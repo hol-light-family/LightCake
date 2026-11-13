@@ -1,0 +1,213 @@
+(* ========================================================================= *)
+(* CakeML kit: compiling match terms into case constants (HOL4's case        *)
+(* pattern compilation).                                                     *)
+(*                                                                           *)
+(* The port never keeps HOL Light match terms: a definition or statement may *)
+(* be WRITTEN with match (nested patterns, wildcards, first match wins, as   *)
+(* HOL4's case), and the kit turns every match into nested case constants    *)
+(* (ty_CASE) and conditionals before anything is defined or proved:          *)
+(*   cases_of_matches tm      the term with every match compiled             *)
+(*   CASE_TERM tm             the same (for statements: prove(CASE_TERM `..`,*)
+(*                            tac))                                          *)
+(* cake_def and cake_def_wf apply it to their clauses.                       *)
+(* Semantics: HOL4's.  Each occurrence of the wildcard _ is independent      *)
+(* (HOL Light's own match reads repeated _ as one variable); a numeral other *)
+(* than 0, a T/F or another literal pattern is a test x = lit; an            *)
+(* unmatched value gives ARB.                                                *)
+(* ========================================================================= *)
+
+type pm_row = { pm_pats : term list; pm_guard : term option; pm_rhs : term };;
+
+let dest_match_term tm =
+  let m,arms = dest_comb tm in
+  let mc,e = dest_comb m in
+  if not (is_const mc && fst(dest_const mc) = "_MATCH")
+  then failwith "dest_match_term" else
+  let rec arms_list t =
+    if is_comb t && is_comb(rator t) && is_const(rator(rator t)) &&
+       fst(dest_const(rator(rator t))) = "_SEQPATTERN"
+    then rand(rator t) :: arms_list (rand t) else [t] in
+  let dest_arm arm =
+    let y,b1 = dest_abs arm in
+    let z,b2 = dest_abs b1 in
+    let _,core = strip_exists b2 in
+    let h,args = strip_comb core in
+    match fst(dest_const h),args with
+      "_UNGUARDED_PATTERN",[p;r] -> lhand p,None,lhand r
+    | "_GUARDED_PATTERN",[p;g;r] -> lhand p,Some g,lhand r
+    | _ -> failwith "dest_match_term: arm" in
+  e,map dest_arm (arms_list arms);;
+
+let is_match_term tm =
+  try fst(dest_const(rator(rator tm))) = "_MATCH" with Failure _ -> false;;
+
+let is_wildcard v = is_var v && fst(dest_var v) = "_";;
+
+let pm_base_name v =
+  let n = fst(dest_var v) in
+  try let k = String.index n '%' in String.sub n 0 k with Not_found -> n;;
+
+let is_literal_pat p =
+  (is_numeral p && dest_numeral p <> num_0) ||
+  p = `T` || p = `F` ||
+  (frees p = [] && not (is_numeral p) && not (is_constructor_app p));;
+
+(* a variant of v whose NAME differs from every name in avoid (HOL Light's  *)
+(* variant only avoids variables of the same name and type)                 *)
+
+let pm_fresh avoid v =
+  let n0,ty = dest_var v in
+  let names = map (fst o dest_var) (!avoid) in
+  let rec go n = if mem n names then go (n^"'") else n in
+  let v' = mk_var(go n0,ty) in
+  avoid := v' :: !avoid; v';;
+
+(* the constructor patterns of the type of s: (vars, pattern, head name) *)
+
+let pm_constructors ty =
+  let n = fst(dest_type ty) in
+  let ci = case_info_of_tyname n in
+  let pats = map (fun (vs,p) ->
+                    let tyi = type_match (type_of p) ty [] in
+                    map (inst tyi) vs, inst tyi p) ci.ci_pats in
+  ci,pats;;
+
+let pat_head p =
+  if is_numeral p then "NUMERAL" else
+  let h = fst(strip_comb p) in
+  if is_const h then fst(dest_const h) else "";;
+
+let rec compile_rows (avoid0:term list) (scruts:term list)
+                     (rows:pm_row list) (dflt:term) : term =
+  match rows with
+    [] -> dflt
+  | r::rest ->
+    let nonvar = filter (fun (p,_) -> not (is_var p)) (zip r.pm_pats scruts) in
+    if nonvar = [] then
+      let s = mapfilter (fun (p,s) -> if is_wildcard p then failwith ""
+                                      else (s,p)) (zip r.pm_pats scruts) in
+      let rhs_ = vsubst s r.pm_rhs in
+      (match r.pm_guard with
+         None -> rhs_
+       | Some g -> mk_cond(vsubst s g,rhs_,compile_rows avoid0 scruts rest dflt))
+    else
+      let i = index (fst(hd nonvar)) r.pm_pats in
+      let p0 = el i r.pm_pats and s = el i scruts in
+      let replace_col l k xs = let a,b = chop_list k l in a @ xs @ tl b in
+      let col = map (fun r' -> el i r'.pm_pats) rows in
+      let has_suc = exists (fun p -> pat_head p = "SUC") col in
+      let num_lit p = is_numeral p && not has_suc in
+      if has_suc && exists (fun p -> is_numeral p && dest_numeral p <> num_0) col
+      then failwith "compile_match_term: numerals other than 0 mixed with SUC"
+      else if is_literal_pat p0 || num_lit p0 then
+        (* rows with this literal (or a variable) at column i vs the others *)
+        let yes = mapfilter (fun r' ->
+            let p = el i r'.pm_pats in
+            if p = p0 then {r' with pm_pats = replace_col r'.pm_pats i
+                                      [mk_var("_",type_of p)]}
+            else if is_var p then r'
+            else failwith "") rows in
+        let no = filter (fun r' -> let p = el i r'.pm_pats in
+                                   is_var p || p <> p0) rows in
+        let eq = if p0 = `T` then s else if p0 = `F` then mk_neg s
+                 else mk_eq(s,p0) in
+        mk_cond(eq,compile_rows avoid0 scruts yes dflt,
+                   compile_rows avoid0 scruts no dflt)
+      else if is_pair p0 && is_pair s then
+        (* an explicit tuple scrutinee: split the column without pair_CASE *)
+        let a,b = dest_pair s in
+        let rows' = map (fun r' ->
+            let p = el i r'.pm_pats in
+            if is_pair p then
+              let pa,pb = dest_pair p in
+              {r' with pm_pats = replace_col r'.pm_pats i [pa;pb]}
+            else
+              let w1 = mk_var("_",type_of a) and w2 = mk_var("_",type_of b) in
+              let rhs_ = if is_wildcard p then r'.pm_rhs
+                         else vsubst [s,p] r'.pm_rhs in
+              let g = match r'.pm_guard with
+                  None -> None
+                | Some g -> Some(if is_wildcard p then g else vsubst [s,p] g) in
+              {pm_pats = replace_col r'.pm_pats i [w1;w2];
+               pm_guard = g; pm_rhs = rhs_}) rows in
+        compile_rows avoid0 (replace_col scruts i [a;b]) rows' dflt
+      else
+        let ci,cons = pm_constructors (type_of s) in
+        let branch (cvs,cpat) =
+          let avoid = ref avoid0 in
+          let chead = pat_head cpat in
+          (* preferred names: from the first row with this constructor *)
+          let pref = try let r1 = find (fun r' ->
+                                          pat_head (el i r'.pm_pats) = chead &&
+                                          not (is_var (el i r'.pm_pats))) rows in
+                         let p = el i r1.pm_pats in
+                         let args = if is_numeral p then [] else snd(strip_comb p) in
+                         map2 (fun a cv -> if is_var a && not (is_wildcard a)
+                                           then a else cv) args cvs
+                     with Failure _ -> cvs in
+          let pref = if length pref = length cvs then pref else cvs in
+          let xs = map2 (fun v p -> pm_fresh avoid (mk_var(pm_base_name p,
+                                                            type_of v)))
+                        cvs pref in
+          let cval = vsubst (zip xs cvs) cpat in
+          let rows_c = mapfilter (fun r' ->
+              let p = el i r'.pm_pats in
+              if is_var p then
+                let ws = map (fun x -> mk_var("_",type_of x)) xs in
+                let sub t = if is_wildcard p then t else vsubst [cval,p] t in
+                {pm_pats = replace_col r'.pm_pats i ws;
+                 pm_guard = (match r'.pm_guard with None -> None
+                                                  | Some g -> Some(sub g));
+                 pm_rhs = sub r'.pm_rhs}
+              else if pat_head p = chead &&
+                      (not (is_numeral p) || p = cpat) then
+                let args = if is_numeral p then [] else snd(strip_comb p) in
+                {r' with pm_pats = replace_col r'.pm_pats i args}
+              else failwith "") rows in
+          let body = compile_rows (!avoid) (replace_col scruts i xs) rows_c dflt in
+          list_mk_abs(xs,body) in
+        let branches = map branch cons in
+        let rty = type_of dflt in
+        let c = ci.ci_case in
+        let c' = inst (type_match (type_of c)
+                         (itlist (mk_fun_ty o type_of) (s::branches) rty) []) c in
+        list_mk_comb(c',s::branches);;
+
+let compile_match_term tm =
+  let e,arms = dest_match_term tm in
+  let counter = ref 0 in
+  let arms = map (fun (p,g,r) ->
+      let vs = filter (fun v -> not (is_wildcard v)) (frees p) in
+      let ren = map (fun v -> incr counter;
+                      mk_var(fst(dest_var v)^"%pm"^string_of_int !counter,
+                             type_of v),v) vs in
+      vsubst ren p,
+      (match g with None -> None | Some g -> Some(vsubst ren g)),
+      vsubst ren r) arms in
+  let avoid = frees tm @ flat (map (fun (p,_,_) -> frees p) arms) in
+  let rows = map (fun (p,g,r) ->
+      (* check linearity: a named variable may occur once *)
+      let vs = filter (fun v -> not (is_wildcard v)) (frees p) in
+      let rec count v t = match t with
+          Comb(f,x) -> count v f + count v x
+        | Var _ -> if t = v then 1 else 0
+        | _ -> 0 in
+      if exists (fun v -> count v p > 1) vs
+      then failwith "compile_match_term: a variable occurs twice in a pattern"
+      else {pm_pats = [p]; pm_guard = g; pm_rhs = r}) arms in
+  let rty = type_of(let _,_,r = hd arms in r) in
+  let dflt = mk_const("ARB",[rty,aty]) in
+  compile_rows avoid [e] rows dflt;;
+
+(* every match of a term, innermost first *)
+
+let rec cases_of_matches tm =
+  match tm with
+    Comb(f,x) ->
+      let tm' = mk_comb(cases_of_matches f,cases_of_matches x) in
+      if is_match_term tm' then cases_of_matches (compile_match_term tm')
+      else tm'
+  | Abs(v,b) -> mk_abs(v,cases_of_matches b)
+  | _ -> tm;;
+
+let CASE_TERM tm = cases_of_matches tm;;
