@@ -342,7 +342,47 @@ let define_size_functions (names:string list) =
     let r = if args = [] then `0:num`
             else list_mk_binop `(+):num->num->num` (`1` :: map comp args) in
     list_mk_forall(vs @ params,mk_eq(mk_comb(sz_of fn,pat),r)) in
-  let def = new_recursive_definition rth (list_mk_conj(map one_clause clauses)) in
+  let def =
+    try new_recursive_definition rth (list_mk_conj(map one_clause clauses))
+    with Failure _ ->
+      (* new_recursive_definition finds the clause of the recursion theorem by *)
+      (* the constructor of its pattern, which is ambiguous when several      *)
+      (* clauses are for pairs of different types (exp has varN # varN # exp,  *)
+      (* varN # exp and pat # exp): instantiate the theorem directly with the  *)
+      (* same clauses, then skolemize the size parameters f_A ..               *)
+      let rthn = INST_TYPE (map (fun fn -> `:num`,snd(dest_fun_ty(type_of fn))) fns)
+                           rth in
+      let fvs',bod' = strip_forall(concl rthn) in
+      let fns',cls' = strip_exists bod' in
+      let comp' a =
+        let ty = type_of a in
+        try let fn' = find (fun f -> dom f = ty) fns' in mk_comb(fn',a)
+        with Failure _ ->
+          let t = mk_comb(size_of_type tvsizes ty,a) in
+          try rhs(concl(BETA_CONV t)) with Failure _ -> t in
+      let inst_of cl =
+        let _,eq = strip_forall cl in
+        let l,r = dest_eq eq in
+        let pat = rand l in
+        let args = if is_pair pat then [fst(dest_pair pat);snd(dest_pair pat)]
+                   else snd(strip_comb pat) in
+        let fi,rargs = strip_comb r in
+        let body = if args = [] then `0:num`
+                   else list_mk_binop `(+):num->num->num` (`1` :: map comp' args) in
+        let rvs = map (fun t -> if is_var t then t else genvar(type_of t)) rargs in
+        let body' = subst (filter (fun (v,t) -> v <> t) (zip rvs rargs)) body in
+        fi,list_mk_abs(rvs,body') in
+      let insts = map inst_of (conjuncts cls') in
+      let th1 = CONV_RULE (DEPTH_CONV BETA_CONV)
+                  (ISPECL (map (fun f -> assoc f insts) fvs') rthn) in
+      let th2 = if params = [] then th1
+                else CONV_RULE SKOLEM_CONV (GENL params th1) in
+      let sp = new_specification fnames th2 in
+      (* the kit's form: one conjunct per clause, !vars params. ... *)
+      if params = [] then sp else
+      let cs = CONJUNCTS (SPECL params sp) in
+      end_itlist CONJ (map (fun c -> let vs = fst(strip_forall(concl c)) in
+                                     GENL (vs @ params) (SPECL vs c)) cs) in
   let consts = map (fun v -> mk_const(fst(dest_var v),[])) svars in
   List.iter2 (fun nm c ->
       let base = String.sub nm 0 (String.length nm - 5) in

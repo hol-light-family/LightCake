@@ -97,3 +97,21 @@ hol4/list.ml	list	theorem	MAP_o	list_MAP_o	name taken (HOL Light or another theo
 hol4/basic.ml	pred_set	theorem	CARD_UNION	pred_set_CARD_UNION	name taken (HOL Light or another theory)
 hol4/simpleSexp.ml	simpleSexp	theorem	sexp_11	simpleSexp_sexp_11	name taken (HOL Light or another theory)
 hol4/words4.ml	words	theorem	WORD_AND_ASSOC	words_WORD_AND_ASSOC	name taken (HOL Light or another theory)
+hol4/term.ml	term	type	term	term_term	term is a common word (HOL Light's OCaml type of terms)
+hol4/term.ml	term	constructor	Var	term_Var	ast and others have Var
+hol4/term.ml	term	constant	vars	term_vars	common variable name
+hol4/walkstar.ml	walkstar	constant	oc	walkstar_oc	common variable name (ffi uses oc)
+hol4/walk.ml	walk	theorem	walk_thm	walk_walk_thm	pattern_comp has walk_thm
+hol4/transfer.ml	transfer	constant	total	transfer_total	common word
+hol4/tcallUnif.ml	tcallUnif	theorem	sum_CASE_list_CASE	tcallUnif_sum_CASE_list_CASE	CakeML unify has the name
+hol4/tcallUnif.ml	tcallUnif	theorem	option_CASE_MAP	tcallUnif_option_CASE_MAP	CakeML unify has the name
+hol4/multiword.ml	multiword	theorem	b2w_def	multiword_b2w_def	name taken
+hol4/multiword.ml	multiword	theorem	LESS_EQ_LENGTH	multiword_LESS_EQ_LENGTH	name taken
+hol4/multiword.ml	multiword	constant	int_op	multiword_int_op	name taken
+hol4/multiword.ml	multiword	constructor	Add	multiword_Add	ast has Add
+hol4/multiword.ml	multiword	constructor	Sub	multiword_Sub	ast has Sub
+hol4/multiword.ml	multiword	constructor	Mul	multiword_Mul	ast has Mul
+hol4/multiword.ml	multiword	constructor	Div	multiword_Div	ast has Div
+hol4/multiword.ml	multiword	constructor	Mod	multiword_Mod	ast has Mod
+hol4/multiword.ml	multiword	constructor	Lt	multiword_Lt	ast has Lt
+hol4/multiword.ml	multiword	constructor	Dec	multiword_Dec	name taken

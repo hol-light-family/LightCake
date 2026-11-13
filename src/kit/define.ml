@@ -170,6 +170,12 @@ let rename_match_arms (fresh:term->term) (fs:term list) (mtm:term) =
     | [] -> failwith "rename_match_arms" in
   mk_comb(m,rebuild x_arms al');;
 
+(* case constants go to the recursion package as they are (it has a rule for *)
+(* each, kit/recursion.ml); set this to true to turn them into match terms   *)
+(* first, as the kit did before 2026-11-13                                    *)
+
+let cake_case_to_match = ref false;;
+
 let CASE_TO_MATCH_CONV : conv =
   fun tm0 ->
     let avoid = ref (variables tm0) in
@@ -177,6 +183,8 @@ let CASE_TO_MATCH_CONV : conv =
     let one tm =
       if not (is_case_app tm) then failwith "CASE_TO_MATCH_CONV" else
       let c,_,fs = dest_case_app tm in
+      (* pair_CASE stays: the recursion package has a cheap rule for it *)
+      if fst(dest_const c) = "pair_CASE" then failwith "CASE_TO_MATCH_CONV" else
       let ci = case_info_of_const c in
       let th1 = REWR_CONV (case_match_thm ci) tm in
       let mtm = rand(concl th1) in
@@ -512,13 +520,16 @@ let tidy_ctx ctx =
       if is_eq c && is_constructor_app (lhs c) && not (is_constructor_app (rhs c))
       then mk_eq(rhs c,lhs c) else c in
     let cs1 = map orient cs in
-    let rws = all_case_rewrites() in
+    (* the case rewrites come from the kit's prebuilt net (CASE_REWRITE_TAC): *)
+    (* rebuilding a net of all of them for each conjunct costs about a second *)
+    (* once a type with many constructors is defined                          *)
+    let exists_meson ths = W(fun (_,w) -> if is_exists w then MESON_TAC ths
+                                          else NO_TAC) in
     let implied others c =
       others <> [] &&
       can (fun () -> prove(mk_imp(list_mk_conj others,c),
-                           DISCH_THEN(fun th -> REWRITE_TAC(CONJUNCTS th @ rws)) THEN
-                           W(fun (_,w) -> if is_exists w then MESON_TAC[]
-                                          else NO_TAC)))
+                           DISCH_THEN(fun th -> CASE_REWRITE_TAC(CONJUNCTS th)) THEN
+                           exists_meson []))
           () in
     let rec drop kept l = match l with
         [] -> rev kept
@@ -529,9 +540,9 @@ let tidy_ctx ctx =
     let th = prove(mk_imp(ctx',ctx),
                    DISCH_THEN(fun th ->
                      let ths = CONJUNCTS th in
-                     REWRITE_TAC(ths @ rws) THEN
+                     CASE_REWRITE_TAC ths THEN
                      REWRITE_TAC(map GSYM (filter (fun t -> is_eq(concl t)) ths)) THEN
-                     REWRITE_TAC(ths @ rws) THEN
+                     CASE_REWRITE_TAC ths THEN
                      TRY(MESON_TAC ths))) in
     ctx',th
   with Failure _ -> ctx,DISCH ctx (ASSUME ctx);;
@@ -555,7 +566,12 @@ let derive_induction (c:term) (clauses:(term list * term list) list)
   let argtys,_ = splitlist dest_fun_ty (type_of c) in
   let n = length (snd(hd clauses)) in
   let argtys = fst(chop_list n argtys) in
-  let p = mk_var("P",itlist mk_fun_ty argtys bool_ty) in
+  (* the predicate is P, or P' etc. if a clause has a variable called P *)
+  let used = map (fst o dest_var)
+               (itlist (fun (vs,args) acc -> union vs (union (freesl args) acc))
+                       clauses []) in
+  let rec pname n = if mem n used then pname (n ^ "'") else n in
+  let p = mk_var(pname "P",itlist mk_fun_ty argtys bool_ty) in
   (* the tupled form of c, for the function variable of the TCs *)
   let tupled_c =
     if n = 1 then c else
@@ -867,9 +883,12 @@ let cake_def_gen (rel_tac : (term * tactic) option) (tm:term) : thm =
                         length (setify args) = length args
     | _ -> false in
   if not recursive && single_var_clause then
-    new_definition (snd(strip_forall tm0))
+    (* quantified in the order of the arguments, as HOL4 does *)
+    let th = new_definition (snd(strip_forall tm0)) in
+    let vs = frees_in_order (lhs(snd(strip_forall(concl th)))) in
+    GENL vs (SPEC_ALL th)
   else
-  let cth = CASE_TO_MATCH_CONV tm0 in
+  let cth = if !cake_case_to_match then CASE_TO_MATCH_CONV tm0 else REFL tm0 in
   let tm_m = rand(concl cth) in
   let etm = mk_exists(f,tm_m) in
   let eth0 = if rel_tac = None then prove_general_recursive_function_exists etm
@@ -919,12 +938,22 @@ let cake_def_gen (rel_tac : (term * tactic) option) (tm:term) : thm =
                 if ok then () else go rest in
           go (measure_candidates ty)
         with Failure _ -> ())
+   | None when recursive ->
+       Format.print_string("Warning: cake_def "^name^": no induction theorem "^
+         "(the strict form R a p of a tail-call termination condition was not "^
+         "proved by the tactic)\n")
    | _ -> ());
   CONV_RULE (DEPTH_CONV ETA_MARKED_CONV) def;;
 
 (* cake_def (with its size-measure fallback) is at the end of this file *)
 
 let cake_def_wf r tac tm = cake_def_gen (Some(r,tac)) tm;;
+
+(* clauses parsed one by one: in one quotation a variable name has one type, *)
+(* while HOL4 types each clause separately (n : num in one clause and        *)
+(* n : bool in another)                                                     *)
+
+let cake_def_wf_clauses r tac tms = cake_def_wf r tac (list_mk_conj tms);;
 
 (* ------------------------------------------------------------------------- *)
 (* Mutual recursion: f1 .. fk are encoded as one function on the sum of     *)
@@ -979,6 +1008,23 @@ let rec FORALL_TUPLE_CONV n tm =
 let cake_def_mutual (rel_tac : (term * tactic) option) (tm:term) : thm =
   let fns0 = setify (map (fun (_,f,_,_) -> f) (dest_clauses tm)) in
   let tm = close_clauses fns0 tm in
+  (* variables of the same name and different types in different clauses   *)
+  (* (x3:pat in one function, x3:pat list in the other) are renamed apart:  *)
+  (* the recursion package puts them into one tuple                         *)
+  let tm =
+    let seen = ref ([] : (string * hol_type) list) in
+    list_mk_conj (map (fun cl ->
+      let vs,bod = strip_forall cl in
+      let ren = mapfilter (fun v ->
+          let n,ty = dest_var v in
+          if exists (fun (n',ty') -> n' = n && ty' <> ty) (!seen) then
+            let names = map fst (!seen) @ map (fst o dest_var) (variables bod) in
+            let rec go m = if mem m names then go (m ^ "'") else m in
+            let v' = mk_var(go n,ty) in
+            seen := (fst(dest_var v'),ty) :: !seen; (v',v)
+          else (seen := (n,ty) :: !seen; fail())) vs in
+      let vs' = map (fun v -> try rev_assoc v ren with Failure _ -> v) vs in
+      list_mk_forall(vs',vsubst ren bod)) (conjuncts tm)) in
   let cls = dest_clauses tm in
   let fns = rev (itlist (fun (_,f,_,_) l -> if mem f l then l else f::l)
                         (rev cls) []) in
@@ -1154,6 +1200,8 @@ let cake_def tm =
                cake_quiet := saved; th
            with Failure _ -> (cake_quiet := saved; go rest)) in
     go cands;;
+
+let cake_def_clauses tms = cake_def (list_mk_conj tms);;
 
 (* ------------------------------------------------------------------------- *)
 (* Inductive relations (HOL4 Inductive foo ... End): new_inductive_definition *)

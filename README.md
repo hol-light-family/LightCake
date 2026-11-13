@@ -18,8 +18,8 @@ in HOL Light.
 | part | files |
 |---|---|
 | proof kit | `src/kit/` (see below) |
-| HOL4 library layer | `src/hol4/`: `vocab.ml` (shared vocabulary), `list.ml`, `rich_list.ml`, `basic.ml` (combinators, options, pairs, arithmetic, relations, `While`, extra set theory), `finite_map.ml`, `alist.ml`, `sptree.ml` (with `spt_closure.ml`), `words4.ml` (words, bytes, alignment, integer words), `ternaryComparisons.ml`, `toto.ml`, `comparison.ml`, `binary_ieee.ml` and `machine_ieee.ml` (IEEE floating point), `string4.ml`, `numposrep.ml`, `ASCIInumbers.ml`, `bitstring.ml`, `llist.ml`, `lprefix_lub.ml` and `path.ml` (lazy lists), `set_sep.ml`, `sorting.ml`, `mergesort.ml`, `bag.ml`, `location.ml`, `grammar.ml`, `peg.ml`, `pegexec.ml` and `NTproperties.ml` (context-free grammars and PEGs), `simpleSexp.ml`, `simpleSexpPEG.ml`, `simpleSexpParse.ml`, `balanced_map.ml`, `gcd.ml`, `tailrec.ml`, `regexp_compiler.ml` (the vector type) |
-| CakeML | `src/misc/` (the misc theory, in three parts); `src/basis/pure/`: `mloption.ml`, `mllist.ml`, `mlstring.ml`; `src/semantics/`: `namespace.ml`, `proofs/namespaceProps.ml`; `src/compiler/backend/`: `backend_common.ml`, `db_vars.ml`, `semantics/backendProps.ml`, `gc/gc_shared.ml`, `reg_alloc/parmove.ml`, `pattern_matching/pattern_common.ml` |
+| HOL4 library layer | `src/hol4/` (53 files): `vocab.ml` (shared vocabulary), lists (`list.ml`, `rich_list.ml`), `basic.ml` (combinators, options, pairs, arithmetic, relations, `While`, extra set theory), finite maps and association lists, `sptree.ml`, words, bytes, alignment and integer words (`words4.ml`), comparisons, IEEE floating point, strings and number formatting, lazy lists, `set_sep.ml`, sorting, mergesort, bags, the context-free grammar and PEG theories, s-expressions, balanced maps, `tailrec.ml`, `gcd.ml`, the vector type, first-order unification (`term.ml` ... `tcallUnif.ml`) and multiword arithmetic (`multiword.ml`, `mc_multiword.ml`) |
+| CakeML | `src/misc/` (the misc theory, in three parts); `src/basis/pure/`: `mloption`, `mllist`, `mlstring`, `mlvector`, `mlint`, `mlsexp`; `src/semantics/`: `namespace`, `ast`, `fpSem`, `ffi/ffi`, `semanticPrimitives`, `tokens`, `tokenUtils`, `lexer_fun`, `gram`, and `proofs/namespaceProps`, `proofs/gramProps`; `src/compiler/backend/`: `backend_common`, `db_vars`, `semantics/backendProps`, `gc/gc_shared`, `gc/copying_gc`, `gc/gen_gc`, `gc/gen_gc_partial`, `reg_alloc/parmove`, `pattern_matching/pattern_common` |
 
 The numbers of files, lines and theorems are in `doc/contents.tsv`. Every file loads in a
 fresh HOL Light session with no axioms beyond HOL Light's three (`check.ml` shows it).
@@ -53,8 +53,9 @@ example `needs "semantics/namespace.ml";;` (paths relative to `src/`).
   HOL4's `Definition` does: each `_` is its own variable, overlapping clauses mean that the
   first match wins and are completed into the instances HOL4 derives, termination is proved
   automatically (HOL Light's analysis, else a size measure) or with HOL4's termination
-  relation, and mutual recursion is allowed. Recursive calls under `MAP`, `ALL`, `EX`, `IMAGE`,
-  `ITLIST`, `OPT_MMAP`, the option monad and `==>` get the contexts of HOL4's congruence rules.
+  relation, and mutual recursion is allowed. Recursive calls under `case`, `MAP`, `ALL`, `EX`,
+  `IMAGE`, `ITLIST`, `OPT_MMAP`, the option monad and `==>` get the contexts of HOL4's
+  congruence rules, and the variables are quantified in HOL4's order.
   Every recursive definition gets a HOL4-style induction theorem (`cake_ind`) with one case per
   clause and one hypothesis per recursive call. Records (`cake_record`) get accessors, updates
   and their algebra; size functions are generated for every datatype.

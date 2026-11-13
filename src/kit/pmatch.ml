@@ -202,15 +202,58 @@ let compile_match_term tm =
   let dflt = mk_const("ARB",[rty,aty]) in
   compile_rows avoid [e] rows dflt;;
 
+(* HOL Light's paired lets (let (x,y) = e in t, a LET of a GABS) become      *)
+(* pair_CASE e (\x y. t), the kit's form, with nested tuples nested.  Paired *)
+(* lambdas \(x,y). t elsewhere stay as they are (write \p. match p with     *)
+(* (x,y) -> t to get pair_CASE)                                              *)
+
+let mk_pair_case_term e f =
+  let c0 = mk_const("pair_CASE",[]) in
+  let rty = snd(dest_fun_ty(snd(dest_fun_ty(type_of f)))) in
+  let cty = mk_fun_ty (type_of e) (mk_fun_ty (type_of f) rty) in
+  mk_comb(mk_comb(inst (type_match (type_of c0) cty []) c0,e),f);;
+
+let elim_gabs tm0 =
+  let avoid = ref (variables tm0) in
+  let fresh ty = pm_fresh avoid (mk_var("p",ty)) in
+  (* a term equal to (\pat. body) e, for a tuple pattern pat *)
+  let rec pc e pat body =
+    if is_var pat then vsubst [e,pat] body else
+    let p1,p2 = dest_pair pat in
+    let a = if is_var p1 then p1 else fresh (type_of p1) in
+    let b = if is_var p2 then p2 else fresh (type_of p2) in
+    let body2 = if is_var p2 then body else pc b p2 body in
+    let body1 = if is_var p1 then body2 else pc a p1 body2 in
+    mk_pair_case_term e (mk_abs(a,mk_abs(b,body1))) in
+  let strip_let_end t =
+    try if fst(dest_const(rator t)) = "LET_END" then rand t else t
+    with Failure _ -> t in
+  let rec tuple_vars p =
+    is_var p || (is_pair p && tuple_vars (fst(dest_pair p)) &&
+                 tuple_vars (snd(dest_pair p))) in
+  let tuple_pat p = is_pair p && tuple_vars p in
+  let rec go tm =
+    match tm with
+      Comb(Comb(Const("LET",_),g),e) when is_gabs g &&
+                                          tuple_pat (fst(dest_gabs g)) ->
+        let pat,body = dest_gabs g in
+        pc (go e) pat (go (strip_let_end body))
+    | Comb(f,x) -> mk_comb(go f,go x)
+    | Abs(v,b) -> mk_abs(v,go b)
+    | _ -> tm in
+  go tm0;;
+
 (* every match of a term, innermost first *)
 
-let rec cases_of_matches tm =
+let rec cases_of_matches_rec tm =
   match tm with
     Comb(f,x) ->
-      let tm' = mk_comb(cases_of_matches f,cases_of_matches x) in
-      if is_match_term tm' then cases_of_matches (compile_match_term tm')
+      let tm' = mk_comb(cases_of_matches_rec f,cases_of_matches_rec x) in
+      if is_match_term tm' then cases_of_matches_rec (compile_match_term tm')
       else tm'
-  | Abs(v,b) -> mk_abs(v,cases_of_matches b)
+  | Abs(v,b) -> mk_abs(v,cases_of_matches_rec b)
   | _ -> tm;;
+
+let cases_of_matches tm = cases_of_matches_rec (elim_gabs tm);;
 
 let CASE_TERM tm = cases_of_matches tm;;

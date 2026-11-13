@@ -24,6 +24,18 @@ let cake_register_admissible c th =
   cake_admissible_rules :=
     (c,th) :: filter (fun (c',_) -> c' <> c) (!cake_admissible_rules);;
 
+(* a rule's bound pattern variables (e.g. the a b of ADMISSIBLE_pair_CASE)  *)
+(* renamed to the user's names, so that the termination conditions and the *)
+(* induction theorem use them; set below                                    *)
+
+let cake_rename_proforma =
+  ref (fun (_:string list) (_:string list) (th:thm) -> th);;
+
+(* the rule for a case constant and the arms of the goal; set below *)
+
+let cake_case_rule_ref =
+  ref (fun (_:term) (_:term list) -> (failwith "case rule" : thm));;
+
 (* the copied code relies on HOL Light's type invention *)
 let cake_tie_saved = !type_invention_error;;
 type_invention_error := false;;
@@ -236,6 +248,17 @@ let instantiate_casewise_recursion,
           -> APPLY_PROFORMA_TAC ADMISSIBLE_GUARDED_PATTERN gl
     | "admissible","COND"
           -> APPLY_PROFORMA_TAC ADMISSIBLE_COND gl
+    | "admissible",_ when is_case_const hop &&
+                          length args = 1 + length (case_info_of_const hop).ci_pats &&
+                          not (can (assoc (name_of hop)) (!cake_admissible_rules))
+          -> APPLY_PROFORMA_TAC (!cake_case_rule_ref hop (tl args)) gl
+    | "admissible","pair_CASE" when can (assoc "pair_CASE") (!cake_admissible_rules)
+          -> let th = assoc "pair_CASE" (!cake_admissible_rules) in
+             let names = try let v1,b1 = dest_abs (last(snd(strip_comb bod))) in
+                             let v2,_ = dest_abs b1 in
+                             [fst(dest_var v1); fst(dest_var v2)]
+                         with Failure _ -> [] in
+             APPLY_PROFORMA_TAC (!cake_rename_proforma ["a";"b"] names th) gl
     | "admissible",c when can (assoc c) (!cake_admissible_rules)
           -> APPLY_PROFORMA_TAC (assoc c (!cake_admissible_rules)) gl
     | "admissible",_ when is_abs bod
@@ -580,6 +603,165 @@ let ADMISSIBLE_ITLIST = prove
   SPEC_TAC(`(l:(A->B)->P->C list) f a`,`ll:C list`) THEN
   LIST_INDUCT_TAC THEN REWRITE_TAC[ITLIST; MEM] THEN ASM_MESON_TAC[]);;
 
+(* pair_CASE e (\a b. t), the kit's let (a,b) = e in t: the context        *)
+(* e = (a,b) (HOL4's LET_CONG with the pair); much cheaper for the recursion *)
+(* package than the match it used to be turned into                         *)
+
+let ADMISSIBLE_pair_CASE = prove
+ (`!(<<) (p:(A->B)->P->bool) (s:P->A) (e:(A->B)->P->C#D) (h:(A->B)->P->C->D->E).
+        admissible(<<) p s e /\
+        admissible (<<) (\f (a,b,x). p f x /\ e f x = (a,b))
+                        (\(a,b,x). s x) (\f (a,b,x). h f x a b)
+        ==> admissible (<<) p s (\f x. pair_CASE (e f x) (h f x))`,
+  REWRITE_TAC[admissible; FORALL_PAIR_THM] THEN REPEAT STRIP_TAC THEN
+  SUBGOAL_THEN `(e:(A->B)->P->C#D) g a = e f a` SUBST1_TAC THENL
+   [ASM_MESON_TAC[]; ALL_TAC] THEN
+  MP_TAC(ISPEC `(e:(A->B)->P->C#D) f a` PAIR_SURJECTIVE) THEN
+  DISCH_THEN(X_CHOOSE_THEN `u:C` (X_CHOOSE_THEN `v:D` ASSUME_TAC)) THEN
+  ASM_REWRITE_TAC[pair_CASE] THEN ASM_MESON_TAC[]);;
+
+let rec cake_rename_bound (ren:(string*string) list) tm =
+  match tm with
+    Abs(v,b) -> let b' = cake_rename_bound ren b in
+                let n,ty = dest_var v in
+                (try let v' = mk_var(assoc n ren,ty) in mk_abs(v',vsubst [v',v] b')
+                 with Failure _ -> mk_abs(v,b'))
+  | Comb(f,x) -> mk_comb(cake_rename_bound ren f,cake_rename_bound ren x)
+  | _ -> tm;;
+
+cake_rename_proforma :=
+  (fun olds news th ->
+     if length news <> length olds then th else
+     let used = ref (map (fst o dest_var) (variables (concl th))) in
+     let fresh n = let rec go n = if mem n !used then go (n ^ "'") else n in
+                   let n' = go n in used := n' :: !used; n' in
+     let ren = map2 (fun od nw -> od, fresh nw) olds news in
+     try let c' = cake_rename_bound ren (concl th) in
+         EQ_MP (ALPHA (concl th) c') th
+     with Failure _ -> th);;
+
+(* ------------------------------------------------------------------------- *)
+(* Admissibility rules for case constants (HOL4's case congruence rules):     *)
+(*   admissible R p s e /\                                                   *)
+(*   (for each constructor Ci y1 .. ym)                                      *)
+(*   admissible R (\f (y1,..,ym,x). p f x /\ e f x = Ci y1 .. ym)             *)
+(*                (\(y1,..,ym,x). s x) (\f (y1,..,ym,x). hi f x y1 .. ym)     *)
+(*   ==> admissible R p s (\f x. ty_CASE (e f x) (h1 f x) .. (hk f x))       *)
+(* (for a constructor without arguments the context is e f x = Ci).  Made    *)
+(* for each case constant when a recursive definition first needs it; a call *)
+(* in an arm gets the context scrutinee = pattern, as with HOL4's TFL.       *)
+(* ------------------------------------------------------------------------- *)
+
+let cake_case_admissible_cache = ref ([] : (string * thm) list);;
+
+let case_admissible_thm (ci:case_info) =
+  let cname = fst(dest_const ci.ci_case) in
+  try assoc cname (!cake_case_admissible_cache) with Failure _ ->
+  let c = ci.ci_case in
+  let tyc = type_of c in
+  let tty = hd(snd(dest_type tyc)) in
+  let n = length ci.ci_pats in
+  let rty = funpow (n + 1) (fun t -> hd(tl(snd(dest_type t)))) tyc in
+  let used = map dest_vartype (tyvars tyc) in
+  let pick l = mk_vartype (find (fun s -> not (mem s used)) l) in
+  let aty' = pick ["A";"A1";"A2";"A3";"A4"]
+  and bty' = pick ["B";"B1";"B2";"B3";"B4"]
+  and pty' = pick ["P";"P1";"P2";"P3";"P4"] in
+  let fty = mk_fun_ty aty' bty' in
+  let lt = mk_var("<<",mk_fun_ty aty' (mk_fun_ty aty' bool_ty)) in
+  let p = mk_var("p",mk_fun_ty fty (mk_fun_ty pty' bool_ty)) in
+  let s = mk_var("s",mk_fun_ty pty' aty') in
+  let e = mk_var("e",mk_fun_ty fty (mk_fun_ty pty' tty)) in
+  let f = mk_var("f",fty) and x = mk_var("x",pty') in
+  let adm0 = mk_const("admissible",[]) in
+  let mk_adm r pp ss t =
+    let ty = itlist mk_fun_ty (map type_of [r;pp;ss;t]) bool_ty in
+    list_mk_comb(inst (type_match (type_of adm0) ty []) adm0,[r;pp;ss;t]) in
+  let arms = map2 (fun (vs,pat) i ->
+      let ys = map2 (fun v j -> mk_var("y"^string_of_int i^"_"^string_of_int j,
+                                       type_of v)) vs (1--length vs) in
+      let pat' = vsubst (zip ys vs) pat in
+      let h = mk_var("h"^string_of_int i,
+                     mk_fun_ty fty (mk_fun_ty pty' (itlist mk_fun_ty (map type_of vs) rty))) in
+      ys,pat',h) ci.ci_pats (1--n) in
+  let pfx = mk_comb(mk_comb(p,f),x) and efx = mk_comb(mk_comb(e,f),x) in
+  let ant (ys,pat',h) =
+    if ys = [] then
+      mk_adm lt (mk_abs(f,mk_abs(x,mk_conj(pfx,mk_eq(efx,pat'))))) s
+                (mk_abs(f,mk_abs(x,list_mk_comb(h,[f;x]))))
+    else
+      let tup = end_itlist (curry mk_pair) (ys @ [x]) in
+      mk_adm lt (mk_abs(f,mk_gabs(tup,mk_conj(pfx,mk_eq(efx,pat')))))
+                (mk_gabs(tup,mk_comb(s,x)))
+                (mk_abs(f,mk_gabs(tup,list_mk_comb(h,[f;x] @ ys)))) in
+  let c' = inst (type_match tyc (itlist mk_fun_ty
+                   (tty :: map (fun (ys,_,_) -> itlist mk_fun_ty (map type_of ys) rty) arms)
+                   rty) []) c in
+  let body = list_mk_comb(c',efx :: map (fun (_,_,h) -> list_mk_comb(h,[f;x])) arms) in
+  let concl_ = mk_adm lt p s (mk_abs(f,mk_abs(x,body))) in
+  let tm = list_mk_forall(lt :: p :: s :: e :: map (fun (_,_,h) -> h) arms,
+             mk_imp(list_mk_conj(mk_adm lt p s e :: map ant arms),concl_)) in
+  let nch = ci.ci_nchotomy and cdef = ci.ci_def in
+  (* the arm antecedents are used by instantiating their tuple variable    *)
+  (* with (y1,..,ym,a) and reducing the paired lambdas: FORALL_PAIR_THM     *)
+  (* would also split a constructor argument of product type               *)
+  let arm_tac (asl,w as gl) =
+    let hl,hr = dest_eq w in
+    let _,largs = strip_comb hl and _,rargs = strip_comb hr in
+    let f0 = hd largs and g0 = hd rargs and a0 = hd(tl largs) in
+    let ys = tl(tl largs) in
+    let tup = if ys = [] then a0 else end_itlist (curry mk_pair) (ys @ [a0]) in
+    let red = CONV_RULE (TOP_DEPTH_CONV GEN_BETA_CONV) in
+    (FIRST_ASSUM(fun th -> MATCH_MP_TAC (red (SPECL [f0;g0;tup] th))) THEN
+     ASM_REWRITE_TAC[]) gl in
+  let tac (asl,w as gl) =
+    let l,r = dest_eq w in
+    let sl = hd(snd(strip_comb l)) and sr = hd(snd(strip_comb r)) in
+    (* e f a = e g a from the first antecedent, without MESON (a type with *)
+    (* tens of constructors gives as many assumptions: MESON goes too deep) *)
+    (SUBGOAL_THEN (mk_eq(sl,sr)) (ASSUME_TAC o SYM) THENL
+      [FIRST_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[];
+       ASM_REWRITE_TAC[] THEN
+       MP_TAC(ISPEC sl nch) THEN
+       DISCH_THEN(REPEAT_TCL DISJ_CASES_THEN
+                    (REPEAT_TCL CHOOSE_THEN ASSUME_TAC)) THEN
+       ASM_REWRITE_TAC[cdef] THEN arm_tac]) gl in
+  let th = prove(tm,
+    REPEAT GEN_TAC THEN REWRITE_TAC[admissible] THEN
+    STRIP_TAC THEN REPEAT GEN_TAC THEN STRIP_TAC THEN tac) in
+  cake_case_admissible_cache := (cname,th) :: !cake_case_admissible_cache;
+  th;;
+
+(* the arm variables y<i>_<j> of a case rule renamed to the binder names of  *)
+(* the arms of the goal (each arm apart from the others)                     *)
+
+let cake_rename_case_rule (th:thm) (news:string list list) =
+  let is_armvar n =
+    String.length n > 1 && String.sub n 0 1 = "y" && String.contains n '_' in
+  let base = filter (fun n -> not (is_armvar n))
+               (map (fst o dest_var) (variables (concl th))) in
+  let ren = flat (map2 (fun nl i ->
+      let used = ref base in
+      let fresh n = let rec go n = if mem n !used then go (n ^ "'") else n in
+                    let n' = go n in used := n' :: !used; n' in
+      map2 (fun nw j -> "y"^string_of_int i^"_"^string_of_int j, fresh nw)
+           nl (1--length nl)) news (1--length news)) in
+  try let c' = cake_rename_bound ren (concl th) in EQ_MP (ALPHA (concl th) c') th
+  with Failure _ -> th;;
+
+let cake_case_rule_for (hop:term) (arms:term list) =
+  let ci = case_info_of_const hop in
+  let th = case_admissible_thm ci in
+  let news = map2 (fun (vs,_) a ->
+      let rec binders k t = if k = 0 then [] else
+        let v,b = dest_abs t in fst(dest_var v) :: binders (k-1) b in
+      try binders (length vs) a with Failure _ -> map (fst o dest_var) vs)
+    ci.ci_pats arms in
+  cake_rename_case_rule th news;;
+
+cake_case_rule_ref := cake_case_rule_for;;
+
 do_list (uncurry cake_register_admissible)
   ["==>",ADMISSIBLE_IMP; "ALL",ADMISSIBLE_ALL; "EX",ADMISSIBLE_EX;
-   "IMAGE",ADMISSIBLE_IMAGE; "ITLIST",ADMISSIBLE_ITLIST];;
+   "IMAGE",ADMISSIBLE_IMAGE; "ITLIST",ADMISSIBLE_ITLIST;
+   "pair_CASE",ADMISSIBLE_pair_CASE];;

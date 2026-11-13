@@ -30,10 +30,13 @@
 - `cake_type "ty = C1 num | C2 ty (ty list)"` defines a datatype with its case constant
   `ty_CASE`, `case_eq "ty"` (HOL4's case_eq), the cases theorem and the size function
   `ty_size` (one size argument per type variable; `type_size_def "ty"`, `size_aux_eqs "ty"`).
+  The sizes are HOL4's: `list_size f (h::t) = 1 + f h + list_size f t`,
+  `pair_size f g (a,b) = 1 + f a + g b` (`min_pair_size` without the `1 +`).
 - HOL4 `case` expressions are written with `match` and compiled into case constants and
   conditionals (HOL4 semantics: each `_` is independent, numeral and other literal patterns are
   equality tests, an unmatched value is `ARB`). `CASE_TERM` compiles a statement:
-  `prove(CASE_TERM `...`, tac)`.
+  `prove(CASE_TERM `...`, tac)`. HOL Light's paired `let (a,b) = e in t` becomes
+  `pair_CASE e (\a b. t)` in the same way.
 - `cake_def tm` for definitions with automatic termination (HOL Light's own analysis, else the
   size of one argument or of all of them, as HOL4's `Define`); `cake_def_wf R tac tm` with
   HOL4's termination relation `R` on the tupled arguments (on their sum `INL`/`INR` for mutual
@@ -45,7 +48,11 @@
   Recursive calls under `MAP`, `ALL`, `EX`, `IMAGE`, `ITLIST`, `OPT_MMAP`, `OPTION_MAP`,
   `OPTION_BIND`, `OPTION_IGNORE_BIND` and `==>` get the contexts of HOL4's congruence rules
   (`MEM y l`, `y IN s`, `o = SOME y`, the antecedent); `cake_register_admissible` adds a rule
-  for another constant.
+  for another constant. A recursive call in an arm of a case expression gets the context
+  scrutinee = pattern, as with HOL4's case congruence rules (a rule for each case constant).
+  The variables of a definition are quantified in HOL4's order (left to right).
+  `cake_def_clauses [`c1`; `c2`]` takes clauses parsed one by one (a variable name may then
+  have different types in different clauses, as in HOL4).
 - `cake_record "r" ["f1","ty1"; ...]` for records; `cake_inductive tm` for inductive relations
   (rules, induction, cases, strong induction).
 

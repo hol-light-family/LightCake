@@ -1027,8 +1027,8 @@ basis/pure/mlvector	mlvector	theorem	tabulate_def	mlvector_tabulate_def	clash:2 
 basis/pure/mlvector	mlvector	constant	toList_aux	toList_aux	unique
 basis/pure/mlvector	mlvector	theorem	toList_aux_def	toList_aux_def	unique
 basis/pure/mlvector	mlvector	theorem	toList_aux_ind	toList_aux_ind	unique
-basis/pure/mlvector	mlvector	constant	toList	toList	unique
-basis/pure/mlvector	mlvector	theorem	toList_def	toList_def	unique
+basis/pure/mlvector	mlvector	constant	toList	mlvector_toList	clash (library name or common variable name)
+basis/pure/mlvector	mlvector	theorem	toList_def	mlvector_toList_def	clash (library name or common variable name)
 basis/pure/mlvector	mlvector	theorem	toList_aux_thm	toList_aux_thm	unique
 basis/pure/mlvector	mlvector	theorem	toList_thm	toList_thm	unique
 basis/pure/mlvector	mlvector	theorem	length_toList	length_toList	unique
@@ -1040,8 +1040,8 @@ basis/pure/mlvector	mlvector	theorem	update_def	update_def	unique
 basis/pure/mlvector	mlvector	theorem	update_thm	update_thm	unique
 basis/pure/mlvector	mlvector	constant	concat	mlvector_concat	clash:2 theories
 basis/pure/mlvector	mlvector	theorem	concat_def	mlvector_concat_def	clash:2 theories
-basis/pure/mlvector	mlvector	constant	map	map	unique
-basis/pure/mlvector	mlvector	theorem	map_def	map_def	unique
+basis/pure/mlvector	mlvector	constant	map	mlvector_map	clash (library name or common variable name)
+basis/pure/mlvector	mlvector	theorem	map_def	mlvector_map_def	clash (library name or common variable name)
 basis/pure/mlvector	mlvector	constant	mapi	mlvector_mapi	clash:2 theories
 basis/pure/mlvector	mlvector	theorem	mapi_def	mlvector_mapi_def	clash:2 theories
 basis/pure/mlvector	mlvector	theorem	less_than_length_thm	less_than_length_thm	unique
@@ -1071,8 +1071,8 @@ basis/pure/mlvector	mlvector	theorem	foldr_aux_thm	foldr_aux_thm	unique
 basis/pure/mlvector	mlvector	theorem	foldr_thm	foldr_thm	unique
 basis/pure/mlvector	mlvector	constant	findi_aux	findi_aux	unique
 basis/pure/mlvector	mlvector	theorem	findi_aux_def	findi_aux_def	unique
-basis/pure/mlvector	mlvector	constant	findi	findi	unique
-basis/pure/mlvector	mlvector	theorem	findi_def	findi_def	unique
+basis/pure/mlvector	mlvector	constant	findi	mlvector_findi	clash (library name or common variable name)
+basis/pure/mlvector	mlvector	theorem	findi_def	mlvector_findi_def	clash (library name or common variable name)
 basis/pure/mlvector	mlvector	constant	find_aux	find_aux	unique
 basis/pure/mlvector	mlvector	theorem	find_aux_def	find_aux_def	unique
 basis/pure/mlvector	mlvector	constant	find	find	unique
@@ -1084,11 +1084,11 @@ basis/pure/mlvector	mlvector	theorem	exists_aux_def	exists_aux_def	unique
 basis/pure/mlvector	mlvector	constant	exists	mlvector_exists	reserved
 basis/pure/mlvector	mlvector	theorem	exists_def	mlvector_exists_def	reserved
 basis/pure/mlvector	mlvector	theorem	exists_aux_thm	exists_aux_thm	unique
-basis/pure/mlvector	mlvector	theorem	exists_thm	exists_thm	unique
+basis/pure/mlvector	mlvector	theorem	exists_thm	mlvector_exists_thm	clash (library name or common variable name)
 basis/pure/mlvector	mlvector	constant	all_aux	all_aux	unique
 basis/pure/mlvector	mlvector	theorem	all_aux_def	all_aux_def	unique
-basis/pure/mlvector	mlvector	constant	all	all	unique
-basis/pure/mlvector	mlvector	theorem	all_def	all_def	unique
+basis/pure/mlvector	mlvector	constant	all	mlvector_all	clash (library name or common variable name)
+basis/pure/mlvector	mlvector	theorem	all_def	mlvector_all_def	clash (library name or common variable name)
 basis/pure/mlvector	mlvector	theorem	all_aux_thm	all_aux_thm	unique
 basis/pure/mlvector	mlvector	theorem	all_thm	all_thm	unique
 basis/pure/mlvector	mlvector	constant	collate_aux	mlvector_collate_aux	clash:2 theories
@@ -6848,7 +6848,7 @@ compiler/backend/gc/copying_gc	copying_gc	theorem	full_gc_def	full_gc_def	unique
 compiler/backend/gc/copying_gc	copying_gc	constant	gc_inv	copying_gc_gc_inv	clash:2 theories
 compiler/backend/gc/copying_gc	copying_gc	theorem	gc_inv_def	copying_gc_gc_inv_def	clash:2 theories
 compiler/backend/gc/copying_gc	copying_gc	theorem	DRESTRICT_heap_map	DRESTRICT_heap_map	unique
-compiler/backend/gc/copying_gc	copying_gc	theorem	IN_FRANGE	IN_FRANGE	unique
+compiler/backend/gc/copying_gc	copying_gc	theorem	IN_FRANGE	copying_gc_IN_FRANGE	clash: finite_map IN_FRANGE (another statement)
 compiler/backend/gc/copying_gc	copying_gc	theorem	heap_addresses_SNOC	heap_addresses_SNOC	unique
 compiler/backend/gc/copying_gc	copying_gc	theorem	gc_move_thm	copying_gc_gc_move_thm	clash:3 theories
 compiler/backend/gc/copying_gc	copying_gc	theorem	gc_move_list_thm	copying_gc_gc_move_list_thm	clash:3 theories
@@ -7144,7 +7144,7 @@ compiler/backend/mips/mips_config	mips_config	constant	mips_names	mips_names	uni
 compiler/backend/mips/mips_config	mips_config	theorem	mips_names_def	mips_names_def	unique
 compiler/backend/mips/mips_config	mips_config	constant	mips_backend_config	mips_backend_config	unique
 compiler/backend/mips/mips_config	mips_config	theorem	mips_backend_config_def	mips_backend_config_def	unique
-semantics/tokens	tokens	type	path	path	unique
+semantics/tokens	tokens	type	path	tokens_path	clash: HOL4 library type path (hol4/path.ml)
 semantics/tokens	tokens	constructor	Mod	tokens_Mod	clash:3 theories
 semantics/tokens	tokens	constructor	End	End	unique
 semantics/tokens	tokens	type	token	token	clash:2 theories

@@ -340,3 +340,7 @@ let ASM_METIS_TAC thl : tactic =
   fun g -> with_type_invention (fun g -> ASM_METIS_TAC thl g) g;;
 
 let METIS thl tm = with_type_invention (METIS thl) tm;;
+
+(* HOL4's CCONTR_TAC: assume the negation of the goal, prove F *)
+
+let CCONTR_TAC : tactic = REFUTE_THEN ASSUME_TAC;;
