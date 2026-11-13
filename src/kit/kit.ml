@@ -2,6 +2,7 @@
 (* The CakeML proof kit: load this first (after setting the load path).     *)
 (* ========================================================================= *)
 
+needs "kit/parse.ml";;
 needs "kit/datatype.ml";;
 needs "kit/simp.ml";;
 needs "kit/tactics.ml";;

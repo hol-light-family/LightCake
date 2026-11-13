@@ -247,12 +247,23 @@ let option_size = new_recursive_definition option_RECURSION
   `(option_size (f:A->num) NONE = 0) /\
    (option_size f (SOME x) = 1 + f x)`;;
 
+(* HOL4's pair_size counts the pair constructor (1 +), as HOL4's generated  *)
+(* size functions do for a component of product type; min_pair_size does   *)
+(* not                                                                       *)
+
 let pair_size = new_definition
-  `pair_size (f:A->num) (g:B->num) p = f (FST p) + g (SND p)`;;
+  `pair_size (f:A->num) (g:B->num) p = 1 + f (FST p) + g (SND p)`;;
 
 let pair_size_THM = prove
- (`!(f:A->num) (g:B->num) a b. pair_size f g (a,b) = f a + g b`,
+ (`!(f:A->num) (g:B->num) a b. pair_size f g (a,b) = 1 + f a + g b`,
   REWRITE_TAC[pair_size]);;
+
+let min_pair_size = new_definition
+  `min_pair_size (f:A->num) (g:B->num) p = f (FST p) + g (SND p)`;;
+
+let min_pair_size_THM = prove
+ (`!(f:A->num) (g:B->num) a b. min_pair_size f g (a,b) = f a + g b`,
+  REWRITE_TAC[min_pair_size]);;
 
 let sum_size = new_recursive_definition sum_RECURSION
   `(sum_size (f:A->num) (g:B->num) (INL a) = f a) /\
@@ -327,9 +338,8 @@ let define_size_functions (names:string list) =
       with Failure _ ->
         let t = mk_comb(size_of_type tvsizes ty,a) in
         try rhs(concl(BETA_CONV t)) with Failure _ -> t in
+    (* a pair counts 1, as HOL4's pair_size does *)
     let r = if args = [] then `0:num`
-            else if is_pair pat then
-              list_mk_binop `(+):num->num->num` (map comp args)
             else list_mk_binop `(+):num->num->num` (`1` :: map comp args) in
     list_mk_forall(vs @ params,mk_eq(mk_comb(sz_of fn,pat),r)) in
   let def = new_recursive_definition rth (list_mk_conj(map one_clause clauses)) in

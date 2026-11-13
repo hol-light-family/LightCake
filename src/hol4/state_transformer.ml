@@ -1,0 +1,17 @@
+(* ========================================================================= *)
+(* state_transformer: HOL4 src/monad/more_monads/state_transformerScript.sml *)
+(* (HOL4 library): the state monad, functions from a state to a value and a  *)
+(* new state (UNIT, BIND, IGNORE_BIND, MMAP, JOIN, FOR, FOREACH, READ,       *)
+(* WRITE, sequence, mapM, MWHILE, ...), and its monad syntax state.          *)
+(*                                                                           *)
+(* Nothing to port for CakeML v3479: the theory is an ancestor of            *)
+(* compiler/backend/reg_alloc/linear_scanScript.sml, reg_allocScript.sml and *)
+(* proofs/reg_allocProofScript.sml, but these use CakeML's own state and     *)
+(* exception monad of ml_monadBase (st_ex_bind, st_ex_return, st_ex_MAP,     *)
+(* ...; the first two disable the monad syntax state and enable st_ex). None *)
+(* of them uses a constant or theorem of state_transformer, and its simp     *)
+(* rules sequence_nil and mapM_nil are about its own sequence and mapM. The  *)
+(* file exists so that the ports of those scripts can name their ancestor.   *)
+(* ========================================================================= *)
+
+needs "hol4/vocab.ml";;

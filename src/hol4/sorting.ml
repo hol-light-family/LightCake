@@ -1,0 +1,948 @@
+(* ========================================================================= *)
+(* sorting: port of HOL4 src/sort/sortingScript.sml (HOL4 library used by    *)
+(* CakeML v3479): permutations of lists (PERM, defined by counting with      *)
+(* FILTER), sortedness (SORTED: R holds between neighbours), SORTS,          *)
+(* partitions (PART, PARTITION) and the theorems the CakeML closure uses.   *)
+(*                                                                           *)
+(* Notation: HOL4 l1 ++ l2 ++ l3 is left associative, written                *)
+(* APPEND (APPEND l1 l2) l3; HOL4 $= x is (=) x; EVERY = ALL, set =          *)
+(* set_of_list, GENLIST f n = list_of_seq f n (vocab.ml).  Not ported (not   *)
+(* used by the closure): QSORT, QSORT3, STABLE, PERM_EQC/EQUIVALENCE, and    *)
+(* the SET_TO_LIST, COUNT_LIST and FOLDR lemmas.  Helper lemmas that are not *)
+(* HOL4 theorems (some are list facts of HOL4 listTheory) are LSORTAUX_.     *)
+(* ========================================================================= *)
+
+needs "hol4/vocab.ml";;
+
+type_invention_error := true;;
+
+(* ------------------------------------------------------------------------- *)
+(* Permutations.                                                             *)
+(* ------------------------------------------------------------------------- *)
+
+let PERM_DEF = new_definition
+  `PERM (L1:A list) L2 <=> !x. FILTER ((=) x) L1 = FILTER ((=) x) L2`;;
+
+let PERM_REFL = prove
+ (`!L:A list. PERM L L`,
+  REWRITE_TAC[PERM_DEF]);;
+
+let PERM_INTRO = prove
+ (`!x y:A list. x = y ==> PERM x y`,
+  SIMP_TAC[PERM_REFL]);;
+
+let PERM_transitive = prove
+ (`transitive (PERM:A list->A list->bool)`,
+  REWRITE_TAC[transitive_DEF; PERM_DEF] THEN MESON_TAC[]);;
+
+let PERM_TRANS = prove
+ (`!x y z:A list. PERM x y /\ PERM y z ==> PERM x z`,
+  REWRITE_TAC[PERM_DEF] THEN MESON_TAC[]);;
+
+let PERM_SYM = prove
+ (`!l1 l2:A list. PERM l1 l2 <=> PERM l2 l1`,
+  REWRITE_TAC[PERM_DEF] THEN MESON_TAC[]);;
+
+let PERM_CONG = prove
+ (`!L1 L2 L3 L4:A list.
+     PERM L1 L3 /\ PERM L2 L4 ==> PERM (APPEND L1 L2) (APPEND L3 L4)`,
+  REWRITE_TAC[PERM_DEF; FILTER_APPEND] THEN REPEAT STRIP_TAC THEN
+  ASM_REWRITE_TAC[]);;
+
+let PERM_MONO = prove
+ (`!l1 l2 (x:A). PERM l1 l2 ==> PERM (CONS x l1) (CONS x l2)`,
+  REWRITE_TAC[PERM_DEF; FILTER] THEN REPEAT STRIP_TAC THEN
+  ASM_REWRITE_TAC[]);;
+
+let PERM_CONS_IFF = prove
+ (`!(x:A) l1 l2. PERM (CONS x l1) (CONS x l2) <=> PERM l1 l2`,
+  REPEAT GEN_TAC THEN EQ_TAC THEN REWRITE_TAC[PERM_MONO] THEN
+  REWRITE_TAC[PERM_DEF; FILTER] THEN DISCH_TAC THEN X_GEN_TAC `y:A` THEN
+  FIRST_X_ASSUM(MP_TAC o SPEC `y:A`) THEN COND_CASES_TAC THEN
+  SIMP_TAC[CONS_11]);;
+
+let PERM_NIL = prove
+ (`!L:A list. (PERM L [] <=> L = []) /\ (PERM [] L <=> L = [])`,
+  LIST_INDUCT_TAC THEN REWRITE_TAC[PERM_REFL; NOT_CONS_NIL] THEN
+  REWRITE_TAC[PERM_DEF; FILTER] THEN CONJ_TAC THEN
+  DISCH_THEN(MP_TAC o SPEC `h:A`) THEN REWRITE_TAC[] THEN
+  MESON_TAC[NOT_CONS_NIL]);;
+
+let LSORTAUX_MEM_FILTER_EQ = prove
+ (`!l (x:A). MEM x l <=> ~(FILTER ((=) x) l = [])`,
+  LIST_INDUCT_TAC THEN REWRITE_TAC[MEM; FILTER] THEN GEN_TAC THEN
+  COND_CASES_TAC THEN ASM_REWRITE_TAC[NOT_CONS_NIL] THEN ASM_MESON_TAC[]);;
+
+let LSORTAUX_FILTER_EQ_CONS_APPEND = prove
+ (`!M N (x:A).
+     APPEND (FILTER ((=) x) M) (CONS x N) =
+     CONS x (APPEND (FILTER ((=) x) M) N)`,
+  LIST_INDUCT_TAC THEN REWRITE_TAC[FILTER; APPEND] THEN
+  REPEAT GEN_TAC THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[APPEND]);;
+
+let LSORTAUX_FILTER_CONS_APPEND = prove
+ (`!(x:A) h t M N.
+     FILTER ((=) x) (CONS h t) = FILTER ((=) x) (APPEND M (CONS h N)) <=>
+     FILTER ((=) x) t = FILTER ((=) x) (APPEND M N)`,
+  REPEAT GEN_TAC THEN REWRITE_TAC[FILTER; FILTER_APPEND] THEN
+  COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
+  FIRST_X_ASSUM SUBST1_TAC THEN
+  REWRITE_TAC[LSORTAUX_FILTER_EQ_CONS_APPEND; CONS_11]);;
+
+let PERM_CONS_EQ_APPEND = prove
+ (`!L (h:A) t. PERM (CONS h t) L <=>
+               ?M N. L = APPEND M (CONS h N) /\ PERM t (APPEND M N)`,
+  REPEAT GEN_TAC THEN EQ_TAC THENL
+   [DISCH_TAC THEN SUBGOAL_THEN `MEM (h:A) L` MP_TAC THENL
+     [REWRITE_TAC[LSORTAUX_MEM_FILTER_EQ] THEN
+      FIRST_X_ASSUM(MP_TAC o SPEC `h:A` o REWRITE_RULE[PERM_DEF]) THEN
+      DISCH_THEN(SUBST1_TAC o SYM) THEN REWRITE_TAC[FILTER; NOT_CONS_NIL];
+      ALL_TAC] THEN
+    REWRITE_TAC[MEM_APPEND_DECOMPOSE] THEN
+    DISCH_THEN(X_CHOOSE_THEN `M:A list` (X_CHOOSE_THEN `N:A list`
+      SUBST_ALL_TAC)) THEN
+    MAP_EVERY EXISTS_TAC [`M:A list`; `N:A list`] THEN
+    POP_ASSUM MP_TAC THEN
+    REWRITE_TAC[PERM_DEF; LSORTAUX_FILTER_CONS_APPEND];
+    STRIP_TAC THEN ASM_REWRITE_TAC[PERM_DEF; LSORTAUX_FILTER_CONS_APPEND] THEN
+    ASM_REWRITE_TAC[GSYM PERM_DEF]]);;
+
+let PERM_SING = prove
+ (`!(L:A list) x. (PERM L [x] <=> L = [x]) /\ (PERM [x] L <=> L = [x])`,
+  REPEAT GEN_TAC THEN
+  SUBGOAL_THEN `PERM [x:A] L <=> L = [x]` ASSUME_TAC THENL
+   [REWRITE_TAC[PERM_CONS_EQ_APPEND; PERM_NIL; APPEND_EQ_NIL] THEN
+    MESON_TAC[APPEND];
+    ASM_MESON_TAC[PERM_SYM]]);;
+
+let PERM_APPEND = prove
+ (`!l1 l2:A list. PERM (APPEND l1 l2) (APPEND l2 l1)`,
+  LIST_INDUCT_TAC THEN REWRITE_TAC[APPEND; APPEND_NIL; PERM_REFL] THEN
+  REWRITE_TAC[PERM_CONS_EQ_APPEND] THEN ASM_MESON_TAC[]);;
+
+let CONS_PERM = prove
+ (`!(x:A) L M N. PERM L (APPEND M N) ==> PERM (CONS x L) (APPEND M (CONS x N))`,
+  MESON_TAC[PERM_CONS_EQ_APPEND]);;
+
+let APPEND_PERM_SYM = prove
+ (`!A B C:A list. PERM (APPEND A B) C ==> PERM (APPEND B A) C`,
+  MESON_TAC[PERM_TRANS; PERM_APPEND]);;
+
+let PERM_SPLIT_IF = prove
+ (`!P Q (l:A list).
+     ALL (\x. P x <=> ~Q x) l ==> PERM l (APPEND (FILTER P l) (FILTER Q l))`,
+  GEN_TAC THEN GEN_TAC THEN LIST_INDUCT_TAC THEN
+  REWRITE_TAC[ALL; FILTER; APPEND; PERM_REFL] THEN
+  STRIP_TAC THEN FIRST_X_ASSUM(MP_TAC o check (is_imp o concl)) THEN
+  ANTS_TAC THENL [ASM_REWRITE_TAC[]; DISCH_TAC] THEN
+  ASM_CASES_TAC `(P:A->bool) h` THENL
+   [SUBGOAL_THEN `~((Q:A->bool) h)` ASSUME_TAC THENL
+     [ASM_MESON_TAC[]; ALL_TAC] THEN
+    ASM_REWRITE_TAC[APPEND; PERM_CONS_IFF];
+    SUBGOAL_THEN `(Q:A->bool) h` ASSUME_TAC THENL
+     [ASM_MESON_TAC[]; ALL_TAC] THEN
+    ASM_REWRITE_TAC[] THEN MATCH_MP_TAC CONS_PERM THEN ASM_REWRITE_TAC[]]);;
+
+let PERM_SPLIT = prove
+ (`!P (l:A list). PERM l (APPEND (FILTER P l) (FILTER ((~) o P) l))`,
+  REPEAT GEN_TAC THEN MATCH_MP_TAC PERM_SPLIT_IF THEN
+  REWRITE_TAC[GSYM ALL_MEM; o_THM]);;
+
+let FILTER_EQ_REP = prove
+ (`!(x:A) l. FILTER ((=) x) l = REPLICATE (LENGTH (FILTER ((=) x) l)) x`,
+  GEN_TAC THEN LIST_INDUCT_TAC THEN REWRITE_TAC[FILTER; LENGTH; REPLICATE] THEN
+  POP_ASSUM MP_TAC THEN COND_CASES_TAC THEN REWRITE_TAC[LENGTH; REPLICATE] THEN
+  FIRST_X_ASSUM(SUBST1_TAC o SYM) THEN REWRITE_TAC[CONS_11]);;
+
+let FILTER_EQ_LENGTHS_EQ = prove
+ (`!(x:A) l1 l2.
+     LENGTH (FILTER ((=) x) l1) = LENGTH (FILTER ((=) x) l2)
+     ==> FILTER ((=) x) l1 = FILTER ((=) x) l2`,
+  REPEAT GEN_TAC THEN DISCH_TAC THEN ONCE_REWRITE_TAC[FILTER_EQ_REP] THEN
+  ASM_REWRITE_TAC[]);;
+
+let PERM_alt = prove
+ (`!L1 L2:A list.
+     PERM L1 L2 <=> !x. LENGTH (FILTER ((=) x) L1) = LENGTH (FILTER ((=) x) L2)`,
+  REWRITE_TAC[PERM_DEF] THEN REPEAT GEN_TAC THEN EQ_TAC THENL
+   [SIMP_TAC[]; MESON_TAC[FILTER_EQ_LENGTHS_EQ]]);;
+
+let PERM_IND = prove
+ (`!P:A list->A list->bool.
+     P [] [] /\
+     (!x l1 l2. P l1 l2 ==> P (CONS x l1) (CONS x l2)) /\
+     (!x y l1 l2. P l1 l2 ==> P (CONS x (CONS y l1)) (CONS y (CONS x l2))) /\
+     (!l1 l2 l3. P l1 l2 /\ P l2 l3 ==> P l1 l3)
+     ==> !l1 l2. PERM l1 l2 ==> P l1 l2`,
+  GEN_TAC THEN
+  DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC (CONJUNCTS_THEN2 (LABEL_TAC "mono")
+    (CONJUNCTS_THEN2 (LABEL_TAC "swap") (LABEL_TAC "trans")))) THEN
+  SUBGOAL_THEN `!l:A list. P l l` (LABEL_TAC "refl") THENL
+   [LIST_INDUCT_TAC THEN ASM_SIMP_TAC[]; ALL_TAC] THEN
+  SUBGOAL_THEN
+   `!M N (h:A). P (CONS h (APPEND M N)) (APPEND M (CONS h N))`
+   (LABEL_TAC "move") THENL
+   [LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[APPEND] THEN
+    MAP_EVERY X_GEN_TAC [`N:A list`; `k:A`] THEN
+    USE_THEN "trans" MATCH_MP_TAC THEN
+    EXISTS_TAC `CONS (h:A) (CONS k (APPEND t N))` THEN CONJ_TAC THENL
+     [USE_THEN "swap" MATCH_MP_TAC THEN ASM_REWRITE_TAC[];
+      USE_THEN "mono" MATCH_MP_TAC THEN ASM_REWRITE_TAC[]];
+    ALL_TAC] THEN
+  LIST_INDUCT_TAC THENL
+   [REWRITE_TAC[PERM_NIL] THEN GEN_TAC THEN DISCH_THEN SUBST1_TAC THEN
+    ASM_REWRITE_TAC[];
+    ALL_TAC] THEN
+  REWRITE_TAC[PERM_CONS_EQ_APPEND] THEN GEN_TAC THEN
+  DISCH_THEN(X_CHOOSE_THEN `M:A list` (X_CHOOSE_THEN `N:A list`
+    (CONJUNCTS_THEN2 SUBST1_TAC ASSUME_TAC))) THEN
+  USE_THEN "trans" MATCH_MP_TAC THEN
+  EXISTS_TAC `CONS (h:A) (APPEND M N)` THEN ASM_REWRITE_TAC[] THEN
+  USE_THEN "mono" MATCH_MP_TAC THEN ASM_SIMP_TAC[]);;
+
+let LSORTAUX_PERM_SWAP_HEAD = prove
+ (`!(x:A) y l. PERM (CONS x (CONS y l)) (CONS y (CONS x l))`,
+  REPEAT GEN_TAC THEN ONCE_REWRITE_TAC[PERM_CONS_EQ_APPEND] THEN
+  MAP_EVERY EXISTS_TAC [`[y:A]`; `l:A list`] THEN
+  REWRITE_TAC[APPEND; PERM_REFL]);;
+
+let PERM_SWAP_AT_FRONT = prove
+ (`!(x:A) y l1 l2.
+     PERM (CONS x (CONS y l1)) (CONS y (CONS x l2)) <=> PERM l1 l2`,
+  REPEAT GEN_TAC THEN
+  SUBGOAL_THEN
+   `PERM (CONS x (CONS y l1)) (CONS y (CONS x l2)) <=>
+    PERM (CONS (x:A) (CONS y l1)) (CONS x (CONS y l2))`
+   SUBST1_TAC THENL
+   [MESON_TAC[PERM_TRANS; PERM_SYM; LSORTAUX_PERM_SWAP_HEAD];
+    REWRITE_TAC[PERM_CONS_IFF]]);;
+
+let PERM_SWAP_L_AT_FRONT = prove
+ (`!x y (l1:A list) l2.
+     PERM (APPEND (APPEND x y) l1) (APPEND (APPEND y x) l2) <=> PERM l1 l2`,
+  REPEAT GEN_TAC THEN REWRITE_TAC[PERM_alt; FILTER_APPEND; LENGTH_APPEND] THEN
+  AP_TERM_TAC THEN ABS_TAC THEN ARITH_TAC);;
+
+let LSORTAUX_PERM_SWAP = prove
+ (`!(x:A) y l1 l2. PERM l1 l2 ==> PERM (CONS x (CONS y l1)) (CONS y (CONS x l2))`,
+  REWRITE_TAC[PERM_SWAP_AT_FRONT]);;
+
+let PERM_STRONG_IND = prove
+ (`!P:A list->A list->bool.
+     P [] [] /\
+     (!x l1 l2. PERM l1 l2 /\ P l1 l2 ==> P (CONS x l1) (CONS x l2)) /\
+     (!x y l1 l2. PERM l1 l2 /\ P l1 l2
+                  ==> P (CONS x (CONS y l1)) (CONS y (CONS x l2))) /\
+     (!l1 l2 l3. PERM l1 l2 /\ P l1 l2 /\ PERM l2 l3 /\ P l2 l3 ==> P l1 l3)
+     ==> !l1 l2. PERM l1 l2 ==> P l1 l2`,
+  GEN_TAC THEN STRIP_TAC THEN
+  SUBGOAL_THEN `!l1 l2:A list. PERM l1 l2 ==> PERM l1 l2 /\ P l1 l2`
+    (fun th -> MESON_TAC[th]) THEN
+  MATCH_MP_TAC PERM_IND THEN
+  ASM_SIMP_TAC[PERM_REFL; PERM_MONO; LSORTAUX_PERM_SWAP] THEN
+  ASM_MESON_TAC[PERM_TRANS]);;
+
+let PERM_LENGTH = prove
+ (`!l1 l2:A list. PERM l1 l2 ==> LENGTH l1 = LENGTH l2`,
+  MATCH_MP_TAC PERM_IND THEN SIMP_TAC[LENGTH]);;
+
+let PERM_NULL_EQ = prove
+ (`!l1 l2:A list. PERM l1 l2 ==> (NULL l1 <=> NULL l2)`,
+  MATCH_MP_TAC PERM_IND THEN SIMP_TAC[NULL]);;
+
+let PERM_MEM_EQ = prove
+ (`!l1 l2:A list. PERM l1 l2 ==> !x. MEM x l1 <=> MEM x l2`,
+  REWRITE_TAC[PERM_DEF; LSORTAUX_MEM_FILTER_EQ] THEN SIMP_TAC[]);;
+
+let PERM_LIST_TO_SET = prove
+ (`!l1 l2:A list. PERM l1 l2 ==> set_of_list l1 = set_of_list l2`,
+  REPEAT STRIP_TAC THEN REWRITE_TAC[EXTENSION; IN_SET_OF_LIST] THEN
+  ASM_MESON_TAC[PERM_MEM_EQ]);;
+
+let PERM_EVERY = prove
+ (`!P ls ls':A list. PERM ls ls' ==> (ALL P ls <=> ALL P ls')`,
+  REWRITE_TAC[GSYM ALL_MEM] THEN MESON_TAC[PERM_MEM_EQ]);;
+
+(* ------------------------------------------------------------------------- *)
+(* Sortedness.                                                               *)
+(* ------------------------------------------------------------------------- *)
+
+let SORTED_DEF = cake_def
+  `(SORTED (R:A->A->bool) [] <=> T) /\
+   (SORTED R [x] <=> T) /\
+   (SORTED R (CONS x (CONS y rst)) <=> R x y /\ SORTED R (CONS y rst))`;;
+
+let SORTED_IND = prove
+ (`!P:(A->A->bool)->A list->bool.
+     (!R. P R []) /\ (!R x. P R [x]) /\
+     (!R x y rst. P R (CONS y rst) ==> P R (CONS x (CONS y rst)))
+     ==> !v v1. P v v1`,
+  GEN_TAC THEN STRIP_TAC THEN GEN_TAC THEN LIST_INDUCT_TAC THEN
+  ASM_REWRITE_TAC[] THEN
+  POP_ASSUM MP_TAC THEN STRUCT_CASES_TAC(ISPEC `t:A list` list_CASES) THEN
+  ASM_SIMP_TAC[]);;
+
+let SORTS_DEF = new_definition
+  `SORTS (f:(A->A->bool)->A list->A list) R <=>
+     !l. PERM l (f R l) /\ SORTED R (f R l)`;;
+
+let SORTED_EQ = prove
+ (`!R (L:A list) x.
+     transitive R
+     ==> (SORTED R (CONS x L) <=> SORTED R L /\ !y. MEM y L ==> R x y)`,
+  GEN_TAC THEN LIST_INDUCT_TAC THEN REWRITE_TAC[SORTED_DEF; MEM] THEN
+  REPEAT STRIP_TAC THEN FIRST_X_ASSUM(MP_TAC o SPEC `h:A`) THEN
+  ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN
+  FIRST_X_ASSUM(MP_TAC o REWRITE_RULE[transitive_DEF]) THEN MESON_TAC[]);;
+
+let SORTED_APPEND = prove
+ (`!R (L1:A list) L2.
+     transitive R
+     ==> (SORTED R (APPEND L1 L2) <=>
+          SORTED R L1 /\ SORTED R L2 /\
+          (!x y. MEM x L1 ==> MEM y L2 ==> R x y))`,
+  GEN_TAC THEN LIST_INDUCT_TAC THEN REWRITE_TAC[APPEND; SORTED_DEF; MEM] THEN
+  REPEAT STRIP_TAC THEN ASM_SIMP_TAC[SORTED_EQ; MEM_APPEND] THEN
+  MESON_TAC[]);;
+
+let SORTED_APPEND_IMP = prove
+ (`!R (L1:A list) L2.
+     transitive R /\ SORTED R L1 /\ SORTED R L2 /\
+     (!x y. MEM x L1 /\ MEM y L2 ==> R x y)
+     ==> SORTED R (APPEND L1 L2)`,
+  SIMP_TAC[SORTED_APPEND] THEN MESON_TAC[]);;
+
+let LSORTAUX_SORTED_CONS = prove
+ (`!R (h:A) L. SORTED R (CONS h L) <=> SORTED R L /\ (L = [] \/ R h (HD L))`,
+  GEN_TAC THEN GEN_TAC THEN LIST_INDUCT_TAC THEN
+  REWRITE_TAC[SORTED_DEF; HD; NOT_CONS_NIL] THEN CONV_TAC TAUT);;
+
+let SORTED_APPEND_GEN = prove
+ (`!R (L1:A list) L2.
+     SORTED R (APPEND L1 L2) <=>
+     SORTED R L1 /\ SORTED R L2 /\
+     (L1 = [] \/ L2 = [] \/ R (LAST L1) (HD L2))`,
+  GEN_TAC THEN LIST_INDUCT_TAC THEN REWRITE_TAC[APPEND; SORTED_DEF] THEN
+  GEN_TAC THEN ASM_REWRITE_TAC[LSORTAUX_SORTED_CONS; NOT_CONS_NIL] THEN
+  STRUCT_CASES_TAC(ISPEC `t:A list` list_CASES) THEN
+  REWRITE_TAC[APPEND; LAST; HD; NOT_CONS_NIL; SORTED_DEF] THEN
+  CONV_TAC TAUT);;
+
+let PART_DEF = new_recursive_definition list_RECURSION
+  `(PART (P:A->bool) [] l1 l2 = (l1,l2)) /\
+   (PART P (CONS h rst) l1 l2 =
+      if P h then PART P rst (CONS h l1) l2 else PART P rst l1 (CONS h l2))`;;
+
+let PART_LENGTH = prove
+ (`!P (L:A list) l1 l2 p q.
+     (p,q) = PART P L l1 l2
+     ==> LENGTH L + LENGTH l1 + LENGTH l2 = LENGTH p + LENGTH q`,
+  GEN_TAC THEN LIST_INDUCT_TAC THEN REWRITE_TAC[PART_DEF; PAIR_EQ; LENGTH] THENL
+   [REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[] THEN ARITH_TAC;
+    REPEAT GEN_TAC THEN COND_CASES_TAC THEN
+    DISCH_THEN(fun th -> FIRST_X_ASSUM(MP_TAC o C MATCH_MP th)) THEN
+    REWRITE_TAC[LENGTH] THEN ARITH_TAC]);;
+
+let PART_LENGTH_LEM = prove
+ (`!P (L:A list) l1 l2 p q.
+     (p,q) = PART P L l1 l2
+     ==> LENGTH p <= LENGTH L + LENGTH l1 + LENGTH l2 /\
+         LENGTH q <= LENGTH L + LENGTH l1 + LENGTH l2`,
+  REPEAT GEN_TAC THEN DISCH_THEN(MP_TAC o MATCH_MP PART_LENGTH) THEN
+  ARITH_TAC);;
+
+let PARTs_HAVE_PROP = prove
+ (`!P (L:A list) A B l1 l2.
+     (A,B) = PART P L l1 l2 /\
+     (!x. MEM x l1 ==> P x) /\ (!x. MEM x l2 ==> ~P x)
+     ==> (!z. MEM z A ==> P z) /\ (!z. MEM z B ==> ~P z)`,
+  GEN_TAC THEN LIST_INDUCT_TAC THEN REWRITE_TAC[PART_DEF; PAIR_EQ] THENL
+   [MESON_TAC[]; ALL_TAC] THEN
+  REPEAT GEN_TAC THEN COND_CASES_TAC THEN STRIP_TAC THEN
+  FIRST_X_ASSUM MATCH_MP_TAC THENL
+   [MAP_EVERY EXISTS_TAC [`CONS (h:A) l1`; `l2:A list`];
+    MAP_EVERY EXISTS_TAC [`l1:A list`; `CONS (h:A) l2`]] THEN
+  ASM_REWRITE_TAC[MEM] THEN ASM_MESON_TAC[]);;
+
+let LSORTAUX_PART_PERM = prove
+ (`!P (L:A list) a1 a2 l1 l2.
+     (a1,a2) = PART P L l1 l2 ==> PERM (APPEND L (APPEND l1 l2)) (APPEND a1 a2)`,
+  GEN_TAC THEN LIST_INDUCT_TAC THEN REWRITE_TAC[PART_DEF; PAIR_EQ; APPEND] THENL
+   [SIMP_TAC[PERM_REFL]; ALL_TAC] THEN
+  REPEAT GEN_TAC THEN COND_CASES_TAC THEN
+  DISCH_THEN(fun th -> FIRST_X_ASSUM(MP_TAC o C MATCH_MP th)) THEN
+  MATCH_MP_TAC(REWRITE_RULE[IMP_CONJ] PERM_TRANS) THENL
+   [REWRITE_TAC[APPEND] THEN MATCH_MP_TAC CONS_PERM THEN
+    REWRITE_TAC[PERM_REFL];
+    REWRITE_TAC[APPEND_ASSOC] THEN MATCH_MP_TAC CONS_PERM THEN
+    REWRITE_TAC[PERM_REFL]]);;
+
+let PART_MEM = prove
+ (`!P (L:A list) a1 a2 l1 l2.
+     (a1,a2) = PART P L l1 l2
+     ==> !x. MEM x (APPEND L (APPEND l1 l2)) <=> MEM x (APPEND a1 a2)`,
+  MESON_TAC[LSORTAUX_PART_PERM; PERM_MEM_EQ]);;
+
+let PARTITION_DEF = new_definition
+  `PARTITION (P:A->bool) l = PART P l [] []`;;
+
+let PERM_APPEND_IFF = prove
+ (`(!l:A list l1 l2. PERM (APPEND l l1) (APPEND l l2) <=> PERM l1 l2) /\
+   (!l:A list l1 l2. PERM (APPEND l1 l) (APPEND l2 l) <=> PERM l1 l2)`,
+  REWRITE_TAC[PERM_alt; FILTER_APPEND; LENGTH_APPEND; EQ_ADD_LCANCEL;
+              EQ_ADD_RCANCEL]);;
+
+let PERM_SINGLE_SWAP_DEF = new_definition
+  `PERM_SINGLE_SWAP (l1:A list) l2 <=>
+     ?x1 x2 x3. l1 = APPEND (APPEND x1 x2) x3 /\ l2 = APPEND (APPEND x1 x3) x2`;;
+
+let PERM_SINGLE_SWAP_SYM = prove
+ (`!l1 l2:A list. PERM_SINGLE_SWAP l1 l2 <=> PERM_SINGLE_SWAP l2 l1`,
+  REWRITE_TAC[PERM_SINGLE_SWAP_DEF] THEN MESON_TAC[]);;
+
+let PERM_SINGLE_SWAP_I = prove
+ (`!x1 x2 x3:A list.
+     PERM_SINGLE_SWAP (APPEND (APPEND x1 x2) x3) (APPEND (APPEND x1 x3) x2)`,
+  REWRITE_TAC[PERM_SINGLE_SWAP_DEF] THEN MESON_TAC[]);;
+
+let PERM_SINGLE_SWAP_APPEND = prove
+ (`!x2 x3:A list. PERM_SINGLE_SWAP (APPEND x2 x3) (APPEND x3 x2)`,
+  MP_TAC(ISPEC `[]:A list` PERM_SINGLE_SWAP_I) THEN REWRITE_TAC[APPEND]);;
+
+let PERM_SINGLE_SWAP_REFL = prove
+ (`!l:A list. PERM_SINGLE_SWAP l l`,
+  GEN_TAC THEN MP_TAC(ISPECL [`[]:A list`; `l:A list`] PERM_SINGLE_SWAP_APPEND) THEN
+  REWRITE_TAC[APPEND; APPEND_NIL]);;
+
+let PERM_SINGLE_SWAP_CONS = prove
+ (`!(x:A) M N. PERM_SINGLE_SWAP M N ==> PERM_SINGLE_SWAP (CONS x M) (CONS x N)`,
+  REWRITE_TAC[PERM_SINGLE_SWAP_DEF] THEN REPEAT STRIP_TAC THEN
+  MAP_EVERY EXISTS_TAC [`CONS (x:A) x1`; `x2:A list`; `x3:A list`] THEN
+  ASM_REWRITE_TAC[APPEND]);;
+
+let PERM_SINGLE_SWAP_TC_CONS = prove
+ (`!(x:A) M N. TC PERM_SINGLE_SWAP M N
+               ==> TC PERM_SINGLE_SWAP (CONS x M) (CONS x N)`,
+  GEN_TAC THEN MATCH_MP_TAC TC_INDUCT THEN
+  MESON_TAC[TC_INC; TC_TRANS; PERM_SINGLE_SWAP_CONS]);;
+
+let LSORTAUX_PERM_IS_TC_PSS = prove
+ (`!l1 l2:A list. PERM l1 l2 ==> TC PERM_SINGLE_SWAP l1 l2`,
+  LIST_INDUCT_TAC THENL
+   [SIMP_TAC[PERM_NIL; TC_INC; PERM_SINGLE_SWAP_REFL]; ALL_TAC] THEN
+  REWRITE_TAC[PERM_CONS_EQ_APPEND] THEN GEN_TAC THEN
+  DISCH_THEN(X_CHOOSE_THEN `M:A list` (X_CHOOSE_THEN `N:A list`
+    (CONJUNCTS_THEN2 SUBST1_TAC ASSUME_TAC))) THEN
+  MATCH_MP_TAC TC_TRANS THEN
+  EXISTS_TAC `APPEND (CONS (h:A) N) M` THEN CONJ_TAC THENL
+   [REWRITE_TAC[APPEND] THEN MATCH_MP_TAC PERM_SINGLE_SWAP_TC_CONS THEN
+    MATCH_MP_TAC TC_TRANS THEN EXISTS_TAC `APPEND (M:A list) N` THEN
+    ASM_SIMP_TAC[] THEN MATCH_MP_TAC TC_INC THEN
+    REWRITE_TAC[PERM_SINGLE_SWAP_APPEND];
+    MATCH_MP_TAC TC_INC THEN REWRITE_TAC[PERM_SINGLE_SWAP_APPEND]]);;
+
+let LSORTAUX_PSS_IS_PERM = prove
+ (`!l1 l2:A list. PERM_SINGLE_SWAP l1 l2 ==> PERM l1 l2`,
+  REWRITE_TAC[PERM_SINGLE_SWAP_DEF; PERM_alt] THEN REPEAT STRIP_TAC THEN
+  ASM_REWRITE_TAC[FILTER_APPEND; LENGTH_APPEND] THEN ARITH_TAC);;
+
+let PERM_TC = prove
+ (`PERM = TC (PERM_SINGLE_SWAP:A list->A list->bool)`,
+  REWRITE_TAC[FUN_EQ_THM] THEN REPEAT GEN_TAC THEN EQ_TAC THEN
+  REWRITE_TAC[LSORTAUX_PERM_IS_TC_PSS] THEN
+  SPEC_TAC(`x':A list`,`y:A list`) THEN SPEC_TAC(`x:A list`,`x:A list`) THEN
+  MATCH_MP_TAC TC_INDUCT THEN
+  MESON_TAC[LSORTAUX_PSS_IS_PERM; PERM_TRANS]);;
+
+let PERM_lifts_transitive_relations = prove
+ (`!(f:A list->B) Q.
+     (!x1 x2 x3. Q (f (APPEND (APPEND x1 x2) x3)) (f (APPEND (APPEND x1 x3) x2))) /\
+     transitive Q
+     ==> !x y. PERM x y ==> Q (f x) (f y)`,
+  REPEAT GEN_TAC THEN REWRITE_TAC[transitive_DEF; PERM_TC] THEN STRIP_TAC THEN
+  MATCH_MP_TAC TC_INDUCT THEN REWRITE_TAC[PERM_SINGLE_SWAP_DEF] THEN
+  ASM_MESON_TAC[]);;
+
+let PERM_lifts_equalities = prove
+ (`!f:A list->B.
+     (!x1 x2 x3. f (APPEND (APPEND x1 x2) x3) = f (APPEND (APPEND x1 x3) x2))
+     ==> !x y. PERM x y ==> f x = f y`,
+  REPEAT STRIP_TAC THEN
+  MP_TAC(ISPECL [`f:A list->B`; `(=):B->B->bool`]
+    PERM_lifts_transitive_relations) THEN
+  ASM_REWRITE_TAC[transitive_DEF] THEN ANTS_TAC THENL
+   [MESON_TAC[]; ASM_MESON_TAC[]]);;
+
+let PERM_lifts_invariants = prove
+ (`!P:A list->bool.
+     (!x1 x2 x3. P (APPEND (APPEND x1 x2) x3) ==> P (APPEND (APPEND x1 x3) x2))
+     ==> !x y. P x /\ PERM x y ==> P y`,
+  REPEAT STRIP_TAC THEN
+  MP_TAC(ISPECL [`\l:A list. l`; `\l1 l2:A list. P l1 ==> P l2`]
+    PERM_lifts_transitive_relations) THEN
+  REWRITE_TAC[transitive_DEF] THEN ANTS_TAC THENL
+   [ASM_MESON_TAC[]; ASM_MESON_TAC[]]);;
+
+let PERM_lifts_monotonicities = prove
+ (`!f:A list->B list.
+     (!x1 x2 x3. ?x1' x2' x3'.
+        f (APPEND (APPEND x1 x2) x3) = APPEND (APPEND x1' x2') x3' /\
+        f (APPEND (APPEND x1 x3) x2) = APPEND (APPEND x1' x3') x2')
+     ==> !x y. PERM x y ==> PERM (f x) (f y)`,
+  GEN_TAC THEN STRIP_TAC THEN MATCH_MP_TAC PERM_lifts_transitive_relations THEN
+  REWRITE_TAC[PERM_transitive] THEN REPEAT GEN_TAC THEN
+  FIRST_X_ASSUM(STRIP_ASSUME_TAC o SPECL
+    [`x1:A list`; `x2:A list`; `x3:A list`]) THEN
+  ASM_REWRITE_TAC[GSYM APPEND_ASSOC; PERM_APPEND_IFF; PERM_APPEND]);;
+
+let PERM_EQUIVALENCE_ALT_DEF = prove
+ (`!x y:A list. PERM x y <=> PERM x = PERM y`,
+  REWRITE_TAC[FUN_EQ_THM] THEN MESON_TAC[PERM_REFL; PERM_SYM; PERM_TRANS]);;
+
+let ALL_DISTINCT_PERM = prove
+ (`!l1 l2:A list. PERM l1 l2 ==> (ALL_DISTINCT l1 <=> ALL_DISTINCT l2)`,
+  MATCH_MP_TAC PERM_STRONG_IND THEN REWRITE_TAC[ALL_DISTINCT; MEM] THEN
+  REPEAT STRIP_TAC THEN ASM_MESON_TAC[PERM_MEM_EQ]);;
+
+let LSORTAUX_ALL_DISTINCT_FILTER = prove
+ (`!l:A list. ALL_DISTINCT l ==> !x. MEM x l ==> FILTER ((=) x) l = [x]`,
+  LIST_INDUCT_TAC THEN REWRITE_TAC[ALL_DISTINCT; MEM; FILTER] THEN
+  STRIP_TAC THEN X_GEN_TAC `x:A` THEN DISCH_TAC THEN
+  ASM_CASES_TAC `x:A = h` THENL
+   [FIRST_X_ASSUM SUBST_ALL_TAC THEN REWRITE_TAC[CONS_11] THEN
+    ASM_MESON_TAC[LSORTAUX_MEM_FILTER_EQ];
+    ASM_REWRITE_TAC[] THEN ASM_MESON_TAC[]]);;
+
+let PERM_ALL_DISTINCT = prove
+ (`!l1 l2:A list.
+     ALL_DISTINCT l1 /\ ALL_DISTINCT l2 /\ (!x. MEM x l1 <=> MEM x l2)
+     ==> PERM l1 l2`,
+  REPEAT STRIP_TAC THEN REWRITE_TAC[PERM_DEF] THEN X_GEN_TAC `x:A` THEN
+  ASM_CASES_TAC `MEM (x:A) l1` THENL
+   [SUBGOAL_THEN `MEM (x:A) l2` ASSUME_TAC THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
+    ASM_SIMP_TAC[LSORTAUX_ALL_DISTINCT_FILTER];
+    SUBGOAL_THEN `~MEM (x:A) l2` MP_TAC THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
+    UNDISCH_TAC `~MEM (x:A) l1` THEN REWRITE_TAC[LSORTAUX_MEM_FILTER_EQ] THEN
+    SIMP_TAC[]]);;
+
+let PERM_MAP = prove
+ (`!(f:A->B) l1 l2. PERM l1 l2 ==> PERM (MAP f l1) (MAP f l2)`,
+  GEN_TAC THEN MATCH_MP_TAC PERM_IND THEN
+  REWRITE_TAC[MAP; PERM_REFL; PERM_CONS_IFF; PERM_SWAP_AT_FRONT] THEN
+  MESON_TAC[PERM_TRANS]);;
+
+let PERM_SUM = prove
+ (`!l1 l2. PERM l1 l2 ==> SUM l1 = SUM l2`,
+  MATCH_MP_TAC PERM_IND THEN REWRITE_TAC[SUM] THEN REPEAT STRIP_TAC THEN
+  ASM_ARITH_TAC);;
+
+let PERM_FILTER = prove
+ (`!P l1 l2:A list. PERM l1 l2 ==> PERM (FILTER P l1) (FILTER P l2)`,
+  GEN_TAC THEN MATCH_MP_TAC PERM_IND THEN REWRITE_TAC[FILTER; PERM_REFL] THEN
+  REPEAT CONJ_TAC THEN REPEAT GEN_TAC THENL
+   [ASM_CASES_TAC `(P:A->bool) x` THEN ASM_REWRITE_TAC[PERM_CONS_IFF];
+    ASM_CASES_TAC `(P:A->bool) x` THEN ASM_CASES_TAC `(P:A->bool) y` THEN
+    ASM_REWRITE_TAC[PERM_CONS_IFF; PERM_SWAP_AT_FRONT];
+    MESON_TAC[PERM_TRANS]]);;
+
+let PERM_REVERSE = prove
+ (`!ls:A list. PERM ls (REVERSE ls)`,
+  LIST_INDUCT_TAC THEN REWRITE_TAC[REVERSE; PERM_REFL] THEN
+  MATCH_MP_TAC CONS_PERM THEN ASM_REWRITE_TAC[APPEND_NIL]);;
+
+let PERM_REVERSE_EQ = prove
+ (`!l1 l2:A list.
+     (PERM (REVERSE l1) l2 <=> PERM l1 l2) /\
+     (PERM l1 (REVERSE l2) <=> PERM l1 l2)`,
+  MESON_TAC[PERM_TRANS; PERM_SYM; PERM_REVERSE]);;
+
+let SORTED_NIL = prove
+ (`!R. SORTED R ([]:A list)`,
+  REWRITE_TAC[SORTED_DEF]);;
+
+let SORTED_SING = prove
+ (`!R (x:A). SORTED R [x]`,
+  REWRITE_TAC[SORTED_DEF]);;
+
+let SORTED_TL = prove
+ (`!R (x:A) xs. SORTED R (CONS x xs) ==> SORTED R xs`,
+  GEN_TAC THEN GEN_TAC THEN LIST_INDUCT_TAC THEN SIMP_TAC[SORTED_DEF]);;
+
+let SORTED_EL_SUC = prove
+ (`!R (ls:A list).
+     SORTED R ls <=> !n. SUC n < LENGTH ls ==> R (EL n ls) (EL (SUC n) ls)`,
+  MATCH_MP_TAC SORTED_IND THEN REWRITE_TAC[SORTED_DEF; LENGTH] THEN
+  REPEAT CONJ_TAC THENL [ARITH_TAC; ARITH_TAC; ALL_TAC] THEN
+  REPEAT GEN_TAC THEN DISCH_THEN SUBST1_TAC THEN EQ_TAC THENL
+   [STRIP_TAC THEN X_GEN_TAC `n:num` THEN
+    DISJ_CASES_THEN2 SUBST1_TAC (X_CHOOSE_THEN `m:num` SUBST1_TAC)
+      (SPEC `n:num` num_CASES) THENL
+     [ASM_REWRITE_TAC[EL; HD; TL];
+      FIRST_X_ASSUM(MP_TAC o SPEC `m:num`) THEN REWRITE_TAC[EL; HD; TL; LT_SUC]];
+    DISCH_TAC THEN CONJ_TAC THENL
+     [FIRST_X_ASSUM(MP_TAC o SPEC `0`) THEN
+      REWRITE_TAC[EL; HD; TL; LT_SUC; LT_0];
+      X_GEN_TAC `m:num` THEN FIRST_X_ASSUM(MP_TAC o SPEC `SUC m`) THEN
+      REWRITE_TAC[EL; HD; TL; LT_SUC]]]);;
+
+let SORTED_EL_LESS = prove
+ (`!R. transitive R ==>
+       !ls:A list. SORTED R ls <=>
+                   !m n. m < n /\ n < LENGTH ls ==> R (EL m ls) (EL n ls)`,
+  GEN_TAC THEN DISCH_TAC THEN LIST_INDUCT_TAC THENL
+   [REWRITE_TAC[SORTED_DEF; LENGTH] THEN ARITH_TAC; ALL_TAC] THEN
+  ASM_SIMP_TAC[SORTED_EQ; LENGTH; MEM_EXISTS_EL] THEN EQ_TAC THENL
+   [STRIP_TAC THEN MAP_EVERY X_GEN_TAC [`m:num`; `n:num`] THEN
+    DISJ_CASES_THEN2 SUBST1_TAC (X_CHOOSE_THEN `i:num` SUBST1_TAC)
+      (SPEC `m:num` num_CASES) THEN
+    DISJ_CASES_THEN2 SUBST1_TAC (X_CHOOSE_THEN `k:num` SUBST1_TAC)
+      (SPEC `n:num` num_CASES) THEN
+    REWRITE_TAC[EL; HD; TL; LT_SUC; LT_REFL; CONJUNCT1 LT; LT_0] THEN
+    ASM_MESON_TAC[];
+    DISCH_TAC THEN CONJ_TAC THENL
+     [MAP_EVERY X_GEN_TAC [`m:num`; `n:num`] THEN STRIP_TAC THEN
+      FIRST_X_ASSUM(MP_TAC o SPECL [`SUC m`; `SUC n`]) THEN
+      ASM_REWRITE_TAC[EL; TL; LT_SUC];
+      REPEAT STRIP_TAC THEN FIRST_X_ASSUM(MP_TAC o SPECL [`0`; `SUC i`]) THEN
+      ASM_REWRITE_TAC[EL; HD; TL; LT_SUC; LT_0]]]);;
+
+let MEM_PERM = prove
+ (`!l1 l2:A list. PERM l1 l2 ==> !a. MEM a l1 <=> MEM a l2`,
+  MATCH_ACCEPT_TAC PERM_MEM_EQ);;
+
+let SORTED_PERM_EQ = prove
+ (`!R. transitive R /\ antisymmetric R
+       ==> !l1 l2:A list. SORTED R l1 /\ SORTED R l2 /\ PERM l1 l2 ==> l1 = l2`,
+  GEN_TAC THEN STRIP_TAC THEN LIST_INDUCT_TAC THENL
+   [MESON_TAC[PERM_NIL]; ALL_TAC] THEN
+  X_GEN_TAC `l2:A list` THEN
+  DISJ_CASES_THEN2 SUBST1_TAC (X_CHOOSE_THEN `k:A` (X_CHOOSE_THEN `u:A list`
+    SUBST1_TAC)) (ISPEC `l2:A list` list_CASES) THENL
+   [MESON_TAC[PERM_NIL; NOT_CONS_NIL]; ALL_TAC] THEN
+  ASM_SIMP_TAC[SORTED_EQ; CONS_11] THEN STRIP_TAC THEN
+  SUBGOAL_THEN `h:A = k` SUBST_ALL_TAC THENL
+   [FIRST_ASSUM(MP_TAC o MATCH_MP PERM_MEM_EQ) THEN
+    DISCH_THEN(fun th -> MP_TAC(SPEC `h:A` th) THEN MP_TAC(SPEC `k:A` th)) THEN
+    REWRITE_TAC[MEM] THEN
+    FIRST_X_ASSUM(MP_TAC o REWRITE_RULE[antisymmetric_DEF] o
+      check (fun th -> can (find_term ((=) `antisymmetric (R:A->A->bool)`))
+                           (concl th))) THEN
+    ASM_MESON_TAC[];
+    RULE_ASSUM_TAC(REWRITE_RULE[PERM_CONS_IFF]) THEN ASM_MESON_TAC[]]);;
+
+let SORTS_PERM_EQ = prove
+ (`!R. transitive R /\ antisymmetric R /\ SORTS (f:(A->A->bool)->A list->A list) R
+       ==> !l1 l2. f R l1 = f R l2 <=> PERM l1 l2`,
+  REWRITE_TAC[SORTS_DEF] THEN REPEAT STRIP_TAC THEN EQ_TAC THENL
+   [ASM_MESON_TAC[PERM_TRANS; PERM_SYM];
+    DISCH_TAC THEN MP_TAC(SPEC `R:A->A->bool` SORTED_PERM_EQ) THEN
+    ASM_REWRITE_TAC[] THEN DISCH_THEN MATCH_MP_TAC THEN
+    ASM_MESON_TAC[PERM_TRANS; PERM_SYM]]);;
+
+let SORTED_FILTER = prove
+ (`!R (ls:A list) P. transitive R /\ SORTED R ls ==> SORTED R (FILTER P ls)`,
+  GEN_TAC THEN LIST_INDUCT_TAC THEN REWRITE_TAC[FILTER; SORTED_DEF] THEN
+  REPEAT STRIP_TAC THEN
+  SUBGOAL_THEN `SORTED R (t:A list) /\ !y. MEM y t ==> R (h:A) y` STRIP_ASSUME_TAC
+  THENL [ASM_MESON_TAC[SORTED_EQ]; ALL_TAC] THEN
+  COND_CASES_TAC THEN ASM_SIMP_TAC[SORTED_EQ; MEM_FILTER]);;
+
+let ALL_DISTINCT_SORTED_WEAKEN = prove
+ (`!R R' (ls:A list).
+     (!x y. MEM x ls /\ MEM y ls /\ ~(x = y) ==> (R x y <=> R' x y)) /\
+     ALL_DISTINCT ls /\ SORTED R ls
+     ==> SORTED R' ls`,
+  GEN_TAC THEN MATCH_MP_TAC SORTED_IND THEN
+  REWRITE_TAC[SORTED_DEF; ALL_DISTINCT; MEM] THEN REPEAT STRIP_TAC THENL
+   [ASM_MESON_TAC[];
+    FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_MESON_TAC[]]);;
+
+let PERM_FUN_APPEND_C = prove
+ (`!l1 l1' l2 l2':A list.
+     PERM l1 = PERM l1' ==> PERM l2 = PERM l2'
+     ==> PERM (APPEND l1 l2) = PERM (APPEND l1' l2')`,
+  REWRITE_TAC[GSYM PERM_EQUIVALENCE_ALT_DEF] THEN MESON_TAC[PERM_CONG]);;
+
+let PERM_FUN_CONS = prove
+ (`!(x:A) l1 l1'. PERM l1 = PERM l1' ==> PERM (CONS x l1) = PERM (CONS x l1')`,
+  REWRITE_TAC[GSYM PERM_EQUIVALENCE_ALT_DEF; PERM_CONS_IFF]);;
+
+let PERM_FUN_APPEND_CONS = prove
+ (`!(x:A) l1 l2. PERM (APPEND l1 (CONS x l2)) = PERM (APPEND (CONS x l1) l2)`,
+  REWRITE_TAC[GSYM PERM_EQUIVALENCE_ALT_DEF; APPEND] THEN
+  ONCE_REWRITE_TAC[PERM_SYM] THEN REPEAT GEN_TAC THEN
+  MATCH_MP_TAC CONS_PERM THEN REWRITE_TAC[PERM_REFL]);;
+
+let PERM_FUN_SWAP_AT_FRONT = prove
+ (`!(x:A) y l. PERM (CONS x (CONS y l)) = PERM (CONS y (CONS x l))`,
+  REWRITE_TAC[GSYM PERM_EQUIVALENCE_ALT_DEF; PERM_SWAP_AT_FRONT; PERM_REFL]);;
+
+let PERM_FUN_CONS_11_SWAP_AT_FRONT = prove
+ (`!(y:A) l1 x l2.
+     PERM l1 = PERM (CONS x l2)
+     ==> PERM (CONS y l1) = PERM (CONS x (CONS y l2))`,
+  REWRITE_TAC[GSYM PERM_EQUIVALENCE_ALT_DEF] THEN REPEAT STRIP_TAC THEN
+  MATCH_MP_TAC PERM_TRANS THEN EXISTS_TAC `CONS (y:A) (CONS x l2)` THEN
+  ASM_REWRITE_TAC[PERM_CONS_IFF; LSORTAUX_PERM_SWAP_HEAD]);;
+
+let PERM_FUN_CONS_11_APPEND = prove
+ (`!(y:A) l1 l2 l3.
+     PERM l1 = PERM (APPEND l2 l3)
+     ==> PERM (CONS y l1) = PERM (APPEND l2 (CONS y l3))`,
+  REWRITE_TAC[GSYM PERM_EQUIVALENCE_ALT_DEF; CONS_PERM]);;
+
+let PERM_FUN_CONS_APPEND_1 = prove
+ (`!l l1 (x:A) l2.
+     PERM l1 = PERM (CONS x l2)
+     ==> PERM (APPEND l1 l) = PERM (CONS x (APPEND l2 l))`,
+  REWRITE_TAC[GSYM PERM_EQUIVALENCE_ALT_DEF] THEN REPEAT STRIP_TAC THEN
+  SUBGOAL_THEN `CONS (x:A) (APPEND l2 l) = APPEND (CONS x l2) l` SUBST1_TAC THENL
+   [REWRITE_TAC[APPEND]; ASM_SIMP_TAC[PERM_CONG; PERM_REFL]]);;
+
+let PERM_FUN_CONS_APPEND_2 = prove
+ (`!l l1 (x:A) l2.
+     PERM l1 = PERM (CONS x l2)
+     ==> PERM (APPEND l l1) = PERM (CONS x (APPEND l l2))`,
+  REWRITE_TAC[GSYM PERM_EQUIVALENCE_ALT_DEF] THEN REPEAT STRIP_TAC THEN
+  MATCH_MP_TAC PERM_TRANS THEN EXISTS_TAC `APPEND l (CONS (x:A) l2)` THEN
+  ASM_REWRITE_TAC[PERM_APPEND_IFF] THEN ONCE_REWRITE_TAC[PERM_SYM] THEN
+  MATCH_MP_TAC CONS_PERM THEN REWRITE_TAC[PERM_REFL]);;
+
+let PERM_FUN_APPEND_APPEND_1 = prove
+ (`!l1 l2 l3 l4:A list.
+     PERM l1 = PERM (APPEND l2 l3)
+     ==> PERM (APPEND l1 l4) = PERM (APPEND l2 (APPEND l3 l4))`,
+  REWRITE_TAC[GSYM PERM_EQUIVALENCE_ALT_DEF] THEN REPEAT STRIP_TAC THEN
+  REWRITE_TAC[APPEND_ASSOC] THEN ASM_SIMP_TAC[PERM_CONG; PERM_REFL]);;
+
+let PERM_FUN_APPEND_APPEND_2 = prove
+ (`!l1 l2 l3 l4:A list.
+     PERM l1 = PERM (APPEND l2 l3)
+     ==> PERM (APPEND l4 l1) = PERM (APPEND l2 (APPEND l4 l3))`,
+  REWRITE_TAC[GSYM PERM_EQUIVALENCE_ALT_DEF; PERM_alt; FILTER_APPEND;
+              LENGTH_APPEND] THEN
+  REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[] THEN ARITH_TAC);;
+
+let PERM_FUN_APPEND = prove
+ (`!l1 l2:A list. PERM (APPEND l1 l2) = PERM (APPEND l2 l1)`,
+  REWRITE_TAC[GSYM PERM_EQUIVALENCE_ALT_DEF; PERM_APPEND]);;
+
+let PERM_FUN_CONS_IFF = prove
+ (`!(x:A) l1 l2. PERM l1 = PERM l2 ==> PERM (CONS x l1) = PERM (CONS x l2)`,
+  REWRITE_TAC[GSYM PERM_EQUIVALENCE_ALT_DEF; PERM_CONS_IFF]);;
+
+let PERM_FUN_APPEND_IFF = prove
+ (`!l l1 l2:A list.
+     PERM l1 = PERM l2 ==> PERM (APPEND l l1) = PERM (APPEND l l2)`,
+  REWRITE_TAC[GSYM PERM_EQUIVALENCE_ALT_DEF; PERM_APPEND_IFF]);;
+
+let PERM_FUN_CONG = prove
+ (`!l1 l1' l2 l2':A list.
+     PERM l1 = PERM l1' ==> PERM l2 = PERM l2' ==> (PERM l1 l2 <=> PERM l1' l2')`,
+  MESON_TAC[PERM_EQUIVALENCE_ALT_DEF]);;
+
+let PERM_CONG_2 = prove
+ (`!l1 l1' l2 l2':A list.
+     PERM l1 l1' ==> PERM l2 l2' ==> (PERM l1 l2 <=> PERM l1' l2')`,
+  MESON_TAC[PERM_EQUIVALENCE_ALT_DEF]);;
+
+let PERM_CONG_APPEND_IFF = prove
+ (`!l l1 l1' l2 l2':A list.
+     PERM l1 (APPEND l l1') ==> PERM l2 (APPEND l l2')
+     ==> (PERM l1 l2 <=> PERM l1' l2')`,
+  MESON_TAC[PERM_EQUIVALENCE_ALT_DEF; PERM_APPEND_IFF]);;
+
+let PERM_CONG_APPEND_IFF2 = prove
+ (`!l1 l1' l1'' l2 l2' l2'':A list.
+     PERM l1 (APPEND l1' l1'') ==> PERM l2 (APPEND l2' l2'') ==>
+     PERM l1' l2' ==> (PERM l1 l2 <=> PERM l1'' l2'')`,
+  REWRITE_TAC[PERM_alt; FILTER_APPEND; LENGTH_APPEND] THEN
+  REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[EQ_ADD_LCANCEL]);;
+
+let PERM_FUN_SPLIT = prove
+ (`!l l1 l1' l2:A list.
+     PERM l (APPEND l1 l2) ==> PERM l1' l1 ==> PERM l (APPEND l1' l2)`,
+  MESON_TAC[PERM_EQUIVALENCE_ALT_DEF; PERM_APPEND_IFF; PERM_CONG; PERM_REFL;
+            PERM_SYM; PERM_TRANS]);;
+
+let PERM_REWR = prove
+ (`!l r l1 l2:A list.
+     PERM l r ==> (PERM (APPEND l l1) l2 <=> PERM (APPEND r l1) l2)`,
+  REPEAT STRIP_TAC THEN MATCH_MP_TAC(REWRITE_RULE[IMP_IMP] PERM_CONG_2) THEN
+  ASM_SIMP_TAC[PERM_CONG; PERM_REFL]);;
+
+let PERM_TO_APPEND_SIMPS = prove
+ (`!(x:A) l r1 r2 xs ys zs r.
+     (PERM (CONS x l) (APPEND (CONS x r1) r2) <=> PERM l (APPEND r1 r2)) /\
+     (PERM (CONS x l) (APPEND r1 (CONS x r2)) <=> PERM l (APPEND r1 r2)) /\
+     (PERM (APPEND (APPEND xs ys) zs) r <=> PERM (APPEND xs (APPEND ys zs)) r) /\
+     (PERM (APPEND (CONS x ys) zs) r <=> PERM (CONS x (APPEND ys zs)) r) /\
+     (PERM (APPEND [] l) r <=> PERM l r) /\
+     (PERM (APPEND xs l) (APPEND (APPEND xs r1) r2) <=> PERM l (APPEND r1 r2)) /\
+     (PERM (APPEND xs l) (APPEND r1 (APPEND xs r2)) <=> PERM l (APPEND r1 r2)) /\
+     (PERM [] (APPEND [] []:A list) <=> T) /\
+     (PERM xs (APPEND (APPEND xs []) []) <=> T) /\
+     (PERM xs (APPEND [] (APPEND xs [])) <=> T)`,
+  REPEAT GEN_TAC THEN
+  REWRITE_TAC[PERM_alt; FILTER; FILTER_APPEND; LENGTH_APPEND; LENGTH] THEN
+  REPEAT CONJ_TAC THEN TRY(AP_TERM_TAC THEN ABS_TAC) THEN
+  TRY COND_CASES_TAC THEN REWRITE_TAC[LENGTH; LENGTH_APPEND] THEN ARITH_TAC);;
+
+let PERM_FLAT = prove
+ (`!l1 l2:(A list) list. PERM l1 l2 ==> PERM (FLAT l1) (FLAT l2)`,
+  MATCH_MP_TAC PERM_IND THEN REWRITE_TAC[FLAT; PERM_REFL; PERM_APPEND_IFF] THEN
+  REWRITE_TAC[APPEND_ASSOC; PERM_SWAP_L_AT_FRONT] THEN MESON_TAC[PERM_TRANS]);;
+
+let LSORTAUX_LIST_IND2 = prove
+ (`!P:A list->bool.
+     P [] /\ (!x. P [x]) /\ (!x y t. P (CONS y t) ==> P (CONS x (CONS y t)))
+     ==> !l. P l`,
+  GEN_TAC THEN STRIP_TAC THEN LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[] THEN
+  POP_ASSUM MP_TAC THEN STRUCT_CASES_TAC(ISPEC `t:A list` list_CASES) THEN
+  ASM_SIMP_TAC[]);;
+
+let SORTED_weaken = prove
+ (`!R R' (ls:A list).
+     SORTED R ls /\ (!x y. MEM x ls /\ MEM y ls /\ R x y ==> R' x y)
+     ==> SORTED R' ls`,
+  GEN_TAC THEN GEN_TAC THEN MATCH_MP_TAC LSORTAUX_LIST_IND2 THEN
+  REWRITE_TAC[SORTED_DEF; MEM] THEN REPEAT STRIP_TAC THENL
+   [ASM_MESON_TAC[];
+    FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_MESON_TAC[MEM]]);;
+
+let sorted_map = prove
+ (`!R (f:A->B) l. SORTED R (MAP f l) <=> SORTED (inv_image R f) l`,
+  GEN_TAC THEN GEN_TAC THEN MATCH_MP_TAC LSORTAUX_LIST_IND2 THEN
+  REWRITE_TAC[MAP; SORTED_DEF; inv_image_THM] THEN SIMP_TAC[]);;
+
+let LSORTAUX_transitive_LT = prove
+ (`transitive ((<):num->num->bool)`,
+  REWRITE_TAC[transitive_DEF] THEN ARITH_TAC);;
+
+let less_sorted_eq = MATCH_MP SORTED_EQ LSORTAUX_transitive_LT;;
+
+let greater_sorted_eq = prove
+ (`!x L. SORTED (>) (CONS x L) <=> SORTED (>) L /\ !y. MEM y L ==> y < x`,
+  REPEAT GEN_TAC THEN
+  SUBGOAL_THEN `transitive ((>):num->num->bool)` ASSUME_TAC THENL
+   [REWRITE_TAC[transitive_DEF] THEN ARITH_TAC; ALL_TAC] THEN
+  ASM_SIMP_TAC[SORTED_EQ; GT]);;
+
+let SORTED_ALL_DISTINCT = prove
+ (`!R. irreflexive R /\ transitive R
+       ==> !ls:A list. SORTED R ls ==> ALL_DISTINCT ls`,
+  GEN_TAC THEN STRIP_TAC THEN LIST_INDUCT_TAC THEN
+  ASM_SIMP_TAC[ALL_DISTINCT; SORTED_EQ] THEN
+  RULE_ASSUM_TAC(REWRITE_RULE[irreflexive_DEF]) THEN ASM_MESON_TAC[]);;
+
+let sorted_filter = prove
+ (`!R (ls:A list) P. transitive R ==> SORTED R ls ==> SORTED R (FILTER P ls)`,
+  MESON_TAC[SORTED_FILTER]);;
+
+let SORTED_ALL_DISTINCT_LIST_TO_SET_EQ = prove
+ (`!R. transitive R /\ antisymmetric R
+       ==> !l1 l2:A list.
+             SORTED R l1 /\ SORTED R l2 /\ ALL_DISTINCT l1 /\
+             ALL_DISTINCT l2 /\ set_of_list l1 = set_of_list l2
+             ==> l1 = l2`,
+  GEN_TAC THEN DISCH_TAC THEN REPEAT GEN_TAC THEN STRIP_TAC THEN
+  MP_TAC(SPEC `R:A->A->bool` SORTED_PERM_EQ) THEN ASM_REWRITE_TAC[] THEN
+  DISCH_THEN MATCH_MP_TAC THEN ASM_REWRITE_TAC[] THEN
+  MATCH_MP_TAC PERM_ALL_DISTINCT THEN ASM_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[GSYM IN_SET_OF_LIST]);;
+
+let LSORTAUX_BIJ_COUNT = prove
+ (`!f n. BIJ f (count n) (count n) <=>
+         (!i. i < n ==> f i < n) /\ (!i j. i < n /\ j < n /\ f i = f j ==> i = j)`,
+  REPEAT GEN_TAC THEN REWRITE_TAC[BIJ; INJ; SURJ; count_DEF; IN_ELIM_THM] THEN
+  MP_TAC(ISPECL [`{m:num | m < n}`; `f:num->num`] SURJECTIVE_IFF_INJECTIVE) THEN
+  REWRITE_TAC[FINITE_NUMSEG_LT; SUBSET; FORALL_IN_IMAGE; IN_ELIM_THM] THEN
+  MESON_TAC[]);;
+
+let LSORTAUX_EQ_LIST_OF_SEQ = prove
+ (`!l (g:num->A) n. l = list_of_seq g n <=> LENGTH l = n /\ !i. i < n ==> EL i l = g i`,
+  REPEAT GEN_TAC THEN REWRITE_TAC[LIST_EQ; LENGTH_LIST_OF_SEQ] THEN
+  EQ_TAC THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
+  ASM_MESON_TAC[EL_LIST_OF_SEQ]);;
+
+let LSORTAUX_PERM_BIJ_EL = prove
+ (`!l1 l2:A list.
+     PERM l1 l2
+     ==> ?f. BIJ f (count (LENGTH l1)) (count (LENGTH l1)) /\
+             LENGTH l2 = LENGTH l1 /\
+             !i. i < LENGTH l1 ==> EL i l2 = EL (f i) l1`,
+  MATCH_MP_TAC PERM_IND THEN REWRITE_TAC[LSORTAUX_BIJ_COUNT; LENGTH] THEN
+  REPEAT CONJ_TAC THENL
+   [EXISTS_TAC `\i:num. i` THEN ARITH_TAC;
+    MAP_EVERY X_GEN_TAC [`x:A`; `l1:A list`; `l2:A list`] THEN
+    DISCH_THEN(X_CHOOSE_THEN `f:num->num` STRIP_ASSUME_TAC) THEN
+    EXISTS_TAC `\i. if i = 0 then 0 else SUC ((f:num->num) (i - 1))` THEN
+    ASM_REWRITE_TAC[] THEN REPEAT CONJ_TAC THENL
+     [X_GEN_TAC `i:num` THEN DISCH_TAC THEN COND_CASES_TAC THEN
+      REWRITE_TAC[LT_0; LT_SUC] THEN FIRST_X_ASSUM MATCH_MP_TAC THEN
+      ASM_ARITH_TAC;
+      MAP_EVERY X_GEN_TAC [`i:num`; `j:num`] THEN STRIP_TAC THEN
+      MAP_EVERY ASM_CASES_TAC [`i = 0`; `j = 0`] THEN
+      ASM_REWRITE_TAC[NOT_SUC; SUC_INJ] THEN UNDISCH_TAC
+       `(if i = 0 then 0 else SUC ((f:num->num) (i - 1))) =
+        (if j = 0 then 0 else SUC (f (j - 1)))` THEN
+      ASM_REWRITE_TAC[NOT_SUC; SUC_INJ] THEN
+      DISCH_TAC THEN
+      SUBGOAL_THEN `i - 1 = j - 1` MP_TAC THENL
+       [FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[] THEN ASM_ARITH_TAC;
+        ASM_ARITH_TAC];
+      X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+      DISJ_CASES_THEN2 SUBST_ALL_TAC (X_CHOOSE_THEN `k:num` SUBST_ALL_TAC)
+        (SPEC `i:num` num_CASES) THEN
+      REWRITE_TAC[EL; HD; TL; NOT_SUC; SUC_SUB1] THEN
+      FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_ARITH_TAC];
+    MAP_EVERY X_GEN_TAC [`x:A`; `y:A`; `l1:A list`; `l2:A list`] THEN
+    DISCH_THEN(X_CHOOSE_THEN `f:num->num` STRIP_ASSUME_TAC) THEN
+    EXISTS_TAC `\i. if i = 0 then 1 else if i = 1 then 0
+                    else SUC (SUC ((f:num->num) (i - 2)))` THEN
+    ASM_REWRITE_TAC[] THEN REPEAT CONJ_TAC THENL
+     [X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+      REPEAT COND_CASES_TAC THEN REWRITE_TAC[LT_SUC] THENL
+       [ARITH_TAC; ARITH_TAC; FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_ARITH_TAC];
+      MAP_EVERY X_GEN_TAC [`i:num`; `j:num`] THEN STRIP_TAC THEN
+      MAP_EVERY ASM_CASES_TAC [`i = 0`; `j = 0`; `i = 1`; `j = 1`] THEN
+      UNDISCH_TAC
+       `(if i = 0 then 1 else if i = 1 then 0
+         else SUC (SUC ((f:num->num) (i - 2)))) =
+        (if j = 0 then 1 else if j = 1 then 0 else SUC (SUC (f (j - 2))))` THEN
+      ASM_REWRITE_TAC[NOT_SUC; SUC_INJ; ARITH_RULE `~(SUC (SUC n) = 1)`;
+                      ARITH_RULE `~(1 = SUC (SUC n))`; ARITH_RULE `~(1 = 0)`;
+                      ARITH_RULE `~(0 = 1)`] THEN
+      TRY(ASM_ARITH_TAC THEN NO_TAC) THEN DISCH_TAC THEN
+      SUBGOAL_THEN `i - 2 = j - 2` MP_TAC THENL
+       [FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[] THEN ASM_ARITH_TAC;
+        ASM_ARITH_TAC];
+      X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+      DISJ_CASES_THEN2 SUBST_ALL_TAC (X_CHOOSE_THEN `k:num` SUBST_ALL_TAC)
+        (SPEC `i:num` num_CASES) THEN
+      REWRITE_TAC[EL; HD; TL; NOT_SUC; ARITH_RULE `SUC k = 1 <=> k = 0`] THENL
+       [REWRITE_TAC[ARITH_RULE `1 = SUC 0`; EL; HD; TL]; ALL_TAC] THEN
+      DISJ_CASES_THEN2 SUBST_ALL_TAC (X_CHOOSE_THEN `m:num` SUBST_ALL_TAC)
+        (SPEC `k:num` num_CASES) THEN
+      REWRITE_TAC[EL; HD; TL; NOT_SUC; ARITH_RULE `SUC (SUC m) - 2 = m`] THEN
+      FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_ARITH_TAC];
+    MAP_EVERY X_GEN_TAC [`l1:A list`; `l2:A list`; `l3:A list`] THEN
+    DISCH_THEN(CONJUNCTS_THEN2
+      (X_CHOOSE_THEN `f:num->num` STRIP_ASSUME_TAC)
+      (X_CHOOSE_THEN `g:num->num` STRIP_ASSUME_TAC)) THEN
+    EXISTS_TAC `(f:num->num) o (g:num->num)` THEN
+    REWRITE_TAC[o_THM] THEN REPEAT CONJ_TAC THEN ASM_MESON_TAC[]]);;
+
+let PERM_BIJ = prove
+ (`!l1 l2:A list.
+     PERM l1 l2
+     ==> ?f. BIJ f (count (LENGTH l1)) (count (LENGTH l1)) /\
+             l2 = list_of_seq (\i. EL (f i) l1) (LENGTH l1)`,
+  REWRITE_TAC[LSORTAUX_EQ_LIST_OF_SEQ] THEN MESON_TAC[LSORTAUX_PERM_BIJ_EL]);;
+
+(* ------------------------------------------------------------------------- *)
+(* Registration of the HOL4 [simp] theorems of this file.                    *)
+(* ------------------------------------------------------------------------- *)
+
+let _ = cake_add_simps
+  [PERM_REFL; PERM_CONS_IFF; PERM_NIL; PERM_SING; SORTED_DEF; PERM_REVERSE_EQ];;

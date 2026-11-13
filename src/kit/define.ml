@@ -72,11 +72,20 @@ let WF_LT_NUM = prove
 
 (* the automatic proof of WF R, for R built from the combinators above *)
 
+(* and of relations whose well-foundedness was proved by hand and          *)
+(* registered with cake_register_wf (HOL4 termination relations that are   *)
+(* not built from measure, inv_image and LEX)                               *)
+
+let cake_extra_wf = ref ([] : thm list);;
+
+let cake_register_wf th = cake_extra_wf := th :: !cake_extra_wf;;
+
 let WF_TAC : tactic =
   REPEAT (MATCH_ACCEPT_TAC WF_LT_NUM ORELSE MATCH_ACCEPT_TAC WF_measure ORELSE
           MATCH_ACCEPT_TAC WF_MEASURE ORELSE MATCH_ACCEPT_TAC WF_FALSE ORELSE
           MATCH_MP_TAC WF_inv_image ORELSE MATCH_MP_TAC WF_LEX_HOL4 ORELSE
-          MATCH_MP_TAC WF_MEASURE_GEN ORELSE CONJ_TAC);;
+          MATCH_MP_TAC WF_MEASURE_GEN ORELSE CONJ_TAC ORELSE
+          (fun g -> MAP_FIRST MATCH_ACCEPT_TAC (!cake_extra_wf) g));;
 
 (* the rewrites that unfold the combinators in termination conditions *)
 
@@ -114,9 +123,10 @@ let MEM_SIZE_TAC : tactic =
     MAP_EVERY ASSUME_TAC facts gl;;
 
 let TERM_TAC : tactic =
-  REPEAT STRIP_TAC THEN RVEQ_TAC THEN
-  (fun g -> REWRITE_TAC(WF_REL_THMS @ [FST; SND; pair_size_THM] @
-                        !the_size_defs @ flat (map snd (!the_size_aux_eqs))) g) THEN
+  REPEAT BOSS_STRIP_TAC THEN RVEQ_TAC THEN
+  (fun g -> let ths = WF_REL_THMS @ [FST; SND; pair_size_THM; sum_CASE] @
+                      !the_size_defs @ flat (map snd (!the_size_aux_eqs)) in
+            (RULE_ASSUM_TAC(REWRITE_RULE ths) THEN REWRITE_TAC ths) g) THEN
   MEM_SIZE_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[pair_size_THM]) THEN
   ASM_ARITH_TAC;;
@@ -191,10 +201,21 @@ let dest_clauses tm =
 
 (* close each clause over its free variables, except the defined functions *)
 
+(* in the order of their first occurrence, left to right, as HOL4 does *)
+
+let frees_in_order tm =
+  let rec go bound t acc =
+    match t with
+      Var _ -> if mem t bound || mem t acc then acc else t :: acc
+    | Const _ -> acc
+    | Comb(a,b) -> go bound b (go bound a acc)
+    | Abs(v,b) -> go (v::bound) b acc in
+  rev (go [] tm []);;
+
 let close_clauses fns tm =
   list_mk_conj
     (map (fun cl -> let bod = snd(strip_forall cl) in
-                    let vs = subtract (frees bod) fns in
+                    let vs = subtract (frees_in_order bod) fns in
                     list_mk_forall(vs,bod))
          (conjuncts tm));;
 
@@ -224,9 +245,9 @@ let cake_quiet = ref false;;
 
 let print_tcs name tcs =
   if !cake_quiet then () else
-  Format.print_string ("cake_def "^name^": termination conditions:\n");
-  do_list (fun t -> Format.print_string ("  "^string_of_term t^"\n")) tcs;
-  Format.print_flush();;
+   (Format.print_string ("cake_def "^name^": termination conditions:\n");
+    do_list (fun t -> Format.print_string ("  "^string_of_term t^"\n")) tcs;
+    Format.print_flush());;
 
 (* prove the existence theorem's hypotheses: the well-definedness one       *)
 (* automatically, the WF one with the relation r (WF r by WF_TAC) and the   *)
@@ -495,7 +516,9 @@ let tidy_ctx ctx =
     let implied others c =
       others <> [] &&
       can (fun () -> prove(mk_imp(list_mk_conj others,c),
-                           DISCH_THEN(fun th -> REWRITE_TAC(CONJUNCTS th @ rws))))
+                           DISCH_THEN(fun th -> REWRITE_TAC(CONJUNCTS th @ rws)) THEN
+                           W(fun (_,w) -> if is_exists w then MESON_TAC[]
+                                          else NO_TAC)))
           () in
     let rec drop kept l = match l with
         [] -> rev kept
@@ -508,7 +531,8 @@ let tidy_ctx ctx =
                      let ths = CONJUNCTS th in
                      REWRITE_TAC(ths @ rws) THEN
                      REWRITE_TAC(map GSYM (filter (fun t -> is_eq(concl t)) ths)) THEN
-                     REWRITE_TAC(ths @ rws))) in
+                     REWRITE_TAC(ths @ rws) THEN
+                     TRY(MESON_TAC ths))) in
     ctx',th
   with Failure _ -> ctx,DISCH ctx (ASSUME ctx);;
 
@@ -551,8 +575,20 @@ let derive_induction (c:term) (clauses:(term list * term list) list)
     let rec go k t = if k = 1 then [t]
                      else let x,y = dest_pair t in x :: go (k-1) y in
     go k t in
-  (* each TC: !vs. ctx ==> r a p ; find its clause *)
+  (* each TC: !vs. ctx ==> r a p ; find its clause.  The TC's variables are *)
+  (* first renamed apart from the pattern variables of every clause: the     *)
+  (* TC of f t in the clause f s may call its variables s (for t) and s'    *)
+  (* (for the argument), and renaming s' to the clause's s must not capture  *)
+  let allpv = itlist (fun ps acc -> union (itlist (union o frees) ps []) acc)
+                     pats [] in
+  let apart th0 =
+    let vs0 = fst(strip_forall(concl th0)) in
+    let avoid = ref (allpv @ vs0 @ freesl(hyp th0)) in
+    let vs' = map (fun v -> if mem (fst(dest_var v)) (map (fst o dest_var) allpv)
+                            then pm_fresh avoid v else v) vs0 in
+    if vs' = vs0 then th0 else GENL vs' (SPECL vs' th0) in
   let tc_info th =
+    let th = apart th in
     let vs,bod = strip_forall(concl th) in
     let ctx,rc = if is_imp bod then dest_imp bod else `T`,bod in
     let ra,pt = dest_comb rc in
@@ -668,16 +704,15 @@ let cake_def_mutual_ref =
   ref (fun (_:(term * tactic) option) (_:term) ->
          (failwith "mutual recursion not loaded" : thm));;
 
-(* a variable named _ in a clause's patterns is a wildcard: give it a name *)
+(* a wildcard (a _ of the quotation) in a clause gives a named variable *)
 
 let rename_wildcards tm =
   let fix cl =
     let bod = snd(strip_forall cl) in
-    let ws = filter (fun v -> fst(dest_var v) = "_") (frees bod) in
+    let ws = filter is_wildcard (frees bod) in
     if ws = [] then cl else
     let avoid = ref (frees bod) in
-    let sub = map (fun w -> let v = variant !avoid (mk_var("x",type_of w)) in
-                            avoid := v :: !avoid; v,w) ws in
+    let sub = map (fun w -> pm_fresh avoid (mk_var("x",type_of w)),w) ws in
     vsubst sub bod in
   list_mk_conj(map fix (conjuncts tm));;
 
@@ -703,14 +738,126 @@ let measure_candidates ty =
               if zero s then [] else [mk_comb(mk_const("measure",[ty,aty]),s)] in
   mapfilter one (0--(n-1)) @ whole;;
 
+(* bare occurrences of the function f being defined (MAP f l, or f x for a  *)
+(* function of two arguments) are eta-expanded, with bound variables named *)
+(* eta%N, because the recursion package needs f applied to all its k       *)
+(* arguments; ETA_MARKED_CONV undoes this in the definition theorem         *)
+
+let eta_expand_bare k f tm =
+  let n = ref 0 in
+  let rec go t =
+    let h,args = strip_comb t in
+    if h = f then
+      let args' = map go args in
+      let m = length args' in
+      if m >= k then list_mk_comb(h,args') else
+      let tys = fst(chop_list (k - m)
+                  (fst(splitlist dest_fun_ty (type_of(list_mk_comb(h,args')))))) in
+      let vs = map (fun ty -> incr n; mk_var("eta%"^string_of_int !n,ty)) tys in
+      list_mk_abs(vs,list_mk_comb(h,args' @ vs))
+    else match t with
+      Comb(a,b) -> mk_comb(go a,go b)
+    | Abs(v,b) -> mk_abs(v,go b)
+    | _ -> t in
+  go tm;;
+
+let ETA_MARKED_CONV tm =
+  match tm with
+    Abs(v,Comb(_,v')) when v' = v &&
+      (let n = fst(dest_var v) in
+       String.length n > 4 && String.sub n 0 4 = "eta%") -> ETA_CONV tm
+  | _ -> failwith "ETA_MARKED_CONV";;
+
+(* Overlapping clauses (HOL4 semantics: the first clause that matches      *)
+(* wins) are completed as HOL4's TFL does: each clause is replaced by the   *)
+(* instances of its patterns that no earlier clause matches, found by      *)
+(* splitting variables into the constructors of their type; argument       *)
+(* lists that no clause matches stay unspecified.  The instances of a      *)
+(* clause keep its variable names.  Clauses with literal patterns (numerals *)
+(* other than 0, T, F, strings) are not completed.                          *)
+
+let complete_clauses (cls : (term list * term * term list * term) list) =
+  let pats = map (fun (_,_,a,_) -> a) cls in
+  let n = length pats in
+  let idx = 0--(n-1) in
+  let overlap =
+    exists (fun i -> exists (fun j -> forall2 pat_compatible (el j pats) (el i pats))
+                            (0--(i-1)))
+           (1--(n-1)) in
+  if not overlap then None else
+  let rec has_literal p =
+    if is_var p then false
+    else if is_numeral p then dest_numeral p <> num_0
+    else if is_constructor_app p then exists has_literal (snd(strip_comb p))
+    else true in
+  if exists (exists has_literal) pats then
+    failwith "cake_def: overlapping clauses with literal patterns" else
+  let avoid = ref (itlist (fun (_,_,a,r) acc -> union (frees r) (union (freesl a) acc))
+                          cls []) in
+  (* new variables are named v, v1, v2, ... as in HOL4's completed clauses *)
+  let vcount = ref 0 in
+  let rec fresh_v ty =
+    let n = if !vcount = 0 then "v" else "v" ^ string_of_int !vcount in
+    incr vcount;
+    if mem n (map (fst o dest_var) !avoid) then fresh_v ty
+    else let v = mk_var(n,ty) in (avoid := v :: !avoid; v) in
+  let args0 = map (fun p -> fresh_v (type_of p)) (hd pats) in
+  let split v =
+    let nch = ISPEC v (nchotomy_of_type (type_of v)) in
+    map (fun d -> let vs,eq = strip_exists d in
+                  let vs' = map (fresh_v o type_of) vs in
+                  vsubst (zip vs' vs) (rand eq))
+        (disjuncts(concl nch)) in
+  let rec first l1 l2 = match l1,l2 with
+      x::t,y::u -> (match split_var x y with Some v -> Some v | None -> first t u)
+    | _ -> None in
+  let rec go args =
+    match filter (fun i -> forall2 pat_compatible (el i pats) args) idx with
+      [] -> []
+    | i::_ ->
+        let ps = el i pats in
+        if forall2 pattern_matches ps args then [i,args] else
+        match first ps args with
+          None -> failwith "complete_clauses: cannot split"
+        | Some v -> flat (map (fun inst -> go (map (vsubst [inst,v]) args)) (split v)) in
+  let leaves = go args0 in
+  let leaves = flat (map (fun i -> filter (fun (j,_) -> j = i) leaves) idx) in
+  Some (map (fun (i,args) ->
+      let (_,f,ps,r) = el i cls in
+      let _,tmi,_ = term_match [] (list_mk_comb(f,ps)) (list_mk_comb(f,args)) in
+      let ren = mapfilter (fun (t,x) -> if is_var t then (x,t) else fail()) tmi in
+      let args' = map (vsubst ren) args in
+      let tmi' = map (fun (t,x) -> vsubst ren t,x) tmi in
+      mk_eq(list_mk_comb(f,args'),vsubst tmi' r)) leaves);;
+
+(* the clauses of each defined function completed separately (functions in *)
+(* the order of their first clause); tm itself if nothing overlaps          *)
+
+let complete_all_clauses tm =
+  let cls = dest_clauses tm in
+  let rec order acc l = match l with
+      [] -> rev acc
+    | (_,f,_,_)::t -> if mem f acc then order acc t else order (f::acc) t in
+  let fns = order [] cls in
+  let groups = map (fun f -> filter (fun (_,g,_,_) -> g = f) cls) fns in
+  let res = map (fun g ->
+      match (try complete_clauses g with Failure _ -> None) with
+        Some c -> c,true
+      | None -> map (fun (vs,f,a,r) -> list_mk_forall(vs,mk_eq(list_mk_comb(f,a),r))) g,
+                false) groups in
+  if exists snd res then list_mk_conj (flat (map fst res)) else tm;;
+
 let cake_def_gen (rel_tac : (term * tactic) option) (tm:term) : thm =
   let tm = rename_wildcards (cases_of_matches tm) in
+  let tm = complete_all_clauses tm in
   let cls = dest_clauses tm in
   let fns = setify (map (fun (_,f,_,_) -> f) cls) in
   if length fns <> 1 then !cake_def_mutual_ref rel_tac tm else
   let f = hd fns in
   if not (is_var f) then failwith "cake_def: the defined function is a constant" else
   let name = fst(dest_var f) in
+  let k = (match cls with (_,_,args,_)::_ -> length args | [] -> 0) in
+  let tm = eta_expand_bare k f tm in
   let tm0 = close_clauses [f] tm in
   let cls0 = dest_clauses tm0 in
   let recursive = exists (fun (_,_,_,r) -> free_in f r) cls0 in
@@ -754,6 +901,7 @@ let cake_def_gen (rel_tac : (term * tactic) option) (tm:term) : thm =
           let c = mk_const(name,[]) in
           let c = inst (type_match (type_of c) (type_of f) []) c in
           let clauses = map (fun (vs,_,args,_) -> vs,args) cls0 in
+          let saved = !cake_quiet in
           let rec go l = match l with
               [] -> ()
             | r::rest ->
@@ -761,20 +909,20 @@ let cake_def_gen (rel_tac : (term * tactic) option) (tm:term) : thm =
                   try let _,info =
                         (cake_quiet := true;
                          let res = discharge_hyps name (Some(r,TERM_TAC)) eth_p in
-                         cake_quiet := false; res) in
+                         cake_quiet := saved; res) in
                       (match info with
                          Some(wfth,tcs) ->
                            let ind = derive_induction c clauses tcs wfth in
                            cake_ind_store := (name,ind) :: !cake_ind_store; true
                        | None -> false)
-                  with Failure _ -> (cake_quiet := false; false) in
+                  with Failure _ -> (cake_quiet := saved; false) in
                 if ok then () else go rest in
           go (measure_candidates ty)
         with Failure _ -> ())
    | _ -> ());
-  def;;
+  CONV_RULE (DEPTH_CONV ETA_MARKED_CONV) def;;
 
-let cake_def tm = cake_def_gen None tm;;
+(* cake_def (with its size-measure fallback) is at the end of this file *)
 
 let cake_def_wf r tac tm = cake_def_gen (Some(r,tac)) tm;;
 
@@ -904,7 +1052,7 @@ let cake_def_mutual (rel_tac : (term * tactic) option) (tm:term) : thm =
                       mk_var("P"^fst(dest_var f),itlist mk_fun_ty atys bool_ty))
                    fns sigs in
      let pfun i =
-       let n = el i ns and (atys,_) = el i sigs in
+       let n = el i ns in
        let t = mk_var("t_mr",el i argtups) in
        mk_abs(t,list_mk_comb(el i ps,if n = 1 then [t]
                                      else tuple_selectors n t)) in
@@ -943,6 +1091,69 @@ let cake_def_mutual (rel_tac : (term * tactic) option) (tm:term) : thm =
   def;;
 
 cake_def_mutual_ref := cake_def_mutual;;
+
+(* cake_def: termination by HOL Light's own analysis, else (as HOL4's       *)
+(* Define does) by a size measure: for one function the size of one       *)
+(* argument or of all of them, for mutual recursion (on the sum of the     *)
+(* argument tuples) the size of all the arguments or of the first one of   *)
+(* each function                                                            *)
+
+let sum_measure_candidates (tys:hol_type list) =
+  let num = `:num` in
+  let whole ty = size_of_type [] ty in
+  let first ty = match dest_type ty with
+      "prod",[a;b] -> let t = mk_var("t_ms",ty) in
+                      mk_abs(t,mk_comb(size_of_type [] a,
+                                       mk_comb(mk_const("FST",[a,aty; b,bty]),t)))
+    | _ -> whole ty in
+  let rec combine tys fs = match tys,fs with
+      [_],[f] -> f
+    | ty::tys',f::fs' ->
+        let g = combine tys' fs' in
+        let sty' = fst(dest_fun_ty(type_of g)) in
+        let sty = mk_type("sum",[ty;sty']) in
+        let s = mk_var("s_ms",sty) in
+        let c0 = mk_const("sum_CASE",[]) in
+        let cty = mk_fun_ty sty (mk_fun_ty (mk_fun_ty ty num)
+                                   (mk_fun_ty (mk_fun_ty sty' num) num)) in
+        let c = inst (type_match (type_of c0) cty []) c0 in
+        mk_abs(s,list_mk_comb(c,[s;f;g]))
+    | _ -> failwith "sum_measure_candidates" in
+  let ms = [combine tys (map whole tys); combine tys (map first tys)] in
+  map (fun m -> mk_comb(mk_const("measure",[fst(dest_fun_ty(type_of m)),aty]),m)) ms;;
+
+let cake_has_substring s sub =
+  let n = String.length s and m = String.length sub in
+  let rec go i = i + m <= n && (String.sub s i m = sub || go (i + 1)) in
+  go 0;;
+
+let cake_def tm =
+  let saved = !cake_quiet in
+  try cake_quiet := true;
+      let th = cake_def_gen None tm in
+      cake_quiet := saved; th
+  with Failure msg ->
+    cake_quiet := saved;
+    if not (cake_has_substring msg "termination not proved") then failwith msg else
+    let cls = dest_clauses (rename_wildcards (cases_of_matches tm)) in
+    let rec order acc l = match l with
+        [] -> rev acc
+      | (_,f,_,_)::t -> if mem f acc then order acc t else order (f::acc) t in
+    let fns = order [] cls in
+    let argty f =
+      let k = match find (fun (_,g,_,_) -> g = f) cls with (_,_,args,_) -> length args in
+      mk_tuple_ty (fst(chop_list k (fst(splitlist dest_fun_ty (type_of f))))) in
+    let cands = try if length fns = 1 then measure_candidates (argty (hd fns))
+                    else sum_measure_candidates (map argty fns)
+                with Failure _ -> [] in
+    let rec go l = match l with
+        [] -> cake_def_gen None tm
+      | r::rest ->
+          (try cake_quiet := true;
+               let th = cake_def_gen (Some(r,TERM_TAC)) tm in
+               cake_quiet := saved; th
+           with Failure _ -> (cake_quiet := saved; go rest)) in
+    go cands;;
 
 (* ------------------------------------------------------------------------- *)
 (* Inductive relations (HOL4 Inductive foo ... End): new_inductive_definition *)

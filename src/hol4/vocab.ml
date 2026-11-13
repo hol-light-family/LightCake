@@ -53,6 +53,62 @@ let OPTION_BIND_DEF = new_recursive_definition option_RECURSION
 let OPTION_IGNORE_BIND_DEF = new_definition
   `OPTION_IGNORE_BIND (m1:A option) (m2:B option) = OPTION_BIND m1 (\x. m2)`;;
 
+(* recursion through OPTION_MAP, OPTION_BIND and OPTION_IGNORE_BIND: a       *)
+(* recursive call in the function gets the context o = SOME y, as with      *)
+(* HOL4's congruence rules OPTION_MAP_CONG, OPTION_BIND_cong and            *)
+(* OPTION_IGNORE_BIND_cong (kit/recursion.ml, cake_register_admissible)     *)
+
+let ADMISSIBLE_OPTION_MAP = prove
+ (`!(<<) (p:(A->B)->P->bool) (s:P->A) (h:(A->B)->P->C->D) o1.
+        admissible(<<) p s o1 /\
+        admissible (<<) (\f (y,x). p f x /\ o1 f x = SOME y)
+                        (\(y,x). s x) (\f (y,x). h f x y)
+        ==> admissible (<<) p s (\f x. OPTION_MAP (h f x) (o1 f x))`,
+  REWRITE_TAC[admissible; FORALL_PAIR_THM] THEN REPEAT STRIP_TAC THEN
+  SUBGOAL_THEN `(o1:(A->B)->P->C option) g a = o1 f a` SUBST1_TAC THENL
+   [ASM_MESON_TAC[]; ALL_TAC] THEN
+  ASM_CASES_TAC `(o1:(A->B)->P->C option) f a = NONE` THEN
+  ASM_REWRITE_TAC[OPTION_MAP_DEF] THEN
+  FIRST_X_ASSUM(MP_TAC o MATCH_MP (MESON[cases "option"]
+    `~(x:C option = NONE) ==> ?y. x = SOME y`)) THEN
+  STRIP_TAC THEN ASM_REWRITE_TAC[OPTION_MAP_DEF; option_INJ] THEN
+  ASM_MESON_TAC[]);;
+
+let ADMISSIBLE_OPTION_BIND = prove
+ (`!(<<) (p:(A->B)->P->bool) (s:P->A) (h:(A->B)->P->C->D option) o1.
+        admissible(<<) p s o1 /\
+        admissible (<<) (\f (y,x). p f x /\ o1 f x = SOME y)
+                        (\(y,x). s x) (\f (y,x). h f x y)
+        ==> admissible (<<) p s (\f x. OPTION_BIND (o1 f x) (h f x))`,
+  REWRITE_TAC[admissible; FORALL_PAIR_THM] THEN REPEAT STRIP_TAC THEN
+  SUBGOAL_THEN `(o1:(A->B)->P->C option) g a = o1 f a` SUBST1_TAC THENL
+   [ASM_MESON_TAC[]; ALL_TAC] THEN
+  ASM_CASES_TAC `(o1:(A->B)->P->C option) f a = NONE` THEN
+  ASM_REWRITE_TAC[OPTION_BIND_DEF] THEN
+  FIRST_X_ASSUM(MP_TAC o MATCH_MP (MESON[cases "option"]
+    `~(x:C option = NONE) ==> ?y. x = SOME y`)) THEN
+  STRIP_TAC THEN ASM_REWRITE_TAC[OPTION_BIND_DEF] THEN
+  ASM_MESON_TAC[]);;
+
+let ADMISSIBLE_OPTION_IGNORE_BIND = prove
+ (`!(<<) (p:(A->B)->P->bool) (s:P->A) (m:(A->B)->P->D option) o1.
+        admissible(<<) p s o1 /\
+        admissible (<<) (\f x. p f x /\ ?y:C. o1 f x = SOME y) s m
+        ==> admissible (<<) p s (\f x. OPTION_IGNORE_BIND (o1 f x) (m f x))`,
+  REWRITE_TAC[admissible; OPTION_IGNORE_BIND_DEF] THEN REPEAT STRIP_TAC THEN
+  SUBGOAL_THEN `(o1:(A->B)->P->C option) g a = o1 f a` SUBST1_TAC THENL
+   [ASM_MESON_TAC[]; ALL_TAC] THEN
+  ASM_CASES_TAC `(o1:(A->B)->P->C option) f a = NONE` THEN
+  ASM_REWRITE_TAC[OPTION_BIND_DEF] THEN
+  FIRST_X_ASSUM(MP_TAC o MATCH_MP (MESON[cases "option"]
+    `~(x:C option = NONE) ==> ?y. x = SOME y`)) THEN
+  STRIP_TAC THEN ASM_REWRITE_TAC[OPTION_BIND_DEF] THEN
+  ASM_MESON_TAC[]);;
+
+do_list (uncurry cake_register_admissible)
+  ["OPTION_MAP",ADMISSIBLE_OPTION_MAP; "OPTION_BIND",ADMISSIBLE_OPTION_BIND;
+   "OPTION_IGNORE_BIND",ADMISSIBLE_OPTION_IGNORE_BIND];;
+
 let OPTION_GUARD_DEF = new_definition
   `OPTION_GUARD b = if b then SOME one else NONE`;;
 
@@ -192,6 +248,29 @@ let OPT_MMAP_DEF = new_recursive_definition list_RECURSION
   `(OPT_MMAP (f:A->B option) [] = SOME []) /\
    (OPT_MMAP f (CONS h t) =
       OPTION_BIND (f h) (\h'. OPTION_BIND (OPT_MMAP f t) (\t'. SOME (CONS h' t'))))`;;
+
+(* recursion through OPT_MMAP: the context MEM y l (HOL4's OPT_MMAP_cong) *)
+
+let ADMISSIBLE_OPT_MMAP = prove
+ (`!(<<) (p:(A->B)->P->bool) (s:P->A) (h:(A->B)->P->C->D option) l.
+        admissible(<<) p s l /\
+        admissible (<<) (\f (y,x). p f x /\ MEM y (l f x))
+                        (\(y,x). s x) (\f (y,x). h f x y)
+        ==> admissible (<<) p s (\f x. OPT_MMAP (h f x) (l f x))`,
+  REWRITE_TAC[admissible; FORALL_PAIR_THM] THEN REPEAT STRIP_TAC THEN
+  SUBGOAL_THEN `(l:(A->B)->P->C list) g a = l f a` SUBST1_TAC THENL
+   [ASM_MESON_TAC[]; ALL_TAC] THEN
+  SUBGOAL_THEN `!y. MEM y ((l:(A->B)->P->C list) f a)
+                    ==> (h:(A->B)->P->C->D option) f a y = h g a y`
+  MP_TAC THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
+  SPEC_TAC(`(l:(A->B)->P->C list) f a`,`ll:C list`) THEN
+  LIST_INDUCT_TAC THEN REWRITE_TAC[OPT_MMAP_DEF; MEM] THEN
+  DISCH_TAC THEN
+  FIRST_X_ASSUM(MP_TAC o check (is_imp o concl)) THEN
+  ANTS_TAC THENL [ASM_MESON_TAC[]; DISCH_THEN SUBST1_TAC] THEN
+  AP_THM_TAC THEN AP_TERM_TAC THEN ASM_MESON_TAC[]);;
+
+cake_register_admissible "OPT_MMAP" ADMISSIBLE_OPT_MMAP;;
 
 let UNZIP_DEF = new_definition
   `UNZIP (l:(A#B) list) = (MAP FST l, MAP SND l)`;;

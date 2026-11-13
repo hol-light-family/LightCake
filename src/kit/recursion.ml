@@ -12,7 +12,17 @@
 (*   f (CONS h t) = match t with [] -> 0 | CONS y z -> if y = 0 then 0       *)
 (*                                                    else f (CONS (y-1) z) *)
 (* gets the termination condition CONS (y-1) z << CONS h t with no y <> 0.   *)
+(* A second addition: the table cake_admissible_rules of admissibility rules *)
+(* for further constants, the analogue of HOL4's [defncong] congruence rules *)
+(* (a recursive call under ALL, EX, IMAGE, ITLIST, ==> ... gets the context  *)
+(* HOL4's congruence rule gives it); cake_register_admissible adds one.      *)
 (* ========================================================================= *)
+
+let cake_admissible_rules = ref ([] : (string * thm) list);;
+
+let cake_register_admissible c th =
+  cake_admissible_rules :=
+    (c,th) :: filter (fun (c',_) -> c' <> c) (!cake_admissible_rules);;
 
 (* the copied code relies on HOL Light's type invention *)
 let cake_tie_saved = !type_invention_error;;
@@ -226,6 +236,8 @@ let instantiate_casewise_recursion,
           -> APPLY_PROFORMA_TAC ADMISSIBLE_GUARDED_PATTERN gl
     | "admissible","COND"
           -> APPLY_PROFORMA_TAC ADMISSIBLE_COND gl
+    | "admissible",c when can (assoc c) (!cake_admissible_rules)
+          -> APPLY_PROFORMA_TAC (assoc c (!cake_admissible_rules)) gl
     | "admissible",_ when is_abs bod
           -> APPLY_PROFORMA_TAC ADMISSIBLE_LAMBDA gl
     | "admissible",_ when is_comb bod && rator bod = f
@@ -507,3 +519,67 @@ let instantiate_casewise_recursion,
   prove_general_recursive_function_exists;;
 
 type_invention_error := cake_tie_saved;;
+
+(* ------------------------------------------------------------------------- *)
+(* Admissibility rules with the contexts of HOL4's congruence rules         *)
+(* (IMP_CONG, EVERY_CONG, EXISTS_CONG, IMAGE_CONG, FOLDR_CONG).              *)
+(* ------------------------------------------------------------------------- *)
+
+let ADMISSIBLE_IMP = prove
+ (`!(<<) (p:(A->B)->P->bool) (s:P->A) P Q.
+        admissible(<<) p s P /\
+        admissible(<<) (\f x. p f x /\ P f x) s Q
+        ==> admissible(<<) p s (\f x. P f x ==> Q f x)`,
+  REWRITE_TAC[admissible] THEN MESON_TAC[]);;
+
+let ADMISSIBLE_ALL = prove
+ (`!(<<) (p:(A->B)->P->bool) (s:P->A) (h:(A->B)->P->C->bool) l.
+        admissible(<<) p s l /\
+        admissible (<<) (\f (y,x). p f x /\ MEM y (l f x))
+                        (\(y,x). s x) (\f (y,x). h f x y)
+        ==> admissible (<<) p s (\f x. ALL (h f x) (l f x))`,
+  REWRITE_TAC[admissible; FORALL_PAIR_THM] THEN REPEAT STRIP_TAC THEN
+  MATCH_MP_TAC(MESON[] `(x:C list) = y /\ (ALL f x <=> ALL g x) ==> (ALL f x <=> ALL g y)`) THEN
+  CONJ_TAC THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
+  REWRITE_TAC[GSYM ALL_MEM] THEN ASM_MESON_TAC[]);;
+
+let ADMISSIBLE_EX = prove
+ (`!(<<) (p:(A->B)->P->bool) (s:P->A) (h:(A->B)->P->C->bool) l.
+        admissible(<<) p s l /\
+        admissible (<<) (\f (y,x). p f x /\ MEM y (l f x))
+                        (\(y,x). s x) (\f (y,x). h f x y)
+        ==> admissible (<<) p s (\f x. EX (h f x) (l f x))`,
+  REWRITE_TAC[admissible; FORALL_PAIR_THM] THEN REPEAT STRIP_TAC THEN
+  MATCH_MP_TAC(MESON[] `(x:C list) = y /\ (EX f x <=> EX g x) ==> (EX f x <=> EX g y)`) THEN
+  CONJ_TAC THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
+  REWRITE_TAC[GSYM EX_MEM] THEN ASM_MESON_TAC[]);;
+
+let ADMISSIBLE_IMAGE = prove
+ (`!(<<) (p:(A->B)->P->bool) (s:P->A) (h:(A->B)->P->C->D) l.
+        admissible(<<) p s l /\
+        admissible (<<) (\f (y,x). p f x /\ y IN l f x)
+                        (\(y,x). s x) (\f (y,x). h f x y)
+        ==> admissible (<<) p s (\f x. IMAGE (h f x) (l f x))`,
+  REWRITE_TAC[admissible; FORALL_PAIR_THM] THEN REPEAT STRIP_TAC THEN
+  MATCH_MP_TAC(MESON[] `(x:C->bool) = y /\ IMAGE (f:C->D) x = IMAGE g x ==> IMAGE f x = IMAGE g y`) THEN
+  CONJ_TAC THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
+  REWRITE_TAC[EXTENSION; IN_IMAGE] THEN ASM_MESON_TAC[]);;
+
+let ADMISSIBLE_ITLIST = prove
+ (`!(<<) (p:(A->B)->P->bool) (s:P->A) (h:(A->B)->P->C->D->D) l b.
+        admissible(<<) p s l /\ admissible(<<) p s b /\
+        admissible (<<) (\f (y,c,x). p f x /\ MEM y (l f x))
+                        (\(y,c,x). s x) (\f (y,c,x). h f x y c)
+        ==> admissible (<<) p s (\f x. ITLIST (h f x) (l f x) (b f x))`,
+  REWRITE_TAC[admissible; FORALL_PAIR_THM] THEN REPEAT STRIP_TAC THEN
+  SUBGOAL_THEN `(l:(A->B)->P->C list) g a = l f a /\ (b:(A->B)->P->D) g a = b f a`
+    (fun th -> REWRITE_TAC[th]) THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
+  SUBGOAL_THEN `!y c. MEM y ((l:(A->B)->P->C list) f a)
+                      ==> (h:(A->B)->P->C->D->D) f a y c = h g a y c`
+  MP_TAC THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
+  SPEC_TAC(`(l:(A->B)->P->C list) f a`,`ll:C list`) THEN
+  LIST_INDUCT_TAC THEN REWRITE_TAC[ITLIST; MEM] THEN ASM_MESON_TAC[]);;
+
+do_list (uncurry cake_register_admissible)
+  ["==>",ADMISSIBLE_IMP; "ALL",ADMISSIBLE_ALL; "EX",ADMISSIBLE_EX;
+   "IMAGE",ADMISSIBLE_IMAGE; "ITLIST",ADMISSIBLE_ITLIST];;

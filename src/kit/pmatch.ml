@@ -11,7 +11,7 @@
 (*                            tac))                                          *)
 (* cake_def and cake_def_wf apply it to their clauses.                       *)
 (* Semantics: HOL4's.  Each occurrence of the wildcard _ is independent      *)
-(* (HOL Light's own match reads repeated _ as one variable); a numeral other *)
+(* (the kit's parse_term names each _ apart: parse.ml); a numeral other     *)
 (* than 0, a T/F or another literal pattern is a test x = lit; an            *)
 (* unmatched value gives ARB.                                                *)
 (* ========================================================================= *)
@@ -41,7 +41,10 @@ let dest_match_term tm =
 let is_match_term tm =
   try fst(dest_const(rator(rator tm))) = "_MATCH" with Failure _ -> false;;
 
-let is_wildcard v = is_var v && fst(dest_var v) = "_";;
+let is_wildcard v =
+  is_var v &&
+  (let n = fst(dest_var v) in
+   n = "_" || String.length n > 2 && String.sub n 0 3 = "_%w");;
 
 let pm_base_name v =
   let n = fst(dest_var v) in

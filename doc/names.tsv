@@ -5490,23 +5490,23 @@ compiler/backend/data_to_word	data_to_word	theorem	AnyArith_call_tree_def	AnyAri
 compiler/backend/data_to_word	data_to_word	constant	structure_le	structure_le	unique
 compiler/backend/data_to_word	data_to_word	theorem	structure_le_def	structure_le_def	unique
 compiler/backend/data_to_word	data_to_word	theorem	AnyArith_call_tree_thm	AnyArith_call_tree_thm	unique
-compiler/backend/reg_alloc/parmove	parmove	constant	step	step	unique
-compiler/backend/reg_alloc/parmove	parmove	theorem	step_rules	step_rules	unique
-compiler/backend/reg_alloc/parmove	parmove	theorem	step_ind	step_ind	unique
-compiler/backend/reg_alloc/parmove	parmove	theorem	step_strongind	step_strongind	unique
-compiler/backend/reg_alloc/parmove	parmove	theorem	step_cases	step_cases	unique
+compiler/backend/reg_alloc/parmove	parmove	constant	step	parmove_step	common word: would capture variables in later files
+compiler/backend/reg_alloc/parmove	parmove	theorem	step_rules	parmove_step_rules	follows the constant
+compiler/backend/reg_alloc/parmove	parmove	theorem	step_ind	parmove_step_ind	follows the constant
+compiler/backend/reg_alloc/parmove	parmove	theorem	step_strongind	parmove_step_strongind	follows the constant
+compiler/backend/reg_alloc/parmove	parmove	theorem	step_cases	parmove_step_cases	follows the constant
 compiler/backend/reg_alloc/parmove	parmove	constant	windmill	windmill	unique
 compiler/backend/reg_alloc/parmove	parmove	theorem	windmill_def	windmill_def	unique
 compiler/backend/reg_alloc/parmove	parmove	theorem	windmill_cons	windmill_cons	unique
-compiler/backend/reg_alloc/parmove	parmove	constant	path	path	unique
-compiler/backend/reg_alloc/parmove	parmove	theorem	path_def	path_def	unique
+compiler/backend/reg_alloc/parmove	parmove	constant	path	parmove_path	common word: would capture variables in later files
+compiler/backend/reg_alloc/parmove	parmove	theorem	path_def	parmove_path_def	follows the constant
 compiler/backend/reg_alloc/parmove	parmove	theorem	path_change_start	path_change_start	unique
 compiler/backend/reg_alloc/parmove	parmove	theorem	path_tail	path_tail	unique
 compiler/backend/reg_alloc/parmove	parmove	theorem	path_imp_mem	path_imp_mem	unique
 compiler/backend/reg_alloc/parmove	parmove	theorem	path_imp_mem2	path_imp_mem2	unique
 compiler/backend/reg_alloc/parmove	parmove	theorem	NoRead_path	NoRead_path	unique
-compiler/backend/reg_alloc/parmove	parmove	constant	wf	wf	unique
-compiler/backend/reg_alloc/parmove	parmove	theorem	wf_def	wf_def	unique
+compiler/backend/reg_alloc/parmove	parmove	constant	wf	parmove_wf	common word: would capture variables in later files
+compiler/backend/reg_alloc/parmove	parmove	theorem	wf_def	parmove_wf_def	follows the constant
 compiler/backend/reg_alloc/parmove	parmove	theorem	wf_init	wf_init	unique
 compiler/backend/reg_alloc/parmove	parmove	theorem	wf_step	wf_step	unique
 compiler/backend/reg_alloc/parmove	parmove	theorem	wf_steps	wf_steps	unique
@@ -5525,8 +5525,8 @@ compiler/backend/reg_alloc/parmove	parmove	theorem	seqsem_def	seqsem_def	unique
 compiler/backend/reg_alloc/parmove	parmove	theorem	seqsem_ind	seqsem_ind	unique
 compiler/backend/reg_alloc/parmove	parmove	theorem	seqsem_append	seqsem_append	unique
 compiler/backend/reg_alloc/parmove	parmove	theorem	seqsem_move_unchanged	seqsem_move_unchanged	unique
-compiler/backend/reg_alloc/parmove	parmove	constant	sem	sem	unique
-compiler/backend/reg_alloc/parmove	parmove	theorem	sem_def	sem_def	unique
+compiler/backend/reg_alloc/parmove	parmove	constant	sem	parmove_sem	common word: would capture variables in later files
+compiler/backend/reg_alloc/parmove	parmove	theorem	sem_def	parmove_sem_def	follows the constant
 compiler/backend/reg_alloc/parmove	parmove	theorem	sem_init	sem_init	unique
 compiler/backend/reg_alloc/parmove	parmove	theorem	sem_final	sem_final	unique
 compiler/backend/reg_alloc/parmove	parmove	constant	eqenv	eqenv	unique
@@ -7216,7 +7216,7 @@ semantics/tokens	tokens	constructor	SymbolT	SymbolT	unique
 semantics/tokens	tokens	constructor	LongidT	LongidT	unique
 semantics/tokens	tokens	constructor	FFIT	FFIT	unique
 semantics/tokens	tokens	constructor	REPLIDT	REPLIDT	unique
-semantics/lexer_fun	lexer_fun	type	symbol	symbol	unique
+semantics/lexer_fun	lexer_fun	type	symbol	lexer_fun_symbol	clash: grammar type symbol (HOL4 grammar theory, src/hol4/grammar.ml)
 semantics/lexer_fun	lexer_fun	constructor	StringS	StringS	unique
 semantics/lexer_fun	lexer_fun	constructor	CharS	CharS	unique
 semantics/lexer_fun	lexer_fun	constructor	NumberS	NumberS	unique

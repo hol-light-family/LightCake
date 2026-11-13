@@ -1,0 +1,99 @@
+file	theory	kind	hol4_name	hol_light_name	reason
+hol4/set_sep.ml	set_sep	constant	one	set_sep_one	HOL Light constant one:1
+hol4/set_sep.ml	set_sep	theorem	one_def	set_sep_one_def	follows the constant
+hol4/set_sep.ml	set_sep	theorem	DIFF_UNION	set_sep_DIFF_UNION	basic.ml binds pred_set's DIFF_UNION
+hol4/set_sep.ml	set_sep	theorem	IMP_IMP	set_sep_IMP_IMP	HOL Light theorem name
+hol4/mergesort.ml	mergesort	constant	merge	mergesort_merge	clos_known defines merge
+hol4/mergesort.ml	mergesort	theorem	merge_def	mergesort_merge_def	follows the constant
+hol4/mergesort.ml	mergesort	theorem	merge_ind	mergesort_merge_ind	follows the constant
+hol4/grammar.ml	grammar	constant	destTOK	grammar_destTOK	tokenUtils defines destTOK
+hol4/grammar.ml	grammar	theorem	FLAT_EQ_NIL	grammar_FLAT_EQ_NIL	list.ml binds another FLAT_EQ_NIL
+hol4/grammar.ml	grammar	theorem	FLAT_EQ_SING	grammar_FLAT_EQ_SING	with FLAT_EQ_NIL
+hol4/grammar.ml	grammar	theorem	FLAT_EQ_APPEND	grammar_FLAT_EQ_APPEND	with FLAT_EQ_NIL
+hol4/peg.ml	peg	constructor	Success	peg_Success	ffi constructor Success
+hol4/peg.ml	peg	theorem	IS_PREFIX_MEM	peg_IS_PREFIX_MEM	rich_list theorem name
+hol4/peg.ml	peg	theorem	Gexprs_def	peg_Gexprs_def	OCaml reads Gexprs_def as a constructor
+hol4/peg.ml	peg	theorem	Gexprs_subexprs	peg_Gexprs_subexprs	with Gexprs_def
+hol4/peg.ml	peg	constant	pegf	peg_pegf	cmlPEG defines pegf
+hol4/peg.ml	peg	constant	choicel	peg_choicel	cmlPEG defines choicel
+hol4/pegexec.ml	pegexec	constant	destResult	pegexec_destResult	cmlParse defines destResult
+hol4/regexp_compiler.ml	regexp_compiler	constant	fromList	regexp_compiler_fromList	sptree defines fromList
+hol4/tailrec.ml	tailrec	constant	TAILREC	tailrec_TAILREC	While's TAILREC is in basic.ml
+hol4/balanced_map.ml	balanced_map	constant	lookup	balanced_map_lookup	sptree defines lookup
+hol4/balanced_map.ml	balanced_map	constant	insert	balanced_map_insert	sptree defines insert
+hol4/balanced_map.ml	balanced_map	constant	empty	balanced_map_empty	peg constructor empty
+hol4/balanced_map.ml	balanced_map	constant	invariant	balanced_map_invariant	source_to_flatProof defines invariant
+hol4/balanced_map.ml	balanced_map	constant	size	balanced_map_size'	balanced_map_size is the generated size function
+hol4/balanced_map.ml	balanced_map	theorem	lookup_insert	balanced_map_lookup_insert	sptree theorem name
+hol4/simpleSexp.ml	simpleSexp	type	sexp	simpleSexp_sexp	mlsexp defines sexp
+hol4/simpleSexp.ml	simpleSexp	theorem	strip_sxcons_thm	simpleSexp_strip_sxcons_thm	fromSexp theorem name
+hol4/simpleSexpPEG.ml	simpleSexpPEG	constant	tokeq	simpleSexpPEG_tokeq	cmlPEG defines tokeq
+hol4/simpleSexpPEG.ml	simpleSexpPEG	constant	pnt	simpleSexpPEG_pnt	cmlPEG defines pnt
+hol4/simpleSexpPEG.ml	simpleSexpPEG	constant	sumID	simpleSexpPEG_sumID	cmlPEG defines sumID
+hol4/simpleSexpPEG.ml	simpleSexpPEG	constant	choicel	simpleSexpPEG_choicel	cmlPEG defines choicel
+hol4/simpleSexpPEG.ml	simpleSexpPEG	constant	pegf	simpleSexpPEG_pegf	cmlPEG defines pegf
+hol4/llist.ml	llist	constant	exists	llist_exists	exists is a binder keyword
+hol4/llist.ml	llist	constant	fromList	llist_fromList	sptree defines fromList
+hol4/list.ml	list	theorem	MEM_MAP	list_MEM_MAP	name taken (HOL Light or another theory)
+hol4/basic.ml	bool	theorem	LET_DEF	bool_LET_DEF	name taken (HOL Light or another theory)
+hol4/list.ml	list	theorem	MEM_EL	list_MEM_EL	name taken (HOL Light or another theory)
+hol4/basic.ml	marker	theorem	Abbrev_def	marker_Abbrev_def	name taken (HOL Light or another theory)
+hol4/basic.ml	pred_set	theorem	UNION_ASSOC	pred_set_UNION_ASSOC	name taken (HOL Light or another theory)
+hol4/rich_list.ml	rich_list	theorem	MAP_REVERSE	rich_list_MAP_REVERSE	name taken (HOL Light or another theory)
+hol4/basic.ml	arithmetic	theorem	LEFT_ADD_DISTRIB	arithmetic_LEFT_ADD_DISTRIB	name taken (HOL Light or another theory)
+hol4/basic.ml	arithmetic	theorem	MULT_DIV	arithmetic_MULT_DIV	name taken (HOL Light or another theory)
+hol4/words4.ml	fcp	theorem	CART_EQ	fcp_CART_EQ	name taken (HOL Light or another theory)
+hol4/basic.ml	arithmetic	theorem	DIVISION	arithmetic_DIVISION	name taken (HOL Light or another theory)
+hol4/basic.ml	arithmetic	theorem	EXP_ADD	arithmetic_EXP_ADD	name taken (HOL Light or another theory)
+hol4/basic.ml	pair	theorem	LEX_DEF	pair_LEX_DEF	name taken (HOL Light or another theory)
+hol4/list.ml	list	theorem	LIST_EQ	list_LIST_EQ	name taken (HOL Light or another theory)
+hol4/rich_list.ml	rich_list	theorem	APPEND_NIL	rich_list_APPEND_NIL	name taken (HOL Light or another theory)
+hol4/rich_list.ml	rich_list	theorem	EL_CONS	rich_list_EL_CONS	name taken (HOL Light or another theory)
+hol4/basic.ml	arithmetic	theorem	LEFT_SUB_DISTRIB	arithmetic_LEFT_SUB_DISTRIB	name taken (HOL Light or another theory)
+hol4/basic.ml	relation	theorem	RTC_RULES	relation_RTC_RULES	name taken (HOL Light or another theory)
+hol4/basic.ml	arithmetic	theorem	DIV_EQ_0	arithmetic_DIV_EQ_0	name taken (HOL Light or another theory)
+hol4/basic.ml	relation	theorem	RTC_INDUCT	relation_RTC_INDUCT	name taken (HOL Light or another theory)
+hol4/rich_list.ml	rich_list	theorem	LENGTH_ZIP	rich_list_LENGTH_ZIP	name taken (HOL Light or another theory)
+hol4/basic.ml	arithmetic	theorem	DIV_MULT	arithmetic_DIV_MULT	name taken (HOL Light or another theory)
+hol4/words4.ml	integer	theorem	NUM_OF_INT	integer_NUM_OF_INT	name taken (HOL Light or another theory)
+hol4/basic.ml	arithmetic	theorem	MOD_MULT_MOD	arithmetic_MOD_MULT_MOD	name taken (HOL Light or another theory)
+hol4/words4.ml	integer	theorem	int_le	integer_int_le	name taken (HOL Light or another theory)
+hol4/rich_list.ml	rich_list	theorem	MAP_o	rich_list_MAP_o	name taken (HOL Light or another theory)
+hol4/basic.ml	arithmetic	theorem	MOD_EQ_0	arithmetic_MOD_EQ_0	name taken (HOL Light or another theory)
+hol4/basic.ml	pair	theorem	WF_LEX	pair_WF_LEX	name taken (HOL Light or another theory)
+hol4/basic.ml	arithmetic	theorem	EVEN_SUB	arithmetic_EVEN_SUB	name taken (HOL Light or another theory)
+hol4/basic.ml	bool	theorem	COND_RAND	bool_COND_RAND	name taken (HOL Light or another theory)
+hol4/words4.ml	integer	theorem	int_ge	integer_int_ge	name taken (HOL Light or another theory)
+hol4/list.ml	list	theorem	LENGTH_MAP2	list_LENGTH_MAP2	name taken (HOL Light or another theory)
+hol4/multiword.ml	multiword	theorem	b2w_def	multiword_b2w_def	name taken (HOL Light or another theory)
+hol4/words4.ml	words	theorem	WORD_OR_ASSOC	words_WORD_OR_ASSOC	name taken (HOL Light or another theory)
+hol4/basic.ml	arithmetic	theorem	LT_MULT_LCANCEL	arithmetic_LT_MULT_LCANCEL	name taken (HOL Light or another theory)
+hol4/basic.ml	arithmetic	theorem	LT_SUC	arithmetic_LT_SUC	name taken (HOL Light or another theory)
+hol4/basic.ml	arithmetic	theorem	MOD_MULT	arithmetic_MOD_MULT	name taken (HOL Light or another theory)
+hol4/words4.ml	integer	theorem	int_gt	integer_int_gt	name taken (HOL Light or another theory)
+hol4/words4.ml	integer	theorem	INT_ABS	integer_INT_ABS	name taken (HOL Light or another theory)
+hol4/list.ml	list	theorem	LAST_EL	list_LAST_EL	name taken (HOL Light or another theory)
+hol4/simpleSexp.ml	simpleSexp	theorem	sexp_size_def	simpleSexp_sexp_size_def	name taken (HOL Light or another theory)
+hol4/balanced_map.ml	balanced_map	theorem	empty_def	balanced_map_empty_def	name taken (HOL Light or another theory)
+hol4/words4.ml	integer	theorem	INT_LT	integer_INT_LT	name taken (HOL Light or another theory)
+hol4/basic.ml	pred_set	theorem	INSERT_DEF	pred_set_INSERT_DEF	name taken (HOL Light or another theory)
+hol4/balanced_map.ml	balanced_map	theorem	invariant_def	balanced_map_invariant_def	name taken (HOL Light or another theory)
+hol4/words4.ml	integer	theorem	INT_SUB	integer_INT_SUB	name taken (HOL Light or another theory)
+hol4/list.ml	list	theorem	EL_MAP2	list_EL_MAP2	name taken (HOL Light or another theory)
+hol4/list.ml	list	theorem	MAP_ID	list_MAP_ID	name taken (HOL Light or another theory)
+hol4/basic.ml	pair	theorem	FORALL_UNCURRY	pair_FORALL_UNCURRY	name taken (HOL Light or another theory)
+hol4/basic.ml	pred_set	theorem	CARD_PSUBSET	pred_set_CARD_PSUBSET	name taken (HOL Light or another theory)
+hol4/basic.ml	pred_set	theorem	CARD_SUBSET	pred_set_CARD_SUBSET	name taken (HOL Light or another theory)
+hol4/basic.ml	pred_set	theorem	FINITE_INDUCT	pred_set_FINITE_INDUCT	name taken (HOL Light or another theory)
+hol4/basic.ml	pred_set	theorem	SUBSET_DIFF	pred_set_SUBSET_DIFF	name taken (HOL Light or another theory)
+hol4/basic.ml	arithmetic	theorem	ADD_SUC	arithmetic_ADD_SUC	name taken (HOL Light or another theory)
+hol4/basic.ml	arithmetic	theorem	EXP_EQ_0	arithmetic_EXP_EQ_0	name taken (HOL Light or another theory)
+hol4/basic.ml	arithmetic	theorem	LE_MULT_RCANCEL	arithmetic_LE_MULT_RCANCEL	name taken (HOL Light or another theory)
+hol4/basic.ml	arithmetic	theorem	LT_MULT_RCANCEL	arithmetic_LT_MULT_RCANCEL	name taken (HOL Light or another theory)
+hol4/comparison.ml	comparison	theorem	num_cmp_def	comparison_num_cmp_def	name taken (HOL Light or another theory)
+hol4/words4.ml	integer	theorem	int_sub	integer_int_sub	name taken (HOL Light or another theory)
+hol4/list.ml	list	theorem	EXISTS_DEF	list_EXISTS_DEF	name taken (HOL Light or another theory)
+hol4/list.ml	list	theorem	MAP_o	list_MAP_o	name taken (HOL Light or another theory)
+hol4/basic.ml	pred_set	theorem	CARD_UNION	pred_set_CARD_UNION	name taken (HOL Light or another theory)
+hol4/simpleSexp.ml	simpleSexp	theorem	sexp_11	simpleSexp_sexp_11	name taken (HOL Light or another theory)
+hol4/words4.ml	words	theorem	WORD_AND_ASSOC	words_WORD_AND_ASSOC	name taken (HOL Light or another theory)

@@ -170,7 +170,9 @@ let cake_del_simps thl =
 (* interactive work on a file: use the simpset of its needs closure *)
 
 let cake_begin file =
-  let f = file_on_path (!load_path) file in
+  (* the file need not exist yet: then it is file in the src directory *)
+  let f = try file_on_path (!load_path) file
+          with Not_found -> Filename.concat cakeml_src_dir file in
   cake_file_deps := (f,read_needs_lines f) ::
                     filter (fun (g,_) -> g <> f) (!cake_file_deps);
   cake_context := Some f;

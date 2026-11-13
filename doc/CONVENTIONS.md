@@ -34,11 +34,18 @@
   conditionals (HOL4 semantics: each `_` is independent, numeral and other literal patterns are
   equality tests, an unmatched value is `ARB`). `CASE_TERM` compiles a statement:
   `prove(CASE_TERM `...`, tac)`.
-- `cake_def tm` for definitions whose termination HOL Light finds itself (structural or tail
-  recursion); `cake_def_wf R tac tm` with HOL4's termination relation `R` on the tupled
-  arguments (on their sum `INL`/`INR` for mutual recursion), built from `measure`,
-  `inv_image` and `LEX`; `tac` proves each termination condition (`TERM_TAC` handles size
-  measures).
+- `cake_def tm` for definitions with automatic termination (HOL Light's own analysis, else the
+  size of one argument or of all of them, as HOL4's `Define`); `cake_def_wf R tac tm` with
+  HOL4's termination relation `R` on the tupled arguments (on their sum `INL`/`INR` for mutual
+  recursion), built from `measure`, `inv_image` and `LEX`; `tac` proves each termination
+  condition (`TERM_TAC` handles size measures). `cake_ind "f"` is the induction theorem.
+- Clauses follow HOL4: each `_` is a separate variable (`(_:num)` is a typed wildcard);
+  overlapping clauses mean that the first match wins and are completed into the instances that
+  no earlier clause matches, as HOL4 does (literal patterns other than `0` must not overlap).
+  Recursive calls under `MAP`, `ALL`, `EX`, `IMAGE`, `ITLIST`, `OPT_MMAP`, `OPTION_MAP`,
+  `OPTION_BIND`, `OPTION_IGNORE_BIND` and `==>` get the contexts of HOL4's congruence rules
+  (`MEM y l`, `y IN s`, `o = SOME y`, the antecedent); `cake_register_admissible` adds a rule
+  for another constant.
 - `cake_record "r" ["f1","ty1"; ...]` for records; `cake_inductive tm` for inductive relations
   (rules, induction, cases, strong induction).
 

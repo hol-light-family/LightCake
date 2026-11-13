@@ -1,0 +1,16 @@
+(* ========================================================================= *)
+(* int_bitwise: HOL4 src/integer/int_bitwiseScript.sml (HOL4 library):       *)
+(* bitwise operations on integers in twos-complement form (int_not, int_bit, *)
+(* int_and, int_or, int_xor, int_shift_left, int_shift_right, bits_of_int,   *)
+(* int_of_bits, ...).                                                        *)
+(*                                                                           *)
+(* Nothing to port for CakeML v3479: the theory is an ancestor of the proofs *)
+(* data_to_wordProof, data_to_word_memoryProof, data_to_word_gcProof,        *)
+(* data_to_word_bignumProof and data_to_word_assignProof                     *)
+(* (compiler/backend/proofs), but none of these scripts (nor any other       *)
+(* script of the closure) uses one of its constants or theorems, and the     *)
+(* theory has no simp rules. The file exists so that the ports of those      *)
+(* scripts can name their ancestor.                                          *)
+(* ========================================================================= *)
+
+needs "hol4/vocab.ml";;

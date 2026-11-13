@@ -1,0 +1,145 @@
+(* ========================================================================= *)
+(* db_vars: port of HOL4 compiler/backend/db_varsScript.sml (CakeML v3479).  *)
+(* Defines a datatype that is handy when keeping track of which dB vars are  *)
+(* live when traversing a language using dB vars.                            *)
+(* ========================================================================= *)
+
+needs "hol4/sptree.ml";;
+needs "misc/misc.ml";;
+
+prioritize_num();;
+type_invention_error := true;;
+
+(* HOL4 () is one; num_set is 1 spt *)
+
+let db_var_set_INDUCT,db_var_set_RECURSION = cake_type
+  "db_var_set = db_vars_Empty
+              | db_vars_Var num
+              | db_vars_Shift num db_var_set
+              | db_vars_Union db_var_set db_var_set";;
+
+let mk_Union_def = cake_def
+  `mk_Union t1 t2 =
+     if t1 = db_vars_Empty then t2 else
+     if t2 = db_vars_Empty then t1 else
+       db_vars_Union t1 t2`;;
+
+let mk_Union_Empty = prove
+ (`mk_Union db_vars_Empty A = A /\ mk_Union A db_vars_Empty = A`,
+  RW[mk_Union_def]);;
+let _ = cake_add_simps [mk_Union_Empty];;
+
+let list_mk_Union_def = cake_def
+  `(list_mk_Union [] = db_vars_Empty) /\
+   (list_mk_Union (CONS x xs) = mk_Union x (list_mk_Union xs))`;;
+
+let FOLDR_mk_Union_UNZIP = prove
+ (CASE_TERM
+  `ITLIST (\(x,l) (ts,frees). (CONS x ts, mk_Union l frees))
+          (l:(A#db_var_set)list) ([],A) =
+   match UNZIP l with
+     (ts,fvs) -> (ts, list_mk_Union (APPEND fvs [A]))`,
+  SPEC_TAC(`l:(A#db_var_set)list`,`l:(A#db_var_set)list`) THEN
+  MATCH_MP_TAC list_INDUCT THEN REWRITE_TAC[FORALL_PAIR_THM] THEN
+  REWRITE_TAC[ITLIST; UNZIP_DEF; MAP; APPEND; pair_CASE; list_mk_Union_def;
+              mk_Union_Empty; FST; SND] THEN
+  REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
+  CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN REWRITE_TAC[]);;
+
+let db_to_set_acc_def = cake_def
+  `(db_to_set_acc (n:num) db_vars_Empty (s:num_set) = s) /\
+   (db_to_set_acc n (db_vars_Var v) s =
+      if v < n then s else insert (v - n) one s) /\
+   (db_to_set_acc n (db_vars_Shift k d) s = db_to_set_acc (n + k) d s) /\
+   (db_to_set_acc n (db_vars_Union v1 v2) s =
+      db_to_set_acc n v1 (db_to_set_acc n v2 s))`;;
+
+let wf_db_to_set_acc = prove
+ (`!s n a. wf a ==> wf (db_to_set_acc n s a)`,
+  MATCH_MP_TAC db_var_set_INDUCT THEN
+  ASM_SIMP_TAC[db_to_set_acc_def; wf_insert] THEN
+  REPEAT STRIP_TAC THEN COND_CASES_TAC THEN ASM_SIMP_TAC[wf_insert]);;
+
+let db_to_set_def = cake_def
+  `db_to_set db = db_to_set_acc 0 db LN`;;
+
+let wf_db_to_set = prove
+ (`!db. wf (db_to_set db)`,
+  RW[db_to_set_def; wf_db_to_set_acc; wf_def]);;
+
+let vars_to_list_def = cake_def
+  `vars_to_list db = MAP FST (toAList (db_to_set db))`;;
+
+let vars_from_list_def = cake_def
+  `vars_from_list vs =
+     FOLDL (\s1 v. db_vars_Union (db_vars_Var v) s1) db_vars_Empty vs`;;
+
+let vars_flatten_def = cake_def
+  `vars_flatten db = vars_from_list (vars_to_list db)`;;
+
+let has_var_def = cake_def
+  `(has_var n db_vars_Empty <=> F) /\
+   (has_var n (db_vars_Var v) <=> n = v) /\
+   (has_var n (db_vars_Shift k d) <=> has_var (n + k) d) /\
+   (has_var n (db_vars_Union d1 d2) <=> has_var n d1 \/ has_var n d2)`;;
+let _ = cake_add_simps [has_var_def];;
+
+let has_var_mk_Union = prove
+ (`has_var n (mk_Union l1 l2) <=> has_var n l1 \/ has_var n l2`,
+  RW[mk_Union_def; has_var_def]);;
+let _ = cake_add_simps [has_var_mk_Union];;
+
+let has_var_list_mk_Union = prove
+ (`!ls. has_var n (list_mk_Union ls) <=> EX (has_var n) ls`,
+  LIST_INDUCT_TAC THEN FS[list_mk_Union_def; has_var_mk_Union; has_var_def; EX]);;
+let _ = cake_add_simps [has_var_list_mk_Union];;
+
+let lookup_db_to_set_acc = prove
+ (`!d n k s.
+     lookup n (db_to_set_acc k d s) =
+       if has_var (n + k) d then SOME one else lookup n s`,
+  MATCH_MP_TAC db_var_set_INDUCT THEN
+  REWRITE_TAC[has_var_def; db_to_set_acc_def] THEN REPEAT STRIP_TAC THENL
+   [COND_CASES_TAC THEN REWRITE_TAC[lookup_insert] THENL
+     [SUBGOAL_THEN `~(n + k = a)` (fun th -> REWRITE_TAC[th]) THEN ASM_ARITH_TAC;
+      SUBGOAL_THEN `n = a - k <=> n + k = a` (fun th -> REWRITE_TAC[th]) THEN
+      ASM_ARITH_TAC];
+    ASM_REWRITE_TAC[ADD_ASSOC];
+    ASM_REWRITE_TAC[] THEN
+    MAP_EVERY ASM_CASES_TAC [`has_var (n + k) a0`; `has_var (n + k) a1`] THEN
+    ASM_REWRITE_TAC[]]);;
+
+let lookup_db_to_set = prove
+ (`has_var n d <=> lookup n (db_to_set d) = SOME one`,
+  REWRITE_TAC[lookup_db_to_set_acc; db_to_set_def; lookup_def; ADD_CLAUSES] THEN
+  COND_CASES_TAC THEN ASM_REWRITE_TAC[option_DISTINCT]);;
+
+let lookup_db_to_set_Shift = prove
+ (`lookup n (db_to_set (db_vars_Shift k s)) = lookup (n + k) (db_to_set s)`,
+  REWRITE_TAC[db_to_set_def; db_to_set_acc_def; lookup_db_to_set_acc;
+              lookup_def; ADD_CLAUSES]);;
+
+let MEM_vars_to_list = prove
+ (`MEM n (vars_to_list d) <=> has_var n d`,
+  REWRITE_TAC[vars_to_list_def; MEM_MAP; EXISTS_PAIR_THM; MEM_toAList] THEN
+  REWRITE_TAC[lookup_db_to_set] THEN MESON_TAC[one]);;
+
+(* HOL4: local *)
+let has_var_FOLDL_Union = prove
+ (`!vs n s. has_var n (FOLDL (\s1 v. db_vars_Union (db_vars_Var v) s1) s vs) <=>
+            MEM n vs \/ has_var n s`,
+  LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[FOLDL; MEM; has_var_def] THEN
+  MESON_TAC[]);;
+
+let MEM_vars_from_list = prove
+ (`!vs n. has_var n (vars_from_list vs) <=> MEM n vs`,
+  REWRITE_TAC[vars_from_list_def; has_var_FOLDL_Union; has_var_def]);;
+
+let has_var_vars_flatten = prove
+ (`has_var n (vars_flatten d) <=> has_var n d`,
+  REWRITE_TAC[vars_flatten_def; MEM_vars_from_list; MEM_vars_to_list]);;
+let _ = cake_add_simps [has_var_vars_flatten];;
+
+let ALL_DISTINCT_vars_to_list = prove
+ (`ALL_DISTINCT (vars_to_list d)`,
+  REWRITE_TAC[vars_to_list_def; ALL_DISTINCT_MAP_FST_toAList]);;

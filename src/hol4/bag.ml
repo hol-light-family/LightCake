@@ -1,0 +1,1361 @@
+(* ========================================================================= *)
+(* bag: port of HOL4 src/bag/bagScript.sml and of the LIST_TO_BAG part of   *)
+(* src/finite_maps/containerScript.sml (HOL4 library used by CakeML v3479):  *)
+(* multisets as functions A->num (HOL4 'a bag), the bag operations and the  *)
+(* theorems the CakeML closure uses, including the multiset ordering mlt1   *)
+(* and its well-foundedness (WF_mlt1).                                       *)
+(*                                                                           *)
+(* Notation: HOL4 'a bag is A->num; the empty bag literal is EMPTY_BAG, the  *)
+(* literal of x and y is BAG_INSERT x (BAG_INSERT y EMPTY_BAG), b1 + b2 is   *)
+(* BAG_UNION b1 b2,                                                          *)
+(* b1 - b2 is BAG_DIFF b1 b2, b1 <= b2 is SUB_BAG b1 b2, x <: b is BAG_IN x  *)
+(* b; HOL4 mlt R (an overload) is TC (mlt1 R); FOLDR f e l is ITLIST f l e   *)
+(* and LIST_REL is ALL2 (vocab.ml).  BAG_CARD is defined as the sum of the   *)
+(* multiplicities over the support (HOL4 specifies it on finite bags only;  *)
+(* every HOL4 theorem about it is a theorem here).  HOL4 SUB_BAG_UNION is    *)
+(* the same list of 24 conjuncts in the same order (HOL Light el is 0-based: *)
+(* HOL4 el 7 is el 6 here).  Helper lemmas that are not HOL4 theorems are    *)
+(* LSORTAUX_.  Not ported (not used by the closure): BAG_DELETE, BAG_CHOICE, *)
+(* BAG_REST, ITBAG, BAG_GEN_SUM/PROD, BAG_EVERY, dominates, BAG_TO_LIST and  *)
+(* the multiset ordering lemmas beyond WF_mlt1 and TC_mlt1_UNION.            *)
+(* ========================================================================= *)
+
+needs "hol4/vocab.ml";;
+needs "hol4/sorting.ml";;
+
+type_invention_error := true;;
+
+(* ------------------------------------------------------------------------- *)
+(* Basic bag operations.                                                     *)
+(* ------------------------------------------------------------------------- *)
+
+let EMPTY_BAG = new_definition
+  `EMPTY_BAG:A->num = K 0`;;
+
+let EMPTY_BAG_alt = prove
+ (`EMPTY_BAG:A->num = \x. 0`,
+  REWRITE_TAC[EMPTY_BAG; FUN_EQ_THM; K_THM]);;
+
+let BAG_INN = new_definition
+  `BAG_INN (e:A) n b <=> b e >= n`;;
+
+let SUB_BAG = new_definition
+  `SUB_BAG b1 b2 <=> !x:A n. BAG_INN x n b1 ==> BAG_INN x n b2`;;
+
+let PSUB_BAG = new_definition
+  `PSUB_BAG (b1:A->num) b2 <=> SUB_BAG b1 b2 /\ ~(b1 = b2)`;;
+
+let BAG_IN = new_definition
+  `BAG_IN (e:A) b <=> BAG_INN e 1 b`;;
+
+let BAG_UNION = new_definition
+  `BAG_UNION b (c:A->num) = \x. b x + c x`;;
+
+let BAG_DIFF = new_definition
+  `BAG_DIFF b1 (b2:A->num) = \x. b1 x - b2 x`;;
+
+let BAG_INSERT = new_definition
+  `BAG_INSERT (e:A) b = \x. if x = e then b e + 1 else b x`;;
+
+let LSORTAUX_BAG_IN_ALT = prove
+ (`!(e:A) b. BAG_IN e b <=> ~(b e = 0)`,
+  REWRITE_TAC[BAG_IN; BAG_INN] THEN ARITH_TAC);;
+
+let LSORTAUX_BAG_INSERT_APPLY = prove
+ (`!(e:A) b x. BAG_INSERT e b x = if x = e then b x + 1 else b x`,
+  REWRITE_TAC[BAG_INSERT] THEN REPEAT GEN_TAC THEN COND_CASES_TAC THEN
+  ASM_REWRITE_TAC[]);;
+
+let LSORTAUX_BAG_INSERT_ADD = prove
+ (`!(e:A) b x. BAG_INSERT e b x = b x + (if x = e then 1 else 0)`,
+  REWRITE_TAC[BAG_INSERT] THEN REPEAT GEN_TAC THEN COND_CASES_TAC THEN
+  ASM_REWRITE_TAC[ADD_CLAUSES]);;
+
+let BAG_cases = prove
+ (`!b:A->num. b = EMPTY_BAG \/ ?b0 e. b = BAG_INSERT e b0`,
+  GEN_TAC THEN ASM_CASES_TAC `!x:A. b x = 0` THENL
+   [DISJ1_TAC THEN ASM_REWRITE_TAC[EMPTY_BAG; FUN_EQ_THM; K_THM];
+    DISJ2_TAC THEN FIRST_X_ASSUM(X_CHOOSE_TAC `x:A` o REWRITE_RULE[NOT_FORALL_THM]) THEN
+    MAP_EVERY EXISTS_TAC [`\y. if y = x then (b:A->num) x - 1 else b y`; `x:A`] THEN
+    REWRITE_TAC[FUN_EQ_THM; LSORTAUX_BAG_INSERT_APPLY] THEN X_GEN_TAC `y:A` THEN
+    COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN ASM_ARITH_TAC]);;
+
+let BAG_INTER = new_definition
+  `BAG_INTER b1 (b2:A->num) = \x. if b1 x < b2 x then b1 x else b2 x`;;
+
+let BAG_MERGE = new_definition
+  `BAG_MERGE b1 (b2:A->num) = \x. if b1 x < b2 x then b2 x else b1 x`;;
+
+let BAG_INN_0 = prove
+ (`!b (e:A). BAG_INN e 0 b`,
+  REWRITE_TAC[BAG_INN] THEN ARITH_TAC);;
+
+let BAG_INN_LESS = prove
+ (`!b (e:A) n m. BAG_INN e n b /\ m < n ==> BAG_INN e m b`,
+  REWRITE_TAC[BAG_INN] THEN ARITH_TAC);;
+
+let BAG_IN_BAG_INSERT = prove
+ (`!b (e1:A) e2. BAG_IN e1 (BAG_INSERT e2 b) <=> e1 = e2 \/ BAG_IN e1 b`,
+  REWRITE_TAC[LSORTAUX_BAG_IN_ALT; LSORTAUX_BAG_INSERT_APPLY] THEN
+  REPEAT GEN_TAC THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN ARITH_TAC);;
+
+let BAG_INN_BAG_INSERT = prove
+ (`!b (e1:A) e2 n.
+     BAG_INN e1 n (BAG_INSERT e2 b) <=>
+     BAG_INN e1 (n - 1) b /\ e1 = e2 \/ BAG_INN e1 n b`,
+  REWRITE_TAC[BAG_INN; LSORTAUX_BAG_INSERT_APPLY] THEN
+  REPEAT GEN_TAC THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN ARITH_TAC);;
+
+let BAG_UNION_EQ_LCANCEL1 = prove
+ (`!b c:A->num. b = BAG_UNION b c <=> c = EMPTY_BAG`,
+  REWRITE_TAC[BAG_UNION; EMPTY_BAG; FUN_EQ_THM; K_THM] THEN
+  REWRITE_TAC[ARITH_RULE `x:num = x + y <=> y = 0`]);;
+
+let BAG_UNION_EQ_RCANCEL1 = prove
+ (`!b c:A->num. b = BAG_UNION c b <=> c = EMPTY_BAG`,
+  REWRITE_TAC[BAG_UNION; EMPTY_BAG; FUN_EQ_THM; K_THM] THEN
+  REWRITE_TAC[ARITH_RULE `x:num = y + x <=> y = 0`]);;
+
+let BAG_IN_BAG_UNION = prove
+ (`!b1 b2 (e:A). BAG_IN e (BAG_UNION b1 b2) <=> BAG_IN e b1 \/ BAG_IN e b2`,
+  REWRITE_TAC[LSORTAUX_BAG_IN_ALT; BAG_UNION] THEN ARITH_TAC);;
+
+let BAG_INN_BAG_UNION = prove
+ (`!n (e:A) b1 b2.
+     BAG_INN e n (BAG_UNION b1 b2) <=>
+     ?m1 m2. n = m1 + m2 /\ BAG_INN e m1 b1 /\ BAG_INN e m2 b2`,
+  REWRITE_TAC[BAG_INN; BAG_UNION] THEN REPEAT GEN_TAC THEN EQ_TAC THENL
+   [DISCH_TAC THEN ASM_CASES_TAC `n <= (b1:A->num) e` THENL
+     [MAP_EVERY EXISTS_TAC [`n:num`; `0`] THEN ASM_ARITH_TAC;
+      MAP_EVERY EXISTS_TAC [`(b1:A->num) e`; `n - (b1:A->num) e`] THEN
+      ASM_ARITH_TAC];
+    STRIP_TAC THEN ASM_ARITH_TAC]);;
+
+let BAG_EXTENSION = prove
+ (`!b1 b2:A->num. b1 = b2 <=> !n e. BAG_INN e n b1 <=> BAG_INN e n b2`,
+  REWRITE_TAC[BAG_INN; FUN_EQ_THM] THEN REPEAT GEN_TAC THEN EQ_TAC THENL
+   [SIMP_TAC[];
+    DISCH_TAC THEN X_GEN_TAC `e:A` THEN
+    FIRST_X_ASSUM(fun th -> MP_TAC(SPECL [`(b1:A->num) e`; `e:A`] th) THEN
+                            MP_TAC(SPECL [`(b2:A->num) e`; `e:A`] th)) THEN
+    ARITH_TAC]);;
+
+let BAG_UNION_INSERT = prove
+ (`!(e:A) b1 b2.
+     BAG_UNION (BAG_INSERT e b1) b2 = BAG_INSERT e (BAG_UNION b1 b2) /\
+     BAG_UNION b1 (BAG_INSERT e b2) = BAG_INSERT e (BAG_UNION b1 b2)`,
+  REWRITE_TAC[FUN_EQ_THM; BAG_UNION; LSORTAUX_BAG_INSERT_APPLY] THEN
+  REPEAT STRIP_TAC THEN COND_CASES_TAC THEN ARITH_TAC);;
+
+let BAG_INSERT_DIFF = prove
+ (`!(x:A) b. ~(BAG_INSERT x b = b)`,
+  REWRITE_TAC[FUN_EQ_THM; LSORTAUX_BAG_INSERT_APPLY] THEN
+  REPEAT GEN_TAC THEN DISCH_THEN(MP_TAC o SPEC `x:A`) THEN ARITH_TAC);;
+
+let BAG_INSERT_NOT_EMPTY = prove
+ (`!(x:A) b. ~(BAG_INSERT x b = EMPTY_BAG)`,
+  REWRITE_TAC[FUN_EQ_THM; LSORTAUX_BAG_INSERT_APPLY; EMPTY_BAG; K_THM] THEN
+  REPEAT GEN_TAC THEN DISCH_THEN(MP_TAC o SPEC `x:A`) THEN ARITH_TAC);;
+
+let BAG_INSERT_ONE_ONE = prove
+ (`!b1 b2 (x:A). BAG_INSERT x b1 = BAG_INSERT x b2 <=> b1 = b2`,
+  REPEAT GEN_TAC THEN EQ_TAC THEN SIMP_TAC[] THEN
+  REWRITE_TAC[FUN_EQ_THM; LSORTAUX_BAG_INSERT_APPLY] THEN
+  DISCH_TAC THEN X_GEN_TAC `y:A` THEN FIRST_X_ASSUM(MP_TAC o SPEC `y:A`) THEN
+  COND_CASES_TAC THEN ARITH_TAC);;
+
+let C_BAG_INSERT_ONE_ONE = prove
+ (`!(x:A) y b. BAG_INSERT x b = BAG_INSERT y b <=> x = y`,
+  REPEAT GEN_TAC THEN EQ_TAC THEN SIMP_TAC[] THEN
+  REWRITE_TAC[FUN_EQ_THM; LSORTAUX_BAG_INSERT_APPLY] THEN
+  DISCH_THEN(MP_TAC o SPEC `x:A`) THEN REWRITE_TAC[] THEN
+  COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN ARITH_TAC);;
+
+let BAG_INSERT_commutes = prove
+ (`!b (e1:A) e2.
+     BAG_INSERT e1 (BAG_INSERT e2 b) = BAG_INSERT e2 (BAG_INSERT e1 b)`,
+  REWRITE_TAC[FUN_EQ_THM; LSORTAUX_BAG_INSERT_ADD] THEN ARITH_TAC);;
+
+let BAG_UNION_LEFT_CANCEL = prove
+ (`!b b1 b2:A->num. BAG_UNION b b1 = BAG_UNION b b2 <=> b1 = b2`,
+  REWRITE_TAC[BAG_UNION; FUN_EQ_THM; EQ_ADD_LCANCEL]);;
+
+let COMM_BAG_UNION = prove
+ (`!b1 b2:A->num. BAG_UNION b1 b2 = BAG_UNION b2 b1`,
+  REWRITE_TAC[BAG_UNION; FUN_EQ_THM] THEN ARITH_TAC);;
+
+let BAG_UNION_RIGHT_CANCEL = prove
+ (`!b b1 b2:A->num. BAG_UNION b1 b = BAG_UNION b2 b <=> b1 = b2`,
+  REWRITE_TAC[BAG_UNION; FUN_EQ_THM; EQ_ADD_RCANCEL]);;
+
+let ASSOC_BAG_UNION = prove
+ (`!b1 b2 b3:A->num.
+     BAG_UNION b1 (BAG_UNION b2 b3) = BAG_UNION (BAG_UNION b1 b2) b3`,
+  REWRITE_TAC[BAG_UNION; FUN_EQ_THM] THEN ARITH_TAC);;
+
+let BAG_UNION_EMPTY = prove
+ (`(!b:A->num. BAG_UNION b EMPTY_BAG = b) /\
+   (!b:A->num. BAG_UNION EMPTY_BAG b = b) /\
+   (!b1 b2:A->num. BAG_UNION b1 b2 = EMPTY_BAG <=> b1 = EMPTY_BAG /\ b2 = EMPTY_BAG)`,
+  REWRITE_TAC[BAG_UNION; EMPTY_BAG; FUN_EQ_THM; K_THM; ADD_CLAUSES; ADD_EQ_0] THEN
+  MESON_TAC[]);;
+
+let EL_BAG = new_definition
+  `EL_BAG (e:A) = BAG_INSERT e EMPTY_BAG`;;
+
+let BAG_INSERT_UNION = prove
+ (`!b (e:A). BAG_INSERT e b = BAG_UNION (EL_BAG e) b`,
+  REWRITE_TAC[EL_BAG; BAG_UNION_INSERT; BAG_UNION_EMPTY]);;
+
+let BAG_INSERT_EQ_UNION = prove
+ (`!(e:A) b b1 b2.
+     BAG_INSERT e b = BAG_UNION b1 b2 ==> BAG_IN e b1 \/ BAG_IN e b2`,
+  REPEAT GEN_TAC THEN DISCH_THEN(MP_TAC o AP_TERM `BAG_IN (e:A)`) THEN
+  REWRITE_TAC[BAG_IN_BAG_INSERT; BAG_IN_BAG_UNION]);;
+
+let NOT_IN_EMPTY_BAG = prove
+ (`!x:A. ~BAG_IN x EMPTY_BAG`,
+  REWRITE_TAC[LSORTAUX_BAG_IN_ALT; EMPTY_BAG; K_THM]);;
+
+let BAG_INN_EMPTY_BAG = prove
+ (`!(e:A) n. BAG_INN e n EMPTY_BAG <=> n = 0`,
+  REWRITE_TAC[BAG_INN; EMPTY_BAG; K_THM] THEN ARITH_TAC);;
+
+let BAG_MEMBER_NOT_EMPTY = prove
+ (`!b:A->num. (?x. BAG_IN x b) <=> ~(b = EMPTY_BAG)`,
+  MESON_TAC[BAG_cases; BAG_IN_BAG_INSERT; NOT_IN_EMPTY_BAG]);;
+
+let SUB_BAG_LEQ = prove
+ (`!b1 b2:A->num. SUB_BAG b1 b2 <=> !x. b1 x <= b2 x`,
+  REWRITE_TAC[SUB_BAG; BAG_INN; GE] THEN MESON_TAC[LE_REFL; LE_TRANS]);;
+
+let SUB_BAG_EMPTY = prove
+ (`(!b:A->num. SUB_BAG EMPTY_BAG b) /\
+   (!b:A->num. SUB_BAG b EMPTY_BAG <=> b = EMPTY_BAG)`,
+  REWRITE_TAC[SUB_BAG_LEQ; EMPTY_BAG; FUN_EQ_THM; K_THM; LE_0;
+              ARITH_RULE `!x. x <= 0 <=> x = 0`]);;
+
+let SUB_BAG_REFL = prove
+ (`!b:A->num. SUB_BAG b b`,
+  REWRITE_TAC[SUB_BAG]);;
+
+let PSUB_BAG_IRREFL = prove
+ (`!b:A->num. ~PSUB_BAG b b`,
+  REWRITE_TAC[PSUB_BAG]);;
+
+let SUB_BAG_ANTISYM = prove
+ (`!b1 b2:A->num. SUB_BAG b1 b2 /\ SUB_BAG b2 b1 ==> b1 = b2`,
+  REWRITE_TAC[SUB_BAG_LEQ; FUN_EQ_THM] THEN MESON_TAC[LE_ANTISYM]);;
+
+let PSUB_BAG_ANTISYM = prove
+ (`!b1 b2:A->num. ~(PSUB_BAG b1 b2 /\ PSUB_BAG b2 b1)`,
+  MESON_TAC[PSUB_BAG; SUB_BAG_ANTISYM]);;
+
+let SUB_BAG_TRANS = prove
+ (`!b1 b2 b3:A->num. SUB_BAG b1 b2 /\ SUB_BAG b2 b3 ==> SUB_BAG b1 b3`,
+  MESON_TAC[SUB_BAG]);;
+
+let PSUB_BAG_TRANS = prove
+ (`!b1 b2 b3:A->num. PSUB_BAG b1 b2 /\ PSUB_BAG b2 b3 ==> PSUB_BAG b1 b3`,
+  MESON_TAC[PSUB_BAG; SUB_BAG_TRANS; SUB_BAG_ANTISYM]);;
+
+let PSUB_BAG_SUB_BAG = prove
+ (`!b1 b2:A->num. PSUB_BAG b1 b2 ==> SUB_BAG b1 b2`,
+  SIMP_TAC[PSUB_BAG]);;
+
+let PSUB_BAG_NOT_EQ = prove
+ (`!b1 b2:A->num. PSUB_BAG b1 b2 ==> ~(b1 = b2)`,
+  SIMP_TAC[PSUB_BAG]);;
+
+let BAG_DIFF_EMPTY = prove
+ (`(!b:A->num. BAG_DIFF b b = EMPTY_BAG) /\
+   (!b:A->num. BAG_DIFF b EMPTY_BAG = b) /\
+   (!b:A->num. BAG_DIFF EMPTY_BAG b = EMPTY_BAG) /\
+   (!b1 b2:A->num. SUB_BAG b1 b2 ==> BAG_DIFF b1 b2 = EMPTY_BAG)`,
+  REWRITE_TAC[SUB_BAG_LEQ; BAG_DIFF; EMPTY_BAG; FUN_EQ_THM; K_THM] THEN
+  REWRITE_TAC[SUB_REFL; SUB_0] THEN MESON_TAC[SUB_EQ_0]);;
+
+let BAG_DIFF_EMPTY_simple = prove
+ (`(!b:A->num. BAG_DIFF b b = EMPTY_BAG) /\
+   (!b:A->num. BAG_DIFF b EMPTY_BAG = b) /\
+   (!b:A->num. BAG_DIFF EMPTY_BAG b = EMPTY_BAG)`,
+  REWRITE_TAC[BAG_DIFF_EMPTY]);;
+
+let BAG_DIFF_EQ_EMPTY = prove
+ (`!b c:A->num. BAG_DIFF b c = EMPTY_BAG <=> SUB_BAG b c`,
+  REWRITE_TAC[BAG_DIFF; FUN_EQ_THM; SUB_BAG_LEQ; EMPTY_BAG; K_THM; SUB_EQ_0]);;
+
+let BAG_DIFF_INSERT_same = prove
+ (`!(x:A) b1 b2.
+     BAG_DIFF (BAG_INSERT x b1) (BAG_INSERT x b2) = BAG_DIFF b1 b2`,
+  REWRITE_TAC[BAG_DIFF; FUN_EQ_THM; LSORTAUX_BAG_INSERT_ADD] THEN ARITH_TAC);;
+
+let BAG_DIFF_INSERT = prove
+ (`!(x:A) b1 b2.
+     ~BAG_IN x b1
+     ==> BAG_DIFF (BAG_INSERT x b2) b1 = BAG_INSERT x (BAG_DIFF b2 b1)`,
+  REWRITE_TAC[BAG_DIFF; FUN_EQ_THM; LSORTAUX_BAG_INSERT_ADD;
+              LSORTAUX_BAG_IN_ALT] THEN
+  REPEAT STRIP_TAC THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
+  ASM_ARITH_TAC);;
+
+let NOT_IN_BAG_DIFF = prove
+ (`!(x:A) b1 b2.
+     ~BAG_IN x b1 ==> BAG_DIFF b1 (BAG_INSERT x b2) = BAG_DIFF b1 b2`,
+  REWRITE_TAC[BAG_DIFF; FUN_EQ_THM; LSORTAUX_BAG_INSERT_ADD;
+              LSORTAUX_BAG_IN_ALT] THEN
+  REPEAT STRIP_TAC THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
+  ASM_ARITH_TAC);;
+
+let BAG_IN_DIFF_I = prove
+ (`!(e:A) b1 b2. BAG_IN e b1 /\ ~BAG_IN e b2 ==> BAG_IN e (BAG_DIFF b1 b2)`,
+  REWRITE_TAC[LSORTAUX_BAG_IN_ALT; BAG_DIFF] THEN ARITH_TAC);;
+
+let BAG_IN_DIFF_E = prove
+ (`!(e:A) b1 b2. BAG_IN e (BAG_DIFF b1 b2) ==> BAG_IN e b1`,
+  REWRITE_TAC[LSORTAUX_BAG_IN_ALT; BAG_DIFF] THEN ARITH_TAC);;
+
+let BAG_UNION_DIFF = prove
+ (`!X Y Z:A->num.
+     SUB_BAG Z Y
+     ==> BAG_UNION X (BAG_DIFF Y Z) = BAG_DIFF (BAG_UNION X Y) Z /\
+         BAG_UNION (BAG_DIFF Y Z) X = BAG_DIFF (BAG_UNION X Y) Z`,
+  REWRITE_TAC[SUB_BAG_LEQ; BAG_UNION; BAG_DIFF; FUN_EQ_THM] THEN
+  REPEAT STRIP_TAC THEN FIRST_X_ASSUM(MP_TAC o SPEC `x:A`) THEN ARITH_TAC);;
+
+let BAG_DIFF_2L = prove
+ (`!X Y Z:A->num. BAG_DIFF (BAG_DIFF X Y) Z = BAG_DIFF X (BAG_UNION Y Z)`,
+  REWRITE_TAC[BAG_UNION; BAG_DIFF; FUN_EQ_THM] THEN ARITH_TAC);;
+
+let BAG_DIFF_2R = prove
+ (`!A B C:A->num.
+     SUB_BAG C B ==> BAG_DIFF A (BAG_DIFF B C) = BAG_DIFF (BAG_UNION A C) B`,
+  REWRITE_TAC[SUB_BAG_LEQ; BAG_UNION; BAG_DIFF; FUN_EQ_THM] THEN
+  REPEAT STRIP_TAC THEN FIRST_X_ASSUM(MP_TAC o SPEC `x:A`) THEN ARITH_TAC);;
+
+let BAG_DIFF_UNION_eliminate = prove
+ (`!b1 b2 b3:A->num.
+     BAG_DIFF (BAG_UNION b1 b2) (BAG_UNION b1 b3) = BAG_DIFF b2 b3 /\
+     BAG_DIFF (BAG_UNION b1 b2) (BAG_UNION b3 b1) = BAG_DIFF b2 b3 /\
+     BAG_DIFF (BAG_UNION b2 b1) (BAG_UNION b1 b3) = BAG_DIFF b2 b3 /\
+     BAG_DIFF (BAG_UNION b2 b1) (BAG_UNION b3 b1) = BAG_DIFF b2 b3`,
+  REWRITE_TAC[BAG_UNION; BAG_DIFF; FUN_EQ_THM] THEN ARITH_TAC);;
+
+let SUB_BAG_UNION_eliminate = prove
+ (`!b1 b2 b3:A->num.
+     (SUB_BAG (BAG_UNION b1 b2) (BAG_UNION b1 b3) <=> SUB_BAG b2 b3) /\
+     (SUB_BAG (BAG_UNION b1 b2) (BAG_UNION b3 b1) <=> SUB_BAG b2 b3) /\
+     (SUB_BAG (BAG_UNION b2 b1) (BAG_UNION b1 b3) <=> SUB_BAG b2 b3) /\
+     (SUB_BAG (BAG_UNION b2 b1) (BAG_UNION b3 b1) <=> SUB_BAG b2 b3)`,
+  REWRITE_TAC[SUB_BAG_LEQ; BAG_UNION] THEN
+  REWRITE_TAC[ARITH_RULE `(a + b <= a + c <=> b <= c) /\
+                          (a + b <= c + a <=> b <= c) /\
+                          (b + a <= a + c <=> b <= c) /\
+                          (b + a <= c + a <=> b <= c)`]);;
+
+let move_BAG_UNION_over_eq = prove
+ (`!X Y Z:A->num. BAG_UNION X Y = Z ==> X = BAG_DIFF Z Y`,
+  REWRITE_TAC[BAG_UNION; BAG_DIFF; FUN_EQ_THM] THEN
+  REPEAT STRIP_TAC THEN FIRST_X_ASSUM(SUBST1_TAC o SYM o SPEC `x:A`) THEN
+  ARITH_TAC);;
+
+let LSORTAUX_BAG_LEQ_TAC =
+  REWRITE_TAC[SUB_BAG_LEQ; BAG_UNION; BAG_DIFF; LSORTAUX_BAG_INSERT_ADD;
+              EMPTY_BAG; K_THM] THEN REPEAT STRIP_TAC THEN
+  REPEAT(FIRST_X_ASSUM(MP_TAC o SPEC `x:A`)) THEN ARITH_TAC;;
+
+let SUB_BAG_UNION =
+  let simplest_cases = map (fun t -> prove(t,LSORTAUX_BAG_LEQ_TAC))
+   [`!b1 b2:A->num. SUB_BAG b1 b2 ==> !b. SUB_BAG b1 (BAG_UNION b2 b)`;
+    `!b1 b2:A->num. SUB_BAG b1 b2 ==> !b. SUB_BAG b1 (BAG_UNION b b2)`] in
+  let one_from_assocl = map (fun t -> prove(t,LSORTAUX_BAG_LEQ_TAC))
+   [`!b1 b2 b3:A->num.
+       SUB_BAG b1 (BAG_UNION b2 b3) ==>
+       !b. SUB_BAG b1 (BAG_UNION (BAG_UNION b2 b) b3)`;
+    `!b1 b2 b3:A->num.
+       SUB_BAG b1 (BAG_UNION b2 b3) ==>
+       !b. SUB_BAG b1 (BAG_UNION (BAG_UNION b b2) b3)`] in
+  let one_from_assocr =
+    map (ONCE_REWRITE_RULE[COMM_BAG_UNION]) one_from_assocl in
+  let union_from_union = map (fun t -> prove(t,LSORTAUX_BAG_LEQ_TAC))
+   [`!b1 b2 b3 b4:A->num.
+       SUB_BAG b1 b3 ==> SUB_BAG b2 b4 ==>
+       SUB_BAG (BAG_UNION b1 b2) (BAG_UNION b3 b4)`;
+    `!b1 b2 b3 b4:A->num.
+       SUB_BAG b1 b4 ==> SUB_BAG b2 b3 ==>
+       SUB_BAG (BAG_UNION b1 b2) (BAG_UNION b3 b4)`] in
+  let union_union2_assocl = map (fun t -> prove(t,LSORTAUX_BAG_LEQ_TAC))
+   [`!b1 b2 b3 b4 b5:A->num.
+       SUB_BAG b1 (BAG_UNION b3 b5) ==> SUB_BAG b2 b4 ==>
+       SUB_BAG (BAG_UNION b1 b2) (BAG_UNION (BAG_UNION b3 b4) b5)`;
+    `!b1 b2 b3 b4 b5:A->num.
+       SUB_BAG b1 (BAG_UNION b4 b5) ==> SUB_BAG b2 b3 ==>
+       SUB_BAG (BAG_UNION b1 b2) (BAG_UNION (BAG_UNION b3 b4) b5)`;
+    `!b1 b2 b3 b4 b5:A->num.
+       SUB_BAG b2 (BAG_UNION b3 b5) ==> SUB_BAG b1 b4 ==>
+       SUB_BAG (BAG_UNION b1 b2) (BAG_UNION (BAG_UNION b3 b4) b5)`;
+    `!b1 b2 b3 b4 b5:A->num.
+       SUB_BAG b2 (BAG_UNION b4 b5) ==> SUB_BAG b1 b3 ==>
+       SUB_BAG (BAG_UNION b1 b2) (BAG_UNION (BAG_UNION b3 b4) b5)`] in
+  let union_union2_assocr =
+    map (ONCE_REWRITE_RULE[COMM_BAG_UNION]) union_union2_assocl in
+  let union2_union_assocl = map (fun t -> prove(t,LSORTAUX_BAG_LEQ_TAC))
+   [`!b1 b2 b3 b4 b5:A->num.
+       SUB_BAG (BAG_UNION b1 b2) b4 ==> SUB_BAG b3 b5 ==>
+       SUB_BAG (BAG_UNION (BAG_UNION b1 b3) b2) (BAG_UNION b4 b5)`;
+    `!b1 b2 b3 b4 b5:A->num.
+       SUB_BAG (BAG_UNION b1 b2) b5 ==> SUB_BAG b3 b4 ==>
+       SUB_BAG (BAG_UNION (BAG_UNION b1 b3) b2) (BAG_UNION b4 b5)`;
+    `!b1 b2 b3 b4 b5:A->num.
+       SUB_BAG (BAG_UNION b3 b2) b4 ==> SUB_BAG b1 b5 ==>
+       SUB_BAG (BAG_UNION (BAG_UNION b1 b3) b2) (BAG_UNION b4 b5)`;
+    `!b1 b2 b3 b4 b5:A->num.
+       SUB_BAG (BAG_UNION b3 b2) b5 ==> SUB_BAG b1 b4 ==>
+       SUB_BAG (BAG_UNION (BAG_UNION b1 b3) b2) (BAG_UNION b4 b5)`] in
+  let union2_union_assocr =
+    map (ONCE_REWRITE_RULE[COMM_BAG_UNION]) union2_union_assocl in
+  end_itlist CONJ (simplest_cases @ one_from_assocl @ one_from_assocr @
+                   union_from_union @ union_union2_assocl @
+                   union_union2_assocr @ union2_union_assocl @
+                   union2_union_assocr);;
+
+let SUB_BAG_EL_BAG = prove
+ (`!(e:A) b. SUB_BAG (EL_BAG e) b <=> BAG_IN e b`,
+  REWRITE_TAC[SUB_BAG_LEQ; EL_BAG; LSORTAUX_BAG_INSERT_ADD; EMPTY_BAG; K_THM;
+              LSORTAUX_BAG_IN_ALT; ADD_CLAUSES] THEN
+  REPEAT GEN_TAC THEN EQ_TAC THENL
+   [DISCH_THEN(MP_TAC o SPEC `e:A`) THEN ARITH_TAC;
+    DISCH_TAC THEN X_GEN_TAC `x:A` THEN COND_CASES_TAC THEN
+    ASM_REWRITE_TAC[] THEN ASM_ARITH_TAC]);;
+
+let SUB_BAG_INSERT = prove
+ (`!(e:A) b1 b2. SUB_BAG (BAG_INSERT e b1) (BAG_INSERT e b2) <=> SUB_BAG b1 b2`,
+  REWRITE_TAC[SUB_BAG_LEQ; LSORTAUX_BAG_INSERT_ADD; LE_ADD_RCANCEL]);;
+
+let SUB_BAG_INSERT_I = prove
+ (`!b c (e:A). SUB_BAG b c ==> SUB_BAG b (BAG_INSERT e c)`,
+  LSORTAUX_BAG_LEQ_TAC);;
+
+let NOT_IN_SUB_BAG_INSERT = prove
+ (`!b1 b2 (e:A).
+     ~BAG_IN e b1 ==> (SUB_BAG b1 (BAG_INSERT e b2) <=> SUB_BAG b1 b2)`,
+  REWRITE_TAC[SUB_BAG_LEQ; LSORTAUX_BAG_INSERT_ADD; LSORTAUX_BAG_IN_ALT] THEN
+  REPEAT STRIP_TAC THEN EQ_TAC THEN DISCH_TAC THEN X_GEN_TAC `x:A` THEN
+  FIRST_X_ASSUM(MP_TAC o SPEC `x:A`) THEN
+  ASM_CASES_TAC `x:A = e` THEN ASM_REWRITE_TAC[] THEN ASM_ARITH_TAC);;
+
+let SUB_BAG_BAG_IN = prove
+ (`!(x:A) b1 b2. SUB_BAG (BAG_INSERT x b1) b2 ==> BAG_IN x b2`,
+  REWRITE_TAC[SUB_BAG_LEQ; LSORTAUX_BAG_INSERT_ADD; LSORTAUX_BAG_IN_ALT] THEN
+  REPEAT GEN_TAC THEN DISCH_THEN(MP_TAC o SPEC `x:A`) THEN REWRITE_TAC[] THEN
+  ARITH_TAC);;
+
+let SUB_BAG_EXISTS = prove
+ (`!b1 b2:A->num. SUB_BAG b1 b2 <=> ?b. b2 = BAG_UNION b1 b`,
+  REWRITE_TAC[SUB_BAG_LEQ; BAG_UNION; FUN_EQ_THM] THEN REPEAT GEN_TAC THEN
+  EQ_TAC THENL
+   [DISCH_TAC THEN EXISTS_TAC `\x:A. (b2:A->num) x - b1 x` THEN
+    X_GEN_TAC `x:A` THEN FIRST_X_ASSUM(MP_TAC o SPEC `x:A`) THEN ARITH_TAC;
+    STRIP_TAC THEN ASM_REWRITE_TAC[] THEN ARITH_TAC]);;
+
+let SUB_BAG_UNION_DIFF = prove
+ (`!b1 b2 b3:A->num.
+     SUB_BAG b1 b3
+     ==> (SUB_BAG b2 (BAG_DIFF b3 b1) <=> SUB_BAG (BAG_UNION b1 b2) b3)`,
+  REWRITE_TAC[SUB_BAG_LEQ; BAG_UNION; BAG_DIFF] THEN REPEAT STRIP_TAC THEN
+  EQ_TAC THEN DISCH_TAC THEN X_GEN_TAC `x:A` THEN
+  REPEAT(FIRST_X_ASSUM(MP_TAC o SPEC `x:A`)) THEN ARITH_TAC);;
+
+let SUB_BAG_UNION_down = prove
+ (`!b1 b2 b3:A->num.
+     SUB_BAG (BAG_UNION b1 b2) b3 ==> SUB_BAG b1 b3 /\ SUB_BAG b2 b3`,
+  LSORTAUX_BAG_LEQ_TAC);;
+
+let SUB_BAG_DIFF = prove
+ (`(!b1 b2:A->num. SUB_BAG b1 b2 ==> !b3. SUB_BAG (BAG_DIFF b1 b3) b2) /\
+   (!b1 b2 b3 b4:A->num.
+      SUB_BAG b2 b1 ==> SUB_BAG b4 b3 ==>
+      (SUB_BAG (BAG_DIFF b1 b2) (BAG_DIFF b3 b4) <=>
+       SUB_BAG (BAG_UNION b1 b4) (BAG_UNION b2 b3)))`,
+  CONJ_TAC THENL [LSORTAUX_BAG_LEQ_TAC; ALL_TAC] THEN
+  REWRITE_TAC[SUB_BAG_LEQ; BAG_UNION; BAG_DIFF] THEN REPEAT STRIP_TAC THEN
+  EQ_TAC THEN DISCH_TAC THEN X_GEN_TAC `x:A` THEN
+  REPEAT(FIRST_X_ASSUM(MP_TAC o SPEC `x:A`)) THEN ARITH_TAC);;
+
+let SUB_BAG_PSUB_BAG = prove
+ (`!b1 b2:A->num. SUB_BAG b1 b2 <=> PSUB_BAG b1 b2 \/ b1 = b2`,
+  REWRITE_TAC[PSUB_BAG] THEN MESON_TAC[SUB_BAG_REFL]);;
+
+let BAG_DECOMPOSE = prove
+ (`!(e:A) b. BAG_IN e b ==> ?b'. b = BAG_INSERT e b'`,
+  REPEAT STRIP_TAC THEN EXISTS_TAC `BAG_DIFF b (EL_BAG (e:A))` THEN
+  POP_ASSUM MP_TAC THEN
+  REWRITE_TAC[FUN_EQ_THM; LSORTAUX_BAG_INSERT_ADD; BAG_DIFF; EL_BAG;
+              EMPTY_BAG; K_THM; LSORTAUX_BAG_IN_ALT; ADD_CLAUSES] THEN
+  DISCH_TAC THEN X_GEN_TAC `x:A` THEN COND_CASES_TAC THEN
+  ASM_REWRITE_TAC[] THEN ASM_ARITH_TAC);;
+
+let SET_OF_BAG = new_definition
+  `SET_OF_BAG (b:A->num) = \x. BAG_IN x b`;;
+
+let BAG_OF_SET = new_definition
+  `BAG_OF_SET (P:A->bool) = \x. if x IN P then 1 else 0`;;
+
+let IN_SET_OF_BAG = prove
+ (`!(x:A) b. x IN SET_OF_BAG b <=> BAG_IN x b`,
+  REWRITE_TAC[SET_OF_BAG; IN]);;
+
+let BAG_OF_SET_DISJOINT_UNION = prove
+ (`!s1 s2:A->bool.
+     DISJOINT s1 s2
+     ==> BAG_OF_SET (s1 UNION s2) = BAG_UNION (BAG_OF_SET s1) (BAG_OF_SET s2)`,
+  REWRITE_TAC[BAG_OF_SET; BAG_UNION; FUN_EQ_THM; IN_UNION; IN_DISJOINT] THEN
+  REPEAT STRIP_TAC THEN
+  ASM_CASES_TAC `(x:A) IN s1` THEN ASM_CASES_TAC `(x:A) IN s2` THEN
+  ASM_REWRITE_TAC[] THEN CONV_TAC NUM_REDUCE_CONV THEN ASM_MESON_TAC[]);;
+
+let BAG_OF_SET_INSERT_NON_ELEMENT = prove
+ (`!(e:A) s.
+     ~(e IN s) ==> BAG_OF_SET (e INSERT s) = BAG_INSERT e (BAG_OF_SET s)`,
+  REWRITE_TAC[BAG_OF_SET; FUN_EQ_THM; LSORTAUX_BAG_INSERT_ADD; IN_INSERT] THEN
+  REPEAT STRIP_TAC THEN ASM_CASES_TAC `x:A = e` THEN ASM_REWRITE_TAC[] THEN
+  ARITH_TAC);;
+
+let SET_OF_EMPTY = prove
+ (`BAG_OF_SET ({}:A->bool) = EMPTY_BAG`,
+  REWRITE_TAC[BAG_OF_SET; EMPTY_BAG; FUN_EQ_THM; K_THM; NOT_IN_EMPTY]);;
+
+let BAG_OF_SET_EQ_EMPTY_BAG = prove
+ (`!s:A->bool. BAG_OF_SET s = EMPTY_BAG <=> s = {}`,
+  REWRITE_TAC[BAG_OF_SET; EMPTY_BAG; FUN_EQ_THM; K_THM; EXTENSION;
+              NOT_IN_EMPTY] THEN
+  MESON_TAC[ARITH_RULE `~(1 = 0)`]);;
+
+let SET_OF_SINGLETON_BAG = prove
+ (`!e:A. SET_OF_BAG (BAG_INSERT e EMPTY_BAG) = {e}`,
+  REWRITE_TAC[EXTENSION; IN_SET_OF_BAG; BAG_IN_BAG_INSERT; NOT_IN_EMPTY_BAG;
+              IN_SING]);;
+
+let BAG_IN_BAG_OF_SET = prove
+ (`!P (p:A). BAG_IN p (BAG_OF_SET P) <=> p IN P`,
+  REWRITE_TAC[LSORTAUX_BAG_IN_ALT; BAG_OF_SET] THEN REPEAT GEN_TAC THEN
+  COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN ARITH_TAC);;
+
+let BAG_OF_EMPTY = prove
+ (`SET_OF_BAG (EMPTY_BAG:A->num) = {}`,
+  REWRITE_TAC[EXTENSION; IN_SET_OF_BAG; NOT_IN_EMPTY_BAG; NOT_IN_EMPTY]);;
+
+let SET_BAG_I = prove
+ (`!s:A->bool. SET_OF_BAG (BAG_OF_SET s) = s`,
+  REWRITE_TAC[EXTENSION; IN_SET_OF_BAG; BAG_IN_BAG_OF_SET]);;
+
+let SUB_BAG_SET = prove
+ (`!b1 b2:A->num. SUB_BAG b1 b2 ==> SET_OF_BAG b1 SUBSET SET_OF_BAG b2`,
+  REWRITE_TAC[SUB_BAG; SUBSET; IN_SET_OF_BAG; BAG_IN] THEN MESON_TAC[]);;
+
+let SET_OF_BAG_UNION = prove
+ (`!b1 b2:A->num.
+     SET_OF_BAG (BAG_UNION b1 b2) = SET_OF_BAG b1 UNION SET_OF_BAG b2`,
+  REWRITE_TAC[EXTENSION; IN_SET_OF_BAG; BAG_IN_BAG_UNION; IN_UNION]);;
+
+let SET_OF_BAG_INSERT = prove
+ (`!(e:A) b. SET_OF_BAG (BAG_INSERT e b) = e INSERT SET_OF_BAG b`,
+  REWRITE_TAC[EXTENSION; IN_SET_OF_BAG; BAG_IN_BAG_INSERT; IN_INSERT]);;
+
+let SET_OF_EL_BAG = prove
+ (`!e:A. SET_OF_BAG (EL_BAG e) = {e}`,
+  REWRITE_TAC[EL_BAG; SET_OF_SINGLETON_BAG]);;
+
+let SET_OF_BAG_DIFF_SUBSET_down = prove
+ (`!b1 b2:A->num.
+     SET_OF_BAG b1 DIFF SET_OF_BAG b2 SUBSET SET_OF_BAG (BAG_DIFF b1 b2)`,
+  REWRITE_TAC[SUBSET; IN_DIFF; IN_SET_OF_BAG; LSORTAUX_BAG_IN_ALT; BAG_DIFF] THEN
+  ARITH_TAC);;
+
+let SET_OF_BAG_DIFF_SUBSET_up = prove
+ (`!b1 b2:A->num. SET_OF_BAG (BAG_DIFF b1 b2) SUBSET SET_OF_BAG b1`,
+  REWRITE_TAC[SUBSET; IN_SET_OF_BAG; LSORTAUX_BAG_IN_ALT; BAG_DIFF] THEN
+  ARITH_TAC);;
+
+let SET_OF_BAG_EQ_EMPTY = prove
+ (`!b:A->num. ({} = SET_OF_BAG b <=> b = EMPTY_BAG) /\
+              (SET_OF_BAG b = {} <=> b = EMPTY_BAG)`,
+  GEN_TAC THEN MATCH_MP_TAC(TAUT `(q <=> r) /\ (p <=> q) ==> (p <=> r) /\ (q <=> r)`) THEN
+  CONJ_TAC THENL [ALL_TAC; MESON_TAC[]] THEN
+  REWRITE_TAC[EXTENSION; IN_SET_OF_BAG; NOT_IN_EMPTY] THEN
+  REWRITE_TAC[LSORTAUX_BAG_IN_ALT; EMPTY_BAG; FUN_EQ_THM; K_THM]);;
+
+let BAG_DISJOINT = new_definition
+  `BAG_DISJOINT (b1:A->num) b2 <=> DISJOINT (SET_OF_BAG b1) (SET_OF_BAG b2)`;;
+
+let BAG_DISJOINT_EMPTY = prove
+ (`!b:A->num. BAG_DISJOINT b EMPTY_BAG /\ BAG_DISJOINT EMPTY_BAG b`,
+  REWRITE_TAC[BAG_OF_EMPTY; BAG_DISJOINT; DISJOINT_EMPTY]);;
+
+let BAG_DISJOINT_DIFF = prove
+ (`!B1 B2:A->num. BAG_DISJOINT (BAG_DIFF B1 B2) (BAG_DIFF B2 B1)`,
+  REWRITE_TAC[BAG_DISJOINT; IN_DISJOINT; IN_SET_OF_BAG; LSORTAUX_BAG_IN_ALT;
+              BAG_DIFF] THEN ARITH_TAC);;
+
+let BAG_DISJOINT_BAG_IN = prove
+ (`!b1 b2:A->num. BAG_DISJOINT b1 b2 <=> !e. ~BAG_IN e b1 \/ ~BAG_IN e b2`,
+  REWRITE_TAC[BAG_DISJOINT; IN_DISJOINT; IN_SET_OF_BAG] THEN MESON_TAC[]);;
+
+let BAG_DISJOINT_BAG_INSERT = prove
+ (`(!b1 b2 (e1:A).
+      BAG_DISJOINT (BAG_INSERT e1 b1) b2 <=>
+      ~BAG_IN e1 b2 /\ BAG_DISJOINT b1 b2) /\
+   (!b1 b2 (e2:A).
+      BAG_DISJOINT b1 (BAG_INSERT e2 b2) <=>
+      ~BAG_IN e2 b1 /\ BAG_DISJOINT b1 b2)`,
+  REWRITE_TAC[BAG_DISJOINT_BAG_IN; BAG_IN_BAG_INSERT] THEN MESON_TAC[]);;
+
+let BAG_DISJOINT_BAG_UNION = prove
+ (`!b1 b2 b3:A->num.
+     (BAG_DISJOINT b1 (BAG_UNION b2 b3) <=>
+      BAG_DISJOINT b1 b2 /\ BAG_DISJOINT b1 b3) /\
+     (BAG_DISJOINT (BAG_UNION b1 b2) b3 <=>
+      BAG_DISJOINT b1 b3 /\ BAG_DISJOINT b2 b3)`,
+  REWRITE_TAC[BAG_DISJOINT_BAG_IN; BAG_IN_BAG_UNION] THEN MESON_TAC[]);;
+
+let FINITE_BAG = new_definition
+  `FINITE_BAG (b:A->num) <=>
+     !P. P EMPTY_BAG /\ (!b'. P b' ==> !e. P (BAG_INSERT e b')) ==> P b`;;
+
+let FINITE_EMPTY_BAG = prove
+ (`FINITE_BAG (EMPTY_BAG:A->num)`,
+  REWRITE_TAC[FINITE_BAG] THEN MESON_TAC[]);;
+
+let FINITE_BAG_INSERT = prove
+ (`!b:A->num. FINITE_BAG b ==> !e. FINITE_BAG (BAG_INSERT e b)`,
+  REWRITE_TAC[FINITE_BAG] THEN MESON_TAC[]);;
+
+let FINITE_BAG_INDUCT = prove
+ (`!P:(A->num)->bool.
+     P EMPTY_BAG /\ (!b. P b ==> !e. P (BAG_INSERT e b))
+     ==> !b. FINITE_BAG b ==> P b`,
+  REWRITE_TAC[FINITE_BAG] THEN MESON_TAC[]);;
+
+let STRONG_FINITE_BAG_INDUCT = prove
+ (`!P:(A->num)->bool.
+     P EMPTY_BAG /\ (!b. FINITE_BAG b /\ P b ==> !e. P (BAG_INSERT e b))
+     ==> !b. FINITE_BAG b ==> P b`,
+  GEN_TAC THEN STRIP_TAC THEN
+  SUBGOAL_THEN `!b:A->num. FINITE_BAG b ==> FINITE_BAG b /\ P b`
+    (fun th -> MESON_TAC[th]) THEN
+  MATCH_MP_TAC FINITE_BAG_INDUCT THEN
+  ASM_SIMP_TAC[FINITE_EMPTY_BAG; FINITE_BAG_INSERT]);;
+
+let LSORTAUX_FINITE_SUPPORT_BAG = prove
+ (`!s:A->bool. FINITE s ==> !b. SET_OF_BAG b SUBSET s ==> FINITE_BAG b`,
+  MATCH_MP_TAC FINITE_INDUCT_STRONG THEN CONJ_TAC THENL
+   [REWRITE_TAC[SUBSET_EMPTY; SET_OF_BAG_EQ_EMPTY] THEN
+    SIMP_TAC[FINITE_EMPTY_BAG];
+    ALL_TAC] THEN
+  MAP_EVERY X_GEN_TAC [`x:A`; `t:A->bool`] THEN STRIP_TAC THEN
+  X_GEN_TAC `b:A->num` THEN DISCH_TAC THEN
+  SUBGOAL_THEN `FINITE_BAG (\y:A. if y = x then 0 else b y)` ASSUME_TAC THENL
+   [FIRST_X_ASSUM MATCH_MP_TAC THEN
+    UNDISCH_TAC `SET_OF_BAG (b:A->num) SUBSET x INSERT t` THEN
+    REWRITE_TAC[SUBSET; IN_SET_OF_BAG; LSORTAUX_BAG_IN_ALT; IN_INSERT] THEN
+    MESON_TAC[];
+    ALL_TAC] THEN
+  SUBGOAL_THEN `!k. FINITE_BAG (\y:A. if y = x then k else b y)` MP_TAC THENL
+   [INDUCT_TAC THEN ASM_REWRITE_TAC[] THEN
+    FIRST_X_ASSUM(MP_TAC o SPEC `x:A` o MATCH_MP FINITE_BAG_INSERT) THEN
+    MATCH_MP_TAC(MESON[] `(a:A->num) = b ==> FINITE_BAG a ==> FINITE_BAG b`) THEN
+    REWRITE_TAC[FUN_EQ_THM; LSORTAUX_BAG_INSERT_ADD] THEN GEN_TAC THEN
+    COND_CASES_TAC THEN REWRITE_TAC[] THEN ARITH_TAC;
+    DISCH_THEN(MP_TAC o SPEC `(b:A->num) x`) THEN
+    MATCH_MP_TAC(MESON[] `(a:A->num) = b ==> FINITE_BAG a ==> FINITE_BAG b`) THEN
+    REWRITE_TAC[FUN_EQ_THM] THEN GEN_TAC THEN COND_CASES_TAC THEN
+    ASM_REWRITE_TAC[]]);;
+
+let FINITE_SET_OF_BAG = prove
+ (`!b:A->num. FINITE (SET_OF_BAG b) <=> FINITE_BAG b`,
+  GEN_TAC THEN EQ_TAC THENL
+   [MESON_TAC[LSORTAUX_FINITE_SUPPORT_BAG; SUBSET_REFL];
+    SPEC_TAC(`b:A->num`,`b:A->num`) THEN MATCH_MP_TAC FINITE_BAG_INDUCT THEN
+    REWRITE_TAC[BAG_OF_EMPTY; FINITE_EMPTY; SET_OF_BAG_INSERT; FINITE_INSERT]]);;
+
+let FINITE_BAG_THM = prove
+ (`FINITE_BAG (EMPTY_BAG:A->num) /\
+   (!(e:A) b. FINITE_BAG (BAG_INSERT e b) <=> FINITE_BAG b)`,
+  REWRITE_TAC[GSYM FINITE_SET_OF_BAG; SET_OF_BAG_INSERT; FINITE_INSERT;
+              BAG_OF_EMPTY; FINITE_EMPTY]);;
+
+let FINITE_BAG_DIFF = prove
+ (`!b1:A->num. FINITE_BAG b1 ==> !b2. FINITE_BAG (BAG_DIFF b1 b2)`,
+  REWRITE_TAC[GSYM FINITE_SET_OF_BAG] THEN
+  MESON_TAC[FINITE_SUBSET; SET_OF_BAG_DIFF_SUBSET_up]);;
+
+let FINITE_BAG_DIFF_dual = prove
+ (`!b1:A->num. FINITE_BAG b1 ==> !b2. FINITE_BAG (BAG_DIFF b2 b1) ==> FINITE_BAG b2`,
+  REWRITE_TAC[GSYM FINITE_SET_OF_BAG] THEN REPEAT STRIP_TAC THEN
+  MATCH_MP_TAC FINITE_SUBSET THEN
+  EXISTS_TAC `SET_OF_BAG (BAG_DIFF b2 b1) UNION SET_OF_BAG (b1:A->num)` THEN
+  ASM_REWRITE_TAC[FINITE_UNION] THEN
+  REWRITE_TAC[SUBSET; IN_UNION; IN_SET_OF_BAG; LSORTAUX_BAG_IN_ALT; BAG_DIFF] THEN
+  ARITH_TAC);;
+
+let FINITE_BAG_UNION = prove
+ (`!b1 b2:A->num. FINITE_BAG (BAG_UNION b1 b2) <=> FINITE_BAG b1 /\ FINITE_BAG b2`,
+  REWRITE_TAC[GSYM FINITE_SET_OF_BAG; SET_OF_BAG_UNION; FINITE_UNION]);;
+
+let FINITE_SUB_BAG = prove
+ (`!b1:A->num. FINITE_BAG b1 ==> !b2. SUB_BAG b2 b1 ==> FINITE_BAG b2`,
+  REWRITE_TAC[GSYM FINITE_SET_OF_BAG] THEN MESON_TAC[FINITE_SUBSET; SUB_BAG_SET]);;
+
+let FINITE_EL_BAG = prove
+ (`!e:A. FINITE_BAG (EL_BAG e)`,
+  REWRITE_TAC[EL_BAG; FINITE_BAG_THM]);;
+
+let FINITE_BAG_OF_SET = prove
+ (`!s:A->bool. FINITE_BAG (BAG_OF_SET s) <=> FINITE s`,
+  REWRITE_TAC[GSYM FINITE_SET_OF_BAG; SET_BAG_I]);;
+
+let BAG_CARD = new_definition
+  `BAG_CARD (b:A->num) = nsum (SET_OF_BAG b) b`;;
+
+let LSORTAUX_BAG_CARD_SUPERSET = prove
+ (`!(b:A->num) t. SET_OF_BAG b SUBSET t ==> BAG_CARD b = nsum t b`,
+  REPEAT STRIP_TAC THEN REWRITE_TAC[BAG_CARD] THEN CONV_TAC SYM_CONV THEN
+  MATCH_MP_TAC NSUM_SUPERSET THEN
+  ASM_REWRITE_TAC[IN_SET_OF_BAG; LSORTAUX_BAG_IN_ALT] THEN SIMP_TAC[]);;
+
+let BAG_CARD_EMPTY = prove
+ (`BAG_CARD (EMPTY_BAG:A->num) = 0`,
+  REWRITE_TAC[BAG_CARD; BAG_OF_EMPTY; NSUM_CLAUSES]);;
+
+let LSORTAUX_BAG_CARD_INSERT = prove
+ (`!b:A->num. FINITE_BAG b ==> !e. BAG_CARD (BAG_INSERT e b) = BAG_CARD b + 1`,
+  REPEAT STRIP_TAC THEN
+  SUBGOAL_THEN `FINITE ((e:A) INSERT SET_OF_BAG b)` ASSUME_TAC THENL
+   [ASM_REWRITE_TAC[FINITE_INSERT; FINITE_SET_OF_BAG]; ALL_TAC] THEN
+  MP_TAC(ISPECL [`BAG_INSERT (e:A) b`; `(e:A) INSERT SET_OF_BAG b`]
+    LSORTAUX_BAG_CARD_SUPERSET) THEN
+  MP_TAC(ISPECL [`b:A->num`; `(e:A) INSERT SET_OF_BAG b`]
+    LSORTAUX_BAG_CARD_SUPERSET) THEN
+  REWRITE_TAC[SET_OF_BAG_INSERT; SUBSET_REFL;
+              SET_RULE `s SUBSET (e:A) INSERT s`] THEN
+  REPEAT(DISCH_THEN SUBST1_TAC) THEN
+  SUBGOAL_THEN `BAG_INSERT (e:A) b = \x. b x + (if x = e then 1 else 0)`
+    SUBST1_TAC THENL
+   [REWRITE_TAC[FUN_EQ_THM; LSORTAUX_BAG_INSERT_ADD]; ALL_TAC] THEN
+  ASM_SIMP_TAC[NSUM_ADD; NSUM_DELTA; ETA_AX] THEN REWRITE_TAC[IN_INSERT]);;
+
+let BAG_CARD_THM = prove
+ (`BAG_CARD (EMPTY_BAG:A->num) = 0 /\
+   (!b:A->num. FINITE_BAG b ==> !e. BAG_CARD (BAG_INSERT e b) = BAG_CARD b + 1)`,
+  REWRITE_TAC[BAG_CARD_EMPTY; LSORTAUX_BAG_CARD_INSERT]);;
+
+let BCARD_0 = prove
+ (`!b:A->num. FINITE_BAG b ==> (BAG_CARD b = 0 <=> b = EMPTY_BAG)`,
+  MATCH_MP_TAC STRONG_FINITE_BAG_INDUCT THEN
+  SIMP_TAC[BAG_CARD_THM; BAG_INSERT_NOT_EMPTY] THEN ARITH_TAC);;
+
+let BAG_CARD_UNION = prove
+ (`!b1 b2:A->num.
+     FINITE_BAG b1 /\ FINITE_BAG b2
+     ==> BAG_CARD (BAG_UNION b1 b2) = BAG_CARD b1 + BAG_CARD b2`,
+  REPEAT STRIP_TAC THEN
+  SUBGOAL_THEN `FINITE (SET_OF_BAG b1 UNION SET_OF_BAG (b2:A->num))` ASSUME_TAC
+  THENL [ASM_REWRITE_TAC[FINITE_UNION; FINITE_SET_OF_BAG]; ALL_TAC] THEN
+  MP_TAC(ISPECL [`BAG_UNION b1 b2:A->num`;
+                 `SET_OF_BAG b1 UNION SET_OF_BAG (b2:A->num)`]
+    LSORTAUX_BAG_CARD_SUPERSET) THEN
+  MP_TAC(ISPECL [`b1:A->num`; `SET_OF_BAG b1 UNION SET_OF_BAG (b2:A->num)`]
+    LSORTAUX_BAG_CARD_SUPERSET) THEN
+  MP_TAC(ISPECL [`b2:A->num`; `SET_OF_BAG b1 UNION SET_OF_BAG (b2:A->num)`]
+    LSORTAUX_BAG_CARD_SUPERSET) THEN
+  REWRITE_TAC[SET_OF_BAG_UNION; SUBSET_REFL; SUBSET_UNION] THEN
+  REPEAT(DISCH_THEN SUBST1_TAC) THEN
+  REWRITE_TAC[BAG_UNION] THEN ASM_SIMP_TAC[NSUM_ADD]);;
+
+let BCARD_SUC = prove
+ (`!b:A->num. FINITE_BAG b ==>
+       !n. BAG_CARD b = SUC n <=> ?b0 e. b = BAG_INSERT e b0 /\ BAG_CARD b0 = n`,
+  GEN_TAC THEN
+  DISJ_CASES_THEN2 SUBST1_TAC (X_CHOOSE_THEN `b1:A->num` (X_CHOOSE_THEN `e1:A`
+    SUBST1_TAC)) (ISPEC `b:A->num` BAG_cases) THEN
+  REWRITE_TAC[BAG_CARD_EMPTY; NOT_SUC; BAG_INSERT_NOT_EMPTY;
+              GSYM BAG_INSERT_NOT_EMPTY] THEN
+  REWRITE_TAC[FINITE_BAG_THM] THEN DISCH_TAC THEN
+  ASM_SIMP_TAC[BAG_CARD_THM; GSYM ADD1; SUC_INJ] THEN GEN_TAC THEN EQ_TAC THENL
+   [MESON_TAC[]; ALL_TAC] THEN
+  DISCH_THEN(X_CHOOSE_THEN `b0:A->num` (X_CHOOSE_THEN `e:A` STRIP_ASSUME_TAC)) THEN
+  FIRST_ASSUM(MP_TAC o AP_TERM `BAG_CARD:(A->num)->num`) THEN
+  SUBGOAL_THEN `FINITE_BAG (b0:A->num)` ASSUME_TAC THENL
+   [ASM_MESON_TAC[FINITE_BAG_THM]; ALL_TAC] THEN
+  ASM_SIMP_TAC[BAG_CARD_THM] THEN ARITH_TAC);;
+
+let SUB_BAG_DIFF_EQ = prove
+ (`!b1 b2:A->num. SUB_BAG b1 b2 ==> b2 = BAG_UNION b1 (BAG_DIFF b2 b1)`,
+  REWRITE_TAC[SUB_BAG_LEQ; BAG_UNION; BAG_DIFF; FUN_EQ_THM] THEN
+  REPEAT STRIP_TAC THEN FIRST_X_ASSUM(MP_TAC o SPEC `x:A`) THEN ARITH_TAC);;
+
+let SUB_BAG_CARD = prove
+ (`!b1 b2:A->num. FINITE_BAG b2 /\ SUB_BAG b1 b2 ==> BAG_CARD b1 <= BAG_CARD b2`,
+  REPEAT STRIP_TAC THEN
+  MP_TAC(ISPECL [`b1:A->num`; `SET_OF_BAG (b2:A->num)`]
+    LSORTAUX_BAG_CARD_SUPERSET) THEN
+  ASM_SIMP_TAC[SUB_BAG_SET] THEN DISCH_THEN SUBST1_TAC THEN
+  REWRITE_TAC[BAG_CARD] THEN MATCH_MP_TAC NSUM_LE THEN
+  ASM_REWRITE_TAC[FINITE_SET_OF_BAG] THEN ASM_MESON_TAC[SUB_BAG_LEQ]);;
+
+let BAG_FILTER_DEF = new_definition
+  `BAG_FILTER P (b:A->num) = \e. if P e then b e else 0`;;
+
+let BAG_FILTER_EMPTY = prove
+ (`!P. BAG_FILTER P (EMPTY_BAG:A->num) = EMPTY_BAG`,
+  REWRITE_TAC[BAG_FILTER_DEF; EMPTY_BAG; FUN_EQ_THM; K_THM; COND_ID]);;
+
+let BAG_FILTER_BAG_INSERT = prove
+ (`!P (e:A) b.
+     BAG_FILTER P (BAG_INSERT e b) =
+     if P e then BAG_INSERT e (BAG_FILTER P b) else BAG_FILTER P b`,
+  REPEAT GEN_TAC THEN REWRITE_TAC[FUN_EQ_THM] THEN X_GEN_TAC `x:A` THEN
+  COND_CASES_TAC THEN
+  REWRITE_TAC[BAG_FILTER_DEF; LSORTAUX_BAG_INSERT_ADD] THEN
+  ASM_CASES_TAC `x:A = e` THEN ASM_REWRITE_TAC[ADD_CLAUSES]);;
+
+let FINITE_BAG_FILTER = prove
+ (`!P b:A->num. FINITE_BAG b ==> FINITE_BAG (BAG_FILTER P b)`,
+  GEN_TAC THEN MATCH_MP_TAC FINITE_BAG_INDUCT THEN
+  REWRITE_TAC[BAG_FILTER_EMPTY; FINITE_EMPTY_BAG; BAG_FILTER_BAG_INSERT] THEN
+  REPEAT STRIP_TAC THEN COND_CASES_TAC THEN ASM_SIMP_TAC[FINITE_BAG_INSERT]);;
+
+let BAG_INN_BAG_FILTER = prove
+ (`!P (e:A) n b. BAG_INN e n (BAG_FILTER P b) <=> n = 0 \/ P e /\ BAG_INN e n b`,
+  REWRITE_TAC[BAG_FILTER_DEF; BAG_INN] THEN REPEAT GEN_TAC THEN
+  COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN ARITH_TAC);;
+
+let BAG_IN_BAG_FILTER = prove
+ (`!P (e:A) b. BAG_IN e (BAG_FILTER P b) <=> P e /\ BAG_IN e b`,
+  REWRITE_TAC[BAG_IN; BAG_INN_BAG_FILTER] THEN ARITH_TAC);;
+
+let BAG_FILTER_FILTER = prove
+ (`!P Q (b:A->num).
+     BAG_FILTER P (BAG_FILTER Q b) = BAG_FILTER (\a. P a /\ Q a) b`,
+  REWRITE_TAC[BAG_FILTER_DEF; FUN_EQ_THM] THEN REPEAT GEN_TAC THEN
+  MAP_EVERY ASM_CASES_TAC [`(P:A->bool) x`; `(Q:A->bool) x`] THEN
+  ASM_REWRITE_TAC[]);;
+
+let BAG_FILTER_SUB_BAG = prove
+ (`!P (b:A->num). SUB_BAG (BAG_FILTER P b) b`,
+  REWRITE_TAC[SUB_BAG_LEQ; BAG_FILTER_DEF] THEN REPEAT GEN_TAC THEN
+  COND_CASES_TAC THEN ARITH_TAC);;
+
+let BAG_FILTER_BAG_UNION = prove
+ (`!P b1 b2:A->num.
+     BAG_FILTER P (BAG_UNION b1 b2) =
+     BAG_UNION (BAG_FILTER P b1) (BAG_FILTER P b2)`,
+  REWRITE_TAC[BAG_FILTER_DEF; BAG_UNION; FUN_EQ_THM] THEN REPEAT GEN_TAC THEN
+  COND_CASES_TAC THEN REWRITE_TAC[ADD_CLAUSES]);;
+
+let BAG_IMAGE_DEF = new_definition
+  `BAG_IMAGE (f:A->B) b =
+     \e. let sb = BAG_FILTER (\e0. f e0 = e) b in
+         if FINITE_BAG sb then BAG_CARD sb else 1`;;
+
+let LSORTAUX_BAG_IMAGE_APPLY = prove
+ (`!(f:A->B) b y.
+     BAG_IMAGE f b y =
+     if FINITE_BAG (BAG_FILTER (\e0. f e0 = y) b)
+     then BAG_CARD (BAG_FILTER (\e0. f e0 = y) b) else 1`,
+  REWRITE_TAC[BAG_IMAGE_DEF; LET_DEF; LET_END_DEF]);;
+
+let BAG_IMAGE_EMPTY = prove
+ (`!f:A->B. BAG_IMAGE f EMPTY_BAG = EMPTY_BAG`,
+  REWRITE_TAC[FUN_EQ_THM; LSORTAUX_BAG_IMAGE_APPLY; BAG_FILTER_EMPTY;
+              FINITE_EMPTY_BAG; BAG_CARD_EMPTY] THEN
+  REWRITE_TAC[EMPTY_BAG; K_THM]);;
+
+let BAG_IMAGE_FINITE_INSERT = prove
+ (`!b (f:A->B) e.
+     FINITE_BAG b
+     ==> BAG_IMAGE f (BAG_INSERT e b) = BAG_INSERT (f e) (BAG_IMAGE f b)`,
+  REPEAT STRIP_TAC THEN REWRITE_TAC[FUN_EQ_THM] THEN X_GEN_TAC `y:B` THEN
+  REWRITE_TAC[LSORTAUX_BAG_INSERT_ADD; LSORTAUX_BAG_IMAGE_APPLY;
+              BAG_FILTER_BAG_INSERT] THEN
+  ASM_SIMP_TAC[FINITE_BAG_FILTER] THEN
+  ASM_CASES_TAC `(f:A->B) e = y` THEN ASM_REWRITE_TAC[] THEN
+  ASM_SIMP_TAC[FINITE_BAG_THM; FINITE_BAG_FILTER; BAG_CARD_THM; ADD_CLAUSES] THEN
+  ASM_MESON_TAC[]);;
+
+let BAG_IMAGE_FINITE_UNION = prove
+ (`!b1 b2 (f:A->B).
+     FINITE_BAG b1 /\ FINITE_BAG b2
+     ==> BAG_IMAGE f (BAG_UNION b1 b2) =
+         BAG_UNION (BAG_IMAGE f b1) (BAG_IMAGE f b2)`,
+  REPEAT STRIP_TAC THEN UNDISCH_TAC `FINITE_BAG (b1:A->num)` THEN
+  SPEC_TAC(`b1:A->num`,`b1:A->num`) THEN
+  MATCH_MP_TAC STRONG_FINITE_BAG_INDUCT THEN
+  ASM_SIMP_TAC[BAG_UNION_INSERT; BAG_UNION_EMPTY; BAG_IMAGE_EMPTY;
+               BAG_IMAGE_FINITE_INSERT; FINITE_BAG_UNION]);;
+
+let BAG_IMAGE_FINITE = prove
+ (`!(f:A->B) b. FINITE_BAG b ==> FINITE_BAG (BAG_IMAGE f b)`,
+  GEN_TAC THEN MATCH_MP_TAC STRONG_FINITE_BAG_INDUCT THEN
+  SIMP_TAC[BAG_IMAGE_EMPTY; BAG_IMAGE_FINITE_INSERT; FINITE_BAG_THM]);;
+
+let BAG_IMAGE_COMPOSE = prove
+ (`!(f:B->C) (g:A->B) b.
+     FINITE_BAG b ==> BAG_IMAGE (f o g) b = BAG_IMAGE f (BAG_IMAGE g b)`,
+  GEN_TAC THEN GEN_TAC THEN MATCH_MP_TAC STRONG_FINITE_BAG_INDUCT THEN
+  SIMP_TAC[BAG_IMAGE_EMPTY; BAG_IMAGE_FINITE_INSERT; BAG_IMAGE_FINITE; o_THM]);;
+
+let BAG_IMAGE_FINITE_I = prove
+ (`!b:A->num. FINITE_BAG b ==> BAG_IMAGE I b = b`,
+  MATCH_MP_TAC STRONG_FINITE_BAG_INDUCT THEN
+  SIMP_TAC[BAG_IMAGE_EMPTY; BAG_IMAGE_FINITE_INSERT; I_THM]);;
+
+let BAG_IN_FINITE_BAG_IMAGE = prove
+ (`!(f:A->B) b x.
+     FINITE_BAG b ==> (BAG_IN x (BAG_IMAGE f b) <=> ?y. f y = x /\ BAG_IN y b)`,
+  GEN_TAC THEN ONCE_REWRITE_TAC[SWAP_FORALL_THM] THEN GEN_TAC THEN
+  MATCH_MP_TAC STRONG_FINITE_BAG_INDUCT THEN
+  SIMP_TAC[BAG_IMAGE_EMPTY; BAG_IMAGE_FINITE_INSERT; NOT_IN_EMPTY_BAG;
+           BAG_IN_BAG_INSERT] THEN
+  MESON_TAC[]);;
+
+let BAG_IMAGE_EQ_EMPTY = prove
+ (`!(f:A->B) b. FINITE_BAG b ==> (BAG_IMAGE f b = EMPTY_BAG <=> b = EMPTY_BAG)`,
+  GEN_TAC THEN MATCH_MP_TAC STRONG_FINITE_BAG_INDUCT THEN
+  SIMP_TAC[BAG_IMAGE_EMPTY; BAG_IMAGE_FINITE_INSERT; BAG_INSERT_NOT_EMPTY]);;
+
+let BAG_ALL_DISTINCT = new_definition
+  `BAG_ALL_DISTINCT (b:A->num) <=> !e. b e <= 1`;;
+
+let BAG_ALL_DISTINCT_THM = prove
+ (`BAG_ALL_DISTINCT (EMPTY_BAG:A->num) /\
+   (!(e:A) b. BAG_ALL_DISTINCT (BAG_INSERT e b) <=>
+              ~BAG_IN e b /\ BAG_ALL_DISTINCT b)`,
+  REWRITE_TAC[BAG_ALL_DISTINCT; EMPTY_BAG; K_THM; LSORTAUX_BAG_INSERT_ADD;
+              LSORTAUX_BAG_IN_ALT] THEN
+  CONJ_TAC THENL [ARITH_TAC; ALL_TAC] THEN REPEAT GEN_TAC THEN EQ_TAC THENL
+   [DISCH_TAC THEN CONJ_TAC THENL
+     [FIRST_X_ASSUM(MP_TAC o SPEC `e:A`) THEN REWRITE_TAC[] THEN ARITH_TAC;
+      X_GEN_TAC `x:A` THEN FIRST_X_ASSUM(MP_TAC o SPEC `x:A`) THEN ARITH_TAC];
+    STRIP_TAC THEN X_GEN_TAC `x:A` THEN FIRST_X_ASSUM(MP_TAC o SPEC `x:A`) THEN
+    ASM_CASES_TAC `x:A = e` THEN ASM_REWRITE_TAC[] THEN ASM_ARITH_TAC]);;
+
+let BAG_ALL_DISTINCT_BAG_MERGE = prove
+ (`!b1 b2:A->num.
+     BAG_ALL_DISTINCT (BAG_MERGE b1 b2) <=>
+     BAG_ALL_DISTINCT b1 /\ BAG_ALL_DISTINCT b2`,
+  REWRITE_TAC[BAG_ALL_DISTINCT; BAG_MERGE; GSYM FORALL_AND_THM] THEN
+  REPEAT GEN_TAC THEN AP_TERM_TAC THEN ABS_TAC THEN
+  COND_CASES_TAC THEN ASM_ARITH_TAC);;
+
+let BAG_ALL_DISTINCT_BAG_UNION = prove
+ (`!b1 b2:A->num.
+     BAG_ALL_DISTINCT (BAG_UNION b1 b2) <=>
+     BAG_ALL_DISTINCT b1 /\ BAG_ALL_DISTINCT b2 /\ BAG_DISJOINT b1 b2`,
+  REWRITE_TAC[BAG_ALL_DISTINCT; BAG_UNION; BAG_DISJOINT_BAG_IN;
+              LSORTAUX_BAG_IN_ALT; GSYM FORALL_AND_THM] THEN
+  REPEAT GEN_TAC THEN AP_TERM_TAC THEN ABS_TAC THEN ARITH_TAC);;
+
+let BAG_ALL_DISTINCT_DIFF = prove
+ (`!b1 b2:A->num. BAG_ALL_DISTINCT b1 ==> BAG_ALL_DISTINCT (BAG_DIFF b1 b2)`,
+  REWRITE_TAC[BAG_ALL_DISTINCT; BAG_DIFF] THEN REPEAT STRIP_TAC THEN
+  FIRST_X_ASSUM(MP_TAC o SPEC `e:A`) THEN ARITH_TAC);;
+
+let BAG_ALL_DISTINCT_SET = prove
+ (`!b:A->num. BAG_ALL_DISTINCT b <=> BAG_OF_SET (SET_OF_BAG b) = b`,
+  REWRITE_TAC[BAG_ALL_DISTINCT; BAG_OF_SET; FUN_EQ_THM; IN_SET_OF_BAG;
+              LSORTAUX_BAG_IN_ALT] THEN
+  GEN_TAC THEN AP_TERM_TAC THEN ABS_TAC THEN COND_CASES_TAC THEN
+  ASM_ARITH_TAC);;
+
+let BAG_ALL_DISTINCT_BAG_OF_SET = prove
+ (`!s:A->bool. BAG_ALL_DISTINCT (BAG_OF_SET s)`,
+  REWRITE_TAC[BAG_ALL_DISTINCT_SET; SET_BAG_I]);;
+
+let BAG_IN_BAG_DIFF_ALL_DISTINCT = prove
+ (`!b1 b2 (e:A).
+     BAG_ALL_DISTINCT b1
+     ==> (BAG_IN e (BAG_DIFF b1 b2) <=> BAG_IN e b1 /\ ~BAG_IN e b2)`,
+  REWRITE_TAC[BAG_ALL_DISTINCT; LSORTAUX_BAG_IN_ALT; BAG_DIFF] THEN
+  REPEAT STRIP_TAC THEN FIRST_X_ASSUM(MP_TAC o SPEC `e:A`) THEN ARITH_TAC);;
+
+let SUB_BAG_ALL_DISTINCT = prove
+ (`!b1 b2:A->num.
+     BAG_ALL_DISTINCT b1
+     ==> (SUB_BAG b1 b2 <=> !x. BAG_IN x b1 ==> BAG_IN x b2)`,
+  REWRITE_TAC[BAG_ALL_DISTINCT; SUB_BAG_LEQ; LSORTAUX_BAG_IN_ALT] THEN
+  REPEAT STRIP_TAC THEN EQ_TAC THEN DISCH_TAC THEN X_GEN_TAC `x:A` THEN
+  REPEAT(FIRST_X_ASSUM(MP_TAC o SPEC `x:A`)) THEN ARITH_TAC);;
+
+let BAG_ALL_DISTINCT_BAG_INN = prove
+ (`!b n (e:A).
+     BAG_ALL_DISTINCT b ==> (BAG_INN e n b <=> n = 0 \/ n = 1 /\ BAG_IN e b)`,
+  REWRITE_TAC[BAG_ALL_DISTINCT; BAG_INN; LSORTAUX_BAG_IN_ALT] THEN
+  REPEAT STRIP_TAC THEN FIRST_X_ASSUM(MP_TAC o SPEC `e:A`) THEN ARITH_TAC);;
+
+let BAG_ALL_DISTINCT_EXTENSION = prove
+ (`!b1 b2:A->num.
+     BAG_ALL_DISTINCT b1 /\ BAG_ALL_DISTINCT b2
+     ==> (b1 = b2 <=> !x. BAG_IN x b1 <=> BAG_IN x b2)`,
+  REWRITE_TAC[BAG_ALL_DISTINCT; FUN_EQ_THM; LSORTAUX_BAG_IN_ALT] THEN
+  REPEAT STRIP_TAC THEN EQ_TAC THEN SIMP_TAC[] THEN DISCH_TAC THEN
+  X_GEN_TAC `x:A` THEN REPEAT(FIRST_X_ASSUM(MP_TAC o SPEC `x:A`)) THEN
+  ARITH_TAC);;
+
+let BAG_ALL_DISTINCT_SUB_BAG = prove
+ (`!s t:A->num. SUB_BAG s t /\ BAG_ALL_DISTINCT t ==> BAG_ALL_DISTINCT s`,
+  REWRITE_TAC[BAG_ALL_DISTINCT; SUB_BAG_LEQ] THEN REPEAT STRIP_TAC THEN
+  REPEAT(FIRST_X_ASSUM(MP_TAC o SPEC `e:A`)) THEN ARITH_TAC);;
+
+let BAG_DISJOINT_SUB_BAG = prove
+ (`!b1 b2 b3:A->num.
+     SUB_BAG b1 b2 /\ BAG_DISJOINT b2 b3 ==> BAG_DISJOINT b1 b3`,
+  REWRITE_TAC[BAG_DISJOINT_BAG_IN] THEN MESON_TAC[SUB_BAG; BAG_IN]);;
+
+let BAG_DISJOINT_SYM = prove
+ (`!b1 b2:A->num. BAG_DISJOINT b1 b2 <=> BAG_DISJOINT b2 b1`,
+  REWRITE_TAC[BAG_DISJOINT; DISJOINT_SYM]);;
+
+let BAG_DISJOINT_FOLDR_BAG_UNION = prove
+ (`!ls b0 (b1:A->num).
+     BAG_DISJOINT b1 (ITLIST BAG_UNION ls b0) <=> ALL (BAG_DISJOINT b1) (CONS b0 ls)`,
+  LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[ITLIST; ALL; BAG_DISJOINT_BAG_UNION] THEN
+  CONV_TAC TAUT);;
+
+let mlt1_def = new_definition
+  `mlt1 (r:A->A->bool) b1 b2 <=>
+     FINITE_BAG b1 /\ FINITE_BAG b2 /\
+     ?e rep res. b1 = BAG_UNION rep res /\
+                 b2 = BAG_UNION res (BAG_INSERT e EMPTY_BAG) /\
+                 !e'. BAG_IN e' rep ==> r e' e`;;
+
+let BAG_NOT_LESS_EMPTY = prove
+ (`!(r:A->A->bool) b. ~mlt1 r b EMPTY_BAG`,
+  REWRITE_TAC[mlt1_def; GSYM BAG_INSERT_UNION; BAG_UNION_INSERT;
+              BAG_UNION_EMPTY] THEN
+  MESON_TAC[BAG_INSERT_NOT_EMPTY]);;
+
+let NOT_mlt_EMPTY = prove
+ (`!(R:A->A->bool) b. ~TC (mlt1 R) b EMPTY_BAG`,
+  ONCE_REWRITE_TAC[TC_CASES_L] THEN REWRITE_TAC[BAG_NOT_LESS_EMPTY]);;
+
+let LSORTAUX_ADD_EQ_CONV_EX = prove
+ (`!M N (a:A) b.
+     BAG_UNION M (BAG_INSERT a EMPTY_BAG) = BAG_UNION N (BAG_INSERT b EMPTY_BAG) <=>
+     M = N /\ a = b \/
+     ?L. M = BAG_UNION L (BAG_INSERT b EMPTY_BAG) /\
+         N = BAG_UNION L (BAG_INSERT a EMPTY_BAG)`,
+  REPEAT GEN_TAC THEN EQ_TAC THENL
+   [ALL_TAC;
+    STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
+    REWRITE_TAC[GSYM ASSOC_BAG_UNION] THEN AP_TERM_TAC THEN
+    MATCH_ACCEPT_TAC COMM_BAG_UNION] THEN
+  ASM_CASES_TAC `a:A = b` THENL
+   [ASM_REWRITE_TAC[BAG_UNION_RIGHT_CANCEL] THEN MESON_TAC[]; ALL_TAC] THEN
+  REWRITE_TAC[FUN_EQ_THM; BAG_UNION; LSORTAUX_BAG_INSERT_ADD; EMPTY_BAG; K_THM;
+              ADD_CLAUSES] THEN
+  DISCH_TAC THEN DISJ2_TAC THEN
+  EXISTS_TAC `\x:A. (M:A->num) x - (if x = b then 1 else 0)` THEN
+  SUBGOAL_THEN `~(b:A = a)` ASSUME_TAC THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
+  FIRST_ASSUM(MP_TAC o SPEC `b:A` o check (is_forall o concl)) THEN
+  REWRITE_TAC[ASSUME `~(b:A = a)`] THEN DISCH_TAC THEN
+  CONJ_TAC THEN X_GEN_TAC `x:A` THEN
+  FIRST_X_ASSUM(MP_TAC o SPEC `x:A` o check (is_forall o concl)) THEN
+  ASM_CASES_TAC `x:A = b` THEN ASM_REWRITE_TAC[] THEN ASM_ARITH_TAC);;
+
+let BAG_LESS_ADD = prove
+ (`!(r:A->A->bool) N M0 a.
+     mlt1 r N (BAG_UNION M0 (BAG_INSERT a EMPTY_BAG))
+     ==> (?M. mlt1 r M M0 /\ N = BAG_UNION M (BAG_INSERT a EMPTY_BAG)) \/
+         (?KK. (!b. BAG_IN b KK ==> r b a) /\ N = BAG_UNION M0 KK)`,
+  REPEAT GEN_TAC THEN REWRITE_TAC[mlt1_def] THEN
+  DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC (CONJUNCTS_THEN2 ASSUME_TAC
+    (X_CHOOSE_THEN `e:A` (X_CHOOSE_THEN `rep:A->num` (X_CHOOSE_THEN `res:A->num`
+      STRIP_ASSUME_TAC))))) THEN
+  UNDISCH_TAC `BAG_UNION M0 (BAG_INSERT a EMPTY_BAG) =
+               BAG_UNION res (BAG_INSERT (e:A) EMPTY_BAG)` THEN
+  REWRITE_TAC[LSORTAUX_ADD_EQ_CONV_EX] THEN STRIP_TAC THENL
+   [DISJ2_TAC THEN EXISTS_TAC `rep:A->num` THEN
+    ASM_REWRITE_TAC[] THEN ASM_MESON_TAC[COMM_BAG_UNION];
+    DISJ1_TAC THEN EXISTS_TAC `BAG_UNION rep (L:A->num)` THEN
+    REPEAT CONJ_TAC THENL
+     [UNDISCH_TAC `FINITE_BAG (N:A->num)` THEN ASM_REWRITE_TAC[FINITE_BAG_UNION] THEN
+      SIMP_TAC[];
+      UNDISCH_TAC `FINITE_BAG (BAG_UNION M0 (BAG_INSERT (a:A) EMPTY_BAG))` THEN
+      SIMP_TAC[FINITE_BAG_UNION];
+      MAP_EVERY EXISTS_TAC [`e:A`; `rep:A->num`; `L:A->num`] THEN
+      ASM_REWRITE_TAC[];
+      ASM_REWRITE_TAC[GSYM ASSOC_BAG_UNION]]]);;
+
+let TC_mlt1_FINITE_BAG = prove
+ (`!(R:A->A->bool) b1 b2. TC (mlt1 R) b1 b2 ==> FINITE_BAG b1 /\ FINITE_BAG b2`,
+  GEN_TAC THEN MATCH_MP_TAC TC_INDUCT THEN SIMP_TAC[mlt1_def]);;
+
+let TC_mlt1_UNION2_I = prove
+ (`!(R:A->A->bool) b2 b1.
+     FINITE_BAG b2 /\ FINITE_BAG b1 /\ ~(b2 = EMPTY_BAG)
+     ==> TC (mlt1 R) b1 (BAG_UNION b1 b2)`,
+  GEN_TAC THEN
+  SUBGOAL_THEN
+   `!b2:A->num. FINITE_BAG b2
+                ==> !b1. FINITE_BAG b1 /\ ~(b2 = EMPTY_BAG)
+                         ==> TC (mlt1 R) b1 (BAG_UNION b1 b2)`
+   (fun th -> MESON_TAC[th]) THEN
+  MATCH_MP_TAC STRONG_FINITE_BAG_INDUCT THEN REWRITE_TAC[BAG_INSERT_NOT_EMPTY] THEN
+  X_GEN_TAC `b2:A->num` THEN STRIP_TAC THEN
+  MAP_EVERY X_GEN_TAC [`e:A`; `b1:A->num`] THEN STRIP_TAC THEN
+  SUBGOAL_THEN `mlt1 R (BAG_UNION b1 b2) (BAG_UNION b1 (BAG_INSERT (e:A) b2))`
+  ASSUME_TAC THENL
+   [ASM_REWRITE_TAC[mlt1_def; FINITE_BAG_UNION; FINITE_BAG_THM] THEN
+    MAP_EVERY EXISTS_TAC [`e:A`; `EMPTY_BAG:A->num`; `BAG_UNION b1 b2:A->num`] THEN
+    REWRITE_TAC[BAG_UNION_EMPTY; NOT_IN_EMPTY_BAG] THEN
+    REWRITE_TAC[BAG_UNION_INSERT; BAG_UNION_EMPTY];
+    ALL_TAC] THEN
+  ASM_CASES_TAC `b2:A->num = EMPTY_BAG` THENL
+   [MATCH_MP_TAC TC_INC THEN
+    UNDISCH_TAC `mlt1 R (BAG_UNION b1 b2) (BAG_UNION b1 (BAG_INSERT (e:A) b2))` THEN
+    ASM_REWRITE_TAC[BAG_UNION_EMPTY];
+    MATCH_MP_TAC TC_TRANS THEN EXISTS_TAC `BAG_UNION b1 b2:A->num` THEN
+    ASM_SIMP_TAC[TC_INC]]);;
+
+let TC_mlt1_UNION1_I = prove
+ (`!(R:A->A->bool) b2 b1.
+     FINITE_BAG b2 /\ FINITE_BAG b1 /\ ~(b1 = EMPTY_BAG)
+     ==> TC (mlt1 R) b2 (BAG_UNION b1 b2)`,
+  MESON_TAC[COMM_BAG_UNION; TC_mlt1_UNION2_I]);;
+
+let LSORTAUX_ACC_RULE = prove
+ (`!(r:A->A->bool) W.
+     (!x. W x <=> !Q. (!z. (!y. r y z ==> Q y) ==> Q z) ==> Q x)
+     ==> !x. (!y. r y x ==> W y) ==> W x`,
+  REPEAT GEN_TAC THEN DISCH_TAC THEN ASM_REWRITE_TAC[] THEN MESON_TAC[]);;
+
+let LSORTAUX_ACC_IND = prove
+ (`!(r:A->A->bool) W.
+     (!x. W x <=> !Q. (!z. (!y. r y z ==> Q y) ==> Q z) ==> Q x)
+     ==> !P. (!x. W x /\ (!y. r y x ==> P y) ==> P x) ==> !x. W x ==> P x`,
+  REPEAT GEN_TAC THEN DISCH_TAC THEN
+  FIRST_ASSUM(ASSUME_TAC o MATCH_MP LSORTAUX_ACC_RULE) THEN
+  GEN_TAC THEN DISCH_TAC THEN
+  SUBGOAL_THEN `!x:A. W x ==> W x /\ P x` (fun th -> MESON_TAC[th]) THEN
+  X_GEN_TAC `x:A` THEN
+  FIRST_ASSUM(fun th -> GEN_REWRITE_TAC (LAND_CONV) [th]) THEN
+  DISCH_THEN(MP_TAC o SPEC `\x:A. W x /\ P x`) THEN REWRITE_TAC[] THEN
+  DISCH_THEN MATCH_MP_TAC THEN ASM_MESON_TAC[]);;
+
+let LSORTAUX_WF_ACC = prove
+ (`!(r:A->A->bool) W.
+     (!x. W x <=> !Q. (!z. (!y. r y z ==> Q y) ==> Q z) ==> Q x)
+     ==> (WF r <=> !x. W x)`,
+  REPEAT GEN_TAC THEN DISCH_TAC THEN
+  FIRST_ASSUM(ASSUME_TAC o MATCH_MP LSORTAUX_ACC_RULE) THEN
+  REWRITE_TAC[WF_IND] THEN EQ_TAC THENL
+   [DISCH_THEN MATCH_MP_TAC THEN ASM_REWRITE_TAC[];
+    ASM_MESON_TAC[]]);;
+
+let LSORTAUX_BAG_UNION_SING = prove
+ (`!M (a:A). BAG_UNION M (BAG_INSERT a EMPTY_BAG) = BAG_INSERT a M`,
+  REWRITE_TAC[BAG_UNION_INSERT; BAG_UNION_EMPTY]);;
+
+let LSORTAUX_MLT1_TEDIOUS = prove
+ (`!(R:A->A->bool) W.
+     (!x. W x <=> !Q. (!z. (!y. mlt1 R y z ==> Q y) ==> Q z) ==> Q x)
+     ==> !M0 a. W M0 /\
+                (!b. R b a ==> !M. W M ==> W (BAG_INSERT b M)) /\
+                (!M. mlt1 R M M0 ==> W (BAG_INSERT a M))
+                ==> W (BAG_INSERT a M0)`,
+  REPEAT GEN_TAC THEN DISCH_TAC THEN
+  FIRST_ASSUM(LABEL_TAC "rule" o MATCH_MP LSORTAUX_ACC_RULE) THEN
+  REPEAT GEN_TAC THEN STRIP_TAC THEN
+  USE_THEN "rule" MATCH_MP_TAC THEN X_GEN_TAC `N:A->num` THEN DISCH_TAC THEN
+  SUBGOAL_THEN `FINITE_BAG (N:A->num)` ASSUME_TAC THENL
+   [UNDISCH_TAC `mlt1 R (N:A->num) (BAG_INSERT a M0)` THEN SIMP_TAC[mlt1_def];
+    ALL_TAC] THEN
+  MP_TAC(ISPECL [`R:A->A->bool`; `N:A->num`; `M0:A->num`; `a:A`] BAG_LESS_ADD) THEN
+  REWRITE_TAC[LSORTAUX_BAG_UNION_SING] THEN
+  ANTS_TAC THENL [ASM_REWRITE_TAC[]; STRIP_TAC] THENL
+   [ASM_MESON_TAC[]; ALL_TAC] THEN
+  FIRST_X_ASSUM SUBST_ALL_TAC THEN
+  UNDISCH_TAC `!b:A. BAG_IN b KK ==> (R:A->A->bool) b a` THEN
+  SUBGOAL_THEN `FINITE_BAG (KK:A->num)` MP_TAC THENL
+   [ASM_MESON_TAC[FINITE_BAG_UNION]; ALL_TAC] THEN
+  SPEC_TAC(`KK:A->num`,`KK:A->num`) THEN
+  MATCH_MP_TAC FINITE_BAG_INDUCT THEN
+  REWRITE_TAC[BAG_UNION_EMPTY; NOT_IN_EMPTY_BAG; BAG_IN_BAG_INSERT;
+              BAG_UNION_INSERT] THEN
+  CONJ_TAC THENL [ASM_REWRITE_TAC[]; ALL_TAC] THEN
+  X_GEN_TAC `L:A->num` THEN DISCH_TAC THEN X_GEN_TAC `e:A` THEN DISCH_TAC THEN
+  ASM_MESON_TAC[]);;
+
+let LSORTAUX_MLT1_STEP = prove
+ (`!(R:A->A->bool) W.
+     (!x. W x <=> !Q. (!z. (!y. mlt1 R y z ==> Q y) ==> Q z) ==> Q x)
+     ==> !a. (!b. R b a ==> !M. W M ==> W (BAG_INSERT b M))
+             ==> !M. W M ==> W (BAG_INSERT a M)`,
+  REPEAT GEN_TAC THEN DISCH_TAC THEN GEN_TAC THEN DISCH_TAC THEN
+  FIRST_ASSUM(MATCH_MP_TAC o MATCH_MP LSORTAUX_ACC_IND) THEN
+  X_GEN_TAC `M:A->num` THEN STRIP_TAC THEN
+  FIRST_ASSUM(MATCH_MP_TAC o MATCH_MP LSORTAUX_MLT1_TEDIOUS) THEN
+  ASM_REWRITE_TAC[]);;
+
+let LSORTAUX_MLT1_INSERT = prove
+ (`!(R:A->A->bool) W.
+     (!x. W x <=> !Q. (!z. (!y. mlt1 R y z ==> Q y) ==> Q z) ==> Q x) /\ WF R
+     ==> !a M. W M ==> W (BAG_INSERT a M)`,
+  REPEAT GEN_TAC THEN STRIP_TAC THEN
+  FIRST_X_ASSUM(MATCH_MP_TAC o REWRITE_RULE[WF_IND] o
+    check (fun th -> is_comb (concl th) && is_const (rator (concl th)) &&
+                     fst (dest_const (rator (concl th))) = "WF")) THEN
+  FIRST_ASSUM(ACCEPT_TAC o MATCH_MP LSORTAUX_MLT1_STEP));;
+
+let LSORTAUX_MLT1_ALL_ACC = prove
+ (`!(R:A->A->bool) W.
+     (!x. W x <=> !Q. (!z. (!y. mlt1 R y z ==> Q y) ==> Q z) ==> Q x) /\ WF R
+     ==> !M. W M`,
+  REPEAT GEN_TAC THEN DISCH_TAC THEN
+  FIRST_ASSUM(ASSUME_TAC o MATCH_MP LSORTAUX_MLT1_INSERT) THEN
+  FIRST_ASSUM(ASSUME_TAC o MATCH_MP LSORTAUX_ACC_RULE o CONJUNCT1) THEN
+  X_GEN_TAC `M:A->num` THEN ASM_CASES_TAC `FINITE_BAG (M:A->num)` THENL
+   [UNDISCH_TAC `FINITE_BAG (M:A->num)` THEN SPEC_TAC(`M:A->num`,`M:A->num`) THEN
+    MATCH_MP_TAC FINITE_BAG_INDUCT THEN CONJ_TAC THENL
+     [FIRST_X_ASSUM MATCH_MP_TAC THEN REWRITE_TAC[BAG_NOT_LESS_EMPTY];
+      ASM_MESON_TAC[]];
+    FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[mlt1_def]]);;
+
+let WF_mlt1 = prove
+ (`!R:A->A->bool. WF R ==> WF (mlt1 R)`,
+  GEN_TAC THEN DISCH_TAC THEN
+  SUBGOAL_THEN
+   `?W:(A->num)->bool.
+      !x. W x <=> !Q. (!z. (!y. mlt1 R y z ==> Q y) ==> Q z) ==> Q x`
+   STRIP_ASSUME_TAC THENL
+   [EXISTS_TAC
+     `\x:A->num. !Q. (!z. (!y. mlt1 (R:A->A->bool) y z ==> Q y) ==> Q z) ==> Q x` THEN
+    REWRITE_TAC[];
+    ALL_TAC] THEN
+  MP_TAC(ISPECL [`mlt1 (R:A->A->bool)`; `W:(A->num)->bool`] LSORTAUX_WF_ACC) THEN
+  ANTS_TAC THENL [ASM_REWRITE_TAC[]; DISCH_THEN SUBST1_TAC] THEN
+  MATCH_MP_TAC LSORTAUX_MLT1_ALL_ACC THEN EXISTS_TAC `R:A->A->bool` THEN
+  ASM_REWRITE_TAC[]);;
+
+let mlt_NOT_REFL = prove
+ (`!(R:A->A->bool) a. WF R ==> ~TC (mlt1 R) a a`,
+  MESON_TAC[WF_mlt1; WF_TC; WF_REFL]);;
+
+
+(* ------------------------------------------------------------------------- *)
+(* container: bags of lists.                                                 *)
+(* ------------------------------------------------------------------------- *)
+
+let LIST_TO_BAG_def = new_recursive_definition list_RECURSION
+  `(LIST_TO_BAG ([]:A list) = EMPTY_BAG) /\
+   (LIST_TO_BAG (CONS h t) = BAG_INSERT h (LIST_TO_BAG t))`;;
+
+let LIST_TO_BAG_alt = prove
+ (`!l (x:A). LIST_TO_BAG l x = LENGTH (FILTER ((=) x) l)`,
+  LIST_INDUCT_TAC THEN
+  ASM_REWRITE_TAC[LIST_TO_BAG_def; EMPTY_BAG; K_THM; FILTER; LENGTH;
+                  LSORTAUX_BAG_INSERT_ADD] THEN
+  GEN_TAC THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[LENGTH] THEN
+  RULE_ASSUM_TAC GSYM THEN ASM_REWRITE_TAC[] THEN ARITH_TAC);;
+
+let FINITE_LIST_TO_BAG = prove
+ (`!ls:A list. FINITE_BAG (LIST_TO_BAG ls)`,
+  LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[LIST_TO_BAG_def; FINITE_BAG_THM]);;
+
+let LIST_TO_BAG_APPEND = prove
+ (`!l1 l2:A list.
+     LIST_TO_BAG (APPEND l1 l2) = BAG_UNION (LIST_TO_BAG l1) (LIST_TO_BAG l2)`,
+  LIST_INDUCT_TAC THEN
+  ASM_REWRITE_TAC[APPEND; LIST_TO_BAG_def; BAG_UNION_EMPTY; BAG_UNION_INSERT]);;
+
+let LIST_TO_BAG_MAP = prove
+ (`!(f:A->B) b. LIST_TO_BAG (MAP f b) = BAG_IMAGE f (LIST_TO_BAG b)`,
+  GEN_TAC THEN LIST_INDUCT_TAC THEN
+  ASM_SIMP_TAC[MAP; LIST_TO_BAG_def; BAG_IMAGE_EMPTY; BAG_IMAGE_FINITE_INSERT;
+               FINITE_LIST_TO_BAG]);;
+
+let LIST_TO_BAG_FILTER = prove
+ (`!f (b:A list). LIST_TO_BAG (FILTER f b) = BAG_FILTER f (LIST_TO_BAG b)`,
+  GEN_TAC THEN LIST_INDUCT_TAC THEN
+  ASM_REWRITE_TAC[FILTER; LIST_TO_BAG_def; BAG_FILTER_EMPTY;
+                  BAG_FILTER_BAG_INSERT] THEN
+  COND_CASES_TAC THEN ASM_REWRITE_TAC[LIST_TO_BAG_def]);;
+
+let INN_LIST_TO_BAG = prove
+ (`!n (h:A) l. BAG_INN h n (LIST_TO_BAG l) <=> LENGTH (FILTER ((=) h) l) >= n`,
+  REWRITE_TAC[BAG_INN; LIST_TO_BAG_alt]);;
+
+let IN_LIST_TO_BAG = prove
+ (`!(h:A) l. BAG_IN h (LIST_TO_BAG l) <=> MEM h l`,
+  GEN_TAC THEN LIST_INDUCT_TAC THEN
+  ASM_REWRITE_TAC[LIST_TO_BAG_def; NOT_IN_EMPTY_BAG; BAG_IN_BAG_INSERT; MEM]);;
+
+let LIST_TO_BAG_DISTINCT = prove
+ (`!b:A list. BAG_ALL_DISTINCT (LIST_TO_BAG b) <=> ALL_DISTINCT b`,
+  LIST_INDUCT_TAC THEN
+  ASM_REWRITE_TAC[LIST_TO_BAG_def; BAG_ALL_DISTINCT_THM; ALL_DISTINCT;
+                  IN_LIST_TO_BAG]);;
+
+let LIST_TO_BAG_EQ_EMPTY = prove
+ (`!l:A list. LIST_TO_BAG l = EMPTY_BAG <=> l = []`,
+  LIST_INDUCT_TAC THEN
+  REWRITE_TAC[LIST_TO_BAG_def; BAG_INSERT_NOT_EMPTY; NOT_CONS_NIL]);;
+
+let PERM_LIST_TO_BAG = prove
+ (`!l1 l2:A list. LIST_TO_BAG l1 = LIST_TO_BAG l2 <=> PERM l1 l2`,
+  REWRITE_TAC[PERM_alt; FUN_EQ_THM; LIST_TO_BAG_alt]);;
+
+let CARD_LIST_TO_BAG = prove
+ (`!ls:A list. BAG_CARD (LIST_TO_BAG ls) = LENGTH ls`,
+  LIST_INDUCT_TAC THEN
+  ASM_SIMP_TAC[LIST_TO_BAG_def; BAG_CARD_THM; LENGTH; FINITE_LIST_TO_BAG; ADD1]);;
+
+let LIST_ELEM_COUNT_LIST_TO_BAG = prove
+ (`!(e:A) ls. LIST_ELEM_COUNT e ls = LIST_TO_BAG ls e`,
+  REWRITE_TAC[LIST_ELEM_COUNT_DEF; LIST_TO_BAG_alt] THEN
+  REPEAT GEN_TAC THEN AP_TERM_TAC THEN AP_THM_TAC THEN AP_TERM_TAC THEN
+  REWRITE_TAC[FUN_EQ_THM] THEN MESON_TAC[]);;
+
+let LIST_TO_BAG_SUB_BAG_FLAT_suff = prove
+ (`!ls1 ls2:(A list) list.
+     ALL2 (\l1 l2. SUB_BAG (LIST_TO_BAG l1) (LIST_TO_BAG l2)) ls1 ls2
+     ==> SUB_BAG (LIST_TO_BAG (FLAT ls1)) (LIST_TO_BAG (FLAT ls2))`,
+  LIST_INDUCT_TAC THEN LIST_INDUCT_TAC THEN
+  REWRITE_TAC[ALL2; FLAT; SUB_BAG_REFL; LIST_TO_BAG_APPEND] THEN
+  STRIP_TAC THEN
+  MATCH_MP_TAC(REWRITE_RULE[IMP_IMP] (el 6 (CONJUNCTS SUB_BAG_UNION))) THEN
+  ASM_SIMP_TAC[]);;
+
+let LIST_TO_BAG_SUBSET = prove
+ (`!l1 l2:A list.
+     SUB_BAG (LIST_TO_BAG l1) (LIST_TO_BAG l2)
+     ==> set_of_list l1 SUBSET set_of_list l2`,
+  REPEAT STRIP_TAC THEN
+  FIRST_X_ASSUM(MP_TAC o MATCH_MP SUB_BAG_SET) THEN
+  SUBGOAL_THEN `!l:A list. SET_OF_BAG (LIST_TO_BAG l) = set_of_list l`
+    (fun th -> REWRITE_TAC[th]) THEN
+  REWRITE_TAC[EXTENSION; IN_SET_OF_BAG; IN_LIST_TO_BAG; IN_SET_OF_LIST]);;
+
+(* ------------------------------------------------------------------------- *)
+(* Registration of the HOL4 [simp] theorems of this file.                    *)
+(* ------------------------------------------------------------------------- *)
+
+let _ = cake_add_simps
+  [BAG_INN_0; BAG_IN_BAG_INSERT; BAG_UNION_EQ_LCANCEL1; BAG_UNION_EQ_RCANCEL1;
+   BAG_IN_BAG_UNION; BAG_INSERT_DIFF; BAG_INSERT_NOT_EMPTY; BAG_INSERT_ONE_ONE;
+   C_BAG_INSERT_ONE_ONE; BAG_UNION_LEFT_CANCEL; BAG_UNION_RIGHT_CANCEL;
+   BAG_UNION_EMPTY; NOT_IN_EMPTY_BAG; BAG_INN_EMPTY_BAG; SUB_BAG_EMPTY;
+   SUB_BAG_REFL; BAG_DIFF_EMPTY_simple; BAG_DIFF_EQ_EMPTY; BAG_DIFF_INSERT_same;
+   BAG_DIFF_UNION_eliminate; SUB_BAG_UNION_eliminate; SET_OF_EMPTY;
+   BAG_OF_SET_EQ_EMPTY_BAG; SET_OF_SINGLETON_BAG; BAG_IN_BAG_OF_SET;
+   BAG_OF_EMPTY; SET_BAG_I; SET_OF_EL_BAG; IN_SET_OF_BAG; SET_OF_BAG_EQ_EMPTY;
+   BAG_DISJOINT_EMPTY; BAG_DISJOINT_BAG_UNION; FINITE_BAG_THM; FINITE_BAG_UNION;
+   FINITE_EL_BAG; BAG_CARD_EMPTY; BAG_CARD_UNION; BAG_FILTER_EMPTY;
+   BAG_FILTER_BAG_INSERT; FINITE_BAG_FILTER; BAG_INN_BAG_FILTER;
+   BAG_IN_BAG_FILTER; BAG_FILTER_SUB_BAG; FINITE_SET_OF_BAG; FINITE_BAG_OF_SET;
+   BAG_IMAGE_EMPTY; BAG_IMAGE_FINITE_INSERT; BAG_IMAGE_FINITE_UNION;
+   BAG_IMAGE_FINITE; BAG_IMAGE_FINITE_I; BAG_IN_FINITE_BAG_IMAGE;
+   BAG_IMAGE_EQ_EMPTY; BAG_ALL_DISTINCT_THM; BAG_ALL_DISTINCT_BAG_OF_SET;
+   BAG_NOT_LESS_EMPTY; NOT_mlt_EMPTY; mlt_NOT_REFL;
+   LIST_TO_BAG_def; FINITE_LIST_TO_BAG; CARD_LIST_TO_BAG];;

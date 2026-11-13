@@ -49,8 +49,19 @@ let CASE_REWRITE_RULE thl = CONV_RULE (CASE_REWRITE_CONV thl);;
 (* Cases_on.                                                                 *)
 (* ------------------------------------------------------------------------- *)
 
+(* cases theorems for types that are not datatypes (e.g. llist, path):      *)
+(* cake_register_cases "llist" LLIST_CASES  with a theorem                  *)
+(* !x. x = C1 \/ (?a b. x = C2 a b) \/ ...  makes CASES_ON work on them      *)
+
+let cake_extra_cases = ref ([] : (string * thm) list);;
+
+let cake_register_cases tyname th =
+  cake_extra_cases := (tyname,th) ::
+                      filter (fun (n,_) -> n <> tyname) (!cake_extra_cases);;
+
 let nchotomy_of_type ty =
   let n = fst(dest_type ty) in
+  try assoc n (!cake_extra_cases) with Failure _ ->
   try (case_info_of_tyname n).ci_nchotomy
   with Failure _ ->
     let th = cases n in
