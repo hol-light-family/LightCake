@@ -20,6 +20,11 @@
 
 let cake_admissible_rules = ref ([] : (string * thm) list);;
 
+(* lets in recursive definitions: unfolded (false, the default) or kept with *)
+(* HOL4's LET_CONG context x = e (true; changes the termination conditions)  *)
+
+let cake_let_cong = ref false;;
+
 let cake_register_admissible c th =
   cake_admissible_rules :=
     (c,th) :: filter (fun (c',_) -> c' <> c) (!cake_admissible_rules);;
@@ -35,6 +40,16 @@ let cake_rename_proforma =
 
 let cake_case_rule_ref =
   ref (fun (_:term) (_:term list) -> (failwith "case rule" : thm));;
+
+(* HOL Light's ADMISSIBLE_LAMBDA with a body of any type, not only bool: a  *)
+(* recursive call in a lambda (a monadic continuation, a function-valued    *)
+(* result) is then admissible with the lambda's variable in its context    *)
+
+let CAKE_ADMISSIBLE_LAMBDA = prove
+ (`!(<<) p (s:P->A) (t:(A->B)->C->P->D).
+     admissible(<<) (\f (u,x). p f x) (\(u,x). s x) (\f (u,x). t f u x)
+     ==> admissible(<<) p s (\f x. \u. t f u x)`,
+  REWRITE_TAC[admissible; FUN_EQ_THM; FORALL_PAIR_THM] THEN MESON_TAC[]);;
 
 (* the copied code relies on HOL Light's type invention *)
 let cake_tie_saved = !type_invention_error;;
@@ -138,21 +153,42 @@ let instantiate_casewise_recursion,
         FIRST_X_ASSUM(MP_TAC o SPEC `\d c. (t:C#D->E) (c,d)`)] THEN
       MATCH_MP_TAC EQ_IMP THEN AP_TERM_TAC THEN
       REWRITE_TAC[FUN_EQ_THM; FORALL_PAIR_THM]) in
-    let HACK_PROFORMA n th =
-      if n <= 1 then th else
+    (* HOL Light's version instantiates P with the n-tuple type at once and  *)
+    (* rewrites to a fixpoint: about cubic in n (minutes per definition for  *)
+    (* the clause sets of closSem, bviSem, evaluate).  Here the version for  *)
+    (* m+1 variables is made from the one for m by splitting only the last   *)
+    (* component (_Pm, or P when m = 1, becomes _Pm # _P(m+1)), which gives  *)
+    (* the same theorem; and every version is cached per rule.              *)
+    let HACK_PROFORMA =
       let mkname i = "_P"^string_of_int i in
-      let ty = end_itlist (fun s t -> mk_type("prod",[s;t]))
-                          (map (mk_vartype o mkname) (1--n)) in
       let conv i =
         let name = "x"^string_of_int i in
         let cnv = ALPHA_CONV (mk_var(name,mk_vartype(mkname i))) in
         fun tm -> if is_abs tm && name_of(bndvar tm) <> name
                   then cnv tm else failwith "conv" in
-      let convs = FIRST_CONV (map conv (1--n)) in
-      let th1 = INST_TYPE [ty,`:P`] th in
-      let th2 = REWRITE_RULE[FORALL_PAIR_THM] th1 in
-      let th3 = REWRITE_RULE[elemma0; elemma1] th2 in
-      CONV_RULE(REDEPTH_CONV convs) th3
+      let step m hm =
+        let old = if m = 1 then `:P` else mk_vartype(mkname m) in
+        let nw = mk_type("prod",[mk_vartype(mkname m);
+                                 mk_vartype(mkname (m+1))]) in
+        let th1 = INST_TYPE [nw,old] hm in
+        let th2 = REWRITE_RULE[FORALL_PAIR_THM] th1 in
+        let th3 = REWRITE_RULE[elemma0; elemma1] th2 in
+        CONV_RULE(REDEPTH_CONV (FIRST_CONV [conv m; conv (m+1)])) th3 in
+      let cache = Hashtbl.create 64 in
+      fun n th ->
+        if n <= 1 then th else
+        let key = (hyp th,concl th) in
+        let known = try Hashtbl.find cache key with Not_found -> [] in
+        try assoc n known with Failure _ ->
+        let m,hm = itlist (fun (k,h) (k0,h0) ->
+                             if k < n && k > k0 then (k,h) else (k0,h0))
+                          known (1,th) in
+        let rec go k hk acc =
+          if k = n then hk,acc else
+          let hk' = step k hk in go (k+1) hk' ((k+1,hk')::acc) in
+        let res,acc = go m hm [] in
+        Hashtbl.replace cache key (acc @ known);
+        res
     and EACK_PROFORMA n th =
       if n <= 1 then th else
       let mkname i = "_Q"^string_of_int i in
@@ -252,6 +288,12 @@ let instantiate_casewise_recursion,
                           length args = 1 + length (case_info_of_const hop).ci_pats &&
                           not (can (assoc (name_of hop)) (!cake_admissible_rules))
           -> APPLY_PROFORMA_TAC (!cake_case_rule_ref hop (tl args)) gl
+    | "admissible","LET" when can (assoc "LET") (!cake_admissible_rules)
+          -> let th = assoc "LET" (!cake_admissible_rules) in
+             let names = try let v1,_ = dest_abs (hd(snd(strip_comb bod))) in
+                             [fst(dest_var v1)]
+                         with Failure _ -> [] in
+             APPLY_PROFORMA_TAC (!cake_rename_proforma ["y"] names th) gl
     | "admissible","pair_CASE" when can (assoc "pair_CASE") (!cake_admissible_rules)
           -> let th = assoc "pair_CASE" (!cake_admissible_rules) in
              let names = try let v1,b1 = dest_abs (last(snd(strip_comb bod))) in
@@ -262,7 +304,7 @@ let instantiate_casewise_recursion,
     | "admissible",c when can (assoc c) (!cake_admissible_rules)
           -> APPLY_PROFORMA_TAC (assoc c (!cake_admissible_rules)) gl
     | "admissible",_ when is_abs bod
-          -> APPLY_PROFORMA_TAC ADMISSIBLE_LAMBDA gl
+          -> APPLY_PROFORMA_TAC CAKE_ADMISSIBLE_LAMBDA gl
     | "admissible",_ when is_comb bod && rator bod = f
           -> if free_in f (rand bod) then
                APPLY_PROFORMA_TAC ADMISSIBLE_NEST gl
@@ -416,7 +458,11 @@ let instantiate_casewise_recursion,
       let wfasm = find is_exists (hyp th1) in
       let ord,bod = dest_exists wfasm in
       let SIMP_ADMISS_TAC =
-        REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
+        (* with cake_let_cong set, LET stays (rule ADMISSIBLE_LET, HOL4's    *)
+        (* LET_CONG: a call in the bound expression is analysed once); by    *)
+        (* default lets are unfolded, as HOL Light does                      *)
+        (fun g -> REWRITE_TAC(if !cake_let_cong then [LET_END_DEF]
+                              else [LET_DEF; LET_END_DEF]) g) THEN
         REPEAT ADMISS_TAC THEN
         TRY(W(fun (asl,w) -> let v = fst(dest_forall w) in
                 X_GEN_TAC v THEN
@@ -761,7 +807,20 @@ let cake_case_rule_for (hop:term) (arms:term list) =
 
 cake_case_rule_ref := cake_case_rule_for;;
 
+(* LET h e, the kit's let x = e in t: the context e = x (HOL4's LET_CONG) *)
+
+let ADMISSIBLE_LET = prove
+ (`!(<<) (p:(A->B)->P->bool) (s:P->A) (e:(A->B)->P->C) (h:(A->B)->P->C->D).
+        admissible(<<) p s e /\
+        admissible (<<) (\f (y,x). p f x /\ e f x = y)
+                        (\(y,x). s x) (\f (y,x). h f x y)
+        ==> admissible (<<) p s (\f x. LET (h f x) (e f x))`,
+  REWRITE_TAC[admissible; FORALL_PAIR_THM; LET_DEF] THEN REPEAT STRIP_TAC THEN
+  SUBGOAL_THEN `(e:(A->B)->P->C) g a = e f a` ASSUME_TAC THENL
+   [ASM_MESON_TAC[]; ALL_TAC] THEN
+  ASM_REWRITE_TAC[] THEN FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[]);;
+
 do_list (uncurry cake_register_admissible)
   ["==>",ADMISSIBLE_IMP; "ALL",ADMISSIBLE_ALL; "EX",ADMISSIBLE_EX;
    "IMAGE",ADMISSIBLE_IMAGE; "ITLIST",ADMISSIBLE_ITLIST;
-   "pair_CASE",ADMISSIBLE_pair_CASE];;
+   "pair_CASE",ADMISSIBLE_pair_CASE; "LET",ADMISSIBLE_LET];;

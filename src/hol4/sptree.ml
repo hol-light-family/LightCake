@@ -1899,7 +1899,14 @@ let spts_to_alist_add_pause_def = new_definition
   `spts_to_alist_add_pause j (q:(num#A spt)list) =
      list_CASE q [(j,LN)] (\h q. pair_CASE h (\i spt. CONS (i + j,spt) q))`;;
 
-let spts_to_alist_aux_def = cake_def
+(* termination by the length of xs, given explicitly (HOL4 finds it; the   *)
+(* measure search of cake_def took a minute here)                           *)
+let spts_to_alist_aux_def = cake_def_wf
+  `measure (\t:num#(num#A spt)list#(num#A)list#(num#A spt)list#(num#A spt)list#bool.
+              LENGTH (FST (SND t)))`
+  (REWRITE_TAC WF_REL_THMS THEN CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
+   REWRITE_TAC[FST; SND] THEN REPEAT STRIP_TAC THEN
+   ASM_REWRITE_TAC[LENGTH] THEN ARITH_TAC)
   `spts_to_alist_aux i (xs:(num#A spt)list) (acc_cent:(num#A)list)
                      acc_right acc_left repeat =
      list_CASE xs

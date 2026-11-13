@@ -14,8 +14,11 @@
 - The backend intermediate languages prefix their types, constructors and constants with
   the language: `clos_`, `bvl_`, `bvi_`, `data_`, `flat_`, `stack_`, `lab_`, `asm_`, `target_`,
   and `wl_` for wordLang. The source language (`semantics/`) keeps HOL4's names. Other theories
-  prefix a name with the theory name only where it clashes. `doc/names.tsv` is the table
-  (columns: file, theory, kind, HOL4 name, HOL Light name, reason).
+  prefix a name with the theory name where it clashes, and also where it is a common variable
+  name (`parmove_step`, `clos_annotate_shift`, `infer_read`): all files are loaded into one
+  session, where a constant would capture every later variable of the same name, also in
+  files that do not load it. `doc/names.tsv` is the table (columns: file, theory, kind, HOL4
+  name, HOL Light name, reason).
 - Record fields: the accessor of field `f` of record type `r` is `r_f`, its update `r_f_fupd`
   (HOL4 `x with f := v` is `r_f_fupd (K v) x`); the literal `<| f1 := v1; ... |>` is
   `r_REC v1 ...` with the fields in declaration order.
@@ -53,6 +56,14 @@
   The variables of a definition are quantified in HOL4's order (left to right).
   `cake_def_clauses [`c1`; `c2`]` takes clauses parsed one by one (a variable name may then
   have different types in different clauses, as in HOL4).
+- Mutual recursion: the functions of one definition are encoded as one function on the sum of
+  their argument tuples; any number of functions is allowed, and the induction theorem has one
+  predicate per function.
+- `sem1aux_def tm` and `sem1aux_def_wf R tac tm` (`src/semantics/sem1aux_tfl.ml`) take the same
+  clauses as `cake_def` and `cake_def_wf` and prove the same clause theorems, with a
+  clause-shaped induction theorem, but compile the clauses into one case tree before the
+  recursion package sees them, as HOL4's TFL does. They are much
+  faster for long definitions with catch-all clauses (the evaluate functions of the semantics).
 - `cake_record "r" ["f1","ty1"; ...]` for records; `cake_inductive tm` for inductive relations
   (rules, induction, cases, strong induction).
 

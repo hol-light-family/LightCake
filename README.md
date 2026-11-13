@@ -18,8 +18,30 @@ in HOL Light.
 | part | files |
 |---|---|
 | proof kit | `src/kit/` (see below) |
-| HOL4 library layer | `src/hol4/` (53 files): `vocab.ml` (shared vocabulary), lists (`list.ml`, `rich_list.ml`), `basic.ml` (combinators, options, pairs, arithmetic, relations, `While`, extra set theory), finite maps and association lists, `sptree.ml`, words, bytes, alignment and integer words (`words4.ml`), comparisons, IEEE floating point, strings and number formatting, lazy lists, `set_sep.ml`, sorting, mergesort, bags, the context-free grammar and PEG theories, s-expressions, balanced maps, `tailrec.ml`, `gcd.ml`, the vector type, first-order unification (`term.ml` ... `tcallUnif.ml`) and multiword arithmetic (`multiword.ml`, `mc_multiword.ml`) |
-| CakeML | `src/misc/` (the misc theory, in three parts); `src/basis/pure/`: `mloption`, `mllist`, `mlstring`, `mlvector`, `mlint`, `mlsexp`; `src/semantics/`: `namespace`, `ast`, `fpSem`, `ffi/ffi`, `semanticPrimitives`, `tokens`, `tokenUtils`, `lexer_fun`, `gram`, and `proofs/namespaceProps`, `proofs/gramProps`; `src/compiler/backend/`: `backend_common`, `db_vars`, `semantics/backendProps`, `gc/gc_shared`, `gc/copying_gc`, `gc/gen_gc`, `gc/gen_gc_partial`, `reg_alloc/parmove`, `pattern_matching/pattern_common` |
+| HOL4 library layer | `src/hol4/` (53 files): `ASCIInumbers`, `NTproperties`, `alist`, `bag`, `balanced_map`, `basic`, `binary_ieee`, `bitstring`, `collapse`, `comparison`, `cps`, `finite_map`, `fmsp`, `gcd`, `grammar`, `int_bitwise`, `list`, `llist`, `location`, `lprefix_lub`, `machine_ieee`, `mc_multiword`, `mergesort`, `multiword`, `numposrep`, `path`, `peg`, `pegexec`, `regexp_compiler`, `rich_list`, `rmfmap`, `set_sep`, `simpleSexp`, `simpleSexpPEG`, `simpleSexpParse`, `sorting`, `spt_closure`, `sptree`, `state_transformer`, `string4`, `subst`, `tailrec`, `tcallUnif`, `term`, `ternaryComparisons`, `toto`, `transfer`, `unifDef`, `unifProps`, `vocab`, `walk`, `walkstar`, `words4` |
+| `src/misc/` | `misc`, `misc_p1`, `misc_p2`, `misc_p3` |
+| `src/basis/pure/` | `mlint`, `mllist`, `mloption`, `mlsexp`, `mlstring`, `mlvector` |
+| `src/semantics/` | `ast`, `cmlPtreeConversion`, `evaluate`, `fpSem`, `gram`, `lexer_fun`, `namespace`, `primTypes`, `sem1aux_tfl`, `semanticPrimitives`, `semantics`, `tokenUtils`, `tokens`, `typeSystem` |
+| `src/semantics/ffi/` | `ffi` |
+| `src/semantics/proofs/` | `evaluateProps`, `gramProps`, `namespaceProps`, `primSemEnv`, `semanticPrimitivesProps`, `typeSoundInvariants`, `typeSysProps`, `weakening` |
+| `src/compiler/parsing/` | `cmlPEG`, `fromSexp`, `lexer_impl` |
+| `src/compiler/parsing/proofs/` | `cmlNTProps`, `pegComplete`, `pegSound` |
+| `src/compiler/inference/` | `infer`, `infer_t`, `unify` |
+| `src/compiler/encoders/asm/` | `asm`, `asmProps`, `asmSem` |
+| `src/translator/monadic/monad_base/` | `ml_monadBase` |
+| `src/compiler/backend/` | `backend_common`, `bvi`, `bvi_inline`, `bvi_let`, `bvi_tailrec`, `bvi_tmc`, `bvi_to_data`, `bvl`, `bvl_const`, `bvl_handle`, `bvl_inline`, `bvl_jump`, `bvl_to_bvi`, `closLang`, `clos_annotate`, `clos_call`, `clos_fvs`, `clos_interp`, `clos_known`, `clos_letop`, `clos_mti`, `clos_number`, `clos_op`, `clos_ticks`, `clos_to_bvl`, `dataLang`, `data_live`, `data_simp`, `data_space`, `db_vars`, `export`, `flatLang`, `flat_elim`, `flat_pattern`, `flat_to_clos`, `il1aux_mutual`, `jsonLang`, `labLang`, `lab_filter`, `lab_to_target`, `source_let`, `source_to_flat`, `stackLang`, `stack_names`, `stack_rawcall`, `stack_remove`, `wordLang`, `word_alloc`, `word_bignum`, `word_copy`, `word_cse`, `word_depth`, `word_elim`, `word_inst`, `word_remove`, `word_simp`, `word_to_word`, `word_unreach` |
+| `src/compiler/backend/semantics/` | `backendProps`, `bviSem`, `bvlSem`, `closSem`, `flatProps`, `flatSem`, `labSem`, `stackSem`, `targetSem`, `wordConvs`, `wordSem` |
+| `src/compiler/backend/gc/` | `copying_gc`, `gc_shared`, `gen_gc`, `gen_gc_partial` |
+| `src/compiler/backend/reg_alloc/` | `linear_scan`, `parmove`, `reg_alloc` |
+| `src/compiler/backend/reg_alloc/proofs/` | `reg_allocProof` |
+| `src/compiler/backend/pattern_matching/` | `pattern_common`, `pattern_comp`, `pattern_exh`, `pattern_semantics` |
+| `src/compiler/backend/proofs/` | `flat_elimProof` |
+| `src/compiler/backend/ag32/` | `export_ag32` |
+| `src/compiler/backend/arm7/` | `export_arm7` |
+| `src/compiler/backend/arm8/` | `export_arm8` |
+| `src/compiler/backend/mips/` | `export_mips` |
+| `src/compiler/backend/riscv/` | `export_riscv` |
+| `src/compiler/backend/x64/` | `export_x64` |
 
 The numbers of files, lines and theorems are in `doc/contents.tsv`. Every file loads in a
 fresh HOL Light session with no axioms beyond HOL Light's three (`check.ml` shows it).

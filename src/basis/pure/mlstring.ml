@@ -381,7 +381,12 @@ let splitl_SPLITL = prove
   AP_THM_TAC THEN AP_THM_TAC THEN AP_TERM_TAC THEN
   REWRITE_TAC[FUN_EQ_THM; o_THM; APPEND]);;
 
-let tokens_aux_def = cake_def
+(* termination by the last argument, given explicitly (HOL4 finds it; the  *)
+(* measure search of cake_def took most of a minute here)                  *)
+let tokens_aux_def = cake_def_wf
+  `measure (\t:(char->bool)#mlstring#(char list)#num#num. SND (SND (SND (SND t))))`
+  (REWRITE_TAC WF_REL_THMS THEN CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
+   REWRITE_TAC[FST; SND] THEN REPEAT STRIP_TAC THEN ASM_ARITH_TAC)
   `(tokens_aux (f:char->bool) s [] n 0 = []) /\
    (tokens_aux f s (CONS h t) n 0 = [implode (REVERSE (CONS h t))]) /\
    (tokens_aux f s [] n (SUC len) =
@@ -632,7 +637,11 @@ let tokens_alt = prove
   REWRITE_TAC[tokens_def] THEN MATCH_MP_TAC tokens_alt_tokens_alt_aux THEN
   REWRITE_TAC[LE_REFL; LE_0; SUB_0; SUB_REFL; substring_0; explode_thm; REVERSE]);;
 
-let fields_aux_def = cake_def
+(* termination by the last argument, given explicitly (as tokens_aux) *)
+let fields_aux_def = cake_def_wf
+  `measure (\t:(char->bool)#mlstring#(char list)#num#num. SND (SND (SND (SND t))))`
+  (REWRITE_TAC WF_REL_THMS THEN CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
+   REWRITE_TAC[FST; SND] THEN REPEAT STRIP_TAC THEN ASM_ARITH_TAC)
   `(fields_aux (f:char->bool) s ss n 0 = [implode (REVERSE ss)]) /\
    (fields_aux f s ss n (SUC len) =
       if f (strsub s n)

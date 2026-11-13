@@ -646,6 +646,17 @@ let derive_induction (c:term) (clauses:(term list * term list) list)
                else mk_imp(ctx,list_mk_comb(p,aargs)) in
     let evs = subtract (frees body) (p :: pv) in
     let evs' = unprime_vars (pv @ (subtract (frees body) evs)) evs in
+    (* a variable named like the defined function (the recursion package    *)
+    (* sometimes names one so) gets a v-name                                *)
+    let cname = try fst(dest_const c) with Failure _ ->
+                try fst(dest_var c) with Failure _ -> "" in
+    let evs' =
+      let used = ref (map (fst o dest_var) (pv @ evs' @ frees body)) in
+      map (fun v -> let n,ty = dest_var v in
+                    if n <> cname then v else
+                    let rec go k = let m = "v" ^ string_of_int k in
+                                   if mem m !used then go (k+1) else m in
+                    let m = go 1 in used := m :: !used; mk_var(m,ty)) evs' in
     let body' = vsubst (zip evs' evs) body in
     list_mk_forall(evs',body') in
   (* per clause: the IHs, each with the TC theorem that proves it; drop     *)
@@ -1089,7 +1100,8 @@ let cake_def_mutual (rel_tac : (term * tactic) option) (tm:term) : thm =
       CONV_TAC(LAND_CONV(REWR_CONV (SPEC_ALL (el i fdefs)) THENC
                          RAND_CONV(PURE_ONCE_REWRITE_CONV[fdef]) THENC
                          PURE_REWRITE_CONV[OUTL; OUTR] THENC fold_conv)) THEN
-      REFL_TAC) in
+      (* a function that occurs bare (MAP f l) comes back as \x. f x *)
+      (REFL_TAC ORELSE (CONV_TAC(TOP_DEPTH_CONV ETA_CONV) THEN REFL_TAC))) in
   let def = end_itlist CONJ (map clause_thm cls) in
   (* the induction theorem *)
   (try
@@ -1111,14 +1123,17 @@ let cake_def_mutual (rel_tac : (term * tactic) option) (tm:term) : thm =
        | [] -> failwith "qterm" in
      let q = qterm argtups 0 in
      let th1 = ISPEC q find in
+     (* with three or more functions a sum_CASE reduces to a beta-redex   *)
+     (* whose reduct is a sum_CASE again: reduce until nothing changes     *)
+     let step = PURE_REWRITE_CONV[sum_CASE; FST; SND] THENC
+                TOP_DEPTH_CONV BETA_CONV in
      let th2 = CONV_RULE (TOP_DEPTH_CONV BETA_CONV THENC
-                          PURE_REWRITE_CONV[sum_CASE; FST; SND] THENC
-                          TOP_DEPTH_CONV BETA_CONV THENC
+                          REPEATC (CHANGED_CONV step) THENC
                           PURE_REWRITE_CONV[FST; SND] THENC fold_conv) th1 in
      let rec split_conv l = match l with
-         [_] -> ALL_CONV
+         [] | [_] -> ALL_CONV
        | _::rest -> GEN_REWRITE_CONV I [SUM_CASE_FORALL] THENC
-                    RAND_CONV (split_conv rest) in
+                    RAND_CONV (BINDER_CONV BETA_CONV THENC split_conv rest) in
      let th3 = CONV_RULE (RAND_CONV (split_conv argtups THENC
                                      TOP_DEPTH_CONV BETA_CONV)) th2 in
      let concl_conv =

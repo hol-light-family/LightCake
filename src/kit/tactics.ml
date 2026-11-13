@@ -26,17 +26,40 @@
 
 let cake_case_net = ref (basic_net());;
 
+(* the case infos and the basic net the net was made from *)
+let cake_case_net_infos = ref (!the_case_infos);;
+let cake_case_net_basic = ref (basic_net());;
+
 let cake_rebuild_case_net () =
   cake_case_net :=
     itlist (net_of_thm true)
            (itlist (mk_rewrites false) (all_case_rewrites()) [])
-           (basic_net());;
+           (basic_net());
+  cake_case_net_infos := !the_case_infos;
+  cake_case_net_basic := basic_net();;
 
 cake_rebuild_case_net();;
 
+(* after new datatypes only their theorems are added (a rebuild of the net  *)
+(* takes half a minute in a session with all the semantics); everything is *)
+(* rebuilt if a case info was replaced or the basic rewrites changed       *)
+let cake_update_case_net () =
+  let old = !cake_case_net_infos and cur = !the_case_infos in
+  let known e l = exists (fun e' -> e' == e) l in
+  if exists (fun e -> not (known e cur)) old ||
+     not (basic_net() == !cake_case_net_basic)
+  then cake_rebuild_case_net() else
+  let news = filter (fun e -> not (known e old)) cur in
+  let thms = itlist (fun (_,ci) l -> ci.ci_def :: ci.ci_distinct @
+                                     ci.ci_inject @ l) news [] in
+  cake_case_net := itlist (net_of_thm true)
+                          (itlist (mk_rewrites false) thms [])
+                          (!cake_case_net);
+  cake_case_net_infos := cur;;
+
 let cake_type s =
   let res = cake_type s in
-  cake_rebuild_case_net(); res;;
+  cake_update_case_net(); res;;
 
 let CASE_REWRITE_CONV thl =
   GENERAL_REWRITE_CONV true TOP_DEPTH_CONV (!cake_case_net) thl;;
@@ -182,7 +205,11 @@ let rec IMP_CURRY_RULE th =
   let c = concl th in
   if is_forall c then
     let v = fst(dest_forall c) in
-    GEN v (IMP_CURRY_RULE (SPEC v th))
+    (* a binder named like a free variable of an antecedent already        *)
+    (* discharged is renamed: SPEC would identify the two (and GEN fail)   *)
+    let hv = freesl (hyp th) in
+    let v' = if mem v hv then variant (hv @ frees c) v else v in
+    GEN v' (IMP_CURRY_RULE (SPEC v' th))
   else if is_imp c then
     let a,b = dest_imp c in
     if is_conj a then

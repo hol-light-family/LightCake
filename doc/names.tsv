@@ -2539,17 +2539,17 @@ compiler/backend/clos_call	clos_call	theorem	EL_MEM_LEMMA	clos_call_EL_MEM_LEMMA
 compiler/backend/clos_call	clos_call	constant	insert_each	insert_each	unique
 compiler/backend/clos_call	clos_call	theorem	insert_each_def	insert_each_def	unique
 compiler/backend/clos_call	clos_call	theorem	insert_each_ind	insert_each_ind	unique
-compiler/backend/clos_call	clos_call	constant	code_list	code_list	unique
-compiler/backend/clos_call	clos_call	theorem	code_list_def	code_list_def	unique
-compiler/backend/clos_call	clos_call	theorem	code_list_ind	code_list_ind	unique
+compiler/backend/clos_call	clos_call	constant	code_list	clos_call_code_list	common word, captured elsewhere (tools/const_capture.py)
+compiler/backend/clos_call	clos_call	theorem	code_list_def	clos_call_code_list_def	common word, captured elsewhere (tools/const_capture.py)
+compiler/backend/clos_call	clos_call	theorem	code_list_ind	clos_call_code_list_ind	common word, captured elsewhere (tools/const_capture.py)
 compiler/backend/clos_call	clos_call	constant	GENLIST_Var	GENLIST_Var	unique
 compiler/backend/clos_call	clos_call	theorem	GENLIST_Var_def	GENLIST_Var_def	unique
 compiler/backend/clos_call	clos_call	constant	calls_list	calls_list	unique
 compiler/backend/clos_call	clos_call	theorem	calls_list_def	calls_list_def	unique
 compiler/backend/clos_call	clos_call	theorem	exp3_size_MAP_SND	exp3_size_MAP_SND	unique
-compiler/backend/clos_call	clos_call	constant	calls	calls	unique
-compiler/backend/clos_call	clos_call	theorem	calls_def	calls_def	unique
-compiler/backend/clos_call	clos_call	theorem	calls_ind	calls_ind	unique
+compiler/backend/clos_call	clos_call	constant	calls	clos_call_calls	common word, captured elsewhere (tools/const_capture.py)
+compiler/backend/clos_call	clos_call	theorem	calls_def	clos_call_calls_def	common word, captured elsewhere (tools/const_capture.py)
+compiler/backend/clos_call	clos_call	theorem	calls_ind	clos_call_calls_ind	common word, captured elsewhere (tools/const_capture.py)
 compiler/backend/clos_call	clos_call	constant	calls_sing	calls_sing	unique
 compiler/backend/clos_call	clos_call	constant	calls_sing_list	calls_sing_list	unique
 compiler/backend/clos_call	clos_call	theorem	calls_sing_def	calls_sing_def	unique
@@ -2813,9 +2813,9 @@ compiler/backend/clos_annotate	clos_annotate	constant	get_var	clos_annotate_get_
 compiler/backend/clos_annotate	clos_annotate	theorem	get_var_def	clos_annotate_get_var_def	clash:4 theories
 compiler/backend/clos_annotate	clos_annotate	constant	shifted_env	shifted_env	unique
 compiler/backend/clos_annotate	clos_annotate	theorem	shifted_env_def	shifted_env_def	unique
-compiler/backend/clos_annotate	clos_annotate	constant	shift	shift	unique
-compiler/backend/clos_annotate	clos_annotate	theorem	shift_def	shift_def	unique
-compiler/backend/clos_annotate	clos_annotate	theorem	shift_ind	shift_ind	unique
+compiler/backend/clos_annotate	clos_annotate	constant	shift	clos_annotate_shift	common word, captured elsewhere (tools/const_capture.py)
+compiler/backend/clos_annotate	clos_annotate	theorem	shift_def	clos_annotate_shift_def	common word, captured elsewhere (tools/const_capture.py)
+compiler/backend/clos_annotate	clos_annotate	theorem	shift_ind	clos_annotate_shift_ind	common word, captured elsewhere (tools/const_capture.py)
 compiler/backend/clos_annotate	clos_annotate	constant	shift_sing	shift_sing	unique
 compiler/backend/clos_annotate	clos_annotate	constant	shift_list	shift_list	unique
 compiler/backend/clos_annotate	clos_annotate	constant	shift_letrec	shift_letrec	unique
@@ -3184,8 +3184,8 @@ compiler/backend/bvi_let	bvi_let	theorem	compile_HD_SING	bvi_let_compile_HD_SING
 compiler/backend/bvi_let	bvi_let	constant	compile_exp	bvi_let_compile_exp	clash:10 theories
 compiler/backend/bvi_let	bvi_let	theorem	compile_exp_def	bvi_let_compile_exp_def	clash:10 theories
 compiler/backend/bvi_let	bvi_let	theorem	compile_exp_eq	bvi_let_compile_exp_eq	clash:4 theories
-compiler/backend/bvi_tailrec	bvi_tailrec	constant	dummy	dummy	unique
-compiler/backend/bvi_tailrec	bvi_tailrec	theorem	dummy_def	dummy_def	unique
+compiler/backend/bvi_tailrec	bvi_tailrec	constant	dummy	bvi_tailrec_dummy	common word, captured elsewhere (tools/const_capture.py)
+compiler/backend/bvi_tailrec	bvi_tailrec	theorem	dummy_def	bvi_tailrec_dummy_def	common word, captured elsewhere (tools/const_capture.py)
 compiler/backend/bvi_tailrec	bvi_tailrec	theorem	MEM_exp_size_imp	MEM_exp_size_imp	unique
 compiler/backend/bvi_tailrec	bvi_tailrec	constant	is_rec	bvi_tailrec_is_rec	clash:2 theories
 compiler/backend/bvi_tailrec	bvi_tailrec	theorem	is_rec_def	bvi_tailrec_is_rec_def	clash:2 theories
@@ -3951,8 +3951,8 @@ translator/monadic/monad_base/ml_monadBase	ml_monadBase	theorem	Marray_update_fa
 translator/monadic/monad_base/ml_monadBase	ml_monadBase	theorem	Marray_update_eq	ml_monadBase_Marray_update_eq	reserved
 translator/monadic/monad_base/ml_monadBase	ml_monadBase	theorem	Marray_alloc_success	ml_monadBase_Marray_alloc_success	reserved
 translator/monadic/monad_base/ml_monadBase	ml_monadBase	theorem	monad_eqs	monad_eqs	unique
-translator/monadic/monad_base/ml_monadBase	ml_monadBase	constant	run	run	unique
-translator/monadic/monad_base/ml_monadBase	ml_monadBase	theorem	run_def	run_def	unique
+translator/monadic/monad_base/ml_monadBase	ml_monadBase	constant	run	ml_monadBase_run	common word (CONVENTIONS section 3)
+translator/monadic/monad_base/ml_monadBase	ml_monadBase	theorem	run_def	ml_monadBase_run_def	common word (CONVENTIONS section 3)
 compiler/backend/reg_alloc/reg_alloc	reg_alloc	type	tag	reg_alloc_tag	clash:3 theories
 compiler/backend/reg_alloc/reg_alloc	reg_alloc	constructor	Fixed	Fixed	unique
 compiler/backend/reg_alloc/reg_alloc	reg_alloc	constructor	Atemp	Atemp	unique
@@ -5835,8 +5835,8 @@ compiler/backend/stack_remove	stack_remove	constant	store_init	store_init	unique
 compiler/backend/stack_remove	stack_remove	theorem	store_init_def	store_init_def	unique
 compiler/backend/stack_remove	stack_remove	constant	init_code	stack_remove_init_code	clash:3 theories
 compiler/backend/stack_remove	stack_remove	theorem	init_code_def	stack_remove_init_code_def	clash:3 theories
-compiler/backend/stack_remove	stack_remove	constant	init_stubs	init_stubs	unique
-compiler/backend/stack_remove	stack_remove	theorem	init_stubs_def	init_stubs_def	unique
+compiler/backend/stack_remove	stack_remove	constant	init_stubs	stack_remove_init_stubs	common word, captured elsewhere (tools/const_capture.py)
+compiler/backend/stack_remove	stack_remove	theorem	init_stubs_def	stack_remove_init_stubs_def	common word, captured elsewhere (tools/const_capture.py)
 compiler/backend/stack_remove	stack_remove	constant	stub_names	stack_remove_stub_names	clash:4 theories
 compiler/backend/stack_remove	stack_remove	theorem	stub_names_def	stack_remove_stub_names_def	clash:4 theories
 compiler/backend/stack_remove	stack_remove	theorem	check_init_stubs_length	check_init_stubs_length	unique
@@ -19675,12 +19675,12 @@ compiler/inference/infer	infer	field	loc_err_info_loc	loc_err_info_loc	unique
 compiler/inference/infer	infer	field	loc_err_info_err	loc_err_info_err	unique
 compiler/inference/infer	infer	constant	failwith	failwith	unique
 compiler/inference/infer	infer	theorem	failwith_def	failwith_def	unique
-compiler/inference/infer	infer	constant	guard	guard	unique
-compiler/inference/infer	infer	theorem	guard_def	guard_def	unique
-compiler/inference/infer	infer	constant	read	read	unique
-compiler/inference/infer	infer	theorem	read_def	read_def	unique
-compiler/inference/infer	infer	constant	write	write	unique
-compiler/inference/infer	infer	theorem	write_def	write_def	unique
+compiler/inference/infer	infer	constant	guard	infer_guard	common word (CONVENTIONS section 3)
+compiler/inference/infer	infer	theorem	guard_def	infer_guard_def	common word (CONVENTIONS section 3)
+compiler/inference/infer	infer	constant	read	infer_read	common word (CONVENTIONS section 3)
+compiler/inference/infer	infer	theorem	read_def	infer_read_def	common word (CONVENTIONS section 3)
+compiler/inference/infer	infer	constant	write	infer_write	common word (CONVENTIONS section 3)
+compiler/inference/infer	infer	theorem	write_def	infer_write_def	common word (CONVENTIONS section 3)
 compiler/inference/infer	infer	constant	lookup_st_ex	lookup_st_ex	unique
 compiler/inference/infer	infer	theorem	lookup_st_ex_def	lookup_st_ex_def	unique
 compiler/inference/infer	infer	type	infer_st	infer_st	unique
@@ -20753,7 +20753,7 @@ compiler/parsing/proofs/pegSound	pegSound	theorem	pmap_EQ_pair	pmap_EQ_pair	uniq
 compiler/parsing/proofs/pegSound	pegSound	theorem	pair_EQ_components	pair_EQ_components	unique
 compiler/parsing/proofs/pegSound	pegSound	theorem	peg_sound	peg_sound	unique
 compiler/parsing/proofs/pegComplete	pegComplete	theorem	option_case_eq	pegComplete_option_case_eq	clash:2 theories
-compiler/parsing/proofs/pegComplete	pegComplete	theorem	MAP_EQ_CONS	MAP_EQ_CONS	unique
+compiler/parsing/proofs/pegComplete	pegComplete	theorem	MAP_EQ_CONS	pegComplete_MAP_EQ_CONS	clash (list.ml binds MAP_EQ_CONS)
 compiler/parsing/proofs/pegComplete	pegComplete	theorem	seql_cons	seql_cons	unique
 compiler/parsing/proofs/pegComplete	pegComplete	theorem	seql_cons_SOME	seql_cons_SOME	unique
 compiler/parsing/proofs/pegComplete	pegComplete	theorem	choicel_cons	choicel_cons	unique

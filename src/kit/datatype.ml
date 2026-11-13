@@ -492,3 +492,13 @@ let option_case_eq = option_case_info.ci_case_eq;;
 let sum_case_eq = sum_case_info.ci_case_eq;;
 let num_case_eq = num_case_info.ci_case_eq;;
 let pair_case_eq = pair_case_info.ci_case_eq;;
+
+(* pair_CASE in a premise of an inductive definition (HOL4's paired lambdas *)
+(* \(a,b). t are written match p with (a,b) -> t): its monotonicity rule    *)
+let MONO_pair_CASE = prove
+ (`(!(a:A) (b:B). P a b ==> Q a b) ==>
+   pair_CASE (x:A#B) P ==> (pair_CASE x Q:bool)`,
+  SPEC_TAC(`x:A#B`,`x:A#B`) THEN REWRITE_TAC[FORALL_PAIR_THM; pair_CASE] THEN
+  MESON_TAC[]);;
+
+let () = monotonicity_theorems := MONO_pair_CASE :: !monotonicity_theorems;;

@@ -125,14 +125,18 @@ let sem1aux_mutual_ind (fns:term list) (ns:int list) (argtups:hol_type list)
     | [] -> failwith "sem1aux_mutual_ind" in
   let q = qterm argtups 0 in
   let th1 = ISPEC q ind in
+  (* with three or more functions a sum_CASE reduces to a beta-redex whose *)
+  (* reduct is a sum_CASE again: reduce until nothing changes (the fix of   *)
+  (* compiler/backend/il1aux_mutual.ml)                                     *)
+  let step = PURE_REWRITE_CONV[sum_CASE; FST; SND] THENC
+             TOP_DEPTH_CONV BETA_CONV in
   let th2 = CONV_RULE (TOP_DEPTH_CONV BETA_CONV THENC
-                       PURE_REWRITE_CONV[sum_CASE; FST; SND] THENC
-                       TOP_DEPTH_CONV BETA_CONV THENC
+                       REPEATC (CHANGED_CONV step) THENC
                        PURE_REWRITE_CONV[FST; SND]) th1 in
   let rec split_conv l = match l with
       [] | [_] -> ALL_CONV
     | _::rest -> GEN_REWRITE_CONV I [SUM_CASE_FORALL] THENC
-                 RAND_CONV (split_conv rest) in
+                 RAND_CONV (BINDER_CONV BETA_CONV THENC split_conv rest) in
   let th3 = CONV_RULE (RAND_CONV (split_conv argtups THENC
                                   TOP_DEPTH_CONV BETA_CONV)) th2 in
   let concl_conv =
