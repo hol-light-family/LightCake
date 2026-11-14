@@ -8152,7 +8152,7 @@ semantics/proofs/typeSound	typeSound	theorem	build_conv_type_sound	build_conv_ty
 semantics/proofs/typeSound	typeSound	theorem	same_ctor_and_same_tid	same_ctor_and_same_tid	unique
 semantics/proofs/typeSound	typeSound	theorem	pat_type_sound	pat_type_sound	unique
 semantics/proofs/typeSound	typeSound	theorem	lookup_var_sound	lookup_var_sound	unique
-semantics/proofs/typeSound	typeSound	theorem	EVERY_REPLICATE	EVERY_REPLICATE	unique
+semantics/proofs/typeSound	typeSound	theorem	EVERY_REPLICATE	typeSound_EVERY_REPLICATE	clash (rich_list.ml binds EVERY_REPLICATE)
 semantics/proofs/typeSound	typeSound	theorem	exp_type_sound	exp_type_sound	unique
 semantics/proofs/typeSound	typeSound	theorem	build_tdefs_build_tenv	build_tdefs_build_tenv	unique
 semantics/proofs/typeSound	typeSound	theorem	type_sound_invariant_union	type_sound_invariant_union	unique
@@ -9944,19 +9944,19 @@ compiler/backend/proofs/bvl_jumpProof	bvl_jumpProof	theorem	evaluate_Jump	evalua
 compiler/backend/proofs/bvl_jumpProof	bvl_jumpProof	theorem	bvl_get_code_labels_JumpList	bvl_get_code_labels_JumpList	unique
 compiler/backend/proofs/clos_constantProof	clos_constantProof	constant	make_part	make_part	unique
 compiler/backend/proofs/clos_constantProof	clos_constantProof	theorem	make_part_def	make_part_def	unique
-compiler/backend/proofs/clos_constantProof	clos_constantProof	constant	parts	parts	unique
+compiler/backend/proofs/clos_constantProof	clos_constantProof	constant	parts	clos_constantProof_parts	common word (CONVENTIONS section 3)
 compiler/backend/proofs/clos_constantProof	clos_constantProof	constant	parts_list	parts_list	unique
-compiler/backend/proofs/clos_constantProof	clos_constantProof	theorem	parts_def	parts_def	unique
-compiler/backend/proofs/clos_constantProof	clos_constantProof	constant	to_parts	to_parts	unique
-compiler/backend/proofs/clos_constantProof	clos_constantProof	theorem	to_parts_def	to_parts_def	unique
+compiler/backend/proofs/clos_constantProof	clos_constantProof	theorem	parts_def	clos_constantProof_parts_def	common word (CONVENTIONS section 3)
+compiler/backend/proofs/clos_constantProof	clos_constantProof	constant	to_parts	clos_constantProof_to_parts	common word (CONVENTIONS section 3)
+compiler/backend/proofs/clos_constantProof	clos_constantProof	theorem	to_parts_def	clos_constantProof_to_parts_def	common word (CONVENTIONS section 3)
 compiler/backend/proofs/clos_constantProof	clos_constantProof	constant	build_part	build_part	unique
 compiler/backend/proofs/clos_constantProof	clos_constantProof	theorem	build_part_def	build_part_def	unique
-compiler/backend/proofs/clos_constantProof	clos_constantProof	constant	build	build	unique
-compiler/backend/proofs/clos_constantProof	clos_constantProof	theorem	build_def	build_def	unique
+compiler/backend/proofs/clos_constantProof	clos_constantProof	constant	build	clos_constantProof_build	common word (CONVENTIONS section 3)
+compiler/backend/proofs/clos_constantProof	clos_constantProof	theorem	build_def	clos_constantProof_build_def	common word (CONVENTIONS section 3)
 compiler/backend/proofs/clos_constantProof	clos_constantProof	constant	build_const	build_const	unique
 compiler/backend/proofs/clos_constantProof	clos_constantProof	theorem	build_const_def	build_const_def	unique
-compiler/backend/proofs/clos_constantProof	clos_constantProof	constant	build_map	build_map	unique
-compiler/backend/proofs/clos_constantProof	clos_constantProof	theorem	build_map_def	build_map_def	unique
+compiler/backend/proofs/clos_constantProof	clos_constantProof	constant	build_map	clos_constantProof_build_map	common word (CONVENTIONS section 3)
+compiler/backend/proofs/clos_constantProof	clos_constantProof	theorem	build_map_def	clos_constantProof_build_map_def	common word (CONVENTIONS section 3)
 compiler/backend/proofs/clos_constantProof	clos_constantProof	theorem	build_mem_thm	build_mem_thm	unique
 compiler/backend/proofs/clos_constantProof	clos_constantProof	theorem	parts_acc	parts_acc	unique
 compiler/backend/proofs/clos_constantProof	clos_constantProof	constant	conses_ok	conses_ok	unique
@@ -14748,7 +14748,7 @@ compiler/backend/proofs/data_to_word_gcProof	data_to_word_gcProof	theorem	IS_SOM
 compiler/backend/proofs/data_to_word_gcProof	data_to_word_gcProof	theorem	IS_SOME_ALOOKUP_EQ	IS_SOME_ALOOKUP_EQ	unique
 compiler/backend/proofs/data_to_word_gcProof	data_to_word_gcProof	theorem	MEM_IMP_IS_SOME_ALOOKUP	MEM_IMP_IS_SOME_ALOOKUP	unique
 compiler/backend/proofs/data_to_word_gcProof	data_to_word_gcProof	theorem	SUBSET_INSERT_EQ_SUBSET	SUBSET_INSERT_EQ_SUBSET	unique
-compiler/backend/proofs/data_to_word_gcProof	data_to_word_gcProof	theorem	EVERY2_IMP_EL	EVERY2_IMP_EL	unique
+compiler/backend/proofs/data_to_word_gcProof	data_to_word_gcProof	theorem	EVERY2_IMP_EL	data_to_word_gcProof_EVERY2_IMP_EL	clash (memoryProof binds another EVERY2_IMP_EL)
 compiler/backend/proofs/data_to_word_gcProof	data_to_word_gcProof	theorem	FST_PAIR_EQ	FST_PAIR_EQ	unique
 compiler/backend/proofs/data_to_word_gcProof	data_to_word_gcProof	theorem	EVERY2_APPEND_IMP	EVERY2_APPEND_IMP	unique
 compiler/backend/proofs/data_to_word_gcProof	data_to_word_gcProof	theorem	ZIP_ID	ZIP_ID	unique
@@ -14757,7 +14757,7 @@ compiler/backend/proofs/data_to_word_gcProof	data_to_word_gcProof	theorem	fromLi
 compiler/backend/proofs/data_to_word_gcProof	data_to_word_gcProof	theorem	fromList2_SNOC	fromList2_SNOC	unique
 compiler/backend/proofs/data_to_word_gcProof	data_to_word_gcProof	constant	join_env	join_env	unique
 compiler/backend/proofs/data_to_word_gcProof	data_to_word_gcProof	theorem	join_env_def	join_env_def	unique
-compiler/backend/proofs/data_to_word_gcProof	data_to_word_gcProof	constant	flat	flat	unique
+compiler/backend/proofs/data_to_word_gcProof	data_to_word_gcProof	constant	flat	data_to_word_gcProof_flat	common word (CONVENTIONS section 3)
 compiler/backend/proofs/data_to_word_gcProof	data_to_word_gcProof	theorem	flat_def	flat_def	unique
 compiler/backend/proofs/data_to_word_gcProof	data_to_word_gcProof	theorem	flat_APPEND	flat_APPEND	unique
 compiler/backend/proofs/data_to_word_gcProof	data_to_word_gcProof	theorem	adjust_var_DIV_2	adjust_var_DIV_2	unique

@@ -23,19 +23,19 @@ in HOL Light.
 | `src/basis/pure/` | `mlint`, `mllist`, `mloption`, `mlsexp`, `mlstring`, `mlvector` |
 | `src/semantics/` | `ast`, `cmlPtreeConversion`, `evaluate`, `fpSem`, `gram`, `lexer_fun`, `namespace`, `primTypes`, `sem1aux_tfl`, `semanticPrimitives`, `semantics`, `tokenUtils`, `tokens`, `typeSystem` |
 | `src/semantics/ffi/` | `ffi` |
-| `src/semantics/proofs/` | `evaluateProps`, `gramProps`, `namespaceProps`, `primSemEnv`, `semanticPrimitivesProps`, `typeSoundInvariants`, `typeSysProps`, `weakening` |
-| `src/compiler/parsing/` | `cmlPEG`, `fromSexp`, `lexer_impl` |
+| `src/semantics/proofs/` | `evaluateProps`, `gramProps`, `namespaceProps`, `primSemEnv`, `semanticPrimitivesProps`, `semanticsProps`, `typeSound`, `typeSoundInvariants`, `typeSysProps`, `weakening` |
+| `src/compiler/parsing/` | `cmlPEG`, `cmlParse`, `fromSexp`, `lexer_impl` |
 | `src/compiler/parsing/proofs/` | `cmlNTProps`, `pegComplete`, `pegSound` |
-| `src/compiler/inference/` | `infer`, `infer_t`, `unify` |
+| `src/compiler/inference/` | `infer`, `inferProps`, `infer_t`, `unify` |
 | `src/compiler/encoders/asm/` | `asm`, `asmProps`, `asmSem` |
 | `src/translator/monadic/monad_base/` | `ml_monadBase` |
-| `src/compiler/backend/` | `backend_common`, `bvi`, `bvi_inline`, `bvi_let`, `bvi_tailrec`, `bvi_tmc`, `bvi_to_data`, `bvl`, `bvl_const`, `bvl_handle`, `bvl_inline`, `bvl_jump`, `bvl_to_bvi`, `closLang`, `clos_annotate`, `clos_call`, `clos_fvs`, `clos_interp`, `clos_known`, `clos_letop`, `clos_mti`, `clos_number`, `clos_op`, `clos_ticks`, `clos_to_bvl`, `dataLang`, `data_live`, `data_simp`, `data_space`, `db_vars`, `export`, `flatLang`, `flat_elim`, `flat_pattern`, `flat_to_clos`, `il1aux_mutual`, `jsonLang`, `labLang`, `lab_filter`, `lab_to_target`, `source_let`, `source_to_flat`, `stackLang`, `stack_names`, `stack_rawcall`, `stack_remove`, `wordLang`, `word_alloc`, `word_bignum`, `word_copy`, `word_cse`, `word_depth`, `word_elim`, `word_inst`, `word_remove`, `word_simp`, `word_to_word`, `word_unreach` |
-| `src/compiler/backend/semantics/` | `backendProps`, `bviSem`, `bvlSem`, `closSem`, `flatProps`, `flatSem`, `labSem`, `stackSem`, `targetSem`, `wordConvs`, `wordSem` |
-| `src/compiler/backend/gc/` | `copying_gc`, `gc_shared`, `gen_gc`, `gen_gc_partial` |
+| `src/compiler/backend/` | `backend`, `backend_common`, `backend_passes`, `bvi`, `bvi_inline`, `bvi_let`, `bvi_tailrec`, `bvi_tmc`, `bvi_to_data`, `bvl`, `bvl_const`, `bvl_handle`, `bvl_inline`, `bvl_jump`, `bvl_to_bvi`, `closLang`, `clos_annotate`, `clos_call`, `clos_fvs`, `clos_interp`, `clos_known`, `clos_letop`, `clos_mti`, `clos_number`, `clos_op`, `clos_ticks`, `clos_to_bvl`, `dataLang`, `data_live`, `data_simp`, `data_space`, `data_to_word`, `db_vars`, `displayLang`, `export`, `flatLang`, `flat_elim`, `flat_pattern`, `flat_to_clos`, `il1aux_mutual`, `jsonLang`, `labLang`, `lab_filter`, `lab_to_target`, `presLang`, `source_let`, `source_to_flat`, `source_to_source`, `stackLang`, `stack_alloc`, `stack_names`, `stack_rawcall`, `stack_remove`, `stack_to_lab`, `wordLang`, `word_alloc`, `word_bignum`, `word_copy`, `word_cse`, `word_depth`, `word_elim`, `word_inst`, `word_remove`, `word_simp`, `word_to_stack`, `word_to_word`, `word_unreach` |
+| `src/compiler/backend/semantics/` | `backendProps`, `bviProps`, `bviSem`, `bvlProps`, `bvlSem`, `closProps`, `closSem`, `dataProps`, `dataSem`, `flatProps`, `flatSem`, `labSem`, `stackProps`, `stackSem`, `targetSem`, `wordConvs`, `wordProps`, `wordSem` |
+| `src/compiler/backend/gc/` | `copying_gc`, `gc_combined`, `gc_shared`, `gen_gc`, `gen_gc_partial` |
 | `src/compiler/backend/reg_alloc/` | `linear_scan`, `parmove`, `reg_alloc` |
-| `src/compiler/backend/reg_alloc/proofs/` | `reg_allocProof` |
+| `src/compiler/backend/reg_alloc/proofs/` | `linear_scanProof`, `reg_allocProof` |
 | `src/compiler/backend/pattern_matching/` | `pattern_common`, `pattern_comp`, `pattern_exh`, `pattern_semantics` |
-| `src/compiler/backend/proofs/` | `flat_elimProof` |
+| `src/compiler/backend/proofs/` | `bvl_constProof`, `bvl_handleProof`, `bvl_jumpProof`, `clos_callProof`, `clos_constantProof`, `clos_fvsProof`, `clos_knownProps`, `clos_mtiProof`, `clos_numberProof`, `data_to_word_memoryProof_p1`, `data_to_word_memoryProof_p2`, `flat_elimProof`, `flat_patternProof`, `source_evalProof`, `stack_namesProof`, `stack_rawcallProof`, `word_allocProof_p1`, `word_bignumProof`, `word_gcFunctions`, `word_simpProof` |
 | `src/compiler/backend/ag32/` | `export_ag32` |
 | `src/compiler/backend/arm7/` | `export_arm7` |
 | `src/compiler/backend/arm8/` | `export_arm8` |
