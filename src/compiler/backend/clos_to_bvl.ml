@@ -267,8 +267,8 @@ let recc_Let0_def = cake_def
 let build_recc_lets_def = cake_def
   `build_recc_lets (nargs:num list) vs n1 fns_l (c3:bvl_exp) =
      bvl_Let [bvl_Let [bvl_Op (MemOp clos_Ref)
-                         (APPEND (REVERSE (MAP (K (mk_const 0)) nargs))
-                                 (MAP bvl_Var vs))]
+                         (REVERSE (APPEND (MAP (K (mk_const 0)) nargs)
+                                          (MAP bvl_Var vs)))]
                 (recc_Let0 (n1 + 2 * (fns_l - 1)) (HD (REVERSE nargs))
                            (fns_l - 1))]
        (recc_Lets n1 (TL (REVERSE nargs)) (fns_l - 1) c3)`;;

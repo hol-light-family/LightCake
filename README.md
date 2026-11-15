@@ -30,18 +30,20 @@ in HOL Light.
 | `src/compiler/encoders/asm/` | `asm`, `asmProps`, `asmSem` |
 | `src/translator/monadic/monad_base/` | `ml_monadBase` |
 | `src/compiler/backend/` | `backend`, `backend_common`, `backend_passes`, `bvi`, `bvi_inline`, `bvi_let`, `bvi_tailrec`, `bvi_tmc`, `bvi_to_data`, `bvl`, `bvl_const`, `bvl_handle`, `bvl_inline`, `bvl_jump`, `bvl_to_bvi`, `closLang`, `clos_annotate`, `clos_call`, `clos_fvs`, `clos_interp`, `clos_known`, `clos_letop`, `clos_mti`, `clos_number`, `clos_op`, `clos_ticks`, `clos_to_bvl`, `dataLang`, `data_live`, `data_simp`, `data_space`, `data_to_word`, `db_vars`, `displayLang`, `export`, `flatLang`, `flat_elim`, `flat_pattern`, `flat_to_clos`, `il1aux_mutual`, `jsonLang`, `labLang`, `lab_filter`, `lab_to_target`, `presLang`, `source_let`, `source_to_flat`, `source_to_source`, `stackLang`, `stack_alloc`, `stack_names`, `stack_rawcall`, `stack_remove`, `stack_to_lab`, `wordLang`, `word_alloc`, `word_bignum`, `word_copy`, `word_cse`, `word_depth`, `word_elim`, `word_inst`, `word_remove`, `word_simp`, `word_to_stack`, `word_to_word`, `word_unreach` |
-| `src/compiler/backend/semantics/` | `backendProps`, `bviProps`, `bviSem`, `bvlProps`, `bvlSem`, `closProps`, `closSem`, `dataProps`, `dataSem`, `flatProps`, `flatSem`, `labSem`, `stackProps`, `stackSem`, `targetSem`, `wordConvs`, `wordProps`, `wordSem` |
+| `src/compiler/backend/semantics/` | `backendProps`, `bviProps`, `bviSem`, `bvlProps`, `bvlSem`, `closProps`, `closSem`, `dataProps`, `dataSem`, `flatProps`, `flatSem`, `labProps`, `labSem`, `stackProps`, `stackSem`, `targetProps`, `targetSem`, `wordConvs`, `wordProps`, `wordSem` |
 | `src/compiler/backend/gc/` | `copying_gc`, `gc_combined`, `gc_shared`, `gen_gc`, `gen_gc_partial` |
 | `src/compiler/backend/reg_alloc/` | `linear_scan`, `parmove`, `reg_alloc` |
 | `src/compiler/backend/reg_alloc/proofs/` | `linear_scanProof`, `reg_allocProof` |
 | `src/compiler/backend/pattern_matching/` | `pattern_common`, `pattern_comp`, `pattern_exh`, `pattern_semantics` |
-| `src/compiler/backend/proofs/` | `bvl_constProof`, `bvl_handleProof`, `bvl_jumpProof`, `clos_callProof`, `clos_constantProof`, `clos_fvsProof`, `clos_knownProps`, `clos_mtiProof`, `clos_numberProof`, `data_to_word_memoryProof_p1`, `data_to_word_memoryProof_p2`, `flat_elimProof`, `flat_patternProof`, `source_evalProof`, `stack_namesProof`, `stack_rawcallProof`, `word_allocProof_p1`, `word_bignumProof`, `word_gcFunctions`, `word_simpProof` |
+| `src/compiler/backend/proofs/` | `bvi_inlineProof`, `bvi_letProof`, `bvl_constProof`, `bvl_handleProof`, `bvl_inlineProof`, `bvl_jumpProof`, `clos_annotateProof`, `clos_callProof`, `clos_constantProof`, `clos_fvsProof`, `clos_interpProof`, `clos_knownProps`, `clos_letopProof`, `clos_mtiProof`, `clos_numberProof`, `clos_opProof`, `clos_ticksProof`, `data_simpProof`, `data_to_word_assignProof`, `data_to_word_assignProof_p1`, `data_to_word_assignProof_p2`, `data_to_word_assignProof_p3`, `data_to_word_assignProof_p4`, `data_to_word_assignProof_p5`, `data_to_word_assignProof_p6`, `data_to_word_bignumProof`, `data_to_word_gcProof`, `data_to_word_gcProof_p1`, `data_to_word_gcProof_p2`, `data_to_word_gcProof_p3`, `data_to_word_memoryProof`, `data_to_word_memoryProof_p1`, `data_to_word_memoryProof_p2`, `data_to_word_memoryProof_p3`, `data_to_word_memoryProof_p4`, `data_to_word_memoryProof_p5`, `data_to_word_memoryProof_p6`, `data_to_word_memoryProof_p7`, `flat_elimProof`, `flat_patternProof`, `lab_filterProof`, `lab_to_targetProof`, `lab_to_targetProof_p1`, `lab_to_targetProof_p2`, `lab_to_targetProof_p3`, `lab_to_targetProof_p4`, `source_evalProof`, `source_letProof`, `source_to_sourceProof`, `stack_namesProof`, `stack_rawcallProof`, `stack_removeProof`, `word_allocProof`, `word_allocProof_p1`, `word_allocProof_p2`, `word_bignumProof`, `word_cseProof`, `word_depthProof`, `word_gcFunctions`, `word_instProof`, `word_removeProof`, `word_simpProof`, `word_to_stackProof_p1`, `word_to_stackProof_p2`, `word_to_stackProof_p3`, `word_to_stackProof_p4`, `word_unreachProof` |
+| `src/compiler/` | `compiler` |
 | `src/compiler/backend/ag32/` | `export_ag32` |
-| `src/compiler/backend/arm7/` | `export_arm7` |
-| `src/compiler/backend/arm8/` | `export_arm8` |
-| `src/compiler/backend/mips/` | `export_mips` |
+| `src/compiler/backend/arm7/` | `arm7_config`, `export_arm7` |
+| `src/compiler/backend/arm8/` | `arm8_config`, `export_arm8` |
+| `src/compiler/backend/mips/` | `export_mips`, `mips_config` |
 | `src/compiler/backend/riscv/` | `export_riscv` |
-| `src/compiler/backend/x64/` | `export_x64` |
+| `src/compiler/backend/x64/` | `export_x64`, `x64_config` |
+| `src/compiler/inference/proofs/` | `envRel`, `infer_eSound`, `type_dCanon` |
 
 The numbers of files, lines and theorems are in `doc/contents.tsv`. Every file loads in a
 fresh HOL Light session with no axioms beyond HOL Light's three (`check.ml` shows it).
