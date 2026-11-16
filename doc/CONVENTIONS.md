@@ -28,6 +28,10 @@
   reordered, `ITER` for `FUNPOW`, `minimal` for `LEAST`, curried `ZIP`); the others keep their HOL4
   names. A HOL4 theorem whose name HOL Light already uses for another statement gets the
   theory name as a prefix (for example `list_MEM_EL`).
+- HOL4's `Num` is `num_of_int`. They agree on non-negative integers; on negative ones HOL4's
+  `Num` is the absolute value and `num_of_int` is unspecified. Every use in the semantics is
+  guarded by a sign test, except dataLang's `space_consumed`, whose negative cases compiled
+  code never reaches.
 
 ## Writing definitions and statements
 - `cake_type "ty = C1 num | C2 ty (ty list)"` defines a datatype with its case constant

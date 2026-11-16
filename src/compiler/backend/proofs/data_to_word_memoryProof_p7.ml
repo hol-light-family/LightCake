@@ -2904,7 +2904,7 @@ let xor_bytes_bytes_to_word = prove
   DISCH_THEN(SUBST1_TAC o SYM) THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[word_xor_set_byte] THEN
   AP_THM_TAC THEN AP_TERM_TAC THEN FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[]);;
 
-(* HOL4 line 18431 (the theorem of line 18638 rebinds the name) *)
+(* HOL4 line 18431 *)
 let xor_bytes_length = prove
  (`!xs ys zs.
      xor_bytes xs ys = SOME zs ==> LENGTH xs <= LENGTH zs /\ LENGTH zs = LENGTH ys`,

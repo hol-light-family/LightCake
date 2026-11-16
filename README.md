@@ -3,22 +3,56 @@
 LightCake is a HOL Light port of [CakeML](https://cakeml.org), the verified implementation
 of a dialect of ML, from CakeML's HOL4 development. It is not the CakeML project itself:
 for CakeML, its compiler and its HOL4 sources see https://cakeml.org and
-https://github.com/CakeML/cakeml. The aim of LightCake is the main correctness theorem of
-the CakeML compiler, HOL4's `compilerProofTheory.compile_correct`, proved in HOL Light from
-HOL Light's three axioms only.
+https://github.com/CakeML/cakeml. LightCake proves the main correctness theorem of the CakeML
+compiler, HOL4's `compilerProofTheory.compile_correct`, in HOL Light from HOL Light's three
+axioms only.
 
 The port follows CakeML release v3479 (commit `e8eca63`, 2026-08-24). Every HOL4 script
 `foo/barScript.sml` of the dependency closure of `compile_correct` becomes a HOL Light file
 `src/foo/bar.ml` with the same definitions and theorems, in the same order, with the same
 names (made unique where HOL4 relies on theory-qualified names), and with proofs written
-in HOL Light.
+in HOL Light. Long scripts are split into consecutive parts `bar_p1.ml`, `bar_p2.ml`, ...,
+and `bar.ml` then loads them.
 
-## Contents of this snapshot
+## The headline theorems
 
-| part | files |
+`src/compiler/proofs/compile_correct_statement.ml` is a short file that states the two
+end-to-end theorems of HOL4's `compilerProofScript.sml` as HOL Light terms:
+`compile_correct_statement` (HOL4's `compile_correct`) and
+`compile_correct_safe_for_space_statement` (HOL4's `compile_correct_safe_for_space`). Like
+HOL4's theorems they are polymorphic in the machine word size, the target machine and the
+state of the foreign function interface. It also defines `config_ok`, the condition on the
+compiler configuration and the target machine that both theorems assume, and the two
+auxiliary notions of the space-safety version; its header lists every notion the statements
+use and the file that defines it.
+
+`src/compiler/proofs/compilerProof.ml` proves them as `compilerProof_compile_correct` and
+`compile_correct_safe_for_space`, and fails unless each theorem has no hypotheses and its
+conclusion is alpha-equivalent to the corresponding statement term. `check.ml` repeats these
+checks after loading everything (see Loading below).
+
+In words, `compile_correct` says: for a compiler configuration and a target machine
+configuration satisfying `config_ok`, if compiling a program (a prelude and an input string)
+succeeds, then the program has a CakeML semantics (it parses, type-checks and its semantics
+is a set of behaviours), and on every machine state in which the compiled code and data are
+installed, every behaviour of the machine is one of these behaviours or a prefix of one that
+ends because a resource limit of the machine was hit; if compilation fails with a parse or a
+type error, the semantics of the program is CannotParse or IllTyped (for assembler and
+configuration errors it says nothing). The space-safety version gives equality of the
+behaviours when the source program is safe for space.
+
+Not ported, because `compile_correct` does not use them and they need theories outside its
+closure: the entry points of `compiler.ml` for the Pancake language and for parsing target
+names (`compile_pancake` and its 64- and 32-bit versions, `parse_target_64/32`,
+`compile_64/32`, `full_compile_64/32`), and two set-relation lemmas of HOL4's
+`miscScript.sml` (`domain_rrestrict_subset`, `range_rrestrict_subset`).
+
+## Contents
+
+| directory | files |
 |---|---|
-| proof kit | `src/kit/` (see below) |
-| HOL4 library layer | `src/hol4/` (53 files): `ASCIInumbers`, `NTproperties`, `alist`, `bag`, `balanced_map`, `basic`, `binary_ieee`, `bitstring`, `collapse`, `comparison`, `cps`, `finite_map`, `fmsp`, `gcd`, `grammar`, `int_bitwise`, `list`, `llist`, `location`, `lprefix_lub`, `machine_ieee`, `mc_multiword`, `mergesort`, `multiword`, `numposrep`, `path`, `peg`, `pegexec`, `regexp_compiler`, `rich_list`, `rmfmap`, `set_sep`, `simpleSexp`, `simpleSexpPEG`, `simpleSexpParse`, `sorting`, `spt_closure`, `sptree`, `state_transformer`, `string4`, `subst`, `tailrec`, `tcallUnif`, `term`, `ternaryComparisons`, `toto`, `transfer`, `unifDef`, `unifProps`, `vocab`, `walk`, `walkstar`, `words4` |
+| `src/kit/` | the proof kit (see below) |
+| `src/hol4/` | the HOL4 library layer (53 files): `ASCIInumbers`, `NTproperties`, `alist`, `bag`, `balanced_map`, `basic`, `binary_ieee`, `bitstring`, `collapse`, `comparison`, `cps`, `finite_map`, `fmsp`, `gcd`, `grammar`, `int_bitwise`, `list`, `llist`, `location`, `lprefix_lub`, `machine_ieee`, `mc_multiword`, `mergesort`, `multiword`, `numposrep`, `path`, `peg`, `pegexec`, `regexp_compiler`, `rich_list`, `rmfmap`, `set_sep`, `simpleSexp`, `simpleSexpPEG`, `simpleSexpParse`, `sorting`, `spt_closure`, `sptree`, `state_transformer`, `string4`, `subst`, `tailrec`, `tcallUnif`, `term`, `ternaryComparisons`, `toto`, `transfer`, `unifDef`, `unifProps`, `vocab`, `walk`, `walkstar`, `words4` |
 | `src/misc/` | `misc`, `misc_p1`, `misc_p2`, `misc_p3` |
 | `src/basis/pure/` | `mlint`, `mllist`, `mloption`, `mlsexp`, `mlstring`, `mlvector` |
 | `src/semantics/` | `ast`, `cmlPtreeConversion`, `evaluate`, `fpSem`, `gram`, `lexer_fun`, `namespace`, `primTypes`, `sem1aux_tfl`, `semanticPrimitives`, `semantics`, `tokenUtils`, `tokens`, `typeSystem` |
@@ -35,17 +69,19 @@ in HOL Light.
 | `src/compiler/backend/reg_alloc/` | `linear_scan`, `parmove`, `reg_alloc` |
 | `src/compiler/backend/reg_alloc/proofs/` | `linear_scanProof`, `reg_allocProof` |
 | `src/compiler/backend/pattern_matching/` | `pattern_common`, `pattern_comp`, `pattern_exh`, `pattern_semantics` |
-| `src/compiler/backend/proofs/` | `bvi_inlineProof`, `bvi_letProof`, `bvl_constProof`, `bvl_handleProof`, `bvl_inlineProof`, `bvl_jumpProof`, `clos_annotateProof`, `clos_callProof`, `clos_constantProof`, `clos_fvsProof`, `clos_interpProof`, `clos_knownProps`, `clos_letopProof`, `clos_mtiProof`, `clos_numberProof`, `clos_opProof`, `clos_ticksProof`, `data_simpProof`, `data_to_word_assignProof`, `data_to_word_assignProof_p1`, `data_to_word_assignProof_p2`, `data_to_word_assignProof_p3`, `data_to_word_assignProof_p4`, `data_to_word_assignProof_p5`, `data_to_word_assignProof_p6`, `data_to_word_bignumProof`, `data_to_word_gcProof`, `data_to_word_gcProof_p1`, `data_to_word_gcProof_p2`, `data_to_word_gcProof_p3`, `data_to_word_memoryProof`, `data_to_word_memoryProof_p1`, `data_to_word_memoryProof_p2`, `data_to_word_memoryProof_p3`, `data_to_word_memoryProof_p4`, `data_to_word_memoryProof_p5`, `data_to_word_memoryProof_p6`, `data_to_word_memoryProof_p7`, `flat_elimProof`, `flat_patternProof`, `lab_filterProof`, `lab_to_targetProof`, `lab_to_targetProof_p1`, `lab_to_targetProof_p2`, `lab_to_targetProof_p3`, `lab_to_targetProof_p4`, `source_evalProof`, `source_letProof`, `source_to_sourceProof`, `stack_namesProof`, `stack_rawcallProof`, `stack_removeProof`, `word_allocProof`, `word_allocProof_p1`, `word_allocProof_p2`, `word_bignumProof`, `word_cseProof`, `word_depthProof`, `word_gcFunctions`, `word_instProof`, `word_removeProof`, `word_simpProof`, `word_to_stackProof_p1`, `word_to_stackProof_p2`, `word_to_stackProof_p3`, `word_to_stackProof_p4`, `word_unreachProof` |
+| `src/compiler/backend/proofs/` | `backendProof`, `backendProof_p1`, `backendProof_p2`, `bvi_inlineProof`, `bvi_letProof`, `bvi_tailrecProof`, `bvi_tmcProof`, `bvi_to_dataProof`, `bvl_constProof`, `bvl_handleProof`, `bvl_inlineProof`, `bvl_jumpProof`, `bvl_to_bviProof`, `bvl_to_bviProof_p1`, `bvl_to_bviProof_p2`, `clos_annotateProof`, `clos_callProof`, `clos_constantProof`, `clos_fvsProof`, `clos_interpProof`, `clos_knownProof`, `clos_knownProps`, `clos_letopProof`, `clos_mtiProof`, `clos_numberProof`, `clos_opProof`, `clos_ticksProof`, `clos_to_bvlProof`, `clos_to_bvlProof_p1`, `clos_to_bvlProof_p2`, `clos_to_bvlProof_p3`, `data_liveProof`, `data_simpProof`, `data_spaceProof`, `data_to_wordProof`, `data_to_word_assignProof`, `data_to_word_assignProof_p1`, `data_to_word_assignProof_p2`, `data_to_word_assignProof_p3`, `data_to_word_assignProof_p4`, `data_to_word_assignProof_p5`, `data_to_word_assignProof_p6`, `data_to_word_bignumProof`, `data_to_word_gcProof`, `data_to_word_gcProof_p1`, `data_to_word_gcProof_p2`, `data_to_word_gcProof_p3`, `data_to_word_memoryProof`, `data_to_word_memoryProof_p1`, `data_to_word_memoryProof_p2`, `data_to_word_memoryProof_p3`, `data_to_word_memoryProof_p4`, `data_to_word_memoryProof_p5`, `data_to_word_memoryProof_p6`, `data_to_word_memoryProof_p7`, `flat_elimProof`, `flat_patternProof`, `flat_to_closProof`, `lab_filterProof`, `lab_to_targetProof`, `lab_to_targetProof_p1`, `lab_to_targetProof_p2`, `lab_to_targetProof_p3`, `lab_to_targetProof_p4`, `source_evalProof`, `source_letProof`, `source_to_flatProof`, `source_to_flatProof_p1`, `source_to_flatProof_p2`, `source_to_sourceProof`, `stack_allocProof`, `stack_allocProof_p1`, `stack_allocProof_p2`, `stack_namesProof`, `stack_rawcallProof`, `stack_removeProof`, `stack_to_labProof`, `stack_to_labProof_p1`, `stack_to_labProof_p2`, `wordConvsProof`, `word_allocProof`, `word_allocProof_p1`, `word_allocProof_p2`, `word_bignumProof`, `word_copyProof`, `word_cseProof`, `word_depthProof`, `word_elimProof`, `word_gcFunctions`, `word_instProof`, `word_removeProof`, `word_simpProof`, `word_to_stackProof`, `word_to_stackProof_p1`, `word_to_stackProof_p2`, `word_to_stackProof_p3`, `word_to_stackProof_p4`, `word_to_wordProof`, `word_unreachProof` |
 | `src/compiler/` | `compiler` |
-| `src/compiler/backend/ag32/` | `export_ag32` |
+| `src/compiler/backend/ag32/` | `ag32_config`, `export_ag32` |
 | `src/compiler/backend/arm7/` | `arm7_config`, `export_arm7` |
 | `src/compiler/backend/arm8/` | `arm8_config`, `export_arm8` |
 | `src/compiler/backend/mips/` | `export_mips`, `mips_config` |
-| `src/compiler/backend/riscv/` | `export_riscv` |
+| `src/compiler/backend/riscv/` | `export_riscv`, `riscv_config` |
 | `src/compiler/backend/x64/` | `export_x64`, `x64_config` |
-| `src/compiler/inference/proofs/` | `envRel`, `infer_eSound`, `type_dCanon` |
+| `src/compiler/inference/proofs/` | `envRel`, `inferComplete`, `inferSound`, `infer_eComplete`, `infer_eSound`, `type_dCanon`, `type_eDeterm` |
+| `src/compiler/proofs/` | `compile_correct_statement`, `compilerProof` |
+| `src/pancake/` | `panLang` |
 
-The numbers of files, lines and theorems are in `doc/contents.tsv`. Every file loads in a
+The numbers of files, lines and theorems are in `doc/contents.tsv`. Everything loads in one
 fresh HOL Light session with no axioms beyond HOL Light's three (`check.ml` shows it).
 
 ## Loading
@@ -60,9 +96,12 @@ or check it with
 
     loadt "check.ml";;
 
-which loads `make.ml` and prints the number of axioms (3) and the list of axioms. After
-`loadt "src/prelude.ml";;` any single file can be loaded on its own with `needs`, for
-example `needs "semantics/namespace.ml";;` (paths relative to `src/`).
+which loads `make.ml`, prints the number of axioms (3) and the list of axioms, checks the
+headline theorems (`HEADLINE true`: no hypotheses, conclusions alpha-equivalent to the
+statements of `compile_correct_statement.ml`) and ends with `CHECK_OK`. Loading everything
+takes about 12 hours in one HOL Light session. After `loadt "src/prelude.ml";;` any single
+file can be loaded on its own with `needs`, for example `needs "semantics/namespace.ml";;`
+(paths relative to `src/`).
 
 ## How the port is written
 
