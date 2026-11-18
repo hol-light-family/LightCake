@@ -38,6 +38,9 @@ let KLAM_o_THM = prove
  (`!(x:A) (f:C->B). (\y. x) o f = (\y. x)`,
   REWRITE_TAC[FUN_EQ_THM; o_THM]);;
 
+(* parsed once (a quotation in the function body is parsed at every call) *)
+let kit_tyvar_C = `:C`;;
+
 let cake_record (name:string) (fields:(string * string) list) =
   let cname = name^"_REC" in
   let spec = name^" = "^cname^" "^
@@ -59,7 +62,7 @@ let cake_record (name:string) (fields:(string * string) list) =
                       fnames xs in
   let acc_cls = map2 (fun a x -> list_mk_forall(xs,mk_eq(mk_comb(a,pat_x),x)))
                      acc_vars xs in
-  let accessors = end_itlist CONJ (map (new_recursive_definition rth) acc_cls) in
+  let accessors = end_itlist CONJ (map (kit_new_recursive_definition rth) acc_cls) in
   let accs = map (fun a -> mk_const(fst(dest_var a),[])) acc_vars in
   let accs = map2 (fun c v -> inst (type_match (type_of c) (type_of v) []) c)
                   accs acc_vars in
@@ -78,7 +81,6 @@ let cake_record (name:string) (fields:(string * string) list) =
     fields (zip accs (0--(n-1))) in
   let upds = map (fun th -> fst(strip_comb(lhs(snd(strip_forall(concl th))))))
                  upd_defs in
-  let rcases = STRUCT_CASES_TAC (SPEC r nch) in
   let gs = map (fun a -> let fty = snd(dest_fun_ty(type_of a)) in
                          mk_var("g",mk_fun_ty fty fty)) accs in
   let hs = map (fun a -> let fty = snd(dest_fun_ty(type_of a)) in
@@ -100,20 +102,20 @@ let cake_record (name:string) (fields:(string * string) list) =
              list_mk_forall([g;r],mk_eq(l,rr)))
            (zip upds gs) (0--(n-1)))
     accs (0--(n-1))) in
+  (* these three by rewriting with the definitions of the updates: a case  *)
+  (* split on r per conjunct cost n CHOOSEs for each of the n^2 conjuncts   *)
   let accfupds = prove(list_mk_conj accfupd_tms,
-                       REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN rcases THEN
-                       REWRITE_TAC(fupds :: [accessors])) in
+                       REWRITE_TAC(accessors :: upd_defs)) in
   (* rec_fupdfupds *)
   let ff_tms = map2 (fun u (g,h) ->
       let t = fst(dest_fun_ty(type_of g)) in
-      let oc = mk_const("o",[t,aty; t,bty; t,`:C`]) in
+      let oc = mk_const("o",[t,aty; t,bty; t,kit_tyvar_C]) in
       list_mk_forall([g;h;r],
         mk_eq(list_mk_comb(u,[g;list_mk_comb(u,[h;r])]),
               list_mk_comb(u,[mk_binop oc g h; r]))))
     upds (zip gs hs) in
   let fupdfupds = prove(list_mk_conj ff_tms,
-                        REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN rcases THEN
-                        REWRITE_TAC[fupds; o_THM]) in
+                        REWRITE_TAC(accfupds :: o_THM :: upd_defs)) in
   (* rec_fupdcanon: a later field's update moves inside an earlier one's *)
   let canon_tms = flat (map (fun i ->
       map (fun j ->
@@ -126,8 +128,7 @@ let cake_record (name:string) (fields:(string * string) list) =
   let fupdcanon =
     if canon_tms = [] then TRUTH else
     prove(list_mk_conj canon_tms,
-          REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN rcases THEN
-          REWRITE_TAC[fupds]) in
+          REWRITE_TAC(accfupds :: upd_defs)) in
   (* component equality *)
   let r1 = mk_var("r1",rty) and r2 = mk_var("r2",rty) in
   let ce_tm = list_mk_forall([r1;r2],

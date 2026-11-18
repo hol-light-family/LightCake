@@ -429,8 +429,11 @@ let DSEMAUX_FINISH_RWS2 =
    injectivity "mem_op"; distinctness "clos_op"; distinctness "mem_op";
    data_OPTION_MAP2_NONE; OPTION_MAP_DEF; the_def] @ DSEMAUX_FINISH_RWS;;
 
+(* do_app is unfolded with CASE_REWRITE_TAC, so that the case on op reduces   *)
+(* as it is unfolded instead of after every arm has been rewritten; the same  *)
+(* holds for the other users of DSEMAUX_DO_APP_DEFS                           *)
 let DSEMAUX_DO_APP_BRUTE_TAC (defs:thm list) : tactic =
-   REPEAT GEN_TAC THEN REWRITE_TAC defs THEN
+   REPEAT GEN_TAC THEN CASE_REWRITE_TAC defs THEN
    CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
    CASE_REWRITE_TAC DSEMAUX_DO_APP_RWS THEN
    REPEAT ((COND_CASES_TAC ORELSE TOP_CASE_TAC) THEN
@@ -528,7 +531,7 @@ let do_app_with_locals = prove
 
 let DSEMAUX_DO_APP_IMP_TAC (defs:thm list) : tactic =
   X_GEN_TAC `op:clos_op` THEN DSEMAUX_OP_CASES_TAC `op:clos_op` THEN
-  REPEAT GEN_TAC THEN REWRITE_TAC defs THEN
+  REPEAT GEN_TAC THEN CASE_REWRITE_TAC defs THEN
   CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
   CASE_REWRITE_TAC DSEMAUX_DO_APP_RWS THEN
   REPEAT ((COND_CASES_TAC ORELSE TOP_CASE_TAC) THEN
@@ -664,7 +667,7 @@ let DSEMAUX_EXISTS_FIELDS_TAC : tactic = fun (asl,w as g) ->
 
 let DSEMAUX_DO_APP_SWAP_TAC (defs:thm list) : tactic =
   X_GEN_TAC `op:clos_op` THEN DSEMAUX_OP_CASES_TAC `op:clos_op` THEN
-  REPEAT GEN_TAC THEN REWRITE_TAC defs THEN
+  REPEAT GEN_TAC THEN CASE_REWRITE_TAC defs THEN
   CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
   CASE_REWRITE_TAC DSEMAUX_DO_APP_RWS THEN
   REPEAT ((COND_CASES_TAC ORELSE TOP_CASE_TAC) THEN
@@ -3611,7 +3614,7 @@ let data_do_app_io_events_mono = prove
      data_do_app x y z = Rval (a,b) ==>
      ffi_state_io_events (data_state_ffi z) <<= ffi_state_io_events (data_state_ffi b)`,
   X_GEN_TAC `x:clos_op` THEN DSEMAUX_OP_CASES_TAC `x:clos_op` THEN
-  REPEAT GEN_TAC THEN REWRITE_TAC DSEMAUX_DO_APP_DEFS THEN
+  REPEAT GEN_TAC THEN CASE_REWRITE_TAC DSEMAUX_DO_APP_DEFS THEN
   CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
   CASE_REWRITE_TAC DSEMAUX_DO_APP_RWS THEN
   REPEAT ((COND_CASES_TAC ORELSE TOP_CASE_TAC) THEN CASE_REWRITE_TAC DSEMAUX_DO_APP_RWS) THEN
@@ -3876,7 +3879,7 @@ let do_app_safe_for_space_mono = prove
      data_do_app op xs s = Rval (r,s1) /\ data_state_safe_for_space s1 ==>
      data_state_safe_for_space s`,
   X_GEN_TAC `op:clos_op` THEN DSEMAUX_OP_CASES_TAC `op:clos_op` THEN
-  REPEAT GEN_TAC THEN REWRITE_TAC DSEMAUX_DO_APP_DEFS THEN
+  REPEAT GEN_TAC THEN CASE_REWRITE_TAC DSEMAUX_DO_APP_DEFS THEN
   CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
   CASE_REWRITE_TAC DSEMAUX_DO_APP_RWS THEN
   REPEAT ((COND_CASES_TAC ORELSE TOP_CASE_TAC) THEN CASE_REWRITE_TAC DSEMAUX_DO_APP_RWS) THEN
@@ -4901,7 +4904,7 @@ let do_app_stack_max = prove
      data_do_app op xs s1 = Rval (v,s2) ==>
      option_le (data_state_stack_max s1) (data_state_stack_max s2)`,
   X_GEN_TAC `op:clos_op` THEN DSEMAUX_OP_CASES_TAC `op:clos_op` THEN
-  REPEAT GEN_TAC THEN REWRITE_TAC DSEMAUX_DO_APP_DEFS THEN
+  REPEAT GEN_TAC THEN CASE_REWRITE_TAC DSEMAUX_DO_APP_DEFS THEN
   CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
   CASE_REWRITE_TAC DSEMAUX_DO_APP_RWS THEN
   REPEAT ((COND_CASES_TAC ORELSE TOP_CASE_TAC) THEN CASE_REWRITE_TAC DSEMAUX_DO_APP_RWS) THEN
@@ -5015,7 +5018,7 @@ let do_app_cc_co_only_diff_rval = prove
                              with Failure _ -> false)
                          then ASSUME_TAC (GEN_ALL (MATCH_MP DSEMAUX_space_consumed_limits th))
                          else NO_TAC) THEN
-  REWRITE_TAC (DSEMAUX_CC_RWS @ DSEMAUX_DO_APP_DEFS) THEN ASM_REWRITE_TAC[] THEN
+  CASE_REWRITE_TAC (DSEMAUX_CC_RWS @ DSEMAUX_DO_APP_DEFS) THEN ASM_REWRITE_TAC[] THEN
   CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
   CASE_REWRITE_TAC DSEMAUX_DO_APP_RWS THEN ASM_REWRITE_TAC[] THEN
   REPEAT ((COND_CASES_TAC ORELSE TOP_CASE_TAC) THEN CASE_REWRITE_TAC DSEMAUX_DO_APP_RWS THEN
@@ -5038,7 +5041,7 @@ let do_app_cc_co_only_diff_rerr = prove
                              with Failure _ -> false)
                          then ASSUME_TAC (GEN_ALL (MATCH_MP DSEMAUX_space_consumed_limits th))
                          else NO_TAC) THEN
-  REWRITE_TAC (DSEMAUX_CC_RWS @ DSEMAUX_DO_APP_DEFS) THEN ASM_REWRITE_TAC[] THEN
+  CASE_REWRITE_TAC (DSEMAUX_CC_RWS @ DSEMAUX_DO_APP_DEFS) THEN ASM_REWRITE_TAC[] THEN
   CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
   CASE_REWRITE_TAC DSEMAUX_DO_APP_RWS THEN ASM_REWRITE_TAC[] THEN
   REPEAT ((COND_CASES_TAC ORELSE TOP_CASE_TAC) THEN CASE_REWRITE_TAC DSEMAUX_DO_APP_RWS THEN
@@ -5318,7 +5321,7 @@ let do_app_stack_max_le_stack_limit = prove
      option_le (data_state_stack_max s) (SOME (limits_stack_limit (data_state_limits s))) ==>
      option_le (data_state_stack_max s1) (SOME (limits_stack_limit (data_state_limits s1)))`,
   X_GEN_TAC `op:clos_op` THEN DSEMAUX_OP_CASES_TAC `op:clos_op` THEN
-  REPEAT GEN_TAC THEN REWRITE_TAC DSEMAUX_DO_APP_DEFS THEN
+  REPEAT GEN_TAC THEN CASE_REWRITE_TAC DSEMAUX_DO_APP_DEFS THEN
   CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
   CASE_REWRITE_TAC DSEMAUX_DO_APP_RWS THEN
   REPEAT ((COND_CASES_TAC ORELSE TOP_CASE_TAC) THEN CASE_REWRITE_TAC DSEMAUX_DO_APP_RWS) THEN

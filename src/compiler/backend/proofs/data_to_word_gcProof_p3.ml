@@ -2516,10 +2516,11 @@ let state_rel_gc_gen = prove
     MP_TAC(ISPECL [`data_state_stack (s:(C,FFI)data_state)`;
                    `wl_state_stack (t:(A,C,FFI)wl_state)`] stack_rel_IMP_size_of_stack) THEN
     ASM_REWRITE_TAC[] THEN REPEAT DISCH_TAC THEN ASM_REWRITE_TAC[] THEN
-    REPEAT CONJ_TAC THENL
-     [MATCH_MP_TAC GCP3AUX_code_oracle_rel_store_IMP THEN
-      EXISTS_TAC `wl_state_store (t:(A,C,FFI)wl_state)` THEN ASM_REWRITE_TAC[];
-      UNDISCH_TAC `option_le (OPTION_MAP2 (+) (wl_stack_size (wl_state_stack (t:(A,C,FFI)wl_state)))
+    REPEAT CONJ_TAC THEN
+    (* since HOL Light 2828953 the ASM_SIMP_TAC above may prove this conjunct itself *)
+    TRY (MATCH_MP_TAC GCP3AUX_code_oracle_rel_store_IMP THEN
+         EXISTS_TAC `wl_state_store (t:(A,C,FFI)wl_state)` THEN ASM_REWRITE_TAC[] THEN NO_TAC) THENL
+     [UNDISCH_TAC `option_le (OPTION_MAP2 (+) (wl_stack_size (wl_state_stack (t:(A,C,FFI)wl_state)))
                      (wl_state_locals_size t)) (wl_state_stack_max t)` THEN
       ASM_REWRITE_TAC[];
       MAP_EVERY EXISTS_TAC

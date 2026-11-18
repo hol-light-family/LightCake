@@ -411,11 +411,14 @@ let FLATSEMAUX_do_app_clock = prove
      flat_do_app s op es = SOME (t,r) ==>
      flat_do_app (flat_state_clock_fupd (K c) s) op es =
      SOME (flat_state_clock_fupd (K c) t,r)`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[flat_do_app_def] THEN DISCH_TAC THEN
+  (* do_app is unfolded in the assumption first, and in the conclusion only *)
+  (* after the split has fixed op                                           *)
+  REPEAT GEN_TAC THEN DISCH_THEN(MP_TAC o REWRITE_RULE[flat_do_app_def]) THEN DISCH_TAC THEN
   FLATSEMAUX_SPLIT_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[PAIR_EQ]) THEN
   REPEAT(FIRST_X_ASSUM(SUBST_ALL_TAC o SYM o check (is_var o rhs o concl))) THEN
   REPEAT(FIRST_X_ASSUM(SUBST_ALL_TAC o check (is_var o lhs o concl))) THEN
+  REWRITE_TAC[flat_do_app_def] THEN CASE_REWRITE_TAC[] THEN
   SIMP[LET_DEF; LET_END_DEF] THEN FS[IS_NONE_EQ_NONE]);;
 
 (* HOL4 [local] *)
@@ -1784,7 +1787,14 @@ let simple_do_app_thm = prove
                   (flat_state_refs (s2:(D,FFI)flat_state)) /\
                 ALL2 (OPTREL vr) (flat_state_globals s1) (flat_state_globals s2) /\
                 flat_state_ffi s1 = flat_state_ffi s2` STRIP_ASSUME_TAC THENL
-   [ASM_MESON_TAC[flat_simple_state_rel_def]; ALL_TAC] THEN
+   [(* MESON on the unfolded assumption rather than with the definition    *)
+    FIRST_ASSUM(fun th -> if (try fst(dest_const(fst(strip_comb(concl th)))) =
+                                  "flat_simple_state_rel"
+                              with Failure _ -> false)
+                          then MP_TAC(REWRITE_RULE[flat_simple_state_rel_def] th)
+                          else NO_TAC) THEN
+    STRIP_TAC THEN ASM_MESON_TAC[];
+    ALL_TAC] THEN
   SUBGOAL_THEN `LENGTH (flat_state_refs (s1:(C,FFI)flat_state)) =
                   LENGTH (flat_state_refs (s2:(D,FFI)flat_state)) /\
                 (!n. n < LENGTH (flat_state_refs s1) ==>
@@ -1794,8 +1804,11 @@ let simple_do_app_thm = prove
                      OPTREL vr (EL n (flat_state_globals s1)) (EL n (flat_state_globals s2)))`
     STRIP_ASSUME_TAC THENL
    [ASM_MESON_TAC[LIST_REL_EL_EQN]; ALL_TAC] THEN
+  (* do_app is unfolded in the assumption only; the conclusion's do_app is   *)
+  (* unfolded after the split has fixed op and the values                    *)
   UNDISCH_TAC `flat_do_app (s1:(C,FFI)flat_state) op vs1 = SOME (t1,r1)` THEN
-  REWRITE_TAC[flat_do_app_def; store_lookup_def; store_assign_def; store_alloc_def] THEN
+  DISCH_THEN(MP_TAC o
+    REWRITE_RULE[flat_do_app_def; store_lookup_def; store_assign_def; store_alloc_def]) THEN
   DISCH_TAC THEN FLATSEMAUX_SPLIT_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[PAIR_EQ]) THEN
   REPEAT(FIRST_X_ASSUM(CONJUNCTS_THEN ASSUME_TAC o check (is_conj o concl))) THEN
@@ -1804,6 +1817,8 @@ let simple_do_app_thm = prove
   REPEAT(FIRST_X_ASSUM(K ALL_TAC o check (fun th -> is_forall (concl th) &&
     can (find_term (fun t -> try fst(dest_const t) = "EL" with Failure _ -> false)) (concl th)))) THEN
   GVS[LIST_REL_CONS1; LIST_REL_NIL; sv_rel_cases; OPTREL_DEF] THEN
+  REWRITE_TAC[flat_do_app_def; store_lookup_def; store_assign_def; store_alloc_def] THEN
+  CASE_REWRITE_TAC[] THEN
   FLATSEMAUX_FWD_CHAIN_TAC
     (map (fun th -> REWRITE_RULE[IMP_CONJ] (SPEC `vr:flat_v->flat_v->bool` th))
       [simple_do_eq_thm; FLATSEMAUX_do_test_rel; FLATSEMAUX_check_type_rel;

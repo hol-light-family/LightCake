@@ -750,7 +750,9 @@ let PERM_CONG_APPEND_IFF = prove
  (`!l l1 l1' l2 l2':A list.
      PERM l1 (APPEND l l1') ==> PERM l2 (APPEND l l2')
      ==> (PERM l1 l2 <=> PERM l1' l2')`,
-  MESON_TAC[PERM_EQUIVALENCE_ALT_DEF; PERM_APPEND_IFF]);;
+  REPEAT STRIP_TAC THEN
+  SUBGOAL_THEN `PERM l1' (l2':A list) <=> PERM (APPEND l l1') (APPEND l l2')` SUBST1_TAC THENL
+   [REWRITE_TAC[PERM_APPEND_IFF]; ASM_MESON_TAC[PERM_TRANS; PERM_SYM]]);;
 
 let PERM_CONG_APPEND_IFF2 = prove
  (`!l1 l1' l1'' l2 l2' l2'':A list.

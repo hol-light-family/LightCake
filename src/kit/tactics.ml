@@ -108,11 +108,11 @@ let CASES_ON (tm:term) : tactic =
       if is_var tm then
         (MP_TAC nch THEN
          DISCH_THEN(REPEAT_TCL STRIP_THM_THEN
-           (fun th -> SUBST_ALL_TAC th ORELSE ASSUME_TAC th))) gl
+           (fun th -> CAKE_SUBST_ALL_TAC th ORELSE ASSUME_TAC th))) gl
       else
         (MP_TAC nch THEN
          DISCH_THEN(REPEAT_TCL STRIP_THM_THEN
-           (fun th -> (SUBST_ALL_TAC th THEN ASSUME_TAC th)
+           (fun th -> (CAKE_SUBST_ALL_TAC th THEN ASSUME_TAC th)
                       ORELSE ASSUME_TAC th))) gl;;
 
 (* ------------------------------------------------------------------------- *)
@@ -141,16 +141,22 @@ let case_find_subterm p =
 let scrutinized_and_free_in whole t =
   if (is_cond t || is_case_app t) then
     let x = scrutinee_of t in
-    if free_in x whole && not (x = `T`) && not (x = `F`)
+    if free_in x whole && not (x = cake_true_tm) && not (x = cake_false_tm)
     then x else failwith "scrutinized_and_free_in"
   else failwith "scrutinized_and_free_in";;
 
+(* can (scrutinized_and_free_in whole), without an exception per subterm *)
+let is_scrutinized_and_free_in whole t =
+  (is_cond t || is_case_app t) &&
+  (let x = if is_cond t then lhand(rator t) else hd(snd(strip_comb t)) in
+   free_in x whole && not (x = cake_true_tm) && not (x = cake_false_tm));;
+
 let first_case_scrutinee whole tm =
-  let t = find_term (can (scrutinized_and_free_in whole)) tm in
+  let t = find_term (is_scrutinized_and_free_in whole) tm in
   scrutinized_and_free_in whole t;;
 
 let inner_case_scrutinee whole tm =
-  let t = case_find_subterm (can (scrutinized_and_free_in whole)) tm in
+  let t = case_find_subterm (is_scrutinized_and_free_in whole) tm in
   scrutinized_and_free_in whole t;;
 
 (* after a split: drop reflexive assumptions, rewrite with the new ones and *)
@@ -172,8 +178,8 @@ let CASE_ASM_TIDY_TAC : tactic =
    (RULE_ASSUM_TAC (CASE_REWRITE_RULE[]) THEN
     REPEAT (FIRST_X_ASSUM (fun th ->
       let c = concl th in
-      if c = `T` then ALL_TAC
-      else if c = `F` then CONTR_TAC th
+      if c = cake_true_tm then ALL_TAC
+      else if c = cake_false_tm then CONTR_TAC th
       else failwith "keep"))) gl;;
 
 let TOP_CASE_TAC : tactic =
@@ -319,8 +325,8 @@ let PAIRARG_TAC : tactic =
     let nch = ISPEC x (nchotomy_of_type (type_of x)) in
     (MP_TAC nch THEN
      DISCH_THEN(X_CHOOSE_THEN v1 (X_CHOOSE_THEN v2
-       (fun th -> if is_var x then SUBST_ALL_TAC th
-                  else SUBST_ALL_TAC th THEN ASSUME_TAC th))) THEN
+       (fun th -> if is_var x then CAKE_SUBST_ALL_TAC th
+                  else CAKE_SUBST_ALL_TAC th THEN ASSUME_TAC th))) THEN
      CASE_ASM_TIDY_TAC THEN CASE_REWRITE_TAC[]) gl;;
 
 (* ------------------------------------------------------------------------- *)

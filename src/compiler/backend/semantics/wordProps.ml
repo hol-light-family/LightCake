@@ -1867,6 +1867,10 @@ let IL2AUX_ADD_CLOCK_CALL_TAC : tactic =
   REWRITE_TAC(IL2AUX_clock_case_eqs @ [PAIR_EQ; LET_DEF; LET_END_DEF]) THEN
   REPEAT STRIP_TAC THEN RVEQ_TAC THEN IL2AUX_BFR_TAC THEN IL2AUX_POP_CONST_TAC THEN
   IL2AUX_USE_IHS_RW_TAC IL2AUX_res_rws THEN
+  (* the induction hypotheses have been used (instantiated) by now: dropping *)
+  (* them makes the SIMP and FS steps below much faster                      *)
+  REPEAT (FIRST_X_ASSUM (fun th -> if is_forall (concl th) then ALL_TAC
+                                   else failwith "")) THEN
   ONCE_REWRITE_TAC[wl_evaluate_def] THEN
   SIMP[IL2AUX_ADD_SUB1; ADD_EQ_0; wl_dec_clock_def] THEN
   FS[IL2AUX_ADD_SUB1; wl_dec_clock_def];;
@@ -2087,7 +2091,12 @@ let IL2AUX_DEC_GEN_TAC : tactic =
   REWRITE_TAC(IL2AUX_clock_case_eqs @ [PAIR_EQ; LET_DEF; LET_END_DEF]) THEN
   REPEAT STRIP_TAC THEN RVEQ_TAC THEN
   IL2AUX_BFR_TAC THEN IL2AUX_CONT_TAC THEN IL2AUX_POP_CONST_TAC THEN
-  IL2AUX_USE_IHS_RW_TAC IL2AUX_res_rws THEN IL2AUX_CLOCK_FACTS_TAC THEN
+  IL2AUX_USE_IHS_RW_TAC IL2AUX_res_rws THEN
+  (* the induction hypotheses have been used (instantiated) by now: dropping *)
+  (* them makes the rewriting, SIMP and FS steps below much faster           *)
+  REPEAT (FIRST_X_ASSUM (fun th -> if is_forall (concl th) then ALL_TAC
+                                   else failwith "")) THEN
+  IL2AUX_CLOCK_FACTS_TAC THEN
   IL2AUX_CUT_CONST_TAC THEN RULE_ASSUM_TAC(REWRITE_RULE IL2AUX_dec_rws) THEN
   ONCE_REWRITE_TAC[wl_evaluate_def] THEN
   FIRST

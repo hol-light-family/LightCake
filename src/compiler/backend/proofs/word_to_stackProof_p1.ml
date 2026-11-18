@@ -1559,9 +1559,12 @@ let W2SP1AUX_state_rel_LUPDATE_sp = prove
    ASM_REWRITE_TAC[]) THEN
   (SIMP_TAC[DROP_LUPDATE_lemma1; LE_REFL; SUB_REFL] THEN
    ASM_SIMP_TAC[DROP_LUPDATE_lemma2; ARITH_RULE `1 <= f ==> 0 < f`; TAKE_LUPDATE] THEN
-   REPEAT CONJ_TAC THENL
-    [ASM_MESON_TAC[];
-     UNDISCH_TAC `stack_size_rel f (wl_state_locals_size (s:(A,num#C,FFI)wl_state))
+   REPEAT CONJ_TAC THEN
+   (* since HOL Light 2828953 the ASM_SIMP_TAC above may prove the code conjunct itself *)
+   TRY (fun (_,w as g) ->
+     if can (find_term ((=) `wl_state_code (s:(A,num#C,FFI)wl_state)`)) w
+     then ASM_MESON_TAC[] g else NO_TAC g) THENL
+    [UNDISCH_TAC `stack_size_rel f (wl_state_locals_size (s:(A,num#C,FFI)wl_state))
         (wl_state_stack_limit s) (wl_state_stack_max s) (wl_state_stack s)
         (stack_state_stack (t:(A,C,FFI)stack_state)) (stack_state_stack_space t) 0` THEN
      REWRITE_TAC[stack_size_rel_def; LENGTH_LUPDATE];
@@ -3884,9 +3887,12 @@ let state_rel_set_var2 = prove
       (stack_state_stack t)) =
     LUPDATE v i (DROP (stack_state_stack_space t) (stack_state_stack (t:(A,C,FFI)stack_state)))`
     SUBST1_TAC THENL [SIMP_TAC[DROP_LUPDATE_lemma1; LE_ADD; ADD_SUB2]; ALL_TAC] THEN
-  ASM_SIMP_TAC[DROP_LUPDATE_lemma2; TAKE_LUPDATE] THEN REPEAT CONJ_TAC THENL
-   [ASM_MESON_TAC[];
-    ASM_SIMP_TAC[wf_insert];
+  ASM_SIMP_TAC[DROP_LUPDATE_lemma2; TAKE_LUPDATE] THEN REPEAT CONJ_TAC THEN
+  (* since HOL Light 2828953 the ASM_SIMP_TAC above may prove the code conjunct itself *)
+  TRY (fun (_,w as g) ->
+    if can (find_term ((=) `wl_state_code (s:(A,num#C,FFI)wl_state)`)) w
+    then ASM_MESON_TAC[] g else NO_TAC g) THENL
+   [ASM_SIMP_TAC[wf_insert];
     UNDISCH_TAC
      `stack_size_rel (f' + 1) (wl_state_locals_size (s:(A,num#C,FFI)wl_state))
         (wl_state_stack_limit s) (wl_state_stack_max s) (wl_state_stack s)

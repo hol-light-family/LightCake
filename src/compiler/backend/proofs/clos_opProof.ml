@@ -2684,7 +2684,7 @@ let CLOSP2AUX_op_fv_eq_pure_list = prove
     CASE_REWRITE_TAC[] THEN COND_CASES_TAC THENL
      [REWRITE_TAC[append_thm; fv_cons; fv_nil; fv1_thm; MakeBool_def]; ALL_TAC] THEN
     DISCH_TAC THEN
-    USE_THEN "H3" (MP_TAC o C MATCH_MP (ASSUME
+    REMOVE_THEN "H3" (MP_TAC o C MATCH_MP (ASSUME
         `fv n (append (eq_pure_list (ZIP (REVERSE (xs1:clos_exp list))
                                          (REVERSE (ys2:clos_exp list)))))`) o
       C MATCH_MP (end_itlist CONJ [REFL `NONE:clos_exp option`;

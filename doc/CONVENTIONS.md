@@ -79,3 +79,6 @@
   `bool_case_eq` and `AllCaseEqs()`; HOL Light's own tactics are used freely.
 - Theorems that HOL4 marks `[simp]` are added to the project simpset with `cake_add_simps`
   when later proofs rely on them.
+- The kit's simplifier tactics use HOL Light's simplifier without its `satisfy_prover` (part of
+  `basic_ss` since November 2026), as HOL4's default simpsets have no `SATISFY_ss`. HOL Light's
+  own `SIMP_TAC` and `ASM_SIMP_TAC` keep it.

@@ -7698,8 +7698,9 @@ let ssa_locals_rel_ignore_list_insert = prove
      LENGTH ls = LENGTH x
      ==> ssa_locals_rel na ssa (wl_state_locals st) (alist_insert ls x (wl_state_locals cst))`,
   REPEAT GEN_TAC THEN REWRITE_TAC[ssa_locals_rel_def; ssa_map_ok_def] THEN
-  STRIP_TAC THEN ASM_SIMP_TAC[domain_alist_insert; IN_UNION] THEN CONJ_TAC THENL
-   [ASM_MESON_TAC[]; ALL_TAC] THEN
+  STRIP_TAC THEN ASM_SIMP_TAC[domain_alist_insert; IN_UNION] THEN
+  (* since HOL Light 2828953 ASM_SIMP_TAC proves the first conjunct itself *)
+  TRY (CONJ_TAC THENL [ASM_MESON_TAC[]; ALL_TAC]) THEN
   MAP_EVERY X_GEN_TAC [`k:num`; `y:(A)word_loc`] THEN DISCH_TAC THEN
   SUBGOAL_THEN `k IN domain (ssa:num spt) /\
                 lookup (THE (lookup k ssa)) (wl_state_locals (cst:(A,C,FFI)wl_state)) = SOME y /\

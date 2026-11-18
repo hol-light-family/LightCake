@@ -135,10 +135,10 @@ let shift_cb_def = cake_def
         CallBlock tag l' c' r')`;;
 
 let call_to_cb_def = cake_def
-  `call_to_cb (loc:A) call_ts call_loc (call_args:C list) (call_h:B option) =
+  `call_to_cb (loc:A) call_ts call_loc (call_args0:C list) (call_h:B option) =
      if call_loc = SOME loc /\ call_h = NONE then
-       match bind 0 call_args with
-         (vs,_) -> SOME (call_args,RCall call_ts vs)
+       match bind 0 call_args0 with
+         (vs,_) -> SOME (call_args0,RCall call_ts vs)
      else NONE`;;
 
 let shift_vars_zero = prove
@@ -339,8 +339,8 @@ let bvi_to_cb_aux_wf_inr_lemma = prove
 let bvi_to_cb_aux_wf_inr = CONJUNCT2 bvi_to_cb_aux_wf_inr_lemma;;
 
 let bvi_to_cb_def = sem1aux_def
-  `(bvi_to_cb n loc (bvi_Call call_ts call_loc call_args call_h) =
-      call_to_cb loc call_ts call_loc call_args call_h) /\
+  `(bvi_to_cb n loc (bvi_Call call_ts call_loc call_args0 call_h) =
+      call_to_cb loc call_ts call_loc call_args0 call_h) /\
    (bvi_to_cb n loc (bvi_Op op xs) =
       match bvi_tmc_dest_Cons op with
         SOME tag ->
@@ -450,8 +450,8 @@ let fill_hole_def = cake_def
      bvi_Op (MemOp UpdateCons) [exp; bvi_Var i_idx; bvi_Var i_ptr]`;;
 
 let optimise_call_def = cake_def
-  `optimise_call call_ts loc_opt call_args exp_ptr exp_idx =
-     let args = APPEND (MAP (\n. bvi_Var n) call_args) [exp_ptr; exp_idx] in
+  `optimise_call call_ts loc_opt call_args0 exp_ptr exp_idx =
+     let args = APPEND (MAP (\n. bvi_Var n) call_args0) [exp_ptr; exp_idx] in
        bvi_Call call_ts (SOME loc_opt) args NONE`;;
 
 let update_cons_def = cake_def
@@ -471,8 +471,8 @@ let cb_to_bvi_worker_aux_def = cake_def_wf
   `measure (\p:call_block # num # num # num. cb_size (FST p))`
   (REWRITE_TAC[measure_THM; FST; call_block_size_shift; cb_size_def] THEN
    ARITH_TAC)
-  `(cb_to_bvi_worker_aux (RCall call_ts call_args) loc_opt ptr idx =
-      optimise_call call_ts loc_opt call_args (bvi_Var ptr)
+  `(cb_to_bvi_worker_aux (RCall call_ts call_args0) loc_opt ptr idx =
+      optimise_call call_ts loc_opt call_args0 (bvi_Var ptr)
         (bvi_Op (IntOp (clos_Const (&idx))) [])) /\
    (cb_to_bvi_worker_aux (CallBlock tag left child right) loc_opt ptr idx =
       bvi_Let [mut_cons tag left right]
@@ -492,8 +492,8 @@ let shift_cb_zero = prove
 (* This version is the one used by the cv translation.                      *)
 
 let cb_to_bvi_worker_aux_alt_def = cake_def
-  `(cb_to_bvi_worker_aux_alt sh (RCall call_ts call_args) loc_opt ptr idx =
-      optimise_call call_ts loc_opt (shift_vars sh call_args) (bvi_Var ptr)
+  `(cb_to_bvi_worker_aux_alt sh (RCall call_ts call_args0) loc_opt ptr idx =
+      optimise_call call_ts loc_opt (shift_vars sh call_args0) (bvi_Var ptr)
         (bvi_Op (IntOp (clos_Const (&idx))) [])) /\
    (cb_to_bvi_worker_aux_alt sh (CallBlock tag left child right) loc_opt ptr idx =
       bvi_Let [mut_cons tag (shift_vars sh left) (shift_vars sh right)]
@@ -518,8 +518,8 @@ let cb_to_bvi_worker_aux_eq = prove
   REWRITE_TAC[cb_to_bvi_worker_aux_alt_thm; shift_cb_zero]);;
 
 let cb_to_bvi_worker_def = cake_def
-  `(cb_to_bvi_worker (RCall call_ts call_args) loc_opt ptr idx =
-      optimise_call call_ts loc_opt call_args (bvi_Var ptr) (bvi_Var idx)) /\
+  `(cb_to_bvi_worker (RCall call_ts call_args0) loc_opt ptr idx =
+      optimise_call call_ts loc_opt call_args0 (bvi_Var ptr) (bvi_Var idx)) /\
    (cb_to_bvi_worker (CallBlock tag left child right) loc_opt ptr idx =
       bvi_Let [mut_cons tag left right]
         (bvi_Let [update_cons (bvi_Var (ptr + 1)) (bvi_Var (idx + 1))

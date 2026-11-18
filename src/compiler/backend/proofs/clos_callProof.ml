@@ -7987,7 +7987,13 @@ let CLOSCALLPAUX_CLM_TAC : tactic =
      fst (dest_var (fst (dest_forall (concl th)))) = "xloc"))) THEN
    RULE_ASSUM_TAC(CASE_REWRITE_RULE CLOSCALLPAUX_CLM_RW) THEN
    TRY (FIRST_ASSUM(fun th -> if concl th = `F` then CONTR_TAC th else NO_TAC)) THEN
-   CASE_REWRITE_TAC CLOSCALLPAUX_CLM_RW THEN ASM_SIMP_TAC[MAP_ZIP; LENGTH_ZIP; LENGTH_MAP] THEN
+   CASE_REWRITE_TAC CLOSCALLPAUX_CLM_RW THEN
+   (* drop the general induction hypotheses, instantiated in the goal by now: else   *)
+   (* ASM_SIMP_TAC rewrites those instances to T (since HOL Light 2828953 its        *)
+   (* satisfy_prover finds the variables of their conditions), and TAUT needs them   *)
+   REPEAT (FIRST_X_ASSUM (K ALL_TAC o check (fun th -> is_forall (concl th) &&
+     can (find_term (fun t -> is_abs t && fst (dest_var (bndvar t)) = "xloc")) (concl th)))) THEN
+   ASM_SIMP_TAC[MAP_ZIP; LENGTH_ZIP; LENGTH_MAP] THEN
    REPEAT (FIRST_X_ASSUM(MP_TAC o check (fun th -> vfree_in `xloc:num` (concl th) &&
      not (is_forall (concl th))))) THEN
    ASM_SIMP_TAC[MAP_ZIP; LENGTH_ZIP; LENGTH_MAP] THEN CONV_TAC TAUT;;

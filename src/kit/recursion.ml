@@ -41,6 +41,24 @@ let cake_rename_proforma =
 let cake_case_rule_ref =
   ref (fun (_:term) (_:term list) -> (failwith "case rule" : thm));;
 
+(* the same rule unrenamed, and the function that renames its arm variables *)
+(* in it or in the version HACK_PROFORMA makes of it; set below              *)
+
+let cake_case_rule_parts_ref =
+  ref (fun (_:term) (_:term list) ->
+         (failwith "case rule" : thm * (thm -> thm)));;
+
+(* the same for cake_rename_proforma: a version of the rule whose renamed   *)
+(* bound variables have names of their own, and the renaming; set below      *)
+
+let cake_proforma_parts_ref =
+  ref (fun (_:string list) (_:string list) (_:thm) ->
+         (failwith "proforma parts" : thm * (thm -> thm)));;
+
+(* compare the two ways of making the rule for a case constant (debugging) *)
+
+let cake_check_case_hack = ref false;;
+
 (* HOL Light's ADMISSIBLE_LAMBDA with a body of any type, not only bool: a  *)
 (* recursive call in a lambda (a monadic continuation, a function-valued    *)
 (* result) is then admissible with the lambda's variable in its context    *)
@@ -51,13 +69,121 @@ let CAKE_ADMISSIBLE_LAMBDA = prove
      ==> admissible(<<) p s (\f x. \u. t f u x)`,
   REWRITE_TAC[admissible; FUN_EQ_THM; FORALL_PAIR_THM] THEN MESON_TAC[]);;
 
+(* GEN_BETA_CONV for a paired lambda whose pattern is a right-nested tuple    *)
+(* of distinct variables (the paired lambdas of the recursion package over   *)
+(* the variables of all the clauses): the same right side as GEN_BETA_CONV    *)
+(* (the body with the components substituted by vsubst, so the same bound    *)
+(* names), with the redex itself as left side.  GEN_BETA_CONV takes time      *)
+(* cubic in the size of the tuple (seconds for 50 variables); this is about   *)
+(* quadratic in it and linear in the body.  Other redexes: GEN_BETA_CONV.     *)
+
+(* SPEC_ALL computes the free variables of the theorem again for every       *)
+(* quantifier, which is quadratic in their number: the same theorem by SPECL *)
+(* when the quantified variables are distinct and not free in the theorem    *)
+(* (then SPEC_ALL keeps their names), else SPEC_ALL                          *)
+
+let CAKE_SPEC_ALL th =
+  let vs = fst(strip_forall(concl th)) in
+  if vs = [] then th else
+  let fvs = thm_frees th in
+  if exists (fun v -> mem v fvs) vs || length (setify vs) <> length vs
+  then SPEC_ALL th else SPECL vs th;;
+
+let CAKE_GEN_BETA_CONV : conv =
+  let cache = Hashtbl.create 16 in
+  let rec rtuple vs t =
+    match vs with
+      [v] -> t = v
+    | v::rest -> (try let a,b = dest_pair t in a = v && rtuple rest b
+                  with Failure _ -> false)
+    | [] -> false in
+  (* |- ?w. !x1 .. xk. GEQ (w (x1,..,xk)) (b x1 .. xk) over A1 .. Ak, B,  *)
+  (* with the witness \p. pair_CASE p (\z1 r1. pair_CASE r1 (\z2 r2. ..   *)
+  (* (\z(k-1) zk. b z1 .. zk))) reduced level by level                    *)
+  let lemma k =
+    try Hashtbl.find cache k with Not_found ->
+    let tys = map (fun i -> mk_vartype("A"^string_of_int i)) (1--k) in
+    let bty = mk_vartype "B" in
+    let xs = map2 (fun ty i -> mk_var("x"^string_of_int i,ty)) tys (1--k) in
+    let zs = map2 (fun ty i -> mk_var("z%cgb"^string_of_int i,ty)) tys (1--k) in
+    let b = mk_var("b%cgb",itlist mk_fun_ty tys bty) in
+    let tup = end_itlist (curry mk_pair) xs in
+    let w = mk_var("w%cgb",mk_fun_ty (type_of tup) bty) in
+    let p = mk_var("p",type_of tup) in
+    let pc e f = list_mk_icomb "pair_CASE" [e;f] in
+    let rec fn i =
+      if i = k - 1 then list_mk_abs([el (k-2) zs; el (k-1) zs],list_mk_comb(b,zs))
+      else let r = mk_var("r%cgb"^string_of_int i,
+                          type_of(end_itlist (curry mk_pair) (snd(chop_list i xs)))) in
+           list_mk_abs([el (i-1) zs; r],pc r (fn (i + 1))) in
+    let wit = mk_abs(p,pc p (fn 1)) in
+    let rec red tm =
+      let th1 = REWR_CONV pair_CASE tm in
+      let th2 = TRANS th1 (BETAS_CONV (rand(concl th1))) in
+      let r2 = rand(concl th2) in
+      if is_comb r2 && is_comb(rator r2) && is_const(rator(rator r2)) &&
+         fst(dest_const(rator(rator r2))) = "pair_CASE"
+      then TRANS th2 (red r2) else th2 in
+    let th0 = BETA_CONV (mk_comb(wit,tup)) in
+    let th1 = TRANS th0 (red (rand(concl th0))) in
+    let th2 = EQ_MP (SYM (ISPECL [mk_comb(wit,tup); list_mk_comb(b,xs)] GEQ_DEF)) th1 in
+    let geq = mk_icomb(mk_const("GEQ",[]),mk_comb(w,tup)) in
+    let stmt = mk_exists(w,list_mk_forall(xs,mk_comb(geq,list_mk_comb(b,xs)))) in
+    let th = EXISTS (stmt,wit) (GENL xs th2) in
+    Hashtbl.add cache k th; th in
+  (* the instance for given types, kept: the clauses of one definition give *)
+  (* thousands of redexes over the same tuple                              *)
+  let icache = Hashtbl.create 16 in
+  let ilemma k tyi =
+    let key = (k,map fst tyi) in
+    try Hashtbl.find icache key with Not_found ->
+    let th = INST_TYPE tyi (lemma k) in
+    if Hashtbl.length icache > 2000 then Hashtbl.reset icache;
+    Hashtbl.add icache key th; th in
+  let geq0 = mk_const("GEQ",[]) in
+  let degeq = REWR_CONV GEQ_DEF in
+  fun tm ->
+    try BETA_CONV tm with Failure _ ->
+    match tm with
+      Comb(Comb(Const("GABS",_),(Abs(_,fb) as pp)) as l,r) ->
+        let avs,gq = strip_forall fb in
+        let k = length avs in
+        let ok,vstr,bod =
+          try let g1,bod = dest_comb gq in
+              let gc,fv = dest_comb g1 in
+              let f,vstr = dest_comb fv in
+              (k >= 2 && is_const gc && fst(dest_const gc) = "GEQ" &&
+               f = bndvar pp && rtuple avs vstr &&
+               length (setify avs) = k),vstr,bod
+          with Failure _ -> false,tm,tm in
+        if not ok then GEN_BETA_CONV tm else
+        let instn = term_match [] vstr r in
+        let tys = map type_of avs and bty = type_of bod in
+        let tyi = (bty,mk_vartype "B") ::
+                  map2 (fun ty i -> ty,mk_vartype("A"^string_of_int i)) tys (1--k) in
+        let th0 = ilemma k tyi in
+        let w,_ = dest_exists(concl th0) in
+        let b = mk_var("b%cgb",itlist mk_fun_ty tys bty) in
+        let geq = inst [bty,aty] geq0 in
+        let target = mk_exists(w,list_mk_forall(avs,
+                       mk_comb(mk_comb(geq,mk_comb(w,vstr)),list_mk_comb(b,avs)))) in
+        let th1 = EQ_MP (ALPHA (concl th0) target) th0 in
+        let th2 = INST [list_mk_abs(avs,bod),b] th1 in
+        let th3 = CONV_RULE (BINDER_CONV (funpow k BINDER_CONV
+                                            (RAND_CONV BETAS_CONV))) th2 in
+        let th4 = CONV_RULE degeq (CAKE_SPEC_ALL (SELECT_RULE th3)) in
+        let th5 = AP_THM (ISPEC pp GABS_DEF) vstr in
+        INSTANTIATE instn (TRANS th5 th4)
+    | _ -> GEN_BETA_CONV tm;;
+
 (* the copied code relies on HOL Light's type invention *)
 let cake_tie_saved = !type_invention_error;;
 type_invention_error := false;;
 
 let instantiate_casewise_recursion,
     pure_prove_recursive_function_exists,
-    prove_general_recursive_function_exists =
+    prove_general_recursive_function_exists,
+    cake_guess_wf_hyp =
 
 (* ------------------------------------------------------------------------- *)
 (* Make some basic simplification of conjunction of welldefinedness clauses. *)
@@ -137,6 +263,7 @@ let instantiate_casewise_recursion,
 (* Hack a proforma to introduce new pairing or pattern variables.            *)
 (* ------------------------------------------------------------------------- *)
 
+  let p_ty = `:P` and q_ty = `:Q` in
   let HACK_PROFORMA,EACK_PROFORMA =
     let elemma0 = prove
      (`((!z. GEQ (f z) (g z)) <=> (!x y. GEQ (f(x,y)) (g(x,y)))) /\
@@ -167,7 +294,7 @@ let instantiate_casewise_recursion,
         fun tm -> if is_abs tm && name_of(bndvar tm) <> name
                   then cnv tm else failwith "conv" in
       let step m hm =
-        let old = if m = 1 then `:P` else mk_vartype(mkname m) in
+        let old = if m = 1 then p_ty else mk_vartype(mkname m) in
         let nw = mk_type("prod",[mk_vartype(mkname m);
                                  mk_vartype(mkname (m+1))]) in
         let th1 = INST_TYPE [nw,old] hm in
@@ -200,7 +327,7 @@ let instantiate_casewise_recursion,
         fun tm -> if is_abs tm && name_of(bndvar tm) <> name
                   then cnv tm else failwith "conv" in
       let convs = FIRST_CONV (map conv (1--n)) in
-      let th1 = INST_TYPE [ty,`:Q`] th in
+      let th1 = INST_TYPE [ty,q_ty] th in
       let th2 = REWRITE_RULE[EXISTS_PAIR_THM] th1 in
       let th3 = REWRITE_RULE[elemma1] th2 in
       let th4 = REWRITE_RULE[FORALL_PAIR_THM] th3 in
@@ -215,6 +342,42 @@ let instantiate_casewise_recursion,
     let vs = fst(dest_gabs(body(rand w))) in
     let n = 1 + length(fst(splitlist dest_pair vs)) in
     (MATCH_MP_TAC(HACK_PROFORMA n th) THEN BETA_TAC) gl in
+
+  (* the rule of a case constant has its arm variables renamed to the names *)
+  (* of the goal's arms, so each use was a new theorem for HACK_PROFORMA's   *)
+  (* cache, which then rebuilt it for n variables from scratch (most of the  *)
+  (* admissibility analysis of a definition over a big datatype): the rule  *)
+  (* is hacked unrenamed (cached) and its arm variables, whose names y<i>_<j> *)
+  (* and types no step of the hack touches, renamed afterwards               *)
+  let CASE_PROFORMA_TAC hop args (asl,w as gl) =
+    let vs = fst(dest_gabs(body(rand w))) in
+    let n = 1 + length(fst(splitlist dest_pair vs)) in
+    let old () = HACK_PROFORMA n (!cake_case_rule_ref hop args) in
+    let th = try let base,ren = !cake_case_rule_parts_ref hop args in
+                 ren (HACK_PROFORMA n base)
+             with Failure _ -> old () in
+    let th = if not !cake_check_case_hack then th else
+             let th' = old () in
+             if concl th' = concl th && hyp th' = hyp th then th else
+             (Format.print_string ("CASE_PROFORMA_TAC: differs for "^
+                                   fst(dest_const hop)^"\n");
+              th') in
+    (MATCH_MP_TAC th THEN BETA_TAC) gl in
+
+  (* the same for the rules of pair_CASE and LET, whose pattern variables  *)
+  (* cake_rename_proforma renames to the names of the goal's binders       *)
+  let RENAMED_PROFORMA_TAC olds news th0 (asl,w as gl) =
+    let vs = fst(dest_gabs(body(rand w))) in
+    let n = 1 + length(fst(splitlist dest_pair vs)) in
+    let old () = HACK_PROFORMA n (!cake_rename_proforma olds news th0) in
+    let th = try let base,ren = !cake_proforma_parts_ref olds news th0 in
+                 ren (HACK_PROFORMA n base)
+             with Failure _ -> old () in
+    let th = if not !cake_check_case_hack then th else
+             let th' = old () in
+             if concl th' = concl th && hyp th' = hyp th then th else
+             (Format.print_string "RENAMED_PROFORMA_TAC: differs\n"; th') in
+    (MATCH_MP_TAC th THEN BETA_TAC) gl in
 
   let is_pattern p n tm =
     try let f,args = strip_comb(snd(strip_exists (body(body tm)))) in
@@ -287,20 +450,20 @@ let instantiate_casewise_recursion,
     | "admissible",_ when is_case_const hop &&
                           length args = 1 + length (case_info_of_const hop).ci_pats &&
                           not (can (assoc (name_of hop)) (!cake_admissible_rules))
-          -> APPLY_PROFORMA_TAC (!cake_case_rule_ref hop (tl args)) gl
+          -> CASE_PROFORMA_TAC hop (tl args) gl
     | "admissible","LET" when can (assoc "LET") (!cake_admissible_rules)
           -> let th = assoc "LET" (!cake_admissible_rules) in
              let names = try let v1,_ = dest_abs (hd(snd(strip_comb bod))) in
                              [fst(dest_var v1)]
                          with Failure _ -> [] in
-             APPLY_PROFORMA_TAC (!cake_rename_proforma ["y"] names th) gl
+             RENAMED_PROFORMA_TAC ["y"] names th gl
     | "admissible","pair_CASE" when can (assoc "pair_CASE") (!cake_admissible_rules)
           -> let th = assoc "pair_CASE" (!cake_admissible_rules) in
              let names = try let v1,b1 = dest_abs (last(snd(strip_comb bod))) in
                              let v2,_ = dest_abs b1 in
                              [fst(dest_var v1); fst(dest_var v2)]
                          with Failure _ -> [] in
-             APPLY_PROFORMA_TAC (!cake_rename_proforma ["a";"b"] names th) gl
+             RENAMED_PROFORMA_TAC ["a";"b"] names th gl
     | "admissible",c when can (assoc c) (!cake_admissible_rules)
           -> APPLY_PROFORMA_TAC (assoc c (!cake_admissible_rules)) gl
     | "admissible",_ when is_abs bod
@@ -348,7 +511,7 @@ let instantiate_casewise_recursion,
         let x,bod = dest_abs tm in
         let tm' = mk_gabs(parm,vsubst[parm,x] bod) in
         let th1 = BETA_CONV(mk_comb(tm,parm))
-        and th2 = GEN_BETA_CONV (mk_comb(tm',parm)) in
+        and th2 = CAKE_GEN_BETA_CONV (mk_comb(tm',parm)) in
         let th3 = TRANS th1 (SYM th2) in
         let th4 = itlist (fun v th -> rewr1 (GEN v th))
                          (butlast parms) (GEN (last parms) th3) in
@@ -365,7 +528,7 @@ let instantiate_casewise_recursion,
         GEN p (SYM(depair parms tm)) in
     let ELIM_LISTOPS_CONV =
       PURE_REWRITE_CONV[PAIRWISE; ALL; GSYM CONJ_ASSOC; AND_CLAUSES] THENC
-      TOP_DEPTH_CONV GEN_BETA_CONV in
+      TOP_DEPTH_CONV CAKE_GEN_BETA_CONV in
     let tuple_function_existence tm =
       let f,def = dest_exists tm in
       let domtys0,ranty0 = splitlist dest_fun_ty (type_of f) in
@@ -407,13 +570,23 @@ let instantiate_casewise_recursion,
       let th0 = UNDISCH(CONV_RULE(FIDDLE_CONV(LAMBDA_PAIR_CONV parms)) pth) in
       let th1 = EQ_MP (GEN_ALPHA_CONV f (concl th0)) th0 in
       let rewr_forall_th = REWR_CONV(FORALL_PAIR_CONV parm parms) in
+      (* the inner quantifier y of each well-definedness condition !f x y. ..  *)
+      (* is split into variables named apart from parms: with the names of    *)
+      (* parms, splitting x renames every one of them, and the kernel's vsubst *)
+      (* takes time exponential in the number of nested binders it renames    *)
+      (* (minutes for 20 variables).  The conditions are only alpha-converted  *)
+      let rewr_forall_th' =
+        let avoid = ref parms in
+        let parms' = map (fun v -> let v' = variant (!avoid) v in
+                                   avoid := v' :: !avoid; v') parms in
+        REWR_CONV(FORALL_PAIR_CONV (end_itlist (curry mk_pair) parms') parms') in
       let th2 = CONV_RULE (BINDER_CONV
                     (LAND_CONV(GABS_CONV rewr_forall_th) THENC
                      EXPAND_PAIRED_ALL_CONV)) th1 in
       let f2,bod2 = dest_exists(concl th2) in
       let ths3 = map
-       (CONV_RULE (COMB2_CONV (funpow 2 RAND_CONV GEN_BETA_CONV)
-                  (RATOR_CONV BETA_CONV THENC GEN_BETA_CONV)) o SPEC_ALL)
+       (CONV_RULE (COMB2_CONV (funpow 2 RAND_CONV CAKE_GEN_BETA_CONV)
+                  (RATOR_CONV BETA_CONV THENC CAKE_GEN_BETA_CONV)) o CAKE_SPEC_ALL)
        (CONJUNCTS(ASSUME bod2)) in
       let ths4 = map2
        (fun th t -> let avs,tbod = strip_forall t in
@@ -423,9 +596,9 @@ let instantiate_casewise_recursion,
       let th7 =
        (RAND_CONV(COMB2_CONV
             (RAND_CONV (LAND_CONV (GABS_CONV(BINDER_CONV
-                     (BINDER_CONV(rewr_forall_th) THENC rewr_forall_th)))))
+                     (BINDER_CONV(rewr_forall_th') THENC rewr_forall_th)))))
             (LAND_CONV (funpow 2 GABS_CONV(BINDER_CONV
-                     (BINDER_CONV(rewr_forall_th) THENC
+                     (BINDER_CONV(rewr_forall_th') THENC
                       rewr_forall_th))))) THENC
         ELIM_LISTOPS_CONV) (hd(hyp th6)) in
       let th8 = PROVE_HYP (UNDISCH(snd(EQ_IMP_RULE th7))) th6 in
@@ -470,7 +643,7 @@ let instantiate_casewise_recursion,
                   (fun v -> TRY(GEN_REWRITE_TAC I [FORALL_PAIR_THM]) THEN
                             X_GEN_TAC v)
                   parms THEN
-                CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
+                CONV_TAC(TOP_DEPTH_CONV CAKE_GEN_BETA_CONV) THEN
                 MAP_EVERY (fun v -> SPEC_TAC(v,v)) (rev parms @ [v]))) THEN
         PURE_REWRITE_TAC[FORALL_SIMP] THEN
         W(fun (asl,w) -> MAP_EVERY (fun t -> SPEC_TAC(t,t))
@@ -482,9 +655,22 @@ let instantiate_casewise_recursion,
       let th4 = ASSUME(list_mk_conj(wfasm::subtract allasms [wfasm])) in
       let th5 = SIMPLE_CHOOSE ord (itlist PROVE_HYP (CONJUNCTS th4) th3) in
       PROVE_HYP th5 th1 in
+    (* the last result is kept: cake_def asks for the same claim again after *)
+    (* the automatic termination proof (for the induction theorem) and for   *)
+    (* each size measure it tries; the key includes the tables the analysis *)
+    (* reads                                                                  *)
+    let cache = ref [] in
     fun dtm ->
+      let l0 = !cake_let_cong and a0 = !cake_admissible_rules
+      and c0 = !the_case_infos and n0 = !basic_rectype_net
+      and r0 = !cake_rename_proforma and q0 = !cake_case_rule_ref
+      and u0 = !cake_case_rule_parts_ref and v0 = !cake_proforma_parts_ref in
+      let hit (d,l,a,c,n,r,q,u,v,_) =
+        l = l0 && a == a0 && c == c0 && n == n0 && r == r0 && q == q0 &&
+        u == u0 && v == v0 && d = dtm in
+      try let (_,_,_,_,_,_,_,_,_,th) = find hit (!cache) in th with Failure _ ->
       let th =  break_down_admissibility(instantiate_casewise_recursion dtm) in
-      if concl th = dtm then th
+      if concl th = dtm then (cache := [dtm,l0,a0,c0,n0,r0,q0,u0,v0,th]; th)
       else failwith "prove_general_recursive_function_exists: sanity" in
 
 (* ------------------------------------------------------------------------- *)
@@ -492,6 +678,7 @@ let instantiate_casewise_recursion,
 (* ------------------------------------------------------------------------- *)
 
   let prove_general_recursive_function_exists =
+    let plus_tm = `(+):num->num->num` and succ_tm = `\n:num. n + 1` in
     let prove_depth_measure_exists =
       let num_ty = `:num` in
       fun tyname ->
@@ -507,7 +694,7 @@ let instantiate_casewise_recursion,
           let fn,cargs = dest_comb l in
           let con,args = strip_comb cargs in
           let bargs = filter (fun t -> type_of t = ty) args in
-          let r' = list_mk_binop `(+):num->num->num`
+          let r' = list_mk_binop plus_tm
                     (mk_small_numeral k :: map (curry mk_comb fn) bargs) in
           list_mk_forall(avs,mk_eq(l,r')) in
         let cjs = conjuncts cbod in
@@ -528,7 +715,7 @@ let instantiate_casewise_recursion,
         let ty = fst(dest_fun_ty(type_of ev)) in
         (EXISTS_TAC(mk_abs(genvar ty,one_tm)) THEN tac) (asl,w) in
     let GUESS_MEASURE_THEN tac =
-      (EXISTS_TAC `\n. n + 1` THEN tac) ORELSE
+      (EXISTS_TAC succ_tm THEN tac) ORELSE
       (INDUCTIVE_MEASURE_THEN tac) ORELSE
       CONSTANT_MEASURE_THEN tac in
     let pth_lexleft = prove
@@ -576,16 +763,21 @@ let instantiate_casewise_recursion,
             REWRITE_TAC[WF_FALSE] THEN NO_TAC) ORELSE
       GUESS_WF_THEN
        (REWRITE_TAC[FORALL_PAIR_THM] THEN ARITH_TAC) in
-    fun etm ->
-      let th = pure_prove_recursive_function_exists etm in
-      try let wtm = find is_exists (hyp th) in
-          let wth = prove(wtm,PRE_GUESS_TAC THEN GUESS_ORDERING_TAC) in
-          PROVE_HYP wth th
-      with Failure _ -> th in
+    (* the automatic proof of the WF hypothesis of an existence theorem   *)
+    (* (fails if the guess fails); cake_def uses it on its own as well      *)
+    let guess_wf_hyp th =
+      let wtm = find is_exists (hyp th) in
+      let wth = prove(wtm,PRE_GUESS_TAC THEN GUESS_ORDERING_TAC) in
+      PROVE_HYP wth th in
+    (fun etm ->
+       let th = pure_prove_recursive_function_exists etm in
+       try guess_wf_hyp th with Failure _ -> th),
+    guess_wf_hyp in
 
   instantiate_casewise_recursion,
   pure_prove_recursive_function_exists,
-  prove_general_recursive_function_exists;;
+  fst prove_general_recursive_function_exists,
+  snd prove_general_recursive_function_exists;;
 
 type_invention_error := cake_tie_saved;;
 
@@ -686,6 +878,29 @@ cake_rename_proforma :=
          EQ_MP (ALPHA (concl th) c') th
      with Failure _ -> th);;
 
+(* the renaming of cake_rename_proforma split in two: the rule with the old   *)
+(* names marked (made once per rule, so that HACK_PROFORMA's cache knows it) *)
+(* and the renaming of the marked names to the new ones, chosen as before    *)
+
+let cake_marked_rules = ref ([] : ((string list * term) * thm) list);;
+
+let cake_proforma_parts olds news th =
+  if length news <> length olds then failwith "cake_proforma_parts" else
+  let used = ref (map (fst o dest_var) (variables (concl th))) in
+  let fresh n = let rec go n = if mem n !used then go (n ^ "'") else n in
+                let n' = go n in used := n' :: !used; n' in
+  let ren = map2 (fun od nw -> od^"%arm", fresh nw) olds news in
+  let key = (olds,concl th) in
+  let base =
+    try assoc key (!cake_marked_rules) with Failure _ ->
+    let c' = cake_rename_bound (map (fun od -> od,od^"%arm") olds) (concl th) in
+    let b = EQ_MP (ALPHA (concl th) c') th in
+    cake_marked_rules := (key,b) :: !cake_marked_rules; b in
+  base,(fun hth -> let c' = cake_rename_bound ren (concl hth) in
+                   EQ_MP (ALPHA (concl hth) c') hth);;
+
+cake_proforma_parts_ref := cake_proforma_parts;;
+
 (* ------------------------------------------------------------------------- *)
 (* Admissibility rules for case constants (HOL4's case congruence rules):     *)
 (*   admissible R p s e /\                                                   *)
@@ -781,17 +996,20 @@ let case_admissible_thm (ci:case_info) =
 (* the arm variables y<i>_<j> of a case rule renamed to the binder names of  *)
 (* the arms of the goal (each arm apart from the others)                     *)
 
-let cake_rename_case_rule (th:thm) (news:string list list) =
+let cake_case_rule_ren (th:thm) (news:string list list) =
   let is_armvar n =
     String.length n > 1 && String.sub n 0 1 = "y" && String.contains n '_' in
   let base = filter (fun n -> not (is_armvar n))
                (map (fst o dest_var) (variables (concl th))) in
-  let ren = flat (map2 (fun nl i ->
+  flat (map2 (fun nl i ->
       let used = ref base in
       let fresh n = let rec go n = if mem n !used then go (n ^ "'") else n in
                     let n' = go n in used := n' :: !used; n' in
       map2 (fun nw j -> "y"^string_of_int i^"_"^string_of_int j, fresh nw)
-           nl (1--length nl)) news (1--length news)) in
+           nl (1--length nl)) news (1--length news));;
+
+let cake_rename_case_rule (th:thm) (news:string list list) =
+  let ren = cake_case_rule_ren th news in
   try let c' = cake_rename_bound ren (concl th) in EQ_MP (ALPHA (concl th) c') th
   with Failure _ -> th;;
 
@@ -806,6 +1024,24 @@ let cake_case_rule_for (hop:term) (arms:term list) =
   cake_rename_case_rule th news;;
 
 cake_case_rule_ref := cake_case_rule_for;;
+
+let cake_case_rule_parts (hop:term) (arms:term list) =
+  let ci = case_info_of_const hop in
+  (* a constructor argument of product type is split by HACK_PROFORMA *)
+  if exists (fun (vs,_) -> exists (fun v -> is_type (type_of v) &&
+                                            fst(dest_type(type_of v)) = "prod") vs)
+            ci.ci_pats then failwith "cake_case_rule_parts" else
+  let th = case_admissible_thm ci in
+  let news = map2 (fun (vs,_) a ->
+      let rec binders k t = if k = 0 then [] else
+        let v,b = dest_abs t in fst(dest_var v) :: binders (k-1) b in
+      try binders (length vs) a with Failure _ -> map (fst o dest_var) vs)
+    ci.ci_pats arms in
+  let ren = cake_case_rule_ren th news in
+  th,(fun hth -> let c' = cake_rename_bound ren (concl hth) in
+                 EQ_MP (ALPHA (concl hth) c') hth);;
+
+cake_case_rule_parts_ref := cake_case_rule_parts;;
 
 (* LET h e, the kit's let x = e in t: the context e = x (HOL4's LET_CONG) *)
 

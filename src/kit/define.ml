@@ -91,6 +91,11 @@ let WF_TAC : tactic =
 
 let WF_REL_THMS = [inv_image_THM; LEX_THM; measure_THM; MEASURE];;
 
+(* terms used by the functions below, parsed once: parsing in a session with *)
+(* thousands of constants takes milliseconds per quotation                   *)
+
+let cake_true_tm = `T` and cake_zero_tm = `0:num` and cake_num_ty = `:num`;;
+
 (* ------------------------------------------------------------------------- *)
 (* A termination tactic for size measures (HOL4: WF_REL_TAC `measure ..` >>  *)
 (* fs[list_size ...] >> decide_tac): unfold the relation, the size           *)
@@ -122,11 +127,27 @@ let MEM_SIZE_TAC : tactic =
                               else failwith "") mems) ls) in
     MAP_EVERY ASSUME_TAC facts gl;;
 
+(* the rewriting of TERM_TAC with every size function, built once per state *)
+(* of the size tables (and of the basic rewrites) instead of twice per goal *)
+
+let cake_term_rw_cache =
+  ref (None : (thm list * (string * thm list) list * gconv net * conv) option);;
+
+let cake_term_rw_conv () =
+  match !cake_term_rw_cache with
+    Some(d,a,b,c) when d == !the_size_defs && a == !the_size_aux_eqs &&
+                       b == basic_net() -> c
+  | _ ->
+      let ths = WF_REL_THMS @ [FST; SND; pair_size_THM; sum_CASE] @
+                !the_size_defs @ flat (map snd (!the_size_aux_eqs)) in
+      let c = REWRITE_CONV ths in
+      cake_term_rw_cache := Some(!the_size_defs,!the_size_aux_eqs,basic_net(),c);
+      c;;
+
 let TERM_TAC : tactic =
   REPEAT BOSS_STRIP_TAC THEN RVEQ_TAC THEN
-  (fun g -> let ths = WF_REL_THMS @ [FST; SND; pair_size_THM; sum_CASE] @
-                      !the_size_defs @ flat (map snd (!the_size_aux_eqs)) in
-            (RULE_ASSUM_TAC(REWRITE_RULE ths) THEN REWRITE_TAC ths) g) THEN
+  (fun g -> let c = cake_term_rw_conv () in
+            (RULE_ASSUM_TAC(CONV_RULE c) THEN CONV_TAC c) g) THEN
   MEM_SIZE_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[pair_size_THM]) THEN
   ASM_ARITH_TAC;;
@@ -313,7 +334,7 @@ let discharge_hyps name rel_tac eth =
       (* tail call has the form !y. R y a ==> R y p; prove R a p as well       *)
       let strict tc th =
         let vs,bod = strip_forall tc in
-        let ctx,c = if is_imp bod then dest_imp bod else `T`,bod in
+        let ctx,c = if is_imp bod then dest_imp bod else cake_true_tm,bod in
         if is_forall c then
           let y,b = dest_forall c in
           let ra,rp = dest_imp b in
@@ -321,7 +342,7 @@ let discharge_hyps name rel_tac eth =
           let r0 = rator(rator ra) in
           let p = rand rp in
           let stm = list_mk_forall(vs,
-                      if ctx = `T` then mk_comb(mk_comb(r0,a),p)
+                      if ctx = cake_true_tm then mk_comb(mk_comb(r0,a),p)
                       else mk_imp(ctx,mk_comb(mk_comb(r0,a),p))) in
           prove(stm,tac)
         else th in
@@ -512,8 +533,30 @@ let rec SPLIT_PATTERNS_TAC (pats : term list list) (leaf : int option -> tactic)
 (* context and |- tidy ==> ctx (or the context itself if anything fails).    *)
 (* ------------------------------------------------------------------------- *)
 
+(* an existential that no prover can prove because it is false for some     *)
+(* value of a free variable: ?xs. .. /\ v = C .. /\ .. with v free, not in   *)
+(* the C term, of a datatype with another constructor D (false for v := D zs) *)
+(* MESON fails on it anyway, after its whole search (40 s for ?s'. y' =      *)
+(* SX_CONS s' s'' in fromSexp)                                               *)
+
+let cake_existential_refutable w =
+  try
+    let xs,bod = strip_exists w in
+    let test v t =
+      is_var v && not (mem v xs) && not (free_in v t) &&
+      (let h = fst(strip_comb t) in
+       is_const h &&
+       let ci = case_info_of_tyname (fst(dest_type(type_of v))) in
+       length ci.ci_pats >= 2 &&
+       exists (fun (_,p) -> let h' = fst(strip_comb p) in
+                            is_const h' && fst(dest_const h') = fst(dest_const h))
+              ci.ci_pats) in
+    exists (fun c -> is_eq c && (test (lhs c) (rhs c) || test (rhs c) (lhs c)))
+           (conjuncts bod)
+  with Failure _ -> false;;
+
 let tidy_ctx ctx =
-  if ctx = `T` then ctx,DISCH ctx (ASSUME ctx) else
+  if ctx = cake_true_tm then ctx,DISCH ctx (ASSUME ctx) else
   try
     let cs = conjuncts ctx in
     let orient c =
@@ -523,8 +566,9 @@ let tidy_ctx ctx =
     (* the case rewrites come from the kit's prebuilt net (CASE_REWRITE_TAC): *)
     (* rebuilding a net of all of them for each conjunct costs about a second *)
     (* once a type with many constructors is defined                          *)
-    let exists_meson ths = W(fun (_,w) -> if is_exists w then MESON_TAC ths
-                                          else NO_TAC) in
+    let exists_meson ths = W(fun (_,w) -> if is_exists w &&
+                                             not (cake_existential_refutable w)
+                                          then MESON_TAC ths else NO_TAC) in
     let implied others c =
       others <> [] &&
       can (fun () -> prove(mk_imp(list_mk_conj others,c),
@@ -606,7 +650,7 @@ let derive_induction (c:term) (clauses:(term list * term list) list)
   let tc_info th =
     let th = apart th in
     let vs,bod = strip_forall(concl th) in
-    let ctx,rc = if is_imp bod then dest_imp bod else `T`,bod in
+    let ctx,rc = if is_imp bod then dest_imp bod else cake_true_tm,bod in
     let ra,pt = dest_comb rc in
     let a = rand ra in
     let aargs = untuple n a in
@@ -618,7 +662,7 @@ let derive_induction (c:term) (clauses:(term list * term list) list)
     let _,ren,_ = term_match [] pt (mk_tuple_term (el i pats)) in
     let ctx1 = vsubst ren ctx in
     let aargs1 = map (vsubst ren) aargs in
-    if ctx = `T` then i,ctx1,aargs1,th else
+    if ctx = cake_true_tm then i,ctx1,aargs1,th else
     (* th specialised to the clause's names *)
     let th1 = SPECL (map (fun v -> try rev_assoc v ren with Failure _ -> v) vs) th in
     (* eliminate equations y = t of variables that are not pattern variables *)
@@ -642,7 +686,7 @@ let derive_induction (c:term) (clauses:(term list * term list) list)
   let infos = map tc_info tcs in
   let ih_of (i,ctx,aargs,_) =
     let pv = itlist (union o frees) (el i pats) [] in
-    let body = if ctx = `T` then list_mk_comb(p,aargs)
+    let body = if ctx = cake_true_tm then list_mk_comb(p,aargs)
                else mk_imp(ctx,list_mk_comb(p,aargs)) in
     let evs = subtract (frees body) (p :: pv) in
     let evs' = unprime_vars (pv @ (subtract (frees body) evs)) evs in
@@ -668,7 +712,7 @@ let derive_induction (c:term) (clauses:(term list * term list) list)
       | ((_,ctx,_,th) as inf)::t ->
           let ih = ih_of inf in
           if exists (fun (ih',_,_) -> aconv ih ih') acc then dedup acc t
-          else dedup ((ih,th,ctx = `T`)::acc) t in
+          else dedup ((ih,th,ctx = cake_true_tm)::acc) t in
     dedup [] mine in
   let ihss = map clause_ihs (0--(length clauses - 1)) in
   let cases = map2 (fun (vs,ps) ihs ->
@@ -755,7 +799,7 @@ let measure_candidates ty =
   let n = length cs in
   let t = mk_var("t_ms",ty) in
   let sels = if n = 1 then [t] else tuple_selectors n t in
-  let zero s = (try snd(dest_abs s) = `0` with Failure _ -> false) in
+  let zero s = (try snd(dest_abs s) = cake_zero_tm with Failure _ -> false) in
   let one k =
     let s = size_of_type [] (el k cs) in
     if zero s then failwith "" else
@@ -874,6 +918,136 @@ let complete_all_clauses tm =
                 false) groups in
   if exists snd res then list_mk_conj (flat (map fst res)) else tm;;
 
+(* ------------------------------------------------------------------------- *)
+(* Non-recursive clauses by a case tree, as HOL4's TFL does: the clauses of  *)
+(* f are compiled into one case tree on fresh argument variables (first      *)
+(* match wins, ARB where no clause matches), each clause is proved from the  *)
+(* equation f x1 .. xn = tree by rewriting with the case equations, and only *)
+(* then f is defined by that equation.  The result is the theorem of the     *)
+(* recursion package's route (the clauses as given), without its well-       *)
+(* definedness condition for every pair of clauses over the variables of all *)
+(* of them.  Fails (before anything is defined) if a clause is not proved,   *)
+(* for example with literal patterns; cake_def then takes the other route.   *)
+(* ------------------------------------------------------------------------- *)
+
+let cake_tfl_nonrec = ref true;;
+
+let cake_tfl_tree (avoid:term list ref) (f:term)
+                  (cls:(term list * term * term list * term) list) =
+  let n = match cls with (_,_,args,_)::_ -> length args
+                       | [] -> failwith "cake_tfl_tree" in
+  let tys,r = splitlist dest_fun_ty (type_of f) in
+  let atys,btys = chop_list n tys in
+  let rty = itlist mk_fun_ty btys r in
+  let xs = map2 (fun ty j ->
+      let base = match cls with
+          (_,_,args,_)::_ when is_var (el j args) -> fst(dest_var (el j args))
+        | _ -> "x"^string_of_int (j + 1) in
+      pm_fresh avoid (mk_var(base,ty))) atys (0--(n-1)) in
+  let counter = ref 0 in
+  let rows = map (fun (_,_,args,r) ->
+      let pvs = filter (fun v -> not (is_wildcard v)) (freesl args) in
+      let ren = map (fun v -> incr counter;
+                       mk_var(fst(dest_var v)^"%pm"^string_of_int !counter,
+                              type_of v),v) pvs in
+      {pm_pats = map (vsubst ren) args; pm_guard = None;
+       pm_rhs = vsubst ren r}) cls in
+  let avoid0 = !avoid @ flat (map (fun r -> freesl r.pm_pats) rows) in
+  xs,compile_rows avoid0 xs rows (mk_const("ARB",[rty,aty]));;
+
+let cake_tfl_define (f:term) (tm0:term) cls0 : thm =
+  let name = fst(dest_var f) in
+  let xs,body = cake_tfl_tree (ref (frees tm0)) f cls0 in
+  let deq = mk_eq(list_mk_comb(f,xs),body) in
+  let dtm = list_mk_forall(xs,deq) in
+  let imps = map (fun cl ->
+      prove(mk_imp(dtm,cl),
+            DISCH_THEN(fun dth -> REPEAT GEN_TAC THEN
+                         GEN_REWRITE_TAC LAND_CONV [dth] THEN
+                         CASE_REWRITE_TAC[] THEN TRY REFL_TAC THEN NO_TAC)))
+    (conjuncts tm0) in
+  let def = new_definition deq in
+  let c = mk_const(name,[]) in
+  let c = inst (type_match (type_of c) (type_of f) []) c in
+  (* new_definition may quantify the arguments in another order *)
+  let def' = GENL xs (SPEC_ALL def) in
+  end_itlist CONJ (map (fun th -> MP (INST [c,f] th) def') imps);;
+
+(* ------------------------------------------------------------------------- *)
+(* A recursive definition without a relation (cake_def): HOL Light's        *)
+(* automatic termination proof first, then the induction theorem from the   *)
+(* first size measure (measure_candidates) whose termination conditions     *)
+(* TERM_TAC proves (with the strict forms) and for which derive_induction   *)
+(* succeeds; if the automatic proof fails, cake_def defines the function    *)
+(* with the first measure whose conditions TERM_TAC proves.  The measures   *)
+(* are tried first here and the automatic proof (often seconds, and         *)
+(* useless when a measure works) only when it decides the result: same     *)
+(* definitions and induction theorems.  eth_p is the existence theorem of    *)
+(* the recursion package with its WF hypothesis.                             *)
+(* ------------------------------------------------------------------------- *)
+
+let cake_candidates_first = ref true;;
+
+let cake_def_auto name (f:term) (cth:thm) (etm:term) cls0 (eth_p:thm) : thm =
+  let define_from eth =
+    if not (aconv (concl eth) etm) then
+      failwith "cake_def: the existence theorem is not about the clauses" else
+    new_specification [name] (EQ_MP (SYM (MK_EXISTS f cth)) eth) in
+  let the_const () = let c = mk_const(name,[]) in
+                     inst (type_match (type_of c) (type_of f) []) c in
+  let clauses = map (fun (vs,_,args,_) -> vs,args) cls0 in
+  let finish def = CONV_RULE (DEPTH_CONV ETA_MARKED_CONV) def in
+  let h = find is_wf_hyp (hyp eth_p) in
+  let ty = fst(dest_fun_ty(type_of(fst(dest_exists h)))) in
+  let cands = try measure_candidates ty with Failure _ -> [] in
+  let saved = !cake_quiet in
+  let attempt r =
+    try cake_quiet := true;
+        let res = discharge_hyps name (Some(r,TERM_TAC)) eth_p in
+        cake_quiet := saved; Some res
+    with Failure _ -> (cake_quiet := saved; None) in
+  let rec first l = match l with
+      [] -> None
+    | r::rest -> (match attempt r with Some res -> Some(res,rest)
+                                     | None -> first rest) in
+  (* after the automatic proof: the first measure with an induction theorem *)
+  let rec a_loop l = match l with
+      [] -> ()
+    | r::rest ->
+        let ok = match attempt r with
+            Some(_,Some(wfth,tcs)) ->
+              (try let ind = derive_induction (the_const()) clauses tcs wfth in
+                   cake_ind_store := (name,ind) :: !cake_ind_store; true
+               with Failure _ -> false)
+          | _ -> false in
+        if ok then () else a_loop rest in
+  match first cands with
+    Some((eth1,info1),rest) ->
+      let def = define_from eth1 in
+      let auto_ok () = can cake_guess_wf_hyp eth_p in
+      (match info1 with
+         Some(wfth,tc_thms) ->
+           let c = the_const() in
+           cake_ind_debug := Some(c,clauses,tc_thms,wfth);
+           let msg = ref "" in
+           (match (try Some(derive_induction c clauses tc_thms wfth)
+                   with Failure m -> (msg := m; None)) with
+              Some ind -> cake_ind_store := (name,ind) :: !cake_ind_store
+            | None ->
+                if auto_ok () then a_loop rest else
+                Format.print_string("Warning: cake_def "^name^
+                                    ": no induction theorem ("^ !msg ^")\n"))
+       | None ->
+           if auto_ok () then a_loop rest else
+           Format.print_string("Warning: cake_def "^name^": no induction theorem "^
+             "(the strict form R a p of a tail-call termination condition was not "^
+             "proved by the tactic)\n"));
+      finish def
+  | None ->
+      let eth0 = try cake_guess_wf_hyp eth_p with Failure _ -> eth_p in
+      let eth,_ = discharge_hyps name None eth0 in
+      finish (define_from eth);;
+
 let cake_def_gen (rel_tac : (term * tactic) option) (tm:term) : thm =
   let tm = rename_wildcards (cases_of_matches tm) in
   let tm = complete_all_clauses tm in
@@ -899,9 +1073,23 @@ let cake_def_gen (rel_tac : (term * tactic) option) (tm:term) : thm =
     let vs = frees_in_order (lhs(snd(strip_forall(concl th)))) in
     GENL vs (SPEC_ALL th)
   else
+  match (if recursive || not !cake_tfl_nonrec then None
+         else try Some(cake_tfl_define f tm0 cls0)
+              with Failure _ | Not_found | Invalid_argument _ -> None) with
+    Some th -> th
+  | None ->
   let cth = if !cake_case_to_match then CASE_TO_MATCH_CONV tm0 else REFL tm0 in
   let tm_m = rand(concl cth) in
   let etm = mk_exists(f,tm_m) in
+  let auto_eth = if rel_tac = None && recursive && !cake_candidates_first
+                 then try Some(pure_prove_recursive_function_exists etm)
+                      with Failure _ -> None
+                 else None in
+  match (match auto_eth with
+           Some eth_p when exists is_wf_hyp (hyp eth_p) -> Some eth_p
+         | _ -> None) with
+    Some eth_p -> cake_def_auto name f cth etm cls0 eth_p
+  | None ->
   let eth0 = if rel_tac = None then prove_general_recursive_function_exists etm
              else pure_prove_recursive_function_exists etm in
   let eth,wfinfo = discharge_hyps name rel_tac eth0 in
@@ -1075,7 +1263,13 @@ let cake_def_mutual (rel_tac : (term * tactic) option) (tm:term) : thm =
     let r' = mk_sum_inj restys i (beta_new (vsubst substs r)) in
     list_mk_forall(vs,mk_eq(lhs_,r')) in
   let ftm = list_mk_conj(map fclause cls) in
-  let fdef = cake_def_gen rel_tac ftm in
+  (* the encoded function takes cake_def_gen's own route: cake_def's        *)
+  (* fallback for mutual recursion has measures of its own                   *)
+  let fdef = let saved = !cake_candidates_first in
+             cake_candidates_first := false;
+             try let th = cake_def_gen rel_tac ftm in
+                 cake_candidates_first := saved; th
+             with e -> (cake_candidates_first := saved; raise e) in
   let fconst = mk_const(fname,[]) in
   let fconst = inst (type_match (type_of fconst) (type_of ff) []) fconst in
   (* the definitions of the f_i *)
@@ -1160,7 +1354,7 @@ cake_def_mutual_ref := cake_def_mutual;;
 (* each function                                                            *)
 
 let sum_measure_candidates (tys:hol_type list) =
-  let num = `:num` in
+  let num = cake_num_ty in
   let whole ty = size_of_type [] ty in
   let first ty = match dest_type ty with
       "prod",[a;b] -> let t = mk_var("t_ms",ty) in

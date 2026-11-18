@@ -31,3 +31,11 @@ let parse_term s =
   let ptm,l = (parse_preterm o flat o map cake_wild_tokens o lex o explode) s in
   if l = [] then (term_of_preterm o (retypecheck [])) ptm
   else failwith "Unparsed input following term";;
+
+(* T and F, the commonest quotations in tactic code that runs once per       *)
+(* subterm or per assumption, like concl th = F: made once (a parse costs   *)
+(* milliseconds in a session with thousands of constants)                   *)
+
+let parse_term =
+  let t_tm = parse_term "T" and f_tm = parse_term "F" in
+  fun s -> if s = "T" then t_tm else if s = "F" then f_tm else parse_term s;;

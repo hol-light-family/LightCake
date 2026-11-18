@@ -16,11 +16,99 @@
 (* theorems, and whatever cake_add_simps registers.                         *)
 (* ========================================================================= *)
 
+(* HOL4's default simpsets have no SATISFY_ss: drop the satisfy_prover of HOL Light's basic_ss *)
+let cake_basic_ss thl = let Simpset(n,p,_,r) = basic_ss thl in Simpset(n,p,[],r);;
+
 let K_DEF = new_definition `K = \(x:A) (y:B). x`;;
 
 let K_THM = prove
  (`!(x:A) (y:B). K x y = x`,
   REWRITE_TAC[K_DEF]);;
+
+(* ------------------------------------------------------------------------- *)
+(* Rewrite nets made once per theorem list.  A tactic that rewrites each      *)
+(* assumption or each goal of a case split with the same long list of         *)
+(* theorems (record accessor theorems, case equations, definitions) would     *)
+(* canonicalize the list and build its net again at every call.  HOL Light's   *)
+(* rewriting functions are redefined here with a small memo: the net of a     *)
+(* list is reused for the same flag, base net and theorems (physical          *)
+(* equality), so the nets and hence the results are the same; only nets that  *)
+(* took some time to build are kept (the last cake_memo_keep of them).        *)
+(* ------------------------------------------------------------------------- *)
+
+let cake_memo_keep = 16 and cake_memo_min_time = 0.002;;
+
+let cake_same_thms l1 l2 =
+  let rec go a b =
+    match a,b with
+      [],[] -> true
+    | x::a',y::b' -> x == y && go a' b'
+    | _ -> false in
+  go l1 l2;;
+
+(* look up a memo (most recent first; a hit moves to the front), or make the *)
+(* value and keep it if that took at least cake_memo_min_time               *)
+let cake_memo (memo:('a * 'b) list ref) (key:'a -> bool) (k:'a) (make:unit -> 'b) =
+  let rec split acc l =
+    match l with
+      [] -> None
+    | (k',v as e)::t -> if key k' then Some(v, e :: List.rev_append acc t)
+                        else split (e::acc) t in
+  match split [] !memo with
+    Some(v,l) -> memo := l; v
+  | None ->
+      let t0 = Sys.time() in
+      let v = make() in
+      (if Sys.time() -. t0 >= cake_memo_min_time then
+         memo := (k,v) :: (if length !memo >= cake_memo_keep then butlast !memo
+                           else !memo));
+      v;;
+
+let cake_rw_net_memo = ref ([] : ((bool * gconv net * thm list) * gconv net) list);;
+
+let GENERAL_REWRITE_CONV rep (cnvl:conv->conv) (builtin_net:gconv net) thl =
+  let final_net =
+    cake_memo cake_rw_net_memo
+      (fun (r,b,l) -> r = rep && b == builtin_net && cake_same_thms l thl)
+      (rep,builtin_net,thl)
+      (fun () -> let thl_canon = itlist (mk_rewrites false) thl [] in
+                 itlist (net_of_thm rep) thl_canon builtin_net) in
+  cnvl (REWRITES_CONV final_net);;
+
+(* HOL Light's front ends, unchanged, so that they use the memo *)
+
+let GEN_REWRITE_CONV (cnvl:conv->conv) thl =
+  GENERAL_REWRITE_CONV false cnvl empty_net thl;;
+let PURE_REWRITE_CONV thl =
+  GENERAL_REWRITE_CONV true TOP_DEPTH_CONV empty_net thl;;
+let REWRITE_CONV thl =
+  GENERAL_REWRITE_CONV true TOP_DEPTH_CONV (basic_net()) thl;;
+let PURE_ONCE_REWRITE_CONV thl =
+  GENERAL_REWRITE_CONV false ONCE_DEPTH_CONV empty_net thl;;
+let ONCE_REWRITE_CONV thl =
+  GENERAL_REWRITE_CONV false ONCE_DEPTH_CONV (basic_net()) thl;;
+let GEN_REWRITE_RULE cnvl thl = CONV_RULE(GEN_REWRITE_CONV cnvl thl);;
+let PURE_REWRITE_RULE thl = CONV_RULE(PURE_REWRITE_CONV thl);;
+let REWRITE_RULE thl = CONV_RULE(REWRITE_CONV thl);;
+let PURE_ONCE_REWRITE_RULE thl = CONV_RULE(PURE_ONCE_REWRITE_CONV thl);;
+let ONCE_REWRITE_RULE thl = CONV_RULE(ONCE_REWRITE_CONV thl);;
+let PURE_ASM_REWRITE_RULE thl th =
+    PURE_REWRITE_RULE ((map ASSUME (hyp th)) @ thl) th;;
+let ASM_REWRITE_RULE thl th =
+    REWRITE_RULE ((map ASSUME (hyp th)) @ thl) th;;
+let PURE_ONCE_ASM_REWRITE_RULE thl th =
+    PURE_ONCE_REWRITE_RULE ((map ASSUME (hyp th)) @ thl) th;;
+let ONCE_ASM_REWRITE_RULE thl th =
+    ONCE_REWRITE_RULE ((map ASSUME (hyp th)) @ thl) th;;
+let GEN_REWRITE_TAC cnvl thl = CONV_TAC(GEN_REWRITE_CONV cnvl thl);;
+let PURE_REWRITE_TAC thl = CONV_TAC(PURE_REWRITE_CONV thl);;
+let REWRITE_TAC thl = CONV_TAC(REWRITE_CONV thl);;
+let PURE_ONCE_REWRITE_TAC thl = CONV_TAC(PURE_ONCE_REWRITE_CONV thl);;
+let ONCE_REWRITE_TAC thl = CONV_TAC(ONCE_REWRITE_CONV thl);;
+let (PURE_ASM_REWRITE_TAC: thm list -> tactic) = ASM PURE_REWRITE_TAC;;
+let (ASM_REWRITE_TAC: thm list -> tactic) = ASM REWRITE_TAC;;
+let (PURE_ONCE_ASM_REWRITE_TAC: thm list -> tactic) = ASM PURE_ONCE_REWRITE_TAC;;
+let (ONCE_ASM_REWRITE_TAC: thm list -> tactic) = ASM ONCE_REWRITE_TAC;;
 
 (* a few arithmetic rewrites in the spirit of HOL4's ARITH_RWTS_ss *)
 
@@ -75,11 +163,11 @@ let cake_base_ss () =
   (* conversions in a simpset must fail (not return x = x) when they do not *)
   (* apply, or the simplifier loops: hence CHANGED_CONV                     *)
   let ss0 = itlist (fun k ss -> ss_of_conv k (CHANGED_CONV NUM_RED_CONV) ss)
-                   numconvs (basic_ss []) in
+                   numconvs (cake_basic_ss []) in
   let ss0 = ss_of_conv `?x:A. P x` (CHANGED_CONV UNWIND_CONV) ss0 in
   ss_of_conv `!x:A. P x` (CHANGED_CONV FORALL_UNWIND_CONV) ss0;;
 
-let cake_global_ss = ref (basic_ss []);;
+let cake_global_ss = ref (cake_basic_ss []);;
 
 (* files being loaded (innermost first), their needs, their registrations *)
 
@@ -88,8 +176,14 @@ let cake_file_deps = ref ([] : (string * string list) list);;
 let cake_simp_buckets = ref ([] : (string * thm list) list);;
 let cake_context = ref (None : string option);;   (* set by cake_begin *)
 
-(* simpsets per context ("*" = everything), built lazily *)
-let cake_ss_cache = ref ([] : (string * simpset) list);;
+(* simpsets per context ("*" = everything), built lazily, each with the    *)
+(* registrations made since it was last used (newest first): a cached     *)
+(* simpset is brought up to date only when it is used again, so a          *)
+(* registration costs no ss_of_thms per cached simpset (each cached simpset *)
+(* of a session with all the semantics got the theorems of every new type); *)
+(* the additions are made in the same order as before, so the simpset is   *)
+(* the same                                                                  *)
+let cake_ss_cache = ref ([] : (string * simpset * thm list list) list);;
 
 let read_needs_lines file =
   try
@@ -118,31 +212,39 @@ let cake_context_key () =
   | [] -> (match !cake_context with Some f -> f | None -> "*");;
 
 let cake_ss_for key =
-  try assoc key (!cake_ss_cache) with Failure _ ->
+  match filter (fun (k,_,_) -> k = key) (!cake_ss_cache) with
+    (_,ss,[])::_ -> ss
+  | (_,ss,pend)::_ ->
+      let ss' = itlist ss_of_thms pend ss in
+      cake_ss_cache := map (fun (k,_,_ as e) -> if k = key then (k,ss',[]) else e)
+                           (!cake_ss_cache);
+      ss'
+  | [] ->
   let thms =
     if key = "*" then flat (map snd (!cake_simp_buckets))
     else
       let cl = cake_file_closure key [] in
       flat (mapfilter (fun f -> assoc f (!cake_simp_buckets)) cl) in
   let ss = ss_of_thms thms (!cake_global_ss) in
-  cake_ss_cache := (key,ss) :: !cake_ss_cache; ss;;
+  cake_ss_cache := (key,ss,[]) :: !cake_ss_cache; ss;;
 
 (* the simpset of the current context *)
 let cake_active_ss () = cake_ss_for (cake_context_key());;
 
 (* kept for compatibility: the current simpset as a reference *)
-let cake_ss = ref (basic_ss []);;
+let cake_ss = ref (cake_basic_ss []);;
 
 let cake_rebuild_ss () =
   cake_global_ss := ss_of_thms (!cake_simp_thms) (cake_base_ss());
   cake_ss_cache := [];;
 
-(* global registration (datatypes, records): every cached simpset grows *)
+(* global registration (datatypes, records): every cached simpset grows    *)
+(* (when it is next used)                                                   *)
 
 let cake_add_global_simps thl =
   cake_simp_thms := thl @ !cake_simp_thms;
   cake_global_ss := ss_of_thms thl (!cake_global_ss);
-  cake_ss_cache := map (fun (k,ss) -> k,ss_of_thms thl ss) (!cake_ss_cache);;
+  cake_ss_cache := map (fun (k,ss,p) -> k,ss,thl::p) (!cake_ss_cache);;
 
 (* registration by a file (HOL4 [simp]) *)
 
@@ -154,11 +256,11 @@ let cake_add_simps thl =
                        filter (fun (g,_) -> g <> f) (!cake_simp_buckets);
   (* the caches that see f: f itself, "*", and anything being loaded *)
   cake_ss_cache :=
-    mapfilter (fun (k,ss) ->
-                 if k = f || k = "*" then (k,ss_of_thms thl ss)
+    mapfilter (fun (k,ss,p) ->
+                 if k = f || k = "*" then (k,ss,thl::p)
                  else if mem k (!cake_loading) then failwith ""
                  else if mem f (cake_file_closure k []) then failwith ""
-                 else (k,ss)) (!cake_ss_cache);;
+                 else (k,ss,p)) (!cake_ss_cache);;
 
 (* remove registered rewrites (by conclusion), everywhere *)
 let cake_del_simps thl =
@@ -176,7 +278,7 @@ let cake_begin file =
   cake_file_deps := (f,read_needs_lines f) ::
                     filter (fun (g,_) -> g <> f) (!cake_file_deps);
   cake_context := Some f;
-  cake_ss_cache := filter (fun (k,_) -> k <> f) (!cake_ss_cache);;
+  cake_ss_cache := filter (fun (k,_,_) -> k <> f) (!cake_ss_cache);;
 
 let cake_end () = cake_context := None;;
 
@@ -214,7 +316,23 @@ let cake_type s =
 (* Conversions and rules.                                                    *)
 (* ------------------------------------------------------------------------- *)
 
-let CAKE_SIMP_CONV thl tm = SIMPLIFY_CONV (cake_active_ss()) thl tm;;
+(* the project simpset augmented with thl: SIMPLIFY_CONV (CAKE_AUGMENTED_SS *)
+(* thl) l is SIMPLIFY_CONV (cake_active_ss()) (l @ thl) (AUGMENT_SIMPSET    *)
+(* works from the right of the list).  Made when the tactic runs, once per  *)
+(* call of a tactic that simplifies many assumptions, and kept in a memo    *)
+(* like the rewrite nets above (same simpset, same theorems)                *)
+
+let cake_ss_memo = ref ([] : ((simpset * thm list) * simpset) list);;
+
+let CAKE_AUGMENTED_SS thl =
+  let ss = cake_active_ss() in
+  cake_memo cake_ss_memo (fun (s,l) -> s == ss && cake_same_thms l thl) (ss,thl)
+    (fun () -> itlist AUGMENT_SIMPSET thl ss);;
+
+(* simplify the goal with the assumptions and an augmented simpset *)
+let SIMP_SS ss : tactic = ASM (fun l -> CONV_TAC (SIMPLIFY_CONV ss l)) [];;
+
+let CAKE_SIMP_CONV thl tm = SIMPLIFY_CONV (CAKE_AUGMENTED_SS thl) [] tm;;
 
 let CAKE_SIMP_RULE thl = CONV_RULE (CAKE_SIMP_CONV thl);;
 
@@ -222,13 +340,18 @@ let CAKE_SIMP_RULE thl = CONV_RULE (CAKE_SIMP_CONV thl);;
 
 let SIMP_NOASM thl = CONV_TAC (CAKE_SIMP_CONV thl);;
 
-let SIMP thl = ASM (fun l -> CONV_TAC (CAKE_SIMP_CONV l)) thl;;
+let SIMP thl : tactic = fun gl -> SIMP_SS (CAKE_AUGMENTED_SS thl) gl;;
 
 (* ------------------------------------------------------------------------- *)
 (* Putting a simplified assumption back: closes the goal if it is F (or the *)
 (* goal itself), drops it if it is T, else strips it in (conjunctions,      *)
 (* disjunctions = case splits, existentials).                               *)
 (* ------------------------------------------------------------------------- *)
+
+(* T and F, parsed once: a quotation in a function body is parsed at each  *)
+(* call, which costs milliseconds in a session with thousands of constants *)
+
+let cake_true_tm = `T` and cake_false_tm = `F`;;
 
 (* stripping that never fails on name clashes: every existential gets a     *)
 (* name that is fresh for the whole goal and the theorem (HOL Light's        *)
@@ -238,8 +361,8 @@ let SIMP thl = ASM (fun l -> CONV_TAC (CAKE_SIMP_CONV l)) thl;;
 let rec CAKE_STRIP_ASSUME_AV (av:term list) th : tactic =
   fun (asl,w as gl) ->
     let c = concl th in
-    if c = `T` then ALL_TAC gl
-    else if c = `F` then CONTR_TAC th gl
+    if c = cake_true_tm then ALL_TAC gl
+    else if c = cake_false_tm then CONTR_TAC th gl
     else if is_conj c then
       let c1,c2 = dest_conj c in
       CONJUNCTS_THEN2 (CAKE_STRIP_ASSUME_AV (union av (frees c2)))
@@ -259,14 +382,14 @@ let CAKE_STRIP_ASSUME_TAC th = CAKE_STRIP_ASSUME_AV [] th;;
 
 let CAKE_ASSUME_TAC th =
   let c = concl th in
-  if c = `T` then ALL_TAC
-  else if c = `F` then CONTR_TAC th
+  if c = cake_true_tm then ALL_TAC
+  else if c = cake_false_tm then CONTR_TAC th
   else CAKE_STRIP_ASSUME_TAC th;;
 
 let CAKE_ASSUME_NOSTRIP_TAC th =
   let c = concl th in
-  if c = `T` then ALL_TAC
-  else if c = `F` then CONTR_TAC th
+  if c = cake_true_tm then ALL_TAC
+  else if c = cake_false_tm then CONTR_TAC th
   else ASSUME_TAC th;;
 
 (* ------------------------------------------------------------------------- *)
@@ -274,12 +397,14 @@ let CAKE_ASSUME_NOSTRIP_TAC th =
 (* ------------------------------------------------------------------------- *)
 
 let FS thl : tactic =
-  POP_ASSUM_LIST (fun asms ->
-    let simped =
-      rev_itlist (fun th acc -> CAKE_SIMP_RULE (acc @ thl) th :: acc)
-                 (rev asms) [] in
-    MAP_EVERY CAKE_ASSUME_TAC (rev simped)) THEN
-  SIMP thl;;
+  fun gl ->
+   let ss = CAKE_AUGMENTED_SS thl in
+   (POP_ASSUM_LIST (fun asms ->
+      let simped =
+        rev_itlist (fun th acc -> CONV_RULE (SIMPLIFY_CONV ss acc) th :: acc)
+                   (rev asms) [] in
+      MAP_EVERY CAKE_ASSUME_TAC (rev simped)) THEN
+    SIMP thl) gl;;
 
 (* ------------------------------------------------------------------------- *)
 (* Variable elimination.  An assumption v = t or t = v with v a variable not *)
@@ -291,13 +416,22 @@ let is_eliminable tm =
   let l,r = dest_eq tm in
   (is_var l && not (free_in l r)) || (is_var r && not (free_in r l));;
 
+(* SUBST_ALL_TAC rth, but SUBS only the assumptions in which the left side  *)
+(* of rth occurs free: SUBS leaves the others as they are anyway (and costs  *)
+(* a substitution and two beta reductions per assumption)                   *)
+let CAKE_SUBST_ALL_TAC rth : tactic =
+  fun gl ->
+    let l = lhand(concl rth) in
+    (SUBST1_TAC rth THEN
+     RULE_ASSUM_TAC (fun th -> if free_in l (concl th) then SUBS [rth] th else th)) gl;;
+
 let VSUBST_ASM_TAC th =
   let l,r = dest_eq(concl th) in
   let th' = if is_var l && not (free_in l r) then th else SYM th in
   (* th' : v = t; replace v by t *)
   let v = lhs(concl th') in
   if not (is_var v) then failwith "VSUBST_ASM_TAC" else
-  SUBST_ALL_TAC th' THEN
+  CAKE_SUBST_ALL_TAC th' THEN
   (* drop the trivial assumption t = t that remains *)
   REPEAT (FIRST_X_ASSUM (fun a -> if is_eq(concl a) &&
                                      lhs(concl a) = rhs(concl a)
@@ -325,19 +459,29 @@ let POP_LAST_ASSUM (ttac:thm_tactic) : tactic =
       [] -> failwith "POP_LAST_ASSUM"
     | (_,th)::rest -> ttac th (rev rest,w);;
 
-let GVS_STEP thl : tactic =
+(* the steps with the simpset already augmented with thl *)
+
+let GVS_STEP_SS ss : tactic =
   POP_LAST_ASSUM (fun th ->
     ASSUM_LIST (fun asms ->
-      let th' = CAKE_SIMP_RULE (asms @ thl) th in
+      let th' = CONV_RULE (SIMPLIFY_CONV ss asms) th in
       if is_eliminable (concl th') then VSUBST_ASM_TAC th'
       else CAKE_ASSUME_TAC th'));;
 
+let GVS_ONE_PASS_SS ss : tactic =
+  fun (asl,w as gl) -> EVERY (replicate (GVS_STEP_SS ss) (length asl)) gl;;
+
+let GVS_STEP thl : tactic =
+  fun gl -> GVS_STEP_SS (CAKE_AUGMENTED_SS thl) gl;;
+
 let GVS_ONE_PASS thl : tactic =
-  fun (asl,w as gl) -> EVERY (replicate (GVS_STEP thl) (length asl)) gl;;
+  fun gl -> GVS_ONE_PASS_SS (CAKE_AUGMENTED_SS thl) gl;;
 
 let GVS thl : tactic =
-  REPEAT (CHANGED_TAC (GVS_ONE_PASS thl)) THEN SIMP thl THEN
-  RVEQ_TAC;;
+  fun gl ->
+   let ss = CAKE_AUGMENTED_SS thl in
+   (REPEAT (CHANGED_TAC (GVS_ONE_PASS_SS ss)) THEN SIMP thl THEN
+    RVEQ_TAC) gl;;
 
 (* ------------------------------------------------------------------------- *)
 (* RW: HOL4 rw[thl] (srw_tac): strip the goal, eliminate var equations,      *)
@@ -349,21 +493,23 @@ let BOSS_STRIP_TAC : tactic =
   GEN_TAC ORELSE CONJ_TAC ORELSE DISCH_THEN CAKE_ASSUME_TAC;;
 
 let rw_breakable tm =
-  is_exists tm || is_conj tm || is_disj tm || tm = `T` || tm = `F` ||
+  is_exists tm || is_conj tm || is_disj tm || tm = cake_true_tm || tm = cake_false_tm ||
   (is_neg tm && is_neg(rand tm)) ||
   can (find_term (fun t -> is_eq t && is_constructor_app (lhs t) &&
                            is_constructor_app (rhs t))) tm;;
 
 let RW thl : tactic =
-  REPEAT (GEN_TAC ORELSE CONJ_TAC) THEN
-  RVEQ_TAC THEN
-  SIMP thl THEN
-  TRY (COND_CASES_TAC THEN REPEAT COND_CASES_TAC THEN SIMP thl) THEN
-  REPEAT BOSS_STRIP_TAC THEN
-  REPEAT (CHANGED_TAC
-    (VAR_EQ_TAC ORELSE
-     FIRST_X_ASSUM (fun th ->
-       if rw_breakable (concl th) then
-         CAKE_ASSUME_TAC (CAKE_SIMP_RULE thl th)
-       else failwith "RW") ORELSE
-     SIMP thl));;
+  fun gl ->
+   let ss = CAKE_AUGMENTED_SS thl in
+   (REPEAT (GEN_TAC ORELSE CONJ_TAC) THEN
+    RVEQ_TAC THEN
+    SIMP_SS ss THEN
+    TRY (COND_CASES_TAC THEN REPEAT COND_CASES_TAC THEN SIMP_SS ss) THEN
+    REPEAT BOSS_STRIP_TAC THEN
+    REPEAT (CHANGED_TAC
+      (VAR_EQ_TAC ORELSE
+       FIRST_X_ASSUM (fun th ->
+         if rw_breakable (concl th) then
+           CAKE_ASSUME_TAC (CONV_RULE (SIMPLIFY_CONV ss []) th)
+         else failwith "RW") ORELSE
+       SIMP_SS ss))) gl;;

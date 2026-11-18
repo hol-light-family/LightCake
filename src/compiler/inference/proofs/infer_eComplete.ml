@@ -2575,7 +2575,8 @@ let INFER1AUX_erc_bind = prove
       (ASSUME `lookup_var x tenvE tenv = SOME (tvs,t)`))) THEN
     DISCH_THEN(CONJUNCTS_THEN2 (X_CHOOSE_TAC `m:num`)
       (X_CHOOSE_THEN `tvs':num` (X_CHOOSE_THEN `t':infer_t` STRIP_ASSUME_TAC))) THEN
-    CONJ_TAC THENL [EXISTS_TAC `m:num` THEN ASM_REWRITE_TAC[]; ALL_TAC] THEN
+    (* since HOL Light 2828953 the ASM_SIMP_TAC above may prove the first conjunct itself *)
+    TRY (CONJ_TAC THENL [EXISTS_TAC `m:num` THEN ASM_REWRITE_TAC[]; ALL_TAC]) THEN
     MAP_EVERY EXISTS_TAC [`tvs':num`; `t':infer_t`] THEN ASM_REWRITE_TAC[] THEN
     MATCH_MP_TAC tscheme_approx_weakening2 THEN
     EXISTS_TAC `s:(num,infer_t)fmap` THEN ASM_REWRITE_TAC[]]);;
