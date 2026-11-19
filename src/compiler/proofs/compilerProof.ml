@@ -388,7 +388,11 @@ let CPPAUX_prim_type_ids_count = prove
  (`prim_type_ids = count start_type_id`,
   REWRITE_TAC([prim_type_ids_def; prim_type_nums_def; start_type_id_def; EXTENSION;
                IN_COUNT; IN_SET_OF_LIST; MEM] @ CPPAUX_TYNUMS) THEN
-  ARITH_TAC);;
+  (* x < 15 expanded into its cases (ARITH_TAC took 50 s on the disjunction) *)
+  GEN_TAC THEN EQ_TAC THENL
+   [STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CONV_TAC NUM_REDUCE_CONV;
+    SPEC_TAC(`x:num`,`x:num`) THEN CONV_TAC EXPAND_CASES_CONV THEN
+    CONV_TAC NUM_REDUCE_CONV]);;
 
 (* HOL4 compile_correct_lemma: EVAL of set_tids_tenv (count start_type_id)  *)
 (* prim_tenv                                                                *)

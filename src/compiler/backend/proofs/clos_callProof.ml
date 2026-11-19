@@ -3916,7 +3916,9 @@ let CLOSCALLPAUX_cc_If = prove
                                DISJOINT_UNION; MEM_APPEND]) THEN
    CLOSCALLPAUX_SPLIT_ASM_TAC THEN
    SUBGOAL_THEN `subg (g':num_set # (num # num # clos_exp) list) g1` ASSUME_TAC THENL
-    [ASM_MESON_TAC[subg_trans]; ALL_TAC] THEN
+    [MATCH_MP_TAC subg_trans THEN
+     EXISTS_TAC `g:num_set # (num # num # clos_exp) list` THEN ASM_REWRITE_TAC[];
+     ALL_TAC] THEN
    SUBGOAL_THEN `set_of_list (code_locs [x1]) DIFF
                  domain (FST (g':num_set # (num # num # clos_exp) list)) SUBSET l1`
      ASSUME_TAC THENL
@@ -3927,7 +3929,9 @@ let CLOSCALLPAUX_cc_If = prove
      ALL_TAC] THEN
    SUBGOAL_THEN `code_includes (SND (g':num_set # (num # num # clos_exp) list))
                    (clos_state_code (t0:(C,FFI)clos_state))` ASSUME_TAC THENL
-    [ASM_MESON_TAC[code_includes_subg]; ALL_TAC] THEN
+    [MATCH_MP_TAC(GEN_ALL(REWRITE_RULE[IMP_IMP] code_includes_subg)) THEN
+     EXISTS_TAC `g:num_set # (num # num # clos_exp) list` THEN ASM_REWRITE_TAC[];
+     ALL_TAC] THEN
    SUBGOAL_THEN `clos_callProof_env_rel (clos_callProof_v_rel g1 l1
                    (clos_state_code (t0:(C,FFI)clos_state))) env env2 0
                    (MAP (\x. (0,x)) [y])` ASSUME_TAC THENL
@@ -3973,9 +3977,13 @@ let CLOSCALLPAUX_cc_If = prove
      ASM_REWRITE_TAC[];
      ALL_TAC] THEN
    SUBGOAL_THEN `subg (g:num_set # (num # num # clos_exp) list) g2` ASSUME_TAC THENL
-    [ASM_MESON_TAC[subg_trans]; ALL_TAC] THEN
+    [MATCH_MP_TAC subg_trans THEN
+     EXISTS_TAC `g1:num_set # (num # num # clos_exp) list` THEN ASM_REWRITE_TAC[];
+     ALL_TAC] THEN
    SUBGOAL_THEN `subg (g'':num_set # (num # num # clos_exp) list) g2` ASSUME_TAC THENL
-    [ASM_MESON_TAC[subg_trans]; ALL_TAC]) THEN
+    [MATCH_MP_TAC subg_trans THEN
+     EXISTS_TAC `g:num_set # (num # num # clos_exp) list` THEN ASM_REWRITE_TAC[];
+     ALL_TAC]) THEN
     (CLOSCALLPAUX_WITH_EVAL_VAL `[x1:clos_exp]` (fun v ->
      ASM_CASES_TAC (mk_eq(`clos_Boolv T`, v)) THENL
       [ALL_TAC; ASM_CASES_TAC (mk_eq(`clos_Boolv F`, v))])) THENL

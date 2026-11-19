@@ -4326,7 +4326,14 @@ let WALLOCPAUX_get_forced_acc = prove
   REWRITE_TAC[APPEND]);;
 
 (* HOL4 line 3337 *)
-let get_forced_in_get_clash_tree = prove
+let get_forced_in_get_clash_tree =
+  (* the cases Seq, MustTerminate and Loop (the others: the THENL list) *)
+  let common_tac =
+    ONCE_REWRITE_TAC[EVERY_get_forced] THEN
+    RULE_ASSUM_TAC(REWRITE_RULE[GSYM ALL_MEM; FORALL_PAIR_THM; pair_CASE]) THEN
+    REWRITE_TAC[GSYM ALL_MEM; FORALL_PAIR_THM; pair_CASE; in_clash_tree_def; ALL; MEM] THEN
+    ASM_MESON_TAC[] in
+  prove
  (CASE_TERM
   `!(prog:(A)wl_prog) lt c.
      ALL (\xy. match xy with
@@ -4336,23 +4343,21 @@ let get_forced_in_get_clash_tree = prove
   MATCH_MP_TAC get_clash_tree_ind THEN REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
   REPEAT DISCH_TAC THEN
   REWRITE_TAC[get_clash_tree_def; get_forced_def; ALL; LET_DEF; LET_END_DEF] THEN
-  CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN REPEAT GEN_TAC THEN
-  TRY(ONCE_REWRITE_TAC[EVERY_get_forced] THEN
-      RULE_ASSUM_TAC(REWRITE_RULE[GSYM ALL_MEM; FORALL_PAIR_THM; pair_CASE]) THEN
-      REWRITE_TAC[GSYM ALL_MEM; FORALL_PAIR_THM; pair_CASE; in_clash_tree_def; ALL;
-                  MEM] THEN
-      ASM_MESON_TAC[] THEN NO_TAC) THENL
+  CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN REPEAT GEN_TAC THENL
    [REWRITE_TAC[GSYM ALL_MEM; FORALL_PAIR_THM; pair_CASE] THEN
     REPEAT GEN_TAC THEN EVERY_CASE_TAC THEN
     ASM_REWRITE_TAC[MEM; APPEND; PAIR_EQ; get_delta_inst_def; in_clash_tree_def;
                     ARITH_EQ] THEN
     MESON_TAC[];
+    common_tac;
     ONCE_REWRITE_TAC[EVERY_get_forced] THEN
     RULE_ASSUM_TAC(REWRITE_RULE[GSYM ALL_MEM; FORALL_PAIR_THM; pair_CASE]) THEN
     REWRITE_TAC[GSYM ALL_MEM; FORALL_PAIR_THM; pair_CASE; in_clash_tree_def; ALL;
                 MEM] THEN
     CASES_ON `ri:(A)reg_imm` THEN CASE_REWRITE_TAC[] THEN
     ASM_REWRITE_TAC[in_clash_tree_def; option_CASE] THEN ASM_MESON_TAC[];
+    common_tac;
+    common_tac;
     REPEAT (POP_ASSUM MP_TAC) THEN
     SPEC_TAC(`h:(num#(A)wl_prog#num#num)option`,`h:(num#(A)wl_prog#num#num)option`) THEN
     SPEC_TAC(`ret:(num list#cutsets#(A)wl_prog#num#num)option`,
@@ -5377,10 +5382,13 @@ let WALLOCPAUX_flat_ShareInst = prove
      flat_exp_conventions (ShareInst op v e)
      ==> (?r. e = wl_Var r) \/ (?r c. e = wl_Op asm_Add [wl_Var r; wl_Const c])`,
   REPEAT GEN_TAC THEN
+  (* split until no variable of these types is left, then MESON (tried after  *)
+  (* each split, it failed at length on the open cases: 19 s)                 *)
   REPEAT((WALLOCPAUX_SPLIT_TY_TAC `:(A)wl_exp` (CONJUNCT1 (cases "wl_exp")) ORELSE
           WALLOCPAUX_SPLIT_TY_TAC `:binop` (cases "binop") ORELSE
           WALLOCPAUX_SPLIT_TY_TAC `:((A)wl_exp)list` list_CASES) THEN
-         REWRITE_TAC[flat_exp_conventions_def] THEN TRY(MESON_TAC[])));;
+         REWRITE_TAC[flat_exp_conventions_def]) THEN
+  MESON_TAC[]);;
 
 (* opening of a case lemma without induction hypotheses *)
 
@@ -7372,7 +7380,16 @@ let fix_inconsistencies_correctR = prove
   X_GEN_TAC `x:num` THEN
   RULE_ASSUM_TAC(REWRITE_RULE[domain_inter; IN_INTER; DE_MORGAN_THM]) THEN
   ASM_CASES_TAC `x IN domain (ssaL:num spt) \/ x IN domain (ssaR:num spt)` THENL
-   [ALL_TAC; ASM_MESON_TAC[lookup_NONE_domain]] THEN
+   [ALL_TAC;
+    (* x is in neither map: MESON from the frame facts alone (ASM_MESON_TAC: 21 s) *)
+    SUBGOAL_THEN `~MEM (x:num) vu` MP_TAC THENL [ASM_REWRITE_TAC[]; ALL_TAC] THEN
+    MAP_EVERY (fun t -> MP_TAC(ASSUME t))
+     [`!x. ~MEM x vu \/ ~(x IN domain (ssaL:num spt)) \/ ~(x IN domain (ssaR:num spt))
+           ==> lookup x (sL:num spt) = lookup x ssaL /\ lookup x (sR:num spt) = lookup x ssaR`;
+      `!x. ~MEM x vu \/ x IN domain (sL:num spt) /\ x IN domain (sR:num spt)
+           ==> lookup x (tL:num spt) = lookup x sL /\ lookup x (tR:num spt) = lookup x sR`;
+      `~(x IN domain (ssaL:num spt) \/ x IN domain (ssaR:num spt))`] THEN
+    MESON_TAC[lookup_NONE_domain]] THEN
   ASM_CASES_TAC `x IN domain (sL:num spt) /\ x IN domain (sR:num spt)` THEN
   ASM_MESON_TAC[]);;
 

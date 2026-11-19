@@ -724,11 +724,10 @@ let CLOSPROPSAUX_RES_TAC : tactic = fun (asl,w as gl) ->
   let curry th = try PURE_REWRITE_RULE[IMP_CONJ] th with Failure _ -> th in
   let rec resolve depth th =
     if depth = 0 || not (is_impth th) then [th] else
-    let rs = mapfilter (fun a -> MATCH_MP th a) asms in
+    let rs = mapfilter (MATCH_MP th) asms in
     if rs = [] then [th] else flat (map (resolve (depth-1)) rs) in
   let results =
-    flat (map (fun th -> let th' = curry th in
-                 flat (map (resolve 4) (mapfilter (fun a -> MATCH_MP th' a) asms)))
+    flat (map (fun th -> flat (map (resolve 4) (mapfilter (MATCH_MP (curry th)) asms)))
               imps) in
   let results = filter (fun th -> not (exists (fun a -> concl a = concl th) asms)) results in
   EVERY (map CAKE_ASSUME_TAC results) gl;;
@@ -4126,13 +4125,14 @@ let CLOSPROPSAUX_RES2_TAC : tactic = fun (asl,w as gl) ->
   let is_impth th = is_imp(snd(strip_forall(concl th))) in
   let imps = filter is_impth asms in
   let curry th = try PURE_REWRITE_RULE[IMP_CONJ] th with Failure _ -> th in
+  (* MATCH_MP th is applied once to th: its preparation of th is then shared *)
+  (* by all the assumptions (it was made for each pair, 90% of the time)       *)
   let rec resolve depth th =
     if depth = 0 || not (is_impth th) then [th] else
-    let rs = mapfilter (fun a -> MATCH_MP th a) asms in
+    let rs = mapfilter (MATCH_MP th) asms in
     if rs = [] then [th] else flat (map (resolve (depth-1)) rs) in
   let results =
-    flat (map (fun th -> let th' = curry th in
-                 flat (map (resolve 4) (mapfilter (fun a -> MATCH_MP th' a) asms)))
+    flat (map (fun th -> flat (map (resolve 4) (mapfilter (MATCH_MP (curry th)) asms)))
               imps) in
   let results = map (REWRITE_RULE CLOSPROPSAUX_eval_simps) results in
   let known th l = forall (fun c -> exists (fun a -> aconv (concl a) c) l)
@@ -4154,6 +4154,9 @@ let CLOSPROPSAUX_ADJ_TAC : tactic =
   CLOSPROPSAUX_RES2_TAC THEN CLOSPROPSAUX_CLEAN_TAC THEN
   CLOSPROPSAUX_RES2_TAC THEN CLOSPROPSAUX_CLEAN_TAC THEN
   ONCE_REWRITE_TAC[clos_evaluate_def] THEN
+  (* plain rewriting closes every case; ASM_SIMP_TAC (slow: 0.5 s a call) is *)
+  (* only a fallback *)
+  REPEAT(CHANGED_TAC(ASM_REWRITE_TAC (CLOSPROPSAUX_adj_simps @ CLOSPROPSAUX_case_defs))) THEN
   REPEAT(CHANGED_TAC(ASM_SIMP_TAC (CLOSPROPSAUX_adj_simps @ CLOSPROPSAUX_case_defs)));;
 
 (* local helper: evaluate on the related state (a function of the state) *)
@@ -4536,7 +4539,8 @@ let CLOSPROPSAUX_COK_TAC : tactic =
   CLOSPROPSAUX_RES2_TAC THEN CLOSPROPSAUX_CLEAN_TAC THEN
   CLOSPROPSAUX_RES2_TAC THEN CLOSPROPSAUX_CLEAN_TAC THEN
   ONCE_REWRITE_TAC[clos_evaluate_def] THEN
-  REPEAT(CHANGED_TAC(ASM_SIMP_TAC (CLOSPROPSAUX_cok_simps @ CLOSPROPSAUX_case_defs))) THEN
+  (* plain rewriting suffices here (ASM_SIMP_TAC took 0.5 s a call) *)
+  REPEAT(CHANGED_TAC(ASM_REWRITE_TAC (CLOSPROPSAUX_cok_simps @ CLOSPROPSAUX_case_defs))) THEN
   TRY(ASM_MESON_TAC[]);;
 
 (* local helper: evaluate with a bigger code (the functional form) *)

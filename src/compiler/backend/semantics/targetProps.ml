@@ -1228,7 +1228,10 @@ let target_evaluate_add_clock = prove
       target_evaluate mc_conf ffi (k + k1) ms = (r,ms1,st1)`
     (fun th -> MESON_TAC[th]) THEN
   INDUCT_TAC THENL
-   [ONCE_REWRITE_TAC[target_evaluate_def] THEN REWRITE_TAC[PAIR_EQ] THEN MESON_TAC[];
+   [(* unfold only the run with clock 0 (it times out) *)
+    REPEAT GEN_TAC THEN
+    GEN_REWRITE_TAC (LAND_CONV o LAND_CONV o LAND_CONV) [target_evaluate_def] THEN
+    REWRITE_TAC[PAIR_EQ] THEN MESON_TAC[];
     ALL_TAC] THEN
   REPEAT GEN_TAC THEN REWRITE_TAC[ADD_CLAUSES] THEN
   ONCE_REWRITE_TAC[target_evaluate_def] THEN

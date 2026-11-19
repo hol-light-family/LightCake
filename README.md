@@ -86,9 +86,9 @@ fresh HOL Light session with no axioms beyond HOL Light's three (`check.ml` show
 
 ## Loading
 
-You need HOL Light; the port uses its core and `Library/words.ml`, `Library/rstc.ml` and
-`Library/iter.ml`. Start HOL Light in the root directory of this repository and load
-everything with
+You need HOL Light from commit `2828953` (10 November 2026) or later; the port uses its core and
+`Library/words.ml`, `Library/rstc.ml` and `Library/iter.ml`. Start HOL Light in the root
+directory of this repository and load everything with
 
     loadt "make.ml";;
 
@@ -99,13 +99,12 @@ or check it with
 which loads `make.ml`, prints the number of axioms (3) and the list of axioms, checks the
 headline theorems (`HEADLINE true`: no hypotheses, conclusions alpha-equivalent to the
 statements of `compile_correct_statement.ml`) and ends with `CHECK_OK`. Everything loads in one
-HOL Light session; `check.ml` was run this way with three versions of HOL Light:
+HOL Light session; `check.ml` was run this way with two versions of HOL Light:
 
 | HOL Light | time of `check.ml` |
 |---|---|
-| commit `9cb19cc` of jargh/hol-light-dev (pull request #215 of jrh13/hol-light: faster definitions and derived rules) | 4.3 hours |
-| commit `6dbb775` of jrh13/hol-light | 6.6 hours |
-| commit `924faf0` of jrh13/hol-light | 10.3 hours |
+| commit `9cb19cc` of jargh/hol-light-dev (pull request #215 of jrh13/hol-light: faster definitions and derived rules) | 1.7 hours |
+| commit `6dbb775` of jrh13/hol-light | 3.3 hours |
 
 After `loadt "src/prelude.ml";;` any single
 file can be loaded on its own with `needs`, for example `needs "semantics/namespace.ml";;`

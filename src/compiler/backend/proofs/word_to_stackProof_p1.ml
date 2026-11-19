@@ -2776,7 +2776,7 @@ let W2SP1AUX_pop_state_rel = prove
      SIMP[s_key_eq_def] THEN CASES_ON `opt:(num#num#num)option` THEN
      REWRITE_TAC[s_frame_key_eq_def];
      ALL_TAC] THEN
-   FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP W2SP1AUX_state_rel_basic o check (fun th -> can (find_term (fun t -> t = `t5:(A,C,FFI)stack_state`)) (concl th))) THEN
+   FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP W2SP1AUX_state_rel_basic o check (fun th -> can (find_term ((=) `t5:(A,C,FFI)stack_state`)) (concl th))) THEN
    SUBGOAL_THEN `f = f' + 1` SUBST_ALL_TAC THENL
     [FIRST_X_ASSUM(MP_TAC o check (is_cond o concl)) THEN COND_CASES_TAC THEN ASM_ARITH_TAC;
      ALL_TAC]) THEN
@@ -2819,7 +2819,8 @@ let W2SP1AUX_pop_state_rel = prove
      REWRITE_TAC[word_to_stackProof_state_rel_def] THEN SIMP_TAC[]; ALL_TAC] THEN
    FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP W2SP1AUX_cut_envs_domain) THEN
    REPEAT CONJ_TAC) THENL
-  [(ASM_MESON_TAC[]);
+  [(* from one assumption, a conjunct of the relation (ASM_MESON_TAC: 3 s) *)
+   (FIRST_ASSUM(fun th -> if is_forall (concl th) then MESON_TAC[th] else NO_TAC));
    (UNDISCH_TAC `DROP (stack_state_stack_space t2) (stack_state_stack (t2:(A,C,FFI)stack_state)) =
                 CONS w rest` THEN
    DISCH_THEN(MP_TAC o AP_TERM `LENGTH:((A)word_loc)list->num`) THEN
@@ -2843,24 +2844,24 @@ let W2SP1AUX_pop_state_rel = prove
    X_GEN_TAC `m:num` THEN X_GEN_TAC `v:(A)word_loc` THEN
    CASES_ON `ALOOKUP (l:(num#(A)word_loc)list) m` THEN SIMP[] THEN STRIP_TAC) THENL
   [(SUBGOAL_THEN `EVEN m /\ k <= m DIV 2` STRIP_ASSUME_TAC THENL
-    [FIRST_X_ASSUM(MATCH_MP_TAC o check (fun th -> can (find_term (fun t -> t = `FST (names:cutsets)`)) (concl th) && is_forall (concl th))) THEN
+    [FIRST_X_ASSUM(MATCH_MP_TAC o check (fun th -> can (find_term ((=) `FST (names:cutsets)`)) (concl th) && is_forall (concl th))) THEN
      UNDISCH_TAC `domain (FST (envs:((A)word_loc)spt#((A)word_loc)spt)) SUBSET domain (FST (names:cutsets))` THEN
      REWRITE_TAC[SUBSET] THEN DISCH_THEN MATCH_MP_TAC THEN
-     REWRITE_TAC[domain_lookup] THEN ASM_MESON_TAC[];
+     REWRITE_TAC[domain_lookup] THEN EXISTS_TAC `v:(A)word_loc` THEN ASM_REWRITE_TAC[];
      ALL_TAC] THEN
-   FIRST_X_ASSUM(MP_TAC o SPECL [`m:num`; `v:(A)word_loc`] o check (fun th -> can (find_term (fun t -> t = `adjust_names`)) (concl th) && is_forall (concl th))) THEN
+   FIRST_X_ASSUM(MP_TAC o SPECL [`m:num`; `v:(A)word_loc`] o check (fun th -> can (find_term ((=) `adjust_names`)) (concl th) && is_forall (concl th))) THEN
    ASM_REWRITE_TAC[ALOOKUP_toAList; adjust_names_def] THEN STRIP_TAC THEN
    ASM_REWRITE_TAC[NOT_LT] THEN
    UNDISCH_TAC `ALOOKUP (index_list (TAKE f' (rest:((A)word_loc)list)) k) (m DIV 2) = SOME v` THEN
    ASM_SIMP_TAC[ALOOKUP_index_list; ARITH_RULE `m < k + f ==> m < f + k`] THEN
    SUBGOAL_THEN `f' - (m DIV 2 - k) = SUC ((f' + k) - (m DIV 2 + 1))` SUBST1_TAC THENL
-    [ASM_ARITH_TAC; ALL_TAC] THEN
+    [MAP_EVERY UNDISCH_TAC [`k <= m DIV 2`; `m DIV 2 < k + f'`] THEN ARITH_TAC; ALL_TAC] THEN
    REWRITE_TAC[oEL_def; NOT_SUC; SUC_SUB1] THEN DISCH_THEN SUBST1_TAC THEN
    ASM_ARITH_TAC);
    (FIRST_X_ASSUM(SUBST_ALL_TAC o check (fun th -> is_eq (concl th) && is_var (lhs (concl th)) && rhs (concl th) = `v:(A)word_loc`)) THEN
-   FIRST_ASSUM(ASSUME_TAC o MATCH_MP ALOOKUP_MEM o check (fun th -> can (find_term (fun t -> t = `ALOOKUP (l:(num#(A)word_loc)list) m`)) (concl th))) THEN
+   FIRST_ASSUM(ASSUME_TAC o MATCH_MP ALOOKUP_MEM o check (fun th -> can (find_term ((=) `ALOOKUP (l:(num#(A)word_loc)list) m`)) (concl th))) THEN
    SUBGOAL_THEN `EVEN m /\ k <= m DIV 2` STRIP_ASSUME_TAC THENL
-    [FIRST_X_ASSUM(MATCH_MP_TAC o check (fun th -> can (find_term (fun t -> t = `SND (names:cutsets)`)) (concl th) && is_forall (concl th))) THEN
+    [FIRST_X_ASSUM(MATCH_MP_TAC o check (fun th -> can (find_term ((=) `SND (names:cutsets)`)) (concl th) && is_forall (concl th))) THEN
      UNDISCH_TAC `domain (SND (envs:((A)word_loc)spt#((A)word_loc)spt)) SUBSET domain (SND (names:cutsets))` THEN
      REWRITE_TAC[SUBSET] THEN DISCH_THEN MATCH_MP_TAC THEN
      MATCH_MP_TAC (INST_TYPE [`:num#C`,`:C`] W2SP1AUX_push_key_mem) THEN
@@ -2868,7 +2869,10 @@ let W2SP1AUX_pop_state_rel = prove
        `toAList (FST (envs:((A)word_loc)spt#((A)word_loc)spt))`; `l:(num#(A)word_loc)list`;
        `NONE:(num#num#num)option`; `ls:((A)stack_frame)list`] THEN
      ASM_REWRITE_TAC[MEM_MAP] THEN CONJ_TAC THENL
-      [ASM_MESON_TAC[]; EXISTS_TAC `(m:num,v:(A)word_loc)` THEN ASM_REWRITE_TAC[]];
+      [UNDISCH_TAC `s_key_eq (wl_state_stack (wl_push_env (envs:((A)word_loc)spt#((A)word_loc)spt)
+           (NONE:(num#(A)wl_prog#num#num)option) (s:(A,num#C,FFI)wl_state)))
+         (wl_state_stack (s2:(A,num#C,FFI)wl_state))` THEN ASM_REWRITE_TAC[];
+       EXISTS_TAC `(m:num,v:(A)word_loc)` THEN ASM_REWRITE_TAC[]];
      ALL_TAC] THEN
    SUBGOAL_THEN `MEM (m DIV 2,v:(A)word_loc) (index_list (TAKE f' (rest:((A)word_loc)list)) k)`
      ASSUME_TAC THENL
@@ -2881,9 +2885,10 @@ let W2SP1AUX_pop_state_rel = prove
    FIRST_ASSUM(MP_TAC o MATCH_MP MEM_index_list_LIM) THEN
    ASM_REWRITE_TAC[NOT_LT] THEN REPEAT DISCH_TAC THEN
    SUBGOAL_THEN `f' - (m DIV 2 - k) = SUC (f' - ((m DIV 2 - k) + 1))` SUBST1_TAC THENL
-    [ASM_ARITH_TAC; ALL_TAC] THEN
+    [UNDISCH_TAC `m DIV 2 - k < f'` THEN ARITH_TAC; ALL_TAC] THEN
    REWRITE_TAC[oEL_def; NOT_SUC; SUC_SUB1; oEL_THM] THEN
-   ASM_REWRITE_TAC[ARITH_RULE `f - (a + 1) < f <=> ~(f = 0)`] THEN ASM_ARITH_TAC)]]);;
+   ASM_REWRITE_TAC[ARITH_RULE `f - (a + 1) < f <=> ~(f = 0)`] THEN
+   MAP_EVERY UNDISCH_TAC [`k <= m DIV 2`; `m DIV 2 - k < f'`] THEN ARITH_TAC)]]);;
 
 let W2SP1AUX_state_rel_store = prove
  (`!ac k f f' (s:(A,num#C,FFI)wl_state) (t:(A,C,FFI)stack_state) lens extra.
@@ -3865,6 +3870,19 @@ let state_rel_set_var' = prove
   MATCH_MP_TAC word_to_stackProof_state_rel_set_var THEN ASM_REWRITE_TAC[]);;
 
 (* HOL4 line 2962 *)
+(* ARITH_TAC from the assumptions that are relations of numbers only (the   *)
+(* other assumptions are atoms to ASM_ARITH_TAC and slowed it down 4-fold)  *)
+let W2SP1AUX_NUM_ARITH_TAC : tactic =
+  let num_ty = `:num` in
+  let rec ok t =
+    if is_neg t then ok (dest_neg t) else
+    if is_conj t then ok (lhand t) && ok (rand t) else
+    match t with
+      Comb(Comb(Const(("<"|"<="|">"|">="),_),a),_) -> type_of a = num_ty
+    | Comb(Comb(Const("=",_),a),_) -> type_of a = num_ty
+    | _ -> false in
+  REPEAT(FIRST_X_ASSUM(MP_TAC o check (ok o concl))) THEN ARITH_TAC;;
+
 let state_rel_set_var2 = prove
  (`!ac k f f' (s:(A,num#C,FFI)wl_state) (t:(A,C,FFI)stack_state) lens x st sp v.
      word_to_stackProof_state_rel ac k f f' s t lens 0 /\
@@ -3876,12 +3894,12 @@ let state_rel_set_var2 = prove
   REWRITE_TAC[word_to_stackProof_state_rel_def; wl_set_var_def; ADD_CLAUSES] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN SIMP[LENGTH_LUPDATE] THEN STRIP_TAC THEN
   FIRST_X_ASSUM SUBST_ALL_TAC THEN FIRST_X_ASSUM SUBST_ALL_TAC THEN ASM_REWRITE_TAC[] THEN
-  SUBGOAL_THEN `~(f' = 0)` ASSUME_TAC THENL [ASM_ARITH_TAC; ALL_TAC] THEN
+  SUBGOAL_THEN `~(f' = 0)` ASSUME_TAC THENL [W2SP1AUX_NUM_ARITH_TAC; ALL_TAC] THEN
   SUBGOAL_THEN `f = f' + 1` SUBST_ALL_TAC THENL
    [UNDISCH_TAC `if f' = 0 then f = 0 else f = f' + 1` THEN ASM_REWRITE_TAC[]; ALL_TAC] THEN
   ABBREV_TAC `i = ((f' + 1) + k) - (x + 1)` THEN
   SUBGOAL_THEN `i < f' + 1 /\ ((f' + 1) - 1) - (x - k) = i` STRIP_ASSUME_TAC THENL
-   [ASM_ARITH_TAC; ALL_TAC] THEN
+   [W2SP1AUX_NUM_ARITH_TAC; ALL_TAC] THEN
   SUBGOAL_THEN
    `DROP (stack_state_stack_space t) (LUPDATE v (stack_state_stack_space t + i)
       (stack_state_stack t)) =
@@ -3907,7 +3925,7 @@ let state_rel_set_var2 = prove
        `i < MIN (f' + 1) (LENGTH (stack_state_stack (t:(A,C,FFI)stack_state)) -
                           stack_state_stack_space t)`
        (fun th -> REWRITE_TAC[th]) THEN
-      ASM_ARITH_TAC;
+      W2SP1AUX_NUM_ARITH_TAC;
       DISCH_TAC THEN FIRST_X_ASSUM(MP_TAC o SPECL [`n:num`; `v':(A)word_loc`]) THEN
       ASM_REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
       POP_ASSUM MP_TAC THEN COND_CASES_TAC THEN REWRITE_TAC[] THEN STRIP_TAC THEN
@@ -3915,7 +3933,7 @@ let state_rel_set_var2 = prove
       (SUBGOAL_THEN `~(x = n DIV 2)` ASSUME_TAC THENL
         [MATCH_MP_TAC W2SP1AUX_EVEN_DIV2_NEQ THEN ASM_REWRITE_TAC[]; ALL_TAC]) THEN
       (SUBGOAL_THEN `~(i = ((f' + 1) - 1) - (n DIV 2 - k))` ASSUME_TAC THENL
-        [ASM_ARITH_TAC; ASM_REWRITE_TAC[oEL_LUPDATE]])]]);;
+        [W2SP1AUX_NUM_ARITH_TAC; ASM_REWRITE_TAC[oEL_LUPDATE]])]]);;
 
 let W2SP1AUX_state_rel_stack_var = prove
  (`!ac k f f' (s:(A,num#C,FFI)wl_state) (t:(A,C,FFI)stack_state) lens x v.

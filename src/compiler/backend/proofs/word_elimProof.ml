@@ -1745,12 +1745,11 @@ let WELIMAUX_IF_TAC : tactic =
   UNDISCH_TAC `wl_evaluate (wl_If cmp r1 ri c1 c2,s:(A,C,FFI)wl_state) =
                result,new_state` THEN
   ONCE_REWRITE_TAC[wl_evaluate_def] THEN ASM_REWRITE_TAC[] THEN
+  (* the NONE cases are closed by the rewriting *)
   CASES_ON `wl_get_var r1 (s:(A,C,FFI)wl_state)` THEN
   ASM_REWRITE_TAC[pair_CASE; option_CASE; PAIR_EQ] THEN
-  TRY (STRIP_TAC THEN ASM_MESON_TAC[]) THEN
   CASES_ON `wl_get_var_imm ri (s:(A,C,FFI)wl_state)` THEN
   ASM_REWRITE_TAC[pair_CASE; option_CASE; PAIR_EQ] THEN
-  TRY (STRIP_TAC THEN ASM_MESON_TAC[]) THEN
   CASES_ON `wl_word_cmp cmp (a:(A)word_loc) (a':(A)word_loc)` THEN
   ASM_REWRITE_TAC[pair_CASE; option_CASE; PAIR_EQ] THEN
   TRY (STRIP_TAC THEN ASM_MESON_TAC[]);;
@@ -2214,11 +2213,12 @@ let WELIMAUX_call_handler_facts = prove
   MESON_TAC[]);;
 
 let WELIMAUX_ERR_TAC : tactic =
+  (* the term is parsed once (a parse per assumption cost seconds a call) *)
+  let err_tm = `~(SOME (wl_Error:(A)wl_result) = SOME wl_Error)` in
   REWRITE_TAC[PAIR_EQ] THEN DISCH_THEN(MP_TAC o CONJUNCT1) THEN
   DISCH_THEN(SUBST_ALL_TAC o SYM) THEN
   FIRST_ASSUM(fun th ->
-    if concl th = `~(SOME (wl_Error:(A)wl_result) = SOME wl_Error)`
-    then CONTR_TAC (REWRITE_RULE[] th) else NO_TAC);;
+    if concl th = err_tm then CONTR_TAC (REWRITE_RULE[] th) else NO_TAC);;
 
 (* the Call case of word_removal_lemma *)
 

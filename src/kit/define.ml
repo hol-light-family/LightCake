@@ -592,7 +592,12 @@ let tidy_ctx ctx =
   with Failure _ -> ctx,DISCH ctx (ASSUME ctx);;
 
 (* nicer names for the extra bound variables of an IH: drop primes when the  *)
-(* unprimed name is free                                                    *)
+(* unprimed name is free, and is not another of the variables vs (with the  *)
+(* same type: the two would become one variable, as y' and y did in the IH  *)
+(* of a let (y,k) = (y + 1,n) in .. under match x with SOME y, which gave   *)
+(* !y y k. x = SOME y /\ (y + 1,n) = (y,k) ==> ..; since 2026-11-18)        *)
+
+let cake_ind_unprime_log = ref false and cake_ind_unprime_kept = ref false;;
 
 let unprime_vars avoid vs =
   let rec base n = let k = String.length n in
@@ -600,13 +605,16 @@ let unprime_vars avoid vs =
   let used = ref (map (fst o dest_var) avoid) in
   map (fun v -> let n,ty = dest_var v in
                 let b = base n in
-                let n' = if mem b !used then n else b in
+                let clash = b <> n && mem (mk_var(b,ty)) vs in
+                (if clash && not (mem b !used) then cake_ind_unprime_kept := true);
+                let n' = if mem b !used || clash then n else b in
                 used := n' :: !used; mk_var(n',ty)) vs;;
 
 let cake_ind_dbg = ref (None : (term * thm * (int option -> tactic) * term list list * (term * thm * bool) list list) option);;
 
 let derive_induction (c:term) (clauses:(term list * term list) list)
                      (tc_thms:thm list) (wfth:thm) =
+  cake_ind_unprime_kept := false;
   let argtys,_ = splitlist dest_fun_ty (type_of c) in
   let n = length (snd(hd clauses)) in
   let argtys = fst(chop_list n argtys) in
@@ -758,6 +766,9 @@ let derive_induction (c:term) (clauses:(term list * term list) list)
                                      MATCH_ACCEPT_TAC)
                          (ncases--(length allcases - 1))) in
   cake_ind_dbg := Some(stmt,cind,leaf,pats,ihss);
+  (if !cake_ind_unprime_log && !cake_ind_unprime_kept then
+     Format.print_string ("INDFIX "^(try fst(dest_const c) with Failure _ ->
+                                         try fst(dest_var c) with Failure _ -> "?")^"\n"));
   prove(stmt,
     GEN_TAC THEN DISCH_THEN(fun th ->
       MAP_EVERY (fun (k,c) -> LABEL_TAC ("case"^string_of_int k) c)

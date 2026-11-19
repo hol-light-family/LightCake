@@ -1265,6 +1265,37 @@ let PARSE3AUX_fail_parts th =
   match snd(strip_comb(PARSE3AUX_res th)) with
     [fl;fe] -> fl,fe | _ -> failwith "fail_parts";;
 
+(* types and terms of the proof tools below, parsed once (a quotation in a  *)
+(* function is parsed at each call: tens of thousands of parses here, of   *)
+(* milliseconds each in a big session)                                      *)
+let PARSE3AUX_token_ty = `:token`
+and PARSE3AUX_locs_ty = `:locs`
+and PARSE3AUX_inp_ty = `:(token#locs)list`
+and PARSE3AUX_mlptree_ty = `:mlptree`
+and PARSE3AUX_symbol_ty = `:(token,MMLnonT)symbol`
+and PARSE3AUX_NIL_INP_TM = `[]:(token#locs)list`
+and PARSE3AUX_CMLPEG_TM = `cmlPEG`
+and PARSE3AUX_NULLABLE_TM = `nullable cmlG`
+and PARSE3AUX_FIRSTSET_TM = `firstSet cmlG`
+and PARSE3AUX_VALID_TM = `valid_lptree cmlG`
+and PARSE3AUX_GEXPRS_TM = `Gexprs cmlPEG`
+and PARSE3AUX_NT_TM = `NT:MMLnonT+num->(token,MMLnonT)symbol`
+and PARSE3AUX_INL_TM = `INL:MMLnonT->MMLnonT+num`
+and PARSE3AUX_PTREE_HEAD_TM = `ptree_head:mlptree->(token,MMLnonT)symbol`
+and PARSE3AUX_REAL_FRINGE_TM =
+  `real_fringe:mlptree->((token,MMLnonT)symbol#locs)list`
+and PARSE3AUX_IN_TOKEN_TM = `(IN):token->(token->bool)->bool`
+and PARSE3AUX_IN_NT_TM = `(IN):MMLnonT+num->(MMLnonT+num->bool)->bool`
+and PARSE3AUX_IN_PEGSYM_TM =
+  `(IN):(token,MMLnonT,(mlptree)list,(char)list)pegsym->
+        ((token,MMLnonT,(mlptree)list,(char)list)pegsym->bool)->bool`
+and PARSE3AUX_FDOM_RULES_TM = `FDOM (peg_rules cmlPEG)`
+and PARSE3AUX_FST_TOKEN_TM = `FST:token#locs->token`
+and PARSE3AUX_I_TM = `I:(mlptree)list->(mlptree)list`
+and PARSE3AUX_NTSYM_TM =
+  `nt:MMLnonT+num->((mlptree)list->(mlptree)list)->
+      (token,MMLnonT,(mlptree)list,(char)list)pegsym`;;
+
 (* the nullability of the remaining non-terminals *)
 let PARSE3AUX_nullable_more =
   map (fun c ->
@@ -1301,8 +1332,8 @@ let PARSE3AUX_nonnull_ths =
 
 let PARSE3AUX_nonnull (y:term) =
   find (fun th -> rand(concl th) =
-          mk_comb(`nullable cmlG`, mk_list([mk_comb(`NT:MMLnonT+num->(token,MMLnonT)symbol`,
-                    mk_comb(`INL:MMLnonT->MMLnonT+num`, y))], `:(token,MMLnonT)symbol`)))
+          mk_comb(PARSE3AUX_NULLABLE_TM, mk_list([mk_comb(PARSE3AUX_NT_TM,
+                    mk_comb(PARSE3AUX_INL_TM, y))], PARSE3AUX_symbol_ty)))
        PARSE3AUX_nonnull_ths;;
 
 let PARSE3AUX_FRINGE_CONS = prove
@@ -1362,14 +1393,14 @@ let PARSE3AUX_DESTRUCT_TAC : tactic = fun (asl,w as g) ->
          is_var(rand(rand c)) then (rand(lhs c), rand(rand c)) else failwith "") asl in
   let one (x,m) (asl,w as g) =
     let hd_th = snd(find (fun (_,th) -> let c = concl th in is_eq c &&
-                  lhs c = mk_comb(`ptree_head:mlptree->(token,MMLnonT)symbol`, x)) asl) in
+                  lhs c = mk_comb(PARSE3AUX_PTREE_HEAD_TM, x)) asl) in
     let y = rand(rand(rhs(concl hd_th))) in
     let fr = snd(find (fun (_,th) -> let c = concl th in is_eq c &&
-               lhs c = mk_comb(`real_fringe:mlptree->((token,MMLnonT)symbol#locs)list`, x)) asl) in
-    let vl = snd(find (fun (_,th) -> concl th = mk_comb(`valid_lptree cmlG`, x)) asl) in
-    let tkn = mk_var(fst(dest_var m)^"_t",`:token`)
-    and lkn = mk_var(fst(dest_var m)^"_l",`:locs`)
-    and mn = mk_var(fst(dest_var m)^"_r",`:(token#locs)list`) in
+               lhs c = mk_comb(PARSE3AUX_REAL_FRINGE_TM, x)) asl) in
+    let vl = snd(find (fun (_,th) -> concl th = mk_comb(PARSE3AUX_VALID_TM, x)) asl) in
+    let tkn = mk_var(fst(dest_var m)^"_t",PARSE3AUX_token_ty)
+    and lkn = mk_var(fst(dest_var m)^"_l",PARSE3AUX_locs_ty)
+    and mn = mk_var(fst(dest_var m)^"_r",PARSE3AUX_inp_ty) in
     let ctac = X_CHOOSE_THEN tkn (X_CHOOSE_THEN lkn (X_CHOOSE_THEN mn
                  (CONJUNCTS_THEN2 SUBST_ALL_TAC ASSUME_TAC))) in
     (match (try Some(PARSE3AUX_nonnull y) with Failure _ -> None) with
@@ -1384,7 +1415,7 @@ let PARSE3AUX_DESTRUCT_TAC : tactic = fun (asl,w as g) ->
 (* deciding a boolean about tokens, using the membership assumptions      *)
 (* tk IN S of the token variables of the term                              *)
 let PARSE3AUX_memfacts asl tm =
-  let vs = filter (fun v -> type_of v = `:token`) (frees tm) in
+  let vs = filter (fun v -> type_of v = PARSE3AUX_token_ty) (frees tm) in
   mapfilter (fun (_,th) -> let c = concl th in
       if (try fst(dest_const(fst(strip_comb c))) = "IN" with Failure _ -> false) &&
          mem (lhand c) vs then th else failwith "") asl;;
@@ -1479,7 +1510,7 @@ let rec PARSE3AUX_TOKEN_SPLIT_TAC (dn:term list) : tactic = fun (asl,w as g) ->
   let th0 = PARSE3AUX_DECIDE_CONV w in
   let w' = rhs(concl th0) in
   if w' = `T` then ACCEPT_TAC (EQT_ELIM th0) g else
-  let xs = filter (fun v -> type_of v = `:token` && not (mem v dn)) (frees w') in
+  let xs = filter (fun v -> type_of v = PARSE3AUX_token_ty && not (mem v dn)) (frees w') in
   if xs = [] then PARSE3AUX_LEAF_DECIDE_TAC g else
   let x = hd xs in
   let mentioned = filter (fun c -> can (find_term (fun t -> t = c)) w')
@@ -1531,7 +1562,7 @@ let PARSE3AUX_decide_ctx asl tm =
 let PARSE3AUX_MEM_CONTR_TAC : tactic = fun (asl,w as g) ->
   let th = find (fun th -> let c = concl th in
       (try fst(dest_const(fst(strip_comb c))) = "IN" &&
-           type_of(lhand c) = `:token` with Failure _ -> false) &&
+           type_of(lhand c) = PARSE3AUX_token_ty with Failure _ -> false) &&
       (try rhs(concl(PARSE3AUX_DECIDE_CONV c)) = `F` with Failure _ -> false))
       (map snd asl) in
   CONTR_TAC (CONV_RULE PARSE3AUX_DECIDE_CONV th) g;;
@@ -1569,7 +1600,7 @@ let PARSE3AUX_IHSIDE_TAC : tactic = fun (asl,w as g) ->
 
 let PARSE3AUX_NTS_GEXPRS e =
   REWRITE_RULE[pnt_def]
-   (TAC_PROOF(([], mk_comb(mk_comb(`(IN):(token,MMLnonT,(mlptree)list,(char)list)pegsym->((token,MMLnonT,(mlptree)list,(char)list)pegsym->bool)->bool`,e),`Gexprs cmlPEG`)),
+   (TAC_PROOF(([], mk_comb(mk_comb(PARSE3AUX_IN_PEGSYM_TM,e),PARSE3AUX_GEXPRS_TM)),
               REWRITE_TAC[NTS_in_PEG_exprs]));;
 
 (* the subtrees with their fringes, and the head of a subtree *)
@@ -1582,19 +1613,19 @@ let PARSE3AUX_fringe_pairs asl =
 
 let PARSE3AUX_head_of asl x =
   let hd_th = snd(find (fun (_,th) -> let c = concl th in is_eq c &&
-                  lhs c = mk_comb(`ptree_head:mlptree->(token,MMLnonT)symbol`, x)) asl) in
+                  lhs c = mk_comb(PARSE3AUX_PTREE_HEAD_TM, x)) asl) in
   rand(rand(rhs(concl hd_th)));;
 
 (* the rest of inp after the prefix fr (both in normal form) *)
 let rec PARSE3AUX_split_prefix fr inp =
-  if fr = `[]:(token#locs)list` then inp
+  if fr = PARSE3AUX_NIL_INP_TM then inp
   else if is_cons fr then
     let h,t = dest_cons fr and h',t' = dest_cons inp in
     if h <> h' then failwith "split_prefix" else PARSE3AUX_split_prefix t t'
   else if is_binary "APPEND" fr then
     let v,t = dest_binary "APPEND" fr and v',t' = dest_binary "APPEND" inp in
     if v <> v' then failwith "split_prefix" else PARSE3AUX_split_prefix t t'
-  else if fr = inp then `[]:(token#locs)list`
+  else if fr = inp then PARSE3AUX_NIL_INP_TM
   else
     let v',t' = dest_binary "APPEND" inp in
     if v' <> fr then failwith "split_prefix" else t';;
@@ -1614,7 +1645,7 @@ let rec PARSE3AUX_vars_lr tm acc =
   | Const(_,_) -> acc;;
 
 let PARSE3AUX_trees_of tm =
-  filter (fun v -> type_of v = `:mlptree`) (PARSE3AUX_vars_lr tm []);;
+  filter (fun v -> type_of v = PARSE3AUX_mlptree_ty) (PARSE3AUX_vars_lr tm []);;
 
 (* the induction hypothesis for a subtree of head y whose fringe starts inp *)
 (* (not one of the subtrees used already, the first one in the goal order)  *)
@@ -1648,17 +1679,17 @@ let PARSE3AUX_with_unfold (nts:term list) f x =
 (* from an evaluation of the rule of n to an evaluation of nt n I *)
 let PARSE3AUX_wrap_nt n inp th1 =
   let fdom = EQT_ELIM(REWRITE_CONV[FDOM_cmlPEG_nts]
-               (mk_comb(mk_comb(`(IN):MMLnonT+num->(MMLnonT+num->bool)->bool`, n),
-                        `FDOM (peg_rules cmlPEG)`))) in
-  let th2 = MP (ISPECL [`cmlPEG`; n; inp; `I:(mlptree)list->(mlptree)list`;
+               (mk_comb(mk_comb(PARSE3AUX_IN_NT_TM, n),
+                        PARSE3AUX_FDOM_RULES_TM))) in
+  let th2 = MP (ISPECL [PARSE3AUX_CMLPEG_TM; n; inp; PARSE3AUX_I_TM;
                         rand(concl th1)] peg_eval_nt) (CONJ fdom th1) in
   CONV_RULE (RAND_CONV (REWRITE_CONV[resultmap_def; I_THM])) th2;;
 
 (* the failure of nt n I on inp: on the empty input when it is not peg0,  *)
 (* or when the first token cannot start n                                   *)
 let PARSE3AUX_nt_failure asl inp e n =
-      if inp = `[]:(token#locs)list` then
-        let th = MP (ISPECL [`cmlPEG`; e] not_peg0_peg_eval_NIL_NONE)
+      if inp = PARSE3AUX_NIL_INP_TM then
+        let th = MP (ISPECL [PARSE3AUX_CMLPEG_TM; e] not_peg0_peg_eval_NIL_NONE)
                     (CONJ (REWRITE_RULE[pnt_def]
                              (find (fun t -> rand(rand(concl t)) = e) PARSE3AUX_npeg0_ths))
                      (CONJ (PARSE3AUX_NTS_GEXPRS e) PEG_wellformed)) in
@@ -1666,8 +1697,8 @@ let PARSE3AUX_nt_failure asl inp e n =
       else if is_cons inp then
         let h,t = dest_cons inp in
         let tk,l = dest_pair h in
-        let mem = mk_comb(mk_comb(`(IN):token->(token->bool)->bool`, tk),
-                   mk_comb(`firstSet cmlG`, mk_list([mk_comb(`NT:MMLnonT+num->(token,MMLnonT)symbol`, n)], `:(token,MMLnonT)symbol`))) in
+        let mem = mk_comb(mk_comb(PARSE3AUX_IN_TOKEN_TM, tk),
+                   mk_comb(PARSE3AUX_FIRSTSET_TM, mk_list([mk_comb(PARSE3AUX_NT_TM, n)], PARSE3AUX_symbol_ty))) in
         let b,mth = PARSE3AUX_decide_asm asl mem in
         if b then failwith ("PARSE3AUX_eval nt: possible start " ^ string_of_term inp) else
         let sth = CONJ mth
@@ -1737,8 +1768,8 @@ let PARSE3AUX_mono_cond_lemmas = ref ([]:(term*thm)list);;
 let PARSE3AUX_mono_nt asl inp n =
   let y = rand n in
   let sfx = !PARSE3AUX_mono_sfx in
-  let ntI = mk_comb(mk_comb(`nt:MMLnonT+num->((mlptree)list->(mlptree)list)->(token,MMLnonT,(mlptree)list,(char)list)pegsym`, n),
-                    `I:(mlptree)list->(mlptree)list`) in
+  let ntI = mk_comb(mk_comb(PARSE3AUX_NTSYM_TM, n),
+                    PARSE3AUX_I_TM) in
   let facts = filter (fun th -> PARSE3AUX_is_evalfact (concl th) &&
                         (let _,e,_ = PARSE3AUX_eval_parts (concl th) in e = ntI))
                      (map snd asl) in
@@ -1801,7 +1832,7 @@ let PARSE3AUX_mono_rpt asl inp e1 f =
                 (SELECT_RULE eth) in
     let s1,_ = dest_pair(rand(concl lth)) in
     let tl = rand(rand(rand(concl lth))) in
-    MP (ISPECL [`cmlPEG`; e1; f; app x; s1; l; tl] PARSE3AUX_rpt_rule) lth in
+    MP (ISPECL [PARSE3AUX_CMLPEG_TM; e1; f; app x; s1; l; tl] PARSE3AUX_rpt_rule) lth in
   tryfind try_fact facts;;
 
 (* an evaluation fact of the context for e on inp *)
@@ -1830,15 +1861,15 @@ let rec PARSE3AUX_eval_u (asl:(string*thm)list) (used:term list) (inp:term) (e:t
   let c = fst(dest_const fn) in
   match c, args with
     "empty", [r] ->
-      ISPECL [`cmlPEG`; inp; r] LPARSEAUX_peg_eval_empty_rule
+      ISPECL [PARSE3AUX_CMLPEG_TM; inp; r] LPARSEAUX_peg_eval_empty_rule
   | "tok", [p;f] ->
-      if inp = `[]:(token#locs)list` then
-        ISPECL [`cmlPEG`; p; f] peg_eval_tok_failureEOF
+      if inp = PARSE3AUX_NIL_INP_TM then
+        ISPECL [PARSE3AUX_CMLPEG_TM; p; f] peg_eval_tok_failureEOF
       else if is_cons inp then
         let h,t = dest_cons inp in
-        let b,th = PARSE3AUX_decide_ctx asl (mk_comb(p, mk_comb(`FST:token#locs->token`, h))) in
-        if b then MP (ISPECL [`cmlPEG`; h; t; p; f] peg_eval_tok_success) th
-        else MP (ISPECL [`cmlPEG`; h; t; p; f] peg_eval_tok_failureF) th
+        let b,th = PARSE3AUX_decide_ctx asl (mk_comb(p, mk_comb(PARSE3AUX_FST_TOKEN_TM, h))) in
+        if b then MP (ISPECL [PARSE3AUX_CMLPEG_TM; h; t; p; f] peg_eval_tok_success) th
+        else MP (ISPECL [PARSE3AUX_CMLPEG_TM; h; t; p; f] peg_eval_tok_failureF) th
       else if is_var inp && !PARSE3AUX_lsplit_vars then raise (Parse3aux_lsplit inp)
       else failwith ("PARSE3AUX_eval tok: " ^ string_of_term inp)
   | "nt", [n;f] when mem (rand n) !PARSE3AUX_unfold_nts ->
@@ -1858,7 +1889,7 @@ let rec PARSE3AUX_eval_u (asl:(string*thm)list) (used:term list) (inp:term) (e:t
                 with Failure _ -> PARSE3AUX_eval_list asl used inp e1 in
       let s2,rest = dest_pair(rand(concl lth)) in
       let cs,err = dest_pair rest in
-      MP (ISPECL [`cmlPEG`; e1; f; inp; s2; cs; err] PARSE3AUX_rpt_rule) lth
+      MP (ISPECL [PARSE3AUX_CMLPEG_TM; e1; f; inp; s2; cs; err] PARSE3AUX_rpt_rule) lth
   | "seq", [e1;e2;f] ->
       let th1 = PARSE3AUX_eval_u asl used inp e1 in
       if PARSE3AUX_is_succ th1 then
@@ -1870,38 +1901,38 @@ let rec PARSE3AUX_eval_u (asl:(string*thm)list) (used:term list) (inp:term) (e:t
         let th2 = PARSE3AUX_eval_u asl (used @ PARSE3AUX_trees_of c1) s1' e2 in
         if PARSE3AUX_is_succ th2 then
           let s2,c2,eo2 = PARSE3AUX_succ_parts th2 in
-          MP (ISPECL [`cmlPEG`; e1; e2; inp; s1'; s2; c1; c2; f; eo1; eo2]
+          MP (ISPECL [PARSE3AUX_CMLPEG_TM; e1; e2; inp; s1'; s2; c1; c2; f; eo1; eo2]
                      peg_eval_seq_success) (CONJ th1 th2)
         else
           let fl,fe = PARSE3AUX_fail_parts th2 in
-          MP (ISPECL [`cmlPEG`; e1; e2; f; inp; eo1; s1'; c1; fl; fe]
+          MP (ISPECL [PARSE3AUX_CMLPEG_TM; e1; e2; f; inp; eo1; s1'; c1; fl; fe]
                      peg_eval_seq_fail2) (CONJ th1 th2)
       else
         let fl,fe = PARSE3AUX_fail_parts th1 in
-        MP (ISPECL [`cmlPEG`; e1; e2; inp; f; fl; fe] peg_eval_seq_fail1) th1
+        MP (ISPECL [PARSE3AUX_CMLPEG_TM; e1; e2; inp; f; fl; fe] peg_eval_seq_fail1) th1
   | "choice", [e1;e2;f] ->
       let th1 = PARSE3AUX_eval_u asl used inp e1 in
       if PARSE3AUX_is_succ th1 then
         let s,r,eo = PARSE3AUX_succ_parts th1 in
-        MP (ISPECL [`cmlPEG`; e1; e2; inp; f; s; r; eo] peg_eval_choice_success1) th1
+        MP (ISPECL [PARSE3AUX_CMLPEG_TM; e1; e2; inp; f; s; r; eo] peg_eval_choice_success1) th1
       else
         let fl,fe = PARSE3AUX_fail_parts th1 in
         let th2 = PARSE3AUX_eval_u asl used inp e2 in
         if PARSE3AUX_is_succ th2 then
           let s,r,eo = PARSE3AUX_succ_parts th2 in
-          MP (ISPECL [`cmlPEG`; e1; e2; inp; s; r; eo; f; fl; fe]
+          MP (ISPECL [PARSE3AUX_CMLPEG_TM; e1; e2; inp; s; r; eo; f; fl; fe]
                      peg_eval_choice_success2) (CONJ th1 th2)
         else
           let fl2,fe2 = PARSE3AUX_fail_parts th2 in
           CONV_RULE (RAND_CONV (REWR_CONV PARSE3AUX_UNCURRY_Failure))
-            (MP (ISPECL [`cmlPEG`; e1; e2; inp; f; fl; fe; fl2; fe2]
+            (MP (ISPECL [PARSE3AUX_CMLPEG_TM; e1; e2; inp; f; fl; fe; fl2; fe2]
                         peg_eval_choice_fail) (CONJ th1 th2))
   | "not", [e1;c] ->
       let th1 = PARSE3AUX_eval_u asl used inp e1 in
       if PARSE3AUX_is_succ th1 then
         let r = PARSE3AUX_res th1 in
         CONV_RULE (RAND_CONV (REWRITE_CONV[sloc_def; SND]))
-          (MP (ISPECL [`cmlPEG`; e1; inp; r; c] peg_eval_not_failure)
+          (MP (ISPECL [PARSE3AUX_CMLPEG_TM; e1; inp; r; c] peg_eval_not_failure)
              (CONJ th1 (EQT_ELIM (REWRITE_CONV[isSuccess_def]
                 (mk_comb(`isSuccess:((token#locs)list,(mlptree)list,(char)list)pegresult->bool`, r))))))
       else failwith "PARSE3AUX_eval not: inner failure"
@@ -1920,11 +1951,11 @@ and PARSE3AUX_eval_list asl used inp e1 =
     let lth = PARSE3AUX_eval_list asl (used @ PARSE3AUX_trees_of c1) s1' e1 in
     let s2,rest = dest_pair(rand(concl lth)) in
     let cs,eo = dest_pair rest in
-    MP (ISPECL [`cmlPEG`; e1; eo1; eo; inp; s1'; s2; c1; cs] peg_eval_list_cons)
+    MP (ISPECL [PARSE3AUX_CMLPEG_TM; e1; eo1; eo; inp; s1'; s2; c1; cs] peg_eval_list_cons)
        (CONJ th1 lth)
   else
     let fl,fe = PARSE3AUX_fail_parts th1 in
-    MP (ISPECL [`cmlPEG`; e1; inp; fl; fe] peg_eval_list_nil) th1
+    MP (ISPECL [PARSE3AUX_CMLPEG_TM; e1; inp; fl; fe] peg_eval_list_nil) th1
 
 and PARSE3AUX_eval_nt_unfold asl used inp n =
   let rule_th = PARSE2AUX_rule (rand n) in
@@ -1975,9 +2006,9 @@ let rec PARSE3AUX_SPLIT_RETRY_TAC (k:int) (tac:tactic) : tactic = fun g ->
       let avoid = itlist (fun (_,th) l -> union (thm_frees th) l) asl (frees w) in
       let mk n ty = variant avoid (mk_var(n,ty)) in
       let hv = mk "PARSE3AUX_h" `:token#locs`
-      and tv = mk "PARSE3AUX_t" `:(token#locs)list`
-      and tkv = mk "PARSE3AUX_tk" `:token`
-      and lv = mk "PARSE3AUX_l" `:locs` in
+      and tv = mk "PARSE3AUX_t" PARSE3AUX_inp_ty
+      and tkv = mk "PARSE3AUX_tk" PARSE3AUX_token_ty
+      and lv = mk "PARSE3AUX_l" PARSE3AUX_locs_ty in
       (MP_TAC(ISPEC x list_CASES) THEN
        DISCH_THEN(DISJ_CASES_THEN2 SUBST_ALL_TAC
          (X_CHOOSE_THEN hv (X_CHOOSE_THEN tv SUBST_ALL_TAC))) THENL
@@ -2001,9 +2032,9 @@ let PARSE3AUX_EVAL0_TAC : tactic = fun (asl,w as g) ->
   let th1 = CONV_RULE (RATOR_CONV(RAND_CONV(RAND_CONV
               (REWR_CONV (SYM prim_th) THENC REWR_CONV (SYM rule_th))))) th in
   let fdom = EQT_ELIM(REWRITE_CONV[FDOM_cmlPEG_nts]
-               (mk_comb(mk_comb(`(IN):MMLnonT+num->(MMLnonT+num->bool)->bool`, n),
-                        `FDOM (peg_rules cmlPEG)`))) in
-  let th2 = MP (ISPECL [`cmlPEG`; n; inp'; `I:(mlptree)list->(mlptree)list`;
+               (mk_comb(mk_comb(PARSE3AUX_IN_NT_TM, n),
+                        PARSE3AUX_FDOM_RULES_TM))) in
+  let th2 = MP (ISPECL [PARSE3AUX_CMLPEG_TM; n; inp'; PARSE3AUX_I_TM;
                         PARSE3AUX_res th1] peg_eval_nt) (CONJ fdom th1) in
   let th3 = CONV_RULE (RAND_CONV (REWRITE_CONV PARSE3AUX_RESULT_RWTS THENC
                                   CASE_REWRITE_CONV PARSE3AUX_RESULT_CASE_RWTS THENC
@@ -2036,9 +2067,9 @@ let PARSE3AUX_EVAL_EQ_TAC : tactic = fun (asl,w as g) ->
   let th1 = CONV_RULE (RATOR_CONV(RAND_CONV(RAND_CONV
               (REWR_CONV (SYM prim_th) THENC REWR_CONV (SYM rule_th))))) th in
   let fdom = EQT_ELIM(REWRITE_CONV[FDOM_cmlPEG_nts]
-               (mk_comb(mk_comb(`(IN):MMLnonT+num->(MMLnonT+num->bool)->bool`, n),
-                        `FDOM (peg_rules cmlPEG)`))) in
-  let th2 = MP (ISPECL [`cmlPEG`; n; inp'; `I:(mlptree)list->(mlptree)list`;
+               (mk_comb(mk_comb(PARSE3AUX_IN_NT_TM, n),
+                        PARSE3AUX_FDOM_RULES_TM))) in
+  let th2 = MP (ISPECL [PARSE3AUX_CMLPEG_TM; n; inp'; PARSE3AUX_I_TM;
                         PARSE3AUX_res th1] peg_eval_nt) (CONJ fdom th1) in
   let th3 = CONV_RULE (RAND_CONV (REWRITE_CONV PARSE3AUX_RESULT_RWTS)) th2 in
   let _,r1,eo = PARSE3AUX_succ_parts th3 in
@@ -2064,9 +2095,9 @@ let PARSE3AUX_SFX_SPLIT_TAC : tactic = fun (asl,w as g) ->
         (try fst(dest_const(fst(strip_comb(rand(rand(concl th)))))) = "stoppers"
          with Failure _ -> false))) THEN
     REWRITE_TAC[NOT_CONS_NIL; HD; FST] THEN DISCH_TAC THEN
-    SUBGOAL_THEN (mk_imp(mk_neg(mk_eq(`CONS (stk:token,sl:locs) sfx_t`,`[]:(token#locs)list`)),
-                         mk_comb(mk_comb(`(IN):token->(token->bool)->bool`,
-                                         mk_comb(`FST:token#locs->token`, mk_comb(`HD:(token#locs)list->token#locs`, `CONS (stk:token,sl:locs) sfx_t`))),
+    SUBGOAL_THEN (mk_imp(mk_neg(mk_eq(`CONS (stk:token,sl:locs) sfx_t`,PARSE3AUX_NIL_INP_TM)),
+                         mk_comb(mk_comb(PARSE3AUX_IN_TOKEN_TM,
+                                         mk_comb(PARSE3AUX_FST_TOKEN_TM, mk_comb(`HD:(token#locs)list->token#locs`, `CONS (stk:token,sl:locs) sfx_t`))),
                                  rand(rand(concl sth)))))
       ASSUME_TAC THENL [ASM_REWRITE_TAC[NOT_CONS_NIL; HD; FST]; ALL_TAC]]) g;;
 
@@ -2088,12 +2119,12 @@ let PARSE3AUX_CCASE_TAC : tactic =
 (* ------------------------------------------------------------------------- *)
 
 let PARSE3AUX_DET_RULE th1 th2 =
-  let det = CONJUNCT1 (ISPEC `cmlPEG` peg_deterministic) in
+  let det = CONJUNCT1 (ISPEC PARSE3AUX_CMLPEG_TM peg_deterministic) in
   EQ_MP (SPEC (rand(concl th2)) (MATCH_MP det th1)) th2;;
 
 (* nt e fails on the empty input *)
 let PARSE3AUX_NIL_FAIL_TH e =
-  let th = MP (ISPECL [`cmlPEG`; e] not_peg0_peg_eval_NIL_NONE)
+  let th = MP (ISPECL [PARSE3AUX_CMLPEG_TM; e] not_peg0_peg_eval_NIL_NONE)
               (CONJ (REWRITE_RULE[pnt_def]
                        (find (fun t -> rand(rand(concl t)) = e) PARSE3AUX_npeg0_ths))
                     (CONJ (PARSE3AUX_NTS_GEXPRS e) PEG_wellformed)) in
@@ -2512,7 +2543,7 @@ let PARSE3AUX_is_tokfact c =
   not (can (find_term (fun t -> is_const t && fst(dest_const t) = "stoppers")) c) &&
   not (is_binary "<" c) && not (is_binary "<=" c) &&
   not (is_eq c && (is_var(lhs c) || is_var(rhs c))) &&
-  can (find_term (fun t -> type_of t = `:token`)) c;;
+  can (find_term (fun t -> type_of t = PARSE3AUX_token_ty)) c;;
 
 (* evaluations of the same expression on the same input have equal results *)
 let PARSE3AUX_DET_UNIFY_TAC : tactic = fun (asl,w as g) ->
@@ -2535,9 +2566,9 @@ let PARSE3AUX_FIRSTSET_CONTR_TAC : tactic = fun (asl,w as g) ->
     let n = rand(rator e) in
     let h,t = dest_cons x in
     let tk,l = dest_pair h in
-    let mem = mk_comb(mk_comb(`(IN):token->(token->bool)->bool`, tk),
-                mk_comb(`firstSet cmlG`, mk_list([mk_comb(`NT:MMLnonT+num->(token,MMLnonT)symbol`, n)],
-                                                 `:(token,MMLnonT)symbol`))) in
+    let mem = mk_comb(mk_comb(PARSE3AUX_IN_TOKEN_TM, tk),
+                mk_comb(PARSE3AUX_FIRSTSET_TM, mk_list([mk_comb(PARSE3AUX_NT_TM, n)],
+                                                 PARSE3AUX_symbol_ty))) in
     let b,mth = PARSE3AUX_decide_asm asl mem in
     if b then failwith "" else
     let i',r',eo' = PARSE3AUX_succ_parts th in
@@ -2587,6 +2618,33 @@ let PARSE3AUX_RENAME_BV_RULE (avoid:term list) th =
 
 (* unfold a successful evaluation of nt B on x when an evaluation of nt A  *)
 (* on x is known and the rule of B mentions A (for determinism conflicts)  *)
+(* STRIP_ASSUME_TAC that closes a branch at once when a new fact x = [] or   *)
+(* x = CONS .. contradicts an assumption about the shape of x: the inverted  *)
+(* rule of a choice of token tests is a product of such cases, nearly all    *)
+(* contradictory (they were made, then closed by PARSE3AUX_CLEAN_TAC)        *)
+let PARSE3AUX_PRUNE_STRIP_ASSUME_TAC : thm_tactic =
+  let is_nil t = is_const t && fst(dest_const t) = "NIL" in
+  let shape t = if is_nil t then Some true else if is_cons t then Some false else None in
+  let DISCARD_TAC th =
+    let tm = concl th in
+    fun (asl,w as g) ->
+      if exists (fun a -> aconv tm (concl(snd a))) asl then ALL_TAC g
+      else failwith "DISCARD_TAC: not already present" in
+  let PRUNE_TAC th : tactic = fun (asl,w as g) ->
+    let c = concl th in
+    if not (is_eq c) || not (is_var (lhs c)) then failwith "PRUNE_TAC" else
+    match shape (rhs c) with
+      None -> failwith "PRUNE_TAC"
+    | Some b ->
+        let _,a = find (fun (_,a) -> let ca = concl a in
+                          is_eq ca && lhs ca = lhs c && shape (rhs ca) = Some (not b)) asl in
+        CONTR_TAC (REWRITE_RULE[NOT_CONS_NIL; NOT_NIL_CONS] (TRANS (SYM a) th)) g in
+  REPEAT_TCL STRIP_THM_THEN
+   (fun gth -> FIRST [CONTR_TAC gth; ACCEPT_TAC gth; DISCARD_TAC gth; PRUNE_TAC gth;
+                      ASSUME_TAC gth]);;
+
+let PARSE3AUX_PRUNE_STRIP_TAC = STRIP_GOAL_THEN PARSE3AUX_PRUNE_STRIP_ASSUME_TAC;;
+
 let PARSE3AUX_UNFOLD_CONFLICT_TAC : tactic = fun (asl,w as g) ->
   let evs = filter (fun th -> PARSE3AUX_is_evalfact (concl th) &&
                      (let _,e,_ = PARSE3AUX_eval_parts (concl th) in
@@ -2603,7 +2661,7 @@ let PARSE3AUX_UNFOLD_CONFLICT_TAC : tactic = fun (asl,w as g) ->
   let avoid = itlist (fun (_,th) l -> union (thm_frees th) l) asl (frees w) in
   (MAP_EVERY (fun b -> MP_TAC (PARSE3AUX_RENAME_BV_RULE avoid (PARSE3AUX_NT_INV_RULE b)))
              cands THEN
-   REPEAT STRIP_TAC THEN PARSE3AUX_CLEAN_TAC) g;;
+   REPEAT PARSE3AUX_PRUNE_STRIP_TAC THEN PARSE3AUX_CLEAN_TAC) g;;
 
 (* forward lemmas: !x y r eo. peg_eval cmlPEG (x, nt (INL A) I)               *)
 (* (peg_Success y r eo) /\ side ==> ?r1 eo1. peg_eval cmlPEG (x, nt B I) ...   *)
@@ -2625,13 +2683,13 @@ let PARSE3AUX_FWD_TAC : tactic = fun (asl,w as g) ->
   if new_ths = [] then failwith "PARSE3AUX_FWD_TAC" else
   let avoid = itlist (fun (_,th) l -> union (thm_frees th) l) asl (frees w) in
   (MAP_EVERY (fun th -> MP_TAC (PARSE3AUX_RENAME_BV_RULE avoid th)) new_ths THEN
-   REPEAT STRIP_TAC THEN PARSE3AUX_CLEAN_TAC) g;;
+   REPEAT PARSE3AUX_PRUNE_STRIP_TAC THEN PARSE3AUX_CLEAN_TAC) g;;
 
 (* invert the evaluation fact labelled lab *)
 let PARSE3AUX_INV_TAC (lab:string) : tactic = fun (asl,w as g) ->
   let avoid = itlist (fun (_,th) l -> union (thm_frees th) l) asl (frees w) in
   (REMOVE_THEN lab (MP_TAC o PARSE3AUX_RENAME_BV_RULE avoid o PARSE3AUX_NT_INV_RULE) THEN
-   STRIP_TAC THEN PARSE3AUX_CLEAN_TAC THEN TRY PARSE3AUX_UNFOLD_CONFLICT_TAC THEN
+   PARSE3AUX_PRUNE_STRIP_TAC THEN PARSE3AUX_CLEAN_TAC THEN TRY PARSE3AUX_UNFOLD_CONFLICT_TAC THEN
    TRY PARSE3AUX_FWD_TAC) g;;
 
 (* induction on the input length, then on the rank of the non-terminal *)
@@ -2997,10 +3055,17 @@ let PARSE3AUX_PAT_LIST_TAC : tactic =
     MAP_EVERY EXISTS_TAC [`eo0:(locs#(char)list)option`; `APPEND i1 sfx:(token#locs)list`] THEN
     ASM_REWRITE_TAC[]];;
 
-let PARSE3AUX_pat_mono = prove
+let PARSE3AUX_pat_mono =
+  (* nPbase and nPapp: the evaluation fact is inverted once, before the split *)
+  (* of the rest (inverting it in each of the three branches cost 9-15 s each) *)
+  let inv_first_tac =
+    PARSE3AUX_INV_TAC "H" THEN PARSE3AUX_RSPLIT_TAC THEN
+    PARSE3AUX_REPORT_TAC PARSE3AUX_MONO_LEAF_TAC in
+  prove
  (PARSE3AUX_pat_mono_tm,
   PARSE3AUX_PAT_START_TAC THENL
-   (replicate PARSE3AUX_MONO_CASE_TAC 8 @ [PARSE3AUX_PAT_LIST_TAC]));;
+   ([inv_first_tac] @ replicate PARSE3AUX_MONO_CASE_TAC 2 @ [inv_first_tac] @
+    replicate PARSE3AUX_MONO_CASE_TAC 4 @ [PARSE3AUX_PAT_LIST_TAC]));;
 
 (* HOL4: [local] *)
 let pegComplete_Pattern_input_monotone0 = prove
@@ -3883,7 +3948,7 @@ let PARSE3AUX_LINFIX_SIDE_TAC : tactic = fun (asl,w as g) ->
      MESON_TAC[]) g
   else if is_neg w then
     (REWRITE_TAC(peg0_tokeq :: nullable_CONS_TOK ::
-                 CONJUNCT1(CONJUNCT2(CONJUNCT2(ISPEC `cmlPEG` PARSE2AUX_peg0_clauses))) ::
+                 CONJUNCT1(CONJUNCT2(CONJUNCT2(ISPEC PARSE3AUX_CMLPEG_TM PARSE2AUX_peg0_clauses))) ::
                  PARSE3AUX_npeg0_ths @ PARSE3AUX_nonnull_ths) THEN NO_TAC) g
   else if is_imp body && is_exists (rand body) &&
           is_conj (snd(dest_exists(rand body))) then
@@ -3956,24 +4021,24 @@ let PARSE3AUX_CLEAN_HYPS_TAC : tactic = fun (asl,w as g) ->
 (* expand the subtree x of head NT (INL y) one level: x becomes            *)
 (* mkNd (INL y) subs for the rules of y, with the facts of its subtrees     *)
 let PARSE3AUX_EXPAND_TAC (y:term) : tactic = fun (asl,w as g) ->
-  let hdt = mk_comb(`NT:MMLnonT+num->(token,MMLnonT)symbol`, mk_comb(`INL:MMLnonT->MMLnonT+num`, y)) in
+  let hdt = mk_comb(PARSE3AUX_NT_TM, mk_comb(PARSE3AUX_INL_TM, y)) in
   let _,hd_th = find (fun (_,th) -> let c = concl th in is_eq c && rhs c = hdt &&
                         (try fst(dest_const(rator(lhs c))) = "ptree_head" with Failure _ -> false) &&
                         is_var(rand(lhs c))) asl in
   let x = rand(lhs(concl hd_th)) in
   let _,fr_th = find (fun (_,th) -> let c = concl th in is_eq c &&
-                        lhs c = mk_comb(`real_fringe:mlptree->((token,MMLnonT)symbol#locs)list`, x)) asl in
-  let _,vl_th = find (fun (_,th) -> concl th = mk_comb(`valid_lptree cmlG`, x)) asl in
+                        lhs c = mk_comb(PARSE3AUX_REAL_FRINGE_TM, x)) asl in
+  let _,vl_th = find (fun (_,th) -> concl th = mk_comb(PARSE3AUX_VALID_TM, x)) asl in
   let avoid = itlist (fun (_,th) l -> union (thm_frees th) l) asl (frees w) in
   let subs = variant avoid (mk_var("PARSE3AUX_subs", `:(mlptree)list`)) in
   (MP_TAC (MATCH_MP ptree_head_NT_mkNd (CONJ hd_th (CONJ vl_th fr_th))) THEN
    DISCH_THEN(X_CHOOSE_THEN subs SUBST_ALL_TAC) THEN
    (fun (asl,w as g) ->
       let nd = mk_comb(mk_comb(`mkNd:MMLnonT+num->(mlptree)list->mlptree`,
-                               mk_comb(`INL:MMLnonT->MMLnonT+num`, y)), subs) in
+                               mk_comb(PARSE3AUX_INL_TM, y)), subs) in
       let _,fr = find (fun (_,th) -> let c = concl th in is_eq c &&
-                   lhs c = mk_comb(`real_fringe:mlptree->((token,MMLnonT)symbol#locs)list`, nd)) asl in
-      let _,vl = find (fun (_,th) -> concl th = mk_comb(`valid_lptree cmlG`, nd)) asl in
+                   lhs c = mk_comb(PARSE3AUX_REAL_FRINGE_TM, nd)) asl in
+      let _,vl = find (fun (_,th) -> concl th = mk_comb(PARSE3AUX_VALID_TM, nd)) asl in
       (MP_TAC (SYM (REWRITE_RULE[real_fringe_mkNd] fr)) THEN
        MP_TAC (REWRITE_RULE[valid_lptree_mkNd] vl) THEN
        DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC (CONJUNCTS_THEN2 ASSUME_TAC ASSUME_TAC)) THEN
@@ -4016,26 +4081,26 @@ let PARSE3AUX_ptPapply_APPEND = prove
 (* the evaluation of the linfix subtree of head NT (INL p) of a completeness *)
 (* case, by peg_linfix_complete with master := its fringe, as an assumption  *)
 let PARSE3AUX_LINFIX_SUB_TAC (p:term) (sep:term) (c:term) : tactic = fun (asl,w as g) ->
-  let hdt = mk_comb(`NT:MMLnonT+num->(token,MMLnonT)symbol`, mk_comb(`INL:MMLnonT->MMLnonT+num`, p)) in
+  let hdt = mk_comb(PARSE3AUX_NT_TM, mk_comb(PARSE3AUX_INL_TM, p)) in
   let _,hd_th = find (fun (_,th) -> let c = concl th in is_eq c && rhs c = hdt &&
                         (try fst(dest_const(rator(lhs c))) = "ptree_head" with Failure _ -> false)) asl in
   let x = rand(lhs(concl hd_th)) in
   let _,fr_th = find (fun (_,th) -> let c = concl th in is_eq c &&
-                        lhs c = mk_comb(`real_fringe:mlptree->((token,MMLnonT)symbol#locs)list`, x)) asl in
+                        lhs c = mk_comb(PARSE3AUX_REAL_FRINGE_TM, x)) asl in
   let m = rand(rand(concl fr_th)) in
   let _,ev = dest_exists w in
   let sfx = rand(rator(rator(rand ev))) in
   let lf = list_mk_comb(`peg_linfix:MMLnonT+num->(token,MMLnonT,(mlptree)list,(char)list)pegsym->(token,MMLnonT,(mlptree)list,(char)list)pegsym->(token,MMLnonT,(mlptree)list,(char)list)pegsym`,
-             [mk_comb(`INL:MMLnonT->MMLnonT+num`, p);
+             [mk_comb(PARSE3AUX_INL_TM, p);
               mk_comb(`sym2peg:(token,MMLnonT)symbol->(token,MMLnonT,(mlptree)list,(char)list)pegsym`, c);
               mk_comb(`sym2peg:(token,MMLnonT)symbol->(token,MMLnonT,(mlptree)list,(char)list)pegsym`, sep)]) in
   let lf' = rhs(concl(REWRITE_CONV[sym2peg_def; tokeq_def] lf)) in
   let eov = mk_var("eo", `:(locs#(char)list)option`) in
   let fact = mk_exists(eov, list_mk_comb(`peg_eval:(token,MMLnonT,(mlptree)list,(char)list)peg->(token#locs)list#(token,MMLnonT,(mlptree)list,(char)list)pegsym->((token#locs)list,(mlptree)list,(char)list)pegresult->bool`,
-               [`cmlPEG`;
+               [PARSE3AUX_CMLPEG_TM;
                 mk_pair(mk_comb(mk_comb(PARSE3AUX_APPEND_TM, m), sfx), lf');
                 list_mk_comb(`peg_Success:(token#locs)list->(mlptree)list->(locs#(char)list)option->((token#locs)list,(mlptree)list,(char)list)pegresult`,
-                             [sfx; mk_list([x], `:mlptree`); eov])])) in
+                             [sfx; mk_list([x], PARSE3AUX_mlptree_ty); eov])])) in
   let avoid = itlist (fun (_,th) l -> union (thm_frees th) l) asl (frees w) in
   let eo' = variant avoid (mk_var("PARSE3AUX_eo", `:(locs#(char)list)option`)) in
   (SUBGOAL_THEN fact (X_CHOOSE_TAC eo') THENL

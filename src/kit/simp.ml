@@ -11,13 +11,56 @@
 (*   RW thl     HOL4 rw[thl]: strip the goal, split its conditionals,        *)
 (*              eliminate var equations, simplify.                           *)
 (*   VAR_EQ_TAC HOL4 rveq: substitute away one assumption var = t / t = var. *)
+(*   RFS thl    FS in the other order: newest first, with the newer ones    *)
+(*              (this is the order of HOL4's fs; FS has the order of rfs).  *)
+(*   DECIDE_TAC HOL4 decide_tac: ARITH_TAC with the arithmetic assumptions. *)
+(*   ARITH_ss   a marker for the lists above: arithmetic (HOL4 ARITH_ss).   *)
+(* The simplifier strategy is HOL Light's TOP_DEPTH_SQCONV without its      *)
+(* redundant second pass (same results, faster); SIMP_TAC etc. use it too.  *)
 (* The project simpset (HOL4's srw_ss) holds the case equations,             *)
 (* distinctness and injectivity of every registered datatype, the record     *)
 (* theorems, and whatever cake_add_simps registers.                         *)
 (* ========================================================================= *)
 
+(* KITNEW lines (kit_new_log := true): the places where a tactic extended *)
+(* on 2026-11-18 behaves differently from before (for the full-load checks) *)
+
+let kit_new_log = ref false;;
+let kit_note (s:string) = if !kit_new_log then Format.print_string ("KITNEW "^s^"\n");;
+
+(* The rewrite maker of the kit's simpsets: HOL Light's mk_rewrites, except *)
+(* that no rewrite has a bare variable as its left side (one not free in    *)
+(* the hypotheses, so a pattern that matches every term of its type), as in *)
+(* HOL4's IMP_EQ_CANON (simp/src/Cond_rewr.sml): a conclusion b or ~b with *)
+(* b such a variable (from an induction hypothesis !b. .. ==> b /\ ..) is  *)
+(* not used, and an equation x = t with x such a variable (from INJ's       *)
+(* !x y. .. /\ f x = f y ==> x = y) is used as (x = t) <=> T.  HOL Light's  *)
+(* mk_rewrites makes b <=> T, b <=> F and x = t of them, which the          *)
+(* simplifier tries at every subterm of the type, proving the condition    *)
+(* each time (FS ran for minutes on such assumptions).  Since 2026-11-18.  *)
+
+let kit_mk_rewrites =
+  let mk = mk_rewrites true in
+  let tf = [`T`; `F`] in
+  let bad th =
+    let c = concl th in
+    let eqn = if is_imp c then rand c else c in
+    is_eq eqn && is_var (lhs eqn) && not (mem (lhs eqn) (freesl (hyp th))) in
+  let fix th =
+    let c = concl th in
+    let eqn = if is_imp c then rand c else c in
+    if type_of (lhs eqn) = bool_ty && mem (rhs eqn) tf then []
+    else if is_imp c then [DISCH (lhand c) (EQT_INTRO (UNDISCH th))]
+    else [EQT_INTRO th] in
+  fun th sofar ->
+    let ths = mk th [] in
+    if not (exists bad ths) then ths @ sofar
+    else (kit_note "rewrite with a variable left side";
+          flat (map (fun t -> if bad t then fix t else [t]) ths) @ sofar);;
+
 (* HOL4's default simpsets have no SATISFY_ss: drop the satisfy_prover of HOL Light's basic_ss *)
-let cake_basic_ss thl = let Simpset(n,p,_,r) = basic_ss thl in Simpset(n,p,[],r);;
+let cake_basic_ss thl =
+  let Simpset(n,p,_,_) = basic_ss thl in Simpset(n,p,[],kit_mk_rewrites);;
 
 let K_DEF = new_definition `K = \(x:A) (y:B). x`;;
 
@@ -109,6 +152,162 @@ let (PURE_ASM_REWRITE_TAC: thm list -> tactic) = ASM PURE_REWRITE_TAC;;
 let (ASM_REWRITE_TAC: thm list -> tactic) = ASM REWRITE_TAC;;
 let (PURE_ONCE_ASM_REWRITE_TAC: thm list -> tactic) = ASM PURE_ONCE_REWRITE_TAC;;
 let (ONCE_ASM_REWRITE_TAC: thm list -> tactic) = ASM ONCE_REWRITE_TAC;;
+
+(* ------------------------------------------------------------------------- *)
+(* A faster simplifier.  HOL Light's TOP_DEPTH_SQCONV, after a pass over the *)
+(* subterms of a term has changed some of them, simplifies the new term      *)
+(* again from scratch, so every subterm is traversed once more (and again    *)
+(* at every enclosing level: on a big induction hypothesis 550,000 calls for *)
+(* a term of size 220).  That second pass cannot change anything: each       *)
+(* subterm is then the result of a call of the strategy (which goes on until *)
+(* it fails) or a subterm on which it failed.  KIT_TOP_DEPTH_SQCONV tries   *)
+(* only the rewrites at the top of the new term instead, and so gives the    *)
+(* same theorems.  The helper functions are HOL Light's (simp.ml), unchanged.*)
+(* SIMPLIFY_CONV and HOL Light's SIMP_CONV, SIMP_RULE, SIMP_TAC,             *)
+(* ASM_SIMP_TAC and their PURE_ versions are redefined with it (otherwise    *)
+(* HOL Light's definitions), for the kit and every later file.               *)
+(* ------------------------------------------------------------------------- *)
+
+(* find_witnesses of HOL Light's simp.ml (commit 9cb19cc), copied so that   *)
+(* the kit also loads on HOL Light versions without it (924faf0)            *)
+let kit_find_witnesses provers vs tm : instantiation =
+  let evs,bod = strip_exists tm in
+  let avs = vs @ evs in
+  let p = list_mk_conj(filter (fun c -> exists (C vfree_in c) avs)
+                              (conjuncts bod)) in
+  let q = list_mk_exists(avs,p) and lconsts = subtract (frees p) avs in
+  let restrict l = filter (fun (_,v) -> mem v vs) l in
+  tryfind (fun pr ->
+    let bcs,insts,tyin = term_match lconsts p (concl(apply_prover pr q)) in
+    if exists (fun (ty,v) -> ty <> v) tyin then fail()
+    else restrict bcs,restrict insts,[])
+  provers;;
+
+(* The conditions of conditional rewrites are proved by the simplifier      *)
+(* (the simpset's prover), at a depth lev; the same condition is often      *)
+(* tried many times in one simplification, all failing (an induction        *)
+(* hypothesis !x. P x ==> f x = T rewrites every f t, and its condition     *)
+(* contains f again: 1230 attempts at 14 different conditions, 36 s, in     *)
+(* simplifying one assumption of flat_patternProof's compile_exp_esgc_free). *)
+(* The results (theorem or failure) are kept for each simpset (the same    *)
+(* object, so the same context), depth and condition, during one call of    *)
+(* SIMPLIFY_CONV; the prover is deterministic, so the results are the same. *)
+(* Since 2026-11-18.                                                         *)
+
+let kit_cond_cache = (Hashtbl.create 1000 : (term, (simpset * int * thm option)) Hashtbl.t);;
+
+let kit_cond_prove prover strat (ss:simpset) (lev:int) (cnd:term) : thm =
+  let hit = try Some (find (fun (s,l,_) -> s == ss && l = lev)
+                           (Hashtbl.find_all kit_cond_cache cnd))
+            with Failure _ -> None in
+  match hit with
+    Some (_,_,Some th) -> th
+  | Some (_,_,None) -> failwith "kit_cond_prove: cached failure"
+  | None ->
+      let r = try Some (prover strat ss (lev-1) cnd) with Failure _ -> None in
+      (if Hashtbl.length kit_cond_cache > 100000 then Hashtbl.reset kit_cond_cache);
+      Hashtbl.add kit_cond_cache cnd (ss,lev,r);
+      match r with Some th -> th | None -> failwith "kit_cond_prove";;
+
+let KIT_TOP_DEPTH_SQCONV =
+  let nonlooping th =
+    let l,r = dest_eq(rand(concl th)) in
+    let matchable = can o term_match (freesl(hyp th)) in
+    not(free_in l r) &&
+    (not(matchable l r && matchable r l) || term_order l r) in
+  let IMP_REWRITES_CONV strat (Simpset(net,prover,provers,rewmaker) as ss) lev
+                        pconvs tm =
+    tryfind (fun (n,cnv) ->
+      if n >= 4 then fail() else
+      let th = cnv tm in
+      let etm = concl th in
+      if is_eq etm then th else
+      if lev <= 0 then failwith "IMP_REWRITES_CONV: Too deep" else
+      let cnd = lhand etm in
+      let mvs = subtract (frees cnd) (union (frees tm) (freesl(hyp th))) in
+      let th' =
+        if mvs = [] then th else
+        let th1 = try INSTANTIATE (kit_find_witnesses provers mvs cnd) th
+                  with Failure _ -> th in
+        if nonlooping th1 then th1
+        else if th1 != th && nonlooping th then th
+        else failwith "IMP_REWRITES_CONV: looping instance" in
+      let cth = kit_cond_prove prover strat ss lev (lhand(concl th')) in
+      MP th' cth) pconvs in
+  let rec RUN_SUB_CONV strat ss lev triv th =
+    let tm = concl th in
+    if is_imp tm then
+      let subtm = lhand tm in
+      let avs,bod = strip_forall subtm in
+      let (t,t'),ss',mk_fun =
+        try dest_eq bod,ss,I with Failure _ ->
+        let cxt,deq = dest_imp bod in
+        dest_eq deq,AUGMENT_SIMPSET (ASSUME cxt) ss,DISCH cxt in
+      let eth,triv' = try strat ss' lev t,false with Failure _ -> REFL t,triv in
+      let eth' = GENL avs (mk_fun eth) in
+      let th' = if is_var t' then INST [rand(concl eth),t'] th
+                else GEN_PART_MATCH lhand th (concl eth') in
+      let th'' = MP th' eth' in
+      RUN_SUB_CONV strat ss lev triv' th''
+    else if triv then fail() else th in
+  let GEN_SUB_CONV strat ss lev pconvs tm =
+    try tryfind (fun (n,cnv) ->
+          if n < 4 then fail() else
+          let th = cnv tm in
+          RUN_SUB_CONV strat ss lev true th) pconvs
+    with Failure _ ->
+        if is_comb tm then
+          let l,r = dest_comb tm in
+          try let th1 = strat ss lev l in
+              try let th2 = strat ss lev r in MK_COMB(th1,th2)
+              with Failure _ -> AP_THM th1 r
+          with Failure _ -> AP_TERM l (strat ss lev r)
+        else if is_abs tm then
+          let v,bod = dest_abs tm in
+          let th = strat ss lev bod in
+          try ABS v th with Failure _ ->
+          let gv = genvar(type_of v) in
+          let gbod = vsubst[gv,v] bod in
+          let gth = ABS gv (strat ss lev gbod) in
+          let gtm = concl gth in
+          let l,r = dest_eq gtm in
+          let v' = variant (frees gtm) v in
+          let l' = alpha v' l and r' = alpha v' r in
+          EQ_MP (ALPHA gtm (mk_eq(l',r'))) gth
+        else failwith "GEN_SUB_CONV" in
+  let rec TOP_DEPTH_SQCONV (Simpset(net,prover,provers,rewmaker) as ss) lev tm =
+    let pconvs = lookup tm net in
+    try let th1 = IMP_REWRITES_CONV TOP_DEPTH_SQCONV ss lev pconvs tm in
+        (try TRANS th1 (TOP_DEPTH_SQCONV ss lev (rand(concl th1)))
+         with Failure _ -> th1)
+    with Failure _ ->
+      let th1 = GEN_SUB_CONV TOP_DEPTH_SQCONV ss lev pconvs tm in
+      let tm1 = rand(concl th1) in
+      try let th2 = IMP_REWRITES_CONV TOP_DEPTH_SQCONV ss lev (lookup tm1 net) tm1 in
+          TRANS th1 (try TRANS th2 (TOP_DEPTH_SQCONV ss lev (rand(concl th2)))
+                     with Failure _ -> th2)
+      with Failure _ -> th1 in
+  TOP_DEPTH_SQCONV;;
+
+
+let kit_simp_depth = ref 0;;
+
+let SIMPLIFY_CONV ss thl tm =
+  (if !kit_simp_depth = 0 then Hashtbl.reset kit_cond_cache);
+  incr kit_simp_depth;
+  let leave () = decr kit_simp_depth;
+                 if !kit_simp_depth = 0 then Hashtbl.reset kit_cond_cache in
+  let r = try GEN_SIMPLIFY_CONV KIT_TOP_DEPTH_SQCONV ss 3 thl tm
+          with e -> (leave (); raise e) in
+  leave (); r;;
+let SIMP_CONV thl = SIMPLIFY_CONV (basic_ss []) thl;;
+let PURE_SIMP_CONV thl = SIMPLIFY_CONV empty_ss thl;;
+let SIMP_RULE thl = CONV_RULE(SIMP_CONV thl);;
+let PURE_SIMP_RULE thl = CONV_RULE(PURE_SIMP_CONV thl);;
+let SIMP_TAC thl = CONV_TAC(SIMP_CONV thl);;
+let PURE_SIMP_TAC thl = CONV_TAC(PURE_SIMP_CONV thl);;
+let ASM_SIMP_TAC = ASM SIMP_TAC;;
+let PURE_ASM_SIMP_TAC = ASM PURE_SIMP_TAC;;
 
 (* a few arithmetic rewrites in the spirit of HOL4's ARITH_RWTS_ss *)
 
@@ -316,18 +515,232 @@ let cake_type s =
 (* Conversions and rules.                                                    *)
 (* ------------------------------------------------------------------------- *)
 
+(* ------------------------------------------------------------------------- *)
+(* DECIDE_TAC (HOL4 decide_tac): ARITH_TAC with the arithmetic assumptions   *)
+(* only (boolean combinations of num relations), first those that share an  *)
+(* atom with the goal (transitively), then, if that fails, all of them.     *)
+(* ------------------------------------------------------------------------- *)
+
+let kit_num_rel tm =
+  (is_eq tm || (try mem (fst(dest_const(rator(rator tm)))) ["<"; "<="; ">"; ">="]
+                with Failure _ -> false)) &&
+  (try type_of (lhand tm) = kit_num_ty with Failure _ -> false);;
+
+let rec kit_is_arith tm =
+  if is_neg tm then kit_is_arith (rand tm)
+  else if is_conj tm || is_disj tm || is_imp tm then
+    kit_is_arith (lhand tm) && kit_is_arith (rand tm)
+  else if is_eq tm && type_of (lhand tm) = bool_ty then
+    kit_is_arith (lhand tm) && kit_is_arith (rand tm)
+  else kit_num_rel tm;;
+
+(* the atoms of an arithmetic formula: its maximal subterms of type num that *)
+(* are not sums, differences, products, SUC, PRE or numerals                 *)
+let kit_arith_atoms =
+  let ops = ["+"; "-"; "*"; "SUC"; "PRE"; "NUMERAL"; "BIT0"; "BIT1"; "_0"] in
+  let rec num_atoms tm acc =
+    if is_numeral tm then acc else
+    let f,args = strip_comb tm in
+    if is_const f && mem (fst(dest_const f)) ops then itlist num_atoms args acc
+    else insert tm acc in
+  let rec go tm acc =
+    if is_neg tm then go (rand tm) acc
+    else if is_conj tm || is_disj tm || is_imp tm || (is_eq tm && type_of (lhand tm) = bool_ty)
+    then go (lhand tm) (go (rand tm) acc)
+    else if is_comb tm && is_comb (rator tm) then num_atoms (lhand tm) (num_atoms (rand tm) acc)
+    else acc in
+  fun tm -> go tm [];;
+
+(* the facts that share an atom with the goal, directly or through others *)
+let kit_relevant_facts (goal:term) (facts:thm list) =
+  let tagged = map (fun th -> th,kit_arith_atoms (concl th)) facts in
+  let rec close atoms chosen rest =
+    let new_,rest' = partition (fun (_,ats) -> exists (fun a -> mem a atoms) ats) rest in
+    if new_ = [] then chosen else
+    close (itlist (fun (_,ats) acc -> union ats acc) new_ atoms) (chosen @ new_) rest' in
+  map fst (close (kit_arith_atoms goal) [] tagged);;
+
+let DECIDE_TAC : tactic = fun (asl,w as g) ->
+  let facts = filter (kit_is_arith o concl) (map snd asl) in
+  let rel = kit_relevant_facts w facts in
+  let with_facts fs = MAP_EVERY MP_TAC fs THEN ARITH_TAC in
+  if length rel = length facts then with_facts facts g else
+  (with_facts rel ORELSE with_facts facts) g;;
+
+(* ------------------------------------------------------------------------- *)
+(* ARITH_ss (HOL4 ARITH_ss, for the easy cases): a marker theorem; any kit   *)
+(* simplification tactic given it in its list (SIMP[ARITH_ss], FS, RFS, GVS, *)
+(* RW, CAKE_SIMP_CONV, ...) also                                             *)
+(*  - decides relations of num (<, <=, =, >, >=) by linear arithmetic, with  *)
+(*    the arithmetic facts of the context that share an atom with them       *)
+(*    (assumptions and antecedents; at most kit_arith_max_facts of them);    *)
+(*    the results, also failures, are cached;                                *)
+(*  - cancels numerals in a subtraction: (m + n + 1) - 1 = m + n;            *)
+(*  - rewrites m < n - p to m + p < n.                                       *)
+(* Without the marker nothing changes.  The decision is made through the    *)
+(* simplifier's conditional rewriting: m < n ==> (m < n <=> T) and           *)
+(* ~(m < n) ==> (m < n <=> F), with the conditions guarded by ARITH_COND     *)
+(* (the identity) and proved by an arithmetic prover that holds the context  *)
+(* (never by simplification, which would apply the same rewrites again).    *)
+(* ------------------------------------------------------------------------- *)
+
+let ARITH_ss = CONJUNCT1 (CONJ TRUTH TRUTH);;
+
+let ARITH_COND_DEF = new_definition `ARITH_COND (p:bool) <=> p`;;
+
+let kit_arith_cond_tm = `ARITH_COND`;;
+
+let kit_arith_max_facts = ref 10;;
+
+let kit_arith_cache = (Hashtbl.create 1000 : (term,thm option) Hashtbl.t);;
+
+(* |- p from facts (the context), by ARITH_RULE on the relevant facts *)
+let kit_arith_decide (facts:thm list) (p:term) : thm =
+  let rel = kit_relevant_facts p facts in
+  let rel = if length rel > !kit_arith_max_facts
+            then fst (chop_list (!kit_arith_max_facts) rel) else rel in
+  let key = itlist (curry mk_imp o concl) rel p in
+  let res =
+    try Hashtbl.find kit_arith_cache key with Not_found ->
+      let r = try Some (ARITH_RULE key) with Failure _ -> None in
+      (if Hashtbl.length kit_arith_cache > 50000 then Hashtbl.reset kit_arith_cache);
+      Hashtbl.add kit_arith_cache key r; r in
+  match res with
+    Some ith -> rev_itlist (fun f th -> MP th f) rel ith
+  | None -> failwith "kit_arith_decide";;
+
+let kit_arith_prover =
+  let apply facts tm =
+    if not (is_comb tm && rator tm = kit_arith_cond_tm) then failwith "kit_arith_prover" else
+    EQ_MP (SYM (SPEC (rand tm) ARITH_COND_DEF)) (kit_arith_decide facts (rand tm))
+  and augment facts thl =
+    filter (kit_is_arith o concl) (flat (map CONJUNCTS thl)) @ facts in
+  mk_prover apply augment [];;
+
+(* the condition prover of an ARITH_ss simpset: ARITH_COND conditions go to *)
+(* the arithmetic prover, all others to HOL Light's basic_prover as before   *)
+let kit_arith_condition_prover strat (Simpset(_,_,provers,_) as ss) lev tm =
+  if is_comb tm && rator tm = kit_arith_cond_tm
+  then tryfind (fun pr -> apply_prover pr tm) provers
+  else basic_prover strat ss lev tm;;
+
+let kit_arith_ss_rewrites =
+  let tac = REWRITE_TAC[ARITH_COND_DEF] in
+  map (fun tm -> prove(tm,tac))
+   [`!m n:num. ARITH_COND (m < n) ==> (m < n <=> T)`;
+    `!m n:num. ARITH_COND (~(m < n)) ==> (m < n <=> F)`;
+    `!m n:num. ARITH_COND (m <= n) ==> (m <= n <=> T)`;
+    `!m n:num. ARITH_COND (~(m <= n)) ==> (m <= n <=> F)`;
+    `!m n:num. ARITH_COND (m = n) ==> (m = n <=> T)`;
+    `!m n:num. ARITH_COND (~(m = n)) ==> (m = n <=> F)`;
+    `!m n:num. ARITH_COND (m > n) ==> (m > n <=> T)`;
+    `!m n:num. ARITH_COND (~(m > n)) ==> (m > n <=> F)`;
+    `!m n:num. ARITH_COND (m >= n) ==> (m >= n <=> T)`;
+    `!m n:num. ARITH_COND (~(m >= n)) ==> (m >= n <=> F)`] @
+  [ARITH_RULE `!m n p:num. m < n - p <=> m + p < n`];;
+
+(* (... + k + ...) - j with numerals k >= j: the sum with k - j for k *)
+let kit_sub_numeral_conv tm =
+  let a,b = dest_binary "-" tm in
+  if not (is_numeral b) || type_of b <> kit_num_ty then failwith "kit_sub_numeral_conv" else
+  let summands = striplist (dest_binary "+") a in
+  let nums,others = partition is_numeral summands in
+  if nums = [] || others = [] then failwith "kit_sub_numeral_conv" else
+  let c = itlist (fun t s -> dest_numeral t +/ s) nums (num 0) and k = dest_numeral b in
+  if c </ k then failwith "kit_sub_numeral_conv" else
+  let r = c -/ k in
+  let target = if r =/ num 0 then list_mk_binop `(+):num->num->num` others
+               else list_mk_binop `(+):num->num->num` (others @ [mk_numeral r]) in
+  ARITH_RULE (mk_eq(tm,target));;
+
+let kit_arith_ss (ss:simpset) : simpset =
+  let ss1 = ss_of_conv `m - n:num` kit_sub_numeral_conv (ss_of_thms kit_arith_ss_rewrites ss) in
+  ss_of_prover kit_arith_condition_prover (ss_of_provers [kit_arith_prover] ss1);;
+
+(* ------------------------------------------------------------------------- *)
+(* ------------------------------------------------------------------------- *)
+(* HOL4 ELIM_UNCURRY: a paired lambda \(x1,..,xn). t (HOL4 UNCURRY) becomes *)
+(* \p. t with the xi replaced by FST p, FST (SND p), ..; ELIM_UNCURRY_CONV  *)
+(* on such a lambda, or ELIM_UNCURRY in the list of a kit simplification     *)
+(* tactic (a marker, like ARITH_ss; since 2026-11-18).                      *)
+(* ------------------------------------------------------------------------- *)
+
+let ELIM_UNCURRY_CONV : conv = fun tm ->
+  if is_abs tm then failwith "ELIM_UNCURRY_CONV" else
+  let vstr,bod = try dest_gabs tm with Failure _ -> failwith "ELIM_UNCURRY_CONV" in
+  if not (is_pair vstr) then failwith "ELIM_UNCURRY_CONV" else
+  let p = variant (frees tm) (mk_var("p",type_of vstr)) in
+  let rec projs v t =
+    if is_pair v then
+      let l,r = dest_pair v in
+      projs l (mk_icomb(mk_const("FST",[]),t)) @ projs r (mk_icomb(mk_const("SND",[]),t))
+    else [t,v] in
+  prove(mk_eq(tm,mk_abs(p,vsubst (projs vstr p) bod)),
+        REWRITE_TAC[FUN_EQ_THM; FORALL_PAIR_THM; FST; SND]);;
+
+let ELIM_UNCURRY = CONJUNCT2 (CONJ TRUTH TRUTH);;
+
+(* ------------------------------------------------------------------------- *)
+(* ONCE th (HOL4 Once th) in the list of a kit simplification tactic: the   *)
+(* rewrites of th (equations or iffs, unconditional) are used once in each  *)
+(* call of the tactic, at the first subterm (top down) where one applies;  *)
+(* e.g. SIMP[ONCE red_rel_cases].  ONCE th is |- CAKE_ONCE t for th |- t   *)
+(* (a marker; since 2026-11-18).                                            *)
+(* ------------------------------------------------------------------------- *)
+
+let CAKE_ONCE_DEF = new_definition `CAKE_ONCE (p:bool) <=> p`;;
+
+let kit_once_tm = `CAKE_ONCE`;;
+
+let ONCE (th:thm) : thm = EQ_MP (SYM (SPEC (concl th) CAKE_ONCE_DEF)) th;;
+
+let kit_is_once (th:thm) =
+  let c = concl th in is_comb c && rator c = kit_once_tm;;
+
+(* the rewrites of the theorem under a ONCE marker, as (key, conversion)   *)
+(* pairs sharing a flag: once one of them has rewritten, they all fail     *)
+let kit_once_convs (mth:thm) : bool ref * (term * conv) list =
+  let th = EQ_MP (SPEC (rand (concl mth)) CAKE_ONCE_DEF) mth in
+  let used = ref false in
+  let rws = mk_rewrites false th [] in
+  let mk rw =
+    let cnv = REWR_CONV rw in
+    lhs (concl rw),
+    (fun tm -> if !used then failwith "ONCE: used" else
+               let r = cnv tm in used := true; r) in
+  used,map mk rws;;
+
 (* the project simpset augmented with thl: SIMPLIFY_CONV (CAKE_AUGMENTED_SS *)
 (* thl) l is SIMPLIFY_CONV (cake_active_ss()) (l @ thl) (AUGMENT_SIMPSET    *)
 (* works from the right of the list).  Made when the tactic runs, once per  *)
 (* call of a tactic that simplifies many assumptions, and kept in a memo    *)
-(* like the rewrite nets above (same simpset, same theorems)                *)
+(* like the rewrite nets above (same simpset, same theorems).  The markers  *)
+(* ARITH_ss, ELIM_UNCURRY and ONCE th add their conversions; the flags of   *)
+(* the ONCE rewrites are reset at each call.                                *)
 
-let cake_ss_memo = ref ([] : ((simpset * thm list) * simpset) list);;
+let cake_ss_memo = ref ([] : ((simpset * thm list) * (simpset * bool ref list)) list);;
+
+let kit_augment ss thl =
+  let is_mark th = th == ARITH_ss || th == ELIM_UNCURRY || kit_is_once th in
+  if not (exists is_mark thl) then itlist AUGMENT_SIMPSET thl ss,[] else
+  let plain = filter (fun th -> not (is_mark th)) thl in
+  let ss1 = if exists (fun th -> th == ARITH_ss) thl then kit_arith_ss ss else ss in
+  let ss2 = if exists (fun th -> th == ELIM_UNCURRY) thl
+            then ss_of_conv `GABS (f:(A->B)->bool)` ELIM_UNCURRY_CONV ss1 else ss1 in
+  let ss3,flags =
+    itlist (fun mth (ss,fl) ->
+              let r,cnvs = kit_once_convs mth in
+              itlist (fun (k,c) ss -> ss_of_conv k c ss) cnvs ss, r::fl)
+           (filter kit_is_once thl) (ss2,[]) in
+  itlist AUGMENT_SIMPSET plain ss3,flags;;
 
 let CAKE_AUGMENTED_SS thl =
   let ss = cake_active_ss() in
-  cake_memo cake_ss_memo (fun (s,l) -> s == ss && cake_same_thms l thl) (ss,thl)
-    (fun () -> itlist AUGMENT_SIMPSET thl ss);;
+  let ss',flags =
+    cake_memo cake_ss_memo (fun (s,l) -> s == ss && cake_same_thms l thl) (ss,thl)
+      (fun () -> kit_augment ss thl) in
+  do_list (fun r -> r := false) flags;
+  ss';;
 
 (* simplify the goal with the assumptions and an augmented simpset *)
 let SIMP_SS ss : tactic = ASM (fun l -> CONV_TAC (SIMPLIFY_CONV ss l)) [];;
@@ -356,7 +769,9 @@ let cake_true_tm = `T` and cake_false_tm = `F`;;
 (* stripping that never fails on name clashes: every existential gets a     *)
 (* name that is fresh for the whole goal and the theorem (HOL Light's        *)
 (* STRIP_ASSUME_TAC can fail with CHOOSE when an inner bound name is free    *)
-(* in a later conjunct)                                                     *)
+(* in a later conjunct); the goal's variables include those free only in    *)
+(* the hypotheses of an assumption theorem (a variable eliminated by SUBS   *)
+(* stays there), and av those of assumptions not put back yet (FS, RFS)     *)
 
 let rec CAKE_STRIP_ASSUME_AV (av:term list) th : tactic =
   fun (asl,w as gl) ->
@@ -371,7 +786,7 @@ let rec CAKE_STRIP_ASSUME_AV (av:term list) th : tactic =
       DISJ_CASES_THEN (CAKE_STRIP_ASSUME_AV av) th gl
     else if is_exists c then
       let v,_ = dest_exists c in
-      let avoid = itlist (union o frees o concl o snd) asl
+      let avoid = itlist (union o thm_frees o snd) asl
                     (union av (union (frees w)
                       (union (frees c) (freesl (hyp th))))) in
       let v' = variant avoid v in
@@ -386,11 +801,54 @@ let CAKE_ASSUME_TAC th =
   else if c = cake_false_tm then CONTR_TAC th
   else CAKE_STRIP_ASSUME_TAC th;;
 
+(* the same, also avoiding the variables av (of assumptions to come) *)
+let CAKE_ASSUME_AV (av:term list) th =
+  let c = concl th in
+  if c = cake_true_tm then ALL_TAC
+  else if c = cake_false_tm then CONTR_TAC th
+  else CAKE_STRIP_ASSUME_AV av th;;
+
 let CAKE_ASSUME_NOSTRIP_TAC th =
   let c = concl th in
   if c = cake_true_tm then ALL_TAC
   else if c = cake_false_tm then CONTR_TAC th
   else ASSUME_TAC th;;
+
+(* t = C x or C x = t, with C a constructor: (t, C x) *)
+let kit_cons_eq tm =
+  if not (is_eq tm) then failwith "kit_cons_eq" else
+  let l,r = dest_eq tm in
+  if is_constructor_app r && not (is_numeral r) && not (is_constructor_app l) then l,r
+  else if is_constructor_app l && not (is_numeral l) && not (is_constructor_app r)
+  then r,l
+  else failwith "kit_cons_eq";;
+
+(* After the assumptions of FS or RFS are simplified: two equations of one   *)
+(* term t with constructor applications, t = C x and t = D y in either      *)
+(* orientation (C x = t), give C x = D y simplified (x = y, or F), unless   *)
+(* that is already an assumption.  The simplification of the assumptions in *)
+(* one order merges such a pair only when the older one has t on the left   *)
+(* (FS) or the newer one (RFS); HOL4's fs has the order of RFS.  Since      *)
+(* 2026-11-18.                                                              *)
+
+let kit_fs_merge (newer_first:bool) ss : tactic = fun (asl,w as g) ->
+  let eqs = mapfilter (fun (_,th) -> let t,r = kit_cons_eq (concl th) in t,r,th) asl in
+  let rec pairs l = match l with [] -> [] | x::rest -> map (fun y -> x,y) rest @ pairs rest in
+  let cands = filter (fun ((t1,r1,_),(t2,r2,_)) -> aconv t1 t2 && not (aconv r1 r2))
+                     (pairs eqs) in
+  if cands = [] then ALL_TAC g else
+  let orient th t = if aconv (lhs(concl th)) t then th else SYM th in
+  (* a1 is newer than a2; the result is oriented as the simplification of  *)
+  (* the newer (FS) or of the older (RFS) one would give it                 *)
+  let facts = mapfilter (fun ((t1,_,a1),(t2,_,a2)) ->
+      let eqth = if newer_first then TRANS (SYM (orient a1 t1)) (orient a2 t2)
+                 else TRANS (SYM (orient a2 t2)) (orient a1 t1) in
+      let fth = CONV_RULE (SIMPLIFY_CONV ss []) eqth in
+      if concl fth = cake_true_tm ||
+         exists (fun (_,a) -> aconv (concl a) (concl fth)) asl
+      then fail() else fth) cands in
+  if facts = [] then ALL_TAC g else
+  (kit_note "FS merge"; MAP_EVERY CAKE_ASSUME_TAC facts g);;
 
 (* ------------------------------------------------------------------------- *)
 (* FS: HOL4 full_simp_tac (srw_ss()) thl.                                    *)
@@ -403,8 +861,30 @@ let FS thl : tactic =
       let simped =
         rev_itlist (fun th acc -> CONV_RULE (SIMPLIFY_CONV ss acc) th :: acc)
                    (rev asms) [] in
-      MAP_EVERY CAKE_ASSUME_TAC (rev simped)) THEN
-    SIMP thl) gl;;
+      let av = itlist (union o thm_frees) simped [] in
+      MAP_EVERY (CAKE_ASSUME_AV av) (rev simped)) THEN
+    kit_fs_merge false ss THEN SIMP_SS ss) gl;;
+
+(* ------------------------------------------------------------------------- *)
+(* RFS: FS in the other order: each assumption, newest first, is simplified *)
+(* with the newer ones (already simplified), so that old assumptions such   *)
+(* as induction hypotheses are instantiated by the facts found after them;  *)
+(* then the goal.  Note on HOL4: its full_simp_tac (fs) takes the NEWEST     *)
+(* assumption first, like RFS, and rev_full_simp_tac (rfs) the oldest       *)
+(* first, like FS (HOL4 simpLib GEN_FULL_SIMP_TAC; its help: each          *)
+(* assumption is used to rewrite lower-numbered ones, 0 the oldest).        *)
+(* ------------------------------------------------------------------------- *)
+
+let RFS thl : tactic =
+  fun gl ->
+   let ss = CAKE_AUGMENTED_SS thl in
+   (POP_ASSUM_LIST (fun asms ->
+      let simped =
+        rev_itlist (fun th acc -> CONV_RULE (SIMPLIFY_CONV ss acc) th :: acc)
+                   asms [] in
+      let av = itlist (union o thm_frees) simped [] in
+      MAP_EVERY (CAKE_ASSUME_AV av) simped) THEN
+    kit_fs_merge true ss THEN SIMP_SS ss) gl;;
 
 (* ------------------------------------------------------------------------- *)
 (* Variable elimination.  An assumption v = t or t = v with v a variable not *)
@@ -461,12 +941,59 @@ let POP_LAST_ASSUM (ttac:thm_tactic) : tactic =
 
 (* the steps with the simpset already augmented with thl *)
 
+(* putting a simplified assumption back in GVS: as CAKE_ASSUME_TAC, but a  *)
+(* branch of its case splits is closed at once when it assumes t = C x      *)
+(* while an assumption says t = D y, with C and D different constructors    *)
+(* (GVS would close it later anyway, after many more steps: the nested case *)
+(* equations of an evaluate assumption split into 1395 goals of which a     *)
+(* handful survive)                                                         *)
+
+(* |- F from th : t = C x and an assumption t = D y *)
+let kit_clash ss (asl:(string * thm) list) (th:thm) : thm =
+  let t,r = kit_cons_eq (concl th) in
+  let h = fst(strip_comb r) in
+  let _,a = find (fun (_,a) ->
+              try let t',r' = kit_cons_eq (concl a) in
+                  aconv t' t && not (fst(strip_comb r') = h)
+              with Failure _ -> false) asl in
+  let orient th = if aconv (lhs(concl th)) t then th else SYM th in
+  let eqth = TRANS (SYM (orient a)) (orient th) in
+  let fth = EQ_MP (SIMPLIFY_CONV ss [] (concl eqth)) eqth in
+  if concl fth = cake_false_tm then fth else failwith "kit_clash";;
+
+let rec KIT_GVS_STRIP_AV ss (av:term list) th : tactic =
+  fun (asl,w as gl) ->
+    let c = concl th in
+    if c = cake_true_tm then ALL_TAC gl
+    else if c = cake_false_tm then CONTR_TAC th gl
+    else if is_conj c then
+      let c1,c2 = dest_conj c in
+      CONJUNCTS_THEN2 (KIT_GVS_STRIP_AV ss (union av (frees c2)))
+                      (KIT_GVS_STRIP_AV ss av) th gl
+    else if is_disj c then
+      DISJ_CASES_THEN (KIT_GVS_STRIP_AV ss av) th gl
+    else if is_exists c then
+      let v,_ = dest_exists c in
+      let avoid = itlist (union o thm_frees o snd) asl
+                    (union av (union (frees w)
+                      (union (frees c) (freesl (hyp th))))) in
+      let v' = variant avoid v in
+      X_CHOOSE_THEN v' (KIT_GVS_STRIP_AV ss (v'::av)) th gl
+    else (try CONTR_TAC (kit_clash ss asl th) gl
+          with Failure _ -> ASSUME_TAC th gl);;
+
+let KIT_GVS_ASSUME_TAC ss th =
+  let c = concl th in
+  if c = cake_true_tm then ALL_TAC
+  else if c = cake_false_tm then CONTR_TAC th
+  else KIT_GVS_STRIP_AV ss [] th;;
+
 let GVS_STEP_SS ss : tactic =
   POP_LAST_ASSUM (fun th ->
     ASSUM_LIST (fun asms ->
       let th' = CONV_RULE (SIMPLIFY_CONV ss asms) th in
       if is_eliminable (concl th') then VSUBST_ASM_TAC th'
-      else CAKE_ASSUME_TAC th'));;
+      else KIT_GVS_ASSUME_TAC ss th'));;
 
 let GVS_ONE_PASS_SS ss : tactic =
   fun (asl,w as gl) -> EVERY (replicate (GVS_STEP_SS ss) (length asl)) gl;;
@@ -480,7 +1007,7 @@ let GVS_ONE_PASS thl : tactic =
 let GVS thl : tactic =
   fun gl ->
    let ss = CAKE_AUGMENTED_SS thl in
-   (REPEAT (CHANGED_TAC (GVS_ONE_PASS_SS ss)) THEN SIMP thl THEN
+   (REPEAT (CHANGED_TAC (GVS_ONE_PASS_SS ss)) THEN SIMP_SS ss THEN
     RVEQ_TAC) gl;;
 
 (* ------------------------------------------------------------------------- *)

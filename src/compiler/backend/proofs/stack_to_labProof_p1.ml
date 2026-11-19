@@ -4660,7 +4660,10 @@ let S2LP1AUX_fc_install = prove
                    (cfg,progs,bm)` STRIP_ASSUME_TAC THENL [MESON_TAC[PAIR_SURJECTIVE]; ALL_TAC] THEN
    FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP S2LP1AUX_rel_basic) THEN
    SUBGOAL_THEN `~stack_state_use_stack (s:(A,C,FFI)stack_state)` ASSUME_TAC THENL
-    [ASM_MESON_TAC[stack_to_labProof_state_rel_def]; ALL_TAC] THEN
+    [(* a conjunct of the relation (ASM_MESON_TAC took 34 s) *)
+     FIRST_ASSUM(MP_TAC o GEN_REWRITE_RULE I [stack_to_labProof_state_rel_def]) THEN
+     STRIP_TAC THEN ASM_REWRITE_TAC[];
+     ALL_TAC] THEN
    S2LP1AUX_EVAL_REWRITE_TAC THEN
    ASM_CASES_TAC `?bytes cb. buffer_flush (stack_state_code_buffer (s:(A,C,FFI)stack_state)) w1 w2 =
                     SOME (bytes,cb)` THENL

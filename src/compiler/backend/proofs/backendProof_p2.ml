@@ -836,7 +836,11 @@ let IMP_is_safe_for_space = prove
   SIMP[] THEN DISCH_THEN SUBST1_TAC THEN
   SUBGOAL_THEN `stack_to_lab_config_perf_calls (backend_config_stack_conf x1) = F`
    ASSUME_TAC THENL
-  [ASM_MESON_TAC[to_word_perf_calls; backend_config_ok_def]; ALL_TAC] THEN
+  [(* to_word keeps perf_calls, which backend_config_ok sets to F (ASM_MESON_TAC: 42 s) *)
+   FIRST_ASSUM(MP_TAC o MATCH_MP to_word_perf_calls) THEN DISCH_THEN(SUBST1_TAC o SYM) THEN
+   UNDISCH_TAC `backend_config_ok (asm_conf:(A)asm_config) c` THEN
+   REWRITE_TAC[backend_config_ok_def] THEN STRIP_TAC THEN ASM_REWRITE_TAC[];
+   ALL_TAC] THEN
   BKP2AUX_HDTM_X_ASSUM "word_to_stack_compile" MP_TAC THEN
   ASM_REWRITE_TAC[word_to_stack_compile_def] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN BACKDEFAUX_PAIRARG_TAC THEN
@@ -2618,8 +2622,9 @@ let BKP2AUX_stack_step = prove
    ASM_REWRITE_TAC[IN_SET_OF_LIST];
    REWRITE_TAC[IN_SET_OF_LIST] THEN MESON_TAC[target_io_regs_callee_saved];
    REWRITE_TAC[IN_SET_OF_LIST] THEN MESON_TAC[target_cc_regs_callee_saved];
-   ASM_MESON_TAC[byte_aligned_MOD];
-   ASM_MESON_TAC[byte_aligned_MOD];
+   (* byte_aligned_MOD at the good_dimindex assumption (ASM_MESON_TAC: 12 s each) *)
+   FIRST_ASSUM(fun th -> MESON_TAC[MATCH_MP byte_aligned_MOD th]);
+   FIRST_ASSUM(fun th -> MESON_TAC[MATCH_MP byte_aligned_MOD th]);
    GEN_TAC THEN
    MP_TAC(ISPECL [`target_config (machine_config_target (mc:(A,B,C)machine_config))`; `c:backend_config`;
                   `prog:dec list`; `bytes:byte list`; `bitmaps:(A word)list`; `c':backend_config`;

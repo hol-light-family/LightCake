@@ -73,10 +73,17 @@
 
 ## Proofs
 - Proofs follow the HOL4 proofs, written in HOL Light with the kit's tactics: `SIMP` (simp),
-  `FS` (fs), `GVS` (gvs), `RW` (rw), `RVEQ_TAC`, `CASES_ON` (Cases_on), `TOP_CASE_TAC`,
-  `CASE_TAC`, `EVERY_CASE_TAC`, `PAIRARG_TAC`, `INDUCT_ON` (Induct_on), `DRULE`, `DXRULE`,
-  `DRULE_ALL`, `IRULE`, `IMP_RES_TAC`, `RES_TAC`; `COND_CASE_EQ` and `all_case_eqs()` are HOL4's
-  `bool_case_eq` and `AllCaseEqs()`; HOL Light's own tactics are used freely.
+  `FS` (rfs, see below), `RFS` (fs), `GVS` (gvs), `RW` (rw), `RVEQ_TAC`, `CASES_ON` (Cases_on),
+  `PAIR_CASES_ON` (PairCases_on), `TOP_CASE_TAC`, `CASE_TAC`, `EVERY_CASE_TAC`, `PAIRARG_TAC`,
+  `INDUCT_ON` (Induct_on), `REC_IND_TAC` (recInduct), `DRULE`, `DXRULE`, `DRULE_ALL`, `DRULE_AT`,
+  `IRULE`, `IRULE_AT` (irule_at), `ASM_EXISTS_TAC`, `IMP_RES_TAC`, `RES_TAC`, `FULL_RES_TAC`,
+  `SUFF_TAC`, `SAME_RUN_TAC` (the qpat_abbrev_tac/qsuff_tac idiom for two runs from equal
+  states), `DECIDE_TAC`, `RENAME1` / `RENAME_TAC` (rename1, rename), and the string-quoted
+  `QEXISTS_TAC`, `QSUFF_TAC`, `QPAT_X_ASSUM`, `QSPEC_THEN`, `QCASES_ON`; `COND_CASE_EQ` and
+  `all_case_eqs()` are HOL4's `bool_case_eq` and `AllCaseEqs()`; the markers `ARITH_ss`, `ONCE th`
+  and `ELIM_UNCURRY` can be put in any kit simp list. HOL Light's own tactics are used freely.
+- The kit's `FS` simplifies the assumptions oldest first and `RFS` newest first: HOL4's fs takes
+  the newest first, so HOL4's fs corresponds to `RFS` and its rfs to `FS`.
 - Theorems that HOL4 marks `[simp]` are added to the project simpset with `cake_add_simps`
   when later proofs rely on them.
 - The kit's simplifier tactics use HOL Light's simplifier without its `satisfy_prover` (part of

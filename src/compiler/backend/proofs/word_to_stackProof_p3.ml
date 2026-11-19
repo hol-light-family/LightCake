@@ -2593,7 +2593,12 @@ let word_to_stackProof_comp_correct_Loop = prove
      [MP_TAC(ISPEC `res:((A)wl_result)option` option_CASES) THEN STRIP_TAC THEN
       ASM_REWRITE_TAC[OPTION_MAP_DEF; option_DISTINCT; option_INJ] THEN
       ASM_SIMP_TAC[compile_result_NOT_2]; ALL_TAC] THEN
-     CONJ_TAC THENL [ASM_MESON_TAC[IS_PREFIX_TRANS]; ASM_MESON_TAC[]]] THEN
+     (* ASM_MESON_TAC took 27 s for each conjunct (the context is large) *)
+     CONJ_TAC THENL
+      [MATCH_MP_TAC IS_PREFIX_TRANS THEN
+       EXISTS_TAC `ffi_state_io_events (wl_state_ffi (r:(A,num#C,FFI)wl_state))` THEN
+       ASM_REWRITE_TAC[];
+       FIRST_ASSUM(fun th -> MATCH_MP_TAC th THEN FIRST_ASSUM ACCEPT_TAC)]] THEN
   (FIRST_X_ASSUM(SUBST_ALL_TAC o SYM o check (fun th -> is_eq(concl th) && rhs(concl th) =
     `resb:((A)stack_result)option`)) THEN
     FIRST_X_ASSUM(MP_TAC o check (fun th -> is_cond(concl th) && w2sp3aux_has_const "stackSem_Halt"

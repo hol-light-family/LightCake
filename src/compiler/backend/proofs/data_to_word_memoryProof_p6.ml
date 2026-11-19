@@ -76,16 +76,18 @@ let MP6AUX_IS_ARITH_ASM =
     | _ -> false in
   ok;;
 
-(* each conjunct of the goal by ARITH_TAC from the arithmetic assumptions   *)
-(* that share a variable with it (all of them if that fails)                *)
-let MP6AUX_ASM_ARITH_TAC =
+(* each conjunct of the goal by ARITH_TAC from fewer arithmetic facts, then *)
+(* from all of them (memoryProof_p5's MP5AUX_ARITH_TAC)                      *)
+let MP6AUX_ASM_ARITH_TAC = MP5AUX_ARITH_TAC;;
+
+(* the first stage of MP6AUX_ASM_ARITH_TAC only (deciding a conditional    *)
+(* fails half of the time, and the second stage made each failure slow)     *)
+let MP6AUX_REL_ARITH_TAC =
   let arith1 (asl,w as g) =
     let fv = frees w in
     let rel th = MP6AUX_IS_ARITH_ASM (concl th) &&
                  not (intersect (frees (concl th)) fv = []) in
-    FIRST [REPEAT(FIRST_X_ASSUM(MP_TAC o check rel)) THEN ARITH_TAC;
-           REPEAT(FIRST_X_ASSUM(MP_TAC o check (MP6AUX_IS_ARITH_ASM o concl))) THEN
-           ARITH_TAC] g in
+    (REPEAT(FIRST_X_ASSUM(MP_TAC o check rel)) THEN ARITH_TAC) g in
   REPEAT CONJ_TAC THEN arith1;;
 
 (* decide the conditionals of the goal one by one (by arithmetic from the   *)
@@ -95,9 +97,9 @@ let MP6AUX_COND_DECIDE_TAC (asl,w as g) =
   let tm = find_term is_cond w in
   let c = fst(dest_cond tm) in
   FIRST [SUBGOAL_THEN c (fun th -> REWRITE_TAC[th]) THENL
-           [MP6AUX_ASM_ARITH_TAC; ALL_TAC];
+           [MP6AUX_REL_ARITH_TAC; ALL_TAC];
          SUBGOAL_THEN (mk_neg c) (fun th -> REWRITE_TAC[th]) THENL
-           [MP6AUX_ASM_ARITH_TAC; ALL_TAC];
+           [MP6AUX_REL_ARITH_TAC; ALL_TAC];
          ASM_CASES_TAC c THEN ASM_REWRITE_TAC[]] g;;
 
 let MP6AUX_COND_ARITH_TAC =
@@ -344,7 +346,7 @@ let memory_rel_limit = prove
     ALL_TAC] THEN
   SUBGOAL_THEN `memory_rel c be ts refs sp st (m:A word -> A word_loc) dm
                   [(v1,w1:A word_loc)]` ASSUME_TAC THENL
-   [FIRST_X_ASSUM(MP_TAC o check (can (find_term (fun t -> t = `vars:(data_v#A word_loc)list`)) o concl)) THEN
+   [FIRST_X_ASSUM(MP_TAC o check (can (find_term ((=) `vars:(data_v#A word_loc)list`)) o concl)) THEN
     MATCH_MP_TAC memory_rel_rearrange THEN REWRITE_TAC[MEM] THEN MESON_TAC[];
     ALL_TAC] THEN
   MP_TAC(ISPECL [`c:data_to_word_config`; `be:bool`; `ts:num`;
@@ -461,7 +463,10 @@ let memory_rel_simple_eq = prove
     REWRITE_TAC[injectivity "word_loc"; RIGHT_EXISTS_AND_THM; UNWIND_THM1] THEN
     ASM_CASES_TAC `w1:A word = w2` THENL
      [FIRST_X_ASSUM SUBST_ALL_TAC THEN REWRITE_TAC[] THEN DISCH_TAC THEN
-      MATCH_MP_TAC memory_rel_ptr_eq THEN ASM_MESON_TAC[];
+      (* memory_rel_ptr_eq forward from the assumptions (ASM_MESON_TAC: 20 s) *)
+      (let gd = ASSUME `good_dimindex(:A)` in
+       FIRST_ASSUM(fun mem -> FIRST_ASSUM(fun eq ->
+         ACCEPT_TAC(MATCH_MP memory_rel_ptr_eq (CONJ mem (CONJ eq gd))))));
       ALL_TAC] THEN
     ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
     SUBGOAL_THEN `~(data_isClos a1 (a2:data_v list)) /\
@@ -702,8 +707,7 @@ let word_eq_min_max_clock = prove
                    SOME (res,l',ck1'))`,
   REPEAT GEN_TAC THEN CONJ_TAC THEN REPEAT GEN_TAC THEN DISCH_TAC THEN
   (SUBGOAL_THEN `?d. MIN (MAX a x) (MAX b y) = MIN a b + d` (CHOOSE_THEN SUBST1_TAC) THENL
-    [EXISTS_TAC `MIN (MAX a x) (MAX b y) - MIN a b` THEN REWRITE_TAC[MIN; MAX] THEN
-     ARITH_TAC;
+    [EXISTS_TAC `MIN (MAX a x) (MAX b y) - MIN a b` THEN ARITH_TAC;
      ALL_TAC]) THEN
   (FIRST_X_ASSUM(MP_TAC o SPEC `d:num` o MATCH_MP (CONJUNCT1 word_eq_add_clock)) ORELSE
    FIRST_X_ASSUM(MP_TAC o SPEC `d:num` o MATCH_MP (CONJUNCT2 word_eq_add_clock))) THEN
@@ -1345,7 +1349,7 @@ let MP6AUX_WEQ_NUM = prove
       (CONJ (MATCH_MP memory_rel_swap th) (ASSUME `good_dimindex(:A)`)))) THEN
     REWRITE_TAC[injectivity "word_loc"; RIGHT_EXISTS_AND_THM; UNWIND_THM1] THEN
     ASM_CASES_TAC `bit 0 (w1:A word)` THEN ASM_CASES_TAC `bit 0 (w2:A word)` THEN
-    ASM_REWRITE_TAC[] THEN REPEAT STRIP_TAC THEN ASM_MESON_TAC[]] THEN
+    ASM_REWRITE_TAC[] THEN REPEAT STRIP_TAC THEN MP5AUX_FAST_MESON_TAC[]] THEN
   ASM_REWRITE_TAC[] THEN FIRST_X_ASSUM(STRIP_ASSUME_TAC) THEN
   FIRST_ASSUM(MP_TAC o MATCH_MP MP6AUX_NUM_BIG_ADDR o
     (fun th -> end_itlist CONJ [th; ASSUME `good_dimindex(:A)`; ASSUME `bit 0 (w1:A word)`])) THEN
@@ -1467,7 +1471,7 @@ let MP6AUX_WEQ_W64 = prove
   SUBGOAL_THEN `~(word_and h1 (word 12) = word 0:A word)` (fun th -> REWRITE_TAC[th]) THENL
    [ONCE_REWRITE_TAC[WORD_AND_SYM] THEN ASM_SIMP_TAC[bit_pattern_1100]; ALL_TAC] THEN
   SUBGOAL_THEN `dimindex(:A) = 32 \/ dimindex(:A) = 64` MP_TAC THENL
-   [ASM_MESON_TAC[good_dimindex_def]; ALL_TAC] THEN
+   [UNDISCH_TAC `good_dimindex(:A)` THEN REWRITE_TAC[good_dimindex_def]; ALL_TAC] THEN
   STRIP_TAC THEN
   REPEAT(FIRST_X_ASSUM(MP_TAC o check (is_cond o concl))) THEN ASM_REWRITE_TAC[] THEN
   CONV_TAC NUM_REDUCE_CONV THEN REPEAT STRIP_TAC THEN
@@ -1524,7 +1528,7 @@ let MP6AUX_REF_CLASS = prove
   DISCH_THEN(X_CHOOSE_THEN `w':A word` (X_CHOOSE_THEN `a':A word`
     (X_CHOOSE_THEN `x':A word` STRIP_ASSUME_TAC))) THEN
   (SUBGOAL_THEN `x':A word = x` SUBST_ALL_TAC THENL
-    [ASM_MESON_TAC[option_INJ; injectivity "word_loc"]; ALL_TAC]) THEN
+    [MP5AUX_FAST_MESON_TAC[option_INJ; injectivity "word_loc"]; ALL_TAC]) THEN
   ASM_REWRITE_TAC[] THEN ASM_MESON_TAC[]);;
 
 let MP6AUX_BA_HDR = prove
@@ -1539,7 +1543,7 @@ let MP6AUX_BA_HDR = prove
   REWRITE_TAC[injectivity "word_loc"] THEN
   DISCH_THEN(X_CHOOSE_THEN `w':A word` (X_CHOOSE_THEN `a':A word`
     (X_CHOOSE_THEN `x':A word` STRIP_ASSUME_TAC))) THEN
-  ASM_MESON_TAC[option_INJ; injectivity "word_loc"]);;
+  MP5AUX_FAST_MESON_TAC[option_INJ; injectivity "word_loc"]);;
 
 let MP6AUX_REF_CASES_TAC (asl,w as g) =
   let v = find (fun v -> type_of v = `:data_v bvl_ref`) (frees w) in
@@ -1589,9 +1593,9 @@ let MP6AUX_BA_USHR = prove
   DISCH_THEN(X_CHOOSE_THEN `w':A word` (X_CHOOSE_THEN `a':A word`
     (X_CHOOSE_THEN `x':A word` STRIP_ASSUME_TAC))) THEN
   (SUBGOAL_THEN `x':A word = x` SUBST_ALL_TAC THENL
-    [ASM_MESON_TAC[option_INJ; injectivity "word_loc"]; ALL_TAC]) THEN
+    [MP5AUX_FAST_MESON_TAC[option_INJ; injectivity "word_loc"]; ALL_TAC]) THEN
   SUBGOAL_THEN `dimindex(:A) = 32 \/ dimindex(:A) = 64` MP_TAC THENL
-   [ASM_MESON_TAC[good_dimindex_def]; ALL_TAC] THEN
+   [UNDISCH_TAC `good_dimindex(:A)` THEN REWRITE_TAC[good_dimindex_def]; ALL_TAC] THEN
   STRIP_TAC THEN
   FIRST_X_ASSUM(MP_TAC o check (is_cond o concl)) THEN ASM_REWRITE_TAC[dimword_def] THEN
   CONV_TAC NUM_REDUCE_CONV THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN ASM_ARITH_TAC);;
@@ -1684,7 +1688,7 @@ let MP6AUX_WEQ_REF = prove
                   (b <=> res = word 1) /\ l <= l1 + n * dimword(:A)`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP MP6AUX_VB_REF) THEN
-  FIRST_X_ASSUM(SUBST_ALL_TAC o check (fun th -> concl th = `n = 1`)) THEN
+  FIRST_X_ASSUM(SUBST_ALL_TAC o check ((=) `n = 1` o concl)) THEN
   REWRITE_TAC[MULT_CLAUSES] THEN RULE_ASSUM_TAC(REWRITE_RULE[MULT_CLAUSES]) THEN
   MP_TAC(MATCH_MP MP6AUX_WORD_01 (ASSUME `good_dimindex(:A)`)) THEN STRIP_TAC THEN
   ONCE_REWRITE_TAC[word_eq_def] THEN
@@ -1705,13 +1709,13 @@ let MP6AUX_WEQ_REF = prove
   REWRITE_TAC[injectivity "word_loc"] THEN
   DISCH_THEN(X_CHOOSE_THEN `u1:A word` (X_CHOOSE_THEN `y1:A word`
     (X_CHOOSE_THEN `h1:A word` STRIP_ASSUME_TAC))) THEN
-  FIRST_X_ASSUM(SUBST_ALL_TAC o SYM o check (fun th -> concl th = `w1:A word = u1`)) THEN
+  FIRST_X_ASSUM(SUBST_ALL_TAC o SYM o check ((=) `w1:A word = u1` o concl)) THEN
   FIRST_ASSUM(fun th -> MP_TAC(MATCH_MP memory_rel_RefPtr_T_IMP
     (CONJ (MATCH_MP memory_rel_tail th) (ASSUME `good_dimindex(:A)`)))) THEN
   REWRITE_TAC[injectivity "word_loc"] THEN
   DISCH_THEN(X_CHOOSE_THEN `u2:A word` (X_CHOOSE_THEN `y2:A word`
     (X_CHOOSE_THEN `h2:A word` STRIP_ASSUME_TAC))) THEN
-  FIRST_X_ASSUM(SUBST_ALL_TAC o SYM o check (fun th -> concl th = `w2:A word = u2`)) THEN
+  FIRST_X_ASSUM(SUBST_ALL_TAC o SYM o check ((=) `w2:A word = u2` o concl)) THEN
   ASM_REWRITE_TAC[] THEN
   SUBGOAL_THEN `word_header c st (w1:A word) dm m = SOME (y1,h1) /\
                 word_header c st (w2:A word) dm m = SOME (y2,h2)`
@@ -1720,7 +1724,7 @@ let MP6AUX_WEQ_REF = prove
   CASE_REWRITE_TAC[] THEN
   SUBGOAL_THEN `~(word_and h1 (word 12) = word 0:A word)` (fun th -> REWRITE_TAC[th]) THENL
    [ONCE_REWRITE_TAC[WORD_AND_SYM] THEN ASM_SIMP_TAC[bit_pattern_1100] THEN
-    FIRST_ASSUM(MP_TAC o check (fun th -> concl th = `bit 3 (h1:A word) <=> ~bit 2 h1`)) THEN
+    FIRST_ASSUM(MP_TAC o check ((=) `bit 3 (h1:A word) <=> ~bit 2 h1` o concl)) THEN
     CONV_TAC TAUT;
     ALL_TAC] THEN
   MP_TAC(SPECL [`c:data_to_word_config`; `be:bool`; `ts:num`; `refs:(data_v bvl_ref)spt`;
@@ -1747,7 +1751,7 @@ let MP6AUX_WEQ_REF = prove
      [ASM_REWRITE_TAC[]; ALL_TAC] THEN
     MAP_EVERY EXISTS_TAC [`word 0:A word`; `l:num`; `ck:num`] THEN ASM_REWRITE_TAC[LE_ADD] THEN
     ASM_CASES_TAC `h1:A word = h2` THENL [ALL_TAC; ASM_REWRITE_TAC[]] THEN
-    FIRST_X_ASSUM(SUBST_ALL_TAC o SYM o check (fun th -> concl th = `h1:A word = h2`)) THEN
+    FIRST_X_ASSUM(SUBST_ALL_TAC o SYM o check ((=) `h1:A word = h2` o concl)) THEN
     REWRITE_TAC[] THEN
     ASM_CASES_TAC `bit 2 (h1:A word)` THEN ASM_REWRITE_TAC[] THEN
     ASM_CASES_TAC `bit 4 (h1:A word)` THEN ASM_REWRITE_TAC[] THEN
@@ -1783,7 +1787,7 @@ let MP6AUX_WEQ_REF = prove
     ANTS_TAC THENL [FIRST_ASSUM(ACCEPT_TAC o MATCH_MP memory_rel_tail); ALL_TAC] THEN
     DISCH_THEN SUBST1_TAC THEN DISCH_THEN SUBST1_TAC THEN REWRITE_TAC[]] THEN
   (* same header: compare the bytes *)
-  FIRST_X_ASSUM(SUBST_ALL_TAC o SYM o check (fun th -> concl th = `h1:A word = h2`)) THEN
+  FIRST_X_ASSUM(SUBST_ALL_TAC o SYM o check ((=) `h1:A word = h2` o concl)) THEN
   MP_TAC(SPECL [`c:data_to_word_config`; `be:bool`; `ts:num`; `refs:(data_v bvl_ref)spt`;
     `sp:num`; `st:(store_name,A word_loc)fmap`; `m:A word -> A word_loc`; `dm:A word->bool`;
     `p1:num`; `p2:num`; `w1:A word`; `w2:A word`; `vars:(data_v#A word_loc)list`;
@@ -1888,7 +1892,7 @@ let MP6AUX_WEQ_BLOCK = prove
                                                data_isClos t2 (vs2:data_v list)`) o
       check (fun th -> is_imp(concl th) && is_disj(lhand(concl th)))) THEN
     STRIP_TAC THEN
-    FIRST_X_ASSUM(SUBST_ALL_TAC o check (fun th -> concl th = `n = 1`)) THEN
+    FIRST_X_ASSUM(SUBST_ALL_TAC o check ((=) `n = 1` o concl)) THEN
     SUBGOAL_THEN `bit 0 (w1:A word) /\ bit 0 (w2:A word)` STRIP_ASSUME_TAC THENL
      [CONJ_TAC THEN MATCH_MP_TAC MP6AUX_CLOS_BIT0 THENL
        [EXISTS_TAC `vs1:data_v list` THEN EXISTS_TAC `t1:num`;
@@ -1938,8 +1942,7 @@ let MP6AUX_WEQ_BLOCK = prove
     ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
     MP6AUX_EX3_TAC THEN ASM_REWRITE_TAC[LE_ADD]] THEN
   (* two pointers: compare the headers *)
-  FIRST_X_ASSUM(STRIP_ASSUME_TAC o check (fun th -> concl th =
-    `bit 0 (w1:A word) /\ bit 0 (w2:A word)`)) THEN
+  FIRST_X_ASSUM(STRIP_ASSUME_TAC o check ((=) `bit 0 (w1:A word) /\ bit 0 (w2:A word)` o concl)) THEN
   ASM_REWRITE_TAC[] THEN
   REMOVE_THEN "p1" (MP_TAC o C MP (ASSUME `bit 0 (w1:A word)`)) THEN
   DISCH_THEN(X_CHOOSE_THEN `a1:A word` (X_CHOOSE_THEN `x1:A word` STRIP_ASSUME_TAC)) THEN
@@ -1975,14 +1978,14 @@ let MP6AUX_WEQ_BLOCK = prove
     ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
     MP6AUX_EX3_TAC THEN ASM_REWRITE_TAC[LE_ADD]] THEN
   (* equal headers: equal tags and lengths, compare the elements *)
-  FIRST_X_ASSUM(SUBST_ALL_TAC o SYM o check (fun th -> concl th = `x1:A word = x2`)) THEN
+  FIRST_X_ASSUM(SUBST_ALL_TAC o SYM o check ((=) `x1:A word = x2` o concl)) THEN
   REWRITE_TAC[] THEN
   MP_TAC(ISPECL [`c:data_to_word_config`; `4 * t1`; `LENGTH (vs1:data_v list)`; `4 * t2`;
     `LENGTH (vs2:data_v list)`; `x1:A word`; `x1:A word`] encode_header_EQ) THEN
   ASM_REWRITE_TAC[] THEN
   ANTS_TAC THENL [FIRST_ASSUM(ACCEPT_TAC o MATCH_MP MP6AUX_MEMREL_LEN_SIZE); ALL_TAC] THEN
   REWRITE_TAC[ARITH_RULE `4 * a = 4 * b <=> a = b`] THEN STRIP_TAC THEN
-  FIRST_X_ASSUM(SUBST_ALL_TAC o SYM o check (fun th -> concl th = `t1:num = t2`)) THEN
+  FIRST_X_ASSUM(SUBST_ALL_TAC o SYM o check ((=) `t1:num = t2` o concl)) THEN
   FIRST_X_ASSUM(MP_TAC o check (fun th -> is_imp (concl th) && is_exists (rand (concl th)))) THEN
   ASM_REWRITE_TAC[] THEN
   DISCH_THEN(X_CHOOSE_THEN `k:num` (CONJUNCTS_THEN2 ASSUME_TAC SUBST_ALL_TAC)) THEN
@@ -2052,7 +2055,10 @@ let MP6AUX_VB_LIST_CONS = prove
 let MP6AUX_MINMAX_CK = prove
  (`!a x b y. MIN (MAX (1 + a) x) (MAX (1 + b) y) - 1 = MIN (MAX a (x - 1)) (MAX b (y - 1)) /\
              MIN (MAX x (a + 1)) (MAX y (b + 1)) = MIN (MAX (1 + a) x) (MAX (1 + b) y)`,
-  REWRITE_TAC[MIN; MAX] THEN REPEAT GEN_TAC THEN REPEAT COND_CASES_TAC THEN ASM_ARITH_TAC);;
+  (* subtraction commutes with MIN and MAX (the 64-way case split took 28 s) *)
+  REWRITE_TAC[ARITH_RULE `!m n k. MIN m n - k = MIN (m - k) (n - k)`;
+              ARITH_RULE `!m n k. MAX m n - k = MAX (m - k) (n - k)`; ADD_SUB2] THEN
+  ARITH_TAC);;
 
 let MP6AUX_NOT_LOC_WORD = prove
  (`!c be ts refs sp st (m:A word -> A word_loc) dm v x vars.
@@ -2116,8 +2122,7 @@ let MP6AUX_WEQ_CONS = prove
     ALL_TAC] THEN
   SUBGOAL_THEN `n0 + 1 <= n` ASSUME_TAC THENL
    [USE_THEN "vb" (DISJ_CASES_THEN STRIP_ASSUME_TAC) THEN ASM_ARITH_TAC; ALL_TAC] THEN
-  FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP MP6AUX_VB_NOT_LOC o check (fun th ->
-    concl th = `vb_eq_size (refs:(data_v bvl_ref)spt) h1 h2 = SOME (n0,y)`)) THEN
+  FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP MP6AUX_VB_NOT_LOC o check ((=) `vb_eq_size (refs:(data_v bvl_ref)spt) h1 h2 = SOME (n0,y)` o concl)) THEN
   FIRST_ASSUM(fun mr -> MP_TAC(MATCH_MP MP6AUX_NOT_LOC_WORD (end_itlist CONJ
     [mr; ASSUME `!ptr. ~(h1 = data_RefPtr F ptr)`; ASSUME `!n. ~(h1 = data_CodePtr n)`]))) THEN
   DISCH_THEN(X_CHOOSE_TAC `c1:A word`) THEN
@@ -2147,8 +2152,7 @@ let MP6AUX_WEQ_CONS = prove
                 (y ==> ?m0. vb_eq_size_list (refs:(data_v bvl_ref)spt) t1 t2 = SOME (m0,b) /\
                             n = m0 + n0 + 1)` STRIP_ASSUME_TAC THENL
    [REMOVE_THEN "vb" (DISJ_CASES_THEN STRIP_ASSUME_TAC) THEN
-    FIRST_X_ASSUM(MP_TAC o check (fun th -> concl th =
-      `vb_eq_size (refs:(data_v bvl_ref)spt) h1 h2 = SOME (n0,y)`)) THEN
+    FIRST_X_ASSUM(MP_TAC o check ((=) `vb_eq_size (refs:(data_v bvl_ref)spt) h1 h2 = SOME (n0,y)` o concl)) THEN
     ASM_REWRITE_TAC[option_INJ; PAIR_EQ] THEN DISCH_TAC THEN ASM_REWRITE_TAC[] THEN
     TRY(EXISTS_TAC `m0:num` THEN ASM_REWRITE_TAC[]);
     ALL_TAC] THEN
@@ -2181,7 +2185,7 @@ let MP6AUX_WEQ_CONS = prove
   SUBGOAL_THEN `y:bool` ASSUME_TAC THENL [ASM_REWRITE_TAC[]; ALL_TAC] THEN
   FIRST_X_ASSUM(X_CHOOSE_THEN `m0:num` STRIP_ASSUME_TAC o C MATCH_MP (ASSUME `y:bool`) o
     check (fun th -> is_imp (concl th) && is_var (lhand (concl th)))) THEN
-  FIRST_X_ASSUM(SUBST_ALL_TAC o check (fun th -> concl th = `n = m0 + n0 + 1`)) THEN
+  FIRST_X_ASSUM(SUBST_ALL_TAC o check ((=) `n = m0 + n0 + 1` o concl)) THEN
   SUBGOAL_THEN `~(l1 = 0) /\ m0 * dimword(:A) < l1 - 1` STRIP_ASSUME_TAC THENL
    [UNDISCH_TAC `l - 1 <= l1 + n0 * dimword(:A)` THEN
     UNDISCH_TAC `(m0 + n0 + 1) * dimword(:A) < l` THEN
@@ -2254,7 +2258,7 @@ let word_eq_thm0 = prove
     STRUCT_CASES_TAC(SPEC `v2:data_v` (CONJUNCT1 (cases "data_v"))) THEN
     REWRITE_TAC[vb_eq_size_def; option_DISTINCT; distinctness "data_v"; injectivity "data_v"] THENL
      [REWRITE_TAC[option_INJ; PAIR_EQ] THEN REPEAT GEN_TAC THEN STRIP_TAC THEN
-      FIRST_X_ASSUM(SUBST_ALL_TAC o SYM o check (fun th -> concl th = `1 = n`)) THEN
+      FIRST_X_ASSUM(SUBST_ALL_TAC o SYM o check ((=) `1 = n` o concl)) THEN
       FIRST_X_ASSUM(SUBST_ALL_TAC o SYM o check (fun th -> is_eq (concl th) &&
         rhs (concl th) = `b:bool`)) THEN
       RULE_ASSUM_TAC(REWRITE_RULE[MULT_CLAUSES]) THEN REWRITE_TAC[MULT_CLAUSES] THEN
@@ -2262,7 +2266,7 @@ let word_eq_thm0 = prove
       MAP_EVERY EXISTS_TAC [`be:bool`; `ts:num`; `refs:(data_v bvl_ref)spt`; `sp:num`;
         `vars:(data_v#A word_loc)list`] THEN ASM_REWRITE_TAC[];
       REWRITE_TAC[option_INJ; PAIR_EQ] THEN REPEAT GEN_TAC THEN STRIP_TAC THEN
-      FIRST_X_ASSUM(SUBST_ALL_TAC o SYM o check (fun th -> concl th = `1 = n`)) THEN
+      FIRST_X_ASSUM(SUBST_ALL_TAC o SYM o check ((=) `1 = n` o concl)) THEN
       FIRST_X_ASSUM(SUBST_ALL_TAC o SYM o check (fun th -> is_eq (concl th) &&
         rhs (concl th) = `b:bool`)) THEN
       RULE_ASSUM_TAC(REWRITE_RULE[MULT_CLAUSES]) THEN REWRITE_TAC[MULT_CLAUSES] THEN
@@ -2287,7 +2291,7 @@ let word_eq_thm0 = prove
      [TRY DISCH_TAC THEN REPEAT GEN_TAC THEN REWRITE_TAC[vb_eq_size_def; option_INJ; PAIR_EQ] THEN
       STRIP_TAC THEN ONCE_REWRITE_TAC[CONJUNCT2 word_eq_def] THEN REWRITE_TAC[] THEN
       MP6AUX_EX3_TAC THEN
-      FIRST_X_ASSUM(SUBST_ALL_TAC o SYM o check (fun th -> concl th = `0 = n`)) THEN
+      FIRST_X_ASSUM(SUBST_ALL_TAC o SYM o check ((=) `0 = n` o concl)) THEN
       ASM_REWRITE_TAC[LE_ADD; MULT_CLAUSES; ADD_CLAUSES; LE_REFL];
       STRIP_TAC THEN
       MATCH_MP_TAC(REWRITE_RULE[NOT_CONS_NIL; CONS_11; LENGTH; NOT_SUC] MP6AUX_WEQ_CONS) THEN
@@ -2356,7 +2360,7 @@ let word_mem_eq_thm = prove
     `set_sep_one (a:A word,wl_Word (h:A word)) STAR ff`] o check (fun th ->
       can (find_term (fun t -> is_const t && fst(dest_const t) = "word_mem_eq"))
         (concl th) && is_forall (concl th) &&
-      can (find_term (fun t -> t = `t:(A word)list`)) (concl th))) THEN
+      can (find_term ((=) `t:(A word)list`)) (concl th))) THEN
   ASM_REWRITE_TAC[] THEN DISCH_THEN MATCH_MP_TAC THEN
   FIRST_X_ASSUM(MP_TAC o check (fun th -> can (find_term (fun t -> is_const t &&
     fst(dest_const t) = "fun2set")) (concl th))) THEN
@@ -2552,7 +2556,7 @@ let memory_rel_Word64_const_test = prove
   EXISTS_TAC `get_addr c ptr (wl_Word (word 0)):A word` THEN EXISTS_TAC `x:A word` THEN
   ASM_REWRITE_TAC[] THEN
   SUBGOAL_THEN `dimindex(:A) = 32 \/ dimindex(:A) = 64` MP_TAC THENL
-   [ASM_MESON_TAC[good_dimindex_def]; ALL_TAC] THEN
+   [UNDISCH_TAC `good_dimindex(:A)` THEN REWRITE_TAC[good_dimindex_def]; ALL_TAC] THEN
   STRIP_TAC THEN
   REPEAT(FIRST_X_ASSUM(MP_TAC o check (is_cond o concl))) THEN
   ASM_REWRITE_TAC[] THEN CONV_TAC NUM_REDUCE_CONV THEN REPEAT STRIP_TAC THEN
@@ -2697,7 +2701,7 @@ let MP6AUX_BYTEARRAY_BOUNDS = prove
   DISCH_THEN(X_CHOOSE_THEN `w:A word` (X_CHOOSE_THEN `a:A word`
     (X_CHOOSE_THEN `x:A word` (MP_TAC o last o CONJUNCTS)))) THEN
   SUBGOAL_THEN `dimindex(:A) = 32 \/ dimindex(:A) = 64` MP_TAC THENL
-   [ASM_MESON_TAC[good_dimindex_def]; ALL_TAC] THEN
+   [UNDISCH_TAC `good_dimindex(:A)` THEN REWRITE_TAC[good_dimindex_def]; ALL_TAC] THEN
   STRIP_TAC THEN ASM_REWRITE_TAC[byte_len_def] THEN STRIP_TAC THEN
   RULE_ASSUM_TAC(CONV_RULE NUM_REDUCE_CONV) THEN CONV_TAC NUM_REDUCE_CONV THENL
    [MP_TAC(ISPECL [`x:A word`; `dimindex(:A) - data_to_word_config_len_size c - 2`;
@@ -3274,7 +3278,7 @@ let MP6AUX_STORE_SECOND' = prove
           memory_rel c be ts (insert p2 (bvl_ByteArray fl_ys (LUPDATE b k ys)) refs)
             sp st m1 dm
             (CONS (data_RefPtr bl1 p1,v1) (CONS (data_RefPtr bl2 p2,wl_Word w2) vars))`,
-  MESON_TAC[MP6AUX_STORE_SECOND]);;
+  REPEAT STRIP_TAC THEN MATCH_MP_TAC MP6AUX_STORE_SECOND THEN ASM_REWRITE_TAC[]);;
 
 (* one store into the second array: the memory_rel assumption is replaced *)
 let MP6AUX_STORE_TAC a2 k b =
@@ -4113,7 +4117,11 @@ let MP6AUX_COPY_BWD_CHAIN4 = prove
    [ASM_ARITH_TAC; ALL_TAC] THEN
   ASM_SIMP_TAC[MP6AUX_LENGTH_COPY_BWD; LENGTH_LUPDATE] THEN
   REPEAT STRIP_TAC THEN ASM_SIMP_TAC[EL_LUPDATE; LENGTH_LUPDATE] THEN
-  MP6AUX_COPY_BWD_FINISH_TAC);;
+  (* the position of n decides every conditional (FINISH_TAC: 41 s) *)
+  MP6AUX_EL_COPY_BWD_TAC THEN
+  SUBGOAL_THEN `n + 4 <= yp \/ n = yp - 3 \/ n = yp - 2 \/ n = yp - 1 \/ n = yp \/ yp < n`
+    MP_TAC THENL [ASM_ARITH_TAC; STRIP_TAC] THEN
+  MP6AUX_COND_ARITH_TAC);;
 
 let MP6AUX_COPY_BWD_SPLIT = prove
  (`!n xp (xs:A list) yp ys.
@@ -4768,7 +4776,7 @@ let memory_rel_write_bytearray_lemma = prove
   DISCH_THEN(X_CHOOSE_THEN `w':A word` (X_CHOOSE_THEN `a':A word`
     (X_CHOOSE_THEN `x1:A word` (fun th -> let l = CONJUNCTS th in
        MAP_EVERY (fun i -> ASSUME_TAC (el i l)) [0;6;10;11])))) THEN
-  FIRST_X_ASSUM(SUBST_ALL_TAC o SYM o check (fun th -> concl th = `w:A word = w'`)) THEN
+  FIRST_X_ASSUM(SUBST_ALL_TAC o SYM o check ((=) `w:A word = w'` o concl)) THEN
   SUBGOAL_THEN `a':A word = a` SUBST_ALL_TAC THENL
    [UNDISCH_TAC `get_real_simple_addr c st w = SOME (a':A word)` THEN
     ASM_REWRITE_TAC[option_INJ] THEN MESON_TAC[];

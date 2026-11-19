@@ -16,7 +16,8 @@
 (*                     = rec_fi_fupd h (rec_fj_fupd g r)   (i < j)           *)
 (*   rec_component_equality   r1 = r2 <=> rec_f1 r1 = rec_f1 r2 /\ ...       *)
 (* all but the last registered in the project simpset (HOL4's srw_ss does    *)
-(* the same).                                                                *)
+(* the same).  At the end: SAME_RUN_TAC thl and SAME_RUN_SUFF_TAC, for the    *)
+(* same run of a function from states proved equal (simulation proofs).      *)
 (* ========================================================================= *)
 
 type record_info =
@@ -147,3 +148,121 @@ let cake_record (name:string) (fields:(string * string) list) =
   cake_add_global_simps ([accessors; fupds; accfupds; fupdfupds; K_o_THM; KLAM_o_THM] @
                   (if fupdcanon = TRUTH then [] else [fupdcanon]));
   ri;;
+
+(* ------------------------------------------------------------------------- *)
+(* SAME_RUN_TAC thl: the goal mentions a run f (p, s1, ...) (an application  *)
+(* of a constant; its arguments split at the pairs) and an assumption or    *)
+(* the goal another run f (p, s2, ...) of the same function on the same     *)
+(* first argument p.  The different arguments are proved equal (records by  *)
+(* their component equality, then SIMP thl, then DECIDE_TAC), the run of    *)
+(* the goal is replaced by the other one, and an assumption f (p, s2) = v   *)
+(* is used to rewrite it.  The candidates are tried in this order: runs of   *)
+(* assumptions f (...) = v (newest first), runs inside assumptions, runs    *)
+(* of the goal; the first one whose arguments are proved equal is taken (at *)
+(* most kit_same_run_max of them are tried).  A run differs from the other  *)
+(* in at least one argument of a record type (cake_record): the state.      *)
+(* SAME_RUN_SUFF_TAC: the same with the first candidate, leaving the        *)
+(* equality of the arguments as a second goal (HOL4 qsuff_tac `pat1 =      *)
+(* pat2` after qpat_abbrev_tac).  Both close the goal when it is then an     *)
+(* assumption or a reflexive equation.                                       *)
+(* ------------------------------------------------------------------------- *)
+
+(* applications of constants (not constructors or pairs) in tm that contain *)
+(* no variable bound in tm                                                   *)
+let kit_free_apps (tm:term) : term list =
+  let acc = ref [] in
+  let rec go bvs t =
+    match t with
+      Comb(f,x) ->
+        let h,args = strip_comb t in
+        (if is_const h && args <> [] && not (is_constructor_app t) &&
+            not (fst(dest_const h) = ",") && not (exists (fun v -> vfree_in v t) bvs)
+         then acc := t :: !acc);
+        go bvs f; go bvs x
+    | Abs(v,b) -> go (v::bvs) b
+    | _ -> () in
+  go [] tm; rev !acc;;
+
+let rec kit_flat_pair t = if is_pair t then let a,b = dest_pair t in a :: kit_flat_pair b else [t];;
+
+let kit_run_args t = let _,args = strip_comb t in flat (map kit_flat_pair args);;
+
+(* t1 and t2 are runs of the same function on the same first argument, and *)
+(* they differ in an argument of a record type (a state)                    *)
+let kit_is_record_ty ty =
+  try let n,_ = dest_type ty in can record_info n with Failure _ -> false;;
+
+let kit_same_run t1 t2 =
+  not (t1 = t2) &&
+  let h1,a1 = strip_comb t1 and h2,a2 = strip_comb t2 in
+  h1 = h2 && length a1 = length a2 &&
+  let c1 = kit_run_args t1 and c2 = kit_run_args t2 in
+  length c1 = length c2 && length c1 >= 2 && aconv (hd c1) (hd c2) &&
+  forall2 (fun x y -> type_of x = type_of y) c1 c2 &&
+  List.exists2 (fun x y -> not (aconv x y) && kit_is_record_ty (type_of x)) c1 c2;;
+
+(* |- t1 = t2 from the equations of the different components *)
+let rec kit_cong_of (eqs:thm list) (t1:term) (t2:term) : thm =
+  if aconv t1 t2 then ALPHA t1 t2 else
+  try find (fun th -> let l,r = dest_eq(concl th) in aconv l t1 && aconv r t2) eqs
+  with Failure _ ->
+    match t1,t2 with
+      Comb(f1,x1),Comb(f2,x2) -> MK_COMB(kit_cong_of eqs f1 f2,kit_cong_of eqs x1 x2)
+    | _ -> failwith "kit_cong_of";;
+
+(* the component-equality theorem of a record type, if there is one *)
+let kit_component_equality (ty:hol_type) =
+  try (record_info (fst(dest_type ty))).ri_component_equality
+  with Failure _ -> failwith "no record";;
+
+let SAME_ARGS_TAC thl : tactic = fun (asl,w as g) ->
+  let l,_ = dest_eq w in
+  ((try GEN_REWRITE_TAC I [kit_component_equality (type_of l)] with Failure _ -> ALL_TAC) THEN
+   SIMP thl THEN REPEAT CONJ_TAC THEN DECIDE_TAC) g;;
+
+(* the candidate pairs (goal run, other run, the assumption equation if any) *)
+let kit_run_candidates ((asl,w):goal) =
+  let gruns = kit_free_apps w in
+  let asms = map snd asl in
+  let eq_runs = mapfilter (fun th ->
+      let l,_ = dest_eq (concl th) in
+      if is_comb l && is_const (fst(strip_comb l)) then (l,Some th) else failwith "") asms in
+  let in_asms = flat (map (fun th -> map (fun t -> t,None) (kit_free_apps (concl th))) asms) in
+  let in_goal = map (fun t -> t,None) gruns in
+  let others = eq_runs @ in_asms @ in_goal in
+  flat (map (fun (t2,eo) ->
+      mapfilter (fun t1 -> if kit_same_run t1 t2 then (t1,t2,eo) else failwith "") gruns)
+    others);;
+
+let kit_same_run_finish (t1,t2,eo) (eqth:thm) : tactic =
+  SUBST1_TAC eqth THEN
+  (match eo with
+     Some th -> GEN_REWRITE_TAC ONCE_DEPTH_CONV [th]
+   | None -> ALL_TAC) THEN
+  TRY (FIRST_ASSUM ACCEPT_TAC ORELSE REFL_TAC);;
+
+let kit_same_run_max = ref 20;;
+
+let SAME_RUN_TAC thl : tactic = fun (asl,w as g) ->
+  let cands = kit_run_candidates g in
+  let cands = if length cands > !kit_same_run_max
+              then fst (chop_list (!kit_same_run_max) cands) else cands in
+  let try_cand (t1,t2,eo as c) =
+    let c1 = kit_run_args t1 and c2 = kit_run_args t2 in
+    let diffs = filter (fun (x,y) -> not (aconv x y)) (zip c1 c2) in
+    let eqs = map (fun (x,y) -> TAC_PROOF((asl,mk_eq(x,y)),SAME_ARGS_TAC thl)) diffs in
+    let eqth = kit_cong_of eqs t1 t2 in
+    kit_same_run_finish c eqth g in
+  try tryfind try_cand cands
+  with Failure _ -> failwith "SAME_RUN_TAC: no run with provably equal arguments";;
+
+let SAME_RUN_SUFF_TAC : tactic = fun (asl,w as g) ->
+  match kit_run_candidates g with
+    [] -> failwith "SAME_RUN_SUFF_TAC: no run"
+  | (t1,t2,eo as c)::_ ->
+      let c1 = kit_run_args t1 and c2 = kit_run_args t2 in
+      let diffs = filter (fun (x,y) -> not (aconv x y)) (zip c1 c2) in
+      let eqtm = list_mk_conj (map mk_eq diffs) in
+      (SUFF_TAC eqtm THENL
+        [DISCH_THEN (fun th -> kit_same_run_finish c (kit_cong_of (CONJUNCTS th) t1 t2));
+         ALL_TAC]) g;;

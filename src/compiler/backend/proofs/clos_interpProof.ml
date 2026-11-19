@@ -228,16 +228,23 @@ let CLOSP2AUX_ip_list_of_seq_1 = prove
  (`!(f:num->A). list_of_seq f 1 = [f 0]`,
   REWRITE_TAC[ONE; list_of_seq; APPEND]);;
 
-(* decide the comparisons of numbers that the clock checks produce *)
-let CLOSP2AUX_IP_ARITH_CONV : conv = fun tm ->
-  let isnum t = (try type_of t = `:num` with Failure _ -> false) in
+(* decide the comparisons of numbers that the clock checks produce (the   *)
+(* evaluator below retries the same comparisons at each pass: the results   *)
+(* of ARITH_RULE, also failures, are remembered)                            *)
+let CLOSP2AUX_IP_ARITH_CONV : conv =
+  let num_ty = `:num` in
+  let memo = Hashtbl.create 997 in
+  fun tm ->
+  let isnum t = (try type_of t = num_ty with Failure _ -> false) in
   let ok = (is_binary "<" tm || is_binary "<=" tm || (is_eq tm && isnum (lhand tm))) &&
            isnum (rand tm) in
   if not ok then failwith "CLOSP2AUX_IP_ARITH_CONV" else
   if frees tm = [] then CHANGED_CONV NUM_REDUCE_CONV tm else
-  try EQT_INTRO (ARITH_RULE tm) with Failure _ ->
-  try EQF_INTRO (ARITH_RULE (mk_neg tm)) with Failure _ ->
-  failwith "CLOSP2AUX_IP_ARITH_CONV";;
+  let r = try Hashtbl.find memo tm with Not_found ->
+            let r = try Some (EQT_INTRO (ARITH_RULE tm)) with Failure _ ->
+                    try Some (EQF_INTRO (ARITH_RULE (mk_neg tm))) with Failure _ -> None in
+            Hashtbl.add memo tm r; r in
+  match r with Some th -> th | None -> failwith "CLOSP2AUX_IP_ARITH_CONV";;
 
 (* a lazy evaluator: rewrite only the active positions of a term (not the  *)
 (* branches of conditionals and case expressions, not under binders)       *)
@@ -349,21 +356,26 @@ let evaluate_SING_intro = prove
 
 (* clocks in the canonical form SUC^k r (r a normalised sum): the clock    *)
 (* decrements of the evaluation are then SUC_SUB1 steps                     *)
-let rec CLOSP2AUX_SUCN_NORM_CONV : conv = fun e ->
-  if not (type_of e = `:num`) then failwith "CLOSP2AUX_SUCN_NORM_CONV" else
-  if is_binary "-" e then LAND_CONV CLOSP2AUX_SUCN_NORM_CONV e else
-  let th1 = (REWRITE_CONV[ADD1] THENC NUM_NORMALIZE_CONV) e in
-  let p = rand (concl th1) in
-  let rec summands t = (try let l,r = dest_binop `(+):num->num->num` t in
-                              summands l @ summands r with Failure _ -> [t]) in
-  let ss = summands p in
-  let nums,rest = partition is_numeral ss in
-  let k = itlist (fun t a -> dest_small_numeral t + a) nums 0 in
-  if rest = [] then failwith "CLOSP2AUX_SUCN_NORM_CONV" else
-  let r = end_itlist (fun a b -> mk_binop `(+):num->num->num` a b) rest in
-  let target = funpow k (fun t -> mk_comb(`SUC`,t)) r in
-  if target = e then failwith "CLOSP2AUX_SUCN_NORM_CONV" else
-  ARITH_RULE (mk_eq(e,target));;
+(* (the quotations are parsed once: a parse costs milliseconds here, and the *)
+(* conversion is tried thousands of times by the evaluator below)           *)
+let CLOSP2AUX_SUCN_NORM_CONV : conv =
+  let num_ty = `:num` and plus_tm = `(+):num->num->num` and suc_tm = `SUC` in
+  let rec conv e =
+    if not (type_of e = num_ty) then failwith "CLOSP2AUX_SUCN_NORM_CONV" else
+    if is_binary "-" e then LAND_CONV conv e else
+    let th1 = (REWRITE_CONV[ADD1] THENC NUM_NORMALIZE_CONV) e in
+    let p = rand (concl th1) in
+    let rec summands t = (try let l,r = dest_binop plus_tm t in
+                                summands l @ summands r with Failure _ -> [t]) in
+    let ss = summands p in
+    let nums,rest = partition is_numeral ss in
+    let k = itlist (fun t a -> dest_small_numeral t + a) nums 0 in
+    if rest = [] then failwith "CLOSP2AUX_SUCN_NORM_CONV" else
+    let r = end_itlist (fun a b -> mk_binop plus_tm a b) rest in
+    let target = funpow k (fun t -> mk_comb(suc_tm,t)) r in
+    if target = e then failwith "CLOSP2AUX_SUCN_NORM_CONV" else
+    ARITH_RULE (mk_eq(e,target)) in
+  conv;;
 
 let CLOSP2AUX_CLOCK_NORM_CONV : conv = fun tm ->
   match tm with

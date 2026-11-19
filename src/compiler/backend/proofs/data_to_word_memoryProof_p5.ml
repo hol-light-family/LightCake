@@ -983,7 +983,7 @@ let make_header_tag_mask = prove
     SUBGOAL_THEN `2 EXP (i - 2) <
       2 EXP (dimindex(:A) - (data_to_word_config_len_size c + 2))` MP_TAC THENL
      [ASM_MESON_TAC[BIT_IMP_GE_TWOEXP; LET_TRANS]; REWRITE_TAC[LT_EXP] THEN ARITH_TAC];
-    MP5AUX_BITS_ARITH_TAC]);;
+    ASM_CASES_TAC `2 <= i` THEN ASM_REWRITE_TAC[] THEN MP5AUX_BITS_ARITH_TAC]);;
 
 (* HOL4 line 11014 *)
 let make_header_and_2 = prove
@@ -2443,6 +2443,113 @@ let memory_rel_Number_bignum_header = prove
      `word_add curr (word_mul (word ptr) bytes_in_word):A word`] THEN
   ASM_REWRITE_TAC[word_addr_def]);;
 
+(* local helpers for memory_rel_bignum_cmp and memory_rel_Number_cmp,       *)
+(* instead of ASM_MESON_TAC and ASM_ARITH_TAC over their 25-47 assumptions  *)
+(* (each call took 3-14 s):                                                 *)
+(* the goal by rewriting with r1 = r2 for the pairs of assumptions l = r1   *)
+(* and l = r2 (a function read twice), simplified by injectivity and by the *)
+(* iff assumptions                                                           *)
+let MP5AUX_FUNC_EQ_TAC : tactic =
+  let inj = [option_INJ; injectivity "word_loc"] in
+  fun (asl,w as gl) ->
+    let eqs = mapfilter (fun (_,th) -> if is_eq (concl th) then th else failwith "") asl in
+    let rec pairs = function
+        [] -> []
+      | th::rest ->
+          mapfilter (fun th2 ->
+            if aconv (lhs (concl th)) (lhs (concl th2)) &&
+               not (aconv (rhs (concl th)) (rhs (concl th2)))
+            then TRANS (SYM th) th2 else failwith "") rest @ pairs rest in
+    let iffs = filter (fun th -> type_of (lhs (concl th)) = bool_ty) eqs in
+    let simp th =
+      let th1 = REWRITE_RULE inj th in
+      let th2 = REWRITE_RULE iffs th1 in
+      if not (aconv (concl th2) (concl th1)) || not (is_eq (concl th1)) then th2
+      else REWRITE_RULE iffs (SYM th1) in
+    let news1 = map simp (pairs eqs) in
+    (* a second round with the equations rewritten by the first-round facts *)
+    (* (x = x' from m a = wl_Word x and m a' = wl_Word x' once a = a')       *)
+    let vareqs = itlist (fun th acc ->
+        let c = concl th in
+        if is_eq c && is_var (lhs c) &&
+           not (exists (fun t -> free_in (lhs c) (concl t) || free_in (rhs c) (concl t)) acc)
+        then th::acc else acc) news1 [] in
+    let news2 = if vareqs = [] then [] else
+      map simp (pairs (map (REWRITE_RULE vareqs) eqs)) in
+    (REWRITE_TAC (news1 @ news2) THEN NO_TAC) gl;;
+
+(* ARITH_TAC with the integer facts among the assumptions only *)
+let MP5AUX_INT_ARITH_TAC : tactic =
+  let int_ty = `:int` in
+  let rec intprop tm =
+    if is_neg tm then intprop (rand tm) else
+    if is_conj tm || is_disj tm || is_imp tm then intprop (lhand tm) && intprop (rand tm) else
+    match tm with
+      Comb(Comb(Const(("int_le"|"int_lt"|"int_ge"|"int_gt"|"="),_),a),_) -> type_of a = int_ty
+    | _ -> false in
+  REPEAT(FIRST_X_ASSUM(MP_TAC o check (intprop o concl))) THEN ARITH_TAC;;
+
+(* ASM_MESON_TAC thl after cheaper attempts: the functional consistency step  *)
+(* above, then MESON with the equational assumptions only (on goals like       *)
+(* x = x' from get_real_addr c st w = SOME a, m a = wl_Word x, w = w', ...,    *)
+(* ASM_MESON_TAC took 3-14 s with all of them)                                 *)
+let MP5AUX_FAST_MESON_TAC thl : tactic =
+  MP5AUX_FUNC_EQ_TAC ORELSE
+  (fun (asl,w as gl) ->
+     MESON_TAC (thl @ filter (fun th -> is_eq (concl th)) (map snd asl)) gl) ORELSE
+  ASM_MESON_TAC thl;;
+
+(* ASM_MESON_TAC thl, first with the assumptions that mention the head      *)
+(* constant of the goal only (chains like option_le a b, option_le b c:      *)
+(* ASM_MESON_TAC[option_le_trans] took 15 s with all of them)                 *)
+let MP5AUX_HEAD_MESON_TAC thl : tactic =
+  (fun (asl,w as gl) ->
+     let h = fst (strip_comb (if is_neg w then rand w else w)) in
+     if not (is_const h) then failwith "MP5AUX_HEAD_MESON_TAC" else
+     MESON_TAC (thl @ filter (fun th -> free_in h (concl th)) (map snd asl)) gl) ORELSE
+  ASM_MESON_TAC thl;;
+
+(* ASM_ARITH_TAC on each conjunct of the goal with fewer facts (the          *)
+(* conjuncts of the arithmetic assumptions): first those whose atoms all     *)
+(* occur in the goal, then those near it (sharing an atom with it or with    *)
+(* such a fact), then all assumptions.  With all of them, ARITH_TAC took     *)
+(* 9-40 s on goals of the data_to_word proofs.                               *)
+let MP5AUX_ARITH_TAC : tactic =
+  let num_ty = `:num` in
+  let rec atoms tm = match tm with
+      Comb(Comb(Const(("+"|"-"|"*"|"DIV"|"MOD"|"<="|"<"|">="|">"|"/\\"|"\\/"|"==>"),_),a),b) ->
+        union (atoms a) (atoms b)
+    | Comb(Comb(Const("=",_),a),b) -> union (atoms a) (atoms b)
+    | Comb(Const("~",_),a) -> atoms a
+    | Comb(Comb(Comb(Const("COND",_),c),a),b) -> union (atoms c) (union (atoms a) (atoms b))
+    | _ -> if is_numeral tm || is_const tm && type_of tm = bool_ty then [] else [tm] in
+  let rec isarith tm =
+    if is_neg tm then isarith (rand tm) else
+    if is_conj tm || is_disj tm || is_imp tm then isarith (lhand tm) && isarith (rand tm) else
+    match tm with
+      Comb(Comb(Const(("<="|"<"|">="|">"),_),a),_) -> type_of a = num_ty
+    | Comb(Comb(Const("=",_),a),_) -> type_of a = num_ty
+    | _ -> false in
+  let facts asl = mapfilter (fun th -> let c = concl th in
+                               if isarith c then (th,atoms c) else failwith "")
+                            (flat (map (CONJUNCTS o snd) asl)) in
+  (* the atoms of the goal; for the goal F, those of the newest arithmetic fact *)
+  let seed afs w =
+    match atoms w, afs with
+      [],(_,a)::_ -> a
+    | ws,_ -> ws in
+  let within_tac (asl,w as gl) =
+    let afs = facts asl in
+    let ws = seed afs w in
+    (MAP_EVERY (MP_TAC o fst) (filter (fun (_,a) -> subset a ws) afs) THEN ARITH_TAC) gl in
+  let near_tac (asl,w as gl) =
+    let afs = facts asl in
+    let near ats = filter (fun (_,a) -> intersect a ats <> []) afs in
+    let ws = seed afs w in
+    let ats1 = itlist (union o snd) (near ws) ws in
+    (MAP_EVERY (MP_TAC o fst) (near ats1) THEN ARITH_TAC) gl in
+  REPEAT CONJ_TAC THEN (within_tac ORELSE near_tac ORELSE ASM_ARITH_TAC);;
+
 (* HOL4 line 12484 *)
 let memory_rel_bignum_cmp = prove
  (`!c be ts refs sp st (m:A word -> A word_loc) dm i1 v1 i2 v2 vars.
@@ -2485,7 +2592,7 @@ let memory_rel_bignum_cmp = prove
       let l,r = dest_eq(concl th) in
       is_var l && (fst(dest_var l) = "v1" || fst(dest_var l) = "v2")))) THEN
     RULE_ASSUM_TAC(REWRITE_RULE[injectivity "word_loc"]) THEN
-    ASM_MESON_TAC[injectivity "word_loc"; option_INJ];
+    MP5AUX_FAST_MESON_TAC[injectivity "word_loc"; option_INJ];
     ALL_TAC] THEN
   SUBGOAL_THEN
    `(word (LENGTH (n2mw (num_of_int (abs i1)):(A word)list)):A word =
@@ -3193,7 +3300,7 @@ let word_cmp_loop_thm = prove
   COND_CASES_TAC THENL
    [FIRST_X_ASSUM(SUBST_ALL_TAC o check (is_eq o concl)) THEN REWRITE_TAC[] THEN
     FIRST_X_ASSUM(MP_TAC o SPECL [`ys1:(A word)list`; `ys2:(A word)list`]) THEN
-    FIRST_ASSUM(fun th -> if concl th = `LENGTH (ys1:(A word)list) = n` then
+    FIRST_ASSUM(let qtm = `LENGTH (ys1:(A word)list) = n` in fun th -> if concl th = qtm then
       SUBST1_TAC(SYM th) else failwith "") THEN
     SUBGOAL_THEN `word_sub (word (SUC (LENGTH (ys1:(A word)list)))) (word 1) =
                   (word (LENGTH ys1):A word) /\
@@ -3269,6 +3376,7 @@ let MP5AUX_word_cmp_res_diff = prove
   REPEAT(POP_ASSUM MP_TAC) THEN
   REWRITE_TAC[GSYM INT_OF_NUM_EQ; GSYM INT_OF_NUM_LT; GSYM INT_OF_NUM_LE] THEN
   INT_ARITH_TAC);;
+
 
 (* HOL4 line 13136 *)
 let memory_rel_Number_cmp = prove
@@ -3346,8 +3454,8 @@ let memory_rel_Number_cmp = prove
   ASM_CASES_TAC `&0 <= (i2:int)` THEN ASM_REWRITE_TAC[] THEN
   REPEAT DISCH_TAC THEN
   (SUBGOAL_THEN `~(i1:int = i2)` (fun th -> REWRITE_TAC[th]) THENL
-    [ASM_ARITH_TAC; ALL_TAC]) THEN
-  COND_CASES_TAC THEN REWRITE_TAC[] THEN ASM_ARITH_TAC;
+    [MP5AUX_INT_ARITH_TAC; ALL_TAC]) THEN
+  COND_CASES_TAC THEN REWRITE_TAC[] THEN MP5AUX_INT_ARITH_TAC;
     MP_TAC(SPECL [`c:data_to_word_config`; `be:bool`; `ts:num`; `refs:(data_v bvl_ref)spt`;
     `sp:num`; `st:(store_name,(A)word_loc)fmap`; `m:A word -> A word_loc`;
     `dm:A word->bool`; `i1:int`; `v1:A word_loc`;
@@ -3389,19 +3497,20 @@ let memory_rel_Number_cmp = prove
       (X_CHOOSE_THEN `y1:A word` (X_CHOOSE_THEN `y2:A word` STRIP_ASSUME_TAC)))))) THEN
   MP5AUX_SUBST_VAR_TAC "q1" THEN MP5AUX_SUBST_VAR_TAC "q2" THEN
   SUBGOAL_THEN `b1 = a1:A word /\ b2 = a2:A word` (CONJUNCTS_THEN SUBST_ALL_TAC) THENL
-   [ASM_MESON_TAC[option_INJ]; ALL_TAC] THEN
+   [MP5AUX_FUNC_EQ_TAC; ALL_TAC] THEN
   SUBGOAL_THEN `y1 = x1:A word /\ y2 = x2:A word` (CONJUNCTS_THEN SUBST_ALL_TAC) THENL
-   [ASM_MESON_TAC[injectivity "word_loc"]; ALL_TAC] THEN
+   [MP5AUX_FUNC_EQ_TAC; ALL_TAC] THEN
   FIRST_X_ASSUM(MP_TAC o check (fun th -> is_imp (concl th) &&
     is_neg (lhand (concl th)))) THEN
   ONCE_REWRITE_TAC[WORD_AND_SYM] THEN ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
   ASM_CASES_TAC `x1:A word = x2` THEN ASM_REWRITE_TAC[] THENL
    [ALL_TAC;
-    MATCH_MP_TAC MP5AUX_word_cmp_res_diff THEN ASM_MESON_TAC[]] THEN
+    MATCH_MP_TAC MP5AUX_word_cmp_res_diff THEN
+    POP_ASSUM MP_TAC THEN POP_ASSUM MP_TAC THEN CONV_TAC TAUT] THEN
   SUBGOAL_THEN `(&0 <= (i1:int) <=> &0 <= (i2:int)) /\
     LENGTH (n2mw (num_of_int (abs i2)):(A word)list) =
     LENGTH (n2mw (num_of_int (abs i1)):(A word)list)` STRIP_ASSUME_TAC THENL
-   [ASM_MESON_TAC[]; ALL_TAC] THEN
+   [MP5AUX_SUBST_VAR_TAC "x2" THEN MP5AUX_FUNC_EQ_TAC; ALL_TAC] THEN
   ASM_SIMP_TAC[MP5AUX_word_cmp_res_same] THEN
   UNDISCH_TAC `&0 <= (i1:int) <=> &0 <= (i2:int)` THEN
   ASM_CASES_TAC `&0 <= (i1:int)` THEN ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
@@ -3636,9 +3745,9 @@ let MP5AUX_pointer_eq_Number = prove
   MAP_EVERY X_GEN_TAC [`a1:A word`; `x1:A word`; `a2:A word`; `x2:A word`] THEN
   STRIP_TAC THEN
   SUBGOAL_THEN `a2:A word = a1` SUBST_ALL_TAC THENL
-   [ASM_MESON_TAC[option_INJ]; ALL_TAC] THEN
+   [MP5AUX_FAST_MESON_TAC[option_INJ]; ALL_TAC] THEN
   SUBGOAL_THEN `x2:A word = x1` SUBST_ALL_TAC THENL
-   [ASM_MESON_TAC[injectivity "word_loc"]; ALL_TAC] THEN
+   [MP5AUX_FAST_MESON_TAC[injectivity "word_loc"]; ALL_TAC] THEN
   FIRST_X_ASSUM(MP_TAC o check (is_cond o concl)) THEN
   REWRITE_TAC[COND_ID; pair_CASE] THEN
   DISCH_THEN(MP_TAC o MATCH_MP word_cmp_loop_refl) THEN
@@ -3983,8 +4092,7 @@ let memory_rel_depth_limit = prove
   ANTS_TAC THENL
    [REWRITE_TAC[elements_list_def] THEN ASM_REWRITE_TAC[] THEN
     FIRST_X_ASSUM(X_CHOOSE_THEN `l1:data_v list` (X_CHOOSE_THEN `l2:data_v list`
-      SUBST1_TAC) o REWRITE_RULE[MEM_SPLIT] o check (fun th ->
-      concl th = `MEM (e:data_v) l`)) THEN
+      SUBST1_TAC) o REWRITE_RULE[MEM_SPLIT] o check ((=) `MEM (e:data_v) l` o concl)) THEN
     MAP_EVERY EXISTS_TAC [`bts:num`; `n:num`; `l1:data_v list`; `l2:data_v list`] THEN
     REWRITE_TAC[GSYM APPEND_ASSOC; APPEND];
     ALL_TAC] THEN
@@ -4243,7 +4351,7 @@ let memory_rel_elements_list_distinct_lemma = prove
         (K ALL_TAC))))) THEN
   FIRST_X_ASSUM(MP_TAC o MATCH_MP (REWRITE_RULE[IMP_CONJ] memory_rel_Block_ptr_eq) o
     check (fun th -> mp5aux_head_is "memory_rel" (concl th) &&
-      can (find_term (fun t -> t = `[]:(data_v#A word_loc)list`)) (concl th))) THEN
+      can (find_term ((=) `[]:(data_v#A word_loc)list`)) (concl th))) THEN
   ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST_ALL_TAC THEN
   FIRST_X_ASSUM(MP_TAC o check (fun th -> mp5aux_head_is "<" (concl th))) THEN
   ARITH_TAC);;

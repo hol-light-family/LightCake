@@ -1186,16 +1186,18 @@ let CLOSP2AUX_CG_SING_TAC : tactic =
       (MATCH_MP clos_evaluate_SING th)
   else NO_TAC));;
 
-let CLOSP2AUX_CG_RES_TAC : tactic = fun (asl,w as gl) ->
+let CLOSP2AUX_CG_RES_TAC : tactic =
+  let rw = REWRITE_RULE[HD; EVERY_REVERSE; ALL] in
+  fun (asl,w as gl) ->
   let is_impth th = is_imp(snd(strip_forall(concl th))) in
   let curry th = try PURE_REWRITE_RULE[IMP_CONJ] th with Failure _ -> th in
   let asms = map snd asl in
   let rec full depth th =
     if not (is_impth th) then Some th else if depth = 0 then None else
+    let mth = try MATCH_MP th with Failure _ -> fun _ -> failwith "MATCH_MP" in
     let rec try_list l = match l with
         [] -> None
-      | a::rest -> (match (try Some (REWRITE_RULE[HD; EVERY_REVERSE; ALL] (MATCH_MP th a))
-                           with Failure _ -> None) with
+      | a::rest -> (match (try Some (rw (mth a)) with Failure _ -> None) with
                       Some th' -> (match full (depth-1) th' with
                                      Some r -> Some r | None -> try_list rest)
                     | None -> try_list rest) in
@@ -1616,31 +1618,40 @@ let CLOSP2AUX_KN_NRM_TAC : tactic =
   REPEAT(FIRST_X_ASSUM(fun th -> if is_conj (concl th) then STRIP_ASSUME_TAC th
                                  else NO_TAC));;
 
-let CLOSP2AUX_RES_WITH (thms:thm list) : tactic = fun (asl,w as gl) ->
+(* |- !vs'. P[t/v] from th = |- !vs. v = t ==> P (or t = v), v one of vs not *)
+(* free in t (checked before the renaming, which most candidates fail)       *)
+let CLOSP2AUX_unwind th =
+  let vs0,bod = strip_forall (concl th) in
+  let l0,r0 = dest_eq (fst(dest_imp bod)) in
+  let ok v t = is_var v && mem v vs0 && not (free_in v t) in
+  if not (ok r0 l0 || ok l0 r0) then failwith "unwind" else
+  let avoid = freesl (concl th :: hyp th) in
+  let vs = itlist (fun v acc -> variant (acc @ avoid) v :: acc) vs0 [] in
+  let th0 = SPECL vs th in
+  let ant = fst(dest_imp (concl th0)) in
+  let l,r = dest_eq ant in
+  let pick v t = mem v vs && not (free_in v t) in
+  let v,t = if is_var r && pick r l then r,l
+            else if is_var l && pick l r then l,r else failwith "unwind" in
+  let th2 = INST [t,v] th0 in
+  GENL (subtract vs [v]) (MP th2 (REFL t));;
+
+let CLOSP2AUX_RES_WITH (thms:thm list) : tactic =
+  let rw = REWRITE_RULE thms in
+  fun (asl,w as gl) ->
   let is_impth th = is_imp(snd(strip_forall(concl th))) in
   let curry th = try PURE_REWRITE_RULE[IMP_CONJ] th with Failure _ -> th in
-  let nrm th = curry (REWRITE_RULE thms th) in
+  let nrm th = curry (rw th) in
   let asms = map snd asl in
-  let unwind th =
-    let vs0,_ = strip_forall (concl th) in
-    let avoid = freesl (concl th :: hyp th) in
-    let vs = itlist (fun v acc -> variant (acc @ avoid) v :: acc) vs0 [] in
-    let th0 = SPECL vs th in
-    let ant = fst(dest_imp (concl th0)) in
-    let l,r = dest_eq ant in
-    let pick v t = mem v vs && not (free_in v t) in
-    let v,t = if is_var r && pick r l then r,l
-              else if is_var l && pick l r then l,r else failwith "unwind" in
-    let th2 = INST [t,v] th0 in
-    GENL (subtract vs [v]) (MP th2 (REFL t)) in
   let rec full depth th =
     if not (is_impth th) then Some th else if depth = 0 then None else
-    match (try Some (nrm (unwind th)) with Failure _ -> None) with
+    match (try Some (nrm (CLOSP2AUX_unwind th)) with Failure _ -> None) with
       Some th' -> full (depth-1) th'
     | None ->
+    let mth = try MATCH_MP th with Failure _ -> fun _ -> failwith "MATCH_MP" in
     let rec try_list l = match l with
         [] -> None
-      | a::rest -> (match (try Some (nrm (MATCH_MP th a)) with Failure _ -> None) with
+      | a::rest -> (match (try Some (nrm (mth a)) with Failure _ -> None) with
                       Some th' -> (match full (depth-1) th' with
                                      Some r -> Some r | None -> try_list rest)
                     | None -> try_list rest) in
@@ -2411,9 +2422,38 @@ let CLOSP2AUX_unique_SUB_BAG = prove
   REPEAT STRIP_TAC THEN FIRST_X_ASSUM(MP_TAC o SPECL [`n:num`; `e:num`]) THEN
   FIRST_X_ASSUM(MP_TAC o SPEC `e:num`) THEN ARITH_TAC);;
 
+(* ARITH_TAC on s <= t (s, t sums of atoms and numerals), failing at once    *)
+(* when an atom has more occurrences (up to alpha) in s than in t or the     *)
+(* numerals of s add up to more: then s <= t has a counterexample and        *)
+(* ARITH_TAC fails too.  Other goals, and atoms with arithmetic or binders   *)
+(* inside, go to ARITH_TAC                                                    *)
+let CLOSP2AUX_SUM_LE_TAC : tactic =
+  let ops = ["+"; "-"; "*"; "DIV"; "MOD"; "EXP"; "PRE"; "SUC"; "MIN"; "MAX"] in
+  let plain t = not (can (find_term (fun u -> is_abs u ||
+                           (is_const u && mem (fst(dest_const u)) ops))) t) in
+  let rec summands t = try let a,b = dest_binary "+" t in summands a @ summands b
+                       with Failure _ -> [t] in
+  let total ns = itlist (fun n a -> dest_small_numeral n + a) ns 0 in
+  let refuted w =
+    try let s,t = dest_binary "<=" w in
+        let ns,xs = partition is_numeral (summands s)
+        and nt,xt = partition is_numeral (summands t) in
+        forall plain (xs @ xt) &&
+        (total ns > total nt ||
+         exists (fun x -> length (filter (aconv x) xs) > length (filter (aconv x) xt)) xs)
+    with Failure _ -> false in
+  fun (asl,w as g) -> if refuted w then failwith "CLOSP2AUX_SUM_LE_TAC" else ARITH_TAC g;;
+
 (* unique_set_globals a co from an assumption unique_set_globals b co, by a  *)
-(* pointwise comparison of the global bags                                   *)
-let CLOSP2AUX_UNIQUE_TAC : tactic = fun (asl,w as g) ->
+(* pointwise comparison of the global bags (the tactics and terms that do    *)
+(* not depend on the goal are made once: a quotation in a tactic that runs   *)
+(* per antecedent is parsed each time, milliseconds in a big session)        *)
+let CLOSP2AUX_UNIQUE_TAC : tactic =
+  let empty_bag = `EMPTY_BAG:num->num` in
+  let sub_tac = MATCH_MP_TAC CLOSP2AUX_unique_SUB_BAG in
+  let rw1 = REWRITE_TAC[clos_set_globals_def; clos_elist_globals_append; APPEND; MAP] in
+  let rw2 = REWRITE_TAC[BAG_UNION_EMPTY; SUB_BAG_LEQ; BAG_UNION; EMPTY_BAG; K_THM] in
+  fun (asl,w as g) ->
   let co = rand w in
   let cands = mapfilter (fun (_,th) ->
       let f,args = strip_comb (concl th) in
@@ -2421,66 +2461,95 @@ let CLOSP2AUX_UNIQUE_TAC : tactic = fun (asl,w as g) ->
       else failwith "") asl in
   let sgfacts = mapfilter (fun (_,th) ->
       let l,r = dest_eq (concl th) in
-      if fst(dest_const(fst(strip_comb l))) = "clos_set_globals" && r = `EMPTY_BAG:num->num`
+      if fst(dest_const(fst(strip_comb l))) = "clos_set_globals" && r = empty_bag
       then th else failwith "") asl in
   FIRST (map (fun th ->
-    MATCH_MP_TAC CLOSP2AUX_unique_SUB_BAG THEN
-    EXISTS_TAC (el 0 (snd(strip_comb(concl th)))) THEN
+    sub_tac THEN EXISTS_TAC (el 0 (snd(strip_comb(concl th)))) THEN
     CONJ_TAC THENL
-     [REWRITE_TAC[clos_set_globals_def; clos_elist_globals_append; APPEND; MAP] THEN
-      REWRITE_TAC sgfacts THEN
-      REWRITE_TAC[BAG_UNION_EMPTY; SUB_BAG_LEQ; BAG_UNION; EMPTY_BAG; K_THM] THEN
-      GEN_TAC THEN ARITH_TAC;
+     [rw1 THEN REWRITE_TAC sgfacts THEN rw2 THEN GEN_TAC THEN CLOSP2AUX_SUM_LE_TAC;
       ACCEPT_TAC th]) cands) g;;
 
+(* the head constant of a term and its number of arguments (NONE for a      *)
+(* variable head): MATCH_MP th a can only succeed when they agree for the    *)
+(* antecedent of th and the conclusion of a                                  *)
+let CLOSP2AUX_head_of t =
+  let h,args = strip_comb t in
+  if is_const h then Some (fst(dest_const h), length args) else None;;
+
+(* the facts whose conclusion has the head hd (all of them for NONE), in     *)
+(* their order                                                               *)
+let CLOSP2AUX_fact_index (facts:thm list) =
+  let tbl = Hashtbl.create 64 in
+  do_list (fun th -> match CLOSP2AUX_head_of (concl th) with
+             Some h -> Hashtbl.replace tbl h (th :: (try Hashtbl.find tbl h with Not_found -> []))
+           | None -> ()) (rev facts);
+  fun hd -> match hd with
+              None -> facts
+            | Some h -> (try Hashtbl.find tbl h with Not_found -> []);;
+
+(* ASM_REWRITE_TAC thl, with the rewrite net of the assumptions kept for the *)
+(* next goal with the same (physically equal) assumption list: the side      *)
+(* provers of the saturations get one goal per antecedent, all with the      *)
+(* assumptions of the round                                                  *)
+let CLOSP2AUX_ASM_REWRITE_TAC (thl:thm list) : tactic =
+  let cache = ref None in
+  fun (asl,w as g) ->
+    let cv = match !cache with
+        Some (a,c) when a == asl -> c
+      | _ -> let c = REWRITE_CONV (map snd asl @ thl) in cache := Some (asl,c); c in
+    CONV_TAC cv g;;
+
 (* saturation with a prover for ground antecedents that no assumption matches *)
-(* (prover is tried only on antecedents whose head constant is in shapes)   *)
+(* (prover is tried only on antecedents whose head constant is in shapes).    *)
+(* Each round derives everything again from all the facts; for speed the     *)
+(* normalisations are memoised (by conclusion and hypotheses), MATCH_MP th   *)
+(* is prepared once per th and only tried on facts with the antecedent's     *)
+(* head, and a prover failure is remembered for the rest of the round (the   *)
+(* derived facts are exactly those of the plain algorithm)                   *)
 let CLOSP2AUX_SATP_GEN_TAC (shapes:string list) (prover:tactic) (thms:thm list)
     (nrm_thms:thm list) (rounds:int) : tactic =
+  let is_impth th = is_imp(snd(strip_forall(concl th))) in
+  let curry th = try PURE_REWRITE_RULE[IMP_CONJ] th with Failure _ -> th in
+  let nrm_conv = REWRITE_CONV nrm_thms in
+  let nrm0 th = curry (CONV_RULE nrm_conv th) in
+  let nthms = map nrm0 thms in
   fun g0 ->
+  let nmemo = Hashtbl.create 1024 in
+  let nrm th = let k = (concl th, hyp th) in
+    try Hashtbl.find nmemo k with Not_found ->
+    let r = nrm0 th in Hashtbl.add nmemo k r; r in
   let derived = ref ([]:term list) in
   let memo = ref ([]:(term * thm) list) in
   let provable_shape t =
     try mem (fst(dest_const(fst(strip_comb t)))) shapes
     with Failure _ -> false in
-  let is_impth th = is_imp(snd(strip_forall(concl th))) in
-  let curry th = try PURE_REWRITE_RULE[IMP_CONJ] th with Failure _ -> th in
-  let nrm_conv = REWRITE_CONV nrm_thms in
-  let nrm th = curry (CONV_RULE nrm_conv th) in
   let one_round (asl,w as g) =
+    let failed = ref ([]:term list) in
     let asms = map snd asl in
     let facts = filter (fun th -> not (is_impth th) && not (is_forall (concl th))) asms in
-    let unwind th =
-      let vs0,_ = strip_forall (concl th) in
-      let avoid = freesl (concl th :: hyp th) in
-      let vs = itlist (fun v acc -> variant (acc @ avoid) v :: acc) vs0 [] in
-      let th0 = SPECL vs th in
-      let ant = fst(dest_imp (concl th0)) in
-      let l,r = dest_eq ant in
-      let pick v t = mem v vs && not (free_in v t) in
-      let v,t = if is_var r && pick r l then r,l
-                else if is_var l && pick l r then l,r else failwith "unwind" in
-      let th2 = INST [t,v] th0 in
-      GENL (subtract vs [v]) (MP th2 (REFL t)) in
+    let facts_for = CLOSP2AUX_fact_index facts in
     let rec all_full depth th =
       if not (is_impth th) then [th] else if depth = 0 then [] else
-      match (try Some (nrm (unwind th)) with Failure _ -> None) with
+      match (try Some (nrm (CLOSP2AUX_unwind th)) with Failure _ -> None) with
         Some th' -> all_full (depth-1) th'
       | None ->
       let vs,body = strip_forall (concl th) in
       let ant = fst(dest_imp body) in
-      let rs = flat (map (fun a -> try all_full (depth-1) (nrm (MATCH_MP th a))
-                                   with Failure _ -> []) facts) in
+      let mth = lazy (try MATCH_MP th with Failure _ -> fun _ -> failwith "MATCH_MP") in
+      let rs = flat (map (fun a -> try all_full (depth-1) (nrm (Lazy.force mth a))
+                                   with Failure _ -> [])
+                       (facts_for (CLOSP2AUX_head_of ant))) in
       if rs <> [] then rs else
       if exists (fun v -> free_in v ant) vs || not (provable_shape ant) then [] else
       let r = try Some (assoc ant !memo) with Failure _ ->
+                if mem ant !failed then None else
                 (match (try Some (TAC_PROOF((asl,ant), prover)) with Failure _ -> None) with
                    Some ath -> (memo := (ant,ath) :: !memo; Some ath)
-                 | None -> None) in
+                 | None -> (failed := ant :: !failed; None)) in
       (match r with
          Some ath -> (try all_full (depth-1) (nrm (MATCH_MP th ath)) with Failure _ -> [])
        | None -> []) in
-    let imps = map nrm (thms @ filter is_impth asms) in
+    let imps = nthms @ map nrm (filter is_impth asms) in
     let results = flat (map (all_full 24) imps) in
     let known_c = map concl asms in
     let rec dedup acc l = match l with
@@ -2518,7 +2587,7 @@ let CLOSP2AUX_mgd_evaluate = prove
 let CLOSP2AUX_SBAG_PROVE_TAC : tactic =
   REWRITE_TAC[clos_set_globals_def; clos_elist_globals_append; APPEND; MAP;
               BAG_UNION_EMPTY; SUB_BAG_LEQ; BAG_UNION; EMPTY_BAG; K_THM] THEN
-  GEN_TAC THEN ARITH_TAC;;
+  GEN_TAC THEN CLOSP2AUX_SUM_LE_TAC;;
 
 let CLOSP2AUX_kca_var = prove
  (`!vs env extra v.
@@ -2760,18 +2829,18 @@ let CLOSP2AUX_kca_nrm = [mglobals_disjoint_rw; ALL; CLOSP2AUX_APPEND_SING; CONJU
   injectivity "val_approx"; injectivity "clos_v"];;
 
 let CLOSP2AUX_KCA_SIDE_TAC : tactic =
-  FIRST [ASM_REWRITE_TAC CLOSP2AUX_kca_nrm THEN NO_TAC; CLOSP2AUX_UNIQUE_TAC;
+  let sgrw = CLOSP2AUX_ASM_REWRITE_TAC
+               [clos_set_globals_def; BAG_UNION_EMPTY; BAG_OF_EMPTY; DISJOINT_EMPTY] in
+  FIRST [CLOSP2AUX_ASM_REWRITE_TAC CLOSP2AUX_kca_nrm THEN NO_TAC; CLOSP2AUX_UNIQUE_TAC;
          CLOSP2AUX_SBAG_PROVE_TAC;
-         MATCH_MP_TAC LIST_REL_APPEND_suff THEN ASM_REWRITE_TAC[CLOSP2AUX_vav_letrec_SOME] THEN
+         MATCH_MP_TAC LIST_REL_APPEND_suff THEN
+           CLOSP2AUX_ASM_REWRITE_TAC[CLOSP2AUX_vav_letrec_SOME] THEN
            TRY(MATCH_MP_TAC CLOSP2AUX_vav_letrec_NONE THEN
                REWRITE_TAC[LENGTH_LIST_OF_SEQ] THEN NO_TAC) THEN NO_TAC;
-         ASM_REWRITE_TAC[clos_set_globals_def; BAG_UNION_EMPTY; BAG_OF_EMPTY; DISJOINT_EMPTY]
-           THEN NO_TAC;
+         sgrw THEN NO_TAC;
          REWRITE_TAC[EVERY_GENLIST; vsgc_free_def; ALL; ALL_APPEND] THEN
-           ASM_REWRITE_TAC[] THEN NO_TAC;
-         REWRITE_TAC[mglobals_disjoint_def] THEN
-           ASM_REWRITE_TAC[clos_set_globals_def; BAG_UNION_EMPTY; BAG_OF_EMPTY; DISJOINT_EMPTY]
-           THEN NO_TAC];;
+           CLOSP2AUX_ASM_REWRITE_TAC[] THEN NO_TAC;
+         REWRITE_TAC[mglobals_disjoint_def] THEN sgrw THEN NO_TAC];;
 
 let CLOSP2AUX_lookup_vars_vsgc = prove
  (`!vs (env:clos_v list) extra env'.
@@ -3967,6 +4036,8 @@ let CLOSP2AUX_kc0_val (asms:thm list) (c:term) (g:term) (h:term) : thm =
       MATCH_MP clos_knownProof_v_rel_subspt (CONJ th sub)
     else failwith "") asms;;
 
+let CLOSP2AUX_v_rel_tm = `clos_knownProof_v_rel`;;
+
 (* |- ALL2 (v_rel c g) l l' from facts *)
 let rec CLOSP2AUX_kc0_env (asms:thm list) (c:term) (g:term) (l:term) : thm =
   try tryfind (fun th ->
@@ -3979,7 +4050,7 @@ let rec CLOSP2AUX_kc0_env (asms:thm list) (c:term) (g:term) (l:term) : thm =
       MP (SPEC g (MATCH_MP v_rel_LIST_REL_subspt th)) sub
     else failwith "") asms
   with Failure _ ->
-  let r = mk_comb(mk_comb(`clos_knownProof_v_rel`, c), g) in
+  let r = mk_comb(mk_comb(CLOSP2AUX_v_rel_tm, c), g) in
   if (try fst(dest_const(fst(strip_comb l))) = "APPEND" with Failure _ -> false) then
     MATCH_MP (ISPEC r CLOSP2AUX_kc0_all2_append)
       (CONJ (CLOSP2AUX_kc0_env asms c g (lhand l)) (CLOSP2AUX_kc0_env asms c g (rand l)))
@@ -4056,38 +4127,36 @@ let rec CLOSP2AUX_kc0_srel (asms:thm list) (c:term) (g:term) (s:term) : thm =
       SPEC k (MATCH_MP CLOSP2AUX_kc0_srel_clock (CLOSP2AUX_kc0_srel asms c g (el 1 args)))
   | _ -> failwith "CLOSP2AUX_kc0_srel";;
 
-(* saturation for known_correct0: as CLOSP2AUX_SATP_GEN_TAC, and an          *)
-(* antecedent ALL2 (v_rel c g) l x with x bound is resolved by constructing  *)
-(* the target list from the facts                                            *)
+(* saturation for known_correct0: as CLOSP2AUX_SATP_GEN_TAC (with the same  *)
+(* memos), and an antecedent ALL2 (v_rel c g) l x with x bound is resolved   *)
+(* by constructing the target list from the facts                            *)
 let CLOSP2AUX_KC0_SAT_TAC (shapes:string list) (prover:tactic) (thms:thm list)
     (nrm_thms:thm list) (rounds:int) : tactic =
+  let is_impth th = is_imp(snd(strip_forall(concl th))) in
+  let curry th = try PURE_REWRITE_RULE[IMP_CONJ] th with Failure _ -> th in
+  let nrm_conv = REWRITE_CONV nrm_thms in
+  let nrm0 th = curry (CONV_RULE nrm_conv th) in
+  let nthms = map nrm0 thms in
   fun g0 ->
+  let nmemo = Hashtbl.create 1024 in
+  let nrm th = let k = (concl th, hyp th) in
+    try Hashtbl.find nmemo k with Not_found ->
+    let r = nrm0 th in Hashtbl.add nmemo k r; r in
   let derived = ref ([]:term list) in
   let memo = ref ([]:(term * thm) list) in
   let provable_shape t =
     try mem (fst(dest_const(fst(strip_comb t)))) shapes
     with Failure _ -> false in
-  let is_impth th = is_imp(snd(strip_forall(concl th))) in
-  let curry th = try PURE_REWRITE_RULE[IMP_CONJ] th with Failure _ -> th in
-  let nrm_conv = REWRITE_CONV nrm_thms in
-  let nrm th = curry (CONV_RULE nrm_conv th) in
   let one_round (asl,w as g) =
+    let failed = ref ([]:term list) in
     let asms = map snd asl in
     let facts = filter (fun th -> not (is_impth th) && not (is_forall (concl th))) asms in
+    let facts_for = CLOSP2AUX_fact_index facts in
     let rename th =
       let vs0,_ = strip_forall (concl th) in
       let avoid = freesl (concl th :: hyp th) in
       let vs = itlist (fun v acc -> variant (acc @ avoid) v :: acc) vs0 [] in
       vs, SPECL vs th in
-    let unwind th =
-      let vs,th0 = rename th in
-      let ant = fst(dest_imp (concl th0)) in
-      let l,r = dest_eq ant in
-      let pick v t = mem v vs && not (free_in v t) in
-      let v,t = if is_var r && pick r l then r,l
-                else if is_var l && pick l r then l,r else failwith "unwind" in
-      let th2 = INST [t,v] th0 in
-      GENL (subtract vs [v]) (MP th2 (REFL t)) in
     let envb th =
       let vs,th0 = rename th in
       let ant = fst(dest_imp (concl th0)) in
@@ -4115,13 +4184,15 @@ let CLOSP2AUX_KC0_SAT_TAC (shapes:string list) (prover:tactic) (thms:thm list)
       GENL (subtract vs [x]) (MP th2 sth) in
     let rec all_full depth th =
       if not (is_impth th) then [th] else if depth = 0 then [] else
-      match (try Some (nrm (unwind th)) with Failure _ -> None) with
+      match (try Some (nrm (CLOSP2AUX_unwind th)) with Failure _ -> None) with
         Some th' -> all_full (depth-1) th'
       | None ->
       let vs,body = strip_forall (concl th) in
       let ant = fst(dest_imp body) in
-      let rs = flat (map (fun a -> try all_full (depth-1) (nrm (MATCH_MP th a))
-                                   with Failure _ -> []) facts) in
+      let mth = lazy (try MATCH_MP th with Failure _ -> fun _ -> failwith "MATCH_MP") in
+      let rs = flat (map (fun a -> try all_full (depth-1) (nrm (Lazy.force mth a))
+                                   with Failure _ -> [])
+                       (facts_for (CLOSP2AUX_head_of ant))) in
       if rs <> [] then rs else
       match (try Some (nrm (envb th)) with Failure _ -> None) with
         Some th' -> all_full (depth-1) th'
@@ -4131,13 +4202,14 @@ let CLOSP2AUX_KC0_SAT_TAC (shapes:string list) (prover:tactic) (thms:thm list)
       | None ->
       if exists (fun v -> free_in v ant) vs || not (provable_shape ant) then [] else
       let r = try Some (assoc ant !memo) with Failure _ ->
+                if mem ant !failed then None else
                 (match (try Some (TAC_PROOF((asl,ant), prover)) with Failure _ -> None) with
                    Some ath -> (memo := (ant,ath) :: !memo; Some ath)
-                 | None -> None) in
+                 | None -> (failed := ant :: !failed; None)) in
       (match r with
          Some ath -> (try all_full (depth-1) (nrm (MATCH_MP th ath)) with Failure _ -> [])
        | None -> []) in
-    let tres = flat (map (fun th -> all_full 40 (nrm th)) thms) in
+    let tres = flat (map (all_full 40) nthms) in
     let ares = map (fun th -> th, all_full 40 (nrm th)) (filter is_impth asms) in
     let used = map fst (filter (fun (_,r) -> r <> []) ares) in
     let results = tres @ flat (map snd ares) in
@@ -4196,16 +4268,17 @@ let CLOSP2AUX_known_cons2 = prove
   CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]);;
 
 (* BAG_DISJOINT and BAG_ALL_DISTINCT goals from the unique_set_globals facts *)
-let CLOSP2AUX_KC0_BAG_TAC : tactic = fun (asl,w as gl) ->
-  let us = mapfilter (fun (_,th) -> MATCH_MP unique_set_globals_IMP_es_distinct_elist_globals th)
-             asl in
+let CLOSP2AUX_KC0_BAG_TAC : tactic =
+  let mth = MATCH_MP unique_set_globals_IMP_es_distinct_elist_globals in
   let thl = [BAG_ALL_DISTINCT; BAG_DISJOINT_BAG_IN; BAG_IN; BAG_INN; GE; BAG_UNION;
              clos_set_globals_def; clos_elist_globals_append; BAG_UNION_EMPTY; EMPTY_BAG;
              K_THM; APPEND; MAP] in
-  let us' = map (REWRITE_RULE thl) us in
-  (REWRITE_TAC thl THEN
-   (fun (asl,w as g) -> if is_forall w then X_GEN_TAC `xg:num` g else ALL_TAC g) THEN
-   MAP_EVERY (fun th -> MP_TAC (try SPEC `xg:num` th with Failure _ -> th)) us' THEN
+  let rw = REWRITE_TAC thl and rwr = REWRITE_RULE thl and xg = `xg:num` in
+  fun (asl,w as gl) ->
+  let us' = map rwr (mapfilter (fun (_,th) -> mth th) asl) in
+  (rw THEN
+   (fun (asl,w as g) -> if is_forall w then X_GEN_TAC xg g else ALL_TAC g) THEN
+   MAP_EVERY (fun th -> MP_TAC (try SPEC xg th with Failure _ -> th)) us' THEN
    ARITH_TAC) gl;;
 
 let CLOSP2AUX_cons_append_rcancel = prove
@@ -4230,7 +4303,7 @@ let CLOSP2AUX_KC0_FV_TAC : tactic = fun (asl,w as gl) ->
    ASM_REWRITE_TAC[] THEN NO_TAC) gl;;
 
 let CLOSP2AUX_KC0_SIDE_TAC : tactic =
-  FIRST [ASM_REWRITE_TAC CLOSP2AUX_kc0_nrm THEN NO_TAC; CLOSP2AUX_SUBSPT_TAC;
+  FIRST [CLOSP2AUX_ASM_REWRITE_TAC CLOSP2AUX_kc0_nrm THEN NO_TAC; CLOSP2AUX_SUBSPT_TAC;
          CLOSP2AUX_UNIQUE_TAC; CLOSP2AUX_SBAG_PROVE_TAC; CLOSP2AUX_KC0_BAG_TAC;
          CLOSP2AUX_KC0_FV_TAC; CLOSP2AUX_KCA_SIDE_TAC];;
 
@@ -4268,10 +4341,12 @@ let CLOSP2AUX_KC0_START_TAC : tactic =
 let CLOSP2AUX_kc0_fnrm = CLOSP2AUX_kc0_nrm @ [LIST_REL_CONS1; LIST_REL_NIL];;
 
 (* rewrite the assumptions with the facts clos_state_code s = FEMPTY *)
-let CLOSP2AUX_KC0_CODE_TAC : tactic = fun (asl,w as g) ->
+let CLOSP2AUX_KC0_CODE_TAC : tactic =
+  let fempty = `FEMPTY:(num,num#clos_exp)fmap` in
+  fun (asl,w as g) ->
   let cf = mapfilter (fun (_,th) -> let l,r = dest_eq (concl th) in
       if fst(dest_const(fst(strip_comb l))) = "clos_state_code" &&
-         r = `FEMPTY:(num,num#clos_exp)fmap` then th else failwith "") asl in
+         r = fempty then th else failwith "") asl in
   if cf = [] then ALL_TAC g else
   (RULE_ASSUM_TAC(REWRITE_RULE (CLOSP2AUX_find_code_empty :: cf)) THEN
    MAP_EVERY ASSUME_TAC cf THEN REWRITE_TAC (CLOSP2AUX_find_code_empty :: cf)) g;;
@@ -5575,6 +5650,15 @@ let KNOWNC1AUX_op_install = prove
                             then REWRITE_TAC[th] else NO_TAC) THEN
     CASE_REWRITE_TAC[]]]);;
 
+(* MESON with the lemmas thl and only the assumptions whose head constant is *)
+(* in heads (ASM_MESON_TAC with the 50 assumptions of the Op case: 3-5 s per *)
+(* subspt chain)                                                            *)
+let CLOSP2AUX_MESON_HEADS_TAC (heads:string list) (thl:thm list) : tactic =
+  fun (asl,w as g) ->
+  let ok th = try mem (fst(dest_const(fst(strip_comb(concl th))))) heads
+              with Failure _ -> false in
+  MESON_TAC (thl @ filter ok (map snd asl)) g;;
+
 (* case 7: Op (HOL4 lines 3484-3966) *)
 let CLOSP2AUX_kc0_Op = prove
  (el 7 CLOSP2AUX_kc0_cases,
@@ -5610,7 +5694,7 @@ let CLOSP2AUX_kc0_Op = prove
     subspt_known_op_elist_globals) THEN
   ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
   SUBGOAL_THEN `subspt (g1:val_approx spt) (next_g (s:(val_approx spt # C,FFI)clos_state))`
-    ASSUME_TAC THENL [ASM_MESON_TAC[subspt_trans]; ALL_TAC] THEN
+    ASSUME_TAC THENL [CLOSP2AUX_MESON_HEADS_TAC ["subspt"] [subspt_trans]; ALL_TAC] THEN
   MP_TAC(ISPEC `clos_evaluate (xs,APPEND env1 xenv1,s:(val_approx spt # C,FFI)clos_state)`
      PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `r:(clos_v list,clos_v)result`
@@ -5641,7 +5725,7 @@ let CLOSP2AUX_kc0_Op = prove
     `s1:(val_approx spt # C,FFI)clos_state`] KNOWNC1AUX_eval_co) THEN
   ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
    SUBGOAL_THEN `subspt (g0:val_approx spt) (next_g (s:(val_approx spt # C,FFI)clos_state))`
-    ASSUME_TAC THENL [ASM_MESON_TAC[subspt_trans]; ALL_TAC] THEN
+    ASSUME_TAC THENL [CLOSP2AUX_MESON_HEADS_TAC ["subspt"] [subspt_trans]; ALL_TAC] THEN
   MP_TAC(ISPECL [`c:clos_known_config`; `xs:clos_exp list`; `aenv:val_approx list`;
     `g0:val_approx spt`; `ea1:(clos_exp#val_approx)list`; `g1:val_approx spt`;
     `env1:clos_v list`; `xenv1:clos_v list`; `s:(val_approx spt # C,FFI)clos_state`;
@@ -5649,7 +5733,8 @@ let CLOSP2AUX_kc0_Op = prove
     known_correct_approx) THEN
   ANTS_TAC THENL
    [ASM_REWRITE_TAC[ALL_APPEND] THEN
-    ASM_MESON_TAC[state_globals_approx_subspt; oracle_gapprox_disjoint_subspt];
+    CLOSP2AUX_MESON_HEADS_TAC ["subspt"; "state_globals_approx"; "oracle_gapprox_disjoint"]
+      [state_globals_approx_subspt; oracle_gapprox_disjoint_subspt];
     REWRITE_TAC[injectivity "result"; LEFT_FORALL_IMP_THM; EXISTS_REFL] THEN STRIP_TAC] THEN
    FIRST_X_ASSUM(ASSUME_TAC o REWRITE_RULE[FORALL_UNWIND_THM1] o check (fun th ->
     is_forall (concl th) &&
@@ -5671,7 +5756,7 @@ let CLOSP2AUX_kc0_Op = prove
     `Rval a:(clos_v list,clos_v)result`] unique_set_globals_evaluate) THEN
   ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
   SUBGOAL_THEN `subspt (g0:val_approx spt) (next_g (s1:(val_approx spt # C,FFI)clos_state))`
-    ASSUME_TAC THENL [ASM_MESON_TAC[subspt_trans]; ALL_TAC] THEN
+    ASSUME_TAC THENL [CLOSP2AUX_MESON_HEADS_TAC ["subspt"] [subspt_trans]; ALL_TAC] THEN
    ASM_CASES_TAC `op = clos_Install` THENL
    [(* Install *)
     FIRST_X_ASSUM(SUBST_ALL_TAC o check (fun th -> concl th = `op = clos_Install`)) THEN
@@ -5724,7 +5809,7 @@ let CLOSP2AUX_kc0_Op = prove
     MAP_EVERY EXISTS_TAC [`apx:val_approx`; `g1:val_approx spt`; `g:val_approx spt`;
       `s1:(val_approx spt # C,FFI)clos_state`; `t1:(C,FFI)clos_state`; `a:clos_v list`;
       `vs2:clos_v list`] THEN
-    ASM_REWRITE_TAC[] THEN ASM_MESON_TAC[subspt_trans]];
+    ASM_REWRITE_TAC[] THEN CLOSP2AUX_MESON_HEADS_TAC ["subspt"] [subspt_trans]];
    (* the arguments raise an error *)
    FIRST_X_ASSUM(MP_TAC o check KNOWNC1AUX_is_res1) THEN
   CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
@@ -6053,7 +6138,8 @@ let rec KNOWNC2AUX_res (side:tactic) (asl:(string*thm) list) (th:thm) : thm =
   let vs,body = strip_forall (concl th) in
   if not (is_imp body) then th else
   let ant = fst(dest_imp body) in
-  match (try Some (tryfind (fun (_,a) -> MATCH_MP th a) asl) with Failure _ -> None) with
+  let mth = try MATCH_MP th with Failure _ -> fun _ -> failwith "MATCH_MP" in
+  match (try Some (tryfind (fun (_,a) -> mth a) asl) with Failure _ -> None) with
     Some th' -> KNOWNC2AUX_res side asl th'
   | None ->
   match (try Some (MATCH_MP th (REFL (lhand ant))) with Failure _ -> None) with
@@ -7352,7 +7438,8 @@ let rec KNOWNC2AUX_resn (nrm:thm list) (side:tactic) (asl:(string*thm) list) (th
   let vs,body = strip_forall (concl th) in
   if not (is_imp body) then th else
   let ant = fst(dest_imp body) in
-  match (try Some (tryfind (fun (_,a) -> MATCH_MP th a) asl) with Failure _ -> None) with
+  let mth = try MATCH_MP th with Failure _ -> fun _ -> failwith "MATCH_MP" in
+  match (try Some (tryfind (fun (_,a) -> mth a) asl) with Failure _ -> None) with
     Some th' -> KNOWNC2AUX_resn nrm side asl th'
   | None ->
   match (try Some (MATCH_MP th (REFL (lhand ant))) with Failure _ -> None) with

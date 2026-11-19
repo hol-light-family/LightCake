@@ -309,7 +309,12 @@ let C2BP2AUX_SIDE_TAC : tactic =
 
 
 let C2BP2AUX_FINISH_TAC f3 =
-  FS[] THEN EXISTS_TAC f3 THEN ASM_REWRITE_TAC[] THEN ASM_MESON_TAC[SUBMAP_TRANS];;
+  FS[] THEN EXISTS_TAC f3 THEN ASM_REWRITE_TAC[] THEN
+  (* what is left is a chain of SUBMAP facts: MESON with those alone first *)
+  (* (ASM_MESON_TAC with all the assumptions took 2 s and more)             *)
+  (fun (asl,w as g) ->
+     let subs = filter (fun th -> is_binary "SUBMAP" (concl th)) (map snd asl) in
+     (MESON_TAC (SUBMAP_TRANS :: subs) ORELSE ASM_MESON_TAC[SUBMAP_TRANS]) g);;
 
 (* a case split whose hypothesis also rewrites the assumptions *)
 let C2BP2AUX_ASM_CASES_TAC t =
@@ -1675,7 +1680,11 @@ let C2BP2AUX_cer_app_CONS = prove
       (FIRST_X_ASSUM(STRIP_ASSUME_TAC o check (fun th -> is_conj (concl th) &&
      can (find_term (fun t -> t = `get_loc (f:clos_v)`)) (concl th))) THEN
   SUBGOAL_THEN `rem_args = LENGTH (args':bvl_v list)` ASSUME_TAC THENL
-   [ASM_ARITH_TAC; ALL_TAC] THEN
+   [(* only the facts needed (ASM_ARITH_TAC took 28 s here) *)
+    MAP_EVERY UNDISCH_TAC [`num_args = LENGTH (args':bvl_v list)`; `num_args - rem_args = 0`;
+                           `rem_args <= num_args`] THEN
+    ARITH_TAC;
+    ALL_TAC] THEN
   SUBGOAL_THEN `ptr = a' + num_stubs (clos_state_max_app (s:(C,FFI)clos_state))` SUBST_ALL_TAC THENL
    [MATCH_MP_TAC C2BP2AUX_ptr_loc THEN
     MAP_EVERY EXISTS_TAC [`f1:(num,num)fmap`;

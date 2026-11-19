@@ -200,11 +200,12 @@ let BVLPROPSAUX_bvi_RES_TAC : tactic = fun (asl,w as gl) ->
   let curry th = try PURE_REWRITE_RULE[IMP_CONJ] th with Failure _ -> th in
   let rec resolve depth th =
     if depth = 0 || not (is_impth th) then [th] else
-    let rs = mapfilter (fun a -> curry (MATCH_MP th a)) asms in
+    let mp = MATCH_MP th in
+    let rs = mapfilter (fun a -> curry (mp a)) asms in
     if rs = [] then [th] else flat (map (resolve (depth-1)) rs) in
   let results =
-    flat (map (fun th -> let th' = curry th in
-                 flat (map (resolve 8) (mapfilter (fun a -> curry (MATCH_MP th' a)) asms)))
+    flat (map (fun th -> let mp = MATCH_MP (curry th) in
+                 flat (map (resolve 8) (mapfilter (fun a -> curry (mp a)) asms)))
               imps) in
   let results = filter (fun th -> not (exists (fun a -> concl a = concl th) asms)) results in
   EVERY (map CAKE_ASSUME_TAC results) gl;;
@@ -1053,7 +1054,8 @@ let BVLPROPSAUX_bvi_TO_CLOSE_TAC : tactic = fun (asl,w as g) ->
   let rec resolve depth th =
     if not (is_impth th) then [th] else
     if depth = 0 then [] else
-    let rs = mapfilter (fun a -> curry (MATCH_MP th a)) asms' in
+    let mp = MATCH_MP th in
+    let rs = mapfilter (fun a -> curry (mp a)) asms' in
     let rs = if rs <> [] then rs else (try [curry (refl_mp th)] with Failure _ -> []) in
     flat (map (resolve (depth-1)) rs) in
   let inst = flat (map (fun ih -> resolve 10 (curry ih)) (filter is_impth asms')) in
@@ -1136,10 +1138,16 @@ let BVLPROPSAUX_RES_SIMPS = [case_def "error_result"; case_def "exn_or_ret";
   dec_clock_global; bvi_state_INFO.ri_accfupds; K_THM;
   BVLPROPSAUX_bvi_do_app_inc; map_result_def; map_error_result_I; I_THM];;
 
+(* the implicational assumptions (induction hypotheses, add_clock facts) are *)
+(* left out of the simplification: as conditional rewrites they made each    *)
+(* call cost up to 0.6 s in a big session (the closer uses them instead)      *)
 let BVLPROPSAUX_RW_TAC : tactic =
   RULE_ASSUM_TAC(REWRITE_RULE BVLPROPSAUX_RES_SIMPS) THEN
-  ASM_SIMP_TAC (BVLPROPSAUX_RES_SIMPS @
-                [bvi_dec_clock_1_inc_clock2; bvi_dec_clock_inc_clock]);;
+  (fun (asl,w as g) ->
+     let facts = filter (fun th -> not (is_imp (snd (strip_forall (concl th)))))
+                        (map snd asl) in
+     SIMP_TAC (facts @ BVLPROPSAUX_RES_SIMPS @
+               [bvi_dec_clock_1_inc_clock2; bvi_dec_clock_inc_clock]) g);;
 
 let BVLPROPSAUX_bvi_TO_STEP6_TAC : tactic = fun (asl,w as g) ->
   let inc t = BVLPROPSAUX_has_const "bvi_inc_clock" t in
@@ -1743,9 +1751,11 @@ let BVLPROPSAUX_bvi_RES3_TAC (simps:thm list) : tactic = fun (asl,w as gl) ->
   let imps = filter is_impth asms in
   let curry th = try PURE_REWRITE_RULE[IMP_CONJ] th with Failure _ -> th in
   let simp th = curry (REWRITE_RULE simps th) in
+  (* MATCH_MP th prepares th once for all the assumptions *)
   let rec resolve depth th =
     if depth = 0 || not (is_impth th) then [th] else
-    let rs = mapfilter (fun a -> simp (MATCH_MP th a)) asms in
+    let mp = MATCH_MP th in
+    let rs = mapfilter (fun a -> simp (mp a)) asms in
     if rs = [] then [th] else flat (map (resolve (depth-1)) rs) in
   let results = flat (map (fun th -> resolve 8 (curry th)) imps) in
   let known th l = forall (fun c -> exists (fun a -> aconv (concl a) c) l)

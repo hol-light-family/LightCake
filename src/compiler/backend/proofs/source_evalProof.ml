@@ -1939,6 +1939,10 @@ let SEVPAUX_NORM_RULE = CONV_RULE (REWRITE_CONV[state_INFO.ri_accfupds; K_THM]);
 let SEVPAUX_MATCH_MP th a =
   let vs,body = strip_forall (concl th) in
   if not (is_imp body) then failwith "SEVPAUX_MATCH_MP" else
+  (* a quick test first: the antecedent must match (renaming vs does not   *)
+  (* change that)                                                          *)
+  let ant0 = lhand body in
+  let _ = term_match (subtract (frees ant0) vs) ant0 (concl a) in
   let avoid = frees (concl a) @ freesl (hyp a) @ freesl (hyp th) @ frees (concl th) in
   let vs' = itlist (fun v acc -> variant (acc @ avoid) v :: acc) (rev vs) [] in
   let vs' = rev vs' in
@@ -1982,6 +1986,10 @@ let SEVPAUX_local_lemmas asl =
 
 (* instances of the local lemmas where the quantified states are updated   *)
 (* in their eval_state (state_eval_state_fupd (K e) s0), normalized         *)
+let SEVPAUX_es_opt_ty = `:(eval_state)option`;;
+let SEVPAUX_K_es = `K:(eval_state)option->(eval_state)option->(eval_state)option`;;
+let SEVPAUX_REC_RW_CONV = REWRITE_CONV EVPROPSAUX_REC_RW;;
+
 let SEVPAUX_local_inst_lemmas asl =
   flat (mapfilter (fun th ->
     let vs,_ = strip_forall (concl th) in
@@ -1990,13 +1998,22 @@ let SEVPAUX_local_inst_lemmas asl =
     let th1 = SPEC_ALL th in
     let insts = map (fun v ->
         let n,ty = dest_var v in
-        let e = SEVPAUX_fresh_name (mk_var(n^"_es",`:(eval_state)option`)) in
+        let e = SEVPAUX_fresh_name (mk_var(n^"_es",SEVPAUX_es_opt_ty)) in
         let v0 = SEVPAUX_fresh_name (mk_var(n^"_0",ty)) in
         (mk_icomb(mk_icomb(mk_const("state_eval_state_fupd",[]),
-                           mk_icomb(`K:(eval_state)option->(eval_state)option->(eval_state)option`, e)),
+                           mk_icomb(SEVPAUX_K_es, e)),
                   v0), v)) svs in
-    let th2 = CONV_RULE (REWRITE_CONV EVPROPSAUX_REC_RW) (INST insts th1) in
+    let th2 = CONV_RULE SEVPAUX_REC_RW_CONV (INST insts th1) in
     [GEN_ALL th2]) (SEVPAUX_local_lemmas asl));;
+
+(* the local lemmas and their instances, memoised for the last assumption *)
+(* list (the discharge asks for them at every level of its search)         *)
+let SEVPAUX_locals_last = ref ([] : ((string * thm) list * thm list) list);;
+let SEVPAUX_locals asl =
+  match !SEVPAUX_locals_last with
+    (a,r)::_ when a == asl -> r
+  | _ -> let r = SEVPAUX_local_lemmas asl @ SEVPAUX_local_inst_lemmas asl in
+         SEVPAUX_locals_last := [asl,r]; r;;
 
 let rec SEVPAUX_discharge_d d asl th0 =
   let th = SEVPAUX_NORM_RULE th0 in
@@ -2048,14 +2065,14 @@ let rec SEVPAUX_discharge_d d asl th0 =
   if r3 <> [] || d = 0 then r3 else
   let back = flat (mapfilter (fun lem ->
       let c = snd (splitlist dest_imp (snd (strip_forall (concl lem)))) in
-      let slem = SPEC_ALL lem in
       let pat,i = try c, term_match [] c ant with Failure _ ->
               if is_comb ant && mem (rand ant) vs then rator c, term_match [] (rator c) (rator ant)
               else failwith "" in
+      let slem = SPEC_ALL lem in
       let lem'' = SEVPAUX_inst_gen pat i slem in
       mapfilter (fun lth -> SEVPAUX_MATCH_MP th lth)
         (SEVPAUX_discharge_d (d - 1) asl lem''))
-      (!SEVPAUX_BACK_LEMMAS @ SEVPAUX_local_lemmas asl @ SEVPAUX_local_inst_lemmas asl)) in
+      (!SEVPAUX_BACK_LEMMAS @ SEVPAUX_locals asl)) in
   flat (map (SEVPAUX_discharge_d d asl) back);;
 
 let SEVPAUX_discharge_all asl th = SEVPAUX_discharge_d 3 asl th;;
@@ -2099,7 +2116,7 @@ let SEVPAUX_BACK_TAC : tactic = fun (asl,w as gl) ->
       let lem' = SEVPAUX_inst_gen c i (SPEC_ALL lem) in
       let th = hd (SEVPAUX_discharge_d 2 asl lem') in
       if aconv (concl th) w then th else failwith "")
-      (!SEVPAUX_BACK_LEMMAS @ SEVPAUX_local_lemmas asl @ SEVPAUX_local_inst_lemmas asl) in
+      (!SEVPAUX_BACK_LEMMAS @ SEVPAUX_locals asl) in
   ACCEPT_TAC th gl;;
 
 (* ---- the induction hypotheses ---- *)
@@ -2313,7 +2330,7 @@ let SEVPAUX_ES_EVAL_THL =
 
 let SEVPAUX_ES_GOAL_TAC : tactic =
   TRY(fun (asl,w as gl) ->
-        SEVPAUX_LEMMA_RES_TAC (SEVPAUX_local_lemmas asl @ SEVPAUX_local_inst_lemmas asl) gl) THEN
+        SEVPAUX_LEMMA_RES_TAC (SEVPAUX_locals asl) gl) THEN
   SEVPAUX_POST_TAC THEN
   ONCE_REWRITE_TAC[full_evaluate_def] THEN
   (fun gl -> REPEAT(CHANGED_TAC(ASM_REWRITE_TAC (SEVPAUX_ES_EVAL_THL @ !SEVPAUX_feqs) THEN
@@ -2763,6 +2780,38 @@ let SEVPAUX_DEDUP_TAC : tactic = fun (asl,w) ->
                       else (l,th)::dedup (concl th::seen) rest in
   (null_meta,[dedup [] asl,w],fun i ths -> hd ths);;
 
+(* the closure of the assumptions under modus ponens (with the non-       *)
+(* quantified implications among them), conjunctions split                  *)
+let SEVPAUX_MP_SAT_TAC : tactic = fun (asl,w as gl) ->
+  let dedup l = itlist (fun th acc -> if exists (fun t -> aconv (concl t) (concl th)) acc
+                                      then acc else th::acc) l [] in
+  let rec go facts acc =
+    let news = flat (map (fun th ->
+        let c = concl th in
+        if is_imp c then
+          match filter (fun f -> aconv (concl f) (lhand c)) facts with
+            f::_ -> CONJUNCTS (MP th f)
+          | [] -> []
+        else []) facts) in
+    let news = dedup (filter (fun t -> not (exists (fun f -> aconv (concl f) (concl t)) facts))
+                       news) in
+    if news = [] then acc else go (news @ facts) (news @ acc) in
+  let facts = flat (map (CONJUNCTS o snd) asl) in
+  MAP_EVERY ASSUME_TAC (rev (go facts [])) gl;;
+
+(* record_forward from the record_forward facts among the assumptions *)
+let SEVPAUX_RF_TAC : tactic = fun (asl,w as gl) ->
+  let rfs = filter (fun th -> let c = concl th in
+               is_comb c && is_comb(rator c) && is_const(rator(rator c)) &&
+               fst(dest_const(rator(rator c))) = "record_forward") (map snd asl) in
+  MESON_TAC(record_forward_refl :: record_forward_trans :: rfs) gl;;
+
+(* the goals of evaluate_is_record_forward from the facts of the runs *)
+let SEVPAUX_REC_FIN_TAC : tactic =
+  REPEAT CONJ_TAC THEN REPEAT DISCH_TAC THEN SEVPAUX_MP_SAT_TAC THEN
+  FIRST [FIRST_ASSUM ACCEPT_TAC; SEVPAUX_RF_TAC;
+         ASM_MESON_TAC[record_forward_refl; record_forward_trans]];;
+
 (* the closing tactic of evaluate_is_record_forward: chain the facts of the  *)
 (* runs among the assumptions (induction hypotheses, insert_do_eval,         *)
 (* insert_declare_env) by transitivity                                       *)
@@ -2778,7 +2827,7 @@ let SEVPAUX_REC_CLOSE_TAC : tactic =
   RES_TAC THEN SEVPAUX_DEDUP_TAC THEN
   REPEAT(FIRST_X_ASSUM(K ALL_TAC o check (is_forall o concl))) THEN
   ASM_REWRITE_TAC[reset_env_generation_orac_eqs; state_INFO.ri_accfupds; K_THM] THEN
-  ASM_MESON_TAC[record_forward_refl; record_forward_trans];;
+  SEVPAUX_REC_FIN_TAC;;
 
 let evaluate_is_record_forward = prove
  (`(!(s:(FFI)state) env exps s' res.
@@ -2931,35 +2980,69 @@ let SEVPAUX_ERS_STEP_TAC : tactic =
     if is_disj c || is_exists c || is_conj c then CAKE_STRIP_ASSUME_TAC th else NO_TAC)) THEN
   RULE_ASSUM_TAC(REWRITE_RULE EVPROPSAUX_REC_RW);;
 
+(* terms used by the clock tactics, parsed once *)
+let SEVPAUX_k = `k:num` and SEVPAUX_0 = `0` and SEVPAUX_1 = `1`
+and SEVPAUX_minus = `(-):num->num->num` and SEVPAUX_le = `(<=):num->num->bool`
+and SEVPAUX_num = `:num`;;
+
 (* the facts about clocks among the assumptions *)
 let SEVPAUX_is_arith_fact tm =
   let t = if is_neg tm then rand tm else tm in
-  (is_eq t && type_of (lhs t) = `:num`) ||
+  (is_eq t && type_of (lhs t) = SEVPAUX_num) ||
   (is_comb t && is_comb (rator t) && is_const (rator (rator t)) &&
    mem (fst(dest_const(rator(rator t)))) ["<="; "<"] &&
-   type_of (rand t) = `:num`);;
+   type_of (rand t) = SEVPAUX_num);;
 
-(* prove tm (a fact about numbers) from the arithmetic assumptions *)
+(* the atoms of a linear fact *)
+let rec SEVPAUX_num_atoms tm =
+  match tm with
+    Comb(Comb(Const(("+"|"-"|"*"|"<="|"<"|"="),_),a),b) ->
+      union (SEVPAUX_num_atoms a) (SEVPAUX_num_atoms b)
+  | Comb(Const("~",_),a) -> SEVPAUX_num_atoms a
+  | _ -> if is_numeral tm then [] else [tm];;
+
+(* prove tm (a fact about numbers) from the arithmetic assumptions connected *)
+(* to it through atoms other than k; the ARITH_RULE results are memoised      *)
+let SEVPAUX_arith_cache = ref ([] : (term * thm option) list);;
 let SEVPAUX_try_arith asl tm =
   let fths = filter (fun th -> SEVPAUX_is_arith_fact (concl th)) (map snd asl) in
-  let th = ARITH_RULE (itlist (fun f t -> mk_imp(concl f,t)) fths tm) in
+  let fat = map (fun th -> th, subtract (SEVPAUX_num_atoms (concl th)) [SEVPAUX_k]) fths in
+  let rec grow ats =
+    let ats' = itlist (fun (_,a) acc -> if intersect a acc <> [] then union a acc else acc)
+                 fat ats in
+    if length ats' = length ats then ats else grow ats' in
+  let ats = grow (subtract (SEVPAUX_num_atoms tm) [SEVPAUX_k]) in
+  let fths = map fst (filter (fun (_,a) -> a = [] || intersect a ats <> []) fat) in
+  let fths = itlist (fun th acc -> if exists (fun t -> aconv (concl t) (concl th)) acc
+                                   then acc else th::acc) fths [] in
+  let imp = itlist (fun f t -> mk_imp(concl f,t)) fths tm in
+  let th = match filter (fun (t,_) -> aconv t imp) (!SEVPAUX_arith_cache) with
+      (_,Some th)::_ -> th
+    | (_,None)::_ -> failwith "SEVPAUX_try_arith"
+    | [] -> (try let th = ARITH_RULE imp in
+                 SEVPAUX_arith_cache := (imp,Some th) :: !SEVPAUX_arith_cache; th
+             with e -> (SEVPAUX_arith_cache := (imp,None) :: !SEVPAUX_arith_cache; raise e)) in
   rev_itlist (fun f th -> MP th f) fths th;;
 
 (* the clocks t tested by the original run (assumptions t = 0 or ~(t = 0)) *)
 let SEVPAUX_clocks asl =
   mapfilter (fun (_,th) -> let c = concl th in
       let c' = if is_neg c then rand c else c in
-      if is_eq c' && rhs c' = `0` && is_comb (lhs c') && is_const(rator(lhs c')) &&
+      if is_eq c' && rhs c' = SEVPAUX_0 && is_comb (lhs c') && is_const(rator(lhs c')) &&
          fst(dest_const(rator(lhs c'))) = "state_clock" then lhs c' else failwith "") asl;;
 
 (* for each tested clock t: the facts t - k = 0 and k <= t - 1 or their    *)
 (* negations, when they follow from the arithmetic assumptions             *)
 let SEVPAUX_CLOCK_FACTS_TAC : tactic = fun (asl,w as gl) ->
   let ts = setify (SEVPAUX_clocks asl) in
+  let known tm = exists (fun (_,th) -> aconv (concl th) tm) asl in
   let cands = flat (map (fun t ->
-      let tk = mk_eq(mk_binop `(-):num->num->num` t `k:num`, `0`) in
-      let k1 = mk_binop `(<=):num->num->bool` `k:num` (mk_binop `(-):num->num->num` t `1`) in
-      [tk; mk_neg tk; k1; mk_neg k1]) ts) in
+      let tk = mk_eq(mk_binop SEVPAUX_minus t SEVPAUX_k, SEVPAUX_0) in
+      let k1 = mk_binop SEVPAUX_le SEVPAUX_k (mk_binop SEVPAUX_minus t SEVPAUX_1) in
+      if known tk || known (mk_neg tk) then
+        (if known k1 || known (mk_neg k1) then [] else [k1; mk_neg k1])
+      else if known k1 || known (mk_neg k1) then [tk; mk_neg tk]
+      else [tk; mk_neg tk; k1; mk_neg k1]) ts) in
   let ths = mapfilter (SEVPAUX_try_arith asl) cands in
   MAP_EVERY ASSUME_TAC ths gl;;
 
@@ -2967,48 +3050,32 @@ let SEVPAUX_CLOCK_FACTS_TAC : tactic = fun (asl,w as gl) ->
 let SEVPAUX_CLOCK_SPLIT_TAC : tactic = fun (asl,w as gl) ->
   let ts = setify (SEVPAUX_clocks asl) in
   let undecided = filter (fun t ->
-      let tk = mk_eq(mk_binop `(-):num->num->num` t `k:num`, `0`) in
+      let tk = mk_eq(mk_binop SEVPAUX_minus t SEVPAUX_k, SEVPAUX_0) in
       not (exists (fun (_,th) -> aconv (concl th) tk || aconv (concl th) (mk_neg tk)) asl)) ts in
   match undecided with
     [] -> failwith "SEVPAUX_CLOCK_SPLIT_TAC"
-  | t::_ -> ASM_CASES_TAC (mk_eq(mk_binop `(-):num->num->num` t `k:num`, `0`)) gl;;
+  | t::_ -> ASM_CASES_TAC (mk_eq(mk_binop SEVPAUX_minus t SEVPAUX_k, SEVPAUX_0)) gl;;
 
 let SEVPAUX_SUB1_K = ARITH_RULE `!a. (a - 1) - k = (a - k) - 1`;;
 
 let SEVPAUX_ERS_THL = [do_eval_res_def; combine_dec_result_def; SEVPAUX_SUB1_K; SUB_0];;
 
-(* the witness of the second disjunct: the state of a timed-out run *)
-let SEVPAUX_TIMEOUT_WITNESS_TAC : tactic = fun (asl,w as gl) ->
-  let cands1 = mapfilter (fun (_,th) ->
-      let c = concl th in
-      if EVPROPSAUX_is_eval_eq c then
-        let r = rhs c in
-        let st,res = dest_pair r in
-        if res = `Rerr (Rabort Rtimeout_error):(v list,v)result` ||
-           res = `Rerr (Rabort Rtimeout_error):(v sem_env,v)result` then st
-        else failwith "" else failwith "") asl in
-  let evres = mapfilter (fun (_,th) ->
-      let c = concl th in
-      if is_eq c && EVPROPSAUX_is_const_app ["do_eval_res"] (lhs c) && is_pair (rhs c)
-      then fst(dest_pair(rhs c))
-      else failwith "") asl in
-  let cands2 = map (fun t -> mk_icomb(mk_icomb(`state_clock_fupd:(num->num)->(FFI)state->(FFI)state`,
-                                               `\c. c - k`), t))
-                   (setify (map rand (SEVPAUX_clocks asl) @ evres)) in
-  FIRST (map (fun t -> EXISTS_TAC t THEN CONJ_TAC THENL
-                [EVPROPSAUX_GOAL_EVAL_TAC SEVPAUX_ERS_THL THEN NO_TAC;
-                 REWRITE_TAC[state_INFO.ri_accfupds; K_THM; reset_env_generation_orac_eqs] THEN
-                 ASM_MESON_TAC[record_forward_refl; record_forward_trans]])
-             (cands1 @ cands2)) gl;;
+let SEVPAUX_FIN_CLOSE_TAC : tactic =
+  REPEAT CONJ_TAC THEN
+  (FIRST_ASSUM ACCEPT_TAC ORELSE
+   (fun (asl,w as gl) -> ACCEPT_TAC (SEVPAUX_try_arith asl w) gl) ORELSE
+   SEVPAUX_RF_TAC) THEN NO_TAC;;
 
+(* the goal's run evaluated with the assumptions: either the same result    *)
+(* (first disjunct) or a timeout whose state is record_forward (second)     *)
 let SEVPAUX_ERS_FIN_TAC : tactic =
   RULE_ASSUM_TAC(REWRITE_RULE[SEVPAUX_SUB1_K]) THEN
-  FIRST [DISJ1_TAC THEN REPEAT CONJ_TAC THEN
-           (FIRST_ASSUM ACCEPT_TAC ORELSE
-            (EVPROPSAUX_GOAL_EVAL_TAC SEVPAUX_ERS_THL THEN NO_TAC) ORELSE
-            (REWRITE_TAC[state_INFO.ri_accfupds; K_THM] THEN
-             (fun (asl,w as gl) -> ACCEPT_TAC (SEVPAUX_try_arith asl w) gl))) THEN NO_TAC;
-         DISJ2_TAC THEN SEVPAUX_TIMEOUT_WITNESS_TAC];;
+  EVPROPSAUX_GOAL_EVAL_TAC SEVPAUX_ERS_THL THEN
+  REWRITE_TAC[UNWIND_THM1; UNWIND_THM2; state_INFO.ri_accfupds; K_THM;
+              reset_env_generation_orac_eqs] THEN
+  FIRST [SEVPAUX_FIN_CLOSE_TAC;
+         DISJ1_TAC THEN SEVPAUX_FIN_CLOSE_TAC;
+         DISJ2_TAC THEN SEVPAUX_FIN_CLOSE_TAC];;
 
 let SEVPAUX_ERS_ROUND_TAC : tactic = SEVPAUX_CLOCK_FACTS_TAC THEN SEVPAUX_ERS_STEP_TAC;;
 

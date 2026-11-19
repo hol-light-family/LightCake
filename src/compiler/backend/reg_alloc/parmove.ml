@@ -1252,7 +1252,9 @@ let fstep_MAP_INJ = prove
     (\i. i < LENGTH mu /\ SND (EL i mu) = d)` SUBST1_TAC THENL
    [REWRITE_TAC[FUN_EQ_THM] THEN X_GEN_TAC `i:num` THEN
     ASM_CASES_TAC `i < LENGTH (mu:(A option#A option) list)` THEN
-    ASM_SIMP_TAC[EL_MAP; PAIR_MAP] THEN
+    (* only the case assumption: the injectivity assumption, whose conclusion *)
+    (* is an equation of variables, makes ASM_SIMP_TAC slow *)
+    POP_ASSUM(fun th -> SIMP_TAC[EL_MAP; PAIR_MAP; th] THEN ASSUME_TAC th) THEN
     SUBGOAL_THEN `MEM (SND (EL i mu:A option#A option)) (MAP SND mu)` ASSUME_TAC THENL
      [REWRITE_TAC[MEM_MAP] THEN EXISTS_TAC `EL i mu:A option#A option` THEN
       ASM_SIMP_TAC[MEM_EL];
@@ -1275,10 +1277,9 @@ let fstep_MAP_INJ = prove
         ASM_REWRITE_TAC[SNOC_APPEND; MAP_APPEND; MEM_APPEND; MAP; MEM] THEN NO_TAC);
       COND_CASES_TAC THEN
       ASM_REWRITE_TAC[PARMOVEAUX_map_state; MAP_SNOC; MAP; PAIR_MAP_THM]];
-    FIRST_X_ASSUM(STRIP_ASSUME_TAC o MATCH_MP OLEAST_SOME_IMP) THEN
-    RULE_ASSUM_TAC BETA_RULE THEN
-    ASM_SIMP_TAC[GSYM MAP_DROP; GSYM MAP_TAKE; DROP_CONS_EL; MAP; list_CASE;
-                 PARMOVEAUX_map_state; MAP_APPEND; PAIR_MAP_THM]]);;
+    FIRST_X_ASSUM(MP_TAC o CONJUNCT1 o BETA_RULE o MATCH_MP OLEAST_SOME_IMP) THEN
+    SIMP_TAC[GSYM MAP_DROP; GSYM MAP_TAKE; DROP_CONS_EL; MAP; list_CASE;
+             PARMOVEAUX_map_state; MAP_APPEND; PAIR_MAP_THM]]);;
 
 let PARMOVEAUX_map_state_final = prove
  (`!(f:A->B) p:(A#A) list#(A#A) list#(A#A) list.

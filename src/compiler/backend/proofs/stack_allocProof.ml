@@ -111,6 +111,13 @@ let STALLOCAUX_ALLOC_CASES_TAC : tactic = fun (asl,w as g) ->
    ASM_REWRITE_TAC[PAIR_EQ] THEN
    DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM))) g;;
 
+(* the branches where the allocation gives (SOME Error,s): MESON with the   *)
+(* facts that mention stack_Error only (ASM_MESON_TAC took 13 s with the 43  *)
+(* assumptions of the partial collection)                                    *)
+let STALLOCAUX_ERROR_TAC : tactic = fun (asl,w as g) ->
+  let is_err t = try fst(dest_const t) = "stack_Error" with Failure _ -> false in
+  MESON_TAC (filter (fun th -> can (find_term is_err) (concl th)) (map snd asl)) g;;
+
 (* HOL4 line 4592 *)
 let alloc_correct_lemma_Generational = prove
  (`!w (s:(A,C,FFI)stack_state) r t conf gen_sizes l ret anything c.
@@ -155,9 +162,9 @@ let alloc_correct_lemma_Generational = prove
                      DISCH_THEN SUBST1_TAC]) THEN
     CONV_TAC (stallocaux_norm []) THEN
     COND_CASES_TAC THENL
-     [CASE_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN ASM_MESON_TAC[]; ALL_TAC] THEN
+     [CASE_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN STALLOCAUX_ERROR_TAC; ALL_TAC] THEN
     COND_CASES_TAC THENL
-     [CASE_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN ASM_MESON_TAC[]; ALL_TAC] THEN
+     [CASE_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN STALLOCAUX_ERROR_TAC; ALL_TAC] THEN
     POP_ASSUM(MP_TAC o REWRITE_RULE[]) THEN
     REWRITE_TAC[word_gc_fun_assum_def; FDOM_FUPDATE; INSERT_SUBSET; IN_INSERT;
                 FAPPLY_FUPDATE_THM; distinctness "store_name"] THEN
@@ -196,7 +203,7 @@ let alloc_correct_lemma_Generational = prove
     STALLOCAUX_SPLIT_FN_TAC "word_gen_gc_partial_move_data" ["i4";"pa4";"m4";"c4"] THEN
     STALLOCAUX_SPLIT_FN_TAC "memcpy" ["b1";"m5";"c5"] THEN
     COND_CASES_TAC THENL
-     [ALL_TAC; CASE_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN ASM_MESON_TAC[]] THEN
+     [ALL_TAC; CASE_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN STALLOCAUX_ERROR_TAC] THEN
     CONV_TAC (stallocaux_norm []) THEN REWRITE_TAC[stack_has_space_def] THEN
     CONV_TAC (stallocaux_norm [])) THEN
   (POP_ASSUM STRIP_ASSUME_TAC THEN
@@ -343,7 +350,7 @@ let alloc_correct_lemma_Generational = prove
     STALLOCAUX_SPLIT_FN_TAC "word_gen_gc_move_roots_bitmaps" ["ws2";"i2";"pa2";"ib2";"pb2";"m2";"c2"] THEN
     STALLOCAUX_SPLIT_FN_TAC "word_gen_gc_move_loop" ["i3";"pa3";"ib3";"pb3";"m3";"c3"] THEN
     COND_CASES_TAC THENL
-     [ALL_TAC; CASE_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN ASM_MESON_TAC[]] THEN
+     [ALL_TAC; CASE_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN STALLOCAUX_ERROR_TAC] THEN
     CONV_TAC (stallocaux_norm []) THEN REWRITE_TAC[stack_has_space_def] THEN
     CONV_TAC (stallocaux_norm []) THEN
     REWRITE_TAC[WORD_RULE `word_sub (word_add x y) x = y:A word`] THEN
@@ -1967,6 +1974,16 @@ let STALLOCAUX_HALT_ASM_TAC (tac:tactic) : tactic =
                           then MP_TAC th else NO_TAC) THEN
   ANTS_TAC THENL [tac; DISCH_TAC];;
 
+(* the clock equations (c + ck) - 1 = (c - 1) + ck of the cases below: ARITH  *)
+(* with only the arithmetic assumptions that mention a clock (ASM_ARITH_TAC  *)
+(* with all of them, the bounds of the stacks and buffers included, took up *)
+(* to 450 s on one equation of the Call case)                              *)
+let STALLOCAUX_CLOCK_ARITH_TAC : tactic = fun (asl,w as g) ->
+  let is_clock t = can (find_term (stallocaux_head_is "stack_state_clock")) t in
+  let ths = filter (fun th -> stallocaux_is_arith (concl th) && is_clock (concl th))
+              (map snd asl) in
+  (MAP_EVERY MP_TAC ths THEN ARITH_TAC) g;;
+
 let STALLOCAUX_cc_Loop = prove
  ((stallocaux_cc_case 15),
   (REPEAT GEN_TAC THEN DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "ih1") (LABEL_TAC "ih2")) THEN
@@ -2032,7 +2049,7 @@ let STALLOCAUX_cc_Loop = prove
     REWRITE_TAC[stack_STOP_def] THEN CONV_TAC (stallocaux_norm []) THEN
     SUBGOAL_THEN `(stack_state_clock (s1:(A,C,FFI)stack_state) + ck2) - 1 =
                   (stack_state_clock s1 - 1) + ck2` SUBST1_TAC THENL
-     [ASM_ARITH_TAC; ALL_TAC] THEN
+     [STALLOCAUX_CLOCK_ARITH_TAC; ALL_TAC] THEN
     RULE_ASSUM_TAC(CONV_RULE (stallocaux_norm [])) THEN ASM_REWRITE_TAC[]);
    (REWRITE_TAC[PAIR_EQ] THEN DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
     MAP_EVERY EXISTS_TAC [`ck1:num`; `regs1:(num,(A)word_loc)fmap`] THEN
@@ -2123,7 +2140,7 @@ let STALLOCAUX_cc_JumpLower = prove
     CONV_TAC (stallocaux_norm []) THEN
     SUBGOAL_THEN `(stack_state_clock (s:(A,C,FFI)stack_state) + ck) - 1 =
                   (stack_state_clock s - 1) + ck` SUBST1_TAC THENL
-     [ASM_ARITH_TAC; ALL_TAC] THEN
+     [STALLOCAUX_CLOCK_ARITH_TAC; ALL_TAC] THEN
     RULE_ASSUM_TAC(CONV_RULE (stallocaux_norm [])) THEN ASM_REWRITE_TAC[] THEN
     CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]);
    (MAP_EVERY EXISTS_TAC [`0`; `regs:(num,(A)word_loc)fmap`] THEN
@@ -2190,7 +2207,7 @@ let STALLOCAUX_cc_RawCall = prove
     CONV_TAC (stallocaux_norm []) THEN
     SUBGOAL_THEN `(stack_state_clock (s:(A,C,FFI)stack_state) + ck) - 1 =
                   (stack_state_clock s - 1) + ck` SUBST1_TAC THENL
-     [ASM_ARITH_TAC; ALL_TAC] THEN
+     [STALLOCAUX_CLOCK_ARITH_TAC; ALL_TAC] THEN
     RULE_ASSUM_TAC(CONV_RULE (stallocaux_norm [])) THEN ASM_REWRITE_TAC[] THEN
     CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[])]);;
 
@@ -2356,17 +2373,18 @@ let STALLOCAUX_CC_CALL_CALLEE_TAC : tactic =
 (* rewrite each e - 1 in the goal, e a sum with stack_state_clock s, to e  *)
 (* with stack_state_clock s - 1 for stack_state_clock s (the clock is not  *)
 (* 0), then left-associate the sums in the goal and the assumptions        *)
-let STALLOCAUX_CLOCK_SUB1_TAC : tactic = fun (asl,w as g) ->
-  let cs = `stack_state_clock (s:(A,C,FFI)stack_state)` in
+let STALLOCAUX_CLOCK_SUB1_TAC : tactic =
+  let cs = `stack_state_clock (s:(A,C,FFI)stack_state)` and one = `1` in
+  let cs1 = mk_comb(mk_comb(`(-):num->num->num`,cs),one) in
+  fun (asl,w as g) ->
   let tms = setify (find_terms (fun t ->
       try let f,args = strip_comb t in
-          fst(dest_const f) = "-" && el 1 args = `1` && free_in cs (el 0 args) &&
+          fst(dest_const f) = "-" && el 1 args = one && free_in cs (el 0 args) &&
           not (el 0 args = cs)
       with Failure _ -> false) w) in
   (MAP_EVERY (fun t ->
-     let e = lhand t in
-     let e' = subst [mk_comb(mk_comb(`(-):num->num->num`,cs),`1`),cs] e in
-     SUBGOAL_THEN (mk_eq(t,e')) SUBST1_TAC THENL [ASM_ARITH_TAC; ALL_TAC]) tms THEN
+     let e' = subst [cs1,cs] (lhand t) in
+     SUBGOAL_THEN (mk_eq(t,e')) SUBST1_TAC THENL [STALLOCAUX_CLOCK_ARITH_TAC; ALL_TAC]) tms THEN
    REWRITE_TAC[ADD_ASSOC] THEN
    RULE_ASSUM_TAC(fun th -> if stallocaux_is_ev_eq (concl th)
                             then REWRITE_RULE[ADD_ASSOC] th else th)) g;;
@@ -2461,7 +2479,7 @@ let STALLOCAUX_cc_Call = prove
   CASE_REWRITE_TAC[] THEN CONV_TAC (stallocaux_norm []) THEN
   SUBGOAL_THEN `(stack_state_clock (s:(A,C,FFI)stack_state) + ck) - 1 =
                 (stack_state_clock s - 1) + ck` SUBST1_TAC THENL
-   [ASM_ARITH_TAC; ALL_TAC] THEN
+   [STALLOCAUX_CLOCK_ARITH_TAC; ALL_TAC] THEN
   RULE_ASSUM_TAC(CONV_RULE (stallocaux_norm [])) THEN ASM_REWRITE_TAC[] THEN
   CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]];
     X_GEN_TAC `a:(A)stack_prog#num#num#num` THEN

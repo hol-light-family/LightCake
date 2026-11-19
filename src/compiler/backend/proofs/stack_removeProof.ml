@@ -2487,7 +2487,8 @@ let copy_loop_thm = prove
         (try fst(dest_const(fst(strip_comb(lhs(concl th))))) = "copy_words"
          with Failure _ -> false))) THEN
       ONCE_REWRITE_TAC[copy_words_def] THEN COND_CASES_TAC THEN
-      REWRITE_TAC[option_DISTINCT] THEN DISCH_TAC THEN ASM_ARITH_TAC; ALL_TAC] THEN
+      REWRITE_TAC[option_DISTINCT] THEN DISCH_THEN(K ALL_TAC) THEN
+      POP_ASSUM MP_TAC THEN ARITH_TAC; ALL_TAC] THEN
     MP_TAC(ISPECL [`MAP wl_Word (bs:(A word)list)`; `x:A word`;
                    `(rest:(A word#(A)word_loc->bool)->bool) STAR memory (mq:A word->(A)word_loc) d`;
                    `me:A word->(A)word_loc`;
@@ -3401,7 +3402,11 @@ let STACKPROPSAUX_cc_StackSetSize = prove
 let STACKPROPSAUX_STAR_second = prove
  (`!(a:(A->bool)->bool) b c d e.
      a STAR b STAR c STAR d STAR e = b STAR (a STAR c STAR d STAR e)`,
-  MESON_TAC[STAR_COMM; STAR_ASSOC]);;
+  (* right-associate, then swap a and b (MESON_TAC[STAR_COMM; STAR_ASSOC]: 6 s) *)
+  REPEAT GEN_TAC THEN REWRITE_TAC[GSYM STAR_ASSOC] THEN
+  GEN_REWRITE_TAC LAND_CONV [STAR_ASSOC] THEN
+  GEN_REWRITE_TAC (LAND_CONV o LAND_CONV) [STAR_COMM] THEN
+  REWRITE_TAC[GSYM STAR_ASSOC]);;
 
 (* the bitmaps of s sit at the address in the store slot BitmapBase *)
 
@@ -6360,6 +6365,47 @@ let STACKPROPSAUX_DIVFACTS_GOAL_TAC : tactic = fun (asl,w) ->
 let STACKPROPSAUX_DROP_DEF_TAC (v:term) : tactic =
   FIRST_X_ASSUM(K ALL_TAC o check (fun th -> is_eq (concl th) && lhs(concl th) = v));;
 
+(* ASM_ARITH_TAC on each conjunct of the goal with fewer facts (the          *)
+(* conjuncts of the arithmetic assumptions): first those whose atoms all     *)
+(* occur in the goal, then those near it (sharing an atom with it or with    *)
+(* such a fact), then all assumptions (with all of them, ARITH_TAC took up   *)
+(* to 37 s per call here)                                                    *)
+let STACKPROPSAUX_ARITH_TAC : tactic =
+  let num_ty = `:num` in
+  let rec atoms tm = match tm with
+      Comb(Comb(Const(("+"|"-"|"*"|"DIV"|"MOD"|"<="|"<"|">="|">"|"/\\"|"\\/"|"==>"),_),a),b) ->
+        union (atoms a) (atoms b)
+    | Comb(Comb(Const("=",_),a),b) -> union (atoms a) (atoms b)
+    | Comb(Const("~",_),a) -> atoms a
+    | Comb(Comb(Comb(Const("COND",_),c),a),b) -> union (atoms c) (union (atoms a) (atoms b))
+    | _ -> if is_numeral tm || is_const tm && type_of tm = bool_ty then [] else [tm] in
+  let rec isarith tm =
+    if is_neg tm then isarith (rand tm) else
+    if is_conj tm || is_disj tm || is_imp tm then isarith (lhand tm) && isarith (rand tm) else
+    match tm with
+      Comb(Comb(Const(("<="|"<"|">="|">"),_),a),_) -> type_of a = num_ty
+    | Comb(Comb(Const("=",_),a),_) -> type_of a = num_ty
+    | _ -> false in
+  let facts asl = mapfilter (fun th -> let c = concl th in
+                               if isarith c then (th,atoms c) else failwith "")
+                            (flat (map (CONJUNCTS o snd) asl)) in
+  (* the atoms of the goal; for the goal F, those of the newest arithmetic fact *)
+  let seed afs w =
+    match atoms w, afs with
+      [],(_,a)::_ -> a
+    | ws,_ -> ws in
+  let within_tac (asl,w as gl) =
+    let afs = facts asl in
+    let ws = seed afs w in
+    (MAP_EVERY (MP_TAC o fst) (filter (fun (_,a) -> subset a ws) afs) THEN ARITH_TAC) gl in
+  let near_tac (asl,w as gl) =
+    let afs = facts asl in
+    let near ats = filter (fun (_,a) -> intersect a ats <> []) afs in
+    let ws = seed afs w in
+    let ats1 = itlist (union o snd) (near ws) ws in
+    (MAP_EVERY (MP_TAC o fst) (near ats1) THEN ARITH_TAC) gl in
+  REPEAT CONJ_TAC THEN (within_tac ORELSE near_tac ORELSE ASM_ARITH_TAC);;
+
 let STACKPROPSAUX_init_vals = prove
  (`!(ptr2:A word) ptr3 ptr4 max_heap mid adj3 mhw q reg3 half.
      good_dimindex (:A) /\ max_stack_alloc <= max_heap /\
@@ -6411,7 +6457,7 @@ let STACKPROPSAUX_init_vals = prove
    [MATCH_MP_TAC STACKPROPSAUX_val_sub_le THEN ASM_REWRITE_TAC[]; ALL_TAC] THEN
   SUBGOAL_THEN `!n. n * (dimindex (:A) DIV 8) < 2 EXP dimindex (:A)
                     ==> val (word_mul (word n) (bytes_in_word:A word)) = n * (dimindex (:A) DIV 8)`
-    ASSUME_TAC THENL [ASM_MESON_TAC[STACKPROPSAUX_val_mul_bw]; ALL_TAC] THEN
+    ASSUME_TAC THENL [ASM_SIMP_TAC[STACKPROPSAUX_val_mul_bw]; ALL_TAC] THEN
   SUBGOAL_THEN `val (word_mul (word 1024) (bytes_in_word:A word)) = 1024 * (dimindex (:A) DIV 8) /\
                 val (word_mul (word 255) (bytes_in_word:A word)) = 255 * (dimindex (:A) DIV 8)`
     STRIP_ASSUME_TAC THENL
@@ -6433,7 +6479,7 @@ let STACKPROPSAUX_init_vals = prove
       MP_TAC(ISPECL [`ptr4:A word`; `word_mul (word 255) (bytes_in_word:A word)`]
         STACKPROPSAUX_val_sub_le)] THEN
     ASM_REWRITE_TAC[] THEN DISCH_THEN MATCH_MP_TAC THEN
-    STACKPROPSAUX_DIMCASES_TAC THEN ASM_ARITH_TAC;
+    STACKPROPSAUX_DIMCASES_TAC THEN STACKPROPSAUX_ARITH_TAC;
     ALL_TAC] THEN
   (* the middle *)
   SUBGOAL_THEN `val (mid:A word) = (dimindex (:A) DIV 8) *
@@ -6442,7 +6488,7 @@ let STACKPROPSAUX_init_vals = prove
    [FIRST_X_ASSUM(SUBST1_TAC o check (fun th -> lhs(concl th) = `mid:A word`)) THEN
     W(fun (asl,w) -> MP_TAC(PART_MATCH (lhand o rand) STACKPROPSAUX_val_shl_ushr_add (lhs w))) THEN
     ASM_REWRITE_TAC[] THEN DISCH_THEN MATCH_MP_TAC THEN
-    STACKPROPSAUX_DIMCASES_TAC THEN STACKPROPSAUX_DIVFACTS_TAC THEN ASM_ARITH_TAC;
+    STACKPROPSAUX_DIMCASES_TAC THEN STACKPROPSAUX_DIVFACTS_TAC THEN STACKPROPSAUX_ARITH_TAC;
     ALL_TAC] THEN
   STACKPROPSAUX_DROP_DEF_TAC `mid:A word` THEN
   (* adj3 *)
@@ -6453,7 +6499,7 @@ let STACKPROPSAUX_init_vals = prove
     STRIP_ASSUME_TAC THENL
    [FIRST_X_ASSUM(SUBST1_TAC o check (fun th -> lhs(concl th) = `adj3:A word`)) THEN
     ASM_REWRITE_TAC[] THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
-    STACKPROPSAUX_DIMCASES_TAC THEN STACKPROPSAUX_DIVFACTS_TAC THEN ASM_ARITH_TAC;
+    STACKPROPSAUX_DIMCASES_TAC THEN STACKPROPSAUX_DIVFACTS_TAC THEN STACKPROPSAUX_ARITH_TAC;
     ALL_TAC] THEN
   STACKPROPSAUX_DROP_DEF_TAC `adj3:A word` THEN
   (* mhw *)
@@ -6477,10 +6523,15 @@ let STACKPROPSAUX_init_vals = prove
    [FIRST_X_ASSUM(SUBST1_TAC o check (fun th -> lhs(concl th) = `q:A word`)) THEN
     REWRITE_TAC[WORD_ULT] THEN
     SUBGOAL_THEN `val (word_sub (adj3:A word) ptr2) = val adj3 - val ptr2` SUBST1_TAC THENL
-     [MATCH_MP_TAC STACKPROPSAUX_val_sub_le THEN ASM_ARITH_TAC; ALL_TAC] THEN
+     [MATCH_MP_TAC STACKPROPSAUX_val_sub_le THEN
+      UNDISCH_TAC `val (ptr2:A word) + 255 * dimindex (:A) DIV 8 <= val (adj3:A word)` THEN
+      ARITH_TAC; ALL_TAC] THEN
     COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
     MATCH_MP_TAC STACKPROPSAUX_val_add_lt THEN
-    MP_TAC(ISPEC `adj3:A word` VAL_BOUND) THEN ASM_ARITH_TAC;
+    MP_TAC(ISPEC `adj3:A word` VAL_BOUND) THEN
+    UNDISCH_TAC `val (mhw:A word) < val (adj3:A word) - val (ptr2:A word)` THEN
+    UNDISCH_TAC `val (ptr2:A word) + 255 * dimindex (:A) DIV 8 <= val (adj3:A word)` THEN
+    ARITH_TAC;
     ALL_TAC] THEN
   STACKPROPSAUX_DROP_DEF_TAC `q:A word` THEN
   (* reg3 and half *)
@@ -6488,13 +6539,20 @@ let STACKPROPSAUX_init_vals = prove
                   ((val (q:A word) - val (ptr2:A word)) DIV (2 * (dimindex (:A) DIV 8))) + val ptr2`
     ASSUME_TAC THENL
    [FIRST_X_ASSUM(SUBST1_TAC o check (fun th -> lhs(concl th) = `reg3:A word`)) THEN
+    SUBGOAL_THEN `val (ptr2:A word) <= val (q:A word)` ASSUME_TAC THENL
+     [FIRST_ASSUM(SUBST1_TAC o check (fun th -> lhs(concl th) = `val (q:A word)`)) THEN
+      COND_CASES_TAC THEN
+      UNDISCH_TAC `val (ptr2:A word) + 255 * dimindex (:A) DIV 8 <= val (adj3:A word)` THEN
+      ARITH_TAC; ALL_TAC] THEN
     SUBGOAL_THEN `val (word_sub (q:A word) ptr2) = val q - val ptr2` ASSUME_TAC THENL
-     [MATCH_MP_TAC STACKPROPSAUX_val_sub_le THEN ASM_REWRITE_TAC[] THEN
-      COND_CASES_TAC THEN ASM_ARITH_TAC; ALL_TAC] THEN
+     [MATCH_MP_TAC STACKPROPSAUX_val_sub_le THEN ASM_REWRITE_TAC[]; ALL_TAC] THEN
     W(fun (asl,w) -> MP_TAC(PART_MATCH (lhand o rand) STACKPROPSAUX_val_shl_ushr_add (lhs w))) THEN
-    ASM_REWRITE_TAC[] THEN DISCH_THEN MATCH_MP_TAC THEN
+    REWRITE_TAC[ASSUME `val (word_sub (q:A word) ptr2) = val q - val ptr2`;
+                ASSUME `2 EXP (backend_common_word_shift (:A) + 1) = 2 * dimindex (:A) DIV 8`] THEN
+    DISCH_THEN MATCH_MP_TAC THEN
     MP_TAC(ISPEC `q:A word` VAL_BOUND) THEN
-    STACKPROPSAUX_DIMCASES_TAC THEN STACKPROPSAUX_DIVFACTS_TAC THEN ASM_ARITH_TAC;
+    MP_TAC(SPECL [`val (q:A word) - val (ptr2:A word)`; `2 * dimindex (:A) DIV 8`] DIV_MUL_LE) THEN
+    UNDISCH_TAC `val (ptr2:A word) <= val (q:A word)` THEN ARITH_TAC;
     ALL_TAC] THEN
   STACKPROPSAUX_DROP_DEF_TAC `reg3:A word` THEN
   SUBGOAL_THEN `val (half:A word) = (dimindex (:A) DIV 8) *
@@ -7008,8 +7066,8 @@ let init_code_thm = prove
     UNDISCH_TAC `val (ptr4:A word) = val (ptr2:A word) + dimindex (:A) DIV 8 * Nw` THEN
     REWRITE_TAC[ARITH_RULE `d * Nw = Nw * d:num`] THEN
     DISCH_THEN SUBST1_TAC THEN DISCH_TAC THEN
-    ANTS_TAC THENL [ASM_ARITH_TAC; DISCH_TAC] THEN
-    ANTS_TAC THENL [ASM_ARITH_TAC; DISCH_THEN SUBST1_TAC THEN ASM_REWRITE_TAC[]];
+    ANTS_TAC THENL [STACKPROPSAUX_ARITH_TAC; DISCH_TAC] THEN
+    ANTS_TAC THENL [STACKPROPSAUX_ARITH_TAC; DISCH_THEN SUBST1_TAC THEN ASM_REWRITE_TAC[]];
     ALL_TAC] THEN
   SUBGOAL_THEN `reg3 = word_add (ptr2:A word) (word_mul bytes_in_word (word (2 * hh)))`
     ASSUME_TAC THENL

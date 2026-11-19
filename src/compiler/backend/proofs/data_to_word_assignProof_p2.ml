@@ -332,7 +332,7 @@ let CopyByteAdd_thm = prove
     REWRITE_TAC[OPTION_BIND_EQUALS_OPTION] THEN STRIP_TAC THEN
     MP_TAC(SPEC `n:A word` ASP2AUX_VAL_SUB_4) THEN ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
     SUBGOAL_THEN `~(wl_state_clock (s:(A,C,FFI)wl_state) = 0)` ASSUME_TAC THENL
-     [ASM_ARITH_TAC; ALL_TAC] THEN
+     [MP5AUX_ARITH_TAC; ALL_TAC] THEN
     ASP2AUX_CRW_TAC (asp2_eval_rws @ asp2_eval_rws2 @ asp2_call_rws) THEN
     REMOVE_THEN "IH" MP_TAC THEN ASM_REWRITE_TAC[] THEN
     ASP2AUX_SPEC_EVAL_TAC `ByteCopyAdd_code:(A)wl_prog`
@@ -417,7 +417,7 @@ let CopyByteSub_thm = prove
     REWRITE_TAC[OPTION_BIND_EQUALS_OPTION] THEN STRIP_TAC THEN
     MP_TAC(SPEC `n:A word` ASP2AUX_VAL_SUB_4) THEN ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
     SUBGOAL_THEN `~(wl_state_clock (s:(A,C,FFI)wl_state) = 0)` ASSUME_TAC THENL
-     [ASM_ARITH_TAC; ALL_TAC] THEN
+     [MP5AUX_ARITH_TAC; ALL_TAC] THEN
     ASP2AUX_CRW_TAC (asp2_eval_rws @ asp2_eval_rws2 @ [ASP2AUX_WORD_ADD_NEG] @ asp2_call_rws) THEN
     REMOVE_THEN "IH" MP_TAC THEN ASM_REWRITE_TAC[] THEN
     ASP2AUX_SPEC_EVAL_TAC `ByteCopySub_code:(A)wl_prog`
@@ -893,7 +893,7 @@ let ASP2AUX_state_rel_WriteWord64 = prove
    [UNDISCH_TAC `ALL (\n. n IN FDOM (wl_state_store (t:(A,C,FFI)wl_state))) [Globals]` THEN
     REWRITE_TAC[ALL];
     GEN_TAC THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[IS_SOME_DEF] THEN ASM_MESON_TAC[];
-    ASM_MESON_TAC[option_le_trans];
+    MP5AUX_HEAD_MESON_TAC[option_le_trans];
     MATCH_MP_TAC memory_rel_less_space THEN EXISTS_TAC `sp:num` THEN ASM_REWRITE_TAC[] THEN
     CASE_REWRITE_TAC[APPEND] THEN REWRITE_TAC[GSYM APPEND_ASSOC; APPEND] THEN
     FIRST_X_ASSUM(MP_TAC o check (fun th -> asp2_head_is "memory_rel" (concl th) &&
@@ -959,8 +959,8 @@ let assign_WordFromWord = prove
     MATCH_MP state_rel_get_vars_IMP) THEN
   DISCH_THEN(X_CHOOSE_THEN `ws:(A word_loc)list` STRIP_ASSUME_TAC) THEN
   FIRST_ASSUM(MP_TAC o REWRITE_RULE[data_to_word_gcProof_state_rel_thm] o
-    check (fun th -> concl th = `data_to_word_gcProof_state_rel c l1 l2
-      (s:(C,FFI)data_state) (t:(A,C,FFI)wl_state) NONE locs`)) THEN
+    check ((=) `data_to_word_gcProof_state_rel c l1 l2
+      (s:(C,FFI)data_state) (t:(A,C,FFI)wl_state) NONE locs` o concl)) THEN
   CASE_REWRITE_TAC[APPEND] THEN STRIP_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[GSYM APPEND_ASSOC]) THEN
   DRULE_ALL memory_rel_get_vars_IMP THEN DISCH_TAC THEN
@@ -1539,15 +1539,14 @@ let assign_CopyByte = prove
     ASM_REWRITE_TAC[LENGTH] THEN CONV_TAC NUM_REDUCE_CONV; ALL_TAC] THEN
   RVEQ_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[data_state_INFO.ri_accfupds; K_THM; MAP]) THEN
-  FIRST_ASSUM(MP_TAC o check (fun th -> concl th =
-    `wl_get_vars [adjust_var e1; adjust_var e2; adjust_var e3; adjust_var e4;
-                  adjust_var e5] (t:(A,C,FFI)wl_state) = SOME [w1; w2; w3; w4; w5]`)) THEN
+  FIRST_ASSUM(MP_TAC o check ((=) `wl_get_vars [adjust_var e1; adjust_var e2; adjust_var e3; adjust_var e4;
+                  adjust_var e5] (t:(A,C,FFI)wl_state) = SOME [w1; w2; w3; w4; w5]` o concl)) THEN
   ASP2AUX_GET_VARS_TAC THEN
   SUBGOAL_THEN `wl_get_vars (MAP adjust_var [e1; e2; e3; e4; e5]) (t:(A,C,FFI)wl_state) =
                 SOME [w1; w2; w3; w4; w5]` ASSUME_TAC THENL [ASM_REWRITE_TAC[MAP]; ALL_TAC] THEN
   FIRST_ASSUM(MP_TAC o REWRITE_RULE[data_to_word_gcProof_state_rel_thm] o
-    check (fun th -> concl th = `data_to_word_gcProof_state_rel c l1 l2
-      (s:(C,FFI)data_state) (t:(A,C,FFI)wl_state) NONE locs`)) THEN
+    check ((=) `data_to_word_gcProof_state_rel c l1 l2
+      (s:(C,FFI)data_state) (t:(A,C,FFI)wl_state) NONE locs` o concl)) THEN
   CASE_REWRITE_TAC[APPEND] THEN STRIP_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[GSYM APPEND_ASSOC]) THEN
   DRULE_ALL memory_rel_get_vars_IMP THEN
@@ -1680,7 +1679,7 @@ let assign_CopyByte = prove
     FIRST_ASSUM(MP_TAC o MATCH_MP memory_rel_Unit o
       (fun th -> CONJ th (ASSUME `good_dimindex (:A)`)) o
       check (fun th -> asp2_head_is "memory_rel" (concl th) &&
-             can (find_term (fun t -> t = `m1:A word->A word_loc`)) (concl th))) THEN
+             can (find_term ((=) `m1:A word->A word_loc`)) (concl th))) THEN
     DISCH_TAC THEN
     ASP2AUX_DRULE_N 4 ASP2AUX_memory_rel_cut_ret THEN
     REWRITE_TAC[IMP_IMP] THEN DISCH_THEN MATCH_MP_TAC THEN
@@ -2138,14 +2137,13 @@ let assign_StringCmp = prove
     ASM_REWRITE_TAC[LENGTH] THEN CONV_TAC NUM_REDUCE_CONV; ALL_TAC] THEN
   RVEQ_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[data_state_INFO.ri_accfupds; K_THM; MAP]) THEN
-  FIRST_ASSUM(MP_TAC o check (fun th -> concl th =
-    `wl_get_vars [adjust_var a1; adjust_var a2] (t:(A,C,FFI)wl_state) = SOME [w1; w2]`)) THEN
+  FIRST_ASSUM(MP_TAC o check ((=) `wl_get_vars [adjust_var a1; adjust_var a2] (t:(A,C,FFI)wl_state) = SOME [w1; w2]` o concl)) THEN
   ASP2AUX_GET_VARS_TAC THEN
   SUBGOAL_THEN `wl_get_vars (MAP adjust_var [a1; a2]) (t:(A,C,FFI)wl_state) = SOME [w1; w2]`
     ASSUME_TAC THENL [ASM_REWRITE_TAC[MAP]; ALL_TAC] THEN
   FIRST_ASSUM(MP_TAC o REWRITE_RULE[data_to_word_gcProof_state_rel_thm] o
-    check (fun th -> concl th = `data_to_word_gcProof_state_rel c l1 l2
-      (s:(C,FFI)data_state) (t:(A,C,FFI)wl_state) NONE locs`)) THEN
+    check ((=) `data_to_word_gcProof_state_rel c l1 l2
+      (s:(C,FFI)data_state) (t:(A,C,FFI)wl_state) NONE locs` o concl)) THEN
   CASE_REWRITE_TAC[APPEND] THEN STRIP_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[GSYM APPEND_ASSOC]) THEN
   DRULE_ALL memory_rel_get_vars_IMP THEN
@@ -2376,8 +2374,7 @@ let assign_XorByte = prove
     ASM_REWRITE_TAC[LENGTH] THEN CONV_TAC NUM_REDUCE_CONV; ALL_TAC] THEN
   RVEQ_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[data_state_INFO.ri_accfupds; K_THM; MAP]) THEN
-  FIRST_ASSUM(MP_TAC o check (fun th -> concl th =
-    `wl_get_vars [adjust_var a1; adjust_var a2] (t:(A,C,FFI)wl_state) = SOME [w1; w2]`)) THEN
+  FIRST_ASSUM(MP_TAC o check ((=) `wl_get_vars [adjust_var a1; adjust_var a2] (t:(A,C,FFI)wl_state) = SOME [w1; w2]` o concl)) THEN
   REWRITE_TAC[wl_get_vars_def; wl_get_var_def] THEN
   REWRITE_TAC(all_case_eqs()) THEN CASE_REWRITE_TAC[] THEN STRIP_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[CONS_11; option_INJ]) THEN RVEQ_TAC THEN
@@ -2385,8 +2382,8 @@ let assign_XorByte = prove
   SUBGOAL_THEN `wl_get_vars (MAP adjust_var [a1; a2]) (t:(A,C,FFI)wl_state) = SOME [w1; w2]`
     ASSUME_TAC THENL [ASM_REWRITE_TAC[MAP]; ALL_TAC] THEN
   FIRST_ASSUM(MP_TAC o REWRITE_RULE[data_to_word_gcProof_state_rel_thm] o
-    check (fun th -> concl th = `data_to_word_gcProof_state_rel c l1 l2
-      (s:(C,FFI)data_state) (t:(A,C,FFI)wl_state) NONE locs`)) THEN
+    check ((=) `data_to_word_gcProof_state_rel c l1 l2
+      (s:(C,FFI)data_state) (t:(A,C,FFI)wl_state) NONE locs` o concl)) THEN
   CASE_REWRITE_TAC[APPEND] THEN STRIP_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[GSYM APPEND_ASSOC]) THEN
   DRULE_ALL memory_rel_get_vars_IMP THEN
@@ -2462,7 +2459,7 @@ let assign_XorByte = prove
     FIRST_ASSUM(MP_TAC o MATCH_MP memory_rel_Unit o
       (fun th -> CONJ th (ASSUME `good_dimindex (:A)`)) o
       check (fun th -> asp2_head_is "memory_rel" (concl th) &&
-             can (find_term (fun t -> t = `m1:A word->A word_loc`)) (concl th))) THEN
+             can (find_term ((=) `m1:A word->A word_loc`)) (concl th))) THEN
     DISCH_TAC THEN
     ASP2AUX_DRULE_N 4 ASP2AUX_memory_rel_cut_ret THEN
     REWRITE_TAC[IMP_IMP] THEN DISCH_THEN MATCH_MP_TAC THEN
@@ -2601,8 +2598,7 @@ let ASP2AUX_Block_MEM_01 = prove
   DISCH_THEN(X_CHOOSE_THEN `w0:A word` (X_CHOOSE_THEN `a0:A word`
     (X_CHOOSE_THEN `y0:A word` STRIP_ASSUME_TAC))) THEN
   ASP2AUX_ELIM_TAC `y0:A word` THEN ASP2AUX_ELIM_TAC `w0:A word` THEN
-  FIRST_X_ASSUM(MP_TAC o check (fun th ->
-    concl th = `get_real_addr c st (ww:A word) = SOME (a0:A word)`)) THEN
+  FIRST_X_ASSUM(MP_TAC o check ((=) `get_real_addr c st (ww:A word) = SOME (a0:A word)` o concl)) THEN
   ASM_REWRITE_TAC[option_INJ] THEN DISCH_THEN(SUBST_ALL_TAC o SYM) THEN
   FIRST_X_ASSUM(MP_TAC o MATCH_MP memory_rel_swap o check (fun th ->
     asp2_head_is "memory_rel" (concl th) && can (find_term ((=) `h:data_v`)) (concl th))) THEN
@@ -2619,8 +2615,7 @@ let ASP2AUX_Block_MEM_01 = prove
   DISCH_THEN(X_CHOOSE_THEN `w1:A word` (X_CHOOSE_THEN `a1:A word`
     (X_CHOOSE_THEN `y1:A word` STRIP_ASSUME_TAC))) THEN
   ASP2AUX_ELIM_TAC `y1:A word` THEN ASP2AUX_ELIM_TAC `w1:A word` THEN
-  FIRST_X_ASSUM(MP_TAC o check (fun th ->
-    concl th = `get_real_addr c st (ww:A word) = SOME (a1:A word)`)) THEN
+  FIRST_X_ASSUM(MP_TAC o check ((=) `get_real_addr c st (ww:A word) = SOME (a1:A word)` o concl)) THEN
   ASM_REWRITE_TAC[option_INJ] THEN DISCH_THEN(SUBST_ALL_TAC o SYM) THEN
   ASM_REWRITE_TAC[] THEN
   FIRST_X_ASSUM(MP_TAC o check (fun th -> asp2_head_is "memory_rel" (concl th) &&
@@ -2731,8 +2726,7 @@ let evaluate_AppendMainLoop_code = prove
     `r1:num`; `r2:num`; `next_free:A word`; `ts:num`; `v:data_v`; `c:data_to_word_config`;
     `s:(C,FFI)data_state`; `sp:num`; `tmp0:A word_loc`; `tmp2:A word_loc`; `f:A word`] THEN
   STRIP_TAC THEN
-  FIRST_X_ASSUM(ASSUME_TAC o SYM o check (fun th ->
-    concl th = `next_free = word_add f (word_mul bytes_in_word (word k)):A word`)) THEN
+  FIRST_X_ASSUM(ASSUME_TAC o SYM o check ((=) `next_free = word_add f (word_mul bytes_in_word (word k)):A word` o concl)) THEN
   FIRST_ASSUM(X_CHOOSE_THEN `ts1:num` (X_CHOOSE_THEN `ys:data_v`
     (CONJUNCTS_THEN2 SUBST_ALL_TAC ASSUME_TAC)) o MATCH_MP v_to_list_SOME_CONS_IMP) THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP ASP2AUX_memory_rel_IMP) THEN
@@ -2780,8 +2774,7 @@ let evaluate_AppendMainLoop_code = prove
     [wl_mem_load_def; wl_mem_store_def; data_to_word_gcProof_word_and_one_eq_0_iff]) THEN
   DISJ_CASES_THEN2 SUBST_ALL_TAC (X_CHOOSE_THEN `h2:data_v` (X_CHOOSE_THEN `tl2:data_v list`
     SUBST_ALL_TAC)) (ISPEC `tl:data_v list` list_CASES) THENL
-   [FIRST_X_ASSUM(MP_TAC o REWRITE_RULE[v_to_list_EQ_SOME_NIL] o check (fun th ->
-      concl th = `data_v_to_list (data_Block ts2 tag2 vs2) = SOME []`)) THEN
+   [FIRST_X_ASSUM(MP_TAC o REWRITE_RULE[v_to_list_EQ_SOME_NIL] o check ((=) `data_v_to_list (data_Block ts2 tag2 vs2) = SOME []` o concl)) THEN
     REWRITE_TAC[injectivity "data_v"] THEN
     DISCH_THEN(X_CHOOSE_THEN `ts3:num` STRIP_ASSUME_TAC) THEN
     ASP2AUX_ELIM_TAC `vs2:data_v list` THEN ASP2AUX_ELIM_TAC `tag2:num` THEN
@@ -2820,8 +2813,7 @@ let evaluate_AppendMainLoop_code = prove
         REWRITE_TAC[LENGTH] THEN ARITH_TAC]];
     FIRST_ASSUM(X_CHOOSE_THEN `ts3:num` (X_CHOOSE_THEN `ys2:data_v`
       (CONJUNCTS_THEN2 MP_TAC ASSUME_TAC)) o MATCH_MP v_to_list_SOME_CONS_IMP o
-      check (fun th -> concl th =
-        `data_v_to_list (data_Block ts2 tag2 vs2) = SOME (CONS h2 tl2)`)) THEN
+      check ((=) `data_v_to_list (data_Block ts2 tag2 vs2) = SOME (CONS h2 tl2)` o concl)) THEN
     REWRITE_TAC[injectivity "data_v"] THEN STRIP_TAC THEN
     ASP2AUX_ELIM_TAC `vs2:data_v list` THEN ASP2AUX_ELIM_TAC `tag2:num` THEN
     ASP2AUX_ELIM_TAC `ts2:num` THEN
@@ -3020,8 +3012,7 @@ let evaluate_AppendMainLoop_code_alt = prove
     `r1:num`; `r2:num`; `next_free:A word`; `ts:num`; `v:data_v`; `c:data_to_word_config`;
     `s:(C,FFI)data_state`; `sp:num`; `tmp0:A word_loc`; `tmp2:A word_loc`; `f:A word`] THEN
   STRIP_TAC THEN
-  FIRST_X_ASSUM(ASSUME_TAC o SYM o check (fun th ->
-    concl th = `next_free = word_add f (word_mul bytes_in_word (word k)):A word`)) THEN
+  FIRST_X_ASSUM(ASSUME_TAC o SYM o check ((=) `next_free = word_add f (word_mul bytes_in_word (word k)):A word` o concl)) THEN
   FIRST_ASSUM(X_CHOOSE_THEN `ts1:num` (X_CHOOSE_THEN `ys:data_v`
     (CONJUNCTS_THEN2 SUBST_ALL_TAC ASSUME_TAC)) o MATCH_MP v_to_list_SOME_CONS_IMP) THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP ASP2AUX_memory_rel_IMP) THEN
@@ -3071,8 +3062,7 @@ let evaluate_AppendMainLoop_code_alt = prove
       ALL_TAC] THEN
     FIRST_ASSUM(X_CHOOSE_THEN `ts3:num` (X_CHOOSE_THEN `ys2:data_v`
       (CONJUNCTS_THEN2 MP_TAC ASSUME_TAC)) o MATCH_MP v_to_list_SOME_CONS_IMP o
-      check (fun th -> concl th =
-        `data_v_to_list (data_Block ts2 tag2 vs2) = SOME (CONS h2 tl2)`)) THEN
+      check ((=) `data_v_to_list (data_Block ts2 tag2 vs2) = SOME (CONS h2 tl2)` o concl)) THEN
     REWRITE_TAC[injectivity "data_v"] THEN STRIP_TAC THEN
     ASP2AUX_ELIM_TAC `vs2:data_v list` THEN ASP2AUX_ELIM_TAC `tag2:num` THEN
     ASP2AUX_ELIM_TAC `ts2:num` THEN
@@ -3331,7 +3321,7 @@ let evaluate_AppendLenLoop_code = prove
      check (fun th -> rand(concl th) = `SOME (xs:data_v list)`)) THEN
     STRIP_TAC THEN
     FIRST_X_ASSUM(MP_TAC o check (fun th -> asp2_head_is "memory_rel" (concl th) &&
-      can (find_term (fun t -> t = `ys:data_v`)) (concl th))) THEN
+      can (find_term ((=) `ys:data_v`)) (concl th))) THEN
     ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
     DRULE_ALL memory_rel_Block_IMP THEN MESON_TAC[];
     ALL_TAC] THEN
@@ -3356,7 +3346,7 @@ let evaluate_AppendLenLoop_code = prove
     CONV_TAC(DEPTH_CONV ASP2AUX_LOOKUP_FROMLIST2_CONV) THEN
     ASM_REWRITE_TAC[] THEN CONJ_TAC THENL
      [FIRST_X_ASSUM(MP_TAC o check (fun th -> asp2_head_is "memory_rel" (concl th) &&
-         can (find_term (fun t -> t = `ys:data_v`)) (concl th))) THEN
+         can (find_term ((=) `ys:data_v`)) (concl th))) THEN
       ASM_REWRITE_TAC[] THEN MATCH_MP_TAC memory_rel_rearrange THEN
       REWRITE_TAC[MEM] THEN MESON_TAC[];
       UNDISCH_TAC `LENGTH (CONS (x:data_v) xs) <= wl_state_clock (t:(A,C,FFI)wl_state)` THEN

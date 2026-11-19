@@ -1438,8 +1438,9 @@ let ctMap_ok_merge_imp = prove
     REWRITE_TAC[FLOOKUP_FUNION] THEN REPEAT GEN_TAC THEN
     CASES_ON `FLOOKUP (ctMap1:ctMap) stamp1` THEN
     CASES_ON `FLOOKUP (ctMap1:ctMap) stamp2` THEN CASE_REWRITE_TAC[] THEN
-    REWRITE_TAC[option_INJ] THEN STRIP_TAC THEN
-    TRY (ASM_MESON_TAC[]) THEN
+    REWRITE_TAC[option_INJ] THEN STRIP_TAC THENL
+     [ASM_MESON_TAC[]; ALL_TAC; ALL_TAC; ASM_MESON_TAC[]] THEN
+    (* the mixed cases: ti is in the range of both maps *)
     FIRST_X_ASSUM(MP_TAC o GEN_REWRITE_RULE I [IN_DISJOINT]) THEN
     ASM_MESON_TAC[TPROPSAUX_ti_IN_FRANGE]]);;
 

@@ -838,6 +838,69 @@ let DATAPAUX_B2D_SPLIT2_TAC : tactic = fun (asl,w as g) ->
 let DATAPAUX_B2D_STEP_TAC =
   DATAPAUX_B2D_SPLIT2_TAC THEN ASM_REWRITE_TAC DATAPAUX_B2D_RWS THEN
   CASE_REWRITE_TAC DATAPAUX_B2D_RWS;;
+
+(* ASM_MESON_TAC[option_CASES; option_DISTINCT] for the liveness goals         *)
+(* (!x. MEM x live ==> ~(lookup x (locals t1) = NONE)) ==> (.. t2 ..): MESON    *)
+(* with the facts about lookup only, not the induction hypotheses (12 s with   *)
+(* all the assumptions)                                                         *)
+let DATAPAUX_LOOKUP_MESON_TAC : tactic =
+  let has c tm = can (find_term (fun t -> is_const t && fst(dest_const t) = c)) tm in
+  (fun (asl,w as gl) ->
+     MESON_TAC(option_CASES :: option_DISTINCT ::
+               filter (fun th -> has "lookup" (concl th) && not (has "bvi_evaluate" (concl th)))
+                      (map snd asl)) gl) ORELSE
+  ASM_MESON_TAC[option_CASES; option_DISTINCT];;
+
+(* ASM_MESON_TAC thl on each conjunct, after two cheap closings of the frame   *)
+(* goals of the calls (ASM_MESON_TAC took 2-108 s on them): the conjunct from   *)
+(* the assumptions by modus ponens (after discharging its antecedents), or a    *)
+(* conjunct Q ==> R from an assumption P \/ Q ==> R                             *)
+let DATAPAUX_FAST_MESON_TAC thl : tactic =
+  let mp_sat : tactic = fun (asl,w as gl) ->
+    let rec go facts =
+      let news = mapfilter (fun th ->
+          let c = concl th in
+          if is_imp c && not (exists (fun f -> aconv (concl f) (rand c)) facts) then
+            MP th (find (fun f -> aconv (concl f) (lhand c)) facts)
+          else failwith "") facts in
+      if news = [] then facts else go (news @ facts) in
+    let facts = go (flat (map (CONJUNCTS o snd) asl)) in
+    ACCEPT_TAC (find (fun f -> aconv (concl f) w) facts) gl in
+  let disch_imp : tactic = fun (asl,w as gl) ->
+    if is_imp w then DISCH_TAC gl else failwith "disch_imp" in
+  REPEAT CONJ_TAC THEN
+  FIRST [REPEAT disch_imp THEN mp_sat;
+         FIRST_X_ASSUM(fun th -> if is_imp (concl th) && is_disj (lhand (concl th))
+                                 then MP_TAC th THEN MESON_TAC[] else NO_TAC);
+         ASM_MESON_TAC thl];;
+
+(* the theorem CASE x (\a. e) .. (\b c. e) = e of a case constant (all arms the *)
+(* same term, independent of the constructor arguments), memoised             *)
+let DATAPAUX_case_const_thms = ref ([] : (string * thm) list);;
+let DATAPAUX_case_const_thm (c:term) =
+  let n = fst(dest_const c) in
+  try assoc n !DATAPAUX_case_const_thms with Failure _ ->
+  let ci = case_info_of_const c in
+  let cc = ci.ci_case in
+  let tys,rty = splitlist dest_fun_ty (type_of cc) in
+  let x = mk_var("x",hd tys) and e = mk_var("e",rty) in
+  let arms = map (fun (vs,_) -> list_mk_abs(vs,e)) ci.ci_pats in
+  let th = prove(mk_eq(list_mk_comb(cc,x::arms),e),
+                 MP_TAC(SPEC x ci.ci_nchotomy) THEN STRIP_TAC THEN
+                 ASM_REWRITE_TAC[ci.ci_def]) in
+  DATAPAUX_case_const_thms := (n,th) :: !DATAPAUX_case_const_thms; th;;
+
+(* the case expressions of the goal whose arms are all the same: the arm *)
+let DATAPAUX_CASE_CONST_TAC : tactic = fun (asl,w as gl) ->
+  let cs = setify (map (fun t -> let h,_,_ = dest_case_app t in h)
+                     (find_terms is_case_app w)) in
+  let ths = mapfilter DATAPAUX_case_const_thm cs in
+  if ths = [] then ALL_TAC gl else REWRITE_TAC ths gl;;
+
+(* STEP_TAC that also drops the case splits whose arms are all the same (on *)
+(* the error cases of a do_app, STEP_TAC split up to 1234 goals)             *)
+let DATAPAUX_B2D_STEP2_TAC =
+  DATAPAUX_B2D_STEP_TAC THEN DATAPAUX_CASE_CONST_TAC;;
 let DATAPAUX_B2D_CLOSE_TAC : tactic =
   RULE_ASSUM_TAC(REWRITE_RULE DATAPAUX_B2D_RWS) THEN
   (fun g -> (FIRST_ASSUM CONTR_TAC ORELSE ALL_TAC) g);;
@@ -996,7 +1059,7 @@ let data_to_bvi_do_app = prove
     EXISTS_TAC `r:(C,FFI)bvi_state` THEN ASM_REWRITE_TAC[] THEN NO_TAC;
     REPEAT STRIP_TAC THEN MATCH_MP_TAC DATAPAUX_B2D_do_app_FinaliseCons THEN
     EXISTS_TAC `r:(C,FFI)bvi_state` THEN ASM_REWRITE_TAC[] THEN NO_TAC;
-    DATAPAUX_B2D_PRE_TAC THEN REPEAT DATAPAUX_B2D_STEP_TAC THEN
+    DATAPAUX_B2D_PRE_TAC THEN REPEAT DATAPAUX_B2D_STEP2_TAC THEN
     TRY DATAPAUX_B2D_NORM_TAC THEN TRY DATAPAUX_B2D_LEAF_TAC THEN
     TRY DATAPAUX_B2D_CLOSE_TAC THEN NO_TAC]);;
 
@@ -1933,8 +1996,8 @@ let DATAPAUX_B2D_do_app_CopyByte = prove
            data_do_app_aux (MemOp (CopyByte F)) z t = Rval (pres,s2) /\
            res = data_to_bvi_v pres /\
            bvi_to_dataProof_state_rel s1 s2`,
-  DATAPAUX_B2D_PRE_TAC THEN REPEAT DATAPAUX_B2D_STEP_TAC THEN TRY DATAPAUX_B2D_NORM_TAC THEN
-  TRY DATAPAUX_B2D_LEAF_TAC THEN TRY DATAPAUX_B2D_CLOSE_TAC);;
+  DATAPAUX_B2D_PRE_TAC THEN DATAPAUX_CASE_CONST_TAC THEN REPEAT DATAPAUX_B2D_STEP2_TAC THEN
+  TRY DATAPAUX_B2D_NORM_TAC THEN TRY DATAPAUX_B2D_LEAF_TAC THEN TRY DATAPAUX_B2D_CLOSE_TAC);;
 
 let DATAPAUX_B2D_Assign_Rval_gen = prove
  (`!n1 op args nopt (t2:(C,FFI)data_state) (r:(C,FFI)bvi_state) zs v r'.
@@ -2511,7 +2574,7 @@ let DATAPAUX_B2D_CC_CONS = prove
         MESON_TAC[OPTION_MAP_DEF; option_DISTINCT];
         UNDISCH_TAC `ALL (\n. ~(lookup n (data_state_locals (t1:(C,FFI)data_state)) = NONE))
                        live` THEN
-        REWRITE_TAC[GSYM ALL_MEM] THEN ASM_MESON_TAC[option_CASES; option_DISTINCT]];
+        REWRITE_TAC[GSYM ALL_MEM] THEN DATAPAUX_LOOKUP_MESON_TAC];
       ALL_TAC] THEN
     MP_TAC(ISPEC `r2:bvi_result` (cases "result")) THEN
     DISCH_THEN(DISJ_CASES_THEN2 (X_CHOOSE_THEN `a2:bvl_v list` SUBST_ALL_TAC)
@@ -2670,12 +2733,12 @@ let DATAPAUX_B2D_CC_IF = prove
       MESON_TAC[];
       ALL_TAC] THEN
     FIRST_X_ASSUM(SUBST_ALL_TAC o SYM o
-      check (fun th -> concl th = `data_to_bvi_v z = w`)) THEN
+      check ((=) `data_to_bvi_v z = w` o concl)) THEN
     SUBGOAL_THEN `ALL (\n. ~(lookup n (data_state_locals (t2:(C,FFI)data_state)) = NONE))
                       live` ASSUME_TAC THENL
      [UNDISCH_TAC `ALL (\n. ~(lookup n (data_state_locals (t1:(C,FFI)data_state)) = NONE))
                      live` THEN
-      REWRITE_TAC[GSYM ALL_MEM] THEN ASM_MESON_TAC[option_CASES; option_DISTINCT];
+      REWRITE_TAC[GSYM ALL_MEM] THEN DATAPAUX_LOOKUP_MESON_TAC;
       ALL_TAC] THEN
     SUBGOAL_THEN `(?v. (res:bvi_result) = Rerr (Rraise (Exn v)))
                   ==> ~(data_jump_exc (t2:(C,FFI)data_state) = NONE)` ASSUME_TAC THENL
@@ -2727,7 +2790,7 @@ let DATAPAUX_B2D_CC_IF = prove
             MESON_TAC[];
             ALL_TAC] THEN
           FIRST_X_ASSUM(SUBST_ALL_TAC o SYM o
-            check (fun th -> concl th = `data_to_bvi_v z2 = w2`)) THEN
+            check ((=) `data_to_bvi_v z2 = w2` o concl)) THEN
           ASM_REWRITE_TAC[HD] THEN CASE_REWRITE_TAC[PAIR_EQ] THEN
           ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[PAIR_EQ] THEN
           REPEAT DATAPAUX_EXISTS_EQ_ANY_TAC THEN TRY (EXISTS_TAC `ls:num option`) THEN
@@ -2802,7 +2865,7 @@ let DATAPAUX_B2D_CC_IF = prove
             MESON_TAC[];
             ALL_TAC] THEN
           FIRST_X_ASSUM(SUBST_ALL_TAC o SYM o
-            check (fun th -> concl th = `data_to_bvi_v z2 = w2`)) THEN
+            check ((=) `data_to_bvi_v z2 = w2` o concl)) THEN
           ASM_REWRITE_TAC[HD] THEN CASE_REWRITE_TAC[PAIR_EQ] THEN
           ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[PAIR_EQ] THEN
           REPEAT DATAPAUX_EXISTS_EQ_ANY_TAC THEN TRY (EXISTS_TAC `ls:num option`) THEN
@@ -2875,7 +2938,7 @@ let DATAPAUX_B2D_CC_LET = prove
                       live` ASSUME_TAC THENL
      [UNDISCH_TAC `ALL (\n. ~(lookup n (data_state_locals (t1:(C,FFI)data_state)) = NONE))
                      live` THEN
-      REWRITE_TAC[GSYM ALL_MEM] THEN ASM_MESON_TAC[option_CASES; option_DISTINCT];
+      REWRITE_TAC[GSYM ALL_MEM] THEN DATAPAUX_LOOKUP_MESON_TAC;
       ALL_TAC] THEN
     SUBGOAL_THEN `(?v. (res:bvi_result) = Rerr (Rraise (Exn v)))
                   ==> ~(data_jump_exc (t2:(C,FFI)data_state) = NONE)` ASSUME_TAC THENL
@@ -2887,8 +2950,8 @@ let DATAPAUX_B2D_CC_LET = prove
       ASSUME_TAC THENL
      [MATCH_MP_TAC DATAPAUX_B2D_var_corr_APPEND THEN ASM_REWRITE_TAC[]; ALL_TAC] THEN
     FIRST_ASSUM(ASSUME_TAC o MATCH_MP DATAPAUX_B2D_var_corr_LENGTH o
-      check (fun th -> concl th = `var_corr a vs
-        (map data_to_bvi_v (data_state_locals (t2:(C,FFI)data_state)))`)) THEN
+      check ((=) `var_corr a vs
+        (map data_to_bvi_v (data_state_locals (t2:(C,FFI)data_state)))` o concl)) THEN
     REMOVE_THEN "ih2" (MP_TAC o SPECL [`a:bvl_v list`; `s1:(C,FFI)bvi_state`]) THEN
     ASM_REWRITE_TAC[] THEN
     DISCH_THEN(MP_TAC o SPECL [`res:bvi_result`; `s2:(C,FFI)bvi_state`;
@@ -3064,7 +3127,7 @@ let DATAPAUX_B2D_CC_OP = prove
         MATCH_MP_TAC DATAPAUX_B2D_ALL_domain THEN
         UNDISCH_TAC `ALL (\n. ~(lookup n (data_state_locals (t1:(C,FFI)data_state)) = NONE))
                        live` THEN
-        REWRITE_TAC[GSYM ALL_MEM] THEN ASM_MESON_TAC[option_CASES; option_DISTINCT];
+        REWRITE_TAC[GSYM ALL_MEM] THEN DATAPAUX_LOOKUP_MESON_TAC;
         MATCH_MP_TAC DATAPAUX_B2D_var_corr_domain THEN
         EXISTS_TAC `env:bvl_v list` THEN ASM_REWRITE_TAC[]];
       ALL_TAC] THEN
@@ -3331,7 +3394,7 @@ let DATAPAUX_B2D_CC_FORCE = prove
         CASE_REWRITE_TAC[] THEN
         RULE_ASSUM_TAC(REWRITE_RULE[data_call_env_def; data_dec_clock_def; LET_DEF; LET_END_DEF;
                                     data_state_INFO.ri_accfupds; K_THM]) THEN
-        ASM_REWRITE_TAC[] THEN ASM_MESON_TAC[];
+        ASM_REWRITE_TAC[] THEN DATAPAUX_FAST_MESON_TAC[];
         DISCH_THEN(MP_TAC o SPECL [`res:bvi_result`; `s2:(C,FFI)bvi_state`;
           `data_call_env args' ss (data_push_env (mk_wf (inter (data_state_locals t1)
              (list_to_num_set (APPEND live corr)))) F (data_dec_clock (t1:(C,FFI)data_state)))`;
@@ -3887,7 +3950,7 @@ let DATAPAUX_B2D_CALL_NONE = prove
         CASE_REWRITE_TAC[] THEN
         RULE_ASSUM_TAC(REWRITE_RULE[data_call_env_def; data_dec_clock_def; funpow_dec_clock_clock;
                                     LET_DEF; LET_END_DEF; data_state_INFO.ri_accfupds; K_THM]) THEN
-        ASM_REWRITE_TAC[] THEN ASM_MESON_TAC[];
+        ASM_REWRITE_TAC[] THEN DATAPAUX_FAST_MESON_TAC[];
         DISCH_THEN(MP_TAC o SPECL [`res:bvi_result`; `s2:(C,FFI)bvi_state`;
           `data_call_env args' ss (data_push_env (mk_wf (inter
              (data_state_locals (t2:(C,FFI)data_state)) (list_to_num_set (APPEND live corr))))
@@ -4205,8 +4268,7 @@ let DATAPAUX_B2D_CALL_SOME = prove
           SUBGOAL_THEN `!k. n2 <= k ==> lookup k (data_state_locals (t2:(C,FFI)data_state)) = NONE`
             ASSUME_TAC THENL
            [REPEAT STRIP_TAC THEN
-            FIRST_X_ASSUM(MATCH_MP_TAC o check (fun th -> concl th =
-              `!k. next_var <= k ==> lookup k (data_state_locals (t2:(C,FFI)data_state)) = NONE`)) THEN
+            FIRST_X_ASSUM(MATCH_MP_TAC o check ((=) `!k. next_var <= k ==> lookup k (data_state_locals (t2:(C,FFI)data_state)) = NONE` o concl)) THEN
             MATCH_MP_TAC(ARITH_RULE `!nv n2 k. nv + 1 <= n2 /\ n2 <= k ==> nv <= k`) THEN
             EXISTS_TAC `n2:num` THEN ASM_REWRITE_TAC[];
             ALL_TAC] THEN
@@ -4259,7 +4321,7 @@ let DATAPAUX_B2D_CALL_SOME = prove
              `data_set_var next_var xv (t3:(C,FFI)data_state)`; `next_var + 1`;
              `CONS (next_var:num) corr`; `F`; `live:num list`]) THEN
           ANTS_TAC THENL
-           [ASM_REWRITE_TAC[LENGTH; DATAPAUX_B2D_state_rel_set_var] THEN ASM_MESON_TAC[];
+           [ASM_REWRITE_TAC[LENGTH; DATAPAUX_B2D_state_rel_set_var] THEN DATAPAUX_FAST_MESON_TAC[];
             ALL_TAC] THEN
           DISCH_THEN(X_CHOOSE_THEN `t5:(C,FFI)data_state` (X_CHOOSE_THEN `pr2:data_prog`
             (X_CHOOSE_THEN `pres2:((data_v list,data_v)result)option`
@@ -4706,9 +4768,8 @@ let DATAPAUX_B2D_CC_LETCALL = prove
               REWRITE_TAC[PAIR_EQ] THEN DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
               REWRITE_TAC DATAPAUX_B2D_RES_RWS]];
           ALL_TAC] THEN
-        FIRST_X_ASSUM(SUBST_ALL_TAC o check (fun th -> concl th = `(r4:bvi_result) = res`)) THEN
-        FIRST_X_ASSUM(SUBST_ALL_TAC o check (fun th ->
-          concl th = `(s4:(C,FFI)bvi_state) = s2`)) THEN
+        FIRST_X_ASSUM(SUBST_ALL_TAC o check ((=) `(r4:bvi_result) = res` o concl)) THEN
+        FIRST_X_ASSUM(SUBST_ALL_TAC o check ((=) `(s4:(C,FFI)bvi_state) = s2` o concl)) THEN
         SUBGOAL_THEN `~(bvi_state_clock (s0:(C,FFI)bvi_state) < ticks) /\
                       ~(bvi_state_clock (s0:(C,FFI)bvi_state) - ticks = 0)` STRIP_ASSUME_TAC THENL
          [ASM_ARITH_TAC; ALL_TAC] THEN
@@ -4746,7 +4807,7 @@ let DATAPAUX_B2D_CC_LETCALL = prove
         CASE_REWRITE_TAC[] THEN
         RULE_ASSUM_TAC(REWRITE_RULE[data_call_env_def; data_dec_clock_def; funpow_dec_clock_clock;
                                     LET_DEF; LET_END_DEF; data_state_INFO.ri_accfupds; K_THM]) THEN
-        ASM_REWRITE_TAC[] THEN ASM_MESON_TAC[]];
+        ASM_REWRITE_TAC[] THEN DATAPAUX_FAST_MESON_TAC[]];
       ASM_CASES_TAC `bvi_state_clock (s0:(C,FFI)bvi_state) < ticks + 1` THEN
       ASM_REWRITE_TAC[] THENL
        [REWRITE_TAC[PAIR_EQ] THEN DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
@@ -4805,15 +4866,12 @@ let DATAPAUX_B2D_CC_LETCALL = prove
             SIMP_TAC[lookup_fromList_outside];
             DISCH_TAC THEN MATCH_MP_TAC DATAPAUX_B2D_jump_push THEN
             REWRITE_TAC[funpow_dec_clock_clock; jump_exc_NONE] THEN
-            FIRST_X_ASSUM(MATCH_MP_TAC o check (fun th -> concl th =
-              `~(data_jump_exc (t1:(C,FFI)data_state) = NONE)
-               ==> ~(data_jump_exc (t2:(C,FFI)data_state) = NONE)`)) THEN
-            FIRST_X_ASSUM(MATCH_MP_TAC o check (fun th -> concl th =
-              `(?v. (res:bvi_result) = Rerr (Rraise (Exn v)))
-               ==> ~(data_jump_exc (t1:(C,FFI)data_state) = NONE)`)) THEN
-            FIRST_X_ASSUM(MATCH_MP_TAC o check (fun th -> concl th =
-              `(?v. (r4:bvi_result) = Rerr (Rraise (Exn v))) ==>
-               (?v. (res:bvi_result) = Rerr (Rraise (Exn v)))`)) THEN
+            FIRST_X_ASSUM(MATCH_MP_TAC o check ((=) `~(data_jump_exc (t1:(C,FFI)data_state) = NONE)
+               ==> ~(data_jump_exc (t2:(C,FFI)data_state) = NONE)` o concl)) THEN
+            FIRST_X_ASSUM(MATCH_MP_TAC o check ((=) `(?v. (res:bvi_result) = Rerr (Rraise (Exn v)))
+               ==> ~(data_jump_exc (t1:(C,FFI)data_state) = NONE)` o concl)) THEN
+            FIRST_X_ASSUM(MATCH_MP_TAC o check ((=) `(?v. (r4:bvi_result) = Rerr (Rraise (Exn v))) ==>
+               (?v. (res:bvi_result) = Rerr (Rraise (Exn v)))` o concl)) THEN
             FIRST_ASSUM ACCEPT_TAC];
           ALL_TAC] THEN
         DISCH_THEN(MP_TAC o MATCH_MP DATAPAUX_B2D_CALLEE) THEN
@@ -4956,9 +5014,8 @@ let DATAPAUX_B2D_CC_LETCALL = prove
                                         ASSUME `data_state_handler (t4:(C,FFI)data_state) =
                                                   data_state_handler (t2:(C,FFI)data_state)`]) THEN
             ASM_REWRITE_TAC[]];
-          FIRST_X_ASSUM(SUBST_ALL_TAC o check (fun th -> concl th = `(r4:bvi_result) = res`)) THEN
-          FIRST_X_ASSUM(SUBST_ALL_TAC o check (fun th ->
-            concl th = `(s4:(C,FFI)bvi_state) = s2`)) THEN
+          FIRST_X_ASSUM(SUBST_ALL_TAC o check ((=) `(r4:bvi_result) = res` o concl)) THEN
+          FIRST_X_ASSUM(SUBST_ALL_TAC o check ((=) `(s4:(C,FFI)bvi_state) = s2` o concl)) THEN
           SUBGOAL_THEN `data_to_bvi_result r = (res:bvi_result)` ASSUME_TAC THENL
            [UNDISCH_TAC `~(?vs. (res:bvi_result) = Rerr (Rraise (Ret vs)))
                          ==> data_to_bvi_result (r:(data_v list,data_v)result) = res` THEN
