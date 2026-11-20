@@ -1802,3 +1802,12 @@ let _ = cake_add_simps
    FUPDATE_PURGE'; DRESTRICT_IDEMPOT; MAP_KEYS_FEMPTY; fmap_rel_FEMPTY;
    fmap_rel_refl; FDOM_FDIFF; FDIFF_FEMPTY; FDIFF_EMPTY];;
 
+(* ------------------------------------------------------------------------- *)
+(* Lemmas used by several later files.                                       *)
+(* ------------------------------------------------------------------------- *)
+
+let FMAPAUX_FUPDATE_FLOOKUP_ELIM = prove
+ (`!(f:(A,B)fmap) k v. FLOOKUP f k = SOME v ==> f |+ (k,v) = f`,
+  REWRITE_TAC[FLOOKUP_DEF] THEN REPEAT GEN_TAC THEN COND_CASES_TAC THEN
+  REWRITE_TAC[option_DISTINCT; option_INJ] THEN DISCH_TAC THEN
+  MATCH_MP_TAC FUPDATE_ELIM THEN ASM_REWRITE_TAC[]);;

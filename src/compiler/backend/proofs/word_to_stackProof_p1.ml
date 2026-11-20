@@ -2290,16 +2290,6 @@ let W2SP1AUX_dec_frame = prove
   DISCH_THEN(X_CHOOSE_THEN `w:(A)word_loc` STRIP_ASSUME_TAC) THEN
   ASM_MESON_TAC[option_INJ]);;
 
-let W2SP1AUX_dec_stack_cons = prove
- (CASE_TERM `!(ls:((A)word_loc)list) n l0 l h st.
-     wl_dec_stack ls (CONS (StackFrame n l0 l h) st) =
-     if LENGTH ls < LENGTH l then NONE
-     else (match wl_dec_stack (DROP (LENGTH l) ls) st with
-             NONE -> NONE
-           | SOME s -> SOME (CONS (StackFrame n l0 (ZIP (MAP FST l) (TAKE (LENGTH l) ls)) h) s))`,
-  GEN_TAC THEN STRUCT_CASES_TAC(ISPEC `ls:((A)word_loc)list` list_CASES) THEN
-  REWRITE_TAC[wl_dec_stack_def]);;
-
 let W2SP1AUX_stack_dec_stack_cons = prove
  (`!(bs:(A word)list) w ts ws bits hd ts' ws' rest.
      full_read_bitmap bs w = SOME bits /\
@@ -2336,7 +2326,7 @@ let dec_stack_lemma1 = prove
      `[]:(((A)word_loc#(A)word_loc)option#bool list#((A)word_loc)list)list`] THEN
    ASM_REWRITE_TAC[stack_dec_stack_def; abs_stack_def; stack_rel_aux_def; ALL2]);
    (REPEAT GEN_TAC THEN DISCH_TAC THEN REPEAT GEN_TAC THEN
-   REWRITE_TAC[abs_stack_def; W2SP1AUX_dec_stack_cons] THEN STRIP_TAC THEN GVS(all_case_eqs()) THEN
+   REWRITE_TAC[abs_stack_def; IL2AUX_dec_stack_cons] THEN STRIP_TAC THEN GVS(all_case_eqs()) THEN
    RULE_ASSUM_TAC(REWRITE_RULE[stack_rel_aux_def]) THEN
    REPEAT(FIRST_X_ASSUM(CONJUNCTS_THEN ASSUME_TAC o check (is_conj o concl)))) THEN
   (MP_TAC(ISPECL [`a:bool list`; `stack:((A)word_loc)list`; `l:(num#(A)word_loc)list`;
@@ -2369,7 +2359,7 @@ let dec_stack_lemma1 = prove
       `bstack':(((A)word_loc#(A)word_loc)option#bool list#((A)word_loc)list)list`] THEN
     ASM_REWRITE_TAC[abs_frame_eq_def; FST; SND])];
    (REWRITE_TAC[FORALL_PAIR_THM] THEN REPEAT GEN_TAC THEN DISCH_TAC THEN REPEAT GEN_TAC THEN
-   REWRITE_TAC[abs_stack_def; W2SP1AUX_dec_stack_cons] THEN STRIP_TAC THEN GVS(all_case_eqs()) THEN
+   REWRITE_TAC[abs_stack_def; IL2AUX_dec_stack_cons] THEN STRIP_TAC THEN GVS(all_case_eqs()) THEN
    RULE_ASSUM_TAC(REWRITE_RULE[stack_rel_aux_def]) THEN
    REPEAT(FIRST_X_ASSUM(CONJUNCTS_THEN ASSUME_TAC o check (is_conj o concl)))) THEN
   (MP_TAC(ISPECL [`a:bool list`; `a1'':((A)word_loc)list`; `l:(num#(A)word_loc)list`;

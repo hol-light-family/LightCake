@@ -248,10 +248,6 @@ let generalise_list_length = prove
   FIRST_X_ASSUM(MATCH_MP_TAC o check (is_forall o concl)) THEN
   ASM_MESON_TAC[]);;
 
-let TYSYS2AUX_TRIPLE = prove
- (`!x:A#B#C. ?a b c. x = (a,b,c)`,
-  MESON_TAC[PAIR]);;
-
 let generalise_subst = prove
  (`(!t m n (s:(num,num)fmap) tvs s' t'.
       generalise m n s t = (tvs,s',t')
@@ -279,7 +275,7 @@ let generalise_subst = prove
   REWRITE_TAC[generalise_def] THEN
   X_CHOOSE_THEN `g1:num` (X_CHOOSE_THEN `s1:(num,num)fmap` (X_CHOOSE_THEN
     `ts1:infer_t list` ASSUME_TAC))
-    (ISPEC `generalise_list m n s (a0:infer_t list)` TYSYS2AUX_TRIPLE) THEN
+    (ISPEC `generalise_list m n s (a0:infer_t list)` BASICAUX_TUPLE3) THEN
   ASM_REWRITE_TAC[pair_CASE; PAIR_EQ] THEN STRIP_TAC THEN
   REPEAT(FIRST_X_ASSUM(SUBST_ALL_TAC o SYM o check (is_var o rhs o concl))) THEN
   REMOVE_THEN "ih" (MP_TAC o SPECL [`m:num`; `n:num`; `s:(num,num)fmap`; `g1:num`;
@@ -318,11 +314,11 @@ let generalise_subst = prove
   REPEAT GEN_TAC THEN REWRITE_TAC[generalise_def] THEN
   X_CHOOSE_THEN `g1:num` (X_CHOOSE_THEN `s1:(num,num)fmap` (X_CHOOSE_THEN
     `t1:infer_t` ASSUME_TAC))
-    (ISPEC `generalise m n s (a0:infer_t)` TYSYS2AUX_TRIPLE) THEN
+    (ISPEC `generalise m n s (a0:infer_t)` BASICAUX_TUPLE3) THEN
   ASM_REWRITE_TAC[pair_CASE] THEN
   X_CHOOSE_THEN `g2:num` (X_CHOOSE_THEN `s2:(num,num)fmap` (X_CHOOSE_THEN
     `ts2:infer_t list` ASSUME_TAC))
-    (ISPEC `generalise_list m (g1 + n) s1 (a1:infer_t list)` TYSYS2AUX_TRIPLE) THEN
+    (ISPEC `generalise_list m (g1 + n) s1 (a1:infer_t list)` BASICAUX_TUPLE3) THEN
   ASM_REWRITE_TAC[pair_CASE; PAIR_EQ] THEN STRIP_TAC THEN
   REPEAT(FIRST_X_ASSUM(SUBST_ALL_TAC o SYM o check (is_var o rhs o concl))) THEN
   REMOVE_THEN "iht" (MP_TAC o SPECL [`m:num`; `n:num`; `s:(num,num)fmap`; `g1:num`;
@@ -666,7 +662,7 @@ let TYSYS2AUX_MAP_SND_FST = prove
      MAP (\p. match p with (_,tn,_) -> tn) tds = MAP (FST o SND) tds`,
   REWRITE_TAC[MAP_EQ_f; o_THM] THEN REPEAT STRIP_TAC THEN
   X_CHOOSE_THEN `a:A` (X_CHOOSE_THEN `b:B` (X_CHOOSE_THEN `c:C` SUBST1_TAC))
-    (ISPEC `e:A#B#C` TYSYS2AUX_TRIPLE) THEN
+    (ISPEC `e:A#B#C` BASICAUX_TUPLE3) THEN
   REWRITE_TAC[pair_CASE; FST; SND]);;
 
 let check_ctors_success = prove
@@ -680,7 +676,7 @@ let check_ctors_success = prove
    [MESON_TAC[]; ALL_TAC] THEN
   X_CHOOSE_THEN `tvs:mlstring list` (X_CHOOSE_THEN `tn:mlstring` (X_CHOOSE_THEN
     `ctors:(mlstring#ast_t list)list` SUBST1_TAC))
-    (ISPEC `h:mlstring list#mlstring#(mlstring#ast_t list)list` TYSYS2AUX_TRIPLE) THEN
+    (ISPEC `h:mlstring list#mlstring#(mlstring#ast_t list)list` BASICAUX_TUPLE3) THEN
   REWRITE_TAC[MAP; o_THM; FST; SND; ALL_DISTINCT; check_ctors_def;
               check_ctor_tenv_def; st_ex_ignore_bind_success; check_dups_success;
               inferProps_check_dup_ctors_thm; TYSYS2AUX_MAP_SND_FST] THEN
@@ -705,7 +701,7 @@ let TYSYS2AUX_check_ctor_tenv_distinct = prove
   GEN_TAC THEN LIST_INDUCT_TAC THEN REWRITE_TAC[MAP; ALL_DISTINCT] THEN
   X_CHOOSE_THEN `tvs:mlstring list` (X_CHOOSE_THEN `tn:mlstring` (X_CHOOSE_THEN
     `ctors:(mlstring#ast_t list)list` SUBST1_TAC))
-    (ISPEC `h:mlstring list#mlstring#(mlstring#ast_t list)list` TYSYS2AUX_TRIPLE) THEN
+    (ISPEC `h:mlstring list#mlstring#(mlstring#ast_t list)list` BASICAUX_TUPLE3) THEN
   REWRITE_TAC[check_ctor_tenv_def; o_THM; FST; SND; TYSYS2AUX_MAP_SND_FST] THEN
   ASM_MESON_TAC[]);;
 
@@ -757,7 +753,7 @@ let remove_pair_lem = prove
   CONJ_TAC THEN REPEAT GEN_TAC THENL
    [MP_TAC(ISPEC `v:A#B` PAIR_SURJECTIVE) THEN STRIP_TAC;
     X_CHOOSE_THEN `a:A` (X_CHOOSE_THEN `b:B` (X_CHOOSE_THEN `c:D` SUBST1_TAC))
-      (ISPEC `v:A#B#D` TYSYS2AUX_TRIPLE)] THEN
+      (ISPEC `v:A#B#D` BASICAUX_TUPLE3)] THEN
   ASM_REWRITE_TAC[pair_CASE; FST; SND]);;
 
 let infer_funs_length = prove
@@ -767,7 +763,7 @@ let infer_funs_length = prove
    [REWRITE_TAC[infer_e_def; success_eqns] THEN MESON_TAC[LENGTH];
     X_CHOOSE_THEN `f:mlstring` (X_CHOOSE_THEN `x:mlstring`
       (X_CHOOSE_THEN `e:exp` SUBST1_TAC))
-      (ISPEC `h:mlstring#mlstring#exp` TYSYS2AUX_TRIPLE) THEN
+      (ISPEC `h:mlstring#mlstring#exp` BASICAUX_TUPLE3) THEN
     REWRITE_TAC[infer_e_def; success_eqns] THEN REPEAT STRIP_TAC THEN
     EXPAND_TAC "ts" THEN REWRITE_TAC[LENGTH; SUC_INJ] THEN ASM_MESON_TAC[]]);;
 
@@ -1647,7 +1643,7 @@ let check_env_letrec_lem = prove
   LIST_INDUCT_TAC THEN REWRITE_TAC[LENGTH; COUNT_LIST_DEF; MAP; MAP2; ALL; NOT_CONS_NIL] THEN
   X_GEN_TAC `u:num` THEN
   X_CHOOSE_THEN `f:mlstring` (X_CHOOSE_THEN `x:mlstring` (X_CHOOSE_THEN `e:exp`
-    SUBST_ALL_TAC)) (ISPEC `h:mlstring#mlstring#exp` TYSYS2AUX_TRIPLE) THEN
+    SUBST_ALL_TAC)) (ISPEC `h:mlstring#mlstring#exp` BASICAUX_TUPLE3) THEN
   BETA_TAC THEN CASE_REWRITE_TAC[check_t_def; IN_COUNT; GSYM MAP_o; o_DEF] THEN
   REWRITE_TAC[ADD_CLAUSES] THEN DISCH_TAC THEN CONJ_TAC THENL
    [ASM_ARITH_TAC;
@@ -1996,7 +1992,7 @@ let TYSYS2AUX_ienv_val_ok_letrec2 = prove
   LIST_INDUCT_TAC THEN LIST_INDUCT_TAC THEN
   REWRITE_TAC[MAP2; ALL; LENGTH; NOT_SUC; SUC_INJ] THEN
   X_CHOOSE_THEN `f:mlstring` (X_CHOOSE_THEN `x:mlstring` (X_CHOOSE_THEN `e:exp`
-    SUBST_ALL_TAC)) (ISPEC `h:mlstring#mlstring#exp` TYSYS2AUX_TRIPLE) THEN
+    SUBST_ALL_TAC)) (ISPEC `h:mlstring#mlstring#exp` BASICAUX_TUPLE3) THEN
   BETA_TAC THEN CASE_REWRITE_TAC[] THEN REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
   ASM_MESON_TAC[]);;
 
@@ -2086,11 +2082,6 @@ let TYSYS2AUX_cs_step = prove
          ==> t_wfs s2 /\ check_s tvs uvs s2`,
   MESON_TAC[t_unify_check_s; t_unify_wfs]);;
 
-let TYSYS2AUX_ALL_REPLICATE = prove
- (`!P n (x:A). ALL P (REPLICATE n x) <=> n = 0 \/ P x`,
-  GEN_TAC THEN INDUCT_TAC THEN ASM_REWRITE_TAC[REPLICATE; ALL; NOT_SUC] THEN
-  MESON_TAC[]);;
-
 let TYSYS2AUX_SPLIT_ASM_TAC =
   REPEAT(FIRST_X_ASSUM(fun th ->
     if is_conj(concl th) then CONJUNCTS_THEN ASSUME_TAC th else failwith "split"));;
@@ -2149,7 +2140,7 @@ let TYSYS2AUX_CHECK_S_CHAIN_TAC : tactic = fun (asl,w as g) ->
         EXISTS_TAC (el 0 args) THEN EXISTS_TAC (el 1 args) THEN
         ASM_SIMP_TAC[every_shim2; every_zip_fst; every_zip_snd] THEN
         REWRITE_TAC[ETA_AX] THEN
-        ASM_REWRITE_TAC[TYSYS2AUX_ALL_REPLICATE; check_t_def; ALL]
+        ASM_REWRITE_TAC[EVERY_REPLICATE; check_t_def; ALL]
       else failwith "pac") in
   (lift_tac THEN chain_tac THEN FIRST [FIRST_ASSUM ACCEPT_TAC; pac_tac]) g;;
 
@@ -2410,13 +2401,6 @@ let infer_e_check_s = prove
 
 (* ---------- Completeness of generalisation: helper lemmas ---------- *)
 
-let TYSYS2AUX_MAP_FST_pair = prove
- (`!(g:B->C) (l:(A#B)list). MAP FST (MAP (\(a,b). (a,g b)) l) = MAP FST l`,
-  GEN_TAC THEN LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[MAP; CONS_11] THEN
-  MP_TAC(ISPEC `h:A#B` PAIR_SURJECTIVE) THEN
-  DISCH_THEN(X_CHOOSE_THEN `a:A` (X_CHOOSE_THEN `b:B` SUBST1_TAC)) THEN
-  REWRITE_TAC[FST]);;
-
 let generalise_complete_lemma = prove
  (`!tvs (ts:(num#num)list).
      (!uv. uv IN FDOM (FEMPTY |++ ts) ==> ?tv. FAPPLY (FEMPTY |++ ts) uv = tv /\ tv < tvs)
@@ -2427,7 +2411,7 @@ let generalise_complete_lemma = prove
   SUBGOAL_THEN `uv IN FDOM (FEMPTY |++ (ts:(num#num)list))` ASSUME_TAC THENL
    [UNDISCH_TAC `uv IN FDOM (FEMPTY |++ MAP (\(uv,tv). (uv,Infer_Tvar_db tv))
                                         (ts:(num#num)list))` THEN
-    REWRITE_TAC[FDOM_FUPDATE_LIST; TYSYS2AUX_MAP_FST_pair; FDOM_FEMPTY];
+    REWRITE_TAC[FDOM_FUPDATE_LIST; map_fst; FDOM_FEMPTY];
     ALL_TAC] THEN
   ASM_SIMP_TAC[fupdate_list_map; injectivity "infer_t"] THEN ASM_MESON_TAC[]);;
 
@@ -2500,7 +2484,7 @@ let generalise_complete_lemma4 = prove
      [REWRITE_TAC[ALOOKUP_NONE; GSYM MAP_REVERSE; MEM_REVERSE] THEN
       FIRST_ASSUM(MP_TAC o check (fun th ->
         try fst(dest_const(fst(strip_comb(concl th)))) = "DISJOINT" with Failure _ -> false)) THEN
-      REWRITE_TAC[FDOM_FUPDATE_LIST; FDOM_FEMPTY; UNION_EMPTY; TYSYS2AUX_MAP_FST_pair] THEN
+      REWRITE_TAC[FDOM_FUPDATE_LIST; FDOM_FEMPTY; UNION_EMPTY; map_fst] THEN
       REWRITE_TAC[GSYM IN_SET_OF_LIST] THEN ASM SET_TAC[];
       ALL_TAC] THEN
     REWRITE_TAC[option_CASE; OPTION_MAP_DEF] THEN
@@ -2792,11 +2776,6 @@ let TYSYS2AUX_t_wfs_FUPDATE_LIST_novars = prove
   REWRITE_TAC[GSYM ALL_MEM] THEN DISCH_THEN(MP_TAC o SPEC `(y:num,a:infer_t)`) THEN
   ASM_REWRITE_TAC[SND] THEN ASM SET_TAC[]);;
 
-let TYSYS2AUX_option_CASE_ID = prove
- (`!(x:A option). option_CASE x NONE (\v. SOME v) = x`,
-  GEN_TAC THEN STRUCT_CASES_TAC(ISPEC `x:A option` (cases "option")) THEN
-  REWRITE_TAC[option_CASE]);;
-
 let TYSYS2AUX_gc_flookup = prove
  (`!(s:(num,infer_t)fmap) (ts1:(num#num)list) (ts2:(num#infer_t)list) unc
     (g:num->infer_t) x.
@@ -2807,7 +2786,7 @@ let TYSYS2AUX_gc_flookup = prove
                 (FLOOKUP s x) (\v. SOME v)`,
   REPEAT STRIP_TAC THEN
   REWRITE_TAC[flookup_fupdate_list; MAP_REVERSE; ALOOKUP_MAP; o_THM; FLOOKUP_EMPTY;
-              TYSYS2AUX_option_CASE_ID] THEN
+              SPTAUX_optcase_lemma] THEN
   REWRITE_TAC[GSYM TYSYS2AUX_FLOOKUP_FEMPTY_FUPDATE_LIST] THEN
   ASM_SIMP_TAC[FLOOKUP_FUN_FMAP] THEN COND_CASES_TAC THEN REWRITE_TAC[option_CASE]);;
 
@@ -2901,13 +2880,13 @@ let generalise_complete = prove
     REWRITE_TAC[FDOM_FUPDATE_LIST; FDOM_FEMPTY; UNION_EMPTY]; ALL_TAC] THEN
   SUBGOAL_THEN `FDOM (FEMPTY |++ MAP (\(uv,tv). (uv,Infer_Tvar_db tv)) (ts1:(num#num)list)) =
                 FDOM (s':(num,num)fmap)` ASSUME_TAC THENL
-   [REWRITE_TAC[FDOM_FUPDATE_LIST; TYSYS2AUX_MAP_FST_pair; FDOM_FEMPTY; UNION_EMPTY] THEN
+   [REWRITE_TAC[FDOM_FUPDATE_LIST; map_fst; FDOM_FEMPTY; UNION_EMPTY] THEN
     TYSYS2AUX_REWRITE_ASM_LHS_TAC `set_of_list (MAP FST (ts1:(num#num)list))`;
     ALL_TAC] THEN
   SUBGOAL_THEN
    `FDOM ((s:(num,infer_t)fmap) |++ MAP (\(uv,tv). (uv,Infer_Tvar_db tv)) ts1 |++ ts2) =
     FDOM s UNION FDOM (s':(num,num)fmap) UNION unc` ASSUME_TAC THENL
-   [REWRITE_TAC[FDOM_FUPDATE_LIST; TYSYS2AUX_MAP_FST_pair; GSYM UNION_ASSOC] THEN
+   [REWRITE_TAC[FDOM_FUPDATE_LIST; map_fst; GSYM UNION_ASSOC] THEN
     TYSYS2AUX_REWRITE_ASM_LHS_TAC `set_of_list (MAP FST (ts1:(num#num)list))` THEN
     TYSYS2AUX_REWRITE_ASM_LHS_TAC `set_of_list (MAP FST (ts2:(num#infer_t)list))`;
     ALL_TAC] THEN
@@ -2953,7 +2932,7 @@ let generalise_complete = prove
     ANTS_TAC THENL
      [REPEAT CONJ_TAC THENL
        [FIRST_ASSUM ACCEPT_TAC;
-        REWRITE_TAC[FDOM_FUPDATE_LIST; TYSYS2AUX_MAP_FST_pair; FDOM_FEMPTY; UNION_EMPTY] THEN
+        REWRITE_TAC[FDOM_FUPDATE_LIST; map_fst; FDOM_FEMPTY; UNION_EMPTY] THEN
         TYSYS2AUX_REWRITE_ASM_LHS_TAC `set_of_list (MAP FST (ts1:(num#num)list))` THEN
         TYSYS2AUX_REWRITE_ASM_LHS_TAC `set_of_list (MAP FST (ts2:(num#infer_t)list))` THEN
         TYSYS2AUX_EXPAND_DIFF_TAC `unc:num->bool` THEN SET_TAC[];
@@ -2980,7 +2959,7 @@ let generalise_complete = prove
       MATCH_MP_TAC generalise_complete_lemma2 THEN EXISTS_TAC `TC_unit:num` THEN
       REPEAT CONJ_TAC THENL
        [FIRST_ASSUM ACCEPT_TAC;
-        ASM_REWRITE_TAC[MAP_APPEND; TYSYS2AUX_MAP_FST_pair; ALL_DISTINCT_APPEND] THEN
+        ASM_REWRITE_TAC[MAP_APPEND; map_fst; ALL_DISTINCT_APPEND] THEN
         REWRITE_TAC[GSYM IN_SET_OF_LIST] THEN
         TYSYS2AUX_REWRITE_ASM_LHS_TAC `set_of_list (MAP FST (ts1:(num#num)list))` THEN
         TYSYS2AUX_REWRITE_ASM_LHS_TAC `set_of_list (MAP FST (ts2:(num#infer_t)list))` THEN
@@ -2991,7 +2970,7 @@ let generalise_complete = prove
             (try fst(dest_const(fst(strip_comb(concl th)))) = "ALL" with Failure _ -> false))) THEN
           MATCH_MP_TAC MONO_ALL THEN REWRITE_TAC[FORALL_PAIR_THM; o_THM] THEN MESON_TAC[]];
         REWRITE_TAC[FDOM_FUPDATE_LIST; FDOM_FEMPTY; UNION_EMPTY; MAP_APPEND;
-                    SET_OF_LIST_APPEND; TYSYS2AUX_MAP_FST_pair] THEN
+                    SET_OF_LIST_APPEND; map_fst] THEN
         TYSYS2AUX_REWRITE_ASM_LHS_TAC `set_of_list (MAP FST (ts1:(num#num)list))` THEN
         TYSYS2AUX_REWRITE_ASM_LHS_TAC `set_of_list (MAP FST (ts2:(num#infer_t)list))` THEN
         TYSYS2AUX_EXPAND_DIFF_TAC `unc:num->bool` THEN
@@ -3150,7 +3129,7 @@ let TYSYS2AUX_ienv_val_ok_alist_map2 = prove
   LIST_INDUCT_TAC THEN LIST_INDUCT_TAC THEN
   REWRITE_TAC[LENGTH; NOT_SUC; GSYM NOT_SUC; SUC_INJ; MAP2; ALL] THEN
   X_CHOOSE_THEN `f:mlstring` (X_CHOOSE_THEN `x:mlstring` (X_CHOOSE_THEN `e:exp`
-    SUBST_ALL_TAC)) (ISPEC `h:mlstring#mlstring#exp` TYSYS2AUX_TRIPLE) THEN
+    SUBST_ALL_TAC)) (ISPEC `h:mlstring#mlstring#exp` BASICAUX_TUPLE3) THEN
   CASE_REWRITE_TAC[] THEN ASM_MESON_TAC[]);;
 
 let TYSYS2AUX_init_facts = prove
@@ -3304,25 +3283,6 @@ let TYSYS2AUX_dletrec_facts = prove
   RULE_ASSUM_TAC(REWRITE_RULE[ETA_AX]) THEN
   REPEAT CONJ_TAC THEN FIRST_ASSUM ACCEPT_TAC);;
 
-let TYSYS2AUX_tenv_abbrev_ok_tdefs = prove
- (CASE_TERM `!(tdefs:(mlstring list#mlstring#(mlstring#ast_t list)list)list) (ids:num list).
-     tenv_abbrev_ok
-       (alist_to_ns
-          (MAP2 (\tvtnc i. match tvtnc with (tvs,tn,ctors) -> (tn,(tvs,Tapp (MAP Tvar tvs) i)))
-                tdefs ids)
-        :(mlstring,mlstring,mlstring list#t)namespace)`,
-  REWRITE_TAC[tenv_abbrev_ok_def] THEN REPEAT GEN_TAC THEN
-  MATCH_MP_TAC nsAll_alist_to_ns THEN BETA_TAC THEN
-  SPEC_TAC(`ids:num list`,`ids:num list`) THEN
-  SPEC_TAC(`tdefs:(mlstring list#mlstring#(mlstring#ast_t list)list)list`,
-           `tdefs:(mlstring list#mlstring#(mlstring#ast_t list)list)list`) THEN
-  LIST_INDUCT_TAC THEN REWRITE_TAC[MAP2_DEF; ALL] THEN GEN_TAC THEN
-  X_CHOOSE_THEN `tvs:mlstring list` (X_CHOOSE_THEN `tn:mlstring`
-    (X_CHOOSE_THEN `ctors:(mlstring#ast_t list)list` SUBST_ALL_TAC))
-    (ISPEC `h:mlstring list#mlstring#(mlstring#ast_t list)list` TYSYS2AUX_TRIPLE) THEN
-  CASE_REWRITE_TAC[check_freevars_def; ALL_MAP; o_DEF] THEN
-  CONJ_TAC THENL [REWRITE_TAC[GSYM ALL_MEM]; FIRST_ASSUM MATCH_ACCEPT_TAC]);;
-
 let TYSYS2AUX_asm_head asl nm =
   snd(find (fun (_,th) ->
     let c = concl th in
@@ -3378,7 +3338,7 @@ let infer_d_check = prove
     (* Dtype *)
     RULE_ASSUM_TAC(REWRITE_RULE[ienv_ok_def]) THEN
     REWRITE_TAC[ienv_ok_def; inf_env_INFO.ri_accessors; ienv_val_ok_def; nsAll_nsEmpty;
-                TYSYS2AUX_tenv_abbrev_ok_tdefs] THEN
+                TPROPSAUX_tenv_abbrev_ok_tdefs] THEN
     MATCH_MP_TAC check_ctor_tenv_ok THEN ASM_REWRITE_TAC[] THEN CONJ_TAC THENL
      [FIRST_X_ASSUM(MP_TAC o check (fun th -> is_eq(concl th) &&
         (try fst(dest_const(fst(strip_comb(lhs(concl th))))) = "n_fresh_id"
@@ -3387,7 +3347,7 @@ let infer_d_check = prove
       MESON_TAC[LENGTH_LIST_OF_SEQ];
       REWRITE_TAC[tenv_abbrev_ok_def] THEN MATCH_MP_TAC nsAll_nsAppend THEN
       RULE_ASSUM_TAC(REWRITE_RULE[tenv_abbrev_ok_def]) THEN
-      ASM_REWRITE_TAC[REWRITE_RULE[tenv_abbrev_ok_def] TYSYS2AUX_tenv_abbrev_ok_tdefs]];
+      ASM_REWRITE_TAC[REWRITE_RULE[tenv_abbrev_ok_def] TPROPSAUX_tenv_abbrev_ok_tdefs]];
     (* Dtabbrev *)
     RULE_ASSUM_TAC(REWRITE_RULE[ienv_ok_def]) THEN
     REWRITE_TAC[ienv_ok_def; inf_env_INFO.ri_accessors; ienv_val_ok_def; tenv_ctor_ok_def;
@@ -3647,7 +3607,7 @@ let generalise_subst_exist = prove
     REWRITE_TAC[generalise_def] THEN
     X_CHOOSE_THEN `g1:num` (X_CHOOSE_THEN `s1:(num,num)fmap` (X_CHOOSE_THEN
       `ts1:infer_t list` ASSUME_TAC))
-      (ISPEC `generalise_list 0 n smap (a0:infer_t list)` TYSYS2AUX_TRIPLE) THEN
+      (ISPEC `generalise_list 0 n smap (a0:infer_t list)` BASICAUX_TUPLE3) THEN
     ASM_REWRITE_TAC[pair_CASE; PAIR_EQ] THEN STRIP_TAC THEN
     TYSYS2AUX_SUBST_OUT_TAC ["a";"b";"t'"] THEN
     REMOVE_THEN "ih" MATCH_MP_TAC THEN
@@ -3688,11 +3648,11 @@ let generalise_subst_exist = prove
     REPEAT GEN_TAC THEN REWRITE_TAC[generalise_def] THEN
     X_CHOOSE_THEN `g1:num` (X_CHOOSE_THEN `s1:(num,num)fmap` (X_CHOOSE_THEN
       `t1:infer_t` ASSUME_TAC))
-      (ISPEC `generalise 0 n smap (a0:infer_t)` TYSYS2AUX_TRIPLE) THEN
+      (ISPEC `generalise 0 n smap (a0:infer_t)` BASICAUX_TUPLE3) THEN
     ASM_REWRITE_TAC[pair_CASE] THEN
     X_CHOOSE_THEN `g2:num` (X_CHOOSE_THEN `s2:(num,num)fmap` (X_CHOOSE_THEN
       `ts2:infer_t list` ASSUME_TAC))
-      (ISPEC `generalise_list 0 (g1 + n) s1 (a1:infer_t list)` TYSYS2AUX_TRIPLE) THEN
+      (ISPEC `generalise_list 0 (g1 + n) s1 (a1:infer_t list)` BASICAUX_TUPLE3) THEN
     ASM_REWRITE_TAC[pair_CASE; PAIR_EQ; ALL] THEN STRIP_TAC THEN
     TYSYS2AUX_SUBST_OUT_TAC ["a";"b";"ts'"] THEN
     REMOVE_THEN "iht" (MP_TAC o SPECL [`subst:infer_t list`; `n:num`; `smap:(num,num)fmap`;
@@ -4074,7 +4034,7 @@ let TYSYS2AUX_SET_TIDS_PAC_TAC =
       let args = snd(strip_comb c) in
       MATCH_MP_TAC pure_add_constraints_set_tids THEN
       EXISTS_TAC (el 0 args) THEN EXISTS_TAC (el 1 args) THEN
-      ASM_SIMP_TAC[MAP_FST_ZIP; MAP_SND_ZIP; TYSYS2AUX_ALL_REPLICATE;
+      ASM_SIMP_TAC[MAP_FST_ZIP; MAP_SND_ZIP; EVERY_REPLICATE;
                    TYSYS2AUX_prim_tids_T_all; TYSYS2AUX_prim_tids_T_nums;
                    TYSYS2AUX_inf_set_tids_subset_eqn; ALL]
     else failwith "TYSYS2AUX_SET_TIDS_PAC_TAC");;
@@ -4151,7 +4111,7 @@ let TYSYS2AUX_sti_letrec = prove
   LIST_INDUCT_TAC THEN LIST_INDUCT_TAC THEN
   REWRITE_TAC[MAP2; ALL; LENGTH; NOT_SUC; SUC_INJ] THEN
   X_CHOOSE_THEN `f:mlstring` (X_CHOOSE_THEN `x:mlstring` (X_CHOOSE_THEN `e:exp`
-    SUBST_ALL_TAC)) (ISPEC `h:mlstring#mlstring#exp` TYSYS2AUX_TRIPLE) THEN
+    SUBST_ALL_TAC)) (ISPEC `h:mlstring#mlstring#exp` BASICAUX_TUPLE3) THEN
   BETA_TAC THEN CASE_REWRITE_TAC[] THEN REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
   ASM_MESON_TAC[]);;
 
@@ -4419,7 +4379,7 @@ let generalise_inf_set_tids = prove
     REPEAT GEN_TAC THEN DISCH_TAC THEN REPEAT GEN_TAC THEN REWRITE_TAC[generalise_def] THEN
     X_CHOOSE_THEN `g1:num` (X_CHOOSE_THEN `s1:(num,num)fmap` (X_CHOOSE_THEN
       `ts1:infer_t list` ASSUME_TAC))
-      (ISPEC `generalise_list a b c (a0:infer_t list)` TYSYS2AUX_TRIPLE) THEN
+      (ISPEC `generalise_list a b c (a0:infer_t list)` BASICAUX_TUPLE3) THEN
     ASM_REWRITE_TAC[pair_CASE; PAIR_EQ] THEN STRIP_TAC THEN
     FIRST_X_ASSUM(SUBST1_TAC o SYM) THEN REWRITE_TAC[inf_set_tids_def] THEN
     FIRST_X_ASSUM(MP_TAC o SPECL [`a:num`; `b:num`; `c:(num,num)fmap`; `g1:num`;
@@ -4436,10 +4396,10 @@ let generalise_inf_set_tids = prove
     REPEAT GEN_TAC THEN STRIP_TAC THEN REPEAT GEN_TAC THEN REWRITE_TAC[generalise_def] THEN
     X_CHOOSE_THEN `g1:num` (X_CHOOSE_THEN `s1:(num,num)fmap` (X_CHOOSE_THEN
       `t1:infer_t` ASSUME_TAC))
-      (ISPEC `generalise a b c (a0:infer_t)` TYSYS2AUX_TRIPLE) THEN
+      (ISPEC `generalise a b c (a0:infer_t)` BASICAUX_TUPLE3) THEN
     X_CHOOSE_THEN `g2:num` (X_CHOOSE_THEN `s2:(num,num)fmap` (X_CHOOSE_THEN
       `ts2:infer_t list` ASSUME_TAC))
-      (ISPEC `generalise_list a (g1 + b) s1 (a1:infer_t list)` TYSYS2AUX_TRIPLE) THEN
+      (ISPEC `generalise_list a (g1 + b) s1 (a1:infer_t list)` BASICAUX_TUPLE3) THEN
     ASM_REWRITE_TAC[pair_CASE; PAIR_EQ] THEN STRIP_TAC THEN
     FIRST_X_ASSUM(SUBST1_TAC o SYM) THEN REWRITE_TAC[ALL2] THEN
     ASM_MESON_TAC[]]);;
@@ -4568,7 +4528,7 @@ let TYSYS2AUX_sti_alist_map2 = prove
   LIST_INDUCT_TAC THEN LIST_INDUCT_TAC THEN
   REWRITE_TAC[LENGTH; NOT_SUC; GSYM NOT_SUC; SUC_INJ; MAP2; ALL] THEN
   X_CHOOSE_THEN `f:mlstring` (X_CHOOSE_THEN `x:mlstring` (X_CHOOSE_THEN `e:exp`
-    SUBST_ALL_TAC)) (ISPEC `h:mlstring#mlstring#exp` TYSYS2AUX_TRIPLE) THEN
+    SUBST_ALL_TAC)) (ISPEC `h:mlstring#mlstring#exp` BASICAUX_TUPLE3) THEN
   CASE_REWRITE_TAC[] THEN ASM_MESON_TAC[]);;
 
 let TYSYS2AUX_generalise_tids = prove
@@ -4633,7 +4593,7 @@ let TYSYS2AUX_sti_tdefs = prove
   REWRITE_TAC[LENGTH; NOT_SUC; GSYM NOT_SUC; SUC_INJ; MAP2; ALL] THEN
   X_CHOOSE_THEN `tvs:mlstring list` (X_CHOOSE_THEN `tn:mlstring`
     (X_CHOOSE_THEN `ctors:(mlstring#ast_t list)list` SUBST_ALL_TAC))
-    (ISPEC `h:mlstring list#mlstring#(mlstring#ast_t list)list` TYSYS2AUX_TRIPLE) THEN
+    (ISPEC `h:mlstring list#mlstring#(mlstring#ast_t list)list` BASICAUX_TUPLE3) THEN
   REPEAT STRIP_TAC THENL
    [CASE_REWRITE_TAC[set_tids_subset_def; set_tids_def; INSERT_SUBSET; GSYM MAP_o;
                      o_DEF; UNIONS_SUBSET; IN_SET_OF_LIST; MEM_MAP] THEN

@@ -22,12 +22,6 @@ type_invention_error := true;;
 (* to alpha-conversion.                                                      *)
 (* ------------------------------------------------------------------------- *)
 
-let MP4AUX_STAR_AC = prove
- (`(!p q:(A->bool)->bool. p STAR q = q STAR p) /\
-   (!p q r:(A->bool)->bool. (p STAR q) STAR r = p STAR (q STAR r)) /\
-   (!p q r:(A->bool)->bool. p STAR (q STAR r) = q STAR (p STAR r))`,
-  MESON_TAC[STAR_COMM; STAR_ASSOC]);;
-
 let MP4AUX_write_fun2set_one = prove
  (`!(y:A) (a:B) x f d.
      set_sep_one (a,x) (fun2set (f,d))
@@ -72,7 +66,7 @@ let rec mp4_remove_first p l =
 
 (* |- p = q for STAR trees p, q equal up to AC *)
 let MP4AUX_STAR_AC_EQ p q =
-  if aconv p q then REFL p else AC MP4AUX_STAR_AC (mk_eq(p,q));;
+  if aconv p q then REFL p else AC LSORTAUX_STAR_AC (mk_eq(p,q));;
 
 (* th : |- p s  ->  |- q s  (p, q equal up to AC) *)
 let MP4AUX_STAR_AC_RULE q th =
@@ -197,7 +191,7 @@ let MP4AUX_SEP_AC_TAC : tactic = fun (asl,w as g) ->
              else failwith "") asl;;
 
 (* the goal  q s  with q AC-normalised as the assumption p s would be       *)
-let MP4AUX_STAR_NORM_CONV = PURE_REWRITE_CONV[MP4AUX_STAR_AC];;
+let MP4AUX_STAR_NORM_CONV = PURE_REWRITE_CONV[LSORTAUX_STAR_AC];;
 
 (* ------------------------------------------------------------------------- *)
 (* Bit-level reasoning about words built from numerals (for any word size,  *)

@@ -1748,3 +1748,13 @@ let word_lang_safe_for_space_def = cake_def
          wl_evaluate (prog, wl_state_clock_fupd (K k) s) = (res,t)
          ==> ?max'. wl_state_stack_max t = SOME max' /\
                     max' <= wl_state_stack_limit t`;;
+
+(* ------------------------------------------------------------------------- *)
+(* Lemmas used by several later files.                                       *)
+(* ------------------------------------------------------------------------- *)
+
+let IL2AUX_evaluate_Seq_NONE = prove
+ (`!c1 c2 (s:(A,C,FFI)wl_state) s1.
+     wl_evaluate (c1,s) = (NONE,s1) ==> wl_evaluate (wl_Seq c1 c2,s) = wl_evaluate (c2,s1)`,
+  REPEAT STRIP_TAC THEN REWRITE_TAC[wl_evaluate_def] THEN ASM_REWRITE_TAC[] THEN
+  CASE_REWRITE_TAC[]);;

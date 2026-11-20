@@ -492,11 +492,6 @@ let B2BP1AUX_ALL_EL_IMP = prove
  (`!P (xs:A list) n. ALL P xs /\ n < LENGTH xs ==> P (EL n xs)`,
   MESON_TAC[ALL_EL]);;
 
-let B2BP1AUX_num_of_int_lt = prove
- (`!a n. &0 <= a /\ a < &n ==> num_of_int a < n`,
-  REPEAT STRIP_TAC THEN REWRITE_TAC[GSYM INT_OF_NUM_LT] THEN
-  ASM_SIMP_TAC[INT_OF_NUM_OF_INT]);;
-
 let B2BP1AUX_FACTS_TAC : tactic = fun (asl,w as g) ->
   let ths = map snd asl in
   let is_sok th = try fst(dest_const(fst(strip_comb(concl th)))) =
@@ -524,7 +519,7 @@ let B2BP1AUX_DO_APP_OK_LEAF_TAC : tactic =
   TRY (FIRST_ASSUM(fun th -> MATCH_ACCEPT_TAC (MATCH_MP B2BP1AUX_do_int_app_ok th))) THEN
   TRY (FIRST_ASSUM(fun th -> MATCH_ACCEPT_TAC (MATCH_MP B2BP1AUX_do_word_app_ok th))) THEN
   TRY (MATCH_MP_TAC B2BP1AUX_ALL_EL_IMP THEN ASM_REWRITE_TAC[] THEN
-       MATCH_MP_TAC B2BP1AUX_num_of_int_lt THEN ASM_REWRITE_TAC[] THEN NO_TAC) THEN
+       MATCH_MP_TAC BASICAUX_num_of_int_lt THEN ASM_REWRITE_TAC[] THEN NO_TAC) THEN
   TRY (MATCH_MP_TAC list_to_v_ok THEN
        ASM_REWRITE_TAC[ALL_APPEND; ALL_MAP; o_DEF; bv_ok_def; ALL_T] THEN NO_TAC) THEN
   TRY (ASM_SIMP_TAC[ALL_APPEND; EVERY_TAKE; EVERY_DROP] THEN NO_TAC) THEN
@@ -1087,10 +1082,6 @@ let B2BP1AUX_NIL_EQ_MAP = prove
  (`!(f:A->B) l. [] = MAP f l <=> l = []`,
   REPEAT GEN_TAC THEN CONV_TAC (LAND_CONV SYM_CONV) THEN REWRITE_TAC[MAP_EQ_NIL]);;
 
-let B2BP1AUX_FUPDATE_FLOOKUP = prove
- (`!(f:(A,B)fmap) k v. FLOOKUP f k = SOME v ==> f |+ (k,v) = f`,
-  REWRITE_TAC[fmap_eq_flookup; FLOOKUP_UPDATE] THEN MESON_TAC[]);;
-
 let B2BP1AUX_CONS_EQ_MAP = prove
  (`!(f:A->B) l h t. CONS h t = MAP f l <=> ?x0 t0. l = CONS x0 t0 /\ h = f x0 /\ t = MAP f t0`,
   REPEAT GEN_TAC THEN CONV_TAC (LAND_CONV SYM_CONV) THEN REWRITE_TAC[MAP_EQ_CONS] THEN
@@ -1118,7 +1109,7 @@ let evaluate_FromListByte_code = prove
    EXISTS_TAC `0` THEN
    REWRITE_TAC[inc_clock_ZERO; FromListByte_code_def; SND] THEN
    B2BP1AUX_BVI_EV_TAC B2BP1AUX_STUB_RWS THEN
-   ASM_SIMP_TAC[MAP; APPEND_NIL; LENGTH; SUB_0; TAKE_LENGTH_ID; B2BP1AUX_FUPDATE_FLOOKUP] THEN
+   ASM_SIMP_TAC[MAP; APPEND_NIL; LENGTH; SUB_0; TAKE_LENGTH_ID; FMAPAUX_FUPDATE_FLOOKUP_ELIM] THEN
    REWRITE_TAC[bvi_state_component_equality; bvi_state_INFO.ri_accfupds; K_THM]);
    (DISCH_TAC THEN REPEAT GEN_TAC THEN COND_CASES_TAC THEN
    REWRITE_TAC[option_DISTINCT] THEN STRIP_TAC THEN
@@ -1175,7 +1166,7 @@ let evaluate_ToListByte_code = prove
     REWRITE_TAC[inc_clock_ZERO; ToListByte_code_def; SND] THEN
     B2BP1AUX_BVI_EV_TAC B2BP1AUX_STUB_RWS THEN
     RULE_ASSUM_TAC(REWRITE_RULE[APPEND]) THEN
-    ASM_SIMP_TAC[MAP; APPEND; B2BP1AUX_FUPDATE_FLOOKUP] THEN
+    ASM_SIMP_TAC[MAP; APPEND; FMAPAUX_FUPDATE_FLOOKUP_ELIM] THEN
     REWRITE_TAC[bvi_state_component_equality; bvi_state_INFO.ri_accfupds; K_THM];
     (GEN_TAC THEN DISCH_TAC THEN GEN_TAC THEN REPEAT GEN_TAC THEN STRIP_TAC THEN
    FIRST_X_ASSUM(MP_TAC o SPECL [`CONS (x:byte) rest`; `p:num`; `s:(C,FFI)bvi_state`;
@@ -1279,7 +1270,7 @@ let evaluate_ConcatByte_code = prove
      REWRITE_TAC[LENGTH_EQ_NIL];
      ALL_TAC] THEN
    RULE_ASSUM_TAC(REWRITE_RULE[APPEND_NIL]) THEN
-   ASM_SIMP_TAC[FLAT; APPEND_NIL; B2BP1AUX_FUPDATE_FLOOKUP] THEN
+   ASM_SIMP_TAC[FLAT; APPEND_NIL; FMAPAUX_FUPDATE_FLOOKUP_ELIM] THEN
    REWRITE_TAC[bvi_state_component_equality; bvi_state_INFO.ri_accfupds; K_THM]);
    (DISCH_TAC THEN REPEAT GEN_TAC THEN COND_CASES_TAC THEN
    REWRITE_TAC[option_DISTINCT] THEN STRIP_TAC THEN
@@ -1371,7 +1362,7 @@ let B2BP1AUX_compile_string = prove
   LIST_INDUCT_TAC THENL
    [REWRITE_TAC[MAPi_DEF; bvi_evaluate_def; LENGTH; REPLICATE; MAP; APPEND_NIL; ADD_CLAUSES] THEN
     REPEAT STRIP_TAC THEN RVEQ_TAC THEN
-    ASM_SIMP_TAC[TAKE_LENGTH_ID; B2BP1AUX_FUPDATE_FLOOKUP; PAIR_EQ] THEN
+    ASM_SIMP_TAC[TAKE_LENGTH_ID; FMAPAUX_FUPDATE_FLOOKUP_ELIM; PAIR_EQ] THEN
     REWRITE_TAC[bvi_state_component_equality; bvi_state_INFO.ri_accfupds; K_THM];
     (REPEAT GEN_TAC THEN STRIP_TAC THEN
    RULE_ASSUM_TAC(REWRITE_RULE[LENGTH]) THEN
@@ -1999,7 +1990,7 @@ let B2BP1AUX_DAA_LEAF_TAC : tactic =
   REWRITE_TAC[injectivity "result"; PAIR_EQ; GSYM CONJ_ASSOC; RIGHT_EXISTS_AND_THM;
               UNWIND_THM1; bvl_to_bvi_id; bvl_to_bvi_with_refs; bvl_to_bvi_with_ffi;
               adjust_bv_def; adjust_bv_Boolv; adjust_bv_Unit] THEN
-  ASM_SIMP_TAC[EL_MAP; B2BP1AUX_num_of_int_lt; GSYM MAP_APPEND; GSYM MAP_TAKE; GSYM MAP_DROP;
+  ASM_SIMP_TAC[EL_MAP; BASICAUX_num_of_int_lt; GSYM MAP_APPEND; GSYM MAP_TAKE; GSYM MAP_DROP;
                GSYM LUPDATE_MAP; list_to_v_adjust] THEN
   TRY (MATCH_MP_TAC B2BP1AUX_state_rel_upd_va ORELSE
        MATCH_MP_TAC B2BP1AUX_state_rel_upd_ba) THEN

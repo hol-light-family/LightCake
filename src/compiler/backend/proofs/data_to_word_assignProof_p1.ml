@@ -734,14 +734,6 @@ let w2w_shift_shift = prove
 
 (* HOL4 line 629: fun sort_tac (a tactic) *)
 
-(* symbolic evaluation of wordLang programs (HOL4 eval_tac on a Seq chain) *)
-let ASP1AUX_Seq_NONE = prove
- (`!c1 c2 (s:(A,C,FFI)wl_state) s1.
-     wl_evaluate (c1,s) = (NONE,s1) ==>
-     wl_evaluate (wl_Seq c1 c2,s) = wl_evaluate (c2,s1)`,
-  REPEAT STRIP_TAC THEN GEN_REWRITE_TAC LAND_CONV [wl_evaluate_def] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]);;
-
 (* ASP1AUX: a NotEnoughSpace result of the first part of a Seq *)
 let ASP1AUX_Seq_halt = prove
  (`!c1 c2 (s:(A,C,FFI)wl_state) r.
@@ -840,7 +832,7 @@ let ASP1AUX_WLB_Store = prove
      wl_evaluate (P, wl_state_memory_fupd
         (K ((a =+ wl_Word (set_byte (word i) (word_zx b) v (wl_state_be s)))
               (wl_state_memory s))) s)`,
-  REPEAT STRIP_TAC THEN MATCH_MP_TAC ASP1AUX_Seq_NONE THEN
+  REPEAT STRIP_TAC THEN MATCH_MP_TAC IL2AUX_evaluate_Seq_NONE THEN
   REWRITE_TAC[wl_evaluate_def; wl_inst_def] THEN CASE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[word_exp_rw; MAP; ITLIST; WORD_ADD_0] THEN CASE_REWRITE_TAC[] THEN
   REWRITE_TAC[ITLIST; WORD_ADD_0; OPTION_MAP_DEF] THEN CASE_REWRITE_TAC[] THEN
@@ -982,7 +974,7 @@ let ASP1AUX_STEP_TAC thl : tactic = fun (asl,w as g) ->
   let c1 = rand(rator prog) and c2 = rand prog in
   let tm = mk_comb(f,mk_pair(c1,s)) in
   let th = CAKE_SIMP_CONV (thl @ map snd asl) tm in
-  let th2 = SPEC c2 (MATCH_MP ASP1AUX_Seq_NONE th) in
+  let th2 = SPEC c2 (MATCH_MP IL2AUX_evaluate_Seq_NONE th) in
   GEN_REWRITE_TAC (ONCE_DEPTH_CONV) [th2] g;;
 
 let ASP1AUX_EVAL_TAC thl = REPEAT (ASP1AUX_STEP_TAC thl);;
@@ -1156,18 +1148,13 @@ let ASP1AUX_val_wA = prove
      [MATCH_MP_TAC MOD_LT THEN ASM_ARITH_TAC;
       REWRITE_TAC[DIV_DIV; ARITH_RULE `2 * 4 = 8`; ADD8DIV8]]]);;
 
-let ASP1AUX_byte_len_eq = prove
- (`!i. good_dimindex(:A) ==> byte_len (:A) i = i DIV (dimindex(:A) DIV 8) + 1`,
-  GEN_TAC THEN REWRITE_TAC[good_dimindex_def] THEN STRIP_TAC THEN
-  ASM_REWRITE_TAC[byte_len_def] THEN CONV_TAC NUM_REDUCE_CONV);;
-
 let ASP1AUX_byte_len_limit = prove
  (`!i len. good_dimindex(:A) /\
            i DIV (dimindex(:A) DIV 8) < dimword(:A) DIV dimindex(:A) /\
            i DIV (dimindex(:A) DIV 8) + 1 < 2 EXP len ==>
            byte_len (:A) i < MIN (2 EXP len) (dimword(:A) DIV 16)`,
   REPEAT GEN_TAC THEN DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC MP_TAC) THEN
-  ASM_SIMP_TAC[ASP1AUX_byte_len_eq] THEN
+  ASM_SIMP_TAC[MP4AUX_byte_len] THEN
   UNDISCH_TAC `good_dimindex(:A)` THEN REWRITE_TAC[good_dimindex_def; dimword_def] THEN
   STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CONV_TAC NUM_REDUCE_CONV THEN ARITH_TAC);;
 
@@ -1605,7 +1592,7 @@ let RefByte_thm = prove
    FIRST_X_ASSUM(MP_TAC o check (fun th -> can (find_term (fun t -> is_const t &&
      fst(dest_const t) = "BignumHalt")) (concl th))) THEN
    ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
-   FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP ASP1AUX_Seq_NONE th])) THEN
+   FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP IL2AUX_evaluate_Seq_NONE th])) THEN
   (SUBGOAL_THEN `!n. Smallnum (&n) = word (4 * n):A word` ASSUME_TAC THENL
     [REWRITE_TAC[data_to_word_Smallnum_def; INT_OF_NUM_LT; LT; INT_OF_NUM_MUL;
                  NUM_OF_INT_OF_NUM];
@@ -1738,13 +1725,13 @@ let RefByte_thm = prove
       [ASM_REWRITE_TAC[] THEN EXPAND_TAC "limit" THEN MATCH_MP_TAC ASP1AUX_byte_len_limit THEN
        ASM_REWRITE_TAC[];
        ALL_TAC] THEN
-     ASM_SIMP_TAC[ASP1AUX_byte_len_eq] THEN ARITH_TAC;
+     ASM_SIMP_TAC[MP4AUX_byte_len] THEN ARITH_TAC;
      ALL_TAC]) THEN
   (FIRST_X_ASSUM(MP_TAC o check (fun th -> is_imp (concl th) &&
      lhand (concl th) = `~(qa = SOME NotEnoughSpace:((A)wl_result)option)`)) THEN
    ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
    FIRST_X_ASSUM(SUBST_ALL_TAC o check (fun th -> concl th = `qa = NONE:((A)wl_result)option`)) THEN
-   FIRST_X_ASSUM(fun th -> REWRITE_TAC[MATCH_MP ASP1AUX_Seq_NONE th])) THEN
+   FIRST_X_ASSUM(fun th -> REWRITE_TAC[MATCH_MP IL2AUX_evaluate_Seq_NONE th])) THEN
   (ABBREV_TAC `s9 = data_state_locals_fupd
        (K (mk_wf (inter (data_state_locals (s:(C,FFI)data_state)) (fromList [one; one; one]))))
        (data_state_space_fupd (K (byte_len (:A) i + 1)) s)` THEN
@@ -1857,7 +1844,7 @@ let RefByte_thm = prove
    ANTS_TAC THENL
     [SIMP[wl_get_vars_def; wl_get_var_def; lookup_insert; ARITH_EQ; UPDATE_APPLY1];
      DISCH_TAC] THEN
-   FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP ASP1AUX_Seq_NONE th])) THEN
+   FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP IL2AUX_evaluate_Seq_NONE th])) THEN
   (SUBGOAL_THEN `word_zx (word_of_byte (word (val (b:byte)):A word)) = b` ASSUME_TAC THENL
     [REWRITE_TAC[GSYM word_zx] THEN MATCH_MP_TAC w2w_word_of_byte_w2w THEN
      FIRST_ASSUM ACCEPT_TAC; ALL_TAC] THEN
@@ -1870,7 +1857,7 @@ let RefByte_thm = prove
                  byte_len (:A) i * (dimindex(:A) DIV 8) < dimword(:A) /\
                  byte_len (:A) i - 1 < dimword(:A)` STRIP_ASSUME_TAC THENL
     [UNDISCH_TAC `byte_len (:A) i < limit` THEN EXPAND_TAC "limit" THEN
-     MP_TAC(ISPEC `i:num` ASP1AUX_byte_len_eq) THEN
+     MP_TAC(ISPEC `i:num` MP4AUX_byte_len) THEN
      UNDISCH_TAC `good_dimindex(:A)` THEN REWRITE_TAC[good_dimindex_def; dimword_def] THEN
      STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CONV_TAC NUM_REDUCE_CONV THEN ARITH_TAC;
      ALL_TAC] THEN
@@ -3488,26 +3475,12 @@ let consume_space_stack_max = prove
 
 (* HOL4 line 2146: fun cases_on_op (a tactic) *)
 
-(* HOL4 cases_on_op: a case split on a closLang op and on the sub-op of its *)
-(* constructor (as dataProps' DSEMAUX_OP_CASES_TAC)                         *)
-let ASP1AUX_OP_CASES_TAC (op:term) : tactic =
-  let subs = ["IntOp","int_op"; "WordOp","word_op"; "BlockOp","block_op";
-              "GlobOp","glob_op"; "MemOp","mem_op"; "clos_ThunkOp","thunk_op"] in
-  STRUCT_CASES_TAC (ISPEC op (cases "clos_op")) THEN
-  (fun (asl,w as g) ->
-     try let t = find_term (fun t -> is_comb t && is_const (rator t) &&
-                                     mem (fst(dest_const(rator t))) (map fst subs) &&
-                                     is_var (rand t)) w in
-         let ty = assoc (fst(dest_const(rator t))) subs in
-         STRUCT_CASES_TAC (ISPEC (rand t) (cases ty)) g
-     with Failure _ -> ALL_TAC g);;
-
 (* HOL4 line 2149 *)
 let do_app_aux_safe_for_space_mono = prove
  (`!op xs (s:(C,FFI)data_state) r s1.
      (data_do_app_aux op xs s = Rval (r,s1)) /\ data_state_safe_for_space s1 ==>
      data_state_safe_for_space s`,
-  X_GEN_TAC `op:clos_op` THEN ASP1AUX_OP_CASES_TAC `op:clos_op` THEN
+  X_GEN_TAC `op:clos_op` THEN DSEMAUX_OP_CASES_TAC `op:clos_op` THEN
   REPEAT GEN_TAC THEN
   REWRITE_TAC[data_do_app_aux_def; with_fresh_ts_def; check_lim_def; consume_space_def;
               LET_DEF; LET_END_DEF] THEN
@@ -4563,7 +4536,7 @@ let assign_Install = prove
    FIRST_X_ASSUM(MP_TAC o check (fun th -> can (find_term (fun t -> is_const t &&
      fst(dest_const t) = "BignumHalt")) (concl th))) THEN
    ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
-   FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP ASP1AUX_Seq_NONE th])) THEN
+   FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP IL2AUX_evaluate_Seq_NONE th])) THEN
   (MP_TAC(ISPECL [`c:data_to_word_config`; `l1:num`; `l2:num`; `s:(C,FFI)data_state`;
      `t:(A,C,FFI)wl_state`; `locs:(num#num)list`; `adjust_var v4`; `w4:A word`]
      evaluate_BignumHalt) THEN
@@ -4576,7 +4549,7 @@ let assign_Install = prove
    FIRST_X_ASSUM(MP_TAC o check (fun th -> can (find_term (fun t -> is_const t &&
      fst(dest_const t) = "BignumHalt")) (concl th))) THEN
    ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
-   FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP ASP1AUX_Seq_NONE th])) THEN
+   FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP IL2AUX_evaluate_Seq_NONE th])) THEN
   (SUBGOAL_THEN `!n. Smallnum (&n) = word (4 * n):A word` ASSUME_TAC THENL
     [REWRITE_TAC[data_to_word_Smallnum_def; INT_OF_NUM_LT; LT; INT_OF_NUM_MUL;
                  NUM_OF_INT_OF_NUM];
@@ -4956,7 +4929,7 @@ let assign_MutCons = prove
      DISCH_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[];
      ALL_TAC] THEN
    FIRST_X_ASSUM(fun th -> GEN_REWRITE_TAC (ONCE_DEPTH_CONV)
-     [MATCH_MP ASP1AUX_Seq_NONE th])) THEN
+     [MATCH_MP IL2AUX_evaluate_Seq_NONE th])) THEN
   (EXPAND_TAC "t2" THEN
    SUBGOAL_THEN `shift_length c - backend_common_word_shift(:A) < dimword(:A) /\
                  ~(shift_length c - backend_common_word_shift(:A) >= dimindex(:A))`

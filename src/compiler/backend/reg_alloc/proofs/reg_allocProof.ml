@@ -797,14 +797,11 @@ let sp_inverts_insert = prove
    [DISCH_THEN(SUBST1_TAC o SYM) THEN REWRITE_TAC[];
     DISCH_TAC THEN COND_CASES_TAC THEN ASM_MESON_TAC[]]);;
 
-(* RAPROOFAUX_TRIPLE, RAPROOFAUX_TRIPLE_TAC: name the components of a triple *)
-let RAPROOFAUX_TRIPLE = prove
- (`!p:A#B#C. ?a b c. p = (a,b,c)`,
-  MESON_TAC[PAIR_SURJECTIVE]);;
+(* RAPROOFAUX_TRIPLE_TAC: name the components of a triple *)
 
 let RAPROOFAUX_TRIPLE_TAC (tm:term) (a:term) (b:term) (c:term) : tactic =
   X_CHOOSE_THEN a (X_CHOOSE_THEN b (X_CHOOSE_THEN c ASSUME_TAC))
-    (ISPEC tm RAPROOFAUX_TRIPLE);;
+    (ISPEC tm BASICAUX_TUPLE3);;
 
 let list_remap_domain = prove
  (`!ls (ta:num spt) (fa:num spt) n ta' fa' n'.
@@ -2989,7 +2986,7 @@ let st_ex_FIRST_consistency_ok_bg_ok = prove
       `acc:(num#num#num)list`; `s:ra_state`; `ra_state_coalesced s`] THEN
     ASM_REWRITE_TAC[case_def "option"] THEN SIMP[ra_state_component_equality];
     ALL_TAC] THEN
-  MP_TAC(ISPEC `h:num#num#num` RAPROOFAUX_TRIPLE) THEN
+  MP_TAC(ISPEC `h:num#num#num` BASICAUX_TUPLE3) THEN
   DISCH_THEN(X_CHOOSE_THEN `p:num` (X_CHOOSE_THEN `x:num` (X_CHOOSE_THEN `y:num` SUBST1_TAC))) THEN
   REWRITE_TAC[ALL; st_ex_FIRST_def; case_def "prod"] THEN REPEAT STRIP_TAC THEN
   MP_TAC(SPECL [`x:num`; `s:ra_state`] coalesce_parent_success) THEN ASM_REWRITE_TAC[] THEN
@@ -3273,7 +3270,7 @@ let RAPROOFAUX_reset_move_related_loop = prove
    [REWRITE_TAC[st_ex_FOREACH_def; st_ex_return_def] THEN REPEAT STRIP_TAC THEN
     EXISTS_TAC `ra_state_move_related s` THEN SIMP[ra_state_component_equality];
     ALL_TAC] THEN
-  MP_TAC(ISPEC `h:A#num#num` RAPROOFAUX_TRIPLE) THEN
+  MP_TAC(ISPEC `h:A#num#num` BASICAUX_TUPLE3) THEN
   DISCH_THEN(X_CHOOSE_THEN `p:A` (X_CHOOSE_THEN `x:num` (X_CHOOSE_THEN `y:num` SUBST1_TAC))) THEN
   REWRITE_TAC[ALL; st_ex_FOREACH_def; case_def "prod"] THEN REPEAT STRIP_TAC THEN
   MP_TAC(MATCH_MP RAPROOFAUX_good_lengths (ASSUME `good_ra_state s`)) THEN STRIP_TAC THEN

@@ -42,15 +42,6 @@ type_invention_error := true;;
 (* derived from the clauses with the kit's derive_induction (as bvlSem's    *)
 (* CLOSSEMAUX_cases_ind)                                                     *)
 
-let DSEMAUX_cases_ind (def:thm) =
-  let cls = map (fun c -> let vs,eq = strip_forall(concl c) in
-                          let _,args = strip_comb(lhs eq) in vs,args)
-                (CONJUNCTS def) in
-  let c = fst(strip_comb(lhs(snd(strip_forall(concl(hd(CONJUNCTS def))))))) in
-  let tty = mk_tuple_ty (map type_of (snd(hd cls))) in
-  let wfth = ISPEC (mk_abs(mk_var("p",tty),`0`)) WF_measure in
-  derive_induction c cls [] wfth;;
-
 let data_v_INDUCT,data_v_RECURSION = cake_type
   "data_v = data_Number int
           | data_Word64 int64
@@ -180,13 +171,6 @@ let DSEMAUX_size_of_clauses =
 (*   \\ imp_res_tac miscTheory.lookup_zero \\ fs [] \\ rw [] \\ fs []         *)
 (*   \\ imp_res_tac check_res_IMP \\ fs []                                    *)
 
-let DSEMAUX_is_num_fact tm =
-  let t = if is_neg tm then dest_neg tm else tm in
-  try let h,args = strip_comb t in
-      length args = 2 && type_of (hd args) = `:num` &&
-      mem (fst(dest_const h)) ["="; "<"; "<="; ">"; ">="]
-  with Failure _ -> false;;
-
 let DSEMAUX_SIZE_OF_TC_TAC : tactic =
   REWRITE_TAC[IMP_CONJ] THEN REPEAT GEN_TAC THEN REPEAT DISCH_TAC THEN
   RVEQ_TAC THEN REPEAT GEN_TAC THEN
@@ -199,7 +183,7 @@ let DSEMAUX_SIZE_OF_TC_TAC : tactic =
   ASM_REWRITE_TAC[option_DISTINCT] THEN
   REWRITE_TAC (!the_size_defs @ flat (map snd (!the_size_aux_eqs)) @
                [list_size; LENGTH; APPEND]) THEN
-  REPEAT(FIRST_X_ASSUM(MP_TAC o check (DSEMAUX_is_num_fact o concl))) THEN
+  REPEAT(FIRST_X_ASSUM(MP_TAC o check (CLOSSEMAUX_is_num_fact o concl))) THEN
   ARITH_TAC;;
 
 (* HOL4's first size_of_def and size_of_ind (with check_res) *)
@@ -411,7 +395,7 @@ let space_consumed_def = sem1aux_def
       | NONE -> 0) /\
    (space_consumed s (op:clos_op) (vs:data_v list) = 0)`;;
 
-let space_consumed_ind = DSEMAUX_cases_ind space_consumed_def;;
+let space_consumed_ind = CLOSSEMAUX_cases_ind space_consumed_def;;
 
 let vb_size_def = cake_def
   `(vb_size (data_Block ts t ls) = 1 + t + SUM (MAP vb_size ls) + LENGTH ls) /\
@@ -519,7 +503,7 @@ let stack_consumed_def = sem1aux_def
    (stack_consumed sfs lims p vs =
       if allowed_op p (LENGTH vs) then SOME 0 else NONE)`;;
 
-let stack_consumed_ind = DSEMAUX_cases_ind stack_consumed_def;;
+let stack_consumed_ind = CLOSSEMAUX_cases_ind stack_consumed_def;;
 
 (* HOL4 overloads do_space_safe and do_space_peak, written out:             *)
 (*   do_space_safe op vs s =                                                 *)
@@ -822,7 +806,7 @@ let lim_safe_def = sem1aux_def (list_mk_conj
    (lim_safe lims _ _ <=> T)`]);;
 let _ = cake_add_simps [lim_safe_def];;
 
-let lim_safe_ind = DSEMAUX_cases_ind lim_safe_def;;
+let lim_safe_ind = CLOSSEMAUX_cases_ind lim_safe_def;;
 
 let do_lim_safe = cake_def
   `do_lim_safe (s:(C,FFI)data_state) op vs =
@@ -1548,7 +1532,7 @@ let DSEMAUX_TC_TAC : tactic =
                        data_push_env_clock; LET_DEF; LET_END_DEF] @
                       !the_size_defs @ flat (map snd (!the_size_aux_eqs)) in
             (RULE_ASSUM_TAC(REWRITE_RULE ths) THEN REWRITE_TAC ths) g) THEN
-  REPEAT(FIRST_X_ASSUM(MP_TAC o check (DSEMAUX_is_num_fact o concl))) THEN
+  REPEAT(FIRST_X_ASSUM(MP_TAC o check (CLOSSEMAUX_is_num_fact o concl))) THEN
   ARITH_TAC;;
 
 (* the clauses are parsed separately (HOL4 types each clause on its own:  *)
@@ -1921,7 +1905,7 @@ let DSEMAUX_CLOCK_TAC : tactic =
      DSEMAUX_jump_exc_clock; do_app_clock] THEN
   (fun g -> let ths = DSEMAUX_clock_rws in
             (RULE_ASSUM_TAC(REWRITE_RULE ths) THEN REWRITE_TAC ths) g) THEN
-  REPEAT(FIRST_X_ASSUM(MP_TAC o check (DSEMAUX_is_num_fact o concl))) THEN
+  REPEAT(FIRST_X_ASSUM(MP_TAC o check (CLOSSEMAUX_is_num_fact o concl))) THEN
   ARITH_TAC;;
 
 (* the If case (the condition isBool of the value is a context of the IHs) *)

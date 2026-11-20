@@ -989,17 +989,13 @@ let FDOM_cmlPEG_nts =
   end_itlist CONJ (map p PARSE2AUX_FDOM_nts);;
 let _ = cake_add_simps [FDOM_cmlPEG_nts];;
 
-let PARSE2AUX_IN_HEAD = prove
- (`!(x:A) s. x IN (x INSERT s)`,
-  REWRITE_TAC[IN_INSERT]);;
-
 let PARSE2AUX_IN_TAIL = prove
  (`!(x:A) y s. x IN s ==> x IN (y INSERT s)`,
   SIMP_TAC[IN_INSERT]);;
 
 let rec PARSE2AUX_IN_ENUM_PROVE x s =
   let y = lhand s and s' = rand s in
-  if aconv x y then ISPECL [x; s'] PARSE2AUX_IN_HEAD
+  if aconv x y then ISPECL [x; s'] COMPONENT
   else MP (ISPECL [x; y; s'] PARSE2AUX_IN_TAIL)
                 (PARSE2AUX_IN_ENUM_PROVE x s');;
 

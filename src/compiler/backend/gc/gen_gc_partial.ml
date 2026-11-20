@@ -3476,12 +3476,6 @@ let GC2AUX_isDataElement_cons = prove
    (!p (a:A) l. ~isDataElement (ForwardPointer p a l:(A,B)heap_element))`,
   REWRITE_TAC[isDataElement_def; heap_element_distinct; heap_element_11] THEN MESON_TAC[]);;
 
-let GC2AUX_option3_cases = prove
- (`!(o1:(A#B#C)option). o1 = NONE \/ ?x y z. o1 = SOME (x,y,z)`,
-  MATCH_MP_TAC option_INDUCT THEN REWRITE_TAC[option_DISTINCT; option_INJ] THEN
-  GEN_TAC THEN MAP_EVERY EXISTS_TAC [`FST (a:A#B#C)`; `FST (SND (a:A#B#C))`;
-    `SND (SND (a:A#B#C))`] THEN REWRITE_TAC[PAIR]);;
-
 (* gc_forward_ptr on a DataElement found by heap_lookup                      *)
 let GC2AUX_gc_forward_ptr_split = prove
  (`!(heap:((A,B)heap_element)list) ptr xs l dd a (d:A) heap'.
@@ -3532,7 +3526,7 @@ let GC2AUX_gc_move_inv_data = prove
                   GC1AUX_heap_length_CONS; heap_length_NIL; el_length_def] THEN ARITH_TAC;
       ALL_TAC] THEN
     MP_TAC (ISPEC `heap_segment (gen_gc_partial_conf_gen_start (c:B gen_gc_partial_conf),
-      gen_gc_partial_conf_refs_start c) (heap:((A,B)heap_element)list)` GC2AUX_option3_cases) THEN
+      gen_gc_partial_conf_refs_start c) (heap:((A,B)heap_element)list)` BASICAUX_option3_cases) THEN
     DISCH_THEN(DISJ_CASES_THEN2 (fun th -> REWRITE_TAC[th] THEN CASE_REWRITE_TAC[])
       (X_CHOOSE_THEN `x0:((A,B)heap_element)list` (X_CHOOSE_THEN
         `x1:((A,B)heap_element)list` (X_CHOOSE_THEN `x2:((A,B)heap_element)list`
@@ -3747,7 +3741,7 @@ let partial_gc_IMP = prove
                                   gen_gc_partial_conf_isRef c d)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[partial_gc_def] THEN
   MP_TAC (ISPEC `heap_segment (gen_gc_partial_conf_gen_start (c:B gen_gc_partial_conf),
-      gen_gc_partial_conf_refs_start c) (heap:((A,B)heap_element)list)` GC2AUX_option3_cases) THEN
+      gen_gc_partial_conf_refs_start c) (heap:((A,B)heap_element)list)` BASICAUX_option3_cases) THEN
   DISCH_THEN(DISJ_CASES_THEN2
     (fun th -> REWRITE_TAC[th] THEN CASE_REWRITE_TAC[PAIR_EQ] THEN
       DISCH_THEN(fun th -> MP_TAC (CONJUNCT2 th) THEN
@@ -3845,7 +3839,7 @@ let partial_gc_IMP = prove
        MP_TAC (ISPEC `heap_segment (gen_gc_partial_conf_gen_start (c:B gen_gc_partial_conf),
            gen_gc_partial_conf_refs_start c)
            (gc_state_heap (gen_gc_partial_gc_move_data c (s2:(A,B)gc_state)))`
-           GC2AUX_option3_cases) THEN
+           BASICAUX_option3_cases) THEN
        DISCH_THEN(DISJ_CASES_THEN2 (fun th -> REWRITE_TAC[th] THEN CASE_REWRITE_TAC[])
          (X_CHOOSE_THEN `o1:((A,B)heap_element)list` (X_CHOOSE_THEN
            `cm:((A,B)heap_element)list` (X_CHOOSE_THEN `rm:((A,B)heap_element)list`

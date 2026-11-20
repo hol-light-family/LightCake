@@ -99,12 +99,13 @@ or check it with
 which loads `make.ml`, prints the number of axioms (3) and the list of axioms, checks the
 headline theorems (`HEADLINE true`: no hypotheses, conclusions alpha-equivalent to the
 statements of `compile_correct_statement.ml`) and ends with `CHECK_OK`. Everything loads in one
-HOL Light session; `check.ml` was run this way with two versions of HOL Light:
+HOL Light session; `check.ml` was run this way with three versions of HOL Light:
 
 | HOL Light | time of `check.ml` |
 |---|---|
-| commit `9cb19cc` of jargh/hol-light-dev (pull request #215 of jrh13/hol-light: faster definitions and derived rules) | 1.7 hours |
-| commit `6dbb775` of jrh13/hol-light | 3.3 hours |
+| commit `1a0c0e6` of jrh13/hol-light (with pull request #215: faster definitions and derived rules) | 1.6 hours |
+| commit `55cac39` of jargh/hol-light-dev (pull request #218 of jrh13/hol-light: MESON, X_CHOOSE_TAC and simplifier fixes) | 1.6 hours |
+| commit `6dbb775` of jrh13/hol-light | 3.2 hours |
 
 After `loadt "src/prelude.ml";;` any single
 file can be loaded on its own with `needs`, for example `needs "semantics/namespace.ml";;`

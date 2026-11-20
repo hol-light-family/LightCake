@@ -49,22 +49,6 @@ type_invention_error := true;;
 (* alpha-conversion.                                                         *)
 (* ------------------------------------------------------------------------- *)
 
-let GCP1AUX_STAR_AC = prove
- (`(!p q:(A->bool)->bool. p STAR q = q STAR p) /\
-   (!p q r:(A->bool)->bool. (p STAR q) STAR r = p STAR (q STAR r)) /\
-   (!p q r:(A->bool)->bool. p STAR (q STAR r) = q STAR (p STAR r))`,
-  MESON_TAC[STAR_COMM; STAR_ASSOC]);;
-
-let GCP1AUX_write_fun2set_one = prove
- (`!(y:A) (a:B) x f d.
-     set_sep_one (a,x) (fun2set (f,d))
-     ==> set_sep_one (a,y) (fun2set ((a =+ y) f,d))`,
-  REPEAT GEN_TAC THEN
-  SUBGOAL_THEN `!(p:(B#A->bool)->bool) s. p s <=> (p STAR emp) s`
-    (fun th -> ONCE_REWRITE_TAC[th]) THENL [REWRITE_TAC[SEP_CLAUSES]; ALL_TAC] THEN
-  REWRITE_TAC[one_fun2set; APPLY_UPDATE_THM; emp_def; fun2set_EMPTY] THEN
-  SIMP_TAC[]);;
-
 let gcp1_is_star tm =
   try let f,_ = dest_comb tm in
       let s,_ = dest_comb f in
@@ -97,15 +81,6 @@ let rec gcp1_remove_first p l =
     [] -> failwith "gcp1_remove_first"
   | h::t -> if p h then t else h :: gcp1_remove_first p t;;
 
-(* |- p = q for STAR trees p, q equal up to AC *)
-let GCP1AUX_STAR_AC_EQ p q =
-  if aconv p q then REFL p else AC GCP1AUX_STAR_AC (mk_eq(p,q));;
-
-(* th : |- p s  ->  |- q s  (p, q equal up to AC) *)
-let GCP1AUX_STAR_AC_RULE q th =
-  let p,s = dest_comb(concl th) in
-  EQ_MP (AP_THM (GCP1AUX_STAR_AC_EQ p q) s) th;;
-
 (* th : |- p s; puts the first leaf satisfying pr in front:                 *)
 (*   |- (leaf STAR rest) s   (rest a left-associated STAR of the others)     *)
 let GCP1AUX_STAR_FOCUS pr th =
@@ -113,7 +88,7 @@ let GCP1AUX_STAR_FOCUS pr th =
   let leaves = gcp1_star_leaves p in
   let leaf = find pr leaves in
   let rest = gcp1_remove_first (fun l -> l == leaf) leaves in
-  GCP1AUX_STAR_AC_RULE (gcp1_mk_star leaf (gcp1_list_mk_star rest)) th;;
+  MP4AUX_STAR_AC_RULE (gcp1_mk_star leaf (gcp1_list_mk_star rest)) th;;
 
 (* reading: th : |- p (fun2set (m,dm)) gives |- m a = x /\ a IN dm for     *)
 (* every leaf set_sep_one (a,x) of p                                        *)
@@ -126,7 +101,7 @@ let GCP1AUX_SEP_READS th =
   else
     map (fun leaf ->
            let rest = gcp1_remove_first (fun l -> l == leaf) leaves in
-           let th1 = GCP1AUX_STAR_AC_RULE
+           let th1 = MP4AUX_STAR_AC_RULE
                        (gcp1_mk_star leaf (gcp1_list_mk_star rest)) th in
            MATCH_MP read_fun2set th1) ones;;
 
@@ -156,12 +131,12 @@ let GCP1AUX_SEP_WRITE a y th =
   let newleaf = mk_comb(rator leaf,mk_pair(a,y)) in
   let leaves' = map (fun l -> if l == leaf then newleaf else l) leaves in
   if length leaves = 1 then
-    SPEC y (MATCH_MP GCP1AUX_write_fun2set_one th)
+    SPEC y (MATCH_MP MP4AUX_write_fun2set_one th)
   else
     let rest = gcp1_remove_first (fun l -> l == leaf) leaves in
-    let th1 = GCP1AUX_STAR_AC_RULE (gcp1_mk_star leaf (gcp1_list_mk_star rest)) th in
+    let th1 = MP4AUX_STAR_AC_RULE (gcp1_mk_star leaf (gcp1_list_mk_star rest)) th in
     let th2 = SPEC y (MATCH_MP write_fun2set th1) in
-    GCP1AUX_STAR_AC_RULE (gcp1_list_mk_star leaves') th2;;
+    MP4AUX_STAR_AC_RULE (gcp1_list_mk_star leaves') th2;;
 
 (* the updates of an update chain (a1 =+ y1) ((a2 =+ y2) ... m), outermost *)
 (* first, and m                                                              *)
@@ -205,17 +180,12 @@ let GCP1AUX_SEP_AC_TAC : tactic = fun (asl,w as g) ->
     let pl = gcp1_star_leaves (rator c) in
     length pl = length ql in
   tryfind (fun (_,th as a) ->
-             if ok a then ACCEPT_TAC (GCP1AUX_STAR_AC_RULE q th) g
+             if ok a then ACCEPT_TAC (MP4AUX_STAR_AC_RULE q th) g
              else failwith "") asl;;
 
 (* ------------------------------------------------------------------------- *)
 (* Bit-level reasoning about words built from numerals (any word size).     *)
 (* ------------------------------------------------------------------------- *)
-
-let GCP1AUX_DIV_2EXP_0 = prove
- (`!n k i. n < 2 EXP k /\ k <= i ==> n DIV 2 EXP i = 0`,
-  REPEAT STRIP_TAC THEN MATCH_MP_TAC DIV_LT THEN MATCH_MP_TAC LTE_TRANS THEN
-  EXISTS_TAC `2 EXP k` THEN ASM_REWRITE_TAC[LE_EXP; ARITH_EQ]);;
 
 let gcp1_num_bits n =
   let rec f k p = if n </ p then k else f (k + 1) (p */ Num.num_of_int 2) in
@@ -234,15 +204,11 @@ let GCP1AUX_DIV_2EXP_0_TAC : tactic = fun (asl,w as g) ->
     let n = dest_numeral (lhand tm) in
     let k = gcp1_num_bits n in
     let e = rand(rand tm) in
-    let th = SPECL [lhand tm; mk_small_numeral k; e] GCP1AUX_DIV_2EXP_0 in
+    let th = SPECL [lhand tm; mk_small_numeral k; e] MP4AUX_DIV_2EXP_0 in
     TRY(SUBGOAL_THEN (mk_eq(tm,`0`)) SUBST1_TAC THENL
          [MATCH_MP_TAC th THEN CONV_TAC(LAND_CONV NUM_REDUCE_CONV) THEN
           REWRITE_TAC[] THEN ASM_ARITH_TAC; ALL_TAC]) in
   MAP_EVERY tac tms g;;
-
-let GCP1AUX_BIT_REWRS =
-  [BIT_WORD_OR; BIT_WORD_AND; BIT_WORD_SHL; BIT_WORD_USHR; BIT_WORD_NOT;
-   BIT_WORD_XOR; BIT_WORD; BIT_WORD_0];;
 
 (* goal  !i. i < dimindex(:N) ==> P i  over bits of numeral words: split    *)
 (* i < k (enumerated) and k <= i (numerals of at most k bits vanish)         *)
@@ -261,7 +227,7 @@ let GCP1AUX_BITS_CASES_TAC k =
 
 (* equations of words built with numerals, or, and, not, shifts *)
 let GCP1AUX_WORD_BITS_TAC k =
-  REWRITE_TAC[WORD_EQ_BITS_ALT] THEN REWRITE_TAC GCP1AUX_BIT_REWRS THEN
+  REWRITE_TAC[WORD_EQ_BITS_ALT] THEN REWRITE_TAC MP4AUX_BIT_REWRS THEN
   GCP1AUX_BITS_CASES_TAC k;;
 
 (* split the cond leaves of a STAR assertion: |- P s gives the conditions  *)
@@ -322,7 +288,7 @@ let GCP1AUX_STAR_FRONT leaves th =
   let rest = remove leaves all in
   let front = gcp1_list_mk_star leaves in
   let q = if rest = [] then front else gcp1_mk_star front (gcp1_list_mk_star rest) in
-  GCP1AUX_STAR_AC_RULE q th;;
+  MP4AUX_STAR_AC_RULE q th;;
 
 (* the frame of an assertion after taking out the given leaves *)
 let gcp1_frame_of p leaves =
@@ -353,7 +319,7 @@ let GCP1AUX_SEP_FRAME_TAC : tactic = fun (asl,w as g) ->
   let q = rator (concl asm) in
   let frame = gcp1_frame_of q pleaves in
   let sepc' = vsubst [frame,fv] sepc in
-  let septh = GCP1AUX_STAR_AC_RULE (rator sepc') asm in
+  let septh = MP4AUX_STAR_AC_RULE (rator sepc') asm in
   (DISCH_THEN(MP_TAC o SPEC frame) THEN REWRITE_TAC[septh]) g;;
 
 (* case splits on the bit atoms (bit i w with i or w not numerals) of the  *)
@@ -380,7 +346,7 @@ let GCP1AUX_SEP_FOCUS_GOAL_TAC pr : tactic = fun (asl,w as g) ->
   let rest = gcp1_remove_first (fun l -> l == leaf) leaves in
   if rest = [] then ALL_TAC g else
   let q = gcp1_mk_star leaf (gcp1_list_mk_star rest) in
-  CONV_TAC(RATOR_CONV(fun t -> GCP1AUX_STAR_AC_EQ t q)) g;;
+  CONV_TAC(RATOR_CONV(fun t -> MP4AUX_STAR_AC_EQ t q)) g;;
 
 (* substitute the assumptions  e = v  for the variables named in vs *)
 let GCP1AUX_SUBST_VARS_TAC (vs:string list) : tactic =
@@ -1323,16 +1289,6 @@ let read_length_lemma = prove
      [REWRITE_TAC[DE_MORGAN_THM] THEN DISJ1_TAC THEN ASM_ARITH_TAC;
       GCP1AUX_DIV_2EXP_0_TAC THEN REWRITE_TAC[ODD]];
     GEN_REWRITE_TAC RAND_CONV [BIT_GUARD] THEN CONV_TAC TAUT]);;
-let GCP1AUX_word_SUC_NEQ_0 = prove
- (`!n. SUC n < dimword(:A) ==> ~(word (SUC n) = word 0:A word)`,
-  REPEAT STRIP_TAC THEN FIRST_X_ASSUM(MP_TAC o AP_TERM `val:A word->num`) THEN
-  REWRITE_TAC[VAL_WORD; VAL_WORD_0] THEN
-  FIRST_ASSUM(ASSUME_TAC o REWRITE_RULE[dimword_def]) THEN
-  ASM_SIMP_TAC[MOD_LT] THEN ARITH_TAC);;
-
-let GCP1AUX_word_SUC_SUB_1 = prove
- (`!n. word_sub (word (SUC n)) (word 1) = word n:A word`,
-  REWRITE_TAC[ADD1; WORD_ADD; WORD_ADD_SUB]);;
 
 (* HOL4 line 739 *)
 let memcpy_thm = prove
@@ -1353,8 +1309,8 @@ let memcpy_thm = prove
   REWRITE_TAC[misc_word_list_def] THEN
   STRIP_TAC THEN
   GCP1AUX_UNDISCH_EQ "memcpy" THEN ONCE_REWRITE_TAC[memcpy_def] THEN
-  FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP GCP1AUX_word_SUC_NEQ_0 th;
-                                    GCP1AUX_word_SUC_SUB_1]) THEN
+  FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP LBIGAUX_WORD_SUC_NZ th;
+                                    LBIGAUX_WORD_SUC_SUB1]) THEN
   PAIRARG_TAC THEN PAIRARG_TAC THEN
   REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN RVEQ_TAC THEN
   GCP1AUX_SEP_R_TAC THEN
@@ -1833,8 +1789,8 @@ let word_gc_move_list_thm = prove
   GCP1AUX_SEP_R_TAC THEN
   GCP1AUX_UNDISCH_EQ "word_gc_move_list" THEN
   ONCE_REWRITE_TAC[word_gc_move_list_def] THEN
-  FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP GCP1AUX_word_SUC_NEQ_0 th;
-                                    GCP1AUX_word_SUC_SUB_1]) THEN
+  FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP LBIGAUX_WORD_SUC_NZ th;
+                                    LBIGAUX_WORD_SUC_SUB1]) THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   FIRST_ASSUM(fun th -> if concl th = `(m:A word->A word_loc) k = word_addr conf (h:(A word_loc)heap_address)`
                         then REWRITE_TAC[th] else NO_TAC) THEN
@@ -1941,7 +1897,7 @@ let GCP1AUX_word_heap_DE_split = prove
   REWRITE_TAC[WORD_RULE `word_add (word_add (c:A word) (word_mul b (word x))) (word_mul b (word y)) =
                          word_add c (word_mul b (word_add (word x) (word y)))`; GSYM WORD_ADD] THEN
   REWRITE_TAC[ARITH_RULE `a + l + 1 = a + (l + 1)`] THEN
-  CONV_TAC(fun t -> GCP1AUX_STAR_AC_EQ (lhs t) (rhs t) |> fun th -> EQT_INTRO th));;
+  CONV_TAC(fun t -> MP4AUX_STAR_AC_EQ (lhs t) (rhs t) |> fun th -> EQT_INTRO th));;
 
 let GCP1AUX_word_list_exists_elim = prove
  (`!(a:A word) n (p:((A word#B)->bool)->bool) s.
@@ -2923,8 +2879,8 @@ let word_gen_gc_move_list_thm = prove
   GCP1AUX_SEP_R_TAC THEN
   GCP1AUX_UNDISCH_EQ "word_gen_gc_move_list" THEN
   ONCE_REWRITE_TAC[word_gen_gc_move_list_def] THEN
-  FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP GCP1AUX_word_SUC_NEQ_0 th;
-                                    GCP1AUX_word_SUC_SUB_1]) THEN
+  FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP LBIGAUX_WORD_SUC_NZ th;
+                                    LBIGAUX_WORD_SUC_SUB1]) THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   FIRST_ASSUM(fun th -> if concl th = `(m:A word->A word_loc) k = word_addr conf (h:(A word_loc)heap_address)`
                         then REWRITE_TAC[th] else NO_TAC) THEN
@@ -4511,14 +4467,6 @@ let partial_gc_move_heap_split = prove
     else failwith "") THEN
   TRY(REWRITE_TAC[GSYM APPEND_ASSOC; heap_drop_APPEND; heap_take_APPEND] THEN NO_TAC) THEN
   GCP1AUX_FWD_SPLIT_TAC THEN GCP1AUX_ARITH_TAC);;
-let GCP1AUX_heap_segment_APPEND = prove
- (`!(h1:((A,B)heap_element)list) h2 h3.
-     heap_segment (heap_length h1,heap_length (APPEND h1 h2)) (APPEND (APPEND h1 h2) h3) =
-     SOME (h1,h2,h3)`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[heap_segment_def; GSYM APPEND_ASSOC; heap_split_APPEND] THEN
-  CASE_REWRITE_TAC[] THEN
-  REWRITE_TAC[heap_length_APPEND; ARITH_RULE `~(a + b < a)`; ADD_SUB2; heap_split_APPEND] THEN
-  CASE_REWRITE_TAC[]);;
 
 (* HOL4 line 2532 *)
 let partial_gc_move_list_heap_split = prove
@@ -4575,7 +4523,7 @@ let partial_gc_move_list_heap_split = prove
       `gen_gc_partial_conf_refs_start (conf:B gen_gc_partial_conf)` then
       REWRITE_TAC[SYM th; heap_length_APPEND] else NO_TAC) THEN ASM_REWRITE_TAC[];
     ALL_TAC] THEN
-  ASM_REWRITE_TAC[GCP1AUX_heap_segment_APPEND]);;
+  ASM_REWRITE_TAC[GC2AUX_heap_segment_APPEND]);;
 (* ------------------------------------------------------------------------- *)
 (* Helpers for word_gen_gc_partial_move_thm: the range test of a pointer,   *)
 (* a heap element inside the current segment, header addresses.             *)
@@ -4641,10 +4589,6 @@ let GCP1AUX_ptr_to_addr_split = prove
               (word_mul bytes_in_word (word o2))`,
   REPEAT STRIP_TAC THEN ASM_SIMP_TAC[GCP1AUX_ptr_to_addr_get_addr] THEN
   REWRITE_TAC[WORD_ADD] THEN CONV_TAC WORD_RULE);;
-
-let GCP1AUX_get_addr_and_1_not_0 = prove
- (`!conf k a. ~(word_and (get_addr conf k a) (word 1) = word 0:A word)`,
-  ONCE_REWRITE_TAC[WORD_AND_SYM] THEN REWRITE_TAC[get_addr_and_1_not_0]);;
 
 (* HOL4 line 2574 *)
 let word_gen_gc_partial_move_thm = prove
@@ -4721,7 +4665,7 @@ let word_gen_gc_partial_move_thm = prove
       `heap_length (gc_state_heap (gcstate:(A word_loc,data_to_word_memoryProof_tag#(A word_loc)list)gc_state))`] GCP1AUX_word_range_test) THEN
     ANTS_TAC THENL [ASM_REWRITE_TAC[] THEN ASM_ARITH_TAC; STRIP_TAC] THEN
     GCP1AUX_UNDISCH_EQ "word_gen_gc_partial_move" THEN
-    ASM_REWRITE_TAC[word_addr_def; word_gen_gc_partial_move_def; GCP1AUX_get_addr_and_1_not_0;
+    ASM_REWRITE_TAC[word_addr_def; word_gen_gc_partial_move_def; GCP1AUX_get_addr_and_1;
                     LET_DEF; LET_END_DEF; PAIR_EQ] THEN
     STRIP_TAC THEN GCP1AUX_SUBST_VARS_TAC ["w";"i1";"pa1";"m1";"c1"] THEN
     MAP_EVERY EXISTS_TAC [`xs:(A word_loc)list`; `current:((A word_loc,data_to_word_memoryProof_tag#(A word_loc)list)heap_element)list`] THEN
@@ -4745,7 +4689,7 @@ let word_gen_gc_partial_move_thm = prove
     `heap_length (gc_state_heap (gcstate:(A word_loc,data_to_word_memoryProof_tag#(A word_loc)list)gc_state))`] GCP1AUX_word_range_test) THEN
   ANTS_TAC THENL [ASM_REWRITE_TAC[] THEN ASM_ARITH_TAC; STRIP_TAC] THEN
   GCP1AUX_UNDISCH_EQ "word_gen_gc_partial_move" THEN
-  ASM_REWRITE_TAC[word_addr_def; word_gen_gc_partial_move_def; GCP1AUX_get_addr_and_1_not_0;
+  ASM_REWRITE_TAC[word_addr_def; word_gen_gc_partial_move_def; GCP1AUX_get_addr_and_1;
                   LET_DEF; LET_END_DEF] THEN
   DISCH_TAC THEN
   MP_TAC(ISPECL [`gc_state_heap (gcstate:(A word_loc,data_to_word_memoryProof_tag#(A word_loc)list)gc_state)`;
@@ -4846,7 +4790,7 @@ let word_gen_gc_partial_move_thm = prove
           rhs (concl th) = `gen_gc_partial_conf_refs_start (gc_conf:(data_to_word_memoryProof_tag#(A word_loc)list)gen_gc_partial_conf)` &&
           gcp1_is_app "heap_length" (lhs (concl th)) then SUBST1_TAC (SYM th) else failwith "") THEN
       REWRITE_TAC[heap_length_APPEND; GC1AUX_heap_length_CONS; el_length_def];
-      REWRITE_TAC[GCP1AUX_heap_segment_APPEND]];
+      REWRITE_TAC[GC2AUX_heap_segment_APPEND]];
     ALL_TAC] THEN
   MAP_EVERY EXISTS_TAC [`zs:(A word_loc)list`;
     `APPEND ha (CONS (ForwardPointer (gc_state_a (gcstate:(A word_loc,data_to_word_memoryProof_tag#(A word_loc)list)gc_state)) (dd:A word_loc) l) hb):((A word_loc,data_to_word_memoryProof_tag#(A word_loc)list)heap_element)list`] THEN

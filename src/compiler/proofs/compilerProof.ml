@@ -374,20 +374,11 @@ let compile_correct_gen = prove
      [ASM_MESON_TAC[parse_prog_correct]; ALL_TAC] THEN
     ASM_REWRITE_TAC[semantics_def] THEN CASE_REWRITE_TAC[]]);;
 
-(* the type numbers of the primitive types (HOL4 EVAL) *)
-let CPPAUX_TYNUMS =
-  [typeSystem_Tarray_num_def; typeSystem_Tbool_num_def; typeSystem_Tchar_num_def;
-   typeSystem_Texn_num_def; typeSystem_Tfn_num_def; typeSystem_Tint_num_def;
-   typeSystem_Tlist_num_def; typeSystem_Tref_num_def; typeSystem_Tstring_num_def;
-   typeSystem_Ttup_num_def; typeSystem_Tvector_num_def; typeSystem_Tword64_num_def;
-   typeSystem_Tword8_num_def; typeSystem_Tword8array_num_def;
-   typeSystem_Tdouble_num_def];;
-
 (* HOL4 compile_correct_lemma: EVAL of prim_type_ids = count start_type_id *)
 let CPPAUX_prim_type_ids_count = prove
  (`prim_type_ids = count start_type_id`,
   REWRITE_TAC([prim_type_ids_def; prim_type_nums_def; start_type_id_def; EXTENSION;
-               IN_COUNT; IN_SET_OF_LIST; MEM] @ CPPAUX_TYNUMS) THEN
+               IN_COUNT; IN_SET_OF_LIST; MEM] @ TPROPSAUX_type_num_defs) THEN
   (* x < 15 expanded into its cases (ARITH_TAC took 50 s on the disjunction) *)
   GEN_TAC THEN EQ_TAC THENL
    [STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CONV_TAC NUM_REDUCE_CONV;
@@ -404,7 +395,7 @@ let CPPAUX_set_tids_tenv_prim_tenv = prove
   REWRITE_TAC[REVERSE; APPEND; ALL] THEN CASE_REWRITE_TAC[] THEN
   REWRITE_TAC([ALL; set_tids_subset_def; set_tids_def; typeSystem_Tlist_def; MAP;
                set_of_list; UNIONS_INSERT; UNIONS_0; UNION_EMPTY; INSERT_SUBSET;
-               EMPTY_SUBSET; IN_COUNT; start_type_id_def] @ CPPAUX_TYNUMS) THEN
+               EMPTY_SUBSET; IN_COUNT; start_type_id_def] @ TPROPSAUX_type_num_defs) THEN
   CONV_TAC NUM_REDUCE_CONV);;
 
 (* the semantic state of the primitives keeps the ffi state *)
@@ -598,5 +589,5 @@ let type_config_ok = prove
   REWRITE_TAC([ALL; inf_set_tids_subset_def; unconvert_t_def; inf_set_tids_def; MAP;
                set_of_list; UNIONS_INSERT; UNIONS_0; UNION_EMPTY; INSERT_SUBSET;
                EMPTY_SUBSET; typeSystem_Tlist_def; CPPAUX_prim_type_ids_count; IN_COUNT;
-               start_type_id_def] @ CPPAUX_TYNUMS) THEN
+               start_type_id_def] @ TPROPSAUX_type_num_defs) THEN
   CONV_TAC NUM_REDUCE_CONV);;

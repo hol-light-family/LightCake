@@ -2648,30 +2648,6 @@ let STALLOCAUX_SEM_eval_mono_clock = prove
             stack_evaluate_add_clock)) THEN
   ASM_REWRITE_TAC[] THEN SIMP[]);;
 
-let STALLOCAUX_SEM_io_mono = prove
- (`!p (x:(A,C,FFI)stack_state) k1 k2.
-     k1 <= k2 ==>
-     isPREFIX
-       (ffi_state_io_events (stack_state_ffi
-          (SND (stack_evaluate (p,stack_state_clock_fupd (K k1) x)))))
-       (ffi_state_io_events (stack_state_ffi
-          (SND (stack_evaluate (p,stack_state_clock_fupd (K k2) x)))))`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[LE_EXISTS] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
-  MP_TAC(ISPECL [`p:(A)stack_prog`; `stack_state_clock_fupd (K k1) (x:(A,C,FFI)stack_state)`]
-          (INST [`d:num`,`extra:num`] stack_evaluate_add_clock_io_events_mono)) THEN
-  SIMP[]);;
-
-let STALLOCAUX_SEM_io_chain = prove
- (`!p (x:(A,C,FFI)stack_state).
-     lprefix_chain
-       (IMAGE (\k. llist_fromList (ffi_state_io_events (stack_state_ffi
-          (SND (stack_evaluate (p,stack_state_clock_fupd (K k) x)))))) (:num))`,
-  REPEAT GEN_TAC THEN
-  REWRITE_TAC[SET_RULE `IMAGE (\k. (g:B->C) ((f:A->B) k)) s = IMAGE g (IMAGE f s)`] THEN
-  MATCH_MP_TAC prefix_chain_lprefix_chain THEN
-  REWRITE_TAC[prefix_chain_def; IMP_CONJ; RIGHT_FORALL_IMP_THM; FORALL_IN_IMAGE; IN_UNIV] THEN
-  MESON_TAC[STALLOCAUX_SEM_io_mono; LE_CASES]);;
-
 let STALLOCAUX_SEM_sem_ev (x:term) (k:term) =
   vsubst [x,`x:(A,C,FFI)stack_state`; k,`k:num`]
    `stack_evaluate (stack_Call NONE (INL start) NONE:(A)stack_prog,
@@ -2699,15 +2675,6 @@ let STALLOCAUX_SEM_sem_oks (x:term) =
      mk_eq(ev,`SOME (stack_Result (wl_Loc 1 0):(A)stack_result)`);
      mk_exists(`w:A word`,mk_eq(ev,`SOME (stackSem_Halt (wl_Word (w:A word)))`));
      mk_exists(`f:final_event`,mk_eq(ev,`SOME (stack_FinalFFI f:(A)stack_result)`))]);;
-let STALLOCAUX_SEM_option_CASE_cong = prove
- (`!(a:B option) b (n1:C) n2 f.
-     a = b /\ (b = NONE ==> n1 = n2) ==> option_CASE a n1 f = option_CASE b n2 f`,
-  REPEAT GEN_TAC THEN STRUCT_CASES_TAC(ISPEC `b:B option` (cases "option")) THEN
-  REWRITE_TAC[option_CASE; option_DISTINCT] THEN MESON_TAC[option_CASE]);;
-let STALLOCAUX_SEM_some_NONE = prove
- (`!P:A->bool. (some) P = NONE <=> !x. ~P x`,
-  GEN_TAC THEN REWRITE_TAC[some_DEF] THEN COND_CASES_TAC THEN
-  ASM_MESON_TAC[option_DISTINCT]);;
 
 (* the semantics of t is the one of s when every run of s that does not   *)
 (* fail is simulated by a run of t with extra clock, with the same ffi      *)
@@ -2827,7 +2794,7 @@ let STALLOCAUX_SEM_semantics_sim = prove
     [FIRST_X_ASSUM(MP_TAC o check (is_exists o concl)) THEN
      USE_THEN "oks" (fun th -> MESON_TAC[th]);
      ALL_TAC] THEN
-  MATCH_MP_TAC STALLOCAUX_SEM_option_CASE_cong THEN CONJ_TAC THENL
+  MATCH_MP_TAC BASICAUX_option_CASE_cong THEN CONJ_TAC THENL
   [AP_TERM_TAC THEN ABS_TAC THEN EQ_TAC THEN STRIP_TAC THENL
    [SUBGOAL_THEN `~(r = (stack_TimeOut:(A)stack_result))` ASSUME_TAC THENL
      [DISCH_THEN SUBST_ALL_TAC THEN FS[]; ALL_TAC] THEN
@@ -2847,7 +2814,7 @@ let STALLOCAUX_SEM_semantics_sim = prove
     MAP_EVERY EXISTS_TAC [`k + ck:num`; `t1:(A,C,FFI)stack_state`; `r:(A)stack_result`;
                           `outcome:outcome`] THEN
     ASM_REWRITE_TAC[]];
-   REWRITE_TAC[STALLOCAUX_SEM_some_NONE] THEN DISCH_TAC THEN AP_TERM_TAC THEN
+   REWRITE_TAC[BASICAUX_some_NONE] THEN DISCH_TAC THEN AP_TERM_TAC THEN
    SUBGOAL_THEN
      `!k. FST (stack_evaluate (stack_Call NONE (INL start) NONE:(A)stack_prog,
                                stack_state_clock_fupd (K k) (s:(A,C,FFI)stack_state))) =
@@ -2881,7 +2848,7 @@ let STALLOCAUX_SEM_semantics_sim = prove
                              `stack_FinalFFI f:(A)stack_result`; `FFI_outcome f`]] THEN
      ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[];
      ALL_TAC] THEN
-   MATCH_MP_TAC IMP_build_lprefix_lub_EQ THEN REWRITE_TAC[STALLOCAUX_SEM_io_chain] THEN
+   MATCH_MP_TAC IMP_build_lprefix_lub_EQ THEN REWRITE_TAC[STACKPROPSAUX_io_chain] THEN
    REWRITE_TAC[lprefix_rel_def; FORALL_IN_IMAGE; EXISTS_IN_IMAGE; IN_UNIV] THEN
    CONJ_TAC THEN X_GEN_TAC `k:num` THEN
    STALLOCAUX_SEM_RUN_TAC `s:(A,C,FFI)stack_state` `k:num`
@@ -2896,7 +2863,7 @@ let STALLOCAUX_SEM_semantics_sim = prove
    STRIP_TAC THENL
     [EXISTS_TAC `k:num` THEN ASM_REWRITE_TAC[LPREFIX_fromList; from_toList; option_CASE] THEN
      MP_TAC(ISPECL [`stack_Call NONE (INL start) NONE:(A)stack_prog`;
-                    `t:(A,C,FFI)stack_state`; `k:num`; `k + ck:num`] STALLOCAUX_SEM_io_mono) THEN
+                    `t:(A,C,FFI)stack_state`; `k:num`; `k + ck:num`] STACKPROPSAUX_io_mono) THEN
      ASM_REWRITE_TAC[LE_ADD];
      EXISTS_TAC `k + ck:num` THEN
      ASM_REWRITE_TAC[LPREFIX_fromList; from_toList; option_CASE; IS_PREFIX_REFL]]]);;

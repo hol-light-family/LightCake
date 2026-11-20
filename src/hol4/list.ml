@@ -2047,3 +2047,36 @@ let _ = cake_add_simps
    list_size_reverse; list_size_map; list_size_snoc; list_size_filter;
    list_size_take; list_size_drop; filter_size_less];;
 
+(* ------------------------------------------------------------------------- *)
+(* Lemmas used by several later files.                                       *)
+(* ------------------------------------------------------------------------- *)
+
+let LISTAUX_list_of_seq_1 = prove
+ (`!f:num->A. list_of_seq f 1 = [f 0]`,
+  REWRITE_TAC[ONE; list_of_seq; APPEND]);;
+
+let LISTAUX_ALL2_CONG = prove
+ (`!(R:C->D->bool) R' l1 l2.
+     (!y z. MEM y l1 /\ MEM z l2 ==> (R y z <=> R' y z))
+     ==> (ALL2 R l1 l2 <=> ALL2 R' l1 l2)`,
+  GEN_TAC THEN GEN_TAC THEN LIST_INDUCT_TAC THEN GEN_TAC THEN
+  STRUCT_CASES_TAC (ISPEC `l2:D list` list_CASES) THEN
+  REWRITE_TAC[ALL2; MEM] THEN STRIP_TAC THEN
+  BINOP_TAC THENL [ASM_MESON_TAC[]; FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_MESON_TAC[]]);;
+
+let LISTAUX_ADMISSIBLE_ALL2 = prove
+ (`!(<<) (p:(A->B)->P->bool) (s:P->A) (h:(A->B)->P->C->D->bool) l1 l2.
+        admissible(<<) p s l1 /\ admissible(<<) p s l2 /\
+        admissible (<<) (\f (y,z,x). p f x /\ MEM y (l1 f x) /\ MEM z (l2 f x))
+                        (\(y,z,x). s x) (\f (y,z,x). h f x y z)
+        ==> admissible (<<) p s (\f x. ALL2 (h f x) (l1 f x) (l2 f x))`,
+  REWRITE_TAC[admissible; FORALL_PAIR_THM] THEN REPEAT STRIP_TAC THEN
+  SUBGOAL_THEN `(l1:(A->B)->P->C list) g a = l1 f a /\
+                (l2:(A->B)->P->D list) g a = l2 f a`
+    STRIP_ASSUME_TAC THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
+  ASM_REWRITE_TAC[] THEN MATCH_MP_TAC LISTAUX_ALL2_CONG THEN
+  REPEAT STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[]);;
+
+let LISTAUX_ALL2_EL = prove
+ (`ALL2 (R:A->B->bool) l1 l2 /\ n < LENGTH l1 ==> R (EL n l1) (EL n l2)`,
+  REWRITE_TAC[LIST_REL_EL_EQN] THEN MESON_TAC[]);;

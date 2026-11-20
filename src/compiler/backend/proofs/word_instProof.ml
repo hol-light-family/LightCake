@@ -1636,16 +1636,13 @@ let inst_select_Loop_helper = prove
       CASES_ON `x:((A)wl_result)option` THEN CASE_REWRITE_TAC[] THEN
       TRY (CASES_ON `a':(A)wl_result` THEN CASE_REWRITE_TAC[]) THEN
       SIMP[wl_exit_loop_def]]]);;
-let WPROOF2AUX_toAList_LN = prove
- (`toAList (LN:A spt) = []`,
-  REWRITE_TAC[toAList_def; SPTAUX_foldi_thm]);;
 
 let WPROOF2AUX_is_Loop = prove
  (mk_imp(WPROOF2AUX_is `c:(A)asm_config` `temp:num` `body:(A)wl_prog`,
          WPROOF2AUX_is `c:(A)asm_config` `temp:num` `wl_Loop names body exit_names:(A)wl_prog`),
   DISCH_TAC THEN REPEAT GEN_TAC THEN REWRITE_TAC[inst_select_def; wl_every_var_def] THEN
   STRIP_TAC THEN MATCH_MP_TAC inst_select_Loop_helper THEN
-  ASM_REWRITE_TAC[every_name_def; WPROOF2AUX_toAList_LN; MAP; ALL] THEN
+  ASM_REWRITE_TAC[every_name_def; IL2AUX_toAList_LN; MAP; ALL] THEN
   REPEAT STRIP_TAC THEN FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[]);;
 
 (* HOL4: a [local] copy of wordProps' locals_rel_cut_envs *)
@@ -1707,24 +1704,6 @@ let WPROOF2AUX_push_env_inst = prove
      wl_push_env envs (SOME (n,h,l1,l2)) s`,
   REWRITE_TAC[wl_push_env_def]);;
 
-let WPROOF2AUX_handler_cases = prove
- (`!(handler:(num#(A)wl_prog#num#num)option).
-     handler = NONE \/ ?hn h hl1 hl2. handler = SOME (hn,h,hl1,hl2)`,
-  GEN_TAC THEN STRUCT_CASES_TAC (ISPEC `handler:(num#(A)wl_prog#num#num)option`
-                                        (cases "option")) THEN
-  REWRITE_TAC[option_DISTINCT; option_INJ] THEN
-  SPEC_TAC(`a:num#(A)wl_prog#num#num`,`a:num#(A)wl_prog#num#num`) THEN
-  REWRITE_TAC[FORALL_PAIR_THM; PAIR_EQ] THEN MESON_TAC[]);;
-
-let WPROOF2AUX_ret_cases = prove
- (`!(ret:(num list#cutsets#(A)wl_prog#num#num)option).
-     ret = NONE \/ ?n names rh l1 l2. ret = SOME (n,names,rh,l1,l2)`,
-  GEN_TAC THEN STRUCT_CASES_TAC (ISPEC `ret:(num list#cutsets#(A)wl_prog#num#num)option`
-                                        (cases "option")) THEN
-  REWRITE_TAC[option_DISTINCT; option_INJ] THEN
-  SPEC_TAC(`a:num list#cutsets#(A)wl_prog#num#num`,`a:num list#cutsets#(A)wl_prog#num#num`) THEN
-  REWRITE_TAC[FORALL_PAIR_THM; PAIR_EQ] THEN MESON_TAC[]);;
-
 (* split the outermost case or conditional of the antecedent of the goal;   *)
 (* the cut_envs of the related locals follows the original one              *)
 
@@ -1743,10 +1722,6 @@ let WPROOF2AUX_ANT_CASE_TAC : tactic = fun (asl,w as g) ->
 (* the leaves: an error, the same final state, or the induction hypothesis *)
 (* for the program of the return handler or the exception handler          *)
 
-let WPROOF2AUX_locals_rel_refl = prove
- (`!temp (l:((A)word_loc)spt). locals_rel temp l l`,
-  REWRITE_TAC[locals_rel_def]);;
-
 let WPROOF2AUX_CALL_IH_TAC : tactic = fun (asl,w as g) ->
   let ant = fst(dest_imp w) in
   let p,s = dest_pair(rand(lhs ant)) in
@@ -1764,7 +1739,7 @@ let WPROOF2AUX_CALL_IH_TAC : tactic = fun (asl,w as g) ->
      MP_TAC(SPECL [s; `res:((A)wl_result)option`; `rst:(A,C,FFI)wl_state`;
                    mk_icomb(`wl_state_locals:(A,C,FFI)wl_state->((A)word_loc)spt`, s)] ih)) THEN
    ANTS_TAC THENL
-    [ASM_REWRITE_TAC[WPROOF2AUX_locals_rel_refl];
+    [ASM_REWRITE_TAC[IL2AUX_locals_rel_refl];
      REWRITE_TAC[locals_rm]]) g;;
 
 let WPROOF2AUX_SAME_WIT_TAC : tactic = fun (asl,w as g) ->
@@ -1802,7 +1777,7 @@ let WPROOF2AUX_is_Call = prove
     (X_CHOOSE_THEN `n:num list` (X_CHOOSE_THEN `names:cutsets`
       (X_CHOOSE_THEN `rh:(A)wl_prog` (X_CHOOSE_THEN `l1:num`
         (X_CHOOSE_THEN `l2:num` SUBST_ALL_TAC)))))
-    (SPEC `ret:(num list#cutsets#(A)wl_prog#num#num)option` WPROOF2AUX_ret_cases) THEN
+    (SPEC `ret:(num list#cutsets#(A)wl_prog#num#num)option` IL2AUX_ret_cases) THEN
   CASE_REWRITE_TAC[] THENL
    [(* a tail call: the handler is NONE, and the program is unchanged *)
     STRIP_TAC THEN
@@ -1825,7 +1800,7 @@ let WPROOF2AUX_is_Call = prove
   DISJ_CASES_THEN2 SUBST_ALL_TAC
     (X_CHOOSE_THEN `hn:num` (X_CHOOSE_THEN `h:(A)wl_prog`
       (X_CHOOSE_THEN `hl1:num` (X_CHOOSE_THEN `hl2:num` SUBST_ALL_TAC))))
-    (SPEC `handler:(num#(A)wl_prog#num#num)option` WPROOF2AUX_handler_cases) THEN
+    (SPEC `handler:(num#(A)wl_prog#num#num)option` IL2AUX_handler_cases) THEN
   RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN CASE_REWRITE_TAC[] THENL
    [ALL_TAC;
     REMOVE_THEN "ihh" (MP_TAC o SPECL [`hn:num`; `hl1:num`; `hl2:num`; `h:(A)wl_prog`]) THEN
@@ -1898,13 +1873,6 @@ let WPROOF2AUX_eval_Seq_def = WPROOF2AUX_eval_clause "wl_Seq";;
 let WPROOF2AUX_eval_Move_def = WPROOF2AUX_eval_clause "wl_Move";;
 let WPROOF2AUX_eval_Inst_def = WPROOF2AUX_eval_clause "wl_Inst";;
 
-let WPROOF2AUX_eval_Seq_gen = prove
- (`!c1 c2 (s:(A,C,FFI)wl_state) s1.
-     wl_evaluate (c1, s) = (NONE, s1)
-     ==> wl_evaluate (wl_Seq c1 c2, s) = wl_evaluate (c2, s1)`,
-  REPEAT STRIP_TAC THEN GEN_REWRITE_TAC LAND_CONV [wl_evaluate_def] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]);;
-
 let WPROOF2AUX_eval_Move1_gen = prove
  (`!tar v x (s:(A,C,FFI)wl_state).
      lookup v (wl_state_locals s) = SOME x
@@ -1950,7 +1918,7 @@ let WPROOF2AUX_TT_ARITH_TAC (step_reg:thm) (step_imm:thm) : tactic =
   REPEAT GEN_TAC THEN REWRITE_TAC[three_to_two_reg_def; every_inst_def; distinct_tar_reg_def] THEN
   STRIP_TAC THEN WPROOF2AUX_INST_HYP_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[wl_word_exp_def; wl_get_var_def]) THEN
-  FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP WPROOF2AUX_eval_Seq_gen
+  FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP IL2AUX_evaluate_Seq_NONE
                                       (MATCH_MP (SPEC `r1:num` WPROOF2AUX_eval_Move1_gen) th)]) THEN
   CASES_ON `ri:(A)reg_imm` THEN RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[wl_word_exp_def; wl_get_var_def; option_INJ;
@@ -2027,7 +1995,7 @@ let WPROOF2AUX_tt_OpCurrHeap = prove
     check (WPROOF2AUX_is_app_of "wl_evaluate")) THEN
   STRIP_TAC THEN RVEQ_TAC THEN WPROOF2AUX_ERR_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[wl_word_exp_def; wl_get_var_def]) THEN
-  FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP WPROOF2AUX_eval_Seq_gen
+  FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP IL2AUX_evaluate_Seq_NONE
                                       (MATCH_MP (SPEC `r1:num` WPROOF2AUX_eval_Move1_gen) th)]) THEN
   MATCH_MP_TAC EQ_TRANS THEN
   EXISTS_TAC `(NONE:((A)wl_result)option,
@@ -2194,11 +2162,11 @@ let WPROOF2AUX_tt_Call = prove
     (X_CHOOSE_THEN `n:num list` (X_CHOOSE_THEN `names:cutsets`
       (X_CHOOSE_THEN `rh:(A)wl_prog` (X_CHOOSE_THEN `l1:num`
         (X_CHOOSE_THEN `l2:num` SUBST_ALL_TAC)))))
-    (SPEC `ret:(num list#cutsets#(A)wl_prog#num#num)option` WPROOF2AUX_ret_cases) THEN
+    (SPEC `ret:(num list#cutsets#(A)wl_prog#num#num)option` IL2AUX_ret_cases) THEN
   DISJ_CASES_THEN2 SUBST_ALL_TAC
     (X_CHOOSE_THEN `hn:num` (X_CHOOSE_THEN `h:(A)wl_prog`
       (X_CHOOSE_THEN `hl1:num` (X_CHOOSE_THEN `hl2:num` SUBST_ALL_TAC))))
-    (SPEC `handler:(num#(A)wl_prog#num#num)option` WPROOF2AUX_handler_cases) THEN
+    (SPEC `handler:(num#(A)wl_prog#num#num)option` IL2AUX_handler_cases) THEN
   CASE_REWRITE_TAC[] THEN REWRITE_TAC[every_inst_def] THEN CASE_REWRITE_TAC[] THEN
   STRIP_TAC THEN
   REMOVE_THEN "ihr" (MP_TAC o SPECL [`n:num list`; `names:cutsets`; `l1:num`; `l2:num`;

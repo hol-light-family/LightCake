@@ -3024,31 +3024,11 @@ let compile_0_def = cake_def
 (* the ground terms of the datatypes (distinctness and injectivity, as     *)
 (* HOL4's EVAL).                                                            *)
 
-let D2WAUX_eq_convs = (Hashtbl.create 20 : (string,conv) Hashtbl.t);;
-
-let D2WAUX_type_eq_conv tyname =
-  try Hashtbl.find D2WAUX_eq_convs tyname with Not_found ->
-  let dths = try CONJUNCTS (distinctness tyname) with Failure _ -> [] in
-  let dths = map (EQF_INTRO o SPEC_ALL) dths @
-             map (EQF_INTRO o SPEC_ALL o GSYM) dths in
-  let iths = try CONJUNCTS (injectivity tyname) with Failure _ -> [] in
-  let iths = if tyname = "prod" then [PAIR_EQ] else iths in
-  let conv = GEN_REWRITE_CONV I (dths @ iths) in
-  Hashtbl.add D2WAUX_eq_convs tyname conv; conv;;
-
-let D2WAUX_EQ_CONV tm =
-  let l,r = dest_eq tm in
-  if l = r then EQT_INTRO (REFL l) else
-  let tyname = try fst (dest_type (type_of l)) with Failure _ ->
-                 failwith "D2WAUX_EQ_CONV" in
-  if tyname = "num" then NUM_EQ_CONV tm else
-  D2WAUX_type_eq_conv tyname tm;;
-
 let D2WAUX_call_graph_cs =
   let cs = Compute.bool_compset () in
   Compute.set_skip cs `COND: bool -> A -> A -> A` (Some 1);
   num_compute_add_convs cs;
-  Compute.add_conv (`(=):A->A->bool`,2,D2WAUX_EQ_CONV) cs;
+  Compute.add_conv (`(=):A->A->bool`,2,WORDP3AUX_EQ_CONV) cs;
   Compute.add_conv (`LET:(A->B)->A->B`,2,let_CONV) cs;
   Compute.add_thms
     ([full_call_graph_def; call_graph_def; mk_Branch_def;

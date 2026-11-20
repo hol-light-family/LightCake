@@ -544,12 +544,6 @@ let ASP2AUX_cut_envs_ins k =
   REWRITE_RULE[ARITH] (ISPEC (mk_small_numeral k)
     data_to_word_gcProof_cut_envs_adjust_sets_insert_ODD);;
 
-let ASP2AUX_MustTerminate_limit_NZ = prove
- (`~(MustTerminate_limit (:A) = 0)`,
-  REWRITE_TAC[MustTerminate_limit_DEF] THEN
-  SUBGOAL_THEN `~(dimword (:A) = 0)` MP_TAC THENL
-   [REWRITE_TAC[dimword_def; EXP_EQ_0] THEN ARITH_TAC; ARITH_TAC]);;
-
 (* MP_TAC (mk st) where st is the state of the first wl_evaluate (code,st)  *)
 (* of the goal                                                               *)
 let ASP2AUX_EVAL_LEMMA_TAC code (mk:term->thm) : tactic = fun (asl,w as g) ->
@@ -569,12 +563,6 @@ let ASP2AUX_EXISTS_PAIR_TAC : tactic = fun (asl,w as g) ->
   let x,y = if is_conj e then lhs(fst(dest_conj e)),lhs(snd(dest_conj e))
             else dest_pair(lhs e) in
   (EXISTS_TAC x THEN EXISTS_TAC y THEN REWRITE_TAC[]) g;;
-
-let ASP2AUX_LENGTH_EQ_2 = prove
- (`!l:A list. LENGTH l = 2 <=> ?a b. l = [a;b]`,
-  GEN_TAC THEN
-  REWRITE_TAC[LENGTH_EQ_CONS; LENGTH_EQ_NIL; num_CONV `2`; num_CONV `1`] THEN
-  MESON_TAC[]);;
 
 let ASP2AUX_do_stack_lim_safe = prove
  (`!op vs (x:(C,FFI)data_state).
@@ -630,17 +618,6 @@ let ASP2AUX_get_real_offset_1 = prove
   REWRITE_TAC[GSYM VAL_EQ; VAL_WORD_ADD; VAL_WORD_MUL; VAL_WORD_SHL; VAL_WORD] THEN
   ASM_REWRITE_TAC[] THEN CONV_TAC NUM_REDUCE_CONV);;
 
-let ASP2AUX_bad_fun_idem = prove
- (CASE_TERM
-  `!e:((A)wl_result)option#(A,C,FFI)wl_state.
-     (match (match e with
-               (res,s) -> if wl_bad_fun_return res then (SOME wl_Error,s) else (res,s)) with
-        (res,s) -> if wl_bad_fun_return res then (SOME wl_Error,s) else (res,s)) =
-     (match e with
-        (res,s) -> if wl_bad_fun_return res then (SOME wl_Error,s) else (res,s))`,
-  REWRITE_TAC[FORALL_PAIR_THM] THEN REPEAT GEN_TAC THEN CASE_REWRITE_TAC[] THEN
-  COND_CASES_TAC THEN CASE_REWRITE_TAC[wl_bad_fun_return_def] THEN
-  ASM_REWRITE_TAC[]);;
 (* from assumptions  e = SOME a  and  e = SOME b  derive  a = b  (for every *)
 (* such pair), then eliminate variables                                     *)
 let ASP2AUX_SOME_UNIQ_TAC : tactic = fun (asl,w as g) ->
@@ -761,11 +738,6 @@ let ASP2AUX_byte_of_w64 = prove
   SUBGOAL_THEN `MIN (MIN (SUC k) (dimindex (:A))) 8 = 8` SUBST1_TAC THENL
    [REWRITE_TAC[MIN] THEN ASM_ARITH_TAC; CONV_TAC NUM_REDUCE_CONV]);;
 
-let ASP2AUX_val_byte_lt = prove
- (`!w:byte. val w < 256`,
-  GEN_TAC THEN MP_TAC(ISPEC `w:byte` VAL_BOUND) THEN
-  REWRITE_TAC[DIMINDEX_8] THEN CONV_TAC NUM_REDUCE_CONV THEN REWRITE_TAC[]);;
-
 let ASP2AUX_Smallnum_byte_ushr = prove
  (`!w:byte. good_dimindex (:A) ==>
      word_ushr (Smallnum (&(val w)):A word) 2 = word (val w)`,
@@ -773,7 +745,7 @@ let ASP2AUX_Smallnum_byte_ushr = prove
   REWRITE_TAC[data_to_word_Smallnum_def; INT_OF_NUM_LT; LT; INT_OF_NUM_MUL;
               NUM_OF_INT_OF_NUM] THEN
   REWRITE_TAC[GSYM VAL_EQ; VAL_WORD_USHR; VAL_WORD] THEN
-  MP_TAC(ISPEC `w:byte` ASP2AUX_val_byte_lt) THEN
+  MP_TAC(ISPEC `w:byte` w2n_lt_256) THEN
   FIRST_X_ASSUM(DISJ_CASES_THEN SUBST1_TAC o REWRITE_RULE[good_dimindex_def]) THEN
   CONV_TAC NUM_REDUCE_CONV THEN DISCH_TAC THEN
   (SUBGOAL_THEN `4 * val (w:byte) < 4294967296 /\ val w < 4294967296 /\
@@ -784,7 +756,7 @@ let ASP2AUX_Smallnum_byte_ushr = prove
 let ASP2AUX_word_zx_byte_word = prove
  (`!w:byte. good_dimindex (:A) ==> (word_zx (word (val w):A word):int64) = word_zx w`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[GSYM VAL_EQ; VAL_WORD_ZX_GEN; VAL_WORD] THEN
-  MP_TAC(ISPEC `w:byte` ASP2AUX_val_byte_lt) THEN
+  MP_TAC(ISPEC `w:byte` w2n_lt_256) THEN
   FIRST_X_ASSUM(DISJ_CASES_THEN SUBST1_TAC o REWRITE_RULE[good_dimindex_def]) THEN
   REWRITE_TAC[DIMINDEX_64] THEN CONV_TAC NUM_REDUCE_CONV THEN DISCH_TAC THEN
   (SUBGOAL_THEN `val (w:byte) < 4294967296 /\ val w < 18446744073709551616`
@@ -798,7 +770,7 @@ let ASP2AUX_extract_zx_byte = prove
   REPEAT STRIP_TAC THEN
   REWRITE_TAC[GSYM VAL_EQ; word_extract_DEF; VAL_WORD_ZX_GEN; VAL_WORD_BITS; BITS_THM2;
               VAL_WORD; DIMINDEX_64] THEN
-  MP_TAC(ISPEC `w:byte` ASP2AUX_val_byte_lt) THEN
+  MP_TAC(ISPEC `w:byte` w2n_lt_256) THEN
   ASM_REWRITE_TAC[] THEN CONV_TAC NUM_REDUCE_CONV THEN DISCH_TAC THEN
   (SUBGOAL_THEN `val (w:byte) < 4294967296 /\ val w < 18446744073709551616`
      STRIP_ASSUME_TAC THENL [ASM_ARITH_TAC; ALL_TAC]) THEN
@@ -814,10 +786,6 @@ let ASP2AUX_IS_SOME_set_var = prove
   REPEAT GEN_TAC THEN STRIP_TAC THEN GEN_TAC THEN
   REWRITE_TAC[lookup_insert; adjust_var_11] THEN COND_CASES_TAC THEN
   REWRITE_TAC[IS_SOME_DEF] THEN ASM_MESON_TAC[]);;
-
-let ASP2AUX_EXP_LE = prove
- (`!m n. m <= n ==> 2 EXP m <= 2 EXP n`,
-  REWRITE_TAC[LE_EXP; ARITH_EQ]);;
 
 (* encode_header c 3 len fails (len < 4) only for len_size 0 or 1 *)
 let ASP2AUX_encode_header_NONE = prove
@@ -836,17 +804,17 @@ let ASP2AUX_encode_header_NONE = prove
                 len < 2 EXP (dimindex (:A) - 4)` (fun th -> REWRITE_TAC[th]) THENL
    [REPEAT CONJ_TAC THENL
      [MATCH_MP_TAC LTE_TRANS THEN EXISTS_TAC `2 EXP 2` THEN
-      CONJ_TAC THENL [ARITH_TAC; MATCH_MP_TAC ASP2AUX_EXP_LE THEN ASM_ARITH_TAC];
+      CONJ_TAC THENL [ARITH_TAC; MATCH_MP_TAC TWOEXP_MONO2 THEN ASM_ARITH_TAC];
       SUBGOAL_THEN `2 EXP 6 <= dimword (:A)` MP_TAC THENL
-       [REWRITE_TAC[dimword_def] THEN MATCH_MP_TAC ASP2AUX_EXP_LE THEN ASM_ARITH_TAC;
+       [REWRITE_TAC[dimword_def] THEN MATCH_MP_TAC TWOEXP_MONO2 THEN ASM_ARITH_TAC;
         ARITH_TAC];
       MATCH_MP_TAC LTE_TRANS THEN EXISTS_TAC `2 EXP 2` THEN
-      CONJ_TAC THENL [ASM_ARITH_TAC; MATCH_MP_TAC ASP2AUX_EXP_LE THEN ASM_ARITH_TAC]];
+      CONJ_TAC THENL [ASM_ARITH_TAC; MATCH_MP_TAC TWOEXP_MONO2 THEN ASM_ARITH_TAC]];
     ALL_TAC] THEN
   REWRITE_TAC[NOT_LT] THEN DISCH_TAC THEN
   ASM_CASES_TAC `2 <= k` THENL
    [SUBGOAL_THEN `2 EXP 2 <= 2 EXP k` MP_TAC THENL
-     [MATCH_MP_TAC ASP2AUX_EXP_LE THEN ASM_REWRITE_TAC[]; ASM_ARITH_TAC];
+     [MATCH_MP_TAC TWOEXP_MONO2 THEN ASM_REWRITE_TAC[]; ASM_ARITH_TAC];
     ASM_ARITH_TAC]);;
 
 (* state_rel after WriteWord64 / WriteWord64_on_32 (from their lemmas)     *)
@@ -1338,10 +1306,6 @@ let ASP2AUX_GET_NUM_TAC (ntm:term) (atm:term) : tactic = fun (asl,w as g) ->
   (MP_TAC (SPECL [ntm; atm] (MATCH_MP (REWRITE_RULE[IMP_CONJ] memory_rel_get_num) th)) THEN
    ASM_REWRITE_TAC[MEM; PAIR_EQ]) g;;
 
-let ASP2AUX_lt_dimword_MustTerminate = prove
- (`!k. k < dimword (:A) ==> k < MustTerminate_limit (:A) - 1`,
-  REWRITE_TAC[MustTerminate_limit_DEF] THEN ARITH_TAC);;
-
 let ASP2AUX_DIV8_lt_dimword = prove
  (`!k. k < dimword (:A) DIV 8 ==> k < dimword (:A) /\ k DIV 4 < dimword (:A)`,
   GEN_TAC THEN DISCH_TAC THEN
@@ -1638,7 +1602,7 @@ let assign_CopyByte = prove
   CASE_REWRITE_TAC[assign_CopyByte_def; data_to_word_get_names_def] THEN
   ASP2AUX_EVAL_TAC (asp2_eval_rws @ asp2_eval_rws2 @ asp2_call_rws @
     [domain_adjust_sets; ALL_DISTINCT; MEM; adjust_var_NEQ; adjust_var_11;
-     ASP2AUX_MustTerminate_limit_NZ; wl_push_env_def; LET_DEF; LET_END_DEF]) THEN
+     MustTerminate_limit_NOT_0; wl_push_env_def; LET_DEF; LET_END_DEF]) THEN
   ASP2AUX_EVAL_LEMMA_TAC `ByteCopy_code c:(A)wl_prog` (fun st ->
     ISPECL [`c:data_to_word_config`; st; `n:num`; `l:num`; `wsrc:A word`; `sw:A word`;
             `lw:A word`; `wdst:A word`; `ow:A word`; `asrc:A word`; `adst:A word`;
@@ -1648,7 +1612,7 @@ let assign_CopyByte = prove
    [ASP2AUX_CRW_TAC (asp2_eval_rws @ asp2_eval_rws2 @ asp2_call_rws @
       [push_env_store; wl_push_env_clock]) THEN
     CONV_TAC(DEPTH_CONV ASP2AUX_LOOKUP_FROMLIST2_CONV) THEN
-    ASM_SIMP_TAC[ASP2AUX_DIV8_lt_dimword; ASP2AUX_lt_dimword_MustTerminate];
+    ASM_SIMP_TAC[ASP2AUX_DIV8_lt_dimword; IMP_LESS_MustTerminate_limit];
     DISCH_THEN(X_CHOOSE_THEN `ck:num` (X_CHOOSE_THEN `ms:num option`
       STRIP_ASSUME_TAC))] THEN
   ASP2AUX_CRW_TAC (asp2_eval_rws @ asp2_eval_rws2 @ asp2_call_rws @
@@ -2045,7 +2009,7 @@ let ASP2AUX_STRCMP_CALL_TAC : tactic =
      ASP2AUX_cut_envs_ins 7; ASP2AUX_cut_envs_ins 9; ASP2AUX_cut_envs_ins 11;
      ASP2AUX_cut_envs_ins 13;
      domain_adjust_sets; ALL_DISTINCT; MEM; adjust_var_NEQ; adjust_var_11;
-     ASP2AUX_MustTerminate_limit_NZ; wl_push_env_def; LET_DEF; LET_END_DEF]) THEN
+     MustTerminate_limit_NOT_0; wl_push_env_def; LET_DEF; LET_END_DEF]) THEN
   ASP2AUX_STRCMP_LEMMA_TAC THEN
   ANTS_TAC THENL
    [ASP2AUX_CRW_TAC (asp2_eval_rws @ asp2_eval_rws2 @ asp2_call_rws @
@@ -2128,10 +2092,10 @@ let assign_StringCmp = prove
   STRIP_TAC THEN RVEQ_TAC THEN
   FIRST_ASSUM(ASSUME_TAC o MATCH_MP cut_state_opt_SOME_eq) THEN
   SUBGOAL_THEN `?a1 a2. args = [a1:num; a2]` STRIP_ASSUME_TAC THENL
-   [REWRITE_TAC[GSYM ASP2AUX_LENGTH_EQ_2] THEN ASM_REWRITE_TAC[LENGTH] THEN
+   [REWRITE_TAC[GSYM LBIGAUX_LENGTH_2] THEN ASM_REWRITE_TAC[LENGTH] THEN
     CONV_TAC NUM_REDUCE_CONV; ALL_TAC] THEN
   SUBGOAL_THEN `?w1 w2. ws = [w1:A word_loc; w2]` STRIP_ASSUME_TAC THENL
-   [REWRITE_TAC[GSYM ASP2AUX_LENGTH_EQ_2] THEN
+   [REWRITE_TAC[GSYM LBIGAUX_LENGTH_2] THEN
     FIRST_X_ASSUM(SUBST1_TAC o SYM o check (fun th ->
       rand(concl th) = `LENGTH (ws:(A word_loc)list)`)) THEN
     ASM_REWRITE_TAC[LENGTH] THEN CONV_TAC NUM_REDUCE_CONV; ALL_TAC] THEN
@@ -2366,10 +2330,10 @@ let assign_XorByte = prove
   STRIP_TAC THEN RVEQ_TAC THEN
   FIRST_ASSUM(ASSUME_TAC o MATCH_MP cut_state_opt_SOME_eq) THEN
   SUBGOAL_THEN `?a1 a2. args = [a1:num; a2]` STRIP_ASSUME_TAC THENL
-   [REWRITE_TAC[GSYM ASP2AUX_LENGTH_EQ_2] THEN ASM_REWRITE_TAC[LENGTH] THEN
+   [REWRITE_TAC[GSYM LBIGAUX_LENGTH_2] THEN ASM_REWRITE_TAC[LENGTH] THEN
     CONV_TAC NUM_REDUCE_CONV; ALL_TAC] THEN
   SUBGOAL_THEN `?w1 w2. ws = [w1:A word_loc; w2]` STRIP_ASSUME_TAC THENL
-   [REWRITE_TAC[GSYM ASP2AUX_LENGTH_EQ_2] THEN
+   [REWRITE_TAC[GSYM LBIGAUX_LENGTH_2] THEN
     FIRST_X_ASSUM(SUBST1_TAC o SYM o check (fun th -> rand(concl th) = `LENGTH (ws:(A word_loc)list)`)) THEN
     ASM_REWRITE_TAC[LENGTH] THEN CONV_TAC NUM_REDUCE_CONV; ALL_TAC] THEN
   RVEQ_TAC THEN
@@ -2415,7 +2379,7 @@ let assign_XorByte = prove
     [ASP2AUX_cut_envs_ins 1; ASP2AUX_cut_envs_ins 3; ASP2AUX_cut_envs_ins 5;
      domain_adjust_sets; ALL_DISTINCT; MEM; wl_mem_load_def; adjust_var_NEQ;
      adjust_var_11;
-     ASP2AUX_MustTerminate_limit_NZ; GSYM decode_length_def;
+     MustTerminate_limit_NOT_0; GSYM decode_length_def;
      wl_push_env_def; LET_DEF; LET_END_DEF;
      REWRITE_RULE[ASSUME `dimindex (:A) - data_to_word_config_len_size c < dimindex (:A)`]
        (ISPEC `dimindex (:A) - data_to_word_config_len_size c` word_exp_SmallLsr)]) THEN
@@ -2909,7 +2873,7 @@ let ASP2AUX_append_lower = prove
   REWRITE_TAC[bytes_in_word_def; WORD_ULT; GSYM WORD_MUL; VAL_WORD; GSYM dimword_def] THEN
   SUBGOAL_THEN `64 <= dimword (:A)` ASSUME_TAC THENL
    [REWRITE_TAC[dimword_def] THEN MATCH_MP_TAC LE_TRANS THEN EXISTS_TAC `2 EXP 6` THEN
-    CONJ_TAC THENL [ARITH_TAC; MATCH_MP_TAC ASP2AUX_EXP_LE] THEN
+    CONJ_TAC THENL [ARITH_TAC; MATCH_MP_TAC TWOEXP_MONO2] THEN
     UNDISCH_TAC `good_dimindex (:A)` THEN REWRITE_TAC[good_dimindex_def] THEN ARITH_TAC;
     ALL_TAC] THEN
   FIRST_X_ASSUM(DISJ_CASES_THEN (fun th -> RULE_ASSUM_TAC(REWRITE_RULE[th]) THEN
@@ -3116,7 +3080,7 @@ let evaluate_AppendMainLoop_code_alt = prove
       DISCH_THEN(X_CHOOSE_THEN `m1:A word->A word_loc` (X_CHOOSE_THEN `ww2:A word`
         (X_CHOOSE_THEN `smx:num option` STRIP_ASSUME_TAC)))] THEN
     ASP2AUX_CRW_TAC (asp2_eval_rws @ asp2_eval_rws2 @ asp2_call_rws @
-      [ASP2AUX_bad_fun_idem]) THEN
+      [ASP1AUX_bad_fun_filter]) THEN
     MAP_EVERY EXISTS_TAC [`m1:A word->A word_loc`; `ww2:A word`; `smx:num option`] THEN
     FIRST_ASSUM(ASSUME_TAC o MATCH_MP ASP2AUX_DIV3_SUC) THEN
     REPEAT CONJ_TAC THENL
@@ -3334,7 +3298,7 @@ let evaluate_AppendLenLoop_code = prove
     ALL_TAC] THEN
   ASP2AUX_CRW_TAC (asp2_eval_rws @ asp2_eval_rws2 @ asp2_call_rws @
     [data_to_word_gcProof_word_and_one_eq_0_iff; wl_mem_load_def]) THEN
-  REWRITE_TAC[ASP2AUX_bad_fun_idem] THEN
+  REWRITE_TAC[ASP1AUX_bad_fun_filter] THEN
   REMOVE_THEN "IH" (MP_TAC o SPEC `k + 1`) THEN
   ASP2AUX_SPEC_EVAL_TAC `AppendLenLoop_code c:(A)wl_prog`
     (fun st -> [st; `c:data_to_word_config`; `l1:num`; `l2:num`; `xx:A word`;

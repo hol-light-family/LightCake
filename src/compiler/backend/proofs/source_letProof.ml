@@ -46,7 +46,7 @@ let SLETPAUX_alist_sing = prove
 let SLETPAUX_ENV_RW =
   [sem_env_INFO.ri_accessors; nsAppend_nsEmpty; unchanged_env; alist_to_ns_nil;
    SLETPAUX_alist_sing; SLETPAUX_REC_fupd; build_rec_env_merge;
-   SEVPAUX_sem_env_v_fupd_id];;
+   with_same_v];;
 
 (* one pass over the case-split evaluation facts: normalise, resolve the    *)
 (* equal function applications, substitute                                   *)

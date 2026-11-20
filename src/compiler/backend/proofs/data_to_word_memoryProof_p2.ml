@@ -121,37 +121,6 @@ let v_all_vs_ts_list = prove
      MEM x (v_all_vs y) /\ MEM ts (v_all_ts x) ==> MEM ts (FLAT (MAP v_all_ts y))`,
   REWRITE_TAC[MEM_FLAT; MEM_MAP] THEN MESON_TAC[MP2AUX_v_all_vs_ts_lift]);;
 
-(* MP2AUX: v_inv_ck for each kind of value (HOL4 simp [Once v_inv_ck_cases]) *)
-let MP2AUX_v_inv_ck_Number = prove
- (`!ck conf i (refs:(data_v bvl_ref)spt) x f tf
-    heap:(((A)word_loc,data_to_word_memoryProof_tag#((A)word_loc)list)
-          heap_element)list.
-     v_inv_ck ck conf (data_Number i) refs (x,f,tf,heap) <=>
-     if small_int (:A) i then x = gc_shared_Data (wl_Word (Smallnum i)) else
-       ?ptr. x = Pointer ptr (wl_Word (word 0)) /\
-             heap_lookup ptr heap = SOME (Bignum i)`,
-  REPEAT GEN_TAC THEN GEN_REWRITE_TAC LAND_CONV [v_inv_ck_cases] THEN
-  SIMP[PAIR_EQ] THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN MESON_TAC[]);;
-
-let MP2AUX_v_inv_ck_Word64 = prove
- (`!ck conf w (refs:(data_v bvl_ref)spt) x f tf
-    heap:(((A)word_loc,data_to_word_memoryProof_tag#((A)word_loc)list)
-          heap_element)list.
-     v_inv_ck ck conf (data_Word64 w) refs (x,f,tf,heap) <=>
-     ?ptr. x = Pointer ptr (wl_Word (word 0)) /\
-           heap_lookup ptr heap = SOME (Word64Rep (:A) w)`,
-  REPEAT GEN_TAC THEN GEN_REWRITE_TAC LAND_CONV [v_inv_ck_cases] THEN
-  SIMP[PAIR_EQ] THEN MESON_TAC[]);;
-
-let MP2AUX_v_inv_ck_CodePtr = prove
- (`!ck conf n (refs:(data_v bvl_ref)spt) x f tf
-    heap:(((A)word_loc,data_to_word_memoryProof_tag#((A)word_loc)list)
-          heap_element)list.
-     v_inv_ck ck conf (data_CodePtr n) refs (x,f,tf,heap) <=>
-     x = gc_shared_Data (wl_Loc n 0)`,
-  REPEAT GEN_TAC THEN GEN_REWRITE_TAC LAND_CONV [v_inv_ck_cases] THEN
-  SIMP[PAIR_EQ] THEN MESON_TAC[]);;
-
 let MP2AUX_v_inv_ck_RefPtr = prove
  (`!ck conf b n (refs:(data_v bvl_ref)spt) x f tf
     heap:(((A)word_loc,data_to_word_memoryProof_tag#((A)word_loc)list)
@@ -176,28 +145,9 @@ let MP2AUX_v_inv_ck_RefPtr = prove
   REPEAT GEN_TAC THEN GEN_REWRITE_TAC LAND_CONV [v_inv_ck_cases] THEN
   SIMP[PAIR_EQ] THEN MESON_TAC[]);;
 
-let MP2AUX_v_inv_ck_Block = prove
- (`!ck conf ts n vs (refs:(data_v bvl_ref)spt) x f tf
-    heap:(((A)word_loc,data_to_word_memoryProof_tag#((A)word_loc)list)
-          heap_element)list.
-     v_inv_ck ck conf (data_Block ts n vs) refs (x,f,tf,heap) <=>
-     if vs = []
-     then x = gc_shared_Data (wl_Word (BlockNil n)) /\
-          n < dimword(:A) DIV 16 /\
-          ts = 0
-     else
-       ?ptr xs.
-         (~(ck = 0) ==>
-          ALL2 (\v x. v_inv_ck (ck - 1) conf v refs (x,f,tf,heap)) vs xs) /\
-         FLOOKUP tf ts = SOME ptr /\
-         x = Pointer ptr (wl_Word (ptr_bits conf n (LENGTH xs))) /\
-         heap_lookup ptr heap = SOME (BlockRep n xs)`,
-  REPEAT GEN_TAC THEN GEN_REWRITE_TAC LAND_CONV [v_inv_ck_cases] THEN
-  SIMP[PAIR_EQ] THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN MESON_TAC[]);;
-
 let MP2AUX_v_inv_ck_thms = end_itlist CONJ
-  [MP2AUX_v_inv_ck_Number; MP2AUX_v_inv_ck_Word64; MP2AUX_v_inv_ck_CodePtr;
-   MP2AUX_v_inv_ck_RefPtr; MP2AUX_v_inv_ck_Block];;
+  [MP1AUX_v_inv_ck_Number; MP1AUX_v_inv_ck_Word64; MP1AUX_v_inv_ck_CodePtr;
+   MP2AUX_v_inv_ck_RefPtr; MP1AUX_v_inv_ck_Block];;
 
 (* MP2AUX: the heap elements that v_inv_ck reads are not RefBlocks, and   *)
 (* only Block values read BlockRep cells                                  *)
@@ -630,13 +580,6 @@ let MP2AUX_alloc_lemma = prove
                    (heap_lookup a (heap:((A,data_to_word_memoryProof_tag#B)heap_element)list))}` THEN
     REWRITE_TAC[EXTENSION; IN_INSERT; IN_ELIM_THM] THEN MESON_TAC[]]);;
 
-(* MP2AUX: Bytes is a data element *)
-let MP2AUX_Bytes_DataElement = prove
- (`!be fl bs (ws:(A word)list).
-     ?l d. Bytes be fl bs ws = DataElement [] l d`,
-  REWRITE_TAC[data_to_word_memoryProof_Bytes_def; LET_DEF; LET_END_DEF] THEN
-  MESON_TAC[]);;
-
 (* MP2AUX: bc_ref_inv of a ref is kept by a new state that keeps the       *)
 (* ref, its address, its heap cell and the v_inv of its contents          *)
 let MP2AUX_bc_ref_inv_transfer = prove
@@ -681,7 +624,7 @@ let MP2AUX_bc_ref_inv_transfer = prove
       MATCH_MP_TAC EVERY2_IMP_EVERY2 THEN REWRITE_TAC[] THEN REPEAT STRIP_TAC THEN
       FIRST_X_ASSUM MATCH_MP_TAC THEN EXISTS_TAC `bvl_ValueArray a:data_v bvl_ref` THEN
       ASM_REWRITE_TAC[find_ref_def]];
-    REWRITE_TAC[LET_DEF; LET_END_DEF] THEN ASM_MESON_TAC[MP2AUX_Bytes_DataElement];
+    REWRITE_TAC[LET_DEF; LET_END_DEF] THEN ASM_MESON_TAC[MP1AUX_Bytes_nil];
     STRIP_TAC THEN EXISTS_TAC `z:(A word_loc)heap_address` THEN REPEAT CONJ_TAC THENL
      [ASM_MESON_TAC[ThunkBlock_def];
       ASM_MESON_TAC[];

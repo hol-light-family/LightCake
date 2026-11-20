@@ -919,10 +919,6 @@ let SEVPAUX_ALL2_MAP_Char = prove
           (MAP (\c. Litv (Char c)) l)`,
   LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[MAP; ALL2; v_rel_l_simps]);;
 
-let SEVPAUX_ALL2_EL = prove
- (`ALL2 (R:A->B->bool) l1 l2 /\ n < LENGTH l1 ==> R (EL n l1) (EL n l2)`,
-  REWRITE_TAC[LIST_REL_EL_EQN] THEN MESON_TAC[]);;
-
 (* for the assumptions ALL2 R l1 l2: LENGTH l2 = LENGTH l1 *)
 let SEVPAUX_LEN_TAC : tactic = fun (asl,w as gl) ->
   let ths = mapfilter (fun (_,th) -> let c = concl th in
@@ -987,7 +983,7 @@ let SEVPAUX_REL_FIN_TAC : tactic =
                sub_exn_v_def; div_exn_v_def; chr_exn_v_def; ALL2; LIST_REL_APPEND_EQ;
                sv_rel_def; injectivity "v"; UNWIND_THM1; UNWIND_THM2; nat_to_v_def;
                LIST_REL_REPLICATE_same; v_rel_list_to_v; SEVPAUX_ALL2_MAP_Char;
-               SEVPAUX_ALL2_EL];;
+               LISTAUX_ALL2_EL];;
 
 let SEVPAUX_DAS_GOAL_TAC : tactic =
   REWRITE_TAC[do_app_def; store_alloc_def; LET_DEF; LET_END_DEF; I_THM] THEN
@@ -1060,11 +1056,6 @@ let SEVPAUX_SUBST_TAC : tactic =
        not (free_in (rhs c) (lhs c)) then SUBST_ALL_TAC (SYM th)
     else failwith ""));;
 
-(* concrete_v by constructor, with concrete_v_list as ALL concrete_v *)
-let SEVPAUX_concrete_v_list = prove
- (`!vs. concrete_v_list vs <=> ALL concrete_v vs`,
-  LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[concrete_v_def; ALL]);;
-
 let SEVPAUX_concrete_v_thm = prove
  (`(!l. concrete_v (Litv l) <=> T) /\
    (!c vs. concrete_v (Conv c vs) <=> ALL concrete_v vs) /\
@@ -1075,7 +1066,7 @@ let SEVPAUX_concrete_v_thm = prove
    (!e i. concrete_v (Env e i) <=> F)`,
   REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
   GEN_REWRITE_TAC LAND_CONV [CONJUNCT1 concrete_v_def] THEN CASE_REWRITE_TAC[] THEN
-  REWRITE_TAC[SEVPAUX_concrete_v_list]);;
+  REWRITE_TAC[concrete_v_list]);;
 
 let concrete_v_rel = prove
  (`!x y. source_evalProof_v_rel es x y ==> concrete_v x ==> y = x`,
@@ -1520,23 +1511,20 @@ let env_rel_imp_c = prove
   SIMP_TAC[source_evalProof_env_rel_def]);;
 
 (* ---- helper lemmas for eval_simulation ---- *)
-let SEVPAUX_sem_env_v_fupd_id = prove
- (`!e:v sem_env. sem_env_v_fupd (K (sem_env_v e)) e = e`,
-  REWRITE_TAC[sem_env_component_equality; sem_env_INFO.ri_accfupds; K_THM]);;
 
 let SEVPAUX_env_rel_bind = prove
  (`source_evalProof_env_rel R env env' /\ R x y ==>
    source_evalProof_env_rel R (sem_env_v_fupd (K (nsBind n x (sem_env_v env))) env)
      (sem_env_v_fupd (K (nsBind n y (sem_env_v env'))) env')`,
   STRIP_TAC THEN MATCH_MP_TAC env_rel_add_nsBind THEN
-  ASM_REWRITE_TAC[SEVPAUX_sem_env_v_fupd_id]);;
+  ASM_REWRITE_TAC[with_same_v]);;
 
 let SEVPAUX_env_rel_optbind = prove
  (`source_evalProof_env_rel R env env' /\ R x y ==>
    source_evalProof_env_rel R (sem_env_v_fupd (K (nsOptBind xo x (sem_env_v env))) env)
      (sem_env_v_fupd (K (nsOptBind xo y (sem_env_v env'))) env')`,
   CASES_ON `xo:mlstring option` THEN REWRITE_TAC[nsOptBind_def] THEN CASE_REWRITE_TAC[] THEN
-  REWRITE_TAC[SEVPAUX_sem_env_v_fupd_id] THEN MESON_TAC[SEVPAUX_env_rel_bind]);;
+  REWRITE_TAC[with_same_v] THEN MESON_TAC[SEVPAUX_env_rel_bind]);;
 
 let SEVPAUX_env_rel_bindlist = prove
  (`source_evalProof_env_rel R env env' /\ ALL2 ((=) ### R) xs ys ==>
@@ -1544,7 +1532,7 @@ let SEVPAUX_env_rel_bindlist = prove
      (sem_env_v_fupd (K (nsAppend (alist_to_ns xs) (sem_env_v env))) env)
      (sem_env_v_fupd (K (nsAppend (alist_to_ns ys) (sem_env_v env'))) env')`,
   REWRITE_TAC[nsAppend_to_nsBindList] THEN STRIP_TAC THEN
-  MATCH_MP_TAC env_rel_add_nsBindList THEN ASM_REWRITE_TAC[SEVPAUX_sem_env_v_fupd_id]);;
+  MATCH_MP_TAC env_rel_add_nsBindList THEN ASM_REWRITE_TAC[with_same_v]);;
 
 let SEVPAUX_ALL2_recclosures = prove
  (CASE_TERM
@@ -2949,7 +2937,7 @@ let v_rel_concrete_v = prove
   MATCH_MP_TAC concrete_v_ind THEN REPEAT CONJ_TAC THENL
    [GEN_TAC THEN CASES_ON `v:v` THEN
     REWRITE_TAC[distinctness "v"; injectivity "v"; SEVPAUX_concrete_v_thm; v_rel_l_simps] THEN
-    REWRITE_TAC[GSYM SEVPAUX_concrete_v_list] THEN MESON_TAC[];
+    REWRITE_TAC[GSYM concrete_v_list] THEN MESON_TAC[];
     REWRITE_TAC[ALL2];
     REWRITE_TAC[concrete_v_def; ALL2] THEN MESON_TAC[]]);;
 
@@ -3141,10 +3129,6 @@ let SEVPAUX_clock_fupd_K = prove
   REWRITE_TAC[state_component_equality; state_INFO.ri_accfupds; K_THM] THEN
   CONV_TAC(DEPTH_CONV BETA_CONV) THEN ASM_ARITH_TAC);;
 
-let SEVPAUX_clock_fupd_id = prove
- (`!(s:(FFI)state). state_clock_fupd (K (state_clock s)) s = s`,
-  REWRITE_TAC[state_component_equality; state_INFO.ri_accfupds; K_THM]);;
-
 (* local: the common prefix property when the second run has less clock *)
 let SEVPAUX_clock_record_common_prefix = prove
  (`!(s:(FFI)state) env decs s' res k s'' res'.
@@ -3199,7 +3183,7 @@ let evaluate_decs_clock_record_common_prefix = prove
     MAP_EVERY EXISTS_TAC [`state_clock_fupd (K k) (s:(FFI)state)`; `env:v sem_env`;
                           `decs:dec list`; `res':(v sem_env,v)result`;
                           `state_clock (s:(FFI)state)`; `res:(v sem_env,v)result`] THEN
-    ASM_REWRITE_TAC[state_INFO.ri_fupdfupds; K_o_THM; SEVPAUX_clock_fupd_id;
+    ASM_REWRITE_TAC[state_INFO.ri_fupdfupds; K_o_THM; with_same_clock;
                     state_INFO.ri_accfupds; K_THM] THEN
     ASM_ARITH_TAC]);;
 

@@ -109,12 +109,6 @@ let W2WPAUX_X_ASM_TAC tm (ttac:thm_tactic) : tactic =
   FIRST_X_ASSUM(fun th -> if can (find_term ((=) tm)) (concl th) then ttac th
                           else failwith "W2WPAUX_X_ASM_TAC");;
 
-let W2WPAUX_evaluate_copy_prop = prove
- (`!(e:(A)wl_prog) (s:(A,C,FFI)wl_state).
-     ~(FST (wl_evaluate (e,s)) = SOME wl_Error)
-     ==> wl_evaluate (copy_prop e,s) = wl_evaluate (e,s)`,
-  MESON_TAC[evaluate_copy_prop]);;
-
 let W2WPAUX_wser_locals = prove
  (`(word_state_eq_rel (wl_state_locals_fupd (K x) (s:(A,C,FFI)wl_state)) t <=>
     word_state_eq_rel s t) /\
@@ -262,7 +256,7 @@ let compile_single_lem = prove
                   (res, wl_state_locals_fupd (K t1) rcst)` ASSUME_TAC THENL
      [MATCH_MP_TAC word_common_subexp_elim_correct THEN ASM_REWRITE_TAC[];
       ALL_TAC] THEN
-    ASM_SIMP_TAC[W2WPAUX_evaluate_copy_prop; FST];
+    ASM_SIMP_TAC[evaluate_copy_prop; FST];
     ALL_TAC] THEN
   (* second remove_dead *)
   MP_TAC(ISPECL [`p6:(A)wl_prog`; `wl_state_permute_fupd (K perm1) (st:(A,C,FFI)wl_state)`;
@@ -880,12 +874,6 @@ let W2WPAUX_push_env_perm = prove
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN SIMP[] THEN
   REWRITE_TAC[ARITH_RULE `~(n + 1 = 0) /\ (n + 1) - 1 = n`; ETA_AX] THEN SIMP[]);;
 
-let W2WPAUX_dec_clock_perm = prove
- (`!(s:(A,C,FFI)wl_state) p.
-     wl_dec_clock (wl_state_permute_fupd (K p) s) =
-     wl_state_permute_fupd (K p) (wl_dec_clock s)`,
-  REWRITE_TAC[wl_dec_clock_def] THEN SIMP[]);;
-
 (* the body of a call: the compiled body prog' runs in the second state     *)
 (* like the source body prog in the first one (induction hypothesis on     *)
 (* prog', then compile_single_lem, then permute_swap_lemma)                *)
@@ -1062,7 +1050,7 @@ let W2WPAUX_csc_Call_tail = prove
     ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_THEN `perm:num->num->num` (LABEL_TAC "BODY")) THEN
   EXISTS_TAC `perm:num->num->num` THEN REMOVE_THEN "BODY" MP_TAC THEN
-  SIMP[W2WPAUX_dec_clock_perm] THEN
+  SIMP[IL2AUX_dec_clock_permute] THEN
   W2WPAUX_NAME_PAIR_TAC
     `wl_evaluate (prog:(A)wl_prog, wl_state_permute_fupd (K perm)
        (wl_call_env args1 ss (wl_dec_clock (st:(A,C,FFI)wl_state))))`
@@ -1078,7 +1066,7 @@ let W2WPAUX_push_env_dec_perm = prove
      wl_push_env envs h (wl_dec_clock (wl_state_permute_fupd
        (K (\n. if n = 0 then wl_state_permute st 0 else p (n - 1))) st)) =
      wl_state_permute_fupd (K p) (wl_push_env envs h (wl_dec_clock st))`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[W2WPAUX_dec_clock_perm] THEN
+  REPEAT GEN_TAC THEN REWRITE_TAC[IL2AUX_dec_clock_permute] THEN
   MP_TAC(ISPECL [`envs:((A)word_loc)spt#((A)word_loc)spt`; `h:(num#(A)wl_prog#num#num)option`;
                  `wl_dec_clock (st:(A,C,FFI)wl_state)`; `p:num->num->num`]
                 W2WPAUX_push_env_perm) THEN
@@ -1882,11 +1870,11 @@ let W2WPAUX_NI_CALL_TAC : tactic =
   DISJ_CASES_THEN2 SUBST_ALL_TAC
    (X_CHOOSE_THEN `hv:num#(A)wl_prog#num#num` SUBST_ALL_TAC)
    (ISPEC `handler:(num#(A)wl_prog#num#num)option` (cases "option")) THEN
-  TRY(MP_TAC(ISPEC `rv:num list#cutsets#(A)wl_prog#num#num` WPROOF1AUX_tuple5) THEN
+  TRY(MP_TAC(ISPEC `rv:num list#cutsets#(A)wl_prog#num#num` BASICAUX_TUPLE5) THEN
       DISCH_THEN(X_CHOOSE_THEN `n:num list` (X_CHOOSE_THEN `names:cutsets`
         (X_CHOOSE_THEN `rh:(A)wl_prog` (X_CHOOSE_THEN `l1:num`
           (X_CHOOSE_THEN `l2:num` SUBST_ALL_TAC)))))) THEN
-  TRY(MP_TAC(ISPEC `hv:num#(A)wl_prog#num#num` WPROOF1AUX_tuple4) THEN
+  TRY(MP_TAC(ISPEC `hv:num#(A)wl_prog#num#num` BASICAUX_TUPLE4) THEN
       DISCH_THEN(X_CHOOSE_THEN `hn:num` (X_CHOOSE_THEN `hp:(A)wl_prog`
         (X_CHOOSE_THEN `hl1:num` (X_CHOOSE_THEN `hl2:num` SUBST_ALL_TAC))))) THEN
   STRIP_TAC THEN

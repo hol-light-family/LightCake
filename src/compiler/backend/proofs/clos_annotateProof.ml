@@ -13,10 +13,6 @@ needs "compiler/backend/semantics/backendProps.ml";;
 
 type_invention_error := true;;
 
-(* a local helper for the tactics: a term is an application of a constant *)
-let CLOSP1AUX_ann_is_app name tm =
-  try fst(dest_const(fst(strip_comb tm))) = name with Failure _ -> false;;
-
 (* alternative definition of free_vars (fv) function *)
 
 (* HOL4: alt_fv_def *)
@@ -574,7 +570,7 @@ let do_install_thm = prove
      SUBGOAL_THEN `~(LENGTH (ys:clos_v list) = 2)` ASSUME_TAC THENL
       [ASM_MESON_TAC[]; ALL_TAC] THEN
      REPEAT(FIRST_X_ASSUM(MP_TAC o check (fun th -> is_eq (concl th) &&
-              CLOSP1AUX_ann_is_app "clos_do_install" (lhs (concl th))))) THEN
+              CLOSPROPSAUX_is_app "clos_do_install" (lhs (concl th))))) THEN
      ASM_SIMP_TAC[CLOSP1AUX_ann_do_install_shape; PAIR_EQ] THEN
      REPEAT STRIP_TAC THEN RVEQ_TAC THEN ASM_REWRITE_TAC[result_rel_def; exc_rel_def]] THEN
    UNDISCH_TAC `ALL2 clos_annotateProof_v_rel xs ys` THEN
@@ -583,9 +579,9 @@ let do_install_thm = prove
    STRIP_TAC THEN RVEQ_TAC THEN REWRITE_TAC[LIST_REL_CONS1; LIST_REL_NIL] THEN
    STRIP_TAC THEN RVEQ_TAC THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o REWRITE_RULE[clos_annotateProof_state_rel_def] o
-               check (CLOSP1AUX_ann_is_app "clos_annotateProof_state_rel" o concl)) THEN
+               check (CLOSPROPSAUX_is_app "clos_annotateProof_state_rel" o concl)) THEN
    REPEAT(FIRST_X_ASSUM(MP_TAC o check (fun th -> is_eq (concl th) &&
-            CLOSP1AUX_ann_is_app "clos_do_install" (lhs (concl th))))) THEN
+            CLOSPROPSAUX_is_app "clos_do_install" (lhs (concl th))))) THEN
    REWRITE_TAC[clos_do_install_def] THEN CASE_REWRITE_TAC[] THEN
    REWRITE_TAC[SYM (MATCH_MP clos_annotateProof_v_to_bytes
                       (ASSUME `clos_annotateProof_v_rel h h''`));
@@ -784,13 +780,6 @@ let CLOSP1AUX_ann_not_thunk = prove
                   clos_bad_thunk_update_def] THEN
   MESON_TAC[]);;
 
-let CLOSP1AUX_ann_dest_thunk_NONE = prove
- (CASE_TERM `!d (x:A option).
-     ~(d = clos_NotThunk) ==>
-     (match d with clos_BadRef -> NONE | clos_NotThunk -> x | clos_IsThunk m v -> NONE) =
-     NONE`,
-  GEN_TAC THEN CASES_ON `d:clos_dest_thunk_ret` THEN CASE_REWRITE_TAC[]);;
-
 (* HOL4: rel_update_thunk [local] *)
 let clos_annotateProof_rel_update_thunk = prove
  (`clos_annotateProof_state_rel (s1:(C,FFI)clos_state) s2 /\
@@ -841,7 +830,7 @@ let clos_annotateProof_rel_update_thunk = prove
     REWRITE_TAC[MATCH_MP (ISPECL [`clos_dest_thunk [x] (clos_state_refs (s1:(C,FFI)clos_state))`;
                                   `store_thunk ptr (clos_Thunk Evaluated x)
                                      (clos_state_refs (s1:(C,FFI)clos_state))`]
-                                 CLOSP1AUX_ann_dest_thunk_NONE)
+                                 CLOSSEMAUX_dest_thunk_NONE)
                           (ASSUME `~(clos_dest_thunk [x]
                                        (clos_state_refs (s1:(C,FFI)clos_state)) =
                                      clos_NotThunk)`);
@@ -965,13 +954,13 @@ let CLOSP1AUX_ann_var = prove
  (el 2 CLOSP1AUX_ann_cases,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   FIRST_X_ASSUM(MP_TAC o check (fun th -> is_eq (concl th) &&
-                  CLOSP1AUX_ann_is_app "clos_evaluate" (lhs (concl th)))) THEN
+                  CLOSPROPSAUX_is_app "clos_evaluate" (lhs (concl th)))) THEN
   ONCE_REWRITE_TAC[clos_evaluate_def] THEN CLOSP1AUX_ANN_TGT_TAC THEN
   ONCE_REWRITE_TAC[clos_evaluate_def] THEN
   COND_CASES_TAC THEN REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN RVEQ_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[]) THEN TRY(FIRST_ASSUM CONTR_TAC) THEN
   FIRST_X_ASSUM(MP_TAC o SPEC `n:num` o CONV_RULE(DEPTH_CONV BETA_CONV) o
-                REWRITE_RULE[SUBSET; IN] o check (CLOSP1AUX_ann_is_app "SUBSET" o concl)) THEN
+                REWRITE_RULE[SUBSET; IN] o check (CLOSPROPSAUX_is_app "SUBSET" o concl)) THEN
   REWRITE_TAC[alt_fv1_thm; alt_fv1_intro] THEN
   REWRITE_TAC[CLOSP1AUX_ann_env_ok_def; clos_annotate_get_var_def; zlookup_def] THEN
   STRIP_TAC THENL
@@ -986,18 +975,10 @@ let CLOSP1AUX_ann_is_PQ name th =
   let c = snd(strip_forall(concl th)) in
   is_imp c && is_conj (lhand c) &&
   (let a = lhand (lhand c) in
-   is_eq a && CLOSP1AUX_ann_is_app name (lhs a) && is_pair (rhs a) &&
+   is_eq a && CLOSPROPSAUX_is_app name (lhs a) && is_pair (rhs a) &&
    is_var (lhand (rhs a)));;
 let CLOSP1AUX_ann_is_P = CLOSP1AUX_ann_is_PQ "clos_evaluate";;
 let CLOSP1AUX_ann_is_Q = CLOSP1AUX_ann_is_PQ "evaluate_app";;
-
-let CLOSP1AUX_ann_curry_top th =
-  try let vs,bod = strip_forall (concl th) in
-      let ant,con = dest_imp bod in
-      let ants = conjuncts ant in
-      let th1 = MP (SPECL vs th) (end_itlist CONJ (map ASSUME ants)) in
-      GENL vs (itlist DISCH ants th1)
-  with Failure _ -> th;;
 
 (* resolve the conditional induction hypotheses with the assumptions *)
 let CLOSP1AUX_ANN_COND_IH_TAC : tactic = fun (asl,w as gl) ->
@@ -1025,7 +1006,7 @@ let CLOSP1AUX_ANN_COND_IH_TAC : tactic = fun (asl,w as gl) ->
     else if depth = 0 then [] else
     let rs = mapfilter (fun a -> MATCH_MP th a) asms @ (try try_prove th with Failure _ -> []) in
     flat (map (resolve (depth-1)) rs) in
-  let res = flat (map (fun th -> resolve 4 (CLOSP1AUX_ann_curry_top th)) cihs) in
+  let res = flat (map (fun th -> resolve 4 (CLOSPROPSAUX_curry_top th)) cihs) in
   let res = filter (fun th -> not (exists (fun a -> aconv (concl a) (concl th)) asms)) res in
   MAP_EVERY ASSUME_TAC res gl;;
 
@@ -1035,7 +1016,7 @@ let CLOSP1AUX_ann_counter = ref 0;;
 let CLOSP1AUX_ann_last = ref `T`;;
 let rec CLOSP1AUX_ann_free_evals tm =
   if is_abs tm then [] else
-  (if is_comb tm && CLOSP1AUX_ann_is_app "clos_evaluate" tm then [tm] else []) @
+  (if is_comb tm && CLOSPROPSAUX_is_app "clos_evaluate" tm then [tm] else []) @
   (if is_comb tm then CLOSP1AUX_ann_free_evals (rator tm) @ CLOSP1AUX_ann_free_evals (rand tm)
    else []);;
 let CLOSP1AUX_ANN_NAME_TAC : tactic = fun (asl,w as gl) ->
@@ -1086,11 +1067,11 @@ let CLOSP1AUX_ANN_IH_TAC (dtac:tactic) : tactic = fun (asl,w as gl) ->
   let src = lhs (concl ev) in
   let x = fst (dest_pair (rand src)) in
   let ss = snd (dest_pair (rhs (concl ev))) in
-  let tgt = find_term (fun t -> is_comb t && CLOSP1AUX_ann_is_app "clos_evaluate" t &&
+  let tgt = find_term (fun t -> is_comb t && CLOSPROPSAUX_is_app "clos_evaluate" t &&
               (let a = fst (dest_pair (rand t)) in
-               CLOSP1AUX_ann_is_app "clos_annotate_shift" a &&
+               CLOSPROPSAUX_is_app "clos_annotate_shift" a &&
                (let f = hd (snd (strip_comb a)) in
-                CLOSP1AUX_ann_is_app "FST" f && rand (rand f) = x))) (rand w) in
+                CLOSPROPSAUX_is_app "FST" f && rand (rand f) = x))) (rand w) in
   let a,bc = dest_pair (rand tgt) in
   let e',t = dest_pair bc in
   let [_;mm;ll;ii] = snd (strip_comb a) in
@@ -1111,9 +1092,9 @@ let CLOSP1AUX_ANN_SPLIT_TAC : tactic = fun (asl,w as gl) ->
   let r = !CLOSP1AUX_ann_last in
   (CASES_ON r THEN
    FIRST_X_ASSUM(fun th -> let c = concl th in
-     if CLOSP1AUX_ann_is_app "result_rel" c && is_var (rand c) &&
-        (CLOSP1AUX_ann_is_app "Rval" (rand (rator c)) ||
-         CLOSP1AUX_ann_is_app "Rerr" (rand (rator c)))
+     if CLOSPROPSAUX_is_app "result_rel" c && is_var (rand c) &&
+        (CLOSPROPSAUX_is_app "Rval" (rand (rator c)) ||
+         CLOSPROPSAUX_is_app "Rerr" (rand (rator c)))
      then MP_TAC th else NO_TAC) THEN
    REWRITE_TAC[result_rel_Rval; result_rel_Rerr1] THEN
    DISCH_THEN(CHOOSE_THEN MP_TAC) THEN
@@ -1140,11 +1121,11 @@ let CLOSP1AUX_ANN_SUBSET_TAC : tactic =
   REWRITE_TAC[SUBSET; IN] THEN CONV_TAC(DEPTH_CONV BETA_CONV) THEN
   X_GEN_TAC `nn:num` THEN DISCH_TAC THEN
   FIRST_ASSUM(MATCH_MP_TAC o CONV_RULE(DEPTH_CONV BETA_CONV) o REWRITE_RULE[SUBSET; IN] o
-              check (CLOSP1AUX_ann_is_app "SUBSET" o concl)) THEN
+              check (CLOSPROPSAUX_is_app "SUBSET" o concl)) THEN
   REWRITE_TAC[alt_fv] THEN ASM_REWRITE_TAC[];;
 
 let CLOSP1AUX_ANN_EVERY_FN_TAC : tactic =
-  REPEAT(FIRST_X_ASSUM(MP_TAC o check (CLOSP1AUX_ann_is_app "every_Fn_vs_NONE" o concl))) THEN
+  REPEAT(FIRST_X_ASSUM(MP_TAC o check (CLOSPROPSAUX_is_app "every_Fn_vs_NONE" o concl))) THEN
   REWRITE_TAC[every_Fn_vs_NONE_def] THEN SIMP_TAC[];;
 
 (* the antecedents of an induction hypothesis *)
@@ -1164,7 +1145,7 @@ let CLOSP1AUX_ANN_STEP_TAC (dtac:tactic) : tactic =
 (* unfold the source evaluation and normalise the target *)
 let CLOSP1AUX_ANN_UNFOLD_TAC : tactic =
   FIRST_X_ASSUM(MP_TAC o check (fun th -> is_eq (concl th) &&
-                  CLOSP1AUX_ann_is_app "clos_evaluate" (lhs (concl th)))) THEN
+                  CLOSPROPSAUX_is_app "clos_evaluate" (lhs (concl th)))) THEN
   ONCE_REWRITE_TAC[clos_evaluate_def] THEN CLOSP1AUX_ANN_TGT_TAC;;
 
 (* a local helper: shift of the alt_free of a CONS *)
@@ -1182,16 +1163,16 @@ let CLOSP1AUX_ann_shift_append = prove
 let CLOSP1AUX_ANN_SING_TAC : tactic =
   REPEAT(FIRST_X_ASSUM(fun th ->
     let c = concl th in
-    if is_eq c && CLOSP1AUX_ann_is_app "clos_evaluate" (lhs c) &&
+    if is_eq c && CLOSPROPSAUX_is_app "clos_evaluate" (lhs c) &&
        (let r = fst(dest_pair(rhs c)) in
-        CLOSP1AUX_ann_is_app "Rval" r && is_var (rand r))
+        CLOSPROPSAUX_is_app "Rval" r && is_var (rand r))
     then (STRIP_ASSUME_TAC(MATCH_MP clos_evaluate_SING th) THEN ASSUME_TAC th)
     else NO_TAC) THEN
     FIRST_X_ASSUM(fun th -> if is_eq (concl th) && is_var (lhs (concl th)) &&
                               is_cons (rhs (concl th)) then SUBST_ALL_TAC th else NO_TAC)) THEN
   REPEAT(FIRST_X_ASSUM(fun th ->
     let c = concl th in
-    if CLOSP1AUX_ann_is_app "ALL2" c &&
+    if CLOSPROPSAUX_is_app "ALL2" c &&
        ((is_cons (lhand c) && (is_var (rand c) || is_cons (rand c))) ||
         (is_var (lhand c) && is_cons (rand c)))
     then MP_TAC th THEN REWRITE_TAC[LIST_REL_CONS1; LIST_REL_CONS2; LIST_REL_NIL; ALL2] THEN
@@ -1232,7 +1213,7 @@ let CLOSP1AUX_ann_cons = prove
   REPEAT GEN_TAC THEN DISCH_THEN(REPEAT_TCL CONJUNCTS_THEN ASSUME_TAC) THEN
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   FIRST_X_ASSUM(MP_TAC o check (fun th -> is_eq (concl th) &&
-                 CLOSP1AUX_ann_is_app "clos_evaluate" (lhs (concl th)))) THEN
+                 CLOSPROPSAUX_is_app "clos_evaluate" (lhs (concl th)))) THEN
   ONCE_REWRITE_TAC[clos_evaluate_def] THEN
   REWRITE_TAC[CLOSP1AUX_ann_alt_free_FST; CLOSP1AUX_ann_shift_append] THEN
   GEN_REWRITE_TAC (RAND_CONV o ONCE_DEPTH_CONV) [clos_evaluate_CONS] THEN
@@ -1279,7 +1260,7 @@ let CLOSP1AUX_ann_let = prove
       COND_CASES_TAC THEN REWRITE_TAC[CLOSP1AUX_ann_shift_thm; HD_FST_alt_free] THEN
       ONCE_REWRITE_TAC[clos_evaluate_def] THEN REWRITE_TAC[CLOSP1AUX_ann_HD_shift] THENL
        [FIRST_X_ASSUM(CONJUNCTS_THEN ASSUME_TAC o check (fun th -> is_conj (concl th) &&
-          CLOSP1AUX_ann_is_app "no_overlap" (lhand (concl th)))); ALL_TAC]) THENL
+          CLOSPROPSAUX_is_app "no_overlap" (lhand (concl th)))); ALL_TAC]) THENL
   [(* pure bindings: dummies *)
    REWRITE_TAC[evaluate_shift_REPLICATE_const_0; LENGTH_REPLICATE] THEN CASE_REWRITE_TAC[] THEN
     CLOSP1AUX_ANN_NAME_TAC THEN CLOSP1AUX_ANN_NOT_TE_TAC THEN
@@ -1304,7 +1285,7 @@ let CLOSP1AUX_ann_let = prove
     MATCH_MP_TAC env_ok_EXTEND_IGNORE THEN
     ASM_SIMP_TAC[LENGTH_REPLICATE] THEN
     FIRST_ASSUM(MATCH_MP_TAC o CONV_RULE(DEPTH_CONV BETA_CONV) o REWRITE_RULE[SUBSET; IN] o
-                check (CLOSP1AUX_ann_is_app "SUBSET" o concl)) THEN
+                check (CLOSPROPSAUX_is_app "SUBSET" o concl)) THEN
     ASM_REWRITE_TAC[alt_fv] THEN
     SUBGOAL_THEN `(nn - LENGTH (xs:clos_exp list)) + LENGTH xs = nn` SUBST1_TAC THENL
      [MATCH_MP_TAC SUB_ADD THEN ASM_SIMP_TAC[]; ASM_REWRITE_TAC[]];
@@ -1313,11 +1294,11 @@ let CLOSP1AUX_ann_let = prove
     DISCH_TAC THEN CLOSP1AUX_ANN_COND_IH_TAC THEN
     FIRST_ASSUM(fun ih -> if CLOSP1AUX_ann_is_P ih then MATCH_MP_TAC ih else NO_TAC) THEN
     FIRST_ASSUM(fun th -> if is_eq (concl th) &&
-                            CLOSP1AUX_ann_is_app "clos_evaluate" (lhs (concl th)) &&
+                            CLOSPROPSAUX_is_app "clos_evaluate" (lhs (concl th)) &&
                              fst (dest_pair (rand (lhs (concl th)))) = `xs:clos_exp list`
                           then ASSUME_TAC (MATCH_MP clos_evaluate_IMP_LENGTH th) else NO_TAC) THEN
     FIRST_ASSUM(ASSUME_TAC o MATCH_MP LIST_REL_LENGTH o
-                check (fun th -> CLOSP1AUX_ann_is_app "ALL2" (concl th))) THEN
+                check (fun th -> CLOSPROPSAUX_is_app "ALL2" (concl th))) THEN
     REWRITE_TAC[LENGTH_FST_alt_free] THEN
     REPEAT CONJ_TAC THEN TRY(FIRST_ASSUM ACCEPT_TAC) THEN
     TRY(CLOSP1AUX_ANN_EVERY_FN_TAC THEN NO_TAC) THEN
@@ -1326,7 +1307,7 @@ let CLOSP1AUX_ann_let = prove
     X_GEN_TAC `nn:num` THEN DISCH_TAC THEN
     MATCH_MP_TAC env_ok_EXTEND THEN ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
     FIRST_ASSUM(MATCH_MP_TAC o CONV_RULE(DEPTH_CONV BETA_CONV) o REWRITE_RULE[SUBSET; IN] o
-                check (CLOSP1AUX_ann_is_app "SUBSET" o concl)) THEN
+                check (CLOSPROPSAUX_is_app "SUBSET" o concl)) THEN
     ASM_REWRITE_TAC[alt_fv] THEN DISJ2_TAC THEN ASM_SIMP_TAC[SUB_ADD]]);;
 
 let CLOSP1AUX_ann_handle = prove
@@ -1335,7 +1316,7 @@ let CLOSP1AUX_ann_handle = prove
    REPEAT GEN_TAC THEN STRIP_TAC THEN CLOSP1AUX_ANN_UNFOLD_TAC THEN
    ONCE_REWRITE_TAC[clos_evaluate_def] THEN REWRITE_TAC[CLOSP1AUX_ann_HD_shift] THEN
    CLOSP1AUX_ANN_STEP_TAC CLOSP1AUX_ANN_DISCH_TAC THENL [CLOSP1AUX_ANN_END_TAC; ALL_TAC] THEN
-   FIRST_X_ASSUM(fun th -> if CLOSP1AUX_ann_is_app "exc_rel" (concl th) then MP_TAC th
+   FIRST_X_ASSUM(fun th -> if CLOSPROPSAUX_is_app "exc_rel" (concl th) then MP_TAC th
                            else NO_TAC) THEN
    CASES_ON `a:(clos_v)error_result` THEN
    REWRITE_TAC[exc_rel_raise1; exc_rel_type_error1] THEN STRIP_TAC THEN RVEQ_TAC THEN
@@ -1349,7 +1330,7 @@ let CLOSP1AUX_ann_handle = prove
    X_GEN_TAC `nn:num` THEN DISCH_TAC THEN
    MATCH_MP_TAC CLOSP1AUX_ann_env_ok_cons THEN ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
    FIRST_ASSUM(MATCH_MP_TAC o CONV_RULE(DEPTH_CONV BETA_CONV) o REWRITE_RULE[SUBSET; IN] o
-               check (CLOSP1AUX_ann_is_app "SUBSET" o concl)) THEN
+               check (CLOSPROPSAUX_is_app "SUBSET" o concl)) THEN
    ASM_SIMP_TAC[alt_fv; SUB_ADD]);;
 
 let CLOSP1AUX_ann_app = prove
@@ -1422,21 +1403,21 @@ let CLOSP1AUX_ann_call = prove
    ONCE_REWRITE_TAC[clos_evaluate_def] THEN REWRITE_TAC[CLOSP1AUX_ann_HD_shift] THEN
    CLOSP1AUX_ANN_STEP_TAC CLOSP1AUX_ANN_DISCH_TAC THENL [ALL_TAC; CLOSP1AUX_ANN_END_TAC] THEN
    (fun (asl,w as gl) ->
-      let fc = find_term (fun t -> is_comb t && CLOSP1AUX_ann_is_app "clos_find_code" t &&
+      let fc = find_term (fun t -> is_comb t && CLOSPROPSAUX_is_app "clos_find_code" t &&
                                    length (snd (strip_comb t)) = 3) (lhand w) in
       (CASES_ON fc THEN CASE_REWRITE_TAC[] THENL [CLOSP1AUX_ANN_END_TAC; ALL_TAC]) gl) THEN
   CLOSP1AUX_ANN_PAIR_ANT_TAC THEN CASE_REWRITE_TAC[] THEN
    IMP_RES_TAC CLOSP1AUX_ann_find_code THEN RVEQ_TAC THEN ASM_REWRITE_TAC[] THEN
    CASE_REWRITE_TAC[] THEN
    FIRST_ASSUM(fun th ->
-     if CLOSP1AUX_ann_is_app "clos_annotateProof_state_rel" (concl th)
+     if CLOSPROPSAUX_is_app "clos_annotateProof_state_rel" (concl th)
      then REWRITE_TAC[GSYM (MATCH_MP clos_annotateProof_state_rel_clocks_eqs th)] else NO_TAC) THEN
   (COND_CASES_TAC THEN REWRITE_TAC[] THENL
        [REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN RVEQ_TAC THEN CLOSP1AUX_ANN_FIN_TAC THEN
         MATCH_MP_TAC CLOSP1AUX_ann_state_rel_clock0 THEN ASM_REWRITE_TAC[];
         ALL_TAC] THEN
       FIRST_ASSUM(fun th -> let c = concl th in
-        if is_eq c && CLOSP1AUX_ann_is_app "clos_annotate_shift" (lhs c) && is_cons (rhs c)
+        if is_eq c && CLOSPROPSAUX_is_app "clos_annotate_shift" (lhs c) && is_cons (rhs c)
         then REWRITE_TAC[SYM th] else NO_TAC) THEN
       DISCH_TAC THEN CLOSP1AUX_ANN_COND_IH_TAC THEN
       FIRST_ASSUM(fun ih -> if CLOSP1AUX_ann_is_P ih then MATCH_MP_TAC ih else NO_TAC) THEN
@@ -1450,13 +1431,13 @@ let CLOSP1AUX_ann_call = prove
     DISCH_TAC THEN ASM_CASES_TAC `nn < LENGTH (a:clos_v list)` THENL
      [DISJ2_TAC THEN DISJ1_TAC THEN
       FIRST_ASSUM(MP_TAC o REWRITE_RULE[LIST_REL_EL_EQN] o
-                  check (CLOSP1AUX_ann_is_app "ALL2" o concl)) THEN
+                  check (CLOSPROPSAUX_is_app "ALL2" o concl)) THEN
       ASM_SIMP_TAC[] THEN ASM_ARITH_TAC;
       DISJ1_TAC THEN ASM_ARITH_TAC];
    (* the body has no free variables annotations *)
    REPEAT(FIRST_X_ASSUM(MP_TAC o REWRITE_RULE[FEVERY_ALL_FLOOKUP] o
-                          check (CLOSP1AUX_ann_is_app "FEVERY" o concl))) THEN
-    FIRST_ASSUM(fun th -> if is_eq (concl th) && CLOSP1AUX_ann_is_app "FLOOKUP" (lhs (concl th))
+                          check (CLOSPROPSAUX_is_app "FEVERY" o concl))) THEN
+    FIRST_ASSUM(fun th -> if is_eq (concl th) && CLOSPROPSAUX_is_app "FLOOKUP" (lhs (concl th))
                           then MP_TAC th else NO_TAC) THEN
     MESON_TAC[SND]]);;
 
@@ -1496,7 +1477,7 @@ let CLOSP1AUX_ann_fn = prove
    REWRITE_TAC[every_Fn_vs_NONE_def] THEN
    CASES_ON `vsopt:(num list)option` THEN REWRITE_TAC[IS_NONE_DEF] THEN DISCH_TAC THEN
    CASE_REWRITE_TAC[] THEN
-   FIRST_ASSUM(fun th -> if CLOSP1AUX_ann_is_app "clos_annotateProof_state_rel" (concl th)
+   FIRST_ASSUM(fun th -> if CLOSPROPSAUX_is_app "clos_annotateProof_state_rel" (concl th)
      then REWRITE_TAC[GSYM (MATCH_MP clos_annotateProof_state_rel_max_app th)] else NO_TAC) THEN
    COND_CASES_TAC THEN REWRITE_TAC[] THENL [ALL_TAC; CLOSP1AUX_ANN_END_TAC] THEN
    REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN RVEQ_TAC THEN
@@ -1504,7 +1485,7 @@ let CLOSP1AUX_ann_fn = prove
                      env_ok m l i env env' k` ASSUME_TAC THENL
     [REWRITE_TAC[MEM_vars_to_list; has_var_def] THEN REPEAT STRIP_TAC THEN
      FIRST_ASSUM(MATCH_MP_TAC o CONV_RULE(DEPTH_CONV BETA_CONV) o REWRITE_RULE[SUBSET; IN] o
-                 check (CLOSP1AUX_ann_is_app "SUBSET" o concl)) THEN
+                 check (CLOSPROPSAUX_is_app "SUBSET" o concl)) THEN
      ASM_REWRITE_TAC[alt_fv; alt_fv_def];
      ALL_TAC] THEN
    FIRST_ASSUM(X_CHOOSE_TAC `x:clos_v list` o MATCH_MP CLOSP1AUX_ann_lookup_vars_live) THEN
@@ -1520,67 +1501,6 @@ let CLOSP1AUX_ann_fn = prove
    SUBGOAL_THEN `MEM (n - num_args) (vars_to_list (db_vars_Shift num_args (SND (alt_free [exp]))))`
      (fun th -> ASM_SIMP_TAC[th]) THEN
    ASM_SIMP_TAC[MEM_vars_to_list; has_var_def; SUB_ADD; GSYM alt_fv_def]);;
-
-(* local helpers for the forcing of thunks (copies of the clos_mtiProof     *)
-(* ones, generic in the relations)                                          *)
-let CLOSP1AUX_ann_dest_thunk_NotThunk = prove
- (`!xs (refs:(num,(clos_v)clos_ref)fmap).
-     (!b ptr. ~(xs = [clos_RefPtr b ptr])) ==> clos_dest_thunk xs refs = clos_NotThunk`,
-  LIST_INDUCT_TAC THEN REWRITE_TAC[clos_dest_thunk_def] THEN
-  STRUCT_CASES_TAC(ISPEC `t:clos_v list` list_CASES) THEN
-  REWRITE_TAC[clos_dest_thunk_def; CONS_11] THEN
-  CASES_ON `h:clos_v` THEN REWRITE_TAC[clos_dest_thunk_def; injectivity "clos_v";
-                                      distinctness "clos_v"] THEN
-  MESON_TAC[]);;
-
-let CLOSP1AUX_ann_vr_RefPtr_shape = prove
- (`!vr xs ys.
-     clos_simple_val_rel vr /\ ALL2 vr xs ys ==>
-     (?b ptr. xs = [clos_RefPtr b ptr] /\ ys = [clos_RefPtr b ptr]) \/
-     ((!b ptr. ~(xs = [clos_RefPtr b ptr])) /\ (!b ptr. ~(ys = [clos_RefPtr b ptr])))`,
-  REPEAT GEN_TAC THEN STRIP_TAC THEN
-  FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP CLOSPROPSAUX_vr_left) THEN
-  FIRST_ASSUM(STRIP_ASSUME_TAC o REWRITE_RULE[clos_simple_val_rel_def] o
-    check (fun th -> CLOSP1AUX_ann_is_app "clos_simple_val_rel" (concl th))) THEN
-  ASM_CASES_TAC `?b ptr. ys = [clos_RefPtr b ptr]` THENL
-   [DISJ1_TAC THEN
-    FIRST_X_ASSUM(X_CHOOSE_THEN `b:bool` (X_CHOOSE_THEN `ptr:num` SUBST_ALL_TAC)) THEN
-    MAP_EVERY EXISTS_TAC [`b:bool`; `ptr:num`] THEN REWRITE_TAC[] THEN
-    UNDISCH_TAC `ALL2 (vr:clos_v->clos_v->bool) xs [clos_RefPtr b ptr]` THEN
-    REWRITE_TAC[LIST_REL_CONS2; LIST_REL_NIL] THEN STRIP_TAC THEN
-    ASM_REWRITE_TAC[CONS_11] THEN ASM_MESON_TAC[];
-    DISJ2_TAC THEN CONJ_TAC THENL
-     [REPEAT GEN_TAC THEN DISCH_THEN SUBST_ALL_TAC THEN
-      UNDISCH_TAC `ALL2 (vr:clos_v->clos_v->bool) [clos_RefPtr b ptr] ys` THEN
-      REWRITE_TAC[LIST_REL_CONS1; LIST_REL_NIL] THEN STRIP_TAC THEN
-      FIRST_X_ASSUM(MP_TAC o
-        check (fun th -> concl th = `~(?b ptr. ys = [clos_RefPtr b ptr])`)) THEN
-      ASM_REWRITE_TAC[] THEN ASM_MESON_TAC[];
-      ASM_MESON_TAC[]]]);;
-
-let CLOSP1AUX_ann_dest_thunk_rel = prove
- (CASE_TERM `!vr (sr:(D,FFI)clos_state->(C,FFI)clos_state->bool) s t xs ys.
-     clos_simple_val_rel vr /\ clos_simple_state_rel vr sr /\ sr s t /\ ALL2 vr xs ys ==>
-     match clos_dest_thunk ys (clos_state_refs t) with
-       clos_BadRef -> clos_dest_thunk xs (clos_state_refs s) = clos_BadRef
-     | clos_NotThunk -> clos_dest_thunk xs (clos_state_refs s) = clos_NotThunk
-     | clos_IsThunk m w -> ?v. clos_dest_thunk xs (clos_state_refs s) = clos_IsThunk m v /\
-                              vr v w`,
-  REPEAT GEN_TAC THEN STRIP_TAC THEN
-  MP_TAC(ISPECL [`vr:clos_v->clos_v->bool`; `xs:clos_v list`; `ys:clos_v list`]
-                CLOSP1AUX_ann_vr_RefPtr_shape) THEN
-  ASM_REWRITE_TAC[] THEN STRIP_TAC THENL
-   [ALL_TAC;
-    ASM_SIMP_TAC[CLOSP1AUX_ann_dest_thunk_NotThunk] THEN CASE_REWRITE_TAC[]] THEN
-  ASM_REWRITE_TAC[clos_dest_thunk_def] THEN
-  FIRST_ASSUM(STRIP_ASSUME_TAC o REWRITE_RULE[clos_simple_state_rel_def] o
-    check (fun th -> CLOSP1AUX_ann_is_app "clos_simple_state_rel" (concl th))) THEN
-  CASES_ON `FLOOKUP (clos_state_refs (t:(C,FFI)clos_state)) ptr` THEN CASE_REWRITE_TAC[] THENL
-   [RES_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]; ALL_TAC] THEN
-  CASES_ON `a:(clos_v)clos_ref` THEN CASE_REWRITE_TAC[] THEN
-  RES_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
-  TRY(CASES_ON `a0:thunk_mode` THEN CASE_REWRITE_TAC[] THEN COND_CASES_TAC THEN
-      CASE_REWRITE_TAC[] THEN ASM_MESON_TAC[]));;
 
 (* local helpers: the forcing body after alt_free and shift; the programs *)
 (* installed come from the oracle                                         *)
@@ -1612,9 +1532,9 @@ let CLOSP1AUX_ANN_NAME_TERM_TAC (tm:term) (r:string) (s:string) : tactic = fun (
 
 (* the installations of the source and of the target related (do_install_thm) *)
 let CLOSP1AUX_ANN_INSTALL_TAC : tactic = fun (asl,w as gl) ->
-  let di = find_term (fun t -> is_comb t && CLOSP1AUX_ann_is_app "clos_do_install" t &&
+  let di = find_term (fun t -> is_comb t && CLOSPROPSAUX_is_app "clos_do_install" t &&
                                length (snd (strip_comb t)) = 2) (lhand w) in
-  let dt = find_term (fun t -> is_comb t && CLOSP1AUX_ann_is_app "clos_do_install" t &&
+  let dt = find_term (fun t -> is_comb t && CLOSPROPSAUX_is_app "clos_do_install" t &&
                                length (snd (strip_comb t)) = 2) (rand w) in
   (CLOSP1AUX_ANN_NAME_TERM_TAC di "ir1" "is1" THEN CLOSP1AUX_ANN_NAME_TERM_TAC dt "ir2" "is2" THEN
    MP_TAC(SPECL [rand (rator di); rand di; rand (rator dt); rand dt;
@@ -1635,7 +1555,7 @@ let CLOSP1AUX_ANN_INSTALL_DISCH_TAC : tactic =
   TRY(REWRITE_TAC[LENGTH] THEN ARITH_TAC THEN NO_TAC) THEN
   TRY(REWRITE_TAC[SUBSET; IN; CLOSP1AUX_ann_env_ok_def] THEN ARITH_TAC THEN NO_TAC) THEN
   FIRST_ASSUM(fun th ->
-    if is_eq (concl th) && CLOSP1AUX_ann_is_app "clos_do_install" (lhs (concl th))
+    if is_eq (concl th) && CLOSPROPSAUX_is_app "clos_do_install" (lhs (concl th))
     then MP_TAC (MATCH_MP CLOSP1AUX_ann_do_install_es th) THEN
          DISCH_THEN(SUBST1_TAC o SYM o CONJUNCT1) THEN ASM_REWRITE_TAC[] THEN NO_TAC
     else NO_TAC);;
@@ -1649,16 +1569,16 @@ let CLOSP1AUX_ANN_APPUNIT_DISCH_TAC : tactic =
   ASM_REWRITE_TAC[CLOSP1AUX_ann_env_ok_def; EL; HD; LENGTH; ARITH];;
 
 let CLOSP1AUX_ANN_UT_TERMS (w:term) =
-  let us = find_term (fun t -> is_comb t && CLOSP1AUX_ann_is_app "clos_update_thunk" t &&
+  let us = find_term (fun t -> is_comb t && CLOSPROPSAUX_is_app "clos_update_thunk" t &&
                                length (snd (strip_comb t)) = 3) (lhand w) in
-  let ut = find_term (fun t -> is_comb t && CLOSP1AUX_ann_is_app "clos_update_thunk" t &&
+  let ut = find_term (fun t -> is_comb t && CLOSPROPSAUX_is_app "clos_update_thunk" t &&
                                length (snd (strip_comb t)) = 3) (rand w) in
   us, ut;;
 
 let CLOSP1AUX_ANN_UT1_TAC : tactic = fun (asl,w as gl) ->
   let us,ut = CLOSP1AUX_ANN_UT_TERMS w in
   let [xs; rs; vs] = snd (strip_comb us) and [ys; rt; ws] = snd (strip_comb ut) in
-  (MP_TAC(ISPECL [`clos_annotateProof_v_rel`; xs; ys] CLOSP1AUX_ann_vr_RefPtr_shape) THEN
+  (MP_TAC(ISPECL [`clos_annotateProof_v_rel`; xs; ys] CLOSPROPSAUX_vr_RefPtr_shape) THEN
    ASM_REWRITE_TAC[CLOSP1AUX_ann_simple_val_rel] THEN STRIP_TAC) gl;;
 
 let CLOSP1AUX_ANN_UT2_TAC : tactic = fun (asl,w as gl) ->
@@ -1667,10 +1587,10 @@ let CLOSP1AUX_ANN_UT2_TAC : tactic = fun (asl,w as gl) ->
   let rel_th = REWRITE_RULE[IMP_CONJ] (GEN_ALL clos_annotateProof_rel_update_thunk) in
   (CASES_ON us THEN CASE_REWRITE_TAC[] THENL
     [CLOSP1AUX_ANN_END_TAC;
-     FIRST_ASSUM(fun sr -> if CLOSP1AUX_ann_is_app "clos_annotateProof_state_rel" (concl sr) &&
+     FIRST_ASSUM(fun sr -> if CLOSPROPSAUX_is_app "clos_annotateProof_state_rel" (concl sr) &&
                               rand (concl sr) = rand rt then
        let th1 = MATCH_MP rel_th sr in
-       FIRST_ASSUM(fun al -> if CLOSP1AUX_ann_is_app "ALL2" (concl al) && lhand (concl al) = vs
+       FIRST_ASSUM(fun al -> if CLOSPROPSAUX_is_app "ALL2" (concl al) && lhand (concl al) = vs
          then let th2 = MATCH_MP th1 al in
               FIRST_ASSUM(fun ue -> if is_eq (concl ue) && lhs (concl ue) = us
                                     then MP_TAC (MATCH_MP th2 ue) else NO_TAC)
@@ -1680,9 +1600,9 @@ let CLOSP1AUX_ANN_UT2_TAC : tactic = fun (asl,w as gl) ->
      CLOSP1AUX_ANN_END_TAC]) gl;;
 
 let CLOSP1AUX_ANN_DO_APP_TAC : tactic = fun (asl,w as gl) ->
-  let ds = find_term (fun t -> is_comb t && CLOSP1AUX_ann_is_app "clos_do_app" t &&
+  let ds = find_term (fun t -> is_comb t && CLOSPROPSAUX_is_app "clos_do_app" t &&
                                length (snd (strip_comb t)) = 3) (lhand w) in
-  let dt = find_term (fun t -> is_comb t && CLOSP1AUX_ann_is_app "clos_do_app" t &&
+  let dt = find_term (fun t -> is_comb t && CLOSPROPSAUX_is_app "clos_do_app" t &&
                                length (snd (strip_comb t)) = 3) (rand w) in
   let [opp; xs; s] = snd (strip_comb ds) and [_; ys; t] = snd (strip_comb dt) in
   (MP_TAC(INST [s,`s:(C,FFI)clos_state`; t,`t:(C,FFI)clos_state`; xs,`xs:clos_v list`;
@@ -1708,7 +1628,7 @@ let CLOSP1AUX_ann_op = prove
   [(* Install *)
    CLOSP1AUX_ANN_INSTALL_TAC THEN
    (FIRST_ASSUM(fun th -> if is_eq (concl th) &&
-                            CLOSP1AUX_ann_is_app "clos_do_install" (lhs (concl th))
+                            CLOSPROPSAUX_is_app "clos_do_install" (lhs (concl th))
                                 && is_var (fst (dest_pair (rhs (concl th)))) &&
                                 name_of (fst (dest_pair (rhs (concl th)))) = "ir1"
          then MP_TAC (MATCH_MP (REWRITE_RULE[IMP_CONJ] CLOSP1AUX_ann_inv_mono)
@@ -1716,7 +1636,7 @@ let CLOSP1AUX_ann_op = prove
        ANTS_TAC THENL [FIRST_ASSUM ACCEPT_TAC; ALL_TAC] THEN
        ANTS_TAC THENL [FIRST_ASSUM ACCEPT_TAC; ALL_TAC] THEN STRIP_TAC THEN
        CASES_ON `ir1:(clos_exp list,clos_v)result` THEN
-       FIRST_X_ASSUM(MP_TAC o check (fun th -> CLOSP1AUX_ann_is_app "result_rel" (concl th) &&
+       FIRST_X_ASSUM(MP_TAC o check (fun th -> CLOSPROPSAUX_is_app "result_rel" (concl th) &&
                                                rand (concl th) =
                                                `ir2:(clos_exp list,clos_v)result`)) THEN
        REWRITE_TAC[result_rel_Rval; result_rel_Rerr1] THEN CONV_TAC(DEPTH_CONV BETA_CONV) THEN
@@ -1726,19 +1646,19 @@ let CLOSP1AUX_ann_op = prove
      [(STRIP_TAC THEN RVEQ_TAC THEN CLOSP1AUX_ANN_FIN_TAC THEN
           MATCH_MP_TAC LIST_REL_LAST THEN ASM_REWRITE_TAC[] THEN
           REPEAT(FIRST_X_ASSUM(fun th ->
-            if is_eq (concl th) && CLOSP1AUX_ann_is_app "clos_do_install" (lhs (concl th))
+            if is_eq (concl th) && CLOSPROPSAUX_is_app "clos_do_install" (lhs (concl th))
             then MP_TAC (MATCH_MP CLOSP1AUX_ann_do_install_es th) else NO_TAC)) THEN
           REPEAT(FIRST_X_ASSUM(fun th ->
-            if is_eq (concl th) && CLOSP1AUX_ann_is_app "clos_evaluate" (lhs (concl th))
+            if is_eq (concl th) && CLOSPROPSAUX_is_app "clos_evaluate" (lhs (concl th))
             then MP_TAC (MATCH_MP clos_evaluate_IMP_LENGTH th) else NO_TAC)) THEN
           REWRITE_TAC[GSYM LENGTH_EQ_NIL] THEN MESON_TAC[]);
       (CLOSP1AUX_ANN_END_TAC)];
-    (FIRST_X_ASSUM(MP_TAC o check (fun th -> CLOSP1AUX_ann_is_app "exc_rel" (concl th))) THEN
+    (FIRST_X_ASSUM(MP_TAC o check (fun th -> CLOSPROPSAUX_is_app "exc_rel" (concl th))) THEN
         CASES_ON `a':(clos_v)error_result` THEN
         REWRITE_TAC[exc_rel_raise1; exc_rel_type_error1] THENL
          [FIRST_X_ASSUM(fun th -> if is_eq (concl th) &&
-                                    CLOSP1AUX_ann_is_app "clos_do_install" (lhs (concl th)) &&
-                                    CLOSP1AUX_ann_is_app "Rerr" (fst (dest_pair (rhs (concl th))))
+                                    CLOSPROPSAUX_is_app "clos_do_install" (lhs (concl th)) &&
+                                    CLOSPROPSAUX_is_app "Rerr" (fst (dest_pair (rhs (concl th))))
                                   then MP_TAC (MATCH_MP do_install_not_Rraise th) else NO_TAC) THEN
           REWRITE_TAC[] THEN MESON_TAC[];
           STRIP_TAC THEN RVEQ_TAC THEN CLOSP1AUX_ANN_END_TAC])];
@@ -1746,15 +1666,15 @@ let CLOSP1AUX_ann_op = prove
    (COND_CASES_TAC THEN ASM_REWRITE_TAC[] THENL [ALL_TAC; ALL_TAC]) THENL
    [(* ThunkOp ForceThunk *)
     ((fun (asl,w as gl) ->
-          let dt = find_term (fun t -> is_comb t && CLOSP1AUX_ann_is_app "clos_dest_thunk" t &&
+          let dt = find_term (fun t -> is_comb t && CLOSPROPSAUX_is_app "clos_dest_thunk" t &&
                                        length (snd (strip_comb t)) = 2) (rand w) in
           let ys = rand (rator dt) and t = rand (rand dt) in
-          let ds = find_term (fun t -> is_comb t && CLOSP1AUX_ann_is_app "clos_dest_thunk" t &&
+          let ds = find_term (fun t -> is_comb t && CLOSPROPSAUX_is_app "clos_dest_thunk" t &&
                                        length (snd (strip_comb t)) = 2) (lhand w) in
           let xs = rand (rator ds) and s = rand (rand ds) in
           (MP_TAC(ISPECL [`clos_annotateProof_v_rel`;
                           `clos_annotateProof_state_rel:(C,FFI)clos_state->(C,FFI)clos_state->bool`;
-                          s; t; xs; ys] CLOSP1AUX_ann_dest_thunk_rel) THEN
+                          s; t; xs; ys] CLOSPROPSAUX_dest_thunk_rel) THEN
            ASM_REWRITE_TAC[CLOSP1AUX_ann_simple_val_rel; CLOSP1AUX_ann_simple_state_rel] THEN
            CASES_ON dt THEN CASE_REWRITE_TAC[]) gl)) THENL
      [(DISCH_THEN SUBST1_TAC THEN CASE_REWRITE_TAC[] THEN CLOSP1AUX_ANN_END_TAC);
@@ -1770,18 +1690,13 @@ let CLOSP1AUX_ann_op = prove
       (CLOSP1AUX_ANN_UT1_TAC) THENL
       [(RVEQ_TAC THEN CLOSP1AUX_ANN_UT2_TAC);
        (FIRST_X_ASSUM(fun th -> if is_eq (concl th) &&
-                                     CLOSP1AUX_ann_is_app "clos_dest_thunk" (lhs (concl th)) &&
-                                     CLOSP1AUX_ann_is_app "clos_IsThunk" (rhs (concl th)) &&
+                                     CLOSPROPSAUX_is_app "clos_dest_thunk" (lhs (concl th)) &&
+                                     CLOSPROPSAUX_is_app "clos_IsThunk" (rhs (concl th)) &&
                                      is_var (lhand (lhs (concl th)))
                                    then MP_TAC th else NO_TAC) THEN
-           ASM_SIMP_TAC[CLOSP1AUX_ann_dest_thunk_NotThunk; distinctness "clos_dest_thunk_ret"])]];
+           ASM_SIMP_TAC[CLOSSEMAUX_dest_thunk_NotThunk; distinctness "clos_dest_thunk_ret"])]];
     (* other operations *)
     (CLOSP1AUX_ANN_DO_APP_TAC)]]);;
-
-(* a local helper: a case on a pair is its projections *)
-let CLOSP1AUX_ann_pair_CASE = prove
- (`!(p:A#B) (f:A->B->C). pair_CASE p f = f (FST p) (SND p)`,
-  REWRITE_TAC[FORALL_PAIR_THM; pair_CASE]);;
 
 (* a local helper: the shifted alt_free of a Letrec, in closed form *)
 let CLOSP1AUX_ann_shift_letrec = prove
@@ -1805,9 +1720,9 @@ let CLOSP1AUX_ann_shift_letrec = prove
              fns)
         (HD (clos_annotate_shift (FST (alt_free [x1])) m (l + LENGTH fns) i))]`,
   REPEAT GEN_TAC THEN REWRITE_TAC[alt_free_def] THEN CONV_TAC(DEPTH_CONV let_CONV) THEN
-  REWRITE_TAC[CLOSP1AUX_ann_pair_CASE] THEN CONV_TAC(DEPTH_CONV BETA_CONV) THEN
+  REWRITE_TAC[pair_CASE_def] THEN CONV_TAC(DEPTH_CONV BETA_CONV) THEN
   REWRITE_TAC[FST; SND; CLOSP1AUX_ann_shift_thm] THEN CASE_REWRITE_TAC[] THEN
-  REWRITE_TAC[CLOSP1AUX_ann_pair_CASE] THEN CONV_TAC(DEPTH_CONV BETA_CONV) THEN
+  REWRITE_TAC[pair_CASE_def] THEN CONV_TAC(DEPTH_CONV BETA_CONV) THEN
   REWRITE_TAC[MAP_MAP_o; o_DEF; LENGTH_MAP; FST; SND; HD_FST_alt_free]);;
 
 (* a local helper: ALL2 with a mapped right list *)
@@ -1823,7 +1738,7 @@ let CLOSP1AUX_ann_letrec = prove
    REWRITE_TAC[every_Fn_vs_NONE_def] THEN
    CASES_ON `namesopt:(num list)option` THEN REWRITE_TAC[IS_NONE_DEF] THEN STRIP_TAC THEN
    FIRST_X_ASSUM(MP_TAC o check (fun th -> is_eq (concl th) &&
-                   CLOSP1AUX_ann_is_app "clos_evaluate" (lhs (concl th)))) THEN
+                   CLOSPROPSAUX_is_app "clos_evaluate" (lhs (concl th)))) THEN
    REWRITE_TAC[CLOSP1AUX_ann_shift_letrec] THEN
    ONCE_REWRITE_TAC[clos_evaluate_def] THEN CONV_TAC(DEPTH_CONV let_CONV) THEN
    CASE_REWRITE_TAC[] THEN
@@ -1842,24 +1757,24 @@ let CLOSP1AUX_ann_letrec = prove
                         num_args <= clos_state_max_app (t1:(C,FFI)clos_state) /\ ~(num_args = 0))
                      (funs2:(num#clos_exp)list)`) ASSUME_TAC THENL
     [EXPAND_TAC "funs2" THEN
-     FIRST_ASSUM(fun th -> if CLOSP1AUX_ann_is_app "clos_annotateProof_state_rel" (concl th)
+     FIRST_ASSUM(fun th -> if CLOSPROPSAUX_is_app "clos_annotateProof_state_rel" (concl th)
        then REWRITE_TAC[GSYM (MATCH_MP clos_annotateProof_state_rel_max_app th)] else NO_TAC) THEN
      UNDISCH_TAC (CASE_TERM `ALL (\p. match p with (num_args,e) ->
                         num_args <= clos_state_max_app (s:(C,FFI)clos_state) /\ ~(num_args = 0))
                      (fns:(num#clos_exp)list)`) THEN
-     REWRITE_TAC[ALL_MAP; o_DEF; CLOSP1AUX_ann_pair_CASE] THEN CONV_TAC(DEPTH_CONV BETA_CONV) THEN
+     REWRITE_TAC[ALL_MAP; o_DEF; pair_CASE_def] THEN CONV_TAC(DEPTH_CONV BETA_CONV) THEN
      REWRITE_TAC[FST];
      ASM_REWRITE_TAC[]] THEN
   SUBGOAL_THEN `!k. MEM k live ==> alt_fv k [clos_Letrec x loc NONE fns exp]` ASSUME_TAC THENL
     [EXPAND_TAC "live" THEN
      REWRITE_TAC[MEM_vars_to_list; has_var_list_mk_Union; EX_MAP; o_DEF; has_var_def; alt_fv;
-                 CLOSP1AUX_ann_pair_CASE; alt_fv_def] THEN
+                 pair_CASE_def; alt_fv_def] THEN
      CONV_TAC(DEPTH_CONV BETA_CONV) THEN REWRITE_TAC[ADD_ASSOC] THEN MESON_TAC[];
      ALL_TAC] THEN
    SUBGOAL_THEN `!k. MEM k live ==> env_ok m l i env env' k` ASSUME_TAC THENL
     [REPEAT STRIP_TAC THEN
      FIRST_ASSUM(MATCH_MP_TAC o CONV_RULE(DEPTH_CONV BETA_CONV) o REWRITE_RULE[SUBSET; IN] o
-                 check (CLOSP1AUX_ann_is_app "SUBSET" o concl)) THEN
+                 check (CLOSPROPSAUX_is_app "SUBSET" o concl)) THEN
      ASM_SIMP_TAC[];
      ALL_TAC] THEN
    FIRST_ASSUM(X_CHOOSE_TAC `env2:clos_v list` o MATCH_MP CLOSP1AUX_ann_lookup_vars_live) THEN
@@ -1877,7 +1792,7 @@ let CLOSP1AUX_ann_letrec = prove
        [ALL_TAC;
         DISCH_TAC THEN
         FIRST_ASSUM(MATCH_MP_TAC o CONV_RULE(DEPTH_CONV BETA_CONV) o REWRITE_RULE[SUBSET; IN] o
-                    check (CLOSP1AUX_ann_is_app "SUBSET" o concl)) THEN
+                    check (CLOSPROPSAUX_is_app "SUBSET" o concl)) THEN
         ASM_SIMP_TAC[alt_fv; SUB_ADD]]) THEN
   REWRITE_TAC[LIST_REL_GENLIST] THEN REPEAT STRIP_TAC THEN
    MATCH_MP_TAC (el 6 (CONJUNCTS clos_annotateProof_v_rel_rules)) THEN
@@ -1973,15 +1888,15 @@ let CLOSP1AUX_ann_dest_closure = prove
         MATCH_MP_TAC EVERY2_REVERSE THEN MATCH_MP_TAC EVERY2_DROP THEN
         MATCH_MP_TAC EVERY2_REVERSE THEN ASM_REWRITE_TAC[]]];
     (* Recclosure *)
-    FIRST_ASSUM(fun th -> if CLOSP1AUX_ann_is_app "ALL2" (concl th) &&
+    FIRST_ASSUM(fun th -> if CLOSPROPSAUX_is_app "ALL2" (concl th) &&
                              is_abs (rand (rator (rator (concl th))))
       then MP_TAC (REWRITE_RULE[LIST_REL_EL_EQN] th) else NO_TAC) THEN
     DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC (MP_TAC o SPEC `a4:num`)) THEN
     ASM_REWRITE_TAC[] THEN CONV_TAC(DEPTH_CONV BETA_CONV) THEN
-    REWRITE_TAC[CLOSP1AUX_ann_pair_CASE] THEN CONV_TAC(DEPTH_CONV BETA_CONV) THEN
+    REWRITE_TAC[pair_CASE_def] THEN CONV_TAC(DEPTH_CONV BETA_CONV) THEN
     DISCH_THEN(X_CHOOSE_THEN `ii:num spt` STRIP_ASSUME_TAC) THEN
     CLOSP1AUX_ANN_LENS_TAC THEN
-    ASM_REWRITE_TAC[CLOSP1AUX_ann_pair_CASE] THEN CONV_TAC(DEPTH_CONV BETA_CONV) THEN
+    ASM_REWRITE_TAC[pair_CASE_def] THEN CONV_TAC(DEPTH_CONV BETA_CONV) THEN
     CONV_TAC(DEPTH_CONV let_CONV) THEN CLOSP1AUX_ANN_DC_SPLIT_TAC THENL
      [REWRITE_TAC[clos_annotateProof_v_rel_simp; injectivity "clos_v"; UNWIND_THM1] THEN
       REWRITE_TAC[GSYM CONJ_ASSOC] THEN CONV_TAC(TOP_DEPTH_CONV UNWIND_CONV) THEN
@@ -2045,12 +1960,12 @@ let CLOSP1AUX_ann_app_cons = prove
   REPEAT GEN_TAC THEN DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "ih1") (LABEL_TAC "ih2")) THEN
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o REWRITE_RULE[LIST_REL_CONS1] o
-    check (fun th -> CLOSP1AUX_ann_is_app "ALL2" (concl th) && is_cons (lhand (concl th)))) THEN
+    check (fun th -> CLOSPROPSAUX_is_app "ALL2" (concl th) && is_cons (lhand (concl th)))) THEN
   RVEQ_TAC THEN
   FIRST_ASSUM(ASSUME_TAC o SYM o MATCH_MP clos_annotateProof_state_rel_max_app) THEN
   FIRST_ASSUM(ASSUME_TAC o SYM o MATCH_MP clos_annotateProof_state_rel_clocks_eqs) THEN
   FIRST_ASSUM(ASSUME_TAC o SYM o MATCH_MP LIST_REL_LENGTH o
-    check (fun th -> CLOSP1AUX_ann_is_app "ALL2" (concl th) && is_cons (lhand (concl th)))) THEN
+    check (fun th -> CLOSPROPSAUX_is_app "ALL2" (concl th) && is_cons (lhand (concl th)))) THEN
   MP_TAC(SPECL [`clos_state_max_app (s:(C,FFI)clos_state)`; `loc_opt:num option`;
                 `f:clos_v`; `f':clos_v`; `CONS (v4:clos_v) v5`; `CONS (h':clos_v) t'`]
                CLOSP1AUX_ann_dest_closure) THEN
@@ -2080,7 +1995,7 @@ let CLOSP1AUX_ann_app_cons = prove
                      length vs = 3 && is_imp b && is_exists (rand b))) THEN
   STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
   FIRST_ASSUM(ASSUME_TAC o SYM o MATCH_MP LIST_REL_LENGTH o
-    check (fun th -> CLOSP1AUX_ann_is_app "ALL2" (concl th) &&
+    check (fun th -> CLOSPROPSAUX_is_app "ALL2" (concl th) &&
                      lhand (concl th) = `a2:clos_v list`)) THEN
   ASM_REWRITE_TAC[] THEN
   COND_CASES_TAC THENL
@@ -2109,7 +2024,7 @@ let CLOSP1AUX_ann_app_cons = prove
     MATCH_MP_TAC CLOSP1AUX_ann_state_rel_dec_clock THEN ASM_REWRITE_TAC[];
     ALL_TAC] THEN
   FIRST_ASSUM(fun eq -> if is_eq (concl eq) &&
-                           CLOSP1AUX_ann_is_app "clos_annotate_shift" (lhs (concl eq))
+                           CLOSPROPSAUX_is_app "clos_annotate_shift" (lhs (concl eq))
                         then REWRITE_TAC[eq] else NO_TAC) THEN
   DISCH_THEN(X_CHOOSE_THEN `r2:(clos_v list,clos_v)result`
     (X_CHOOSE_THEN `q2:(C,FFI)clos_state` STRIP_ASSUME_TAC)) THEN
@@ -2229,7 +2144,7 @@ let CLOSP1AUX_ANN_AF_IND_TAC : tactic =
   RULE_ASSUM_TAC(REWRITE_RULE[CLOSP1AUX_ann_pair_split; IMP_CONJ; RIGHT_FORALL_IMP_THM;
                               FORALL_UNWIND_THM1]) THEN
   REWRITE_TAC[alt_free_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
-  REWRITE_TAC[CLOSP1AUX_ann_pair_CASE] THEN CONV_TAC(DEPTH_CONV BETA_CONV) THEN
+  REWRITE_TAC[pair_CASE_def] THEN CONV_TAC(DEPTH_CONV BETA_CONV) THEN
   REWRITE_TAC[FST; SND];;
 
 let CLOSP1AUX_ann_every_Fn_SOME_REPLICATE = prove
@@ -2376,7 +2291,7 @@ let CLOSP1AUX_ANN_SHIFT_ALL_TAC (defs:thm list) : tactic =
   REWRITE_TAC[clos_annotate_shift_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   REWRITE_TAC(ALL :: ALL_APPEND :: EVERY_shift_sing :: shift_LENGTH_LEMMA :: defs) THEN
   REPEAT STRIP_TAC THEN TRY(ASM_MESON_TAC[] THEN NO_TAC) THEN
-  REPEAT(FIRST_X_ASSUM(MP_TAC o check (CLOSP1AUX_ann_is_app "ALL" o concl))) THEN
+  REPEAT(FIRST_X_ASSUM(MP_TAC o check (CLOSPROPSAUX_is_app "ALL" o concl))) THEN
   REWRITE_TAC[MAP_MAP_o; ALL_MAP; GSYM ALL_MEM; FORALL_PAIR_THM; o_THM] THEN
   CONV_TAC(DEPTH_CONV BETA_CONV) THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[SND] THEN
   REPEAT STRIP_TAC THEN ASM_MESON_TAC[];;
@@ -2403,7 +2318,7 @@ let CLOSP1AUX_ANN_AF_ALL_TAC (defs:thm list) : tactic =
       REWRITE_TAC(FST :: ALL :: EVERY_REPLICATE :: const_0_def ::
                   CLOSP1AUX_ann_ALL_alt_free_sing :: defs) THEN
       ASM_MESON_TAC[] THEN NO_TAC) THEN
-  REPEAT(FIRST_X_ASSUM(MP_TAC o check (CLOSP1AUX_ann_is_app "ALL" o concl))) THEN
+  REPEAT(FIRST_X_ASSUM(MP_TAC o check (CLOSPROPSAUX_is_app "ALL" o concl))) THEN
   REWRITE_TAC[MAP_MAP_o; ALL_MAP; GSYM ALL_MEM; FORALL_PAIR_THM; o_THM] THEN
   CONV_TAC(DEPTH_CONV BETA_CONV) THEN REWRITE_TAC[FST; SND] THEN
   REPEAT STRIP_TAC THEN ASM_MESON_TAC[];;
@@ -2547,9 +2462,9 @@ let semantics_annotate = prove
   REWRITE_TAC[GSYM clos_initial_state_def] THEN STRIP_TAC THEN
   MAP_EVERY EXISTS_TAC [`res':(clos_v list,clos_v)result`; `t2:(C,FFI)clos_state`] THEN
   FIRST_X_ASSUM(STRIP_ASSUME_TAC o REWRITE_RULE[clos_annotateProof_state_rel_def] o
-    check (CLOSP1AUX_ann_is_app "clos_annotateProof_state_rel" o concl)) THEN
+    check (CLOSPROPSAUX_is_app "clos_annotateProof_state_rel" o concl)) THEN
   ASM_REWRITE_TAC[] THEN
-  FIRST_X_ASSUM(MP_TAC o check (CLOSP1AUX_ann_is_app "result_rel" o concl)) THEN
+  FIRST_X_ASSUM(MP_TAC o check (CLOSPROPSAUX_is_app "result_rel" o concl)) THEN
   CASES_ON `res1:(clos_v list,clos_v)result` THEN
   CASES_ON `res':(clos_v list,clos_v)result` THEN
   REWRITE_TAC[result_rel_def] THEN

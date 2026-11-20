@@ -46,24 +46,6 @@ let ASP4AUX_DO_APP_TAC op_tm : tactic =
               injectivity "result"; PAIR_EQ; RIGHT_AND_EXISTS_THM; LEFT_AND_EXISTS_THM] THEN
   EQ_TAC THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN ASM_MESON_TAC[];;
 
-let ASP4AUX_Seq_NONE = prove
- (`!c1 c2 (s:(A,C,FFI)wl_state) s1.
-     wl_evaluate (c1,s) = (NONE,s1) ==> wl_evaluate (wl_Seq c1 c2,s) = wl_evaluate (c2,s1)`,
-  REPEAT STRIP_TAC THEN REWRITE_TAC[wl_evaluate_def] THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[]);;
-
-let ASP4AUX_state_rel_memory_rel = prove
- (`!c l1 l2 (s:(C,FFI)data_state) (t:(A,C,FFI)wl_state) locs.
-     data_to_word_gcProof_state_rel c l1 l2 s t NONE locs ==>
-     memory_rel c (wl_state_be t) (THE (data_state_tstamps s)) (data_state_refs s)
-       (data_state_space s) (wl_state_store t) (wl_state_memory t) (wl_state_mdomain t)
-       (APPEND (join_env (data_state_locals s)
-                 (toAList (inter (wl_state_locals t) (adjust_set (data_state_locals s)))))
-          (APPEND [(the_global (data_state_global s),FAPPLY (wl_state_store t) Globals)]
-             (data_to_word_gcProof_flat (data_state_stack s) (wl_state_stack t))))`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[data_to_word_gcProof_state_rel_thm] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[APPEND; GSYM APPEND_ASSOC] THEN MESON_TAC[]);;
-
 let ASP4AUX_state_rel_facts = prove
  (`!c l1 l2 (s:(C,FFI)data_state) (t:(A,C,FFI)wl_state) v locs.
      data_to_word_gcProof_state_rel c l1 l2 s t v locs ==>
@@ -87,7 +69,7 @@ let ASP4AUX_state_rel_get_vars = prove
   DRULE state_rel_get_vars_IMP THEN DISCH_THEN(DRULE) THEN
   DISCH_THEN(X_CHOOSE_THEN `ws:(A word_loc)list` STRIP_ASSUME_TAC) THEN
   EXISTS_TAC `ws:(A word_loc)list` THEN ASM_REWRITE_TAC[] THEN
-  FIRST_ASSUM(ASSUME_TAC o MATCH_MP ASP4AUX_state_rel_memory_rel) THEN
+  FIRST_ASSUM(ASSUME_TAC o MATCH_MP ASP1AUX_state_rel_memory_rel) THEN
   DRULE_ALL memory_rel_get_vars_IMP THEN REWRITE_TAC[GSYM APPEND_ASSOC]);;
 
 let ASP4AUX_state_rel_get_var1 = prove
@@ -133,52 +115,6 @@ let ASP4AUX_state_rel_get_var2 = prove
   RULE_ASSUM_TAC(REWRITE_RULE[MAP; get_vars_SOME_IFF; ZIP; APPEND]) THEN
   ASM_REWRITE_TAC[APPEND]);;
 
-(* the end of the assign proofs (HOL4: fs [state_rel_thm] ... then          *)
-(* match_mp_tac memory_rel_insert): dest := v in the data state and          *)
-(* adjust_var dest := w in the word state, the data state changed only in    *)
-(* refs, tstamps, stack_max and the safety flags                             *)
-let ASP4AUX_state_rel_set_var = prove
- (`!c l1 l2 (s:(C,FFI)data_state) (t:(A,C,FFI)wl_state) locs dest v w
-    (s2:(C,FFI)data_state).
-     data_to_word_gcProof_state_rel c l1 l2 s t NONE locs /\
-     data_state_ffi s2 = data_state_ffi s /\
-     data_state_clock s2 = data_state_clock s /\
-     data_state_handler s2 = data_state_handler s /\
-     data_state_code s2 = data_state_code s /\
-     data_state_compile s2 = data_state_compile s /\
-     data_state_compile_oracle s2 = data_state_compile_oracle s /\
-     data_state_locals s2 = data_state_locals s /\
-     data_state_stack s2 = data_state_stack s /\
-     data_state_stack_frame_sizes s2 = data_state_stack_frame_sizes s /\
-     data_state_locals_size s2 = data_state_locals_size s /\
-     data_state_limits s2 = data_state_limits s /\
-     data_state_space s2 = data_state_space s /\
-     data_state_global s2 = data_state_global s /\
-     IS_SOME (data_state_tstamps s2) /\
-     option_le (data_state_stack_max s) (data_state_stack_max s2) /\
-     memory_rel c (wl_state_be t) (THE (data_state_tstamps s2)) (data_state_refs s2)
-       (data_state_space s) (wl_state_store t) (wl_state_memory t) (wl_state_mdomain t)
-       (CONS (v,w)
-         (APPEND (join_env (data_state_locals s)
-                   (toAList (inter (wl_state_locals t) (adjust_set (data_state_locals s)))))
-            (APPEND [(the_global (data_state_global s),FAPPLY (wl_state_store t) Globals)]
-               (data_to_word_gcProof_flat (data_state_stack s) (wl_state_stack t))))) ==>
-     data_to_word_gcProof_state_rel c l1 l2 (data_set_var dest v s2)
-       (wl_set_var (adjust_var dest) w t) NONE locs`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[data_to_word_gcProof_state_rel_thm] THEN
-  REWRITE_TAC[data_set_var_def; wl_set_var_def] THEN SIMP[] THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
-  REWRITE_TAC[lookup_insert; adjust_var_NEQ; adjust_var_11] THEN
-  ASM_REWRITE_TAC[] THEN REPEAT CONJ_TAC THENL
-   [GEN_TAC THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[IS_SOME_DEF];
-    ASM_MESON_TAC[];
-    ASM_MESON_TAC[option_le_trans];
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[APPEND] THEN
-    REWRITE_TAC[GSYM APPEND_ASSOC] THEN MATCH_MP_TAC memory_rel_insert THEN
-    FIRST_X_ASSUM(MP_TAC o check (fun th ->
-      can (find_term ((=) `CONS ((v:data_v),(w:A word_loc))`)) (concl th))) THEN
-    REWRITE_TAC[GSYM APPEND_ASSOC; APPEND]]);;
-
 let ASP4AUX_state_rel_do_stack_set_var = prove
  (`!c l1 l2 (s:(C,FFI)data_state) (t:(A,C,FFI)wl_state) locs dest v w op vs.
      data_to_word_gcProof_state_rel c l1 l2 s t NONE locs /\
@@ -192,7 +128,7 @@ let ASP4AUX_state_rel_do_stack_set_var = prove
      data_to_word_gcProof_state_rel c l1 l2
        (data_set_var dest v (do_stack op vs (do_lim_safe s op vs)))
        (wl_set_var (adjust_var dest) w t) NONE locs`,
-  REPEAT STRIP_TAC THEN MATCH_MP_TAC ASP4AUX_state_rel_set_var THEN
+  REPEAT STRIP_TAC THEN MATCH_MP_TAC ASP1AUX_state_rel_set_var THEN
   EXISTS_TAC `s:(C,FFI)data_state` THEN
   ASM_REWRITE_TAC[do_stack_def; do_lim_safe; LET_DEF; LET_END_DEF;
                   data_state_INFO.ri_accfupds; K_THM; option_le_max_right; option_le_refl] THEN
@@ -249,10 +185,6 @@ let ASP4AUX_word_16_eq = prove
          (word (16 * m + 2):A word = word (16 * n + 2) <=> m = n)`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[n2w_11] THEN
   ASM_SIMP_TAC[MOD_LT; data_to_word_assignProof_LESS_DIV_16_IMP] THEN ARITH_TAC);;
-
-let ASP4AUX_word_cmp_Word = prove
- (`!c (a:A word) b. wl_word_cmp c (wl_Word a) (wl_Word b) = SOME (asm_word_cmp c a b)`,
-  MATCH_MP_TAC cmp_INDUCT THEN REWRITE_TAC[wl_word_cmp_def; asm_word_cmp_def]);;
 
 let asp4_ev_clause c = find (fun th -> let l = lhs (concl (SPEC_ALL th)) in
                   fst (dest_const (fst (strip_comb (fst (dest_pair (rand l)))))) = c)
@@ -321,7 +253,7 @@ let rec asp4_ev_conv thl tm =
     let r1 = rhs (concl th1) in
     if is_pair r1 && asp4_is_none (fst (dest_pair r1)) then
       let s1 = snd (dest_pair r1) in
-      let th2 = MATCH_MP (ISPECL [c1; c2; s; s1] ASP4AUX_Seq_NONE) th1 in
+      let th2 = MATCH_MP (ISPECL [c1; c2; s; s1] IL2AUX_evaluate_Seq_NONE) th1 in
       TRANS th2 (asp4_ev_rest thl (rhs (concl th2)))
     else
       let th2 = REWR_CONV ASP4AUX_ev_Seq tm in
@@ -344,7 +276,7 @@ let ASP4AUX_EV_TAC thl : tactic = fun (asl,w as g) ->
   CONV_TAC (asp4_closed_conv [] (asp4_ev_conv (thl @ map snd asl))) g;;
 
 let ASP4AUX_EV_RWS =
-  [word_exp_rw; wl_set_var_def; adjust_var_NEQ; ASP4AUX_word_cmp_Word; asm_word_cmp_def;
+  [word_exp_rw; wl_set_var_def; adjust_var_NEQ; word_cmp_Word_Word; asm_word_cmp_def;
    data_to_word_gcProof_word_and_one_eq_0_iff; wl_mem_load_def; WORD_AND_NOT0;
    insert_shadow];;
 
@@ -490,16 +422,6 @@ let ASP4AUX_state_rel_same_fields = prove
       data_to_word_gcProof_state_rel c l1 l2 s t v locs)`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   ASM_REWRITE_TAC[data_to_word_gcProof_state_rel_thm]);;
-
-let ASP4AUX_Smallnum_num = prove
- (`!a. Smallnum (&a) = word (4 * a):A word`,
-  GEN_TAC THEN REWRITE_TAC[data_to_word_Smallnum_def; INT_ARITH `~(&a:int < &0)`] THEN
-  REWRITE_TAC[INT_OF_NUM_MUL; NUM_OF_INT_OF_NUM]);;
-
-let ASP4AUX_small_int_num = prove
- (`!a. small_int (:A) (&a) <=> a < dimword (:A) DIV 8`,
-  REWRITE_TAC[small_int_def; INT_OF_NUM_LT] THEN
-  GEN_TAC THEN MATCH_MP_TAC(TAUT `p ==> (p /\ q <=> q)`) THEN INT_ARITH_TAC);;
 
 let ASP4AUX_option_stack_bound = prove
  (`!tsm xsm ls st d d1.
@@ -695,7 +617,7 @@ let ASP4AUX_RefArray_mr0 = prove
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   FIRST_ASSUM(SUBST1_TAC o MATCH_MP cut_state_opt_SOME_eq) THEN
   REWRITE_TAC[data_state_INFO.ri_accfupds; K_THM] THEN
-  FIRST_ASSUM(MP_TAC o MATCH_MP ASP4AUX_state_rel_memory_rel) THEN
+  FIRST_ASSUM(MP_TAC o MATCH_MP ASP1AUX_state_rel_memory_rel) THEN
   DISCH_THEN(MP_TAC o MATCH_MP (REWRITE_RULE[IMP_CONJ] memory_rel_lookup)) THEN
   DISCH_THEN(MP_TAC o SPECL [`a2:num`; `vv:data_v`; `w2:A word_loc`]) THEN
   ASM_REWRITE_TAC[] THEN
@@ -707,12 +629,6 @@ let ASP4AUX_RefArray_mr0 = prove
                         `L:(A word_loc)spt`] THEN
   ASM_REWRITE_TAC[lookup_mk_wf; lookup_inter_alt] THEN
   MESON_TAC[option_DISTINCT]);;
-
-let ASP4AUX_memory_rel_len_size = prove
- (`!c be ts refs sp st (m:A word->A word_loc) dm vs.
-     memory_rel c be ts refs sp st m dm vs ==>
-     data_to_word_config_len_size c + 7 < dimindex (:A)`,
-  REWRITE_TAC[memory_rel_def; heap_in_memory_store_def] THEN MESON_TAC[]);;
 
 let ASP4AUX_encode_header_RefArray = prove
  (`!c k. good_dimindex (:A) /\ data_to_word_config_len_size c + 7 < dimindex (:A) /\
@@ -770,7 +686,7 @@ let ASP4AUX_RefArray_call = prove
   MP_TAC(ISPECL [`c:data_to_word_config`; `l1:num`; `l2:num`; `s1:(C,FFI)data_state`;
                  `t:(A,C,FFI)wl_state`; `NONE:((data_v#A word_loc)list)option`;
                  `locs:(num#num)list`; `a1:num`; `k:num`] state_rel_get_var_Number_IMP) THEN
-  ASM_REWRITE_TAC[data_get_var_def; ASP4AUX_Smallnum_num] THEN DISCH_TAC THEN
+  ASM_REWRITE_TAC[data_get_var_def; MP6AUX_SMALLNUM_NUM] THEN DISCH_TAC THEN
   MP_TAC(ISPECL [`c:data_to_word_config`; `l1:num`; `l2:num`; `s1:(C,FFI)data_state`;
                  `t:(A,C,FFI)wl_state`; `NONE:((data_v#A word_loc)list)option`;
                  `locs:(num#num)list`; `a2:num`; `vv:data_v`] state_rel_get_var_IMP) THEN
@@ -805,7 +721,7 @@ let ASP4AUX_RefArray_call = prove
                     (fromAList (toAList (y1:(A word_loc)spt)))`] ASP4AUX_RefArray_mr0) THEN
   ANTS_TAC THENL [REPEAT CONJ_TAC THEN FIRST_ASSUM ACCEPT_TAC; ALL_TAC] THEN
   DISCH_TAC) THEN
-  (FIRST_ASSUM(ASSUME_TAC o MATCH_MP ASP4AUX_memory_rel_len_size o check (fun th ->
+  (FIRST_ASSUM(ASSUME_TAC o MATCH_MP MP6AUX_MEMREL_LEN_SIZE7 o check (fun th ->
     can (find_term ((=) `vv:data_v`)) (concl th) && is_comb (concl th) &&
     (let h,_ = strip_comb (concl th) in is_const h && fst(dest_const h) = "memory_rel"))) THEN
   FIRST_ASSUM(MP_TAC o MATCH_MP (REWRITE_RULE[IMP_CONJ] memory_rel_RefArray) o check (fun th ->
@@ -1030,7 +946,7 @@ let assign_RefArray = prove
    (DISCH_TAC THEN REWRITE_TAC[NUM_OF_INT_OF_NUM] THEN
   SUBGOAL_THEN `~(k < 2 EXP (if dimindex (:A) = 64 then 64 else 32) DIV 16)`
     (fun th -> REWRITE_TAC[th]) THEN
-  UNDISCH_TAC `~small_int (:A) (&k)` THEN REWRITE_TAC[ASP4AUX_small_int_num; dimword_def] THEN
+  UNDISCH_TAC `~small_int (:A) (&k)` THEN REWRITE_TAC[MP6AUX_SMALL_INT_NUM; dimword_def] THEN
   UNDISCH_TAC `good_dimindex (:A)` THEN REWRITE_TAC[good_dimindex_def] THEN
   STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CONV_TAC NUM_REDUCE_CONV THEN ARITH_TAC));
    ((SUBGOAL_THEN `small_int (:A) (&k)` ASSUME_TAC THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
@@ -1041,7 +957,7 @@ let assign_RefArray = prove
                    `wl_state_store (t:(A,C,FFI)wl_state)`; `wl_state_memory (t:(A,C,FFI)wl_state)`;
                    `wl_state_mdomain (t:(A,C,FFI)wl_state)`; `&k:int`; `v1:A word`]
       ASP4AUX_memory_rel_Number_small) THEN
-    ASM_REWRITE_TAC[ASP4AUX_Smallnum_num] THEN DISCH_THEN MATCH_MP_TAC THEN
+    ASM_REWRITE_TAC[MP6AUX_SMALLNUM_NUM] THEN DISCH_THEN MATCH_MP_TAC THEN
     EXISTS_TAC `CONS (vv,w2:A word_loc) (APPEND
        (join_env (data_state_locals (s:(C,FFI)data_state))
        (toAList (inter (wl_state_locals (t:(A,C,FFI)wl_state))
@@ -1051,7 +967,7 @@ let assign_RefArray = prove
     ASM_REWRITE_TAC[];
     ALL_TAC] THEN
   SUBGOAL_THEN `4 * k < dimword (:A) /\ k < dimword (:A) DIV 8` STRIP_ASSUME_TAC THENL
-   [UNDISCH_TAC `small_int (:A) (&k)` THEN REWRITE_TAC[ASP4AUX_small_int_num] THEN
+   [UNDISCH_TAC `small_int (:A) (&k)` THEN REWRITE_TAC[MP6AUX_SMALL_INT_NUM] THEN
     MP_TAC(SPECL [`dimword(:A)`; `8`] DIVISION) THEN ARITH_TAC;
     ALL_TAC] THEN
   REWRITE_TAC[data_to_word_list_Seq_def] THEN
@@ -1414,7 +1330,7 @@ let ASP4AUX_WordFromInt_W64 = prove
   ANTS_TAC THENL
    [ASM_REWRITE_TAC[ARITH] THEN REPEAT CONJ_TAC THENL
      [REWRITE_TAC[join_env_locals_def] THEN
-      FIRST_ASSUM(ACCEPT_TAC o MATCH_MP ASP4AUX_state_rel_memory_rel);
+      FIRST_ASSUM(ACCEPT_TAC o MATCH_MP ASP1AUX_state_rel_memory_rel);
       ASM_ARITH_TAC;
       X_GEN_TAC `nn:num` THEN DISCH_TAC THEN
       SUBGOAL_THEN `lookup (adjust_var nn) (L1:(A word_loc)spt) =
@@ -1470,7 +1386,7 @@ let ASP4AUX_WordFromInt_W32 = prove
   ANTS_TAC THENL
    [ASM_REWRITE_TAC[ARITH] THEN REPEAT CONJ_TAC THENL
      [REWRITE_TAC[join_env_locals_def] THEN
-      FIRST_ASSUM(ACCEPT_TAC o MATCH_MP ASP4AUX_state_rel_memory_rel);
+      FIRST_ASSUM(ACCEPT_TAC o MATCH_MP ASP1AUX_state_rel_memory_rel);
       ASM_ARITH_TAC;
       X_GEN_TAC `nn:num` THEN DISCH_TAC THEN
       SUBGOAL_THEN `lookup (adjust_var nn) (L1:(A word_loc)spt) =
@@ -1590,17 +1506,12 @@ let ASP4AUX_div_small = prove
    [MATCH_MP_TAC INT_DIV_UNIQ THEN EXISTS_TAC `x + d:int` THEN ASM_INT_ARITH_TAC;
     REWRITE_TAC[INT_DIV_EQ_0] THEN ASM_INT_ARITH_TAC]);;
 
-let ASP4AUX_word_ishr_iword = prove
- (`!(x:N word) n. word_ishr x n = iword (ival x div &2 pow n)`,
-  REPEAT GEN_TAC THEN GEN_REWRITE_TAC LAND_CONV [GSYM IWORD_IVAL] THEN
-  REWRITE_TAC[IVAL_WORD_ISHR]);;
-
 let ASP4AUX_W32_small = prove
  (`!i. dimindex(:A) = 32 /\ small_int (:A) i ==>
        word_ishr (Smallnum i:A word) 2 = iword i /\
        word_ishr (Smallnum i:A word) 31 = iword (i div &2 pow 32)`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
-  REWRITE_TAC[data_to_word_memoryProof_Smallnum_i2w; ASP4AUX_word_ishr_iword] THEN
+  REWRITE_TAC[data_to_word_memoryProof_Smallnum_i2w; word_ishr] THEN
   SUBGOAL_THEN `ival (iword (&4 * i):A word) = &4 * i` SUBST1_TAC THENL
    [MATCH_MP_TAC IVAL_IWORD THEN
     UNDISCH_TAC `small_int (:A) i` THEN
@@ -1791,7 +1702,7 @@ let assign_WordFromInt = prove
   DRULE_ALL ASP4AUX_state_rel_get_var1 THEN
   DISCH_THEN(X_CHOOSE_THEN `w1:A word_loc` STRIP_ASSUME_TAC) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[wl_get_var_def])) THEN
-  (FIRST_ASSUM(ASSUME_TAC o MATCH_MP ASP4AUX_memory_rel_len_size) THEN
+  (FIRST_ASSUM(ASSUME_TAC o MATCH_MP MP6AUX_MEMREL_LEN_SIZE7) THEN
   FIRST_ASSUM(MP_TAC o MATCH_MP memory_rel_any_Number_IMP o CONJ (ASSUME `good_dimindex(:A)`)) THEN
   DISCH_THEN(X_CHOOSE_THEN `w:A word` (CONJUNCTS_THEN2 SUBST_ALL_TAC ASSUME_TAC)) THEN
   FIRST_ASSUM(ASSUME_TAC o MATCH_MP ASP4AUX_state_rel_len_size) THEN
@@ -2556,7 +2467,7 @@ let ASP4AUX_do_app_Add = prove
                     (do_lim_safe (THE (do_space (IntOp clos_Add) vs s)) (IntOp clos_Add) vs)`,
   ASP4AUX_DO_APP_ARITH_TAC `IntOp clos_Add` ASP4AUX_int_app_Add);;
 
-(* ASP4AUX_state_rel_set_var with the space of s2 in memory_rel           *)
+(* ASP1AUX_state_rel_set_var with the space of s2 in memory_rel           *)
 let ASP4AUX_state_rel_set_var_sp = prove
  (`!c l1 l2 (s:(C,FFI)data_state) (t:(A,C,FFI)wl_state) locs dest v w
     (s2:(C,FFI)data_state).
@@ -2627,7 +2538,7 @@ let ASP4AUX_state_rel_arith_fast = prove
   ASM_SIMP_TAC[inter_insert_ODD_adjust_set_alt; ARITH_ODD] THEN
   MATCH_MP_TAC IMP_memory_rel_Number THEN ASM_REWRITE_TAC[] THEN
   MATCH_MP_TAC memory_rel_zero_space THEN EXISTS_TAC `data_state_space (x:(C,FFI)data_state)` THEN
-  ASM_MESON_TAC[ASP4AUX_state_rel_memory_rel]);;
+  ASM_MESON_TAC[ASP1AUX_state_rel_memory_rel]);;
 
 let ASP4AUX_memory_rel_Number2_small = prove
  (`!c be ts refs sp st (m:A word -> A word_loc) dm n1 n2 v1 v2 vars.
@@ -3136,8 +3047,8 @@ let ASP4AUX_mult_fast_cond = prove
     GEN_REWRITE_RULE I [GSYM INT_OF_NUM_EXISTS]) THEN
   FIRST_X_ASSUM(X_CHOOSE_THEN `a:num` SUBST_ALL_TAC o
     GEN_REWRITE_RULE I [GSYM INT_OF_NUM_EXISTS]) THEN
-  RULE_ASSUM_TAC(REWRITE_RULE[INT_OF_NUM_MUL; ASP4AUX_small_int_num]) THEN
-  REWRITE_TAC[ASP4AUX_Smallnum_num; VAL_WORD_USHR; w2n_n2w] THEN
+  RULE_ASSUM_TAC(REWRITE_RULE[INT_OF_NUM_MUL; MP6AUX_SMALL_INT_NUM]) THEN
+  REWRITE_TAC[MP6AUX_SMALLNUM_NUM; VAL_WORD_USHR; w2n_n2w] THEN
   SUBGOAL_THEN `8 * (dimword (:A) DIV 8) <= dimword (:A)` ASSUME_TAC THENL
    [MP_TAC(SPECL [`dimword(:A)`; `8`] DIVISION) THEN ARITH_TAC; ALL_TAC] THEN
   ASM_SIMP_TAC[MOD_LT; ARITH_RULE `a < d DIV 8 /\ 8 * (d DIV 8) <= d ==> 4 * a < d`] THEN
@@ -3455,7 +3366,7 @@ let ASP4AUX_state_rel_arith_fast3 = prove
   MATCH_MP_TAC IMP_memory_rel_Number THEN ASM_REWRITE_TAC[] THEN
   MATCH_MP_TAC memory_rel_zero_space THEN
   EXISTS_TAC `data_state_space (x:(C,FFI)data_state)` THEN
-  ASM_MESON_TAC[ASP4AUX_state_rel_memory_rel]);;
+  ASM_MESON_TAC[ASP1AUX_state_rel_memory_rel]);;
 
 let ASP4AUX_word_div_4 = prove
  (`!k1 k2. 4 * k1 < dimword (:A) /\ 4 * k2 < dimword (:A) /\ ~(k2 = 0) /\
@@ -3471,8 +3382,8 @@ let ASP4AUX_Smallnum_msb = prove
  (`!i. good_dimindex (:A) /\ small_int (:A) i /\ &0 <= i ==> ~word_msb (Smallnum i:A word)`,
   GEN_TAC THEN STRIP_TAC THEN
   FIRST_X_ASSUM(X_CHOOSE_THEN `k:num` SUBST_ALL_TAC o GEN_REWRITE_RULE I [GSYM INT_OF_NUM_EXISTS]) THEN
-  RULE_ASSUM_TAC(REWRITE_RULE[ASP4AUX_small_int_num]) THEN
-  REWRITE_TAC[ASP4AUX_Smallnum_num; word_msb_def; MSB_VAL; NOT_LE; w2n_n2w] THEN
+  RULE_ASSUM_TAC(REWRITE_RULE[MP6AUX_SMALL_INT_NUM]) THEN
+  REWRITE_TAC[MP6AUX_SMALLNUM_NUM; word_msb_def; MSB_VAL; NOT_LE; w2n_n2w] THEN
   UNDISCH_TAC `k < dimword (:A) DIV 8` THEN
   UNDISCH_TAC `good_dimindex(:A)` THEN REWRITE_TAC[good_dimindex_def; dimword_def] THEN
   STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CONV_TAC NUM_REDUCE_CONV THEN
@@ -3497,14 +3408,6 @@ let ASP4AUX_not_all_small_div = prove
   ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
   UNDISCH_TAC `~(~bit 0 (v1:A word) /\ ~bit 0 (v2:A word) /\ ~word_msb v1 /\ ~word_msb v2)` THEN
   ASM_SIMP_TAC[ASP4AUX_Smallnum_msb]);;
-
-let ASP4AUX_adjust_var_IN_adjust_set = prove
- (`!n (s:A spt). adjust_var n IN domain (adjust_set s) <=> n IN domain s`,
-  REPEAT GEN_TAC THEN GEN_REWRITE_TAC LAND_CONV [domain_lookup] THEN
-  REWRITE_TAC[lookup_adjust_set; adjust_var_def] THEN
-  REWRITE_TAC[ODD_ADD; ODD_MULT; ARITH; ARITH_RULE `~(2 * n + 2 = 0)`;
-              ARITH_RULE `((2 * n + 2) - 2) DIV 2 = n`] THEN
-  COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT] THEN MESON_TAC[]);;
 
 (* state_rel survives a change of the word state that keeps the even     *)
 (* keys of the cut locals, the stack and the store (HOL4: the state_rel_thm *)
@@ -3543,7 +3446,7 @@ let ASP4AUX_state_rel_frame = prove
    [GEN_TAC THEN DISCH_TAC THEN
     SUBGOAL_THEN `adjust_var n IN domain (adjust_set (data_state_locals (x:(C,FFI)data_state)))`
       ASSUME_TAC THENL
-     [REWRITE_TAC[ASP4AUX_adjust_var_IN_adjust_set] THEN
+     [REWRITE_TAC[GCP1AUX_adjust_var_IN_adjust_set] THEN
       ASM_MESON_TAC[IS_SOME_lookup];
       ALL_TAC] THEN
     ASM_SIMP_TAC[];
@@ -3741,7 +3644,7 @@ let ASP4AUX_state_rel_after_call = prove
   MATCH_MP_TAC IMP_memory_rel_Number THEN ASM_REWRITE_TAC[] THEN
   MATCH_MP_TAC memory_rel_zero_space THEN
   EXISTS_TAC `data_state_space (x:(C,FFI)data_state)` THEN
-  FIRST_ASSUM(MP_TAC o MATCH_MP ASP4AUX_state_rel_memory_rel) THEN
+  FIRST_ASSUM(MP_TAC o MATCH_MP ASP1AUX_state_rel_memory_rel) THEN
   REWRITE_TAC[data_state_INFO.ri_accfupds; K_THM]);;
 
 (* HOL4 line 10403 *)
@@ -3816,7 +3719,7 @@ let assign_Div = prove
        [REPEAT CONJ_TAC THEN
         FIRST_X_ASSUM(MP_TAC o check (fun th -> is_neg (concl th) &&
           can (find_term ((=) `&k2:int`)) (concl th) && is_eq (dest_neg (concl th)))) ORELSE ALL_TAC THEN
-        ASM_MESON_TAC[ASP4AUX_small_int_num; INT_OF_NUM_EQ];
+        ASM_MESON_TAC[MP6AUX_SMALL_INT_NUM; INT_OF_NUM_EQ];
         ALL_TAC] THEN
       SUBGOAL_THEN `8 * (dimword (:A) DIV 8) <= dimword (:A)` ASSUME_TAC THENL
        [MP_TAC(SPECL [`dimword(:A)`; `8`] DIVISION) THEN ARITH_TAC; ALL_TAC] THEN
@@ -3828,7 +3731,7 @@ let assign_Div = prove
         ALL_TAC] THEN
       SUBGOAL_THEN `small_int (:A) (&(k1 DIV k2)) /\ ~(word (4 * k2) = word 0:A word) /\
                     int_div (&k1) (&k2) = &(k1 DIV k2)` STRIP_ASSUME_TAC THENL
-       [ASM_SIMP_TAC[INT_DIV; ASP4AUX_small_int_num; n2w_11; MOD_LT; ZERO_LT_dimword] THEN
+       [ASM_SIMP_TAC[INT_DIV; MP6AUX_SMALL_INT_NUM; n2w_11; MOD_LT; ZERO_LT_dimword] THEN
         UNDISCH_TAC `~(k2 = 0)` THEN ARITH_TAC;
         ALL_TAC] THEN
       ASM_CASES_TAC `data_to_word_config_has_div c` THEN ASM_REWRITE_TAC[] THENL
@@ -3836,7 +3739,7 @@ let assign_Div = prove
       ASP4AUX_EV_TAC (wl_inst_def :: wl_get_vars_def :: LET_DEF :: LET_END_DEF ::
            ASP4AUX_word_exp_ShiftVar :: word_sh_def :: ASP4AUX_word_div_4 :: ASP4AUX_EV_RWS) THEN
       ASP4AUX_NONE_TAC THEN ASM_REWRITE_TAC[] THEN
-        REWRITE_TAC[WORD_SHL_WORD; ARITH_RULE `2 EXP 2 * q = 4 * q`; GSYM ASP4AUX_Smallnum_num] THEN
+        REWRITE_TAC[WORD_SHL_WORD; ARITH_RULE `2 EXP 2 * q = 4 * q`; GSYM MP6AUX_SMALLNUM_NUM] THEN
         MATCH_MP_TAC ASP4AUX_state_rel_arith_fast3 THEN
         ASM_REWRITE_TAC[op_space_reset_def; lookup_insert] THEN
         MESON_TAC[ASP4AUX_EVEN_NOT_1_3];
@@ -3852,7 +3755,7 @@ let assign_Div = prove
           ASP4AUX_EV_TAC (wl_inst_def :: wl_get_vars_def :: LET_DEF :: LET_END_DEF ::
              ASP4AUX_word_exp_ShiftVar :: word_sh_def :: VAL_WORD_0 :: ASP4AUX_EV_RWS) THEN
         ASP4AUX_NONE_TAC THEN ASM_REWRITE_TAC[] THEN
-          REWRITE_TAC[WORD_SHL_WORD; ARITH_RULE `2 EXP 2 * q = 4 * q`; GSYM ASP4AUX_Smallnum_num] THEN
+          REWRITE_TAC[WORD_SHL_WORD; ARITH_RULE `2 EXP 2 * q = 4 * q`; GSYM MP6AUX_SMALLNUM_NUM] THEN
           MATCH_MP_TAC ASP4AUX_state_rel_arith_fast3 THEN
           ASM_REWRITE_TAC[op_space_reset_def; lookup_insert] THEN
           MESON_TAC[ASP4AUX_EVEN_NOT_1_3];
@@ -3875,7 +3778,7 @@ let assign_Div = prove
           SUBGOAL_THEN `word_shl (FST (single_div (word 0) (word (4 * k1)) (word (4 * k2)))) 2 =
                         Smallnum (&(k1 DIV k2)):A word` SUBST1_TAC THENL
            [REWRITE_TAC[single_div_def; VAL_WORD_0; MULT_CLAUSES; ADD_CLAUSES] THEN
-            ASM_REWRITE_TAC[] THEN REWRITE_TAC[WORD_SHL_WORD; ASP4AUX_Smallnum_num] THEN
+            ASM_REWRITE_TAC[] THEN REWRITE_TAC[WORD_SHL_WORD; MP6AUX_SMALLNUM_NUM] THEN
             AP_TERM_TAC THEN ARITH_TAC;
             ALL_TAC] THEN
           ASM_REWRITE_TAC[] THEN REWRITE_TAC[GSYM wl_set_var_def] THEN
@@ -4007,7 +3910,7 @@ let assign_Mod = prove
        [REPEAT CONJ_TAC THEN
         FIRST_X_ASSUM(MP_TAC o check (fun th -> is_neg (concl th) &&
           can (find_term ((=) `&k2:int`)) (concl th) && is_eq (dest_neg (concl th)))) ORELSE ALL_TAC THEN
-        ASM_MESON_TAC[ASP4AUX_small_int_num; INT_OF_NUM_EQ];
+        ASM_MESON_TAC[MP6AUX_SMALL_INT_NUM; INT_OF_NUM_EQ];
         ALL_TAC] THEN
       SUBGOAL_THEN `8 * (dimword (:A) DIV 8) <= dimword (:A)` ASSUME_TAC THENL
        [MP_TAC(SPECL [`dimword(:A)`; `8`] DIVISION) THEN ARITH_TAC; ALL_TAC] THEN
@@ -4020,7 +3923,7 @@ let assign_Mod = prove
       SUBGOAL_THEN `small_int (:A) (&(k1 MOD k2)) /\ ~(word (4 * k2) = word 0:A word) /\
                     integer_int_mod (&k1) (&k2) = &(k1 MOD k2)` STRIP_ASSUME_TAC THENL
        [SUBGOAL_THEN `k1 MOD k2 < k2` MP_TAC THENL [ASM_REWRITE_TAC[MOD_LT_EQ]; ALL_TAC] THEN
-        ASM_SIMP_TAC[INT_MOD; ASP4AUX_small_int_num; n2w_11; MOD_LT; ZERO_LT_dimword] THEN
+        ASM_SIMP_TAC[INT_MOD; MP6AUX_SMALL_INT_NUM; n2w_11; MOD_LT; ZERO_LT_dimword] THEN
         UNDISCH_TAC `~(k2 = 0)` THEN UNDISCH_TAC `k2 < dimword (:A) DIV 8` THEN ARITH_TAC;
         ALL_TAC] THEN
       ASM_CASES_TAC `data_to_word_config_has_div c` THEN ASM_REWRITE_TAC[] THENL
@@ -4038,7 +3941,7 @@ let assign_Mod = prove
          [MP_TAC(SPECL [`k1:num`; `k2:num`] DIVISION) THEN ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
           SUBGOAL_THEN `(k1 DIV k2) * (4 * k2) <= 4 * k1` ASSUME_TAC THENL
            [ASM_ARITH_TAC; ALL_TAC] THEN
-          REWRITE_TAC[ASP4AUX_Smallnum_num] THEN
+          REWRITE_TAC[MP6AUX_SMALLNUM_NUM] THEN
           SUBGOAL_THEN `4 * (k1 MOD k2) = 4 * k1 - (k1 DIV k2) * (4 * k2)` SUBST1_TAC THENL
            [ASM_ARITH_TAC; ALL_TAC] THEN
           ASM_SIMP_TAC[WORD_SUB];
@@ -4060,7 +3963,7 @@ let assign_Mod = prove
              ASP4AUX_word_exp_ShiftVar :: word_sh_def :: VAL_WORD_0 :: wl_set_vars_def ::
              alist_insert_def :: MAP :: ASP4AUX_EV_RWS) THEN
         ASP4AUX_NONE_TAC THEN ASM_REWRITE_TAC[] THEN
-          REWRITE_TAC[GSYM ASP4AUX_Smallnum_num] THEN
+          REWRITE_TAC[GSYM MP6AUX_SMALLNUM_NUM] THEN
           MATCH_MP_TAC ASP4AUX_state_rel_arith_fast3 THEN
           ASM_REWRITE_TAC[op_space_reset_def; lookup_insert] THEN
           MESON_TAC[ASP4AUX_EVEN_NOT_1_3];
@@ -4083,7 +3986,7 @@ let assign_Mod = prove
           SUBGOAL_THEN `SND (single_div (word 0) (word (4 * k1)) (word (4 * k2))) =
                         Smallnum (&(k1 MOD k2)):A word` SUBST1_TAC THENL
            [REWRITE_TAC[single_div_def; VAL_WORD_0; MULT_CLAUSES; ADD_CLAUSES] THEN
-            ASM_REWRITE_TAC[] THEN REWRITE_TAC[ASP4AUX_Smallnum_num] THEN
+            ASM_REWRITE_TAC[] THEN REWRITE_TAC[MP6AUX_SMALLNUM_NUM] THEN
             ASM_SIMP_TAC[MOD_MULT2; ARITH_EQ];
             ALL_TAC] THEN
           ASM_REWRITE_TAC[] THEN REWRITE_TAC[GSYM wl_set_var_def] THEN

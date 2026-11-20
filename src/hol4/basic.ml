@@ -573,6 +573,29 @@ let some_F = prove
 let some_EQ = prove
  (`((some x:A. x = y) = SOME y) /\ ((some x:A. y = x) = SOME y)`,
   REWRITE_TAC[some_DEF] THEN MESON_TAC[]);;
+
+let BASICAUX_option3_cases = prove
+ (`!(o1:(A#B#C)option). o1 = NONE \/ ?x y z. o1 = SOME (x,y,z)`,
+  MATCH_MP_TAC option_INDUCT THEN REWRITE_TAC[option_DISTINCT; option_INJ] THEN
+  GEN_TAC THEN MAP_EVERY EXISTS_TAC [`FST (a:A#B#C)`; `FST (SND (a:A#B#C))`;
+    `SND (SND (a:A#B#C))`] THEN REWRITE_TAC[PAIR]);;
+
+let BASICAUX_option_CASE_cong = prove
+ (`!(a:B option) b (n1:C) n2 f.
+     a = b /\ (b = NONE ==> n1 = n2) ==> option_CASE a n1 f = option_CASE b n2 f`,
+  REPEAT GEN_TAC THEN STRUCT_CASES_TAC(ISPEC `b:B option` (cases "option")) THEN
+  REWRITE_TAC[option_CASE; option_DISTINCT] THEN MESON_TAC[option_CASE]);;
+
+let BASICAUX_some_SOME = prove
+ (`!P (a:A). (some) P = SOME a ==> P a`,
+  REPEAT GEN_TAC THEN REWRITE_TAC[some_DEF] THEN COND_CASES_TAC THEN
+  REWRITE_TAC[distinctness "option"; injectivity "option"] THEN
+  DISCH_THEN(SUBST1_TAC o SYM) THEN CONV_TAC SELECT_CONV THEN ASM_REWRITE_TAC[]);;
+
+let BASICAUX_some_NONE = prove
+ (`!P:A->bool. (some) P = NONE <=> !x. ~P x`,
+  GEN_TAC THEN REWRITE_TAC[some_DEF] THEN COND_CASES_TAC THEN
+  ASM_MESON_TAC[option_DISTINCT]);;
 (* ------------------------------------------------------------------------- *)
 (* pair (HOL4 src/coretypes/pairScript.sml).  HOL Light's pair.ml has FST,   *)
 (* SND, PAIR, PAIR_EQ, CURRY_DEF, UNCURRY_DEF; HOL4 ## is vocab.ml's ##,      *)
@@ -587,6 +610,18 @@ let EXISTS_PROD = EXISTS_PAIR_THM;;
 let LAMBDA_PROD = LAMBDA_PAIR_THM;;
 
 let pair_CASES = PAIR_SURJECTIVE;;
+
+let BASICAUX_TUPLE3 = prove
+ (`!p:A#B#C. ?a b c. p = (a,b,c)`,
+  MESON_TAC[PAIR_SURJECTIVE]);;
+
+let BASICAUX_TUPLE4 = prove
+ (`!p:A#B#C#D. ?a b c d. p = (a,b,c,d)`,
+  MESON_TAC[PAIR_SURJECTIVE]);;
+
+let BASICAUX_TUPLE5 = prove
+ (`!p:A#B#C#D#E. ?a b c d e. p = (a,b,c,d,e)`,
+  MESON_TAC[PAIR_SURJECTIVE]);;
 
 let ABS_PAIR_THM = PAIR_SURJECTIVE;;
 
@@ -1386,6 +1421,14 @@ let transitive_LESS = prove
 let transitive_LE = prove
  (`transitive ((<=):num->num->bool)`,
   REWRITE_TAC[transitive_DEF] THEN ARITH_TAC);;
+
+let BASICAUX_num_of_int_lt = prove
+ (`!i n. &0 <= i /\ i < &n ==> num_of_int i < n`,
+  REPEAT STRIP_TAC THEN ASM_SIMP_TAC[GSYM INT_OF_NUM_LT; INT_OF_NUM_OF_INT]);;
+
+let BASICAUX_EX_ADD = prove
+ (`!P k. (?y. P (k + y)) ==> (?x:num. P x)`,
+  MESON_TAC[]);;
 (* ------------------------------------------------------------------------- *)
 (* While (HOL4 src/num/theories/WhileScript.sml).  HOL4 LEAST is HOL Light's *)
 (* minimal ($LEAST P = (minimal) P); OWHILE, WHILE, OLEAST are vocab.ml's.   *)

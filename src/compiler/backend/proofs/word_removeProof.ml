@@ -378,19 +378,6 @@ let word_remove_correct = prove
 (* Helpers used by word_to_wordProof.                                        *)
 (* ------------------------------------------------------------------------- *)
 
-let WPROOF1AUX_tuple5 = prove
- (`!x:A#B#C#D#E. ?a b c d e. x = (a,b,c,d,e)`,
-  REWRITE_TAC[FORALL_PAIR_THM] THEN MESON_TAC[]);;
-
-let WPROOF1AUX_tuple4 = prove
- (`!x:A#B#C#D. ?a b c d. x = (a,b,c,d)`,
-  REWRITE_TAC[FORALL_PAIR_THM] THEN MESON_TAC[]);;
-
-let WPROOF1AUX_option_cases3 = prove
- (`!x:(A#B#C)option. x = NONE \/ ?a b c. x = SOME (a,b,c)`,
-  REWRITE_TAC[FORALL_OPTION_THM; option_DISTINCT; option_INJ; GSYM EXISTS_PAIR_THM] THEN
-  MESON_TAC[]);;
-
 (* strip the outer universal quantifiers of the goal, naming them ns *)
 
 let WPROOF1AUX_NAMED_GEN_TAC (ns:string list) : tactic =
@@ -406,7 +393,7 @@ let WPROOF1AUX_OCASES_TAC (c:string) (pat:term) : tactic = fun (asl,w as g) ->
              is_const h && fst(dest_const h) = c && subset (frees t) fvs in
   let t = find_term ok w in
   let th0 = if is_var pat then ISPEC t (cases "option")
-            else ISPEC t WPROOF1AUX_option_cases3 in
+            else ISPEC t BASICAUX_option3_cases in
   let vs = if is_var pat then [pat] else
            let a,bc = dest_pair pat in let b,cc = dest_pair bc in [a;b;cc] in
   let USE th = REWRITE_TAC[th] THEN CASE_REWRITE_TAC[] THEN ASSUME_TAC th in

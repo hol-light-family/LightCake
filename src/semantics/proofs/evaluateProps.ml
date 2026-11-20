@@ -290,34 +290,20 @@ let is_clock_io_mono_cong = prove
      (!s. state_eval_state s = state_eval_state t /\ state_refs s = state_refs t /\
           state_ffi s = state_ffi t ==> f s = g s) ==>
      (is_clock_io_mono f s <=> is_clock_io_mono g t)`,
-  REPEAT GEN_TAC THEN DISCH_THEN SUBST1_TAC THEN DISCH_TAC THEN
-  SUBGOAL_THEN `(f:(FFI)state->(FFI)state#(A,B)result) t = g t /\
-                !clk. f (state_clock_fupd (K clk) t) = g (state_clock_fupd (K clk) t)`
-    (fun th -> REWRITE_TAC[is_clock_io_mono_def; th]) THEN
-  CONJ_TAC THENL [ALL_TAC; GEN_TAC] THEN FIRST_X_ASSUM MATCH_MP_TAC THEN
-  REWRITE_TAC[state_INFO.ri_accfupds]);;
+  SIMP[is_clock_io_mono_def]);;
 
 let is_clock_io_mono_return = prove
  (`!(r:A) s:(FFI)state. is_clock_io_mono (\s. (s,(Rval r:(A,B)result))) s`,
-  REWRITE_TAC[is_clock_io_mono_def; pair_CASE; io_events_mono_refl; LE_REFL;
-              state_INFO.ri_accfupds; K_THM; SUB_REFL; SUB_0; GE; LE_0] THEN
-  REWRITE_TAC[state_INFO.ri_fupdfupds; o_DEF; K_THM] THEN
-  REWRITE_TAC[distinctness "result"; injectivity "result"]);;
+  SIMP[is_clock_io_mono_def; ARITH_ss]);;
 
 let is_clock_io_mono_err = prove
  (`!(r:(B)error_result) s:(FFI)state. is_clock_io_mono (\s. (s,(Rerr r:(A,B)result))) s`,
-  REWRITE_TAC[is_clock_io_mono_def; pair_CASE; io_events_mono_refl; LE_REFL;
-              state_INFO.ri_accfupds; K_THM; SUB_REFL; SUB_0; GE; LE_0] THEN
-  REWRITE_TAC[state_INFO.ri_fupdfupds; o_DEF; K_THM] THEN
-  MESON_TAC[]);;
+  SIMP[is_clock_io_mono_def; ARITH_ss]);;
 
 let pair_CASE_eq_forall = prove
  (CASE_TERM `!(x:A#B) (P:A->B->bool).
     (match x with (a,b) -> P a b) <=> (!a b. x = (a,b) ==> P a b)`,
-  REPEAT GEN_TAC THEN
-  MP_TAC(ISPEC `x:A#B` PAIR_SURJECTIVE) THEN
-  DISCH_THEN(X_CHOOSE_THEN `a0:A` (X_CHOOSE_THEN `b0:B` SUBST1_TAC)) THEN
-  REWRITE_TAC[pair_CASE; PAIR_EQ] THEN MESON_TAC[]);;
+  REPEAT GEN_TAC THEN PAIR_CASES_ON `x:A#B` THEN SIMP[]);;
 
 (* is_clock_io_mono with its pair cases as universal statements *)
 let EVPROPSAUX_icim_ALT = prove
@@ -347,6 +333,14 @@ let EVPROPSAUX_icim_ALT = prove
 let EVPROPSAUX_ARITH_TAC : tactic =
   REPEAT(FIRST_X_ASSUM(MP_TAC o check (EVALAUX_is_num_fact o concl))) THEN
   ARITH_TAC;;
+
+(* the clock arithmetic of is_clock_io_mono_bind *)
+let EVPROPSAUX_bind_arith = prove
+ (`!S S1 S2 clk. S2 <= S1 /\ S1 <= S /\ clk >= S - S1 ==>
+     (clk - (S - S1)) - (S1 - S2) = clk - (S - S2) /\
+     ((clk - (S - S1)) >= S1 - S2 <=> clk >= S - S2) /\
+     (clk <= S ==> clk - (S - S1) <= S1)`,
+  REPEAT STRIP_TAC THEN TRY DISCH_TAC THEN DECIDE_TAC);;
 
 let is_clock_io_mono_bind = prove
  (CASE_TERM `!(f:(FFI)state->(FFI)state#(A,B)result)
@@ -398,11 +392,11 @@ let is_clock_io_mono_bind = prove
     ASM_REWRITE_TAC[] THEN ASM_CASES_TAC `clk <= state_clock (s:(FFI)state)` THEN
     ASM_REWRITE_TAC[] THEN
     SUBGOAL_THEN `q1:(A,B)result = Rerr (Rabort Rtimeout_error)` SUBST_ALL_TAC THENL
-     [ASM_MESON_TAC[]; ALL_TAC] THEN
+     [RFS[]; ALL_TAC] THEN
     UNDISCH_TAC `(g:(A,B)result->(FFI)state->(FFI)state#(C,D)result)
                    (Rerr (Rabort Rtimeout_error)) t1 = t2,q2` THEN
     ASM_REWRITE_TAC[PAIR_EQ] THEN DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
-    ASM_MESON_TAC[];
+    RFS[];
     ALL_TAC] THEN
   ASM_CASES_TAC `q1:(A,B)result = Rerr (Rabort Rtimeout_error)` THENL
    [(* the first computation times out with the new clock only *)
@@ -410,13 +404,13 @@ let is_clock_io_mono_bind = prove
     ASM_REWRITE_TAC[PAIR_EQ] THEN DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
     REWRITE_TAC[] THEN
     SUBGOAL_THEN `~(clk >= state_clock (s:(FFI)state) - state_clock (s1:(FFI)state))`
-      ASSUME_TAC THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
+      ASSUME_TAC THENL [RFS[]; ALL_TAC] THEN
     CONJ_TAC THENL
      [DISCH_TAC THEN EVPROPSAUX_ARITH_TAC; ASM_MESON_TAC[io_events_mono_trans]];
     ALL_TAC] THEN
   (* neither times out: the second computation runs with the adjusted clock *)
   SUBGOAL_THEN `clk >= state_clock (s:(FFI)state) - state_clock (s1:(FFI)state)`
-    ASSUME_TAC THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
+    ASSUME_TAC THENL [RFS[]; ALL_TAC] THEN
   UNDISCH_TAC `~(q1:(A,B)result = Rerr (Rabort Rtimeout_error)) /\
       ~(r1:(A,B)result = Rerr (Rabort Rtimeout_error))
       ==> q1 = r1 /\
@@ -434,12 +428,18 @@ let is_clock_io_mono_bind = prove
                  <=> clk >= state_clock s - state_clock s2) /\
                 (clk <= state_clock s ==> clk - (state_clock s - state_clock s1) <=
                                           state_clock s1)`
-    STRIP_ASSUME_TAC THENL [EVPROPSAUX_ARITH_TAC; ALL_TAC] THEN
-  ASM_MESON_TAC[]);;
+    STRIP_ASSUME_TAC THENL [MATCH_MP_TAC EVPROPSAUX_bind_arith THEN ASM_REWRITE_TAC[]; ALL_TAC] THEN
+  RFS[]);;
 
 let adj_clock_def = cake_def
   `adj_clock inc dec (s:(FFI)state) =
      state_clock_fupd (K ((state_clock s + inc) - dec)) s`;;
+
+(* the clock arithmetic of is_clock_io_mono_check *)
+let EVPROPSAUX_check_arith = prove
+ (`(!k c x. 1 <= k /\ x + 1 <= c ==> (k - 1) - ((c - 1) - x) = k - (c - x)) /\
+   (!k c x. ~(k = 0) /\ x <= c - 1 ==> ((k - 1) >= (c - 1) - x <=> k >= c - x))`,
+  CONJ_TAC THEN REPEAT STRIP_TAC THEN DECIDE_TAC);;
 
 let is_clock_io_mono_check = prove
  (`!(f:(FFI)state->(FFI)state#(A,B)result) s.
@@ -447,49 +447,13 @@ let is_clock_io_mono_check = prove
       is_clock_io_mono (\s. f (adj_clock 1 0 s)) (dec_clock s))
      ==> is_clock_io_mono (\s. if state_clock s = 0
                                then (s,Rerr (Rabort Rtimeout_error)) else f s) s`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[EVPROPSAUX_icim_ALT] THEN
-  ASM_CASES_TAC `state_clock (s:(FFI)state) = 0` THEN ASM_REWRITE_TAC[] THENL
-   [REWRITE_TAC[PAIR_EQ] THEN REPEAT GEN_TAC THEN
-    DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
-    ASM_REWRITE_TAC[io_events_mono_refl; LE_REFL; LE_0; state_INFO.ri_accfupds; K_THM;
-                    LE] THEN
-    REPEAT GEN_TAC THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[PAIR_EQ] THEN
-    REPEAT STRIP_TAC THEN RVEQ_TAC THEN
-    ASM_REWRITE_TAC[state_INFO.ri_accfupds; io_events_mono_refl];
-    ALL_TAC] THEN
-  SUBGOAL_THEN `adj_clock 1 0 (dec_clock s) = s:(FFI)state /\
-                (!clk. adj_clock 1 0 (state_clock_fupd (K clk) (dec_clock s)) =
-                       state_clock_fupd (K (clk + 1)) s) /\
-                state_clock (dec_clock s) = state_clock s - 1 /\
-                state_ffi (dec_clock s) = state_ffi s /\
-                state_refs (dec_clock s) = state_refs s /\
-                state_next_type_stamp (dec_clock s) = state_next_type_stamp s /\
-                state_next_exn_stamp (dec_clock s) = state_next_exn_stamp s`
-    (fun th -> REWRITE_TAC[th]) THENL
-   [REWRITE_TAC[adj_clock_def; dec_clock_def; state_INFO.ri_fupdfupds; K_o_THM;
-                state_INFO.ri_accfupds; K_THM; ADD_CLAUSES; SUB_0] THEN
-    ASM_SIMP_TAC[ARITH_RULE `~(n = 0) ==> n - 1 + 1 = n`; with_same_clock];
-    ALL_TAC] THEN
-  DISCH_TAC THEN MAP_EVERY X_GEN_TAC [`s1:(FFI)state`; `r1:(A,B)result`] THEN
-  DISCH_TAC THEN FIRST_X_ASSUM(MP_TAC o SPECL [`s1:(FFI)state`; `r1:(A,B)result`]) THEN
-  ASM_REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
-  REPEAT CONJ_TAC THENL [EVPROPSAUX_ARITH_TAC; ALL_TAC] THEN
-  X_GEN_TAC `clk:num` THEN REWRITE_TAC[state_INFO.ri_accfupds; K_THM] THEN
-  ASM_CASES_TAC `clk = 0` THEN ASM_REWRITE_TAC[] THENL
-   [REWRITE_TAC[PAIR_EQ] THEN REPEAT GEN_TAC THEN
-    DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
-    ASM_REWRITE_TAC[state_INFO.ri_accfupds; LE_0] THEN EVPROPSAUX_ARITH_TAC;
-    ALL_TAC] THEN
-  MAP_EVERY X_GEN_TAC [`s2:(FFI)state`; `r2:(A,B)result`] THEN DISCH_TAC THEN
-  FIRST_X_ASSUM(MP_TAC o SPECL [`clk - 1`; `s2:(FFI)state`; `r2:(A,B)result`]) THEN
-  ASM_SIMP_TAC[ARITH_RULE `~(n = 0) ==> n - 1 + 1 = n`] THEN
-  SUBGOAL_THEN `clk - 1 - (state_clock (s:(FFI)state) - 1 - state_clock (s1:(FFI)state)) =
-                clk - (state_clock s - state_clock s1) /\
-                (clk - 1 >= state_clock s - 1 - state_clock s1 <=>
-                 clk >= state_clock s - state_clock s1) /\
-                (clk - 1 <= state_clock s - 1 <=> clk <= state_clock s)`
-    (fun th -> REWRITE_TAC[th]) THENL
-   [EVPROPSAUX_ARITH_TAC; MESON_TAC[]]);;
+  REPEAT GEN_TAC THEN SIMP[is_clock_io_mono_def; dec_clock_def; adj_clock_def; with_same_clock] THEN
+  REPEAT (CASE_TAC ORELSE DISCH_TAC ORELSE GEN_TAC ORELSE
+          CHANGED_TAC (RFS[ARITH_ss; with_same_clock; SUB_ADD])) THEN
+  FIRST_X_ASSUM (QSPEC_THEN "clk - 1" MP_TAC) THEN SIMP[ARITH_ss; SUB_ADD] THEN
+  REPEAT (CASE_TAC ORELSE DISCH_TAC ORELSE GEN_TAC ORELSE
+          CHANGED_TAC (RFS[ARITH_ss; SUB_ADD; EVPROPSAUX_check_arith])) THEN
+  FS[ARITH_ss; EVPROPSAUX_check_arith]);;
 
 let dec_inc_clock = prove
  (`!s:(FFI)state. dec_clock (adj_clock 1 0 s) = s`,
@@ -500,16 +464,9 @@ let do_app_refs_length = prove
  (`!(refs_ffi:(v store_v)list#(FFI)ffi_state) op vs res.
      do_app refs_ffi op vs = SOME res ==>
      LENGTH (FST refs_ffi) <= LENGTH (FST (FST res))`,
-  REPEAT GEN_TAC THEN
-  MP_TAC(ISPEC `refs_ffi:(v store_v)list#(FFI)ffi_state` PAIR_SURJECTIVE) THEN
-  DISCH_THEN(X_CHOOSE_THEN `s0:(v store_v)list`
-    (X_CHOOSE_THEN `t0:(FFI)ffi_state` SUBST1_TAC)) THEN
-  MP_TAC(ISPEC `res:((v store_v)list#(FFI)ffi_state)#(v,v)result` PAIR_SURJECTIVE) THEN
-  DISCH_THEN(X_CHOOSE_THEN `st:(v store_v)list#(FFI)ffi_state`
-    (X_CHOOSE_THEN `r:(v,v)result` SUBST1_TAC)) THEN
-  MP_TAC(ISPEC `st:(v store_v)list#(FFI)ffi_state` PAIR_SURJECTIVE) THEN
-  DISCH_THEN(X_CHOOSE_THEN `s1:(v store_v)list`
-    (X_CHOOSE_THEN `t1:(FFI)ffi_state` SUBST1_TAC)) THEN
+  REPEAT GEN_TAC THEN PAIR_CASES_ON `refs_ffi:(v store_v)list#(FFI)ffi_state` THEN
+  PAIR_CASES_ON `res:((v store_v)list#(FFI)ffi_state)#(v,v)result` THEN
+  PAIR_CASES_ON `res0:(v store_v)list#(FFI)ffi_state` THEN
   REWRITE_TAC[FST; do_app_cases] THEN
   RW[] THEN GVS([thunk_op_def; store_alloc_def; store_assign_def; sum_case_eq;
                  case_eq "ffi_result"; case_eq "thunk_op"; case_eq "thunk_mode"] @
@@ -766,50 +723,24 @@ let is_clock_io_mono_extra = prove
      ==> f s = (s',r) /\ ~(r = Rerr (Rabort Rtimeout_error))
      ==> f (state_clock_fupd (K (state_clock s + extra)) s) =
          (state_clock_fupd (K (state_clock s' + extra)) s',r)`,
-  REPEAT GEN_TAC THEN
-  DISCH_THEN(MP_TAC o SPEC `state_clock_fupd (K (state_clock s + extra)) (s:(FFI)state)`) THEN
-  REWRITE_TAC[EVPROPSAUX_icim_ALT] THEN
-  MP_TAC(ISPEC `(f:(FFI)state->(FFI)state#(A,B)result)
-                  (state_clock_fupd (K (state_clock s + extra)) s)` PAIR_SURJECTIVE) THEN
-  DISCH_THEN(X_CHOOSE_THEN `s1:(FFI)state` (X_CHOOSE_THEN `r1:(A,B)result` ASSUME_TAC)) THEN
-  DISCH_THEN(MP_TAC o SPECL [`s1:(FFI)state`; `r1:(A,B)result`]) THEN ASM_REWRITE_TAC[] THEN
-  STRIP_TAC THEN STRIP_TAC THEN
-  FIRST_X_ASSUM(MP_TAC o SPECL [`state_clock (s:(FFI)state)`; `s':(FFI)state`;
-                                `r:(A,B)result`]) THEN
-  ASM_REWRITE_TAC[state_INFO.ri_fupdfupds; K_o_THM; with_same_clock;
-                  state_INFO.ri_accfupds; K_THM; LE_ADD] THEN
-  STRIP_TAC THEN RULE_ASSUM_TAC(REWRITE_RULE[state_INFO.ri_accfupds; K_THM]) THEN
-  SUBGOAL_THEN `r:(A,B)result = r1 /\
-                s' = state_clock_fupd (K (state_clock (s:(FFI)state) -
-                        ((state_clock s + extra) - state_clock (s1:(FFI)state)))) s1 /\
-                state_clock s >= (state_clock s + extra) - state_clock s1`
-    STRIP_ASSUME_TAC THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
-  ASM_REWRITE_TAC[PAIR_EQ; state_INFO.ri_fupdfupds; K_o_THM; state_INFO.ri_accfupds;
-                  K_THM] THEN
-  SUBGOAL_THEN `state_clock (s:(FFI)state) - ((state_clock s + extra) -
-                  state_clock (s1:(FFI)state)) + extra = state_clock s1`
-    SUBST1_TAC THENL [EVPROPSAUX_ARITH_TAC; REWRITE_TAC[with_same_clock]]);;
+  REPEAT GEN_TAC THEN DISCH_TAC THEN
+  FIRST_X_ASSUM (QSPEC_THEN "state_clock_fupd (K (state_clock s + extra)) s" MP_TAC) THEN
+  SIMP[is_clock_io_mono_def] THEN CASE_TAC THEN REPEAT (DISCH_TAC ORELSE GEN_TAC) THEN FS[] THEN
+  FIRST_X_ASSUM (QSPEC_THEN "state_clock s" MP_TAC) THEN FS[with_same_clock] THEN
+  REPEAT DISCH_TAC THEN
+  FS[with_same_clock; ARITH_RULE `!S e X. X <= S + e /\ S >= (S + e) - X ==>
+                                          S - ((S + e) - X) + e = X`]);;
 
 let is_clock_io_mono_extra_mono = prove
  (`!(f:(FFI)state->(FFI)state#(A,B)result) s extra.
      (!s. is_clock_io_mono f s)
      ==> io_events_mono (state_ffi (FST (f s)))
            (state_ffi (FST (f (state_clock_fupd (K (state_clock s + extra)) s))))`,
-  REPEAT GEN_TAC THEN
-  DISCH_THEN(MP_TAC o SPEC `state_clock_fupd (K (state_clock s + extra)) (s:(FFI)state)`) THEN
-  REWRITE_TAC[EVPROPSAUX_icim_ALT] THEN
-  MP_TAC(ISPEC `(f:(FFI)state->(FFI)state#(A,B)result)
-                  (state_clock_fupd (K (state_clock s + extra)) s)` PAIR_SURJECTIVE) THEN
-  DISCH_THEN(X_CHOOSE_THEN `s1:(FFI)state` (X_CHOOSE_THEN `r1:(A,B)result` ASSUME_TAC)) THEN
-  MP_TAC(ISPEC `(f:(FFI)state->(FFI)state#(A,B)result) s` PAIR_SURJECTIVE) THEN
-  DISCH_THEN(X_CHOOSE_THEN `s2:(FFI)state` (X_CHOOSE_THEN `r2:(A,B)result` ASSUME_TAC)) THEN
-  DISCH_THEN(MP_TAC o SPECL [`s1:(FFI)state`; `r1:(A,B)result`]) THEN
-  ASM_REWRITE_TAC[FST] THEN
-  DISCH_THEN(MP_TAC o SPECL [`state_clock (s:(FFI)state)`; `s2:(FFI)state`;
-                             `r2:(A,B)result`] o last o CONJUNCTS) THEN
-  ASM_REWRITE_TAC[state_INFO.ri_fupdfupds; K_o_THM; with_same_clock;
-                  state_INFO.ri_accfupds; K_THM; LE_ADD] THEN
-  MESON_TAC[]);;
+  REPEAT GEN_TAC THEN DISCH_TAC THEN
+  FIRST_X_ASSUM (QSPEC_THEN "state_clock_fupd (K (state_clock s + extra)) s" MP_TAC) THEN
+  SIMP[is_clock_io_mono_def] THEN CASE_TAC THEN REPEAT (DISCH_TAC ORELSE GEN_TAC) THEN FS[] THEN
+  FIRST_X_ASSUM (QSPEC_THEN "state_clock s" MP_TAC) THEN FS[with_same_clock] THEN
+  CASE_TAC THEN SIMP[]);;
 
 (* HOL4 mk_extra_lemmas / prove_extra: the rule applied to each conjunct of *)
 (* is_clock_io_mono_evaluate                                                 *)
@@ -890,44 +821,8 @@ let evaluate_cons = prove
            (s'',Rval vs') -> (s'',Rval (APPEND vs vs'))
          | err -> err)
     | err -> err`,
-  REPEAT GEN_TAC THEN
-  MP_TAC(ISPEC `evaluate (s:(FFI)state) env [e]` PAIR_SURJECTIVE) THEN
-  DISCH_THEN(X_CHOOSE_THEN `s1:(FFI)state` (X_CHOOSE_THEN `r1:(v list,v)result`
-    ASSUME_TAC)) THEN
-  STRUCT_CASES_TAC(ISPEC `es:exp list` list_CASES) THEN
-  ASM_REWRITE_TAC[pair_CASE] THENL
-   [CASES_ON `r1:(v list,v)result` THEN
-    CASE_REWRITE_TAC[evaluate_nil; pair_CASE; APPEND_NIL];
-    ONCE_REWRITE_TAC[evaluate_def] THEN ASM_REWRITE_TAC[pair_CASE] THEN
-    CASES_ON `r1:(v list,v)result` THEN CASE_REWRITE_TAC[] THEN
-    FIRST_ASSUM(MP_TAC o MATCH_MP evaluate_sing) THEN STRIP_TAC THEN
-    ASM_REWRITE_TAC[HD; APPEND] THEN
-    MP_TAC(ISPEC `evaluate (s1:(FFI)state) env (CONS h t)` PAIR_SURJECTIVE) THEN
-    DISCH_THEN(X_CHOOSE_THEN `s2:(FFI)state` (X_CHOOSE_THEN `r2:(v list,v)result`
-      SUBST1_TAC)) THEN
-    CASES_ON `r2:(v list,v)result` THEN CASE_REWRITE_TAC[pair_CASE]]);;
-
-(* split the first evaluation in the goal into a state and a result, and   *)
-(* the result into its two cases                                           *)
-let EVPROPSAUX_split_counter = ref 0;;
-let EVPROPSAUX_EVAL_SPLIT_TAC : tactic = fun (asl,w as gl) ->
-  let is_ev t =
-    let h,args = strip_comb t in
-    is_const h &&
-    (match fst(dest_const h),length args with
-       ("evaluate",3) | ("evaluate_decs",3) | ("evaluate_match",5) -> true
-     | _ -> false) &&
-    free_in t w in
-  let t = find_term is_ev w in
-  let sty,rty = match dest_type (type_of t) with (_,[a;b]) -> a,b | _ -> failwith "pair" in
-  let avoid = itlist (union o frees o concl o snd) asl (frees w) in
-  let n = (incr EVPROPSAUX_split_counter; string_of_int !EVPROPSAUX_split_counter) in
-  let sv = variant avoid (mk_var("st_"^n,sty)) in
-  let rv = variant (sv::avoid) (mk_var("res_"^n,rty)) in
-  (MP_TAC(ISPEC t PAIR_SURJECTIVE) THEN
-   DISCH_THEN(X_CHOOSE_THEN sv (X_CHOOSE_THEN rv
-     (fun th -> SUBST1_TAC th THEN ASSUME_TAC th))) THEN
-   CASES_ON rv THEN CASE_REWRITE_TAC[]) gl;;
+  REPEAT GEN_TAC THEN CASES_ON `es:exp list` THEN SIMP[evaluate_def] THEN
+  REPEAT TOP_CASE_TAC THEN IMP_RES_TAC evaluate_sing THEN FS[]);;
 
 let evaluate_append = prove
  (CASE_TERM `!(s:(FFI)state) env xs ys.
@@ -946,11 +841,10 @@ let evaluate_append = prove
            (s'',Rval vs') -> (s'',Rval (APPEND vs vs'))
          | err -> err)
     | err -> err`) (fun th -> REWRITE_TAC[th]) THEN
-  LIST_INDUCT_TAC THEN REPEAT GEN_TAC THENL
-   [REWRITE_TAC[APPEND; evaluate_nil] THEN CASE_REWRITE_TAC[APPEND] THEN
-    REPEAT EVPROPSAUX_EVAL_SPLIT_TAC;
-    REWRITE_TAC[APPEND] THEN ONCE_REWRITE_TAC[evaluate_cons] THEN ASM_REWRITE_TAC[] THEN
-    REPEAT EVPROPSAUX_EVAL_SPLIT_TAC THEN REWRITE_TAC[APPEND_ASSOC]]);;
+  LIST_INDUCT_TAC THEN SIMP[APPEND] THEN REPEAT GEN_TAC THENL
+   [REPEAT TOP_CASE_TAC;
+    ONCE_REWRITE_TAC[evaluate_cons] THEN ASM_REWRITE_TAC[] THEN EVERY_CASE_TAC THEN
+    FS[APPEND_ASSOC]]);;
 
 let evaluate_decs_nil = prove
  (`!(s:(FFI)state) env.
@@ -966,13 +860,8 @@ let evaluate_decs_cons = prove
         (match evaluate_decs s1 (extend_dec_env env1 env) ds with
            (s2,r) -> (s2,combine_dec_result env1 r))
     | err -> err`,
-  REPEAT GEN_TAC THEN STRUCT_CASES_TAC(ISPEC `ds:dec list` list_CASES) THENL
-   [REWRITE_TAC[evaluate_decs_nil] THEN CASE_REWRITE_TAC[] THEN
-    REPEAT EVPROPSAUX_EVAL_SPLIT_TAC THEN
-    REWRITE_TAC[combine_dec_result_def] THEN
-    CASE_REWRITE_TAC[sem_env_INFO.ri_accessors; nsAppend_nsEmpty; unchanged_env];
-    ONCE_REWRITE_TAC[evaluate_decs_def] THEN REWRITE_TAC[] THEN
-    REPEAT EVPROPSAUX_EVAL_SPLIT_TAC]);;
+  REPEAT GEN_TAC THEN CASES_ON `ds:dec list` THEN SIMP[evaluate_decs_def] THEN
+  REPEAT TOP_CASE_TAC THEN SIMP[combine_dec_result_def; sem_env_component_equality]);;
 
 let evaluate_decs_append = prove
  (CASE_TERM `!ds1 (s:(FFI)state) env ds2.
@@ -982,22 +871,11 @@ let evaluate_decs_append = prove
         (match evaluate_decs s1 (extend_dec_env env1 env) ds2 with
            (s2,r) -> (s2,combine_dec_result env1 r))
     | (s1,Rerr v7) -> (s1,Rerr v7)`,
-  LIST_INDUCT_TAC THEN REPEAT GEN_TAC THENL
-   [REWRITE_TAC[APPEND; evaluate_decs_nil] THEN CASE_REWRITE_TAC[] THEN
-    REWRITE_TAC[extend_dec_env_def; sem_env_INFO.ri_accessors; nsAppend_nsEmpty;
-                unchanged_env] THEN
-    REPEAT EVPROPSAUX_EVAL_SPLIT_TAC THEN
-    REWRITE_TAC[combine_dec_result_def] THEN
-    CASE_REWRITE_TAC[sem_env_INFO.ri_accessors; nsAppend_nsEmpty; unchanged_env];
-    REWRITE_TAC[APPEND] THEN ONCE_REWRITE_TAC[evaluate_decs_cons] THEN
-    ASM_REWRITE_TAC[] THEN REPEAT EVPROPSAUX_EVAL_SPLIT_TAC THEN
-    REWRITE_TAC[combine_dec_result_def] THEN CASE_REWRITE_TAC[] THEN
-    RULE_ASSUM_TAC(REWRITE_RULE[extend_dec_env_def; sem_env_INFO.ri_accessors;
-                                nsAppend_assoc]) THEN
-    ASM_REWRITE_TAC[extend_dec_env_def; sem_env_INFO.ri_accessors; nsAppend_assoc] THEN
-    REPEAT EVPROPSAUX_EVAL_SPLIT_TAC THEN
-    REWRITE_TAC[combine_dec_result_def] THEN
-    CASE_REWRITE_TAC[sem_env_INFO.ri_accessors; nsAppend_assoc]]);;
+  LIST_INDUCT_TAC THEN RW[APPEND] THENL
+   [RW[extend_dec_env_def; combine_dec_result_def] THEN REPEAT CASE_TAC THEN
+    SIMP[sem_env_component_equality];
+    ONCE_REWRITE_TAC[evaluate_decs_cons] THEN SIMP[] THEN
+    FS[combine_dec_result_def; extend_dec_env_def] THEN REPEAT CASE_TAC THEN FS[nsAppend_assoc]]);;
 
 let evaluate_match_list_result = prove
  (`!(s:(FFI)state) e v p er s' r.
@@ -1107,23 +985,9 @@ let evaluate_decs_ffi_mono_clock = prove
      io_events_mono (state_ffi (FST (evaluate_decs (state_clock_fupd (K k1) s) e p)))
        (state_ffi (FST (evaluate_decs (state_clock_fupd (K k2) s) e p)))`,
   REPEAT STRIP_TAC THEN
-  MP_TAC(ISPECL [`state_clock_fupd (K k2) (s:(FFI)state)`; `e:v sem_env`; `p:dec list`]
-                is_clock_io_mono_evaluate_decs) THEN
-  REWRITE_TAC[EVPROPSAUX_icim_ALT] THEN
-  MP_TAC(ISPEC `evaluate_decs (state_clock_fupd (K k2) (s:(FFI)state)) e p`
-           PAIR_SURJECTIVE) THEN
-  DISCH_THEN(X_CHOOSE_THEN `s2:(FFI)state` (X_CHOOSE_THEN `r2:(v sem_env,v)result`
-    ASSUME_TAC)) THEN
-  MP_TAC(ISPEC `evaluate_decs (state_clock_fupd (K k1) (s:(FFI)state)) e p`
-           PAIR_SURJECTIVE) THEN
-  DISCH_THEN(X_CHOOSE_THEN `s1:(FFI)state` (X_CHOOSE_THEN `r1:(v sem_env,v)result`
-    ASSUME_TAC)) THEN
-  DISCH_THEN(MP_TAC o SPECL [`s2:(FFI)state`; `r2:(v sem_env,v)result`]) THEN
-  ASM_REWRITE_TAC[FST] THEN
-  DISCH_THEN(MP_TAC o SPECL [`k1:num`; `s1:(FFI)state`; `r1:(v sem_env,v)result`] o
-             last o CONJUNCTS) THEN
-  ASM_REWRITE_TAC[state_INFO.ri_fupdfupds; K_o_THM; state_INFO.ri_accfupds; K_THM] THEN
-  MESON_TAC[]);;
+  QSPECL_THEN ["state_clock_fupd (K k2) s"; "e"; "p"] MP_TAC is_clock_io_mono_evaluate_decs THEN
+  SIMP[is_clock_io_mono_def] THEN CASE_TAC THEN STRIP_TAC THEN
+  FIRST_X_ASSUM (QSPEC_THEN "k1" MP_TAC) THEN CASE_TAC THEN FS[]);;
 
 (* HOL4: evaluate_state_unchanged is commented out in the script (no longer *)
 (* true because of Eval)                                                     *)
@@ -1221,7 +1085,7 @@ let EVPROPSAUX_ACC_EQ_TAC (acc:string) : tactic = fun (asl,w as gl) ->
       let c = mk_const(acc,[]) in
       mk_eq(mk_icomb(c,t),mk_icomb(c,a))) runs in
   MAP_EVERY (fun e -> SUBGOAL_THEN e ASSUME_TAC THENL
-                        [REWRITE_TAC EVPROPSAUX_REC_RW THEN EVPROPSAUX_ARITH_TAC;
+                        [REWRITE_TAC EVPROPSAUX_REC_RW THEN DECIDE_TAC;
                          ALL_TAC]) eqs gl;;
 
 (* the induction hypotheses whose antecedents follow from the assumptions   *)
@@ -1244,10 +1108,12 @@ let EVPROPSAUX_GOAL_EVAL_TAC thl : tactic =
   ONCE_REWRITE_TAC[full_evaluate_def] THEN
   REPEAT(CHANGED_TAC(ASM_REWRITE_TAC (EVPROPSAUX_REC_RW @ thl) THEN CASE_REWRITE_TAC[]));;
 
+let EVPROPSAUX_add_eq_self = ARITH_RULE `!m n. m + n = m <=> n = 0`;;
+
 let EVPROPSAUX_STAMP_CONJ_TAC acc : tactic =
   TRY DISCH_TAC THEN RULE_ASSUM_TAC(REWRITE_RULE EVPROPSAUX_REC_RW) THEN
   RULE_ASSUM_TAC(CONV_RULE NUM_REDUCE_CONV o
-                 REWRITE_RULE[ARITH_RULE `!m n. m + n = m <=> n = 0`; LENGTH_EQ_NIL]) THEN
+                 REWRITE_RULE[EVPROPSAUX_add_eq_self; LENGTH_EQ_NIL]) THEN
   TRY(FIRST_ASSUM(CONTR_TAC o check (fun th -> concl th = `F`))) THEN RVEQ_TAC THEN
   EVPROPSAUX_ACC_EQ_TAC acc THEN EVPROPSAUX_IH_DISCH_TAC THEN
   EVPROPSAUX_GOAL_EVAL_TAC [do_eval_res_def; build_tdefs_def; LENGTH; ADD_CLAUSES; ALL];;
@@ -1416,21 +1282,10 @@ let is_clock_io_mono_set_clock = prove
      is_clock_io_mono f s
      ==> f s = (s',r) /\ ~(r = Rerr (Rabort Rtimeout_error))
      ==> ?ck0. f (state_clock_fupd (K ck0) s) = (state_clock_fupd (K ck1) s',r)`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[EVPROPSAUX_icim_ALT] THEN
-  DISCH_TAC THEN STRIP_TAC THEN
-  FIRST_X_ASSUM(MP_TAC o SPECL [`s':(FFI)state`; `r:(A,B)result`]) THEN
-  ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
-  EXISTS_TAC `ck1 + (state_clock (s:(FFI)state) - state_clock (s':(FFI)state))` THEN
-  MP_TAC(ISPEC `(f:(FFI)state->(FFI)state#(A,B)result)
-                  (state_clock_fupd (K (ck1 + (state_clock s -
-                                               state_clock (s':(FFI)state)))) s)`
-           PAIR_SURJECTIVE) THEN
-  DISCH_THEN(X_CHOOSE_THEN `t:(FFI)state` (X_CHOOSE_THEN `q:(A,B)result`
-    ASSUME_TAC)) THEN
-  FIRST_X_ASSUM(MP_TAC o SPECL [`ck1 + (state_clock (s:(FFI)state) -
-                                        state_clock (s':(FFI)state))`;
-                                `t:(FFI)state`; `q:(A,B)result`]) THEN
-  ASM_REWRITE_TAC[GE; ARITH_RULE `b <= a + b`; ADD_SUB] THEN MESON_TAC[]);;
+  REPEAT GEN_TAC THEN SIMP[is_clock_io_mono_def] THEN REPEAT STRIP_TAC THEN RFS[] THEN
+  FIRST_X_ASSUM (QSPEC_THEN "ck1 + (state_clock s - state_clock s')" MP_TAC) THEN CASE_TAC THEN
+  SIMP[ARITH_ss; ADD_SUB] THEN STRIP_TAC THEN
+  QEXISTS_TAC "ck1 + (state_clock s - state_clock s')" THEN RFS[]);;
 
 (* HOL4 evaluate_set_clock_lemmas *)
 let EVPROPSAUX_set_clock_lemmas =
@@ -1458,18 +1313,9 @@ let is_clock_io_mono_minimal = prove
          state_clock s > k
      ==> ?s''. f (state_clock_fupd (K k) s) = (s'',Rerr (Rabort Rtimeout_error)) /\
                io_events_mono (state_ffi s'') (state_ffi s')`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[EVPROPSAUX_icim_ALT] THEN
-  DISCH_TAC THEN STRIP_TAC THEN
-  FIRST_X_ASSUM(MP_TAC o SPECL [`s':(FFI)state`; `r:(A,B)result`]) THEN
-  ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
-  MP_TAC(ISPEC `(f:(FFI)state->(FFI)state#(A,B)result) (state_clock_fupd (K k) s)`
-           PAIR_SURJECTIVE) THEN
-  DISCH_THEN(X_CHOOSE_THEN `t:(FFI)state` (X_CHOOSE_THEN `q:(A,B)result`
-    ASSUME_TAC)) THEN
-  FIRST_X_ASSUM(MP_TAC o SPECL [`k:num`; `t:(FFI)state`; `q:(A,B)result`]) THEN
-  ASM_REWRITE_TAC[SUB_0; GE] THEN
-  ASM_SIMP_TAC[ARITH_RULE `s > k ==> ~(s <= k) /\ k <= s`; PAIR_EQ] THEN
-  MESON_TAC[]);;
+  REPEAT GEN_TAC THEN SIMP[is_clock_io_mono_def] THEN REPEAT STRIP_TAC THEN RFS[] THEN
+  FIRST_X_ASSUM (QSPEC_THEN "k" MP_TAC) THEN CASE_TAC THEN SIMP[ARITH_ss] THEN STRIP_TAC THEN
+  RFS[ARITH_ss]);;
 
 (* HOL4 evaluate_minimal_lemmas *)
 let EVPROPSAUX_minimal_lemmas =
@@ -1884,22 +1730,7 @@ let evaluateProps_Apps_append = prove
  (`!xs ys f. Apps f (APPEND xs ys) = Apps (Apps f xs) ys`,
   LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[APPEND; ast_Apps_def]);;
 
-(* App with two arguments: the evaluation of the arguments (right to left) *)
-let EVPROPSAUX_App2_err1 = prove
- (`!(st:(FFI)state) env op g h s1 e.
-     evaluate st env [h] = (s1,Rerr e) ==> evaluate st env [App op [g; h]] = (s1,Rerr e)`,
-  REPEAT STRIP_TAC THEN GEN_REWRITE_TAC LAND_CONV [evaluate_def] THEN
-  REWRITE_TAC[REVERSE; APPEND] THEN ONCE_REWRITE_TAC[evaluate_cons] THEN
-  REPEAT(CHANGED_TAC(ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[])));;
-
-let EVPROPSAUX_App2_err2 = prove
- (`!(st:(FFI)state) env op g h s1 v s2 e.
-     evaluate st env [h] = (s1,Rval v) /\ evaluate s1 env [g] = (s2,Rerr e)
-     ==> evaluate st env [App op [g; h]] = (s2,Rerr e)`,
-  REPEAT STRIP_TAC THEN GEN_REWRITE_TAC LAND_CONV [evaluate_def] THEN
-  REWRITE_TAC[REVERSE; APPEND] THEN ONCE_REWRITE_TAC[evaluate_cons] THEN
-  REPEAT(CHANGED_TAC(ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[])));;
-
+(* App Opapp with two arguments: the evaluation of the arguments (right to left) *)
 let EVPROPSAUX_App2_Opapp = prove
  (CASE_TERM `!(st:(FFI)state) env g h s1 v1 s2 v2.
      evaluate st env [h] = (s1,Rval [v1]) /\ evaluate s1 env [g] = (s2,Rval [v2])
@@ -1918,23 +1749,10 @@ let evaluate_Apps_Rerr = prove
  (`!xs f (st:(FFI)state) env s1 e.
      evaluate st env xs = (s1,Rerr e) ==>
      evaluate st env [Apps f (REVERSE xs)] = (s1,Rerr e)`,
-  LIST_INDUCT_TAC THENL
-   [REWRITE_TAC[evaluate_nil; PAIR_EQ] THEN CASE_REWRITE_TAC[];
-    REPEAT GEN_TAC THEN DISCH_THEN(MP_TAC o ONCE_REWRITE_RULE[evaluate_cons]) THEN
-    REWRITE_TAC[REVERSE; evaluateProps_Apps_append; ast_Apps_def] THEN
-    MP_TAC(ISPEC `evaluate (st:(FFI)state) env [h]` PAIR_SURJECTIVE) THEN
-    DISCH_THEN(X_CHOOSE_THEN `s2:(FFI)state` (X_CHOOSE_THEN `r2:(v list,v)result`
-      ASSUME_TAC)) THEN
-    ASM_REWRITE_TAC[] THEN CASES_ON `r2:(v list,v)result` THEN CASE_REWRITE_TAC[] THENL
-     [MP_TAC(ISPEC `evaluate (s2:(FFI)state) env t` PAIR_SURJECTIVE) THEN
-      DISCH_THEN(X_CHOOSE_THEN `s3:(FFI)state` (X_CHOOSE_THEN `r3:(v list,v)result`
-        ASSUME_TAC)) THEN
-      ASM_REWRITE_TAC[] THEN CASES_ON `r3:(v list,v)result` THEN
-      CASE_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN
-      MATCH_MP_TAC EVPROPSAUX_App2_err2 THEN
-      MAP_EVERY EXISTS_TAC [`s2:(FFI)state`; `a:v list`] THEN
-      ASM_REWRITE_TAC[] THEN FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_MESON_TAC[];
-      STRIP_TAC THEN MATCH_MP_TAC EVPROPSAUX_App2_err1 THEN ASM_REWRITE_TAC[]]]);;
+  LIST_INDUCT_TAC THEN GVS[evaluate_def] THEN
+  SIMP[ONCE evaluate_cons; evaluateProps_Apps_append; ast_Apps_def; REVERSE] THEN
+  REPEAT GEN_TAC THEN GVS[evaluate_def] THEN REPEAT TOP_CASE_TAC THEN GVS[] THEN
+  RES_TAC THEN GVS[]);;
 
 let EVPROPSAUX_nsAppend_alist_SNOC = prove
  (`!(a:(N#V)list) n v (e:(M,N,V)namespace).
@@ -2050,26 +1868,10 @@ let evaluate_Apps_f_err = prove
      evaluate st env xs = (s1,Rval vs) /\
      evaluate s1 env [f] = (s2,Rerr r) ==>
      evaluate st env [Apps f (REVERSE xs)] = (s2,Rerr r)`,
-  MATCH_MP_TAC SNOC_INDUCT THEN CONJ_TAC THENL
-   [REWRITE_TAC[evaluate_nil; PAIR_EQ; REVERSE; ast_Apps_def] THEN MESON_TAC[];
-    ALL_TAC] THEN
-  X_GEN_TAC `l:exp list` THEN DISCH_TAC THEN X_GEN_TAC `y:exp` THEN
-  REPEAT GEN_TAC THEN REWRITE_TAC[SNOC_APPEND; evaluate_append; REVERSE_APPEND; REVERSE;
-                                  APPEND; ast_Apps_def] THEN
-  MP_TAC(ISPEC `evaluate (st:(FFI)state) env l` PAIR_SURJECTIVE) THEN
-  DISCH_THEN(X_CHOOSE_THEN `t1:(FFI)state` (X_CHOOSE_THEN `q1:(v list,v)result`
-    (fun th -> SUBST1_TAC th THEN ASSUME_TAC th))) THEN
-  CASES_ON `q1:(v list,v)result` THEN CASE_REWRITE_TAC[PAIR_EQ] THEN
-  MP_TAC(ISPEC `evaluate (t1:(FFI)state) env [y]` PAIR_SURJECTIVE) THEN
-  DISCH_THEN(X_CHOOSE_THEN `t2:(FFI)state` (X_CHOOSE_THEN `q2:(v list,v)result`
-    ASSUME_TAC)) THEN
-  ASM_REWRITE_TAC[] THEN CASES_ON `q2:(v list,v)result` THEN CASE_REWRITE_TAC[PAIR_EQ] THEN
-  STRIP_TAC THEN RVEQ_TAC THEN
-  FIRST_X_ASSUM(MP_TAC o SPECL [`a:v list`; `st:(FFI)state`; `envs1:A`;
-                                `App Opapp [f; y]`; `t1:(FFI)state`; `s2:(FFI)state`]) THEN
-  ASM_REWRITE_TAC[] THEN DISCH_THEN MATCH_MP_TAC THEN
-  MATCH_MP_TAC EVPROPSAUX_App2_err2 THEN
-  MAP_EVERY EXISTS_TAC [`s1:(FFI)state`; `a':v list`] THEN ASM_REWRITE_TAC[]);;
+  MATCH_MP_TAC SNOC_INDUCT THEN GVS[evaluate_def; ast_Apps_def] THEN
+  SIMP[evaluate_append; SNOC_APPEND] THEN GVS(all_case_eqs()) THEN RW[] THEN
+  GVS[evaluateProps_Apps_append; ast_Apps_def; REVERSE_APPEND] THEN
+  LAST_X_ASSUM IRULE THEN GVS[evaluate_def]);;
 
 let evaluate_Apps_Funs_timeout = prove
  (`!l x ns vs (st:(FFI)state) s1 s2 env env1 e.

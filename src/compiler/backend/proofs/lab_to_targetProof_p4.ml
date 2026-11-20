@@ -960,12 +960,6 @@ let LTTP4AUX_get_shmem_info_shift = prove
   ASM_REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[PAIR_EQ] THEN
   FIRST_X_ASSUM(SUBST1_TAC o SYM) THEN REWRITE_TAC[]);;
 
-let LTTP4AUX_val_word_add_lt = prove
- (`!(pc:A word) n. val pc + n < dimword (:A) ==> val (word_add pc (word n)) = val pc + n`,
-  REPEAT STRIP_TAC THEN REWRITE_TAC[VAL_WORD_ADD; VAL_WORD; GSYM dimword_def] THEN
-  SUBGOAL_THEN `n < dimword (:A)` ASSUME_TAC THENL [ASM_ARITH_TAC; ALL_TAC] THEN
-  ASM_SIMP_TAC[MOD_LT]);;
-
 let LTTP4AUX_val_add_eq = prove
  (`!(pc:A word) n e. n < dimword (:A) /\ val (word_add pc (word n)) = val pc + e ==> n = e`,
   REPEAT GEN_TAC THEN REWRITE_TAC[VAL_WORD_ADD; VAL_WORD; GSYM dimword_def] THEN
@@ -1497,7 +1491,7 @@ let IMP_state_rel_make_init = prove
                       (DROP i (machine_config_ffi_entry_pcs mc_conf)) 0 = SOME index`
         ASSUME_TAC THENL
        [ONCE_REWRITE_TAC[GSYM find_index_MAP_w2n] THEN
-        ASM_SIMP_TAC[LTTP4AUX_val_word_add_lt; MAP_DROP] THEN
+        ASM_SIMP_TAC[MISC3AUX_VAL_WORD_ADD_LT; MAP_DROP] THEN
         FIRST_ASSUM(fun th -> if is_eq(concl th) && is_comb(lhand(concl th)) &&
             (try fst(dest_const(fst(strip_comb(lhand(concl th))))) = "MAP" with Failure _ ->
                 false) &&

@@ -80,7 +80,7 @@ let prim_type_sound_invariants = prove
     (* good_ctMap *)
     REWRITE_TAC([good_ctMap_def; ctMap_ok_def; ctMap_has_bools_def; ctMap_has_exns_def;
                  ctMap_has_lists_def; FEVERY_ALL_FLOOKUP; flookup_fupdate_list;
-                 REVERSE_REVERSE; FLOOKUP_EMPTY; TPROPSAUX_option_CASE_NONE_SOME;
+                 REVERSE_REVERSE; FLOOKUP_EMPTY; SPTAUX_optcase_lemma;
                  ALOOKUP_THM] @ STAMPS) THEN
     REPEAT CONJ_TAC THEN
     TPROPSAUX_RW([COND_CASE_EQ; injectivity "char"; prim_type_nums_def; same_type_def;
@@ -103,7 +103,7 @@ let prim_type_sound_invariants = prove
      [REPEAT (MATCH_MP_TAC nsAll2_nsBind THEN CONJ_TAC) THEN
       REWRITE_TAC[nsAll2_nsEmpty] THEN
       REWRITE_TAC([type_ctor_def; flookup_fupdate_list; FLOOKUP_EMPTY; ALOOKUP_THM;
-                   REVERSE; APPEND; TPROPSAUX_option_CASE_NONE_SOME; LENGTH] @ STAMPS) THEN
+                   REVERSE; APPEND; SPTAUX_optcase_lemma; LENGTH] @ STAMPS) THEN
       SIMP_NOASM[injectivity "char"];
       REWRITE_TAC[nsAll2_nsEmpty]];
     (* type_s *)

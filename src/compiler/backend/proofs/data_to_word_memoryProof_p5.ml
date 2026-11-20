@@ -105,14 +105,6 @@ let MP5AUX_SUB_SUB_CONV tm =
       ARITH_RULE(mk_eq(tm,mk_binop `(-):num->num->num` x c))
   | _ -> failwith "MP5AUX_SUB_SUB_CONV";;
 
-let MP5AUX_LT_EXP2 = prove
- (`!a b. 2 EXP a < 2 EXP b <=> a < b`,
-  REWRITE_TAC[LT_EXP] THEN ARITH_TAC);;
-
-let MP5AUX_LE_EXP2 = prove
- (`!a b. 2 EXP a <= 2 EXP b <=> a <= b`,
-  REWRITE_TAC[LE_EXP] THEN ARITH_TAC);;
-
 (* disjoint bit fields: or is plus *)
 let MP5AUX_WORD_OR_DISJ = prove
  (`!a b k. b < 2 EXP k ==>
@@ -124,7 +116,7 @@ let MP5AUX_WORD_OR_DISJ = prove
   REWRITE_TAC[NUMBIT_MUL_2EXP] THEN ASM_CASES_TAC `k <= i` THEN ASM_REWRITE_TAC[] THEN
   MATCH_MP_TAC(TAUT `~b ==> ~(a /\ b)`) THEN MATCH_MP_TAC NOT_BIT_GT_TWOEXP THEN
   MATCH_MP_TAC LTE_TRANS THEN
-  EXISTS_TAC `2 EXP k` THEN ASM_REWRITE_TAC[MP5AUX_LE_EXP2]);;
+  EXISTS_TAC `2 EXP k` THEN ASM_REWRITE_TAC[WORDSAUX_EXP2_LE]);;
 
 (* the header word as a number *)
 let MP5AUX_make_header_word = prove
@@ -163,12 +155,6 @@ let MP5AUX_DIVMOD_EQ = prove
 (* SEP_R_TAC), splitting cond atoms.                                         *)
 (* ------------------------------------------------------------------------- *)
 
-let MP5AUX_STAR_AC = prove
- (`(!p q:(A->bool)->bool. p STAR q = q STAR p) /\
-   (!p q r:(A->bool)->bool. (p STAR q) STAR r = p STAR (q STAR r)) /\
-   (!p q r:(A->bool)->bool. p STAR (q STAR r) = q STAR (p STAR r))`,
-  MESON_TAC[STAR_COMM; STAR_ASSOC]);;
-
 let rec mp5aux_star_atoms tm =
   match tm with
     Comb(Comb(Const("STAR",_),p),q) -> mp5aux_star_atoms p @ mp5aux_star_atoms q
@@ -186,7 +172,7 @@ let MP5AUX_STAR_FRONT_CONV atom tm =
       Comb(Comb(s,_),_) -> s | _ -> failwith "MP5AUX_STAR_FRONT_CONV" in
   let restt = end_itlist (fun a b -> mk_comb(mk_comb(star,a),b)) rest in
   let rhs = mk_comb(mk_comb(star,atom),restt) in
-  if rhs = tm then REFL tm else AC MP5AUX_STAR_AC (mk_eq(tm,rhs));;
+  if rhs = tm then REFL tm else AC LSORTAUX_STAR_AC (mk_eq(tm,rhs));;
 
 (* from |- P s with P a STAR term: the facts of its set_sep_one (a,x) atoms *)
 let MP5AUX_SEP_READ th =
@@ -512,19 +498,9 @@ let MP5AUX_VAL_MOD_BYTES = prove
 (* Small numbers: Smallnum i is iword (&4 * i), the word iword i shifted.    *)
 (* ------------------------------------------------------------------------- *)
 
-let MP5AUX_Smallnum_iword = prove
- (`!i. Smallnum i:A word = iword (&4 * i)`,
-  GEN_TAC THEN REWRITE_TAC[data_to_word_Smallnum_def; WORD_SUB_LZERO; WORD_IWORD] THEN
-  COND_CASES_TAC THENL
-   [SUBGOAL_THEN `&(num_of_int (&4 * (&0 - i:int))) = --(&4 * i:int)` SUBST1_TAC THENL
-     [MATCH_MP_TAC EQ_TRANS THEN EXISTS_TAC `&4 * (&0 - i:int)` THEN CONJ_TAC THENL
-       [MATCH_MP_TAC INT_OF_NUM_OF_INT THEN ASM_ARITH_TAC; INT_ARITH_TAC];
-      REWRITE_TAC[IWORD_INT_NEG; WORD_NEG_NEG]];
-    AP_TERM_TAC THEN MATCH_MP_TAC INT_OF_NUM_OF_INT THEN ASM_ARITH_TAC]);;
-
 let MP5AUX_Smallnum_shl = prove
  (`!i. Smallnum i:A word = word_shl (iword i) 2`,
-  REWRITE_TAC[MP5AUX_Smallnum_iword; WORD_MUL_LSL; IWORD_INT_MUL] THEN
+  REWRITE_TAC[data_to_word_memoryProof_Smallnum_i2w; WORD_MUL_LSL; IWORD_INT_MUL] THEN
   CONV_TAC NUM_REDUCE_CONV THEN REWRITE_TAC[WORD_IWORD]);;
 
 let MP5AUX_NUMBIT_EXP2 = prove
@@ -584,7 +560,7 @@ let MP5AUX_STAR_ASSUM (ttac:thm_tactic) : tactic =
 
 let MP5AUX_ival_Smallnum = prove
  (`!i. good_dimindex(:A) /\ small_int (:A) i ==> ival (Smallnum i:A word) = &4 * i`,
-  GEN_TAC THEN REWRITE_TAC[MP5AUX_Smallnum_iword; small_int_def] THEN
+  GEN_TAC THEN REWRITE_TAC[data_to_word_memoryProof_Smallnum_i2w; small_int_def] THEN
   STRIP_TAC THEN MATCH_MP_TAC IVAL_IWORD THEN
   UNDISCH_TAC `good_dimindex(:A)` THEN REWRITE_TAC[good_dimindex_def] THEN
   STRIP_TAC THEN RULE_ASSUM_TAC(REWRITE_RULE[dimword_def]) THEN
@@ -650,10 +626,6 @@ let MP5AUX_get_addr_word0 = prove
   REPEAT GEN_TAC THEN AP_TERM_TAC THEN
   REWRITE_TAC[WORD_EQ_BITS_ALT] THEN REWRITE_TAC MP5AUX_BIT_RULES THEN MESON_TAC[]);;
 
-let MP5AUX_EXP2_POS = prove
- (`!n. 0 < 2 EXP n`,
-  REWRITE_TAC[EXP_LT_0] THEN ARITH_TAC);;
-
 (* a heap address of the stack times the pointer scaling fits in a word *)
 let MP5AUX_FAPPLY_BOUND = prove
  (`!heap a sp sp1 gens c st (m:A word -> A word_loc) dm limit (f:(num,num)fmap) p.
@@ -676,8 +648,8 @@ let MP5AUX_FAPPLY_BOUND = prove
   SUBGOAL_THEN `FAPPLY (f:(num,num)fmap) p < dimword (:A) DIV 2 EXP shift_length c`
     MP_TAC THENL
    [ASM_ARITH_TAC; ALL_TAC] THEN
-  SIMP_TAC[X_LT_DIV; MP5AUX_EXP2_POS] THEN
-  MP_TAC(SPEC `shift_length c` MP5AUX_EXP2_POS) THEN ARITH_TAC);;
+  SIMP_TAC[X_LT_DIV; ZERO_LT_TWOEXP] THEN
+  MP_TAC(SPEC `shift_length c` ZERO_LT_TWOEXP) THEN ARITH_TAC);;
 
 (* two clear top bits *)
 let MP5AUX_LT_TOP_BITS = prove
@@ -760,8 +732,8 @@ let MP5AUX_heap_lookup_BOUND = prove
   FIRST_X_ASSUM(ASSUME_TAC o MATCH_MP heap_lookup_LESS) THEN
   SUBGOAL_THEN `p < dimword (:A) DIV 2 EXP shift_length c` MP_TAC THENL
    [ASM_ARITH_TAC; ALL_TAC] THEN
-  SIMP_TAC[X_LT_DIV; MP5AUX_EXP2_POS] THEN
-  MP_TAC(SPEC `shift_length c` MP5AUX_EXP2_POS) THEN
+  SIMP_TAC[X_LT_DIV; ZERO_LT_TWOEXP] THEN
+  MP_TAC(SPEC `shift_length c` ZERO_LT_TWOEXP) THEN
   REWRITE_TAC[ARITH_RULE `0 < k <=> 1 <= k`] THEN DISCH_TAC THEN DISCH_TAC THEN
   CONJ_TAC THENL [ASM_ARITH_TAC; ALL_TAC] THEN
   MATCH_MP_TAC LTE_TRANS THEN EXISTS_TAC `(p + 1) * 2 EXP shift_length c` THEN
@@ -788,10 +760,6 @@ let MP5AUX_bit0_BlockNil = prove
   REWRITE_TAC[MP5AUX_BIT_WORD] THEN CONV_TAC(DEPTH_CONV MP5AUX_NUMBIT_CONV) THEN
   ARITH_TAC);;
 
-let MP5AUX_BlockNil_and_not1 = prove
- (`!n. word_and (BlockNil n) (word_not (word 1)) = BlockNil n:A word`,
-  REWRITE_TAC[MP5AUX_and_not1; MP5AUX_bit0_BlockNil]);;
-
 (* sums bounded elementwise *)
 let MP5AUX_SUM_MAP_BOUND = prove
  (`!(f:A->num) k l. ALL (\x. f x <= k) l ==> SUM (MAP f l) <= LENGTH l * k`,
@@ -816,7 +784,7 @@ let MP5AUX_depth_arith = prove
 (* |- p s  gives  |- q s  for STAR terms p and q equal up to AC *)
 let MP5AUX_STAR_AC_RULE q th =
   let p,s = dest_comb (concl th) in
-  if p = q then th else EQ_MP (AP_THM (AC MP5AUX_STAR_AC (mk_eq(p,q))) s) th;;
+  if p = q then th else EQ_MP (AP_THM (AC LSORTAUX_STAR_AC (mk_eq(p,q))) s) th;;
 
 (* writing one word of a word list in memory *)
 let MP5AUX_word_list_LUPDATE = prove
@@ -942,7 +910,7 @@ let MP5AUX_make_byte_header_word = prove
   ASM_CASES_TAC `dimindex(:A) = 32` THEN ASM_REWRITE_TAC[] THEN
   CONV_TAC NUM_REDUCE_CONV THEN BOOL_CASES_TAC `fl:bool` THEN REWRITE_TAC[] THEN
   MATCH_MP_TAC MP5AUX_WORD_OR_DISJ THEN MATCH_MP_TAC LTE_TRANS THEN
-  EXISTS_TAC `2 EXP 5` THEN REWRITE_TAC[MP5AUX_LE_EXP2] THEN
+  EXISTS_TAC `2 EXP 5` THEN REWRITE_TAC[WORDSAUX_EXP2_LE] THEN
   CONV_TAC NUM_REDUCE_CONV THEN ASM_ARITH_TAC);;
 
 let MP5AUX_make_byte_header_bits = prove
@@ -960,7 +928,7 @@ let MP5AUX_make_byte_header_bits = prove
   GEN_TAC THEN DISCH_TAC THEN
   SUBGOAL_THEN `(if fl then 7 else 23) < 2 EXP s` ASSUME_TAC THENL
    [MATCH_MP_TAC LTE_TRANS THEN EXISTS_TAC `2 EXP 5` THEN
-    ASM_REWRITE_TAC[MP5AUX_LE_EXP2] THEN COND_CASES_TAC THEN CONV_TAC NUM_REDUCE_CONV;
+    ASM_REWRITE_TAC[WORDSAUX_EXP2_LE] THEN COND_CASES_TAC THEN CONV_TAC NUM_REDUCE_CONV;
     ALL_TAC] THEN
   ASM_SIMP_TAC[MP5AUX_BIT_WORD; MP5AUX_NUMBIT_MUL_ADD;
     ARITH_RULE `5 <= s ==> 2 < s /\ 3 < s /\ 4 < s`] THEN
@@ -1083,7 +1051,7 @@ let not_bit_lt_2exp = prove
   REPEAT STRIP_TAC THEN FIRST_X_ASSUM(MP_TAC o MATCH_MP BIT_IMP_GE_TWOEXP) THEN
   POP_ASSUM MP_TAC THEN REWRITE_TAC[NOT_LE; GSYM NOT_LT] THEN
   DISCH_TAC THEN MATCH_MP_TAC LTE_TRANS THEN EXISTS_TAC `2 EXP (p + 1)` THEN
-  ASM_REWRITE_TAC[MP5AUX_LE_EXP2] THEN ARITH_TAC);;
+  ASM_REWRITE_TAC[WORDSAUX_EXP2_LE] THEN ARITH_TAC);;
 
 (* HOL4 line 11090 (val) *)
 let not_bit_lt_2 = prove
@@ -1208,11 +1176,6 @@ let MP5AUX_all_ts_Thunk = prove
   SUBGOAL_THEN `!t. ~MEM t (v_all_ts (data_RefPtr bl p))` ASSUME_TAC THENL
    [REWRITE_TAC[v_all_ts_def; MEM]; ALL_TAC] THEN
   ASM_MESON_TAC[]);;
-
-let MP5AUX_all_ts_CONS = prove
- (`!refs z xs. all_ts refs xs SUBSET all_ts refs (CONS z xs)`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[all_ts_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
-  REWRITE_TAC[SUBSET; IN_ELIM_THM; MEM] THEN MESON_TAC[]);;
 
 (* the header bits that mark a thunk *)
 let MP5AUX_and60_thunk = prove
@@ -1422,7 +1385,7 @@ let MP5AUX_Thunk_push_rel = prove
   REPEAT CONJ_TAC THENL
    [MATCH_MP_TAC SUBSET_TRANS THEN
     EXISTS_TAC `all_ts refs (CONS (data_RefPtr F p) (MAP FST (vars:(data_v#A word_loc)list)))` THEN
-    ASM_REWRITE_TAC[MP5AUX_all_ts_CONS];
+    ASM_REWRITE_TAC[all_ts_CONS_SUBSET];
     MATCH_MP_TAC blocks_unique_Thunk2 THEN ASM_MESON_TAC[];
     REPEAT STRIP_TAC THEN FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[] THEN
     ONCE_REWRITE_TAC[GSYM MP5AUX_reachable_refs_dup] THEN
@@ -1914,7 +1877,7 @@ let MP5AUX_make_byte_header_ushr = prove
   ABBREV_TAC `s = dimindex(:A) - k - data_to_word_config_len_size c` THEN
   SUBGOAL_THEN `(if fl then 7 else 23) < 2 EXP s` ASSUME_TAC THENL
    [MATCH_MP_TAC LTE_TRANS THEN EXISTS_TAC `2 EXP 5` THEN
-    REWRITE_TAC[MP5AUX_LE_EXP2] THEN CONJ_TAC THENL
+    REWRITE_TAC[WORDSAUX_EXP2_LE] THEN CONJ_TAC THENL
      [COND_CASES_TAC THEN CONV_TAC NUM_REDUCE_CONV; ASM_ARITH_TAC];
     ALL_TAC] THEN
   SUBGOAL_THEN `2 EXP s * 2 EXP (data_to_word_config_len_size c + k) = dimword(:A)`
@@ -2121,7 +2084,7 @@ let memory_rel_ByteArray_IMP = prove
                 2 EXP (dimindex(:A) - 3)` ASSUME_TAC THENL
    [MATCH_MP_TAC LTE_TRANS THEN
     EXISTS_TAC `2 EXP (data_to_word_config_len_size c + backend_common_word_shift(:A))` THEN
-    ASM_REWRITE_TAC[MP5AUX_LE_EXP2] THEN REWRITE_TAC[backend_common_word_shift_def] THEN
+    ASM_REWRITE_TAC[WORDSAUX_EXP2_LE] THEN REWRITE_TAC[backend_common_word_shift_def] THEN
     COND_CASES_TAC THEN ASM_ARITH_TAC;
     ALL_TAC] THEN
   MAP_EVERY EXISTS_TAC [`w:A word`; `a:A word`;
@@ -2419,7 +2382,7 @@ let memory_rel_Number_bignum_IMP_ALT = prove
   ASM_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   STRIP_TAC THEN ASM_REWRITE_TAC[INT_NOT_LT] THEN
   MATCH_MP_TAC LTE_TRANS THEN EXISTS_TAC `2 EXP (dimindex (:A) - 4)` THEN
-  ASM_REWRITE_TAC[dimword_def; MP5AUX_LE_EXP2] THEN ARITH_TAC);;
+  ASM_REWRITE_TAC[dimword_def; WORDSAUX_EXP2_LE] THEN ARITH_TAC);;
 
 (* HOL4 line 12461 (the unused bound variables ff x y of HOL4 are left out) *)
 let memory_rel_Number_bignum_header = prove
@@ -2697,7 +2660,7 @@ let IMP_memory_rel_Number_num = prove
   REPEAT STRIP_TAC THEN MATCH_MP_TAC IMP_memory_rel_Number_num3 THEN
   ASM_REWRITE_TAC[] THEN MATCH_MP_TAC LTE_TRANS THEN
   EXISTS_TAC `2 EXP (dimindex (:A) - 4)` THEN
-  ASM_REWRITE_TAC[MP5AUX_LE_EXP2] THEN ARITH_TAC);;
+  ASM_REWRITE_TAC[WORDSAUX_EXP2_LE] THEN ARITH_TAC);;
 
 (* HOL4 line 12594 *)
 let memory_rel_Number_EQ = prove
@@ -2937,7 +2900,7 @@ let data_to_word_memoryProof_Smallnum_test = prove
     MATCH_MP_TAC INT_OF_NUM_OF_INT THEN ASM_ARITH_TAC;
     ALL_TAC] THEN
   REWRITE_TAC[INT_OF_NUM_POW; INT_OF_NUM_LT] THEN
-  RULE_ASSUM_TAC(REWRITE_RULE[MP5AUX_Smallnum_iword; INT_OF_NUM_MUL; GSYM WORD_IWORD;
+  RULE_ASSUM_TAC(REWRITE_RULE[data_to_word_memoryProof_Smallnum_i2w; INT_OF_NUM_MUL; GSYM WORD_IWORD;
                               MP5AUX_BIT_WORD; small_int_def; dimword_def]) THEN
   MP_TAC(SPECL [`4 * n`; `dimindex(:A) - 2`] MP5AUX_LT_TOP_BITS) THEN
   UNDISCH_TAC `good_dimindex(:A)` THEN REWRITE_TAC[good_dimindex_def] THEN
@@ -2951,7 +2914,7 @@ let data_to_word_memoryProof_Smallnum_test = prove
 let small_int_w2i_i2w = prove
  (`!i. small_int (:A) i /\ good_dimindex (:A) ==>
        ival (iword (&4 * i):A word) = &4 * i`,
-  REWRITE_TAC[GSYM MP5AUX_Smallnum_iword] THEN MESON_TAC[MP5AUX_ival_Smallnum]);;
+  REWRITE_TAC[GSYM data_to_word_memoryProof_Smallnum_i2w] THEN MESON_TAC[MP5AUX_ival_Smallnum]);;
 
 (* HOL4 line 12853 *)
 let memory_rel_Add = prove
@@ -2970,16 +2933,16 @@ let memory_rel_Add = prove
   SUBGOAL_THEN `wi = Smallnum i:A word /\ wj = Smallnum j:A word`
     (CONJUNCTS_THEN SUBST_ALL_TAC) THENL
    [ASM_MESON_TAC[memory_rel_Number_IMP; injectivity "word_loc"]; ALL_TAC] THEN
-  RULE_ASSUM_TAC(REWRITE_RULE[MP5AUX_Smallnum_iword; GSYM IWORD_INT_ADD]) THEN
-  REWRITE_TAC[MP5AUX_Smallnum_iword; GSYM IWORD_INT_ADD;
+  RULE_ASSUM_TAC(REWRITE_RULE[data_to_word_memoryProof_Smallnum_i2w; GSYM IWORD_INT_ADD]) THEN
+  REWRITE_TAC[data_to_word_memoryProof_Smallnum_i2w; GSYM IWORD_INT_ADD;
               INT_ARITH `&4 * (i + j):int = &4 * i + &4 * j`] THEN
-  REWRITE_TAC[GSYM INT_ADD_LDISTRIB; GSYM MP5AUX_Smallnum_iword] THEN
+  REWRITE_TAC[GSYM INT_ADD_LDISTRIB; GSYM data_to_word_memoryProof_Smallnum_i2w] THEN
   MATCH_MP_TAC IMP_memory_rel_Number THEN ASM_REWRITE_TAC[] THEN
   ASM_SIMP_TAC[MP5AUX_small_int_ival] THEN
   FIRST_X_ASSUM(MP_TAC o check (fun th -> is_eq (concl th) &&
     mp5aux_head_is "ival" (lhs (concl th)))) THEN
-  ASM_SIMP_TAC[GSYM MP5AUX_Smallnum_iword; MP5AUX_ival_Smallnum; INT_ADD_LDISTRIB] THEN
-  REWRITE_TAC[MP5AUX_Smallnum_iword; GSYM IWORD_INT_ADD] THEN
+  ASM_SIMP_TAC[GSYM data_to_word_memoryProof_Smallnum_i2w; MP5AUX_ival_Smallnum; INT_ADD_LDISTRIB] THEN
+  REWRITE_TAC[data_to_word_memoryProof_Smallnum_i2w; GSYM IWORD_INT_ADD] THEN
   DISCH_THEN(SUBST1_TAC o SYM) THEN REWRITE_TAC[IVAL_BOUND]);;
 
 (* HOL4 line 12879 *)
@@ -2999,15 +2962,15 @@ let memory_rel_Sub = prove
   SUBGOAL_THEN `wi = Smallnum i:A word /\ wj = Smallnum j:A word`
     (CONJUNCTS_THEN SUBST_ALL_TAC) THENL
    [ASM_MESON_TAC[memory_rel_Number_IMP; injectivity "word_loc"]; ALL_TAC] THEN
-  RULE_ASSUM_TAC(REWRITE_RULE[MP5AUX_Smallnum_iword; GSYM IWORD_INT_SUB]) THEN
-  REWRITE_TAC[MP5AUX_Smallnum_iword; GSYM IWORD_INT_SUB] THEN
-  REWRITE_TAC[GSYM INT_SUB_LDISTRIB; GSYM MP5AUX_Smallnum_iword] THEN
+  RULE_ASSUM_TAC(REWRITE_RULE[data_to_word_memoryProof_Smallnum_i2w; GSYM IWORD_INT_SUB]) THEN
+  REWRITE_TAC[data_to_word_memoryProof_Smallnum_i2w; GSYM IWORD_INT_SUB] THEN
+  REWRITE_TAC[GSYM INT_SUB_LDISTRIB; GSYM data_to_word_memoryProof_Smallnum_i2w] THEN
   MATCH_MP_TAC IMP_memory_rel_Number THEN ASM_REWRITE_TAC[] THEN
   ASM_SIMP_TAC[MP5AUX_small_int_ival] THEN
   FIRST_X_ASSUM(MP_TAC o check (fun th -> is_eq (concl th) &&
     mp5aux_head_is "ival" (lhs (concl th)))) THEN
-  ASM_SIMP_TAC[GSYM MP5AUX_Smallnum_iword; MP5AUX_ival_Smallnum; INT_SUB_LDISTRIB] THEN
-  REWRITE_TAC[MP5AUX_Smallnum_iword; GSYM IWORD_INT_SUB] THEN
+  ASM_SIMP_TAC[GSYM data_to_word_memoryProof_Smallnum_i2w; MP5AUX_ival_Smallnum; INT_SUB_LDISTRIB] THEN
+  REWRITE_TAC[data_to_word_memoryProof_Smallnum_i2w; GSYM IWORD_INT_SUB] THEN
   DISCH_THEN(SUBST1_TAC o SYM) THEN REWRITE_TAC[IVAL_BOUND]);;
 
 (* HOL4 line 12905 *)
@@ -3164,7 +3127,7 @@ let maxout_bits_bit = prove
   SUBGOAL_THEN `n < 2 EXP l` MP_TAC THENL [ASM_ARITH_TAC; ALL_TAC] THEN
   REWRITE_TAC[IMP_IMP] THEN DISCH_THEN(MP_TAC o MATCH_MP (ARITH_RULE
     `n < a /\ b <= n ==> b < a`)) THEN
-  REWRITE_TAC[MP5AUX_LT_EXP2] THEN ASM_ARITH_TAC);;
+  REWRITE_TAC[WORDSAUX_EXP2_LT] THEN ASM_ARITH_TAC);;
 
 (* HOL4 line 13060 *)
 let maxout_bits_IMP = prove
@@ -3198,19 +3161,12 @@ let word_cmp_res_def = cake_def
   `word_cmp_res i (j:int) = if i = j then word 1 else if i < j then word 0
                             else word 2:A word`;;
 
-(* the termination condition of word_cmp_loop (HOL4's automatic proof) *)
-let SKELAUX_VAL_WORD_SUB_1_LT = prove
- (`!l:A word. ~(l = word 0) ==> val (word_sub l (word 1)) < val l`,
-  GEN_TAC THEN REWRITE_TAC[GSYM VAL_EQ_0] THEN DISCH_TAC THEN
-  REWRITE_TAC[VAL_WORD_SUB_CASES; VAL_WORD_1] THEN
-  COND_CASES_TAC THEN ASM_ARITH_TAC);;
-
 (* HOL4 line 13092 *)
 let word_cmp_loop_def = cake_def_wf
   `measure (\p:A word#A word#A word#(A word->bool)#(A word->A word_loc).
               val (FST p))`
   (REWRITE_TAC[measure_THM; FST; SND] THEN REPEAT STRIP_TAC THEN
-   MATCH_MP_TAC SKELAUX_VAL_WORD_SUB_1_LT THEN ASM_REWRITE_TAC[])
+   MATCH_MP_TAC WSIMPPAUX_val_word_pred THEN ASM_REWRITE_TAC[])
   `word_cmp_loop (l:A word) (a1:A word) a2 dm (m:A word -> A word_loc) =
      if l = word 0 then SOME (word 1) else
        if a1 IN dm /\ a2 IN dm then
@@ -3546,40 +3502,8 @@ let word_cmp_loop_refl = prove
 (* the kit has admissibility rules for MAP, ALL, EX, ... but none for ALL2: *)
 (* a recursive call under ALL2 f l1 l2 gets the context MEM x l1 /\       *)
 (* MEM y l2 (kit/recursion.ml, cake_register_admissible)                   *)
-let SKELAUX_ALL2_CONG = prove
- (`!(f:C->D->bool) g l1 l2.
-     (!y z. MEM y l1 /\ MEM z l2 ==> (f y z <=> g y z)) ==>
-     (ALL2 f l1 l2 <=> ALL2 g l1 l2)`,
-  GEN_TAC THEN GEN_TAC THEN LIST_INDUCT_TAC THENL
-   [LIST_INDUCT_TAC THEN REWRITE_TAC[ALL2];
-    X_GEN_TAC `l2:D list` THEN STRUCT_CASES_TAC (ISPEC `l2:D list` list_CASES) THEN
-    REWRITE_TAC[ALL2; MEM] THEN DISCH_TAC THEN
-    MATCH_MP_TAC(TAUT `(a <=> b) /\ (c <=> d) ==> (a /\ c <=> b /\ d)`) THEN
-    CONJ_TAC THENL
-     [FIRST_ASSUM MATCH_MP_TAC THEN REWRITE_TAC[];
-      FIRST_X_ASSUM(MATCH_MP_TAC o SPEC `t':D list`) THEN
-      REPEAT STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[]]]);;
 
-let SKELAUX_ADMISSIBLE_ALL2 = prove
- (`!(<<) (p:(A->B)->P->bool) (s:P->A) (h:(A->B)->P->C->D->bool) l1 l2.
-        admissible(<<) p s l1 /\ admissible(<<) p s l2 /\
-        admissible (<<) (\f (y,z,x). p f x /\ MEM y (l1 f x) /\ MEM z (l2 f x))
-                        (\(y,z,x). s x) (\f (y,z,x). h f x y z)
-        ==> admissible (<<) p s (\f x. ALL2 (h f x) (l1 f x) (l2 f x))`,
-  REWRITE_TAC[admissible; FORALL_PAIR_THM] THEN REPEAT GEN_TAC THEN
-  DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "l1")
-               (CONJUNCTS_THEN2 (LABEL_TAC "l2") (LABEL_TAC "h"))) THEN
-  MAP_EVERY X_GEN_TAC [`f:A->B`; `g:A->B`; `a:P`] THEN STRIP_TAC THEN
-  SUBGOAL_THEN `(l1:(A->B)->P->C list) g a = l1 f a /\
-                (l2:(A->B)->P->D list) g a = l2 f a` STRIP_ASSUME_TAC THENL
-   [CONJ_TAC THEN CONV_TAC SYM_CONV THENL
-     [USE_THEN "l1" MATCH_MP_TAC; USE_THEN "l2" MATCH_MP_TAC] THEN
-    ASM_REWRITE_TAC[];
-    ALL_TAC] THEN
-  ASM_REWRITE_TAC[] THEN MATCH_MP_TAC SKELAUX_ALL2_CONG THEN
-  REPEAT STRIP_TAC THEN USE_THEN "h" MATCH_MP_TAC THEN ASM_REWRITE_TAC[]);;
-
-let () = cake_register_admissible "ALL2" SKELAUX_ADMISSIBLE_ALL2;;
+let () = cake_register_admissible "ALL2" LISTAUX_ADMISSIBLE_ALL2;;
 
 (* HOL4 line 13248.  Defined by a match (the clause form with the catch-all *)
 (* clause makes the recursion package very slow: 25 clauses); the recursive *)
@@ -4163,7 +4087,7 @@ let shift_shift = prove
   SIMP_TAC[DIV_MULT; EXP_EQ_0; ARITH_RULE `~(2 = 0)`] THEN
   MATCH_MP_TAC(GSYM MOD_LT) THEN
   MATCH_MP_TAC LET_TRANS THEN EXISTS_TAC `n1 * 2 EXP l` THEN ASM_REWRITE_TAC[] THEN
-  MP_TAC(SPEC `l:num` MP5AUX_EXP2_POS) THEN
+  MP_TAC(SPEC `l:num` ZERO_LT_TWOEXP) THEN
   REWRITE_TAC[ARITH_RULE `0 < k <=> 1 <= k`] THEN
   DISCH_TAC THEN GEN_REWRITE_TAC LAND_CONV [ARITH_RULE `n = n * 1`] THEN
   ASM_REWRITE_TAC[LE_MULT_LCANCEL]);;
@@ -4207,7 +4131,7 @@ let memory_rel_Block_ptr_eq = prove
      [ASM_CASES_TAC `b2:data_v list = []` THEN ASM_REWRITE_TAC[] THEN
             REPEAT STRIP_TAC THEN
             MP5AUX_SUBST_VAR_TAC "h1" THEN MP5AUX_SUBST_VAR_TAC "h2" THEN
-            RULE_ASSUM_TAC(REWRITE_RULE[word_addr_def; MP5AUX_BlockNil_and_not1]) THENL
+            RULE_ASSUM_TAC(REWRITE_RULE[word_addr_def; MP4AUX_BlockNil_and]) THENL
        [MP5AUX_SUBST_VAR_TAC "x" THEN RULE_ASSUM_TAC(REWRITE_RULE[injectivity "word_loc"]) THEN
           ASM_REWRITE_TAC[];
         MP5AUX_SUBST_VAR_TAC "x" THEN RULE_ASSUM_TAC(REWRITE_RULE[injectivity "word_loc"]) THEN
@@ -4217,7 +4141,7 @@ let memory_rel_Block_ptr_eq = prove
       ASM_CASES_TAC `b2:data_v list = []` THEN ASM_REWRITE_TAC[] THEN
             REPEAT STRIP_TAC THEN
             MP5AUX_SUBST_VAR_TAC "h1" THEN MP5AUX_SUBST_VAR_TAC "h2" THEN
-            RULE_ASSUM_TAC(REWRITE_RULE[word_addr_def; MP5AUX_BlockNil_and_not1]) THENL
+            RULE_ASSUM_TAC(REWRITE_RULE[word_addr_def; MP4AUX_BlockNil_and]) THENL
        [MP5AUX_SUBST_VAR_TAC "x" THEN RULE_ASSUM_TAC(REWRITE_RULE[injectivity "word_loc"]) THEN
           FIRST_X_ASSUM(MP_TAC o AP_TERM `bit 0:A word->bool` o check (fun th ->
             is_eq (concl th) && type_of (lhs (concl th)) = `:A word`)) THEN

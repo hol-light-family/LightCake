@@ -2126,15 +2126,6 @@ let evaluate_dec_clock = prove
 
 (* the io_events of call_FFI and of share_inst only grow *)
 
-let IL2AUX_call_FFI_io_events = prove
- (`call_FFI (st:(FFI)ffi_state) s conf bytes = FFI_return st' bytes'
-   ==> ffi_state_io_events st <<= ffi_state_io_events st'`,
-  REWRITE_TAC[call_FFI_def] THEN COND_CASES_TAC THENL
-   [TOP_CASE_TAC THEN TRY COND_CASES_TAC THEN
-    REWRITE_TAC[injectivity "ffi_result"; distinctness "ffi_result"] THEN
-    STRIP_TAC THEN RVEQ_TAC THEN SIMP[IS_PREFIX_APPEND] THEN MESON_TAC[];
-    REWRITE_TAC[injectivity "ffi_result"] THEN MESON_TAC[IS_PREFIX_REFL]]);;
-
 let IL2AUX_CALL_FFI_CASES_TAC : tactic = fun (asl,w as g) ->
   let t = find_term (fun t -> try let f,args = strip_comb t in
                               fst(dest_const f) = "call_FFI" && length args = 4
@@ -2152,7 +2143,7 @@ let IL2AUX_share_inst_io_events = prove
   REPEAT (COND_CASES_TAC ORELSE TOP_CASE_TAC ORELSE IL2AUX_CALL_FFI_CASES_TAC) THEN
   REWRITE_TAC[sh_mem_set_var_def; PAIR_EQ] THEN STRIP_TAC THEN RVEQ_TAC THEN
   SIMP[IS_PREFIX_REFL] THEN
-  FIRST_ASSUM(MP_TAC o MATCH_MP IL2AUX_call_FFI_io_events) THEN SIMP[]);;
+  FIRST_ASSUM(MP_TAC o MATCH_MP SEM2AUX_call_FFI_io_events) THEN SIMP[]);;
 
 (* the facts of the lemmas lems for the assumptions they match *)
 
@@ -2170,7 +2161,7 @@ let IL2AUX_is_prefix tm =
 
 let IL2AUX_io_facts =
   [wl_alloc_const; wl_inst_const; mem_store_const; jump_exc_const; assign_const;
-   gc_const; IL2AUX_share_inst_io_events; IL2AUX_call_FFI_io_events;
+   gc_const; IL2AUX_share_inst_io_events; SEM2AUX_call_FFI_io_events;
    cut_state_const];;
 
 (* an IH whose conclusion is the goal (the instance would close the goal   *)
@@ -5448,10 +5439,6 @@ let IL2AUX_jump_exc_inv = prove
   ASM_REWRITE_TAC[] THEN ANTS_TAC THENL [ASM_ARITH_TAC; ALL_TAC] THEN
   REWRITE_TAC[stack_size_eq2; stack_size_frame_def] THEN MESON_TAC[]);;
 
-let IL2AUX_OPTION_MAP2_ADD_SYM = prove
- (`!a b:num option. OPTION_MAP2 (+) a b = OPTION_MAP2 (+) b a`,
-  REWRITE_TAC[FORALL_OPTION_THM; OPTION_MAP2_THM; ADD_SYM]);;
-
 (* the state after the gc and the pop_env of alloc *)
 
 let IL2AUX_alloc_pop = prove
@@ -5499,7 +5486,7 @@ let IL2AUX_alloc_pop_inv = prove
      ==> option_le (OPTION_MAP2 (+) (wl_stack_size (wl_state_stack z)) (wl_state_locals_size z))
                    (wl_state_stack_max z)`,
   REPEAT GEN_TAC THEN DISCH_THEN(STRIP_ASSUME_TAC o MATCH_MP IL2AUX_alloc_pop) THEN
-  ASM_REWRITE_TAC[] THEN GEN_REWRITE_TAC LAND_CONV [IL2AUX_OPTION_MAP2_ADD_SYM] THEN
+  ASM_REWRITE_TAC[] THEN GEN_REWRITE_TAC LAND_CONV [option_add_comm] THEN
   REWRITE_TAC[IL2AUX_option_le_max]);;
 
 let IL2AUX_alloc_inv = prove

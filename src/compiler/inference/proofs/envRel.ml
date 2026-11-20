@@ -424,13 +424,6 @@ let env_rel_sound_extend0 = prove
     ASM_SIMP_TAC[check_t_to_check_freevars; tscheme_approx0];
     ASM_SIMP_TAC[nsLookup_nsBind; INFER1AUX_lookup_var_Bind_name_other]]);;
 
-let INFER1AUX_ALOOKUP_MAP_pair = prove
- (CASE_TERM `!(f:B->C) (al:(A#B)list) k.
-     ALOOKUP (MAP (\p. match p with (x,y) -> (x,f y)) al) k = OPTION_MAP f (ALOOKUP al k)`,
-  GEN_TAC THEN LIST_INDUCT_TAC THEN REWRITE_TAC[MAP; ALOOKUP_THM; OPTION_MAP_DEF] THEN
-  SPEC_TAC(`h:A#B`,`h:A#B`) THEN REWRITE_TAC[FORALL_PAIR_THM; pair_CASE; ALOOKUP_THM] THEN
-  REPEAT GEN_TAC THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[OPTION_MAP_DEF]);;
-
 let env_rel_sound_merge0 = prove
  (CASE_TERM `!(s:(num,infer_t)fmap) ienv (bindings:(mlstring#infer_t)list) tenv tenvE.
      t_wfs s /\
@@ -446,7 +439,7 @@ let env_rel_sound_merge0 = prove
   REPEAT GEN_TAC THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
   MAP_EVERY X_GEN_TAC [`y:(mlstring,mlstring)id`; `ts:num#infer_t`] THEN
   REWRITE_TAC[nsLookup_nsAppend_some; nsLookup_alist_to_ns_some; nsLookup_alist_to_ns_none;
-              INFER1AUX_ALOOKUP_MAP_pair; OPTION_MAP_EQ_SOME; OPTION_MAP_EQ_NONE] THEN
+              NSPAUX_ALOOKUP_MAP; OPTION_MAP_EQ_SOME; OPTION_MAP_EQ_NONE] THEN
   STRIP_TAC THENL
    [REPEAT(FIRST_X_ASSUM(SUBST_ALL_TAC o check (is_var o lhs o concl))) THEN
     SUBGOAL_THEN `check_t (num_tvs tenvE) {} (t_walkstar (s:(num,infer_t)fmap) z)`
@@ -461,7 +454,7 @@ let env_rel_sound_merge0 = prove
       ALL_TAC] THEN
     MAP_EVERY EXISTS_TAC [`0`; `convert_t (t_walkstar (s:(num,infer_t)fmap) z)`] THEN
     REWRITE_TAC[lookup_var_def; lookup_varE_def] THEN CASE_REWRITE_TAC[] THEN
-    REWRITE_TAC[tveLookup_bvl; convert_env_def; INFER1AUX_ALOOKUP_MAP_pair] THEN
+    REWRITE_TAC[tveLookup_bvl; convert_env_def; NSPAUX_ALOOKUP_MAP] THEN
     ASM_REWRITE_TAC[OPTION_MAP_DEF] THEN CASE_REWRITE_TAC[deBruijn_inc0; ADD_CLAUSES] THEN
     FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP check_t_empty_unconvert_convert_id th]) THEN
     ASM_SIMP_TAC[check_t_to_check_freevars; tscheme_approx0];
@@ -473,7 +466,7 @@ let env_rel_sound_merge0 = prove
     SPEC_TAC(`y:(mlstring,mlstring)id`,`y:(mlstring,mlstring)id`) THEN
     MATCH_MP_TAC id_INDUCT THEN
     REWRITE_TAC[lookup_var_def; lookup_varE_def; tveLookup_bvl; convert_env_def;
-                INFER1AUX_ALOOKUP_MAP_pair; injectivity "id"; distinctness "id"] THEN
+                NSPAUX_ALOOKUP_MAP; injectivity "id"; distinctness "id"] THEN
     CASE_REWRITE_TAC[] THEN REPEAT STRIP_TAC THEN
     ASM_SIMP_TAC[OPTION_MAP_DEF] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]]);;
 

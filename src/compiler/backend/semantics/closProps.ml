@@ -1975,20 +1975,6 @@ let clos_evaluate_add_clock_initial_state = prove
   REWRITE_TAC[clos_initial_state_def; clos_state_INFO.ri_accessors;
               clos_state_INFO.ri_fupds; K_THM]);;
 
-(* a local helper: call_FFI only extends the io_events *)
-let CLOSPROPSAUX_call_FFI_io_events = prove
- (`!(st:(FFI)ffi_state) s conf bytes t' ws'.
-     call_FFI st s conf bytes = FFI_return t' ws' ==>
-     ffi_state_io_events st <<= ffi_state_io_events t'`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[call_FFI_def] THEN
-  COND_CASES_TAC THEN REWRITE_TAC[injectivity "ffi_result"] THENL
-   [CASES_ON `ffi_state_oracle (st:(FFI)ffi_state) s (ffi_state_ffi_state st) conf bytes` THEN
-    REWRITE_TAC[case_def "oracle_result"; distinctness "ffi_result"] THEN
-    COND_CASES_TAC THEN REWRITE_TAC[distinctness "ffi_result"; injectivity "ffi_result"] THEN
-    DISCH_THEN(SUBST1_TAC o SYM o CONJUNCT1) THEN
-    REWRITE_TAC[ffi_state_INFO.ri_accfupds; K_THM; IS_PREFIX_APPEND] THEN MESON_TAC[];
-    DISCH_THEN(SUBST1_TAC o SYM o CONJUNCT1) THEN REWRITE_TAC[IS_PREFIX_REFL]]);;
-
 (* HOL4 [local] *)
 let clos_do_app_io_events_mono = prove
  (`!op vs (s:(C,FFI)clos_state) v s'.
@@ -2000,7 +1986,7 @@ let clos_do_app_io_events_mono = prove
   REWRITE_TAC[injectivity "result"; distinctness "result"; PAIR_EQ] THEN
   DISCH_THEN(SUBST1_TAC o SYM o CONJUNCT2) THEN
   REWRITE_TAC[clos_state_INFO.ri_accfupds; K_THM; IS_PREFIX_REFL] THEN
-  ASM_MESON_TAC[CLOSPROPSAUX_call_FFI_io_events]);;
+  ASM_MESON_TAC[SEM2AUX_call_FFI_io_events]);;
 
 (* a local helper: evaluate_io_events_mono in implication form *)
 let CLOSPROPSAUX_io_events_mono = prove
@@ -3069,10 +3055,6 @@ let CLOSPROPSAUX_ssr_globals = prove
      ALL2 (OPTREL vr) (clos_state_globals s) (clos_state_globals t)`,
   REWRITE_TAC[clos_simple_state_rel_def] THEN MESON_TAC[]);;
 
-let CLOSPROPSAUX_num_of_int_lt = prove
- (`!i n. &0 <= i /\ i < &n ==> num_of_int i < n`,
-  REPEAT STRIP_TAC THEN ASM_SIMP_TAC[GSYM INT_OF_NUM_LT; INT_OF_NUM_OF_INT]);;
-
 (* forward reasoning at a leaf: the source facts from the target facts *)
 let CLOSPROPSAUX_SYNC_TAC : tactic = fun (asl,w as gl) ->
   let vrt = `vr:clos_v->clos_v->bool` in
@@ -3181,7 +3163,7 @@ let CLOSPROPSAUX_FINISH_TAC : tactic = fun gl ->
      ASM_REWRITE_TAC (ALL_T :: rws) THEN
      TRY(MATCH_MP_TAC LIST_REL_APPEND_suff THEN
          ASM_SIMP_TAC[EVERY2_TAKE; EVERY2_DROP] THEN NO_TAC) THEN
-     ASM_MESON_TAC[LIST_REL_EL_EQN; CLOSPROPSAUX_num_of_int_lt];
+     ASM_MESON_TAC[LIST_REL_EL_EQN; BASICAUX_num_of_int_lt];
      ASM_REWRITE_TAC[] THEN
      FIRST [MATCH_MP_TAC (ISPEC vrt CLOSPROPSAUX_ssr_ffi_bytes);
             MATCH_MP_TAC (ISPEC vrt simple_state_rel_update_bytes);
@@ -3672,12 +3654,6 @@ let CLOSPROPSAUX_M_eq = prove
   REWRITE_TAC[CLOSPROPSAUX_result_rel_T] THEN REPEAT STRIP_TAC THEN
   ASM_REWRITE_TAC[case_def "result"; case_def "error_result"]);;
 
-let CLOSPROPSAUX_some_SOME = prove
- (`!P (a:A). (some) P = SOME a ==> P a`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[some_DEF] THEN COND_CASES_TAC THEN
-  REWRITE_TAC[distinctness "option"; injectivity "option"] THEN
-  DISCH_THEN(SUBST1_TAC o SYM) THEN CONV_TAC SELECT_CONV THEN ASM_REWRITE_TAC[]);;
-
 let CLOSPROPSAUX_sem_fail = prove
  (`!(ffi:(FFI)ffi_state) ma code (co:num -> C # clos_prog) cc es.
      clos_semantics ffi ma code co cc es = Fail <=>
@@ -3687,7 +3663,7 @@ let CLOSPROPSAUX_sem_fail = prove
   CONV_TAC(DEPTH_CONV BETA_CONV) THEN
   COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
   TOP_CASE_TAC THEN REWRITE_TAC[distinctness "behaviour"] THEN
-  FIRST_X_ASSUM(MP_TAC o MATCH_MP CLOSPROPSAUX_some_SOME) THEN
+  FIRST_X_ASSUM(MP_TAC o MATCH_MP BASICAUX_some_SOME) THEN
   CONV_TAC(DEPTH_CONV BETA_CONV) THEN STRIP_TAC THEN
   ASM_REWRITE_TAC[distinctness "behaviour"]);;
 
@@ -4784,3 +4760,90 @@ let clos_initial_state_clock = prove
      clos_initial_state ffi max_app f co cc k`,
   REWRITE_TAC[clos_initial_state_def; clos_state_INFO.ri_accessors;
               clos_state_INFO.ri_fupds; K_THM]);;
+
+(* ------------------------------------------------------------------------- *)
+(* Lemmas used by several later files.                                       *)
+(* ------------------------------------------------------------------------- *)
+
+let CLOSPROPSAUX_eval_SING_NIL = prove
+ (`!x env (s:(C,FFI)clos_state) r s2.
+     clos_evaluate ([x],env,s) = (Rval r,s2) ==> ~(r = [])`,
+  REPEAT GEN_TAC THEN DISCH_THEN(STRIP_ASSUME_TAC o MATCH_MP clos_evaluate_SING) THEN
+  ASM_REWRITE_TAC[NOT_CONS_NIL]);;
+
+let CLOSPROPSAUX_do_app_not_Rraise = prove
+ (`!op ls (s:(C,FFI)clos_state) v. ~(clos_do_app op ls s = Rerr (Rraise v))`,
+  REPEAT GEN_TAC THEN ASM_CASES_TAC `op = BlockOp clos_Equal` THENL
+   [ASM_REWRITE_TAC[clos_do_app_def] THEN CASE_REWRITE_TAC[] THEN
+    REPEAT(TOP_CASE_TAC THEN CASE_REWRITE_TAC[]);
+    DISCH_THEN(MP_TAC o MATCH_MP clos_do_app_err) THEN ASM_REWRITE_TAC[] THEN
+    REWRITE_TAC[distinctness "error_result"]]);;
+
+(* every_Fn_vs_NONE and every_Fn_SOME of a CONS (every_Fn_vs_NONE_EVERY and  *)
+(* every_Fn_SOME_EVERY without their rewriting loop on singletons)           *)
+let CLOSPROPSAUX_every_Fn_vs_NONE_cons = prove
+ (`!x xs. every_Fn_vs_NONE (CONS x xs) <=> every_Fn_vs_NONE [x] /\ every_Fn_vs_NONE xs`,
+  REPEAT GEN_TAC THEN CASES_ON `xs:clos_exp list` THEN REWRITE_TAC[every_Fn_vs_NONE_def]);;
+
+let CLOSPROPSAUX_every_Fn_SOME_cons = prove
+ (`!x xs. every_Fn_SOME (CONS x xs) <=> every_Fn_SOME [x] /\ every_Fn_SOME xs`,
+  REPEAT GEN_TAC THEN CASES_ON `xs:clos_exp list` THEN REWRITE_TAC[every_Fn_SOME_def]);;
+
+let CLOSPROPSAUX_vr_RefPtr_shape = prove
+ (`!vr xs ys.
+     clos_simple_val_rel vr /\ ALL2 vr xs ys ==>
+     (?b ptr. xs = [clos_RefPtr b ptr] /\ ys = [clos_RefPtr b ptr]) \/
+     ((!b ptr. ~(xs = [clos_RefPtr b ptr])) /\ (!b ptr. ~(ys = [clos_RefPtr b ptr])))`,
+  REPEAT GEN_TAC THEN STRIP_TAC THEN
+  FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP CLOSPROPSAUX_vr_left) THEN
+  FIRST_ASSUM(STRIP_ASSUME_TAC o REWRITE_RULE[clos_simple_val_rel_def] o
+    check (fun th -> CLOSPROPSAUX_is_app "clos_simple_val_rel" (concl th))) THEN
+  ASM_CASES_TAC `?b ptr. ys = [clos_RefPtr b ptr]` THENL
+   [DISJ1_TAC THEN
+    FIRST_X_ASSUM(X_CHOOSE_THEN `b:bool` (X_CHOOSE_THEN `ptr:num` SUBST_ALL_TAC)) THEN
+    MAP_EVERY EXISTS_TAC [`b:bool`; `ptr:num`] THEN REWRITE_TAC[] THEN
+    UNDISCH_TAC `ALL2 (vr:clos_v->clos_v->bool) xs [clos_RefPtr b ptr]` THEN
+    REWRITE_TAC[LIST_REL_CONS2; LIST_REL_NIL] THEN STRIP_TAC THEN
+    ASM_REWRITE_TAC[CONS_11] THEN ASM_MESON_TAC[];
+    DISJ2_TAC THEN CONJ_TAC THENL
+     [REPEAT GEN_TAC THEN DISCH_THEN SUBST_ALL_TAC THEN
+      UNDISCH_TAC `ALL2 (vr:clos_v->clos_v->bool) [clos_RefPtr b ptr] ys` THEN
+      REWRITE_TAC[LIST_REL_CONS1; LIST_REL_NIL] THEN STRIP_TAC THEN
+      FIRST_X_ASSUM(MP_TAC o
+        check (fun th -> concl th = `~(?b ptr. ys = [clos_RefPtr b ptr])`)) THEN
+      ASM_REWRITE_TAC[] THEN ASM_MESON_TAC[];
+      ASM_MESON_TAC[]]]);;
+
+let CLOSPROPSAUX_dest_thunk_rel = prove
+ (CASE_TERM `!vr (sr:(D,FFI)clos_state->(C,FFI)clos_state->bool) s t xs ys.
+     clos_simple_val_rel vr /\ clos_simple_state_rel vr sr /\ sr s t /\ ALL2 vr xs ys ==>
+     match clos_dest_thunk ys (clos_state_refs t) with
+       clos_BadRef -> clos_dest_thunk xs (clos_state_refs s) = clos_BadRef
+     | clos_NotThunk -> clos_dest_thunk xs (clos_state_refs s) = clos_NotThunk
+     | clos_IsThunk m w -> ?v. clos_dest_thunk xs (clos_state_refs s) = clos_IsThunk m v /\
+                              vr v w`,
+  REPEAT GEN_TAC THEN STRIP_TAC THEN
+  MP_TAC(ISPECL [`vr:clos_v->clos_v->bool`; `xs:clos_v list`; `ys:clos_v list`]
+                CLOSPROPSAUX_vr_RefPtr_shape) THEN
+  ASM_REWRITE_TAC[] THEN STRIP_TAC THENL
+   [ALL_TAC;
+    ASM_SIMP_TAC[CLOSSEMAUX_dest_thunk_NotThunk] THEN CASE_REWRITE_TAC[]] THEN
+  ASM_REWRITE_TAC[clos_dest_thunk_def] THEN
+  FIRST_ASSUM(STRIP_ASSUME_TAC o REWRITE_RULE[clos_simple_state_rel_def] o
+    check (fun th -> CLOSPROPSAUX_is_app "clos_simple_state_rel" (concl th))) THEN
+  CASES_ON `FLOOKUP (clos_state_refs (t:(C,FFI)clos_state)) ptr` THEN CASE_REWRITE_TAC[] THENL
+   [RES_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]; ALL_TAC] THEN
+  CASES_ON `a:(clos_v)clos_ref` THEN CASE_REWRITE_TAC[] THEN
+  RES_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  TRY(CASES_ON `a0:thunk_mode` THEN CASE_REWRITE_TAC[] THEN COND_CASES_TAC THEN
+      CASE_REWRITE_TAC[] THEN ASM_MESON_TAC[]));;
+
+(* the top implication of !vs. a1 /\ ... /\ an ==> c, curried (no change if it *)
+(* has no implication)                                                        *)
+let CLOSPROPSAUX_curry_top th =
+  try let vs,bod = strip_forall (concl th) in
+      let ant,con = dest_imp bod in
+      let ants = conjuncts ant in
+      let th1 = MP (SPECL vs th) (end_itlist CONJ (map ASSUME ants)) in
+      GENL vs (itlist DISCH ants th1)
+  with Failure _ -> th;;

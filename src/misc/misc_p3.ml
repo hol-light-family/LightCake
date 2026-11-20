@@ -432,12 +432,6 @@ let FOLDL_OPTION_CHOICE_EQ_SOME_IMP_MEM = prove
   POP_ASSUM MP_TAC THEN CASES_ON `x:A option` THEN
   REWRITE_TAC[OPTION_CHOICE_DEF] THEN MESON_TAC[]);;
 
-let MISC3AUX_FORALL_LT_SUC = prove
- (`!P n. (!m. m < SUC n ==> P m) <=> P 0 /\ (!m. m < n ==> P (SUC m))`,
-  REPEAT GEN_TAC THEN EQ_TAC THENL
-   [MESON_TAC[LT_0; LT_SUC];
-    STRIP_TAC THEN INDUCT_TAC THEN ASM_SIMP_TAC[LT_SUC]]);;
-
 let BAG_ALL_DISTINCT_FOLDR_BAG_UNION = prove
  (`!ls (b0:A->num).
      BAG_ALL_DISTINCT (ITLIST BAG_UNION ls b0) <=>
@@ -447,7 +441,7 @@ let BAG_ALL_DISTINCT_FOLDR_BAG_UNION = prove
           (!m. m < n ==> BAG_DISJOINT (EL n ls) (EL m ls)))`,
   LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[ITLIST; LENGTH; CONJUNCT1 LT] THEN
   REWRITE_TAC[BAG_ALL_DISTINCT_BAG_UNION; BAG_DISJOINT_FOLDR_BAG_UNION; ALL] THEN
-  GEN_TAC THEN REWRITE_TAC[MISC3AUX_FORALL_LT_SUC] THEN
+  GEN_TAC THEN REWRITE_TAC[RICHAUX_FORALL_LT_SUC] THEN
   REWRITE_TAC[EL; HD; TL; CONJUNCT1 LT] THEN REWRITE_TAC[GSYM ALL_EL] THEN
   ASM_REWRITE_TAC[] THEN MESON_TAC[BAG_DISJOINT_SYM]);;
 
@@ -943,23 +937,6 @@ let eq_shape_def = cake_def_wf
 
 let eq_shape_ind = cake_ind "eq_shape";;
 
-(* helpers: a key is 0, an odd number or a positive even number *)
-let MISC3AUX_bit_cases = prove
- (`!n. n = 0 \/ (?m. n = 2 * m + 1) \/ (?m. n = 2 * m + 2)`,
-  GEN_TAC THEN DISJ_CASES_TAC(SPEC `n:num` EVEN_OR_ODD) THENL
-   [FIRST_X_ASSUM(X_CHOOSE_TAC `m:num` o REWRITE_RULE[EVEN_EXISTS]) THEN
-    ASM_CASES_TAC `m = 0` THENL
-     [ASM_REWRITE_TAC[] THEN ARITH_TAC;
-      DISJ2_TAC THEN DISJ2_TAC THEN EXISTS_TAC `m - 1` THEN ASM_ARITH_TAC];
-    FIRST_X_ASSUM(X_CHOOSE_TAC `m:num` o REWRITE_RULE[ODD_EXISTS]) THEN
-    DISJ2_TAC THEN DISJ1_TAC THEN EXISTS_TAC `m:num` THEN ASM_ARITH_TAC]);;
-
-let MISC3AUX_FORALL_BITS = prove
- (`!P. (!n. P n) <=> P 0 /\ (!m. P (2 * m + 1)) /\ (!m. P (2 * m + 2))`,
-  GEN_TAC THEN EQ_TAC THEN SIMP_TAC[] THEN STRIP_TAC THEN GEN_TAC THEN
-  REPEAT_TCL STRIP_THM_THEN SUBST1_TAC (SPEC `n:num` MISC3AUX_bit_cases) THEN
-  ASM_REWRITE_TAC[]);;
-
 let MISC3AUX_BIT_RW = prove
  (`(!m. ~(2 * m + 1 = 0)) /\ (!m. ~(2 * m + 2 = 0)) /\
    (!m. EVEN (2 * m + 1) <=> F) /\ (!m. EVEN (2 * m + 2) <=> T) /\
@@ -984,7 +961,7 @@ let spt_eq = prove
   MATCH_MP_TAC spt_INDUCT THEN REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
   TRY DISCH_TAC THEN REPEAT GEN_TAC THEN CASES_ON `t2:A spt` THEN
   REWRITE_TAC[eq_shape_def; spt_distinct; spt_inject] THEN
-  ONCE_REWRITE_TAC[MISC3AUX_FORALL_BITS] THEN
+  ONCE_REWRITE_TAC[SPTAUX_FORALL_BITS] THEN
   REWRITE_TAC[lookup_def; MISC3AUX_lookup_bits; option_DISTINCT; option_INJ] THEN
   REWRITE_TAC[MISC3AUX_BIT_RW] THEN
   TRY(FIRST_X_ASSUM(fun th -> ONCE_REWRITE_TAC[CONJUNCT1 th; CONJUNCT2 th])) THEN
@@ -1049,12 +1026,6 @@ let num_lemma = prove
   REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN TRY ARITH_TAC THEN
   DISCH_THEN(MP_TAC o AP_TERM `EVEN`) THEN REWRITE_TAC[EVEN_ADD; EVEN_MULT; ARITH]);;
 
-let MISC3AUX_domain_eq_lookup = prove
- (`!(t1:A spt) (t2:B spt). domain t1 = domain t2 <=>
-     !k. lookup k t1 = NONE <=> lookup k t2 = NONE`,
-  REWRITE_TAC[EXTENSION; domain_lookup] THEN
-  MESON_TAC[option_nchotomy; option_DISTINCT]);;
-
 let shape_eq_copy_shape = prove
  (`!(t1:A spt) (t2:B spt).
      domain t1 = domain t2 ==> eq_shape (copy_shape t1 t2) t2`,
@@ -1063,11 +1034,11 @@ let shape_eq_copy_shape = prove
                            else MP_TAC th)) THEN
   CASES_ON `t2:B spt` THEN
   REWRITE_TAC[copy_shape_def; eq_shape_def] THEN
-  RULE_ASSUM_TAC(REWRITE_RULE[MISC3AUX_domain_eq_lookup]) THEN
+  RULE_ASSUM_TAC(REWRITE_RULE[domain_eq]) THEN
   MP_TAC eq_shape_copy_shape THEN
-  REWRITE_TAC[MISC3AUX_domain_eq_lookup; MISC3AUX_domain_empty_lookup] THEN
+  REWRITE_TAC[domain_eq; MISC3AUX_domain_empty_lookup] THEN
   DISCH_TAC THEN
-  ONCE_REWRITE_TAC[MISC3AUX_FORALL_BITS] THEN
+  ONCE_REWRITE_TAC[SPTAUX_FORALL_BITS] THEN
   REWRITE_TAC[lookup_def; MISC3AUX_lookup_bits; option_DISTINCT] THEN
   REPEAT COND_CASES_TAC THEN REWRITE_TAC[eq_shape_def] THEN
   ASM_MESON_TAC[]);;
@@ -1214,11 +1185,6 @@ let alist_insert_ALL_DISTINCT = prove
   REWRITE_TAC[GSYM MAP_APPEND] THEN FIRST_X_ASSUM MATCH_MP_TAC THEN
   ASM_REWRITE_TAC[]);;
 
-(* signed comparisons of words with small values *)
-let MISC3AUX_IVAL_SMALL = prove
- (`!w:N word. val w < 2 EXP (dimindex(:N) - 1) ==> ival w = &(val w)`,
-  SIMP_TAC[ival]);;
-
 let MISC3AUX_ILT_0 = prove
  (`!w:N word. word_ilt (word 0) w <=>
               0 < val w /\ val w < 2 EXP (dimindex(:N) - 1)`,
@@ -1231,7 +1197,7 @@ let MISC3AUX_ILT_ILE_SMALL = prove
  (`!v w:N word.
      val v < 2 EXP (dimindex(:N) - 1) /\ val w < 2 EXP (dimindex(:N) - 1) ==>
      (word_ilt v w <=> val v < val w) /\ (word_ile v w <=> val v <= val w)`,
-  SIMP_TAC[word_ilt; word_ile; irelational2; MISC3AUX_IVAL_SMALL;
+  SIMP_TAC[word_ilt; word_ile; irelational2; IVAL_EQ_VAL;
            INT_OF_NUM_LT; INT_OF_NUM_LE]);;
 
 let n2w_lt = prove

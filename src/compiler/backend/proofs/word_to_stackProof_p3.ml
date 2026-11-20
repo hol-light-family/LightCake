@@ -863,10 +863,6 @@ let W2SP3AUX_MAX_LT = prove
  (`!a b c. MAX a b < c <=> a < c /\ b < c`,
   REWRITE_TAC[MAX] THEN ARITH_TAC);;
 
-let W2SP3AUX_max3_LT = prove
- (`!a b c d. max3 a b c < d <=> a < d /\ b < d /\ c < d`,
-  REWRITE_TAC[max3_def] THEN ARITH_TAC);;
-
 (* W2SP3AUX: the end of each case of comp_correct[If] (an OCaml tactic): the *)
 (* registers are loaded in the stack state tf (assumptions                   *)
 (* stack_get_var r' tf = SOME a, stack_get_var_imm ri tf = SOME yv,           *)
@@ -939,11 +935,11 @@ let word_to_stackProof_comp_correct_If = prove
    UNDISCH_TAC `flat_exp_conventions (wl_If cmp r1 ri c1 c2:(A)wl_prog)` THEN
    UNDISCH_TAC `max_var (wl_If cmp r1 ri c1 c2:(A)wl_prog) < 2 * f' + 2 * k` THEN
    REWRITE_TAC[post_alloc_conventions_def; call_arg_convention_def; flat_exp_conventions_def;
-               wl_every_var_def; every_stack_var_def; max_var_def; W2SP3AUX_max3_LT;
+               wl_every_var_def; every_stack_var_def; max_var_def; W2SP2AUX_max3_LT;
                is_phy_var_def; GSYM EVEN_MOD2] THEN
    CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
    CASES_ON `ri:(A)reg_imm` THEN REWRITE_TAC[every_var_imm_def] THEN
-   CASE_REWRITE_TAC[W2SP3AUX_MAX_LT; W2SP3AUX_max3_LT] THEN REPEAT STRIP_TAC THEN
+   CASE_REWRITE_TAC[W2SP3AUX_MAX_LT; W2SP2AUX_max3_LT] THEN REPEAT STRIP_TAC THEN
    RULE_ASSUM_TAC(CASE_REWRITE_RULE[is_phy_var_def; GSYM EVEN_MOD2]) THEN
    RVEQ_TAC THEN ASM_REWRITE_TAC[]; ALL_TAC] THEN
   UNDISCH_TAC `word_to_stack_comp ac F (wl_If cmp r1 ri c1 c2) (bs,n) (k,f,f') =
@@ -2218,46 +2214,12 @@ let copy_ret_aux_thm = prove
   REPEAT GEN_TAC THEN CONJ_TAC THEN GEN_REWRITE_TAC LAND_CONV [copy_ret_aux_def] THEN
   REWRITE_TAC[NOT_SUC; SUC_SUB1] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REFL_TAC);;
 
-(* W2SP3AUX: stackSem Seq facts *)
-let W2SP3AUX_Seq_Skip_r = prove
- (`!p (s:(A,C,FFI)stack_state).
-     stack_evaluate (stack_Seq p stack_Skip,s) = stack_evaluate (p,s)`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[w2sp3aux_seval "stack_Seq"; w2sp3aux_seval "stack_Skip"] THEN
-  MP_TAC(ISPEC `stack_evaluate (p:(A)stack_prog,s:(A,C,FFI)stack_state)` PAIR_SURJECTIVE) THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[pair_CASE_def] THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[]);;
-
-let W2SP3AUX_Seq_Skip_l = prove
- (`!p (s:(A,C,FFI)stack_state).
-     stack_evaluate (stack_Seq stack_Skip p,s) = stack_evaluate (p,s)`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[w2sp3aux_seval "stack_Seq"; w2sp3aux_seval "stack_Skip"] THEN
-  REWRITE_TAC[pair_CASE_def]);;
-
-let W2SP3AUX_Seq_assoc = prove
- (`!p1 p2 p3 (s:(A,C,FFI)stack_state).
-     stack_evaluate (stack_Seq (stack_Seq p1 p2) p3,s) =
-     stack_evaluate (stack_Seq p1 (stack_Seq p2 p3),s)`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[w2sp3aux_seval "stack_Seq"] THEN
-  MP_TAC(ISPEC `stack_evaluate (p1:(A)stack_prog,s:(A,C,FFI)stack_state)` PAIR_SURJECTIVE) THEN
-  DISCH_THEN(X_CHOOSE_THEN `r1:((A)stack_result)option` (X_CHOOSE_THEN `s1:(A,C,FFI)stack_state`
-    SUBST1_TAC)) THEN REWRITE_TAC[pair_CASE_def; FST; SND] THEN
-  ASM_CASES_TAC `r1:((A)stack_result)option = NONE` THEN ASM_REWRITE_TAC[FST; SND] THEN
-  MP_TAC(ISPEC `stack_evaluate (p2:(A)stack_prog,s1:(A,C,FFI)stack_state)` PAIR_SURJECTIVE) THEN
-  DISCH_THEN(X_CHOOSE_THEN `r2:((A)stack_result)option` (X_CHOOSE_THEN `s2:(A,C,FFI)stack_state`
-    SUBST1_TAC)) THEN REWRITE_TAC[pair_CASE_def; FST; SND] THEN
-  COND_CASES_TAC THEN ASM_REWRITE_TAC[FST; SND]);;
-
-let W2SP3AUX_Seq_cong = prove
- (`!p q1 q2 (s:(A,C,FFI)stack_state).
-     (!s':(A,C,FFI)stack_state. stack_evaluate (q1,s') = stack_evaluate (q2,s'))
-     ==> stack_evaluate (stack_Seq p q1,s) = stack_evaluate (stack_Seq p q2,s)`,
-  REPEAT STRIP_TAC THEN REWRITE_TAC[w2sp3aux_seval "stack_Seq"] THEN ASM_REWRITE_TAC[]);;
-
 let W2SP3AUX_Seq_Skip_mid = prove
  (`!p q (s:(A,C,FFI)stack_state).
      stack_evaluate (stack_Seq (stack_Seq p stack_Skip) q,s) =
      stack_evaluate (stack_Seq p q,s)`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[W2SP3AUX_Seq_assoc] THEN
-  MATCH_MP_TAC W2SP3AUX_Seq_cong THEN REWRITE_TAC[W2SP3AUX_Seq_Skip_l]);;
+  REPEAT GEN_TAC THEN REWRITE_TAC[W2SP2AUX_evaluate_Seq_assoc] THEN
+  MATCH_MP_TAC W2SP2AUX_evaluate_Seq_cong2 THEN REWRITE_TAC[W2SP2AUX_evaluate_Skip_Seq]);;
 
 (* HOL4 line 7611 *)
 let evaluate_copy_ret_Seq = prove
@@ -2270,8 +2232,8 @@ let evaluate_copy_ret_Seq = prove
   MP_TAC(ISPEC `ff:num#C` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `f:num` (X_CHOOSE_THEN `f':C` SUBST1_TAC)) THEN
   REWRITE_TAC[copy_ret_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
-  COND_CASES_TAC THEN ASM_REWRITE_TAC[W2SP3AUX_Seq_Skip_l; W2SP3AUX_Seq_assoc] THEN
-  MATCH_MP_TAC W2SP3AUX_Seq_cong THEN
+  COND_CASES_TAC THEN ASM_REWRITE_TAC[W2SP2AUX_evaluate_Skip_Seq; W2SP2AUX_evaluate_Seq_assoc] THEN
+  MATCH_MP_TAC W2SP2AUX_evaluate_Seq_cong2 THEN
   ASM_REWRITE_TAC[SeqStackFree_def; W2SP3AUX_Seq_Skip_mid]);;
 
 (* HOL4 line 7622 *)
@@ -2283,7 +2245,7 @@ let evaluate_copy_ret_Seq' = prove
        (stack_Seq (copy_ret_aux k (if is_handle then f + 3 else f) n) (SeqStackFree n k0),t)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[copy_ret_F] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
-  REWRITE_TAC[copy_ret_aux_thm; SeqStackFree_def; W2SP3AUX_Seq_Skip_l]);;
+  REWRITE_TAC[copy_ret_aux_thm; SeqStackFree_def; W2SP2AUX_evaluate_Skip_Seq]);;
 
 (* W2SP3AUX: copy_ret_aux has no labels *)
 let W2SP3AUX_get_labels_copy_ret_aux = prove
@@ -2529,7 +2491,7 @@ let word_to_stackProof_comp_correct_Loop = prove
    UNDISCH_TAC `flat_exp_conventions (wl_Loop names c exit_names:(A)wl_prog)` THEN
    UNDISCH_TAC `max_var (wl_Loop names c exit_names:(A)wl_prog) < 2 * f' + 2 * k` THEN
    REWRITE_TAC[post_alloc_conventions_def; call_arg_convention_def; flat_exp_conventions_def;
-               wl_every_var_def; every_stack_var_def; max_var_def; W2SP3AUX_max3_LT] THEN
+               wl_every_var_def; every_stack_var_def; max_var_def; W2SP2AUX_max3_LT] THEN
    SIMP_TAC[]; ALL_TAC] THEN
   UNDISCH_TAC `word_to_stack_comp ac F (wl_Loop names c exit_names) (bs,n) (k,f,f') =
                (sprog:(A)stack_prog,bs',n')` THEN
@@ -3271,7 +3233,7 @@ let W2SP3AUX_ret_convs = prove
               flat_exp_conventions_def; every_stack_var_def; wl_every_var_def] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN CASE_REWRITE_TAC[] THEN
   REWRITE_TAC[every_name_def; cutsets_max_def; option_DISTINCT; option_INJ; PAIR_EQ;
-              W2SP3AUX_max3_LT; W2SP3AUX_MAX_LT] THEN
+              W2SP2AUX_max3_LT; W2SP3AUX_MAX_LT] THEN
   REWRITE_TAC[GSYM toAList_domain; EVERY_MEM; is_phy_var_def; GSYM EVEN_MOD2] THEN
   REPEAT STRIP_TAC THEN TRY(FIRST_ASSUM ACCEPT_TAC) THEN RVEQ_TAC THEN
   ASM_REWRITE_TAC[] THEN

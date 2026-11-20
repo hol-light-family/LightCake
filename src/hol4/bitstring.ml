@@ -91,13 +91,6 @@ let bxor_def = new_definition
 (* List helpers (list and rich_list theorems of other units).                *)
 (* ------------------------------------------------------------------------- *)
 
-let LSTRAUX_LENGTH_TAKE = prove
- (`!(l:A list) n. n <= LENGTH l ==> LENGTH (TAKE n l) = n`,
-  LIST_INDUCT_TAC THEN REWRITE_TAC[TAKE_DEF; LENGTH] THEN
-  REPEAT STRIP_TAC THENL [ASM_ARITH_TAC; ALL_TAC] THEN
-  COND_CASES_TAC THEN ASM_REWRITE_TAC[LENGTH] THEN
-  FIRST_X_ASSUM(MP_TAC o SPEC `n - 1`) THEN ANTS_TAC THEN ASM_ARITH_TAC);;
-
 let LSTRAUX_EL_TAKE = prove
  (`!(l:A list) n i. i < n /\ n <= LENGTH l ==> EL i (TAKE n l) = EL i l`,
   LIST_INDUCT_TAC THEN REWRITE_TAC[TAKE_DEF; LENGTH] THEN
@@ -105,20 +98,6 @@ let LSTRAUX_EL_TAKE = prove
   COND_CASES_TAC THENL [ASM_MESON_TAC[LT]; ALL_TAC] THEN
   REWRITE_TAC[EL_CONS] THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
   FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_ARITH_TAC);;
-
-let LSTRAUX_TAKE_0 = prove
- (`!l:A list. TAKE 0 l = []`,
-  LIST_INDUCT_TAC THEN REWRITE_TAC[TAKE_DEF]);;
-
-let LSTRAUX_DROP_0 = prove
- (`!l:A list. DROP 0 l = l`,
-  LIST_INDUCT_TAC THEN REWRITE_TAC[DROP_DEF]);;
-
-let LSTRAUX_LENGTH_DROP = prove
- (`!(l:A list) n. LENGTH (DROP n l) = LENGTH l - n`,
-  LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[DROP_DEF; LENGTH; SUB_0] THEN
-  REPEAT GEN_TAC THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[LENGTH] THEN
-  ASM_ARITH_TAC);;
 
 let LSTRAUX_EL_DROP = prove
  (`!(l:A list) n i. i + n < LENGTH l ==> EL i (DROP n l) = EL (i + n) l`,
@@ -139,15 +118,6 @@ let LSTRAUX_DROP_LAST = prove
     DISCH_THEN SUBST1_TAC THEN REFL_TAC;
     FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_ARITH_TAC]);;
 
-let LSTRAUX_EL_ZIP = prove
- (`!(l1:A list) (l2:B list) i. LENGTH l1 = LENGTH l2 /\ i < LENGTH l1
-      ==> EL i (ZIP l1 l2) = (EL i l1, EL i l2)`,
-  LIST_INDUCT_TAC THEN LIST_INDUCT_TAC THEN
-  REWRITE_TAC[LENGTH; NOT_SUC; ZIP; SUC_INJ; LT] THEN
-  REPEAT STRIP_TAC THEN REWRITE_TAC[EL_CONS] THEN
-  COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
-  FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_ARITH_TAC);;
-
 (* ------------------------------------------------------------------------- *)
 (* testbit: bit b of v counts from the end of v.                             *)
 (* ------------------------------------------------------------------------- *)
@@ -160,7 +130,7 @@ let testbit = prove
   REWRITE_TAC[ARITH_RULE `SUC b - b = 1`] THEN
   SUBGOAL_THEN `LENGTH (TAKE (LENGTH v - b) (v:bool list)) = LENGTH v - b`
   ASSUME_TAC THENL
-   [MATCH_MP_TAC LSTRAUX_LENGTH_TAKE THEN ARITH_TAC; ASM_REWRITE_TAC[]] THEN
+   [MATCH_MP_TAC LENGTH_TAKE THEN ARITH_TAC; ASM_REWRITE_TAC[]] THEN
   ASM_CASES_TAC `b < LENGTH (v:bool list)` THEN ASM_REWRITE_TAC[] THENL
    [SUBGOAL_THEN `~(LENGTH (v:bool list) - b < 1)` (fun th -> REWRITE_TAC[th]) THENL
      [ASM_ARITH_TAC; ALL_TAC] THEN
@@ -176,7 +146,7 @@ let testbit = prove
     CONV_TAC TAUT;
     SUBGOAL_THEN `LENGTH (v:bool list) - b = 0` SUBST1_TAC THENL
      [ASM_ARITH_TAC; ALL_TAC] THEN
-    REWRITE_TAC[ARITH_RULE `0 < 1 /\ 1 - 0 = 1`; LSTRAUX_TAKE_0; APPEND_NIL] THEN
+    REWRITE_TAC[ARITH_RULE `0 < 1 /\ 1 - 0 = 1`; TAKE_0; APPEND_NIL] THEN
     REWRITE_TAC[num_CONV `1`; list_of_seq; APPEND; K_THM; CONS_11]]);;
 
 let testbit_geq_len = prove
@@ -232,7 +202,7 @@ let LSTRAUX_TESTBIT_ZERO_EXTEND = prove
 
 let LSTRAUX_TESTBIT_DROP = prove
  (`!i k v. testbit i (DROP k v) <=> i < LENGTH v - k /\ testbit i v`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[testbit; LSTRAUX_LENGTH_DROP] THEN
+  REPEAT GEN_TAC THEN REWRITE_TAC[testbit; LENGTH_DROP] THEN
   ASM_CASES_TAC `i < LENGTH (v:bool list) - k` THEN ASM_REWRITE_TAC[] THEN
   SUBGOAL_THEN `((LENGTH (v:bool list) - k) - 1 - i) + k < LENGTH v /\
                 ((LENGTH v - k) - 1 - i) + k = LENGTH v - 1 - i /\
@@ -263,7 +233,7 @@ let length_fixwidth = prove
   REPEAT GEN_TAC THEN
   REWRITE_TAC[fixwidth_def; zero_extend_def; PAD_LEFT] THEN
   COND_CASES_TAC THEN
-  ASM_REWRITE_TAC[LENGTH_APPEND; LENGTH_LIST_OF_SEQ; LSTRAUX_LENGTH_DROP] THEN
+  ASM_REWRITE_TAC[LENGTH_APPEND; LENGTH_LIST_OF_SEQ; LENGTH_DROP] THEN
   ASM_ARITH_TAC);;
 
 let length_field = prove
@@ -273,7 +243,7 @@ let length_field = prove
 let length_shiftr = prove
  (`!v n. LENGTH (shiftr v n) = LENGTH v - n`,
   REPEAT GEN_TAC THEN REWRITE_TAC[shiftr_def] THEN
-  MATCH_MP_TAC LSTRAUX_LENGTH_TAKE THEN ARITH_TAC);;
+  MATCH_MP_TAC LENGTH_TAKE THEN ARITH_TAC);;
 
 let length_w2v = prove
  (`!w:N word. LENGTH (w2v w) = dimindex(:N)`,
@@ -281,7 +251,7 @@ let length_w2v = prove
 
 let fixwidth_id = prove
  (`!w. fixwidth (LENGTH w) w = w`,
-  REWRITE_TAC[fixwidth_def; LT_REFL; SUB_REFL; LSTRAUX_DROP_0]);;
+  REWRITE_TAC[fixwidth_def; LT_REFL; SUB_REFL; DROP_0]);;
 
 let fixwidth_id_imp = prove
  (`!n w. n = LENGTH w ==> fixwidth n w = w`,
@@ -302,7 +272,7 @@ let LSTRAUX_TESTBIT_BITWISE = prove
   REWRITE_TAC[testbit; LENGTH_MAP] THEN ASM_REWRITE_TAC[] THEN
   ASM_CASES_TAC `i < m` THEN ASM_REWRITE_TAC[] THEN
   SUBGOAL_THEN `m - 1 - i < m` ASSUME_TAC THENL [ASM_ARITH_TAC; ALL_TAC] THEN
-  ASM_SIMP_TAC[EL_MAP; LSTRAUX_EL_ZIP; length_fixwidth; UNCURRY_DEF] THEN
+  ASM_SIMP_TAC[EL_MAP; EL_ZIP; length_fixwidth; UNCURRY_DEF] THEN
   MP_TAC(SPECL [`i:num`; `m:num`; `v:bool list`] LSTRAUX_TESTBIT_FIXWIDTH) THEN
   MP_TAC(SPECL [`i:num`; `m:num`; `w:bool list`] LSTRAUX_TESTBIT_FIXWIDTH) THEN
   ASM_SIMP_TAC[testbit; length_fixwidth]);;

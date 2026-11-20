@@ -2009,11 +2009,6 @@ let INFER1AUX_ground_eq = prove
   FIRST_X_ASSUM(SUBST1_TAC o SYM o check (fun th -> concl th = `u = t_walkstar s1 tb`)) THEN
   MATCH_MP_TAC t_walkstar_no_vars THEN EXISTS_TAC `n:num` THEN ASM_REWRITE_TAC[]);;
 
-let INFER1AUX_ec_ALL_SND = prove
- (`!(P:B->bool) (l:(A#B)list). ALL (\(x,t). P t) l <=> ALL P (MAP SND l)`,
-  GEN_TAC THEN LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[ALL; MAP] THEN
-  SPEC_TAC(`h:A#B`,`h:A#B`) THEN REWRITE_TAC[FORALL_PAIR_THM]);;
-
 (* the pattern and the first constraint of a clause of infer_pes *)
 let INFER1AUX_pes_pat_step = prove
  (CASE_TERM `!l ienv tenv tenvE uvar p bindings t1 t1' st0 cs0 s0.
@@ -2125,7 +2120,7 @@ let INFER1AUX_pes_pat_step = prove
     MP_TAC(SPECL [`uvar:num`; `infer_st_next_uvar st1`; `ienv:inf_env`] ienv_ok_more) THEN
     ASM_REWRITE_TAC[ienv_ok_def] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
     MATCH_MP_TAC TYSYS2AUX_ienv_val_ok_pes THEN
-    ASM_REWRITE_TAC[GSYM INFER1AUX_ec_ALL_SND];
+    ASM_REWRITE_TAC[GSYM every_shim];
     MATCH_MP_TAC INFER1AUX_env_rel_complete_pat THEN
     MAP_EVERY EXISTS_TAC [`s0:(num,infer_t)fmap`; `s1:(num,infer_t)fmap`] THEN
     ASM_REWRITE_TAC[SUBSET; IN_COUNT] THEN ASM_ARITH_TAC]);;
@@ -2531,20 +2526,6 @@ let INFER1AUX_IEC_NIL_TAC : tactic =
                         `constraints:(infer_t#infer_t)list`] THEN
   ASM_SIMP_TAC[t_compat_refl; MAP; infer_e_def; st_ex_return_def];;
 
-(* lookup_var under a binding of another name *)
-let INFER1AUX_lookup_var_bind_other = prove
- (`!x n tvs t1 tenvE tenv.
-     ~(x = Short n)
-     ==> lookup_var x (Bind_name n tvs t1 tenvE) tenv = lookup_var x tenvE tenv`,
-  REPEAT GEN_TAC THEN
-  MP_TAC(ISPEC `x:(mlstring,mlstring)id` (cases "id")) THEN STRIP_TAC THEN
-  FIRST_X_ASSUM SUBST_ALL_TAC THEN
-  REWRITE_TAC[lookup_var_def; lookup_varE_def; injectivity "id"] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[tveLookup_def] THEN
-  DISCH_TAC THEN ASM_REWRITE_TAC[] THEN
-  SUBGOAL_THEN `~((n:mlstring) = a)` (fun th -> REWRITE_TAC[th]) THEN
-  ASM_MESON_TAC[]);;
-
 (* env_rel_complete for the environment extended with a variable of type ty *)
 let INFER1AUX_erc_bind = prove
  (`!s s' ienv tenv tenvE n t1 ty.
@@ -2570,7 +2551,7 @@ let INFER1AUX_erc_bind = prove
     GEN_TAC THEN DISCH_THEN SUBST1_TAC THEN REWRITE_TAC[infer_deBruijn_subst_id] THEN
     ASM_REWRITE_TAC[] THEN MATCH_MP_TAC t_walkstar_no_vars THEN
     EXISTS_TAC `num_tvs tenvE` THEN ASM_SIMP_TAC[check_freevars_to_check_t];
-    ASM_SIMP_TAC[INFER1AUX_lookup_var_bind_other; nsLookup_nsBind] THEN DISCH_TAC THEN
+    ASM_SIMP_TAC[INFER1AUX_lookup_var_Bind_name_other; nsLookup_nsBind] THEN DISCH_TAC THEN
     FIRST_X_ASSUM(fun ih -> MP_TAC(MATCH_MP ih
       (ASSUME `lookup_var x tenvE tenv = SOME (tvs,t)`))) THEN
     DISCH_THEN(CONJUNCTS_THEN2 (X_CHOOSE_TAC `m:num`)

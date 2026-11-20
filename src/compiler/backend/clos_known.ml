@@ -340,16 +340,12 @@ let CLOS2AUX_ADMISSIBLE_MAP2 = prove
     (fun th -> REWRITE_TAC[th]) THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
   MATCH_MP_TAC CLOS2AUX_MAP2_CONG THEN ASM_MESON_TAC[]);;
 
-let CLOS2AUX_MERGE_TC_TAC : tactic =
-  REWRITE_TAC[IMP_CONJ] THEN REPEAT GEN_TAC THEN REPEAT DISCH_TAC THEN
-  RVEQ_TAC THEN TERM_TAC;;
-
 let merge_def =
   let saved = !cake_admissible_rules in
   cake_register_admissible "MAP2" CLOS2AUX_ADMISSIBLE_MAP2;
   let th = try sem1aux_def_wf
     `measure (\p:val_approx#val_approx. val_approx_size (FST p))`
-    CLOS2AUX_MERGE_TC_TAC
+    SEM1AUX_TC_TAC
     `(merge Impossible y = y) /\
      (merge x Impossible = x) /\
      (merge (clos_known_Tuple tg1 xs) (clos_known_Tuple tg2 ys) =
@@ -374,7 +370,7 @@ let merge_ind =
        (LENGTH xs = LENGTH ys /\ tg1 = tg2) /\ MEM x xs
        ==> measure (\p:val_approx#val_approx. val_approx_size (FST p))
              (x,y) (clos_known_Tuple tg1 xs,clos_known_Tuple tg2 ys)`,
-    CLOS2AUX_MERGE_TC_TAC) in
+    SEM1AUX_TC_TAC) in
   let wfth = prove(mk_comb(`WF:(val_approx#val_approx->val_approx#val_approx->bool)->bool`,r),
                    WF_TAC) in
   let cls = map (fun c -> let vs,eq = strip_forall c in
@@ -440,10 +436,6 @@ let merge_alt = prove
 (* the NAME_pmatch theorems: the definition by cases (the match form is     *)
 (* compiled into case constants, a case split proves it)                    *)
 
-let CLOS2AUX_PMATCH_TAC (defs:thm list) : tactic =
-  REPEAT GEN_TAC THEN REPEAT (TOP_CASE_TAC THEN ASM_REWRITE_TAC defs) THEN
-  FS defs;;
-
 let known_op_def = sem1aux_def
   `(known_op (GlobOp (clos_Global n)) as g =
       if NULL as then
@@ -501,7 +493,7 @@ let known_op_pmatch = prove
           | CONS _ (CONS Impossible xs) -> (Impossible,g)
           | _ -> (clos_known_Other,g))
      | _ -> (clos_known_Other,g)`,
-  CLOS2AUX_PMATCH_TAC[known_op_def]);;
+  IL1AUX_PMATCH_TAC[known_op_def]);;
 
 (* HOL4: EL_MEM_LEMMA [local] *)
 
@@ -532,7 +524,7 @@ let isGlobal_def = sem1aux_def
 let isGlobal_pmatch = prove
  (CASE_TERM
   `!op. isGlobal op <=> match op with GlobOp (clos_Global _) -> T | _ -> F`,
-  CLOS2AUX_PMATCH_TAC[isGlobal_def]);;
+  IL1AUX_PMATCH_TAC[isGlobal_def]);;
 
 let gO_destApx_def = sem1aux_def
   `(gO_destApx (clos_known_Int i) = gO_Int i) /\

@@ -481,13 +481,6 @@ let CLOSP2AUX_letop_not_thunk = prove
                   clos_bad_thunk_update_def] THEN
   MESON_TAC[]);;
 
-let CLOSP2AUX_letop_dest_thunk_NONE = prove
- (CASE_TERM `!d (x:A option).
-     ~(d = clos_NotThunk) ==>
-     (match d with clos_BadRef -> NONE | clos_NotThunk -> x | clos_IsThunk m v -> NONE) =
-     NONE`,
-  GEN_TAC THEN CASES_ON `d:clos_dest_thunk_ret` THEN CASE_REWRITE_TAC[]);;
-
 (* HOL4: rel_update_thunk [local] *)
 let clos_letopProof_rel_update_thunk = prove
  (`clos_letopProof_state_rel (s1:(C,FFI)clos_state) s2 /\
@@ -525,7 +518,7 @@ let clos_letopProof_rel_update_thunk = prove
     ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[];
     SUBGOAL_THEN `~(clos_dest_thunk [y] (clos_state_refs (s2:(C,FFI)clos_state)) =
                     clos_NotThunk)` ASSUME_TAC THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
-    ASM_SIMP_TAC[CLOSP2AUX_letop_dest_thunk_NONE; distinctness "option"]] THEN
+    ASM_SIMP_TAC[CLOSSEMAUX_dest_thunk_NONE; distinctness "option"]] THEN
   REWRITE_TAC[store_thunk_def] THEN
   MP_TAC(SPECL [`s1:(C,FFI)clos_state`; `s2:(C,FFI)clos_state`; `ptr:num`]
                CLOSP2AUX_letop_flookup_rel) THEN
@@ -577,14 +570,11 @@ let CLOSP2AUX_letop_ind =
   CONV_RULE (DEPTH_CONV BETA_CONV) (ISPECL [p;q] CLOSPROPSAUX_evaluate_ind);;
 let CLOSP2AUX_letop_cases = conjuncts (lhand (concl CLOSP2AUX_letop_ind));;
 
-let CLOSP2AUX_letop_is_app s tm =
-  try fst(dest_const(fst(strip_comb tm))) = s with Failure _ -> false;;
-
 let CLOSP2AUX_letop_counter = ref 0;;
 
 let CLOSP2AUX_letop_is_eval t =
-  (CLOSP2AUX_letop_is_app "clos_evaluate" t && is_comb t) ||
-  (CLOSP2AUX_letop_is_app "evaluate_app" t && length (snd (strip_comb t)) = 4);;
+  (CLOSPROPSAUX_is_app "clos_evaluate" t && is_comb t) ||
+  (CLOSPROPSAUX_is_app "evaluate_app" t && length (snd (strip_comb t)) = 4);;
 
 let CLOSP2AUX_letop_is_P th =
   let c = snd(strip_forall(concl th)) in
@@ -592,14 +582,6 @@ let CLOSP2AUX_letop_is_P th =
   (let a = lhand (lhand c) in
    is_eq a && CLOSP2AUX_letop_is_eval (lhs a) && is_pair (rhs a) &&
    is_var (fst (dest_pair (rhs a))));;
-
-let CLOSP2AUX_letop_curry_top th =
-  try let vs,bod = strip_forall (concl th) in
-      let ant,con = dest_imp bod in
-      let ants = conjuncts ant in
-      let th1 = MP (SPECL vs th) (end_itlist CONJ (map ASSUME ants)) in
-      GENL vs (itlist DISCH ants th1)
-  with Failure _ -> th;;
 
 let CLOSP2AUX_LETOP_COND_IH_TAC : tactic = fun (asl,w as gl) ->
   let asms = map snd asl in
@@ -614,7 +596,7 @@ let CLOSP2AUX_LETOP_COND_IH_TAC : tactic = fun (asl,w as gl) ->
     else if depth = 0 then [] else
     let rs = mapfilter (fun a -> MATCH_MP th a) asms in
     flat (map (resolve (depth-1)) rs) in
-  let res = flat (map (fun th -> resolve 4 (CLOSP2AUX_letop_curry_top th)) cihs) in
+  let res = flat (map (fun th -> resolve 4 (CLOSPROPSAUX_curry_top th)) cihs) in
   let res = filter (fun th -> not (exists (fun a -> aconv (concl a) (concl th)) asms)) res in
   MAP_EVERY ASSUME_TAC res gl;;
 
@@ -676,16 +658,16 @@ let CLOSP2AUX_letop_all2_nil = prove
 (* the relation of a source environment to a target one *)
 let rec CLOSP2AUX_letop_env (asl:thm list) (e:term) : thm =
   try find (fun th -> let c = concl th in
-              CLOSP2AUX_letop_is_app "ALL2" c && lhand c = e &&
+              CLOSPROPSAUX_is_app "ALL2" c && lhand c = e &&
               rator (rator c) = `ALL2 clos_letopProof_v_rel`) asl
   with Failure _ ->
-  if CLOSP2AUX_letop_is_app "APPEND" e then
+  if CLOSPROPSAUX_is_app "APPEND" e then
     MATCH_MP CLOSP2AUX_letop_all2_append
       (CONJ (CLOSP2AUX_letop_env asl (lhand e)) (CLOSP2AUX_letop_env asl (rand e)))
   else if is_cons e then
     let h,t = dest_cons e in
     let vh = find (fun th -> let c = concl th in
-                     CLOSP2AUX_letop_is_app "clos_letopProof_v_rel" c && lhand c = h) asl in
+                     CLOSPROPSAUX_is_app "clos_letopProof_v_rel" c && lhand c = h) asl in
     MATCH_MP CLOSP2AUX_letop_all2_cons (CONJ vh (CLOSP2AUX_letop_env asl t))
   else if e = `[]:clos_v list` then CLOSP2AUX_letop_all2_nil
   else failwith "CLOSP2AUX_letop_env";;
@@ -693,7 +675,7 @@ let rec CLOSP2AUX_letop_env (asl:thm list) (e:term) : thm =
 let CLOSP2AUX_LETOP_ENV_TAC : tactic = fun (asl,w as gl) ->
   let ev = concl (snd (hd asl)) in
   let l = lhs ev in
-  if not (CLOSP2AUX_letop_is_app "clos_evaluate" l) then ALL_TAC gl else
+  if not (CLOSPROPSAUX_is_app "clos_evaluate" l) then ALL_TAC gl else
   let e = fst (dest_pair (snd (dest_pair (rand l)))) in
   let asms = map snd asl in
   let th = CLOSP2AUX_letop_env asms e in
@@ -709,7 +691,7 @@ let CLOSP2AUX_letop_apply (asl:thm list) (ih:thm) (ev:thm) : thm =
     let vs,bod = strip_forall (concl th) in
     if not (is_imp bod) then th else
     let ant = lhand bod in
-    if CLOSP2AUX_letop_is_app "clos_letopProof_code_rel" ant
+    if CLOSPROPSAUX_is_app "clos_letopProof_code_rel" ant
     then CLOSP2AUX_letop_code_disch asl th
     else disch (tryfind (fun a -> MATCH_MP th a) asl) in
   disch th1;;
@@ -752,7 +734,7 @@ let CLOSP2AUX_LETOP_SPLIT_TAC : tactic = fun (asl,w as gl) ->
   and sv = mk_var("sv" ^ k, `:clos_v`) and tv = mk_var("tv" ^ k, `:clos_v`)
   and ab = mk_var("ab" ^ k, `:abort`) in
   (FIRST_X_ASSUM(fun th ->
-     if CLOSP2AUX_letop_is_app "result_rel" (concl th) && lhand (concl th) = rr
+     if CLOSPROPSAUX_is_app "result_rel" (concl th) && lhand (concl th) = rr
      then DISJ_CASES_THEN2 (X_CHOOSE_THEN sa (X_CHOOSE_THEN ta STRIP_ASSUME_TAC))
             (DISJ_CASES_THEN2 (X_CHOOSE_THEN sv (X_CHOOSE_THEN tv STRIP_ASSUME_TAC))
                               (X_CHOOSE_THEN ab STRIP_ASSUME_TAC))
@@ -772,12 +754,12 @@ let CLOSP2AUX_letop_evaluate_SING_let_op = prove
 let CLOSP2AUX_LETOP_SING_TAC : tactic =
   REPEAT(FIRST_X_ASSUM(fun th ->
     let c = concl th in
-    if is_eq c && CLOSP2AUX_letop_is_app "clos_evaluate" (lhs c) &&
+    if is_eq c && CLOSPROPSAUX_is_app "clos_evaluate" (lhs c) &&
        is_pair (rhs c) &&
-       (let r = fst(dest_pair(rhs c)) in CLOSP2AUX_letop_is_app "Rval" r && is_var (rand r)) &&
+       (let r = fst(dest_pair(rhs c)) in CLOSPROPSAUX_is_app "Rval" r && is_var (rand r)) &&
        (let xs = fst(dest_pair(rand(lhs c))) in
         (is_list xs && length (dest_list xs) = 1) ||
-        (CLOSP2AUX_letop_is_app "clos_letop_let_op" xs &&
+        (CLOSPROPSAUX_is_app "clos_letop_let_op" xs &&
          (let a = rand xs in is_list a && length (dest_list a) = 1)))
     then (let xs = fst(dest_pair(rand(lhs c))) in
           STRIP_ASSUME_TAC(MATCH_MP (if is_list xs then clos_evaluate_SING
@@ -788,7 +770,7 @@ let CLOSP2AUX_LETOP_SING_TAC : tactic =
                               is_cons (rhs (concl th)) then SUBST_ALL_TAC th else NO_TAC)) THEN
   REPEAT(FIRST_X_ASSUM(fun th ->
     let c = concl th in
-    if CLOSP2AUX_letop_is_app "ALL2" c && is_cons (lhand c) && is_cons (rand c)
+    if CLOSPROPSAUX_is_app "ALL2" c && is_cons (lhand c) && is_cons (rand c)
     then MP_TAC th THEN REWRITE_TAC[ALL2] THEN STRIP_TAC else NO_TAC));;
 
 let CLOSP2AUX_LETOP_FIN_TAC : tactic =
@@ -845,7 +827,7 @@ let CLOSP2AUX_letop_full_env_rec = prove
 
 let CLOSP2AUX_LETOP_DC_TAC : tactic =
   ASSUM_LIST(fun l -> MAP_EVERY (ASSUME_TAC o MATCH_MP LIST_REL_LENGTH)
-                        (filter (CLOSP2AUX_letop_is_app "ALL2" o concl) l)) THEN
+                        (filter (CLOSPROPSAUX_is_app "ALL2" o concl) l)) THEN
   ASM_REWRITE_TAC[COND_SWAP; LET_DEF; LET_END_DEF] THEN BETA_TAC THEN
   REPEAT COND_CASES_TAC THEN RULE_ASSUM_TAC(REWRITE_RULE[]) THEN
   TRY(FIRST_ASSUM CONTR_TAC) THEN ASM_REWRITE_TAC[] THEN
@@ -873,7 +855,7 @@ let CLOSP2AUX_letop_dest_closure_cases = prove
         ALL2 clos_letopProof_v_rel rest1 rest2)`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   CASES_ON `f1:clos_v` THEN
-  FIRST_X_ASSUM(MP_TAC o check (CLOSP2AUX_letop_is_app "clos_letopProof_v_rel" o concl)) THEN
+  FIRST_X_ASSUM(MP_TAC o check (CLOSPROPSAUX_is_app "clos_letopProof_v_rel" o concl)) THEN
   REWRITE_TAC[clos_letopProof_v_rel_simps] THEN STRIP_TAC THEN RVEQ_TAC THEN
   REWRITE_TAC[dest_closure_def] THEN CASE_REWRITE_TAC[] THENL
    [CLOSP2AUX_LETOP_DC_TAC; ALL_TAC] THEN
@@ -924,7 +906,7 @@ let CLOSP2AUX_LETOP_INTRO_TAC : tactic =
 let CLOSP2AUX_LETOP_TGT_TAC : tactic =
   FIRST_X_ASSUM(SUBST_ALL_TAC o
     REWRITE_RULE[clos_letopProof_code_rel_def; clos_letop_let_op_def; LET_DEF; LET_END_DEF] o
-    check (CLOSP2AUX_letop_is_app "clos_letopProof_code_rel" o concl));;
+    check (CLOSPROPSAUX_is_app "clos_letopProof_code_rel" o concl));;
 
 let CLOSP2AUX_LETOP_UNFOLD_TAC : tactic =
   FIRST_X_ASSUM(MP_TAC o check (fun th -> is_eq (concl th) &&
@@ -952,7 +934,7 @@ let CLOSP2AUX_letop_var = prove
  (el 2 CLOSP2AUX_letop_cases,
   CLOSP2AUX_LETOP_INTRO_TAC THEN CLOSP2AUX_LETOP_TGT_TAC THEN CLOSP2AUX_LETOP_UNFOLD_TAC THEN
   FIRST_ASSUM(ASSUME_TAC o MATCH_MP LIST_REL_LENGTH o
-              check (CLOSP2AUX_letop_is_app "ALL2" o concl)) THEN
+              check (CLOSPROPSAUX_is_app "ALL2" o concl)) THEN
   ASM_REWRITE_TAC[] THEN COND_CASES_TAC THEN CLOSP2AUX_LETOP_FIN_TAC THEN
   ASM_MESON_TAC[LIST_REL_EL_EQN]);;
 
@@ -1002,17 +984,17 @@ let CLOSP2AUX_letop_let_op_Op = prove
 let CLOSP2AUX_LETOP_OP_TAC : tactic = fun (asl,w as gl) ->
   let asms = map snd asl in
   let hd_th = find (fun th -> let c = concl th in
-                     is_eq c && CLOSP2AUX_letop_is_app "HD" (lhs c) &&
-                     CLOSP2AUX_letop_is_app "clos_Op" (rhs c)) asms in
+                     is_eq c && CLOSPROPSAUX_is_app "HD" (lhs c) &&
+                     CLOSPROPSAUX_is_app "clos_Op" (rhs c)) asms in
   let lo = MATCH_MP CLOSP2AUX_letop_let_op_Op hd_th in
   let x2code = lhs (concl lo) in
   let ev = find (fun th -> let c = concl th in
-                  is_eq c && CLOSP2AUX_letop_is_app "clos_evaluate" (lhs c) &&
+                  is_eq c && CLOSPROPSAUX_is_app "clos_evaluate" (lhs c) &&
                   fst (dest_pair (rand (lhs c))) = x2code) asms in
-  let vl = find (fun th -> CLOSP2AUX_letop_is_app "clos_letop_var_list" (concl th)) asms in
+  let vl = find (fun th -> CLOSPROPSAUX_is_app "clos_letop_var_list" (concl th)) asms in
   let args_tgt = rand (concl vl) in
   let ev_args = find (fun th -> let c = concl th in
-                       is_eq c && CLOSP2AUX_letop_is_app "clos_evaluate" (lhs c) &&
+                       is_eq c && CLOSPROPSAUX_is_app "clos_evaluate" (lhs c) &&
                        fst (dest_pair (rand (lhs c))) = args_tgt) asms in
   let len = MATCH_MP clos_evaluate_IMP_LENGTH ev_args in
   let vie = MATCH_MP var_list_IMP_evaluate (CONJ vl len) in
@@ -1030,7 +1012,7 @@ let CLOSP2AUX_letop_let = prove
     ALL_TAC] THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP dest_op_SOME_IMP o
               check (fun th -> is_eq (concl th) &&
-                               CLOSP2AUX_letop_is_app "clos_letop_dest_op" (lhs (concl th)))) THEN
+                               CLOSPROPSAUX_is_app "clos_letop_dest_op" (lhs (concl th)))) THEN
   CLOSP2AUX_LETOP_UNFOLD_TAC THEN
   CLOSP2AUX_LETOP_STEP_TAC THENL
    [ALL_TAC; CLOSP2AUX_LETOP_FIN_TAC; CLOSP2AUX_LETOP_FIN_TAC] THEN
@@ -1039,15 +1021,6 @@ let CLOSP2AUX_letop_let = prove
 (* local helpers for the Op case: dest_thunk, do_install, do_app and        *)
 (* update_thunk of related values (HOL4: oneline dest_thunk_def,            *)
 (* do_install_lemma, do_app_lemma, rel_update_thunk)                         *)
-let CLOSP2AUX_letop_dest_thunk_NotThunk = prove
- (`!xs (refs:(num,(clos_v)clos_ref)fmap).
-     (!b ptr. ~(xs = [clos_RefPtr b ptr])) ==> clos_dest_thunk xs refs = clos_NotThunk`,
-  LIST_INDUCT_TAC THEN REWRITE_TAC[clos_dest_thunk_def] THEN
-  STRUCT_CASES_TAC(ISPEC `t:clos_v list` list_CASES) THEN
-  REWRITE_TAC[clos_dest_thunk_def; CONS_11] THEN
-  CASES_ON `h:clos_v` THEN REWRITE_TAC[clos_dest_thunk_def; injectivity "clos_v";
-                                      distinctness "clos_v"] THEN
-  MESON_TAC[]);;
 
 let CLOSP2AUX_letop_RefPtr_shape = prove
  (`!xs ys.
@@ -1083,7 +1056,7 @@ let CLOSP2AUX_letop_dest_thunk_rel = prove
   MP_TAC(ISPECL [`xs:clos_v list`; `ys:clos_v list`] CLOSP2AUX_letop_RefPtr_shape) THEN
   ASM_REWRITE_TAC[] THEN STRIP_TAC THENL
    [ALL_TAC;
-    ASM_SIMP_TAC[CLOSP2AUX_letop_dest_thunk_NotThunk] THEN CASE_REWRITE_TAC[]] THEN
+    ASM_SIMP_TAC[CLOSSEMAUX_dest_thunk_NotThunk] THEN CASE_REWRITE_TAC[]] THEN
   ASM_REWRITE_TAC[clos_dest_thunk_def] THEN
   MP_TAC(SPECL [`s:(C,FFI)clos_state`; `t:(C,FFI)clos_state`; `ptr:num`]
                CLOSP2AUX_letop_flookup_rel) THEN
@@ -1100,7 +1073,7 @@ let CLOSP2AUX_letop_dest_thunk_rel = prove
 let CLOSP2AUX_letop_dest_thunk_IsThunk = prove
  (`!xs (refs:(num,(clos_v)clos_ref)fmap) m v.
      clos_dest_thunk xs refs = clos_IsThunk m v ==> ?b ptr. xs = [clos_RefPtr b ptr]`,
-  MESON_TAC[CLOSP2AUX_letop_dest_thunk_NotThunk; distinctness "clos_dest_thunk_ret"]);;
+  MESON_TAC[CLOSSEMAUX_dest_thunk_NotThunk; distinctness "clos_dest_thunk_ret"]);;
 
 let CLOSP2AUX_letop_dest_thunk_cases = prove
  (`!(s:(C,FFI)clos_state) t xs ys.
@@ -1184,18 +1157,18 @@ let CLOSP2AUX_letop_update_thunk_cases = prove
 (* target's, by the case lemmas above                                       *)
 let CLOSP2AUX_letop_rel_facts (asl:thm list) (xs:term) (s:term) : thm =
   let find_all2 l = find (fun th -> let c = concl th in
-                      CLOSP2AUX_letop_is_app "ALL2" c && lhand c = l &&
+                      CLOSPROPSAUX_is_app "ALL2" c && lhand c = l &&
                       rator (rator c) = `ALL2 clos_letopProof_v_rel`) asl in
   let all2 = try find_all2 xs with Failure _ ->
-             if CLOSP2AUX_letop_is_app "REVERSE" xs
+             if CLOSPROPSAUX_is_app "REVERSE" xs
              then MATCH_MP EVERY2_REVERSE (find_all2 (rand xs))
              else failwith "CLOSP2AUX_letop_rel_facts" in
   let sr = find (fun th -> let c = concl th in
-                   CLOSP2AUX_letop_is_app "clos_letopProof_state_rel" c && lhand c = s) asl in
+                   CLOSPROPSAUX_is_app "clos_letopProof_state_rel" c && lhand c = s) asl in
   CONJ sr all2;;
 
 let CLOSP2AUX_letop_find_ant (s:string) (w:term) : term =
-  hd (filter (CLOSP2AUX_letop_is_app s) (CLOSP2AUX_letop_find_closed_any [] (lhand w)));;
+  hd (filter (CLOSPROPSAUX_is_app s) (CLOSP2AUX_letop_find_closed_any [] (lhand w)));;
 
 let CLOSP2AUX_LETOP_INSTALL_TAC : tactic = fun (asl,w as gl) ->
   let tm = CLOSP2AUX_letop_find_ant "clos_do_install" w in
@@ -1272,7 +1245,7 @@ let CLOSP2AUX_letop_fn = prove
     ASM_REWRITE_TAC[ALL2; clos_letopProof_code_rel_def; HD_let_op_SING];
     ALL_TAC] THEN
   FIRST_ASSUM(MP_TAC o SPEC `a:num list` o MATCH_MP CLOSP2AUX_letop_lookup_vars_cases o
-              check (CLOSP2AUX_letop_is_app "ALL2" o concl)) THEN
+              check (CLOSPROPSAUX_is_app "ALL2" o concl)) THEN
   STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
   CLOSP2AUX_LETOP_FIN_TAC THEN
   MATCH_MP_TAC (el 5 (CONJUNCTS clos_letopProof_v_rel_rules)) THEN
@@ -1310,8 +1283,8 @@ let CLOSP2AUX_LETOP_SYNC_COND_TAC (thl:thm list) : tactic = fun (asl,w as gl) ->
     [ASM_REWRITE_TAC thl; ALL_TAC]) gl;;
 
 let CLOSP2AUX_LETOP_RECC_TAC : tactic = fun (asl,w as gl) ->
-  let is_recc t = CLOSP2AUX_letop_is_app "list_of_seq" t &&
-                  CLOSP2AUX_letop_is_app "clos_Recclosure" (lhand t) in
+  let is_recc t = CLOSPROPSAUX_is_app "list_of_seq" t &&
+                  CLOSPROPSAUX_is_app "clos_Recclosure" (lhand t) in
   let t1 = find_term is_recc (lhand w) and t2 = find_term is_recc (rand w) in
   let env_of t = rand (rator (lhand t)) and fns_of t = rand (lhand t) in
   let e1 = env_of t1 and e2 = env_of t2 in
@@ -1331,7 +1304,7 @@ let CLOSP2AUX_letop_letrec = prove
   CLOSP2AUX_LETOP_INTRO_TAC THEN CLOSP2AUX_LETOP_TGT_TAC THEN CLOSP2AUX_LETOP_UNFOLD_TAC THEN
   REWRITE_TAC[LET_DEF; LET_END_DEF] THEN BETA_TAC THEN
   FIRST_ASSUM(ASSUME_TAC o MATCH_MP CLOSP2AUX_letop_state_rel_max_app o
-              check (CLOSP2AUX_letop_is_app "clos_letopProof_state_rel" o concl)) THEN
+              check (CLOSPROPSAUX_is_app "clos_letopProof_state_rel" o concl)) THEN
   CLOSP2AUX_LETOP_SYNC_COND_TAC[CLOSP2AUX_letop_ALL_MAP] THEN
   COND_CASES_TAC THENL [ALL_TAC; CLOSP2AUX_LETOP_FIN_TAC] THEN
   REWRITE_TAC[LENGTH_MAP] THEN
@@ -1359,7 +1332,7 @@ let CLOSP2AUX_letop_HD_rel = prove
 let CLOSP2AUX_LETOP_HD_TAC : tactic = fun (asl,w as gl) ->
   let asms = map snd asl in
   let evs = filter (fun th -> let c = concl th in
-                     is_eq c && CLOSP2AUX_letop_is_app "clos_evaluate" (lhs c)) asms in
+                     is_eq c && CLOSPROPSAUX_is_app "clos_evaluate" (lhs c)) asms in
   let res = flat (map (fun ev -> mapfilter (fun a ->
                     MATCH_MP CLOSP2AUX_letop_HD_rel (CONJ ev a)) asms) evs) in
   let res = filter (fun th -> not (exists (fun a -> concl a = concl th) asms)) res in
@@ -1383,7 +1356,7 @@ let CLOSP2AUX_letop_tick = prove
   FIRST_ASSUM(fun th -> REWRITE_TAC[SYM (MATCH_MP clos_letopProof_state_rel_clocks_eqs th)]) THEN
   COND_CASES_TAC THENL [CLOSP2AUX_LETOP_FIN_TAC; ALL_TAC] THEN
   FIRST_ASSUM(ASSUME_TAC o MATCH_MP clos_letopProof_state_rel_dec_clock o
-              check (CLOSP2AUX_letop_is_app "clos_letopProof_state_rel" o concl)) THEN
+              check (CLOSPROPSAUX_is_app "clos_letopProof_state_rel" o concl)) THEN
   REPEAT CLOSP2AUX_LETOP_STEP_TAC THEN CLOSP2AUX_LETOP_FIN_TAC);;
 
 let CLOSP2AUX_letop_call = prove
@@ -1394,14 +1367,14 @@ let CLOSP2AUX_letop_call = prove
   ASSUM_LIST(fun l -> REWRITE_TAC(flat (map (fun th ->
     let th' = REWRITE_RULE[clos_letopProof_state_rel_def] th in
     [CONJUNCT1 (CONJUNCT2 th'); CONJUNCT1 (CONJUNCT2 (CONJUNCT2 th'))])
-    (filter (CLOSP2AUX_letop_is_app "clos_letopProof_state_rel" o concl) l)))) THEN
+    (filter (CLOSPROPSAUX_is_app "clos_letopProof_state_rel" o concl) l)))) THEN
   REWRITE_TAC[clos_find_code_def; FLOOKUP_EMPTY] THEN CASE_REWRITE_TAC[] THEN
   CLOSP2AUX_LETOP_FIN_TAC);;
 
 let CLOSP2AUX_letop_app_nil = prove
  (el 13 CLOSP2AUX_letop_cases,
   CLOSP2AUX_LETOP_INTRO_TAC THEN
-  FIRST_X_ASSUM(MP_TAC o check (fun th -> CLOSP2AUX_letop_is_app "ALL2" (concl th) &&
+  FIRST_X_ASSUM(MP_TAC o check (fun th -> CLOSPROPSAUX_is_app "ALL2" (concl th) &&
                                 lhand (concl th) = `[]:clos_v list`)) THEN
   REWRITE_TAC[LIST_REL_NIL] THEN DISCH_THEN SUBST1_TAC THEN
   CLOSP2AUX_LETOP_UNFOLD_TAC THEN REWRITE_TAC[evaluate_app_NIL] THEN
@@ -1422,7 +1395,7 @@ let CLOSP2AUX_letop_state_rel_with_clock = prove
 
 let CLOSP2AUX_LETOP_CLOCK_SYNC_TAC : tactic =
   ASSUM_LIST(fun l -> REWRITE_TAC(map (SYM o MATCH_MP clos_letopProof_state_rel_clocks_eqs)
-    (filter (CLOSP2AUX_letop_is_app "clos_letopProof_state_rel" o concl) l)));;
+    (filter (CLOSPROPSAUX_is_app "clos_letopProof_state_rel" o concl) l)));;
 
 let CLOSP2AUX_LETOP_APP_FIN_TAC : tactic =
   CLOSP2AUX_LETOP_FIN_TAC THEN
@@ -1431,7 +1404,7 @@ let CLOSP2AUX_LETOP_APP_FIN_TAC : tactic =
 let CLOSP2AUX_letop_app_cons = prove
  (el 14 CLOSP2AUX_letop_cases,
   CLOSP2AUX_LETOP_INTRO_TAC THEN
-  FIRST_X_ASSUM(fun th -> if CLOSP2AUX_letop_is_app "ALL2" (concl th) &&
+  FIRST_X_ASSUM(fun th -> if CLOSPROPSAUX_is_app "ALL2" (concl th) &&
                              is_cons (lhand (concl th))
                           then ASSUME_TAC (SYM (MATCH_MP LIST_REL_LENGTH th)) THEN MP_TAC th
                           else NO_TAC) THEN
@@ -1558,14 +1531,6 @@ let semantics_let_op = prove
 
 (* syntactic properties *)
 
-let CLOSP2AUX_letop_every_Fn_SOME_cons = prove
- (`!x xs. every_Fn_SOME (CONS x xs) <=> every_Fn_SOME [x] /\ every_Fn_SOME xs`,
-  REPEAT GEN_TAC THEN CASES_ON `xs:clos_exp list` THEN REWRITE_TAC[every_Fn_SOME_def]);;
-
-let CLOSP2AUX_letop_every_Fn_vs_NONE_cons = prove
- (`!x xs. every_Fn_vs_NONE (CONS x xs) <=> every_Fn_vs_NONE [x] /\ every_Fn_vs_NONE xs`,
-  REPEAT GEN_TAC THEN CASES_ON `xs:clos_exp list` THEN REWRITE_TAC[every_Fn_vs_NONE_def]);;
-
 (* a local helper: the properties of a list of variables *)
 let CLOSP2AUX_letop_var_list_props = prove
  (`!n ys0 (zs:A list).
@@ -1580,8 +1545,8 @@ let CLOSP2AUX_letop_var_list_props = prove
               UNIONS_0] THEN
   REPEAT GEN_TAC THEN DISCH_THEN(fun th -> STRIP_TAC THEN MP_TAC th) THEN
   ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
-  ONCE_REWRITE_TAC[code_locs_cons; CLOSP2AUX_letop_every_Fn_SOME_cons;
-                   CLOSP2AUX_letop_every_Fn_vs_NONE_cons; app_call_dests_cons] THEN
+  ONCE_REWRITE_TAC[code_locs_cons; CLOSPROPSAUX_every_Fn_SOME_cons;
+                   CLOSPROPSAUX_every_Fn_vs_NONE_cons; app_call_dests_cons] THEN
   ASM_REWRITE_TAC[code_locs_def; every_Fn_SOME_def; every_Fn_vs_NONE_def;
                   app_call_dests_def; obeys_max_app_def; no_Labels_def;
                   clos_get_code_labels_def; UNIONS_INSERT; APPEND; UNION_EMPTY]);;
@@ -1621,7 +1586,7 @@ let var_list_let_op_IMP_code_locs = prove
   STRIP_TAC THEN
   FIRST_X_ASSUM(SUBST1_TAC o MATCH_MP CLOSP2AUX_letop_sing_Var o
     check (fun th -> is_eq (concl th) &&
-                     CLOSP2AUX_letop_is_app "clos_letop_let_op_sing" (lhs (concl th)))) THEN
+                     CLOSPROPSAUX_is_app "clos_letop_let_op_sing" (lhs (concl th)))) THEN
   ONCE_REWRITE_TAC[code_locs_cons] THEN REWRITE_TAC[code_locs_def; APPEND] THEN
   ASM_MESON_TAC[]);;
 
@@ -1634,8 +1599,8 @@ let CLOSP2AUX_LETOP_SYN_GEN_TAC : tactic =
   REPEAT GEN_TAC THEN REPEAT DISCH_TAC THEN
   REWRITE_TAC[clos_letop_let_op_sing_def; LET_DEF; LET_END_DEF] THEN BETA_TAC THEN
   ASM_REWRITE_TAC CLOSP2AUX_letop_syn_defs THEN
-  ONCE_REWRITE_TAC[code_locs_cons; CLOSP2AUX_letop_every_Fn_SOME_cons;
-                   CLOSP2AUX_letop_every_Fn_vs_NONE_cons; app_call_dests_cons] THEN
+  ONCE_REWRITE_TAC[code_locs_cons; CLOSPROPSAUX_every_Fn_SOME_cons;
+                   CLOSPROPSAUX_every_Fn_vs_NONE_cons; app_call_dests_cons] THEN
   ASM_REWRITE_TAC[];;
 
 let CLOSP2AUX_LETOP_SYN_LET_TAC : tactic =
@@ -1647,9 +1612,9 @@ let CLOSP2AUX_LETOP_SYN_LET_TAC : tactic =
     ALL_TAC] THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP dest_op_SOME_IMP o
     check (fun th -> is_eq (concl th) &&
-                     CLOSP2AUX_letop_is_app "clos_letop_dest_op" (lhs (concl th)))) THEN
+                     CLOSPROPSAUX_is_app "clos_letop_dest_op" (lhs (concl th)))) THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP CLOSP2AUX_letop_var_list_props o
-    check (CLOSP2AUX_letop_is_app "clos_letop_var_list" o concl)) THEN
+    check (CLOSPROPSAUX_is_app "clos_letop_var_list" o concl)) THEN
   REWRITE_TAC CLOSP2AUX_letop_syn_defs THEN BETA_TAC THEN
   REMOVE_THEN "ihx2" (fun ih -> REWRITE_TAC (map GSYM (CONJUNCTS ih))) THEN
   ASM_REWRITE_TAC[] THEN

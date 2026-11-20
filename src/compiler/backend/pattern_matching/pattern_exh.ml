@@ -142,6 +142,15 @@ let col_ctors_def = cake_def
 
 let col_ctors_ind = cake_ind "col_ctors";;
 
+(* a case split on a free variable of option or pair type of the goal *)
+(* (HOL4: Cases_on o, PairCases_on ts, ...)                          *)
+
+let IL1AUX_SPLIT_TAC : tactic = fun (asl,w as g) ->
+  let vs = filter (fun v -> match dest_type(type_of v) with
+                              ("option",_) | ("prod",_) -> true | _ -> false
+                            | exception Failure _ -> false) (frees w) in
+  if vs = [] then failwith "IL1AUX_SPLIT_TAC" else CASES_ON (hd vs) g;;
+
 (* Specialised and default matrices.  spec_row c takes the rows that can    *)
 (* match a value whose head constructor is c, and replaces the head pattern *)
 (* by the patterns for the arguments of c.  default_row keeps only the rows *)
@@ -173,14 +182,8 @@ let spec_row_ind = prove
        (!c l rest. P c (CONS (pattern_semantics_Lit l) rest)) /\
        (!c p q rest. P c (CONS (pattern_semantics_Or p q) rest))
        ==> !c r. P c r`,
-  GEN_TAC THEN STRIP_TAC THEN GEN_TAC THEN LIST_INDUCT_TAC THEN
-  ASM_REWRITE_TAC[] THEN
-  STRUCT_CASES_TAC (ISPEC `h:pattern_semantics_pat`
-                      (nchotomy_of_type `:pattern_semantics_pat`)) THEN
-  ASM_REWRITE_TAC[] THEN
-  STRUCT_CASES_TAC (ISPEC `a0:((num # ((num # num) list) option) option)`
-                      (nchotomy_of_type `:(num # ((num # num) list) option) option`)) THEN
-  ASM_REWRITE_TAC[]);;
+  REPEAT STRIP_TAC THEN QCASES_ON "r" THEN ASM_REWRITE_TAC[] THEN
+  QCASES_ON "a0" THEN REPEAT IL1AUX_SPLIT_TAC THEN ASM_REWRITE_TAC[]);;
 
 let spec_mat_def = cake_def
   `(spec_mat c [] = []) /\
@@ -204,10 +207,8 @@ let default_row_ind = prove
        (!l rest. P (CONS (pattern_semantics_Lit l) rest)) /\
        (!q rest. P (CONS (pattern_semantics_Ref q) rest))
        ==> !r. P r`,
-  GEN_TAC THEN STRIP_TAC THEN LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[] THEN
-  STRUCT_CASES_TAC (ISPEC `h:pattern_semantics_pat`
-                      (nchotomy_of_type `:pattern_semantics_pat`)) THEN
-  ASM_REWRITE_TAC[]);;
+  REPEAT STRIP_TAC THEN QCASES_ON "r" THEN ASM_REWRITE_TAC[] THEN
+  QCASES_ON "a0" THEN ASM_REWRITE_TAC[]);;
 
 let default_mat_def = cake_def
   `(default_mat [] = []) /\
@@ -274,128 +275,63 @@ let mat_weight_spec_row = prove
 
 let mat_weight_spec_mat = prove
  (`!c rows. mat_weight (spec_mat c rows) <= mat_weight rows`,
-  GEN_TAC THEN LIST_INDUCT_TAC THEN
-  ASM_REWRITE_TAC[spec_mat_def; mat_weight_def; mat_weight_append; LE_REFL] THEN
-  MP_TAC (SPECL [`c:ctor`; `h:(pattern_semantics_pat)list`] mat_weight_spec_row) THEN
-  ASM_ARITH_TAC);;
-
-(* a case split on a free variable of option or pair type of the goal *)
-(* (HOL4: Cases_on o, PairCases_on ts, ...)                          *)
-
-let IL1AUX_SPLIT_TAC : tactic = fun (asl,w as g) ->
-  let vs = filter (fun v -> match dest_type(type_of v) with
-                              ("option",_) | ("prod",_) -> true | _ -> false
-                            | exception Failure _ -> false) (frees w) in
-  if vs = [] then failwith "IL1AUX_SPLIT_TAC" else CASES_ON (hd vs) g;;
+  GEN_TAC THEN LIST_INDUCT_TAC THEN FS[spec_mat_def; mat_weight_def; mat_weight_append] THEN
+  MATCH_MP_TAC LE_ADD2 THEN FS[mat_weight_spec_row]);;
 
 let mat_weight_spec_row_less = prove
  (`!c p r. ~(ctors_of p = NONE) ==>
            mat_weight (spec_row c (CONS p r)) < pats_weight (CONS p r)`,
-  GEN_TAC THEN GEN_TAC THEN
-  STRUCT_CASES_TAC (ISPEC `p:pattern_semantics_pat`
-                      (nchotomy_of_type `:pattern_semantics_pat`)) THEN
-  REPEAT IL1AUX_SPLIT_TAC THEN
-  RW[ctors_of_def; spec_row_def; mat_weight_def; pat_weight_def;
-     pats_weight_append] THEN ARITH_TAC);;
+  GEN_TAC THEN GEN_TAC THEN QCASES_ON "p" THEN REPEAT IL1AUX_SPLIT_TAC THEN
+  RW[ctors_of_def; spec_row_def; mat_weight_def; pat_weight_def; pats_weight_append] THEN
+  DECIDE_TAC);;
+
 let mat_weight_spec_mat_less = prove
  (`!c rows cs. col_ctors rows = SOME cs ==>
                mat_weight (spec_mat c rows) < mat_weight rows`,
   GEN_TAC THEN MATCH_MP_TAC col_ctors_ind THEN
-  REWRITE_TAC[col_ctors_def; spec_mat_def; mat_weight_def; mat_weight_append;
-              distinctness "option"] THEN
-  CONJ_TAC THENL
-   [REPEAT STRIP_TAC THEN
-    REWRITE_TAC[spec_row_def; mat_weight_def; pat_weight_def; ADD_CLAUSES] THEN
-    RES_TAC THEN ASM_REWRITE_TAC[];
-    MAP_EVERY X_GEN_TAC [`p:pattern_semantics_pat`;
-                         `qs:(pattern_semantics_pat)list`;
-                         `rows:((pattern_semantics_pat)list)list`] THEN
-    DISCH_TAC THEN GEN_TAC THEN
-    MP_TAC (SPECL [`c:ctor`; `p:pattern_semantics_pat`;
-                   `qs:(pattern_semantics_pat)list`] mat_weight_spec_row_less) THEN
-    MP_TAC (SPECL [`c:ctor`; `CONS (p:pattern_semantics_pat) qs`]
-                  mat_weight_spec_row) THEN
-    MP_TAC (SPECL [`c:ctor`; `rows:((pattern_semantics_pat)list)list`]
-                  mat_weight_spec_mat) THEN
-    CASES_ON `ctors_of p` THEN
-    CASES_ON `col_ctors rows` THEN
-    REWRITE_TAC[ctor_inter_def; distinctness "option"] THEN
-    REPEAT DISCH_TAC THEN RES_TAC THEN ASM_ARITH_TAC]);;
+  RW[col_ctors_def; spec_mat_def; mat_weight_def; mat_weight_append] THENL
+   [FS[spec_row_def; mat_weight_def; pat_weight_def] THEN RES_TAC;
+    QSPECL_THEN ["c"; "rows"] MP_TAC mat_weight_spec_mat THEN
+    QSPECL_THEN ["c"; "CONS p x"] MP_TAC mat_weight_spec_row THEN
+    QSPECL_THEN ["c"; "p"; "x"] MP_TAC mat_weight_spec_row_less THEN
+    QCASES_ON "ctors_of p" THEN FS[ctor_inter_def] THEN RES_TAC THEN DECIDE_TAC]);;
+
 let mat_weight_default_mat = prove
  (`!rows. mat_weight (default_mat rows) <= mat_weight rows`,
-  LIST_INDUCT_TAC THEN
-  ASM_REWRITE_TAC[default_mat_def; mat_weight_def; mat_weight_append; LE_REFL] THEN
-  MATCH_MP_TAC (ARITH_RULE `a <= b /\ c <= d ==> a + c <= b + d:num`) THEN
-  ASM_REWRITE_TAC[] THEN
-  SPEC_TAC(`h:(pattern_semantics_pat)list`,`r:(pattern_semantics_pat)list`) THEN
-  MATCH_MP_TAC default_row_ind THEN
-  REWRITE_TAC[default_row_def; mat_weight_def; pat_weight_def] THEN ARITH_TAC);;
+  LIST_INDUCT_TAC THEN FS[default_mat_def; mat_weight_def; mat_weight_append] THEN
+  QCASES_ON "h" THEN FS[default_row_def; mat_weight_def; pat_weight_def] THEN
+  QCASES_ON "a0" THEN FS[default_row_def; mat_weight_def; pat_weight_def] THEN DECIDE_TAC);;
 
 let mat_len_default_mat = prove
  (`!rows. mat_len (default_mat rows) <= mat_len rows`,
-  LIST_INDUCT_TAC THEN
-  ASM_REWRITE_TAC[default_mat_def; mat_len_def; mat_len_append; LE_REFL] THEN
-  MATCH_MP_TAC (ARITH_RULE `a <= b /\ c <= d ==> a + c <= b + d:num`) THEN
-  ASM_REWRITE_TAC[] THEN
-  SPEC_TAC(`h:(pattern_semantics_pat)list`,`r:(pattern_semantics_pat)list`) THEN
-  MATCH_MP_TAC default_row_ind THEN
-  REWRITE_TAC[default_row_def; mat_len_def; LENGTH] THEN ARITH_TAC);;
+  LIST_INDUCT_TAC THEN FS[default_mat_def; mat_len_def; mat_len_append] THEN
+  QCASES_ON "h" THEN FS[default_row_def; mat_len_def] THEN
+  QCASES_ON "a0" THEN FS[default_row_def; mat_len_def] THEN DECIDE_TAC);;
 
 let mats_weight_spec_mats = prove
  (`!cs rows ds.
      col_ctors rows = SOME ds ==>
      mats_weight (spec_mats cs rows) < mat_weight rows`,
   LIST_INDUCT_TAC THEN REWRITE_TAC[spec_mats_def; mats_weight_def] THEN
-  REPEAT STRIP_TAC THENL
-   [MP_TAC (SPECL [`RefC`; `rows:((pattern_semantics_pat)list)list`;
-                   `ds:ctor list`] mat_weight_spec_mat_less) THEN
-    ASM_REWRITE_TAC[] THEN ARITH_TAC;
-    MP_TAC (SPECL [`h:ctor`; `rows:((pattern_semantics_pat)list)list`;
-                   `ds:ctor list`] mat_weight_spec_mat_less) THEN
-    FIRST_X_ASSUM (MP_TAC o SPECL [`rows:((pattern_semantics_pat)list)list`;
-                                   `ds:ctor list`]) THEN
-    ASM_REWRITE_TAC[] THEN REWRITE_TAC[MAX] THEN ARITH_TAC]);;
+  ASM_MESON_TAC[mat_weight_spec_mat_less; ARITH_RULE `a < c ==> 0 < c`;
+                ARITH_RULE `a < c /\ b < c ==> MAX a b < c`]);;
 
 let mat_len_default_mat_less = prove
  (`!r rows. ~(r = []) ==>
             mat_len (default_mat (CONS r rows)) < mat_len (CONS r rows)`,
-  REPEAT GEN_TAC THEN DISCH_TAC THEN
-  MP_TAC (SPEC `rows:((pattern_semantics_pat)list)list` mat_len_default_mat) THEN
-  REWRITE_TAC[default_mat_def; mat_len_def; mat_len_append] THEN
-  POP_ASSUM MP_TAC THEN SPEC_TAC(`r:(pattern_semantics_pat)list`,`r:(pattern_semantics_pat)list`) THEN
-  LIST_INDUCT_TAC THEN REWRITE_TAC[NOT_CONS_NIL] THEN
-  STRUCT_CASES_TAC (ISPEC `h:pattern_semantics_pat`
-                      (nchotomy_of_type `:pattern_semantics_pat`)) THEN
-  REWRITE_TAC[default_row_def; mat_len_def; LENGTH] THEN ARITH_TAC);;
+  REPEAT GEN_TAC THEN STRIP_TAC THEN QSPEC_THEN "rows" MP_TAC mat_len_default_mat THEN
+  QCASES_ON "r" THEN FS[default_mat_def; mat_len_def; mat_len_append] THEN
+  QCASES_ON "a0" THEN FS[default_row_def; mat_len_def] THEN DECIDE_TAC);;
 
 (* the termination conditions of exh_matrix and exh_steps (HOL4's proof):  *)
 (* the lemmas about the weights of the default and specialised matrices at  *)
 (* the matrices of the condition                                            *)
 
 let IL1AUX_EXH_TC_TAC : tactic =
-  REWRITE_TAC[IMP_CONJ] THEN REPEAT GEN_TAC THEN REPEAT DISCH_TAC THEN
-  RVEQ_TAC THEN
-  REPEAT (FIRST_X_ASSUM (K ALL_TAC o check (fun th ->
-    is_neg (concl th) && is_exists (dest_neg (concl th))))) THEN
-  REWRITE_TAC(WF_REL_THMS @ [sum_CASE; FST; SND]) THEN
-  (fun (asl,w as g) ->
-     let find_app c n =
-       find_term (fun t -> try let h,args = strip_comb t in
-                               fst(dest_const h) = c && length args = n
-                           with Failure _ -> false) w in
-     let tac1 = try let rr = rand (find_app "default_mat" 1) in
-                    let r,rows = dest_cons rr in
-                    MP_TAC (ISPEC rr mat_weight_default_mat) THEN
-                    MP_TAC (ISPECL [r; rows] mat_len_default_mat_less)
-                with Failure _ -> ALL_TAC in
-     let tac2 = try let _,args = strip_comb (find_app "spec_mats" 2) in
-                    let cs = hd args and rows = hd (tl args) in
-                    MP_TAC (ISPECL [cs; rows; cs] mats_weight_spec_mats)
-                with Failure _ -> ALL_TAC in
-     (tac1 THEN tac2) g) THEN
-  REWRITE_TAC[GSYM NULL_EQ] THEN
-  ASM_REWRITE_TAC[mats_weight_def; mats_len_def; LENGTH; MAX] THEN
-  REPEAT COND_CASES_TAC THEN ASM_ARITH_TAC;;
+  RW(NULL_EQ :: WF_REL_THMS @ [mats_weight_def; mats_len_def; LENGTH; MAX]) THEN
+  IMP_RES_TAC mats_weight_spec_mats THEN IMP_RES_TAC mat_len_default_mat_less THEN
+  MP_TAC (ISPEC `CONS (r:pattern_semantics_pat list) rows` mat_weight_default_mat) THEN
+  FS[] THEN DECIDE_TAC;;
 
 let exh_matrix_def = sem1aux_def_wf
   `inv_image ((<) LEX (<) LEX (<))
@@ -453,12 +389,7 @@ let exh_steps_list_append = prove
 
 let exh_all_def = sem1aux_def_wf
   `measure exh_steps_list`
-  (REWRITE_TAC[IMP_CONJ] THEN REPEAT GEN_TAC THEN REPEAT DISCH_TAC THEN
-   RVEQ_TAC THEN
-   REPEAT (FIRST_X_ASSUM (K ALL_TAC o check (fun th ->
-     is_neg (concl th) && is_exists (dest_neg (concl th))))) THEN
-   REWRITE_TAC(WF_REL_THMS @ [exh_steps_def; exh_steps_list_append]) THEN
-   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN ASM_ARITH_TAC)
+  (RW(WF_REL_THMS @ [exh_steps_def; exh_steps_list_append]))
   `(exh_all [] <=> T) /\
    (exh_all (CONS [] ms) <=> F) /\
    (exh_all (CONS (CONS r rows) ms) <=>
@@ -610,11 +541,7 @@ let MEM_ctor_keep = prove
 
 let MEM_tag_ctors = prove
  (`!sibs t a. MEM (TagC t a) (tag_ctors sibs) <=> MEM (t,a) sibs`,
-  LIST_INDUCT_TAC THEN REWRITE_TAC[tag_ctors_def; MEM] THEN
-  REWRITE_TAC[FORALL_PAIR_THM] THEN
-  SUBGOAL_THEN `?p q. h = (p:num,q:num)` STRIP_ASSUME_TAC THENL
-   [MESON_TAC[PAIR]; ALL_TAC] THEN
-  ASM_REWRITE_TAC[tag_ctors_def; MEM; injectivity "ctor"; PAIR_EQ]);;
+  MATCH_MP_TAC list_INDUCT THEN FS[tag_ctors_def; FORALL_PAIR_THM] THEN MESON_TAC[]);;
 
 let MEM_spec_mats = prove
  (`!cs c rows. MEM c cs ==> MEM (spec_mat c rows) (spec_mats cs rows)`,
@@ -649,9 +576,7 @@ let MEM_mk_rows = prove
 
 let LENGTH_expand_list = prove
  (`!ps qs. MEM qs (expand_list ps) ==> LENGTH qs = LENGTH ps`,
-  LIST_INDUCT_TAC THEN REWRITE_TAC[expand_def; MEM; MEM_mk_prods] THEN
-  REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[LENGTH] THEN RES_TAC THEN
-  ASM_REWRITE_TAC[]);;
+  LIST_INDUCT_TAC THEN FS[expand_def; MEM_mk_prods] THEN RW[] THEN RES_TAC THEN FS[]);;
 
 let expand_thm = prove
  (`(!p q refs v.
@@ -665,79 +590,39 @@ let expand_thm = prove
       ~(pattern_semantics_pmatch_list refs qs vs = PTypeFailure) /\
       (pattern_semantics_pmatch_list refs qs vs = PMatchSuccess ==>
        pattern_semantics_pmatch_list refs ps vs = PMatchSuccess))`,
-  let easy_tac =
-    REPEAT GEN_TAC THEN REWRITE_TAC[expand_def; MEM] THEN REPEAT STRIP_TAC THEN
-    RVEQ_TAC THEN ASM_REWRITE_TAC[] THEN ASM_MESON_TAC[]
-  and cons_tac =
-    (* the tagged and the tuple patterns: the expanded arguments have the  *)
-    (* same length, so the same branch of pmatch is taken                  *)
-    MAP_EVERY X_GEN_TAC [`t:((num # ((num # num) list) option) option)`;
-                         `ps:(pattern_semantics_pat)list`] THEN
-    DISCH_TAC THEN
-    MAP_EVERY X_GEN_TAC [`q:pattern_semantics_pat`; `refs:(num,term)fmap`;
-                         `v:term`] THEN
-    REWRITE_TAC[expand_def; MEM_mk_conses] THEN
-    DISCH_THEN (CONJUNCTS_THEN2
-      (X_CHOOSE_THEN `qs:(pattern_semantics_pat)list` STRIP_ASSUME_TAC) MP_TAC) THEN
-    RVEQ_TAC THEN FIRST_ASSUM (ASSUME_TAC o MATCH_MP LENGTH_expand_list) THEN
-    STRUCT_CASES_TAC (ISPEC `v:term` (nchotomy_of_type `:term`)) THEN
-    REPEAT IL1AUX_SPLIT_TAC THEN
-    REWRITE_TAC[pattern_semantics_pmatch_def; distinctness "pmatchResult"] THEN
-    ASM_REWRITE_TAC[] THEN
-    TRY (COND_CASES_TAC THEN ASM_REWRITE_TAC[distinctness "pmatchResult"]) THEN
-    DISCH_TAC THEN FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[]
-  and or_tac =
-    (* both branches must be free of type failures, and once that is known *)
-    (* the induction hypotheses apply directly                              *)
-    MAP_EVERY X_GEN_TAC [`p1:pattern_semantics_pat`; `p2:pattern_semantics_pat`] THEN
-    DISCH_THEN (CONJUNCTS_THEN2 (LABEL_TAC "IH1") (LABEL_TAC "IH2")) THEN
-    MAP_EVERY X_GEN_TAC [`q:pattern_semantics_pat`; `refs:(num,term)fmap`;
-                         `v:term`] THEN
-    REWRITE_TAC[expand_def; MEM_APPEND] THEN
-    REMOVE_THEN "IH1" (MP_TAC o SPECL [`q:pattern_semantics_pat`;
-                                       `refs:(num,term)fmap`; `v:term`]) THEN
-    REMOVE_THEN "IH2" (MP_TAC o SPECL [`q:pattern_semantics_pat`;
-                                       `refs:(num,term)fmap`; `v:term`]) THEN
-    REWRITE_TAC[pattern_semantics_pmatch_def] THEN
-    CASES_ON `pattern_semantics_pmatch refs p1 v` THEN
-    CASES_ON `pattern_semantics_pmatch refs p2 v` THEN
-    CASES_ON `pattern_semantics_pmatch refs q v` THEN
-    CASE_REWRITE_TAC[distinctness "pmatchResult"] THEN MESON_TAC[]
-  and ref_tac =
-    X_GEN_TAC `p:pattern_semantics_pat` THEN DISCH_TAC THEN
-    MAP_EVERY X_GEN_TAC [`q:pattern_semantics_pat`; `refs:(num,term)fmap`;
-                         `v:term`] THEN
-    REWRITE_TAC[expand_def; MEM_mk_refs] THEN
-    DISCH_THEN (CONJUNCTS_THEN2
-      (X_CHOOSE_THEN `q':pattern_semantics_pat` STRIP_ASSUME_TAC) MP_TAC) THEN
-    RVEQ_TAC THEN
-    STRUCT_CASES_TAC (ISPEC `v:term` (nchotomy_of_type `:term`)) THEN
-    REWRITE_TAC[pattern_semantics_pmatch_def] THEN
-    CASES_ON `FLOOKUP (refs:(num,term)fmap) (a:num)` THEN
-    CASE_REWRITE_TAC[distinctness "pmatchResult"] THEN
-    DISCH_TAC THEN FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[]
-  and cons_list_tac =
-    MAP_EVERY X_GEN_TAC [`p:pattern_semantics_pat`;
-                         `ps:(pattern_semantics_pat)list`] THEN
-    DISCH_THEN (CONJUNCTS_THEN2 (LABEL_TAC "IH1") (LABEL_TAC "IH2")) THEN
-    MAP_EVERY X_GEN_TAC [`qs:(pattern_semantics_pat)list`; `refs:(num,term)fmap`;
-                         `vs:term list`] THEN
-    REWRITE_TAC[expand_def; MEM_mk_prods] THEN
-    DISCH_THEN (CONJUNCTS_THEN2
-      (X_CHOOSE_THEN `x:pattern_semantics_pat`
-         (X_CHOOSE_THEN `ys:(pattern_semantics_pat)list` STRIP_ASSUME_TAC))
-      MP_TAC) THEN
-    RVEQ_TAC THEN
-    STRUCT_CASES_TAC (ISPEC `vs:term list` list_CASES) THEN
-    REWRITE_TAC(IL1AUX_PE_SIMPS @ [distinctness "pmatchResult"]) THEN
-    STRIP_TAC THEN
-    REMOVE_THEN "IH1" (MP_TAC o SPECL [`x:pattern_semantics_pat`;
-                                       `refs:(num,term)fmap`; `h:term`]) THEN
-    REMOVE_THEN "IH2" (MP_TAC o SPECL [`ys:(pattern_semantics_pat)list`;
-                                       `refs:(num,term)fmap`; `t:term list`]) THEN
-    ASM_REWRITE_TAC[] THEN ASM_MESON_TAC[] in
   MATCH_MP_TAC pattern_semantics_pat_INDUCT THEN REPEAT CONJ_TAC THENL
-   [easy_tac; cons_tac; or_tac; easy_tac; ref_tac; easy_tac; cons_list_tac]);;
+   [(* Any *)
+    FS[expand_def];
+    (* Cons *)
+    GEN_TAC THEN GEN_TAC THEN DISCH_TAC THEN REPEAT GEN_TAC THEN QCASES_ON "v" THEN
+    REPEAT IL1AUX_SPLIT_TAC THEN RW[expand_def; MEM_mk_conses] THEN
+    IMP_RES_TAC LENGTH_expand_list THEN
+    GVS[pattern_semantics_pmatch_def; COND_CASE_EQ] THEN RES_TAC THEN FS[];
+    (* Or: both branches must be free of type failures, and once that is *)
+    (* known the induction hypotheses apply directly                       *)
+    REPEAT GEN_TAC THEN STRIP_TAC THEN REPEAT GEN_TAC THEN STRIP_TAC THEN
+    SUBGOAL_THEN `~(pattern_semantics_pmatch refs a0 v = PTypeFailure) /\
+                  ~(pattern_semantics_pmatch refs a1 v = PTypeFailure)`
+      STRIP_ASSUME_TAC THENL
+     [QPAT_X_ASSUM "~(pattern_semantics_pmatch refs (pattern_semantics_Or _ _) _ = _)"
+        MP_TAC THEN
+      FS[pattern_semantics_pmatch_def] THEN EVERY_CASE_TAC THEN FS[];
+      ALL_TAC] THEN
+    FS[expand_def; MEM_APPEND] THEN RES_TAC THEN FS[pattern_semantics_pmatch_def] THEN
+    (* the induction hypotheses are used: without them FS is much cheaper *)
+    REPEAT (FIRST_X_ASSUM (K ALL_TAC o check (is_forall o concl))) THEN
+    CASES_ON `pattern_semantics_pmatch refs a0 v` THEN
+    CASES_ON `pattern_semantics_pmatch refs a1 v` THEN FS[];
+    (* Lit *)
+    FS[expand_def];
+    (* Ref *)
+    FS[expand_def; MEM_mk_refs] THEN RW[] THEN QCASES_ON "v" THEN
+    FS[pattern_semantics_pmatch_def] THEN EVERY_CASE_TAC THEN FS[] THEN RES_TAC THEN FS[];
+    (* [] *)
+    FS[expand_def];
+    (* p::ps *)
+    FS[expand_def; MEM_mk_prods] THEN RW[] THEN QCASES_ON "vs" THEN
+    FS(DE_MORGAN_THM :: IL1AUX_PE_SIMPS) THEN RES_TAC THEN FS[]]);;
 
 (* The constructor of a value, and its arguments.  dest_val is only defined *)
 (* for the values that a constructor pattern can possibly match; literals   *)
@@ -763,24 +648,12 @@ let dest_val_eq_SOME = prove
      (v = Term NONE as /\ c = TupC (LENGTH as)) \/
      (?r w. v = pattern_semantics_RefPtr r /\ FLOOKUP refs r = SOME w /\
             as = [w] /\ c = RefC)`,
-  REPEAT GEN_TAC THEN
-  STRUCT_CASES_TAC (ISPEC `v:term` (nchotomy_of_type `:term`)) THEN
-  REPEAT IL1AUX_SPLIT_TAC THEN ONCE_REWRITE_TAC[SWAP_EXISTS_THM] THEN
-  REWRITE_TAC[dest_val_def; injectivity "term"; distinctness "term";
-              injectivity "option"; distinctness "option"; PAIR_EQ;
-              GSYM CONJ_ASSOC; UNWIND_THM1] THEN
-  W (fun (_,w) ->
-       if can (find_term (fun t -> is_const t && fst(dest_const t) = "FLOOKUP")) w
-       then CASES_ON `FLOOKUP (refs:(num,term)fmap) a` else ALL_TAC) THEN
-  CASE_REWRITE_TAC[] THEN
-  ASM_REWRITE_TAC[injectivity "option"; distinctness "option"; PAIR_EQ;
-                  UNWIND_THM1] THEN
-  EQ_TAC THEN STRIP_TAC THEN RVEQ_TAC THEN REWRITE_TAC[]);;
+  REPEAT GEN_TAC THEN QCASES_ON "v" THEN FS[dest_val_def] THEN REPEAT IL1AUX_SPLIT_TAC THEN
+  FS[dest_val_def] THEN TRY CASE_TAC THEN FS[] THEN MESON_TAC[]);;
 
 let LENGTH_dest_val = prove
  (`!refs v c as. dest_val refs v = SOME (c,as) ==> LENGTH as = ctor_arity c`,
-  REWRITE_TAC[dest_val_eq_SOME] THEN REPEAT STRIP_TAC THEN
-  ASM_REWRITE_TAC[ctor_arity_def; LENGTH; ONE]);;
+  RW[dest_val_eq_SOME] THEN RW[ctor_arity_def]);;
 
 (* A head pattern that reports a constructor set really does confine a      *)
 (* value that it does not type-fail on to that set.                          *)
@@ -789,29 +662,10 @@ let ctors_of_thm = prove
  (`!p xs refs v.
      ctors_of p = SOME xs /\ ~(pattern_semantics_pmatch refs p v = PTypeFailure) ==>
      ?c as. dest_val refs v = SOME (c,as) /\ MEM c xs`,
-  REPEAT GEN_TAC THEN
-  STRUCT_CASES_TAC (ISPEC `p:pattern_semantics_pat`
-                      (nchotomy_of_type `:pattern_semantics_pat`)) THEN
-  REPEAT IL1AUX_SPLIT_TAC THEN
-  REWRITE_TAC[ctors_of_def; distinctness "option"; injectivity "option"] THEN
-  DISCH_THEN (CONJUNCTS_THEN2 (SUBST_ALL_TAC o SYM) MP_TAC) THEN
-  STRUCT_CASES_TAC (ISPEC `v:term` (nchotomy_of_type `:term`)) THEN
-  REPEAT IL1AUX_SPLIT_TAC THEN
-  REWRITE_TAC[pattern_semantics_pmatch_def; dest_val_def;
-              distinctness "pmatchResult"] THEN
-  W (fun (_,w) ->
-       if can (find_term (fun t -> is_const t && fst(dest_const t) = "FLOOKUP")) w
-       then CASES_ON `FLOOKUP (refs:(num,term)fmap) a'` else ALL_TAC) THEN
-  CASE_REWRITE_TAC[] THEN
-  REWRITE_TAC[injectivity "option"; distinctness "option";
-              distinctness "pmatchResult"; PAIR_EQ] THEN
-  ONCE_REWRITE_TAC[SWAP_EXISTS_THM] THEN
-  REWRITE_TAC[GSYM CONJ_ASSOC; UNWIND_THM1; MEM; MEM_ctor_nub; MEM_tag_ctors;
-              injectivity "ctor"; is_sibling_def] THEN
-  TRY (DISCH_THEN (MP_TAC o MATCH_MP pattern_exh_pmatch_list_LENGTH) THEN
-       SIMP_TAC[] THEN NO_TAC) THEN
-  REPEAT COND_CASES_TAC THEN ASM_REWRITE_TAC[distinctness "pmatchResult"] THEN
-  MESON_TAC[]);;
+  REPEAT GEN_TAC THEN QCASES_ON "p" THEN QCASES_ON "v" THEN REPEAT IL1AUX_SPLIT_TAC THEN
+  FS[ctors_of_def] THEN RW[] THEN FS[pattern_semantics_pmatch_def; dest_val_def] THEN
+  EVERY_CASE_TAC THEN FS[MEM_ctor_nub; MEM_tag_ctors; is_sibling_def] THEN
+  IMP_RES_TAC pattern_exh_pmatch_list_LENGTH THEN FS[]);;
 
 (* ... and therefore so does the intersection over a whole column. *)
 
@@ -820,33 +674,11 @@ let col_ctors_thm = prove
      col_ctors M = SOME cs /\
      ALL (\r. ~(pattern_semantics_pmatch_list refs r (CONS v vs) = PTypeFailure)) M ==>
      ?c as. dest_val refs v = SOME (c,as) /\ MEM c cs`,
-  MATCH_MP_TAC col_ctors_ind THEN
-  REWRITE_TAC[col_ctors_def; ALL; distinctness "option"; pmatch_list_nil;
-              pmatch_list_cons; pand_eq_PTypeFailure; DE_MORGAN_THM] THEN
-  REPEAT GEN_TAC THEN DISCH_TAC THEN REPEAT GEN_TAC THEN STRIP_TAC THEN
-  CASES_ON `ctors_of p` THEN
-  FIRST_X_ASSUM (MP_TAC o check (is_eq o concl) o
-                 check (can (find_term (fun t -> is_const t &&
-                                fst(dest_const t) = "ctor_inter")) o concl)) THEN
-  ASM_REWRITE_TAC[ctor_inter_def] THENL
-   [DISCH_TAC THEN FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_MESON_TAC[];
-    ALL_TAC] THEN
-  MP_TAC (SPECL [`p:pattern_semantics_pat`; `a:ctor list`;
-                 `refs:(num,term)fmap`; `v:term`] ctors_of_thm) THEN
-  ANTS_TAC THENL [ASM_REWRITE_TAC[]; ALL_TAC] THEN
-  DISCH_THEN (X_CHOOSE_THEN `c:ctor` (X_CHOOSE_THEN `as:term list`
-                STRIP_ASSUME_TAC)) THEN
-  CASES_ON `col_ctors rows` THEN
-  ASM_REWRITE_TAC[ctor_inter_def; injectivity "option"] THENL
-   [DISCH_THEN (SUBST_ALL_TAC o SYM) THEN ASM_MESON_TAC[];
-    DISCH_THEN (SUBST_ALL_TAC o SYM)] THEN
-  FIRST_X_ASSUM (MP_TAC o SPECL [`a':ctor list`; `refs:(num,term)fmap`;
-                                 `v:term`; `vs:term list`]) THEN
-  ASM_REWRITE_TAC[injectivity "option"; PAIR_EQ] THEN
-  DISCH_THEN (X_CHOOSE_THEN `c':ctor` (X_CHOOSE_THEN `as':term list`
-                STRIP_ASSUME_TAC)) THEN
-  MAP_EVERY EXISTS_TAC [`c:ctor`; `as:term list`] THEN
-  ASM_REWRITE_TAC[MEM_ctor_keep] THEN ASM_MESON_TAC[]);;
+  MATCH_MP_TAC col_ctors_ind THEN RW(col_ctors_def :: DE_MORGAN_THM :: IL1AUX_PE_SIMPS) THEN
+  QCASES_ON "ctors_of p" THEN FS[ctor_inter_def] THENL
+   [RES_TAC THEN FS[];
+    DRULE_ALL ctors_of_thm THEN STRIP_TAC THEN
+    QCASES_ON "col_ctors rows" THEN FS[ctor_inter_def] THEN RES_TAC THEN GVS[MEM_ctor_keep]]);;
 
 (* Specialising and defaulting preserve match results: every row of a       *)
 (* transformed matrix gives the same three-valued match result, against the *)
@@ -860,29 +692,18 @@ let IL1AUX_PMATCH_CLAUSES =
   filter (fun th -> fst(dest_const(fst(strip_comb(lhs(snd(strip_forall(concl th)))))))
                     = "pattern_semantics_pmatch")
          (CONJUNCTS pattern_semantics_pmatch_def);;
+
 let spec_row_thm = prove
  (`!c r row refs v vs as.
      dest_val refs v = SOME (c,as) /\ MEM row (spec_row c r) ==>
      pattern_semantics_pmatch_list refs row (APPEND as vs) =
      pattern_semantics_pmatch_list refs r (CONS v vs)`,
-  MATCH_MP_TAC spec_row_ind THEN
-  REWRITE_TAC[spec_row_def; MEM] THEN REPEAT CONJ_TAC THEN
-  REWRITE_TAC[FORALL_PAIR_THM; FST] THEN REPEAT GEN_TAC THEN
-  TRY COND_CASES_TAC THEN REWRITE_TAC[MEM] THEN STRIP_TAC THEN
-  FIRST_ASSUM (ASSUME_TAC o MATCH_MP LENGTH_dest_val) THEN
-  FIRST_X_ASSUM (STRIP_ASSUME_TAC o GEN_REWRITE_RULE I [dest_val_eq_SOME]) THEN
-  RVEQ_TAC THEN
-  RULE_ASSUM_TAC (REWRITE_RULE[injectivity "ctor"; distinctness "ctor";
-                               ctor_arity_def]) THEN
-  TRY (FIRST_ASSUM CONTR_TAC) THEN
-  RULE_ASSUM_TAC (REWRITE_RULE[GSYM CONJ_ASSOC]) THEN
-  REPEAT (FIRST_X_ASSUM (CONJUNCTS_THEN ASSUME_TAC o check (is_conj o concl))) THEN
-  RVEQ_TAC THEN
-  REWRITE_TAC[ctor_arity_def; ONE; anys_def; APPEND; pmatch_list_cons] THEN
-  ASM_SIMP_TAC[pattern_exh_pmatch_list_append; LENGTH_anys;
-               pmatch_list_anys; pand_simps; pmatch_Any] THEN
-  REWRITE_TAC IL1AUX_PMATCH_CLAUSES THEN CASE_REWRITE_TAC[] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]);;
+  MATCH_MP_TAC spec_row_ind THEN RW[spec_row_def] THEN
+  TRY (PAIR_CASES_ON `ts:num # ((num # num) list) option`) THEN
+  IMP_RES_TAC LENGTH_dest_val THEN
+  GVS([dest_val_eq_SOME; pattern_exh_pmatch_list_append; ctor_arity_def; LENGTH_anys;
+       pmatch_list_anys] @ IL1AUX_PMATCH_CLAUSES @ IL1AUX_PE_SIMPS) THEN
+  EVERY_CASE_TAC THEN FS[pand_def]);;
 
 let spec_mat_MEM = prove
  (`!M c as refs v vs row.
@@ -890,24 +711,16 @@ let spec_mat_MEM = prove
      ?r. MEM r M /\
          pattern_semantics_pmatch_list refs row (APPEND as vs) =
          pattern_semantics_pmatch_list refs r (CONS v vs)`,
-  LIST_INDUCT_TAC THEN REWRITE_TAC[spec_mat_def; MEM; MEM_APPEND] THEN
-  REPEAT STRIP_TAC THENL
-   [EXISTS_TAC `h:(pattern_semantics_pat)list` THEN REWRITE_TAC[] THEN
-    MATCH_MP_TAC spec_row_thm THEN ASM_MESON_TAC[];
-    FIRST_X_ASSUM (MP_TAC o SPECL [`c:ctor`; `as:term list`;
-                                   `refs:(num,term)fmap`; `v:term`;
-                                   `vs:term list`;
-                                   `row:(pattern_semantics_pat)list`]) THEN
-    ASM_REWRITE_TAC[] THEN MESON_TAC[]]);;
+  LIST_INDUCT_TAC THEN FS[spec_mat_def; MEM_APPEND] THEN RW[] THENL
+   [DRULE_ALL spec_row_thm THEN MESON_TAC[MEM];
+    RES_TAC THEN ASM_MESON_TAC[MEM]]);;
 
 let default_row_thm = prove
  (`!r row refs v vs.
      MEM row (default_row r) ==>
      pattern_semantics_pmatch_list refs row vs =
      pattern_semantics_pmatch_list refs r (CONS v vs)`,
-  MATCH_MP_TAC default_row_ind THEN
-  REWRITE_TAC[default_row_def; MEM] THEN REPEAT STRIP_TAC THEN
-  ASM_REWRITE_TAC[pmatch_list_cons; pmatch_Any; pand_simps]);;
+  MATCH_MP_TAC default_row_ind THEN RW(default_row_def :: IL1AUX_PE_SIMPS));;
 
 let default_mat_MEM = prove
  (`!M refs v vs row.
@@ -915,76 +728,13 @@ let default_mat_MEM = prove
      ?r. MEM r M /\
          pattern_semantics_pmatch_list refs row vs =
          pattern_semantics_pmatch_list refs r (CONS v vs)`,
-  LIST_INDUCT_TAC THEN REWRITE_TAC[default_mat_def; MEM; MEM_APPEND] THEN
-  REPEAT STRIP_TAC THENL
-   [EXISTS_TAC `h:(pattern_semantics_pat)list` THEN REWRITE_TAC[] THEN
-    MATCH_MP_TAC default_row_thm THEN ASM_REWRITE_TAC[];
-    FIRST_X_ASSUM (MP_TAC o SPECL [`refs:(num,term)fmap`; `v:term`;
-                                   `vs:term list`;
-                                   `row:(pattern_semantics_pat)list`]) THEN
-    ASM_REWRITE_TAC[] THEN MESON_TAC[]]);;
+  LIST_INDUCT_TAC THEN FS[default_mat_def; MEM_APPEND] THEN RW[] THENL
+   [DRULE default_row_thm THEN MESON_TAC[MEM];
+    RES_TAC THEN ASM_MESON_TAC[MEM]]);;
 
 (* Soundness of the matrix algorithm: "ok" (no row type-fails) is          *)
 (* inherited by the sub-matrices, and "hit" (some row succeeds) is          *)
 (* reflected back out of them.                                               *)
-
-(* the "ok" and "hit" properties of the default and specialised matrices *)
-
-let IL1AUX_DEFAULT_OK = prove
- (`!M refs v vs.
-     ALL (\r. ~(pattern_semantics_pmatch_list refs r (CONS v vs) = PTypeFailure)) M
-     ==> ALL (\r. ~(pattern_semantics_pmatch_list refs r vs = PTypeFailure))
-             (default_mat M)`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[GSYM ALL_MEM] THEN
-  DISCH_TAC THEN X_GEN_TAC `row:(pattern_semantics_pat)list` THEN DISCH_TAC THEN
-  MP_TAC (SPECL [`M:((pattern_semantics_pat)list)list`; `refs:(num,term)fmap`;
-                 `v:term`; `vs:term list`; `row:(pattern_semantics_pat)list`]
-                default_mat_MEM) THEN
-  ASM_REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
-  FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[]);;
-
-let IL1AUX_DEFAULT_HIT = prove
- (`!M refs v vs.
-     EX (\r. pattern_semantics_pmatch_list refs r vs = PMatchSuccess)
-        (default_mat M)
-     ==> EX (\r. pattern_semantics_pmatch_list refs r (CONS v vs) = PMatchSuccess) M`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[GSYM EX_MEM] THEN
-  DISCH_THEN (X_CHOOSE_THEN `row:(pattern_semantics_pat)list` STRIP_ASSUME_TAC) THEN
-  MP_TAC (SPECL [`M:((pattern_semantics_pat)list)list`; `refs:(num,term)fmap`;
-                 `v:term`; `vs:term list`; `row:(pattern_semantics_pat)list`]
-                default_mat_MEM) THEN
-  ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
-  EXISTS_TAC `r:(pattern_semantics_pat)list` THEN ASM_MESON_TAC[]);;
-
-let IL1AUX_SPEC_OK = prove
- (`!M c as refs v vs.
-     dest_val refs v = SOME (c,as) /\
-     ALL (\r. ~(pattern_semantics_pmatch_list refs r (CONS v vs) = PTypeFailure)) M
-     ==> ALL (\r. ~(pattern_semantics_pmatch_list refs r (APPEND as vs) =
-                    PTypeFailure))
-             (spec_mat c M)`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[GSYM ALL_MEM] THEN
-  STRIP_TAC THEN X_GEN_TAC `row:(pattern_semantics_pat)list` THEN DISCH_TAC THEN
-  MP_TAC (SPECL [`M:((pattern_semantics_pat)list)list`; `c:ctor`; `as:term list`;
-                 `refs:(num,term)fmap`; `v:term`; `vs:term list`;
-                 `row:(pattern_semantics_pat)list`] spec_mat_MEM) THEN
-  ASM_REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
-  FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[]);;
-
-let IL1AUX_SPEC_HIT = prove
- (`!M c as refs v vs.
-     dest_val refs v = SOME (c,as) /\
-     EX (\r. pattern_semantics_pmatch_list refs r (APPEND as vs) = PMatchSuccess)
-        (spec_mat c M)
-     ==> EX (\r. pattern_semantics_pmatch_list refs r (CONS v vs) = PMatchSuccess) M`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[GSYM EX_MEM] THEN
-  DISCH_THEN (CONJUNCTS_THEN2 ASSUME_TAC
-    (X_CHOOSE_THEN `row:(pattern_semantics_pat)list` STRIP_ASSUME_TAC)) THEN
-  MP_TAC (SPECL [`M:((pattern_semantics_pat)list)list`; `c:ctor`; `as:term list`;
-                 `refs:(num,term)fmap`; `v:term`; `vs:term list`;
-                 `row:(pattern_semantics_pat)list`] spec_mat_MEM) THEN
-  ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
-  EXISTS_TAC `r:(pattern_semantics_pat)list` THEN ASM_MESON_TAC[]);;
 
 let exh_matrix_thm = prove
  (`(!M refs vs.
@@ -997,66 +747,41 @@ let exh_matrix_thm = prove
       EX (\r. pattern_semantics_pmatch_list refs r vs = PMatchSuccess) m)`,
   MATCH_MP_TAC exh_matrix_ind THEN REPEAT CONJ_TAC THENL
    [(* the empty matrix is never accepted *)
-    REWRITE_TAC[exh_matrix_def];
+    FS[exh_matrix_def];
     ALL_TAC;
-    REWRITE_TAC[MEM];
-    REWRITE_TAC[exh_matrix_def; MEM] THEN MESON_TAC[]] THEN
-  REPEAT GEN_TAC THEN
-  DISCH_THEN (CONJUNCTS_THEN2 (LABEL_TAC "IHs") (LABEL_TAC "IHd")) THEN
-  REPEAT GEN_TAC THEN ONCE_REWRITE_TAC[exh_matrix_def] THEN
-  ASM_CASES_TAC `NULL (r:(pattern_semantics_pat)list)` THEN ASM_REWRITE_TAC[] THENL
+    FS[];
+    FS[exh_matrix_def] THEN RW[] THEN FS[] THEN RES_TAC] THEN
+  REPEAT GEN_TAC THEN STRIP_TAC THEN REPEAT GEN_TAC THEN STRIP_TAC THEN
+  QPAT_X_ASSUM "exh_matrix _" MP_TAC THEN SIMP[ONCE exh_matrix_def] THEN
+  ASM_CASES_TAC `NULL (r:(pattern_semantics_pat)list)` THEN FS[] THENL
    [(* a row of width zero: the value vector must be empty too, and then  *)
     (* that row matches                                                     *)
-    UNDISCH_TAC `NULL (r:(pattern_semantics_pat)list)` THEN
-    REWRITE_TAC[NULL_EQ] THEN DISCH_THEN SUBST_ALL_TAC THEN
-    STRUCT_CASES_TAC (ISPEC `vs:term list` list_CASES) THEN
-    REWRITE_TAC[ALL; EX; pmatch_list_nil];
+    QCASES_ON "r" THEN FS[] THEN QCASES_ON "vs" THEN FS IL1AUX_PE_SIMPS;
     ALL_TAC] THEN
-  SUBGOAL_THEN `?p ps. r = CONS (p:pattern_semantics_pat) ps` STRIP_ASSUME_TAC THENL
-   [ASM_MESON_TAC[NULL_EQ; list_CASES]; ALL_TAC] THEN
-  FIRST_X_ASSUM SUBST_ALL_TAC THEN
-  RULE_ASSUM_TAC (REWRITE_RULE[NULL]) THEN REWRITE_TAC[NULL] THEN
-  STRIP_TAC THEN
   SUBGOAL_THEN `?v vs'. vs = CONS (v:term) vs'` STRIP_ASSUME_TAC THENL
-   [UNDISCH_TAC `ALL (\r. ~(pattern_semantics_pmatch_list refs r vs = PTypeFailure))
-                     (CONS (CONS p ps) rows)` THEN
-    STRUCT_CASES_TAC (ISPEC `vs:term list` list_CASES) THEN
-    REWRITE_TAC[ALL; pmatch_list_nil] THEN MESON_TAC[];
-    ALL_TAC] THEN
-  FIRST_X_ASSUM SUBST_ALL_TAC THEN
-  CASES_ON `col_ctors (CONS (CONS (p:pattern_semantics_pat) ps) rows)` THEN
-  FIRST_X_ASSUM (MP_TAC o check (fun th -> is_case_app (concl th))) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN DISCH_TAC THENL
+   [QCASES_ON "vs" THEN FS[] THEN QCASES_ON "r" THEN FS IL1AUX_PE_SIMPS; ALL_TAC] THEN
+  GVS[] THEN QCASES_ON "col_ctors (CONS r rows)" THEN FS[] THEN STRIP_TAC THENL
    [(* nothing is known about the column, so only the wildcard rows can be *)
     (* relied on: work in the default matrix                                *)
-    REMOVE_THEN "IHd" (MP_TAC o SPECL [`refs:(num,term)fmap`; `vs':term list`] o
-                       REWRITE_RULE[]) THEN
-    ASM_REWRITE_TAC[] THEN
-    ANTS_TAC THENL
-     [MATCH_MP_TAC IL1AUX_DEFAULT_OK THEN EXISTS_TAC `v:term` THEN
-      ASM_REWRITE_TAC[];
-      ALL_TAC] THEN
-    DISCH_TAC THEN MATCH_MP_TAC IL1AUX_DEFAULT_HIT THEN ASM_REWRITE_TAC[];
+    FIRST_X_ASSUM (QSPECL_THEN ["refs"; "vs'"] MP_TAC) THEN ANTS_TAC THENL
+     [FS[GSYM ALL_MEM] THEN RW[] THEN DRULE default_mat_MEM THEN
+      DISCH_THEN (QSPECL_THEN ["refs"; "v"; "vs'"] STRIP_ASSUME_TAC) THEN GVS[] THEN
+      RES_TAC THEN FS[];
+      FS[GSYM EX_MEM] THEN RW[] THEN DRULE default_mat_MEM THEN
+      DISCH_THEN (QSPECL_THEN ["refs"; "v"; "vs'"] STRIP_ASSUME_TAC) THEN GVS[] THEN
+      ASM_MESON_TAC[]];
     (* the column's constructors are known, so the value has one of them:  *)
     (* work in the matrix specialised for it                                *)
-    REMOVE_THEN "IHs" (MP_TAC o SPEC `a:ctor list`) THEN
-    REWRITE_TAC[] THEN DISCH_TAC THEN
-    MP_TAC (SPECL [`CONS (CONS (p:pattern_semantics_pat) ps) rows`; `a:ctor list`;
-                   `refs:(num,term)fmap`; `v:term`; `vs':term list`]
-                  col_ctors_thm) THEN
-    ASM_REWRITE_TAC[] THEN
-    DISCH_THEN (X_CHOOSE_THEN `c:ctor` (X_CHOOSE_THEN `as:term list`
-                  STRIP_ASSUME_TAC)) THEN
-    FIRST_X_ASSUM (MP_TAC o SPECL
-      [`spec_mat c (CONS (CONS (p:pattern_semantics_pat) ps) rows)`;
-       `refs:(num,term)fmap`; `APPEND (as:term list) vs'`]) THEN
-    ASM_SIMP_TAC[MEM_spec_mats] THEN
+    SUBGOAL_THEN `ALL (\r. ~(pattern_semantics_pmatch_list refs r (CONS v vs') =
+                             PTypeFailure)) (CONS r rows)` ASSUME_TAC THENL
+     [FS[]; ALL_TAC] THEN
+    DRULE_ALL col_ctors_thm THEN STRIP_TAC THEN
+    FIRST_X_ASSUM (QSPECL_THEN ["spec_mat c (CONS r rows)"; "refs"; "APPEND as vs'"] MP_TAC) THEN
     ANTS_TAC THENL
-     [MATCH_MP_TAC IL1AUX_SPEC_OK THEN EXISTS_TAC `v:term` THEN
-      ASM_REWRITE_TAC[];
-      ALL_TAC] THEN
-    DISCH_TAC THEN MATCH_MP_TAC IL1AUX_SPEC_HIT THEN
-    MAP_EVERY EXISTS_TAC [`c:ctor`; `as:term list`] THEN ASM_REWRITE_TAC[]]);;
+     [FS[MEM_spec_mats; GSYM ALL_MEM] THEN RW[] THEN DRULE_ALL spec_mat_MEM THEN
+      DISCH_THEN (QSPEC_THEN "vs'" STRIP_ASSUME_TAC) THEN GVS[] THEN RES_TAC THEN FS[];
+      FS[GSYM EX_MEM] THEN RW[] THEN DRULE_ALL spec_mat_MEM THEN
+      DISCH_THEN (QSPEC_THEN "vs'" STRIP_ASSUME_TAC) THEN GVS[] THEN ASM_MESON_TAC[]]]);;
 
 (* From the matrix back to match. *)
 
@@ -1064,59 +789,25 @@ let match_no_PTypeFailure = prove
  (`!rows:(pattern_semantics_pat # num) list.
      ~(pattern_semantics_match refs rows v = NONE) ==>
      ALL (\(p,e). ~(pattern_semantics_pmatch refs p v = PTypeFailure)) rows`,
-  LIST_INDUCT_TAC THEN REWRITE_TAC[ALL] THEN
-  POP_ASSUM MP_TAC THEN
-  SPEC_TAC(`h:pattern_semantics_pat # num`,`h:pattern_semantics_pat # num`) THEN
-  REWRITE_TAC[FORALL_PAIR_THM] THEN
-  MAP_EVERY X_GEN_TAC [`p:pattern_semantics_pat`; `e:num`] THEN
-  REWRITE_TAC[pattern_semantics_match_def] THEN
-  CONV_TAC (TOP_DEPTH_CONV GEN_BETA_CONV) THEN REPEAT DISCH_TAC THEN
-  CASES_ON `pattern_semantics_pmatch refs p v` THEN
-  RULE_ASSUM_TAC (CASE_REWRITE_RULE[]) THEN
-  ASM_REWRITE_TAC[distinctness "pmatchResult"] THEN
-  TRY (CASES_ON `pattern_semantics_match refs (t:(pattern_semantics_pat # num) list) v`) THEN
-  RULE_ASSUM_TAC (CASE_REWRITE_RULE[]) THEN
-  ASM_MESON_TAC[distinctness "option"]);;
+  MATCH_MP_TAC list_INDUCT THEN FS[pattern_semantics_match_def; FORALL_PAIR_THM] THEN RW[] THEN
+  CASES_ON `pattern_semantics_pmatch refs p1 v` THEN FS[] THEN EVERY_CASE_TAC THEN FS[]);;
 
 let match_EXISTS = prove
  (`!rows:(pattern_semantics_pat # num) list.
      ~(pattern_semantics_match refs rows v = NONE) /\
      EX (\(p,e). pattern_semantics_pmatch refs p v = PMatchSuccess) rows ==>
      ~(pattern_semantics_match refs rows v = SOME MatchFailure)`,
-  LIST_INDUCT_TAC THEN REWRITE_TAC[EX] THEN
-  POP_ASSUM MP_TAC THEN
-  SPEC_TAC(`h:pattern_semantics_pat # num`,`h:pattern_semantics_pat # num`) THEN
-  REWRITE_TAC[FORALL_PAIR_THM] THEN
-  MAP_EVERY X_GEN_TAC [`p:pattern_semantics_pat`; `e:num`] THEN
-  REWRITE_TAC[pattern_semantics_match_def] THEN
-  CONV_TAC (TOP_DEPTH_CONV GEN_BETA_CONV) THEN REPEAT STRIP_TAC THEN
-  CASES_ON `pattern_semantics_pmatch refs p v` THEN
-  RULE_ASSUM_TAC (CASE_REWRITE_RULE[]) THEN
-  RULE_ASSUM_TAC (REWRITE_RULE[distinctness "pmatchResult"]) THEN
-  TRY (CASES_ON `pattern_semantics_match refs (t:(pattern_semantics_pat # num) list) v` THEN
-       RULE_ASSUM_TAC (CASE_REWRITE_RULE[])) THEN
-  ASM_MESON_TAC[distinctness "option"; injectivity "option";
-                distinctness "matchResult"]);;
+  MATCH_MP_TAC list_INDUCT THEN FS[pattern_semantics_match_def; FORALL_PAIR_THM] THEN RW[] THEN
+  CASES_ON `pattern_semantics_pmatch refs p1 v` THEN FS[] THEN EVERY_CASE_TAC THEN FS[]);;
 
 let or_rows_ok = prove
  (`!rows:(pattern_semantics_pat # A) list.
      ALL (\(p,e). ~(pattern_semantics_pmatch refs p v = PTypeFailure)) rows ==>
      ALL (\r. ~(pattern_semantics_pmatch_list refs r [v] = PTypeFailure))
          (or_rows rows)`,
-  LIST_INDUCT_TAC THEN REWRITE_TAC[ALL; or_rows_def] THEN
-  POP_ASSUM MP_TAC THEN
-  SPEC_TAC(`h:pattern_semantics_pat # A`,`h:pattern_semantics_pat # A`) THEN
-  REWRITE_TAC[FORALL_PAIR_THM] THEN
-  MAP_EVERY X_GEN_TAC [`p:pattern_semantics_pat`; `e:A`] THEN
-  REWRITE_TAC[or_rows_def; ALL_APPEND] THEN
-  CONV_TAC (TOP_DEPTH_CONV GEN_BETA_CONV) THEN REPEAT STRIP_TAC THENL
-   [REWRITE_TAC[GSYM ALL_MEM; MEM_mk_rows; LEFT_IMP_EXISTS_THM] THEN
-    REPEAT GEN_TAC THEN DISCH_THEN (CONJUNCTS_THEN2 ASSUME_TAC SUBST1_TAC) THEN
-    REWRITE_TAC[pmatch_list_cons; pmatch_list_nil; pand_simps] THEN
-    MP_TAC (SPECL [`p:pattern_semantics_pat`; `p':pattern_semantics_pat`;
-                   `refs:(num,term)fmap`; `v:term`] (CONJUNCT1 expand_thm)) THEN
-    ASM_SIMP_TAC[];
-    FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[]]);;
+  MATCH_MP_TAC list_INDUCT THEN FS[or_rows_def; FORALL_PAIR_THM; ALL_APPEND] THEN RW[] THEN
+  FS[GSYM ALL_MEM; MEM_mk_rows] THEN RW[] THEN FS IL1AUX_PE_SIMPS THEN
+  DRULE_ALL (CONJUNCT1 expand_thm) THEN FS[]);;
 
 let or_rows_hit = prove
  (`!rows:(pattern_semantics_pat # A) list.
@@ -1124,32 +815,15 @@ let or_rows_hit = prove
      EX (\r. pattern_semantics_pmatch_list refs r [v] = PMatchSuccess)
         (or_rows rows) ==>
      EX (\(p,e). pattern_semantics_pmatch refs p v = PMatchSuccess) rows`,
-  LIST_INDUCT_TAC THEN REWRITE_TAC[ALL; EX; or_rows_def] THEN
-  POP_ASSUM MP_TAC THEN
-  SPEC_TAC(`h:pattern_semantics_pat # A`,`h:pattern_semantics_pat # A`) THEN
-  REWRITE_TAC[FORALL_PAIR_THM] THEN
-  MAP_EVERY X_GEN_TAC [`p:pattern_semantics_pat`; `e:A`] THEN
-  REWRITE_TAC[or_rows_def; EXISTS_APPEND] THEN
-  CONV_TAC (TOP_DEPTH_CONV GEN_BETA_CONV) THEN REPEAT STRIP_TAC THENL
-   [DISJ1_TAC THEN
-    UNDISCH_TAC `EX (\r. pattern_semantics_pmatch_list refs r [v] = PMatchSuccess)
-                    (mk_rows (expand p))` THEN
-    REWRITE_TAC[GSYM EX_MEM; MEM_mk_rows] THEN STRIP_TAC THEN
-    FIRST_X_ASSUM SUBST_ALL_TAC THEN
-    RULE_ASSUM_TAC (REWRITE_RULE[pmatch_list_cons; pmatch_list_nil; pand_simps]) THEN
-    MP_TAC (SPECL [`p:pattern_semantics_pat`; `p':pattern_semantics_pat`;
-                   `refs:(num,term)fmap`; `v:term`] (CONJUNCT1 expand_thm)) THEN
-    ASM_SIMP_TAC[];
-    DISJ2_TAC THEN FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[]]);;
+  MATCH_MP_TAC list_INDUCT THEN FS[or_rows_def; FORALL_PAIR_THM; EXISTS_APPEND] THEN RW[] THEN
+  FS[GSYM EX_MEM; MEM_mk_rows] THEN RW[] THEN FS IL1AUX_PE_SIMPS THEN
+  DRULE_ALL (CONJUNCT1 expand_thm) THEN FS[]);;
 
 (* Soundness of exh_rows: the theorem the pattern compiler needs. *)
 
 let exh_rows_thm = prove
  (`~(pattern_semantics_match refs rows v = NONE) /\ exh_rows rows ==>
    ~(pattern_semantics_match refs rows v = SOME MatchFailure)`,
-  STRIP_TAC THEN MATCH_MP_TAC match_EXISTS THEN ASM_REWRITE_TAC[] THEN
-  FIRST_ASSUM (ASSUME_TAC o MATCH_MP match_no_PTypeFailure) THEN
-  MATCH_MP_TAC or_rows_hit THEN ASM_REWRITE_TAC[] THEN
-  MATCH_MP_TAC (CONJUNCT1 exh_matrix_thm) THEN
-  ASM_SIMP_TAC[or_rows_ok] THEN
-  RULE_ASSUM_TAC (REWRITE_RULE[exh_rows_def]) THEN ASM_REWRITE_TAC[]);;
+  STRIP_TAC THEN IRULE match_EXISTS THEN FS[] THEN DRULE match_no_PTypeFailure THEN
+  STRIP_TAC THEN IRULE or_rows_hit THEN FS[] THEN IRULE (CONJUNCT1 exh_matrix_thm) THEN
+  FS[or_rows_ok] THEN FS[exh_rows_def]);;

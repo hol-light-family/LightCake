@@ -298,16 +298,6 @@ let lab_case_eq_thms = end_itlist CONJ
 
 (* call_FFI and share_mem_op only extend the io_events *)
 
-let LABPROPSAUX_call_FFI_io = prove
- (`call_FFI (st:(FFI)ffi_state) n conf bytes = FFI_return st' t ==>
-   ffi_state_io_events st <<= ffi_state_io_events st'`,
-  DISCH_TAC THEN
-  MP_TAC(ISPECL [`st:(FFI)ffi_state`; `st':(FFI)ffi_state`]
-    call_FFI_rel_io_events_mono) THEN
-  REWRITE_TAC[io_events_mono_def] THEN ANTS_TAC THENL
-   [MATCH_MP_TAC RTC_INC THEN REWRITE_TAC[call_FFI_rel_def] THEN ASM_MESON_TAC[];
-    SIMP_TAC[]]);;
-
 let LABPROPSAUX_share_mem_op_io = prove
  (`share_mem_op m r ad (s:(A,C,FFI)lab_state) = SOME (res,s') ==>
    ffi_state_io_events (lab_state_ffi s) <<= ffi_state_io_events (lab_state_ffi s')`,
@@ -315,7 +305,7 @@ let LABPROPSAUX_share_mem_op_io = prove
   REWRITE_TAC[share_mem_op_def; share_mem_load_def; share_mem_store_def] THEN
   EVERY_CASE_TAC THEN SIMP[inc_pc_def; lab_dec_clock_def] THEN
   REPEAT STRIP_TAC THEN RVEQ_TAC THEN SIMP[IS_PREFIX_REFL] THEN
-  ASM_MESON_TAC[LABPROPSAUX_call_FFI_io]);;
+  ASM_MESON_TAC[SEM2AUX_call_FFI_io_events]);;
 
 (* complete induction on the clock *)
 
@@ -361,7 +351,7 @@ let LABPROPSAUX_io_SND = prove
          MATCH_MP_TAC LABPROPSAUX_IO_STEP THEN CONJ_TAC THENL
           [SIMP[asm_inst_consts; IS_PREFIX_REFL; inc_pc_def; lab_dec_clock_def;
                 lab_upd_pc_def; lab_upd_reg_def] THEN
-           ASM_MESON_TAC[LABPROPSAUX_share_mem_op_io; LABPROPSAUX_call_FFI_io];
+           ASM_MESON_TAC[LABPROPSAUX_share_mem_op_io; SEM2AUX_call_FFI_io_events];
            FIRST_X_ASSUM MATCH_MP_TAC THEN LABPROPSAUX_CLOCK_LT_TAC];
          ASM_MESON_TAC[LABPROPSAUX_share_mem_op_io]]);;
 

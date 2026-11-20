@@ -495,20 +495,6 @@ let flat_evaluate_decs_add_to_clock = prove
   ASM_REWRITE_TAC[]);;
 
 
-(* a local helper: call_FFI only extends the io_events *)
-let FLATSEMAUX_call_FFI_io_events = prove
- (`!(st:(FFI)ffi_state) s conf bytes t' ws'.
-     call_FFI st s conf bytes = FFI_return t' ws' ==>
-     ffi_state_io_events st <<= ffi_state_io_events t'`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[call_FFI_def] THEN
-  COND_CASES_TAC THEN REWRITE_TAC[injectivity "ffi_result"] THENL
-   [CASES_ON `ffi_state_oracle (st:(FFI)ffi_state) s (ffi_state_ffi_state st) conf bytes` THEN
-    REWRITE_TAC[case_def "oracle_result"; distinctness "ffi_result"] THEN
-    COND_CASES_TAC THEN REWRITE_TAC[distinctness "ffi_result"; injectivity "ffi_result"] THEN
-    DISCH_THEN(SUBST1_TAC o SYM o CONJUNCT1) THEN
-    REWRITE_TAC[ffi_state_INFO.ri_accfupds; K_THM; IS_PREFIX_APPEND] THEN MESON_TAC[];
-    DISCH_THEN(SUBST1_TAC o SYM o CONJUNCT1) THEN REWRITE_TAC[IS_PREFIX_REFL]]);;
-
 let flat_do_app_io_events_mono = prove
  (`!(s:(C,FFI)flat_state) op vs t r.
      flat_do_app s op vs = SOME (t,r) ==>
@@ -518,7 +504,7 @@ let flat_do_app_io_events_mono = prove
   RULE_ASSUM_TAC(REWRITE_RULE[PAIR_EQ]) THEN
   REPEAT(FIRST_X_ASSUM(SUBST_ALL_TAC o SYM o check (is_var o rhs o concl))) THEN
   REWRITE_TAC[flat_state_INFO.ri_accfupds; K_THM; IS_PREFIX_REFL] THEN
-  FLATSEMAUX_FWD_TAC [FLATSEMAUX_call_FFI_io_events] THEN ASM_REWRITE_TAC[]);;
+  FLATSEMAUX_FWD_TAC [SEM2AUX_call_FFI_io_events] THEN ASM_REWRITE_TAC[]);;
 
 (* a local helper: evaluate_io_events_mono for the result state *)
 let FLATSEMAUX_io_events_mono = prove

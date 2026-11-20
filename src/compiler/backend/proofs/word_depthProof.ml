@@ -879,12 +879,6 @@ let WDPAUX_ret_cases = prove
   REWRITE_TAC[FORALL_OPTION_THM; FORALL_PAIR_THM; option_DISTINCT; option_INJ; PAIR_EQ] THEN
   MESON_TAC[]);;
 
-let WDPAUX_handler_cases = prove
- (`!handler:(num#(A)wl_prog#num#num)option.
-     handler = NONE \/ ?hn h hl1 hl2. handler = SOME (hn,h,hl1,hl2)`,
-  REWRITE_TAC[FORALL_OPTION_THM; FORALL_PAIR_THM; option_DISTINCT; option_INJ; PAIR_EQ] THEN
-  MESON_TAC[]);;
-
 let WDPAUX_find_code_SOME = prove
  (`!d (args:((A)word_loc)list) (code:(num#B)spt) (ssize:(C)spt) args1 prog ss.
      wl_find_code (SOME d) args code ssize = SOME (args1,prog,ss) ==>
@@ -892,10 +886,6 @@ let WDPAUX_find_code_SOME = prove
   REPEAT GEN_TAC THEN REWRITE_TAC[wl_find_code_def] THEN
   REWRITE_TAC(IL2AUX_clock_case_eqs @ [PAIR_EQ; option_INJ; option_DISTINCT]) THEN
   REPEAT STRIP_TAC THEN RVEQ_TAC THEN ASM_REWRITE_TAC[]);;
-
-let WDPAUX_subspt_delete = prove
- (`!d (funs:(A)spt) funs2. subspt funs funs2 ==> subspt (delete d funs) funs2`,
-  REWRITE_TAC[subspt_lookup; lookup_delete] THEN MESON_TAC[option_DISTINCT]);;
 
 let WDPAUX_option_le_NONE = prove
  (`!a g:num option. option_le a g /\ ~(g = NONE) ==> ~(a = NONE)`,
@@ -940,7 +930,7 @@ let WDPAUX_RET_SPLIT_TAC : tactic =
 
 let WDPAUX_HANDLER_SPLIT_TAC : tactic =
   DISJ_CASES_THEN2 SUBST_ALL_TAC (REPEAT_TCL CHOOSE_THEN SUBST_ALL_TAC)
-    (ISPEC `handler:(num#(A)wl_prog#num#num)option` WDPAUX_handler_cases);;
+    (ISPEC `handler:(num#(A)wl_prog#num#num)option` IL2AUX_handler_cases);;
 
 (* MP_TAC lem applied to the evaluation of the call and ~(res = SOME Error) *)
 let WDPAUX_EVAL_MP_TAC (lem:thm) : tactic = fun (asl,w as g) ->
@@ -1185,7 +1175,7 @@ let WDPAUX_PUSH_RWS =
 (* the induction hypothesis of the callee body, its stack implication       *)
 (* discharged, and the code of the state after the callee                   *)
 let WDPAUX_CALLEE_TAC : tactic =
-  ASSUME_TAC (MATCH_MP WDPAUX_subspt_delete
+  ASSUME_TAC (MATCH_MP subspt_delete
     (ASSUME `subspt (funs:(num#(A)wl_prog)spt) funs2`)) THEN
   REMOVE_THEN "ihB" (WDPAUX_IH_X_TAC
     [("funs",`delete d (funs:(num#(A)wl_prog)spt)`); ("n",`d:num`); ("ns",`[d:num]`)]

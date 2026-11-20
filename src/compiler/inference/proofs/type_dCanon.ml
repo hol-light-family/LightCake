@@ -1146,10 +1146,6 @@ let DISJOINT_CARD_UNION = prove
 
 (* Helpers for type_d_type_d_canon *)
 
-let INFER1AUX_nsMap_nsSing = prove
- (`!(f:V->W) (n:N) (v:V). nsMap f (nsSing n v:(M,N,V)namespace) = nsSing n (f v)`,
-  REWRITE_TAC[nsSing_def; nsMap_def; MAP] THEN CASE_REWRITE_TAC[]);;
-
 let INFER1AUX_tenv_equiv_trans = prove
  (`!a b c. tenv_equiv a b /\ tenv_equiv b c ==> tenv_equiv a c`,
   REWRITE_TAC[tenv_equiv_def; nsAll2_def; nsSub_def] THEN MESON_TAC[]);;
@@ -1401,7 +1397,7 @@ let INFER1AUX_TDC_DTABBREV_TAC =
     REWRITE_TAC[];
     MATCH_MP_TAC(el 4 (CONJUNCTS type_d_canon_rules)) THEN ASM_REWRITE_TAC[];
     REWRITE_TAC[remap_tenv_def; type_env_INFO.ri_accessors; nsMap_nsEmpty;
-                INFER1AUX_nsMap_nsSing] THEN
+                nsMap_nsSing] THEN
     CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[tenv_equiv_refl]];;
 
 let INFER1AUX_TDC_DEXN_TAC =
@@ -1432,7 +1428,7 @@ let INFER1AUX_TDC_DEXN_TAC =
     MATCH_MP_TAC(el 5 (CONJUNCTS type_d_canon_rules)) THEN ASM_REWRITE_TAC[] THEN
     REWRITE_TAC[EVERY_MEM] THEN ASM_MESON_TAC[];
     REWRITE_TAC[remap_tenv_def; type_env_INFO.ri_accessors; nsMap_nsEmpty;
-                INFER1AUX_nsMap_nsSing] THEN
+                nsMap_nsSing] THEN
     CASE_REWRITE_TAC[MAP_MAP_o] THEN
     REWRITE_TAC[INFER1AUX_GR] THEN
     SUBGOAL_THEN `MAP (ts_tid_rename f o type_name_subst (type_env_t tenv)) ts =

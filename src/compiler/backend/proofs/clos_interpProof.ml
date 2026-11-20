@@ -224,10 +224,6 @@ let CLOSP2AUX_ip_do_app = prove
   REWRITE_TAC[clos_do_app_def] THEN CASE_REWRITE_TAC[] THEN
   REWRITE_TAC[clos_do_int_app_def] THEN CASE_REWRITE_TAC[]);;
 
-let CLOSP2AUX_ip_list_of_seq_1 = prove
- (`!(f:num->A). list_of_seq f 1 = [f 0]`,
-  REWRITE_TAC[ONE; list_of_seq; APPEND]);;
-
 (* decide the comparisons of numbers that the clock checks produce (the   *)
 (* evaluator below retries the same comparisons at each pass: the results   *)
 (* of ARITH_RULE, also failures, are remembered)                            *)
@@ -267,10 +263,6 @@ let rec CLOSP2AUX_LAZY_CONV (step:conv) : conv = fun tm ->
        with Failure _ -> AP_TERM f (CLOSP2AUX_LAZY_CONV step x))
   | _ -> failwith "CLOSP2AUX_LAZY_CONV";;
 
-let CLOSP2AUX_ip_EL_CONS = prove
- (`!n (h:A) t. EL n (CONS h t) = if n = 0 then h else EL (n - 1) t`,
-  INDUCT_TAC THEN REWRITE_TAC[EL; HD; TL; NOT_SUC; SUC_SUB1]);;
-
 let CLOSP2AUX_ip_case_defs =
   map case_def ["result"; "option"; "list"; "prod"; "error_result"; "app_kind";
                 "clos_v"; "eq_result"];;
@@ -280,8 +272,8 @@ let CLOSP2AUX_ip_step_rules =
   CONJUNCTS clos_evaluate_def @
   [CLOSP2AUX_ip_do_app; dest_closure_def; check_loc_def; clos_dec_clock_def;
    clos_state_INFO.ri_accfupds; clos_state_INFO.ri_fupdfupds; K_o_THM; K_THM;
-   LENGTH; REVERSE; APPEND; APPEND_NIL; HD; TL; CLOSP2AUX_ip_EL_CONS; TAKE_DEF; DROP_DEF;
-   CLOSP2AUX_ip_list_of_seq_1; LET_DEF; LET_END_DEF; clos_interpreter_def; ALL;
+   LENGTH; REVERSE; APPEND; APPEND_NIL; HD; TL; EL_CONS; TAKE_DEF; DROP_DEF;
+   LISTAUX_list_of_seq_1; LET_DEF; LET_END_DEF; clos_interpreter_def; ALL;
    clos_Boolv_def; true_tag_def; false_tag_def; COND_CLAUSES; REFL_CLAUSE;
    injectivity "clos_v"; distinctness "clos_v"; injectivity "clos_op";
    distinctness "clos_op"; distinctness "block_op"; distinctness "int_op";
@@ -2978,11 +2970,6 @@ let init_globals = prove
                          (co:num -> C # clos_prog) cc ck) = []`,
   REWRITE_TAC[clos_initial_state_def; clos_state_INFO.ri_accessors]);;
 
-let CLOSP2AUX_ip_result_rel_T = prove
- (`!r:(clos_v list,clos_v)result.
-     result_rel (\(x:clos_v list) (y:clos_v list). T) (\(x:clos_v) (y:clos_v). T) r r`,
-  MATCH_MP_TAC result_rel_refl THEN REWRITE_TAC[]);;
-
 let CLOSP2AUX_ip_init_clock = prove
  (`!(ffi:(FFI)ffi_state) ma code (co:num -> C # clos_prog) cc k ck g.
      clos_state_clock_fupd
@@ -3012,7 +2999,7 @@ let CLOSP2AUX_IP_SEM_TAC (r:term) : tactic =
   DISCH_THEN(X_CHOOSE_THEN `ck:num` (X_CHOOSE_THEN `t2:(C,FFI)clos_state` STRIP_ASSUME_TAC)) THEN
   EXISTS_TAC `ck:num` THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
   REWRITE_TAC[PAIR_EQ; GSYM CONJ_ASSOC; RIGHT_EXISTS_AND_THM; UNWIND_THM1; LEFT_EXISTS_AND_THM;
-              EXISTS_REFL; CLOSP2AUX_ip_result_rel_T] THEN
+              EXISTS_REFL; CLOSPROPSAUX_result_rel_T_refl] THEN
   UNDISCH_TAC `clos_interpProof_state_rel (s2:(C,FFI)clos_state) t2` THEN
   SIMP_TAC[clos_interpProof_state_rel_def];;
 
@@ -3057,7 +3044,7 @@ let semantics_attach_interpreter = prove
       ALL_TAC] THEN
     DISCH_THEN(X_CHOOSE_THEN `t2:(C,FFI)clos_state` STRIP_ASSUME_TAC) THEN
     MAP_EVERY EXISTS_TAC [`0`; `res1:(clos_v list,clos_v)result`; `t2:(C,FFI)clos_state`] THEN
-    ASM_REWRITE_TAC[ADD_CLAUSES; CLOSP2AUX_ip_result_rel_T] THEN
+    ASM_REWRITE_TAC[ADD_CLAUSES; CLOSPROPSAUX_result_rel_T_refl] THEN
     UNDISCH_TAC `state_rel' (s2:(C,FFI)clos_state) t2` THEN SIMP_TAC[state_rel'_def]] THEN
   FIRST_X_ASSUM(MP_TAC o check (fun th -> is_eq (concl th) &&
     rhs (concl th) = `(res1:(clos_v list,clos_v)result, s2:(C,FFI)clos_state)`)) THEN

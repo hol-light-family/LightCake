@@ -1241,14 +1241,6 @@ let target_evaluate_add_clock = prove
 
 (* a call_FFI that returns only extends the io_events *)
 
-let LABPROPSAUX_target_call_FFI_io = prove
- (`call_FFI (st:(FFI)ffi_state) n conf bytes = FFI_return st' t ==>
-   ffi_state_io_events st <<= ffi_state_io_events st'`,
-  REWRITE_TAC[call_FFI_def] THEN EVERY_CASE_TAC THEN
-  REWRITE_TAC[injectivity "ffi_result"; distinctness "ffi_result"] THEN
-  STRIP_TAC THEN RVEQ_TAC THEN SIMP[IS_PREFIX_REFL; IS_PREFIX_APPEND] THEN
-  MESON_TAC[]);;
-
 (* HOL4: evaluate_io_events_mono *)
 
 let target_evaluate_io_events_mono = prove
@@ -1267,7 +1259,7 @@ let target_evaluate_io_events_mono = prove
   REWRITE_TAC[NOT_SUC; SUC_SUB1; apply_oracle_def] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   REPEAT TOP_CASE_TAC THEN REWRITE_TAC[SND; IS_PREFIX_REFL] THEN
-  ASM_MESON_TAC[IS_PREFIX_TRANS; LABPROPSAUX_target_call_FFI_io]);;
+  ASM_MESON_TAC[IS_PREFIX_TRANS; SEM2AUX_call_FFI_io_events]);;
 
 (* HOL4: evaluate_add_clock_io_events_mono *)
 

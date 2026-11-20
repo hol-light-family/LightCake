@@ -2278,11 +2278,6 @@ let C2BP1AUX_V2L_TAC : tactic =
       FIRST_ASSUM (fun vr -> STRIP_ASSUME_TAC (MATCH_MP clos_to_bvlProof_v_to_list (CONJ th vr)))
     else NO_TAC));;
 
-let C2BP1AUX_num_of_int_lt = prove
- (`!a n. &0 <= a /\ a < &n ==> num_of_int a < n`,
-  REPEAT STRIP_TAC THEN REWRITE_TAC[GSYM INT_OF_NUM_LT] THEN
-  ASM_SIMP_TAC[INT_OF_NUM_OF_INT]);;
-
 let C2BP1AUX_ALL2_MAP_MAP2 = prove
  (`!(R:A->B->bool) (m1:C->A) m2 l.
      (!k. R (m1 k) (m2 k)) ==> ALL2 R (MAP m1 l) (MAP m2 l)`,
@@ -2501,7 +2496,7 @@ let C2BP1AUX_doapp_rel_MemOp = prove
     REWRITE_TAC[injectivity "mem_op"; distinctness "mem_op"] THEN MESON_TAC[];
     (* El *)
     REWRITE_TAC[distinctness "mem_op"] THEN C2BP1AUX_DOAPP_TAC THEN TRY C2BP1AUX_REFS_TAC THEN
-    ASM_MESON_TAC[LIST_REL_EL_EQN; C2BP1AUX_num_of_int_lt];
+    ASM_MESON_TAC[LIST_REL_EL_EQN; BASICAUX_num_of_int_lt];
     (* Length *)
     REWRITE_TAC[distinctness "mem_op"] THEN C2BP1AUX_DOAPP_TAC THEN C2BP1AUX_REFS_TAC;
     (* LengthByte *)
@@ -3603,10 +3598,6 @@ let evaluate_code_for_recc_case = prove
   C2BP1AUX_EVAL_LHS_TAC (TAKE_LENGTH_APPEND :: C2BP1AUX_eval_lemmas) THEN
   REWRITE_TAC[GSYM APPEND_ASSOC; APPEND]);;
 
-let C2BP1AUX_REV_TAKE_REV = prove
- (`!k (l:A list). k <= LENGTH l ==> REVERSE (TAKE k (REVERSE l)) = DROP (LENGTH l - k) l`,
-  SIMP_TAC[TAKE_REVERSE; REVERSE_REVERSE; LASTN_DROP]);;
-
 let C2BP1AUX_cl_rel_run_env = prove
  (`!max_app f1 refs code args args' env fvs stuff k.
      ALL2 (clos_to_bvlProof_v_rel max_app f1 refs code) env fvs /\
@@ -3617,7 +3608,7 @@ let C2BP1AUX_cl_rel_run_env = prove
   REPEAT STRIP_TAC THEN
   SUBGOAL_THEN `LENGTH (args:clos_v list) = LENGTH (args':bvl_v list)` ASSUME_TAC THENL
    [ASM_MESON_TAC[LIST_REL_LENGTH]; ALL_TAC] THEN
-  ASM_SIMP_TAC[C2BP1AUX_REV_TAKE_REV] THEN
+  ASM_SIMP_TAC[revtakerev] THEN
   MATCH_MP_TAC clos_to_bvlProof_env_rel_APPEND THEN CONJ_TAC THENL
    [UNDISCH_TAC `LENGTH (args:clos_v list) = LENGTH (args':bvl_v list)` THEN
     DISCH_THEN (SUBST1_TAC) THEN MATCH_MP_TAC cl_rel_run_lemma3 THEN ASM_REWRITE_TAC[];
@@ -3694,14 +3685,10 @@ let C2BP1AUX_cl_rel_run_env_gen = prove
   REPEAT STRIP_TAC THEN
   SUBGOAL_THEN `LENGTH (args:clos_v list) = LENGTH (args':bvl_v list)` ASSUME_TAC THENL
    [ASM_MESON_TAC[LIST_REL_LENGTH]; ALL_TAC] THEN
-  ASM_SIMP_TAC[C2BP1AUX_REV_TAKE_REV] THEN
+  ASM_SIMP_TAC[revtakerev] THEN
   MATCH_MP_TAC clos_to_bvlProof_env_rel_APPEND THEN ASM_REWRITE_TAC[] THEN
   UNDISCH_TAC `LENGTH (args:clos_v list) = LENGTH (args':bvl_v list)` THEN
   DISCH_THEN (SUBST1_TAC) THEN MATCH_MP_TAC cl_rel_run_lemma3 THEN ASM_REWRITE_TAC[]);;
-
-let C2BP1AUX_GENLIST_1 = prove
- (`!(f:num->A). list_of_seq f 1 = [f 0]`,
-  REWRITE_TAC[ONE; list_of_seq; APPEND]);;
 
 let C2BP1AUX_rec_closures_v_rel = prove
  (`!max_app f1 refs code env ys exps_ps loc r j.
@@ -3795,7 +3782,7 @@ let cl_rel_run = prove
     CASE_REWRITE_TAC[] THEN
     COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT] THEN
     COND_CASES_TAC THEN SIMP[] THEN STRIP_TAC THEN RVEQ_TAC) THEN
-    (REWRITE_TAC[C2BP1AUX_GENLIST_1; GSYM APPEND_ASSOC; APPEND] THEN
+    (REWRITE_TAC[LISTAUX_list_of_seq_1; GSYM APPEND_ASSOC; APPEND] THEN
     SUBGOAL_THEN `num_args - 1 + 1 = num_args /\
                   LENGTH (DROP (LENGTH (args':bvl_v list) - num_args) args') = num_args /\
                   num_args <= LENGTH (args:clos_v list)` STRIP_ASSUME_TAC THENL
@@ -4547,12 +4534,6 @@ let compile_exps_chain_exps_cons = prove
                  `max_app:num`] C2BP1AUX_chain_exps_SND) THEN
   ASM_REWRITE_TAC[SND] THEN MESON_TAC[]);;
 
-let C2BP1AUX_some_SOME = prove
- (`!(P:A->bool) m. (some) P = SOME m ==> P m`,
-  REWRITE_TAC[some_DEF] THEN REPEAT GEN_TAC THEN COND_CASES_TAC THEN
-  REWRITE_TAC[option_DISTINCT; option_INJ] THEN DISCH_THEN (SUBST1_TAC o SYM) THEN
-  ASM_MESON_TAC[SELECT_AX]);;
-
 let C2BP1AUX_same_aux_SND = prove
  (`!max_app n real_es progs0.
      extract_name progs0 = (n,real_es)
@@ -4572,7 +4553,7 @@ let C2BP1AUX_same_aux_SND = prove
     FIRST_X_ASSUM (SUBST1_TAC o SYM) THEN REWRITE_TAC[C2BP1AUX_chain_exps_SND];
     ALL_TAC] THEN
   STRIP_TAC THEN
-  FIRST_X_ASSUM (MP_TAC o MATCH_MP C2BP1AUX_some_SOME) THEN
+  FIRST_X_ASSUM (MP_TAC o MATCH_MP BASICAUX_some_SOME) THEN
   REWRITE_TAC[] THEN STRIP_TAC THEN
   FIRST_X_ASSUM SUBST_ALL_TAC THEN
   FIRST_X_ASSUM (SUBST_ALL_TAC o SYM) THEN
@@ -4668,10 +4649,6 @@ let C2BP1AUX_eval_Let_Call0 = prove
   AP_TERM_TAC THEN AP_TERM_TAC THEN AP_TERM_TAC THEN REWRITE_TAC[bvl_state_component_equality] THEN
   SIMP[bvl_dec_clock_def; bvl_inc_clock_def] THEN ARITH_TAC);;
 
-let C2BP1AUX_clock_fupd_id = prove
- (`!(t:(C,FFI)bvl_state). bvl_state_clock_fupd (K (bvl_state_clock t)) t = t`,
-  REWRITE_TAC[bvl_state_component_equality] THEN SIMP[]);;
-
 let C2BP1AUX_chained_gen = prove
  (CASE_TERM `!all index x6 (t:(C,FFI)bvl_state) res t1 k1 d1 new_exps rest acc x7 max_app aux.
      bvl_evaluate (x6,[],t) = (res,t1) /\
@@ -4705,7 +4682,7 @@ let C2BP1AUX_chained_gen = prove
   RULE_ASSUM_TAC (CASE_REWRITE_RULE[MAP2; APPEND; HD; PAIR_EQ]) THEN
     REPEAT (FIRST_X_ASSUM (CONJUNCTS_THEN ASSUME_TAC o check (is_conj o concl))) THEN
   RVEQ_TAC THEN
-  EXISTS_TAC `0` THEN REWRITE_TAC[ADD_CLAUSES; C2BP1AUX_clock_fupd_id] THEN
+  EXISTS_TAC `0` THEN REWRITE_TAC[ADD_CLAUSES; bvl_with_same_clock] THEN
   EXISTS_TAC `res:((bvl_v)list,bvl_v)result` THEN ASM_REWRITE_TAC[] THEN
   CASES_ON `res:((bvl_v)list,bvl_v)result` THEN CASE_REWRITE_TAC[] THEN
   FIRST_ASSUM (STRIP_ASSUME_TAC o MATCH_MP bvl_evaluate_SING) THEN ASM_REWRITE_TAC[LAST];
@@ -4809,7 +4786,7 @@ let C2BP1AUX_chained_gen = prove
       ASM_MESON_TAC[bvl_evaluate_IMP_LENGTH; LENGTH; LENGTH_EQ_NIL];
       (* Rerr *)
       STRIP_TAC THEN RVEQ_TAC THEN EXISTS_TAC `0` THEN
-      REWRITE_TAC[ADD_CLAUSES; C2BP1AUX_clock_fupd_id] THEN
+      REWRITE_TAC[ADD_CLAUSES; bvl_with_same_clock] THEN
       ONCE_REWRITE_TAC[bvl_evaluate_def] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
       MESON_TAC[]]]);;
 
@@ -4948,7 +4925,7 @@ let evaluate_IMP_evaluate_chained = prove
     STRIP_TAC THEN RVEQ_TAC THEN MATCH_MP_TAC C2BP1AUX_chained_APPEND THEN ASM_MESON_TAC[];
     (* SOME *)
     STRIP_TAC THEN
-  FIRST_X_ASSUM (MP_TAC o MATCH_MP C2BP1AUX_some_SOME o
+  FIRST_X_ASSUM (MP_TAC o MATCH_MP BASICAUX_some_SOME o
                  check (fun th -> can (term_match [] `(some) (P:num->bool) = SOME m`) (concl th))) THEN
   REWRITE_TAC[] THEN DISCH_THEN (CHOOSE_THEN SUBST_ALL_TAC) THEN
   RVEQ_TAC THEN ASM_CASES_TAC `tl:clos_exp list = []` THENL

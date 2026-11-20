@@ -367,10 +367,6 @@ let WPROOF1AUX_WU_NOT_NONE_TAC : tactic = fun (asl,w as g) ->
      REPEAT (TOP_CASE_TAC THEN SIMP[]) THEN NO_TAC;
      STRIP_TAC THEN ASM_REWRITE_TAC[]]) g;;
 
-let WPROOF1AUX_WU_tuple3 = prove
- (`!x:A#B#C. ?a b c. x = (a,b,c)`,
-  MESON_TAC[PAIR_SURJECTIVE]);;
-
 let evaluate_SimpSeq = prove
  (`wl_evaluate (wl_Seq p1 p2,s:(A,C,FFI)wl_state) = (res,s1) /\ ~(res = SOME wl_Error) ==>
    wl_evaluate (SimpSeq p1 p2,s) = (res,s1)`,
@@ -384,7 +380,7 @@ let evaluate_SimpSeq = prove
   (* Move *)
   CASES_ON `dest_Seq_Move (p2:(A)wl_prog)` THEN CASE_REWRITE_TAC[] THENL
    [STRIP_TAC THEN ASM_REWRITE_TAC[]; ALL_TAC] THEN
-  MP_TAC(ISPEC `a:num#(num#num)list#(A)wl_prog` WPROOF1AUX_WU_tuple3) THEN
+  MP_TAC(ISPEC `a:num#(num#num)list#(A)wl_prog` BASICAUX_TUPLE3) THEN
   DISCH_THEN(X_CHOOSE_THEN `n2:num` (X_CHOOSE_THEN `l2:(num#num)list`
     (X_CHOOSE_THEN `rest:(A)wl_prog` SUBST_ALL_TAC))) THEN
   CASE_REWRITE_TAC[] THEN
@@ -600,14 +596,6 @@ let WPROOF1AUX_WU_LOOP_TAC : tactic =
   ASM_REWRITE_TAC[FST] THEN DISCH_TAC THEN
   FIRST_X_ASSUM(MATCH_MP_TAC o check (is_forall o concl)) THEN ASM_REWRITE_TAC[];;
 
-let WPROOF1AUX_WU_tuple5 = prove
- (`!x:A#B#C#D#E. ?a b c d e. x = (a,b,c,d,e)`,
-  MESON_TAC[PAIR_SURJECTIVE]);;
-
-let WPROOF1AUX_WU_tuple4 = prove
- (`!x:A#B#C#D. ?a b c d. x = (a,b,c,d)`,
-  MESON_TAC[PAIR_SURJECTIVE]);;
-
 let WPROOF1AUX_WU_push_env_some = prove
  (`wl_push_env envs (SOME (n, Seq_assoc_right p wl_Skip, l1, l2)) (s:(A,C,FFI)wl_state) =
    wl_push_env envs (SOME (n,p,l1,l2)) s`,
@@ -623,11 +611,11 @@ let WPROOF1AUX_WU_CALL0_TAC : tactic =
   DISJ_CASES_THEN2 SUBST_ALL_TAC
    (X_CHOOSE_THEN `hv:num#(A)wl_prog#num#num` SUBST_ALL_TAC)
    (ISPEC `handler:(num#(A)wl_prog#num#num)option` (cases "option")) THEN
-  TRY(MP_TAC(ISPEC `rv:num list#cutsets#(A)wl_prog#num#num` WPROOF1AUX_WU_tuple5) THEN
+  TRY(MP_TAC(ISPEC `rv:num list#cutsets#(A)wl_prog#num#num` BASICAUX_TUPLE5) THEN
       DISCH_THEN(X_CHOOSE_THEN `x1:num list` (X_CHOOSE_THEN `x2:cutsets`
         (X_CHOOSE_THEN `q1:(A)wl_prog` (X_CHOOSE_THEN `x3:num`
           (X_CHOOSE_THEN `x4:num` SUBST_ALL_TAC)))))) THEN
-  TRY(MP_TAC(ISPEC `hv:num#(A)wl_prog#num#num` WPROOF1AUX_WU_tuple4) THEN
+  TRY(MP_TAC(ISPEC `hv:num#(A)wl_prog#num#num` BASICAUX_TUPLE4) THEN
       DISCH_THEN(X_CHOOSE_THEN `y1:num` (X_CHOOSE_THEN `q2:(A)wl_prog`
         (X_CHOOSE_THEN `y2:num` (X_CHOOSE_THEN `y3:num` SUBST_ALL_TAC))))) THEN
   REWRITE_TAC[option_DISTINCT; option_INJ; PAIR_EQ] THEN

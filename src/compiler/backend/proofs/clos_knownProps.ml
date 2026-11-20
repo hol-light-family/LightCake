@@ -49,10 +49,6 @@ let CLOSPROPSAUX_MAP2_idem = prove
   GEN_TAC THEN LIST_INDUCT_TAC THEN REWRITE_TAC[MAP2_DEF; MEM; HD; TL; CONS_11] THEN
   ASM_MESON_TAC[]);;
 
-let CLOSPROPSAUX_LENGTH_MAP2 = prove
- (`!(f:A->B->C) xs ys. LENGTH (MAP2 f xs ys) = LENGTH xs`,
-  GEN_TAC THEN LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[MAP2_DEF; LENGTH]);;
-
 (* HOL4: merge_comm *)
 let merge_comm = prove
  (`!a1 a2. merge a1 a2 = merge a2 a1`,
@@ -73,9 +69,9 @@ let merge_assoc = prove
   TRY DISCH_TAC THEN REPEAT GEN_TAC THEN CASES_ON `a3:val_approx` THEN
   REWRITE_TAC[merge_def; merge_Other; merge_Impossible] THEN
   REPEAT(COND_CASES_TAC THEN
-         REWRITE_TAC[merge_def; merge_Other; merge_Impossible; CLOSPROPSAUX_LENGTH_MAP2;
+         REWRITE_TAC[merge_def; merge_Other; merge_Impossible; LISTAUX_LENGTH_MAP2;
                      injectivity "val_approx"; distinctness "val_approx"]) THEN
-  RULE_ASSUM_TAC(REWRITE_RULE[DE_MORGAN_THM; CLOSPROPSAUX_LENGTH_MAP2]) THEN
+  RULE_ASSUM_TAC(REWRITE_RULE[DE_MORGAN_THM; LISTAUX_LENGTH_MAP2]) THEN
   TRY(MATCH_MP_TAC CLOSPROPSAUX_MAP2_assoc THEN ASM_MESON_TAC[] THEN NO_TAC) THEN
   ASM_MESON_TAC[]);;
 

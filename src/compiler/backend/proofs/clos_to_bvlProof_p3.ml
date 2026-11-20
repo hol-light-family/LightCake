@@ -38,13 +38,6 @@ let code_installed_fromAList_strong = prove
               lookup_fromAList] THEN
   MESON_TAC[ALOOKUP_ALL_DISTINCT_MEM; IS_SUBLIST_MEM]);;
 
-let C2BP3AUX_do_app_Label = prove
- (`!n (s:(C,FFI)bvl_state).
-     bvl_do_app (clos_Label n) [] s =
-     if n IN domain (bvl_state_code s) then Rval (bvl_CodePtr n,s)
-     else Rerr (Rabort Rtype_error)`,
-  REWRITE_TAC[bvl_do_app_def] THEN CASE_REWRITE_TAC[]);;
-
 (* HOL4 line 6126 *)
 let evaluate_init1 = prove
  (`!mapp2 mapp1 tot (st:(C,FFI)bvl_state).
@@ -59,7 +52,7 @@ let evaluate_init1 = prove
   REPEAT STRIP_TAC THEN REWRITE_TAC[REVERSE_APPEND; REVERSE; APPEND] THEN
   ONCE_REWRITE_TAC[bvl_evaluate_CONS] THEN
   REWRITE_TAC[bvl_evaluate_def] THEN CASE_REWRITE_TAC[REVERSE] THEN
-  ASM_SIMP_TAC[C2BP3AUX_do_app_Label; ARITH_RULE `mapp2 < SUC mapp2`] THEN
+  ASM_SIMP_TAC[C2BP1AUX_do_app_Label; ARITH_RULE `mapp2 < SUC mapp2`] THEN
   CASE_REWRITE_TAC[HD] THEN
   FIRST_X_ASSUM(MP_TAC o SPECL [`mapp1:num`; `tot:num`; `st:(C,FFI)bvl_state`]) THEN
   ANTS_TAC THENL [ASM_MESON_TAC[ARITH_RULE `n < mapp2 ==> n < SUC mapp2`]; ALL_TAC] THEN
@@ -151,7 +144,7 @@ let C2BP3AUX_bvl_sem_fail = prove
   CONV_TAC(DEPTH_CONV BETA_CONV) THEN
   COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
   TOP_CASE_TAC THEN REWRITE_TAC[distinctness "behaviour"] THEN
-  FIRST_X_ASSUM(MP_TAC o MATCH_MP CLOSPROPSAUX_some_SOME) THEN
+  FIRST_X_ASSUM(MP_TAC o MATCH_MP BASICAUX_some_SOME) THEN
   CONV_TAC(DEPTH_CONV BETA_CONV) THEN STRIP_TAC THEN
   ASM_REWRITE_TAC[distinctness "behaviour"]);;
 
@@ -467,15 +460,6 @@ let chain_installed_SUBMAP = prove
   DISCH_THEN(MP_TAC o SPEC `a:num#clos_exp`) THEN REWRITE_TAC[] THEN
   DISCH_THEN(fun th -> REWRITE_TAC[th]) THEN CASE_REWRITE_TAC[]);;
 
-let C2BP3AUX_result_rel_refl = prove
- (`!r:(clos_v list,clos_v)result.
-     result_rel (\(x:clos_v list) (y:clos_v list). T) (\(x:clos_v) (y:clos_v). T) r r`,
-  REWRITE_TAC[CLOSPROPSAUX_result_rel_T] THEN GEN_TAC THEN
-  CASES_ON `r:(clos_v list,clos_v)result` THEN
-  REWRITE_TAC[injectivity "result"; distinctness "result"] THEN
-  TRY(CASES_ON `a:(clos_v)error_result`) THEN
-  REWRITE_TAC[injectivity "error_result"; distinctness "error_result"] THEN MESON_TAC[]);;
-
 let C2BP3AUX_K_o_K = prove
  (`!(a:A) (b:A). (K a o (K b:B->A)) = (K a:B->A)`,
   REWRITE_TAC[FUN_EQ_THM; o_THM; K_THM]);;
@@ -497,7 +481,7 @@ let chain_installed_thm = prove
   ASM_CASES_TAC `t:clos_exp list = []` THENL
    [EXISTS_TAC `h:clos_exp` THEN ASM_REWRITE_TAC[] THEN REPEAT STRIP_TAC THEN
     MAP_EVERY EXISTS_TAC [`0`; `res:(clos_v list,clos_v)result`; `st':(C,FFI)clos_state`] THEN
-    ASM_REWRITE_TAC[ADD_CLAUSES; clos_with_same_clock; C2BP3AUX_result_rel_refl];
+    ASM_REWRITE_TAC[ADD_CLAUSES; clos_with_same_clock; CLOSPROPSAUX_result_rel_T_refl];
     ALL_TAC] THEN
   FIRST_X_ASSUM(X_CHOOSE_TAC `e1:clos_exp` o SPEC `start + 1`) THEN
   EXISTS_TAC `clos_Let backend_common_None [h]
@@ -551,7 +535,7 @@ let chain_installed_thm = prove
     REWRITE_TAC[injectivity "result"; distinctness "result"] THEN MESON_TAC[];
     REWRITE_TAC[PAIR_EQ] THEN DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
     EXISTS_TAC `0` THEN ASM_REWRITE_TAC[ADD_CLAUSES; clos_with_same_clock] THEN
-    CASE_REWRITE_TAC[] THEN MESON_TAC[C2BP3AUX_result_rel_refl]]);;
+    CASE_REWRITE_TAC[] THEN MESON_TAC[CLOSPROPSAUX_result_rel_T_refl]]);;
 
 
 (* HOL4 line 6455 *)
@@ -575,13 +559,6 @@ let chain_installed_chain_exps = prove
                   ARITH_RULE `~(i = i + SUC n)`; ARITH_RULE `i + SUC n = (i + 1) + n`;
                   ARITH_RULE `SUC n + 1 < SUC m <=> n + 1 < m`;
                   ARITH_RULE `i + SUC n + 1 = (i + 1) + n + 1`]]]);;
-
-let C2BP3AUX_clos_eval_Const = prove
- (`!t i env (s:(C,FFI)clos_state).
-     clos_evaluate ([clos_Op t (IntOp (clos_Const i)) []],env,s) = (Rval [clos_Number i],s)`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[clos_evaluate_def] THEN CASE_REWRITE_TAC[REVERSE] THEN
-  REWRITE_TAC[clos_do_app_def] THEN CASE_REWRITE_TAC[] THEN
-  REWRITE_TAC[clos_do_int_app_def] THEN CASE_REWRITE_TAC[]);;
 
 let C2BP3AUX_find_code_nil = prove
  (`!p (code:(num,num#clos_exp)fmap) e.
@@ -609,7 +586,7 @@ let chain_exps_semantics = prove
     EXISTS_TAC `clos_Op backend_common_None (IntOp (clos_Const (&0))) []` THEN
     REWRITE_TAC[chain_exps_def; ALOOKUP_THM] THEN
     MATCH_MP_TAC CLOSPROPSAUX_sem_eq THEN
-    REWRITE_TAC[clos_evaluate_def; C2BP3AUX_clos_eval_Const; FST; SND; distinctness "result"] THEN
+    REWRITE_TAC[clos_evaluate_def; CLOSP1AUX_num_eval_const; FST; SND; distinctness "result"] THEN
     GEN_TAC THEN EXISTS_TAC `0` THEN
     REWRITE_TAC[CLOSPROPSAUX_result_rel_T; ADD_CLAUSES; injectivity "result";
                 distinctness "result"] THEN
@@ -745,7 +722,7 @@ let chain_exps_semantics_call = prove
   CASE_REWRITE_TAC[] THEN
   REWRITE_TAC[ARITH_RULE `~(k + 1 < 0 + 1)`; clos_dec_clock_def; clos_state_INFO.ri_accessors;
               clos_state_INFO.ri_fupds; K_THM; ARITH_RULE `(k + 1) - (0 + 1) = k`] THEN
-  REWRITE_TAC[C2BP3AUX_result_rel_refl]);;
+  REWRITE_TAC[CLOSPROPSAUX_result_rel_T_refl]);;
 
 (* HOL4 line 6634 *)
 let kcompile_csyntax_ok = prove
@@ -886,9 +863,6 @@ let collect_args_fv1 = prove
     REWRITE_TAC[ARITH_RULE `(a + v) + b = (a + b) + v:num`];
     REWRITE_TAC[PAIR_EQ] THEN REPEAT STRIP_TAC THEN RVEQ_TAC THEN REWRITE_TAC[]]);;
 
-let C2BP3AUX_has_const name tm =
-  can (find_term (fun t -> is_const t && fst(dest_const t) = name)) tm;;
-
 let C2BP3AUX_MATCH_EQ_ASSUMS_TAC : thm_tactic = fun eq ->
   RULE_ASSUM_TAC(fun th -> try MATCH_MP th eq with Failure _ -> th);;
 
@@ -938,7 +912,7 @@ let intro_multi_fv1 = prove
      MAP_EVERY ASSUME_TAC (mapfilter (fun (_,th) -> MATCH_MP C2BP3AUX_fv_ALL2 th) asl) gl) THEN
   REWRITE_TAC[fv1_thm; intro_multi_length; LENGTH_MAP] THEN ASM_REWRITE_TAC[] THEN
   FIRST
-   [W(fun (asl,w) -> if C2BP3AUX_has_const "collect_apps" w then ALL_TAC else NO_TAC) THEN
+   [W(fun (asl,w) -> if CLOS2AUX_CONST_IN "collect_apps" w then ALL_TAC else NO_TAC) THEN
     MP_TAC(ISPEC `collect_apps max_app es e` PAIR_SURJECTIVE) THEN
     DISCH_THEN(X_CHOOSE_THEN `es':clos_exp list` (X_CHOOSE_THEN `e':clos_exp` ASSUME_TAC)) THEN
     FIRST_ASSUM C2BP3AUX_MATCH_EQ_ASSUMS_TAC THEN
@@ -949,7 +923,7 @@ let intro_multi_fv1 = prove
     MP_TAC(SPECL [`max_app:num`; `es:clos_exp list`; `e:clos_exp`; `v:num`]
                  collect_apps_fv1) THEN
     ASM_REWRITE_TAC[FST; SND] THEN MESON_TAC[];
-    W(fun (asl,w) -> if C2BP3AUX_has_const "Fn" w then ALL_TAC else NO_TAC) THEN
+    W(fun (asl,w) -> if CLOS2AUX_CONST_IN "Fn" w then ALL_TAC else NO_TAC) THEN
     MP_TAC(ISPEC `collect_args max_app num_args e` PAIR_SURJECTIVE) THEN
     DISCH_THEN(X_CHOOSE_THEN `na':num` (X_CHOOSE_THEN `e':clos_exp` ASSUME_TAC)) THEN
     FIRST_ASSUM C2BP3AUX_MATCH_EQ_ASSUMS_TAC THEN
@@ -1111,14 +1085,6 @@ let HD_FST_calls = prove
   FIRST_ASSUM(X_CHOOSE_TAC `z:clos_exp` o MATCH_MP calls_sing) THEN
   ASM_REWRITE_TAC[FST; HD]);;
 
-let C2BP3AUX_every_Fn_SOME_cons = prove
- (`!x xs. every_Fn_SOME (CONS x xs) <=> every_Fn_SOME [x] /\ every_Fn_SOME xs`,
-  REPEAT GEN_TAC THEN CASES_ON `xs:clos_exp list` THEN REWRITE_TAC[every_Fn_SOME_def]);;
-
-let C2BP3AUX_every_Fn_vs_NONE_cons = prove
- (`!x xs. every_Fn_vs_NONE (CONS x xs) <=> every_Fn_vs_NONE [x] /\ every_Fn_vs_NONE xs`,
-  REPEAT GEN_TAC THEN CASES_ON `xs:clos_exp list` THEN REWRITE_TAC[every_Fn_vs_NONE_def]);;
-
 (* HOL4 line 6927 *)
 let every_Fn_SOME_collect_apps = prove
  (`!max_app es e es' e'.
@@ -1139,22 +1105,22 @@ let every_Fn_SOME_intro_multi = prove
  (`!max_app es. every_Fn_SOME (intro_multi max_app es) <=> every_Fn_SOME es`,
   MATCH_MP_TAC intro_multi_ind THEN REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
   REWRITE_TAC[intro_multi_def] THEN REPEAT STRIP_TAC THEN
-  TRY(W(fun (asl,w) -> if C2BP3AUX_has_const "collect_apps" w then ALL_TAC else NO_TAC) THEN
+  TRY(W(fun (asl,w) -> if CLOS2AUX_CONST_IN "collect_apps" w then ALL_TAC else NO_TAC) THEN
       MP_TAC(ISPEC `collect_apps max_app es e` PAIR_SURJECTIVE) THEN
       DISCH_THEN(X_CHOOSE_THEN `es':clos_exp list`
         (X_CHOOSE_THEN `e':clos_exp` ASSUME_TAC)) THEN
       FIRST_ASSUM C2BP3AUX_MATCH_EQ_ASSUMS_TAC THEN
       FIRST_ASSUM(ASSUME_TAC o MATCH_MP every_Fn_SOME_collect_apps) THEN
       ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]) THEN
-  TRY(W(fun (asl,w) -> if C2BP3AUX_has_const "collect_args" w then ALL_TAC else NO_TAC) THEN
+  TRY(W(fun (asl,w) -> if CLOS2AUX_CONST_IN "collect_args" w then ALL_TAC else NO_TAC) THEN
       MP_TAC(ISPEC `collect_args max_app num_args e` PAIR_SURJECTIVE) THEN
       DISCH_THEN(X_CHOOSE_THEN `na':num` (X_CHOOSE_THEN `e':clos_exp` ASSUME_TAC)) THEN
       ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]) THEN
-  ONCE_REWRITE_TAC[C2BP3AUX_every_Fn_SOME_cons] THEN
-  ONCE_REWRITE_TAC[C2BP3AUX_every_Fn_SOME_cons] THEN
+  ONCE_REWRITE_TAC[CLOSPROPSAUX_every_Fn_SOME_cons] THEN
+  ONCE_REWRITE_TAC[CLOSPROPSAUX_every_Fn_SOME_cons] THEN
   REWRITE_TAC[every_Fn_SOME_def; IS_SOME_DEF; GEN_ALL HD_intro_multi] THEN
   ASM_REWRITE_TAC[] THEN
-  RULE_ASSUM_TAC(ONCE_REWRITE_RULE[C2BP3AUX_every_Fn_SOME_cons]) THEN
+  RULE_ASSUM_TAC(ONCE_REWRITE_RULE[CLOSPROPSAUX_every_Fn_SOME_cons]) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[every_Fn_SOME_def]) THEN
   ASM_REWRITE_TAC[] THEN ASM_MESON_TAC[]);;
 
@@ -1177,17 +1143,10 @@ let set_code_locs_collect_apps = prove
                   SET_OF_LIST_APPEND] THEN
   DISCH_THEN SUBST1_TAC THEN SET_TAC[]);;
 
-let C2BP3AUX_ncompile_inc_SND = prove
- (`!x y. SND (clos_number_compile_inc x y) =
-         CONS (clos_Op backend_common_None (IntOp (clos_Const (&x))) [])
-           (SND (renumber_code_locs_list (make_even (x + MAX (LENGTH y) 1)) y))`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[clos_number_compile_inc_def; LET_DEF; LET_END_DEF] THEN
-  CONV_TAC(DEPTH_CONV BETA_CONV) THEN REWRITE_TAC[C2BP3AUX_pair_CASE_FST_SND; SND]);;
-
 (* HOL4 line 6961 *)
 let every_Fn_SOME_ncompile_inc = prove
  (`!x y. every_Fn_SOME (SND (clos_number_compile_inc x y))`,
-  REWRITE_TAC[C2BP3AUX_ncompile_inc_SND] THEN ONCE_REWRITE_TAC[C2BP3AUX_every_Fn_SOME_cons] THEN
+  REWRITE_TAC[CLOSP1AUX_num_SND_compile_inc] THEN ONCE_REWRITE_TAC[CLOSPROPSAUX_every_Fn_SOME_cons] THEN
   REWRITE_TAC[every_Fn_SOME_def; renumber_code_locs_every_Fn_SOME]);;
 
 let _ = cake_add_simps [every_Fn_SOME_ncompile_inc];;
@@ -1195,8 +1154,8 @@ let _ = cake_add_simps [every_Fn_SOME_ncompile_inc];;
 (* HOL4 line 6970 *)
 let every_Fn_vs_NONE_ncompile_inc = prove
  (`!x y. every_Fn_vs_NONE (SND (clos_number_compile_inc x y)) <=> every_Fn_vs_NONE y`,
-  REWRITE_TAC[C2BP3AUX_ncompile_inc_SND] THEN
-  ONCE_REWRITE_TAC[C2BP3AUX_every_Fn_vs_NONE_cons] THEN
+  REWRITE_TAC[CLOSP1AUX_num_SND_compile_inc] THEN
+  ONCE_REWRITE_TAC[CLOSPROPSAUX_every_Fn_vs_NONE_cons] THEN
   REWRITE_TAC[every_Fn_vs_NONE_def; renumber_code_locs_every_Fn_vs_NONE]);;
 
 let _ = cake_add_simps [every_Fn_vs_NONE_ncompile_inc];;
@@ -1204,7 +1163,7 @@ let _ = cake_add_simps [every_Fn_vs_NONE_ncompile_inc];;
 (* HOL4 line 6979 *)
 let ncompile_inc_code_locs_distinct = prove
  (`!x y. ALL_DISTINCT (code_locs (SND (clos_number_compile_inc x y)))`,
-  REWRITE_TAC[C2BP3AUX_ncompile_inc_SND] THEN ONCE_REWRITE_TAC[code_locs_cons] THEN
+  REWRITE_TAC[CLOSP1AUX_num_SND_compile_inc] THEN ONCE_REWRITE_TAC[code_locs_cons] THEN
   REWRITE_TAC[code_locs_def; APPEND; renumber_code_locs_list_distinct]);;
 
 let _ = cake_add_simps [ncompile_inc_code_locs_distinct];;
@@ -1344,7 +1303,7 @@ let semantics_cond_call_compile_inc = prove
     RULE_ASSUM_TAC(REWRITE_RULE[clos_callProof_syntax_ok_def]) THEN
     ASM_REWRITE_TAC[SND; MAP; set_of_list; DISJOINT_EMPTY; wfg_def; FST;
                     domain_def; IMAGE_CLAUSES; ALL_DISTINCT];
-    FIRST_X_ASSUM(MP_TAC o check (fun th -> C2BP3AUX_has_const "oracle_monotonic" (concl th))) THEN
+    FIRST_X_ASSUM(MP_TAC o check (fun th -> CLOS2AUX_CONST_IN "oracle_monotonic" (concl th))) THEN
     MATCH_MP_TAC oracle_monotonic_subset THEN REWRITE_TAC[SUBSET_REFL] THEN
     MP_TAC(ISPECL [`es:clos_exp list`; `(LN:num_set,[]:(num#num#clos_exp)list)`;
                    `es':clos_exp list`; `(g:num_set,aux:(num#num#clos_exp)list)`]
@@ -1476,7 +1435,7 @@ let known_state_oracle_globals_approx = prove
     MESON_TAC[];
     ALL_TAC] THEN
   FIRST_X_ASSUM(MP_TAC o SPEC `k:num` o REWRITE_RULE[is_state_oracle_def] o
-    check (fun th -> C2BP3AUX_has_const "is_state_oracle" (concl th))) THEN
+    check (fun th -> CLOS2AUX_CONST_IN "is_state_oracle" (concl th))) THEN
   REWRITE_TAC[o_THM; pure_co_def; PAIR_MAP; I_THM; fcompile_inc_uncurry; kcompile_inc_uncurry;
               FST; SND; clos_fvs_compile_def] THEN
   DISCH_THEN SUBST1_TAC THEN
@@ -1562,7 +1521,7 @@ let known_co_facts = prove
               code_locs_remove_ticks] THEN
   STRIP_TAC THEN USE_THEN "glob" (STRIP_ASSUME_TAC o SPEC `k:num`) THEN
   FIRST_X_ASSUM(STRIP_ASSUME_TAC o SPEC `k:num` o check (fun th ->
-    is_forall (concl th) && C2BP3AUX_has_const "every_Fn_vs_NONE" (concl th))) THEN
+    is_forall (concl th) && CLOS2AUX_CONST_IN "every_Fn_vs_NONE" (concl th))) THEN
   MP_TAC(ISPECL [`reset_inline_factor a`;
                  `remove_fvs 0 (FST (SND ((co:num->((val_approx)spt#B)#clos_prog) k)))`;
                  `[]:val_approx list`; `FST (FST ((co:num->((val_approx)spt#B)#clos_prog) k))`]
@@ -1594,7 +1553,7 @@ let MEM_number_compile_inc_locs = prove
  (`!x n exps.
      MEM x (code_locs (SND (clos_number_compile_inc n exps)))
      ==> n < x /\ x < FST (clos_number_compile_inc n exps)`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[C2BP3AUX_ncompile_inc_SND; C2BP3AUX_ncompile_inc_FST] THEN
+  REPEAT GEN_TAC THEN REWRITE_TAC[CLOSP1AUX_num_SND_compile_inc; C2BP3AUX_ncompile_inc_FST] THEN
   ONCE_REWRITE_TAC[code_locs_cons] THEN REWRITE_TAC[code_locs_def; APPEND] THEN
   MP_TAC(SPECL [`make_even (n + MAX (LENGTH (exps:clos_exp list)) 1)`; `exps:clos_exp list`]
                renumber_code_locs_list_distinct) THEN
@@ -1737,7 +1696,7 @@ let ccompile_locs_subset = prove
 (* HOL4 line 7432 *)
 let number_compile_inc_esgc_free = prove
  (`!x y. ALL clos_esgc_free y ==> ALL clos_esgc_free (SND (clos_number_compile_inc x y))`,
-  REPEAT STRIP_TAC THEN REWRITE_TAC[C2BP3AUX_ncompile_inc_SND; ALL; clos_esgc_free_def] THEN
+  REPEAT STRIP_TAC THEN REWRITE_TAC[CLOSP1AUX_num_SND_compile_inc; ALL; clos_esgc_free_def] THEN
   MATCH_MP_TAC (CONJUNCT1 renumber_code_locs_esgc_free) THEN
   MAP_EVERY EXISTS_TAC [`make_even (x + MAX (LENGTH (y:clos_exp list)) 1)`; `y:clos_exp list`;
                         `FST (renumber_code_locs_list (make_even (x + MAX (LENGTH (y:clos_exp list)) 1)) y)`] THEN
@@ -1868,7 +1827,7 @@ let C2BP3AUX_co_n = prove
               SND_SND_ignore_table]);;
 
 let C2BP3AUX_is_eq_app name th =
-  let c = concl th in is_eq c && C2BP3AUX_has_const name (lhand c) && is_pair (rand c);;
+  let c = concl th in is_eq c && CLOS2AUX_CONST_IN name (lhand c) && is_pair (rand c);;
 
 (* HOL4 line 7509 (HOL4 $< is (<); fvs_inc is clos_fvs_compile_inc at clos_prog->clos_prog) *)
 let compile_common_semantics = prove
@@ -1977,7 +1936,7 @@ let compile_common_semantics = prove
    [EXPAND_TAC "co_m" THEN MATCH_MP_TAC semantics_cond_mti_compile_inc THEN
     ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
     FIRST_X_ASSUM(MP_TAC o check (fun th -> is_imp (concl th) &&
-      C2BP3AUX_has_const "no_mti" (concl th))) THEN ASM_REWRITE_TAC[] THEN SIMP_TAC[];
+      CLOS2AUX_CONST_IN "no_mti" (concl th))) THEN ASM_REWRITE_TAC[] THEN SIMP_TAC[];
     ALL_TAC] THEN
   SUBGOAL_THEN `~(clos_semantics (ffi:(FFI)ffi_state) (clos_to_bvl_config_max_app c) FEMPTY
                   (co_m:num->(num#(val_approx)spt#num_set#B)#clos_prog)
@@ -2000,7 +1959,7 @@ let compile_common_semantics = prove
                    `cc_k:(val_approx)spt#num_set#B->clos_prog->(byte list#int64 list#(val_approx)spt#num_set#B)option`;
                    `clos_mti_compile (clos_to_bvl_config_do_mti c) (clos_to_bvl_config_max_app c) es1`]
          (GEN_ALL semantics_number)) THEN
-    FIRST_ASSUM(fun th -> if C2BP3AUX_has_const "renumber_code_locs_list" (concl th) &&
+    FIRST_ASSUM(fun th -> if CLOS2AUX_CONST_IN "renumber_code_locs_list" (concl th) &&
                             is_eq (concl th) && is_pair (rhs (concl th))
                          then REWRITE_TAC[th; SND] else NO_TAC) THEN
     ASM_REWRITE_TAC[] THEN
@@ -2046,7 +2005,7 @@ let compile_common_semantics = prove
                       (clos_known_config_val_approx_spt (THE kc)) /\
                     1 <= clos_to_bvl_config_max_app c` (LABEL_TAC "S2") THENL
    [DISCH_TAC THEN FIRST_X_ASSUM(MP_TAC o check (fun th -> is_imp (concl th) &&
-      C2BP3AUX_has_const "IS_SOME" (lhand (concl th)))) THEN ASM_REWRITE_TAC[] THEN
+      CLOS2AUX_CONST_IN "IS_SOME" (lhand (concl th)))) THEN ASM_REWRITE_TAC[] THEN
     USE_THEN "post" (fun th -> REWRITE_TAC[th; FST]) THEN STRIP_TAC THEN
     ASM_REWRITE_TAC[clos_knownProof_syntax_oracle_ok_def] THEN
     USE_THEN "con" (fun th -> REWRITE_TAC[th]) THEN
@@ -2110,8 +2069,8 @@ let compile_common_semantics = prove
   USE_THEN "kco" (fun th -> REWRITE_TAC[th]) THEN ASM_REWRITE_TAC[] THEN
   ANTS_TAC THENL
    [DISCH_TAC THEN FIRST_X_ASSUM(MP_TAC o check (fun th -> is_imp (concl th) &&
-      C2BP3AUX_has_const "IS_SOME" (lhand (concl th)) &&
-      C2BP3AUX_has_const "is_state_oracle" (concl th))) THEN ASM_REWRITE_TAC[] THEN
+      CLOS2AUX_CONST_IN "IS_SOME" (lhand (concl th)) &&
+      CLOS2AUX_CONST_IN "is_state_oracle" (concl th))) THEN ASM_REWRITE_TAC[] THEN
     USE_THEN "post" (fun th -> REWRITE_TAC[th; FST]) THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
     USE_THEN "S1" (MP_TAC o REWRITE_RULE[clos_knownProof_syntax_ok_def]) THEN
     STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
@@ -2130,7 +2089,7 @@ let compile_common_semantics = prove
     USE_THEN "ren" (fun th -> REWRITE_TAC[th; FST; SND]) THEN
     USE_THEN "com" (fun th -> REWRITE_TAC[th]) THEN ASM_REWRITE_TAC[] THEN
     ANTS_TAC THENL
-     [FIRST_X_ASSUM(MP_TAC o check (fun th -> C2BP3AUX_has_const ">=" (concl th))) THEN
+     [FIRST_X_ASSUM(MP_TAC o check (fun th -> CLOS2AUX_CONST_IN ">=" (concl th))) THEN
       USE_THEN "ren" (fun th -> REWRITE_TAC[th; FST]);
       ALL_TAC] THEN
     REWRITE_TAC[];
@@ -2168,12 +2127,12 @@ let compile_common_semantics = prove
     REWRITE_TAC[C2BP3AUX_pair_CASE_FST_SND] THEN ASM_REWRITE_TAC[] THEN
     CONJ_TAC THENL
      [FIRST_X_ASSUM(MP_TAC o check (fun th -> is_imp (concl th) &&
-        C2BP3AUX_has_const "clos_call_compile_inc" (concl th))) THEN
+        CLOS2AUX_CONST_IN "clos_call_compile_inc" (concl th))) THEN
       ASM_REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[];
       ALL_TAC] THEN
     CONJ_TAC THENL
      [FIRST_X_ASSUM(MP_TAC o check (fun th -> is_imp (concl th) &&
-        C2BP3AUX_has_const "clos_call_compile_inc" (concl th))) THEN
+        CLOS2AUX_CONST_IN "clos_call_compile_inc" (concl th))) THEN
       USE_THEN "post" (fun th -> REWRITE_TAC[th; SND]) THEN
       USE_THEN "cco" (fun th -> REWRITE_TAC[th; FST; SND]) THEN ASM_REWRITE_TAC[] THEN
       STRIP_TAC THEN
@@ -2181,8 +2140,8 @@ let compile_common_semantics = prove
       USE_THEN "con" (fun th -> REWRITE_TAC[th]) THEN ASM_REWRITE_TAC[];
       ALL_TAC] THEN
     FIRST_X_ASSUM(MATCH_MP_TAC o check (fun th -> is_imp (concl th) &&
-      C2BP3AUX_has_const "oracle_monotonic" (concl th) &&
-      C2BP3AUX_has_const "code_locs" (concl th))) THEN
+      CLOS2AUX_CONST_IN "oracle_monotonic" (concl th) &&
+      CLOS2AUX_CONST_IN "code_locs" (concl th))) THEN
     USE_THEN "omn" ACCEPT_TAC;
     ALL_TAC] THEN
   SUBGOAL_THEN `~(clos_semantics (ffi:(FFI)ffi_state) (clos_to_bvl_config_max_app c) (alist_to_fmap aux)
@@ -2234,7 +2193,7 @@ let compile_common_semantics = prove
      [REWRITE_TAC[make_even_def] THEN COND_CASES_TAC THEN ARITH_TAC;
       USE_THEN "ren" (fun th -> MP_TAC(MATCH_MP (CONJUNCT1 renumber_code_locs_imp_inc) th)) THEN
       REWRITE_TAC[];
-      FIRST_X_ASSUM(MP_TAC o check (fun th -> C2BP3AUX_has_const ">=" (concl th))) THEN
+      FIRST_X_ASSUM(MP_TAC o check (fun th -> CLOS2AUX_CONST_IN ">=" (concl th))) THEN
       USE_THEN "ren" (fun th -> REWRITE_TAC[th; FST]) THEN ARITH_TAC];
     ALL_TAC] THEN
   SUBGOAL_THEN `DISJOINT (IMAGE ((+) (clos_to_bvl_config_next_loc c)) (count (LENGTH (es_c:clos_exp list))))
@@ -2291,8 +2250,8 @@ let compile_common_semantics = prove
     MATCH_MP_TAC oracle_monotonic_init_subset THEN
     EXISTS_TAC `count (FST (FST ((co1:num->(num#(val_approx)spt#num_set#B)#clos_prog) 0)))` THEN
     USE_THEN "D2" (fun th -> REWRITE_TAC[th]) THEN
-    FIRST_ASSUM(ACCEPT_TAC o check (fun th -> C2BP3AUX_has_const "oracle_monotonic" (concl th) &&
-      not (is_imp (concl th)) && C2BP3AUX_has_const "count" (concl th)));
+    FIRST_ASSUM(ACCEPT_TAC o check (fun th -> CLOS2AUX_CONST_IN "oracle_monotonic" (concl th) &&
+      not (is_imp (concl th)) && CLOS2AUX_CONST_IN "count" (concl th)));
     ALL_TAC] THEN
   (* the clos_annotate phase *)
   REWRITE_TAC[clos_to_bvl_config_INFO.ri_accfupds; K_THM] THEN
@@ -2352,11 +2311,6 @@ let C2BP3AUX_do_app_SetGlobal = prove
      | NONE -> Rerr (Rabort Rtype_error)`,
   REWRITE_TAC[bvl_do_app_def] THEN CASE_REWRITE_TAC[]);;
 
-let C2BP3AUX_do_app_Cons = prove
- (`!tag xs (s:(C,FFI)bvl_state).
-     bvl_do_app (BlockOp (clos_Cons tag)) xs s = Rval (bvl_Block tag xs,s)`,
-  REWRITE_TAC[bvl_do_app_def] THEN CASE_REWRITE_TAC[]);;
-
 (* the code of init_globals, run on a state without globals *)
 let C2BP3AUX_eval_init_globals = prove
  (`!max_app start_loc (st:(C,FFI)bvl_state).
@@ -2388,7 +2342,7 @@ let C2BP3AUX_eval_init_globals = prove
   GEN_REWRITE_TAC LAND_CONV [bvl_evaluate_def] THEN
   GEN_REWRITE_TAC (LAND_CONV o ONCE_DEPTH_CONV) [bvl_evaluate_def] THEN
   GEN_REWRITE_TAC (LAND_CONV o ONCE_DEPTH_CONV) [bvl_evaluate_def] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[REVERSE_REVERSE; C2BP3AUX_do_app_Cons] THEN
+  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[REVERSE_REVERSE; bvl_do_app_Cons] THEN
   REWRITE_TAC[REVERSE; APPEND; C2BP3AUX_do_app_SetGlobal; partial_app_label_table_loc_def;
               bvl_state_INFO.ri_accfupds; K_THM; get_global_def; LENGTH; EL; HD;
               ARITH_RULE `0 < SUC 0`] THEN
@@ -2397,15 +2351,6 @@ let C2BP3AUX_eval_init_globals = prove
   GEN_REWRITE_TAC RAND_CONV [bvl_evaluate_def] THEN
   REWRITE_TAC[bvl_evaluate_def; bvl_state_INFO.ri_accfupds] THEN CASE_REWRITE_TAC[] THEN
   REWRITE_TAC[bvl_state_INFO.ri_accfupds]);;
-
-let C2BP3AUX_result_rel_weaken = prove
- (`!(R1:clos_v list->bvl_v list->bool) (R2:clos_v->bvl_v->bool) r1 r2.
-     result_rel R1 R2 r1 r2
-     ==> result_rel (\(x:clos_v list) (y:bvl_v list). T) (\(x:clos_v) (y:bvl_v). T) r1 r2`,
-  REPEAT GEN_TAC THEN CASES_ON `r1:(clos_v list,clos_v)result` THEN
-  CASES_ON `r2:(bvl_v list,bvl_v)result` THEN REWRITE_TAC[result_rel_def] THEN
-  TRY(CASES_ON `a:(clos_v)error_result` THEN CASES_ON `a':(bvl_v)error_result`) THEN
-  REWRITE_TAC[exc_rel_def]);;
 
 (* HOL4 line 7687 *)
 let clos_to_bvlProof_compile_prog_semantics = prove
@@ -2429,13 +2374,13 @@ let clos_to_bvlProof_compile_prog_semantics = prove
      ==> bvl_semantics ffi code2 co2 cc2 nsm1 =
          clos_semantics ffi max_app code1 co1 cc1 [clos_Call backend_common_None 0 start []]`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN MATCH_MP_TAC C2BP3AUX_sem_eq THEN
-  FIRST_ASSUM(fun th -> if C2BP3AUX_has_const "Fail" (concl th)
+  FIRST_ASSUM(fun th -> if CLOS2AUX_CONST_IN "Fail" (concl th)
      then REWRITE_TAC[REWRITE_RULE[CLOSPROPSAUX_sem_fail; NOT_EXISTS_THM] th] else NO_TAC) THEN
   X_GEN_TAC `k:num` THEN
   SUBGOAL_THEN `~(FST (clos_evaluate ([clos_Call backend_common_None 0 start []],[],
                     clos_initial_state (ffi:(FFI)ffi_state) max_app code1 (co1:num->C#clos_prog) cc1 k)) =
                   Rerr (Rabort Rtype_error))` MP_TAC THENL
-   [FIRST_ASSUM(fun th -> if C2BP3AUX_has_const "Fail" (concl th)
+   [FIRST_ASSUM(fun th -> if CLOS2AUX_CONST_IN "Fail" (concl th)
       then MP_TAC(REWRITE_RULE[CLOSPROPSAUX_sem_fail; NOT_EXISTS_THM] th) else NO_TAC) THEN
     SIMP_TAC[];
     ALL_TAC] THEN
@@ -2476,8 +2421,8 @@ let clos_to_bvlProof_compile_prog_semantics = prove
     (X_CHOOSE_THEN `s2:(C,FFI)clos_state` ASSUME_TAC)) THEN
   ASM_REWRITE_TAC[FST; SND] THEN
   RULE_ASSUM_TAC(REWRITE_RULE[FST]) THEN
-  FIRST_ASSUM(fun th -> if is_forall (concl th) && C2BP3AUX_has_const "clos_to_bvl_compile_exps" (concl th) &&
-                          C2BP3AUX_has_const "FLOOKUP" (concl th)
+  FIRST_ASSUM(fun th -> if is_forall (concl th) && CLOS2AUX_CONST_IN "clos_to_bvl_compile_exps" (concl th) &&
+                          CLOS2AUX_CONST_IN "FLOOKUP" (concl th)
      then MP_TAC(MATCH_MP th (ASSUME `FLOOKUP (code1:(num,num#clos_exp)fmap) start = SOME (0,y)`))
      else NO_TAC) THEN
   DISCH_THEN(X_CHOOSE_THEN `aux1:(num#num#bvl_exp)list` (X_CHOOSE_THEN `c2:bvl_exp`
@@ -2485,7 +2430,7 @@ let clos_to_bvlProof_compile_prog_semantics = prove
   ALL_TAC THEN
   SUBGOAL_THEN `~(r1 = Rerr (Rabort Rtype_error):(clos_v list,clos_v)result)` ASSUME_TAC THENL
    [FIRST_X_ASSUM(MP_TAC o check (fun th -> is_neg (concl th) &&
-      C2BP3AUX_has_const "clos_evaluate" (concl th))) THEN
+      CLOS2AUX_CONST_IN "clos_evaluate" (concl th))) THEN
     ASM_REWRITE_TAC[ARITH_RULE `k < 0 + 1 <=> k = 0`; FST];
     ALL_TAC] THEN
   ABBREV_TAC `T1 = bvl_state_globals_fupd (K [SOME (global_table max_app)])
@@ -2555,7 +2500,7 @@ let clos_to_bvlProof_compile_prog_semantics = prove
       `lookup (start + num_stubs max_app) (code2:(num#bvl_exp)spt) = SOME (0,c2)`)] THEN
     CASE_REWRITE_TAC[LENGTH] THEN
     ASM_REWRITE_TAC[ARITH_RULE `k + ck < 0 + 1 <=> k = 0 /\ ck = 0`] THEN
-    FIRST_X_ASSUM(fun th -> if is_eq (concl th) && C2BP3AUX_has_const "bvl_evaluate" (lhand (concl th))
+    FIRST_X_ASSUM(fun th -> if is_eq (concl th) && CLOS2AUX_CONST_IN "bvl_evaluate" (lhand (concl th))
        then MP_TAC th else NO_TAC) THEN
     MATCH_MP_TAC(MESON[] `(a:(bvl_v list,bvl_v)result#(C,FFI)bvl_state) = b ==> (a = c ==> b = c)`) THEN AP_TERM_TAC THEN
     REWRITE_TAC[PAIR_EQ] THEN EXPAND_TAC "T1" THEN
@@ -2566,9 +2511,9 @@ let clos_to_bvlProof_compile_prog_semantics = prove
     UNDISCH_TAC `~(k = 0)` THEN ARITH_TAC;
     ALL_TAC] THEN
   CONJ_TAC THENL
-   [MATCH_MP_TAC C2BP3AUX_result_rel_weaken THEN ASM_MESON_TAC[];
+   [MATCH_MP_TAC CLOSP2AUX_letop_result_shape THEN ASM_MESON_TAC[];
     FIRST_X_ASSUM(MP_TAC o REWRITE_RULE[clos_to_bvlProof_state_rel_def] o check (fun th ->
-      C2BP3AUX_has_const "clos_to_bvlProof_state_rel" (concl th))) THEN SIMP_TAC[]]);;
+      CLOS2AUX_CONST_IN "clos_to_bvlProof_state_rel" (concl th))) THEN SIMP_TAC[]]);;
 
 (* HOL4 line 7763 (HOL4 $< is (<); fvs_inc is clos_fvs_compile_inc at clos_prog->clos_prog) *)
 let clos_to_bvlProof_syntax_oracle_ok_def = cake_def
@@ -2659,11 +2604,11 @@ let C2BP3AUX_compile_exps_append_aux = prove
     ASM_REWRITE_TAC[PAIR_EQ] THEN SIMP_TAC[] THEN
     DISCH_THEN(MP_TAC o SPEC `aux_extra:(num#num#bvl_exp)list`) THEN ASM_REWRITE_TAC[PAIR_EQ] THEN
     SIMP_TAC[];
-    FIRST_ASSUM(fun th -> if is_eq (concl th) && C2BP3AUX_has_const "build_aux" (lhs (concl th)) &&
-                            not (C2BP3AUX_has_const "APPEND" (lhs (concl th)))
+    FIRST_ASSUM(fun th -> if is_eq (concl th) && CLOS2AUX_CONST_IN "build_aux" (lhs (concl th)) &&
+                            not (CLOS2AUX_CONST_IN "APPEND" (lhs (concl th)))
        then MP_TAC (MATCH_MP C2BP3AUX_build_aux_append th) THEN
             FIRST_X_ASSUM(fun ih -> if is_forall (concl ih) &&
-                                       C2BP3AUX_has_const "build_aux" (concl ih)
+                                       CLOS2AUX_CONST_IN "build_aux" (concl ih)
                then MP_TAC (MATCH_MP ih th) else NO_TAC)
        else NO_TAC) THEN
     DISCH_THEN(fun ih -> FIRST_ASSUM(fun eq ->
@@ -3078,8 +3023,8 @@ let cond_call_compile_inc_req = prove
    [DISCH_TAC THEN MATCH_MP_TAC C2BP3AUX_distinct_calls THEN
     EXISTS_TAC `code_locs (exps':clos_exp list)` THEN ASM_REWRITE_TAC[] THEN
     FIRST_X_ASSUM(MP_TAC o REWRITE_RULE[ALL_DISTINCT_APPEND; MEM_APPEND; MEM_MAP] o
-      check (fun th -> C2BP3AUX_has_const "ALL_DISTINCT" (concl th) &&
-                       C2BP3AUX_has_const "SUC" (concl th))) THEN
+      check (fun th -> CLOS2AUX_CONST_IN "ALL_DISTINCT" (concl th) &&
+                       CLOS2AUX_CONST_IN "SUC" (concl th))) THEN
     STRIP_TAC THEN
     FIRST_ASSUM(MP_TAC o MATCH_MP calls_code_locs_ALL_DISTINCT) THEN
     FIRST_ASSUM(MP_TAC o MATCH_MP (REWRITE_RULE[IMP_CONJ] calls_ALL_DISTINCT)) THEN
@@ -3226,7 +3171,7 @@ let known_co_req = prove
      [REWRITE_TAC[GSYM LIST_TO_BAG_DISTINCT] THEN MATCH_MP_TAC BAG_ALL_DISTINCT_SUB_BAG THEN
       EXISTS_TAC `LIST_TO_BAG (code_locs (exps':clos_exp list))` THEN ASM_REWRITE_TAC[] THEN
       REWRITE_TAC[LIST_TO_BAG_DISTINCT] THEN
-      FIRST_X_ASSUM(MP_TAC o check (fun th -> C2BP3AUX_has_const "ALL_DISTINCT" (concl th))) THEN
+      FIRST_X_ASSUM(MP_TAC o check (fun th -> CLOS2AUX_CONST_IN "ALL_DISTINCT" (concl th))) THEN
       SIMP_TAC[ALL_DISTINCT_APPEND];
       ALL_TAC] THEN
     MP_TAC(ISPECL [`MAP ((+) n') (COUNT_LIST (MAX 1 (LENGTH (exps':clos_exp list))))`;
@@ -3236,7 +3181,7 @@ let known_co_req = prove
                   C2BP3AUX_distinct_known) THEN
     ASM_REWRITE_TAC[] THEN ANTS_TAC THENL
      [FIRST_X_ASSUM(MP_TAC o MATCH_MP LIST_TO_BAG_SUBSET o check (fun th ->
-        C2BP3AUX_has_const "SUB_BAG" (concl th))) THEN
+        CLOS2AUX_CONST_IN "SUB_BAG" (concl th))) THEN
       REWRITE_TAC[SUBSET; IN_SET_OF_LIST];
       SIMP_TAC[]];
     MP_TAC(MATCH_MP LIST_TO_BAG_SUBSET (ASSUME
@@ -3268,7 +3213,7 @@ let C2BP3AUX_ignore_number = prove
      (CONS (clos_Op backend_common_None (IntOp (clos_Const (&n))) [])
         (SND (renumber_code_locs_list (make_even (n + MAX (LENGTH exps) 1)) exps)),aux)`,
   REPEAT GEN_TAC THEN ONCE_REWRITE_TAC[PAIR_FST_SND_EQ] THEN
-  REWRITE_TAC[FST_SND_ignore_table; SND_SND_ignore_table; FST; SND; C2BP3AUX_ncompile_inc_SND]);;
+  REWRITE_TAC[FST_SND_ignore_table; SND_SND_ignore_table; FST; SND; CLOSP1AUX_num_SND_compile_inc]);;
 
 let C2BP3AUX_distinct_number = prove
  (`!n L loc (C:num list).
@@ -3377,7 +3322,7 @@ let renumber_code_locs_monotonic_req = prove
     ASM_REWRITE_TAC[ARITH_RULE `i + 1 <= j <=> i < j`] THEN ASM_ARITH_TAC;
     FIRST_ASSUM(MP_TAC o SPECL [`i:num`; `0`] o MATCH_MP number_oracle_FST_mono) THEN
     REWRITE_TAC[LE_0] THEN
-    FIRST_X_ASSUM(MP_TAC o SPEC `x:num` o check (fun th -> C2BP3AUX_has_const ">" (concl th))) THEN
+    FIRST_X_ASSUM(MP_TAC o SPEC `x:num` o check (fun th -> CLOS2AUX_CONST_IN ">" (concl th))) THEN
     ASM_REWRITE_TAC[] THEN ASM_ARITH_TAC]);;
 
 (* HOL4 line 8332 (HOL4 BIGUNION is UNIONS) *)
@@ -3801,9 +3746,9 @@ let chain_exps_every_Fn_SOME = prove
  (`!x y. every_Fn_SOME (MAP (SND o SND) (chain_exps x y)) <=> every_Fn_SOME y`,
   MATCH_MP_TAC chain_exps_ind THEN REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
   REWRITE_TAC[chain_exps_def; MAP; o_THM; every_Fn_SOME_def] THEN
-  DISCH_TAC THEN ONCE_REWRITE_TAC[C2BP3AUX_every_Fn_SOME_cons] THEN
+  DISCH_TAC THEN ONCE_REWRITE_TAC[CLOSPROPSAUX_every_Fn_SOME_cons] THEN
   ASM_REWRITE_TAC[] THEN REWRITE_TAC[every_Fn_SOME_def] THEN
-  MESON_TAC[C2BP3AUX_every_Fn_SOME_cons]);;
+  MESON_TAC[CLOSPROPSAUX_every_Fn_SOME_cons]);;
 
 (* HOL4 line 8606 *)
 let chain_exps_every_Fn_vs_SOME = prove
@@ -4867,5 +4812,5 @@ let chain_exps_every_Fn_SOME = prove
   ONCE_REWRITE_TAC[SWAP_FORALL_THM] THEN MATCH_MP_TAC chain_exps_ind THEN
   REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
   REWRITE_TAC[chain_exps_def; MAP; o_THM; every_Fn_SOME_def] THEN
-  DISCH_TAC THEN ONCE_REWRITE_TAC[C2BP3AUX_every_Fn_SOME_cons] THEN
-  REWRITE_TAC[every_Fn_SOME_def] THEN ASM_MESON_TAC[C2BP3AUX_every_Fn_SOME_cons]);;
+  DISCH_TAC THEN ONCE_REWRITE_TAC[CLOSPROPSAUX_every_Fn_SOME_cons] THEN
+  REWRITE_TAC[every_Fn_SOME_def] THEN ASM_MESON_TAC[CLOSPROPSAUX_every_Fn_SOME_cons]);;

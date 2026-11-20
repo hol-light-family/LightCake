@@ -266,10 +266,6 @@ let EVALAUX_case_rand (ci:case_info) =
   EVALAUX_case_rand_cache := (cname,th) :: !EVALAUX_case_rand_cache;
   th;;
 
-let EVALAUX_COND_RAND = prove
- (`!(g:A->B) b x y. g (if b then x else y) = if b then g x else g y`,
-  REPEAT GEN_TAC THEN COND_CASES_TAC THEN REWRITE_TAC[]);;
-
 let EVALAUX_LET_RAND = prove
  (`!(g:B->C) (f:A->B) x. g (LET f x) = LET (\y. g (f y)) x`,
   REWRITE_TAC[LET_DEF]);;
@@ -283,7 +279,7 @@ let EVALAUX_LET_END_RAND = prove
 let EVALAUX_PUSH_CONV (g0:term) (leaves:thm list) : conv =
   let leaf_net =
     itlist (net_of_thm true) (itlist (mk_rewrites false) leaves []) empty_net in
-  let cond_rule = ISPEC g0 (EVALAUX_TVS_APART EVALAUX_COND_RAND)
+  let cond_rule = ISPEC g0 (EVALAUX_TVS_APART bool_COND_RAND)
   and let_rule = ISPEC g0 (EVALAUX_TVS_APART EVALAUX_LET_RAND)
   and let_end_rule = ISPEC g0 (EVALAUX_TVS_APART EVALAUX_LET_END_RAND) in
   let step tm =

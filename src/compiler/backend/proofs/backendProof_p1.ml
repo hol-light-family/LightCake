@@ -2251,10 +2251,6 @@ let BKP1AUX_clos_compile_inc_spt = prove
   REWRITE_TAC[IS_SOME_DEF; option_upd_val_spt_def; option_val_approx_spt_def] THEN
   CASE_REWRITE_TAC[] THEN SIMP[]);;
 
-let BKP1AUX_pair_CASE_FST_SND = prove
- (`!(p:A#B) (f:A->B->C). pair_CASE p f = f (FST p) (SND p)`,
-  REWRITE_TAC[FORALL_PAIR_THM; pair_CASE; FST; SND]);;
-
 let BKP1AUX_cake_orac_clos_props = prove
  (`!asm_conf c' syntax (f:backend_config->B) n max_app.
      let xs = FST (SND (cake_orac (asm_conf:(A)asm_config) c' syntax f
@@ -2289,7 +2285,7 @@ let BKP1AUX_orac_number = prove
              `syntax:num->(num#num)#(dec)list`] cake_orac_clos_is_state)) th)) THEN
   REPEAT GEN_TAC THEN REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN
   REWRITE_TAC[o_THM; pure_co_def; PAIR_MAP_THM; I_THM; config_tuple1_def;
-              BKP1AUX_pair_CASE_FST_SND; FST; SND] THEN
+              pair_CASE_def; FST; SND] THEN
   MP_TAC(ISPECL [`backend_config_clos_conf c''`; `backend_progs_clos_prog (ps:(A)backend_progs)`]
     BKP1AUX_clos_compile_inc_next_loc) THEN
   ASM_REWRITE_TAC[] THEN MESON_TAC[]);;
@@ -2313,7 +2309,7 @@ let BKP1AUX_orac_call = prove
              `syntax:num->(num#num)#(dec)list`] cake_orac_clos_is_state)) th)) THEN
   REPEAT GEN_TAC THEN REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN
   REWRITE_TAC[o_THM; pure_co_def; PAIR_MAP_THM; I_THM; config_tuple1_def;
-              state_co_fun_def; BKP1AUX_pair_CASE_FST_SND; FST; SND] THEN
+              state_co_fun_def; pair_CASE_def; FST; SND] THEN
   MP_TAC(ISPECL [`backend_config_clos_conf c''`; `backend_progs_clos_prog (ps:(A)backend_progs)`]
     BKP1AUX_clos_compile_inc_call_state) THEN
   ASM_REWRITE_TAC[cond_call_compile_inc_def] THEN MESON_TAC[]);;
@@ -2324,7 +2320,7 @@ let BKP1AUX_known_compile_inc_SOME = prove
      FST (clos_known_compile_inc k spt (clos_fvs_compile_inc p:clos_prog))`,
   REPEAT GEN_TAC THEN REWRITE_TAC[known_static_conf_def] THEN CASE_REWRITE_TAC[] THEN
   REWRITE_TAC[known_compile_inc_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
-  REWRITE_TAC[BKP1AUX_pair_CASE_FST_SND; FST; kcompile_inc_uncurry] THEN
+  REWRITE_TAC[pair_CASE_def; FST; kcompile_inc_uncurry] THEN
   REWRITE_TAC[BKP1AUX_reset_spt_reset; known_reset_spt]);;
 
 let BKP1AUX_orac_known = prove
@@ -2350,7 +2346,7 @@ let BKP1AUX_orac_known = prove
              `syntax:num->(num#num)#(dec)list`] cake_orac_clos_is_state)) th)) THEN
   REPEAT GEN_TAC THEN REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN
   REWRITE_TAC[o_THM; pure_co_def; PAIR_MAP_THM; I_THM; config_tuple1_def;
-              state_co_fun_def; BKP1AUX_pair_CASE_FST_SND; FST; SND] THEN
+              state_co_fun_def; pair_CASE_def; FST; SND] THEN
   MP_TAC(ISPECL [`backend_config_clos_conf c''`; `backend_progs_clos_prog (ps:(A)backend_progs)`]
     BKP1AUX_clos_compile_inc_spt) THEN
   ASM_REWRITE_TAC[IS_SOME_DEF; BKP1AUX_known_compile_inc_SOME] THEN MESON_TAC[]);;
@@ -2378,7 +2374,7 @@ let BKP1AUX_to_clos_eq = prove
                (source_to_source_compile prog)))`,
   REPEAT GEN_TAC THEN REWRITE_TAC[to_clos_def; to_flat_def] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
-  REWRITE_TAC[BKP1AUX_pair_CASE_FST_SND] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+  REWRITE_TAC[pair_CASE_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   REWRITE_TAC[FST; SND]);;
 
 let BKP1AUX_SND_source_inc = prove
@@ -2472,7 +2468,7 @@ let compile_lab_LENGTH = prove
    ==> lab_to_target_config_pos c' = LENGTH bytes + lab_to_target_config_pos c`,
   REPEAT GEN_TAC THEN REWRITE_TAC[compile_lab_def] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
-  REWRITE_TAC[BKP1AUX_pair_CASE_FST_SND] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+  REWRITE_TAC[pair_CASE_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   EVERY_CASE_TAC THEN REWRITE_TAC[distinctness "option"; option_INJ; PAIR_EQ] THEN
   STRIP_TAC THEN FIRST_X_ASSUM(SUBST1_TAC o SYM) THEN
   REWRITE_TAC[(record_info "lab_to_target_config").ri_accfupds;
@@ -2498,11 +2494,11 @@ let bvl_to_bvi_compile_inc_all_DISTINCT = prove
   FIRST_X_ASSUM(MP_TAC o check (fun th -> bkp1aux_mentions "bvl_to_bvi_compile_inc_all" th)) THEN
   REWRITE_TAC[bvl_to_bvi_compile_inc_all_def; full_co_def] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
-  REWRITE_TAC[state_co_def; K_THM; BKP1AUX_pair_CASE_FST_SND; FST; SND] THEN
+  REWRITE_TAC[state_co_def; K_THM; pair_CASE_def; FST; SND] THEN
   REWRITE_TAC[(record_info "bvl_to_bvi_config").ri_accfupds;
               (record_info "bvl_to_bvi_config").ri_accessors; K_THM; PAIR_EQ] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
-  REWRITE_TAC[BKP1AUX_pair_CASE_FST_SND; FST; SND; PAIR_EQ;
+  REWRITE_TAC[pair_CASE_def; FST; SND; PAIR_EQ;
               (record_info "bvl_to_bvi_config").ri_accfupds;
               (record_info "bvl_to_bvi_config").ri_accessors; K_THM] THEN
   STRIP_TAC THEN ASM_REWRITE_TAC[]);;
@@ -2519,7 +2515,7 @@ let BKP1AUX_MAP_FST_word_data = prove
   SPEC_TAC(`h:num#num#bvi_exp`,`h:num#num#bvi_exp`) THEN
   REWRITE_TAC[FORALL_PAIR_THM; bvi_to_data_compile_part_def; data_to_word_compile_part_def;
               full_compile_single_def; word_to_word_compile_single_def] THEN
-  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[BKP1AUX_pair_CASE_FST_SND; FST]);;
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[pair_CASE_def; FST]);;
 
 (* HOL4 line 1240 *)
 let cake_orac_stack_ALL_DISTINCT = prove
@@ -2665,7 +2661,7 @@ let BKP1AUX_compile_no_stubs_labels_ok = prove
   MP_TAC(SPEC_ALL (ISPECL [`n:num`; `next_lab (p:(A)stack_prog) 2`; `p:(A)stack_prog`]
     stack_alloc_lab_pres)) THEN
   ASM_REWRITE_TAC[LE_REFL] THEN
-  REWRITE_TAC[LET_DEF; LET_END_DEF; BKP1AUX_pair_CASE_FST_SND] THEN
+  REWRITE_TAC[LET_DEF; LET_END_DEF; pair_CASE_def] THEN
   REPEAT BKP1AUX_GABS_TAC THEN REWRITE_TAC[FST; SND] THEN SIMP_TAC[]);;
 (* BKP1AUX: the labels of a compiled word function *)
 let BKP1AUX_fcs_labels = prove
@@ -2767,7 +2763,7 @@ let compile_lab_domain_labels = prove
        IMAGE FST (lab_get_code_labels prog) UNION domain (lab_to_target_config_labels c)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[compile_lab_def] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
-  REWRITE_TAC[BKP1AUX_pair_CASE_FST_SND] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+  REWRITE_TAC[pair_CASE_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   EVERY_CASE_TAC THEN REWRITE_TAC[distinctness "option"; option_INJ; PAIR_EQ] THEN
   STRIP_TAC THEN FIRST_X_ASSUM(SUBST1_TAC o SYM) THEN
   REWRITE_TAC[(record_info "lab_to_target_config").ri_accfupds;
@@ -2910,13 +2906,6 @@ let MAP_Section_num_stack_to_lab_SUBSET = prove
   REWRITE_TAC[SUBSET; IN_COUNT] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
   REPEAT CONJ_TAC THEN FIRST_X_ASSUM MATCH_MP_TAC THEN ARITH_TAC);;
 
-(* BKP1AUX: bvi_to_data keeps the function names *)
-let BKP1AUX_MAP_FST_bvi_to_data = prove
- (`!p. MAP FST (bvi_to_data_compile_prog p) = MAP FST p`,
-  GEN_TAC THEN REWRITE_TAC[bvi_to_data_compile_prog_def] THEN
-  MATCH_MP_TAC BKP1AUX_MAP_FST_MAP THEN
-  REWRITE_TAC[FORALL_PAIR_THM; bvi_to_data_compile_part_def; FST]);;
-
 (* BKP1AUX: |- t = (FST t, FST (SND t), ...) for a tuple-valued term t *)
 let bkp1aux_tuple_eq t =
   let rec expand tm =
@@ -2939,10 +2928,10 @@ let to_data_labels_ok = prove
        ALL (\n. data_num_stubs <= n) (MAP FST p) /\ ALL_DISTINCT (MAP FST p)`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   REWRITE_TAC[to_data_def; to_bvi_def; to_bvl_def] THEN
-  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[BKP1AUX_pair_CASE_FST_SND] THEN
-  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[BKP1AUX_pair_CASE_FST_SND] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[pair_CASE_def] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[pair_CASE_def] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
-  REWRITE_TAC[FST; SND; BKP1AUX_MAP_FST_bvi_to_data] THEN
+  REWRITE_TAC[FST; SND; bvi_to_dataProof_MAP_FST_compile_prog] THEN
   REWRITE_TAC[(record_info "backend_config").ri_accfupds;
               (record_info "backend_config").ri_accessors; K_THM] THEN
   W(fun (asl,w) ->
@@ -2955,7 +2944,7 @@ let to_data_labels_ok = prove
     ALL_TAC] THEN
   ANTS_TAC THENL [ALL_TAC; SIMP_TAC[]] THEN
   REWRITE_TAC[MULT_CLAUSES; ADD_CLAUSES; to_clos_def; to_flat_def] THEN
-  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[BKP1AUX_pair_CASE_FST_SND] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[pair_CASE_def] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   REWRITE_TAC[FST; (record_info "backend_config").ri_accfupds;
               (record_info "backend_config").ri_accessors; K_THM] THEN
@@ -2985,14 +2974,14 @@ let to_word_labels_ok = prove
   REPEAT GEN_TAC THEN DISCH_TAC THEN
   FIRST_ASSUM(MP_TAC o MATCH_MP to_data_labels_ok) THEN
   REWRITE_TAC[to_word_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
-  REWRITE_TAC[BKP1AUX_pair_CASE_FST_SND] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
-  REWRITE_TAC[BKP1AUX_pair_CASE_FST_SND] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+  REWRITE_TAC[pair_CASE_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+  REWRITE_TAC[pair_CASE_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   REWRITE_TAC[FST; SND] THEN STRIP_TAC THEN
   W(fun (asl,w) ->
     let t = BKP1AUX_find_app "data_to_word_compile" w in
     MP_TAC(CONV_RULE(TOP_DEPTH_CONV let_CONV)
              (ISPECL (snd(strip_comb t)) data_to_word_compile_lab_pres))) THEN
-  REWRITE_TAC[BKP1AUX_pair_CASE_FST_SND] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
+  REWRITE_TAC[pair_CASE_def] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
   REWRITE_TAC[ALL_DISTINCT_APPEND; ALL_APPEND; ALL_DISTINCT_MAP_FST_stubs;
               data_to_word_stubs_above_store_consts_stub] THEN
   ASM_REWRITE_TAC[] THEN
@@ -3017,8 +3006,8 @@ let to_word_labels_ok = prove
 let BKP1AUX_to_bvi_stack_conf = prove
  (`!c prog. backend_config_stack_conf (FST (to_bvi c prog)) = backend_config_stack_conf c`,
   REWRITE_TAC[to_bvi_def; to_bvl_def; to_clos_def; to_flat_def] THEN
-  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[BKP1AUX_pair_CASE_FST_SND] THEN
-  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[BKP1AUX_pair_CASE_FST_SND] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[pair_CASE_def] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[pair_CASE_def] THEN
   REWRITE_TAC[FST; SND; (record_info "backend_config").ri_accfupds;
               (record_info "backend_config").ri_accessors; K_THM]);;
 
@@ -3036,8 +3025,8 @@ let to_bvi_perf_calls = prove
 let BKP1AUX_to_data_stack_conf = prove
  (`!c prog. backend_config_stack_conf (FST (to_data c prog)) = backend_config_stack_conf c`,
   REWRITE_TAC[to_data_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
-  REWRITE_TAC[BKP1AUX_pair_CASE_FST_SND] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
-  REWRITE_TAC[BKP1AUX_pair_CASE_FST_SND; FST; BKP1AUX_to_bvi_stack_conf]);;
+  REWRITE_TAC[pair_CASE_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+  REWRITE_TAC[pair_CASE_def; FST; BKP1AUX_to_bvi_stack_conf]);;
 
 (* HOL4 line 1541 *)
 let to_data_perf_calls = prove
@@ -3054,8 +3043,8 @@ let BKP1AUX_to_word_stack_conf = prove
  (`!(asm_conf:(A)asm_config) c prog.
      backend_config_stack_conf (FST (to_word asm_conf c prog)) = backend_config_stack_conf c`,
   REWRITE_TAC[to_word_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
-  REWRITE_TAC[BKP1AUX_pair_CASE_FST_SND] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
-  REWRITE_TAC[BKP1AUX_pair_CASE_FST_SND] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+  REWRITE_TAC[pair_CASE_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+  REWRITE_TAC[pair_CASE_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   REWRITE_TAC[FST; (record_info "backend_config").ri_accfupds;
               (record_info "backend_config").ri_accessors; K_THM;
               BKP1AUX_to_data_stack_conf]);;
@@ -3090,8 +3079,8 @@ let to_lab_labels_ok = prove
   FIRST_ASSUM(MP_TAC o MATCH_MP to_word_labels_ok) THEN
   FIRST_ASSUM(MP_TAC o REWRITE_RULE[backend_config_ok_def] o CONJUNCT2) THEN
   REWRITE_TAC[to_lab_def; to_stack_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
-  REWRITE_TAC[BKP1AUX_pair_CASE_FST_SND] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
-  REWRITE_TAC[BKP1AUX_pair_CASE_FST_SND] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+  REWRITE_TAC[pair_CASE_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+  REWRITE_TAC[pair_CASE_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   REWRITE_TAC[FST; SND; BKP1AUX_to_word_stack_conf; (record_info "backend_config").ri_accfupds;
               (record_info "backend_config").ri_accessors; K_THM] THEN
   STRIP_TAC THEN ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
@@ -3104,7 +3093,7 @@ let to_lab_labels_ok = prove
    [CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
     RULE_ASSUM_TAC(CONV_RULE(TOP_DEPTH_CONV let_CONV)) THEN ASM_REWRITE_TAC[];
     ALL_TAC] THEN
-  REWRITE_TAC[BKP1AUX_pair_CASE_FST_SND] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
+  REWRITE_TAC[pair_CASE_def] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   RULE_ASSUM_TAC(CONV_RULE(TOP_DEPTH_CONV let_CONV)) THEN ASM_REWRITE_TAC[] THEN
   FIRST_X_ASSUM(MP_TAC o check (fun th -> bkp1aux_mentions "wl_store_consts_stub_location" th &&
@@ -3167,7 +3156,7 @@ let backendProof_oracle_monotonic_state_with_inv = prove
       ASM_REWRITE_TAC[PAIR] THEN
       FIRST_ASSUM(fun th -> if bkp1aux_mentions "is_state_oracle" th
         then REWRITE_TAC[REWRITE_RULE[is_state_oracle_def] th] else NO_TAC) THEN
-      REWRITE_TAC[state_co_def; BKP1AUX_pair_CASE_FST_SND] THEN STRIP_TAC THEN ASM_REWRITE_TAC[];
+      REWRITE_TAC[state_co_def; pair_CASE_def] THEN STRIP_TAC THEN ASM_REWRITE_TAC[];
       ALL_TAC] THEN
     SUBGOAL_THEN `!i. P (FST (FST ((orac:num->(S#E)#P0) i)))` ASSUME_TAC THENL
      [INDUCT_TAC THEN ASM_SIMP_TAC[]; ASM_SIMP_TAC[]];
@@ -3218,7 +3207,7 @@ let backendProof_compile_prog_avoids_nss_2 = prove
    MEM k (MAP FST code) /\ k MOD bvl_to_bvi_namespaces = 2
    ==> k < bvl_num_stubs`,
   REPEAT GEN_TAC THEN REWRITE_TAC[bvl_to_bvi_compile_prog_def] THEN
-  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[BKP1AUX_pair_CASE_FST_SND] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[pair_CASE_def] THEN
   REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN
   FIRST_X_ASSUM(SUBST_ALL_TAC o SYM o check (fun th -> is_var(rhs(concl th)) &&
     fst(dest_var(rhs(concl th))) = "code")) THEN
@@ -3300,7 +3289,7 @@ let BKP1AUX_compile_inc_all_nn_eq = prove
                                     (bvl_to_bvi_config_exp_cut cc)
                                     (bvl_to_bvi_config_inlines cc) p)))))))`,
   REPEAT GEN_TAC THEN REWRITE_TAC[bvl_to_bvi_compile_inc_all_def] THEN
-  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[BKP1AUX_pair_CASE_FST_SND] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[pair_CASE_def] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   REWRITE_TAC[FST; (record_info "bvl_to_bvi_config").ri_accfupds;
               (record_info "bvl_to_bvi_config").ri_accessors; K_THM]);;
@@ -3332,7 +3321,7 @@ let is_state_oracle_tailrec_cake_orac = prove
     (ISPECL [`asm_conf:(A)asm_config`; `C:backend_config`; `e:num#num`; `p:(dec)list`]
        BKP1AUX_compile_inc_progs_confs)) THEN
   STRIP_TAC THEN STRIP_TAC THEN
-  REWRITE_TAC[BKP1AUX_pair_CASE_FST_SND; o_THM; state_co_fun_def; config_tuple2_def; FST; SND] THEN
+  REWRITE_TAC[pair_CASE_def; o_THM; state_co_fun_def; config_tuple2_def; FST; SND] THEN
   ASM_REWRITE_TAC[BKP1AUX_compile_inc_all_nn_eq]);;
 
 (* HOL4 line 1727 *)
@@ -3364,7 +3353,7 @@ let is_state_oracle_tmc_cake_orac = prove
     (ISPECL [`asm_conf:(A)asm_config`; `C:backend_config`; `e:num#num`; `p:(dec)list`]
        BKP1AUX_compile_inc_progs_confs)) THEN
   STRIP_TAC THEN STRIP_TAC THEN
-  REWRITE_TAC[BKP1AUX_pair_CASE_FST_SND; o_THM; state_co_fun_def; config_tuple2_def; FST; SND] THEN
+  REWRITE_TAC[pair_CASE_def; o_THM; state_co_fun_def; config_tuple2_def; FST; SND] THEN
   ASM_REWRITE_TAC[BKP1AUX_compile_inc_all_nn_eq]);;
 
 (* HOL4 line 1752 *)
@@ -3378,7 +3367,7 @@ let inline_compile_inc_names = prove
                  `[]:(num#num#bvl_exp)list`;
                  `FST (tick_inline_all l (spt:(num#bvl_exp)spt) prog [])`;
                  `SND (tick_inline_all l (spt:(num#bvl_exp)spt) prog [])`] tick_inline_all_names) THEN
-  REWRITE_TAC[PAIR; REVERSE; MAP; APPEND; BKP1AUX_pair_CASE_FST_SND; PAIR_EQ] THEN
+  REWRITE_TAC[PAIR; REVERSE; MAP; APPEND; pair_CASE_def; PAIR_EQ] THEN
   DISCH_TAC THEN STRIP_TAC THEN FIRST_X_ASSUM(SUBST1_TAC o SYM) THEN
   ASM_REWRITE_TAC[MAP_MAP_o] THEN
   SPEC_TAC(`SND (tick_inline_all l (spt:(num#bvl_exp)spt) prog [])`,`xs:(num#num#bvl_exp)list`) THEN
@@ -3519,10 +3508,10 @@ let BKP1AUX_to_lab_lab_conf = prove
      backend_config_lab_conf (FST (SND (to_lab asm_conf c prog))) = backend_config_lab_conf c`,
   REWRITE_TAC[to_lab_def; to_stack_def; to_word_def; to_data_def; to_bvi_def; to_bvl_def;
               to_clos_def; to_flat_def] THEN
-  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[BKP1AUX_pair_CASE_FST_SND] THEN
-  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[BKP1AUX_pair_CASE_FST_SND] THEN
-  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[BKP1AUX_pair_CASE_FST_SND] THEN
-  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[BKP1AUX_pair_CASE_FST_SND] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[pair_CASE_def] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[pair_CASE_def] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[pair_CASE_def] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[pair_CASE_def] THEN
   REWRITE_TAC[FST; SND; (record_info "backend_config").ri_accfupds;
               (record_info "backend_config").ri_accessors; K_THM]);;
 
@@ -3532,7 +3521,7 @@ let BKP1AUX_to_lab_prog = prove
        FST (SND (SND (to_lab asm_conf c prog))) =
        stack_to_lab_compile scc dc mh sp off (FST (SND (SND (to_stack asm_conf c prog))))`,
   REPEAT GEN_TAC THEN REWRITE_TAC[to_lab_def] THEN
-  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[BKP1AUX_pair_CASE_FST_SND] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[pair_CASE_def] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[FST; SND] THEN MESON_TAC[]);;
 
 (* HOL4 line 1874 *)
@@ -3554,7 +3543,7 @@ let monotonic_labels_stack_to_lab = prove
     (ASSUME `backend_compile (asm_conf:(A)asm_config) c prog = SOME (b,bm,c')`)) THEN
   FIRST_ASSUM(MP_TAC o check (bkp1aux_mentions "backend_compile")) THEN
   REWRITE_TAC[compile_eq_to_target; to_target_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
-  REWRITE_TAC[BKP1AUX_pair_CASE_FST_SND] THEN
+  REWRITE_TAC[pair_CASE_def] THEN
   DISCH_THEN(MP_TAC o MATCH_MP attach_bitmaps_SOME) THEN REWRITE_TAC[PAIR_EQ] THEN
   STRIP_TAC THEN ASM_REWRITE_TAC[(record_info "backend_config").ri_accfupds;
     (record_info "backend_config").ri_accessors; K_THM] THEN DISCH_TAC THEN
@@ -3606,7 +3595,7 @@ let monotonic_labels_bvi_down_to_stack = prove
   FIRST_ASSUM(MP_TAC o REWRITE_RULE[backend_config_ok_def] o
               check (bkp1aux_mentions "backend_config_ok")) THEN
   REWRITE_TAC[to_stack_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
-  REWRITE_TAC[BKP1AUX_pair_CASE_FST_SND] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+  REWRITE_TAC[pair_CASE_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   REWRITE_TAC[FST; SND; BKP1AUX_to_word_stack_conf] THEN
   STRIP_TAC THEN ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
   W(fun (asl,w) ->
@@ -3617,18 +3606,18 @@ let monotonic_labels_bvi_down_to_stack = prove
    [CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
     RULE_ASSUM_TAC(CONV_RULE(TOP_DEPTH_CONV let_CONV)) THEN ASM_REWRITE_TAC[];
     ALL_TAC] THEN
-  REWRITE_TAC[BKP1AUX_pair_CASE_FST_SND] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
+  REWRITE_TAC[pair_CASE_def] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
   REWRITE_TAC[to_word_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
-  REWRITE_TAC[BKP1AUX_pair_CASE_FST_SND] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+  REWRITE_TAC[pair_CASE_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   REWRITE_TAC[FST; SND] THEN
   W(fun (asl,w) ->
     let t = BKP1AUX_find_app "data_to_word_compile" w in
     MP_TAC(CONV_RULE(TOP_DEPTH_CONV let_CONV)
              (ISPECL (snd(strip_comb t)) data_to_word_compile_lab_pres))) THEN
-  REWRITE_TAC[BKP1AUX_pair_CASE_FST_SND] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
+  REWRITE_TAC[pair_CASE_def] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
   REWRITE_TAC[to_data_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
-  REWRITE_TAC[BKP1AUX_pair_CASE_FST_SND] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
-  REWRITE_TAC[FST; SND; BKP1AUX_MAP_FST_bvi_to_data]) THEN
+  REWRITE_TAC[pair_CASE_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+  REWRITE_TAC[FST; SND; bvi_to_dataProof_MAP_FST_compile_prog]) THEN
   (REWRITE_TAC[SUBSET; IN_UNION; IN_COUNT; IN_SET_OF_LIST; MEM; MEM_APPEND] THEN
   X_GEN_TAC `x:num` THEN
   MP_TAC(ISPECL [`x:num`; `(:A)`;
@@ -3746,14 +3735,14 @@ let BKP1AUX_to_bvi_classify = prove
          (x MOD bvl_to_bvi_namespaces = 3
           ==> x < bvl_to_bvi_config_next_name3 (backend_config_bvl_conf (FST (to_bvi c prog))))`,
   REPEAT GEN_TAC THEN REWRITE_TAC[to_bvi_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
-  REWRITE_TAC[BKP1AUX_pair_CASE_FST_SND] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+  REWRITE_TAC[pair_CASE_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   REWRITE_TAC[FST; SND; (record_info "backend_config").ri_accfupds;
               (record_info "backend_config").ri_accessors; K_THM;
               (record_info "bvl_to_bvi_config").ri_accfupds;
               (record_info "bvl_to_bvi_config").ri_accessors] THEN
   SPEC_TAC(`to_bvl c prog`,`tb:backend_config#(num#num#bvl_exp)list#(mlstring)spt`) THEN
   GEN_TAC THEN REWRITE_TAC[bvl_to_bvi_compile_def] THEN
-  REWRITE_TAC[BKP1AUX_pair_CASE_FST_SND] THEN REWRITE_TAC[FST; SND] THEN
+  REWRITE_TAC[pair_CASE_def] THEN REWRITE_TAC[FST; SND] THEN
   REWRITE_TAC[BKP1AUX_bvi_inline_prog_names] THEN DISCH_TAC THEN
   W(fun (asl,w) ->
     let tR = BKP1AUX_find_app "bvl_to_bvi_compile_prog" w in
@@ -3829,7 +3818,7 @@ let BKP1AUX_inc_all_classify = prove
           ==> bvl_to_bvi_config_next_name3 bc <= x /\
               x < bvl_to_bvi_config_next_name3 (FST (bvl_to_bvi_compile_inc_all bc P)))`,
   REPEAT GEN_TAC THEN REWRITE_TAC[bvl_to_bvi_compile_inc_all_def] THEN
-  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[BKP1AUX_pair_CASE_FST_SND] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[pair_CASE_def] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   REWRITE_TAC[FST; SND; (record_info "bvl_to_bvi_config").ri_accfupds;
               (record_info "bvl_to_bvi_config").ri_accessors; K_THM;
@@ -3920,10 +3909,10 @@ let BKP1AUX_bvl_conf_c' = prove
   REPEAT GEN_TAC THEN
   REWRITE_TAC[compile_eq_to_target; to_target_def; to_lab_def; to_stack_def; to_word_def;
               to_data_def] THEN
-  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[BKP1AUX_pair_CASE_FST_SND] THEN
-  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[BKP1AUX_pair_CASE_FST_SND] THEN
-  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[BKP1AUX_pair_CASE_FST_SND] THEN
-  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[BKP1AUX_pair_CASE_FST_SND] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[pair_CASE_def] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[pair_CASE_def] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[pair_CASE_def] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[pair_CASE_def] THEN
   REWRITE_TAC[FST; SND] THEN
   DISCH_THEN(MP_TAC o MATCH_MP attach_bitmaps_SOME) THEN REWRITE_TAC[PAIR_EQ] THEN
   STRIP_TAC THEN ASM_REWRITE_TAC[(record_info "backend_config").ri_accfupds;
@@ -3958,7 +3947,7 @@ let BKP1AUX_nn_mono = prove
   REWRITE_TAC[PAIR] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
   REWRITE_TAC[BKP1AUX_compile_inc_all_nn_eq] THEN
   REWRITE_TAC[bvl_to_bvi_compile_inc_all_def] THEN
-  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[BKP1AUX_pair_CASE_FST_SND] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[pair_CASE_def] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   REWRITE_TAC[FST; SND; (record_info "bvl_to_bvi_config").ri_accfupds;
               (record_info "bvl_to_bvi_config").ri_accessors; K_THM] THEN

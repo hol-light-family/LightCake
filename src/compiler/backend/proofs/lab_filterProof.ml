@@ -1067,14 +1067,6 @@ let filter_correct = prove
 (* local versions of labProps facts (labProps is not ported yet) and of    *)
 (* the ffiProps fact that a returning call_FFI only appends io events      *)
 
-let STACKPROPSAUX_lab_call_FFI_io = prove
- (`!(st:(FFI)ffi_state) s conf bytes st' bytes'.
-     call_FFI st s conf bytes = FFI_return st' bytes' ==>
-     isPREFIX (ffi_state_io_events st) (ffi_state_io_events st')`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[call_FFI_def] THEN
-  EVERY_CASE_TAC THEN REWRITE_TAC[injectivity "ffi_result"; distinctness "ffi_result"] THEN
-  STRIP_TAC THEN RVEQ_TAC THEN SIMP[IS_PREFIX_APPEND3; IS_PREFIX_REFL]);;
-
 let STACKPROPSAUX_lab_share_mem_op_io = prove
  (`!m r a (s:(A,C,FFI)lab_state) res s1.
      share_mem_op m r a s = SOME (res,s1) ==>
@@ -1084,7 +1076,7 @@ let STACKPROPSAUX_lab_share_mem_op_io = prove
   REWRITE_TAC[share_mem_op_def; share_mem_load_def; share_mem_store_def] THEN
   EVERY_CASE_TAC THEN REWRITE_TAC[option_DISTINCT; option_INJ; PAIR_EQ] THEN
   STRIP_TAC THEN RVEQ_TAC THEN SIMP[inc_pc_def; lab_dec_clock_def; IS_PREFIX_REFL] THEN
-  FIRST_X_ASSUM(MATCH_ACCEPT_TAC o MATCH_MP STACKPROPSAUX_lab_call_FFI_io));;
+  FIRST_X_ASSUM(MATCH_ACCEPT_TAC o MATCH_MP SEM2AUX_call_FFI_io_events));;
 
 (* HOL4 labProps: share_mem_op_add_clock_same (its three cases in one)     *)
 
@@ -1147,7 +1139,7 @@ let STACKPROPSAUX_STEP_DEFS =
 let STACKPROPSAUX_STEP_IO_TAC : tactic =
   SIMP (IS_PREFIX_REFL :: STACKPROPSAUX_STEP_DEFS) THEN
   TRY (FIRST_ASSUM(fun th ->
-         FIRST [(fun g -> MATCH_ACCEPT_TAC (MATCH_MP STACKPROPSAUX_lab_call_FFI_io th) g);
+         FIRST [(fun g -> MATCH_ACCEPT_TAC (MATCH_MP SEM2AUX_call_FFI_io_events th) g);
                 (fun g -> MATCH_ACCEPT_TAC (MATCH_MP STACKPROPSAUX_lab_share_mem_op_io th) g)]));;
 
 let STACKPROPSAUX_STEP_FRAME_TAC : tactic =

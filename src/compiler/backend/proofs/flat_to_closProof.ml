@@ -775,12 +775,6 @@ let F2CPAUX_evaluate_CONS_Rval = prove
   MAP_EVERY EXISTS_TAC [`r1':clos_v`; `s1:(C,FFI)clos_state`; `a':clos_v list`] THEN
   RVEQ_TAC THEN ASM_REWRITE_TAC[HD]);;
 
-(* small facts about the byte values of characters *)
-let F2CPAUX_val_byte_lt = prove
- (`!w:byte. val w < 256`,
-  GEN_TAC THEN MP_TAC(ISPEC `w:byte` VAL_BOUND) THEN
-  REWRITE_TAC[DIMINDEX_8] THEN CONV_TAC NUM_REDUCE_CONV);;
-
 let F2CPAUX_val_word_ORD = prove
  (`!c. val ((word:num->byte) (ORD c)) = ORD c`,
   GEN_TAC THEN REWRITE_TAC[VAL_WORD; DIMINDEX_8] THEN CONV_TAC NUM_REDUCE_CONV THEN
@@ -817,10 +811,6 @@ let F2CPAUX_num_of_int_cmp = prove
     MATCH_MP_TAC INT_OF_NUM_OF_INT THEN ASM_INT_ARITH_TAC;
     ALL_TAC] THEN
   REWRITE_TAC[NUM_OF_INT_OF_NUM; INT_OF_NUM_LT] THEN ARITH_TAC);;
-
-let F2CPAUX_ALL2_EL = prove
- (`!R (l1:A list) (l2:B list) n. ALL2 R l1 l2 /\ n < LENGTH l1 ==> R (EL n l1) (EL n l2)`,
-  SIMP_TAC[LIST_REL_EL_EQN]);;
 
 (* stripping an assumption with fresh names: as the kit's CAKE_STRIP_ASSUME_TAC *)
 (* but the names also avoid the variables of the hypotheses of the assumption  *)
@@ -926,7 +916,7 @@ let F2CPAUX_ARGS_TAC : tactic =
 
 (* HOL4: imp_res_tac LIST_REL_LENGTH \ fs [LIST_REL_EL] *)
 let F2CPAUX_ALL2_EL_TAC : tactic =
-  IMP_RES_TAC LIST_REL_LENGTH THEN MATCH_MP_TAC F2CPAUX_ALL2_EL THEN
+  IMP_RES_TAC LIST_REL_LENGTH THEN MATCH_MP_TAC LISTAUX_ALL2_EL THEN
   CONJ_TAC THENL
    [FIRST_ASSUM ACCEPT_TAC;
     ASM_REWRITE_TAC[] THEN ASM_SIMP_TAC[F2CPAUX_num_of_int_cmp] THEN ASM_ARITH_TAC];;
@@ -1042,7 +1032,7 @@ let F2CPAUX_EVAL_THMS =
   CONJUNCTS REVERSE @ CONJUNCTS APPEND @ CONJUNCTS LENGTH @ [HD; TL] @
   [clos_Boolv_11; F2CPAUX_iword_val; F2CPAUX_some_val;
    EQT_INTRO (SPEC_ALL F2CPAUX_ex_val); INT_POS; NUM_OF_INT_OF_NUM;
-   EQT_INTRO (SPEC_ALL ORD_BOUND); EQT_INTRO (SPEC_ALL F2CPAUX_val_byte_lt);
+   EQT_INTRO (SPEC_ALL ORD_BOUND); EQT_INTRO (SPEC_ALL w2n_lt_256);
    F2CPAUX_val_word_ORD; F2CPAUX_MAP_CHR_val_word_ORD; implode_explode;
    INT_OF_NUM_LT; INT_OF_NUM_LE; INT_OF_NUM_EQ; HD_compile; evaluate_SmartCons];;
 
@@ -1371,7 +1361,7 @@ let F2CPAUX3_MAP_word_ORD_ws_to_chars = prove
  (`!ws. MAP ((word:num->byte) o ORD) (ws_to_chars ws) = ws`,
   REWRITE_TAC[ws_to_chars_def] THEN LIST_INDUCT_TAC THEN
   ASM_REWRITE_TAC[MAP; o_THM; CONS_11] THEN
-  SIMP_TAC[ORD_CHR_RWT; F2CPAUX_val_byte_lt; WORD_VAL]);;
+  SIMP_TAC[ORD_CHR_RWT; w2n_lt_256; WORD_VAL]);;
 
 let F2CPAUX3_chars_to_ws = prove
  (`!cs. chars_to_ws cs = MAP ((word:num->byte) o ORD) cs`,
@@ -1496,11 +1486,6 @@ let v_rel_v_to_char_list = prove
   RULE_ASSUM_TAC(REWRITE_RULE[]) THEN RES_TAC THEN
   ASM_REWRITE_TAC[clos_v_to_list_def; MAP; o_THM] THEN CASE_REWRITE_TAC[]);;
 
-(* helpers for op_str *)
-let F2CPAUX_strsub_EL = prove
- (`!s i. strsub s i = EL i (explode s)`,
-  MATCH_MP_TAC mlstring_INDUCT THEN REWRITE_TAC[strsub_def; explode_thm]);;
-
 let F2CPAUX_ALL2_chars = prove
  (`!l. ALL2 flat_to_closProof_v_rel (MAP (\c. flat_Litv (Char c)) l)
           (MAP (\b. clos_Number (&(val b))) (MAP ((word:num->byte) o ORD) l))`,
@@ -1591,7 +1576,7 @@ let op_str = prove
   ASM_REWRITE_TAC[F2CPAUX_some_ORD] THEN TRY F2CPAUX_EVAL_TAC THEN
   SIMP[flat_to_closProof_v_rel_def; MAP_MAP_o; explode_implode] THEN
   ASM_SIMP_TAC[EL_MAP; LENGTH_explode; F2CPAUX_num_of_int_cmp; o_THM;
-               F2CPAUX_val_word_ORD; F2CPAUX_strsub_EL]);;
+               F2CPAUX_val_word_ORD; PURE1AUX_strsub_EL]);;
 
 (* HOL4 op_globals: the global variables of a state_rel pair (HOL4: fs       *)
 (* [state_rel_def] \\ Cases_on t.globals \\ fs [GSYM ADD1,EL,LIST_REL_EL] ...) *)
@@ -1933,7 +1918,7 @@ let op_from_to = prove
   REPEAT (FIRST_X_ASSUM (F2CPAUX_STRIP_ASSUME_TAC o check (is_conj o concl))) THEN
   TRY F2CPAUX_EVAL_TAC THEN SIMP[flat_to_closProof_v_rel_def] THEN
   REWRITE_TAC[w2n_i2w; dimword_def; DIMINDEX_8] THEN CONV_TAC NUM_REDUCE_CONV THEN
-  ASM_SIMP_TAC[MOD_LT; ORD_BOUND; ORD_CHR_RWT; F2CPAUX_val_byte_lt;
+  ASM_SIMP_TAC[MOD_LT; ORD_BOUND; ORD_CHR_RWT; w2n_lt_256;
                F2CPAUX_ORD_CHR_int]);;
 
 let F2CPAUX_dest_Litv_SOME = prove
@@ -2176,12 +2161,6 @@ let compile_op_correct = prove
           NO_TAC;
           FIRST_ASSUM(CONTR_TAC o REWRITE_RULE[])]));;
 
-let F2CPAUX_some_SOME = prove
- (`!P (y:A). (some) P = SOME y ==> P y`,
-  REWRITE_TAC[some_DEF] THEN REPEAT GEN_TAC THEN COND_CASES_TAC THEN
-  REWRITE_TAC[injectivity "option"; distinctness "option"] THEN
-  DISCH_THEN(SUBST1_TAC o SYM) THEN CONV_TAC SELECT_CONV THEN ASM_REWRITE_TAC[]);;
-
 let F2CPAUX_ALL2_Word64 = prove
  (`!l ys. ALL2 flat_to_closProof_v_rel (MAP (flat_Litv o Word64) l) ys <=>
           ys = MAP clos_Word64 l`,
@@ -2215,7 +2194,7 @@ let v_rel_to_words = prove
  (`!x y xs. flat_to_closProof_v_rel x y /\ flat_v_to_words x = SOME xs
             ==> clos_v_to_words y = SOME xs`,
   REWRITE_TAC[flat_v_to_words_def; clos_v_to_words_def] THEN REPEAT STRIP_TAC THEN
-  FIRST_X_ASSUM(MP_TAC o BETA_RULE o MATCH_MP F2CPAUX_some_SOME) THEN DISCH_TAC THEN
+  FIRST_X_ASSUM(MP_TAC o BETA_RULE o MATCH_MP BASICAUX_some_SOME) THEN DISCH_TAC THEN
   MP_TAC(SPECL [`x:flat_v`; `y:clos_v`; `MAP (flat_Litv o Word64) xs`] v_rel_to_list) THEN
   ASM_REWRITE_TAC[F2CPAUX_ALL2_Word64] THEN STRIP_TAC THEN
   ASM_REWRITE_TAC[injectivity "option"; F2CPAUX_MAP_Word64_11; some_EQ]);;
@@ -2225,7 +2204,7 @@ let v_rel_to_bytes = prove
  (`!x y xs. flat_to_closProof_v_rel x y /\ flat_v_to_bytes x = SOME xs
             ==> clos_v_to_bytes y = SOME xs`,
   REWRITE_TAC[flat_v_to_bytes_def; clos_v_to_bytes_def] THEN REPEAT STRIP_TAC THEN
-  FIRST_X_ASSUM(MP_TAC o BETA_RULE o MATCH_MP F2CPAUX_some_SOME) THEN DISCH_TAC THEN
+  FIRST_X_ASSUM(MP_TAC o BETA_RULE o MATCH_MP BASICAUX_some_SOME) THEN DISCH_TAC THEN
   MP_TAC(SPECL [`x:flat_v`; `y:clos_v`; `MAP (flat_Litv o Word8) xs`] v_rel_to_list) THEN
   ASM_REWRITE_TAC[F2CPAUX_ALL2_Word8] THEN STRIP_TAC THEN
   ASM_REWRITE_TAC[injectivity "option"; F2CPAUX_MAP_Number_val_11; some_EQ]);;
@@ -3298,8 +3277,8 @@ let F2CPAUX_BYTE_FINISH_TAC : tactic =
   RULE_ASSUM_TAC(REWRITE_RULE[INT_GT; INT_OF_NUM_LT; INT_OF_NUM_EQ]) THEN
   REWRITE_TAC[GSYM WORD_IWORD; VAL_WORD; DIMINDEX_8; INT_OF_NUM_EQ] THEN
   CONV_TAC NUM_REDUCE_CONV THEN
-  ASM_SIMP_TAC[MOD_LT; ORD_BOUND; ORD_CHR_RWT; F2CPAUX_val_byte_lt] THEN
-  ASM_MESON_TAC[F2CPAUX_val_byte_lt; ARITH_RULE `~(n < 0)`;
+  ASM_SIMP_TAC[MOD_LT; ORD_BOUND; ORD_CHR_RWT; w2n_lt_256] THEN
+  ASM_MESON_TAC[w2n_lt_256; ARITH_RULE `~(n < 0)`;
                 ARITH_RULE `n < 256 ==> ~(255 < n)`];;
 
 let F2CPAUX_NOP_CONV_TAC : tactic =
@@ -3526,10 +3505,6 @@ let flat_to_closProof_FST_SND_EQ_CASE = prove
   REWRITE_TAC[FUN_EQ_THM; FORALL_PAIR_THM; FST; SND] THEN
   CONV_TAC(DEPTH_CONV GEN_BETA_CONV) THEN REWRITE_TAC[]);;
 
-let F2CPAUX_REPLICATE_1 = prove
- (`!x:A. REPLICATE 1 x = [x]`,
-  REWRITE_TAC[num_CONV `1`; REPLICATE]);;
-
 (* HOL4 line 2022 *)
 let evaluate_compile_prog_initial_state = prove
  (CASE_TERM
@@ -3550,7 +3525,7 @@ let evaluate_compile_prog_initial_state = prove
   REWRITE_TAC[compile_init_def; clos_initial_state_def; initial_state'_def] THEN
   ASM_CASES_TAC `has_install_list (flat_to_clos_compile_decs ds)` THEN ASM_REWRITE_TAC[] THEN
   F2CPAUX_EVAL_WITH_TAC [clos_state_INFO.ri_accessors; clos_state_INFO.ri_fupds;
-                         clos_state_INFO.ri_accfupds; F2CPAUX_REPLICATE_1; get_global_def;
+                         clos_state_INFO.ri_accfupds; CLOSP2AUX_ip_REPLICATE_1; get_global_def;
                          LUPDATE_DEF; K_THM; clos_Unit_def; tuple_tag_def] THEN
   REWRITE_TAC[HD; clos_Unit_def; tuple_tag_def]);;
 

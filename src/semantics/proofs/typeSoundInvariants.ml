@@ -26,7 +26,7 @@ type_invention_error := true;;
 (*   LENGTH tvs' = LENGTH ts' next to it).                                   *)
 (* - HOL4's paired lambdas (\(a,b). t) are (\p. match p with (a,b) -> t);    *)
 (*   for the premises of type_v the monotonicity theorem of pair_CASE        *)
-(*   TYSYS2AUX_MONO_pair_CASE is added to monotonicity_theorems first.       *)
+(*   MONO_pair_CASE is added to monotonicity_theorems first.       *)
 (* - The mlstring literal of x is implode "x".                               *)
 (* ------------------------------------------------------------------------- *)
 
@@ -108,14 +108,8 @@ let add_tenvE_def = cake_def
 (* monotonicity of pair_CASE, for the paired lambdas in the premises of    *)
 (* type_v (HOL4's inductive package handles UNCURRY by itself)              *)
 
-let TYSYS2AUX_MONO_pair_CASE = prove
- (`(!(a:A) (b:B). P a b ==> Q a b) ==>
-   pair_CASE (x:A#B) P ==> (pair_CASE x Q:bool)`,
-  SPEC_TAC(`x:A#B`,`x:A#B`) THEN REWRITE_TAC[FORALL_PAIR_THM; pair_CASE] THEN
-  MESON_TAC[]);;
-
 let () = monotonicity_theorems :=
-  TYSYS2AUX_MONO_pair_CASE :: !monotonicity_theorems;;
+  MONO_pair_CASE :: !monotonicity_theorems;;
 
 let type_v_rules,type_v_ind,type_v_cases,type_v_strongind = cake_inductive
   `(!tvs (ctMap:ctMap) (tenvS:tenv_store) n.

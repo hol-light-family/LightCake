@@ -1090,13 +1090,6 @@ let FLATSEMAUX_evaluate_rel =
 (* both kinds of termination conditions (R a' a, and !y. R y a' ==> R y a    *)
 (* for a tail call).                                                         *)
 
-let FLATSEMAUX_is_num_fact tm =
-  let t = if is_neg tm then dest_neg tm else tm in
-  try let h,args = strip_comb t in
-      length args = 2 && type_of (hd args) = `:num` &&
-      mem (fst(dest_const h)) ["="; "<"; "<="; ">"; ">="]
-  with Failure _ -> false;;
-
 let FLATSEMAUX_Opapp_not_Force = prove
  (`~(Src Opapp = Src (ThunkOp ForceThunk))`,
   REWRITE_TAC[injectivity "flat_op"; distinctness "op"]);;
@@ -1117,7 +1110,7 @@ let FLATSEMAUX_TC_TAC : tactic =
                        FLATSEMAUX_Opapp_not_Force] @
                       !the_size_defs @ flat (map snd (!the_size_aux_eqs)) in
             (RULE_ASSUM_TAC(REWRITE_RULE ths) THEN REWRITE_TAC ths) g) THEN
-  REPEAT(FIRST_X_ASSUM(MP_TAC o check (FLATSEMAUX_is_num_fact o concl))) THEN
+  REPEAT(FIRST_X_ASSUM(MP_TAC o check (EVALAUX_is_num_fact o concl))) THEN
   ARITH_TAC;;
 
 (* HOL4 evaluate_def (the first one, with fix_clock); sem1aux_def_wf (the    *)
@@ -1189,7 +1182,7 @@ let FLATSEMAUX_CLOCK_TAC (def:thm) : tactic =
                            (mapfilter (MATCH_MP flat_fix_clock_IMP) ths)) THEN
   ASSUM_LIST (fun ths -> MAP_EVERY ASSUME_TAC
                            (mapfilter (MATCH_MP flat_do_app_const) ths)) THEN
-  REPEAT(FIRST_X_ASSUM(MP_TAC o check (FLATSEMAUX_is_num_fact o concl))) THEN
+  REPEAT(FIRST_X_ASSUM(MP_TAC o check (EVALAUX_is_num_fact o concl))) THEN
   REWRITE_TAC[flat_state_INFO.ri_accfupds; K_THM] THEN ARITH_TAC;;
 
 let flat_evaluate_clock = prove

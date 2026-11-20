@@ -1715,8 +1715,6 @@ let PARSE3AUX_nt_failure asl inp e n =
 (* lemmas of the tables below or the induction hypothesis labelled "mih"    *)
 (* ------------------------------------------------------------------------- *)
 
-let PARSE3AUX_rpt_rule = el 16 LPARSEAUX_peg_eval_rules_list;;
-
 let PARSE3AUX_mono_mode = ref false;;
 
 let PARSE3AUX_mono_sfx = ref `[]:(token#locs)list`;;
@@ -1732,9 +1730,6 @@ let PARSE3AUX_with_mono sfx f x =
   PARSE3AUX_mono_mode := true; PARSE3AUX_mono_sfx := sfx;
   try let r = f x in PARSE3AUX_mono_mode := old; PARSE3AUX_mono_sfx := olds; r
   with e -> (PARSE3AUX_mono_mode := old; PARSE3AUX_mono_sfx := olds; raise e);;
-
-let PARSE3AUX_is_listfact tm =
-  try fst(dest_const(fst(strip_comb tm))) = "peg_eval_list" with Failure _ -> false;;
 
 let PARSE3AUX_eval_parts c =
   let ie = rand(rator c) in
@@ -1832,7 +1827,7 @@ let PARSE3AUX_mono_rpt asl inp e1 f =
                 (SELECT_RULE eth) in
     let s1,_ = dest_pair(rand(concl lth)) in
     let tl = rand(rand(rand(concl lth))) in
-    MP (ISPECL [PARSE3AUX_CMLPEG_TM; e1; f; app x; s1; l; tl] PARSE3AUX_rpt_rule) lth in
+    MP (ISPECL [PARSE3AUX_CMLPEG_TM; e1; f; app x; s1; l; tl] LPARSEAUX_peg_eval_rpt_rule) lth in
   tryfind try_fact facts;;
 
 (* an evaluation fact of the context for e on inp *)
@@ -1889,7 +1884,7 @@ let rec PARSE3AUX_eval_u (asl:(string*thm)list) (used:term list) (inp:term) (e:t
                 with Failure _ -> PARSE3AUX_eval_list asl used inp e1 in
       let s2,rest = dest_pair(rand(concl lth)) in
       let cs,err = dest_pair rest in
-      MP (ISPECL [PARSE3AUX_CMLPEG_TM; e1; f; inp; s2; cs; err] PARSE3AUX_rpt_rule) lth
+      MP (ISPECL [PARSE3AUX_CMLPEG_TM; e1; f; inp; s2; cs; err] LPARSEAUX_peg_eval_rpt_rule) lth
   | "seq", [e1;e2;f] ->
       let th1 = PARSE3AUX_eval_u asl used inp e1 in
       if PARSE3AUX_is_succ th1 then
@@ -2493,14 +2488,6 @@ let peg_eval_NT_NONE = prove
   ONCE_REWRITE_TAC[EQ_SYM_EQ] THEN REWRITE_TAC[resultmap_EQ_Failure] THEN
   MESON_TAC[]);;
 
-(* lengths along an evaluation *)
-let PARSE3AUX_LEN_LE = prove
- (`!(G:(A,B,C,E)peg) s0 e s c eo.
-     peg_eval G (s0,e) (peg_Success s c eo) ==> LENGTH s <= LENGTH s0`,
-  REPEAT STRIP_TAC THEN
-  FIRST_X_ASSUM(DISJ_CASES_TAC o MATCH_MP peg_eval_suffix') THEN
-  ASM_SIMP_TAC[LE_REFL; LT_IMP_LE]);;
-
 let PARSE3AUX_LIST_LEN_LE = prove
  (`!(G:(A,B,C,E)peg) s0 e s rl err.
      peg_eval_list G (s0,e) (s,rl,err) ==> LENGTH s <= LENGTH s0`,
@@ -2517,7 +2504,7 @@ let PARSE3AUX_len_fact th =
     (try MATCH_MP (MATCH_MP not_peg0_LENGTH_decreases
                      (REWRITE_RULE[pnt_def]
                         (find (fun t -> rand(rand(concl t)) = e) PARSE3AUX_npeg0_ths))) th
-     with Failure _ -> MATCH_MP PARSE3AUX_LEN_LE th)
+     with Failure _ -> MATCH_MP length_no_greater th)
   else if PARSE3AUX_is_listfact c then MATCH_MP PARSE3AUX_LIST_LEN_LE th
   else failwith "len_fact";;
 

@@ -801,10 +801,6 @@ let TPROPSAUX_type_v_Boolv' = REWRITE_RULE TPROPSAUX_TYEQS type_v_Boolv;;
 
 let TPROPSAUX_type_v_exn' = REWRITE_RULE TPROPSAUX_TYEQS TPROPSAUX_type_v_exn;;
 
-let TPROPSAUX_LENGTH_0 = prove
- (`!l:A list. 0 = LENGTH l <=> l = []`,
-  MESON_TAC[LENGTH_EQ_NIL]);;
-
 (* the value of Explode has type Tlist Tchar (HOL4 proves it inside         *)
 (* op_type_sound)                                                            *)
 let TPROPSAUX_type_v_chars = prove
@@ -932,7 +928,7 @@ let TPROPSAUX_SPLIT_TAC : tactic = fun (asl,w as gl) ->
 
 (* the cases of do_app after TPROPSAUX_OTS_START, then the witnesses *)
 let TPROPSAUX_OTS_GEN_TAC : tactic =
-  RULE_ASSUM_TAC(REWRITE_RULE[LENGTH; TPROPSAUX_LENGTH_0]) THEN RVEQ_TAC THEN
+  RULE_ASSUM_TAC(REWRITE_RULE[LENGTH; LENGTH_NIL_SYM]) THEN RVEQ_TAC THEN
   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
   REPEAT TPROPSAUX_SPLIT_TAC THEN
   IMP_RES_TAC type_v_freevars THEN
@@ -1671,10 +1667,6 @@ let TPROPSAUX_BOOLV_CASES_TAC : tactic = fun (asl,w as gl) ->
                                    distinctness "exp_or_val"; injectivity "exp_or_val"]) THEN
        TRY (FIRST_ASSUM CONTR_TAC) THEN TPROPSAUX_NORM_TAC) gl;;
 
-let TPROPSAUX_sem_env_v_unchanged = prove
- (`!env:v sem_env. sem_env_v_fupd (K (sem_env_v env)) env = env`,
-  REWRITE_TAC[sem_env_component_equality; sem_env_INFO.ri_accfupds; K_THM]);;
-
 (* the environment typing with a new variable *)
 let TPROPSAUX_type_all_env_bind = prove
  (`!ctMap tenvS env tenv tenvE v t x.
@@ -1783,7 +1775,7 @@ let TPROPSAUX_ets_Let_TAC : tactic =
   ((TPROPSAUX_RESOLVE_IH_TAC THEN TPROPSAUX_CANON_BOOL_TAC THEN
     TPROPSAUX_CASES_VAR_TAC `:mlstring option` THEN
     RULE_ASSUM_TAC(CASE_REWRITE_RULE[opt_bind_name_def; nsOptBind_def; bind_tvar0; HD;
-                                     TPROPSAUX_sem_env_v_unchanged]) THEN
+                                     with_same_v]) THEN
     IMP_RES_TAC type_v_freevars THEN TPROPSAUX_WEAKEN_ENV_TAC `tenvS1:tenv_store` THEN
     IMP_RES_TAC TPROPSAUX_type_all_env_bind THEN
     TPROPSAUX_APPLY_IH_TAC `0` `tenvS1:tenv_store` `tenvS2:tenv_store` THEN
@@ -2377,21 +2369,12 @@ let TPROPSAUX_DTS_CASES = conjuncts (lhand (concl TPROPSAUX_DTS_IND));;
 
 let TPROPSAUX_DTS k = el k TPROPSAUX_DTS_CASES;;
 
-let TPROPSAUX_sem_env_eta = prove
- (`!env:v sem_env. sem_env_REC (sem_env_v env) (sem_env_c env) = env`,
-  REWRITE_TAC[sem_env_INFO.ri_component_equality; sem_env_INFO.ri_accessors]);;
-
-let TPROPSAUX_type_env_eta = prove
- (`!tenv:type_env.
-     type_env_REC (type_env_v tenv) (type_env_c tenv) (type_env_t tenv) = tenv`,
-  REWRITE_TAC[type_env_INFO.ri_component_equality; type_env_INFO.ri_accessors]);;
-
 let TPROPSAUX_extend_empty = prove
  (`(!env:v sem_env. extend_dec_env (sem_env_REC nsEmpty nsEmpty) env = env) /\
    (!tenv. extend_dec_tenv (type_env_REC nsEmpty nsEmpty nsEmpty) tenv = tenv)`,
   REWRITE_TAC[extend_dec_env_def; extend_dec_tenv_def; sem_env_INFO.ri_accessors;
-              type_env_INFO.ri_accessors; nsAppend_nsEmpty; TPROPSAUX_sem_env_eta;
-              TPROPSAUX_type_env_eta]);;
+              type_env_INFO.ri_accessors; nsAppend_nsEmpty; unchanged_env;
+              unchanged_tenv]);;
 
 let TPROPSAUX_dts_nil = prove
  (TPROPSAUX_DTS 0,

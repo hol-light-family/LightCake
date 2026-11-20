@@ -3032,13 +3032,6 @@ let S2LP1AUX_fc_jumplower = prove
       try fst(dest_const(fst(strip_comb(concl th)))) = "S2LP1AUX_concl" with Failure _ -> false)) THEN
     MATCH_MP_TAC EQ_IMP THEN MATCH_MP_TAC S2LP1AUX_concl_view_indep THEN ASM_REWRITE_TAC[]]);;
 
-(* the callee of a RawCall is a Seq (local helper) *)
-let S2LP1AUX_dest_Seq_SOME = prove
- (`!(p:(A)stack_prog) x y. stack_dest_Seq p = SOME (x,y) <=> p = stack_Seq x y`,
-  GEN_TAC THEN CASES_ON `p:(A)stack_prog` THEN
-  REWRITE_TAC[stack_dest_Seq_def; option_DISTINCT; option_INJ; PAIR_EQ;
-              distinctness "stack_prog"; injectivity "stack_prog"]);;
-
 (* case RawCall (HOL4 lines 1967-2027) *)
 let S2LP1AUX_fc_rawcall = prove
  (`!dest (s:(A,C,FFI)stack_state).
@@ -3079,7 +3072,7 @@ let S2LP1AUX_fc_rawcall = prove
   ASM_CASES_TAC `stack_bad_fun_return (res:((A)stack_result)option)` THEN
   ASM_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN RVEQ_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[]) THEN TRY(FIRST_ASSUM CONTR_TAC) THEN
-  FIRST_X_ASSUM(SUBST_ALL_TAC o REWRITE_RULE[S2LP1AUX_dest_Seq_SOME] o
+  FIRST_X_ASSUM(SUBST_ALL_TAC o REWRITE_RULE[STACKPROPSAUX_dest_Seq_SOME] o
     check (fun th -> concl th = `stack_dest_Seq (prog:(A)stack_prog) = SOME (p1,body)`)) THEN
   MP_TAC(ISPECL [`s:(A,C,FFI)stack_state`; `t1:(A,C,FFI)lab_state`; `dest:num`;
     `stack_Seq p1 body:(A)stack_prog`] S2LP1AUX_rel_code) THEN
@@ -4165,10 +4158,6 @@ let S2LP1AUX_take1_word_to_bytes = prove
   REWRITE_TAC[word_to_bytes_aux_def; APPEND; TAKE_DEF; NOT_SUC] THEN
   REWRITE_TAC[ARITH_RULE `SUC 0 - 1 = 0`; TAKE_DEF]);;
 
-let S2LP1AUX_clock_fupd_id = prove
- (`!(t:(A,C,FFI)lab_state). lab_state_clock_fupd (K (lab_state_clock t)) t = t`,
-  REWRITE_TAC[lab_state_component_equality] THEN SIMP[]);;
-
 (* facts of state_rel for the shared memory (local helper) *)
 let S2LP1AUX_rel_shmem = prove
  (`!(s:(A,C,FFI)stack_state) t.
@@ -4241,7 +4230,7 @@ let S2LP1AUX_shm_load = prove
      ASM_REWRITE_TAC[S2LP1AUX_stack_dec_clock_simps]];
     EXISTS_TAC `t1:(A,C,FFI)lab_state` THEN
    REWRITE_TAC[S2LP1AUX_concl_def] THEN CASE_REWRITE_TAC[halt_view_def] THEN
-   REWRITE_TAC[ADD_CLAUSES; S2LP1AUX_stack_dec_clock_simps; S2LP1AUX_clock_fupd_id] THEN
+   REWRITE_TAC[ADD_CLAUSES; S2LP1AUX_stack_dec_clock_simps; lab_with_same_clock] THEN
    ASM_REWRITE_TAC[] THEN
    MP_TAC(ISPECL [`t1:(A,C,FFI)lab_state`; `op:memop`; `r:num`; `Addr a w:(A)addr`;
      `[]:byte list`; `0`; `n:num`; `v:A word`; `outcome:final_event`;
@@ -4249,7 +4238,7 @@ let S2LP1AUX_shm_load = prove
    ASM_REWRITE_TAC[] THEN
     SUBGOAL_THEN `stack_state_clock (s:(A,C,FFI)stack_state) - 1 + 1 =
                  lab_state_clock (t1:(A,C,FFI)lab_state)` SUBST1_TAC THENL
-    [ASM_ARITH_TAC; REWRITE_TAC[S2LP1AUX_clock_fupd_id]]]);;
+    [ASM_ARITH_TAC; REWRITE_TAC[lab_with_same_clock]]]);;
 
 (* a shared memory store of n bytes (local helper of the ShMemOp case) *)
 let S2LP1AUX_shm_store = prove
@@ -4308,7 +4297,7 @@ let S2LP1AUX_shm_store = prove
        ASM_REWRITE_TAC[]];
      EXISTS_TAC `t1:(A,C,FFI)lab_state` THEN
      REWRITE_TAC[S2LP1AUX_concl_def] THEN CASE_REWRITE_TAC[halt_view_def] THEN
-     REWRITE_TAC[ADD_CLAUSES; S2LP1AUX_stack_dec_clock_simps; S2LP1AUX_clock_fupd_id] THEN
+     REWRITE_TAC[ADD_CLAUSES; S2LP1AUX_stack_dec_clock_simps; lab_with_same_clock] THEN
      ASM_REWRITE_TAC[] THEN
      MP_TAC(ISPECL [`t1:(A,C,FFI)lab_state`; `op:memop`; `r:num`; `Addr a w:(A)addr`;
        `[]:byte list`; `0`; `n:num`; `v:A word`; `wv:A word`; `outcome:final_event`;
@@ -4316,7 +4305,7 @@ let S2LP1AUX_shm_store = prove
      ASM_REWRITE_TAC[] THEN
      SUBGOAL_THEN `stack_state_clock (s:(A,C,FFI)stack_state) - 1 + 1 =
                    lab_state_clock (t1:(A,C,FFI)lab_state)` SUBST1_TAC THENL
-      [ASM_ARITH_TAC; REWRITE_TAC[S2LP1AUX_clock_fupd_id]]]);;
+      [ASM_ARITH_TAC; REWRITE_TAC[lab_with_same_clock]]]);;
 
 (* the shared memory operations of ShMemOp (local tactics) *)
 let S2LP1AUX_IS_SHM th =

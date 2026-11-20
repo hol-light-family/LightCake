@@ -999,13 +999,6 @@ let STACKPAUX_clock_rws = prove
    stack_state_clock (stack_STOP s) = stack_state_clock s`,
   REWRITE_TAC[stack_dec_clock_def; stack_set_var_def; stack_STOP_def] THEN SIMP[]);;
 
-let STACKPAUX_is_num_fact tm =
-  let t = if is_neg tm then dest_neg tm else tm in
-  try let h,args = strip_comb t in
-      length args = 2 && type_of (hd args) = `:num` &&
-      mem (fst(dest_const h)) ["="; "<"; "<="; ">"; ">="]
-  with Failure _ -> false;;
-
 let STACKPAUX_TC_TAC : tactic =
   REWRITE_TAC[IMP_CONJ] THEN REPEAT GEN_TAC THEN REPEAT DISCH_TAC THEN
   RVEQ_TAC THEN
@@ -1014,7 +1007,7 @@ let STACKPAUX_TC_TAC : tactic =
   (fun g -> let ths = WF_REL_THMS @ [FST; SND; type_size_def "stack_prog";
                                      STACKPAUX_clock_rws; stack_STOP_def; I_THM] in
             (RULE_ASSUM_TAC(REWRITE_RULE ths) THEN REWRITE_TAC ths) g) THEN
-  REPEAT(FIRST_X_ASSUM(MP_TAC o check (STACKPAUX_is_num_fact o concl))) THEN
+  REPEAT(FIRST_X_ASSUM(MP_TAC o check (IL2AUX_is_num_fact o concl))) THEN
   ARITH_TAC;;
 
 let STACKPAUX_evaluate_rel =
@@ -1401,32 +1394,6 @@ let STACKPAUX_is_eval_eq tm =
 (* sides of an equation), the instantiated conjunction is proved by         *)
 (* rewriting with the assumptions                                           *)
 
-let STACKPAUX_EXISTS_ASM_TAC : tactic = fun (asl,w as g) ->
-  let vs,body = strip_exists w in
-  let facts = map (concl o snd) asl in
-  let rec go theta cjs =
-    match cjs with
-      [] -> theta
-    | c::rest ->
-        let c' = vsubst theta c in
-        let fvs = filter (fun v -> mem v vs && not (can (rev_assoc v) theta))
-                         (frees c') in
-        if fvs = [] then go theta rest else
-        let try_m p t =
-          let (_,tmi,tyi) = term_match [] p t in
-          if forall (fun (t,v) -> mem v fvs || t = v) tmi &&
-             forall (fun (a,b) -> a = b) tyi
-          then filter (fun (t,v) -> mem v fvs) tmi else failwith "" in
-        let tmi = try tryfind (try_m c') facts
-                  with Failure _ ->
-                    try let l,r = dest_eq c' in
-                        (try try_m r l with Failure _ -> try_m l r)
-                    with Failure _ -> [] in
-        go (tmi @ theta) rest in
-  let theta = go [] (conjuncts body) in
-  let wits = map (fun v -> try rev_assoc v theta with Failure _ -> v) vs in
-  (MAP_EVERY EXISTS_TAC wits THEN ASM_REWRITE_TAC[]) g;;
-
 (* for every assumption stack_evaluate p = (v,t) and every induction        *)
 (* hypothesis whose evaluate antecedent matches it, add the instance of its  *)
 (* conclusion when its other antecedents follow from the assumptions        *)
@@ -1456,7 +1423,7 @@ let STACKPAUX_USE_IHS_TAC : tactic = fun (asl,w as g) ->
   let insts = flat (map (fun e -> mapfilter (fun ih -> inst_of ih e) ihs) evs) in
   MAP_EVERY (fun (c,th) ->
       TRY (SUBGOAL_THEN c STRIP_ASSUME_TAC THENL
-            [MATCH_MP_TAC th THEN STACKPAUX_EXISTS_ASM_TAC THEN NO_TAC; ALL_TAC]))
+            [MATCH_MP_TAC th THEN IL2AUX_EXISTS_ASM_TAC THEN NO_TAC; ALL_TAC]))
     insts g;;
 
 let STACKPAUX_CLOCK_TAC : tactic =
@@ -1472,7 +1439,7 @@ let STACKPAUX_CLOCK_TAC : tactic =
                        stack_unset_var_def; stack_state_INFO.ri_accfupds; K_THM;
                        I_THM] in
             (RULE_ASSUM_TAC(REWRITE_RULE ths) THEN REWRITE_TAC ths) g) THEN
-  REPEAT(FIRST_X_ASSUM(MP_TAC o check (STACKPAUX_is_num_fact o concl))) THEN
+  REPEAT(FIRST_X_ASSUM(MP_TAC o check (IL2AUX_is_num_fact o concl))) THEN
   ARITH_TAC;;
 
 (* the If case (the boolean of the comparison is a context of the IHs) *)

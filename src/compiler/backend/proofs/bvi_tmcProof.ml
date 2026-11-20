@@ -1963,10 +1963,6 @@ let BVITMCAUX_v_rel_Boolv = prove
   REWRITE_TAC[bvl_Boolv_def; bvl_Unit_def; BVITMCAUX_v_rel_simps; LIST_REL_NIL] THEN
   MESON_TAC[]);;
 
-let BVITMCAUX_ALL2_EL = prove
- (`!(R:A->B->bool) l1 l2 n. ALL2 R l1 l2 /\ n < LENGTH l1 ==> R (EL n l1) (EL n l2)`,
-  SIMP_TAC[LIST_REL_EL_EQN]);;
-
 
 let BVITMCAUX_EX_REFL = prove
  (`(!a:A. ?x. a = x) /\ (!a:A. ?x. x = a)`,
@@ -1976,7 +1972,7 @@ let BVITMCAUX_ALL2_EL_INT = prove
  (`!(R:A->B->bool) l1 l2 i.
      ALL2 R l1 l2 /\ &0 <= i /\ i < &(LENGTH l1) ==>
      R (EL (num_of_int i) l1) (EL (num_of_int i) l2)`,
-  REPEAT STRIP_TAC THEN MATCH_MP_TAC BVITMCAUX_ALL2_EL THEN
+  REPEAT STRIP_TAC THEN MATCH_MP_TAC LISTAUX_ALL2_EL THEN
   ASM_REWRITE_TAC[] THEN
   FIRST_X_ASSUM(MP_TAC o check (fun th -> is_comb(concl th) &&
     try fst(dest_const(rator(rator(concl th)))) = "int_lt" with Failure _ -> false)) THEN
@@ -2173,7 +2169,7 @@ let BVITMCAUX_OP_SIMPS =
    holes_unchanged_except_refl; holes_still_not_finalised_refl;
    BVITMCAUX_v_rel_Boolv; BVITMCAUX_v_rel_refls; BVITMCAUX_v_rel_simps;
    BVITMCAUX_ref_rel_simps; LIST_REL_NIL; LIST_REL_CONS1; bvi_bvi_to_bvl_refs;
-   BVITMCAUX_ALL2_EL; bvi_tmcProof_list_to_v_v_rel; LIST_REL_APPEND_suff;
+   LISTAUX_ALL2_EL; bvi_tmcProof_list_to_v_v_rel; LIST_REL_APPEND_suff;
    EVERY2_TAKE; EVERY2_DROP; state_ref_rel_update; BVITMCAUX_state_rel_refs_same;
    EVERY2_LUPDATE_same; BVITMCAUX_state_rel_global_fupd; BVITMCAUX_EX_REFL;
    INT_OF_NUM_EQ; VAL_EQ; BVITMCAUX_ALL2_EL_INT; bvl_to_bvi_with_refs;
@@ -6764,19 +6760,13 @@ let BVITMCAUX_hole_transport = prove
     REWRITE_TAC[hole_has_val_def] THEN ASM_REWRITE_TAC[injectivity "bvl_v"] THEN
     MESON_TAC[]]);;
 
-let BVITMCAUX_Boolv_eq = prove
- (`!b c. bvl_Boolv b = bvl_Boolv c <=> (b <=> c)`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[bvl_Boolv_def; injectivity "bvl_v"] THEN
-  BOOL_CASES_TAC `b:bool` THEN BOOL_CASES_TAC `c:bool` THEN
-  REWRITE_TAC[bool_to_tag_def; true_tag_def; false_tag_def] THEN ARITH_TAC);;
-
 let BVITMCAUX_eval_If_Boolv = prove
  (`!x1 x2 x3 b env (s:(C,FFI)bvi_state) u.
      bvi_evaluate ([x1],env,s) = (Rval [bvl_Boolv b],u) ==>
      bvi_evaluate ([bvi_If x1 x2 x3],env,s) =
      bvi_evaluate ([if b then x2 else x3],env,u)`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[bvi_evaluate_def] THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[HD; BVITMCAUX_Boolv_eq] THEN
+  CASE_REWRITE_TAC[] THEN REWRITE_TAC[HD; bvl_Boolv_11] THEN
   BOOL_CASES_TAC `b:bool` THEN REWRITE_TAC[]);;
 
 let BVITMCAUX_tmc_if_branch = prove
@@ -8662,10 +8652,6 @@ let evaluate_rewrite_tmc = prove
   FIRST_X_ASSUM(MP_TAC o SPEC `hole_ptr:num` o C MP (ASSUME `opt:bool`)) THEN
   ASM_REWRITE_TAC[]);;
 
-let BVITMCAUX_pair_CASE_FST_SND = prove
- (`!(p:A#B) (f:A->B->C). pair_CASE p f = f (FST p) (SND p)`,
-  REWRITE_TAC[FORALL_PAIR_THM; pair_CASE; FST; SND]);;
-
 (* HOL4 line 5873 *)
 let bvi_tmcProof_evaluate_compile_each = prove
  (`!next prog (co:num -> (num#C) # (num#num#bvi_exp) list) start (ffi0:(FFI)ffi_state)
@@ -8706,7 +8692,7 @@ let bvi_tmcProof_evaluate_compile_each = prove
     ASSUME_TAC THENL
    [REWRITE_TAC[bvi_tmcProof_state_rel_def; bvi_initial_state_def;
                 bvi_state_INFO.ri_accessors] THEN
-    REWRITE_TAC[LET_DEF; LET_END_DEF; BVITMCAUX_pair_CASE_FST_SND] THEN BETA_TAC THEN
+    REWRITE_TAC[LET_DEF; LET_END_DEF; pair_CASE_def] THEN BETA_TAC THEN
     REWRITE_TAC[state_ref_rel_def; FDOM_FEMPTY; FLOOKUP_EMPTY; distinctness "option";
                 OPTREL_THM; fmap_inj_FEMPTY] THEN
     REPEAT CONJ_TAC THENL
@@ -8756,17 +8742,7 @@ let bvi_tmcProof_state_rel_const = prove
      bvi_state_clock t = bvi_state_clock s /\ bvi_state_ffi t = bvi_state_ffi s`,
   SIMP_TAC[bvi_tmcProof_state_rel_def]);;
 
-(* local helpers for the semantics theorems; BVITMCAUX_semantics_not_Fail_cond *)
-(* is a copy of a local helper of bvi_tailrecProof, which is not an ancestor   *)
-let BVITMCAUX_semantics_not_Fail_cond = prove
- (`!(ffi:(FFI)ffi_state) code (co:num -> C # (num#num#bvi_exp) list)
-     (cc:C->(num#num#bvi_exp)list->(((8)word)list#((64)word)list#C)option) start.
-     ~(bvi_semantics ffi code co cc start = Fail) ==>
-     ~(?j e. FST (bvi_evaluate ([bvi_Call 0 (SOME start) [] NONE],[],
-                    bvi_initial_state ffi code co cc j)) = Rerr e /\
-             ~(e = Rabort Rtimeout_error) /\ (!f. ~(e = Rabort (Rffi_error f))))`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[bvi_semantics_def; LET_DEF; LET_END_DEF] THEN BETA_TAC THEN
-  COND_CASES_TAC THEN ASM_REWRITE_TAC[]);;
+(* local helpers for the semantics theorems *)
 
 let BVITMCAUX_triv_rel_cases = prove
  (`!(r1:(bvl_v list,exn_or_ret)result) r2.
@@ -8915,7 +8891,7 @@ let bvi_tmcProof_compile_each_semantics = prove
     (X_CHOOSE_THEN `s1:(num#C,FFI)bvi_state` ASSUME_TAC)) THEN
   SUBGOAL_THEN `~(r1:(bvl_v list,exn_or_ret)result = Rerr (Rabort Rtype_error))`
     ASSUME_TAC THENL
-   [FIRST_ASSUM(MP_TAC o MATCH_MP BVITMCAUX_semantics_not_Fail_cond) THEN
+   [FIRST_ASSUM(MP_TAC o MATCH_MP CLOSSEMAUX_bvi_semantics_not_Fail_cond) THEN
     REWRITE_TAC[NOT_EXISTS_THM] THEN DISCH_THEN(MP_TAC o SPECL [`k:num`;
       `Rabort Rtype_error:(exn_or_ret)error_result`]) THEN
     ASM_REWRITE_TAC[FST] THEN REWRITE_TAC BVLPROPSAUX_bvi_eval_simps;

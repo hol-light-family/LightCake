@@ -533,3 +533,17 @@ let bvi_semantics_def = cake_def
                           (ffi_state_io_events
                              (bvi_state_ffi (SND (bvi_evaluate (es,[],init k))))))
                        UNIV)))`;;
+
+(* ------------------------------------------------------------------------- *)
+(* Lemmas used by several later files.                                       *)
+(* ------------------------------------------------------------------------- *)
+
+let CLOSSEMAUX_bvi_semantics_not_Fail_cond = prove
+ (`!(ffi:(FFI)ffi_state) code (co:num -> C # (num#num#bvi_exp) list)
+     (cc:C->(num#num#bvi_exp)list->(((8)word)list#((64)word)list#C)option) start.
+     ~(bvi_semantics ffi code co cc start = Fail) ==>
+     ~(?j e. FST (bvi_evaluate ([bvi_Call 0 (SOME start) [] NONE],[],
+                    bvi_initial_state ffi code co cc j)) = Rerr e /\
+             ~(e = Rabort Rtimeout_error) /\ (!f. ~(e = Rabort (Rffi_error f))))`,
+  REPEAT GEN_TAC THEN REWRITE_TAC[bvi_semantics_def; LET_DEF; LET_END_DEF] THEN BETA_TAC THEN
+  COND_CASES_TAC THEN ASM_REWRITE_TAC[]);;

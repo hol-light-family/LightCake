@@ -1132,11 +1132,6 @@ let cons_multi_thm = prove
 (* compared syntactically.                                                    *)
 (* ------------------------------------------------------------------------- *)
 
-let MP7AUX_STAR_AC = prove
- (`!p q r:(A->bool)->bool.
-     p STAR q = q STAR p /\ (p STAR q) STAR r = p STAR (q STAR r) /\
-     p STAR (q STAR r) = q STAR (p STAR r)`,
-  MESON_TAC[STAR_ASSOC; STAR_COMM]);;
 let mp7_is_star tm =
   is_comb tm && is_comb (rator tm) && is_const (rator (rator tm)) &&
   fst(dest_const(rator(rator tm))) = "STAR";;
@@ -1156,7 +1151,7 @@ let mp7_star_rotate p t =
   let star = rator(rator p) in
   let mk a b = mk_comb(mk_comb(star,a),b) in
   let restm = end_itlist mk rest in
-  AC MP7AUX_STAR_AC (mk_eq(p, mk t restm));;
+  AC MP3AUX_STAR_AC (mk_eq(p, mk t restm));;
 (* from P (fun2set (m,d)) the facts m a = x and a IN d of every leaf      *)
 (* set_sep_one (a,x) of P                                                  *)
 let mp7_sep_reads th =
@@ -1184,7 +1179,7 @@ let MP7AUX_SEP_AC_TAC : tactic = fun (asl,w as g) ->
   let tryone (_,th) =
     let p,s' = dest_comb (concl th) in
     if not (aconv s s') then failwith "" else
-    let eq = AC MP7AUX_STAR_AC (mk_eq(q,p)) in
+    let eq = AC MP3AUX_STAR_AC (mk_eq(q,p)) in
     EQ_MP (SYM (AP_THM eq s)) th in
   ACCEPT_TAC (tryfind tryone asl) g;;
 (* the memory part of memory_rel_append: words written at the start of the  *)
@@ -2069,9 +2064,6 @@ let least_notin_domain = prove
     MESON_TAC[ARITH_RULE `~(a + 1 <= a)`];
     REWRITE_TAC[MINIMAL] THEN MESON_TAC[]]);;
 
-let MP7AUX_FUPDATE_FLOOKUP = prove
- (`!(f:(A,B)fmap) k v. FLOOKUP f k = SOME v ==> f |+ (k,v) = f`,
-  REWRITE_TAC[fmap_eq_flookup; FLOOKUP_UPDATE] THEN MESON_TAC[]);;
 (* a store_list result that does not depend on ks *)
 let MP7AUX_FORALL_KS = prove
  (`!(o1:B option) (P:(C list)->B->bool).
@@ -2112,7 +2104,7 @@ let MP7AUX_do_build_part = prove
  [(GVS(NULL_EQ :: LENGTH_EQ_NIL :: all_case_eqs()) THENL
   [EXISTS_TAC `m:A word->A word_loc` THEN
   ASM_SIMP_TAC[data_to_word_memoryProof_store_list_def; WORD_MUL_0; WORD_ADD_0;
-               MP7AUX_FUPDATE_FLOOKUP] THEN
+               FMAPAUX_FUPDATE_FLOOKUP_ELIM] THEN
   GEN_TAC THEN REWRITE_TAC[GSYM MP7AUX_BlockNil] THEN
   MATCH_MP_TAC memory_rel_Cons_empty THEN ASM_REWRITE_TAC[];
    CONJ_TAC THENL
@@ -2143,7 +2135,7 @@ let MP7AUX_do_build_part = prove
   GVS(all_case_eqs()) THENL
   [EXISTS_TAC `m:A word->A word_loc` THEN
   ASM_SIMP_TAC[data_to_word_memoryProof_store_list_def; WORD_MUL_0; WORD_ADD_0;
-               MP7AUX_FUPDATE_FLOOKUP] THEN
+               FMAPAUX_FUPDATE_FLOOKUP_ELIM] THEN
   GEN_TAC THEN MATCH_MP_TAC IMP_memory_rel_Number THEN ASM_REWRITE_TAC[];
    SUBGOAL_THEN `SUC (LENGTH (y:(A word)list)) <= part_space_req (clos_Int a)` ASSUME_TAC THENL
    [SUBGOAL_THEN `y = n2mw (num_of_int (abs a)):(A word)list` SUBST_ALL_TAC THENL
@@ -2274,7 +2266,7 @@ let memory_rel_do_build = prove
     REPEAT(FIRST_X_ASSUM(SUBST_ALL_TAC o SYM o check (fun th -> is_eq(concl th) &&
            (is_var(rhs(concl th)) || is_comb(rhs(concl th)) && is_var(rand(rhs(concl th))))))) THEN
     EXISTS_TAC `m:A word->A word_loc` THEN
-    ASM_SIMP_TAC[LENGTH; SUB_0; WORD_MUL_0; WORD_ADD_0; MP7AUX_FUPDATE_FLOOKUP;
+    ASM_SIMP_TAC[LENGTH; SUB_0; WORD_MUL_0; WORD_ADD_0; FMAPAUX_FUPDATE_FLOOKUP_ELIM;
                  data_to_word_memoryProof_store_list_def] THEN
     FIRST_X_ASSUM(MP_TAC o SPEC `[i - 1]`) THEN REWRITE_TAC[MAP; APPEND];
     ALL_TAC] THEN
@@ -3382,7 +3374,7 @@ let MP7AUX_word_heap_SPLIT1 = prove
     word_heap (word_add (word_add curr (word_mul bytes_in_word (word (heap_length h1))))
                  (word_mul bytes_in_word (word (el_length (x:mp7el))))) (h2:mp7heap) c` THEN
   REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[word_heap_APPEND; word_heap_def] THEN
-  REWRITE_TAC[MP7AUX_STAR_AC]);;
+  REWRITE_TAC[MP3AUX_STAR_AC]);;
 (* the same with a second, different element of the heap *)
 let MP7AUX_word_heap_SPLIT2 = prove
  (`!(curr:A word) (h1:mp7heap) (x:mp7el) h2 c k1 x1.
@@ -3417,7 +3409,7 @@ let MP7AUX_word_heap_SPLIT2 = prove
      [REWRITE_TAC[heap_length_APPEND; GC1AUX_heap_length_CONS; WORD_ADD] THEN
       CONV_TAC WORD_RULE;
       ALL_TAC] THEN
-    REWRITE_TAC[MP7AUX_STAR_AC];
+    REWRITE_TAC[MP3AUX_STAR_AC];
     ALL_TAC] THEN
   SUBGOAL_THEN `heap_lookup (k1 - heap_length (h1:mp7heap) - el_length (x:mp7el)) (h2:mp7heap) =
                 SOME x1 /\ heap_length h1 + el_length x <= k1` MP_TAC THENL
@@ -3450,7 +3442,7 @@ let MP7AUX_word_heap_SPLIT2 = prove
      [ASM_ARITH_TAC; ALL_TAC] THEN
     REWRITE_TAC[WORD_ADD] THEN CONV_TAC WORD_RULE;
     ALL_TAC] THEN
-  REWRITE_TAC[MP7AUX_STAR_AC]);;
+  REWRITE_TAC[MP3AUX_STAR_AC]);;
 (* word_el of a byte array element, with the same condition for a byte    *)
 (* array of the same length                                                 *)
 let MP7AUX_word_el_Bytes_eq = prove
@@ -3530,7 +3522,7 @@ let mp7_sep_front2 t1 t2 th =
   let star = rator(rator p) in
   let mk a b = mk_comb(mk_comb(star,a),b) in
   let q = mk (mk t1 t2) (end_itlist mk rest) in
-  EQ_MP (AP_THM (AC MP7AUX_STAR_AC (mk_eq(p,q))) s) th;;
+  EQ_MP (AP_THM (AC MP3AUX_STAR_AC (mk_eq(p,q))) s) th;;
 (* the memory part of memory_rel_xor_bytes: the heap with the second byte  *)
 (* array in front of h2 and the first one at k1                             *)
 let MP7AUX_xor_bytes_heap = prove

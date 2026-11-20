@@ -785,11 +785,6 @@ let DATAPAUX_B2D_Boolv_eq = prove
   REWRITE_TAC[bool_to_tag_def; true_tag_def; false_tag_def] THEN
   COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT; option_INJ] THEN ASM_ARITH_TAC);;
 
-let DATAPAUX_B2D_num_of_int_lt = prove
- (`!i n. &0 <= i /\ i < &n ==> num_of_int i < n`,
-  REPEAT STRIP_TAC THEN ONCE_REWRITE_TAC[GSYM INT_OF_NUM_LT] THEN
-  ASM_SIMP_TAC[INT_OF_NUM_OF_INT]);;
-
 let DATAPAUX_B2D_do_eq_rw = prove
  (`!(rr:(num,(bvl_v)bvl_ref)fmap) (tr:((data_v)bvl_ref)spt) v1 v2.
      (!n. FLOOKUP rr n = OPTION_MAP data_to_bvi_ref (lookup n tr))
@@ -914,7 +909,7 @@ let DATAPAUX_B2D_LEAF_TAC =
               data_state_INFO.ri_accfupds; K_THM; lookup_map; check_lim_def] THEN
   ASM_REWRITE_TAC[bvl_Boolv_11] THEN
   RULE_ASSUM_TAC(REWRITE_RULE[GE; NOT_LE]) THEN
-  ASM_SIMP_TAC[EL_MAP; DATAPAUX_B2D_num_of_int_lt; MAP_TAKE; MAP_DROP; MAP_APPEND;
+  ASM_SIMP_TAC[EL_MAP; BASICAUX_num_of_int_lt; MAP_TAKE; MAP_DROP; MAP_APPEND;
                LUPDATE_MAP; map_replicate] THEN
   TRY (FIRST_ASSUM (fun th -> REWRITE_TAC[MATCH_MP data_to_bvi_v_list_to_v_APPEND th;
                                           data_to_bvi_v_list_to_v_Nil; MAP_APPEND]) THEN
@@ -1341,16 +1336,9 @@ let DATAPAUX_B2D_Seq_SOME = prove
   REPEAT STRIP_TAC THEN ONCE_REWRITE_TAC[data_evaluate_def] THEN
   ASM_REWRITE_TAC[LET_DEF; LET_END_DEF; option_DISTINCT] THEN CASE_REWRITE_TAC[option_DISTINCT]);;
 
-let DATAPAUX_B2D_Seq_NONE = prove
- (`!c1 c2 (t:(C,FFI)data_state) t2.
-     data_evaluate (c1,t) = (NONE,t2)
-     ==> data_evaluate (data_Seq c1 c2,t) = data_evaluate (c2,t2)`,
-  REPEAT STRIP_TAC THEN GEN_REWRITE_TAC LAND_CONV [data_evaluate_def] THEN
-  ASM_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN CASE_REWRITE_TAC[]);;
-
 (* rewrite data_evaluate (Seq c1 c2,t) with an assumption about c1 *)
 let DATAPAUX_B2D_SEQ_NONE_TAC : tactic =
-  FIRST_ASSUM(fun th -> CHANGED_TAC(PURE_REWRITE_TAC[MATCH_MP DATAPAUX_B2D_Seq_NONE th]));;
+  FIRST_ASSUM(fun th -> CHANGED_TAC(PURE_REWRITE_TAC[MATCH_MP DSEMAUX_Seq_NONE th]));;
 let DATAPAUX_B2D_SEQ_SOME_TAC : tactic =
   FIRST_ASSUM(fun th -> CHANGED_TAC(PURE_REWRITE_TAC[MATCH_MP DATAPAUX_B2D_Seq_SOME th]));;
 
@@ -4608,7 +4596,7 @@ let DATAPAUX_B2D_Seq_NONE2 = prove
   REPEAT STRIP_TAC THEN
   GEN_REWRITE_TAC LAND_CONV [data_evaluate_def] THEN
   GEN_REWRITE_TAC RAND_CONV [data_evaluate_def] THEN
-  FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP DATAPAUX_B2D_Seq_NONE th]) THEN
+  FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP DSEMAUX_Seq_NONE th]) THEN
   REWRITE_TAC[data_fix_clock_evaluate]);;
 
 let DATAPAUX_B2D_SEQ_SOME2_TAC : tactic =

@@ -114,3 +114,15 @@ let trace_oracle_def = cake_def
          if s = s' /\ MAP FST bytes2 = input /\ conf = conf' then
            Oracle_return (THE (LTL io_trace)) (MAP SND bytes2)
          else Oracle_final FFI_failed`;;
+
+(* ------------------------------------------------------------------------- *)
+(* Lemmas used by several later files.                                       *)
+(* ------------------------------------------------------------------------- *)
+
+let SEM2AUX_call_FFI_io_events = prove
+ (`!(st:(FFI)ffi_state) s conf bytes st' bytes'.
+     call_FFI st s conf bytes = FFI_return st' bytes' ==>
+     isPREFIX (ffi_state_io_events st) (ffi_state_io_events st')`,
+  REPEAT GEN_TAC THEN REWRITE_TAC[call_FFI_def] THEN
+  EVERY_CASE_TAC THEN REWRITE_TAC[injectivity "ffi_result"; distinctness "ffi_result"] THEN
+  STRIP_TAC THEN RVEQ_TAC THEN SIMP[IS_PREFIX_APPEND3; IS_PREFIX_REFL]);;

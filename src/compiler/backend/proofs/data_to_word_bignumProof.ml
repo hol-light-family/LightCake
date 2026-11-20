@@ -95,11 +95,6 @@ let BIGPAUX_MATCH_ABBREV_TAC (pat:term) (v:term) : tactic = fun (asl,w as g) ->
   let x = rev_assoc v tmi in
   ABBREV_TAC (mk_eq(v,x)) g;;
 
-let BIGPAUX_MAX_MAX = prove
- (`!x y. OPTION_MAP2 MAX (OPTION_MAP2 MAX x y) y = OPTION_MAP2 MAX x y`,
-  REPEAT GEN_TAC THEN CASES_ON `x:num option` THEN CASES_ON `y:num option` THEN
-  REWRITE_TAC[OPTION_MAP2_THM; option_INJ] THEN ARITH_TAC);;
-
 (* HOL4 simp with the simple facts among the assumptions only (no          *)
 (* quantified, implicational or existential ones, no abbreviations x = v   *)
 (* and none mentioning a constant of excl): the kit's SIMP uses every      *)
@@ -467,7 +462,7 @@ let BIGPAUX_LD1_CALL_GEN_TAC (fin:tactic) (ih:thm) : tactic = fun (asl,w as g) -
 
 let BIGPAUX_LD1_CALL_TAC = BIGPAUX_LD1_CALL_GEN_TAC
   (ASM_REWRITE_TAC[] THEN EXPAND_TAC "t3" THEN
-   REWRITE_TAC[wl_state_component_equality] THEN SIMP[BIGPAUX_MAX_MAX] THEN
+   REWRITE_TAC[wl_state_component_equality] THEN SIMP[OPTION_MAP2_MAX_CANCEL] THEN
    ARITH_TAC);;
 
 let bigp_has_sdl tm =
@@ -1253,7 +1248,7 @@ let evaluate_LongDiv_code' = prove
   EXISTS_TAC `wl_state_clock (t2:(A,C,FFI)wl_state) - dimindex(:A)` THEN
   EXISTS_TAC (mk_var("max",`:num option`)) THEN
   ASM_REWRITE_TAC[] THEN EXPAND_TAC "t2" THEN
-  REWRITE_TAC[wl_state_component_equality] THEN SIMP[BIGPAUX_MAX_MAX]);;
+  REWRITE_TAC[wl_state_component_equality] THEN SIMP[OPTION_MAP2_MAX_CANCEL]);;
 
 (* HOL4 line 865 (the unused bound variable w is left out) *)
 let evaluate_LongDiv_code = prove
@@ -1531,10 +1526,10 @@ let data_to_word_bignumProof_Replicate_code_thm = prove
     ALL_TAC] THEN
   STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[wl_bad_fun_return_def] THEN
   EXISTS_TAC `m:num option` THEN EXPAND_TAC "t3" THEN
-  SIMP[wl_state_component_equality; BIGPAUX_MAX_MAX] THEN
+  SIMP[wl_state_component_equality; OPTION_MAP2_MAX_CANCEL] THEN
   CONJ_TAC THENL [ARITH_TAC; ALL_TAC] THEN
   FIRST_X_ASSUM(MP_TAC o check (fun th -> mp4_is_app "option_le" (concl th))) THEN
-  EXPAND_TAC "t3" THEN SIMP[BIGPAUX_MAX_MAX]);;
+  EXPAND_TAC "t3" THEN SIMP[OPTION_MAP2_MAX_CANCEL]);;
 
 let BIGPAUX_fromList_one = prove
  (`fromList [one] = LS one`,
@@ -4064,10 +4059,6 @@ let BIGPAUX_NES_heap = prove
   ASM_SIMP_TAC[BIGPAUX_small_index] THEN
   REPEAT COND_CASES_TAC THEN ARITH_TAC);;
 
-let BIGPAUX_domain_fromAList_toAList = prove
- (`!t:A spt. domain (fromAList (toAList t)) = domain t`,
-  REWRITE_TAC[EXTENSION; domain_lookup; lookup_fromAList_toAList]);;
-
 (* the locals after the return from the AnyArith call                       *)
 let BIGPAUX_pop_locals = prove
  (`!c (t0:(A,C,FFI)wl_state) y1 y2 n l x1 x2 (w:A word) ss1 ss2 v vs s4 s5.
@@ -4125,7 +4116,7 @@ let BIGPAUX_domain_pop = prove
      domain (wl_state_locals s5) = domain y1 UNION domain y2`,
   REPEAT GEN_TAC THEN DISCH_THEN(MP_TAC o MATCH_MP BIGPAUX_pop_locals) THEN
   DISCH_THEN(X_CHOOSE_THEN `e:(num#(A word_loc))list` STRIP_ASSUME_TAC) THEN
-  ASM_REWRITE_TAC[domain_union; BIGPAUX_domain_fromAList_toAList] THEN
+  ASM_REWRITE_TAC[domain_union; domain_fromAList_toAList] THEN
   REWRITE_TAC[UNION_COMM]);;
 
 (* the return location of the caller after the return from the AnyArith call *)

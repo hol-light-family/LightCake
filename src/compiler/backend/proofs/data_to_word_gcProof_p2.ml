@@ -54,14 +54,6 @@ let GCP2AUX_cut_envs_adjust_sets = prove
   DISCH_THEN(SUBST1_TAC o SYM) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[domain_def; SING_SUBSET]) THEN ASM_REWRITE_TAC[FST; SND]);;
 
-(* separation logic: STAR trees up to associativity and commutativity       *)
-(* (after the MP4AUX helpers of data_to_word_memoryProof_p4)                 *)
-let GCP2AUX_STAR_AC = prove
- (`(!p q:(A->bool)->bool. p STAR q = q STAR p) /\
-   (!p q r:(A->bool)->bool. (p STAR q) STAR r = p STAR (q STAR r)) /\
-   (!p q r:(A->bool)->bool. p STAR (q STAR r) = q STAR (p STAR r))`,
-  MESON_TAC[STAR_COMM; STAR_ASSOC]);;
-
 let gcp2aux_is_star tm =
   try let f,_ = dest_comb tm in
       let s,_ = dest_comb f in
@@ -75,7 +67,7 @@ let rec gcp2aux_star_leaves tm =
 
 (* |- p = q for STAR trees p, q equal up to AC *)
 let gcp2aux_STAR_AC_EQ p q =
-  if aconv p q then REFL p else AC GCP2AUX_STAR_AC (mk_eq(p,q));;
+  if aconv p q then REFL p else AC LSORTAUX_STAR_AC (mk_eq(p,q));;
 
 (* closes a goal  q s  with an assumption  p s  (p, q equal up to AC) *)
 let gcp2aux_sep_ac_tac : tactic = fun (asl,w as g) ->
@@ -89,23 +81,6 @@ let gcp2aux_sep_ac_tac : tactic = fun (asl,w as g) ->
          ACCEPT_TAC (EQ_MP (AP_THM (gcp2aux_STAR_AC_EQ p q) s) th) g
     else failwith "" in
   tryfind try_one asl;;
-
-(* GCP2AUX: tuples of length 4 and 5 *)
-let GCP2AUX_TUPLE4 = prove
- (`!p:A#B#C#D. ?a b c d. p = (a,b,c,d)`,
-  MESON_TAC[PAIR_SURJECTIVE]);;
-
-let GCP2AUX_TUPLE5 = prove
- (`!p:A#B#C#D#E. ?a b c d e. p = (a,b,c,d,e)`,
-  MESON_TAC[PAIR_SURJECTIVE]);;
-
-(* GCP2AUX: tuples of length 6 *)
-let GCP2AUX_TUPLE6 = prove
- (`!p:A#B#C#D#E#F. ?a b c d e f. p = (a,b,c,d,e,f)`,
-  GEN_TAC THEN MAP_EVERY EXISTS_TAC [`FST(p:A#B#C#D#E#F)`; `FST(SND(p:A#B#C#D#E#F))`;
-    `FST(SND(SND(p:A#B#C#D#E#F)))`; `FST(SND(SND(SND(p:A#B#C#D#E#F))))`;
-    `FST(SND(SND(SND(SND(p:A#B#C#D#E#F)))))`; `SND(SND(SND(SND(SND(p:A#B#C#D#E#F)))))`] THEN
-  REWRITE_TAC[PAIR]);;
 
 (* GCP2AUX: tuples of length 7 *)
 let GCP2AUX_TUPLE7 = prove
@@ -155,11 +130,6 @@ let gcp2aux_sep_write a y th =
   let leaf = gcp2aux_one_leaf a (rator(concl th)) in
   SPEC y (MATCH_MP write_fun2set (gcp2aux_sep_focus leaf th));;
 
-(* GCP2AUX: tuples of length 3 *)
-let GCP2AUX_TUPLE3 = prove
- (`!p:A#B#C. ?a b c. p = (a,b,c)`,
-  MESON_TAC[PAIR_SURJECTIVE]);;
-
 (* the first application of the constant name in tm with no bound variable *)
 let gcp2aux_find_app name tm =
   let rec find bvs tm =
@@ -207,8 +177,8 @@ let gcp2aux_tuple_tac name names : tactic = fun (asl,w as g) ->
   let tm = try gcp2aux_find_app name w with Failure _ ->
            tryfind (fun (_,th) -> gcp2aux_find_app name (concl th)) asl in
   let th0 = match length names with
-      2 -> PAIR_SURJECTIVE | 3 -> GCP2AUX_TUPLE3 | 4 -> GCP2AUX_TUPLE4
-    | 5 -> GCP2AUX_TUPLE5 | 6 -> GCP2AUX_TUPLE6 | 7 -> GCP2AUX_TUPLE7
+      2 -> PAIR_SURJECTIVE | 3 -> BASICAUX_TUPLE3 | 4 -> BASICAUX_TUPLE4
+    | 5 -> BASICAUX_TUPLE5 | 6 -> GC1AUX_PAIR6 | 7 -> GCP2AUX_TUPLE7
     | _ -> failwith "gcp2aux_tuple_tac: arity" in
   let th = ISPEC tm th0 in
   let rec split ty n =
@@ -501,7 +471,7 @@ let word_gen_gc_partial_move_roots_thm = prove
      word_mul bytes_in_word (word (gen_gc_partial_conf_gen_start
        (gen_conf:(data_to_word_memoryProof_tag#(A word_loc)list)gen_gc_partial_conf))),
      word_mul bytes_in_word (word (gen_gc_partial_conf_refs_start gen_conf)))`
-    GCP2AUX_TUPLE5) THEN
+    BASICAUX_TUPLE5) THEN
   DISCH_THEN(X_CHOOSE_THEN `w2:A word_loc` (X_CHOOSE_THEN `i2:A word` (X_CHOOSE_THEN
     `pa2:A word` (X_CHOOSE_THEN `m2:A word->A word_loc` (X_CHOOSE_THEN `c2:bool`
     ASSUME_TAC))))) THEN
@@ -510,7 +480,7 @@ let word_gen_gc_partial_move_roots_thm = prove
      word_mul bytes_in_word (word (gen_gc_partial_conf_gen_start
        (gen_conf:(data_to_word_memoryProof_tag#(A word_loc)list)gen_gc_partial_conf))),
      word_mul bytes_in_word (word (gen_gc_partial_conf_refs_start gen_conf)))`
-    GCP2AUX_TUPLE5) THEN
+    BASICAUX_TUPLE5) THEN
   DISCH_THEN(X_CHOOSE_THEN `ws3:(A word_loc)list` (X_CHOOSE_THEN `i3:A word` (X_CHOOSE_THEN
     `pa3:A word` (X_CHOOSE_THEN `m3:A word->A word_loc` (X_CHOOSE_THEN `c3:bool`
     ASSUME_TAC))))) THEN
@@ -635,7 +605,7 @@ let word_gen_gc_partial_move_list_thm = prove
   REPEAT GEN_TAC THEN
   ASM_CASES_TAC `SUC (LENGTH (t:((A word_loc)heap_address)list)) < dimword(:A)` THENL
    [ALL_TAC; ASM_REWRITE_TAC[LENGTH]] THEN
-  FIRST_ASSUM(ASSUME_TAC o MATCH_MP WSIMPPAUX_word_SUC_ne0) THEN
+  FIRST_ASSUM(ASSUME_TAC o MATCH_MP LBIGAUX_WORD_SUC_NZ) THEN
   ASM_REWRITE_TAC[gen_gc_partial_gc_move_list_def; MAP; LENGTH; misc_word_list_def;
                   word_gen_gc_partial_move_list_suc] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
@@ -1514,7 +1484,7 @@ let word_gen_gc_partial_thm = prove
   MP_TAC(ISPEC `ocr:((A word_loc,data_to_word_memoryProof_tag#
       (A word_loc)list)heap_element)list#((A word_loc,data_to_word_memoryProof_tag#
       (A word_loc)list)heap_element)list#((A word_loc,data_to_word_memoryProof_tag#
-      (A word_loc)list)heap_element)list` GCP2AUX_TUPLE3) THEN
+      (A word_loc)list)heap_element)list` BASICAUX_TUPLE3) THEN
   DISCH_THEN(X_CHOOSE_THEN `old:((A word_loc,data_to_word_memoryProof_tag#
       (A word_loc)list)heap_element)list` (X_CHOOSE_THEN `current:((A word_loc,
       data_to_word_memoryProof_tag#(A word_loc)list)heap_element)list` (X_CHOOSE_THEN
@@ -3996,18 +3966,6 @@ let GCP2AUX_word_ml_inv_MEM = prove
   GEN_TAC THEN DISCH_THEN SUBST1_TAC THEN ASM_REWRITE_TAC[]);;
 
 (* GCP2AUX: a variable and its word are in the join_env of the locals *)
-let GCP2AUX_MEM_join_env_lookup = prove
- (`!(ls:data_v spt) (lt:(A word_loc)spt) n x w.
-     lookup n ls = SOME x /\ lookup (adjust_var n) lt = SOME w ==>
-     MEM (x,w) (join_env ls (toAList (inter lt (adjust_set ls))))`,
-  REPEAT GEN_TAC THEN STRIP_TAC THEN
-  REWRITE_TAC[join_env_def; MEM_MAP; MEM_FILTER; EXISTS_PROD] THEN
-  MAP_EVERY EXISTS_TAC [`adjust_var n`; `w:A word_loc`] THEN
-  ASM_REWRITE_TAC[adjust_var_NOT_0; EVEN_adjust_var; adjust_var_DIV_2; THE_DEF;
-                  MEM_toAList; lookup_inter_alt; GCP2AUX_IN_domain_adjust_set] THEN
-  COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
-  FIRST_X_ASSUM(MP_TAC o SPEC `n:num` o REWRITE_RULE[NOT_EXISTS_THM]) THEN
-  ASM_REWRITE_TAC[domain_lookup] THEN ASM_MESON_TAC[]);;
 
 (* GCP2AUX: the word representation of the value of a variable *)
 let GCP2AUX_state_rel_get_var_v_inv = prove
@@ -4024,7 +3982,7 @@ let GCP2AUX_state_rel_get_var_v_inv = prove
     MATCH_MP (REWRITE_RULE[IMP_CONJ; RIGHT_FORALL_IMP_THM] GCP2AUX_word_ml_inv_MEM)) THEN
   ANTS_TAC THENL
    [REWRITE_TAC[MEM_APPEND] THEN DISJ1_TAC THEN DISJ1_TAC THEN DISJ2_TAC THEN
-    MATCH_MP_TAC GCP2AUX_MEM_join_env_lookup THEN EXISTS_TAC `n:num` THEN ASM_REWRITE_TAC[];
+    MATCH_MP_TAC GCP1AUX_MEM_join_env THEN EXISTS_TAC `n:num` THEN ASM_REWRITE_TAC[];
     MESON_TAC[]]);;
 
 (* GCP2AUX: the representations of the booleans *)
@@ -5480,19 +5438,6 @@ let GCP2AUX_push_SOME_exc_s_key_eq = prove
      with Failure _ -> false))) THEN
   CASE_REWRITE_TAC[] THEN MESON_TAC[]);;
 
-(* GCP2AUX: the keys of env_to_list are the domain *)
-let GCP2AUX_set_MAP_FST_env_to_list = prove
- (`!(t:(A word_loc)spt) perm.
-     set_of_list (MAP FST (FST (env_to_list t perm))) = domain t`,
-  REPEAT GEN_TAC THEN
-  MP_TAC(ISPEC `env_to_list (t:(A word_loc)spt) perm` PAIR_SURJECTIVE) THEN
-  DISCH_THEN(X_CHOOSE_THEN `l:(num#A word_loc)list` (X_CHOOSE_THEN `p:num->num->num`
-    ASSUME_TAC)) THEN
-  FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP env_to_list_lookup_equiv) THEN
-  ASM_REWRITE_TAC[FST; EXTENSION; IN_SET_OF_LIST; domain_lookup] THEN
-  X_GEN_TAC `k:num` THEN REWRITE_TAC[GSYM IS_SOME_ALOOKUP_EQ] THEN
-  ASM_REWRITE_TAC[IS_SOME_EXISTS]);;
-
 (* GCP2AUX: the stack after a call (any handler) *)
 let GCP2AUX_call_push_stack = prove
  (`!args1 ss y (opt:(num#(A)wl_prog#num#num)option) (t:(A,C,FFI)wl_state).
@@ -5571,7 +5516,7 @@ let evaluate_IMP_domain_EQ = prove
     gcp2aux_has_const "MAP" (concl th) && not(gcp2aux_has_const "toAList" (concl th)))) THEN
   FIRST_X_ASSUM(SUBST1_TAC o SYM o check (fun th -> is_eq(concl th) &&
     gcp2aux_has_const "toAList" (concl th))) THEN
-  REWRITE_TAC[GCP2AUX_set_MAP_FST_env_to_list; set_MAP_FST_toAList_domain; UNION_COMM]);;
+  REWRITE_TAC[IL2AUX_env_to_list_domain; set_MAP_FST_toAList_domain; UNION_COMM]);;
 
 (* HOL4 line 5666 *)
 let evaluate_IMP_domain_EQ_Exc = prove
@@ -5592,7 +5537,7 @@ let evaluate_IMP_domain_EQ_Exc = prove
   ASM_REWRITE_TAC[domain_union; domain_fromAList] THEN
   FIRST_X_ASSUM(SUBST1_TAC o SYM o check (fun th -> is_eq(concl th) &&
     gcp2aux_has_const "MAP" (concl th))) THEN
-  REWRITE_TAC[GCP2AUX_set_MAP_FST_env_to_list; set_MAP_FST_toAList_domain; UNION_COMM]);;
+  REWRITE_TAC[IL2AUX_env_to_list_domain; set_MAP_FST_toAList_domain; UNION_COMM]);;
 
 (* HOL4 line 5688 *)
 let mk_loc_jump_exc = prove

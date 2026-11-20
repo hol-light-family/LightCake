@@ -2169,12 +2169,6 @@ let STACKPROPSAUX_word_list_read = prove
 
 (* copy_each_thm (HOL4 line 1250) and its helpers *)
 
-let STACKPROPSAUX_FUPDATE_FLOOKUP_ELIM = prove
- (`!(f:(A,B)fmap) k v. FLOOKUP f k = SOME v ==> f |+ (k,v) = f`,
-  REWRITE_TAC[FLOOKUP_DEF] THEN REPEAT GEN_TAC THEN COND_CASES_TAC THEN
-  REWRITE_TAC[option_DISTINCT; option_INJ] THEN DISCH_TAC THEN
-  MATCH_MP_TAC FUPDATE_ELIM THEN ASM_REWRITE_TAC[]);;
-
 let STACKPROPSAUX_one_mod_dimword = prove
  (`1 MOD dimword (:A) = 1`,
   MATCH_MP_TAC MOD_LT THEN REWRITE_TAC[dimword_def] THEN
@@ -2295,7 +2289,7 @@ let copy_each_thm = prove
     CASE_REWRITE_TAC[stack_cont_loop_def; stack_exit_loop_def] THEN
     REWRITE_TAC[PAIR_EQ; stack_state_component_equality] THEN SIMP[] THEN
     RULE_ASSUM_TAC(REWRITE_RULE[stack_get_var_def]) THEN
-    ASM_SIMP_TAC[STACKPROPSAUX_FUPDATE_FLOOKUP_ELIM];
+    ASM_SIMP_TAC[FMAPAUX_FUPDATE_FLOOKUP_ELIM];
     ALL_TAC] THEN
   (* one round of the loop, then the induction hypothesis *)
   COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT; LET_DEF; LET_END_DEF] THEN DISCH_TAC THEN
@@ -2783,12 +2777,6 @@ let STACKPROPSAUX_get_var_clock = prove
      stack_get_var r (stack_state_clock_fupd (K c) t) = stack_get_var r t`,
   REWRITE_TAC[stack_get_var_def; STACKPROPSAUX_SR_ACC]);;
 
-let STACKPROPSAUX_get_var_imm_clock = prove
- (`!ri c (t:(A,C,FFI)stack_state).
-     stack_get_var_imm ri (stack_state_clock_fupd (K c) t) = stack_get_var_imm ri t`,
-  GEN_TAC THEN STRUCT_CASES_TAC (ISPEC `ri:(A)reg_imm` (cases "reg_imm")) THEN
-  REWRITE_TAC[stack_get_var_imm_def; stack_get_var_def; STACKPROPSAUX_SR_ACC]);;
-
 let STACKPROPSAUX_get_var_imm_rel = prove
  (CASE_TERM `!jump off k (s:(A,C,FFI)stack_state) t ri.
      stack_removeProof_state_rel jump off k s t /\
@@ -2807,7 +2795,7 @@ let STACKPROPSAUX_cc_If = prove
   REPEAT GEN_TAC THEN DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "ih1") (LABEL_TAC "ih2")) THEN
   STACKPROPSAUX_CC_SETUP_TAC THEN
   REWRITE_TAC[STACKPROPSAUX_ev_clause "stack_If"; STACKPROPSAUX_get_var_clock;
-              STACKPROPSAUX_get_var_imm_clock] THEN
+              stack_get_var_imm_with_const] THEN
   SUBGOAL_THEN `stack_get_var r1 (t1:(A,C,FFI)stack_state) = stack_get_var r1 (s:(A,C,FFI)stack_state) /\
                 stack_get_var_imm ri t1 = stack_get_var_imm ri (s:(A,C,FFI)stack_state)`
     (CONJUNCTS_THEN SUBST1_TAC) THENL
@@ -3278,7 +3266,7 @@ let STACKPROPSAUX_eval_stack_store = prove
   REWRITE_TAC STACKPROPSAUX_SR_NORM THEN
   REWRITE_TAC[PAIR_EQ; stack_state_component_equality; STACKPROPSAUX_SR_ACC; FUPDATE_EQ;
               WORD_RULE `word_sub (word_add (b:A word) x) x = b`] THEN
-  ASM_SIMP_TAC[STACKPROPSAUX_FUPDATE_FLOOKUP_ELIM]);;
+  ASM_SIMP_TAC[FMAPAUX_FUPDATE_FLOOKUP_ELIM]);;
 
 let STACKPROPSAUX_cc_StackStore = prove
  (`!r n (s:(A,C,FFI)stack_state). STACKPROPSAUX_cc (StackStore r n) s`,
@@ -3587,9 +3575,9 @@ let STACKPROPSAUX_cc_StackStoreAny = prove
                      (stack_state_memory t1))) (t1:(A,C,FFI)stack_state)` THEN
    CONJ_TAC THENL
     [SIMP STACKPROPSAUX_EVAL_SIMPS THEN
-     ASM_SIMP_TAC[STACKPROPSAUX_FUPDATE_FLOOKUP_ELIM] THEN
+     ASM_SIMP_TAC[FMAPAUX_FUPDATE_FLOOKUP_ELIM] THEN
      REWRITE_TAC[stack_state_component_equality; STACKPROPSAUX_SR_ACC] THEN
-     ASM_SIMP_TAC[STACKPROPSAUX_FUPDATE_FLOOKUP_ELIM];
+     ASM_SIMP_TAC[FMAPAUX_FUPDATE_FLOOKUP_ELIM];
      REWRITE_TAC[ISPECL [`stack_state_stack_space (s:(A,C,FFI)stack_state)`;
                          `val (word_ushr (a:A word) (backend_common_word_shift (:A)))`] ADD_SYM] THEN
      MATCH_MP_TAC state_rel_stack_store THEN
@@ -3636,12 +3624,6 @@ let STACKPROPSAUX_cc_CodeBufferWrite = prove
   CASE_REWRITE_TAC[] THEN MATCH_MP_TAC STACKPROPSAUX_state_rel_code_buffer THEN
   ASM_REWRITE_TAC[]);;
 
-let STACKPROPSAUX_STAR_AC = prove
- (`(!p q:(A->bool)->bool. p STAR q = q STAR p) /\
-   (!p q r:(A->bool)->bool. (p STAR q) STAR r = p STAR (q STAR r)) /\
-   (!p q r:(A->bool)->bool. p STAR (q STAR r) = q STAR (p STAR r))`,
-  MESON_TAC[STAR_COMM; STAR_ASSOC]);;
-
 (* writing the next word of the data buffer into its free space *)
 
 let STACKPROPSAUX_buffer_write_mem = prove
@@ -3670,10 +3652,10 @@ let STACKPROPSAUX_buffer_write_mem = prove
     (p:(A word#(A)word_loc->bool)->bool) =
     set_sep_one (a,w) STAR (misc_word_list bp (MAP wl_Word L) STAR
       word_list_exists (word_add a bytes_in_word) n STAR p)` (fun th -> REWRITE_TAC[th]) THENL
-   [GEN_TAC THEN CONV_TAC(AC STACKPROPSAUX_STAR_AC); ALL_TAC] THEN
+   [GEN_TAC THEN CONV_TAC(AC LSORTAUX_STAR_AC); ALL_TAC] THEN
   DISCH_TAC THEN CONJ_TAC THENL [ASM_MESON_TAC[read_fun2set]; ALL_TAC] THEN
   FIRST_X_ASSUM(MP_TAC o MATCH_MP (ISPEC `wl_Word v:(A)word_loc` write_fun2set)) THEN
-  MATCH_MP_TAC EQ_IMP THEN AP_THM_TAC THEN CONV_TAC(AC STACKPROPSAUX_STAR_AC));;
+  MATCH_MP_TAC EQ_IMP THEN AP_THM_TAC THEN CONV_TAC(AC LSORTAUX_STAR_AC));;
 
 let STACKPROPSAUX_sr_buffer_position = prove
  (`!jump off k (s:(A,C,FFI)stack_state) t.
@@ -3722,7 +3704,7 @@ let STACKPROPSAUX_state_rel_buffer_write = prove
                                               "STAR" with Failure _ -> false)) THEN
      ASM_REWRITE_TAC[MAP_APPEND; LENGTH_APPEND] THEN
      MATCH_MP_TAC EQ_IMP THEN AP_THM_TAC THEN REWRITE_TAC[ADD_SYM] THEN
-     CONV_TAC(AC STACKPROPSAUX_STAR_AC);
+     CONV_TAC(AC LSORTAUX_STAR_AC);
      ALL_TAC] THEN
    STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
    UNDISCH_TAC `stack_removeProof_state_rel jump off k (s:(A,C,FFI)stack_state) t` THEN
@@ -3734,7 +3716,7 @@ let STACKPROPSAUX_state_rel_buffer_write = prove
          can (find_term ((=) `wl_Word (w2:A word)`)) (concl th)
      with Failure _ -> false)) THEN
    REWRITE_TAC[APPEND_ASSOC; ARITH_RULE `SUC n - 1 = n`] THEN
-   MATCH_MP_TAC EQ_IMP THEN AP_THM_TAC THEN CONV_TAC(AC STACKPROPSAUX_STAR_AC));;
+   MATCH_MP_TAC EQ_IMP THEN AP_THM_TAC THEN CONV_TAC(AC LSORTAUX_STAR_AC));;
 
 let STACKPROPSAUX_cc_DataBufferWrite = prove
  (`!r1 r2 (s:(A,C,FFI)stack_state). STACKPROPSAUX_cc (stack_DataBufferWrite r1 r2) s`,
@@ -3800,7 +3782,7 @@ let STACKPROPSAUX_state_rel_ffi_return = prove
    FIRST_X_ASSUM(MP_TAC o check (fun th -> try fst(dest_const(fst(strip_comb(rator(concl th))))) =
                                              "STAR" with Failure _ -> false)) THEN
    MATCH_MP_TAC EQ_IMP THEN AP_THM_TAC THEN REWRITE_TAC[MAP_APPEND; LENGTH_APPEND] THEN
-   REWRITE_TAC[ADD_SYM] THEN CONV_TAC(AC STACKPROPSAUX_STAR_AC));;
+   REWRITE_TAC[ADD_SYM] THEN CONV_TAC(AC LSORTAUX_STAR_AC));;
 
 (* case split on a word_loc value, naming the word *)
 
@@ -4643,7 +4625,7 @@ let STACKPROPSAUX_SC_MEM_TAC : tactic =
   REWRITE_TAC[the_SOME_Word_def; stack_set_var_def; STACKPROPSAUX_SR_ACC] THEN
   MATCH_MP_TAC EQ_IMP THEN AP_THM_TAC THEN
   REWRITE_TAC[MAP_APPEND; stack_removeProof_word_list_APPEND; LENGTH_APPEND; LENGTH_MAP] THEN
-  REWRITE_TAC[ADD_SYM] THEN CONV_TAC(AC STACKPROPSAUX_STAR_AC);;
+  REWRITE_TAC[ADD_SYM] THEN CONV_TAC(AC LSORTAUX_STAR_AC);;
 
 let STACKPROPSAUX_cc_StoreConsts = prove
  (`!t1 t2 stub_opt (s:(A,C,FFI)stack_state).
@@ -4733,7 +4715,7 @@ let STACKPROPSAUX_cc_StoreConsts = prove
                                               "STAR" with Failure _ -> false)) THEN
      ASM_REWRITE_TAC[the_SOME_Word_def; stack_removeProof_word_list_APPEND] THEN
      EXPAND_TAC "rst" THEN
-     MATCH_MP_TAC EQ_IMP THEN AP_THM_TAC THEN CONV_TAC(AC STACKPROPSAUX_STAR_AC);
+     MATCH_MP_TAC EQ_IMP THEN AP_THM_TAC THEN CONV_TAC(AC LSORTAUX_STAR_AC);
      ALL_TAC] THEN
   SUBGOAL_THEN `~(tb = 1) /\ ~(tb = 2) /\ ~(tb = 3) /\ ~(ta = 1) /\ ~(ta = 2) /\ ~(ta = 3) /\
                  ~(tb = ta)` STRIP_ASSUME_TAC THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
@@ -4971,7 +4953,7 @@ let store_list_code_thm = prove
                     STACKPROPSAUX_ev_clause "stack_Skip"; WORD_MUL_0; WORD_ADD_0;
                     FUPDATE_LIST_THM] THEN
     RULE_ASSUM_TAC(REWRITE_RULE[stack_get_var_def]) THEN
-    ASM_SIMP_TAC[STACKPROPSAUX_FUPDATE_FLOOKUP_ELIM; FUPDATE_ELIM] THEN
+    ASM_SIMP_TAC[FMAPAUX_FUPDATE_FLOOKUP_ELIM; FUPDATE_ELIM] THEN
     REWRITE_TAC[PAIR_EQ; stack_state_component_equality; STACKPROPSAUX_SR_ACC];
     ALL_TAC] THEN
   MAP_EVERY X_GEN_TAC [`x0:A word + num`; `xs:(A word + num)list`] THEN
@@ -5035,7 +5017,7 @@ let store_list_code_thm = prove
     ANTS_TAC THENL
      [FIRST_X_ASSUM(MP_TAC o check (fun th -> can (find_term
         ((=) `set_sep_one (w:A word,wl_Word (c:A word))`)) (concl th))) THEN
-      MATCH_MP_TAC EQ_IMP THEN AP_THM_TAC THEN CONV_TAC(AC STACKPROPSAUX_STAR_AC);
+      MATCH_MP_TAC EQ_IMP THEN AP_THM_TAC THEN CONV_TAC(AC LSORTAUX_STAR_AC);
       ALL_TAC] THEN
     ASM_REWRITE_TAC[] THEN
     DISCH_THEN(X_CHOOSE_THEN `r1:(A)word_loc`
@@ -5045,7 +5027,7 @@ let store_list_code_thm = prove
      [FIRST_X_ASSUM(MP_TAC o check (fun th -> can (find_term
         ((=) `fun2set (m1:A word->(A)word_loc,
                        stack_state_mdomain (s:(A,C,FFI)stack_state))`)) (concl th))) THEN
-      MATCH_MP_TAC EQ_IMP THEN AP_THM_TAC THEN CONV_TAC(AC STACKPROPSAUX_STAR_AC);
+      MATCH_MP_TAC EQ_IMP THEN AP_THM_TAC THEN CONV_TAC(AC LSORTAUX_STAR_AC);
       REWRITE_TAC[PAIR_EQ; stack_state_component_equality; STACKPROPSAUX_SR_ACC] THEN
       ASM_SIMP_TAC[STACKPROPSAUX_slc_regs; STACKPROPSAUX_slc_word]];
     SUBGOAL_THEN `~(i:num = a) /\ ~(i = t) /\
@@ -5079,7 +5061,7 @@ let store_list_code_thm = prove
      [FIRST_X_ASSUM(MP_TAC o check (fun th -> can (find_term
         ((=) `set_sep_one (w:A word,FAPPLY (stack_state_regs (s:(A,C,FFI)stack_state)) i)`))
         (concl th))) THEN
-      MATCH_MP_TAC EQ_IMP THEN AP_THM_TAC THEN CONV_TAC(AC STACKPROPSAUX_STAR_AC);
+      MATCH_MP_TAC EQ_IMP THEN AP_THM_TAC THEN CONV_TAC(AC LSORTAUX_STAR_AC);
       ALL_TAC] THEN
     ASM_REWRITE_TAC[] THEN
     DISCH_THEN(X_CHOOSE_THEN `r1:(A)word_loc`
@@ -5089,7 +5071,7 @@ let store_list_code_thm = prove
      [FIRST_X_ASSUM(MP_TAC o check (fun th -> can (find_term
         ((=) `fun2set (m1:A word->(A)word_loc,
                        stack_state_mdomain (s:(A,C,FFI)stack_state))`)) (concl th))) THEN
-      MATCH_MP_TAC EQ_IMP THEN AP_THM_TAC THEN CONV_TAC(AC STACKPROPSAUX_STAR_AC);
+      MATCH_MP_TAC EQ_IMP THEN AP_THM_TAC THEN CONV_TAC(AC LSORTAUX_STAR_AC);
       REWRITE_TAC[PAIR_EQ; stack_state_component_equality; STACKPROPSAUX_SR_ACC] THEN
       REWRITE_TAC[STACKPROPSAUX_slc_regs2; STACKPROPSAUX_slc_word]]]);;
 
@@ -5105,7 +5087,7 @@ let star_move_lemma = prove
  (`!(p0:(A->bool)->bool) p1 p1' p2 p3 p4.
      p0 STAR p1 STAR p1' STAR p2 STAR p3 STAR p4 =
      p2 STAR (p1 STAR p1' STAR (p3 STAR (p4 STAR p0)))`,
-  REPEAT GEN_TAC THEN CONV_TAC(AC STACKPROPSAUX_STAR_AC));;
+  REPEAT GEN_TAC THEN CONV_TAC(AC LSORTAUX_STAR_AC));;
 
 (* HOL4 line 2739 *)
 let stack_removeProof_read_mem_def = cake_def
@@ -5244,7 +5226,7 @@ let word_list_EQ_rev = prove
                          word_add a (word_mul (word n) b)`] THEN
   REWRITE_TAC[WORD_RULE `word_add (a:A word) (word_mul b (word n)) =
                          word_add a (word_mul (word n) b)`] THEN
-  CONV_TAC(AC STACKPROPSAUX_STAR_AC));;
+  CONV_TAC(AC LSORTAUX_STAR_AC));;
 
 (* HOL4 line 2827 (local) *)
 let word_list_and_rev_join_lemma = prove
@@ -5263,7 +5245,7 @@ let word_list_and_rev_join_lemma = prove
     word_add a (word_mul (word_add (word m) (word n)) b)`] THEN
   STRIP_TAC THEN ASM_REWRITE_TAC[] THEN POP_ASSUM(K ALL_TAC) THEN
   POP_ASSUM MP_TAC THEN MATCH_MP_TAC EQ_IMP THEN AP_THM_TAC THEN
-  CONV_TAC(AC STACKPROPSAUX_STAR_AC));;
+  CONV_TAC(AC LSORTAUX_STAR_AC));;
 
 (* HOL4 line 2837 (local) *)
 let word_list_IMP_read_mem = prove
@@ -5277,11 +5259,11 @@ let word_list_IMP_read_mem = prove
                    `m:A word->B`; `dm:A word->bool`] read_fun2set) THEN
     ANTS_TAC THENL [ALL_TAC; SIMP_TAC[]] THEN
     POP_ASSUM MP_TAC THEN MATCH_MP_TAC EQ_IMP THEN AP_THM_TAC THEN
-    CONV_TAC(AC STACKPROPSAUX_STAR_AC);
+    CONV_TAC(AC LSORTAUX_STAR_AC);
     FIRST_X_ASSUM MATCH_MP_TAC THEN
     MAP_EVERY EXISTS_TAC [`p STAR set_sep_one (a:A word,h:B)`; `dm:A word->bool`] THEN
     POP_ASSUM MP_TAC THEN MATCH_MP_TAC EQ_IMP THEN AP_THM_TAC THEN
-    CONV_TAC(AC STACKPROPSAUX_STAR_AC)]);;
+    CONV_TAC(AC LSORTAUX_STAR_AC)]);;
 
 (* HOL4 line 2846 (local) *)
 let INSERT_DELETE_EQ_DELETE = prove
@@ -5681,7 +5663,7 @@ let word_list_EL_in_memory = prove
   ASM_REWRITE_TAC[] THEN ANTS_TAC THENL [ALL_TAC; SIMP_TAC[]] THEN
   FIRST_X_ASSUM(MP_TAC o check (fun th -> can (find_term (fun t -> is_const t &&
     fst(dest_const t) = "fun2set")) (concl th))) THEN
-  MATCH_MP_TAC EQ_IMP THEN AP_THM_TAC THEN CONV_TAC(AC STACKPROPSAUX_STAR_AC));;
+  MATCH_MP_TAC EQ_IMP THEN AP_THM_TAC THEN CONV_TAC(AC LSORTAUX_STAR_AC));;
 
 (* HOL4 line 3201 *)
 let word_list_in_memory = prove
@@ -5702,7 +5684,7 @@ let word_list_in_memory = prove
   MAP_EVERY EXISTS_TAC [`r1 STAR r2:(A word#B->bool)->bool`; `dm:A word->bool`] THEN
   FIRST_X_ASSUM(MP_TAC o check (fun th -> can (find_term (fun t -> is_const t &&
     fst(dest_const t) = "fun2set")) (concl th))) THEN
-  MATCH_MP_TAC EQ_IMP THEN AP_THM_TAC THEN CONV_TAC(AC STACKPROPSAUX_STAR_AC));;
+  MATCH_MP_TAC EQ_IMP THEN AP_THM_TAC THEN CONV_TAC(AC LSORTAUX_STAR_AC));;
 
 (* init_code_thm (HOL4 line 3225): evaluation of the init code, segment by segment *)
 
@@ -5876,7 +5858,7 @@ let STACKPROPSAUX_init_segB = prove
   REWRITE_TAC[GSYM WORD_NOT_LOWER] THEN
   ASM_CASES_TAC `word_ult (p3:A word) a2` THEN ASM_CASES_TAC `word_ult (a4:A word) p3` THEN
   STACKPROPSAUX_RUN_TAC [] THEN
-  ASM_SIMP_TAC[STACKPROPSAUX_FUPDATE_FLOOKUP_ELIM]);;
+  ASM_SIMP_TAC[FMAPAUX_FUPDATE_FLOOKUP_ELIM]);;
 
 let STACKPROPSAUX_init_segC = prove
  (`!(s:(A,C,FFI)stack_state) a2 a3 a4 mhw.
@@ -5926,7 +5908,7 @@ let STACKPROPSAUX_init_segD = prove
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   ASM_CASES_TAC `word_ult (mh:A word) r0` THEN
   STACKPROPSAUX_RUN_TAC [] THEN
-  ASM_SIMP_TAC[STACKPROPSAUX_FUPDATE_FLOOKUP_ELIM]);;
+  ASM_SIMP_TAC[FMAPAUX_FUPDATE_FLOOKUP_ELIM]);;
 
 let STACKPROPSAUX_init_segE = prove
  (`!(s:(A,C,FFI)stack_state) k p2 r3 r4.
@@ -6787,7 +6769,7 @@ let STACKPROPSAUX_word_list_no_wrap = prove
      misc_word_list (word_add a bytes_in_word) ys STAR (p:(A word#B->bool)->bool)`;
     `m:A word->B`; `d:A word->bool`] THEN
   POP_ASSUM MP_TAC THEN MATCH_MP_TAC EQ_IMP THEN AP_THM_TAC THEN
-  CONV_TAC(AC STACKPROPSAUX_STAR_AC));;
+  CONV_TAC(AC LSORTAUX_STAR_AC));;
 
 let STACKPROPSAUX_DIV_MULT_R = prove
  (`!m n. ~(m = 0) ==> (n * m) DIV m = n`,
@@ -6930,7 +6912,7 @@ let STACKPROPSAUX_bitmaps_bound = prove
        "((misc_word_list bp (MAP wl_Word bms) STAR " ^
        "misc_word_list (word_add bp (word_mul bytes_in_word (word (LENGTH bms)))) xs STAR p) STAR " ^
        "cond (LENGTH xs = data_sp)) (fun2set (m,dm))"),
-      AP_THM_TAC THEN CONV_TAC(AC STACKPROPSAUX_STAR_AC))))) THEN
+      AP_THM_TAC THEN CONV_TAC(AC LSORTAUX_STAR_AC))))) THEN
   REWRITE_TAC[cond_STAR] THEN STRIP_TAC THEN
   MP_TAC(ISPECL [`bp:A word`; `APPEND (MAP wl_Word (bms:(A word)list)) (xs:((A)word_loc)list)`;
                  `p:(A word#(A)word_loc->bool)->bool`; `m:A word->(A)word_loc`;
@@ -7144,8 +7126,8 @@ let init_code_thm = prove
      (MP_TAC o MATCH_MP (ISPEC `wl_Word (word 0):(A)word_loc` write_fun2set)) THENL
      [FIRST_X_ASSUM(MP_TAC o check (fun th -> can (find_term ((=)
         `set_sep_one (word_sub (ptr4:A word) bytes_in_word,lastw:(A)word_loc)`)) (concl th))) THEN
-      MATCH_MP_TAC EQ_IMP THEN AP_THM_TAC THEN CONV_TAC(AC STACKPROPSAUX_STAR_AC);
-      MATCH_MP_TAC EQ_IMP THEN AP_THM_TAC THEN CONV_TAC(AC STACKPROPSAUX_STAR_AC)];
+      MATCH_MP_TAC EQ_IMP THEN AP_THM_TAC THEN CONV_TAC(AC LSORTAUX_STAR_AC);
+      MATCH_MP_TAC EQ_IMP THEN AP_THM_TAC THEN CONV_TAC(AC LSORTAUX_STAR_AC)];
     ALL_TAC] THEN
   (* run the init code *)
   MP_TAC(ISPECL [`s:(A,C,FFI)stack_state`; `gen_gc':bool`; `max_heap:num`; `k:num`;
@@ -7243,7 +7225,7 @@ let init_code_thm = prove
       `stack_state_mdomain (s:(A,C,FFI)stack_state)`] THEN
     FIRST_X_ASSUM(MP_TAC o check (fun th -> can (find_term ((=) `fun2set (m1:A word->(A)word_loc,
        stack_state_mdomain (s:(A,C,FFI)stack_state))`)) (concl th))) THEN
-    MATCH_MP_TAC EQ_IMP THEN AP_THM_TAC THEN CONV_TAC(AC STACKPROPSAUX_STAR_AC);
+    MATCH_MP_TAC EQ_IMP THEN AP_THM_TAC THEN CONV_TAC(AC LSORTAUX_STAR_AC);
     ALL_TAC] THEN
   MP_TAC(CONV_RULE (DEPTH_CONV let_CONV) (ISPECL [`gen_gc':bool`; `k:num`; `RF:(num,(A)word_loc)fmap`]
     STACKPROPSAUX_init_store_lookups)) THEN
@@ -7308,7 +7290,7 @@ let init_code_thm = prove
       REPEAT CONJ_TAC THENL
        [FIRST_X_ASSUM(MP_TAC o check (fun th -> can (find_term ((=) `fun2set (m1:A word->(A)word_loc,
           stack_state_mdomain (s:(A,C,FFI)stack_state))`)) (concl th))) THEN
-        MATCH_MP_TAC EQ_IMP THEN AP_THM_TAC THEN CONV_TAC(AC STACKPROPSAUX_STAR_AC);
+        MATCH_MP_TAC EQ_IMP THEN AP_THM_TAC THEN CONV_TAC(AC LSORTAUX_STAR_AC);
         ASM_REWRITE_TAC[];
         ASM_REWRITE_TAC[] THEN
         MAP_EVERY UNDISCH_TAC [`2 * hh + 255 <= Nw`;
@@ -7340,7 +7322,7 @@ let init_code_thm = prove
       ALL_TAC] THEN
     FIRST_X_ASSUM(MP_TAC o check (fun th -> can (find_term ((=) `fun2set (m1:A word->(A)word_loc,
        stack_state_mdomain (s:(A,C,FFI)stack_state))`)) (concl th))) THEN
-    MATCH_MP_TAC EQ_IMP THEN AP_THM_TAC THEN CONV_TAC(AC STACKPROPSAUX_STAR_AC);
+    MATCH_MP_TAC EQ_IMP THEN AP_THM_TAC THEN CONV_TAC(AC LSORTAUX_STAR_AC);
     ALL_TAC] THEN
   CONJ_TAC THENL
    [(* init_prop *)
@@ -7369,7 +7351,7 @@ let init_code_thm = prove
      [CONJ_TAC THENL [ASM_REWRITE_TAC[]; ALL_TAC] THEN
       FIRST_ASSUM(MP_TAC o check (fun th -> can (find_term ((=) `fun2set (m1:A word->(A)word_loc,
          stack_state_mdomain (s:(A,C,FFI)stack_state))`)) (concl th))) THEN
-      MATCH_MP_TAC EQ_IMP THEN AP_THM_TAC THEN CONV_TAC(AC STACKPROPSAUX_STAR_AC);
+      MATCH_MP_TAC EQ_IMP THEN AP_THM_TAC THEN CONV_TAC(AC LSORTAUX_STAR_AC);
       DISCH_TAC] THEN
     ASM_REWRITE_TAC[LENGTH_APPEND; LENGTH; LAST_APPEND; LAST; NOT_CONS_NIL] THEN
     REWRITE_TAC[WORD_RULE `word_mul (word n) (bytes_in_word:A word) =
@@ -7414,7 +7396,7 @@ let init_code_thm = prove
         REPEAT CONJ_TAC THENL
          [FIRST_ASSUM(MP_TAC o check (fun th -> can (find_term ((=)
             `set_sep_one (word_sub (ptr4:A word) bytes_in_word,lastw:(A)word_loc)`)) (concl th))) THEN
-          MATCH_MP_TAC EQ_IMP THEN AP_THM_TAC THEN CONV_TAC(AC STACKPROPSAUX_STAR_AC);
+          MATCH_MP_TAC EQ_IMP THEN AP_THM_TAC THEN CONV_TAC(AC LSORTAUX_STAR_AC);
           ASM_REWRITE_TAC[];
           ALL_TAC];
         MAP_EVERY EXISTS_TAC
@@ -7427,7 +7409,7 @@ let init_code_thm = prove
         REPEAT CONJ_TAC THENL
          [FIRST_ASSUM(MP_TAC o check (fun th -> can (find_term ((=) `fun2set (m1:A word->(A)word_loc,
             stack_state_mdomain (s:(A,C,FFI)stack_state))`)) (concl th))) THEN
-          MATCH_MP_TAC EQ_IMP THEN AP_THM_TAC THEN CONV_TAC(AC STACKPROPSAUX_STAR_AC);
+          MATCH_MP_TAC EQ_IMP THEN AP_THM_TAC THEN CONV_TAC(AC LSORTAUX_STAR_AC);
           ASM_REWRITE_TAC[];
           ALL_TAC]] THEN
       ASM_REWRITE_TAC[] THEN

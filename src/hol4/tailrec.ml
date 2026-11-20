@@ -36,15 +36,15 @@ let ISL =
 
 let TAILREC_PRE_def =
   let th = new_definition
-    `TAILREC_PRE (f1:A->A) guard precondition (x:A) <=>
+    `TAILREC_PRE (f1:A->A) guard pcond (x:A) <=>
        (!k. (!m. m < k ==> guard (ITER m f1 x))
-            ==> precondition (ITER k f1 x)) /\
+            ==> pcond (ITER k f1 x)) /\
        (?n. ~guard (ITER n f1 x))` in
   prove
-   (`!(f1:A->A) guard precondition (x:A).
-       TAILREC_PRE f1 guard precondition x <=>
+   (`!(f1:A->A) guard pcond (x:A).
+       TAILREC_PRE f1 guard pcond x <=>
        (!k. (!m. m < k ==> guard (ITER m f1 x))
-            ==> precondition (ITER k f1 x)) /\
+            ==> pcond (ITER k f1 x)) /\
        (?n. ~guard (ITER n f1 x))`,
     REWRITE_TAC[th]);;
 
@@ -71,12 +71,6 @@ let SHORT_TAILREC_PRE_def = new_definition
 
 (* helpers: splitting a quantifier over num at 0 and SUC *)
 
-let LSMALLAUX_FORALL_NUM = MESON[num_CASES]
-  `!P. (!n. P n) <=> P 0 /\ (!n. P (SUC n))`;;
-
-let LSMALLAUX_EXISTS_NUM = MESON[num_CASES]
-  `!P. (?n. P n) <=> P 0 \/ (?n. P (SUC n))`;;
-
 let LSMALLAUX_FORALL_LT_SUC = prove
  (`!(R:num->bool) k.
      (!m. m < SUC k ==> R m) <=> R 0 /\ (!m. m < k ==> R (SUC m))`,
@@ -89,7 +83,7 @@ let TAILREC_PRE_THM = prove
               p x /\ (g x ==> TAILREC_PRE f1 g p (f1 x))`,
   REPEAT GEN_TAC THEN REWRITE_TAC[TAILREC_PRE_def] THEN
   GEN_REWRITE_TAC (LAND_CONV o ONCE_DEPTH_CONV)
-    [LSMALLAUX_FORALL_NUM; LSMALLAUX_EXISTS_NUM] THEN
+    [FORALL_NUM; EXISTS_NUM] THEN
   REWRITE_TAC[LSMALLAUX_FORALL_LT_SUC; CONJUNCT1 LT; ITER_ALT] THEN
   ASM_CASES_TAC `(g:A->bool) x` THEN ASM_REWRITE_TAC[CONJ_ASSOC]);;
 

@@ -766,9 +766,6 @@ let MAP_get_var_eqD = prove
   REWRITE_TAC[wl_get_vars_def] THEN ASM_REWRITE_TAC[] THEN
   FIRST_X_ASSUM(MP_TAC o SPEC `t':num list` o check (is_forall o concl)) THEN
   ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN REWRITE_TAC[]);;
-let WPROOF2AUX_cp_pair_CASE = prove
- (`!(p:A#B) (f:A->B->C). pair_CASE p f = f (FST p) (SND p)`,
-  REWRITE_TAC[FORALL_PAIR_THM; pair_CASE]);;
 
 let WPROOF2AUX_cp_FORALL_PAIR_EQ_IMP = prove
  (`!(t:A#B) (Q:A->B->bool). (!x y. t = (x,y) ==> Q x y) <=> Q (FST t) (SND t)`,
@@ -779,7 +776,7 @@ let WPROOF2AUX_cpm_CONS = prove
      copy_prop_move (CONS (x,y) xs) cs =
      (CONS (x,lookup_eq cs y) (FST (copy_prop_move xs cs)),
       set_eq (remove_eq (SND (copy_prop_move xs cs)) x) x y)`,
-  REWRITE_TAC[copy_prop_move_def; LET_DEF; LET_END_DEF; WPROOF2AUX_cp_pair_CASE]);;
+  REWRITE_TAC[copy_prop_move_def; LET_DEF; LET_END_DEF; pair_CASE_def]);;
 
 let copy_prop_move_eval_aux1 = prove
  (`CPstate_inv cs ==>
@@ -868,7 +865,7 @@ let copy_prop_inst_inv = prove
     (fun th -> MESON_TAC[th; SND]) THEN
   MATCH_MP_TAC copy_prop_inst_ind THEN REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
   REWRITE_TAC[copy_prop_inst_def; LET_DEF; LET_END_DEF] THEN
-  CASE_REWRITE_TAC[WPROOF2AUX_cp_pair_CASE; FST; SND] THEN
+  CASE_REWRITE_TAC[pair_CASE_def; FST; SND] THEN
   REPEAT COND_CASES_TAC THEN REWRITE_TAC[FST; SND] THEN
   MESON_TAC[remove_eq_inv; remove_eqs_inv]);;
 
@@ -881,9 +878,9 @@ let copy_prop_prog_inv = prove
   MATCH_MP_TAC copy_prop_prog_ind THEN REPEAT CONJ_TAC THEN REPEAT STRIP_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[WPROOF2AUX_cp_FORALL_PAIR_EQ_IMP]) THEN
   REWRITE_TAC[copy_prop_prog_def; LET_DEF; LET_END_DEF] THEN
-  CASE_REWRITE_TAC[WPROOF2AUX_cp_pair_CASE; FST; SND] THEN
+  CASE_REWRITE_TAC[pair_CASE_def; FST; SND] THEN
   REPEAT (FIRST [COND_CASES_TAC; TOP_CASE_TAC]) THEN
-  CASE_REWRITE_TAC[WPROOF2AUX_cp_pair_CASE; FST; SND] THEN
+  CASE_REWRITE_TAC[pair_CASE_def; FST; SND] THEN
   ASM_SIMP_TAC[empty_eq_inv; remove_eq_inv; remove_eqs_inv; set_store_eq_inv] THEN
   TRY (MATCH_MP_TAC merge_eqs_inv THEN ASM_SIMP_TAC[] THEN NO_TAC) THEN
   ASM_MESON_TAC[copy_prop_move_inv; copy_prop_inst_inv; PAIR]);;
@@ -973,7 +970,7 @@ let copy_prop_move_correct = prove
    wl_evaluate (prog', st) = (err, st') /\
    (err = NONE ==> CPstate_models cs' st')`,
   REWRITE_TAC[copy_prop_prog_def; LET_DEF; LET_END_DEF] THEN
-  CASE_REWRITE_TAC[WPROOF2AUX_cp_pair_CASE] THEN
+  CASE_REWRITE_TAC[pair_CASE_def] THEN
   COND_CASES_TAC THEN REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN RVEQ_TAC THENL
    [CONJ_TAC THENL
      [MP_TAC(INST [`FST (copy_prop_move moves cs)`,`moves':(num#num)list`;
@@ -1034,7 +1031,7 @@ let copy_prop_inst_eval = prove
     ASM_REWRITE_TAC[]; ALL_TAC]) THEN
   DISCH_THEN(MP_TAC o SYM) THEN
   REWRITE_TAC[copy_prop_inst_def; LET_DEF; LET_END_DEF] THEN
-  CASE_REWRITE_TAC[WPROOF2AUX_cp_pair_CASE; FST; SND] THEN
+  CASE_REWRITE_TAC[pair_CASE_def; FST; SND] THEN
   REPEAT COND_CASES_TAC THEN CASE_REWRITE_TAC[FST; SND; PAIR_EQ] THEN
   STRIP_TAC THEN RVEQ_TAC THEN
   REWRITE_TAC[wl_evaluate_def; wl_inst_def] THEN CASE_REWRITE_TAC[] THEN
@@ -1074,7 +1071,7 @@ let WPROOF2AUX_copy_prop_inst_model = prove
   MATCH_MP_TAC copy_prop_inst_ind THEN REPEAT CONJ_TAC THEN
   REPEAT GEN_TAC THEN DISCH_TAC THEN DISCH_TAC THEN
   REWRITE_TAC[copy_prop_inst_def; LET_DEF; LET_END_DEF] THEN
-  CASE_REWRITE_TAC[WPROOF2AUX_cp_pair_CASE; FST; SND] THEN
+  CASE_REWRITE_TAC[pair_CASE_def; FST; SND] THEN
   REWRITE_TAC[wl_inst_def; remove_eqs_def] THEN CASE_REWRITE_TAC[] THEN
   REWRITE_TAC[wl_assign_def; wl_mem_store_def] THEN DISCH_TAC THEN
   GVS(all_case_eqs()) THEN WPROOF2AUX_MODEL_TAC);;
@@ -1597,7 +1594,7 @@ let WPROOF2AUX_cpc_Get = prove
   UNDISCH_TAC `copy_prop_prog (wl_Get n name:(A)wl_prog) cs = (prog',cs')` THEN
   REWRITE_TAC[copy_prop_prog_def; LET_DEF; LET_END_DEF] THEN
   MP_TAC(ISPEC `lookup_store_eq cs name` (nchotomy_of_type `:(num)option`)) THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[WPROOF2AUX_cp_pair_CASE] THENL
+  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[pair_CASE_def] THENL
    [REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN WPROOF2AUX_cp_SUBST_TAC THEN
     ASM_REWRITE_TAC[] THEN MATCH_MP_TAC set_store_eq_model_set_var THEN
     ASM_REWRITE_TAC[];
@@ -1683,7 +1680,7 @@ let WPROOF2AUX_cpc_MustTerminate = prove
  (mk_imp(WPROOF2AUX_cpc `p1:(A)wl_prog`, WPROOF2AUX_cpc `MustTerminate p1:(A)wl_prog`),
   DISCH_TAC THEN
   REWRITE_TAC[copy_prop_prog_def; LET_DEF; LET_END_DEF] THEN
-  CASE_REWRITE_TAC[WPROOF2AUX_cp_pair_CASE; PAIR_EQ] THEN
+  CASE_REWRITE_TAC[pair_CASE_def; PAIR_EQ] THEN
   REPEAT GEN_TAC THEN STRIP_TAC THEN WPROOF2AUX_cp_SUBST_TAC THEN
   UNDISCH_TAC `wl_evaluate (MustTerminate p1, st:(A,C,FFI)wl_state) = (err, st')` THEN
   REWRITE_TAC[wl_evaluate_def; LET_DEF; LET_END_DEF] THEN
@@ -1716,7 +1713,7 @@ let WPROOF2AUX_cpc_Seq = prove
          WPROOF2AUX_cpc `wl_Seq p1 p2:(A)wl_prog`),
   DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "IH1") (LABEL_TAC "IH2")) THEN
   REWRITE_TAC[copy_prop_prog_def; LET_DEF; LET_END_DEF] THEN
-  CASE_REWRITE_TAC[WPROOF2AUX_cp_pair_CASE; PAIR_EQ] THEN
+  CASE_REWRITE_TAC[pair_CASE_def; PAIR_EQ] THEN
   REPEAT GEN_TAC THEN STRIP_TAC THEN WPROOF2AUX_cp_SUBST_TAC THEN
   UNDISCH_TAC `wl_evaluate (wl_Seq p1 p2, st:(A,C,FFI)wl_state) = (err, st')` THEN
   REWRITE_TAC[wl_evaluate_def; LET_DEF; LET_END_DEF] THEN
@@ -1759,7 +1756,7 @@ let WPROOF2AUX_cpc_If = prove
          WPROOF2AUX_cpc `wl_If cmp r ri p1 p2:(A)wl_prog`),
   DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "IH1") (LABEL_TAC "IH2")) THEN
   REWRITE_TAC[copy_prop_prog_def; LET_DEF; LET_END_DEF] THEN
-  CASE_REWRITE_TAC[WPROOF2AUX_cp_pair_CASE; PAIR_EQ] THEN
+  CASE_REWRITE_TAC[pair_CASE_def; PAIR_EQ] THEN
   REPEAT GEN_TAC THEN STRIP_TAC THEN WPROOF2AUX_cp_SUBST_TAC THEN
   FIRST_ASSUM(ASSUME_TAC o GSYM o check (fun th ->
     concl th = `~(err = SOME (wl_Error:(A)wl_result))`)) THEN
@@ -1791,7 +1788,7 @@ let WPROOF2AUX_cpc_Loop = prove
          WPROOF2AUX_cpc `wl_Loop names c exit_names:(A)wl_prog`),
   DISCH_TAC THEN
   REWRITE_TAC[copy_prop_prog_def; LET_DEF; LET_END_DEF] THEN
-  CASE_REWRITE_TAC[WPROOF2AUX_cp_pair_CASE; PAIR_EQ] THEN
+  CASE_REWRITE_TAC[pair_CASE_def; PAIR_EQ] THEN
   REPEAT GEN_TAC THEN STRIP_TAC THEN WPROOF2AUX_cp_SUBST_TAC THEN
   REWRITE_TAC[empty_eq_model] THEN
   MATCH_MP_TAC evaluate_Loop_body_cong_err THEN EXISTS_TAC `c:(A)wl_prog` THEN

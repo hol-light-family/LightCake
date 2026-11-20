@@ -908,16 +908,12 @@ let genv_lookup_cons = prove
   REPEAT STRIP_TAC THEN EQ_TAC THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
   ASM_MESON_TAC[PAIR_EQ]);;
 
-let FLATP1AUX_STRIPS_TAC : tactic =
-  REPEAT(FIRST_X_ASSUM(fun th -> let c = concl th in
-    if is_exists c || is_conj c || is_disj c then CAKE_STRIP_ASSUME_TAC th else NO_TAC));;
-
 let FLATP1AUX_VREL_TAC (thl:thm list) : tactic =
   REPEAT(CHANGED_TAC(
     RULE_ASSUM_TAC(REWRITE_RULE([v_rel_eqns; LIST_REL_CONS1; LIST_REL_NIL; LENGTH;
                                  option_INJ; option_DISTINCT; PAIR_EQ] @ thl)) THEN
     RULE_ASSUM_TAC(CONV_RULE NUM_REDUCE_CONV) THEN
-    FLATP1AUX_STRIPS_TAC THEN TRY RVEQ_TAC)) THEN
+    SEVPAUX_STRIPS_TAC THEN TRY RVEQ_TAC)) THEN
   TRY(FIRST_ASSUM(CONTR_TAC o check (fun th -> concl th = `F`)));;
 
 (* HOL4 line 828 *)
@@ -1062,7 +1058,7 @@ let do_test_lemma = prove
   [ASM_MESON_TAC[source_to_flatProof_v_rel_check_type]; ALL_TAC] THEN
   ASM_REWRITE_TAC[] THEN COND_CASES_TAC THENL
   [RVEQ_TAC THEN RULE_ASSUM_TAC(REWRITE_RULE[check_type_def]) THEN
-   FLATP1AUX_STRIPS_TAC THEN RVEQ_TAC THEN FLATP1AUX_VREL_TAC [] THEN
+   SEVPAUX_STRIPS_TAC THEN RVEQ_TAC THEN FLATP1AUX_VREL_TAC [] THEN
    REWRITE_TAC[the_Litv_Float64_def; flat_the_Litv_Float64_def];
    ASM_MESON_TAC[source_to_flatProof_do_eq]]);;
 
@@ -1248,7 +1244,7 @@ let FLATP1AUX_dest_thunk_rel = prove
      check (fun th -> is_forall (concl th) && is_exists (snd (dest_forall (concl th))))) THEN
    ASM_REWRITE_TAC[] THEN
    RULE_ASSUM_TAC(REWRITE_RULE[source_to_flatProof_sv_rel_cases]) THEN
-   FLATP1AUX_STRIPS_TAC THEN RVEQ_TAC THEN CASE_REWRITE_TAC[] THEN
+   SEVPAUX_STRIPS_TAC THEN RVEQ_TAC THEN CASE_REWRITE_TAC[] THEN
    TRY(CASES_ON `m:thunk_mode`) THEN CASE_REWRITE_TAC[] THEN
    COND_CASES_TAC THEN CASE_REWRITE_TAC[]]);;
 
@@ -1263,21 +1259,21 @@ let FLATP1AUX_DA_SPLIT_TAC : tactic =
     (X_CHOOSE_THEN `fcfg:(C)install_config` SUBST1_TAC))))) THEN
   REWRITE_TAC[flat_state_INFO.ri_accessors; FST; SND; NOT_NULL_EQ; IMP_CONJ] THEN
   DISCH_THEN(CAKE_STRIP_ASSUME_TAC o REWRITE_RULE[do_app_cases]) THEN
-  REPEAT DISCH_TAC THEN FLATP1AUX_STRIPS_TAC THEN RVEQ_TAC;;
+  REPEAT DISCH_TAC THEN SEVPAUX_STRIPS_TAC THEN RVEQ_TAC;;
 
 let FLATP1AUX_DA_PREP_TAC : tactic =
   RULE_ASSUM_TAC(REWRITE_RULE[distinctness "op"; PAIR_EQ; store_alloc_def; TL; o_DEF;
                               case_eq "ffi_result"; option_case_eq; sum_case_eq;
                               option_INJ; option_DISTINCT]) THEN
   TRY(FIRST_ASSUM(CONTR_TAC o check (fun th -> concl th = `F`))) THEN
-  FLATP1AUX_STRIPS_TAC THEN RVEQ_TAC THEN
-  RULE_ASSUM_TAC(REWRITE_RULE[PAIR_EQ]) THEN FLATP1AUX_STRIPS_TAC THEN RVEQ_TAC THEN
+  SEVPAUX_STRIPS_TAC THEN RVEQ_TAC THEN
+  RULE_ASSUM_TAC(REWRITE_RULE[PAIR_EQ]) THEN SEVPAUX_STRIPS_TAC THEN RVEQ_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[thunk_op_def]) THEN
   RULE_ASSUM_TAC(REWRITE_RULE([pair_case_eq; option_case_eq; list_case_eq; COND_CASE_EQ;
                                case_eq "thunk_op"; case_eq "v"; PAIR_EQ; option_INJ;
                                option_DISTINCT; store_alloc_def])) THEN
-  FLATP1AUX_STRIPS_TAC THEN RVEQ_TAC THEN
-  RULE_ASSUM_TAC(REWRITE_RULE[PAIR_EQ]) THEN FLATP1AUX_STRIPS_TAC THEN RVEQ_TAC THEN
+  SEVPAUX_STRIPS_TAC THEN RVEQ_TAC THEN
+  RULE_ASSUM_TAC(REWRITE_RULE[PAIR_EQ]) THEN SEVPAUX_STRIPS_TAC THEN RVEQ_TAC THEN
   FLATP1AUX_VREL_TAC [];;
 
 let FLATP1AUX_bad_thunk_update_rel = prove
@@ -1299,24 +1295,6 @@ let FLATP1AUX_sv_rel_eqns = prove
   GEN_REWRITE_TAC LAND_CONV [source_to_flatProof_sv_rel_cases] THEN SIMP[] THEN
   MESON_TAC[]);;
 
-let FLATP1AUX_EX_WITNESS_TAC : tactic = fun (asl,w as gl) ->
-  let vs,b = strip_exists w in
-  let v = hd vs in
-  let ok t = not (exists (fun u -> free_in u t) vs) in
-  let rec find_eq tm =
-    if is_conj tm then (try find_eq (lhand tm) with Failure _ -> find_eq (rand tm))
-    else if is_eq tm then
-      let l,r = dest_eq tm in
-      if l = v && ok r then r
-      else if r = v && ok l then l
-      else failwith "find_eq"
-    else failwith "find_eq" in
-  EXISTS_TAC (find_eq b) gl;;
-
-let FLATP1AUX_strsub = prove
- (`!str n. strsub str n = EL n (explode str)`,
-  MATCH_MP_TAC mlstring_INDUCT THEN REWRITE_TAC[strsub_def; explode_implode]);;
-
 let FLATP1AUX_flat_refs_head (w:term) =
   let t = find_term (fun t -> let h,args = strip_comb t in
                        is_const h && fst(dest_const h) = "flat_state_REC" &&
@@ -1332,7 +1310,7 @@ let FLATP1AUX_LOOKUP_TAC : tactic = fun (asl,w as gl) ->
         is_exists (snd (dest_forall c))
      then CAKE_STRIP_ASSUME_TAC (SPEC y th) else NO_TAC)) THEN
    RULE_ASSUM_TAC(REWRITE_RULE[FLATP1AUX_sv_rel_eqns]) THEN
-   FLATP1AUX_STRIPS_TAC THEN RVEQ_TAC) gl;;
+   SEVPAUX_STRIPS_TAC THEN RVEQ_TAC) gl;;
 
 let FLATP1AUX_shift_lookup = prove
  (`(!sh. shift8_lookup sh = shift_lookup sh) /\ (!sh. shift64_lookup sh = shift_lookup sh)`,
@@ -1382,7 +1360,7 @@ let FLATP1AUX_DA_REL_TAC : tactic =
   IMP_RES_TAC do_conversion_INL THEN IMP_RES_TAC do_conversion_INR THEN
   IMP_RES_TAC source_to_flatProof_vs_to_string THEN
   IMP_RES_TAC FLATP1AUX_genv_c_ok_has_lists THEN
-  FLATP1AUX_STRIPS_TAC THEN RVEQ_TAC THEN FLATP1AUX_BAD_THUNK_TAC;;
+  SEVPAUX_STRIPS_TAC THEN RVEQ_TAC THEN FLATP1AUX_BAD_THUNK_TAC;;
 
 let FLATP1AUX_STORE_ASSIGN_TAC : tactic = fun (asl,w as gl) ->
   let is_sa t = let h,args = strip_comb t in
@@ -1411,33 +1389,16 @@ let FLATP1AUX_ALL2_MAP_Char = prove
                  (MAP (\c. flat_Litv (Char c)) l)`,
   GEN_TAC THEN LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[MAP; ALL2; v_rel_eqns]);;
 
-let FLATP1AUX_LEN_TAC : tactic = fun (asl,w as gl) ->
-  let ths = mapfilter (fun (_,th) -> let c = concl th in
-     let h,args = strip_comb c in
-     if is_const h && fst(dest_const h) = "ALL2" && length args = 3 then
-       GSYM (MATCH_MP LIST_REL_LENGTH th) else failwith "") asl in
-  let ths' = filter (fun th -> let c = concl th in not (lhs c = rhs c) &&
-                       not (exists (fun (_,a) -> aconv (concl a) c ||
-                                     aconv (concl a) (mk_eq(rhs c,lhs c))) asl)) ths in
-  MAP_EVERY ASSUME_TAC ths' gl;;
-
-let FLATP1AUX_GE_FACTS_TAC : tactic = fun (asl,w as gl) ->
-  let ths = mapfilter (fun (_,th) -> let c = concl th in
-     if is_neg c && is_comb (rand c) &&
-        (let h,_ = strip_comb (rand c) in is_const h && fst(dest_const h) = ">=")
-     then REWRITE_RULE[GE; NOT_LE] th else failwith "") asl in
-  MAP_EVERY ASSUME_TAC ths gl;;
-
 let FLATP1AUX_DA_FIN_TAC : tactic =
-  FLATP1AUX_LEN_TAC THEN FLATP1AUX_GE_FACTS_TAC THEN
+  SEVPAUX_LEN_TAC THEN SEVPAUX_GE_FACTS_TAC THEN
   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
   TRY FLATP1AUX_STORE_ASSIGN_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
   REWRITE_TAC[option_INJ; PAIR_EQ; GSYM CONJ_ASSOC] THEN
-  REPEAT FLATP1AUX_EX_WITNESS_TAC THEN
+  REPEAT SEVPAUX_EX_WITNESS_TAC THEN
   ASM_REWRITE_TAC[flat_state_INFO.ri_accessors; flat_state_INFO.ri_accfupds; K_THM; TL;
                   result_rel_eqns; NOT_CONS_NIL; CONS_11; UNWIND_THM1; UNWIND_THM2;
                   flat_Unitv_def; injectivity "result"; injectivity "error_result";
-                  FLATP1AUX_strsub] THEN
+                  PURE1AUX_strsub_EL] THEN
   REWRITE_TAC[TAKE_def; ARITH_RULE `~(1 = 0)`; ARITH_RULE `1 - 1 = 0`; CONS_11; TAKE_0] THEN
   SIMP[v_rel_eqns; LIST_REL_NIL; LIST_REL_CONS1; FLATP1AUX_sv_rel_eqns; ADD1;
        LIST_REL_REPLICATE_same; FLATP1AUX_v_rel_EL; source_to_flatProof_list_to_v_v_rel;
@@ -1887,7 +1848,7 @@ let do_opapp = prove
   REPEAT GEN_TAC THEN REWRITE_TAC[do_opapp_cases] THEN
   STRIP_TAC THEN RVEQ_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[LIST_REL_CONS1; LIST_REL_NIL; EVALAUX_MAP_FST3]) THEN
-  FLATP1AUX_STRIPS_TAC THEN RVEQ_TAC THENL
+  SEVPAUX_STRIPS_TAC THEN RVEQ_TAC THENL
   [MATCH_MP_TAC FLATP1AUX_do_opapp_Closure THEN ASM_REWRITE_TAC[];
    FIRST_X_ASSUM(STRIP_ASSUME_TAC o REWRITE_RULE[v_rel_more_eqns] o
      check (fun th -> let c = concl th in
@@ -2146,7 +2107,7 @@ let FLATP1AUX_pmatch = prove
                       fst (dest_var (fst (dest_forall (concl th)))) = "sv")) THEN
    ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
    CASES_ON `a:v store_v` THEN
-   RULE_ASSUM_TAC(REWRITE_RULE[FLATP1AUX_sv_rel_eqns]) THEN FLATP1AUX_STRIPS_TAC THEN
+   RULE_ASSUM_TAC(REWRITE_RULE[FLATP1AUX_sv_rel_eqns]) THEN SEVPAUX_STRIPS_TAC THEN
    RVEQ_TAC THEN CASE_REWRITE_TAC[source_to_flatProof_match_result_rel_def] THEN
    FIRST_X_ASSUM(MP_TAC o SPEC `a':v` o
      check (fun th -> is_forall (concl th) && is_imp (snd (dest_forall (concl th))))) THEN
@@ -2782,7 +2743,7 @@ let eval_state_call_rel_trans = prove
   REWRITE_TAC[eval_state_call_rel_def] THEN REPEAT GEN_TAC THEN
   CASES_ON `es1:(eval_state)option` THEN CASE_REWRITE_TAC[] THEN
   CASES_ON `a:eval_state` THEN CASE_REWRITE_TAC[] THEN STRIP_TAC THEN RVEQ_TAC THEN
-  RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN FLATP1AUX_STRIPS_TAC THEN RVEQ_TAC THEN
+  RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN SEVPAUX_STRIPS_TAC THEN RVEQ_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[option_INJ; injectivity "eval_state"]) THEN RVEQ_TAC THEN
   EXISTS_TAC `s2':eval_oracle_state` THEN ASM_REWRITE_TAC[] THEN
   CONJ_TAC THENL [ASM_MESON_TAC[LE_TRANS]; ASM_MESON_TAC[]]);;
@@ -3060,7 +3021,7 @@ let ALL_DISJOINT_MOVE = prove
   RULE_ASSUM_TAC(REWRITE_RULE[LENGTH_LUPDATE]) THEN
   ASM_REWRITE_TAC[EL_LUPDATE; LENGTH_LUPDATE] THEN
   REPEAT COND_CASES_TAC THEN RULE_ASSUM_TAC(REWRITE_RULE[DE_MORGAN_THM]) THEN
-  FLATP1AUX_STRIPS_TAC THEN RVEQ_TAC THEN
+  SEVPAUX_STRIPS_TAC THEN RVEQ_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[SUBSET; EXTENSION; IN_INTER; NOT_IN_EMPTY]) THEN
   REWRITE_TAC[EXTENSION; IN_INTER; NOT_IN_EMPTY; IN_DIFF; IN_UNION] THEN
   ASM_MESON_TAC[]);;

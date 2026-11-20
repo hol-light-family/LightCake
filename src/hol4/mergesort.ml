@@ -306,14 +306,6 @@ let merge_perm = prove
   EXISTS_TAC `CONS (y:A) (CONS x (APPEND l1 l2))` THEN CONJ_TAC THENL
    [LSORTAUX_PERM_ARITH_TAC; ASM_SIMP_TAC[PERM_CONS_IFF]]);;
 
-let LSORTAUX_TAKE_0 = prove
- (`!l:A list. TAKE 0 l = []`,
-  LIST_INDUCT_TAC THEN REWRITE_TAC[TAKE_DEF]);;
-
-let LSORTAUX_DROP_0 = prove
- (`!l:A list. DROP 0 l = l`,
-  LIST_INDUCT_TAC THEN REWRITE_TAC[DROP_DEF]);;
-
 let LSORTAUX_take_drop_partition = prove
  (`!(l:A list) n m.
      m <= n ==> APPEND (TAKE m l) (TAKE (n - m) (DROP m l)) = TAKE n l`,
@@ -341,7 +333,7 @@ let LSORTAUX_MSN_CASES_TAC (fin:tactic) : tactic =
 
 let LSORTAUX_TAKE_TAC =
   REWRITE_TAC[TAKE_DEF] THEN CONV_TAC NUM_REDUCE_CONV THEN
-  REWRITE_TAC[LSORTAUX_TAKE_0];;
+  REWRITE_TAC[TAKE_0];;
 
 let mergesortN_perm = prove
  (`!R n (l:A list). PERM (TAKE n l) (mergesortN R n l)`,
@@ -363,14 +355,10 @@ let mergesortN_perm = prove
 (* Sortedness.                                                               *)
 (* ------------------------------------------------------------------------- *)
 
-let LSORTAUX_TAKE_LENGTH_ID = prove
- (`!l:A list. TAKE (LENGTH l) l = l`,
-  LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[TAKE_DEF; LENGTH; NOT_SUC; SUC_SUB1]);;
-
 let mergesort_perm = prove
  (`!R (l:A list). PERM l (mergesort R l)`,
   REWRITE_TAC[mergesort_def] THEN
-  MESON_TAC[mergesortN_perm; LSORTAUX_TAKE_LENGTH_ID]);;
+  MESON_TAC[mergesortN_perm; TAKE_LENGTH_ID]);;
 
 let sort2_sorted = prove
  (`!R (x:A) y. total R ==> SORTED R (sort2 R x y)`,
@@ -505,7 +493,7 @@ let mergesortN_stable = prove
 
 let mergesort_stable = prove
  (`!R (l:A list). transitive R /\ total R ==> stable R l (mergesort R l)`,
-  MESON_TAC[mergesortN_stable; mergesort_def; LSORTAUX_TAKE_LENGTH_ID]);;
+  MESON_TAC[mergesortN_stable; mergesort_def; TAKE_LENGTH_ID]);;
 
 (* ------------------------------------------------------------------------- *)
 (* The tail-recursive version.                                               *)

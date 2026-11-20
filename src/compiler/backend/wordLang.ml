@@ -398,3 +398,19 @@ let exp_to_addr_def = sem1aux_def
 
 let word_loc_INDUCT,word_loc_RECURSION = cake_type
   "word_loc = wl_Word (A word) | wl_Loc num num";;
+
+(* ------------------------------------------------------------------------- *)
+(* Lemmas used by several later files.                                       *)
+(* ------------------------------------------------------------------------- *)
+
+let IL2AUX_handler_cases = prove
+ (`!handler:(num#(A)wl_prog#num#num)option.
+     handler = NONE \/ ?hn h hl1 hl2. handler = SOME (hn,h,hl1,hl2)`,
+  REWRITE_TAC[FORALL_OPTION_THM; FORALL_PAIR_THM; option_DISTINCT; option_INJ; PAIR_EQ] THEN
+  MESON_TAC[]);;
+
+let IL2AUX_ret_cases = prove
+ (`!ret:(num list#cutsets#(A)wl_prog#num#num)option.
+     ret = NONE \/ ?n names rh l1 l2. ret = SOME (n,names,rh,l1,l2)`,
+  REWRITE_TAC[FORALL_OPTION_THM; FORALL_PAIR_THM; option_DISTINCT; option_INJ;
+              PAIR_EQ] THEN MESON_TAC[]);;

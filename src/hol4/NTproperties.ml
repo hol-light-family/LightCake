@@ -653,12 +653,6 @@ let firstSetML_ind = prove
   USE_THEN "nt" MATCH_MP_TAC THEN CONJ_TAC THEN REPEAT STRIP_TAC THEN
   USE_THEN "ih" MATCH_MP_TAC THEN LPARSEAUX_NT_TERM_TAC);;
 
-let LPARSEAUX_UNIONS_IMAGE_MONO = prove
- (`!(f:A->B->bool) g s.
-     (!x. x IN s ==> f x SUBSET g x)
-     ==> UNIONS (IMAGE f s) SUBSET UNIONS (IMAGE g s)`,
-  REWRITE_TAC[SUBSET; IN_UNIONS; IN_IMAGE] THEN MESON_TAC[]);;
-
 let firstSetML_firstSet = prove
  (`!(G:(A,B)grammar) seen sf. firstSetML G seen sf SUBSET firstSet G sf`,
   MATCH_MP_TAC firstSetML_ind THEN
@@ -670,7 +664,7 @@ let firstSetML_firstSet = prove
    `(a:A->bool) SUBSET c /\ b SUBSET d ==> a UNION b SUBSET c UNION d`) THEN
   CONJ_TAC THENL
    [COND_CASES_TAC THEN REWRITE_TAC[EMPTY_SUBSET] THEN
-    MATCH_MP_TAC LPARSEAUX_UNIONS_IMAGE_MONO THEN ASM_SIMP_TAC[];
+    MATCH_MP_TAC UNIONS_MONO_IMAGE THEN ASM_SIMP_TAC[];
     COND_CASES_TAC THEN REWRITE_TAC[SUBSET_REFL] THEN
     FIRST_X_ASSUM(MATCH_MP_TAC o check (is_imp o concl)) THEN
     ASM_REWRITE_TAC[]]);;

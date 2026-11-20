@@ -846,20 +846,6 @@ let bvl_evaluate_add_clock_initial_state = prove
   REWRITE_TAC[bvl_initial_state_def; bvl_inc_clock_def; bvl_state_INFO.ri_accessors;
               bvl_state_INFO.ri_fupds; K_THM]);;
 
-(* a local helper: call_FFI only extends the io_events *)
-let BVLPROPSAUX_call_FFI_io_events = prove
- (`!(st:(FFI)ffi_state) s conf bytes t' ws'.
-     call_FFI st s conf bytes = FFI_return t' ws' ==>
-     ffi_state_io_events st <<= ffi_state_io_events t'`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[call_FFI_def] THEN
-  COND_CASES_TAC THEN REWRITE_TAC[injectivity "ffi_result"] THENL
-   [CASES_ON `ffi_state_oracle (st:(FFI)ffi_state) s (ffi_state_ffi_state st) conf bytes` THEN
-    REWRITE_TAC[case_def "oracle_result"; distinctness "ffi_result"] THEN
-    COND_CASES_TAC THEN REWRITE_TAC[distinctness "ffi_result"; injectivity "ffi_result"] THEN
-    DISCH_THEN(SUBST1_TAC o SYM o CONJUNCT1) THEN
-    REWRITE_TAC[ffi_state_INFO.ri_accfupds; K_THM; IS_PREFIX_APPEND] THEN MESON_TAC[];
-    DISCH_THEN(SUBST1_TAC o SYM o CONJUNCT1) THEN REWRITE_TAC[IS_PREFIX_REFL]]);;
-
 let bvl_do_app_io_events_mono = prove
  (`!op vs (s1:(C,FFI)bvl_state) x s2.
      bvl_do_app op vs s1 = Rval (x,s2) ==>
@@ -870,7 +856,7 @@ let bvl_do_app_io_events_mono = prove
   REWRITE_TAC[injectivity "result"; distinctness "result"; PAIR_EQ] THEN
   DISCH_THEN(SUBST1_TAC o SYM o CONJUNCT2) THEN
   REWRITE_TAC[bvl_state_INFO.ri_accfupds; K_THM; IS_PREFIX_REFL] THEN
-  ASM_MESON_TAC[BVLPROPSAUX_call_FFI_io_events]);;
+  ASM_MESON_TAC[SEM2AUX_call_FFI_io_events]);;
 
 let bvl_evaluate_io_events_mono = prove
  (`!exps env (s1:(C,FFI)bvl_state) res s2.

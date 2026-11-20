@@ -1047,14 +1047,10 @@ let STALLOCAUX_ADD_CLOCK (extra:term) (th:thm) : thm =
   let th1 = MATCH_MP (INST [extra,`extra:num`] stack_evaluate_add_clock) (CONJ th nt) in
   CONV_RULE (BINOP_CONV (RAND_CONV (RAND_CONV (stallocaux_norm [])))) th1;;
 
-let STALLOCAUX_EX_ADD = prove
- (`!P k. (?y. P (k + y)) ==> (?x:num. P x)`,
-  MESON_TAC[]);;
-
 (* the goal ?x. P x (x the clock): continue with ?v. P (k + v) *)
 let STALLOCAUX_CLOCK_TAC (k:term) (v:term) : tactic = fun (asl,w as g) ->
   let x,body = dest_exists w in
-  let th = ISPECL [mk_abs(x,body); k] STALLOCAUX_EX_ADD in
+  let th = ISPECL [mk_abs(x,body); k] BASICAUX_EX_ADD in
   (MATCH_MP_TAC th THEN CONV_TAC (GEN_ALPHA_CONV v) THEN
    CONV_TAC (BINDER_CONV BETA_CONV)) g;;
 
@@ -2696,11 +2692,7 @@ let STALLOCAUX_ev_stackloadany_0 = prove
 let () = STALLOCAUX_leaf_lemmas :=
   STALLOCAUX_ev_stackloadany_0 :: !STALLOCAUX_leaf_lemmas;;
 
-let STALLOCAUX_EL_len = prove
- (`!(a:A list) x c. EL (LENGTH a) (APPEND a (CONS x c)) = x`,
-  SIMP_TAC[EL_LENGTH_APPEND; NULL; HD]);;
-
-let () = stallocaux_add_rws [STALLOCAUX_EL_len];;
+let () = stallocaux_add_rws [LBIGAUX_EL_LENGTH_CONS];;
 
 (* HOL4 line 1577 *)
 let alloc_correct_lemma_Simple = prove

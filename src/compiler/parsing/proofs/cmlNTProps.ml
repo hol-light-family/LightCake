@@ -164,9 +164,6 @@ let rec PARSE2AUX_FSML_CONV (hyps:thm list) tm =
    LAND_CONV seen_part THENC RAND_CONV null_part THENC
    PURE_REWRITE_CONV[UNION_EMPTY]) tm;;
 
-let PARSE2AUX_COND_BOOL = TAUT
-  `!b p q. (if b then p else q) <=> (b ==> p) /\ (~b ==> q)`;;
-
 (* A SUBSET C for unions of explicit parts: each part of A is found among   *)
 (* the parts of C (up to alpha-conversion), or else proved by first-order   *)
 (* reasoning on its own                                                     *)
@@ -191,10 +188,6 @@ let PARSE2AUX_IN_UNION_L = prove
 let PARSE2AUX_IN_UNION_R = prove
  (`!(x:A) c1 c2. x IN c2 ==> x IN (c1 UNION c2)`,
   SET_TAC[]);;
-
-let PARSE2AUX_IN_INSERT_HEAD = prove
- (`!(x:A) s. x IN (x INSERT s)`,
-  REWRITE_TAC[IN_INSERT]);;
 
 let PARSE2AUX_IN_INSERT_TAIL = prove
  (`!(x:A) y s. x IN s ==> x IN (y INSERT s)`,
@@ -229,7 +222,7 @@ let rec PARSE2AUX_ELEM_IN x c =
        MP (ISPECL [x;c1;c2] PARSE2AUX_IN_UNION_R) (PARSE2AUX_ELEM_IN x c2))
   else
     try let y,s = PARSE2AUX_dest_insert c in
-        if aconv x y then ISPECL [x;s] PARSE2AUX_IN_INSERT_HEAD
+        if aconv x y then ISPECL [x;s] COMPONENT
         else MP (ISPECL [x;y;s] PARSE2AUX_IN_INSERT_TAIL) (PARSE2AUX_ELEM_IN x s)
     with Failure _ -> failwith "PARSE2AUX_ELEM_IN";;
 
@@ -248,11 +241,11 @@ let rec PARSE2AUX_SUBSET_TAC : tactic = fun (asl,w as g) ->
          (GEN_REWRITE_TAC I [INSERT_SUBSET] THEN CONJ_TAC THENL
            [(fun g -> ACCEPT_TAC (PARSE2AUX_ELEM_IN x c) g) ORELSE
             (REWRITE_TAC[IN_UNION; IN_ELIM_THM; IN_INSERT; NOT_IN_EMPTY;
-                         COND_RAND; PARSE2AUX_COND_BOOL] THEN ASM_MESON_TAC[]);
+                         COND_RAND; COND_EXPAND_IMP] THEN ASM_MESON_TAC[]);
             PARSE2AUX_SUBSET_TAC]) g
      with Failure _ ->
        (REWRITE_TAC[SUBSET; IN_UNION; IN_ELIM_THM; IN_INSERT; NOT_IN_EMPTY;
-                    COND_RAND; PARSE2AUX_COND_BOOL] THEN ASM_MESON_TAC[]) g);;
+                    COND_RAND; COND_EXPAND_IMP] THEN ASM_MESON_TAC[]) g);;
 
 (* HOL4: simp[firstSetML_eqn], simp[Once firstSetML_def, cmlG_applied,       *)
 (* cmlG_FDOM] (repeatedly) and dsimp[Once EXTENSION, EQ_IMP_THM]: both       *)

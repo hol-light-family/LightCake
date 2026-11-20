@@ -347,28 +347,6 @@ let env_rel_cong = prove
 (* gets the context MEM y l1 /\ MEM z l2), registered for this definition   *)
 (* only.                                                                     *)
 
-let CLOSCALLPAUX_ALL2_CONG = prove
- (`!(R:C->D->bool) R' l1 l2.
-     (!y z. MEM y l1 /\ MEM z l2 ==> (R y z <=> R' y z))
-     ==> (ALL2 R l1 l2 <=> ALL2 R' l1 l2)`,
-  GEN_TAC THEN GEN_TAC THEN LIST_INDUCT_TAC THEN GEN_TAC THEN
-  STRUCT_CASES_TAC (ISPEC `l2:D list` list_CASES) THEN
-  REWRITE_TAC[ALL2; MEM] THEN STRIP_TAC THEN
-  BINOP_TAC THENL [ASM_MESON_TAC[]; FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_MESON_TAC[]]);;
-
-let CLOSCALLPAUX_ADMISSIBLE_ALL2 = prove
- (`!(<<) (p:(A->B)->P->bool) (s:P->A) (h:(A->B)->P->C->D->bool) l1 l2.
-        admissible(<<) p s l1 /\ admissible(<<) p s l2 /\
-        admissible (<<) (\f (y,z,x). p f x /\ MEM y (l1 f x) /\ MEM z (l2 f x))
-                        (\(y,z,x). s x) (\f (y,z,x). h f x y z)
-        ==> admissible (<<) p s (\f x. ALL2 (h f x) (l1 f x) (l2 f x))`,
-  REWRITE_TAC[admissible; FORALL_PAIR_THM] THEN REPEAT STRIP_TAC THEN
-  SUBGOAL_THEN `(l1:(A->B)->P->C list) g a = l1 f a /\
-                (l2:(A->B)->P->D list) g a = l2 f a`
-    STRIP_ASSUME_TAC THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
-  ASM_REWRITE_TAC[] THEN MATCH_MP_TAC CLOSCALLPAUX_ALL2_CONG THEN
-  REPEAT STRIP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[]);;
-
 let CLOSCALLPAUX_ADMISSIBLE_env_rel = prove
  (`!(<<) (p:(A->B)->P->bool) (s:P->A) (h:(A->B)->P->C->D->bool) e1 e2 n es.
         admissible(<<) p s e1 /\ admissible(<<) p s e2 /\
@@ -388,7 +366,7 @@ let CLOSCALLPAUX_ADMISSIBLE_env_rel = prove
 
 let clos_callProof_v_rel_def =
   let saved = !cake_admissible_rules in
-  cake_register_admissible "ALL2" CLOSCALLPAUX_ADMISSIBLE_ALL2;
+  cake_register_admissible "ALL2" LISTAUX_ADMISSIBLE_ALL2;
   cake_register_admissible "clos_callProof_env_rel" CLOSCALLPAUX_ADMISSIBLE_env_rel;
   let th = try cake_def_wf
     `measure (\x:(num_set # (num # num # clos_exp) list) # (num->bool) #
@@ -786,10 +764,6 @@ let CLOSCALLPAUX_code_list_keys_eq = prove
    [EXISTS_TAC `2 * m + loc` THEN CONJ_TAC THENL [ARITH_TAC; ASM_MESON_TAC[]];
     EXISTS_TAC `m:num` THEN ASM_REWRITE_TAC[] THEN ARITH_TAC]);;
 
-let CLOSCALLPAUX_LIST_OF_SEQ_1 = prove
- (`!f:num->A. list_of_seq f 1 = [f 0]`,
-  REWRITE_TAC[ONE; LIST_OF_SEQ]);;
-
 (* ------------------------------------------------------------------------- *)
 
 let calls_subspt = prove
@@ -807,7 +781,7 @@ let CLOSCALLPAUX_CALLS_FACTS_TAC : tactic =
   RULE_ASSUM_TAC(REWRITE_RULE[FST_code_list; MAP_FST_code_list;
     SND_insert_each; domain_FST_insert_each; LENGTH_MAP; SET_OF_LIST_APPEND;
     LISTAUX_LENGTH_ZIP; CLOSCALLPAUX_code_list_keys_eq; IMAGE_UNION; UNION_SUBSET;
-    CLOSCALLPAUX_LIST_OF_SEQ_1; set_of_list; BETA_THM;
+    LISTAUX_list_of_seq_1; set_of_list; BETA_THM;
     ARITH_RULE `2 * 0 + loc = loc`]) THEN
   CLOSCALLPAUX_SPLIT_ASM_TAC;;
 
@@ -1029,7 +1003,7 @@ let calls_domain = prove
   CLOSCALLPAUX_ADD_FACTS_TAC (MATCH_MP CLOSCALLPAUX_IS_SUFFIX_PRE) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[FST_code_list; MAP_FST_code_list; SND_insert_each;
     domain_FST_insert_each; SET_OF_LIST_APPEND; IMAGE_UNION; CLOSCALLPAUX_keys_PRE;
-    CLOSCALLPAUX_LIST_OF_SEQ_1; set_of_list; IMAGE_CLAUSES;
+    LISTAUX_list_of_seq_1; set_of_list; IMAGE_CLAUSES;
     ARITH_RULE `!n. PRE (n + 1) = n`; LISTAUX_LENGTH_ZIP; LENGTH_MAP;
     BETA_THM; ARITH_RULE `2 * 0 + loc = loc`; UNION_SUBSET]) THEN
   CLOSCALLPAUX_SPLIT_ASM_TAC THEN
@@ -1044,7 +1018,7 @@ let calls_domain_locs = prove
   CLOSCALLPAUX_CALLS_IND_TAC THEN EVERY_CASE_TAC THEN GVS[code_locs_def] THEN
   CLOSCALLPAUX_IH_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[FST_code_list; domain_FST_insert_each; SET_OF_LIST_APPEND;
-    CLOSCALLPAUX_LIST_OF_SEQ_1; set_of_list; CLOSCALLPAUX_GENLIST_LOC;
+    LISTAUX_list_of_seq_1; set_of_list; CLOSCALLPAUX_GENLIST_LOC;
     BETA_THM; ARITH_RULE `2 * 0 + loc = loc`; UNION_SUBSET]) THEN
   CLOSCALLPAUX_SPLIT_ASM_TAC THEN
   REWRITE_TAC[FST; SND; SET_OF_LIST_APPEND; set_of_list; CLOSCALLPAUX_GENLIST_LOC;
@@ -1116,7 +1090,7 @@ let CLOSCALLPAUX_WFG_PRE_TAC : tactic =
   CLOSCALLPAUX_IH_CALLS_TAC THEN
   IMP_RES_TAC calls_subspt THEN IMP_RES_TAC calls_length THEN
   RULE_ASSUM_TAC(REWRITE_RULE[subspt_domain; FST_code_list; domain_FST_insert_each;
-    CLOSCALLPAUX_LIST_OF_SEQ_1; set_of_list; BETA_THM; ARITH_RULE `2 * 0 + loc = loc`;
+    LISTAUX_list_of_seq_1; set_of_list; BETA_THM; ARITH_RULE `2 * 0 + loc = loc`;
     UNION_SUBSET; LENGTH_MAP; LISTAUX_LENGTH_ZIP]) THEN
   CLOSCALLPAUX_SPLIT_ASM_TAC;;
 
@@ -2600,19 +2574,6 @@ let wfv_v2l = prove
 
 (* local helpers for do_app_thm *)
 
-let CLOSCALLPAUX_do_app_not_Rraise = prove
- (`!op vs (s:(C,FFI)clos_state) v. ~(clos_do_app op vs s = Rerr (Rraise v))`,
-  REPEAT GEN_TAC THEN ASM_CASES_TAC `op = BlockOp clos_Equal` THENL
-   [FIRST_X_ASSUM SUBST1_TAC THEN
-    STRUCT_CASES_TAC(ISPEC `vs:clos_v list` list_CASES) THEN
-    TRY(STRUCT_CASES_TAC(ISPEC `t:clos_v list` list_CASES)) THEN
-    TRY(STRUCT_CASES_TAC(ISPEC `t':clos_v list` list_CASES)) THEN
-    REWRITE_TAC[clos_do_app_def] THEN CASE_REWRITE_TAC[] THEN
-    TRY(CASES_ON `clos_do_eq h h'` THEN CASE_REWRITE_TAC[]) THEN
-    REWRITE_TAC[injectivity "result"; distinctness "result"; distinctness "error_result"];
-    DISCH_THEN(MP_TAC o MATCH_MP clos_do_app_err) THEN ASM_REWRITE_TAC[] THEN
-    REWRITE_TAC[distinctness "error_result"; NOT_EXISTS_THM]]);;
-
 let CLOSCALLPAUX_ALL2_EQ_ALL = prove
  (`!(P:A->bool) xs ys. ALL2 (\v1 v2. P v1 /\ v1 = v2) xs ys <=> xs = ys /\ ALL P xs`,
   GEN_TAC THEN LIST_INDUCT_TAC THEN LIST_INDUCT_TAC THEN
@@ -2749,7 +2710,7 @@ let clos_callProof_do_app_thm = prove
   REWRITE_TAC[CLOSCALLPAUX_simple_val_rel_wfv; CLOSCALLPAUX_simple_state_rel_wfv] THEN
   REWRITE_TAC[BETA_THM; CLOSCALLPAUX_ALL2_EQ_ALL; EVERY_REVERSE; LIST_REL_REVERSE_EQ] THEN
   MP_TAC(ISPECL [`op:clos_op`; `REVERSE (a:clos_v list)`;
-                 `r:(abs_calls_state # C,FFI)clos_state`] CLOSCALLPAUX_do_app_not_Rraise) THEN
+                 `r:(abs_calls_state # C,FFI)clos_state`] CLOSPROPSAUX_do_app_not_Rraise) THEN
   MP_TAC(ISPECL [`op:clos_op`; `REVERSE (a:clos_v list)`;
                  `r:(abs_calls_state # C,FFI)clos_state`] do_app_never_timesout) THEN
   REWRITE_TAC[ETA_AX] THEN
@@ -4440,7 +4401,7 @@ let CLOSCALLPAUX_recclosure_rel_Fn = prove
      ==> recclosure_rel g1 l1 code x [(n,exp)] [(n,body)]`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN REWRITE_TAC[recclosure_rel_def] THEN
   EXISTS_TAC `g0:num_set # (num # num # clos_exp) list` THEN
-  ASM_REWRITE_TAC[recclosure_wf_def; MAP; LENGTH; GSYM ONE; CLOSCALLPAUX_LIST_OF_SEQ_1;
+  ASM_REWRITE_TAC[recclosure_wf_def; MAP; LENGTH; GSYM ONE; LISTAUX_list_of_seq_1;
                   set_of_list; LET_DEF; LET_END_DEF; ADD_CLAUSES; MULT_CLAUSES; ZIP_def] THEN
   ASM_REWRITE_TAC[DISJOINT_INSERT; DISJOINT_EMPTY; IN_SET_OF_LIST] THEN
   CASE_REWRITE_TAC[ALL2; closed_Fn] THEN REWRITE_TAC[ZIP_def] THEN
@@ -6463,14 +6424,6 @@ let CLOSCALLPAUX_do_install_eq = prove
   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
   CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[]);;
 
-let CLOSCALLPAUX_ALL2_LAST = prove
- (`!(R:A->B->bool) l1 l2. ALL2 R l1 l2 /\ ~(l1 = []) ==> R (LAST l1) (LAST l2)`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[LIST_REL_EL_EQN] THEN STRIP_TAC THEN
-  SUBGOAL_THEN `~(l2:B list = [])` ASSUME_TAC THENL
-   [ASM_MESON_TAC[LENGTH_EQ_NIL]; ALL_TAC] THEN
-  ASM_SIMP_TAC[LAST_EL] THEN FIRST_X_ASSUM MATCH_MP_TAC THEN
-  UNDISCH_TAC `~(l1:A list = [])` THEN REWRITE_TAC[GSYM LENGTH_EQ_NIL] THEN ASM_ARITH_TAC);;
-
 let CLOSCALLPAUX_ALL_LAST = prove
  (`!(P:A->bool) l. ALL P l /\ ~(l = []) ==> P (LAST l)`,
   GEN_TAC THEN LIST_INDUCT_TAC THEN REWRITE_TAC[] THEN
@@ -6764,7 +6717,7 @@ let CLOSCALLPAUX_cc_Op_install = prove
      MATCH_MP_TAC CLOSCALLPAUX_ALL_LAST THEN ASM_REWRITE_TAC[];
      ONCE_REWRITE_TAC[clos_evaluate_def] THEN ASM_REWRITE_TAC[] THEN
      REPEAT (CHANGED_TAC (CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]));
-     MATCH_MP_TAC CLOSCALLPAUX_ALL2_LAST THEN ASM_REWRITE_TAC[]];
+     MATCH_MP_TAC LIST_REL_LAST THEN ASM_REWRITE_TAC[]];
    FIRST_X_ASSUM(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM) o check (fun th -> is_conj (concl th) &&
      lhand (concl th) = `(Rerr err:(clos_v list,clos_v)result) = res`)) THEN
    FIRST_X_ASSUM(SUBST_ALL_TAC o check (fun th -> is_eq (concl th) &&

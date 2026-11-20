@@ -83,7 +83,7 @@ let DSEMAUX_size_of_approx_of = prove
                   subspt refs1 (refs1':((data_v)bvl_ref)spt)` STRIP_ASSUME_TAC THENL
      [ASM_MESON_TAC[subspt_trans]; ALL_TAC] THEN
     CONJ_TAC THENL
-     [REPEAT(FIRST_X_ASSUM(MP_TAC o check (DSEMAUX_is_num_fact o concl))) THEN
+     [REPEAT(FIRST_X_ASSUM(MP_TAC o check (CLOSSEMAUX_is_num_fact o concl))) THEN
       ARITH_TAC;
       ASM_MESON_TAC[subspt_trans]];
     REWRITE_TAC[size_of_def; approx_of_def; PAIR_EQ] THEN
@@ -106,7 +106,7 @@ let DSEMAUX_size_of_approx_of = prove
     (ANTS_TAC THENL [ASM_MESON_TAC[DSEMAUX_subspt_delete2]; ALL_TAC]) THEN
     STRIP_TAC THEN
     (CONJ_TAC THENL
-      [REPEAT(FIRST_X_ASSUM(MP_TAC o check (DSEMAUX_is_num_fact o concl))) THEN
+      [REPEAT(FIRST_X_ASSUM(MP_TAC o check (CLOSSEMAUX_is_num_fact o concl))) THEN
        ARITH_TAC;
        ASM_MESON_TAC[subspt_trans; DSEMAUX_subspt_delete_self]]);
     REWRITE_TAC[size_of_def; approx_of_def; PAIR_EQ] THEN
@@ -2769,10 +2769,6 @@ let evaluate_NONE_jump_exc_ALT = prove
 (* the final locals are LN unless the result is NONE, a type error or an  *)
 (* exception                                                                *)
 
-let DSEMAUX_EXISTS_REFL2 = prove
- (`!a:A. ?x. a = x`,
-  MESON_TAC[]);;
-
 let DSEMAUX_LN_CLAUSE_TAC : tactic =
   REPEAT GEN_TAC THEN
   (fun (asl,w as g) ->
@@ -2788,7 +2784,7 @@ let DSEMAUX_LN_CLAUSE_TAC : tactic =
   ASM_REWRITE_TAC[option_DISTINCT; option_INJ; injectivity "result"; distinctness "result";
                   injectivity "error_result"; distinctness "error_result";
                   data_flush_state_def; data_state_INFO.ri_accfupds; K_THM; EXISTS_REFL;
-                  DSEMAUX_EXISTS_REFL2];;
+                  TPROPSAUX_EXISTS_REFL'];;
 
 let DSEMAUX_evaluate_LN = prove
  (`!p (r:((data_v list,data_v)result)option) (s1:(C,FFI)data_state).
@@ -3599,16 +3595,6 @@ let cut_state_opt_const = prove
   REPEAT TOP_CASE_TAC THEN REWRITE_TAC[option_DISTINCT; option_INJ] THEN
   DISCH_THEN (SUBST1_TAC o SYM) THEN REWRITE_TAC[data_state_INFO.ri_accfupds; K_THM]);;
 
-let DSEMAUX_call_FFI_io_events = prove
- (`!(st:(FFI)ffi_state) s conf bytes st' bytes'.
-     call_FFI st s conf bytes = FFI_return st' bytes' ==>
-     ffi_state_io_events st <<= ffi_state_io_events st'`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[call_FFI_def] THEN
-  REPEAT (COND_CASES_TAC ORELSE TOP_CASE_TAC) THEN
-  REWRITE_TAC[injectivity "ffi_result"; distinctness "ffi_result"] THEN
-  DISCH_THEN (SUBST1_TAC o SYM o CONJUNCT1) THEN
-  REWRITE_TAC[ffi_state_INFO.ri_accfupds; K_THM; IS_PREFIX_APPEND3; IS_PREFIX_REFL]);;
-
 let data_do_app_io_events_mono = prove
  (`!x y (z:(C,FFI)data_state) a b.
      data_do_app x y z = Rval (a,b) ==>
@@ -3621,7 +3607,7 @@ let data_do_app_io_events_mono = prove
   REWRITE_TAC[injectivity "result"; distinctness "result"; PAIR_EQ] THEN
   REPEAT STRIP_TAC THEN RVEQ_TAC THEN
   ASM_REWRITE_TAC(IS_PREFIX_REFL :: DSEMAUX_FINISH_RWS) THEN
-  TRY (FIRST_ASSUM (MATCH_ACCEPT_TAC o MATCH_MP DSEMAUX_call_FFI_io_events)));;
+  TRY (FIRST_ASSUM (MATCH_ACCEPT_TAC o MATCH_MP SEM2AUX_call_FFI_io_events)));;
 
 let data_dec_clock_const = prove
  (`!s:(C,FFI)data_state.
@@ -3858,7 +3844,7 @@ let v_to_list_SOME_NIL_IFF = prove
               NOT_CONS_NIL; option_DISTINCT] THEN
   REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN TRY DISCH_TAC THEN
   REPEAT (COND_CASES_TAC ORELSE TOP_CASE_TAC) THEN
-  ASM_REWRITE_TAC[option_DISTINCT; option_INJ; NOT_CONS_NIL; DSEMAUX_EXISTS_REFL2]);;
+  ASM_REWRITE_TAC[option_DISTINCT; option_INJ; NOT_CONS_NIL; TPROPSAUX_EXISTS_REFL']);;
 
 let v_to_list_SOME_CONS_IMP = prove
  (`!v x xs. data_v_to_list v = SOME (CONS x xs) ==>
@@ -4195,7 +4181,7 @@ let find_code_upto_size = prove
   REPEAT (COND_CASES_TAC ORELSE TOP_CASE_TAC) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[]) THEN TRY(FIRST_ASSUM CONTR_TAC) THEN
   REWRITE_TAC[OPTION_MAP_DEF] THEN CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
-  REWRITE_TAC[option_INJ; PAIR_EQ; DSEMAUX_EXISTS_REFL2]);;
+  REWRITE_TAC[option_INJ; PAIR_EQ; TPROPSAUX_EXISTS_REFL']);;
 
 let do_app_stack_eq = prove
  (`!op vs (s:(C,FFI)data_state) q s'.

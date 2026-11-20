@@ -1048,17 +1048,6 @@ let MP3AUX_ASM_LHS_HEAD_TAC c ttac =
                    is_const h && fst(dest_const h) = c)
     then ttac th else NO_TAC);;
 
-(* MP3AUX: heap_length of a CONS; a heap of length 0 is empty *)
-let MP3AUX_heap_length_CONS = prove
- (`!(x:(A,B)heap_element) xs. heap_length (CONS x xs) = el_length x + heap_length xs`,
-  REWRITE_TAC[heap_length_def; MAP; SUM]);;
-
-let MP3AUX_heap_length_EQ_0 = prove
- (`!xs:((A,B)heap_element)list. heap_length xs = 0 <=> xs = []`,
-  LIST_INDUCT_TAC THEN
-  REWRITE_TAC[heap_length_NIL; MP3AUX_heap_length_CONS; NOT_CONS_NIL] THEN
-  MP_TAC(ISPEC `h:(A,B)heap_element` el_length_NOT_0) THEN ARITH_TAC);;
-
 (* HOL4 line 6113 *)
 let heap_store_unused_thm = prove
  (`!a n (heap:((A,B)heap_element)list) h1 h2 heap2 x.
@@ -1084,9 +1073,9 @@ let heap_store_unused_thm = prove
   ASM_REWRITE_TAC[data_to_word_memoryProof_heap_lookup_APPEND] THEN
   DISCH_THEN(STRIP_ASSUME_TAC o MATCH_MP heap_lookup_SPLIT) THEN
   SUBGOAL_THEN `hb:((A,B)heap_element)list = []` SUBST_ALL_TAC THENL
-   [REWRITE_TAC[GSYM MP3AUX_heap_length_EQ_0] THEN
+   [REWRITE_TAC[GSYM MP1AUX_heap_length_0] THEN
     UNDISCH_TAC `heap_length (h1:((A,B)heap_element)list) = a + n` THEN
-    ASM_REWRITE_TAC[heap_length_APPEND; MP3AUX_heap_length_CONS; el_length_def] THEN
+    ASM_REWRITE_TAC[heap_length_APPEND; heap_length_CONS; el_length_def] THEN
     UNDISCH_TAC `0 < n` THEN ARITH_TAC;
     ALL_TAC] THEN
   EXISTS_TAC `ha:((A,B)heap_element)list` THEN ASM_REWRITE_TAC[] THEN
@@ -2125,7 +2114,7 @@ let new_byte_alt_thm = prove
            data_to_word_memoryProof_tag#(A word_loc)list)heap_element)list)`
        SUBST1_TAC THENL
        [ASM_REWRITE_TAC[heap_length_APPEND; gc_shared_heap_length_heap_expand;
-                        MP3AUX_heap_length_CONS; heap_length_NIL;
+                        heap_length_CONS; heap_length_NIL;
                         MP3AUX_Bytes_props; LENGTH_REPLICATE] THEN
         ASM_ARITH_TAC; ALL_TAC] THEN
       ASM_REWRITE_TAC[heap_split_length] THEN
@@ -2638,7 +2627,7 @@ let heap_store_unused_IMP_length = prove
   FIRST_X_ASSUM(CONJUNCTS_THEN ASSUME_TAC) THEN
   FIRST_X_ASSUM(STRIP_ASSUME_TAC o MATCH_MP heap_lookup_SPLIT) THEN
   RVEQ_TAC THEN REWRITE_TAC[heap_store_lemma; PAIR_EQ] THEN STRIP_TAC THEN
-  RVEQ_TAC THEN ASM_REWRITE_TAC[heap_length_APPEND; MP3AUX_heap_length_CONS] THEN
+  RVEQ_TAC THEN ASM_REWRITE_TAC[heap_length_APPEND; heap_length_CONS] THEN
   ARITH_TAC);;
 
 (* HOL4 line 7527 *)
@@ -2651,7 +2640,7 @@ let heap_store_unused_alt_IMP_length = prove
   FIRST_X_ASSUM(CONJUNCTS_THEN ASSUME_TAC) THEN
   FIRST_X_ASSUM(STRIP_ASSUME_TAC o MATCH_MP heap_lookup_SPLIT) THEN
   RVEQ_TAC THEN REWRITE_TAC[heap_store_lemma; PAIR_EQ] THEN STRIP_TAC THEN
-  RVEQ_TAC THEN ASM_REWRITE_TAC[heap_length_APPEND; MP3AUX_heap_length_CONS] THEN
+  RVEQ_TAC THEN ASM_REWRITE_TAC[heap_length_APPEND; heap_length_CONS] THEN
   ARITH_TAC);;
 
 (* HOL4 line 7542: pointers have tag and len bits *)
@@ -3215,7 +3204,7 @@ let word_heap_APPEND = prove
      word_heap (word_add a (word_mul bytes_in_word (word (heap_length xs)))) ys conf`,
   GEN_TAC THEN LIST_INDUCT_TAC THEN
   ASM_REWRITE_TAC[APPEND; word_heap_def; heap_length_NIL; SEP_CLAUSES;
-                  MP3AUX_heap_length_CONS] THENL
+                  heap_length_CONS] THENL
    [REPEAT GEN_TAC THEN AP_THM_TAC THEN AP_THM_TAC THEN AP_TERM_TAC THEN
     CONV_TAC WORD_RULE;
     REPEAT GEN_TAC THEN REWRITE_TAC[GSYM STAR_ASSOC] THEN AP_TERM_TAC THEN

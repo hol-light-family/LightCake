@@ -470,23 +470,6 @@ let C2BP2AUX_app_SOME = prove
     ALL_TAC] THEN
   REWRITE_TAC[bvl_dec_clock_def]);;
 
-let C2BP2AUX_do_app_ElemAt = prove
- (`!n tag xs (s:(C,FFI)bvl_state).
-     bvl_do_app (BlockOp (ElemAt n)) [bvl_Block tag xs] s =
-     if n < LENGTH xs then Rval (EL n xs,s) else Rerr (Rabort Rtype_error)`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[bvl_do_app_def] THEN CASE_REWRITE_TAC[]);;
-
-let C2BP2AUX_do_app_EqualConst_Int = prove
- (`!i j (s:(C,FFI)bvl_state).
-     bvl_do_app (BlockOp (EqualConst (clos_Int i))) [bvl_Number j] s =
-     Rval (bvl_Boolv (i = j),s)`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[bvl_do_app_def] THEN CASE_REWRITE_TAC[]);;
-
-let C2BP2AUX_EL_LENGTH_APPEND = prove
- (`!(l:A list) x l2. EL (LENGTH l) (APPEND (APPEND l [x]) l2) = x`,
-  REWRITE_TAC[GSYM APPEND_ASSOC; APPEND] THEN
-  LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[LENGTH; APPEND; EL; HD; TL]);;
-
 let C2BP2AUX_LENGTH_LT_APPEND = prove
  (`!(l:A list) x l2. LENGTH l < LENGTH (APPEND (APPEND l [x]) l2)`,
   REWRITE_TAC[LENGTH_APPEND; LENGTH] THEN ARITH_TAC);;
@@ -504,7 +487,7 @@ let C2BP2AUX_eval_genlist_vars_cl = prove
   MP_TAC(ISPECL [`args':bvl_v list`; `APPEND [x:bvl_v] env`; `t:(C,FFI)bvl_state`]
     evaluate_simple_genlist_vars) THEN
   ASM_REWRITE_TAC[LT_NZ; APPEND_ASSOC] THEN DISCH_THEN SUBST1_TAC THEN
-  CASE_REWRITE_TAC[bvl_evaluate_def; C2BP2AUX_EL_LENGTH_APPEND; C2BP2AUX_LENGTH_LT_APPEND]);;
+  CASE_REWRITE_TAC[bvl_evaluate_def; el_append3; C2BP2AUX_LENGTH_LT_APPEND]);;
 
 let C2BP2AUX_mk_cl_call_partial = prove
  (`!args' tag ptr m rest env (t:(C,FFI)bvl_state) max_app.
@@ -524,9 +507,9 @@ let C2BP2AUX_mk_cl_call_partial = prove
   REWRITE_TAC[mk_cl_call_def; LENGTH_LIST_OF_SEQ] THEN
   ONCE_REWRITE_TAC[bvl_evaluate_def] THEN
   ONCE_REWRITE_TAC[bvl_evaluate_def] THEN
-  REWRITE_TAC[bvl_evaluate_def; C2BP2AUX_EL_LENGTH_APPEND; C2BP2AUX_LENGTH_LT_APPEND] THEN
-  REPEAT(CHANGED_TAC(CASE_REWRITE_TAC[REVERSE; APPEND; C2BP2AUX_do_app_ElemAt; LENGTH;
-    ARITH_RULE `1 < SUC (SUC n)`; C2BP2AUX_EL_CONS_ONE; C2BP2AUX_do_app_EqualConst_Int; HD] THEN
+  REWRITE_TAC[bvl_evaluate_def; el_append3; C2BP2AUX_LENGTH_LT_APPEND] THEN
+  REPEAT(CHANGED_TAC(CASE_REWRITE_TAC[REVERSE; APPEND; C2BP1AUX_do_app_ElemAt; LENGTH;
+    ARITH_RULE `1 < SUC (SUC n)`; C2BP2AUX_EL_CONS_ONE; C2BP1AUX_do_app_EqualConst_Int; HD] THEN
     ASM_REWRITE_TAC[bvl_Boolv_11])) THEN
   ASM_SIMP_TAC[C2BP2AUX_eval_genlist_vars_cl] THEN CASE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[bvl_find_code_def; LENGTH_APPEND; LENGTH] THEN CASE_REWRITE_TAC[] THEN
@@ -1777,10 +1760,6 @@ let C2BP2AUX_cer_app_CONS = prove
 
 (* helpers for the Letrec case *)
 
-let C2BP2AUX_list_of_seq_1 = prove
- (`!f:num->A. list_of_seq f 1 = [f 0]`,
-  REWRITE_TAC[num_CONV `1`; list_of_seq; APPEND]);;
-
 (* a singly-recursive closure and its code (cl_rel rule 2) *)
 let C2BP2AUX_v_rel_Rec1 = prove
  (`!max_app f refs code loc env ys num_args exp aux d aux1.
@@ -1813,10 +1792,6 @@ let C2BP2AUX_v_rel_Rec1 = prove
 let C2BP2AUX_HD_TL_REVERSE_SNOC = prove
  (`!l (a:A). HD (REVERSE (APPEND l [a])) = a /\ TL (REVERSE (APPEND l [a])) = REVERSE l`,
   REWRITE_TAC[REVERSE_APPEND; REVERSE; APPEND; HD; TL]);;
-
-let C2BP2AUX_EL_1 = prove
- (`!(a:A) b l. EL 1 (CONS a (CONS b l)) = b`,
-  REWRITE_TAC[num_CONV `1`; EL; HD; TL]);;
 
 let C2BP2AUX_LUPDATE_MAP_SNOC = prove
  (`!(v:C) (f:B->C) (g:A->B) l y l2.
@@ -1868,11 +1843,11 @@ let C2BP2AUX_eval_recc_Let0 = prove
   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
   REWRITE_TAC[LENGTH; LT_0; EL; HD; TL; REVERSE; APPEND; bvl_do_app_Cons] THEN
   CASE_REWRITE_TAC[] THEN
-  REWRITE_TAC[ARITH_RULE `!n. 1 < SUC (SUC n)`; C2BP2AUX_EL_1] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[ARITH_RULE `!n. 1 < SUC (SUC n)`; C2BP2AUX_EL_CONS_ONE] THEN CASE_REWRITE_TAC[] THEN
   REWRITE_TAC[LENGTH; LT_0; EL; HD; TL; REVERSE; APPEND] THEN CASE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[bvl_state_INFO.ri_accfupds] THEN CASE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[INT_POS; INT_OF_NUM_LT; NUM_OF_INT_OF_NUM] THEN CASE_REWRITE_TAC[] THEN
-  REWRITE_TAC[APPEND; LENGTH; ARITH_RULE `!n. 1 < SUC (SUC n)`; C2BP2AUX_EL_1]);;
+  REWRITE_TAC[APPEND; LENGTH; ARITH_RULE `!n. 1 < SUC (SUC n)`; C2BP2AUX_EL_CONS_ONE]);;
 
 let C2BP2AUX_eval_recc_Let0_ref = prove
  (`!m a i env (s0:(C,FFI)bvl_state) rr xs.
@@ -2264,7 +2239,7 @@ let C2BP2AUX_cer_Letrec = prove
    [(* special case for singly-recursive closure *)
     FS[LIST_OF_SEQ; LENGTH; APPEND; MAP; ALL] THEN REPEAT PAIRARG_TAC THEN FS[] THEN
     RVEQ_TAC THEN
-    RULE_ASSUM_TAC(REWRITE_RULE[C2BP2AUX_list_of_seq_1; APPEND]) THEN
+    RULE_ASSUM_TAC(REWRITE_RULE[LISTAUX_list_of_seq_1; APPEND]) THEN
     IMP_RES_TAC clos_to_bvl_compile_exps_SING THEN RVEQ_TAC THEN
     REPEAT(FIRST_X_ASSUM(fun th -> if is_exists(concl th) then CAKE_STRIP_ASSUME_TAC th
                                    else NO_TAC)) THEN
@@ -2627,11 +2602,6 @@ let C2BP2AUX_MAP_Number_11 = prove
  (`!x y:num list. MAP (bvl_Number o int_of_num) x = MAP (bvl_Number o int_of_num) y <=> x = y`,
   MP_TAC (ISPEC `bvl_Number o int_of_num` INJECTIVE_MAP) THEN
   REWRITE_TAC[o_THM; injectivity "bvl_v"; INT_OF_NUM_EQ] THEN MESON_TAC[]);;
-let C2BP2AUX_some_SOME = prove
- (`!P (y:A). (some) P = SOME y ==> P y`,
-  REWRITE_TAC[some_DEF] THEN REPEAT GEN_TAC THEN COND_CASES_TAC THEN
-  REWRITE_TAC[option_INJ; distinctness "option"] THEN
-  DISCH_THEN(SUBST1_TAC o SYM) THEN CONV_TAC SELECT_CONV THEN ASM_REWRITE_TAC[]);;
 
 let C2BP2AUX_some_UNIQUE = prove
  (`!P (y:A). P y /\ (!x. P x ==> x = y) ==> (some) P = SOME y`,
@@ -2667,7 +2637,7 @@ let C2BP2AUX_op_FromListByte = prove
  (C2BP2AUX_op_goal `MemOp FromListByte`,
   REPEAT GEN_TAC THEN REWRITE_TAC[clos_do_app_def] THEN CASE_REWRITE_TAC[] THEN
   STRIP_TAC THEN GVS[clos_case_eq_thms; COND_CASE_EQ] THEN
-  FIRST_X_ASSUM(STRIP_ASSUME_TAC o BETA_RULE o MATCH_MP C2BP2AUX_some_SOME) THEN
+  FIRST_X_ASSUM(STRIP_ASSUME_TAC o BETA_RULE o MATCH_MP BASICAUX_some_SOME) THEN
   FIRST_ASSUM(fun th1 -> FIRST_ASSUM(fun th2 ->
     MP_TAC (MATCH_MP clos_to_bvlProof_v_to_list (CONJ th1 th2)))) THEN
   DISCH_THEN(X_CHOOSE_THEN `l':bvl_v list` STRIP_ASSUME_TAC) THEN
@@ -2710,7 +2680,7 @@ let C2BP2AUX_op_ConcatByteVec = prove
  (C2BP2AUX_op_goal `MemOp ConcatByteVec`,
   REPEAT GEN_TAC THEN REWRITE_TAC[clos_do_app_def] THEN CASE_REWRITE_TAC[] THEN
   STRIP_TAC THEN GVS[clos_case_eq_thms; COND_CASE_EQ] THEN
-  FIRST_X_ASSUM(STRIP_ASSUME_TAC o BETA_RULE o MATCH_MP C2BP2AUX_some_SOME) THEN
+  FIRST_X_ASSUM(STRIP_ASSUME_TAC o BETA_RULE o MATCH_MP BASICAUX_some_SOME) THEN
   FIRST_ASSUM(fun th1 -> FIRST_ASSUM(fun th2 ->
     MP_TAC (MATCH_MP clos_to_bvlProof_v_to_list (CONJ th1 th2)))) THEN
   DISCH_THEN(X_CHOOSE_THEN `l':bvl_v list` STRIP_ASSUME_TAC) THEN
@@ -2961,8 +2931,8 @@ let C2BP2AUX_compile_AppUnit = prove
   REWRITE_TAC[clos_to_bvl_compile_exps_def; LET_DEF; LET_END_DEF] THEN
   CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN CASE_REWRITE_TAC[] THEN
   REWRITE_TAC[clos_to_bvl_compile_op_def; clos_tag_shift_def; HD; APPEND; LENGTH;
-              C2BP2AUX_list_of_seq_1] THEN
-  CONV_TAC NUM_REDUCE_CONV THEN REWRITE_TAC[C2BP2AUX_list_of_seq_1]);;
+              LISTAUX_list_of_seq_1] THEN
+  CONV_TAC NUM_REDUCE_CONV THEN REWRITE_TAC[LISTAUX_list_of_seq_1]);;
 
 let C2BP2AUX_case_Rerr_same = prove
  (CASE_TERM
@@ -3023,7 +2993,7 @@ let C2BP2AUX_eval_force_thunk_code = prove
     CONV_TAC NUM_REDUCE_CONV THEN
     REWRITE_TAC[bvl_evaluate_def] THEN CASE_REWRITE_TAC[] THEN
     REWRITE_TAC[LENGTH; LT_0; EL; HD; TL; REVERSE; APPEND; bvl_do_app_Cons;
-                C2BP2AUX_EL_1; ARITH_RULE `1 < SUC (SUC n)`] THEN
+                C2BP2AUX_EL_CONS_ONE; ARITH_RULE `1 < SUC (SUC n)`] THEN
     CASE_REWRITE_TAC[] THEN REWRITE_TAC[HD];
     ALL_TAC] THEN
   W(fun (asl,w) ->
@@ -3037,7 +3007,7 @@ let C2BP2AUX_eval_force_thunk_code = prove
   FIRST_X_ASSUM(MP_TAC o MATCH_MP bvl_evaluate_SING) THEN
   DISCH_THEN(X_CHOOSE_THEN `v:bvl_v` SUBST1_TAC) THEN
   REWRITE_TAC[bvl_evaluate_def; APPEND; HD] THEN CASE_REWRITE_TAC[] THEN
-  REWRITE_TAC[LENGTH; LT_0; EL; HD; TL; REVERSE; APPEND; C2BP2AUX_EL_1;
+  REWRITE_TAC[LENGTH; LT_0; EL; HD; TL; REVERSE; APPEND; C2BP2AUX_EL_CONS_ONE;
               ARITH_RULE `1 < SUC (SUC n)`] THEN
   CASE_REWRITE_TAC[] THEN
   C2BP2AUX_CASES_ON `bvl_do_app (clos_ThunkOp (UpdateThunk Evaluated)) [thv; v]
@@ -3045,10 +3015,10 @@ let C2BP2AUX_eval_force_thunk_code = prove
   CASE_REWRITE_TAC[] THEN
   TRY(C2BP2AUX_PAIR_CASES_TAC `a:bvl_v#(C,FFI)bvl_state` `u:bvl_v` `s2:(C,FFI)bvl_state`) THEN
   CASE_REWRITE_TAC[] THEN
-  REWRITE_TAC[LENGTH; LT_0; EL; HD; TL; REVERSE; APPEND; C2BP2AUX_EL_1;
+  REWRITE_TAC[LENGTH; LT_0; EL; HD; TL; REVERSE; APPEND; C2BP2AUX_EL_CONS_ONE;
               ARITH_RULE `1 < SUC (SUC n)`] THEN
   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
-  REWRITE_TAC[LENGTH; LT_0; EL; HD; TL; REVERSE; APPEND; C2BP2AUX_EL_1;
+  REWRITE_TAC[LENGTH; LT_0; EL; HD; TL; REVERSE; APPEND; C2BP2AUX_EL_CONS_ONE;
               ARITH_RULE `1 < SUC (SUC n)`]);;
 let C2BP2AUX_dest_thunk_IsThunk = prove
  (`!vs refs m v.
@@ -4095,7 +4065,7 @@ let C2BP2AUX_compile_exps_code_locs = prove
         RVEQ_TAC THEN C2BP2AUX_APPEND_WITNESS_TAC THEN
         ASM_REWRITE_TAC[MAP_APPEND; REVERSE_APPEND; MAP; REVERSE; APPEND; APPEND_NIL;
                         GSYM APPEND_ASSOC] THEN
-        REWRITE_TAC[C2BP2AUX_list_of_seq_1; APPEND; MULT_CLAUSES; ADD_CLAUSES; REVERSE;
+        REWRITE_TAC[LISTAUX_list_of_seq_1; APPEND; MULT_CLAUSES; ADD_CLAUSES; REVERSE;
                     MAP; CONS_11; ADD_SYM];
         REPEAT PAIRARG_TAC THEN GVS[] THEN
         FIRST_ASSUM(CAKE_STRIP_ASSUME_TAC o MATCH_MP lemma2 o check C2BP2AUX_is_build_aux) THEN

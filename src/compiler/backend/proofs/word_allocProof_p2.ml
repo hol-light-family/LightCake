@@ -645,15 +645,6 @@ let ssa_locals_rel_force_rename = prove
 
 (* helper: a map that is ALL_DISTINCT on a list is injective on its elements *)
 
-let WALLOCPAUX_ALL_DISTINCT_MAP_MEM = prove
- (`!(f:A->B) ls x y.
-     ALL_DISTINCT (MAP f ls) /\ MEM x ls /\ MEM y ls /\ f x = f y ==> x = y`,
-  GEN_TAC THEN LIST_INDUCT_TAC THEN REWRITE_TAC[MEM; MAP; ALL_DISTINCT] THEN
-  REPEAT GEN_TAC THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THENL
-   [ASM_MESON_TAC[MEM_MAP];
-    ASM_MESON_TAC[MEM_MAP];
-    ASM_MESON_TAC[]]);;
-
 (* HOL4 line 6405 *)
 let list_next_var_rename_move_distinct = prove
  (`!(ssa:num spt) na ls (mov:(A)wl_prog) ssa' na' x y.
@@ -682,7 +673,7 @@ let list_next_var_rename_move_distinct = prove
     USE_THEN "some" (fun th -> FIRST_ASSUM(MP_TAC o MATCH_MP th)) THEN
     STRIP_TAC THEN ASM_REWRITE_TAC[option_lookup_def; option_CASE; THE_DEF];
     ALL_TAC] THEN
-  MATCH_MP_TAC(ISPEC `\z. THE (lookup z (ssa':num spt))` WALLOCPAUX_ALL_DISTINCT_MAP_MEM) THEN
+  MATCH_MP_TAC(ISPEC `\z. THE (lookup z (ssa':num spt))` LSCANPAUX_INJ_MAP) THEN
   EXISTS_TAC `ls:num list` THEN
   ASM_REWRITE_TAC[] THEN CONJ_TAC THENL
    [USE_THEN "nl" (SUBST1_TAC o SYM) THEN USE_THEN "dist" ACCEPT_TAC;
@@ -989,7 +980,7 @@ let evaluate_fake_const_chain = prove
   MP_TAC(ISPECL [`fake_move h:(A)wl_prog`;
                  `ITLIST wl_Seq (MAP (\r. fake_move r:(A)wl_prog) t) wl_Skip`;
                  `cst:(A,C,FFI)wl_state`; `wl_set_var h (wl_Word (word 0)) (cst:(A,C,FFI)wl_state)`]
-                WALLOCPAUX_seq_NONE) THEN
+                IL2AUX_evaluate_Seq_NONE) THEN
   REWRITE_TAC[WALLOCPAUX_evaluate_fake_move] THEN DISCH_THEN SUBST1_TAC THEN
   ASM_REWRITE_TAC[wl_set_var_def; wl_state_INFO.ri_accfupds; wl_state_INFO.ri_fupdfupds;
                   K_THM; K_o_THM; foldr_insert_const_swap]);;
@@ -1019,11 +1010,6 @@ let evaluate_fake_const_chain_locals = prove
     GEN_TAC THEN COND_CASES_TAC THEN ASM_SIMP_TAC[]]);;
 
 (* helper: word_state_eq_rel is transitive *)
-
-let WALLOCPAUX_wser_trans = prove
- (`!(s:(A,C,FFI)wl_state) t u.
-     word_state_eq_rel s t /\ word_state_eq_rel t u ==> word_state_eq_rel s u`,
-  REWRITE_TAC[word_state_eq_rel_def] THEN REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[]);;
 
 (* HOL4 line 6766 *)
 let loop_setup_correct = prove
@@ -1092,7 +1078,7 @@ let loop_setup_correct = prove
   STRIP_TAC THEN
   MP_TAC(ISPECL [`ITLIST wl_Seq (MAP (\r. fake_move r:(A)wl_prog) fresh_pos_ls) wl_Skip`;
                  `refresh_mov:(A)wl_prog`; `cst:(A,C,FFI)wl_state`; `fcst:(A,C,FFI)wl_state`]
-                WALLOCPAUX_seq_NONE) THEN
+                IL2AUX_evaluate_Seq_NONE) THEN
   ASM_REWRITE_TAC[evaluate_fake_const_chain] THEN DISCH_THEN SUBST1_TAC THEN
   SUBGOAL_THEN `ssa_locals_rel na_ext ssa_ext (wl_state_locals (st:(A,C,FFI)wl_state))
                   (wl_state_locals (fcst:(A,C,FFI)wl_state))` ASSUME_TAC THENL
@@ -1142,7 +1128,7 @@ let loop_setup_correct = prove
   MP_TAC(ISPECL [`st:(A,C,FFI)wl_state`; `ssa_ext:num spt`; `na_ext:num`; `rf:num list`;
                  `fcst:(A,C,FFI)wl_state`] list_next_var_rename_move_preserve_weak) THEN
   ANTS_TAC THENL
-   [ASM_REWRITE_TAC[] THEN MATCH_MP_TAC WALLOCPAUX_wser_trans THEN
+   [ASM_REWRITE_TAC[] THEN MATCH_MP_TAC WALLOCPAUX_word_state_eq_rel_trans THEN
     EXISTS_TAC `cst:(A,C,FFI)wl_state` THEN ASM_REWRITE_TAC[];
     ALL_TAC] THEN
   ASM_REWRITE_TAC[pair_CASE; LET_DEF; LET_END_DEF] THEN CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
@@ -1220,7 +1206,7 @@ let loop_setup_correct = prove
       `set_of_list ex UNION set_of_list rf = domain (union (names:1 spt) exit_names)`)) THEN
     REWRITE_TAC[INJ; IN_UNIV; IN_UNION; IN_SET_OF_LIST] THEN
     MAP_EVERY X_GEN_TAC [`x:num`; `y:num`] THEN DISCH_TAC THEN
-    MATCH_MP_TAC(ISPEC `option_lookup (ssa_refreshed:num spt)` WALLOCPAUX_ALL_DISTINCT_MAP_MEM) THEN
+    MATCH_MP_TAC(ISPEC `option_lookup (ssa_refreshed:num spt)` LSCANPAUX_INJ_MAP) THEN
     EXISTS_TAC `APPEND ex rf:num list` THEN
     ASM_REWRITE_TAC[MAP_APPEND; MEM_APPEND; ALL_DISTINCT_APPEND];
     ALL_TAC] THEN
@@ -1249,7 +1235,7 @@ let loop_setup_correct = prove
 let evaluate_seq_collapse = prove
  (`!(P:(A)wl_prog) Q (s:(A,C,FFI)wl_state) t.
      wl_evaluate (P,s) = (NONE,t) ==> wl_evaluate (wl_Seq P Q,s) = wl_evaluate (Q,t)`,
-  REWRITE_TAC[WALLOCPAUX_seq_NONE]);;
+  REWRITE_TAC[IL2AUX_evaluate_Seq_NONE]);;
 
 (* HOL4 line 7026 *)
 let cut_env_fromAList_LN = prove
@@ -1520,7 +1506,7 @@ let ssa_cc_trans_Loop_helper = prove
   DISCH_THEN(DISJ_CASES_THEN2 ASSUME_TAC
     (X_CHOOSE_THEN `env:((A)word_loc)spt` ASSUME_TAC)) THENL
    [EXISTS_TAC `wl_state_permute (st:(A,C,FFI)wl_state)` THEN
-    REWRITE_TAC[WALLOCPAUX_with_same_permute] THEN ONCE_REWRITE_TAC[wl_evaluate_def] THEN
+    REWRITE_TAC[WALLOCPAUX_permute_same] THEN ONCE_REWRITE_TAC[wl_evaluate_def] THEN
     ASM_REWRITE_TAC[wl_cut_state_def; option_CASE] THEN BETA_TAC THEN REWRITE_TAC[pair_CASE];
     ALL_TAC] THEN
   MP_TAC(ISPECL [`option_lookup (ssa_refreshed:num spt)`; `(names:1 spt,LN:1 spt)`;
@@ -1575,7 +1561,7 @@ let ssa_cc_trans_Loop_helper = prove
        ANTS_TAC THENL [CONJ_TAC THEN FIRST_ASSUM ACCEPT_TAC; ALL_TAC] THEN
        DISCH_THEN(X_CHOOSE_THEN `c2:(A,C,FFI)wl_state` STRIP_ASSUME_TAC) THEN
        SUBGOAL_THEN `word_state_eq_rel (s1:(A,C,FFI)wl_state) c2` ASSUME_TAC THENL
-        [MATCH_MP_TAC WALLOCPAUX_wser_trans THEN EXISTS_TAC `s2:(A,C,FFI)wl_state` THEN
+        [MATCH_MP_TAC WALLOCPAUX_word_state_eq_rel_trans THEN EXISTS_TAC `s2:(A,C,FFI)wl_state` THEN
          ASM_REWRITE_TAC[];
          ALL_TAC] THEN
        SUBGOAL_THEN `wl_state_clock (c2:(A,C,FFI)wl_state) <= wl_state_clock (cst:(A,C,FFI)wl_state)`
@@ -1924,12 +1910,12 @@ let WALLOCPAUX_sct_Break = prove
     MATCH_MP_TAC WALLOCPAUX_wser_permute THEN FIRST_ASSUM ACCEPT_TAC;
     ALL_TAC] THEN
   MP_TAC(ISPECL [`(ssa_reconcile (ssa:num spt) t0 (en:1 spt)):(A)wl_prog`; `wl_Break a0:(A)wl_prog`;
-                 `cst:(A,C,FFI)wl_state`; `c2:(A,C,FFI)wl_state`] WALLOCPAUX_seq_NONE) THEN
+                 `cst:(A,C,FFI)wl_state`; `c2:(A,C,FFI)wl_state`] IL2AUX_evaluate_Seq_NONE) THEN
   ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN
   ONCE_REWRITE_TAC[wl_evaluate_def] THEN
   ASM_REWRITE_TAC[pair_CASE; option_CASE; WALLOCPAUX_wl_result_CASE; wl_state_INFO.ri_accfupds] THEN
   MATCH_MP_TAC WALLOCPAUX_wser_permute THEN
-  MATCH_MP_TAC WALLOCPAUX_wser_trans THEN EXISTS_TAC `cst:(A,C,FFI)wl_state` THEN
+  MATCH_MP_TAC WALLOCPAUX_word_state_eq_rel_trans THEN EXISTS_TAC `cst:(A,C,FFI)wl_state` THEN
   ASM_REWRITE_TAC[]);;
 
 let WALLOCPAUX_sct_Continue = prove
@@ -1967,12 +1953,12 @@ let WALLOCPAUX_sct_Continue = prove
     MATCH_MP_TAC WALLOCPAUX_wser_permute THEN FIRST_ASSUM ACCEPT_TAC;
     ALL_TAC] THEN
   MP_TAC(ISPECL [`(ssa_reconcile (ssa:num spt) t0 (nm:1 spt)):(A)wl_prog`; `wl_Continue a0:(A)wl_prog`;
-                 `cst:(A,C,FFI)wl_state`; `c2:(A,C,FFI)wl_state`] WALLOCPAUX_seq_NONE) THEN
+                 `cst:(A,C,FFI)wl_state`; `c2:(A,C,FFI)wl_state`] IL2AUX_evaluate_Seq_NONE) THEN
   ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN
   ONCE_REWRITE_TAC[wl_evaluate_def] THEN
   ASM_REWRITE_TAC[pair_CASE; option_CASE; WALLOCPAUX_wl_result_CASE; wl_state_INFO.ri_accfupds] THEN
   MATCH_MP_TAC WALLOCPAUX_wser_permute THEN
-  MATCH_MP_TAC WALLOCPAUX_wser_trans THEN EXISTS_TAC `cst:(A,C,FFI)wl_state` THEN
+  MATCH_MP_TAC WALLOCPAUX_word_state_eq_rel_trans THEN EXISTS_TAC `cst:(A,C,FFI)wl_state` THEN
   ASM_REWRITE_TAC[]);;
 
 let WALLOCPAUX_sct_MustTerminate = prove
@@ -2086,7 +2072,7 @@ let WALLOCPAUX_sct_Seq = prove
   ASM_REWRITE_TAC[pair_CASE; option_DISTINCT; wl_state_INFO.ri_fupdfupds; K_o_THM] THEN
   DISCH_THEN(X_CHOOSE_TAC `perm3:num->num->num`) THEN
   EXISTS_TAC `perm3:num->num->num` THEN
-  ASSUM_LIST(fun ths -> REWRITE_TAC (mapfilter (MATCH_MP WALLOCPAUX_seq_NONE) ths)) THEN
+  ASSUM_LIST(fun ths -> REWRITE_TAC (mapfilter (MATCH_MP IL2AUX_evaluate_Seq_NONE) ths)) THEN
   REMOVE_THEN "ih2" MP_TAC THEN ASM_REWRITE_TAC[pair_CASE; LET_DEF; LET_END_DEF] THEN
   CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN REWRITE_TAC[pair_CASE]);;
 
@@ -2156,7 +2142,7 @@ let WALLOCPAUX_SCT_IFBR_TAC (p:term) (q:term) (cn:term) (sa:term) (nb:term)
    [(RULE_ASSUM_TAC(REWRITE_RULE[option_CASE]) THEN
   FIRST_ASSUM(fun th -> if is_eq(concl th) &&
       (try fst(dest_pair(rand(lhs(concl th)))) = q with Failure _ -> false)
-    then REWRITE_TAC[MATCH_MP (ISPECL [q; cn] WALLOCPAUX_seq_NONE) th] else NO_TAC) THEN
+    then REWRITE_TAC[MATCH_MP (ISPECL [q; cn] IL2AUX_evaluate_Seq_NONE) th] else NO_TAC) THEN
   MP_TAC fixth THEN ANTS_TAC THENL
    [ASM_REWRITE_TAC[] THEN TRY(MATCH_MP_TAC ssa_map_ok_more THEN EXISTS_TAC `na2:num` THEN
     ASM_REWRITE_TAC[]);
@@ -2168,7 +2154,7 @@ let WALLOCPAUX_SCT_IFBR_TAC (p:term) (q:term) (cn:term) (sa:term) (nb:term)
     ALL_TAC] THEN
   WALLOCPAUX_NAME_EVAL_TAC cn [`r3:((A)wl_result)option`; `s3:(A,C,FFI)wl_state`] THEN
   STRIP_TAC THEN ASM_REWRITE_TAC[pair_CASE; option_CASE] THEN
-  MATCH_MP_TAC WALLOCPAUX_wser_trans THEN EXISTS_TAC `s2:(A,C,FFI)wl_state` THEN
+  MATCH_MP_TAC WALLOCPAUX_word_state_eq_rel_trans THEN EXISTS_TAC `s2:(A,C,FFI)wl_state` THEN
   ASM_REWRITE_TAC[]);
     FIRST_ASSUM(fun th -> if is_eq(concl th) &&
         (try fst(dest_pair(rand(lhs(concl th)))) = q with Failure _ -> false)
@@ -2288,7 +2274,7 @@ let WALLOCPAUX_sct_Loop = prove
   REWRITE_TAC[LET_DEF; LET_END_DEF] THEN CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
   FIRST_ASSUM(fun th -> if is_eq(concl th) &&
       (try fst(dest_pair(rand(lhs(concl th)))) = `sp:(A)wl_prog` with Failure _ -> false)
-    then REWRITE_TAC[MATCH_MP WALLOCPAUX_seq_NONE th] else NO_TAC) THEN
+    then REWRITE_TAC[MATCH_MP IL2AUX_evaluate_Seq_NONE th] else NO_TAC) THEN
   DISCH_TAC THEN
   (fun (asl,w as g) ->
      let tm = find_term (fun t -> is_comb t &&
@@ -2436,7 +2422,7 @@ let WALLOCPAUX_sct_Call_tail = prove
   FIRST_ASSUM(fun th -> if is_eq(concl th) &&
       (try fst(dest_const(fst(strip_comb(fst(dest_pair(rand(lhs(concl th)))))))) = "wl_Move"
        with Failure _ -> false)
-    then REWRITE_TAC[MATCH_MP WALLOCPAUX_seq_NONE th] else NO_TAC) THEN
+    then REWRITE_TAC[MATCH_MP IL2AUX_evaluate_Seq_NONE th] else NO_TAC) THEN
   ONCE_REWRITE_TAC[wl_evaluate_def] THEN
   REWRITE_TAC[wl_get_vars_with_const] THEN ASM_REWRITE_TAC[option_CASE] THEN
   MP_TAC(ISPECL [`cst:(A,C,FFI)wl_state`; `list_of_seq (\x. 2 * x) (LENGTH (args:num list))`;
@@ -2996,14 +2982,6 @@ let WALLOCPAUX_sct_Inst = prove
 (* of the renamed map; around it the two renaming moves                      *)
 (* ------------------------------------------------------------------------- *)
 
-let WALLOCPAUX_env_to_list_keys_FST = prove
- (`!(x:((A)word_loc)spt) perm. set_of_list (MAP FST (FST (env_to_list x perm))) = domain x`,
-  REPEAT GEN_TAC THEN
-  MP_TAC(ISPECL [`x:((A)word_loc)spt`; `perm:num->num->num`] env_to_list_keys) THEN
-  SPEC_TAC(`env_to_list (x:((A)word_loc)spt) perm`,
-           `p:(num#(A)word_loc)list#(num->num->num)`) THEN
-  REWRITE_TAC[FORALL_PAIR_THM; pair_CASE; FST]);;
-
 (* the locals after popping the frame pushed for an Alloc *)
 
 let WALLOCPAUX_pop_push_domain = prove
@@ -3032,7 +3010,7 @@ let WALLOCPAUX_pop_push_domain = prove
   FIRST_X_ASSUM(fun th -> if is_eq(concl th) &&
       rhs(concl th) = `MAP FST (a2:(num#(A)word_loc)list)`
     then REWRITE_TAC[SYM th] else NO_TAC) THEN
-  REWRITE_TAC[WALLOCPAUX_env_to_list_keys_FST] THEN
+  REWRITE_TAC[IL2AUX_env_to_list_domain] THEN
   SET_TAC[]);;
 
 let WALLOCPAUX_cut_names_domain = prove
@@ -3302,9 +3280,9 @@ let WALLOCPAUX_sct_Alloc = prove
     (fun th -> REWRITE_TAC[th]) THENL
    [GEN_TAC THEN
     MP_TAC(ISPECL [`mov1:(A)wl_prog`; `wl_Seq (wl_Move 1 [2,option_lookup ssa1 a0]) X:(A)wl_prog`;
-                   `cst:(A,C,FFI)wl_state`; `rcst1:(A,C,FFI)wl_state`] WALLOCPAUX_seq_NONE) THEN
+                   `cst:(A,C,FFI)wl_state`; `rcst1:(A,C,FFI)wl_state`] IL2AUX_evaluate_Seq_NONE) THEN
     ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN
-    MATCH_MP_TAC WALLOCPAUX_seq_NONE THEN
+    MATCH_MP_TAC IL2AUX_evaluate_Seq_NONE THEN
     ONCE_REWRITE_TAC[wl_evaluate_def] THEN
     REWRITE_TAC[MAP; ALL_DISTINCT; MEM; wl_get_vars_def] THEN
     ASM_REWRITE_TAC[option_CASE; wl_set_vars_def; alist_insert_def];
@@ -3379,7 +3357,7 @@ let WALLOCPAUX_sct_Alloc = prove
   DISCH_THEN(DISJ_CASES_THEN2 SUBST_ALL_TAC (X_CHOOSE_THEN `r:(A)wl_result` SUBST_ALL_TAC)) THENL
    [(MP_TAC(ISPECL [`wl_Alloc 2 (apply_nummaps_key (option_lookup ssa1) (p0,p1)):(A)wl_prog`;
                    `mov2:(A)wl_prog`; `rcst2:(A,C,FFI)wl_state`; `rcst3:(A,C,FFI)wl_state`]
-           WALLOCPAUX_seq_NONE) THEN
+           IL2AUX_evaluate_Seq_NONE) THEN
     ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN
     FIRST_ASSUM(fun th -> if is_eq(concl th) &&
         (try fst(dest_const(fst(strip_comb(lhs(concl th))))) = "wl_alloc"
@@ -3526,9 +3504,9 @@ let WALLOCPAUX_sct_Install = prove
    [GEN_TAC THEN
     MP_TAC(ISPECL [`mov1:(A)wl_prog`;
                    `wl_Seq (wl_Move 1 [2,option_lookup ssa1 a0; 4,option_lookup ssa1 a1]) X:(A)wl_prog`;
-                   `cst:(A,C,FFI)wl_state`; `rcst1:(A,C,FFI)wl_state`] WALLOCPAUX_seq_NONE) THEN
+                   `cst:(A,C,FFI)wl_state`; `rcst1:(A,C,FFI)wl_state`] IL2AUX_evaluate_Seq_NONE) THEN
     ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN
-    MATCH_MP_TAC WALLOCPAUX_seq_NONE THEN
+    MATCH_MP_TAC IL2AUX_evaluate_Seq_NONE THEN
     ONCE_REWRITE_TAC[wl_evaluate_def] THEN
     REWRITE_TAC[MAP; ALL_DISTINCT; MEM; wl_get_vars_def; ARITH_EQ] THEN
     ASM_REWRITE_TAC[option_CASE; wl_set_vars_def; alist_insert_def];
@@ -3583,7 +3561,7 @@ let WALLOCPAUX_sct_Install = prove
       (try fst(dest_const(fst(strip_comb(lhs(concl th))))) = "wl_evaluate" &&
            can (find_term (fun t -> try fst(dest_const t) = "wl_Install" with Failure _ -> false))
              (lhs(concl th)) with Failure _ -> false)
-    then REWRITE_TAC[MATCH_MP WALLOCPAUX_seq_NONE th] else NO_TAC) THEN
+    then REWRITE_TAC[MATCH_MP IL2AUX_evaluate_Seq_NONE th] else NO_TAC) THEN
   (fun (asl,w as g) ->
      let tm = find_term (fun t -> try fst(dest_const(rator t)) = "wl_evaluate" &&
                  fst(dest_const(fst(strip_comb(fst(dest_pair(rand t)))))) = "wl_Seq"
@@ -3602,7 +3580,7 @@ let WALLOCPAUX_sct_Install = prove
       (try fst(dest_const(fst(strip_comb(lhs(concl th))))) = "wl_evaluate" &&
            can (find_term (fun t -> try fst(dest_const t) = "wl_Move" with Failure _ -> false))
              (lhs(concl th)) with Failure _ -> false)
-    then REWRITE_TAC[MATCH_MP WALLOCPAUX_seq_NONE th] else NO_TAC) THEN
+    then REWRITE_TAC[MATCH_MP IL2AUX_evaluate_Seq_NONE th] else NO_TAC) THEN
   (fun (asl,w as g) ->
      let wser = find_term (fun t -> try fst(dest_const(fst(strip_comb t))) = "word_state_eq_rel"
                                     with Failure _ -> false) w in
@@ -3774,9 +3752,9 @@ let WALLOCPAUX_sct_FFI = prove
     MP_TAC(ISPECL [`mov1:(A)wl_prog`;
                    `wl_Seq (wl_Move 1 [2,option_lookup ssa1 a1; 4,option_lookup ssa1 a2;
                       6,option_lookup ssa1 a3; 8,option_lookup ssa1 a4]) X:(A)wl_prog`;
-                   `cst:(A,C,FFI)wl_state`; `rcst1:(A,C,FFI)wl_state`] WALLOCPAUX_seq_NONE) THEN
+                   `cst:(A,C,FFI)wl_state`; `rcst1:(A,C,FFI)wl_state`] IL2AUX_evaluate_Seq_NONE) THEN
     ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN
-    MATCH_MP_TAC WALLOCPAUX_seq_NONE THEN
+    MATCH_MP_TAC IL2AUX_evaluate_Seq_NONE THEN
     ONCE_REWRITE_TAC[wl_evaluate_def] THEN
     REWRITE_TAC[MAP; ALL_DISTINCT; MEM; wl_get_vars_def; ARITH_EQ] THEN
     ASM_REWRITE_TAC[option_CASE; wl_set_vars_def; alist_insert_def];
@@ -3834,7 +3812,7 @@ let WALLOCPAUX_sct_FFI = prove
       (try fst(dest_const(fst(strip_comb(lhs(concl th))))) = "wl_evaluate" &&
            can (find_term (fun t -> try fst(dest_const t) = "wl_FFI" with Failure _ -> false))
              (lhs(concl th)) with Failure _ -> false)
-    then REWRITE_TAC[MATCH_MP WALLOCPAUX_seq_NONE th] else NO_TAC)) THEN
+    then REWRITE_TAC[MATCH_MP IL2AUX_evaluate_Seq_NONE th] else NO_TAC)) THEN
    ((fun (asl,w as g) ->
      let wser = find_term (fun t -> try fst(dest_const(fst(strip_comb t))) = "word_state_eq_rel"
                                     with Failure _ -> false) w in
@@ -3973,7 +3951,7 @@ let WALLOCPAUX_call_sim = prove
    [ASM_MESON_TAC[LENGTH_EQ_NIL]; ALL_TAC] THEN
   let srcerr thl =
     EXISTS_TAC `wl_state_permute (st:(A,C,FFI)wl_state)` THEN
-    REWRITE_TAC[WALLOCPAUX_with_same_permute] THEN ONCE_REWRITE_TAC[wl_evaluate_def] THEN
+    REWRITE_TAC[WALLOCPAUX_permute_same] THEN ONCE_REWRITE_TAC[wl_evaluate_def] THEN
     ASM_REWRITE_TAC([option_CASE; pair_CASE; WALLOCPAUX_word_loc_CASE; add_ret_loc_def;
                      WALLOCPAUX_wl_result_CASE] @ thl) in
   MP_TAC(ISPEC `wl_get_vars args (st:(A,C,FFI)wl_state)` (cases "option")) THEN
@@ -4103,7 +4081,7 @@ let WALLOCPAUX_call_sim = prove
   WALLOCPAUX_RESULT_CASES_TAC `r1:((A)wl_result)option` THEN
   let stop =
     STRIP_TAC THEN EXISTS_TAC `wl_state_permute (s1:(A,C,FFI)wl_state)` THEN
-    REWRITE_TAC[WALLOCPAUX_with_same_permute] THEN
+    REWRITE_TAC[WALLOCPAUX_permute_same] THEN
     FIRST_X_ASSUM(MP_TAC o SPEC `wl_state_stack (tc0:(A,C,FFI)wl_state)` o
                   check (is_forall o concl)) THEN
     ANTS_TAC THENL [FIRST_ASSUM ACCEPT_TAC; DISCH_THEN SUBST1_TAC] THEN
@@ -4323,7 +4301,7 @@ let WALLOCPAUX_call_sim = prove
       ASM_REWRITE_TAC[];
       ALL_TAC] THEN
     EXISTS_TAC `wl_state_permute (s1:(A,C,FFI)wl_state)` THEN
-    REWRITE_TAC[WALLOCPAUX_with_same_permute] THEN
+    REWRITE_TAC[WALLOCPAUX_permute_same] THEN
     FIRST_X_ASSUM(fun th -> if is_eq(concl th) &&
         (try fst(dest_const(fst(strip_comb(lhs(concl th))))) = "wl_evaluate" with Failure _ -> false) &&
         free_in `tc0:(A,C,FFI)wl_state` (lhs(concl th))
@@ -4601,9 +4579,9 @@ let WALLOCPAUX_ret_moves = prove
   REPEAT CONJ_TAC THENL
    [MP_TAC(ISPECL [`mov2:(A)wl_prog`; `wl_Seq (wl_Move 1 (ZIP ret' regs)) X:(A)wl_prog`;
                    `wl_set_vars regs (ys:((A)word_loc)list) (t1:(A,C,FFI)wl_state)`;
-                   `t2:(A,C,FFI)wl_state`] WALLOCPAUX_seq_NONE) THEN
+                   `t2:(A,C,FFI)wl_state`] IL2AUX_evaluate_Seq_NONE) THEN
     ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN
-    MATCH_MP_TAC WALLOCPAUX_seq_NONE THEN FIRST_ASSUM ACCEPT_TAC;
+    MATCH_MP_TAC IL2AUX_evaluate_Seq_NONE THEN FIRST_ASSUM ACCEPT_TAC;
     REWRITE_TAC[wl_set_vars_def] THEN MATCH_MP_TAC WALLOCPAUX_wser_locals THEN
     FIRST_ASSUM ACCEPT_TAC;
     REWRITE_TAC[wl_set_vars_def; wl_state_INFO.ri_accfupds; K_THM] THEN
@@ -4690,9 +4668,9 @@ let WALLOCPAUX_exc_moves = prove
   REPEAT CONJ_TAC THENL
    [MP_TAC(ISPECL [`mov2:(A)wl_prog`; `wl_Seq (wl_Move 1 [na3,2]) X:(A)wl_prog`;
                    `wl_set_var 2 (y:(A)word_loc) (t1:(A,C,FFI)wl_state)`;
-                   `t2:(A,C,FFI)wl_state`] WALLOCPAUX_seq_NONE) THEN
+                   `t2:(A,C,FFI)wl_state`] IL2AUX_evaluate_Seq_NONE) THEN
     ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN
-    MATCH_MP_TAC WALLOCPAUX_seq_NONE THEN FIRST_ASSUM ACCEPT_TAC;
+    MATCH_MP_TAC IL2AUX_evaluate_Seq_NONE THEN FIRST_ASSUM ACCEPT_TAC;
     REWRITE_TAC[wl_set_vars_def; wl_set_var_def] THEN MATCH_MP_TAC WALLOCPAUX_wser_locals THEN
     FIRST_ASSUM ACCEPT_TAC;
     REWRITE_TAC[wl_set_vars_def; wl_set_var_def; alist_insert_def; wl_state_INFO.ri_accfupds;
@@ -4758,7 +4736,7 @@ let WALLOCPAUX_sct_R_seq_cons = prove
   MP_TAC(ISPEC `r':((A)wl_result)option` (cases "option")) THEN
   DISCH_THEN(DISJ_CASES_THEN2 SUBST_ALL_TAC (X_CHOOSE_THEN `rr:(A)wl_result` SUBST_ALL_TAC)) THENL
    [MP_TAC(ISPECL [`P:(A)wl_prog`; `cons:(A)wl_prog`; `t0:(A,C,FFI)wl_state`;
-                   `t:(A,C,FFI)wl_state`] WALLOCPAUX_seq_NONE) THEN
+                   `t:(A,C,FFI)wl_state`] IL2AUX_evaluate_Seq_NONE) THEN
     ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN
     UNDISCH_TAC `WALLOCPAUX_sct_R na ssa lt r (s:(A,C,FFI)wl_state) NONE (t:(A,C,FFI)wl_state)` THEN
     REWRITE_TAC[WALLOCPAUX_sct_R_def] THEN STRIP_TAC THEN
@@ -4770,7 +4748,7 @@ let WALLOCPAUX_sct_R_seq_cons = prove
     WALLOCPAUX_TUPLE_TAC `wl_evaluate (cons:(A)wl_prog,t:(A,C,FFI)wl_state)`
       [`r3:((A)wl_result)option`; `t3:(A,C,FFI)wl_state`] THEN
     REWRITE_TAC[pair_CASE] THEN STRIP_TAC THEN ASM_REWRITE_TAC[option_CASE] THEN
-    MATCH_MP_TAC WALLOCPAUX_wser_trans THEN EXISTS_TAC `t:(A,C,FFI)wl_state` THEN
+    MATCH_MP_TAC WALLOCPAUX_word_state_eq_rel_trans THEN EXISTS_TAC `t:(A,C,FFI)wl_state` THEN
     ASM_REWRITE_TAC[];
     MP_TAC(ISPECL [`P:(A)wl_prog`; `cons:(A)wl_prog`; `t0:(A,C,FFI)wl_state`; `rr:(A)wl_result`;
                    `t:(A,C,FFI)wl_state`] WALLOCPAUX_seq_SOME) THEN
@@ -4800,7 +4778,7 @@ let WALLOCPAUX_sct_Call_ret_none = prove
   REPEAT(FIRST_X_ASSUM(CONJUNCTS_THEN ASSUME_TAC o check (is_conj o concl))) THEN
   let srcerr thl =
     EXISTS_TAC `wl_state_permute (st:(A,C,FFI)wl_state)` THEN
-    REWRITE_TAC[WALLOCPAUX_with_same_permute] THEN ONCE_REWRITE_TAC[wl_evaluate_def] THEN
+    REWRITE_TAC[WALLOCPAUX_permute_same] THEN ONCE_REWRITE_TAC[wl_evaluate_def] THEN
     ASM_REWRITE_TAC([option_CASE; pair_CASE; WALLOCPAUX_word_loc_CASE; add_ret_loc_def;
                      WALLOCPAUX_wl_result_CASE] @ thl) in
   MP_TAC(ISPEC `wl_get_vars args (st:(A,C,FFI)wl_state)` (cases "option")) THEN
@@ -4940,9 +4918,9 @@ let WALLOCPAUX_sct_Call_ret_none = prove
    [GEN_TAC THEN
     MP_TAC(ISPECL [`mov1:(A)wl_prog`;
                    `wl_Seq (wl_Move 1 (ZIP cargs (MAP (option_lookup ssa) args))) X:(A)wl_prog`;
-                   `cst:(A,C,FFI)wl_state`; `rcst1:(A,C,FFI)wl_state`] WALLOCPAUX_seq_NONE) THEN
+                   `cst:(A,C,FFI)wl_state`; `rcst1:(A,C,FFI)wl_state`] IL2AUX_evaluate_Seq_NONE) THEN
     ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN
-    MATCH_MP_TAC WALLOCPAUX_seq_NONE THEN
+    MATCH_MP_TAC IL2AUX_evaluate_Seq_NONE THEN
     ONCE_REWRITE_TAC[wl_evaluate_def] THEN
     SUBGOAL_THEN `LENGTH (cargs:num list) = LENGTH (MAP (option_lookup ssa) (args:num list))`
       (LABEL_TAC "lz") THENL [ASM_REWRITE_TAC[LENGTH_MAP]; ALL_TAC] THEN
@@ -5066,7 +5044,7 @@ let WALLOCPAUX_sct_Call_ret_some = prove
   REPEAT(FIRST_X_ASSUM(CONJUNCTS_THEN ASSUME_TAC o check (is_conj o concl))) THEN
   let srcerr thl =
     EXISTS_TAC `wl_state_permute (st:(A,C,FFI)wl_state)` THEN
-    REWRITE_TAC[WALLOCPAUX_with_same_permute] THEN ONCE_REWRITE_TAC[wl_evaluate_def] THEN
+    REWRITE_TAC[WALLOCPAUX_permute_same] THEN ONCE_REWRITE_TAC[wl_evaluate_def] THEN
     ASM_REWRITE_TAC([option_CASE; pair_CASE; WALLOCPAUX_word_loc_CASE; add_ret_loc_def;
                      WALLOCPAUX_wl_result_CASE] @ thl) in
   MP_TAC(ISPEC `wl_get_vars args (st:(A,C,FFI)wl_state)` (cases "option")) THEN
@@ -5215,9 +5193,9 @@ let WALLOCPAUX_sct_Call_ret_some = prove
    [GEN_TAC THEN
     MP_TAC(ISPECL [`mov1:(A)wl_prog`;
                    `wl_Seq (wl_Move 1 (ZIP cargs (MAP (option_lookup ssa) args))) X:(A)wl_prog`;
-                   `cst:(A,C,FFI)wl_state`; `rcst1:(A,C,FFI)wl_state`] WALLOCPAUX_seq_NONE) THEN
+                   `cst:(A,C,FFI)wl_state`; `rcst1:(A,C,FFI)wl_state`] IL2AUX_evaluate_Seq_NONE) THEN
     ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN
-    MATCH_MP_TAC WALLOCPAUX_seq_NONE THEN
+    MATCH_MP_TAC IL2AUX_evaluate_Seq_NONE THEN
     ONCE_REWRITE_TAC[wl_evaluate_def] THEN
     SUBGOAL_THEN `LENGTH (cargs:num list) = LENGTH (MAP (option_lookup ssa) (args:num list))`
       (LABEL_TAC "lz") THENL [ASM_REWRITE_TAC[LENGTH_MAP]; ALL_TAC] THEN
@@ -5559,12 +5537,6 @@ let WALLOCPAUX_ALL_MAX_LIST = prove
  (`!l m. MAX_LIST l <= m ==> ALL (\x. x <= m) l`,
   REWRITE_TAC[GSYM ALL_MEM] THEN MESON_TAC[MAX_LIST_PROPERTY; LE_TRANS]);;
 
-let WALLOCPAUX_MAX_LIST_APPEND = prove
- (`!l1 l2. MAX_LIST (APPEND l1 l2) = MAX (MAX_LIST l1) (MAX_LIST l2)`,
-  LIST_INDUCT_TAC THEN REWRITE_TAC[APPEND; MAX_LIST] THENL
-   [REWRITE_TAC[MAX] THEN ARITH_TAC;
-    ASM_REWRITE_TAC[MAX] THEN ARITH_TAC]);;
-
 (* close x <= e for a syntactic MAX-tree e containing x *)
 
 let rec WALLOCPAUX_LE_TREE_TAC : tactic = fun (asl,w as g) ->
@@ -5574,7 +5546,7 @@ let rec WALLOCPAUX_LE_TREE_TAC : tactic = fun (asl,w as g) ->
       if free_in s a then (MATCH_MP_TAC WALLOCPAUX_MAXL THEN WALLOCPAUX_LE_TREE_TAC) g
       else (MATCH_MP_TAC WALLOCPAUX_MAXR THEN WALLOCPAUX_LE_TREE_TAC) g
   with Failure _ ->
-    (CHANGED_TAC(REWRITE_TAC[MAX_LIST_CONS; MAX_LIST_NIL; WALLOCPAUX_MAX_LIST_APPEND]) THEN
+    (CHANGED_TAC(REWRITE_TAC[MAX_LIST_CONS; MAX_LIST_NIL; MAX_LIST_APPEND]) THEN
      WALLOCPAUX_LE_TREE_TAC) g;;
 
 (* HOL4 line 10211 *)
@@ -5837,7 +5809,7 @@ let full_ssa_cc_trans_correct = prove
     [`prog':(A)wl_prog`; `ssa':num spt`; `na':num`] THEN
   REWRITE_TAC[pair_CASE] THEN
   MP_TAC(ISPECL [`mov:(A)wl_prog`; `prog':(A)wl_prog`; `st:(A,C,FFI)wl_state`;
-                 `cst:(A,C,FFI)wl_state`] WALLOCPAUX_seq_NONE) THEN
+                 `cst:(A,C,FFI)wl_state`] IL2AUX_evaluate_Seq_NONE) THEN
   ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN
   MP_TAC(ISPECL [`prog:(A)wl_prog`; `st:(A,C,FFI)wl_state`; `cst:(A,C,FFI)wl_state`;
                  `ssa:num spt`; `na:num`; `[]:(num spt#1 spt#1 spt)list`]
@@ -6764,10 +6736,6 @@ let full_ssa_cc_trans_full_inst_ok_less = prove
 
 (* helpers for call_arg_convention_preservation (local to this file) *)
 
-let WALLOCPAUX_phy_small = prove
- (`is_phy_var 0 /\ is_phy_var 2 /\ is_phy_var 4 /\ is_phy_var 6 /\ is_phy_var 8`,
-  REWRITE_TAC[is_phy_var_def] THEN CONV_TAC NUM_REDUCE_CONV);;
-
 let WALLOCPAUX_phy_double = prove
  (`!x. is_phy_var (2 * x)`,
   SIMP_TAC[is_phy_var_def; MOD_MULT; ARITH_EQ]);;
@@ -6786,7 +6754,7 @@ let WALLOCPAUX_inst_arg_colour = prove
   REPEAT STRIP_TAC THEN
   REPEAT(FIRST_X_ASSUM(SUBST_ALL_TAC o check (fun th -> is_eq(concl th) &&
     is_var(lhs(concl th)) && is_numeral(rhs(concl th))))) THEN
-  ASM_MESON_TAC[WALLOCPAUX_phy_small]);;
+  ASM_MESON_TAC[WALLOCPAUX_PHY_REGS]);;
 
 let WALLOCPAUX_map_colour_seq = prove
  (`!f (g:num->num) (ys:num list).
@@ -6811,7 +6779,7 @@ let WALLOCPAUX_CAC_REG_TAC : tactic =
   WALLOCPAUX_CAC_REW THEN STRIP_TAC THEN
   REPEAT(FIRST_X_ASSUM(SUBST_ALL_TAC o check (fun th -> is_eq(concl th) &&
     is_var(lhs(concl th)) && is_numeral(rhs(concl th))))) THEN
-  ASM_MESON_TAC[WALLOCPAUX_phy_small];;
+  ASM_MESON_TAC[WALLOCPAUX_PHY_REGS];;
 
 let WALLOCPAUX_CAC_SEQ_TAC : tactic =
   MATCH_MP_TAC WALLOCPAUX_map_colour_seq THEN REPEAT CONJ_TAC THEN
@@ -6823,7 +6791,7 @@ let WALLOCPAUX_CAC_IH_TAC : tactic =
 
 let WALLOCPAUX_CAC_V2_TAC : tactic =
   UNDISCH_TAC `is_phy_var v ==> (f:num->num) v = v` THEN UNDISCH_TAC `v = 2` THEN
-  DISCH_THEN SUBST1_TAC THEN REWRITE_TAC[WALLOCPAUX_phy_small];;
+  DISCH_THEN SUBST1_TAC THEN REWRITE_TAC[WALLOCPAUX_PHY_REGS];;
 
 let WALLOCPAUX_CAC_STRUCT_TAC : tactic =
   DISCH_THEN STRIP_ASSUME_TAC THEN GEN_TAC THEN WALLOCPAUX_CAC_REW THEN STRIP_TAC THEN
@@ -7144,7 +7112,7 @@ let WALLOCPAUX_phy_total_colour = prove
   REPEAT GEN_TAC THEN REWRITE_TAC[total_colour_def] THEN
   MP_TAC(ISPEC `lookup x (col:num spt)` (cases "option")) THEN STRIP_TAC THEN
   ASM_REWRITE_TAC[option_CASE] THEN TRY COND_CASES_TAC THEN
-  ASM_REWRITE_TAC[WALLOCPAUX_phy_double; WALLOCPAUX_phy_small]);;
+  ASM_REWRITE_TAC[WALLOCPAUX_phy_double; WALLOCPAUX_PHY_REGS]);;
 
 (* HOL4 line 11344 *)
 let every_var_is_phy_var_total_colour = prove

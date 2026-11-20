@@ -213,11 +213,6 @@ let word_gen_gc_partial_move_list_suc = prove
   GEN_REWRITE_TAC LAND_CONV [word_gen_gc_partial_move_list_def] THEN
   REWRITE_TAC[n2w_SUC; WORD_ADD_SUB]);;
 
-let WSIMPPAUX_word_SUC_ne0 = prove
- (`!n. SUC n < dimword(:A) ==> ~(word (SUC n):A word = word 0)`,
-  REWRITE_TAC[dimword_def; GSYM VAL_EQ_0; VAL_WORD] THEN
-  SIMP_TAC[MOD_LT; NOT_SUC]);;
-
 (* split the first call of the constant cname that does not contain bound   *)
 (* variables: it is abstracted to a tuple of new variables, as with HOL4's  *)
 (* pairarg_tac on all its occurrences                                        *)
@@ -281,7 +276,7 @@ let word_gen_gc_partial_move_list_append = prove
     REWRITE_TAC[ADD_CLAUSES] THEN DISCH_TAC THEN
     SUBGOAL_THEN `l + l' < dimword(:A) /\ SUC l < dimword(:A)` STRIP_ASSUME_TAC THENL
      [ASM_ARITH_TAC; ALL_TAC] THEN
-    ASM_SIMP_TAC[word_gen_gc_partial_move_list_suc; WSIMPPAUX_word_SUC_ne0] THEN
+    ASM_SIMP_TAC[word_gen_gc_partial_move_list_suc; LBIGAUX_WORD_SUC_NZ] THEN
     CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
     WSIMPPAUX_GC_ABS_TAC "word_gen_gc_partial_move" THEN
     WSIMPPAUX_GC_ABS_TAC "word_gen_gc_partial_move_list" THEN

@@ -2613,8 +2613,7 @@ let _ = cake_add_simps
    int_end_sub_eqn; update_int_end_eqn; sorted_regs_sub_eqn; update_sorted_regs_eqn;
    sorted_moves_sub_eqn; update_sorted_moves_eqn];;
 
-(* HOL4 line 2130: the ML list msimps *)
-let LSCANPAUX_msimps = [st_ex_bind_def; st_ex_ignore_bind_def; st_ex_return_def];;
+(* HOL4 line 2130: the ML list msimps (reg_allocProof's RAPROOFAUX_msimps) *)
 
 (* HOL4 line 2132 *)
 let lookup_default_id_def = cake_def
@@ -3533,7 +3532,7 @@ let spill_register_FILTER_invariants_hidden = prove
   SUBGOAL_THEN `!r. MEM r l /\ is_phy_var r ==> ~(r = reg)` (LABEL_TAC "phy") THENL
    [USE_THEN "id" MP_TAC THEN REWRITE_TAC[linear_scanProof_id_def] THEN MESON_TAC[];
     ALL_TAC] THEN
-  REWRITE_TAC(spill_register_def :: update_colors_eqn :: LSCANPAUX_msimps) THEN
+  REWRITE_TAC(spill_register_def :: update_colors_eqn :: RAPROOFAUX_msimps) THEN
   REWRITE_TAC(K_THM :: LSCANPAUX_st_record) THEN
   USE_THEN "reglt" (fun th -> REWRITE_TAC[th; case_def "prod"; case_def "exc"]) THEN
   LSCANPAUX_PAIR_WITNESS_TAC THEN
@@ -3723,14 +3722,14 @@ let edges_to_adjlist_FOLDL = prove
      edges_to_adjlist forced acc sth =
        (M_success (FOLDL (\acc pair. edges_to_adjlist_step sth pair acc) acc forced),sth)`,
     LIST_INDUCT_TAC THENL
-   [REWRITE_TAC(edges_to_adjlist_def :: FOLDL :: LSCANPAUX_msimps); ALL_TAC] THEN
+   [REWRITE_TAC(edges_to_adjlist_def :: FOLDL :: RAPROOFAUX_msimps); ALL_TAC] THEN
   MP_TAC(ISPEC `h:num#num` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `a:num` (X_CHOOSE_THEN `b:num` SUBST_ALL_TAC)) THEN
   REPEAT GEN_TAC THEN REWRITE_TAC[ALL; pair_CASE] THEN STRIP_TAC THEN
   REWRITE_TAC[FOLDL; edges_to_adjlist_def; edges_to_adjlist_step_def] THEN
   COND_CASES_TAC THEN ASM_SIMP_TAC[] THEN
   ASM_REWRITE_TAC(int_beg_sub_eqn :: case_def "prod" :: case_def "exc" :: LEX_THM ::
-                  LSCANPAUX_msimps) THEN
+                  RAPROOFAUX_msimps) THEN
   COND_CASES_TAC THEN ASM_SIMP_TAC[]);;
 
 (* HOL4 line 2972 *)
@@ -3871,7 +3870,7 @@ let find_last_stealable_success = prove
          active ==>
      ?optout. find_last_stealable active forbidden sth = (M_success optout,sth)`,
     GEN_TAC THEN GEN_TAC THEN LIST_INDUCT_TAC THEN
-  REWRITE_TAC(find_last_stealable_def :: LSCANPAUX_msimps) THENL
+  REWRITE_TAC(find_last_stealable_def :: RAPROOFAUX_msimps) THENL
    [MESON_TAC[]; ALL_TAC] THEN
   MP_TAC(ISPEC `h:int#num` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `e:int` (X_CHOOSE_THEN `r:num` SUBST_ALL_TAC)) THEN
@@ -3881,12 +3880,12 @@ let find_last_stealable_success = prove
   REWRITE_TAC[case_def "prod"; case_def "exc"] THEN
   CASES_ON `opt:((int#num)#(int#num)list)option` THEN
   REWRITE_TAC[case_def "option"] THENL
-   [ASM_REWRITE_TAC(colors_sub_eqn :: case_def "prod" :: case_def "exc" :: LSCANPAUX_msimps) THEN
+   [ASM_REWRITE_TAC(colors_sub_eqn :: case_def "prod" :: case_def "exc" :: RAPROOFAUX_msimps) THEN
     COND_CASES_TAC THEN REWRITE_TAC[] THEN MESON_TAC[];
     MP_TAC(ISPEC `a:(int#num)#(int#num)list` PAIR_SURJECTIVE) THEN
     DISCH_THEN(X_CHOOSE_THEN `steal:int#num` (X_CHOOSE_THEN `rest:(int#num)list`
       SUBST1_TAC)) THEN
-    REWRITE_TAC(pair_CASE :: LSCANPAUX_msimps) THEN MESON_TAC[]]);;
+    REWRITE_TAC(pair_CASE :: RAPROOFAUX_msimps) THEN MESON_TAC[]]);;
 
 
 (* HOL4 line 3100 *)
@@ -3897,7 +3896,7 @@ let find_last_stealable_output = prove
      lookup (EL (SND steal) (linear_scan_hidden_state_colors sth)) forbidden = NONE /\
      ?l1 l2. rest = APPEND l1 l2 /\ active = APPEND l1 (CONS steal l2)`,
     GEN_TAC THEN GEN_TAC THEN LIST_INDUCT_TAC THEN
-  REWRITE_TAC(find_last_stealable_def :: LSCANPAUX_msimps) THEN
+  REWRITE_TAC(find_last_stealable_def :: RAPROOFAUX_msimps) THEN
   REWRITE_TAC[PAIR_EQ; injectivity "exc"; option_DISTINCT] THEN
   REPEAT GEN_TAC THEN
   MP_TAC(ISPEC `find_last_stealable t forbidden sth` PAIR_SURJECTIVE) THEN
@@ -3913,7 +3912,7 @@ let find_last_stealable_output = prove
     (X_CHOOSE_THEN `p:(int#num)#(int#num)list` SUBST_ALL_TAC)
     (ISPEC `v:((int#num)#(int#num)list)option` (cases "option")) THEN
   REWRITE_TAC[case_def "option"] THENL
-   [REWRITE_TAC(colors_sub_eqn :: case_def "prod" :: case_def "exc" :: LSCANPAUX_msimps) THEN
+   [REWRITE_TAC(colors_sub_eqn :: case_def "prod" :: case_def "exc" :: RAPROOFAUX_msimps) THEN
     COND_CASES_TAC THEN
     REWRITE_TAC[case_def "prod"; case_def "exc"; PAIR_EQ; distinctness "exc"] THEN
     COND_CASES_TAC THEN
@@ -3924,7 +3923,7 @@ let find_last_stealable_output = prove
     MP_TAC(ISPEC `p:(int#num)#(int#num)list` PAIR_SURJECTIVE) THEN
     DISCH_THEN(X_CHOOSE_THEN `steal':int#num` (X_CHOOSE_THEN `rest':(int#num)list`
       SUBST_ALL_TAC)) THEN
-    REWRITE_TAC(pair_CASE :: LSCANPAUX_msimps) THEN
+    REWRITE_TAC(pair_CASE :: RAPROOFAUX_msimps) THEN
     REWRITE_TAC[PAIR_EQ; injectivity "exc"; option_INJ] THEN
     STRIP_TAC THEN REPEAT(FIRST_X_ASSUM(SUBST_ALL_TAC o SYM o
       check (fun th -> is_eq(concl th) && is_var(rhs(concl th))))) THEN
@@ -4086,7 +4085,7 @@ let color_register_invariants = prove
     ALL_TAC] THEN
   REMOVE_THEN "Aeq" (K ALL_TAC) THEN REMOVE_THEN "A'eq" (K ALL_TAC) THEN
   REWRITE_TAC[color_register_eq] THEN
-  REWRITE_TAC(update_colors_eqn :: LSCANPAUX_msimps) THEN
+  REWRITE_TAC(update_colors_eqn :: RAPROOFAUX_msimps) THEN
   USE_THEN "reglt" (fun th -> REWRITE_TAC[th; case_def "prod"; case_def "exc"]) THEN
   LSCANPAUX_PAIR_WITNESS_TAC THEN
   REWRITE_TAC(K_THM :: LENGTH_LUPDATE :: LSCANPAUX_st_record @ LSCANPAUX_hs_record) THEN
@@ -4319,7 +4318,7 @@ let find_spill_invariants = prove
     `linear_scan_state_active st`] find_last_stealable_success) THEN
   USE_THEN "alc" (fun th -> REWRITE_TAC[th]) THEN
   DISCH_THEN(X_CHOOSE_THEN `opt:((int#num)#(int#num)list)option` (LABEL_TAC "fls")) THEN
-  REWRITE_TAC(find_spill_def :: LSCANPAUX_msimps) THEN
+  REWRITE_TAC(find_spill_def :: RAPROOFAUX_msimps) THEN
   USE_THEN "fls" (fun th -> REWRITE_TAC[th; case_def "prod"; case_def "exc"]) THEN
   DISJ_CASES_THEN2 SUBST_ALL_TAC
     (X_CHOOSE_THEN `p:(int#num)#(int#num)list` SUBST_ALL_TAC)
@@ -4374,7 +4373,7 @@ let find_spill_invariants = prove
   USE_THEN "stlt" (fun th -> REWRITE_TAC[th; case_def "prod"; case_def "exc"]) THEN
   USE_THEN "speq" (fun th -> REWRITE_TAC[GSYM th; case_def "prod"; case_def "exc"]) THEN
   USE_THEN "speq" (MP_TAC o REWRITE_RULE(spill_register_def :: update_colors_eqn :: K_THM ::
-    LSCANPAUX_msimps @ LSCANPAUX_st_record)) THEN
+    RAPROOFAUX_msimps @ LSCANPAUX_st_record)) THEN
   USE_THEN "stlt" (fun th -> REWRITE_TAC[th; case_def "prod"; case_def "exc"; PAIR_EQ;
                                          injectivity "exc"]) THEN
   DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "s1eq") (LABEL_TAC "t1eq")) THEN
@@ -4632,9 +4631,9 @@ let st_ex_MAP_colors_sub = prove
      ALL (\r. r < LENGTH (linear_scan_hidden_state_colors sth)) l ==>
      st_ex_MAP colors_sub l sth =
        (M_success (MAP (\r. EL r (linear_scan_hidden_state_colors sth)) l),sth)`,
-    LIST_INDUCT_TAC THEN REWRITE_TAC(st_ex_MAP_def :: MAP :: ALL :: LSCANPAUX_msimps) THEN
+    LIST_INDUCT_TAC THEN REWRITE_TAC(st_ex_MAP_def :: MAP :: ALL :: RAPROOFAUX_msimps) THEN
   REPEAT STRIP_TAC THEN
-  ASM_SIMP_TAC(colors_sub_eqn :: case_def "prod" :: case_def "exc" :: LSCANPAUX_msimps));;
+  ASM_SIMP_TAC(colors_sub_eqn :: case_def "prod" :: case_def "exc" :: RAPROOFAUX_msimps));;
 
 (* HOL4 line 3550 *)
 let phystack_on_stack_def = cake_def
@@ -4785,7 +4784,7 @@ let linear_reg_alloc_step_pass1_invariants = prove
    [USE_THEN "gls" (fun a -> USE_THEN "posle" (fun b -> REWRITE_TAC[a; b])); ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_THEN `st1:linear_scan_state` (CONJUNCTS_THEN2 (LABEL_TAC "rii")
     (CONJUNCTS_THEN2 (LABEL_TAC "gls1") (LABEL_TAC "max1")))) THEN
-  REWRITE_TAC(linear_reg_alloc_step_pass1_def :: LSCANPAUX_msimps) THEN
+  REWRITE_TAC(linear_reg_alloc_step_pass1_def :: RAPROOFAUX_msimps) THEN
   REWRITE_TAC[int_beg_sub_eqn; int_end_sub_eqn] THEN
   USE_THEN "rb" (fun a -> USE_THEN "re" (fun b ->
     REWRITE_TAC[a; b; case_def "prod"; case_def "exc"])) THEN
@@ -4926,7 +4925,7 @@ let linear_reg_alloc_step_pass2_invariants = prove
    [USE_THEN "gls" (fun a -> USE_THEN "posle" (fun b -> REWRITE_TAC[a; b])); ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_THEN `st1:linear_scan_state` (CONJUNCTS_THEN2 (LABEL_TAC "rii")
     (CONJUNCTS_THEN2 (LABEL_TAC "gls1") (LABEL_TAC "max1")))) THEN
-  REWRITE_TAC(linear_reg_alloc_step_pass2_def :: LSCANPAUX_msimps) THEN
+  REWRITE_TAC(linear_reg_alloc_step_pass2_def :: RAPROOFAUX_msimps) THEN
   REWRITE_TAC[int_beg_sub_eqn; int_end_sub_eqn] THEN
   USE_THEN "rb" (fun a -> USE_THEN "re" (fun b ->
     REWRITE_TAC[a; b; case_def "prod"; case_def "exc"])) THEN
@@ -5106,7 +5105,7 @@ let st_ex_FOLDL_linear_reg_alloc_step_passn_invariants_lemma = prove
        linear_scan_state_colormax stout = linear_scan_state_colormax st`,
     LIST_INDUCT_TAC THENL
    [REPEAT GEN_TAC THEN STRIP_TAC THEN
-    REWRITE_TAC(st_ex_FOLDL_def :: LSCANPAUX_msimps) THEN
+    REWRITE_TAC(st_ex_FOLDL_def :: RAPROOFAUX_msimps) THEN
     MAP_EVERY EXISTS_TAC [`st:linear_scan_state`; `sth:linear_scan_hidden_state`; `pos:int`] THEN
     ASM_REWRITE_TAC[REVERSE; APPEND; APPEND_NIL] THEN MESON_TAC[];
     ALL_TAC] THEN
@@ -5171,7 +5170,7 @@ let st_ex_FOLDL_linear_reg_alloc_step_passn_invariants_lemma = prove
     (CONJUNCTS_THEN2 (LABEL_TAC "lenm") (CONJUNCTS_THEN2 (LABEL_TAC "begm")
     (CONJUNCTS_THEN2 (LABEL_TAC "endm") (CONJUNCTS_THEN2 (LABEL_TAC "elm")
     (CONJUNCTS_THEN2 (LABEL_TAC "phym") (LABEL_TAC "maxm")))))))))) THEN
-  REWRITE_TAC(st_ex_FOLDL_def :: LSCANPAUX_msimps) THEN
+  REWRITE_TAC(st_ex_FOLDL_def :: RAPROOFAUX_msimps) THEN
   USE_THEN "midq" (fun th -> REWRITE_TAC[th; case_def "prod"; case_def "exc"]) THEN
   FIRST_X_ASSUM(MP_TAC o SPECL [`stmid:linear_scan_state`; `sthmid:linear_scan_hidden_state`;
     `CONS (h:num) l`; `EL h (linear_scan_hidden_state_int_beg sth)`; `b:bool`;
@@ -5287,7 +5286,7 @@ let swap_regs_eq = prove
                     (linear_scan_hidden_state_sorted_regs sth)))) sth`,
     REPEAT GEN_TAC THEN STRIP_TAC THEN
   REWRITE_TAC(swap_regs_def :: sorted_regs_sub_eqn :: update_sorted_regs_eqn ::
-              LSCANPAUX_msimps) THEN
+              RAPROOFAUX_msimps) THEN
   ASM_REWRITE_TAC(case_def "prod" :: case_def "exc" :: K_THM :: LENGTH_LUPDATE ::
                   LSCANPAUX_hs_record) THEN
   REWRITE_TAC[PAIR_EQ; UNWIND_THM1] THEN
@@ -5454,7 +5453,7 @@ let partition_regs_correct = prove
   REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
   ONCE_REWRITE_TAC[partition_regs_def] THEN
   COND_CASES_TAC THENL
-   [REWRITE_TAC LSCANPAUX_msimps THEN
+   [REWRITE_TAC RAPROOFAUX_msimps THEN
     MAP_EVERY EXISTS_TAC [`l:num`; `sth:linear_scan_hidden_state`] THEN
     REWRITE_TAC[PERM_REFL; LE_REFL] THEN CONJ_TAC THENL
      [REWRITE_TAC[linear_scan_hidden_state_component_equality] THEN
@@ -5467,7 +5466,7 @@ let partition_regs_correct = prove
   SUBGOAL_THEN `EL l (linear_scan_hidden_state_sorted_regs sth) <
                 LENGTH (linear_scan_hidden_state_int_beg sth)` (LABEL_TAC "reglt") THENL
    [USE_THEN "inb" MATCH_MP_TAC THEN ASM_ARITH_TAC; ALL_TAC] THEN
-  REWRITE_TAC(sorted_regs_sub_eqn :: int_beg_sub_eqn :: LSCANPAUX_msimps) THEN
+  REWRITE_TAC(sorted_regs_sub_eqn :: int_beg_sub_eqn :: RAPROOFAUX_msimps) THEN
   USE_THEN "llt" (fun th -> REWRITE_TAC[th; case_def "prod"; case_def "exc"]) THEN
   USE_THEN "reglt" (fun th -> REWRITE_TAC[th; case_def "prod"; case_def "exc"]) THEN
   ASM_CASES_TAC
@@ -5761,7 +5760,7 @@ let sort_regs_correct = prove
   REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
   ONCE_REWRITE_TAC[sort_regs_def] THEN
   COND_CASES_TAC THENL
-   [REWRITE_TAC LSCANPAUX_msimps THEN EXISTS_TAC `sth:linear_scan_hidden_state` THEN
+   [REWRITE_TAC RAPROOFAUX_msimps THEN EXISTS_TAC `sth:linear_scan_hidden_state` THEN
     REWRITE_TAC[PERM_REFL] THEN CONJ_TAC THENL
      [REWRITE_TAC[linear_scan_hidden_state_component_equality] THEN
       REWRITE_TAC(K_THM :: LSCANPAUX_hs_record);
@@ -5774,7 +5773,7 @@ let sort_regs_correct = prove
   SUBGOAL_THEN `EL l (linear_scan_hidden_state_sorted_regs sth) <
                 LENGTH (linear_scan_hidden_state_int_beg sth)` (LABEL_TAC "pivlt") THENL
    [USE_THEN "inb" MATCH_MP_TAC THEN ASM_ARITH_TAC; ALL_TAC] THEN
-  REWRITE_TAC(sorted_regs_sub_eqn :: int_beg_sub_eqn :: LSCANPAUX_msimps) THEN
+  REWRITE_TAC(sorted_regs_sub_eqn :: int_beg_sub_eqn :: RAPROOFAUX_msimps) THEN
   USE_THEN "llt" (fun th -> REWRITE_TAC[th; case_def "prod"; case_def "exc"]) THEN
   USE_THEN "pivlt" (fun th -> REWRITE_TAC[th; case_def "prod"; case_def "exc"]) THEN
   MP_TAC(SPECL [`l + 1`; `EL l (linear_scan_hidden_state_sorted_regs sth)`;
@@ -5811,7 +5810,7 @@ let sort_regs_correct = prove
   USE_THEN "seq" (fun th -> REWRITE_TAC[th; case_def "prod"; case_def "exc"]) THEN
   SUBGOAL_THEN `~(mid <= l \/ r < mid)` (fun th -> REWRITE_TAC[th]) THENL
    [ASM_ARITH_TAC; ALL_TAC] THEN
-  REWRITE_TAC LSCANPAUX_msimps THEN
+  REWRITE_TAC RAPROOFAUX_msimps THEN
   SUBGOAL_THEN `PERM (linear_scan_hidden_state_sorted_regs sth) (linear_scan_hidden_state_sorted_regs sp)` (LABEL_TAC "pP") THENL
    [MATCH_MP_TAC LSCANPAUX_PERM_TAKE_ALL THEN USE_THEN "plen" (fun th -> REWRITE_TAC[th]) THEN
     USE_THEN "pperm" MATCH_MP_TAC THEN ASM_ARITH_TAC;
@@ -6014,7 +6013,7 @@ let swap_moves_eq = prove
                     (linear_scan_hidden_state_sorted_moves sth)))) sth`,
     REPEAT GEN_TAC THEN STRIP_TAC THEN
   REWRITE_TAC(swap_moves_def :: sorted_moves_sub_eqn :: update_sorted_moves_eqn ::
-              LSCANPAUX_msimps) THEN
+              RAPROOFAUX_msimps) THEN
   ASM_REWRITE_TAC(case_def "prod" :: case_def "exc" :: K_THM :: LENGTH_LUPDATE ::
                   LSCANPAUX_hs_record) THEN
   REWRITE_TAC[PAIR_EQ; UNWIND_THM1] THEN
@@ -6078,7 +6077,7 @@ let partition_moves_correct = prove
   X_GEN_TAC `sth:linear_scan_hidden_state` THEN
   DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "lle") (LABEL_TAC "rle")) THEN
   ONCE_REWRITE_TAC[partition_moves_def] THEN COND_CASES_TAC THENL
-   [REWRITE_TAC LSCANPAUX_msimps THEN
+   [REWRITE_TAC RAPROOFAUX_msimps THEN
     MAP_EVERY EXISTS_TAC [`l:num`; `sth:linear_scan_hidden_state`] THEN
     REWRITE_TAC[PERM_REFL; LE_REFL] THEN
     REWRITE_TAC[linear_scan_hidden_state_component_equality] THEN
@@ -6087,7 +6086,7 @@ let partition_moves_correct = prove
   POP_ASSUM(LABEL_TAC "rl") THEN
   SUBGOAL_THEN `l < LENGTH (linear_scan_hidden_state_sorted_moves sth)` (LABEL_TAC "llt") THENL
    [ASM_ARITH_TAC; ALL_TAC] THEN
-  REWRITE_TAC(sorted_moves_sub_eqn :: LSCANPAUX_msimps) THEN
+  REWRITE_TAC(sorted_moves_sub_eqn :: RAPROOFAUX_msimps) THEN
   USE_THEN "llt" (fun th -> REWRITE_TAC[th; case_def "prod"; case_def "exc"]) THEN
   ASM_CASES_TAC `FST (EL l (linear_scan_hidden_state_sorted_moves sth)) < ppiv` THEN
   POP_ASSUM(fun th -> REWRITE_TAC[th] THEN LABEL_TAC "cond" th) THENL
@@ -6158,7 +6157,7 @@ let sort_moves_correct = prove
   X_GEN_TAC `sth:linear_scan_hidden_state` THEN
   DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "lle") (LABEL_TAC "rle")) THEN
   ONCE_REWRITE_TAC[linear_scan_sort_moves_def] THEN COND_CASES_TAC THENL
-   [REWRITE_TAC LSCANPAUX_msimps THEN EXISTS_TAC `sth:linear_scan_hidden_state` THEN
+   [REWRITE_TAC RAPROOFAUX_msimps THEN EXISTS_TAC `sth:linear_scan_hidden_state` THEN
     REWRITE_TAC[PERM_REFL] THEN
     REWRITE_TAC[linear_scan_hidden_state_component_equality] THEN
     REWRITE_TAC(K_THM :: LSCANPAUX_hs_record);
@@ -6166,7 +6165,7 @@ let sort_moves_correct = prove
   POP_ASSUM(LABEL_TAC "rl") THEN
   SUBGOAL_THEN `l < LENGTH (linear_scan_hidden_state_sorted_moves sth)` (LABEL_TAC "llt") THENL
    [ASM_ARITH_TAC; ALL_TAC] THEN
-  REWRITE_TAC(sorted_moves_sub_eqn :: LSCANPAUX_msimps) THEN
+  REWRITE_TAC(sorted_moves_sub_eqn :: RAPROOFAUX_msimps) THEN
   USE_THEN "llt" (fun th -> REWRITE_TAC[th; case_def "prod"; case_def "exc"]) THEN
   MP_TAC(SPECL [`l + 1`; `FST (EL l (linear_scan_hidden_state_sorted_moves sth))`; `r:num`;
     `sth:linear_scan_hidden_state`] partition_moves_correct) THEN
@@ -6186,7 +6185,7 @@ let sort_moves_correct = prove
   USE_THEN "seq" (fun th -> REWRITE_TAC[th; case_def "prod"; case_def "exc"]) THEN
   SUBGOAL_THEN `~(mid <= l \/ r < mid)` (fun th -> REWRITE_TAC[th]) THENL
    [ASM_ARITH_TAC; ALL_TAC] THEN
-  REWRITE_TAC LSCANPAUX_msimps THEN
+  REWRITE_TAC RAPROOFAUX_msimps THEN
   REMOVE_THEN "ihl" (MP_TAC o SPEC `mid:num`) THEN
   USE_THEN "rl" (fun th -> REWRITE_TAC[th]) THEN
   SUBGOAL_THEN `~(mid <= l \/ r < mid)` (fun th -> REWRITE_TAC[th]) THENL
@@ -6302,7 +6301,7 @@ let LSCANPAUX_FILTER_good = prove
      (!r. MEM r l ==> P r s = (M_success (Q r),s)) ==>
      st_ex_FILTER_good P l s = (M_success (FILTER Q l),s)`,
   GEN_TAC THEN GEN_TAC THEN LIST_INDUCT_TAC THEN
-  REWRITE_TAC(st_ex_FILTER_good_def :: FILTER :: MEM :: LSCANPAUX_msimps) THEN
+  REWRITE_TAC(st_ex_FILTER_good_def :: FILTER :: MEM :: RAPROOFAUX_msimps) THEN
   REPEAT STRIP_TAC THEN
   SUBGOAL_THEN `(P:A->S->(bool,E)exc#S) h s = (M_success (Q h),s)` SUBST1_TAC THENL
    [FIRST_X_ASSUM MATCH_MP_TAC THEN REWRITE_TAC[]; ALL_TAC] THEN
@@ -6311,7 +6310,7 @@ let LSCANPAUX_FILTER_good = prove
     ASSUME_TAC THENL
    [FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_MESON_TAC[]; ALL_TAC] THEN
   COND_CASES_TAC THEN
-  ASM_REWRITE_TAC(case_def "prod" :: case_def "exc" :: LSCANPAUX_msimps));;
+  ASM_REWRITE_TAC(case_def "prod" :: case_def "exc" :: RAPROOFAUX_msimps));;
 
 (* HOL4 line 4380 *)
 let st_ex_FILTER_good_stack = prove
@@ -6328,7 +6327,7 @@ let st_ex_FILTER_good_stack = prove
    [UNDISCH_TAC `ALL (\r. r < LENGTH (linear_scan_hidden_state_colors sth)) reglist` THEN
     REWRITE_TAC[GSYM ALL_MEM] THEN ASM_SIMP_TAC[];
     ALL_TAC] THEN
-  ASM_REWRITE_TAC(colors_sub_eqn :: case_def "prod" :: case_def "exc" :: LSCANPAUX_msimps));;
+  ASM_REWRITE_TAC(colors_sub_eqn :: case_def "prod" :: case_def "exc" :: RAPROOFAUX_msimps));;
 
 (* HOL4 line 4396 *)
 let lookup_fromAList_MAP_not_NONE = prove
@@ -6414,14 +6413,14 @@ let list_to_sorted_regs_correct = prove
          TAKE n (linear_scan_hidden_state_sorted_regs sth) /\
        TAKE (LENGTH l) (DROP n (linear_scan_hidden_state_sorted_regs sthout)) = l`,
     LIST_INDUCT_TAC THENL
-   [REWRITE_TAC(list_to_sorted_regs_def :: LSCANPAUX_msimps) THEN REPEAT STRIP_TAC THEN
+   [REWRITE_TAC(list_to_sorted_regs_def :: RAPROOFAUX_msimps) THEN REPEAT STRIP_TAC THEN
     EXISTS_TAC `sth:linear_scan_hidden_state` THEN REWRITE_TAC[LENGTH; TAKE_0] THEN
     REWRITE_TAC[linear_scan_hidden_state_component_equality] THEN
     REWRITE_TAC(K_THM :: LSCANPAUX_hs_record);
     ALL_TAC] THEN
   REPEAT GEN_TAC THEN REWRITE_TAC[LENGTH] THEN DISCH_TAC THEN
   SUBGOAL_THEN `n < LENGTH (linear_scan_hidden_state_sorted_regs sth)` ASSUME_TAC THENL [ASM_ARITH_TAC; ALL_TAC] THEN
-  REWRITE_TAC(list_to_sorted_regs_def :: update_sorted_regs_eqn :: LSCANPAUX_msimps) THEN
+  REWRITE_TAC(list_to_sorted_regs_def :: update_sorted_regs_eqn :: RAPROOFAUX_msimps) THEN
   ASM_REWRITE_TAC[case_def "prod"; case_def "exc"] THEN
   FIRST_X_ASSUM(MP_TAC o SPECL [`n + 1`;
     `linear_scan_hidden_state_sorted_regs_fupd (K (LUPDATE h n (linear_scan_hidden_state_sorted_regs sth))) sth`]) THEN
@@ -6468,11 +6467,11 @@ let sorted_regs_to_list_correct = prove
   MAP_EVERY X_GEN_TAC [`n:num`; `last:num`] THEN DISCH_THEN(LABEL_TAC "ih") THEN
   X_GEN_TAC `sth:linear_scan_hidden_state` THEN DISCH_TAC THEN
   ONCE_REWRITE_TAC[sorted_regs_to_list_def] THEN COND_CASES_TAC THENL
-   [REWRITE_TAC LSCANPAUX_msimps THEN
+   [REWRITE_TAC RAPROOFAUX_msimps THEN
     SUBGOAL_THEN `last - n = 0` SUBST1_TAC THENL [ASM_ARITH_TAC; REWRITE_TAC[TAKE_0]];
     ALL_TAC] THEN
   SUBGOAL_THEN `n < LENGTH (linear_scan_hidden_state_sorted_regs sth)` ASSUME_TAC THENL [ASM_ARITH_TAC; ALL_TAC] THEN
-  REWRITE_TAC(sorted_regs_sub_eqn :: LSCANPAUX_msimps) THEN
+  REWRITE_TAC(sorted_regs_sub_eqn :: RAPROOFAUX_msimps) THEN
   ASM_REWRITE_TAC[case_def "prod"; case_def "exc"] THEN
   REMOVE_THEN "ih" (fun ih -> MP_TAC(SPEC `sth:linear_scan_hidden_state`
     (MP ih (ASSUME `~(last <= n:num)`)))) THEN
@@ -6497,14 +6496,14 @@ let list_to_sorted_moves_correct = prove
          TAKE n (linear_scan_hidden_state_sorted_moves sth) /\
        TAKE (LENGTH l) (DROP n (linear_scan_hidden_state_sorted_moves sthout)) = l`,
     LIST_INDUCT_TAC THENL
-   [REWRITE_TAC(list_to_sorted_moves_def :: LSCANPAUX_msimps) THEN REPEAT STRIP_TAC THEN
+   [REWRITE_TAC(list_to_sorted_moves_def :: RAPROOFAUX_msimps) THEN REPEAT STRIP_TAC THEN
     EXISTS_TAC `sth:linear_scan_hidden_state` THEN REWRITE_TAC[LENGTH; TAKE_0] THEN
     REWRITE_TAC[linear_scan_hidden_state_component_equality] THEN
     REWRITE_TAC(K_THM :: LSCANPAUX_hs_record);
     ALL_TAC] THEN
   REPEAT GEN_TAC THEN REWRITE_TAC[LENGTH] THEN DISCH_TAC THEN
   SUBGOAL_THEN `n < LENGTH (linear_scan_hidden_state_sorted_moves sth)` ASSUME_TAC THENL [ASM_ARITH_TAC; ALL_TAC] THEN
-  REWRITE_TAC(list_to_sorted_moves_def :: update_sorted_moves_eqn :: LSCANPAUX_msimps) THEN
+  REWRITE_TAC(list_to_sorted_moves_def :: update_sorted_moves_eqn :: RAPROOFAUX_msimps) THEN
   ASM_REWRITE_TAC[case_def "prod"; case_def "exc"] THEN
   FIRST_X_ASSUM(MP_TAC o SPECL [`n + 1`;
     `linear_scan_hidden_state_sorted_moves_fupd (K (LUPDATE h n (linear_scan_hidden_state_sorted_moves sth))) sth`]) THEN
@@ -6552,11 +6551,11 @@ let sorted_moves_to_list_correct = prove
   MAP_EVERY X_GEN_TAC [`n:num`; `last:num`] THEN DISCH_THEN(LABEL_TAC "ih") THEN
   X_GEN_TAC `sth:linear_scan_hidden_state` THEN DISCH_TAC THEN
   ONCE_REWRITE_TAC[sorted_moves_to_list_def] THEN COND_CASES_TAC THENL
-   [REWRITE_TAC LSCANPAUX_msimps THEN
+   [REWRITE_TAC RAPROOFAUX_msimps THEN
     SUBGOAL_THEN `last - n = 0` SUBST1_TAC THENL [ASM_ARITH_TAC; REWRITE_TAC[TAKE_0]];
     ALL_TAC] THEN
   SUBGOAL_THEN `n < LENGTH (linear_scan_hidden_state_sorted_moves sth)` ASSUME_TAC THENL [ASM_ARITH_TAC; ALL_TAC] THEN
-  REWRITE_TAC(sorted_moves_sub_eqn :: LSCANPAUX_msimps) THEN
+  REWRITE_TAC(sorted_moves_sub_eqn :: RAPROOFAUX_msimps) THEN
   ASM_REWRITE_TAC[case_def "prod"; case_def "exc"] THEN
   REMOVE_THEN "ih" (fun ih -> MP_TAC(SPEC `sth:linear_scan_hidden_state`
     (MP ih (ASSUME `~(last <= n:num)`)))) THEN
@@ -6806,21 +6805,9 @@ let LSCANPAUX_ivl_final = prove
         REWRITE_RULE[GSYM ALL_MEM; FORALL_PAIR_THM; pair_CASE]) THEN
       ASM_REWRITE_TAC[]]]);;
 
-(* LSCANPAUX_bind_eq, LSCANPAUX_ibind_eq, LSCANPAUX_rbind: running the      *)
-(* first step of a monadic sequence                                          *)
-let LSCANPAUX_bind_eq = prove
- (`!(m:S->(A,E)exc#S) (f:A->S->(B,E)exc#S) s a s'.
-     m s = (M_success a,s') ==> st_ex_bind m f s = f a s'`,
-  REPEAT STRIP_TAC THEN ASM_REWRITE_TAC(case_def "prod" :: case_def "exc" :: LSCANPAUX_msimps));;
-
-let LSCANPAUX_ibind_eq = prove
- (`!(m:S->(A,E)exc#S) (f:S->(B,E)exc#S) s a s'.
-     m s = (M_success a,s') ==> st_ex_ignore_bind m f s = f s'`,
-  REPEAT STRIP_TAC THEN ASM_REWRITE_TAC(case_def "prod" :: case_def "exc" :: LSCANPAUX_msimps));;
-
 let LSCANPAUX_rbind = prove
  (`!(x:A) (f:A->S->(B,E)exc#S) s. st_ex_bind (st_ex_return x) f s = f x s`,
-  REWRITE_TAC(case_def "prod" :: case_def "exc" :: LSCANPAUX_msimps));;
+  REWRITE_TAC(case_def "prod" :: case_def "exc" :: RAPROOFAUX_msimps));;
 
 (* LSCANPAUX_ivl_phaseA: sorting the registers by interval start *)
 let LSCANPAUX_ivl_phaseA = prove
@@ -6874,9 +6861,9 @@ let LSCANPAUX_ivl_phaseA = prove
     `TAKE (LENGTH (R:num list)) (linear_scan_hidden_state_sorted_regs s2)`] THEN
   REPEAT CONJ_TAC THENL
    [GEN_TAC THEN
-    USE_THEN "eq3" (fun th -> REWRITE_TAC[MATCH_MP LSCANPAUX_ibind_eq (SYM th)]) THEN
-    USE_THEN "eq2" (fun th -> REWRITE_TAC[MATCH_MP LSCANPAUX_ibind_eq th]) THEN
-    USE_THEN "eq1" (fun th -> REWRITE_TAC[MATCH_MP LSCANPAUX_bind_eq th]);
+    USE_THEN "eq3" (fun th -> REWRITE_TAC[MATCH_MP RAPROOFAUX_ignore_bind_ok (SYM th)]) THEN
+    USE_THEN "eq2" (fun th -> REWRITE_TAC[MATCH_MP RAPROOFAUX_ignore_bind_ok th]) THEN
+    USE_THEN "eq1" (fun th -> REWRITE_TAC[MATCH_MP RAPROOFAUX_bind_ok th]);
     USE_THEN "rec2" (fun th -> GEN_REWRITE_TAC LAND_CONV [th]) THEN
     USE_THEN "rec3" (fun th -> GEN_REWRITE_TAC (LAND_CONV o RAND_CONV) [th]) THEN
     REWRITE_TAC[linear_scan_hidden_state_component_equality] THEN
@@ -6936,9 +6923,9 @@ let LSCANPAUX_ivl_phaseB = prove
     `TAKE (LENGTH (moves:(num#num#num)list)) (linear_scan_hidden_state_sorted_moves s2)`] THEN
   REPEAT CONJ_TAC THENL
    [GEN_TAC THEN
-    USE_THEN "eq3" (fun th -> REWRITE_TAC[MATCH_MP LSCANPAUX_ibind_eq (SYM th)]) THEN
-    USE_THEN "eq2" (fun th -> REWRITE_TAC[MATCH_MP LSCANPAUX_ibind_eq th]) THEN
-    USE_THEN "eq1" (fun th -> REWRITE_TAC[MATCH_MP LSCANPAUX_bind_eq th]);
+    USE_THEN "eq3" (fun th -> REWRITE_TAC[MATCH_MP RAPROOFAUX_ignore_bind_ok (SYM th)]) THEN
+    USE_THEN "eq2" (fun th -> REWRITE_TAC[MATCH_MP RAPROOFAUX_ignore_bind_ok th]) THEN
+    USE_THEN "eq1" (fun th -> REWRITE_TAC[MATCH_MP RAPROOFAUX_bind_ok th]);
     USE_THEN "rec2" (fun th -> GEN_REWRITE_TAC LAND_CONV [th]) THEN
     USE_THEN "rec3" (fun th -> GEN_REWRITE_TAC (LAND_CONV o RAND_CONV) [th]) THEN
     REWRITE_TAC[linear_scan_hidden_state_component_equality] THEN
@@ -7054,7 +7041,7 @@ let linear_reg_alloc_intervals_correct = prove
     USE_THEN "mvlt" ACCEPT_TAC;
     ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_THEN `madj:(num list)spt` (CONJUNCTS_THEN2
-    (fun th -> REWRITE_TAC[MATCH_MP LSCANPAUX_bind_eq th]) (LABEL_TAC "mff"))) THEN
+    (fun th -> REWRITE_TAC[MATCH_MP RAPROOFAUX_bind_ok th]) (LABEL_TAC "mff"))) THEN
   MP_TAC(SPECL [`forced:(num#num)list`; `s0:linear_scan_hidden_state`]
     edges_to_adjlist_output) THEN
   ANTS_TAC THENL
@@ -7063,7 +7050,7 @@ let linear_reg_alloc_intervals_correct = prove
     REWRITE_TAC[GSYM ALL_MEM; FORALL_PAIR_THM; pair_CASE] THEN MESON_TAC[];
     ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_THEN `fadj:(num list)spt` (CONJUNCTS_THEN2
-    (fun th -> REWRITE_TAC[MATCH_MP LSCANPAUX_bind_eq th]) (LABEL_TAC "fff"))) THEN
+    (fun th -> REWRITE_TAC[MATCH_MP RAPROOFAUX_bind_ok th]) (LABEL_TAC "fff"))) THEN
   USE_THEN "b0" (fun th -> RULE_ASSUM_TAC(REWRITE_RULE[th]) THEN LABEL_TAC "b0" th) THEN
   (* facts about the sorted register list *)
   USE_THEN "permA" (LABEL_TAC "memR" o MATCH_MP PERM_MEM_EQ) THEN
@@ -7138,7 +7125,7 @@ let linear_reg_alloc_intervals_correct = prove
     (CONJUNCTS_THEN2 (LABEL_TAC "len1") (CONJUNCTS_THEN2 (LABEL_TAC "beg1")
     (CONJUNCTS_THEN2 (LABEL_TAC "end1") (CONJUNCTS_THEN2 (LABEL_TAC "out1")
     (CONJUNCTS_THEN2 (LABEL_TAC "ps1") (LABEL_TAC "max1"))))))))))) THEN
-  USE_THEN "eq1" (fun th -> REWRITE_TAC[MATCH_MP LSCANPAUX_bind_eq (SYM th)]) THEN
+  USE_THEN "eq1" (fun th -> REWRITE_TAC[MATCH_MP RAPROOFAUX_bind_ok (SYM th)]) THEN
   USE_THEN "gls1" (LSCANPAUX_LABEL_CONJS "a" o
     REWRITE_RULE[good_linear_scan_state_REVERSE; good_linear_scan_state_def]) THEN
   USE_THEN "ps1" (LABEL_TAC "ps1'" o REWRITE_RULE[phystack_on_stack_REVERSE;
@@ -7168,7 +7155,7 @@ let linear_reg_alloc_intervals_correct = prove
     (CONJUNCTS_THEN2 (LABEL_TAC "x1inj") (CONJUNCTS_THEN2 (LABEL_TAC "x1b")
     (CONJUNCTS_THEN2 (LABEL_TAC "x1c") (CONJUNCTS_THEN2 (LABEL_TAC "x1e")
       (LABEL_TAC "x1d")))))))))) THEN
-  USE_THEN "x1eq" (fun th -> REWRITE_TAC[MATCH_MP LSCANPAUX_ibind_eq (SYM th)]) THEN
+  USE_THEN "x1eq" (fun th -> REWRITE_TAC[MATCH_MP RAPROOFAUX_ignore_bind_ok (SYM th)]) THEN
   (* the registers that go to the second pass *)
   MP_TAC(SPECL [`reglist:num list`; `s2:linear_scan_hidden_state`; `k:num`]
     st_ex_FILTER_good_stack) THEN
@@ -7177,7 +7164,7 @@ let linear_reg_alloc_intervals_correct = prove
     USE_THEN "len1" (fun th -> REWRITE_TAC[th]) THEN
     USE_THEN "c0" (fun th -> REWRITE_TAC[th]) THEN USE_THEN "rlt" ACCEPT_TAC;
     ALL_TAC] THEN
-  DISCH_THEN(fun th -> REWRITE_TAC[MATCH_MP LSCANPAUX_bind_eq th]) THEN
+  DISCH_THEN(fun th -> REWRITE_TAC[MATCH_MP RAPROOFAUX_bind_ok th]) THEN
   REWRITE_TAC[LSCANPAUX_rbind] THEN
   ABBREV_TAC `stacklist = FILTER (\r. is_stack_var r \/
                 k <= EL r (linear_scan_hidden_state_colors s2)) reglist` THEN
@@ -7246,7 +7233,7 @@ let linear_reg_alloc_intervals_correct = prove
     (CONJUNCTS_THEN2 (LABEL_TAC "len3") (CONJUNCTS_THEN2 (LABEL_TAC "beg3")
     (CONJUNCTS_THEN2 (LABEL_TAC "end3") (CONJUNCTS_THEN2 (LABEL_TAC "out3")
       (LABEL_TAC "max3")))))))))) THEN
-  USE_THEN "eq3" (fun th -> REWRITE_TAC[MATCH_MP LSCANPAUX_bind_eq (SYM th)]) THEN
+  USE_THEN "eq3" (fun th -> REWRITE_TAC[MATCH_MP RAPROOFAUX_bind_ok (SYM th)]) THEN
   USE_THEN "gls3" (LSCANPAUX_LABEL_CONJS "b" o
     REWRITE_RULE[good_linear_scan_state_REVERSE; good_linear_scan_state_def]) THEN
   SUBGOAL_THEN `ALL (\r. k <= EL r (linear_scan_hidden_state_colors s3)) stacklist`
@@ -7593,14 +7580,14 @@ let numset_list_add_if_lt_monad_correct = prove
   LIST_INDUCT_TAC THENL
    [REPEAT STRIP_TAC THEN EXISTS_TAC `sth:linear_scan_hidden_state` THEN
     ASM_REWRITE_TAC(numset_list_add_if_lt_monad_def :: numset_list_add_if_lt_def ::
-                    numset_list_add_if_def :: LSCANPAUX_msimps) THEN
+                    numset_list_add_if_def :: RAPROOFAUX_msimps) THEN
     REWRITE_TAC[linear_scan_hidden_state_component_equality] THEN
     REWRITE_TAC(K_THM :: LSCANPAUX_hs_record);
     ALL_TAC] THEN
   REPEAT GEN_TAC THEN REWRITE_TAC[ALL] THEN
   DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "v0") (CONJUNCTS_THEN2 (LABEL_TAC "eq")
     (CONJUNCTS_THEN2 (LABEL_TAC "hlt") (LABEL_TAC "tlt")))) THEN
-  REWRITE_TAC(numset_list_add_if_lt_monad_def :: LSCANPAUX_msimps) THEN
+  REWRITE_TAC(numset_list_add_if_lt_monad_def :: RAPROOFAUX_msimps) THEN
   USE_THEN "hlt" (fun th -> REWRITE_TAC[int_beg_sub_eqn; th; case_def "prod"; case_def "exc"]) THEN
   REWRITE_TAC[numset_list_add_if_lt_def; numset_list_add_if_def] THEN
   REWRITE_TAC[GSYM numset_list_add_if_lt_def] THEN
@@ -7650,7 +7637,7 @@ let numset_list_add_if_lt_monad_correct = prove
      [USE_THEN "e1" (fun th -> REWRITE_TAC[GSYM th]) THEN FIRST_ASSUM ACCEPT_TAC; ALL_TAC] THEN
     USE_THEN "lk" (fun th -> REWRITE_TAC[th; case_def "option"]) THEN
     REWRITE_TAC[ASSUME `&0 < EL h (linear_scan_hidden_state_int_beg sth)`] THEN
-    REWRITE_TAC(update_int_beg_eqn :: LSCANPAUX_msimps) THEN
+    REWRITE_TAC(update_int_beg_eqn :: RAPROOFAUX_msimps) THEN
     USE_THEN "hlt" (fun th -> REWRITE_TAC[th; case_def "prod"; case_def "exc"]) THEN
     USE_THEN "updcase" ACCEPT_TAC;
     ALL_TAC] THEN
@@ -7661,7 +7648,7 @@ let numset_list_add_if_lt_monad_correct = prove
   USE_THEN "lk" (fun th -> REWRITE_TAC[th; case_def "option"]) THEN
   REWRITE_TAC[ASSUME `~(&0 < EL h (linear_scan_hidden_state_int_beg sth))`] THEN
   COND_CASES_TAC THENL
-   [REWRITE_TAC(update_int_beg_eqn :: LSCANPAUX_msimps) THEN
+   [REWRITE_TAC(update_int_beg_eqn :: RAPROOFAUX_msimps) THEN
     USE_THEN "hlt" (fun th -> REWRITE_TAC[th; case_def "prod"; case_def "exc"]) THEN
     USE_THEN "updcase" ACCEPT_TAC;
     FIRST_X_ASSUM(MP_TAC o SPECL [`v:int`; `sth:linear_scan_hidden_state`; `s:int spt`]) THEN
@@ -7688,14 +7675,14 @@ let numset_list_add_if_gt_monad_correct = prove
   LIST_INDUCT_TAC THENL
    [REPEAT STRIP_TAC THEN EXISTS_TAC `sth:linear_scan_hidden_state` THEN
     ASM_REWRITE_TAC(numset_list_add_if_gt_monad_def :: numset_list_add_if_gt_def ::
-                    numset_list_add_if_def :: LSCANPAUX_msimps) THEN
+                    numset_list_add_if_def :: RAPROOFAUX_msimps) THEN
     REWRITE_TAC[linear_scan_hidden_state_component_equality] THEN
     REWRITE_TAC(K_THM :: LSCANPAUX_hs_record);
     ALL_TAC] THEN
   REPEAT GEN_TAC THEN REWRITE_TAC[ALL] THEN
   DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "v0") (CONJUNCTS_THEN2 (LABEL_TAC "eq")
     (CONJUNCTS_THEN2 (LABEL_TAC "hlt") (LABEL_TAC "tlt")))) THEN
-  REWRITE_TAC(numset_list_add_if_gt_monad_def :: LSCANPAUX_msimps) THEN
+  REWRITE_TAC(numset_list_add_if_gt_monad_def :: RAPROOFAUX_msimps) THEN
   USE_THEN "hlt" (fun th -> REWRITE_TAC[int_end_sub_eqn; th; case_def "prod"; case_def "exc"]) THEN
   REWRITE_TAC[numset_list_add_if_gt_def; numset_list_add_if_def] THEN
   REWRITE_TAC[GSYM numset_list_add_if_gt_def] THEN
@@ -7745,7 +7732,7 @@ let numset_list_add_if_gt_monad_correct = prove
      [USE_THEN "e1" (fun th -> REWRITE_TAC[GSYM th]) THEN FIRST_ASSUM ACCEPT_TAC; ALL_TAC] THEN
     USE_THEN "lk" (fun th -> REWRITE_TAC[th; case_def "option"]) THEN
     REWRITE_TAC[ASSUME `&0 < EL h (linear_scan_hidden_state_int_end sth)`] THEN
-    REWRITE_TAC(update_int_end_eqn :: LSCANPAUX_msimps) THEN
+    REWRITE_TAC(update_int_end_eqn :: RAPROOFAUX_msimps) THEN
     USE_THEN "hlt" (fun th -> REWRITE_TAC[th; case_def "prod"; case_def "exc"]) THEN
     USE_THEN "updcase" ACCEPT_TAC;
     ALL_TAC] THEN
@@ -7756,18 +7743,13 @@ let numset_list_add_if_gt_monad_correct = prove
   USE_THEN "lk" (fun th -> REWRITE_TAC[th; case_def "option"]) THEN
   REWRITE_TAC[ASSUME `~(&0 < EL h (linear_scan_hidden_state_int_end sth))`] THEN
   COND_CASES_TAC THENL
-   [REWRITE_TAC(update_int_end_eqn :: LSCANPAUX_msimps) THEN
+   [REWRITE_TAC(update_int_end_eqn :: RAPROOFAUX_msimps) THEN
     USE_THEN "hlt" (fun th -> REWRITE_TAC[th; case_def "prod"; case_def "exc"]) THEN
     USE_THEN "updcase" ACCEPT_TAC;
     FIRST_X_ASSUM(MP_TAC o SPECL [`v:int`; `sth:linear_scan_hidden_state`; `s:int spt`]) THEN
     USE_THEN "v0" (fun th -> REWRITE_TAC[th]) THEN USE_THEN "tlt" (fun th -> REWRITE_TAC[th]) THEN
     USE_THEN "eq" (fun th -> REWRITE_TAC[th])]);;
 
-
-(* LSCANPAUX_QUAD: naming the components of a quadruple *)
-let LSCANPAUX_QUAD = prove
- (`!p:A#B#C#D. ?a b c d. p = (a,b,c,d)`,
-  MESON_TAC[PAIR_SURJECTIVE]);;
 
 (* LSCANPAUX_hs2_eq: the two-field record equation of the interval monad *)
 let LSCANPAUX_hs2_trans = prove
@@ -7822,7 +7804,7 @@ let get_intervals_ct_monad_aux_correct = prove
           (SUBST1_TAC o SYM))))
       (CONJUNCTS_THEN2 (LABEL_TAC "len") (CONJUNCTS_THEN2 (LABEL_TAC "ct")
         (LABEL_TAC "lv"))))))) THEN
-    REWRITE_TAC(get_intervals_ct_monad_aux_def :: LSCANPAUX_msimps) THEN
+    REWRITE_TAC(get_intervals_ct_monad_aux_def :: RAPROOFAUX_msimps) THEN
     MP_TAC(SPECL [`int_beg:int spt`; `sth:linear_scan_hidden_state`; `wr:num list`; `n:int`]
       numset_list_add_if_lt_monad_correct) THEN
     ANTS_TAC THENL
@@ -7888,7 +7870,7 @@ let get_intervals_ct_monad_aux_correct = prove
           (SUBST1_TAC o SYM))))
       (CONJUNCTS_THEN2 (LABEL_TAC "len") (CONJUNCTS_THEN2 (LABEL_TAC "ct")
         (LABEL_TAC "lv"))))))) THEN
-    REWRITE_TAC(get_intervals_ct_monad_aux_def :: LSCANPAUX_msimps) THEN
+    REWRITE_TAC(get_intervals_ct_monad_aux_def :: RAPROOFAUX_msimps) THEN
     MP_TAC(SPECL [`int_end:int spt`; `sth:linear_scan_hidden_state`;
       `MAP FST (toAList (cs:1 spt))`; `n:int`] numset_list_add_if_gt_monad_correct) THEN
     ANTS_TAC THENL
@@ -7923,10 +7905,10 @@ let get_intervals_ct_monad_aux_correct = prove
       (CONJUNCTS_THEN2 (LABEL_TAC "ee") (CONJUNCTS_THEN2 (LABEL_TAC "aux")
       (CONJUNCTS_THEN2 (LABEL_TAC "len") (CONJUNCTS_THEN2 (LABEL_TAC "ct")
         (LABEL_TAC "lv"))))))) THEN
-    MP_TAC(ISPEC `get_intervals_ct_aux c2 n int_beg int_end live` LSCANPAUX_QUAD) THEN
+    MP_TAC(ISPEC `get_intervals_ct_aux c2 n int_beg int_end live` BASICAUX_TUPLE4) THEN
     DISCH_THEN(X_CHOOSE_THEN `n2:int` (X_CHOOSE_THEN `b2:int spt` (X_CHOOSE_THEN `e2:int spt`
       (X_CHOOSE_THEN `lv2:1 spt` (LABEL_TAC "a2"))))) THEN
-    MP_TAC(ISPEC `get_intervals_ct_aux c1 n2 b2 e2 live` LSCANPAUX_QUAD) THEN
+    MP_TAC(ISPEC `get_intervals_ct_aux c1 n2 b2 e2 live` BASICAUX_TUPLE4) THEN
     DISCH_THEN(X_CHOOSE_THEN `n1:int` (X_CHOOSE_THEN `b1:int spt` (X_CHOOSE_THEN `e1:int spt`
       (X_CHOOSE_THEN `lv1:1 spt` (LABEL_TAC "a1"))))) THEN
     USE_THEN "aux" (MP_TAC o REWRITE_RULE[get_intervals_ct_aux_def]) THEN
@@ -7959,7 +7941,7 @@ let get_intervals_ct_monad_aux_correct = prove
         (LABEL_TAC "n1le"))))))))) THEN
     USE_THEN "r2" (fun a -> USE_THEN "r1" (fun b ->
       LABEL_TAC "r12" (MATCH_MP LSCANPAUX_hs2_trans (CONJ a b)))) THEN
-    REWRITE_TAC(get_intervals_ct_monad_aux_def :: LSCANPAUX_msimps) THEN
+    REWRITE_TAC(get_intervals_ct_monad_aux_def :: RAPROOFAUX_msimps) THEN
     USE_THEN "q2" (fun th -> REWRITE_TAC[th; case_def "prod"; case_def "exc"; pair_CASE]) THEN
     USE_THEN "q1" (fun th -> REWRITE_TAC[th; case_def "prod"; case_def "exc"; pair_CASE]) THEN
     DISJ_CASES_THEN2 (X_CHOOSE_THEN `cs:1 spt` SUBST_ALL_TAC) SUBST_ALL_TAC
@@ -8006,7 +7988,7 @@ let get_intervals_ct_monad_aux_correct = prove
         USE_THEN "n1le" MP_TAC THEN INT_ARITH_TAC];
       (* NONE *)
       EXISTS_TAC `s1:linear_scan_hidden_state` THEN
-      REWRITE_TAC LSCANPAUX_msimps THEN REWRITE_TAC[PAIR_EQ] THEN
+      REWRITE_TAC RAPROOFAUX_msimps THEN REWRITE_TAC[PAIR_EQ] THEN
       REPEAT CONJ_TAC THENL
        [USE_THEN "sb1" ACCEPT_TAC;
         USE_THEN "se1" ACCEPT_TAC;
@@ -8028,7 +8010,7 @@ let get_intervals_ct_monad_aux_correct = prove
       (CONJUNCTS_THEN2 (LABEL_TAC "ee") (CONJUNCTS_THEN2 (LABEL_TAC "aux")
       (CONJUNCTS_THEN2 (LABEL_TAC "len") (CONJUNCTS_THEN2 (LABEL_TAC "ct")
         (LABEL_TAC "lv"))))))) THEN
-    MP_TAC(ISPEC `get_intervals_ct_aux c2 n int_beg int_end live` LSCANPAUX_QUAD) THEN
+    MP_TAC(ISPEC `get_intervals_ct_aux c2 n int_beg int_end live` BASICAUX_TUPLE4) THEN
     DISCH_THEN(X_CHOOSE_THEN `n2:int` (X_CHOOSE_THEN `b2:int spt` (X_CHOOSE_THEN `e2:int spt`
       (X_CHOOSE_THEN `lv2:1 spt` (LABEL_TAC "a2"))))) THEN
     USE_THEN "aux" (MP_TAC o REWRITE_RULE[get_intervals_ct_aux_def]) THEN
@@ -8059,7 +8041,7 @@ let get_intervals_ct_monad_aux_correct = prove
       (CONJUNCTS_THEN2 (LABEL_TAC "lb1") (CONJUNCTS_THEN2 (LABEL_TAC "le1")
       (CONJUNCTS_THEN2 (LABEL_TAC "lvb1") (CONJUNCTS_THEN2 (LABEL_TAC "r1")
         (LABEL_TAC "n1le"))))))))) THEN
-    REWRITE_TAC(get_intervals_ct_monad_aux_def :: LSCANPAUX_msimps) THEN
+    REWRITE_TAC(get_intervals_ct_monad_aux_def :: RAPROOFAUX_msimps) THEN
     USE_THEN "q2" (fun th -> REWRITE_TAC[th; case_def "prod"; case_def "exc"; pair_CASE]) THEN
     EXISTS_TAC `s1:linear_scan_hidden_state` THEN
     USE_THEN "q1" (fun th -> REWRITE_TAC[th]) THEN
@@ -8099,7 +8081,7 @@ let get_intervals_ct_monad_correct = prove
     REPEAT GEN_TAC THEN
   DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "pb") (CONJUNCTS_THEN2 (LABEL_TAC "pe")
     (CONJUNCTS_THEN2 (LABEL_TAC "gi") (CONJUNCTS_THEN2 (LABEL_TAC "len") (LABEL_TAC "ct"))))) THEN
-  MP_TAC(ISPEC `get_intervals_ct_aux ct (&0) LN LN LN` LSCANPAUX_QUAD) THEN
+  MP_TAC(ISPEC `get_intervals_ct_aux ct (&0) LN LN LN` BASICAUX_TUPLE4) THEN
   DISCH_THEN(X_CHOOSE_THEN `n1:int` (X_CHOOSE_THEN `b1:int spt` (X_CHOOSE_THEN `e1:int spt`
     (X_CHOOSE_THEN `lv1:1 spt` (LABEL_TAC "a1"))))) THEN
   USE_THEN "gi" (MP_TAC o REWRITE_RULE[get_intervals_ct_def; LET_DEF; LET_END_DEF]) THEN
@@ -8124,7 +8106,7 @@ let get_intervals_ct_monad_correct = prove
     (CONJUNCTS_THEN2 (LABEL_TAC "lb1") (CONJUNCTS_THEN2 (LABEL_TAC "le1")
     (CONJUNCTS_THEN2 (LABEL_TAC "lvb1") (CONJUNCTS_THEN2 (LABEL_TAC "r1")
       (LABEL_TAC "n1le"))))))))) THEN
-  REWRITE_TAC(get_intervals_ct_monad_def :: LSCANPAUX_msimps) THEN
+  REWRITE_TAC(get_intervals_ct_monad_def :: RAPROOFAUX_msimps) THEN
   USE_THEN "q1" (fun th -> REWRITE_TAC[th; case_def "prod"; case_def "exc"; pair_CASE]) THEN
   MP_TAC(SPECL [`b1:int spt`; `s1:linear_scan_hidden_state`; `MAP FST (toAList (lv1:1 spt))`;
     `n1:int`] numset_list_add_if_lt_monad_correct) THEN
@@ -8153,7 +8135,7 @@ let get_intervals_ct_monad_correct = prove
   USE_THEN "q3" (fun th -> REWRITE_TAC[th; case_def "prod"; case_def "exc"]) THEN
   USE_THEN "r3" (fun th -> LABEL_TAC "b3" (REWRITE_RULE(K_THM :: LSCANPAUX_hs_record)
     (AP_TERM `linear_scan_hidden_state_int_beg` th))) THEN
-  EXISTS_TAC `s3:linear_scan_hidden_state` THEN REWRITE_TAC LSCANPAUX_msimps THEN
+  EXISTS_TAC `s3:linear_scan_hidden_state` THEN REWRITE_TAC RAPROOFAUX_msimps THEN
   REWRITE_TAC[PAIR_EQ] THEN REPEAT CONJ_TAC THENL
    [USE_THEN "b3" (fun th -> REWRITE_TAC[th]) THEN USE_THEN "sb2" ACCEPT_TAC;
     USE_THEN "se3" ACCEPT_TAC;
@@ -8256,7 +8238,7 @@ let get_intervals_beg_less_end = prove
       USE_THEN "sub" MP_TAC THEN SET_TAC[]];
     MAP_EVERY X_GEN_TAC [`lt1:live_tree`; `lt2:live_tree`] THEN
     DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "ih1") (LABEL_TAC "ih2")) THEN REPEAT GEN_TAC THEN
-    MP_TAC(ISPEC `get_intervals lt2 n_in beg_in end_in` RAPROOFAUX_TRIPLE) THEN
+    MP_TAC(ISPEC `get_intervals lt2 n_in beg_in end_in` BASICAUX_TUPLE3) THEN
     DISCH_THEN(X_CHOOSE_THEN `n2:int` (X_CHOOSE_THEN `b2:int spt` (X_CHOOSE_THEN `e2:int spt`
       (LABEL_TAC "a2")))) THEN
     USE_THEN "a2" (fun th -> REWRITE_TAC[th; LET_DEF; LET_END_DEF; pair_CASE]) THEN
@@ -8317,7 +8299,7 @@ let linear_reg_alloc_without_renaming_correct = prove
     (CONJUNCTS_THEN2 (LABEL_TAC "mvlt") (CONJUNCTS_THEN2 (LABEL_TAC "lsr")
     (CONJUNCTS_THEN2 (LABEL_TAC "lsm") (CONJUNCTS_THEN2 (LABEL_TAC "lcb")
     (CONJUNCTS_THEN2 (K ALL_TAC) (LABEL_TAC "Rd")))))))))))) THEN
-  MP_TAC(ISPEC `get_intervals_ct ct` RAPROOFAUX_TRIPLE) THEN
+  MP_TAC(ISPEC `get_intervals_ct ct` BASICAUX_TUPLE3) THEN
   DISCH_THEN(X_CHOOSE_THEN `n:int` (X_CHOOSE_THEN `ib:int spt` (X_CHOOSE_THEN `ie:int spt`
     (LABEL_TAC "gi")))) THEN
   MP_TAC(SPECL [`ct:clash_tree`; `sth:linear_scan_hidden_state`; `n:int`; `ib:int spt`;
@@ -8338,7 +8320,7 @@ let linear_reg_alloc_without_renaming_correct = prove
     REWRITE_TAC(K_THM :: LSCANPAUX_hs_record);
     ALL_TAC] THEN
   MP_TAC(ISPEC `get_intervals (fix_domination (get_live_tree ct)) (&0) LN LN`
-    RAPROOFAUX_TRIPLE) THEN
+    BASICAUX_TUPLE3) THEN
   DISCH_THEN(X_CHOOSE_THEN `n':int` (X_CHOOSE_THEN `ib':int spt` (X_CHOOSE_THEN `ie':int spt`
     (LABEL_TAC "gi'")))) THEN
   MP_TAC(SPECL [`ct:clash_tree`; `ib:int spt`; `ib':int spt`; `ie:int spt`; `ie':int spt`;
@@ -8429,7 +8411,7 @@ let linear_reg_alloc_without_renaming_correct = prove
     (MP_TAC o MATCH_MP get_live_tree_correct_LN))) THEN
   DISCH_THEN(X_CHOOSE_THEN `livein:1 spt` (X_CHOOSE_THEN `flivein:1 spt` ASSUME_TAC)) THEN
   MAP_EVERY EXISTS_TAC [`so:linear_scan_hidden_state`; `livein:1 spt`; `flivein:1 spt`] THEN
-  USE_THEN "qi" (fun th -> REWRITE_TAC[MATCH_MP LSCANPAUX_ibind_eq th]) THEN
+  USE_THEN "qi" (fun th -> REWRITE_TAC[MATCH_MP RAPROOFAUX_ignore_bind_ok th]) THEN
   ASM_REWRITE_TAC[] THEN
   X_GEN_TAC `r:num` THEN DISCH_TAC THEN
   USE_THEN "colo" (MP_TAC o SPEC `r:num` o REWRITE_RULE[GSYM ALL_MEM]) THEN
@@ -9173,7 +9155,7 @@ let extract_coloration_output = prove
                   (M_success (EL h (linear_scan_hidden_state_colors sth)),sth)` ASSUME_TAC THENL
      [REWRITE_TAC[colors_sub_eqn] THEN USE_THEN "hlt" (fun th -> REWRITE_TAC[th]); ALL_TAC] THEN
     REWRITE_TAC[extract_coloration_def] THEN
-    FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP LSCANPAUX_bind_eq th]) THEN BETA_TAC THEN
+    FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP RAPROOFAUX_bind_ok th]) THEN BETA_TAC THEN
     USE_THEN "ex" ACCEPT_TAC;
     X_GEN_TAC `r:num` THEN DISCH_TAC THEN
     REMOVE_THEN "lk" (MP_TAC o SPEC `r:num`) THEN ASM_REWRITE_TAC[MEM] THEN

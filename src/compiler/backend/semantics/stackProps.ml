@@ -446,15 +446,6 @@ let sh_mem_op_const = prove
 (* evaluate assumptions.                                                     *)
 (* ------------------------------------------------------------------------- *)
 
-let STACKPROPSAUX_case_eqs =
-  [pair_case_eq; option_case_eq; list_case_eq; COND_CASE_EQ] @
-  map case_eq ["word_loc"; "stack_result"; "ffi_result"];;
-
-let STACKPROPSAUX_is_eval_eq tm =
-  is_eq tm &&
-  (try fst(dest_const(fst(strip_comb(lhs tm)))) = "stack_evaluate"
-   with Failure _ -> false);;
-
 (* prove ?vs. A1 /\ ... /\ An from the assumptions: each existential       *)
 (* variable is found by matching a conjunct with an assumption (or the two  *)
 (* sides of an equation); the instance is proved conjunct by conjunct, by  *)
@@ -493,11 +484,11 @@ let STACKPROPSAUX_EXISTS_ASM_TAC (side:tactic) : tactic = fun (asl,w as g) ->
 (* antecedents follow (STACKPROPSAUX_EXISTS_ASM_TAC side)                   *)
 
 let STACKPROPSAUX_USE_IHS_TAC (side:tactic) : tactic = fun (asl,w as g) ->
-  let evs = filter (fun th -> STACKPROPSAUX_is_eval_eq (concl th)) (map snd asl) in
+  let evs = filter (fun th -> STACKPAUX_is_eval_eq (concl th)) (map snd asl) in
   let ihs = mapfilter (fun (_,th) ->
       let th' = REWRITE_RULE[IMP_IMP; RIGHT_IMP_FORALL_THM] th in
       let vs,bod = strip_forall (concl th') in
-      if is_imp bod && exists STACKPROPSAUX_is_eval_eq (conjuncts(fst(dest_imp bod)))
+      if is_imp bod && exists STACKPAUX_is_eval_eq (conjuncts(fst(dest_imp bod)))
       then th' else failwith "") asl in
   (* the fresh names also avoid the variables of the hypotheses of the     *)
   (* assumptions (an instance must not change them: VALID)                 *)
@@ -507,7 +498,7 @@ let STACKPROPSAUX_USE_IHS_TAC (side:tactic) : tactic = fun (asl,w as g) ->
     let vs1 = rev(itlist (fun v acc -> variant (acc @ avoid) v :: acc) (rev vs0) []) in
     let ih = SPECL vs1 ih0 in
     let ant,_ = dest_imp (concl ih) in
-    let ecjs = filter STACKPROPSAUX_is_eval_eq (conjuncts ant) in
+    let ecjs = filter STACKPAUX_is_eval_eq (conjuncts ant) in
     let rec go theta cjs =
       match cjs with
         [] -> [theta]
@@ -541,7 +532,7 @@ let STACKPROPSAUX_USE_IHS_TAC (side:tactic) : tactic = fun (asl,w as g) ->
 let STACKPROPSAUX_SPLIT_TAC : tactic =
   REPEAT (GEN_TAC ORELSE DISCH_THEN(fun th -> MAP_EVERY ASSUME_TAC (CONJUNCTS th))) THEN
   POP_ASSUM MP_TAC THEN ONCE_REWRITE_TAC[stack_evaluate_def] THEN
-  REWRITE_TAC(STACKPROPSAUX_case_eqs @ [PAIR_EQ; LET_DEF; LET_END_DEF]) THEN
+  REWRITE_TAC(STACKPAUX_clock_case_eqs @ [PAIR_EQ; LET_DEF; LET_END_DEF]) THEN
   REPEAT STRIP_TAC THEN RVEQ_TAC;;
 
 (* induction on the program and state of stack_evaluate: the statement     *)
@@ -596,10 +587,6 @@ let STACKPROPSAUX_shift_seq_0 = prove
  (`!co:num->A. shift_seq 0 co = co`,
   REWRITE_TAC[shift_seq_def; ADD_CLAUSES; ETA_AX]);;
 
-let STACKPROPSAUX_list_of_seq_1 = prove
- (`!f:num->A. list_of_seq f 1 = [f 0]`,
-  REWRITE_TAC[ONE; list_of_seq; APPEND]);;
-
 let STACKPROPSAUX_code_bitmaps_trans = prove
  (`!(co:num->C#(num#(A)stack_prog)list#(A word)list) code bm n1 n2.
      shift_seq n2 (shift_seq n1 co) = shift_seq (n2 + n1) co /\
@@ -623,7 +610,7 @@ let STACKPROPSAUX_CB_TAC : tactic =
     SIMP[STACKPROPSAUX_shift_seq_0; list_of_seq; MAP; FOLDL; FLAT; APPEND_NIL] THEN
     NO_TAC;
     EXISTS_TAC `1` THEN
-    SIMP[STACKPROPSAUX_list_of_seq_1; MAP; FOLDL; FLAT; APPEND_NIL; o_THM] THEN
+    SIMP[LISTAUX_list_of_seq_1; MAP; FOLDL; FLAT; APPEND_NIL; o_THM] THEN
     NO_TAC;
     MESON_TAC[STACKPROPSAUX_code_bitmaps_trans]];;
 
@@ -650,14 +637,6 @@ let stack_evaluate_mono = prove
 (* a call_FFI that returns only appends to the io_events (a fact of HOL4's *)
 (* ffiProps)                                                                *)
 
-let STACKPROPSAUX_call_FFI_io = prove
- (`!(st:(FFI)ffi_state) s conf bytes st' bytes'.
-     call_FFI st s conf bytes = FFI_return st' bytes' ==>
-     isPREFIX (ffi_state_io_events st) (ffi_state_io_events st')`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[call_FFI_def] THEN
-  EVERY_CASE_TAC THEN REWRITE_TAC[injectivity "ffi_result"; distinctness "ffi_result"] THEN
-  STRIP_TAC THEN RVEQ_TAC THEN SIMP[IS_PREFIX_APPEND3; IS_PREFIX_REFL]);;
-
 let STACKPROPSAUX_sh_mem_op_io = prove
  (`sh_mem_op op r a (s:(A,C,FFI)stack_state) = (res,t) ==>
    isPREFIX (ffi_state_io_events (stack_state_ffi s))
@@ -669,10 +648,10 @@ let STACKPROPSAUX_sh_mem_op_io = prove
               stack_sh_mem_store_byte_def; stack_sh_mem_load_byte_def] THEN
   EVERY_CASE_TAC THEN REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN RVEQ_TAC THEN
   SIMP[IS_PREFIX_REFL] THEN
-  FIRST_X_ASSUM(MATCH_ACCEPT_TAC o MATCH_MP STACKPROPSAUX_call_FFI_io));;
+  FIRST_X_ASSUM(MATCH_ACCEPT_TAC o MATCH_MP SEM2AUX_call_FFI_io_events));;
 
 let STACKPROPSAUX_IO_FACTS_TAC : tactic =
-  STACKPROPSAUX_FACTS_TAC [STACKPROPSAUX_call_FFI_io; STACKPROPSAUX_sh_mem_op_io];;
+  STACKPROPSAUX_FACTS_TAC [SEM2AUX_call_FFI_io_events; STACKPROPSAUX_sh_mem_op_io];;
 
 let STACKPROPSAUX_IO_TAC : tactic =
   STACKPROPSAUX_SPLIT_TAC THEN
@@ -768,9 +747,9 @@ let STACKPROPSAUX_TIDY_TAC : tactic =
 
 let STACKPROPSAUX_ADD_CLOCK_TAC : tactic =
   REPEAT (GEN_TAC ORELSE DISCH_THEN(fun th -> MAP_EVERY ASSUME_TAC (CONJUNCTS th))) THEN
-  FIRST_X_ASSUM (MP_TAC o check (STACKPROPSAUX_is_eval_eq o concl)) THEN
+  FIRST_X_ASSUM (MP_TAC o check (STACKPAUX_is_eval_eq o concl)) THEN
   CONV_TAC(LAND_CONV(ONCE_REWRITE_CONV[stack_evaluate_def] THENC
-           REWRITE_CONV(STACKPROPSAUX_case_eqs @ [PAIR_EQ; LET_DEF; LET_END_DEF]))) THEN
+           REWRITE_CONV(STACKPAUX_clock_case_eqs @ [PAIR_EQ; LET_DEF; LET_END_DEF]))) THEN
   REPEAT STRIP_TAC THEN RVEQ_TAC THEN STACKPROPSAUX_TIDY_TAC THEN
   STACKPROPSAUX_USE_IHS_TAC STACKPROPSAUX_SIDE_TAC THEN
   STACKPROPSAUX_DROP_IHS_TAC THEN
@@ -808,7 +787,7 @@ let STACKPROPSAUX_eval_state tm = snd(dest_pair(rand(lhs tm)));;
 (* not a time out                                                           *)
 
 let STACKPROPSAUX_ADD_CLOCK_FACTS_TAC : tactic = fun (asl,w as g) ->
-  let evs = filter (fun th -> STACKPROPSAUX_is_eval_eq (concl th) &&
+  let evs = filter (fun th -> STACKPAUX_is_eval_eq (concl th) &&
                      not (STACKPROPSAUX_is_clock_state
                             (STACKPROPSAUX_eval_state (concl th)))) (map snd asl) in
   MAP_EVERY (fun e (asl,w as g) ->
@@ -820,11 +799,11 @@ let STACKPROPSAUX_ADD_CLOCK_FACTS_TAC : tactic = fun (asl,w as g) ->
 
 let STACKPROPSAUX_TIMEOUT_IO_TAC : tactic =
   REPEAT (GEN_TAC ORELSE DISCH_THEN(fun th -> MAP_EVERY ASSUME_TAC (CONJUNCTS th))) THEN
-  FIRST_X_ASSUM (MP_TAC o check (fun th -> STACKPROPSAUX_is_eval_eq (concl th) &&
+  FIRST_X_ASSUM (MP_TAC o check (fun th -> STACKPAUX_is_eval_eq (concl th) &&
                    STACKPROPSAUX_is_clock_state (STACKPROPSAUX_eval_state (concl th)))) THEN
-  FIRST_X_ASSUM (MP_TAC o check (STACKPROPSAUX_is_eval_eq o concl)) THEN
+  FIRST_X_ASSUM (MP_TAC o check (STACKPAUX_is_eval_eq o concl)) THEN
   CONV_TAC(LAND_CONV(ONCE_REWRITE_CONV[stack_evaluate_def] THENC
-           REWRITE_CONV(STACKPROPSAUX_case_eqs @ [PAIR_EQ; LET_DEF; LET_END_DEF]))) THEN
+           REWRITE_CONV(STACKPAUX_clock_case_eqs @ [PAIR_EQ; LET_DEF; LET_END_DEF]))) THEN
   DISCH_THEN CAKE_STRIP_ASSUME_TAC THEN RVEQ_TAC THEN STACKPROPSAUX_TIDY_TAC THEN
   STACKPROPSAUX_ADD_CLOCK_FACTS_TAC THEN
   STACKPROPSAUX_CONST_FACTS_TAC THEN
@@ -833,7 +812,7 @@ let STACKPROPSAUX_TIMEOUT_IO_TAC : tactic =
   SIMP(STACKPROPSAUX_local_simps @
        [STACKPROPSAUX_dec_clock_clock; STACKPROPSAUX_dec_clock_add; PAIR_MAP_THM; I_THM;
         OPTION_MAP_DEF; LET_DEF; LET_END_DEF]) THEN
-  REWRITE_TAC(STACKPROPSAUX_case_eqs @ [PAIR_EQ; LET_DEF; LET_END_DEF]) THEN
+  REWRITE_TAC(STACKPAUX_clock_case_eqs @ [PAIR_EQ; LET_DEF; LET_END_DEF]) THEN
   REPEAT STRIP_TAC THEN RVEQ_TAC THEN STACKPROPSAUX_TIDY_TAC THEN
   STACKPROPSAUX_USE_IHS_TAC STACKPROPSAUX_SIDE_TAC THEN
   STACKPROPSAUX_DROP_IHS_TAC THEN
@@ -985,9 +964,9 @@ let inst_clock_neutral_ffi = prove
 
 let STACKPROPSAUX_NEUTRAL_TAC (rws:thm list) : tactic =
   REPEAT (GEN_TAC ORELSE DISCH_THEN(fun th -> MAP_EVERY ASSUME_TAC (CONJUNCTS th))) THEN
-  FIRST_X_ASSUM (MP_TAC o check (STACKPROPSAUX_is_eval_eq o concl)) THEN
+  FIRST_X_ASSUM (MP_TAC o check (STACKPAUX_is_eval_eq o concl)) THEN
   CONV_TAC(LAND_CONV(ONCE_REWRITE_CONV[stack_evaluate_def] THENC
-           REWRITE_CONV(STACKPROPSAUX_case_eqs @ [PAIR_EQ; LET_DEF; LET_END_DEF]))) THEN
+           REWRITE_CONV(STACKPAUX_clock_case_eqs @ [PAIR_EQ; LET_DEF; LET_END_DEF]))) THEN
   REPEAT STRIP_TAC THEN RVEQ_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[clock_neutral_def]) THEN
   STACKPROPSAUX_TIDY_TAC THEN
@@ -1596,3 +1575,31 @@ let no_shmemop_def = sem1aux_def_wf
    (no_shmemop _ <=> T)`;;
 
 let no_shmemop_ind = cake_ind "no_shmemop";;
+
+(* ------------------------------------------------------------------------- *)
+(* Lemmas used by several later files.                                       *)
+(* ------------------------------------------------------------------------- *)
+
+let STACKPROPSAUX_io_mono = prove
+ (`!p (x:(A,C,FFI)stack_state) k1 k2.
+     k1 <= k2 ==>
+     isPREFIX
+       (ffi_state_io_events (stack_state_ffi
+          (SND (stack_evaluate (p,stack_state_clock_fupd (K k1) x)))))
+       (ffi_state_io_events (stack_state_ffi
+          (SND (stack_evaluate (p,stack_state_clock_fupd (K k2) x)))))`,
+  REPEAT GEN_TAC THEN REWRITE_TAC[LE_EXISTS] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
+  MP_TAC(ISPECL [`p:(A)stack_prog`; `stack_state_clock_fupd (K k1) (x:(A,C,FFI)stack_state)`]
+          (INST [`d:num`,`extra:num`] stack_evaluate_add_clock_io_events_mono)) THEN
+  SIMP[]);;
+
+let STACKPROPSAUX_io_chain = prove
+ (`!p (x:(A,C,FFI)stack_state).
+     lprefix_chain
+       (IMAGE (\k. llist_fromList (ffi_state_io_events (stack_state_ffi
+          (SND (stack_evaluate (p,stack_state_clock_fupd (K k) x)))))) (:num))`,
+  REPEAT GEN_TAC THEN
+  REWRITE_TAC[SET_RULE `IMAGE (\k. (g:B->C) ((f:A->B) k)) s = IMAGE g (IMAGE f s)`] THEN
+  MATCH_MP_TAC prefix_chain_lprefix_chain THEN
+  REWRITE_TAC[prefix_chain_def; IMP_CONJ; RIGHT_FORALL_IMP_THM; FORALL_IN_IMAGE; IN_UNIV] THEN
+  MESON_TAC[STACKPROPSAUX_io_mono; LE_CASES]);;

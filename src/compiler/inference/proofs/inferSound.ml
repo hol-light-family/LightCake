@@ -541,7 +541,7 @@ let INFER1AUX_ids_dlet = prove
                  `ntvs:num`; `s2:(num,num)fmap`; `ts':infer_t list`;
                  `infer_st_next_uvar st''`; `0`; `{}:num->bool`] generalise_complete) THEN
   ANTS_TAC THENL
-   [ASM_REWRITE_TAC[ETA_AX; GSYM INFER1AUX_ec_ALL_SND]; ALL_TAC] THEN
+   [ASM_REWRITE_TAC[ETA_AX; GSYM every_shim]; ALL_TAC] THEN
   REWRITE_TAC[ADD_CLAUSES; NOT_IN_EMPTY] THEN
   DISCH_THEN(X_CHOOSE_THEN `ec1:(infer_t#infer_t)list` (X_CHOOSE_THEN
     `last_sub:(num,infer_t)fmap` STRIP_ASSUME_TAC)) THEN
@@ -618,7 +618,7 @@ let INFER1AUX_ids_dlet = prove
     MATCH_MP_TAC INFER1AUX_gen_inst THEN
     MAP_EVERY EXISTS_TAC [`s:(num,infer_t)fmap`; `infer_st_next_uvar st''`; `s2:(num,num)fmap`;
                           `ec1:(infer_t#infer_t)list`; `csa:(infer_t#infer_t)list`] THEN
-    ASM_REWRITE_TAC[GSYM INFER1AUX_ec_ALL_SND];
+    ASM_REWRITE_TAC[GSYM every_shim];
     (* not a value: no generalisation *)
     SUBGOAL_THEN `ntvs = 0` SUBST_ALL_TAC THENL
      [UNDISCH_TAC `ntvs = 0 \/ is_value e` THEN ASM_REWRITE_TAC[]; ALL_TAC] THEN
@@ -636,14 +636,14 @@ let INFER1AUX_ids_dlet = prove
     ANTS_TAC THENL
      [ASM_REWRITE_TAC[ALL_MAP; o_DEF] THEN
       UNDISCH_TAC `ALL (\(x:mlstring,t). check_t 0 (count (infer_st_next_uvar st'')) t) env'` THEN
-      REWRITE_TAC[INFER1AUX_ec_ALL_SND; GSYM ALL_MEM] THEN REPEAT STRIP_TAC THEN
+      REWRITE_TAC[every_shim; GSYM ALL_MEM] THEN REPEAT STRIP_TAC THEN
       MATCH_MP_TAC t_walkstar_check THEN ASM_REWRITE_TAC[] THEN CONJ_TAC THENL
        [MATCH_MP_TAC check_s_more5 THEN EXISTS_TAC `count (infer_st_next_uvar st'')` THEN
         ASM_REWRITE_TAC[SUBSET_UNION];
         MATCH_MP_TAC(REWRITE_RULE[IMP_IMP; RIGHT_IMP_FORALL_THM] (CONJUNCT1 check_t_more5)) THEN
         EXISTS_TAC `count (infer_st_next_uvar st'')` THEN REWRITE_TAC[SUBSET_UNION] THEN
         FIRST_X_ASSUM MATCH_MP_TAC THEN MATCH_MP_TAC MEM_MAP_f THEN ASM_REWRITE_TAC[]];
-      REWRITE_TAC[INFER1AUX_ec_ALL_SND; ALL_MAP; o_DEF] THEN SIMP_TAC[ETA_AX]]]);;
+      REWRITE_TAC[every_shim; ALL_MAP; o_DEF] THEN SIMP_TAC[ETA_AX]]]);;
 
 let INFER1AUX_IDS_DLET_TAC : tactic =
   REPEAT GEN_TAC THEN STRIP_TAC THEN
@@ -864,7 +864,7 @@ let INFER1AUX_ids_dletrec = prove
     ASSUME_TAC THENL
    [EXPAND_TAC "ienv1" THEN MATCH_MP_TAC env_rel_sound_merge0 THEN
     ASM_REWRITE_TAC[bind_tvar_rewrites; num_tvs_def; ADD_CLAUSES] THEN
-    EXPAND_TAC "bindings" THEN REWRITE_TAC[INFER1AUX_ec_ALL_SND] THEN
+    EXPAND_TAC "bindings" THEN REWRITE_TAC[every_shim] THEN
     SIMP_TAC[MAP_SND_ZIP; LENGTH_MAP;
              ASSUME `LENGTH (us:infer_t list) = LENGTH (funs:(mlstring#mlstring#exp)list)`] THEN
     ASM_REWRITE_TAC[GSYM ALL_MEM] THEN REPEAT STRIP_TAC THEN

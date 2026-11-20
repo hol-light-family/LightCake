@@ -716,10 +716,6 @@ let LIEEEAUX_WORD1_CASES = prove
   MP_TAC(ISPEC `w:1 word` VAL_BOUND) THEN REWRITE_TAC[DIMINDEX_1] THEN
   ARITH_TAC);;
 
-let LIEEEAUX_WORD_1_NE_0 = prove
- (`~(word 1:N word = word 0)`,
-  REWRITE_TAC[GSYM VAL_EQ; VAL_WORD_1; VAL_WORD_0] THEN ARITH_TAC);;
-
 let LIEEEAUX_WORD_UINT_MAX_NE_0 = prove
  (`~(word_UINT_MAX:N word = word 0)`,
   REWRITE_TAC[GSYM VAL_EQ; VAL_WORD_UINT_MAX; VAL_WORD_0] THEN
@@ -730,7 +726,7 @@ let LIEEEAUX_WORD_SUB_1_NE = prove
  (`!w:N word. ~(word_sub w (word 1) = w)`,
   GEN_TAC THEN ONCE_REWRITE_TAC[GSYM WORD_SUB_EQ_0] THEN
   REWRITE_TAC[WORD_RULE `word_sub (word_sub (w:N word) x) w = word_neg x`] THEN
-  REWRITE_TAC[WORD_NEG_EQ_0; LIEEEAUX_WORD_1_NE_0]);;
+  REWRITE_TAC[WORD_NEG_EQ_0; WORD_NE_10]);;
 
 let LIEEEAUX_WORD_NOT_NE = prove
  (`!w:N word. ~(word_not w = w)`,
@@ -862,7 +858,7 @@ let float_distinct = prove
    (!fp_op. ~(float_minus_min(:T#W) = float_some_qnan fp_op)) /\
    (!x:(T,W)float. ~(float_negate x = x))`,
   REWRITE_TAC[float_component_equality; float_components] THEN
-  REWRITE_TAC[LIEEEAUX_WORD_1_NE_0; GSYM LIEEEAUX_WORD_1_NE_0;
+  REWRITE_TAC[WORD_NE_10; GSYM WORD_NE_10;
               LIEEEAUX_WORD_UINT_MAX_NE_0; GSYM LIEEEAUX_WORD_UINT_MAX_NE_0;
               LIEEEAUX_WORD_SUB_1_NE; GSYM LIEEEAUX_WORD_SUB_1_NE;
               LIEEEAUX_WORD_NOT_NE; some_nan_components] THEN
@@ -1003,7 +999,7 @@ let float_to_real_EQ0 = prove
   REWRITE_TAC[float_component_equality; float_components] THEN
   MP_TAC(ISPEC `float_Sign (f:(T,W)float)` LIEEEAUX_WORD1_CASES) THEN
   STRIP_TAC THEN
-  ASM_REWRITE_TAC[LIEEEAUX_WORD_1_NE_0; GSYM LIEEEAUX_WORD_1_NE_0]);;
+  ASM_REWRITE_TAC[WORD_NE_10; GSYM WORD_NE_10]);;
 
 let float_is_finite = prove
  (`!x:(T,W)float.
@@ -1074,7 +1070,7 @@ let float_infinities = prove
   REPEAT COND_CASES_TAC THEN
   ASM_REWRITE_TAC[float_value_CASE] THEN
   STRIP_TAC THEN
-  ASM_REWRITE_TAC[LIEEEAUX_WORD_1_NE_0; GSYM LIEEEAUX_WORD_1_NE_0]);;
+  ASM_REWRITE_TAC[WORD_NE_10; GSYM WORD_NE_10]);;
 
 let float_infinities_distinct = prove
  (`!x:(T,W)float.
@@ -1136,7 +1132,7 @@ let min_properties = prove
    ~float_is_infinite (float_minus_min(:T#W))`,
   REWRITE_TAC[float_is_zero; float_is_finite_Exponent; float_is_normal_def;
               float_is_subnormal_def; float_components;
-              LIEEEAUX_WORD_1_NE_0; GSYM LIEEEAUX_WORD_UINT_MAX_NE_0] THEN
+              WORD_NE_10; GSYM LIEEEAUX_WORD_UINT_MAX_NE_0] THEN
   REWRITE_TAC[float_is_nan_def; float_is_infinite_def; float_is_integral_def;
               float_values; float_value_CASE] THEN
   REWRITE_TAC[REAL_ARITH `-- &2 / x = --(&2 / x)`; LIEEE_INTEGER_NEG;
@@ -1506,7 +1502,7 @@ let float_to_real = prove
               GSYM REAL_OF_NUM_POW] THEN
   MP_TAC(ISPEC `s:1 word` LIEEEAUX_WORD1_CASES) THEN
   DISCH_THEN(DISJ_CASES_THEN SUBST1_TAC) THEN
-  REWRITE_TAC[VAL_WORD_0; VAL_WORD_1; LIEEEAUX_WORD_1_NE_0; real_pow;
+  REWRITE_TAC[VAL_WORD_0; VAL_WORD_1; WORD_NE_10; real_pow;
               REAL_POW_1] THEN
   COND_CASES_TAC THEN REAL_ARITH_TAC);;
 
@@ -1648,8 +1644,8 @@ let LIEEE_CHECK_NONNAN = prove
 
 let LIEEE_COMPUTE_TAC def =
   REWRITE_TAC[def; float_values; float_value_CASE; float_components;
-              LIEEE_CHECK_NONSIG; LIEEEAUX_WORD_1_NE_0;
-              GSYM LIEEEAUX_WORD_1_NE_0] THEN
+              LIEEE_CHECK_NONSIG; WORD_NE_10;
+              GSYM WORD_NE_10] THEN
   REPEAT GEN_TAC THEN
   ASM_CASES_TAC `float_value (x:(T,W)float) = NaN` THEN
   ASM_REWRITE_TAC[float_value_CASE; LIEEE_CHECK_NONSIG] THEN
@@ -1672,7 +1668,7 @@ let LIEEE_INF_TAC def =
   ASM_REWRITE_TAC[def; float_values; float_value_CASE; float_components] THEN
   MP_TAC(ISPEC `float_Sign (x:(T,W)float)` LIEEEAUX_WORD1_CASES) THEN
   DISCH_THEN(DISJ_CASES_THEN SUBST1_TAC) THEN
-  REWRITE_TAC[LIEEEAUX_WORD_1_NE_0; GSYM LIEEEAUX_WORD_1_NE_0];;
+  REWRITE_TAC[WORD_NE_10; GSYM WORD_NE_10];;
 
 let float_add_compute = prove
  (`(!mode x fp_op:(T,W)fp_op.
@@ -2108,7 +2104,7 @@ let LIEEE_SIGN_MAG_EQ = prove
   MP_TAC(ISPEC `s2:1 word` LIEEEAUX_WORD1_CASES) THEN
   REPEAT(DISCH_THEN(DISJ_CASES_THEN SUBST1_TAC)) THEN
   REWRITE_TAC[VAL_WORD_0; VAL_WORD_1; real_pow; REAL_POW_1;
-              LIEEEAUX_WORD_1_NE_0; GSYM LIEEEAUX_WORD_1_NE_0] THEN
+              WORD_NE_10; GSYM WORD_NE_10] THEN
   REWRITE_TAC[REAL_MUL_LID; REAL_MUL_LNEG; REAL_EQ_NEG2; REAL_EQ_MUL_RCANCEL;
               REAL_OF_NUM_EQ; REAL_NEG_EQ_0] THEN
   ASM_SIMP_TAC[REAL_LT_IMP_NZ] THEN REAL_ARITH_TAC);;
@@ -2380,7 +2376,7 @@ let LIEEEAUX_WORD_ADD_1_NE = prove
  (`!x:N word. ~(word_add x (word 1) = x)`,
   GEN_TAC THEN DISCH_THEN(MP_TAC o AP_TERM `\y:N word. word_sub y x`) THEN
   REWRITE_TAC[WORD_RULE `word_sub (word_add (x:N word) (word 1)) x = word 1`;
-              WORD_SUB_REFL; LIEEEAUX_WORD_1_NE_0]);;
+              WORD_SUB_REFL; WORD_NE_10]);;
 
 let LIEEE_FUPD_SELF = prove
  (`!f:(T,W)float. float_Significand_fupd (K (float_Significand f)) f = f`,

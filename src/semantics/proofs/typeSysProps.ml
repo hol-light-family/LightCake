@@ -1478,10 +1478,6 @@ let fupdate2_union = prove
   REPEAT GEN_TAC THEN CASES_ON `ALOOKUP (REVERSE (a2:(A#B)list)) x` THEN
   CASE_REWRITE_TAC[]);;
 
-let TPROPSAUX_option_CASE_NONE_SOME = prove
- (`!x:A option. option_CASE x NONE (\v. SOME v) = x`,
-  MATCH_MP_TAC option_INDUCT THEN REWRITE_TAC[option_CASE]);;
-
 (* the constructor map of one type definition *)
 let TPROPSAUX_ctMap_ok_ctors = prove
  (CASE_TERM `!(tenvT:tenv_abbrev) next tvs ctors (id:num).
@@ -1494,7 +1490,7 @@ let TPROPSAUX_ctMap_ok_ctors = prove
                                   (tvs, MAP (type_name_subst tenvT) ts, id))) ctors)`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   REWRITE_TAC[ctMap_ok_def; FEVERY_ALL_FLOOKUP; flookup_fupdate_list; FLOOKUP_EMPTY;
-              TPROPSAUX_option_CASE_NONE_SOME] THEN
+              SPTAUX_optcase_lemma] THEN
   SUBGOAL_THEN (CASE_TERM
    `!k v. ALOOKUP (REVERSE (MAP (\p. match p with
                       (cn,ts) -> (TypeStamp cn next,
@@ -1529,7 +1525,7 @@ let TPROPSAUX_FRANGE_fupdate_list = prove
      ti IN FRANGE ((SND o SND) o_f (FEMPTY |++ l))
      ==> ?k v. ALOOKUP (REVERSE l) k = SOME v /\ ti = SND (SND v)`,
   REWRITE_TAC[IN_FRANGE_FLOOKUP; FLOOKUP_o_f; flookup_fupdate_list; FLOOKUP_EMPTY;
-              TPROPSAUX_option_CASE_NONE_SOME] THEN
+              SPTAUX_optcase_lemma] THEN
   REPEAT GEN_TAC THEN DISCH_THEN(X_CHOOSE_THEN `k:stamp` MP_TAC) THEN
   CASES_ON `ALOOKUP (REVERSE (l:(stamp#(mlstring list#t list#num))list)) k` THEN
   CASE_REWRITE_TAC[] THEN REWRITE_TAC[option_INJ; o_THM] THEN ASM_MESON_TAC[]);;

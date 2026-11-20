@@ -587,17 +587,6 @@ let WSIMPPAUX_ALL2_ZIP_MAP_FST = prove
 (* HOL4's dec_stack_def clause for a frame with a general value list (the  *)
 (* TFL completion splits it on the value list)                              *)
 
-let WSIMPPAUX_dec_stack_CONS = prove
- (CASE_TERM
-  `!xs n l0 l handler (st:((A)stack_frame)list).
-     wl_dec_stack xs (CONS (StackFrame n l0 l handler) st) =
-     if LENGTH xs < LENGTH l then NONE else
-     match wl_dec_stack (DROP (LENGTH l) xs) st with
-       NONE -> NONE
-     | SOME s -> SOME (CONS (StackFrame n l0 (ZIP (MAP FST l) (TAKE (LENGTH l) xs))
-                               handler) s)`,
-  LIST_INDUCT_TAC THEN REWRITE_TAC[wl_dec_stack_def]);;
-
 let enc_stack_dec_stack_is_gc_word_const = prove
  (`!(s:((A)stack_frame)list) s' s'l.
      ALL2 (\a b. is_gc_word_const a ==> b = a) (wl_enc_stack s) s'l /\
@@ -611,7 +600,7 @@ let enc_stack_dec_stack_is_gc_word_const = prove
   MATCH_MP_TAC stack_frame_INDUCT THEN
   MAP_EVERY X_GEN_TAC [`n:num option`; `l0:(num#(A)word_loc)list`;
                        `l:(num#(A)word_loc)list`; `hd:(num#num#num)option`] THEN
-  REWRITE_TAC[wl_enc_stack_def; WSIMPPAUX_dec_stack_CONS] THEN REPEAT GEN_TAC THEN
+  REWRITE_TAC[wl_enc_stack_def; IL2AUX_dec_stack_cons] THEN REPEAT GEN_TAC THEN
   COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT] THEN CASE_TAC THEN
   REWRITE_TAC[option_DISTINCT; option_INJ] THEN STRIP_TAC THEN RVEQ_TAC THEN
   FIRST_X_ASSUM(STRIP_ASSUME_TAC o MATCH_MP LIST_REL_append_left) THEN
@@ -1553,11 +1542,6 @@ let get_var_set_vars_ignore = prove
 
 (* evaluate_const_fp_loop: tactics and helpers *)
 
-let WSIMPPAUX_word_cmp_Word = prove
- (`!cmp (w1:A word) w2.
-     wl_word_cmp cmp (wl_Word w1) (wl_Word w2) = SOME (asm_word_cmp cmp w1 w2)`,
-  GEN_TAC THEN CASES_ON `cmp:cmp` THEN REWRITE_TAC[wl_word_cmp_def; asm_word_cmp_def]);;
-
 (* the constants known after a state update *)
 
 let WSIMPPAUX_CSI_TAC : tactic =
@@ -1674,7 +1658,7 @@ let WSIMPPAUX_IF_BOTH_TAC : tactic =
   UNDISCH_TAC `wl_evaluate (wl_If cmp lhs rhs p1 p2,s:(A,C,FFI)wl_state) = (res,s')` THEN
   ONCE_REWRITE_TAC[wl_evaluate_def] THEN
   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
-  REWRITE_TAC[WSIMPPAUX_word_cmp_Word] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[word_cmp_Word_Word] THEN CASE_REWRITE_TAC[] THEN
   COND_CASES_TAC THEN REWRITE_TAC[] THEN REPEAT DISCH_TAC THENL
    [REMOVE_THEN "ie" MP_TAC; REMOVE_THEN "if" MP_TAC] THEN
   ASM_REWRITE_TAC[] THEN

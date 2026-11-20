@@ -807,20 +807,13 @@ let ffi_entry_pcs_NOT_ccache_OR_halt_pc = prove
 
 (* HOL4 line 7171: val share_mem_eval_expand_tac (a tactic) *)
 
-(* the value of a some that is SOME satisfies the predicate *)
-let LTTP3AUX_some_SOME = prove
- (`!(P:A->bool) i. (some) P = SOME i ==> P i`,
-  REWRITE_TAC[some_DEF] THEN REPEAT GEN_TAC THEN COND_CASES_TAC THEN
-  REWRITE_TAC[option_DISTINCT; option_INJ] THEN DISCH_THEN(SUBST1_TAC o SYM) THEN
-  ASM_MESON_TAC[]);;
-
 (* HOL4 line 7202 *)
 let ffi_name_NOT_Mapped = prove
  (`!ffi_names i s.
      mmio_pcs_min_index ffi_names = SOME i /\ (?str. s = ExtCall str) /\ MEM s ffi_names
      ==> get_ffi_index ffi_names s < i`,
   REPEAT GEN_TAC THEN REWRITE_TAC[mmio_pcs_min_index_def] THEN STRIP_TAC THEN
-  FIRST_X_ASSUM(MP_TAC o BETA_RULE o MATCH_MP LTTP3AUX_some_SOME) THEN STRIP_TAC THEN
+  FIRST_X_ASSUM(MP_TAC o BETA_RULE o MATCH_MP BASICAUX_some_SOME) THEN STRIP_TAC THEN
   FIRST_ASSUM(X_CHOOSE_THEN `k:num` STRIP_ASSUME_TAC o SPEC `0` o MATCH_MP find_index_MEM) THEN
   ASM_REWRITE_TAC[get_ffi_index_def; ADD_CLAUSES; the_def] THEN
   REWRITE_TAC[GSYM NOT_LE] THEN DISCH_TAC THEN
@@ -836,7 +829,7 @@ let mmio_pcs_min_index_is_SOME = prove
          (!j. j < i ==> ?s. EL j ffi_names = ExtCall s) /\
          (!j. i <= j /\ j < LENGTH ffi_names ==> ?op. EL j ffi_names = SharedMem op)`,
   REWRITE_TAC[mmio_pcs_min_index_def] THEN REPEAT GEN_TAC THEN
-  DISCH_THEN(ACCEPT_TAC o BETA_RULE o MATCH_MP LTTP3AUX_some_SOME));;
+  DISCH_THEN(ACCEPT_TAC o BETA_RULE o MATCH_MP BASICAUX_some_SOME));;
 
 (* HOL4 line 7243 *)
 let no_share_mem_lemma = prove

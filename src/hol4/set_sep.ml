@@ -421,3 +421,13 @@ let SEP_IMP_EXISTS = prove
 let cond_STAR1_I = prove
  (`!c p (s:A->bool). (cond c STAR p) s <=> I c /\ p s`,
   REWRITE_TAC[I_THM; cond_STAR]);;
+
+(* ------------------------------------------------------------------------- *)
+(* Lemmas used by several later files.                                       *)
+(* ------------------------------------------------------------------------- *)
+
+let LSORTAUX_STAR_AC = prove
+ (`(!p q:(A->bool)->bool. p STAR q = q STAR p) /\
+   (!p q r:(A->bool)->bool. (p STAR q) STAR r = p STAR (q STAR r)) /\
+   (!p q r:(A->bool)->bool. p STAR (q STAR r) = q STAR (p STAR r))`,
+  MESON_TAC[STAR_COMM; STAR_ASSOC]);;

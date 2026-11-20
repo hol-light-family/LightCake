@@ -4,7 +4,7 @@
 (* Correctness proof for clos_op.                                            *)
 (*                                                                           *)
 (* The proofs follow HOL4's, with the kit's HOL4-style tactics.  CLOSP2AUX_  *)
-(* names are local helpers: CLOSP2AUX_op_lift_exps_ind replaces HOL4's       *)
+(* names are local helpers: lift_exps_ind replaces HOL4's       *)
 (* lift_exps_ind (cake_ind "lift_exps" gives one name to the argument ys and *)
 (* to the result of the recursive call on it, which makes its third         *)
 (* hypothesis too weak).                                                    *)
@@ -124,31 +124,8 @@ let evaluate_dont_lift = prove
    clos_evaluate ([x],env1,s) = (Rval [v],s:(C,FFI)clos_state)`,
   RW[dont_lift_thm] THEN FS[clos_evaluate_def; clos_do_app_def; clos_do_int_app_def]);;
 
-(* local helpers: an induction theorem for lift_exps (instead of HOL4's     *)
-(* lift_exps_ind, see the header) and the first steps of the proofs by it  *)
-let CLOSP2AUX_op_lift_exps_ind = prove
- (`!P:clos_exp list -> num -> clos_exp list -> bool.
-       (!n binds. P [] n binds) /\
-       (!x xs n binds.
-          (dont_lift x ==> P xs n binds) /\
-          (~dont_lift x /\ dest_Op clos_op_dest_Cons x = NONE
-           ==> P xs (n + 1) (APPEND binds [x])) /\
-          (!t ys ys1 n1 binds1.
-             ~dont_lift x /\ dest_Op clos_op_dest_Cons x = SOME (t,ys) /\
-             lift_exps ys n binds = (ys1,n1,binds1) ==> P xs n1 binds1) /\
-          (!t ys. ~dont_lift x /\ dest_Op clos_op_dest_Cons x = SOME (t,ys)
-                  ==> P ys n binds)
-          ==> P (CONS x xs) n binds)
-       ==> !xs n binds. P xs n binds`,
-  GEN_TAC THEN STRIP_TAC THEN
-  MATCH_MP_TAC(REWRITE_RULE[WF_IND] (ISPEC `list_size clos_exp_size` WF_MEASURE)) THEN
-  REWRITE_TAC[MEASURE] THEN LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[] THEN
-  DISCH_THEN(fun ih -> REPEAT GEN_TAC THEN FIRST_X_ASSUM MATCH_MP_TAC THEN REPEAT STRIP_TAC THEN
-    MATCH_MP_TAC(REWRITE_RULE[RIGHT_IMP_FORALL_THM] ih)) THEN
-  TRY (FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP IL1AUX_dest_Op_SOME)) THEN RVEQ_TAC THEN TERM_TAC);;
-
 let CLOSP2AUX_OP_LIFT_SPLIT_TAC : tactic =
-  MATCH_MP_TAC CLOSP2AUX_op_lift_exps_ind THEN CONJ_TAC THENL
+  MATCH_MP_TAC lift_exps_ind THEN CONJ_TAC THENL
    [ALL_TAC;
     REPEAT GEN_TAC THEN ASM_CASES_TAC `dont_lift x` THENL
      [ALL_TAC;

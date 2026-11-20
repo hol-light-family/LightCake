@@ -299,17 +299,6 @@ let get_stack_enc_stack = prove
     ASM_MESON_TAC[];
     ASM SET_TAC[]]);;
 
-let WELIMAUX_dec_stack_cons = prove
- (CASE_TERM `!(xs:((A)word_loc)list) n l0 l handler st.
-     wl_dec_stack xs (CONS (StackFrame n l0 l handler) st) =
-     if LENGTH xs < LENGTH l then NONE else
-     match wl_dec_stack (DROP (LENGTH l) xs) st with
-       NONE -> NONE
-     | SOME s ->
-         SOME (CONS (StackFrame n l0 (ZIP (MAP FST l) (TAKE (LENGTH l) xs))
-                                handler) s)`,
-  LIST_INDUCT_TAC THEN REWRITE_TAC[wl_dec_stack_def]);;
-
 let WELIMAUX_dec_stack_step = prove
  (`!(xs:((A)word_loc)list) n l0 l handler st (reachable:B spt) new_stack.
      (~(LENGTH xs < LENGTH l)
@@ -325,7 +314,7 @@ let WELIMAUX_dec_stack_step = prove
        SUBSET domain reachable /\
      wl_dec_stack xs (CONS (StackFrame n l0 l handler) st) = SOME new_stack
      ==> domain (word_elimProof_get_stack new_stack) SUBSET domain reachable`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[WELIMAUX_dec_stack_cons] THEN
+  REPEAT GEN_TAC THEN REWRITE_TAC[IL2AUX_dec_stack_cons] THEN
   COND_CASES_TAC THEN ASM_REWRITE_TAC[option_DISTINCT] THEN
   CASES_ON `wl_dec_stack (DROP (LENGTH (l:(num#(A)word_loc)list))
                            (xs:((A)word_loc)list)) (st:((A)stack_frame)list)` THEN
@@ -2136,12 +2125,6 @@ let WELIMAUX_call_prog = prove
     ASM_MESON_TAC[no_install_code_def];
     ASM_MESON_TAC[]]);;
 
-let WELIMAUX_ret_cases = prove
- (`!ret:(num list#cutsets#(A)wl_prog#num#num)option.
-     ret = NONE \/ ?n names rh l1 l2. ret = SOME (n,names,rh,l1,l2)`,
-  REWRITE_TAC[FORALL_OPTION_THM; FORALL_PAIR_THM; option_DISTINCT; option_INJ;
-              PAIR_EQ] THEN MESON_TAC[]);;
-
 let WELIMAUX_handler_cases = prove
  (`!handler:(num#(A)wl_prog#num#num)option.
      handler = NONE \/ ?n h l1 l2. handler = SOME (n,h,l1,l2)`,
@@ -2469,7 +2452,7 @@ let WELIMAUX_CALL_EXC_TAC : tactic =
 let WELIMAUX_CALL_TAC : tactic =
   WELIMAUX_CALL_PRE_TAC THEN
   DISJ_CASES_THEN2 SUBST_ALL_TAC (REPEAT_TCL CHOOSE_THEN SUBST_ALL_TAC)
-    (ISPEC `ret:(num list#cutsets#(A)wl_prog#num#num)option` WELIMAUX_ret_cases) THENL
+    (ISPEC `ret:(num list#cutsets#(A)wl_prog#num#num)option` IL2AUX_ret_cases) THENL
    [WELIMAUX_CALL_TAIL_TAC;
     WELIMAUX_CALL_RET1_TAC THENL [WELIMAUX_CALL_RESULT_TAC; WELIMAUX_CALL_EXC_TAC]];;
 

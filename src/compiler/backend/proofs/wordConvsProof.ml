@@ -56,24 +56,6 @@ let extract_labels_SmartSeq = prove
   REWRITE_TAC[SmartSeq_def] THEN COND_CASES_TAC THEN
   ASM_REWRITE_TAC[wordConvs_extract_labels_def; APPEND]);;
 
-let WPROOF2AUX_wc_ret_cases = prove
- (`!(ret:(num list#cutsets#(A)wl_prog#num#num)option).
-     ret = NONE \/ ?n names rh l1 l2. ret = SOME (n,names,rh,l1,l2)`,
-  GEN_TAC THEN STRUCT_CASES_TAC (ISPEC `ret:(num list#cutsets#(A)wl_prog#num#num)option`
-                                        (cases "option")) THEN
-  REWRITE_TAC[option_DISTINCT; option_INJ] THEN
-  SPEC_TAC(`a:num list#cutsets#(A)wl_prog#num#num`,`a:num list#cutsets#(A)wl_prog#num#num`) THEN
-  REWRITE_TAC[FORALL_PAIR_THM; PAIR_EQ] THEN MESON_TAC[]);;
-
-let WPROOF2AUX_wc_handler_cases = prove
- (`!(handler:(num#(A)wl_prog#num#num)option).
-     handler = NONE \/ ?hn h hl1 hl2. handler = SOME (hn,h,hl1,hl2)`,
-  GEN_TAC THEN STRUCT_CASES_TAC (ISPEC `handler:(num#(A)wl_prog#num#num)option`
-                                        (cases "option")) THEN
-  REWRITE_TAC[option_DISTINCT; option_INJ] THEN
-  SPEC_TAC(`a:num#(A)wl_prog#num#num`,`a:num#(A)wl_prog#num#num`) THEN
-  REWRITE_TAC[FORALL_PAIR_THM; PAIR_EQ] THEN MESON_TAC[]);;
-
 (* split the return and the exception handler of a call in the goal whose *)
 (* arguments are variables                                                  *)
 
@@ -90,11 +72,11 @@ let WPROOF2AUX_wc_CALL_SPLIT_TAC : tactic = fun (asl,w as g) ->
      (X_CHOOSE_THEN `n:num list` (X_CHOOSE_THEN `names:cutsets`
        (X_CHOOSE_THEN `rh:(A)wl_prog` (X_CHOOSE_THEN `l1:num`
          (X_CHOOSE_THEN `l2:num` SUBST_ALL_TAC)))))
-     (SPEC ret WPROOF2AUX_wc_ret_cases) THEN
+     (SPEC ret IL2AUX_ret_cases) THEN
    DISJ_CASES_THEN2 SUBST_ALL_TAC
      (X_CHOOSE_THEN `hn:num` (X_CHOOSE_THEN `h:(A)wl_prog`
        (X_CHOOSE_THEN `hl1:num` (X_CHOOSE_THEN `hl2:num` SUBST_ALL_TAC))))
-     (SPEC handler WPROOF2AUX_wc_handler_cases) THEN
+     (SPEC handler IL2AUX_handler_cases) THEN
    RULE_ASSUM_TAC(REWRITE_RULE[option_INJ; option_DISTINCT; PAIR_EQ]) THEN
    RULE_ASSUM_TAC(CAKE_SIMP_RULE[]) THEN CASE_REWRITE_TAC[]) g;;
 
@@ -191,10 +173,6 @@ let labels_rel_append_imp = prove
 (* rearrangements are done by the helpers below.                            *)
 (* ------------------------------------------------------------------------- *)
 
-let WPROOF2AUX_pair_CASE_FST_SND = prove
- (`!(p:A#B) (f:A->B->C). pair_CASE p f = f (FST p) (SND p)`,
-  REWRITE_TAC[FORALL_PAIR_THM; pair_CASE]);;
-
 let WPROOF2AUX_cfl_Seq = prove
  (`!p1 p2 (cs:(A word)spt).
      const_fp_loop (wl_Seq p1 p2) cs =
@@ -202,7 +180,7 @@ let WPROOF2AUX_cfl_Seq = prove
              (FST (const_fp_loop p2 (SND (const_fp_loop p1 cs)))),
       SND (const_fp_loop p2 (SND (const_fp_loop p1 cs))))`,
   REPEAT GEN_TAC THEN GEN_REWRITE_TAC LAND_CONV [const_fp_loop_def] THEN
-  REWRITE_TAC[WPROOF2AUX_pair_CASE_FST_SND]);;
+  REWRITE_TAC[pair_CASE_def]);;
 
 let WPROOF2AUX_cfl_If_LN = prove
  (`!cmp l r p1 (p2:(A)wl_prog).
@@ -210,7 +188,7 @@ let WPROOF2AUX_cfl_If_LN = prove
      (wl_If cmp l r (FST (const_fp_loop p1 LN)) (FST (const_fp_loop p2 LN)),
       inter_eq (SND (const_fp_loop p1 LN)) (SND (const_fp_loop p2 LN)))`,
   REPEAT GEN_TAC THEN GEN_REWRITE_TAC LAND_CONV [const_fp_loop_def] THEN
-  REWRITE_TAC[lookup_def] THEN CASE_REWRITE_TAC[WPROOF2AUX_pair_CASE_FST_SND]);;
+  REWRITE_TAC[lookup_def] THEN CASE_REWRITE_TAC[pair_CASE_def]);;
 
 let WPROOF2AUX_labels_rel_NIL = prove
  (`!ys:A list. labels_rel [] ys <=> ys = []`,
@@ -480,7 +458,7 @@ let WPROOF2AUX_push_out_if_aux_labels = prove
   RULE_ASSUM_TAC(CAKE_SIMP_RULE[]) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[IMP_CONJ; WPROOF2AUX_FORALL_PAIR_EQ_IMP]) THEN
   TRY WPROOF2AUX_wc_CALL_SPLIT_TAC THEN
-  REWRITE_TAC[WPROOF2AUX_pair_CASE_FST_SND] THEN
+  REWRITE_TAC[pair_CASE_def] THEN
   REPEAT COND_CASES_TAC THEN RES_TAC THEN
   REWRITE_TAC[FST; SND; wordConvs_extract_labels_def; labels_rel_refl; APPEND; APPEND_NIL] THEN
   TRY (WPROOF2AUX_wc_LR_TAC THEN NO_TAC) THEN
@@ -632,7 +610,7 @@ let simp_push_out_if_no_inst = prove
   RULE_ASSUM_TAC(CAKE_SIMP_RULE[]) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[IMP_CONJ; WPROOF2AUX_FORALL_PAIR_EQ_IMP]) THEN
   TRY WPROOF2AUX_wc_CALL_SPLIT_TAC THEN
-  REWRITE_TAC[WPROOF2AUX_pair_CASE_FST_SND] THEN
+  REWRITE_TAC[pair_CASE_def] THEN
   REPEAT COND_CASES_TAC THEN
   REWRITE_TAC[FST; SND; every_inst_def] THEN CASE_REWRITE_TAC[] THEN
   REPEAT STRIP_TAC THEN RES_TAC THEN RES_TAC THEN ASM_REWRITE_TAC[]);;
@@ -768,7 +746,7 @@ let WPROOF2AUX_ncs_push_out_if_aux = prove
   RULE_ASSUM_TAC(CAKE_SIMP_RULE[]) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[IMP_CONJ; WPROOF2AUX_FORALL_PAIR_EQ_IMP]) THEN
   TRY WPROOF2AUX_wc_CALL_SPLIT_TAC THEN
-  REWRITE_TAC[WPROOF2AUX_pair_CASE_FST_SND] THEN
+  REWRITE_TAC[pair_CASE_def] THEN
   REPEAT COND_CASES_TAC THEN
   REWRITE_TAC[FST; SND; not_created_subprogs_def] THEN CASE_REWRITE_TAC[] THEN
   RES_TAC THEN ASM_REWRITE_TAC[] THEN REWRITE_TAC[CONJ_ACI]);;
@@ -955,7 +933,7 @@ let word_good_handlers_simp_push_out_if = prove
   RULE_ASSUM_TAC(CAKE_SIMP_RULE[]) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[IMP_CONJ; WPROOF2AUX_FORALL_PAIR_EQ_IMP]) THEN
   TRY WPROOF2AUX_wc_CALL_SPLIT_TAC THEN
-  REWRITE_TAC[WPROOF2AUX_pair_CASE_FST_SND] THEN
+  REWRITE_TAC[pair_CASE_def] THEN
   REPEAT COND_CASES_TAC THEN
   REWRITE_TAC[FST; SND; good_handlers_def] THEN CASE_REWRITE_TAC[] THEN
   REPEAT STRIP_TAC THEN RES_TAC THEN RES_TAC THEN ASM_REWRITE_TAC[]);;
@@ -1047,7 +1025,7 @@ let WPROOF2AUX_gcl_push_out_if_aux = prove
   RULE_ASSUM_TAC(CAKE_SIMP_RULE[]) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[IMP_CONJ; WPROOF2AUX_FORALL_PAIR_EQ_IMP]) THEN
   TRY WPROOF2AUX_wc_CALL_SPLIT_TAC THEN
-  REWRITE_TAC[WPROOF2AUX_pair_CASE_FST_SND] THEN
+  REWRITE_TAC[pair_CASE_def] THEN
   REPEAT COND_CASES_TAC THEN
   REWRITE_TAC[FST; SND; wordConvs_get_code_labels_def; SUBSET_REFL] THEN
   CASE_REWRITE_TAC[SUBSET_REFL] THEN RES_TAC THEN ASM SET_TAC[]);;
@@ -1275,9 +1253,9 @@ let WPROOF2AUX_scti_closed = prove
   GEN_TAC THEN STRIP_TAC THEN
   MATCH_MP_TAC ssa_cc_trans_inst_ind THEN REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
   REWRITE_TAC[ssa_cc_trans_inst_def; next_var_rename_def; LET_DEF; LET_END_DEF] THEN
-  CASE_REWRITE_TAC[WPROOF2AUX_pair_CASE_FST_SND] THEN
+  CASE_REWRITE_TAC[pair_CASE_def] THEN
   REPEAT (FIRST [COND_CASES_TAC; TOP_CASE_TAC]) THEN
-  CASE_REWRITE_TAC[WPROOF2AUX_pair_CASE_FST_SND; FST; SND] THEN
+  CASE_REWRITE_TAC[pair_CASE_def; FST; SND] THEN
   ASM_SIMP_TAC[]);;
 
 let WPROOF2AUX_fake_moves_closed = prove
@@ -1289,9 +1267,9 @@ let WPROOF2AUX_fake_moves_closed = prove
   GEN_TAC THEN STRIP_TAC THEN GEN_TAC THEN LIST_INDUCT_TAC THEN
   REWRITE_TAC[fake_moves_def; LET_DEF; LET_END_DEF] THEN
   ASM_REWRITE_TAC[FST; SND] THEN REPEAT GEN_TAC THEN
-  CASE_REWRITE_TAC[WPROOF2AUX_pair_CASE_FST_SND] THEN
+  CASE_REWRITE_TAC[pair_CASE_def] THEN
   REPEAT (FIRST [COND_CASES_TAC; TOP_CASE_TAC]) THEN
-  CASE_REWRITE_TAC[WPROOF2AUX_pair_CASE_FST_SND; FST; SND; fake_move_def] THEN
+  CASE_REWRITE_TAC[pair_CASE_def; FST; SND; fake_move_def] THEN
   ASM_SIMP_TAC[]);;
 
 let WPROOF2AUX_fix_inconsistencies_closed = prove
@@ -1304,7 +1282,7 @@ let WPROOF2AUX_fix_inconsistencies_closed = prove
   FIRST_ASSUM(ASSUME_TAC o MATCH_MP WPROOF2AUX_fake_moves_closed) THEN
   POP_ASSUM MP_TAC THEN POP_ASSUM STRIP_ASSUME_TAC THEN DISCH_TAC THEN
   REWRITE_TAC[fix_inconsistencies_def; LET_DEF; LET_END_DEF] THEN
-  CASE_REWRITE_TAC[WPROOF2AUX_pair_CASE_FST_SND; FST; SND] THEN
+  CASE_REWRITE_TAC[pair_CASE_def; FST; SND] THEN
   ASM_SIMP_TAC[]);;
 
 let WPROOF2AUX_fake_seq_closed = prove
@@ -1329,7 +1307,7 @@ let WPROOF2AUX_lnvrm_FST = prove
               wl_Move 0 (ZIP (FST (list_next_var_rename ls ssa n))
                              (MAP (option_lookup ssa) ls))`,
   REWRITE_TAC[list_next_var_rename_move_def; LET_DEF; LET_END_DEF;
-              WPROOF2AUX_pair_CASE_FST_SND; FST; SND]);;
+              pair_CASE_def; FST; SND]);;
 
 let WPROOF2AUX_loop_setup_closed = prove
  (`!(Q:(A)wl_prog->bool).
@@ -1338,7 +1316,7 @@ let WPROOF2AUX_loop_setup_closed = prove
      ==> !names exit_names ssa na. Q (FST (loop_setup names exit_names ssa na))`,
   GEN_TAC THEN STRIP_TAC THEN REPEAT GEN_TAC THEN
   REWRITE_TAC[loop_setup_def; LET_DEF; LET_END_DEF] THEN
-  CASE_REWRITE_TAC[WPROOF2AUX_pair_CASE_FST_SND; FST; SND; WPROOF2AUX_lnvrm_FST] THEN
+  CASE_REWRITE_TAC[pair_CASE_def; FST; SND; WPROOF2AUX_lnvrm_FST] THEN
   FIRST_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[] THEN
   MP_TAC(ISPEC `Q:(A)wl_prog->bool` WPROOF2AUX_fake_seq_closed) THEN
   ASM_SIMP_TAC[]);;
@@ -1496,7 +1474,7 @@ let WPROOF2AUX_SCT_TAC : tactic =
   CASES_ON `prog:(A)wl_prog` THEN TRY WPROOF2AUX_wc_CALL_SPLIT_TAC THEN
   WPROOF2AUX_SCT_IH_TAC THEN REPEAT GEN_TAC THEN
   REWRITE_TAC[ssa_cc_trans_def; LET_DEF; LET_END_DEF] THEN
-  CASE_REWRITE_TAC[WPROOF2AUX_pair_CASE_FST_SND; FST; SND];;
+  CASE_REWRITE_TAC[pair_CASE_def; FST; SND];;
 
 (* instances of the closure lemmas for a property q                          *)
 
@@ -1520,14 +1498,14 @@ let WPROOF2AUX_sct_pieces (q:term) (ths:thm list) : thm list =
 let WPROOF2AUX_SCT_FIN_TAC (ths:thm list) : tactic =
   REWRITE_TAC ths THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC ths THEN
   REPEAT (FIRST [COND_CASES_TAC; TOP_CASE_TAC] THEN
-          CASE_REWRITE_TAC[WPROOF2AUX_pair_CASE_FST_SND; FST; SND] THEN
+          CASE_REWRITE_TAC[pair_CASE_def; FST; SND] THEN
           ASM_REWRITE_TAC ths);;
 
 let WPROOF2AUX_SCT_FIN_IMP_TAC (ths:thm list) : tactic =
   REWRITE_TAC ths THEN CASE_REWRITE_TAC[] THEN
   REPEAT STRIP_TAC THEN ASM_SIMP_TAC ths THEN
   REPEAT (FIRST [COND_CASES_TAC; TOP_CASE_TAC] THEN
-          CASE_REWRITE_TAC[WPROOF2AUX_pair_CASE_FST_SND; FST; SND] THEN
+          CASE_REWRITE_TAC[pair_CASE_def; FST; SND] THEN
           ASM_SIMP_TAC ths);;
 
 let WPROOF2AUX_el_sct = prove
@@ -1543,7 +1521,7 @@ let WPROOF2AUX_setup_ssa_FST = prove
  (`!n lim prog:(A)wl_prog.
      FST (setup_ssa n lim prog) =
      wl_Move 1 (ZIP (FST (list_next_var_rename (even_list n) LN lim)) (even_list n))`,
-  REWRITE_TAC[setup_ssa_def; LET_DEF; LET_END_DEF; WPROOF2AUX_pair_CASE_FST_SND; FST]);;
+  REWRITE_TAC[setup_ssa_def; LET_DEF; LET_END_DEF; pair_CASE_def; FST]);;
 
 let WPROOF2AUX_full_ssa_cc_trans = prove
  (`!n prog:(A)wl_prog.
@@ -1551,7 +1529,7 @@ let WPROOF2AUX_full_ssa_cc_trans = prove
      wl_Seq (FST (setup_ssa n (limit_var prog) prog))
             (FST (ssa_cc_trans prog (FST (SND (setup_ssa n (limit_var prog) prog)))
                     (SND (SND (setup_ssa n (limit_var prog) prog))) []))`,
-  REWRITE_TAC[full_ssa_cc_trans_def; LET_DEF; LET_END_DEF; WPROOF2AUX_pair_CASE_FST_SND]);;
+  REWRITE_TAC[full_ssa_cc_trans_def; LET_DEF; LET_END_DEF; pair_CASE_def]);;
 
 let full_ssa_cc_trans_lab_pres = prove
  (`!prog:(A)wl_prog n.
@@ -1759,7 +1737,7 @@ let WPROOF2AUX_PROG_STEP_TAC (defs:thm list) : tactic =
   CASES_ON `prog:(A)wl_prog` THEN TRY WPROOF2AUX_wc_CALL_SPLIT_TAC THEN
   WPROOF2AUX_SCT_IH_TAC THEN REPEAT GEN_TAC THEN
   REWRITE_TAC(defs @ [LET_DEF; LET_END_DEF]) THEN
-  CASE_REWRITE_TAC[WPROOF2AUX_pair_CASE_FST_SND; FST; SND];;
+  CASE_REWRITE_TAC[pair_CASE_def; FST; SND];;
 
 (* for every assumption t = wl_Skip (also inside conjunctions) with t not a *)
 (* variable, assume f t = f wl_Skip rewritten with the quantified equations  *)
@@ -1869,7 +1847,7 @@ let word_get_code_labels_remove_dead = prove
   WPROOF2AUX_PROG_STEP_TAC [remove_dead_def] THEN
   REWRITE_TAC[wordConvs_get_code_labels_def; SUBSET_REFL] THEN
   REPEAT (FIRST [COND_CASES_TAC; TOP_CASE_TAC] THEN
-          CASE_REWRITE_TAC[WPROOF2AUX_pair_CASE_FST_SND; FST; SND;
+          CASE_REWRITE_TAC[pair_CASE_def; FST; SND;
                            wordConvs_get_code_labels_def; SUBSET_REFL]) THEN
   ASM SET_TAC[]);;
 
@@ -1941,13 +1919,13 @@ let WPROOF2AUX_CSE_LEAF_TAC : tactic = fun (asl,w as g) ->
 let WPROOF2AUX_CSE_FIN_TAC (ths:thm list) : tactic =
   REWRITE_TAC ths THEN CASE_REWRITE_TAC[] THEN REPEAT STRIP_TAC THEN ASM_SIMP_TAC ths THEN
   REPEAT (FIRST [COND_CASES_TAC; TOP_CASE_TAC; WPROOF2AUX_CSE_LEAF_TAC] THEN
-          CASE_REWRITE_TAC[WPROOF2AUX_pair_CASE_FST_SND; FST; SND] THEN ASM_SIMP_TAC ths);;
+          CASE_REWRITE_TAC[pair_CASE_def; FST; SND] THEN ASM_SIMP_TAC ths);;
 
 let WPROOF2AUX_wcse_SND = prove
  (`!prog:(A)wl_prog.
      word_common_subexp_elim prog = SND (word_cse empty_data prog)`,
   REWRITE_TAC[word_common_subexp_elim_def; LET_DEF; LET_END_DEF;
-              WPROOF2AUX_pair_CASE_FST_SND]);;
+              pair_CASE_def]);;
 
 let WPROOF2AUX_cse_el = prove
  (`!p data. wordConvs_extract_labels (SND (word_cse data (p:(A)wl_prog))) =
@@ -2053,7 +2031,7 @@ let WPROOF2AUX_cpi_cases = prove
      FST (copy_prop_inst i cs) = wl_Skip \/ ?j. FST (copy_prop_inst i cs) = wl_Inst j`,
   MATCH_MP_TAC copy_prop_inst_ind THEN REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
   REWRITE_TAC[copy_prop_inst_def; LET_DEF; LET_END_DEF] THEN
-  CASE_REWRITE_TAC[WPROOF2AUX_pair_CASE_FST_SND; FST; SND] THEN
+  CASE_REWRITE_TAC[pair_CASE_def; FST; SND] THEN
   REPEAT COND_CASES_TAC THEN REWRITE_TAC[FST; SND] THEN MESON_TAC[]);;
 
 (* split the copy_prop_inst results in the goal                              *)
@@ -2072,7 +2050,7 @@ let WPROOF2AUX_CP_LEAF_TAC : tactic = fun (asl,w as g) ->
 let WPROOF2AUX_CP_FIN_TAC (ths:thm list) : tactic =
   REWRITE_TAC ths THEN CASE_REWRITE_TAC[] THEN REPEAT STRIP_TAC THEN ASM_SIMP_TAC ths THEN
   REPEAT (FIRST [COND_CASES_TAC; TOP_CASE_TAC; WPROOF2AUX_CP_LEAF_TAC] THEN
-          CASE_REWRITE_TAC[WPROOF2AUX_pair_CASE_FST_SND; FST; SND] THEN ASM_SIMP_TAC ths);;
+          CASE_REWRITE_TAC[pair_CASE_def; FST; SND] THEN ASM_SIMP_TAC ths);;
 
 let wf_cutsets_copy_prop_aux = prove
  (`!p:(A)wl_prog cs. wf_cutsets p ==> wf_cutsets (FST (copy_prop_prog p cs))`,
@@ -2088,7 +2066,7 @@ let WPROOF2AUX_cpi_dtr = prove
      distinct_tar_reg i ==> every_inst distinct_tar_reg (FST (copy_prop_inst i cs))`,
   MATCH_MP_TAC copy_prop_inst_ind THEN REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
   REWRITE_TAC[copy_prop_inst_def; LET_DEF; LET_END_DEF] THEN
-  CASE_REWRITE_TAC[WPROOF2AUX_pair_CASE_FST_SND; FST; SND] THEN
+  CASE_REWRITE_TAC[pair_CASE_def; FST; SND] THEN
   REPEAT COND_CASES_TAC THEN
   ASM_REWRITE_TAC[FST; SND; every_inst_def; distinct_tar_reg_def; injectivity "reg_imm"] THEN
   CASE_REWRITE_TAC[distinct_tar_reg_def] THEN ASM_MESON_TAC[]);;
@@ -2192,7 +2170,7 @@ let WPROOF2AUX_nav_copy_prop_move = prove
                 lookup v (copy_state_to_eq (SND (copy_prop_move xs cs))) = NONE)`,
   LIST_INDUCT_TAC THEN REWRITE_TAC[copy_prop_move_def; SND] THEN
   SPEC_TAC(`h:num#num`,`h:num#num`) THEN REWRITE_TAC[FORALL_PAIR_THM] THEN
-  REWRITE_TAC[copy_prop_move_def; LET_DEF; LET_END_DEF; WPROOF2AUX_pair_CASE_FST_SND;
+  REWRITE_TAC[copy_prop_move_def; LET_DEF; LET_END_DEF; pair_CASE_def;
               SND] THEN
   REPEAT STRIP_TAC THEN
   MATCH_MP_TAC(REWRITE_RULE[RIGHT_IMP_FORALL_THM; IMP_IMP] WPROOF2AUX_nav_set_eq) THEN
@@ -2206,7 +2184,7 @@ let WPROOF2AUX_nav_cpi = prove
      (!v. ~is_alloc_var v ==> lookup v (copy_state_to_eq (SND (copy_prop_inst i cs))) = NONE)`,
   MATCH_MP_TAC copy_prop_inst_ind THEN REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
   REWRITE_TAC[copy_prop_inst_def; LET_DEF; LET_END_DEF] THEN
-  CASE_REWRITE_TAC[WPROOF2AUX_pair_CASE_FST_SND; FST; SND] THEN
+  CASE_REWRITE_TAC[pair_CASE_def; FST; SND] THEN
   REPEAT COND_CASES_TAC THEN REWRITE_TAC[FST; SND] THEN
   MESON_TAC[GEN_ALL copy_prop_prog_not_alloc_var_aux1;
             GEN_ALL copy_prop_prog_not_alloc_var_aux2]);;
@@ -2220,7 +2198,7 @@ let copy_prop_prog_not_alloc_var = prove
   WPROOF2AUX_PROG_STEP_TAC [copy_prop_prog_def] THEN
   REPEAT STRIP_TAC THEN
   REPEAT (FIRST [COND_CASES_TAC; TOP_CASE_TAC] THEN
-          CASE_REWRITE_TAC[WPROOF2AUX_pair_CASE_FST_SND; FST; SND]) THEN
+          CASE_REWRITE_TAC[pair_CASE_def; FST; SND]) THEN
   RULE_ASSUM_TAC(fun th -> if is_forall(concl th) then norm th else th) THEN
   ASM_MESON_TAC[norm copy_prop_prog_not_alloc_var_aux1;
                 norm copy_prop_prog_not_alloc_var_aux2; WPROOF2AUX_nav_empty;
@@ -2271,7 +2249,7 @@ let WPROOF2AUX_cpi_cac = prove
   MATCH_MP_TAC copy_prop_inst_ind THEN REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
   WPROOF2AUX_SPLIT_RI_TAC THEN
   REWRITE_TAC[copy_prop_inst_def; lookup_eq_imm_def; LET_DEF; LET_END_DEF] THEN
-  CASE_REWRITE_TAC[WPROOF2AUX_pair_CASE_FST_SND; FST; SND] THEN
+  CASE_REWRITE_TAC[pair_CASE_def; FST; SND] THEN
   REPEAT STRIP_TAC THEN RULE_ASSUM_TAC(REWRITE_RULE[inst_arg_convention_def]) THEN
   RVEQ_TAC THEN
   ASM_SIMP_TAC[WPROOF2AUX_lookup_eq_nav; WPROOF2AUX_not_alloc_small] THEN
@@ -2294,7 +2272,7 @@ let WPROOF2AUX_cp_cac = prove
   WPROOF2AUX_PROG_STEP_TAC [copy_prop_prog_def] THEN
   REPEAT STRIP_TAC THEN
   REPEAT (FIRST [COND_CASES_TAC; TOP_CASE_TAC] THEN
-          CASE_REWRITE_TAC[WPROOF2AUX_pair_CASE_FST_SND; FST; SND]) THEN
+          CASE_REWRITE_TAC[pair_CASE_def; FST; SND]) THEN
   RULE_ASSUM_TAC(CASE_REWRITE_RULE[call_arg_convention_def]) THEN
   ASM_SIMP_TAC[call_arg_convention_def; WPROOF2AUX_lookup_eq_nav;
                WPROOF2AUX_not_alloc_small] THEN
@@ -2324,7 +2302,7 @@ let WPROOF2AUX_cpi_fiol = prove
   MATCH_MP_TAC copy_prop_inst_ind THEN REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
   WPROOF2AUX_SPLIT_RI_TAC THEN
   REWRITE_TAC[copy_prop_inst_def; lookup_eq_imm_def; LET_DEF; LET_END_DEF] THEN
-  CASE_REWRITE_TAC[WPROOF2AUX_pair_CASE_FST_SND; FST; SND] THEN
+  CASE_REWRITE_TAC[pair_CASE_def; FST; SND] THEN
   REPEAT COND_CASES_TAC THEN
   ASM_REWRITE_TAC[FST; SND; full_inst_ok_less_def; inst_ok_less_def;
                   injectivity "reg_imm"; distinctness "reg_imm"] THEN
@@ -2888,7 +2866,7 @@ let WPROOF2AUX_word_alloc_cases = prove
   MP_TAC(ISPEC `oracle_colour_ok k col_opt (get_clash_tree (prog:(A)wl_prog) [])
                   prog (get_forced (c:(A)asm_config) prog [])`
                (nchotomy_of_type `:((A)wl_prog)option`)) THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[WPROOF2AUX_pair_CASE_FST_SND] THENL
+  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[pair_CASE_def] THENL
    [TOP_CASE_TAC THEN MESON_TAC[];
     FIRST_ASSUM(MP_TAC o MATCH_MP WPROOF2AUX_oracle_colour_ok_SOME) THEN MESON_TAC[]]);;
 
@@ -3074,7 +3052,7 @@ let WPROOF2AUX_fcs_FST = prove
      FST (full_compile_single tra rc ralg c ((n,m,pp),col)) = n /\
      FST (SND (full_compile_single tra rc ralg c ((n,m,pp),col))) = m`,
   REWRITE_TAC[full_compile_single_def; word_to_word_compile_single_def; LET_DEF; LET_END_DEF;
-              WPROOF2AUX_pair_CASE_FST_SND; FST; SND]);;
+              pair_CASE_def; FST; SND]);;
 
 let WPROOF2AUX_fcs_gh = prove
  (`!tra rc ralg (c:(A)asm_config) n m pp col.
@@ -3082,7 +3060,7 @@ let WPROOF2AUX_fcs_gh = prove
      good_handlers n (SND (SND (full_compile_single tra rc ralg c ((n,m,pp),col))))`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN
   REWRITE_TAC[full_compile_single_def; word_to_word_compile_single_def; LET_DEF; LET_END_DEF;
-              WPROOF2AUX_pair_CASE_FST_SND; FST; SND] THEN
+              pair_CASE_def; FST; SND] THEN
   REWRITE_TAC[word_good_handlers_remove_must_terminate; word_good_handlers_word_alloc;
               word_good_handlers_remove_dead_prog] THEN
   MATCH_MP_TAC word_good_handlers_remove_unreach THEN
@@ -3139,7 +3117,7 @@ let WPROOF2AUX_w2w_SND = prove
             (word_to_word_config_reg_alg wc) ac)
          (ZIP progs (FST (next_n_oracle (LENGTH progs) (word_to_word_config_col_oracle wc))))`,
   REWRITE_TAC[word_to_word_compile_def; LET_DEF; LET_END_DEF;
-              WPROOF2AUX_pair_CASE_FST_SND; FST; SND]);;
+              pair_CASE_def; FST; SND]);;
 
 let word_good_handlers_word_to_word = prove
  (`ALL (\(n,m,pp). good_handlers n pp) (progs:(num#num#(A)wl_prog)list) ==>
@@ -3155,7 +3133,7 @@ let WPROOF2AUX_fcs_gcl = prove
      wordConvs_get_code_labels pp`,
   REPEAT GEN_TAC THEN
   REWRITE_TAC[full_compile_single_def; word_to_word_compile_single_def; LET_DEF; LET_END_DEF;
-              WPROOF2AUX_pair_CASE_FST_SND; FST; SND] THEN
+              pair_CASE_def; FST; SND] THEN
   REWRITE_TAC[word_get_code_labels_remove_must_terminate; word_get_code_labels_word_alloc] THEN
   REPEAT
    (FIRST

@@ -223,19 +223,6 @@ let w2sp4aux_wev k =
    `wl_evaluate (wl_Call NONE (SOME start) [0] NONE:(A)wl_prog,
                  wl_state_clock_fupd (K kk) (s:(A,num#C,FFI)wl_state))`;;
 
-let W2SP4AUX_stack_io_mono = prove
- (`!p (x:(A,C,FFI)stack_state) k1 k2.
-     k1 <= k2 ==>
-     isPREFIX
-       (ffi_state_io_events (stack_state_ffi
-          (SND (stack_evaluate (p,stack_state_clock_fupd (K k1) x)))))
-       (ffi_state_io_events (stack_state_ffi
-          (SND (stack_evaluate (p,stack_state_clock_fupd (K k2) x)))))`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[LE_EXISTS] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
-  MP_TAC(ISPECL [`p:(A)stack_prog`; `stack_state_clock_fupd (K k1) (x:(A,C,FFI)stack_state)`]
-          (INST [`d:num`,`extra:num`] stack_evaluate_add_clock_io_events_mono)) THEN
-  SIMP[]);;
-
 let W2SP4AUX_word_io_mono = prove
  (`!p (x:(A,num#C,FFI)wl_state) k1 k2.
      k1 <= k2 ==>
@@ -248,17 +235,6 @@ let W2SP4AUX_word_io_mono = prove
   MP_TAC(ISPECL [`p:(A)wl_prog`; `wl_state_clock_fupd (K k1) (x:(A,num#C,FFI)wl_state)`;
                  `d:num`] wl_evaluate_add_clock_io_events_mono) THEN
   SIMP[]);;
-
-let W2SP4AUX_stack_io_chain = prove
- (`!p (x:(A,C,FFI)stack_state).
-     lprefix_chain
-       (IMAGE (\k. llist_fromList (ffi_state_io_events (stack_state_ffi
-          (SND (stack_evaluate (p,stack_state_clock_fupd (K k) x)))))) (:num))`,
-  REPEAT GEN_TAC THEN
-  REWRITE_TAC[SET_RULE `IMAGE (\k. (g:B->C) ((f:A->B) k)) s = IMAGE g (IMAGE f s)`] THEN
-  MATCH_MP_TAC prefix_chain_lprefix_chain THEN
-  REWRITE_TAC[prefix_chain_def; IMP_CONJ; RIGHT_FORALL_IMP_THM; FORALL_IN_IMAGE; IN_UNIV] THEN
-  MESON_TAC[W2SP4AUX_stack_io_mono; LE_CASES]);;
 
 let W2SP4AUX_word_io_chain = prove
  (`!p (x:(A,num#C,FFI)wl_state).
@@ -433,13 +409,13 @@ let W2SP4AUX_lub_eq = prove
               (SND (wl_evaluate (wl_Call NONE (SOME start) [0] NONE,
                                  wl_state_clock_fupd (K k) s)))))) (:num))`,
   REPEAT STRIP_TAC THEN MATCH_MP_TAC IMP_build_lprefix_lub_EQ THEN
-  REWRITE_TAC[W2SP4AUX_stack_io_chain; W2SP4AUX_word_io_chain] THEN
+  REWRITE_TAC[STACKPROPSAUX_io_chain; W2SP4AUX_word_io_chain] THEN
   REWRITE_TAC[lprefix_rel_def; FORALL_IN_IMAGE; EXISTS_IN_IMAGE; IN_UNIV] THEN
   CONJ_TAC THEN X_GEN_TAC `kc:num` THEN
   FIRST_X_ASSUM(X_CHOOSE_TAC `ck:num` o SPEC `kc:num`) THENL
    [EXISTS_TAC `kc:num` THEN
     ASM_REWRITE_TAC[LPREFIX_fromList; from_toList; option_CASE] THEN
-    MATCH_MP_TAC W2SP4AUX_stack_io_mono THEN ARITH_TAC;
+    MATCH_MP_TAC STACKPROPSAUX_io_mono THEN ARITH_TAC;
     EXISTS_TAC `kc + ck:num` THEN
     ASM_REWRITE_TAC[LPREFIX_fromList; from_toList; option_CASE; IS_PREFIX_REFL]]);;
 
@@ -1442,13 +1418,6 @@ let W2SP4AUX_format_var_bound = prove
 let W2SP4AUX_SUM_CASES_ALL_TAC : tactic = fun (asl,w as g) ->
   let v = find (fun v -> match type_of v with Tyapp("sum",_) -> true | _ -> false) (frees w) in
   DISJ_CASES_THEN (CHOOSE_THEN SUBST_ALL_TAC) (ISPEC v (cases "sum")) g;;
-
-let W2SP4AUX_option3_CASES = prove
- (`!x:(A#B#C)option. x = NONE \/ ?a b c. x = SOME (a,b,c)`,
-  GEN_TAC THEN STRUCT_CASES_TAC (ISPEC `x:(A#B#C)option` (cases "option")) THEN
-  REWRITE_TAC[option_DISTINCT; option_INJ] THEN
-  MAP_EVERY EXISTS_TAC [`FST(a:A#B#C)`; `FST(SND(a:A#B#C))`; `SND(SND(a:A#B#C))`] THEN
-  REWRITE_TAC[PAIR]);;
 
 let W2SP4AUX_TY_CASES_TAC (tyname:string) (th:thm) : tactic = fun (asl,w as g) ->
   let fvs = itlist (union o frees o concl o snd) asl (frees w) in
@@ -2784,7 +2753,7 @@ let reg_bound_mono = prove
  (`!(p:(A)stack_prog) k k'. reg_bound p k /\ k <= k' ==> reg_bound p k'`,
   MATCH_MP_TAC reg_bound_ind THEN REPEAT CONJ_TAC THEN REPEAT STRIP_TAC THEN
   REPEAT (FIRST [W2SP4AUX_TY_CASES_TAC "option" W2SP4AUX_option4_CASES;
-                 W2SP4AUX_TY_CASES_TAC "option" W2SP4AUX_option3_CASES;
+                 W2SP4AUX_TY_CASES_TAC "option" BASICAUX_option3_cases;
                  W2SP4AUX_TY_CASES_TAC "sum" (cases "sum");
                  W2SP4AUX_TY_CASES_TAC "reg_imm" (cases "reg_imm")]) THEN
   RULE_ASSUM_TAC(CASE_REWRITE_RULE[option_INJ; PAIR_EQ] o REWRITE_RULE[reg_bound_def]) THEN

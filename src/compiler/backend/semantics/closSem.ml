@@ -1107,3 +1107,24 @@ let clos_semantics_def = cake_def
                           (ffi_state_io_events
                              (clos_state_ffi (SND (clos_evaluate (es,[],st k))))))
                        UNIV)))`;;
+
+(* ------------------------------------------------------------------------- *)
+(* Lemmas used by several later files.                                       *)
+(* ------------------------------------------------------------------------- *)
+
+let CLOSSEMAUX_dest_thunk_NotThunk = prove
+ (`!xs (refs:(num,(clos_v)clos_ref)fmap).
+     (!b ptr. ~(xs = [clos_RefPtr b ptr])) ==> clos_dest_thunk xs refs = clos_NotThunk`,
+  LIST_INDUCT_TAC THEN REWRITE_TAC[clos_dest_thunk_def] THEN
+  STRUCT_CASES_TAC(ISPEC `t:clos_v list` list_CASES) THEN
+  REWRITE_TAC[clos_dest_thunk_def; CONS_11] THEN
+  CASES_ON `h:clos_v` THEN REWRITE_TAC[clos_dest_thunk_def; injectivity "clos_v";
+                                      distinctness "clos_v"] THEN
+  MESON_TAC[]);;
+
+let CLOSSEMAUX_dest_thunk_NONE = prove
+ (CASE_TERM `!d (x:A option).
+     ~(d = clos_NotThunk) ==>
+     (match d with clos_BadRef -> NONE | clos_NotThunk -> x | clos_IsThunk m v -> NONE) =
+     NONE`,
+  GEN_TAC THEN CASES_ON `d:clos_dest_thunk_ret` THEN CASE_REWRITE_TAC[]);;
