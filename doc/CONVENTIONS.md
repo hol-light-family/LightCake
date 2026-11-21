@@ -82,6 +82,15 @@
   `QEXISTS_TAC`, `QSUFF_TAC`, `QPAT_X_ASSUM`, `QSPEC_THEN`, `QCASES_ON`; `COND_CASE_EQ` and
   `all_case_eqs()` are HOL4's `bool_case_eq` and `AllCaseEqs()`; the markers `ARITH_ss`, `ONCE th`
   and `ELIM_UNCURRY` can be put in any kit simp list. HOL Light's own tactics are used freely.
+- Further HOL4 tactics: `GVS_ASM` (gvs on the assumptions only), `QREFINE_TAC` / `QREFINEL_TAC`
+  (qrefine), `DEP_REWRITE_TAC` (dep_rewrite), `ONELINE` (oneline), `NAMED_CASES_ON`
+  (namedCases_on), `QINDUCT_ON` (Induct_on, also on a bound variable), `TOP_CASE_NOPAIR_TAC`
+  (HOL4's TOP_CASE_TAC), `MATCH_GOALSUB_ABBREV_TAC` / `MATCH_ASMSUB_ABBREV_TAC`
+  (qmatch_goalsub_abbrev_tac, qmatch_asmsub_abbrev_tac), `QBY` and `QSUFFICES_BY` (`"t" by tac`,
+  `"t" suffices_by tac`), and the simp-list markers `ARITH_LIN_ss` (HOL4's arithmetic
+  normalisation, with cut-off subtraction), `NOT_ss` (HOL4's NOT_ss: De Morgan and friends),
+  `RECORD_SELFID_ss` (`r with f := r.f = r`), `CONGR th` (HOL4's Cong) and `IGNASM "pat"`
+  (HOL4's IgnAsm). The comments in `src/kit/tactics.ml` and `src/kit/simp.ml` describe them.
 - The kit's `FS` simplifies the assumptions oldest first and `RFS` newest first: HOL4's fs takes
   the newest first, so HOL4's fs corresponds to `RFS` and its rfs to `FS`.
 - Theorems that HOL4 marks `[simp]` are added to the project simpset with `cake_add_simps`

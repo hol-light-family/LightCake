@@ -1155,6 +1155,74 @@ let cake_def_gen (rel_tac : (term * tactic) option) (tm:term) : thm =
    | _ -> ());
   CONV_RULE (DEPTH_CONV ETA_MARKED_CONV) def;;
 
+(* Identical redefinitions (since 2026-11-20).  Each definition is stored   *)
+(* with a digest of its clauses as cake_def_gen sees them (after            *)
+(* cases_of_matches and rename_wildcards, up to alpha), its function        *)
+(* variables replaced by the new constants.  The same clauses given again,  *)
+(* in a session that holds the definition already (the functions then parse *)
+(* as the constants: an image with the file, in which a changed copy of the *)
+(* file or its dependents are to be checked), give the stored theorem back, *)
+(* as HOL Light's define and new_definition do for a benign redefinition.   *)
+(* Any other clauses for a defined constant still fail ("the defined        *)
+(* function is a constant").  (Only digests are kept: the clause terms of   *)
+(* every definition made the heap bigger and later loads slower.)            *)
+
+let kit_term_digest (tm:term) : string =
+  let buf = Buffer.create 4096 in
+  let add = Buffer.add_string buf in
+  let rec tyser ty =
+    match ty with
+      Tyvar n -> add "'"; add n
+    | Tyapp(c,args) -> add c; add "("; do_list (fun a -> tyser a; add ",") args; add ")" in
+  let rec go env t =
+    match t with
+      Var(n,ty) ->
+        let rec idx i l =
+          match l with [] -> -1 | v::r -> if v == t || v = t then i else idx (i+1) r in
+        let i = idx 0 env in
+        if i >= 0 then (add "B"; add (string_of_int i))
+        else (add "V("; add n; add ":"; tyser ty; add ")")
+    | Const(n,ty) -> add "C("; add n; add ":"; tyser ty; add ")"
+    | Comb(f,x) -> add "A("; go env f; add " "; go env x; add ")"
+    | Abs(v,b) -> add "L("; tyser (type_of v); add "."; go (v::env) b; add ")" in
+  go [] tm; Digest.string (Buffer.contents buf);;
+
+let cake_def_store = (Hashtbl.create 1000 : (string,(string * thm)) Hashtbl.t);;
+
+let kit_def_store = ref true;;
+
+let cake_def_gen =
+  let cake_def_gen0 = cake_def_gen in
+  fun (rel_tac : (term * tactic) option) (tm:term) ->
+    if not !kit_def_store then cake_def_gen0 rel_tac tm else
+    let ctm = rename_wildcards (cases_of_matches tm) in
+    let head = try (match dest_clauses ctm with
+                      (_,f,_,_)::_ -> if is_var f then fst(dest_var f)
+                                      else fst(dest_const f)
+                    | [] -> "")
+               with Failure _ -> "" in
+    let olds = Hashtbl.find_all cake_def_store head in
+    let found =
+      if olds = [] then None else
+      let d = kit_term_digest ctm in
+      try Some (snd (find (fun (k,_) -> k = d) olds)) with Failure _ -> None in
+    match found with
+      Some th -> (Format.print_string ("Warning: cake_def "^head^
+                                       ": benign redefinition\n"); th)
+    | None ->
+        (* ctm is already compiled: cake_def_gen0's own cases_of_matches and   *)
+        (* rename_wildcards leave it as it is (no second compilation)          *)
+        let th = cake_def_gen0 rel_tac ctm in
+        (try
+           let fns = setify (filter is_var (map (fun (_,f,_,_) -> f) (dest_clauses ctm))) in
+           let sub = map (fun f ->
+               let c = mk_const(fst(dest_var f),[]) in
+               inst (type_match (type_of c) (type_of f) []) c,f) fns in
+           if sub <> [] && head <> "" then
+             Hashtbl.add cake_def_store head (kit_term_digest (vsubst sub ctm),th)
+         with Failure _ -> ());
+        th;;
+
 (* cake_def (with its size-measure fallback) is at the end of this file *)
 
 let cake_def_wf r tac tm = cake_def_gen (Some(r,tac)) tm;;

@@ -330,3 +330,8 @@ needs "compiler/backend/proofs/backendProof_p2.ml";;
 needs "compiler/backend/proofs/backendProof.ml";;
 needs "compiler/proofs/compile_correct_statement.ml";;
 needs "compiler/proofs/compilerProof.ml";;
+needs "compiler/encoders/ag32/ag32.ml";;
+needs "compiler/encoders/ag32/ag32_target.ml";;
+needs "compiler/encoders/ag32/proofs/ag32_targetProof.ml";;
+needs "compiler/backend/ag32/proofs/ag32_compile_correct_statement.ml";;
+needs "compiler/backend/ag32/proofs/ag32_configProof.ml";;

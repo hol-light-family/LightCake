@@ -257,3 +257,59 @@ let rec cases_of_matches_rec tm =
 let cases_of_matches tm = cases_of_matches_rec (elim_gabs tm);;
 
 let CASE_TERM tm = cases_of_matches tm;;
+
+(* ------------------------------------------------------------------------- *)
+(* HOL4 oneline (DefnBase.one_line_ify): the clauses of a definition by      *)
+(* patterns, |- f p11 .. p1n = e1 /\ .. /\ f pk1 .. pkn = ek (constructor    *)
+(* patterns, as cake_def stores them), as one equation                       *)
+(*   |- !v1 .. vn. f v1 .. vn = case .. (the patterns of the columns that    *)
+(*   have one compiled into case constants, first match wins)                *)
+(* proved by splitting the case tree and rewriting with the clauses.  As in  *)
+(* HOL4 the arguments split on are named v, v' ..; the others keep the      *)
+(* names of the first clause.  A clause with only variables is returned as  *)
+(* it is.  Since 2026-11-20.                                                 *)
+(* ------------------------------------------------------------------------- *)
+
+let ONELINE_TAC (th:thm) : tactic =
+  let rec go g =
+    ((REWRITE_TAC[th] THEN CASE_REWRITE_TAC[] THEN NO_TAC) ORELSE
+     (TOP_CASE_TAC THEN go)) g in
+  REPEAT GEN_TAC THEN go;;
+
+let ONELINE (th:thm) : thm =
+  let conjs = CONJUNCTS (SPEC_ALL th) in
+  let rows = map (fun c -> let l,r = dest_eq (snd (strip_forall (concl c))) in
+                           let f,args = strip_comb l in f,args,r,c) conjs in
+  let f,args1,_,_ = hd rows in
+  if not (forall (fun (g,a,_,_) -> g = f && length a = length args1) rows)
+  then failwith "ONELINE: clauses of more than one function" else
+  match (try Some (find (fun (_,a,_,_) -> forall is_var a) rows) with Failure _ -> None) with
+    Some (_,_,_,c) -> GEN_ALL c
+  | None ->
+  let n = length args1 in
+  let patcols = filter (fun i -> exists (fun (_,a,_,_) -> not (is_var (el i a))) rows)
+                       (0--(n-1)) in
+  let patfvs = itlist (fun (_,a,_,_) acc ->
+                         union (freesl (map (fun i -> el i a) patcols)) acc) rows [] in
+  let avoid = ref patfvs in
+  let actual = map (fun i -> let a = el i args1 in
+                       if mem i patcols then pm_fresh avoid (mk_var("v",type_of a))
+                       else pm_fresh avoid a) (0--(n-1)) in
+  let counter = ref 0 in
+  let pmrows = map (fun (_,a,r,_) ->
+      let theta = mapfilter (fun i -> if mem i patcols then fail() else el i actual,el i a)
+                            (0--(n-1)) in
+      let pats = map (fun i -> el i a) patcols in
+      let vs = filter (fun v -> not (is_wildcard v)) (freesl pats) in
+      let ren = map (fun v -> incr counter;
+                       mk_var(fst(dest_var v)^"%pm"^string_of_int !counter,type_of v),v) vs in
+      {pm_pats = map (vsubst ren) pats; pm_guard = None;
+       pm_rhs = vsubst ren (vsubst theta r)}) rows in
+  let rty = type_of (let _,_,r,_ = hd rows in r) in
+  let dflt = mk_const("ARB",[rty,aty]) in
+  let scruts = map (fun i -> el i actual) patcols in
+  (* the binders of the branches avoid the arguments only (the pattern     *)
+  (* variables were renamed apart, so their own names are free to reuse)   *)
+  let body = compile_rows actual scruts pmrows dflt in
+  let goal = list_mk_forall(actual,mk_eq(list_mk_comb(f,actual),body)) in
+  prove(goal,ONELINE_TAC th);;

@@ -21004,3 +21004,182 @@ pancake/panLang	panLang	constant	free_var_ids	free_var_ids	unique
 pancake/panLang	panLang	theorem	free_var_ids_def	free_var_ids_def	unique
 pancake/panLang	panLang	constant	inlinable	inlinable	unique
 pancake/panLang	panLang	theorem	inlinable_def	inlinable_def	unique
+compiler/encoders/ag32/ag32	ag32	type	funcT	funcT	unique
+compiler/encoders/ag32/ag32	ag32	type	shiftT	shiftT	unique
+compiler/encoders/ag32/ag32	ag32	type	reg_immT	reg_immT	unique
+compiler/encoders/ag32/ag32	ag32	type	instruction	instruction	unique
+compiler/encoders/ag32/ag32	ag32	type	ag32_state	ag32_state	unique
+compiler/encoders/ag32/ag32	ag32	constructor	fAdd	fAdd	unique
+compiler/encoders/ag32/ag32	ag32	constructor	fAddWithCarry	fAddWithCarry	unique
+compiler/encoders/ag32/ag32	ag32	constructor	fSub	fSub	unique
+compiler/encoders/ag32/ag32	ag32	constructor	fCarry	fCarry	unique
+compiler/encoders/ag32/ag32	ag32	constructor	fOverflow	fOverflow	unique
+compiler/encoders/ag32/ag32	ag32	constructor	fInc	fInc	unique
+compiler/encoders/ag32/ag32	ag32	constructor	fDec	fDec	unique
+compiler/encoders/ag32/ag32	ag32	constructor	fMul	fMul	unique
+compiler/encoders/ag32/ag32	ag32	constructor	fMulHU	fMulHU	unique
+compiler/encoders/ag32/ag32	ag32	constructor	fAnd	fAnd	unique
+compiler/encoders/ag32/ag32	ag32	constructor	fOr	fOr	unique
+compiler/encoders/ag32/ag32	ag32	constructor	fXor	fXor	unique
+compiler/encoders/ag32/ag32	ag32	constructor	fEqual	fEqual	unique
+compiler/encoders/ag32/ag32	ag32	constructor	fLess	fLess	unique
+compiler/encoders/ag32/ag32	ag32	constructor	fLower	fLower	unique
+compiler/encoders/ag32/ag32	ag32	constructor	fSnd	fSnd	unique
+compiler/encoders/ag32/ag32	ag32	constructor	shiftLL	shiftLL	unique
+compiler/encoders/ag32/ag32	ag32	constructor	shiftLR	shiftLR	unique
+compiler/encoders/ag32/ag32	ag32	constructor	shiftAR	shiftAR	unique
+compiler/encoders/ag32/ag32	ag32	constructor	shiftRor	shiftRor	unique
+compiler/encoders/ag32/ag32	ag32	constructor	Imm	ag32_Imm	clash:2 theories
+compiler/encoders/ag32/ag32	ag32	constructor	Reg	ag32_Reg	clash:2 theories
+compiler/encoders/ag32/ag32	ag32	constructor	Accelerator	Accelerator	unique
+compiler/encoders/ag32/ag32	ag32	constructor	In	In	unique
+compiler/encoders/ag32/ag32	ag32	constructor	Interrupt	Interrupt	unique
+compiler/encoders/ag32/ag32	ag32	constructor	JumpIfNotZero	JumpIfNotZero	unique
+compiler/encoders/ag32/ag32	ag32	constructor	JumpIfZero	JumpIfZero	unique
+compiler/encoders/ag32/ag32	ag32	constructor	LoadConstant	LoadConstant	unique
+compiler/encoders/ag32/ag32	ag32	constructor	LoadMEM	LoadMEM	unique
+compiler/encoders/ag32/ag32	ag32	constructor	LoadMEMByte	LoadMEMByte	unique
+compiler/encoders/ag32/ag32	ag32	constructor	LoadUpperConstant	LoadUpperConstant	unique
+compiler/encoders/ag32/ag32	ag32	constructor	Normal	Normal	unique
+compiler/encoders/ag32/ag32	ag32	constructor	ReservedInstr	ReservedInstr	unique
+compiler/encoders/ag32/ag32	ag32	constructor	StoreMEM	StoreMEM	unique
+compiler/encoders/ag32/ag32	ag32	constructor	StoreMEMByte	StoreMEMByte	unique
+compiler/encoders/ag32/ag32	ag32	constructor	Jump	ag32_Jump	clash:4 theories
+compiler/encoders/ag32/ag32	ag32	constructor	Out	ag32_Out	clash:2 theories
+compiler/encoders/ag32/ag32	ag32	constructor	Shift	ag32_Shift	clash:6 theories
+compiler/encoders/ag32/ag32	ag32	field	ag32_state_CarryFlag	ag32_state_CarryFlag	unique
+compiler/encoders/ag32/ag32	ag32	field	ag32_state_MEM	ag32_state_MEM	unique
+compiler/encoders/ag32/ag32	ag32	field	ag32_state_OverflowFlag	ag32_state_OverflowFlag	unique
+compiler/encoders/ag32/ag32	ag32	field	ag32_state_PC	ag32_state_PC	unique
+compiler/encoders/ag32/ag32	ag32	field	ag32_state_R	ag32_state_R	unique
+compiler/encoders/ag32/ag32	ag32	field	ag32_state_data_in	ag32_state_data_in	unique
+compiler/encoders/ag32/ag32	ag32	field	ag32_state_data_out	ag32_state_data_out	unique
+compiler/encoders/ag32/ag32	ag32	field	ag32_state_io_events	ag32_state_io_events	unique
+compiler/encoders/ag32/ag32	ag32	constant	funcT2num	funcT2num	unique
+compiler/encoders/ag32/ag32	ag32	constant	num2funcT	num2funcT	unique
+compiler/encoders/ag32/ag32	ag32	constant	shiftT2num	shiftT2num	unique
+compiler/encoders/ag32/ag32	ag32	constant	num2shiftT	num2shiftT	unique
+compiler/encoders/ag32/ag32	ag32	constant	ALU	ALU	unique
+compiler/encoders/ag32/ag32	ag32	constant	incPC	incPC	unique
+compiler/encoders/ag32/ag32	ag32	constant	ri2word	ri2word	unique
+compiler/encoders/ag32/ag32	ag32	constant	dfn'LoadUpperConstant	dfn'LoadUpperConstant	unique
+compiler/encoders/ag32/ag32	ag32	constant	dfn'LoadConstant	dfn'LoadConstant	unique
+compiler/encoders/ag32/ag32	ag32	constant	dfn'Normal	dfn'Normal	unique
+compiler/encoders/ag32/ag32	ag32	constant	dfn'Shift	dfn'Shift	unique
+compiler/encoders/ag32/ag32	ag32	constant	dfn'StoreMEM	dfn'StoreMEM	unique
+compiler/encoders/ag32/ag32	ag32	constant	dfn'StoreMEMByte	dfn'StoreMEMByte	unique
+compiler/encoders/ag32/ag32	ag32	constant	dfn'LoadMEM	dfn'LoadMEM	unique
+compiler/encoders/ag32/ag32	ag32	constant	dfn'LoadMEMByte	dfn'LoadMEMByte	unique
+compiler/encoders/ag32/ag32	ag32	constant	dfn'Out	dfn'Out	unique
+compiler/encoders/ag32/ag32	ag32	constant	dfn'In	dfn'In	unique
+compiler/encoders/ag32/ag32	ag32	constant	accelerator_f	accelerator_f	unique
+compiler/encoders/ag32/ag32	ag32	constant	dfn'Accelerator	dfn'Accelerator	unique
+compiler/encoders/ag32/ag32	ag32	constant	dfn'Jump	dfn'Jump	unique
+compiler/encoders/ag32/ag32	ag32	constant	dfn'JumpIfZero	dfn'JumpIfZero	unique
+compiler/encoders/ag32/ag32	ag32	constant	dfn'JumpIfNotZero	dfn'JumpIfNotZero	unique
+compiler/encoders/ag32/ag32	ag32	constant	dfn'Interrupt	dfn'Interrupt	unique
+compiler/encoders/ag32/ag32	ag32	constant	dfn'ReservedInstr	dfn'ReservedInstr	unique
+compiler/encoders/ag32/ag32	ag32	constant	DecodeReg_imm	DecodeReg_imm	unique
+compiler/encoders/ag32/ag32	ag32	constant	boolify32	boolify32	unique
+compiler/encoders/ag32/ag32	ag32	constant	bitify32	bitify32	unique
+compiler/encoders/ag32/ag32	ag32	constant	ri2bits	ri2bits	unique
+compiler/encoders/ag32/ag32	ag32	constant	encShift	encShift	unique
+compiler/encoders/ag32/ag32	ag32	constant	shift	ag32_shift	clash:2 theories
+compiler/encoders/ag32/ag32	ag32	constant	norm	ag32_norm	clash-hol-light (Multivariate overloadable norm)
+compiler/encoders/ag32/ag32	ag32	constant	Run	ag32_Run	generic L3 name (prefixed as the unit brief asks)
+compiler/encoders/ag32/ag32	ag32	constant	Decode	ag32_Decode	generic L3 name (prefixed as the unit brief asks)
+compiler/encoders/ag32/ag32	ag32	constant	Next	ag32_Next	generic L3 name (prefixed as the unit brief asks)
+compiler/encoders/ag32/ag32	ag32	constant	Encode	ag32_Encode	generic L3 name (prefixed as the unit brief asks)
+compiler/encoders/ag32/ag32	ag32	constant	enc	ag32_enc'	clash: variable name; ag32_enc is ag32_target
+compiler/encoders/ag32/ag32	ag32	theorem	ALU_def	ALU_def	unique
+compiler/encoders/ag32/ag32	ag32	theorem	shift_def	ag32_shift_def	clash:2 theories
+compiler/encoders/ag32/ag32	ag32	theorem	incPC_def	incPC_def	unique
+compiler/encoders/ag32/ag32	ag32	theorem	norm_def	ag32_norm_def	clash-hol-light (Multivariate overloadable norm)
+compiler/encoders/ag32/ag32	ag32	theorem	ri2word_def	ri2word_def	unique
+compiler/encoders/ag32/ag32	ag32	theorem	dfn'LoadUpperConstant_def	dfn'LoadUpperConstant_def	unique
+compiler/encoders/ag32/ag32	ag32	theorem	dfn'LoadConstant_def	dfn'LoadConstant_def	unique
+compiler/encoders/ag32/ag32	ag32	theorem	dfn'Normal_def	dfn'Normal_def	unique
+compiler/encoders/ag32/ag32	ag32	theorem	dfn'Shift_def	dfn'Shift_def	unique
+compiler/encoders/ag32/ag32	ag32	theorem	dfn'StoreMEM_def	dfn'StoreMEM_def	unique
+compiler/encoders/ag32/ag32	ag32	theorem	dfn'StoreMEMByte_def	dfn'StoreMEMByte_def	unique
+compiler/encoders/ag32/ag32	ag32	theorem	dfn'LoadMEM_def	dfn'LoadMEM_def	unique
+compiler/encoders/ag32/ag32	ag32	theorem	dfn'LoadMEMByte_def	dfn'LoadMEMByte_def	unique
+compiler/encoders/ag32/ag32	ag32	theorem	dfn'Out_def	dfn'Out_def	unique
+compiler/encoders/ag32/ag32	ag32	theorem	dfn'In_def	dfn'In_def	unique
+compiler/encoders/ag32/ag32	ag32	theorem	accelerator_f_def	accelerator_f_def	unique
+compiler/encoders/ag32/ag32	ag32	theorem	dfn'Accelerator_def	dfn'Accelerator_def	unique
+compiler/encoders/ag32/ag32	ag32	theorem	dfn'Jump_def	dfn'Jump_def	unique
+compiler/encoders/ag32/ag32	ag32	theorem	dfn'JumpIfZero_def	dfn'JumpIfZero_def	unique
+compiler/encoders/ag32/ag32	ag32	theorem	dfn'JumpIfNotZero_def	dfn'JumpIfNotZero_def	unique
+compiler/encoders/ag32/ag32	ag32	theorem	dfn'Interrupt_def	dfn'Interrupt_def	unique
+compiler/encoders/ag32/ag32	ag32	theorem	dfn'ReservedInstr_def	dfn'ReservedInstr_def	unique
+compiler/encoders/ag32/ag32	ag32	theorem	Run_def	ag32_Run_def	generic L3 name (prefixed as the unit brief asks)
+compiler/encoders/ag32/ag32	ag32	theorem	DecodeReg_imm_def	DecodeReg_imm_def	unique
+compiler/encoders/ag32/ag32	ag32	theorem	boolify32_def	boolify32_def	unique
+compiler/encoders/ag32/ag32	ag32	theorem	bitify32_def	bitify32_def	unique
+compiler/encoders/ag32/ag32	ag32	theorem	Decode_def	ag32_Decode_def	generic L3 name (prefixed as the unit brief asks)
+compiler/encoders/ag32/ag32	ag32	theorem	Next_def	ag32_Next_def	generic L3 name (prefixed as the unit brief asks)
+compiler/encoders/ag32/ag32	ag32	theorem	ri2bits_def	ri2bits_def	unique
+compiler/encoders/ag32/ag32	ag32	theorem	enc_def	ag32_enc'_def	clash: variable name; ag32_enc is ag32_target
+compiler/encoders/ag32/ag32	ag32	theorem	encShift_def	encShift_def	unique
+compiler/encoders/ag32/ag32	ag32	theorem	Encode_def	ag32_Encode_def	generic L3 name (prefixed as the unit brief asks)
+compiler/encoders/ag32/ag32	ag32	theorem	boolify32_n2w	boolify32_n2w	unique
+compiler/encoders/ag32/ag32	ag32	theorem	boolify32_v2w	boolify32_v2w	unique
+compiler/encoders/ag32/ag32	ag32	theorem	boolify32bitify32	boolify32bitify32	unique
+compiler/encoders/ag32/ag32	ag32	theorem	bitify32boolify32	bitify32boolify32	unique
+compiler/encoders/ag32/ag32_target	ag32_target	constant	ag32_ok	ag32_ok	unique
+compiler/encoders/ag32/ag32_target	ag32_target	theorem	ag32_ok_def	ag32_ok_def	unique
+compiler/encoders/ag32/ag32_target	ag32_target	constant	is_ag32_init_state	is_ag32_init_state	unique
+compiler/encoders/ag32/ag32_target	ag32_target	theorem	is_ag32_init_state_def	is_ag32_init_state_def	unique
+compiler/encoders/ag32/ag32_target	ag32_target	constant	ag32_encode1	ag32_encode1	unique
+compiler/encoders/ag32/ag32_target	ag32_target	theorem	ag32_encode1_def	ag32_encode1_def	unique
+compiler/encoders/ag32/ag32_target	ag32_target	constant	ag32_encode	ag32_encode	unique
+compiler/encoders/ag32/ag32_target	ag32_target	theorem	ag32_encode_def	ag32_encode_def	unique
+compiler/encoders/ag32/ag32_target	ag32_target	constant	ag32_bop	ag32_bop	unique
+compiler/encoders/ag32/ag32_target	ag32_target	theorem	ag32_bop_def	ag32_bop_def	unique
+compiler/encoders/ag32/ag32_target	ag32_target	constant	ag32_sh	ag32_sh	unique
+compiler/encoders/ag32/ag32_target	ag32_target	theorem	ag32_sh_def	ag32_sh_def	unique
+compiler/encoders/ag32/ag32_target	ag32_target	constant	ag32_cmp	ag32_cmp	unique
+compiler/encoders/ag32/ag32_target	ag32_target	theorem	ag32_cmp_def	ag32_cmp_def	unique
+compiler/encoders/ag32/ag32_target	ag32_target	constant	ag32_constant	ag32_constant	unique
+compiler/encoders/ag32/ag32_target	ag32_target	theorem	ag32_constant_def	ag32_constant_def	unique
+compiler/encoders/ag32/ag32_target	ag32_target	constant	ag32_jump_constant	ag32_jump_constant	unique
+compiler/encoders/ag32/ag32_target	ag32_target	theorem	ag32_jump_constant_def	ag32_jump_constant_def	unique
+compiler/encoders/ag32/ag32_target	ag32_target	constant	ag32_enc	ag32_enc	unique
+compiler/encoders/ag32/ag32_target	ag32_target	theorem	ag32_enc_def	ag32_enc_def	unique
+compiler/encoders/ag32/ag32_target	ag32_target	constant	ag32_config	ag32_config	unique
+compiler/encoders/ag32/ag32_target	ag32_target	theorem	ag32_config_def	ag32_config_def	unique
+compiler/encoders/ag32/ag32_target	ag32_target	constant	ag32_proj	ag32_proj	unique
+compiler/encoders/ag32/ag32_target	ag32_target	theorem	ag32_proj_def	ag32_proj_def	unique
+compiler/encoders/ag32/ag32_target	ag32_target	constant	ag32_target	ag32_target	unique
+compiler/encoders/ag32/ag32_target	ag32_target	theorem	ag32_target_def	ag32_target_def	unique
+compiler/encoders/ag32/ag32_target	ag32_target	theorem	ag32_config	ag32_config	unique
+compiler/encoders/ag32/ag32_target	ag32_target	theorem	ag32_asm_ok	ag32_asm_ok	unique
+compiler/encoders/ag32/proofs/ag32_targetProof	ag32_targetProof	theorem	bytes_in_memory_thm	bytes_in_memory_thm	unique
+compiler/encoders/ag32/proofs/ag32_targetProof	ag32_targetProof	theorem	bytes_in_memory_thm2	bytes_in_memory_thm2	unique
+compiler/encoders/ag32/proofs/ag32_targetProof	ag32_targetProof	theorem	add_carry_lem	add_carry_lem	unique
+compiler/encoders/ag32/proofs/ag32_targetProof	ag32_targetProof	theorem	add_carry_lem2	add_carry_lem2	unique
+compiler/encoders/ag32/proofs/ag32_targetProof	ag32_targetProof	theorem	shift_lem	shift_lem	unique
+compiler/encoders/ag32/proofs/ag32_targetProof	ag32_targetProof	theorem	long_mul_lem	long_mul_lem	unique
+compiler/encoders/ag32/proofs/ag32_targetProof	ag32_targetProof	theorem	load_lem2	load_lem2	unique
+compiler/encoders/ag32/proofs/ag32_targetProof	ag32_targetProof	theorem	length_ag32_encode	length_ag32_encode	unique
+compiler/encoders/ag32/proofs/ag32_targetProof	ag32_targetProof	theorem	ag32_target_ok	ag32_target_ok	unique
+compiler/encoders/ag32/proofs/ag32_targetProof	ag32_targetProof	theorem	aligned_pc	aligned_pc	unique
+compiler/encoders/ag32/proofs/ag32_targetProof	ag32_targetProof	theorem	concat_bytes	concat_bytes	unique
+compiler/encoders/ag32/proofs/ag32_targetProof	ag32_targetProof	theorem	funcT_thm	funcT_thm	unique
+compiler/encoders/ag32/proofs/ag32_targetProof	ag32_targetProof	theorem	shiftT_thm	shiftT_thm	unique
+compiler/encoders/ag32/proofs/ag32_targetProof	ag32_targetProof	theorem	Decode_Encode	Decode_Encode	unique
+compiler/encoders/ag32/proofs/ag32_targetProof	ag32_targetProof	theorem	ag32_run	ag32_run	unique
+compiler/encoders/ag32/proofs/ag32_targetProof	ag32_targetProof	theorem	bytes_in_memory_IMP_all_pcs_MEM	bytes_in_memory_IMP_all_pcs_MEM	unique
+compiler/encoders/ag32/proofs/ag32_targetProof	ag32_targetProof	theorem	ag32_encoder_correct	ag32_encoder_correct	unique
+compiler/backend/ag32/proofs/ag32_configProof	ag32_configProof	constant	is_ag32_machine_config	is_ag32_machine_config	unique
+compiler/backend/ag32/proofs/ag32_configProof	ag32_configProof	theorem	is_ag32_machine_config_def	is_ag32_machine_config_def	unique
+compiler/backend/ag32/proofs/ag32_configProof	ag32_configProof	theorem	ag32_backend_config_ok	ag32_backend_config_ok	unique
+compiler/backend/ag32/proofs/ag32_configProof	ag32_configProof	theorem	ag32_machine_config_ok	ag32_machine_config_ok	unique
+compiler/backend/ag32/proofs/ag32_configProof	ag32_configProof	theorem	ag32_init_ok	ag32_init_ok	unique
+compiler/backend/ag32/proofs/ag32_configProof	ag32_configProof	theorem	ag32_compile_correct	ag32_compile_correct	unique
+compiler/backend/ag32/proofs/ag32_configProof	ag32_configProof	theorem	get_shmem_info_LENGTH	get_shmem_info_LENGTH	unique
+compiler/backend/ag32/proofs/ag32_configProof	ag32_configProof	theorem	IMP_EVERY_list_add_if_fresh	IMP_EVERY_list_add_if_fresh	unique
+compiler/backend/ag32/proofs/ag32_configProof	ag32_configProof	theorem	find_ffi_names_ExtCall	find_ffi_names_ExtCall	unique
+compiler/backend/ag32/proofs/ag32_configProof	ag32_configProof	theorem	MAP_ExtCall_ffinames	MAP_ExtCall_ffinames	unique
+compiler/backend/ag32/proofs/ag32_configProof	ag32_configProof	theorem	compile_imp_ffi_names	compile_imp_ffi_names	unique

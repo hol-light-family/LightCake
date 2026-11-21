@@ -4,11 +4,12 @@ LightCake is a HOL Light port of [CakeML](https://cakeml.org), the verified impl
 of a dialect of ML, from CakeML's HOL4 development. It is not the CakeML project itself:
 for CakeML, its compiler and its HOL4 sources see https://cakeml.org and
 https://github.com/CakeML/cakeml. LightCake proves the main correctness theorem of the CakeML
-compiler, HOL4's `compilerProofTheory.compile_correct`, in HOL Light from HOL Light's three
-axioms only.
+compiler, HOL4's `compilerProofTheory.compile_correct`, and its instance for the ag32
+("Silver") target, HOL4's `ag32_configProofTheory.ag32_compile_correct`, in HOL Light from HOL
+Light's three axioms only.
 
 The port follows CakeML release v3479 (commit `e8eca63`, 2026-08-24). Every HOL4 script
-`foo/barScript.sml` of the dependency closure of `compile_correct` becomes a HOL Light file
+`foo/barScript.sml` of the dependency closures of these theorems becomes a HOL Light file
 `src/foo/bar.ml` with the same definitions and theorems, in the same order, with the same
 names (made unique where HOL4 relies on theory-qualified names), and with proofs written
 in HOL Light. Long scripts are split into consecutive parts `bar_p1.ml`, `bar_p2.ml`, ...,
@@ -41,6 +42,20 @@ type error, the semantics of the program is CannotParse or IllTyped (for assembl
 configuration errors it says nothing). The space-safety version gives equality of the
 behaviours when the source program is safe for space.
 
+`src/compiler/backend/ag32/proofs/ag32_compile_correct_statement.ml` states the ag32 theorem in
+the same way, as the term `ag32_compile_correct_statement`, and defines
+`is_ag32_machine_config`, the condition on the machine configuration. It is the correctness
+theorem of the compiler backend (HOL4's `backendProof` `compile_correct`) instantiated with the
+ag32 assembler configuration `ag32_config`, the compiler configuration `ag32_backend_config`
+and a machine configuration for the ag32 ISA (`src/compiler/encoders/ag32/ag32.ml`, the ISA
+definition that HOL4 generates with L3): if the backend compiles a program whose source
+semantics does not fail, then every behaviour of an ag32 machine on which the compiled code is
+installed is a behaviour of the program, or a prefix of one that ends at a resource limit. The
+proof uses the correctness of the ag32 instruction encoder (`ag32_encoder_correct` in
+`src/compiler/encoders/ag32/proofs/ag32_targetProof.ml`).
+`src/compiler/backend/ag32/proofs/ag32_configProof.ml` proves it as `ag32_compile_correct` and
+checks it against the statement in the same way.
+
 Not ported, because `compile_correct` does not use them and they need theories outside its
 closure: the entry points of `compiler.ml` for the Pancake language and for parsing target
 names (`compile_pancake` and its 64- and 32-bit versions, `parse_target_64/32`,
@@ -72,6 +87,9 @@ names (`compile_pancake` and its 64- and 32-bit versions, `parse_target_64/32`,
 | `src/compiler/backend/proofs/` | `backendProof`, `backendProof_p1`, `backendProof_p2`, `bvi_inlineProof`, `bvi_letProof`, `bvi_tailrecProof`, `bvi_tmcProof`, `bvi_to_dataProof`, `bvl_constProof`, `bvl_handleProof`, `bvl_inlineProof`, `bvl_jumpProof`, `bvl_to_bviProof`, `bvl_to_bviProof_p1`, `bvl_to_bviProof_p2`, `clos_annotateProof`, `clos_callProof`, `clos_constantProof`, `clos_fvsProof`, `clos_interpProof`, `clos_knownProof`, `clos_knownProps`, `clos_letopProof`, `clos_mtiProof`, `clos_numberProof`, `clos_opProof`, `clos_ticksProof`, `clos_to_bvlProof`, `clos_to_bvlProof_p1`, `clos_to_bvlProof_p2`, `clos_to_bvlProof_p3`, `data_liveProof`, `data_simpProof`, `data_spaceProof`, `data_to_wordProof`, `data_to_word_assignProof`, `data_to_word_assignProof_p1`, `data_to_word_assignProof_p2`, `data_to_word_assignProof_p3`, `data_to_word_assignProof_p4`, `data_to_word_assignProof_p5`, `data_to_word_assignProof_p6`, `data_to_word_bignumProof`, `data_to_word_gcProof`, `data_to_word_gcProof_p1`, `data_to_word_gcProof_p2`, `data_to_word_gcProof_p3`, `data_to_word_memoryProof`, `data_to_word_memoryProof_p1`, `data_to_word_memoryProof_p2`, `data_to_word_memoryProof_p3`, `data_to_word_memoryProof_p4`, `data_to_word_memoryProof_p5`, `data_to_word_memoryProof_p6`, `data_to_word_memoryProof_p7`, `flat_elimProof`, `flat_patternProof`, `flat_to_closProof`, `lab_filterProof`, `lab_to_targetProof`, `lab_to_targetProof_p1`, `lab_to_targetProof_p2`, `lab_to_targetProof_p3`, `lab_to_targetProof_p4`, `source_evalProof`, `source_letProof`, `source_to_flatProof`, `source_to_flatProof_p1`, `source_to_flatProof_p2`, `source_to_sourceProof`, `stack_allocProof`, `stack_allocProof_p1`, `stack_allocProof_p2`, `stack_namesProof`, `stack_rawcallProof`, `stack_removeProof`, `stack_to_labProof`, `stack_to_labProof_p1`, `stack_to_labProof_p2`, `wordConvsProof`, `word_allocProof`, `word_allocProof_p1`, `word_allocProof_p2`, `word_bignumProof`, `word_copyProof`, `word_cseProof`, `word_depthProof`, `word_elimProof`, `word_gcFunctions`, `word_instProof`, `word_removeProof`, `word_simpProof`, `word_to_stackProof`, `word_to_stackProof_p1`, `word_to_stackProof_p2`, `word_to_stackProof_p3`, `word_to_stackProof_p4`, `word_to_wordProof`, `word_unreachProof` |
 | `src/compiler/` | `compiler` |
 | `src/compiler/backend/ag32/` | `ag32_config`, `export_ag32` |
+| `src/compiler/backend/ag32/proofs/` | `ag32_compile_correct_statement`, `ag32_configProof` |
+| `src/compiler/encoders/ag32/` | `ag32`, `ag32_target` |
+| `src/compiler/encoders/ag32/proofs/` | `ag32_targetProof` |
 | `src/compiler/backend/arm7/` | `arm7_config`, `export_arm7` |
 | `src/compiler/backend/arm8/` | `arm8_config`, `export_arm8` |
 | `src/compiler/backend/mips/` | `export_mips`, `mips_config` |
@@ -98,14 +116,15 @@ or check it with
 
 which loads `make.ml`, prints the number of axioms (3) and the list of axioms, checks the
 headline theorems (`HEADLINE true`: no hypotheses, conclusions alpha-equivalent to the
-statements of `compile_correct_statement.ml`) and ends with `CHECK_OK`. Everything loads in one
+statements of `compile_correct_statement.ml`; `HEADLINE_AG32 true`: the same for
+`ag32_compile_correct_statement.ml`) and ends with `CHECK_OK`. Everything loads in one
 HOL Light session; `check.ml` was run this way with three versions of HOL Light:
 
 | HOL Light | time of `check.ml` |
 |---|---|
 | commit `1a0c0e6` of jrh13/hol-light (with pull request #215: faster definitions and derived rules) | 1.6 hours |
 | commit `55cac39` of jargh/hol-light-dev (pull request #218 of jrh13/hol-light: MESON, X_CHOOSE_TAC and simplifier fixes) | 1.6 hours |
-| commit `6dbb775` of jrh13/hol-light | 3.2 hours |
+| commit `6dbb775` of jrh13/hol-light | 3.3 hours |
 
 After `loadt "src/prelude.ml";;` any single
 file can be loaded on its own with `needs`, for example `needs "semantics/namespace.ml";;`

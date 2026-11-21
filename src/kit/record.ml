@@ -15,9 +15,13 @@
 (*   rec_fupdcanon   rec_fj_fupd g (rec_fi_fupd h r)                         *)
 (*                     = rec_fi_fupd h (rec_fj_fupd g r)   (i < j)           *)
 (*   rec_component_equality   r1 = r2 <=> rec_f1 r1 = rec_f1 r2 /\ ...       *)
-(* all but the last registered in the project simpset (HOL4's srw_ss does    *)
-(* the same).  At the end: SAME_RUN_TAC thl and SAME_RUN_SUFF_TAC, for the    *)
-(* same run of a function from states proved equal (simulation proofs).      *)
+(*   rec_fupdselfid  rec_fi_fupd (K (rec_fi r)) r = r  (HOL4 r with fi :=    *)
+(*                   r.fi = r; record_fupdselfid "rec"; since 2026-11-20)    *)
+(* all but the last two registered in the project simpset (HOL4's srw_ss    *)
+(* has all but the component equality; the selfid rules are used with the   *)
+(* marker RECORD_SELFID_ss: existing proofs rely on their absence).  At the *)
+(* end: SAME_RUN_TAC thl and SAME_RUN_SUFF_TAC, for the same run of a        *)
+(* function from states proved equal (simulation proofs).                    *)
 (* ========================================================================= *)
 
 type record_info =
@@ -28,7 +32,17 @@ type record_info =
 
 let the_records = ref ([] : (string * record_info) list);;
 
+
+
 let record_info name = assoc name (!the_records);;
+
+(* the rec_fupdselfid theorem of each record (kept apart from record_info,  *)
+(* whose type files of the port also build: pancake/panLang), proved when   *)
+(* first used (record_fupdselfid, RECORD_SELFID_ss): a record of n fields   *)
+(* takes n small proofs, about a second for the big states                 *)
+let the_record_selfids = ref ([] : (string * thm Lazy.t) list);;
+
+let record_fupdselfid name = Lazy.force (assoc name (!the_record_selfids));;
 
 (* HOL4's K_o_THM *)
 let K_o_THM = prove
@@ -139,6 +153,15 @@ let cake_record (name:string) (fields:(string * string) list) =
     REPEAT GEN_TAC THEN
     STRUCT_CASES_TAC (SPEC r1 nch) THEN STRUCT_CASES_TAC (SPEC r2 nch) THEN
     REWRITE_TAC[accessors; injectivity name]) in
+  (* rec_fupdselfid (HOL4): r with fi := r.fi = r *)
+  let selfid_tms = map2 (fun u a ->
+      let fty = snd(dest_fun_ty(type_of a)) in
+      let kc = mk_const("K",[fty,aty; fty,bty]) in
+      mk_forall(r,mk_eq(list_mk_comb(u,[mk_comb(kc,mk_comb(a,r)); r]),r)))
+    upds accs in
+  let fupdselfid = lazy (prove(list_mk_conj selfid_tms,
+    REPEAT CONJ_TAC THEN GEN_TAC THEN STRUCT_CASES_TAC (SPEC r nch) THEN
+    REWRITE_TAC(accessors :: K_THM :: upd_defs))) in
   let ri = { ri_name = name;
              ri_fields = map2 (fun f (a,u) -> f,a,u) fnames (zip accs upds);
              ri_accessors = accessors; ri_fupds = fupds; ri_accfupds = accfupds;
@@ -147,6 +170,10 @@ let cake_record (name:string) (fields:(string * string) list) =
   the_records := (name,ri) :: !the_records;
   cake_add_global_simps ([accessors; fupds; accfupds; fupdfupds; K_o_THM; KLAM_o_THM] @
                   (if fupdcanon = TRUTH then [] else [fupdcanon]));
+  (* the selfid rule: for the RECORD_SELFID_ss marker (simp.ml), not in the *)
+  (* project simpset: existing proofs rely on its absence                    *)
+  kit_record_selfids := !kit_record_selfids @ [fupdselfid];
+  the_record_selfids := (name,fupdselfid) :: !the_record_selfids;
   ri;;
 
 (* ------------------------------------------------------------------------- *)

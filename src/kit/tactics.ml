@@ -197,6 +197,23 @@ let TOP_CASE_TAC : tactic =
     let x = first_case_scrutinee w w in
     (CASES_ON x THEN CASE_TIDY_TAC) gl;;
 
+(* TOP_CASE_NOPAIR_TAC: TOP_CASE_TAC as HOL4's, which does not see paired   *)
+(* lets (HOL4 writes them with UNCURRY): pair_CASE (let (a,b) = e in t, or  *)
+(* a match on a pair) is skipped, and the tactic fails if that is all there *)
+(* is (PAIRARG_TAC splits those).  The kit's TOP_CASE_TAC splits the first  *)
+(* case expression of any kind, also pair_CASE; the full load of 2026-11-20 *)
+(* showed that existing proofs rely on that (hol4/mc_multiword), so it is a *)
+(* separate tactic.  Since 2026-11-20.                                       *)
+let is_pair_case_app t =
+  is_case_app t && (let c,_,_ = dest_case_app t in fst(dest_const c) = "pair_CASE");;
+
+let TOP_CASE_NOPAIR_TAC : tactic =
+  fun (asl,w as gl) ->
+    let x = scrutinized_and_free_in w
+              (find_term (fun t -> is_scrutinized_and_free_in w t &&
+                                   not (is_pair_case_app t)) w) in
+    (CASES_ON x THEN CASE_TIDY_TAC) gl;;
+
 let CASE_TAC : tactic =
   fun (asl,w as gl) ->
     let x = inner_case_scrutinee w w in
@@ -261,9 +278,17 @@ let rec drule_all_with asl th =
     tryfind (fun a -> drule_all_with asl (mp a)) asl
   else th;;
 
+(* HOL4's drule_all fails on a theorem that is not an implication; the    *)
+(* kit's gave the theorem back (FIRST_X_ASSUM DRULE_ALL took the newest     *)
+(* assumption whatever it was).  Since 2026-11-20 it fails too (check mode: *)
+(* KITDIFF and the old behaviour).                                          *)
 let DRULE_ALL th : tactic =
   fun (asl,w as gl) ->
-    MP_TAC (drule_all_with (map snd asl) (IMP_CURRY_RULE (GEN_ALL th))) gl;;
+    let th' = IMP_CURRY_RULE (GEN_ALL th) in
+    if not (is_imp (snd (strip_forall (concl th')))) then
+      (if !kit_check then (kit_diff "DRULE_ALL on a non-implication"; MP_TAC th' gl)
+       else failwith "DRULE_ALL: not an implication")
+    else MP_TAC (drule_all_with (map snd asl) th') gl;;
 
 (* theorem-tactic forms: use an assumption as the rule *)
 
@@ -373,12 +398,46 @@ let kit_assume_new th : tactic = fun (asl,w as g) ->
   if exists (fun (_,a) -> aconv (concl a) (concl th)) asl then ALL_TAC g
   else CAKE_ASSUME_TAC th g;;
 
-let FULL_RES_TAC : tactic =
+let kit_full_res_old : tactic =
   let rec rounds k old : tactic = fun (asl,w as gl) ->
     let is_new (_,th) = not (exists (fun (_,a) -> aconv (concl a) (concl th)) old) in
     if k <= 1 || not (exists is_new asl) then ALL_TAC gl
     else (kit_res_with kit_assume_new THEN rounds (k-1) asl) gl in
   fun (asl,w as gl) -> (RES_TAC THEN rounds !kit_res_rounds asl) gl;;
+
+(* Since 2026-11-20 FULL_RES_TAC goes on to a fixpoint (at most            *)
+(* kit_res_max_rounds rounds), every round adding only new facts, and the  *)
+(* one-point rule is applied to each new fact first (!x. x = t ==> P x     *)
+(* becomes P t, ?x. x = t /\ P x becomes P t), so that a resolvent such as *)
+(* !v. v = f a ==> Q v is used at once (check mode: KITDIFF where the goals *)
+(* differ from the old FULL_RES_TAC's, and those).                          *)
+
+let kit_res_max_rounds = ref 10;;
+
+let kit_one_point_rule (th:thm) : thm =
+  try CONV_RULE (CHANGED_CONV (TOP_DEPTH_CONV
+         (CHANGED_CONV FORALL_UNWIND_CONV ORELSEC CHANGED_CONV UNWIND_CONV))) th
+  with Failure _ -> th;;
+
+let kit_full_res_new : tactic =
+  let rec rounds k old : tactic = fun (asl,w as gl) ->
+    let is_new (_,th) = not (exists (fun (_,a) -> aconv (concl a) (concl th)) old) in
+    if k <= 0 || not (exists is_new asl) then ALL_TAC gl
+    else (kit_res_with (fun th -> kit_assume_new (kit_one_point_rule th)) THEN
+          rounds (k-1) asl) gl in
+  fun gl -> rounds !kit_res_max_rounds [] gl;;
+
+let kit_same_goalstate ((_,gs1,_):goalstate) ((_,gs2,_):goalstate) =
+  length gs1 = length gs2 &&
+  forall2 (fun (a1,w1) (a2,w2) ->
+             aconv w1 w2 && length a1 = length a2 &&
+             forall2 (fun (_,x) (_,y) -> aconv (concl x) (concl y)) a1 a2) gs1 gs2;;
+
+let FULL_RES_TAC : tactic = fun gl ->
+  if !kit_check then
+    kit_check_both "FULL_RES_TAC fixpoint" kit_same_goalstate
+      (fun () -> kit_full_res_old gl) (fun () -> kit_full_res_new gl)
+  else kit_full_res_new gl;;
 
 (* ------------------------------------------------------------------------- *)
 (* pairarg_tac: a pair_CASE e (\a b. ...) with e not a pair becomes          *)
@@ -406,8 +465,8 @@ let PAIRARG_TAC : tactic =
     (* theorem (a variable eliminated by SUBS stays there): CHOOSE fails     *)
     (* in the justification if one of them is chosen                         *)
     let avoid = itlist (union o thm_frees o snd) asl (frees whole) in
-    let v1 = variant avoid (mk_var(n1,tya)) in
-    let v2 = variant (v1::avoid) (mk_var(n2,tyb)) in
+    let v1 = kit_fresh_var avoid (mk_var(n1,tya)) in
+    let v2 = kit_fresh_var (v1::avoid) (mk_var(n2,tyb)) in
     let nch = ISPEC x (nchotomy_of_type (type_of x)) in
     (MP_TAC nch THEN
      DISCH_THEN(X_CHOOSE_THEN v1 (X_CHOOSE_THEN v2
@@ -451,6 +510,15 @@ let with_type_invention f x =
   type_invention_error := false;
   try let r = f x in type_invention_error := old; r
   with e -> (type_invention_error := old; raise e);;
+
+(* the same, also without the warning: for the patterns of the q-tactics, *)
+(* whose type variables are found by matching (HOL4's q-tactics parse with  *)
+(* its warnings off too); since 2026-11-20                                  *)
+let with_quiet_type_invention f x =
+  let old_e = !type_invention_error and old_w = !type_invention_warning in
+  type_invention_error := false; type_invention_warning := false;
+  let restore () = type_invention_error := old_e; type_invention_warning := old_w in
+  try let r = f x in restore (); r with e -> (restore (); raise e);;
 
 let METIS_TAC thl : tactic =
   fun g -> with_type_invention (fun g -> METIS_TAC thl g) g;;
@@ -865,7 +933,7 @@ let PAIR_CASES_ON (x:term) : tactic = fun (asl,w as g) ->
   let rec fresh av l i =
     match l with
       [] -> []
-    | t::rest -> let v = variant av (mk_var(n ^ string_of_int i,t)) in
+    | t::rest -> let v = kit_fresh_var av (mk_var(n ^ string_of_int i,t)) in
                  v :: fresh (v::av) rest (i+1) in
   let vs = fresh avoid tys 0 in
   let tup = end_itlist (curry mk_pair) vs in
@@ -919,7 +987,7 @@ let kit_parse_in (vars:term list) (s:string) : term =
   let venv = map (fun v -> let n,ty = dest_var v in n,pretype_of_type ty) vars in
   let ptm,l = (parse_preterm o flat o map cake_wild_tokens o lex o explode) s in
   if l <> [] then failwith "RENAME: unparsed input in pattern" else
-  with_type_invention (fun p -> cake_preterm_to_term s venv p) ptm;;
+  with_quiet_type_invention (fun p -> cake_preterm_to_term s venv p) ptm;;
 
 (* parse s with the free variables vars typed, as a term of type ty *)
 let kit_parse_typed (vars:term list) (ty:hol_type) (s:string) : term =
@@ -1094,3 +1162,439 @@ let MATCH_GOALSUB_RENAME_TAC (s:string) : tactic = kit_rename_with ["sg0"] false
 
 let RENAME_TAC (sl:string list) : tactic =
   itlist (fun s k -> kit_rename_with ["g";"a";"sg";"sa"] true s k) sl ALL_TAC;;
+
+(* ========================================================================= *)
+(* More HOL4 tactics (since 2026-11-20).                                     *)
+(*                                                                           *)
+(*   QREFINE_TAC "t"        qrefine: witness t with new existentials.        *)
+(*   QREFINEL_TAC ["t";"_"] qrefinel: several witnesses, _ keeps one.        *)
+(*   DEP_REWRITE_TAC thl    dep_rewrite: conditional rewrites, antecedents   *)
+(*                          as new conjuncts; DEP_ONCE_REWRITE_TAC, and the  *)
+(*                          PURE_ versions.                                  *)
+(*   MATCH_GOALSUB_ABBREV_TAC "pat"  qmatch_goalsub_abbrev_tac;              *)
+(*   MATCH_ASMSUB_ABBREV_TAC "pat"   qmatch_asmsub_abbrev_tac.               *)
+(*   QBY "t" tac            `t` by tac; QSUFFICES_BY "t" tac (suffices_by);  *)
+(*                          QSUBGOAL "t" (sg).                               *)
+(*   NAMED_CASES_ON "t" ["a b";"c"]  namedCases_on.                          *)
+(*   QINDUCT_ON "x"         Induct_on `x`, x free or bound in the goal.      *)
+(* ========================================================================= *)
+
+(* the free variables of tm, in the order of their first occurrence *)
+let kit_frees_lr (tm:term) : term list =
+  let rec go bvs t acc =
+    match t with
+      Var _ -> if mem t bvs || mem t acc then acc else t :: acc
+    | Const _ -> acc
+    | Comb(f,x) -> go bvs x (go bvs f acc)
+    | Abs(v,b) -> go (v::bvs) b acc in
+  rev (go [] tm []);;
+
+(* ------------------------------------------------------------------------- *)
+(* qrefine and qrefinel (HOL4 Q.REFINE_EXISTS_TAC, Q.LIST_REFINE_EXISTS_TAC) *)
+(* ------------------------------------------------------------------------- *)
+
+(* |- w from |- b[vals/vs], for w = ?v1 .. vk. b and vals of length k *)
+let rec kit_exists_n (w:term) (vals:term list) (th:thm) : thm =
+  match vals with
+    [] -> EQ_MP (ALPHA (concl th) w) th
+  | t::rest -> let v,b = dest_exists w in
+               EXISTS (w,t) (kit_exists_n (vsubst [t,v] b) rest th);;
+
+(* a |- c to (?v1 .. vn. a') |- c, for a = ?v1 .. vn. a' (the vi not free  *)
+(* in c or other hypotheses)                                                *)
+let rec kit_choose_list (vs:term list) (a:term) (th:thm) : thm =
+  match vs with
+    [] -> th
+  | v::rest -> let v',inner = dest_exists a in
+               let inner' = if v' = v then inner else vsubst [v,v'] inner in
+               CHOOSE (v,ASSUME a) (kit_choose_list rest inner' th);;
+
+(* the goal ?v1 .. vk. b with the values vals for v1 .. vk (a value may be   *)
+(* the variable itself), as the goal ?ws. b[vals/vs]                       *)
+let kit_refine (vals:term list) (ws:term list) : tactic = fun (asl,w) ->
+  let rec strip n tm acc =
+    if n = 0 then rev acc,tm else
+    let v,b = try dest_exists tm with Failure _ -> failwith "QREFINE: too few existentials" in
+    strip (n-1) b (v::acc) in
+  let vs,b = strip (length vals) w [] in
+  let b' = vsubst (zip vals vs) b in
+  let w' = list_mk_exists(ws,b') in
+  let th = kit_choose_list ws w' (kit_exists_n w vals (ASSUME b')) in
+  (null_meta,[asl,w'],fun _ thl -> PROVE_HYP (hd thl) th);;
+
+(* HOL4 qrefine `t`: for a goal ?x. P x, the witness t is parsed in the      *)
+(* goal's context with the type of x; its free variables that are not free  *)
+(* in the goal become existential: ?v1 .. vn. P t (vi in order of           *)
+(* occurrence), e.g. QREFINE_TAC "ck + n" on ?ck. evaluate .. ck .. .        *)
+let QREFINE_TAC (s:string) : tactic = fun (asl,w as g) ->
+  let v,_ = try dest_exists w with Failure _ -> failwith "QREFINE_TAC: not an existential" in
+  let fr = kit_goal_frees g in
+  let t = kit_parse_typed fr (type_of v) s in
+  let ws = filter (fun x -> not (mem x fr)) (kit_frees_lr t) in
+  kit_refine [t] ws g;;
+
+(* HOL4 qrefinel [`t1`, `_`, ..]: witnesses for the first existential       *)
+(* variables, each parsed in the goal's context and that of the new         *)
+(* variables of the witnesses before it; "_" keeps the variable existential *)
+(* (renamed apart from the new variables); the goal is then ?ws vs'. b with *)
+(* ws the new variables (in order) and vs' the kept ones.                   *)
+let QREFINEL_TAC (sl:string list) : tactic = fun (asl,w as g) ->
+  let fr = kit_goal_frees g in
+  let rec strip n tm acc =
+    if n = 0 then rev acc else
+    let v,b = try dest_exists tm with Failure _ -> failwith "QREFINEL_TAC: too many witnesses" in
+    strip (n-1) b (v::acc) in
+  let vs = strip (length sl) w [] in
+  let rec go pairs news vals =
+    match pairs with
+      [] -> rev news,rev vals
+    | (s,v)::rest ->
+        if String.trim s = "_" then go rest news ((None,v)::vals) else
+        let t = kit_parse_typed (fr @ news) (type_of v) s in
+        let nw = filter (fun x -> not (mem x fr) && not (mem x news)) (kit_frees_lr t) in
+        go rest (rev nw @ news) ((Some t,v)::vals) in
+  let news,vals = go (zip sl vs) [] [] in
+  (* kept variables, renamed apart from the goal and the new variables *)
+  let avoid = ref (fr @ news) in
+  let vals' = map (fun (wo,v) ->
+      match wo with
+        Some t -> t,None
+      | None -> let v' = kit_primed_var !avoid v in avoid := v' :: !avoid; v',Some v') vals in
+  let kept = mapfilter (fun (_,k) -> match k with Some v -> v | None -> fail()) vals' in
+  kit_refine (map fst vals') (news @ kept) g;;
+
+(* ------------------------------------------------------------------------- *)
+(* HOL4 dep_rewrite (Homeier): DEP_PURE_ONCE_REWRITE_TAC thl uses each       *)
+(* theorem of thl (each conjunct) once, in order: !xs. a1 ==> .. ==> l = r   *)
+(* (conjunctive antecedents curried; a conclusion ~p is p = F, other ones p *)
+(* are p = T) is matched with the first subterm of the goal (top down, left *)
+(* to right) that it matches with antecedents free of variables bound above *)
+(* the subterm; the goal is rewritten once (PURE_ONCE_REWRITE_CONV) with    *)
+(* the instance and its antecedents are collected; then the goal is         *)
+(* a1' /\ .. /\ an' /\ goal' (the antecedents without duplicates and T).    *)
+(* DEP_ONCE_REWRITE_TAC thl is that THEN REWRITE_TAC[].  DEP_PURE_REWRITE_TAC *)
+(* and DEP_REWRITE_TAC rewrite with each instance to a fixpoint             *)
+(* (PURE_REWRITE_CONV, REWRITE_CONV), use the theorems again until nothing   *)
+(* changes, and then again on the new goal with its antecedent conjuncts     *)
+(* (at most kit_dep_max_steps instances in all).                             *)
+(* ------------------------------------------------------------------------- *)
+
+let kit_dep_max_steps = ref 200;;
+
+(* the rules of a theorem: (number of antecedents, a1 ==> .. ==> l = r with *)
+(* the variables free, the variables that th quantifies, renamed apart from *)
+(* avoid, the variables of the goal); th's own free variables are           *)
+(* instantiated by matching too (as in HOL4)                                *)
+let kit_dep_rules (avoid:term list) (thl:thm list) : (int * thm * term list) list =
+  map (fun th ->
+         let thf,xs,ants = kit_rule_parts (union avoid (thm_frees th)) th in
+         let c = concl thf in
+         let eqth = if is_eq c then thf else if is_neg c then EQF_INTRO thf
+                    else EQT_INTRO thf in
+         length ants,itlist DISCH ants eqth,xs)
+      (flat (map CONJUNCTS thl));;
+
+(* the first instance of a rule in tm: A |- l' = r' (A the antecedents).    *)
+(* The variables that the theorem quantifies and that the match leaves in   *)
+(* antecedents only become existential, as in HOL4 (DEP_FIND_matches): the  *)
+(* antecedents with them are then one antecedent ?vs. ai' /\ .. /\ aj'       *)
+let kit_dep_match ((n,rule,xs):int * thm * term list) (tm:term) : thm * term list =
+  let partfn c = lhs (funpow n rand c) in
+  let mfn = PART_MATCH partfn rule in
+  let rec ants k c = if k = 0 then [] else lhand c :: ants (k-1) (rand c) in
+  let at bvs t =
+    let ith = mfn t in
+    let al = ants n (concl ith) in
+    let eqi = funpow n UNDISCH ith in
+    let eqn = concl eqi in
+    let evs = filter (fun x -> not (vfree_in x eqn) && exists (vfree_in x) al &&
+                               not (exists (fun h -> vfree_in x h) (hyp rule))) xs in
+    let eqi,al =
+      if evs = [] then eqi,al else
+      let eal,oal = partition (fun a -> exists (fun x -> vfree_in x a) evs) al in
+      let a = list_mk_conj eal in
+      let eqa = itlist PROVE_HYP (kit_conj_split (length eal) (ASSUME a)) eqi in
+      let ex = list_mk_exists(evs,a) in
+      kit_choose_list evs ex eqa,oal @ [ex] in
+    if exists (fun a -> exists (fun b -> vfree_in b a) bvs) al
+    then failwith "kit_dep_match: bound variable" else eqi,al in
+  let rec search bvs t =
+    try at bvs t with Failure _ ->
+    match t with
+      Comb(l,r) -> (try search bvs l with Failure _ -> search bvs r)
+    | Abs(v,b) -> search (v::bvs) b
+    | _ -> failwith "kit_dep_match" in
+  search [] tm;;
+
+(* rewrite tm with the rules (each once if once, else again and again):    *)
+(* A |- tm = tm' and the antecedents A, or failure if nothing applies      *)
+let kit_dep_conv (once:bool) (rw:thm list -> conv) (rules:(int * thm * term list) list)
+                 (tm:term) : thm * term list =
+  let steps = ref 0 in
+  let rec round rules tm (th,acc) changed =
+    match rules with
+      [] -> (th,acc),changed
+    | r::rest ->
+        (match (try Some (kit_dep_match r tm) with Failure _ -> None) with
+           None -> round rest tm (th,acc) changed
+         | Some (eqi,al) ->
+             incr steps;
+             if !steps > !kit_dep_max_steps then failwith "DEP_REWRITE: too many steps" else
+             let cth = rw [eqi] tm in
+             let tm' = rand(concl cth) in
+             if tm' = tm then round rest tm (th,acc) changed else
+             round rest tm' (TRANS th cth,acc @ al) true) in
+  let rec loop tm (th,acc) any =
+    let (th',acc'),changed = round rules tm (th,acc) false in
+    if changed && not once then loop (rand(concl th')) (th',acc') true
+    else (th',acc'),(any || changed) in
+  let (th,acc),changed = loop tm (REFL tm,[]) false in
+  if not changed then failwith "DEP_REWRITE: no change" else th,acc;;
+
+(* the goal from |- A /\ .. /\ tm' (A the antecedents) *)
+let kit_dep_tac (once:bool) (rw:thm list -> conv) (thl:thm list) : tactic =
+  fun (asl,w) ->
+    let rules = kit_dep_rules (variables w) thl in
+    let cth,al = kit_dep_conv once rw rules w in
+    let w' = rand(concl cth) in
+    let atoms = rev_itlist (fun a acc ->
+        rev_itlist (fun c acc -> if c = cake_true_tm || exists (aconv c) acc then acc
+                                 else acc @ [c])
+                   (conjuncts a) acc) al [] in
+    if atoms = [] then
+      let cth' = itlist (fun a th -> PROVE_HYP (EQT_ELIM (REWRITE_CONV[] a)) th) al cth in
+      (null_meta,[asl,w'],fun _ thl -> EQ_MP (SYM cth') (hd thl))
+    else
+      (* the goal A /\ goal', or just A when goal' is T (as HOL4's DEP_TAC) *)
+      let triv = (w' = cake_true_tm) in
+      let nw = if triv then list_mk_conj atoms else mk_conj(list_mk_conj atoms,w') in
+      (null_meta,[asl,nw],fun _ thl ->
+         let th = hd thl in
+         let ath = if triv then th else CONJUNCT1 th in
+         let aths = kit_conj_split (length atoms) ath in
+         let rec build t =
+           if t = cake_true_tm then TRUTH
+           else if is_conj t then CONJ (build (lhand t)) (build (rand t))
+           else let f = find (fun f -> aconv (concl f) t) aths in
+                EQ_MP (ALPHA (concl f) t) f in
+         let cth' = itlist (fun a th -> PROVE_HYP (build a) th) al cth in
+         EQ_MP (SYM cth') (if triv then TRUTH else CONJUNCT2 th));;
+
+let DEP_PURE_ONCE_REWRITE_TAC thl = kit_dep_tac true PURE_ONCE_REWRITE_CONV thl;;
+let DEP_ONCE_REWRITE_TAC thl = DEP_PURE_ONCE_REWRITE_TAC thl THEN REWRITE_TAC[];;
+let DEP_PURE_REWRITE_TAC thl =
+  REPEAT (CHANGED_TAC (kit_dep_tac false PURE_REWRITE_CONV thl));;
+let DEP_REWRITE_TAC thl =
+  REPEAT (CHANGED_TAC (kit_dep_tac false REWRITE_CONV thl));;
+let DEP_ASM_REWRITE_TAC thl = ASSUM_LIST (fun asl -> DEP_REWRITE_TAC (asl @ thl));;
+let DEP_ONCE_ASM_REWRITE_TAC thl = ASSUM_LIST (fun asl -> DEP_ONCE_REWRITE_TAC (asl @ thl));;
+
+(* ------------------------------------------------------------------------- *)
+(* HOL4 qmatch_goalsub_abbrev_tac `pat` and qmatch_asmsub_abbrev_tac: the    *)
+(* pattern (a string, parsed in the goal's context: its variables that are  *)
+(* free in the goal stand for themselves) is matched with the subterms of   *)
+(* the goal (of the assumptions), top down, newest assumption first; the    *)
+(* other pattern variables (not those named _..) become abbreviations       *)
+(* (ABBREV_TAC `v = t`: t is replaced by v in the goal and the assumptions  *)
+(* and t = v is assumed); EXPAND_TAC "v" undoes one.                        *)
+(* ------------------------------------------------------------------------- *)
+
+let kit_match_abbrev (sel:string list) (s:string) : tactic = fun (asl,w as g) ->
+  let fr = kit_goal_frees g in
+  let pat = kit_parse_in fr s in
+  let fixed = intersect (frees pat) fr in
+  let binds = tryfind (fun (t,bvs) ->
+                 let b = kit_rename_match fixed pat bvs t in
+                 if b = [] then failwith "nothing to abbreviate" else b)
+                (kit_rename_places sel g) in
+  MAP_EVERY (fun (t,v) -> if is_var t then ALL_TAC else ABBREV_TAC (mk_eq(v,t))) binds g;;
+
+let MATCH_GOALSUB_ABBREV_TAC (s:string) : tactic = kit_match_abbrev ["sg0"] s;;
+
+let MATCH_ASMSUB_ABBREV_TAC (s:string) : tactic = kit_match_abbrev ["sa0"] s;;
+
+(* ------------------------------------------------------------------------- *)
+(* HOL4 `t` by tac, `t` suffices_by tac, sg `t`, with t a string parsed in   *)
+(* the goal's context (no type annotations needed).                          *)
+(*   QBY "t" tac          prove t by tac (which must solve it), then strip  *)
+(*                        it into the assumptions (as HOL4's by).           *)
+(*   QSUFFICES_BY "t" tac t ==> goal by tac; t is the new goal.             *)
+(*   QSUBGOAL "t"         the goals t, then the goal with t assumed.        *)
+(* ------------------------------------------------------------------------- *)
+
+let QBY (s:string) (tac:tactic) : tactic = fun g ->
+  let t = kit_parse_typed (kit_goal_frees g) bool_ty s in
+  (SUBGOAL_THEN t CAKE_STRIP_ASSUME_TAC THENL [tac THEN NO_TAC; ALL_TAC]) g;;
+
+let QSUFFICES_BY (s:string) (tac:tactic) : tactic = fun g ->
+  let t = kit_parse_typed (kit_goal_frees g) bool_ty s in
+  (SUFF_TAC t THENL [tac THEN NO_TAC; ALL_TAC]) g;;
+
+let QSUBGOAL (s:string) : tactic = fun g ->
+  let t = kit_parse_typed (kit_goal_frees g) bool_ty s in
+  SUBGOAL_THEN t CAKE_STRIP_ASSUME_TAC g;;
+
+(* ------------------------------------------------------------------------- *)
+(* HOL4 namedCases_on `t` ["a b"; "c"]: CASES_ON with the names of the new   *)
+(* variables of each case (the disjuncts of the type's cases theorem, in     *)
+(* order; "_" or "" keeps the default names of a case); for a product type  *)
+(* one string names all the components (HOL4's tupleCases): ["a b c"]      *)
+(* gives t = (a,b,c).  t is parsed in the goal's context.                   *)
+(* ------------------------------------------------------------------------- *)
+
+let kit_named_nchotomy (names:string list) (ty:hol_type) : thm =
+  let words s = filter (fun w -> w <> "") (String.split_on_char ' ' (String.trim s)) in
+  let rec comps ty = match ty with Tyapp("prod",[a;b]) -> a :: comps b | _ -> [ty] in
+  let tys = comps ty in
+  if length tys > 1 && length names = 1 then
+    let ns = words (hd names) in
+    if length ns <> length tys then failwith "NAMED_CASES_ON: wrong number of names" else
+    let vs = map2 (fun n t -> if n = "_" || n = "-" then genvar t else mk_var(n,t)) ns tys in
+    let x = variant vs (mk_var("x",ty)) in
+    let tup = end_itlist (curry mk_pair) vs in
+    let rec projs t l =
+      match l with
+        [_] -> [t]
+      | _::rest -> mk_icomb(mk_const("FST",[]),t) :: projs (mk_icomb(mk_const("SND",[]),t)) rest
+      | [] -> [] in
+    GEN x (prove(list_mk_exists(vs,mk_eq(x,tup)),
+                 MAP_EVERY EXISTS_TAC (projs x vs) THEN REWRITE_TAC[PAIR]))
+  else
+    let nch = nchotomy_of_type ty in
+    let nch = INST_TYPE (type_match (type_of (fst(dest_forall(concl nch)))) ty []) nch in
+    let x,body = dest_forall (concl nch) in
+    let ds = disjuncts body in
+    let rename (s,d) =
+      let bvs,m = strip_exists d in
+      let ns = words s in
+      if ns = [] || ns = ["_"] || ns = ["-"] || length ns <> length bvs then d else
+      let vs' = map2 (fun n v -> if n = "_" || n = "-" then v else mk_var(n,type_of v)) ns bvs in
+      list_mk_exists(vs',vsubst (zip vs' bvs) m) in
+    let names' = if length names >= length ds then fst(chop_list (length ds) names)
+                 else names @ replicate "_" (length ds - length names) in
+    let tm' = mk_forall(x,list_mk_disj(map rename (zip names' ds))) in
+    EQ_MP (ALPHA (concl nch) tm') nch;;
+
+let NAMED_CASES_ON (s:string) (names:string list) : tactic = fun (asl,w as g) ->
+  let fr = kit_goal_frees g in
+  let venv = map (fun v -> let n,t = dest_var v in n,pretype_of_type t) fr in
+  let ptm,l = (parse_preterm o flat o map cake_wild_tokens o lex o explode) s in
+  if l <> [] then failwith "NAMED_CASES_ON: unparsed input" else
+  let tm = cake_preterm_to_term s venv ptm in
+  let nch = ISPEC tm (kit_named_nchotomy names (type_of tm)) in
+  (* the new variables keep their names unless they are in use *)
+  let avoid = itlist (union o thm_frees o snd) asl (frees w) in
+  let rec ttac th : tactic =
+    let c = concl th in
+    if is_disj c then DISJ_CASES_THEN ttac th
+    else if is_exists c then
+      let v,_ = dest_exists c in
+      X_CHOOSE_THEN (kit_primed_var (avoid @ thm_frees th) v) ttac th
+    else if is_var tm then CAKE_SUBST_ALL_TAC th ORELSE ASSUME_TAC th
+    else (CAKE_SUBST_ALL_TAC th THEN ASSUME_TAC th) ORELSE ASSUME_TAC th in
+  (MP_TAC nch THEN DISCH_THEN ttac) g;;
+
+(* ------------------------------------------------------------------------- *)
+(* HOL4 Induct_on `x` for a variable x given by name: free in the goal (as  *)
+(* INDUCT_ON), or bound by the goal's leading universal quantifiers: the    *)
+(* quantifiers are stripped, x stays free and the others are quantified     *)
+(* again (HOL4 FREEUP), then INDUCT_ON x; the induction hypothesis is then  *)
+(* for all values of the other variables.                                   *)
+(* ------------------------------------------------------------------------- *)
+
+let kit_induct_bound (x:term) : tactic = fun (asl,w as g) ->
+  let vs,_ = strip_forall w in
+  let avoid = ref (filter (fun v -> not (v = x)) (kit_goal_frees g)) in
+  let vs' = map (fun v -> if v = x then x else
+                   let v' = kit_primed_var (x :: !avoid) v in avoid := v' :: !avoid; v') vs in
+  let others = filter (fun v -> not (v = x)) vs' in
+  (MAP_EVERY X_GEN_TAC vs' THEN MAP_EVERY (fun v -> SPEC_TAC(v,v)) (rev others) THEN
+   INDUCT_ON x) g;;
+
+let QINDUCT_ON (s:string) : tactic = fun (asl,w as g) ->
+  let n = String.trim s in
+  let fr = kit_goal_frees g in
+  match filter (fun v -> fst(dest_var v) = n) fr with
+    v::_ -> INDUCT_ON v g
+  | [] ->
+      let vs,_ = strip_forall w in
+      match filter (fun v -> fst(dest_var v) = n) vs with
+        v::_ -> kit_induct_bound v g
+      | [] -> failwith ("QINDUCT_ON: no variable " ^ n ^
+                        " free in the goal or bound by its quantifiers");;
+
+(* INDUCT_ON x with x not free in the goal but bound by its leading          *)
+(* universal quantifiers: as HOL4's Induct_on (FREEUP, above).  Before, the  *)
+(* induction was on a vacuous quantifier !x around the goal.  Since          *)
+(* 2026-11-20 (in check mode: a KITDIFF line, and the old behaviour).        *)
+let INDUCT_ON (x:term) : tactic = fun (asl,w as g) ->
+  if is_var x && not (free_in x w) &&
+     not (exists (fun (_,th) -> free_in x (concl th)) asl) &&
+     mem x (fst(strip_forall w))
+  then (if !kit_check then (kit_diff "INDUCT_ON on a bound variable"; INDUCT_ON x g)
+        else kit_induct_bound x g)
+  else INDUCT_ON x g;;
+
+(* PAIR_CASES_ON t for a term t of a product type that is not a variable:   *)
+(* t = (p0,..,pn) is assumed, with new variables p0 .. pn, and t is         *)
+(* replaced by the tuple everywhere (as CASES_ON a compound term; HOL4's    *)
+(* PairCases_on takes only variables).  Before, it failed.  Since 2026-11-20. *)
+let PAIR_CASES_ON (x:term) : tactic = fun (asl,w as g) ->
+  if is_var x then PAIR_CASES_ON x g else
+  let rec comps ty = match ty with
+      Tyapp("prod",[a;b]) -> a :: comps b
+    | _ -> [ty] in
+  let tys = comps (type_of x) in
+  if length tys < 2 then failwith "PAIR_CASES_ON: not of a product type" else
+  let avoid = itlist (union o thm_frees o snd) asl (frees w) in
+  let rec fresh av l i =
+    match l with
+      [] -> []
+    | t::rest -> let v = kit_primed_var av (mk_var("p" ^ string_of_int i,t)) in
+                 v :: fresh (v::av) rest (i+1) in
+  let vs = fresh avoid tys 0 in
+  let tup = end_itlist (curry mk_pair) vs in
+  let rec projs t l =
+    match l with
+      [_] -> [t]
+    | _::rest -> mk_icomb(mk_const("FST",[]),t) ::
+                 projs (mk_icomb(mk_const("SND",[]),t)) rest
+    | [] -> [] in
+  let eth = prove(list_mk_exists(vs,mk_eq(x,tup)),
+                  MAP_EVERY EXISTS_TAC (projs x vs) THEN REWRITE_TAC[PAIR]) in
+  (MP_TAC eth THEN
+   MAP_EVERY (fun v -> DISCH_THEN(X_CHOOSE_THEN v MP_TAC)) vs THEN
+   DISCH_THEN(fun th -> CAKE_SUBST_ALL_TAC th THEN ASSUME_TAC th)) g;;
+
+(* ------------------------------------------------------------------------- *)
+(* IGNASM "pat" (HOL4 IgnAsm `pat`) in the list of SIMP, FS, RFS, GVS,       *)
+(* GVS_ASM or RW: the assumptions that the pattern matches (parsed in the   *)
+(* goal's context, as for QPAT_X_ASSUM) are neither used nor simplified:     *)
+(* they are set aside while the tactic runs and put back, as the oldest      *)
+(* assumptions, in every goal it leaves; e.g. FS[IGNASM "!x. _"; def] keeps *)
+(* the induction hypotheses out of FS.  IGNASM "pat" is a marker theorem    *)
+(* (a fresh copy of T, with its pattern in a table).  Since 2026-11-20.     *)
+(* ------------------------------------------------------------------------- *)
+
+let kit_ignasm_tbl = ref ([] : (thm * string) list);;
+
+let IGNASM (s:string) : thm =
+  let th = CONJUNCT1 (CONJ TRUTH TRUTH) in
+  kit_ignasm_tbl := (th,s) :: !kit_ignasm_tbl; th;;
+
+let kit_with_ignasm (tac:thm list -> tactic) (thl:thm list) : tactic = fun (asl,w as g) ->
+  let pats = mapfilter (fun th -> snd (find (fun (m,_) -> m == th) !kit_ignasm_tbl)) thl in
+  if pats = [] then tac thl g else
+  let thl' = filter (fun th -> not (exists (fun (m,_) -> m == th) !kit_ignasm_tbl)) thl in
+  let pts = map (fun s -> kit_qpat s g) pats in
+  let ign (_,th) = exists (fun (p,fixed) -> can (term_match fixed p) (concl th)) pts in
+  let ignored = filter ign asl and kept = filter (fun a -> not (ign a)) asl in
+  let (meta,gs,just) = tac thl' (kept,w) in
+  (meta,map (fun (a,w') -> (a @ ignored,w')) gs,just);;
+
+let SIMP thl = kit_with_ignasm SIMP thl;;
+let FS thl = kit_with_ignasm FS thl;;
+let RFS thl = kit_with_ignasm RFS thl;;
+let GVS thl = kit_with_ignasm GVS thl;;
+let GVS_ASM thl = kit_with_ignasm GVS_ASM thl;;
+let RW thl = kit_with_ignasm RW thl;;

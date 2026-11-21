@@ -12,8 +12,9 @@
 (*   bvl_to_bvi_default_config (computed by rewriting); the other parts      *)
 (*   are record literals (fields in record order; gc_kind Simple is          *)
 (*   data_to_word_Simple).                                                   *)
-(* - The target theory ag32_target of the HOL4 Ancestors is outside the      *)
-(*   port: nothing of it is used here.                                       *)
+(* - The target theory ag32_target of the HOL4 Ancestors is                  *)
+(*   compiler/encoders/ag32/ag32_target.ml; nothing of it is used here       *)
+(*   (backend_compile takes the asm configuration as an argument).           *)
 (* ========================================================================= *)
 
 needs "compiler/backend/backend.ml";;
