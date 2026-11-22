@@ -6,7 +6,11 @@ for CakeML, its compiler and its HOL4 sources see https://cakeml.org and
 https://github.com/CakeML/cakeml. LightCake proves the main correctness theorem of the CakeML
 compiler, HOL4's `compilerProofTheory.compile_correct`, and its instance for the ag32
 ("Silver") target, HOL4's `ag32_configProofTheory.ag32_compile_correct`, in HOL Light from HOL
-Light's three axioms only.
+Light's three axioms only. It also ports the compiler for Pancake, CakeML's low-level language,
+with its end-to-end correctness theorem (HOL4's `pan_to_target_compile_semantics`), and the
+logic part of Candle, the "HOL in HOL" development behind CakeML's verified HOL Light kernel,
+with the soundness and consistency theorems of HOL (`proves_sound`, `extends_consistent`,
+`hol_consistent` and `hol_light_consistent`).
 
 The port follows CakeML release v3479 (commit `e8eca63`, 2026-08-24). Every HOL4 script
 `foo/barScript.sml` of the dependency closures of these theorems becomes a HOL Light file
@@ -56,8 +60,33 @@ proof uses the correctness of the ag32 instruction encoder (`ag32_encoder_correc
 `src/compiler/backend/ag32/proofs/ag32_configProof.ml` proves it as `ag32_compile_correct` and
 checks it against the statement in the same way.
 
-Not ported, because `compile_correct` does not use them and they need theories outside its
-closure: the entry points of `compiler.ml` for the Pancake language and for parsing target
+`src/pancake/proofs/pan_to_target_statement.ml` states HOL4's `pan_to_target_compile_semantics`
+as the term `pan_to_target_compile_semantics_statement`, with the four notions only it uses
+(`pancake_good_code`, `pan_installed`, `compile_prog_max` and `option_lt`). In words: for a
+compiler configuration and a target machine (other than ag32) satisfying the backend's
+conditions, if the Pancake compiler compiles a well-formed program with distinct function
+names and parameters, the initial state and memory are laid out as the statement requires, the
+compiled code is installed, and the program's semantics from `main` does not fail, then every
+behaviour of the machine is the program's behaviour, or a prefix of it that ends at a resource
+limit; if the stack bound that the compiler computes is below the machine's stack size, the
+machine's behaviour is exactly the program's.
+`src/pancake/proofs/pan_to_targetProof.ml` proves it and checks it against the statement in the
+same way.
+
+`src/candle/standard/semantics/candle_logic_statement.ml` states four theorems of HOL in HOL
+(Kumar, Arthan, Myreen and Owens) as terms and, loaded after them, checks them in the same way:
+`proves_sound` (every derivable sequent is valid in every model, for any model `mem` of set
+theory), `extends_consistent` (a model of a theory extends to a model of any extension by
+definitions, i.e. by updates without new axioms), `hol_consistent` (every such extension of
+HOL's standard context, with the axioms of extensionality, choice and infinity, is consistent,
+for a set theory with an infinite set) and `hol_light_consistent` (the same for contexts of the
+shape that HOL Light actually builds, in which the axioms are interleaved with definitions and
+stated in closed form, for the set model of `src/candle/set-theory/setModel.ml`). HOL4's
+overloads (`thyof`, `tysof`, `|=`, `models`, ...) are written out, so the statements are longer
+than in HOL4, and `===` and `|-` are infix constants, as in HOL Light's `Model/syntax.ml`.
+
+Not ported, because they need parts of CakeML outside the port: the entry points of
+`compiler.ml` for the Pancake language and for parsing target
 names (`compile_pancake` and its 64- and 32-bit versions, `parse_target_64/32`,
 `compile_64/32`, `full_compile_64/32`), and two set-relation lemmas of HOL4's
 `miscScript.sml` (`domain_rrestrict_subset`, `range_rrestrict_subset`).
@@ -67,9 +96,9 @@ names (`compile_pancake` and its 64- and 32-bit versions, `parse_target_64/32`,
 | directory | files |
 |---|---|
 | `src/kit/` | the proof kit (see below) |
-| `src/hol4/` | the HOL4 library layer (53 files): `ASCIInumbers`, `NTproperties`, `alist`, `bag`, `balanced_map`, `basic`, `binary_ieee`, `bitstring`, `collapse`, `comparison`, `cps`, `finite_map`, `fmsp`, `gcd`, `grammar`, `int_bitwise`, `list`, `llist`, `location`, `lprefix_lub`, `machine_ieee`, `mc_multiword`, `mergesort`, `multiword`, `numposrep`, `path`, `peg`, `pegexec`, `regexp_compiler`, `rich_list`, `rmfmap`, `set_sep`, `simpleSexp`, `simpleSexpPEG`, `simpleSexpParse`, `sorting`, `spt_closure`, `sptree`, `state_transformer`, `string4`, `subst`, `tailrec`, `tcallUnif`, `term`, `ternaryComparisons`, `toto`, `transfer`, `unifDef`, `unifProps`, `vocab`, `walk`, `walkstar`, `words4` |
+| `src/hol4/` | the HOL4 library layer (58 files): `alist`, `ASCIInumbers`, `bag`, `balanced_map`, `balanced_map_part2`, `basic`, `binary_ieee`, `bitstring`, `collapse`, `comparison`, `cps`, `errorLogMonad`, `errorMonad`, `finite_map`, `fmsp`, `gcd`, `grammar`, `int_bitwise`, `itreeTau`, `libext`, `list`, `llist`, `location`, `lprefix_lub`, `machine_ieee`, `mc_multiword`, `mergesort`, `multiword`, `NTproperties`, `numposrep`, `path`, `peg`, `pegexec`, `regexp_compiler`, `rich_list`, `rmfmap`, `set_sep`, `simpleSexp`, `simpleSexpParse`, `simpleSexpPEG`, `sorting`, `sptree`, `spt_closure`, `state_transformer`, `string4`, `subst`, `tailrec`, `tcallUnif`, `term`, `ternaryComparisons`, `toto`, `transfer`, `unifDef`, `unifProps`, `vocab`, `walk`, `walkstar`, `words4` |
 | `src/misc/` | `misc`, `misc_p1`, `misc_p2`, `misc_p3` |
-| `src/basis/pure/` | `mlint`, `mllist`, `mloption`, `mlsexp`, `mlstring`, `mlvector` |
+| `src/basis/pure/` | `mlint`, `mllist`, `mlmap`, `mloption`, `mlsexp`, `mlstring`, `mlvector` |
 | `src/semantics/` | `ast`, `cmlPtreeConversion`, `evaluate`, `fpSem`, `gram`, `lexer_fun`, `namespace`, `primTypes`, `sem1aux_tfl`, `semanticPrimitives`, `semantics`, `tokenUtils`, `tokens`, `typeSystem` |
 | `src/semantics/ffi/` | `ffi` |
 | `src/semantics/proofs/` | `evaluateProps`, `gramProps`, `namespaceProps`, `primSemEnv`, `semanticPrimitivesProps`, `semanticsProps`, `typeSound`, `typeSoundInvariants`, `typeSysProps`, `weakening` |
@@ -97,14 +126,23 @@ names (`compile_pancake` and its 64- and 32-bit versions, `parse_target_64/32`,
 | `src/compiler/backend/x64/` | `export_x64`, `x64_config` |
 | `src/compiler/inference/proofs/` | `envRel`, `inferComplete`, `inferSound`, `infer_eComplete`, `infer_eSound`, `type_dCanon`, `type_eDeterm` |
 | `src/compiler/proofs/` | `compile_correct_statement`, `compilerProof` |
-| `src/pancake/` | `panLang` |
+| `src/pancake/` | `crepLang`, `crep_arith`, `crep_inline`, `crep_to_loop`, `loopLang`, `loop_call`, `loop_live`, `loop_to_word`, `panLang`, `panStatic`, `pan_common`, `pan_globals`, `pan_passes`, `pan_simp`, `pan_structs`, `pan_to_crep`, `pan_to_target`, `pan_to_word` |
+| `src/pancake/parser/` | `panLexer`, `panPEG`, `panPtreeConversion` |
+| `src/pancake/semantics/` | `crepProps`, `crepSem`, `loopProps`, `loopSem`, `panProps`, `panSem`, `pan_commonProps`, `pan_itreeProps`, `pan_itreeSem` |
+| `src/pancake/proofs/` | `crep_arithProof`, `crep_inlineProof`, `crep_to_loopProof`, `loop_callProof`, `loop_liveProof`, `loop_to_wordProof`, `pan_globalsProof`, `pan_itreeEquivProof`, `pan_simpProof`, `pan_structsProof`, `pan_to_crepProof`, `pan_to_targetProof`, `pan_to_target_statement`, `pan_to_wordProof` |
+| `src/candle/set-theory/` | `setModel`, `setSpec` |
+| `src/candle/syntax-lib/` | `holSyntaxLib` |
+| `src/candle/standard/syntax/` | `holAxiomsSyntax`, `holBoolSyntax`, `holConservative`, `holSyntax`, `holSyntaxExtra`, `holSyntaxExtra_p1`, `holSyntaxExtra_p2`, `holSyntaxExtra_p3`, `holSyntaxExtra_p4`, `holSyntaxExtra_p5`, `holSyntaxExtra_p6`, `holSyntaxExtra_p7`, `holSyntaxExtra_p8` |
+| `src/candle/standard/syntax/little_theories/` | `littleTheoriesSyntax`, `littleTheoriesSyntaxNewSystem`, `littleTheoriesSyntaxOldSystem`, `littleTheoriesSyntaxOldSystem_p1`, `littleTheoriesSyntaxOldSystem_p2`, `littleTheoriesSyntaxOldSystem_p3`, `littleTheoriesSyntaxOldSystem_p4`, `littleTheoriesSyntaxOldSystem_p5`, `littleTheoriesSyntaxOldSystem_p6`, `littleTheoriesSyntaxOldSystem_p7` |
+| `src/candle/standard/semantics/` | `candle_logic_statement`, `holAxioms`, `holBool`, `holConsistency`, `holExtension`, `holLightConsistency`, `holSemantics`, `holSemanticsExtra`, `holSoundness` |
 
 The numbers of files, lines and theorems are in `doc/contents.tsv`. Everything loads in one
 fresh HOL Light session with no axioms beyond HOL Light's three (`check.ml` shows it).
 
 ## Loading
 
-You need HOL Light from commit `2828953` (10 November 2026) or later; the port uses its core and
+You need HOL Light from commit `1a0c0e6` (19 November 2026) or later; the port uses its core (with
+`new_coinductive_definition` and the datatype tables of that commit) and
 `Library/words.ml`, `Library/rstc.ml` and `Library/iter.ml`. Start HOL Light in the root
 directory of this repository and load everything with
 
@@ -116,15 +154,15 @@ or check it with
 
 which loads `make.ml`, prints the number of axioms (3) and the list of axioms, checks the
 headline theorems (`HEADLINE true`: no hypotheses, conclusions alpha-equivalent to the
-statements of `compile_correct_statement.ml`; `HEADLINE_AG32 true`: the same for
-`ag32_compile_correct_statement.ml`) and ends with `CHECK_OK`. Everything loads in one
-HOL Light session; `check.ml` was run this way with three versions of HOL Light:
+statements of `compile_correct_statement.ml`; `HEADLINE_AG32 true`, `HEADLINE_PANCAKE true` and
+`HEADLINE_CANDLE true`: the same for `ag32_compile_correct_statement.ml`,
+`pan_to_target_statement.ml` and `candle_logic_statement.ml`) and ends with `CHECK_OK`. Everything loads in one
+HOL Light session; `check.ml` was run this way with two versions of HOL Light:
 
 | HOL Light | time of `check.ml` |
 |---|---|
-| commit `1a0c0e6` of jrh13/hol-light (with pull request #215: faster definitions and derived rules) | 1.6 hours |
-| commit `55cac39` of jargh/hol-light-dev (pull request #218 of jrh13/hol-light: MESON, X_CHOOSE_TAC and simplifier fixes) | 1.6 hours |
-| commit `6dbb775` of jrh13/hol-light | 3.3 hours |
+| commit `1a0c0e6` of jrh13/hol-light | 2.2 hours |
+| commit `55cac39` of jargh/hol-light-dev (pull request #218 of jrh13/hol-light: MESON, X_CHOOSE_TAC and simplifier fixes) | 2.2 hours |
 
 After `loadt "src/prelude.ml";;` any single
 file can be loaded on its own with `needs`, for example `needs "semantics/namespace.ml";;`

@@ -115,3 +115,7 @@ hol4/multiword.ml	multiword	constructor	Div	multiword_Div	ast has Div
 hol4/multiword.ml	multiword	constructor	Mod	multiword_Mod	ast has Mod
 hol4/multiword.ml	multiword	constructor	Lt	multiword_Lt	ast has Lt
 hol4/multiword.ml	multiword	constructor	Dec	multiword_Dec	name taken
+hol4/llist.ml	llist	constant	toList	llist_toList	clash (found by LIBX, 2026-11-21)
+hol4/sptree.ml	sptree	theorem	size_def	sptree_size_def	kit function size_def (LIBX, 2026-11-21)
+hol4/lprefix_lub.ml	lprefix_lub	theorem	LPREFIX_NTH	lprefix_lub_LPREFIX_NTH	clash (LIBX, 2026-11-21)
+hol4/grammar.ml	grammar	constant	parsetree1_size	parsetree_size_aux1	port name of the size function (LIBX, 2026-11-21)
