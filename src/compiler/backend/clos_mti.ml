@@ -26,7 +26,7 @@ needs "semantics/sem1aux_tfl.ml";;
 type_invention_error := true;;
 
 let collect_args_def = sem1aux_def_wf
-  `measure (\p:num # num # clos_exp. clos_exp_size (SND (SND p)))`
+  `MEASURE (\p:num # num # clos_exp. clos_exp_size (SND (SND p)))`
   SEM1AUX_TC_TAC
   `(collect_args max_app num_args (Fn t NONE NONE num_args' e) =
       if num_args + num_args' <= max_app then
@@ -59,7 +59,7 @@ let collect_args_zero = prove
   FS[PAIR_EQ] THEN RES_TAC THEN ASM_ARITH_TAC);;
 
 let collect_apps_def = sem1aux_def_wf
-  `measure (\p:num # clos_exp list # clos_exp. clos_exp_size (SND (SND p)))`
+  `MEASURE (\p:num # clos_exp list # clos_exp. clos_exp_size (SND (SND p)))`
   SEM1AUX_TC_TAC
   `(collect_apps max_app args (clos_App tra NONE e es) =
       if LENGTH args + LENGTH es <= max_app then
@@ -108,7 +108,7 @@ let IL1AUX_MTI_TC_TAC : tactic =
    TERM_TAC);;
 
 let intro_multi_def = sem1aux_def_wf
-  `measure (\p:num # clos_exp list. list_size clos_exp_size (SND p))`
+  `MEASURE (\p:num # clos_exp list. list_size clos_exp_size (SND p))`
   IL1AUX_MTI_TC_TAC
   `(intro_multi max_app [] = []) /\
    (intro_multi max_app (CONS e1 (CONS e2 es)) =

@@ -2603,13 +2603,6 @@ let C2BP2AUX_MAP_Number_11 = prove
   MP_TAC (ISPEC `bvl_Number o int_of_num` INJECTIVE_MAP) THEN
   REWRITE_TAC[o_THM; injectivity "bvl_v"; INT_OF_NUM_EQ] THEN MESON_TAC[]);;
 
-let C2BP2AUX_some_UNIQUE = prove
- (`!P (y:A). P y /\ (!x. P x ==> x = y) ==> (some) P = SOME y`,
-  REWRITE_TAC[some_DEF] THEN REPEAT STRIP_TAC THEN
-  COND_CASES_TAC THENL [ALL_TAC; ASM_MESON_TAC[]] THEN
-  REWRITE_TAC[option_INJ] THEN FIRST_X_ASSUM MATCH_MP_TAC THEN
-  CONV_TAC SELECT_CONV THEN ASM_MESON_TAC[]);;
-
 let C2BP2AUX_ALL2_v_rel_Numbers = prove
  (`!max_app f refs code (ns:num list) l.
      ALL2 (clos_to_bvlProof_v_rel max_app f refs code) (MAP (clos_Number o int_of_num) ns) l <=>
@@ -2646,7 +2639,7 @@ let C2BP2AUX_op_FromListByte = prove
   ASM_REWRITE_TAC[bvl_do_app_def] THEN CASE_REWRITE_TAC[] THEN
   SUBGOAL_THEN `(some ns. bvl_v_to_list y = SOME (MAP (bvl_Number o int_of_num) ns) /\
                           ALL (\n. n < 256) ns) = SOME (a:num list)` SUBST1_TAC THENL
-   [MATCH_MP_TAC C2BP2AUX_some_UNIQUE THEN BETA_TAC THEN ASM_REWRITE_TAC[option_INJ] THEN
+   [MATCH_MP_TAC BASICAUX_some_unique THEN BETA_TAC THEN ASM_REWRITE_TAC[option_INJ] THEN
     MESON_TAC[C2BP2AUX_MAP_Number_11];
     ALL_TAC] THEN
   CASE_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
@@ -2690,7 +2683,7 @@ let C2BP2AUX_op_ConcatByteVec = prove
   SUBGOAL_THEN `(some wss. ?ps. bvl_v_to_list y = SOME (MAP (bvl_RefPtr T) ps) /\
      MAP (FLOOKUP (bvl_state_refs (t1:(C,FFI)bvl_state))) ps = MAP (SOME o bvl_ByteArray T) wss) =
      SOME (a:(byte list) list)` SUBST1_TAC THENL
-   [MATCH_MP_TAC C2BP2AUX_some_UNIQUE THEN BETA_TAC THEN CONJ_TAC THENL
+   [MATCH_MP_TAC BASICAUX_some_unique THEN BETA_TAC THEN CONJ_TAC THENL
      [EXISTS_TAC `ps:num list` THEN ASM_REWRITE_TAC[];
       X_GEN_TAC `x:(byte list) list` THEN
       DISCH_THEN(X_CHOOSE_THEN `ps':num list` STRIP_ASSUME_TAC) THEN
@@ -3172,7 +3165,7 @@ let C2BP2AUX_bvl_do_install = prove
            clos_to_bvl_compile_inc' (clos_state_max_app s) (exps,aux) = CONS (k,0,d) rest /\
            bvl_do_install [w1; w2] t =
              (Rval (bvl_CodePtr k,
-                   bvl_state_code_fupd (K (union (bvl_state_code t)
+                   bvl_state_code_fupd (K (sptree_union (bvl_state_code t)
                      (fromAList (clos_to_bvl_compile_inc' (clos_state_max_app s) (exps,aux)))))
                      (bvl_state_compile_oracle_fupd
                         (K (shift_seq 1 (bvl_state_compile_oracle t))) t))
@@ -3227,7 +3220,7 @@ let C2BP2AUX_bvl_do_install_k = prove
      clos_to_bvl_compile_inc' (clos_state_max_app s) (exps,aux) = CONS (k,0,d) rest
      ==> bvl_do_install [w1; w2] t =
            (Rval (bvl_CodePtr k,
-                  bvl_state_code_fupd (K (union (bvl_state_code t)
+                  bvl_state_code_fupd (K (sptree_union (bvl_state_code t)
                     (fromAList (CONS (k,0,d) rest))))
                     (bvl_state_compile_oracle_fupd
                        (K (shift_seq 1 (bvl_state_compile_oracle t))) t))
@@ -3246,7 +3239,7 @@ let C2BP2AUX_state_rel_install = prove
      ==> clos_to_bvlProof_state_rel f
            (clos_state_code_fupd (K (clos_state_code s |++ aux))
               (clos_state_compile_oracle_fupd (K (shift_seq 1 (clos_state_compile_oracle s))) s))
-           (bvl_state_code_fupd (K (union (bvl_state_code t)
+           (bvl_state_code_fupd (K (sptree_union (bvl_state_code t)
                (fromAList (clos_to_bvl_compile_inc' (clos_state_max_app s) (exps,aux)))))
               (bvl_state_compile_oracle_fupd (K (shift_seq 1 (bvl_state_compile_oracle t))) t))`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
@@ -3400,7 +3393,7 @@ let C2BP2AUX_find_code_install = prove
  (`!(code:(num#bvl_exp)spt) k d rest.
      DISJOINT (domain code) (set_of_list (MAP FST (CONS (k,0,d) rest))) /\
      ALL_DISTINCT (MAP FST (CONS (k,0,d) rest))
-     ==> bvl_find_code NONE [bvl_CodePtr k] (union code (fromAList (CONS (k,0,d) rest))) =
+     ==> bvl_find_code NONE [bvl_CodePtr k] (sptree_union code (fromAList (CONS (k,0,d) rest))) =
          SOME ([],d)`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[bvl_find_code_def; NOT_CONS_NIL; LAST] THEN
   CASE_REWRITE_TAC[] THEN
@@ -3428,7 +3421,7 @@ let C2BP2AUX_code_installed_new = prove
  (`!(code:(num#bvl_exp)spt) nw l.
      ALL_DISTINCT (MAP FST nw) /\ DISJOINT (domain code) (set_of_list (MAP FST nw)) /\
      IS_SUBLIST nw l
-     ==> clos_to_bvlProof_code_installed l (union code (fromAList nw))`,
+     ==> clos_to_bvlProof_code_installed l (sptree_union code (fromAList nw))`,
   REPEAT STRIP_TAC THEN MATCH_MP_TAC code_installed_union THEN CONJ_TAC THENL
    [MATCH_MP_TAC code_installed_fromAList THEN ASM_REWRITE_TAC[];
     UNDISCH_TAC `DISJOINT (domain (code:(num#bvl_exp)spt)) (set_of_list (MAP FST (nw:(num#num#bvl_exp)list)))` THEN
@@ -3550,7 +3543,7 @@ let C2BP2AUX_cer_Op = prove
       check (C2BP2AUX_is_ih o concl)) THEN
     ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
     C2BP2AUX_IH_TAC [(`[]:(num#num#bvl_exp)list`,"aux1");
-      (`bvl_state_code_fupd (K (union (bvl_state_code t2) (fromAList (CONS (k,0,d) rest))))
+      (`bvl_state_code_fupd (K (sptree_union (bvl_state_code t2) (fromAList (CONS (k,0,d) rest))))
          (bvl_state_compile_oracle_fupd (K (shift_seq 1 (bvl_state_compile_oracle t2)))
             (t2:(C,FFI)bvl_state))`,"t1");
       (`[]:bvl_v list`,"env'"); (`f2:(num,num)fmap`,"f1");
@@ -3584,9 +3577,9 @@ let C2BP2AUX_cer_Op = prove
       ASM_REWRITE_TAC[GSYM MAP_APPEND];
       ALL_TAC] THEN
     SUBGOAL_THEN `clos_to_bvlProof_code_installed x7
-         (union (bvl_state_code (t2:(C,FFI)bvl_state)) (fromAList (CONS (k,0,d) rest))) /\
+         (sptree_union (bvl_state_code (t2:(C,FFI)bvl_state)) (fromAList (CONS (k,0,d) rest))) /\
        clos_to_bvlProof_code_installed pr
-         (union (bvl_state_code (t2:(C,FFI)bvl_state)) (fromAList (CONS (k,0,d) rest)))`
+         (sptree_union (bvl_state_code (t2:(C,FFI)bvl_state)) (fromAList (CONS (k,0,d) rest)))`
       STRIP_ASSUME_TAC THENL
      [CONJ_TAC THEN MATCH_MP_TAC C2BP2AUX_code_installed_new THEN ASM_REWRITE_TAC[] THEN
       FIRST_X_ASSUM(SUBST1_TAC o SYM o check (fun th -> is_eq (concl th) &&
@@ -3628,7 +3621,7 @@ let C2BP2AUX_cer_Op = prove
     (* the chained code of the installed expressions (evaluate_IMP_evaluate_chained) *)
     MP_TAC (ISPECL [`x6:bvl_exp list`;
       `bvl_state_clock_fupd (K (clos_state_clock (sI:(C,FFI)clos_state) + ck'))
-        (bvl_state_code_fupd (K (union (bvl_state_code t2) (fromAList (CONS (k,0,d) rest))))
+        (bvl_state_code_fupd (K (sptree_union (bvl_state_code t2) (fromAList (CONS (k,0,d) rest))))
           (bvl_state_compile_oracle_fupd (K (shift_seq 1 (bvl_state_compile_oracle t2)))
             (t2:(C,FFI)bvl_state)))`;
       `res3:(bvl_v list,bvl_v)result`; `t4:(C,FFI)bvl_state`; `pr:(num#num#bvl_exp)list`;
@@ -4144,7 +4137,7 @@ let domain_init_code = prove
  (`!max_app.
      0 < max_app
      ==> domain (clos_to_bvl_init_code max_app) =
-         count (max_app + (max_app * (max_app - 1)) DIV 2)`,
+         pred_set_count (max_app + (max_app * (max_app - 1)) DIV 2)`,
   REWRITE_TAC[clos_to_bvl_init_code_def; domain_fromList; C2BP2AUX_init_code_LENGTH]);;
 let C2BP2AUX_MAP_FST_MAP2 = prove
  (`!(f:A->B->C#D) g l1 l2.

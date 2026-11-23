@@ -590,9 +590,9 @@ let STACKPROPSAUX_shift_seq_0 = prove
 let STACKPROPSAUX_code_bitmaps_trans = prove
  (`!(co:num->C#(num#(A)stack_prog)list#(A word)list) code bm n1 n2.
      shift_seq n2 (shift_seq n1 co) = shift_seq (n2 + n1) co /\
-     FOLDL union (FOLDL union code (MAP (fromAList o FST o SND) (list_of_seq co n1)))
+     FOLDL sptree_union (FOLDL sptree_union code (MAP (fromAList o FST o SND) (list_of_seq co n1)))
        (MAP (fromAList o FST o SND) (list_of_seq (shift_seq n1 co) n2)) =
-     FOLDL union code (MAP (fromAList o FST o SND) (list_of_seq co (n2 + n1))) /\
+     FOLDL sptree_union code (MAP (fromAList o FST o SND) (list_of_seq co (n2 + n1))) /\
      APPEND (APPEND bm (FLAT (MAP (SND o SND) (list_of_seq co n1))))
        (FLAT (MAP (SND o SND) (list_of_seq (shift_seq n1 co) n2))) =
      APPEND bm (FLAT (MAP (SND o SND) (list_of_seq co (n2 + n1))))`,
@@ -619,7 +619,7 @@ let evaluate_code_bitmaps = prove
      stack_evaluate (c,s) = (r,s1) ==>
      ?n. stack_state_compile_oracle s1 = shift_seq n (stack_state_compile_oracle s) /\
          stack_state_code s1 =
-           FOLDL union (stack_state_code s)
+           FOLDL sptree_union (stack_state_code s)
              (MAP (fromAList o FST o SND) (list_of_seq (stack_state_compile_oracle s) n)) /\
          stack_state_bitmaps s1 =
            APPEND (stack_state_bitmaps s)
@@ -858,7 +858,7 @@ let stack_evaluate_add_clock_io_events_mono = prove
     SIMP[IS_PREFIX_REFL]]);;
 
 let clock_neutral_def = sem1aux_def_wf
-  `measure (stack_prog_size (\x:A. 0))`
+  `MEASURE (stack_prog_size (\x:A. 0))`
   SEM1AUX_TC_TAC
   `(clock_neutral (stack_Seq p1 p2:(A)stack_prog) <=>
       clock_neutral p1 /\ clock_neutral p2) /\
@@ -1094,7 +1094,7 @@ let dec_stack_length = prove
 (* HOL4: extract_labels_def; HOL4 ++ is left associative *)
 
 let stack_extract_labels_def = sem1aux_def_wf
-  `measure (stack_prog_size (\x:A. 0))`
+  `MEASURE (stack_prog_size (\x:A. 0))`
   SEM1AUX_TC_TAC
   `(stack_extract_labels (stack_Call ret dest h:(A)stack_prog) =
       match ret with
@@ -1140,7 +1140,7 @@ let addr_ok_def = cake_def
 (* asm_ok out of stack_names *)
 
 let stack_asm_ok_def = sem1aux_def_wf
-  `measure (\x:(A)asm_config#(A)stack_prog. stack_prog_size (\x:A. 0) (SND x))`
+  `MEASURE (\x:(A)asm_config#(A)stack_prog. stack_prog_size (\x:A. 0) (SND x))`
   SEM1AUX_TC_TAC
   `(stack_asm_ok (c:(A)asm_config) (stack_Inst i:(A)stack_prog) <=> inst_ok i c) /\
    (stack_asm_ok c (ShMemOp op r ad) <=> reg_ok r c /\ addr_ok op ad c) /\
@@ -1273,7 +1273,7 @@ let inst_name_def = cake_def
    (inst_name _ _ <=> T)`;;
 
 let stack_asm_name_def = sem1aux_def_wf
-  `measure (\x:(A)asm_config#(A)stack_prog. stack_prog_size (\x:A. 0) (SND x))`
+  `MEASURE (\x:(A)asm_config#(A)stack_prog. stack_prog_size (\x:A. 0) (SND x))`
   SEM1AUX_TC_TAC
   `(stack_asm_name (c:(A)asm_config) (stack_Inst i:(A)stack_prog) <=> inst_name c i) /\
    (stack_asm_name c (stack_OpCurrHeap b r1 r2) <=>
@@ -1311,7 +1311,7 @@ let fixed_names_def = cake_def
      else T`;;
 
 let stack_asm_remove_def = sem1aux_def_wf
-  `measure (\x:(A)asm_config#(A)stack_prog. stack_prog_size (\x:A. 0) (SND x))`
+  `MEASURE (\x:(A)asm_config#(A)stack_prog. stack_prog_size (\x:A. 0) (SND x))`
   SEM1AUX_TC_TAC
   `(stack_asm_remove (c:(A)asm_config) (stack_Get n s:(A)stack_prog) <=> reg_name n c) /\
    (stack_asm_remove c (stack_OpCurrHeap binop v src) <=>
@@ -1350,7 +1350,7 @@ let stack_asm_remove_ind = cake_ind "stack_asm_remove";;
 (* TODO: this can also be a semantic check...                               *)
 
 let alloc_arg_def = sem1aux_def_wf
-  `measure (stack_prog_size (\x:A. 0))`
+  `MEASURE (stack_prog_size (\x:A. 0))`
   SEM1AUX_TC_TAC
   `(alloc_arg (stack_Alloc v:(A)stack_prog) <=> v = 1) /\
    (alloc_arg (stack_Seq p1 p2) <=> alloc_arg p1 /\ alloc_arg p2) /\
@@ -1368,7 +1368,7 @@ let alloc_arg_ind = cake_ind "alloc_arg";;
 (* HOL4: Termination WF_REL_TAC measure ((exp_size ARB) o FST) *)
 
 let reg_bound_exp_def = sem1aux_def_wf
-  `measure (\x:(A)wl_exp#num. wl_exp_size (\x:A. 0) (FST x))`
+  `MEASURE (\x:(A)wl_exp#num. wl_exp_size (\x:A. 0) (FST x))`
   SEM1AUX_TC_TAC
   `(reg_bound_exp (wl_Var n:(A)wl_exp) k <=> n < k) /\
    (reg_bound_exp (wl_Load e) k <=> reg_bound_exp e k) /\
@@ -1410,7 +1410,7 @@ let _ = cake_add_simps [reg_bound_inst_def];;
 (* second StackStore clause), which HOL4's TFL ignores: they are left out    *)
 
 let reg_bound_def = sem1aux_def_wf
-  `measure (\x:(A)stack_prog#num. stack_prog_size (\x:A. 0) (FST x))`
+  `MEASURE (\x:(A)stack_prog#num. stack_prog_size (\x:A. 0) (FST x))`
   SEM1AUX_TC_TAC
   `(reg_bound (stack_Halt v1:(A)stack_prog) k <=> v1 < k) /\
    (reg_bound (stack_Raise v1) k <=> v1 < k) /\
@@ -1455,7 +1455,7 @@ let reg_bound_ind = cake_ind "reg_bound";;
 (* Finally, stack_to_lab requires correct arguments for Call/FFI/Install calls *)
 
 let call_args_def = sem1aux_def_wf
-  `measure (\x:(A)stack_prog#num#num#num#num#num. stack_prog_size (\x:A. 0) (FST x))`
+  `MEASURE (\x:(A)stack_prog#num#num#num#num#num. stack_prog_size (\x:A. 0) (FST x))`
   SEM1AUX_TC_TAC
   `(call_args (stack_Seq p1 p2:(A)stack_prog) ptr len ptr2 len2 ret <=>
       call_args p1 ptr len ptr2 len2 ret /\
@@ -1485,7 +1485,7 @@ let call_args_ind = cake_ind "call_args";;
 (* TODO: remove "stack_" prefix from these functions *)
 
 let stack_get_handler_labels_def = sem1aux_def_wf
-  `measure (\x:num#(A)stack_prog. stack_prog_size (\x:A. 0) (SND x))`
+  `MEASURE (\x:num#(A)stack_prog. stack_prog_size (\x:A. 0) (SND x))`
   SEM1AUX_TC_TAC
   `(stack_get_handler_labels n (stack_Call r d h:(A)stack_prog) =
       match r with
@@ -1509,7 +1509,7 @@ let _ = cake_add_simps [stack_get_handler_labels_def];;
 (* HOL4: get_code_labels_def; HOL4 UNION is left associative *)
 
 let stack_get_code_labels_def = sem1aux_def_wf
-  `measure (stack_prog_size (\x:A. 0))`
+  `MEASURE (stack_prog_size (\x:A. 0))`
   SEM1AUX_TC_TAC
   `(stack_get_code_labels (stack_Call r d h:(A)stack_prog) =
       ((match d with INL x -> {(x,0)} | _ -> {}) UNION
@@ -1548,7 +1548,7 @@ let stack_good_handler_labels_def = cake_def
       IMAGE (\n. n,1) (set_of_list (MAP FST p)))`;;
 
 let stack_no_install_def = sem1aux_def_wf
-  `measure (stack_prog_size (\x:A. 0))`
+  `MEASURE (stack_prog_size (\x:A. 0))`
   SEM1AUX_TC_TAC
   `(stack_no_install (stack_Call r d h:(A)stack_prog) <=>
       (match r with SOME (x,_,_) -> stack_no_install x | _ -> T) /\
@@ -1563,7 +1563,7 @@ let stack_no_install_def = sem1aux_def_wf
 let stack_no_install_ind = cake_ind "stack_no_install";;
 
 let no_shmemop_def = sem1aux_def_wf
-  `measure (stack_prog_size (\x:A. 0))`
+  `MEASURE (stack_prog_size (\x:A. 0))`
   SEM1AUX_TC_TAC
   `(no_shmemop (stack_Call r d h:(A)stack_prog) <=>
       (match r with SOME (x,_,_) -> no_shmemop x | _ -> T) /\

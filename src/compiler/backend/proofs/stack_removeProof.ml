@@ -2,6 +2,8 @@
 (* stack_removeProof: port of HOL4 compiler/backend/proofs/                  *)
 (* stack_removeProofScript.sml (CakeML v3479).                               *)
 (* Correctness proof for stack_remove.                                       *)
+(* HOL4 memory is stack_removeProof_memory (a short or common word), and     *)
+(* memory_def is stack_removeProof_memory_def.                               *)
 (* ========================================================================= *)
 
 needs "misc/misc.ml";;
@@ -27,7 +29,7 @@ type_invention_error := true;;
 
 (* HOL4 line 21 *)
 let stack_removeProof_word_list_exists_thm = prove
- (`(!a:A word. word_list_exists a 0 = (emp:(A word#B->bool)->bool)) /\
+ (`(!a:A word. word_list_exists a 0 = (set_sep_emp:(A word#B->bool)->bool)) /\
    (!(a:A word) n.
       word_list_exists a (SUC n) =
       SEP_EXISTS w:B. set_sep_one (a,w) STAR word_list_exists (word_add a bytes_in_word) n)`,
@@ -140,12 +142,12 @@ let word_offset_eq = prove
   REWRITE_TAC[word_offset_def; bytes_in_word_def; WORD_MUL]);;
 
 (* HOL4 line 118 *)
-let memory_def = cake_def
-  `memory (m:A->B) dm = \s. s = fun2set (m,dm)`;;
+let stack_removeProof_memory_def = cake_def
+  `stack_removeProof_memory (m:A->B) dm = \s. s = fun2set (m,dm)`;;
 
 (* HOL4 line 122 *)
 let word_list_rev_def = cake_def
-  `(word_list_rev (a:A word) ([]:B list) = emp) /\
+  `(word_list_rev (a:A word) ([]:B list) = set_sep_emp) /\
    (word_list_rev a (CONS x xs) =
       set_sep_one (word_sub a bytes_in_word,x) STAR
       word_list_rev (word_sub a bytes_in_word) xs)`;;
@@ -220,7 +222,7 @@ let stack_removeProof_state_rel_def = cake_def
              FLOOKUP (stack_state_regs s2) k =
                SOME (wl_Word (word_add base (word_mul bytes_in_word
                                 (word (stack_state_stack_space s1))))) /\
-             (memory (stack_state_memory s1) (stack_state_mdomain s1) STAR
+             (stack_removeProof_memory (stack_state_memory s1) (stack_state_mdomain s1) STAR
               misc_word_list bp (MAP wl_Word all_bitmaps) STAR
               word_list_exists
                 (word_add bp (word_mul bytes_in_word (word (LENGTH all_bitmaps))))
@@ -349,8 +351,8 @@ let word_store_CurrHeap = prove
 (* HOL4 line 272 (local) *)
 let memory_fun2set_IMP_read = prove
  (`!(m:A->B) d p m1 d1 a.
-     (memory m d STAR p) (fun2set (m1,d1)) /\ a IN d ==> a IN d1 /\ m1 a = m a`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[STAR_def; SPLIT_EQ; memory_def] THEN
+     (stack_removeProof_memory m d STAR p) (fun2set (m1,d1)) /\ a IN d ==> a IN d1 /\ m1 a = m a`,
+  REPEAT GEN_TAC THEN REWRITE_TAC[STAR_def; SPLIT_EQ; stack_removeProof_memory_def] THEN
   STRIP_TAC THEN
   UNDISCH_TAC `(u:A#B->bool) SUBSET fun2set (m1,d1)` THEN
   ASM_REWRITE_TAC[SUBSET; FORALL_PAIR_THM; IN_fun2set] THEN
@@ -382,7 +384,7 @@ let STACKPROPSAUX_sr_facts = prove
 let STACKPROPSAUX_sr_memory = prove
  (`!jump off k (s:(A,C,FFI)stack_state) t.
      stack_removeProof_state_rel jump off k s t
-     ==> ?p. (memory (stack_state_memory s) (stack_state_mdomain s) STAR p)
+     ==> ?p. (stack_removeProof_memory (stack_state_memory s) (stack_state_mdomain s) STAR p)
                (fun2set (stack_state_memory t,stack_state_mdomain t))`,
   REWRITE_TAC[stack_removeProof_state_rel_def; LET_DEF; LET_END_DEF] THEN
   REPEAT GEN_TAC THEN STRIP_TAC THEN
@@ -551,11 +553,11 @@ let write_bytearray_EQ = prove
 (* HOL4 line 372 (local) *)
 let write_bytearray_lemma = prove
  (`!new_bytes (a:A word) m1 d1 be x p m d.
-     (memory m1 d1 STAR p) (fun2set (m,d)) /\
+     (stack_removeProof_memory m1 d1 STAR p) (fun2set (m,d)) /\
      read_bytearray a (LENGTH new_bytes) (mem_load_byte_aux m1 d1 be) = SOME x
-     ==> (memory (write_bytearray a new_bytes m1 d1 be) d1 STAR p)
+     ==> (stack_removeProof_memory (write_bytearray a new_bytes m1 d1 be) d1 STAR p)
            (fun2set (write_bytearray a new_bytes m d be,d))`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[STAR_def; SPLIT_EQ; memory_def] THEN STRIP_TAC THEN
+  REPEAT GEN_TAC THEN REWRITE_TAC[STAR_def; SPLIT_EQ; stack_removeProof_memory_def] THEN STRIP_TAC THEN
   SUBGOAL_THEN `!a:A word. a IN d1 ==> (m1:A word->(A)word_loc) a = m a /\ a IN d` (LABEL_TAC "f1") THENL
    [UNDISCH_TAC `(u:A word#(A)word_loc->bool) SUBSET fun2set (m,d)` THEN
     ASM_REWRITE_TAC[SUBSET; FORALL_PAIR_THM; IN_fun2set] THEN MESON_TAC[];
@@ -600,7 +602,7 @@ let state_rel_get_var_k = prove
            stack_get_var k t =
              SOME (wl_Word (word_add c (word_mul bytes_in_word
                                           (word (stack_state_stack_space s))))) /\
-           (memory (stack_state_memory s) (stack_state_mdomain s) STAR
+           (stack_removeProof_memory (stack_state_memory s) (stack_state_mdomain s) STAR
             misc_word_list
               (word_shl (the_SOME_Word (FLOOKUP (stack_state_store s) BitmapBase))
                         (backend_common_word_shift (:A)))
@@ -1201,9 +1203,9 @@ let state_rel_mem_load_imp = prove
 (* HOL4 line 674 *)
 let memory_write = prove
  (`!(x:A) y sd sm p m dm.
-     x IN sd /\ x IN dm /\ (memory (sm:A->B) sd STAR p) (fun2set (m,dm))
-     ==> (memory ((x =+ y) sm) sd STAR p) (fun2set ((x =+ y) m,dm))`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[STAR_def; SPLIT_EQ; memory_def] THEN STRIP_TAC THEN
+     x IN sd /\ x IN dm /\ (stack_removeProof_memory (sm:A->B) sd STAR p) (fun2set (m,dm))
+     ==> (stack_removeProof_memory ((x =+ y) sm) sd STAR p) (fun2set ((x =+ y) m,dm))`,
+  REPEAT GEN_TAC THEN REWRITE_TAC[STAR_def; SPLIT_EQ; stack_removeProof_memory_def] THEN STRIP_TAC THEN
   MAP_EVERY EXISTS_TAC [`fun2set ((x =+ y) (sm:A->B),sd)`; `v:A#B->bool`] THEN
   REWRITE_TAC[] THEN CONJ_TAC THENL [ALL_TAC; ASM_REWRITE_TAC[]] THEN
   SUBGOAL_THEN `!a:A. a IN sd ==> a IN dm /\ (m:A->B) a = sm a` (LABEL_TAC "f1") THENL
@@ -1568,7 +1570,7 @@ let state_rel_stack_store = prove
   MP_TAC(ISPECL [`stack_state_stack (s:(A,C,FFI)stack_state)`; `a':A word`]
                 stack_write) THEN
   DISCH_THEN(MP_TAC o SPECL
-    [`memory (stack_state_memory s) (stack_state_mdomain s) STAR
+    [`stack_removeProof_memory (stack_state_memory s) (stack_state_mdomain s) STAR
       misc_word_list
         (word_shl (the_SOME_Word (FLOOKUP (stack_state_store (s:(A,C,FFI)stack_state)) BitmapBase))
                   (backend_common_word_shift (:A)))
@@ -2018,7 +2020,7 @@ let mem_load_lemma = prove
  (`!name (s:(A,C,FFI)stack_state) (t1:(A,C,FFI)stack_state) x c.
      MEM name stack_remove_store_list /\
      FLOOKUP (stack_state_store s) name = SOME x /\
-     (memory (stack_state_memory s) (stack_state_mdomain s) STAR
+     (stack_removeProof_memory (stack_state_memory s) (stack_state_mdomain s) STAR
       misc_word_list
         (word_shl (the_SOME_Word (FLOOKUP (stack_state_store s) BitmapBase))
                   (backend_common_word_shift (:A)))
@@ -2049,7 +2051,7 @@ let mem_load_lemma = prove
 let mem_load_lemma2 = prove
  (`!name (s:(A,C,FFI)stack_state) (t1:(A,C,FFI)stack_state) c.
      MEM name stack_remove_store_list /\
-     (memory (stack_state_memory s) (stack_state_mdomain s) STAR
+     (stack_removeProof_memory (stack_state_memory s) (stack_state_mdomain s) STAR
       misc_word_list
         (word_shl (the_SOME_Word (FLOOKUP (stack_state_store s) BitmapBase))
                   (backend_common_word_shift (:A)))
@@ -2084,7 +2086,7 @@ let assoc_lem = prove
 let store_write_lemma = prove
  (`!name (s:(A,C,FFI)stack_state) c m d x.
      MEM name stack_remove_store_list /\
-     (memory (stack_state_memory s) (stack_state_mdomain s) STAR
+     (stack_removeProof_memory (stack_state_memory s) (stack_state_mdomain s) STAR
       misc_word_list
         (word_shl (the_SOME_Word (FLOOKUP (stack_state_store s) BitmapBase))
                   (backend_common_word_shift (:A)))
@@ -2099,7 +2101,7 @@ let store_write_lemma = prove
         (buffer_space_left (stack_state_data_buffer s)) STAR
       word_store c (stack_state_store s) STAR
       misc_word_list c (stack_state_stack s)) (fun2set (m,d))
-     ==> (memory (stack_state_memory s) (stack_state_mdomain s) STAR
+     ==> (stack_removeProof_memory (stack_state_memory s) (stack_state_mdomain s) STAR
           misc_word_list
             (word_shl (the_SOME_Word (FLOOKUP (stack_state_store s) BitmapBase))
                       (backend_common_word_shift (:A)))
@@ -2135,7 +2137,7 @@ let stack_removeProof_prog_comp_eta = prove
 (* HOL4 line 1473 *)
 let memory_fun2set_SUBSET = prove
  (`!(m1:A->B) d1 rest m2 d2.
-     (memory m1 d1 STAR rest) (fun2set (m2,d2)) ==> d1 SUBSET d2`,
+     (stack_removeProof_memory m1 d1 STAR rest) (fun2set (m2,d2)) ==> d1 SUBSET d2`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[SUBSET] THEN REPEAT STRIP_TAC THEN
   MP_TAC(ISPECL [`m1:A->B`; `d1:A->bool`; `rest:(A#B->bool)->bool`; `m2:A->B`;
                  `d2:A->bool`; `x:A`] memory_fun2set_IMP_read) THEN
@@ -2250,7 +2252,7 @@ let copy_each_thm = prove
      stack_get_var 2 t = SOME (wl_Word a) /\
      stack_get_var 3 t = SOME (wl_Word off) /\
      stack_get_var t2 t = SOME (wl_Word (word_add x (word_mul bytes_in_word (word i)))) /\
-     (misc_word_list x (MAP wl_Word bs) STAR rest STAR memory m d)
+     (misc_word_list x (MAP wl_Word bs) STAR rest STAR stack_removeProof_memory m d)
        (fun2set (stack_state_memory t,dm))
      ==> ?ck y m2.
            stack_evaluate (copy_each t1 t2,
@@ -2262,7 +2264,7 @@ let copy_each_thm = prove
                             |+ (2,wl_Word a1) |+ (1,wl_Word (word 1))
                             |+ (t2,wl_Word (word_add x (word_mul bytes_in_word
                                                           (word i1)))))) t)) /\
-           (misc_word_list x (MAP wl_Word bs) STAR rest STAR memory m1 d) (fun2set (m2,dm))`,
+           (misc_word_list x (MAP wl_Word bs) STAR rest STAR stack_removeProof_memory m1 d) (fun2set (m2,dm))`,
   MATCH_MP_TAC copy_words_for_pattern_ind THEN
   MAP_EVERY X_GEN_TAC [`pattern:A word`; `i:num`; `a:A word`; `off:A word`;
                        `bs:(A word)list`; `d:A word->bool`; `m:A word->(A)word_loc`] THEN
@@ -2298,7 +2300,7 @@ let copy_each_thm = prove
   FIRST_X_ASSUM(SUBST_ALL_TAC o check (fun th -> try lhs(concl th) = `dm:A word->bool`
                                                  with Failure _ -> false)) THEN
   MP_TAC(ISPECL [`MAP wl_Word (bs:(A word)list)`; `x:A word`;
-                 `(rest:(A word#(A)word_loc->bool)->bool) STAR memory (m:A word->(A)word_loc) d`;
+                 `(rest:(A word#(A)word_loc->bool)->bool) STAR stack_removeProof_memory (m:A word->(A)word_loc) d`;
                  `stack_state_memory (t:(A,C,FFI)stack_state)`;
                  `stack_state_mdomain (t:(A,C,FFI)stack_state)`; `i:num`]
                 STACKPROPSAUX_word_list_read) THEN
@@ -2399,7 +2401,7 @@ let copy_loop_thm = prove
      stack_get_var 2 t = SOME (wl_Word a) /\
      stack_get_var 3 t = SOME (wl_Word off) /\
      stack_get_var t2 t = SOME (wl_Word (word_add x (word_mul bytes_in_word (word i)))) /\
-     (misc_word_list x (MAP wl_Word bs) STAR rest STAR memory m d)
+     (misc_word_list x (MAP wl_Word bs) STAR rest STAR stack_removeProof_memory m d)
        (fun2set (stack_state_memory t,dm))
      ==> ?ck b y y2 m2.
            stack_evaluate (copy_loop t1 t2,
@@ -2410,7 +2412,7 @@ let copy_loop_thm = prove
                              else stack_state_regs t |+ (t1,wl_Word y))
                             |+ (2,wl_Word a1) |+ (1,wl_Word (word 1))
                             |+ (t2,wl_Word y2))) t)) /\
-           (misc_word_list x (MAP wl_Word bs) STAR rest STAR memory m1 d) (fun2set (m2,dm))`,
+           (misc_word_list x (MAP wl_Word bs) STAR rest STAR stack_removeProof_memory m1 d) (fun2set (m2,dm))`,
   MATCH_MP_TAC copy_words_ind THEN
   MAP_EVERY X_GEN_TAC [`i:num`; `a:A word`; `off:A word`;
                        `bs:(A word)list`; `d:A word->bool`; `m:A word->(A)word_loc`] THEN
@@ -2437,7 +2439,7 @@ let copy_loop_thm = prove
   (* the first pattern word is read and copy_each runs on it *)
   SUBGOAL_THEN `i < LENGTH (bs:(A word)list)` ASSUME_TAC THENL [ASM_ARITH_TAC; ALL_TAC] THEN
   MP_TAC(ISPECL [`MAP wl_Word (bs:(A word)list)`; `x:A word`;
-                 `(rest:(A word#(A)word_loc->bool)->bool) STAR memory (m:A word->(A)word_loc) d`;
+                 `(rest:(A word#(A)word_loc->bool)->bool) STAR stack_removeProof_memory (m:A word->(A)word_loc) d`;
                  `stack_state_memory (t:(A,C,FFI)stack_state)`;
                  `stack_state_mdomain (t:(A,C,FFI)stack_state)`; `i:num`]
                 STACKPROPSAUX_word_list_read) THEN
@@ -2484,7 +2486,7 @@ let copy_loop_thm = prove
       REWRITE_TAC[option_DISTINCT] THEN DISCH_THEN(K ALL_TAC) THEN
       POP_ASSUM MP_TAC THEN ARITH_TAC; ALL_TAC] THEN
     MP_TAC(ISPECL [`MAP wl_Word (bs:(A word)list)`; `x:A word`;
-                   `(rest:(A word#(A)word_loc->bool)->bool) STAR memory (mq:A word->(A)word_loc) d`;
+                   `(rest:(A word#(A)word_loc->bool)->bool) STAR stack_removeProof_memory (mq:A word->(A)word_loc) d`;
                    `me:A word->(A)word_loc`;
                    `stack_state_mdomain (t:(A,C,FFI)stack_state)`; `i1:num`]
                   STACKPROPSAUX_word_list_read) THEN
@@ -3694,7 +3696,7 @@ let STACKPROPSAUX_state_rel_buffer_write = prove
      ALL_TAC] THEN
    FIRST_X_ASSUM(X_CHOOSE_TAC `n:num` o MATCH_MP (MESON[num_CASES; LT_REFL] `0 < x ==> ?n. x = SUC n`)) THEN
    MP_TAC(ISPECL [`bp:A word`; `APPEND BM BF:(A word)list`; `n:num`;
-                  `memory (stack_state_memory s) (stack_state_mdomain s) STAR
+                  `stack_removeProof_memory (stack_state_memory s) (stack_state_mdomain s) STAR
                    word_store c (stack_state_store s) STAR
                    misc_word_list c (stack_state_stack (s:(A,C,FFI)stack_state))`;
                   `w2:A word`; `stack_state_memory (t:(A,C,FFI)stack_state)`;
@@ -4102,8 +4104,8 @@ let STACKPROPSAUX_code_rel_union = prove
  (`!jump off k (c1:((A)stack_prog)spt) c2 progs.
      stack_removeProof_code_rel jump off k c1 c2 /\
      (!i p. MEM (i,p) progs ==> reg_bound p k /\ stack_num_stubs <= i + 1)
-     ==> stack_removeProof_code_rel jump off k (union c1 (fromAList progs))
-           (union c2 (fromAList (MAP (stack_remove_prog_comp jump off k) progs)))`,
+     ==> stack_removeProof_code_rel jump off k (sptree_union c1 (fromAList progs))
+           (sptree_union c2 (fromAList (MAP (stack_remove_prog_comp jump off k) progs)))`,
   REPEAT GEN_TAC THEN REWRITE_TAC[stack_removeProof_code_rel_def] THEN
    DISCH_THEN(CONJUNCTS_THEN2 (CONJUNCTS_THEN2 (LABEL_TAC "old") (LABEL_TAC "dom"))
                               (LABEL_TAC "mem")) THEN
@@ -4149,7 +4151,7 @@ let STACKPROPSAUX_state_rel_install = prove
            (stack_state_bitmaps_fupd (K (APPEND (stack_state_bitmaps s) bm))
            (stack_state_code_buffer_fupd (K cb)
            (stack_state_data_buffer_fupd (K db)
-           (stack_state_code_fupd (K (union (stack_state_code s) (fromAList progs)))
+           (stack_state_code_fupd (K (sptree_union (stack_state_code s) (fromAList progs)))
            (stack_state_regs_fupd
               (K (DRESTRICT (stack_state_regs s) (stack_state_ffi_save_regs s) |+
                   (ptr,wl_Loc l 0)))
@@ -4160,7 +4162,7 @@ let STACKPROPSAUX_state_rel_install = prove
            (stack_state_code_buffer_fupd (K cb)
            (stack_state_data_buffer_fupd (K (stack_state_data_buffer t))
            (stack_state_code_fupd
-              (K (union (stack_state_code t)
+              (K (sptree_union (stack_state_code t)
                     (fromAList (MAP (stack_remove_prog_comp jump off k) progs))))
            (stack_state_regs_fupd
               (K (DRESTRICT (stack_state_regs t) (stack_state_ffi_save_regs t) |+
@@ -4545,7 +4547,7 @@ let STACKPROPSAUX_state_rel_regs_mem = prove
      FLOOKUP R2 k = FLOOKUP (stack_state_regs t) k /\
      FLOOKUP R2 (k + 1) = FLOOKUP (stack_state_regs t) (k + 1) /\
      FLOOKUP R2 (k + 2) = FLOOKUP (stack_state_regs t) (k + 2) /\
-     (memory m1 (stack_state_mdomain s) STAR
+     (stack_removeProof_memory m1 (stack_state_mdomain s) STAR
       misc_word_list
         (word_shl (the_SOME_Word (FLOOKUP (stack_state_store s) BitmapBase))
                   (backend_common_word_shift (:A)))
@@ -4708,7 +4710,7 @@ let STACKPROPSAUX_cc_StoreConsts = prove
                       word_store c (stack_state_store s) STAR
                       misc_word_list c (stack_state_stack s)` THEN
    SUBGOAL_THEN `(misc_word_list bp (MAP wl_Word (stack_state_bitmaps (s:(A,C,FFI)stack_state))) STAR
-                  rst STAR memory (stack_state_memory s) (stack_state_mdomain s))
+                  rst STAR stack_removeProof_memory (stack_state_memory s) (stack_state_mdomain s))
                    (fun2set (stack_state_memory t1,stack_state_mdomain (t1:(A,C,FFI)stack_state)))`
      ASSUME_TAC THENL
     [FIRST_X_ASSUM(MP_TAC o check (fun th -> try fst(dest_const(fst(strip_comb(rator(concl th))))) =
@@ -5130,9 +5132,9 @@ let addresses_thm = prove
 
 let STACKPROPSAUX_memory_INSERT = prove
  (`!(m:A->B) a X. ~(a IN X)
-     ==> memory m (a INSERT X) = set_sep_one (a,m a) STAR memory m X`,
+     ==> stack_removeProof_memory m (a INSERT X) = set_sep_one (a,m a) STAR stack_removeProof_memory m X`,
   REPEAT STRIP_TAC THEN GEN_REWRITE_TAC I [FUN_EQ_THM] THEN
-  REWRITE_TAC[memory_def; one_STAR] THEN X_GEN_TAC `s:A#B->bool` THEN
+  REWRITE_TAC[stack_removeProof_memory_def; one_STAR] THEN X_GEN_TAC `s:A#B->bool` THEN
   SUBGOAL_THEN `fun2set (m:A->B,a INSERT X) = (a,m a) INSERT fun2set (m,X) /\
                 ~((a,m a) IN fun2set (m,X))` STRIP_ASSUME_TAC THENL
    [REWRITE_TAC[EXTENSION; IN_INSERT; IN_fun2set; FORALL_PAIR_THM; PAIR_EQ] THEN
@@ -5176,10 +5178,10 @@ let STACKPROPSAUX_not_in_addresses = prove
 let STACKPROPSAUX_memory_addresses_gen = prove
  (`!n (a:A word) (m:A word->B).
      n * (dimindex (:A) DIV 8) < dimword (:A) /\ good_dimindex (:A)
-     ==> memory m (addresses a n) = misc_word_list a (stack_removeProof_read_mem a m n)`,
+     ==> stack_removeProof_memory m (addresses a n) = misc_word_list a (stack_removeProof_read_mem a m n)`,
   INDUCT_TAC THEN
   REWRITE_TAC[addresses_def; stack_removeProof_read_mem_def; misc_word_list_def] THENL
-   [REWRITE_TAC[FUN_EQ_THM; memory_def; emp_def; EXTENSION; FORALL_PAIR_THM;
+   [REWRITE_TAC[FUN_EQ_THM; stack_removeProof_memory_def; set_sep_emp_def; EXTENSION; FORALL_PAIR_THM;
                 IN_fun2set; NOT_IN_EMPTY];
     ALL_TAC] THEN
   REPEAT GEN_TAC THEN STRIP_TAC THEN
@@ -5197,7 +5199,7 @@ let STACKPROPSAUX_memory_addresses_gen = prove
 let memory_addresses = prove
  (`!n (a:A word) (m:A word->(A)word_loc).
      n * (dimindex (:A) DIV 8) < dimword (:A) /\ good_dimindex (:A)
-     ==> memory m (addresses a n) = misc_word_list a (stack_removeProof_read_mem a m n)`,
+     ==> stack_removeProof_memory m (addresses a n) = misc_word_list a (stack_removeProof_read_mem a m n)`,
   MATCH_ACCEPT_TAC STACKPROPSAUX_memory_addresses_gen);;
 
 (* HOL4 line 2805 (local) *)
@@ -5277,7 +5279,7 @@ let word_list_exists_addresses = prove
      ==> word_list_exists a n (fun2set (m1,addresses a n))`,
   INDUCT_TAC THEN
   REWRITE_TAC[stack_removeProof_word_list_exists_thm; addresses_def] THENL
-   [REWRITE_TAC[emp_def; fun2set_EMPTY]; ALL_TAC] THEN
+   [REWRITE_TAC[set_sep_emp_def; fun2set_EMPTY]; ALL_TAC] THEN
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   REWRITE_TAC[SEP_EXISTS_THM] THEN EXISTS_TAC `(m1:A word->B) a` THEN
   REWRITE_TAC[one_fun2set; IN_INSERT; INSERT_DELETE_EQ_DELETE] THEN
@@ -5542,7 +5544,7 @@ let read_pointers_def = cake_def
 (* HOL4 line 3089 *)
 let word_list_inj = prove
  (`!(xs:B list) (a:A word) u u'. misc_word_list a xs u /\ misc_word_list a xs u' ==> u = u'`,
-  LIST_INDUCT_TAC THEN REWRITE_TAC[misc_word_list_def; emp_def; one_STAR] THENL
+  LIST_INDUCT_TAC THEN REWRITE_TAC[misc_word_list_def; set_sep_emp_def; one_STAR] THENL
    [MESON_TAC[]; ALL_TAC] THEN
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   FIRST_X_ASSUM(MP_TAC o SPECL [`word_add (a:A word) bytes_in_word`;
@@ -5558,7 +5560,7 @@ let STACKPROPSAUX_word_list_set_aux = prove
      ==> (misc_word_list a xs s <=>
           s = {(word_add a (word_mul (word i) bytes_in_word),EL i xs) | i | i < LENGTH xs})`,
   LIST_INDUCT_TAC THENL
-   [REWRITE_TAC[misc_word_list_def; emp_def; LENGTH; LT] THEN
+   [REWRITE_TAC[misc_word_list_def; set_sep_emp_def; LENGTH; LT] THEN
     REPEAT STRIP_TAC THEN AP_TERM_TAC THEN
     REWRITE_TAC[EXTENSION; IN_ELIM_THM; NOT_IN_EMPTY];
     ALL_TAC] THEN
@@ -5625,7 +5627,7 @@ let STACKPROPSAUX_set_of_list_seq = prove
      set_of_list (list_of_seq (\i. (word_add a (word_mul (word i) bytes_in_word),EL i xs))
                               (LENGTH xs)) =
      {(word_add a (word_mul (word i) bytes_in_word),EL i xs) | i | i < LENGTH xs}`,
-  REWRITE_TAC[LIST_TO_SET_GENLIST; EXTENSION; IN_IMAGE; count_DEF; IN_ELIM_THM] THEN
+  REWRITE_TAC[LIST_TO_SET_GENLIST; EXTENSION; IN_IMAGE; pred_set_count_DEF; IN_ELIM_THM] THEN
   MESON_TAC[]);;
 
 (* HOL4 line 3101 *)
@@ -5671,7 +5673,7 @@ let word_list_in_memory = prove
      (r1 STAR misc_word_list a xs STAR r2) (fun2set (m,dm)) /\
      good_dimindex (:A) /\
      val a + LENGTH xs * val (bytes_in_word:A word) < dimword (:A)
-     ==> memory m (addresses a (LENGTH xs)) = misc_word_list a xs`,
+     ==> stack_removeProof_memory m (addresses a (LENGTH xs)) = misc_word_list a xs`,
   REPEAT STRIP_TAC THEN
   MP_TAC(ISPECL [`LENGTH (xs:B list)`; `a:A word`; `m:A word->B`]
     STACKPROPSAUX_memory_addresses_gen) THEN
@@ -6908,10 +6910,10 @@ let STACKPROPSAUX_bitmaps_bound = prove
   DISCH_THEN(MP_TAC o EQ_MP
     ((prove(parse_term ("(misc_word_list (bp:A word) (MAP wl_Word (bms:(A word)list)) STAR " ^
        "(misc_word_list (word_add bp (word_mul bytes_in_word (word (LENGTH bms)))) xs STAR " ^
-       "cond (LENGTH (xs:((A)word_loc)list) = data_sp)) STAR p) (fun2set (m,dm)) <=> " ^
+       "set_sep_cond (LENGTH (xs:((A)word_loc)list) = data_sp)) STAR p) (fun2set (m,dm)) <=> " ^
        "((misc_word_list bp (MAP wl_Word bms) STAR " ^
        "misc_word_list (word_add bp (word_mul bytes_in_word (word (LENGTH bms)))) xs STAR p) STAR " ^
-       "cond (LENGTH xs = data_sp)) (fun2set (m,dm))"),
+       "set_sep_cond (LENGTH xs = data_sp)) (fun2set (m,dm))"),
       AP_THM_TAC THEN CONV_TAC(AC LSORTAUX_STAR_AC))))) THEN
   REWRITE_TAC[cond_STAR] THEN STRIP_TAC THEN
   MP_TAC(ISPECL [`bp:A word`; `APPEND (MAP wl_Word (bms:(A word)list)) (xs:((A)word_loc)list)`;
@@ -7274,7 +7276,7 @@ let init_code_thm = prove
       MATCH_MP_TAC STACKPROPSAUX_stack_last_addr THEN ASM_REWRITE_TAC[];
       ALL_TAC] THEN
     REWRITE_TAC[ADD_CLAUSES; STACKPROPSAUX_word_store_map] THEN
-    SUBGOAL_THEN `memory (m1:A word->(A)word_loc) (addresses ptr2 (2 * hh)) =
+    SUBGOAL_THEN `stack_removeProof_memory (m1:A word->(A)word_loc) (addresses ptr2 (2 * hh)) =
                   misc_word_list ptr2 (heap:((A)word_loc)list)` SUBST1_TAC THENL
      [SUBGOAL_THEN `2 * hh = LENGTH (heap:((A)word_loc)list)`
         (fun th -> GEN_REWRITE_TAC (LAND_CONV o RAND_CONV o RAND_CONV) [th]) THENL
@@ -7382,9 +7384,9 @@ let init_code_thm = prove
     (* the heap is not touched *)
     SUBGOAL_THEN `2 * hh = LENGTH (heap:((A)word_loc)list)` SUBST1_TAC THENL
      [ASM_REWRITE_TAC[]; ALL_TAC] THEN
-    SUBGOAL_THEN `memory (stack_state_memory (s:(A,C,FFI)stack_state))
+    SUBGOAL_THEN `stack_removeProof_memory (stack_state_memory (s:(A,C,FFI)stack_state))
                     (addresses ptr2 (LENGTH (heap:((A)word_loc)list))) =
-                  memory (m1:A word->(A)word_loc) (addresses ptr2 (LENGTH heap))` MP_TAC THENL
+                  stack_removeProof_memory (m1:A word->(A)word_loc) (addresses ptr2 (LENGTH heap))` MP_TAC THENL
      [MATCH_MP_TAC EQ_TRANS THEN EXISTS_TAC `misc_word_list (ptr2:A word) (heap:((A)word_loc)list)` THEN
       CONJ_TAC THENL [ALL_TAC; CONV_TAC SYM_CONV] THEN
       MATCH_MP_TAC word_list_in_memory THENL
@@ -7417,7 +7419,7 @@ let init_code_thm = prove
                              `val (ptr2:A word) + dimindex (:A) DIV 8 * Nw < dimword (:A)`] THEN
       STACKPROPSAUX_DIMCASES_GOAL_TAC THEN ARITH_TAC;
       ALL_TAC] THEN
-    REWRITE_TAC[memory_def; FUN_EQ_THM] THEN
+    REWRITE_TAC[stack_removeProof_memory_def; FUN_EQ_THM] THEN
     DISCH_THEN(MP_TAC o SPEC `fun2set (stack_state_memory (s:(A,C,FFI)stack_state),
                                        addresses ptr2 (LENGTH (heap:((A)word_loc)list)))`) THEN
     REWRITE_TAC[]]);;
@@ -8350,4 +8352,3 @@ let stack_remove_stack_asm_name = prove
      (INST_TYPE [`:A`,`:A`] STACKPROPSAUX_store_init_regs)) THEN
    STRIP_TAC THEN ASM_REWRITE_TAC[injectivity "sum"; distinctness "sum"] THEN
    DISCH_THEN SUBST_ALL_TAC THEN ASM_SIMP_TAC[]);;
-

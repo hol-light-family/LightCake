@@ -88,7 +88,7 @@ let single_stack_alloc_def = cake_def
        :(A)stack_prog`;;
 
 let stack_alloc_def = cake_def_wf
-  `measure ((SND o SND):bool#num#num->num)`
+  `MEASURE ((SND o SND):bool#num#num->num)`
   (REWRITE_TAC[measure_THM; o_THM; max_stack_alloc_def] THEN
    REPEAT STRIP_TAC THEN ASM_ARITH_TAC)
   `stack_alloc jump k n =
@@ -107,7 +107,7 @@ let single_stack_free_def = cake_def
 (* HOL4: stack_free_def *)
 
 let stack_remove_stack_free_def = cake_def_wf
-  `measure (SND:num#num->num)`
+  `MEASURE (SND:num#num->num)`
   (REWRITE_TAC[measure_THM; max_stack_alloc_def] THEN
    REPEAT STRIP_TAC THEN ASM_ARITH_TAC)
   `stack_remove_stack_free k n =
@@ -122,7 +122,7 @@ let stack_remove_stack_free_ind = cake_ind "stack_remove_stack_free";;
 (* upshift the stack pointer *)
 
 let upshift_def = cake_def_wf
-  `measure (SND:num#num->num)`
+  `MEASURE (SND:num#num->num)`
   (REWRITE_TAC[measure_THM; max_stack_alloc_def] THEN
    REPEAT STRIP_TAC THEN ASM_ARITH_TAC)
   `upshift r n =
@@ -138,7 +138,7 @@ let upshift_def = cake_def_wf
 let upshift_ind = cake_ind "upshift";;
 
 let downshift_def = cake_def_wf
-  `measure (SND:num#num->num)`
+  `MEASURE (SND:num#num->num)`
   (REWRITE_TAC[measure_THM; max_stack_alloc_def] THEN
    REPEAT STRIP_TAC THEN ASM_ARITH_TAC)
   `downshift r n =
@@ -199,7 +199,7 @@ let copy_loop_def = cake_def
 (* the program)                                                              *)
 
 let stack_remove_comp_def = cake_def_wf
-  `measure (\(jump:bool,off:A word#A word,k:num,p:(A)stack_prog).
+  `MEASURE (\(jump:bool,off:A word#A word,k:num,p:(A)stack_prog).
               stack_prog_size (\x:A. 0) p)`
   TERM_TAC
   `stack_remove_comp jump (off:A word#A word) k (p:(A)stack_prog) =

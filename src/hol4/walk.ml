@@ -6,7 +6,7 @@
 (* How vwalk is defined: HOL4 defines vwalk with a schematic TFL definition *)
 (* (xDefineSchema) whose termination relation is vR s and whose hypotheses  *)
 (* are discharged by wfs s.  Here vwalk is a new_specification of a        *)
-(* function proved to exist (by WF_REC on vR s for each s with wfs s), with *)
+(* function proved to exist (by WF_REC on subst_vR s for each s with wfs s), with *)
 (* exactly HOL4's characterisation vwalk_def as its defining property; its  *)
 (* values are unspecified when wfs s fails, as in HOL4.                      *)
 (*                                                                           *)
@@ -38,13 +38,13 @@ let LUNIFAUX_vwalk_exists_s = prove
       `\(g:num->A term_term) (v:num).
          match FLOOKUP (s:(num,A term_term)fmap) v with
            SOME (term_Var u) -> g u | SOME t -> t | NONE -> term_Var v`)
-    (MATCH_MP WF_REC (ASSUME `WF (vR (s:(num,A term_term)fmap))`))) THEN
+    (MATCH_MP WF_REC (ASSUME `WF (subst_vR (s:(num,A term_term)fmap))`))) THEN
   REWRITE_TAC[] THEN DISCH_THEN MATCH_MP_TAC THEN
   MAP_EVERY X_GEN_TAC [`f:num->A term_term`; `g:num->A term_term`; `x:num`] THEN
   DISCH_TAC THEN CASES_ON `FLOOKUP (s:(num,A term_term)fmap) x` THEN
   REWRITE_TAC[option_CASE] THEN CASES_ON `a:A term_term` THEN
   REWRITE_TAC[term_term_CASE] THEN FIRST_X_ASSUM MATCH_MP_TAC THEN
-  ASM_REWRITE_TAC[vR_def; option_CASE; term_vars_def; IN_SING]);;
+  ASM_REWRITE_TAC[subst_vR_def; option_CASE; term_vars_def; IN_SING]);;
 
 let vwalk_def = new_specification ["vwalk"]
  (prove
@@ -68,7 +68,7 @@ let vwalk_ind = prove
     `!u. FLOOKUP (s:(num,A term_term)fmap) x = SOME (term_Var u) ==> P u`
     ASSUME_TAC THENL
    [REPEAT STRIP_TAC THEN FIRST_X_ASSUM MATCH_MP_TAC THEN
-    ASM_REWRITE_TAC[vR_def; option_CASE; term_vars_def; IN_SING];
+    ASM_REWRITE_TAC[subst_vR_def; option_CASE; term_vars_def; IN_SING];
     ASM_MESON_TAC[]]);;
 
 let NOT_FDOM_vwalk = prove
@@ -133,7 +133,7 @@ let walk_to_var = prove
 let vwalk_vR = prove
  (`!s:(num,A term_term)fmap.
      wfs s ==> !v u. u IN term_vars (vwalk s v) /\ ~(vwalk s v = term_Var v)
-                     ==> TC (vR s) u v`,
+                     ==> TC (subst_vR s) u v`,
   GEN_TAC THEN DISCH_TAC THEN
   FIRST_ASSUM(MATCH_MP_TAC o MATCH_MP vwalk_ind) THEN
   X_GEN_TAC `v:num` THEN DISCH_TAC THEN X_GEN_TAC `u:num` THEN
@@ -142,8 +142,8 @@ let vwalk_vR = prove
   REWRITE_TAC[option_CASE] THEN CASES_ON `a:A term_term` THEN
   REWRITE_TAC[term_term_CASE; term_term_distinct; term_vars_def; NOT_IN_EMPTY] THENL
    [STRIP_TAC THEN
-    SUBGOAL_THEN `vR (s:(num,A term_term)fmap) a' v` ASSUME_TAC THENL
-     [ASM_REWRITE_TAC[vR_def; option_CASE; term_vars_def; IN_SING]; ALL_TAC] THEN
+    SUBGOAL_THEN `subst_vR (s:(num,A term_term)fmap) a' v` ASSUME_TAC THENL
+     [ASM_REWRITE_TAC[subst_vR_def; option_CASE; term_vars_def; IN_SING]; ALL_TAC] THEN
     ASM_CASES_TAC `vwalk (s:(num,A term_term)fmap) a' = term_Var a'` THENL
      [UNDISCH_TAC `u IN term_vars (vwalk (s:(num,A term_term)fmap) a')` THEN
       ASM_REWRITE_TAC[term_vars_def; IN_SING] THEN DISCH_THEN SUBST1_TAC THEN
@@ -151,7 +151,7 @@ let vwalk_vR = prove
       MATCH_MP_TAC TC_TRANS_L THEN EXISTS_TAC `a':num` THEN
       ASM_MESON_TAC[]];
     STRIP_TAC THEN MATCH_MP_TAC TC_INC THEN
-    ASM_REWRITE_TAC[vR_def; option_CASE; term_vars_def]]);;
+    ASM_REWRITE_TAC[subst_vR_def; option_CASE; term_vars_def]]);;
 
 let vwalk_IN_FRANGE = prove
  (`!(s:(num,A term_term)fmap) v.

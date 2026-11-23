@@ -638,7 +638,7 @@ let MEM_IMP_v_size = prove
 
 (* HOL4 line 383 *)
 let get_refs_def = cake_def_wf
-  `measure data_v_size` TERM_TAC
+  `MEASURE data_v_size` TERM_TAC
   `(get_refs (data_Number _) = []) /\
    (get_refs (data_Word64 _) = []) /\
    (get_refs (data_CodePtr _) = []) /\
@@ -699,7 +699,7 @@ let bc_ref_inv_def = cake_def
 
 (* HOL4 line 448 *)
 let v_all_ts_def = cake_def_wf
-  `measure data_v_size` TERM_TAC
+  `MEASURE data_v_size` TERM_TAC
   `v_all_ts (data_Block ts _ xs) = CONS ts (FLAT (MAP v_all_ts xs)) /\
    v_all_ts _ = []`;;
 let v_all_ts_ind = cake_ind "v_all_ts";;

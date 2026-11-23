@@ -97,11 +97,11 @@ let arch_size_def = cake_def
 (* HOL4 infers the most general type *)
 let check_res_def = cake_def
   `check_res (r:A spt) ((n:B),(refs:A spt),(seen:C)) =
-     if size refs <= size r then (n,refs,seen) else (n,r,seen)`;;
+     if sptree_size refs <= sptree_size r then (n,refs,seen) else (n,r,seen)`;;
 
 let check_res_IMP = prove
  (`!(y:B#A spt#C) (n:B) (r:A spt) (s:C) (t:A spt).
-     (n,r,s) = check_res t y ==> size r <= size t`,
+     (n,r,s) = check_res t y ==> sptree_size r <= sptree_size t`,
   REWRITE_TAC[FORALL_PAIR_THM; check_res_def] THEN REPEAT GEN_TAC THEN
   COND_CASES_TAC THEN REWRITE_TAC[PAIR_EQ] THEN
   DISCH_THEN(fun th -> REWRITE_TAC[CONJUNCT1(CONJUNCT2 th)]) THEN
@@ -113,7 +113,7 @@ let small_num_def = cake_def
      else --((&2:int) pow 29) <= i /\ i < (&2:int) pow 29`;;
 
 let bignum_digits_def = cake_def_wf
-  `measure (\p:bool#num. SND p)`
+  `MEASURE (\p:bool#num. SND p)`
   (REWRITE_TAC[measure_THM; FST; SND; LET_DEF; LET_END_DEF] THEN REPEAT STRIP_TAC THEN
    ASM_SIMP_TAC[RDIV_LT_EQ; EXP_EQ_0; ARITH_EQ] THEN
    COND_CASES_TAC THEN CONV_TAC NUM_REDUCE_CONV THEN ASM_ARITH_TAC)
@@ -130,9 +130,9 @@ let bignum_size_def = cake_def
 (*             (\(lims,vs,refs,seen). (sptree$size refs,vs))                 *)
 
 let DSEMAUX_size_of_rel =
-  `inv_image (measure (I:num->num) LEX measure (list_size data_v_size))
+  `inv_image (MEASURE (I:num->num) LEX MEASURE (list_size data_v_size))
      (\x:limits # data_v list # ((data_v)bvl_ref)spt # num_set.
-        size (FST (SND (SND x))),FST (SND x))`;;
+        sptree_size (FST (SND (SND x))),FST (SND x))`;;
 
 let DSEMAUX_size_of_clauses =
   `(size_of (lims:limits) ([]:data_v list) (refs:((data_v)bvl_ref)spt)
@@ -194,8 +194,8 @@ let DSEMAUX_size_of_check_ind = cake_ind "size_of";;
 
 let DSEMAUX_size_of_refs = prove
  (`!lims vs refs seen.
-     size (FST (SND (size_of lims vs refs seen))) <=
-     size (refs:((data_v)bvl_ref)spt)`,
+     sptree_size (FST (SND (size_of lims vs refs seen))) <=
+     sptree_size (refs:((data_v)bvl_ref)spt)`,
   MATCH_MP_TAC DSEMAUX_size_of_check_ind THEN REPEAT CONJ_TAC THEN
   REPEAT GEN_TAC THENL
    [REWRITE_TAC[DSEMAUX_size_of_check_def; FST; SND; LE_REFL];
@@ -224,7 +224,7 @@ let DSEMAUX_size_of_refs = prove
     REWRITE_TAC[DSEMAUX_size_of_check_def; FST; SND; LE_REFL];
     STRIP_TAC THEN ONCE_REWRITE_TAC[DSEMAUX_size_of_check_def] THEN
     TOP_CASE_TAC THEN REWRITE_TAC[FST; SND; LE_REFL] THEN
-    SUBGOAL_THEN `size (delete r (refs:((data_v)bvl_ref)spt)) <= size refs`
+    SUBGOAL_THEN `sptree_size (delete r (refs:((data_v)bvl_ref)spt)) <= sptree_size refs`
       ASSUME_TAC THENL [REWRITE_TAC[size_delete] THEN ARITH_TAC; ALL_TAC] THEN
     TOP_CASE_TAC THEN REWRITE_TAC[FST; SND] THEN ASM_REWRITE_TAC[] THEN
     REPEAT PAIRARG_TAC THEN GVS[] THEN ASM_ARITH_TAC;
@@ -318,7 +318,7 @@ let allowed_op_def = cake_def
      ~(op = clos_Install) /\ !t i. ~(op = MemOp (MutCons t i))`;;
 
 let data_v_to_list_def = sem1aux_def_wf
-  `measure data_v_size`
+  `MEASURE data_v_size`
   SEM1AUX_TC_TAC
   `(data_v_to_list (data_Block ts tag []) =
       if tag = nil_tag then SOME [] else NONE) /\
@@ -557,7 +557,7 @@ let do_stack_def = cake_def
                           (data_state_locals_size s)) in
      data_state_safe_for_space_fupd
        (K (data_state_safe_for_space s /\
-           the F (OPTION_MAP ((>) (limits_stack_limit (data_state_limits s)))
+           misc_the F (OPTION_MAP ((>) (limits_stack_limit (data_state_limits s)))
                              new_stack)))
        (data_state_stack_max_fupd
           (K (OPTION_MAP2 MAX (data_state_stack_max s) new_stack)) s)`;;
@@ -644,7 +644,7 @@ let data_do_install_def = cake_def
                        let s' =
                          data_state_safe_for_space_fupd (K F)
                            (data_state_code_fupd
-                              (K (union (data_state_code s) (fromAList progs)))
+                              (K (sptree_union (data_state_code s) (fromAList progs)))
                               (data_state_compile_oracle_fupd (K new_oracle) s))
                        in
                          Rval (data_CodePtr k, s')
@@ -965,7 +965,7 @@ let data_bad_thunk_update_def = cake_def
 (* that each block produced by the finalisation gets a fresh time stamp    *)
 
 let data_finalise_cons_def = cake_def_wf
-  `measure ((size:((data_v)bvl_ref)spt->num) o FST o
+  `MEASURE ((sptree_size:((data_v)bvl_ref)spt->num) o FST o
             (SND:data_v # ((data_v)bvl_ref)spt # num option ->
                  ((data_v)bvl_ref)spt # num option))`
   (REWRITE_TAC[measure_THM; o_THM; FST; SND] THEN REPEAT STRIP_TAC THEN
@@ -1370,7 +1370,7 @@ let data_call_env_def = cake_def
   `data_call_env args (size':num option) (s:(C,FFI)data_state) =
      let new_stack_max = OPTION_MAP2 MAX (data_state_stack_max s)
                            (OPTION_MAP2 (+) (size_of_stack (data_state_stack s)) size') in
-     let stack_safe = the F (OPTION_MAP ((>) (limits_stack_limit (data_state_limits s)))
+     let stack_safe = misc_the F (OPTION_MAP ((>) (limits_stack_limit (data_state_limits s)))
                                         new_stack_max) in
        data_state_locals_fupd (K (fromList args))
          (data_state_locals_size_fupd (K size')
@@ -1382,7 +1382,7 @@ let data_push_env_def = cake_def
   `(data_push_env env F (s:(C,FFI)data_state) =
       let stack = CONS (data_Env (data_state_locals_size s) env) (data_state_stack s) in
       let stack_max = OPTION_MAP2 MAX (data_state_stack_max s) (size_of_stack stack) in
-      let stack_safe = the F (OPTION_MAP ((>) (limits_stack_limit (data_state_limits s)))
+      let stack_safe = misc_the F (OPTION_MAP ((>) (limits_stack_limit (data_state_limits s)))
                                          stack_max) in
         data_state_stack_fupd (K stack)
           (data_state_stack_max_fupd (K stack_max)
@@ -1392,7 +1392,7 @@ let data_push_env_def = cake_def
       let stack = CONS (Exc (data_state_locals_size s) env (data_state_handler s))
                        (data_state_stack s) in
       let stack_max = OPTION_MAP2 MAX (data_state_stack_max s) (size_of_stack stack) in
-      let stack_safe = the F (OPTION_MAP ((>) (limits_stack_limit (data_state_limits s)))
+      let stack_safe = misc_the F (OPTION_MAP ((>) (limits_stack_limit (data_state_limits s)))
                                          stack_max) in
         data_state_stack_fupd (K stack)
           (data_state_stack_max_fupd (K stack_max)
@@ -1429,7 +1429,7 @@ let data_jump_exc_def = cake_def
 let data_cut_env_def = cake_def
   `data_cut_env (name_set:num_set) (env:A spt) =
      if domain name_set SUBSET domain env
-     then SOME (mk_wf (inter env name_set))
+     then SOME (mk_wf (sptree_inter env name_set))
      else NONE`;;
 
 let data_cut_state_def = cake_def
@@ -1495,7 +1495,7 @@ let _ = cake_add_simps [install_sfs_def];;
 
 let data_set_vars_def = cake_def
   `data_set_vars ns vs (s:(C,FFI)data_state) =
-     data_state_locals_fupd (K (union (fromAList (ZIP ns vs)) (data_state_locals s))) s`;;
+     data_state_locals_fupd (K (sptree_union (fromAList (ZIP ns vs)) (data_state_locals s))) s`;;
 
 (* HOL4 [local]: helpers for the termination proof of evaluate *)
 
@@ -1518,7 +1518,7 @@ let DSEMAUX_set_var_clock = prove
 (*      LET_THM] \\ fs [dec_clock_def]                                       *)
 
 let DSEMAUX_evaluate_rel =
-  `inv_image (measure (I:num->num) LEX measure data_prog_size)
+  `inv_image (MEASURE (I:num->num) LEX MEASURE data_prog_size)
      (\x:data_prog # (C,FFI)data_state. data_state_clock (SND x),FST x)`;;
 
 let DSEMAUX_TC_TAC : tactic =

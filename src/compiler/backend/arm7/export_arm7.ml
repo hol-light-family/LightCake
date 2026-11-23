@@ -11,7 +11,7 @@ type_invention_error := true;;
 
 (* Notation as in export.ml: the mlstring literal syntax is implode "...";   *)
 (* misc$List is misc_List; word32 is int32.  Names                           *)
-(* (notes/naming/names.tsv): startup, ffi_asm, export_func and               *)
+(* (doc/names.tsv): startup, ffi_asm, export_func and                        *)
 (* export_funcs are export_arm7_startup, export_arm7_ffi_asm,                *)
 (* export_arm7_export_func and export_arm7_export_funcs.  The HOL4 script    *)
 (* builds parts of arm7_export_def in ML: the values ffi_code and            *)

@@ -574,7 +574,22 @@ let define_size_functions (names:string list) =
 
 let cake_last_types = ref ([] : string list);;
 
+(* comments (nested) in a specification string are dropped, as HOL4's        *)
+(* Datatype quotations allow them (since 2026-11-22)                         *)
+let kit_strip_comments (s:string) : string =
+  let n = String.length s in
+  let b = Buffer.create n in
+  let rec go i depth =
+    if i >= n then () else
+    if i + 1 < n && s.[i] = '(' && s.[i+1] = '*' then
+      (if depth = 0 then Buffer.add_char b ' '; go (i + 2) (depth + 1))
+    else if depth > 0 && i + 1 < n && s.[i] = '*' && s.[i+1] = ')' then go (i + 2) (depth - 1)
+    else (if depth = 0 then Buffer.add_char b s.[i]; go (i + 1) depth) in
+  go 0 0;
+  Buffer.contents b;;
+
 let cake_type s =
+  let s = kit_strip_comments s in
   let spec = parse_inductive_type_specification s in
   let names = map (fun (ty,_) -> try dest_vartype ty
                                  with Failure _ -> fst(dest_type ty)) spec in

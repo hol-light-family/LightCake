@@ -96,7 +96,7 @@ let GC2AUX_MATCH_MP_EITHER (lemma:thm) (th:thm) : thm =
   try MATCH_MP lemma th with Failure _ -> MATCH_MP lemma (SYM th);;
 
 let gen_gc_gc_move_data_def = cake_def_wf
-  `measure (\(conf:B gen_gc_conf,state:(A,B)gc_state).
+  `MEASURE (\(conf:B gen_gc_conf,state:(A,B)gc_state).
               gen_gc_conf_limit conf - heap_length (gc_state_h1 state))`
   (REPEAT STRIP_TAC THEN RVEQ_TAC THEN
    FIRST_X_ASSUM(MP_TAC o GC2AUX_MATCH_MP_EITHER gen_gc_gc_move_list_IMP) THEN
@@ -128,7 +128,7 @@ let gen_gc_gc_move_data_def = cake_def_wf
 let gen_gc_gc_move_data_ind = cake_ind "gen_gc_gc_move_data";;
 
 let gc_move_refs_def = cake_def_wf
-  `measure (\(conf:B gen_gc_conf,state:(A,B)gc_state). heap_length (gc_state_r2 state))`
+  `MEASURE (\(conf:B gen_gc_conf,state:(A,B)gc_state). heap_length (gc_state_r2 state))`
   (REPEAT STRIP_TAC THEN RVEQ_TAC THEN SIMP[measure_THM] THEN
    FIRST_X_ASSUM(fun th ->
      let l,r = dest_eq (concl th) in

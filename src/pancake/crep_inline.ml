@@ -3,7 +3,7 @@
 (* Function inlining pass in crepLang.                                       *)
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
-(* - Names as notes/naming/names.tsv says: the early_exit constructors Exn   *)
+(* - Names as doc/names.tsv says: the early_exit constructors Exn            *)
 (*   and Ret are crep_inline_Exn and crep_inline_Ret (Loop_exit keeps its   *)
 (*   name); the crepLang constructors are crep_Dec, crep_Call, ...           *)
 (* - ++ is APPEND, GENLIST f n is list_of_seq f n, fm \\ k is fdomsub;       *)
@@ -16,7 +16,7 @@
 (*   would then put unspecified expressions HD [] into the code             *)
 (*   (crep_inlineProof's every_inst_crep_inline would fail).  inline_nontail *)
 (*   keeps HOL Light's MAP2: its one use (inline_prog) has rts and temp_rets *)
-(*   of equal lengths (notes/DEVIATIONS.md).                                 *)
+(*   of equal lengths.                                                       *)
 (* - The clauses for crep_Call are parsed apart from the others (e is an    *)
 (*   expression in crep_Dec and a function name in crep_Call; in one         *)
 (*   quotation a variable has one type).  Bound pattern variables that HOL4 *)
@@ -255,7 +255,7 @@ let PCINLAUX_INLINE_TC_TAC : tactic =
     DISJ1_TAC THEN FIRST_ASSUM(fun th g -> try lt th g with Failure _ -> lt (SYM th) g)];;
 
 let inline_prog_def = cake_def_wf
-  `inv_image (measure I LEX measure (crep_prog_size ARB))
+  `inv_image (MEASURE I LEX MEASURE (crep_prog_size ARB))
      (\(x:(mlstring,num list # (A)crep_prog)fmap,y:(A)crep_prog). (CARD (FDOM x),y))`
   PCINLAUX_INLINE_TC_TAC
   (list_mk_conj

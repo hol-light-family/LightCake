@@ -20,7 +20,7 @@ let dest_const_def = cake_def
 (* termination: the word shifted right by one is smaller (it is not 0) *)
 
 let dest_2exp_def = cake_def_wf
-  `measure (\(n:num,w:A word). val w)`
+  `MEASURE (\(n:num,w:A word). val w)`
   (REWRITE_TAC[measure_THM; FORALL_PAIR_THM] THEN
    CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN REPEAT STRIP_TAC THEN
    SUBGOAL_THEN `val(word_ushr (w:A word) 1) < val w` MP_TAC THENL
@@ -69,7 +69,7 @@ let mul_const_def = cake_def
 cake_let_cong := true;;
 
 let simp_exp_def = cake_def_wf
-  `measure (crep_exp_size (K 0):(A)crep_exp->num)`
+  `MEASURE (crep_exp_size (K 0):(A)crep_exp->num)`
   TERM_TAC
   `(simp_exp (Crepop op exps:(A)crep_exp) =
       let exps = MAP simp_exp exps in

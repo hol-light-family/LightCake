@@ -417,7 +417,7 @@ let BVLPROPSAUX_code_inv_def = new_definition
  `BVLPROPSAUX_code_inv (co:num -> C # (num # num # bvl_exp) list)
                        (code:(num # bvl_exp) spt) co1 code1 <=>
     ?n. co1 = shift_seq n co /\
-        code1 = FOLDL union code (MAP (fromAList o SND) (list_of_seq co n))`;;
+        code1 = FOLDL sptree_union code (MAP (fromAList o SND) (list_of_seq co n))`;;
 
 let BVLPROPSAUX_code_inv_refl = prove
  (`!(co:num -> C # (num # num # bvl_exp) list) code.
@@ -488,7 +488,7 @@ let bvl_evaluate_code = prove
      bvl_evaluate (xs,env,s1) = (vs,s2) ==>
      ?n. bvl_state_compile_oracle s2 = shift_seq n (bvl_state_compile_oracle s1) /\
          bvl_state_code s2 =
-         FOLDL union (bvl_state_code s1)
+         FOLDL sptree_union (bvl_state_code s1)
                (MAP (fromAList o SND) (list_of_seq (bvl_state_compile_oracle s1) n))`,
   REWRITE_TAC[GSYM BVLPROPSAUX_code_inv_def] THEN
   MESON_TAC[BVLPROPSAUX_evaluate_code_lemma]);;
@@ -1243,7 +1243,7 @@ let evaluate_Var_list = prove
 
 (* HOL4 [simp]; Termination WF_REL_TAC `measure (exp1_size o SND)` *)
 let bVarBound_def = cake_def_wf
-  `measure (list_size bvl_exp_size o (SND:num # bvl_exp list -> bvl_exp list))`
+  `MEASURE (list_size bvl_exp_size o (SND:num # bvl_exp list -> bvl_exp list))`
   (REWRITE_TAC[measure_THM; o_THM] THEN TERM_TAC)
   `(bVarBound n [] <=> T) /\
    (bVarBound n (CONS (x:bvl_exp) (CONS y xs)) <=>
@@ -1266,7 +1266,7 @@ let bVarBound_ind = cake_ind "bVarBound";;
 
 (* HOL4 [simp]; Termination WF_REL_TAC `measure (exp1_size o SND)` *)
 let bEvery_def = cake_def_wf
-  `measure (list_size bvl_exp_size o
+  `MEASURE (list_size bvl_exp_size o
             (SND:(bvl_exp->bool) # bvl_exp list -> bvl_exp list))`
   (REWRITE_TAC[measure_THM; o_THM] THEN TERM_TAC)
   `(bEvery P [] <=> T) /\
@@ -1305,7 +1305,7 @@ let bEvery_EVERY = prove
 (* HOL4: get_code_labels; Termination wf_rel_tac `measure exp_size`; HOL4's  *)
 (* final get_code_labels_def is the definition with MAP get_code_labels      *)
 let bvl_get_code_labels_def = cake_def_wf
-  `measure bvl_exp_size`
+  `MEASURE bvl_exp_size`
   TERM_TAC
   `(bvl_get_code_labels (bvl_Var _) = {}:num->bool) /\
    (bvl_get_code_labels (bvl_If e1 e2 e3) =

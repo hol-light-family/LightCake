@@ -240,7 +240,7 @@ let STACKPROPSAUX_state_rel_mono = prove
 
 let STACKPROPSAUX_state_ok_union = prove
  (`!j p code. stack_rawcallProof_state_ok j code ==>
-              stack_rawcallProof_state_ok j (union code (p:((A)stack_prog)spt))`,
+              stack_rawcallProof_state_ok j (sptree_union code (p:((A)stack_prog)spt))`,
   SIMP[stack_rawcallProof_state_ok_def; lookup_union] THEN REPEAT STRIP_TAC THEN
   RES_TAC THEN SIMP[]);;
 
@@ -1157,5 +1157,3 @@ let stack_get_handler_labels_comp = prove
      stack_get_handler_labels k (stack_rawcall_comp i p) = stack_get_handler_labels k p /\
      stack_get_handler_labels k (comp_top i p) = stack_get_handler_labels k p`,
   STACKPROPSAUX_RC_SYNTAX_TAC [stack_get_handler_labels_def]);;
-
-

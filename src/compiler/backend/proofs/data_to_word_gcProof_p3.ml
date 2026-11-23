@@ -150,8 +150,8 @@ let state_rel_set_store_AllocSize = prove
 (* HOL4 line 5993 *)
 let inter_insert = prove
  (`!n (x:A) t1 (t2:B spt).
-     inter (insert n x t1) t2 =
-     if n IN domain t2 then insert n x (inter t1 t2) else inter t1 t2`,
+     sptree_inter (insert n x t1) t2 =
+     if n IN domain t2 then insert n x (sptree_inter t1 t2) else sptree_inter t1 t2`,
   REPEAT GEN_TAC THEN COND_CASES_TAC THEN
   SIMP_TAC[spt_eq_thm; wf_inter; wf_insert; lookup_inter_alt; lookup_insert] THEN
   GEN_TAC THEN REPEAT COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN ASM_MESON_TAC[]);;
@@ -188,7 +188,7 @@ let lookup_ODD_adjust_set = prove
 
 (* HOL4 line 6036 *)
 let wf_adjust_set = prove
- (`!s:A spt. wf (adjust_set s)`,
+ (`!s:A spt. sptree_wf (adjust_set s)`,
   REWRITE_TAC[adjust_set_def; wf_fromAList]);;
 
 (* HOL4 line 6042 *)
@@ -222,7 +222,7 @@ let GCP3AUX_IN_domain_adjust_set_alt = prove
 (* HOL4 line 6066 *)
 let adjust_set_inter = prove
  (`!(t1:A spt) (t2:B spt).
-     adjust_set (inter t1 t2) = inter (adjust_set t1) (adjust_set t2)`,
+     adjust_set (sptree_inter t1 t2) = sptree_inter (adjust_set t1) (adjust_set t2)`,
   REPEAT GEN_TAC THEN SIMP_TAC[spt_eq_thm; wf_adjust_set; wf_inter] THEN
   REWRITE_TAC[lookup_inter_alt; lookup_adjust_set; domain_inter; IN_INTER;
               GCP3AUX_IN_domain_adjust_set_alt] THEN
@@ -1160,7 +1160,7 @@ let size_of_global_to_vs = prove
   REPEAT GEN_TAC THEN SPEC_TAC(`xs:data_v list`,`xs:data_v list`) THEN
   LIST_INDUCT_TAC THEN REWRITE_TAC[APPEND] THENL
    [CASES_ON `x:num option` THEN
-    REWRITE_TAC[global_to_vs_def; the_global_def; the_def; OPTION_MAP_DEF; size_of_def] THEN
+    REWRITE_TAC[global_to_vs_def; the_global_def; misc_the_def; OPTION_MAP_DEF; size_of_def] THEN
     REWRITE_TAC[small_num_def] THEN CONV_TAC INT_REDUCE_CONV THEN
     REWRITE_TAC[COND_ID];
     ONCE_REWRITE_TAC[size_of_cons] THEN ASM_REWRITE_TAC[]]);;
@@ -1972,7 +1972,7 @@ let stack_rel_imp_subset = prove
 (* HOL4 line 7213 *)
 let PERM_toList_lookup_eq = prove
  (`!m1 (m2:A spt). (!k. lookup k m1 = lookup k m2) ==> PERM (toList m1) (toList m2)`,
-  SUBGOAL_THEN `!n (m1:A spt) m2. size m1 = n /\ (!k. lookup k m1 = lookup k m2) ==>
+  SUBGOAL_THEN `!n (m1:A spt) m2. sptree_size m1 = n /\ (!k. lookup k m1 = lookup k m2) ==>
                                   PERM (toList m1) (toList m2)`
     (fun th -> MESON_TAC[th]) THEN
   MATCH_MP_TAC num_WF THEN X_GEN_TAC `n:num` THEN DISCH_TAC THEN
@@ -1983,7 +1983,7 @@ let PERM_toList_lookup_eq = prove
      [ASM_MESON_TAC[]; ALL_TAC] THEN
     SUBGOAL_THEN `PERM (toList (delete k (m1:A spt))) (toList (delete k (m2:A spt)))`
       ASSUME_TAC THENL
-     [FIRST_X_ASSUM(MP_TAC o SPEC `size (delete k (m1:A spt))` o check (fun th ->
+     [FIRST_X_ASSUM(MP_TAC o SPEC `sptree_size (delete k (m1:A spt))` o check (fun th ->
         is_forall (concl th) && is_imp (snd (dest_forall (concl th))))) THEN ANTS_TAC THENL
        [ASM_REWRITE_TAC[size_delete; option_DISTINCT] THEN
         MP_TAC(ISPECL [`k:num`; `m1:A spt`; `v:A`] lookup_zero) THEN
@@ -2029,10 +2029,10 @@ let get_vars_PERM_toList_inter = prove
  (`!args (x':num_set) (vals:A list) locals.
      data_get_vars args locals = SOME vals ==>
      ?dups.
-       PERM (APPEND vals (toList (inter locals x')))
-            (APPEND dups (toList (inter locals (list_insert args x')))) /\
+       PERM (APPEND vals (toList (sptree_inter locals x')))
+            (APPEND dups (toList (sptree_inter locals (list_insert args x')))) /\
        set_of_list dups SUBSET set_of_list vals /\
-       set_of_list vals SUBSET set_of_list (toList (inter locals (list_insert args x')))`,
+       set_of_list vals SUBSET set_of_list (toList (sptree_inter locals (list_insert args x')))`,
   LIST_INDUCT_TAC THENL
    [REWRITE_TAC[data_get_vars_def; list_insert_def; option_INJ] THEN REPEAT GEN_TAC THEN
     DISCH_THEN(SUBST1_TAC o SYM) THEN EXISTS_TAC `[]:A list` THEN
@@ -2050,31 +2050,31 @@ let get_vars_PERM_toList_inter = prove
   CASE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN DISCH_THEN(SUBST1_TAC o SYM) THEN
   FIRST_X_ASSUM(MP_TAC o SPECL [`insert h one (x2:num_set)`; `ws:A list`; `locals:A spt`]) THEN
   ASM_REWRITE_TAC[] THEN DISCH_THEN(X_CHOOSE_THEN `dups:A list` STRIP_ASSUME_TAC) THEN
-  SUBGOAL_THEN `MEM (v:A) (toList (inter (locals:A spt) (list_insert t (insert h one (x2:num_set)))))`
+  SUBGOAL_THEN `MEM (v:A) (toList (sptree_inter (locals:A spt) (list_insert t (insert h one (x2:num_set)))))`
     ASSUME_TAC THENL
    [REWRITE_TAC[MEM_toList] THEN EXISTS_TAC `h:num` THEN
     ASM_REWRITE_TAC[lookup_inter_alt; domain_list_insert; domain_insert; IN_INSERT];
     ALL_TAC] THEN
   ASM_CASES_TAC `h IN domain (x2:num_set)` THENL
    [EXISTS_TAC `CONS (v:A) dups` THEN
-    SUBGOAL_THEN `PERM (toList (inter (locals:A spt) (insert h one x2)))
-                       (toList (inter locals (x2:num_set)))` ASSUME_TAC THENL
+    SUBGOAL_THEN `PERM (toList (sptree_inter (locals:A spt) (insert h one x2)))
+                       (toList (sptree_inter locals (x2:num_set)))` ASSUME_TAC THENL
      [MATCH_MP_TAC PERM_toList_lookup_eq THEN
       REWRITE_TAC[lookup_inter_alt; domain_insert; IN_INSERT] THEN
       GEN_TAC THEN ASM_CASES_TAC `k:num = h` THEN ASM_REWRITE_TAC[];
       ALL_TAC] THEN
     REWRITE_TAC[APPEND; set_of_list] THEN REPEAT CONJ_TAC THENL
      [MATCH_MP_TAC PERM_MONO THEN MATCH_MP_TAC PERM_TRANS THEN
-      EXISTS_TAC `APPEND (ws:A list) (toList (inter (locals:A spt) (insert h one x2)))` THEN
+      EXISTS_TAC `APPEND (ws:A list) (toList (sptree_inter (locals:A spt) (insert h one x2)))` THEN
       ASM_REWRITE_TAC[] THEN MATCH_MP_TAC PERM_CONG THEN
       ONCE_REWRITE_TAC[PERM_SYM] THEN ASM_REWRITE_TAC[PERM_REFL];
       ASM SET_TAC[];
       REWRITE_TAC[INSERT_SUBSET; IN_SET_OF_LIST] THEN ASM_REWRITE_TAC[]];
     EXISTS_TAC `dups:A list` THEN
-    SUBGOAL_THEN `PERM (toList (inter (locals:A spt) (insert h one x2)))
-                       (CONS (v:A) (toList (inter locals (x2:num_set))))` ASSUME_TAC THENL
+    SUBGOAL_THEN `PERM (toList (sptree_inter (locals:A spt) (insert h one x2)))
+                       (CONS (v:A) (toList (sptree_inter locals (x2:num_set))))` ASSUME_TAC THENL
      [MATCH_MP_TAC PERM_TRANS THEN
-      EXISTS_TAC `CONS (v:A) (toList (delete h (inter (locals:A spt) (insert h one x2))))` THEN
+      EXISTS_TAC `CONS (v:A) (toList (delete h (sptree_inter (locals:A spt) (insert h one x2))))` THEN
       CONJ_TAC THENL
        [MATCH_MP_TAC PERM_toList_delete THEN
         ASM_REWRITE_TAC[lookup_inter_alt; domain_insert; IN_INSERT];
@@ -2084,9 +2084,9 @@ let get_vars_PERM_toList_inter = prove
       ALL_TAC] THEN
     REWRITE_TAC[APPEND; set_of_list] THEN REPEAT CONJ_TAC THENL
      [MATCH_MP_TAC PERM_TRANS THEN
-      EXISTS_TAC `APPEND (ws:A list) (toList (inter (locals:A spt) (insert h one x2)))` THEN
+      EXISTS_TAC `APPEND (ws:A list) (toList (sptree_inter (locals:A spt) (insert h one x2)))` THEN
       ASM_REWRITE_TAC[] THEN MATCH_MP_TAC PERM_TRANS THEN
-      EXISTS_TAC `APPEND (ws:A list) (CONS v (toList (inter (locals:A spt) (x2:num_set))))` THEN
+      EXISTS_TAC `APPEND (ws:A list) (CONS v (toList (sptree_inter (locals:A spt) (x2:num_set))))` THEN
       CONJ_TAC THENL
        [ONCE_REWRITE_TAC[PERM_SYM] THEN REWRITE_TAC[LSORTAUX_PERM_MOVE];
         MATCH_MP_TAC PERM_CONG THEN ONCE_REWRITE_TAC[PERM_SYM] THEN
@@ -2245,11 +2245,11 @@ let GCP3AUX_word_ml_inv_loc_ok = prove
 
 (* GCP3AUX: an adjusted empty name set cuts away everything *)
 let GCP3AUX_toAList_inter_adjust_set_LN = prove
- (`!t:A spt. toAList (inter t (adjust_set (LN:B spt))) = []`,
-  GEN_TAC THEN MP_TAC(ISPEC `toAList (inter (t:A spt) (adjust_set (LN:B spt)))` list_CASES) THEN
+ (`!t:A spt. toAList (sptree_inter t (adjust_set (LN:B spt))) = []`,
+  GEN_TAC THEN MP_TAC(ISPEC `toAList (sptree_inter (t:A spt) (adjust_set (LN:B spt)))` list_CASES) THEN
   DISCH_THEN(DISJ_CASES_THEN2 ACCEPT_TAC
     (X_CHOOSE_THEN `h:num#A` (X_CHOOSE_THEN `r:(num#A)list` ASSUME_TAC))) THEN
-  SUBGOAL_THEN `MEM (h:num#A) (toAList (inter (t:A spt) (adjust_set (LN:B spt))))` MP_TAC THENL
+  SUBGOAL_THEN `MEM (h:num#A) (toAList (sptree_inter (t:A spt) (adjust_set (LN:B spt))))` MP_TAC THENL
    [ASM_REWRITE_TAC[MEM]; ALL_TAC] THEN
   SPEC_TAC(`h:num#A`,`h:num#A`) THEN REWRITE_TAC[FORALL_PAIR_THM; MEM_toAList] THEN
   REWRITE_TAC[lookup_inter_alt; GCP2AUX_IN_domain_adjust_set; domain_def; NOT_IN_EMPTY] THEN
@@ -2314,7 +2314,7 @@ let state_rel_gc_gen = prove
   REPEAT GEN_TAC THEN REWRITE_TAC[data_to_word_gcProof_state_rel_def] THEN
   STRIP_TAC THEN STRIP_TAC THEN
   SUBGOAL_THEN `join_env (data_state_locals (s:(C,FFI)data_state))
-     (toAList (inter (wl_state_locals (t:(A,C,FFI)wl_state))
+     (toAList (sptree_inter (wl_state_locals (t:(A,C,FFI)wl_state))
        (adjust_set (data_state_locals s)))) = []`
     (fun th -> RULE_ASSUM_TAC(CASE_REWRITE_RULE[th; APPEND])) THENL
    [ASM_REWRITE_TAC[GCP3AUX_toAList_inter_adjust_set_LN; join_env_NIL]; ALL_TAC] THEN
@@ -3036,9 +3036,9 @@ let alloc_lemma = prove
     ASM_REWRITE_TAC[APPEND; PERM_REFL; set_of_list; EMPTY_SUBSET];
     FIRST_ASSUM ACCEPT_TAC]);;
 
-(* GCP3AUX: an insert outside the domain of t does not change inter _ t *)
+(* GCP3AUX: an insert outside the domain of t does not change sptree_inter _ t *)
 let GCP3AUX_inter_insert_NOT_IN = prove
- (`!n (w:A) s (t:B spt). ~(n IN domain t) ==> inter (insert n w s) t = inter s t`,
+ (`!n (w:A) s (t:B spt). ~(n IN domain t) ==> sptree_inter (insert n w s) t = sptree_inter s t`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[inter_eq; lookup_inter_alt; lookup_insert] THEN
   X_GEN_TAC `k:num` THEN COND_CASES_TAC THEN REWRITE_TAC[] THEN
   COND_CASES_TAC THEN ASM_MESON_TAC[]);;
@@ -3234,7 +3234,7 @@ let data_to_word_gcProof_get_var_set_var_thm = prove
 let GCP3AUX_wl_cut_env_adjust_sets = prove
  (`!(names:B spt) (l:A spt) y.
      wl_cut_env (adjust_sets names) l = SOME y ==>
-     y = union (inter l (adjust_set names)) (inter l (LS one)) /\
+     y = sptree_union (sptree_inter l (adjust_set names)) (sptree_inter l (LS one)) /\
      domain (adjust_set names) SUBSET domain l /\ 0 IN domain l`,
   REPEAT GEN_TAC THEN
   REWRITE_TAC[wl_cut_env_def; cut_envs_def; adjust_sets_def; cut_names_def; FST; SND] THEN
@@ -3280,8 +3280,8 @@ let state_rel_cut_env_cut_env = prove
     REWRITE_TAC[option_INJ; distinctness "option"] THEN
     DISCH_THEN(SUBST1_TAC o SYM) THEN REWRITE_TAC[domain_mk_wf; domain_inter] THEN SET_TAC[];
     ALL_TAC] THEN
-  SUBGOAL_THEN `inter (y:(A word_loc)spt) (adjust_set (x:data_v spt)) =
-                inter (wl_state_locals (t:(A,C,FFI)wl_state)) (adjust_set x)` ASSUME_TAC THENL
+  SUBGOAL_THEN `sptree_inter (y:(A word_loc)spt) (adjust_set (x:data_v spt)) =
+                sptree_inter (wl_state_locals (t:(A,C,FFI)wl_state)) (adjust_set x)` ASSUME_TAC THENL
    [REWRITE_TAC[inter_eq; lookup_inter_alt] THEN X_GEN_TAC `k:num` THEN
     COND_CASES_TAC THEN REWRITE_TAC[] THEN
     ASM_MESON_TAC[GCP2AUX_IN_domain_adjust_set; GCP1AUX_adjust_var_IN_adjust_set; SUBSET];
@@ -3451,7 +3451,7 @@ let alloc_with_locals_1_3 = prove
 
 (* HOL4 line 8235 *)
 let cut_names_imp_wf = prove
- (`!(s:B spt) (t:A spt) x. cut_names s t = SOME x ==> wf x`,
+ (`!(s:B spt) (t:A spt) x. cut_names s t = SOME x ==> sptree_wf x`,
   REPEAT GEN_TAC THEN REWRITE_TAC[cut_names_def] THEN COND_CASES_TAC THEN
   REWRITE_TAC[option_INJ; distinctness "option"] THEN
   DISCH_THEN(SUBST1_TAC o SYM) THEN REWRITE_TAC[wf_inter]);;
@@ -4051,7 +4051,7 @@ let AllocVar_thm_nary = prove
   (* the cut of x' and the value of xa *)
   SUBGOAL_THEN `domain (list_insert args (x':num_set)) SUBSET
                 domain (data_state_locals (s:(C,FFI)data_state)) /\
-                xa = inter (data_state_locals s) (list_insert args x')` STRIP_ASSUME_TAC THENL
+                xa = sptree_inter (data_state_locals s) (list_insert args x')` STRIP_ASSUME_TAC THENL
    [UNDISCH_TAC `data_cut_env (list_insert args (x':num_set))
        (data_state_locals (s:(C,FFI)data_state)) = SOME xa` THEN
     REWRITE_TAC[data_cut_env_def] THEN COND_CASES_TAC THEN
@@ -4059,7 +4059,7 @@ let AllocVar_thm_nary = prove
     DISCH_THEN(SUBST1_TAC o SYM) THEN ASM_SIMP_TAC[wf_mk_id; wf_inter];
     ALL_TAC] THEN
   SUBGOAL_THEN `data_cut_env (x':num_set) (data_state_locals (s:(C,FFI)data_state)) =
-                SOME (inter (data_state_locals s) x')` ASSUME_TAC THENL
+                SOME (sptree_inter (data_state_locals s) x')` ASSUME_TAC THENL
    [REWRITE_TAC[data_cut_env_def] THEN SIMP_TAC[wf_mk_id; wf_inter] THEN
     COND_CASES_TAC THEN REWRITE_TAC[] THEN
     UNDISCH_TAC `~(domain (x':num_set) SUBSET domain (data_state_locals (s:(C,FFI)data_state)))` THEN
@@ -4068,7 +4068,7 @@ let AllocVar_thm_nary = prove
     REWRITE_TAC[SUBSET; domain_list_insert] THEN MESON_TAC[];
     ALL_TAC] THEN
   SUBGOAL_THEN `?n2 r2 s2. size_of (data_state_limits (s:(C,FFI)data_state))
-      (APPEND (APPEND (APPEND vals (toList (inter (data_state_locals s) (x':num_set))))
+      (APPEND (APPEND (APPEND vals (toList (sptree_inter (data_state_locals s) (x':num_set))))
          (FLAT (MAP extract_stack (data_state_stack s))))
         [the_global (data_state_global s)]) (data_state_refs s) LN = (n2,r2,s2)`
     STRIP_ASSUME_TAC THENL [MESON_TAC[PAIR_SURJECTIVE]; ALL_TAC] THEN
@@ -4087,7 +4087,7 @@ let AllocVar_thm_nary = prove
     is_forall (snd(dest_imp(concl th))))) THEN
   ASM_REWRITE_TAC[] THEN DISCH_THEN MATCH_MP_TAC THEN
   MAP_EVERY EXISTS_TAC
-   [`APPEND (APPEND (APPEND vals (toList (inter (data_state_locals s) (x':num_set))))
+   [`APPEND (APPEND (APPEND vals (toList (sptree_inter (data_state_locals s) (x':num_set))))
        (FLAT (MAP extract_stack (data_state_stack s))))
        [the_global (data_state_global (s:(C,FFI)data_state))]`; `dups:data_v list`;
     `r2:((data_v)bvl_ref)spt`; `s2:(1)spt`] THEN
@@ -4191,12 +4191,12 @@ let get_vars_SOME_IFF_eq = prove
 let memory_rel_get_vars_IMP_lemma = prove
  (`!c be ts refs sp st (m:A word->A word_loc) dm ll (t:(A,C,FFI)wl_state) envs n x w.
      memory_rel c be ts refs sp st m dm
-       (APPEND (join_env ll (toAList (inter (wl_state_locals t) (adjust_set ll)))) envs) /\
+       (APPEND (join_env ll (toAList (sptree_inter (wl_state_locals t) (adjust_set ll)))) envs) /\
      data_get_vars n ll = SOME x /\
      wl_get_vars (MAP adjust_var n) t = SOME w ==>
      memory_rel c be ts refs sp st m dm
        (APPEND (APPEND (ZIP x w)
-          (join_env ll (toAList (inter (wl_state_locals t) (adjust_set ll))))) envs)`,
+          (join_env ll (toAList (sptree_inter (wl_state_locals t) (adjust_set ll))))) envs)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[memory_rel_def] THEN STRIP_TAC THEN
   MAP_EVERY EXISTS_TAC
    [`heap:((A word_loc,data_to_word_memoryProof_tag#(A word_loc)list)heap_element)list`;
@@ -4210,13 +4210,13 @@ let memory_rel_get_vars_IMP = prove
     envs n x w.
      memory_rel c be ts (data_state_refs s) sp st m dm
        (APPEND (join_env (data_state_locals s)
-          (toAList (inter (wl_state_locals t) (adjust_set (data_state_locals s))))) envs) /\
+          (toAList (sptree_inter (wl_state_locals t) (adjust_set (data_state_locals s))))) envs) /\
      data_get_vars n (data_state_locals s) = SOME x /\
      wl_get_vars (MAP adjust_var n) t = SOME w ==>
      memory_rel c be ts (data_state_refs s) sp st m dm
        (APPEND (APPEND (ZIP x w)
           (join_env (data_state_locals s)
-             (toAList (inter (wl_state_locals t) (adjust_set (data_state_locals s))))))
+             (toAList (sptree_inter (wl_state_locals t) (adjust_set (data_state_locals s))))))
           envs)`,
   REPEAT STRIP_TAC THEN MATCH_MP_TAC memory_rel_get_vars_IMP_lemma THEN
   EXISTS_TAC `n:num list` THEN ASM_REWRITE_TAC[]);;
@@ -4229,13 +4229,13 @@ let memory_rel_get_var_IMP = prove
     envs u y y'.
      memory_rel c be ts (data_state_refs s) sp st m dm
        (APPEND (join_env (data_state_locals s)
-          (toAList (inter (wl_state_locals t) (adjust_set (data_state_locals s))))) envs) /\
+          (toAList (sptree_inter (wl_state_locals t) (adjust_set (data_state_locals s))))) envs) /\
      data_get_var u (data_state_locals s) = SOME y /\
      wl_get_var (adjust_var u) t = SOME y' ==>
      memory_rel c be ts (data_state_refs s) sp st m dm
        (CONS (y,y')
           (APPEND (join_env (data_state_locals s)
-             (toAList (inter (wl_state_locals t) (adjust_set (data_state_locals s)))))
+             (toAList (sptree_inter (wl_state_locals t) (adjust_set (data_state_locals s)))))
              envs))`,
   REPEAT STRIP_TAC THEN
   MP_TAC(ISPECL [`c:data_to_word_config`; `be:bool`; `ts:num`; `s:(C,FFI)data_state`;
@@ -4268,10 +4268,10 @@ let lookup_RefByte_location = prove
 let memory_rel_insert = prove
  (`!c be ts refs sp st (m:A word->A word_loc) dm x w d l xs dest.
      memory_rel c be ts refs sp st m dm
-       (APPEND (APPEND [(x,w)] (join_env d (toAList (inter l (adjust_set d))))) xs) ==>
+       (APPEND (APPEND [(x,w)] (join_env d (toAList (sptree_inter l (adjust_set d))))) xs) ==>
      memory_rel c be ts refs sp st m dm
        (APPEND (join_env (insert dest x d)
-          (toAList (inter (insert (adjust_var dest) w l)
+          (toAList (sptree_inter (insert (adjust_var dest) w l)
                           (adjust_set (insert dest x d))))) xs)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[memory_rel_def] THEN STRIP_TAC THEN
   MAP_EVERY EXISTS_TAC
@@ -4381,8 +4381,8 @@ let get_vars_3_IMP = prove
 let inter_insert_ODD_adjust_set = prove
  (`!k dest (w:A) v s (t:B spt).
      ODD k ==>
-     inter (insert (adjust_var dest) w (insert k v s)) (adjust_set t) =
-     inter (insert (adjust_var dest) w s) (adjust_set t)`,
+     sptree_inter (insert (adjust_var dest) w (insert k v s)) (adjust_set t) =
+     sptree_inter (insert (adjust_var dest) w s) (adjust_set t)`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[inter_eq; lookup_inter_alt; lookup_insert] THEN
   X_GEN_TAC `n:num` THEN COND_CASES_TAC THEN REWRITE_TAC[] THEN
   COND_CASES_TAC THEN REWRITE_TAC[] THEN
@@ -4392,14 +4392,14 @@ let inter_insert_ODD_adjust_set = prove
 (* HOL4 line 8778 *)
 let inter_insert_ODD_adjust_set_alt = prove
  (`!k (v:A) s (t:B spt).
-     ODD k ==> inter (insert k v s) (adjust_set t) = inter s (adjust_set t)`,
+     ODD k ==> sptree_inter (insert k v s) (adjust_set t) = sptree_inter s (adjust_set t)`,
   REPEAT STRIP_TAC THEN MATCH_MP_TAC GCP3AUX_inter_insert_NOT_IN THEN
   ASM_MESON_TAC[GCP3AUX_ODD_NOT_IN_domain_adjust_set]);;
 
 (* HOL4 line 8788 *)
 let inter_delete_ODD_adjust_set_alt = prove
  (`!k (s:A spt) (t:B spt).
-     ODD k ==> inter (delete k s) (adjust_set t) = inter s (adjust_set t)`,
+     ODD k ==> sptree_inter (delete k s) (adjust_set t) = sptree_inter s (adjust_set t)`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[inter_eq; lookup_inter_alt; lookup_delete] THEN
   X_GEN_TAC `n:num` THEN COND_CASES_TAC THEN REWRITE_TAC[] THEN
   SUBGOAL_THEN `~(n:num = k)` (fun th -> REWRITE_TAC[th]) THEN
@@ -4418,7 +4418,7 @@ let _ = cake_add_simps [get_vars_termdep];;
 (* HOL4 line 8804 *)
 let join_env_locals_def = cake_def
   `join_env_locals (sl:A spt) (tl:(B)spt) =
-     join_env sl (toAList (inter tl (adjust_set sl)))`;;
+     join_env sl (toAList (sptree_inter tl (adjust_set sl)))`;;
 
 (* HOL4 line 8809 *)
 let join_env_locals_insert_odd = prove
@@ -4483,14 +4483,14 @@ let word_ml_inv_get_var_IMP = prove
     (t:(A,C,FFI)wl_state) n1 x1 x1' envs.
      word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs
        (APPEND (join_env (data_state_locals s)
-          (toAList (inter (wl_state_locals t) (adjust_set (data_state_locals s)))))
+          (toAList (sptree_inter (wl_state_locals t) (adjust_set (data_state_locals s)))))
           envs) /\
      data_get_var n1 (data_state_locals s) = SOME x1 /\
      wl_get_var (adjust_var n1) t = SOME x1' ==>
      word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs
        (CONS (x1,x1')
           (APPEND (join_env (data_state_locals s)
-             (toAList (inter (wl_state_locals t) (adjust_set (data_state_locals s)))))
+             (toAList (sptree_inter (wl_state_locals t) (adjust_set (data_state_locals s)))))
              envs))`,
   REPEAT STRIP_TAC THEN
   MP_TAC(ISPECL [`heap:((A word_loc,data_to_word_memoryProof_tag#(A word_loc)list)heap_element)list`;

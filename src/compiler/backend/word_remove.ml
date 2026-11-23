@@ -6,7 +6,7 @@
 (* correctness proofs.                                                       *)
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
-(* - The wordLang constructors are wl_... (notes/naming/names.tsv).          *)
+(* - The wordLang constructors are wl_... (doc/names.tsv).                   *)
 (* - HOL4's pmatch case expressions are written with match like all others, *)
 (*   so remove_must_terminate_pmatch restates the definition in match form.  *)
 (* - The catch-all clause is completed as HOL4's TFL does (sem1aux_def).     *)

@@ -41,8 +41,8 @@ needs "compiler/backend/semantics/labSem.ml";;
 needs "compiler/backend/word_to_stack.ml";;
 needs "compiler/backend/proofs/data_to_word_gcProof.ml";;
 needs "compiler/backend/proofs/word_to_stackProof.ml";;
-(* stack_allocProof (a HOL4 ancestor) is not loaded: it is not validated yet; *)
-(* the three theorems of it that part 1 uses (next_lab_EQ_MAX, next_lab_thm, *)
+(* stack_allocProof (a HOL4 ancestor) is not loaded; the three theorems of   *)
+(* it that part 1 uses (next_lab_EQ_MAX, next_lab_thm,                       *)
 (* extract_labels_next_lab) are proved below under the S2LP1AUX_ prefix.     *)
 needs "compiler/backend/proofs/stack_removeProof.ml";;
 needs "compiler/backend/semantics/labProps.ml";;
@@ -244,19 +244,19 @@ let _ = cake_add_simps [word_cmp_not_NONE];;
 
 (* HOL4 line 84 [simp] (asm's word_cmp) *)
 let word_cmp_negate_alt = prove
- (`!cmp (w1:A word) w2. asm_word_cmp (negate cmp) w1 w2 <=> ~asm_word_cmp cmp w1 w2`,
+ (`!cmp (w1:A word) w2. asm_word_cmp (stack_to_lab_negate cmp) w1 w2 <=> ~asm_word_cmp cmp w1 w2`,
   GEN_TAC THEN CASES_ON `cmp:cmp` THEN
-  REWRITE_TAC[negate_def; asm_word_cmp_def]);;
+  REWRITE_TAC[stack_to_lab_negate_def; asm_word_cmp_def]);;
 
 let _ = cake_add_simps [word_cmp_negate_alt];;
 
 (* HOL4 line 90 [simp] (wordSem's word_cmp; $~ is (~)) *)
 let word_cmp_negate = prove
  (`!cmp (w1:(A)word_loc) w2.
-     wl_word_cmp (negate cmp) w1 w2 = OPTION_MAP (~) (wl_word_cmp cmp w1 w2)`,
+     wl_word_cmp (stack_to_lab_negate cmp) w1 w2 = OPTION_MAP (~) (wl_word_cmp cmp w1 w2)`,
   GEN_TAC THEN CASES_ON `cmp:cmp` THEN
   REPEAT GEN_TAC THEN CASES_ON `w1:(A)word_loc` THEN CASES_ON `w2:(A)word_loc` THEN
-  REWRITE_TAC[negate_def; wl_word_cmp_def; OPTION_MAP_DEF] THEN
+  REWRITE_TAC[stack_to_lab_negate_def; wl_word_cmp_def; OPTION_MAP_DEF] THEN
   ASM_CASES_TAC `a1 = 0` THEN ASM_CASES_TAC `a:A word = word 1` THEN
   ASM_REWRITE_TAC[OPTION_MAP_DEF]);;
 
@@ -2568,7 +2568,7 @@ let S2LP1AUX_fc_if = prove
     RVEQ_TAC THEN RULE_ASSUM_TAC(REWRITE_RULE[]) THEN TRY(FIRST_ASSUM CONTR_TAC) THEN
     ASM_MESON_TAC[]] THEN
   SUBGOAL_THEN `wl_word_cmp cmp (lab_state_regs (t1:(A,C,FFI)lab_state) r1) (lab_reg_imm ri t1) = SOME b /\
-                wl_word_cmp (negate cmp) (lab_state_regs t1 r1) (lab_reg_imm ri t1) =
+                wl_word_cmp (stack_to_lab_negate cmp) (lab_state_regs t1 r1) (lab_reg_imm ri t1) =
                 SOME (~b)` STRIP_ASSUME_TAC THENL
    [RULE_ASSUM_TAC(REWRITE_RULE[stack_get_var_def]) THEN
     IMP_RES_TAC S2LP1AUX_rel_regs THEN IMP_RES_TAC state_rel_get_var_imm THEN
@@ -4422,7 +4422,7 @@ let S2LP1AUX_rel_install = prove
            (stack_state_bitmaps_fupd (K (APPEND (stack_state_bitmaps s) bm))
            (stack_state_code_buffer_fupd (K cb)
            (stack_state_data_buffer_fupd (K db)
-           (stack_state_code_fupd (K (union (stack_state_code s) (fromAList progs)))
+           (stack_state_code_fupd (K (sptree_union (stack_state_code s) (fromAList progs)))
            (stack_state_regs_fupd
               (K (DRESTRICT (stack_state_regs s) (stack_state_ffi_save_regs s) |+
                   (lab_state_ptr_reg t,wl_Loc k 0)))

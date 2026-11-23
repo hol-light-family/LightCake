@@ -4,7 +4,7 @@
 (* Properties of loopLang and loopSem.                                       *)
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
-(* - Names as notes/naming/names.tsv says (loop_unassigned_vars_evaluate_same,*)
+(* - Names as doc/names.tsv says (loop_unassigned_vars_evaluate_same,         *)
 (*   loop_eval_upd_clock_eq, loop_evaluate_add_clock_eq,                     *)
 (*   loop_evaluate_io_events_mono, loop_evaluate_add_clock_io_events_mono;   *)
 (*   the other theorems keep their HOL4 names).                              *)
@@ -639,21 +639,21 @@ let cut_sets_nested_seq = prove
            cut_sets (cut_sets l (loop_nested_seq p)) (loop_nested_seq q)`,
   LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[APPEND; loop_nested_seq_def; cut_sets_def]);;
 let PLOOPAUX_insert_union_r = prove
- (`!n (l:num_set). insert n one l = union l (insert n one LN)`,
+ (`!n (l:num_set). insert n one l = sptree_union l (insert n one LN)`,
   REPEAT GEN_TAC THEN GEN_REWRITE_TAC RAND_CONV [union_num_set_sym] THEN
   REWRITE_TAC[union_insert_LN]);;
 
 let PLOOPAUX_foldl_insert_union = prove
- (`!ns (l:num_set). ?l'. FOLDL (\sp n. insert n one sp) l ns = union l l'`,
+ (`!ns (l:num_set). ?l'. FOLDL (\sp n. insert n one sp) l ns = sptree_union l l'`,
   LIST_INDUCT_TAC THEN REWRITE_TAC[FOLDL] THENL
   [MESON_TAC[union_LN]; ALL_TAC] THEN
   GEN_TAC THEN FIRST_X_ASSUM(X_CHOOSE_TAC `l2:num_set` o SPEC `insert h one (l:num_set)`) THEN
-  ASM_REWRITE_TAC[] THEN EXISTS_TAC `union (insert h one LN) (l2:num_set)` THEN
+  ASM_REWRITE_TAC[] THEN EXISTS_TAC `sptree_union (insert h one LN) (l2:num_set)` THEN
   REWRITE_TAC[union_assoc] THEN AP_THM_TAC THEN AP_TERM_TAC THEN
   MATCH_ACCEPT_TAC PLOOPAUX_insert_union_r);;
 
 let PLOOPAUX_cut_sets_union = prove
- (`!l (p:(A)loop_prog). comp_syntax_ok l p ==> ?l'. cut_sets l p = union l l'`,
+ (`!l (p:(A)loop_prog). comp_syntax_ok l p ==> ?l'. cut_sets l p = sptree_union l l'`,
   MATCH_MP_TAC (cake_ind "comp_syntax_ok") THEN
   REWRITE_TAC[comp_syntax_ok_def; cut_sets_def] THEN REPEAT CONJ_TAC THEN
   REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[] THENL
@@ -662,8 +662,8 @@ let PLOOPAUX_cut_sets_union = prove
    EXISTS_TAC `LN:num_set` THEN REWRITE_TAC[union_LN];
    STRUCT_CASES_TAC (ISPEC `arith:loop_arith` (cases "loop_arith")) THEN
    REWRITE_TAC[case_def "loop_arith"] THENL
-   [EXISTS_TAC `union (insert a0 one LN) (insert a1 one LN):num_set`;
-    EXISTS_TAC `union (insert a0 one LN) (insert a1 one LN):num_set`;
+   [EXISTS_TAC `sptree_union (insert a0 one LN) (insert a1 one LN):num_set`;
+    EXISTS_TAC `sptree_union (insert a0 one LN) (insert a1 one LN):num_set`;
     EXISTS_TAC `insert a0 one LN:num_set`] THEN
    GEN_REWRITE_TAC RAND_CONV [union_num_set_sym] THEN
    REWRITE_TAC[GSYM union_assoc; union_insert_LN];
@@ -671,16 +671,16 @@ let PLOOPAUX_cut_sets_union = prove
    EXISTS_TAC `insert n one LN:num_set` THEN MATCH_ACCEPT_TAC PLOOPAUX_insert_union_r;
    EXISTS_TAC `insert m one LN:num_set` THEN MATCH_ACCEPT_TAC PLOOPAUX_insert_union_r;
    EXISTS_TAC `insert m one LN:num_set` THEN MATCH_ACCEPT_TAC PLOOPAUX_insert_union_r;
-   SUBGOAL_THEN `?l1. cut_sets l (p:(A)loop_prog) = union l l1`
+   SUBGOAL_THEN `?l1. cut_sets l (p:(A)loop_prog) = sptree_union l l1`
      (X_CHOOSE_TAC `l1:num_set`) THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
    SUBGOAL_THEN `?l2. cut_sets (cut_sets l (p:(A)loop_prog)) (q:(A)loop_prog) =
-                     union (cut_sets l p) l2`
+                     sptree_union (cut_sets l p) l2`
      (X_CHOOSE_TAC `l2:num_set`) THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
-   EXISTS_TAC `union l1 l2:num_set` THEN ASM_REWRITE_TAC[union_assoc];
+   EXISTS_TAC `sptree_union l1 l2:num_set` THEN ASM_REWRITE_TAC[union_assoc];
    MATCH_ACCEPT_TAC PLOOPAUX_foldl_insert_union]);;
 let cut_sets_union_accumulate = prove
  (`!p l. comp_syntax_ok l (p:(A)loop_prog) ==>
-         ?l':num_set. cut_sets l p = union l l'`,
+         ?l':num_set. cut_sets l p = sptree_union l l'`,
   MESON_TAC[PLOOPAUX_cut_sets_union]);;
 
 let cut_sets_union_domain_subset = prove

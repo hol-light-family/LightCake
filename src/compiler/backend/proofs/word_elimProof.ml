@@ -16,7 +16,7 @@
 (*   r of word_removal_thm); free variables of HOL4 statements stay free    *)
 (*   (lsz of get_stack_hd_thm, n of stack_list_rearrange_lemma, mem of      *)
 (*   FINITE_mdom_mem).  The variable memory of get_memory_update is mem     *)
-(*   (memory is a constant of another file).                                *)
+(*   (memory was a constant of another file, now stack_removeProof_memory). *)
 (* - word_removal_lemma is proved by induction with wl_evaluate_ind (HOL4   *)
 (*   recInduct evaluate_ind, with its suspend/Resume cases), one local      *)
 (*   tactic per clause of evaluate.  The proof uses that related states     *)
@@ -86,9 +86,9 @@ let get_locals_def = cake_def
   `(get_locals (LN:((A)word_loc)spt) = LN:1 spt) /\
    (get_locals (LS a) =
       match dest_word_loc a with SOME n -> insert n one LN | NONE -> LN) /\
-   (get_locals (BN t1 t2) = union (get_locals t1) (get_locals t2)) /\
+   (get_locals (BN t1 t2) = sptree_union (get_locals t1) (get_locals t2)) /\
    (get_locals (BS t1 a t2) =
-      let t = union (get_locals t1) (get_locals t2) in
+      let t = sptree_union (get_locals t1) (get_locals t2) in
       match dest_word_loc a with SOME n -> insert n one t | NONE -> t)`;;
 
 let domain_get_locals_lookup = prove
@@ -216,8 +216,8 @@ let get_num_wordloc_alist_get_locals = prove
 
 let get_locals_union_subset = prove
  (`!A (B:((A)word_loc)spt).
-     domain (get_locals (union A B)) SUBSET
-     domain (union (get_locals A) (get_locals B))`,
+     domain (get_locals (sptree_union A B)) SUBSET
+     domain (sptree_union (get_locals A) (get_locals B))`,
   REWRITE_TAC[SUBSET; domain_union; IN_UNION; domain_get_locals_lookup;
               lookup_union] THEN
   REPEAT GEN_TAC THEN DISCH_THEN(X_CHOOSE_THEN `k:num` (X_CHOOSE_THEN `n1:num`
@@ -230,7 +230,7 @@ let get_locals_union_subset = prove
 let word_elimProof_get_stack_def = cake_def
   `(word_elimProof_get_stack ([]:((A)stack_frame)list) = LN:1 spt) /\
    (word_elimProof_get_stack (CONS (StackFrame lsz e0 e _) xs) =
-      union (union (get_num_wordloc_alist e0) (get_num_wordloc_alist e))
+      sptree_union (sptree_union (get_num_wordloc_alist e0) (get_num_wordloc_alist e))
             (word_elimProof_get_stack xs))`;;
 
 let word_elimProof_get_stack_ind = cake_ind "word_elimProof_get_stack";;
@@ -239,7 +239,7 @@ let get_stack_hd_thm = prove
  (`!stack dr (l0:(num#(A)word_loc)list) l opt t.
      domain (word_elimProof_get_stack stack) SUBSET dr /\
      stack = CONS (StackFrame (lsz:num option) l l0 opt) t
-     ==> domain (get_locals (union (fromAList l0) (fromAList l))) SUBSET dr /\
+     ==> domain (get_locals (sptree_union (fromAList l0) (fromAList l))) SUBSET dr /\
          domain (word_elimProof_get_stack t) SUBSET dr`,
   REPEAT GEN_TAC THEN DISCH_THEN(CONJUNCTS_THEN2 MP_TAC SUBST1_TAC) THEN
   REWRITE_TAC[word_elimProof_get_stack_def; domain_union] THEN
@@ -399,7 +399,7 @@ let find_loc_state_def = cake_def
      let sto = word_elimProof_get_store (wl_state_store s) in
      let sta = word_elimProof_get_stack (wl_state_stack s) in
      let mem = get_memory (wl_state_memory s) (wl_state_mdomain s) in
-     union (union loc sto) (union sta mem)`;;
+     sptree_union (sptree_union loc sto) (sptree_union sta mem)`;;
 
 let domain_find_loc_state = prove
  (`!s:(A,C,FFI)wl_state.
@@ -562,10 +562,10 @@ let stack_list_rearrange_lemma = prove
      domain (get_locals (wl_state_locals s)) SUBSET dr /\
      domain (word_elimProof_get_stack (wl_state_stack s)) SUBSET dr
      ==> domain (word_elimProof_get_stack
-           (CONS (StackFrame lsz (toAList (inter (wl_state_locals s) (n:B spt)))
+           (CONS (StackFrame lsz (toAList (sptree_inter (wl_state_locals s) (n:B spt)))
                     (list_rearrange (wl_state_permute s 0)
                        (sort key_val_compare
-                          (toAList (inter (wl_state_locals s) locs)))) opt)
+                          (toAList (sptree_inter (wl_state_locals s) locs)))) opt)
                  (wl_state_stack s))) SUBSET dr`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   ASM_REWRITE_TAC[word_elimProof_get_stack_def; domain_union; UNION_SUBSET] THEN
@@ -951,7 +951,7 @@ let word_state_rel_inst_SOME = prove
 let WELIMAUX_frame_lemma = prove
  (`!stack lsz (l:(num#(A)word_loc)list) l0 opt t.
      stack = CONS (StackFrame lsz l l0 opt) t
-     ==> domain (get_locals (union (fromAList l0) (fromAList l))) SUBSET
+     ==> domain (get_locals (sptree_union (fromAList l0) (fromAList l))) SUBSET
          domain (word_elimProof_get_stack stack) /\
          domain (word_elimProof_get_stack t) SUBSET
          domain (word_elimProof_get_stack stack)`,
@@ -1043,10 +1043,10 @@ let word_state_rel_gc = prove
 let WELIMAUX_push_frame = prove
  (`!(s:(A,C,FFI)wl_state) (n:B spt) (locs:D spt) opt lsz.
      domain (word_elimProof_get_stack
-       (CONS (StackFrame lsz (toAList (inter (wl_state_locals s) n))
+       (CONS (StackFrame lsz (toAList (sptree_inter (wl_state_locals s) n))
                 (list_rearrange (wl_state_permute s 0)
                    (sort key_val_compare
-                      (toAList (inter (wl_state_locals s) locs)))) opt)
+                      (toAList (sptree_inter (wl_state_locals s) locs)))) opt)
              (wl_state_stack s))) SUBSET domain (find_loc_state s)`,
   REPEAT GEN_TAC THEN MATCH_MP_TAC (GEN `n:B spt` stack_list_rearrange_lemma) THEN
   REWRITE_TAC[domain_find_loc_state] THEN SET_TAC[]);;
@@ -1201,7 +1201,7 @@ let push_env_def2 = prove
 (* HOL4 [local] *)
 
 let get_locals_inter_subset = prove
- (`domain (get_locals (inter (a:((A)word_loc)spt) (b:B spt))) SUBSET
+ (`domain (get_locals (sptree_inter (a:((A)word_loc)spt) (b:B spt))) SUBSET
    domain (get_locals a)`,
   REWRITE_TAC[SUBSET; domain_get_locals_lookup; lookup_inter_alt] THEN
   REWRITE_TAC[COND_CASE_EQ; option_DISTINCT] THEN MESON_TAC[]);;
@@ -1522,8 +1522,8 @@ let WELIMAUX_cut_env_locals = prove
   EVERY_CASE_TAC THEN REWRITE_TAC[option_INJ; option_DISTINCT] THEN
   DISCH_THEN(SUBST1_TAC o SYM) THEN
   MATCH_MP_TAC SUBSET_TRANS THEN
-  EXISTS_TAC `domain (union (get_locals (inter (L:((A)word_loc)spt) (SND (names:cutsets))))
-                            (get_locals (inter L (FST names))))` THEN
+  EXISTS_TAC `domain (sptree_union (get_locals (sptree_inter (L:((A)word_loc)spt) (SND (names:cutsets))))
+                            (get_locals (sptree_inter L (FST names))))` THEN
   REWRITE_TAC[get_locals_union_subset; domain_union; UNION_SUBSET;
               get_locals_inter_subset]);;
 

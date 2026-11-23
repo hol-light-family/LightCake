@@ -197,7 +197,7 @@ let LBMAPAUX_print_sexp_tc3 = prove
   DISCH_THEN(CONJUNCTS_THEN2 (SUBST1_TAC o SYM) ASSUME_TAC) THEN
   ASM_REWRITE_TAC[NULL]);;
 
-let print_sexp_def = cake_def_wf `measure simpleSexp_sexp_size`
+let print_sexp_def = cake_def_wf `MEASURE simpleSexp_sexp_size`
   (REWRITE_TAC[measure_THM] THEN REPEAT STRIP_TAC THEN RVEQ_TAC THEN
    ASM_MESON_TAC[LBMAPAUX_print_sexp_tc1; LBMAPAUX_print_sexp_tc2;
                  LBMAPAUX_print_sexp_tc3])

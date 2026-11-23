@@ -874,13 +874,9 @@ let STALLOCAUX_EV_CONV (facts:thm list) : conv =
 
 (* the facts of the assumptions: normalised, and k IN FDOM f for each fact *)
 (* FLOOKUP f k = SOME v                                                     *)
-let STALLOCAUX_FLOOKUP_IN_FDOM = prove
- (`!(f:(A,B)fmap) k v. FLOOKUP f k = SOME v ==> k IN FDOM f`,
-  SIMP_TAC[FDOM_FLOOKUP; option_DISTINCT]);;
-
 let stallocaux_facts (asl:(string*thm) list) : thm list =
   let fs = map (fun (_,th) -> CONV_RULE (stallocaux_norm []) th) asl in
-  fs @ mapfilter (MATCH_MP STALLOCAUX_FLOOKUP_IN_FDOM) fs;;
+  fs @ mapfilter (MATCH_MP FMAPAUX_FLOOKUP_SOME_FDOM) fs;;
 
 let STALLOCAUX_EV_TAC : tactic = fun (asl,w as g) ->
   let facts = stallocaux_facts asl in
@@ -1571,10 +1567,6 @@ let STALLOCAUX_option_tuple6_id = prove
      (match x with NONE -> NONE | SOME (a,b,c,d,e,f) -> SOME (a,b,c,d,e,f)) = x`,
   GEN_TAC THEN STALLOCAUX_OPT_CASES_TAC `x:(A#B#C#D#E#G)option` ["a";"b";"c";"d";"e";"f"]);;
 
-let STALLOCAUX_pair_CASE_K = prove
- (`!(p:A#B) (x:C). pair_CASE p (\a b. x) = x`,
-  REWRITE_TAC[FORALL_PAIR_THM; pair_CASE]);;
-
 (* HOL4 line 746 *)
 let word_gc_move_bitmaps_unroll = prove
  (CASE_TERM
@@ -1634,7 +1626,7 @@ let word_gc_move_bitmaps_unroll = prove
     REWRITE_TAC[];
     REWRITE_TAC[GSYM get_bits_def] THEN ASM_REWRITE_TAC[] THEN
     CASE_REWRITE_TAC[STALLOCAUX_option_tuple6_id] THEN DISCH_THEN(K ALL_TAC) THEN
-    REWRITE_TAC[STALLOCAUX_option_tuple6_id; STALLOCAUX_pair_CASE_K]]);;
+    REWRITE_TAC[STALLOCAUX_option_tuple6_id; BASICAUX_pair_CASE_K]]);;
 
 let STALLOCAUX_get_bits_cons = prove
  (`!w:A word. ~(w = word 0) /\ ~(w = word 1) ==>

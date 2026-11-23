@@ -96,7 +96,7 @@ let NoRead_path = prove
   DISCH_THEN(MP_TAC o SPEC `FST (h:A#A)` o MATCH_MP path_imp_mem2) THEN
   ASM_MESON_TAC[]);;
 
-(* HOL4: wf (overloaded as a turnstile); renamed: sptree has wf *)
+(* HOL4: wf (overloaded as a turnstile); renamed: a common word *)
 let parmove_wf_def = cake_def
   `parmove_wf (mu,sigma,tau:B) <=>
      windmill (APPEND mu sigma) /\
@@ -706,7 +706,7 @@ let PARMOVEAUX_dstep_measure = prove
 
 (* HOL4 Termination: measure of (mu,sigma,tau) = twice LENGTH mu plus LENGTH sigma *)
 let pmov_def = cake_def_wf
-  `measure (\s:(A option#A option) list#(A option#A option) list#(A option#A option) list.
+  `MEASURE (\s:(A option#A option) list#(A option#A option) list#(A option#A option) list.
               2 * LENGTH (FST s) + LENGTH (FST (SND s)))`
   (REWRITE_TAC[measure_THM] THEN REPEAT STRIP_TAC THEN RVEQ_TAC THEN
    MATCH_MP_TAC PARMOVEAUX_dstep_measure THEN MATCH_MP_TAC fstep_dstep THEN

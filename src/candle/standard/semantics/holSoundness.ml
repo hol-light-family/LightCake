@@ -250,7 +250,7 @@ let DEDUCT_ANTISYM_correct = prove
           ASM_REWRITE_TAC[]];
         ASM_MESON_TAC[]]];
     ALL_TAC] THEN
-  SUBGOAL_THEN `(mem:U->U->bool) ((sem:hol_term->U) p1) (two mem) /\ mem (sem p2) (two mem)` MP_TAC THENL
+  SUBGOAL_THEN `(mem:U->U->bool) ((sem:hol_term->U) p1) (setSpec_two mem) /\ mem (sem p2) (setSpec_two mem)` MP_TAC THENL
    [EXPAND_TAC "sem" THEN
     SUBGOAL_THEN `is_std_type_assignment0 (mem:U->U->bool) (FST (i:(mlstring->U list->U)#(mlstring->U list->U)))`
       ASSUME_TAC THENL [ASM_MESON_TAC[models0_def; is_std_interpretation_is_type]; ALL_TAC] THEN

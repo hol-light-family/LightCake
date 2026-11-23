@@ -145,9 +145,9 @@ let balanced_map_link_def = cake_def
   `(balanced_map_link (k:K) (v:V) Tip r = insertMin k v r) /\
    (balanced_map_link k v l Tip = insertMax k v l) /\
    (balanced_map_link k v (Bin sizeL ky y ly ry) (Bin sizeR kz z lz rz) =
-      if delta * sizeL < sizeR then
+      if balanced_map_delta * sizeL < sizeR then
         balanceL kz z (balanced_map_link k v (Bin sizeL ky y ly ry) lz) rz
-      else if delta * sizeR < sizeL then
+      else if balanced_map_delta * sizeR < sizeL then
         balanceR ky y ly (balanced_map_link k v ry (Bin sizeR kz z lz rz))
       else bin k v (Bin sizeL ky y ly ry) (Bin sizeR kz z lz rz))`;;
 
@@ -157,9 +157,9 @@ let balanced_map_link2_def = cake_def
   `(balanced_map_link2 (l:(K,V)balanced_map) Tip = l) /\
    (balanced_map_link2 Tip r = r) /\
    (balanced_map_link2 (Bin sizeL kx x lx rx) (Bin sizeR ky y ly ry) =
-      if delta * sizeL < sizeR then
+      if balanced_map_delta * sizeL < sizeR then
         balanceL ky y (balanced_map_link2 (Bin sizeL kx x lx rx) ly) ry
-      else if delta * sizeR < sizeL then
+      else if balanced_map_delta * sizeR < sizeL then
         balanceR kx x lx (balanced_map_link2 rx (Bin sizeR ky y ly ry))
       else balanced_map_glue (Bin sizeL kx x lx rx) (Bin sizeR ky y ly ry))`;;
 
@@ -693,15 +693,6 @@ let LIBXAUX_B_size_domsub = prove
          else balanced_map_size' t`,
   REPEAT STRIP_TAC THEN ASM_SIMP_TAC[size_thm; LIBXAUX_B_FCARD_DOMSUB]);;
 
-let LIBXAUX_B_ko_subset = prove
- (`!(cmp:K->K->ordering) k (t:(K,V)balanced_map) (t':(K,V)balanced_map) res.
-     good_cmp cmp /\ FDOM (to_fmap cmp t') SUBSET FDOM (to_fmap cmp t) /\
-     key_ordered cmp k t res
-     ==> key_ordered cmp k t' res`,
-  REPEAT GEN_TAC THEN STRIP_TAC THEN
-  UNDISCH_TAC `key_ordered (cmp:K->K->ordering) k (t:(K,V)balanced_map) res` THEN
-  ASM_SIMP_TAC[key_ordered_to_fmap] THEN ASM SET_TAC[]);;
-
 let LIBXAUX_B_ko_bin = prove
  (`!(cmp:K->K->ordering) k k0 (x:V) (t:(K,V)balanced_map) l r res.
      good_cmp cmp /\
@@ -747,7 +738,7 @@ let LIBXAUX_B_del_left = prove
    [ASM_MESON_TAC[LBMAPAUX_key_ordered_FDOM; ordering_distinct]; ALL_TAC] THEN
   SUBGOAL_THEN `key_ordered (cmp:K->K->ordering) k0 (l':(K,V)balanced_map) GREATER`
     ASSUME_TAC THENL
-   [MATCH_MP_TAC LIBXAUX_B_ko_subset THEN EXISTS_TAC `l:(K,V)balanced_map` THEN
+   [MATCH_MP_TAC LIBXAUX_ko_sub THEN EXISTS_TAC `l:(K,V)balanced_map` THEN
     ASM_REWRITE_TAC[FDOM_DOMSUB; DELETE_SUBSET]; ALL_TAC] THEN
   SUBGOAL_THEN `almost_balancedR (balanced_map_size' (l':(K,V)balanced_map))
                                  (balanced_map_size' (r:(K,V)balanced_map))`
@@ -789,7 +780,7 @@ let LIBXAUX_B_del_right = prove
    [ASM_MESON_TAC[LBMAPAUX_key_ordered_FDOM; ordering_distinct]; ALL_TAC] THEN
   SUBGOAL_THEN `key_ordered (cmp:K->K->ordering) k0 (r':(K,V)balanced_map) LESS`
     ASSUME_TAC THENL
-   [MATCH_MP_TAC LIBXAUX_B_ko_subset THEN EXISTS_TAC `r:(K,V)balanced_map` THEN
+   [MATCH_MP_TAC LIBXAUX_ko_sub THEN EXISTS_TAC `r:(K,V)balanced_map` THEN
     ASM_REWRITE_TAC[FDOM_DOMSUB; DELETE_SUBSET]; ALL_TAC] THEN
   SUBGOAL_THEN `almost_balancedL (balanced_map_size' (l:(K,V)balanced_map))
                                  (balanced_map_size' (r':(K,V)balanced_map))`
@@ -1373,10 +1364,6 @@ let LIBXAUX_bounded_root = prove
               injectivity "balanced_map"] THEN
   MESON_TAC[]);;
 
-let LIBXAUX_FLOOKUP_SOME_FDOM = prove
- (`!(f:(A,B)fmap) x y. FLOOKUP f x = SOME y ==> x IN FDOM f`,
-  REWRITE_TAC[FLOOKUP_DEF] THEN MESON_TAC[option_DISTINCT]);;
-
 let LIBXAUX_SUBMAP_Bin = prove
  (`!(cmp:K->K->ordering) s k (v:V) l r.
      good_cmp cmp /\ balanced_map_invariant cmp (Bin s k v l r)
@@ -1390,7 +1377,7 @@ let LIBXAUX_SUBMAP_Bin = prove
   REWRITE_TAC[SUBMAP_FLOOKUP_EQN; LIBXAUX_to_fmap_Bin; FLOOKUP_UPDATE;
               FLOOKUP_FUNION] THEN
   CONJ_TAC THEN MAP_EVERY X_GEN_TAC [`x:K->bool`; `y:V`] THEN DISCH_TAC THEN
-  FIRST_ASSUM(ASSUME_TAC o MATCH_MP LIBXAUX_FLOOKUP_SOME_FDOM) THEN
+  FIRST_ASSUM(ASSUME_TAC o MATCH_MP FMAPAUX_FLOOKUP_SOME_FDOM) THEN
   SUBGOAL_THEN `~(key_set (cmp:K->K->ordering) k = x)` (fun th -> REWRITE_TAC[th]) THENL
    [DISCH_THEN SUBST_ALL_TAC THEN ASM_MESON_TAC[];
     ASM_REWRITE_TAC[option_CASE];
@@ -1581,32 +1568,32 @@ let trim_thm = prove
 
 let LIBXAUX_link_bal1 = prove
  (`!sL slz srz.
-     balanced slz srz /\ delta * sL < slz + srz + 1
+     balanced slz srz /\ balanced_map_delta * sL < slz + srz + 1
      ==> almost_balancedL (sL + slz + 1) srz`,
   LBMAPAUX_BAL_TAC);;
 
 let LIBXAUX_link_bal2 = prove
  (`!sR sly sry.
-     balanced sly sry /\ ~(delta * (sly + sry + 1) < sR) /\
-     delta * sR < sly + sry + 1
+     balanced sly sry /\ ~(balanced_map_delta * (sly + sry + 1) < sR) /\
+     balanced_map_delta * sR < sly + sry + 1
      ==> almost_balancedR sly (sry + sR + 1)`,
   LBMAPAUX_BAL_TAC);;
 
 let LIBXAUX_link_bal3 = prove
- (`!sL sR. ~(delta * sL < sR) /\ ~(delta * sR < sL) ==> balanced sL sR`,
+ (`!sL sR. ~(balanced_map_delta * sL < sR) /\ ~(balanced_map_delta * sR < sL) ==> balanced sL sR`,
   LBMAPAUX_BAL_TAC);;
 
 let LIBXAUX_link2_bal1 = prove
  (`!sL sR slx srx sly sry.
      balanced slx srx /\ balanced sly sry /\ 1 + slx + srx = sL /\
-     1 + sly + sry = sR /\ delta * sL < sR
+     1 + sly + sry = sR /\ balanced_map_delta * sL < sR
      ==> almost_balancedL (sL + sly) sry`,
   LBMAPAUX_BAL_TAC);;
 
 let LIBXAUX_link2_bal2 = prove
  (`!sL sR slx srx sly sry.
      balanced slx srx /\ balanced sly sry /\ 1 + slx + srx = sL /\
-     1 + sly + sry = sR /\ ~(delta * sL < sR) /\ delta * sR < sL
+     1 + sly + sry = sR /\ ~(balanced_map_delta * sL < sR) /\ balanced_map_delta * sR < sL
      ==> almost_balancedR slx (srx + sR)`,
   LBMAPAUX_BAL_TAC);;
 
@@ -1762,7 +1749,7 @@ let link_thm = prove
          [UNDISCH_TAC `balanced (balanced_map_size' (lz:(K,V)balanced_map))
                                 (balanced_map_size' (rz:(K,V)balanced_map))` THEN
           ASM_REWRITE_TAC[];
-          UNDISCH_TAC `delta * sL < sR` THEN
+          UNDISCH_TAC `balanced_map_delta * sL < sR` THEN
           UNDISCH_TAC `1 + structure_size (lz:(K,V)balanced_map) +
                        structure_size (rz:(K,V)balanced_map) = sR` THEN
           ARITH_TAC]];
@@ -1809,10 +1796,10 @@ let link_thm = prove
          [UNDISCH_TAC `balanced (balanced_map_size' (ly:(K,V)balanced_map))
                                 (balanced_map_size' (ry:(K,V)balanced_map))` THEN
           ASM_REWRITE_TAC[];
-          UNDISCH_TAC `~(delta * sL < sR)` THEN UNDISCH_TAC `delta * sR < sL` THEN
+          UNDISCH_TAC `~(balanced_map_delta * sL < sR)` THEN UNDISCH_TAC `balanced_map_delta * sR < sL` THEN
           UNDISCH_TAC `1 + structure_size (ly:(K,V)balanced_map) +
                        structure_size (ry:(K,V)balanced_map) = sL` THEN
-          REWRITE_TAC[delta_def] THEN ARITH_TAC]];
+          REWRITE_TAC[balanced_map_delta_def] THEN ARITH_TAC]];
       ALL_TAC] THEN
     DISCH_THEN(fun th -> REWRITE_TAC[th]) THEN
     ASM_REWRITE_TAC[LIBXAUX_to_fmap_Bin] THEN

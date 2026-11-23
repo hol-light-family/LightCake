@@ -29,9 +29,9 @@ let data_OPTION_CASE_OPTION_MAP = prove
 (*             (\(lims,vs,refs). (sptree$size refs,vs))                      *)
 
 let approx_of_def = cake_def_wf
-  `inv_image (measure (I:num->num) LEX measure (list_size data_v_size))
+  `inv_image (MEASURE (I:num->num) LEX MEASURE (list_size data_v_size))
      (\x:limits # data_v list # ((data_v)bvl_ref)spt.
-        size (SND (SND x)),FST (SND x))`
+        sptree_size (SND (SND x)),FST (SND x))`
   DSEMAUX_SIZE_OF_TC_TAC
   `(approx_of (lims:limits) ([]:data_v list) (refs:((data_v)bvl_ref)spt) = 0) /\
    (approx_of lims (CONS x (CONS y ys)) refs =
@@ -148,8 +148,8 @@ let data_OPTION_MAP2_NONE = prove
 let _ = cake_add_simps [data_OPTION_MAP2_NONE];;
 
 let the_NONE = prove
- (`!x:A. the x NONE = x`,
-  REWRITE_TAC[the_def]);;
+ (`!x:A. misc_the x NONE = x`,
+  REWRITE_TAC[misc_the_def]);;
 let _ = cake_add_simps [the_NONE];;
 
 let data_initial_state_simp = prove
@@ -349,7 +349,7 @@ let DSEMAUX_overload_defs =
       if allowed_op op (LENGTH vs)
       then ((do_space_safe:clos_op->data_v list->(C,FFI)data_state->bool) op vs s /\
             lim_safe (data_state_limits s) op vs /\
-            the F (OPTION_MAP ((>) (limits_stack_limit (data_state_limits s)))
+            misc_the F (OPTION_MAP ((>) (limits_stack_limit (data_state_limits s)))
                      (OPTION_MAP2 (+)
                         (stack_consumed (data_state_stack_frame_sizes s)
                            (data_state_limits s) op vs)
@@ -427,7 +427,7 @@ let DSEMAUX_FINISH_RWS = DSEMAUX_rec_rws @
 let DSEMAUX_FINISH_RWS2 =
   [stack_consumed_def; lim_safe_def; allowed_op_def; injectivity "clos_op";
    injectivity "mem_op"; distinctness "clos_op"; distinctness "mem_op";
-   data_OPTION_MAP2_NONE; OPTION_MAP_DEF; the_def] @ DSEMAUX_FINISH_RWS;;
+   data_OPTION_MAP2_NONE; OPTION_MAP_DEF; misc_the_def] @ DSEMAUX_FINISH_RWS;;
 
 (* do_app is unfolded with CASE_REWRITE_TAC, so that the case on op reduces   *)
 (* as it is unfolded instead of after every arm has been rewritten; the same  *)
@@ -1021,7 +1021,7 @@ let DSEMAUX_ssp_call_env = prove
      data_call_env args sz (DSEMAUX_ssp smx sf pk s) =
      DSEMAUX_ssp
        (OPTION_MAP2 MAX smx (OPTION_MAP2 (+) (size_of_stack (data_state_stack s)) sz))
-       (sf /\ the F (OPTION_MAP ((>) (limits_stack_limit (data_state_limits s)))
+       (sf /\ misc_the F (OPTION_MAP ((>) (limits_stack_limit (data_state_limits s)))
                        (OPTION_MAP2 MAX smx
                           (OPTION_MAP2 (+) (size_of_stack (data_state_stack s)) sz))))
        pk (data_call_env args sz s)`,
@@ -1033,7 +1033,7 @@ let DSEMAUX_ssp_push_env = prove
      data_push_env env b (DSEMAUX_ssp smx sf pk s) =
      DSEMAUX_ssp
        (OPTION_MAP2 MAX smx (size_of_stack (data_state_stack (data_push_env env b s))))
-       (sf /\ the F (OPTION_MAP ((>) (limits_stack_limit (data_state_limits s)))
+       (sf /\ misc_the F (OPTION_MAP ((>) (limits_stack_limit (data_state_limits s)))
                        (OPTION_MAP2 MAX smx
                           (size_of_stack (data_state_stack (data_push_env env b s))))))
        pk (data_push_env env b s)`,
@@ -1540,7 +1540,7 @@ let DSEMAUX_sl_call_env = prove
           (OPTION_MAP2 MAX (data_state_stack_max s)
              (OPTION_MAP2 (+) (size_of_stack xs) sz))
           (data_state_safe_for_space s /\
-           the F (OPTION_MAP ((>) (limits_stack_limit (data_state_limits s)))
+           misc_the F (OPTION_MAP ((>) (limits_stack_limit (data_state_limits s)))
                     (OPTION_MAP2 MAX (data_state_stack_max s)
                        (OPTION_MAP2 (+) (size_of_stack xs) sz))))
           (data_state_peak_heap_length s)
@@ -1560,7 +1560,7 @@ let DSEMAUX_sl_push_env = prove
              (size_of_stack (CONS (if b then Exc lsz env (data_state_handler s)
                                    else data_Env lsz env) xs)))
           (data_state_safe_for_space s /\
-           the F (OPTION_MAP ((>) (limits_stack_limit (data_state_limits s)))
+           misc_the F (OPTION_MAP ((>) (limits_stack_limit (data_state_limits s)))
                     (OPTION_MAP2 MAX (data_state_stack_max s)
                        (size_of_stack (CONS (if b then Exc lsz env (data_state_handler s)
                                              else data_Env lsz env) xs)))))
@@ -3913,7 +3913,7 @@ let DSEMAUX_push_env_safe = prove
  (`!env b (s:(C,FFI)data_state).
      data_state_safe_for_space (data_push_env env b s) <=>
      data_state_safe_for_space s /\
-     the F (OPTION_MAP ((>) (limits_stack_limit (data_state_limits s)))
+     misc_the F (OPTION_MAP ((>) (limits_stack_limit (data_state_limits s)))
               (OPTION_MAP2 MAX (data_state_stack_max s)
                  (size_of_stack (data_state_stack (data_push_env env b s)))))`,
   REPEAT GEN_TAC THEN BOOL_CASES_TAC `b:bool` THEN
@@ -4019,7 +4019,7 @@ let DSEMAUX_lim_rws = prove
       data_call_env args sz (data_state_limits_fupd (K lim) s) =
       DSEMAUX_ssp (data_state_stack_max (data_call_env args sz s))
         (data_state_safe_for_space s /\
-         the F (OPTION_MAP ((>) (limits_stack_limit lim))
+         misc_the F (OPTION_MAP ((>) (limits_stack_limit lim))
                   (data_state_stack_max (data_call_env args sz s))))
         (data_state_peak_heap_length s)
         (data_state_limits_fupd (K lim) (data_call_env args sz s))) /\
@@ -4027,7 +4027,7 @@ let DSEMAUX_lim_rws = prove
       data_push_env env b (data_state_limits_fupd (K lim) s) =
       DSEMAUX_ssp (data_state_stack_max (data_push_env env b s))
         (data_state_safe_for_space s /\
-         the F (OPTION_MAP ((>) (limits_stack_limit lim))
+         misc_the F (OPTION_MAP ((>) (limits_stack_limit lim))
                   (data_state_stack_max (data_push_env env b s))))
         (data_state_peak_heap_length s)
         (data_state_limits_fupd (K lim) (data_push_env env b s))) /\
@@ -5296,9 +5296,9 @@ let data_evaluate_stack_limit = prove
 
 (* TODO: move *)
 let the_le_IMP_option_le = prove
- (`!n m. the F (OPTION_MAP ((>) n) m) ==> option_le m (SOME n)`,
+ (`!n m. misc_the F (OPTION_MAP ((>) n) m) ==> option_le m (SOME n)`,
   GEN_TAC THEN MATCH_MP_TAC option_INDUCT THEN
-  REWRITE_TAC[OPTION_MAP_DEF; the_def; option_le_def] THEN ARITH_TAC);;
+  REWRITE_TAC[OPTION_MAP_DEF; misc_the_def; option_le_def] THEN ARITH_TAC);;
 
 (*fs[] is slower than full_simp_tac(srw_ss())[]*)
 let do_app_stack_max_le_stack_limit = prove

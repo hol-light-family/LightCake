@@ -95,7 +95,7 @@ let W2SP3AUX_state_rel_basic = prove
          stack_state_stack_space t + f <= LENGTH (stack_state_stack t) /\
          LENGTH (stack_state_stack t) < dimword (:A) /\
          (if f' = 0 then f = 0 else f = f' + 1) /\
-         wf (wl_state_locals s)`,
+         sptree_wf (wl_state_locals s)`,
   REWRITE_TAC[word_to_stackProof_state_rel_def] THEN REPEAT STRIP_TAC THEN
   ASM_REWRITE_TAC[]);;
 
@@ -378,7 +378,7 @@ let W2SP3AUX_Return_state_rel = prove
   REPEAT GEN_TAC THEN REWRITE_TAC[word_to_stackProof_state_rel_def; wl_flush_state_def] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN STRIP_TAC THEN
   REWRITE_TAC[w2sp3aux_wl_accfupds; w2sp3aux_stack_accfupds; K_THM] THEN
-  ASM_REWRITE_TAC[wf_def; lookup_def; option_DISTINCT] THEN
+  ASM_REWRITE_TAC[sptree_wf_def; lookup_def; option_DISTINCT] THEN
   SUBGOAL_THEN `skip_free (k,f,f':num) (ms:num list) + (LENGTH ms - (k - 1)) = f /\
                 skip_free (k,f,f':num) ms <= f` STRIP_ASSUME_TAC THENL
   [REWRITE_TAC[skip_free_def; num_stack_ret_def] THEN
@@ -515,13 +515,13 @@ let word_to_stackProof_comp_correct_Return = prove
 let stack_rel_aux_stack_size = prove
  (`!len k (frame:((A)stack_frame)list) bits.
      stack_rel_aux len k frame bits
-     ==> the (handler_val bits) (wl_stack_size frame) = handler_val bits`,
+     ==> misc_the (handler_val bits) (wl_stack_size frame) = handler_val bits`,
   MATCH_MP_TAC stack_rel_aux_ind THEN
-  REWRITE_TAC[stack_rel_aux_def; stack_size_eq; handler_val_def; the_def] THEN
+  REWRITE_TAC[stack_rel_aux_def; stack_size_eq; handler_val_def; misc_the_def] THEN
   REPEAT STRIP_TAC THEN RES_TAC THEN
   MP_TAC(ISPEC `n:num option` option_CASES) THEN
   MP_TAC(ISPEC `wl_stack_size (xs:((A)stack_frame)list)` option_CASES) THEN
-  REPEAT STRIP_TAC THEN GVS[the_def; OPTION_MAP2_THM; OPTION_MAP_DEF] THEN
+  REPEAT STRIP_TAC THEN GVS[misc_the_def; OPTION_MAP2_THM; OPTION_MAP_DEF] THEN
   ARITH_TAC);;
 
 (* HOL4 line 6592 *)
@@ -613,7 +613,7 @@ let W2SP3AUX_raise_state_rel = prove
               word_to_stackProof_state_rel ac k 0 0
                 (push_locals e0 e
                   (wl_state_handler_fupd (K h1)
-                    (wl_state_locals_fupd (K (union (fromAList e) (fromAList e0)))
+                    (wl_state_locals_fupd (K (sptree_union (fromAList e) (fromAList e0)))
                       (wl_state_stack_fupd (K xs) (wl_state_locals_size_fupd (K m) s)))))
                 (stack_state_regs_fupd (K rr)
                   (stack_state_store_fupd
@@ -737,7 +737,7 @@ let W2SP3AUX_raise_state_rel = prove
                       (astack:(((A)word_loc#(A)word_loc)option#bool list#((A)word_loc)list)list))`]
                  abs_stack_LENGTH) THEN
    ANTS_TAC THENL [FIRST_ASSUM ACCEPT_TAC; ALL_TAC] THEN
-   ASM_REWRITE_TAC[stack_size_eq; OPTION_MAP2_THM; the_def; LENGTH_DROP] THEN
+   ASM_REWRITE_TAC[stack_size_eq; OPTION_MAP2_THM; misc_the_def; LENGTH_DROP] THEN
    DISCH_THEN SUBST1_TAC THEN DISCH_TAC THEN
    CONJ_TAC THENL [MAP_EVERY EXISTS_TAC [`m1:num`; `x2:num`] THEN ASM_REWRITE_TAC[]; ALL_TAC] THEN
    UNDISCH_TAC `m1 + x2 = LENGTH (stack_state_stack (t:(A,C,FFI)stack_state)) -
@@ -755,7 +755,7 @@ let W2SP3AUX_raise_state_rel = prove
               push_locals_def] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN STRIP_TAC THEN
   REWRITE_TAC[w2sp3aux_wl_accfupds; w2sp3aux_stack_accfupds; K_THM] THEN
-  ASM_REWRITE_TAC[DOMSUB_FUPDATE; FDOM_FUPDATE; IN_INSERT; FLOOKUP_UPDATE; wf_def; lookup_def;
+  ASM_REWRITE_TAC[DOMSUB_FUPDATE; FDOM_FUPDATE; IN_INSERT; FLOOKUP_UPDATE; sptree_wf_def; lookup_def;
                   option_DISTINCT; DROP_0; ADD_CLAUSES] THEN
   SUBGOAL_THEN `LENGTH (LASTN (wl_state_handler (s:(A,num#C,FFI)wl_state))
      (astack:(((A)word_loc#(A)word_loc)option#bool list#((A)word_loc)list)list)) =
@@ -1183,7 +1183,7 @@ let W2SP3AUX_install_eval = prove
            (stack_state_compile_oracle_fupd (K (shift_seq 1 (stack_state_compile_oracle t)))
            (stack_state_code_buffer_fupd (K cb)
            (stack_state_data_buffer_fupd (K db)
-           (stack_state_code_fupd (K (union (stack_state_code t) (fromAList progs'))) t)))))))`,
+           (stack_state_code_fupd (K (sptree_union (stack_state_code t) (fromAList progs'))) t)))))))`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   UNDISCH_TAC `progs' = CONS (kk,sprog) (rest':(num#(A)stack_prog)list)` THEN
   DISCH_THEN SUBST_ALL_TAC THEN
@@ -1209,7 +1209,7 @@ let W2SP3AUX_Install_inv = prove
            res = NONE /\
            s1 = wl_state_code_buffer_fupd (K cb)
                  (wl_state_data_buffer_fupd (K db)
-                 (wl_state_code_fupd (K (union (wl_state_code s) (fromAList progs)))
+                 (wl_state_code_fupd (K (sptree_union (wl_state_code s) (fromAList progs)))
                  (wl_state_locals_fupd (K (insert ptr (wl_Loc kk 0) env))
                  (wl_state_fp_regs_fupd (K FEMPTY)
                  (wl_state_compile_oracle_fupd (K (shift_seq 1 (wl_state_compile_oracle s)))
@@ -1255,7 +1255,7 @@ let W2SP3AUX_cut_env_lookup = prove
 
 (* W2SP3AUX: a cut environment is wf *)
 let W2SP3AUX_cut_env_wf = prove
- (`!names (l:((A)word_loc)spt) env. wl_cut_env names l = SOME env ==> wf env`,
+ (`!names (l:((A)word_loc)spt) env. wl_cut_env names l = SOME env ==> sptree_wf env`,
   REWRITE_TAC[wl_cut_env_def; cut_envs_def; cut_names_def] THEN REPEAT GEN_TAC THEN
   GVS[COND_CASE_EQ; option_case_eq; pair_case_eq] THEN STRIP_TAC THEN
   FIRST_X_ASSUM(SUBST_ALL_TAC o SYM o check (fun th -> is_var(rhs(concl th)))) THEN
@@ -1282,7 +1282,7 @@ let W2SP3AUX_install_state_rel = prove
      ==> word_to_stackProof_state_rel ac k f f'
            (wl_state_code_buffer_fupd (K cb)
            (wl_state_data_buffer_fupd (K db)
-           (wl_state_code_fupd (K (union (wl_state_code s) (fromAList (CONS (kk,prog) rest))))
+           (wl_state_code_fupd (K (sptree_union (wl_state_code s) (fromAList (CONS (kk,prog) rest))))
            (wl_state_locals_fupd (K (insert 2 (wl_Loc kk 0) env))
            (wl_state_fp_regs_fupd (K FEMPTY)
            (wl_state_compile_oracle_fupd (K (shift_seq 1 (wl_state_compile_oracle s)))
@@ -1295,7 +1295,7 @@ let W2SP3AUX_install_state_rel = prove
            (stack_state_compile_oracle_fupd (K (shift_seq 1 (stack_state_compile_oracle t)))
            (stack_state_code_buffer_fupd (K cb)
            (stack_state_data_buffer_fupd (K db)
-           (stack_state_code_fupd (K (union (stack_state_code t) (fromAList progs'))) t)))))))
+           (stack_state_code_fupd (K (sptree_union (stack_state_code t) (fromAList progs'))) t)))))))
            lens 0`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
     MP_TAC(ISPEC `cfg:num#C` PAIR_SURJECTIVE) THEN
@@ -1367,7 +1367,7 @@ let W2SP3AUX_install_state_rel = prove
      UNDISCH_TAC `~(raise_stub_location = n)` THEN
      UNDISCH_TAC `~(wl_store_consts_stub_location = n)` THEN
      REWRITE_TAC[lookup_NONE_domain] THEN MESON_TAC[]; ALL_TAC] THEN
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[lookup_def; the_def] THEN
+    CASE_REWRITE_TAC[] THEN REWRITE_TAC[lookup_def; misc_the_def] THEN
     MP_TAC(ISPECL [`CONS (kk,prog) (rest:(num#num#(A)wl_prog)list)`; `k:num`;
       `Nil:(A word)app_list`;
                    `b0:num`; `progs':(num#(A)stack_prog)list`; `fs:num list`;
@@ -1385,7 +1385,7 @@ let W2SP3AUX_install_state_rel = prove
      ASM_REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
      MAP_EVERY EXISTS_TAC [`bs:(A word)app_list`; `i:num`; `bs2:(A word)app_list`; `i2:num`;
                           `f'':num`; `stack_prog:(A)stack_prog`] THEN
-    ASM_REWRITE_TAC[LENGTH_APPEND; lookup_def; the_def] THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[LENGTH_APPEND; lookup_def; misc_the_def] THEN CASE_REWRITE_TAC[] THEN
     CONJ_TAC THENL
     [UNDISCH_TAC `i - LENGTH (append (bs:(A word)app_list)) <=
                   LENGTH (stack_state_bitmaps (t:(A,C,FFI)stack_state))` THEN ARITH_TAC;
@@ -1465,7 +1465,7 @@ let word_to_stackProof_comp_correct_Install = prove
   UNDISCH_TAC `res = (NONE:((A)wl_result)option)` THEN DISCH_THEN SUBST_ALL_TAC THEN
   UNDISCH_TAC `s1 = wl_state_code_buffer_fupd (K cb)
                (wl_state_data_buffer_fupd (K db)
-               (wl_state_code_fupd (K (union (wl_state_code s) (fromAList progs)))
+               (wl_state_code_fupd (K (sptree_union (wl_state_code s) (fromAList progs)))
                (wl_state_locals_fupd (K (insert ptr (wl_Loc kk 0) env))
                (wl_state_fp_regs_fupd (K FEMPTY)
                (wl_state_compile_oracle_fupd (K (shift_seq 1 (wl_state_compile_oracle s)))
@@ -1628,7 +1628,7 @@ let W2SP3AUX_state_rel_FFI = prove
              (stack_state_memory_fupd (K m) (stack_state_ffi_fupd (K ffi') t))))
            lens 0`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
-  SUBGOAL_THEN `wf (env:((A)word_loc)spt)` ASSUME_TAC THENL
+  SUBGOAL_THEN `sptree_wf (env:((A)word_loc)spt)` ASSUME_TAC THENL
    [ASM_MESON_TAC[W2SP3AUX_cut_env_wf]; ALL_TAC] THEN
   SUBGOAL_THEN `!n v. lookup n env = SOME v
                       ==> lookup n (wl_state_locals (s:(A,num#C,FFI)wl_state)) = SOME v /\
@@ -2422,7 +2422,7 @@ let get_labels_loc_check_subspt = prove
 (* W2SP3AUX: state_rel for a state whose locals are a wf part of the old ones *)
 let W2SP3AUX_state_rel_locals = prove
  (`!ac k f f' (s:(A,num#C,FFI)wl_state) (t:(A,C,FFI)stack_state) lens extra l.
-     word_to_stackProof_state_rel ac k f f' s t lens extra /\ wf l /\
+     word_to_stackProof_state_rel ac k f f' s t lens extra /\ sptree_wf l /\
      (!n v. lookup n l = SOME v ==> lookup n (wl_state_locals s) = SOME v)
      ==> word_to_stackProof_state_rel ac k f f' (wl_state_locals_fupd (K l) s) t
            lens extra`,
@@ -2453,8 +2453,8 @@ let W2SP3AUX_loop_mono = prove
                  | SOME s2 -> (NONE,s2))
            else (wl_exit_loop q,r)) = (res,s1)
      ==> ffi_state_io_events (wl_state_ffi r) <<= ffi_state_io_events (wl_state_ffi s1) /\
-         (the (wl_state_stack_limit r + 1) (wl_state_stack_max r) > wl_state_stack_limit r
-          ==> the (wl_state_stack_limit s1 + 1) (wl_state_stack_max s1) >
+         (misc_the (wl_state_stack_limit r + 1) (wl_state_stack_max r) > wl_state_stack_limit r
+          ==> misc_the (wl_state_stack_limit s1 + 1) (wl_state_stack_max s1) >
               wl_state_stack_limit s1)`,
   REPEAT GEN_TAC THEN
   ASM_CASES_TAC `wl_cont_loop (q:((A)wl_result)option)` THEN ASM_REWRITE_TAC[] THENL
@@ -2736,7 +2736,7 @@ let W2SP3AUX_tail_state_rel = prove
      isPREFIX args1 a /\
      LENGTH args1 - k <= svc /\
      (if svc = 0 then fs = 0 else fs = svc + 1) /\
-     the fs ss = fs /\
+     misc_the fs ss = fs /\
      LENGTH args1 - k <= f /\
      fs - (LENGTH args1 - k) <= stack_state_stack_space t + (f - (LENGTH args1 - k)) /\
      ~(wl_state_clock s = 0)
@@ -2891,9 +2891,9 @@ let W2SP3AUX_max_var_svc = prove
 (* W2SP3AUX: a callee frame that does not fit makes the stack bound fail *)
 let W2SP3AUX_call_overflow = prove
  (`!ac k f f' (s:(A,num#C,FFI)wl_state) (t:(A,C,FFI)stack_state) lens ss fs sac.
-     word_to_stackProof_state_rel ac k f f' s t lens 0 /\ the fs ss = fs /\ sac <= f /\
+     word_to_stackProof_state_rel ac k f f' s t lens 0 /\ misc_the fs ss = fs /\ sac <= f /\
      stack_state_stack_space t + (f - sac) < fs - sac
-     ==> the (wl_state_stack_limit s + 1)
+     ==> misc_the (wl_state_stack_limit s + 1)
            (OPTION_MAP2 MAX (wl_state_stack_max s)
               (OPTION_MAP2 (+) (wl_stack_size (wl_state_stack s)) ss)) >
          wl_state_stack_limit s`,
@@ -2901,7 +2901,7 @@ let W2SP3AUX_call_overflow = prove
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN STRIP_TAC THEN
   MP_TAC(ISPEC `OPTION_MAP2 MAX (wl_state_stack_max (s:(A,num#C,FFI)wl_state))
                   (OPTION_MAP2 (+) (wl_stack_size (wl_state_stack s)) ss)` option_CASES) THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[the_def] THEN TRY ARITH_TAC THEN
+  STRIP_TAC THEN ASM_REWRITE_TAC[misc_the_def] THEN TRY ARITH_TAC THEN
   FIRST_X_ASSUM(MP_TAC o check (fun th -> w2sp3aux_has_const "OPTION_MAP2" (concl th) &&
     is_eq(concl th))) THEN
   REWRITE_TAC[OPTION_MAP2_SOME] THEN STRIP_TAC THEN
@@ -2912,7 +2912,7 @@ let W2SP3AUX_call_overflow = prove
   FIRST_X_ASSUM(MP_TAC o SPEC `x1:num` o check (is_forall o concl)) THEN
   ASM_REWRITE_TAC[option_INJ] THEN STRIP_TAC THEN
   SUBGOAL_THEN `x2':num = fs` ASSUME_TAC THENL
-  [UNDISCH_TAC `the fs (ss:num option) = fs` THEN ASM_REWRITE_TAC[the_def]; ALL_TAC] THEN
+  [UNDISCH_TAC `misc_the fs (ss:num option) = fs` THEN ASM_REWRITE_TAC[misc_the_def]; ALL_TAC] THEN
   ASM_REWRITE_TAC[] THEN
   UNDISCH_TAC `stack_state_stack_space (t:(A,C,FFI)stack_state) + f <= LENGTH
     (stack_state_stack t)` THEN
@@ -3285,18 +3285,18 @@ let W2SP3AUX_ret_limit = prove
      wl_find_code dest (add_ret_loc (SOME (vs,live,ret_code,l1,l2)) xs) (wl_state_code s)
        (wl_state_stack_size s) = SOME (args1,prog,ss) /\
      cut_envs live (wl_state_locals s) = SOME envs /\
-     the (wl_state_stack_limit s + 1)
+     misc_the (wl_state_stack_limit s + 1)
        (wl_state_stack_max (wl_call_env args1 ss (wl_push_env envs h s))) >
        wl_state_stack_limit s
-     ==> the (wl_state_stack_limit s1 + 1) (wl_state_stack_max s1) > wl_state_stack_limit s1`,
+     ==> misc_the (wl_state_stack_limit s1 + 1) (wl_state_stack_max s1) > wl_state_stack_limit s1`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   SUBGOAL_THEN
-   `the (wl_state_stack_limit (wl_call_env args1 ss
+   `misc_the (wl_state_stack_limit (wl_call_env args1 ss
            (wl_push_env envs h (wl_dec_clock (s:(A,num#C,FFI)wl_state)))) + 1)
         (wl_state_stack_max (wl_call_env args1 ss (wl_push_env envs h (wl_dec_clock s)))) >
     wl_state_stack_limit (wl_call_env args1 ss (wl_push_env envs h (wl_dec_clock s)))`
    ASSUME_TAC THENL
-  [UNDISCH_TAC `the (wl_state_stack_limit (s:(A,num#C,FFI)wl_state) + 1)
+  [UNDISCH_TAC `misc_the (wl_state_stack_limit (s:(A,num#C,FFI)wl_state) + 1)
      (wl_state_stack_max (wl_call_env args1 ss (wl_push_env envs h s))) >
      wl_state_stack_limit s` THEN
    REWRITE_TAC[wl_call_env_def; w2sp3aux_wl_accfupds; K_THM; push_env_dec_clock_stack] THEN
@@ -3334,13 +3334,13 @@ let W2SP3AUX_ret_overflow = prove
        (wl_state_locals_fupd (K LN) (wl_state_locals_size_fupd (K (SOME 0))
           (wl_push_env envs (NONE:(num#(A)wl_prog#num#num)option) s)))
        t5 (CONS f' lens) 0 /\
-     the fs ss = fs /\
+     misc_the fs ss = fs /\
      wl_stack_size (wl_state_stack (wl_push_env envs h s)) =
        OPTION_MAP ((+) d)
          (wl_stack_size (wl_state_stack
             (wl_push_env envs (NONE:(num#(A)wl_prog#num#num)option) s))) /\
      stack_state_stack_space t5 < fs + d
-     ==> the (wl_state_stack_limit s + 1)
+     ==> misc_the (wl_state_stack_limit s + 1)
            (wl_state_stack_max (wl_call_env args1 ss (wl_push_env envs h s))) >
          wl_state_stack_limit s`,
   REPEAT GEN_TAC THEN REWRITE_TAC[word_to_stackProof_state_rel_def; stack_size_rel_def] THEN
@@ -3353,12 +3353,12 @@ let W2SP3AUX_ret_overflow = prove
   CASES_ON `wl_stack_size (wl_state_stack (wl_push_env envs
      (NONE:(num#(A)wl_prog#num#num)option) (s:(A,num#C,FFI)wl_state)))` THEN
   CASES_ON `ss:num option` THEN
-  ASM_REWRITE_TAC[OPTION_MAP2_THM; OPTION_MAP_DEF; the_def; option_INJ; option_DISTINCT] THEN
+  ASM_REWRITE_TAC[OPTION_MAP2_THM; OPTION_MAP_DEF; misc_the_def; option_INJ; option_DISTINCT] THEN
   TRY ARITH_TAC THEN
   FIRST_X_ASSUM(MP_TAC o SPEC `MAX a a'` o check (fun th -> is_forall (concl th) &&
     w2sp3aux_has_const "IS_SOME" (concl th))) THEN
   ASM_REWRITE_TAC[OPTION_MAP2_THM; option_INJ; IS_SOME_DEF; SUB_0; UNWIND_THM1] THEN
-  UNDISCH_TAC `the fs (SOME (a'':num)) = fs` THEN REWRITE_TAC[the_def] THEN
+  UNDISCH_TAC `misc_the fs (SOME (a'':num)) = fs` THEN REWRITE_TAC[misc_the_def] THEN
   DISCH_THEN SUBST1_TAC THEN STRIP_TAC THEN
   UNDISCH_TAC `stack_state_stack_space (t5:(A,C,FFI)stack_state) < fs + d` THEN
   UNDISCH_TAC `stack_state_stack_space (t5:(A,C,FFI)stack_state) + 0 <=
@@ -3465,7 +3465,7 @@ let W2SP3AUX_ret_callee_rel = prove
      args = list_of_seq (\x. 2 * (x + 1)) (LENGTH args) /\
      isPREFIX args1 (CONS (wl_Loc l1 l2) a) /\
      LENGTH args1 - k = sac /\ sac <= svc /\
-     (if svc = 0 then fs = 0 else fs = svc + 1) /\ the fs ss = fs /\
+     (if svc = 0 then fs = 0 else fs = svc + 1) /\ misc_the fs ss = fs /\
      sac <= f /\ fs <= stack_state_stack_space t5 /\
      LENGTH t7s = LENGTH (stack_state_stack t5) /\
      DROP (stack_state_stack_space t5) t7s = DROP (stack_state_stack_space t5)
@@ -3626,8 +3626,8 @@ let W2SP3AUX_ret_cont_mono = prove
      cut_envs live (wl_state_locals s) = SOME envs /\ ~(wl_state_clock s = 0) /\
      wl_evaluate (prog,wl_call_env args1 ss (wl_push_env envs h (wl_dec_clock s))) = (r2,s2)
      ==> ffi_state_io_events (wl_state_ffi s2) <<= ffi_state_io_events (wl_state_ffi s1) /\
-         (the (wl_state_stack_limit s2 + 1) (wl_state_stack_max s2) > wl_state_stack_limit s2
-          ==> the (wl_state_stack_limit s1 + 1) (wl_state_stack_max s1) > wl_state_stack_limit s1)`,
+         (misc_the (wl_state_stack_limit s2 + 1) (wl_state_stack_max s2) > wl_state_stack_limit s2
+          ==> misc_the (wl_state_stack_limit s1 + 1) (wl_state_stack_max s1) > wl_state_stack_limit s1)`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   UNDISCH_TAC `wl_evaluate (wl_Call (SOME (vs,live,ret_code,l1,l2)) dest args h,
                             s:(A,num#C,FFI)wl_state) = (res,s1)` THEN
@@ -3690,7 +3690,7 @@ let W2SP3AUX_frame_lookup = prove
       len f' lens n v whandler.
      word_to_stackProof_stack_rel k whandler (CONS (StackFrame m l0 l NONE) xs) sh st len bs
        (CONS f' lens) /\
-     lookup n (union (fromAList l) (fromAList l0)) = SOME v /\ k <= n DIV 2 /\ n DIV 2 < k + f'
+     lookup n (sptree_union (fromAList l) (fromAList l0)) = SOME v /\ k <= n DIV 2 /\ n DIV 2 < k + f'
      ==> oEL (f' - (n DIV 2 - k)) st = SOME v`,
   REPEAT GEN_TAC THEN REWRITE_TAC[word_to_stackProof_stack_rel_def] THEN STRIP_TAC THEN
     UNDISCH_TAC `abs_stack (bs:(A word)list) (CONS (StackFrame m l0 l NONE)
@@ -3722,7 +3722,7 @@ let W2SP3AUX_frame_lookup = prove
                   oEL (f' - 1 - (n DIV 2 - k)) (TAKE f' rest)` SUBST1_TAC THENL
     [CONV_TAC SYM_CONV THEN MATCH_MP_TAC LLOOKUP_TAKE THEN
      UNDISCH_TAC `k <= n DIV 2` THEN UNDISCH_TAC `n DIV 2 < k + f'` THEN ARITH_TAC; ALL_TAC] THEN
-    UNDISCH_TAC `lookup n (union (fromAList l) (fromAList (l0:(num#(A)word_loc)list))) = SOME
+    UNDISCH_TAC `lookup n (sptree_union (fromAList l) (fromAList (l0:(num#(A)word_loc)list))) = SOME
       (v:(A)word_loc)` THEN
     REWRITE_TAC[lookup_union; lookup_fromAList] THEN
     CASES_ON `ALOOKUP (l:(num#(A)word_loc)list) n` THEN CASE_REWRITE_TAC[option_INJ] THENL
@@ -3851,8 +3851,8 @@ let W2SP3AUX_ret_state_rel = prove
                      ASM_REWRITE_TAC[]; ALL_TAC] THEN
      REWRITE_TAC[DROP_0; LENGTH_DROP] THEN UNDISCH_TAC `f' + 1 = f` THEN ARITH_TAC;
      MATCH_MP_TAC wf_alist_insert THEN MATCH_MP_TAC wf_union THEN REWRITE_TAC[wf_fromAList];
-     
-   SUBGOAL_THEN `the (f' + 1) (m:num option) = f' + 1` ASSUME_TAC THENL
+
+   SUBGOAL_THEN `misc_the (f' + 1) (m:num option) = f' + 1` ASSUME_TAC THENL
     [MP_TAC(ISPECL [`k:num`; `wl_state_handler (s2:(A,num#C,FFI)wl_state)`; `m:num option`;
        `l0:(num#(A)word_loc)list`; `l:(num#(A)word_loc)list`; `NONE:(num#num#num)option`;
        `xs:((A)stack_frame)list`; `FLOOKUP (stack_state_store (t1:(A,C,FFI)stack_state)) Handler`;
@@ -3870,7 +3870,7 @@ let W2SP3AUX_ret_state_rel = prove
       (stack_state_stack_space t1) n0` THEN
     ASM_REWRITE_TAC[stack_size_rel_def; stack_size_eq; OPTION_MAP2_SOME] THEN STRIP_TAC THEN
     REPEAT CONJ_TAC THENL
-    [DISCH_TAC THEN UNDISCH_TAC `the (f' + 1) (m:num option) = f' + 1` THEN ASM_REWRITE_TAC[];
+    [DISCH_TAC THEN UNDISCH_TAC `misc_the (f' + 1) (m:num option) = f' + 1` THEN ASM_REWRITE_TAC[];
      ASM_REWRITE_TAC[];
      ALL_TAC] THEN
     X_GEN_TAC `sm:num` THEN DISCH_TAC THEN
@@ -3880,7 +3880,7 @@ let W2SP3AUX_ret_state_rel = prove
     DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC (CONJUNCTS_THEN2 ASSUME_TAC
       (X_CHOOSE_THEN `ss0:num` (CONJUNCTS_THEN2
         (X_CHOOSE_THEN `x1:num` (X_CHOOSE_THEN `x2:num` STRIP_ASSUME_TAC)) ASSUME_TAC)))) THEN
-    UNDISCH_TAC `the (f' + 1) (m:num option) = f' + 1` THEN ASM_REWRITE_TAC[the_def;
+    UNDISCH_TAC `misc_the (f' + 1) (m:num option) = f' + 1` THEN ASM_REWRITE_TAC[misc_the_def;
       IS_SOME_DEF] THEN
     DISCH_TAC THEN ASM_REWRITE_TAC[option_INJ; UNWIND_THM1] THEN
      UNDISCH_TAC `LENGTH (stack_state_stack (t1:(A,C,FFI)stack_state)) - stack_state_stack_space t1
@@ -4930,7 +4930,7 @@ let W2SP3AUX_ret_callee_rel_gen = prove
      args = list_of_seq (\x. 2 * (x + 1)) (LENGTH args) /\
      isPREFIX args1 (CONS (wl_Loc l1 l2) a) /\
      LENGTH args1 - k = sac /\ sac <= svc /\
-     (if svc = 0 then fs = 0 else fs = svc + 1) /\ the fs ss = fs /\
+     (if svc = 0 then fs = 0 else fs = svc + 1) /\ misc_the fs ss = fs /\
      sac <= fr /\ fs <= stack_state_stack_space t5 /\
      LENGTH t7s = LENGTH (stack_state_stack t5) /\
      DROP (stack_state_stack_space t5) t7s = DROP (stack_state_stack_space t5)
@@ -5161,7 +5161,7 @@ let W2SP3AUX_frame_lookup_SOME = prove
      word_to_stackProof_stack_rel k whandler (CONS (StackFrame m l0 l (SOME (hh,h1,h2))) xs)
        sh st len bs
        (CONS f' lens) /\
-     lookup n (union (fromAList l) (fromAList l0)) = SOME v /\ k <= n DIV 2 /\ n DIV 2 < k + f'
+     lookup n (sptree_union (fromAList l) (fromAList l0)) = SOME v /\ k <= n DIV 2 /\ n DIV 2 < k + f'
      ==> oEL ((f' + 3) - (n DIV 2 - k)) st = SOME v`,
   REPEAT GEN_TAC THEN REWRITE_TAC[word_to_stackProof_stack_rel_def] THEN STRIP_TAC THEN
     UNDISCH_TAC `abs_stack (bs:(A word)list) (CONS (StackFrame m l0 l (SOME (hh,h1,h2)))
@@ -5208,7 +5208,7 @@ let W2SP3AUX_frame_lookup_SOME = prove
                   oEL (f' - 1 - (n DIV 2 - k)) (TAKE f' rest)` SUBST1_TAC THENL
     [CONV_TAC SYM_CONV THEN MATCH_MP_TAC LLOOKUP_TAKE THEN
      UNDISCH_TAC `k <= n DIV 2` THEN UNDISCH_TAC `n DIV 2 < k + f'` THEN ARITH_TAC; ALL_TAC] THEN
-    UNDISCH_TAC `lookup n (union (fromAList l) (fromAList (l0:(num#(A)word_loc)list))) = SOME
+    UNDISCH_TAC `lookup n (sptree_union (fromAList l) (fromAList (l0:(num#(A)word_loc)list))) = SOME
       (v:(A)word_loc)` THEN
     REWRITE_TAC[lookup_union; lookup_fromAList] THEN
     CASES_ON `ALOOKUP (l:(num#(A)word_loc)list) n` THEN CASE_REWRITE_TAC[option_INJ] THENL
@@ -5341,7 +5341,7 @@ let W2SP3AUX_ret_state_rel_h = prove
     (stack_state_stack t1)` THEN
     UNDISCH_TAC `f' + 1 = f` THEN ARITH_TAC);
    (MATCH_MP_TAC wf_alist_insert THEN MATCH_MP_TAC wf_union THEN REWRITE_TAC[wf_fromAList]);
-   (SUBGOAL_THEN `the (f' + 1) (m:num option) = f' + 1` ASSUME_TAC THENL
+   (SUBGOAL_THEN `misc_the (f' + 1) (m:num option) = f' + 1` ASSUME_TAC THENL
     [MP_TAC(ISPECL [`k:num`; `wl_state_handler (s2:(A,num#C,FFI)wl_state)`; `m:num option`;
        `l0:(num#(A)word_loc)list`; `l:(num#(A)word_loc)list`; `SOME (hh:num,hl1:num,hl2:num)`;
        `xs:((A)stack_frame)list`; `FLOOKUP (stack_state_store (t1:(A,C,FFI)stack_state)) Handler`;
@@ -5359,7 +5359,7 @@ let W2SP3AUX_ret_state_rel_h = prove
       (stack_state_stack_space t1) n0` THEN
     ASM_REWRITE_TAC[stack_size_rel_def; stack_size_eq; OPTION_MAP2_SOME] THEN STRIP_TAC THEN
     REPEAT CONJ_TAC THENL
-    [DISCH_TAC THEN UNDISCH_TAC `the (f' + 1) (m:num option) = f' + 1` THEN ASM_REWRITE_TAC[];
+    [DISCH_TAC THEN UNDISCH_TAC `misc_the (f' + 1) (m:num option) = f' + 1` THEN ASM_REWRITE_TAC[];
      ASM_REWRITE_TAC[];
      ALL_TAC] THEN
     X_GEN_TAC `sm:num` THEN DISCH_TAC THEN
@@ -5370,10 +5370,10 @@ let W2SP3AUX_ret_state_rel_h = prove
       (X_CHOOSE_THEN `ss0:num` (CONJUNCTS_THEN2
         (X_CHOOSE_THEN `x1:num` (X_CHOOSE_THEN `x2:num` STRIP_ASSUME_TAC)) ASSUME_TAC)))) THEN
     UNDISCH_TAC `OPTION_MAP ((+) 3) (m:num option) = SOME x1` THEN
-    UNDISCH_TAC `the (f' + 1) (m:num option) = f' + 1` THEN
+    UNDISCH_TAC `misc_the (f' + 1) (m:num option) = f' + 1` THEN
     MP_TAC(ISPEC `m:num option` option_CASES) THEN
     DISCH_THEN(DISJ_CASES_THEN2 (X_CHOOSE_THEN `z:num` SUBST_ALL_TAC) SUBST_ALL_TAC) THEN
-    REWRITE_TAC[OPTION_MAP_DEF; option_DISTINCT; option_INJ; the_def; IS_SOME_DEF] THEN
+    REWRITE_TAC[OPTION_MAP_DEF; option_DISTINCT; option_INJ; misc_the_def; IS_SOME_DEF] THEN
     REPEAT DISCH_TAC THEN ASM_REWRITE_TAC[option_INJ; UNWIND_THM1]) THEN
    (UNDISCH_TAC `LENGTH (stack_state_stack (t1:(A,C,FFI)stack_state)) - stack_state_stack_space t1 -
      n0 <= sm` THEN
@@ -5563,7 +5563,7 @@ let W2SP3AUX_exc_swap_SOME = prove
 let W2SP3AUX_exc_state_rel_h = prove
  (`!ac k f f' (s2:(A,num#C,FFI)wl_state) (t1:(A,C,FFI)stack_state) lens l0 l y.
      word_to_stackProof_state_rel ac k 0 0 (push_locals l0 l s2) t1 (CONS f' lens) 0 /\
-     wl_state_locals s2 = union (fromAList l) (fromAList l0) /\
+     wl_state_locals s2 = sptree_union (fromAList l) (fromAList l0) /\
      FLOOKUP (stack_state_regs t1) 1 = SOME y /\
      f' + 1 = f /\ ~(f' = 0) /\
      (!n. n IN domain (wl_state_locals s2) ==> EVEN n /\ 2 * k <= n /\ n < 2 * f' + 2 * k)
@@ -5593,7 +5593,7 @@ let W2SP3AUX_exc_state_rel_h = prove
       (stack_state_stack t1)` THEN
     UNDISCH_TAC `f' + 1 = f` THEN ARITH_TAC);
    (MATCH_MP_TAC wf_insert THEN MATCH_MP_TAC wf_union THEN REWRITE_TAC[wf_fromAList]);
-   (SUBGOAL_THEN `the (f' + 1) (wl_state_locals_size (s2:(A,num#C,FFI)wl_state)) = f' + 1`
+   (SUBGOAL_THEN `misc_the (f' + 1) (wl_state_locals_size (s2:(A,num#C,FFI)wl_state)) = f' + 1`
      ASSUME_TAC THENL
     [MP_TAC(ISPECL [`k:num`; `wl_state_handler (s2:(A,num#C,FFI)wl_state)`;
        `wl_state_locals_size (s2:(A,num#C,FFI)wl_state)`;
@@ -5615,7 +5615,7 @@ let W2SP3AUX_exc_state_rel_h = prove
     REWRITE_TAC[stack_size_rel_def; stack_size_eq; OPTION_MAP2_SOME] THEN STRIP_TAC THEN
     ASM_REWRITE_TAC[] THEN
     REPEAT CONJ_TAC THENL
-    [DISCH_TAC THEN UNDISCH_TAC `the (f' + 1) (wl_state_locals_size (s2:(A,num#C,FFI)wl_state)) =
+    [DISCH_TAC THEN UNDISCH_TAC `misc_the (f' + 1) (wl_state_locals_size (s2:(A,num#C,FFI)wl_state)) =
       f' + 1` THEN
      ASM_REWRITE_TAC[];
      ALL_TAC] THEN
@@ -5626,8 +5626,8 @@ let W2SP3AUX_exc_state_rel_h = prove
     DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC (CONJUNCTS_THEN2 ASSUME_TAC
       (X_CHOOSE_THEN `ss0:num` (CONJUNCTS_THEN2
         (X_CHOOSE_THEN `x1:num` (X_CHOOSE_THEN `x2:num` STRIP_ASSUME_TAC)) ASSUME_TAC)))) THEN
-    UNDISCH_TAC `the (f' + 1) (wl_state_locals_size (s2:(A,num#C,FFI)wl_state)) = f' + 1` THEN
-    ASM_REWRITE_TAC[the_def; IS_SOME_DEF] THEN
+    UNDISCH_TAC `misc_the (f' + 1) (wl_state_locals_size (s2:(A,num#C,FFI)wl_state)) = f' + 1` THEN
+    ASM_REWRITE_TAC[misc_the_def; IS_SOME_DEF] THEN
     DISCH_TAC THEN ASM_REWRITE_TAC[option_INJ; UNWIND_THM1]) THEN
    (UNDISCH_TAC `LENGTH (stack_state_stack (t1:(A,C,FFI)stack_state)) - stack_state_stack_space
      t1 <= sm` THEN

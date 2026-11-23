@@ -27,6 +27,9 @@
 (*   peg_peg0_choicel, peg_peg_eval_choicel_NIL, peg_peg_eval_choicel_CONS.  *)
 (*   ignoreL and ignoreR are prefix constants (HOL4 infixes ~> and <~).      *)
 (* - Lemmas named LPARSEAUX_... are helpers of this unit (not HOL4 names).   *)
+(* - HOL4 nt, tok, error, seq, not, sloc, any and rpt are peg_nt, peg_tok,   *)
+(*   peg_error, peg_seq, peg_not, peg_sloc, peg_any and peg_rpt (short or    *)
+(*   common words), and sloc_def is peg_sloc_def.                            *)
 (* ========================================================================= *)
 
 needs "hol4/vocab.ml";;
@@ -40,14 +43,14 @@ needs "hol4/grammar.ml";;
 
 let pegsym_INDUCT,pegsym_RECURSION = cake_type
   "pegsym = empty C
-          | any (A # locs -> C)
-          | tok (A -> bool) (A # locs -> C)
-          | nt (B + num) (C -> C)
-          | seq pegsym pegsym (C -> C -> C)
+          | peg_any (A # locs -> C)
+          | peg_tok (A -> bool) (A # locs -> C)
+          | peg_nt (B + num) (C -> C)
+          | peg_seq pegsym pegsym (C -> C -> C)
           | choice pegsym pegsym (C + C -> C)
-          | rpt pegsym (C list -> C)
-          | not pegsym C
-          | error E";;
+          | peg_rpt pegsym (C list -> C)
+          | peg_not pegsym C
+          | peg_error E";;
 
 let pegsym_distinct = distinctness "pegsym";;
 let pegsym_inject = injectivity "pegsym";;
@@ -110,14 +113,14 @@ let optmax_def = cake_def
    (optmax f (SOME x) NONE = SOME x) /\
    (optmax f (SOME x) (SOME y) = SOME (f x y))`;;
 
-let sloc_def = cake_def
-  `(sloc ([]:(A#locs)list) = Locs EOFpt EOFpt) /\
-   (sloc (CONS (h:A#locs) t) = SND h)`;;
+let peg_sloc_def = cake_def
+  `(peg_sloc ([]:(A#locs)list) = Locs EOFpt EOFpt) /\
+   (peg_sloc (CONS (h:A#locs) t) = SND h)`;;
 
 let sloc_thm = prove
- (`sloc ([]:(A#locs)list) = Locs EOFpt EOFpt /\
-   (!(c:A) l t. sloc (CONS (c,l) t) = l)`,
-  REWRITE_TAC[sloc_def]);;
+ (`peg_sloc ([]:(A#locs)list) = Locs EOFpt EOFpt /\
+   (!(c:A) l t. peg_sloc (CONS (c,l) t) = l)`,
+  REWRITE_TAC[peg_sloc_def]);;
 
 (* ------------------------------------------------------------------------- *)
 (* The evaluation relation.                                                  *)
@@ -127,33 +130,33 @@ let peg_eval_rules,peg_eval_ind,peg_eval_cases = new_inductive_definition
  `(!s c. peg_eval (G:(A,B,C,E)peg) (s, empty c) (peg_Success s c NONE)) /\
   (!n s f res.
      n IN FDOM (peg_rules G) /\ peg_eval G (s, FAPPLY (peg_rules G) n) res
-     ==> peg_eval G (s, nt n f) (resultmap f res)) /\
-  (!h t f. peg_eval G (CONS h t, any f) (peg_Success t (f h) NONE)) /\
-  (!f. peg_eval G ([], any f) (Failure (Locs EOFpt EOFpt) (peg_anyEOF G))) /\
+     ==> peg_eval G (s, peg_nt n f) (resultmap f res)) /\
+  (!h t f. peg_eval G (CONS h t, peg_any f) (peg_Success t (f h) NONE)) /\
+  (!f. peg_eval G ([], peg_any f) (Failure (Locs EOFpt EOFpt) (peg_anyEOF G))) /\
   (!e t P f.
-     P (FST e) ==> peg_eval G (CONS e t, tok P f) (peg_Success t (f e) NONE)) /\
+     P (FST e) ==> peg_eval G (CONS e t, peg_tok P f) (peg_Success t (f e) NONE)) /\
   (!h t P f.
      ~P (FST h)
-     ==> peg_eval G (CONS h t, tok P f) (Failure (SND h) (peg_tokFALSE G))) /\
+     ==> peg_eval G (CONS h t, peg_tok P f) (Failure (SND h) (peg_tokFALSE G))) /\
   (!P f.
-     peg_eval G ([], tok P f) (Failure (Locs EOFpt EOFpt) (peg_tokEOF G))) /\
+     peg_eval G ([], peg_tok P f) (Failure (Locs EOFpt EOFpt) (peg_tokEOF G))) /\
   (!e s c fr.
      peg_eval G (s, e) fr /\ isFailure fr
-     ==> peg_eval G (s, not e c) (peg_Success s c NONE)) /\
+     ==> peg_eval G (s, peg_not e c) (peg_Success s c NONE)) /\
   (!e s r c.
      peg_eval G (s, e) r /\ isSuccess r
-     ==> peg_eval G (s, not e c) (Failure (sloc s) (peg_notFAIL G))) /\
+     ==> peg_eval G (s, peg_not e c) (Failure (peg_sloc s) (peg_notFAIL G))) /\
   (!e1 e2 s f fl fe.
      peg_eval G (s, e1) (Failure fl fe)
-     ==> peg_eval G (s, seq e1 e2 f) (Failure fl fe)) /\
+     ==> peg_eval G (s, peg_seq e1 e2 f) (Failure fl fe)) /\
   (!e1 e2 f s0 eo s1 c1 fl fe.
      peg_eval G (s0, e1) (peg_Success s1 c1 eo) /\
      peg_eval G (s1, e2) (Failure fl fe)
-     ==> peg_eval G (s0, seq e1 e2 f) (Failure fl fe)) /\
+     ==> peg_eval G (s0, peg_seq e1 e2 f) (Failure fl fe)) /\
   (!e1 e2 s0 s1 s2 c1 c2 f eo1 eo2.
      peg_eval G (s0, e1) (peg_Success s1 c1 eo1) /\
      peg_eval G (s1, e2) (peg_Success s2 c2 eo2)
-     ==> peg_eval G (s0, seq e1 e2 f) (peg_Success s2 (f c1 c2) eo2)) /\
+     ==> peg_eval G (s0, peg_seq e1 e2 f) (peg_Success s2 (f c1 c2) eo2)) /\
   (!e1 e2 s f fl1 fe1 fl2 fe2.
      peg_eval G (s, e1) (Failure fl1 fe1) /\
      peg_eval G (s, e2) (Failure fl2 fe2)
@@ -167,10 +170,10 @@ let peg_eval_rules,peg_eval_ind,peg_eval_cases = new_inductive_definition
      peg_eval G (s0, e2) (peg_Success s r eo)
      ==> peg_eval G (s0, choice e1 e2 f)
                   (peg_Success s (f (INR r)) (optmax MAXerr (SOME (fl,fe)) eo))) /\
-  (!e s. peg_eval G (s, error e) (Failure (sloc s) e)) /\
+  (!e s. peg_eval G (s, peg_error e) (Failure (peg_sloc s) e)) /\
   (!e f s s1 list err.
      peg_eval_list G (s, e) (s1,list,err)
-     ==> peg_eval G (s, rpt e f) (peg_Success s1 (f list) (SOME err))) /\
+     ==> peg_eval G (s, peg_rpt e f) (peg_Success s1 (f list) (SOME err))) /\
   (!e s fl fe.
      peg_eval G (s, e) (Failure fl fe)
      ==> peg_eval_list G (s, e) (s,[],(fl,fe))) /\
@@ -212,33 +215,33 @@ let peg_eval_strongind' = prove
      (!n s f res.
         n IN FDOM (peg_rules G) /\ peg_eval G (s, FAPPLY (peg_rules G) n) res /\
         P1 s (FAPPLY (peg_rules G) n) res
-        ==> P1 s (nt n f) (resultmap f res)) /\
-     (!h t f. P1 (CONS h t) (any f) (peg_Success t (f h) NONE)) /\
-     (!f. P1 [] (any f) (Failure (Locs EOFpt EOFpt) (peg_anyEOF G))) /\
-     (!e t P f. P (FST e) ==> P1 (CONS e t) (tok P f) (peg_Success t (f e) NONE)) /\
+        ==> P1 s (peg_nt n f) (resultmap f res)) /\
+     (!h t f. P1 (CONS h t) (peg_any f) (peg_Success t (f h) NONE)) /\
+     (!f. P1 [] (peg_any f) (Failure (Locs EOFpt EOFpt) (peg_anyEOF G))) /\
+     (!e t P f. P (FST e) ==> P1 (CONS e t) (peg_tok P f) (peg_Success t (f e) NONE)) /\
      (!h t P f.
         ~P (FST h)
-        ==> P1 (CONS h t) (tok P f) (Failure (SND h) (peg_tokFALSE G))) /\
-     (!P f. P1 [] (tok P f) (Failure (Locs EOFpt EOFpt) (peg_tokEOF G))) /\
+        ==> P1 (CONS h t) (peg_tok P f) (Failure (SND h) (peg_tokFALSE G))) /\
+     (!P f. P1 [] (peg_tok P f) (Failure (Locs EOFpt EOFpt) (peg_tokEOF G))) /\
      (!e s c fr.
         peg_eval G (s, e) fr /\ P1 s e fr /\ isFailure fr
-        ==> P1 s (not e c) (peg_Success s c NONE)) /\
+        ==> P1 s (peg_not e c) (peg_Success s c NONE)) /\
      (!e s r c.
         peg_eval G (s, e) r /\ P1 s e r /\ isSuccess r
-        ==> P1 s (not e c) (Failure (sloc s) (peg_notFAIL G))) /\
+        ==> P1 s (peg_not e c) (Failure (peg_sloc s) (peg_notFAIL G))) /\
      (!e1 e2 s f fl fe.
         peg_eval G (s, e1) (Failure fl fe) /\ P1 s e1 (Failure fl fe)
-        ==> P1 s (seq e1 e2 f) (Failure fl fe)) /\
+        ==> P1 s (peg_seq e1 e2 f) (Failure fl fe)) /\
      (!e1 e2 f s0 eo s1 c1 fl fe.
         peg_eval G (s0, e1) (peg_Success s1 c1 eo) /\ P1 s0 e1 (peg_Success s1 c1 eo) /\
         peg_eval G (s1, e2) (Failure fl fe) /\ P1 s1 e2 (Failure fl fe)
-        ==> P1 s0 (seq e1 e2 f) (Failure fl fe)) /\
+        ==> P1 s0 (peg_seq e1 e2 f) (Failure fl fe)) /\
      (!e1 e2 s0 s1 s2 c1 c2 f eo1 eo2.
         peg_eval G (s0, e1) (peg_Success s1 c1 eo1) /\
         P1 s0 e1 (peg_Success s1 c1 eo1) /\
         peg_eval G (s1, e2) (peg_Success s2 c2 eo2) /\
         P1 s1 e2 (peg_Success s2 c2 eo2)
-        ==> P1 s0 (seq e1 e2 f) (peg_Success s2 (f c1 c2) eo2)) /\
+        ==> P1 s0 (peg_seq e1 e2 f) (peg_Success s2 (f c1 c2) eo2)) /\
      (!e1 e2 s f fl1 fe1 fl2 fe2.
         peg_eval G (s, e1) (Failure fl1 fe1) /\ P1 s e1 (Failure fl1 fe1) /\
         peg_eval G (s, e2) (Failure fl2 fe2) /\ P1 s e2 (Failure fl2 fe2)
@@ -252,10 +255,10 @@ let peg_eval_strongind' = prove
         peg_eval G (s0, e2) (peg_Success s r eo) /\ P1 s0 e2 (peg_Success s r eo)
         ==> P1 s0 (choice e1 e2 f)
                (peg_Success s (f (INR r)) (optmax MAXerr (SOME (fl,fe)) eo))) /\
-     (!e s. P1 s (error e) (Failure (sloc s) e)) /\
+     (!e s. P1 s (peg_error e) (Failure (peg_sloc s) e)) /\
      (!e f s s1 list err.
         peg_eval_list G (s, e) (s1,list,err) /\ P2 s e s1 list err
-        ==> P1 s (rpt e f) (peg_Success s1 (f list) (SOME err))) /\
+        ==> P1 s (peg_rpt e f) (peg_Success s1 (f list) (SOME err))) /\
      (!e s fl fe.
         peg_eval G (s, e) (Failure fl fe) /\ P1 s e (Failure fl fe)
         ==> P2 s e s [] (fl,fe)) /\
@@ -339,8 +342,8 @@ let LPARSEAUX_IS_SUFFIX_LENGTH_EQ = prove
 
 let LPARSEAUX_sloc_MEM = prove
  (`!s:(A#locs)list.
-     ~(sloc s = Locs EOFpt EOFpt) ==> MEM (sloc s) (MAP SND s)`,
-  LIST_INDUCT_TAC THEN REWRITE_TAC[sloc_def; MAP; MEM]);;
+     ~(peg_sloc s = Locs EOFpt EOFpt) ==> MEM (peg_sloc s) (MAP SND s)`,
+  LIST_INDUCT_TAC THEN REWRITE_TAC[peg_sloc_def; MAP; MEM]);;
 
 let LPARSEAUX_IS_SUFFIX_MEM_MAP = prove
  (`!(l1:A list) l2 (f:A->B) x.
@@ -465,7 +468,7 @@ let LPARSEAUX_PEG_INV_TAC : tactic =
 
 let peg_eval_rpt = prove
  (`!(G:(A,B,C,E)peg) i0 s f x.
-     peg_eval G (i0, rpt s f) x <=>
+     peg_eval G (i0, peg_rpt s f) x <=>
      ?i l err. peg_eval_list G (i0,s) (i,l,err) /\
                x = peg_Success i (f l) (SOME err)`,
   LPARSEAUX_PEG_INV_TAC);;
@@ -484,7 +487,7 @@ let peg_eval_list = prove
 
 let peg_badrpt = prove
  (`!(G:(A,B,C,E)peg) s0 e r eo f.
-     peg_eval G (s0,e) (peg_Success s0 r eo) ==> !r. ~peg_eval G (s0, rpt e f) r`,
+     peg_eval G (s0,e) (peg_Success s0 r eo) ==> !r. ~peg_eval G (s0, peg_rpt e f) r`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN GEN_TAC THEN
   REWRITE_TAC[peg_eval_rpt; NOT_EXISTS_THM] THEN
   MAP_EVERY X_GEN_TAC [`i:(A#locs)list`; `l:C list`; `err:locs#E`] THEN
@@ -506,33 +509,33 @@ let peg_badrpt = prove
 
 let peg0_rules,peg0_ind,LPARSEAUX_peg0_cases = new_inductive_definition
  `(!c. peg0 (G:(A,B,C,E)peg) (empty c)) /\
-  (!f. peggt0 G (any f)) /\
-  (!f. pegfail G (any f)) /\
-  (!t f. peggt0 G (tok t f)) /\
-  (!t f. pegfail G (tok t f)) /\
-  (!e f. pegfail G e ==> peg0 G (rpt e f)) /\
-  (!e f. peggt0 G e ==> peggt0 G (rpt e f)) /\
+  (!f. peggt0 G (peg_any f)) /\
+  (!f. pegfail G (peg_any f)) /\
+  (!t f. peggt0 G (peg_tok t f)) /\
+  (!t f. pegfail G (peg_tok t f)) /\
+  (!e f. pegfail G e ==> peg0 G (peg_rpt e f)) /\
+  (!e f. peggt0 G e ==> peggt0 G (peg_rpt e f)) /\
   (!n f. n IN FDOM (peg_rules G) /\ peg0 G (FAPPLY (peg_rules G) n)
-         ==> peg0 G (nt n f)) /\
+         ==> peg0 G (peg_nt n f)) /\
   (!n f. n IN FDOM (peg_rules G) /\ peggt0 G (FAPPLY (peg_rules G) n)
-         ==> peggt0 G (nt n f)) /\
+         ==> peggt0 G (peg_nt n f)) /\
   (!n f. n IN FDOM (peg_rules G) /\ pegfail G (FAPPLY (peg_rules G) n)
-         ==> pegfail G (nt n f)) /\
+         ==> pegfail G (peg_nt n f)) /\
   (!e1 e2 f. pegfail G e1 \/ (peg0 G e1 /\ pegfail G e2) \/
              (peggt0 G e1 /\ pegfail G e2)
-             ==> pegfail G (seq e1 e2 f)) /\
+             ==> pegfail G (peg_seq e1 e2 f)) /\
   (!e1 e2 f. peggt0 G e1 /\ (peg0 G e2 \/ peggt0 G e2) \/
              (peg0 G e1 \/ peggt0 G e1) /\ peggt0 G e2
-             ==> peggt0 G (seq e1 e2 f)) /\
-  (!e1 e2 f. peg0 G e1 /\ peg0 G e2 ==> peg0 G (seq e1 e2 f)) /\
+             ==> peggt0 G (peg_seq e1 e2 f)) /\
+  (!e1 e2 f. peg0 G e1 /\ peg0 G e2 ==> peg0 G (peg_seq e1 e2 f)) /\
   (!e1 e2 f. peg0 G e1 \/ (pegfail G e1 /\ peg0 G e2)
              ==> peg0 G (choice e1 e2 f)) /\
   (!e1 e2 f. pegfail G e1 /\ pegfail G e2 ==> pegfail G (choice e1 e2 f)) /\
   (!e1 e2 f. peggt0 G e1 \/ (pegfail G e1 /\ peggt0 G e2)
              ==> peggt0 G (choice e1 e2 f)) /\
-  (!e c. pegfail G e ==> peg0 G (not e c)) /\
-  (!e c. peg0 G e \/ peggt0 G e ==> pegfail G (not e c)) /\
-  (!e. pegfail G (error e))`;;
+  (!e c. pegfail G e ==> peg0 G (peg_not e c)) /\
+  (!e c. peg0 G e \/ peggt0 G e ==> pegfail G (peg_not e c)) /\
+  (!e. pegfail G (peg_error e))`;;
 
 let peg0_strongind = derive_strong_induction(peg0_rules,peg0_ind);;
 
@@ -545,7 +548,7 @@ let peg0_cases =
   | _ -> failwith "peg0_cases";;
 
 let peg0_error = prove
- (`!(G:(A,B,C,E)peg) e. ~peg0 G (error e)`,
+ (`!(G:(A,B,C,E)peg) e. ~peg0 G (peg_error e)`,
   ONCE_REWRITE_TAC[peg0_cases] THEN REWRITE_TAC[pegsym_distinct]);;
 
 let LPARSEAUX_peg_eval_suffix_cases = prove
@@ -675,16 +678,16 @@ let lemma4_1a = prove
 let wfpeg_rules,wfpeg_ind,wfpeg_cases = new_inductive_definition
  `(!n f. n IN FDOM (peg_rules (G:(A,B,C,E)peg)) /\
          wfpeg G (FAPPLY (peg_rules G) n)
-         ==> wfpeg G (nt n f)) /\
+         ==> wfpeg G (peg_nt n f)) /\
   (!c. wfpeg G (empty c)) /\
-  (!f. wfpeg G (any f)) /\
-  (!t f. wfpeg G (tok t f)) /\
-  (!e. wfpeg G (error e)) /\
-  (!e c. wfpeg G e ==> wfpeg G (not e c)) /\
+  (!f. wfpeg G (peg_any f)) /\
+  (!t f. wfpeg G (peg_tok t f)) /\
+  (!e. wfpeg G (peg_error e)) /\
+  (!e c. wfpeg G e ==> wfpeg G (peg_not e c)) /\
   (!e1 e2 f. wfpeg G e1 /\ (peg0 G e1 ==> wfpeg G e2)
-             ==> wfpeg G (seq e1 e2 f)) /\
+             ==> wfpeg G (peg_seq e1 e2 f)) /\
   (!e1 e2 f. wfpeg G e1 /\ wfpeg G e2 ==> wfpeg G (choice e1 e2 f)) /\
-  (!e f. wfpeg G e /\ ~peg0 G e ==> wfpeg G (rpt e f))`;;
+  (!e f. wfpeg G e /\ ~peg0 G e ==> wfpeg G (peg_rpt e f))`;;
 
 let wfpeg_strongind = derive_strong_induction(wfpeg_rules,wfpeg_ind);;
 
@@ -693,29 +696,29 @@ let wfpeg__empty = prove
   MESON_TAC[wfpeg_rules]);;
 
 let wfpeg__any = prove
- (`!(G:(A,B,C,E)peg) f. wfpeg G (any f)`,
+ (`!(G:(A,B,C,E)peg) f. wfpeg G (peg_any f)`,
   MESON_TAC[wfpeg_rules]);;
 
 let wfpeg_tok = prove
- (`!(G:(A,B,C,E)peg) t f. wfpeg G (tok t f)`,
+ (`!(G:(A,B,C,E)peg) t f. wfpeg G (peg_tok t f)`,
   MESON_TAC[wfpeg_rules]);;
 
 let wfpeg__error = prove
- (`!(G:(A,B,C,E)peg) e. wfpeg G (error e)`,
+ (`!(G:(A,B,C,E)peg) e. wfpeg G (peg_error e)`,
   MESON_TAC[wfpeg_rules]);;
 
 let subexprs_def = cake_def
- `(subexprs (any (f1:A#locs->C)) = {any f1}:((A,B,C,E)pegsym)->bool) /\
+ `(subexprs (peg_any (f1:A#locs->C)) = {peg_any f1}:((A,B,C,E)pegsym)->bool) /\
   (subexprs (empty c) = {empty c}) /\
-  (subexprs (tok t f2) = {tok t f2}) /\
-  (subexprs (error err) = {error err}) /\
-  (subexprs (nt s f) = {nt s f}) /\
-  (subexprs (not e c) = not e c INSERT subexprs e) /\
-  (subexprs (seq e1 e2 f3) =
-     seq e1 e2 f3 INSERT (subexprs e1 UNION subexprs e2)) /\
+  (subexprs (peg_tok t f2) = {peg_tok t f2}) /\
+  (subexprs (peg_error err) = {peg_error err}) /\
+  (subexprs (peg_nt s f) = {peg_nt s f}) /\
+  (subexprs (peg_not e c) = peg_not e c INSERT subexprs e) /\
+  (subexprs (peg_seq e1 e2 f3) =
+     peg_seq e1 e2 f3 INSERT (subexprs e1 UNION subexprs e2)) /\
   (subexprs (choice e1 e2 f4) =
      choice e1 e2 f4 INSERT (subexprs e1 UNION subexprs e2)) /\
-  (subexprs (rpt e f5) = rpt e f5 INSERT subexprs e)`;;
+  (subexprs (peg_rpt e f5) = peg_rpt e f5 INSERT subexprs e)`;;
 
 let subexprs_included = prove
  (`!e:(A,B,C,E)pegsym. e IN subexprs e`,
@@ -750,11 +753,11 @@ let peg_Gexprs_subexprs = prove
 
 let IN_Gexprs_E = prove
  (`!(G:(A,B,C,E)peg).
-     (!e c. not e c IN Gexprs G ==> e IN Gexprs G) /\
-     (!e1 e2 f. seq e1 e2 f IN Gexprs G ==> e1 IN Gexprs G /\ e2 IN Gexprs G) /\
+     (!e c. peg_not e c IN Gexprs G ==> e IN Gexprs G) /\
+     (!e1 e2 f. peg_seq e1 e2 f IN Gexprs G ==> e1 IN Gexprs G /\ e2 IN Gexprs G) /\
      (!e1 e2 f2. choice e1 e2 f2 IN Gexprs G
                  ==> e1 IN Gexprs G /\ e2 IN Gexprs G) /\
-     (!e f3. rpt e f3 IN Gexprs G ==> e IN Gexprs G)`,
+     (!e f3. peg_rpt e f3 IN Gexprs G ==> e IN Gexprs G)`,
   REPEAT STRIP_TAC THEN FIRST_X_ASSUM(MP_TAC o MATCH_MP peg_Gexprs_subexprs) THEN
   REWRITE_TAC[subexprs_def; SUBSET; IN_INSERT; IN_UNION] THEN
   MESON_TAC[subexprs_included]);;
@@ -928,25 +931,25 @@ let peg_eval_total = prove
 
 let peg_pegf_def = new_definition
   `peg_pegf (sym:(A,B,C,E)pegsym) (f:C->C) =
-     seq sym (empty ARB) (\l1 l2. f l1)`;;
+     peg_seq sym (empty ARB) (\l1 l2. f l1)`;;
 
 let ignoreL_def = new_definition
-  `ignoreL (s1:(A,B,C,E)pegsym) s2 = seq s1 s2 (\a b. b)`;;
+  `ignoreL (s1:(A,B,C,E)pegsym) s2 = peg_seq s1 s2 (\a b. b)`;;
 
 let ignoreR_def = new_definition
-  `ignoreR (s1:(A,B,C,E)pegsym) s2 = seq s1 s2 (\a b. a)`;;
+  `ignoreR (s1:(A,B,C,E)pegsym) s2 = peg_seq s1 s2 (\a b. a)`;;
 
 let peg_choicel_def = new_recursive_definition list_RECURSION
-  `(peg_choicel [] = not (empty ARB) ARB:(A,B,C,E)pegsym) /\
+  `(peg_choicel [] = peg_not (empty ARB) ARB:(A,B,C,E)pegsym) /\
    (peg_choicel (CONS h t) = choice h (peg_choicel t) (\s. sum_CASE s I I))`;;
 
 let checkAhead_def = new_definition
   `checkAhead (P:A->bool) (s:(A,B,C,E)pegsym) =
-     ignoreL (not (not (tok P ARB) ARB) ARB) s`;;
+     ignoreL (peg_not (peg_not (peg_tok P ARB) ARB) ARB) s`;;
 
 let peg_eval_seq_SOME = prove
  (`!(G:(A,B,C,E)peg) i0 s1 s2 f i r eo.
-     peg_eval G (i0, seq s1 s2 f) (peg_Success i r eo) <=>
+     peg_eval G (i0, peg_seq s1 s2 f) (peg_Success i r eo) <=>
      ?i1 r1 r2 eo1.
        peg_eval G (i0, s1) (peg_Success i1 r1 eo1) /\
        peg_eval G (i1, s2) (peg_Success i r2 eo) /\ r = f r1 r2`,
@@ -954,7 +957,7 @@ let peg_eval_seq_SOME = prove
 
 let peg_eval_seq_NONE = prove
  (`!(G:(A,B,C,E)peg) i0 s1 s2 f fl fe.
-     peg_eval G (i0, seq s1 s2 f) (Failure fl fe) <=>
+     peg_eval G (i0, peg_seq s1 s2 f) (Failure fl fe) <=>
      peg_eval G (i0, s1) (Failure fl fe) \/
      ?i r eo. peg_eval G (i0,s1) (peg_Success i r eo) /\
               peg_eval G (i,s2) (Failure fl fe)`,
@@ -962,14 +965,14 @@ let peg_eval_seq_NONE = prove
 
 let peg_eval_tok_NONE = prove
  (`!(G:(A,B,C,E)peg) i P f fl fe.
-     peg_eval G (i, tok P f) (Failure fl fe) <=>
+     peg_eval G (i, peg_tok P f) (Failure fl fe) <=>
      (?h t. i = CONS h t /\ fl = SND h /\ fe = peg_tokFALSE G /\ ~P (FST h)) \/
      (i = [] /\ fl = Locs EOFpt EOFpt /\ fe = peg_tokEOF G)`,
   LPARSEAUX_PEG_INV_TAC);;
 
 let peg_eval_tok_SOME = prove
  (`!(G:(A,B,C,E)peg) i0 P f i r eo.
-     peg_eval G (i0, tok P f) (peg_Success i r eo) <=>
+     peg_eval G (i0, peg_tok P f) (peg_Success i r eo) <=>
      ?h l. P h /\ i0 = CONS (h,l) i /\ r = f (h,l) /\ eo = NONE`,
   REPEAT GEN_TAC THEN GEN_REWRITE_TAC LAND_CONV [peg_eval_cases] THEN
   REWRITE_TAC[PAIR_EQ; pegsym_distinct; pegsym_inject; pegresult_distinct;
@@ -988,7 +991,7 @@ let LPARSEAUX_Success_EQ_resultmap = prove
 
 let peg_eval_NT_SOME = prove
  (`!(G:(A,B,C,E)peg) i0 N f i r eo.
-     peg_eval G (i0,nt N f) (peg_Success i r eo) <=>
+     peg_eval G (i0,peg_nt N f) (peg_Success i r eo) <=>
      ?r0. r = f r0 /\ N IN FDOM (peg_rules G) /\
           peg_eval G (i0,FAPPLY (peg_rules G) N) (peg_Success i r0 eo)`,
   REPEAT GEN_TAC THEN GEN_REWRITE_TAC LAND_CONV [peg_eval_cases] THEN
@@ -1028,7 +1031,7 @@ let peg_eval_choice = prove
 let peg_peg_eval_choicel_NIL = prove
  (`!(G:(A,B,C,E)peg) i0 x.
      peg_eval G (i0, peg_choicel []) x <=>
-     x = Failure (sloc i0) (peg_notFAIL G)`,
+     x = Failure (peg_sloc i0) (peg_notFAIL G)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[peg_choicel_def] THEN
   GEN_REWRITE_TAC LAND_CONV [peg_eval_cases] THEN
   REWRITE_TAC[PAIR_EQ; pegsym_distinct; pegsym_inject; peg_eval_empty] THEN
@@ -1075,7 +1078,7 @@ let peg0_empty = prove
   LPARSEAUX_PEG0_TAC);;
 
 let peg0_not = prove
- (`!(G:(A,B,C,E)peg) s r. peg0 G (not s r) <=> pegfail G s`,
+ (`!(G:(A,B,C,E)peg) s r. peg0 G (peg_not s r) <=> pegfail G s`,
   LPARSEAUX_PEG0_TAC);;
 
 let peg0_choice = prove
@@ -1091,11 +1094,11 @@ let peg_peg0_choicel = prove
   REWRITE_TAC[peg_choicel_def; peg0_not; peg0_choice; pegfail_empty]);;
 
 let peg0_seq = prove
- (`!(G:(A,B,C,E)peg) s1 s2 f. peg0 G (seq s1 s2 f) <=> peg0 G s1 /\ peg0 G s2`,
+ (`!(G:(A,B,C,E)peg) s1 s2 f. peg0 G (peg_seq s1 s2 f) <=> peg0 G s1 /\ peg0 G s2`,
   LPARSEAUX_PEG0_TAC);;
 
 let peg0_tok = prove
- (`!(G:(A,B,C,E)peg) P f. peg0 G (tok P f) <=> F`,
+ (`!(G:(A,B,C,E)peg) P f. peg0 G (peg_tok P f) <=> F`,
   LPARSEAUX_PEG0_TAC);;
 
 let peg_peg0_pegf = prove
@@ -1113,3 +1116,131 @@ let _ = cake_add_simps
    subexprs_included; start_IN_Gexprs; peg_eval_empty;
    peg_peg_eval_choicel_NIL; pegfail_empty; peg0_empty; peg0_not;
    peg0_choice; peg_peg0_choicel; peg0_seq; peg0_tok; peg_peg0_pegf];;
+
+(* ------------------------------------------------------------------------- *)
+(* Lemmas used by several later files.                                       *)
+(* ------------------------------------------------------------------------- *)
+
+(* the cases of peg0, peggt0, pegfail and wfpeg for each kind of expression *)
+(* (HOL4 builds them as ML values from peg0_cases and wfpeg_cases)           *)
+let LPARSEAUX_CASES_TAC (cth:thm) : tactic =
+  REPEAT GEN_TAC THEN REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
+  GEN_REWRITE_TAC LAND_CONV [cth] THEN
+  REWRITE_TAC[pegsym_distinct; pegsym_inject] THEN
+  REWRITE_TAC[RIGHT_EXISTS_AND_THM; LEFT_EXISTS_AND_THM; UNWIND_THM1;
+              UNWIND_THM2; GSYM CONJ_ASSOC; EXISTS_REFL] THEN
+  MESON_TAC[];;
+
+let LPARSEAUX_peg0_clauses = prove
+ (`!G:(A,B,C,E)peg.
+     (!c. peg0 G (empty c) <=> T) /\
+     (!f. peg0 G (peg_any f) <=> F) /\
+     (!t f. peg0 G (peg_tok t f) <=> F) /\
+     (!e. peg0 G (peg_error e) <=> F) /\
+     (!e c. peg0 G (peg_not e c) <=> pegfail G e) /\
+     (!e f. peg0 G (peg_rpt e f) <=> pegfail G e) /\
+     (!e1 e2 f. peg0 G (peg_seq e1 e2 f) <=> peg0 G e1 /\ peg0 G e2) /\
+     (!e1 e2 f. peg0 G (choice e1 e2 f) <=>
+                peg0 G e1 \/ pegfail G e1 /\ peg0 G e2)`,
+  LPARSEAUX_CASES_TAC peg0_cases);;
+
+let LPARSEAUX_peggt0_clauses = prove
+ (`!G:(A,B,C,E)peg.
+     (!c. peggt0 G (empty c) <=> F) /\
+     (!f. peggt0 G (peg_any f) <=> T) /\
+     (!t f. peggt0 G (peg_tok t f) <=> T) /\
+     (!e. peggt0 G (peg_error e) <=> F) /\
+     (!e c. peggt0 G (peg_not e c) <=> F) /\
+     (!e f. peggt0 G (peg_rpt e f) <=> peggt0 G e) /\
+     (!e1 e2 f. peggt0 G (peg_seq e1 e2 f) <=>
+                peggt0 G e1 /\ (peg0 G e2 \/ peggt0 G e2) \/
+                (peg0 G e1 \/ peggt0 G e1) /\ peggt0 G e2) /\
+     (!e1 e2 f. peggt0 G (choice e1 e2 f) <=>
+                peggt0 G e1 \/ pegfail G e1 /\ peggt0 G e2)`,
+  LPARSEAUX_CASES_TAC peg0_cases);;
+
+let LPARSEAUX_pegfail_clauses = prove
+ (`!G:(A,B,C,E)peg.
+     (!c. pegfail G (empty c) <=> F) /\
+     (!f. pegfail G (peg_any f) <=> T) /\
+     (!t f. pegfail G (peg_tok t f) <=> T) /\
+     (!e. pegfail G (peg_error e) <=> T) /\
+     (!e c. pegfail G (peg_not e c) <=> peg0 G e \/ peggt0 G e) /\
+     (!e f. pegfail G (peg_rpt e f) <=> F) /\
+     (!e1 e2 f. pegfail G (peg_seq e1 e2 f) <=>
+                pegfail G e1 \/ peg0 G e1 /\ pegfail G e2 \/
+                peggt0 G e1 /\ pegfail G e2) /\
+     (!e1 e2 f. pegfail G (choice e1 e2 f) <=> pegfail G e1 /\ pegfail G e2)`,
+  LPARSEAUX_CASES_TAC peg0_cases);;
+
+let LPARSEAUX_peg0_nt_clauses = prove
+ (`!G:(A,B,C,E)peg.
+     (!n f. peg0 G (peg_nt n f) <=>
+            n IN FDOM (peg_rules G) /\ peg0 G (FAPPLY (peg_rules G) n)) /\
+     (!n f. peggt0 G (peg_nt n f) <=>
+            n IN FDOM (peg_rules G) /\ peggt0 G (FAPPLY (peg_rules G) n)) /\
+     (!n f. pegfail G (peg_nt n f) <=>
+            n IN FDOM (peg_rules G) /\ pegfail G (FAPPLY (peg_rules G) n))`,
+  LPARSEAUX_CASES_TAC peg0_cases);;
+
+let LPARSEAUX_wfpeg_clauses = prove
+ (`!G:(A,B,C,E)peg.
+     (!c. wfpeg G (empty c) <=> T) /\
+     (!f. wfpeg G (peg_any f) <=> T) /\
+     (!t f. wfpeg G (peg_tok t f) <=> T) /\
+     (!e. wfpeg G (peg_error e) <=> T) /\
+     (!e c. wfpeg G (peg_not e c) <=> wfpeg G e) /\
+     (!e f. wfpeg G (peg_rpt e f) <=> wfpeg G e /\ ~peg0 G e) /\
+     (!e1 e2 f. wfpeg G (peg_seq e1 e2 f) <=>
+                wfpeg G e1 /\ (peg0 G e1 ==> wfpeg G e2)) /\
+     (!e1 e2 f. wfpeg G (choice e1 e2 f) <=> wfpeg G e1 /\ wfpeg G e2)`,
+  GEN_TAC THEN REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
+  GEN_REWRITE_TAC LAND_CONV [wfpeg_cases] THEN
+  REWRITE_TAC[pegsym_distinct; pegsym_inject] THEN
+  REWRITE_TAC[RIGHT_EXISTS_AND_THM; LEFT_EXISTS_AND_THM; UNWIND_THM1;
+              UNWIND_THM2; GSYM CONJ_ASSOC; EXISTS_REFL] THEN
+  MESON_TAC[]);;
+
+let LPARSEAUX_wfpeg_nt = prove
+ (`!(G:(A,B,C,E)peg) n f.
+     wfpeg G (peg_nt n f) <=>
+     n IN FDOM (peg_rules G) /\ wfpeg G (FAPPLY (peg_rules G) n)`,
+  REPEAT GEN_TAC THEN GEN_REWRITE_TAC LAND_CONV [wfpeg_cases] THEN
+  REWRITE_TAC[pegsym_distinct; pegsym_inject] THEN
+  REWRITE_TAC[RIGHT_EXISTS_AND_THM; LEFT_EXISTS_AND_THM; UNWIND_THM1;
+              UNWIND_THM2; GSYM CONJ_ASSOC; EXISTS_REFL] THEN
+  MESON_TAC[]);;
+
+let LPARSEAUX_ALLWF = prove
+ (`!(G:(A,B,C,E)peg) c f1 t f2 err s f e e1 e2 f3 f4 f5.
+     ((!x. x IN subexprs (empty c) ==> wfpeg G x) <=> T) /\
+     ((!x. x IN subexprs (peg_any f1) ==> wfpeg G x) <=> T) /\
+     ((!x. x IN subexprs (peg_tok t f2) ==> wfpeg G x) <=> T) /\
+     ((!x. x IN subexprs (peg_error err) ==> wfpeg G x) <=> T) /\
+     ((!x. x IN subexprs (peg_nt s f) ==> wfpeg G x) <=> wfpeg G (peg_nt s f)) /\
+     ((!x. x IN subexprs (peg_not e c) ==> wfpeg G x) <=>
+      (!x. x IN subexprs e ==> wfpeg G x)) /\
+     ((!x. x IN subexprs (peg_seq e1 e2 f3) ==> wfpeg G x) <=>
+      (!x. x IN subexprs e1 ==> wfpeg G x) /\
+      (!x. x IN subexprs e2 ==> wfpeg G x)) /\
+     ((!x. x IN subexprs (choice e1 e2 f4) ==> wfpeg G x) <=>
+      (!x. x IN subexprs e1 ==> wfpeg G x) /\
+      (!x. x IN subexprs e2 ==> wfpeg G x)) /\
+     ((!x. x IN subexprs (peg_rpt e f5) ==> wfpeg G x) <=>
+      (!x. x IN subexprs e ==> wfpeg G x) /\ ~peg0 G e)`,
+  REPEAT GEN_TAC THEN
+  REWRITE_TAC[subexprs_def; IN_INSERT; IN_UNION; NOT_IN_EMPTY] THEN
+  REWRITE_TAC[TAUT `(a \/ b ==> c) <=> (a ==> c) /\ (b ==> c)`;
+              FORALL_AND_THM; FORALL_UNWIND_THM2] THEN
+  REWRITE_TAC[LPARSEAUX_wfpeg_clauses] THEN
+  MESON_TAC[subexprs_included]);;
+
+let LPARSEAUX_FORALL_GEXPRS = prove
+ (`!(G:(A,B,C,E)peg) P.
+     (!e. e IN Gexprs G ==> P e) <=>
+     (!e. e IN subexprs (peg_start G) ==> P e) /\
+     (!n. n IN FDOM (peg_rules G) ==>
+          !e. e IN subexprs (FAPPLY (peg_rules G) n) ==> P e)`,
+  REWRITE_TAC[peg_Gexprs_def; IN_UNIONS; IN_IMAGE; IN_INSERT; FRANGE_DEF;
+              IN_ELIM_THM] THEN
+  MESON_TAC[]);;

@@ -265,7 +265,7 @@ let IL1AUX_dest_Op_SOME = prove
   MESON_TAC[]);;
 
 let cons_measure_def = cake_def_wf
-  `measure clos_exp_size`
+  `MEASURE clos_exp_size`
   (REPEAT GEN_TAC THEN STRIP_TAC THEN RVEQ_TAC THEN
    FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP IL1AUX_dest_Op_SOME) THEN
    RVEQ_TAC THEN TERM_TAC)
@@ -342,7 +342,7 @@ let IL1AUX_EPL_TC_TAC : tactic =
     COND_CASES_TAC THEN ARITH_TAC];;
 
 let eq_pure_list_def = cake_def_wf
-  `measure (\l:(clos_exp # clos_exp) list.
+  `MEASURE (\l:(clos_exp # clos_exp) list.
      SUM (MAP (\p. 1 + cons_measure (FST p) + cons_measure (SND p) +
                    (if cons_measure (FST p) < cons_measure (SND p) then 1 else 0))
               l))`
@@ -399,7 +399,7 @@ let dont_lift_def = cake_def
            | NONE -> F))`;;
 
 let lift_exps_def = cake_def_wf
-  `measure (\p:clos_exp list # num # clos_exp list.
+  `MEASURE (\p:clos_exp list # num # clos_exp list.
               list_size clos_exp_size (FST p))`
   (REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN RVEQ_TAC THEN
    TRY (FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP IL1AUX_dest_Op_SOME)) THEN

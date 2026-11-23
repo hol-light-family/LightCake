@@ -72,7 +72,7 @@ let WSIMPPAUX_val_word_pred = prove
 (* m any range type                                                        *)
 
 let memcpy_def = cake_def_wf
-  `measure (\x:B word#A word#A word#(A word->C)#(A word->bool). val (FST x))`
+  `MEASURE (\x:B word#A word#A word#(A word->C)#(A word->bool). val (FST x))`
   (REWRITE_TAC[measure_THM; FST; SND] THEN REPEAT STRIP_TAC THEN
    ASM_MESON_TAC[LT_TRANS; WSIMPPAUX_val_word_pred])
   `memcpy (w:B word) (a:A word) (b:A word) (m:A word->C) (dm:A word->bool) =
@@ -81,7 +81,7 @@ let memcpy_def = cake_def_wf
                           (word_add b bytes_in_word) ((b =+ m a) m) dm in
          (b1,m1,(c1 /\ a IN dm /\ b IN dm))`;;
 
-(* the same definition as in the data_to_word_memoryProof skeleton *)
+(* decode_length is also used by the data_to_word proofs *)
 
 let decode_length_def = cake_def
   `decode_length (conf:data_to_word_config) (w:A word) =
@@ -143,7 +143,7 @@ let word_gc_move_roots_def = cake_def
 let word_gc_move_roots_ind = cake_ind "word_gc_move_roots";;
 
 let word_gc_move_list_def = cake_def_wf
-  `measure (\x:data_to_word_config#A word#A word#A word#A word#A word#
+  `MEASURE (\x:data_to_word_config#A word#A word#A word#A word#A word#
                (A word->(A)word_loc)#(A word->bool). val (FST (SND (SND x))))`
   (REWRITE_TAC[measure_THM; FST; SND] THEN REPEAT STRIP_TAC THEN
    ASM_MESON_TAC[LT_TRANS; WSIMPPAUX_val_word_pred])
@@ -173,7 +173,7 @@ let word_gen_gc_partial_move_roots_def = cake_def
 let word_gen_gc_partial_move_roots_ind = cake_ind "word_gen_gc_partial_move_roots";;
 
 let word_gen_gc_partial_move_list_def = cake_def_wf
-  `measure (\x:data_to_word_config#A word#A word#A word#A word#A word#
+  `MEASURE (\x:data_to_word_config#A word#A word#A word#A word#A word#
                (A word->(A)word_loc)#(A word->bool)#A word#A word.
               val (FST (SND (SND x))))`
   (REWRITE_TAC[measure_THM; FST; SND] THEN REPEAT STRIP_TAC THEN
@@ -284,7 +284,7 @@ let word_gen_gc_partial_move_list_append = prove
     REWRITE_TAC[PAIR_EQ; CONJ_ACI]]);;
 
 let word_gc_move_loop_def = cake_def_wf
-  `measure (\x:num#data_to_word_config#A word#A word#A word#A word#
+  `MEASURE (\x:num#data_to_word_config#A word#A word#A word#A word#
                (A word->(A)word_loc)#(A word->bool)#bool. FST x)`
   (REWRITE_TAC[measure_THM; FST; SND] THEN REPEAT STRIP_TAC THEN
    ASM_MESON_TAC[LT_TRANS; ARITH_RULE `!k. ~(k = 0) ==> k - 1 < k`])
@@ -360,7 +360,7 @@ let refs_to_addresses_def = cake_def
    (refs_to_addresses (CONS _ refs) = refs_to_addresses refs)`;;
 
 let word_gen_gc_partial_move_ref_list_def = cake_def_wf
-  `measure (\x:num#data_to_word_config#A word#A word#A word#A word#
+  `MEASURE (\x:num#data_to_word_config#A word#A word#A word#A word#
                (A word->(A)word_loc)#(A word->bool)#bool#A word#A word#A word. FST x)`
   (REWRITE_TAC[measure_THM; FST; SND] THEN REPEAT STRIP_TAC THEN
    ASM_MESON_TAC[LT_TRANS; ARITH_RULE `!k. ~(k = 0) ==> k - 1 < k`])
@@ -379,7 +379,7 @@ let word_gen_gc_partial_move_ref_list_def = cake_def_wf
            (pb,i1,pa1,old,m1,dm,(c /\ c1),gs,rs,re)`;;
 
 let word_gen_gc_partial_move_data_def = cake_def_wf
-  `measure (\x:data_to_word_config#num#A word#A word#A word#A word#
+  `MEASURE (\x:data_to_word_config#num#A word#A word#A word#A word#
                (A word->(A)word_loc)#(A word->bool)#A word#A word. FST (SND x))`
   (REWRITE_TAC[measure_THM; FST; SND] THEN REPEAT STRIP_TAC THEN
    ASM_MESON_TAC[LT_TRANS; ARITH_RULE `!k. ~(k = 0) ==> k - 1 < k`])
@@ -473,7 +473,7 @@ let word_gen_gc_move_roots_def = cake_def
 let word_gen_gc_move_roots_ind = cake_ind "word_gen_gc_move_roots";;
 
 let word_gen_gc_move_list_def = cake_def_wf
-  `measure (\x:data_to_word_config#A word#A word#A word#A word#A word#A word#
+  `MEASURE (\x:data_to_word_config#A word#A word#A word#A word#A word#A word#
                A word#(A word->(A)word_loc)#(A word->bool). val (FST (SND (SND x))))`
   (REWRITE_TAC[measure_THM; FST; SND] THEN REPEAT STRIP_TAC THEN
    ASM_MESON_TAC[LT_TRANS; WSIMPPAUX_val_word_pred])
@@ -491,7 +491,7 @@ let word_gen_gc_move_list_def = cake_def_wf
 let word_gen_gc_move_list_ind = cake_ind "word_gen_gc_move_list";;
 
 let word_gen_gc_move_data_def = cake_def_wf
-  `measure (\x:data_to_word_config#num#A word#A word#A word#A word#A word#
+  `MEASURE (\x:data_to_word_config#num#A word#A word#A word#A word#A word#
                A word#(A word->(A)word_loc)#(A word->bool). FST (SND x))`
   (REWRITE_TAC[measure_THM; FST; SND] THEN REPEAT STRIP_TAC THEN
    ASM_MESON_TAC[LT_TRANS; ARITH_RULE `!k. ~(k = 0) ==> k - 1 < k`])
@@ -517,7 +517,7 @@ let word_gen_gc_move_data_def = cake_def_wf
              (i,pa,ib,pb,m,(c /\ c1 /\ c2))`;;
 
 let word_gen_gc_move_refs_def = cake_def_wf
-  `measure (\x:data_to_word_config#num#A word#A word#A word#A word#A word#
+  `MEASURE (\x:data_to_word_config#num#A word#A word#A word#A word#A word#
                A word#A word#(A word->(A)word_loc)#(A word->bool). FST (SND x))`
   (REWRITE_TAC[measure_THM; FST; SND] THEN REPEAT STRIP_TAC THEN
    ASM_MESON_TAC[LT_TRANS; ARITH_RULE `!k. ~(k = 0) ==> k - 1 < k`])
@@ -537,7 +537,7 @@ let word_gen_gc_move_refs_def = cake_def_wf
          (r2a,i,pa,ib,pb,m,(c /\ c1 /\ c2))`;;
 
 let word_gen_gc_move_loop_def = cake_def_wf
-  `measure (\x:data_to_word_config#num#A word#A word#A word#A word#A word#
+  `MEASURE (\x:data_to_word_config#num#A word#A word#A word#A word#A word#
                A word#A word#(A word->(A)word_loc)#(A word->bool). FST (SND x))`
   (REWRITE_TAC[measure_THM; FST; SND] THEN REPEAT STRIP_TAC THEN
    ASM_MESON_TAC[LT_TRANS; ARITH_RULE `!k. ~(k = 0) ==> k - 1 < k`])

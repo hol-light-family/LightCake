@@ -2777,14 +2777,14 @@ let word_el_def = cake_def
    (word_el a (DataElement ys l (tag,(qs:((B)word_loc)list))) conf =
       let (h,ts,c) = word_payload ys l tag qs conf in
       misc_word_list a (CONS (wl_Word h) ts) STAR
-      cond (LENGTH ts < 2 EXP (dimindex (:A) - 4) /\
+      set_sep_cond (LENGTH ts < 2 EXP (dimindex (:A) - 4) /\
             decode_length conf h = word (LENGTH ts) /\ c))`;;
 
 (* HOL4 line 7655 *)
 let word_heap_def = cake_def
   `(word_heap (a:A word)
       ([]:((A word_loc,data_to_word_memoryProof_tag#(A word_loc)list)
-           heap_element)list) conf = emp) /\
+           heap_element)list) conf = set_sep_emp) /\
    (word_heap a (CONS x xs) conf =
       word_el a x conf STAR
       word_heap (word_add a (word_mul bytes_in_word (word (el_length x)))) xs conf)`;;
@@ -3553,7 +3553,7 @@ let MP3AUX_memory_len_Block = prove
   ASM_REWRITE_TAC[word_el_def; word_payload_def] THEN CASE_REWRITE_TAC[] THEN
   STRIP_TAC THEN POP_ASSUM MP_TAC THEN
   ONCE_REWRITE_TAC[AC MP3AUX_STAR_AC
-    `((x:(A word#A word_loc->bool)->bool) STAR cond c) STAR q = cond c STAR (x STAR q)`] THEN
+    `((x:(A word#A word_loc->bool)->bool) STAR set_sep_cond c) STAR q = set_sep_cond c STAR (x STAR q)`] THEN
   REWRITE_TAC[cond_STAR; LENGTH_MAP] THEN SIMP_TAC[]);;
 
 (* MP3AUX: the root of a small number second on the stack *)
@@ -3735,4 +3735,3 @@ let memory_rel_Deref' = prove
   EXISTS_TAC `CONS (EL index (zs:((A word_loc)heap_address)list))
     (CONS (Pointer p (wl_Word (word 0))) roots2)` THEN
   ASM_REWRITE_TAC[ALL2]));;
-

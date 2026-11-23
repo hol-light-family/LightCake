@@ -7,7 +7,7 @@
 (* shape checks and primitive checks.                                        *)
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
-(* - Names as notes/naming/names.tsv says: the record context is            *)
+(* - Names as doc/names.tsv says: the record context is                     *)
 (*   panStatic_context (fields panStatic_context_locals, ...); the          *)
 (*   scoped_id constructors Var and Fun are panStatic_Var and panStatic_Fun; *)
 (*   the constructors of panLang and asm are as there (panLang_Skip,         *)
@@ -16,7 +16,8 @@
 (* - The type abbreviation static_result of HOL4 (with a type variable) is   *)
 (*   written out: (A,staterr)error # (staterr)list.                          *)
 (* - Variables named like constants of the port are renamed: is_load (asm)   *)
-(*   is is_load', field and fields are field' and fields', the let variable  *)
+(*   is is_load', field (then a constant of bitstring, now bitstring_field)  *)
+(*   and fields are field' and fields', the let variable                     *)
 (*   op_type (a constant of bvi_tailrec) is op_type'.                        *)
 (* - Record literals are the record constructors (fields in declaration     *)
 (*   order), r.f is RECTYPE_f r, r with f := v is RECTYPE_f_fupd (K v) r;   *)
@@ -158,17 +159,11 @@ let scoped_id_INDUCT,scoped_id_RECURSION = cake_type
 (* HOL4's termination proof uses the local lemma dropWhile P xs = ys ==>   *)
 (* LENGTH ys <= LENGTH xs (from LENGTH_dropWhile_LESS_EQ)                    *)
 
-let PPARSEAUX_dropWhile_CONS = prove
- (`!(P:A->bool) ls h t. dropWhile P ls = CONS h t ==> LENGTH t < LENGTH ls`,
-  REPEAT GEN_TAC THEN DISCH_THEN(MP_TAC o AP_TERM `LENGTH:A list->num`) THEN
-  MP_TAC(SPEC_ALL LENGTH_dropWhile_LESS_EQ) THEN REWRITE_TAC[LENGTH] THEN
-  ARITH_TAC);;
-
 let sh_bd_from_sh_def = cake_def_wf
-  `measure (LENGTH:(mlstring#struct_info)list->num) LEX
-   measure (shape_size o (SND:based#shape->shape))`
+  `MEASURE (LENGTH:(mlstring#struct_info)list->num) LEX
+   MEASURE (shape_size o (SND:based#shape->shape))`
   (REWRITE_TAC[LEX_THM; measure_THM; o_THM] THEN REPEAT STRIP_TAC THEN
-   ((DISJ1_TAC THEN FIRST_ASSUM(MATCH_ACCEPT_TAC o MATCH_MP PPARSEAUX_dropWhile_CONS))
+   ((DISJ1_TAC THEN FIRST_ASSUM(MATCH_ACCEPT_TAC o MATCH_MP LIBXAUX_dropWhile_CONS))
     ORELSE
     (DISJ2_TAC THEN REWRITE_TAC(type_size_def "shape" :: size_aux_eqs "shape") THEN
      FIRST_ASSUM(MP_TAC o MATCH_MP MEM_IMP_shape_size) THEN ARITH_TAC)))
@@ -192,7 +187,7 @@ let sh_bd_from_sh_ind = cake_ind "sh_bd_from_sh";;
 (* single based (HOL4's paired lambda \(nm,sb). .. is a pair_CASE here)     *)
 
 let sh_bd_from_bd_def = cake_def_wf
-  `measure (\p:based#shaped_based. shaped_based_size (SND p))`
+  `MEASURE (\p:based#shaped_based. shaped_based_size (SND p))`
   TERM_TAC
   `(sh_bd_from_bd b (WordB b') = WordB b) /\
    (sh_bd_from_bd b (StructB sbs) = StructB (MAP (sh_bd_from_bd b) sbs)) /\
@@ -202,7 +197,7 @@ let sh_bd_from_bd_def = cake_def_wf
 (* Determine if a shaped based has a given shape *)
 
 let sh_bd_has_shape_def = cake_def_wf
-  `measure (\s:(shape#shaped_based)+((shape)list#(shaped_based)list).
+  `MEASURE (\s:(shape#shaped_based)+((shape)list#(shaped_based)list).
               sum_CASE s (\p. shape_size (FST p))
                          (\p. list_size shape_size (FST p)))`
   TERM_TAC
@@ -221,7 +216,7 @@ let sh_bd_has_shape_def = cake_def_wf
 (* Determine if two shaped baseds have the same shape *)
 
 let sh_bd_eq_shapes_def = cake_def_wf
-  `measure (\s:(shaped_based#shaped_based)+
+  `MEASURE (\s:(shaped_based#shaped_based)+
                ((shaped_based)list#(shaped_based)list).
               sum_CASE s (\p. shaped_based_size (FST p))
                          (\p. list_size shaped_based_size (FST p)))`
@@ -303,7 +298,7 @@ let seq_loc_inf_def = cake_def
 (* Get the shape string of a shaped based *)
 
 let sh_bd_to_str_def = cake_def_wf
-  `measure shaped_based_size`
+  `MEASURE shaped_based_size`
   TERM_TAC
   `(sh_bd_to_str (WordB b) = implode "1") /\
    (sh_bd_to_str (StructB []) = implode "{}") /\
@@ -591,7 +586,7 @@ let check_redec_var_def = cake_def
      match (mlmap_lookup (panStatic_context_locals ctxt) vname,
             mlmap_lookup (panStatic_context_globals ctxt) vname) with
        (NONE,NONE) -> errorLogMonad_return one
-     | _ -> log (WarningErr (get_redec_msg panStatic_Var (panStatic_context_loc ctxt)
+     | _ -> errorLogMonad_log (WarningErr (get_redec_msg panStatic_Var (panStatic_context_loc ctxt)
                                            vname (panStatic_context_scope ctxt)))
        :(1,staterr)error#(staterr)list`;;
 
@@ -666,7 +661,7 @@ let check_func_args_def = cake_def
 (* variable fields is fields' here: fields is a constant of mlstring)       *)
 
 let check_struct_fields_def = cake_def_wf
-  `measure (\p:panStatic_context#mlstring#(mlstring#shape)list#
+  `MEASURE (\p:panStatic_context#mlstring#(mlstring#shape)list#
                 (mlstring#shaped_based)list. LENGTH (FST (SND (SND p))))`
   (REWRITE_TAC[measure_THM] THEN REPEAT STRIP_TAC THEN REPEAT VAR_EQ_TAC THEN
    ASM_REWRITE_TAC[LENGTH; FST; SND] THEN ARITH_TAC)
@@ -705,7 +700,7 @@ let check_struct_fields_def = cake_def_wf
 (* Check that the shape names are in scope *)
 
 let check_shape_def = cake_def_wf
-  `measure (\s:((mlstring#B)list#mlstring#scope#shape)+
+  `MEASURE (\s:((mlstring#B)list#mlstring#scope#shape)+
                ((mlstring#B)list#mlstring#scope#(shape)list).
               sum_CASE s (\p. shape_size (SND (SND (SND p))))
                          (\p. list_size shape_size (SND (SND (SND p)))))`
@@ -767,10 +762,10 @@ let PPARSEAUX_EXP_SIZE_TAC =
 (* clause of static_check_exp is written for its pattern variable            *)
 (* BytesInWordB in HOL4, which covers only BytesInWord (all the other       *)
 (* constructors come before it); the variable field is field' here (field  *)
-(* is a constant of the library)                                            *)
+(* was a constant of the library, now bitstring_field)                      *)
 
 let static_check_exp_def = cake_def_wf
-  `measure (\s:(panStatic_context#(A)panLang_exp)+
+  `MEASURE (\s:(panStatic_context#(A)panLang_exp)+
                (panStatic_context#((A)panLang_exp)list).
               sum_CASE s (\p. panLang_exp_size (\x:A. 0) (SND p))
                          (\p. list_size (panLang_exp_size (\x:A. 0)) (SND p)))`
@@ -840,10 +835,10 @@ let static_check_exp_def = cake_def_wf
                (implode "load address") (sh_bd_to_str (exp_return_sh_bd aret))
                (panStatic_context_loc ctxt) (panStatic_context_scope ctxt)))
          | WordB NotBased ->
-             log (WarningErr (get_memop_msg T T F (panStatic_context_loc ctxt)
+             errorLogMonad_log (WarningErr (get_memop_msg T T F (panStatic_context_loc ctxt)
                                             (panStatic_context_scope ctxt)))
          | WordB NotTrusted ->
-             log (WarningErr (get_memop_msg T T T (panStatic_context_loc ctxt)
+             errorLogMonad_log (WarningErr (get_memop_msg T T T (panStatic_context_loc ctxt)
                                             (panStatic_context_scope ctxt)))
          | _ -> errorLogMonad_return one) (\u.
       match sh_bd_from_sh (panStatic_context_structs ctxt) Trusted shape with
@@ -864,10 +859,10 @@ let static_check_exp_def = cake_def_wf
                (implode "load address") (sh_bd_to_str (exp_return_sh_bd aret))
                (panStatic_context_loc ctxt) (panStatic_context_scope ctxt)))
          | WordB NotBased ->
-             log (WarningErr (get_memop_msg T T F (panStatic_context_loc ctxt)
+             errorLogMonad_log (WarningErr (get_memop_msg T T F (panStatic_context_loc ctxt)
                                             (panStatic_context_scope ctxt)))
          | WordB NotTrusted ->
-             log (WarningErr (get_memop_msg T T T (panStatic_context_loc ctxt)
+             errorLogMonad_log (WarningErr (get_memop_msg T T T (panStatic_context_loc ctxt)
                                             (panStatic_context_scope ctxt)))
          | _ -> errorLogMonad_return one) (\u.
       errorLogMonad_return (exp_return_REC (WordB Trusted))))) /\
@@ -884,10 +879,10 @@ let static_check_exp_def = cake_def_wf
                (implode "load address") (sh_bd_to_str (exp_return_sh_bd aret))
                (panStatic_context_loc ctxt) (panStatic_context_scope ctxt)))
          | WordB NotBased ->
-             log (WarningErr (get_memop_msg T T F (panStatic_context_loc ctxt)
+             errorLogMonad_log (WarningErr (get_memop_msg T T F (panStatic_context_loc ctxt)
                                             (panStatic_context_scope ctxt)))
          | WordB NotTrusted ->
-             log (WarningErr (get_memop_msg T T T (panStatic_context_loc ctxt)
+             errorLogMonad_log (WarningErr (get_memop_msg T T T (panStatic_context_loc ctxt)
                                             (panStatic_context_scope ctxt)))
          | _ -> errorLogMonad_return one) (\u.
       errorLogMonad_return (exp_return_REC (WordB Trusted))))) /\
@@ -981,7 +976,7 @@ let PPARSEAUX_PROG_SIZE_TAC =
   TERM_TAC ORELSE (REPEAT STRIP_TAC THEN REPEAT VAR_EQ_TAC THEN TERM_TAC);;
 
 let static_check_prog_def = cake_def_wf
-  `measure (\p:panStatic_context#(A)panLang_prog.
+  `MEASURE (\p:panStatic_context#(A)panLang_prog.
               panLang_prog_size (\x:A. 0) (SND p))`
   PPARSEAUX_PROG_SIZE_TAC
   `(static_check_prog ctxt (panLang_Skip:(A)panLang_prog) =
@@ -1287,7 +1282,7 @@ let static_check_prog_def = cake_def_wf
       let (warn_p1,ctxt1) = reached_warnable prog1 ctxt in
       errorLogMonad_bind
         (match warn_p1 with
-           SOME ls -> log (WarningErr (get_unreach_msg (panStatic_context_loc ctxt1)
+           SOME ls -> errorLogMonad_log (WarningErr (get_unreach_msg (panStatic_context_loc ctxt1)
                              (last_to_str ls) (panStatic_context_scope ctxt1)))
          | NONE -> errorLogMonad_return one) (\u.
       errorLogMonad_bind (static_check_prog ctxt1 prog1) (\pret1.
@@ -1305,7 +1300,7 @@ let static_check_prog_def = cake_def_wf
       let (warn_p2,ctxt3) = reached_warnable prog2 ctxt2 in
       errorLogMonad_bind
         (match warn_p2 with
-           SOME ls -> log (WarningErr (get_unreach_msg (panStatic_context_loc ctxt3)
+           SOME ls -> errorLogMonad_log (WarningErr (get_unreach_msg (panStatic_context_loc ctxt3)
                              (last_to_str ls) (panStatic_context_scope ctxt1)))
          | NONE -> errorLogMonad_return one) (\u.
       errorLogMonad_bind (static_check_prog ctxt3 prog2) (\pret2.
@@ -1400,10 +1395,10 @@ let static_check_prog_def = cake_def_wf
                (implode "store address") (sh_bd_to_str (exp_return_sh_bd aret))
                (panStatic_context_loc ctxt) (panStatic_context_scope ctxt)))
          | WordB NotBased ->
-             log (WarningErr (get_memop_msg T F F (panStatic_context_loc ctxt)
+             errorLogMonad_log (WarningErr (get_memop_msg T F F (panStatic_context_loc ctxt)
                                             (panStatic_context_scope ctxt)))
          | WordB NotTrusted ->
-             log (WarningErr (get_memop_msg T F T (panStatic_context_loc ctxt)
+             errorLogMonad_log (WarningErr (get_memop_msg T F T (panStatic_context_loc ctxt)
                                             (panStatic_context_scope ctxt)))
          | _ -> errorLogMonad_return one) (\u.
       errorLogMonad_return
@@ -1423,10 +1418,10 @@ let static_check_prog_def = cake_def_wf
                (implode "store address") (sh_bd_to_str (exp_return_sh_bd aret))
                (panStatic_context_loc ctxt) (panStatic_context_scope ctxt)))
          | WordB NotBased ->
-             log (WarningErr (get_memop_msg T F F (panStatic_context_loc ctxt)
+             errorLogMonad_log (WarningErr (get_memop_msg T F F (panStatic_context_loc ctxt)
                                             (panStatic_context_scope ctxt)))
          | WordB NotTrusted ->
-             log (WarningErr (get_memop_msg T F T (panStatic_context_loc ctxt)
+             errorLogMonad_log (WarningErr (get_memop_msg T F T (panStatic_context_loc ctxt)
                                             (panStatic_context_scope ctxt)))
          | _ -> errorLogMonad_return one) (\u.
       errorLogMonad_bind
@@ -1452,10 +1447,10 @@ let static_check_prog_def = cake_def_wf
                (implode "store address") (sh_bd_to_str (exp_return_sh_bd aret))
                (panStatic_context_loc ctxt) (panStatic_context_scope ctxt)))
          | WordB NotBased ->
-             log (WarningErr (get_memop_msg T F F (panStatic_context_loc ctxt)
+             errorLogMonad_log (WarningErr (get_memop_msg T F F (panStatic_context_loc ctxt)
                                             (panStatic_context_scope ctxt)))
          | WordB NotTrusted ->
-             log (WarningErr (get_memop_msg T F T (panStatic_context_loc ctxt)
+             errorLogMonad_log (WarningErr (get_memop_msg T F T (panStatic_context_loc ctxt)
                                             (panStatic_context_scope ctxt)))
          | _ -> errorLogMonad_return one) (\u.
       errorLogMonad_bind
@@ -1481,10 +1476,10 @@ let static_check_prog_def = cake_def_wf
                (implode "load address") (sh_bd_to_str (exp_return_sh_bd aret))
                (panStatic_context_loc ctxt) (panStatic_context_scope ctxt)))
          | WordB Based ->
-             log (WarningErr (get_memop_msg F T F (panStatic_context_loc ctxt)
+             errorLogMonad_log (WarningErr (get_memop_msg F T F (panStatic_context_loc ctxt)
                                             (panStatic_context_scope ctxt)))
          | WordB NotTrusted ->
-             log (WarningErr (get_memop_msg F T T (panStatic_context_loc ctxt)
+             errorLogMonad_log (WarningErr (get_memop_msg F T T (panStatic_context_loc ctxt)
                                             (panStatic_context_scope ctxt)))
          | _ -> errorLogMonad_return one) (\u.
       errorLogMonad_bind
@@ -1513,10 +1508,10 @@ let static_check_prog_def = cake_def_wf
                (implode "load address") (sh_bd_to_str (exp_return_sh_bd aret))
                (panStatic_context_loc ctxt) (panStatic_context_scope ctxt)))
          | WordB Based ->
-             log (WarningErr (get_memop_msg F T F (panStatic_context_loc ctxt)
+             errorLogMonad_log (WarningErr (get_memop_msg F T F (panStatic_context_loc ctxt)
                                             (panStatic_context_scope ctxt)))
          | WordB NotTrusted ->
-             log (WarningErr (get_memop_msg F T T (panStatic_context_loc ctxt)
+             errorLogMonad_log (WarningErr (get_memop_msg F T T (panStatic_context_loc ctxt)
                                             (panStatic_context_scope ctxt)))
          | _ -> errorLogMonad_return one) (\u.
       errorLogMonad_bind
@@ -1542,10 +1537,10 @@ let static_check_prog_def = cake_def_wf
                (implode "store address") (sh_bd_to_str (exp_return_sh_bd aret))
                (panStatic_context_loc ctxt) (panStatic_context_scope ctxt)))
          | WordB Based ->
-             log (WarningErr (get_memop_msg F F F (panStatic_context_loc ctxt)
+             errorLogMonad_log (WarningErr (get_memop_msg F F F (panStatic_context_loc ctxt)
                                             (panStatic_context_scope ctxt)))
          | WordB NotTrusted ->
-             log (WarningErr (get_memop_msg F F T (panStatic_context_loc ctxt)
+             errorLogMonad_log (WarningErr (get_memop_msg F F T (panStatic_context_loc ctxt)
                                             (panStatic_context_scope ctxt)))
          | _ -> errorLogMonad_return one) (\u.
       errorLogMonad_bind
@@ -1574,7 +1569,7 @@ let static_check_prog_def = cake_def_wf
 (* structs, scope, in_loop, is_reachable, last, loc                         *)
 
 let static_check_progs_def = cake_def_wf
-  `measure (\p:(mlstring,func_info)map#(mlstring,global_info)map#
+  `MEASURE (\p:(mlstring,func_info)map#(mlstring,global_info)map#
                (mlstring#struct_info)list#(mlstring,shape)map#((A)decl)list.
               LENGTH (SND (SND (SND (SND p)))))`
   (REWRITE_TAC[measure_THM] THEN REPEAT STRIP_TAC THEN REPEAT VAR_EQ_TAC THEN
@@ -1620,7 +1615,7 @@ let static_check_progs_def = cake_def_wf
 (* exported functions too                                                   *)
 
 let static_check_decls_def = cake_def_wf
-  `measure (\p:(mlstring,func_info)map#(mlstring,global_info)map#
+  `MEASURE (\p:(mlstring,func_info)map#(mlstring,global_info)map#
                (mlstring#struct_info)list#(mlstring,shape)map#((A)decl)list.
               LENGTH (SND (SND (SND (SND p)))))`
   (REWRITE_TAC[measure_THM] THEN REPEAT STRIP_TAC THEN REPEAT VAR_EQ_TAC THEN
@@ -1727,7 +1722,7 @@ let static_check_decls_def = cake_def_wf
 (* static_check_names returns ((stcname # struct_info) list) static_result *)
 
 let static_check_names_def = cake_def_wf
-  `measure (\p:(mlstring#struct_info)list#((A)decl)list. LENGTH (SND p))`
+  `MEASURE (\p:(mlstring#struct_info)list#((A)decl)list. LENGTH (SND p))`
   (REWRITE_TAC[measure_THM] THEN REPEAT STRIP_TAC THEN REPEAT VAR_EQ_TAC THEN
    RULE_ASSUM_TAC(REWRITE_RULE[LENGTH; SND]) THEN REWRITE_TAC[LENGTH; SND] THEN
    ASM_ARITH_TAC)
@@ -1767,4 +1762,3 @@ let static_check_def = cake_def
        (\p. match p with
               (fctxt,gctxt,ectxt) -> static_check_progs fctxt gctxt sctxt ectxt decls))
        :(1,staterr)error#(staterr)list`;;
-

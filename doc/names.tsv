@@ -1,6 +1,6 @@
 file	theory	kind	hol4_name	hol_light_name	reason
-misc/misc	misc	constant	the	the	unique
-misc/misc	misc	theorem	the_def	the_def	unique
+misc/misc	misc	constant	the	misc_the	common word, user rule 2026-11-22
+misc/misc	misc	theorem	the_def	misc_the_def	common word, user rule 2026-11-22
 misc/misc	misc	constant	opt_bind	opt_bind	unique
 misc/misc	misc	theorem	opt_bind_def	opt_bind_def	unique
 misc/misc	misc	theorem	IMP_IMP	misc_IMP_IMP	clash-hol-light
@@ -163,8 +163,8 @@ misc/misc	misc	theorem	IS_PREFIX_THM	IS_PREFIX_THM	unique
 misc/misc	misc	theorem	EVERY2_RC_same	EVERY2_RC_same	unique
 misc/misc	misc	theorem	FOLDL_invariant	FOLDL_invariant	unique
 misc/misc	misc	theorem	FOLDL_invariant_rest	FOLDL_invariant_rest	unique
-misc/misc	misc	constant	between	between	unique
-misc/misc	misc	theorem	between_def	between_def	unique
+misc/misc	misc	constant	between	misc_between	common word, user rule 2026-11-22
+misc/misc	misc	theorem	between_def	misc_between_def	common word, user rule 2026-11-22
 misc/misc	misc	theorem	IN_between	IN_between	unique
 misc/misc	misc	theorem	SUC_LEAST	SUC_LEAST	unique
 misc/misc	misc	constant	fmap_linv	fmap_linv	unique
@@ -417,8 +417,8 @@ misc/misc	misc	theorem	MULT_DIV_MULT_LEMMA	MULT_DIV_MULT_LEMMA	unique
 misc/misc	misc	theorem	IMP_MULT_DIV_LESS	IMP_MULT_DIV_LESS	unique
 misc/misc	misc	theorem	DIV_LESS_DIV	DIV_LESS_DIV	unique
 misc/misc	misc	theorem	toPath_fromList	toPath_fromList	unique
-misc/misc	misc	constant	steps	steps	unique
-misc/misc	misc	theorem	steps_def	steps_def	unique
+misc/misc	misc	constant	steps	misc_steps	common word, user rule 2026-11-22
+misc/misc	misc	theorem	steps_def	misc_steps_def	common word, user rule 2026-11-22
 misc/misc	misc	constant	steps_rel	steps_rel	unique
 misc/misc	misc	theorem	steps_rel_def	steps_rel_def	unique
 misc/misc	misc	theorem	steps_rel_ind	steps_rel_ind	unique
@@ -459,8 +459,8 @@ misc/misc	misc	theorem	subspt_delete	subspt_delete	unique
 misc/misc	misc	theorem	inter_union_empty	inter_union_empty	unique
 misc/misc	misc	theorem	inter_insert_empty	inter_insert_empty	unique
 misc/misc	misc	theorem	fromList2_value	fromList2_value	unique
-misc/misc	misc	constant	range	range	unique
-misc/misc	misc	theorem	range_def	range_def	unique
+misc/misc	misc	constant	range	misc_range	common word, user rule 2026-11-22
+misc/misc	misc	theorem	range_def	misc_range_def	common word, user rule 2026-11-22
 misc/misc	misc	theorem	range_delete	range_delete	unique
 misc/misc	misc	theorem	range_insert	range_insert	unique
 misc/misc	misc	theorem	range_insert_2	range_insert_2	unique
@@ -531,8 +531,8 @@ basis/pure/mllist	mllist	constant	nth	nth	unique
 basis/pure/mllist	mllist	theorem	nth_def	nth_def	unique
 basis/pure/mllist	mllist	constant	take	take	unique
 basis/pure/mllist	mllist	theorem	take_def	take_def	unique
-basis/pure/mllist	mllist	constant	drop	drop	unique
-basis/pure/mllist	mllist	theorem	drop_def	drop_def	unique
+basis/pure/mllist	mllist	constant	drop	mllist_drop	common word, user rule 2026-11-22
+basis/pure/mllist	mllist	theorem	drop_def	mllist_drop_def	common word, user rule 2026-11-22
 basis/pure/mllist	mllist	constant	takeUntil	takeUntil	unique
 basis/pure/mllist	mllist	theorem	takeUntil_def	takeUntil_def	unique
 basis/pure/mllist	mllist	constant	dropUntil	dropUntil	unique
@@ -941,8 +941,8 @@ basis/pure/mlsexp	mlsexp	constant	lex_aux	mlsexp_lex_aux	clash:2 theories
 basis/pure/mlsexp	mlsexp	theorem	lex_aux_def	mlsexp_lex_aux_def	clash:2 theories
 basis/pure/mlsexp	mlsexp	theorem	lex_aux_ind	mlsexp_lex_aux_ind	clash:2 theories
 basis/pure/mlsexp	mlsexp	theorem	lex_aux_length	lex_aux_length	unique
-basis/pure/mlsexp	mlsexp	constant	lex	lex	unique
-basis/pure/mlsexp	mlsexp	theorem	lex_def	lex_def	unique
+basis/pure/mlsexp	mlsexp	constant	lex	mlsexp_lex	common word, user rule 2026-11-22
+basis/pure/mlsexp	mlsexp	theorem	lex_def	mlsexp_lex_def	common word, user rule 2026-11-22
 basis/pure/mlsexp	mlsexp	theorem	lex_IMP_LENGTH_LESS	lex_IMP_LENGTH_LESS	unique
 basis/pure/mlsexp	mlsexp	theorem	test_lex	test_lex	unique
 basis/pure/mlsexp	mlsexp	constant	parse_aux	parse_aux	unique
@@ -1018,10 +1018,10 @@ basis/pure/mlsexp	mlsexp	theorem	parse_sexp_to_pretty_string	parse_sexp_to_prett
 basis/pure/mlsexp	mlsexp	theorem	fromString_sexp_to_string	fromString_sexp_to_string	unique
 basis/pure/mlsexp	mlsexp	theorem	fromString_sexp_to_pretty_string	fromString_sexp_to_pretty_string	unique
 basis/pure/mlvector	mlvector	theorem	vector_nchotomy	vector_nchotomy	unique
-basis/pure/mlvector	mlvector	theorem	sub_def	sub_def	unique
+basis/pure/mlvector	mlvector	theorem	sub_def	regexp_compiler_sub_def	common word, user rule 2026-11-22
 basis/pure/mlvector	mlvector	constant	sub_unsafe	sub_unsafe	unique
 basis/pure/mlvector	mlvector	theorem	sub_unsafe_def	sub_unsafe_def	unique
-basis/pure/mlvector	mlvector	theorem	length_def	length_def	unique
+basis/pure/mlvector	mlvector	theorem	length_def	regexp_compiler_length_def	common word, user rule 2026-11-22
 basis/pure/mlvector	mlvector	constant	tabulate	mlvector_tabulate	clash:2 theories
 basis/pure/mlvector	mlvector	theorem	tabulate_def	mlvector_tabulate_def	clash:2 theories
 basis/pure/mlvector	mlvector	constant	toList_aux	toList_aux	unique
@@ -2762,9 +2762,9 @@ compiler/backend/clos_known	clos_known	theorem	reset_inline_factor_def	reset_inl
 compiler/backend/clos_known	clos_known	constant	decide_inline	decide_inline	unique
 compiler/backend/clos_known	clos_known	theorem	decide_inline_def	decide_inline_def	unique
 compiler/backend/clos_known	clos_known	theorem	decide_inline_LetInline	decide_inline_LetInline	unique
-compiler/backend/clos_known	clos_known	constant	known	known	unique
-compiler/backend/clos_known	clos_known	theorem	known_def	known_def	unique
-compiler/backend/clos_known	clos_known	theorem	known_ind	known_ind	unique
+compiler/backend/clos_known	clos_known	constant	known	clos_known_known	common word, user rule 2026-11-22
+compiler/backend/clos_known	clos_known	theorem	known_def	clos_known_known_def	common word, user rule 2026-11-22
+compiler/backend/clos_known	clos_known	theorem	known_ind	clos_known_known_ind	common word, user rule 2026-11-22
 compiler/backend/clos_known	clos_known	theorem	known_LENGTH	known_LENGTH	unique
 compiler/backend/clos_known	clos_known	theorem	known_LENGTH_EQ_E	known_LENGTH_EQ_E	unique
 compiler/backend/clos_known	clos_known	theorem	known_sing	known_sing	unique
@@ -3354,8 +3354,8 @@ compiler/backend/bvi_tmc	bvi_tmc	theorem	dest_Cons_def	bvi_tmc_dest_Cons_def	cla
 compiler/backend/bvi_tmc	bvi_tmc	type	call_block	call_block	unique
 compiler/backend/bvi_tmc	bvi_tmc	constructor	CallBlock	CallBlock	unique
 compiler/backend/bvi_tmc	bvi_tmc	constructor	RCall	RCall	unique
-compiler/backend/bvi_tmc	bvi_tmc	constant	bind	bind	unique
-compiler/backend/bvi_tmc	bvi_tmc	theorem	bind_def	bind_def	unique
+compiler/backend/bvi_tmc	bvi_tmc	constant	bind	bvi_tmc_bind	common word, user rule 2026-11-22
+compiler/backend/bvi_tmc	bvi_tmc	theorem	bind_def	bvi_tmc_bind_def	common word, user rule 2026-11-22
 compiler/backend/bvi_tmc	bvi_tmc	theorem	bind_size	bind_size	unique
 compiler/backend/bvi_tmc	bvi_tmc	constant	shift_vars	shift_vars	unique
 compiler/backend/bvi_tmc	bvi_tmc	theorem	shift_vars_def	shift_vars_def	unique
@@ -3557,9 +3557,9 @@ compiler/backend/bvl_to_bvi	bvl_to_bvi	constant	bvl_to_bvi_compile_inc_all	bvl_t
 compiler/backend/bvl_to_bvi	bvl_to_bvi	theorem	bvl_to_bvi_compile_inc_all_def	bvl_to_bvi_compile_inc_all_def	unique
 compiler/backend/data_simp	data_simp	constant	pSeq	pSeq	unique
 compiler/backend/data_simp	data_simp	theorem	pSeq_def	pSeq_def	unique
-compiler/backend/data_simp	data_simp	constant	simp	simp	unique
-compiler/backend/data_simp	data_simp	theorem	simp_def	simp_def	unique
-compiler/backend/data_simp	data_simp	theorem	simp_ind	simp_ind	unique
+compiler/backend/data_simp	data_simp	constant	simp	data_simp_simp	common word, user rule 2026-11-22
+compiler/backend/data_simp	data_simp	theorem	simp_def	data_simp_simp_def	common word, user rule 2026-11-22
+compiler/backend/data_simp	data_simp	theorem	simp_ind	data_simp_simp_ind	common word, user rule 2026-11-22
 compiler/backend/data_live	data_live	constant	is_pure	data_live_is_pure	clash:2 theories
 compiler/backend/data_live	data_live	theorem	is_pure_def	data_live_is_pure_def	clash:2 theories
 compiler/backend/data_live	data_live	theorem	is_pure_pmatch	is_pure_pmatch	unique
@@ -3882,8 +3882,8 @@ translator/monadic/monad_base/ml_monadBase	ml_monadBase	constant	st_ex_return	st
 translator/monadic/monad_base/ml_monadBase	ml_monadBase	theorem	st_ex_return_def	st_ex_return_def	unique
 translator/monadic/monad_base/ml_monadBase	ml_monadBase	constant	otherwise	otherwise	unique
 translator/monadic/monad_base/ml_monadBase	ml_monadBase	theorem	otherwise_def	otherwise_def	unique
-translator/monadic/monad_base/ml_monadBase	ml_monadBase	constant	can	can	unique
-translator/monadic/monad_base/ml_monadBase	ml_monadBase	theorem	can_def	can_def	unique
+translator/monadic/monad_base/ml_monadBase	ml_monadBase	constant	can	ml_monadBase_can	common word, user rule 2026-11-22
+translator/monadic/monad_base/ml_monadBase	ml_monadBase	theorem	can_def	ml_monadBase_can_def	common word, user rule 2026-11-22
 translator/monadic/monad_base/ml_monadBase	ml_monadBase	type	store_ref	store_ref	unique
 translator/monadic/monad_base/ml_monadBase	ml_monadBase	constructor	StoreRef	StoreRef	unique
 translator/monadic/monad_base/ml_monadBase	ml_monadBase	constant	Msub	Msub	unique
@@ -5879,8 +5879,8 @@ compiler/backend/stack_rawcall	stack_rawcall	constant	compile	stack_rawcall_comp
 compiler/backend/stack_rawcall	stack_rawcall	theorem	compile_def	stack_rawcall_compile_def	clash:28 theories
 compiler/backend/stack_to_lab	stack_to_lab	constant	compile_jump	compile_jump	unique
 compiler/backend/stack_to_lab	stack_to_lab	theorem	compile_jump_def	compile_jump_def	unique
-compiler/backend/stack_to_lab	stack_to_lab	constant	negate	negate	unique
-compiler/backend/stack_to_lab	stack_to_lab	theorem	negate_def	negate_def	unique
+compiler/backend/stack_to_lab	stack_to_lab	constant	negate	stack_to_lab_negate	common word, user rule 2026-11-22
+compiler/backend/stack_to_lab	stack_to_lab	theorem	negate_def	stack_to_lab_negate_def	common word, user rule 2026-11-22
 compiler/backend/stack_to_lab	stack_to_lab	constant	find_lab	find_lab	unique
 compiler/backend/stack_to_lab	stack_to_lab	theorem	find_lab_def	find_lab_def	unique
 compiler/backend/stack_to_lab	stack_to_lab	constant	flatten	stack_to_lab_flatten	clash:2 theories
@@ -9085,8 +9085,8 @@ compiler/backend/proofs/source_to_flatProof	source_to_flatProof	constant	fin_idx
 compiler/backend/proofs/source_to_flatProof	source_to_flatProof	theorem	fin_idx_match_def	fin_idx_match_def	unique
 compiler/backend/proofs/source_to_flatProof	source_to_flatProof	constant	eval_ref_inv	eval_ref_inv	unique
 compiler/backend/proofs/source_to_flatProof	source_to_flatProof	theorem	eval_ref_inv_def	eval_ref_inv_def	unique
-compiler/backend/proofs/source_to_flatProof	source_to_flatProof	constant	invariant	invariant	unique
-compiler/backend/proofs/source_to_flatProof	source_to_flatProof	theorem	invariant_def	invariant_def	unique
+compiler/backend/proofs/source_to_flatProof	source_to_flatProof	constant	invariant	source_to_flatProof_invariant	common word, user rule 2026-11-22
+compiler/backend/proofs/source_to_flatProof	source_to_flatProof	theorem	invariant_def	source_to_flatProof_invariant_def	common word, user rule 2026-11-22
 compiler/backend/proofs/source_to_flatProof	source_to_flatProof	constant	orac_config_envs_subspt	orac_config_envs_subspt	unique
 compiler/backend/proofs/source_to_flatProof	source_to_flatProof	theorem	orac_config_envs_subspt_def	orac_config_envs_subspt_def	unique
 compiler/backend/proofs/source_to_flatProof	source_to_flatProof	theorem	orac_config_envs_subspt_trans	orac_config_envs_subspt_trans	unique
@@ -9374,13 +9374,13 @@ compiler/backend/semantics/closProps	closProps	theorem	exp1_size_rw	exp1_size_rw
 compiler/backend/semantics/closProps	closProps	constant	no_mti	no_mti	unique
 compiler/backend/semantics/closProps	closProps	theorem	no_mti_def	no_mti_def	unique
 compiler/backend/semantics/closProps	closProps	theorem	no_mti_ind	no_mti_ind	unique
-compiler/backend/semantics/closProps	closProps	constant	fv	fv	unique
-compiler/backend/semantics/closProps	closProps	theorem	fv_def	fv_def	unique
-compiler/backend/semantics/closProps	closProps	theorem	fv_ind	fv_ind	unique
+compiler/backend/semantics/closProps	closProps	constant	fv	clos_fv	common word, user rule 2026-11-22
+compiler/backend/semantics/closProps	closProps	theorem	fv_def	clos_fv_def	common word, user rule 2026-11-22
+compiler/backend/semantics/closProps	closProps	theorem	fv_ind	clos_fv_ind	common word, user rule 2026-11-22
 compiler/backend/semantics/closProps	closProps	theorem	fv_append	fv_append	unique
 compiler/backend/semantics/closProps	closProps	theorem	fv_nil	fv_nil	unique
-compiler/backend/semantics/closProps	closProps	constant	fv1	fv1	unique
-compiler/backend/semantics/closProps	closProps	theorem	fv1_def	fv1_def	unique
+compiler/backend/semantics/closProps	closProps	constant	fv1	clos_fv1	common word, user rule 2026-11-22
+compiler/backend/semantics/closProps	closProps	theorem	fv1_def	clos_fv1_def	common word, user rule 2026-11-22
 compiler/backend/semantics/closProps	closProps	theorem	fv1_intro	fv1_intro	unique
 compiler/backend/semantics/closProps	closProps	theorem	fv1_thm	fv1_thm	unique
 compiler/backend/semantics/closProps	closProps	theorem	fv_cons	fv_cons	unique
@@ -12152,8 +12152,8 @@ compiler/backend/proofs/bvl_to_bviProof	bvl_to_bviProof	theorem	IMP_v_to_bytes	I
 compiler/backend/proofs/bvl_to_bviProof	bvl_to_bviProof	theorem	IMP_v_to_words	IMP_v_to_words	unique
 compiler/backend/proofs/bvl_to_bviProof	bvl_to_bviProof	theorem	aux_code_installed_sublist	aux_code_installed_sublist	unique
 compiler/backend/proofs/bvl_to_bviProof	bvl_to_bviProof	theorem	compile_exps_aux_sorted	compile_exps_aux_sorted	unique
-compiler/backend/proofs/bvl_to_bviProof	bvl_to_bviProof	constant	in_ns	in_ns	unique
-compiler/backend/proofs/bvl_to_bviProof	bvl_to_bviProof	theorem	in_ns_def	in_ns_def	unique
+compiler/backend/proofs/bvl_to_bviProof	bvl_to_bviProof	constant	in_ns	bvl_to_bviProof_in_ns	common word, user rule 2026-11-22
+compiler/backend/proofs/bvl_to_bviProof	bvl_to_bviProof	theorem	in_ns_def	bvl_to_bviProof_in_ns_def	common word, user rule 2026-11-22
 compiler/backend/proofs/bvl_to_bviProof	bvl_to_bviProof	theorem	nss_in_ns	nss_in_ns	unique
 compiler/backend/proofs/bvl_to_bviProof	bvl_to_bviProof	theorem	mult_nss_in_ns	mult_nss_in_ns	unique
 compiler/backend/proofs/bvl_to_bviProof	bvl_to_bviProof	theorem	mult_nss_in_ns_1	mult_nss_in_ns_1	unique
@@ -13441,8 +13441,8 @@ compiler/encoders/asm/asmSem	asmSem	constant	inst	asmSem_inst	clash:3 theories
 compiler/encoders/asm/asmSem	asmSem	theorem	inst_def	asmSem_inst_def	clash:3 theories
 compiler/encoders/asm/asmSem	asmSem	constant	jump_to_offset	jump_to_offset	unique
 compiler/encoders/asm/asmSem	asmSem	theorem	jump_to_offset_def	jump_to_offset_def	unique
-compiler/encoders/asm/asmSem	asmSem	constant	asm	asm	unique
-compiler/encoders/asm/asmSem	asmSem	theorem	asm_def	asm_def	unique
+compiler/encoders/asm/asmSem	asmSem	constant	asm	asm_asm	common word, user rule 2026-11-22
+compiler/encoders/asm/asmSem	asmSem	theorem	asm_def	asm_asm_def	common word, user rule 2026-11-22
 compiler/encoders/asm/asmSem	asmSem	constant	asm_step	asm_step	unique
 compiler/encoders/asm/asmSem	asmSem	theorem	asm_step_def	asm_step_def	unique
 compiler/encoders/asm/asmProps	asmProps	theorem	asm_deterministic	asm_deterministic	unique
@@ -14439,8 +14439,8 @@ compiler/backend/proofs/data_to_word_memoryProof	data_to_word_memoryProof	theore
 compiler/backend/proofs/data_to_word_memoryProof	data_to_word_memoryProof	constant	word_copy_bwd	word_copy_bwd	unique
 compiler/backend/proofs/data_to_word_memoryProof	data_to_word_memoryProof	theorem	word_copy_bwd_def	word_copy_bwd_def	unique
 compiler/backend/proofs/data_to_word_memoryProof	data_to_word_memoryProof	theorem	word_copy_bwd_ind	word_copy_bwd_ind	unique
-compiler/backend/proofs/data_to_word_memoryProof	data_to_word_memoryProof	constant	minus	minus	unique
-compiler/backend/proofs/data_to_word_memoryProof	data_to_word_memoryProof	theorem	minus_def	minus_def	unique
+compiler/backend/proofs/data_to_word_memoryProof	data_to_word_memoryProof	constant	minus	data_to_word_memoryProof_minus	common word, user rule 2026-11-22
+compiler/backend/proofs/data_to_word_memoryProof	data_to_word_memoryProof	theorem	minus_def	data_to_word_memoryProof_minus_def	common word, user rule 2026-11-22
 compiler/backend/proofs/data_to_word_memoryProof	data_to_word_memoryProof	constant	list_copy_bwd	list_copy_bwd	unique
 compiler/backend/proofs/data_to_word_memoryProof	data_to_word_memoryProof	theorem	list_copy_bwd_def	list_copy_bwd_def	unique
 compiler/backend/proofs/data_to_word_memoryProof	data_to_word_memoryProof	theorem	list_copy_bwd_ind	list_copy_bwd_ind	unique
@@ -17891,8 +17891,8 @@ compiler/backend/proofs/stack_removeProof	stack_removeProof	theorem	get_var_set_
 compiler/backend/proofs/stack_removeProof	stack_removeProof	theorem	get_var_set_var	stack_removeProof_get_var_set_var	clash:4 theories
 compiler/backend/proofs/stack_removeProof	stack_removeProof	theorem	bytes_in_word_word_shift	stack_removeProof_bytes_in_word_word_shift	clash:2 theories
 compiler/backend/proofs/stack_removeProof	stack_removeProof	theorem	word_offset_eq	word_offset_eq	unique
-compiler/backend/proofs/stack_removeProof	stack_removeProof	constant	memory	memory	unique
-compiler/backend/proofs/stack_removeProof	stack_removeProof	theorem	memory_def	memory_def	unique
+compiler/backend/proofs/stack_removeProof	stack_removeProof	constant	memory	stack_removeProof_memory	common word, user rule 2026-11-22
+compiler/backend/proofs/stack_removeProof	stack_removeProof	theorem	memory_def	stack_removeProof_memory_def	common word, user rule 2026-11-22
 compiler/backend/proofs/stack_removeProof	stack_removeProof	constant	word_list_rev	word_list_rev	unique
 compiler/backend/proofs/stack_removeProof	stack_removeProof	theorem	word_list_rev_def	word_list_rev_def	unique
 compiler/backend/proofs/stack_removeProof	stack_removeProof	constant	word_store	word_store	unique
@@ -19164,8 +19164,8 @@ compiler/parsing/cmlPEG	cmlPEG	constant	tokeq	tokeq	unique
 compiler/parsing/cmlPEG	cmlPEG	theorem	tokeq_def	tokeq_def	unique
 compiler/parsing/cmlPEG	cmlPEG	constant	tokSymP	tokSymP	unique
 compiler/parsing/cmlPEG	cmlPEG	theorem	tokSymP_def	tokSymP_def	unique
-compiler/parsing/cmlPEG	cmlPEG	constant	pnt	pnt	unique
-compiler/parsing/cmlPEG	cmlPEG	theorem	pnt_def	pnt_def	unique
+compiler/parsing/cmlPEG	cmlPEG	constant	pnt	cmlPEG_pnt	common word, user rule 2026-11-22
+compiler/parsing/cmlPEG	cmlPEG	theorem	pnt_def	cmlPEG_pnt_def	common word, user rule 2026-11-22
 compiler/parsing/cmlPEG	cmlPEG	constant	peg_UQConstructorName	peg_UQConstructorName	unique
 compiler/parsing/cmlPEG	cmlPEG	theorem	peg_UQConstructorName_def	peg_UQConstructorName_def	unique
 compiler/parsing/cmlPEG	cmlPEG	constant	peg_TypeDec	peg_TypeDec	unique
@@ -21203,8 +21203,8 @@ hol4/errorLogMonad	errorLogMonad	type	M	errorLogMonad_M	clash-old:cmlPtreeConver
 hol4/errorLogMonad	errorLogMonad	theorem	M_CASES	M_CASES	unique
 hol4/errorLogMonad	errorLogMonad	constant	return	errorLogMonad_return	clash:2 theories
 hol4/errorLogMonad	errorLogMonad	theorem	return_def	errorLogMonad_return_def	clash:2 theories
-hol4/errorLogMonad	errorLogMonad	constant	log	log	unique
-hol4/errorLogMonad	errorLogMonad	theorem	log_def	log_def	unique
+hol4/errorLogMonad	errorLogMonad	constant	log	errorLogMonad_log	common word, user rule 2026-11-22
+hol4/errorLogMonad	errorLogMonad	theorem	log_def	errorLogMonad_log_def	common word, user rule 2026-11-22
 hol4/errorLogMonad	errorLogMonad	constant	error	errorLogMonad_error	clash-library
 hol4/errorLogMonad	errorLogMonad	theorem	error_def	errorLogMonad_error_def	clash-library
 hol4/errorLogMonad	errorLogMonad	constant	bind	errorLogMonad_bind	clash-old:bvi_tmc
@@ -21351,7 +21351,7 @@ hol4/itreeTau	itreeTau	constant	upto_taus_func	upto_taus_func	unique
 hol4/itreeTau	itreeTau	theorem	upto_taus_func_def	upto_taus_func_def	unique
 hol4/itreeTau	itreeTau	theorem	upto_taus_compatible	upto_taus_compatible	unique
 hol4/itreeTau	itreeTau	theorem	itree_coind_upto_taus	itree_coind_upto_taus	unique
-hol4/itreeTau	itreeTau	constant	spin	spin	unique
+hol4/itreeTau	itreeTau	constant	spin	itree_spin	common word, user rule 2026-11-22
 hol4/itreeTau	itreeTau	theorem	spin	spin	unique
 hol4/itreeTau	itreeTau	theorem	strip_tau_spin	strip_tau_spin	unique
 hol4/itreeTau	itreeTau	constant	untau	untau	unique
@@ -22512,8 +22512,8 @@ pancake/parser/panPtreeConversion	panPtreeConversion	constant	tokcheck	panPtreeC
 pancake/parser/panPtreeConversion	panPtreeConversion	theorem	tokcheck_def	panPtreeConversion_tokcheck_def	clash-old:cmlPtreeConversion
 pancake/parser/panPtreeConversion	panPtreeConversion	constant	dest_annot_tok	dest_annot_tok	unique
 pancake/parser/panPtreeConversion	panPtreeConversion	theorem	dest_annot_tok_def	dest_annot_tok_def	unique
-pancake/parser/panPtreeConversion	panPtreeConversion	constant	kw	kw	unique
-pancake/parser/panPtreeConversion	panPtreeConversion	theorem	kw_def	kw_def	unique
+pancake/parser/panPtreeConversion	panPtreeConversion	constant	kw	panPtreeConversion_kw	common word, captured elsewhere (tools/const_capture.py)
+pancake/parser/panPtreeConversion	panPtreeConversion	theorem	kw_def	panPtreeConversion_kw_def	common word, captured elsewhere (tools/const_capture.py)
 pancake/parser/panPtreeConversion	panPtreeConversion	constant	isNT	isNT	unique
 pancake/parser/panPtreeConversion	panPtreeConversion	theorem	isNT_def	isNT_def	unique
 pancake/parser/panPtreeConversion	panPtreeConversion	constant	argsNT	argsNT	unique
@@ -23716,14 +23716,14 @@ pancake/semantics/pan_itreeSem	pan_itreeSem	theorem	h_prog_simple_defs	h_prog_si
 pancake/semantics/pan_itreeSem	pan_itreeSem	type	ptree	pan_itreeSem_ptree	clash-old:cmlPtreeConversion
 pancake/semantics/pan_itreeSem	pan_itreeSem	type	fst	fst	unique
 pancake/semantics/pan_itreeSem	pan_itreeSem	theorem	itree_unfold_FUNPOW_Tau	itree_unfold_FUNPOW_Tau	unique
-pancake/semantics/pan_itreeSem	pan_itreeSem	constant	ext	ext	unique
-pancake/semantics/pan_itreeSem	pan_itreeSem	theorem	ext_def	ext_def	unique
+pancake/semantics/pan_itreeSem	pan_itreeSem	constant	ext	pan_itreeSem_ext	common word, user rule 2026-11-22
+pancake/semantics/pan_itreeSem	pan_itreeSem	theorem	ext_def	pan_itreeSem_ext_def	common word, user rule 2026-11-22
 pancake/semantics/pan_itreeSem	pan_itreeSem	theorem	ext_access	ext_access	unique
 pancake/semantics/pan_itreeSem	pan_itreeSem	theorem	eval_ext	eval_ext	unique
 pancake/semantics/pan_itreeSem	pan_itreeSem	theorem	opt_mmap_eval_ext	opt_mmap_eval_ext	unique
 pancake/semantics/pan_itreeSem	pan_itreeSem	theorem	ext_normalise	ext_normalise	unique
-pancake/semantics/pan_itreeSem	pan_itreeSem	constant	bst	bst	unique
-pancake/semantics/pan_itreeSem	pan_itreeSem	theorem	bst_def	bst_def	unique
+pancake/semantics/pan_itreeSem	pan_itreeSem	constant	bst	pan_itreeSem_bst	common word, user rule 2026-11-22
+pancake/semantics/pan_itreeSem	pan_itreeSem	theorem	bst_def	pan_itreeSem_bst_def	common word, user rule 2026-11-22
 pancake/semantics/pan_itreeSem	pan_itreeSem	theorem	bst_access	bst_access	unique
 pancake/semantics/pan_itreeSem	pan_itreeSem	theorem	bst_normalise	bst_normalise	unique
 pancake/semantics/pan_itreeSem	pan_itreeSem	theorem	eval_bst	eval_bst	unique
@@ -24358,9 +24358,9 @@ candle/standard/syntax/holSyntax	holSyntax	theorem	INST_CORE_def	INST_CORE_def	u
 candle/standard/syntax/holSyntax	holSyntax	theorem	INST_CORE_ind	INST_CORE_ind	unique
 candle/standard/syntax/holSyntax	holSyntax	constant	INST	INST	unique
 candle/standard/syntax/holSyntax	holSyntax	theorem	INST_def	INST_def	unique
-candle/standard/syntax/holSyntax	holSyntax	constant	tyvars	tyvars	unique
-candle/standard/syntax/holSyntax	holSyntax	theorem	tyvars_def	tyvars_def	unique
-candle/standard/syntax/holSyntax	holSyntax	theorem	tyvars_ind	tyvars_ind	unique
+candle/standard/syntax/holSyntax	holSyntax	constant	tyvars	hol_tyvars	common word, user rule 2026-11-22
+candle/standard/syntax/holSyntax	holSyntax	theorem	tyvars_def	hol_tyvars_def	common word, user rule 2026-11-22
+candle/standard/syntax/holSyntax	holSyntax	theorem	tyvars_ind	hol_tyvars_ind	common word, user rule 2026-11-22
 candle/standard/syntax/holSyntax	holSyntax	constant	tvars	tvars	unique
 candle/standard/syntax/holSyntax	holSyntax	theorem	tvars_def	tvars_def	unique
 candle/standard/syntax/holSyntax	holSyntax	constant	===	equation	symbolic: named after its definition
@@ -24631,8 +24631,8 @@ candle/standard/syntax/holSyntaxExtra	holSyntaxExtra	theorem	rename_bvars_RACONV
 candle/standard/syntax/holSyntaxExtra	holSyntaxExtra	theorem	rename_bvars_ACONV	rename_bvars_ACONV	unique
 candle/standard/syntax/holSyntaxExtra	holSyntaxExtra	theorem	rename_bvars_has_type	rename_bvars_has_type	unique
 candle/standard/syntax/holSyntaxExtra	holSyntaxExtra	theorem	rename_bvars_welltyped	rename_bvars_welltyped	unique
-candle/standard/syntax/holSyntaxExtra	holSyntaxExtra	constant	fresh	fresh	unique
-candle/standard/syntax/holSyntaxExtra	holSyntaxExtra	theorem	fresh_def	fresh_def	unique
+candle/standard/syntax/holSyntaxExtra	holSyntaxExtra	constant	fresh	hol_fresh	common word, user rule 2026-11-22
+candle/standard/syntax/holSyntaxExtra	holSyntaxExtra	theorem	fresh_def	hol_fresh_def	common word, user rule 2026-11-22
 candle/standard/syntax/holSyntaxExtra	holSyntaxExtra	theorem	fresh_union	fresh_union	unique
 candle/standard/syntax/holSyntaxExtra	holSyntaxExtra	theorem	fresh_names_exist	fresh_names_exist	unique
 candle/standard/syntax/holSyntaxExtra	holSyntaxExtra	theorem	bv_names_rename_bvars	bv_names_rename_bvars	unique
@@ -24660,8 +24660,8 @@ candle/standard/syntax/holSyntaxExtra	holSyntaxExtra	constant	union	hol_union	cl
 candle/standard/syntax/holSyntaxExtra	holSyntaxExtra	theorem	union_def	hol_union_def	clash-library
 candle/standard/syntax/holSyntaxExtra	holSyntaxExtra	theorem	MEM_union	MEM_union	unique
 candle/standard/syntax/holSyntaxExtra	holSyntaxExtra	theorem	EXISTS_union	EXISTS_union	unique
-candle/standard/syntax/holSyntaxExtra	holSyntaxExtra	constant	frees	frees	unique
-candle/standard/syntax/holSyntaxExtra	holSyntaxExtra	theorem	frees_def	frees_def	unique
+candle/standard/syntax/holSyntaxExtra	holSyntaxExtra	constant	frees	hol_frees	common word, user rule 2026-11-22
+candle/standard/syntax/holSyntaxExtra	holSyntaxExtra	theorem	frees_def	hol_frees_def	common word, user rule 2026-11-22
 candle/standard/syntax/holSyntaxExtra	holSyntaxExtra	theorem	MEM_frees_EQ	MEM_frees_EQ	unique
 candle/standard/syntax/holSyntaxExtra	holSyntaxExtra	theorem	variant_inst_thm	variant_inst_thm	unique
 candle/standard/syntax/holSyntaxExtra	holSyntaxExtra	theorem	INST_CORE_Abs_thm	INST_CORE_Abs_thm	unique
@@ -25421,8 +25421,8 @@ candle/set-theory/setSpec	setSpec	theorem	unit_inj	unit_inj	unique
 candle/set-theory/setSpec	setSpec	constant	one	setSpec_one	clash-hol-light
 candle/set-theory/setSpec	setSpec	theorem	one_def	setSpec_one_def	clash-hol-light
 candle/set-theory/setSpec	setSpec	theorem	mem_one	mem_one	unique
-candle/set-theory/setSpec	setSpec	constant	two	two	unique
-candle/set-theory/setSpec	setSpec	theorem	two_def	two_def	unique
+candle/set-theory/setSpec	setSpec	constant	two	setSpec_two	common word, user rule 2026-11-22
+candle/set-theory/setSpec	setSpec	theorem	two_def	setSpec_two_def	common word, user rule 2026-11-22
 candle/set-theory/setSpec	setSpec	theorem	mem_two	mem_two	unique
 candle/set-theory/setSpec	setSpec	constant	pair	setSpec_pair	common word: variable in 4 closure scripts (CONVENTIONS section 3)
 candle/set-theory/setSpec	setSpec	theorem	pair_def	setSpec_pair_def	common word: variable in 4 closure scripts (CONVENTIONS section 3)
@@ -25437,10 +25437,10 @@ candle/set-theory/setSpec	setSpec	theorem	product_def	setSpec_product_def	clash-
 candle/set-theory/setSpec	setSpec	theorem	mem_product	mem_product	unique
 candle/set-theory/setSpec	setSpec	constant	relspace	relspace	unique
 candle/set-theory/setSpec	setSpec	theorem	relspace_def	relspace_def	unique
-candle/set-theory/setSpec	setSpec	constant	funspace	funspace	unique
-candle/set-theory/setSpec	setSpec	theorem	funspace_def	funspace_def	unique
-candle/set-theory/setSpec	setSpec	constant	apply	apply	unique
-candle/set-theory/setSpec	setSpec	theorem	apply_def	apply_def	unique
+candle/set-theory/setSpec	setSpec	constant	funspace	setSpec_funspace	common word, user rule 2026-11-22
+candle/set-theory/setSpec	setSpec	theorem	funspace_def	setSpec_funspace_def	common word, user rule 2026-11-22
+candle/set-theory/setSpec	setSpec	constant	apply	setSpec_apply	common word, user rule 2026-11-22
+candle/set-theory/setSpec	setSpec	theorem	apply_def	setSpec_apply_def	common word, user rule 2026-11-22
 candle/set-theory/setSpec	setSpec	constant	true	setSpec_true	reserved
 candle/set-theory/setSpec	setSpec	theorem	true_def	setSpec_true_def	reserved
 candle/set-theory/setSpec	setSpec	constant	false	setSpec_false	reserved
@@ -25451,8 +25451,8 @@ candle/set-theory/setSpec	setSpec	constant	boolean	boolean	unique
 candle/set-theory/setSpec	setSpec	theorem	boolean_def	boolean_def	unique
 candle/set-theory/setSpec	setSpec	theorem	boolean_in_boolset	boolean_in_boolset	unique
 candle/set-theory/setSpec	setSpec	theorem	boolean_eq_true	boolean_eq_true	unique
-candle/set-theory/setSpec	setSpec	constant	holds	holds	unique
-candle/set-theory/setSpec	setSpec	theorem	holds_def	holds_def	unique
+candle/set-theory/setSpec	setSpec	constant	holds	setSpec_holds	common word, user rule 2026-11-22
+candle/set-theory/setSpec	setSpec	theorem	holds_def	setSpec_holds_def	common word, user rule 2026-11-22
 candle/set-theory/setSpec	setSpec	constant	abstract	abstract	unique
 candle/set-theory/setSpec	setSpec	theorem	abstract_def	abstract_def	unique
 candle/set-theory/setSpec	setSpec	theorem	apply_abstract	apply_abstract	unique

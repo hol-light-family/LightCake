@@ -6,7 +6,7 @@
 (* goto-like jumps.                                                          *)
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
-(* - Names as notes/naming/names.tsv says: stack_to_lab_flatten,             *)
+(* - Names as doc/names.tsv says: stack_to_lab_flatten,                      *)
 (*   stack_to_lab_config (fields stack_to_lab_config_reg_names, ..._jump,    *)
 (*   ..._perf_calls) and stack_to_lab_compile carry the theory prefix.      *)
 (* - The local HOL4 Overloads are written out: Asm a (an asm instruction)   *)
@@ -18,6 +18,8 @@
 (*   compiled to case constants, so it is the definition itself.             *)
 (* - The prog_comp of compile_no_stubs are stack_remove's (applied to jump, *)
 (*   offset, sp) and stack_alloc's (on the pairs), as their types say.       *)
+(* - HOL4 negate is stack_to_lab_negate (a short or common word), and        *)
+(*   negate_def is stack_to_lab_negate_def.                                  *)
 (* ========================================================================= *)
 
 needs "misc/misc.ml";;
@@ -37,17 +39,17 @@ let compile_jump_def = cake_def
   `(compile_jump (INL n) = LabAsm (lab_Jump (lab_Lab n 0)) (word 0) [] 0:(A)line) /\
    (compile_jump (INR r) = Asm (Asmi (JumpReg r)) [] 0)`;;
 
-let negate_def = cake_def
-  `(negate asm_Less = NotLess) /\
-   (negate asm_Equal = NotEqual) /\
-   (negate Lower = NotLower) /\
-   (negate asm_Test = NotTest) /\
-   (negate NotLess = asm_Less) /\
-   (negate NotEqual = asm_Equal) /\
-   (negate NotLower = Lower) /\
-   (negate NotTest = asm_Test)`;;
+let stack_to_lab_negate_def = cake_def
+  `(stack_to_lab_negate asm_Less = NotLess) /\
+   (stack_to_lab_negate asm_Equal = NotEqual) /\
+   (stack_to_lab_negate Lower = NotLower) /\
+   (stack_to_lab_negate asm_Test = NotTest) /\
+   (stack_to_lab_negate NotLess = asm_Less) /\
+   (stack_to_lab_negate NotEqual = asm_Equal) /\
+   (stack_to_lab_negate NotLower = Lower) /\
+   (stack_to_lab_negate NotTest = asm_Test)`;;
 
-let _ = cake_add_simps [negate_def];;
+let _ = cake_add_simps [stack_to_lab_negate_def];;
 
 let find_lab_def = cake_def
   `find_lab n labs =
@@ -58,7 +60,7 @@ let find_lab_def = cake_def
 (* HOL4: flatten_def (the size of the program decreases) *)
 
 let stack_to_lab_flatten_def = cake_def_wf
-  `measure (\(t:bool,p:(A)stack_prog,n:num,m:num,conts:num list,breaks:num list).
+  `MEASURE (\(t:bool,p:(A)stack_prog,n:num,m:num,conts:num list,breaks:num list).
               stack_prog_size (\x:A. 0) p)`
   TERM_TAC
   `stack_to_lab_flatten t (p:(A)stack_prog) n m conts breaks =
@@ -84,14 +86,14 @@ let stack_to_lab_flatten_def = cake_def_wf
          else if p2 = stack_Skip then
            (misc_Append
               (misc_Append
-                 (misc_List [LabAsm (lab_JumpCmp (negate c) r ri (lab_Lab n m))
+                 (misc_List [LabAsm (lab_JumpCmp (stack_to_lab_negate c) r ri (lab_Lab n m))
                                (word 0) [] 0]) xs)
               (misc_List [lab_Label n m 0]),F,m + 1)
          else if nr1 then
            (misc_Append
               (misc_Append
                  (misc_Append
-                    (misc_List [LabAsm (lab_JumpCmp (negate c) r ri (lab_Lab n m))
+                    (misc_List [LabAsm (lab_JumpCmp (stack_to_lab_negate c) r ri (lab_Lab n m))
                                   (word 0) [] 0]) xs)
                  (misc_List [lab_Label n m 0])) ys,nr2,m + 1)
          else if nr2 then

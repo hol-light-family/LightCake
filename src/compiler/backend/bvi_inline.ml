@@ -68,7 +68,7 @@ let wrapper_ok_def = cake_def
 (* code table (up to the expression relation used by the pass).             *)
 
 let inline_exp_def = sem1aux_def_wf
-  `measure (\x:((num # bvi_exp) spt # bvi_exp) + ((num # bvi_exp) spt # bvi_exp list).
+  `MEASURE (\x:((num # bvi_exp) spt # bvi_exp) + ((num # bvi_exp) spt # bvi_exp list).
               sum_CASE x (\p. bvi_exp_size (SND p))
                          (\p. list_size bvi_exp_size (SND p)))`
   SEM1AUX_TC_TAC
@@ -117,7 +117,7 @@ let inline_all_def = cake_def
 (* that it makes no induction theorem: it is proved below                  *)
 
 let remove_ticks_exp_def = sem1aux_def_wf
-  `measure (\x:bvi_exp + bvi_exp list.
+  `MEASURE (\x:bvi_exp + bvi_exp list.
               sum_CASE x (\e. bvi_exp_size e) (\es. list_size bvi_exp_size es))`
   SEM1AUX_TC_TAC
   `(remove_ticks_exp (bvi_Var n) = bvi_Var n) /\

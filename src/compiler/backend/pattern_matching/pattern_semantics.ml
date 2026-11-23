@@ -67,7 +67,7 @@ let is_sibling_def = cake_def
 (* HOL4: pmatch, pmatch_list *)
 
 let pattern_semantics_pmatch_def = sem1aux_def_wf
-  `measure
+  `MEASURE
      (\x:((num,term)fmap # pattern_semantics_pat # term) +
          ((num,term)fmap # pattern_semantics_pat list # term list).
         sum_CASE x (\t. pattern_semantics_pat_size (FST (SND t)))
@@ -179,7 +179,7 @@ let dt_eval_guard_ind = cake_ind "dt_eval_guard";;
 (* termination as HOL4's automatic proof: the size of the decision tree *)
 
 let dt_eval_def = cake_def_wf
-  `measure (\x:(num,term)fmap # term # dTree. dTree_size (SND (SND x)))`
+  `MEASURE (\x:(num,term)fmap # term # dTree. dTree_size (SND (SND x)))`
   (TERM_TAC ORELSE (REPEAT STRIP_TAC THEN COND_CASES_TAC THEN TERM_TAC))
   `(dt_eval refs _ (pattern_semantics_Leaf k) = SOME (MatchSuccess k)) /\
    (dt_eval refs _ pattern_semantics_Fail = SOME MatchFailure) /\

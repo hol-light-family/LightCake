@@ -33,7 +33,7 @@ type_invention_error := true;;
 (* HOL4: free *)
 
 let clos_call_free_def = sem1aux_def_wf
-  `measure (\es:clos_exp list. list_size clos_exp_size es)`
+  `MEASURE (\es:clos_exp list. list_size clos_exp_size es)`
   SEM1AUX_TC_TAC
   `(clos_call_free [] = ([],db_vars_Empty)) /\
    (clos_call_free (CONS (x:clos_exp) (CONS y xs)) =
@@ -90,7 +90,7 @@ let clos_call_free_def = sem1aux_def_wf
 let clos_call_free_ind = cake_ind "clos_call_free";;
 
 let free_sing_def = sem1aux_def_wf
-  `measure (\x:clos_exp + clos_exp list.
+  `MEASURE (\x:clos_exp + clos_exp list.
               sum_CASE x clos_exp_size (list_size clos_exp_size))`
   SEM1AUX_TC_TAC
   `(free_sing (clos_Var t v) = (clos_Var t v, db_vars_Var v)) /\
@@ -227,7 +227,7 @@ let clos_call_EL_MEM_LEMMA = prove
   MESON_TAC[MEM_EL]);;
 
 let insert_each_def = cake_def_wf
-  `measure (\x:num # num # (num_set # A). FST (SND x))` TERM_TAC
+  `MEASURE (\x:num # num # (num_set # A). FST (SND x))` TERM_TAC
   `(insert_each p 0 (g:num_set # A) = g) /\
    (insert_each p (SUC n) (g1,g2) = insert_each (p + 2) n (insert p one g1,g2))`;;
 
@@ -274,7 +274,7 @@ let IL1AUX_CLOS_TC_TAC : tactic =
    REWRITE_TAC[list_size_pair_size_MAP_FST_SND] THEN ARITH_TAC);;
 
 let clos_call_calls_def = sem1aux_def_wf
-  `measure (\p:clos_exp list # (num_set # (num # num # clos_exp) list).
+  `MEASURE (\p:clos_exp list # (num_set # (num # num # clos_exp) list).
               list_size clos_exp_size (FST p))`
   IL1AUX_CLOS_TC_TAC
   `(clos_call_calls [] g = ([],g)) /\
@@ -358,7 +358,7 @@ let clos_call_calls_def = sem1aux_def_wf
 let clos_call_calls_ind = cake_ind "clos_call_calls";;
 
 let calls_sing_def = sem1aux_def_wf
-  `measure
+  `MEASURE
      (\x:(clos_exp # (num_set # (num # num # clos_exp) list)) +
          (clos_exp list # (num_set # (num # num # clos_exp) list)).
         sum_CASE x (\p. clos_exp_size (FST p))

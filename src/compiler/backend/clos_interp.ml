@@ -35,7 +35,7 @@ let can_interpret_op_def = sem1aux_def
    (can_interpret_op _ l <=> F)`;;
 
 let can_interpret_def = sem1aux_def_wf
-  `measure (\x:clos_exp + clos_exp list.
+  `MEASURE (\x:clos_exp + clos_exp list.
               sum_CASE x clos_exp_size (list_size clos_exp_size))`
   SEM1AUX_TC_TAC
   `(can_interpret (clos_Var t n) <=> T) /\
@@ -67,7 +67,7 @@ let check_size_op_def = sem1aux_def
    (check_size_op k _ l = k - 1)`;;
 
 let check_size_def = sem1aux_def_wf
-  `measure (\x:(num # clos_exp) + (num # clos_exp list).
+  `MEASURE (\x:(num # clos_exp) + (num # clos_exp list).
               sum_CASE x (\p. clos_exp_size (SND p))
                          (\p. list_size clos_exp_size (SND p)))`
   SEM1AUX_TC_TAC
@@ -117,7 +117,7 @@ let to_constant_op_def = sem1aux_def
    (to_constant_op _ l cs = ConstInt (&0))`;;
 
 let to_constant_def = sem1aux_def_wf
-  `measure (\x:clos_exp + clos_exp list.
+  `MEASURE (\x:clos_exp + clos_exp list.
               sum_CASE x clos_exp_size (list_size clos_exp_size))`
   SEM1AUX_TC_TAC
   `(to_constant (clos_Var t n) = ConstCons 0 [ConstInt (&n)]) /\

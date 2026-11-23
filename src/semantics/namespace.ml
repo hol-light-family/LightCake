@@ -28,7 +28,7 @@ let namespace_INDUCT,namespace_RECURSION =
   cake_type "namespace = Bind ((N#V) list) ((M#namespace) list)";;
 
 let nsLookup_def = cake_def_wf
-  `measure (\p:(M,N,V)namespace#(M,N)id. id_size (\x:M. 0) (\x:N. 0) (SND p))`
+  `MEASURE (\p:(M,N,V)namespace#(M,N)id. id_size (\x:M. 0) (\x:N. 0) (SND p))`
   (REWRITE_TAC[measure_THM; FST; SND; type_size_def "id"] THEN ARITH_TAC)
   `(nsLookup (Bind v m:(M,N,V)namespace) (Short n) = ALOOKUP v n) /\
    (nsLookup (Bind v m) (Long mn id) =
@@ -39,7 +39,7 @@ let nsLookup_def = cake_def_wf
 let nsLookup_ind = cake_ind "nsLookup";;
 
 let nsLookupMod_def = cake_def_wf
-  `measure (\p:(M,N,V)namespace#M list. LENGTH (SND p))`
+  `MEASURE (\p:(M,N,V)namespace#M list. LENGTH (SND p))`
   (REWRITE_TAC[measure_THM; FST; SND; LENGTH] THEN ARITH_TAC)
   `(nsLookupMod (e:(M,N,V)namespace) [] = SOME e) /\
    (nsLookupMod (Bind v m) (CONS mn path) =
@@ -101,7 +101,7 @@ let nsDomMod_def = cake_def
 
 
 let nsMap_def = cake_def_wf
-  `measure (\p:(V->W)#(M,N,V)namespace.
+  `MEASURE (\p:(V->W)#(M,N,V)namespace.
               namespace_size (\x:M. 0) (\x:N. 0) (\x:V. 0) (SND p))`
   TERM_TAC
   `nsMap (f:V->W) (Bind v m:(M,N,V)namespace) =

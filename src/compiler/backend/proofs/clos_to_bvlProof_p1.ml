@@ -1432,7 +1432,7 @@ let env_rel_IMP_EL = prove
 let clos_to_bvlProof_nth_code_def = cake_def
   `(clos_to_bvlProof_nth_code (t_co:num->C#(num#num#bvl_exp)list) 0 = LN) /\
    (clos_to_bvlProof_nth_code t_co (SUC n) =
-      union (fromAList (SND (t_co 0))) (clos_to_bvlProof_nth_code (shift_seq 1 t_co) n))`;;
+      sptree_union (fromAList (SND (t_co 0))) (clos_to_bvlProof_nth_code (shift_seq 1 t_co) n))`;;
 
 let clos_to_bvlProof_nth_code_ind = cake_ind "clos_to_bvlProof_nth_code";;
 
@@ -1446,7 +1446,7 @@ let compile_oracle_inv_def = cake_def
      s_cc = pure_cc (clos_to_bvl_compile_inc' max_app) t_cc /\
      t_co = pure_co (clos_to_bvl_compile_inc' max_app) o s_co /\
      (!n cfg ps. t_co n = (cfg,ps) ==> ALL_DISTINCT (MAP FST ps)) /\
-     (!n. DISJOINT (domain (union t_code (clos_to_bvlProof_nth_code t_co n)))
+     (!n. DISJOINT (domain (sptree_union t_code (clos_to_bvlProof_nth_code t_co n)))
             (set_of_list (MAP FST (SND (t_co n))))) /\
      !n cfg e ps.
        s_co n = (cfg,e,ps)
@@ -4389,14 +4389,14 @@ let not_domain_lookup = prove
 (* HOL4 line 2952 [local] *)
 let cl_rel_union = prove
  (`!a x y max_app f2 refs code c2.
-     cl_rel max_app f2 refs code a x y ==> cl_rel max_app f2 refs (union code c2) a x y`,
+     cl_rel max_app f2 refs code a x y ==> cl_rel max_app f2 refs (sptree_union code c2) a x y`,
   MESON_TAC[cl_rel_subspt; subspt_union]);;
 
 (* HOL4 line 2986 [local] *)
 let v_rel_union = prove
  (`!c2 x y max_app f2 refs code.
      clos_to_bvlProof_v_rel max_app f2 refs code x y
-     ==> clos_to_bvlProof_v_rel max_app f2 refs (union code c2) x y`,
+     ==> clos_to_bvlProof_v_rel max_app f2 refs (sptree_union code c2) x y`,
   MESON_TAC[clos_to_bvlProof_v_rel_subspt; subspt_union]);;
 
 (* HOL4 line 3021 *)
@@ -4413,7 +4413,7 @@ let FEVERY_FUPDATE_LIST_SUFF = prove
 let code_installed_union = prove
  (`!aux y x.
      clos_to_bvlProof_code_installed aux y /\ DISJOINT (set_of_list (MAP FST aux)) (domain x)
-     ==> clos_to_bvlProof_code_installed aux (union x y)`,
+     ==> clos_to_bvlProof_code_installed aux (sptree_union x y)`,
   REWRITE_TAC[C2BP1AUX_code_installed_MEM; lookup_union] THEN REPEAT STRIP_TAC THEN
   SUBGOAL_THEN `lookup n (x:(num#bvl_exp)spt) = NONE` SUBST1_TAC THENL
    [REWRITE_TAC[lookup_NONE_domain] THEN
@@ -4428,7 +4428,7 @@ let code_installed_union = prove
 let code_installed_union1 = prove
  (`!aux t1 t2.
      clos_to_bvlProof_code_installed aux t1
-     ==> clos_to_bvlProof_code_installed aux (union t1 t2)`,
+     ==> clos_to_bvlProof_code_installed aux (sptree_union t1 t2)`,
   MESON_TAC[code_installed_subspt; subspt_union]);;
 
 (* HOL4 line 3053 *)
@@ -5115,4 +5115,3 @@ let rel_dest_thunk_NotThunk = prove
   TRY (EVERY_CASE_TAC THEN CASE_REWRITE_TAC[]) THEN
   STRIP_TAC THEN RVEQ_TAC THEN TRY (IMP_RES_TAC state_rel_refs_lookup) THEN
   GVS[bvl_dest_thunk_def]);;
-

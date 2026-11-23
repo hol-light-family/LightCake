@@ -42,7 +42,7 @@ let flat_pattern_init_config_def = cake_def
   `flat_pattern_init_config ph = flat_pattern_config_REC ph`;;
 
 let sum_string_ords_def = cake_def_wf
-  `measure (\p:num # mlstring. strlen (SND p) - FST p)`
+  `MEASURE (\p:num # mlstring. strlen (SND p) - FST p)`
   (REPEAT STRIP_TAC THEN REWRITE_TAC(WF_REL_THMS @ [FST; SND]) THEN
    ASM_ARITH_TAC)
   `sum_string_ords i str =
@@ -59,7 +59,7 @@ let dec_name_to_num_def = cake_def
      then sum_string_ords 2 name else 0`;;
 
 let enc_num_to_name_aux_def = cake_def_wf
-  `measure (FST:num # char list -> num)`
+  `MEASURE (FST:num # char list -> num)`
   (REWRITE_TAC(WF_REL_THMS @ [FST; SND]) THEN REPEAT STRIP_TAC THEN
    ASM_ARITH_TAC)
   `enc_num_to_name_aux i xs =
@@ -118,7 +118,7 @@ let IL1AUX_PATB_TC_TAC : tactic =
   ARITH_TAC;;
 
 let compile_pat_bindings_def = cake_def_wf
-  `measure (\x:tra # num # (flat_pat # num # flat_exp) list # flat_exp.
+  `MEASURE (\x:tra # num # (flat_pat # num # flat_exp) list # flat_exp.
               SUM (MAP (flat_pat_size o FST) (FST (SND (SND x)))) +
               LENGTH (FST (SND (SND x))))`
   IL1AUX_PATB_TC_TAC
@@ -232,7 +232,7 @@ let decode_dtree_def = cake_def
       else SmartIf t (decode_guard t v guard) dec1 dec2)`;;
 
 let encode_pat_def = sem1aux_def_wf
-  `measure flat_pat_size`
+  `MEASURE flat_pat_size`
   SEM1AUX_TC_TAC
   `(encode_pat flat_Pany = pattern_semantics_Any) /\
    (encode_pat (flat_Plit l) = pattern_semantics_Lit l) /\
@@ -284,7 +284,7 @@ let IL1AUX_NAIVE_TC_TAC : tactic =
   ARITH_TAC;;
 
 let naive_pattern_match_def = cake_def_wf
-  `measure (\x:tra # (flat_pat # flat_exp) list.
+  `MEASURE (\x:tra # (flat_pat # flat_exp) list.
               SUM (MAP (flat_pat_size o FST) (SND x)) + LENGTH (SND x))`
   IL1AUX_NAIVE_TC_TAC
   `(naive_pattern_match t [] = flat_Bool t T) /\
@@ -351,7 +351,7 @@ let IL1AUX_FPC_TC_TAC : tactic =
    TERM_TAC);;
 
 let flat_pattern_compile_exp_def = sem1aux_def_wf
-  `measure (\x:(flat_pattern_config # flat_exp) +
+  `MEASURE (\x:(flat_pattern_config # flat_exp) +
                (flat_pattern_config # flat_exp list) +
                (flat_pattern_config # (flat_pat # flat_exp) list).
      sum_CASE x (\p. flat_exp_size (SND p))

@@ -209,8 +209,8 @@ let PPASS2AUX_cc_Annot =
 let PPASS2AUX_cc_Tick =
   prove(PPASS2AUX_cc_case "panLang_Tick", PPASS2AUX_simple_tac);;
 
-(* HOL4 names the memory variables memory, memory' (memory is a constant of *)
-(* stack_removeProof here): mem, mem'                                       *)
+(* HOL4 names the memory variables memory, memory' (memory was a constant  *)
+(* of stack_removeProof, now stack_removeProof_memory): mem, mem'          *)
 
 let mem_stores_append = prove
  (CASE_TERM
@@ -1955,10 +1955,6 @@ let PPASS2AUX_fin6_tac =
    [MATCH_MP_TAC (CONJUNCT2 state_rel_empty_locals) THEN ASM_REWRITE_TAC[];
     REWRITE_TAC[pan_empty_locals_def; pan_state_INFO.ri_fupdfupds; K_o_THM; K_THM]];;
 
-let PPASS2AUX_word_1_neq_0 = prove
- (`~(word 1:A word = word 0)`,
-  REWRITE_TAC[GSYM VAL_EQ_0; VAL_WORD_1; ARITH_EQ]);;
-
 let PPASS2AUX_cc_Call = prove
  (PPASS2AUX_cc_case "panLang_Call",
   REPEAT GEN_TAC THEN
@@ -2325,7 +2321,7 @@ DISCH_THEN(X_CHOOSE_THEN `w':(A)pan_v` STRIP_ASSUME_TAC) THEN
    REWRITE_TAC[pan_set_var_def; pan_state_INFO.ri_fupdfupds; K_o_THM; pan_state_INFO.ri_accfupds;
                K_THM] THEN CASE_REWRITE_TAC[] THEN
    REWRITE_TAC[PPASS2AUX_evaluate_If; pan_eval_def; kvar_simps; pan_state_INFO.ri_accfupds;
-               K_THM; FLOOKUP_UPDATE] THEN CASE_REWRITE_TAC[PPASS2AUX_word_1_neq_0] THEN
+               K_THM; FLOOKUP_UPDATE] THEN CASE_REWRITE_TAC[WORD_NE_10] THEN
    REWRITE_TAC[pan_evaluate_def] THEN CASE_REWRITE_TAC[] THEN
    REWRITE_TAC[pan_state_INFO.ri_fupdfupds; K_o_THM; pan_state_INFO.ri_accfupds; K_THM] THEN
        REWRITE_TAC[UNWIND_THM1; good_res_def] THEN

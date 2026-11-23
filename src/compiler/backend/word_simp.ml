@@ -6,7 +6,7 @@
 (* that can be produced by the data_to_word compiler.                        *)
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
-(* - Names as notes/naming/names.tsv says: the wordLang constructors wl_..., *)
+(* - Names as doc/names.tsv says: the wordLang constructors wl_...,          *)
 (*   word_simp_dest_Seq and word_simp_compile_exp (clashing constants), and  *)
 (*   word_simp_Seq_assoc_def/_ind/_pmatch (Seq_assoc_def cannot be bound by  *)
 (*   OCaml); the constant Seq_assoc keeps its name.                          *)
@@ -227,7 +227,7 @@ let is_gc_const_def = cake_def
   `is_gc_const (c:A word) <=> word_and c (word 1) = word 0`;;
 
 let all_names_def = cake_def
-  `all_names (n,m) = union n (m:A spt)`;;
+  `all_names (n,m) = sptree_union n (m:A spt)`;;
 
 let _ = cake_add_simps [all_names_def];;
 
@@ -282,7 +282,7 @@ let const_fp_loop_def = sem1aux_def (list_mk_conj
      | SOME (n, names, ret_handler, l1, l2) ->
          (if handler = NONE then
             (let cs' = ITLIST delete n
-                         (filter_v is_gc_const (inter cs (all_names names))) in
+                         (filter_v is_gc_const (sptree_inter cs (all_names names))) in
              let (ret_handler', cs'') = const_fp_loop ret_handler cs' in
              (SmartSeq (drop_consts cs args)
                 (wl_Call (SOME (n, names, ret_handler', l1, l2)) dest args handler),
@@ -291,18 +291,18 @@ let const_fp_loop_def = sem1aux_def (list_mk_conj
             (SmartSeq (drop_consts cs args) (wl_Call ret dest args handler), LN))`;
   `const_fp_loop (wl_FFI x0 x1 x2 x3 x4 names:(A)wl_prog) (cs:(A word)spt) =
      (SmartSeq (drop_consts cs [x1;x2;x3;x4]) (wl_FFI x0 x1 x2 x3 x4 names),
-      inter cs (all_names names))`;
+      sptree_inter cs (all_names names))`;
   `const_fp_loop (wl_LocValue v x3:(A)wl_prog) (cs:(A word)spt) =
      (wl_LocValue v x3:(A)wl_prog, delete v cs)`;
   `const_fp_loop (wl_Alloc n names:(A)wl_prog) (cs:(A word)spt) =
      (SmartSeq (drop_consts cs [n]) (wl_Alloc n names),
-      filter_v is_gc_const (inter cs (all_names names)))`;
+      filter_v is_gc_const (sptree_inter cs (all_names names)))`;
   `const_fp_loop (wl_StoreConsts a b c d ws:(A)wl_prog) (cs:(A word)spt) =
      (wl_StoreConsts a b c d ws:(A)wl_prog,
       delete a (delete b (delete c (delete d cs))))`;
   `const_fp_loop (wl_Install r1 r2 r3 r4 names:(A)wl_prog) (cs:(A word)spt) =
      (SmartSeq (drop_consts cs [r1;r2;r3;r4]) (wl_Install r1 r2 r3 r4 names),
-      delete r1 (filter_v is_gc_const (inter cs (all_names names))))`;
+      delete r1 (filter_v is_gc_const (sptree_inter cs (all_names names))))`;
   `const_fp_loop (wl_Store e v:(A)wl_prog) (cs:(A word)spt) =
      (wl_Store (const_fp_exp e cs) v:(A)wl_prog, cs)`;
   `const_fp_loop (ShareInst asm_Load v e:(A)wl_prog) (cs:(A word)spt) =

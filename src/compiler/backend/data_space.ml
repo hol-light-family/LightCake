@@ -18,7 +18,7 @@ needs "semantics/sem1aux_tfl.ml";;
 
 type_invention_error := true;;
 
-let num_size_def = cake_def_wf `measure (\n:num. n)`
+let num_size_def = cake_def_wf `MEASURE (\n:num. n)`
   (REWRITE_TAC[measure_THM] THEN CONV_TAC NUM_REDUCE_CONV THEN
    REPEAT STRIP_TAC THEN ASM_SIMP_TAC[RDIV_LT_EQ; ARITH_EQ] THEN ASM_ARITH_TAC)
   `num_size (n:num) =
@@ -85,7 +85,7 @@ let space_def = sem1aux_def
         | INR (k2,names2,c4) ->
             (match c1 with
                data_Skip -> INR (k2,names2,c4)
-             | MakeSpace k1 names1 -> INR (k2,inter names1 names2,c4)
+             | MakeSpace k1 names1 -> INR (k2,sptree_inter names1 names2,c4)
              | data_Move dest src ->
                  INR (k2,insert src one (delete dest names2),
                       data_Seq (data_Move dest src) c4)
@@ -119,7 +119,7 @@ let space_pmatch = prove
             | INR (k2,names2,c4) ->
                 (match c1 with
                    data_Skip -> INR (k2,names2,c4)
-                 | MakeSpace k1 names1 -> INR (k2,inter names1 names2,c4)
+                 | MakeSpace k1 names1 -> INR (k2,sptree_inter names1 names2,c4)
                  | data_Move dest src ->
                      INR (k2,insert src one (delete dest names2),
                           data_Seq (data_Move dest src) c4)

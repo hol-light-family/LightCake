@@ -3,6 +3,9 @@
 (* the blocks of lines 1471-3035 of the script.                             *)
 (* Miscellaneous definitions and minor lemmas used throughout the           *)
 (* development.                                                              *)
+(* HOL4 between is misc_between (a short or common word; between is also a   *)
+(* constant of HOL Light's Multivariate), and between_def is                 *)
+(* misc_between_def.                                                         *)
 (* ========================================================================= *)
 
 needs "hol4/vocab.ml";;
@@ -47,12 +50,12 @@ let FOLDL_invariant_rest = prove
     FIRST_X_ASSUM(MP_TAC o SPECL [`x:B`; `SUC n`]) THEN
     ASM_REWRITE_TAC[LENGTH; LT_SUC; RICHAUX_DROP_CLAUSES; EL; TL]]);;
 
-let between_def = cake_def
-  `between x y z <=> x:num <= z /\ z < y`;;
+let misc_between_def = cake_def
+  `misc_between x y z <=> x:num <= z /\ z < y`;;
 
 let IN_between = prove
- (`x IN between y z <=> y <= x /\ x < z`,
-  REWRITE_TAC[IN; between_def]);;
+ (`x IN misc_between y z <=> y <= x /\ x < z`,
+  REWRITE_TAC[IN; misc_between_def]);;
 
 (* never used *)
 let SUC_LEAST = prove
@@ -369,13 +372,13 @@ let LIST_REL_MAP_FILTER_NEQ = prove
 (* HOL4: word_list (misc_word_list in names.tsv); HOL4 set_sep$one is *)
 (* set_sep_one, p * q is p STAR q, a + bytes_in_word is word_add *)
 let misc_word_list_def = cake_def
-  `(misc_word_list (a:N word) ([]:B list) = emp) /\
+  `(misc_word_list (a:N word) ([]:B list) = set_sep_emp) /\
    (misc_word_list a (CONS x xs) =
       set_sep_one (a,x) STAR misc_word_list (word_add a bytes_in_word) xs)`;;
 
 let word_list_exists_def = cake_def
   `word_list_exists (a:N word) n =
-     SEP_EXISTS (xs:B list). misc_word_list a xs STAR cond (LENGTH xs = n)`;;
+     SEP_EXISTS (xs:B list). misc_word_list a xs STAR set_sep_cond (LENGTH xs = n)`;;
 
 (* lookup_vars vs env = OPT_MMAP (\i. oEL i env) vs *)
 let lookup_vars_def = cake_def
@@ -1107,7 +1110,7 @@ let MAP_K_REPLICATE = prove
   LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[MAP; LENGTH; REPLICATE; K_THM]);;
 (* HOL4 a << n is word_shl a n, a >>> n is word_ushr a n, 0w is word 0 *)
 let shift_left_def = cake_def_wf
-  `measure (\p:(N word)#num. SND p)`
+  `MEASURE (\p:(N word)#num. SND p)`
   (REWRITE_TAC[measure_THM] THEN ARITH_TAC)
   `shift_left (a:N word) n =
      if n = 0 then a
@@ -1133,7 +1136,7 @@ let shift_left_rwt = prove
   AP_TERM_TAC THEN ASM_ARITH_TAC);;
 
 let shift_right_def = cake_def_wf
-  `measure (\p:(N word)#num. SND p)`
+  `MEASURE (\p:(N word)#num. SND p)`
   (REWRITE_TAC[measure_THM] THEN ARITH_TAC)
   `shift_right (a:N word) n =
      if n = 0 then a
@@ -1163,7 +1166,7 @@ let shift_right_rwt = prove
 
 (* HOL4 a >> n is word_ishr a n and -1w is word_neg (word 1) *)
 let arith_shift_right_def = cake_def_wf
-  `measure (\p:(N word)#num. SND p)`
+  `MEASURE (\p:(N word)#num. SND p)`
   (REWRITE_TAC[measure_THM] THEN ARITH_TAC)
   `arith_shift_right (a:N word) n =
      if n = 0 then a
@@ -1220,7 +1223,7 @@ let arith_shift_right_rwt = prove
 
 (* HOL4 word64 is int64 = (64)word *)
 let any_word64_ror_def = cake_def_wf
-  `measure (\p:int64#num. SND p)`
+  `MEASURE (\p:int64#num. SND p)`
   (REWRITE_TAC[measure_THM] THEN ARITH_TAC)
   `any_word64_ror (w:int64) (n:num) =
      if 64 <= n then any_word64_ror w (n - 64) else
@@ -1413,9 +1416,9 @@ let FLAT_MAP_TOKENS_FIELDS = prove
   REWRITE_TAC[TOKENS_def; APPEND]);;
 
 let the_nil_eq_cons = prove
- (`the [] x = CONS (y:A) z <=> x = SOME (CONS y z)`,
+ (`misc_the [] x = CONS (y:A) z <=> x = SOME (CONS y z)`,
   CASES_ON `x:(A list)option` THEN
-  REWRITE_TAC[the_def; option_INJ; option_DISTINCT; NOT_NIL_CONS]);;
+  REWRITE_TAC[misc_the_def; option_INJ; option_DISTINCT; NOT_NIL_CONS]);;
 
 (* HOL4 #"\n" is CHR 10; the HOL4 comment: discard trailing newline *)
 let splitlines_def = cake_def
@@ -1588,4 +1591,3 @@ let plus_0_I = prove
  (`(+) 0 = I`,
   REWRITE_TAC[FUN_EQ_THM; I_THM; ADD_CLAUSES]);;
 let _ = cake_add_simps [plus_0_I];;
-

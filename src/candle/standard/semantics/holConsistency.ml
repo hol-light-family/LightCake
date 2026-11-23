@@ -59,9 +59,9 @@ let proves_consistent = prove
       if (x,ty) = (implode "x",Tyapp (implode "bool") []) then setSpec_true (mem:U->U->bool)
       else if (x,ty) = (implode "y",Tyapp (implode "bool") []) then setSpec_false mem
       else @v. mem v (typesem (FST (i:(mlstring->U list->U)#(mlstring->U list->U)))
-                             (K (two mem)) ty)` THEN
+                             (K (setSpec_two mem)) ty)` THEN
   DISCH_THEN(MP_TAC o SPEC
-    `(K (two (mem:U->U->bool)):mlstring->U, sigma:mlstring#hol_type->U)`) THEN
+    `(K (setSpec_two (mem:U->U->bool)):mlstring->U, sigma:mlstring#hol_type->U)`) THEN
   MATCH_MP_TAC(TAUT `a /\ (b ==> F) ==> (a ==> b) ==> F`) THEN
   MATCH_MP_TAC(TAUT `a /\ (a ==> b) ==> a /\ b`) THEN CONJ_TAC THENL
    [REWRITE_TAC[is_valuation0_def; is_type_valuation0_def; is_term_valuation0_def;
@@ -83,7 +83,7 @@ let proves_consistent = prove
     DISCH_TAC] THEN
   FIRST_ASSUM(MP_TAC o ISPECL
      [`FST (thy:thy)`; `i:(mlstring->U list->U)#(mlstring->U list->U)`;
-      `(K (two (mem:U->U->bool)):mlstring->U, sigma:mlstring#hol_type->U)`;
+      `(K (setSpec_two (mem:U->U->bool)):mlstring->U, sigma:mlstring#hol_type->U)`;
       `hol_Var (implode "x") (Tyapp (implode "bool") [])`;
       `hol_Var (implode "y") (Tyapp (implode "bool") [])`; `SND (FST (thy:thy))`] o
      MATCH_MP termsem_equation) THEN
@@ -129,10 +129,10 @@ let init_ctxt_has_model = prove
                                  init_ctxt)))`,
   DISCH_TAC THEN
   EXISTS_TAC
-   `(\x. if x = implode "fun" then (\ls. funspace (mem:U->U->bool) (HD ls) (HD (TL ls)))
-         else if x = implode "bool" then K (two mem) else ARB),
-    (K (\l. abstract (mem:U->U->bool) (HD l) (funspace mem (HD l) (two mem))
-              (\x. abstract mem (HD l) (two mem) (\y. boolean mem (x = y))))
+   `(\x. if x = implode "fun" then (\ls. setSpec_funspace (mem:U->U->bool) (HD ls) (HD (TL ls)))
+         else if x = implode "bool" then K (setSpec_two mem) else ARB),
+    (K (\l. abstract (mem:U->U->bool) (HD l) (setSpec_funspace mem (HD l) (setSpec_two mem))
+              (\x. abstract mem (HD l) (setSpec_two mem) (\y. boolean mem (x = y))))
        :mlstring->U list->U)` THEN
   REWRITE_TAC[models0_def; init_ctxt_def; MAP; FLAT; APPEND; types_of_upd_def;
               consts_of_upd_def; axexts_of_upd_def; conexts_of_upd_def; alist_to_fmap_thm;

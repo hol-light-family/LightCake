@@ -240,7 +240,7 @@ let CBOOLAUX_ConstDef_extends = prove
                    alist_to_fmap (FLAT (MAP consts_of_upd rest))) tm /\
       ~(name IN FDOM (alist_to_fmap (FLAT (MAP consts_of_upd rest)))) /\
       CLOSED tm /\
-      set_of_list (tvars tm) SUBSET set_of_list (tyvars (typeof tm))) /\
+      set_of_list (tvars tm) SUBSET set_of_list (hol_tyvars (typeof tm))) /\
      rest extends ctxt
      ==> CONS (hol_ConstSpec [(name,tm)] (hol_Var name (typeof tm) === tm)) rest
            extends ctxt`,
@@ -300,7 +300,7 @@ let CBOOLAUX_CLOSED_TAC =
   REPEAT GEN_TAC THEN CONV_TAC TAUT;;
 
 let CBOOLAUX_TVARS_TAC =
-  REWRITE_TAC([tvars_def; tyvars_def; equation_def; typeof_def; codomain_def; ITLIST;
+  REWRITE_TAC([tvars_def; hol_tyvars_def; equation_def; typeof_def; codomain_def; ITLIST;
                MEM_LIST_UNION; set_of_list; UNION_EMPTY] @ CBOOLAUX_defs) THEN
   SET_TAC[];;
 

@@ -16,6 +16,7 @@
 (* - Lemmas named LPARSEAUX_... are helpers of this unit (not HOL4 names);   *)
 (*   LPARSEAUX_OWHILE_THM and LPARSEAUX_OWHILE_EQ_NONE are the While         *)
 (*   theorems OWHILE_THM and OWHILE_EQ_NONE.                                 *)
+(* - HOL4 done is pegexec_done (a short or common word).                     *)
 (* ========================================================================= *)
 
 needs "hol4/vocab.ml";;
@@ -77,7 +78,7 @@ let kont_INDUCT,kont_RECURSION = cake_type
         | restoreEO ((locs # E) option) kont
         | poplist ((C list) -> C) kont
         | listsym ((A,B,C,E)pegsym) ((C list) -> C) kont
-        | done
+        | pegexec_done
         | failed";;
 
 let kont_distinct = distinctness "kont";;
@@ -119,43 +120,43 @@ let coreloop_def = cake_def
    OWHILE (\s:(A,B,C,E)evalcase. match s with Result u1 -> F | u2 -> T)
     (\s. match s with
        EV (empty v) i r eo errs k fk -> AP k i (CONS (SOME v) r) eo errs
-     | EV (any tf) i r eo errs k fk ->
+     | EV (peg_any tf) i r eo errs k fk ->
          (match i with
             [] -> (let err = (Locs EOFpt EOFpt, peg_anyEOF G)
                    in AP fk i r (optmax MAXerr eo (SOME err)) (CONS err errs))
           | CONS h t -> AP k t (CONS (SOME (tf h)) r) eo errs)
-     | EV (tok P tf2) i r eo errs k fk ->
+     | EV (peg_tok P tf2) i r eo errs k fk ->
          (match i with
             [] -> (let err = (Locs EOFpt EOFpt, peg_tokEOF G)
                    in AP fk i r (optmax MAXerr eo (SOME err)) (CONS err errs))
           | CONS h t ->
               if P (FST h) then AP k t (CONS (SOME (tf2 h)) r) eo errs
-              else (let err = (sloc i, peg_tokFALSE G)
+              else (let err = (peg_sloc i, peg_tokFALSE G)
                     in AP fk i r (optmax MAXerr eo (SOME err)) (CONS err errs)))
-     | EV (nt n tf3) i r eo errs k fk ->
+     | EV (peg_nt n tf3) i r eo errs k fk ->
          if n IN FDOM (peg_rules G)
          then EV (FAPPLY (peg_rules G) n) i r eo errs (appf1 tf3 k) fk
          else Looped
-     | EV (seq e1 e2 f) i r eo errs k fk ->
+     | EV (peg_seq e1 e2 f) i r eo errs k fk ->
          EV e1 i r eo errs
             (restoreEO eo (ksym e2 (appf2 f k) (cmpEO eo (returnTo i r fk))))
             fk
      | EV (choice e1 e2 cf) i r eo errs k fk ->
          EV e1 i r eo errs (appf1 (cf o INL) k)
             (returnTo i r (ksym e2 (dropErr (appf1 (cf o INR) k)) (cmpErrs fk)))
-     | EV (rpt e lf) i r eo errs k fk ->
+     | EV (peg_rpt e lf) i r eo errs k fk ->
          EV e i (CONS NONE r) eo errs (restoreEO eo (listsym e lf k))
             (poplist lf k)
-     | EV (not e v) i r eo errs k fk ->
+     | EV (peg_not e v) i r eo errs k fk ->
          EV e i r eo errs
-            (restoreEO eo (returnTo i r (addErr (sloc i) (peg_notFAIL G) fk)))
+            (restoreEO eo (returnTo i r (addErr (peg_sloc i) (peg_notFAIL G) fk)))
             (restoreEO eo (returnTo i (CONS (SOME v) r) (dropErr k)))
-     | EV (error err0) i r eo errs k fk ->
-         (let err = (sloc i, err0)
+     | EV (peg_error err0) i r eo errs k fk ->
+         (let err = (peg_sloc i, err0)
           in AP fk i r (optmax MAXerr eo (SOME err)) (CONS err errs))
-     | AP done i [] u3 u4 -> Looped
-     | AP done i (CONS NONE t) u5 u6 -> Looped
-     | AP done i (CONS (SOME rv) u7) eo u8 -> Result (peg_Success i rv eo)
+     | AP pegexec_done i [] u3 u4 -> Looped
+     | AP pegexec_done i (CONS NONE t) u5 u6 -> Looped
+     | AP pegexec_done i (CONS (SOME rv) u7) eo u8 -> Result (peg_Success i rv eo)
      | AP failed i r u9 [] -> Looped
      | AP failed i r u10 (CONS (l,e) u11) -> Result (Failure l e)
      | AP (dropErr u12) i r u13 [] -> Looped
@@ -248,26 +249,26 @@ let peg_exec_thm = prove
       peg_exec G (empty v) i r eo errs k fk =
       applykont G k i (CONS (SOME v) r) eo errs) /\
    (!(G:(A,B,C,E)peg) P f r eo errs k fk.
-      peg_exec G (tok P f) [] r eo errs k fk =
+      peg_exec G (peg_tok P f) [] r eo errs k fk =
       applykont G fk [] r
         (optmax MAXerr eo (SOME (Locs EOFpt EOFpt, peg_tokEOF G)))
         (CONS (Locs EOFpt EOFpt, peg_tokEOF G) errs)) /\
    (!(G:(A,B,C,E)peg) P f x xs r eo errs k fk.
-      peg_exec G (tok P f) (CONS x xs) r eo errs k fk =
+      peg_exec G (peg_tok P f) (CONS x xs) r eo errs k fk =
       if P (FST x) then applykont G k xs (CONS (SOME (f x)) r) eo errs
       else applykont G fk (CONS x xs) r
-             (optmax MAXerr eo (SOME (sloc (CONS x xs), peg_tokFALSE G)))
-             (CONS (sloc (CONS x xs), peg_tokFALSE G) errs)) /\
+             (optmax MAXerr eo (SOME (peg_sloc (CONS x xs), peg_tokFALSE G)))
+             (CONS (peg_sloc (CONS x xs), peg_tokFALSE G) errs)) /\
    (!(G:(A,B,C,E)peg) f r eo errs k fk.
-      peg_exec G (any f) [] r eo errs k fk =
+      peg_exec G (peg_any f) [] r eo errs k fk =
       applykont G fk [] r
         (optmax MAXerr eo (SOME (Locs EOFpt EOFpt, peg_anyEOF G)))
         (CONS (Locs EOFpt EOFpt, peg_anyEOF G) errs)) /\
    (!(G:(A,B,C,E)peg) f x xs r eo errs k fk.
-      peg_exec G (any f) (CONS x xs) r eo errs k fk =
+      peg_exec G (peg_any f) (CONS x xs) r eo errs k fk =
       applykont G k xs (CONS (SOME (f x)) r) eo errs) /\
    (!(G:(A,B,C,E)peg) e1 e2 sf i r eo errs k fk.
-      peg_exec G (seq e1 e2 sf) i r eo errs k fk =
+      peg_exec G (peg_seq e1 e2 sf) i r eo errs k fk =
       peg_exec G e1 i r eo errs
         (restoreEO eo (ksym e2 (appf2 sf k) (cmpEO eo (returnTo i r fk)))) fk) /\
    (!(G:(A,B,C,E)peg) e1 e2 cf i r eo errs k fk.
@@ -275,24 +276,24 @@ let peg_exec_thm = prove
       peg_exec G e1 i r eo errs (appf1 (cf o INL) k)
         (returnTo i r (ksym e2 (dropErr (appf1 (cf o INR) k)) (cmpErrs fk)))) /\
    (!(G:(A,B,C,E)peg) e v i r eo errs k fk.
-      peg_exec G (not e v) i r eo errs k fk =
+      peg_exec G (peg_not e v) i r eo errs k fk =
       peg_exec G e i r eo errs
-        (restoreEO eo (returnTo i r (addErr (sloc i) (peg_notFAIL G) fk)))
+        (restoreEO eo (returnTo i r (addErr (peg_sloc i) (peg_notFAIL G) fk)))
         (restoreEO eo (returnTo i (CONS (SOME v) r) (dropErr k)))) /\
    (!(G:(A,B,C,E)peg) e lf i r eo errs k fk.
-      peg_exec G (rpt e lf) i r eo errs k fk =
+      peg_exec G (peg_rpt e lf) i r eo errs k fk =
       peg_exec G e i (CONS NONE r) eo errs (restoreEO eo (listsym e lf k))
         (poplist lf k)) /\
    (!(G:(A,B,C,E)peg) err i r eo errs k fk.
-      peg_exec G (error err) i r eo errs k fk =
-      applykont G fk i r (optmax MAXerr eo (SOME (sloc i, err)))
-        (CONS (sloc i, err) errs))`,
+      peg_exec G (peg_error err) i r eo errs k fk =
+      applykont G fk i r (optmax MAXerr eo (SOME (peg_sloc i, err)))
+        (CONS (peg_sloc i, err) errs))`,
   REPEAT CONJ_TAC THEN LPARSEAUX_EXEC_TAC THEN
   TRY(COND_CASES_TAC THEN REWRITE_TAC[]));;
 
 let peg_nt_thm = prove
  (`!(G:(A,B,C,E)peg) n nfn i r eo errs k fk.
-     peg_exec G (nt n nfn) i r eo errs k fk =
+     peg_exec G (peg_nt n nfn) i r eo errs k fk =
      if n IN FDOM (peg_rules G)
      then peg_exec G (FAPPLY (peg_rules G) n) i r eo errs (appf1 nfn k) fk
      else Looped`,
@@ -322,11 +323,11 @@ let applykont_thm = prove
       applykont G (cmpErrs k) i r eo (CONS (l1,er1) (CONS (l2,er2) errs)) =
       applykont G k i r eo
         (CONS (if locsle l2 l1 then (l1,er1) else (l2,er2)) errs)) /\
-   (!(G:(A,B,C,E)peg) i eo errs. applykont G done i [] eo errs = Looped) /\
+   (!(G:(A,B,C,E)peg) i eo errs. applykont G pegexec_done i [] eo errs = Looped) /\
    (!(G:(A,B,C,E)peg) i rs eo errs.
-      applykont G done i (CONS NONE rs) eo errs = Looped) /\
+      applykont G pegexec_done i (CONS NONE rs) eo errs = Looped) /\
    (!(G:(A,B,C,E)peg) i rv rs eo errs.
-      applykont G done i (CONS (SOME rv) rs) eo errs = Result (peg_Success i rv eo)) /\
+      applykont G pegexec_done i (CONS (SOME rv) rs) eo errs = Result (peg_Success i rv eo)) /\
    (!(G:(A,B,C,E)peg) i r eo. applykont G failed i r eo [] = Looped) /\
    (!(G:(A,B,C,E)peg) i r eo l e errs.
       applykont G failed i r eo (CONS (l,e) errs) = Result (Failure l e)) /\
@@ -401,7 +402,7 @@ let LPARSEAUX_EC_RWS =
   LPARSEAUX_RESULT_RWS;;
 
 let LPARSEAUX_EXEC_FIN_RWS =
-  [peg_exec_thm; peg_nt_thm; applykont_thm; LPARSEAUX_OME_NONE; sloc_def;
+  [peg_exec_thm; peg_nt_thm; applykont_thm; LPARSEAUX_OME_NONE; peg_sloc_def;
    o_THM; LPARSEAUX_OME_ASSOC; LPARSEAUX_poplistval; APPEND_NIL];;
 
 let LPARSEAUX_EC_NT_TAC : tactic =
@@ -483,7 +484,7 @@ let exec_correct = prove
 let pegexec_succeeds = prove
  (`!(G:(A,B,C,E)peg) i e j v eo eo0.
      peg_eval G (i,e) (peg_Success j v eo) ==>
-     peg_exec G e i [] eo0 [] done failed =
+     peg_exec G e i [] eo0 [] pegexec_done failed =
      Result (peg_Success j v (optmax MAXerr eo0 eo))`,
   REPEAT STRIP_TAC THEN
   FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP (CONJUNCT1 (SPEC_ALL exec_correct)) th]) THEN
@@ -492,7 +493,7 @@ let pegexec_succeeds = prove
 let pegexec_fails = prove
  (`!(G:(A,B,C,E)peg) i e eo l err.
      peg_eval G (i,e) (Failure l err) ==>
-     peg_exec G e i [] eo [] done failed = Result (Failure l err)`,
+     peg_exec G e i [] eo [] pegexec_done failed = Result (Failure l err)`,
   REPEAT STRIP_TAC THEN
   FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP
     (CONJUNCT1(CONJUNCT2 (SPEC_ALL exec_correct))) th]) THEN
@@ -500,7 +501,7 @@ let pegexec_fails = prove
 
 let pegexec = prove
  (`!(G:(A,B,C,E)peg) s e r.
-     peg_eval G (s,e) r ==> peg_exec G e s [] NONE [] done failed = Result r`,
+     peg_eval G (s,e) r ==> peg_exec G e s [] NONE [] pegexec_done failed = Result r`,
   REPEAT GEN_TAC THEN
   STRUCT_CASES_TAC(ISPEC `r:((A#locs)list,C,E)pegresult` pegresult_nchotomy) THEN
   DISCH_TAC THENL
@@ -511,7 +512,7 @@ let pegexec = prove
 let peg_eval_executed = prove
  (`!(G:(A,B,C,E)peg) e s r.
      wfG G /\ e IN Gexprs G ==>
-     (peg_eval G (s,e) r <=> peg_exec G e s [] NONE [] done failed = Result r)`,
+     (peg_eval G (s,e) r <=> peg_exec G e s [] NONE [] pegexec_done failed = Result r)`,
   REPEAT STRIP_TAC THEN EQ_TAC THENL [MESON_TAC[pegexec]; ALL_TAC] THEN
   DISCH_TAC THEN
   MP_TAC(SPEC `G:(A,B,C,E)peg` peg_eval_total) THEN ASM_REWRITE_TAC[] THEN
@@ -534,7 +535,7 @@ let pegexec_destResult_def = new_recursive_definition evalcase_RECURSION
 let pegparse_def = cake_def
   `pegparse (G:(A,B,C,E)peg) s =
      if wfG G then
-       match pegexec_destResult (peg_exec G (peg_start G) s [] NONE [] done failed)
+       match pegexec_destResult (peg_exec G (peg_start G) s [] NONE [] pegexec_done failed)
        with peg_Success s v eo -> SOME (s,v,eo)
           | u1 -> NONE
      else NONE`;;
@@ -580,20 +581,20 @@ let pegparse_eq_NONE = prove
 
 let peg_exec_total = prove
  (`!(G:(A,B,C,E)peg) i.
-     wfG G ==> ?r. peg_exec G (peg_start G) i [] NONE [] done failed = Result r`,
+     wfG G ==> ?r. peg_exec G (peg_start G) i [] NONE [] pegexec_done failed = Result r`,
   MESON_TAC[LPARSEAUX_peg_eval_start; pegexec]);;
 
 let coreloop_total = prove
  (`!(G:(A,B,C,E)peg) i.
      wfG G ==>
-     ?r. coreloop G (EV (peg_start G) i [] NONE [] done failed) = SOME (Result r)`,
+     ?r. coreloop G (EV (peg_start G) i [] NONE [] pegexec_done failed) = SOME (Result r)`,
   REPEAT STRIP_TAC THEN
   FIRST_ASSUM(X_CHOOSE_TAC `r:((A#locs)list,C,E)pegresult` o
     SPEC `i:(A#locs)list` o MATCH_MP peg_exec_total) THEN
   EXISTS_TAC `r:((A#locs)list,C,E)pegresult` THEN
   POP_ASSUM MP_TAC THEN REWRITE_TAC[peg_exec_def] THEN
   STRUCT_CASES_TAC(ISPEC
-    `coreloop (G:(A,B,C,E)peg) (EV (peg_start G) i [] NONE [] done failed)`
+    `coreloop (G:(A,B,C,E)peg) (EV (peg_start G) i [] NONE [] pegexec_done failed)`
     LPARSEAUX_option_nchotomy) THEN
   REWRITE_TAC(option_INJ :: evalcase_distinct :: LPARSEAUX_CASE_RWS));;
 

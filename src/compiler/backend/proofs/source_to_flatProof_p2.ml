@@ -15,8 +15,8 @@ type_invention_error := true;;
 
 (* proof tools of this part (OCaml helpers, FLATP2AUX_)                      *)
 
-(* FLATP2 proof helpers: split a conjunction into labelled assumptions; the  *)
-(* labels of the conjuncts of invariant_def                                   *)
+(* Proof helpers: split a conjunction into labelled assumptions; the         *)
+(* labels of the conjuncts of source_to_flatProof_invariant_def               *)
 let rec FLATP2AUX_LABEL_CONJS (ls:string list) : thm_tactic = fun th ->
   match ls with
     [] -> ALL_TAC
@@ -30,7 +30,7 @@ let FLATP2AUX_INV_LABELS =
 
 let FLATP2AUX_INV_TAC (lab:string) : tactic =
   USE_THEN lab (FLATP2AUX_LABEL_CONJS FLATP2AUX_INV_LABELS o
-                REWRITE_RULE[invariant_def]);;
+                REWRITE_RULE[source_to_flatProof_invariant_def]);;
 
 (* nested X_CHOOSE_THEN with the given variables *)
 let FLATP2AUX_CHOOSE_THEN (vs:term list) (ttac:thm_tactic) : thm_tactic =
@@ -57,10 +57,10 @@ let FLATP2AUX_LIST_SPLIT_TAC (l:term) (h:term) (t:term) : tactic =
   DISCH_THEN(DISJ_CASES_THEN2 SUBST1_TAC
     (X_CHOOSE_THEN h (X_CHOOSE_THEN t SUBST1_TAC)));;
 
-(* the conjuncts of invariant_def of assumption lab, labelled with prefix p *)
+(* the conjuncts of source_to_flatProof_invariant_def of assumption lab, labelled with prefix p *)
 let FLATP2AUX_INV_TAC_P (lab:string) (p:string) : tactic =
   USE_THEN lab (FLATP2AUX_LABEL_CONJS (map (fun l -> p ^ l) FLATP2AUX_INV_LABELS) o
-                REWRITE_RULE[invariant_def]);;
+                REWRITE_RULE[source_to_flatProof_invariant_def]);;
 (* case split of a result variable r into Rval v / Rerr e (substituted) *)
 let FLATP2AUX_RESULT_CASES_TAC (r:term) (v:term) (e:term) : tactic =
   MP_TAC(ISPEC r (cases "result")) THEN
@@ -566,7 +566,7 @@ let FLATP2AUX_ALL2_6 = prove
     STRIP_TAC THEN ASM_REWRITE_TAC[] THEN SIMP[CONS_11]]);;
 
 let FLATP2AUX_subspt_insert = prove
- (`!t n (x:A). domain t SUBSET count n ==> subspt t (insert n x t)`,
+ (`!t n (x:A). domain t SUBSET pred_set_count n ==> subspt t (insert n x t)`,
   REWRITE_TAC[subspt_lookup; lookup_insert; SUBSET; IN_COUNT] THEN
   REPEAT STRIP_TAC THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
   FIRST_X_ASSUM SUBST_ALL_TAC THEN
@@ -628,7 +628,7 @@ let FLATP2AUX_inc_compile_prog_eq = prove
 let do_eval = prove
  (CASE_TERM `!vs' vs s env decs eval_state interp g gen genv idxs t.
      do_eval vs (state_eval_state s) = SOME (env, decs, eval_state) /\
-         invariant (interp:(v->(source_to_flat_config#C)option)option) g gen genv idxs
+         source_to_flatProof_invariant (interp:(v->(source_to_flat_config#C)option)option) g gen genv idxs
            (s:(FFI)state) (t:(C,FFI)flat_state) /\
          ALL2 (source_to_flatProof_v_rel genv) vs vs'
          ==> ?genv' env_id c decs' eval_config' c' idx end_idx other.
@@ -638,7 +638,7 @@ let do_eval = prove
                LENGTH vs' = 6 /\
                inc_compile_prog env_id c decs = (c', decs') /\
                ~(decs' = []) /\
-               invariant interp g
+               source_to_flatProof_invariant interp g
                  (environment_generation_store_REC 0
                     (environment_store_next (source_to_flat_config_envs c)) LN)
                  genv'
@@ -796,7 +796,7 @@ X_GEN_TAC `vs':flat_v list` THEN REPEAT GEN_TAC THEN
   SUBGOAL_THEN `DROP 4 [w1:flat_v; w2; w3; w4; w5; w6] = [w5; w6]` SUBST1_TAC THENL
    [REWRITE_TAC[ARITH_RULE `4 = SUC(SUC(SUC(SUC 0)))`; DROP]; ALL_TAC] THEN
   FLATP2AUX_LREWRITE_TAC ["fde"; "decs"; "s_inc"; "es'"]
-    [LENGTH; ARITH; invariant_def; ARITH_RULE `SUC 0 = 1`] THEN
+    [LENGTH; ARITH; source_to_flatProof_invariant_def; ARITH_RULE `SUC 0 = 1`] THEN
   SIMP_NOASM[] THEN REPEAT CONJ_TAC THENL
    [(* 1 nonempty *)
     USE_THEN "s_inc" (ACCEPT_TAC o MATCH_MP inc_compile_prog_nonempty);
@@ -950,10 +950,10 @@ let FLATP2AUX_invs_generation = prove
 (* HOL4 line 3409 *)
 let invariant_end_eval = prove
  (CASE_TERM `!interp g gen' genv x end_idx1 idx end_idx other st st' gen prev_genv prev_st prev_st' begin_eval_state.
-     invariant (interp:(v->(source_to_flat_config#C)option)option) g gen' genv
+     source_to_flatProof_invariant (interp:(v->(source_to_flat_config#C)option)option) g gen' genv
      (x, end_idx1, idx_block idx end_idx UNION other) (st:(FFI)state)
      (st':(C,FFI)flat_state) /\
-   invariant interp g gen prev_genv (idx, end_idx, other) (prev_st:(FFI)state)
+   source_to_flatProof_invariant interp g gen prev_genv (idx, end_idx, other) (prev_st:(FFI)state)
      (prev_st':(C,FFI)flat_state) /\
    orac_forward_rel interp begin_eval_state (state_eval_state st) /\
    idx_prev end_idx end_idx1 /\
@@ -965,7 +965,7 @@ let invariant_end_eval = prove
              eval_oracle_state_generation s' =
                eval_oracle_state_generation (add_env_generation s)
     | _ -> F)
-   ==> invariant interp g gen genv (idx, end_idx, other)
+   ==> source_to_flatProof_invariant interp g gen genv (idx, end_idx, other)
          (state_eval_state_fupd
             (K (reset_env_generation (state_eval_state prev_st) (state_eval_state st))) st)
          st' /\
@@ -1023,7 +1023,7 @@ REPEAT GEN_TAC THEN
     ALL_TAC] THEN
   REPEAT CONJ_TAC THENL
    [(* the invariant *)
-    REWRITE_TAC[invariant_def; src_orac_invs_def] THEN
+    REWRITE_TAC[source_to_flatProof_invariant_def; src_orac_invs_def] THEN
     SIMP_NOASM[FLATP2AUX_invs_generation; FLATP2AUX_next_cfg_generation] THEN
     REPEAT CONJ_TAC THENL
      [USE_THEN "a_c_ok" ACCEPT_TAC;
@@ -1184,7 +1184,7 @@ let FLATP2AUX_s_rel_weak = prove
 
 let FLATP2AUX_invariant_genv_ext = prove
  (`!interp g gen genv genv' idx idx' end_idx os (st:(FFI)state) st1 (s_i1:(C,FFI)flat_state).
-     invariant (interp:(v->(source_to_flat_config#C)option)option) g gen genv
+     source_to_flatProof_invariant (interp:(v->(source_to_flat_config#C)option)option) g gen genv
        (idx, end_idx, os) st s_i1 /\
      genv_c_ok (global_env_c genv') /\
      genv_c_tys_ok (global_env_c genv') (global_env_tys genv') /\
@@ -1195,12 +1195,12 @@ let FLATP2AUX_invariant_genv_ext = prove
      state_ffi st1 = state_ffi st /\ state_eval_state st1 = state_eval_state st /\
      idx_range_rel interp genv' (state_next_type_stamp st1) (state_next_exn_stamp st1)
        (state_eval_state st) (idx', end_idx, os)
-     ==> invariant interp g gen genv' (idx', end_idx, os) st1 s_i1`,
+     ==> source_to_flatProof_invariant interp g gen genv' (idx', end_idx, os) st1 s_i1`,
   REPEAT GEN_TAC THEN
   DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "inv")
     (FLATP2AUX_LABEL_CONJS ["cok"; "tok"; "sc"; "sy"; "sv"; "rf"; "cl"; "ff"; "es"; "ir"])) THEN
   FLATP2AUX_INV_TAC "inv" THEN
-  REWRITE_TAC[invariant_def] THEN
+  REWRITE_TAC[source_to_flatProof_invariant_def] THEN
   FLATP2AUX_LREWRITE_TAC ["cok"; "tok"; "es"; "ir"; "orac_rel"; "eval_ref"; "env_gen_inv"] [] THEN
   USE_THEN "sv" (fun th -> REWRITE_TAC[th]) THEN
   FLATP2AUX_LREWRITE_TAC ["globals"; "fin_idx"] [] THEN
@@ -1220,15 +1220,6 @@ let FLATP2AUX_idx_block_type = prove
     IN_ELIM_THM; FORALL_PAIR_THM; PAIR_EQ] THEN
   SIMP_NOASM[] THEN REPEAT GEN_TAC THEN
   CASES_ON `p2:idx_types` THEN REWRITE_TAC[distinctness "idx_types"] THEN ARITH_TAC);;
-
-let FLATP2AUX_FRANGE_FUNION_IMP = prove
- (`!(a:(K,V)fmap) b x. x IN FRANGE (FUNION a b) ==> x IN FRANGE a \/ x IN FRANGE b`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[FRANGE_FLOOKUP; FLOOKUP_FUNION] THEN
-  DISCH_THEN(X_CHOOSE_THEN `k:K` MP_TAC) THEN
-  MP_TAC(ISPEC `FLOOKUP (a:(K,V)fmap) k` (cases "option")) THEN
-  DISCH_THEN(DISJ_CASES_THEN2 (fun th -> REWRITE_TAC[th])
-    (X_CHOOSE_THEN `y:V` (fun th -> REWRITE_TAC[th] THEN ASSUME_TAC th))) THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[injectivity "option"] THEN ASM_MESON_TAC[]);;
 
 let FLATP2AUX_genv_alloc_type = prove
  (`!genv t c_ext tys_ext.
@@ -1303,14 +1294,14 @@ let FLATP2AUX_idx_range_type = prove
     USE_THEN "lt" MP_TAC THEN MESON_TAC[LE_REFL];
     MAP_EVERY X_GEN_TAC [`cn:mlstring`; `t:num`] THEN DISCH_THEN(LABEL_TAC "ge") THEN
     DISCH_THEN(DISJ_CASES_THEN2 (LABEL_TAC "inr") (LABEL_TAC "inx") o
-               MATCH_MP FLATP2AUX_FRANGE_FUNION_IMP) THENL
+               MATCH_MP FMAPAUX_IN_FRANGE_FUNION) THENL
      [USE_THEN "ts" (MP_TAC o SPECL [`cn:mlstring`; `t:num`]) THEN
       FLATP2AUX_LREWRITE_TAC ["inr"] [] THEN USE_THEN "ge" MP_TAC THEN ARITH_TAC;
       USE_THEN "inx" (fun th -> USE_THEN "rg" (MP_TAC o C MATCH_MP th)) THEN
       REWRITE_TAC[injectivity "stamp"] THEN USE_THEN "ge" MP_TAC THEN ARITH_TAC];
     X_GEN_TAC `cn:num` THEN DISCH_THEN(LABEL_TAC "ge") THEN
     DISCH_THEN(DISJ_CASES_THEN2 (LABEL_TAC "inr") (LABEL_TAC "inx") o
-               MATCH_MP FLATP2AUX_FRANGE_FUNION_IMP) THENL
+               MATCH_MP FMAPAUX_IN_FRANGE_FUNION) THENL
      [USE_THEN "en" (MP_TAC o SPEC `cn:num`) THEN FLATP2AUX_LREWRITE_TAC ["inr"; "ge"] [];
       USE_THEN "inx" (fun th -> USE_THEN "rg" (MP_TAC o C MATCH_MP th)) THEN
       REWRITE_TAC[distinctness "stamp"]]]);;
@@ -1556,7 +1547,7 @@ let FLATP2AUX_idx_range_type_fresh = prove
 let alloc_tags_invariant = prove
  (`!idx ctors ns cids interp g gen genv end_idx os st st' comp_map env.
      alloc_tags (next_indices_tidx idx) (ctors:(mlstring # ast_t list) list) = (ns, cids) /\
-   invariant (interp:(v->(source_to_flat_config#C)option)option) g gen genv
+   source_to_flatProof_invariant (interp:(v->(source_to_flat_config#C)option)option) g gen genv
      (idx, end_idx, os) (st:(FFI)state) (st':(C,FFI)flat_state) /\
    global_env_inv genv comp_map {} env /\
    ALL_DISTINCT (MAP FST ctors) /\
@@ -1565,7 +1556,7 @@ let alloc_tags_invariant = prove
          global_env_c genv SUBMAP global_env_c genv' /\
          global_env_tys genv SUBMAP global_env_tys genv' /\
          global_env_v genv' = global_env_v genv /\
-         invariant interp g gen genv'
+         source_to_flatProof_invariant interp g gen genv'
            (next_indices_tidx_fupd (K (next_indices_tidx idx + 1)) idx, end_idx, os)
            (state_next_type_stamp_fupd (K (state_next_type_stamp st + 1)) st) st' /\
          (let build_env = sem_env_REC nsEmpty
@@ -1696,10 +1687,10 @@ let nsLookup_nsBind_If = prove
 (* HOL4 line 3721 *)
 let invariant_IMP_s_rel = prove
  (`!interp g gen genv idx st st'.
-     invariant (interp:(v->(source_to_flat_config#C)option)option) g gen genv idx
+     source_to_flatProof_invariant (interp:(v->(source_to_flat_config#C)option)option) g gen genv idx
      (st:(FFI)state) (st':(C,FFI)flat_state)
    ==> source_to_flatProof_s_rel genv st st'`,
-  SIMP_TAC[invariant_def]);;
+  SIMP_TAC[source_to_flatProof_invariant_def]);;
 
 (* HOL4 line 3727 *)
 let source_to_flatProof_abort_def = cake_def
@@ -1735,12 +1726,12 @@ let _ = cake_add_simps [source_to_flatProof_abort_simps];;
 (* HOL4 line 4040 *)
 let invariant_change_eval_ref = prove
  (`!interp g gen genv idxs st st' y.
-     invariant (interp:(v->(source_to_flat_config#C)option)option) g gen genv idxs
+     source_to_flatProof_invariant (interp:(v->(source_to_flat_config#C)option)option) g gen genv idxs
      (st:(FFI)state) (st':(C,FFI)flat_state)
-   ==> invariant interp g gen genv idxs st
+   ==> source_to_flatProof_invariant interp g gen genv idxs st
          (flat_state_refs_fupd (K (CONS (Refv y) (TL (flat_state_refs st')))) st')`,
   REPEAT GEN_TAC THEN
-  REWRITE_TAC[invariant_def; source_to_flatProof_s_rel_cases; eval_ref_inv_def] THEN
+  REWRITE_TAC[source_to_flatProof_invariant_def; source_to_flatProof_s_rel_cases; eval_ref_inv_def] THEN
   SIMP_NOASM[NULL; TL; TAKE_def; ARITH_RULE `~(1 = 0)`; ARITH_RULE `1 - 1 = 0`] THEN
   MESON_TAC[]);;
 
@@ -1785,7 +1776,7 @@ let FLATP2AUX_eval_ref_inv_cons = prove
 let declare_env_store_env_id = prove
  (CASE_TERM `!st env x es2 interp g gen genv idxs s_i1 gen_id id.
      declare_env (state_eval_state st) env = SOME (x, es2) /\
-   invariant (interp:(v->(source_to_flat_config#C)option)option) g gen genv idxs
+   source_to_flatProof_invariant (interp:(v->(source_to_flat_config#C)option)option) g gen genv idxs
      (st:(FFI)state) (s_i1:(C,FFI)flat_state) /\
    env_gen_rel gen (state_eval_state st) /\
    gen_id = environment_generation_store_generation gen /\
@@ -1801,7 +1792,7 @@ let declare_env_store_env_id = prove
    ==> ?y. flat_evaluate_decs s_i1 [store_env_id gen_id id] =
              (flat_state_refs_fupd (K (CONS (Refv y) (TL (flat_state_refs s_i1)))) s_i1,
               NONE) /\
-           invariant interp g
+           source_to_flatProof_invariant interp g
              (environment_generation_store_next_fupd
                 (K (environment_generation_store_next gen + 1)) gen)
              genv idxs (state_eval_state_fupd (K es2) st) s_i1 /\
@@ -1848,7 +1839,7 @@ REPEAT GEN_TAC THEN
     MAP_EVERY EXISTS_TAC [`xs:(flat_v option)list`; `v0:flat_v`] THEN
     FLATP2AUX_LREWRITE_TAC ["gl"; "rf"] [];
     (* the invariant *)
-    REWRITE_TAC[invariant_def; src_orac_invs_def] THEN
+    REWRITE_TAC[source_to_flatProof_invariant_def; src_orac_invs_def] THEN
     SIMP_NOASM[FLATP2AUX_invs_envs] THEN REPEAT CONJ_TAC THENL
      [USE_THEN "c_ok" ACCEPT_TAC;
       USE_THEN "tys_ok" ACCEPT_TAC;
@@ -1955,10 +1946,10 @@ let abort_compile_dec_result = prove
 (* HOL4 line 4714 *)
 let invariant_env_gen_inv = prove
  (`!interp g gen genv idx end_idx os s s_i1.
-     invariant (interp:(v->(source_to_flat_config#C)option)option) g gen genv
+     source_to_flatProof_invariant (interp:(v->(source_to_flat_config#C)option)option) g gen genv
      (idx,end_idx,os) (s:(FFI)state) (s_i1:(C,FFI)flat_state)
    ==> env_gen_inv gen`,
-  SIMP_TAC[invariant_def]);;
+  SIMP_TAC[source_to_flatProof_invariant_def]);;
 
 (* HOL4 line 4722 *)
 let compile_decs_future_rel = prove
@@ -2008,7 +1999,7 @@ let FLATP2AUX_cc_goal = `!interp g.
      (!(s:(FFI)state) env es s' r genv comp_map env_i1 (s_i1:(C,FFI)flat_state) es_i1
       locals t ts gen idxs.
       evaluate s env es = (s', r) /\
-      invariant (interp:(v->(source_to_flat_config#C)option)option) g gen genv idxs
+      source_to_flatProof_invariant (interp:(v->(source_to_flat_config#C)option)option) g gen genv idxs
         s s_i1 /\
       env_all_rel genv comp_map env env_i1 locals /\
       LENGTH ts = LENGTH locals /\
@@ -2023,7 +2014,7 @@ let FLATP2AUX_cc_goal = `!interp g.
             source_to_flatProof_result_rel (ALL2 o source_to_flatProof_v_rel) genv' r r_i1 /\
             source_to_flatProof_s_rel genv' s' s'_i1 /\
             (~source_to_flatProof_abort r
-             ==> invariant interp g gen genv' idxs s' s'_i1 /\
+             ==> source_to_flatProof_invariant interp g gen genv' idxs s' s'_i1 /\
                  env_gen_rel gen (state_eval_state s') /\
                  orac_forward_rel interp (state_eval_state s) (state_eval_state s') /\
                  global_env_c genv SUBMAP global_env_c genv' /\
@@ -2032,7 +2023,7 @@ let FLATP2AUX_cc_goal = `!interp g.
    (!(s:(FFI)state) env v pes err_v genv comp_map s' r env_i1 (s_i1:(C,FFI)flat_state)
       v_i1 pes_i1 err_v_i1 locals t ts gen idxs.
       evaluate_match s env v pes err_v = (s', r) /\
-      invariant interp g gen genv idxs s s_i1 /\
+      source_to_flatProof_invariant interp g gen genv idxs s s_i1 /\
       env_all_rel genv comp_map env env_i1 locals /\
       source_to_flatProof_v_rel genv v v_i1 /\
       LENGTH ts = LENGTH locals /\
@@ -2049,7 +2040,7 @@ let FLATP2AUX_cc_goal = `!interp g.
             source_to_flatProof_result_rel (ALL2 o source_to_flatProof_v_rel) genv' r r_i1 /\
             source_to_flatProof_s_rel genv' s' s'_i1 /\
             (~source_to_flatProof_abort r
-             ==> invariant interp g gen genv' idxs s' s'_i1 /\
+             ==> source_to_flatProof_invariant interp g gen genv' idxs s' s'_i1 /\
                  env_gen_rel gen (state_eval_state s') /\
                  orac_forward_rel interp (state_eval_state s) (state_eval_state s') /\
                  global_env_c genv SUBMAP global_env_c genv' /\
@@ -2058,7 +2049,7 @@ let FLATP2AUX_cc_goal = `!interp g.
    (!(s:(FFI)state) env ds s' r path t idx end_idx os comp_map
       (s_i1:(C,FFI)flat_state) idx' comp_map' ds_i1 t' genv gen gen'.
       evaluate_decs s env ds = (s', r) /\
-      invariant interp g gen genv (idx, end_idx, os) s s_i1 /\
+      source_to_flatProof_invariant interp g gen genv (idx, end_idx, os) s s_i1 /\
       source_to_flat_compile_decs path t idx comp_map gen ds =
         (t', idx', comp_map', gen', ds_i1) /\
       global_env_inv genv comp_map {} env /\
@@ -2070,7 +2061,7 @@ let FLATP2AUX_cc_goal = `!interp g.
             flat_evaluate_decs s_i1 ds_i1 = (s1_i1, r_i1) /\
             source_to_flatProof_s_rel genv' s' s1_i1 /\
             (~source_to_flatProof_abort r
-             ==> invariant interp g gen' genv' (idx', end_idx, os) s' s1_i1 /\
+             ==> source_to_flatProof_invariant interp g gen' genv' (idx', end_idx, os) s' s1_i1 /\
                  orac_forward_rel interp (state_eval_state s) (state_eval_state s') /\
                  global_env_c genv SUBMAP global_env_c genv' /\
                  global_env_tys genv SUBMAP global_env_tys genv' /\
@@ -2695,7 +2686,7 @@ let FLATP2AUX_state_nts_eta = prove
 
 let FLATP2AUX_dtype_ind = prove
  (`!interp g gen end_idx os s_i1 comp_map env tds idx (st:(FFI)state) genv.
-     invariant (interp:(v->(source_to_flat_config#C)option)option) g gen genv
+     source_to_flatProof_invariant (interp:(v->(source_to_flat_config#C)option)option) g gen genv
        (idx, end_idx, os) st (s_i1:(C,FFI)flat_state) /\
      global_env_inv genv comp_map {} env /\
      ALL check_dup_ctors tds /\
@@ -2704,7 +2695,7 @@ let FLATP2AUX_dtype_ind = prove
            global_env_c genv SUBMAP global_env_c genv' /\
            global_env_tys genv SUBMAP global_env_tys genv' /\
            global_env_v genv' = global_env_v genv /\
-           invariant interp g gen genv'
+           source_to_flatProof_invariant interp g gen genv'
              (next_indices_tidx_fupd (K (next_indices_tidx idx + LENGTH tds)) idx, end_idx, os)
              (state_next_type_stamp_fupd (K (state_next_type_stamp st + LENGTH tds)) st) s_i1 /\
            global_env_inv genv'
@@ -3071,13 +3062,13 @@ let FLATP2AUX_App_simple = prove
      flat_evaluate env_i1 s_i1 (source_to_flat_compile_exps t cm (REVERSE es)) =
        (s1_i1, Rval vs_i1) /\
      ALL2 (source_to_flatProof_v_rel genv1) vs vs_i1 /\
-     invariant (interp:(v->(source_to_flat_config#C)option)option) g gen genv1 idxs st1 s1_i1
+     source_to_flatProof_invariant (interp:(v->(source_to_flat_config#C)option)option) g gen genv1 idxs st1 s1_i1
      ==> ?s'_i1 r_i1.
            flat_evaluate env_i1 s_i1 [source_to_flat_compile_exp t cm (App op es)] =
              (s'_i1, r_i1) /\
            source_to_flatProof_result_rel (ALL2 o source_to_flatProof_v_rel) genv1 r r_i1 /\
            source_to_flatProof_s_rel genv1 s' s'_i1 /\
-           invariant interp g gen genv1 idxs s' s'_i1 /\
+           source_to_flatProof_invariant interp g gen genv1 idxs s' s'_i1 /\
            state_eval_state s' = state_eval_state st1`,
   REPEAT GEN_TAC THEN
   DISCH_THEN(FLATP2AUX_LABEL_CONJS ["ev1"; "ev"; "nte"; "cls"; "na"; "ne"; "fe1"; "vr"; "inv"]) THEN
@@ -3126,7 +3117,7 @@ let FLATP2AUX_App_simple = prove
     FLATP2AUX_LREWRITE_TAC ["nn2"; "scl"] [] THEN MESON_TAC[];
     ALL_TAC] THEN
   FLATP2AUX_LREWRITE_TAC ["sr2"] [] THEN
-  REWRITE_TAC[invariant_def; state_INFO.ri_accfupds] THEN
+  REWRITE_TAC[source_to_flatProof_invariant_def; state_INFO.ri_accfupds] THEN
   USE_THEN "fda" (LABEL_TAC "dsu" o MATCH_MP do_app_state_unchanged) THEN
   FLATP2AUX_LREWRITE_TAC ["c_ok"; "tys_ok"; "sr2"; "idx_range"; "src_orac"; "env_gen_inv"] [] THEN
   USE_THEN "gl2" (fun th -> REWRITE_TAC[GSYM th]) THEN
@@ -3211,13 +3202,13 @@ let FLATP2AUX_App_alloc = prove
      flat_evaluate env_i1 s_i1 (source_to_flat_compile_exps t cm (REVERSE es)) =
        (s1_i1, Rval vs_i1) /\
      ALL2 (source_to_flatProof_v_rel genv1) vs vs_i1 /\
-     invariant (interp:(v->(source_to_flat_config#C)option)option) g gen genv1 idxs st1 s1_i1
+     source_to_flatProof_invariant (interp:(v->(source_to_flat_config#C)option)option) g gen genv1 idxs st1 s1_i1
      ==> ?s'_i1 r_i1.
            flat_evaluate env_i1 s_i1 [source_to_flat_compile_exp t cm (App AallocEmpty es)] =
              (s'_i1, r_i1) /\
            source_to_flatProof_result_rel (ALL2 o source_to_flatProof_v_rel) genv1 r r_i1 /\
            source_to_flatProof_s_rel genv1 s' s'_i1 /\
-           invariant interp g gen genv1 idxs s' s'_i1 /\
+           source_to_flatProof_invariant interp g gen genv1 idxs s' s'_i1 /\
            state_eval_state s' = state_eval_state st1`,
   REPEAT GEN_TAC THEN
   DISCH_THEN(FLATP2AUX_LABEL_CONJS ["ev1"; "ev"; "nte"; "fe1"; "vr"; "inv"]) THEN
@@ -3263,7 +3254,7 @@ let FLATP2AUX_App_alloc = prove
     (LABEL_TAC "sr2") THENL
    [USE_THEN "s_rel" (ACCEPT_TAC o MATCH_MP FLATP2AUX_s_rel_alloc); ALL_TAC] THEN
   FLATP2AUX_LREWRITE_TAC ["sr2"] [state_INFO.ri_accfupds] THEN
-  REWRITE_TAC[invariant_def; state_INFO.ri_accfupds; flat_state_INFO.ri_accfupds; K_THM] THEN
+  REWRITE_TAC[source_to_flatProof_invariant_def; state_INFO.ri_accfupds; flat_state_INFO.ri_accfupds; K_THM] THEN
   FLATP2AUX_LREWRITE_TAC ["c_ok"; "tys_ok"; "sr2"; "idx_range"; "src_orac"; "orac_rel";
     "globals"; "env_gen_inv"; "fin_idx"] [] THEN
   USE_THEN "s_rel" (MP_TAC o CONJUNCT1 o REWRITE_RULE[source_to_flatProof_s_rel_cases]) THEN
@@ -3485,16 +3476,16 @@ let FLATP2AUX_ALL2_v_rel_weak = prove
   EXISTS_TAC `genv:global_env` THEN ASM_REWRITE_TAC[]);;
 let FLATP2AUX_invariant_refs = prove
  (`!interp g gen genv idxs (st:(FFI)state) (s_i1:(C,FFI)flat_state) refs refs'.
-     invariant (interp:(v->(source_to_flat_config#C)option)option) g gen genv idxs st s_i1 /\
+     source_to_flatProof_invariant (interp:(v->(source_to_flat_config#C)option)option) g gen genv idxs st s_i1 /\
      source_to_flatProof_s_rel genv (state_refs_fupd (K refs) st)
        (flat_state_refs_fupd (K refs') s_i1) /\
      TAKE 1 refs' = TAKE 1 (flat_state_refs s_i1)
-     ==> invariant interp g gen genv idxs (state_refs_fupd (K refs) st)
+     ==> source_to_flatProof_invariant interp g gen genv idxs (state_refs_fupd (K refs) st)
            (flat_state_refs_fupd (K refs') s_i1)`,
   REPEAT GEN_TAC THEN
   DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "inv") (CONJUNCTS_THEN2 (LABEL_TAC "sr") (LABEL_TAC "tk"))) THEN
   FLATP2AUX_INV_TAC "inv" THEN
-  REWRITE_TAC[invariant_def; state_INFO.ri_accfupds; flat_state_INFO.ri_accfupds; K_THM] THEN
+  REWRITE_TAC[source_to_flatProof_invariant_def; state_INFO.ri_accfupds; flat_state_INFO.ri_accfupds; K_THM] THEN
   FLATP2AUX_LREWRITE_TAC ["tk"] [] THEN
   FLATP2AUX_LREWRITE_TAC ["c_ok"; "tys_ok"; "sr"; "idx_range"; "src_orac"; "orac_rel"; "globals";
     "eval_ref"; "env_gen_inv"; "fin_idx"] []);;
@@ -3957,7 +3948,7 @@ let FLATP2AUX_cc_Var = prove
               source_to_flatProof_result_rel (ALL2 o source_to_flatProof_v_rel) genv'
                 (Rval [v]) r_i1 /\
               source_to_flatProof_s_rel genv' s' s'_i1 /\
-              invariant interp g gen genv' idxs s' s'_i1 /\
+              source_to_flatProof_invariant interp g gen genv' idxs s' s'_i1 /\
               env_gen_rel gen (state_eval_state s') /\
               orac_forward_rel interp (state_eval_state s') (state_eval_state s') /\
               global_env_c genv SUBMAP global_env_c genv' /\
@@ -5009,7 +5000,7 @@ let FLATP2AUX_cc_Dlet = prove
         USE_THEN "gei" (ACCEPT_TAC o MATCH_MP FLATP2AUX_env_all_rel_nil);
         ALL_TAC] THEN
       MP_TAC(SPEC `p:pat` (MATCH_MP pmatch_invariant (end_itlist CONJ
-        [ASSUME `invariant interp g gen genv1 (idx,end_idx,os) (st1:(FFI)state)
+        [ASSUME `source_to_flatProof_invariant interp g gen genv1 (idx,end_idx,os) (st1:(FFI)state)
                    (s1_i1:(C,FFI)flat_state)`;
          ASSUME `env_all_rel genv1 comp_map env
                    (flat_environment_REC [] :(flat_v)flat_environment) []`;
@@ -5389,7 +5380,7 @@ let FLATP2AUX_cc_Denv = prove
   FLATP2AUX_LREWRITE_TAC ["sgl"] []) THEN
   CONJ_TAC THENL
   [CONJ_TAC THENL
-   [(REWRITE_TAC[invariant_def; src_orac_invs_def] THEN
+   [(REWRITE_TAC[source_to_flatProof_invariant_def; src_orac_invs_def] THEN
   REWRITE_TAC[global_env_INFO.ri_accfupds; K_THM; state_INFO.ri_accfupds;
               flat_state_INFO.ri_accfupds; FLATP2AUX_invs_envs] THEN
   FLATP2AUX_LREWRITE_TAC ["c_ok"; "tys_ok"; "sr'"; "orac_rel"] [] THEN
@@ -5938,7 +5929,7 @@ let FLATP2AUX_cc_App = prove
     ALL_TAC] THEN
   REWRITE_TAC[PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN2 (SUBST_ALL_TAC o SYM) (SUBST_ALL_TAC o SYM)) THEN
-  USE_THEN "inv2" (LABEL_TAC "sr2'" o CONJUNCT1 o CONJUNCT2 o CONJUNCT2 o REWRITE_RULE[invariant_def]) THEN
+  USE_THEN "inv2" (LABEL_TAC "sr2'" o CONJUNCT1 o CONJUNCT2 o CONJUNCT2 o REWRITE_RULE[source_to_flatProof_invariant_def]) THEN
   USE_THEN "sr2'" (FLATP2AUX_LABEL_CONJS ["nn2"; "srf2"; "scl2"; "sff2"] o
                    REWRITE_RULE[source_to_flatProof_s_rel_cases]) THEN
   MP_TAC(ISPECL [`genv2:global_env`; `vs:v list`; `vs1':flat_v list`;
@@ -6015,7 +6006,7 @@ let source_to_flatProof_compile_correct = prove
      (!(s:(FFI)state) env es s' r genv comp_map env_i1 (s_i1:(C,FFI)flat_state) es_i1
       locals t ts gen idxs.
       evaluate s env es = (s', r) /\
-      invariant (interp:(v->(source_to_flat_config#C)option)option) g gen genv idxs
+      source_to_flatProof_invariant (interp:(v->(source_to_flat_config#C)option)option) g gen genv idxs
         s s_i1 /\
       env_all_rel genv comp_map env env_i1 locals /\
       LENGTH ts = LENGTH locals /\
@@ -6030,7 +6021,7 @@ let source_to_flatProof_compile_correct = prove
             source_to_flatProof_result_rel (ALL2 o source_to_flatProof_v_rel) genv' r r_i1 /\
             source_to_flatProof_s_rel genv' s' s'_i1 /\
             (~source_to_flatProof_abort r
-             ==> invariant interp g gen genv' idxs s' s'_i1 /\
+             ==> source_to_flatProof_invariant interp g gen genv' idxs s' s'_i1 /\
                  env_gen_rel gen (state_eval_state s') /\
                  orac_forward_rel interp (state_eval_state s) (state_eval_state s') /\
                  global_env_c genv SUBMAP global_env_c genv' /\
@@ -6039,7 +6030,7 @@ let source_to_flatProof_compile_correct = prove
    (!(s:(FFI)state) env v pes err_v genv comp_map s' r env_i1 (s_i1:(C,FFI)flat_state)
       v_i1 pes_i1 err_v_i1 locals t ts gen idxs.
       evaluate_match s env v pes err_v = (s', r) /\
-      invariant interp g gen genv idxs s s_i1 /\
+      source_to_flatProof_invariant interp g gen genv idxs s s_i1 /\
       env_all_rel genv comp_map env env_i1 locals /\
       source_to_flatProof_v_rel genv v v_i1 /\
       LENGTH ts = LENGTH locals /\
@@ -6056,7 +6047,7 @@ let source_to_flatProof_compile_correct = prove
             source_to_flatProof_result_rel (ALL2 o source_to_flatProof_v_rel) genv' r r_i1 /\
             source_to_flatProof_s_rel genv' s' s'_i1 /\
             (~source_to_flatProof_abort r
-             ==> invariant interp g gen genv' idxs s' s'_i1 /\
+             ==> source_to_flatProof_invariant interp g gen genv' idxs s' s'_i1 /\
                  env_gen_rel gen (state_eval_state s') /\
                  orac_forward_rel interp (state_eval_state s) (state_eval_state s') /\
                  global_env_c genv SUBMAP global_env_c genv' /\
@@ -6065,7 +6056,7 @@ let source_to_flatProof_compile_correct = prove
    (!(s:(FFI)state) env ds s' r path t idx end_idx os comp_map
       (s_i1:(C,FFI)flat_state) idx' comp_map' ds_i1 t' genv gen gen'.
       evaluate_decs s env ds = (s', r) /\
-      invariant interp g gen genv (idx, end_idx, os) s s_i1 /\
+      source_to_flatProof_invariant interp g gen genv (idx, end_idx, os) s s_i1 /\
       source_to_flat_compile_decs path t idx comp_map gen ds =
         (t', idx', comp_map', gen', ds_i1) /\
       global_env_inv genv comp_map {} env /\
@@ -6077,7 +6068,7 @@ let source_to_flatProof_compile_correct = prove
             flat_evaluate_decs s_i1 ds_i1 = (s1_i1, r_i1) /\
             source_to_flatProof_s_rel genv' s' s1_i1 /\
             (~source_to_flatProof_abort r
-             ==> invariant interp g gen' genv' (idx', end_idx, os) s' s1_i1 /\
+             ==> source_to_flatProof_invariant interp g gen' genv' (idx', end_idx, os) s' s1_i1 /\
                  orac_forward_rel interp (state_eval_state s) (state_eval_state s') /\
                  global_env_c genv SUBMAP global_env_c genv' /\
                  global_env_tys genv SUBMAP global_env_tys genv' /\
@@ -6384,7 +6375,7 @@ let FLATP2AUX_compile_prog_cfg = prove
               environment_store_INFO.ri_accessors] THEN
   CONJ_TAC THENL [ASM_MESON_TAC[compile_decs_idx_prev]; ALL_TAC] THEN
   REWRITE_TAC[env_store_inv_def; environment_store_INFO.ri_accessors; domain_insert] THEN
-  REWRITE_TAC[INSERT_SUBSET; count_DEF; IN_ELIM_THM; SUBSET] THEN
+  REWRITE_TAC[INSERT_SUBSET; pred_set_count_DEF; IN_ELIM_THM; SUBSET] THEN
   MESON_TAC[ARITH_RULE `m < n ==> m < n + 1`; ARITH_RULE `n < n + 1`]);;
 
 (* HOL4 line 5365 *)
@@ -6395,7 +6386,7 @@ let invariant_begin_alloc_blanks = prove
    cfg' = FST (source_to_flat_compile_prog cfg prog) /\
    init_globs = CONS (SOME (flat_Loc T 0))
                   (REPLICATE (next_indices_vidx (source_to_flat_config_next cfg') - 1) NONE)
-   ==> invariant interp g
+   ==> source_to_flatProof_invariant interp g
          (environment_generation_store_REC 0
             (environment_store_next (source_to_flat_config_envs cfg)) LN)
          (global_env_v_fupd (K init_globs) init_genv)
@@ -6439,7 +6430,7 @@ let invariant_begin_alloc_blanks = prove
       REWRITE_TAC[empty_config_def; source_to_flat_config_INFO.ri_accessors;
         environment_store_INFO.ri_accessors] THEN ARITH_TAC];
     ALL_TAC] THEN
-  REWRITE_TAC[invariant_def; global_env_INFO.ri_accfupds; K_THM; flat_state_INFO.ri_accfupds;
+  REWRITE_TAC[source_to_flatProof_invariant_def; global_env_INFO.ri_accfupds; K_THM; flat_state_INFO.ri_accfupds;
     flat_initial_state_def; flat_state_INFO.ri_accessors] THEN
   REWRITE_TAC[init_genv_ok; init_genv_tys_ok] THEN
   REPEAT CONJ_TAC THENL
@@ -7164,7 +7155,7 @@ let source_to_flatProof_mem_size_lemma = prove
 
 (* HOL4 line 5794 *)
 let num_bindings_def = cake_def_wf
-  `measure dec_size`
+  `MEASURE dec_size`
   TERM_TAC
   `(num_bindings (Dlet _ p e) =
       match simple_dlet p e with SOME _ -> 0 | _ -> LENGTH (pat_bindings p)) /\

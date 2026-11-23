@@ -10,7 +10,8 @@
 (*   double quote, CHR 39 quote, CHR 92 backslash, CHR 95 underscore, ...;  *)
 (*   STRING c s is CONS c s; s1 ++ s2 is APPEND s1 s2; STRLEN is LENGTH.     *)
 (* - HOL4 let (a,b) = e in t is written match e with (a,b) -> t; the        *)
-(*   variable tok of next_sym is tk (tok is a constructor of peg.ml).        *)
+(*   variable tok of next_sym is tk (tok was a constructor of peg.ml, now    *)
+(*   peg_tok).                                                               *)
 (* - HOL4 l with col updated_by (+) n is locn_colupdate ((+) n) l.           *)
 (* - read_string_thm and skip_comment_thm are proved by induction on the    *)
 (*   length of the string (HOL4 uses the recursion induction theorems,      *)
@@ -108,7 +109,7 @@ let read_char_as_3digits_reduces = prove
   ASM_ARITH_TAC);;
 
 let read_string_def = cake_def_wf
-  `measure ((LENGTH:string->num) o (FST:string#string#locn->string))`
+  `MEASURE ((LENGTH:string->num) o (FST:string#string#locn->string))`
   (REWRITE_TAC[measure_THM; o_THM] THEN REPEAT STRIP_TAC THEN
    CASES_ON `str:string` THEN GVS[] THEN
    TRY (FIRST_X_ASSUM (MP_TAC o SEM2AUX_MATCH_EITHER read_char_as_3digits_reduces)) THEN
@@ -224,7 +225,7 @@ let read_Ident_ret_def = cake_def
      else (LongS (REVERSE acc) n,new_loc,rest)`;;
 
 let read_Ident_def = cake_def_wf
-  `measure ((LENGTH:string->num) o (FST:string#locn#string list->string))`
+  `MEASURE ((LENGTH:string->num) o (FST:string#locn#string list->string))`
   (REWRITE_TAC[measure_THM; o_THM] THEN REPEAT STRIP_TAC THEN
    FIRST_X_ASSUM (MP_TAC o SEM2AUX_MATCH_EITHER read_while_thm) THEN
    GVS[] THEN ARITH_TAC)
@@ -254,7 +255,7 @@ let read_Ident_ind = cake_ind "read_Ident";;
 (* next_sym reads the next symbol from a string, returning NONE if at eof *)
 
 let next_sym_def = cake_def_wf
-  `measure ((LENGTH:string->num) o (FST:string#locn->string))`
+  `MEASURE ((LENGTH:string->num) o (FST:string#locn->string))`
   (REWRITE_TAC[measure_THM; o_THM] THEN REPEAT STRIP_TAC THEN GVS[] THEN
    TRY (FIRST_X_ASSUM (MP_TAC o SEM2AUX_MATCH_EITHER skip_comment_thm)) THEN
    CASES_ON `str:string` THEN GVS[isPREFIX] THEN ASM_ARITH_TAC)
@@ -479,7 +480,7 @@ let next_token_LESS = prove
 (* top-level lexer specification *)
 
 let lexer_fun_aux_def = cake_def_wf
-  `measure ((LENGTH:string->num) o (FST:string#locn->string))`
+  `MEASURE ((LENGTH:string->num) o (FST:string#locn->string))`
   (REWRITE_TAC[measure_THM; o_THM] THEN REPEAT STRIP_TAC THEN GVS[] THEN
    FIRST_X_ASSUM (MP_TAC o SEM2AUX_MATCH_EITHER next_token_LESS) THEN SIMP[])
   `lexer_fun_aux input loc =
@@ -518,7 +519,7 @@ let toplevel_semi_dex_non0 = prove
   RW[] THEN RES_TAC THEN ASM_ARITH_TAC);;
 
 let split_top_level_semi_def = cake_def_wf
-  `measure (LENGTH:(token#A)list->num)`
+  `MEASURE (LENGTH:(token#A)list->num)`
   (REWRITE_TAC[measure_THM] THEN REPEAT STRIP_TAC THEN
    FIRST_ASSUM (ASSUME_TAC o SEM2AUX_MATCH_EITHER toplevel_semi_dex_non0) THEN
    CASES_ON `toks:(token#A)list` THEN

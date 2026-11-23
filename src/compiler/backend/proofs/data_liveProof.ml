@@ -563,16 +563,16 @@ let DATAPAUX_LIVE_rel_fields = prove
 
 let DATAPAUX_LIVE_cut_env = prove
  (`!(s:(C,FFI)data_state) t names (l:num_set) (l':num_set) env.
-     data_liveProof_state_rel s t l' /\ domain (inter names l) SUBSET domain l' /\
+     data_liveProof_state_rel s t l' /\ domain (sptree_inter names l) SUBSET domain l' /\
      data_cut_env names (data_state_locals s) = SOME env ==>
-     data_cut_env (inter names l) (data_state_locals t) =
-     SOME (mk_wf (inter (data_state_locals t) (inter names l))) /\
+     data_cut_env (sptree_inter names l) (data_state_locals t) =
+     SOME (mk_wf (sptree_inter (data_state_locals t) (sptree_inter names l))) /\
      (!x. x IN domain l ==>
-          lookup x env = lookup x (mk_wf (inter (data_state_locals t) (inter names l))))`,
+          lookup x env = lookup x (mk_wf (sptree_inter (data_state_locals t) (sptree_inter names l))))`,
   REPEAT GEN_TAC THEN REWRITE_TAC[data_cut_env_def] THEN
   COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT; option_INJ] THEN
   REPEAT STRIP_TAC THEN RVEQ_TAC THENL
-   [SUBGOAL_THEN `domain (inter (names:num_set) (l:num_set)) SUBSET
+   [SUBGOAL_THEN `domain (sptree_inter (names:num_set) (l:num_set)) SUBSET
                   domain (data_state_locals (t:(C,FFI)data_state))`
       (fun th -> REWRITE_TAC[th]) THEN
     REWRITE_TAC[SUBSET; domain_inter; IN_INTER] THEN X_GEN_TAC `x:num` THEN STRIP_TAC THEN
@@ -737,18 +737,18 @@ let DATAPAUX_LIVE_ASSIGN_SOME_TAC : tactic =
     [REWRITE_TAC[option_CASE; PAIR_EQ] THEN STRIP_TAC THEN RVEQ_TAC THEN FS[]; ALL_TAC] THEN
    ASM_REWRITE_TAC[option_CASE] THEN
    SUBGOAL_THEN
-     `data_cut_env (inter (a:num_set) (delete dest (l2:num_set))) (data_state_locals (t1:(C,FFI)data_state)) =
-      SOME (mk_wf (inter (data_state_locals t1) (inter a (delete dest l2))))`
+     `data_cut_env (sptree_inter (a:num_set) (delete dest (l2:num_set))) (data_state_locals (t1:(C,FFI)data_state)) =
+      SOME (mk_wf (sptree_inter (data_state_locals t1) (sptree_inter a (delete dest l2))))`
      SUBST1_TAC THENL
     [UNDISCH_TAC `data_cut_env (a:num_set) (data_state_locals (s:(C,FFI)data_state)) = SOME env` THEN
      REWRITE_TAC[data_cut_env_def] THEN COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT] THEN
      DISCH_TAC THEN
-     SUBGOAL_THEN `domain (inter (a:num_set) (delete dest (l2:num_set))) SUBSET
+     SUBGOAL_THEN `domain (sptree_inter (a:num_set) (delete dest (l2:num_set))) SUBSET
                    domain (data_state_locals (t1:(C,FFI)data_state))`
        (fun th -> REWRITE_TAC[th]) THEN
      REWRITE_TAC[SUBSET; domain_inter; IN_INTER] THEN X_GEN_TAC `x:num` THEN STRIP_TAC THEN
      MP_TAC(ISPECL [`s:(C,FFI)data_state`; `t1:(C,FFI)data_state`;
-                    `list_insert args (inter (a:num_set) (delete dest (l2:num_set)))`; `x:num`]
+                    `list_insert args (sptree_inter (a:num_set) (delete dest (l2:num_set)))`; `x:num`]
               DATAPAUX_LIVE_rel_lookup) THEN
      ASM_REWRITE_TAC[domain_list_insert; domain_inter; IN_INTER] THEN
      RULE_ASSUM_TAC(REWRITE_RULE[SUBSET]) THEN
@@ -759,13 +759,13 @@ let DATAPAUX_LIVE_ASSIGN_SOME_TAC : tactic =
   SUBGOAL_THEN
      `data_liveProof_state_rel (data_state_locals_fupd (K env) (s:(C,FFI)data_state))
         (data_state_locals_fupd
-           (K (mk_wf (inter (data_state_locals (t1:(C,FFI)data_state))
-                            (inter (a:num_set) (delete dest (l2:num_set))))))
+           (K (mk_wf (sptree_inter (data_state_locals (t1:(C,FFI)data_state))
+                            (sptree_inter (a:num_set) (delete dest (l2:num_set))))))
            t1)
         (delete dest l2)`
      ASSUME_TAC THENL
     [MATCH_MP_TAC DATAPAUX_LIVE_rel_with_locals THEN
-     EXISTS_TAC `list_insert args (inter (a:num_set) (delete dest (l2:num_set)))` THEN
+     EXISTS_TAC `list_insert args (sptree_inter (a:num_set) (delete dest (l2:num_set)))` THEN
      ASM_REWRITE_TAC[] THEN
      UNDISCH_TAC `data_cut_env (a:num_set) (data_state_locals (s:(C,FFI)data_state)) = SOME env` THEN
      REWRITE_TAC[data_cut_env_def] THEN COND_CASES_TAC THEN
@@ -774,7 +774,7 @@ let DATAPAUX_LIVE_ASSIGN_SOME_TAC : tactic =
      REWRITE_TAC[lookup_mk_wf; lookup_inter_alt; domain_inter; IN_INTER] THEN
      COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
      MATCH_MP_TAC DATAPAUX_LIVE_rel_lookup THEN
-     EXISTS_TAC `list_insert args (inter (a:num_set) (delete dest (l2:num_set)))` THEN
+     EXISTS_TAC `list_insert args (sptree_inter (a:num_set) (delete dest (l2:num_set)))` THEN
      ASM_REWRITE_TAC[domain_list_insert; domain_inter; IN_INTER];
      ALL_TAC] THEN
    MP_TAC(ISPEC `data_do_app op a' (data_state_locals_fupd (K env) (s:(C,FFI)data_state))`
@@ -835,12 +835,12 @@ let DATAPAUX_LIVE_MAKESPACE = prove
   UNDISCH_TAC `data_cut_env names (data_state_locals (s:(C,FFI)data_state)) = SOME a` THEN
   REWRITE_TAC[data_cut_env_def] THEN COND_CASES_TAC THEN
   REWRITE_TAC[option_DISTINCT; option_INJ] THEN DISCH_THEN(SUBST1_TAC o SYM) THEN
-  SUBGOAL_THEN `domain (inter (names:num_set) (l2:num_set)) SUBSET
+  SUBGOAL_THEN `domain (sptree_inter (names:num_set) (l2:num_set)) SUBSET
                 domain (data_state_locals (t1:(C,FFI)data_state))`
     (fun th -> REWRITE_TAC[th]) THENL
    [REWRITE_TAC[domain_inter; SUBSET; IN_INTER] THEN X_GEN_TAC `x:num` THEN STRIP_TAC THEN
     MP_TAC(ISPECL [`s:(C,FFI)data_state`; `t1:(C,FFI)data_state`;
-                   `inter (names:num_set) (l2:num_set)`; `x:num`]
+                   `sptree_inter (names:num_set) (l2:num_set)`; `x:num`]
              DATAPAUX_LIVE_rel_lookup) THEN
     ASM_REWRITE_TAC[domain_inter; IN_INTER] THEN
     RULE_ASSUM_TAC(REWRITE_RULE[SUBSET]) THEN
@@ -849,11 +849,11 @@ let DATAPAUX_LIVE_MAKESPACE = prove
     ALL_TAC] THEN
   REWRITE_TAC[option_CASE; PAIR_EQ; UNWIND_THM1] THEN
   MATCH_MP_TAC DATAPAUX_LIVE_rel_add_space THEN MATCH_MP_TAC DATAPAUX_LIVE_rel_with_locals THEN
-  EXISTS_TAC `inter (names:num_set) (l2:num_set)` THEN
+  EXISTS_TAC `sptree_inter (names:num_set) (l2:num_set)` THEN
   ASM_REWRITE_TAC[lookup_mk_wf; lookup_inter_alt; domain_inter; IN_INTER] THEN
   REPEAT STRIP_TAC THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
   MATCH_MP_TAC DATAPAUX_LIVE_rel_lookup THEN
-  EXISTS_TAC `inter (names:num_set) (l2:num_set)` THEN
+  EXISTS_TAC `sptree_inter (names:num_set) (l2:num_set)` THEN
   ASM_REWRITE_TAC[domain_inter; IN_INTER]);;
 
 (* HOL4: evaluate_compile[Raise] *)
@@ -992,7 +992,7 @@ let DATAPAUX_LIVE_IF = prove
                 data_get_var n (data_state_locals (s:(C,FFI)data_state))` ASSUME_TAC THENL
    [REWRITE_TAC[data_get_var_def] THEN CONV_TAC SYM_CONV THEN
     MATCH_MP_TAC DATAPAUX_LIVE_rel_lookup THEN
-    EXISTS_TAC `insert n one (union l4 l3)` THEN
+    EXISTS_TAC `insert n one (sptree_union l4 l3)` THEN
     ASM_REWRITE_TAC[domain_insert; IN_INSERT]; ALL_TAC] THEN
   UNDISCH_TAC `data_evaluate (data_If n c1 c2,s:(C,FFI)data_state) = res,s2` THEN
   REWRITE_TAC[data_evaluate_def] THEN ASM_REWRITE_TAC[] THEN
@@ -1002,14 +1002,14 @@ let DATAPAUX_LIVE_IF = prove
    [REMOVE_THEN "ih1" (MP_TAC o SPEC `a:data_v`) THEN ASM_REWRITE_TAC[] THEN
     DISCH_TAC THEN DISCH_TAC THEN FIRST_X_ASSUM MATCH_MP_TAC THEN
     EXISTS_TAC `l4:num_set` THEN ASM_REWRITE_TAC[] THEN
-    MATCH_MP_TAC DATAPAUX_LIVE_rel_mono THEN EXISTS_TAC `insert n one (union l4 l3)` THEN
+    MATCH_MP_TAC DATAPAUX_LIVE_rel_mono THEN EXISTS_TAC `insert n one (sptree_union l4 l3)` THEN
     ASM_REWRITE_TAC[domain_insert; domain_union] THEN SET_TAC[];
     ALL_TAC] THEN
   COND_CASES_TAC THENL
    [REMOVE_THEN "ih2" (MP_TAC o SPEC `a:data_v`) THEN ASM_REWRITE_TAC[] THEN
     DISCH_TAC THEN DISCH_TAC THEN FIRST_X_ASSUM MATCH_MP_TAC THEN
     EXISTS_TAC `l3:num_set` THEN ASM_REWRITE_TAC[] THEN
-    MATCH_MP_TAC DATAPAUX_LIVE_rel_mono THEN EXISTS_TAC `insert n one (union l4 l3)` THEN
+    MATCH_MP_TAC DATAPAUX_LIVE_rel_mono THEN EXISTS_TAC `insert n one (sptree_union l4 l3)` THEN
     ASM_REWRITE_TAC[domain_insert; domain_union] THEN SET_TAC[];
     ALL_TAC] THEN
   REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN RVEQ_TAC THEN FS[]);;
@@ -1082,14 +1082,14 @@ let DATAPAUX_LIVE_FORCE_CUT_TAC : tactic =
    [ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN DATAPAUX_LIVE_ERR_TAC; ALL_TAC] THEN
   MP_TAC(ISPECL [`s:(C,FFI)data_state`; `t1:(C,FFI)data_state`; `names:num_set`;
                  `delete dest (l2:num_set)`;
-                 `insert src one (inter names (delete dest (l2:num_set)))`;
+                 `insert src one (sptree_inter names (delete dest (l2:num_set)))`;
                  `env:data_v spt`] DATAPAUX_LIVE_cut_env) THEN
   ANTS_TAC THENL
    [ASM_REWRITE_TAC[domain_insert] THEN SET_TAC[]; ALL_TAC] THEN
   DISCH_THEN(CONJUNCTS_THEN2 SUBST1_TAC ASSUME_TAC) THEN
   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[];;
 let DATAPAUX_LIVE_FS_S = `data_call_env x y' (data_push_env env F (data_dec_clock (s:(C,FFI)data_state)))`;;
-let DATAPAUX_LIVE_FS_T = `data_call_env x y' (data_push_env (mk_wf (inter (data_state_locals (t1:(C,FFI)data_state)) (inter (names:num_set) (delete dest (l2:num_set))))) F (data_dec_clock t1))`;;
+let DATAPAUX_LIVE_FS_T = `data_call_env x y' (data_push_env (mk_wf (sptree_inter (data_state_locals (t1:(C,FFI)data_state)) (sptree_inter (names:num_set) (delete dest (l2:num_set))))) F (data_dec_clock t1))`;;
 let DATAPAUX_LIVE_FORCE_SOME_TAC : tactic =
   (MP_TAC(ISPEC `a:num#num_set` PAIR_SURJECTIVE) THEN
    DISCH_THEN(X_CHOOSE_THEN `dest:num` (X_CHOOSE_THEN `names:num_set` SUBST_ALL_TAC)) THEN
@@ -1102,7 +1102,7 @@ let DATAPAUX_LIVE_FORCE_SOME_TAC : tactic =
                  data_get_var src (data_state_locals (s:(C,FFI)data_state))` ASSUME_TAC THENL
     [REWRITE_TAC[data_get_var_def] THEN CONV_TAC SYM_CONV THEN
      MATCH_MP_TAC DATAPAUX_LIVE_rel_lookup THEN
-     EXISTS_TAC `insert src one (inter names (delete dest (l2:num_set)))` THEN
+     EXISTS_TAC `insert src one (sptree_inter names (delete dest (l2:num_set)))` THEN
      ASM_REWRITE_TAC[domain_insert; IN_INSERT]; ALL_TAC] THEN
    REWRITE_TAC[data_evaluate_def] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
    TOP_CASE_TAC THENL [DATAPAUX_LIVE_ERR_TAC; ALL_TAC] THEN
@@ -1111,7 +1111,7 @@ let DATAPAUX_LIVE_FORCE_SOME_TAC : tactic =
    [DATAPAUX_LIVE_FORCE_CUT_TAC THEN (DISCH_THEN(CONJUNCTS_THEN2 (SUBST_ALL_TAC o SYM) (SUBST_ALL_TAC o SYM)) THEN
    REWRITE_TAC[UNWIND_THM1; option_CASE] THEN
    MATCH_MP_TAC DATAPAUX_LIVE_rel_set_var THEN MATCH_MP_TAC DATAPAUX_LIVE_rel_with_locals THEN
-   EXISTS_TAC `insert src one (inter names (delete dest (l2:num_set)))` THEN
+   EXISTS_TAC `insert src one (sptree_inter names (delete dest (l2:num_set)))` THEN
    ASM_REWRITE_TAC[]);
     (TOP_CASE_TAC THENL [DATAPAUX_LIVE_ERR_TAC; ALL_TAC] THEN
    TOP_CASE_TAC THEN TOP_CASE_TAC THEN
@@ -1120,7 +1120,7 @@ let DATAPAUX_LIVE_FORCE_SOME_TAC : tactic =
     [REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN RVEQ_TAC THEN
      REWRITE_TAC[UNWIND_THM1; option_CASE] THEN
      UNDISCH_TAC `data_liveProof_state_rel (s:(C,FFI)data_state) t1
-                    (insert src one (inter names (delete dest (l2:num_set))))` THEN
+                    (insert src one (sptree_inter names (delete dest (l2:num_set))))` THEN
      REWRITE_TAC[data_liveProof_state_rel_def; data_state_INFO.ri_accfupds; K_THM;
                  data_call_env_def; data_push_env_def; data_dec_clock_def; LET_DEF; LET_END_DEF;
                  domain_def; NOT_IN_EMPTY] THEN SIMP_TAC[];
@@ -1128,8 +1128,8 @@ let DATAPAUX_LIVE_FORCE_SOME_TAC : tactic =
   (REWRITE_TAC[] THEN
    FIRST_ASSUM(fun th -> ONCE_REWRITE_TAC[SPECL
      [`x:data_v list`; `y':num option`; `env:data_v spt`;
-      `mk_wf (inter (data_state_locals (t1:(C,FFI)data_state))
-                    (inter (names:num_set) (delete dest (l2:num_set))))`; `F`]
+      `mk_wf (sptree_inter (data_state_locals (t1:(C,FFI)data_state))
+                    (sptree_inter (names:num_set) (delete dest (l2:num_set))))`; `F`]
      (MATCH_MP DATAPAUX_LIVE_call_push_frame th)]) THEN
    MP_TAC(ISPEC `data_evaluate (x',data_call_env x y'
                    (data_push_env env F (data_dec_clock (s:(C,FFI)data_state))))`
@@ -1217,8 +1217,8 @@ let DATAPAUX_LIVE_FORCE_SOME_TAC : tactic =
                                              mk_icomb(`data_state_stack:(C,FFI)data_state->stack list`, DATAPAUX_LIVE_FS_T))),
                            DATAPAUX_LIVE_FS_S);
                   `data_state_locals_size (t1:(C,FFI)data_state)`;
-                  `mk_wf (inter (data_state_locals (t1:(C,FFI)data_state))
-                                (inter (names:num_set) (delete dest (l2:num_set))))`;
+                  `mk_wf (sptree_inter (data_state_locals (t1:(C,FFI)data_state))
+                                (sptree_inter (names:num_set) (delete dest (l2:num_set))))`;
                   `t3:(C,FFI)data_state`] DSEMAUX_jump_exc_Env_cons3) THEN
    ANTS_TAC THENL
     [ASM_REWRITE_TAC[data_call_env_def; data_push_env_def; data_dec_clock_def; LET_DEF;
@@ -1321,10 +1321,10 @@ let DATAPAUX_LIVE_CUT_TAC (l:term) (l':term) : tactic =
   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[];;
 
 let DATAPAUX_LIVE_CN_S = `data_call_env x y' (data_push_env env F (data_dec_clock (s:(C,FFI)data_state)))`;;
-let DATAPAUX_LIVE_CN_T = `data_call_env x y' (data_push_env (mk_wf (inter (data_state_locals (t1:(C,FFI)data_state)) (inter (names:num_set) (list_delete ns (l2:num_set))))) F (data_dec_clock t1))`;;
+let DATAPAUX_LIVE_CN_T = `data_call_env x y' (data_push_env (mk_wf (sptree_inter (data_state_locals (t1:(C,FFI)data_state)) (sptree_inter (names:num_set) (list_delete ns (l2:num_set))))) F (data_dec_clock t1))`;;
 let DATAPAUX_LIVE_CH_S = `data_call_env x y' (data_push_env env T (data_dec_clock (s:(C,FFI)data_state)))`;;
-let DATAPAUX_LIVE_CH_T = `data_call_env x y' (data_push_env (mk_wf (inter (data_state_locals (t1:(C,FFI)data_state)) (inter (names:num_set) (union (list_delete ns (l2:num_set)) (delete var (l6:num_set)))))) T (data_dec_clock t1))`;;
-let DATAPAUX_LIVE_CH_L0 = `union (list_delete ns (l2:num_set)) (delete var (l6:num_set))`;;
+let DATAPAUX_LIVE_CH_T = `data_call_env x y' (data_push_env (mk_wf (sptree_inter (data_state_locals (t1:(C,FFI)data_state)) (sptree_inter (names:num_set) (sptree_union (list_delete ns (l2:num_set)) (delete var (l6:num_set)))))) T (data_dec_clock t1))`;;
+let DATAPAUX_LIVE_CH_L0 = `sptree_union (list_delete ns (l2:num_set)) (delete var (l6:num_set))`;;
 
 let DATAPAUX_LIVE_CALL_TAIL_TAC : tactic =
   UNDISCH_TAC `data_live_compile (data_Call NONE dest args handler) l2 = d,l1` THEN
@@ -1381,7 +1381,7 @@ let DATAPAUX_LIVE_CALL_TAIL_TAC : tactic =
 let DATAPAUX_LIVE_CALL_RET_TAC : tactic =
   MP_TAC(ISPEC `a:num list#num_set` PAIR_SURJECTIVE) THEN
    DISCH_THEN(X_CHOOSE_THEN `ns:num list` (X_CHOOSE_THEN `names:num_set` SUBST_ALL_TAC)) THEN
-   CASES_ON `handler:(num#data_prog)option` THENL 
+   CASES_ON `handler:(num#data_prog)option` THENL
    [(UNDISCH_TAC `data_live_compile (data_Call (SOME (ns,names)) dest args NONE) l2 = d,l1` THEN
    REWRITE_TAC[data_live_compile_def; LET_DEF; LET_END_DEF; PAIR_EQ] THEN
    STRIP_TAC THEN RVEQ_TAC THEN
@@ -1392,7 +1392,7 @@ let DATAPAUX_LIVE_CALL_RET_TAC : tactic =
     [MATCH_MP_TAC EVERY_get_vars THEN REWRITE_TAC[GSYM ALL_MEM] THEN
      X_GEN_TAC `a:num` THEN DISCH_TAC THEN CONV_TAC SYM_CONV THEN
      MATCH_MP_TAC DATAPAUX_LIVE_rel_lookup THEN
-     EXISTS_TAC `list_insert args (inter names (list_delete ns (l2:num_set)))` THEN
+     EXISTS_TAC `list_insert args (sptree_inter names (list_delete ns (l2:num_set)))` THEN
      ASM_REWRITE_TAC[domain_list_insert];
      ALL_TAC] THEN
    REWRITE_TAC[data_evaluate_def; IS_SOME_DEF] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
@@ -1402,12 +1402,12 @@ let DATAPAUX_LIVE_CALL_RET_TAC : tactic =
    COND_CASES_TAC THENL [DATAPAUX_LIVE_ERR_TAC; ALL_TAC]) THEN
   (REWRITE_TAC[] THEN
    DATAPAUX_LIVE_CUT_TAC `list_delete ns (l2:num_set)`
-     `list_insert args (inter names (list_delete ns (l2:num_set)))` THEN
+     `list_insert args (sptree_inter names (list_delete ns (l2:num_set)))` THEN
    COND_CASES_TAC THENL
     [REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN RVEQ_TAC THEN
      REWRITE_TAC[UNWIND_THM1; option_CASE] THEN
      UNDISCH_TAC `data_liveProof_state_rel (s:(C,FFI)data_state) t1
-                    (list_insert args (inter names (list_delete ns (l2:num_set))))` THEN
+                    (list_insert args (sptree_inter names (list_delete ns (l2:num_set))))` THEN
      REWRITE_TAC[data_liveProof_state_rel_def; data_state_INFO.ri_accfupds; K_THM;
                  data_call_env_def; data_push_env_def; data_dec_clock_def; LET_DEF; LET_END_DEF;
                  domain_def; NOT_IN_EMPTY] THEN SIMP_TAC[];
@@ -1415,8 +1415,8 @@ let DATAPAUX_LIVE_CALL_RET_TAC : tactic =
    REWRITE_TAC[] THEN
    FIRST_ASSUM(fun th -> ONCE_REWRITE_TAC[SPECL
      [`x:data_v list`; `y':num option`; `env:data_v spt`;
-      `mk_wf (inter (data_state_locals (t1:(C,FFI)data_state))
-                    (inter (names:num_set) (list_delete ns (l2:num_set))))`; `F`]
+      `mk_wf (sptree_inter (data_state_locals (t1:(C,FFI)data_state))
+                    (sptree_inter (names:num_set) (list_delete ns (l2:num_set))))`; `F`]
      (MATCH_MP DATAPAUX_LIVE_call_push_frame th)]) THEN
    MP_TAC(ISPEC `data_evaluate (x',data_call_env x y'
                    (data_push_env env F (data_dec_clock (s:(C,FFI)data_state))))`
@@ -1506,8 +1506,8 @@ let DATAPAUX_LIVE_CALL_RET_TAC : tactic =
                                              mk_icomb(`data_state_stack:(C,FFI)data_state->stack list`, DATAPAUX_LIVE_CN_T))),
                            DATAPAUX_LIVE_CN_S);
                   `data_state_locals_size (t1:(C,FFI)data_state)`;
-                  `mk_wf (inter (data_state_locals (t1:(C,FFI)data_state))
-                                (inter (names:num_set) (list_delete ns (l2:num_set))))`;
+                  `mk_wf (sptree_inter (data_state_locals (t1:(C,FFI)data_state))
+                                (sptree_inter (names:num_set) (list_delete ns (l2:num_set))))`;
                   `t3:(C,FFI)data_state`] DSEMAUX_jump_exc_Env_cons3) THEN
    ANTS_TAC THENL
     [ASM_REWRITE_TAC[data_call_env_def; data_push_env_def; data_dec_clock_def; LET_DEF;
@@ -1551,7 +1551,7 @@ let DATAPAUX_LIVE_CALL_RET_TAC : tactic =
      X_GEN_TAC `a:num` THEN DISCH_TAC THEN CONV_TAC SYM_CONV THEN
      MATCH_MP_TAC DATAPAUX_LIVE_rel_lookup THEN
      EXISTS_TAC (mk_icomb(mk_icomb(`list_insert`,`args:num list`),
-                          mk_icomb(mk_icomb(`inter:num_set->num_set->num_set`,`names:num_set`),
+                          mk_icomb(mk_icomb(`sptree_inter:num_set->num_set->num_set`,`names:num_set`),
                                    DATAPAUX_LIVE_CH_L0))) THEN
      ASM_REWRITE_TAC[domain_list_insert];
      ALL_TAC] THEN
@@ -1563,7 +1563,7 @@ let DATAPAUX_LIVE_CALL_RET_TAC : tactic =
    REWRITE_TAC[] THEN
    DATAPAUX_LIVE_CUT_TAC DATAPAUX_LIVE_CH_L0
      (mk_icomb(mk_icomb(`list_insert`,`args:num list`),
-               mk_icomb(mk_icomb(`inter:num_set->num_set->num_set`,`names:num_set`),
+               mk_icomb(mk_icomb(`sptree_inter:num_set->num_set->num_set`,`names:num_set`),
                         DATAPAUX_LIVE_CH_L0))) THEN
    COND_CASES_TAC THENL
     [REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN RVEQ_TAC THEN
@@ -1578,9 +1578,9 @@ let DATAPAUX_LIVE_CALL_RET_TAC : tactic =
    FIRST_ASSUM(fun th -> ONCE_REWRITE_TAC[SPECL
      [`x:data_v list`; `y':num option`; `env:data_v spt`;
       mk_icomb(`mk_wf:data_v spt->data_v spt`,
-        mk_icomb(mk_icomb(`inter:data_v spt->num_set->data_v spt`,
+        mk_icomb(mk_icomb(`sptree_inter:data_v spt->num_set->data_v spt`,
                           `data_state_locals (t1:(C,FFI)data_state)`),
-                 mk_icomb(mk_icomb(`inter:num_set->num_set->num_set`,`names:num_set`),
+                 mk_icomb(mk_icomb(`sptree_inter:num_set->num_set->num_set`,`names:num_set`),
                           DATAPAUX_LIVE_CH_L0))); `T`]
      (MATCH_MP DATAPAUX_LIVE_call_push_frame th)]) THEN
    MP_TAC(ISPEC `data_evaluate (x',data_call_env x y'
@@ -1666,8 +1666,8 @@ let DATAPAUX_LIVE_CALL_RET_TAC : tactic =
      (mk_icomb(mk_icomb(`data_state_handler_fupd:(num->num)->(C,FFI)data_state->(C,FFI)data_state`,
                         `K (data_state_handler (t1:(C,FFI)data_state)):num->num`),
       mk_icomb(mk_icomb(`data_state_locals_fupd:(data_v spt->data_v spt)->(C,FFI)data_state->(C,FFI)data_state`,
-                        `K (mk_wf (inter (data_state_locals (t1:(C,FFI)data_state))
-                               (inter (names:num_set) (union (list_delete ns (l2:num_set))
+                        `K (mk_wf (sptree_inter (data_state_locals (t1:(C,FFI)data_state))
+                               (sptree_inter (names:num_set) (sptree_union (list_delete ns (l2:num_set))
                                   (delete var (l6:num_set)))))):data_v spt->data_v spt`),
       mk_icomb(mk_icomb(`data_state_stack_fupd:(stack list->stack list)->(C,FFI)data_state->(C,FFI)data_state`,
                         `K (data_state_stack (t1:(C,FFI)data_state)):stack list->stack list`),

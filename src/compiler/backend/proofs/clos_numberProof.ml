@@ -2014,7 +2014,7 @@ let CLOSP1AUX_num_evens_eq = prove
 
 let CLOSP1AUX_num_evens_image = prove
  (`!m l. EVEN m ==>
-         IMAGE (\k. m + 2 * k) (count l) = {x | EVEN x /\ m <= x /\ x < m + 2 * l}`,
+         IMAGE (\k. m + 2 * k) (pred_set_count l) = {x | EVEN x /\ m <= x /\ x < m + 2 * l}`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[EXTENSION; IN_IMAGE; IN_COUNT; IN_ELIM_THM] THEN
   X_GEN_TAC `x:num` THEN EQ_TAC THENL
    [STRIP_TAC THEN ASM_REWRITE_TAC[EVEN_ADD; EVEN_MULT; ARITH] THEN ASM_ARITH_TAC;

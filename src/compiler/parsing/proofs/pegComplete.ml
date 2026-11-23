@@ -109,7 +109,7 @@ let choicel_cons_NONE = prove
 
 let peg_eval_tok_CONS_NONE = prove
  (`!(G:(A,B,C,E)peg) h t P f fl fe.
-     peg_eval G (CONS h t, tok P f) (Failure fl fe) <=>
+     peg_eval G (CONS h t, peg_tok P f) (Failure fl fe) <=>
      ?tk l. h = (tk,l) /\ fl = l /\ fe = peg_tokFALSE G /\ ~P tk`,
   REWRITE_TAC[peg_eval_tok_NONE; NOT_CONS_NIL; CONS_11; EXISTS_PAIR_THM] THEN
   MESON_TAC[]);;
@@ -119,7 +119,7 @@ let _ = cake_add_simps [peg_eval_tok_CONS_NONE];;
 (* on peg_eval G (i0, tok P f) r                                            *)
 let peg_eval_tok = prove
  (`!(G:(A,B,C,E)peg) i0 P f r.
-     peg_eval G (i0, tok P f) r <=>
+     peg_eval G (i0, peg_tok P f) r <=>
      (?tk l t. i0 = CONS (tk,l) t /\ P tk /\ r = peg_Success t (f (tk,l)) NONE) \/
      (?tk l t. i0 = CONS (tk,l) t /\ ~P tk /\ r = Failure l (peg_tokFALSE G)) \/
      (i0 = [] /\ r = Failure (Locs EOFpt EOFpt) (peg_tokEOF G))`,
@@ -129,7 +129,7 @@ let peg_eval_tok = prove
 
 let peg_eval_tok_NIL = prove
  (`!(G:(A,B,C,E)peg) P f r.
-     peg_eval G ([], tok P f) r <=> r = Failure (Locs EOFpt EOFpt) (peg_tokEOF G)`,
+     peg_eval G ([], peg_tok P f) r <=> r = Failure (Locs EOFpt EOFpt) (peg_tokEOF G)`,
   REWRITE_TAC[peg_eval_tok; NOT_CONS_NIL]);;
 let _ = cake_add_simps [peg_eval_tok_NIL];;
 
@@ -224,9 +224,9 @@ let rfirstSet_nonempty_fringe = prove
 
 let peg_respects_firstSets = prove
  (`!N i0 t l.
-     ~(t IN firstSet cmlG [NT N]) /\ ~peg0 cmlPEG (nt N I) /\
-     nt N I IN Gexprs cmlPEG ==>
-     ?fl fe. peg_eval cmlPEG (CONS (t,l) i0, nt N I) (Failure fl fe)`,
+     ~(t IN firstSet cmlG [NT N]) /\ ~peg0 cmlPEG (peg_nt N I) /\
+     peg_nt N I IN Gexprs cmlPEG ==>
+     ?fl fe. peg_eval cmlPEG (CONS (t,l) i0, peg_nt N I) (Failure fl fe)`,
   REPEAT STRIP_TAC THEN
   FIRST_ASSUM(MP_TAC o SPEC `CONS (t:token,l:locs) i0` o
               MATCH_MP PARSE3AUX_cmlPEG_total) THEN
@@ -237,7 +237,7 @@ let peg_respects_firstSets = prove
    [ALL_TAC; MESON_TAC[]] THEN
   DISCH_TAC THEN
   FIRST_ASSUM(MP_TAC o MATCH_MP (MATCH_MP not_peg0_LENGTH_decreases
-    (ASSUME `~peg0 cmlPEG (nt N I)`))) THEN
+    (ASSUME `~peg0 cmlPEG (peg_nt N I)`))) THEN
   FIRST_X_ASSUM(MP_TAC o MATCH_MP peg_sound) THEN
   DISCH_THEN(X_CHOOSE_THEN `pt:mlptree` STRIP_ASSUME_TAC) THEN
   MP_TAC(ISPEC `real_fringe (pt:mlptree)` list_CASES) THEN
@@ -264,25 +264,25 @@ let fFail_def = new_specification ["fFAIL1"; "fFAIL2"]
  (prove
   (`?fFAIL1 fFAIL2.
       !N i0 t l.
-        ~(t IN firstSet cmlG [NT N]) /\ ~peg0 cmlPEG (nt N I) /\
-        nt N I IN Gexprs cmlPEG ==>
-        peg_eval cmlPEG (CONS (t,l) i0, nt N I)
+        ~(t IN firstSet cmlG [NT N]) /\ ~peg0 cmlPEG (peg_nt N I) /\
+        peg_nt N I IN Gexprs cmlPEG ==>
+        peg_eval cmlPEG (CONS (t,l) i0, peg_nt N I)
                  (Failure (fFAIL1 N i0 t l) (fFAIL2 N i0 t l))`,
    REWRITE_TAC[GSYM SKOLEM_THM; RIGHT_EXISTS_IMP_THM] THEN
    REWRITE_TAC[peg_respects_firstSets]));;
 
 let peg_respects_firstSets_rwt = prove
  (`!N i0 t l.
-     ~(t IN firstSet cmlG [NT N]) /\ ~peg0 cmlPEG (nt N I) /\
-     nt N I IN Gexprs cmlPEG ==>
-     !sr'. peg_eval cmlPEG (CONS (t,l) i0, nt N I) sr' <=>
+     ~(t IN firstSet cmlG [NT N]) /\ ~peg0 cmlPEG (peg_nt N I) /\
+     peg_nt N I IN Gexprs cmlPEG ==>
+     !sr'. peg_eval cmlPEG (CONS (t,l) i0, peg_nt N I) sr' <=>
            sr' = Failure (fFAIL1 N i0 t l) (fFAIL2 N i0 t l)`,
   REPEAT GEN_TAC THEN DISCH_THEN(MP_TAC o MATCH_MP fFail_def) THEN
   MESON_TAC[peg_deterministic]);;
 
 let peg_eval_NIL_NT = prove
  (`!N i r eo.
-     peg_eval cmlPEG ([], nt N I) (peg_Success i r eo) ==>
+     peg_eval cmlPEG ([], peg_nt N I) (peg_Success i r eo) ==>
      nullable cmlG [NT N] /\ i = []`,
   REPEAT GEN_TAC THEN DISCH_THEN(STRIP_ASSUME_TAC o MATCH_MP peg_sound) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[MAP]) THEN
@@ -299,7 +299,7 @@ let peg_eval_NIL_NT = prove
 let not_nullable_input_CONS = prove
  (`!N i0 i r eo.
      ~nullable cmlG [NT N] ==>
-     peg_eval cmlPEG (i0, nt N I) (peg_Success i r eo) ==>
+     peg_eval cmlPEG (i0, peg_nt N I) (peg_Success i r eo) ==>
      ?ht l t. i0 = CONS (ht,l) t /\ LENGTH i <= LENGTH t`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN
   STRUCT_CASES_TAC(ISPEC `i0:(token#locs)list` list_CASES) THENL
@@ -322,7 +322,7 @@ let not_nullable_input_CONS = prove
 let not_nullable_seql_input_CONS = prove
  (`!N i0 rest f i r eo.
      ~nullable cmlG [NT N] ==>
-     peg_eval cmlPEG (i0, seql (CONS (nt N I) rest) f) (peg_Success i r eo) ==>
+     peg_eval cmlPEG (i0, seql (CONS (peg_nt N I) rest) f) (peg_Success i r eo) ==>
      ?ht l t. i0 = CONS (ht,l) t /\ LENGTH i <= LENGTH t`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN REWRITE_TAC[seql_cons_SOME] THEN
   STRIP_TAC THEN
@@ -333,7 +333,7 @@ let not_nullable_seql_input_CONS = prove
 
 let sym2peg_def = cake_def
   `(sym2peg (TOK tk) = tokeq tk:(token,MMLnonT,(mlptree)list,E)pegsym) /\
-   (sym2peg (NT N) = nt N I)`;;
+   (sym2peg (NT N) = peg_nt N I)`;;
 
 let not_peg0_peg_eval_NIL_NONE = prove
  (`!(G:(A,B,C,E)peg) sym.
@@ -432,7 +432,7 @@ let left_insert2_ind = prove
     ASM_REWRITE_TAC[MEM] THEN SIMP_TAC[]]);;
 
 let left_insert_def = cake_def_wf
-  `measure (\x:(A,B,locs)parsetree#(B+num)#(A,B,locs)parsetree#(A,B,locs)parsetree.
+  `MEASURE (\x:(A,B,locs)parsetree#(B+num)#(A,B,locs)parsetree#(A,B,locs)parsetree.
               parsetree_size (\x:A. 0) (\x:B. 0) (\x:locs. 0) (FST x))`
   TERM_TAC
   `(left_insert (Lf (tk,l)) (p:B+num) (sep:(A,B,locs)parsetree) c =
@@ -957,9 +957,9 @@ let peg_seql_NONE_det = prove
 
 let firstSet_respect_peg_eval_not_success = prove
  (`!N i0 t l i r e0.
-     ~(t IN firstSet cmlG [NT N]) /\ ~peg0 cmlPEG (nt N I) /\
-     nt N I IN Gexprs cmlPEG ==>
-     ~peg_eval cmlPEG (CONS (t,l) i0, nt N I) (peg_Success i r e0)`,
+     ~(t IN firstSet cmlG [NT N]) /\ ~peg0 cmlPEG (peg_nt N I) /\
+     peg_nt N I IN Gexprs cmlPEG ==>
+     ~peg_eval cmlPEG (CONS (t,l) i0, peg_nt N I) (peg_Success i r e0)`,
   REPEAT GEN_TAC THEN DISCH_THEN(MP_TAC o MATCH_MP peg_respects_firstSets_rwt) THEN
   DISCH_THEN(fun th -> REWRITE_TAC[th; pegresult_distinct]));;
 
@@ -988,17 +988,17 @@ let PARSE3AUX_FIRSTSET_TAC : tactic =
 
 let eOR_wrongtok = prove
  (`!loc i0 i r eo.
-     ~peg_eval cmlPEG (CONS (RaiseT,loc) i0, nt (INL nElogicOR) I) (peg_Success i r eo) /\
-     ~peg_eval cmlPEG (CONS (FnT,loc) i0, nt (INL nElogicOR) I) (peg_Success i r eo) /\
-     ~peg_eval cmlPEG (CONS (CaseT,loc) i0, nt (INL nElogicOR) I) (peg_Success i r eo) /\
-     ~peg_eval cmlPEG (CONS (IfT,loc) i0, nt (INL nElogicOR) I) (peg_Success i r eo)`,
+     ~peg_eval cmlPEG (CONS (RaiseT,loc) i0, peg_nt (INL nElogicOR) I) (peg_Success i r eo) /\
+     ~peg_eval cmlPEG (CONS (FnT,loc) i0, peg_nt (INL nElogicOR) I) (peg_Success i r eo) /\
+     ~peg_eval cmlPEG (CONS (CaseT,loc) i0, peg_nt (INL nElogicOR) I) (peg_Success i r eo) /\
+     ~peg_eval cmlPEG (CONS (IfT,loc) i0, peg_nt (INL nElogicOR) I) (peg_Success i r eo)`,
   REPEAT GEN_TAC THEN REPEAT CONJ_TAC THEN
   MATCH_MP_TAC firstSet_respect_peg_eval_not_success THEN
   REWRITE_TAC[peg0_nElogicOR; NTS_in_PEG_exprs] THEN PARSE3AUX_FIRSTSET_TAC);;
 
 let peg_eval_seqempty = prove
  (`!(G:(A,B,(C)list,E)peg) i0 e1 f r.
-     peg_eval G (i0, seq e1 (empty []) f) r <=>
+     peg_eval G (i0, peg_seq e1 (empty []) f) r <=>
      ?r0. peg_eval G (i0, e1) r0 /\
           ((?fl fe. r0 = Failure fl fe /\ r = r0) \/
            (?i r00 eo. r0 = peg_Success i r00 eo /\
@@ -1015,7 +1015,7 @@ let peg_eval_seqempty = prove
 
 let peg_eval_NT = prove
  (`!(G:(A,B,C,E)peg) i0 N f r.
-     peg_eval G (i0, nt N f) r <=>
+     peg_eval G (i0, peg_nt N f) r <=>
      ?r0. r = resultmap f r0 /\ N IN FDOM (peg_rules G) /\
           peg_eval G (i0, FAPPLY (peg_rules G) N) r0`,
   REPEAT GEN_TAC THEN GEN_REWRITE_TAC LAND_CONV [peg_eval_cases] THEN
@@ -1114,12 +1114,12 @@ let PARSE3AUX_complete_goal (x:string) =
          INL N' IN FDOM (peg_rules cmlPEG) /\\
          (~(sfx' = []) ==> FST (HD sfx') IN stoppers N') /\\
          real_fringe pt' = MAP (TOK ## I) pfx' ==>
-         ?eo. peg_eval cmlPEG (APPEND pfx' sfx', nt (INL N') I)
+         ?eo. peg_eval cmlPEG (APPEND pfx' sfx', peg_nt (INL N') I)
                        (peg_Success sfx' [pt'] eo)) /\\
       valid_lptree cmlG (mkNd (INL " ^ x ^ ") subs) /\\
       (~(sfx = []) ==> FST (HD sfx) IN stoppers " ^ x ^ ") /\\
       real_fringe (mkNd (INL " ^ x ^ ") subs) = MAP (TOK ## I) pfx ==>
-      ?eo. peg_eval cmlPEG (APPEND pfx sfx, nt (INL " ^ x ^ ") I)
+      ?eo. peg_eval cmlPEG (APPEND pfx sfx, peg_nt (INL " ^ x ^ ") I)
                     (peg_Success sfx [mkNd (INL " ^ x ^ ") subs] eo)");;
 
 let PARSE3AUX_PAIR_MAP_TKI_EQ = prove
@@ -1174,7 +1174,7 @@ let PARSE3AUX_UNCURRY_Failure = prove
 (* the derived forms, unfolded to the primitive expressions *)
 let PARSE3AUX_PRIM_CONV =
   PURE_REWRITE_CONV[seql_def; ITLIST; choicel_def; pegf_def; try_def;
-                    tokeq_def; tokSymP_def; pnt_def; MAP; peg_V_def;
+                    tokeq_def; tokSymP_def; cmlPEG_pnt_def; MAP; peg_V_def;
                     peg_longV_def; peg_UQConstructorName_def;
                     peg_StructName_def; peg_TypeDec_def; peg_EbaseParen_def] THENC
   TOP_DEPTH_CONV BETA_CONV;;
@@ -1293,7 +1293,7 @@ and PARSE3AUX_FDOM_RULES_TM = `FDOM (peg_rules cmlPEG)`
 and PARSE3AUX_FST_TOKEN_TM = `FST:token#locs->token`
 and PARSE3AUX_I_TM = `I:(mlptree)list->(mlptree)list`
 and PARSE3AUX_NTSYM_TM =
-  `nt:MMLnonT+num->((mlptree)list->(mlptree)list)->
+  `peg_nt:MMLnonT+num->((mlptree)list->(mlptree)list)->
       (token,MMLnonT,(mlptree)list,(char)list)pegsym`;;
 
 (* the nullability of the remaining non-terminals *)
@@ -1599,7 +1599,7 @@ let PARSE3AUX_IHSIDE_TAC : tactic = fun (asl,w as g) ->
      ASM_REWRITE_TAC[]]) g;;
 
 let PARSE3AUX_NTS_GEXPRS e =
-  REWRITE_RULE[pnt_def]
+  REWRITE_RULE[cmlPEG_pnt_def]
    (TAC_PROOF(([], mk_comb(mk_comb(PARSE3AUX_IN_PEGSYM_TM,e),PARSE3AUX_GEXPRS_TM)),
               REWRITE_TAC[NTS_in_PEG_exprs]));;
 
@@ -1676,7 +1676,7 @@ let PARSE3AUX_with_unfold (nts:term list) f x =
   try let r = f x in PARSE3AUX_unfold_nts := old; r
   with e -> (PARSE3AUX_unfold_nts := old; raise e);;
 
-(* from an evaluation of the rule of n to an evaluation of nt n I *)
+(* from an evaluation of the rule of n to an evaluation of peg_nt n I *)
 let PARSE3AUX_wrap_nt n inp th1 =
   let fdom = EQT_ELIM(REWRITE_CONV[FDOM_cmlPEG_nts]
                (mk_comb(mk_comb(PARSE3AUX_IN_NT_TM, n),
@@ -1685,12 +1685,12 @@ let PARSE3AUX_wrap_nt n inp th1 =
                         rand(concl th1)] peg_eval_nt) (CONJ fdom th1) in
   CONV_RULE (RAND_CONV (REWRITE_CONV[resultmap_def; I_THM])) th2;;
 
-(* the failure of nt n I on inp: on the empty input when it is not peg0,  *)
+(* the failure of peg_nt n I on inp: on the empty input when it is not peg0,  *)
 (* or when the first token cannot start n                                   *)
 let PARSE3AUX_nt_failure asl inp e n =
       if inp = PARSE3AUX_NIL_INP_TM then
         let th = MP (ISPECL [PARSE3AUX_CMLPEG_TM; e] not_peg0_peg_eval_NIL_NONE)
-                    (CONJ (REWRITE_RULE[pnt_def]
+                    (CONJ (REWRITE_RULE[cmlPEG_pnt_def]
                              (find (fun t -> rand(rand(concl t)) = e) PARSE3AUX_npeg0_ths))
                      (CONJ (PARSE3AUX_NTS_GEXPRS e) PEG_wellformed)) in
         SELECT_RULE (SELECT_RULE th)
@@ -1702,7 +1702,7 @@ let PARSE3AUX_nt_failure asl inp e n =
         let b,mth = PARSE3AUX_decide_asm asl mem in
         if b then failwith ("PARSE3AUX_eval nt: possible start " ^ string_of_term inp) else
         let sth = CONJ mth
-                    (CONJ (REWRITE_RULE[pnt_def]
+                    (CONJ (REWRITE_RULE[cmlPEG_pnt_def]
                              (find (fun t -> rand(rand(concl t)) = e) PARSE3AUX_npeg0_ths))
                           (PARSE3AUX_NTS_GEXPRS e)) in
         MP (ISPECL [n; t; tk; l] fFail_def) sth
@@ -1857,7 +1857,7 @@ let rec PARSE3AUX_eval_u (asl:(string*thm)list) (used:term list) (inp:term) (e:t
   match c, args with
     "empty", [r] ->
       ISPECL [PARSE3AUX_CMLPEG_TM; inp; r] LPARSEAUX_peg_eval_empty_rule
-  | "tok", [p;f] ->
+  | "peg_tok", [p;f] ->
       if inp = PARSE3AUX_NIL_INP_TM then
         ISPECL [PARSE3AUX_CMLPEG_TM; p; f] peg_eval_tok_failureEOF
       else if is_cons inp then
@@ -1867,25 +1867,25 @@ let rec PARSE3AUX_eval_u (asl:(string*thm)list) (used:term list) (inp:term) (e:t
         else MP (ISPECL [PARSE3AUX_CMLPEG_TM; h; t; p; f] peg_eval_tok_failureF) th
       else if is_var inp && !PARSE3AUX_lsplit_vars then raise (Parse3aux_lsplit inp)
       else failwith ("PARSE3AUX_eval tok: " ^ string_of_term inp)
-  | "nt", [n;f] when mem (rand n) !PARSE3AUX_unfold_nts ->
+  | "peg_nt", [n;f] when mem (rand n) !PARSE3AUX_unfold_nts ->
       PARSE3AUX_eval_nt_unfold asl used inp n
-  | "nt", [n;f] when !PARSE3AUX_mono_mode ->
+  | "peg_nt", [n;f] when !PARSE3AUX_mono_mode ->
       (try PARSE3AUX_mono_nt asl inp n with Failure _ ->
          PARSE3AUX_nt_failure asl inp e n)
-  | "nt", [n;f] ->
+  | "peg_nt", [n;f] ->
       let y = rand n in
       (try PARSE3AUX_fact_lookup asl inp e with Failure _ ->
        try PARSE3AUX_ih_apply asl used inp y with Failure _ ->
          PARSE3AUX_nt_failure asl inp e n)
-  | "rpt", [e1;f] when !PARSE3AUX_mono_mode ->
+  | "peg_rpt", [e1;f] when !PARSE3AUX_mono_mode ->
       PARSE3AUX_mono_rpt asl inp e1 f
-  | "rpt", [e1;f] ->
+  | "peg_rpt", [e1;f] ->
       let lth = try PARSE3AUX_list_fact_lookup asl inp e1
                 with Failure _ -> PARSE3AUX_eval_list asl used inp e1 in
       let s2,rest = dest_pair(rand(concl lth)) in
       let cs,err = dest_pair rest in
       MP (ISPECL [PARSE3AUX_CMLPEG_TM; e1; f; inp; s2; cs; err] LPARSEAUX_peg_eval_rpt_rule) lth
-  | "seq", [e1;e2;f] ->
+  | "peg_seq", [e1;e2;f] ->
       let th1 = PARSE3AUX_eval_u asl used inp e1 in
       if PARSE3AUX_is_succ th1 then
         let s1,c1,eo1 = PARSE3AUX_succ_parts th1 in
@@ -1922,11 +1922,11 @@ let rec PARSE3AUX_eval_u (asl:(string*thm)list) (used:term list) (inp:term) (e:t
           CONV_RULE (RAND_CONV (REWR_CONV PARSE3AUX_UNCURRY_Failure))
             (MP (ISPECL [PARSE3AUX_CMLPEG_TM; e1; e2; inp; f; fl; fe; fl2; fe2]
                         peg_eval_choice_fail) (CONJ th1 th2))
-  | "not", [e1;c] ->
+  | "peg_not", [e1;c] ->
       let th1 = PARSE3AUX_eval_u asl used inp e1 in
       if PARSE3AUX_is_succ th1 then
         let r = PARSE3AUX_res th1 in
-        CONV_RULE (RAND_CONV (REWRITE_CONV[sloc_def; SND]))
+        CONV_RULE (RAND_CONV (REWRITE_CONV[peg_sloc_def; SND]))
           (MP (ISPECL [PARSE3AUX_CMLPEG_TM; e1; inp; r; c] peg_eval_not_failure)
              (CONJ th1 (EQT_ELIM (REWRITE_CONV[isSuccess_def]
                 (mk_comb(`isSuccess:((token#locs)list,(mlptree)list,(char)list)pegresult->bool`, r))))))
@@ -2117,15 +2117,15 @@ let PARSE3AUX_DET_RULE th1 th2 =
   let det = CONJUNCT1 (ISPEC PARSE3AUX_CMLPEG_TM peg_deterministic) in
   EQ_MP (SPEC (rand(concl th2)) (MATCH_MP det th1)) th2;;
 
-(* nt e fails on the empty input *)
+(* peg_nt e fails on the empty input *)
 let PARSE3AUX_NIL_FAIL_TH e =
   let th = MP (ISPECL [PARSE3AUX_CMLPEG_TM; e] not_peg0_peg_eval_NIL_NONE)
-              (CONJ (REWRITE_RULE[pnt_def]
+              (CONJ (REWRITE_RULE[cmlPEG_pnt_def]
                        (find (fun t -> rand(rand(concl t)) = e) PARSE3AUX_npeg0_ths))
                     (CONJ (PARSE3AUX_NTS_GEXPRS e) PEG_wellformed)) in
   SELECT_RULE (SELECT_RULE th);;
 
-(* the hypothesis "H": peg_eval cmlPEG (CONS (tk,lk) t, nt N I) res;       *)
+(* the hypothesis "H": peg_eval cmlPEG (CONS (tk,lk) t, peg_nt N I) res;   *)
 (* the goal: the same on the input extended by sfx                         *)
 let PARSE3AUX_MONO_EVAL_TAC (nts:term list) : tactic = fun (asl,w as g) ->
   let h = assoc "H" asl in
@@ -2169,7 +2169,7 @@ let PARSE3AUX_TOKMONO_NONE_TAC (nts:term list) : tactic =
 
 let PARSE3AUX_S_not = prove
  (`!(G:(A,B,C,E)peg) i0 e c i r eo.
-     peg_eval G (i0, not e c) (peg_Success i r eo) <=>
+     peg_eval G (i0, peg_not e c) (peg_Success i r eo) <=>
      (?fl fe. peg_eval G (i0, e) (Failure fl fe)) /\ i = i0 /\ r = c /\ eo = NONE`,
   REPEAT GEN_TAC THEN GEN_REWRITE_TAC LAND_CONV [peg_eval_cases] THEN
   REWRITE_TAC[PAIR_EQ; pegsym_distinct; pegsym_inject; pegresult_distinct;
@@ -2180,9 +2180,9 @@ let PARSE3AUX_S_not = prove
 
 let PARSE3AUX_F_not = prove
  (`!(G:(A,B,C,E)peg) i0 e c fl fe.
-     peg_eval G (i0, not e c) (Failure fl fe) <=>
+     peg_eval G (i0, peg_not e c) (Failure fl fe) <=>
      (?i r eo. peg_eval G (i0, e) (peg_Success i r eo)) /\
-     fl = sloc i0 /\ fe = peg_notFAIL G`,
+     fl = peg_sloc i0 /\ fe = peg_notFAIL G`,
   REPEAT GEN_TAC THEN GEN_REWRITE_TAC LAND_CONV [peg_eval_cases] THEN
   REWRITE_TAC[PAIR_EQ; pegsym_distinct; pegsym_inject; pegresult_distinct;
               pegresult_inject] THEN
@@ -2204,13 +2204,13 @@ let PARSE3AUX_F_choice = prove
 
 let PARSE3AUX_S_rpt = prove
  (`!(G:(A,B,C,E)peg) i0 s f i r eo.
-     peg_eval G (i0, rpt s f) (peg_Success i r eo) <=>
+     peg_eval G (i0, peg_rpt s f) (peg_Success i r eo) <=>
      ?l err. peg_eval_list G (i0,s) (i,l,err) /\ r = f l /\ eo = SOME err`,
   REWRITE_TAC[peg_eval_rpt; pegresult_inject] THEN MESON_TAC[]);;
 
 let PARSE3AUX_F_rpt = prove
  (`!(G:(A,B,C,E)peg) i0 s f fl fe.
-     peg_eval G (i0, rpt s f) (Failure fl fe) <=> F`,
+     peg_eval G (i0, peg_rpt s f) (Failure fl fe) <=> F`,
   REWRITE_TAC[peg_eval_rpt; pegresult_distinct]);;
 
 let PARSE3AUX_F_empty = prove
@@ -2220,7 +2220,7 @@ let PARSE3AUX_F_empty = prove
 
 let PARSE3AUX_F_tok = prove
  (`!(G:(A,B,C,E)peg) i P f fl fe.
-     peg_eval G (i, tok P f) (Failure fl fe) <=>
+     peg_eval G (i, peg_tok P f) (Failure fl fe) <=>
      (?tk l t. i = CONS (tk,l) t /\ fl = l /\ fe = peg_tokFALSE G /\ ~P tk) \/
      (i = [] /\ fl = Locs EOFpt EOFpt /\ fe = peg_tokEOF G)`,
   REWRITE_TAC[peg_eval_tok_NONE; EXISTS_PAIR_THM; FST; SND]);;
@@ -2237,18 +2237,18 @@ let left_insert1_mkNd = prove
      mkNd (INL nEapp) [mkNd (INL nEapp) [pt1]; pt2]`,
   REWRITE_TAC[PARSE3AUX_left_insert1_mkNd1]);;
 
-(* the evaluation of nt nEapp, in terms of nEbase and its repetition *)
+(* the evaluation of peg_nt nEapp, in terms of nEbase and its repetition *)
 let PARSE3AUX_Eapp_intro = prove
  (`!i0 i1 i h eo1 l err x t.
-     peg_eval cmlPEG (i0, nt (INL nEbase) I) (peg_Success i1 h eo1) /\
-     peg_eval_list cmlPEG (i1, nt (INL nEbase) I) (i, l, err) /\
+     peg_eval cmlPEG (i0, peg_nt (INL nEbase) I) (peg_Success i1 h eo1) /\
+     peg_eval_list cmlPEG (i1, peg_nt (INL nEbase) I) (i, l, err) /\
      APPEND h (FLAT l) = CONS x t ==>
-     ?eo. peg_eval cmlPEG (i0, nt (INL nEapp) I)
+     ?eo. peg_eval cmlPEG (i0, peg_nt (INL nEapp) I)
             (peg_Success i [FOLDL (\a b. mkNd (INL nEapp) [a; b])
                                   (mkNd (INL nEapp) [x]) t] eo)`,
   REPEAT STRIP_TAC THEN
   REWRITE_TAC[peg_eval_NT_SOME; PARSE2AUX_rule `nEapp`; FDOM_cmlPEG_nts; I_THM] THEN
-  REWRITE_TAC[seql_cons_SOME; PARSE3AUX_S_seql_NIL; pnt_def; peg_eval_rpt] THEN
+  REWRITE_TAC[seql_cons_SOME; PARSE3AUX_S_seql_NIL; cmlPEG_pnt_def; peg_eval_rpt] THEN
   EXISTS_TAC `NONE:(locs#(char)list)option` THEN
   EXISTS_TAC `[FOLDL (\a b. mkNd (INL nEapp) [a; b]) (mkNd (INL nEapp) [x]) t]:(mlptree)list` THEN
   REWRITE_TAC[] THEN
@@ -2266,17 +2266,17 @@ let PARSE3AUX_Eapp_intro = prove
 
 let PARSE3AUX_Eapp_inv = prove
  (`!i0 i r eo.
-     peg_eval cmlPEG (i0, nt (INL nEapp) I) (peg_Success i r eo) ==>
+     peg_eval cmlPEG (i0, peg_nt (INL nEapp) I) (peg_Success i r eo) ==>
      ?i1 h eo1 l err.
-       peg_eval cmlPEG (i0, nt (INL nEbase) I) (peg_Success i1 h eo1) /\
-       peg_eval_list cmlPEG (i1, nt (INL nEbase) I) (i, l, err) /\
+       peg_eval cmlPEG (i0, peg_nt (INL nEbase) I) (peg_Success i1 h eo1) /\
+       peg_eval_list cmlPEG (i1, peg_nt (INL nEbase) I) (i, l, err) /\
        (APPEND h (FLAT l) = [] /\ r = [] \/
         ?x t. APPEND h (FLAT l) = CONS x t /\
               r = [FOLDL (\a b. mkNd (INL nEapp) [a; b]) (mkNd (INL nEapp) [x]) t])`,
   REPEAT GEN_TAC THEN
   DISCH_THEN(MP_TAC o REWRITE_RULE[peg_eval_NT_SOME; PARSE2AUX_rule `nEapp`;
                                    FDOM_cmlPEG_nts; I_THM]) THEN
-  REWRITE_TAC[seql_cons_SOME; PARSE3AUX_S_seql_NIL; pnt_def; peg_eval_rpt;
+  REWRITE_TAC[seql_cons_SOME; PARSE3AUX_S_seql_NIL; cmlPEG_pnt_def; peg_eval_rpt;
               pegresult_inject; I_THM; APPEND_NIL] THEN
   STRIP_TAC THEN RVEQ_TAC THEN
   MAP_EVERY EXISTS_TAC [`i1:(token#locs)list`; `rh:(mlptree)list`;
@@ -2289,9 +2289,9 @@ let PARSE3AUX_Eapp_inv = prove
   MAP_EVERY EXISTS_TAC [`h:mlptree`; `t:(mlptree)list`] THEN REWRITE_TAC[]);;
 
 let PARSE3AUX_nt_fail = prove
- (`!N sfx. nt (INL N) I IN Gexprs cmlPEG /\ ~peg0 cmlPEG (nt (INL N) I) /\
+ (`!N sfx. peg_nt (INL N) I IN Gexprs cmlPEG /\ ~peg0 cmlPEG (peg_nt (INL N) I) /\
            (~(sfx = []) ==> ~(FST (HD sfx) IN firstSet cmlG [NT (INL N)])) ==>
-           ?fl fe. peg_eval cmlPEG (sfx, nt (INL N) I) (Failure fl fe)`,
+           ?fl fe. peg_eval cmlPEG (sfx, peg_nt (INL N) I) (Failure fl fe)`,
   REPEAT GEN_TAC THEN
   MP_TAC(ISPEC `sfx:(token#locs)list` list_CASES) THEN
   STRIP_TAC THEN ASM_REWRITE_TAC[NOT_CONS_NIL; HD] THENL
@@ -2309,20 +2309,20 @@ let eapp_complete = prove
         INL N IN FDOM (peg_rules cmlPEG) /\
         ptree_head pt' = NT (INL N) /\ real_fringe pt' = MAP (TOK ## I) pfx' /\
         (~(sfx' = []) ==> FST (HD sfx') IN stoppers N) ==>
-        ?eo. peg_eval cmlPEG (APPEND pfx' sfx', nt (INL N) I)
+        ?eo. peg_eval cmlPEG (APPEND pfx' sfx', peg_nt (INL N) I)
                       (peg_Success sfx' [pt'] eo)) /\
      (!pt' sfx'.
         valid_lptree cmlG pt' /\ ptree_head pt' = NT (INL nEbase) /\
         real_fringe pt' = MAP (TOK ## I) master /\
         (~(sfx' = []) ==> FST (HD sfx') IN stoppers nEbase) ==>
-        ?eo. peg_eval cmlPEG (APPEND master sfx', nt (INL nEbase) I)
+        ?eo. peg_eval cmlPEG (APPEND master sfx', peg_nt (INL nEbase) I)
                       (peg_Success sfx' [pt'] eo))
      ==> !pfx apt sfx.
            IS_SUFFIX master pfx /\ valid_lptree cmlG apt /\
            ptree_head apt = NT (INL nEapp) /\
            real_fringe apt = MAP (TOK ## I) pfx /\
            (~(sfx = []) ==> FST (HD sfx) IN stoppers nEapp) ==>
-           ?eo. peg_eval cmlPEG (APPEND pfx sfx, nt (INL nEapp) I)
+           ?eo. peg_eval cmlPEG (APPEND pfx sfx, peg_nt (INL nEapp) I)
                          (peg_Success sfx [apt] eo)`,
   GEN_TAC THEN DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "ih1") (LABEL_TAC "ihE")) THEN
   SUBGOAL_THEN
@@ -2330,7 +2330,7 @@ let eapp_complete = prove
       LENGTH pfx = n /\ IS_SUFFIX master pfx /\ valid_lptree cmlG apt /\
       ptree_head apt = NT (INL nEapp) /\ real_fringe apt = MAP (TOK ## I) pfx /\
       (~(sfx = []) ==> FST (HD sfx) IN stoppers nEapp) ==>
-      ?eo. peg_eval cmlPEG (APPEND pfx sfx, nt (INL nEapp) I)
+      ?eo. peg_eval cmlPEG (APPEND pfx sfx, peg_nt (INL nEapp) I)
                     (peg_Success sfx [apt] eo)`
    (fun th -> MESON_TAC[th]) THEN
   MATCH_MP_TAC num_WF THEN X_GEN_TAC `n:num` THEN DISCH_THEN(LABEL_TAC "ihn") THEN
@@ -2377,7 +2377,7 @@ let eapp_complete = prove
     DISCH_THEN(X_CHOOSE_THEN `p:(token#locs)list` ASSUME_TAC) THEN
     (* the Ebase *)
     SUBGOAL_THEN `?eo. peg_eval cmlPEG
-        (APPEND (CONS (bt,bl) bf_r) (APPEND (CONS (at,al) af_r) sfx), nt (INL nEbase) I)
+        (APPEND (CONS (bt,bl) bf_r) (APPEND (CONS (at,al) af_r) sfx), peg_nt (INL nEbase) I)
         (peg_Success (APPEND (CONS (at,al) af_r) sfx) [bpt'] eo)`
       (X_CHOOSE_TAC `eob:(locs#(char)list)option`) THENL
      [USE_THEN "ih1" MATCH_MP_TAC THEN
@@ -2385,7 +2385,7 @@ let eapp_complete = prove
       REWRITE_TAC[LENGTH_APPEND; LENGTH] THEN ARITH_TAC;
       ALL_TAC] THEN
     (* the shorter Eapp *)
-    SUBGOAL_THEN `?eo. peg_eval cmlPEG (APPEND (CONS (at,al) af_r) sfx, nt (INL nEapp) I)
+    SUBGOAL_THEN `?eo. peg_eval cmlPEG (APPEND (CONS (at,al) af_r) sfx, peg_nt (INL nEapp) I)
                          (peg_Success sfx [apt'] eo)`
       (X_CHOOSE_TAC `eoa:(locs#(char)list)option`) THENL
      [USE_THEN "ihn" (MP_TAC o SPEC `LENGTH (CONS (at:token,al:locs) af_r)`) THEN
@@ -2397,7 +2397,7 @@ let eapp_complete = prove
       REWRITE_TAC[APPEND_ASSOC];
       ALL_TAC] THEN
     MP_TAC(MATCH_MP PARSE3AUX_Eapp_inv (ASSUME
-       `peg_eval cmlPEG (APPEND (CONS (at,al) af_r) sfx, nt (INL nEapp) I)
+       `peg_eval cmlPEG (APPEND (CONS (at,al) af_r) sfx, peg_nt (INL nEapp) I)
                          (peg_Success sfx [apt'] eoa)`)) THEN
     REWRITE_TAC[NOT_CONS_NIL; CONS_11] THEN
     DISCH_THEN(X_CHOOSE_THEN `i1:(token#locs)list` (X_CHOOSE_THEN `h:(mlptree)list`
@@ -2417,7 +2417,7 @@ let eapp_complete = prove
       RULE_ASSUM_TAC(REWRITE_RULE[APPEND]) THEN ASM_REWRITE_TAC[];
       REWRITE_TAC[left_insert1_FOLDL; left_insert1_mkNd; FOLDL]];
     (* Eapp -> Ebase *)
-    SUBGOAL_THEN `?eo. peg_eval cmlPEG (APPEND pfx sfx, nt (INL nEbase) I)
+    SUBGOAL_THEN `?eo. peg_eval cmlPEG (APPEND pfx sfx, peg_nt (INL nEbase) I)
                                 (peg_Success sfx [h0] eo)` STRIP_ASSUME_TAC THENL
      [MP_TAC(ISPECL [`master:(token#locs)list`; `pfx:(token#locs)list`]
                     LPARSEAUX_IS_SUFFIX_APPEND) THEN
@@ -2435,7 +2435,7 @@ let eapp_complete = prove
         UNDISCH_TAC `~(p:(token#locs)list = [])` THEN
         REWRITE_TAC[GSYM LENGTH_EQ_NIL] THEN ARITH_TAC];
       ALL_TAC] THEN
-    SUBGOAL_THEN `?fl fe. peg_eval cmlPEG (sfx, nt (INL nEbase) I) (Failure fl fe)`
+    SUBGOAL_THEN `?fl fe. peg_eval cmlPEG (sfx, peg_nt (INL nEbase) I) (Failure fl fe)`
       STRIP_ASSUME_TAC THENL
      [MATCH_MP_TAC PARSE3AUX_nt_fail THEN REWRITE_TAC[NTS_in_PEG_exprs; peg0_nEbase] THEN
       UNDISCH_TAC `~(sfx:(token#locs)list = []) ==> FST (HD sfx) IN stoppers nEapp` THEN
@@ -2452,8 +2452,8 @@ let eapp_complete = prove
 
 let peg_respects_firstSets' = prove
  (`!N t (l:locs) rest sfx res eo.
-     peg_eval cmlPEG (CONS (t,l) rest, nt N I) (peg_Success sfx res eo) /\
-     nt N I IN Gexprs cmlPEG /\ ~peg0 cmlPEG (nt N I) ==>
+     peg_eval cmlPEG (CONS (t,l) rest, peg_nt N I) (peg_Success sfx res eo) /\
+     peg_nt N I IN Gexprs cmlPEG /\ ~peg0 cmlPEG (peg_nt N I) ==>
      t IN firstSet cmlG [NT N]`,
   REPEAT STRIP_TAC THEN
   MATCH_MP_TAC(TAUT `(~p ==> F) ==> p`) THEN DISCH_TAC THEN
@@ -2467,21 +2467,21 @@ let peg_respects_firstSets' = prove
 
 let nUQConstructorName_input_monotone = prove
  (`!i0 i r eo sfx.
-     peg_eval cmlPEG (i0, nt (INL nUQConstructorName) I) (peg_Success i r eo) ==>
-     peg_eval cmlPEG (APPEND i0 sfx, nt (INL nUQConstructorName) I)
+     peg_eval cmlPEG (i0, peg_nt (INL nUQConstructorName) I) (peg_Success i r eo) ==>
+     peg_eval cmlPEG (APPEND i0 sfx, peg_nt (INL nUQConstructorName) I)
               (peg_Success (APPEND i sfx) r eo)`,
   PARSE3AUX_TOKMONO_TAC [`nUQConstructorName`]);;
 
 let nConstructorName_input_monotone = prove
  (`!i0 i r eo sfx.
-     peg_eval cmlPEG (i0, nt (INL nConstructorName) I) (peg_Success i r eo) ==>
-     peg_eval cmlPEG (APPEND i0 sfx, nt (INL nConstructorName) I)
+     peg_eval cmlPEG (i0, peg_nt (INL nConstructorName) I) (peg_Success i r eo) ==>
+     peg_eval cmlPEG (APPEND i0 sfx, peg_nt (INL nConstructorName) I)
               (peg_Success (APPEND i sfx) r eo)`,
   PARSE3AUX_TOKMONO_TAC [`nConstructorName`; `nUQConstructorName`]);;
 
 let peg_eval_NT_NONE = prove
  (`!i0 n fl fe.
-     peg_eval cmlPEG (i0, nt (INL n) I) (Failure fl fe) <=>
+     peg_eval cmlPEG (i0, peg_nt (INL n) I) (Failure fl fe) <=>
      INL n IN FDOM (peg_rules cmlPEG) /\
      peg_eval cmlPEG (i0, FAPPLY (peg_rules cmlPEG) (INL n)) (Failure fl fe)`,
   REWRITE_TAC[peg_eval_NT] THEN
@@ -2502,13 +2502,13 @@ let PARSE3AUX_len_fact th =
     let x,e,res = PARSE3AUX_eval_parts c in
     if not (PARSE3AUX_is_succ th) then failwith "len_fact" else
     (try MATCH_MP (MATCH_MP not_peg0_LENGTH_decreases
-                     (REWRITE_RULE[pnt_def]
+                     (REWRITE_RULE[cmlPEG_pnt_def]
                         (find (fun t -> rand(rand(concl t)) = e) PARSE3AUX_npeg0_ths))) th
      with Failure _ -> MATCH_MP length_no_greater th)
   else if PARSE3AUX_is_listfact c then MATCH_MP PARSE3AUX_LIST_LEN_LE th
   else failwith "len_fact";;
 
-(* unfold an evaluation fact of nt (INL Y) I into the evaluation of the     *)
+(* unfold an evaluation fact of peg_nt (INL Y) I into the evaluation of the *)
 (* primitive form of the rule of Y, and invert the compound expressions    *)
 let PARSE3AUX_INV_CONV : conv =
   REWRITE_CONV (PARSE3AUX_INV_RWTS @
@@ -2543,7 +2543,7 @@ let PARSE3AUX_DET_UNIFY_TAC : tactic = fun (asl,w as g) ->
                         NOT_CONS_NIL; GSYM NOT_CONS_NIL] (PARSE3AUX_DET_RULE a b) in
   (UNDISCH_THEN (concl b) (K ALL_TAC) THEN STRIP_ASSUME_TAC eq THEN RVEQ_TAC) g;;
 
-(* a successful evaluation of nt N on an input whose first token cannot   *)
+(* a successful evaluation of peg_nt N on an input whose first token cannot   *)
 (* start N                                                                   *)
 let PARSE3AUX_FIRSTSET_CONTR_TAC : tactic = fun (asl,w as g) ->
   let try_th th =
@@ -2561,7 +2561,7 @@ let PARSE3AUX_FIRSTSET_CONTR_TAC : tactic = fun (asl,w as g) ->
     let i',r',eo' = PARSE3AUX_succ_parts th in
     let th1 = ISPECL [n; tk; l; t; i'; r'; eo'] peg_respects_firstSets' in
     let th2 = MP th1 (CONJ th (CONJ (PARSE3AUX_NTS_GEXPRS e)
-                 (REWRITE_RULE[pnt_def] (find (fun t -> rand(rand(concl t)) = e)
+                 (REWRITE_RULE[cmlPEG_pnt_def] (find (fun t -> rand(rand(concl t)) = e)
                                               PARSE3AUX_npeg0_ths)))) in
     CONTR_TAC (MP (NOT_ELIM mth) th2) g in
   tryfind try_th (map snd asl);;
@@ -2603,7 +2603,7 @@ let PARSE3AUX_RENAME_BV_RULE (avoid:term list) th =
   let tm' = ren (concl th) in
   EQ_MP (ALPHA (concl th) tm') th;;
 
-(* unfold a successful evaluation of nt B on x when an evaluation of nt A  *)
+(* unfold a successful evaluation of peg_nt B on x when an evaluation of peg_nt A  *)
 (* on x is known and the rule of B mentions A (for determinism conflicts)  *)
 (* STRIP_ASSUME_TAC that closes a branch at once when a new fact x = [] or   *)
 (* x = CONS .. contradicts an assumption about the shape of x: the inverted  *)
@@ -2635,7 +2635,7 @@ let PARSE3AUX_PRUNE_STRIP_TAC = STRIP_GOAL_THEN PARSE3AUX_PRUNE_STRIP_ASSUME_TAC
 let PARSE3AUX_UNFOLD_CONFLICT_TAC : tactic = fun (asl,w as g) ->
   let evs = filter (fun th -> PARSE3AUX_is_evalfact (concl th) &&
                      (let _,e,_ = PARSE3AUX_eval_parts (concl th) in
-                      try fst(dest_const(fst(strip_comb e))) = "nt" with Failure _ -> false))
+                      try fst(dest_const(fst(strip_comb e))) = "peg_nt" with Failure _ -> false))
                    (map snd asl) in
   let nt_of th = let _,e,_ = PARSE3AUX_eval_parts (concl th) in rand(rand(rator e)) in
   let inp_of th = let x,_,_ = PARSE3AUX_eval_parts (concl th) in x in
@@ -2650,8 +2650,8 @@ let PARSE3AUX_UNFOLD_CONFLICT_TAC : tactic = fun (asl,w as g) ->
              cands THEN
    REPEAT PARSE3AUX_PRUNE_STRIP_TAC THEN PARSE3AUX_CLEAN_TAC) g;;
 
-(* forward lemmas: !x y r eo. peg_eval cmlPEG (x, nt (INL A) I)               *)
-(* (peg_Success y r eo) /\ side ==> ?r1 eo1. peg_eval cmlPEG (x, nt B I) ...   *)
+(* forward lemmas: !x y r eo. peg_eval cmlPEG (x, peg_nt (INL A) I)           *)
+(* (peg_Success y r eo) /\ side ==> ?r1 eo1. peg_eval cmlPEG (x, peg_nt B I) ...   *)
 let PARSE3AUX_fwd_lemmas = ref ([]:thm list);;
 
 let PARSE3AUX_FWD_TAC : tactic = fun (asl,w as g) ->
@@ -2795,34 +2795,34 @@ let PARSE3AUX_HD_NOTIN_TAC (sfx:term) : tactic =
 
 let nConstructorName_NONE_input_monotone = prove
  (`!tk l i sfx fl fe.
-     peg_eval cmlPEG (CONS (tk,l) i, nt (INL nConstructorName) I) (Failure fl fe) ==>
-     peg_eval cmlPEG (CONS (tk,l) (APPEND i sfx), nt (INL nConstructorName) I)
+     peg_eval cmlPEG (CONS (tk,l) i, peg_nt (INL nConstructorName) I) (Failure fl fe) ==>
+     peg_eval cmlPEG (CONS (tk,l) (APPEND i sfx), peg_nt (INL nConstructorName) I)
               (Failure fl fe)`,
   PARSE3AUX_TOKMONO_NONE_TAC [`nConstructorName`; `nUQConstructorName`]);;
 
 let nV_input_monotone = prove
  (`!i0 i r eo sfx.
-     peg_eval cmlPEG (i0, nt (INL nV) I) (peg_Success i r eo) ==>
-     peg_eval cmlPEG (APPEND i0 sfx, nt (INL nV) I) (peg_Success (APPEND i sfx) r eo)`,
+     peg_eval cmlPEG (i0, peg_nt (INL nV) I) (peg_Success i r eo) ==>
+     peg_eval cmlPEG (APPEND i0 sfx, peg_nt (INL nV) I) (peg_Success (APPEND i sfx) r eo)`,
   PARSE3AUX_TOKMONO_TAC [`nV`]);;
 
 let nV_NONE_input_monotone = prove
  (`!tk l i0 sfx fl fe.
-     peg_eval cmlPEG (CONS (tk,l) i0, nt (INL nV) I) (Failure fl fe) ==>
-     peg_eval cmlPEG (CONS (tk,l) (APPEND i0 sfx), nt (INL nV) I) (Failure fl fe)`,
+     peg_eval cmlPEG (CONS (tk,l) i0, peg_nt (INL nV) I) (Failure fl fe) ==>
+     peg_eval cmlPEG (CONS (tk,l) (APPEND i0 sfx), peg_nt (INL nV) I) (Failure fl fe)`,
   PARSE3AUX_TOKMONO_NONE_TAC [`nV`]);;
 
 let nOpID_input_monotone = prove
  (`!i0 i r eo sfx.
-     peg_eval cmlPEG (i0, nt (INL nOpID) I) (peg_Success i r eo) ==>
-     peg_eval cmlPEG (APPEND i0 sfx, nt (INL nOpID) I)
+     peg_eval cmlPEG (i0, peg_nt (INL nOpID) I) (peg_Success i r eo) ==>
+     peg_eval cmlPEG (APPEND i0 sfx, peg_nt (INL nOpID) I)
               (peg_Success (APPEND i sfx) r eo)`,
   PARSE3AUX_TOKMONO_TAC [`nOpID`]);;
 
 let nUQTyOp_input_monotone = prove
  (`!i0 i r eo sfx.
-     peg_eval cmlPEG (i0, nt (INL nUQTyOp) I) (peg_Success i r eo) ==>
-     peg_eval cmlPEG (APPEND i0 sfx, nt (INL nUQTyOp) I)
+     peg_eval cmlPEG (i0, peg_nt (INL nUQTyOp) I) (peg_Success i r eo) ==>
+     peg_eval cmlPEG (APPEND i0 sfx, peg_nt (INL nUQTyOp) I)
               (peg_Success (APPEND i sfx) r eo)`,
   PARSE3AUX_TOKMONO_TAC [`nUQTyOp`]);;
 
@@ -2832,8 +2832,8 @@ let nUQTyOp_input_monotone' =
 
 let nTyOp_input_monotone = prove
  (`!i0 i r eo sfx.
-     peg_eval cmlPEG (i0, nt (INL nTyOp) I) (peg_Success i r eo) ==>
-     peg_eval cmlPEG (APPEND i0 sfx, nt (INL nTyOp) I)
+     peg_eval cmlPEG (i0, peg_nt (INL nTyOp) I) (peg_Success i r eo) ==>
+     peg_eval cmlPEG (APPEND i0 sfx, peg_nt (INL nTyOp) I)
               (peg_Success (APPEND i sfx) r eo)`,
   PARSE3AUX_TOKMONO_TAC [`nTyOp`; `nUQTyOp`]);;
 
@@ -2843,15 +2843,15 @@ let nTyOp_input_monotone' =
 
 let PARSE3AUX_nTyOp_NONE_input_monotone = prove
  (`!tk l i sfx fl fe.
-     peg_eval cmlPEG (CONS (tk,l) i, nt (INL nTyOp) I) (Failure fl fe) ==>
-     peg_eval cmlPEG (CONS (tk,l) (APPEND i sfx), nt (INL nTyOp) I) (Failure fl fe)`,
+     peg_eval cmlPEG (CONS (tk,l) i, peg_nt (INL nTyOp) I) (Failure fl fe) ==>
+     peg_eval cmlPEG (CONS (tk,l) (APPEND i sfx), peg_nt (INL nTyOp) I) (Failure fl fe)`,
   PARSE3AUX_TOKMONO_NONE_TAC [`nTyOp`; `nUQTyOp`]);;
 
 let nTyOplist_input_monotone = prove
  (`!pts res i0 i sfx.
-     peg_eval_list cmlPEG (i0, nt (INL nTyOp) I) (i, pts, res) /\
+     peg_eval_list cmlPEG (i0, peg_nt (INL nTyOp) I) (i, pts, res) /\
      (i = [] /\ ~(sfx = []) ==> FST (HD sfx) IN stoppers nDType) ==>
-     ?res'. peg_eval_list cmlPEG (APPEND i0 sfx, nt (INL nTyOp) I)
+     ?res'. peg_eval_list cmlPEG (APPEND i0 sfx, peg_nt (INL nTyOp) I)
                           (APPEND i sfx, pts, res')`,
   LIST_INDUCT_TAC THENL
    [REPEAT GEN_TAC THEN
@@ -2859,7 +2859,7 @@ let nTyOplist_input_monotone = prove
     REWRITE_TAC[NOT_CONS_NIL] THEN STRIP_TAC THEN
     FIRST_X_ASSUM(SUBST_ALL_TAC o check (fun th ->
       concl th = `i:(token#locs)list = i0`)) THEN
-    SUBGOAL_THEN `?fl' fe'. peg_eval cmlPEG (APPEND i0 sfx, nt (INL nTyOp) I)
+    SUBGOAL_THEN `?fl' fe'. peg_eval cmlPEG (APPEND i0 sfx, peg_nt (INL nTyOp) I)
                                      (Failure fl' fe')`
       STRIP_ASSUME_TAC THENL
      [MP_TAC(ISPEC `i0:(token#locs)list` list_CASES) THEN
@@ -2894,7 +2894,7 @@ let nTyOplist_input_monotone = prove
 (* HOL4: [local,simp] *)
 let peg_eval_TyOp_LparT = prove
  (`!loc i0 i r eo.
-     peg_eval cmlPEG (CONS (LparT,loc) i0, nt (INL nTyOp) I)
+     peg_eval cmlPEG (CONS (LparT,loc) i0, peg_nt (INL nTyOp) I)
               (peg_Success i r eo) <=> F`,
   REPEAT GEN_TAC THEN REWRITE_TAC[] THEN DISCH_TAC THEN
   MP_TAC(SPECL [`INL nTyOp:MMLnonT+num`; `LparT`; `loc:locs`; `i0:(token#locs)list`;
@@ -2932,17 +2932,17 @@ let pegComplete_Type_input_monotone = prove
      N IN {nTypeList2, nTypeList1, nType, nPType, nDType, nTbase} /\
      (~(i = []) ==> FST (HD i) IN stoppers N) /\
      (i = [] /\ ~(sfx = []) ==> FST (HD sfx) IN stoppers N) /\
-     peg_eval cmlPEG (i0, nt (INL N) I) (peg_Success i r eo) ==>
-     peg_eval cmlPEG (APPEND i0 sfx, nt (INL N) I)
+     peg_eval cmlPEG (i0, peg_nt (INL N) I) (peg_Success i r eo) ==>
+     peg_eval cmlPEG (APPEND i0 sfx, peg_nt (INL N) I)
               (peg_Success (APPEND i sfx) r eo)`,
   PARSE3AUX_MONO_START_TAC THEN PARSE3AUX_MONO_CASE_TAC);;
 
 (* HOL4: [local] *)
 let Pattern_nV_nCons = prove
  (`!i j r eo.
-     peg_eval cmlPEG (i, nt (INL nV) I) (peg_Success j r eo) /\
+     peg_eval cmlPEG (i, peg_nt (INL nV) I) (peg_Success j r eo) /\
      (~(j = []) ==> FST (HD j) IN stoppers nPcons) ==>
-     ?r1 eo1. peg_eval cmlPEG (i, nt (INL nPcons) I) (peg_Success j r1 eo1)`,
+     ?r1 eo1. peg_eval cmlPEG (i, peg_nt (INL nPcons) I) (peg_Success j r1 eo1)`,
   REPEAT GEN_TAC THEN DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "H") ASSUME_TAC) THEN
   PARSE3AUX_JSPLIT_TAC `j:(token#locs)list` THEN
   PARSE3AUX_INV_TAC "H" THEN
@@ -2973,16 +2973,16 @@ let PARSE3AUX_pat_mono_tm =
         N IN {nPbase, nPtuple, nPattern, nPapp, nPatternList, nPas, nPcons, nV} /\
         (~(i = []) ==> FST (HD i) IN stoppers N) /\
         (i = [] /\ ~(sfx = []) ==> FST (HD sfx) IN stoppers N) /\
-        peg_eval cmlPEG (i0, nt (INL N) I) (peg_Success i r eo) ==>
-        peg_eval cmlPEG (APPEND i0 sfx, nt (INL N) I)
+        peg_eval cmlPEG (i0, peg_nt (INL N) I) (peg_Success i r eo) ==>
+        peg_eval cmlPEG (APPEND i0 sfx, peg_nt (INL N) I)
                  (peg_Success (APPEND i sfx) r eo)) /\
      (N = nPbase ==>
       !rlist i err sfx.
         (~(i = []) ==> ~(FST (HD i) IN firstSet cmlG [NT (INL nPbase)])) /\
         (i = [] /\ ~(sfx = []) ==>
          ~(FST (HD sfx) IN firstSet cmlG [NT (INL nPbase)])) /\
-        peg_eval_list cmlPEG (i0, nt (INL nPbase) I) (i, rlist, err) ==>
-        ?res'. peg_eval_list cmlPEG (APPEND i0 sfx, nt (INL nPbase) I)
+        peg_eval_list cmlPEG (i0, peg_nt (INL nPbase) I) (i, rlist, err) ==>
+        ?res'. peg_eval_list cmlPEG (APPEND i0 sfx, peg_nt (INL nPbase) I)
                              (APPEND i sfx, rlist, res'))`;;
 
 let PARSE3AUX_PAT_START_TAC : tactic =
@@ -3007,7 +3007,7 @@ let PARSE3AUX_PAT_LIST_TAC : tactic =
    [FIRST_X_ASSUM(SUBST_ALL_TAC o check (fun th -> lhs(concl th) = `i:(token#locs)list`)) THEN
     FIRST_X_ASSUM(SUBST_ALL_TAC o check (fun th ->
       lhs(concl th) = `rlist:((mlptree)list)list`)) THEN
-    SUBGOAL_THEN `?fl' fe'. peg_eval cmlPEG (APPEND i0 sfx, nt (INL nPbase) I)
+    SUBGOAL_THEN `?fl' fe'. peg_eval cmlPEG (APPEND i0 sfx, peg_nt (INL nPbase) I)
                                      (Failure fl' fe')` STRIP_ASSUME_TAC THENL
      [MATCH_MP_TAC PARSE3AUX_nt_fail THEN REWRITE_TAC[NTS_in_PEG_exprs; peg0_nPbase] THEN
       MP_TAC(ISPEC `i0:(token#locs)list` list_CASES) THEN
@@ -3020,7 +3020,7 @@ let PARSE3AUX_PAT_LIST_TAC : tactic =
       MATCH_MP_TAC peg_eval_list_nil THEN ASM_REWRITE_TAC[]];
     FIRST_X_ASSUM(SUBST_ALL_TAC o check (fun th ->
       lhs(concl th) = `rlist:((mlptree)list)list`)) THEN
-    SUBGOAL_THEN `peg_eval cmlPEG (APPEND i0 sfx, nt (INL nPbase) I)
+    SUBGOAL_THEN `peg_eval cmlPEG (APPEND i0 sfx, peg_nt (INL nPbase) I)
                     (peg_Success (APPEND i1 sfx) rh eo0)` ASSUME_TAC THENL
      [USE_THEN "NL" MATCH_MP_TAC THEN
       ASM_REWRITE_TAC[IN_INSERT; stoppers_def; IN_UNIV];
@@ -3060,15 +3060,15 @@ let pegComplete_Pattern_input_monotone0 = prove
      (N IN {nPbase, nPtuple, nPattern, nPapp, nPatternList, nPas, nPcons, nV} /\
       ~b /\ (~(i = []) ==> FST (HD i) IN stoppers N) /\
       (i = [] /\ ~(sfx = []) ==> FST (HD sfx) IN stoppers N) /\
-      peg_eval cmlPEG (i0, nt (INL N) I) (peg_Success i r eo) ==>
-      peg_eval cmlPEG (APPEND i0 sfx, nt (INL N) I)
+      peg_eval cmlPEG (i0, peg_nt (INL N) I) (peg_Success i r eo) ==>
+      peg_eval cmlPEG (APPEND i0 sfx, peg_nt (INL N) I)
                (peg_Success (APPEND i sfx) r eo)) /\
      (N = nPbase /\ b /\
       (~(i = []) ==> ~(FST (HD i) IN firstSet cmlG [NT (INL nPbase)])) /\
       (i = [] /\ ~(sfx = []) ==>
        ~(FST (HD sfx) IN firstSet cmlG [NT (INL nPbase)])) /\
-      peg_eval_list cmlPEG (i0, nt (INL N) I) (i, rlist, l, res) ==>
-      ?res'. peg_eval_list cmlPEG (APPEND i0 sfx, nt (INL N) I)
+      peg_eval_list cmlPEG (i0, peg_nt (INL N) I) (i, rlist, l, res) ==>
+      ?res'. peg_eval_list cmlPEG (APPEND i0 sfx, peg_nt (INL N) I)
                            (APPEND i sfx, rlist, res'))`,
   REPEAT GEN_TAC THEN CONJ_TAC THEN STRIP_TAC THENL
    [MATCH_MP_TAC(CONJUNCT1(SPECL [`N:MMLnonT`; `i0:(token#locs)list`]
@@ -3085,10 +3085,10 @@ let pegComplete_Pattern_input_monotone =
 
 let extend_Pbase_list = prove
  (`!results pfx sfx sfx' result e eo.
-     peg_eval_list cmlPEG (pfx, nt (INL nPbase) I) ([], results, e) /\
-     peg_eval cmlPEG (sfx, nt (INL nPbase) I) (peg_Success sfx' result eo) /\
+     peg_eval_list cmlPEG (pfx, peg_nt (INL nPbase) I) ([], results, e) /\
+     peg_eval cmlPEG (sfx, peg_nt (INL nPbase) I) (peg_Success sfx' result eo) /\
      (~(sfx' = []) ==> ~(FST (HD sfx') IN firstSet cmlG [NT (INL nPbase)])) ==>
-     ?e'. peg_eval_list cmlPEG (APPEND pfx sfx, nt (INL nPbase) I)
+     ?e'. peg_eval_list cmlPEG (APPEND pfx sfx, peg_nt (INL nPbase) I)
                         (sfx', APPEND results [result], e')`,
   LIST_INDUCT_TAC THENL
    [REPEAT GEN_TAC THEN GEN_REWRITE_TAC (LAND_CONV o LAND_CONV) [peg_eval_list] THEN
@@ -3096,7 +3096,7 @@ let extend_Pbase_list = prove
     FIRST_X_ASSUM(SUBST_ALL_TAC o SYM o check (fun th ->
       concl th = `[]:(token#locs)list = pfx`)) THEN
     REWRITE_TAC[APPEND] THEN
-    SUBGOAL_THEN `?fl' fe'. peg_eval cmlPEG (sfx', nt (INL nPbase) I) (Failure fl' fe')`
+    SUBGOAL_THEN `?fl' fe'. peg_eval cmlPEG (sfx', peg_nt (INL nPbase) I) (Failure fl' fe')`
       STRIP_ASSUME_TAC THENL
      [MATCH_MP_TAC PARSE3AUX_nt_fail THEN
       ASM_REWRITE_TAC[NTS_in_PEG_exprs; peg0_nPbase];
@@ -3128,12 +3128,12 @@ let papp_complete = prove
        INL N IN FDOM (peg_rules cmlPEG) /\ ptree_head pt' = NT (INL N) /\
        real_fringe pt' = MAP (TOK ## I) pfx' /\
        (~(sfx' = []) ==> FST (HD sfx') IN stoppers N) ==>
-       ?eo. peg_eval cmlPEG (APPEND pfx' sfx', nt (INL N) I)
+       ?eo. peg_eval cmlPEG (APPEND pfx' sfx', peg_nt (INL N) I)
                      (peg_Success sfx' [pt'] eo)) /\
     (!pt' sfx'.
        valid_lptree cmlG pt' /\ ptree_head pt' = NT (INL nConstructorName) /\
        real_fringe pt' = MAP (TOK ## I) master ==>
-       ?eo. peg_eval cmlPEG (APPEND master sfx', nt (INL nConstructorName) I)
+       ?eo. peg_eval cmlPEG (APPEND master sfx', peg_nt (INL nConstructorName) I)
                      (peg_Success sfx' [pt'] eo)) ==>
     !pfx accpt sfx.
       pfx <<= master /\ valid_lptree cmlG accpt /\
@@ -3141,9 +3141,9 @@ let papp_complete = prove
       real_fringe accpt = MAP (TOK ## I) pfx /\
       (~(sfx = []) ==> FST (HD sfx) IN stoppers nPConApp) ==>
       ?cpt i bpts eo e.
-        peg_eval cmlPEG (APPEND pfx sfx, nt (INL nConstructorName) I)
+        peg_eval cmlPEG (APPEND pfx sfx, peg_nt (INL nConstructorName) I)
                  (peg_Success i [cpt] eo) /\
-        peg_eval_list cmlPEG (i, nt (INL nPbase) I) (sfx, bpts, e) /\
+        peg_eval_list cmlPEG (i, peg_nt (INL nPbase) I) (sfx, bpts, e) /\
         accpt = FOLDL (\pcpt bpt. bindNT0 nPConApp [pcpt; bpt])
                       (mkNd (INL nPConApp) [cpt]) (FLAT bpts)`,
   GEN_TAC THEN DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "ih1") (LABEL_TAC "ihC")) THEN
@@ -3154,9 +3154,9 @@ let papp_complete = prove
       real_fringe accpt = MAP (TOK ## I) pfx /\
       (~(sfx = []) ==> FST (HD sfx) IN stoppers nPConApp) ==>
       ?cpt i bpts eo e.
-        peg_eval cmlPEG (APPEND pfx sfx, nt (INL nConstructorName) I)
+        peg_eval cmlPEG (APPEND pfx sfx, peg_nt (INL nConstructorName) I)
                  (peg_Success i [cpt] eo) /\
-        peg_eval_list cmlPEG (i, nt (INL nPbase) I) (sfx, bpts, e) /\
+        peg_eval_list cmlPEG (i, peg_nt (INL nPbase) I) (sfx, bpts, e) /\
         accpt = FOLDL (\pcpt bpt. bindNT0 nPConApp [pcpt; bpt])
                       (mkNd (INL nPConApp) [cpt]) (FLAT bpts)`
    (fun th -> MESON_TAC[th]) THEN
@@ -3170,7 +3170,7 @@ let papp_complete = prove
   PARSE3AUX_GRULE_CASES_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[MEM; DISJ_IMP_THM; FORALL_AND_THM; FORALL_UNWIND_THM2]) THEN
   PARSE3AUX_FRINGE_SPLIT_TAC THENL
-   [SUBGOAL_THEN `?eo. peg_eval cmlPEG (APPEND pfx sfx, nt (INL nConstructorName) I)
+   [SUBGOAL_THEN `?eo. peg_eval cmlPEG (APPEND pfx sfx, peg_nt (INL nConstructorName) I)
                                 (peg_Success sfx [h0] eo)` STRIP_ASSUME_TAC THENL
      [UNDISCH_TAC `(pfx:(token#locs)list) <<= master` THEN REWRITE_TAC[IS_PREFIX_APPEND] THEN
       DISCH_THEN(X_CHOOSE_THEN `q:(token#locs)list` SUBST_ALL_TAC) THEN
@@ -3185,7 +3185,7 @@ let papp_complete = prove
         UNDISCH_TAC `~(q:(token#locs)list = [])` THEN
         REWRITE_TAC[GSYM LENGTH_EQ_NIL] THEN ARITH_TAC];
       ALL_TAC] THEN
-    SUBGOAL_THEN `?fl fe. peg_eval cmlPEG (sfx, nt (INL nPbase) I) (Failure fl fe)`
+    SUBGOAL_THEN `?fl fe. peg_eval cmlPEG (sfx, peg_nt (INL nPbase) I) (Failure fl fe)`
       STRIP_ASSUME_TAC THENL
      [MATCH_MP_TAC PARSE3AUX_nt_fail THEN REWRITE_TAC[NTS_in_PEG_exprs; peg0_nPbase] THEN
       PARSE3AUX_HD_NOTIN_TAC `sfx:(token#locs)list`;
@@ -3228,7 +3228,7 @@ let papp_complete = prove
                  `eo:(locs#(char)list)option`; `APPEND (CONS (bt:token,bl:locs) m2r) sfx`]
                 nConstructorName_input_monotone) THEN
   ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
-  SUBGOAL_THEN `?eob. peg_eval cmlPEG (APPEND (CONS (bt,bl) m2r) sfx, nt (INL nPbase) I)
+  SUBGOAL_THEN `?eob. peg_eval cmlPEG (APPEND (CONS (bt,bl) m2r) sfx, peg_nt (INL nPbase) I)
                         (peg_Success sfx [h0'] eob)`
     (X_CHOOSE_TAC `eob:(locs#(char)list)option`) THENL
    [USE_THEN "ih1" MATCH_MP_TAC THEN
@@ -3274,19 +3274,19 @@ let left_insert2_mkNd = prove
 
 let _ = cake_add_simps [left_insert2_mkNd];;
 
-(* the evaluation of nt nDType, in terms of nTbase and the repetition of  *)
+(* the evaluation of peg_nt nDType, in terms of nTbase and the repetition of  *)
 (* nTyOp                                                                   *)
 let PARSE3AUX_DType_intro = prove
  (`!i0 i1 i h eo1 l err x t.
-     peg_eval cmlPEG (i0, nt (INL nTbase) I) (peg_Success i1 h eo1) /\
-     peg_eval_list cmlPEG (i1, nt (INL nTyOp) I) (i, l, err) /\
+     peg_eval cmlPEG (i0, peg_nt (INL nTbase) I) (peg_Success i1 h eo1) /\
+     peg_eval_list cmlPEG (i1, peg_nt (INL nTyOp) I) (i, l, err) /\
      APPEND h (FLAT l) = CONS x t ==>
-     ?eo. peg_eval cmlPEG (i0, nt (INL nDType) I)
+     ?eo. peg_eval cmlPEG (i0, peg_nt (INL nDType) I)
             (peg_Success i [FOLDL (\a b. mkNd (INL nDType) [a; b])
                                   (mkNd (INL nDType) [x]) t] eo)`,
   REPEAT STRIP_TAC THEN
   REWRITE_TAC[peg_eval_NT_SOME; PARSE2AUX_rule `nDType`; FDOM_cmlPEG_nts; I_THM] THEN
-  REWRITE_TAC[seql_cons_SOME; PARSE3AUX_S_seql_NIL; pnt_def; peg_eval_rpt] THEN
+  REWRITE_TAC[seql_cons_SOME; PARSE3AUX_S_seql_NIL; cmlPEG_pnt_def; peg_eval_rpt] THEN
   EXISTS_TAC `NONE:(locs#(char)list)option` THEN
   EXISTS_TAC `[FOLDL (\a b. mkNd (INL nDType) [a; b]) (mkNd (INL nDType) [x]) t]:(mlptree)list` THEN
   REWRITE_TAC[] THEN
@@ -3304,17 +3304,17 @@ let PARSE3AUX_DType_intro = prove
 
 let PARSE3AUX_DType_inv = prove
  (`!i0 i r eo.
-     peg_eval cmlPEG (i0, nt (INL nDType) I) (peg_Success i r eo) ==>
+     peg_eval cmlPEG (i0, peg_nt (INL nDType) I) (peg_Success i r eo) ==>
      ?i1 h eo1 l err.
-       peg_eval cmlPEG (i0, nt (INL nTbase) I) (peg_Success i1 h eo1) /\
-       peg_eval_list cmlPEG (i1, nt (INL nTyOp) I) (i, l, err) /\
+       peg_eval cmlPEG (i0, peg_nt (INL nTbase) I) (peg_Success i1 h eo1) /\
+       peg_eval_list cmlPEG (i1, peg_nt (INL nTyOp) I) (i, l, err) /\
        (APPEND h (FLAT l) = [] /\ r = [] \/
         ?x t. APPEND h (FLAT l) = CONS x t /\
               r = [FOLDL (\a b. mkNd (INL nDType) [a; b]) (mkNd (INL nDType) [x]) t])`,
   REPEAT GEN_TAC THEN
   DISCH_THEN(MP_TAC o REWRITE_RULE[peg_eval_NT_SOME; PARSE2AUX_rule `nDType`;
                                    FDOM_cmlPEG_nts; I_THM]) THEN
-  REWRITE_TAC[seql_cons_SOME; PARSE3AUX_S_seql_NIL; pnt_def; peg_eval_rpt;
+  REWRITE_TAC[seql_cons_SOME; PARSE3AUX_S_seql_NIL; cmlPEG_pnt_def; peg_eval_rpt;
               pegresult_inject; I_THM; APPEND_NIL] THEN
   STRIP_TAC THEN RVEQ_TAC THEN
   MAP_EVERY EXISTS_TAC [`i1:(token#locs)list`; `rh:(mlptree)list`;
@@ -3329,9 +3329,9 @@ let PARSE3AUX_DType_inv = prove
 (* a Tbase whose first token can start a TyOp is a TyOp *)
 let PARSE3AUX_Tbase_TyOp = prove
  (`!x i r eo.
-     peg_eval cmlPEG (x, nt (INL nTbase) I) (peg_Success i r eo) /\
+     peg_eval cmlPEG (x, peg_nt (INL nTbase) I) (peg_Success i r eo) /\
      (~(x = []) ==> FST (HD x) IN firstSet cmlG [NT (INL nTyOp)]) ==>
-     ?tr eo'. peg_eval cmlPEG (x, nt (INL nTyOp) I) (peg_Success i tr eo') /\
+     ?tr eo'. peg_eval cmlPEG (x, peg_nt (INL nTyOp) I) (peg_Success i tr eo') /\
               r = bindNT nTbase tr`,
   REPEAT GEN_TAC THEN DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "H") ASSUME_TAC) THEN
   PARSE3AUX_JSPLIT_TAC `x:(token#locs)list` THEN
@@ -3339,7 +3339,7 @@ let PARSE3AUX_Tbase_TyOp = prove
   FIRST_ASSUM(fun th ->
     let c = concl th in
     if PARSE3AUX_is_evalfact c &&
-       (let _,e,_ = PARSE3AUX_eval_parts c in e = `nt (INL nTyOp) I:(token,MMLnonT,(mlptree)list,(char)list)pegsym`)
+       (let _,e,_ = PARSE3AUX_eval_parts c in e = `peg_nt (INL nTyOp) I:(token,MMLnonT,(mlptree)list,(char)list)pegsym`)
     then let _,r1,eo1 = PARSE3AUX_succ_parts th in
          MAP_EVERY EXISTS_TAC [r1; eo1] THEN ASM_REWRITE_TAC[] THEN
          REWRITE_TAC PARSE3AUX_RESULT_RWTS
@@ -3371,20 +3371,20 @@ let dtype_complete = prove
      INL N IN FDOM (peg_rules cmlPEG) /\
      ptree_head pt' = NT (INL N) /\ real_fringe pt' = MAP (TOK ## I) pfx' /\
      (~(sfx' = []) ==> FST (HD sfx') IN stoppers N) ==>
-     ?eo. peg_eval cmlPEG (APPEND pfx' sfx', nt (INL N) I)
+     ?eo. peg_eval cmlPEG (APPEND pfx' sfx', peg_nt (INL N) I)
                    (peg_Success sfx' [pt'] eo)) /\
   (!pt' sfx'.
      valid_lptree cmlG pt' /\ ptree_head pt' = NT (INL nTbase) /\
      real_fringe pt' = MAP (TOK ## I) master /\
      (~(sfx' = []) ==> FST (HD sfx') IN stoppers nEbase) ==>
-     ?eo. peg_eval cmlPEG (APPEND master sfx', nt (INL nTbase) I)
+     ?eo. peg_eval cmlPEG (APPEND master sfx', peg_nt (INL nTbase) I)
                    (peg_Success sfx' [pt'] eo))
   ==>
   !pfx apt sfx.
     IS_SUFFIX master pfx /\ valid_lptree cmlG apt /\
     ptree_head apt = NT (INL nDType) /\ real_fringe apt = MAP (TOK ## I) pfx /\
     (~(sfx = []) ==> FST (HD sfx) IN stoppers nDType) ==>
-    ?eo. peg_eval cmlPEG (APPEND pfx sfx, nt (INL nDType) I)
+    ?eo. peg_eval cmlPEG (APPEND pfx sfx, peg_nt (INL nDType) I)
                   (peg_Success sfx [apt] eo)`,
   GEN_TAC THEN DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "ih1") (LABEL_TAC "ihT")) THEN
   SUBGOAL_THEN
@@ -3392,7 +3392,7 @@ let dtype_complete = prove
       LENGTH pfx = n /\ IS_SUFFIX master pfx /\ valid_lptree cmlG apt /\
       ptree_head apt = NT (INL nDType) /\ real_fringe apt = MAP (TOK ## I) pfx /\
       (~(sfx = []) ==> FST (HD sfx) IN stoppers nDType) ==>
-      ?eo. peg_eval cmlPEG (APPEND pfx sfx, nt (INL nDType) I)
+      ?eo. peg_eval cmlPEG (APPEND pfx sfx, peg_nt (INL nDType) I)
                     (peg_Success sfx [apt] eo)`
    (fun th -> MESON_TAC[th]) THEN
   MATCH_MP_TAC num_WF THEN X_GEN_TAC `n:num` THEN DISCH_THEN(LABEL_TAC "ihn") THEN
@@ -3438,14 +3438,14 @@ let dtype_complete = prove
   ASM_REWRITE_TAC[LPARSEAUX_IS_SUFFIX_APPEND] THEN
   DISCH_THEN(X_CHOOSE_THEN `p:(token#locs)list` ASSUME_TAC) THEN
   SUBGOAL_THEN `?eo. peg_eval cmlPEG
-      (APPEND (CONS (bt,bl) bf_r) (APPEND (CONS (at,al) af_r) sfx), nt (INL nTbase) I)
+      (APPEND (CONS (bt,bl) bf_r) (APPEND (CONS (at,al) af_r) sfx), peg_nt (INL nTbase) I)
       (peg_Success (APPEND (CONS (at,al) af_r) sfx) [bpt'] eo)`
     (X_CHOOSE_TAC `eob:(locs#(char)list)option`) THENL
    [USE_THEN "ih1" MATCH_MP_TAC THEN
     ASM_REWRITE_TAC[stoppers_def; IN_UNIV; FDOM_cmlPEG_nts] THEN
     REWRITE_TAC[LENGTH_APPEND; LENGTH] THEN ARITH_TAC;
     ALL_TAC] THEN
-  SUBGOAL_THEN `?eo. peg_eval cmlPEG (APPEND (CONS (at,al) af_r) sfx, nt (INL nDType) I)
+  SUBGOAL_THEN `?eo. peg_eval cmlPEG (APPEND (CONS (at,al) af_r) sfx, peg_nt (INL nDType) I)
                        (peg_Success sfx [apt'] eo)`
     (X_CHOOSE_TAC `eoa:(locs#(char)list)option`) THENL
    [USE_THEN "ihn" (MP_TAC o SPEC `LENGTH (CONS (at:token,al:locs) af_r)`) THEN
@@ -3473,7 +3473,7 @@ let dtype_complete = prove
     REWRITE_TAC[APPEND; CONS_11; PAIR_EQ] THEN STRIP_TAC THEN ASM_REWRITE_TAC[];
     ALL_TAC] THEN
     MP_TAC(MATCH_MP PARSE3AUX_DType_inv (ASSUME
-     `peg_eval cmlPEG (APPEND (CONS (at,al) af_r) sfx, nt (INL nDType) I)
+     `peg_eval cmlPEG (APPEND (CONS (at,al) af_r) sfx, peg_nt (INL nDType) I)
                       (peg_Success sfx [apt'] eoa)`)) THEN
   REWRITE_TAC[NOT_CONS_NIL; CONS_11] THEN
   DISCH_THEN(X_CHOOSE_THEN `i1:(token#locs)list` (X_CHOOSE_THEN `h:(mlptree)list`
@@ -3487,7 +3487,7 @@ let dtype_complete = prove
   DISCH_THEN(X_CHOOSE_THEN `tr:(mlptree)list` (X_CHOOSE_THEN `eot:(locs#(char)list)option`
     STRIP_ASSUME_TAC)) THEN
   FIRST_ASSUM(MP_TAC o MATCH_MP peg_sound o check (fun th ->
-    try rand(rand(rator(concl th))) = `nt (INL nTyOp) I:(token,MMLnonT,(mlptree)list,(char)list)pegsym`
+    try rand(rand(rator(concl th))) = `peg_nt (INL nTyOp) I:(token,MMLnonT,(mlptree)list,(char)list)pegsym`
     with Failure _ -> false)) THEN
   DISCH_THEN(X_CHOOSE_THEN `tyop2:mlptree` STRIP_ASSUME_TAC) THEN
   FIRST_X_ASSUM SUBST_ALL_TAC THEN
@@ -3508,7 +3508,7 @@ let dtype_complete = prove
     ASM_REWRITE_TAC[];
     REWRITE_TAC[left_insert2_FOLDL; left_insert2_mkNd; FOLDL]];
     (* DType -> Tbase *)
-    SUBGOAL_THEN `?eo. peg_eval cmlPEG (APPEND pfx sfx, nt (INL nTbase) I)
+    SUBGOAL_THEN `?eo. peg_eval cmlPEG (APPEND pfx sfx, peg_nt (INL nTbase) I)
                                 (peg_Success sfx [h0] eo)` STRIP_ASSUME_TAC THENL
      [MP_TAC(ISPECL [`master:(token#locs)list`; `pfx:(token#locs)list`]
                     LPARSEAUX_IS_SUFFIX_APPEND) THEN
@@ -3526,7 +3526,7 @@ let dtype_complete = prove
         UNDISCH_TAC `~(p:(token#locs)list = [])` THEN
         REWRITE_TAC[GSYM LENGTH_EQ_NIL] THEN ARITH_TAC];
       ALL_TAC] THEN
-    SUBGOAL_THEN `?fl fe. peg_eval cmlPEG (sfx, nt (INL nTyOp) I) (Failure fl fe)`
+    SUBGOAL_THEN `?fl fe. peg_eval cmlPEG (sfx, peg_nt (INL nTyOp) I) (Failure fl fe)`
       STRIP_ASSUME_TAC THENL
      [MATCH_MP_TAC PARSE3AUX_nt_fail THEN REWRITE_TAC[NTS_in_PEG_exprs; peg0_nTyOp] THEN
       UNDISCH_TAC `~(sfx:(token#locs)list = []) ==> FST (HD sfx) IN stoppers nDType` THEN
@@ -3545,7 +3545,7 @@ let dtype_complete = prove
 let PARSE3AUX_linfix_intro = prove
  (`!tgt (e1:(token,MMLnonT,(mlptree)list,(char)list)pegsym) e2 i0 i1 i h eo1 l err.
      peg_eval cmlPEG (i0, e1) (peg_Success i1 [h] eo1) /\
-     peg_eval_list cmlPEG (i1, seq e2 e1 APPEND) (i, l, err) ==>
+     peg_eval_list cmlPEG (i1, peg_seq e2 e1 APPEND) (i, l, err) ==>
      ?eo. peg_eval cmlPEG (i0, peg_linfix tgt e1 e2)
             (peg_Success i [mk_linfix tgt (mkNd tgt [h]) (FLAT l)] eo)`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[peg_linfix_def; peg_eval_seq_SOME; peg_eval_rpt] THEN
@@ -3562,7 +3562,7 @@ let PARSE3AUX_linfix_inv = prove
      peg_eval cmlPEG (i0, peg_linfix tgt e1 e2) (peg_Success i r eo) ==>
      ?i1 a eo1 l err.
        peg_eval cmlPEG (i0, e1) (peg_Success i1 a eo1) /\
-       peg_eval_list cmlPEG (i1, seq e2 e1 APPEND) (i, l, err) /\
+       peg_eval_list cmlPEG (i1, peg_seq e2 e1 APPEND) (i, l, err) /\
        (a = [] /\ r = [] \/
         ?h t. a = CONS h t /\ r = [mk_linfix tgt (mkNd tgt [h]) (FLAT l)])`,
   REPEAT GEN_TAC THEN REWRITE_TAC[peg_linfix_def; peg_eval_seq_SOME; peg_eval_rpt] THEN
@@ -3578,7 +3578,7 @@ let PARSE3AUX_linfix_inv = prove
 (* the separator fails on a suffix that starts with a stopper of P *)
 let PARSE3AUX_SEP_fail = prove
  (`!SEP P sfx.
-     (!n. SEP = NT n ==> ?nn. n = INL nn /\ nt (INL nn) I IN Gexprs cmlPEG /\
+     (!n. SEP = NT n ==> ?nn. n = INL nn /\ peg_nt (INL nn) I IN Gexprs cmlPEG /\
                               stoppers nn = (:token)) /\
      (!t. t IN firstSet cmlG [SEP] ==> ~(t IN stoppers P)) /\
      ~peg0 cmlPEG (sym2peg SEP) /\
@@ -3630,7 +3630,7 @@ let PARSE3AUX_sym2peg_single = prove
 let peg_linfix_complete = prove
  (`!master SEP C P.
   (!n. SEP = NT n ==>
-       ?nn. n = INL nn /\ nt (INL nn) I IN Gexprs cmlPEG /\ stoppers nn = (:token)) /\
+       ?nn. n = INL nn /\ peg_nt (INL nn) I IN Gexprs cmlPEG /\ stoppers nn = (:token)) /\
   (!n. C = NT n ==> ?nn. n = INL nn) /\
   (!t. t IN firstSet cmlG [SEP] ==> ~(t IN stoppers P)) /\
   (!n. C = NT (INL n) ==>
@@ -3935,7 +3935,7 @@ let PARSE3AUX_LINFIX_SIDE_TAC : tactic = fun (asl,w as g) ->
      MESON_TAC[]) g
   else if is_neg w then
     (REWRITE_TAC(peg0_tokeq :: nullable_CONS_TOK ::
-                 CONJUNCT1(CONJUNCT2(CONJUNCT2(ISPEC PARSE3AUX_CMLPEG_TM PARSE2AUX_peg0_clauses))) ::
+                 CONJUNCT1(CONJUNCT2(CONJUNCT2(ISPEC PARSE3AUX_CMLPEG_TM LPARSEAUX_peg0_clauses))) ::
                  PARSE3AUX_npeg0_ths @ PARSE3AUX_nonnull_ths) THEN NO_TAC) g
   else if is_imp body && is_exists (rand body) &&
           is_conj (snd(dest_exists(rand body))) then
@@ -3957,7 +3957,7 @@ let PARSE3AUX_LINFIX_CASE_TAC (p:term) (sep:term) (c:term) : tactic =
   REPEAT GEN_TAC THEN
   DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "ih") STRIP_ASSUME_TAC) THEN
   REWRITE_TAC[peg_eval_NT_SOME; PARSE2AUX_rule p; FDOM_cmlPEG_nts; I_THM;
-              pnt_def] THEN
+              cmlPEG_pnt_def] THEN
   REWRITE_TAC[RIGHT_EXISTS_AND_THM; LEFT_EXISTS_AND_THM; UNWIND_THM1;
               UNWIND_THM2] THEN
   MP_TAC(ISPECL [`pfx:(token#locs)list`; sep; c; p] peg_linfix_complete) THEN
@@ -4348,8 +4348,8 @@ let PARSE3AUX_complete_nPas = prove
   PARSE3AUX_SKOLEM_IH_TAC THEN PARSE3AUX_DESTRUCT_TAC THEN TRY PARSE3AUX_EVAL_TAC THEN
   (* the case Pas ::= Pcons: V on the input fails, or succeeds without AsT *)
   MP_TAC(MP (ISPECL [`APPEND (CONS (pfx_t:token,pfx_l:locs) pfx_r) sfx`;
-                     `nt (INL nV) I:(token,MMLnonT,(mlptree)list,(char)list)pegsym`]
-                    PARSE3AUX_cmlPEG_total) (PARSE3AUX_NTS_GEXPRS `nt (INL nV) I:(token,MMLnonT,(mlptree)list,(char)list)pegsym`)) THEN
+                     `peg_nt (INL nV) I:(token,MMLnonT,(mlptree)list,(char)list)pegsym`]
+                    PARSE3AUX_cmlPEG_total) (PARSE3AUX_NTS_GEXPRS `peg_nt (INL nV) I:(token,MMLnonT,(mlptree)list,(char)list)pegsym`)) THEN
   DISCH_THEN(X_CHOOSE_THEN `rv:((token#locs)list,(mlptree)list,(char)list)pegresult` MP_TAC) THEN
   STRUCT_CASES_TAC(ISPEC `rv:((token#locs)list,(mlptree)list,(char)list)pegresult` pegresult_nchotomy) THEN
   DISCH_TAC THENL
@@ -4364,7 +4364,7 @@ let PARSE3AUX_complete_nPas = prove
     FIRST_ASSUM(MP_TAC o MATCH_MP Pattern_nV_nCons o C CONJ
       (TAC_PROOF(([], `~(CONS (AsT,vl:locs) vt = []) ==> FST (HD (CONS (AsT,vl) vt)) IN stoppers nPcons`),
                  REWRITE_TAC[NOT_CONS_NIL; HD; FST] THEN CONV_TAC PARSE3AUX_DECIDE_CONV)) o
-      check (fun th -> try rand(rand(rator(concl th))) = `nt (INL nV) I:(token,MMLnonT,(mlptree)list,(char)list)pegsym` with Failure _ -> false)) THEN
+      check (fun th -> try rand(rand(rator(concl th))) = `peg_nt (INL nV) I:(token,MMLnonT,(mlptree)list,(char)list)pegsym` with Failure _ -> false)) THEN
     DISCH_THEN(X_CHOOSE_THEN `r1:(mlptree)list` (X_CHOOSE_TAC `eo1:(locs#(char)list)option`)) THEN
     USE_THEN "ihs" (MP_TAC o SPECL [`h0:mlptree`; `nPcons`;
                                     `CONS (pfx_t:token,pfx_l:locs) pfx_r`; `sfx:(token#locs)list`]) THEN
@@ -4373,7 +4373,7 @@ let PARSE3AUX_complete_nPas = prove
        [DISJ2_TAC THEN PARSE3AUX_RANK_TAC; PARSE3AUX_STOPPERS_TAC];
       ALL_TAC] THEN
     DISCH_THEN(fun th -> MP_TAC(PARSE3AUX_DET_RULE th (ASSUME
-      `peg_eval cmlPEG (APPEND (CONS (pfx_t,pfx_l) pfx_r) sfx,nt (INL nPcons) I)
+      `peg_eval cmlPEG (APPEND (CONS (pfx_t,pfx_l) pfx_r) sfx,peg_nt (INL nPcons) I)
                        (peg_Success (CONS (AsT,vl) vt) r1 eo1)`))) THEN
     REWRITE_TAC[pegresult_inject] THEN
     DISCH_THEN(MP_TAC o CONJUNCT1) THEN DISCH_THEN(SUBST_ALL_TAC o SYM) THEN
@@ -4408,7 +4408,7 @@ let PARSE3AUX_complete_nPapp = prove
      (CONJ (ASSUME `valid_lptree cmlG (h0:mlptree)`) nullable_PConApp)))) THEN
   DISCH_THEN(X_CHOOSE_THEN `ct:token` (X_CHOOSE_THEN `cl:locs`
     (X_CHOOSE_THEN `m1r:(token#locs)list` (CONJUNCTS_THEN2 SUBST_ALL_TAC ASSUME_TAC)))) THEN
-  SUBGOAL_THEN `peg_eval cmlPEG (APPEND m2 sfx, nt (INL nPbase) I)
+  SUBGOAL_THEN `peg_eval cmlPEG (APPEND m2 sfx, peg_nt (INL nPbase) I)
                   (peg_Success sfx [h0'] ((ihf:mlptree->MMLnonT->(token#locs)list->(token#locs)list->(locs#(char)list)option) h0' nPbase m2 sfx))` ASSUME_TAC THENL
    [USE_THEN "ihs" MATCH_MP_TAC THEN
     ASM_REWRITE_TAC[FDOM_cmlPEG_nts; stoppers_def; IN_UNIV] THEN
@@ -4530,14 +4530,14 @@ let completeness = prove
      INL N IN FDOM (peg_rules cmlPEG) /\
      (~(sfx = []) ==> FST (HD sfx) IN stoppers N) /\
      real_fringe pt = MAP (TOK ## I) pfx ==>
-     ?eo. peg_eval cmlPEG (APPEND pfx sfx, nt (INL N) I) (peg_Success sfx [pt] eo)`,
+     ?eo. peg_eval cmlPEG (APPEND pfx sfx, peg_nt (INL N) I) (peg_Success sfx [pt] eo)`,
   SUBGOAL_THEN
    `!N (pfx:(token#locs)list). !pt sfx.
       valid_lptree cmlG pt /\ ptree_head pt = NT (INL N) /\
       INL N IN FDOM (peg_rules cmlPEG) /\
       (~(sfx = []) ==> FST (HD sfx) IN stoppers N) /\
       real_fringe pt = MAP (TOK ## I) pfx ==>
-      ?eo. peg_eval cmlPEG (APPEND pfx sfx, nt (INL N) I) (peg_Success sfx [pt] eo)`
+      ?eo. peg_eval cmlPEG (APPEND pfx sfx, peg_nt (INL N) I) (peg_Success sfx [pt] eo)`
    (fun th -> MESON_TAC[th]) THEN
   MATCH_MP_TAC PARSE3AUX_LEX_IND THEN
   MAP_EVERY X_GEN_TAC [`N:MMLnonT`; `pfx:(token#locs)list`] THEN
@@ -4550,7 +4550,7 @@ let completeness = prove
       INL N' IN FDOM (peg_rules cmlPEG) /\
       (~(sfx' = []) ==> FST (HD sfx') IN stoppers N') /\
       real_fringe pt' = MAP (TOK ## I) pfx' ==>
-      ?eo. peg_eval cmlPEG (APPEND pfx' sfx', nt (INL N') I)
+      ?eo. peg_eval cmlPEG (APPEND pfx' sfx', peg_nt (INL N') I)
                     (peg_Success sfx' [pt'] eo)`
     (LABEL_TAC "ih") THENL
    [MAP_EVERY X_GEN_TAC [`pt':mlptree`; `N':MMLnonT`; `pfx':(token#locs)list`;
@@ -4564,7 +4564,7 @@ let completeness = prove
                                            INL N' IN FDOM (peg_rules cmlPEG) /\
                                            (~(sfx = []) ==> FST (HD sfx) IN stoppers N') /\
                                            real_fringe pt = MAP (TOK ## I) pfx' ==>
-                                           ?eo. peg_eval cmlPEG (APPEND pfx' sfx, nt (INL N') I)
+                                           ?eo. peg_eval cmlPEG (APPEND pfx' sfx, peg_nt (INL N') I)
                                                          (peg_Success sfx [pt] eo))`)) lr)))
       STRIP_ASSUME_TAC) THEN
     DISCH_THEN MATCH_MP_TAC THEN ASM_REWRITE_TAC[];
@@ -4614,6 +4614,6 @@ let cmlG_unambiguous = prove
   DISCH_THEN(X_CHOOSE_TAC `eo2:(locs#(char)list)option`) THEN
   DISCH_THEN(X_CHOOSE_TAC `eo1:(locs#(char)list)option`) THEN
   MP_TAC(PARSE3AUX_DET_RULE
-    (ASSUME `peg_eval cmlPEG (APPEND pfx [],nt (INL N) I) (peg_Success [] [pt1] eo1)`)
-    (ASSUME `peg_eval cmlPEG (APPEND pfx [],nt (INL N) I) (peg_Success [] [pt2] eo2)`)) THEN
+    (ASSUME `peg_eval cmlPEG (APPEND pfx [],peg_nt (INL N) I) (peg_Success [] [pt1] eo1)`)
+    (ASSUME `peg_eval cmlPEG (APPEND pfx [],peg_nt (INL N) I) (peg_Success [] [pt2] eo2)`)) THEN
   REWRITE_TAC[pegresult_inject; CONS_11] THEN MESON_TAC[]);;

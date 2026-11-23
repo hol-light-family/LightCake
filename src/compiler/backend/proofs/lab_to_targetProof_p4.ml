@@ -488,19 +488,13 @@ let FILTER_NOT_MEM_Mapped = prove
   REWRITE_TAC[MEM_FILTER]);;
 
 (* HOL4 line 9752 *)
-let LTTP4AUX_some_unique = prove
- (`!P (a:A). P a /\ (!x. P x ==> x = a) ==> (some) P = SOME a`,
-  REPEAT STRIP_TAC THEN REWRITE_TAC[some_def] THEN
-  COND_CASES_TAC THENL [ALL_TAC; ASM_MESON_TAC[]] THEN
-  REWRITE_TAC[option_INJ] THEN ASM_MESON_TAC[]);;
-
 let mmio_pcs_min_index_APPEND_thm = prove
  (`!l ffis.
      ALL (\x. !s. ~(x = ExtCall s)) l /\ ALL (\x. ?s. x = ExtCall s) ffis
      ==> mmio_pcs_min_index (APPEND ffis l) = SOME (LENGTH ffis)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[EVERY_EL] THEN
   DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "l") (LABEL_TAC "f")) THEN
-  REWRITE_TAC[mmio_pcs_min_index_def] THEN MATCH_MP_TAC LTTP4AUX_some_unique THEN
+  REWRITE_TAC[mmio_pcs_min_index_def] THEN MATCH_MP_TAC BASICAUX_some_unique THEN
   REWRITE_TAC[LENGTH_APPEND; EL_APPEND_EQN] THEN CONJ_TAC THENL
    [REWRITE_TAC[LE_ADD] THEN CONJ_TAC THENL
      [GEN_TAC THEN DISCH_TAC THEN ASM_REWRITE_TAC[] THEN USE_THEN "f" MATCH_MP_TAC THEN
@@ -2422,4 +2416,3 @@ let lab_to_targetProof_semantics_compile = prove
   UNDISCH_TAC `lab_to_targetProof_good_code (asm_conf:(A)asm_config)
                  (lab_to_target_config_labels c) (code:((A)sec)list)` THEN
   ASM_REWRITE_TAC[] THEN DISCH_TAC THEN ASM_REWRITE_TAC[]);;
-

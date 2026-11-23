@@ -87,7 +87,7 @@ let num_compare_def = cake_def
 (* General results on lists *)
 
 let list_compare_def = cake_def_wf
-  `measure (\p:(A->B->ordering)#(A list)#(B list). LENGTH (FST (SND p)))`
+  `MEASURE (\p:(A->B->ordering)#(A list)#(B list). LENGTH (FST (SND p)))`
   (REWRITE_TAC[measure_THM; FST; SND; LENGTH] THEN ARITH_TAC)
   `(list_compare (cmp:A->B->ordering) [] [] = EQUAL) /\
    (list_compare cmp [] (CONS v4 v5) = LESS) /\
@@ -114,7 +114,7 @@ let compare_equal = prove
 (* looks out of place *)
 
 let list_merge_def = cake_def_wf
-  `measure (\p:(A->A->bool)#(A list)#(A list).
+  `MEASURE (\p:(A->A->bool)#(A list)#(A list).
               LENGTH (FST (SND p)) + LENGTH (SND (SND p)))`
   (REWRITE_TAC[measure_THM; FST; SND; LENGTH] THEN ARITH_TAC)
   `(list_merge (a_lt:A->A->bool) l1 [] = l1) /\

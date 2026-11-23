@@ -3,7 +3,7 @@
 (* The formal semantics of loopLang.                                         *)
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
-(* - Names as notes/naming/names.tsv says: loop_state (fields                *)
+(* - Names as doc/names.tsv says: loop_state (fields                         *)
 (*   loop_state_locals, ...), loop_result (loop_Result, loop_Exception,      *)
 (*   loopSem_Break, loopSem_Continue, loop_TimeOut, loop_FinalFFI,           *)
 (*   loop_Error), loop_eval, loop_evaluate, loop_semantics, ...             *)
@@ -214,7 +214,7 @@ let call_env_def = cake_def
 let cut_state_def = cake_def
   `cut_state (live:(B)spt) (s:(A,FFI)loop_state) =
      if domain live SUBSET domain (loop_state_locals s) then
-       SOME (loop_state_locals_fupd (K (inter (loop_state_locals s) live)) s)
+       SOME (loop_state_locals_fupd (K (sptree_inter (loop_state_locals s) live)) s)
      else NONE`;;
 
 let cut_res_def = cake_def
@@ -362,7 +362,7 @@ let PLOOPAUX_TC_TAC : tactic =
   ARITH_TAC;;
 
 let PLOOPAUX_evaluate_rel =
-  `inv_image (measure I LEX measure (loop_prog_size (\x:A. 0)))
+  `inv_image (MEASURE I LEX MEASURE (loop_prog_size (\x:A. 0)))
      (\p:(A)loop_prog#(A,FFI)loop_state. (loop_state_clock (SND p), FST p))`;;
 
 let PLOOPAUX_evaluate_clauses =

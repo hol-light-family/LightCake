@@ -11,7 +11,7 @@ type_invention_error := true;;
 
 (* ------------------------------------------------------------------------- *)
 (* Notes on the rendering:                                                   *)
-(* - Names as notes/naming/names.tsv says: pan_simp_SmartSeq (word_simp has  *)
+(* - Names as doc/names.tsv says: pan_simp_SmartSeq (word_simp has           *)
 (*   SmartSeq), pan_simp_compile, pan_simp_compile_prog; the panLang         *)
 (*   constructors with their panLang_ names.                                 *)
 (* - HOL4 Overloads: TailCall = Call NONE, AssignCall s h = Call (SOME (SOME *)

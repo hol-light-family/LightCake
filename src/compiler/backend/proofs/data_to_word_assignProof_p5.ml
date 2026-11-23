@@ -64,7 +64,7 @@ let ASP5AUX_state_rel_finish = prove
        (data_state_space s) (wl_state_store t) (wl_state_memory t) (wl_state_mdomain t)
        (CONS (v,w)
          (APPEND (join_env (data_state_locals s)
-                   (toAList (inter L (adjust_set (data_state_locals s)))))
+                   (toAList (sptree_inter L (adjust_set (data_state_locals s)))))
             (APPEND [(the_global (data_state_global s),FAPPLY (wl_state_store t) Globals)]
                (data_to_word_gcProof_flat (data_state_stack s) (wl_state_stack t))))) ==>
      data_to_word_gcProof_state_rel c l1 l2
@@ -747,7 +747,7 @@ let ASP5AUX_state_rel_finish_reset = prove
        (wl_state_store t) (wl_state_memory t) (wl_state_mdomain t)
        (CONS (v,w)
          (APPEND (join_env (data_state_locals x)
-                   (toAList (inter L (adjust_set (data_state_locals x)))))
+                   (toAList (sptree_inter L (adjust_set (data_state_locals x)))))
             (APPEND [(the_global (data_state_global x),FAPPLY (wl_state_store t) Globals)]
                (data_to_word_gcProof_flat (data_state_stack x) (wl_state_stack t))))) /\
      option_le (OPTION_MAP2 (+) (wl_stack_size (wl_state_stack t)) (wl_state_locals_size t)) sm /\
@@ -785,7 +785,7 @@ let ASP5AUX_state_rel_finish_reset0 = prove
        (wl_state_store t) (wl_state_memory t) (wl_state_mdomain t)
        (CONS (v,w)
          (APPEND (join_env (data_state_locals x)
-                   (toAList (inter L (adjust_set (data_state_locals x)))))
+                   (toAList (sptree_inter L (adjust_set (data_state_locals x)))))
             (APPEND [(the_global (data_state_global x),FAPPLY (wl_state_store t) Globals)]
                (data_to_word_gcProof_flat (data_state_stack x) (wl_state_stack t))))) /\
      option_le (data_state_stack_max x)
@@ -839,7 +839,7 @@ let ASP5AUX_state_rel_finish_sp = prove
        (data_state_space s2) (wl_state_store t) (wl_state_memory t) (wl_state_mdomain t)
        (CONS (v,w)
          (APPEND (join_env (data_state_locals x)
-                   (toAList (inter L (adjust_set (data_state_locals x)))))
+                   (toAList (sptree_inter L (adjust_set (data_state_locals x)))))
             (APPEND [(the_global (data_state_global x),FAPPLY (wl_state_store t) Globals)]
                (data_to_word_gcProof_flat (data_state_stack x) (wl_state_stack t))))) /\
      option_le (OPTION_MAP2 (+) (wl_stack_size (wl_state_stack t)) (wl_state_locals_size t)) sm /\
@@ -979,7 +979,7 @@ let ASP5AUX_CMP_END_TAC : tactic =
    EXISTS_TAC `x:(C,FFI)data_state` THEN
    REWRITE_TAC[do_stack_def; do_space_def; op_space_reset_def; THE_DEF; LET_DEF; LET_END_DEF;
                data_state_INFO.ri_accfupds; K_THM]) THEN
-  (UNDISCH_TAC `y = union y2 (y1:(A word_loc)spt)` THEN DISCH_THEN SUBST_ALL_TAC THEN
+  (UNDISCH_TAC `y = sptree_union y2 (y1:(A word_loc)spt)` THEN DISCH_THEN SUBST_ALL_TAC THEN
    FIRST_ASSUM(MP_TAC o MATCH_MP evaluate_stack_max_le o check (fun th -> is_eq (concl th) &&
      can (find_term ((=) `Compare_code c:(A)wl_prog`)) (lhs (concl th)))) THEN
    FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP ASP5AUX_state_rel_stack_facts o check (fun th ->
@@ -1463,7 +1463,7 @@ let ASP5AUX_cut_envs_0246 = prove
  (`!L:(A)spt. IS_SOME (lookup 0 L) /\ IS_SOME (lookup 2 L) /\ IS_SOME (lookup 4 L) /\
               IS_SOME (lookup 6 L) ==>
      cut_envs (insert 6 one (insert 4 one (insert 2 one (insert 0 one LN))),(LN:1 spt)) L =
-     SOME (inter L (insert 6 one (insert 4 one (insert 2 one (insert 0 one (LN:1 spt))))),
+     SOME (sptree_inter L (insert 6 one (insert 4 one (insert 2 one (insert 0 one (LN:1 spt))))),
            LN)`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[cut_envs_def; cut_names_def; inter_LN] THEN
   REWRITE_TAC[domain_insert; domain_def; EMPTY_SUBSET] THEN
@@ -2251,7 +2251,7 @@ let assign_BoundsCheckArray = prove
     `bl:bool`; `ptr:num`; `w1:A word_loc`] memory_rel_ValueArray_IMP) THEN
   DISCH_THEN(MP_TAC o SPECL [`CONS (data_Number i,wl_Word (wi:A word))
      (APPEND (join_env (data_state_locals (s:(C,FFI)data_state))
-                 (toAList (inter (wl_state_locals (t:(A,C,FFI)wl_state))
+                 (toAList (sptree_inter (wl_state_locals (t:(A,C,FFI)wl_state))
                             (adjust_set (data_state_locals s)))))
               (APPEND [(the_global (data_state_global s),FAPPLY (wl_state_store t) Globals)]
                  (data_to_word_gcProof_flat (data_state_stack s) (wl_state_stack t))))`;
@@ -2316,7 +2316,7 @@ let assign_BoundsCheckByte = prove
     `bl:bool`; `ptr:num`; `w1:A word_loc`] memory_rel_ByteArray_IMP) THEN
   DISCH_THEN(MP_TAC o SPECL [`CONS (data_Number i,wl_Word (wi:A word))
      (APPEND (join_env (data_state_locals (s:(C,FFI)data_state))
-                 (toAList (inter (wl_state_locals (t:(A,C,FFI)wl_state))
+                 (toAList (sptree_inter (wl_state_locals (t:(A,C,FFI)wl_state))
                             (adjust_set (data_state_locals s)))))
               (APPEND [(the_global (data_state_global s),FAPPLY (wl_state_store t) Globals)]
                  (data_to_word_gcProof_flat (data_state_stack s) (wl_state_stack t))))`;
@@ -2750,7 +2750,7 @@ let not_word_cmp_Less_word_cmp_res = prove
 
 (* HOL4 line 11870 *)
 let IMP_spt_eq = prove
- (`!t1 t2:A spt. wf t1 /\ wf t2 /\ (!n. lookup n t1 = lookup n t2) ==> (t1 = t2)`,
+ (`!t1 t2:A spt. sptree_wf t1 /\ sptree_wf t2 /\ (!n. lookup n t1 = lookup n t2) ==> (t1 = t2)`,
   MESON_TAC[spt_eq_thm]);;
 
 (* HOL4 line 11876 *)
@@ -3438,7 +3438,7 @@ let data_to_word_assignProof_Equal_code_lemma = prove
    EXPAND_TAC "t1" THEN SIMP[wl_pop_env_def; wl_set_vars_def; alist_insert_def;
    asp5_ev_clause "wl_Skip"]) THEN
   (SUBGOAL_THEN `fromAList (lst:(num#A word_loc)list) = LN` ASSUME_TAC THENL
-   [MATCH_MP_TAC IMP_spt_eq THEN REWRITE_TAC[wf_fromAList; wf_def; lookup_fromAList] THEN
+   [MATCH_MP_TAC IMP_spt_eq THEN REWRITE_TAC[wf_fromAList; sptree_wf_def; lookup_fromAList] THEN
    FIRST_ASSUM(MP_TAC o MATCH_MP env_to_list_lookup_equiv o
    check (fun th -> is_eq (concl th) &&
    can (find_term (fun u -> is_const u && fst (dest_const u) = "env_to_list")) (concl th))) THEN
@@ -3681,7 +3681,7 @@ let assign_Equal = prove
    EXISTS_TAC `x:(C,FFI)data_state` THEN
    REWRITE_TAC[do_stack_def; do_space_def; op_space_reset_def; THE_DEF; LET_DEF; LET_END_DEF;
    data_state_INFO.ri_accfupds; K_THM]) THEN
-  (UNDISCH_TAC `y = union y2 (y1:(A word_loc)spt)` THEN DISCH_THEN SUBST_ALL_TAC THEN
+  (UNDISCH_TAC `y = sptree_union y2 (y1:(A word_loc)spt)` THEN DISCH_THEN SUBST_ALL_TAC THEN
    FIRST_ASSUM(MP_TAC o MATCH_MP evaluate_stack_max_le o check (fun th -> is_eq (concl th) &&
    can (find_term ((=) `Equal_code c:(A)wl_prog`)) (lhs (concl th)))) THEN
    FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP ASP5AUX_state_rel_stack_facts o check (fun th ->
@@ -3998,4 +3998,3 @@ let assign_WordShiftW64 = prove
 
 (* HOL4 lines 13990-14002: vals assign_FP_cmp, assign_FP_top, assign_FP_bop, *)
 (* assign_FP_uop (SIMP_CONV of assign_def): proof tools, not stated          *)
-

@@ -834,8 +834,8 @@ let INST_nil = prove
 (* tyvars and tvars *)
 
 let tyvars_ALL_DISTINCT = prove
- (`!ty. ALL_DISTINCT (tyvars ty)`,
-  MATCH_MP_TAC type_ind THEN REWRITE_TAC[tyvars_def; ALL_DISTINCT; MEM] THEN
+ (`!ty. ALL_DISTINCT (hol_tyvars ty)`,
+  MATCH_MP_TAC type_ind THEN REWRITE_TAC[hol_tyvars_def; ALL_DISTINCT; MEM] THEN
   REPEAT GEN_TAC THEN DISCH_THEN(K ALL_TAC) THEN
   SPEC_TAC(`l:hol_type list`,`l:hol_type list`) THEN LIST_INDUCT_TAC THEN
   ASM_SIMP_TAC[ITLIST; ALL_DISTINCT; ALL_DISTINCT_LIST_UNION]);;
@@ -849,31 +849,31 @@ let _ = cake_add_simps [tvars_ALL_DISTINCT];;
 
 let tyvars_TYPE_SUBST = prove
  (`!ty tyin.
-     set_of_list (tyvars (TYPE_SUBST tyin ty)) =
-     {v | ?x. MEM x (tyvars ty) /\
-              MEM v (tyvars (REV_ASSOCD (Tyvar x) tyin (Tyvar x)))}`,
+     set_of_list (hol_tyvars (TYPE_SUBST tyin ty)) =
+     {v | ?x. MEM x (hol_tyvars ty) /\
+              MEM v (hol_tyvars (REV_ASSOCD (Tyvar x) tyin (Tyvar x)))}`,
   MATCH_MP_TAC type_ind THEN CONJ_TAC THENL
-   [REWRITE_TAC[TYPE_SUBST_def; tyvars_def; MEM; EXTENSION; IN_ELIM_THM;
+   [REWRITE_TAC[TYPE_SUBST_def; hol_tyvars_def; MEM; EXTENSION; IN_ELIM_THM;
                 IN_SET_OF_LIST] THEN MESON_TAC[];
     REPEAT GEN_TAC THEN REWRITE_TAC[GSYM ALL_MEM] THEN DISCH_TAC THEN GEN_TAC THEN
-    REWRITE_TAC[TYPE_SUBST_def; tyvars_def; EXTENSION; IN_ELIM_THM;
+    REWRITE_TAC[TYPE_SUBST_def; hol_tyvars_def; EXTENSION; IN_ELIM_THM;
                 IN_SET_OF_LIST; MEM_FOLDR_LIST_UNION; MEM; MEM_MAP] THEN
     RULE_ASSUM_TAC(REWRITE_RULE[EXTENSION; IN_ELIM_THM; IN_SET_OF_LIST]) THEN
     ASM_MESON_TAC[]]);;
 
 let tyvars_typeof_subset_tvars = prove
  (`!tm ty. tm has_type ty
-           ==> set_of_list (tyvars ty) SUBSET set_of_list (tvars tm)`,
+           ==> set_of_list (hol_tyvars ty) SUBSET set_of_list (tvars tm)`,
   MATCH_MP_TAC has_type_ind THEN
-  REWRITE_TAC[tvars_def; tyvars_def; ITLIST; MEM_LIST_UNION; set_of_list] THEN
+  REWRITE_TAC[tvars_def; hol_tyvars_def; ITLIST; MEM_LIST_UNION; set_of_list] THEN
   SET_TAC[]);;
 
 let tyvars_Tyapp_MAP_Tyvar = prove
- (`!x ls. ALL_DISTINCT ls ==> tyvars (Tyapp x (MAP Tyvar ls)) = LIST_UNION [] ls`,
+ (`!x ls. ALL_DISTINCT ls ==> hol_tyvars (Tyapp x (MAP Tyvar ls)) = LIST_UNION [] ls`,
   GEN_TAC THEN LIST_INDUCT_TAC THEN REWRITE_TAC[ALL_DISTINCT; LIST_UNION_NIL] THEN
-  REWRITE_TAC[tyvars_def; MAP; ITLIST] THEN STRIP_TAC THEN
+  REWRITE_TAC[hol_tyvars_def; MAP; ITLIST] THEN STRIP_TAC THEN
   FIRST_X_ASSUM(MP_TAC o check (is_imp o concl)) THEN
-  ASM_REWRITE_TAC[tyvars_def; LIST_UNION_NIL] THEN DISCH_THEN SUBST1_TAC THEN
+  ASM_REWRITE_TAC[hol_tyvars_def; LIST_UNION_NIL] THEN DISCH_THEN SUBST1_TAC THEN
   ASM_REWRITE_TAC[LIST_UNION_def; ITLIST; LIST_INSERT_def]);;
 
 let STRING_SORT_SET_TO_LIST_set_tvars = prove

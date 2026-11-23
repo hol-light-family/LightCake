@@ -4,7 +4,7 @@
 (* Correctness proof for combined pan_to_word compilation.                   *)
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
-(* - Names as notes/naming/names.tsv says; HOL4's local Type prog is         *)
+(* - Names as doc/names.tsv says; HOL4's local Type prog is                  *)
 (*   (A)panLang_prog written out.  The records of the semantics are          *)
 (*   pan_state, crep_state, loop_state and wl_state (fields                  *)
 (*   pan_state_locals, ...); HOL4 <| f1 := v1; ... |> is the REC constructor *)
@@ -200,23 +200,6 @@ let functions_resort_decls = prove
   REWRITE_TAC[FILTER_EQ_NIL; EVERY_MEM; ETA_AX] THEN
   MESON_TAC[not_is_function]);;
 
-(* the domain of the exception map *)
-let PTOPAUX_FDOM_get_eids = prove
- (`!decls:((A)decl)list.
-     FDOM (get_eids_from_decls decls) = set_of_list (MAP FST (exceptions decls))`,
-  GEN_TAC THEN REWRITE_TAC[get_eids_from_decls_def] THEN
-  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[FDOM_alist_to_fmap] THEN
-  AP_TERM_TAC THEN
-  SPEC_TAC(`list_of_seq (\x. (word x):A word)
-              (LENGTH (MAP FST (exceptions (decls:((A)decl)list))))`,
-           `ys:(A word)list`) THEN
-  SPEC_TAC(`MAP FST (exceptions (decls:((A)decl)list))`,`xs:mlstring list`) THEN
-  LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[MAP2_DEF; MAP]);;
-
-let PTOPAUX_exceptions_fperm_decs = prove
- (`!f g decs:((A)decl)list. exceptions (fperm_decs f g decs) = exceptions decs`,
-  REC_IND_TAC fperm_decs_ind THEN RW[fperm_decs_def; exceptions_def]);;
-
 let PTOPAUX_exceptions_functions = prove
  (`!fs:((A)decl)list. ALL is_function fs ==> exceptions fs = []`,
   REC_IND_TAC (cake_ind "exceptions") THEN RW[exceptions_def; ALL; is_function_def]);;
@@ -226,7 +209,7 @@ let FDOM_get_eids_pan_globals_compile_eq = prove
      ALOOKUP (functions (pan_code:((A)decl)list)) main = SOME (args,body,rshape) ==>
      FDOM (get_eids_from_decls (pan_globals_compile_top pan_code main)) =
      FDOM (get_eids_from_decls pan_code)`,
-  REPEAT STRIP_TAC THEN REWRITE_TAC[PTOPAUX_FDOM_get_eids] THEN
+  REPEAT STRIP_TAC THEN REWRITE_TAC[PP2CAUX_B_fdom_get_eids] THEN
   ASM_REWRITE_TAC[pan_globals_compile_top_def] THEN CASE_REWRITE_TAC[] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   PAIR_CASES_ON `pan_globals_compile_decs
@@ -240,7 +223,7 @@ let FDOM_get_eids_pan_globals_compile_eq = prove
   FIRST_ASSUM (ASSUME_TAC o MATCH_MP compile_decs_EVERY_is_function) THEN
   FIRST_ASSUM (ASSUME_TAC o MATCH_MP compile_decs_exns_are_exns) THEN
   ASM_SIMP_TAC[exceptions_append; exceptions_def; PTOPAUX_exceptions_functions;
-               APPEND_NIL; exceptions_FILTER_is_function; PTOPAUX_exceptions_fperm_decs] THEN
+               APPEND_NIL; exceptions_FILTER_is_function; PPASS2AUX_exceptions_fperm_decs] THEN
   REWRITE_TAC[resort_decls_def; exceptions_append; exceptions_FILTER_is_function; APPEND;
               APPEND_NIL]);;
 
@@ -300,7 +283,7 @@ let FDOM_get_eids_structs_compile_decs_eq = prove
  (`!ctxt prog:((A)decl)list.
      FDOM (get_eids_from_decls prog) =
      FDOM (get_eids_from_decls (FST (pan_structs_compile_decs ctxt prog)))`,
-  REWRITE_TAC[PTOPAUX_FDOM_get_eids; PTOPAUX_exceptions_structs_compile_decs]);;
+  REWRITE_TAC[PP2CAUX_B_fdom_get_eids; PTOPAUX_exceptions_structs_compile_decs]);;
 
 (* HOL4 [local] *)
 let FDOM_get_eids_structs_compile_eq = prove
@@ -996,9 +979,6 @@ let every_inst_ok_loop_call = prove
   EVERY_CASE_TAC THEN
   RW[every_prog_def; loop_call_comp_def; loop_inst_ok_def]);;
 
-(* the clauses of loop_live_shrink without the one of fixedpoint *)
-let PTOPAUX_shrink_rws = end_itlist CONJ (butlast (CONJUNCTS loop_live_shrink_def));;
-
 (* HOL4: the first by-subgoal of every_inst_ok_loop_live *)
 let PTOPAUX_every_inst_ok_shrink = prove
  (`!(c:(A)asm_config).
@@ -1021,7 +1001,7 @@ let PTOPAUX_every_inst_ok_shrink = prove
   REPEAT CONJ_TAC THEN REPEAT STRIP_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[every_prog_def; loop_inst_ok_def]) THEN
   TRY (GEN_REWRITE_TAC RAND_CONV [PLOOPAUX_fixedpoint_eq]) THEN
-  REWRITE_TAC[PTOPAUX_shrink_rws] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+  REWRITE_TAC[PLOOPAUX_shrink_rws] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   REPEAT PAIRARG_TAC THEN EVERY_CASE_TAC THEN REPEAT PAIRARG_TAC THEN
   ASM_REWRITE_TAC[FST; every_prog_def; loop_inst_ok_def; OPTION_ALL_def; o_THM;
                   case_def "option"; case_def "prod"] THEN

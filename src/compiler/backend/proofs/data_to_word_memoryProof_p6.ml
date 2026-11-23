@@ -5,6 +5,8 @@
 (* The parts _p1 ... _p7 are loaded one after the other (each needs the     *)
 (* previous one); data_to_word_memoryProof.ml needs the last.                *)
 (* MP6AUX_ names are local helpers of this part.                            *)
+(* HOL4 minus is data_to_word_memoryProof_minus (a short or common word),    *)
+(* and minus_def is data_to_word_memoryProof_minus_def.                      *)
 (* ========================================================================= *)
 
 needs "compiler/backend/proofs/data_to_word_memoryProof_p5.ml";;
@@ -109,9 +111,9 @@ let MP6AUX_STAR_AC_CONV = EQT_INTRO o AC MP3AUX_STAR_AC;;
 (* conditions to the front of a STAR product *)
 let MP6AUX_COND_PULL = prove
  (`!c p q:(A->bool)->bool.
-     (p STAR cond c = cond c STAR p) /\
-     (p STAR (cond c STAR q) = cond c STAR (p STAR q)) /\
-     ((cond c STAR p) STAR q = cond c STAR (p STAR q))`,
+     (p STAR set_sep_cond c = set_sep_cond c STAR p) /\
+     (p STAR (set_sep_cond c STAR q) = set_sep_cond c STAR (p STAR q)) /\
+     ((set_sep_cond c STAR p) STAR q = set_sep_cond c STAR (p STAR q))`,
   REPEAT GEN_TAC THEN REPEAT CONJ_TAC THEN CONV_TAC MP6AUX_STAR_AC_CONV);;
 
 (* goal ?frame. (P STAR frame) s, an assumption Q s with P a factor of the *)
@@ -157,7 +159,7 @@ let MP6AUX_SEP_FACTOR p th =
 (* vb_eq_size_def below is HOL4's theorem: the clauses as TFL completes    *)
 (* them                                                                      *)
 let vb_eq_size_DEF = cake_def_wf
-  `measure (\x:(A bvl_ref)spt#data_v#data_v + (A bvl_ref)spt#(data_v list)#(data_v list).
+  `MEASURE (\x:(A bvl_ref)spt#data_v#data_v + (A bvl_ref)spt#(data_v list)#(data_v list).
               sum_CASE x (\p. data_v_size (FST (SND p)))
                          (\p. list_size data_v_size (FST (SND p))))`
   TERM_TAC
@@ -538,7 +540,7 @@ let word_is_clos_def = cake_def
 
 (* HOL4 line 13982 *)
 let word_eq_def = cake_def_wf
-  `measure (\x:data_to_word_config#(store_name,A word_loc)fmap#(A word->bool)#
+  `MEASURE (\x:data_to_word_config#(store_name,A word_loc)fmap#(A word->bool)#
                 (A word->A word_loc)#num#num#A word#A word +
                data_to_word_config#(store_name,A word_loc)fmap#(A word->bool)#
                 (A word->A word_loc)#num#num#A word#A word#A word.
@@ -3106,7 +3108,7 @@ let SKELAUX_VAL_WORD_SUB_4_LT = prove
 
 (* HOL4 line 15295 *)
 let word_copy_fwd_def = cake_def_wf
-  `measure (\p:bool#A word#A word#A word#(A word->A word_loc)#(A word->bool).
+  `MEASURE (\p:bool#A word#A word#A word#(A word->A word_loc)#(A word->bool).
               val (FST (SND p)))`
   (REWRITE_TAC[measure_THM; FST; SND] THEN REPEAT STRIP_TAC THEN
    MATCH_MP_TAC SKELAUX_VAL_WORD_SUB_4_LT THEN ASM_REWRITE_TAC[])
@@ -3145,7 +3147,7 @@ let word_copy_fwd_ind = cake_ind "word_copy_fwd";;
 
 (* HOL4 line 15331 *)
 let list_copy_fwd_def = cake_def_wf
-  `measure (\p:num#num#A list#num#A list. FST p)` TERM_TAC
+  `MEASURE (\p:num#num#A list#num#A list. FST p)` TERM_TAC
   `list_copy_fwd n xp (xs:A list) yp ys =
      if xp + n <= LENGTH xs /\ yp + n <= LENGTH ys then
        if n = 0 then SOME ys else
@@ -3165,7 +3167,7 @@ let list_copy_fwd_ind = cake_ind "list_copy_fwd";;
 
 (* HOL4 line 15349 *)
 let list_copy_fwd_alias_def = cake_def_wf
-  `measure (\p:num#num#num#A list. FST p)` TERM_TAC
+  `MEASURE (\p:num#num#num#A list. FST p)` TERM_TAC
   `list_copy_fwd_alias n xp yp (ys:A list) =
      if xp + n <= LENGTH ys /\ yp + n <= LENGTH ys then
        if n = 0 then SOME ys else
@@ -3510,7 +3512,7 @@ let word_copy_fwd_alias_thm = prove
 
 (* HOL4 line 15540 *)
 let word_copy_bwd_def = cake_def_wf
-  `measure (\p:bool#A word#A word#A word#(A word->A word_loc)#(A word->bool).
+  `MEASURE (\p:bool#A word#A word#A word#(A word->A word_loc)#(A word->bool).
               val (FST (SND p)))`
   (REWRITE_TAC[measure_THM; FST; SND] THEN REPEAT STRIP_TAC THEN
    MATCH_MP_TAC SKELAUX_VAL_WORD_SUB_4_LT THEN ASM_REWRITE_TAC[])
@@ -3548,54 +3550,54 @@ let word_copy_bwd_def = cake_def_wf
 let word_copy_bwd_ind = cake_ind "word_copy_bwd";;
 
 (* HOL4 line 15576 *)
-let minus_def = cake_def
-  `minus m n = m - n:num`;;
+let data_to_word_memoryProof_minus_def = cake_def
+  `data_to_word_memoryProof_minus m n = m - n:num`;;
 
 (* HOL4 line 15580 *)
 let list_copy_bwd_def = cake_def_wf
-  `measure (\p:num#num#A list#num#A list. FST p)` TERM_TAC
+  `MEASURE (\p:num#num#A list#num#A list. FST p)` TERM_TAC
   `list_copy_bwd (n:num) xp (xs:A list) yp ys =
      if n <= xp + 1 /\ xp < LENGTH xs /\ n <= yp + 1 /\ yp < LENGTH ys then
        if n = 0 then SOME ys else
        if n = 1 then SOME (LUPDATE (EL xp xs) yp ys) else
-       if n = 2 then SOME ((LUPDATE (EL (minus xp 1) xs) (minus yp 1) o
-                            LUPDATE (EL (minus xp 0) xs) (minus yp 0)) ys) else
-       if n = 3 then SOME ((LUPDATE (EL (minus xp 2) xs) (minus yp 2) o
-                            LUPDATE (EL (minus xp 1) xs) (minus yp 1) o
-                            LUPDATE (EL (minus xp 0) xs) (minus yp 0)) ys) else
-         list_copy_bwd (n - 4) (minus xp 4) xs (minus yp 4)
-                          ((LUPDATE (EL (minus xp 3) xs) (minus yp 3) o
-                            LUPDATE (EL (minus xp 2) xs) (minus yp 2) o
-                            LUPDATE (EL (minus xp 1) xs) (minus yp 1) o
-                            LUPDATE (EL (minus xp 0) xs) (minus yp 0)) ys)
+       if n = 2 then SOME ((LUPDATE (EL (data_to_word_memoryProof_minus xp 1) xs) (data_to_word_memoryProof_minus yp 1) o
+                            LUPDATE (EL (data_to_word_memoryProof_minus xp 0) xs) (data_to_word_memoryProof_minus yp 0)) ys) else
+       if n = 3 then SOME ((LUPDATE (EL (data_to_word_memoryProof_minus xp 2) xs) (data_to_word_memoryProof_minus yp 2) o
+                            LUPDATE (EL (data_to_word_memoryProof_minus xp 1) xs) (data_to_word_memoryProof_minus yp 1) o
+                            LUPDATE (EL (data_to_word_memoryProof_minus xp 0) xs) (data_to_word_memoryProof_minus yp 0)) ys) else
+         list_copy_bwd (n - 4) (data_to_word_memoryProof_minus xp 4) xs (data_to_word_memoryProof_minus yp 4)
+                          ((LUPDATE (EL (data_to_word_memoryProof_minus xp 3) xs) (data_to_word_memoryProof_minus yp 3) o
+                            LUPDATE (EL (data_to_word_memoryProof_minus xp 2) xs) (data_to_word_memoryProof_minus yp 2) o
+                            LUPDATE (EL (data_to_word_memoryProof_minus xp 1) xs) (data_to_word_memoryProof_minus yp 1) o
+                            LUPDATE (EL (data_to_word_memoryProof_minus xp 0) xs) (data_to_word_memoryProof_minus yp 0)) ys)
      else NONE`;;
 let list_copy_bwd_ind = cake_ind "list_copy_bwd";;
 
 (* HOL4 line 15598 (val) *)
-let list_copy_bwd_def = REWRITE_RULE [minus_def] list_copy_bwd_def;;
+let list_copy_bwd_def = REWRITE_RULE [data_to_word_memoryProof_minus_def] list_copy_bwd_def;;
 
 (* HOL4 line 15600 *)
 let list_copy_bwd_alias_def = cake_def_wf
-  `measure (\p:num#num#num#A list. FST p)` TERM_TAC
+  `MEASURE (\p:num#num#num#A list. FST p)` TERM_TAC
   `list_copy_bwd_alias n xp yp (ys:A list) =
      if n <= xp + 1 /\ xp < LENGTH ys /\ n <= yp + 1 /\ yp < LENGTH ys then
        if n = 0 then SOME ys else
        if n = 1 then SOME (LUPDATE (EL xp ys) yp ys) else
-       if n = 2 then SOME ((LUPDATE (EL (minus xp 1) ys) (minus yp 1) o
-                            LUPDATE (EL (minus xp 0) ys) (minus yp 0)) ys) else
-       if n = 3 then SOME ((LUPDATE (EL (minus xp 2) ys) (minus yp 2) o
-                            LUPDATE (EL (minus xp 1) ys) (minus yp 1) o
-                            LUPDATE (EL (minus xp 0) ys) (minus yp 0)) ys) else
-         list_copy_bwd_alias (n - 4) (minus xp 4) (minus yp 4)
-                          ((LUPDATE (EL (minus xp 3) ys) (minus yp 3) o
-                            LUPDATE (EL (minus xp 2) ys) (minus yp 2) o
-                            LUPDATE (EL (minus xp 1) ys) (minus yp 1) o
-                            LUPDATE (EL (minus xp 0) ys) (minus yp 0)) ys)
+       if n = 2 then SOME ((LUPDATE (EL (data_to_word_memoryProof_minus xp 1) ys) (data_to_word_memoryProof_minus yp 1) o
+                            LUPDATE (EL (data_to_word_memoryProof_minus xp 0) ys) (data_to_word_memoryProof_minus yp 0)) ys) else
+       if n = 3 then SOME ((LUPDATE (EL (data_to_word_memoryProof_minus xp 2) ys) (data_to_word_memoryProof_minus yp 2) o
+                            LUPDATE (EL (data_to_word_memoryProof_minus xp 1) ys) (data_to_word_memoryProof_minus yp 1) o
+                            LUPDATE (EL (data_to_word_memoryProof_minus xp 0) ys) (data_to_word_memoryProof_minus yp 0)) ys) else
+         list_copy_bwd_alias (n - 4) (data_to_word_memoryProof_minus xp 4) (data_to_word_memoryProof_minus yp 4)
+                          ((LUPDATE (EL (data_to_word_memoryProof_minus xp 3) ys) (data_to_word_memoryProof_minus yp 3) o
+                            LUPDATE (EL (data_to_word_memoryProof_minus xp 2) ys) (data_to_word_memoryProof_minus yp 2) o
+                            LUPDATE (EL (data_to_word_memoryProof_minus xp 1) ys) (data_to_word_memoryProof_minus yp 1) o
+                            LUPDATE (EL (data_to_word_memoryProof_minus xp 0) ys) (data_to_word_memoryProof_minus yp 0)) ys)
      else NONE`;;
 let list_copy_bwd_alias_ind = cake_ind "list_copy_bwd_alias";;
 
 (* HOL4 line 15617 (val) *)
-let list_copy_bwd_alias_def = REWRITE_RULE [minus_def] list_copy_bwd_alias_def;;
+let list_copy_bwd_alias_def = REWRITE_RULE [data_to_word_memoryProof_minus_def] list_copy_bwd_alias_def;;
 
 let MP6AUX_WORD_COPY_BWD_0 = prove
  (`!be a1 a2 (m:A word -> A word_loc) dm.
@@ -4130,7 +4132,7 @@ let list_copy_bwd_eq = prove
      list_copy_bwd n xp xs yp ys =
      SOME (APPEND (APPEND (TAKE ((yp + 1) - n) ys) (TAKE n (DROP ((xp + 1) - n) xs)))
                   (DROP (yp + 1) ys))`,
-  MATCH_MP_TAC list_copy_bwd_ind THEN REWRITE_TAC[minus_def] THEN
+  MATCH_MP_TAC list_copy_bwd_ind THEN REWRITE_TAC[data_to_word_memoryProof_minus_def] THEN
   REPEAT GEN_TAC THEN DISCH_TAC THEN STRIP_TAC THEN
   ONCE_REWRITE_TAC[list_copy_bwd_def] THEN ASM_REWRITE_TAC[] THEN
   ASM_CASES_TAC `n = 0` THENL
@@ -4216,7 +4218,7 @@ let list_copy_bwd_alias_eq = prove
      list_copy_bwd_alias n xp yp ys =
      SOME (APPEND (APPEND (TAKE ((yp + 1) - n) ys) (TAKE n (DROP ((xp + 1) - n) ys)))
                   (DROP (yp + 1) ys))`,
-  MATCH_MP_TAC list_copy_bwd_alias_ind THEN REWRITE_TAC[minus_def] THEN
+  MATCH_MP_TAC list_copy_bwd_alias_ind THEN REWRITE_TAC[data_to_word_memoryProof_minus_def] THEN
   REPEAT GEN_TAC THEN DISCH_TAC THEN STRIP_TAC THEN
   ONCE_REWRITE_TAC[list_copy_bwd_alias_def] THEN ASM_REWRITE_TAC[] THEN
   ASM_CASES_TAC `n = 0` THENL
@@ -5089,5 +5091,3 @@ let bind_each_eq_lt_FDOM = prove
     FIRST_X_ASSUM(MP_TAC o SPECL [`tf:(num,num)fmap`; `ts + 1`; `k + i:num`;
                                   `i:num`; `x:num`]) THEN
     ASM_REWRITE_TAC[] THEN DISCH_THEN MATCH_MP_TAC THEN ASM_ARITH_TAC]);;
-
-

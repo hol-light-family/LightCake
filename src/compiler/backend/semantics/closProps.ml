@@ -1,6 +1,8 @@
 (* ========================================================================= *)
 (* closProps: port of HOL4 compiler/backend/semantics/closPropsScript.sml    *)
 (* (CakeML v3479).  Properties about closLang and its semantics.             *)
+(* HOL4 fv and fv1 are clos_fv and clos_fv1 (short or common words), with    *)
+(* the theorems renamed alike (fv_def is clos_fv_def, ...).                  *)
 (* ========================================================================= *)
 
 needs "misc/misc.ml";;
@@ -137,7 +139,7 @@ let CLOSPROPSAUX_TC_TAC : tactic =
    REWRITE_TAC[list_size_pair_size_MAP_FST_SND] THEN ARITH_TAC);;
 
 let code_locs_def = sem1aux_def_wf
-  `measure (list_size clos_exp_size)`
+  `MEASURE (list_size clos_exp_size)`
   CLOSPROPSAUX_TC_TAC
   `(code_locs [] = []) /\
    (code_locs (CONS x (CONS y xs)) =
@@ -207,7 +209,7 @@ let BIGUNION_MAP_code_locs_SND_SND = prove
   ASM_REWRITE_TAC[SET_OF_LIST_APPEND; o_THM]);;
 
 let contains_App_SOME_def = sem1aux_def_wf
-  `measure (\p:num # clos_exp list. list_size clos_exp_size (SND p))`
+  `MEASURE (\p:num # clos_exp list. list_size clos_exp_size (SND p))`
   CLOSPROPSAUX_TC_TAC
   `(contains_App_SOME max_app [] <=> F) /\
    (contains_App_SOME max_app (CONS x (CONS y xs)) <=>
@@ -256,7 +258,7 @@ let contains_App_SOME_EXISTS = prove
 
 (* HOL4 [simp] *)
 let every_Fn_SOME_def = sem1aux_def_wf
-  `measure (list_size clos_exp_size)`
+  `MEASURE (list_size clos_exp_size)`
   CLOSPROPSAUX_TC_TAC
   `(every_Fn_SOME [] <=> T) /\
    (every_Fn_SOME (CONS x (CONS y xs)) <=>
@@ -309,7 +311,7 @@ let _ = cake_add_simps [every_Fn_SOME_APPEND];;
 
 (* HOL4 [simp] *)
 let every_Fn_vs_NONE_def = sem1aux_def_wf
-  `measure (list_size clos_exp_size)`
+  `MEASURE (list_size clos_exp_size)`
   CLOSPROPSAUX_TC_TAC
   `(every_Fn_vs_NONE [] <=> T) /\
    (every_Fn_vs_NONE (CONS x (CONS y xs)) <=>
@@ -367,7 +369,7 @@ let _ = cake_add_simps [every_Fn_vs_NONE_APPEND];;
 
 (* HOL4 [simp] *)
 let every_Fn_vs_SOME_def = sem1aux_def_wf
-  `measure (list_size clos_exp_size)`
+  `MEASURE (list_size clos_exp_size)`
   CLOSPROPSAUX_TC_TAC
   `(every_Fn_vs_SOME [] <=> T) /\
    (every_Fn_vs_SOME (CONS x (CONS y xs)) <=>
@@ -460,7 +462,7 @@ let CLOSPROPSAUX_TC2_TAC : tactic =
 
 
 let no_mti_def = sem1aux_def_wf
-  `measure clos_exp_size`
+  `MEASURE clos_exp_size`
   CLOSPROPSAUX_TC2_TAC
   `(no_mti (clos_Var t n) <=> T) /\
    (no_mti (clos_If t e1 e2 e3) <=>
@@ -493,78 +495,78 @@ let no_mti_def = sem1aux_def_wf
 
 let no_mti_ind = cake_ind "no_mti";;
 
-let fv_def = sem1aux_def_wf
-  `measure (\p:num # clos_exp list. list_size clos_exp_size (SND p))`
+let clos_fv_def = sem1aux_def_wf
+  `MEASURE (\p:num # clos_exp list. list_size clos_exp_size (SND p))`
   CLOSPROPSAUX_TC2_TAC
-  `(fv n [] <=> F) /\
-   (fv n (CONS (x:clos_exp) (CONS y xs)) <=>
-      fv n [x] \/ fv n (CONS y xs)) /\
-   (fv n [clos_Var _ v] <=> (n = v)) /\
-   (fv n [clos_If _ x1 x2 x3] <=>
-      fv n [x1] \/ fv n [x2] \/ fv n [x3]) /\
-   (fv n [clos_Let _ xs x2] <=>
-      fv n xs \/ fv (n + LENGTH xs) [x2]) /\
-   (fv n [clos_Raise _ x1] <=> fv n [x1]) /\
-   (fv n [clos_Tick _ x1] <=> fv n [x1]) /\
-   (fv n [clos_Op _ op xs] <=> fv n xs) /\
-   (fv n [clos_App _ loc_opt x1 es] <=>
-      fv n [x1] \/ fv n es) /\
-   (fv n [Fn _ loc vs num_args x1] <=>
-      fv (n + num_args) [x1]) /\
-   (fv n [clos_Letrec _ loc vs fns x1] <=>
+  `(clos_fv n [] <=> F) /\
+   (clos_fv n (CONS (x:clos_exp) (CONS y xs)) <=>
+      clos_fv n [x] \/ clos_fv n (CONS y xs)) /\
+   (clos_fv n [clos_Var _ v] <=> (n = v)) /\
+   (clos_fv n [clos_If _ x1 x2 x3] <=>
+      clos_fv n [x1] \/ clos_fv n [x2] \/ clos_fv n [x3]) /\
+   (clos_fv n [clos_Let _ xs x2] <=>
+      clos_fv n xs \/ clos_fv (n + LENGTH xs) [x2]) /\
+   (clos_fv n [clos_Raise _ x1] <=> clos_fv n [x1]) /\
+   (clos_fv n [clos_Tick _ x1] <=> clos_fv n [x1]) /\
+   (clos_fv n [clos_Op _ op xs] <=> clos_fv n xs) /\
+   (clos_fv n [clos_App _ loc_opt x1 es] <=>
+      clos_fv n [x1] \/ clos_fv n es) /\
+   (clos_fv n [Fn _ loc vs num_args x1] <=>
+      clos_fv (n + num_args) [x1]) /\
+   (clos_fv n [clos_Letrec _ loc vs fns x1] <=>
       EX (\p. match p with
-                (num_args, x) -> fv ((n + num_args) + LENGTH fns) [x]) fns \/
-      fv (n + LENGTH fns) [x1]) /\
-   (fv n [clos_Handle _ x1 x2] <=>
-      fv n [x1] \/ fv (n + 1) [x2]) /\
-   (fv n [clos_Call _ ticks dest xs] <=> fv n xs)`;;
+                (num_args, x) -> clos_fv ((n + num_args) + LENGTH fns) [x]) fns \/
+      clos_fv (n + LENGTH fns) [x1]) /\
+   (clos_fv n [clos_Handle _ x1 x2] <=>
+      clos_fv n [x1] \/ clos_fv (n + 1) [x2]) /\
+   (clos_fv n [clos_Call _ ticks dest xs] <=> clos_fv n xs)`;;
 
-let fv_ind = cake_ind "fv";;
+let clos_fv_ind = cake_ind "clos_fv";;
 
-(* a local helper: fv of a non-empty list *)
+(* a local helper: clos_fv of a non-empty list *)
 let CLOSPROPSAUX_fv_cons = prove
- (`!v x xs. fv v (CONS x xs) <=> fv v [x] \/ fv v xs`,
-  REPEAT GEN_TAC THEN CASES_ON `xs:clos_exp list` THEN REWRITE_TAC[fv_def]);;
+ (`!v x xs. clos_fv v (CONS x xs) <=> clos_fv v [x] \/ clos_fv v xs`,
+  REPEAT GEN_TAC THEN CASES_ON `xs:clos_exp list` THEN REWRITE_TAC[clos_fv_def]);;
 
 (* HOL4 [simp] *)
 let fv_append = prove
- (`!v l1 l2. fv v (APPEND l1 l2) <=> fv v l1 \/ fv v l2`,
-  GEN_TAC THEN LIST_INDUCT_TAC THEN REWRITE_TAC[APPEND; fv_def] THEN
+ (`!v l1 l2. clos_fv v (APPEND l1 l2) <=> clos_fv v l1 \/ clos_fv v l2`,
+  GEN_TAC THEN LIST_INDUCT_TAC THEN REWRITE_TAC[APPEND; clos_fv_def] THEN
   ONCE_REWRITE_TAC[CLOSPROPSAUX_fv_cons] THEN ASM_REWRITE_TAC[DISJ_ASSOC]);;
 let _ = cake_add_simps [fv_append];;
 
 (* HOL4 [simp] *)
 let fv_nil = prove
- (`!v. fv v [] <=> F`,
-  REWRITE_TAC[fv_def]);;
+ (`!v. clos_fv v [] <=> F`,
+  REWRITE_TAC[clos_fv_def]);;
 let _ = cake_add_simps [fv_nil];;
 
-let fv1_def = cake_def
-  `fv1 v e <=> fv v [e]`;;
+let clos_fv1_def = cake_def
+  `clos_fv1 v e <=> clos_fv v [e]`;;
 
 (* HOL4 [simp]: fv1_intro = GSYM fv1_def *)
 let fv1_intro = prove
- (`!v e. fv v [e] <=> fv1 v e`,
-  REWRITE_TAC[fv1_def]);;
+ (`!v e. clos_fv v [e] <=> clos_fv1 v e`,
+  REWRITE_TAC[clos_fv1_def]);;
 let _ = cake_add_simps [fv1_intro];;
 
 (* HOL4: fv1_thm = fv_def |> SIMP_RULE (srw_ss()) [] (the clause for [] *)
 (* becomes T by fv_nil and is dropped)                                   *)
-let fv1_thm = end_itlist CONJ (tl (CONJUNCTS (REWRITE_RULE[fv1_intro] fv_def)));;
+let fv1_thm = end_itlist CONJ (tl (CONJUNCTS (REWRITE_RULE[fv1_intro] clos_fv_def)));;
 
 (* HOL4 [simp] *)
 let fv_cons = prove
- (`!v x xs. fv v (CONS x xs) <=> fv1 v x \/ fv v xs`,
+ (`!v x xs. clos_fv v (CONS x xs) <=> clos_fv1 v x \/ clos_fv v xs`,
   REWRITE_TAC[GSYM fv1_intro] THEN MATCH_ACCEPT_TAC CLOSPROPSAUX_fv_cons);;
 let _ = cake_add_simps [fv_cons];;
 
 let fv_exists = prove
- (`!v ls. fv v ls <=> EX (fv1 v) ls`,
+ (`!v ls. clos_fv v ls <=> EX (clos_fv1 v) ls`,
   GEN_TAC THEN LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[fv_nil; fv_cons; EX]);;
 
 let fv_MAPi = prove
  (`!l x (f:num->A->clos_exp).
-     fv x (MAPi f l) <=> ?n. n < LENGTH l /\ fv x [f n (EL n l)]`,
+     clos_fv x (MAPi f l) <=> ?n. n < LENGTH l /\ clos_fv x [f n (EL n l)]`,
   LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[MAPi_DEF; fv_nil; fv_cons; LENGTH; LT] THEN
   REWRITE_TAC[fv1_intro; o_THM] THEN REPEAT GEN_TAC THEN
   REWRITE_TAC[GSYM LT] THEN EQ_TAC THENL
@@ -576,14 +578,14 @@ let fv_MAPi = prove
     REWRITE_TAC[EL; HD; TL; LT_SUC] THEN MESON_TAC[]]);;
 
 let fv_GENLIST_Var = prove
- (`!tra v n. fv v (list_of_seq (clos_Var tra) n) <=> v < n`,
+ (`!tra v n. clos_fv v (list_of_seq (clos_Var tra) n) <=> v < n`,
   GEN_TAC THEN GEN_TAC THEN INDUCT_TAC THEN
   ASM_REWRITE_TAC[list_of_seq; fv_nil; fv_append; LT] THEN
-  REWRITE_TAC[fv1_intro; GSYM fv1_intro; fv_def] THEN MESON_TAC[]);;
+  REWRITE_TAC[fv1_intro; GSYM fv1_intro; clos_fv_def] THEN MESON_TAC[]);;
 
 (* HOL4 [simp] *)
 let fv_REPLICATE = prove
- (`!n m e. fv n (REPLICATE m e) <=> 0 < m /\ fv1 n e`,
+ (`!n m e. clos_fv n (REPLICATE m e) <=> 0 < m /\ clos_fv1 n e`,
   GEN_TAC THEN INDUCT_TAC THEN
   ASM_REWRITE_TAC[REPLICATE; fv_nil; fv_cons; LT_REFL; LT_0] THEN MESON_TAC[]);;
 let _ = cake_add_simps [fv_REPLICATE];;
@@ -2218,7 +2220,7 @@ let _ = cake_add_simps [exp2_size_rw];;
 
 (* HOL4: set_globals_def [simp] *)
 let clos_set_globals_def = sem1aux_def_wf
-  `measure (\x:clos_exp + clos_exp list.
+  `MEASURE (\x:clos_exp + clos_exp list.
               sum_CASE x (\e. clos_exp_size e) (\es. list_size clos_exp_size es))`
   CLOSPROPSAUX_TC_TAC
   `(clos_set_globals (clos_Var _ _) = EMPTY_BAG) /\
@@ -2254,7 +2256,7 @@ let clos_v_size_lemma = prove
 (* value is setglobal-closure free; HOL4 rebinds vsgc_free_def to its eta- *)
 (* reduced form, which is the form stored here                             *)
 let vsgc_free_def = sem1aux_def_wf
-  `measure clos_v_size`
+  `MEASURE clos_v_size`
   (SEM1AUX_TC_TAC ORELSE
    (REWRITE_TAC[IMP_CONJ] THEN REPEAT GEN_TAC THEN REPEAT DISCH_TAC THEN
     RVEQ_TAC THEN
@@ -2295,7 +2297,7 @@ let _ = cake_add_simps [rsgc_free_def];;
 (* HOL4: esgc_free_def; HOL4 rebinds it to its eta-reduced form, which is  *)
 (* the form stored here                                                     *)
 let clos_esgc_free_def = sem1aux_def_wf
-  `measure clos_exp_size`
+  `MEASURE clos_exp_size`
   CLOSPROPSAUX_TC2_TAC
   `(clos_esgc_free (clos_Var _ _) <=> T) /\
    (clos_esgc_free (clos_If _ e1 e2 e3) <=>
@@ -4564,7 +4566,7 @@ let CLOSPROPSAUX_TC3_TAC : tactic =
 (* HOL4: obeys_max_app_def; HOL4 rebinds it to its eta-reduced form, which  *)
 (* is the form stored here (the Letrec list is named fns: one name, one type) *)
 let obeys_max_app_def = sem1aux_def_wf
-  `measure (\p:num # clos_exp. clos_exp_size (SND p))`
+  `MEASURE (\p:num # clos_exp. clos_exp_size (SND p))`
   CLOSPROPSAUX_TC3_TAC
   `(obeys_max_app m (clos_Var _ _) <=> T) /\
    (obeys_max_app m (clos_If _ e1 e2 e3) <=>
@@ -4587,7 +4589,7 @@ let obeys_max_app_ind = cake_ind "obeys_max_app";;
 (* HOL4: no_Labels_def; HOL4 rebinds it to its eta-reduced form, which is    *)
 (* the form stored here                                                      *)
 let no_Labels_def = sem1aux_def_wf
-  `measure clos_exp_size`
+  `MEASURE clos_exp_size`
   CLOSPROPSAUX_TC3_TAC
   `(no_Labels (clos_Var _ _) <=> T) /\
    (no_Labels (clos_If _ e1 e2 e3) <=> no_Labels e1 /\ no_Labels e2 /\ no_Labels e3) /\
@@ -4606,7 +4608,7 @@ let no_Labels_ind = cake_ind "no_Labels";;
 
 (* HOL4: app_call_dests_def (HOL4 [simp,compute,allow_rebind] = itself) *)
 let app_call_dests_def = sem1aux_def_wf
-  `measure (\p:bool option # clos_exp list. list_size clos_exp_size (SND p))`
+  `MEASURE (\p:bool option # clos_exp list. list_size clos_exp_size (SND p))`
   CLOSPROPSAUX_TC_TAC
   `(app_call_dests opt [] = ({}:num->bool)) /\
    (app_call_dests opt (CONS x (CONS y xs)) =
@@ -4697,7 +4699,7 @@ let any_dests_call_dests_app_dests = prove
 (* MAP (get_code_labels o SND) (MAP_MAP_o), stored below under the same name *)
 (* (the label of Call is named d: one name, one type in a quotation)         *)
 let clos_get_code_labels_def = sem1aux_def_wf
-  `measure clos_exp_size`
+  `MEASURE clos_exp_size`
   CLOSPROPSAUX_TC3_TAC
   `(clos_get_code_labels (clos_Var _ _) = ({}:num->bool)) /\
    (clos_get_code_labels (clos_If _ e1 e2 e3) =
@@ -4719,7 +4721,7 @@ let clos_get_code_labels_def = sem1aux_def_wf
    (clos_get_code_labels (clos_Letrec _ l _ fns e) =
       ((match l with
           NONE -> {}
-        | SOME n -> IMAGE (\k. n + 2 * k) (count (LENGTH fns))) UNION
+        | SOME n -> IMAGE (\k. n + 2 * k) (pred_set_count (LENGTH fns))) UNION
        clos_get_code_labels e) UNION
       UNIONS (set_of_list (MAP clos_get_code_labels (MAP SND fns)))) /\
    (clos_get_code_labels (clos_Op _ op es) =

@@ -1115,7 +1115,7 @@ let WBIGPAUX_cut_envs_ret = prove
   SUBGOAL_THEN `?v':A. lookup 0 env = SOME v'` (fun th -> REWRITE_TAC[th]) THENL
    [ASM_MESON_TAC[]; ALL_TAC] THEN
   CASE_REWRITE_TAC[] THEN REWRITE_TAC[option_INJ; PAIR_EQ] THEN
-  SIMP_TAC[spt_eq_thm; wf_inter; wf_insert; wf_def] THEN
+  SIMP_TAC[spt_eq_thm; wf_inter; wf_insert; sptree_wf_def] THEN
   REWRITE_TAC[lookup_inter_alt; lookup_insert; domain_def; IN_SING] THEN
   GEN_TAC THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[lookup_def]);;
 
@@ -1139,9 +1139,9 @@ let WBIGPAUX_lookup_fromList2_1 = prove
 
 let WBIGPAUX_pop_env_locals = prove
  (`!(e1:((A)word_loc)spt) e2 p.
-     (!k. lookup k (union (fromAList (FST (env_to_list e2 p))) (fromAList (toAList e1))) =
-          lookup k (union e2 e1)) /\
-     domain (union (fromAList (FST (env_to_list e2 p))) (fromAList (toAList e1))) =
+     (!k. lookup k (sptree_union (fromAList (FST (env_to_list e2 p))) (fromAList (toAList e1))) =
+          lookup k (sptree_union e2 e1)) /\
+     domain (sptree_union (fromAList (FST (env_to_list e2 p))) (fromAList (toAList e1))) =
      domain e2 UNION domain e1`,
   REPEAT GEN_TAC THEN QCASES_ON "env_to_list (e2:((A)word_loc)spt) p" THEN
   IMP_RES_TAC env_to_list_lookup_equiv THEN
@@ -1375,14 +1375,14 @@ let word_bignumProof_compile_thm = prove
                    cs2 t0 frame /\\ lookup 0 (wl_state_locals t6) = SOME (wl_Loc n l) /\\
                  wl_state_code t6 = wl_state_code t1 /\\
                  wl_state_stack t6 =
-                 CONS (StackFrame (wl_state_locals_size t1) (toAList (inter L (LS one)))
-                   (FST (env_to_list (inter L (list_insert (MAP (\\n. n + 2) save_regs) LN))
+                 CONS (StackFrame (wl_state_locals_size t1) (toAList (sptree_inter L (LS one)))
+                   (FST (env_to_list (sptree_inter L (list_insert (MAP (\\n. n + 2) save_regs) LN))
                            (wl_state_permute t1))) NONE) (wl_state_stack t1)"
       (QPAT_X_ASSUM "_ = t6" (SUBST1_TAC o SYM) THEN
        SIMP[state_rel_delete_vars; WBIGPAUX_state_rel_call; WBIGPAUX_state_rel_fupds;
             wl_call_env_def; WBIGPAUX_lookup_fromList2_1; wl_push_env_def; LET_DEF;
             LET_END_DEF] THEN
-       QCASES_ON "env_to_list (inter L (list_insert (MAP (\\n. n + 2) save_regs) LN))
+       QCASES_ON "env_to_list (sptree_inter L (list_insert (MAP (\\n. n + 2) save_regs) LN))
                     (wl_state_permute t1)" THEN SIMP[]) THEN
     LAST_X_ASSUM DRULE THEN
     DISCH_THEN (QSPECL_THEN ["cs2"; "t6"; "wl_Loc n l"] MP_TAC) THEN FS[wl_get_var_def] THEN

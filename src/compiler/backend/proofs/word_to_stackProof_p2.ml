@@ -528,7 +528,7 @@ let W2SP2AUX_state_rel_code = prove
            i - LENGTH (append bs) <= LENGTH (stack_state_bitmaps t) /\
            isPREFIX (append bs2) (DROP (i - LENGTH (append bs)) (stack_state_bitmaps t)) /\
            lookup n (stack_state_code t) = SOME stack_prog /\
-           the f0 (lookup n (wl_state_stack_size s)) = f0`,
+           misc_the f0 (lookup n (wl_state_stack_size s)) = f0`,
   REWRITE_TAC[word_to_stackProof_state_rel_def] THEN REPEAT STRIP_TAC THEN
   RES_TAC THEN ASM_MESON_TAC[]);;
 (* W2SP2AUX: the variables of related states are even *)
@@ -564,7 +564,7 @@ let call_dest_lemma = prove
                    i - LENGTH (append bs) <= LENGTH (stack_state_bitmaps t) /\
                    isPREFIX (append bs2)
                      (DROP (i - LENGTH (append bs)) (stack_state_bitmaps t)) /\
-                   the fs ssize = fs /\
+                   misc_the fs ssize = fs /\
                    stack_find_code dest' (stack_state_regs t4) (stack_state_code t4) =
                      SOME stack_prog`,
   GEN_TAC THEN STRUCT_CASES_TAC(ISPEC `dest:num option` (cases "option")) THEN
@@ -799,7 +799,7 @@ let ALOOKUP_MAP_any = prove
 
 (* HOL4 line 3570 *)
 let wf_alist_insert = prove
- (`!xs ys (z:A spt). wf z ==> wf (alist_insert xs ys z)`,
+ (`!xs ys (z:A spt). sptree_wf z ==> sptree_wf (alist_insert xs ys z)`,
   MATCH_MP_TAC alist_insert_ind THEN REWRITE_TAC[alist_insert_def] THEN
   REPEAT STRIP_TAC THEN MATCH_MP_TAC wf_insert THEN ASM_SIMP_TAC[]);;
 
@@ -858,7 +858,7 @@ let alist_insert_get_vars = prove
      ALL_DISTINCT (MAP FST moves) /\
      wl_get_vars (MAP SND moves) s = SOME x /\
      ALL_DISTINCT (FILTER IS_SOME ls) /\
-     wf (wl_state_locals s) /\
+     sptree_wf (wl_state_locals s) /\
      (!x. MEM (SOME x) ls ==> MEM x (MAP FST moves)) /\
      (!x y. MEM (x,y) moves /\ ~(x = y) ==> MEM (SOME x) ls)
      ==> alist_insert (MAP THE (FILTER IS_SOME ls))
@@ -892,15 +892,15 @@ let alist_insert_get_vars = prove
 
 (* HOL4 line 3703 *)
 let wf_fromList2 = prove
- (`!(ls:A list). wf (fromList2 ls)`,
-  SUBGOAL_THEN `!(ls:A list) j tr. wf tr
-     ==> wf (SND (FOLDL (\(i,t) a. i + 2,insert i a t) (j,tr) ls))` MP_TAC THENL
+ (`!(ls:A list). sptree_wf (fromList2 ls)`,
+  SUBGOAL_THEN `!(ls:A list) j tr. sptree_wf tr
+     ==> sptree_wf (SND (FOLDL (\(i,t) a. i + 2,insert i a t) (j,tr) ls))` MP_TAC THENL
    [LIST_INDUCT_TAC THEN REWRITE_TAC[FOLDL] THEN REPEAT STRIP_TAC THEN
     ASM_REWRITE_TAC[] THEN
     FIRST_X_ASSUM MATCH_MP_TAC THEN MATCH_MP_TAC wf_insert THEN ASM_REWRITE_TAC[];
     REWRITE_TAC[fromList2_def] THEN DISCH_TAC THEN GEN_TAC THEN
     FIRST_X_ASSUM MATCH_MP_TAC THEN
-    REWRITE_TAC[wf_def]]);;
+    REWRITE_TAC[sptree_wf_def]]);;
 
 (* HOL4 line 3711 *)
 let wStackLoad_append = prove
@@ -1077,7 +1077,7 @@ let word_to_stackProof_state_rel_mem_store = prove
 (* HOL4 line 4054 (Termination WF_REL_TAC measure (exp_size ARB o SND);      *)
 (* here the size with the constant 0 for the words)                          *)
 let map_var_def = cake_def_wf
-  `measure (\(f:num->num,e:(A)wl_exp). wl_exp_size (\x:A. 0) e)`
+  `MEASURE (\(f:num->num,e:(A)wl_exp). wl_exp_size (\x:A. 0) e)`
   TERM_TAC
   `(map_var f (wl_Var num) = wl_Var (f num)) /\
    (map_var f (wl_Load exp) = wl_Load (map_var f exp)) /\
@@ -3068,7 +3068,7 @@ let stack_rel_cons_locals_size = prove
      (bitmaps:(A word)list) f' lens.
      word_to_stackProof_stack_rel k whandler (CONS (StackFrame n l0 l opt) t'')
        shandler rest_of_stack len bitmaps (CONS f' lens)
-     ==> the (f' + 1) n = f' + 1`,
+     ==> misc_the (f' + 1) n = f' + 1`,
   REPEAT GEN_TAC THEN REWRITE_TAC[word_to_stackProof_stack_rel_def] THEN
   DISCH_THEN(CONJUNCTS_THEN2 (K ALL_TAC) (X_CHOOSE_THEN
     `stk:(((A)word_loc#(A)word_loc)option#bool list#((A)word_loc)list)list`
@@ -3757,7 +3757,7 @@ let word_to_stackProof_goal = CASE_TERM
              then res1 = SOME (stackSem_Halt (wl_Word (word 2))) /\
                   isPREFIX (ffi_state_io_events (stack_state_ffi t1))
                     (ffi_state_io_events (wl_state_ffi s1)) /\
-                  the (wl_state_stack_limit s1 + 1) (wl_state_stack_max s1) >
+                  misc_the (wl_state_stack_limit s1 + 1) (wl_state_stack_max s1) >
                     wl_state_stack_limit s1
              else
                match res with
@@ -3773,7 +3773,7 @@ let word_to_stackProof_goal = CASE_TERM
                    ?l0 l.
                      word_to_stackProof_state_rel ac k 0 0 (push_locals l0 l s1) t1
                        (LASTN (wl_state_handler s + 1) lens) 0 /\
-                     wl_state_locals s1 = union (fromAList l) (fromAList l0) /\
+                     wl_state_locals s1 = sptree_union (fromAList l) (fromAList l0) /\
                      FLOOKUP (stack_state_regs t1) 1 = SOME y
                | SOME (wordSem_Break _) -> word_to_stackProof_state_rel ac k f f' s1 t1 lens 0
                | SOME (wordSem_Continue _) ->
@@ -4222,7 +4222,7 @@ let copy_words_correct = prove
 (* W2SP2AUX: the word locals of a related state are well formed *)
 let W2SP2AUX_state_rel_wf = prove
  (`!ac k f f' (s:(A,num#C,FFI)wl_state) (t:(A,C,FFI)stack_state) lens extra.
-     word_to_stackProof_state_rel ac k f f' s t lens extra ==> wf (wl_state_locals s)`,
+     word_to_stackProof_state_rel ac k f f' s t lens extra ==> sptree_wf (wl_state_locals s)`,
   REWRITE_TAC[word_to_stackProof_state_rel_def] THEN REPEAT STRIP_TAC THEN
   ASM_REWRITE_TAC[]);;
 
@@ -4230,7 +4230,7 @@ let W2SP2AUX_state_rel_wf = prove
 (* that agree on every local held in a register                              *)
 let W2SP2AUX_state_rel_locals_regs = prove
  (`!ac k f f' (s:(A,num#C,FFI)wl_state) (t:(A,C,FFI)stack_state) lens extra l r.
-     word_to_stackProof_state_rel ac k f f' s t lens extra /\ wf l /\
+     word_to_stackProof_state_rel ac k f f' s t lens extra /\ sptree_wf l /\
      (!n v. lookup n l = SOME v
             ==> EVEN n /\
                 if n DIV 2 < k then FLOOKUP r (n DIV 2) = SOME v
@@ -4350,7 +4350,7 @@ let W2SP2AUX_state_rel_locals_regs_eq = prove
      word_to_stackProof_state_rel ac k f f' s t lens extra /\
      s' = wl_state_locals_fupd (K (wl_state_locals s')) s /\
      t' = stack_state_regs_fupd (K (stack_state_regs t')) t /\
-     wf (wl_state_locals s') /\
+     sptree_wf (wl_state_locals s') /\
      (!n v. lookup n (wl_state_locals s') = SOME v
             ==> EVEN n /\
                 if n DIV 2 < k then FLOOKUP (stack_state_regs t') (n DIV 2) = SOME v
@@ -4633,7 +4633,7 @@ let W2SP2AUX_move_bound = prove
 let W2SP2AUX_move_set_vars = prove
  (`!(moves:(num#num)list) (s:(A,C,FFI)wl_state) vs (r:num option->((A)word_loc)option).
      windmill moves /\ ALL EVEN (MAP FST moves) /\ ALL EVEN (MAP SND moves) /\
-     wf (wl_state_locals s) /\ wl_get_vars (MAP SND moves) s = SOME vs /\
+     sptree_wf (wl_state_locals s) /\ wl_get_vars (MAP SND moves) s = SOME vs /\
      (!i. r (SOME i) = wl_get_var (2 * i) s)
      ==> wl_set_vars
            (MAP ((\x. 2 * x) o THE)

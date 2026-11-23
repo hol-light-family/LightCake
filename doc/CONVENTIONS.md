@@ -13,21 +13,25 @@
 ## Names
 - The backend intermediate languages prefix their types, constructors and constants with
   the language: `clos_`, `bvl_`, `bvi_`, `data_`, `flat_`, `stack_`, `lab_`, `asm_`, `target_`,
-  and `wl_` for wordLang. The source language (`semantics/`) keeps HOL4's names. Other theories
-  prefix a name with the theory name where it clashes, and also where it is a common variable
-  name (`parmove_step`, `clos_annotate_shift`, `infer_read`): all files are loaded into one
-  session, where a constant would capture every later variable of the same name, also in
-  files that do not load it. `doc/names.tsv` is the table (columns: file, theory, kind, HOL4
-  name, HOL Light name, reason).
+  and `wl_` for wordLang. The source language (`semantics/`) keeps HOL4's names. Other theories,
+  the HOL4 library theories of `src/hol4/` included, prefix a name with the theory name where it
+  clashes, and also where it is short or a common word or variable name (`parmove_step`,
+  `clos_annotate_shift`, `infer_read`, `sptree_union`, `misc_the`, `peg_nt`): all files are
+  loaded into one session, where a constant would capture every later variable of the same
+  name, also in files that do not load it, and a short constant name would take namespace from
+  every user of the library. `doc/names.tsv` is the table (columns: file, theory, kind, HOL4
+  name, HOL Light name, reason); `doc/library_renames.tsv` lists the HOL4 library names that
+  changed.
 - Record fields: the accessor of field `f` of record type `r` is `r_f`, its update `r_f_fupd`
   (HOL4 `x with f := v` is `r_f_fupd (K v) x`); the literal `<| f1 := v1; ... |>` is
   `r_REC v1 ...` with the fields in declaration order.
 - Definition theorems are `NAME_def`, induction theorems `NAME_ind` (`cake_ind "NAME"`).
 - HOL4 library notions use HOL Light's constants where they mean the same (`ALL`, `EX`, `ALL2`,
   `set_of_list`, `UNIONS`, `BUTLAST`, `list_of_seq`, `ITLIST` for `FOLDR` with its arguments
-  reordered, `ITER` for `FUNPOW`, `minimal` for `LEAST`, curried `ZIP`); the others keep their HOL4
-  names. A HOL4 theorem whose name HOL Light already uses for another statement gets the
-  theory name as a prefix (for example `list_MEM_EL`).
+  reordered, `ITER` for `FUNPOW`, `minimal` for `LEAST`, `MEASURE` for `measure`, curried
+  `ZIP`); the others keep their HOL4 names, prefixed where the rule above says so. A HOL4
+  theorem whose name HOL Light already uses for another statement gets the theory name as a
+  prefix (for example `list_MEM_EL`).
 - HOL4's `Num` is `num_of_int`. They agree on non-negative integers; on negative ones HOL4's
   `Num` is the absolute value and `num_of_int` is unspecified. Every use in the semantics is
   guarded by a sign test, except dataLang's `space_consumed`, whose negative cases compiled
@@ -47,7 +51,7 @@
 - `cake_def tm` for definitions with automatic termination (HOL Light's own analysis, else the
   size of one argument or of all of them, as HOL4's `Define`); `cake_def_wf R tac tm` with
   HOL4's termination relation `R` on the tupled arguments (on their sum `INL`/`INR` for mutual
-  recursion), built from `measure`, `inv_image` and `LEX`; `tac` proves each termination
+  recursion), built from `MEASURE` (HOL4's `measure`), `inv_image` and `LEX`; `tac` proves each termination
   condition (`TERM_TAC` handles size measures). `cake_ind "f"` is the induction theorem.
 - Clauses follow HOL4: each `_` is a separate variable (`(_:num)` is a typed wildcard);
   overlapping clauses mean that the first match wins and are completed into the instances that
@@ -91,6 +95,16 @@
   normalisation, with cut-off subtraction), `NOT_ss` (HOL4's NOT_ss: De Morgan and friends),
   `RECORD_SELFID_ss` (`r with f := r.f = r`), `CONGR th` (HOL4's Cong) and `IGNASM "pat"`
   (HOL4's IgnAsm). The comments in `src/kit/tactics.ml` and `src/kit/simp.ml` describe them.
+- More HOL4 tactics and tools: `HOL4_INDUCT_ON` and `HOL4_INDUCT_TAC` (Induct_on and Induct
+  with HOL4's goals: the induction hypotheses are assumptions and the arguments are named after
+  the variable; `INDUCT_ON` leaves the cases as `MATCH_MP_TAC` gives them), `HOL4_SELECT_ELIM_TAC`
+  (HOL4's SELECT_ELIM_TAC; HOL Light's own `SELECT_ELIM_TAC` is a different tactic),
+  `cake_enum_bijections` (HOL4's `ty2num` and `num2ty` for an enumeration type, with their
+  theorems), and `cake_register_case_type`, `cake_define_case_type` and `cake_register_induction`
+  for case types that are not HOL Light datatypes (`itree`, `llist`).
+- Quoted terms of the string-quoted tactics are OCaml strings: a backslash followed by a space
+  is a space, so write `/\\` for conjunction (the kit reads a lone `/` as `/\` when the string
+  does not typecheck otherwise, with a warning), and `\\n` for a lambda over `n`.
 - The kit's `FS` simplifies the assumptions oldest first and `RFS` newest first: HOL4's fs takes
   the newest first, so HOL4's fs corresponds to `RFS` and its rfs to `FS`.
 - Theorems that HOL4 marks `[simp]` are added to the project simpset with `cake_add_simps`

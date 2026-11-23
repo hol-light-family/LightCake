@@ -180,13 +180,13 @@ let char_size_def = new_definition
   `char_size (c:char) = 0`;;
 
 let UNIV_IMAGE_CHR_count_256 = prove
- (`(UNIV:char->bool) = IMAGE CHR (count 256)`,
-  REWRITE_TAC[EXTENSION; IN_UNIV; IN_IMAGE; count_DEF; IN_ELIM_THM] THEN
+ (`(UNIV:char->bool) = IMAGE CHR (pred_set_count 256)`,
+  REWRITE_TAC[EXTENSION; IN_UNIV; IN_IMAGE; pred_set_count_DEF; IN_ELIM_THM] THEN
   MESON_TAC[ranged_char_nchotomy]);;
 
 let FINITE_UNIV_char = prove
  (`FINITE (UNIV:char->bool)`,
-  REWRITE_TAC[UNIV_IMAGE_CHR_count_256; count_DEF] THEN
+  REWRITE_TAC[UNIV_IMAGE_CHR_count_256; pred_set_count_DEF] THEN
   MATCH_MP_TAC FINITE_IMAGE THEN REWRITE_TAC[FINITE_NUMSEG_LT]);;
 
 let RC_char_lt = prove
@@ -220,7 +220,7 @@ let LSTRAUX_SPLITP_TC_TAC =
   REWRITE_TAC[NULL; TL; LENGTH] THEN ARITH_TAC;;
 
 let LSTRAUX_TOKENS_FST_SND = cake_def_wf
-  `measure (LENGTH o (SND:(char->bool)#(char list)->char list))`
+  `MEASURE (LENGTH o (SND:(char->bool)#(char list)->char list))`
   LSTRAUX_SPLITP_TC_TAC
   `(TOKENS P ([]:char list) = []) /\
    (TOKENS P (CONS h t) =
@@ -230,7 +230,7 @@ let LSTRAUX_TOKENS_FST_SND = cake_def_wf
                 (TOKENS P (SND (SPLITP P (CONS h t)))))`;;
 
 let LSTRAUX_FIELDS_FST_SND = cake_def_wf
-  `measure (LENGTH o (SND:(char->bool)#(char list)->char list))`
+  `MEASURE (LENGTH o (SND:(char->bool)#(char list)->char list))`
   LSTRAUX_SPLITP_TC_TAC
   `(FIELDS P ([]:char list) = [[]]) /\
    (FIELDS P (CONS h t) =

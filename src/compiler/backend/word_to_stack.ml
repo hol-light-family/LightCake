@@ -8,7 +8,7 @@
 (* variables it should treat as roots in a given stack frame.               *)
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
-(* - Names as notes/naming/names.tsv says: the prefix word_to_stack_ for the *)
+(* - Names as doc/names.tsv says: the prefix word_to_stack_ for the          *)
 (*   names that clash with other theories (word_to_stack_config and its      *)
 (*   fields, word_to_stack_word_list, word_to_stack_stack_free,              *)
 (*   word_to_stack_comp, word_to_stack_compile_prog, word_to_stack_compile,  *)
@@ -239,7 +239,7 @@ let bits_to_word_def = cake_def
 (* HOL4: word_list_def, Termination WF_REL_TAC measure (LENGTH o FST) *)
 
 let word_to_stack_word_list_def = cake_def_wf
-  `measure (LENGTH o (FST:bool list#num->bool list))`
+  `MEASURE (LENGTH o (FST:bool list#num->bool list))`
   (REPEAT GEN_TAC THEN REWRITE_TAC(WF_REL_THMS @ [o_THM; FST; LENGTH_DROP]) THEN
    ARITH_TAC)
   `word_to_stack_word_list (xs:bool list) d =
@@ -461,7 +461,7 @@ new_type_abbrev("backdefaux_comp_ty",
     (A)stack_prog#(A word)app_list#num`);;
 
 let word_to_stack_comp_def = sem1aux_def_wf
-  `measure (\(conf:(A)asm_config,perf:bool,p:(A)wl_prog,bs:(A word)app_list#num,
+  `MEASURE (\(conf:(A)asm_config,perf:bool,p:(A)wl_prog,bs:(A word)app_list#num,
               kf:num#num#num). wl_prog_size (\x:A. 0) p)`
   SEM1AUX_TC_TAC (list_mk_conj
  [`(word_to_stack_comp:backdefaux_comp_ty) conf perf wl_Skip bs kf = (stack_Skip,bs)`;

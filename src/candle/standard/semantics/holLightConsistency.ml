@@ -684,7 +684,7 @@ let equal_on_bool_interpretation = prove
   FS[is_bool_sig_def; is_true_sig_def; is_and_sig_def; is_implies_sig_def;
      is_forall_sig_def; is_exists_sig_def; is_or_sig_def; is_false_sig_def;
      is_not_sig_def] THEN
-  SIMP[type_ok_def; tyvars_def] THEN FS[is_std_sig_def]);;
+  SIMP[type_ok_def; hol_tyvars_def] THEN FS[is_std_sig_def]);;
 let term_ok_Forall = prove
  (`!sig nm ty p.
      is_std_sig sig /\ is_forall_sig (SND sig) /\ type_ok (FST sig) ty /\
@@ -1765,7 +1765,7 @@ let ONE_ONE_def_updates = prove
          updates ctxt`,
   REPEAT STRIP_TAC THEN FIRST_ASSUM(ASSUME_TAC o MATCH_MP is_bool_sig_std) THEN
   MATCH_MP_TAC ConstDef_updates THEN
-  SIMP[CLOSED_def; tvars_def; tyvars_def; equation_def; hol_term_ok_def; type_ok_def;
+  SIMP[CLOSED_def; tvars_def; hol_tyvars_def; equation_def; hol_term_ok_def; type_ok_def;
        typeof_def; codomain_def] THEN
   FS[is_bool_sig_def; is_std_sig_def; is_forall_sig_def; is_implies_sig_def] THEN
   CONJ_TAC THENL
@@ -1853,7 +1853,7 @@ let ONTO_def_updates = prove
          updates ctxt`,
   REPEAT STRIP_TAC THEN FIRST_ASSUM(ASSUME_TAC o MATCH_MP is_bool_sig_std) THEN
   MATCH_MP_TAC ConstDef_updates THEN
-  SIMP[CLOSED_def; tvars_def; tyvars_def; equation_def; hol_term_ok_def; type_ok_def;
+  SIMP[CLOSED_def; tvars_def; hol_tyvars_def; equation_def; hol_term_ok_def; type_ok_def;
        typeof_def; codomain_def] THEN
   FS[is_bool_sig_def; is_std_sig_def; is_forall_sig_def; is_exists_sig_def] THEN
   CONJ_TAC THENL

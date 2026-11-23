@@ -139,7 +139,7 @@ let locsle_TRANS = prove
 let merge_locs_def = cake_def
   `merge_locs (Locs l1 l2) (Locs l3 l4) = Locs l1 l4`;;
 
-let merge_list_locs_def = cake_def_wf `measure (LENGTH:locs list->num)`
+let merge_list_locs_def = cake_def_wf `MEASURE (LENGTH:locs list->num)`
   (REWRITE_TAC[measure_THM; LENGTH] THEN ARITH_TAC)
   `(merge_list_locs [] = unknown_loc) /\
    (merge_list_locs [h] = h) /\

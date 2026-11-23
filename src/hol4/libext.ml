@@ -22,7 +22,7 @@
 (*     inv is INV and EQC is RSTC there (inv_MOVES_OUT below uses them)      *)
 (*   combin I_EQ_IDABS = I_DEF (HOL Light)                                   *)
 (*   words word_0_n2w = VAL_WORD_0 (HOL Light)                               *)
-(*   llist LL_ALL = every (hol4/llist.ml)                                    *)
+(*   llist LL_ALL = llist_every (hol4/llist.ml)                              *)
 (* APPEND_EQ_APPEND_MID is bound here to the helper of hol4/grammar.ml with  *)
 (* HOL4's statement (LPARSEAUX_APPEND_EQ_APPEND_MID).                        *)
 (*                                                                           *)
@@ -194,10 +194,6 @@ let INFINITE_LIST_UNIV = prove
   MESON_TAC[INFINITE_SUPERSET; SUBSET_UNIV]);;
 let _ = cake_add_simps [INFINITE_LIST_UNIV];;
 
-let LIBXAUX_EXISTS_NUM = prove
- (`!P. (?n. P n) <=> P 0 \/ (?m. P (SUC m))`,
-  MESON_TAC[num_CASES]);;
-
 let LLEX_EL_THM = prove
  (`!(R:A->A->bool) l1 l2.
      LLEX R l1 l2 <=>
@@ -208,7 +204,7 @@ let LLEX_EL_THM = prove
   REWRITE_TAC[LLEX_def; list_CASE; LENGTH; ARITH_RULE `~(n < 0)`;
               NOT_CONS_NIL] THENL
    [EXISTS_TAC `0` THEN REWRITE_TAC[TAKE_0; LE_REFL; LT_0];
-    GEN_REWRITE_TAC RAND_CONV [LIBXAUX_EXISTS_NUM] THEN
+    GEN_REWRITE_TAC RAND_CONV [EXISTS_NUM] THEN
     ASM_REWRITE_TAC[TAKE_0; TAKE_DEF; NOT_SUC; SUC_SUB1; EL; HD; TL; LE_SUC;
                     LT_SUC; LE_0; LT_0; CONS_11] THEN
     MESON_TAC[]]);;
@@ -444,12 +440,6 @@ let UNCURRY_CONG = prove
 (* LIST_LENGTH_THMS_0, in its order.                                         *)
 (* ------------------------------------------------------------------------- *)
 
-let LIBXAUX_LENGTH_1 = prove
- (`!l:A list. LENGTH l = 1 <=> ?e1. l = [e1]`,
-  LIST_INDUCT_TAC THEN REWRITE_TAC[LENGTH; ARITH_RULE `~(0 = 1)`; NOT_CONS_NIL;
-    ARITH_RULE `SUC n = 1 <=> n = 0`; LENGTH_EQ_NIL; CONS_11] THEN
-  MESON_TAC[]);;
-
 let LIBXAUX_LE_LENGTH_1 = prove
  (`!l:A list. 1 <= LENGTH l <=> ?l' e1. l = CONS e1 l'`,
   LIST_INDUCT_TAC THEN REWRITE_TAC[LENGTH; ARITH_RULE `~(1 <= 0)`;
@@ -488,7 +478,7 @@ let LIST_LENGTH_1 = prove
    (!l:A list. 1 > LENGTH l <=> l = []) /\
    (!l:A list. 0 >= LENGTH l <=> l = []) /\
    (!l:A list. LENGTH l <= 0 <=> l = [])`,
-  REWRITE_TAC[GSYM LIBXAUX_LENGTH_1; GSYM LIBXAUX_LE_LENGTH_1;
+  REWRITE_TAC[GSYM LISTAUX_LENGTH_EQ_1; GSYM LIBXAUX_LE_LENGTH_1;
               GSYM LIBXAUX_LE_LENGTH_PLUS; GSYM LIBXAUX_LENGTH_EQ_PLUS;
               GSYM LENGTH_EQ_NIL; GT; GE] THEN
   ARITH_TAC);;
@@ -816,20 +806,20 @@ let LIBXAUX_MINIMAL_SUC = prove
   X_GEN_TAC `m:num` THEN STRUCT_CASES_TAC(SPEC `m:num` num_CASES) THEN
   ASM_REWRITE_TAC[LT_SUC] THEN ASM_MESON_TAC[]);;
 
-(* MESON fails on every ((=) LNIL) (an unapplied (=), CONVENTIONS section  *)
+(* MESON fails on llist_every ((=) LNIL) (an unapplied (=), CONVENTIONS section  *)
 (* 10), so these proofs rewrite instead                                     *)
 
 let LFLATTEN = new_specification ["LFLATTEN"]
  (prove
    (`?LFLATTEN. !ll:(A llist)llist.
        LFLATTEN ll =
-       if every ((=) LNIL) ll then LNIL
+       if llist_every ((=) LNIL) ll then LNIL
        else if THE (LHD ll) = LNIL then LFLATTEN (THE (LTL ll))
        else LCONS (THE (LHD (THE (LHD ll))))
                   (LFLATTEN (LCONS (THE (LTL (THE (LHD ll)))) (THE (LTL ll))))`,
     ABBREV_TAC
      `f = \ll:(A llist)llist.
-        if every ((=) LNIL) ll then NONE
+        if llist_every ((=) LNIL) ll then NONE
         else SOME (LCONS (THE (LTL (THE (LNTH (minimal n.
                                 ?e. LNTH n ll = SOME e /\ ~(e = LNIL)) ll))))
                          (THE (LDROP (SUC (minimal n.
@@ -838,7 +828,7 @@ let LFLATTEN = new_specification ["LFLATTEN"]
                                 ?e. LNTH n ll = SOME e /\ ~(e = LNIL)) ll))))` THEN
     EXISTS_TAC `LUNFOLD (f:(A llist)llist->((A llist)llist#A)option)` THEN
     X_GEN_TAC `ll:(A llist)llist` THEN
-    ASM_CASES_TAC `every ((=) LNIL) (ll:(A llist)llist)` THEN ASM_REWRITE_TAC[] THENL
+    ASM_CASES_TAC `llist_every ((=) LNIL) (ll:(A llist)llist)` THEN ASM_REWRITE_TAC[] THENL
      [GEN_REWRITE_TAC LAND_CONV [LUNFOLD] THEN EXPAND_TAC "f" THEN
       ASM_REWRITE_TAC[option_CASE];
       ALL_TAC] THEN
@@ -846,7 +836,7 @@ let LFLATTEN = new_specification ["LFLATTEN"]
     DISCH_THEN(DISJ_CASES_THEN2 SUBST_ALL_TAC
       (X_CHOOSE_THEN `h:A llist` (X_CHOOSE_THEN `t:(A llist)llist` SUBST_ALL_TAC)))
     THENL
-     [UNDISCH_TAC `~every ((=) LNIL) (LNIL:(A llist)llist)` THEN
+     [UNDISCH_TAC `~llist_every ((=) LNIL) (LNIL:(A llist)llist)` THEN
       REWRITE_TAC[every_thm];
       ALL_TAC] THEN
     REWRITE_TAC[LHD_THM; LTL_THM; THE_DEF] THEN
@@ -854,12 +844,12 @@ let LFLATTEN = new_specification ["LFLATTEN"]
      [FIRST_X_ASSUM SUBST_ALL_TAC THEN REWRITE_TAC[] THEN
       SUBGOAL_THEN `?n e. LNTH n (t:(A llist)llist) = SOME e /\ ~(e = LNIL)`
       ASSUME_TAC THENL
-       [UNDISCH_TAC `~every ((=) LNIL) (LCONS LNIL (t:(A llist)llist))` THEN
+       [UNDISCH_TAC `~llist_every ((=) LNIL) (LCONS LNIL (t:(A llist)llist))` THEN
         REWRITE_TAC[every_thm; every_LNTH; NOT_FORALL_THM; NOT_IMP] THEN
         MESON_TAC[];
         ALL_TAC] THEN
-      SUBGOAL_THEN `~every ((=) LNIL) (t:(A llist)llist)` ASSUME_TAC THENL
-       [UNDISCH_TAC `~every ((=) LNIL) (LCONS LNIL (t:(A llist)llist))` THEN
+      SUBGOAL_THEN `~llist_every ((=) LNIL) (t:(A llist)llist)` ASSUME_TAC THENL
+       [UNDISCH_TAC `~llist_every ((=) LNIL) (LCONS LNIL (t:(A llist)llist))` THEN
         REWRITE_TAC[every_thm];
         ALL_TAC] THEN
       SUBGOAL_THEN
@@ -899,11 +889,21 @@ let LFLATTEN_THM = prove
 let _ = cake_add_simps [LFLATTEN_THM];;
 
 let LFLATTEN_EQ_NIL = prove
- (`!ll:(A llist)llist. LFLATTEN ll = LNIL <=> every ((=) LNIL) ll`,
+ (`!ll:(A llist)llist. LFLATTEN ll = LNIL <=> llist_every ((=) LNIL) ll`,
   GEN_TAC THEN EQ_TAC THENL
    [SPEC_TAC(`ll:(A llist)llist`,`ll:(A llist)llist`) THEN
-    MATCH_MP_TAC every_coind THEN
+    MATCH_MP_TAC llist_every_coind THEN
     MAP_EVERY X_GEN_TAC [`h:A llist`; `t:(A llist)llist`] THEN
     MP_TAC(ISPEC `h:A llist` llist_CASES) THEN STRIP_TAC THEN
     ASM_REWRITE_TAC[LFLATTEN_THM; LCONS_NOT_NIL];
     ONCE_REWRITE_TAC[LFLATTEN] THEN SIMP_TAC[]]);;
+
+(* ------------------------------------------------------------------------- *)
+(* Lemmas used by several later files.                                       *)
+(* ------------------------------------------------------------------------- *)
+
+let LIBXAUX_dropWhile_CONS = prove
+ (`!P (l:A list) h t. dropWhile P l = CONS h t ==> LENGTH t < LENGTH l`,
+  REPEAT STRIP_TAC THEN
+  MP_TAC(ISPECL [`P:A->bool`; `l:A list`] LENGTH_dropWhile_LESS_EQ) THEN
+  ASM_REWRITE_TAC[LENGTH] THEN ARITH_TAC);;

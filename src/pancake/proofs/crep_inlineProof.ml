@@ -2378,7 +2378,7 @@ let mem_var_prog_nested_seq = prove
 
 (* HOL4's MAP2 truncates the longer list; with HOL Light's MAP2 (HD/TL of    *)
 (* the second list) the statement holds when the first list is not longer:  *)
-(* the hypothesis LENGTH l1 <= LENGTH l2 is added (notes/DEVIATIONS.md)      *)
+(* the hypothesis LENGTH l1 <= LENGTH l2 is added.                           *)
 
 let MEM_MAP2_IMP = prove
  (`!(f:A->B->C) l1 l2 x.
@@ -2918,10 +2918,6 @@ let PCINLAUX_IPC_TAIL_INL_TAC : tactic =
 
 (* a pair case whose arms do not use the components *)
 
-let PCINLAUX_PAIR_CASE_CONST = prove
- (CASE_TERM `!(p:A#B) (c:C). (match p with (a,b) -> c) = c`,
-  REWRITE_TAC[FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[]);;
-
 let PCINLAUX_IPC_HDL_FINISH : tactic =
   TRY(QPAT_ASSUM "crep_evaluate (prog,_) = _" (ASSUME_TAC o MATCH_MP evaluate_code_invariant)) THEN
   RULE_ASSUM_TAC(SIMP_RULE[crep_dec_clock_def]) THEN
@@ -2930,7 +2926,7 @@ let PCINLAUX_IPC_HDL_FINISH : tactic =
 let PCINLAUX_IPC_HDL_TAC : tactic =
   NAMED_CASES_ON "wh" ["w hdl"] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
   QCASES_ON "FLOOKUP inl_bag fname" THEN CASE_REWRITE_TAC[] THEN
-  REWRITE_TAC[PCINLAUX_PAIR_CASE_CONST] THEN PCINLAUX_IPC_TAIL_NOINL_TAC THEN
+  REWRITE_TAC[BASICAUX_pair_CASE_K] THEN PCINLAUX_IPC_TAIL_NOINL_TAC THEN
   TRY PCINLAUX_IPC_HDL_FINISH;;
 
 (* the target of a non-tail inlined call: the transformed callee tcp runs in s1 with the
@@ -3720,7 +3716,7 @@ let PCINLAUX_EII_CALL : tactic =
     QCASES_ON "FLOOKUP inlineable_fs e" THEN CASE_REWRITE_TAC[] THENL
      [REWRITE_TAC[crep_exps_of_def] THEN MESON_TAC[]; PCINLAUX_EII_NONTAIL];
     COND_CASES_TAC THEN TRY(QCASES_ON "FLOOKUP inlineable_fs e") THEN CASE_REWRITE_TAC[] THEN
-    REWRITE_TAC[PCINLAUX_PAIR_CASE_CONST; crep_exps_of_def; MEM_APPEND] THEN
+    REWRITE_TAC[BASICAUX_pair_CASE_K; crep_exps_of_def; MEM_APPEND] THEN
     REMOVE_THEN "ihh" (MP_TAC o SPECL [`rs:num list`; `w:A word`; `hdl:(A)crep_prog`]) THEN
     REWRITE_TAC[] THEN
     DISCH_THEN(MP_TAC o SPECL [`crep_code:(mlstring # num list # (A)crep_prog)list`;
@@ -3807,10 +3803,6 @@ let evaluate_call_same_result_state = prove
 
 (* the semantics depends on the runs only through their results and ffi states *)
 
-let PCINLAUX_PAIR_SND = prove
- (`!(p:A#B) x. p = (x,SND p) <=> FST p = x`,
-  REWRITE_TAC[FORALL_PAIR_THM; PAIR_EQ; FST; SND]);;
-
 let PCINLAUX_SEM_EQ = prove
  (`!(s:(A,FFI)crep_state) (t:(A,FFI)crep_state) start.
      (!k. FST (crep_evaluate (crep_Call NONE start [],crep_state_clock_fupd (K k) t)) =
@@ -3854,7 +3846,7 @@ let PCINLAUX_SEM_EQ = prove
      [`k:num`; `SND (crep_evaluate (crep_Call NONE start [],
                                     crep_state_clock_fupd (K k) (t:(A,FFI)crep_state)))`;
       `r1:((A)crep_result)option`; `oc:outcome`]] THEN
-  ASM_REWRITE_TAC[PCINLAUX_PAIR_SND]);;
+  ASM_REWRITE_TAC[BASICAUX_PAIR_SND]);;
 
 (* the code of compile_inl_prog *)
 

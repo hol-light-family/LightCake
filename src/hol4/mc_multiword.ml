@@ -23,7 +23,8 @@
 (* - HOL4's let (a,b) = e in t is written match e with (a,b) -> t (CASE_TERM). *)
 (*   When e is an explicit tuple (the swaps let (xs,ys) = (ys,xs)) CASE_TERM  *)
 (*   substitutes it, so those equations show the swapped variables directly. *)
-(* - The condition variable cond of HOL4 is cnd (cond is a set_sep constant), *)
+(* - The condition variable cond of HOL4 is cnd (cond was a set_sep constant, *)
+(*   now set_sep_cond),                                                      *)
 (*   and l <> 0n is ~(l = 0).                                               *)
 (* - mc_fac and mc_fac_pre (HOL4 tDefine, not tail-recursive) are cake_def_wf *)
 (*   definitions with the measure FST, as in HOL4 (WF_REL_TAC, measure FST). *)
@@ -53,8 +54,8 @@ type_invention_error := true;;
 (* NAME x and INR y leaves by y (the cond lets removed), and for the         *)
 (* precondition the leaves (INL x,c) replaced by NAME_pre x /\ c and         *)
 (* (INR y,c) by c, the cond lets kept, the outermost cond being T.          *)
-(* HOL4 names the condition variable cond; here it is cnd (cond is a        *)
-(* constant of set_sep).                                                    *)
+(* HOL4 names the condition variable cond; here it is cnd (cond was a       *)
+(* constant of set_sep, now set_sep_cond).                                  *)
 (* HOL4's let (a,b) = e in t is written match e with (a,b) -> t.             *)
 (* ------------------------------------------------------------------------- *)
 
@@ -4874,7 +4875,7 @@ let mc_fac_final,mc_fac_final_pre,mc_fac_final_def,mc_fac_final_pre_def =
          (INR (l,r1),cnd)))
    :num#N word#N word -> ((num#N word#N word) + (num#N word))#bool)`;;
 
-let mc_fac_def = cake_def_wf `measure (FST:num#N word->num)`
+let mc_fac_def = cake_def_wf `MEASURE (FST:num#N word->num)`
   (REWRITE_TAC WF_REL_THMS THEN REWRITE_TAC[FST] THEN REPEAT STRIP_TAC THEN
    REPEAT(FIRST_X_ASSUM(MP_TAC o check (fun th -> not (is_forall (concl th))))) THEN
    REWRITE_TAC[MIN] THEN ARITH_TAC)
@@ -4894,7 +4895,7 @@ let mc_fac_def = cake_def_wf `measure (FST:num#N word->num)`
        match mc_fac_final (l,r1,r2) with (l,r1) ->
          (l,r1)`;;
 
-let mc_fac_pre_def = cake_def_wf `measure (FST:num#N word->num)`
+let mc_fac_pre_def = cake_def_wf `MEASURE (FST:num#N word->num)`
   (REWRITE_TAC WF_REL_THMS THEN REWRITE_TAC[FST] THEN REPEAT STRIP_TAC THEN
    REPEAT(FIRST_X_ASSUM(MP_TAC o check (fun th -> not (is_forall (concl th))))) THEN
    REWRITE_TAC[MIN] THEN ARITH_TAC)

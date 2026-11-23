@@ -11,6 +11,8 @@
 (* - Not ported (unused by the closure): finite, last, length, el, pmap,     *)
 (*   path_case, pconcat, PL, exists, every, ...                              *)
 (* - Lemmas named LLISTAUX_... are helpers (not HOL4 names).                 *)
+(* - HOL4 first is path_first (a short or common word), and first_def is     *)
+(*   path_first_def.                                                         *)
 (* ========================================================================= *)
 
 needs "hol4/vocab.ml";;
@@ -40,15 +42,15 @@ let toPath_onto = prove
  (`!a:(A,B)path. ?r:A#(B#A)llist. a = toPath r`,
   MESON_TAC[path_rep_bijections_thm]);;
 
-let first_def = new_definition
-  `first (p:(A,B)path) = FST (fromPath p)`;;
+let path_first_def = new_definition
+  `path_first (p:(A,B)path) = FST (fromPath p)`;;
 
 let stopped_at_def = new_definition
   `stopped_at (x:A) = (toPath (x, LNIL:(B#A)llist) :(A,B)path)`;;
 
 let pcons_def = new_definition
   `pcons (x:A) (r:B) (p:(A,B)path) =
-     (toPath (x, LCONS (r, first p) (SND (fromPath p))) :(A,B)path)`;;
+     (toPath (x, LCONS (r, path_first p) (SND (fromPath p))) :(A,B)path)`;;
 
 let stopped_at_11 = prove
  (`!x y:A. (stopped_at x = (stopped_at y:(A,B)path)) <=> x = y`,
@@ -61,7 +63,7 @@ let LLISTAUX_PAIR_FST_SND_EQ = prove
 let pcons_11 = prove
  (`!(x:A) (r:B) p y s q.
      pcons x r p = pcons y s q <=> x = y /\ r = s /\ p = q`,
-  REWRITE_TAC[pcons_def; toPath_11; PAIR_EQ; LCONS_11; first_def] THEN
+  REWRITE_TAC[pcons_def; toPath_11; PAIR_EQ; LCONS_11; path_first_def] THEN
   REWRITE_TAC[GSYM fromPath_11] THEN
   REWRITE_TAC[LLISTAUX_PAIR_FST_SND_EQ; CONJ_ASSOC]);;
 
@@ -81,7 +83,7 @@ let path_cases = prove
    [DISJ1_TAC THEN EXISTS_TAC `a:A` THEN REWRITE_TAC[stopped_at_def];
     DISJ2_TAC THEN
     MAP_EVERY EXISTS_TAC [`a:A`; `FST (h:B#A)`; `toPath (SND (h:B#A), t):(A,B)path`] THEN
-    REWRITE_TAC[pcons_def; first_def; path_rep_bijections_thm; PAIR]]);;
+    REWRITE_TAC[pcons_def; path_first_def; path_rep_bijections_thm; PAIR]]);;
 
 let FORALL_path = prove
  (`!P. (!p:(A,B)path. P p) <=> (!x. P (stopped_at x)) /\ (!x r p. P (pcons x r p))`,
@@ -92,9 +94,9 @@ let EXISTS_path = prove
   MESON_TAC[path_cases]);;
 
 let first_thm = prove
- (`(!x:A. first (stopped_at x:(A,B)path) = x) /\
-   (!(x:A) (r:B) p. first (pcons x r p) = x)`,
-  REWRITE_TAC[first_def; stopped_at_def; pcons_def; path_rep_bijections_thm]);;
+ (`(!x:A. path_first (stopped_at x:(A,B)path) = x) /\
+   (!(x:A) (r:B) p. path_first (pcons x r p) = x)`,
+  REWRITE_TAC[path_first_def; stopped_at_def; pcons_def; path_rep_bijections_thm]);;
 
 (* okpath: HOL4 defines it as the greatest fixpoint gfp (okpath_f R); here it *)
 (* is defined directly by its coinduction invariant (the same set).          *)
@@ -103,10 +105,10 @@ let okpath_def = new_definition
   `okpath (R:A->B->A->bool) (p:(A,B)path) <=>
      ?P. P p /\
          !q. P q ==> (?x. q = stopped_at x) \/
-                     (?x r q'. q = pcons x r q' /\ R x r (first q') /\ P q')`;;
+                     (?x r q'. q = pcons x r q' /\ R x r (path_first q') /\ P q')`;;
 
 let okpath_co_ind = prove
- (`!P. (!(x:A) (r:B) p. P (pcons x r p) ==> R x r (first p) /\ P p) ==>
+ (`!P. (!(x:A) (r:B) p. P (pcons x r p) ==> R x r (path_first p) /\ P p) ==>
        !p. P p ==> okpath R p`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[okpath_def] THEN
   EXISTS_TAC `P:(A,B)path->bool` THEN ASM_REWRITE_TAC[] THEN
@@ -119,7 +121,7 @@ let okpath_cases = prove
  (`!R (p:(A,B)path).
      okpath R p <=>
      (?x. p = stopped_at x) \/
-     (?x r q. p = pcons x r q /\ R x r (first q) /\ okpath R q)`,
+     (?x r q. p = pcons x r q /\ R x r (path_first q) /\ okpath R q)`,
   REPEAT GEN_TAC THEN EQ_TAC THENL
    [REWRITE_TAC[okpath_def] THEN
     DISCH_THEN(X_CHOOSE_THEN `P:(A,B)path->bool` STRIP_ASSUME_TAC) THEN
@@ -150,7 +152,7 @@ let okpath_cases = prove
 
 let okpath_thm = prove
  (`!R. (!x:A. okpath R (stopped_at x:(A,B)path)) /\
-       (!(x:A) (r:B) p. okpath R (pcons x r p) <=> R x r (first p) /\ okpath R p)`,
+       (!(x:A) (r:B) p. okpath R (pcons x r p) <=> R x r (path_first p) /\ okpath R p)`,
   GEN_TAC THEN CONJ_TAC THEN REPEAT GEN_TAC THENL
    [ONCE_REWRITE_TAC[okpath_cases]; GEN_REWRITE_TAC LAND_CONV [okpath_cases]] THEN
   REWRITE_TAC[stopped_at_not_pcons; pcons_11; stopped_at_11] THEN MESON_TAC[]);;

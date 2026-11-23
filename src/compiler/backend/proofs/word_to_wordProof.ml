@@ -15,9 +15,9 @@
 (*   prefix); the asm Overloads addr_offset_ok ac 0w etc. are written out    *)
 (*   as asm_offset_ok 0 (asm_config_addr_offset ac) (word 0) (as asm.ml).    *)
 (* - Library: EVERY = ALL, EVERY2 = ALL2, set = set_of_list, ZIP (l1,l2) =   *)
-(*   ZIP l1 l2 (all ZIPs here zip lists of equal lengths:                    *)
-(*   docs/CONVENTIONS.md 8); r with f := x is RECTYPE_f_fupd (K x) r; the    *)
-(*   wildcards of HOL4's paired lambdas and lets are named variables.        *)
+(*   ZIP l1 l2 (all ZIPs here zip lists of equal lengths); r with f := x is  *)
+(*   RECTYPE_f_fupd (K x) r; the wildcards of HOL4's paired lambdas and lets *)
+(*   are named variables.                                                    *)
 (* - HOL4's unused binder clk of panLang_compile_word_to_word_thm is left    *)
 (*   out.  The derived theorems cond16bit_inst_select_exp (SIMP_RULE        *)
 (*   std_ss [] of cond16bit_inst_select_exp'), code_rel_P, code_rel_no_alloc *)
@@ -392,8 +392,8 @@ let W2WPAUX_ALOOKUP_compile_single = prove
 let code_rel_union_fromAList = prove
  (`!s l ls t k a (c:(A)asm_config).
      word_to_wordProof_code_rel s l /\ domain s = domain l
-     ==> word_to_wordProof_code_rel (union s (fromAList ls))
-           (union l (fromAList (MAP (\p. word_to_word_compile_single t k a c (p,NONE)) ls)))`,
+     ==> word_to_wordProof_code_rel (sptree_union s (fromAList ls))
+           (sptree_union l (fromAList (MAP (\p. word_to_word_compile_single t k a c (p,NONE)) ls)))`,
   REPEAT GEN_TAC THEN
   REWRITE_TAC[word_to_wordProof_code_rel_def; lookup_union; lookup_fromAList;
               W2WPAUX_ALOOKUP_compile_single] THEN
@@ -431,7 +431,7 @@ let W2WPAUX_lex_ind = prove
     (fun th -> REPEAT GEN_TAC THEN MP_TAC(SPEC `(prog:(A)wl_prog,st:(A,C,FFI)wl_state)` th) THEN
                REWRITE_TAC[FST; SND]) THEN
   MATCH_MP_TAC(REWRITE_RULE[WF_IND]
-    (prove(`WF (inv_image (measure I LEX measure I LEX measure (wl_prog_size (\x:A. 0)))
+    (prove(`WF (inv_image (MEASURE I LEX MEASURE I LEX MEASURE (wl_prog_size (\x:A. 0)))
                (\p:(A)wl_prog#(A,C,FFI)wl_state.
                   (wl_state_termdep (SND p), wl_state_clock (SND p), FST p)))`,
            WF_TAC))) THEN
@@ -1334,7 +1334,7 @@ let compile_word_to_word_thm = prove
            if res = SOME wl_Error then T else
            let (res1,rst1) =
              wl_evaluate (prog,
-               wl_state_code_fupd (K (map (I ## remove_must_terminate) l))
+               wl_state_code_fupd (K (sptree_map (I ## remove_must_terminate) l))
                  (wl_state_clock_fupd (K (wl_state_clock st + clk))
                     (wl_state_termdep_fupd (K 0)
                        (wl_state_compile_fupd (K cc)

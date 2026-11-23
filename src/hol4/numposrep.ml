@@ -57,7 +57,7 @@ let l2n_def = new_recursive_definition list_RECURSION
   `(!b. l2n b [] = 0) /\
    (!b h t. l2n b (CONS h t) = h MOD b + b * l2n b t)`;;
 
-let n2l_def = cake_def_wf `measure (SND:num#num->num)`
+let n2l_def = cake_def_wf `MEASURE (SND:num#num->num)`
   (REWRITE_TAC(SND::WF_REL_THMS) THEN REWRITE_TAC[DE_MORGAN_THM; NOT_LT] THEN
    REPEAT STRIP_TAC THEN
    ASM_SIMP_TAC[RDIV_LT_EQ; ARITH_RULE `2 <= b ==> ~(b = 0)`] THEN

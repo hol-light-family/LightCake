@@ -19,7 +19,7 @@ type_invention_error := true;;
 (* n2w is word, w2n is val; GENLIST f n is list_of_seq f n.                 *)
 
 let split16_def = cake_def_wf
-  `measure (\p:(A list->B app_list)#A list. LENGTH (SND p))`
+  `MEASURE (\p:(A list->B app_list)#A list. LENGTH (SND p))`
   (REWRITE_TAC[measure_THM; LENGTH_DROP; LENGTH] THEN ARITH_TAC)
   `(split16 (f:A list->B app_list) [] = Nil) /\
    (split16 f xs =
@@ -218,8 +218,8 @@ let all_bytes_eq = prove
   REWRITE_TAC[APPEND]);;
 
 let byte_to_string_eq = prove
- (`!b. byte_to_string b = sub all_bytes (val b)`,
-  GEN_TAC THEN REWRITE_TAC[all_bytes_def; sub_def] THEN
+ (`!b. byte_to_string b = regexp_compiler_sub all_bytes (val b)`,
+  GEN_TAC THEN REWRITE_TAC[all_bytes_def; regexp_compiler_sub_def] THEN
   SUBGOAL_THEN `val (b:byte) < 256` ASSUME_TAC THENL
    [MP_TAC(ISPEC `b:byte` VAL_BOUND) THEN REWRITE_TAC[DIMINDEX_8] THEN
     ARITH_TAC;

@@ -8,7 +8,7 @@
 (* swalk_thm, soc_thm, soc_walking and sunify_thm with transferLib (xfer)   *)
 (* from vR_def, vwalk_def, walk_def, oc_thm, oc_walking and unify_def.  The *)
 (* transfer automation is not ported: the same statements (the sptree      *)
-(* variable carries the hypothesis wf sp that the transfer adds) are proved *)
+(* variable carries the hypothesis sptree_wf sp that the transfer adds) are proved *)
 (* directly from the definitions and fmsp.ml.                               *)
 (*                                                                           *)
 (* Notes: HOL4 term_CASE is term_term_CASE (term.ml); term_CASE_CONG and    *)
@@ -63,17 +63,17 @@ let term_CASE_EQCONG = prove
 (* ------------------------------------------------------------------------- *)
 
 let svR_def = new_definition
-  `svR (sp:(A term_term)spt) u v <=> vR (sp2fm sp) u v`;;
+  `svR (sp:(A term_term)spt) u v <=> subst_vR (sp2fm sp) u v`;;
 
 let FMSP_rvR = prove
  (`(FMSP (=) (=) |==> (=) |==> (=) |==> (=))
-     (vR:(num,A term_term)fmap->num->num->bool) svR`,
+     (subst_vR:(num,A term_term)fmap->num->num->bool) svR`,
   REWRITE_TAC[FUN_REL_def; sp2fm_correct; svR_def] THEN MESON_TAC[]);;
 
 let svR_thm = prove
- (CASE_TERM `!(sp:(A term_term)spt) y x. wf sp ==>
+ (CASE_TERM `!(sp:(A term_term)spt) y x. sptree_wf sp ==>
      (svR sp y x <=> (match lookup x sp with SOME t -> y IN term_vars t | _ -> F))`,
-  REWRITE_TAC[svR_def; vR_def; FLOOKUP_sp2fm]);;
+  REWRITE_TAC[svR_def; subst_vR_def; FLOOKUP_sp2fm]);;
 
 let swfs_def = new_definition
   `swfs (sp:(A term_term)spt) <=> wfs (sp2fm sp)`;;
@@ -91,7 +91,7 @@ let FMSP_vwalk = prove
   REWRITE_TAC[FUN_REL_def; sp2fm_correct; svwalk_def] THEN MESON_TAC[]);;
 
 let svwalk_thm = prove
- (CASE_TERM `!(sp:(A term_term)spt) v. wf sp /\ swfs sp ==>
+ (CASE_TERM `!(sp:(A term_term)spt) v. sptree_wf sp /\ swfs sp ==>
      svwalk sp v =
      (match lookup v sp with SOME (term_Var u) -> svwalk sp u | SOME t -> t
                            | NONE -> term_Var v)`,
@@ -108,7 +108,7 @@ let FMSP_walk = prove
   REWRITE_TAC[FUN_REL_def; sp2fm_correct; swalk_def] THEN MESON_TAC[]);;
 
 let swalk_thm = prove
- (CASE_TERM `!(sp:(A term_term)spt) t. wf sp ==>
+ (CASE_TERM `!(sp:(A term_term)spt) t. sptree_wf sp ==>
      swalk sp t = (match t with term_Var v -> svwalk sp v | t -> t)`,
   REWRITE_TAC[swalk_def; svwalk_def; walk_def]);;
 
@@ -121,7 +121,7 @@ let FMSP_oc = prove
   REWRITE_TAC[FUN_REL_def; sp2fm_correct; soc_def] THEN MESON_TAC[]);;
 
 let soc_thm = prove
- (CASE_TERM `!(sp:(A term_term)spt) v x t1 t2 c. wf sp ==>
+ (CASE_TERM `!(sp:(A term_term)spt) v x t1 t2 c. sptree_wf sp ==>
      (swfs sp ==>
       (soc sp (term_Var v) x <=>
        match svwalk sp v with
@@ -133,7 +133,7 @@ let soc_thm = prove
   REWRITE_TAC[swfs_def; soc_def; svwalk_def] THEN SIMP_TAC[oc_thm]);;
 
 let soc_walking = prove
- (CASE_TERM `!(sp:(A term_term)spt) t v. wf sp /\ swfs sp ==>
+ (CASE_TERM `!(sp:(A term_term)spt) t v. sptree_wf sp /\ swfs sp ==>
      (soc sp t v <=>
       match swalk sp t with
         term_Var u -> v = u
@@ -144,20 +144,20 @@ let soc_walking = prove
   REFL_TAC);;
 
 let sunify_def = new_definition
-  `sunify (sp:(A term_term)spt) t1 t2 = OPTION_MAP fm2sp (unify (sp2fm sp) t1 t2)`;;
+  `sunify (sp:(A term_term)spt) t1 t2 = OPTION_MAP fm2sp (unifDef_unify (sp2fm sp) t1 t2)`;;
 
 let FMSP_unify = prove
  (`(FMSP (=) (=) |==> (=) |==> (=) |==> OPTREL (FMSP (=) (=)))
-     (unify:(num,A term_term)fmap->A term_term->A term_term->
+     (unifDef_unify:(num,A term_term)fmap->A term_term->A term_term->
             ((num,A term_term)fmap)option) sunify`,
   REWRITE_TAC[FUN_REL_def; sp2fm_correct; sunify_def] THEN REPEAT STRIP_TAC THEN
   ASM_REWRITE_TAC[] THEN
-  CASES_ON `unify (sp2fm (b:(A term_term)spt)) b' b''` THEN
+  CASES_ON `unifDef_unify (sp2fm (b:(A term_term)spt)) b' b''` THEN
   REWRITE_TAC[OPTION_MAP_DEF; OPTREL_THM; sp2fm_correct; wf_fm2sp;
               sp2fm_fm2sp]);;
 
 let sunify_thm = prove
- (CASE_TERM `!(sp:(A term_term)spt) t1 t2. wf sp /\ swfs sp ==>
+ (CASE_TERM `!(sp:(A term_term)spt) t1 t2. sptree_wf sp /\ swfs sp ==>
       sunify sp t1 t2 =
       (match (swalk sp t1, swalk sp t2) with
          (term_Var v1, term_Var v2) ->
@@ -173,7 +173,7 @@ let sunify_thm = prove
   REWRITE_TAC[swfs_def] THEN REPEAT STRIP_TAC THEN
   GEN_REWRITE_TAC LAND_CONV [sunify_def] THEN
   FIRST_ASSUM(fun th -> GEN_REWRITE_TAC (LAND_CONV o RAND_CONV)
-    [MATCH_MP unify_def th]) THEN
+    [MATCH_MP unifDef_unify_def th]) THEN
   REWRITE_TAC[swalk_def; soc_def] THEN
   CASES_ON `walk (sp2fm (sp:(A term_term)spt)) t1` THEN
   CASES_ON `walk (sp2fm (sp:(A term_term)spt)) t2` THEN
@@ -182,5 +182,5 @@ let sunify_thm = prove
   ASM_SIMP_TAC[OPTION_MAP_DEF; fm2sp_sp2fm; GSYM(CONJUNCT2 sp2fm_thm);
                wf_insert] THEN
   REWRITE_TAC[sunify_def] THEN
-  CASES_ON `unify (sp2fm (sp:(A term_term)spt)) a0 a0'` THEN
+  CASES_ON `unifDef_unify (sp2fm (sp:(A term_term)spt)) a0 a0'` THEN
   REWRITE_TAC[OPTION_BIND_DEF; OPTION_MAP_DEF; sp2fm_fm2sp]);;

@@ -561,7 +561,7 @@ let declare_env_def = cake_def
 (* are unchanged by many compiler phases.                                    *)
 
 let concrete_v_def = cake_def_wf
-  `measure (\x:v + v list. sum_CASE x (\v. v_size v) (\vs. list_size v_size vs))`
+  `MEASURE (\x:v + v list. sum_CASE x (\v. v_size v) (\vs. list_size v_size vs))`
   SEM1AUX_TC_TAC
   `(concrete_v v <=>
       match v with

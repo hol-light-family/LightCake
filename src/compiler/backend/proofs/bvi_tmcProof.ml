@@ -76,7 +76,7 @@ let no_mutcons_op_def = cake_def
 (* HOL4 line 59 [simp] (Termination: measure exp_size; the dest of LetCall *)
 (* is d2: one quotation types a variable once) *)
 let no_mutcons_def = cake_def_wf
-  `measure bvi_exp_size`
+  `MEASURE bvi_exp_size`
   TERM_TAC
   `(no_mutcons (bvi_Var n) <=> T) /\
    (no_mutcons (bvi_If x1 x2 x3) <=> no_mutcons x1 /\ no_mutcons x2 /\ no_mutcons x3) /\
@@ -445,14 +445,14 @@ let bvi_tmcProof_compile_each_namespace_rel = prove
 let bvi_tmcProof_namespace_rel_union = prove
  (`bvi_tmcProof_namespace_rel (x:A spt) y /\ bvi_tmcProof_namespace_rel t s /\
    DISJOINT (domain s) (domain y) ==>
-   bvi_tmcProof_namespace_rel (union x t) (union y s)`,
+   bvi_tmcProof_namespace_rel (sptree_union x t) (sptree_union y s)`,
   REWRITE_TAC[bvi_tmcProof_namespace_rel_def; domain_union; IN_DISJOINT;
               IN_UNION; COND_EXPAND] THEN
   MESON_TAC[]);;
 
 let BVITMCAUX_lookup_union_SOME = prove
  (`!k (m1:A spt) m2 v.
-     lookup k (union m1 m2) = SOME v <=>
+     lookup k (sptree_union m1 m2) = SOME v <=>
      lookup k m1 = SOME v \/ (lookup k m1 = NONE /\ lookup k m2 = SOME v)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[lookup_union] THEN
   CASES_ON `lookup k (m1:A spt)` THEN CASE_REWRITE_TAC[] THEN
@@ -461,7 +461,7 @@ let BVITMCAUX_lookup_union_SOME = prove
 let bvi_tmcProof_code_rel_union = prove
  (`bvi_tmcProof_code_rel x y /\ bvi_tmcProof_code_rel t s /\
    DISJOINT (domain s) (domain y) ==>
-   bvi_tmcProof_code_rel (union x t) (union y s)`,
+   bvi_tmcProof_code_rel (sptree_union x t) (sptree_union y s)`,
   REWRITE_TAC[bvi_tmcProof_code_rel_def; BVITMCAUX_lookup_union_SOME] THEN
   REWRITE_TAC[IN_DISJOINT; domain_lookup] THEN
   DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "xy")
@@ -1133,7 +1133,7 @@ let flookup_com_neq = prove
 
 (* HOL4 Termination: wf_rel_tac measure (CARD o FDOM o FST o SND o SND) *)
 let mb_rel_def = sem1aux_def_wf
-  `measure (\p:(num,num)fmap # (num,(bvl_v)bvl_ref)fmap #
+  `MEASURE (\p:(num,num)fmap # (num,(bvl_v)bvl_ref)fmap #
                (num,(bvl_v)bvl_ref)fmap # bvl_v # bvl_v.
               CARD (FDOM (FST (SND (SND p)))))`
   (REWRITE_TAC[IMP_CONJ] THEN REPEAT GEN_TAC THEN REPEAT DISCH_TAC THEN
@@ -2450,7 +2450,7 @@ let BVITMCAUX_install_bound = prove
      (!n. n IN domain c2 /\ n MOD bvl_to_bvi_namespaces = 3 ==> n < state0) /\
      bvi_tmcProof_input_condition state0 progs0 /\
      bvi_tmc_compile_each state0 progs0 = (state1,progs1) ==>
-     !n. n IN domain (union c2 (fromAList progs1)) /\
+     !n. n IN domain (sptree_union c2 (fromAList progs1)) /\
          n MOD bvl_to_bvi_namespaces = 3 ==> n < state1`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP bvi_tmcProof_compile_each_next_mono) THEN
@@ -2987,10 +2987,10 @@ let evaluate_var_list_binders = prove
 
 let BVITMCAUX_bind_vars = prove
  (`!args n vs n' (ys:bvl_v list) avs.
-     bind n (args:A list) = (vs,n') /\ LENGTH ys = n /\ LENGTH avs = LENGTH args ==>
+     bvi_tmc_bind n (args:A list) = (vs,n') /\ LENGTH ys = n /\ LENGTH avs = LENGTH args ==>
      ALL (\k. k < LENGTH (APPEND ys avs)) vs /\
      MAP (\k. EL k (APPEND ys avs)) vs = avs`,
-  LIST_INDUCT_TAC THEN REWRITE_TAC[bind_def; PAIR_EQ] THENL
+  LIST_INDUCT_TAC THEN REWRITE_TAC[bvi_tmc_bind_def; PAIR_EQ] THENL
    [REPEAT GEN_TAC THEN STRIP_TAC THEN RVEQ_TAC THEN
     RULE_ASSUM_TAC(REWRITE_RULE[LENGTH; LENGTH_EQ_NIL]) THEN
     ASM_REWRITE_TAC[ALL; MAP];
@@ -3009,7 +3009,7 @@ let BVITMCAUX_bind_vars = prove
 
 let evaluate_binders = prove
  (`!args env (s:(C,FFI)bvi_state) t vs avs next next'.
-     bvi_evaluate (args,env,s) = (Rval avs,t) /\ bind next args = (vs,next') ==>
+     bvi_evaluate (args,env,s) = (Rval avs,t) /\ bvi_tmc_bind next args = (vs,next') ==>
      !ys. LENGTH ys = next ==>
           bvi_evaluate (MAP (\n. bvi_Var n) vs,APPEND ys avs,t) = (Rval avs,t)`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN GEN_TAC THEN DISCH_TAC THEN
@@ -3324,7 +3324,7 @@ let BVITMCAUX_inr_call = prove
   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
   REWRITE_TAC[distinctness "option"] THEN
   FIRST_X_ASSUM(CONJUNCTS_THEN SUBST1_TAC) THEN
-  MP_TAC(ISPEC `bind 0 (args:bvi_exp list)` PAIR_SURJECTIVE) THEN
+  MP_TAC(ISPEC `bvi_tmc_bind 0 (args:bvi_exp list)` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `vs':num list` (X_CHOOSE_THEN `n':num` ASSUME_TAC)) THEN
   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
   REWRITE_TAC[option_INJ; PAIR_EQ; injectivity "sum"] THEN
@@ -3786,7 +3786,7 @@ let evaluate_bvi_to_cb = prove
     UNDISCH_TAC `bvi_to_cb n loc (bvi_Call ts (SOME loc) args NONE) =
                  SOME (bs,RCall ts vs)` THEN
     REWRITE_TAC[bvi_to_cb_def; call_to_cb_def] THEN
-    MP_TAC(ISPEC `bind 0 (args:bvi_exp list)` PAIR_SURJECTIVE) THEN
+    MP_TAC(ISPEC `bvi_tmc_bind 0 (args:bvi_exp list)` PAIR_SURJECTIVE) THEN
     DISCH_THEN(X_CHOOSE_THEN `vs':num list` (X_CHOOSE_THEN `n':num` ASSUME_TAC)) THEN
     ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
     REWRITE_TAC[option_INJ; PAIR_EQ; injectivity "call_block"] THEN
@@ -3816,8 +3816,8 @@ let evaluate_bvi_to_cb = prove
 
 (* HOL4 [local] *)
 let WF_I_I = prove
- (`WF (measure (I:num->num) LEX measure (I:num->num))`,
-  MATCH_MP_TAC WF_LEX_HOL4 THEN REWRITE_TAC[WF_measure]);;
+ (`WF (MEASURE (I:num->num) LEX MEASURE (I:num->num))`,
+  MATCH_MP_TAC WF_LEX_HOL4 THEN REWRITE_TAC[WF_MEASURE]);;
 
 let optimised_code_def = cake_def
  `optimised_code loc loc_opt (c1:(num#bvi_exp)spt) (c2:(num#bvi_exp)spt) <=>
@@ -6015,7 +6015,7 @@ let bvi_to_cb_aux_no_mutcons_lemma = prove
     REPEAT GEN_TAC THEN REWRITE_TAC[bvi_to_cb_aux_def; call_to_cb_def] THEN
     COND_CASES_TAC THEN CASE_REWRITE_TAC[] THEN
     REWRITE_TAC[distinctness "option"] THEN
-    MP_TAC(ISPEC `bind 0 (args:bvi_exp list)` PAIR_SURJECTIVE) THEN
+    MP_TAC(ISPEC `bvi_tmc_bind 0 (args:bvi_exp list)` PAIR_SURJECTIVE) THEN
     DISCH_THEN(X_CHOOSE_THEN `vs:num list` (X_CHOOSE_THEN `k:num` SUBST1_TAC)) THEN
     CASE_REWRITE_TAC[] THEN REWRITE_TAC[option_INJ; PAIR_EQ] THEN
     DISCH_THEN(CONJUNCTS_THEN2 (CONJUNCTS_THEN2 (SUBST1_TAC o SYM) (K ALL_TAC))
@@ -6101,7 +6101,7 @@ let bvi_to_cb_no_mutcons = prove
     UNDISCH_TAC `bvi_to_cb n loc (bvi_Call ts (SOME loc) args NONE) =
                  SOME (bs,RCall ts vs)` THEN
     REWRITE_TAC[bvi_to_cb_def; call_to_cb_def] THEN
-    MP_TAC(ISPEC `bind 0 (args:bvi_exp list)` PAIR_SURJECTIVE) THEN
+    MP_TAC(ISPEC `bvi_tmc_bind 0 (args:bvi_exp list)` PAIR_SURJECTIVE) THEN
     DISCH_THEN(X_CHOOSE_THEN `vs':num list` (X_CHOOSE_THEN `n':num` SUBST1_TAC)) THEN
     CASE_REWRITE_TAC[] THEN REWRITE_TAC[option_INJ; PAIR_EQ] THEN
     DISCH_THEN(SUBST_ALL_TAC o SYM o CONJUNCT1) THEN
@@ -8996,7 +8996,7 @@ let bvi_to_cb_aux_code_labels_lemma = prove
     REPEAT GEN_TAC THEN REWRITE_TAC[bvi_to_cb_aux_def; call_to_cb_def] THEN
     COND_CASES_TAC THEN CASE_REWRITE_TAC[] THEN
     REWRITE_TAC[distinctness "option"] THEN
-    MP_TAC(ISPEC `bind 0 (args:bvi_exp list)` PAIR_SURJECTIVE) THEN
+    MP_TAC(ISPEC `bvi_tmc_bind 0 (args:bvi_exp list)` PAIR_SURJECTIVE) THEN
     DISCH_THEN(X_CHOOSE_THEN `vs:num list` (X_CHOOSE_THEN `k:num` SUBST1_TAC)) THEN
     CASE_REWRITE_TAC[] THEN REWRITE_TAC[option_INJ; PAIR_EQ] THEN
     DISCH_THEN(SUBST1_TAC o SYM o CONJUNCT1) THEN

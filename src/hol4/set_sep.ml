@@ -14,6 +14,9 @@
 (* another statement get the prefix set_sep_ (set_sep_DIFF_UNION,            *)
 (* set_sep_IMP_IMP); helper lemmas that are not HOL4 theorems are LSORTAUX_. *)
 (* SEP_ARRAY (words) is not ported: the closure does not use it.             *)
+(* HOL4 emp and cond are set_sep_emp and set_sep_cond (short or common       *)
+(* words), with the theorems renamed alike (emp_def is set_sep_emp_def,      *)
+(* ...).                                                                     *)
 (* ========================================================================= *)
 
 needs "hol4/vocab.ml";;
@@ -27,11 +30,11 @@ type_invention_error := true;;
 let set_sep_one_def = new_definition
   `set_sep_one (x:A) = \s. s = {x}`;;
 
-let emp_def = new_definition
-  `emp = \s:A->bool. s = {}`;;
+let set_sep_emp_def = new_definition
+  `set_sep_emp = \s:A->bool. s = {}`;;
 
-let cond_def = new_definition
-  `cond c = \s:A->bool. s = {} /\ c`;;
+let set_sep_cond_def = new_definition
+  `set_sep_cond c = \s:A->bool. s = {} /\ c`;;
 
 let SEP_F_def = new_definition
   `SEP_F (s:A->bool) <=> F`;;
@@ -62,10 +65,10 @@ let SEP_DISJ_def = new_definition
   `SEP_DISJ (p:(A->bool)->bool) q = \s. p s \/ q s`;;
 
 let sidecond_def = new_definition
-  `sidecond = (cond:bool->(A->bool)->bool)`;;
+  `sidecond = (set_sep_cond:bool->(A->bool)->bool)`;;
 
 let precond_def = new_definition
-  `precond = (cond:bool->(A->bool)->bool)`;;
+  `precond = (set_sep_cond:bool->(A->bool)->bool)`;;
 
 let SEP_IMP_def = new_definition
   `SEP_IMP (p:(A->bool)->bool) q <=> !s. p s ==> q s`;;
@@ -128,19 +131,19 @@ let SEP_CLAUSES = prove
      (SEP_DISJ (SEP_EXISTS v. p v) q = SEP_EXISTS v. SEP_DISJ (p v) q) /\
      (SEP_DISJ q (SEP_EXISTS v. p v) = SEP_EXISTS v. SEP_DISJ q (p v)) /\
      ((SEP_EXISTS v:B. q) = q) /\
-     ((SEP_EXISTS v. p v STAR cond (v = x)) = p x) /\
+     ((SEP_EXISTS v. p v STAR set_sep_cond (v = x)) = p x) /\
      (SEP_DISJ q SEP_F = q) /\ (SEP_DISJ SEP_F q = q) /\
      (SEP_F STAR q = SEP_F) /\ (q STAR SEP_F = SEP_F) /\
      (SEP_DISJ r r = r) /\
      (q STAR SEP_DISJ r t = SEP_DISJ (q STAR r) (q STAR t)) /\
      (SEP_DISJ r t STAR q = SEP_DISJ (r STAR q) (t STAR q)) /\
-     (SEP_DISJ (cond c) (cond c') = (cond (c \/ c'):(A->bool)->bool)) /\
-     (cond c STAR cond c' = (cond (c /\ c'):(A->bool)->bool)) /\
-     (cond T = (emp:(A->bool)->bool)) /\ (cond F = (SEP_F:(A->bool)->bool)) /\
-     (emp STAR q = q) /\ (q STAR emp = q)`,
+     (SEP_DISJ (set_sep_cond c) (set_sep_cond c') = (set_sep_cond (c \/ c'):(A->bool)->bool)) /\
+     (set_sep_cond c STAR set_sep_cond c' = (set_sep_cond (c /\ c'):(A->bool)->bool)) /\
+     (set_sep_cond T = (set_sep_emp:(A->bool)->bool)) /\ (set_sep_cond F = (SEP_F:(A->bool)->bool)) /\
+     (set_sep_emp STAR q = q) /\ (q STAR set_sep_emp = q)`,
   let RW_TAC = GEN_REWRITE_TAC I [FUN_EQ_THM] THEN
                REWRITE_TAC[SEP_EXISTS; LSORTAUX_STAR_THM; SEP_DISJ_def;
-                           cond_def; SEP_F_def; emp_def] in
+                           set_sep_cond_def; SEP_F_def; set_sep_emp_def] in
   REPEAT GEN_TAC THEN REPEAT CONJ_TAC THENL
    [RW_TAC THEN MESON_TAC[]; RW_TAC THEN MESON_TAC[];
     RW_TAC THEN MESON_TAC[]; RW_TAC THEN MESON_TAC[];
@@ -178,7 +181,7 @@ let SEP_CLAUSES = prove
 
 let SEP_EXISTS_COND = prove
  (`!(p:B->(A->bool)->bool) c.
-     (SEP_EXISTS v. p v STAR cond c) = (SEP_EXISTS v. p v) STAR cond c`,
+     (SEP_EXISTS v. p v STAR set_sep_cond c) = (SEP_EXISTS v. p v) STAR set_sep_cond c`,
   REWRITE_TAC[SEP_CLAUSES]);;
 
 let SEP_EXISTS_THM = prove
@@ -187,7 +190,7 @@ let SEP_EXISTS_THM = prove
 
 let cond_STAR = prove
  (`!c (s:A->bool) p.
-     ((cond c STAR p) s <=> c /\ p s) /\ ((p STAR cond c) s <=> c /\ p s)`,
+     ((set_sep_cond c STAR p) s <=> c /\ p s) /\ ((p STAR set_sep_cond c) s <=> c /\ p s)`,
   GEN_TAC THEN BOOL_CASES_TAC `c:bool` THEN
   REWRITE_TAC[SEP_CLAUSES] THEN REWRITE_TAC[SEP_F_def]);;
 
@@ -220,17 +223,17 @@ let SEP_IMP_FRAME = prove
   REWRITE_TAC[SEP_IMP_def; STAR_def] THEN MESON_TAC[]);;
 
 let SEP_IMP_MOVE_COND = prove
- (`!c p q:(A->bool)->bool. SEP_IMP (p STAR cond c) q <=> c ==> SEP_IMP p q`,
+ (`!c p q:(A->bool)->bool. SEP_IMP (p STAR set_sep_cond c) q <=> c ==> SEP_IMP p q`,
   GEN_TAC THEN BOOL_CASES_TAC `c:bool` THEN REWRITE_TAC[SEP_CLAUSES] THEN
   REWRITE_TAC[SEP_IMP_def; SEP_F_def]);;
 
 let SEP_IMP_emp = prove
- (`!p:(A->bool)->bool. SEP_IMP emp p <=> p {}`,
-  REWRITE_TAC[SEP_IMP_def; emp_def] THEN MESON_TAC[]);;
+ (`!p:(A->bool)->bool. SEP_IMP set_sep_emp p <=> p {}`,
+  REWRITE_TAC[SEP_IMP_def; set_sep_emp_def] THEN MESON_TAC[]);;
 
 let SEP_IMP_cond = prove
- (`!g h. SEP_IMP (cond g:(A->bool)->bool) (cond h) <=> g ==> h`,
-  REWRITE_TAC[SEP_IMP_def; cond_def] THEN MESON_TAC[]);;
+ (`!g h. SEP_IMP (set_sep_cond g:(A->bool)->bool) (set_sep_cond h) <=> g ==> h`,
+  REWRITE_TAC[SEP_IMP_def; set_sep_cond_def] THEN MESON_TAC[]);;
 
 let SEP_IMP_STAR = prove
  (`!p p' q q':(A->bool)->bool.
@@ -388,7 +391,7 @@ let SEP_REWRITE_THM = prove
   REWRITE_TAC[FUN_EQ_THM; STAR_def] THEN MESON_TAC[]);;
 
 let cond_CONJ = prove
- (`!c d. cond (c /\ d) = (cond c STAR cond d:(A->bool)->bool)`,
+ (`!c d. set_sep_cond (c /\ d) = (set_sep_cond c STAR set_sep_cond d:(A->bool)->bool)`,
   REWRITE_TAC[SEP_CLAUSES]);;
 
 let set_sep_IMP_IMP = prove
@@ -397,21 +400,21 @@ let set_sep_IMP_IMP = prove
 
 let cond_ELIM = prove
  (`!c c' (P:(A->bool)->bool).
-     (cond c STAR cond c' = (cond (c /\ c'):(A->bool)->bool)) /\
-     (P STAR cond c STAR cond c' = P STAR cond (c /\ c'))`,
+     (set_sep_cond c STAR set_sep_cond c' = (set_sep_cond (c /\ c'):(A->bool)->bool)) /\
+     (P STAR set_sep_cond c STAR set_sep_cond c' = P STAR set_sep_cond (c /\ c'))`,
   REWRITE_TAC[GSYM STAR_ASSOC; SEP_CLAUSES]);;
 
 let cond_MOVE = prove
  (`!c (P:(A->bool)->bool) Q.
-     (cond c STAR P = P STAR cond c) /\
-     (P STAR cond c STAR Q = P STAR Q STAR cond c)`,
+     (set_sep_cond c STAR P = P STAR set_sep_cond c) /\
+     (P STAR set_sep_cond c STAR Q = P STAR Q STAR set_sep_cond c)`,
   REPEAT GEN_TAC THEN CONJ_TAC THENL
    [MATCH_ACCEPT_TAC STAR_COMM;
     REWRITE_TAC[GSYM STAR_ASSOC] THEN AP_TERM_TAC THEN
     MATCH_ACCEPT_TAC STAR_COMM]);;
 
 let cond_T = prove
- (`!p:(A->bool)->bool. (cond T STAR p = p) /\ (p STAR cond T = p)`,
+ (`!p:(A->bool)->bool. (set_sep_cond T STAR p = p) /\ (p STAR set_sep_cond T = p)`,
   REWRITE_TAC[SEP_CLAUSES]);;
 
 let SEP_IMP_EXISTS = prove
@@ -419,7 +422,7 @@ let SEP_IMP_EXISTS = prove
   REWRITE_TAC[SEP_IMP_def; SEP_EXISTS_THM] THEN MESON_TAC[]);;
 
 let cond_STAR1_I = prove
- (`!c p (s:A->bool). (cond c STAR p) s <=> I c /\ p s`,
+ (`!c p (s:A->bool). (set_sep_cond c STAR p) s <=> I c /\ p s`,
   REWRITE_TAC[I_THM; cond_STAR]);;
 
 (* ------------------------------------------------------------------------- *)

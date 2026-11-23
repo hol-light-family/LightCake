@@ -315,7 +315,7 @@ let delete_var_pmatch = prove
 (* compile automatically, with the size of the expression list             *)
 
 let bvl_const_compile_def = sem1aux_def_wf
-  `measure (\p:(bvl_exp option) list # bvl_exp list.
+  `MEASURE (\p:(bvl_exp option) list # bvl_exp list.
               list_size bvl_exp_size (SND p))`
   SEM1AUX_TC_TAC
   `(bvl_const_compile (env:(bvl_exp option) list) [] = []) /\
@@ -360,7 +360,7 @@ let bvl_const_compile_def = sem1aux_def_wf
 let bvl_const_compile_ind = cake_ind "bvl_const_compile";;
 
 let bvl_const_compile_sing_def = sem1aux_def_wf
-  `measure (\x:(bvl_exp option) list # bvl_exp +
+  `MEASURE (\x:(bvl_exp option) list # bvl_exp +
                (bvl_exp option) list # bvl_exp list.
               sum_CASE x (\p. bvl_exp_size (SND p))
                          (\p. list_size bvl_exp_size (SND p)))`

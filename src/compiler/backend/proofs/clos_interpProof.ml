@@ -754,10 +754,6 @@ let CLOSP2AUX_ip_correct_Var = prove
   MAP_EVERY EXISTS_TAC [`c1 + 2`; `t4:(C,FFI)clos_state`] THEN ASM_REWRITE_TAC[] THEN
   CLOSP2AUX_IP_BODY_TAC THEN CLOSP2AUX_IP_EVAL_TAC[] THEN CLOSP2AUX_IP_FIN_TAC);;
 
-let CLOSP2AUX_ip_LENGTH1 = prove
- (`!l:A list. LENGTH l = 1 <=> ?a. l = [a]`,
-  GEN_TAC THEN REWRITE_TAC[ONE; LENGTH_EQ_CONS; LENGTH_EQ_NIL] THEN MESON_TAC[]);;
-
 (* the App case of clos_interpreter_correct *)
 let CLOSP2AUX_ip_correct_App = prove
  (mk_imp(mk_conj(CLOSP2AUX_ip_p0 `e:clos_exp`,
@@ -765,7 +761,7 @@ let CLOSP2AUX_ip_correct_App = prove
                    mk_imp(`es = CONS (e1:clos_exp) a1`, CLOSP2AUX_ip_p0 `e1:clos_exp`))),
          CLOSP2AUX_ip_p0 `clos_App x x' e es`),
   DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "IH1") ASSUME_TAC) THEN
-  REPEAT GEN_TAC THEN REWRITE_TAC[can_interpret_def; CLOSP2AUX_ip_LENGTH1] THEN STRIP_TAC THEN
+  REPEAT GEN_TAC THEN REWRITE_TAC[can_interpret_def; LISTAUX_LENGTH_EQ_1] THEN STRIP_TAC THEN
   RVEQ_TAC THEN RULE_ASSUM_TAC(REWRITE_RULE[can_interpret_def; IS_NONE_EQ_NONE]) THEN
   RVEQ_TAC THEN
   FIRST_X_ASSUM(LABEL_TAC "IH2" o REWRITE_RULE[] o SPECL [`[]:clos_exp list`; `a:clos_exp`] o
@@ -2165,7 +2161,7 @@ let evaluate_interp_thm = prove
 
 (* HOL4: v_ok_def [simp] *)
 let v_ok_def = sem1aux_def_wf
-  `measure clos_v_size`
+  `MEASURE clos_v_size`
   (SEM1AUX_TC_TAC ORELSE
    (REWRITE_TAC[IMP_CONJ] THEN REPEAT GEN_TAC THEN REPEAT DISCH_TAC THEN
     RVEQ_TAC THEN

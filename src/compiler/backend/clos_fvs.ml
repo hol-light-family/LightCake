@@ -24,7 +24,7 @@ type_invention_error := true;;
 (* termination: HOL4's automatic proof, by the size of the expression list *)
 
 let remove_fvs_def = sem1aux_def_wf
-  `measure (\p:num # clos_exp list. list_size clos_exp_size (SND p))`
+  `MEASURE (\p:num # clos_exp list. list_size clos_exp_size (SND p))`
   SEM1AUX_TC_TAC
   `(remove_fvs fvs [] = []) /\
    (remove_fvs fvs (CONS (x:clos_exp) (CONS y xs)) =
@@ -69,7 +69,7 @@ let remove_fvs_def = sem1aux_def_wf
 let remove_fvs_ind = cake_ind "remove_fvs";;
 
 let remove_fvs_sing_def = il1aux_def_wf
-  `measure
+  `MEASURE
      (\x:(num # clos_exp) + (num # clos_exp list) +
          (num # num # (num # clos_exp) list).
         sum_CASE x (\p. clos_exp_size (SND p))

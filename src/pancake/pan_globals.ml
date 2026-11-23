@@ -3,7 +3,7 @@
 (* Allocate globals at the end of heap.                                      *)
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
-(* - Names as notes/naming/names.tsv says: the record context is            *)
+(* - Names as doc/names.tsv says: the record context is                     *)
 (*   pan_globals_context (fields pan_globals_context_globals, ..._size,     *)
 (*   ..._max_globals_size); compile_exp, compile, compile_decs and          *)
 (*   compile_top get the prefix pan_globals_.                               *)
@@ -33,7 +33,7 @@ let pan_globals_context_component_equality =
 (* HOL4 Termination: measure (\e. exp_size ARB (SND e)), then MEM_IMP_exp_size *)
 
 let pan_globals_compile_exp_def = sem1aux_def_wf
-  `measure (\e:(A)pan_globals_context#(A)panLang_exp.
+  `MEASURE (\e:(A)pan_globals_context#(A)panLang_exp.
               panLang_exp_size ARB (SND e))`
   SEM1AUX_TC_TAC
   (list_mk_conj
@@ -79,7 +79,7 @@ let pan_globals_compile_exp_ind = cake_ind "pan_globals_compile_exp";;
 (* names)) - strlen name), with MAX_SET_PROPERTY (here X_LE_MAX_SET)       *)
 
 let fresh_name_def = cake_def_wf
-  `measure (\(name:mlstring,names:mlstring list).
+  `MEASURE (\(name:mlstring,names:mlstring list).
               (1 + MAX_SET (IMAGE strlen (set_of_list names))) - strlen name)`
   (REPEAT GEN_TAC THEN STRIP_TAC THEN
    SUBGOAL_THEN `strlen name <= MAX_SET (IMAGE strlen (set_of_list names))`

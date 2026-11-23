@@ -14,6 +14,9 @@
 (* - case expressions are case constants (spt_CASE, option_CASE, ...); the   *)
 (*   case of a pair of lookups in lookup_inter is the nested option_CASE.    *)
 (* - Lemmas named SPTAUX_... are helpers of this file (not HOL4 names).     *)
+(* - HOL4 size, map, wf, union and inter are sptree_size, sptree_map,        *)
+(*   sptree_wf, sptree_union and sptree_inter (short or common words), with  *)
+(*   the theorems renamed alike (map_def is sptree_map_def, ...).            *)
 (* ========================================================================= *)
 
 needs "hol4/vocab.ml";;
@@ -38,11 +41,11 @@ new_type_abbrev("num_set",`:1 spt`);;
 let isEmpty_def = new_definition
   `isEmpty (t:A spt) <=> t = LN`;;
 
-let wf_def = cake_def
-  `(wf LN <=> T) /\
-   (wf (LS (a:A)) <=> T) /\
-   (wf (BN t1 t2) <=> wf t1 /\ wf t2 /\ ~(t1 = LN /\ t2 = LN)) /\
-   (wf (BS t1 a t2) <=> wf t1 /\ wf t2 /\ ~(t1 = LN /\ t2 = LN))`;;
+let sptree_wf_def = cake_def
+  `(sptree_wf LN <=> T) /\
+   (sptree_wf (LS (a:A)) <=> T) /\
+   (sptree_wf (BN t1 t2) <=> sptree_wf t1 /\ sptree_wf t2 /\ ~(t1 = LN /\ t2 = LN)) /\
+   (sptree_wf (BS t1 a t2) <=> sptree_wf t1 /\ sptree_wf t2 /\ ~(t1 = LN /\ t2 = LN))`;;
 
 (* ------------------------------------------------------------------------- *)
 (* Keys: 0 is the root, key 2m+2 is key m of the left subtree, key 2m+1 is  *)
@@ -97,7 +100,7 @@ let SPTAUX_CASES_TAC (t:term) : tactic = CASES_ON t;;
 (* lookup and insert.                                                        *)
 (* ------------------------------------------------------------------------- *)
 
-let lookup_def = cake_def_wf `measure (FST:num#A spt->num)` SPTAUX_TC_TAC
+let lookup_def = cake_def_wf `MEASURE (FST:num#A spt->num)` SPTAUX_TC_TAC
   `(lookup k LN = NONE) /\
    (lookup k (LS (a:A)) = if k = 0 then SOME a else NONE) /\
    (lookup k (BN t1 t2) =
@@ -139,7 +142,7 @@ let SPTAUX_lookup_bits = prove
    (!m t1 (a:A) t2. lookup (2 * m + 2) (BS t1 a t2) = lookup m t1)`,
   REWRITE_TAC[lookup_def; SPTAUX_BIT_RW]);;
 
-let insert_def = cake_def_wf `measure (FST:num#A#A spt->num)` SPTAUX_TC_TAC
+let insert_def = cake_def_wf `MEASURE (FST:num#A#A spt->num)` SPTAUX_TC_TAC
   `(insert k (a:A) LN = if k = 0 then LS a
                      else if EVEN k then BN (insert ((k-1) DIV 2) a LN) LN
                      else BN LN (insert ((k-1) DIV 2) a LN)) /\
@@ -216,10 +219,10 @@ let fromList_def = new_definition
 (* HOL4: size_def (the name is the kit function size_def) *)
 
 let sptree_size_def = cake_def
-  `(size (LN:A spt) = 0) /\
-   (size (LS (a:A)) = 1) /\
-   (size (BN t1 t2) = size t1 + size t2) /\
-   (size (BS t1 a t2) = size t1 + size t2 + 1)`;;
+  `(sptree_size (LN:A spt) = 0) /\
+   (sptree_size (LS (a:A)) = 1) /\
+   (sptree_size (BN t1 t2) = sptree_size t1 + sptree_size t2) /\
+   (sptree_size (BS t1 a t2) = sptree_size t1 + sptree_size t2 + 1)`;;
 
 let insert_notEmpty = prove
  (`~(insert k (a:A) t = LN)`,
@@ -227,11 +230,11 @@ let insert_notEmpty = prove
   REPEAT COND_CASES_TAC THEN REWRITE_TAC[spt_distinct]);;
 
 let wf_insert = prove
- (`!k (a:A) t. wf t ==> wf (insert k a t)`,
+ (`!k (a:A) t. sptree_wf t ==> sptree_wf (insert k a t)`,
   MATCH_MP_TAC SPTAUX_bit_induction THEN REPEAT STRIP_TAC THEN
   SPTAUX_CASES_TAC `t:A spt` THEN
-  RULE_ASSUM_TAC(REWRITE_RULE[wf_def]) THEN
-  ASM_SIMP_TAC[SPTAUX_insert_bits; wf_def; insert_notEmpty]);;
+  RULE_ASSUM_TAC(REWRITE_RULE[sptree_wf_def]) THEN
+  ASM_SIMP_TAC[SPTAUX_insert_bits; sptree_wf_def; insert_notEmpty]);;
 
 let mk_BN_thm = prove
  (`!t1 t2:A spt. mk_BN t1 t2 = if t1 = LN /\ t2 = LN then LN else BN t1 t2`,
@@ -244,11 +247,11 @@ let mk_BS_thm = prove
   SPTAUX_CASES_TAC `t2:A spt` THEN REWRITE_TAC[mk_BS_def; spt_distinct]);;
 
 let wf_delete = prove
- (`!t k. wf (t:A spt) ==> wf (delete k t)`,
-  MATCH_MP_TAC spt_INDUCT THEN REWRITE_TAC[wf_def; delete_def] THEN
+ (`!t k. sptree_wf (t:A spt) ==> sptree_wf (delete k t)`,
+  MATCH_MP_TAC spt_INDUCT THEN REWRITE_TAC[sptree_wf_def; delete_def] THEN
   REPEAT STRIP_TAC THEN REPEAT COND_CASES_TAC THEN
-  ASM_SIMP_TAC[wf_def; mk_BN_thm; mk_BS_thm] THEN
-  REPEAT COND_CASES_TAC THEN ASM_SIMP_TAC[wf_def]);;
+  ASM_SIMP_TAC[sptree_wf_def; mk_BN_thm; mk_BS_thm] THEN
+  REPEAT COND_CASES_TAC THEN ASM_SIMP_TAC[sptree_wf_def]);;
 
 (* HOL4 proves lookup_insert1 first; here it follows from lookup_insert *)
 
@@ -268,33 +271,33 @@ let lookup_insert1 = prove
 (* union                                                                     *)
 (* ------------------------------------------------------------------------- *)
 
-let union_def = cake_def
-  `(union LN t = t:A spt) /\
-   (union (LS (a:A)) t =
+let sptree_union_def = cake_def
+  `(sptree_union LN t = t:A spt) /\
+   (sptree_union (LS (a:A)) t =
       spt_CASE t (LS a) (\b. LS a) (\t1 t2. BS t1 a t2)
                  (\t1 b t2. BS t1 a t2)) /\
-   (union (BN t1 t2) t =
+   (sptree_union (BN t1 t2) t =
       spt_CASE t (BN t1 t2) (\a. BS t1 a t2)
-                 (\t1' t2'. BN (union t1 t1') (union t2 t2'))
-                 (\t1' a t2'. BS (union t1 t1') a (union t2 t2'))) /\
-   (union (BS t1 a t2) t =
+                 (\t1' t2'. BN (sptree_union t1 t1') (sptree_union t2 t2'))
+                 (\t1' a t2'. BS (sptree_union t1 t1') a (sptree_union t2 t2'))) /\
+   (sptree_union (BS t1 a t2) t =
       spt_CASE t (BS t1 a t2) (\a'. BS t1 a t2)
-                 (\t1' t2'. BS (union t1 t1') a (union t2 t2'))
-                 (\t1' a' t2'. BS (union t1 t1') a (union t2 t2')))`;;
+                 (\t1' t2'. BS (sptree_union t1 t1') a (sptree_union t2 t2'))
+                 (\t1' a' t2'. BS (sptree_union t1 t1') a (sptree_union t2 t2')))`;;
 
 (* HOL4: isEmpty_union *)
 
 let isEmpty_union = prove
- (`union m1 m2 = LN <=> m1 = LN /\ m2 = (LN:A spt)`,
+ (`sptree_union m1 m2 = LN <=> m1 = LN /\ m2 = (LN:A spt)`,
   SPTAUX_CASES_TAC `m1:A spt` THEN SPTAUX_CASES_TAC `m2:A spt` THEN
-  REWRITE_TAC[union_def; spt_CASE; spt_distinct]);;
+  REWRITE_TAC[sptree_union_def; spt_CASE; spt_distinct]);;
 
 let wf_union = prove
- (`!m1 m2:A spt. wf m1 /\ wf m2 ==> wf (union m1 m2)`,
+ (`!m1 m2:A spt. sptree_wf m1 /\ sptree_wf m2 ==> sptree_wf (sptree_union m1 m2)`,
   MATCH_MP_TAC spt_INDUCT THEN REPEAT STRIP_TAC THEN
   SPTAUX_CASES_TAC `m2:A spt` THEN
-  RULE_ASSUM_TAC(REWRITE_RULE[wf_def]) THEN
-  ASM_SIMP_TAC[union_def; spt_CASE; wf_def; isEmpty_union] THEN
+  RULE_ASSUM_TAC(REWRITE_RULE[sptree_wf_def]) THEN
+  ASM_SIMP_TAC[sptree_union_def; spt_CASE; sptree_wf_def; isEmpty_union] THEN
   ASM_MESON_TAC[]);;
 
 (* HOL4: optcase_lemma *)
@@ -304,29 +307,29 @@ let SPTAUX_optcase_lemma = prove
   GEN_TAC THEN SPTAUX_CASES_TAC `opt:A option` THEN REWRITE_TAC[option_CASE]);;
 
 let lookup_union = prove
- (`!m1 m2 k. lookup k (union m1 m2) =
+ (`!m1 m2 k. lookup k (sptree_union m1 m2) =
              option_CASE (lookup k m1) (lookup k m2) (\v:A. SOME v)`,
   MATCH_MP_TAC spt_INDUCT THEN REPEAT STRIP_TAC THEN
   SPTAUX_CASES_TAC `m2:A spt` THEN SPTAUX_BITS_TAC `k:num` THEN
-  ASM_REWRITE_TAC[union_def; spt_CASE; lookup_rwts; SPTAUX_lookup_bits;
+  ASM_REWRITE_TAC[sptree_union_def; spt_CASE; lookup_rwts; SPTAUX_lookup_bits;
                   option_CASE; SPTAUX_optcase_lemma]);;
 
 (* ------------------------------------------------------------------------- *)
 (* inter, inter_eq, difference                                               *)
 (* ------------------------------------------------------------------------- *)
 
-let inter_def = cake_def
-  `(inter LN (t:B spt) = LN:A spt) /\
-   (inter (LS (a:A)) t =
+let sptree_inter_def = cake_def
+  `(sptree_inter LN (t:B spt) = LN:A spt) /\
+   (sptree_inter (LS (a:A)) t =
       spt_CASE t LN (\b. LS a) (\t1 t2. LN) (\t1 b t2. LS a)) /\
-   (inter (BN t1 t2) t =
+   (sptree_inter (BN t1 t2) t =
       spt_CASE t LN (\a. LN)
-                 (\t1' t2'. mk_BN (inter t1 t1') (inter t2 t2'))
-                 (\t1' a t2'. mk_BN (inter t1 t1') (inter t2 t2'))) /\
-   (inter (BS t1 a t2) t =
+                 (\t1' t2'. mk_BN (sptree_inter t1 t1') (sptree_inter t2 t2'))
+                 (\t1' a t2'. mk_BN (sptree_inter t1 t1') (sptree_inter t2 t2'))) /\
+   (sptree_inter (BS t1 a t2) t =
       spt_CASE t LN (\a'. LS a)
-                 (\t1' t2'. mk_BN (inter t1 t1') (inter t2 t2'))
-                 (\t1' a' t2'. mk_BS (inter t1 t1') a (inter t2 t2')))`;;
+                 (\t1' t2'. mk_BN (sptree_inter t1 t1') (sptree_inter t2 t2'))
+                 (\t1' a' t2'. mk_BS (sptree_inter t1 t1') a (sptree_inter t2 t2')))`;;
 
 let inter_eq_def = cake_def
   `(inter_eq LN t = LN:A spt) /\
@@ -360,20 +363,20 @@ let difference_def = cake_def
 (* HOL4: wf_mk_BN, wf_mk_BS (local iff forms) *)
 
 let SPTAUX_wf_mk_BN = prove
- (`!t1 t2:A spt. wf (mk_BN t1 t2) <=> wf t1 /\ wf t2`,
+ (`!t1 t2:A spt. sptree_wf (mk_BN t1 t2) <=> sptree_wf t1 /\ sptree_wf t2`,
   REPEAT GEN_TAC THEN SPTAUX_CASES_TAC `t1:A spt` THEN
-  SPTAUX_CASES_TAC `t2:A spt` THEN REWRITE_TAC[mk_BN_def; wf_def; spt_distinct]);;
+  SPTAUX_CASES_TAC `t2:A spt` THEN REWRITE_TAC[mk_BN_def; sptree_wf_def; spt_distinct]);;
 
 let SPTAUX_wf_mk_BS = prove
- (`!t1 (x:A) t2. wf (mk_BS t1 x t2) <=> wf t1 /\ wf t2`,
+ (`!t1 (x:A) t2. sptree_wf (mk_BS t1 x t2) <=> sptree_wf t1 /\ sptree_wf t2`,
   REPEAT GEN_TAC THEN SPTAUX_CASES_TAC `t1:A spt` THEN
-  SPTAUX_CASES_TAC `t2:A spt` THEN REWRITE_TAC[mk_BS_def; wf_def; spt_distinct]);;
+  SPTAUX_CASES_TAC `t2:A spt` THEN REWRITE_TAC[mk_BS_def; sptree_wf_def; spt_distinct]);;
 
 let wf_inter = prove
- (`!m1:A spt m2:B spt. wf (inter m1 m2)`,
+ (`!m1:A spt m2:B spt. sptree_wf (sptree_inter m1 m2)`,
   MATCH_MP_TAC spt_INDUCT THEN REPEAT STRIP_TAC THEN
   SPTAUX_CASES_TAC `m2:B spt` THEN
-  ASM_REWRITE_TAC[inter_def; spt_CASE; wf_def; SPTAUX_wf_mk_BN;
+  ASM_REWRITE_TAC[sptree_inter_def; spt_CASE; sptree_wf_def; SPTAUX_wf_mk_BN;
                   SPTAUX_wf_mk_BS]);;
 
 (* HOL4: lookup_mk_BN, lookup_mk_BS (local) *)
@@ -396,12 +399,12 @@ let SPTAUX_optcase_NONE = prove
 
 let lookup_inter = prove
  (`!m1:A spt m2:B spt k.
-     lookup k (inter m1 m2) =
+     lookup k (sptree_inter m1 m2) =
      option_CASE (lookup k m1) NONE
        (\v. option_CASE (lookup k m2) NONE (\w. SOME v))`,
   MATCH_MP_TAC spt_INDUCT THEN REPEAT STRIP_TAC THEN
   SPTAUX_CASES_TAC `m2:B spt` THEN SPTAUX_BITS_TAC `k:num` THEN
-  ASM_REWRITE_TAC[inter_def; spt_CASE; lookup_rwts; SPTAUX_lookup_bits;
+  ASM_REWRITE_TAC[sptree_inter_def; spt_CASE; lookup_rwts; SPTAUX_lookup_bits;
                   SPTAUX_lookup_mk_BN; SPTAUX_lookup_mk_BS; option_CASE;
                   SPTAUX_optcase_NONE]);;
 
@@ -424,9 +427,9 @@ let lookup_inter_eq = prove
   REPEAT COND_CASES_TAC THEN ASM_MESON_TAC[]);;
 
 let lookup_inter_EQ = prove
- (`((lookup x (inter t1 t2) = SOME (y:A)) <=>
+ (`((lookup x (sptree_inter t1 t2) = SOME (y:A)) <=>
       (lookup x t1 = SOME y) /\ ~(lookup x (t2:B spt) = NONE)) /\
-   ((lookup x (inter t1 t2) = NONE) <=>
+   ((lookup x (sptree_inter t1 t2) = NONE) <=>
       (lookup x t1 = NONE) \/ (lookup x t2 = NONE))`,
   REWRITE_TAC[lookup_inter] THEN
   SPTAUX_CASES_TAC `lookup x (t1:A spt)` THEN
@@ -434,8 +437,8 @@ let lookup_inter_EQ = prove
   REWRITE_TAC[option_CASE; option_DISTINCT; option_INJ]);;
 
 let lookup_inter_assoc = prove
- (`lookup x (inter t1 (inter t2 t3)) =
-   lookup x (inter (inter (t1:A spt) (t2:B spt)) (t3:C spt))`,
+ (`lookup x (sptree_inter t1 (sptree_inter t2 t3)) =
+   lookup x (sptree_inter (sptree_inter (t1:A spt) (t2:B spt)) (t3:C spt))`,
   REWRITE_TAC[lookup_inter] THEN
   SPTAUX_CASES_TAC `lookup x (t1:A spt)` THEN
   SPTAUX_CASES_TAC `lookup x (t2:B spt)` THEN
@@ -456,7 +459,7 @@ let lookup_difference = prove
 (* lrnext and domain                                                         *)
 (* ------------------------------------------------------------------------- *)
 
-let lrnext_def = cake_def_wf `measure (I:num->num)`
+let lrnext_def = cake_def_wf `MEASURE (I:num->num)`
   (REWRITE_TAC(I_THM::WF_REL_THMS) THEN REPEAT STRIP_TAC THEN ASM_ARITH_TAC)
   `lrnext n = if n = 0 then 1 else 2 * lrnext ((n - 1) DIV 2)`;;
 
@@ -531,8 +534,8 @@ let IN_domain = prove
   REWRITE_TAC[SPTAUX_domain_bits; SPTAUX_BIT_RW]);;
 
 let size_insert = prove
- (`!k (v:A) m. size (insert k v m) =
-               if k IN domain m then size m else size m + 1`,
+ (`!k (v:A) m. sptree_size (insert k v m) =
+               if k IN domain m then sptree_size m else sptree_size m + 1`,
   MATCH_MP_TAC SPTAUX_bit_induction THEN REPEAT STRIP_TAC THEN
   SPTAUX_CASES_TAC `m:A spt` THEN
   ASM_REWRITE_TAC[SPTAUX_insert_bits; sptree_size_def; SPTAUX_domain_bits;
@@ -574,7 +577,7 @@ let domain_lookup = prove
                   option_DISTINCT; option_INJ] THEN
   MESON_TAC[]);;
 let lookup_inter_alt = prove
- (`lookup x (inter t1 t2) =
+ (`lookup x (sptree_inter t1 t2) =
    if x IN domain (t2:B spt) then lookup x (t1:A spt) else NONE`,
   REWRITE_TAC[lookup_inter; domain_lookup] THEN
   SPTAUX_CASES_TAC `lookup x (t2:B spt)` THEN
@@ -587,13 +590,13 @@ let lookup_NONE_domain = prove
   REWRITE_TAC[option_DISTINCT; option_INJ] THEN MESON_TAC[]);;
 
 let domain_union = prove
- (`domain (union t1 t2) = domain t1 UNION domain (t2:A spt)`,
+ (`domain (sptree_union t1 t2) = domain t1 UNION domain (t2:A spt)`,
   REWRITE_TAC[EXTENSION; domain_lookup; lookup_union; IN_UNION] THEN
   X_GEN_TAC `k:num` THEN SPTAUX_CASES_TAC `lookup k (t1:A spt)` THEN
   REWRITE_TAC[option_CASE; option_DISTINCT; option_INJ] THEN MESON_TAC[]);;
 
 let domain_inter = prove
- (`domain (inter t1 t2) = domain (t1:A spt) INTER domain (t2:B spt)`,
+ (`domain (sptree_inter t1 t2) = domain (t1:A spt) INTER domain (t2:B spt)`,
   REWRITE_TAC[EXTENSION; domain_lookup; lookup_inter; IN_INTER] THEN
   X_GEN_TAC `k:num` THEN SPTAUX_CASES_TAC `lookup k (t1:A spt)` THEN
   SPTAUX_CASES_TAC `lookup k (t2:B spt)` THEN
@@ -616,8 +619,8 @@ let domain_sing = prove
   REWRITE_TAC[domain_insert; domain_def]);;
 
 let domain_fromList = prove
- (`domain (fromList l) = count (LENGTH (l:A list))`,
-  REWRITE_TAC[EXTENSION; domain_lookup; lookup_fromList; count_DEF;
+ (`domain (fromList l) = pred_set_count (LENGTH (l:A list))`,
+  REWRITE_TAC[EXTENSION; domain_lookup; lookup_fromList; pred_set_count_DEF;
               IN_ELIM_THM] THEN
   GEN_TAC THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[option_DISTINCT] THEN
   MESON_TAC[]);;
@@ -647,7 +650,7 @@ let SPTAUX_card_images = prove
   ARITH_TAC);;
 
 let size_domain = prove
- (`!t:A spt. size t = CARD (domain t)`,
+ (`!t:A spt. sptree_size t = CARD (domain t)`,
   MATCH_MP_TAC spt_INDUCT THEN
   ASM_SIMP_TAC[sptree_size_def; domain_def; SPTAUX_card_images; FINITE_domain;
                CARD_CLAUSES; CARD_SING] THEN ARITH_TAC);;
@@ -711,7 +714,7 @@ let foldi_def = cake_def
       let inc = lrnext i in
       foldi f (i + inc) (f i a (foldi f (i + 2 * inc) acc t1)) t2)`;;
 
-let spt_acc_def = cake_def_wf `measure (SND:num#num->num)` SPTAUX_TC_TAC
+let spt_acc_def = cake_def_wf `MEASURE (SND:num#num->num)` SPTAUX_TC_TAC
   `(spt_acc i 0 = i) /\
    (spt_acc i (SUC k) =
       spt_acc (i + if EVEN (SUC k) then 2 * lrnext i else lrnext i) (k DIV 2))`;;
@@ -892,16 +895,16 @@ let ALOOKUP_toAList = prove
     ASM_MESON_TAC[SPTAUX_ALOOKUP_MEM; MEM_toAList]]);;
 
 let insert_union = prove
- (`!k (v:A) s. insert k v s = union (insert k v LN) s`,
+ (`!k (v:A) s. insert k v s = sptree_union (insert k v LN) s`,
   MATCH_MP_TAC SPTAUX_bit_induction THEN REPEAT STRIP_TAC THEN
   TRY (FIRST_X_ASSUM (ASSUME_TAC o GSYM)) THEN
   SPTAUX_CASES_TAC `s:A spt` THEN
-  ASM_REWRITE_TAC[SPTAUX_insert_bits; union_def; spt_CASE]);;
+  ASM_REWRITE_TAC[SPTAUX_insert_bits; sptree_union_def; spt_CASE]);;
 
 let domain_empty = prove
- (`!t:A spt. wf t ==> ((t = LN) <=> (domain t = EMPTY))`,
+ (`!t:A spt. sptree_wf t ==> ((t = LN) <=> (domain t = EMPTY))`,
   MATCH_MP_TAC spt_INDUCT THEN
-  REWRITE_TAC[wf_def; domain_def; spt_distinct; NOT_INSERT_EMPTY;
+  REWRITE_TAC[sptree_wf_def; domain_def; spt_distinct; NOT_INSERT_EMPTY;
               EMPTY_UNION; IMAGE_EQ_EMPTY] THEN
   MESON_TAC[]);;
 
@@ -910,12 +913,12 @@ let domain_empty = prove
 
 let SPTAUX_LENGTH_foldi = prove
  (`!t:A spt i acc.
-     LENGTH (foldi (\k v a. CONS (k,v) a) i acc t) = size t + LENGTH acc`,
+     LENGTH (foldi (\k v a. CONS (k,v) a) i acc t) = sptree_size t + LENGTH acc`,
   MATCH_MP_TAC spt_INDUCT THEN REPEAT STRIP_TAC THEN
   ASM_REWRITE_TAC[SPTAUX_foldi_thm; sptree_size_def; LENGTH] THEN ARITH_TAC);;
 
 let LENGTH_toAList = prove
- (`LENGTH (toAList t) = size (t:A spt)`,
+ (`LENGTH (toAList t) = sptree_size (t:A spt)`,
   REWRITE_TAC[toAList_def; SPTAUX_LENGTH_foldi; LENGTH; ADD_CLAUSES]);;
 
 (* list lemma (list unit), proved here for local use *)
@@ -975,21 +978,21 @@ let toListA_append = prove
   REWRITE_TAC[GSYM SPTAUX_toListA_APPEND; APPEND]);;
 
 let SPTAUX_LENGTH_toListA = prove
- (`!t:A spt acc. LENGTH (toListA acc t) = size t + LENGTH acc`,
+ (`!t:A spt acc. LENGTH (toListA acc t) = sptree_size t + LENGTH acc`,
   MATCH_MP_TAC spt_INDUCT THEN REPEAT STRIP_TAC THEN
   ASM_REWRITE_TAC[toListA_def; sptree_size_def; LENGTH] THEN ARITH_TAC);;
 
 (* HOL4: size_zero_empty (later in the HOL4 script) *)
 
 let size_zero_empty = prove
- (`!x:A spt. size x = 0 <=> domain x = EMPTY`,
+ (`!x:A spt. sptree_size x = 0 <=> domain x = EMPTY`,
   MATCH_MP_TAC spt_INDUCT THEN
   ASM_REWRITE_TAC[sptree_size_def; domain_def; ADD_EQ_0; ARITH;
                   NOT_INSERT_EMPTY; EMPTY_UNION; IMAGE_EQ_EMPTY] THEN
   MESON_TAC[]);;
 
 let isEmpty_toListA = prove
- (`!t:A spt acc. wf t ==> ((t = LN) <=> (toListA acc t = acc))`,
+ (`!t:A spt acc. sptree_wf t ==> ((t = LN) <=> (toListA acc t = acc))`,
   REPEAT STRIP_TAC THEN EQ_TAC THENL
    [DISCH_THEN SUBST1_TAC THEN REWRITE_TAC[toListA_def]; ALL_TAC] THEN
   DISCH_THEN(MP_TAC o AP_TERM `LENGTH:A list->num`) THEN
@@ -1000,7 +1003,7 @@ let toList_def = new_definition
   `toList (m:A spt) = toListA [] m`;;
 
 let isEmpty_toList = prove
- (`!t:A spt. wf t ==> ((t = LN) <=> (toList t = []))`,
+ (`!t:A spt. sptree_wf t ==> ((t = LN) <=> (toList t = []))`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[toList_def] THEN
   MATCH_MP_TAC isEmpty_toListA THEN ASM_REWRITE_TAC[]);;
 
@@ -1042,18 +1045,18 @@ let SPTAUX_FORALL_BITS = prove
   ASM_REWRITE_TAC[]);;
 
 let SPTAUX_lookup_NONE_LN = prove
- (`!t:A spt. wf t ==> (((!n. lookup n t = NONE) <=> t = LN) /\
+ (`!t:A spt. sptree_wf t ==> (((!n. lookup n t = NONE) <=> t = LN) /\
                       ((!n. NONE = lookup n t) <=> t = LN))`,
   REPEAT STRIP_TAC THEN ASM_SIMP_TAC[domain_empty] THEN
   REWRITE_TAC[EXTENSION; NOT_IN_EMPTY; GSYM lookup_NONE_domain] THEN
   MESON_TAC[]);;
 
 let spt_eq_thm = prove
- (`!t1 t2:A spt. wf t1 /\ wf t2 ==>
+ (`!t1 t2:A spt. sptree_wf t1 /\ sptree_wf t2 ==>
                  ((t1 = t2) <=> !n. lookup n t1 = lookup n t2)`,
   MATCH_MP_TAC spt_INDUCT THEN REPEAT STRIP_TAC THEN
   SPTAUX_CASES_TAC `t2:A spt` THEN
-  RULE_ASSUM_TAC(REWRITE_RULE[wf_def]) THEN
+  RULE_ASSUM_TAC(REWRITE_RULE[sptree_wf_def]) THEN
   REWRITE_TAC[spt_distinct; spt_inject] THEN
   ONCE_REWRITE_TAC[SPTAUX_FORALL_BITS] THEN
   REWRITE_TAC[lookup_rwts; SPTAUX_lookup_bits; option_DISTINCT; option_INJ] THEN
@@ -1070,13 +1073,13 @@ let mk_wf_def = cake_def
    (mk_wf (BS t1 x t2) = mk_BS (mk_wf t1) x (mk_wf t2))`;;
 
 let wf_mk_wf = prove
- (`!t:A spt. wf (mk_wf t)`,
+ (`!t:A spt. sptree_wf (mk_wf t)`,
   MATCH_MP_TAC spt_INDUCT THEN
-  ASM_SIMP_TAC[wf_def; mk_wf_def; SPTAUX_wf_mk_BS; SPTAUX_wf_mk_BN]);;
+  ASM_SIMP_TAC[sptree_wf_def; mk_wf_def; SPTAUX_wf_mk_BS; SPTAUX_wf_mk_BN]);;
 
 let wf_mk_id = prove
- (`!t:A spt. wf t ==> (mk_wf t = t)`,
-  MATCH_MP_TAC spt_INDUCT THEN REWRITE_TAC[wf_def; mk_wf_def] THEN
+ (`!t:A spt. sptree_wf t ==> (mk_wf t = t)`,
+  MATCH_MP_TAC spt_INDUCT THEN REWRITE_TAC[sptree_wf_def; mk_wf_def] THEN
   SIMP_TAC[mk_BS_thm; mk_BN_thm]);;
 
 let lookup_mk_wf = prove
@@ -1099,23 +1102,23 @@ let mk_wf_eq = prove
 
 let inter_eq = prove
  (`!t1:A spt t2:B spt t3 t4:C spt.
-     (inter t1 t2 = inter t3 t4) <=>
-     !x. lookup x (inter t1 t2) = lookup x (inter t3 t4)`,
+     (sptree_inter t1 t2 = sptree_inter t3 t4) <=>
+     !x. lookup x (sptree_inter t1 t2) = lookup x (sptree_inter t3 t4)`,
   MESON_TAC[spt_eq_thm; wf_inter]);;
 
 let union_mk_wf = prove
- (`!t1 t2:A spt. union (mk_wf t1) (mk_wf t2) = mk_wf (union t1 t2)`,
+ (`!t1 t2:A spt. sptree_union (mk_wf t1) (mk_wf t2) = mk_wf (sptree_union t1 t2)`,
   REPEAT GEN_TAC THEN
-  SUBGOAL_THEN `union (mk_wf t1) (mk_wf t2) =
-                mk_wf (union (mk_wf t1) (mk_wf (t2:A spt)))` SUBST1_TAC THENL
+  SUBGOAL_THEN `sptree_union (mk_wf t1) (mk_wf t2) =
+                mk_wf (sptree_union (mk_wf t1) (mk_wf (t2:A spt)))` SUBST1_TAC THENL
    [MESON_TAC[wf_union; wf_mk_wf; wf_mk_id]; ALL_TAC] THEN
   REWRITE_TAC[mk_wf_eq; lookup_union; lookup_mk_wf]);;
 
 let inter_mk_wf = prove
- (`!t1:A spt t2:B spt. inter (mk_wf t1) (mk_wf t2) = mk_wf (inter t1 t2)`,
+ (`!t1:A spt t2:B spt. sptree_inter (mk_wf t1) (mk_wf t2) = mk_wf (sptree_inter t1 t2)`,
   REPEAT GEN_TAC THEN
-  SUBGOAL_THEN `inter (mk_wf t1) (mk_wf t2) =
-                mk_wf (inter (mk_wf (t1:A spt)) (mk_wf (t2:B spt)))`
+  SUBGOAL_THEN `sptree_inter (mk_wf t1) (mk_wf t2) =
+                mk_wf (sptree_inter (mk_wf (t1:A spt)) (mk_wf (t2:B spt)))`
     SUBST1_TAC THENL
    [MESON_TAC[wf_inter; wf_mk_wf; wf_mk_id]; ALL_TAC] THEN
   REWRITE_TAC[mk_wf_eq; lookup_inter; lookup_mk_wf]);;
@@ -1137,24 +1140,24 @@ let delete_mk_wf = prove
   REWRITE_TAC[mk_wf_eq; lookup_delete; lookup_mk_wf]);;
 
 let union_LN = prove
- (`!t:A spt. (union t LN = t) /\ (union LN t = t)`,
+ (`!t:A spt. (sptree_union t LN = t) /\ (sptree_union LN t = t)`,
   GEN_TAC THEN SPTAUX_CASES_TAC `t:A spt` THEN
-  REWRITE_TAC[union_def; spt_CASE]);;
+  REWRITE_TAC[sptree_union_def; spt_CASE]);;
 
 let inter_LN = prove
- (`!t:A spt. (inter t (LN:B spt) = LN) /\ (inter (LN:C spt) t = LN)`,
-  REWRITE_TAC[inter_def] THEN GEN_TAC THEN SPTAUX_CASES_TAC `t:A spt` THEN
-  REWRITE_TAC[inter_def; spt_CASE]);;
+ (`!t:A spt. (sptree_inter t (LN:B spt) = LN) /\ (sptree_inter (LN:C spt) t = LN)`,
+  REWRITE_TAC[sptree_inter_def] THEN GEN_TAC THEN SPTAUX_CASES_TAC `t:A spt` THEN
+  REWRITE_TAC[sptree_inter_def; spt_CASE]);;
 
 let union_assoc = prove
- (`!t1 t2 t3:A spt. union t1 (union t2 t3) = union (union t1 t2) t3`,
+ (`!t1 t2 t3:A spt. sptree_union t1 (sptree_union t2 t3) = sptree_union (sptree_union t1 t2) t3`,
   MATCH_MP_TAC spt_INDUCT THEN REPEAT STRIP_TAC THEN
   SPTAUX_CASES_TAC `t2:A spt` THEN SPTAUX_CASES_TAC `t3:A spt` THEN
-  ASM_REWRITE_TAC[union_def; spt_CASE]);;
+  ASM_REWRITE_TAC[sptree_union_def; spt_CASE]);;
 
 let inter_assoc = prove
  (`!t1:A spt t2:B spt t3:C spt.
-     inter t1 (inter t2 t3) = inter (inter t1 t2) t3`,
+     sptree_inter t1 (sptree_inter t2 t3) = sptree_inter (sptree_inter t1 t2) t3`,
   REWRITE_TAC[inter_eq; lookup_inter] THEN REPEAT GEN_TAC THEN
   SPTAUX_CASES_TAC `lookup x (t1:A spt)` THEN
   SPTAUX_CASES_TAC `lookup x (t2:B spt)` THEN
@@ -1190,22 +1193,22 @@ let lookup_fromAList_toAList = prove
   REWRITE_TAC[lookup_fromAList; ALOOKUP_toAList]);;
 
 let wf_fromAList = prove
- (`!ls:(num#A)list. wf (fromAList ls)`,
-  LIST_INDUCT_TAC THEN REWRITE_TAC[fromAList_def; wf_def] THEN
+ (`!ls:(num#A)list. sptree_wf (fromAList ls)`,
+  LIST_INDUCT_TAC THEN REWRITE_TAC[fromAList_def; sptree_wf_def] THEN
   SPTAUX_CASES_TAC `h:num#A` THEN
   ASM_SIMP_TAC[fromAList_def; wf_insert]);;
 
 let fromAList_toAList = prove
- (`!t:A spt. wf t ==> (fromAList (toAList t) = t)`,
+ (`!t:A spt. sptree_wf t ==> (fromAList (toAList t) = t)`,
   MESON_TAC[wf_fromAList; lookup_fromAList_toAList; spt_eq_thm]);;
 
 let union_insert_LN = prove
- (`!x (y:A) t2. union (insert x y LN) t2 = insert x y t2`,
+ (`!x (y:A) t2. sptree_union (insert x y LN) t2 = insert x y t2`,
   REWRITE_TAC[GSYM insert_union]);;
 
 let fromAList_append = prove
  (`!l1 l2:(num#A)list.
-     fromAList (APPEND l1 l2) = union (fromAList l1) (fromAList l2)`,
+     fromAList (APPEND l1 l2) = sptree_union (fromAList l1) (fromAList l2)`,
   LIST_INDUCT_TAC THEN REWRITE_TAC[APPEND; fromAList_def; union_LN] THEN
   SPTAUX_CASES_TAC `h:num#A` THEN ASM_REWRITE_TAC[fromAList_def] THEN
   GEN_TAC THEN GEN_REWRITE_TAC LAND_CONV [insert_union] THEN
@@ -1215,58 +1218,58 @@ let fromAList_append = prove
 (* map                                                                       *)
 (* ------------------------------------------------------------------------- *)
 
-let map_def = cake_def
-  `(map (f:A->B) LN = LN) /\
-   (map f (LS a) = LS (f a)) /\
-   (map f (BN t1 t2) = BN (map f t1) (map f t2)) /\
-   (map f (BS t1 a t2) = BS (map f t1) (f a) (map f t2))`;;
+let sptree_map_def = cake_def
+  `(sptree_map (f:A->B) LN = LN) /\
+   (sptree_map f (LS a) = LS (f a)) /\
+   (sptree_map f (BN t1 t2) = BN (sptree_map f t1) (sptree_map f t2)) /\
+   (sptree_map f (BS t1 a t2) = BS (sptree_map f t1) (f a) (sptree_map f t2))`;;
 
 let SPTAUX_toListA_map = prove
- (`!s:A spt acc. toListA (MAP (f:A->B) acc) (map f s) = MAP f (toListA acc s)`,
+ (`!s:A spt acc. toListA (MAP (f:A->B) acc) (sptree_map f s) = MAP f (toListA acc s)`,
   MATCH_MP_TAC spt_INDUCT THEN REPEAT STRIP_TAC THEN
-  ASM_REWRITE_TAC[map_def; toListA_def; MAP] THEN
+  ASM_REWRITE_TAC[sptree_map_def; toListA_def; MAP] THEN
   ASM_REWRITE_TAC[GSYM(CONJUNCT2 MAP)]);;
 
 let toList_map = prove
- (`!s:A spt. toList (map (f:A->B) s) = MAP f (toList s)`,
+ (`!s:A spt. toList (sptree_map (f:A->B) s) = MAP f (toList s)`,
   REWRITE_TAC[toList_def; GSYM SPTAUX_toListA_map; MAP]);;
 
 let domain_map = prove
- (`!s:A spt. domain (map (f:A->B) s) = domain s`,
+ (`!s:A spt. domain (sptree_map (f:A->B) s) = domain s`,
   MATCH_MP_TAC spt_INDUCT THEN REPEAT STRIP_TAC THEN
-  ASM_REWRITE_TAC[map_def; domain_def]);;
+  ASM_REWRITE_TAC[sptree_map_def; domain_def]);;
 
 let lookup_map = prove
- (`!s:A spt x. lookup x (map (f:A->B) s) = OPTION_MAP f (lookup x s)`,
+ (`!s:A spt x. lookup x (sptree_map (f:A->B) s) = OPTION_MAP f (lookup x s)`,
   MATCH_MP_TAC spt_INDUCT THEN REPEAT STRIP_TAC THEN
   SPTAUX_BITS_TAC `x:num` THEN
-  ASM_REWRITE_TAC[map_def; lookup_rwts; SPTAUX_lookup_bits; OPTION_MAP_DEF]);;
+  ASM_REWRITE_TAC[sptree_map_def; lookup_rwts; SPTAUX_lookup_bits; OPTION_MAP_DEF]);;
 
 let map_LN = prove
- (`!t:A spt. (map (f:A->B) t = LN) <=> (t = LN)`,
+ (`!t:A spt. (sptree_map (f:A->B) t = LN) <=> (t = LN)`,
   GEN_TAC THEN SPTAUX_CASES_TAC `t:A spt` THEN
-  REWRITE_TAC[map_def; spt_distinct]);;
+  REWRITE_TAC[sptree_map_def; spt_distinct]);;
 
 let wf_map = prove
- (`!t:A spt (f:A->B). wf (map f t) = wf t`,
+ (`!t:A spt (f:A->B). sptree_wf (sptree_map f t) = sptree_wf t`,
   MATCH_MP_TAC spt_INDUCT THEN REPEAT STRIP_TAC THEN
-  ASM_REWRITE_TAC[map_def; wf_def; map_LN]);;
+  ASM_REWRITE_TAC[sptree_map_def; sptree_wf_def; map_LN]);;
 
 let map_map_o = prove
- (`!t:A spt (f:B->C) (g:A->B). map f (map g t) = map (f o g) t`,
+ (`!t:A spt (f:B->C) (g:A->B). sptree_map f (sptree_map g t) = sptree_map (f o g) t`,
   MATCH_MP_TAC spt_INDUCT THEN REPEAT STRIP_TAC THEN
-  ASM_REWRITE_TAC[map_def; o_THM]);;
+  ASM_REWRITE_TAC[sptree_map_def; o_THM]);;
 
 let map_insert = prove
- (`!(f:A->B) x y z. map f (insert x y z) = insert x (f y) (map f z)`,
+ (`!(f:A->B) x y z. sptree_map f (insert x y z) = insert x (f y) (sptree_map f z)`,
   GEN_TAC THEN MATCH_MP_TAC SPTAUX_bit_induction THEN REPEAT STRIP_TAC THEN
   SPTAUX_CASES_TAC `z:A spt` THEN
-  ASM_REWRITE_TAC[SPTAUX_insert_bits; map_def]);;
+  ASM_REWRITE_TAC[SPTAUX_insert_bits; sptree_map_def]);;
 
 let map_fromAList = prove
- (`map (f:A->B) (fromAList ls) = fromAList (MAP (\(k,v). (k,f v)) ls)`,
+ (`sptree_map (f:A->B) (fromAList ls) = fromAList (MAP (\(k,v). (k,f v)) ls)`,
   SPEC_TAC(`ls:(num#A)list`,`ls:(num#A)list`) THEN
-  LIST_INDUCT_TAC THEN REWRITE_TAC[fromAList_def; map_def; MAP] THEN
+  LIST_INDUCT_TAC THEN REWRITE_TAC[fromAList_def; sptree_map_def; MAP] THEN
   SPTAUX_CASES_TAC `h:num#A` THEN
   ASM_REWRITE_TAC[fromAList_def; map_insert]);;
 
@@ -1380,12 +1383,12 @@ let subspt_LN = prove
   MESON_TAC[]);;
 
 let subspt_union = prove
- (`subspt s (union s (t:A spt))`,
+ (`subspt s (sptree_union s (t:A spt))`,
   REWRITE_TAC[subspt_lookup; lookup_union] THEN REPEAT GEN_TAC THEN
   DISCH_THEN SUBST1_TAC THEN REWRITE_TAC[option_CASE]);;
 
 let subspt_FOLDL_union = prove
- (`!ls t:A spt. subspt t (FOLDL union t ls)`,
+ (`!ls t:A spt. subspt t (FOLDL sptree_union t ls)`,
   LIST_INDUCT_TAC THEN REWRITE_TAC[FOLDL; subspt_refl] THEN
   ASM_MESON_TAC[subspt_union; subspt_trans]);;
 
@@ -1396,7 +1399,7 @@ let domain_mapi = prove
   REWRITE_TAC[OPTION_MAP_DEF; option_DISTINCT; option_INJ] THEN MESON_TAC[]);;
 
 let lookup_FOLDL_union = prove
- (`lookup k (FOLDL union t ls) =
+ (`lookup k (FOLDL sptree_union t ls) =
    FOLDL OPTION_CHOICE (lookup k (t:A spt)) (MAP (lookup k) ls)`,
   SPEC_TAC(`t:A spt`,`t:A spt`) THEN SPEC_TAC(`ls:(A spt)list`,`ls:(A spt)list`) THEN
   LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[FOLDL; MAP; lookup_union] THEN
@@ -1405,10 +1408,10 @@ let lookup_FOLDL_union = prove
   REWRITE_TAC[option_CASE; OPTION_CHOICE_DEF]);;
 
 let map_union = prove
- (`!t1 t2:A spt. map (f:A->B) (union t1 t2) = union (map f t1) (map f t2)`,
+ (`!t1 t2:A spt. sptree_map (f:A->B) (sptree_union t1 t2) = sptree_union (sptree_map f t1) (sptree_map f t2)`,
   MATCH_MP_TAC spt_INDUCT THEN REPEAT STRIP_TAC THEN
   SPTAUX_CASES_TAC `t2:A spt` THEN
-  ASM_REWRITE_TAC[map_def; union_def; spt_CASE]);;
+  ASM_REWRITE_TAC[sptree_map_def; sptree_union_def; spt_CASE]);;
 
 let domain_eq = prove
  (`!t1:A spt t2:B spt.
@@ -1443,27 +1446,27 @@ let lookup_filter_v = prove
                   SPTAUX_lookup_mk_BS; option_CASE]);;
 
 let wf_filter_v = prove
- (`!t:A spt f. wf t ==> wf (filter_v f t)`,
+ (`!t:A spt f. sptree_wf t ==> sptree_wf (filter_v f t)`,
   MATCH_MP_TAC spt_INDUCT THEN REPEAT STRIP_TAC THEN
-  RULE_ASSUM_TAC(REWRITE_RULE[wf_def]) THEN
+  RULE_ASSUM_TAC(REWRITE_RULE[sptree_wf_def]) THEN
   REWRITE_TAC[filter_v_def] THEN REPEAT COND_CASES_TAC THEN
-  ASM_SIMP_TAC[wf_def; SPTAUX_wf_mk_BN; SPTAUX_wf_mk_BS]);;
+  ASM_SIMP_TAC[sptree_wf_def; SPTAUX_wf_mk_BN; SPTAUX_wf_mk_BS]);;
 
 let wf_mk_BN = prove
- (`wf t1 /\ wf t2 ==> wf (mk_BN t1 (t2:A spt))`,
+ (`sptree_wf t1 /\ sptree_wf t2 ==> sptree_wf (mk_BN t1 (t2:A spt))`,
   REWRITE_TAC[SPTAUX_wf_mk_BN]);;
 
 let wf_mk_BS = prove
- (`wf t1 /\ wf t2 ==> wf (mk_BS t1 (a:A) t2)`,
+ (`sptree_wf t1 /\ sptree_wf t2 ==> sptree_wf (mk_BS t1 (a:A) t2)`,
   REWRITE_TAC[SPTAUX_wf_mk_BS]);;
 
 let wf_mapi = prove
- (`wf (mapi (f:num->A->B) pt)`,
+ (`sptree_wf (mapi (f:num->A->B) pt)`,
   REWRITE_TAC[mapi_def] THEN
-  SUBGOAL_THEN `!pt:A spt n. wf (mapi0 (f:num->A->B) n pt)`
+  SUBGOAL_THEN `!pt:A spt n. sptree_wf (mapi0 (f:num->A->B) n pt)`
     (fun th -> REWRITE_TAC[th]) THEN
   MATCH_MP_TAC spt_INDUCT THEN REPEAT STRIP_TAC THEN
-  ASM_REWRITE_TAC[mapi0_def; LET_DEF; LET_END_DEF; wf_def; SPTAUX_wf_mk_BN;
+  ASM_REWRITE_TAC[mapi0_def; LET_DEF; LET_END_DEF; sptree_wf_def; SPTAUX_wf_mk_BN;
                   SPTAUX_wf_mk_BS]);;
 
 (* HOL4: ALOOKUP_MAP_lemma (local) *)
@@ -1497,7 +1500,7 @@ let mapi_Alist = prove
   GEN_TAC THEN AP_THM_TAC THEN AP_TERM_TAC THEN REWRITE_TAC[ETA_AX]);;
 
 let num_set_domain_eq = prove
- (`!t1 t2:1 spt. wf t1 /\ wf t2 ==> ((domain t1 = domain t2) <=> (t1 = t2))`,
+ (`!t1 t2:1 spt. sptree_wf t1 /\ sptree_wf t2 ==> ((domain t1 = domain t2) <=> (t1 = t2))`,
   SIMP_TAC[spt_eq_thm] THEN REPEAT STRIP_TAC THEN
   REWRITE_TAC[EXTENSION; domain_lookup; EXISTS_ONE_THM] THEN
   EQ_TAC THEN DISCH_TAC THEN X_GEN_TAC `n:num` THENL
@@ -1508,15 +1511,15 @@ let num_set_domain_eq = prove
     ASM_REWRITE_TAC[]]);;
 
 let union_num_set_sym = prove
- (`!(t1:1 spt) t2. union t1 t2 = union t2 t1`,
+ (`!(t1:1 spt) t2. sptree_union t1 t2 = sptree_union t2 t1`,
   MATCH_MP_TAC spt_INDUCT THEN REPEAT STRIP_TAC THEN
   SPTAUX_CASES_TAC `t2:1 spt` THEN
-  ASM_REWRITE_TAC[union_def; spt_CASE; spt_inject] THEN MESON_TAC[one]);;
+  ASM_REWRITE_TAC[sptree_union_def; spt_CASE; spt_inject] THEN MESON_TAC[one]);;
 
 let union_disjoint_sym = prove
  (`!t1 t2:A spt.
-     wf t1 /\ wf t2 /\ DISJOINT (domain t1) (domain t2) ==>
-     union t1 t2 = union t2 t1`,
+     sptree_wf t1 /\ sptree_wf t2 /\ DISJOINT (domain t1) (domain t2) ==>
+     sptree_union t1 t2 = sptree_union t2 t1`,
   REPEAT STRIP_TAC THEN ASM_SIMP_TAC[spt_eq_thm; wf_union; lookup_union] THEN
   X_GEN_TAC `n:num` THEN
   FIRST_X_ASSUM(MP_TAC o SPEC `n:num` o REWRITE_RULE[DISJOINT; EXTENSION;
@@ -1531,15 +1534,15 @@ let difference_sub = prove
   REWRITE_TAC[domain_difference; domain_def] THEN SET_TAC[]);;
 
 let wf_difference = prove
- (`!t1:A spt t2:B spt. wf t1 /\ wf t2 ==> wf (difference t1 t2)`,
+ (`!t1:A spt t2:B spt. sptree_wf t1 /\ sptree_wf t2 ==> sptree_wf (difference t1 t2)`,
   MATCH_MP_TAC spt_INDUCT THEN REPEAT STRIP_TAC THEN
   SPTAUX_CASES_TAC `t2:B spt` THEN
-  RULE_ASSUM_TAC(REWRITE_RULE[wf_def]) THEN
-  ASM_SIMP_TAC[difference_def; spt_CASE; wf_def; SPTAUX_wf_mk_BN;
+  RULE_ASSUM_TAC(REWRITE_RULE[sptree_wf_def]) THEN
+  ASM_SIMP_TAC[difference_def; spt_CASE; sptree_wf_def; SPTAUX_wf_mk_BN;
                SPTAUX_wf_mk_BS]);;
 
 let delete_fail = prove
- (`!n t:A spt. wf t ==> (~(n IN domain t) <=> (delete n t = t))`,
+ (`!n t:A spt. sptree_wf t ==> (~(n IN domain t) <=> (delete n t = t))`,
   REPEAT STRIP_TAC THEN EQ_TAC THENL
    [DISCH_TAC THEN ASM_SIMP_TAC[spt_eq_thm; wf_delete; lookup_delete] THEN
     GEN_TAC THEN COND_CASES_TAC THEN ASM_MESON_TAC[lookup_NONE_domain];
@@ -1547,8 +1550,8 @@ let delete_fail = prove
     REWRITE_TAC[domain_delete] THEN SET_TAC[]]);;
 
 let size_delete = prove
- (`!n t:A spt. size (delete n t) =
-               if lookup n t = NONE then size t else size t - 1`,
+ (`!n t:A spt. sptree_size (delete n t) =
+               if lookup n t = NONE then sptree_size t else sptree_size t - 1`,
   REWRITE_TAC[size_domain; domain_delete; lookup_NONE_domain] THEN
   SIMP_TAC[CARD_DELETE; FINITE_domain] THEN MESON_TAC[]);;
 
@@ -1563,7 +1566,7 @@ let spt_fold_def = cake_def
    (spt_fold f acc (BS t1 a t2) = spt_fold f (f a (spt_fold f acc t1)) t2)`;;
 
 let IMP_size_LESS_size = prove
- (`!x y:A spt. subspt x y /\ ~(domain x = domain y) ==> size x < size y`,
+ (`!x y:A spt. subspt x y /\ ~(domain x = domain y) ==> sptree_size x < sptree_size y`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[size_domain] THEN
   MATCH_MP_TAC CARD_PSUBSET THEN REWRITE_TAC[FINITE_domain; PSUBSET] THEN
   ASM_REWRITE_TAC[] THEN UNDISCH_TAC `subspt (x:A spt) y` THEN
@@ -1573,7 +1576,7 @@ let size_diff_less = prove
  (`!x:A spt y:B spt z:C spt t.
      domain z SUBSET domain y /\ t IN domain y /\
      ~(t IN domain z) /\ t IN domain x ==>
-     size (difference x y) < size (difference x z)`,
+     sptree_size (difference x y) < sptree_size (difference x z)`,
   REPEAT STRIP_TAC THEN MATCH_MP_TAC IMP_size_LESS_size THEN CONJ_TAC THENL
    [REWRITE_TAC[subspt_lookup; lookup_difference] THEN REPEAT GEN_TAC THEN
     COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT] THEN
@@ -1584,7 +1587,7 @@ let size_diff_less = prove
     DISCH_THEN(MP_TAC o SPEC `t:num`) THEN ASM_REWRITE_TAC[]]);;
 
 let inter_eq_LN = prove
- (`!x:A spt y:B spt. (inter x y = LN) <=> DISJOINT (domain x) (domain y)`,
+ (`!x:A spt y:B spt. (sptree_inter x y = LN) <=> DISJOINT (domain x) (domain y)`,
   SIMP_TAC[domain_empty; wf_inter; domain_inter; DISJOINT]);;
 
 (* ------------------------------------------------------------------------- *)
@@ -1626,18 +1629,18 @@ let lookup_list_to_num_set = prove
 
 let list_to_num_set_append = prove
  (`!l1 l2. list_to_num_set (APPEND l1 l2) =
-           union (list_to_num_set l1) (list_to_num_set l2)`,
+           sptree_union (list_to_num_set l1) (list_to_num_set l2)`,
   LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[APPEND; list_to_num_set_def; union_LN] THEN
   GEN_TAC THEN GEN_REWRITE_TAC LAND_CONV [insert_union] THEN
   ONCE_REWRITE_TAC[union_assoc] THEN REWRITE_TAC[union_insert_LN]);;
 
 let map_map_K = prove
- (`!t:A spt. map (K (a:C)) (map (f:A->B) t) = map (K a) t`,
+ (`!t:A spt. sptree_map (K (a:C)) (sptree_map (f:A->B) t) = sptree_map (K a) t`,
   MATCH_MP_TAC spt_INDUCT THEN REPEAT STRIP_TAC THEN
-  ASM_REWRITE_TAC[map_def; K_THM]);;
+  ASM_REWRITE_TAC[sptree_map_def; K_THM]);;
 
 let lookup_map_K = prove
- (`!t:A spt n. lookup n (map (K (x:B)) t) =
+ (`!t:A spt n. lookup n (sptree_map (K (x:B)) t) =
                if n IN domain t then SOME x else NONE`,
   REWRITE_TAC[lookup_map; domain_lookup] THEN REPEAT GEN_TAC THEN
   SPTAUX_CASES_TAC `lookup n (t:A spt)` THEN
@@ -1688,26 +1691,26 @@ let alist_insert_append = prove
   ASM_SIMP_TAC[alist_insert_def]);;
 
 let wf_LN = prove
- (`wf (LN:A spt)`,
-  REWRITE_TAC[wf_def]);;
+ (`sptree_wf (LN:A spt)`,
+  REWRITE_TAC[sptree_wf_def]);;
 
 let wf_fromList = prove
- (`wf (fromList (ls:A list))`,
+ (`sptree_wf (fromList (ls:A list))`,
   REWRITE_TAC[fromList_def] THEN
-  SUBGOAL_THEN `!ls:A list i t. wf t ==>
-     wf (SND (FOLDL (\(i,t) a. (i + 1,insert i a t)) (i,t) ls))`
+  SUBGOAL_THEN `!ls:A list i t. sptree_wf t ==>
+     sptree_wf (SND (FOLDL (\(i,t) a. (i + 1,insert i a t)) (i,t) ls))`
     (fun th -> MATCH_MP_TAC th THEN REWRITE_TAC[wf_LN]) THEN
   LIST_INDUCT_TAC THEN REWRITE_TAC[FOLDL] THEN
   ASM_SIMP_TAC[wf_insert]);;
 
 let wf_list_to_num_set = prove
- (`!ls. wf (list_to_num_set ls)`,
+ (`!ls. sptree_wf (list_to_num_set ls)`,
   LIST_INDUCT_TAC THEN ASM_SIMP_TAC[list_to_num_set_def; wf_insert; wf_LN]);;
 
 let size_list_to_num_set = prove
- (`size (list_to_num_set ls) = LENGTH (nub ls)`,
+ (`sptree_size (list_to_num_set ls) = LENGTH (list_nub ls)`,
   SPEC_TAC(`ls:num list`,`ls:num list`) THEN LIST_INDUCT_TAC THEN
-  ASM_REWRITE_TAC[list_to_num_set_def; nub_DEF; sptree_size_def; LENGTH;
+  ASM_REWRITE_TAC[list_to_num_set_def; list_nub_DEF; sptree_size_def; LENGTH;
                   size_insert; domain_list_to_num_set] THEN
   COND_CASES_TAC THEN ASM_REWRITE_TAC[LENGTH; ADD1]);;
 
@@ -1865,11 +1868,11 @@ let list_size_APPEND = prove
   ASM_REWRITE_TAC[APPEND; list_size] THEN ARITH_TAC);;
 
 let size_map = prove
- (`size (map (f:A->B) t) = size t`,
+ (`sptree_size (sptree_map (f:A->B) t) = sptree_size t`,
   REWRITE_TAC[size_domain; domain_map]);;
 
 let size_mapi = prove
- (`size (mapi (f:num->A->B) t) = size t`,
+ (`sptree_size (mapi (f:num->A->B) t) = sptree_size t`,
   REWRITE_TAC[size_domain; domain_mapi]);;
 
 let SUM_MAP_same_LE = prove
@@ -1887,8 +1890,8 @@ let SUM_MAP_same_LESS = prove
     MATCH_MP_TAC LET_ADD2 THEN ASM_SIMP_TAC[]]);;
 
 let size_fromList = prove
- (`size (fromList (ls:A list)) = LENGTH ls`,
-  REWRITE_TAC[size_domain; domain_fromList; count_DEF; CARD_NUMSEG_LT]);;
+ (`sptree_size (fromList (ls:A list)) = LENGTH ls`,
+  REWRITE_TAC[size_domain; domain_fromList; pred_set_count_DEF; CARD_NUMSEG_LT]);;
 
 (* ------------------------------------------------------------------------- *)
 (* toSortedAList: the association list in key order (breadth-first walk).   *)
@@ -1902,7 +1905,7 @@ let spts_to_alist_add_pause_def = new_definition
 (* termination by the length of xs, given explicitly (HOL4 finds it; the   *)
 (* measure search of cake_def took a minute here)                           *)
 let spts_to_alist_aux_def = cake_def_wf
-  `measure (\t:num#(num#A spt)list#(num#A)list#(num#A spt)list#(num#A spt)list#bool.
+  `MEASURE (\t:num#(num#A spt)list#(num#A)list#(num#A spt)list#(num#A spt)list#bool.
               LENGTH (FST (SND t)))`
   (REWRITE_TAC WF_REL_THMS THEN CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
    REWRITE_TAC[FST; SND] THEN REPEAT STRIP_TAC THEN
@@ -2003,7 +2006,7 @@ let spts_to_alist_aux_size = prove
 (* is defined with projections and the HOL4 equation is derived below.      *)
 
 let SPTAUX_spts_to_alist_eqn = cake_def_wf
-  `measure (\p:num#(num#A spt)list#(num#A)list.
+  `MEASURE (\p:num#(num#A spt)list#(num#A)list.
               SUM (MAP (spt_size (K 0) o SND) (FST (SND p))))`
   (REWRITE_TAC(FST::SND::WF_REL_THMS) THEN REPEAT GEN_TAC THEN
    STRIP_TAC THEN TRY GEN_TAC THEN
@@ -2079,19 +2082,19 @@ let fromList_fromAList = prove
 let num_set_tree_union_def = cake_def
   `(num_set_tree_union LN t2 = t2:(1 spt)spt) /\
    (num_set_tree_union (LS a) t =
-      spt_CASE t (LS a) (\b. LS (union a b)) (\t1 t2. BS t1 a t2)
-                 (\t1 b t2. BS t1 (union a b) t2)) /\
+      spt_CASE t (LS a) (\b. LS (sptree_union a b)) (\t1 t2. BS t1 a t2)
+                 (\t1 b t2. BS t1 (sptree_union a b) t2)) /\
    (num_set_tree_union (BN t1 t2) t =
       spt_CASE t (BN t1 t2) (\a. BS t1 a t2)
         (\t1' t2'. BN (num_set_tree_union t1 t1') (num_set_tree_union t2 t2'))
         (\t1' a t2'.
            BS (num_set_tree_union t1 t1') a (num_set_tree_union t2 t2'))) /\
    (num_set_tree_union (BS t1 a t2) t =
-      spt_CASE t (BS t1 a t2) (\b. BS t1 (union a b) t2)
+      spt_CASE t (BS t1 a t2) (\b. BS t1 (sptree_union a b) t2)
         (\t1' t2'.
            BS (num_set_tree_union t1 t1') a (num_set_tree_union t2 t2'))
         (\t1' b t2'.
-           BS (num_set_tree_union t1 t1') (union a b)
+           BS (num_set_tree_union t1 t1') (sptree_union a b)
               (num_set_tree_union t2 t2')))`;;
 
 let SPTAUX_EXISTS_lookup_P = prove
@@ -2111,7 +2114,7 @@ let SPTAUX_EXISTS_lookup_P = prove
 
 let domain_spt_fold_union = prove
  (`!tree:(A spt)spt y.
-     domain (spt_fold union y tree) =
+     domain (spt_fold sptree_union y tree) =
      domain y UNION
      {n | ?k aSet. lookup k tree = SOME aSet /\ n IN domain aSet}`,
   MATCH_MP_TAC spt_INDUCT THEN REPEAT STRIP_TAC THEN
@@ -2121,42 +2124,42 @@ let domain_spt_fold_union = prove
 
 let SPTAUX_closure_spt_size = prove
  (`!(reachable:1 spt) (tree:(1 spt)spt).
-     ~subspt (spt_fold union LN (inter tree reachable)) reachable
-     ==> size (difference (spt_fold union LN tree)
-                (union reachable (spt_fold union LN (inter tree reachable)))) <
-         size (difference (spt_fold union LN tree) reachable)`,
+     ~subspt (spt_fold sptree_union LN (sptree_inter tree reachable)) reachable
+     ==> sptree_size (difference (spt_fold sptree_union LN tree)
+                (sptree_union reachable (spt_fold sptree_union LN (sptree_inter tree reachable)))) <
+         sptree_size (difference (spt_fold sptree_union LN tree) reachable)`,
   REPEAT GEN_TAC THEN
   REWRITE_TAC[subspt_domain; SUBSET; NOT_FORALL_THM; NOT_IMP] THEN
   DISCH_THEN(X_CHOOSE_THEN `t:num` STRIP_ASSUME_TAC) THEN
   MATCH_MP_TAC size_diff_less THEN EXISTS_TAC `t:num` THEN
   ASM_REWRITE_TAC[domain_union; IN_UNION; SUBSET] THEN
   UNDISCH_TAC
-   `t IN domain (spt_fold union LN (inter (tree:(1 spt)spt) (reachable:1 spt)))` THEN
+   `t IN domain (spt_fold sptree_union LN (sptree_inter (tree:(1 spt)spt) (reachable:1 spt)))` THEN
   REWRITE_TAC[domain_spt_fold_union; domain_def; IN_UNION; NOT_IN_EMPTY;
               IN_ELIM_THM; lookup_inter_EQ] THEN
   MESON_TAC[]);;
 
 let closure_spt_def = cake_def_wf
-  `measure (\p:(1 spt)#((1 spt)spt).
-              size (difference (spt_fold union LN (SND p)) (FST p)))`
+  `MEASURE (\p:(1 spt)#((1 spt)spt).
+              sptree_size (difference (spt_fold sptree_union LN (SND p)) (FST p)))`
   (REWRITE_TAC(FST::SND::WF_REL_THMS) THEN REPEAT GEN_TAC THEN
    DISCH_THEN(ASSUME_TAC o MATCH_MP SPTAUX_closure_spt_size) THEN
    GEN_TAC THEN POP_ASSUM MP_TAC THEN ARITH_TAC)
   `closure_spt (reachable:1 spt) (tree:(1 spt)spt) =
-     let sets = inter tree reachable in
-     let nodes = spt_fold union LN sets in
+     let sets = sptree_inter tree reachable in
+     let nodes = spt_fold sptree_union LN sets in
      if subspt nodes reachable then reachable
-     else closure_spt (union reachable nodes) tree`;;
+     else closure_spt (sptree_union reachable nodes) tree`;;
 
 
 (* the kit stores no induction theorem for closure_spt: proved directly *)
 
 let closure_spt_ind = prove
  (`!P. (!(reachable:1 spt) (tree:(1 spt)spt).
-          (!sets nodes. sets = inter tree reachable /\
-                        nodes = spt_fold union LN sets /\
+          (!sets nodes. sets = sptree_inter tree reachable /\
+                        nodes = spt_fold sptree_union LN sets /\
                         ~subspt nodes reachable
-                        ==> P (union reachable nodes) tree)
+                        ==> P (sptree_union reachable nodes) tree)
           ==> P reachable tree)
        ==> !v v1. P v v1`,
   GEN_TAC THEN DISCH_THEN(LABEL_TAC "H") THEN
@@ -2166,11 +2169,11 @@ let closure_spt_ind = prove
                REWRITE_TAC[]) THEN
   MATCH_MP_TAC(REWRITE_RULE[WF_IND]
     (ISPEC `\p:(1 spt)#((1 spt)spt).
-              size (difference (spt_fold union LN (SND p)) (FST p))`
+              sptree_size (difference (spt_fold sptree_union LN (SND p)) (FST p))`
            WF_MEASURE)) THEN
   X_GEN_TAC `p:(1 spt)#((1 spt)spt)` THEN DISCH_THEN(LABEL_TAC "IH") THEN
   USE_THEN "H" MATCH_MP_TAC THEN REPEAT STRIP_TAC THEN
-  USE_THEN "IH" (MP_TAC o SPEC `(union (FST (p:(1 spt)#((1 spt)spt))) nodes,
+  USE_THEN "IH" (MP_TAC o SPEC `(sptree_union (FST (p:(1 spt)#((1 spt)spt))) nodes,
                                 SND p)`) THEN
   REWRITE_TAC[MEASURE] THEN DISCH_THEN MATCH_MP_TAC THEN RVEQ_TAC THEN
   ASM_SIMP_TAC[SPTAUX_closure_spt_size]);;
@@ -2189,11 +2192,11 @@ let num_set_tree_union_empty = prove
   REWRITE_TAC[num_set_tree_union_def; spt_CASE; spt_distinct]);;
 
 let wf_num_set_tree_union = prove
- (`!t1 t2 (result:(1 spt)spt). wf t1 /\ wf t2 ==> wf (num_set_tree_union t1 t2)`,
+ (`!t1 t2 (result:(1 spt)spt). sptree_wf t1 /\ sptree_wf t2 ==> sptree_wf (num_set_tree_union t1 t2)`,
   MATCH_MP_TAC spt_INDUCT THEN REPEAT STRIP_TAC THEN
   SPTAUX_CASES_TAC `t2:(1 spt)spt` THEN
-  RULE_ASSUM_TAC(REWRITE_RULE[wf_def]) THEN
-  ASM_SIMP_TAC[num_set_tree_union_def; spt_CASE; wf_def;
+  RULE_ASSUM_TAC(REWRITE_RULE[sptree_wf_def]) THEN
+  ASM_SIMP_TAC[num_set_tree_union_def; spt_CASE; sptree_wf_def;
                num_set_tree_union_empty] THEN
   ASM_MESON_TAC[]);;
 
@@ -2215,7 +2218,7 @@ let lookup_num_set_tree_union = prove
  (`!t1 t2 n.
      lookup n (num_set_tree_union t1 t2) =
      option_CASE (lookup n t1) (lookup n t2)
-       (\x. option_CASE (lookup n t2) (SOME x) (\y. SOME (union x y)))`,
+       (\x. option_CASE (lookup n t2) (SOME x) (\y. SOME (sptree_union x y)))`,
   MATCH_MP_TAC spt_INDUCT THEN REPEAT STRIP_TAC THEN
   SPTAUX_CASES_TAC `t2:(1 spt)spt` THEN SPTAUX_BITS_TAC `n:num` THEN
   ASM_REWRITE_TAC[num_set_tree_union_def; spt_CASE; lookup_rwts;
@@ -2238,23 +2241,23 @@ let SPTAUX_FORALL_lookup_P = prove
 
 let wf_spt_fold_union = prove
  (`!tree:(A spt)spt y.
-     (!n x. (lookup n tree = SOME x) ==> wf x) /\ wf y
-     ==> wf (spt_fold union y tree)`,
+     (!n x. (lookup n tree = SOME x) ==> sptree_wf x) /\ sptree_wf y
+     ==> sptree_wf (spt_fold sptree_union y tree)`,
   MATCH_MP_TAC spt_INDUCT THEN
   REWRITE_TAC[spt_fold_def; SPTAUX_FORALL_lookup_P] THEN
   REPEAT STRIP_TAC THEN ASM_MESON_TAC[wf_union]);;
 
 let wf_closure_spt = prove
  (`!reachable tree.
-     wf reachable /\ (!n x. lookup n tree = SOME x ==> wf x)
-     ==> wf (closure_spt reachable tree)`,
+     sptree_wf reachable /\ (!n x. lookup n tree = SOME x ==> sptree_wf x)
+     ==> sptree_wf (closure_spt reachable tree)`,
   MATCH_MP_TAC closure_spt_ind THEN REPEAT GEN_TAC THEN
   DISCH_TAC THEN STRIP_TAC THEN ONCE_REWRITE_TAC[closure_spt_def] THEN
   REWRITE_TAC[LET_DEF; LET_END_DEF] THEN COND_CASES_TAC THEN
   ASM_REWRITE_TAC[] THEN
   FIRST_X_ASSUM(MP_TAC o SPECL
-    [`inter (tree:(1 spt)spt) (reachable:1 spt)`;
-     `spt_fold union LN (inter (tree:(1 spt)spt) (reachable:1 spt))`]) THEN
+    [`sptree_inter (tree:(1 spt)spt) (reachable:1 spt)`;
+     `spt_fold sptree_union LN (sptree_inter (tree:(1 spt)spt) (reachable:1 spt))`]) THEN
   ASM_REWRITE_TAC[] THEN DISCH_THEN MATCH_MP_TAC THEN
   ASM_REWRITE_TAC[] THEN MATCH_MP_TAC wf_union THEN ASM_REWRITE_TAC[] THEN
   MATCH_MP_TAC wf_spt_fold_union THEN REWRITE_TAC[wf_LN; lookup_inter_EQ] THEN
@@ -2311,7 +2314,7 @@ let closure_spt_lemma = prove
      (fun th -> ASM_MESON_TAC[th; is_reachable_def; SUBSET]) THEN
     MATCH_MP_TAC rtc_is_adjacent THEN
     UNDISCH_TAC
-     `subspt (spt_fold union LN (inter (tree:(1 spt)spt) (reachable:1 spt)))
+     `subspt (spt_fold sptree_union LN (sptree_inter (tree:(1 spt)spt) (reachable:1 spt)))
              reachable` THEN
     REWRITE_TAC[subspt_domain; SUBSET; domain_spt_fold_union; domain_def;
                 IN_UNION; NOT_IN_EMPTY; IN_ELIM_THM; is_adjacent_def;
@@ -2320,15 +2323,15 @@ let closure_spt_lemma = prove
     ALL_TAC] THEN
   STRIP_TAC THEN
   FIRST_X_ASSUM(MP_TAC o SPECL
-    [`inter (tree:(1 spt)spt) (reachable:1 spt)`;
-     `spt_fold union LN (inter (tree:(1 spt)spt) (reachable:1 spt))`]) THEN
+    [`sptree_inter (tree:(1 spt)spt) (reachable:1 spt)`;
+     `spt_fold sptree_union LN (sptree_inter (tree:(1 spt)spt) (reachable:1 spt))`]) THEN
   ASM_REWRITE_TAC[] THEN DISCH_THEN MATCH_MP_TAC THEN
   ASM_REWRITE_TAC[domain_union] THEN CONJ_TAC THENL
    [ASM SET_TAC[]; ALL_TAC] THEN
   X_GEN_TAC `k:num` THEN REWRITE_TAC[IN_UNION] THEN
   STRIP_TAC THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
   UNDISCH_TAC
-   `k IN domain (spt_fold union LN (inter (tree:(1 spt)spt) (reachable:1 spt)))` THEN
+   `k IN domain (spt_fold sptree_union LN (sptree_inter (tree:(1 spt)spt) (reachable:1 spt)))` THEN
   REWRITE_TAC[domain_spt_fold_union; domain_def; IN_UNION; NOT_IN_EMPTY;
               IN_ELIM_THM; lookup_inter_alt] THEN
   STRIP_TAC THEN
@@ -2362,6 +2365,6 @@ let _ = cake_add_simps
    domain_inter; domain_insert; domain_difference; domain_delete; mapi0_def;
    LENGTH_toAList; wf_mk_wf; wf_mk_id; lookup_mk_wf; domain_mk_wf; mk_wf_eq;
    inter_eq; union_mk_wf; inter_mk_wf; insert_mk_wf; delete_mk_wf; union_LN;
-   inter_LN; fromAList_def; map_def; domain_map; map_LN; wf_map; subspt_refl;
+   inter_LN; fromAList_def; sptree_map_def; domain_map; map_LN; wf_map; subspt_refl;
    subspt_LN; subspt_union; domain_mapi; map_map_K; wf_LN; wf_fromList;
    wf_list_to_num_set; size_map; size_mapi; size_fromList];;

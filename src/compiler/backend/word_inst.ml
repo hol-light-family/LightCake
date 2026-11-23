@@ -5,7 +5,7 @@
 (* Maximal Munch strategy.                                                   *)
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
-(* - Names as notes/naming/names.tsv says: the wordLang constructors wl_..., *)
+(* - Names as doc/names.tsv says: the wordLang constructors wl_...,          *)
 (*   the asm constructors asm_Add, asm_Load, asm_Shift, ..., and             *)
 (*   word_inst_is_const (HOL4 is_const).  HOL4 brings wordLang's Shift to    *)
 (*   the front of its overloads: wl_Shift on expressions, asm_Shift inside   *)
@@ -125,7 +125,7 @@ let WORDP1AUX_TC_TAC : tactic =
 (* the fourth clause: first pull all the inner expressions, then pull at  *)
 (* the topmost                                                              *)
 
-let pull_exp_def = sem1aux_def_wf `measure (wl_exp_size (\x:A. 0))` WORDP1AUX_TC_TAC
+let pull_exp_def = sem1aux_def_wf `MEASURE (wl_exp_size (\x:A. 0))` WORDP1AUX_TC_TAC
   `(pull_exp (wl_Op asm_Sub ls) =
       let new_ls = MAP pull_exp ls in
       convert_sub new_ls) /\
@@ -197,7 +197,7 @@ let is_Lookup_CurrHeap_pmatch = prove
 (* The last clause makes it total.                                           *)
 
 let inst_select_exp_def = sem1aux_def_wf
-  `measure (\x:(A)asm_config#num#num#(A)wl_exp.
+  `MEASURE (\x:(A)asm_config#num#num#(A)wl_exp.
               wl_exp_size (\x:A. 0) (SND (SND (SND x))))`
   WORDP1AUX_TC_TAC
   `(inst_select_exp (c:(A)asm_config) (tar:num) (temp:num) (wl_Load exp) =

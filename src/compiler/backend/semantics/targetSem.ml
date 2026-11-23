@@ -143,7 +143,7 @@ let is_valid_mapped_write_def = cake_def
 (* the kit's own search and gives the induction theorem                     *)
 
 let target_evaluate_def = cake_def_wf
-  `measure (\x:(A,B,C)machine_config#(FFI)ffi_state#num#B. FST (SND (SND x)))`
+  `MEASURE (\x:(A,B,C)machine_config#(FFI)ffi_state#num#B. FST (SND (SND x)))`
   TERM_TAC
   `target_evaluate (mc:(A,B,C)machine_config) (ffi:(FFI)ffi_state) k (ms:B) =
      if k = 0 then (target_TimeOut,ms,ffi)

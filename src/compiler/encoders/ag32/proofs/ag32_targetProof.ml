@@ -213,7 +213,7 @@ let AG32AUX_ENCODE1_SING = prove
 let AG32AUX_ENC_RWTS = [ag32_enc_def; AG32AUX_ENCODE1_SING; ag32_constant_def;
   ag32_jump_constant_def; APPEND; LENGTH; ag32_bop_def; ag32_sh_def; ag32_cmp_def];;
 
-let AG32AUX_ASM_RWTS = [asm_def; asmSem_inst_def; asm_upd_pc_def; asm_upd_reg_def;
+let AG32AUX_ASM_RWTS = [asm_asm_def; asmSem_inst_def; asm_upd_pc_def; asm_upd_reg_def;
   asm_arith_upd_def; asm_binop_upd_def; read_reg_def; asm_reg_imm_def; asm_word_shift_def;
   asm_assert_def; jump_to_offset_def; asm_word_cmp_def; asm_addr_def; asm_mem_op_def;
   asm_mem_load_def; asm_mem_store_def; asm_read_mem_def; asm_upd_mem_def];;
@@ -751,7 +751,7 @@ let AG32AUX_SIMPLE_FACT th =
 let AG32AUX_ASM_TAC =
   let state_ty = `:(32)asm_state` in
   FIRST_X_ASSUM(fun th -> if is_eq(concl th) &&
-     (try fst(dest_const(fst(strip_comb(lhs(concl th))))) = "asm" with Failure _ -> false)
+     (try fst(dest_const(fst(strip_comb(lhs(concl th))))) = "asm_asm" with Failure _ -> false)
      then MP_TAC th else failwith "") THEN
   CONV_TAC(LAND_CONV(LAND_CONV(CASE_REWRITE_CONV AG32AUX_ASM_RWTS THENC
     DEPTH_CONV (DIMINDEX_CONV ORELSEC NUM_RED_CONV ORELSEC LOG2_CONV)))) THEN

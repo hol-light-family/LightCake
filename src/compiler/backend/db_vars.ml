@@ -55,7 +55,7 @@ let db_to_set_acc_def = cake_def
       db_to_set_acc n v1 (db_to_set_acc n v2 s))`;;
 
 let wf_db_to_set_acc = prove
- (`!s n a. wf a ==> wf (db_to_set_acc n s a)`,
+ (`!s n a. sptree_wf a ==> sptree_wf (db_to_set_acc n s a)`,
   MATCH_MP_TAC db_var_set_INDUCT THEN
   ASM_SIMP_TAC[db_to_set_acc_def; wf_insert] THEN
   REPEAT STRIP_TAC THEN COND_CASES_TAC THEN ASM_SIMP_TAC[wf_insert]);;
@@ -64,8 +64,8 @@ let db_to_set_def = cake_def
   `db_to_set db = db_to_set_acc 0 db LN`;;
 
 let wf_db_to_set = prove
- (`!db. wf (db_to_set db)`,
-  RW[db_to_set_def; wf_db_to_set_acc; wf_def]);;
+ (`!db. sptree_wf (db_to_set db)`,
+  RW[db_to_set_def; wf_db_to_set_acc; sptree_wf_def]);;
 
 let vars_to_list_def = cake_def
   `vars_to_list db = MAP FST (toAList (db_to_set db))`;;

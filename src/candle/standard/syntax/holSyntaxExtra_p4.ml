@@ -14,33 +14,10 @@ type_invention_error := true;;
 
 (* Equations *)
 
-let CSYNAUX_P4_has_type_Var = prove
- (`!n ty ty'. hol_Var n ty has_type ty' <=> ty' = ty`,
-  ONCE_REWRITE_TAC[has_type_cases] THEN
-  REWRITE_TAC[injectivity "hol_term"; distinctness "hol_term"] THEN MESON_TAC[]);;
-
-let CSYNAUX_P4_has_type_Const = prove
- (`!n ty ty'. hol_Const n ty has_type ty' <=> ty' = ty`,
-  ONCE_REWRITE_TAC[has_type_cases] THEN
-  REWRITE_TAC[injectivity "hol_term"; distinctness "hol_term"] THEN MESON_TAC[]);;
-
-let CSYNAUX_P4_has_type_Comb = prove
- (`!s t ty. hol_Comb s t has_type ty <=>
-            ?dty. s has_type Tyapp (implode "fun") [dty; ty] /\ t has_type dty`,
-  REPEAT GEN_TAC THEN GEN_REWRITE_TAC LAND_CONV [has_type_cases] THEN
-  REWRITE_TAC[injectivity "hol_term"; distinctness "hol_term"] THEN MESON_TAC[]);;
-
-let CSYNAUX_P4_has_type_Abs = prove
- (`!v t ty. hol_Abs v t has_type ty <=>
-            ?n dty rty. v = hol_Var n dty /\ ty = Tyapp (implode "fun") [dty; rty] /\
-                        t has_type rty`,
-  REPEAT GEN_TAC THEN GEN_REWRITE_TAC LAND_CONV [has_type_cases] THEN
-  REWRITE_TAC[injectivity "hol_term"; distinctness "hol_term"] THEN MESON_TAC[]);;
-
 let EQUATION_HAS_TYPE_BOOL = prove
  (`!s t. (s === t) has_type (Tyapp (implode "bool") []) <=>
          welltyped s /\ welltyped t /\ typeof s = typeof t`,
-  REWRITE_TAC[equation_def; CSYNAUX_P4_has_type_Comb; CSYNAUX_P4_has_type_Const;
+  REWRITE_TAC[equation_def; CSYNAUX_P3_has_type_Comb; CSYNAUX_P3_has_type_Const;
               injectivity "hol_type"; CONS_11] THEN
   MESON_TAC[WELLTYPED_LEMMA; WELLTYPED]);;
 
@@ -91,9 +68,9 @@ let type_ok_TYPE_SUBST = prove
 
 let type_ok_TYPE_SUBST_imp = prove
  (`!s tyin ty. type_ok s (TYPE_SUBST tyin ty)
-               ==> !x. MEM x (tyvars ty) ==> type_ok s (TYPE_SUBST tyin (Tyvar x))`,
+               ==> !x. MEM x (hol_tyvars ty) ==> type_ok s (TYPE_SUBST tyin (Tyvar x))`,
   GEN_TAC THEN MATCH_MP_TAC TYPE_SUBST_ind THEN
-  REWRITE_TAC[tyvars_def; MEM_FOLDR_LIST_UNION; MEM; type_ok_def;
+  REWRITE_TAC[hol_tyvars_def; MEM_FOLDR_LIST_UNION; MEM; type_ok_def;
               TYPE_SUBST_def] THEN
   CONJ_TAC THENL [MESON_TAC[]; ALL_TAC] THEN
   REPEAT GEN_TAC THEN DISCH_TAC THEN
@@ -196,7 +173,7 @@ let term_ok_VSUBST = prove
     SIMP[hol_term_ok_def; injectivity "hol_term"] THEN ASM_REWRITE_TAC[] THEN
     FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[MEM; MEM_FILTER; PAIR_EQ] THEN
     REPEAT STRIP_TAC THEN
-    ASM_SIMP_TAC[CSYNAUX_P4_has_type_Var; hol_term_ok_def; injectivity "hol_term"] THEN
+    ASM_SIMP_TAC[CSYNAUX_P3_has_type_Var; hol_term_ok_def; injectivity "hol_term"] THEN
     ASM_MESON_TAC[]]);;
 
 let CSYNAUX_P4_INST_CORE_Abs_Var = prove
@@ -313,7 +290,7 @@ let CSYNAUX_P4_term_ok_INST_CORE = prove
      [MATCH_MP_TAC term_ok_VSUBST THEN ASM_REWRITE_TAC[MEM; PAIR_EQ] THEN
       REPEAT STRIP_TAC THEN
       ASM_REWRITE_TAC[injectivity "hol_term"; hol_term_ok_def;
-                      CSYNAUX_P4_has_type_Var] THEN
+                      CSYNAUX_P3_has_type_Var] THEN
       MESON_TAC[];
       ASM_MESON_TAC[]]]);;
 
@@ -886,7 +863,7 @@ let CSYNAUX_P4_INST_CORE_dbINST = prove
   SUBGOAL_THEN `welltyped tv` ASSUME_TAC THENL
    [EXPAND_TAC "tv" THEN MATCH_MP_TAC VSUBST_WELLTYPED THEN
     ASM_REWRITE_TAC[MEM; PAIR_EQ] THEN REPEAT STRIP_TAC THEN
-    ASM_REWRITE_TAC[CSYNAUX_P4_has_type_Var] THEN MESON_TAC[];
+    ASM_REWRITE_TAC[CSYNAUX_P3_has_type_Var] THEN MESON_TAC[];
     ALL_TAC] THEN
   MP_TAC(ISPECL [`hol_db tv`; `(x':mlstring,bty:hol_type)`; `0`;
                  `tyin:(hol_type#hol_type)list`] dbINST_bind) THEN

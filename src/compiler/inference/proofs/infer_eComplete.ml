@@ -164,12 +164,12 @@ let not_t_oc = prove
 
 let FDOM_extend = prove
  (`!s next_uvar (n:infer_t).
-     FDOM s = count next_uvar ==> FDOM (s |+ (next_uvar,n)) = count (SUC next_uvar)`,
+     FDOM s = pred_set_count next_uvar ==> FDOM (s |+ (next_uvar,n)) = pred_set_count (SUC next_uvar)`,
   REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[FDOM_FUPDATE; EXTENSION; IN_INSERT; IN_COUNT] THEN
   ARITH_TAC);;
 let pure_add_constraints_exists = prove
  (`!s ts next_uvar lim.
-     t_wfs s /\ FDOM s = count next_uvar /\ ALL (check_freevars lim []) ts
+     t_wfs s /\ FDOM s = pred_set_count next_uvar /\ ALL (check_freevars lim []) ts
      ==> let tys = MAP (\n. next_uvar + n) (COUNT_LIST (LENGTH ts)) in
          let targs = MAP unconvert_t ts in
          let constraints = ZIP (MAP Infer_Tuvar tys) targs in
@@ -178,7 +178,7 @@ let pure_add_constraints_exists = prove
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   SUBGOAL_THEN
    `!ts s next_uvar lim.
-      t_wfs s /\ FDOM s = count next_uvar /\ ALL (check_freevars lim []) ts
+      t_wfs s /\ FDOM s = pred_set_count next_uvar /\ ALL (check_freevars lim []) ts
       ==> pure_add_constraints s
             (ZIP (MAP Infer_Tuvar (MAP (\n. next_uvar + n) (COUNT_LIST (LENGTH ts))))
                  (MAP unconvert_t ts))
@@ -571,14 +571,14 @@ let extend_one_props = prove
      t_wfs (infer_st_subst st) /\ t_wfs s /\
      pure_add_constraints (infer_st_subst st) constraints s /\
      (!uv. uv IN FDOM s ==> check_t n {} (t_walkstar s (Infer_Tuvar uv))) /\
-     check_freevars n [] t /\ FDOM s = count (infer_st_next_uvar st)
+     check_freevars n [] t /\ FDOM s = pred_set_count (infer_st_next_uvar st)
      ==> let s' = s |++ [(infer_st_next_uvar st,unconvert_t t)] in
          t_wfs s' /\
          pure_add_constraints s [Infer_Tuvar (infer_st_next_uvar st),unconvert_t t] s' /\
          s SUBMAP s' /\ infer_st_subst st SUBMAP s' /\
          pure_add_constraints (infer_st_subst st)
            (APPEND constraints [(Infer_Tuvar (infer_st_next_uvar st),unconvert_t t)]) s' /\
-         FDOM s' = count (infer_st_next_uvar st + 1) /\
+         FDOM s' = pred_set_count (infer_st_next_uvar st + 1) /\
          t_walkstar s' (Infer_Tuvar (infer_st_next_uvar st)) = unconvert_t t /\
          !uv. uv IN FDOM s' ==> check_t n {} (t_walkstar s' (Infer_Tuvar uv))`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
@@ -601,7 +601,7 @@ let extend_one_props = prove
   SUBGOAL_THEN `infer_st_subst st SUBMAP (s |++ [(u,unconvert_t t)])` ASSUME_TAC THENL
    [ASM_MESON_TAC[SUBMAP_TRANS]; ALL_TAC] THEN
   ASM_REWRITE_TAC[] THEN
-  SUBGOAL_THEN `FDOM (s |++ [(u,unconvert_t t)]) = count (u + 1)` ASSUME_TAC THENL
+  SUBGOAL_THEN `FDOM (s |++ [(u,unconvert_t t)]) = pred_set_count (u + 1)` ASSUME_TAC THENL
    [ASM_REWRITE_TAC[FDOM_FUPDATE_LIST; MAP; set_of_list; EXTENSION; IN_UNION; IN_COUNT;
                     IN_INSERT; NOT_IN_EMPTY] THEN ARITH_TAC;
     ALL_TAC] THEN
@@ -658,7 +658,7 @@ let extend_multi_props = prove
      t_wfs (infer_st_subst st) /\ t_wfs s /\
      pure_add_constraints (infer_st_subst st) constraints s /\
      (!uv. uv IN FDOM s ==> check_t n {} (t_walkstar s (Infer_Tuvar uv))) /\
-     ALL (check_freevars n []) ts /\ FDOM s = count (infer_st_next_uvar st)
+     ALL (check_freevars n []) ts /\ FDOM s = pred_set_count (infer_st_next_uvar st)
      ==> let tys = MAP (\n. infer_st_next_uvar st + n) (COUNT_LIST (LENGTH ts)) in
          let targs = MAP unconvert_t ts in
          let new_constraints = ZIP (MAP Infer_Tuvar tys) targs in
@@ -667,7 +667,7 @@ let extend_multi_props = prove
          pure_add_constraints s new_constraints s' /\
          pure_add_constraints (infer_st_subst st) (APPEND constraints new_constraints) s' /\
          t_wfs s' /\ s SUBMAP s' /\ infer_st_subst st SUBMAP s' /\
-         FDOM s' = count (infer_st_next_uvar st + LENGTH ts) /\
+         FDOM s' = pred_set_count (infer_st_next_uvar st + LENGTH ts) /\
          (!n. n < LENGTH ts
               ==> t_walkstar s' (Infer_Tuvar (infer_st_next_uvar st + n)) = EL n targs) /\
          (!uv. uv IN FDOM s' ==> check_t n {} (t_walkstar s' (Infer_Tuvar uv)))`,
@@ -701,7 +701,7 @@ let extend_multi_props = prove
         check (fun th -> INFER1AUX_ec_is_app "ALL" (concl th))) THEN
       MATCH_MP_TAC MEM_EL THEN ASM_REWRITE_TAC[]];
     ALL_TAC] THEN
-  SUBGOAL_THEN `FDOM ((s:(num,infer_t)fmap) |++ ext) = count (u + LENGTH (ts:t list))` ASSUME_TAC THENL
+  SUBGOAL_THEN `FDOM ((s:(num,infer_t)fmap) |++ ext) = pred_set_count (u + LENGTH (ts:t list))` ASSUME_TAC THENL
    [EXPAND_TAC "ext" THEN
     ASM_SIMP_TAC[FDOM_FUPDATE_LIST; MAP_FST_ZIP; LENGTH_MAP; LENGTH_COUNT_LIST] THEN
     REWRITE_TAC[EXTENSION; IN_UNION; IN_COUNT; IN_SET_OF_LIST; MEM_MAP; MEM_COUNT_LIST] THEN
@@ -736,11 +736,11 @@ let extend_multi_props = prove
 (* completeness of a list of constraints that the completion satisfies *)
 let INFER1AUX_cs_core = prove
  (`!n m s0 cs s CS.
-     sub_completion n m s0 cs s /\ FDOM s = count m /\ t_wfs s0 /\
+     sub_completion n m s0 cs s /\ FDOM s = pred_set_count m /\ t_wfs s0 /\
      ALL (\(x,y). t_walkstar s x = t_walkstar s y) CS
      ==> ?s1 si cs'.
            pure_add_constraints s0 CS s1 /\ sub_completion n m s1 cs' si /\
-           t_compat s si /\ FDOM s1 SUBSET count m /\ FDOM si = count m /\
+           t_compat s si /\ FDOM s1 SUBSET pred_set_count m /\ FDOM si = pred_set_count m /\
            (!x. t_walkstar si x = t_walkstar s x)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[sub_completion_def] THEN STRIP_TAC THEN
   SUBGOAL_THEN `t_wfs (s:(num,infer_t)fmap)` ASSUME_TAC THENL
@@ -772,13 +772,13 @@ let INFER1AUX_cs_core = prove
 (* the same, after binding the next uvar m to a ground type *)
 let INFER1AUX_cs_core1 = prove
  (`!n m s0 cs s CS tt.
-     sub_completion n m s0 cs s /\ FDOM s = count m /\ t_wfs s0 /\
+     sub_completion n m s0 cs s /\ FDOM s = pred_set_count m /\ t_wfs s0 /\
      check_freevars n [] tt /\
      ALL (\(x,y). t_walkstar (s |++ [(m,unconvert_t tt)]) x =
                   t_walkstar (s |++ [(m,unconvert_t tt)]) y) CS
      ==> ?s1 si cs'.
            pure_add_constraints s0 CS s1 /\ sub_completion n (m + 1) s1 cs' si /\
-           t_compat s si /\ FDOM s1 SUBSET count (m + 1) /\ FDOM si = count (m + 1) /\
+           t_compat s si /\ FDOM s1 SUBSET pred_set_count (m + 1) /\ FDOM si = pred_set_count (m + 1) /\
            (!x. t_walkstar si x = t_walkstar (s |++ [(m,unconvert_t tt)]) x) /\
            t_walkstar (s |++ [(m,unconvert_t tt)]) (Infer_Tuvar m) = unconvert_t tt /\
            s SUBMAP (s |++ [(m,unconvert_t tt)]) /\ t_wfs (s |++ [(m,unconvert_t tt)])`,
@@ -863,8 +863,8 @@ let constrain_op_complete_simple_helper = prove
      type_op op ts t /\
      MAP (convert_t o t_walkstar s) ts' = ts /\
      FST (op_simple_constraints op) /\
-     FDOM (infer_st_subst st) SUBSET count (infer_st_next_uvar st) /\
-     FDOM s = count (infer_st_next_uvar st) /\
+     FDOM (infer_st_subst st) SUBSET pred_set_count (infer_st_next_uvar st) /\
+     FDOM s = pred_set_count (infer_st_next_uvar st) /\
      t_wfs (infer_st_subst st) /\
      ALL (check_t n {}) (MAP (t_walkstar s) ts') /\
      check_freevars n [] t
@@ -927,7 +927,7 @@ let constrain_op_complete_simple_helper = prove
 let INFER1AUX_coc0 = prove
  (`!n st constraints s CS R (run:(infer_t,locs option#mlstring)exc#infer_st) t.
      sub_completion n (infer_st_next_uvar st) (infer_st_subst st) constraints s /\
-     FDOM s = count (infer_st_next_uvar st) /\ t_wfs (infer_st_subst st) /\
+     FDOM s = pred_set_count (infer_st_next_uvar st) /\ t_wfs (infer_st_subst st) /\
      ALL (\(x,y). t_walkstar s x = t_walkstar s y) CS /\
      (!s1. pure_add_constraints (infer_st_subst st) CS s1
            ==> run = (M_success R,infer_st_subst_fupd (K s1) st)) /\
@@ -936,8 +936,8 @@ let INFER1AUX_coc0 = prove
            run = (M_success t',st') /\
            sub_completion n (infer_st_next_uvar st') (infer_st_subst st') constraints' s' /\
            t_compat s s' /\
-           FDOM (infer_st_subst st') SUBSET count (infer_st_next_uvar st') /\
-           FDOM s' = count (infer_st_next_uvar st') /\
+           FDOM (infer_st_subst st') SUBSET pred_set_count (infer_st_next_uvar st') /\
+           FDOM s' = pred_set_count (infer_st_next_uvar st') /\
            t = convert_t (t_walkstar s' t')`,
   REPEAT STRIP_TAC THEN
   MP_TAC(ISPECL [`n:num`; `infer_st_next_uvar st`; `infer_st_subst st`;
@@ -953,7 +953,7 @@ let INFER1AUX_coc0 = prove
 let INFER1AUX_coc1 = prove
  (`!n st constraints s CS R (run:(infer_t,locs option#mlstring)exc#infer_st) tt t.
      sub_completion n (infer_st_next_uvar st) (infer_st_subst st) constraints s /\
-     FDOM s = count (infer_st_next_uvar st) /\ t_wfs (infer_st_subst st) /\
+     FDOM s = pred_set_count (infer_st_next_uvar st) /\ t_wfs (infer_st_subst st) /\
      check_freevars n [] tt /\
      ALL (\(x,y). t_walkstar (s |++ [(infer_st_next_uvar st,unconvert_t tt)]) x =
                   t_walkstar (s |++ [(infer_st_next_uvar st,unconvert_t tt)]) y) CS /\
@@ -966,8 +966,8 @@ let INFER1AUX_coc1 = prove
            run = (M_success t',st') /\
            sub_completion n (infer_st_next_uvar st') (infer_st_subst st') constraints' s' /\
            t_compat s s' /\
-           FDOM (infer_st_subst st') SUBSET count (infer_st_next_uvar st') /\
-           FDOM s' = count (infer_st_next_uvar st') /\
+           FDOM (infer_st_subst st') SUBSET pred_set_count (infer_st_next_uvar st') /\
+           FDOM s' = pred_set_count (infer_st_next_uvar st') /\
            t = convert_t (t_walkstar s' t')`,
   REPEAT STRIP_TAC THEN
   MP_TAC(ISPECL [`n:num`; `infer_st_next_uvar st`; `infer_st_subst st`;
@@ -1022,7 +1022,7 @@ let INFER1AUX_COC_RUN_TAC : tactic =
 
 let INFER1AUX_ext_facts = prove
  (`!n m s tt.
-     t_wfs s /\ FDOM s = count m /\
+     t_wfs s /\ FDOM s = pred_set_count m /\
      (!uv. uv IN FDOM s ==> check_t n {} (t_walkstar s (Infer_Tuvar uv))) /\
      check_freevars n [] tt
      ==> t_wfs (s |++ [(m,unconvert_t tt)]) /\ s SUBMAP (s |++ [(m,unconvert_t tt)]) /\
@@ -1207,8 +1207,8 @@ let constrain_op_complete = prove
  (`!op ts t st constraints s ts' l n.
      type_op op ts t /\
      sub_completion n (infer_st_next_uvar st) (infer_st_subst st) constraints s /\
-     FDOM (infer_st_subst st) SUBSET count (infer_st_next_uvar st) /\
-     FDOM s = count (infer_st_next_uvar st) /\
+     FDOM (infer_st_subst st) SUBSET pred_set_count (infer_st_next_uvar st) /\
+     FDOM s = pred_set_count (infer_st_next_uvar st) /\
      t_wfs (infer_st_subst st) /\
      MAP (convert_t o t_walkstar s) ts' = ts /\
      ALL (check_t n {}) (MAP (t_walkstar s) ts') /\
@@ -1217,8 +1217,8 @@ let constrain_op_complete = prove
            constrain_op l op ts' st = (M_success t',st') /\
            sub_completion n (infer_st_next_uvar st') (infer_st_subst st') constraints' s' /\
            t_compat s s' /\
-           FDOM (infer_st_subst st') SUBSET count (infer_st_next_uvar st') /\
-           FDOM s' = count (infer_st_next_uvar st') /\
+           FDOM (infer_st_subst st') SUBSET pred_set_count (infer_st_next_uvar st') /\
+           FDOM s' = pred_set_count (infer_st_next_uvar st') /\
            t = convert_t (t_walkstar s' t')`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   ASM_CASES_TAC `FST (op_simple_constraints op)` THENL
@@ -1331,7 +1331,7 @@ let INFER1AUX_IPC_CLOSE_TAC : tactic =
          COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT; injectivity "option"] THEN
          REPEAT STRIP_TAC THEN RVEQ_TAC THEN ASM_REWRITE_TAC[UNWIND_THM1; UNWIND_THM2] THEN
          MESON_TAC[];
-         MATCH_MP_TAC SUBSET_TRANS THEN EXISTS_TAC `count (infer_st_next_uvar st)` THEN
+         MATCH_MP_TAC SUBSET_TRANS THEN EXISTS_TAC `pred_set_count (infer_st_next_uvar st)` THEN
          ASM_REWRITE_TAC[SUBSET; IN_COUNT] THEN ARITH_TAC;
          INFER1AUX_CU_TAC ASSUME_TAC THEN ASM_REWRITE_TAC[] THEN NO_TAC;
          ALL_TAC];;
@@ -1364,13 +1364,13 @@ let INFER1AUX_IPC_LIT_TAC tm : tactic =
 (* HOL4 proves this after infer_p_complete; it is needed there *)
 let sub_completion_completes = prove
  (`!s n t tvs.
-     t_wfs s /\ check_t 0 (count n) t /\ FDOM s = count n /\
+     t_wfs s /\ check_t 0 (pred_set_count n) t /\ FDOM s = pred_set_count n /\
      (!uv. uv < n ==> check_t tvs {} (t_walkstar s (Infer_Tuvar uv)))
      ==> check_t tvs {} (t_walkstar s t)`,
   REPEAT STRIP_TAC THEN
-  MP_TAC(CONJUNCT1(SPECL [`s:(num,infer_t)fmap`; `tvs:num`; `count n`] check_t_less)) THEN
+  MP_TAC(CONJUNCT1(SPECL [`s:(num,infer_t)fmap`; `tvs:num`; `pred_set_count n`] check_t_less)) THEN
   DISCH_THEN(MP_TAC o SPEC `t:infer_t`) THEN ASM_REWRITE_TAC[IN_COUNT] THEN
-  SUBGOAL_THEN `count n INTER COMPL (count n) = {}` (fun th -> REWRITE_TAC[th]) THEN
+  SUBGOAL_THEN `pred_set_count n INTER COMPL (pred_set_count n) = {}` (fun th -> REWRITE_TAC[th]) THEN
   REWRITE_TAC[EXTENSION; IN_INTER; COMPL_DEF; IN_DIFF; IN_UNIV; NOT_IN_EMPTY] THEN
   MESON_TAC[]);;
 (* apply an induction hypothesis of infer_p_complete *)
@@ -1420,7 +1420,7 @@ let INFER1AUX_IPC_PCON_NONE_TAC : tactic =
 (* to a ground type                                                         *)
 let INFER1AUX_sc_ground = prove
  (`!tvs m s1 cs s t.
-     sub_completion tvs m s1 cs s /\ FDOM s = count m /\ t_wfs s /\ check_t 0 (count m) t
+     sub_completion tvs m s1 cs s /\ FDOM s = pred_set_count m /\ t_wfs s /\ check_t 0 (pred_set_count m) t
      ==> check_t tvs {} (t_walkstar s t)`,
   REPEAT STRIP_TAC THEN MATCH_MP_TAC sub_completion_completes THEN
   EXISTS_TAC `m:num` THEN ASM_REWRITE_TAC[] THEN
@@ -1571,8 +1571,8 @@ let INFER1AUX_IPC_PTANNOT_TAC : tactic =
 
 let INFER1AUX_sc_ground_list = prove
  (`!tvs m s1 cs s ts.
-     sub_completion tvs m s1 cs s /\ FDOM s = count m /\ t_wfs s /\
-     ALL (check_t 0 (count m)) ts
+     sub_completion tvs m s1 cs s /\ FDOM s = pred_set_count m /\ t_wfs s /\
+     ALL (check_t 0 (pred_set_count m)) ts
      ==> ALL (check_t tvs {}) (MAP (t_walkstar s) ts)`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN REWRITE_TAC[ALL_MAP; o_DEF] THEN
   FIRST_X_ASSUM(MP_TAC o check (fun th -> INFER1AUX_ec_is_app "ALL" (concl th))) THEN
@@ -1802,14 +1802,14 @@ let infer_p_complete = prove
            tenv_abbrev_ok (type_env_t tenv) /\
            t_wfs (infer_st_subst st) /\
            sub_completion tvs (infer_st_next_uvar st) (infer_st_subst st) constraints s /\
-           FDOM (infer_st_subst st) SUBSET count (infer_st_next_uvar st) /\
-           FDOM s = count (infer_st_next_uvar st)
+           FDOM (infer_st_subst st) SUBSET pred_set_count (infer_st_next_uvar st) /\
+           FDOM s = pred_set_count (infer_st_next_uvar st)
            ==> ?t' new_bindings st' s' constraints'.
                  infer_p l ienv p st = (M_success (t',new_bindings),st') /\
                  sub_completion tvs (infer_st_next_uvar st') (infer_st_subst st')
                    constraints' s' /\
-                 FDOM (infer_st_subst st') SUBSET count (infer_st_next_uvar st') /\
-                 FDOM s' = count (infer_st_next_uvar st') /\
+                 FDOM (infer_st_subst st') SUBSET pred_set_count (infer_st_next_uvar st') /\
+                 FDOM s' = pred_set_count (infer_st_next_uvar st') /\
                  t_compat s s' /\
                  simp_tenv_invC s' tvs new_bindings tenvE /\
                  t = convert_t (t_walkstar s' t')) /\
@@ -1822,14 +1822,14 @@ let infer_p_complete = prove
            tenv_abbrev_ok (type_env_t tenv) /\
            t_wfs (infer_st_subst st) /\
            sub_completion tvs (infer_st_next_uvar st) (infer_st_subst st) constraints s /\
-           FDOM (infer_st_subst st) SUBSET count (infer_st_next_uvar st) /\
-           FDOM s = count (infer_st_next_uvar st)
+           FDOM (infer_st_subst st) SUBSET pred_set_count (infer_st_next_uvar st) /\
+           FDOM s = pred_set_count (infer_st_next_uvar st)
            ==> ?ts' new_bindings st' s' constraints'.
                  infer_ps l ienv ps st = (M_success (ts',new_bindings),st') /\
                  sub_completion tvs (infer_st_next_uvar st') (infer_st_subst st')
                    constraints' s' /\
-                 FDOM (infer_st_subst st') SUBSET count (infer_st_next_uvar st') /\
-                 FDOM s' = count (infer_st_next_uvar st') /\
+                 FDOM (infer_st_subst st') SUBSET pred_set_count (infer_st_next_uvar st') /\
+                 FDOM s' = pred_set_count (infer_st_next_uvar st') /\
                  t_compat s s' /\
                  simp_tenv_invC s' tvs new_bindings tenvE /\
                  ts = MAP (convert_t o t_walkstar s') ts')`,
@@ -2012,22 +2012,22 @@ let INFER1AUX_ground_eq = prove
 (* the pattern and the first constraint of a clause of infer_pes *)
 let INFER1AUX_pes_pat_step = prove
  (CASE_TERM `!l ienv tenv tenvE uvar p bindings t1 t1' st0 cs0 s0.
-     ienv_ok (count uvar) ienv /\ uvar <= infer_st_next_uvar st0 /\
+     ienv_ok (pred_set_count uvar) ienv /\ uvar <= infer_st_next_uvar st0 /\
      t_wfs (infer_st_subst st0) /\ env_rel_complete s0 ienv tenv tenvE /\
      ALL_DISTINCT (pat_bindings p) /\ type_p (num_tvs tenvE) tenv p t1 bindings /\
      sub_completion (num_tvs tenvE) (infer_st_next_uvar st0) (infer_st_subst st0) cs0 s0 /\
-     FDOM (infer_st_subst st0) SUBSET count (infer_st_next_uvar st0) /\
-     FDOM s0 = count (infer_st_next_uvar st0) /\
+     FDOM (infer_st_subst st0) SUBSET pred_set_count (infer_st_next_uvar st0) /\
+     FDOM s0 = pred_set_count (infer_st_next_uvar st0) /\
      unconvert_t t1 = t_walkstar s0 t1'
      ==> ?tp nb st1 s2 si cs'.
            infer_p l ienv p st0 = (M_success (tp,nb),st1) /\ ALL_DISTINCT (MAP FST nb) /\
            pure_add_constraints (infer_st_subst st1) [t1',tp] s2 /\
            infer_st_next_uvar st0 <= infer_st_next_uvar st1 /\
            check_t (num_tvs tenvE) {} (unconvert_t t1) /\
-           t_wfs s2 /\ FDOM s2 SUBSET count (infer_st_next_uvar st1) /\
+           t_wfs s2 /\ FDOM s2 SUBSET pred_set_count (infer_st_next_uvar st1) /\
            sub_completion (num_tvs tenvE) (infer_st_next_uvar st1) s2 cs' si /\
-           FDOM si = count (infer_st_next_uvar st1) /\ t_compat s0 si /\
-           ienv_ok (count (infer_st_next_uvar st1))
+           FDOM si = pred_set_count (infer_st_next_uvar st1) /\ t_compat s0 si /\
+           ienv_ok (pred_set_count (infer_st_next_uvar st1))
              (inf_env_inf_v_fupd
                (K (nsAppend (alist_to_ns (MAP (\nt. match nt with (n,t) -> (n,(0,t))) nb))
                             (inf_env_inf_v ienv))) ienv) /\
@@ -2046,7 +2046,7 @@ let INFER1AUX_pes_pat_step = prove
     ALL_TAC] THEN
   SUBGOAL_THEN `tenv_ctor_ok (type_env_c tenv) /\ tenv_abbrev_ok (type_env_t tenv)`
     STRIP_ASSUME_TAC THENL
-   [UNDISCH_TAC `ienv_ok (count uvar) ienv` THEN ASM_REWRITE_TAC[ienv_ok_def] THEN
+   [UNDISCH_TAC `ienv_ok (pred_set_count uvar) ienv` THEN ASM_REWRITE_TAC[ienv_ok_def] THEN
     STRIP_TAC THEN ASM_REWRITE_TAC[];
     ALL_TAC] THEN
   MP_TAC(SPECL [`num_tvs tenvE`; `tenv:type_env`; `p:pat`; `t1:t`;
@@ -2140,14 +2140,14 @@ let INFER1AUX_pes_exp_step = prove
  (`!n s0 s3 st3 cs3 t2 t2' tt.
      t_compat s0 s3 /\ unconvert_t t2 = t_walkstar s0 t2' /\
      sub_completion n (infer_st_next_uvar st3) (infer_st_subst st3) cs3 s3 /\
-     FDOM s3 = count (infer_st_next_uvar st3) /\ t_wfs (infer_st_subst st3) /\
-     check_t 0 (count (infer_st_next_uvar st3)) tt /\
+     FDOM s3 = pred_set_count (infer_st_next_uvar st3) /\ t_wfs (infer_st_subst st3) /\
+     check_t 0 (pred_set_count (infer_st_next_uvar st3)) tt /\
      t2 = convert_t (t_walkstar s3 tt)
      ==> ?s4 si cs4.
            pure_add_constraints (infer_st_subst st3) [t2',tt] s4 /\
            sub_completion n (infer_st_next_uvar st3) s4 cs4 si /\
-           FDOM s4 SUBSET count (infer_st_next_uvar st3) /\
-           FDOM si = count (infer_st_next_uvar st3) /\ t_wfs s4 /\
+           FDOM s4 SUBSET pred_set_count (infer_st_next_uvar st3) /\
+           FDOM si = pred_set_count (infer_st_next_uvar st3) /\ t_wfs s4 /\
            t_compat s0 si /\ check_t n {} (unconvert_t t2)`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   SUBGOAL_THEN `t_wfs (s3:(num,infer_t)fmap)` ASSUME_TAC THENL
@@ -2194,7 +2194,7 @@ let INFER1AUX_IE_TAC (thm:thm) : tactic =
 let infer_pes_complete = prove
  (`!l ienv tenv tenvE uvar t1 t2 t1' t2' pes st' constraints' s'.
      ~(pes = []) /\
-     ienv_ok (count uvar) ienv /\
+     ienv_ok (pred_set_count uvar) ienv /\
      uvar <= infer_st_next_uvar st' /\
      t_wfs (infer_st_subst st') /\
      env_rel_complete s' ienv tenv tenvE /\
@@ -2204,34 +2204,34 @@ let infer_pes_complete = prove
                   type_p (num_tvs tenvE) tenv p t1 bindings /\
                   type_e tenv (bind_var_list 0 bindings tenvE) e t2 /\
                   !l s'' ienv' st'' constraints''.
-                    ienv_ok (count (infer_st_next_uvar st'')) ienv' /\
+                    ienv_ok (pred_set_count (infer_st_next_uvar st'')) ienv' /\
                     t_wfs (infer_st_subst st'') /\
-                    FDOM (infer_st_subst st'') SUBSET count (infer_st_next_uvar st'') /\
+                    FDOM (infer_st_subst st'') SUBSET pred_set_count (infer_st_next_uvar st'') /\
                     sub_completion (num_tvs (bind_var_list 0 bindings tenvE))
                       (infer_st_next_uvar st'') (infer_st_subst st'') constraints'' s'' /\
-                    FDOM s'' = count (infer_st_next_uvar st'') /\
+                    FDOM s'' = pred_set_count (infer_st_next_uvar st'') /\
                     env_rel_complete s'' ienv' tenv (bind_var_list 0 bindings tenvE)
                     ==> ?t'' st''' s''' constraints'''.
                           infer_e l ienv' e st'' = (M_success t'',st''') /\
                           sub_completion (num_tvs tenvE) (infer_st_next_uvar st''')
                             (infer_st_subst st''') constraints''' s''' /\
                           FDOM (infer_st_subst st''') SUBSET
-                            count (infer_st_next_uvar st''') /\
-                          FDOM s''' = count (infer_st_next_uvar st''') /\
+                            pred_set_count (infer_st_next_uvar st''') /\
+                          FDOM s''' = pred_set_count (infer_st_next_uvar st''') /\
                           t_compat s'' s''' /\
                           t2 = convert_t (t_walkstar s''' t'')) /\
      sub_completion (num_tvs tenvE) (infer_st_next_uvar st') (infer_st_subst st')
        constraints' s' /\
-     FDOM (infer_st_subst st') SUBSET count (infer_st_next_uvar st') /\
-     FDOM s' = count (infer_st_next_uvar st') /\
+     FDOM (infer_st_subst st') SUBSET pred_set_count (infer_st_next_uvar st') /\
+     FDOM s' = pred_set_count (infer_st_next_uvar st') /\
      unconvert_t t1 = t_walkstar s' t1' /\
      unconvert_t t2 = t_walkstar s' t2'
      ==> ?st'' s'' constraints''.
            infer_pes l ienv pes t1' t2' st' = (M_success one,st'') /\
            sub_completion (num_tvs tenvE) (infer_st_next_uvar st'') (infer_st_subst st'')
              constraints'' s'' /\
-           FDOM (infer_st_subst st'') SUBSET count (infer_st_next_uvar st'') /\
-           FDOM s'' = count (infer_st_next_uvar st'') /\
+           FDOM (infer_st_subst st'') SUBSET pred_set_count (infer_st_next_uvar st'') /\
+           FDOM s'' = pred_set_count (infer_st_next_uvar st'') /\
            t_compat s' s''`,
   MAP_EVERY X_GEN_TAC [`l:loc_err_info`; `ienv:inf_env`; `tenv:type_env`;
     `tenvE:tenv_val_exp`; `uvar:num`; `t1:t`; `t2:t`; `t1':infer_t`; `t2':infer_t`] THEN
@@ -2381,16 +2381,16 @@ let convert_infer_deBruijn_subst = prove
 
 let t_walkstar_infer_db_subst = prove
  (`!s s' uvars subst tvs.
-     s SUBMAP s' /\ t_wfs s' /\ FDOM s = count uvars /\
+     s SUBMAP s' /\ t_wfs s' /\ FDOM s = pred_set_count uvars /\
      (!n. n < uvars ==> check_t tvs {} (t_walkstar s (Infer_Tuvar n))) /\
      (!n. n < LENGTH subst
           ==> t_walkstar s' (Infer_Tuvar (n + uvars)) = t_walkstar s (EL n subst))
-     ==> (!t. check_t (LENGTH subst) (count uvars) t
+     ==> (!t. check_t (LENGTH subst) (pred_set_count uvars) t
               ==> t_walkstar s (infer_deBruijn_subst subst t) =
                   t_walkstar s'
                     (infer_deBruijn_subst
                        (MAP (\n. Infer_Tuvar (n + uvars)) (COUNT_LIST (LENGTH subst))) t)) /\
-         (!ts. ALL (check_t (LENGTH subst) (count uvars)) ts
+         (!ts. ALL (check_t (LENGTH subst) (pred_set_count uvars)) ts
                ==> MAP (t_walkstar s o infer_deBruijn_subst subst) ts =
                    MAP (t_walkstar s' o
                         infer_deBruijn_subst
@@ -2414,7 +2414,7 @@ let t_walkstar_infer_db_subst = prove
 let ienv_val_ok_more = prove
  (`(!cuvs cuvs' env. ienv_val_ok cuvs env /\ cuvs SUBSET cuvs' ==> ienv_val_ok cuvs' env) /\
    (!uvs uvs' env.
-      ienv_val_ok (count uvs) env /\ uvs <= uvs' ==> ienv_val_ok (count uvs') env)`,
+      ienv_val_ok (pred_set_count uvs) env /\ uvs <= uvs' ==> ienv_val_ok (pred_set_count uvs') env)`,
   CONJ_TAC THENL [ALL_TAC; MESON_TAC[TYSYS2AUX_ienv_val_ok_mono]] THEN
   REPEAT GEN_TAC THEN REWRITE_TAC[ienv_val_ok_def] THEN
   DISCH_THEN(CONJUNCTS_THEN2 (fun th -> MP_TAC th) ASSUME_TAC) THEN
@@ -2440,14 +2440,14 @@ let INFER1AUX_IEC_LIT_TAC tm : tactic =
 let INFER1AUX_iec_step = prove
  (`!loc ienv e st t1 st1 s s1 cs1 tenv tenvE.
      infer_e loc ienv e st = (M_success t1,st1) /\
-     ienv_ok (count (infer_st_next_uvar st)) ienv /\ t_wfs (infer_st_subst st) /\
-     FDOM s = count (infer_st_next_uvar st) /\ env_rel_complete s ienv tenv tenvE /\
+     ienv_ok (pred_set_count (infer_st_next_uvar st)) ienv /\ t_wfs (infer_st_subst st) /\
+     FDOM s = pred_set_count (infer_st_next_uvar st) /\ env_rel_complete s ienv tenv tenvE /\
      sub_completion (num_tvs tenvE) (infer_st_next_uvar st1) (infer_st_subst st1) cs1 s1 /\
-     FDOM s1 = count (infer_st_next_uvar st1) /\ t_compat s s1
+     FDOM s1 = pred_set_count (infer_st_next_uvar st1) /\ t_compat s s1
      ==> infer_st_next_uvar st <= infer_st_next_uvar st1 /\ t_wfs (infer_st_subst st1) /\
-         t_wfs s1 /\ ienv_ok (count (infer_st_next_uvar st1)) ienv /\
+         t_wfs s1 /\ ienv_ok (pred_set_count (infer_st_next_uvar st1)) ienv /\
          env_rel_complete s1 ienv tenv tenvE /\
-         check_t 0 (count (infer_st_next_uvar st1)) t1 /\
+         check_t 0 (pred_set_count (infer_st_next_uvar st1)) t1 /\
          check_t (num_tvs tenvE) {} (t_walkstar s1 t1)`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   SUBGOAL_THEN `infer_st_next_uvar st <= infer_st_next_uvar st1` ASSUME_TAC THENL
@@ -2456,7 +2456,7 @@ let INFER1AUX_iec_step = prove
    [ASM_MESON_TAC[infer_e_wfs]; ALL_TAC] THEN
   SUBGOAL_THEN `t_wfs (s1:(num,infer_t)fmap)` ASSUME_TAC THENL
    [ASM_MESON_TAC[t_compat_def]; ALL_TAC] THEN
-  SUBGOAL_THEN `check_t 0 (count (infer_st_next_uvar st1)) t1` ASSUME_TAC THENL
+  SUBGOAL_THEN `check_t 0 (pred_set_count (infer_st_next_uvar st1)) t1` ASSUME_TAC THENL
    [MATCH_MP_TAC(CONJUNCT1 infer_e_check_t) THEN
     MAP_EVERY EXISTS_TAC [`loc:loc_err_info`; `ienv:inf_env`; `e:exp`; `st:infer_st`] THEN
     ASM_MESON_TAC[ienv_ok_def];
@@ -2473,14 +2473,14 @@ let INFER1AUX_iec_step = prove
 let INFER1AUX_iec_steps = prove
  (`!loc ienv es st ts1 st1 s s1 cs1 tenv tenvE.
      infer_es loc ienv es st = (M_success ts1,st1) /\
-     ienv_ok (count (infer_st_next_uvar st)) ienv /\ t_wfs (infer_st_subst st) /\
-     FDOM s = count (infer_st_next_uvar st) /\ env_rel_complete s ienv tenv tenvE /\
+     ienv_ok (pred_set_count (infer_st_next_uvar st)) ienv /\ t_wfs (infer_st_subst st) /\
+     FDOM s = pred_set_count (infer_st_next_uvar st) /\ env_rel_complete s ienv tenv tenvE /\
      sub_completion (num_tvs tenvE) (infer_st_next_uvar st1) (infer_st_subst st1) cs1 s1 /\
-     FDOM s1 = count (infer_st_next_uvar st1) /\ t_compat s s1
+     FDOM s1 = pred_set_count (infer_st_next_uvar st1) /\ t_compat s s1
      ==> infer_st_next_uvar st <= infer_st_next_uvar st1 /\ t_wfs (infer_st_subst st1) /\
-         t_wfs s1 /\ ienv_ok (count (infer_st_next_uvar st1)) ienv /\
+         t_wfs s1 /\ ienv_ok (pred_set_count (infer_st_next_uvar st1)) ienv /\
          env_rel_complete s1 ienv tenv tenvE /\
-         ALL (check_t 0 (count (infer_st_next_uvar st1))) ts1 /\
+         ALL (check_t 0 (pred_set_count (infer_st_next_uvar st1))) ts1 /\
          ALL (check_t (num_tvs tenvE) {}) (MAP (t_walkstar s1) ts1)`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   SUBGOAL_THEN `infer_st_next_uvar st <= infer_st_next_uvar st1` ASSUME_TAC THENL
@@ -2489,7 +2489,7 @@ let INFER1AUX_iec_steps = prove
    [ASM_MESON_TAC[infer_e_wfs]; ALL_TAC] THEN
   SUBGOAL_THEN `t_wfs (s1:(num,infer_t)fmap)` ASSUME_TAC THENL
    [ASM_MESON_TAC[t_compat_def]; ALL_TAC] THEN
-  SUBGOAL_THEN `ALL (check_t 0 (count (infer_st_next_uvar st1))) ts1` ASSUME_TAC THENL
+  SUBGOAL_THEN `ALL (check_t 0 (pred_set_count (infer_st_next_uvar st1))) ts1` ASSUME_TAC THENL
    [MATCH_MP_TAC(CONJUNCT1(CONJUNCT2 infer_e_check_t)) THEN
     MAP_EVERY EXISTS_TAC [`loc:loc_err_info`; `ienv:inf_env`; `es:exp list`; `st:infer_st`] THEN
     ASM_MESON_TAC[ienv_ok_def];
@@ -2565,22 +2565,22 @@ let INFER1AUX_erc_bind = prove
 (* the invariants for the body of a function with a fresh argument type *)
 let INFER1AUX_iec_fresh = prove
  (`!st s constraints ienv tenv tenvE n t1.
-     ienv_ok (count (infer_st_next_uvar st)) ienv /\ t_wfs (infer_st_subst st) /\
-     FDOM (infer_st_subst st) SUBSET count (infer_st_next_uvar st) /\
+     ienv_ok (pred_set_count (infer_st_next_uvar st)) ienv /\ t_wfs (infer_st_subst st) /\
+     FDOM (infer_st_subst st) SUBSET pred_set_count (infer_st_next_uvar st) /\
      sub_completion (num_tvs tenvE) (infer_st_next_uvar st) (infer_st_subst st)
        constraints s /\
-     FDOM s = count (infer_st_next_uvar st) /\ env_rel_complete s ienv tenv tenvE /\
+     FDOM s = pred_set_count (infer_st_next_uvar st) /\ env_rel_complete s ienv tenv tenvE /\
      check_freevars (num_tvs tenvE) [] t1
-     ==> ienv_ok (count (infer_st_next_uvar st + 1))
+     ==> ienv_ok (pred_set_count (infer_st_next_uvar st + 1))
            (inf_env_inf_v_fupd
               (K (nsBind n (0,Infer_Tuvar (infer_st_next_uvar st)) (inf_env_inf_v ienv)))
               ienv) /\
-         FDOM (infer_st_subst st) SUBSET count (infer_st_next_uvar st + 1) /\
+         FDOM (infer_st_subst st) SUBSET pred_set_count (infer_st_next_uvar st + 1) /\
          sub_completion (num_tvs tenvE) (infer_st_next_uvar st + 1) (infer_st_subst st)
            (APPEND constraints [(Infer_Tuvar (infer_st_next_uvar st),unconvert_t t1)])
            (s |++ [(infer_st_next_uvar st,unconvert_t t1)]) /\
          FDOM (s |++ [(infer_st_next_uvar st,unconvert_t t1)]) =
-           count (infer_st_next_uvar st + 1) /\
+           pred_set_count (infer_st_next_uvar st + 1) /\
          env_rel_complete (s |++ [(infer_st_next_uvar st,unconvert_t t1)])
            (inf_env_inf_v_fupd
               (K (nsBind n (0,Infer_Tuvar (infer_st_next_uvar st)) (inf_env_inf_v ienv)))
@@ -2605,7 +2605,7 @@ let INFER1AUX_iec_fresh = prove
     REWRITE_TAC[check_t_def; IN_COUNT] THEN CONJ_TAC THENL [ALL_TAC; ARITH_TAC] THEN
     MATCH_MP_TAC TYSYS2AUX_ienv_val_ok_mono THEN
     EXISTS_TAC `infer_st_next_uvar st` THEN ASM_REWRITE_TAC[] THEN ARITH_TAC;
-    MATCH_MP_TAC SUBSET_TRANS THEN EXISTS_TAC `count (infer_st_next_uvar st)` THEN
+    MATCH_MP_TAC SUBSET_TRANS THEN EXISTS_TAC `pred_set_count (infer_st_next_uvar st)` THEN
     ASM_REWRITE_TAC[SUBSET; IN_COUNT] THEN ARITH_TAC;
     MATCH_MP_TAC INFER1AUX_erc_bind THEN EXISTS_TAC `s:(num,infer_t)fmap` THEN
     ASM_SIMP_TAC[SUBMAP_t_compat; SUBSET; IN_COUNT] THEN ARITH_TAC;
@@ -2628,14 +2628,14 @@ let INFER1AUX_IEC_IH_TAC (key:term) (specs:term list) (rws:thm list) (names:term
 let INFER1AUX_iec_constrain = prove
  (`!n st cs s CS ienv tenv tenvE.
      sub_completion n (infer_st_next_uvar st) (infer_st_subst st) cs s /\
-     FDOM s = count (infer_st_next_uvar st) /\ t_wfs (infer_st_subst st) /\
+     FDOM s = pred_set_count (infer_st_next_uvar st) /\ t_wfs (infer_st_subst st) /\
      env_rel_complete s ienv tenv tenvE /\
      ALL (\(x,y). t_walkstar s x = t_walkstar s y) CS
      ==> ?s1 si cs'.
            pure_add_constraints (infer_st_subst st) CS s1 /\
            sub_completion n (infer_st_next_uvar st) s1 cs' si /\
-           FDOM s1 SUBSET count (infer_st_next_uvar st) /\
-           FDOM si = count (infer_st_next_uvar st) /\ t_compat s si /\
+           FDOM s1 SUBSET pred_set_count (infer_st_next_uvar st) /\
+           FDOM si = pred_set_count (infer_st_next_uvar st) /\ t_compat s si /\
            (!x. t_walkstar si x = t_walkstar s x) /\ t_wfs s1 /\ t_wfs si /\
            env_rel_complete si ienv tenv tenvE`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
@@ -2744,26 +2744,26 @@ let INFER1AUX_IEC_ESCONS_TAC : tactic =
 let INFER1AUX_iec_fun_body = prove
  (`!loc ienv tenv tenvE n e t1 t2 st s constraints.
      (!loc s ienv st constraints.
-        ienv_ok (count (infer_st_next_uvar st)) ienv /\
+        ienv_ok (pred_set_count (infer_st_next_uvar st)) ienv /\
         t_wfs (infer_st_subst st) /\
-        FDOM (infer_st_subst st) SUBSET count (infer_st_next_uvar st) /\
+        FDOM (infer_st_subst st) SUBSET pred_set_count (infer_st_next_uvar st) /\
         sub_completion (num_tvs tenvE) (infer_st_next_uvar st) (infer_st_subst st)
           constraints s /\
-        FDOM s = count (infer_st_next_uvar st) /\
+        FDOM s = pred_set_count (infer_st_next_uvar st) /\
         env_rel_complete s ienv tenv (Bind_name n 0 t1 tenvE)
         ==> ?t' st' s' constraints'.
               infer_e loc ienv e st = (M_success t',st') /\
               sub_completion (num_tvs tenvE) (infer_st_next_uvar st') (infer_st_subst st')
                 constraints' s' /\
-              FDOM (infer_st_subst st') SUBSET count (infer_st_next_uvar st') /\
-              FDOM s' = count (infer_st_next_uvar st') /\
+              FDOM (infer_st_subst st') SUBSET pred_set_count (infer_st_next_uvar st') /\
+              FDOM s' = pred_set_count (infer_st_next_uvar st') /\
               t_compat s s' /\
               t2 = convert_t (t_walkstar s' t')) /\
-     ienv_ok (count (infer_st_next_uvar st)) ienv /\ t_wfs (infer_st_subst st) /\
-     FDOM (infer_st_subst st) SUBSET count (infer_st_next_uvar st) /\
+     ienv_ok (pred_set_count (infer_st_next_uvar st)) ienv /\ t_wfs (infer_st_subst st) /\
+     FDOM (infer_st_subst st) SUBSET pred_set_count (infer_st_next_uvar st) /\
      sub_completion (num_tvs tenvE) (infer_st_next_uvar st) (infer_st_subst st)
        constraints s /\
-     FDOM s = count (infer_st_next_uvar st) /\ env_rel_complete s ienv tenv tenvE /\
+     FDOM s = pred_set_count (infer_st_next_uvar st) /\ env_rel_complete s ienv tenv tenvE /\
      check_freevars (num_tvs tenvE) [] t1
      ==> ?t2' st2 s2 cs2.
            infer_e loc
@@ -2774,11 +2774,11 @@ let INFER1AUX_iec_fun_body = prove
              (M_success t2',st2) /\
            sub_completion (num_tvs tenvE) (infer_st_next_uvar st2) (infer_st_subst st2)
              cs2 s2 /\
-           FDOM (infer_st_subst st2) SUBSET count (infer_st_next_uvar st2) /\
-           FDOM s2 = count (infer_st_next_uvar st2) /\
+           FDOM (infer_st_subst st2) SUBSET pred_set_count (infer_st_next_uvar st2) /\
+           FDOM s2 = pred_set_count (infer_st_next_uvar st2) /\
            t_compat s s2 /\ infer_st_next_uvar st < infer_st_next_uvar st2 /\
            t_wfs (infer_st_subst st2) /\ t_wfs s2 /\
-           ienv_ok (count (infer_st_next_uvar st2)) ienv /\
+           ienv_ok (pred_set_count (infer_st_next_uvar st2)) ienv /\
            env_rel_complete s2 ienv tenv tenvE /\
            t1 = convert_t (t_walkstar s2 (Infer_Tuvar (infer_st_next_uvar st))) /\
            t2 = convert_t (t_walkstar s2 t2') /\
@@ -2985,14 +2985,14 @@ let INFER1AUX_IEC_IF_TAC : tactic =
     ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_THEN `sA:(num,infer_t)fmap` (X_CHOOSE_THEN `siA:(num,infer_t)fmap`
     (X_CHOOSE_THEN `csA:(infer_t#infer_t)list` STRIP_ASSUME_TAC))) THEN
-  SUBGOAL_THEN `ienv_ok (count (infer_st_next_uvar (infer_st_subst_fupd (K sA) st1))) ienv /\
+  SUBGOAL_THEN `ienv_ok (pred_set_count (infer_st_next_uvar (infer_st_subst_fupd (K sA) st1))) ienv /\
                 t_wfs (infer_st_subst (infer_st_subst_fupd (K sA) st1)) /\
                 FDOM (infer_st_subst (infer_st_subst_fupd (K sA) st1)) SUBSET
-                  count (infer_st_next_uvar (infer_st_subst_fupd (K sA) st1)) /\
+                  pred_set_count (infer_st_next_uvar (infer_st_subst_fupd (K sA) st1)) /\
                 sub_completion (num_tvs tenvE)
                   (infer_st_next_uvar (infer_st_subst_fupd (K sA) st1))
                   (infer_st_subst (infer_st_subst_fupd (K sA) st1)) csA siA /\
-                FDOM siA = count (infer_st_next_uvar (infer_st_subst_fupd (K sA) st1))`
+                FDOM siA = pred_set_count (infer_st_next_uvar (infer_st_subst_fupd (K sA) st1))`
     STRIP_ASSUME_TAC THENL
    [REWRITE_TAC[infer_st_rewrs] THEN INFER1AUX_IEC_ACCEPT_TAC; ALL_TAC] THEN
   INFER1AUX_IEC_IH_TAC `e2:exp` [`loc:loc_err_info`; `siA:(num,infer_t)fmap`;
@@ -3074,7 +3074,7 @@ let INFER1AUX_IEC_LET_TAC : tactic =
     SUBGOAL_THEN `t_compat s1 (s1:(num,infer_t)fmap)` ASSUME_TAC THENL
      [MATCH_MP_TAC t_compat_refl THEN ASM_REWRITE_TAC[]; ALL_TAC] THEN
     SUBGOAL_THEN
-      `ienv_ok (count (infer_st_next_uvar st1))
+      `ienv_ok (pred_set_count (infer_st_next_uvar st1))
          (inf_env_inf_v_fupd (K (nsBind x (0,t1') (inf_env_inf_v ienv))) ienv) /\
        env_rel_complete s1
          (inf_env_inf_v_fupd (K (nsBind x (0,t1') (inf_env_inf_v ienv))) ienv)
@@ -3083,7 +3083,7 @@ let INFER1AUX_IEC_LET_TAC : tactic =
      [CONJ_TAC THENL
        [REWRITE_TAC[ienv_ok_def; inf_env_INFO.ri_accfupds; K_THM] THEN
         FIRST_ASSUM(STRIP_ASSUME_TAC o REWRITE_RULE[ienv_ok_def] o check (fun th ->
-          concl th = `ienv_ok (count (infer_st_next_uvar st1)) ienv`)) THEN
+          concl th = `ienv_ok (pred_set_count (infer_st_next_uvar st1)) ienv`)) THEN
         ASM_REWRITE_TAC[] THEN MATCH_MP_TAC TYSYS2AUX_ienv_val_ok_nsBind THEN
         ASM_REWRITE_TAC[];
         MATCH_MP_TAC INFER1AUX_erc_bind THEN EXISTS_TAC `s1:(num,infer_t)fmap` THEN
@@ -3219,7 +3219,7 @@ let INFER1AUX_IEC_TANNOT_TAC : tactic =
 (* the type of the branches of a match is closed: infer the first branch *)
 let INFER1AUX_mat_freevars = prove
  (`!ienv tenv tenvE uvar pes t1 t2 t1' st1 cs1 s1.
-     ~(pes = []) /\ ienv_ok (count uvar) ienv /\ uvar <= infer_st_next_uvar st1 /\
+     ~(pes = []) /\ ienv_ok (pred_set_count uvar) ienv /\ uvar <= infer_st_next_uvar st1 /\
      t_wfs (infer_st_subst st1) /\ env_rel_complete s1 ienv tenv tenvE /\
      (!p e. MEM (p,e) pes
             ==> ?bindings.
@@ -3227,25 +3227,25 @@ let INFER1AUX_mat_freevars = prove
                   type_p (num_tvs tenvE) tenv p t1 bindings /\
                   type_e tenv (bind_var_list 0 bindings tenvE) e t2 /\
                   !l s'' ienv' st'' constraints''.
-                    ienv_ok (count (infer_st_next_uvar st'')) ienv' /\
+                    ienv_ok (pred_set_count (infer_st_next_uvar st'')) ienv' /\
                     t_wfs (infer_st_subst st'') /\
-                    FDOM (infer_st_subst st'') SUBSET count (infer_st_next_uvar st'') /\
+                    FDOM (infer_st_subst st'') SUBSET pred_set_count (infer_st_next_uvar st'') /\
                     sub_completion (num_tvs tenvE)
                       (infer_st_next_uvar st'') (infer_st_subst st'') constraints'' s'' /\
-                    FDOM s'' = count (infer_st_next_uvar st'') /\
+                    FDOM s'' = pred_set_count (infer_st_next_uvar st'') /\
                     env_rel_complete s'' ienv' tenv (bind_var_list 0 bindings tenvE)
                     ==> ?t'' st''' s''' constraints'''.
                           infer_e l ienv' e st'' = (M_success t'',st''') /\
                           sub_completion (num_tvs tenvE) (infer_st_next_uvar st''')
                             (infer_st_subst st''') constraints''' s''' /\
                           FDOM (infer_st_subst st''') SUBSET
-                            count (infer_st_next_uvar st''') /\
-                          FDOM s''' = count (infer_st_next_uvar st''') /\
+                            pred_set_count (infer_st_next_uvar st''') /\
+                          FDOM s''' = pred_set_count (infer_st_next_uvar st''') /\
                           t_compat s'' s''' /\
                           t2 = convert_t (t_walkstar s''' t'')) /\
      sub_completion (num_tvs tenvE) (infer_st_next_uvar st1) (infer_st_subst st1) cs1 s1 /\
-     FDOM (infer_st_subst st1) SUBSET count (infer_st_next_uvar st1) /\
-     FDOM s1 = count (infer_st_next_uvar st1) /\
+     FDOM (infer_st_subst st1) SUBSET pred_set_count (infer_st_next_uvar st1) /\
+     FDOM s1 = pred_set_count (infer_st_next_uvar st1) /\
      unconvert_t t1 = t_walkstar s1 t1'
      ==> check_freevars (num_tvs tenvE) [] t2`,
   REPEAT GEN_TAC THEN
@@ -3407,17 +3407,17 @@ let INFER1AUX_iec_var = prove
  (`!tenv tenvE n t targs tvs loc s ienv st constraints.
      tvs = LENGTH targs /\ ALL (check_freevars (num_tvs tenvE) []) targs /\
      lookup_var n tenvE tenv = SOME (tvs,t) /\
-     ienv_ok (count (infer_st_next_uvar st)) ienv /\ t_wfs (infer_st_subst st) /\
-     FDOM (infer_st_subst st) SUBSET count (infer_st_next_uvar st) /\
+     ienv_ok (pred_set_count (infer_st_next_uvar st)) ienv /\ t_wfs (infer_st_subst st) /\
+     FDOM (infer_st_subst st) SUBSET pred_set_count (infer_st_next_uvar st) /\
      sub_completion (num_tvs tenvE) (infer_st_next_uvar st) (infer_st_subst st)
        constraints s /\
-     FDOM s = count (infer_st_next_uvar st) /\ env_rel_complete s ienv tenv tenvE
+     FDOM s = pred_set_count (infer_st_next_uvar st) /\ env_rel_complete s ienv tenv tenvE
      ==> ?t' st' s' constraints'.
            infer_e loc ienv (Var n) st = (M_success t',st') /\
            sub_completion (num_tvs tenvE) (infer_st_next_uvar st') (infer_st_subst st')
              constraints' s' /\
-           FDOM (infer_st_subst st') SUBSET count (infer_st_next_uvar st') /\
-           FDOM s' = count (infer_st_next_uvar st') /\
+           FDOM (infer_st_subst st') SUBSET pred_set_count (infer_st_next_uvar st') /\
+           FDOM s' = pred_set_count (infer_st_next_uvar st') /\
            t_compat s s' /\
            deBruijn_subst 0 targs t = convert_t (t_walkstar s' t')`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
@@ -3431,7 +3431,7 @@ let INFER1AUX_iec_var = prove
   DISCH_THEN(CONJUNCTS_THEN2 (X_CHOOSE_TAC `m:num`)
     (X_CHOOSE_THEN `tvs':num` (X_CHOOSE_THEN `t':infer_t` STRIP_ASSUME_TAC))) THEN
   (* the inferred type scheme is closed in the current uvars *)
-  SUBGOAL_THEN `check_t tvs' (count (infer_st_next_uvar st)) t'` ASSUME_TAC THENL
+  SUBGOAL_THEN `check_t tvs' (pred_set_count (infer_st_next_uvar st)) t'` ASSUME_TAC THENL
    [FIRST_ASSUM(MP_TAC o REWRITE_RULE[ienv_ok_def; ienv_val_ok_def; nsAll_def] o
       check (fun th -> INFER1AUX_ec_is_app "ienv_ok" (concl th))) THEN
     DISCH_THEN(MP_TAC o SPECL [`n:(mlstring,mlstring)id`; `(tvs',t'):num#infer_t`] o
@@ -3534,7 +3534,7 @@ let INFER1AUX_iec_var = prove
          REPEAT(CHANGED_TAC(ASM_REWRITE_TAC[infer_st_rewrs] THEN CASE_REWRITE_TAC[])) THEN
          NO_TAC;
          MATCH_MP_TAC SUBMAP_t_compat THEN ASM_REWRITE_TAC[] THEN NO_TAC;
-         MATCH_MP_TAC SUBSET_TRANS THEN EXISTS_TAC `count (infer_st_next_uvar st)` THEN
+         MATCH_MP_TAC SUBSET_TRANS THEN EXISTS_TAC `pred_set_count (infer_st_next_uvar st)` THEN
          ASM_REWRITE_TAC[SUBSET; IN_COUNT] THEN ARITH_TAC]);;
 
 let INFER1AUX_IEC_VAR_TAC : tactic =
@@ -3781,7 +3781,7 @@ let INFER1AUX_IEC_LETREC_TAC : tactic =
     EXPAND_TAC "us" THEN ASM_SIMP_TAC[EL_MAP; LENGTH_COUNT_LIST; EL_COUNT_LIST; LENGTH_MAP];
     ALL_TAC] THEN
   SUBGOAL_THEN (CASE_TERM
-    `ienv_ok (count (infer_st_next_uvar st + LENGTH (funs:(mlstring#mlstring#exp)list)))
+    `ienv_ok (pred_set_count (infer_st_next_uvar st + LENGTH (funs:(mlstring#mlstring#exp)list)))
        (inf_env_inf_v_fupd
           (K (nsAppend
                 (alist_to_ns (MAP (\nt. match nt with (n,t) -> (n,(0,t)))
@@ -3797,7 +3797,7 @@ let INFER1AUX_IEC_LETREC_TAC : tactic =
    [CONJ_TAC THENL
      [REWRITE_TAC[ienv_ok_def; inf_env_INFO.ri_accfupds; K_THM] THEN
       FIRST_ASSUM(STRIP_ASSUME_TAC o REWRITE_RULE[ienv_ok_def] o check (fun th ->
-        concl th = `ienv_ok (count (infer_st_next_uvar st)) ienv`)) THEN
+        concl th = `ienv_ok (pred_set_count (infer_st_next_uvar st)) ienv`)) THEN
       ASM_REWRITE_TAC[] THEN MATCH_MP_TAC TYSYS2AUX_ienv_val_ok_pes THEN CONJ_TAC THENL
        [ASM_SIMP_TAC[MAP_SND_ZIP; LENGTH_MAP] THEN EXPAND_TAC "us" THEN
         REWRITE_TAC[GSYM ALL_MEM; MEM_MAP; MEM_COUNT_LIST] THEN
@@ -3809,13 +3809,13 @@ let INFER1AUX_IEC_LETREC_TAC : tactic =
       ASM_SIMP_TAC[SUBMAP_t_compat; t_compat_refl; SUBSET; IN_COUNT] THEN ARITH_TAC];
     ALL_TAC] THEN
   SUBGOAL_THEN `FDOM (infer_st_subst st) SUBSET
-                  count (infer_st_next_uvar st + LENGTH (funs:(mlstring#mlstring#exp)list)) /\
+                  pred_set_count (infer_st_next_uvar st + LENGTH (funs:(mlstring#mlstring#exp)list)) /\
                 sub_completion (num_tvs tenvE)
                   (infer_st_next_uvar st + LENGTH (funs:(mlstring#mlstring#exp)list))
                   (infer_st_subst st) (APPEND constraints nc) s2`
     STRIP_ASSUME_TAC THENL
    [ASM_REWRITE_TAC[sub_completion_def; SUBSET_REFL] THEN
-    MATCH_MP_TAC SUBSET_TRANS THEN EXISTS_TAC `count (infer_st_next_uvar st)` THEN
+    MATCH_MP_TAC SUBSET_TRANS THEN EXISTS_TAC `pred_set_count (infer_st_next_uvar st)` THEN
     ASM_REWRITE_TAC[SUBSET; IN_COUNT] THEN ARITH_TAC;
     ALL_TAC] THEN
   INFER1AUX_LETREC_ENV_TAC (fun ie ->
@@ -3900,7 +3900,7 @@ let INFER1AUX_IEC_LETREC_TAC : tactic =
     (X_CHOOSE_THEN `cs4:(infer_t#infer_t)list` STRIP_ASSUME_TAC))) THEN
   INFER1AUX_LETREC_ENV_TAC (fun ie ->
     SUBGOAL_THEN (list_mk_comb(`ienv_ok:(num->bool)->inf_env->bool`,
-                               [`count (infer_st_next_uvar st2)`; ie])) ASSUME_TAC THENL
+                               [`pred_set_count (infer_st_next_uvar st2)`; ie])) ASSUME_TAC THENL
      [MATCH_MP_TAC ienv_ok_more THEN
       EXISTS_TAC `infer_st_next_uvar st + LENGTH (funs:(mlstring#mlstring#exp)list)` THEN
       ASM_REWRITE_TAC[];
@@ -3935,55 +3935,55 @@ let infer_e_complete = prove
  (`(!tenv tenvE e t.
      type_e tenv tenvE e t
      ==> !loc s ienv st constraints.
-           ienv_ok (count (infer_st_next_uvar st)) ienv /\
+           ienv_ok (pred_set_count (infer_st_next_uvar st)) ienv /\
            t_wfs (infer_st_subst st) /\
-           FDOM (infer_st_subst st) SUBSET count (infer_st_next_uvar st) /\
+           FDOM (infer_st_subst st) SUBSET pred_set_count (infer_st_next_uvar st) /\
            sub_completion (num_tvs tenvE) (infer_st_next_uvar st) (infer_st_subst st)
              constraints s /\
-           FDOM s = count (infer_st_next_uvar st) /\
+           FDOM s = pred_set_count (infer_st_next_uvar st) /\
            env_rel_complete s ienv tenv tenvE
            ==> ?t' st' s' constraints'.
                  infer_e loc ienv e st = (M_success t',st') /\
                  sub_completion (num_tvs tenvE) (infer_st_next_uvar st') (infer_st_subst st')
                    constraints' s' /\
-                 FDOM (infer_st_subst st') SUBSET count (infer_st_next_uvar st') /\
-                 FDOM s' = count (infer_st_next_uvar st') /\
+                 FDOM (infer_st_subst st') SUBSET pred_set_count (infer_st_next_uvar st') /\
+                 FDOM s' = pred_set_count (infer_st_next_uvar st') /\
                  t_compat s s' /\
                  t = convert_t (t_walkstar s' t')) /\
    (!tenv tenvE es ts.
      type_es tenv tenvE es ts
      ==> !loc s ienv st constraints.
-           ienv_ok (count (infer_st_next_uvar st)) ienv /\
+           ienv_ok (pred_set_count (infer_st_next_uvar st)) ienv /\
            t_wfs (infer_st_subst st) /\
-           FDOM (infer_st_subst st) SUBSET count (infer_st_next_uvar st) /\
+           FDOM (infer_st_subst st) SUBSET pred_set_count (infer_st_next_uvar st) /\
            sub_completion (num_tvs tenvE) (infer_st_next_uvar st) (infer_st_subst st)
              constraints s /\
-           FDOM s = count (infer_st_next_uvar st) /\
+           FDOM s = pred_set_count (infer_st_next_uvar st) /\
            env_rel_complete s ienv tenv tenvE
            ==> ?ts' st' s' constraints'.
                  infer_es loc ienv es st = (M_success ts',st') /\
                  sub_completion (num_tvs tenvE) (infer_st_next_uvar st') (infer_st_subst st')
                    constraints' s' /\
-                 FDOM (infer_st_subst st') SUBSET count (infer_st_next_uvar st') /\
-                 FDOM s' = count (infer_st_next_uvar st') /\
+                 FDOM (infer_st_subst st') SUBSET pred_set_count (infer_st_next_uvar st') /\
+                 FDOM s' = pred_set_count (infer_st_next_uvar st') /\
                  t_compat s s' /\
                  ts = MAP (convert_t o t_walkstar s') ts') /\
    (!tenv tenvE funs env.
      type_funs tenv tenvE funs env
      ==> !loc s ienv st constraints.
-           ienv_ok (count (infer_st_next_uvar st)) ienv /\
+           ienv_ok (pred_set_count (infer_st_next_uvar st)) ienv /\
            t_wfs (infer_st_subst st) /\
-           FDOM (infer_st_subst st) SUBSET count (infer_st_next_uvar st) /\
+           FDOM (infer_st_subst st) SUBSET pred_set_count (infer_st_next_uvar st) /\
            sub_completion (num_tvs tenvE) (infer_st_next_uvar st) (infer_st_subst st)
              constraints s /\
-           FDOM s = count (infer_st_next_uvar st) /\
+           FDOM s = pred_set_count (infer_st_next_uvar st) /\
            env_rel_complete s ienv tenv tenvE
            ==> ?env' st' s' constraints'.
                  infer_funs loc ienv funs st = (M_success env',st') /\
                  sub_completion (num_tvs tenvE) (infer_st_next_uvar st') (infer_st_subst st')
                    constraints' s' /\
-                 FDOM (infer_st_subst st') SUBSET count (infer_st_next_uvar st') /\
-                 FDOM s' = count (infer_st_next_uvar st') /\
+                 FDOM (infer_st_subst st') SUBSET pred_set_count (infer_st_next_uvar st') /\
+                 FDOM s' = pred_set_count (infer_st_next_uvar st') /\
                  t_compat s s' /\
                  MAP SND env = MAP (convert_t o t_walkstar s') env')`,
   MATCH_MP_TAC type_e_strongind THEN REPEAT CONJ_TAC THENL

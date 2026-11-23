@@ -94,7 +94,7 @@ let IL1AUX_LIFT_LET_SIZE = prove
   REWRITE_TAC[type_size_def "dec"; type_size_def "exp"] THEN ARITH_TAC);;
 
 let lift_lets_def = cake_def_wf
-  `measure ((dec_size o SND):dec list # dec -> num)`
+  `MEASURE ((dec_size o SND):dec list # dec -> num)`
   (REWRITE_TAC(WF_REL_THMS @ [o_THM; SND]) THEN REPEAT STRIP_TAC THEN RVEQ_TAC THEN
    FIRST_ASSUM (ASSUME_TAC o MATCH_MP IL1AUX_LIFT_LET_SIZE) THEN ASM_ARITH_TAC)
   `lift_lets sofar d =
@@ -105,7 +105,7 @@ let lift_lets_def = cake_def_wf
 let lift_lets_ind = cake_ind "lift_lets";;
 
 let source_let_compile_decs_def = sem1aux_def_wf
-  `measure (list_size dec_size)`
+  `MEASURE (list_size dec_size)`
   SEM1AUX_TC_TAC
   `(source_let_compile_decs [] = []) /\
    (source_let_compile_decs (CONS d ds) =

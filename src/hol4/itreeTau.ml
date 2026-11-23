@@ -16,7 +16,7 @@
 (* strip_tau and after_taus are inductive.                                   *)
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
-(* - Names from notes/naming/names.tsv: HOL4 Ret is itree_Ret (bviSem has a  *)
+(* - Names from doc/names.tsv: HOL4 Ret is itree_Ret (bviSem has a           *)
 (*   constructor Ret) and Return is itree_Return; theorems that OCaml would *)
 (*   read as constructors take the prefix itree_ (itree_Ret_def,            *)
 (*   itree_Tau_11, ...).  HOL4's 'seed is S (itree_next is (A,E,R,S)).     *)
@@ -38,6 +38,8 @@
 (*   (untau maps into HOL4's other itree type, of theory itree, which no     *)
 (*   theory of the port uses); datatype_itree (a TypeBase marker).          *)
 (* - Lemmas named ITREEAUX_... are helpers of this file (not HOL4 names).    *)
+(* - HOL4 spin is itree_spin (a short or common word).  The theorem spin     *)
+(*   keeps its HOL4 name.                                                    *)
 (* ========================================================================= *)
 
 needs "hol4/vocab.ml";;
@@ -359,11 +361,12 @@ let itree_CASE_elim = prove
 
 (* ------------------------------------------------------------------------- *)
 (* itree as a case type (HOL4: TypeBase.export below), registered by hand    *)
-(* since it is not a HOL Light datatype: with the kit (case constant,       *)
-(* nchotomy, case_eq: CASES_ON, TOP_CASE_TAC, match patterns, case_eq       *)
-(* "itree", all_case_eqs, the simpset and the case net) and with HOL Light's *)
-(* rectype net and distinctness/injectivity stores (MATCH_CONV and the      *)
-(* recursion package simplify itree constructor equations with them).       *)
+(* since it is not a HOL Light datatype: with the kit (case constant,        *)
+(* nchotomy, case_eq: CASES_ON, TOP_CASE_TAC, match patterns, case_eq        *)
+(* "itree", all_case_eqs, the simpset and the case net; the case info        *)
+(* carries the distinctness and injectivity theorems), with HOL Light's      *)
+(* rectype net (MATCH_CONV and the recursion package simplify itree          *)
+(* constructor equations with it) and with its injectivity store.            *)
 (* ------------------------------------------------------------------------- *)
 
 let itree_case_info =
@@ -378,7 +381,6 @@ let itree_case_info =
              ci_distinct = ds @ map sym_neg ds;
              ci_inject = is } in
   the_case_infos := ("itree",ci) :: !the_case_infos;
-  distinctness_store := ("itree",fun () -> itree_distinct) :: !distinctness_store;
   injectivity_store := ("itree",itree_11) :: !injectivity_store;
   basic_rectype_net :=
     itlist (net_of_thm true)
@@ -1505,32 +1507,33 @@ let itree_coind_upto_taus = prove
     MATCH_MP_TAC ITREEAUX_set_gfp_sub_companion THEN
     REWRITE_TAC[wbisim_functional_mono]]);;
 
-(* misc.  HOL4's definition spin is rebound to the theorem spin below; the  *)
-(* definition is ITREEAUX_spin_def (HOL4 () is one)                          *)
+(* misc.  HOL4's definition spin (the constant itree_spin here) is rebound  *)
+(* to the theorem spin below; the definition is ITREEAUX_spin_def (HOL4 ()   *)
+(* is one)                                                                   *)
 
 let ITREEAUX_spin_def = cake_def
- `spin = itree_unfold (K (Tau' one)) one:(A,E,R)itree`;;
+ `itree_spin = itree_unfold (K (Tau' one)) one:(A,E,R)itree`;;
 
 let spin = prove
- (`spin:(A,E,R)itree = Tau spin`,
+ (`itree_spin:(A,E,R)itree = Tau itree_spin`,
   REWRITE_TAC[ITREEAUX_spin_def] THEN GEN_REWRITE_TAC LAND_CONV [itree_unfold] THEN
   SIMP[K_THM]);;
 
 (* relation to tauless itrees *)
 
 let strip_tau_spin = prove
- (`!t:(A,E,R)itree. (!t'. ~strip_tau t t') ==> t = spin`,
+ (`!t:(A,E,R)itree. (!t'. ~strip_tau t t') ==> t = itree_spin`,
   GEN_TAC THEN DISCH_TAC THEN ONCE_REWRITE_TAC[itree_bisimulation] THEN
-  QEXISTS_TAC "\\t t'. (!t''. ~strip_tau t t'') /\\ t' = spin" THEN
+  QEXISTS_TAC "\\t t'. (!t''. ~strip_tau t t'') /\\ t' = itree_spin" THEN
   ASM_REWRITE_TAC[] THEN REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
   STRIP_TAC THENL
    [ASM_MESON_TAC[strip_tau_simps2];
-    EXISTS_TAC `spin:(A,E,R)itree` THEN ASM_MESON_TAC[spin; strip_tau_simps];
+    EXISTS_TAC `itree_spin:(A,E,R)itree` THEN ASM_MESON_TAC[spin; strip_tau_simps];
     ASM_MESON_TAC[strip_tau_simps3]]);;
 
 let spin_strip_tau = prove
- (`!t:(A,E,R)itree. strip_tau spin t ==> F`,
-  SUBGOAL_THEN `!x t:(A,E,R)itree. strip_tau x t ==> x = spin ==> F`
+ (`!t:(A,E,R)itree. strip_tau itree_spin t ==> F`,
+  SUBGOAL_THEN `!x t:(A,E,R)itree. strip_tau x t ==> x = itree_spin ==> F`
     (fun th -> MESON_TAC[th]) THEN
   MATCH_MP_TAC strip_tau_ind THEN GEN_REWRITE_TAC ONCE_DEPTH_CONV [spin] THEN
   REWRITE_TAC[itree_11; itree_distinct] THEN MESON_TAC[spin]);;
@@ -1629,30 +1632,30 @@ let FUNPOW_Tau_Ret_eq = prove
 (* more on spin *)
 
 let spin_bind = prove
- (`!k:R->(A,E,B)itree. itree_bind spin k = spin`,
+ (`!k:R->(A,E,B)itree. itree_bind itree_spin k = itree_spin`,
   GEN_TAC THEN ONCE_REWRITE_TAC[itree_bisimulation] THEN
-  QEXISTS_TAC "\\x y. x = itree_bind spin k /\\ y = spin" THEN
+  QEXISTS_TAC "\\x y. x = itree_bind itree_spin k /\\ y = itree_spin" THEN
   REWRITE_TAC[] THEN REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
   GEN_REWRITE_TAC (LAND_CONV o LAND_CONV o RAND_CONV o LAND_CONV) [spin] THEN
   REWRITE_TAC[itree_bind_thm; itree_distinct; itree_11] THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN EXISTS_TAC `spin:(A,E,B)itree` THEN
+  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN EXISTS_TAC `itree_spin:(A,E,B)itree` THEN
   ASM_MESON_TAC[spin]);;
 
 let spin_FUNPOW_Tau = prove
- (`!n. spin:(A,E,R)itree = ITER n Tau spin`,
+ (`!n. itree_spin:(A,E,R)itree = ITER n Tau itree_spin`,
   INDUCT_TAC THEN REWRITE_TAC[ITER] THEN
   FIRST_X_ASSUM(fun th -> GEN_REWRITE_TAC (RAND_CONV o RAND_CONV) [GSYM th]) THEN
   ACCEPT_TAC spin);;
 
 let wbisim_spin_eq = prove
- (`!t:(A,E,R)itree. itree_wbisim t spin <=> t = spin`,
+ (`!t:(A,E,R)itree. itree_wbisim t itree_spin <=> t = itree_spin`,
   GEN_TAC THEN EQ_TAC THENL
    [DISCH_TAC THEN ONCE_REWRITE_TAC[itree_bisimulation] THEN
-    QEXISTS_TAC "\\x y. itree_wbisim x spin /\\ y = spin" THEN
+    QEXISTS_TAC "\\x y. itree_wbisim x itree_spin /\\ y = itree_spin" THEN
     ASM_REWRITE_TAC[] THEN REPEAT CONJ_TAC THEN REPEAT GEN_TAC THENL
      [GEN_REWRITE_TAC (LAND_CONV o LAND_CONV) [itree_wbisim_cases] THEN
       SIMP[itree_distinct; REWRITE_RULE[IMP_CLAUSES] spin_strip_tau];
-      STRIP_TAC THEN EXISTS_TAC `spin:(A,E,R)itree` THEN
+      STRIP_TAC THEN EXISTS_TAC `itree_spin:(A,E,R)itree` THEN
       ASM_MESON_TAC[spin; itree_wbisim_tau_eqn];
       GEN_REWRITE_TAC (LAND_CONV o LAND_CONV) [itree_wbisim_cases] THEN
       SIMP[itree_distinct; REWRITE_RULE[IMP_CLAUSES] spin_strip_tau]];
@@ -1664,19 +1667,19 @@ let strip_tau_FUNPOW_strip_tau = prove
   INDUCT_TAC THEN SIMP[ITER]);;
 
 let FUNPOW_Ret_spin_F = prove
- (`!n (x:R). ITER n Tau (itree_Ret x) = spin:(A,E,R)itree ==> F`,
+ (`!n (x:R). ITER n Tau (itree_Ret x) = itree_spin:(A,E,R)itree ==> F`,
   INDUCT_TAC THEN GEN_TAC THEN
   GEN_REWRITE_TAC (LAND_CONV o RAND_CONV) [spin] THEN
   ASM_REWRITE_TAC[ITER; itree_11; itree_distinct] THEN ASM_MESON_TAC[]);;
 
 let FUNPOW_Vis_spin_F = prove
- (`!n (e:E) (k:A->(A,E,R)itree). ITER n Tau (Vis e k) = spin ==> F`,
+ (`!n (e:E) (k:A->(A,E,R)itree). ITER n Tau (Vis e k) = itree_spin ==> F`,
   INDUCT_TAC THEN REPEAT GEN_TAC THEN
   GEN_REWRITE_TAC (LAND_CONV o RAND_CONV) [spin] THEN
   ASM_REWRITE_TAC[ITER; itree_11; itree_distinct] THEN ASM_MESON_TAC[]);;
 
 let FUNPOW_Tau_SUC_cyclic_spin = prove
- (`!t:(A,E,R)itree n. t = ITER (SUC n) Tau t <=> t = spin`,
+ (`!t:(A,E,R)itree n. t = ITER (SUC n) Tau t <=> t = itree_spin`,
   REPEAT GEN_TAC THEN EQ_TAC THENL
    [DISCH_TAC THEN
     ASM_CASES_TAC `?t':(A,E,R)itree. strip_tau t t'` THENL
@@ -1698,11 +1701,11 @@ let FUNPOW_Tau_SUC_cyclic_spin = prove
 
 let FUNPOW_Tau_abs_cyclic_spin = prove
  (`!ab:B->(A,E,R)itree.
-     (!r. ?n r'. ab r = ITER (SUC n) Tau (ab r')) <=> (!r. ab r = spin)`,
+     (!r. ?n r'. ab r = ITER (SUC n) Tau (ab r')) <=> (!r. ab r = itree_spin)`,
   GEN_TAC THEN EQ_TAC THENL
    [DISCH_TAC THEN GEN_TAC THEN REWRITE_TAC[GSYM wbisim_spin_eq] THEN
     SUBGOAL_THEN `!x y:(A,E,R)itree.
-                    (?n r. x = ITER n Tau ((ab:B->(A,E,R)itree) r)) /\ y = spin
+                    (?n r. x = ITER n Tau ((ab:B->(A,E,R)itree) r)) /\ y = itree_spin
                     ==> itree_wbisim x y`
       (fun th -> MESON_TAC[th; ITER]) THEN
     MATCH_MP_TAC itree_wbisim_coind THEN REPEAT GEN_TAC THEN STRIP_TAC THEN
@@ -1721,7 +1724,7 @@ let FUNPOW_Tau_abs_cyclic_spin = prove
 let itree_wbisim_strip_tau_cases = prove
  (`!t t':(A,E,R)itree.
      itree_wbisim t t' <=>
-     (t = spin /\ t' = spin) \/
+     (t = itree_spin /\ t' = itree_spin) \/
      (?r. strip_tau t (itree_Ret r) /\ strip_tau t' (itree_Ret r)) \/
      (?e k k'. strip_tau t (Vis e k) /\ strip_tau t' (Vis e k') /\
                !l. itree_wbisim (k l) (k' l))`,
@@ -1733,20 +1736,20 @@ let itree_wbisim_strip_tau_cases = prove
         ASM_MESON_TAC[strip_tau_simps];
         ASM_MESON_TAC[itree_wbisim_strip_tau_Vis]];
       DISJ1_TAC THEN
-      SUBGOAL_THEN `t:(A,E,R)itree = spin` SUBST_ALL_TAC THENL
+      SUBGOAL_THEN `t:(A,E,R)itree = itree_spin` SUBST_ALL_TAC THENL
        [ASM_MESON_TAC[strip_tau_spin]; ALL_TAC] THEN
       ASM_MESON_TAC[wbisim_spin_eq; itree_wbisim_sym]];
     STRIP_TAC THEN ASM_REWRITE_TAC[itree_wbisim_refl] THEN
     ASM_MESON_TAC[itree_wbisim_rules]]);;
 
 let after_taus_itree_strong_bisim_spin_spin = prove
- (`!t t':(A,E,R)itree. after_taus (=) t t' ==> t' = spin ==> t = spin`,
+ (`!t t':(A,E,R)itree. after_taus (=) t t' ==> t' = itree_spin ==> t = itree_spin`,
   MATCH_MP_TAC after_taus_ind THEN MESON_TAC[spin; itree_11]);;
 
 let after_taus_itree_strong_bisim_strip_tau = prove
  (`!t t':(A,E,R)itree.
      after_taus (=) t t' <=>
-     (?t''. strip_tau t t'' /\ strip_tau t' t'') \/ (t = spin /\ t' = spin)`,
+     (?t''. strip_tau t t'' /\ strip_tau t' t'') \/ (t = itree_spin /\ t' = itree_spin)`,
   REPEAT GEN_TAC THEN EQ_TAC THENL
    [SPEC_TAC(`t':(A,E,R)itree`,`t':(A,E,R)itree`) THEN
     SPEC_TAC(`t:(A,E,R)itree`,`t:(A,E,R)itree`) THEN
@@ -1762,7 +1765,7 @@ let after_taus_itree_strong_bisim_strip_tau = prove
       ASM_REWRITE_TAC[] THEN MATCH_MP_TAC after_taus_rel THEN REWRITE_TAC[]]]);;
 
 let after_taus_itree_wbisim_spin_spin = prove
- (`!t t':(A,E,R)itree. after_taus itree_wbisim t t' ==> t' = spin ==> t = spin`,
+ (`!t t':(A,E,R)itree. after_taus itree_wbisim t t' ==> t' = itree_spin ==> t = itree_spin`,
   MATCH_MP_TAC after_taus_ind THEN MESON_TAC[spin; itree_11; wbisim_spin_eq]);;
 
 let after_taus_itree_wbisim_itree_wbisim = prove
@@ -1907,17 +1910,17 @@ let weak_bisim_upfrom_abs_rules,weak_bisim_upfrom_abs_coind,
      weak_bisim_upfrom_abs (ab,ab') (ITER (SUC n) Tau t) (ITER (SUC n') Tau t'))`;;
 
 let weak_bisim_upfrom_abs_spin = prove
- (`!(ab:B->(A,E,R)itree) ab'. weak_bisim_upfrom_abs (ab,ab') spin spin`,
+ (`!(ab:B->(A,E,R)itree) ab'. weak_bisim_upfrom_abs (ab,ab') itree_spin itree_spin`,
   REPEAT GEN_TAC THEN
   SUBGOAL_THEN `!ap t t':(A,E,R)itree.
-                  ap = (ab:B->(A,E,R)itree,ab') /\ t = spin /\ t' = spin ==>
+                  ap = (ab:B->(A,E,R)itree,ab') /\ t = itree_spin /\ t' = itree_spin ==>
                   weak_bisim_upfrom_abs ap t t'`
     (fun th -> MESON_TAC[th]) THEN
   MATCH_MP_TAC weak_bisim_upfrom_abs_coind THEN REPEAT GEN_TAC THEN
   STRIP_TAC THEN ASM_REWRITE_TAC[PAIR_EQ] THEN
   DISJ2_TAC THEN DISJ2_TAC THEN DISJ2_TAC THEN
   MAP_EVERY EXISTS_TAC [`ab:B->(A,E,R)itree`; `ab':B->(A,E,R)itree`;
-                        `spin:(A,E,R)itree`; `spin:(A,E,R)itree`; `0`; `0`] THEN
+                        `itree_spin:(A,E,R)itree`; `itree_spin:(A,E,R)itree`; `0`; `0`] THEN
   REWRITE_TAC[ITER; GSYM spin]);;
 
 let weak_bisim_upfrom_abs_tauL = prove
@@ -1970,7 +1973,7 @@ let weak_bisim_upfrom_abs_wbisim_bind = prove
     STRIP_TAC THENL
      [ASM_REWRITE_TAC[spin_bind] THEN DISJ2_TAC THEN DISJ2_TAC THEN DISJ2_TAC THEN
       MAP_EVERY EXISTS_TAC [`ab:B->(A,E,R)itree`; `ab':B->(A,E,R)itree`;
-                            `spin:(A,E,R)itree`; `spin:(A,E,R)itree`; `0`; `0`] THEN
+                            `itree_spin:(A,E,R)itree`; `itree_spin:(A,E,R)itree`; `0`; `0`] THEN
       REWRITE_TAC[ITER; GSYM spin] THEN
       DISJ2_TAC THEN MATCH_ACCEPT_TAC weak_bisim_upfrom_abs_spin;
       SUBGOAL_THEN `weak_bisim_upfrom_abs (ab:B->(A,E,R)itree,ab')
@@ -2006,7 +2009,7 @@ let itree_wbisim_weak_upfrom_abs = prove
   REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THENL
    [ASM_REWRITE_TAC[] THEN DISJ2_TAC THEN DISJ2_TAC THEN DISJ2_TAC THEN
     MAP_EVERY EXISTS_TAC [`ab:B->(A,E,R)itree`; `ab:B->(A,E,R)itree`;
-                          `spin:(A,E,R)itree`; `spin:(A,E,R)itree`; `0`; `0`] THEN
+                          `itree_spin:(A,E,R)itree`; `itree_spin:(A,E,R)itree`; `0`; `0`] THEN
     REWRITE_TAC[ITER; GSYM spin; itree_wbisim_refl];
     ASM_MESON_TAC[];
     ASM_MESON_TAC[]]);;
@@ -2043,7 +2046,7 @@ let itree_wbisim_weak_bisim_upfrom_abs = prove
   REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THENL
    [ASM_REWRITE_TAC[] THEN DISJ2_TAC THEN DISJ2_TAC THEN DISJ2_TAC THEN
     MAP_EVERY EXISTS_TAC [`ab:B->(A,E,R)itree`; `ab':B->(A,E,R)itree`;
-                          `spin:(A,E,R)itree`; `spin:(A,E,R)itree`; `0`; `0`] THEN
+                          `itree_spin:(A,E,R)itree`; `itree_spin:(A,E,R)itree`; `0`; `0`] THEN
     REWRITE_TAC[ITER; GSYM spin; itree_wbisim_refl];
     ASM_MESON_TAC[];
     ASM_MESON_TAC[]]);;

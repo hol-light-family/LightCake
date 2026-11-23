@@ -1379,7 +1379,7 @@ let memory_rel_append = prove
 
 (* HOL4 line 17360: walk *)
 let data_to_word_memoryProof_walk_def = cake_def_wf
-  `measure (\p:data_to_word_config#
+  `MEASURE (\p:data_to_word_config#
                ((A word_loc,data_to_word_memoryProof_tag#B list)heap_element)list#
                num#num. SND (SND (SND p)))`
   TERM_TAC
@@ -2815,7 +2815,7 @@ let SKELAUX_VAL_WORD_SUB_2_LT = prove
 
 (* HOL4 line 18357 *)
 let word_xor_bytes_def = cake_def_wf
-  `measure (\p:A word#A word#A word#(A word->bool)#(A word->A word_loc).
+  `MEASURE (\p:A word#A word#A word#(A word->bool)#(A word->A word_loc).
               val (FST (SND (SND p))))`
   (REPEAT STRIP_TAC THEN REWRITE_TAC[measure_THM; FST; SND] THEN
    MATCH_MP_TAC SKELAUX_VAL_WORD_SUB_2_LT THEN ASM_REWRITE_TAC[])
@@ -3451,11 +3451,11 @@ let MP7AUX_word_el_Bytes_eq = prove
      ?P. word_el a (Bytes be fl vals zs) c =
            set_sep_one (a, wl_Word (make_byte_header c fl (LENGTH vals))) STAR
            misc_word_list (word_add a bytes_in_word) (MAP wl_Word (write_bytes vals zs be))
-           STAR cond P /\
+           STAR set_sep_cond P /\
          word_el a (Bytes be fl vals' zs) c =
            set_sep_one (a, wl_Word (make_byte_header c fl (LENGTH vals))) STAR
            misc_word_list (word_add a bytes_in_word) (MAP wl_Word (write_bytes vals' zs be))
-           STAR cond P /\
+           STAR set_sep_cond P /\
          (P ==> decode_length c (make_byte_header c fl (LENGTH vals):A word) =
                   word (LENGTH zs) /\
                 LENGTH zs < dimword(:A))`,
@@ -3471,13 +3471,13 @@ let MP7AUX_word_el_Bytes_eq = prove
   REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
   MATCH_MP_TAC LTE_TRANS THEN EXISTS_TAC `2 EXP (dimindex (:A) - 4)` THEN
   ASM_REWRITE_TAC[dimword_def; LE_EXP] THEN ARITH_TAC);;
-(* more separation logic automation: conditions cond b of STAR trees, and  *)
+(* more separation logic automation: conditions set_sep_cond b of STAR trees, and  *)
 (* rotations that put chosen leaves in front                                *)
 let mp7_is_cond tm =
-  is_comb tm && is_const (rator tm) && fst(dest_const(rator tm)) = "cond";;
+  is_comb tm && is_const (rator tm) && fst(dest_const(rator tm)) = "set_sep_cond";;
 let mp7_misc_at a t =
   mp7_leaf_const t = "misc_word_list" && aconv (rand(rator t)) a;;
-(* from P s with leaves cond b of P: the facts b and the assertion P' s     *)
+(* from P s with leaves set_sep_cond b of P: the facts b and the assertion P' s     *)
 (* without them                                                             *)
 let rec mp7_sep_conds th =
   let p,s = dest_comb (concl th) in
@@ -3499,7 +3499,7 @@ let MP7AUX_SEP_COND_TAC : tactic = fun (asl,w as g) ->
   | (_,th)::_ ->
       (UNDISCH_TAC (concl th) THEN DISCH_THEN(fun th' ->
          MAP_EVERY ASSUME_TAC (mp7_sep_conds th'))) g;;
-(* goal Q s with a leaf cond b of Q: the goal b /\ Q' s *)
+(* goal Q s with a leaf set_sep_cond b of Q: the goal b /\ Q' s *)
 let MP7AUX_SEP_GOAL_COND_TAC : tactic = fun (asl,w as g) ->
   let q,s = dest_comb w in
   let t = find mp7_is_cond (mp7_star_leaves q) in
@@ -3861,7 +3861,7 @@ let memory_rel_xor_bytes = prove
 
 (* HOL4 line 18962 *)
 let word_str_cmp_loop_def = cake_def_wf
-  `measure (\p:A word#A word#A word#A word#A word#(A word->bool)#
+  `MEASURE (\p:A word#A word#A word#A word#A word#(A word->bool)#
                (A word->A word_loc)#bool#num.
               SND (SND (SND (SND (SND (SND (SND (SND p))))))))`
   TERM_TAC

@@ -3,7 +3,7 @@
 (* (CakeML v3479).  Common Properties for Pancake ILS.                       *)
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
-(* - Names as notes/naming/names.tsv says: pan_commonProps_ctxt_max,         *)
+(* - Names as doc/names.tsv says: pan_commonProps_ctxt_max,                  *)
 (*   pan_commonProps_no_overlap; the theorems keep their HOL4 names.         *)
 (* - HOL4 set is set_of_list; GENLIST f n is list_of_seq f n; FOLDR f e l is *)
 (*   ITLIST f l e; ZIP (a,b) is ZIP a b (every ZIP here is of lists of equal *)
@@ -419,12 +419,12 @@ let subspt_same_insert_cancel = prove
   REWRITE_TAC[] THEN ASM_MESON_TAC[]);;
 
 let max_set_count_length = prove
- (`!n. MAX_SET (count n) = n - 1`,
+ (`!n. MAX_SET (pred_set_count n) = n - 1`,
   INDUCT_TAC THEN RW[] THENL
-   [REWRITE_TAC[count_DEF; LT; EMPTY_GSPEC; MAX_SET_THM] THEN ARITH_TAC; ALL_TAC] THEN
+   [REWRITE_TAC[pred_set_count_DEF; LT; EMPTY_GSPEC; MAX_SET_THM] THEN ARITH_TAC; ALL_TAC] THEN
   FS[COUNT_SUC] THEN
-  QBY "MAX_SET (n INSERT count n) = MAX n (MAX_SET (count n))"
-    (QBY "FINITE (count n)" (REWRITE_TAC[FINITE_COUNT]) THEN
+  QBY "MAX_SET (n INSERT pred_set_count n) = MAX n (MAX_SET (pred_set_count n))"
+    (QBY "FINITE (pred_set_count n)" (REWRITE_TAC[FINITE_COUNT]) THEN
      ASM_MESON_TAC[MAX_SET_THM]) THEN
   FS[MAX_DEF] THEN ARITH_TAC);;
 

@@ -16,7 +16,7 @@ type_invention_error := true;;
 (* cs : ('a # exp) num_map (the arity is not used here)                    *)
 
 let tick_inline_def = sem1aux_def_wf
-  `measure (\p:(A#bvl_exp) spt # bvl_exp list. list_size bvl_exp_size (SND p))`
+  `MEASURE (\p:(A#bvl_exp) spt # bvl_exp list. list_size bvl_exp_size (SND p))`
   SEM1AUX_TC_TAC
   `(tick_inline (cs:(A#bvl_exp) spt) [] = []) /\
    (tick_inline cs (CONS x (CONS y xs)) =
@@ -51,7 +51,7 @@ let tick_inline_def = sem1aux_def_wf
 let tick_inline_ind = cake_ind "tick_inline";;
 
 let tick_inline_sing_def = sem1aux_def_wf
-  `measure (\x:(A#bvl_exp) spt # bvl_exp + (A#bvl_exp) spt # bvl_exp list.
+  `MEASURE (\x:(A#bvl_exp) spt # bvl_exp + (A#bvl_exp) spt # bvl_exp list.
               sum_CASE x (\p. bvl_exp_size (SND p))
                          (\p. list_size bvl_exp_size (SND p)))`
   SEM1AUX_TC_TAC
@@ -96,7 +96,7 @@ let tick_inline_sing = prove
 (* This definition is written to exit as soon as possible. *)
 
 let is_small_aux_def = sem1aux_def_wf
-  `measure (\p:num # bvl_exp list. list_size bvl_exp_size (SND p))`
+  `MEASURE (\p:num # bvl_exp list. list_size bvl_exp_size (SND p))`
   SEM1AUX_TC_TAC
   `(is_small_aux n [] = n) /\
    (is_small_aux n (CONS x (CONS y xs)) =
@@ -132,7 +132,7 @@ let is_small_aux_def = sem1aux_def_wf
 let is_small_aux_ind = cake_ind "is_small_aux";;
 
 let is_small_sing_def = sem1aux_def_wf
-  `measure (\x:num # bvl_exp + num # bvl_exp list.
+  `MEASURE (\x:num # bvl_exp + num # bvl_exp list.
               sum_CASE x (\p. bvl_exp_size (SND p))
                          (\p. list_size bvl_exp_size (SND p)))`
   SEM1AUX_TC_TAC
@@ -188,7 +188,7 @@ let is_small_eq = prove
   REWRITE_TAC[is_small_def; is_small_sing]);;
 
 let bvl_inline_is_rec_def = sem1aux_def_wf
-  `measure (\p:num # bvl_exp list. list_size bvl_exp_size (SND p))`
+  `MEASURE (\p:num # bvl_exp list. list_size bvl_exp_size (SND p))`
   SEM1AUX_TC_TAC
   `(bvl_inline_is_rec n [] <=> F) /\
    (bvl_inline_is_rec n (CONS x (CONS y xs)) <=>
@@ -215,7 +215,7 @@ let bvl_inline_is_rec_def = sem1aux_def_wf
 let bvl_inline_is_rec_ind = cake_ind "bvl_inline_is_rec";;
 
 let is_rec_sing_def = sem1aux_def_wf
-  `measure (\x:num # bvl_exp + num # bvl_exp list.
+  `MEASURE (\x:num # bvl_exp + num # bvl_exp list.
               sum_CASE x (\p. bvl_exp_size (SND p))
                          (\p. list_size bvl_exp_size (SND p)))`
   SEM1AUX_TC_TAC
@@ -301,7 +301,7 @@ let _ = cake_add_simps [HD_tick_inline];;
 (* remove_ticks -- a function that removes Ticks *)
 
 let bvl_inline_remove_ticks_def = sem1aux_def_wf
-  `measure (\xs:bvl_exp list. list_size bvl_exp_size xs)`
+  `MEASURE (\xs:bvl_exp list. list_size bvl_exp_size xs)`
   SEM1AUX_TC_TAC
   `(bvl_inline_remove_ticks [] = []) /\
    (bvl_inline_remove_ticks (CONS x (CONS y xs)) =
@@ -328,7 +328,7 @@ let bvl_inline_remove_ticks_def = sem1aux_def_wf
 let bvl_inline_remove_ticks_ind = cake_ind "bvl_inline_remove_ticks";;
 
 let bvl_inline_remove_ticks_sing_def = sem1aux_def_wf
-  `measure (\x:bvl_exp + bvl_exp list.
+  `MEASURE (\x:bvl_exp + bvl_exp list.
               sum_CASE x (\e. bvl_exp_size e) (\es. list_size bvl_exp_size es))`
   SEM1AUX_TC_TAC
   `(bvl_inline_remove_ticks_sing (bvl_Var v) = bvl_Var v) /\
@@ -393,7 +393,7 @@ let bvl_inline_dest_op_def = sem1aux_def
    (bvl_inline_dest_op _ _ = NONE)`;;
 
 let bvl_inline_let_op_def = sem1aux_def_wf
-  `measure (\xs:bvl_exp list. list_size bvl_exp_size xs)`
+  `MEASURE (\xs:bvl_exp list. list_size bvl_exp_size xs)`
   SEM1AUX_TC_TAC
   `(bvl_inline_let_op [] = []) /\
    (bvl_inline_let_op (CONS (x:bvl_exp) (CONS y xs)) =
@@ -424,7 +424,7 @@ let bvl_inline_let_op_def = sem1aux_def_wf
 let bvl_inline_let_op_ind = cake_ind "bvl_inline_let_op";;
 
 let let_op_one_def = sem1aux_def_wf
-  `measure (\x:bvl_exp + bvl_exp list.
+  `MEASURE (\x:bvl_exp + bvl_exp list.
               sum_CASE x (\e. bvl_exp_size e) (\es. list_size bvl_exp_size es))`
   SEM1AUX_TC_TAC
   `(let_op_one (bvl_Var v) = bvl_Var v) /\

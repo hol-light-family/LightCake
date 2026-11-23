@@ -14,7 +14,7 @@ needs "semantics/sem1aux_tfl.ml";;
 type_invention_error := true;;
 
 let can_raise_def = sem1aux_def_wf
-  `measure (\x:bvl_exp + bvl_exp list.
+  `MEASURE (\x:bvl_exp + bvl_exp list.
               sum_CASE x (\e. bvl_exp_size e) (\es. list_size bvl_exp_size es))`
   SEM1AUX_TC_TAC
   `(can_raise (bvl_Var v) <=> F) /\
@@ -51,7 +51,7 @@ let dest_handle_If_def = sem1aux_def
    (dest_handle_If _ = NONE)`;;
 
 let handle_adj_vars_def = sem1aux_def_wf
-  `measure (\x:num#num#bvl_exp + num#num#bvl_exp list.
+  `MEASURE (\x:num#num#bvl_exp + num#num#bvl_exp list.
               sum_CASE x (\p. bvl_exp_size (SND (SND p)))
                          (\p. list_size bvl_exp_size (SND (SND p))))`
   SEM1AUX_TC_TAC
@@ -75,7 +75,7 @@ let handle_adj_vars_def = sem1aux_def_wf
       CONS (handle_adj_vars l d x) (handle_adj_vars1 l d xs))`;;
 
 let handle_size_def = sem1aux_def_wf
-  `measure (\x:bvl_exp + bvl_exp list.
+  `MEASURE (\x:bvl_exp + bvl_exp list.
               sum_CASE x (\e. bvl_exp_size e) (\es. list_size bvl_exp_size es))`
   SEM1AUX_TC_TAC
   `(handle_size (bvl_Var v) = 1) /\
@@ -143,7 +143,7 @@ let BVLPAUX_HANDLE_TC_TAC : tactic =
   BVLPAUX_HS_POS_TAC THEN ARITH_TAC;;
 
 let handle_simp_def = sem1aux_def_wf
-  `measure (\x:bvl_exp + bvl_exp list + bvl_exp # bvl_exp # num.
+  `MEASURE (\x:bvl_exp + bvl_exp list + bvl_exp # bvl_exp # num.
               sum_CASE x (\a. handle_size a)
                 (\y. sum_CASE y (\a. handle_size1 a)
                        (\p. handle_size (FST p) + handle_size (FST (SND p)))))`
@@ -223,7 +223,7 @@ let OptionalLetLet_sing_eq = prove
 (* expression list                                                          *)
 
 let bvl_handle_compile_def = sem1aux_def_wf
-  `measure (\p:num#num#bvl_exp list. list_size bvl_exp_size (SND (SND p)))`
+  `MEASURE (\p:num#num#bvl_exp list. list_size bvl_exp_size (SND (SND p)))`
   SEM1AUX_TC_TAC
   `(bvl_handle_compile l n [] = ([]:bvl_exp list,db_vars_Empty,0,T)) /\
    (bvl_handle_compile l n (CONS x (CONS y xs)) =
@@ -278,7 +278,7 @@ let bvl_handle_compile_def = sem1aux_def_wf
 let bvl_handle_compile_ind = cake_ind "bvl_handle_compile";;
 
 let bvl_handle_compile_sing_def = sem1aux_def_wf
-  `measure (\x:num#num#bvl_exp + num#num#bvl_exp list.
+  `MEASURE (\x:num#num#bvl_exp + num#num#bvl_exp list.
               sum_CASE x (\p. bvl_exp_size (SND (SND p)))
                          (\p. list_size bvl_exp_size (SND (SND p))))`
   SEM1AUX_TC_TAC
@@ -432,7 +432,7 @@ let BVLPAUX_dest_Seq_eq = prove
 (* HOL4: Termination WF_REL_TAC `measure (\(c,e,a). exp_size e)` *)
 
 let compile_seqs_def = cake_def_wf
-  `measure (\p:num#bvl_exp#bvl_exp option. bvl_exp_size (FST (SND p)))`
+  `MEASURE (\p:num#bvl_exp#bvl_exp option. bvl_exp_size (FST (SND p)))`
   (REWRITE_TAC[IMP_CONJ] THEN REPEAT GEN_TAC THEN REPEAT DISCH_TAC THEN
    RVEQ_TAC THEN FS[BVLPAUX_dest_Seq_eq] THEN RVEQ_TAC THEN TERM_TAC)
   `compile_seqs cut_size e acc =

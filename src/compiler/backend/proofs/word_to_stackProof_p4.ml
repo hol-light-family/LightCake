@@ -121,7 +121,7 @@ let comp_Call = prove
              res1 = SOME (stackSem_Halt (wl_Word (word 2))) /\
              isPREFIX (ffi_state_io_events (stack_state_ffi t1))
                (ffi_state_io_events (wl_state_ffi s1)) /\
-             the (wl_state_stack_limit s1 + 1) (wl_state_stack_max s1) >
+             misc_the (wl_state_stack_limit s1 + 1) (wl_state_stack_max s1) >
                wl_state_stack_limit s1`,
   REPEAT STRIP_TAC THEN
   SUBGOAL_THEN `4 < k /\ good_dimindex(:A)` STRIP_ASSUME_TAC THENL
@@ -274,7 +274,7 @@ let W2SP4AUX_sim = prove
              (stack_Call NONE (INL start) NONE,stack_state_clock_fupd (K (kc + ck)) t)))))
           (ffi_state_io_events (wl_state_ffi (SND (wl_evaluate
              (wl_Call NONE (SOME start) [0] NONE,wl_state_clock_fupd (K kc) s))))) /\
-        the (wl_state_stack_limit (SND (wl_evaluate (wl_Call NONE (SOME start) [0] NONE,
+        misc_the (wl_state_stack_limit (SND (wl_evaluate (wl_Call NONE (SOME start) [0] NONE,
                                                    wl_state_clock_fupd (K kc) s))) + 1)
             (wl_state_stack_max (SND (wl_evaluate (wl_Call NONE (SOME start) [0] NONE,
                                                   wl_state_clock_fupd (K kc) s)))) >
@@ -924,7 +924,7 @@ let init_state_ok_IMP_state_rel = prove
     ALL_TAC] THEN
   SUBGOAL_THEN `wl_stack_size ([]:((A)stack_frame)list) = SOME 1` ASSUME_TAC THENL
    [REWRITE_TAC[wl_stack_size_def; ITLIST]; ALL_TAC] THEN
-  ASM_REWRITE_TAC[SUB_0; ADD_CLAUSES; the_def; LE_REFL; option_CLAUSES] THEN
+  ASM_REWRITE_TAC[SUB_0; ADD_CLAUSES; misc_the_def; LE_REFL; option_CLAUSES] THEN
   CONJ_TAC THENL
    [MAP_EVERY X_GEN_TAC [`n:num`; `word_prog:(A)wl_prog`; `arg_count:num`] THEN DISCH_TAC THEN
     FIRST_X_ASSUM(MP_TAC o SPECL [`n:num`; `word_prog:(A)wl_prog`; `arg_count:num`] o
@@ -939,7 +939,7 @@ let init_state_ok_IMP_state_rel = prove
     ASM_REWRITE_TAC[] THEN
     MAP_EVERY EXISTS_TAC [`bs:(A word)app_list`; `i:num`; `bs2:(A word)app_list`; `i2:num`;
                           `f:num`; `stack_prog:(A)stack_prog`] THEN
-    ASM_REWRITE_TAC[lookup_mapi; OPTION_MAP_DEF; the_def] THEN
+    ASM_REWRITE_TAC[lookup_mapi; OPTION_MAP_DEF; misc_the_def] THEN
     CONV_TAC(DEPTH_CONV GEN_BETA_CONV) THEN
     REWRITE_TAC[ISPECL [`ac:(A)asm_config`; `F`; `word_prog:(A)wl_prog`; `arg_count:num`;
                         `k:num`; `Nil:(A word)app_list,0`; `bs:(A word)app_list,i:num`]
@@ -954,7 +954,7 @@ let init_state_ok_IMP_state_rel = prove
     REWRITE_TAC[isPREFIX_THM; LENGTH; HD] THEN SIMP[] THEN ARITH_TAC;
     ALL_TAC] THEN
   ASM_REWRITE_TAC[] THEN
-  CONJ_TAC THENL [MATCH_MP_TAC wf_insert THEN REWRITE_TAC[wf_def]; ALL_TAC] THEN
+  CONJ_TAC THENL [MATCH_MP_TAC wf_insert THEN REWRITE_TAC[sptree_wf_def]; ALL_TAC] THEN
   REWRITE_TAC[LET_DEF; LET_END_DEF; DROP; TAKE] THEN CONJ_TAC THENL
    [REWRITE_TAC[word_to_stackProof_stack_rel_def; ALL; abs_stack_def; LENGTH; LT_REFL] THEN
     SIMP[stack_rel_aux_def];
@@ -1026,7 +1026,7 @@ let W2SP4AUX_sim_safe = prove
     mk_comb(`SND:((A)wl_result)option#(A,num#C,FFI)wl_state->(A,num#C,FFI)wl_state`,
             w2sp4aux_wev `kc:num`)] o
     REWRITE_RULE[word_lang_safe_for_space_def; LET_DEF; LET_END_DEF]) THEN
-  REWRITE_TAC[PAIR] THEN STRIP_TAC THEN ASM_REWRITE_TAC[the_def] THEN
+  REWRITE_TAC[PAIR] THEN STRIP_TAC THEN ASM_REWRITE_TAC[misc_the_def] THEN
   MATCH_MP_TAC(TAUT `~d ==> ~(a /\ b /\ c /\ d)`) THEN
   FIRST_X_ASSUM(MP_TAC o check (is_binary "<=" o concl)) THEN ARITH_TAC);;
 

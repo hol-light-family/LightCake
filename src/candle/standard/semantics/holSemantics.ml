@@ -21,9 +21,9 @@
 (* - The other HOL4 overloads are written out: inhabited s is ?x. mem x s;  *)
 (*   tyaof i, tmaof i are FST i, SND i; tyvof v, tmvof v are FST v, SND v;   *)
 (*   the setSpec ones as in setSpec.ml (x <: s is mem x s, Funspace s t is   *)
-(*   funspace mem s t, boolset is two mem, True is setSpec_true mem,         *)
+(*   setSpec_funspace mem s t, boolset is setSpec_two mem, True is setSpec_true mem,         *)
 (*   Boolean b is boolean mem b, Abstract is abstract mem, f ' x is          *)
-(*   apply mem f x, Holds s x is holds mem s x, s suchthat P is              *)
+(*   setSpec_apply mem f x, Holds s x is setSpec_holds mem s x, s suchthat P is              *)
 (*   setSpec_sub mem s P); the holSyntax ones as in holSyntax.ml (Fun, Bool, *)
 (*   Equal, tysof, tmsof, sigof, axsof, ...); mlstring literals are          *)
 (*   implode "...".                                                          *)
@@ -33,8 +33,8 @@
 (*     tyass = tmass = mlstring -> U list -> U, tyval = mlstring -> U,       *)
 (*     tmval = mlstring # hol_type -> U, interpretation = tyass # tmass,     *)
 (*     valuation = tyval # tmval.                                            *)
-(* - HOL4's Greek variable names: delta is dl (delta is a constant of the    *)
-(*   library), tau, gamma, sigma; Gamma is G.                                *)
+(* - HOL4's Greek variable names: delta is dl (delta was a constant of the   *)
+(*   library, now balanced_map_delta), tau, gamma, sigma; Gamma is G.        *)
 (* - Local helpers that are not HOL4 theorems are CSEMAUX_.                  *)
 (* ========================================================================= *)
 
@@ -84,7 +84,7 @@ let is_term_assignment0_def = cake_def
      FEVERY (\(name,ty).
                !tau. is_type_valuation0 mem tau
                      ==> mem (gamma name
-                                (MAP tau (MAP implode (STRING_SORT (MAP explode (tyvars ty))))))
+                                (MAP tau (MAP implode (STRING_SORT (MAP explode (hol_tyvars ty))))))
                              (typesem dl tau ty))
             tmsig`;;
 
@@ -119,13 +119,13 @@ let CSEMAUX_instance_exists = prove
      ==> f tmsig i name ty =
          \tau. SND i name
                  (MAP (typesem (FST i) tau o TYPE_SUBST tyin o Tyvar)
-                      (MAP implode (STRING_SORT (MAP explode (tyvars ty0)))))`,
+                      (MAP implode (STRING_SORT (MAP explode (hol_tyvars ty0)))))`,
   EXISTS_TAC
    `\(tmsig:tmsig) (i:(mlstring->U list->U)#(mlstring->U list->U)) name ty (tau:mlstring->U).
       SND i name
         (MAP (typesem (FST i) tau o
               TYPE_SUBST (@tyin. ty = TYPE_SUBST tyin (THE (FLOOKUP tmsig name))) o Tyvar)
-             (MAP implode (STRING_SORT (MAP explode (tyvars (THE (FLOOKUP tmsig name)))))))` THEN
+             (MAP implode (STRING_SORT (MAP explode (hol_tyvars (THE (FLOOKUP tmsig name)))))))` THEN
   REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[THE_DEF] THEN
   REWRITE_TAC[FUN_EQ_THM] THEN X_GEN_TAC `tau:mlstring->U` THEN
   AP_TERM_TAC THEN REWRITE_TAC[MAP_EQ_f; o_THM] THEN
@@ -152,7 +152,7 @@ let termsem0_def = cake_def
       SND v (x,ty)) /\
    (termsem0 mem tmsig i v (hol_Const name ty) = instance tmsig i name ty (FST v)) /\
    (termsem0 mem tmsig i v (hol_Comb t1 t2) =
-      apply mem (termsem0 mem tmsig i v t1) (termsem0 mem tmsig i v t2)) /\
+      setSpec_apply mem (termsem0 mem tmsig i v t1) (termsem0 mem tmsig i v t2)) /\
    (termsem0 mem tmsig i v (hol_Abs (hol_Var x ty) b) =
       abstract mem (typesem (FST i) (FST v) ty) (typesem (FST i) (FST v) (typeof b))
         (\m. termsem0 mem tmsig i (FST v, ((x,ty) =+ m) (SND v)) b))`;;
@@ -183,8 +183,8 @@ let is_interpretation0_def = cake_def
 (* HOL4: Definition is_std_type_assignment_def *)
 let is_std_type_assignment0_def = cake_def
   `is_std_type_assignment0 (mem:U->U->bool) (dl:mlstring->U list->U) <=>
-     (!dom rng. dl (implode "fun") [dom; rng] = funspace mem dom rng) /\
-     (dl (implode "bool") [] = two mem)`;;
+     (!dom rng. dl (implode "fun") [dom; rng] = setSpec_funspace mem dom rng) /\
+     (dl (implode "bool") [] = setSpec_two mem)`;;
 
 (* HOL4: Definition interprets_def (HOL4 notation                            *)
 (* gamma interprets name on vs as f)                                         *)
@@ -198,8 +198,8 @@ let is_std_interpretation0_def = cake_def
                           (i:(mlstring->U list->U)#(mlstring->U list->U)) <=>
      is_std_type_assignment0 mem (FST i) /\
      interprets0 mem (SND i) (implode "=") [implode "A"]
-       (\l. abstract mem (HD l) (funspace mem (HD l) (two mem))
-              (\x. abstract mem (HD l) (two mem) (\y. boolean mem (x = y))))`;;
+       (\l. abstract mem (HD l) (setSpec_funspace mem (HD l) (setSpec_two mem))
+              (\x. abstract mem (HD l) (setSpec_two mem) (\y. boolean mem (x = y))))`;;
 
 (* A model of a theory is a standard interpretation that satisfies all the
    axioms. *)

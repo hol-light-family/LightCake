@@ -51,11 +51,11 @@ let _ = cake_add_simps [ltree_not_Vis];;
 
 let ltree_spin = prove
  (`!fs:(ffiname->B->byte list->byte list->(B)oracle_result)#B.
-     ltree fs spin =
-     (spin:((ffi_outcome+byte list)+((A)pan_result)option#(A)bstate,ev,
+     ltree fs itree_spin =
+     (itree_spin:((ffi_outcome+byte list)+((A)pan_result)option#(A)bstate,ev,
             (ffi_outcome+byte list)+((A)pan_result)option#(A)bstate)itree)`,
   GEN_TAC THEN ONCE_REWRITE_TAC[itree_bisimulation] THEN
-  QEXISTS_TAC "\\x y. x = ltree fs spin /\\ y = spin" THEN REWRITE_TAC[] THEN
+  QEXISTS_TAC "\\x y. x = ltree fs itree_spin /\\ y = itree_spin" THEN REWRITE_TAC[] THEN
   REPEAT STRIP_TAC THEN
   RULE_ASSUM_TAC(ONCE_REWRITE_RULE[spin]) THEN FS[] THEN
   REWRITE_TAC[GSYM spin]);;
@@ -162,11 +162,11 @@ let div_imp_spin = prove
  (`!(fs:(ffiname->B->byte list->byte list->(B)oracle_result)#B)
     (t:((ffi_outcome+byte list)+((A)pan_result)option#(A)bstate,ev,
         (ffi_outcome+byte list)+((A)pan_result)option#(A)bstate)itree).
-     pan_itreeSem_div fs t ==> ltree fs t = spin`,
+     pan_itreeSem_div fs t ==> ltree fs t = itree_spin`,
   REPEAT STRIP_TAC THEN MATCH_MP_TAC EQ_SYM THEN
   ONCE_REWRITE_TAC[itree_bisimulation] THEN
   QEXISTS_TAC
-   "\\x y. x = spin /\\
+   "\\x y. x = itree_spin /\\
           ?(fs:(ffiname->B->byte list->byte list->(B)oracle_result)#B) t.
             y = ltree fs t /\\ pan_itreeSem_div fs t" THEN
   REWRITE_TAC[] THEN CONJ_TAC THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
@@ -243,7 +243,7 @@ let div_eq_ltree_spin = prove
  (`!(fs:(ffiname->B->byte list->byte list->(B)oracle_result)#B)
     (t:((ffi_outcome+byte list)+((A)pan_result)option#(A)bstate,ev,
         (ffi_outcome+byte list)+((A)pan_result)option#(A)bstate)itree).
-     pan_itreeSem_div fs t <=> ltree fs t = spin`,
+     pan_itreeSem_div fs t <=> ltree fs t = itree_spin`,
   REPEAT GEN_TAC THEN EQ_TAC THEN REWRITE_TAC[div_imp_spin] THEN
   SIMP[pan_itreeSem_div_def] THEN MESON_TAC[FUNPOW_Ret_spin_F]);;
 
@@ -330,26 +330,26 @@ let lnil = prove
 (* every element of a flattened unfold of a spinning tree is LNIL *)
 
 let PITRAUX_every_lnil = prove
- (`!ll:(A llist)llist. ll = lnil ==> every ((=) LNIL) ll`,
-  MATCH_MP_TAC every_coind THEN REPEAT GEN_TAC THEN
+ (`!ll:(A llist)llist. ll = lnil ==> llist_every ((=) LNIL) ll`,
+  MATCH_MP_TAC llist_every_coind THEN REPEAT GEN_TAC THEN
   GEN_REWRITE_TAC (LAND_CONV o RAND_CONV) [GSYM lnil] THEN
   SIMP[LCONS_11]);;
 
 let trace_prefix_spin = prove
  (`!fs:(ffiname->B->byte list->byte list->(B)oracle_result)#B.
      trace_prefix fs
-       (spin:((ffi_outcome+byte list)+((A)pan_result)option#(A)bstate,ev,
+       (itree_spin:((ffi_outcome+byte list)+((A)pan_result)option#(A)bstate,ev,
               (ffi_outcome+byte list)+((A)pan_result)option#(A)bstate)itree) = LNIL`,
   GEN_TAC THEN REWRITE_TAC[trace_prefix_def; LFLATTEN_EQ_NIL] THEN
   MATCH_MP_TAC PITRAUX_every_lnil THEN REWRITE_TAC[lnil_def] THEN
-  MATCH_GOALSUB_ABBREV_TAC "LUNFOLD ff (SND fs,spin)" THEN
-  QBY "!st:B. ff (st,spin) = SOME ((st,spin),LNIL)"
+  MATCH_GOALSUB_ABBREV_TAC "LUNFOLD ff (SND fs,itree_spin)" THEN
+  QBY "!st:B. ff (st,itree_spin) = SOME ((st,itree_spin),LNIL)"
     (GEN_TAC THEN GEN_REWRITE_TAC (LAND_CONV o RAND_CONV o RAND_CONV) [spin] THEN
      EXPAND_TAC "ff" THEN SIMP[]) THEN
   ONCE_REWRITE_TAC[LUNFOLD_BISIMULATION] THEN
   QEXISTS_TAC "\\(y1:B#((ffi_outcome+byte list)+((A)pan_result)option#(A)bstate,ev,
                     (ffi_outcome+byte list)+((A)pan_result)option#(A)bstate)itree)
-                (y2:1). SND y1 = spin" THEN
+                (y2:1). SND y1 = itree_spin" THEN
   SIMP[FORALL_PAIR_THM]);;
 
 let trace_prefix_bind_append = prove
@@ -406,15 +406,15 @@ let trace_prefix_bind_div = prove
 
 let trace_prefix0_spin = prove
  (`!fs:(ffiname->B->byte list->byte list->(B)oracle_result)#B.
-     trace_prefix0 fs (spin:(ffi_outcome+byte list,ev,R)itree) = LNIL`,
+     trace_prefix0 fs (itree_spin:(ffi_outcome+byte list,ev,R)itree) = LNIL`,
   GEN_TAC THEN REWRITE_TAC[trace_prefix0_def; LFLATTEN_EQ_NIL] THEN
   MATCH_MP_TAC PITRAUX_every_lnil THEN REWRITE_TAC[lnil_def] THEN
-  MATCH_GOALSUB_ABBREV_TAC "LUNFOLD ff (SND fs,spin)" THEN
-  QBY "!st:B. ff (st,spin) = SOME ((st,spin),LNIL)"
+  MATCH_GOALSUB_ABBREV_TAC "LUNFOLD ff (SND fs,itree_spin)" THEN
+  QBY "!st:B. ff (st,itree_spin) = SOME ((st,itree_spin),LNIL)"
     (GEN_TAC THEN GEN_REWRITE_TAC (LAND_CONV o RAND_CONV o RAND_CONV) [spin] THEN
      EXPAND_TAC "ff" THEN SIMP[]) THEN
   ONCE_REWRITE_TAC[LUNFOLD_BISIMULATION] THEN
-  QEXISTS_TAC "\\(y1:B#(ffi_outcome+byte list,ev,R)itree) (y2:1). SND y1 = spin" THEN
+  QEXISTS_TAC "\\(y1:B#(ffi_outcome+byte list,ev,R)itree) (y2:1). SND y1 = itree_spin" THEN
   SIMP[FORALL_PAIR_THM]);;
 
 let trace_prefix0_FUNPOW_Tau = prove
@@ -428,14 +428,14 @@ let _ = cake_add_simps [trace_prefix0_FUNPOW_Tau];;
 
 let itree_unfold_spin = prove
  (`!f:(A,E,R)itree->(B,C,D,(A,E,R)itree)itree_next.
-     (!u. f (Tau u) = Tau' u) ==> itree_unfold f spin = spin`,
+     (!u. f (Tau u) = Tau' u) ==> itree_unfold f itree_spin = itree_spin`,
   REPEAT STRIP_TAC THEN
-  QBY "itree_unfold f spin = Tau (itree_unfold f spin)"
+  QBY "itree_unfold f itree_spin = Tau (itree_unfold f itree_spin)"
     (GEN_REWRITE_TAC (LAND_CONV o RAND_CONV) [spin] THEN
      GEN_REWRITE_TAC LAND_CONV [itree_unfold] THEN SIMP[]) THEN
-  QPAT_X_ASSUM "itree_unfold f spin = _" (fun eq ->
+  QPAT_X_ASSUM "itree_unfold f itree_spin = _" (fun eq ->
     ONCE_REWRITE_TAC[itree_bisimulation] THEN
-    QEXISTS_TAC "\\x y. x = itree_unfold f spin /\\ y = spin" THEN
+    QEXISTS_TAC "\\x y. x = itree_unfold f itree_spin /\\ y = itree_spin" THEN
     REWRITE_TAC[] THEN REPEAT STRIP_TAC THEN
     RULE_ASSUM_TAC(ONCE_REWRITE_RULE[eq]) THEN FS[] THEN REWRITE_TAC[GSYM spin]));;
 

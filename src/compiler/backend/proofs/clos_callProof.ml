@@ -24,9 +24,9 @@ let code_locs_GENLIST_Var = prove
 let _ = cake_add_simps [code_locs_GENLIST_Var];;
 
 let fv_GENLIST_Var_tra = prove
- (`!n tra i. fv v (GENLIST_Var tra i n) <=> v < n`,
+ (`!n tra i. clos_fv v (GENLIST_Var tra i n) <=> v < n`,
   INDUCT_TAC THEN ONCE_REWRITE_TAC[GENLIST_Var_def] THEN
-  ASM_REWRITE_TAC[NOT_SUC; SUC_SUB1; fv_append; fv_def; LT] THEN
+  ASM_REWRITE_TAC[NOT_SUC; SUC_SUB1; fv_append; clos_fv_def; LT] THEN
   MESON_TAC[]);;
 
 let evaluate_GENLIST_Var_tra = prove
@@ -93,12 +93,12 @@ let CLOSCALLPAUX_FREE_FACTS_TAC : tactic =
 let free_thm = prove
  (CASE_TERM
   `!xs. let (ys,l) = clos_call_free xs in
-          !n. (fv n ys <=> has_var n l) /\ (fv n xs <=> has_var n l)`,
+          !n. (clos_fv n ys <=> has_var n l) /\ (clos_fv n xs <=> has_var n l)`,
   MATCH_MP_TAC clos_call_free_ind THEN
   REWRITE_TAC[CLOSCALLPAUX_FORALL_PAIR_EQ_IMP] THEN REPEAT CONJ_TAC THEN
   REPEAT STRIP_TAC THEN REWRITE_TAC[clos_call_free_def] THEN
   REPEAT PAIRARG_TAC THEN CLOSCALLPAUX_FREE_FACTS_TAC THEN
-  GVS[fv_def; has_var_def; HD] THEN
+  GVS[clos_fv_def; has_var_def; HD] THEN
   (* Letrec *)
   REWRITE_TAC[EX_MAP; o_DEF] THEN GEN_TAC THEN CONJ_TAC THEN
   AP_THM_TAC THEN AP_TERM_TAC THEN
@@ -318,7 +318,7 @@ let recclosure_rel_def = cake_def
 let clos_callProof_env_rel_def = cake_def
   `clos_callProof_env_rel (R:A->B->bool) env1 env2 a (es:(num # clos_exp) list) <=>
      if LENGTH env1 = LENGTH env2 then ALL2 R env1 env2 else
-     !x. EX (\p. match p with (n,p) -> fv1 (n + a + x) p) es ==>
+     !x. EX (\p. match p with (n,p) -> clos_fv1 (n + a + x) p) es ==>
          x < LENGTH env1 /\ x < LENGTH env2 /\ R (EL x env1) (EL x env2)`;;
 
 (* HOL4 [mono] *)
@@ -369,7 +369,7 @@ let clos_callProof_v_rel_def =
   cake_register_admissible "ALL2" LISTAUX_ADMISSIBLE_ALL2;
   cake_register_admissible "clos_callProof_env_rel" CLOSCALLPAUX_ADMISSIBLE_env_rel;
   let th = try cake_def_wf
-    `measure (\x:(num_set # (num # num # clos_exp) list) # (num->bool) #
+    `MEASURE (\x:(num_set # (num # num # clos_exp) list) # (num->bool) #
                  (num,num # clos_exp)fmap # clos_v # clos_v.
                 clos_v_size (FST (SND (SND (SND x)))))`
     TERM_TAC
@@ -404,7 +404,7 @@ let clos_callProof_v_rel_ind = cake_ind "clos_callProof_v_rel";;
 (* induction theorem wfv_ind are proved from it.                          *)
 
 let CLOSCALLPAUX_wfv_match_def = cake_def_wf
-  `measure (\x:(num_set # (num # num # clos_exp) list) # (num->bool) #
+  `MEASURE (\x:(num_set # (num # num # clos_exp) list) # (num->bool) #
                (num,num # clos_exp)fmap # clos_v.
               clos_v_size (SND (SND (SND x))))`
   TERM_TAC
@@ -1040,7 +1040,7 @@ let wfg'_code_list = prove
 let CLOSCALLPAUX_db_to_set_LN = prove
  (`!d. db_to_set d = LN <=> !n. ~has_var n d`,
   GEN_TAC THEN MP_TAC(ISPECL [`db_to_set d`; `LN:num_set`] spt_eq_thm) THEN
-  REWRITE_TAC[wf_db_to_set; wf_def] THEN DISCH_THEN SUBST1_TAC THEN
+  REWRITE_TAC[wf_db_to_set; sptree_wf_def] THEN DISCH_THEN SUBST1_TAC THEN
   REWRITE_TAC[lookup_def; lookup_db_to_set] THEN
   AP_TERM_TAC THEN REWRITE_TAC[FUN_EQ_THM] THEN GEN_TAC THEN
   STRUCT_CASES_TAC(ISPEC `lookup x (db_to_set d)` option_nchotomy) THEN
@@ -1058,7 +1058,7 @@ let closed_Fn = prove
     FIRST_X_ASSUM(MP_TAC o SPEC `n + args`) THEN ASM_REWRITE_TAC[] THEN ARITH_TAC]);;
 
 let closed_Fn_fv = prove
- (`clos_call_closed (Fn t loco vs args e) <=> !v. fv v [e] ==> v < args`,
+ (`clos_call_closed (Fn t loco vs args e) <=> !v. clos_fv v [e] ==> v < args`,
   REWRITE_TAC[closed_Fn] THEN MP_TAC(SPEC `[e:clos_exp]` free_thm) THEN
   IL1AUX_PAIRARG_TAC THEN ASM_REWRITE_TAC[SND] THEN SIMP_TAC[]);;
 
@@ -1146,25 +1146,25 @@ let calls_wfg = prove
 
 (* local helpers for calls_fv1_subset *)
 let CLOSCALLPAUX_ALL2_fv = prove
- (`!xs ys. ALL2 (\x y. !v. fv1 v y ==> fv1 v x) xs ys ==> !n. fv n ys ==> fv n xs`,
+ (`!xs ys. ALL2 (\x y. !v. clos_fv1 v y ==> clos_fv1 v x) xs ys ==> !n. clos_fv n ys ==> clos_fv n xs`,
   LIST_INDUCT_TAC THEN GEN_TAC THEN
   STRUCT_CASES_TAC (ISPEC `ys:clos_exp list` list_CASES) THEN
-  REWRITE_TAC[ALL2; fv_def; fv_cons] THEN ASM_MESON_TAC[]);;
+  REWRITE_TAC[ALL2; clos_fv_def; fv_cons] THEN ASM_MESON_TAC[]);;
 
 let CLOSCALLPAUX_EX_calls_list = prove
  (CASE_TERM `!fns (t:tra) i loc n m.
-     ~EX (\p. match p with (a,b) -> fv1 ((n + a) + m) b)
+     ~EX (\p. match p with (a,b) -> clos_fv1 ((n + a) + m) b)
          (calls_list t i loc (fns:(num#A)list))`,
   LIST_INDUCT_TAC THEN REWRITE_TAC[calls_list_def; EX] THEN
   CASES_ON `h:num#A` THEN
   ASM_REWRITE_TAC[calls_list_def; EX] THEN CASE_REWRITE_TAC[] THEN
-  REWRITE_TAC[GSYM fv1_intro; fv_def; fv_GENLIST_Var_tra] THEN ARITH_TAC);;
+  REWRITE_TAC[GSYM fv1_intro; clos_fv_def; fv_GENLIST_Var_tra] THEN ARITH_TAC);;
 
 let CLOSCALLPAUX_EX_ZIP_fv = prove
  (CASE_TERM `!fns ys n m.
-     ALL2 (\x y. !v. fv1 v y ==> fv1 v x) (MAP SND fns) ys ==>
-     EX (\p. match p with (a,b) -> fv1 ((n + a) + m) b) (ZIP (MAP FST fns) ys) ==>
-     EX (\p. match p with (a,b) -> fv1 ((n + a) + m) b) (fns:(num # clos_exp) list)`,
+     ALL2 (\x y. !v. clos_fv1 v y ==> clos_fv1 v x) (MAP SND fns) ys ==>
+     EX (\p. match p with (a,b) -> clos_fv1 ((n + a) + m) b) (ZIP (MAP FST fns) ys) ==>
+     EX (\p. match p with (a,b) -> clos_fv1 ((n + a) + m) b) (fns:(num # clos_exp) list)`,
   LIST_INDUCT_TAC THEN REWRITE_TAC[MAP; ZIP; EX] THEN
   CASES_ON `h:num # clos_exp` THEN GEN_TAC THEN
   STRUCT_CASES_TAC (ISPEC `ys:clos_exp list` list_CASES) THEN
@@ -1178,11 +1178,11 @@ let CLOSCALLPAUX_FV1_FIN_TAC : tactic =
   RULE_ASSUM_TAC(REWRITE_RULE[LENGTH]) THEN
   REWRITE_TAC[fv1_thm; HD; fv1_intro] THEN
   RULE_ASSUM_TAC(REWRITE_RULE[fv1_thm; HD; fv1_intro]) THEN
-  REWRITE_TAC[GSYM fv1_intro; fv_def; fv_append; fv_GENLIST_Var_tra; SNOC_APPEND;
+  REWRITE_TAC[GSYM fv1_intro; clos_fv_def; fv_append; fv_GENLIST_Var_tra; SNOC_APPEND;
               LENGTH_APPEND; LENGTH; ARITH_RULE `!x y. x + y < y <=> F`;
               ARITH_RULE `!x y z. x + y + z < y <=> F`;
               ARITH_RULE `!x y. x + y + SUC 0 < y <=> F`] THEN
-  RULE_ASSUM_TAC(REWRITE_RULE[GSYM fv1_intro; fv_def; fv_append]) THEN
+  RULE_ASSUM_TAC(REWRITE_RULE[GSYM fv1_intro; clos_fv_def; fv_append]) THEN
   REPEAT STRIP_TAC THEN ASM_MESON_TAC[];;
 
 let CLOSCALLPAUX_FV1_LETREC_TAC : tactic =
@@ -1200,7 +1200,7 @@ let CLOSCALLPAUX_FV1_LETREC_TAC : tactic =
 let calls_fv1_subset = prove
  (`!xs (g0:num_set # (num # num # clos_exp) list) ys g.
      clos_call_calls xs g0 = (ys,g) ==>
-     ALL2 (\x y. flip fv1 y SUBSET flip fv1 x) xs ys`,
+     ALL2 (\x y. flip clos_fv1 y SUBSET flip clos_fv1 x) xs ys`,
   CLOSCALLPAUX_CALLS_IND_TAC THEN EVERY_CASE_TAC THEN GVS[] THEN
   CLOSCALLPAUX_IH_TAC THEN IMP_RES_TAC calls_length THEN
   RULE_ASSUM_TAC(REWRITE_RULE[LENGTH_EQ_NUM_compute]) THEN
@@ -1212,8 +1212,8 @@ let calls_fv1_subset = prove
      then CLOSCALLPAUX_FV1_LETREC_TAC g else CLOSCALLPAUX_FV1_FIN_TAC g));;
 
 let calls_fv_imp = prove
- (`clos_call_calls xs (g0:num_set # (num # num # clos_exp) list) = (ys,g) /\ fv v ys
-   ==> fv v xs`,
+ (`clos_call_calls xs (g0:num_set # (num # num # clos_exp) list) = (ys,g) /\ clos_fv v ys
+   ==> clos_fv v xs`,
   STRIP_TAC THEN FIRST_X_ASSUM(MP_TAC o MATCH_MP calls_fv1_subset) THEN
   REWRITE_TAC[SUBSET; IN; C_THM] THEN
   DISCH_THEN(MP_TAC o MATCH_MP CLOSCALLPAUX_ALL2_fv) THEN ASM_MESON_TAC[]);;
@@ -1308,7 +1308,7 @@ let calls_replace_SND = prove
     ASM_REWRITE_TAC[]]);;
 
 let insert_each'_def = cake_def_wf
-  `measure (\x:(num # A) list # num # num # (num_set # (num # A) list).
+  `MEASURE (\x:(num # A) list # num # num # (num_set # (num # A) list).
               FST (SND (SND x)))`
   TERM_TAC
   `(insert_each' (gt:(num # A) list) p 0 (g:num_set # (num # A) list) = g) /\
@@ -2757,7 +2757,7 @@ let clos_callProof_syntax_ok_def = cake_def
      every_Fn_SOME x /\ every_Fn_vs_NONE x /\ ALL_DISTINCT (code_locs x)`;;
 
 let co_ok_def = cake_def_wf
-  `measure (\x:(num,num # clos_exp)fmap #
+  `MEASURE (\x:(num,num # clos_exp)fmap #
               (num -> (num_set # C) # clos_exp list # A) #
               (num -> num_set # (num # num # clos_exp) list) # num.
               SND (SND (SND x)))`
@@ -3152,7 +3152,7 @@ let code_rel_state_rel_install = prove
      MATCH_MP_TAC CLOSCALLPAUX_ref_rel_mono THEN ASM_REWRITE_TAC[]]));;
 
 let fv_GENLIST_Var_alt = prove
- (`!n i tra. fv v (GENLIST_Var tra i n) <=> v < n`,
+ (`!n i tra. clos_fv v (GENLIST_Var tra i n) <=> v < n`,
   REWRITE_TAC[fv_GENLIST_Var_tra]);;
 
 let env_rel_env_exists = prove
@@ -3386,13 +3386,13 @@ let CLOSCALLPAUX_env_rel_MAP0 = prove
  (`!(R:clos_v->clos_v->bool) e1 e2 ys.
      clos_callProof_env_rel R e1 e2 0 (MAP (\x. (0,x)) ys) <=>
      if LENGTH e1 = LENGTH e2 then ALL2 R e1 e2 else
-     !x. fv x ys ==> x < LENGTH e1 /\ x < LENGTH e2 /\ R (EL x e1) (EL x e2)`,
+     !x. clos_fv x ys ==> x < LENGTH e1 /\ x < LENGTH e2 /\ R (EL x e1) (EL x e2)`,
   REWRITE_TAC[clos_callProof_env_rel_def; EX_MAP; o_DEF] THEN
   CASE_REWRITE_TAC[ADD_CLAUSES] THEN REWRITE_TAC[fv_exists; ETA_AX]);;
 
 let CLOSCALLPAUX_env_rel_MAP0_mono = prove
  (`!(R:clos_v->clos_v->bool) e1 e2 ys ys'.
-     (!x. fv x ys' ==> fv x ys) /\
+     (!x. clos_fv x ys' ==> clos_fv x ys) /\
      clos_callProof_env_rel R e1 e2 0 (MAP (\x. (0,x)) ys)
      ==> clos_callProof_env_rel R e1 e2 0 (MAP (\x. (0,x)) ys')`,
   REWRITE_TAC[CLOSCALLPAUX_env_rel_MAP0] THEN REPEAT GEN_TAC THEN
@@ -3432,7 +3432,7 @@ let CLOSCALLPAUX_cc_Raise = prove
      [DISCH_THEN SUBST_ALL_TAC THEN RULE_ASSUM_TAC(CASE_REWRITE_RULE[PAIR_EQ]) THEN
       ASM_MESON_TAC[];
       MATCH_MP_TAC CLOSCALLPAUX_env_rel_MAP0_mono THEN
-      EXISTS_TAC `[clos_Raise x y]` THEN ASM_REWRITE_TAC[fv_def]];
+      EXISTS_TAC `[clos_Raise x y]` THEN ASM_REWRITE_TAC[clos_fv_def]];
     ALL_TAC] THEN
   STRIP_TAC THEN
   MAP_EVERY EXISTS_TAC [`ck:num`;
@@ -3512,7 +3512,7 @@ let CLOSCALLPAUX_cc_Tick = prove
                  CLOSCALLPAUX_wfv_state_dec_clock; CLOSCALLPAUX_state_rel_dec_clock] THEN
     ANTS_TAC THENL
      [MATCH_MP_TAC CLOSCALLPAUX_env_rel_MAP0_mono THEN
-      EXISTS_TAC `[clos_Tick x' y]` THEN ASM_REWRITE_TAC[fv_def];
+      EXISTS_TAC `[clos_Tick x' y]` THEN ASM_REWRITE_TAC[clos_fv_def];
       ALL_TAC] THEN
     DISCH_THEN(CLOSCALLPAUX_CHOOSE_NAMES CLOSCALLPAUX_IH_NAMES) THEN
     MAP_EVERY EXISTS_TAC CLOSCALLPAUX_IH_NAMES THEN
@@ -3545,7 +3545,7 @@ let CLOSCALLPAUX_cc_Call = prove
      [DISCH_THEN SUBST_ALL_TAC THEN RULE_ASSUM_TAC(CASE_REWRITE_RULE[PAIR_EQ]) THEN
       ASM_MESON_TAC[];
       MATCH_MP_TAC CLOSCALLPAUX_env_rel_MAP0_mono THEN
-      EXISTS_TAC `[clos_Call x ticks dest xs']` THEN ASM_REWRITE_TAC[fv_def]];
+      EXISTS_TAC `[clos_Call x ticks dest xs']` THEN ASM_REWRITE_TAC[clos_fv_def]];
     ALL_TAC] THEN
   DISCH_THEN(CLOSCALLPAUX_CHOOSE_NAMES CLOSCALLPAUX_IH_NAMES) THEN
   SUBGOAL_THEN `clos_state_code (s2:(abs_calls_state # C,FFI)clos_state) = FEMPTY`
@@ -3897,7 +3897,7 @@ let CLOSCALLPAUX_cc_If = prove
                    (clos_state_code (t0:(C,FFI)clos_state))) env env2 0
                    (MAP (\x. (0,x)) [y])` ASSUME_TAC THENL
     [MATCH_MP_TAC CLOSCALLPAUX_env_rel_MAP0_mono THEN
-     EXISTS_TAC `[clos_If x y y' y'']` THEN ASM_REWRITE_TAC[fv_def] THEN MESON_TAC[];
+     EXISTS_TAC `[clos_If x y y' y'']` THEN ASM_REWRITE_TAC[clos_fv_def] THEN MESON_TAC[];
      ALL_TAC] THEN
    SUBGOAL_THEN `~(r1 = Rerr (Rabort Rtype_error):(clos_v list,clos_v)result)` ASSUME_TAC THENL
     [DISCH_THEN SUBST_ALL_TAC THEN RULE_ASSUM_TAC(CASE_REWRITE_RULE[PAIR_EQ]) THEN
@@ -3972,7 +3972,7 @@ let CLOSCALLPAUX_cc_If = prove
        REWRITE_TAC[SUBSET; IN_DIFF; IN_UNION; IN_SET_OF_LIST] THEN ASM_MESON_TAC[];
        MATCH_MP_TAC CLOSCALLPAUX_env_rel_MAP0_mono THEN
        EXISTS_TAC `[clos_If x y y' y'']` THEN
-       CONJ_TAC THENL [REWRITE_TAC[fv_def] THEN MESON_TAC[]; ALL_TAC] THEN
+       CONJ_TAC THENL [REWRITE_TAC[clos_fv_def] THEN MESON_TAC[]; ALL_TAC] THEN
        MATCH_MP_TAC (GEN_ALL env_rel_subg) THEN
        MAP_EVERY EXISTS_TAC [`g1:num_set # (num # num # clos_exp) list`; `l1:num->bool`;
                              `clos_state_code (t0:(C,FFI)clos_state)`] THEN
@@ -4016,7 +4016,7 @@ let CLOSCALLPAUX_cc_If = prove
        SET_TAC[];
        MATCH_MP_TAC CLOSCALLPAUX_env_rel_MAP0_mono THEN
        EXISTS_TAC `[clos_If x y y' y'']` THEN
-       CONJ_TAC THENL [REWRITE_TAC[fv_def] THEN MESON_TAC[]; ALL_TAC] THEN
+       CONJ_TAC THENL [REWRITE_TAC[clos_fv_def] THEN MESON_TAC[]; ALL_TAC] THEN
        MATCH_MP_TAC (GEN_ALL env_rel_subg) THEN
        MAP_EVERY EXISTS_TAC [`g1:num_set # (num # num # clos_exp) list`; `l1:num->bool`;
                              `clos_state_code (t0:(C,FFI)clos_state)`] THEN
@@ -4047,7 +4047,7 @@ let CLOSCALLPAUX_cc_If = prove
 let CLOSCALLPAUX_env_rel_APPEND_body = prove
  (`!(R:clos_v->clos_v->bool) vs vs' env env2 e2 ys.
      ALL2 R vs vs' /\
-     (!x. fv x [e2] /\ ~(x < LENGTH vs) ==> fv (x - LENGTH vs) ys) /\
+     (!x. clos_fv x [e2] /\ ~(x < LENGTH vs) ==> clos_fv (x - LENGTH vs) ys) /\
      clos_callProof_env_rel R env env2 0 (MAP (\x. (0,x)) ys)
      ==> clos_callProof_env_rel R (APPEND vs env) (APPEND vs' env2) 0 (MAP (\x. (0,x)) [e2])`,
   REPEAT GEN_TAC THEN REWRITE_TAC[CLOSCALLPAUX_env_rel_MAP0; LENGTH_APPEND] THEN STRIP_TAC THEN
@@ -4120,7 +4120,7 @@ let CLOSCALLPAUX_cc_Let = prove
                    (clos_state_code (t0:(C,FFI)clos_state))) env env2 0
                    (MAP (\x. (0,x)) e1')` ASSUME_TAC THENL
     [MATCH_MP_TAC CLOSCALLPAUX_env_rel_MAP0_mono THEN
-     EXISTS_TAC `[clos_Let x e1' y]` THEN ASM_REWRITE_TAC[fv_def] THEN MESON_TAC[];
+     EXISTS_TAC `[clos_Let x e1' y]` THEN ASM_REWRITE_TAC[clos_fv_def] THEN MESON_TAC[];
      ALL_TAC] THEN
    SUBGOAL_THEN `~(r1 = Rerr (Rabort Rtype_error):(clos_v list,clos_v)result)` ASSUME_TAC THENL
     [DISCH_THEN SUBST_ALL_TAC THEN RULE_ASSUM_TAC(CASE_REWRITE_RULE[PAIR_EQ]) THEN
@@ -4180,7 +4180,7 @@ let CLOSCALLPAUX_cc_Let = prove
         (clos_state_code (t1:(C,FFI)clos_state))) (APPEND a env) (APPEND vv env2) 0
         (MAP (\x. (0,x)) [y])`) ASSUME_TAC THENL
     [MATCH_MP_TAC CLOSCALLPAUX_env_rel_APPEND_body THEN
-     EXISTS_TAC `[clos_Let x e1' y]` THEN ASM_REWRITE_TAC[fv_def] THEN CONJ_TAC THENL
+     EXISTS_TAC `[clos_Let x e1' y]` THEN ASM_REWRITE_TAC[clos_fv_def] THEN CONJ_TAC THENL
       [REPEAT STRIP_TAC THEN DISJ2_TAC THEN
        FIRST_ASSUM(fun th -> if is_neg (concl th) && is_binary "<" (rand (concl th))
                              then ASSUME_TAC (REWRITE_RULE[NOT_LT] th) else NO_TAC) THEN
@@ -4263,7 +4263,7 @@ let CLOSCALLPAUX_cc_Handle = prove
                    (clos_state_code (t0:(C,FFI)clos_state))) env env2 0
                    (MAP (\x. (0,x)) [y])` ASSUME_TAC THENL
     [MATCH_MP_TAC CLOSCALLPAUX_env_rel_MAP0_mono THEN
-     EXISTS_TAC `[clos_Handle x y y']` THEN ASM_REWRITE_TAC[fv_def] THEN MESON_TAC[];
+     EXISTS_TAC `[clos_Handle x y y']` THEN ASM_REWRITE_TAC[clos_fv_def] THEN MESON_TAC[];
      ALL_TAC] THEN
    SUBGOAL_THEN `~(r1 = Rerr (Rabort Rtype_error):(clos_v list,clos_v)result)` ASSUME_TAC THENL
     [DISCH_THEN SUBST_ALL_TAC THEN RULE_ASSUM_TAC(CASE_REWRITE_RULE[PAIR_EQ]) THEN
@@ -4322,7 +4322,7 @@ let CLOSCALLPAUX_cc_Handle = prove
         (clos_state_code (t1:(C,FFI)clos_state))) (APPEND [vv] env) (APPEND [ww] env2) 0
         (MAP (\x. (0,x)) [y'])`) (ASSUME_TAC o REWRITE_RULE[APPEND]) THENL
     [MATCH_MP_TAC CLOSCALLPAUX_env_rel_APPEND_body THEN
-     EXISTS_TAC `[clos_Handle x y y']` THEN ASM_REWRITE_TAC[fv_def; ALL2; LENGTH] THEN
+     EXISTS_TAC `[clos_Handle x y y']` THEN ASM_REWRITE_TAC[clos_fv_def; ALL2; LENGTH] THEN
      CONJ_TAC THENL
       [REPEAT STRIP_TAC THEN DISJ2_TAC THEN
        FIRST_ASSUM(fun th -> if is_neg (concl th) && is_binary "<" (rand (concl th))
@@ -4896,7 +4896,7 @@ let CLOSCALLPAUX_cc_Letrec = prove
          `NONE:(num list)option`; `fns4:(num # clos_exp) list`; `bb:clos_exp`]
          CLOSCALLPAUX_env_rel_Letrec_fns) THEN
        ASM_REWRITE_TAC[];
-       REWRITE_TAC[fv_def] THEN REPEAT STRIP_TAC THEN DISJ2_TAC THEN
+       REWRITE_TAC[clos_fv_def] THEN REPEAT STRIP_TAC THEN DISJ2_TAC THEN
        FIRST_ASSUM(fun th -> if is_neg (concl th) && is_binary "<" (rand (concl th))
                              then ASSUME_TAC (REWRITE_RULE[NOT_LT] th) else NO_TAC) THEN
        ASM_SIMP_TAC[SUB_ADD]];
@@ -5086,7 +5086,7 @@ let CLOSCALLPAUX_recclosure_wf_EL = prove
 
 let CLOSCALLPAUX_env_rel_closed_TAKE = prove
  (`!(R:A->B->bool) fargs args2 n m e.
-     (!x. fv1 x e ==> x < n) /\ n + m <= LENGTH fargs /\ n + m <= LENGTH args2 /\
+     (!x. clos_fv1 x e ==> x < n) /\ n + m <= LENGTH fargs /\ n + m <= LENGTH args2 /\
      ALL2 R (TAKE (n + m) fargs) (TAKE (n + m) args2)
      ==> clos_callProof_env_rel R fargs (TAKE n args2) 0 [(0,e)]`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
@@ -5205,8 +5205,8 @@ let CLOSCALLPAUX_app_red_cl = prove
   CASE_REWRITE_TAC[]);;
 
 let CLOSCALLPAUX_fv1_has_var = prove
- (`!e x. fv1 x e <=> has_var x (SND (clos_call_free [e]))`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[fv1_def] THEN MP_TAC(SPEC `[e:clos_exp]` free_thm) THEN
+ (`!e x. clos_fv1 x e <=> has_var x (SND (clos_call_free [e]))`,
+  REPEAT GEN_TAC THEN REWRITE_TAC[clos_fv1_def] THEN MP_TAC(SPEC `[e:clos_exp]` free_thm) THEN
   IL1AUX_PAIRARG_TAC THEN ASM_REWRITE_TAC[SND] THEN SIMP_TAC[]);;
 
 let CLOSCALLPAUX_ALOOKUP_code_list_EL = prove
@@ -6757,7 +6757,7 @@ let CLOSCALLPAUX_cc_Op = prove
    SUBGOAL_THEN `clos_callProof_env_rel (clos_callProof_v_rel g1 l1
        (clos_state_code (t0:(C,FFI)clos_state))) env env2 0 (MAP (\x. (0,x)) e1')` ASSUME_TAC THENL
     [MATCH_MP_TAC CLOSCALLPAUX_env_rel_MAP0_mono THEN EXISTS_TAC `[clos_Op x op e1']` THEN
-     ASM_REWRITE_TAC[fv_def];
+     ASM_REWRITE_TAC[clos_fv_def];
      ALL_TAC] THEN
    FIRST_X_ASSUM(MP_TAC o GEN_REWRITE_RULE I [CLOSCALLPAUX_cc_P_def] o check (fun th ->
      concl th = `CLOSCALLPAUX_cc_P (xs,env,(s:(abs_calls_state # C,FFI)clos_state))`)) THEN
@@ -7752,7 +7752,7 @@ let CLOSCALLPAUX_cc_App = prove
        env env2 0 (MAP (\x. (0,x)) es')` ASSUME_TAC THENL
     [MATCH_MP_TAC CLOSCALLPAUX_env_rel_MAP0_mono THEN
      EXISTS_TAC `[clos_Call x (LENGTH (es':clos_exp list)) (loc + 1) es']` THEN
-     ASM_REWRITE_TAC[fv_def] THEN MESON_TAC[];
+     ASM_REWRITE_TAC[clos_fv_def] THEN MESON_TAC[];
      ALL_TAC] THEN
    CLOSCALLPAUX_APP_IH3_TAC `SOME loc:num option` THEN
    MP_TAC(ISPECL [`x:tra`; `SOME loc:num option`; `x1:clos_exp`; `args:clos_exp list`;
@@ -7775,7 +7775,7 @@ let CLOSCALLPAUX_cc_App = prove
      EXISTS_TAC `[clos_Let (mk_cons x 0) (SNOC ex es')
                     (clos_Call (mk_cons x 1) (LENGTH (es':clos_exp list)) (loc + 1)
                        (GENLIST_Var backend_common_None 2 (LENGTH es')))]` THEN
-     ASM_REWRITE_TAC[fv_def; SNOC_APPEND; fv_append] THEN MESON_TAC[];
+     ASM_REWRITE_TAC[clos_fv_def; SNOC_APPEND; fv_append] THEN MESON_TAC[];
      ALL_TAC] THEN
    CLOSCALLPAUX_APP_IH3_TAC `SOME loc:num option` THEN
    MP_TAC(ISPECL [`x:tra`; `SOME loc:num option`; `x1:clos_exp`; `args:clos_exp list`;
@@ -7795,7 +7795,7 @@ let CLOSCALLPAUX_cc_App = prove
      clos_callProof_env_rel (clos_callProof_v_rel g1 l1 (clos_state_code t0))
        env env2 0 (MAP (\x. (0,x)) [ex])` STRIP_ASSUME_TAC THENL
     [CONJ_TAC THEN MATCH_MP_TAC CLOSCALLPAUX_env_rel_MAP0_mono THEN
-     EXISTS_TAC `[clos_App x loc_opt ex es']` THEN ASM_REWRITE_TAC[fv_def] THEN MESON_TAC[];
+     EXISTS_TAC `[clos_App x loc_opt ex es']` THEN ASM_REWRITE_TAC[clos_fv_def] THEN MESON_TAC[];
      ALL_TAC] THEN
    CLOSCALLPAUX_APP_IH3_TAC `loc_opt:num option` THEN
    MP_TAC(ISPECL [`x:tra`; `loc_opt:num option`; `x1:clos_exp`; `args:clos_exp list`;

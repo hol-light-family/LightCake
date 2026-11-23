@@ -1915,7 +1915,7 @@ let S2LP2AUX_init_store_ok_any = prove
     EXISTS_TAC `0` THEN EXISTS_TAC `word 0:A word` THEN
     CASES_ON `data_to_word_config_gc_kind c1` THEN CASE_REWRITE_TAC[] THEN
     SIMP[WORD_MUL_0; WORD_ADD_0; LE_0; ADD_CLAUSES; stack_removeProof_word_list_exists_thm;
-         emp_def; fun2set_EMPTY; byte_aligned_def; aligned_0];
+         set_sep_emp_def; fun2set_EMPTY; byte_aligned_def; aligned_0];
     FIRST_X_ASSUM(MP_TAC o MATCH_MP S2LP2AUX_make_init_opt_SOME) THEN
     DISCH_THEN(X_CHOOSE_THEN `t0:(A,C,FFI)stack_state` STRIP_ASSUME_TAC) THEN
     UNDISCH_TAC `init_prop gen max_heap data_sp
@@ -2072,7 +2072,7 @@ let _ = cake_add_simps [full_make_init_has_fp_ops];;
 (* with sem1aux_def_wf, as stackProps' stack_get_code_labels: cake_def_wf    *)
 (* did not finish in 10 min) *)
 let complex_get_code_labels_def = sem1aux_def_wf
-  `measure (stack_prog_size (\x:A. 0))`
+  `MEASURE (stack_prog_size (\x:A. 0))`
   SEM1AUX_TC_TAC
   `(complex_get_code_labels (stack_Seq p1 p2:(A)stack_prog) =
       complex_get_code_labels p1 UNION complex_get_code_labels p2) /\

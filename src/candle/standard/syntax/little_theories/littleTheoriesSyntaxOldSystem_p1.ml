@@ -8,7 +8,7 @@
 (* VSUBST, NVARIANT, free variables, VSUBSTfm, esubst_ty0.                   *)
 (*                                                                           *)
 (* Notes on the rendering (all parts):                                       *)
-(* - Names as notes/naming/names.tsv says: proves_theory_ok is               *)
+(* - Names as doc/names.tsv says: proves_theory_ok is                        *)
 (*   little_proves_theory_ok, FAPPLY_FLOOKUP is little_FAPPLY_FLOOKUP.  The  *)
 (*   conventions of littleTheoriesSyntax.ml (see its header) hold here:      *)
 (*   HOL4 Overloads written out, sigma and theta for the Greek letters,      *)
@@ -561,10 +561,6 @@ let MEM_ZIP_SND = prove
   REWRITE_TAC[LENGTH; HD; TL; MEM; ARITH_RULE `~(SUC n <= 0)`; LE_SUC] THEN
   REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[] THEN ASM_MESON_TAC[]);;
 
-let CLITAUX_COND_EQ = prove
- (`!b (x:A) y z. (if b then x else y) = z <=> b /\ x = z \/ ~b /\ y = z`,
-  REPEAT GEN_TAC THEN COND_CASES_TAC THEN REWRITE_TAC[]);;
-
 (* VSUBSTfm_FVs pointwise, for a map to variables *)
 let CLITAUX_VSUBSTfm_FVs_pt = prove
  (`!tm sig fm m ty'.
@@ -610,7 +606,7 @@ let CLITAUX_VSUBSTfm_FVs_pt = prove
      [REWRITE_TAC[FLOOKUP_UPDATE] THEN ASM_MESON_TAC[injectivity "option"]; ALL_TAC] THEN
     ASM_SIMP_TAC[] THEN REWRITE_TAC[FLOOKUP_UPDATE] THEN
     ASM_REWRITE_TAC[injectivity "hol_term"] THEN
-    REWRITE_TAC[CLITAUX_COND_EQ; distinctness "option"; injectivity "option";
+    REWRITE_TAC[COND_CASE_EQ; distinctness "option"; injectivity "option";
                 injectivity "hol_term"] THEN
     MESON_TAC[];
     SUBGOAL_THEN `!n ty m mty. (n,ty) IN FVs t /\ ~(n = x /\ ty = xty) /\
@@ -623,7 +619,7 @@ let CLITAUX_VSUBSTfm_FVs_pt = prove
       ASM_MESON_TAC[FVs_VFREER_in];
       ALL_TAC] THEN
     ASM_SIMP_TAC[] THEN
-    ASM_REWRITE_TAC[CLITAUX_COND_EQ; distinctness "option"; injectivity "option";
+    ASM_REWRITE_TAC[COND_CASE_EQ; distinctness "option"; injectivity "option";
                     injectivity "hol_term"] THEN
     POP_ASSUM MP_TAC THEN MESON_TAC[]]);;
 
@@ -671,10 +667,10 @@ let FVs_VSUBST_CASES = prove
   MP_TAC(SPECL [`tm:hol_term`; `sig:sig`; `alist_to_fm [(hol_Var a ty,hol_Var b ty)]`;
                 `x:mlstring`; `ty1:hol_type`] CLITAUX_VSUBSTfm_FVs_pt) THEN
   REWRITE_TAC[alist_to_fm_def; FLOOKUP_UPDATE; FLOOKUP_EMPTY] THEN ANTS_TAC THENL
-   [ASM_REWRITE_TAC[CLITAUX_COND_EQ; distinctness "option"; injectivity "option"] THEN
+   [ASM_REWRITE_TAC[COND_CASE_EQ; distinctness "option"; injectivity "option"] THEN
     MESON_TAC[];
     DISCH_THEN SUBST1_TAC] THEN
-  REWRITE_TAC[CLITAUX_COND_EQ; distinctness "option"; injectivity "option";
+  REWRITE_TAC[COND_CASE_EQ; distinctness "option"; injectivity "option";
               injectivity "hol_term"] THEN
   MESON_TAC[]);;
 
@@ -742,19 +738,19 @@ let tm_names_VSUBSTfm_fupdate = prove
   MP_TAC(SPECL [`tm':hol_term`; `sig:sig`; `fm |+ (hol_Var n ty,hol_Var nv ty)`; `n:mlstring`;
                 `ty:hol_type`] CLITAUX_VSUBSTfm_FVs_pt) THEN
   ANTS_TAC THENL
-   [ASM_REWRITE_TAC[FLOOKUP_UPDATE; CLITAUX_COND_EQ; injectivity "option"] THEN
+   [ASM_REWRITE_TAC[FLOOKUP_UPDATE; COND_CASE_EQ; injectivity "option"] THEN
     REPEAT STRIP_TAC THENL
      [MAP_EVERY EXISTS_TAC [`nv:mlstring`; `ty:hol_type`] THEN ASM_REWRITE_TAC[];
       QPAT_X_ASSUM "!v. v IN FRANGE fm ==> ?n ty. _" MATCH_MP_TAC THEN
       REWRITE_TAC[IN_FRANGE_FLOOKUP] THEN ASM_MESON_TAC[]];
     DISCH_THEN SUBST1_TAC] THEN
-  DISJ2_TAC THEN RULE_ASSUM_TAC(REWRITE_RULE[DOMSUB_FLOOKUP_THM; CLITAUX_COND_EQ;
+  DISJ2_TAC THEN RULE_ASSUM_TAC(REWRITE_RULE[DOMSUB_FLOOKUP_THM; COND_CASE_EQ;
                                               distinctness "option"]) THEN
   SUBGOAL_THEN `(k:hol_term) IN FDOM fm /\ (w:hol_term) IN FRANGE fm` STRIP_ASSUME_TAC THENL
    [REWRITE_TAC[FDOM_FLOOKUP; IN_FRANGE_FLOOKUP] THEN ASM_MESON_TAC[distinctness "option"];
     ALL_TAC] THEN
   RES_TAC THEN GVS[VFREE_IN_def] THEN
-  REWRITE_TAC[FLOOKUP_UPDATE; CLITAUX_COND_EQ; injectivity "hol_term"; injectivity "option"] THEN
+  REWRITE_TAC[FLOOKUP_UPDATE; COND_CASE_EQ; injectivity "hol_term"; injectivity "option"] THEN
   ASM_MESON_TAC[FVs_VFREE_in]);;
 
 let tm_names_vsubstfm_different_name = prove
@@ -1229,7 +1225,7 @@ let esubst_ty0_impossible1 = prove
       (X_CHOOSE_THEN `typ3':hol_type` STRIP_ASSUME_TAC))) THEN
     MAP_EVERY EXISTS_TAC [`n3:mlstring`; `typ3:hol_type`; `typ3':hol_type`] THEN
     RULE_ASSUM_TAC(REWRITE_RULE[MATCH_MP FVs_VSUBST_CASES (ASSUME `hol_term_ok sig body`);
-                                REV_ASSOCD; injectivity "hol_term"; CLITAUX_COND_EQ]) THEN
+                                REV_ASSOCD; injectivity "hol_term"; COND_CASE_EQ]) THEN
     ASM_REWRITE_TAC[FVs_def; IN_DIFF; IN_SING; PAIR_EQ] THEN
     ASM_MESON_TAC[]]);;
 

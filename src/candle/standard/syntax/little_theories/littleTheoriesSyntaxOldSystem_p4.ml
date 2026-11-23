@@ -44,7 +44,7 @@ let esubsts_ok_FLOOKUP_tmsof = prove
      ==> CLOSED repl /\
          welltyped repl /\
          typeof repl = ty_esubst sigma decl_ty /\
-         set_of_list (tvars repl) SUBSET set_of_list (tyvars (typeof repl)) /\
+         set_of_list (tvars repl) SUBSET set_of_list (hol_tyvars (typeof repl)) /\
          FLOOKUP (SND sig) m = SOME decl_ty`,
   GEN_TAC THEN REWRITE_TAC[FORALL_PAIR_THM; esubsts_ok_def] THEN
   MAP_EVERY X_GEN_TAC [`s:(mlstring,mlstring list#hol_type)fmap`;
@@ -70,11 +70,11 @@ let ty_esubst_match_type = prove
   CONJ_TAC THEN MATCH_MP_TAC ty_esubst_type_ok_alt THEN ASM_MESON_TAC[type_ok_TYPE_SUBST_inv]);;
 
 let dbtyvars_def = cake_def
-  `(dbtyvars (dbVar n ty) = tyvars ty) /\
-   (dbtyvars (dbConst n ty) = tyvars ty) /\
+  `(dbtyvars (dbVar n ty) = hol_tyvars ty) /\
+   (dbtyvars (dbConst n ty) = hol_tyvars ty) /\
    (dbtyvars (dbBound k) = []) /\
    (dbtyvars (dbComb t1 t2) = APPEND (dbtyvars t1) (dbtyvars t2)) /\
-   (dbtyvars (dbAbs ty t) = APPEND (tyvars ty) (dbtyvars t))`;;
+   (dbtyvars (dbAbs ty t) = APPEND (hol_tyvars ty) (dbtyvars t))`;;
 
 let dbINST_cong = prove
  (`!dbtm s1 s2.
@@ -176,7 +176,7 @@ let db_esubst_dbINST_comm = prove
     MP_TAC(ISPEC `x:hol_term` dbtyvars_db) THEN ASM_REWRITE_TAC[] THEN
     QPAT_X_ASSUM "set_of_list (tvars x) SUBSET _" MP_TAC THEN ASM_REWRITE_TAC[] THEN
     REWRITE_TAC[SUBSET; IN_SET_OF_LIST] THEN DISCH_TAC THEN DISCH_TAC THEN
-    QBY "MEM v (tyvars (ty_esubst sigma y))" (ASM_MESON_TAC[]) THEN
+    QBY "MEM v (hol_tyvars (ty_esubst sigma y))" (ASM_MESON_TAC[]) THEN
     SUBGOAL_THEN `!f:hol_type->hol_type. (\(ty:hol_type,a:hol_type). f ty,a) = (f ## I)`
       (fun th -> REWRITE_TAC[th] THEN RULE_ASSUM_TAC(REWRITE_RULE[th])) THENL
      [REWRITE_TAC[FUN_EQ_THM; FORALL_PAIR_THM; PAIR_MAP_THM; I_THM]; ALL_TAC] THEN
@@ -1165,4 +1165,3 @@ let VSUBST_VSUBST_ACONV = prove
       STRIP_TAC THEN FIRST_X_ASSUM SUBST_ALL_TAC THEN
       RULE_ASSUM_TAC(REWRITE_RULE[hol_db_def]) THEN
       ASM_MESON_TAC[injectivity "dbterm"; injectivity "hol_term"]]]);;
-

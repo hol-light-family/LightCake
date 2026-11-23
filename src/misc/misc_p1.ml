@@ -3,6 +3,7 @@
 (* the script up to (not including) FOLDL_invariant.                         *)
 (* Miscellaneous definitions and minor lemmas used throughout the            *)
 (* development.                                                              *)
+(* HOL4 the is misc_the (a short name), and the_def is misc_the_def.         *)
 (* ========================================================================= *)
 
 needs "hol4/vocab.ml";;
@@ -20,9 +21,9 @@ prioritize_num();;
 type_invention_error := true;;
 
 (* Total version of THE *)
-let the_def = cake_def
-  `(the (d:A) (SOME x) = x) /\
-   (the x NONE = x)`;;
+let misc_the_def = cake_def
+  `(misc_the (d:A) (SOME x) = x) /\
+   (misc_the x NONE = x)`;;
 
 let opt_bind_def = cake_def
   `opt_bind (n:A option) (v:B) e =
@@ -590,7 +591,7 @@ let MEM_ALOOKUP = prove
 (* TODO - candidate for move to HOL, but in simpler form without accumulator *)
 (* only used in inferProg *)
 let anub_def = cake_def_wf
-  `measure (\p:(K#V) list # K list. LENGTH (FST p))`
+  `MEASURE (\p:(K#V) list # K list. LENGTH (FST p))`
   (REWRITE_TAC[measure_THM; LENGTH] THEN ARITH_TAC)
   `(anub ([]:(K#V) list) (acc:K list) = []) /\
    (anub (CONS (k,v) ls) acc =
@@ -706,7 +707,7 @@ let domain_nat_set_from_list = prove
 let _ = cake_add_simps [domain_nat_set_from_list];;
 
 let wf_nat_set_from_list = prove
- (`!ls (ns:A spt). wf ns ==> wf (FOLDL (\s n. insert n z s) ns ls)`,
+ (`!ls (ns:A spt). sptree_wf ns ==> sptree_wf (FOLDL (\s n. insert n z s) ns ls)`,
   LIST_INDUCT_TAC THEN ASM_SIMP_TAC[FOLDL; wf_insert]);;
 
 (* HOL4 BIT is HOL Light's numbit *)

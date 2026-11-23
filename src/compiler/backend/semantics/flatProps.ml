@@ -1099,7 +1099,7 @@ let FLATSEMAUX_MAP_SIZE_TAC : tactic = fun (asl,w as g) ->
 (* HOL4's infix bag union is left-associative; variables of different types *)
 (* in different clauses are named apart (one quotation)                       *)
 let flat_set_globals_def = cake_def_wf
-  `measure (\a:flat_exp + flat_exp list.
+  `MEASURE (\a:flat_exp + flat_exp list.
               sum_CASE a (\e. flat_exp_size e) (\es. list_size flat_exp_size es))`
   (REWRITE_TAC[IMP_CONJ] THEN REPEAT GEN_TAC THEN REPEAT DISCH_TAC THEN
    RVEQ_TAC THEN REWRITE_TAC[measure_THM; sum_CASE] THEN
@@ -1131,7 +1131,7 @@ let _ = cake_add_simps [flat_set_globals_def];;
 let flat_set_globals_ind = cake_ind "flat_set_globals";;
 
 let flat_esgc_free_def = cake_def_wf
-  `measure flat_exp_size`
+  `MEASURE flat_exp_size`
   (REWRITE_TAC[measure_THM; IMP_CONJ] THEN REPEAT STRIP_TAC THEN
    RULE_ASSUM_TAC(REWRITE_RULE[measure_THM; MEM_MAP; o_DEF]) THEN
    REPEAT(FIRST_X_ASSUM(STRIP_ASSUME_TAC o check (is_exists o concl))) THEN
@@ -1912,7 +1912,7 @@ let v_size_aux = prove
 
 (* HOL4's catch-all for Handle is written with a match *)
 let no_Mat_def = cake_def_wf
-  `measure flat_exp_size`
+  `MEASURE flat_exp_size`
   (REWRITE_TAC[measure_THM; IMP_CONJ] THEN REPEAT STRIP_TAC THEN
    RULE_ASSUM_TAC(REWRITE_RULE[measure_THM; MEM_MAP; o_DEF]) THEN
    REPEAT(FIRST_X_ASSUM(STRIP_ASSUME_TAC o check (is_exists o concl))) THEN

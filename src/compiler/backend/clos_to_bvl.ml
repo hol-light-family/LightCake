@@ -247,7 +247,7 @@ let recc_Let_def = cake_def
              (bvl_Var 1)))`;;
 
 let recc_Lets_def = cake_def_wf
-  `measure (\p:num#num list#num#bvl_exp. FST (SND (SND p)))`
+  `MEASURE (\p:num#num list#num#bvl_exp. FST (SND (SND p)))`
   TERM_TAC
   `recc_Lets n nargs k rest =
      if k = 0 then rest else
@@ -459,7 +459,7 @@ let CLOS2AUX_INST_TAC : tactic = fun (asl,w as g) ->
 (* HOL4: compile_exps; in Fn and Letrec the names (HOL4 t) are nm and nms *)
 
 let clos_to_bvl_compile_exps_def = sem1aux_def_wf
-  `measure (\p:num#clos_exp list#(num#num#bvl_exp) list.
+  `MEASURE (\p:num#clos_exp list#(num#num#bvl_exp) list.
               list_size clos_exp_size (FST (SND p)))`
   CLOS2AUX_SIZE_TC_TAC
   `(clos_to_bvl_compile_exps max_app [] aux = ([],aux)) /\
@@ -558,7 +558,7 @@ let clos_to_bvl_compile_exps_ind = cake_ind "clos_to_bvl_compile_exps";;
 (* HOL4: compile_exp_sing, compile_exp_list *)
 
 let compile_exp_sing_def = sem1aux_def_wf
-  `measure (\x:num#clos_exp#(num#num#bvl_exp) list +
+  `MEASURE (\x:num#clos_exp#(num#num#bvl_exp) list +
                num#clos_exp list#(num#num#bvl_exp) list.
               sum_CASE x (\p. clos_exp_size (FST (SND p)))
                          (\p. list_size clos_exp_size (FST (SND p))))`
@@ -817,7 +817,7 @@ let code_split_def = cake_def
    (code_split (CONS (z:A) zs) xs ys = code_split zs (CONS z ys) xs)`;;
 
 let code_merge_def = cake_def_wf
-  `measure (\p:(num#A) list # (num#A) list. LENGTH (FST p) + LENGTH (SND p))`
+  `MEASURE (\p:(num#A) list # (num#A) list. LENGTH (FST p) + LENGTH (SND p))`
   (REWRITE_TAC[measure_THM; FST; SND] THEN REPEAT STRIP_TAC THEN
    ASM_REWRITE_TAC[LENGTH] THEN ARITH_TAC)
   `code_merge (xs:(num#A) list) ys =
@@ -864,7 +864,7 @@ let CLOS2AUX_CODE_SORT_TC_TAC : tactic =
   REWRITE_TAC[NOT_CONS_NIL; GSYM LENGTH_EQ_NIL; LENGTH] THEN ARITH_TAC;;
 
 let code_sort_def = cake_def_wf
-  `measure (LENGTH:(num#A) list->num)`
+  `MEASURE (LENGTH:(num#A) list->num)`
   CLOS2AUX_CODE_SORT_TC_TAC
   `(code_sort ([]:(num#A) list) = []) /\
    (code_sort [x] = [x]) /\
@@ -916,7 +916,7 @@ let add_src_names_def = cake_def
 (* wildcards, the names of Fn and clos_Letrec name and names              *)
 
 let get_src_names_def = sem1aux_def_wf
-  `measure (\p:clos_exp list # mlstring spt. list_size clos_exp_size (FST p))`
+  `MEASURE (\p:clos_exp list # mlstring spt. list_size clos_exp_size (FST p))`
   CLOS2AUX_SIZE_TC_TAC
   `(get_src_names [] (l:mlstring spt) = l) /\
    (get_src_names (CONS x (CONS y xs)) l =
@@ -947,7 +947,7 @@ let get_src_names_def = sem1aux_def_wf
 let get_src_names_ind = cake_ind "get_src_names";;
 
 let get_src_names_sing_def = sem1aux_def_wf
-  `measure (\x:clos_exp # mlstring spt + clos_exp list # mlstring spt.
+  `MEASURE (\x:clos_exp # mlstring spt + clos_exp list # mlstring spt.
               sum_CASE x (\p. clos_exp_size (FST p))
                          (\p. list_size clos_exp_size (FST p)))`
   CLOS2AUX_SIZE_TC_TAC

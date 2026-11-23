@@ -7,22 +7,23 @@
 (* Notes: HOL4's cpsLib (contify_CONV, cwcp) is ML automation and is not    *)
 (* ported.  HOL4 case expressions are the kit's case constants (list_CASE,  *)
 (* pair_CASE, option_CASE).  HOL4 h::t is CONS h t and ++ is APPEND.        *)
+(* HOL4 cwc is cps_cwc (a short name), and cwc_def is cps_cwc_def.           *)
 (* ========================================================================= *)
 
 needs "hol4/vocab.ml";;
 
 type_invention_error := true;;
 
-let cwc_def = new_definition
-  `cwc (v:A) (k:A->B) = k v`;;
+let cps_cwc_def = new_definition
+  `cps_cwc (v:A) (k:A->B) = k v`;;
 
 let contify_def = new_definition
   `contify (k:A->B) (v:A) = k v`;;
 
 let contify_app = prove
  (`!(k:B->C) (f:A->B) x.
-     contify k (f x) = contify (\fk. contify (\xk. cwc (fk xk) k) x) f`,
-  REWRITE_TAC[contify_def; cwc_def]);;
+     contify k (f x) = contify (\fk. contify (\xk. cps_cwc (fk xk) k) x) f`,
+  REWRITE_TAC[contify_def; cps_cwc_def]);;
 
 let contify_COND = prove
  (`!(k:A->B) g t e.
@@ -32,7 +33,7 @@ let contify_COND = prove
   REWRITE_TAC[]);;
 
 let FACTk_def = new_definition
-  `FACTk x (k:num->A) = cwc (FACT x) k`;;
+  `FACTk x (k:num->A) = cps_cwc (FACT x) k`;;
 
 let FACT_EQN = prove
  (`!n. FACT n = if n < 2 then 1 else n * FACT (n - 1)`,
@@ -49,11 +50,11 @@ let REVERSE_EQN = prove
   LIST_INDUCT_TAC THEN REWRITE_TAC[REVERSE; list_CASE]);;
 
 let contify_cwc = prove
- (`!(k:A->B) x. contify k x = cwc x k`,
-  REWRITE_TAC[contify_def; cwc_def]);;
+ (`!(k:A->B) x. contify k x = cps_cwc x k`,
+  REWRITE_TAC[contify_def; cps_cwc_def]);;
 
 let kREVERSE_def = new_definition
-  `REVERSEk (x:A list) (k:A list->B) = cwc (REVERSE x) k`;;
+  `REVERSEk (x:A list) (k:A list->B) = cps_cwc (REVERSE x) k`;;
 
 let contify_list_case = prove
  (CASE_TERM `!(k:B->C) (x:A list) n c.

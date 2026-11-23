@@ -3118,4 +3118,3 @@ let v_inv_BlockRep_upd_lemma = prove
     RULE_ASSUM_TAC(REWRITE_RULE[FLOOKUP_DEF]) THEN ASM_MESON_TAC[option_INJ;
       distinctness "option"];
     DISCH_THEN MATCH_MP_TAC THEN ASM_MESON_TAC[v_inv_eq]]);;
-

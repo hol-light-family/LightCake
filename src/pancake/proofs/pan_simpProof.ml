@@ -3,7 +3,7 @@
 (* (CakeML v3479).  Correctness proof for pan_simp.                          *)
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
-(* - Names as notes/naming/names.tsv says (pan_simpProof_compile_correct,    *)
+(* - Names as doc/names.tsv says (pan_simpProof_compile_correct,             *)
 (*   pan_simpProof_state_rel, ...); PPASS1AUX_ names are local helpers.      *)
 (* - HOL4 paired lambdas are written with match; r with f := v is            *)
 (*   RECTYPE_f_fupd (K v) r.                                                 *)
@@ -879,14 +879,6 @@ let decs_stcnames_compile_prog = prove
 
 (* uses evaluate_decls_functions of panProps *)
 
-let PPASS1AUX_fempty_fupdate_list = prove
- (`!l:(A#B)list. ALL_DISTINCT (MAP FST l) ==> FEMPTY |++ l = alist_to_fmap l`,
-  REPEAT STRIP_TAC THEN
-  ASM_SIMP_TAC[fmap_eq_flookup; flookup_fupdate_list; ALOOKUP_EQ_FLOOKUP;
-               alookup_distinct_reverse; FLOOKUP_EMPTY] THEN
-  GEN_TAC THEN QCASES_ON "ALOOKUP (l:(A#B)list) x" THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[]);;
-
 let pan_simpProof_state_rel_imp_semantics_decls = prove
  (`!(s:(A,FFI)pan_state) t pan_code start.
      pan_simpProof_state_rel s t (pan_state_code t) /\
@@ -920,4 +912,4 @@ let pan_simpProof_state_rel_imp_semantics_decls = prove
   EXISTS_TAC `pan_code:((A)decl)list` THEN ASM_REWRITE_TAC[] THEN
   REPEAT(FIRST_X_ASSUM(MP_TAC o MATCH_MP evaluate_decls_functions)) THEN
   SIMP[] THEN ASM_REWRITE_TAC[] THEN
-  ASM_SIMP_TAC[PPASS1AUX_fempty_fupdate_list; pan_simpProof_first_compile_prog_all_distinct]);;
+  ASM_SIMP_TAC[FMAPAUX_FEMPTY_FUPDATE_LIST; pan_simpProof_first_compile_prog_all_distinct]);;

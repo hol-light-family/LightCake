@@ -187,7 +187,7 @@ let clos_exp_INDUCT,clos_exp_RECURSION = cake_type
 (* in HOL4 (list_size_pair_size_MAP_FST_SND of misc)                       *)
 
 let has_install_def = sem1aux_def_wf
-  `measure (\x:clos_exp + clos_exp list.
+  `MEASURE (\x:clos_exp + clos_exp list.
               sum_CASE x (\e. clos_exp_size e) (\es. list_size clos_exp_size es))`
   (SEM1AUX_TC_TAC ORELSE
    (REWRITE_TAC[IMP_CONJ] THEN REPEAT GEN_TAC THEN REPEAT DISCH_TAC THEN

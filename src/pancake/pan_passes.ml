@@ -4,7 +4,7 @@
 (* compiler pass.                                                            *)
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
-(* - Names as notes/naming/names.tsv says: the any_pan_prog constructors    *)
+(* - Names as doc/names.tsv says: the any_pan_prog constructors             *)
 (*   Pan, Crep, pan_passes_Loop and Cake; the local lemma MAP2_MAP is       *)
 (*   pan_passes_MAP2_MAP.                                                    *)
 (* - mlstring literals are implode "..."; HOL4's Overloads list_to_display *)
@@ -76,7 +76,7 @@ let pan_to_target_all_def = cake_def
      let names = fromAList (ZIP (sort (<) (MAP FST prog2))
                                 (CONS (implode "generated_main")
                                       (MAP FST (functions prog1)))) in
-     let names = union (fromAList (APPEND (APPEND (word_to_stack_stub_names one)
+     let names = sptree_union (fromAList (APPEND (APPEND (word_to_stack_stub_names one)
                                                   (stack_alloc_stub_names one))
                                           (stack_remove_stub_names one))) names in
      let ps = APPEND ps [(implode "after crep_to_loop",pan_passes_Loop prog_b1 names)] in
@@ -179,7 +179,7 @@ let primop_to_display_def = cake_def
   `primop_to_display panLang_AddCarry = displayLang_String (implode "AddCarry")`;;
 
 let pan_exp_to_display_def = sem1aux_def_wf
-  `measure (\e:(A)panLang_exp. panLang_exp_size ARB e)`
+  `MEASURE (\e:(A)panLang_exp. panLang_exp_size ARB e)`
   SEM1AUX_TC_TAC
   `(pan_exp_to_display (panLang_Const (v:A word)) = item_with_word (implode "Const") v) /\
    (pan_exp_to_display (panLang_Var vk n) =
@@ -227,7 +227,7 @@ let dest_annot_def = sem1aux_def
 (* treat (Seq (Annot _) _) as a special case, and don't flatten it *)
 
 let pan_seqs_def = cake_def_wf
-  `measure (\z:(A)panLang_prog. panLang_prog_size ARB z)`
+  `MEASURE (\z:(A)panLang_prog. panLang_prog_size ARB z)`
   TERM_TAC
   `pan_seqs (z:(A)panLang_prog) =
      match z with
@@ -302,7 +302,7 @@ let PTOPAUX_PAN_DISP_TC_TAC : tactic =
 (* as a part of a Call (option_size of the tuple size), which bounds it.     *)
 
 let pan_prog_to_display_def = PTOPAUX_RELET_RULE (sem1aux_def_wf
-  `measure (\x:(A)panLang_prog + ((eid#varname#(A)panLang_prog)option).
+  `MEASURE (\x:(A)panLang_prog + ((eid#varname#(A)panLang_prog)option).
               sum_CASE x (\p. panLang_prog_size ARB p)
                 (\h. option_size (pair_size mlstring_size
                                      (pair_size mlstring_size (panLang_prog_size ARB))) h))`
@@ -446,7 +446,7 @@ let pan_to_strs_def = cake_def
 (* crep *)
 
 let crep_exp_to_display_def = sem1aux_def_wf
-  `measure (\e:(A)crep_exp. crep_exp_size ARB e)`
+  `MEASURE (\e:(A)crep_exp. crep_exp_size ARB e)`
   SEM1AUX_TC_TAC
   (list_mk_conj
    [`(crep_exp_to_display (crep_Const (v:A word)) = item_with_word (implode "Const") v) /\
@@ -476,7 +476,7 @@ let crep_exp_to_display_def = sem1aux_def_wf
           [crep_exp_to_display e; crep_exp_to_display e'])`]);;
 
 let crep_seqs_def = cake_def_wf
-  `measure (\z:(A)crep_prog. crep_prog_size ARB z)`
+  `MEASURE (\z:(A)crep_prog. crep_prog_size ARB z)`
   TERM_TAC
   `crep_seqs (z:(A)crep_prog) =
      match z with
@@ -514,7 +514,7 @@ let PTOPAUX_CREP_DISP_TC_TAC : tactic =
 (* (the size of the handler as a part of a Call).                            *)
 
 let crep_prog_to_display_def = PTOPAUX_RELET_RULE (sem1aux_def_wf
-  `measure (\x:(A)crep_prog + ((A word # (A)crep_prog)option).
+  `MEASURE (\x:(A)crep_prog + ((A word # (A)crep_prog)option).
               sum_CASE x (\p. crep_prog_size ARB p)
                 (\h. option_size (pair_size (\w:A word. 0) (crep_prog_size ARB)) h))`
   PTOPAUX_CREP_DISP_TC_TAC
@@ -627,7 +627,7 @@ let crep_to_strs_def = cake_def
 (* loop *)
 
 let loop_exp_to_display_def = sem1aux_def_wf
-  `measure (\e:(A)loop_exp. loop_exp_size ARB e)`
+  `MEASURE (\e:(A)loop_exp. loop_exp_size ARB e)`
   SEM1AUX_TC_TAC
   `(loop_exp_to_display (loop_Const (v:A word)) = item_with_word (implode "Const") v) /\
    (loop_exp_to_display (loop_Var n) = item_with_num (implode "Var") n) /\
@@ -644,7 +644,7 @@ let loop_exp_to_display_def = sem1aux_def_wf
         [shift_to_display sh; loop_exp_to_display exp; loop_exp_to_display exp'])`;;
 
 let loop_seqs_def = cake_def_wf
-  `measure (\z:(A)loop_prog. loop_prog_size ARB z)`
+  `MEASURE (\z:(A)loop_prog. loop_prog_size ARB z)`
   TERM_TAC
   `loop_seqs (z:(A)loop_prog) =
      match z with
@@ -682,7 +682,7 @@ let PTOPAUX_LOOP_DISP_TC_TAC : tactic =
 (* spt_size one_size d); here the size of the handler as a part of a Call.   *)
 
 let loop_prog_to_display_def = PTOPAUX_RELET_RULE (sem1aux_def_wf
-  `measure (\x:(mlstring spt # (A)loop_prog) +
+  `MEASURE (\x:(mlstring spt # (A)loop_prog) +
                (mlstring spt # ((num # (A)loop_prog # (A)loop_prog # num_set)option)).
               sum_CASE x (\p. loop_prog_size ARB (SND p))
                 (\p. option_size (pair_size (\n:num. n)

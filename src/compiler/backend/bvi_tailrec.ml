@@ -293,7 +293,7 @@ let BVIPAUX_TR_TC_TAC : tactic =
   (TERM_TAC ORELSE (PRINT_GOAL_TAC THEN NO_TAC));;
 
 let term_ok_int_def = sem1aux_def_wf
-  `measure (\p:v_ty list # bvi_exp. bvi_exp_size (SND p))`
+  `MEASURE (\p:v_ty list # bvi_exp. bvi_exp_size (SND p))`
   BVIPAUX_TR_TC_TAC
   `term_ok_int ts expr <=>
      match expr with
@@ -307,7 +307,7 @@ let term_ok_int_def = sem1aux_def_wf
 let term_ok_int_ind = cake_ind "term_ok_int";;
 
 let term_ok_any_def = sem1aux_def_wf
-  `measure (\p:v_ty list # bool # bvi_exp. bvi_exp_size (SND (SND p)))`
+  `MEASURE (\p:v_ty list # bool # bvi_exp. bvi_exp_size (SND (SND p)))`
   BVIPAUX_TR_TC_TAC
   `(term_ok_any ts list (bvi_Var i) <=>
       if ~list then i < LENGTH ts
@@ -506,7 +506,7 @@ let op_ty_PMATCH = prove
   BVIPAUX_TR_PMATCH_TAC [op_ty_def] THEN REWRITE_TAC[DISJ_SYM]);;
 
 let scan_expr_def = sem1aux_def_wf
-  `measure (\p:v_ty list # num # bvi_exp list.
+  `MEASURE (\p:v_ty list # num # bvi_exp list.
               list_size bvi_exp_size (SND (SND p)))`
   BVIPAUX_TR_TC_TAC
   `(scan_expr ts loc [] = []) /\
@@ -574,7 +574,7 @@ let scan_expr_def = sem1aux_def_wf
 let scan_expr_ind = cake_ind "scan_expr";;
 
 let scan_expr_sing_def = sem1aux_def_wf
-  `measure (\x:(v_ty list # num # bvi_exp) + (v_ty list # num # bvi_exp list).
+  `MEASURE (\x:(v_ty list # num # bvi_exp) + (v_ty list # num # bvi_exp list).
               sum_CASE x (\p. bvi_exp_size (SND (SND p)))
                          (\p. list_size bvi_exp_size (SND (SND p))))`
   BVIPAUX_TR_TC_TAC
@@ -687,7 +687,7 @@ let push_call_def = sem1aux_def
    (push_call _ _ _ _ _ = bvi_tailrec_dummy)`;;
 
 let rewrite_def = sem1aux_def_wf
-  `measure (\p:num # num # assoc_op # num # v_ty list # bvi_exp.
+  `MEASURE (\p:num # num # assoc_op # num # v_ty list # bvi_exp.
               bvi_exp_size (SND (SND (SND (SND (SND p))))))`
   BVIPAUX_TR_TC_TAC
   `(rewrite loc next opr acc ts (bvi_Var n) = (F,bvi_Var n)) /\
@@ -759,7 +759,7 @@ let rewrite_eq =
 (* Top-level expression check *)
 
 let has_rec_def = sem1aux_def_wf
-  `measure (\p:num # bvi_exp list. list_size bvi_exp_size (SND p))`
+  `MEASURE (\p:num # bvi_exp list. list_size bvi_exp_size (SND p))`
   BVIPAUX_TR_TC_TAC
   `(has_rec loc [] <=> F) /\
    (has_rec loc (CONS x (CONS y xs)) <=>
@@ -778,7 +778,7 @@ let has_rec1_def = cake_def
   `has_rec1 loc x <=> has_rec loc [x]`;;
 
 let has_rec_sing_def = sem1aux_def_wf
-  `measure (\x:(num # bvi_exp) + (num # bvi_exp list).
+  `MEASURE (\x:(num # bvi_exp) + (num # bvi_exp list).
               sum_CASE x (\p. bvi_exp_size (SND p))
                          (\p. list_size bvi_exp_size (SND p)))`
   BVIPAUX_TR_TC_TAC

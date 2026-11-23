@@ -27,7 +27,7 @@ type_invention_error := true;;
 
 let FMSP_def = new_definition
   `FMSP (AN:A->num->bool) (BC:B->C->bool) fm sp <=>
-     wf sp /\ !a n. AN a n ==> OPTREL BC (FLOOKUP fm a) (lookup n sp)`;;
+     sptree_wf sp /\ !a n. AN a n ==> OPTREL BC (FLOOKUP fm a) (lookup n sp)`;;
 
 let FMSP_FDOM = prove
  (`!(AN:A->num->bool) (BC:B->C->bool).
@@ -88,7 +88,7 @@ let FMSP_total = prove
 
 let FMSP_FUNION = prove
  (`!(AN:A->num->bool) (BC:B->C->bool).
-     (FMSP AN BC |==> FMSP AN BC |==> FMSP AN BC) FUNION union`,
+     (FMSP AN BC |==> FMSP AN BC |==> FMSP AN BC) FUNION sptree_union`,
   REWRITE_TAC[FUN_REL_def; FMSP_def] THEN REPEAT STRIP_TAC THEN
   ASM_SIMP_TAC[wf_union] THEN REWRITE_TAC[FLOOKUP_FUNION; lookup_union] THEN
   FIRST_X_ASSUM(MP_TAC o SPECL [`a'':A`; `n:num`]) THEN
@@ -197,7 +197,7 @@ let sp2fm_thm = prove
   MESON_TAC[]);;
 
 let sp2fm_correct = prove
- (`!(fm:(num,A)fmap) sp. FMSP (=) (=) fm sp <=> wf sp /\ fm = sp2fm sp`,
+ (`!(fm:(num,A)fmap) sp. FMSP (=) (=) fm sp <=> sptree_wf sp /\ fm = sp2fm sp`,
   REWRITE_TAC[FMSP_def; OPTREL_eq; FLOOKUP_EXT; FUN_EQ_THM; FLOOKUP_sp2fm] THEN
   MESON_TAC[]);;
 
@@ -205,7 +205,7 @@ let fm2sp_def = new_definition
   `fm2sp (fm:(num,A)fmap) = fromAList (fmap_to_alist fm)`;;
 
 let wf_fm2sp = prove
- (`!fm:(num,A)fmap. wf (fm2sp fm)`,
+ (`!fm:(num,A)fmap. sptree_wf (fm2sp fm)`,
   REWRITE_TAC[fm2sp_def; wf_fromAList]);;
 
 let lookup_fm2sp = prove
@@ -220,7 +220,7 @@ let fm2sp_thm = prove
   MESON_TAC[]);;
 
 let fm2sp_sp2fm = prove
- (`!sp:A spt. wf sp ==> fm2sp (sp2fm sp) = sp`,
+ (`!sp:A spt. sptree_wf sp ==> fm2sp (sp2fm sp) = sp`,
   SIMP_TAC[spt_eq_thm; wf_fm2sp; lookup_fm2sp; FLOOKUP_sp2fm]);;
 
 let sp2fm_fm2sp = prove

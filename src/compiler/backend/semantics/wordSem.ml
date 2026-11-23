@@ -8,7 +8,7 @@
 (*   (wl_state, wl_result, wl_evaluate, wl_get_var, ...); the result         *)
 (*   constructors Break and Continue are wordSem_Break and wordSem_Continue  *)
 (*   (wl_Break and wl_Continue are the wordLang statements), as             *)
-(*   notes/naming/names.tsv says.                                            *)
+(*   doc/names.tsv says.                                                     *)
 (* - The record state is wl_state with the fields wl_state_locals, ...;     *)
 (*   HOL4 s.f is wl_state_f s and s with f := v is wl_state_f_fupd (K v) s;  *)
 (*   s with <| f1 := x; f2 := y |> is wl_state_f1_fupd (K x)                 *)
@@ -136,30 +136,6 @@ let mem_store_32_def = cake_def
 
 (* the bytes of a 32-bit word (for mem_load_32_alt) *)
 
-let IL2AUX_word_of_bytes_32 = prove
- (`!be (b0:byte) b1 b2 b3.
-     word_of_bytes be (word 0:int32) [b0;b1;b2;b3] =
-     if be then
-       word_or (word_or (word_or (word_shl (word_zx b0) 24)
-                                 (word_shl (word_zx b1) 16))
-                        (word_shl (word_zx b2) 8))
-               (word_zx b3)
-     else
-       word_or (word_or (word_or (word_zx b0) (word_shl (word_zx b1) 8))
-                        (word_shl (word_zx b2) 16))
-               (word_shl (word_zx b3) 24)`,
-  REPEAT GEN_TAC THEN
-  REWRITE_TAC[word_of_bytes_def; set_byte_def; byte_index_def; DIMINDEX_32] THEN
-  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
-  CONV_TAC WORD_REDUCE_CONV THEN CONV_TAC NUM_REDUCE_CONV THEN
-  COND_CASES_TAC THEN
-  REWRITE_TAC[WORD_EQ_BITS_ALT; DIMINDEX_32] THEN
-  CONV_TAC EXPAND_CASES_CONV THEN
-  REWRITE_TAC[BIT_WORD_OR; BIT_WORD_SHL; BIT_WORD_ZX; BIT_WORD_SLICE_ALT;
-              BIT_WORD_0; DIMINDEX_32; DIMINDEX_8] THEN
-  CONV_TAC NUM_REDUCE_CONV THEN
-  SIMP_TAC[BIT_TRIVIAL; DIMINDEX_8; ARITH]);;
-
 let mem_load_32_alt = prove
  (CASE_TERM `mem_load_32 (m:A word->(A)word_loc) dm be (w:A word) =
    if alignment_aligned 2 w
@@ -185,26 +161,10 @@ let mem_load_32_alt = prove
               SOME (v':int32)
             else NONE
    else NONE`,
-  REWRITE_TAC[mem_load_32_def; IL2AUX_word_of_bytes_32] THEN
+  REWRITE_TAC[mem_load_32_def; WORDSAUX_word_of_bytes_32] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REFL_TAC);;
 
 (* the bytes of a 32-bit word (for mem_store_32_alt) *)
-
-let IL2AUX_get_byte_32 = prove
- (`!(hw:int32) be.
-     get_byte (word 0:int32) hw be =
-       (if be then word_zx (word_ushr hw 24) else word_zx hw) /\
-     get_byte (word 1:int32) hw be =
-       (if be then word_zx (word_ushr hw 16) else word_zx (word_ushr hw 8)) /\
-     get_byte (word 2:int32) hw be =
-       (if be then word_zx (word_ushr hw 8) else word_zx (word_ushr hw 16)) /\
-     get_byte (word 3:int32) hw be =
-       (if be then word_zx hw else word_zx (word_ushr hw 24))`,
-  REPEAT GEN_TAC THEN
-  REWRITE_TAC[get_byte_def; byte_index_def; DIMINDEX_32] THEN
-  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
-  CONV_TAC WORD_REDUCE_CONV THEN CONV_TAC NUM_REDUCE_CONV THEN
-  COND_CASES_TAC THEN REWRITE_TAC[WORD_USHR_ZERO]);;
 
 let mem_store_32_alt = prove
  (CASE_TERM `mem_store_32 (m:A word->(A)word_loc) dm be (w:A word) (hw:int32) =
@@ -234,7 +194,7 @@ let mem_store_32_alt = prove
             else NONE
         | _ -> NONE
    else NONE`,
-  REWRITE_TAC[mem_store_32_def; IL2AUX_get_byte_32] THEN
+  REWRITE_TAC[mem_store_32_def; WORDSAUX_get_byte_32] THEN
   BOOL_CASES_TAC `be:bool` THEN REWRITE_TAC[]);;
 
 let mem_load_byte_aux_def = cake_def
@@ -422,7 +382,7 @@ let wl_set_store_def = cake_def
      wl_state_store_fupd (K (wl_state_store s |+ (v,x))) s`;;
 
 let wl_word_exp_def = cake_def_wf
-  `measure (\p:(A,C,FFI)wl_state#(A)wl_exp. wl_exp_size (\x:A. 0) (SND p))`
+  `MEASURE (\p:(A,C,FFI)wl_state#(A)wl_exp. wl_exp_size (\x:A. 0) (SND p))`
   TERM_TAC
   `(wl_word_exp (s:(A,C,FFI)wl_state) (wl_Const w) = SOME (wl_Word w)) /\
    (wl_word_exp s (wl_Var v) = wl_get_var v s) /\
@@ -589,7 +549,7 @@ let wl_call_env_def = cake_def
 
 let list_rearrange_def = cake_def
   `list_rearrange mover (xs:A list) =
-     if BIJ mover (count (LENGTH xs)) (count (LENGTH xs))
+     if BIJ mover (pred_set_count (LENGTH xs)) (pred_set_count (LENGTH xs))
      then list_of_seq (\i. EL (mover i) xs) (LENGTH xs)
      else xs`;;
 
@@ -647,10 +607,10 @@ let wl_pop_env_def = cake_def
   `wl_pop_env (s:(A,C,FFI)wl_state) =
      match wl_state_stack s with
        CONS (StackFrame m e0 e NONE) xs ->
-         SOME (wl_state_locals_fupd (K (union (fromAList e) (fromAList e0)))
+         SOME (wl_state_locals_fupd (K (sptree_union (fromAList e) (fromAList e0)))
                  (wl_state_stack_fupd (K xs) (wl_state_locals_size_fupd (K m) s)))
      | CONS (StackFrame m e0 e (SOME (n,_,_))) xs ->
-         SOME (wl_state_locals_fupd (K (union (fromAList e) (fromAList e0)))
+         SOME (wl_state_locals_fupd (K (sptree_union (fromAList e) (fromAList e0)))
                  (wl_state_stack_fupd (K xs)
                     (wl_state_locals_size_fupd (K m)
                        (wl_state_handler_fupd (K n) s))))
@@ -679,7 +639,7 @@ let wl_jump_exc_def = cake_def
        match LASTN (wl_state_handler s + 1) (wl_state_stack s) with
          CONS (StackFrame m e0 e (SOME (n,l1,l2))) xs ->
            SOME (wl_state_handler_fupd (K n)
-                   (wl_state_locals_fupd (K (union (fromAList e) (fromAList e0)))
+                   (wl_state_locals_fupd (K (sptree_union (fromAList e) (fromAList e0)))
                       (wl_state_stack_fupd (K xs)
                          (wl_state_locals_size_fupd (K m) s))),
                  l1,l2)
@@ -688,7 +648,7 @@ let wl_jump_exc_def = cake_def
 
 let cut_names_def = cake_def
   `cut_names (name_set:(B)spt) (env:(A)spt) =
-     if domain name_set SUBSET domain env then SOME (inter env name_set)
+     if domain name_set SUBSET domain env then SOME (sptree_inter env name_set)
      else NONE`;;
 
 let cut_envs_def = cake_def
@@ -700,7 +660,7 @@ let cut_envs_def = cake_def
 let wl_cut_env_def = cake_def
   `wl_cut_env (name_sets:cutsets) (env:(A)spt) =
      match cut_envs name_sets env with
-       SOME (e1, e2) -> SOME (union e2 e1)
+       SOME (e1, e2) -> SOME (sptree_union e2 e1)
      | _ -> NONE`;;
 
 let wl_cut_state_def = cake_def
@@ -1191,7 +1151,7 @@ let IL2AUX_TC_TAC : tactic =
   ARITH_TAC;;
 
 let IL2AUX_evaluate_rel =
-  `inv_image (measure I LEX measure I LEX measure (wl_prog_size (\x:A. 0)))
+  `inv_image (MEASURE I LEX MEASURE I LEX MEASURE (wl_prog_size (\x:A. 0)))
      (\p:(A)wl_prog#(A,C,FFI)wl_state.
         (wl_state_termdep (SND p), wl_state_clock (SND p), FST p))`;;
 
@@ -1330,7 +1290,7 @@ let IL2AUX_evaluate_clauses = list_mk_conj
                         wl_state_code_buffer_fupd (K cb)
                          (wl_state_data_buffer_fupd (K db)
                           (wl_state_code_fupd
-                             (K (union (wl_state_code s) (fromAList progs)))
+                             (K (sptree_union (wl_state_code s) (fromAList progs)))
                            (wl_state_locals_fupd (K (insert ptr (wl_Loc k 0) env))
                             (wl_state_fp_regs_fupd (K FEMPTY)
                              (wl_state_compile_oracle_fupd (K new_oracle)

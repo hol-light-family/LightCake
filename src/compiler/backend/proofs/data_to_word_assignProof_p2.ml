@@ -70,7 +70,7 @@ let memory_rel_get_num = prove
 (* HOL4 line 2918 *)
 let IN_domain_adjust_set_inter = prove
  (`!x (s1:A spt) (s2:B spt).
-     x IN domain (adjust_set (inter s1 s2)) <=>
+     x IN domain (adjust_set (sptree_inter s1 s2)) <=>
      x IN domain (adjust_set s1) /\ x IN domain (adjust_set s2)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[domain_lookup] THEN
   REWRITE_TAC[lookup_adjust_set] THEN
@@ -1138,7 +1138,7 @@ let cut_envs_domain_IN = prove
 
 (* HOL4 line 3447 *)
 let inter_union_distrib = prove
- (`!(x:A spt) y (z:B spt). inter (union x y) z = union (inter x z) (inter y z)`,
+ (`!(x:A spt) y (z:B spt). sptree_inter (sptree_union x y) z = sptree_union (sptree_inter x z) (sptree_inter y z)`,
   REPEAT GEN_TAC THEN
   SIMP_TAC[spt_eq_thm; wf_inter; wf_union] THEN
   REWRITE_TAC[lookup_inter_alt; lookup_union] THEN
@@ -1150,13 +1150,13 @@ let cut_envs_inter = prove
  (`!kept_names (t_locals:B spt) y1 y2 (s_locals:A spt) x.
      cut_envs (adjust_sets kept_names) t_locals = SOME (y1,y2) /\
      data_cut_env kept_names s_locals = SOME x ==>
-     inter (fromAList (toAList y1)) (adjust_set x) = LN`,
+     sptree_inter (fromAList (toAList y1)) (adjust_set x) = LN`,
   REPEAT GEN_TAC THEN
   REWRITE_TAC[data_cut_env_def; cut_envs_def; adjust_sets_def; cut_names_def] THEN
   REPEAT COND_CASES_TAC THEN
   CASE_REWRITE_TAC[option_DISTINCT; option_INJ; PAIR_EQ] THEN
   STRIP_TAC THEN RVEQ_TAC THEN
-  SIMP_TAC[spt_eq_thm; wf_inter; wf_def] THEN
+  SIMP_TAC[spt_eq_thm; wf_inter; sptree_wf_def] THEN
   REWRITE_TAC[lookup_inter_alt; lookup_fromAList; ALOOKUP_toAList; lookup_def] THEN
   X_GEN_TAC `k:num` THEN REWRITE_TAC[domain_def; IN_SING] THEN
   ASM_CASES_TAC `k = 0` THEN ASM_REWRITE_TAC[NOT_0_domain; COND_ID]);;
@@ -1168,9 +1168,9 @@ let ASP2AUX_join_env_cut_MEM = prove
      data_cut_env kept_names s_locals = SOME xl /\
      cut_envs (adjust_sets kept_names) t_locals = SOME (y1,y2) /\
      env_to_list y2 p = (q,perm) /\
-     MEM x (join_env xl (toAList (inter (union (fromAList q) (fromAList (toAList y1)))
+     MEM x (join_env xl (toAList (sptree_inter (sptree_union (fromAList q) (fromAList (toAList y1)))
                                     (adjust_set xl)))) ==>
-     MEM x (join_env s_locals (toAList (inter t_locals (adjust_set s_locals))))`,
+     MEM x (join_env s_locals (toAList (sptree_inter t_locals (adjust_set s_locals))))`,
   REPEAT GEN_TAC THEN
   REWRITE_TAC[data_cut_env_def; cut_envs_def; adjust_sets_def; cut_names_def] THEN
   REPEAT COND_CASES_TAC THEN CASE_REWRITE_TAC[option_DISTINCT; option_INJ; PAIR_EQ] THEN
@@ -1183,9 +1183,9 @@ let ASP2AUX_join_env_cut_MEM = prove
   CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
   DISCH_THEN(X_CHOOSE_THEN `k:num` (X_CHOOSE_THEN `v:A word_loc` STRIP_ASSUME_TAC)) THEN
   MAP_EVERY EXISTS_TAC [`k:num`; `v:A word_loc`] THEN
-  UNDISCH_TAC `lookup k (inter (union (fromAList (q:(num#A word_loc)list))
-      (fromAList (toAList (inter t_locals (LS one)))))
-      (adjust_set (inter (s_locals:data_v spt) (kept_names:num_set)))) = SOME (v:A word_loc)` THEN
+  UNDISCH_TAC `lookup k (sptree_inter (sptree_union (fromAList (q:(num#A word_loc)list))
+      (fromAList (toAList (sptree_inter t_locals (LS one)))))
+      (adjust_set (sptree_inter (s_locals:data_v spt) (kept_names:num_set)))) = SOME (v:A word_loc)` THEN
   REWRITE_TAC[lookup_inter_alt; IN_domain_adjust_set_inter] THEN
   COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT] THEN
   FIRST_X_ASSUM(CONJUNCTS_THEN ASSUME_TAC) THEN
@@ -1219,7 +1219,7 @@ let ASP2AUX_cut_ret_lookup_0 = prove
      env_to_list y2 p = (q,perm) /\
      lookup 0 t_locals = SOME (wl_Loc l1 l2) ==>
      lookup 0 (insert (adjust_var dest) ret
-                 (union (fromAList q) (fromAList (toAList y1)))) =
+                 (sptree_union (fromAList q) (fromAList (toAList y1)))) =
      SOME (wl_Loc l1 l2)`,
   REPEAT STRIP_TAC THEN DRULE_ALL cut_envs_lookup_0 THEN
   ASM_REWRITE_TAC[lookup_insert; adjust_var_NEQ; lookup_union; lookup_fromAList;
@@ -1234,7 +1234,7 @@ let ASP2AUX_cut_ret_IS_SOME = prove
      env_to_list y2 p = (q,perm) ==>
      !n. IS_SOME (lookup n (insert dest v xl)) ==>
          IS_SOME (lookup (adjust_var n) (insert (adjust_var dest) ret
-                   (union (fromAList q) (fromAList (toAList y1)))))`,
+                   (sptree_union (fromAList q) (fromAList (toAList y1)))))`,
   REPEAT STRIP_TAC THEN
   ASM_CASES_TAC `n:num = dest` THEN ASM_REWRITE_TAC[lookup_insert; IS_SOME_DEF] THEN
   RULE_ASSUM_TAC(REWRITE_RULE[lookup_insert]) THEN
@@ -1254,13 +1254,13 @@ let ASP2AUX_memory_rel_cut_ret = prove
      cut_envs (adjust_sets kept_names) t_locals = SOME (y1,y2) /\
      env_to_list y2 p = (q,perm) /\
      memory_rel c be ts refs sp st m dm (CONS (v,ret) ys) /\
-     (!x. MEM x (join_env s_locals (toAList (inter t_locals (adjust_set s_locals)))) ==>
+     (!x. MEM x (join_env s_locals (toAList (sptree_inter t_locals (adjust_set s_locals)))) ==>
           MEM x ys) /\
      (!x. MEM x xs ==> MEM x ys) ==>
      memory_rel c be ts refs sp st m dm
        (APPEND (join_env (insert dest v xl)
-          (toAList (inter (insert (adjust_var dest) ret
-                             (union (fromAList q) (fromAList (toAList y1))))
+          (toAList (sptree_inter (insert (adjust_var dest) ret
+                             (sptree_union (fromAList q) (fromAList (toAList y1))))
                           (adjust_set (insert dest v xl))))) xs)`,
   REPEAT STRIP_TAC THEN MATCH_MP_TAC memory_rel_insert THEN
   FIRST_X_ASSUM(MP_TAC o check (asp2_head_is "memory_rel" o concl)) THEN
@@ -1545,7 +1545,7 @@ let assign_CopyByte = prove
         (insert dst (bvl_ByteArray fl ys1) (data_state_refs (s:(C,FFI)data_state)))
         (data_state_space s) (wl_state_store t) m1 (wl_state_mdomain t)
         (APPEND (join_env (data_state_locals s)
-                   (toAList (inter (wl_state_locals t) (adjust_set (data_state_locals s)))))
+                   (toAList (sptree_inter (wl_state_locals t) (adjust_set (data_state_locals s)))))
            (CONS (the_global (data_state_global s),FAPPLY (wl_state_store t) Globals)
               (data_to_word_gcProof_flat (data_state_stack s) (wl_state_stack t))))`
    STRIP_ASSUME_TAC THENL
@@ -1619,7 +1619,7 @@ let assign_CopyByte = prove
       [push_env_store; wl_push_env_clock; wl_push_env_def; wl_pop_env_def;
        wl_set_vars_def; alist_insert_def; LET_DEF; LET_END_DEF; LENGTH;
        wl_bad_fun_return_def]) THEN
-  SUBGOAL_THEN `domain (union (fromAList (q:(num#A word_loc)list))
+  SUBGOAL_THEN `domain (sptree_union (fromAList (q:(num#A word_loc)list))
                   (fromAList (toAList (y1:(A word_loc)spt)))) =
                 domain y1 UNION domain (y2:(A word_loc)spt)` (fun th -> REWRITE_TAC[th]) THENL
    [REWRITE_TAC[domain_union; domain_fromAList_toAList] THEN
@@ -1841,8 +1841,8 @@ let ASP2AUX_do_app_StringCmp = prove
 let ASP2AUX_join_env_cut_MEM_nocall = prove
  (`!kept_names (s_locals:data_v spt) xl (t_locals:(A word_loc)spt) x.
      data_cut_env kept_names s_locals = SOME xl /\
-     MEM x (join_env xl (toAList (inter t_locals (adjust_set xl)))) ==>
-     MEM x (join_env s_locals (toAList (inter t_locals (adjust_set s_locals))))`,
+     MEM x (join_env xl (toAList (sptree_inter t_locals (adjust_set xl)))) ==>
+     MEM x (join_env s_locals (toAList (sptree_inter t_locals (adjust_set s_locals))))`,
   REPEAT GEN_TAC THEN REWRITE_TAC[data_cut_env_def] THEN
   COND_CASES_TAC THEN CASE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN
   STRIP_TAC THEN RVEQ_TAC THEN
@@ -1853,8 +1853,8 @@ let ASP2AUX_join_env_cut_MEM_nocall = prove
   CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
   DISCH_THEN(X_CHOOSE_THEN `k:num` (X_CHOOSE_THEN `v:A word_loc` STRIP_ASSUME_TAC)) THEN
   MAP_EVERY EXISTS_TAC [`k:num`; `v:A word_loc`] THEN
-  UNDISCH_TAC `lookup k (inter (t_locals:(A word_loc)spt)
-      (adjust_set (inter (s_locals:data_v spt) (kept_names:num_set)))) = SOME (v:A word_loc)` THEN
+  UNDISCH_TAC `lookup k (sptree_inter (t_locals:(A word_loc)spt)
+      (adjust_set (sptree_inter (s_locals:data_v spt) (kept_names:num_set)))) = SOME (v:A word_loc)` THEN
   REWRITE_TAC[lookup_inter_alt; IN_domain_adjust_set_inter] THEN
   COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT] THEN
   FIRST_X_ASSUM(CONJUNCTS_THEN ASSUME_TAC) THEN DISCH_TAC THEN
@@ -1918,7 +1918,7 @@ let ASP2AUX_cut_ret_lookup_0_union = prove
      cut_envs (adjust_sets kept_names) t_locals = SOME (y1,y2) /\
      env_to_list y2 p = (q,perm) /\
      lookup 0 t_locals = SOME (wl_Loc l1 l2) ==>
-     lookup 0 (union (fromAList q) (fromAList (toAList y1))) = SOME (wl_Loc l1 l2)`,
+     lookup 0 (sptree_union (fromAList q) (fromAList (toAList y1))) = SOME (wl_Loc l1 l2)`,
   REPEAT STRIP_TAC THEN DRULE_ALL cut_envs_lookup_0 THEN
   ASM_REWRITE_TAC[lookup_union; lookup_fromAList; ALOOKUP_toAList] THEN
   STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]);;
@@ -1932,7 +1932,7 @@ let ASP2AUX_cut_ret_IS_SOME_57 = prove
      !n. IS_SOME (lookup n (insert dest v xl)) ==>
          IS_SOME (lookup (adjust_var n) (insert (adjust_var dest) ret
                    (insert 5 r5 (insert 7 r7
-                     (union (fromAList q) (fromAList (toAList y1)))))))`,
+                     (sptree_union (fromAList q) (fromAList (toAList y1)))))))`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN
   FIRST_ASSUM(MP_TAC o SPECL [`dest:num`; `v:data_v`; `ret:A word_loc`] o
     MATCH_MP ASP2AUX_cut_ret_IS_SOME) THEN
@@ -2022,7 +2022,7 @@ let ASP2AUX_STRCMP_CALL_TAC : tactic =
       [push_env_store; wl_push_env_clock; wl_push_env_def; wl_pop_env_def;
        wl_set_vars_def; alist_insert_def; LET_DEF; LET_END_DEF; LENGTH;
        wl_bad_fun_return_def]) THEN
-  SUBGOAL_THEN `domain (union (fromAList (q:(num#A word_loc)list))
+  SUBGOAL_THEN `domain (sptree_union (fromAList (q:(num#A word_loc)list))
                   (fromAList (toAList (y1:(A word_loc)spt)))) =
                 domain y1 UNION domain (y2:(A word_loc)spt)` (fun th -> REWRITE_TAC[th]) THENL
    [REWRITE_TAC[domain_union; domain_fromAList_toAList] THEN
@@ -2192,7 +2192,7 @@ let assign_StringCmp = prove
         REWRITE_TAC[MEM_APPEND; MEM] THEN REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
         DISJ1_TAC THEN MATCH_MP_TAC ASP2AUX_join_env_cut_MEM_nocall THEN
         MAP_EVERY EXISTS_TAC [`kept_names:num_set`;
-          `mk_wf (inter (data_state_locals (s:(C,FFI)data_state)) (kept_names:num_set))`] THEN
+          `mk_wf (sptree_inter (data_state_locals (s:(C,FFI)data_state)) (kept_names:num_set))`] THEN
         ASM_REWRITE_TAC[]]];
     ASM_CASES_TAC `word_ult (word_ushr (w':A word) sh_len) (word_ushr w sh_len)` THEN
     ASM_REWRITE_TAC[] THEN DISCH_TAC THEN ASP2AUX_STRCMP_CALL_TAC]);;
@@ -2399,7 +2399,7 @@ let assign_XorByte = prove
       [push_env_store; wl_push_env_clock; wl_push_env_def; wl_pop_env_def;
        wl_set_vars_def; alist_insert_def; LET_DEF; LET_END_DEF; LENGTH;
        wl_bad_fun_return_def]) THEN
-  SUBGOAL_THEN `domain (union (fromAList (q:(num#A word_loc)list))
+  SUBGOAL_THEN `domain (sptree_union (fromAList (q:(num#A word_loc)list))
                   (fromAList (toAList (y1:(A word_loc)spt)))) =
                 domain y1 UNION domain (y2:(A word_loc)spt)` (fun th -> REWRITE_TAC[th]) THENL
    [REWRITE_TAC[domain_union; domain_fromAList_toAList] THEN
@@ -3404,4 +3404,3 @@ let cut_state_refs_same = prove
   CASES_ON `data_cut_env n (data_state_locals (s:(C,FFI)data_state))` THEN
   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN
   DISCH_THEN(SUBST1_TAC o SYM) THEN REWRITE_TAC[data_state_INFO.ri_accfupds]);;
-

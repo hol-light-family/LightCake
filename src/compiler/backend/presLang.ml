@@ -70,7 +70,7 @@ let bool_to_display_def = cake_def
      empty_item (if b then implode "True" else implode "False")`;;
 
 let num_to_hex_def = cake_def_wf
-  `measure (\n:num. n)`
+  `MEASURE (\n:num. n)`
   (REWRITE_TAC WF_REL_THMS THEN REPEAT STRIP_TAC THEN
    ASM_SIMP_TAC[RDIV_LT_EQ; ARITH_RULE `~(16 = 0)`] THEN ASM_ARITH_TAC)
   `num_to_hex n =
@@ -297,7 +297,7 @@ let id_to_display_def = cake_def
       Item NONE (implode "Long") [displayLang_String n; id_to_display i])`;;
 
 let ast_t_to_display_def = sem1aux_def_wf
-  `measure (\x:ast_t + ast_t list.
+  `MEASURE (\x:ast_t + ast_t list.
               sum_CASE x (\v. ast_t_size v) (\v. list_size ast_t_size v))`
   SEM1AUX_TC_TAC
   `(ast_t_to_display c =
@@ -317,7 +317,7 @@ let ast_t_to_display_def = sem1aux_def_wf
 let ast_t_to_display_ind = cake_ind "ast_t_to_display";;
 
 let pat_to_display_def = sem1aux_def_wf
-  `measure (\x:pat + pat list.
+  `MEASURE (\x:pat + pat list.
               sum_CASE x (\v. pat_size v) (\v. list_size pat_size v))`
   SEM1AUX_TC_TAC
   `(pat_to_display (c:pat) =
@@ -342,7 +342,7 @@ let pat_to_display_def = sem1aux_def_wf
 let pat_to_display_ind = cake_ind "pat_to_display";;
 
 let exp_to_display_def = sem1aux_def_wf
-  `measure (\x:exp + exp list + (pat # exp) list + (varN # varN # exp) list.
+  `MEASURE (\x:exp + exp list + (pat # exp) list + (varN # varN # exp) list.
      sum_CASE x (\v. exp_size v)
        (\y. sum_CASE y (\v. list_size exp_size v)
               (\z. sum_CASE z (\v. list_size (pair_size pat_size exp_size) v)
@@ -401,7 +401,7 @@ let exp_to_display_def = sem1aux_def_wf
            (fun_to_display_list fxs))`;;
 
 let source_to_display_dec_def = sem1aux_def_wf
-  `measure (\x:dec + dec list.
+  `MEASURE (\x:dec + dec list.
               sum_CASE x (\v. dec_size v) (\v. list_size dec_size v))`
   SEM1AUX_TC_TAC
   `(source_to_display_dec (d:dec) =
@@ -465,7 +465,7 @@ let opt_con_to_display_def = cake_def
      | SOME (c, SOME t) -> item_with_nums (implode "ConIdTyped") [c; t]`;;
 
 let flat_pat_to_display_def = sem1aux_def_wf
-  `measure (\x:flat_pat + flat_pat list.
+  `MEASURE (\x:flat_pat + flat_pat list.
               sum_CASE x (\v. flat_pat_size v) (\v. list_size flat_pat_size v))`
   SEM1AUX_TC_TAC
   `(flat_pat_to_display p =
@@ -530,7 +530,7 @@ let add_name_hint_def = cake_def
      mlstring_concat [prefix; implode "<"; name_hint; implode ">"]`;;
 
 let flat_to_display_def = sem1aux_def_wf
-  `measure (\x:flat_exp + flat_exp list + (flat_pat # flat_exp) list +
+  `MEASURE (\x:flat_exp + flat_exp list + (flat_pat # flat_exp) list +
                (varN # varN # flat_exp) list.
      sum_CASE x (\v. flat_exp_size v)
        (\y. sum_CASE y (\v. list_size flat_exp_size v)
@@ -585,7 +585,7 @@ let flat_to_display_def = sem1aux_def_wf
 (* clos *)
 
 let num_to_varn_aux_def = cake_def_wf
-  `measure (\n:num. n)`
+  `MEASURE (\n:num. n)`
   (REWRITE_TAC WF_REL_THMS THEN REPEAT STRIP_TAC THEN
    MATCH_MP_TAC (ARITH_RULE `m <= n DIV 26 /\ n DIV 26 < n ==> m - 1 < n`) THEN
    ASM_SIMP_TAC[RDIV_LT_EQ; ARITH_RULE `~(26 = 0)`; LE_REFL] THEN ASM_ARITH_TAC)
@@ -626,7 +626,7 @@ let const_part_to_display_def = cake_def
       Item NONE (implode "W64") [word_to_display w])`;;
 
 let const_to_display_def = sem1aux_def_wf
-  `measure (\x:const + const list.
+  `MEASURE (\x:const + const list.
               sum_CASE x (\v. const_size v) (\v. list_size const_size v))`
   SEM1AUX_TC_TAC
   `(const_to_display (ConstInt i) =
@@ -739,7 +739,7 @@ let presLang_commas_def = cake_def
    (presLang_commas (CONS x xs) = strcat (strcat x (implode ",")) (presLang_commas xs))`;;
 
 let clos_to_display_def = sem1aux_def_wf
-  `measure (\x:(mlstring spt # num # clos_exp) +
+  `MEASURE (\x:(mlstring spt # num # clos_exp) +
                (mlstring spt # num # clos_exp list) +
                (mlstring spt # num # num # clos_exp list) +
                (mlstring spt # num # num # num # (num # clos_exp) list).
@@ -852,7 +852,7 @@ let MEM_bvl_exps_size = prove
   FIRST_X_ASSUM (MP_TAC o SPEC `e:bvl_exp`) THEN ASM_REWRITE_TAC[] THEN ARITH_TAC);;
 
 let bvl_to_display_def = sem1aux_def_wf
-  `measure (\x:(mlstring spt # num # bvl_exp) +
+  `MEASURE (\x:(mlstring spt # num # bvl_exp) +
                (mlstring spt # num # bvl_exp list) +
                (mlstring spt # num # num # bvl_exp list).
      sum_CASE x (\p. bvl_exp_size (SND (SND p)))
@@ -918,7 +918,7 @@ let MEM_bvi_exps_size = prove
   FIRST_X_ASSUM (MP_TAC o SPEC `e:bvi_exp`) THEN ASM_REWRITE_TAC[] THEN ARITH_TAC);;
 
 let bvi_to_display_def = sem1aux_def_wf
-  `measure (\x:(mlstring spt # num # bvi_exp) +
+  `MEASURE (\x:(mlstring spt # num # bvi_exp) +
                (mlstring spt # num # bvi_exp list) +
                (mlstring spt # num # num # bvi_exp list).
      sum_CASE x (\p. bvi_exp_size (SND (SND p)))
@@ -1037,7 +1037,7 @@ let list_size_append_data_seqs = prove
   REWRITE_TAC[type_size_def "data_prog"] THEN ARITH_TAC);;
 
 let data_prog_to_display_def = sem1aux_def_wf
-  `measure (\x:(num # mlstring spt # data_prog) + (num # mlstring spt # data_prog list).
+  `MEASURE (\x:(num # mlstring spt # data_prog) + (num # mlstring spt # data_prog list).
               sum_CASE x (\p. FST p) (\p. FST p))`
   SEM1AUX_TC_TAC
   `(data_prog_to_display 0 ns prog = empty_item (implode "...")) /\
@@ -1280,7 +1280,7 @@ let list_size_append_stack_seqs = prove
   REWRITE_TAC[type_size_def "stack_prog"] THEN ARITH_TAC);;
 
 let stack_prog_to_display_def = sem1aux_def_wf
-  `measure (\x:(num # mlstring spt # (A)stack_prog) +
+  `MEASURE (\x:(num # mlstring spt # (A)stack_prog) +
                (num # mlstring spt # ((A)stack_prog) list).
               sum_CASE x (\p. FST p) (\p. FST p))`
   SEM1AUX_TC_TAC
@@ -1482,7 +1482,7 @@ let MEM_word_exps_size_ARB =
   INST [`ARB:A->num`,`l:A->num`] wl_MEM_IMP_exp_size;;
 
 let word_exp_to_display_def = sem1aux_def_wf
-  `measure (\x:(A)wl_exp + ((A)wl_exp) list.
+  `MEASURE (\x:(A)wl_exp + ((A)wl_exp) list.
               sum_CASE x (\v. wl_exp_size ARB v) (\v. list_size (wl_exp_size ARB) v))`
   SEM1AUX_TC_TAC
   `(word_exp_to_display (wl_Const (v:A word)) = item_with_word (implode "Const") v) /\
@@ -1514,7 +1514,7 @@ let num_sets_to_display_def = cake_def
      displayLang_Tuple [num_set_to_display l; num_set_to_display r]`;;
 
 let word_prog_to_display_def = sem1aux_def_wf
-  `measure (\x:(num # mlstring spt # (A)wl_prog) +
+  `MEASURE (\x:(num # mlstring spt # (A)wl_prog) +
                (num # mlstring spt # ((A)wl_prog) list) +
                (num # mlstring spt #
                 (num list # cutsets # (A)wl_prog # num # num) option) +

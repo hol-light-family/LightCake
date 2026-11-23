@@ -102,7 +102,7 @@ let CSYNAUX_P8_TERM_TAC =
 (* a type matching algorithm, based on the implementation in HOL4 *)
 
 let tymatch_def = cake_def_wf
-  `measure (\(ps:hol_type list,obs:hol_type list,
+  `MEASURE (\(ps:hol_type list,obs:hol_type list,
               sids:(hol_type#hol_type)list#mlstring list). list_size hol_type_size ps)`
   CSYNAUX_P8_TERM_TAC
   `(tymatch [] [] sids = SOME sids) /\
@@ -124,7 +124,7 @@ let tymatch_def = cake_def_wf
 let tymatch_ind = cake_ind "tymatch";;
 
 let arities_match_def = cake_def_wf
-  `measure (\(l1:hol_type list,l2:hol_type list). list_size hol_type_size l1)`
+  `MEASURE (\(l1:hol_type list,l2:hol_type list). list_size hol_type_size l1)`
   CSYNAUX_P8_TERM_TAC
   `(arities_match [] [] <=> T) /\
    (arities_match [] _ <=> F) /\

@@ -27,9 +27,9 @@ let MP4AUX_write_fun2set_one = prove
      set_sep_one (a,x) (fun2set (f,d))
      ==> set_sep_one (a,y) (fun2set ((a =+ y) f,d))`,
   REPEAT GEN_TAC THEN
-  SUBGOAL_THEN `!(p:(B#A->bool)->bool) s. p s <=> (p STAR emp) s`
+  SUBGOAL_THEN `!(p:(B#A->bool)->bool) s. p s <=> (p STAR set_sep_emp) s`
     (fun th -> ONCE_REWRITE_TAC[th]) THENL [REWRITE_TAC[SEP_CLAUSES]; ALL_TAC] THEN
-  REWRITE_TAC[one_fun2set; APPLY_UPDATE_THM; emp_def; fun2set_EMPTY] THEN
+  REWRITE_TAC[one_fun2set; APPLY_UPDATE_THM; set_sep_emp_def; fun2set_EMPTY] THEN
   SIMP_TAC[]);;
 
 let mp4_is_star tm =
@@ -304,7 +304,7 @@ let MP4AUX_word_el_ptr = prove
      ?(h:A word) c. !ys'. LENGTH ys' = LENGTH xs ==>
        word_el a (DataElement ys' l (tag,qs)) conf =
        misc_word_list a (CONS (wl_Word h) (MAP (word_addr conf) ys')) STAR
-       cond (LENGTH ys' < 2 EXP (dimindex (:A) - 4) /\
+       set_sep_cond (LENGTH ys' < 2 EXP (dimindex (:A) - 4) /\
              decode_length conf h = word (LENGTH ys') /\ c)`,
   REPEAT GEN_TAC THEN
   DISCH_THEN(MP_TAC o SPECL [`xs:((A word_loc)heap_address)list`; `l:num`;
@@ -493,7 +493,7 @@ let MP4AUX_word_heap_el_cond = prove
            `w:A word#(A word_loc)list#bool`) THEN
   REWRITE_TAC[FORALL_PAIR_THM] THEN REPEAT GEN_TAC THEN CASE_REWRITE_TAC[] THEN
   REWRITE_TAC[FST; SND] THEN
-  DISCH_THEN(MP_TAC o MP4AUX_STAR_FOCUS (mp4_is_app "cond")) THEN
+  DISCH_THEN(MP_TAC o MP4AUX_STAR_FOCUS (mp4_is_app "set_sep_cond")) THEN
   REWRITE_TAC[cond_STAR] THEN SIMP_TAC[]);;
 let MP4AUX_word_and_not_1 = prove
  (`!n. word_and (word (4 * n)) (word_not (word 1)):A word = word (4 * n)`,
@@ -1351,7 +1351,7 @@ let memory_rel_UpdateThunk_Evaluated = prove
   MP4_X_ASM "STAR" (MP_TAC o CAKE_SIMP_RULE[word_heap_APPEND; word_heap_def; word_el_def;
       el_length_def; word_payload_def; misc_word_list_def; SEP_CLAUSES; LENGTH]) THEN
   DISCH_THEN(STRIP_ASSUME_TAC o REWRITE_RULE[cond_STAR] o
-     MP4AUX_STAR_FOCUS (mp4_is_app "cond")) THEN
+     MP4AUX_STAR_FOCUS (mp4_is_app "set_sep_cond")) THEN
    MP4_ASM "STAR" (fun th -> MAP_EVERY (STRIP_ASSUME_TAC) (MP4AUX_SEP_READS th)) THEN
    MAP_EVERY EXISTS_TAC
     [`get_addr c (heap_length (ha:((A word_loc,data_to_word_memoryProof_tag#
@@ -1387,7 +1387,7 @@ let memory_rel_UpdateThunk_Evaluated = prove
 (* HOL4 line 8809: word_list_exists_thm *)
 let data_to_word_memoryProof_word_list_exists_thm = prove
  (`!(a:A word) n.
-     (word_list_exists a 0 = emp:((A word#B)->bool)->bool) /\
+     (word_list_exists a 0 = set_sep_emp:((A word#B)->bool)->bool) /\
      (word_list_exists a (SUC n) =
         SEP_EXISTS w:B. set_sep_one (a,w) STAR
                         word_list_exists (word_add a bytes_in_word) n)`,
@@ -1530,7 +1530,7 @@ let word_el_IMP_word_list_exists = prove
            `w:B word#(B word_loc)list#bool`) THEN
   REWRITE_TAC[FORALL_PAIR_THM] THEN REPEAT GEN_TAC THEN CASE_REWRITE_TAC[] THEN
   DISCH_TAC THEN DISCH_THEN(STRIP_ASSUME_TAC o REWRITE_RULE[cond_STAR] o
-    MP4AUX_STAR_FOCUS (mp4_is_app "cond")) THEN
+    MP4AUX_STAR_FOCUS (mp4_is_app "set_sep_cond")) THEN
   SUBGOAL_THEN `LENGTH (p1':(B word_loc)list) = a1` ASSUME_TAC THENL
    [ASM_MESON_TAC[]; ALL_TAC] THEN
   REWRITE_TAC[word_list_exists_def; SEP_CLAUSES; SEP_EXISTS_THM] THEN
@@ -2439,12 +2439,12 @@ let bc_stack_ref_inv_union_del_ins_lemma = prove
  (`!c ts vars refs frame xs
     (heap:((A word_loc,data_to_word_memoryProof_tag#(A word_loc)list)
            heap_element)list) be ptr x.
-     bc_stack_ref_inv c ts vars (union refs frame) (xs,heap,be) /\
+     bc_stack_ref_inv c ts vars (sptree_union refs frame) (xs,heap,be) /\
      lookup ptr refs = SOME x ==>
-     bc_stack_ref_inv c ts vars (union (delete ptr refs) (insert ptr x frame))
+     bc_stack_ref_inv c ts vars (sptree_union (delete ptr refs) (insert ptr x frame))
        (xs,heap,be)`,
   REPEAT STRIP_TAC THEN MATCH_MP_TAC bc_stack_ref_inv_swap_refs THEN
-  EXISTS_TAC `union refs frame:(data_v bvl_ref)spt` THEN ASM_REWRITE_TAC[] THEN
+  EXISTS_TAC `sptree_union refs frame:(data_v bvl_ref)spt` THEN ASM_REWRITE_TAC[] THEN
   X_GEN_TAC `n:num` THEN REWRITE_TAC[lookup_union; lookup_delete; lookup_insert] THEN
   ASM_CASES_TAC `n:num = ptr` THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]);;
 
@@ -2642,9 +2642,9 @@ let bc_stack_ref_inv_FinaliseCons_lemma = prove
  (`!c heap be v refs ts_opt v' refs' ts' ts vars frame
     (x:(A word_loc)heap_address) xs.
      data_finalise_cons v refs ts_opt = SOME (v',refs',ts') /\ ts_opt = SOME ts /\
-     bc_stack_ref_inv c ts (CONS v vars) (union refs frame) (CONS x xs,heap,be) ==>
+     bc_stack_ref_inv c ts (CONS v vars) (sptree_union refs frame) (CONS x xs,heap,be) ==>
      IS_SOME ts' /\
-     bc_stack_ref_inv c (THE ts') (CONS v' vars) (union refs' frame)
+     bc_stack_ref_inv c (THE ts') (CONS v' vars) (sptree_union refs' frame)
        (CONS x xs,heap,be)`,
   GEN_TAC THEN GEN_TAC THEN GEN_TAC THEN MATCH_MP_TAC data_finalise_cons_ind THEN
   REWRITE_TAC[data_finalise_cons_def; option_INJ; PAIR_EQ] THEN
@@ -2655,11 +2655,11 @@ let bc_stack_ref_inv_FinaliseCons_lemma = prove
               PAIR_EQ; option_DISTINCT] THEN
   STRIP_TAC THEN RVEQ_TAC THEN ASM_REWRITE_TAC[IS_SOME_DEF; THE_DEF] THEN
   FIRST_X_ASSUM(SUBST_ALL_TAC o EQF_INTRO o check (fun th -> concl th = `~(a1:bool)`)) THEN
-  SUBGOAL_THEN `lookup ptr (union refs frame) =
+  SUBGOAL_THEN `lookup ptr (sptree_union refs frame) =
                 SOME (MutBlock a0 F (a2:data_v list) a3 a4)` ASSUME_TAC THENL
    [ASM_REWRITE_TAC[lookup_union] THEN CASE_REWRITE_TAC[]; ALL_TAC] THEN
   MP4_X_ASM "bc_stack_ref_inv" (fun th -> MP_TAC(MATCH_MP bc_stack_ref_inv_MutBlock_centre
-    (CONJ th (ASSUME `lookup ptr (union refs frame) =
+    (CONJ th (ASSUME `lookup ptr (sptree_union refs frame) =
                 SOME (MutBlock a0 F (a2:data_v list) a3 a4)`)))) THEN
   ASM_REWRITE_TAC[ref_ptr_annot_def] THEN
   DISCH_THEN(X_CHOOSE_THEN `ptr_n:num` (X_CHOOSE_THEN `zs:((A word_loc)heap_address)list`
@@ -2685,7 +2685,7 @@ let bc_stack_ref_inv_FinaliseCons_lemma = prove
                           `SOME (ts'':num)`; `x':data_v`; `SOME (ts2:num)`] THEN
     ASM_REWRITE_TAC[lookup_delete];
     ALL_TAC] THEN
-  SUBGOAL_THEN `lookup ptr (union (x'':(data_v bvl_ref)spt)
+  SUBGOAL_THEN `lookup ptr (sptree_union (x'':(data_v bvl_ref)spt)
                   (insert ptr (MutBlock a0 F (a2:data_v list) a3 a4) frame)) =
                 SOME (MutBlock a0 F a2 a3 a4)` ASSUME_TAC THENL
    [ASM_REWRITE_TAC[lookup_union; lookup_insert; option_CASE]; ALL_TAC] THEN
@@ -2693,7 +2693,7 @@ let bc_stack_ref_inv_FinaliseCons_lemma = prove
     (CONJ (REWRITE_RULE[ARITH_RULE `a + 1 + b = a + (b + 1)`] th)
       (CONJ (ASSUME `heap_lookup ptr_n (heap:((A word_loc,data_to_word_memoryProof_tag#
                (A word_loc)list)heap_element)list) = SOME (BlockRep a0 zs)`)
-        (ASSUME `lookup ptr (union (x'':(data_v bvl_ref)spt)
+        (ASSUME `lookup ptr (sptree_union (x'':(data_v bvl_ref)spt)
                   (insert ptr (MutBlock a0 F (a2:data_v list) a3 a4) frame)) =
                 SOME (MutBlock a0 F a2 a3 a4)`))))) THEN
   REWRITE_TAC[ARITH_RULE `a + 1 + b = a + (b + 1)`; THE_DEF] THEN
@@ -3151,7 +3151,7 @@ let MP4AUX_word_list_exists_write = prove
   REWRITE_TAC[word_list_exists_def; SEP_CLAUSES; SEP_EXISTS_THM] THEN
   DISCH_THEN(CONJUNCTS_THEN2 (X_CHOOSE_TAC `xs:(A word_loc)list`) ASSUME_TAC) THEN
   FIRST_X_ASSUM(STRIP_ASSUME_TAC o REWRITE_RULE[cond_STAR] o
-    MP4AUX_STAR_FOCUS (mp4_is_app "cond")) THEN
+    MP4AUX_STAR_FOCUS (mp4_is_app "set_sep_cond")) THEN
   SUBGOAL_THEN `n < LENGTH (xs:(A word_loc)list)` ASSUME_TAC THENL
    [ASM_REWRITE_TAC[]; ALL_TAC] THEN
   FIRST_X_ASSUM(fun th ->
@@ -3240,7 +3240,7 @@ let word_list_AND_word_list_exists_IMP = prove
   DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC
     (CONJUNCTS_THEN2 (X_CHOOSE_TAC `xs:(A word_loc)list`) ASSUME_TAC)) THEN
   FIRST_X_ASSUM(STRIP_ASSUME_TAC o REWRITE_RULE[cond_STAR] o
-    MP4AUX_STAR_FOCUS (mp4_is_app "cond") o
+    MP4AUX_STAR_FOCUS (mp4_is_app "set_sep_cond") o
     check (fun th -> can (find_term ((=) `xs:(A word_loc)list`)) (concl th))) THEN
   SUBGOAL_THEN `TAKE (LENGTH (ws:(A word_loc)list)) (xs:(A word_loc)list) = ws`
     ASSUME_TAC THENL
@@ -4712,7 +4712,7 @@ let memory_rel_El_any = prove
 
 (* HOL4 line 10858 *)
 let copy_list_def = cake_def_wf
-  `measure (\p:data_to_word_config#(store_name,A word_loc)fmap#num#
+  `MEASURE (\p:data_to_word_config#(store_name,A word_loc)fmap#num#
                (A word_loc#A word_loc#A word#(A word->A word_loc)#(A word->bool)).
               FST (SND (SND p)))`
   TERM_TAC

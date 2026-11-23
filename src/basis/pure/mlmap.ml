@@ -6,7 +6,7 @@
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
 (* - The type is (K,V)map with the constructor Map (HOL4 ('a,'b) map).       *)
-(* - Names as notes/naming/names.tsv says: lookup, insert, delete, null,     *)
+(* - Names as doc/names.tsv says: lookup, insert, delete, null,              *)
 (*   size, empty, union, unionWith, unionWithKey, foldrWithKey, filter,      *)
 (*   filterWithKey, map, mapWithKey, toAscList, fromList, all, exists,       *)
 (*   member, singleton, compare and to_fmap are mlmap_lookup, ...; the       *)
@@ -103,7 +103,7 @@ let mlmap_exists_def = cake_def
   `mlmap_exists f (Map cmp t:(K,V)map) <=> balanced_map_exists f t`;;
 
 let mlmap_member_def = cake_def
-  `mlmap_member k (Map cmp t:(K,V)map) <=> member cmp k t`;;
+  `mlmap_member k (Map cmp t:(K,V)map) <=> balanced_map_member cmp k t`;;
 
 let mlmap_singleton_def = cake_def
   `mlmap_singleton cmp (k:K) (v:V) = Map cmp (singleton k v)`;;
@@ -513,4 +513,3 @@ let mlmap_MEM_toAscList = prove
            `FLOOKUP (to_fmap cmp (b:(K,V)balanced_map)) (key_set cmp k)`) THEN
   ANTS_TAC THENL [ASM_REWRITE_TAC[]; ALL_TAC] THEN
   ASM_SIMP_TAC[to_fmap_thm; TotOrd_key_set; PPARSEAUX_FLOOKUP_sing]);;
-

@@ -4,7 +4,7 @@
 (* Correctness proof for loop_live.                                          *)
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
-(* - Names as notes/naming/names.tsv says: compile_correct is                *)
+(* - Names as doc/names.tsv says: compile_correct is                         *)
 (*   loop_liveProof_compile_correct, domain_list_delete is                   *)
 (*   loop_liveProof_domain_list_delete, optimise_correct is                  *)
 (*   loop_liveProof_optimise_correct; shrink is loop_live_shrink, comp is    *)
@@ -38,7 +38,7 @@ let subspt_IMP_domain = prove
 
 let subspt_inter_domain_cut = prove
  (`!(X:B spt) (m1:A spt) m2.
-     domain X SUBSET domain m1 /\ subspt (inter m1 X) m2 ==>
+     domain X SUBSET domain m1 /\ subspt (sptree_inter m1 X) m2 ==>
      domain X SUBSET domain m2`,
   REWRITE_TAC[SUBSET; subspt_lookup; lookup_inter_alt] THEN
   REPEAT STRIP_TAC THEN
@@ -49,7 +49,7 @@ let subspt_inter_domain_cut = prove
 
 let subspt_inter_union_R = prove
  (`!(a:A spt) (b:B spt) c (d:A spt).
-     subspt (inter a (union b c)) d ==> subspt (inter a c) d`,
+     subspt (sptree_inter a (sptree_union b c)) d ==> subspt (sptree_inter a c) d`,
   REWRITE_TAC[subspt_lookup; lookup_inter_alt; domain_union; IN_UNION] THEN
   REPEAT STRIP_TAC THEN FIRST_X_ASSUM MATCH_MP_TAC THEN
   POP_ASSUM MP_TAC THEN REPEAT COND_CASES_TAC THEN ASM_REWRITE_TAC[option_DISTINCT] THEN
@@ -81,7 +81,7 @@ let PLOOPAUX_vars_of_exp_acc = prove
 
 let vars_of_exp_acc = prove
  (`!(exp:(A)loop_exp) l.
-     domain (vars_of_exp exp l) = domain (union (vars_of_exp exp LN) l)`,
+     domain (vars_of_exp exp l) = domain (sptree_union (vars_of_exp exp LN) l)`,
   REWRITE_TAC[domain_union] THEN MESON_TAC[PLOOPAUX_vars_of_exp_acc]);;
 
 let PLOOPAUX_vars_of_exp_mono = prove
@@ -127,7 +127,7 @@ let eval_lemma' = prove
 
 let PLOOPAUX_subspt_inter_mono = prove
  (`!(X:B spt) (m:A spt) (Y:C spt) n.
-     domain Y SUBSET domain X /\ subspt (inter m X) n ==> subspt (inter m Y) n`,
+     domain Y SUBSET domain X /\ subspt (sptree_inter m X) n ==> subspt (sptree_inter m Y) n`,
   REWRITE_TAC[SUBSET; subspt_lookup; lookup_inter_alt] THEN
   REPEAT STRIP_TAC THEN FIRST_X_ASSUM MATCH_MP_TAC THEN
   POP_ASSUM MP_TAC THEN COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT] THEN
@@ -153,7 +153,7 @@ let PLOOPAUX_vars_of_exp_list_MEM = prove
 let PLOOPAUX_eval_lemma = prove
  (`!(s:(A,FFI)loop_state) exp w.
      loop_eval s exp = SOME w /\
-     subspt (inter (loop_state_locals s) (vars_of_exp exp LN)) locals ==>
+     subspt (sptree_inter (loop_state_locals s) (vars_of_exp exp LN)) locals ==>
      loop_eval (loop_state_locals_fupd (K locals) s) exp = SOME w`,
   MATCH_MP_TAC loop_eval_ind THEN REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
   REWRITE_TAC[loop_eval_def; loop_mem_load_def; loop_state_INFO.ri_accfupds; K_THM;
@@ -182,9 +182,9 @@ let PLOOPAUX_eval_lemma = prove
       ASM_MESON_TAC[]];
     (* Shift *)
     SUBGOAL_THEN
-     `subspt (inter (loop_state_locals (s:(A,FFI)loop_state))
+     `subspt (sptree_inter (loop_state_locals (s:(A,FFI)loop_state))
                     (vars_of_exp (wexp1:(A)loop_exp) LN)) locals /\
-      subspt (inter (loop_state_locals s) (vars_of_exp (wexp2:(A)loop_exp) LN)) locals`
+      subspt (sptree_inter (loop_state_locals s) (vars_of_exp (wexp2:(A)loop_exp) LN)) locals`
      STRIP_ASSUME_TAC THENL
      [CONJ_TAC THEN
       MATCH_MP_TAC(ISPECL [`vars_of_exp (wexp1:(A)loop_exp)
@@ -199,7 +199,7 @@ let PLOOPAUX_eval_lemma = prove
 let eval_lemma = prove
  (`!(s:(A,FFI)loop_state) exp w l.
      loop_eval s exp = SOME w /\
-     subspt (inter (loop_state_locals s) (vars_of_exp exp l)) locals ==>
+     subspt (sptree_inter (loop_state_locals s) (vars_of_exp exp l)) locals ==>
      loop_eval (loop_state_locals_fupd (K locals) s) exp = SOME w`,
   REPEAT STRIP_TAC THEN MATCH_MP_TAC PLOOPAUX_eval_lemma THEN ASM_REWRITE_TAC[] THEN
   MATCH_MP_TAC(ISPECL [`vars_of_exp (exp:(A)loop_exp) l`;
@@ -220,14 +220,14 @@ let dom_vars_of_exp_in = prove
 
 let PLOOPAUX_subspt_inter_lookup = prove
  (`!(m:A spt) (X:B spt) n k v.
-     subspt (inter m X) n /\ k IN domain X /\ lookup k m = SOME v ==>
+     subspt (sptree_inter m X) n /\ k IN domain X /\ lookup k m = SOME v ==>
      lookup k n = SOME v`,
   REWRITE_TAC[subspt_lookup; lookup_inter_alt] THEN MESON_TAC[]);;
 
 let get_vars_subspt = prove
  (`!rhss ws (s:(A,FFI)loop_state) (extra:num_set) locals.
      get_vars rhss s = SOME ws /\
-     subspt (inter (loop_state_locals s) (list_insert rhss extra)) locals ==>
+     subspt (sptree_inter (loop_state_locals s) (list_insert rhss extra)) locals ==>
      get_vars rhss (loop_state_locals_fupd (K locals) s) = SOME ws`,
   LIST_INDUCT_TAC THEN
   REWRITE_TAC[get_vars_def; loop_state_INFO.ri_accfupds; K_THM; list_insert_def] THEN
@@ -249,16 +249,16 @@ let PLOOPAUX_live_post_def = new_definition (CASE_TERM
                      (res:((A)loop_result)option) (s1:(A,FFI)loop_state)
                      (new_locals:((A)word_loc)spt) <=>
     match res with
-      NONE -> subspt (inter (loop_state_locals s1) l0) new_locals
+      NONE -> subspt (sptree_inter (loop_state_locals s1) l0) new_locals
     | SOME (loop_Result v5) -> new_locals = loop_state_locals s1
     | SOME (loop_Exception v6) -> new_locals = loop_state_locals s1
     | SOME (loopSem_Break n) ->
         (match oEL n lt with
-           SOME (_, brk) -> subspt (inter (loop_state_locals s1) brk) new_locals
+           SOME (_, brk) -> subspt (sptree_inter (loop_state_locals s1) brk) new_locals
          | NONE -> T)
     | SOME (loopSem_Continue n) ->
         (match oEL n lt with
-           SOME (cont, _) -> subspt (inter (loop_state_locals s1) cont) new_locals
+           SOME (cont, _) -> subspt (sptree_inter (loop_state_locals s1) cont) new_locals
          | NONE -> T)
     | SOME loop_TimeOut -> new_locals = loop_state_locals s1
     | SOME (loop_FinalFFI v7) -> new_locals = loop_state_locals s1
@@ -266,15 +266,15 @@ let PLOOPAUX_live_post_def = new_definition (CASE_TERM
 
 let PLOOPAUX_live_post_thm = prove
  (`(PLOOPAUX_live_post lt l0 NONE (s1:(A,FFI)loop_state) nl <=>
-      subspt (inter (loop_state_locals s1) l0) nl) /\
+      subspt (sptree_inter (loop_state_locals s1) l0) nl) /\
    (PLOOPAUX_live_post lt l0 (SOME (loop_Result v)) (s1:(A,FFI)loop_state) nl <=>
       nl = loop_state_locals s1) /\
    (PLOOPAUX_live_post lt l0 (SOME (loop_Exception w)) (s1:(A,FFI)loop_state) nl <=>
       nl = loop_state_locals s1) /\
    (PLOOPAUX_live_post lt l0 (SOME (loopSem_Break n)) (s1:(A,FFI)loop_state) nl <=>
-      !c b. oEL n lt = SOME (c,b) ==> subspt (inter (loop_state_locals s1) b) nl) /\
+      !c b. oEL n lt = SOME (c,b) ==> subspt (sptree_inter (loop_state_locals s1) b) nl) /\
    (PLOOPAUX_live_post lt l0 (SOME (loopSem_Continue n)) (s1:(A,FFI)loop_state) nl <=>
-      !c b. oEL n lt = SOME (c,b) ==> subspt (inter (loop_state_locals s1) c) nl) /\
+      !c b. oEL n lt = SOME (c,b) ==> subspt (sptree_inter (loop_state_locals s1) c) nl) /\
    (PLOOPAUX_live_post lt l0 (SOME loop_TimeOut) (s1:(A,FFI)loop_state) nl <=>
       nl = loop_state_locals s1) /\
    (PLOOPAUX_live_post lt l0 (SOME (loop_FinalFFI f)) (s1:(A,FFI)loop_state) nl <=>
@@ -293,7 +293,7 @@ let PLOOPAUX_live_P_def = new_definition
     !res s1 lt locals prog1 l1 l0.
       loop_evaluate (prog,s) = (res,s1) /\ ~(res = SOME loop_Error) /\
       loop_live_shrink lt prog l0 = (prog1,l1) /\
-      subspt (inter (loop_state_locals s) l1) locals ==>
+      subspt (sptree_inter (loop_state_locals s) l1) locals ==>
       ?new_locals.
         loop_evaluate (prog1, loop_state_locals_fupd (K locals) s) =
         (res, loop_state_locals_fupd (K new_locals) s1) /\
@@ -381,8 +381,8 @@ let PLOOPAUX_live_Raise = prove
 
 let PLOOPAUX_subspt_inter_insert_out = prove
  (`!(m:A spt) (l0:num_set) n v x.
-     subspt (inter m l0) n /\ lookup v l0 = NONE ==>
-     subspt (inter (insert v x m) l0) n`,
+     subspt (sptree_inter m l0) n /\ lookup v l0 = NONE ==>
+     subspt (sptree_inter (insert v x m) l0) n`,
   REWRITE_TAC[subspt_lookup; lookup_inter_alt; lookup_insert; domain_lookup] THEN
   REPEAT STRIP_TAC THEN POP_ASSUM MP_TAC THEN
   REPEAT COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT] THEN
@@ -391,8 +391,8 @@ let PLOOPAUX_subspt_inter_insert_out = prove
 let PLOOPAUX_IN_domain_rws = prove
  (`(!k v (t:A spt) x. x IN domain (insert k v t) <=> x = k \/ x IN domain t) /\
    (!k (t:A spt) x. x IN domain (delete k t) <=> ~(x = k) /\ x IN domain t) /\
-   (!(a:A spt) (b:B spt) x. x IN domain (inter a b) <=> x IN domain a /\ x IN domain b) /\
-   (!(a:A spt) b x. x IN domain (union a b) <=> x IN domain a \/ x IN domain b)`,
+   (!(a:A spt) (b:B spt) x. x IN domain (sptree_inter a b) <=> x IN domain a /\ x IN domain b) /\
+   (!(a:A spt) b x. x IN domain (sptree_union a b) <=> x IN domain a \/ x IN domain b)`,
   REWRITE_TAC[domain_insert; domain_delete; domain_inter; domain_union; IN_INSERT;
               IN_DELETE; IN_INTER; IN_UNION] THEN MESON_TAC[]);;
 
@@ -453,7 +453,7 @@ let PLOOPAUX_DOM_RWS =
 
 let PLOOPAUX_DOM_FACTS = [PLOOPAUX_vars_of_exp_in; PLOOPAUX_IN_domain_rws];;
 
-(* subspt (inter m X) n from an assumption subspt (inter m Y) n, with       *)
+(* subspt (sptree_inter m X) n from an assumption subspt (inter m Y) n, with       *)
 (* domain X SUBSET domain Y by rewriting                                    *)
 
 let PLOOPAUX_SUBSPT_TAC : tactic = fun (asl,w as g) ->
@@ -461,7 +461,7 @@ let PLOOPAUX_SUBSPT_TAC : tactic = fun (asl,w as g) ->
     match strip_comb t with
       (f,[a;n]) when fst(dest_const f) = "subspt" ->
         (match strip_comb a with
-           (g,[m;x]) when fst(dest_const g) = "inter" -> (m,x,n)
+           (g,[m;x]) when fst(dest_const g) = "sptree_inter" -> (m,x,n)
          | _ -> failwith "")
     | _ -> failwith "" in
   let (m,x,n) = parts w in
@@ -474,7 +474,7 @@ let PLOOPAUX_SUBSPT_TAC : tactic = fun (asl,w as g) ->
        ASM_REWRITE_TAC[] THEN ASM_MESON_TAC PLOOPAUX_DOM_FACTS;
        ACCEPT_TAC th]) cands) g;;
 
-(* lookup k n = SOME v from assumptions subspt (inter m X) n and            *)
+(* lookup k n = SOME v from assumptions subspt (sptree_inter m X) n and     *)
 (* lookup k m = SOME v, with k IN domain X by rewriting                     *)
 
 let PLOOPAUX_LOOKUP_TAC : tactic = fun (asl,w as g) ->
@@ -483,7 +483,7 @@ let PLOOPAUX_LOOKUP_TAC : tactic = fun (asl,w as g) ->
     match strip_comb t with
       (f,[a;n']) when fst(dest_const f) = "subspt" && n' = n ->
         (match strip_comb a with
-           (g,[m;x]) when fst(dest_const g) = "inter" -> (m,x)
+           (g,[m;x]) when fst(dest_const g) = "sptree_inter" -> (m,x)
          | _ -> failwith "")
     | _ -> failwith "" in
   let cands = mapfilter (fun (_,th) -> parts (concl th)) asl in
@@ -514,7 +514,7 @@ let PLOOPAUX_cut_res_live = prove
   FIRST_X_ASSUM(MP_TAC o check (is_cond o lhs o concl)) THEN SIMP[] THEN
   COND_CASES_TAC THEN REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN RVEQ_TAC THENL
   [EXISTS_TAC `LN:((A)word_loc)spt` THEN SIMP[PLOOPAUX_live_post_thm];
-   EXISTS_TAC `inter nl (L:num_set):((A)word_loc)spt` THEN
+   EXISTS_TAC `sptree_inter nl (L:num_set):((A)word_loc)spt` THEN
    SIMP[PLOOPAUX_live_post_thm; loop_dec_clock_def] THEN
    POP_ASSUM_LIST(fun ths -> MAP_EVERY MP_TAC (filter (fun th -> let c = concl th in
      can (find_term ((=) `L:num_set`)) c) ths)) THEN
@@ -593,7 +593,7 @@ let PLOOPAUX_live_If = prove
     PLOOPAUX_SUBSPT_TAC THEN
   PLOOPAUX_LOOKUPS_TAC `locals:((A)word_loc)spt` THEN
   FIRST_ASSUM(MP_TAC o MATCH_MP PLOOPAUX_cut_res_live_imp) THEN
-  DISCH_THEN(MP_TAC o SPECL [`inter (l0:num_set) (live_out:num_set)`; `l0:num_set`;
+  DISCH_THEN(MP_TAC o SPECL [`sptree_inter (l0:num_set) (live_out:num_set)`; `l0:num_set`;
                              `lt:(num_set#num_set)list`; `nl:((A)word_loc)spt`]) THEN
   ASM_REWRITE_TAC PLOOPAUX_DOM_RWS THEN
   (ANTS_TAC THENL [MESON_TAC[]; ALL_TAC]) THEN
@@ -604,14 +604,14 @@ let PLOOPAUX_live_If = prove
 
 let PLOOPAUX_subspt_inter_insert = prove
  (`!(m:A spt) (X:num_set) n v x (l0:num_set).
-     subspt (inter m X) n /\ domain l0 DELETE v SUBSET domain X ==>
-     subspt (inter (insert v x m) l0) (insert v x n)`,
+     subspt (sptree_inter m X) n /\ domain l0 DELETE v SUBSET domain X ==>
+     subspt (sptree_inter (insert v x m) l0) (insert v x n)`,
   REWRITE_TAC[SUBSET; IN_DELETE; subspt_lookup; lookup_inter_alt; lookup_insert] THEN
   REPEAT STRIP_TAC THEN POP_ASSUM MP_TAC THEN
   REPEAT COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT] THEN ASM_MESON_TAC[]);;
 
 (* subspt (inter (insert v x m) l0) (insert v x n) from an assumption       *)
-(* subspt (inter m X) n, with domain l0 DELETE v SUBSET domain X by          *)
+(* subspt (sptree_inter m X) n, with domain l0 DELETE v SUBSET domain X by   *)
 (* rewriting                                                                 *)
 
 let PLOOPAUX_SUBSPT_INS_TAC : tactic = fun (asl,w as g) ->
@@ -619,7 +619,7 @@ let PLOOPAUX_SUBSPT_INS_TAC : tactic = fun (asl,w as g) ->
     match strip_comb t with
       (f,[a;n]) when fst(dest_const f) = "subspt" ->
         (match strip_comb a with
-           (g,[m;x]) when fst(dest_const g) = "inter" -> (m,x,n)
+           (g,[m;x]) when fst(dest_const g) = "sptree_inter" -> (m,x,n)
          | _ -> failwith "")
     | _ -> failwith "" in
   let (im,_,ins) = parts w in
@@ -661,8 +661,8 @@ let PLOOPAUX_NL_TAC (fin:tactic) : tactic = fun (asl,w as g) ->
 
 let PLOOPAUX_subspt_insert_step = prove
  (`!(m:A spt) (l0:num_set) n v x.
-     subspt (inter m (delete v l0)) n ==>
-     subspt (inter (insert v x m) l0) (insert v x n)`,
+     subspt (sptree_inter m (delete v l0)) n ==>
+     subspt (sptree_inter (insert v x m) l0) (insert v x n)`,
   REWRITE_TAC[subspt_lookup; lookup_inter_alt; lookup_insert; domain_delete; IN_DELETE] THEN
   REPEAT STRIP_TAC THEN POP_ASSUM MP_TAC THEN
   REPEAT COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT] THEN ASM_MESON_TAC[]);;
@@ -751,8 +751,8 @@ let PLOOPAUX_live_ShMem = prove
 
 let PLOOPAUX_subspt_alist_insert = prove
  (`!xs ys (m:A spt) (l0:num_set) n.
-     LENGTH xs = LENGTH ys /\ subspt (inter m (list_delete xs l0)) n ==>
-     subspt (inter (alist_insert xs ys m) l0) (alist_insert xs ys n)`,
+     LENGTH xs = LENGTH ys /\ subspt (sptree_inter m (list_delete xs l0)) n ==>
+     subspt (sptree_inter (alist_insert xs ys m) l0) (alist_insert xs ys n)`,
   LIST_INDUCT_TAC THEN LIST_INDUCT_TAC THEN
   REWRITE_TAC[LENGTH; NOT_SUC; ARITH_RULE `~(SUC n = 0)`; SUC_INJ; alist_insert_def;
               list_delete_def] THEN
@@ -776,8 +776,8 @@ let PLOOPAUX_live_Primitive = prove
 
 let PLOOPAUX_subspt_cut = prove
  (`!(m:A spt) (C:num_set) (l0:num_set) n (X:num_set).
-     subspt (inter m X) n /\ domain (inter C l0) SUBSET domain X ==>
-     subspt (inter (inter m C) l0) (inter n (inter C l0))`,
+     subspt (sptree_inter m X) n /\ domain (sptree_inter C l0) SUBSET domain X ==>
+     subspt (sptree_inter (sptree_inter m C) l0) (sptree_inter n (sptree_inter C l0))`,
   REWRITE_TAC[SUBSET; subspt_lookup; lookup_inter_alt; domain_inter; IN_INTER] THEN
   REPEAT STRIP_TAC THEN POP_ASSUM MP_TAC THEN
   REPEAT COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT] THEN ASM_MESON_TAC[]);;
@@ -802,9 +802,9 @@ let PLOOPAUX_live_FFI = prove
   RULE_ASSUM_TAC(REWRITE_RULE PLOOPAUX_result_rws) THEN TRY (FIRST_ASSUM CONTR_TAC) THEN
   RVEQ_TAC THEN PLOOPAUX_LOOKUPS_TAC `locals:((A)word_loc)spt` THEN
   (SUBGOAL_THEN
-     `domain (inter (cutset:num_set) (l0:num_set)) SUBSET domain (locals:((A)word_loc)spt)`
+     `domain (sptree_inter (cutset:num_set) (l0:num_set)) SUBSET domain (locals:((A)word_loc)spt)`
      ASSUME_TAC THENL
-   [MATCH_MP_TAC(ISPECL [`inter (cutset:num_set) (l0:num_set)`;
+   [MATCH_MP_TAC(ISPECL [`sptree_inter (cutset:num_set) (l0:num_set)`;
                          `loop_state_locals (s:(A,FFI)loop_state)`]
                    subspt_inter_domain_cut) THEN
     CONJ_TAC THENL [REWRITE_TAC[domain_inter] THEN ASM SET_TAC[]; PLOOPAUX_SUBSPT_TAC];
@@ -849,7 +849,7 @@ let PLOOPAUX_cut_res_NONE_cases = prove
       q = SOME loop_TimeOut /\ s' = loop_state_locals_fupd (K LN) s) \/
      (domain L SUBSET domain (loop_state_locals s) /\ ~(loop_state_clock s = 0) /\
       q = NONE /\
-      s' = loop_dec_clock (loop_state_locals_fupd (K (inter (loop_state_locals s) L)) s))`,
+      s' = loop_dec_clock (loop_state_locals_fupd (K (sptree_inter (loop_state_locals s) L)) s))`,
   REWRITE_TAC[cut_res_def; cut_state_def] THEN REPEAT GEN_TAC THEN
   COND_CASES_TAC THEN REWRITE_TAC[case_def "option"; PAIR_EQ] THENL
    [SIMP[] THEN COND_CASES_TAC THEN REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN
@@ -861,7 +861,7 @@ let PLOOPAUX_cut_res_NONE_eq = prove
      domain L SUBSET domain (loop_state_locals s) ==>
      cut_res L (NONE:((A)loop_result)option, s) =
      if loop_state_clock s = 0 then (SOME loop_TimeOut, loop_state_locals_fupd (K LN) s)
-     else (NONE, loop_dec_clock (loop_state_locals_fupd (K (inter (loop_state_locals s) L)) s))`,
+     else (NONE, loop_dec_clock (loop_state_locals_fupd (K (sptree_inter (loop_state_locals s) L)) s))`,
   REWRITE_TAC[cut_res_def; cut_state_def] THEN REPEAT STRIP_TAC THEN
   ASM_REWRITE_TAC[case_def "option"] THEN SIMP[]);;
 
@@ -893,8 +893,8 @@ let PLOOPAUX_loop_cut_not_NONE = prove
 
 let PLOOPAUX_subspt_loop_entry = prove
  (`!(m:A spt) (L1:num_set) n (li:num_set) (X:num_set).
-     subspt (inter m L1) n /\ domain li INTER domain X SUBSET domain L1 ==>
-     subspt (inter (inter m li) X) (inter n L1)`,
+     subspt (sptree_inter m L1) n /\ domain li INTER domain X SUBSET domain L1 ==>
+     subspt (sptree_inter (sptree_inter m li) X) (sptree_inter n L1)`,
   REWRITE_TAC[SUBSET; subspt_lookup; lookup_inter_alt; IN_INTER] THEN
   REPEAT STRIP_TAC THEN POP_ASSUM MP_TAC THEN
   REPEAT COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT] THEN ASM_MESON_TAC[]);;
@@ -931,14 +931,14 @@ let PLOOPAUX_live_Loop_core = prove
               ==> PLOOPAUX_live_P (loop_Loop li body lo) s') /\
     (!s'. cut_res li (NONE:((A)loop_result)option,s) = (NONE,s')
           ==> PLOOPAUX_live_P body s') /\
-    loop_live_shrink lt (loop_Loop li body lo) l0 = (loop_Loop L1 b (inter lo l0), L1) /\
-    loop_live_shrink (CONS (L1,BRK) lt) body (union li (inter lo l0)) = (b,X) /\
+    loop_live_shrink lt (loop_Loop li body lo) l0 = (loop_Loop L1 b (sptree_inter lo l0), L1) /\
+    loop_live_shrink (CONS (L1,BRK) lt) body (sptree_union li (sptree_inter lo l0)) = (b,X) /\
     domain L1 SUBSET domain li /\ domain li INTER domain X SUBSET domain L1 /\
-    domain (inter lo l0) SUBSET domain BRK ==>
+    domain (sptree_inter lo l0) SUBSET domain BRK ==>
     !res s1 locals.
       loop_evaluate (loop_Loop li body lo,s) = (res,s1) /\ ~(res = SOME loop_Error) /\
-      subspt (inter (loop_state_locals s) L1) locals ==>
-      ?nl. loop_evaluate (loop_Loop L1 b (inter lo l0),
+      subspt (sptree_inter (loop_state_locals s) L1) locals ==>
+      ?nl. loop_evaluate (loop_Loop L1 b (sptree_inter lo l0),
                           loop_state_locals_fupd (K locals) s) =
            (res, loop_state_locals_fupd (K nl) s1) /\
            PLOOPAUX_live_post lt l0 res s1 nl`,
@@ -969,7 +969,7 @@ let PLOOPAUX_live_Loop_core = prove
    MP_TAC(ISPECL [`L1:num_set`; `loop_state_locals_fupd (K locals) (s:(A,FFI)loop_state)`]
                  PLOOPAUX_cut_res_NONE_eq) THEN
    SIMP[] THEN DISCH_TAC THEN
-   MP_TAC(ISPECL [`L1:num_set`; `b:(A)loop_prog`; `inter (lo:num_set) (l0:num_set)`;
+   MP_TAC(ISPECL [`L1:num_set`; `b:(A)loop_prog`; `sptree_inter (lo:num_set) (l0:num_set)`;
                   `loop_state_locals_fupd (K locals) (s:(A,FFI)loop_state)`;
                   `SOME loop_TimeOut:((A)loop_result)option`;
                   `loop_state_locals_fupd (K LN) (s:(A,FFI)loop_state)`]
@@ -983,11 +983,11 @@ let PLOOPAUX_live_Loop_core = prove
    [MATCH_MP_TAC(ISPECL [`L1:num_set`; `loop_state_locals (s:(A,FFI)loop_state)`]
                    subspt_inter_domain_cut) THEN ASM_MESON_TAC[SUBSET_TRANS]; ALL_TAC] THEN
    ABBREV_TAC `s2 = loop_dec_clock (loop_state_locals_fupd
-                      (K (inter (loop_state_locals s) (li:num_set))) (s:(A,FFI)loop_state))` THEN
+                      (K (sptree_inter (loop_state_locals s) (li:num_set))) (s:(A,FFI)loop_state))` THEN
    SUBGOAL_THEN
      `cut_res (L1:num_set) (NONE:((A)loop_result)option,
                             loop_state_locals_fupd (K locals) (s:(A,FFI)loop_state)) =
-      (NONE, loop_state_locals_fupd (K (inter locals L1)) s2)` ASSUME_TAC THENL
+      (NONE, loop_state_locals_fupd (K (sptree_inter locals L1)) s2)` ASSUME_TAC THENL
    [ASM_SIMP_TAC[PLOOPAUX_cut_res_NONE_eq; loop_state_INFO.ri_accfupds; K_THM] THEN
     EXPAND_TAC "s2" THEN SIMP_NOASM[loop_dec_clock_def]; ALL_TAC] THEN
    PAIR_CASES_ON `loop_evaluate (body:(A)loop_prog, s2:(A,FFI)loop_state)` THEN
@@ -1004,19 +1004,19 @@ let PLOOPAUX_live_Loop_core = prove
                                             is_conj (lhand (concl th)))) THEN
     ASM_REWRITE_TAC(loop_exit_loop_def :: PAIR_EQ :: PLOOPAUX_result_rws);
     ALL_TAC] THEN
-   SUBGOAL_THEN `subspt (inter (loop_state_locals (s2:(A,FFI)loop_state)) (X:num_set))
-                        (inter (locals:((A)word_loc)spt) (L1:num_set))` ASSUME_TAC THENL
+   SUBGOAL_THEN `subspt (sptree_inter (loop_state_locals (s2:(A,FFI)loop_state)) (X:num_set))
+                        (sptree_inter (locals:((A)word_loc)spt) (L1:num_set))` ASSUME_TAC THENL
    [EXPAND_TAC "s2" THEN SIMP_NOASM[loop_dec_clock_def] THEN
     MATCH_MP_TAC PLOOPAUX_subspt_loop_entry THEN ASM_REWRITE_TAC[]; ALL_TAC] THEN
    PLOOPAUX_P_SPEC_TAC `PLOOPAUX_live_P (body:(A)loop_prog) (s2:(A,FFI)loop_state)`
      [`p0':((A)loop_result)option`; `p1':(A,FFI)loop_state`;
       `CONS (L1:num_set,BRK:num_set) lt`;
-      `inter (locals:((A)word_loc)spt) (L1:num_set)`; `b:(A)loop_prog`; `X:num_set`;
-      `union (li:num_set) (inter (lo:num_set) (l0:num_set))`]
+      `sptree_inter (locals:((A)word_loc)spt) (L1:num_set)`; `b:(A)loop_prog`; `X:num_set`;
+      `sptree_union (li:num_set) (sptree_inter (lo:num_set) (l0:num_set))`]
      `nl1:((A)word_loc)spt` THEN
-   MP_TAC(ISPECL [`L1:num_set`; `b:(A)loop_prog`; `inter (lo:num_set) (l0:num_set)`;
+   MP_TAC(ISPECL [`L1:num_set`; `b:(A)loop_prog`; `sptree_inter (lo:num_set) (l0:num_set)`;
                   `loop_state_locals_fupd (K locals) (s:(A,FFI)loop_state)`;
-                  `loop_state_locals_fupd (K (inter (locals:((A)word_loc)spt) (L1:num_set)))
+                  `loop_state_locals_fupd (K (sptree_inter (locals:((A)word_loc)spt) (L1:num_set)))
                      (s2:(A,FFI)loop_state)`;
                   `p0':((A)loop_result)option`;
                   `loop_state_locals_fupd (K nl1) (p1':(A,FFI)loop_state)`]
@@ -1030,13 +1030,13 @@ let PLOOPAUX_live_Loop_core = prove
       check (PLOOPAUX_is_P_loop_ih false o concl)) THEN
     ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
     RULE_ASSUM_TAC(REWRITE_RULE[SUBSET]) THEN
-    SUBGOAL_THEN `subspt (inter (loop_state_locals (p1':(A,FFI)loop_state)) (L1:num_set))
+    SUBGOAL_THEN `subspt (sptree_inter (loop_state_locals (p1':(A,FFI)loop_state)) (L1:num_set))
                          (nl1:((A)word_loc)spt)` ASSUME_TAC THENL
     [PLOOPAUX_SUBSPT_TAC; ALL_TAC] THEN
     PLOOPAUX_P_SPEC_TAC `PLOOPAUX_live_P (loop_Loop li body lo) (p1':(A,FFI)loop_state)`
       [`res:((A)loop_result)option`; `s1:(A,FFI)loop_state`; `lt:(num_set#num_set)list`;
        `nl1:((A)word_loc)spt`;
-       `loop_Loop L1 (b:(A)loop_prog) (inter (lo:num_set) (l0:num_set))`;
+       `loop_Loop L1 (b:(A)loop_prog) (sptree_inter (lo:num_set) (l0:num_set))`;
        `L1:num_set`; `l0:num_set`] `nl2:((A)word_loc)spt` THEN
     EXISTS_TAC `nl2:((A)word_loc)spt` THEN ASM_REWRITE_TAC[];
     ALL_TAC] THEN
@@ -1048,13 +1048,13 @@ let PLOOPAUX_live_Loop_core = prove
     FIRST_X_ASSUM(MP_TAC o SPECL [`s2:(A,FFI)loop_state`; `p1':(A,FFI)loop_state`] o
       check (PLOOPAUX_is_P_loop_ih true o concl)) THEN
     ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
-    SUBGOAL_THEN `subspt (inter (loop_state_locals (p1':(A,FFI)loop_state)) (L1:num_set))
+    SUBGOAL_THEN `subspt (sptree_inter (loop_state_locals (p1':(A,FFI)loop_state)) (L1:num_set))
                          (nl1:((A)word_loc)spt)` ASSUME_TAC THENL
     [ASM_MESON_TAC[]; ALL_TAC] THEN
     PLOOPAUX_P_SPEC_TAC `PLOOPAUX_live_P (loop_Loop li body lo) (p1':(A,FFI)loop_state)`
       [`res:((A)loop_result)option`; `s1:(A,FFI)loop_state`; `lt:(num_set#num_set)list`;
        `nl1:((A)word_loc)spt`;
-       `loop_Loop L1 (b:(A)loop_prog) (inter (lo:num_set) (l0:num_set))`;
+       `loop_Loop L1 (b:(A)loop_prog) (sptree_inter (lo:num_set) (l0:num_set))`;
        `L1:num_set`; `l0:num_set`] `nl2:((A)word_loc)spt` THEN
     EXISTS_TAC `nl2:((A)word_loc)spt` THEN ASM_REWRITE_TAC[];
     ALL_TAC] THEN
@@ -1063,10 +1063,10 @@ let PLOOPAUX_live_Loop_core = prove
     POP_ASSUM SUBST_ALL_TAC THEN
     RULE_ASSUM_TAC(REWRITE_RULE (PLOOPAUX_live_post_thm :: oEL_def :: PAIR_EQ ::
                                  PLOOPAUX_result_rws)) THEN
-    SUBGOAL_THEN `subspt (inter (loop_state_locals (p1':(A,FFI)loop_state)) (BRK:num_set))
+    SUBGOAL_THEN `subspt (sptree_inter (loop_state_locals (p1':(A,FFI)loop_state)) (BRK:num_set))
                          (nl1:((A)word_loc)spt)` ASSUME_TAC THENL
     [ASM_MESON_TAC[]; ALL_TAC] THEN
-    MP_TAC(ISPECL [`lo:num_set`; `inter (lo:num_set) (l0:num_set)`; `l0:num_set`;
+    MP_TAC(ISPECL [`lo:num_set`; `sptree_inter (lo:num_set) (l0:num_set)`; `l0:num_set`;
                    `lt:(num_set#num_set)list`; `NONE:((A)loop_result)option`;
                    `p1':(A,FFI)loop_state`; `nl1:((A)word_loc)spt`;
                    `res:((A)loop_result)option`; `s1:(A,FFI)loop_state`]
@@ -1092,7 +1092,7 @@ let PLOOPAUX_live_Loop_core = prove
        with Failure _ -> false) &&
       free_in `L1:num_set` (concl th))) THEN ASM_REWRITE_TAC[];
    MATCH_MP_TAC(ISPECL [`(L1:num_set,BRK:num_set)`; `lt:(num_set#num_set)list`;
-                        `l0:num_set`; `union (li:num_set) (inter (lo:num_set) (l0:num_set))`]
+                        `l0:num_set`; `sptree_union (li:num_set) (sptree_inter (lo:num_set) (l0:num_set))`]
                   PLOOPAUX_live_post_exit) THEN
    ASM_REWRITE_TAC[]]]);;
 
@@ -1117,7 +1117,7 @@ let PLOOPAUX_live_Loop = prove
      with Failure _ -> false))) THEN
   REWRITE_TAC[PLOOPAUX_shrink_rws; LET_DEF; LET_END_DEF] THEN
   STRIP_ASSUME_TAC(ISPEC `fixedpoint (lt:(num_set#num_set)list) live_in LN
-       (union live_in (inter live_out (l0:num_set))) (body:(A)loop_prog)` (cases "option")) THEN
+       (sptree_union live_in (sptree_inter live_out (l0:num_set))) (body:(A)loop_prog)` (cases "option")) THEN
   ASM_REWRITE_TAC[case_def "option"] THENL
   [(* no fixed point: the body shrunk once *)
    PAIRARG_TAC THEN REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN RVEQ_TAC THEN
@@ -1140,7 +1140,7 @@ let PLOOPAUX_domain_args = prove
 let PLOOPAUX_get_vars_dom = prove
  (`!xs ws (s:(A,FFI)loop_state) (L:num_set) locals.
      get_vars xs s = SOME ws /\ set_of_list xs SUBSET domain L /\
-     subspt (inter (loop_state_locals s) L) locals ==>
+     subspt (sptree_inter (loop_state_locals s) L) locals ==>
      get_vars xs (loop_state_locals_fupd (K locals) s) = SOME ws`,
   REPEAT STRIP_TAC THEN MATCH_MP_TAC get_vars_subspt THEN
   EXISTS_TAC `LN:num_set` THEN ASM_REWRITE_TAC[] THEN
@@ -1176,7 +1176,7 @@ let PLOOPAUX_CALL_GV_TAC : tactic = fun (asl,w as g) ->
      match strip_comb (concl th) with
        (f,[a;n]) when fst(dest_const f) = "subspt" ->
          (match strip_comb a with
-            (g,[m;x]) when fst(dest_const g) = "inter" &&
+            (g,[m;x]) when fst(dest_const g) = "sptree_inter" &&
                            fst(dest_const(rator m)) = "loop_state_locals" -> (rand m, x, n)
           | _ -> failwith "")
      | _ -> failwith "" in
@@ -1209,9 +1209,9 @@ let PLOOPAUX_live_Call_NONE = prove
 let PLOOPAUX_cut_res_sub_NONE = prove
  (`!(L:num_set) (s:(A,FFI)loop_state) s' (L':num_set) locals.
      cut_res L (NONE:((A)loop_result)option, s) = (NONE, s') /\
-     domain L' SUBSET domain L /\ subspt (inter (loop_state_locals s) L') locals ==>
+     domain L' SUBSET domain L /\ subspt (sptree_inter (loop_state_locals s) L') locals ==>
      cut_res L' (NONE:((A)loop_result)option, loop_state_locals_fupd (K locals) s) =
-     (NONE, loop_state_locals_fupd (K (inter locals L')) s')`,
+     (NONE, loop_state_locals_fupd (K (sptree_inter locals L')) s')`,
   REPEAT GEN_TAC THEN
   DISCH_THEN(CONJUNCTS_THEN2 (MP_TAC o MATCH_MP PLOOPAUX_cut_res_NONE_cases) STRIP_ASSUME_TAC) THEN
   REWRITE_TAC PLOOPAUX_result_rws THEN STRIP_TAC THEN RVEQ_TAC THEN
@@ -1225,7 +1225,7 @@ let PLOOPAUX_cut_res_sub_NONE = prove
 let PLOOPAUX_cut_res_sub_TO = prove
  (`!(L:num_set) (s:(A,FFI)loop_state) s' (L':num_set) locals.
      cut_res L (NONE:((A)loop_result)option, s) = (SOME loop_TimeOut, s') /\
-     domain L' SUBSET domain L /\ subspt (inter (loop_state_locals s) L') locals ==>
+     domain L' SUBSET domain L /\ subspt (sptree_inter (loop_state_locals s) L') locals ==>
      cut_res L' (NONE:((A)loop_result)option, loop_state_locals_fupd (K locals) s) =
      (SOME loop_TimeOut, s')`,
   REPEAT GEN_TAC THEN
@@ -1240,9 +1240,9 @@ let PLOOPAUX_cut_res_sub_TO = prove
 
 let PLOOPAUX_subspt_entry2 = prove
  (`!(m:A spt) (X:num_set) n (live:num_set) (Y:num_set) (L':num_set).
-     subspt (inter m X) n /\ domain live INTER domain Y SUBSET domain L' /\
+     subspt (sptree_inter m X) n /\ domain live INTER domain Y SUBSET domain L' /\
      domain L' SUBSET domain X ==>
-     subspt (inter (inter m live) Y) (inter n L')`,
+     subspt (sptree_inter (sptree_inter m live) Y) (sptree_inter n L')`,
   REWRITE_TAC[SUBSET; subspt_lookup; lookup_inter_alt; IN_INTER] THEN
   REPEAT STRIP_TAC THEN POP_ASSUM MP_TAC THEN
   REPEAT COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT] THEN ASM_MESON_TAC[]);;
@@ -1271,7 +1271,7 @@ let PLOOPAUX_CALL_CUT_TAC (L':term) (loc:term) : tactic = fun (asl,w as g) ->
   MAP_EVERY (fun th -> TRY (fun g -> one th g)) cuts g;;
 
 (* subspt (inter (inter m live) Y) (inter n L') from an assumption           *)
-(* subspt (inter m X) n, with the domain conditions by rewriting            *)
+(* subspt (sptree_inter m X) n, with the domain conditions by rewriting     *)
 
 let PLOOPAUX_ENTRY2_TAC : tactic =
   MATCH_MP_TAC PLOOPAUX_subspt_entry2 THEN
@@ -1316,7 +1316,7 @@ let PLOOPAUX_live_Call_SOME_NONE = prove
   REWRITE_TAC (PLOOPAUX_clock_case_eqs @ [PAIR_EQ]) THEN STRIP_TAC THEN RVEQ_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE PLOOPAUX_result_rws) THEN TRY (FIRST_ASSUM CONTR_TAC) THEN
   RVEQ_TAC THEN PLOOPAUX_CUT_CASES_TAC THEN PLOOPAUX_CALL_GV_TAC THEN
-  PLOOPAUX_CALL_CUT_TAC `list_delete ns (inter (l0:num_set) (live:num_set))`
+  PLOOPAUX_CALL_CUT_TAC `list_delete ns (sptree_inter (l0:num_set) (live:num_set))`
     `locals:((A)word_loc)spt` THEN
   RVEQ_TAC THEN
   RULE_ASSUM_TAC(fun th -> if PLOOPAUX_is_eval_eq (concl th)
@@ -1370,7 +1370,7 @@ let PLOOPAUX_CALL_HANDLER_TAC (newl:term) : tactic =
                      (try fst(dest_const(fst(strip_comb(lhs(concl th))))) = "cut_res"
                       with Failure _ -> false) &&
                      not (is_const (fst(dest_pair(rand(lhs(concl th)))))))) THEN
-  DISCH_THEN(MP_TAC o SPECL [`inter (l0:num_set) (lo:num_set)`; `l0:num_set`;
+  DISCH_THEN(MP_TAC o SPECL [`sptree_inter (l0:num_set) (lo:num_set)`; `l0:num_set`;
                              `lt:(num_set#num_set)list`; `nl:((A)word_loc)spt`]) THEN
   ASM_REWRITE_TAC PLOOPAUX_DOM_RWS THEN
   ANTS_TAC THENL [MESON_TAC[]; ALL_TAC] THEN
@@ -1420,15 +1420,15 @@ let PLOOPAUX_live_Call_SOME_SOME = prove
   PLOOPAUX_IHS2_TAC ALL_TAC THEN
   PLOOPAUX_CUT_CASES_TAC THEN PLOOPAUX_CALL_GV_TAC THEN
   PLOOPAUX_CALL_CUT_TAC
-    `inter (live:num_set) (union (list_delete ns (l2:num_set)) (delete e (l3:num_set)))`
+    `sptree_inter (live:num_set) (sptree_union (list_delete ns (l2:num_set)) (delete e (l3:num_set)))`
     `locals:((A)word_loc)spt` THEN
   RVEQ_TAC THEN
   (fun (asl,w as g) ->
      if exists (fun (_,th) -> try fst(dest_const(fst(strip_comb(concl th)))) =
                                   "PLOOPAUX_live_P" with Failure _ -> false) asl
      then PLOOPAUX_CALL_HANDLER_TAC
-            `inter (locals:((A)word_loc)spt)
-               (inter (live:num_set) (union (list_delete ns (l2:num_set))
+            `sptree_inter (locals:((A)word_loc)spt)
+               (sptree_inter (live:num_set) (sptree_union (list_delete ns (l2:num_set))
                                             (delete e (l3:num_set))))` g
      else PLOOPAUX_CALL_PLAIN_TAC g));;
 
@@ -1501,21 +1501,21 @@ let loop_liveProof_compile_correct = prove
   `!v (v1:(A,FFI)loop_state) res s1 lt locals prog1 l1 l0.
      loop_evaluate (v,v1) = (res,s1) /\ ~(res = SOME loop_Error) /\
      loop_live_shrink lt v l0 = (prog1,l1) /\
-     subspt (inter (loop_state_locals v1) l1) locals ==>
+     subspt (sptree_inter (loop_state_locals v1) l1) locals ==>
      ?new_locals.
        loop_evaluate (prog1, loop_state_locals_fupd (K locals) v1) =
        (res, loop_state_locals_fupd (K new_locals) s1) /\
        (match res with
-          NONE -> subspt (inter (loop_state_locals s1) l0) new_locals
+          NONE -> subspt (sptree_inter (loop_state_locals s1) l0) new_locals
         | SOME (loop_Result v5) -> new_locals = loop_state_locals s1
         | SOME (loop_Exception v6) -> new_locals = loop_state_locals s1
         | SOME (loopSem_Break n) ->
             (match oEL n lt with
-               SOME (_, brk) -> subspt (inter (loop_state_locals s1) brk) new_locals
+               SOME (_, brk) -> subspt (sptree_inter (loop_state_locals s1) brk) new_locals
              | NONE -> T)
         | SOME (loopSem_Continue n) ->
             (match oEL n lt with
-               SOME (cont, _) -> subspt (inter (loop_state_locals s1) cont) new_locals
+               SOME (cont, _) -> subspt (sptree_inter (loop_state_locals s1) cont) new_locals
              | NONE -> T)
         | SOME loop_TimeOut -> new_locals = loop_state_locals s1
         | SOME (loop_FinalFFI v7) -> new_locals = loop_state_locals s1

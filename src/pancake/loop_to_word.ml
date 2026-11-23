@@ -3,7 +3,7 @@
 (* Compilation from loopLang to wordLang.                                    *)
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
-(* - Names as notes/naming/names.tsv says: find_var, comp, comp_func,        *)
+(* - Names as doc/names.tsv says: find_var, comp, comp_func,                 *)
 (*   compile_prog and compile get the prefix loop_to_word_.                  *)
 (* - loopLang constructors are loop_Const, loop_Var, ... (Mark and LocValue  *)
 (*   keep their names); wordLang's are wl_Const, wl_Var, ..., Lookup and     *)
@@ -35,7 +35,7 @@ let find_reg_imm_def = cake_def
    (find_reg_imm ctxt (Reg n) = Reg (loop_to_word_find_var ctxt n))`;;
 
 let comp_exp_def = cake_def_wf
-  `measure (\(ctxt:num spt,e:(A)loop_exp). loop_exp_size (\x:A. 0) e)`
+  `MEASURE (\(ctxt:num spt,e:(A)loop_exp). loop_exp_size (\x:A. 0) e)`
   TERM_TAC
   `(comp_exp ctxt (loop_Const (w:A word)) = wl_Const w) /\
    (comp_exp ctxt (loop_Var n) = wl_Var (loop_to_word_find_var ctxt n)) /\
@@ -69,7 +69,7 @@ let mk_new_cutset_def = cake_def
 (* gives a variable one type; a is a num in the Load32 clauses).           *)
 
 let loop_to_word_comp_def = cake_def_wf
-  `measure (\(ctxt:num spt,p:(A)loop_prog,l:num#num). loop_prog_size (\x:A. 0) p)`
+  `MEASURE (\(ctxt:num spt,p:(A)loop_prog,l:num#num). loop_prog_size (\x:A. 0) p)`
   TERM_TAC
   `(loop_to_word_comp ctxt (loop_Skip:(A)loop_prog) l = (wl_Skip:(A)wl_prog,l)) /\
    (loop_to_word_comp ctxt (loop_Assign n e) l =

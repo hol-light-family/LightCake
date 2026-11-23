@@ -3675,4 +3675,3 @@ let full_inst_ok_less_word_common_subexp_elim = prove
  (`full_inst_ok_less ac (p:(A)wl_prog) ==>
    full_inst_ok_less ac (word_common_subexp_elim p)`,
   REWRITE_TAC[WPROOF1AUX_CSE_wcse_SND; WPROOF1AUX_CSE_full_inst_ok_less]);;
-

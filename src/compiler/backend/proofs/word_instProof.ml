@@ -491,7 +491,7 @@ let flatten_exp_ok = prove
 (* args. However, the semantics already checks that and it will get removed  *)
 (* later.  HOL4 exp_size ARB is wl_exp_size (\x. 0).                         *)
 
-let binary_branch_exp_def = sem1aux_def_wf `measure (wl_exp_size (\x:A. 0))` TERM_TAC
+let binary_branch_exp_def = sem1aux_def_wf `MEASURE (wl_exp_size (\x:A. 0))` TERM_TAC
   `(binary_branch_exp (wl_Op asm_Sub exps) <=> ALL binary_branch_exp exps) /\
    (binary_branch_exp (wl_Op op xs) <=> LENGTH xs = 2 /\ ALL binary_branch_exp xs) /\
    (binary_branch_exp (wl_Load exp) <=> binary_branch_exp exp) /\

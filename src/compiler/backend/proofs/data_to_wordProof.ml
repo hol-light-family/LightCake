@@ -152,9 +152,9 @@ let D2WPAUX_domain_adjust_set_mk_wf = prove
 (* HOL4 line 102 *)
 let MEM_join_env_cut_env = prove
  (`!(a:data_v#A word_loc) (t:(A word_loc)spt) r s x.
-     MEM a (join_env x (toAList (inter t (adjust_set x)))) /\
+     MEM a (join_env x (toAList (sptree_inter t (adjust_set x)))) /\
      data_cut_env r s = SOME x ==>
-     MEM a (join_env s (toAList (inter t (adjust_set s))))`,
+     MEM a (join_env s (toAList (sptree_inter t (adjust_set s))))`,
   REPEAT GEN_TAC THEN
   REWRITE_TAC[join_env_def; MEM_MAP; MEM_FILTER; EXISTS_PAIR_THM; MEM_toAList;
               lookup_inter_alt; data_cut_env_def] THEN
@@ -261,7 +261,7 @@ let D2WPAUX_lookup_alist_insert_EL = prove
 let D2WPAUX_lookup_union_ZIP_NOT_MEM = prove
  (`!ks (vs:A list) s k.
      LENGTH ks = LENGTH vs /\ ~MEM k ks ==>
-     lookup k (union (fromAList (ZIP ks vs)) s) = lookup k s`,
+     lookup k (sptree_union (fromAList (ZIP ks vs)) s) = lookup k s`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[lookup_union; lookup_fromAList] THEN
   SUBGOAL_THEN `ALOOKUP (ZIP (ks:num list) (vs:A list)) k = NONE` SUBST1_TAC THENL
    [ASM_SIMP_TAC[ALOOKUP_ZIP_FAIL]; CASE_REWRITE_TAC[]]);;
@@ -269,7 +269,7 @@ let D2WPAUX_lookup_union_ZIP_NOT_MEM = prove
 let D2WPAUX_lookup_union_ZIP_EL = prove
  (`!ks (vs:A list) s i.
      LENGTH ks = LENGTH vs /\ ALL_DISTINCT ks /\ i < LENGTH ks ==>
-     lookup (EL i ks) (union (fromAList (ZIP ks vs)) s) = SOME (EL i vs)`,
+     lookup (EL i ks) (sptree_union (fromAList (ZIP ks vs)) s) = SOME (EL i vs)`,
   REPEAT STRIP_TAC THEN
   ASM_SIMP_TAC[lookup_union; lookup_fromAList; D2WPAUX_ALOOKUP_ZIP_EL] THEN
   CASE_REWRITE_TAC[]);;
@@ -279,10 +279,10 @@ let D2WPAUX_lookup_union_ZIP_EL = prove
 let D2WPAUX_MEM_join_env_set_vars = prove
  (`!(s:data_v spt) (t:(A word_loc)spt) ns as ws x.
      LENGTH as = LENGTH ws /\ LENGTH ns = LENGTH as /\ ALL_DISTINCT ns /\
-     MEM x (join_env (union (fromAList (ZIP ns as)) s)
-             (toAList (inter (alist_insert (MAP adjust_var ns) ws t)
-                             (adjust_set (union (fromAList (ZIP ns as)) s))))) ==>
-     MEM x (ZIP as ws) \/ MEM x (join_env s (toAList (inter t (adjust_set s))))`,
+     MEM x (join_env (sptree_union (fromAList (ZIP ns as)) s)
+             (toAList (sptree_inter (alist_insert (MAP adjust_var ns) ws t)
+                             (adjust_set (sptree_union (fromAList (ZIP ns as)) s))))) ==>
+     MEM x (ZIP as ws) \/ MEM x (join_env s (toAList (sptree_inter t (adjust_set s))))`,
   REPEAT GEN_TAC THEN
   DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC (CONJUNCTS_THEN2 ASSUME_TAC
     (CONJUNCTS_THEN2 ASSUME_TAC MP_TAC))) THEN
@@ -306,7 +306,7 @@ let D2WPAUX_MEM_join_env_set_vars = prove
     SUBGOAL_THEN `adjust_var j = EL i (MAP adjust_var ns)` SUBST_ALL_TAC THENL
      [ASM_SIMP_TAC[EL_MAP]; ALL_TAC] THEN
     UNDISCH_TAC `(if EL i (MAP adjust_var ns) IN
-                     domain (adjust_set (union (fromAList (ZIP ns as)) (s:data_v spt)))
+                     domain (adjust_set (sptree_union (fromAList (ZIP ns as)) (s:data_v spt)))
                   then lookup (EL i (MAP adjust_var ns))
                          (alist_insert (MAP adjust_var ns) ws (t:(A word_loc)spt))
                   else NONE) = SOME v` THEN
@@ -317,7 +317,7 @@ let D2WPAUX_MEM_join_env_set_vars = prove
                    `i:num`] D2WPAUX_lookup_alist_insert_EL) THEN
     ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN REWRITE_TAC[option_INJ] THEN
     DISCH_THEN(SUBST_ALL_TAC o SYM) THEN
-    SUBGOAL_THEN `lookup (EL i ns) (union (fromAList (ZIP ns as)) (s:data_v spt)) =
+    SUBGOAL_THEN `lookup (EL i ns) (sptree_union (fromAList (ZIP ns as)) (s:data_v spt)) =
                   SOME (EL i as)` ASSUME_TAC THENL
      [MATCH_MP_TAC D2WPAUX_lookup_union_ZIP_EL THEN ASM_REWRITE_TAC[];
       ALL_TAC] THEN
@@ -337,7 +337,7 @@ let D2WPAUX_MEM_join_env_set_vars = prove
    [REWRITE_TAC[MEM_MAP; adjust_var_11] THEN UNDISCH_TAC `~MEM (j:num) ns` THEN
     MESON_TAC[];
     ALL_TAC] THEN
-  SUBGOAL_THEN `lookup j (union (fromAList (ZIP ns as)) (s:data_v spt)) = lookup j s`
+  SUBGOAL_THEN `lookup j (sptree_union (fromAList (ZIP ns as)) (s:data_v spt)) = lookup j s`
     ASSUME_TAC THENL
    [MATCH_MP_TAC D2WPAUX_lookup_union_ZIP_NOT_MEM THEN ASM_REWRITE_TAC[]; ALL_TAC] THEN
   SUBGOAL_THEN `lookup (adjust_var j) (alist_insert (MAP adjust_var ns) ws t) =
@@ -345,7 +345,7 @@ let D2WPAUX_MEM_join_env_set_vars = prove
    [MATCH_MP_TAC WALLOCPAUX_lookup_alist_insert_notin THEN ASM_REWRITE_TAC[]; ALL_TAC] THEN
   MAP_EVERY EXISTS_TAC [`adjust_var j`; `v:A word_loc`] THEN
   UNDISCH_TAC `(if adjust_var j IN
-                   domain (adjust_set (union (fromAList (ZIP ns as)) (s:data_v spt)))
+                   domain (adjust_set (sptree_union (fromAList (ZIP ns as)) (s:data_v spt)))
                 then lookup (adjust_var j)
                        (alist_insert (MAP adjust_var ns) ws (t:(A word_loc)spt))
                 else NONE) = SOME v` THEN
@@ -414,7 +414,7 @@ let D2WPAUX_frame_lookup_0 = prove
  (`!sf m (e0:(num#A word_loc)list) e h l8 l9.
      data_to_word_gcProof_stack_rel sf (StackFrame m e0 e h) /\
      contains_loc (StackFrame m e0 e h) (l8,l9) ==>
-     lookup 0 (union (fromAList e) (fromAList e0)) = SOME (wl_Loc l8 l9)`,
+     lookup 0 (sptree_union (fromAList e) (fromAList e0)) = SOME (wl_Loc l8 l9)`,
   REPEAT GEN_TAC THEN
   SUBGOAL_THEN `data_to_word_gcProof_stack_rel sf (StackFrame m (e0:(num#A word_loc)list) e h)
                 ==> ALL (\(x1,x2). ~(x1 = 0) /\ EVEN x1) e` MP_TAC THENL
@@ -454,7 +454,7 @@ let D2WPAUX_pop_env_lookup_0 = prove
     (X_CHOOSE_THEN `e:(num#A word_loc)list` (X_CHOOSE_THEN `hh:(num#num#num)option`
        SUBST1_TAC)))) THEN
   CASE_REWRITE_TAC[] THEN REPEAT STRIP_TAC THEN
-  SUBGOAL_THEN `wl_state_locals (t2:(A,C,FFI)wl_state) = union (fromAList e) (fromAList e0)`
+  SUBGOAL_THEN `wl_state_locals (t2:(A,C,FFI)wl_state) = sptree_union (fromAList e) (fromAList e0)`
     SUBST1_TAC THENL
    [POP_ASSUM MP_TAC THEN
     DISJ_CASES_THEN2 SUBST1_TAC (REPEAT_TCL CHOOSE_THEN SUBST1_TAC)
@@ -687,14 +687,14 @@ let D2WPAUX_memory_rel_get_vars_IMP = prove
     (t:(A,C,FFI)wl_state) n x w envs.
      memory_rel c be ts refs sp st m dm
        (APPEND (join_env (data_state_locals s)
-          (toAList (inter (wl_state_locals t) (adjust_set (data_state_locals s)))))
+          (toAList (sptree_inter (wl_state_locals t) (adjust_set (data_state_locals s)))))
           envs) /\
      data_get_vars n (data_state_locals s) = SOME x /\
      wl_get_vars (MAP adjust_var n) t = SOME w ==>
      memory_rel c be ts refs sp st m dm
        (APPEND (APPEND (ZIP x w)
           (join_env (data_state_locals s)
-             (toAList (inter (wl_state_locals t) (adjust_set (data_state_locals s))))))
+             (toAList (sptree_inter (wl_state_locals t) (adjust_set (data_state_locals s))))))
           envs)`,
   REWRITE_TAC[memory_rel_def] THEN MESON_TAC[word_ml_inv_get_vars_IMP]);;
 
@@ -729,9 +729,9 @@ let D2WPAUX_state_rel_flush_F = prove
                        with Failure _ -> false));
     ALL_TAC] THEN
   REWRITE_TAC[toAList_def] THEN REWRITE_TAC[GSYM toAList_def] THEN
-  SUBGOAL_THEN `toAList (inter (LN:(A word_loc)spt) (adjust_set (LN:data_v spt))) = []`
+  SUBGOAL_THEN `toAList (sptree_inter (LN:(A word_loc)spt) (adjust_set (LN:data_v spt))) = []`
     SUBST1_TAC THENL
-   [REWRITE_TAC[inter_def; toAList_def; foldi_def] THEN CASE_REWRITE_TAC[] THEN
+   [REWRITE_TAC[sptree_inter_def; toAList_def; foldi_def] THEN CASE_REWRITE_TAC[] THEN
     REWRITE_TAC[foldi_def];
     ALL_TAC] THEN
   REWRITE_TAC[join_env_def; FILTER; MAP; APPEND_NIL] THEN
@@ -2126,7 +2126,7 @@ let D2WPAUX_state_rel_return_value = prove
        (data_state_space s) (wl_state_store t) (wl_state_memory t) (wl_state_mdomain t)
        (CONS (z,w)
          (APPEND (join_env (data_state_locals s)
-                   (toAList (inter (wl_state_locals t) (adjust_set (data_state_locals s)))))
+                   (toAList (sptree_inter (wl_state_locals t) (adjust_set (data_state_locals s)))))
             (CONS (the_global (data_state_global s),FAPPLY (wl_state_store t) Globals)
                (data_to_word_gcProof_flat (data_state_stack s) (wl_state_stack t))))) ==>
      data_to_word_gcProof_state_rel c l1 l2 (data_flush_state F s) (wl_flush_state F t)
@@ -2143,9 +2143,9 @@ let D2WPAUX_state_rel_return_value = prove
                              (concl th)
                        with Failure _ -> false));
     ALL_TAC] THEN
-  SUBGOAL_THEN `toAList (inter (LN:(A word_loc)spt) (adjust_set (LN:data_v spt))) = []`
+  SUBGOAL_THEN `toAList (sptree_inter (LN:(A word_loc)spt) (adjust_set (LN:data_v spt))) = []`
     SUBST1_TAC THENL
-   [REWRITE_TAC[inter_def; toAList_def; foldi_def] THEN CASE_REWRITE_TAC[] THEN
+   [REWRITE_TAC[sptree_inter_def; toAList_def; foldi_def] THEN CASE_REWRITE_TAC[] THEN
     REWRITE_TAC[foldi_def];
     ALL_TAC] THEN
   REWRITE_TAC[join_env_def; FILTER; MAP; APPEND] THEN
@@ -2166,7 +2166,7 @@ let D2WPAUX_state_rel_force_assign = prove
        (data_state_space s) (wl_state_store t) (wl_state_memory t) (wl_state_mdomain t)
        (CONS (z,w)
          (APPEND (join_env (data_state_locals s)
-                   (toAList (inter (wl_state_locals t) (adjust_set (data_state_locals s)))))
+                   (toAList (sptree_inter (wl_state_locals t) (adjust_set (data_state_locals s)))))
             (CONS (the_global (data_state_global s),FAPPLY (wl_state_store t) Globals)
                (data_to_word_gcProof_flat (data_state_stack s) (wl_state_stack t))))) ==>
      data_to_word_gcProof_state_rel c l1 l2
@@ -2184,7 +2184,7 @@ let D2WPAUX_state_rel_force_assign = prove
     UNDISCH_TAC `data_cut_env names (data_state_locals (s:(C,FFI)data_state)) = SOME env` THEN
     REWRITE_TAC[data_cut_env_def] THEN COND_CASES_TAC THEN
     REWRITE_TAC[option_INJ; option_DISTINCT] THEN DISCH_THEN(SUBST_ALL_TAC o SYM) THEN
-    UNDISCH_TAC `IS_SOME (lookup k (mk_wf (inter (data_state_locals (s:(C,FFI)data_state))
+    UNDISCH_TAC `IS_SOME (lookup k (mk_wf (sptree_inter (data_state_locals (s:(C,FFI)data_state))
                                            (names:num_set))))` THEN
     REWRITE_TAC[lookup_mk_wf; lookup_inter_alt] THEN COND_CASES_TAC THEN
     REWRITE_TAC[IS_SOME_DEF];
@@ -2359,7 +2359,7 @@ let D2WPAUX_state_rel_add_vals = prove
      memory_rel c (wl_state_be t) (THE (data_state_tstamps s)) (data_state_refs s)
        (data_state_space s) (wl_state_store t) (wl_state_memory t) (wl_state_mdomain t)
        (APPEND vs (APPEND (join_env (data_state_locals s)
-                   (toAList (inter (wl_state_locals t) (adjust_set (data_state_locals s)))))
+                   (toAList (sptree_inter (wl_state_locals t) (adjust_set (data_state_locals s)))))
           (CONS (the_global (data_state_global s),FAPPLY (wl_state_store t) Globals)
              (data_to_word_gcProof_flat (data_state_stack s) (wl_state_stack t))))) ==>
      data_to_word_gcProof_state_rel c l1 l2 s t (SOME vs) locs`,
@@ -2492,7 +2492,7 @@ let D2WPAUX_Force = prove
                  `wl_state_memory (t:(A,C,FFI)wl_state)`; `wl_state_mdomain (t:(A,C,FFI)wl_state)`;
                  `F`; `p:num`; `w:A word_loc`;
                  `APPEND (join_env (data_state_locals (s:(C,FFI)data_state))
-                   (toAList (inter (wl_state_locals (t:(A,C,FFI)wl_state))
+                   (toAList (sptree_inter (wl_state_locals (t:(A,C,FFI)wl_state))
                                    (adjust_set (data_state_locals s)))))
                    (CONS (the_global (data_state_global s),FAPPLY (wl_state_store t) Globals)
                       (data_to_word_gcProof_flat (data_state_stack s) (wl_state_stack t)))`;
@@ -3094,7 +3094,7 @@ let D2WPAUX_code_rel_exists = prove
      (!n v. lookup n code = SOME v ==>
             ?t' k' a' (c':(A)asm_config) col.
               lookup n l = SOME (SND (full_compile_single t' k' a' c' ((n,v),col)))) ==>
-     ?l2. word_to_wordProof_code_rel code l2 /\ map (I ## remove_must_terminate) l2 = l`,
+     ?l2. word_to_wordProof_code_rel code l2 /\ sptree_map (I ## remove_must_terminate) l2 = l`,
   REPEAT GEN_TAC THEN
   DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC (MP_TAC o REWRITE_RULE[RIGHT_IMP_EXISTS_THM; SKOLEM_THM])) THEN
   DISCH_THEN(X_CHOOSE_THEN `f1:num->num#(A)wl_prog->bool`
@@ -3176,7 +3176,7 @@ let data_to_wordProof_compile_correct = prove
                  `start:num`] compile_word_to_word_thm) THEN
   ANTS_TAC THENL
    [ASM_REWRITE_TAC[] THEN CONJ_TAC THENL
-     [UNDISCH_TAC `map (I ## remove_must_terminate) l3 = (l:(num#(A)wl_prog)spt)` THEN
+     [UNDISCH_TAC `sptree_map (I ## remove_must_terminate) l3 = (l:(num#(A)wl_prog)spt)` THEN
       DISCH_THEN(MP_TAC o AP_TERM `domain:(num#(A)wl_prog)spt->num->bool`) THEN
       REWRITE_TAC[domain_map] THEN ASM_MESON_TAC[];
       UNDISCH_TAC `data_to_word_gcProof_state_rel x l1 l2 (s:(C,FFI)data_state)
@@ -5101,9 +5101,8 @@ let comp_no_share_inst = prove
 
 (* HOL4 line 2174 (local; DEVIATION: HOL4's ZIP truncates, so the HOL4      *)
 (* statement is TAKE (LENGTH ys) xs for any lengths; HOL Light's ZIP has the *)
-(* length of the first list: the hypothesis LENGTH xs <= LENGTH ys is added; *)
-(* the skeleton had LENGTH ys <= LENGTH xs, which is false for HOL Light's   *)
-(* ZIP, see STATEMENT_CHANGES)                                               *)
+(* length of the first list: the hypothesis LENGTH xs <= LENGTH ys is        *)
+(* added)                                                                    *)
 let data_to_wordProof_MAP_FST_ZIP = prove
  (`!(xs:A list) (ys:B list).
      LENGTH xs <= LENGTH ys ==> MAP FST (ZIP xs ys) = TAKE (LENGTH ys) xs`,

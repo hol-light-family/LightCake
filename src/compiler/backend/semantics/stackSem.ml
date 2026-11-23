@@ -51,7 +51,7 @@ let stack_result_INDUCT,stack_result_RECURSION = cake_type
 (* HOL4 proves termination automatically: val w decreases *)
 
 let bit_length_def = cake_def_wf
-  `measure (val:A word->num)`
+  `MEASURE (val:A word->num)`
   (REWRITE_TAC[measure_THM; VAL_WORD_USHR; EXP_1] THEN REPEAT STRIP_TAC THEN
    SUBGOAL_THEN `~(val (w:A word) = 0)` MP_TAC THENL
     [ASM_REWRITE_TAC[VAL_EQ_0]; ARITH_TAC])
@@ -241,7 +241,7 @@ let stack_dec_clock_def = cake_def
 (* HOL4: word_exp_def; Termination WF_REL_TAC measure (exp_size ARB o SND) *)
 
 let stack_word_exp_def = cake_def_wf
-  `measure (\p:(A,C,FFI)stack_state#(A)wl_exp. wl_exp_size (\x:A. 0) (SND p))`
+  `MEASURE (\p:(A,C,FFI)stack_state#(A)wl_exp. wl_exp_size (\x:A. 0) (SND p))`
   TERM_TAC
   `(stack_word_exp (s:(A,C,FFI)stack_state) (wl_Const w) = SOME w) /\
    (stack_word_exp s (wl_Var v) =
@@ -460,7 +460,7 @@ let full_read_bitmap_ind = prove
 (* filter_bitmap_LENGTH                                                      *)
 
 let stack_enc_stack_def = cake_def_wf
-  `measure (\p:(A word)list#((A)word_loc)list. LENGTH (SND p))`
+  `MEASURE (\p:(A word)list#((A)word_loc)list. LENGTH (SND p))`
   (REWRITE_TAC[measure_THM] THEN REPEAT STRIP_TAC THEN RVEQ_TAC THEN
    REWRITE_TAC[LENGTH] THEN
    FIRST_X_ASSUM(MP_TAC o MATCH_MP filter_bitmap_LENGTH) THEN ARITH_TAC)
@@ -483,7 +483,7 @@ let stack_enc_stack_ind = cake_ind "stack_enc_stack";;
 (* with map_bitmap_LENGTH                                                   *)
 
 let stack_dec_stack_def = cake_def_wf
-  `measure (\p:(A word)list#((A)word_loc)list#((A)word_loc)list. LENGTH (SND (SND p)))`
+  `MEASURE (\p:(A word)list#((A)word_loc)list#((A)word_loc)list. LENGTH (SND (SND p)))`
   (REWRITE_TAC[measure_THM] THEN REPEAT STRIP_TAC THEN RVEQ_TAC THEN
    REWRITE_TAC[LENGTH] THEN
    FIRST_X_ASSUM(MP_TAC o MATCH_MP map_bitmap_LENGTH) THEN ARITH_TAC)
@@ -848,7 +848,7 @@ let stack_STOP_def = cake_def
 (* parentheses keep HOL4's term                                              *)
 
 let stack_get_labels_def = sem1aux_def_wf
-  `measure (stack_prog_size (\x:A. 0))`
+  `MEASURE (stack_prog_size (\x:A. 0))`
   SEM1AUX_TC_TAC
   `(stack_get_labels (stack_Seq p1 p2:(A)stack_prog) =
       stack_get_labels p1 UNION stack_get_labels p2) /\
@@ -875,7 +875,7 @@ let loc_check_def = cake_def
 (* HOL4 proves termination automatically: val pattern decreases *)
 
 let copy_words_for_pattern_def = cake_def_wf
-  `measure (\x:A word#num#A word#A word#(A word)list#(A word->bool)#
+  `MEASURE (\x:A word#num#A word#A word#(A word)list#(A word->bool)#
                (A word->(A)word_loc). val (FST x))`
   (REWRITE_TAC[measure_THM; FST; VAL_WORD_USHR; EXP_1] THEN REPEAT STRIP_TAC THEN
    REPEAT (POP_ASSUM MP_TAC) THEN REWRITE_TAC[GSYM VAL_EQ_0] THEN ARITH_TAC)
@@ -906,7 +906,7 @@ let copy_words_for_pattern_LESS_EQ = prove
 (* with copy_words_for_pattern_LESS_EQ                                      *)
 
 let copy_words_def = cake_def_wf
-  `measure (\x:num#A word#A word#(A word)list#(A word->bool)#(A word->(A)word_loc).
+  `MEASURE (\x:num#A word#A word#(A word)list#(A word->bool)#(A word->(A)word_loc).
               LENGTH (FST (SND (SND (SND x)))) - FST x)`
   (REWRITE_TAC[measure_THM; FST; SND] THEN REPEAT STRIP_TAC THEN RVEQ_TAC THEN
    FIRST_X_ASSUM(MP_TAC o MATCH_MP copy_words_for_pattern_LESS_EQ) THEN
@@ -1011,7 +1011,7 @@ let STACKPAUX_TC_TAC : tactic =
   ARITH_TAC;;
 
 let STACKPAUX_evaluate_rel =
-  `inv_image (measure I LEX measure (stack_prog_size (\x:A. 0)))
+  `inv_image (MEASURE I LEX MEASURE (stack_prog_size (\x:A. 0)))
      (\p:(A)stack_prog#(A,C,FFI)stack_state. (stack_state_clock (SND p),FST p))`;;
 
 (* the clauses, each parsed on its own (HOL4 types each clause on its own:  *)
@@ -1176,7 +1176,7 @@ let STACKPAUX_evaluate_clauses = list_mk_conj
                        (stack_state_code_buffer_fupd (K cb)
                        (stack_state_data_buffer_fupd (K db)
                        (stack_state_code_fupd
-                          (K (union (stack_state_code s) (fromAList progs)))
+                          (K (sptree_union (stack_state_code s) (fromAList progs)))
                        (stack_state_regs_fupd
                           (K (DRESTRICT (stack_state_regs s) (stack_state_ffi_save_regs s)
                               |+ (ptr,wl_Loc k 0)))

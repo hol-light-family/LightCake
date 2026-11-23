@@ -818,7 +818,7 @@ let push_env_pop_env_locals_thm = prove
   REWRITE_TAC[wl_get_var_def] THEN
   (* the locals after the pop *)
   SUBGOAL_THEN `wl_state_locals (s''':(A,C,FFI)wl_state) =
-                union (fromAList sw) (fromAList (toAList (e1:((A)word_loc)spt)))`
+                sptree_union (fromAList sw) (fromAList (toAList (e1:((A)word_loc)spt)))`
   SUBST1_TAC THENL
    [UNDISCH_TAC `wl_pop_env (s'':(A,C,FFI)wl_state) = SOME s'''` THEN
     ASM_REWRITE_TAC[wl_pop_env_def] THEN CASE_REWRITE_TAC[] THEN
@@ -836,7 +836,7 @@ let push_env_pop_env_locals_thm = prove
   ASM_CASES_TAC `lookup v (n1:num_set) = NONE` THENL
    [SUBGOAL_THEN `ALOOKUP (sw:(num#(A)word_loc)list) v = NONE` SUBST1_TAC THENL
      [MATCH_MP_TAC ALOOKUP_LIST_REL_sf_gc_consts_NONE THEN
-      EXISTS_TAC `FST (env_to_list (inter (wl_state_locals (s:(A,C,FFI)wl_state))
+      EXISTS_TAC `FST (env_to_list (sptree_inter (wl_state_locals (s:(A,C,FFI)wl_state))
                                           (n1:num_set)) (wl_state_permute s))` THEN
       ASM_REWRITE_TAC[WSIMPPAUX_ALOOKUP_env_to_list; lookup_inter_EQ];
       ALL_TAC] THEN
@@ -844,7 +844,7 @@ let push_env_pop_env_locals_thm = prove
     CASES_ON `lookup v (n0:num_set)` THEN FS[];
     SUBGOAL_THEN `ALOOKUP (sw:(num#(A)word_loc)list) v = SOME w` SUBST1_TAC THENL
      [MATCH_MP_TAC ALOOKUP_LIST_REL_sf_gc_consts THEN
-      EXISTS_TAC `FST (env_to_list (inter (wl_state_locals (s:(A,C,FFI)wl_state))
+      EXISTS_TAC `FST (env_to_list (sptree_inter (wl_state_locals (s:(A,C,FFI)wl_state))
                                           (n1:num_set)) (wl_state_permute s))` THEN
       ASM_REWRITE_TAC[WSIMPPAUX_ALOOKUP_env_to_list; lookup_inter_EQ];
       CASE_REWRITE_TAC[]]]);;
@@ -1717,7 +1717,7 @@ let WSIMPPAUX_cfl_call_cs = prove
      wl_pop_env s2 = SOME s1 /\
      gc_fun_const_ok (wl_state_gc_fun s) /\
      (!v w. lookup v cs = SOME w ==> wl_get_var v s = SOME (wl_Word w)) /\
-     lookup v (ITLIST delete n (filter_v is_gc_const (inter cs (all_names names)))) =
+     lookup v (ITLIST delete n (filter_v is_gc_const (sptree_inter cs (all_names names)))) =
        SOME w
      ==> wl_get_var v (wl_set_vars n ys s1) = SOME (wl_Word w)`,
   REPEAT STRIP_TAC THEN
@@ -1766,7 +1766,7 @@ let WSIMPPAUX_CFL_P p cs =
   list_mk_forall(tl(tl vs), vsubst [p,p0; cs,cs0] body);;
 
 let WSIMPPAUX_cs1_tm =
-  `ITLIST delete n (filter_v is_gc_const (inter (cs:(A word)spt) (all_names (names:cutsets))))`;;
+  `ITLIST delete n (filter_v is_gc_const (sptree_inter (cs:(A word)spt) (all_names (names:cutsets))))`;;
 
 let WSIMPPAUX_cfl_call_leaf = prove
  (WSIMPPAUX_list_mk_imp

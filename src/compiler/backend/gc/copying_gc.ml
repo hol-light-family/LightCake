@@ -38,7 +38,7 @@ let copying_gc_gc_move_list_def = cake_def
 (* same up to the name of a bound variable.                                *)
 
 let copying_gc_gc_move_loop_def = cake_def_wf
-  `measure (\(h1:((A,B)heap_element)list,h2:((A,B)heap_element)list,a:num,n:num,
+  `MEASURE (\(h1:((A,B)heap_element)list,h2:((A,B)heap_element)list,a:num,n:num,
               heap:((A,B)heap_element)list,c:bool,limit:num). limit - heap_length h1)`
   (REPEAT STRIP_TAC THEN RVEQ_TAC THEN
    FS[measure_THM; heap_length_APPEND; GC1AUX_heap_length_CONS; el_length_def] THEN

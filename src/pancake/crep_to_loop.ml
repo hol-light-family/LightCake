@@ -3,7 +3,7 @@
 (* Compilation from crepLang to loopLang.                                    *)
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
-(* - Names as notes/naming/names.tsv says: the record context is             *)
+(* - Names as doc/names.tsv says: the record context is                      *)
 (*   crep_to_loop_context (fields crep_to_loop_context_vars, ..._funcs,      *)
 (*   ..._vmax, ..._target); find_var, find_lab, compile_exp(s), compile,     *)
 (*   mk_ctxt, make_vmap, comp_func, make_funcs and compile_prog get the      *)
@@ -72,7 +72,7 @@ let compile_crepop_def = cake_def
        ([loop_Arith (LLongMul tmp tmp x y)],tmp)`;;
 
 let crep_to_loop_compile_exp_def = cake_def_wf
-  `measure (\x. sum_CASE x
+  `MEASURE (\x. sum_CASE x
                   (\p:crep_to_loop_context#num#num_set#(A)crep_exp.
                      crep_exp_size ARB (SND (SND (SND p))))
                   (\q:crep_to_loop_context#num#num_set#((A)crep_exp)list.
@@ -150,7 +150,7 @@ let rt_vars_def = cake_def
 (* is an expression in most clauses and a function name in crep_Call)       *)
 
 let crep_to_loop_compile_def = cake_def_wf_clauses
-  `measure (\(ctxt:crep_to_loop_context,l:num_set,p:(A)crep_prog).
+  `MEASURE (\(ctxt:crep_to_loop_context,l:num_set,p:(A)crep_prog).
               crep_prog_size ARB p)`
   TERM_TAC
   [`crep_to_loop_compile (_:crep_to_loop_context) (_:num_set)

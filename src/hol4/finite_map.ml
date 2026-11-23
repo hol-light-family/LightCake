@@ -1811,3 +1811,26 @@ let FMAPAUX_FUPDATE_FLOOKUP_ELIM = prove
   REWRITE_TAC[FLOOKUP_DEF] THEN REPEAT GEN_TAC THEN COND_CASES_TAC THEN
   REWRITE_TAC[option_DISTINCT; option_INJ] THEN DISCH_TAC THEN
   MATCH_MP_TAC FUPDATE_ELIM THEN ASM_REWRITE_TAC[]);;
+
+(* ------------------------------------------------------------------------- *)
+(* Lemmas used by several later files.                                       *)
+(* ------------------------------------------------------------------------- *)
+
+let FMAPAUX_FLOOKUP_SOME_FDOM = prove
+ (`!(f:(A,B)fmap) x y. FLOOKUP f x = SOME y ==> x IN FDOM f`,
+  REWRITE_TAC[FLOOKUP_DEF] THEN MESON_TAC[option_DISTINCT]);;
+
+let FMAPAUX_IN_FRANGE_FUNION = prove
+ (`!(f:(A,B)fmap) g y. y IN FRANGE (FUNION f g) ==> y IN FRANGE f \/ y IN FRANGE g`,
+  REWRITE_TAC[IN_FRANGE_FLOOKUP; FLOOKUP_FUNION] THEN REPEAT GEN_TAC THEN
+  DISCH_THEN(X_CHOOSE_THEN `k:A` MP_TAC) THEN
+  MP_TAC(ISPEC `FLOOKUP (f:(A,B)fmap) k` (cases "option")) THEN STRIP_TAC THEN
+  ASM_REWRITE_TAC[option_CASE] THEN ASM_MESON_TAC[option_INJ]);;
+
+let FMAPAUX_FUL_CONS = prove
+ (`!(f:(A,B)fmap) h t. f |++ CONS h t = FUPDATE f h |++ t`,
+  REWRITE_TAC[FUPDATE_LIST_THM]);;
+
+let FMAPAUX_FUL_NIL = prove
+ (`!(f:(A,B)fmap). f |++ [] = f`,
+  REWRITE_TAC[FUPDATE_LIST_THM]);;

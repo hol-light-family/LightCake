@@ -66,7 +66,7 @@ let ast_pat1_size = prove
   ARITH_TAC);;
 
 let compile_pat_def = cake_def_wf
-  `measure ((pat_size o SND):source_to_flat_environment # pat -> num)`
+  `MEASURE ((pat_size o SND):source_to_flat_environment # pat -> num)`
   (REWRITE_TAC(WF_REL_THMS @ [o_THM; SND]) THEN REPEAT STRIP_TAC THEN
    (TERM_TAC ORELSE
     (REWRITE_TAC[type_size_def "pat"] THEN ASM_ARITH_TAC)))
@@ -398,7 +398,7 @@ let simple_dlet_def = cake_def
      | _ -> NONE`;;
 
 let source_to_flat_compile_decs_def = sem1aux_def_wf
-  `measure ((list_size dec_size o SND o SND o SND o SND o SND):
+  `MEASURE ((list_size dec_size o SND o SND o SND o SND o SND):
             mlstring list # num # next_indices # source_to_flat_environment #
             environment_generation_store # dec list -> num)`
   (SEM1AUX_TC_TAC ORELSE

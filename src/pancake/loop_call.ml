@@ -3,7 +3,7 @@
 (* Call optimisation for loopLang.                                           *)
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
-(* - Names as notes/naming/names.tsv says: is_load is loop_call_is_load      *)
+(* - Names as doc/names.tsv says: is_load is loop_call_is_load               *)
 (*   (asm has is_load) and comp is loop_call_comp.                           *)
 (* - The last row of the Arith case of comp (_ => l) is redundant, as in     *)
 (*   HOL4 (every loop_arith constructor has a row before it).                *)

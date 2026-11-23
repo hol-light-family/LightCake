@@ -18,6 +18,8 @@
 (* Internally a case constant is turned into a match while the recursion     *)
 (* theorem is built (so that HOL Light's machinery sees the contexts of the  *)
 (* recursive calls), and back afterwards.  Nothing is ever assumed.          *)
+(* HOL4 measure is HOL Light's MEASURE (wf.ml), with WF_MEASURE; the kit     *)
+(* keeps measure_THM (HOL4 measure_thm) for it.                              *)
 (* ========================================================================= *)
 
 (* ------------------------------------------------------------------------- *)
@@ -54,17 +56,12 @@ let WF_LEX_HOL4 = prove
   ASM_REWRITE_TAC[] THEN MATCH_MP_TAC EQ_IMP THEN AP_TERM_TAC THEN
   REWRITE_TAC[FUN_EQ_THM; FORALL_PAIR_THM; LEX_DEF]);;
 
-let measure = new_definition
-  `measure (f:A->num) = inv_image (<) f`;;
+(* HOL4's measure is HOL Light's MEASURE (wf.ml: MEASURE m = \x y. m x < m y, *)
+(* with WF_MEASURE); measure_THM is HOL4's measure_thm for it               *)
 
 let measure_THM = prove
- (`!(f:A->num) x y. measure f x y <=> f x < f y`,
-  REWRITE_TAC[measure; inv_image]);;
-
-let WF_measure = prove
- (`!f:A->num. WF (measure f)`,
-  REWRITE_TAC[measure] THEN GEN_TAC THEN MATCH_MP_TAC WF_inv_image THEN
-  REWRITE_TAC[WF_num]);;
+ (`!(f:A->num) x y. MEASURE f x y <=> f x < f y`,
+  REWRITE_TAC[MEASURE]);;
 
 let WF_LT_NUM = prove
  (`WF ((<):num->num->bool)`,
@@ -74,15 +71,15 @@ let WF_LT_NUM = prove
 
 (* and of relations whose well-foundedness was proved by hand and          *)
 (* registered with cake_register_wf (HOL4 termination relations that are   *)
-(* not built from measure, inv_image and LEX)                               *)
+(* not built from MEASURE, inv_image and LEX)                               *)
 
 let cake_extra_wf = ref ([] : thm list);;
 
 let cake_register_wf th = cake_extra_wf := th :: !cake_extra_wf;;
 
 let WF_TAC : tactic =
-  REPEAT (MATCH_ACCEPT_TAC WF_LT_NUM ORELSE MATCH_ACCEPT_TAC WF_measure ORELSE
-          MATCH_ACCEPT_TAC WF_MEASURE ORELSE MATCH_ACCEPT_TAC WF_FALSE ORELSE
+  REPEAT (MATCH_ACCEPT_TAC WF_LT_NUM ORELSE MATCH_ACCEPT_TAC WF_MEASURE ORELSE
+          MATCH_ACCEPT_TAC WF_FALSE ORELSE
           MATCH_MP_TAC WF_inv_image ORELSE MATCH_MP_TAC WF_LEX_HOL4 ORELSE
           MATCH_MP_TAC WF_MEASURE_GEN ORELSE CONJ_TAC ORELSE
           (fun g -> MAP_FIRST MATCH_ACCEPT_TAC (!cake_extra_wf) g));;
@@ -612,6 +609,37 @@ let unprime_vars avoid vs =
 
 let cake_ind_dbg = ref (None : (term * thm * (int option -> tactic) * term list list * (term * thm * bool) list list) option);;
 
+(* the variables of the conclusion !x1 .. xn. P x1 .. xn of an induction     *)
+(* theorem (of each conjunct, for mutual recursion) are named apart from     *)
+(* the variables of the cases and from each other: before, ordav_ind had     *)
+(* !x1 x2 x3. P x1 x2 x3 with x2 a variable of its cases too, and            *)
+(* MATCH_MP_TAC (whose match renames the bound variables of the conclusion   *)
+(* to the goal's) also renamed that one, so the cases got two variables      *)
+(* named env.  HOL4's conclusions are !v v1 .. (TFL's vary).  An             *)
+(* alpha-equivalent theorem.  Since 2026-11-22.                              *)
+let kit_ind_concl_apart (th:thm) : thm =
+  try
+    let ps,body = strip_forall (concl th) in
+    let ant,cn = dest_imp body in
+    let used = ref (map (fst o dest_var) (variables ant @ ps @ variables cn)) in
+    let fresh = ref (map (fst o dest_var) (variables ant @ ps)) in
+    let changed = ref false in
+    let fix c =
+      let vs,b = strip_forall c in
+      let vs' = map (fun v ->
+          let n,ty = dest_var v in
+          if mem n !fresh then
+            let rec go m = if mem m !used then go (m ^ "'") else m in
+            let n' = go n in
+            changed := true; used := n' :: !used; fresh := n' :: !fresh; mk_var(n',ty)
+          else (fresh := n :: !fresh; v)) vs in
+      if vs' = vs then c else list_mk_forall(vs',vsubst (zip vs' vs) b) in
+    let cn' = list_mk_conj (map fix (conjuncts cn)) in
+    if not !changed then th else
+    let th' = EQ_MP (ALPHA (concl th) (list_mk_forall(ps,mk_imp(ant,cn')))) th in
+    kit_note "cake_ind: conclusion variables named apart"; th'
+  with Failure _ -> th;;
+
 let derive_induction (c:term) (clauses:(term list * term list) list)
                      (tc_thms:thm list) (wfth:thm) =
   cake_ind_unprime_kept := false;
@@ -769,12 +797,60 @@ let derive_induction (c:term) (clauses:(term list * term list) list)
   (if !cake_ind_unprime_log && !cake_ind_unprime_kept then
      Format.print_string ("INDFIX "^(try fst(dest_const c) with Failure _ ->
                                          try fst(dest_var c) with Failure _ -> "?")^"\n"));
-  prove(stmt,
+  kit_ind_concl_apart (prove(stmt,
     GEN_TAC THEN DISCH_THEN(fun th ->
       MAP_EVERY (fun (k,c) -> LABEL_TAC ("case"^string_of_int k) c)
                 (zip (0--(length allcases - 1)) (CONJUNCTS th))) THEN
     MATCH_MP_TAC cind THEN REPEAT GEN_TAC THEN DISCH_THEN(LABEL_TAC "wfh") THEN
-    SPLIT_PATTERNS_TAC pats leaf);;
+    SPLIT_PATTERNS_TAC pats leaf));;
+
+(* ------------------------------------------------------------------------- *)
+(* cake_ind_tidy th (opt-in; since 2026-11-22): the induction theorem th     *)
+(* without the induction hypotheses that another hypothesis of the same      *)
+(* case implies (the same variables and conclusion, a subset of its          *)
+(* conditions): after lets are unfolded a recursive call can occur several   *)
+(* times, each with a stronger context (INST_CORE's call in a let, then in   *)
+(* if IS_RESULT tres then .. RESULT tres else tres), and each gave its own   *)
+(* hypothesis.  HOL4's TFL gives one per call.  The result is logically      *)
+(* equivalent; cake_ind itself is unchanged (stored theorems of existing     *)
+(* files stay as they are): write let f_ind = cake_ind_tidy (cake_ind "f").  *)
+(* ------------------------------------------------------------------------- *)
+
+let cake_ind_tidy (th:thm) : thm =
+  let ps,body = strip_forall (concl th) in
+  let ant,cn = dest_imp body in
+  let cases = conjuncts ant in
+  let parts h = let ws,b = strip_forall h in
+                if is_imp b then ws,conjuncts (fst(dest_imp b)),snd(dest_imp b)
+                else ws,[],b in
+  let implies hi hj =
+    let wi,ci,gi = parts hi and wj,cj,gj = parts hj in
+    wi = wj && aconv gi gj && forall (fun c -> exists (aconv c) cj) ci in
+  let tidy_case c =
+    let vs,b = strip_forall c in
+    if not (is_imp b) then c else
+    let ihs,cc = dest_imp b in
+    let hs = Array.of_list (conjuncts ihs) in
+    let n = Array.length hs in
+    let keep j = not (exists (fun i -> i <> j && implies hs.(i) hs.(j) &&
+                                       (i < j || not (implies hs.(j) hs.(i))))
+                            (0--(n-1))) in
+    let hs' = map (fun j -> hs.(j)) (filter keep (0--(n-1))) in
+    if length hs' = n then c else list_mk_forall(vs,mk_imp(list_mk_conj hs',cc)) in
+  let cases' = map tidy_case cases in
+  if cases' = cases then th else
+  let ant' = list_mk_conj cases' in
+  let cths = CONJUNCTS (ASSUME ant') in
+  let old_case (c,c',cth) =
+    if c = c' then cth else
+    let vs,b = strip_forall c in
+    let ihs,_ = dest_imp b in
+    let hs' = conjuncts (fst(dest_imp(snd(strip_forall c')))) in
+    let parts = CONJUNCTS (ASSUME ihs) in
+    let pth = end_itlist CONJ (map (fun h -> find (fun t -> aconv (concl t) h) parts) hs') in
+    GENL vs (DISCH ihs (MP (SPECL vs cth) pth)) in
+  let cth = end_itlist CONJ (map2 (fun (c,c') t -> old_case (c,c',t)) (zip cases cases') cths) in
+  GENL ps (DISCH ant' (MP (SPECL ps th) cth));;
 
 (* ------------------------------------------------------------------------- *)
 (* The main entry points (single functions; mutual recursion below).         *)
@@ -815,9 +891,9 @@ let measure_candidates ty =
     let s = size_of_type [] (el k cs) in
     if zero s then failwith "" else
     let body = rhs(concl(TOP_DEPTH_CONV BETA_CONV (mk_comb(s,el k sels)))) in
-    mk_comb(mk_const("measure",[ty,aty]),mk_abs(t,body)) in
+    mk_comb(mk_const("MEASURE",[ty,aty]),mk_abs(t,body)) in
   let whole = let s = size_of_type [] ty in
-              if zero s then [] else [mk_comb(mk_const("measure",[ty,aty]),s)] in
+              if zero s then [] else [mk_comb(mk_const("MEASURE",[ty,aty]),s)] in
   mapfilter one (0--(n-1)) @ whole;;
 
 (* bare occurrences of the function f being defined (MAP f l, or f x for a  *)
@@ -1417,7 +1493,7 @@ let cake_def_mutual (rel_tac : (term * tactic) option) (tm:term) : thm =
        go 0 in
      let th4 = CONV_RULE (RAND_CONV (concl_conv THENC
                                      PURE_REWRITE_CONV[FST; SND])) th3 in
-     let th5 = GENL ps th4 in
+     let th5 = kit_ind_concl_apart (GENL ps th4) in
      do_list (fun n -> cake_ind_store := (n,th5) :: !cake_ind_store) names
    with Failure msg ->
      Format.print_string("Warning: cake_def "^fname^
@@ -1454,7 +1530,7 @@ let sum_measure_candidates (tys:hol_type list) =
         mk_abs(s,list_mk_comb(c,[s;f;g]))
     | _ -> failwith "sum_measure_candidates" in
   let ms = [combine tys (map whole tys); combine tys (map first tys)] in
-  map (fun m -> mk_comb(mk_const("measure",[fst(dest_fun_ty(type_of m)),aty]),m)) ms;;
+  map (fun m -> mk_comb(mk_const("MEASURE",[fst(dest_fun_ty(type_of m)),aty]),m)) ms;;
 
 let cake_has_substring s sub =
   let n = String.length s and m = String.length sub in

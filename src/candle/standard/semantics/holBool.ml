@@ -20,9 +20,9 @@ type_invention_error := true;;
 (*   Overload X = X0 ^mem are written with their mem argument (Boolrel R is  *)
 (*   Boolrel0 mem R, is_bool_interpretation i is is_bool_interpretation0 mem *)
 (*   i, termsem is termsem0 mem, ...); the setSpec overloads as in setSpec.ml *)
-(*   (x <: s is mem x s, boolset is two mem, True and False are setSpec_true *)
+(*   (x <: s is mem x s, boolset is setSpec_two mem, True and False are setSpec_true *)
 (*   mem and setSpec_false mem, Boolean is boolean mem, Abstract is abstract *)
-(*   mem, f ' x is apply mem f x, Holds is holds mem); tyaof, tmaof, tyvof,  *)
+(*   mem, f ' x is setSpec_apply mem f x, Holds is setSpec_holds mem); tyaof, tmaof, tyvof,  *)
 (*   tmvof are FST and SND; the HOL4 type abbreviations with U are written   *)
 (*   out; HOL4's Greek variables are tau, sigma, gamma.                      *)
 (* - The syntax overloads (True, And, Forall, ... of holBoolSyntax and the   *)
@@ -34,7 +34,7 @@ type_invention_error := true;;
 (* rewriting (HOL4: EVAL_TAC).                                               *)
 
 let CBOOLAUX_TYVARS_THMS =
-  [tyvars_def; ITLIST; LIST_UNION_def; LIST_INSERT_def; MEM; STRING_SORT_def;
+  [hol_tyvars_def; ITLIST; LIST_UNION_def; LIST_INSERT_def; MEM; STRING_SORT_def;
    INORDER_INSERT_def; FILTER; APPEND; MAP; explode_implode];;
 
 let bool_sig_instances = prove
@@ -74,8 +74,8 @@ let bool_sig_instances = prove
 (* HOL4: Definition Boolrel_def (Overload Boolrel = Boolrel0 ^mem) *)
 let holBool_Boolrel0_def = cake_def
   `Boolrel0 (mem:U->U->bool) R =
-     abstract mem (two mem) (funspace mem (two mem) (two mem))
-       (\p. abstract mem (two mem) (two mem)
+     abstract mem (setSpec_two mem) (setSpec_funspace mem (setSpec_two mem) (setSpec_two mem))
+       (\p. abstract mem (setSpec_two mem) (setSpec_two mem)
               (\q. boolean mem (R (p = setSpec_true mem) (q = setSpec_true mem))))`;;
 
 (* HOL4: Definition is_true_interpretation_def *)
@@ -97,15 +97,15 @@ let is_implies_interpretation0_def = cake_def
 let is_forall_interpretation0_def = cake_def
   `is_forall_interpretation0 (mem:U->U->bool) (gamma:mlstring->U list->U) <=>
      interprets0 mem gamma (implode "!") [implode "A"]
-       (\l. abstract mem (funspace mem (HD l) (two mem)) (two mem)
-              (\P. boolean mem (!x. mem x (HD l) ==> holds mem P x)))`;;
+       (\l. abstract mem (setSpec_funspace mem (HD l) (setSpec_two mem)) (setSpec_two mem)
+              (\P. boolean mem (!x. mem x (HD l) ==> setSpec_holds mem P x)))`;;
 
 (* HOL4: Definition is_exists_interpretation_def *)
 let is_exists_interpretation0_def = cake_def
   `is_exists_interpretation0 (mem:U->U->bool) (gamma:mlstring->U list->U) <=>
      interprets0 mem gamma (implode "?") [implode "A"]
-       (\l. abstract mem (funspace mem (HD l) (two mem)) (two mem)
-              (\P. boolean mem (?x. mem x (HD l) /\ holds mem P x)))`;;
+       (\l. abstract mem (setSpec_funspace mem (HD l) (setSpec_two mem)) (setSpec_two mem)
+              (\P. boolean mem (?x. mem x (HD l) /\ setSpec_holds mem P x)))`;;
 
 (* HOL4: Definition is_or_interpretation_def *)
 let is_or_interpretation0_def = cake_def
@@ -121,7 +121,7 @@ let is_false_interpretation0_def = cake_def
 let is_not_interpretation0_def = cake_def
   `is_not_interpretation0 (mem:U->U->bool) (gamma:mlstring->U list->U) <=>
      interprets0 mem gamma (implode "~") []
-       (K (abstract mem (two mem) (two mem)
+       (K (abstract mem (setSpec_two mem) (setSpec_two mem)
              (\p. boolean mem (~(p = setSpec_true mem)))))`;;
 
 (* HOL4: val ints (an ML list) *)
@@ -148,7 +148,7 @@ let is_bool_interpretation0_def = cake_def
 let boolrel_in_funspace = prove
  (`is_set_theory (mem:U->U->bool)
    ==> mem (Boolrel0 mem R)
-           (funspace mem (two mem) (funspace mem (two mem) (two mem)))`,
+           (setSpec_funspace mem (setSpec_two mem) (setSpec_funspace mem (setSpec_two mem) (setSpec_two mem)))`,
   DISCH_TAC THEN REWRITE_TAC[holBool_Boolrel0_def] THEN
   FIRST_ASSUM(MATCH_MP_TAC o MATCH_MP abstract_in_funspace) THEN
   REPEAT STRIP_TAC THEN BETA_TAC THEN
@@ -162,13 +162,13 @@ let _ = cake_add_simps [boolrel_in_funspace];;
 let apply_boolrel = prove
  (`is_set_theory (mem:U->U->bool) ==>
    !b1 b2 b3.
-     mem b1 (two mem) /\ mem b2 (two mem) /\
+     mem b1 (setSpec_two mem) /\ mem b2 (setSpec_two mem) /\
      b3 = boolean mem (R (b1 = setSpec_true mem) (b2 = setSpec_true mem))
-     ==> apply mem (apply mem (Boolrel0 mem R) b1) b2 = b3`,
+     ==> setSpec_apply mem (setSpec_apply mem (Boolrel0 mem R) b1) b2 = b3`,
   REPEAT STRIP_TAC THEN
   SUBGOAL_THEN
-   `apply mem (Boolrel0 mem R) b1 =
-    abstract mem (two mem) (two mem)
+   `setSpec_apply mem (Boolrel0 mem R) b1 =
+    abstract mem (setSpec_two mem) (setSpec_two mem)
       (\b2. boolean mem (R (b1 = setSpec_true mem) (b2 = setSpec_true (mem:U->U->bool))))`
   SUBST1_TAC THENL
    [REWRITE_TAC[holBool_Boolrel0_def] THEN MATCH_MP_TAC apply_abstract_matchable THEN
@@ -189,12 +189,12 @@ let CBOOLAUX_termsem_in_boolset = prove
      is_interpretation0 mem s i /\
      is_std_type_assignment0 mem (FST i) /\
      hol_term_ok s p /\ typeof p = Tyapp (implode "bool") []
-     ==> mem (termsem0 mem (SND s) i v p) (two mem)`,
+     ==> mem (termsem0 mem (SND s) i v p) (setSpec_two mem)`,
   REPEAT STRIP_TAC THEN
   FIRST_ASSUM(MP_TAC o ISPECL [`s:sig`; `i:(mlstring->U list->U)#(mlstring->U list->U)`;
     `p:hol_term`; `v:(mlstring->U)#(mlstring#hol_type->U)`;
     `FST(i:(mlstring->U list->U)#(mlstring->U list->U))`;
-    `FST(v:(mlstring->U)#(mlstring#hol_type->U))`; `SND(s:sig)`; `two(mem:U->U->bool)`] o
+    `FST(v:(mlstring->U)#(mlstring#hol_type->U))`; `SND(s:sig)`; `setSpec_two(mem:U->U->bool)`] o
     MATCH_MP termsem_typesem_matchable) THEN
   ASM_SIMP_TAC[typesem_Bool]);;
 
@@ -296,7 +296,7 @@ let CBOOLAUX_QUANT_TAC sig_def int_def : tactic =
    `!m. mem m (typesem (FST (i:(mlstring->U list->U)#(mlstring->U list->U)))
                        (FST (v:(mlstring->U)#(mlstring#hol_type->U))) y)
         ==> mem (termsem0 (mem:U->U->bool) (SND (s:sig)) i
-                   (FST v,((f,y) =+ m) (SND v)) b) (two mem)`
+                   (FST v,((f,y) =+ m) (SND v)) b) (setSpec_two mem)`
   ASSUME_TAC THENL
    [REPEAT STRIP_TAC THEN MATCH_MP_TAC CBOOLAUX_termsem_in_boolset THEN
     ASM_REWRITE_TAC[] THEN MATCH_MP_TAC CBOOLAUX_is_valuation_update THEN
@@ -304,7 +304,7 @@ let CBOOLAUX_QUANT_TAC sig_def int_def : tactic =
     ALL_TAC] THEN
   MATCH_MP_TAC apply_abstract_matchable THEN
   ASM_SIMP_TAC[boolean_in_boolset; abstract_in_funspace] THEN
-  AP_TERM_TAC THEN REWRITE_TAC[holds_def] THEN AP_TERM_TAC THEN ABS_TAC THEN
+  AP_TERM_TAC THEN REWRITE_TAC[setSpec_holds_def] THEN AP_TERM_TAC THEN ABS_TAC THEN
   FIRST [MATCH_MP_TAC(TAUT `(a ==> (b <=> c)) ==> ((a ==> b) <=> (a ==> c))`);
          MATCH_MP_TAC(TAUT `(a ==> (b <=> c)) ==> (a /\ b <=> a /\ c)`)] THEN
   DISCH_TAC THEN ASM_SIMP_TAC[apply_abstract];;
@@ -391,17 +391,17 @@ let termsem_not = prove
 
 let CBOOLAUX_apply_boolrel = prove
  (`!(mem:U->U->bool) R b1 b2.
-     is_set_theory mem /\ mem b1 (two mem) /\ mem b2 (two mem)
-     ==> apply mem (apply mem (Boolrel0 mem R) b1) b2 =
+     is_set_theory mem /\ mem b1 (setSpec_two mem) /\ mem b2 (setSpec_two mem)
+     ==> setSpec_apply mem (setSpec_apply mem (Boolrel0 mem R) b1) b2 =
          boolean mem (R (b1 = setSpec_true mem) (b2 = setSpec_true mem))`,
   MESON_TAC[apply_boolrel]);;
 
 let CBOOLAUX_true_in_boolset = prove
- (`!(mem:U->U->bool). is_set_theory mem ==> mem (setSpec_true mem) (two mem)`,
+ (`!(mem:U->U->bool). is_set_theory mem ==> mem (setSpec_true mem) (setSpec_two mem)`,
   MESON_TAC[mem_boolset]);;
 
 let CBOOLAUX_false_in_boolset = prove
- (`!(mem:U->U->bool). is_set_theory mem ==> mem (setSpec_false mem) (two mem)`,
+ (`!(mem:U->U->bool). is_set_theory mem ==> mem (setSpec_false mem) (setSpec_two mem)`,
   MESON_TAC[mem_boolset]);;
 
 let CBOOLAUX_abstract_eq2 = prove
@@ -415,20 +415,20 @@ let CBOOLAUX_abstract_eq2 = prove
 (* equal iff they agree on Boolrel (/\)                                       *)
 let CBOOLAUX_and_sem = prove
  (`!(mem:U->U->bool) b1 b2.
-     is_set_theory mem /\ mem b1 (two mem) /\ mem b2 (two mem)
-     ==> (abstract mem (funspace mem (two mem) (funspace mem (two mem) (two mem))) (two mem)
-            (\ff. apply mem (apply mem ff b1) b2) =
-          abstract mem (funspace mem (two mem) (funspace mem (two mem) (two mem))) (two mem)
-            (\ff. apply mem (apply mem ff (setSpec_true mem)) (setSpec_true mem)) <=>
+     is_set_theory mem /\ mem b1 (setSpec_two mem) /\ mem b2 (setSpec_two mem)
+     ==> (abstract mem (setSpec_funspace mem (setSpec_two mem) (setSpec_funspace mem (setSpec_two mem) (setSpec_two mem))) (setSpec_two mem)
+            (\ff. setSpec_apply mem (setSpec_apply mem ff b1) b2) =
+          abstract mem (setSpec_funspace mem (setSpec_two mem) (setSpec_funspace mem (setSpec_two mem) (setSpec_two mem))) (setSpec_two mem)
+            (\ff. setSpec_apply mem (setSpec_apply mem ff (setSpec_true mem)) (setSpec_true mem)) <=>
           b1 = setSpec_true mem /\ b2 = setSpec_true mem)`,
   REPEAT STRIP_TAC THEN EQ_TAC THENL [ALL_TAC; STRIP_TAC THEN ASM_REWRITE_TAC[]] THEN
   DISCH_THEN(MP_TAC o C AP_THM `Boolrel0 (mem:U->U->bool) (/\)` o
-             AP_TERM `apply (mem:U->U->bool)`) THEN
+             AP_TERM `setSpec_apply (mem:U->U->bool)`) THEN
   FIRST_ASSUM(ASSUME_TAC o MATCH_MP CBOOLAUX_true_in_boolset) THEN
   SUBGOAL_THEN
-   `!c1 c2. mem c1 (two mem) /\ mem c2 (two (mem:U->U->bool))
-            ==> apply mem (abstract mem (funspace mem (two mem) (funspace mem (two mem) (two mem)))
-                     (two mem) (\ff. apply mem (apply mem ff c1) c2)) (Boolrel0 mem (/\)) =
+   `!c1 c2. mem c1 (setSpec_two mem) /\ mem c2 (setSpec_two (mem:U->U->bool))
+            ==> setSpec_apply mem (abstract mem (setSpec_funspace mem (setSpec_two mem) (setSpec_funspace mem (setSpec_two mem) (setSpec_two mem)))
+                     (setSpec_two mem) (\ff. setSpec_apply mem (setSpec_apply mem ff c1) c2)) (Boolrel0 mem (/\)) =
                 boolean mem (c1 = setSpec_true mem /\ c2 = setSpec_true mem)`
    (fun th -> ASM_SIMP_TAC[th]) THENL
    [REPEAT STRIP_TAC THEN MATCH_MP_TAC apply_abstract_matchable THEN
@@ -438,7 +438,7 @@ let CBOOLAUX_and_sem = prove
 (* ImpliesDef *)
 let CBOOLAUX_implies_sem = prove
  (`!(mem:U->U->bool) b1 b2.
-     is_set_theory mem /\ mem b1 (two mem) /\ mem b2 (two mem)
+     is_set_theory mem /\ mem b1 (setSpec_two mem) /\ mem b2 (setSpec_two mem)
      ==> (boolean mem (b1 = setSpec_true mem /\ b2 = setSpec_true mem) = b1 <=>
           (b1 = setSpec_true mem ==> b2 = setSpec_true mem))`,
   REPEAT STRIP_TAC THEN
@@ -449,26 +449,22 @@ let CBOOLAUX_implies_sem = prove
 (* ForallDef *)
 let CBOOLAUX_forall_sem = prove
  (`!(mem:U->U->bool) s pp.
-     is_set_theory mem /\ mem pp (funspace mem s (two mem))
-     ==> (pp = abstract mem s (two mem) (\x. setSpec_true mem) <=>
-          !x. mem x s ==> holds mem pp x)`,
+     is_set_theory mem /\ mem pp (setSpec_funspace mem s (setSpec_two mem))
+     ==> (pp = abstract mem s (setSpec_two mem) (\x. setSpec_true mem) <=>
+          !x. mem x s ==> setSpec_holds mem pp x)`,
   REPEAT STRIP_TAC THEN
   FIRST_ASSUM(MP_TAC o MATCH_MP in_funspace_abstract) THEN
-  DISCH_THEN(MP_TAC o SPECL [`pp:U`; `s:U`; `two (mem:U->U->bool)`]) THEN
-  ASM_REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[holds_def] THEN
+  DISCH_THEN(MP_TAC o SPECL [`pp:U`; `s:U`; `setSpec_two (mem:U->U->bool)`]) THEN
+  ASM_REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[setSpec_holds_def] THEN
   FIRST_ASSUM(ASSUME_TAC o MATCH_MP CBOOLAUX_true_in_boolset) THEN
   ASM_SIMP_TAC[apply_abstract] THEN EQ_TAC THENL
    [DISCH_TAC THEN X_GEN_TAC `x:U` THEN DISCH_TAC THEN
-    FIRST_X_ASSUM(MP_TAC o C AP_THM `x:U` o AP_TERM `apply (mem:U->U->bool)`) THEN
+    FIRST_X_ASSUM(MP_TAC o C AP_THM `x:U` o AP_TERM `setSpec_apply (mem:U->U->bool)`) THEN
     ASM_SIMP_TAC[apply_abstract];
     DISCH_TAC THEN FIRST_ASSUM(MATCH_MP_TAC o MATCH_MP abstract_eq) THEN
     ASM_SIMP_TAC[]]);;
 
 (* syntax *)
-
-let CBOOLAUX_typeof_equation = prove
- (`!s t. typeof (s === t) = Tyapp (implode "bool") []`,
-  REWRITE_TAC[equation_def; typeof_def; codomain_def]);;
 
 let CBOOLAUX_VSUBST_id = prove
  (`!tm ilist. (!s' s. MEM (s',s) ilist ==> ~VFREE_IN s tm) ==> VSUBST ilist tm = tm`,
@@ -534,8 +530,8 @@ let CBOOLAUX_structure = prove
 let CBOOLAUX_std_type_facts = prove
  (`!(mem:U->U->bool) i.
      is_std_interpretation0 mem i
-     ==> (!dom rng. FST i (implode "fun") [dom; rng] = funspace mem dom rng) /\
-         FST i (implode "bool") [] = two mem`,
+     ==> (!dom rng. FST i (implode "fun") [dom; rng] = setSpec_funspace mem dom rng) /\
+         FST i (implode "bool") [] = setSpec_two mem`,
   SIMP_TAC[is_std_interpretation0_def; is_std_type_assignment0_def]);;
 
 (* a constant of a model: its value is the termsem of its definition *)
@@ -568,8 +564,8 @@ let CBOOLAUX_interp_from_def = prove
      FLOOKUP (SND (FST thy)) n = SOME ty /\
      (!v. is_valuation0 mem (FST (FST thy)) (FST i) v
           ==> termsem0 mem (SND (FST thy)) i v D =
-              f (MAP (FST v) (MAP implode (STRING_SORT (MAP explode (tyvars ty))))))
-     ==> interprets0 mem (SND i) n (MAP implode (STRING_SORT (MAP explode (tyvars ty)))) f`,
+              f (MAP (FST v) (MAP implode (STRING_SORT (MAP explode (hol_tyvars ty))))))
+     ==> interprets0 mem (SND i) n (MAP implode (STRING_SORT (MAP explode (hol_tyvars ty)))) f`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[interprets0_def] THEN
   X_GEN_TAC `tau:mlstring->U` THEN DISCH_TAC THEN
   SUBGOAL_THEN `?sigma. is_valuation0 (mem:U->U->bool) (FST (FST (thy:thy)))
@@ -593,7 +589,7 @@ let CBOOLAUX_STRING_THMS =
    PAIR_EQ; injectivity "hol_type"];;
 
 let CBOOLAUX_EVAL_SEM_THMS =
-  [termsem0_def; typesem_def; MAP; typeof_def; codomain_def; CBOOLAUX_typeof_equation;
+  [termsem0_def; typesem_def; MAP; typeof_def; codomain_def; CSYNAUX_typeof_equation;
    FST; SND; APPLY_UPDATE_THM; K_THM; HD] @ CBOOLAUX_STRING_THMS;;
 
 (* hol_term_ok in a Boolean signature (the assumption is_bool_sig sig) *)
@@ -601,7 +597,7 @@ let CBOOLAUX_TERM_OK_TAC : tactic =
   FIRST_ASSUM(fun th ->
     let bt = MATCH_MP bool_term_ok th in
     let cl = MATCH_MP term_ok_clauses (MATCH_MP is_bool_sig_std th) in
-    REWRITE_TAC[bt; cl; typeof_def; codomain_def; CBOOLAUX_typeof_equation]) THEN
+    REWRITE_TAC[bt; cl; typeof_def; codomain_def; CSYNAUX_typeof_equation]) THEN
   ASM_REWRITE_TAC[];;
 
 (* the facts of a model of a theory with a Boolean signature, as assumptions *)
@@ -643,7 +639,7 @@ let CBOOLAUX_SEM_SIMP_TAC thl : tactic =
     let bt = MATCH_MP bool_term_ok bs in
     let sems = map (fun th -> MATCH_MP th st)
                  [termsem_and; termsem_implies; termsem_forall; termsem_exists; termsem_not] in
-    ASM_SIMP_TAC(sems @ [cl; bt; typeof_def; codomain_def; CBOOLAUX_typeof_equation;
+    ASM_SIMP_TAC(sems @ [cl; bt; typeof_def; codomain_def; CSYNAUX_typeof_equation;
                          WELLTYPED_CLAUSES; injectivity "hol_type"; CONS_11;
                          RIGHT_EXISTS_AND_THM; CBOOLAUX_EXISTS_REFL; UNWIND_THM1] @ thl));;
 
@@ -718,7 +714,7 @@ let CBOOLAUX_and_interp = prove
     is_true_interpretation0_def THEN
   REWRITE_TAC[AndDef_def; holBool_Boolrel0_def] THEN
   ASM_REWRITE_TAC[termsem0_def; typesem_def; MAP; typeof_def; codomain_def;
-                  CBOOLAUX_typeof_equation] THEN
+                  CSYNAUX_typeof_equation] THEN
   MATCH_MP_TAC CBOOLAUX_abstract_eq2 THEN ASM_REWRITE_TAC[] THEN
   X_GEN_TAC `b1:U` THEN DISCH_TAC THEN BETA_TAC THEN
   ASM_SIMP_TAC[abstract_in_funspace; boolean_in_boolset] THEN
@@ -770,8 +766,8 @@ let CBOOLAUX_forall_interp = prove
        [Tyapp (implode "fun") [Tyvar (implode "A"); Tyapp (implode "bool") []];
         Tyapp (implode "bool") []]`
     `ForallDef`
-    `\l. abstract (mem:U->U->bool) (funspace mem (HD l) (two mem)) (two mem)
-           (\P. boolean mem (!x. mem x (HD l) ==> holds mem P x))`
+    `\l. abstract (mem:U->U->bool) (setSpec_funspace mem (HD l) (setSpec_two mem)) (setSpec_two mem)
+           (\P. boolean mem (!x. mem x (HD l) ==> setSpec_holds mem P x))`
     is_forall_sig_def is_forall_interpretation0_def THEN
   CBOOLAUX_VALUE_TAC `implode "T"` `setSpec_true (mem:U->U->bool)`
     is_true_interpretation0_def THEN
@@ -798,8 +794,8 @@ let CBOOLAUX_exists_interp = prove
        [Tyapp (implode "fun") [Tyvar (implode "A"); Tyapp (implode "bool") []];
         Tyapp (implode "bool") []]`
     `ExistsDef`
-    `\l. abstract (mem:U->U->bool) (funspace mem (HD l) (two mem)) (two mem)
-           (\P. boolean mem (?x. mem x (HD l) /\ holds mem P x))`
+    `\l. abstract (mem:U->U->bool) (setSpec_funspace mem (HD l) (setSpec_two mem)) (setSpec_two mem)
+           (\P. boolean mem (?x. mem x (HD l) /\ setSpec_holds mem P x))`
     is_exists_sig_def is_exists_interpretation0_def THEN
   REWRITE_TAC[ExistsDef_def] THEN ONCE_REWRITE_TAC[termsem0_def] THEN
   ASM_REWRITE_TAC [typesem_def; MAP; typeof_def; codomain_def; HD] THEN
@@ -808,7 +804,7 @@ let CBOOLAUX_exists_interp = prove
   ASM_SIMP_TAC[boolean_in_boolset] THEN CBOOLAUX_VAL_OK_TAC THEN
   CBOOLAUX_SEM_SIMP_TAC [CBOOLAUX_is_valuation_update2; typesem_def; MAP] THEN
   CBOOLAUX_BOOLEAN_TAC THEN ASM_REWRITE_TAC CBOOLAUX_EVAL_SEM_THMS THEN
-  AP_TERM_TAC THEN REWRITE_TAC[holds_def] THEN CBOOLAUX_TRUTH_TAC);;
+  AP_TERM_TAC THEN REWRITE_TAC[setSpec_holds_def] THEN CBOOLAUX_TRUTH_TAC);;
 
 let CBOOLAUX_or_interp = prove
  (`!(mem:U->U->bool) thy i.
@@ -864,7 +860,7 @@ let CBOOLAUX_not_interp = prove
   CBOOLAUX_CONN_START_TAC `implode "~"`
     `Tyapp (implode "fun") [Tyapp (implode "bool") []; Tyapp (implode "bool") []]`
     `NotDef`
-    `K (abstract (mem:U->U->bool) (two mem) (two mem)
+    `K (abstract (mem:U->U->bool) (setSpec_two mem) (setSpec_two mem)
           (\p. boolean mem (~(p = setSpec_true mem)))):U list->U`
     is_not_sig_def is_not_interpretation0_def THEN
   CBOOLAUX_VALUE_TAC `implode "F"` `setSpec_false (mem:U->U->bool)`
@@ -960,7 +956,7 @@ let bool_has_bool_interpretation = prove
   REWRITE_TAC([SND; mk_bool_ctxt_def; MAP; FLAT; APPEND; axexts_of_upd_def;
                IN_SET_OF_LIST; MEM_APPEND; MEM] @
               map (MATCH_MP CBOOLAUX_conexts_ConstDef) (CONJUNCTS CBOOLAUX_defs_CLOSED)) THEN
-  REWRITE_TAC(CBOOLAUX_defs @ [typeof_def; codomain_def; CBOOLAUX_typeof_equation]));;
+  REWRITE_TAC(CBOOLAUX_defs @ [typeof_def; codomain_def; CSYNAUX_typeof_equation]));;
 
 let extends_is_bool_interpretation = prove
  (`is_set_theory (mem:U->U->bool) /\

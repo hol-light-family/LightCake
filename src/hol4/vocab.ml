@@ -3,12 +3,15 @@
 (* definitions only (the theorems are in the other files of src/hol4/).      *)
 (*                                                                           *)
 (* Where HOL Light already has a constant with the same meaning, the port   *)
-(* uses HOL Light's (notes/survey/hol4lib_refs.tsv, column hol_light):       *)
+(* uses HOL Light's:                                                         *)
 (*   EVERY = ALL   EXISTS = EX   LIST_REL = EVERY2 = ALL2   FRONT = BUTLAST  *)
 (*   set = LIST_TO_SET = set_of_list   BIGUNION = UNIONS   LEAST = minimal   *)
 (*   GENLIST f n = list_of_seq f n   FUNPOW f n x = ITER n f x               *)
 (*   FOLDR f e l = ITLIST f l e   ZIP (l1,l2) = ZIP l1 l2 (curried; equal    *)
 (*   lengths)   x NOTIN s = ~(x IN s)   flip = C of HOL4 combin.            *)
+(* HOL4 count and nub are pred_set_count and list_nub (short or common       *)
+(* words), with the theorems renamed alike (count_DEF is pred_set_count_DEF, *)
+(* ...).                                                                     *)
 (* ========================================================================= *)
 
 needs "kit/kit.ml";;
@@ -214,9 +217,9 @@ let IS_SUFFIX_DEF = new_definition
 let IS_SUBLIST_DEF = new_definition
   `IS_SUBLIST (l1:A list) l2 <=> ?l l'. l1 = APPEND l (APPEND l2 l')`;;
 
-let nub_DEF = new_recursive_definition list_RECURSION
-  `(nub ([]:A list) = []) /\
-   (nub (CONS x l) = if MEM x l then nub l else CONS x (nub l))`;;
+let list_nub_DEF = new_recursive_definition list_RECURSION
+  `(list_nub ([]:A list) = []) /\
+   (list_nub (CONS x l) = if MEM x l then list_nub l else CONS x (list_nub l))`;;
 
 let LIST_BIND_DEF = new_definition
   `LIST_BIND (l:A list) (f:A->B list) = FLAT (MAP f l)`;;
@@ -318,8 +321,8 @@ let NRC = new_recursive_definition num_RECURSION
 (* pred_set                                                                  *)
 (* ------------------------------------------------------------------------- *)
 
-let count_DEF = new_definition
-  `count n = {m | m < n}`;;
+let pred_set_count_DEF = new_definition
+  `pred_set_count n = {m | m < n}`;;
 
 let COMPL_DEF = new_definition
   `COMPL (s:A->bool) = UNIV DIFF s`;;

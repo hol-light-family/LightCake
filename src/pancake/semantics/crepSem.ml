@@ -3,7 +3,7 @@
 (* v3479).  Semantics of crepLang.                                           *)
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
-(* - Names as notes/naming/names.tsv says: the state record crep_state       *)
+(* - Names as doc/names.tsv says: the state record crep_state                *)
 (*   (fields crep_state_locals, ...), the result type crep_result            *)
 (*   (crep_Error, crep_TimeOut, crepSem_Break, crepSem_Continue,             *)
 (*   crepSem_Return, crep_Exception, crep_FinalFFI), crep_eval,              *)
@@ -108,7 +108,7 @@ let crep_op_def = cake_def
 (* crepop in Crepop                                                         *)
 
 let crep_eval_def = cake_def_wf
-  `measure ((crep_exp_size ARB o SND):(A,FFI)crep_state#(A)crep_exp->num)`
+  `MEASURE ((crep_exp_size ARB o SND):(A,FFI)crep_state#(A)crep_exp->num)`
   (REWRITE_TAC[measure_THM; o_THM] THEN TERM_TAC)
   (list_mk_conj
   [`(crep_eval (s:(A,FFI)crep_state) (crep_Const w:(A)crep_exp) =
@@ -330,7 +330,7 @@ let PCREPAUX_TC_TAC : tactic =
   ARITH_TAC;;
 
 let PCREPAUX_evaluate_rel =
-  `inv_image (measure I LEX measure (crep_prog_size (K 0)))
+  `inv_image (MEASURE I LEX MEASURE (crep_prog_size (K 0)))
      (\p:(A)crep_prog#(A,FFI)crep_state. (crep_state_clock (SND p),FST p))`;;
 
 (* the clauses, parsed in four quotations (HOL4 types each clause on its    *)

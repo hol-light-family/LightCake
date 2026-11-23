@@ -1248,7 +1248,7 @@ let op_byte_arrays = prove
                  (list_result res2) res2'`,
   F2CPAUX_OP_TAC);;
 
-(* the helpers of op_byte_copy (helper prefix F2CPAUX3_, agent F2COP) *)
+(* the helpers of op_byte_copy (helper prefix F2CPAUX3_) *)
 (* the bounds test of copy_array (HOL4: Num (ABS k), decided by COOPER_TAC) *)
 let F2CPAUX3_lt_num_of_int_abs = prove
  (`!n x:int. n < num_of_int (abs x) <=> &n < abs x`,
@@ -3730,8 +3730,7 @@ let flat_to_closProof_compile_semantics = prove
 (* ------------------------------------------------------------------------- *)
 (* The syntactic group (HOL4 lines 2206-2601): set_globals, esgc_free,      *)
 (* contains_App_SOME, every_Fn_vs_NONE and no_mti over the flat_to_clos     *)
-(* compile functions (proved by agent F2CSYN; F2CPAUX2_ names are its local *)
-(* helpers).                                                                 *)
+(* compile functions (F2CPAUX2_ names are the local helpers of this group).  *)
 (* ------------------------------------------------------------------------- *)
 
 (* HOL4 line 2206 *)

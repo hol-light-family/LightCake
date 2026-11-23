@@ -26,7 +26,7 @@ let shape_of_val = prove
 (* (stcname # struct_info) list) are written out                            *)
 
 let is_wf_shape_v_def = cake_def_wf
-  `measure (\p:(mlstring#B)list#(A)pan_v. pan_v_size (ARB:A->num) (SND p))`
+  `MEASURE (\p:(mlstring#B)list#(A)pan_v. pan_v_size (ARB:A->num) (SND p))`
   PSEMAUX_V_TC_TAC
   `(is_wf_shape_v (sctxt:(mlstring#B)list) (pan_Val (v:(A)word_lab)) <=> T) /\
    (is_wf_shape_v sctxt (pan_RStruct vs) <=> ALL (is_wf_shape_v sctxt) vs) /\
@@ -1145,7 +1145,7 @@ let evaluate_is_wf_shape_invariant = prove
 (* changes type between clauses; the clauses are in HOL4 order              *)
 
 let pan_every_exp_def = cake_def_wf_clauses
-  `measure (\p:((A)panLang_exp->bool)#(A)panLang_exp. panLang_exp_size ARB (SND p))`
+  `MEASURE (\p:((A)panLang_exp->bool)#(A)panLang_exp. panLang_exp_size ARB (SND p))`
   PSEMAUX_EVAL_TC_TAC
   [`(pan_every_exp P (panLang_Const (w:A word)) <=> P (panLang_Const w)) /\
     (pan_every_exp P (panLang_Var vk v) <=> P (panLang_Var vk v)) /\
@@ -1452,8 +1452,8 @@ let mem_load_swap_memory = prove
   MATCH_MP_TAC pan_mem_load_ind THEN RW[pan_mem_load_def] THEN
   FS(all_case_eqs()) THEN GVS[]);;
 
-(* HOL4's variable memory is mry here (memory is a constant of             *)
-(* stack_removeProof, flagged by tools/const_capture.py)                    *)
+(* HOL4's variable memory is mry here (memory was a constant of            *)
+(* stack_removeProof, now stack_removeProof_memory)                         *)
 
 let mem_load_swap_memaddrs = prove
  (`(!sh (addr:A word) addrs mry (stcs:(stcname#struct_info)list) v addrs2.

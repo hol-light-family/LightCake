@@ -9,6 +9,7 @@
 (* is left associative: APPEND (APPEND l1 l2) l3.  A HOL4 name that HOL      *)
 (* Light already uses for another statement gets the prefix list_ (e.g.     *)
 (* list_MEM_EL); helper lemmas that are not HOL4 theorems get LISTAUX_.      *)
+(* HOL4 nub_def is list_nub_def (HOL4 nub is list_nub, a short name).        *)
 (* ========================================================================= *)
 
 needs "hol4/vocab.ml";;
@@ -1330,28 +1331,28 @@ let LLEX_NIL2 = prove
   STRUCT_CASES_TAC(ISPEC `l:A list` list_CASES) THEN
   REWRITE_TAC[LLEX_def; list_CASE]);;
 
-let nub_def = nub_DEF;;
+let list_nub_def = list_nub_DEF;;
 
-let nub_NIL = CONJUNCT1 nub_DEF;;
+let nub_NIL = CONJUNCT1 list_nub_DEF;;
 
 let LISTAUX_MEM_NUB = prove
- (`!l (x:A). MEM x (nub l) <=> MEM x l`,
-  LIST_INDUCT_TAC THEN REWRITE_TAC[nub_DEF; MEM] THEN
+ (`!l (x:A). MEM x (list_nub l) <=> MEM x l`,
+  LIST_INDUCT_TAC THEN REWRITE_TAC[list_nub_DEF; MEM] THEN
   COND_CASES_TAC THEN ASM_REWRITE_TAC[MEM] THEN ASM_MESON_TAC[]);;
 
 let nub_set = prove
- (`!l:A list. set_of_list (nub l) = set_of_list l`,
+ (`!l:A list. set_of_list (list_nub l) = set_of_list l`,
   REWRITE_TAC[EXTENSION; IN_SET_OF_LIST; LISTAUX_MEM_NUB]);;
 
 let all_distinct_nub = prove
- (`!l:A list. ALL_DISTINCT (nub l)`,
-  LIST_INDUCT_TAC THEN REWRITE_TAC[nub_DEF; ALL_DISTINCT] THEN
+ (`!l:A list. ALL_DISTINCT (list_nub l)`,
+  LIST_INDUCT_TAC THEN REWRITE_TAC[list_nub_DEF; ALL_DISTINCT] THEN
   COND_CASES_TAC THEN ASM_REWRITE_TAC[ALL_DISTINCT; LISTAUX_MEM_NUB]);;
 
 let nub_EQ0 = prove
- (`nub (l:A list) = [] <=> l = []`,
+ (`list_nub (l:A list) = [] <=> l = []`,
   SPEC_TAC(`l:A list`,`l:A list`) THEN
-  LIST_INDUCT_TAC THEN REWRITE_TAC[nub_DEF; NOT_CONS_NIL] THEN
+  LIST_INDUCT_TAC THEN REWRITE_TAC[list_nub_DEF; NOT_CONS_NIL] THEN
   COND_CASES_TAC THEN ASM_REWRITE_TAC[NOT_CONS_NIL] THEN
   ASM_MESON_TAC[MEM]);;
 
@@ -1524,8 +1525,8 @@ let ALL_DISTINCT_MAP_INJ = prove
   EXISTS_TAC `\x y:A. ~(x = y)` THEN ASM_REWRITE_TAC[] THEN ASM_MESON_TAC[]);;
 
 let LIST_TO_SET_GENLIST = prove
- (`!(f:num->A) n. set_of_list (list_of_seq f n) = IMAGE f (count n)`,
-  REWRITE_TAC[EXTENSION; IN_SET_OF_LIST; MEM_GENLIST; IN_IMAGE; count_DEF;
+ (`!(f:num->A) n. set_of_list (list_of_seq f n) = IMAGE f (pred_set_count n)`,
+  REWRITE_TAC[EXTENSION; IN_SET_OF_LIST; MEM_GENLIST; IN_IMAGE; pred_set_count_DEF;
               IN_ELIM_THM] THEN
   MESON_TAC[]);;
 
@@ -2080,3 +2081,11 @@ let LISTAUX_ADMISSIBLE_ALL2 = prove
 let LISTAUX_ALL2_EL = prove
  (`ALL2 (R:A->B->bool) l1 l2 /\ n < LENGTH l1 ==> R (EL n l1) (EL n l2)`,
   REWRITE_TAC[LIST_REL_EL_EQN] THEN MESON_TAC[]);;
+
+(* ------------------------------------------------------------------------- *)
+(* Lemmas used by several later files.                                       *)
+(* ------------------------------------------------------------------------- *)
+
+let LISTAUX_LENGTH_EQ_1 = prove
+ (`!l:A list. LENGTH l = 1 <=> ?a. l = [a]`,
+  GEN_TAC THEN REWRITE_TAC[ONE; LENGTH_EQ_CONS; LENGTH_EQ_NIL] THEN MESON_TAC[]);;

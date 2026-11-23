@@ -32,7 +32,7 @@ let find_lookupsL_MEM = prove
 
 let find_lookupsL_APPEND = prove
  (`!l1 l2. find_lookupsL (APPEND l1 l2) =
-           union (find_lookupsL l1) (find_lookupsL l2)`,
+           sptree_union (find_lookupsL l1) (find_lookupsL l2)`,
   LIST_INDUCT_TAC THEN
   ASM_REWRITE_TAC[APPEND; find_lookups_def; union_LN; union_assoc]);;
 
@@ -44,8 +44,8 @@ let find_lookupsL_REVERSE = prove
 
 let find_loc_EVERY_isEmpty = prove
  (`!l (reachable:num_set).
-     ALL (\e. inter (find_loc e) reachable = LN) l <=>
-     inter (find_locL l) reachable = LN`,
+     ALL (\e. sptree_inter (find_loc e) reachable = LN) l <=>
+     sptree_inter (find_locL l) reachable = LN`,
   LIST_INDUCT_TAC THEN
   ASM_REWRITE_TAC[ALL; find_loc_def; inter_LN; inter_union_empty]);;
 
@@ -71,26 +71,26 @@ let FLATPAUX_V_TC_TAC : tactic =
   REWRITE_TAC[list_size_pair_size_MAP_FST_SND] THEN ARITH_TAC;;
 
 let find_v_globals_def = sem1aux_def_wf
-  `measure (\x:flat_v + flat_v list.
+  `MEASURE (\x:flat_v + flat_v list.
               sum_CASE x flat_v_size (list_size flat_v_size))`
   FLATPAUX_V_TC_TAC
   `(find_v_globals (flat_Conv _ vl) = (find_v_globalsL vl):num_set) /\
    (find_v_globals (flat_Closure env _ e) =
-      union (find_v_globalsL (MAP SND (flat_environment_v env)))
+      sptree_union (find_v_globalsL (MAP SND (flat_environment_v env)))
             (find_lookups e)) /\
    (find_v_globals (flat_Recclosure env vves _) =
-      union (find_v_globalsL (MAP SND (flat_environment_v env)))
+      sptree_union (find_v_globalsL (MAP SND (flat_environment_v env)))
             (find_lookupsL (MAP (SND o SND) vves))) /\
    (find_v_globals (flat_Vectorv vl) = find_v_globalsL vl) /\
    (find_v_globals _ = LN) /\
    (find_v_globalsL [] = LN) /\
-   (find_v_globalsL (CONS h t) = union (find_v_globals h) (find_v_globalsL t))`;;
+   (find_v_globalsL (CONS h t) = sptree_union (find_v_globals h) (find_v_globalsL t))`;;
 
 let find_v_globals_ind = cake_ind "find_v_globals";;
 
 let find_v_globalsL_APPEND = prove
  (`!l1 l2. find_v_globalsL (APPEND l1 l2) =
-           union (find_v_globalsL l1) (find_v_globalsL l2)`,
+           sptree_union (find_v_globalsL l1) (find_v_globalsL l2)`,
   LIST_INDUCT_TAC THEN
   ASM_REWRITE_TAC[APPEND; find_v_globals_def; union_LN; union_assoc]);;
 
@@ -181,11 +181,11 @@ let find_v_globals_list_to_v = prove
 
 let find_refs_globals_def = sem1aux_def
   `(find_refs_globals (CONS (Refv a) t) =
-      union (find_v_globals a) (find_refs_globals t)) /\
+      sptree_union (find_v_globals a) (find_refs_globals t)) /\
    (find_refs_globals (CONS (Varray l) t) =
-      union (find_v_globalsL l) (find_refs_globals t)) /\
+      sptree_union (find_v_globalsL l) (find_refs_globals t)) /\
    (find_refs_globals (CONS (Thunk _ a) t) =
-      union (find_v_globals a) (find_refs_globals t)) /\
+      sptree_union (find_v_globals a) (find_refs_globals t)) /\
    (find_refs_globals (CONS _ t) = find_refs_globals t) /\
    (find_refs_globals ([]:(flat_v store_v) list) = LN)`;;
 
@@ -236,7 +236,7 @@ let find_refs_globals_LUPDATE = prove
 
 let find_refs_globals_APPEND = prove
  (`!refs new. find_refs_globals (APPEND refs new) =
-              union (find_refs_globals refs) (find_refs_globals new)`,
+              sptree_union (find_refs_globals refs) (find_refs_globals new)`,
   LIST_INDUCT_TAC THEN REWRITE_TAC[APPEND; find_refs_globals_def; union_LN] THEN
   GEN_TAC THEN CASES_ON `h:flat_v store_v` THEN
   ASM_REWRITE_TAC[find_refs_globals_def; union_assoc]);;
@@ -279,7 +279,7 @@ let FLATPAUX_V_MEM_TC_TAC : tactic =
   MEM_SIZE_TAC THEN ASM_ARITH_TAC;;
 
 let v_has_Eval_def1 = sem1aux_def_wf
-  `measure flat_v_size`
+  `MEASURE flat_v_size`
   FLATPAUX_V_MEM_TC_TAC
   `(v_has_Eval (flat_Closure env _ e) <=>
       has_Eval e \/ EX v_has_Eval (MAP SND (flat_environment_v env))) /\
@@ -326,7 +326,7 @@ let decs_closed_reduce = prove
   DISCH_TAC THEN
   SUBGOAL_THEN `?r1 t1. analyse_exp e = (r1:num_set,t1:(num_set)spt)`
     STRIP_ASSUME_TAC THENL [MESON_TAC[PAIR]; ALL_TAC] THEN
-  FIRST_X_ASSUM(MP_TAC o SPECL [`union r1 r:num_set`;
+  FIRST_X_ASSUM(MP_TAC o SPECL [`sptree_union r1 r:num_set`;
                                 `num_set_tree_union t1 t0`]) THEN
   ASM_REWRITE_TAC[code_analysis_union_def; domain_union; UNION_SUBSET] THEN
   STRIP_TAC THEN ASM_REWRITE_TAC[] THEN REPEAT STRIP_TAC THEN
@@ -344,7 +344,7 @@ let decs_closed_reduce_HD = prove
   ASM_REWRITE_TAC[code_analysis_union_def; PAIR_EQ] THEN
   ONCE_REWRITE_TAC[num_set_tree_union_sym] THEN
   REWRITE_TAC[num_set_tree_union_def; union_LN] THEN
-  DISCH_THEN(MP_TAC o SPECL [`union r1 r2:num_set`;
+  DISCH_THEN(MP_TAC o SPECL [`sptree_union r1 r2:num_set`;
                              `num_set_tree_union t2 t1`]) THEN
   REWRITE_TAC[domain_union; UNION_SUBSET] THEN STRIP_TAC THEN
   REPEAT GEN_TAC THEN DISCH_THEN(CONJUNCTS_THEN2 SUBST_ALL_TAC SUBST_ALL_TAC) THEN
@@ -1947,7 +1947,7 @@ let evaluate_flat_state_rel_lemma = prove
      ALL flat_elim_is_pure exprL /\
      ALL ((~) o v_has_Eval o SND) (flat_environment_v env) /\
      ALL ((~) o has_Eval) exprL /\
-     ALL (\e. inter (find_loc e) reachable = LN) exprL /\
+     ALL (\e. sptree_inter (find_loc e) reachable = LN) exprL /\
      flat_state_rel reachable state removed_state /\
      ~(result = Rerr (Rabort Rtype_error))
      ==> ?values. flat_state_rel reachable new_state removed_state /\

@@ -3,7 +3,7 @@
 (* Compilation from panLang to crepLang.                                     *)
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
-(* - Names as notes/naming/names.tsv says: the record context is            *)
+(* - Names as doc/names.tsv says: the record context is                     *)
 (*   pan_to_crep_context (fields pan_to_crep_context_vars, ..._funcs,       *)
 (*   ..._eids, ..._vmax; constructor pan_to_crep_context_REC); compile_exp, *)
 (*   compile, mk_ctxt, make_vmap, comp_func, make_funcs and compile_prog    *)
@@ -71,7 +71,7 @@ let compile_panop_def = cake_def
 
 cake_let_cong := true;;
 let pan_to_crep_compile_exp_def = cake_def_wf_clauses
-  `measure (\p:(B)pan_to_crep_context#(A)panLang_exp.
+  `MEASURE (\p:(B)pan_to_crep_context#(A)panLang_exp.
               panLang_exp_size ARB (SND p))`
   TERM_TAC
   [`(pan_to_crep_compile_exp (ctxt:(B)pan_to_crep_context)
@@ -178,7 +178,7 @@ let wrap_rt_def = cake_def
 
 cake_let_cong := true;;
 let pan_to_crep_compile_def = cake_def_wf_clauses
-  `measure (\p:(A)pan_to_crep_context#(A)panLang_prog.
+  `MEASURE (\p:(A)pan_to_crep_context#(A)panLang_prog.
               panLang_prog_size ARB (SND p))`
   TERM_TAC
   [`(pan_to_crep_compile (_:(A)pan_to_crep_context)

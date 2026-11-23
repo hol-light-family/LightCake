@@ -1059,8 +1059,8 @@ let COUNT_LIST_SNOC = prove
   REWRITE_TAC[COUNT_LIST_GENLIST; GENLIST; I_THM]);;
 
 let COUNT_LIST_COUNT = prove
- (`!n. set_of_list (COUNT_LIST n) = count n`,
-  REWRITE_TAC[EXTENSION; IN_SET_OF_LIST; MEM_COUNT_LIST; count_DEF;
+ (`!n. set_of_list (COUNT_LIST n) = pred_set_count n`,
+  REWRITE_TAC[EXTENSION; IN_SET_OF_LIST; MEM_COUNT_LIST; pred_set_count_DEF;
               IN_ELIM_THM]);;
 
 let COUNT_LIST_ADD = prove
@@ -1077,8 +1077,8 @@ let MAP_COUNT_LIST = prove
   REWRITE_TAC[COUNT_LIST_GENLIST; MAP_LIST_OF_SEQ; I_O_ID]);;
 
 let SUM_IMAGE_count_SUM_GENLIST = prove
- (`!(f:num->num) n. SUM_IMAGE f (count n) = SUM (list_of_seq f n)`,
-  GEN_TAC THEN REWRITE_TAC[SUM_IMAGE_DEF; count_DEF] THEN INDUCT_TAC THENL
+ (`!(f:num->num) n. SUM_IMAGE f (pred_set_count n) = SUM (list_of_seq f n)`,
+  GEN_TAC THEN REWRITE_TAC[SUM_IMAGE_DEF; pred_set_count_DEF] THEN INDUCT_TAC THENL
    [REWRITE_TAC[CONJUNCT1 LT; EMPTY_GSPEC; NSUM_CLAUSES; list_of_seq; SUM];
     SUBGOAL_THEN `{m | m < SUC n} = n INSERT {m | m < n}` SUBST1_TAC THENL
      [REWRITE_TAC[EXTENSION; IN_INSERT; IN_ELIM_THM] THEN ARITH_TAC;
@@ -1361,3 +1361,12 @@ let _ = cake_add_simps
    LENGTH_GENLIST; EL_GENLIST; DROP_LENGTH_NIL; FLAT_APPEND; LAST_CONS;
    LENGTH_SNOC; REVERSE_EQ_NIL; MAP_APPEND; LENGTH_APPEND; LENGTH_MAP;
    LENGTH_REVERSE; REVERSE_REVERSE];;
+
+(* ------------------------------------------------------------------------- *)
+(* Lemmas used by several later files.                                       *)
+(* ------------------------------------------------------------------------- *)
+
+let RICHAUX_LASTN_CONS = prove
+ (`!(x:A) l. LASTN (LENGTH l + 1) (CONS x l) = CONS x l`,
+  REPEAT GEN_TAC THEN MP_TAC(ISPEC `CONS (x:A) l` LASTN_LENGTH_ID) THEN
+  REWRITE_TAC[LENGTH; ADD1]);;

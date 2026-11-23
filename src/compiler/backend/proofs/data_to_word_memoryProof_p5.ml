@@ -152,7 +152,7 @@ let MP5AUX_DIVMOD_EQ = prove
 
 (* ------------------------------------------------------------------------- *)
 (* Separation logic: AC rearrangement of STAR, reading memory (HOL4's        *)
-(* SEP_R_TAC), splitting cond atoms.                                         *)
+(* SEP_R_TAC), splitting set_sep_cond atoms.                                 *)
 (* ------------------------------------------------------------------------- *)
 
 let rec mp5aux_star_atoms tm =
@@ -196,18 +196,18 @@ let MP5AUX_SEP_R_TAC : tactic = fun (asl,w as g) ->
      then MP5AUX_SEP_READ th else failwith "") asl) in
   MAP_EVERY (fun th -> STRIP_ASSUME_TAC th) facts g;;
 
-(* split the cond atoms of a STAR assumption: |- P s gives the conditions *)
+(* split the set_sep_cond atoms of a STAR assumption: |- P s gives the conditions *)
 (* and the assertion without them                                          *)
 let rec MP5AUX_SEP_COND_RULE th =
   let p,s = dest_comb (concl th) in
   let conds = filter (fun a -> match a with
-        Comb(Const("cond",_),_) -> true | _ -> false) (mp5aux_star_atoms p) in
+        Comb(Const("set_sep_cond",_),_) -> true | _ -> false) (mp5aux_star_atoms p) in
   match conds with
     [] -> [th]
   | cd::_ ->
       let eq = MP5AUX_STAR_FRONT_CONV cd p in
       let th1 = EQ_MP (AP_THM eq s) th in
-      if p = cd then [REWRITE_RULE[cond_def] th1] else
+      if p = cd then [REWRITE_RULE[set_sep_cond_def] th1] else
       let th2 = CONV_RULE (REWR_CONV (CONJUNCT1 (SPEC_ALL cond_STAR))) th1 in
       CONJUNCT1 th2 :: MP5AUX_SEP_COND_RULE (CONJUNCT2 th2);;
 
@@ -216,7 +216,7 @@ let MP5AUX_SEP_COND_TAC : tactic =
     let c = concl th in
     if is_comb c && (match rator c with Comb(Comb(Const("STAR",_),_),_) -> true
                                          | _ -> false) &&
-       exists (fun a -> match a with Comb(Const("cond",_),_) -> true | _ -> false)
+       exists (fun a -> match a with Comb(Const("set_sep_cond",_),_) -> true | _ -> false)
               (mp5aux_star_atoms (rator c))
     then MAP_EVERY STRIP_ASSUME_TAC (MP5AUX_SEP_COND_RULE th)
     else failwith ""));;
@@ -1660,7 +1660,7 @@ let MP5AUX_word_el_Bytes = prove
      misc_word_list e
        (CONS (wl_Word (make_byte_header c fl (LENGTH bs):A word))
              (MAP wl_Word (write_bytes bs ws be))) STAR
-     cond (LENGTH ws < 2 EXP (dimindex (:A) - 4) /\
+     set_sep_cond (LENGTH ws < 2 EXP (dimindex (:A) - 4) /\
            decode_length c (make_byte_header c fl (LENGTH bs):A word) =
              word (LENGTH ws) /\
            LENGTH bs + 2 EXP backend_common_word_shift(:A) <
@@ -3163,7 +3163,7 @@ let word_cmp_res_def = cake_def
 
 (* HOL4 line 13092 *)
 let word_cmp_loop_def = cake_def_wf
-  `measure (\p:A word#A word#A word#(A word->bool)#(A word->A word_loc).
+  `MEASURE (\p:A word#A word#A word#(A word->bool)#(A word->A word_loc).
               val (FST p))`
   (REWRITE_TAC[measure_THM; FST; SND] THEN REPEAT STRIP_TAC THEN
    MATCH_MP_TAC WSIMPPAUX_val_word_pred THEN ASM_REWRITE_TAC[])
@@ -3507,10 +3507,10 @@ let () = cake_register_admissible "ALL2" LISTAUX_ADMISSIBLE_ALL2;;
 
 (* HOL4 line 13248.  Defined by a match (the clause form with the catch-all *)
 (* clause makes the recursion package very slow: 25 clauses); the recursive *)
-(* call under ALL2 is a lambda (docs/CONVENTIONS.md section 8).             *)
+(* call under ALL2 is a lambda.                                             *)
 (* v_same_type_def is HOL4's theorem: the clauses as TFL completes them.    *)
 let v_same_type_DEF = cake_def_wf
-  `measure (\p:data_v#data_v. data_v_size (FST p))` TERM_TAC
+  `MEASURE (\p:data_v#data_v. data_v_size (FST p))` TERM_TAC
   `v_same_type v1 v2 <=>
      match (v1,v2) with
        (data_Number _,data_Number _) -> T
@@ -3922,7 +3922,7 @@ let v1_size_map = prove
 
 (* HOL4 line 13418 *)
 let v_depth_def = cake_def_wf
-  `measure data_v_size` TERM_TAC
+  `MEASURE data_v_size` TERM_TAC
   `(v_depth (data_Block _ _ ls) =
       (if NULL ls then 0 else 1) + MAX_LIST (MAP v_depth ls)) /\
    (v_depth _ = 0)`;;
@@ -4421,4 +4421,3 @@ let memory_rel_depth_size_limit = prove
     REWRITE_TAC[LE_EXP] THEN MP_TAC(INST_TYPE [`:A`,`:N`] ONE_LT_dimword) THEN
     DISCH_THEN(fun th -> REWRITE_TAC[MATCH_MP
       (ARITH_RULE `1 < x ==> ~(x = 0) /\ ~(x = 1)`) th]) THEN ARITH_TAC]);;
-

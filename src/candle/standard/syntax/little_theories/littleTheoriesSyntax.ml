@@ -4,7 +4,7 @@
 (* inference system extended with the little theories module system.         *)
 (*                                                                           *)
 (* Notes on the rendering (also for the files that load this one):           *)
-(* - Names as notes/naming/names.tsv says: try is little_try, env_ok is      *)
+(* - Names as doc/names.tsv says: try is little_try, env_ok is               *)
 (*   little_env_ok, the update' constructors ConstSpec, TypeDefn, NewType,   *)
 (*   NewConst, NewAxiom are little_ConstSpec, ...; the symbolic relations    *)
 (*   |-' and |n- are proves' and nproves, written prefix: (thy, es, h) |-' c *)
@@ -33,7 +33,7 @@
 (*     axsof' ctxt            set_of_list (axiom_list' ctxt)                 *)
 (*     ethyof ctxt   ethy_REC (tmsof' ctxt) (tysof' ctxt) (axsof' ctxt)      *)
 (*                     (etmsof ctxt) (etysof ctxt) (eaxsof ctxt)             *)
-(*     is_monomorphic ty      tyvars ty = []                                 *)
+(*     is_monomorphic ty      hol_tyvars ty = []                             *)
 (*   with the inner overloads expanded too.  The type abbreviation SIG is a  *)
 (*   HOL Light one (the same type as holSyntax.ml's sig).                    *)
 (* - HOL4 do-notation of the error monad is written with errorMonad_bind and *)
@@ -143,7 +143,7 @@ let term_ok'_def = prove
    of the second), so the definition takes the first LENGTH params types:
    the same list for all lengths. *)
 let ty_esubst_def = cake_def_wf
-  `measure (\(sigma:(mlstring,mlstring list#hol_type)fmap#A,ty:hol_type).
+  `MEASURE (\(sigma:(mlstring,mlstring list#hol_type)fmap#A,ty:hol_type).
               hol_type_size ty)` TERM_TAC
   `(ty_esubst (_:(mlstring,mlstring list#hol_type)fmap#A) (Tyvar n) = Tyvar n) /\
    (ty_esubst sigma (Tyapp n ts) =
@@ -206,7 +206,7 @@ let CLITAUX_nvar_aux_lt = prove
     REPEAT COND_CASES_TAC THEN REWRITE_TAC[LENGTH] THEN ASM_ARITH_TAC]);;
 
 let nvar_aux = cake_def_wf
-  `measure (\(nms:mlstring list,n:mlstring).
+  `MEASURE (\(nms:mlstring list,n:mlstring).
               LENGTH (FILTER (\e. strlen n <= strlen e) nms))`
   (REWRITE_TAC[measure_THM] THEN CONV_TAC(ONCE_DEPTH_CONV GEN_BETA_CONV) THEN
    REWRITE_TAC[CLITAUX_strlen_prime] THEN MESON_TAC[CLITAUX_nvar_aux_lt; LT_TRANS])
@@ -220,7 +220,7 @@ let NVARIANT = cake_def
 (* analog of INST_CORE.  HOL4's do-notation of the error monad is written
    with errorMonad_bind and errorMonad_return; x <<- e; m is let x = e in m. *)
 let esubst_ty0_def = cake_def_wf
-  `measure (\(env:(hol_term#hol_term)list,
+  `MEASURE (\(env:(hol_term#hol_term)list,
               sigma:(mlstring,mlstring list#hol_type)fmap#
                     (mlstring,hol_term#hol_type)fmap,
               avds:mlstring list,tm:hol_term). sizeof tm)`
@@ -348,7 +348,7 @@ let VSUBSTfm = cake_def
 
 (* HOL4 Overload is_monomorphic ty = (tyvars ty = []): written out. *)
 
-let tycons_def = cake_def_wf `measure hol_type_size`
+let tycons_def = cake_def_wf `MEASURE hol_type_size`
   (REWRITE_TAC[IN_SET_OF_LIST] THEN TERM_TAC)
   `(tycons (Tyvar _) = {}) /\
    (tycons (Tyapp n ts) = {n} UNION UNIONS (IMAGE tycons (set_of_list ts)))`;;
@@ -366,7 +366,7 @@ let esubsts_ok_def = cake_def
                    FLOOKUP (FST sig) tynm = SOME a /\
                    FAPPLY sigma tynm = (params,body) /\
                    LENGTH params = a /\
-                   set_of_list (tyvars body) SUBSET set_of_list params /\
+                   set_of_list (hol_tyvars body) SUBSET set_of_list params /\
                    type_ok (FST sig) body /\
                    DISJOINT (tycons body) (FDOM sigma)) /\
      (!tmnm. tmnm IN FDOM theta
@@ -375,7 +375,7 @@ let esubsts_ok_def = cake_def
                    FAPPLY theta tmnm = (repl,decl_ty) /\
                    decl_ty = ty /\
                    CLOSED repl /\
-                   set_of_list (tvars repl) SUBSET set_of_list (tyvars (typeof repl)) /\
+                   set_of_list (tvars repl) SUBSET set_of_list (hol_tyvars (typeof repl)) /\
                    hol_term_ok (esubst_sig (sigma,theta) sig) repl /\
                    typeof repl = ty_esubst (sigma,theta) ty)`;;
 
@@ -390,7 +390,7 @@ let esubsts_ok'_def = cake_def
              ==> ?params body.
                    FAPPLY sigma tynm = (params,body) /\
                    LENGTH params = FAPPLY (ethy_etys thy) tynm /\
-                   set_of_list (tyvars body) SUBSET set_of_list params /\
+                   set_of_list (hol_tyvars body) SUBSET set_of_list params /\
                    type_ok (ctys thy) body /\
                    DISJOINT (tycons body) (FDOM sigma)) /\
      FDOM theta SUBSET FDOM (ethy_etms thy) /\
@@ -399,7 +399,7 @@ let esubsts_ok'_def = cake_def
                    FAPPLY theta tmnm = (repl,decl_ty) /\
                    decl_ty = FAPPLY (ethy_etms thy) tmnm /\
                    CLOSED repl /\
-                   set_of_list (tvars repl) SUBSET set_of_list (tyvars (typeof repl)) /\
+                   set_of_list (tvars repl) SUBSET set_of_list (hol_tyvars (typeof repl)) /\
                    term_ok' (esubst_thy (sigma,theta) thy) repl /\
                    typeof repl = ty_esubst (sigma,theta) decl_ty)`;;
 
@@ -739,7 +739,7 @@ let updates'_rules,updates'_ind,updates'_cases,updates'_strongind = cake_inducti
         (conexts_of_upd' upd)) ctxt))) (alist_to_fmap (FLAT (MAP econsts_of_upd' ctxt)))
         (alist_to_fmap (FLAT (MAP etypes_of_upd' ctxt))) (set_of_list (FLAT
         (MAP eaxexts_of_upd' ctxt))),{},MAP (\(s,t). hol_Var s (typeof t) === t) eqs) prop /\
-      ALL (\t. CLOSED t /\ (!v. MEM v (tvars t) ==> MEM v (tyvars (typeof t))))
+      ALL (\t. CLOSED t /\ (!v. MEM v (tvars t) ==> MEM v (hol_tyvars (typeof t))))
           (MAP SND eqs) /\
       (!x ty. VFREE_IN (hol_Var x ty) prop ==>
               MEM (x,ty) (MAP (\(s,t). (s,typeof t)) eqs)) /\

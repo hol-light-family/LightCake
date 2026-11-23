@@ -40,7 +40,7 @@ type_invention_error := true;;
 let bvi_to_dataProof_code_rel_def = cake_def
   `bvi_to_dataProof_code_rel (bvi_code:(num # bvi_exp) spt)
                              (data_code:(num # data_prog) spt) <=>
-     wf bvi_code /\ wf data_code /\
+     sptree_wf bvi_code /\ sptree_wf data_code /\
      domain bvi_code = domain data_code /\
      (!n exp arg_count.
         lookup n bvi_code = SOME (arg_count,exp)
@@ -48,7 +48,7 @@ let bvi_to_dataProof_code_rel_def = cake_def
 
 (* HOL4 line 30 (Termination: measure v_size) *)
 let data_to_bvi_v_def = cake_def_wf
-  `measure data_v_size`
+  `MEASURE data_v_size`
   TERM_TAC
   `(data_to_bvi_v (data_Number i) = bvl_Number i) /\
    (data_to_bvi_v (data_Word64 w) = bvl_Word64 w) /\
@@ -90,7 +90,7 @@ let bvi_to_dataProof_state_rel_def = cake_def
      bvi_state_compile s =
        (\cfg prog. data_state_compile t cfg (bvi_to_data_compile_prog prog)) /\
      (!n. FLOOKUP (bvi_state_refs s) n =
-          lookup n (map data_to_bvi_ref (data_state_refs t))) /\
+          lookup n (sptree_map data_to_bvi_ref (data_state_refs t))) /\
      bvi_state_ffi s = data_state_ffi t /\
      bvi_state_global s = data_state_global t`;;
 
@@ -163,7 +163,7 @@ let optimise_correct = prove
   DISCH_THEN(X_CHOOSE_THEN `ls:num option` (X_CHOOSE_THEN `sm:num option`
     (X_CHOOSE_THEN `safe1:bool` (X_CHOOSE_THEN `peak1:num` ASSUME_TAC)))) THEN
   REWRITE_TAC[bvi_to_data_optimise_def] THEN
-  MP_TAC(ISPECL [`simp (FST (data_live_compile c LN)) data_Skip`; `s:(C,FFI)data_state`]
+  MP_TAC(ISPECL [`data_simp_simp (FST (data_live_compile c LN)) data_Skip`; `s:(C,FFI)data_state`]
     data_spaceProof_compile_correct) THEN
   ASM_REWRITE_TAC[simp_correct; FST; PAIR_MAP_THM; I_THM] THEN
   DISCH_THEN(X_CHOOSE_THEN `safe2:bool` (X_CHOOSE_THEN `peak2:num`
@@ -306,7 +306,7 @@ let isBool_F_T = prove
 (* HOL4 line 278 *)
 let get_vars_lift_thm = prove
  (`!vs a t2.
-     var_corr a vs (map data_to_bvi_v t2)
+     var_corr a vs (sptree_map data_to_bvi_v t2)
      ==> ?z. data_get_vars vs t2 = SOME z /\ a = MAP data_to_bvi_v z`,
   LIST_INDUCT_TAC THENL
    [LIST_INDUCT_TAC THEN REWRITE_TAC[var_corr_def; ALL2; data_get_vars_def; MAP] THEN
@@ -318,7 +318,7 @@ let get_vars_lift_thm = prove
   FIRST_X_ASSUM(MP_TAC o SPECL [`t':bvl_v list`; `t2:data_v spt`]) THEN
   ASM_REWRITE_TAC[var_corr_def] THEN
   DISCH_THEN(X_CHOOSE_THEN `z:data_v list` STRIP_ASSUME_TAC) THEN
-  UNDISCH_TAC `data_get_var h (map data_to_bvi_v t2) = SOME (h':bvl_v)` THEN
+  UNDISCH_TAC `data_get_var h (sptree_map data_to_bvi_v t2) = SOME (h':bvl_v)` THEN
   REWRITE_TAC[data_get_var_def; lookup_map] THEN
   MP_TAC(ISPEC `lookup h (t2:data_v spt)` (cases "option")) THEN STRIP_TAC THEN
   ASM_REWRITE_TAC[OPTION_MAP_DEF; option_DISTINCT; option_INJ] THEN DISCH_TAC THEN
@@ -327,7 +327,7 @@ let get_vars_lift_thm = prove
 
 (* HOL4 line 291 *)
 let var_corr_inter = prove
- (`!t p vs z. var_corr z vs (inter (p:A spt) (t:B spt)) ==> var_corr z vs p`,
+ (`!t p vs z. var_corr z vs (sptree_inter (p:A spt) (t:B spt)) ==> var_corr z vs p`,
   REPEAT GEN_TAC THEN REWRITE_TAC[var_corr_def] THEN
   MATCH_MP_TAC MONO_ALL2 THEN
   REWRITE_TAC[data_get_var_def; lookup_inter_alt] THEN MESON_TAC[option_DISTINCT]);;
@@ -341,19 +341,19 @@ let _ = cake_add_simps [get_vars_mk_wf];;
 
 (* HOL4 line 313 *)
 let get_vars_inter = prove
- (`!vs p t z. data_get_vars vs (inter (p:A spt) (t:B spt)) = SOME z
+ (`!vs p t z. data_get_vars vs (sptree_inter (p:A spt) (t:B spt)) = SOME z
               ==> data_get_vars vs p = SOME z`,
   REPEAT STRIP_TAC THEN FIRST_ASSUM(SUBST1_TAC o SYM) THEN
   MATCH_MP_TAC EVERY_get_vars THEN REWRITE_TAC[GSYM ALL_MEM] THEN
   X_GEN_TAC `x:num` THEN DISCH_TAC THEN
-  SUBGOAL_THEN `x IN domain (inter (p:A spt) (t:B spt))` MP_TAC THENL
+  SUBGOAL_THEN `x IN domain (sptree_inter (p:A spt) (t:B spt))` MP_TAC THENL
    [ASM_MESON_TAC[data_get_vars_IMP_domain]; ALL_TAC] THEN
   REWRITE_TAC[domain_inter; IN_INTER; lookup_inter_alt] THEN
   STRIP_TAC THEN ASM_REWRITE_TAC[]);;
 
 (* HOL4 line 328 *)
 let var_corr_map = prove
- (`!p (f:A->B) vs z. var_corr z vs p ==> var_corr (MAP f z) vs (map f p)`,
+ (`!p (f:A->B) vs z. var_corr z vs p ==> var_corr (MAP f z) vs (sptree_map f p)`,
   GEN_TAC THEN GEN_TAC THEN LIST_INDUCT_TAC THEN GEN_TAC THEN
   CASES_ON `z:A list` THEN
   REWRITE_TAC[var_corr_def; ALL2; MAP; data_get_var_def; lookup_map] THEN
@@ -495,10 +495,10 @@ let data_to_bvi_v_list_to_v_Nil = prove
 (* HOL4 line 406 *)
 let data_to_bvi_do_eq = prove
  (`(!t v1 v2 r.
-      (!n. FLOOKUP r n = lookup n (map data_to_bvi_ref t))
+      (!n. FLOOKUP r n = lookup n (sptree_map data_to_bvi_ref t))
       ==> bvl_do_eq r (data_to_bvi_v v1) (data_to_bvi_v v2) = data_do_eq t v1 v2) /\
    (!t l1 l2 r.
-      (!n. FLOOKUP r n = lookup n (map data_to_bvi_ref t))
+      (!n. FLOOKUP r n = lookup n (sptree_map data_to_bvi_ref t))
       ==> bvl_do_eq_list r (MAP data_to_bvi_v l1) (MAP data_to_bvi_v l2) =
           data_do_eq_list t l1 l2)`,
   MATCH_MP_TAC data_do_eq_ind THEN REPEAT CONJ_TAC THEN REPEAT STRIP_TAC THEN
@@ -553,7 +553,7 @@ let data_to_bvi_v_list_to_v_APPEND = prove
 (* HOL4 line 454 *)
 let refs_rel_LEAST_eq = prove
  (`!s1 s2.
-     (!n. FLOOKUP s1 n = lookup n (map data_to_bvi_ref s2))
+     (!n. FLOOKUP s1 n = lookup n (sptree_map data_to_bvi_ref s2))
      ==> (minimal ptr. ~(ptr IN FDOM s1)) = (minimal ptr. ~(ptr IN domain s2))`,
   REPEAT STRIP_TAC THEN
   SUBGOAL_THEN `!x. x IN FDOM (s1:(num,(bvl_v)bvl_ref)fmap) <=>
@@ -1160,7 +1160,7 @@ let list_insert_list_to_num_set = prove
      list_insert xs (list_to_num_set (APPEND (APPEND xs ys) zs)) =
      list_to_num_set (APPEND (APPEND xs ys) zs)`,
   REPEAT GEN_TAC THEN
-  SUBGOAL_THEN `!xs (t:1 spt). wf t ==> wf (list_insert xs t)` ASSUME_TAC THENL
+  SUBGOAL_THEN `!xs (t:1 spt). sptree_wf t ==> sptree_wf (list_insert xs t)` ASSUME_TAC THENL
    [LIST_INDUCT_TAC THEN ASM_SIMP_TAC[list_insert_def; wf_insert]; ALL_TAC] THEN
   W(fun (asl,w) -> MP_TAC(ISPECL [lhs w; rhs w] num_set_domain_eq)) THEN
   ASM_SIMP_TAC[wf_list_to_num_set] THEN DISCH_THEN(SUBST1_TAC o SYM) THEN
@@ -1271,7 +1271,7 @@ let DATAPAUX_B2D_CC_GOAL = CASE_TERM
   `!xs env (s1:(C,FFI)bvi_state) res s2 (t1:(C,FFI)data_state) n corr tail live.
      bvi_evaluate (xs,env,s1) = (res,s2) /\
      ~(res = Rerr (Rabort Rtype_error)) /\
-     var_corr env corr (map data_to_bvi_v (data_state_locals t1)) /\
+     var_corr env corr (sptree_map data_to_bvi_v (data_state_locals t1)) /\
      (~(LENGTH xs = 1) ==> ~tail) /\
      (!k. n <= k ==> lookup k (data_state_locals t1) = NONE) /\
      bvi_to_dataProof_state_rel s1 t1 /\
@@ -1300,7 +1300,7 @@ let DATAPAUX_B2D_CC_GOAL = CASE_TERM
                 ~tail /\ n <= next_var /\
                 ALL (\v. v < next_var) vs /\
                 (!k. next_var <= k ==> lookup k (data_state_locals t2) = NONE) /\
-                var_corr env corr (map data_to_bvi_v (data_state_locals t2)) /\
+                var_corr env corr (sptree_map data_to_bvi_v (data_state_locals t2)) /\
                 (!k x. lookup k (data_state_locals t2) = SOME x ==> k < next_var) /\
                 (!k x. lookup k (data_state_locals t1) = SOME x /\
                        (~MEM k live ==> MEM k corr)
@@ -1309,7 +1309,7 @@ let DATAPAUX_B2D_CC_GOAL = CASE_TERM
                 data_state_handler t1 = data_state_handler t2 /\
                 (~(data_jump_exc t1 = NONE) ==> ~(data_jump_exc t2 = NONE)) /\
                 (match res with
-                   Rval xs -> var_corr xs vs (map data_to_bvi_v (data_state_locals t2))
+                   Rval xs -> var_corr xs vs (sptree_map data_to_bvi_v (data_state_locals t2))
                  | _ -> F))`;;
 
 let DATAPAUX_B2D_IND_INST3 (goal:term) (ind:thm) =
@@ -1409,9 +1409,9 @@ let DATAPAUX_B2D_Seq_Tick = prove
 
 let DATAPAUX_B2D_var_corr_insert = prove
  (`!env corr (t:data_v spt) m k z.
-     var_corr env corr (map data_to_bvi_v t) /\
+     var_corr env corr (sptree_map data_to_bvi_v t) /\
      (!j x. lookup j t = SOME x ==> j < m) /\ m <= k
-     ==> var_corr env corr (map data_to_bvi_v (insert k z t))`,
+     ==> var_corr env corr (sptree_map data_to_bvi_v (insert k z t))`,
   REPEAT GEN_TAC THEN
   REWRITE_TAC[var_corr_def; LIST_REL_EL_EQN; data_get_var_def; lookup_map; lookup_insert] THEN
   DISCH_THEN(CONJUNCTS_THEN2 (CONJUNCTS_THEN2 ASSUME_TAC (LABEL_TAC "el"))
@@ -1439,7 +1439,7 @@ let DATAPAUX_B2D_IF_MOVE = prove
      data_state_handler t1 = data_state_handler t2 /\
      (~(data_jump_exc t1 = NONE) ==> ~(data_jump_exc t2 = NONE)) /\
      (!k. nv <= k ==> lookup k (data_state_locals t3) = NONE) /\
-     var_corr env corr (map data_to_bvi_v (data_state_locals t3)) /\
+     var_corr env corr (sptree_map data_to_bvi_v (data_state_locals t3)) /\
      (!k x. lookup k (data_state_locals t3) = SOME x ==> k < nv) /\
      (!k x. lookup k (data_state_locals t2) = SOME x /\ (~MEM k live ==> MEM k corr)
             ==> lookup k (data_state_locals t3) = SOME x) /\
@@ -1451,7 +1451,7 @@ let DATAPAUX_B2D_IF_MOVE = prove
          (!k. n3 + 1 <= k
               ==> lookup k (data_state_locals (data_set_var n3 z2 t3)) = NONE) /\
          var_corr env corr
-           (map data_to_bvi_v (data_state_locals (data_set_var n3 z2 t3))) /\
+           (sptree_map data_to_bvi_v (data_state_locals (data_set_var n3 z2 t3))) /\
          (!k x. lookup k (data_state_locals (data_set_var n3 z2 t3)) = SOME x
                 ==> k < n3 + 1) /\
          (!k x. lookup k (data_state_locals t1) = SOME x /\ (~MEM k live ==> MEM k corr)
@@ -1460,10 +1460,10 @@ let DATAPAUX_B2D_IF_MOVE = prove
          data_state_handler t1 = data_state_handler (data_set_var n3 z2 t3) /\
          (~(data_jump_exc t1 = NONE) ==> ~(data_jump_exc (data_set_var n3 z2 t3) = NONE)) /\
          var_corr [data_to_bvi_v z2] [n3]
-           (map data_to_bvi_v (data_state_locals (data_set_var n3 z2 t3)))`,
+           (sptree_map data_to_bvi_v (data_state_locals (data_set_var n3 z2 t3)))`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   SUBGOAL_THEN `var_corr env corr
-    (map data_to_bvi_v (data_state_locals (data_set_var n3 z2 (t3:(C,FFI)data_state))))`
+    (sptree_map data_to_bvi_v (data_state_locals (data_set_var n3 z2 (t3:(C,FFI)data_state))))`
     ASSUME_TAC THENL
    [REWRITE_TAC[data_set_var_def; data_state_INFO.ri_accfupds; K_THM] THEN
     MATCH_MP_TAC DATAPAUX_B2D_var_corr_insert THEN EXISTS_TAC `nv:num` THEN
@@ -1578,7 +1578,7 @@ let DATAPAUX_B2D_var_corr_transfer = prove
 let DATAPAUX_B2D_get_vars_inter_names = prove
  (`!args (t:A spt) (names:B spt) zs.
      data_get_vars args t = SOME zs /\ set_of_list args SUBSET domain names
-     ==> data_get_vars args (mk_wf (inter t names)) = SOME zs`,
+     ==> data_get_vars args (mk_wf (sptree_inter t names)) = SOME zs`,
   REPEAT STRIP_TAC THEN FIRST_X_ASSUM(SUBST1_TAC o SYM) THEN
   MATCH_MP_TAC EVERY_get_vars THEN REWRITE_TAC[GSYM ALL_MEM] THEN
   X_GEN_TAC `a:num` THEN DISCH_TAC THEN
@@ -1599,7 +1599,7 @@ let DATAPAUX_B2D_OP_FACTS = prove
      data_state_handler t1 = data_state_handler t2 /\
      (~(data_jump_exc t1 = NONE) ==> ~(data_jump_exc t2 = NONE)) /\
      (!k. n1 <= k ==> lookup k (data_state_locals t2) = NONE) /\
-     var_corr env corr (map data_to_bvi_v (data_state_locals t2)) /\
+     var_corr env corr (sptree_map data_to_bvi_v (data_state_locals t2)) /\
      (!k x. lookup k (data_state_locals t3) = SOME x
             ==> lookup k (data_state_locals t2) = SOME x) /\
      (!k. MEM k live \/ MEM k corr
@@ -1611,7 +1611,7 @@ let DATAPAUX_B2D_OP_FACTS = prove
          (!k. n1 + 1 <= k
               ==> lookup k (data_state_locals (data_set_var n1 pv t3)) = NONE) /\
          var_corr env corr
-           (map data_to_bvi_v (data_state_locals (data_set_var n1 pv t3))) /\
+           (sptree_map data_to_bvi_v (data_state_locals (data_set_var n1 pv t3))) /\
          (!k x. lookup k (data_state_locals (data_set_var n1 pv t3)) = SOME x
                 ==> k < n1 + 1) /\
          (!k x. lookup k (data_state_locals t1) = SOME x /\ (~MEM k live ==> MEM k corr)
@@ -1620,7 +1620,7 @@ let DATAPAUX_B2D_OP_FACTS = prove
          data_state_handler t1 = data_state_handler (data_set_var n1 pv t3) /\
          (~(data_jump_exc t1 = NONE) ==> ~(data_jump_exc (data_set_var n1 pv t3) = NONE)) /\
          var_corr [data_to_bvi_v pv] [n1]
-           (map data_to_bvi_v (data_state_locals (data_set_var n1 pv t3)))`,
+           (sptree_map data_to_bvi_v (data_state_locals (data_set_var n1 pv t3)))`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   SUBGOAL_THEN `!k x. lookup k (data_state_locals (t3:(C,FFI)data_state)) = SOME x ==> k < n1`
     ASSUME_TAC THENL
@@ -1633,13 +1633,13 @@ let DATAPAUX_B2D_OP_FACTS = prove
     ASM_REWRITE_TAC[] THEN MESON_TAC[option_DISTINCT];
     ALL_TAC] THEN
   SUBGOAL_THEN `var_corr env corr
-    (map data_to_bvi_v (data_state_locals (data_set_var n1 pv (t3:(C,FFI)data_state))))`
+    (sptree_map data_to_bvi_v (data_state_locals (data_set_var n1 pv (t3:(C,FFI)data_state))))`
     ASSUME_TAC THENL
    [REWRITE_TAC[data_set_var_def; data_state_INFO.ri_accfupds; K_THM] THEN
     MATCH_MP_TAC DATAPAUX_B2D_var_corr_insert THEN EXISTS_TAC `n1:num` THEN
     ASM_REWRITE_TAC[LE_REFL] THEN
     MATCH_MP_TAC DATAPAUX_B2D_var_corr_transfer THEN
-    EXISTS_TAC `map data_to_bvi_v (data_state_locals (t2:(C,FFI)data_state))` THEN
+    EXISTS_TAC `sptree_map data_to_bvi_v (data_state_locals (t2:(C,FFI)data_state))` THEN
     ASM_SIMP_TAC[lookup_map];
     ALL_TAC] THEN
   ASM_REWRITE_TAC[] THEN
@@ -1696,7 +1696,7 @@ let DATAPAUX_B2D_iAssign_Rval = prove
                  v = data_to_bvi_v pv /\ bvi_to_dataProof_state_rel r' t3 /\
                  (data_state_locals t3 = data_state_locals t2 \/
                   data_state_locals t3 =
-                    mk_wf (inter (data_state_locals t2)
+                    mk_wf (sptree_inter (data_state_locals t2)
                                  (list_to_num_set (APPEND (APPEND args live) env)))) /\
                  data_state_stack t3 = data_state_stack t2 /\
                  data_state_handler t3 = data_state_handler t2`,
@@ -1708,7 +1708,7 @@ let DATAPAUX_B2D_iAssign_Rval = prove
    [EXPAND_TAC "nms" THEN
     REWRITE_TAC[domain_list_to_num_set2; SET_OF_LIST_APPEND] THEN SET_TAC[];
     ALL_TAC] THEN
-  SUBGOAL_THEN `data_get_vars args (mk_wf (inter (data_state_locals (t2:(C,FFI)data_state))
+  SUBGOAL_THEN `data_get_vars args (mk_wf (sptree_inter (data_state_locals (t2:(C,FFI)data_state))
                   (nms:num_set))) = SOME zs` ASSUME_TAC THENL
    [MATCH_MP_TAC DATAPAUX_B2D_get_vars_inter_names THEN ASM_REWRITE_TAC[]; ALL_TAC] THEN
   let finish_tac =
@@ -1730,7 +1730,7 @@ let DATAPAUX_B2D_iAssign_Rval = prove
                 data_cut_env_def] THEN
     ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
     MP_TAC(ISPECL [`op:clos_op`; `zs:data_v list`;
-      `data_state_locals_fupd (K (mk_wf (inter (data_state_locals t2) (nms:num_set))))
+      `data_state_locals_fupd (K (mk_wf (sptree_inter (data_state_locals t2) (nms:num_set))))
          (t2:(C,FFI)data_state)`] DATAPAUX_B2D_do_app_frame) THEN
     ANTS_TAC THENL
      [ASM_REWRITE_TAC[] THEN
@@ -1783,7 +1783,7 @@ let DATAPAUX_B2D_iAssign_Rerr = prove
   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
   MP_TAC(ISPECL [`i:mlstring`; `zs:data_v list`; `r:(C,FFI)bvi_state`;
-    `data_state_locals_fupd (K (mk_wf (inter (data_state_locals t2)
+    `data_state_locals_fupd (K (mk_wf (sptree_inter (data_state_locals t2)
        (list_to_num_set (APPEND (APPEND args live) env))))) (t2:(C,FFI)data_state)`;
     `x:final_event`] state_rel_do_app_FFI_err) THEN
   ASM_REWRITE_TAC[DATAPAUX_B2D_state_rel_fupds] THEN DISCH_THEN SUBST1_TAC THEN
@@ -1795,7 +1795,7 @@ let DATAPAUX_B2D_cut_facts = prove
  (`!(t3:(C,FFI)data_state) (t2:(C,FFI)data_state) args live env.
      (data_state_locals t3 = data_state_locals t2 \/
       data_state_locals t3 =
-        mk_wf (inter (data_state_locals t2)
+        mk_wf (sptree_inter (data_state_locals t2)
                      (list_to_num_set (APPEND (APPEND args live) env))))
      ==> (!k x. lookup k (data_state_locals t3) = SOME x
                 ==> lookup k (data_state_locals t2) = SOME x) /\
@@ -1886,7 +1886,7 @@ let DATAPAUX_B2D_Assign_Rval = prove
                  v = data_to_bvi_v pv /\ bvi_to_dataProof_state_rel r' t3 /\
                  data_state_locals t3 =
                    option_CASE nopt (data_state_locals t2)
-                     (\nms. mk_wf (inter (data_state_locals t2) nms)) /\
+                     (\nms. mk_wf (sptree_inter (data_state_locals t2) nms)) /\
                  data_state_stack t3 = data_state_stack t2 /\
                  data_state_handler t3 = data_state_handler t2`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
@@ -1919,7 +1919,7 @@ let DATAPAUX_B2D_Assign_Rval = prove
     ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
     ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
     MP_TAC(ISPECL [`op:clos_op`; `zs:data_v list`;
-      `data_state_locals_fupd (K (mk_wf (inter (data_state_locals t2) (nms:num_set))))
+      `data_state_locals_fupd (K (mk_wf (sptree_inter (data_state_locals t2) (nms:num_set))))
          (t2:(C,FFI)data_state)`] DATAPAUX_B2D_do_app_frame) THEN
     ANTS_TAC THENL [ASM_REWRITE_TAC[LE_0]; ALL_TAC] THEN
     finish_tac]);;
@@ -1938,7 +1938,7 @@ let DATAPAUX_B2D_iAssign_swap_Rval = prove
                  v = data_to_bvi_v pv /\ bvi_to_dataProof_state_rel r' t3 /\
                  (data_state_locals t3 = data_state_locals t2 \/
                   data_state_locals t3 =
-                    mk_wf (inter (data_state_locals t2)
+                    mk_wf (sptree_inter (data_state_locals t2)
                                  (list_to_num_set (APPEND (APPEND args live) env)))) /\
                  data_state_stack t3 = data_state_stack t2 /\
                  data_state_handler t3 = data_state_handler t2`,
@@ -2006,7 +2006,7 @@ let DATAPAUX_B2D_Assign_Rval_gen = prove
                  v = data_to_bvi_v pv /\ bvi_to_dataProof_state_rel r' t3 /\
                  data_state_locals t3 =
                    option_CASE nopt (data_state_locals t2)
-                     (\nms. mk_wf (inter (data_state_locals t2) nms)) /\
+                     (\nms. mk_wf (sptree_inter (data_state_locals t2) nms)) /\
                  data_state_stack t3 = data_state_stack t2 /\
                  data_state_handler t3 = data_state_handler t2`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
@@ -2042,7 +2042,7 @@ let DATAPAUX_B2D_Assign_Rval_gen = prove
     ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
     ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
     MP_TAC(ISPECL [`op:clos_op`; `zs:data_v list`;
-      `data_state_locals_fupd (K (mk_wf (inter (data_state_locals t2) (nms:num_set))))
+      `data_state_locals_fupd (K (mk_wf (sptree_inter (data_state_locals t2) (nms:num_set))))
          (t2:(C,FFI)data_state)`] DATAPAUX_B2D_do_app_frame) THEN
     ANTS_TAC THENL [ASM_REWRITE_TAC[LE_0]; ALL_TAC] THEN
     finish_tac]);;
@@ -2061,8 +2061,8 @@ let DATAPAUX_B2D_MAP_FST_compile_prog = prove
 let DATAPAUX_B2D_code_rel_union = prove
  (`!c1 c2 progs.
      bvi_to_dataProof_code_rel c1 c2
-     ==> bvi_to_dataProof_code_rel (union c1 (fromAList progs))
-           (union c2 (fromAList (bvi_to_data_compile_prog progs)))`,
+     ==> bvi_to_dataProof_code_rel (sptree_union c1 (fromAList progs))
+           (sptree_union c2 (fromAList (bvi_to_data_compile_prog progs)))`,
   REPEAT GEN_TAC THEN REWRITE_TAC[bvi_to_dataProof_code_rel_def] THEN STRIP_TAC THEN
   ASM_SIMP_TAC[wf_union; wf_fromAList; domain_union; domain_fromAList;
                DATAPAUX_B2D_MAP_FST_compile_prog] THEN
@@ -2112,7 +2112,7 @@ let DATAPAUX_B2D_do_install = prove
   ASM_REWRITE_TAC[] THEN CONJ_TAC THENL
    [W(fun (asl,w) ->
       let t = find_term (fun t -> is_comb t && is_comb (rator t) &&
-                (try fst(dest_const(rator(rator t))) = "union" with _ -> false) &&
+                (try fst(dest_const(rator(rator t))) = "sptree_union" with _ -> false) &&
                 (try fst(dest_const(fst(strip_comb(rand t)))) = "fromAList" with _ -> false) &&
                 (try type_of t = `:(num#bvi_exp)spt` with _ -> false)) w in
       let progs = rand(rand t) in
@@ -2134,7 +2134,7 @@ let DATAPAUX_B2D_iAssign_Install_Rval = prove
                  v = data_to_bvi_v pv /\ bvi_to_dataProof_state_rel r' t3 /\
                  (data_state_locals t3 = data_state_locals t2 \/
                   data_state_locals t3 =
-                    mk_wf (inter (data_state_locals t2)
+                    mk_wf (sptree_inter (data_state_locals t2)
                                  (list_to_num_set (APPEND (APPEND args live) env)))) /\
                  data_state_stack t3 = data_state_stack t2 /\
                  data_state_handler t3 = data_state_handler t2`,
@@ -2171,7 +2171,7 @@ let DATAPAUX_B2D_iAssign_CopyByte_Rval = prove
                  v = data_to_bvi_v pv /\ bvi_to_dataProof_state_rel r' t3 /\
                  (data_state_locals t3 = data_state_locals t2 \/
                   data_state_locals t3 =
-                    mk_wf (inter (data_state_locals t2)
+                    mk_wf (sptree_inter (data_state_locals t2)
                                  (list_to_num_set (APPEND (APPEND args live) env)))) /\
                  data_state_stack t3 = data_state_stack t2 /\
                  data_state_handler t3 = data_state_handler t2`,
@@ -2205,7 +2205,7 @@ let DATAPAUX_B2D_iAssign_any_Rval = prove
                  v = data_to_bvi_v pv /\ bvi_to_dataProof_state_rel r' t3 /\
                  (data_state_locals t3 = data_state_locals t2 \/
                   data_state_locals t3 =
-                    mk_wf (inter (data_state_locals t2)
+                    mk_wf (sptree_inter (data_state_locals t2)
                                  (list_to_num_set (APPEND (APPEND args live) env)))) /\
                  data_state_stack t3 = data_state_stack t2 /\
                  data_state_handler t3 = data_state_handler t2`,
@@ -2243,7 +2243,7 @@ let DATAPAUX_B2D_iAssign_any_Rval = prove
 
 let DATAPAUX_B2D_var_corr_domain = prove
  (`!env corr (t:data_v spt).
-     var_corr env corr (map data_to_bvi_v t) ==> set_of_list corr SUBSET domain t`,
+     var_corr env corr (sptree_map data_to_bvi_v t) ==> set_of_list corr SUBSET domain t`,
   REPEAT GEN_TAC THEN
   REWRITE_TAC[var_corr_def; LIST_REL_EL_EQN; data_get_var_def; lookup_map; SUBSET;
               IN_SET_OF_LIST; MEM_EXISTS_EL] THEN
@@ -2335,7 +2335,7 @@ let DATAPAUX_B2D_state_rel_call_push = prove
 let DATAPAUX_B2D_var_corr_fromList = prove
  (`!args:data_v list.
      var_corr (MAP data_to_bvi_v args) (COUNT_LIST (LENGTH args))
-       (map data_to_bvi_v (fromList args))`,
+       (sptree_map data_to_bvi_v (fromList args))`,
   GEN_TAC THEN
   REWRITE_TAC[var_corr_def; data_get_var_def; lookup_map; COUNT_LIST_GENLIST; LIST_REL_EL_EQN;
               LENGTH_LIST_OF_SEQ; LENGTH_MAP] THEN
@@ -2343,10 +2343,10 @@ let DATAPAUX_B2D_var_corr_fromList = prove
 
 let DATAPAUX_B2D_cut_live_corr = prove
  (`!(t1:(C,FFI)data_state) env corr live.
-     var_corr env corr (map data_to_bvi_v (data_state_locals t1)) /\
+     var_corr env corr (sptree_map data_to_bvi_v (data_state_locals t1)) /\
      ALL (\n. ~(lookup n (data_state_locals t1) = NONE)) live
      ==> data_cut_env (list_to_num_set (APPEND live corr)) (data_state_locals t1) =
-         SOME (mk_wf (inter (data_state_locals t1) (list_to_num_set (APPEND live corr))))`,
+         SOME (mk_wf (sptree_inter (data_state_locals t1) (list_to_num_set (APPEND live corr))))`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[data_cut_env_def] THEN
   SUBGOAL_THEN `domain (list_to_num_set (APPEND live corr)) SUBSET
                 domain (data_state_locals (t1:(C,FFI)data_state))`
@@ -2360,9 +2360,9 @@ let DATAPAUX_B2D_cut_live_corr = prove
 let DATAPAUX_B2D_FORCE_FACTS = prove
  (`!(t1:(C,FFI)data_state) (t3:(C,FFI)data_state) n env corr live pv.
      (!k. n <= k ==> lookup k (data_state_locals t1) = NONE) /\
-     var_corr env corr (map data_to_bvi_v (data_state_locals t1)) /\
+     var_corr env corr (sptree_map data_to_bvi_v (data_state_locals t1)) /\
      data_state_locals t3 =
-       mk_wf (inter (data_state_locals t1) (list_to_num_set (APPEND live corr))) /\
+       mk_wf (sptree_inter (data_state_locals t1) (list_to_num_set (APPEND live corr))) /\
      data_state_stack t3 = data_state_stack t1 /\
      data_state_handler t3 = data_state_handler t1
      ==> n <= n + 1 /\
@@ -2370,7 +2370,7 @@ let DATAPAUX_B2D_FORCE_FACTS = prove
          (!k. n + 1 <= k
               ==> lookup k (data_state_locals (data_set_var n pv t3)) = NONE) /\
          var_corr env corr
-           (map data_to_bvi_v (data_state_locals (data_set_var n pv t3))) /\
+           (sptree_map data_to_bvi_v (data_state_locals (data_set_var n pv t3))) /\
          (!k x. lookup k (data_state_locals (data_set_var n pv t3)) = SOME x
                 ==> k < n + 1) /\
          (!k x. lookup k (data_state_locals t1) = SOME x /\ (~MEM k live ==> MEM k corr)
@@ -2379,7 +2379,7 @@ let DATAPAUX_B2D_FORCE_FACTS = prove
          data_state_handler t1 = data_state_handler (data_set_var n pv t3) /\
          (~(data_jump_exc t1 = NONE) ==> ~(data_jump_exc (data_set_var n pv t3) = NONE)) /\
          var_corr [data_to_bvi_v pv] [n]
-           (map data_to_bvi_v (data_state_locals (data_set_var n pv t3)))`,
+           (sptree_map data_to_bvi_v (data_state_locals (data_set_var n pv t3)))`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   MATCH_MP_TAC DATAPAUX_B2D_OP_FACTS THEN EXISTS_TAC `t1:(C,FFI)data_state` THEN
   MP_TAC(ISPECL [`t3:(C,FFI)data_state`; `t1:(C,FFI)data_state`; `[]:num list`;
@@ -2557,7 +2557,7 @@ let DATAPAUX_B2D_CC_CONS = prove
                       (CONS tv live)` ASSUME_TAC THENL
      [REWRITE_TAC[ALL] THEN CONJ_TAC THENL
        [UNDISCH_TAC `var_corr [w] [tv]
-          (map data_to_bvi_v (data_state_locals (t2:(C,FFI)data_state)))` THEN
+          (sptree_map data_to_bvi_v (data_state_locals (t2:(C,FFI)data_state)))` THEN
         REWRITE_TAC[var_corr_def; ALL2; data_get_var_def; lookup_map] THEN
         MESON_TAC[OPTION_MAP_DEF; option_DISTINCT];
         UNDISCH_TAC `ALL (\n. ~(lookup n (data_state_locals (t1:(C,FFI)data_state)) = NONE))
@@ -2591,7 +2591,7 @@ let DATAPAUX_B2D_CC_CONS = prove
         DISCH_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN
         ASM_REWRITE_TAC[];
         UNDISCH_TAC `var_corr [w] [tv]
-          (map data_to_bvi_v (data_state_locals (t2:(C,FFI)data_state)))` THEN
+          (sptree_map data_to_bvi_v (data_state_locals (t2:(C,FFI)data_state)))` THEN
         REWRITE_TAC[var_corr_def; ALL2; data_get_var_def; lookup_map] THEN
         MP_TAC(ISPEC `lookup tv (data_state_locals (t2:(C,FFI)data_state))`
                  (cases "option")) THEN
@@ -2639,7 +2639,7 @@ let DATAPAUX_B2D_CC_VAR = prove
   DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
   REWRITE_TAC[] THEN REPEAT DISCH_TAC THEN
   MP_TAC(ISPECL [`env:bvl_v list`; `corr:num list`;
-                 `map data_to_bvi_v (data_state_locals (t1:(C,FFI)data_state))`; `n:num`]
+                 `sptree_map data_to_bvi_v (data_state_locals (t1:(C,FFI)data_state))`; `n:num`]
                 DATAPAUX_B2D_var_corr_EL) THEN
   ASM_REWRITE_TAC[data_get_var_def; lookup_map] THEN
   MP_TAC(ISPEC `lookup (EL n corr) (data_state_locals (t1:(C,FFI)data_state))`
@@ -2713,7 +2713,7 @@ let DATAPAUX_B2D_CC_IF = prove
     SUBGOAL_THEN `?z. lookup tv (data_state_locals (t2:(C,FFI)data_state)) = SOME z /\
                       data_to_bvi_v z = w` STRIP_ASSUME_TAC THENL
      [UNDISCH_TAC `var_corr [w] [tv]
-        (map data_to_bvi_v (data_state_locals (t2:(C,FFI)data_state)))` THEN
+        (sptree_map data_to_bvi_v (data_state_locals (t2:(C,FFI)data_state)))` THEN
       REWRITE_TAC[var_corr_def; ALL2; data_get_var_def; lookup_map] THEN
       MP_TAC(ISPEC `lookup tv (data_state_locals (t2:(C,FFI)data_state))`
                (cases "option")) THEN
@@ -2770,7 +2770,7 @@ let DATAPAUX_B2D_CC_IF = prove
           SUBGOAL_THEN `?z2. lookup tv2 (data_state_locals (t3:(C,FFI)data_state)) = SOME z2 /\
                              data_to_bvi_v z2 = w2` STRIP_ASSUME_TAC THENL
            [UNDISCH_TAC `var_corr [w2] [tv2]
-              (map data_to_bvi_v (data_state_locals (t3:(C,FFI)data_state)))` THEN
+              (sptree_map data_to_bvi_v (data_state_locals (t3:(C,FFI)data_state)))` THEN
             REWRITE_TAC[var_corr_def; ALL2; data_get_var_def; lookup_map] THEN
             MP_TAC(ISPEC `lookup tv2 (data_state_locals (t3:(C,FFI)data_state))`
                      (cases "option")) THEN
@@ -2845,7 +2845,7 @@ let DATAPAUX_B2D_CC_IF = prove
           SUBGOAL_THEN `?z2. lookup tv2 (data_state_locals (t3:(C,FFI)data_state)) = SOME z2 /\
                              data_to_bvi_v z2 = w2` STRIP_ASSUME_TAC THENL
            [UNDISCH_TAC `var_corr [w2] [tv2]
-              (map data_to_bvi_v (data_state_locals (t3:(C,FFI)data_state)))` THEN
+              (sptree_map data_to_bvi_v (data_state_locals (t3:(C,FFI)data_state)))` THEN
             REWRITE_TAC[var_corr_def; ALL2; data_get_var_def; lookup_map] THEN
             MP_TAC(ISPEC `lookup tv2 (data_state_locals (t3:(C,FFI)data_state))`
                      (cases "option")) THEN
@@ -2934,12 +2934,12 @@ let DATAPAUX_B2D_CC_LET = prove
       ASM_REWRITE_TAC[];
       ALL_TAC] THEN
     SUBGOAL_THEN `var_corr (APPEND a env) (APPEND vs corr)
-                    (map data_to_bvi_v (data_state_locals (t2:(C,FFI)data_state)))`
+                    (sptree_map data_to_bvi_v (data_state_locals (t2:(C,FFI)data_state)))`
       ASSUME_TAC THENL
      [MATCH_MP_TAC DATAPAUX_B2D_var_corr_APPEND THEN ASM_REWRITE_TAC[]; ALL_TAC] THEN
     FIRST_ASSUM(ASSUME_TAC o MATCH_MP DATAPAUX_B2D_var_corr_LENGTH o
       check ((=) `var_corr a vs
-        (map data_to_bvi_v (data_state_locals (t2:(C,FFI)data_state)))` o concl)) THEN
+        (sptree_map data_to_bvi_v (data_state_locals (t2:(C,FFI)data_state)))` o concl)) THEN
     REMOVE_THEN "ih2" (MP_TAC o SPECL [`a:bvl_v list`; `s1:(C,FFI)bvi_state`]) THEN
     ASM_REWRITE_TAC[] THEN
     DISCH_THEN(MP_TAC o SPECL [`res:bvi_result`; `s2:(C,FFI)bvi_state`;
@@ -2997,7 +2997,7 @@ let DATAPAUX_B2D_CC_RAISE = prove
     DATAPAUX_B2D_PRES_TAC `pres:((data_v list,data_v)result)option` THEN
     FIRST_ASSUM(MP_TAC o MATCH_MP compile_SING_IMP) THEN
     DISCH_THEN(X_CHOOSE_THEN `tv:num` SUBST_ALL_TAC) THEN
-    UNDISCH_TAC `var_corr [w] [tv] (map data_to_bvi_v (data_state_locals (t2:(C,FFI)data_state)))` THEN
+    UNDISCH_TAC `var_corr [w] [tv] (sptree_map data_to_bvi_v (data_state_locals (t2:(C,FFI)data_state)))` THEN
     REWRITE_TAC[var_corr_def; ALL2; data_get_var_def; lookup_map] THEN
     MP_TAC(ISPEC `lookup tv (data_state_locals (t2:(C,FFI)data_state))` (cases "option")) THEN
     STRIP_TAC THEN ASM_REWRITE_TAC[OPTION_MAP_DEF; option_DISTINCT; option_INJ] THEN
@@ -3248,7 +3248,7 @@ let DATAPAUX_B2D_CC_FORCE = prove
   ASM_CASES_TAC `n < LENGTH (env:bvl_v list)` THEN ASM_REWRITE_TAC[] THENL
    [ALL_TAC; DATAPAUX_B2D_TERR_TAC] THEN
   MP_TAC(ISPECL [`env:bvl_v list`; `corr:num list`;
-                 `map data_to_bvi_v (data_state_locals (t1:(C,FFI)data_state))`; `n:num`]
+                 `sptree_map data_to_bvi_v (data_state_locals (t1:(C,FFI)data_state))`; `n:num`]
                 DATAPAUX_B2D_var_corr_EL) THEN
   ASM_REWRITE_TAC[data_get_var_def; lookup_map] THEN STRIP_TAC THEN
   SUBGOAL_THEN `?z. lookup (EL n corr) (data_state_locals (t1:(C,FFI)data_state)) = SOME z /\
@@ -3295,7 +3295,7 @@ let DATAPAUX_B2D_CC_FORCE = prove
       ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN CASE_REWRITE_TAC[PAIR_EQ] THEN
       REPEAT DATAPAUX_EXISTS_EQ_ANY_TAC THEN CASE_REWRITE_TAC[] THEN
       MP_TAC(ISPECL [`t1:(C,FFI)data_state`;
-        `data_state_locals_fupd (K (mk_wf (inter (data_state_locals t1)
+        `data_state_locals_fupd (K (mk_wf (sptree_inter (data_state_locals t1)
             (list_to_num_set (APPEND live corr))))) (t1:(C,FFI)data_state)`;
         `n':num`; `env:bvl_v list`; `corr:num list`; `live:num list`; `v':data_v`]
         DATAPAUX_B2D_FORCE_FACTS) THEN
@@ -3384,7 +3384,7 @@ let DATAPAUX_B2D_CC_FORCE = prove
                                     data_state_INFO.ri_accfupds; K_THM]) THEN
         ASM_REWRITE_TAC[] THEN DATAPAUX_FAST_MESON_TAC[];
         DISCH_THEN(MP_TAC o SPECL [`res:bvi_result`; `s2:(C,FFI)bvi_state`;
-          `data_call_env args' ss (data_push_env (mk_wf (inter (data_state_locals t1)
+          `data_call_env args' ss (data_push_env (mk_wf (sptree_inter (data_state_locals t1)
              (list_to_num_set (APPEND live corr)))) F (data_dec_clock (t1:(C,FFI)data_state)))`;
           `LENGTH (args':data_v list)`; `COUNT_LIST (LENGTH (args':data_v list))`; `T`;
           `[]:num list`]) THEN
@@ -3432,7 +3432,7 @@ let DATAPAUX_B2D_CC_FORCE = prove
             (CONJUNCTS_THEN2 SUBST_ALL_TAC SUBST_ALL_TAC))) THEN
           SUBGOAL_THEN `data_state_stack (t3:(C,FFI)data_state) =
                         CONS (data_Env (data_state_locals_size (t1:(C,FFI)data_state))
-                          (mk_wf (inter (data_state_locals t1)
+                          (mk_wf (sptree_inter (data_state_locals t1)
                                     (list_to_num_set (APPEND live corr)))))
                           (data_state_stack t1) /\
                         data_state_handler t3 = data_state_handler t1` STRIP_ASSUME_TAC THENL
@@ -3445,7 +3445,7 @@ let DATAPAUX_B2D_CC_FORCE = prove
           CASE_REWRITE_TAC[PAIR_EQ] THEN
           REPEAT DATAPAUX_EXISTS_EQ_ANY_TAC THEN CASE_REWRITE_TAC[] THEN
           MP_TAC(ISPECL [`t1:(C,FFI)data_state`;
-            `data_state_locals_fupd (K (mk_wf (inter (data_state_locals (t1:(C,FFI)data_state))
+            `data_state_locals_fupd (K (mk_wf (sptree_inter (data_state_locals (t1:(C,FFI)data_state))
                 (list_to_num_set (APPEND live corr)))))
              (data_state_stack_fupd (K (data_state_stack t1))
                (data_state_locals_size_fupd (K (data_state_locals_size t1))
@@ -3466,7 +3466,7 @@ let DATAPAUX_B2D_CC_FORCE = prove
           ASM_REWRITE_TAC(data_to_bvi_result_def :: DATAPAUX_B2D_RES_RWS) THEN
           MATCH_MP_TAC DATAPAUX_B2D_jump_Env THEN
           MAP_EVERY EXISTS_TAC [`data_state_locals_size (t1:(C,FFI)data_state)`;
-            `mk_wf (inter (data_state_locals (t1:(C,FFI)data_state))
+            `mk_wf (sptree_inter (data_state_locals (t1:(C,FFI)data_state))
                           (list_to_num_set (APPEND live corr)))`] THEN
           FIRST_X_ASSUM(MATCH_MP_TAC o check (fun th -> is_imp (concl th) &&
              can (find_term (fun t -> try fst(dest_const t) = "data_jump_exc" with _ -> false))
@@ -3559,7 +3559,7 @@ let DATAPAUX_B2D_ALL_live = prove
 
 let DATAPAUX_B2D_domain_live_corr = prove
  (`!(t:(C,FFI)data_state) env corr live.
-     var_corr env corr (map data_to_bvi_v (data_state_locals t)) /\
+     var_corr env corr (sptree_map data_to_bvi_v (data_state_locals t)) /\
      ALL (\n. ~(lookup n (data_state_locals t) = NONE)) live
      ==> domain (list_to_num_set (APPEND live corr)) SUBSET domain (data_state_locals t)`,
   REPEAT STRIP_TAC THEN
@@ -3649,15 +3649,15 @@ let DATAPAUX_B2D_jump_push_T_ne = prove
 (* with the exception value bound to n1                                     *)
 let DATAPAUX_B2D_HANDLER_START = prove
  (`!(t2:(C,FFI)data_state) (t3:(C,FFI)data_state) n1 env corr live xv.
-     var_corr env corr (map data_to_bvi_v (data_state_locals t2)) /\
+     var_corr env corr (sptree_map data_to_bvi_v (data_state_locals t2)) /\
      (!k. n1 <= k ==> lookup k (data_state_locals t2) = NONE) /\
      ALL (\n. ~(lookup n (data_state_locals t2) = NONE)) live /\
      data_state_locals t3 =
-       mk_wf (inter (data_state_locals t2) (list_to_num_set (APPEND live corr))) /\
+       mk_wf (sptree_inter (data_state_locals t2) (list_to_num_set (APPEND live corr))) /\
      data_state_stack t3 = data_state_stack t2 /\
      data_state_handler t3 = data_state_handler t2
      ==> var_corr (CONS (data_to_bvi_v xv) env) (CONS n1 corr)
-           (map data_to_bvi_v (data_state_locals (data_set_var n1 xv t3))) /\
+           (sptree_map data_to_bvi_v (data_state_locals (data_set_var n1 xv t3))) /\
          (!k. n1 + 1 <= k ==> lookup k (data_state_locals (data_set_var n1 xv t3)) = NONE) /\
          ALL (\n. ~(lookup n (data_state_locals (data_set_var n1 xv t3)) = NONE)) live /\
          (data_jump_exc (data_set_var n1 xv t3) = NONE <=> data_jump_exc t2 = NONE) /\
@@ -3675,10 +3675,10 @@ let DATAPAUX_B2D_HANDLER_START = prove
     SUBGOAL_THEN `lookup k (data_state_locals (t2:(C,FFI)data_state)) = SOME x` MP_TAC THENL
      [ASM_MESON_TAC[]; ASM_SIMP_TAC[option_DISTINCT]];
     ALL_TAC] THEN
-  SUBGOAL_THEN `var_corr env corr (map data_to_bvi_v (data_state_locals (t3:(C,FFI)data_state)))`
+  SUBGOAL_THEN `var_corr env corr (sptree_map data_to_bvi_v (data_state_locals (t3:(C,FFI)data_state)))`
     ASSUME_TAC THENL
    [MATCH_MP_TAC DATAPAUX_B2D_var_corr_transfer THEN
-    EXISTS_TAC `map data_to_bvi_v (data_state_locals (t2:(C,FFI)data_state))` THEN
+    EXISTS_TAC `sptree_map data_to_bvi_v (data_state_locals (t2:(C,FFI)data_state))` THEN
     ASM_SIMP_TAC[lookup_map];
     ALL_TAC] THEN
   REWRITE_TAC[data_set_var_def; data_state_INFO.ri_accfupds; K_THM; jump_exc_NONE] THEN
@@ -3729,7 +3729,7 @@ let DATAPAUX_B2D_HANDLER_END = prove
      data_state_handler th = data_state_handler t2 /\
      n1 + 1 <= n2 /\
      (!k. n2 <= k ==> lookup k (data_state_locals t5) = NONE) /\
-     var_corr (CONS w env) (CONS n1 corr) (map data_to_bvi_v (data_state_locals t5)) /\
+     var_corr (CONS w env) (CONS n1 corr) (sptree_map data_to_bvi_v (data_state_locals t5)) /\
      (!k x. lookup k (data_state_locals th) = SOME x /\
             (~MEM k live ==> MEM k (CONS n1 corr))
             ==> lookup k (data_state_locals t5) = SOME x) /\
@@ -3740,7 +3740,7 @@ let DATAPAUX_B2D_HANDLER_END = prove
          (!k. n2 + 1 <= k
               ==> lookup k (data_state_locals (data_set_var n2 pv t5)) = NONE) /\
          var_corr env corr
-           (map data_to_bvi_v (data_state_locals (data_set_var n2 pv t5))) /\
+           (sptree_map data_to_bvi_v (data_state_locals (data_set_var n2 pv t5))) /\
          (!k x. lookup k (data_state_locals (data_set_var n2 pv t5)) = SOME x
                 ==> k < n2 + 1) /\
          (!k x. lookup k (data_state_locals t1) = SOME x /\ (~MEM k live ==> MEM k corr)
@@ -3750,7 +3750,7 @@ let DATAPAUX_B2D_HANDLER_END = prove
          (~(data_jump_exc t1 = NONE)
           ==> ~(data_jump_exc (data_set_var n2 pv t5) = NONE)) /\
          var_corr [data_to_bvi_v pv] [n2]
-           (map data_to_bvi_v (data_state_locals (data_set_var n2 pv t5)))`,
+           (sptree_map data_to_bvi_v (data_state_locals (data_set_var n2 pv t5)))`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   SUBGOAL_THEN `!k x. lookup k (data_state_locals (t5:(C,FFI)data_state)) = SOME x ==> k < n2`
     ASSUME_TAC THENL
@@ -3772,7 +3772,7 @@ let DATAPAUX_B2D_HANDLER_END = prove
     MATCH_MP_TAC DATAPAUX_B2D_var_corr_insert THEN EXISTS_TAC `n2:num` THEN
     ASM_REWRITE_TAC[LE_REFL] THEN
     UNDISCH_TAC `var_corr (CONS w env) (CONS n1 corr)
-                   (map data_to_bvi_v (data_state_locals (t5:(C,FFI)data_state)))` THEN
+                   (sptree_map data_to_bvi_v (data_state_locals (t5:(C,FFI)data_state)))` THEN
     SIMP_TAC[DATAPAUX_B2D_var_corr_CONS];
     REPEAT GEN_TAC THEN REWRITE_TAC[lookup_insert] THEN COND_CASES_TAC THENL
      [DISCH_TAC THEN ASM_ARITH_TAC; DISCH_TAC THEN MATCH_MP_TAC(ARITH_RULE `k < n2 ==> k < n2 + 1`) THEN
@@ -3807,7 +3807,7 @@ let DATAPAUX_B2D_state_rel_set_var = prove
 
 let DATAPAUX_B2D_var_corr_SING = prove
  (`!l k (t:data_v spt).
-     var_corr l [k] (map data_to_bvi_v t) <=>
+     var_corr l [k] (sptree_map data_to_bvi_v t) <=>
      ?v. l = [data_to_bvi_v v] /\ lookup k t = SOME v`,
   GEN_TAC THEN STRUCT_CASES_TAC(ISPEC `l:bvl_v list` list_CASES) THEN
   REWRITE_TAC[var_corr_def; ALL2; NOT_CONS_NIL] THEN
@@ -3940,7 +3940,7 @@ let DATAPAUX_B2D_CALL_NONE = prove
                                     LET_DEF; LET_END_DEF; data_state_INFO.ri_accfupds; K_THM]) THEN
         ASM_REWRITE_TAC[] THEN DATAPAUX_FAST_MESON_TAC[];
         DISCH_THEN(MP_TAC o SPECL [`res:bvi_result`; `s2:(C,FFI)bvi_state`;
-          `data_call_env args' ss (data_push_env (mk_wf (inter
+          `data_call_env args' ss (data_push_env (mk_wf (sptree_inter
              (data_state_locals (t2:(C,FFI)data_state)) (list_to_num_set (APPEND live corr))))
              F (data_dec_clock (ITER ticks data_dec_clock t2)))`;
           `LENGTH (args':data_v list)`; `COUNT_LIST (LENGTH (args':data_v list))`; `T`;
@@ -3989,7 +3989,7 @@ let DATAPAUX_B2D_CALL_NONE = prove
             (CONJUNCTS_THEN2 SUBST_ALL_TAC SUBST_ALL_TAC))) THEN
           SUBGOAL_THEN `data_state_stack (t3:(C,FFI)data_state) =
                         CONS (data_Env (data_state_locals_size (t2:(C,FFI)data_state))
-                          (mk_wf (inter (data_state_locals t2)
+                          (mk_wf (sptree_inter (data_state_locals t2)
                                     (list_to_num_set (APPEND live corr)))))
                           (data_state_stack t2) /\
                         data_state_handler t3 = data_state_handler t2` STRIP_ASSUME_TAC THENL
@@ -4001,7 +4001,7 @@ let DATAPAUX_B2D_CALL_NONE = prove
           ASM_REWRITE_TAC[] THEN
           CASE_REWRITE_TAC[PAIR_EQ] THEN
           REPEAT DATAPAUX_EXISTS_EQ_ANY_TAC THEN CASE_REWRITE_TAC[] THEN
-          MP_TAC(ISPECL [`data_state_locals_fupd (K (mk_wf (inter
+          MP_TAC(ISPECL [`data_state_locals_fupd (K (mk_wf (sptree_inter
                 (data_state_locals (t2:(C,FFI)data_state)) (list_to_num_set (APPEND live corr)))))
              (data_state_stack_fupd (K (data_state_stack t2))
                (data_state_locals_size_fupd (K (data_state_locals_size t2))
@@ -4009,7 +4009,7 @@ let DATAPAUX_B2D_CALL_NONE = prove
             `live:num list`; `corr:num list`] DATAPAUX_B2D_cut_facts) THEN
           REWRITE_TAC[APPEND; data_state_INFO.ri_accfupds; K_THM] THEN STRIP_TAC THEN
           MP_TAC(ISPECL [`t1:(C,FFI)data_state`; `t2:(C,FFI)data_state`;
-            `data_state_locals_fupd (K (mk_wf (inter
+            `data_state_locals_fupd (K (mk_wf (sptree_inter
                 (data_state_locals (t2:(C,FFI)data_state)) (list_to_num_set (APPEND live corr)))))
              (data_state_stack_fupd (K (data_state_stack t2))
                (data_state_locals_size_fupd (K (data_state_locals_size t2))
@@ -4030,7 +4030,7 @@ let DATAPAUX_B2D_CALL_NONE = prove
           ASM_REWRITE_TAC(data_to_bvi_result_def :: DATAPAUX_B2D_RES_RWS) THEN
           MATCH_MP_TAC DATAPAUX_B2D_jump_Env THEN
           MAP_EVERY EXISTS_TAC [`data_state_locals_size (t2:(C,FFI)data_state)`;
-            `mk_wf (inter (data_state_locals (t2:(C,FFI)data_state))
+            `mk_wf (sptree_inter (data_state_locals (t2:(C,FFI)data_state))
                           (list_to_num_set (APPEND live corr)))`] THEN
           FIRST_X_ASSUM(MATCH_MP_TAC o check (fun th -> is_imp (concl th) &&
              can (find_term (fun t -> try fst(dest_const t) = "data_jump_exc" with _ -> false))
@@ -4162,7 +4162,7 @@ let DATAPAUX_B2D_CALL_SOME = prove
                                         `MAP data_to_bvi_v args'`; `s0:(C,FFI)bvi_state`]) THEN
       ANTS_TAC THENL [ASM_REWRITE_TAC[]; ALL_TAC] THEN
       DISCH_THEN(MP_TAC o SPECL [`r4:bvi_result`; `s4:(C,FFI)bvi_state`;
-          `data_call_env args' ss (data_push_env (mk_wf (inter
+          `data_call_env args' ss (data_push_env (mk_wf (sptree_inter
              (data_state_locals (t2:(C,FFI)data_state)) (list_to_num_set (APPEND live corr))))
              T (data_dec_clock (ITER ticks data_dec_clock t2)))`;
           `LENGTH (args':data_v list)`; `COUNT_LIST (LENGTH (args':data_v list))`; `T`;
@@ -4208,7 +4208,7 @@ let DATAPAUX_B2D_CALL_SOME = prove
           (CONJUNCTS_THEN2 SUBST_ALL_TAC SUBST_ALL_TAC))) THEN
         SUBGOAL_THEN `data_state_stack (t3:(C,FFI)data_state) =
                       CONS (Exc (data_state_locals_size (t2:(C,FFI)data_state))
-                        (mk_wf (inter (data_state_locals t2) (list_to_num_set (APPEND live corr))))
+                        (mk_wf (sptree_inter (data_state_locals t2) (list_to_num_set (APPEND live corr))))
                         (data_state_handler t2)) (data_state_stack t2)` ASSUME_TAC THENL
          [FIRST_X_ASSUM(MP_TAC o check (fun th -> is_imp (concl th) &&
                                                   is_disj (lhand (concl th)))) THEN
@@ -4219,7 +4219,7 @@ let DATAPAUX_B2D_CALL_SOME = prove
           ALL_TAC] THEN
         SUBGOAL_THEN `data_evaluate (data_Call (SOME ([n2],list_to_num_set (APPEND live corr))) dest vs
                          (SOME (next_var,data_Seq c2 (data_Move n2 vv))),
-                         ITER ticks data_dec_clock (t2:(C,FFI)data_state)) = (NONE, data_set_var n2 x (data_state_locals_fupd (K (mk_wf (inter (data_state_locals (t2:(C,FFI)data_state))
+                         ITER ticks data_dec_clock (t2:(C,FFI)data_state)) = (NONE, data_set_var n2 x (data_state_locals_fupd (K (mk_wf (sptree_inter (data_state_locals (t2:(C,FFI)data_state))
                 (list_to_num_set (APPEND live corr)))))
              (data_state_stack_fupd (K (data_state_stack t2))
                (data_state_locals_size_fupd (K (data_state_locals_size t2))
@@ -4245,7 +4245,7 @@ let DATAPAUX_B2D_CALL_SOME = prove
                           DATAPAUX_B2D_RES_RWS);
           REWRITE_TAC[data_evaluate_def; PAIR_EQ] THEN
           REPEAT DATAPAUX_EXISTS_EQ_ANY_TAC THEN CASE_REWRITE_TAC[] THEN
-          MP_TAC(ISPECL [`data_state_locals_fupd (K (mk_wf (inter (data_state_locals (t2:(C,FFI)data_state))
+          MP_TAC(ISPECL [`data_state_locals_fupd (K (mk_wf (sptree_inter (data_state_locals (t2:(C,FFI)data_state))
                 (list_to_num_set (APPEND live corr)))))
              (data_state_stack_fupd (K (data_state_stack t2))
                (data_state_locals_size_fupd (K (data_state_locals_size t2))
@@ -4260,7 +4260,7 @@ let DATAPAUX_B2D_CALL_SOME = prove
             MATCH_MP_TAC(ARITH_RULE `!nv n2 k. nv + 1 <= n2 /\ n2 <= k ==> nv <= k`) THEN
             EXISTS_TAC `n2:num` THEN ASM_REWRITE_TAC[];
             ALL_TAC] THEN
-          MP_TAC(ISPECL [`t1:(C,FFI)data_state`; `t2:(C,FFI)data_state`; `data_state_locals_fupd (K (mk_wf (inter (data_state_locals (t2:(C,FFI)data_state))
+          MP_TAC(ISPECL [`t1:(C,FFI)data_state`; `t2:(C,FFI)data_state`; `data_state_locals_fupd (K (mk_wf (sptree_inter (data_state_locals (t2:(C,FFI)data_state))
                 (list_to_num_set (APPEND live corr)))))
              (data_state_stack_fupd (K (data_state_stack t2))
                (data_state_locals_size_fupd (K (data_state_locals_size t2))
@@ -4436,7 +4436,7 @@ let DATAPAUX_B2D_CC_CALL = prove
 
 let DATAPAUX_B2D_lookup_set_vars_seq = prove
  (`!n1 (xs:data_v list) (l:data_v spt) k.
-     lookup k (union (fromAList (ZIP (list_of_seq (\i. n1 + i) (LENGTH xs)) xs)) l) =
+     lookup k (sptree_union (fromAList (ZIP (list_of_seq (\i. n1 + i) (LENGTH xs)) xs)) l) =
      if n1 <= k /\ k < n1 + LENGTH xs then SOME (EL (k - n1) xs) else lookup k l`,
   REPEAT GEN_TAC THEN REWRITE_TAC[lookup_union; lookup_fromAList] THEN
   SUBGOAL_THEN `LENGTH (list_of_seq (\i. n1 + i) (LENGTH (xs:data_v list))) = LENGTH xs`
@@ -4458,26 +4458,26 @@ let DATAPAUX_B2D_lookup_set_vars_seq = prove
 (* bound to n1, n1 + 1, ...                                                 *)
 let DATAPAUX_B2D_LETCALL_START = prove
  (`!(t2:(C,FFI)data_state) n1 env corr live (xs:data_v list).
-     var_corr env corr (map data_to_bvi_v (data_state_locals t2)) /\
+     var_corr env corr (sptree_map data_to_bvi_v (data_state_locals t2)) /\
      (!k. n1 <= k ==> lookup k (data_state_locals t2) = NONE) /\
      ALL (\n. ~(lookup n (data_state_locals t2) = NONE)) live
      ==> var_corr (APPEND (MAP data_to_bvi_v xs) env)
            (APPEND (list_of_seq (\i. n1 + i) (LENGTH xs)) corr)
-           (map data_to_bvi_v
-              (union (fromAList (ZIP (list_of_seq (\i. n1 + i) (LENGTH xs)) xs))
-                 (mk_wf (inter (data_state_locals t2)
+           (sptree_map data_to_bvi_v
+              (sptree_union (fromAList (ZIP (list_of_seq (\i. n1 + i) (LENGTH xs)) xs))
+                 (mk_wf (sptree_inter (data_state_locals t2)
                            (list_to_num_set (APPEND live corr)))))) /\
          (!k. n1 + LENGTH xs <= k
-              ==> lookup k (union (fromAList (ZIP (list_of_seq (\i. n1 + i) (LENGTH xs)) xs))
-                              (mk_wf (inter (data_state_locals t2)
+              ==> lookup k (sptree_union (fromAList (ZIP (list_of_seq (\i. n1 + i) (LENGTH xs)) xs))
+                              (mk_wf (sptree_inter (data_state_locals t2)
                                         (list_to_num_set (APPEND live corr))))) = NONE) /\
-         ALL (\n. ~(lookup n (union (fromAList (ZIP (list_of_seq (\i. n1 + i) (LENGTH xs)) xs))
-                                (mk_wf (inter (data_state_locals t2)
+         ALL (\n. ~(lookup n (sptree_union (fromAList (ZIP (list_of_seq (\i. n1 + i) (LENGTH xs)) xs))
+                                (mk_wf (sptree_inter (data_state_locals t2)
                                           (list_to_num_set (APPEND live corr))))) = NONE))
              live /\
          (!k x. lookup k (data_state_locals t2) = SOME x /\ (MEM k live \/ MEM k corr)
-                ==> lookup k (union (fromAList (ZIP (list_of_seq (\i. n1 + i) (LENGTH xs)) xs))
-                                (mk_wf (inter (data_state_locals t2)
+                ==> lookup k (sptree_union (fromAList (ZIP (list_of_seq (\i. n1 + i) (LENGTH xs)) xs))
+                                (mk_wf (sptree_inter (data_state_locals t2)
                                           (list_to_num_set (APPEND live corr))))) = SOME x)`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   SUBGOAL_THEN `!k x. lookup k (data_state_locals (t2:(C,FFI)data_state)) = SOME x ==> k < n1`
@@ -4509,7 +4509,7 @@ let DATAPAUX_B2D_LETCALL_START = prove
       REPEAT STRIP_TAC THEN
       ASM_REWRITE_TAC[ARITH_RULE `n1 <= n1 + i`; LT_ADD_LCANCEL; ADD_SUB2; OPTION_MAP_DEF];
       MATCH_MP_TAC DATAPAUX_B2D_var_corr_transfer THEN
-      EXISTS_TAC `map data_to_bvi_v (data_state_locals (t2:(C,FFI)data_state))` THEN
+      EXISTS_TAC `sptree_map data_to_bvi_v (data_state_locals (t2:(C,FFI)data_state))` THEN
       ASM_REWRITE_TAC[lookup_map; DATAPAUX_B2D_lookup_set_vars_seq; lookup_mk_wf;
                       lookup_inter_alt; domain_list_to_num_set; MEM_APPEND] THEN
       X_GEN_TAC `k:num` THEN DISCH_TAC THEN
@@ -4545,7 +4545,7 @@ let DATAPAUX_B2D_LETCALL_END = prove
      data_state_stack t4 = data_state_stack t2 /\
      data_state_handler t4 = data_state_handler t2 /\
      LENGTH a = LENGTH rs /\ n1 <= n2 /\
-     var_corr (APPEND a env) (APPEND rs corr) (map data_to_bvi_v (data_state_locals t5)) /\
+     var_corr (APPEND a env) (APPEND rs corr) (sptree_map data_to_bvi_v (data_state_locals t5)) /\
      (!k x. lookup k (data_state_locals t4) = SOME x /\
             (~MEM k live ==> MEM k (APPEND rs corr))
             ==> lookup k (data_state_locals t5) = SOME x) /\
@@ -4553,7 +4553,7 @@ let DATAPAUX_B2D_LETCALL_END = prove
      data_state_handler t4 = data_state_handler t5 /\
      (~(data_jump_exc t4 = NONE) ==> ~(data_jump_exc t5 = NONE))
      ==> n <= n2 /\
-         var_corr env corr (map data_to_bvi_v (data_state_locals t5)) /\
+         var_corr env corr (sptree_map data_to_bvi_v (data_state_locals t5)) /\
          (!k x. lookup k (data_state_locals t1) = SOME x /\ (~MEM k live ==> MEM k corr)
                 ==> lookup k (data_state_locals t5) = SOME x) /\
          data_state_stack t1 = data_state_stack t5 /\
@@ -4562,7 +4562,7 @@ let DATAPAUX_B2D_LETCALL_END = prove
   REPEAT GEN_TAC THEN STRIP_TAC THEN REPEAT CONJ_TAC THENL
    [ASM_ARITH_TAC;
     UNDISCH_TAC `var_corr (APPEND a env) (APPEND rs corr)
-                   (map data_to_bvi_v (data_state_locals (t5:(C,FFI)data_state)))` THEN
+                   (sptree_map data_to_bvi_v (data_state_locals (t5:(C,FFI)data_state)))` THEN
     REWRITE_TAC[var_corr_def] THEN
     DISCH_THEN(MP_TAC o MATCH_MP (REWRITE_RULE[IMP_CONJ] LIST_REL_APPEND_IMP)) THEN
     ASM_REWRITE_TAC[] THEN SIMP_TAC[];
@@ -4839,7 +4839,7 @@ let DATAPAUX_B2D_CC_LETCALL = prove
         REMOVE_THEN "ihc" (MP_TAC o SPECL [`MAP data_to_bvi_v zz`; `exp:bvi_exp`;
                                           `MAP data_to_bvi_v args'`; `s0:(C,FFI)bvi_state`]) THEN
         ANTS_TAC THENL [ASM_REWRITE_TAC[]; ALL_TAC] THEN
-        DISCH_THEN(MP_TAC o SPECL [`r4:bvi_result`; `s4:(C,FFI)bvi_state`; `data_call_env args' ss (data_push_env (mk_wf (inter
+        DISCH_THEN(MP_TAC o SPECL [`r4:bvi_result`; `s4:(C,FFI)bvi_state`; `data_call_env args' ss (data_push_env (mk_wf (sptree_inter
              (data_state_locals (t2:(C,FFI)data_state)) (list_to_num_set (APPEND live corr))))
              F (data_dec_clock (ITER ticks data_dec_clock t2)))`;
           `LENGTH (args':data_v list)`; `COUNT_LIST (LENGTH (args':data_v list))`; `T`;
@@ -4892,7 +4892,7 @@ let DATAPAUX_B2D_CC_LETCALL = prove
             check (fun th -> try rand(concl th) = `rets:num` with _ -> false)) THEN
           SUBGOAL_THEN `data_state_stack (t3:(C,FFI)data_state) =
                         CONS (data_Env (data_state_locals_size (t2:(C,FFI)data_state))
-                          (mk_wf (inter (data_state_locals t2)
+                          (mk_wf (sptree_inter (data_state_locals t2)
                                     (list_to_num_set (APPEND live corr)))))
                           (data_state_stack t2) /\
                         data_state_handler t3 = data_state_handler t2` STRIP_ASSUME_TAC THENL
@@ -4907,7 +4907,7 @@ let DATAPAUX_B2D_CC_LETCALL = prove
            [REWRITE_TAC[ALL_DISTINCT_GENLIST] THEN ARITH_TAC; ALL_TAC] THEN
           SUBGOAL_THEN `data_evaluate (mk_ticks ticks (data_Call (SOME (list_of_seq (\i. next_var + i) (LENGTH (vs':data_v list)),list_to_num_set (APPEND live corr)))
                  (SOME dest) vs NONE),t2:(C,FFI)data_state) = (NONE,data_set_vars (list_of_seq (\i. next_var + i) (LENGTH (vs':data_v list))) vs'
-               (data_state_locals_fupd (K (mk_wf (inter (data_state_locals (t2:(C,FFI)data_state))
+               (data_state_locals_fupd (K (mk_wf (sptree_inter (data_state_locals (t2:(C,FFI)data_state))
                 (list_to_num_set (APPEND live corr)))))
              (data_state_stack_fupd (K (data_state_stack t2))
                (data_state_locals_size_fupd (K (data_state_locals_size t2))
@@ -4923,13 +4923,13 @@ let DATAPAUX_B2D_CC_LETCALL = prove
             ALL_TAC] THEN
           DATAPAUX_B2D_SEQ_NONE_TAC THEN
           ABBREV_TAC `t4 = data_set_vars (list_of_seq (\i. next_var + i) (LENGTH (vs':data_v list))) vs'
-               (data_state_locals_fupd (K (mk_wf (inter (data_state_locals (t2:(C,FFI)data_state))
+               (data_state_locals_fupd (K (mk_wf (sptree_inter (data_state_locals (t2:(C,FFI)data_state))
                 (list_to_num_set (APPEND live corr)))))
              (data_state_stack_fupd (K (data_state_stack t2))
                (data_state_locals_size_fupd (K (data_state_locals_size t2))
                  (t3:(C,FFI)data_state))))` THEN
-          SUBGOAL_THEN `data_state_locals (t4:(C,FFI)data_state) = union (fromAList (ZIP (list_of_seq (\i. next_var + i) (LENGTH (vs':data_v list))) vs'))
-               (mk_wf (inter (data_state_locals (t2:(C,FFI)data_state))
+          SUBGOAL_THEN `data_state_locals (t4:(C,FFI)data_state) = sptree_union (fromAList (ZIP (list_of_seq (\i. next_var + i) (LENGTH (vs':data_v list))) vs'))
+               (mk_wf (sptree_inter (data_state_locals (t2:(C,FFI)data_state))
                          (list_to_num_set (APPEND live corr)))) /\
                         data_state_stack t4 = data_state_stack t2 /\
                         data_state_handler t4 = data_state_handler t2 /\
@@ -4947,8 +4947,8 @@ let DATAPAUX_B2D_CC_LETCALL = prove
                          `corr:num list`; `live:num list`; `vs':data_v list`]
                         DATAPAUX_B2D_LETCALL_START) THEN
           ASM_REWRITE_TAC[] THEN
-          REWRITE_TAC[GSYM (ASSUME `data_state_locals (t4:(C,FFI)data_state) = union (fromAList (ZIP (list_of_seq (\i. next_var + i) (LENGTH (vs':data_v list))) vs'))
-               (mk_wf (inter (data_state_locals (t2:(C,FFI)data_state))
+          REWRITE_TAC[GSYM (ASSUME `data_state_locals (t4:(C,FFI)data_state) = sptree_union (fromAList (ZIP (list_of_seq (\i. next_var + i) (LENGTH (vs':data_v list))) vs'))
+               (mk_wf (sptree_inter (data_state_locals (t2:(C,FFI)data_state))
                          (list_to_num_set (APPEND live corr))))`)] THEN
           STRIP_TAC THEN
           REMOVE_THEN "ihy" (MP_TAC o SPECL [`MAP data_to_bvi_v zz`; `exp:bvi_exp`;
@@ -5051,7 +5051,7 @@ let DATAPAUX_B2D_CC_LETCALL = prove
           ASM_REWRITE_TAC(data_to_bvi_result_def :: DATAPAUX_B2D_RES_RWS) THEN
           MATCH_MP_TAC DATAPAUX_B2D_jump_Env THEN
           MAP_EVERY EXISTS_TAC [`data_state_locals_size (t2:(C,FFI)data_state)`;
-            `mk_wf (inter (data_state_locals (t2:(C,FFI)data_state))
+            `mk_wf (sptree_inter (data_state_locals (t2:(C,FFI)data_state))
                           (list_to_num_set (APPEND live corr)))`] THEN
           FIRST_X_ASSUM(MATCH_MP_TAC o check (fun th -> is_imp (concl th) &&
              can (find_term (fun t -> try fst(dest_const t) = "data_jump_exc" with _ -> false))
@@ -5079,7 +5079,7 @@ let bvi_to_dataProof_compile_correct = prove
   `!xs env (s1:(C,FFI)bvi_state) res s2 (t1:(C,FFI)data_state) n corr tail live.
      bvi_evaluate (xs,env,s1) = (res,s2) /\
      ~(res = Rerr (Rabort Rtype_error)) /\
-     var_corr env corr (map data_to_bvi_v (data_state_locals t1)) /\
+     var_corr env corr (sptree_map data_to_bvi_v (data_state_locals t1)) /\
      (~(LENGTH xs = 1) ==> ~tail) /\
      (!k. n <= k ==> lookup k (data_state_locals t1) = NONE) /\
      bvi_to_dataProof_state_rel s1 t1 /\
@@ -5108,7 +5108,7 @@ let bvi_to_dataProof_compile_correct = prove
                 ~tail /\ n <= next_var /\
                 ALL (\v. v < next_var) vs /\
                 (!k. next_var <= k ==> lookup k (data_state_locals t2) = NONE) /\
-                var_corr env corr (map data_to_bvi_v (data_state_locals t2)) /\
+                var_corr env corr (sptree_map data_to_bvi_v (data_state_locals t2)) /\
                 (!k x. lookup k (data_state_locals t2) = SOME x ==> k < next_var) /\
                 (!k x. lookup k (data_state_locals t1) = SOME x /\
                        (~MEM k live ==> MEM k corr)
@@ -5117,7 +5117,7 @@ let bvi_to_dataProof_compile_correct = prove
                 data_state_handler t1 = data_state_handler t2 /\
                 (~(data_jump_exc t1 = NONE) ==> ~(data_jump_exc t2 = NONE)) /\
                 (match res with
-                   Rval xs -> var_corr xs vs (map data_to_bvi_v (data_state_locals t2))
+                   Rval xs -> var_corr xs vs (sptree_map data_to_bvi_v (data_state_locals t2))
                  | _ -> F))`,
   MATCH_ACCEPT_TAC
     (REWRITE_RULE[FORALL_PAIR_THM; FST; SND]
@@ -5151,7 +5151,7 @@ let compile_exp_lemma = prove
  (`!exp env (s1:(C,FFI)bvi_state) res s2 (t1:(C,FFI)data_state) n.
      bvi_evaluate ([exp],env,s1) = (res,s2) /\
      ~(res = Rerr (Rabort Rtype_error)) /\
-     var_corr env (list_of_seq I n) (map data_to_bvi_v (data_state_locals t1)) /\
+     var_corr env (list_of_seq I n) (sptree_map data_to_bvi_v (data_state_locals t1)) /\
      (!k. n <= k ==> lookup k (data_state_locals t1) = NONE) /\
      bvi_to_dataProof_state_rel s1 t1 /\
      (!v. res = Rerr (Rraise (Exn v)) ==> ~(data_jump_exc t1 = NONE))
@@ -5197,7 +5197,7 @@ let compile_exp_correct = prove
  (`!exp env (s1:(C,FFI)bvi_state) res s2 (t1:(C,FFI)data_state) n.
      bvi_evaluate ([exp],env,s1) = (res,s2) /\
      ~(res = Rerr (Rabort Rtype_error)) /\
-     var_corr env (list_of_seq I n) (map data_to_bvi_v (data_state_locals t1)) /\
+     var_corr env (list_of_seq I n) (sptree_map data_to_bvi_v (data_state_locals t1)) /\
      (!k. n <= k ==> lookup k (data_state_locals t1) = NONE) /\
      bvi_to_dataProof_state_rel s1 t1 /\
      (!v. res = Rerr (Rraise (Exn v)) ==> ~(data_jump_exc t1 = NONE)) /\
@@ -5443,7 +5443,7 @@ let bvi_to_dataProof_compile_prog_evaluate = prove
                   bvi_state_INFO.ri_accessors; data_state_INFO.ri_accessors;
                   bvi_to_dataProof_state_rel_def; bvi_to_dataProof_code_rel_def;
                   wf_fromAList; domain_fromAList; lookup_fromAList; FLOOKUP_EMPTY;
-                  map_def; lookup_rwts] THEN
+                  sptree_map_def; lookup_rwts] THEN
   REWRITE_TAC[bvi_to_data_compile_prog_def; compile_part_thm] THEN
   CONJ_TAC THENL
    [REWRITE_TAC[MAP_MAP_o] THEN AP_TERM_TAC THEN AP_THM_TAC THEN AP_TERM_TAC THEN

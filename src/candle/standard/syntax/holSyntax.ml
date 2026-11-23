@@ -5,7 +5,7 @@
 (* and the context updates.                                                  *)
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
-(* - Names as notes/naming/names.tsv says: the HOL4 types type and term are  *)
+(* - Names as doc/names.tsv says: the HOL4 types type and term are           *)
 (*   hol_type (constructors Tyvar, Tyapp) and hol_term (hol_Var, hol_Const,  *)
 (*   hol_Comb, hol_Abs); domain is hol_domain, term_ok is hol_term_ok, the   *)
 (*   update constructors are hol_ConstSpec, hol_TypeDefn, hol_NewType,       *)
@@ -47,6 +47,8 @@
 (*   which the inductive definitions type_lt and term_lt need, are the local *)
 (*   CSYNAUX_LEX_MONO and CSYNAUX_LLEX_MONO.                                 *)
 (* - Local helpers that are not HOL4 theorems are CSYNAUX_.                  *)
+(* - HOL4 tyvars is hol_tyvars (a short or common word), with the theorems   *)
+(*   renamed alike (tyvars_def is hol_tyvars_def, ...).                      *)
 (* ========================================================================= *)
 
 needs "misc/misc.ml";;
@@ -329,7 +331,7 @@ let VARIANT_THM = prove
 (* The third HOL4 clause (Fun ty1 ty2, a Tyapp) is an instance of the        *)
 (* second: the definition has two clauses, TYPE_SUBST_def all three.        *)
 let CSYNAUX_TYPE_SUBST_raw =
-  cake_def_wf `measure (\(i:(hol_type#hol_type)list,ty). hol_type_size ty)`
+  cake_def_wf `MEASURE (\(i:(hol_type#hol_type)list,ty). hol_type_size ty)`
   TERM_TAC
   `(TYPE_SUBST i (Tyvar v) = REV_ASSOCD (Tyvar v) i (Tyvar v)) /\
    (TYPE_SUBST i (Tyapp v tys) = Tyapp v (MAP (TYPE_SUBST i) tys))`;;
@@ -402,7 +404,7 @@ let CSYNAUX_SIZEOF_VSUBST_VAR = prove
   REWRITE_TAC[MEM; PAIR_EQ] THEN MESON_TAC[]);;
 
 let INST_CORE_def = cake_def_wf
-  `measure (\(env:(hol_term#hol_term)list,tyin:(hol_type#hol_type)list,tm).
+  `MEASURE (\(env:(hol_term#hol_term)list,tyin:(hol_type#hol_type)list,tm).
               sizeof tm)`
   (REWRITE_TAC[measure_THM] THEN REPEAT STRIP_TAC THEN
    RULE_ASSUM_TAC(REWRITE_RULE[sizeof_def; CSYNAUX_SIZEOF_VSUBST_VAR]) THEN
@@ -444,17 +446,17 @@ let INST_def = cake_def
 
 (* Type variables in a type. *)
 
-let tyvars_def = cake_def_wf `measure hol_type_size` TERM_TAC
-  `(tyvars (Tyvar v) = [v]) /\
-   (tyvars (Tyapp v tys) = ITLIST (\x y. LIST_UNION (tyvars x) y) tys [])`;;
+let hol_tyvars_def = cake_def_wf `MEASURE hol_type_size` TERM_TAC
+  `(hol_tyvars (Tyvar v) = [v]) /\
+   (hol_tyvars (Tyapp v tys) = ITLIST (\x y. LIST_UNION (hol_tyvars x) y) tys [])`;;
 
-let tyvars_ind = cake_ind "tyvars";;
+let hol_tyvars_ind = cake_ind "hol_tyvars";;
 
 (* Type variables in a term. *)
 
 let tvars_def = cake_def
-  `(tvars (hol_Var n ty) = tyvars ty) /\
-   (tvars (hol_Const n ty) = tyvars ty) /\
+  `(tvars (hol_Var n ty) = hol_tyvars ty) /\
+   (tvars (hol_Const n ty) = hol_tyvars ty) /\
    (tvars (hol_Comb s t) = LIST_UNION (tvars s) (tvars t)) /\
    (tvars (hol_Abs v t) = LIST_UNION (tvars v) (tvars t))`;;
 
@@ -480,7 +482,7 @@ new_type_abbrev("sig",`:tysig#tmsig`);;
 (* Well-formedness of types/terms with respect to a signature *)
 
 let type_ok_def = cake_def_wf
-  `measure (\(tysig:(mlstring,num)fmap,ty). hol_type_size ty)` TERM_TAC
+  `MEASURE (\(tysig:(mlstring,num)fmap,ty). hol_type_size ty)` TERM_TAC
   `(type_ok tysig (Tyvar _) <=> T) /\
    (type_ok tysig (Tyapp name args) <=>
       FLOOKUP tysig name = SOME (LENGTH args) /\
@@ -493,7 +495,7 @@ let type_ok_ind = cake_ind "type_ok";;
 (* Light's recursion analysis needs it outside, so the definition has it    *)
 (* there and hol_term_ok_def states HOL4's clauses.                         *)
 let CSYNAUX_hol_term_ok_raw = cake_def_wf
-  `measure (\(sig:sig,tm). hol_term_size tm)` TERM_TAC
+  `MEASURE (\(sig:sig,tm). hol_term_size tm)` TERM_TAC
   `(hol_term_ok (sig:sig) (hol_Var x ty) <=> type_ok (FST sig) ty) /\
    (hol_term_ok sig (hol_Const name ty) <=>
       ?ty0. FLOOKUP (SND sig) name = SOME ty0 /\
@@ -704,7 +706,7 @@ let updates_rules,updates_ind,updates_cases,updates_strongind = cake_inductive
          set_of_list (FLAT (MAP (\upd. APPEND (axexts_of_upd upd)
                                               (conexts_of_upd upd)) ctxt))),
         MAP (\(s,t). hol_Var s (typeof t) === t) eqs) |- prop) /\
-      ALL (\t. CLOSED t /\ (!v. MEM v (tvars t) ==> MEM v (tyvars (typeof t))))
+      ALL (\t. CLOSED t /\ (!v. MEM v (tvars t) ==> MEM v (hol_tyvars (typeof t))))
           (MAP SND eqs) /\
       (!x ty. VFREE_IN (hol_Var x ty) prop ==>
               MEM (x,ty) (MAP (\(s,t). (s,typeof t)) eqs)) /\
@@ -742,3 +744,12 @@ let init_ctxt_def = cake_def
            Tyapp (implode "fun") [Tyvar (implode "A"); Tyapp (implode "bool") []]]);
       hol_NewType (implode "bool") 0;
       hol_NewType (implode "fun") 2]`;;
+
+(* ------------------------------------------------------------------------- *)
+(* Lemmas used by several later files.                                       *)
+(* ------------------------------------------------------------------------- *)
+
+(* typeof (s === t) for any s and t (typeof_equation without its hypothesis) *)
+let CSYNAUX_typeof_equation = prove
+ (`!s t. typeof (s === t) = Tyapp (implode "bool") []`,
+  REWRITE_TAC[equation_def; typeof_def; codomain_def]);;

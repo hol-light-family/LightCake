@@ -179,9 +179,9 @@ let type_pe_determ_canon_def = cake_def
   `type_pe_determ_canon (n:num) (tenv:type_env) (tenvE:tenv_val_exp) (p:pat) (e:exp) <=>
      !t1 tenv1 t2 tenv2.
        type_p 0 tenv p t1 tenv1 /\ type_e tenv tenvE e t1 /\
-       ALL (\(k:mlstring,t). set_tids_subset (count n) t) tenv1 /\
+       ALL (\(k:mlstring,t). set_tids_subset (pred_set_count n) t) tenv1 /\
        type_p 0 tenv p t2 tenv2 /\ type_e tenv tenvE e t2 /\
-       ALL (\(k:mlstring,t). set_tids_subset (count n) t) tenv2
+       ALL (\(k:mlstring,t). set_tids_subset (pred_set_count n) t) tenv2
        ==> tenv1 = tenv2`;;
 
 let type_pe_determ_canon_tenv_equiv = prove
@@ -209,7 +209,7 @@ let type_d_canon_rules,type_d_canon_ind,type_d_canon_cases,type_d_canon_strongin
       (!tvs' bindings' t'.
          type_p tvs' tenv p t' bindings' /\
          type_e tenv (bind_tvar tvs' Empty) e t' /\
-         ALL (\(k:mlstring,t). set_tids_subset (count n) t) bindings'
+         ALL (\(k:mlstring,t). set_tids_subset (pred_set_count n) t) bindings'
          ==> ALL2 tscheme_inst (MAP SND (tenv_add_tvs tvs' bindings'))
                                (MAP SND (tenv_add_tvs tvs bindings)))
       ==> type_d_canon n tenv (Dlet locs p e) 0
@@ -225,7 +225,7 @@ let type_d_canon_rules,type_d_canon_ind,type_d_canon_cases,type_d_canon_strongin
       type_funs tenv (bind_var_list 0 bindings (bind_tvar tvs Empty)) funs bindings /\
       (!tvs' bindings'.
          type_funs tenv (bind_var_list 0 bindings' (bind_tvar tvs' Empty)) funs bindings' /\
-         ALL (\(k:mlstring,t). set_tids_subset (count n) t) bindings'
+         ALL (\(k:mlstring,t). set_tids_subset (pred_set_count n) t) bindings'
          ==> ALL2 tscheme_inst (MAP SND (tenv_add_tvs tvs' bindings'))
                                (MAP SND (tenv_add_tvs tvs bindings)))
       ==> type_d_canon n tenv (Dletrec locs funs) 0
@@ -401,8 +401,8 @@ let remap_tenv_extend_dec_tenv = prove
 
 let BIJ_extend_bij = prove
  (`!tids ids f g n.
-     DISJOINT tids ids /\ BIJ f tids (count n) /\ BIJ g ids (count (CARD ids))
-     ==> BIJ (extend_bij f g ids n) (tids UNION ids) (count (n + CARD ids))`,
+     DISJOINT tids ids /\ BIJ f tids (pred_set_count n) /\ BIJ g ids (pred_set_count (CARD ids))
+     ==> BIJ (extend_bij f g ids n) (tids UNION ids) (pred_set_count (n + CARD ids))`,
   REWRITE_TAC[BIJ; INJ; SURJ; extend_bij_def; IN_DISJOINT; IN_UNION; IN_COUNT] THEN
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   MATCH_MP_TAC(TAUT `a /\ b /\ c ==> (a /\ b) /\ (a /\ c)`) THEN REPEAT CONJ_TAC THENL
@@ -1043,7 +1043,7 @@ let type_pe_bindings_tids_0 = prove
 let type_pe_determ_remap = prove
  (`!tenv p e f tids n.
      type_pe_determ tenv Empty p e /\ good_remap f /\ prim_tids T tids /\
-     BIJ f tids (count n) /\ set_tids_tenv tids tenv
+     BIJ f tids (pred_set_count n) /\ set_tids_tenv tids tenv
      ==> type_pe_determ_canon n (remap_tenv f tenv) Empty p e`,
   REWRITE_TAC[type_pe_determ_canon_def; type_pe_determ_def] THEN REPEAT GEN_TAC THEN
   DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "det") STRIP_ASSUME_TAC) THEN
@@ -1080,7 +1080,7 @@ let type_pe_determ_remap = prove
                           `ts_tid_rename (LINV f tids) t2`] THEN
     ASM_MESON_TAC[];
     ALL_TAC] THEN
-  SUBGOAL_THEN `INJ (LINV f tids) (count n) (tids:num->bool)` ASSUME_TAC THENL
+  SUBGOAL_THEN `INJ (LINV f tids) (pred_set_count n) (tids:num->bool)` ASSUME_TAC THENL
    [ASM_MESON_TAC[BIJ_LINV_BIJ; BIJ]; ALL_TAC] THEN
   MATCH_MP_TAC(ISPEC `\(n:mlstring,t). (n,ts_tid_rename (LINV f tids) t)` INJ_MAP_EQ_2) THEN
   ASM_REWRITE_TAC[FORALL_PAIR_THM; IN_SET_OF_LIST; PAIR_EQ] THEN
@@ -1091,7 +1091,7 @@ let type_pe_determ_remap = prove
   RULE_ASSUM_TAC(REWRITE_RULE[INJ]) THEN ASM_MESON_TAC[]);;
 
 (* DEVIATION: the hypothesis check_ctor_tenv tenvt xs is added (HOL Light's  *)
-(* ZIP in type_name_subst; see notes/DEVIATIONS.md)                          *)
+(* ZIP in type_name_subst)                                                   *)
 let build_ctor_tenv_type_identities = prove
  (CASE_TERM `!tenvt xs type_identities tids.
      prim_tids T tids /\
@@ -1260,7 +1260,7 @@ let INFER1AUX_MAP_SND_tenv_add_tvs = prove
 
 let INFER1AUX_tscheme_inst_transfer = prove
  (`!f tids n tvs tvs' b' b.
-     BIJ f tids (count n) /\ set_tids_subset (count n) b' /\
+     BIJ f tids (pred_set_count n) /\ set_tids_subset (pred_set_count n) b' /\
      tscheme_inst (tvs',ts_tid_rename (LINV f tids) b') (tvs,b)
      ==> tscheme_inst (tvs',b') (tvs,ts_tid_rename f b)`,
   REWRITE_TAC[tscheme_inst_def] THEN REPEAT STRIP_TAC THEN
@@ -1274,7 +1274,7 @@ let INFER1AUX_tscheme_inst_transfer = prove
 
 let INFER1AUX_ALL2_transfer = prove
  (`!f tids n tvs tvs' (b':(mlstring#t)list) (b:(mlstring#t)list).
-     BIJ f tids (count n) /\ ALL (\(k:mlstring,t). set_tids_subset (count n) t) b' /\
+     BIJ f tids (pred_set_count n) /\ ALL (\(k:mlstring,t). set_tids_subset (pred_set_count n) t) b' /\
      ALL2 tscheme_inst
        (MAP (\x. (tvs',SND x)) (MAP (\(n:mlstring,t). (n,ts_tid_rename (LINV f tids) t)) b'))
        (MAP (\x. (tvs,SND x)) b)
@@ -1292,7 +1292,7 @@ let INFER1AUX_ALL2_transfer = prove
 
 let INFER1AUX_pull_back = prove
  (`!f tids n tenv mt.
-     BIJ f tids (count n) /\ good_remap f /\ prim_tids T tids /\
+     BIJ f tids (pred_set_count n) /\ good_remap f /\ prim_tids T tids /\
      set_tids_tenv tids tenv /\ tenv_equiv (remap_tenv f tenv) mt
      ==> (!tvs p t b.
             type_p tvs mt p t b
@@ -1492,7 +1492,7 @@ let INFER1AUX_TDC_TWO_IH_TAC =
   RULE_ASSUM_TAC(REWRITE_RULE[UNION_ASSOC]) THEN ASM_REWRITE_TAC[] THEN
   SUBGOAL_THEN `prim_tids F (decls1 UNION decls2) /\
                 BIJ (extend_bij g1 g2 decls2 (CARD decls1)) (decls1 UNION decls2)
-                    (count (CARD decls1 + CARD decls2))` (fun th -> REWRITE_TAC[th]) THENL
+                    (pred_set_count (CARD decls1 + CARD decls2))` (fun th -> REWRITE_TAC[th]) THENL
    [CONJ_TAC THENL
      [UNDISCH_TAC `prim_tids F decls1` THEN UNDISCH_TAC `prim_tids F decls2` THEN
       REWRITE_TAC[prim_tids_def; prim_type_nums_def; ALL; IN_UNION] THEN SIMP_TAC[];
@@ -1789,7 +1789,7 @@ let INFER1AUX_index_BIJ = prove
  (`!(ids:num list).
      ALL_DISTINCT ids
      ==> BIJ (THE o ALOOKUP (ZIP ids (COUNT_LIST (LENGTH ids)))) (set_of_list ids)
-             (count (LENGTH ids))`,
+             (pred_set_count (LENGTH ids))`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[BIJ; INJ; SURJ; IN_SET_OF_LIST; IN_COUNT; MEM_EXISTS_EL] THEN
   REPEAT CONJ_TAC THEN REPEAT STRIP_TAC THEN
   ASM_SIMP_TAC[INFER1AUX_index_EL] THEN ASM_MESON_TAC[INFER1AUX_index_EL]);;
@@ -1810,7 +1810,7 @@ let INFER1AUX_nsAll2_eq_trans = prove
 
 let INFER1AUX_prims_lt = prove
  (`!f tids n.
-     BIJ f tids (count n) /\ prim_tids T tids /\ good_remap f
+     BIJ f tids (pred_set_count n) /\ prim_tids T tids /\ good_remap f
      ==> ITLIST MAX (CONS Tlist_num (CONS Tbool_num prim_type_nums)) 0 < n`,
   REPEAT STRIP_TAC THEN
   SUBGOAL_THEN `Tdouble_num IN tids` ASSUME_TAC THENL
@@ -2060,22 +2060,22 @@ let type_d_type_d_canon = prove
       type_d extra_checks tenv d ids tenv'
       ==> !tids f n mapped_tenv.
             extra_checks = T /\ DISJOINT ids tids /\ set_tids_tenv tids tenv /\
-            BIJ f tids (count n) /\ prim_tids T tids /\ good_remap f /\
+            BIJ f tids (pred_set_count n) /\ prim_tids T tids /\ good_remap f /\
             tenv_equiv (remap_tenv f tenv) mapped_tenv
             ==> ?g mapped_tenv'.
                   set_tids_tenv (tids UNION ids) tenv' /\ prim_tids F ids /\ FINITE ids /\
-                  BIJ g ids (count (CARD ids)) /\
+                  BIJ g ids (pred_set_count (CARD ids)) /\
                   type_d_canon n mapped_tenv d (CARD ids) mapped_tenv' /\
                   tenv_equiv (remap_tenv (extend_bij f g ids n) tenv') mapped_tenv') /\
    (!extra_checks tenv ds ids tenv'.
       type_ds extra_checks tenv ds ids tenv'
       ==> !tids f n mapped_tenv.
             extra_checks = T /\ DISJOINT ids tids /\ set_tids_tenv tids tenv /\
-            BIJ f tids (count n) /\ prim_tids T tids /\ good_remap f /\
+            BIJ f tids (pred_set_count n) /\ prim_tids T tids /\ good_remap f /\
             tenv_equiv (remap_tenv f tenv) mapped_tenv
             ==> ?g mapped_tenv'.
                   set_tids_tenv (tids UNION ids) tenv' /\ prim_tids F ids /\ FINITE ids /\
-                  BIJ g ids (count (CARD ids)) /\
+                  BIJ g ids (pred_set_count (CARD ids)) /\
                   type_ds_canon n mapped_tenv ds (CARD ids) mapped_tenv' /\
                   tenv_equiv (remap_tenv (extend_bij f g ids n) tenv') mapped_tenv')`,
   MATCH_MP_TAC type_d_strongind THEN REPEAT CONJ_TAC THENL

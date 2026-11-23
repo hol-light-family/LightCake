@@ -32,7 +32,7 @@ let compile_state_def = cake_def
     wl_state_compile_fupd (K c)
      (wl_state_compile_oracle_fupd
         (K ((I ## MAP (I ## I ## remove_must_terminate)) o wl_state_compile_oracle s))
-      (wl_state_code_fupd (K (map (I ## remove_must_terminate) (wl_state_code s)))
+      (wl_state_code_fupd (K (sptree_map (I ## remove_must_terminate) (wl_state_code s)))
        (wl_state_termdep_fupd (K 0)
         (wl_state_clock_fupd (K (wl_state_clock s + clk)) s))))`;;
 
@@ -43,7 +43,7 @@ let compile_state_const = prove
    wl_state_code_buffer (compile_state clk c s) = wl_state_code_buffer s /\
    wl_state_data_buffer (compile_state clk c s) = wl_state_data_buffer s /\
    wl_state_code (compile_state clk c s) =
-     map (I ## remove_must_terminate) (wl_state_code s) /\
+     sptree_map (I ## remove_must_terminate) (wl_state_code s) /\
    wl_state_clock (compile_state clk c s) = wl_state_clock s + clk /\
    wl_state_termdep (compile_state clk c s) = 0 /\
    wl_state_compile_oracle (compile_state clk c s) =
@@ -66,7 +66,7 @@ let compile_state_const = prove
 let _ = cake_add_simps [compile_state_const];;
 
 let find_code_map_I = prove
- (`wl_find_code d (l:((A)word_loc)list) (map (I ## (f:B->D)) (t:(num#B)spt))
+ (`wl_find_code d (l:((A)word_loc)list) (sptree_map (I ## (f:B->D)) (t:(num#B)spt))
                 (lsz:(L)spt) =
    OPTION_MAP (I ## f ## I) (wl_find_code d l t lsz)`,
   QCASES_ON "d" THEN RW[wl_find_code_def; lookup_map] THEN

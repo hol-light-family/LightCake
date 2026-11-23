@@ -162,7 +162,7 @@ let LENGTH_LESS_size = prove
  (`!name ns (funs:(A)spt) y.
      ~MEM name ns /\ set_of_list ns SUBSET domain funs /\ ALL_DISTINCT ns /\
      lookup name funs = SOME y ==>
-     LENGTH ns < size funs`,
+     LENGTH ns < sptree_size funs`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[size_domain] THEN
   FIRST_ASSUM(SUBST1_TAC o SYM o MATCH_MP ALL_DISTINCT_CARD_LIST_TO_SET) THEN
   MATCH_MP_TAC CARD_PSUBSET THEN REWRITE_TAC[FINITE_domain; PSUBSET] THEN
@@ -779,11 +779,6 @@ let WDPAUX_call_result_facts = prove
     MATCH_MP_TAC WDPAUX_key_eq_pop_gen THEN ASM_MESON_TAC[];
     ASM_MESON_TAC[wl_s_key_eq_stack_size]]);;
 
-let WDPAUX_LASTN_CONS = prove
- (`!(f:A) l. LASTN (LENGTH l + 1) (CONS f l) = CONS f l`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[GSYM ADD1] THEN
-  MP_TAC(ISPEC `CONS (f:A) l` LASTN_LENGTH_ID) THEN REWRITE_TAC[LENGTH]);;
-
 let WDPAUX_call_exc_facts = prove
  (`!args1 ss envs hn h hl1 hl2 (s:(A,C,FFI)wl_state) prog x y s2.
      wl_evaluate (prog, wl_call_env args1 ss
@@ -800,7 +795,7 @@ let WDPAUX_call_exc_facts = prove
       check (fun th -> try fst(dest_const(fst(strip_comb(concl th)))) = "IL2AUX_ss_exc"
                        with Failure _ -> false)) THEN
     REWRITE_TAC[wl_call_env_const; IL2AUX_push_env_some_stack; wl_dec_clock_const] THEN
-    REWRITE_TAC[WDPAUX_LASTN_CONS] THEN
+    REWRITE_TAC[RICHAUX_LASTN_CONS] THEN
     REWRITE_TAC[CONS_11; injectivity "stack_frame"] THEN MESON_TAC[];
     ASM_MESON_TAC[wl_s_key_eq_stack_size]]);;
 
@@ -1125,7 +1120,7 @@ let WDPAUX_PROG_BODY_TAC : tactic =
 
 let WDPAUX_TAIL_NMEM_TAC : tactic =
   WDPAUX_LOOKUP_SPLIT_TAC THEN WDPAUX_PROG_BODY_TAC THEN
-  SUBGOAL_THEN `LENGTH (ns:num list) < size (funs2:(num#(A)wl_prog)spt)` ASSUME_TAC THENL
+  SUBGOAL_THEN `LENGTH (ns:num list) < sptree_size (funs2:(num#(A)wl_prog)spt)` ASSUME_TAC THENL
    [MATCH_MP_TAC LENGTH_LESS_size THEN
     MAP_EVERY EXISTS_TAC [`d:num`; `(a:num, body:(A)wl_prog)`] THEN ASM_REWRITE_TAC[];
     ALL_TAC] THEN
@@ -1300,9 +1295,9 @@ let max_depth_call_graph_lemma = prove
            (OPTION_MAP2 MAX
              (max_depth_graphs (wl_state_stack_size s) ns ns funs funs2)
              (max_depth (wl_state_stack_size s)
-                (call_graph funs n ns (size funs2) prog))))) /\
+                (call_graph funs n ns (sptree_size funs2) prog))))) /\
      (~(max_depth_graphs (wl_state_stack_size s) ns ns funs funs2 = NONE) /\
-      ~(max_depth (wl_state_stack_size s) (call_graph funs n ns (size funs2) prog) = NONE) ==>
+      ~(max_depth (wl_state_stack_size s) (call_graph funs n ns (sptree_size funs2) prog) = NONE) ==>
       wl_state_stack_size s1 = wl_state_stack_size s /\
       ((res = NONE \/ (?k. res = SOME (wordSem_Break k)) \/
         (?k. res = SOME (wordSem_Continue k))) ==>

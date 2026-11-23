@@ -494,7 +494,7 @@ let ConstDef_updates = prove
                   alist_to_fmap (FLAT (MAP consts_of_upd ctxt))) tm /\
      ~(name IN FDOM (alist_to_fmap (FLAT (MAP consts_of_upd ctxt)))) /\
      CLOSED tm /\
-     set_of_list (tvars tm) SUBSET set_of_list (tyvars (typeof tm))
+     set_of_list (tvars tm) SUBSET set_of_list (hol_tyvars (typeof tm))
      ==> (hol_ConstSpec [(name,tm)] (hol_Var name (typeof tm) === tm)) updates ctxt`,
   REPEAT STRIP_TAC THEN MATCH_MP_TAC(el 2 (CONJUNCTS updates_rules)) THEN
   REWRITE_TAC[MAP; ALL; MEM; ALL_DISTINCT] THEN

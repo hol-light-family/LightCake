@@ -25,8 +25,8 @@ let LIST_UNION_EQ_NIL = prove
 let _ = cake_add_simps [LIST_UNION_EQ_NIL];;
 
 let monomorphic_type_subst = prove
- (`!ty i. tyvars ty = [] ==> TYPE_SUBST i ty = ty`,
-  MATCH_MP_TAC type_ind THEN REWRITE_TAC[tyvars_def; TYPE_SUBST_def; NOT_CONS_NIL] THEN
+ (`!ty i. hol_tyvars ty = [] ==> TYPE_SUBST i ty = ty`,
+  MATCH_MP_TAC type_ind THEN REWRITE_TAC[hol_tyvars_def; TYPE_SUBST_def; NOT_CONS_NIL] THEN
   GEN_TAC THEN LIST_INDUCT_TAC THEN
   ASM_REWRITE_TAC[ALL; ITLIST; MAP; LIST_UNION_EQ_NIL; injectivity "hol_type"; CONS_11] THEN
   REPEAT STRIP_TAC THEN RULE_ASSUM_TAC(REWRITE_RULE[injectivity "hol_type"]) THEN
@@ -101,22 +101,22 @@ let CLITAUX_REV_ASSOCD_ZIP_TYPE_SUBST = prove
 
 let TYPE_SUBST_ZIP_compose = prove
  (`!body params vals s.
-     set_of_list (tyvars body) SUBSET set_of_list params /\
+     set_of_list (hol_tyvars body) SUBSET set_of_list params /\
      LENGTH vals = LENGTH params
      ==> TYPE_SUBST s (TYPE_SUBST (ZIP vals (MAP Tyvar params)) body) =
          TYPE_SUBST (ZIP (MAP (TYPE_SUBST s) vals) (MAP Tyvar params)) body`,
   MATCH_MP_TAC type_ind THEN CONJ_TAC THENL
-   [REWRITE_TAC[tyvars_def; TYPE_SUBST_def; set_of_list; INSERT_SUBSET; EMPTY_SUBSET;
+   [REWRITE_TAC[hol_tyvars_def; TYPE_SUBST_def; set_of_list; INSERT_SUBSET; EMPTY_SUBSET;
                 IN_SET_OF_LIST] THEN
     MESON_TAC[CLITAUX_REV_ASSOCD_ZIP_TYPE_SUBST];
     MAP_EVERY X_GEN_TAC [`m:mlstring`; `l:hol_type list`] THEN
-    REWRITE_TAC[GSYM ALL_MEM; tyvars_def; TYPE_SUBST_def; injectivity "hol_type"] THEN
+    REWRITE_TAC[GSYM ALL_MEM; hol_tyvars_def; TYPE_SUBST_def; injectivity "hol_type"] THEN
     REPEAT STRIP_TAC THEN REWRITE_TAC[MAP_MAP_o] THEN MATCH_MP_TAC MAP_EQ THEN
     REWRITE_TAC[GSYM ALL_MEM; o_THM] THEN X_GEN_TAC `y:hol_type` THEN DISCH_TAC THEN
     FIRST_X_ASSUM(MP_TAC o SPEC `y:hol_type`) THEN ASM_REWRITE_TAC[] THEN
     DISCH_THEN MATCH_MP_TAC THEN ASM_REWRITE_TAC[] THEN
     MATCH_MP_TAC SUBSET_TRANS THEN
-    EXISTS_TAC `set_of_list (ITLIST (\x y. LIST_UNION (tyvars x) y) l [])` THEN
+    EXISTS_TAC `set_of_list (ITLIST (\x y. LIST_UNION (hol_tyvars x) y) l [])` THEN
     ASM_REWRITE_TAC[] THEN
     REWRITE_TAC[SUBSET; IN_SET_OF_LIST; MEM_FOLDR_LIST_UNION] THEN ASM_MESON_TAC[]]);;
 
@@ -302,7 +302,7 @@ let esubst_ty0_term_ok = prove
                           errorMonad_return subst_tm" THEN
     REWRITE_TAC[esubst_ty0_def; dest_var_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
     REWRITE_TAC[pair_CASE; try_eq_return; bind_EQ_return; bind_EQ_error; injectivity "error";
-                distinctness "error"; CLITAUX_COND_EQ] THEN
+                distinctness "error"; COND_CASE_EQ] THEN
     STRIP_TAC THEN FIRST_X_ASSUM(SUBST1_TAC o SYM) THEN
     REWRITE_TAC[hol_term_ok_def; injectivity "hol_term"; CLITAUX_esubst_sig_FST_SND] THEN
     REWRITE_TAC[GSYM CONJ_ASSOC; RIGHT_EXISTS_AND_THM; UNWIND_THM1] THEN
@@ -441,7 +441,7 @@ let sizeof_esubst_ty0 = prove
                         errorMonad_return subst_tm" THEN
   REWRITE_TAC[esubst_ty0_def; dest_var_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   REWRITE_TAC[pair_CASE; try_eq_return; bind_EQ_return; bind_EQ_error; injectivity "error";
-              distinctness "error"; CLITAUX_COND_EQ] THEN
+              distinctness "error"; COND_CASE_EQ] THEN
   STRIP_TAC THENL
    [FIRST_X_ASSUM(SUBST1_TAC o SYM) THEN REWRITE_TAC[sizeof_def; EQ_ADD_LCANCEL] THEN
     REMOVE_THEN "iha" MATCH_MP_TAC THEN EXISTS_TAC `sig:sig` THEN
@@ -599,7 +599,7 @@ AP_TERM_TAC THEN FIRST_X_ASSUM(MP_TAC o SPEC `t1:hol_term` o check CLITAUX_menti
   QPAT_X_ASSUM "esubst_ty0 _ _ _ _ = _" MP_TAC THEN
   REWRITE_TAC[esubst_ty0_def; dest_var_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   REWRITE_TAC[pair_CASE; try_eq_return; bind_EQ_return; bind_EQ_error; injectivity "error";
-              distinctness "error"; CLITAUX_COND_EQ] THEN
+              distinctness "error"; COND_CASE_EQ] THEN
   STRIP_TAC THEN FIRST_X_ASSUM(SUBST1_TAC o SYM) THEN
   REWRITE_TAC[esubst_tm_def; typeof_def; injectivity "hol_type"; CONS_11] THENL
    [FIRST_X_ASSUM(MP_TAC o SPEC `body:hol_term` o check CLITAUX_mentions_sizeof) THEN
@@ -1083,7 +1083,7 @@ let esubst_ty_abs_avoids = prove
   UNDISCH_TAC `esubst_ty0 [] sigma avds (hol_Abs (hol_Var x ty) body) = errorMonad_return v` THEN
   REWRITE_TAC[esubst_ty0_def; dest_var_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   REWRITE_TAC[pair_CASE; try_eq_return; bind_EQ_return; bind_EQ_error; injectivity "error";
-              distinctness "error"; CLITAUX_COND_EQ] THEN
+              distinctness "error"; COND_CASE_EQ] THEN
   STRIP_TAC THEN
   FIRST_X_ASSUM(SUBST1_TAC o SYM o check (fun th -> rhs(concl th) = `v:hol_term`)) THENL
    [MAP_EVERY EXISTS_TAC [`x:mlstring`; `u:hol_term`] THEN REWRITE_TAC[] THEN
@@ -1119,7 +1119,7 @@ let esubst_ty0_abs_nvariant = prove
   REPEAT GEN_TAC THEN
   REWRITE_TAC[esubst_ty0_def; dest_var_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   REWRITE_TAC[pair_CASE; try_eq_return; bind_EQ_return; bind_EQ_error; injectivity "error";
-              distinctness "error"; CLITAUX_COND_EQ; injectivity "hol_term"] THEN
+              distinctness "error"; COND_CASE_EQ; injectivity "hol_term"] THEN
   STRIP_TAC THENL
    [ASM_MESON_TAC[];
     SUBGOAL_THEN `u:hol_term = subst_body` SUBST_ALL_TAC THENL

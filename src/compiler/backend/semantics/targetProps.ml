@@ -81,7 +81,7 @@ let _ = cake_add_simps [app_post_def];;
 (* together with the continuation configuration and ffi state (HOL4 proves  *)
 (* termination by itself: k decreases)                                       *)
 let find_next_interference_def = cake_def_wf
-  `measure (\x:(A,B,C)machine_config#(FFI)ffi_state#num#B. FST (SND (SND x)))`
+  `MEASURE (\x:(A,B,C)machine_config#(FFI)ffi_state#num#B. FST (SND (SND x)))`
   TERM_TAC
   `find_next_interference (mc:(A,B,C)machine_config) (ffi:(FFI)ffi_state) k (ms:B) =
      if k = 0 then (NONE:((A,B)interference_app#(A,B,C)machine_config#(FFI)ffi_state)option)
@@ -1061,7 +1061,7 @@ let asm_step_IMP_evaluate_step_find_next = prove
       interference_ok (machine_config_next_interfer c)
         (target_proj (machine_config_target c) (asm_state_mem_domain s1)) /\
       asm_step (target_config (machine_config_target c)) s1 i
-        (asm i (word_add (asm_state_pc s1)
+        (asm_asm i (word_add (asm_state_pc s1)
                   (word (LENGTH (asm_config_encode (target_config (machine_config_target c))
                                    i)))) s1) /\
       target_state_rel (machine_config_target c) s1 ms1 ==>
@@ -1071,7 +1071,7 @@ let asm_step_IMP_evaluate_step_find_next = prove
         find_next_interference c io (k + l) ms1 =
         find_next_interference (shift_interfer l c) io k ms2 /\
         target_state_rel (machine_config_target c)
-          (asm i (word_add (asm_state_pc s1)
+          (asm_asm i (word_add (asm_state_pc s1)
                     (word (LENGTH (asm_config_encode
                                      (target_config (machine_config_target c)) i)))) s1)
           ms2 /\
@@ -1083,7 +1083,7 @@ let asm_step_IMP_evaluate_step_find_next = prove
                      with Failure _ -> false)) THEN
   DISCH_THEN(CONJUNCTS_THEN2 (STRIP_ASSUME_TAC o REWRITE_RULE[target_ok_def])
     (MP_TAC o SPECL [`s1:(A)asm_state`; `i:(A)asm`;
-      `asm i (word_add (asm_state_pc s1)
+      `asm_asm i (word_add (asm_state_pc s1)
                 (word (LENGTH (asm_config_encode
                                  (target_config (machine_config_target
                                    (c:(A,B,C)machine_config))) i)))) (s1:(A)asm_state)`;
@@ -1102,7 +1102,7 @@ let asm_step_IMP_evaluate_step_find_next = prove
   MP_TAC(SPECL [`n:num`; `ms1:B`; `c:(A,B,C)machine_config`]
     (INST [`asm_state_mem_domain (s1:(A)asm_state)`,`dm:A word->bool`;
            `asm_state_pc (s1:(A)asm_state)`,`init_pc:A word`;
-           `asm i (word_add (asm_state_pc s1)
+           `asm_asm i (word_add (asm_state_pc s1)
                      (word (LENGTH (asm_config_encode
                                       (target_config (machine_config_target
                                         (c:(A,B,C)machine_config))) i))))
@@ -1196,7 +1196,7 @@ let asm_step_IMP_evaluate_step = prove
      interference_ok (machine_config_next_interfer c)
        (target_proj (machine_config_target c) (asm_state_mem_domain s1)) /\
      asm_step (target_config (machine_config_target c)) s1 i
-       (asm i (word_add (asm_state_pc s1)
+       (asm_asm i (word_add (asm_state_pc s1)
                  (word (LENGTH (asm_config_encode (target_config (machine_config_target c))
                                   i)))) s1) /\
      target_state_rel (machine_config_target c) s1 ms1 ==>
@@ -1204,7 +1204,7 @@ let asm_step_IMP_evaluate_step = prove
        (!k. target_evaluate c io (k + l) ms1 =
             target_evaluate (shift_interfer l c) io k ms2) /\
        target_state_rel (machine_config_target c)
-         (asm i (word_add (asm_state_pc s1)
+         (asm_asm i (word_add (asm_state_pc s1)
                    (word (LENGTH (asm_config_encode
                                     (target_config (machine_config_target c)) i)))) s1)
          ms2 /\

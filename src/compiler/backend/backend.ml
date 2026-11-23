@@ -5,7 +5,7 @@
 (* the front-end, i.e. parsing and type inference.                          *)
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
-(* - Names as notes/naming/names.tsv says: backend_config (fields           *)
+(* - Names as doc/names.tsv says: backend_config (fields                    *)
 (*   backend_config_source_conf, ...), backend_compile, backend_to_word_thm, *)
 (*   backend_from_data_thm, backend_ZIP_MAP_MAP; the passes are called by    *)
 (*   their port names (source_to_flat_compile, clos_to_bvl_compile, ...;     *)
@@ -147,7 +147,7 @@ let backend_compile_def = cake_def
                      (backend_config_word_to_word_conf c) asm_conf p in
      let c = backend_config_word_to_word_conf_fupd
                (\c. word_to_word_config_col_oracle_fupd (K col) c) c in
-     let names = union (fromAList (APPEND (APPEND (APPEND
+     let names = sptree_union (fromAList (APPEND (APPEND (APPEND
                    (data_to_word_stub_names one) (word_to_stack_stub_names one))
                    (stack_alloc_stub_names one)) (stack_remove_stub_names one))) names in
      let _ = empty_ffi (implode "finished: data_to_word") in
@@ -194,7 +194,7 @@ let to_bvi_def = cake_def
      let (s,p,l,bl,n1,n2,n3,names) =
        bvl_to_bvi_compile (clos_to_bvl_config_start (backend_config_clos_conf c))
          (backend_config_bvl_conf c) names p in
-     let names = union (fromAList (APPEND (APPEND (APPEND
+     let names = sptree_union (fromAList (APPEND (APPEND (APPEND
                    (data_to_word_stub_names one) (word_to_stack_stub_names one))
                    (stack_alloc_stub_names one)) (stack_remove_stub_names one))) names in
      let c = backend_config_clos_conf_fupd
@@ -348,7 +348,7 @@ let from_bvl_def = cake_def
      let (s,p,l,bl,n1,n2,n3,names) =
        bvl_to_bvi_compile (clos_to_bvl_config_start (backend_config_clos_conf c))
          (backend_config_bvl_conf c) names p in
-     let names = union (fromAList (APPEND (APPEND (APPEND
+     let names = sptree_union (fromAList (APPEND (APPEND (APPEND
                    (data_to_word_stub_names one) (word_to_stack_stub_names one))
                    (stack_alloc_stub_names one)) (stack_remove_stub_names one))) names in
      let c = backend_config_clos_conf_fupd

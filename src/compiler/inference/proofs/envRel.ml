@@ -65,7 +65,7 @@ let convert_inc = prove
 let db_subst_infer_subst_swap = prove
  (`(!t (s:(num,infer_t)fmap) tvs uvar n.
      t_wfs s /\
-     count (uvar + tvs) SUBSET FDOM s /\
+     pred_set_count (uvar + tvs) SUBSET FDOM s /\
      (!uv. uv IN FDOM s ==> check_t n {} (t_walkstar s (Infer_Tuvar uv))) /\
      check_t tvs (FDOM s) t
      ==> convert_t (t_walkstar s (infer_deBruijn_subst
@@ -75,7 +75,7 @@ let db_subst_infer_subst_swap = prove
            (convert_t (t_walkstar (infer_deBruijn_inc tvs o_f s) t))) /\
    (!ts (s:(num,infer_t)fmap) tvs uvar n.
      t_wfs s /\
-     count (uvar + tvs) SUBSET FDOM s /\
+     pred_set_count (uvar + tvs) SUBSET FDOM s /\
      (!uv. uv IN FDOM s ==> check_t n {} (t_walkstar s (Infer_Tuvar uv))) /\
      ALL (\t. check_t tvs (FDOM s) t) ts
      ==> MAP (convert_t o t_walkstar s o
@@ -474,7 +474,7 @@ let env_rel_e_sound_letrec_merge0 = prove
  (CASE_TERM `!(funs:(mlstring#mlstring#exp)list) ienv tenv tenvE (s:(num,infer_t)fmap) uvs.
      t_wfs s /\
      (!uv. uv IN FDOM s ==> check_t (num_tvs tenvE) {} (t_walkstar s (Infer_Tuvar uv))) /\
-     count (uvs + LENGTH funs) SUBSET FDOM s /\
+     pred_set_count (uvs + LENGTH funs) SUBSET FDOM s /\
      env_rel_sound s ienv tenv tenvE
      ==> env_rel_sound s
            (inf_env_inf_v_fupd
@@ -772,4 +772,3 @@ let tenv_to_ienv_lift = prove
  (`!mn tenv. tenv_to_ienv (tenvLift mn tenv) = lift_ienv mn (tenv_to_ienv tenv)`,
   REWRITE_TAC[tenv_to_ienv_def; lift_ienv_def; tenvLift_def; nsLift_nsMap;
               inf_env_INFO.ri_accessors; type_env_INFO.ri_accessors]);;
-

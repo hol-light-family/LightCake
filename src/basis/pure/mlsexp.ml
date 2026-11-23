@@ -2,6 +2,8 @@
 (* mlsexp: port of HOL4 basis/pure/mlsexpScript.sml (CakeML v3479).          *)
 (* Definition of a simple mlstring-based s-expression, includes parsing and  *)
 (* pretty printing for these s-expressions.                                  *)
+(* HOL4 lex is mlsexp_lex (a short or common word), and lex_def is           *)
+(* mlsexp_lex_def.                                                           *)
 (* ========================================================================= *)
 
 needs "misc/misc.ml";;
@@ -126,7 +128,7 @@ let read_symbol_length = prove
 (* (an implementation detail relevant in the context of streams).          *)
 
 let mlsexp_lex_aux_def = cake_def_wf
-  `measure (\p:num#string#mlsexp_token list. LENGTH (FST (SND p)))`
+  `MEASURE (\p:num#string#mlsexp_token list. LENGTH (FST (SND p)))`
   (REPEAT STRIP_TAC THEN RVEQ_TAC THEN
    RULE_ASSUM_TAC(REWRITE_RULE (WF_REL_THMS @ [FST; SND])) THEN
    REWRITE_TAC(WF_REL_THMS @ [FST; SND; LENGTH]) THEN
@@ -172,13 +174,13 @@ let lex_aux_length = prove
 (* Fails with an error message if parentheses are unbalanced or            *)
 (* read_string fails on a string literal.                                   *)
 
-let lex_def = cake_def
-  `lex (input:string) = mlsexp_lex_aux 0 input []`;;
+let mlsexp_lex_def = cake_def
+  `mlsexp_lex (input:string) = mlsexp_lex_aux 0 input []`;;
 
 let lex_IMP_LENGTH_LESS = prove
  (`!input x rest.
-     lex input = INR (x,rest) ==> LENGTH rest < LENGTH input \/ x = []`,
-  SIMP(lex_def :: all_case_eqs()) THEN REPEAT GEN_TAC THEN
+     mlsexp_lex input = INR (x,rest) ==> LENGTH rest < LENGTH input \/ x = []`,
+  SIMP(mlsexp_lex_def :: all_case_eqs()) THEN REPEAT GEN_TAC THEN
   CASES_ON `input:string` THEN
   FS(mlsexp_lex_aux_def :: all_case_eqs()) THEN
   REPEAT STRIP_TAC THEN GVS[] THEN TRY DISJ1_TAC THEN
@@ -200,7 +202,7 @@ let PURE3AUX_cs =
   Compute.add_conv (`isSpace`,1,PURE3AUX_ISSPACE_CONV) cs;
   Compute.add_conv (`(=):char->char->bool`,2,CHAR_EQ_CONV) cs;
   Compute.add_thms
-    [REVERSE; APPEND; list_CASE; sum_CASE; pair_CASE; LET_END_DEF; lex_def;
+    [REVERSE; APPEND; list_CASE; sum_CASE; pair_CASE; LET_END_DEF; mlsexp_lex_def;
      mlsexp_lex_aux_def; mlsexp_read_string_def; read_string_aux_def;
      read_symbol_def] cs;
   cs;;
@@ -208,14 +210,14 @@ let PURE3AUX_cs =
 let PURE3AUX_EVAL_CONV tm = Compute.CBV_CONV PURE3AUX_cs tm;;
 
 let test_lex = prove
- (`lex " 1 2   3 " = INR ([SYMBOL (implode "1")], " 2   3 ") /\
-   lex "\"\n \" 2" = INR ([SYMBOL (implode "\n ")], " 2") /\
-   lex " (1 2) 3 " =
+ (`mlsexp_lex " 1 2   3 " = INR ([SYMBOL (implode "1")], " 2   3 ") /\
+   mlsexp_lex "\"\n \" 2" = INR ([SYMBOL (implode "\n ")], " 2") /\
+   mlsexp_lex " (1 2) 3 " =
      INR ([CLOSE; SYMBOL (implode "2"); SYMBOL (implode "1"); OPEN], " 3 ") /\
-   lex " (1 2) ) " =
+   mlsexp_lex " (1 2) ) " =
      INR ([CLOSE; SYMBOL (implode "2"); SYMBOL (implode "1"); OPEN], " ) ") /\
-   lex " (1 2    " = INL (implode "lex_aux: missing closing parenthesis", "") /\
-   lex " ) (1 2) " =
+   mlsexp_lex " (1 2    " = INL (implode "lex_aux: missing closing parenthesis", "") /\
+   mlsexp_lex " ) (1 2) " =
      INL (implode "lex_aux: too many closing parenthesis", " (1 2) ")`,
   REPEAT CONJ_TAC THEN CONV_TAC(LAND_CONV PURE3AUX_EVAL_CONV) THEN REFL_TAC);;
 
@@ -233,7 +235,7 @@ let parse_aux_def = cake_def
 
 let mlsexp_parse_def = cake_def
   `mlsexp_parse (input:string) =
-     (match lex input with
+     (match mlsexp_lex input with
         INL (msg, rest) -> INL (msg, rest)
       | INR (rev_toks, rest) ->
           (match parse_aux rev_toks [] [] with
@@ -248,7 +250,7 @@ let parse_IMP_LENGTH_LESS = prove
 
 let parse_space = prove
  (`mlsexp_parse (CONS (CHR 10) xs) = mlsexp_parse xs`,
-  SIMP[mlsexp_parse_def; lex_def] THEN
+  SIMP[mlsexp_parse_def; mlsexp_lex_def] THEN
   ONCE_REWRITE_TAC[mlsexp_lex_aux_def] THEN
   REWRITE_TAC PURE3AUX_CHAR_SIMPS);;
 
@@ -821,7 +823,7 @@ let parse_sexp_to_string = prove
  (`!s x.
      (~(s = []) ==> isSpace (HD s)) ==>
      mlsexp_parse (APPEND (explode (sexp_to_string x)) s) = INR (x, s)`,
-  REWRITE_TAC[sexp_to_string_def; mlsexp_parse_def; lex_def] THEN REPEAT STRIP_TAC THEN
+  REWRITE_TAC[sexp_to_string_def; mlsexp_parse_def; mlsexp_lex_def] THEN REPEAT STRIP_TAC THEN
   ASM_SIMP_TAC[CONJUNCT1 lex_aux_sexp_to_list] THEN
   FS[APPEND_NIL; parse_aux_to_tokens_thm]);;
 
@@ -829,7 +831,7 @@ let parse_sexp_to_pretty_string = prove
  (`!s x.
      mlsexp_parse (APPEND (explode (sexp_to_pretty_string x)) s) =
      INR (x, APPEND "\n" s)`,
-  REWRITE_TAC[sexp_to_pretty_string_def; str_tree_to_strs_def; mlsexp_parse_def; lex_def] THEN
+  REWRITE_TAC[sexp_to_pretty_string_def; str_tree_to_strs_def; mlsexp_parse_def; mlsexp_lex_def] THEN
   ONCE_REWRITE_TAC[flatten_acc] THEN
   REWRITE_TAC[concat_append; explode_strcat; concat_sing; explode_thm; GSYM APPEND_ASSOC] THEN
   REPEAT GEN_TAC THEN

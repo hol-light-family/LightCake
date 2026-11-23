@@ -20,6 +20,8 @@
 (*   panPtreeConversion_ (tokenUtils and cmlPtreeConversion have them); the  *)
 (*   constructors of panLang, asm and panLexer are as there (panLang_Const,  *)
 (*   asm_Add, NotEqual, panLexer_IntT, ...).                                 *)
+(* - HOL4 kw is panPtreeConversion_kw (a common word: a constant kw would    *)
+(*   capture the variable kw of other files in one session).                 *)
 (* - conv_Exp_def is one mutual definition of the seven functions, as in     *)
 (*   HOL4; its clauses use the argument names tree, ts and res throughout   *)
 (*   (HOL4 also has leaf and e).  Paired lambdas of HOL4 inside recursive    *)
@@ -68,8 +70,8 @@ let dest_annot_tok_def = cake_def
        SOME (AnnotCommentT c) -> SOME c
      | _ -> NONE`;;
 
-let kw_def = cake_def
-  `kw k = KeywordT k`;;
+let panPtreeConversion_kw_def = cake_def
+  `panPtreeConversion_kw k = KeywordT k`;;
 
 let isNT_def = cake_def
   `isNT (nodeNT:(B+num)#C) (ntm:B) <=> FST nodeNT = INL ntm`;;
@@ -139,7 +141,7 @@ let isSubOp_def = cake_def
 (* Convert a binary operator into its AST representation. *)
 
 let conv_binop_def = cake_def_wf
-  `measure (\t:(panLexer_token,pancakeNT,C)parsetree.
+  `MEASURE (\t:(panLexer_token,pancakeNT,C)parsetree.
               parsetree_size (\x:panLexer_token. 0) (\x:pancakeNT. 0)
                              (\x:C. 0) t)`
   TERM_TAC
@@ -158,7 +160,7 @@ let conv_binop_def = cake_def_wf
       else NONE)`;;
 
 let conv_panop_def = cake_def_wf
-  `measure (\t:(panLexer_token,pancakeNT,C)parsetree.
+  `MEASURE (\t:(panLexer_token,pancakeNT,C)parsetree.
               parsetree_size (\x:panLexer_token. 0) (\x:pancakeNT. 0)
                              (\x:C. 0) t)`
   TERM_TAC
@@ -173,7 +175,7 @@ let conv_panop_def = cake_def_wf
       else NONE)`;;
 
 let conv_shift_def = cake_def_wf
-  `measure (\t:(panLexer_token,pancakeNT,C)parsetree.
+  `MEASURE (\t:(panLexer_token,pancakeNT,C)parsetree.
               parsetree_size (\x:panLexer_token. 0) (\x:pancakeNT. 0)
                              (\x:C. 0) t)`
   TERM_TAC
@@ -191,7 +193,7 @@ let conv_shift_def = cake_def_wf
       else NONE)`;;
 
 let conv_cmp_def = cake_def_wf
-  `measure (\t:(panLexer_token,pancakeNT,C)parsetree.
+  `MEASURE (\t:(panLexer_token,pancakeNT,C)parsetree.
               parsetree_size (\x:panLexer_token. 0) (\x:pancakeNT. 0)
                              (\x:C. 0) t)`
   TERM_TAC
@@ -243,7 +245,7 @@ let PPARSEAUX_ARGS_TERM_TAC =
 (* A single tree is smaller than the forest. *)
 
 let conv_Shape_def = cake_def_wf
-  `measure (\t:(panLexer_token,pancakeNT,C)parsetree.
+  `MEASURE (\t:(panLexer_token,pancakeNT,C)parsetree.
               parsetree_size (\x:panLexer_token. 0) (\x:pancakeNT. 0)
                              (\x:C. 0) t)`
   PPARSEAUX_ARGS_TERM_TAC
@@ -303,7 +305,7 @@ let PPARSEAUX_measure (tys:hol_type list) =
         let s = mk_var("s",sty) in
         mk_abs(s,list_mk_icomb "sum_CASE" [s; arg_size ty; g])
     | [] -> failwith "PPARSEAUX_measure" in
-  mk_icomb(mk_const("measure",[]),combine tys);;
+  mk_icomb(mk_const("MEASURE",[]),combine tys);;
 
 (* termination: TERM_TAC, after substituting the equations of the context  *)
 (* if needed; for a call on a child given by argsNT, the size lemma         *)
@@ -442,12 +444,12 @@ let conv_Exp_def = cake_def_wf
          | CONS e es -> OPTION_BIND (conv_Exp e) (conv_panops es))
       else NONE) /\
    (conv_Exp tree =
-      if panPtreeConversion_tokcheck tree (kw BaseK) then SOME BaseAddr
-      else if panPtreeConversion_tokcheck tree (kw TopK) then SOME TopAddr
-      else if panPtreeConversion_tokcheck tree (kw BiwK) then SOME BytesInWord
-      else if panPtreeConversion_tokcheck tree (kw TrueK)
+      if panPtreeConversion_tokcheck tree (panPtreeConversion_kw BaseK) then SOME BaseAddr
+      else if panPtreeConversion_tokcheck tree (panPtreeConversion_kw TopK) then SOME TopAddr
+      else if panPtreeConversion_tokcheck tree (panPtreeConversion_kw BiwK) then SOME BytesInWord
+      else if panPtreeConversion_tokcheck tree (panPtreeConversion_kw TrueK)
       then SOME (panLang_Const (word 1))
-      else if panPtreeConversion_tokcheck tree (kw FalseK)
+      else if panPtreeConversion_tokcheck tree (panPtreeConversion_kw FalseK)
       then SOME (panLang_Const (word 0))
       else OPTION_CHOICE (conv_const tree) (conv_var tree)
         :((A)panLang_exp)option) /\
@@ -559,11 +561,11 @@ let conv_NonRecStmt_def = cake_def
          | _ -> NONE)
       else NONE) /\
    (conv_NonRecStmt leaf =
-      if panPtreeConversion_tokcheck leaf (kw SkipK) then SOME panLang_Skip
-      else if panPtreeConversion_tokcheck leaf (kw BrK) then SOME panLang_Break
-      else if panPtreeConversion_tokcheck leaf (kw ContK)
+      if panPtreeConversion_tokcheck leaf (panPtreeConversion_kw SkipK) then SOME panLang_Skip
+      else if panPtreeConversion_tokcheck leaf (panPtreeConversion_kw BrK) then SOME panLang_Break
+      else if panPtreeConversion_tokcheck leaf (panPtreeConversion_kw ContK)
       then SOME panLang_Continue
-      else if panPtreeConversion_tokcheck leaf (kw TicK) then SOME panLang_Tick
+      else if panPtreeConversion_tokcheck leaf (panPtreeConversion_kw TicK) then SOME panLang_Tick
       else (match dest_annot_tok leaf with
               SOME c -> SOME (Annot (implode "@") (implode c))
             | NONE -> NONE):((A)panLang_prog)option)`;;
@@ -687,7 +689,7 @@ let conv_DecCall_def = cake_def
 
 let conv_Ret_def = cake_def
   `conv_Ret (tree:(panLexer_token,pancakeNT,C)parsetree) =
-     if panPtreeConversion_tokcheck tree (kw RetK) then SOME NONE
+     if panPtreeConversion_tokcheck tree (panPtreeConversion_kw RetK) then SOME NONE
      else if panPtreeConversion_tokcheck tree NotT then SOME (SOME NONE)
      else
        match argsNT tree RetNT with
@@ -730,7 +732,7 @@ let PPARSEAUX_PROG_TERM_TAC =
     FIRST_ASSUM(MATCH_ACCEPT_TAC o MATCH_MP PPARSEAUX_size_LAST)));;
 
 let conv_Prog_def = cake_def_wf
-  `measure (\t:(panLexer_token,pancakeNT,locs)parsetree.
+  `MEASURE (\t:(panLexer_token,pancakeNT,locs)parsetree.
               parsetree_size (\x:panLexer_token. 0) (\x:pancakeNT. 0)
                              (\x:locs. 0) t)`
   PPARSEAUX_PROG_TERM_TAC
@@ -873,7 +875,7 @@ let conv_TopDec_def = cake_def
        :((A)decl)option`;;
 
 let conv_TopDecList_def = cake_def_wf
-  `measure (\t:(panLexer_token,pancakeNT,locs)parsetree.
+  `MEASURE (\t:(panLexer_token,pancakeNT,locs)parsetree.
               parsetree_size (\x:panLexer_token. 0) (\x:pancakeNT. 0)
                              (\x:locs. 0) t)`
   PPARSEAUX_EXP_TERM_TAC
@@ -911,7 +913,7 @@ let collect_globals_def = cake_def
 (* the catch-all clause also leaves Load32 unchanged, as in HOL4 *)
 
 let localise_exp_def = cake_def_wf
-  `measure (\s:((mlstring,1)map#(A)panLang_exp)+
+  `MEASURE (\s:((mlstring,1)map#(A)panLang_exp)+
                ((mlstring,1)map#((A)panLang_exp)list).
      sum_CASE s (\p. panLang_exp_size (\x:A. 0) (SND p))
                 (\p. list_size (panLang_exp_size (\x:A. 0)) (SND p)))`
@@ -947,7 +949,7 @@ let localise_exp_ind = cake_ind "localise_exp";;
 (* unchanged, as in HOL4                                                     *)
 
 let localise_prog_def = cake_def_wf
-  `measure (\p:(mlstring,1)map#(A)panLang_prog.
+  `MEASURE (\p:(mlstring,1)map#(A)panLang_prog.
               panLang_prog_size (\x:A. 0) (SND p))`
   TERM_TAC
   `(localise_prog (ls:(mlstring,1)map)
@@ -1049,4 +1051,3 @@ let parse_topdecs_to_ast_def = cake_def
                                unknown_loc)])
           | INR err -> INR err)
      | INR err -> INR err:(((A)decl)list)+((mlstring#locs)list)`;;
-

@@ -90,7 +90,7 @@ let bvi_bvi_to_bvl_refs = prove
 (* HOL4 [simp] *)
 let bvi_to_bvl_code = prove
  (`!x:(C,FFI)bvi_state.
-     bvl_state_code (bvi_to_bvl x) = map (K (ARB:num # bvl_exp)) (bvi_state_code x)`,
+     bvl_state_code (bvi_to_bvl x) = sptree_map (K (ARB:num # bvl_exp)) (bvi_state_code x)`,
   REWRITE_TAC[bvi_to_bvl_def; bvl_state_INFO.ri_accfupds; K_THM]);;
 
 (* HOL4 [simp] *)
@@ -520,9 +520,9 @@ let GENLIST_add_split = prove
 (* HOL4 [local] *)
 let FOLDL_union_GENLIST_split = prove
  (`!c (f:num -> C # (num # num # bvi_exp) list) a b.
-     FOLDL union (FOLDL union c (MAP (fromAList o SND) (list_of_seq f a)))
+     FOLDL sptree_union (FOLDL sptree_union c (MAP (fromAList o SND) (list_of_seq f a)))
        (MAP (fromAList o SND) (list_of_seq (\i. f (i + a)) b)) =
-     FOLDL union c (MAP (fromAList o SND) (list_of_seq f (a + b)))`,
+     FOLDL sptree_union c (MAP (fromAList o SND) (list_of_seq f (a + b)))`,
   REPEAT GEN_TAC THEN
   SUBGOAL_THEN `(\i. (f:num -> C # (num # num # bvi_exp) list) (i + a)) = (\i. f (a + i))`
     SUBST1_TAC THENL [REWRITE_TAC[FUN_EQ_THM; ADD_SYM]; ALL_TAC] THEN
@@ -534,7 +534,7 @@ let BVLPROPSAUX_bvi_code_inv_def = new_definition
  `BVLPROPSAUX_bvi_code_inv (co:num -> C # (num # num # bvi_exp) list)
                            (code:(num # bvi_exp) spt) co1 code1 <=>
     ?n. co1 = shift_seq n co /\
-        code1 = FOLDL union code (MAP (fromAList o SND) (list_of_seq co n))`;;
+        code1 = FOLDL sptree_union code (MAP (fromAList o SND) (list_of_seq co n))`;;
 
 let BVLPROPSAUX_bvi_code_inv_refl = prove
  (`!(co:num -> C # (num # num # bvi_exp) list) code.
@@ -621,7 +621,7 @@ let bvi_evaluate_code = prove
      bvi_evaluate (xs,env,s1) = (vs,s2) ==>
      ?n. bvi_state_compile_oracle s2 = shift_seq n (bvi_state_compile_oracle s1) /\
          bvi_state_code s2 =
-         FOLDL union (bvi_state_code s1)
+         FOLDL sptree_union (bvi_state_code s1)
                (MAP (fromAList o SND) (list_of_seq (bvi_state_compile_oracle s1) n))`,
   REWRITE_TAC[GSYM BVLPROPSAUX_bvi_code_inv_def] THEN
   MESON_TAC[BVLPROPSAUX_bvi_evaluate_code_lemma]);;
@@ -773,7 +773,7 @@ let BVLPROPSAUX_bvi_to_bvl_swap = prove
        (bvl_state_refs (bvi_to_bvl s)) (bvi_state_clock s)
        (bvl_state_compile (ARB:(B,FFI)bvl_state))
        (bvl_state_compile_oracle (ARB:(B,FFI)bvl_state))
-       (map (K (ARB:num # bvl_exp)) (bvi_state_code t)) (bvl_state_ffi (bvi_to_bvl s))`,
+       (sptree_map (K (ARB:num # bvl_exp)) (bvi_state_code t)) (bvl_state_ffi (bvi_to_bvl s))`,
   REWRITE_TAC[bvi_to_bvl_def; BVLPROPSAUX_swap_acc; bvl_state_INFO.ri_accfupds; K_THM] THEN
   REWRITE_TAC[bvl_state_component_equality; bvl_state_INFO.ri_accessors;
               bvl_state_INFO.ri_accfupds; K_THM]);;
@@ -853,7 +853,7 @@ let BVLPROPSAUX_bvi_do_app_swap = prove
      `bvl_state_globals (ARB:(B,FFI)bvl_state)`; `bvi_state_clock (s:(A,FFI)bvi_state)`;
      `bvl_state_compile (ARB:(B,FFI)bvl_state)`;
      `bvl_state_compile_oracle (ARB:(B,FFI)bvl_state)`;
-     `map (K (ARB:num # bvl_exp)) (bvi_state_code (t:(B,FFI)bvi_state))`]
+     `sptree_map (K (ARB:num # bvl_exp)) (bvi_state_code (t:(B,FFI)bvi_state))`]
      BVLPROPSAUX_bvl_do_app_frame) THEN
   ASM_REWRITE_TAC[bvi_to_bvl_code; domain_map] THEN
   DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC ASSUME_TAC) THEN
@@ -1121,7 +1121,7 @@ let bvi_evaluate_genlist_vars = prove
 (* final get_code_labels_def is the definition with MAP get_code_labels      *)
 (* (the d of LetCall is named dest: one quotation types a variable once)     *)
 let bvi_get_code_labels_def = cake_def_wf
-  `measure bvi_exp_size`
+  `MEASURE bvi_exp_size`
   TERM_TAC
   `(bvi_get_code_labels (bvi_Var _) = {}:num->bool) /\
    (bvi_get_code_labels (bvi_If e1 e2 e3) =

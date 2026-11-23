@@ -4,7 +4,7 @@
 (* This compilation pass removes trivially unreachable code.                 *)
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
-(* - Names as notes/naming/names.tsv says: the wordLang constructors wl_..., *)
+(* - Names as doc/names.tsv says: the wordLang constructors wl_...,          *)
 (*   word_unreach_merge_moves (HOL4 merge_moves) and                         *)
 (*   word_unreach_Seq_assoc_right_def/_ind (Seq_assoc_right_def cannot be    *)
 (*   bound by OCaml); the constant Seq_assoc_right keeps its name.           *)

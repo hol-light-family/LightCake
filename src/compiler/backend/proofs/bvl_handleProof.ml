@@ -132,7 +132,7 @@ let let_ok_def = sem1aux_def
 
 (* HOL4: Termination WF_REL_TAC with measure exp1_size *)
 let handle_ok_def = sem1aux_def_wf
-  `measure (list_size bvl_exp_size)`
+  `MEASURE (list_size bvl_exp_size)`
   SEM1AUX_TC_TAC
   `(handle_ok [] <=> T) /\
    (handle_ok (CONS (x:bvl_exp) (CONS y xs)) <=>

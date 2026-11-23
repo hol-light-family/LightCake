@@ -106,7 +106,7 @@ let clos_do_eq_def = sem1aux_def_wf
 let clos_do_eq_ind = cake_ind "clos_do_eq";;
 
 let clos_v_to_list_def = sem1aux_def_wf
-  `measure clos_v_size`
+  `MEASURE clos_v_size`
   SEM1AUX_TC_TAC
   `(clos_v_to_list (clos_Block tag []) =
       if tag = nil_tag then SOME [] else NONE) /\
@@ -169,7 +169,7 @@ let clos_do_install_def = cake_def
      | _ -> (Rerr (Rabort Rtype_error),s)`;;
 
 let make_const_def = cake_def_wf
-  `measure const_size`
+  `MEASURE const_size`
   TERM_TAC
   `(make_const (ConstInt i) = clos_Number i) /\
    (make_const (ConstStr s) = ByteVector (MAP (word o ORD) (explode s))) /\
@@ -938,7 +938,7 @@ let CLOSSEMAUX_evaluate_clauses =
 (*                  | INR (l,f,args,s) => (s.clock,0,LENGTH args))           *)
 
 let CLOSSEMAUX_evaluate_rel =
-  `inv_image (measure (I:num->num) LEX measure (I:num->num) LEX measure (I:num->num))
+  `inv_image (MEASURE (I:num->num) LEX MEASURE (I:num->num) LEX MEASURE (I:num->num))
      (\x:(clos_exp list # clos_v list # (C,FFI)clos_state) +
          (num option # clos_v # clos_v list # (C,FFI)clos_state).
         sum_CASE x

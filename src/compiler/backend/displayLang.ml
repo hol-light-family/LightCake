@@ -58,7 +58,7 @@ let MEM_sExp_size = prove
 (* Converts a display expression to JSON *)
 
 let display_to_json_def = cake_def_wf
-  `measure sExp_size`
+  `MEASURE sExp_size`
   (REWRITE_TAC(WF_REL_THMS) THEN REPEAT STRIP_TAC THEN RVEQ_TAC THEN
    REWRITE_TAC[type_size_def "sExp"] THEN REWRITE_TAC(size_aux_eqs "sExp") THEN
    FIRST_ASSUM (ASSUME_TAC o MATCH_MP MEM_sExp_size) THEN ASM_ARITH_TAC)

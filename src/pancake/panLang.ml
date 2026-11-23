@@ -5,7 +5,7 @@
 (* functions, and foreign function calls.                                    *)
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
-(* - Names as notes/naming/names.tsv says: panLang_exp, panLang_prog and the *)
+(* - Names as doc/names.tsv says: panLang_exp, panLang_prog and the          *)
 (*   constructors that clash with other languages (panLang_Const,            *)
 (*   panLang_Var, panLang_Seq, ...); asm's memops are asm_Load, Load8, ...   *)
 (* - HOL4 Type shift = ast$shift is the type abbreviation panLang_shift; the  *)
@@ -521,7 +521,7 @@ let PANLAUX_EXP_TC_TAC : tactic =
   TERM_TAC;;
 
 let var_exp_def = sem1aux_def_wf
-  `measure (\e:(A)panLang_exp. panLang_exp_size ARB e)`
+  `MEASURE (\e:(A)panLang_exp. panLang_exp_size ARB e)`
   PANLAUX_EXP_TC_TAC
   (list_mk_conj
    [`(var_exp (panLang_Const (w:A word)) = []:mlstring list) /\
@@ -553,7 +553,7 @@ let var_exp_ind = cake_ind "var_exp";;
 (* TopAddr, BytesInWord (as in HOL4)                                         *)
 
 let PANLAUX_global_var_exp_def = sem1aux_def_wf
-  `measure (\e:(A)panLang_exp. panLang_exp_size ARB e)`
+  `MEASURE (\e:(A)panLang_exp. panLang_exp_size ARB e)`
   PANLAUX_EXP_TC_TAC
   (list_mk_conj
    [`(global_var_exp (panLang_Const (w:A word)) = []:mlstring list) /\

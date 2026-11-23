@@ -815,7 +815,7 @@ let ffi_name_NOT_Mapped = prove
   REPEAT GEN_TAC THEN REWRITE_TAC[mmio_pcs_min_index_def] THEN STRIP_TAC THEN
   FIRST_X_ASSUM(MP_TAC o BETA_RULE o MATCH_MP BASICAUX_some_SOME) THEN STRIP_TAC THEN
   FIRST_ASSUM(X_CHOOSE_THEN `k:num` STRIP_ASSUME_TAC o SPEC `0` o MATCH_MP find_index_MEM) THEN
-  ASM_REWRITE_TAC[get_ffi_index_def; ADD_CLAUSES; the_def] THEN
+  ASM_REWRITE_TAC[get_ffi_index_def; ADD_CLAUSES; misc_the_def] THEN
   REWRITE_TAC[GSYM NOT_LE] THEN DISCH_TAC THEN
   FIRST_X_ASSUM(MP_TAC o SPEC `k:num` o check (fun th -> is_forall(concl th) &&
      can (find_term (fun t -> try fst(dest_const t) = "SharedMem" with _ -> false)) (concl th))) THEN
@@ -1371,11 +1371,11 @@ let LTTP3AUX_cc_Inst = prove
   USE_THEN "instlem" (STRIP_ASSUME_TAC o SPEC `ms1:B`) THEN
   MP_TAC(ISPECL [`mc_conf:(A,B,C)machine_config`; `t1:(A)asm_state`; `ms1:B`;
      `lab_state_ffi (s1:(A,lab_to_target_config,FFI)lab_state)`; `asm_Inst (i:(A)inst)`;
-     `asm (asm_Inst (i:(A)inst))
+     `asm_asm (asm_Inst (i:(A)inst))
         (word_add (asm_state_pc t1) (word (LENGTH (bytes':byte list)))) t1`;
      `bytes':byte list`] asm_step_IMP_evaluate_step_nop) THEN
   ASM_REWRITE_TAC[asm_step_nop_def; distinctness "asm"] THEN ANTS_TAC THENL
-   [SIMP[asm_def; asm_upd_pc_def] THEN REPEAT CONJ_TAC THENL
+   [SIMP[asm_asm_def; asm_upd_pc_def] THEN REPEAT CONJ_TAC THENL
      [MATCH_MP_TAC IMP_ffi_entry_pcs_disjoint_Asm THEN
       MAP_EVERY EXISTS_TAC [`s1:(A,lab_to_target_config,FFI)lab_state`; `code2:((A)sec)list`;
         `labs:(num spt)spt`;
@@ -1396,7 +1396,7 @@ let LTTP3AUX_cc_Inst = prove
   DISCH_THEN(MP_TAC o SPECL [`res:machine_result`;
     `shift_interfer l (mc_conf:(A,B,C)machine_config)`;
     `s2:(A,lab_to_target_config,FFI)lab_state`; `code2:((A)sec)list`; `labs:(num spt)spt`;
-    `asm (asm_Inst (i:(A)inst))
+    `asm_asm (asm_Inst (i:(A)inst))
        (word_add (word_add p (word (pos_val
           (lab_state_pc (s1:(A,lab_to_target_config,FFI)lab_state)) 0 (code2:((A)sec)list))))
         (word (LENGTH (bytes':byte list)))) t1`;
@@ -1410,7 +1410,7 @@ let LTTP3AUX_cc_Inst = prove
       ASM_REWRITE_TAC[shift_interfer_def; machine_config_INFO.ri_accfupds];
       MATCH_MP_TAC state_rel_shift_interfer THEN
       USE_THEN "instlem" (MP_TAC o CONJUNCT2 o CONJUNCT2 o SPEC `ms2:B`) THEN
-      RULE_ASSUM_TAC(REWRITE_RULE[asm_def]) THEN REWRITE_TAC[asm_def] THEN
+      RULE_ASSUM_TAC(REWRITE_RULE[asm_asm_def]) THEN REWRITE_TAC[asm_asm_def] THEN
       DISCH_THEN MATCH_MP_TAC THEN FIRST_ASSUM ACCEPT_TAC];
     ALL_TAC] THEN
   SIMP_TAC(inc_pc_def :: lab_dec_clock_def :: asm_inst_consts :: LTTP3AUX_RECS) THEN
@@ -1477,11 +1477,11 @@ let LTTP3AUX_cc_JumpReg = prove
      `p:A word`; `s1:(A,lab_to_target_config,FFI)lab_state`; `t1:(A)asm_state`; `ms1:B`;
      `x:num`] LTTP3AUX_state_rel_aligned_pos_val) THEN
   ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
-  SUBGOAL_THEN `asm (JumpReg r) (word_add (word_add p (word pv)) (word (LENGTH (enc:byte list))))
+  SUBGOAL_THEN `asm_asm (JumpReg r) (word_add (word_add p (word pv)) (word (LENGTH (enc:byte list))))
                   t1 =
                 asm_upd_pc (word_add p (word (pos_val x 0 (code2:((A)sec)list))))
                   (t1:(A)asm_state)` (LABEL_TAC "asmeq") THENL
-   [ASM_REWRITE_TAC[asm_def; read_reg_def; LET_DEF; LET_END_DEF; asm_assert_def] THEN
+   [ASM_REWRITE_TAC[asm_asm_def; read_reg_def; LET_DEF; LET_END_DEF; asm_assert_def] THEN
     AP_TERM_TAC THEN REWRITE_TAC(asm_state_component_equality :: LTTP3AUX_RECS) THEN
     ASM_REWRITE_TAC[];
     ALL_TAC] THEN
@@ -1584,7 +1584,7 @@ let LTTP3AUX_cc_Jump = prove
                                                with Failure _ -> false)) THEN
   FIRST_X_ASSUM(SUBST_ALL_TAC o check (fun th -> try lhs(concl th) = `tt:A word`
                                                with Failure _ -> false)) THEN
-  SUBGOAL_THEN `asm (asm_Jump (word_sub (word (pos_val x 0 (code2:((A)sec)list))) (word pv)))
+  SUBGOAL_THEN `asm_asm (asm_Jump (word_sub (word (pos_val x 0 (code2:((A)sec)list))) (word pv)))
                   (word_add (word_add p (word pv))
                      (word (LENGTH (asm_config_encode
                         (target_config (machine_config_target (mc_conf:(A,B,C)machine_config)))
@@ -1592,7 +1592,7 @@ let LTTP3AUX_cc_Jump = prove
                   t1 =
                 asm_upd_pc (word_add p (word (pos_val x 0 (code2:((A)sec)list))))
                   (t1:(A)asm_state)` (LABEL_TAC "asmeq") THENL
-   [ASM_REWRITE_TAC[asm_def; jump_to_offset_def] THEN AP_THM_TAC THEN AP_TERM_TAC THEN
+   [ASM_REWRITE_TAC[asm_asm_def; jump_to_offset_def] THEN AP_THM_TAC THEN AP_TERM_TAC THEN
     MATCH_ACCEPT_TAC(WORD_RULE
      `!(a:A word) b c. word_add (word_add a b) (word_sub c b) = word_add a c`);
     ALL_TAC] THEN
@@ -1697,7 +1697,7 @@ let LTTP3AUX_cc_JumpCmp_T = prove
                                                with Failure _ -> false)) THEN
   FIRST_X_ASSUM(SUBST_ALL_TAC o check (fun th -> try lhs(concl th) = `tt:A word`
                                                with Failure _ -> false)) THEN
-  SUBGOAL_THEN `asm (asm_JumpCmp cmp rr ri (word_sub (word (pos_val x 0 (code2:((A)sec)list))) (word pv)))
+  SUBGOAL_THEN `asm_asm (asm_JumpCmp cmp rr ri (word_sub (word (pos_val x 0 (code2:((A)sec)list))) (word pv)))
                   (word_add (word_add p (word pv))
                      (word (LENGTH (asm_config_encode
                         (target_config (machine_config_target (mc_conf:(A,B,C)machine_config)))
@@ -1705,7 +1705,7 @@ let LTTP3AUX_cc_JumpCmp_T = prove
                   t1 =
                 asm_upd_pc (word_add p (word (pos_val x 0 (code2:((A)sec)list))))
                   (t1:(A)asm_state)` (LABEL_TAC "asmeq") THENL
-   [ASM_REWRITE_TAC[asm_def; jump_to_offset_def] THEN AP_THM_TAC THEN AP_TERM_TAC THEN
+   [ASM_REWRITE_TAC[asm_asm_def; jump_to_offset_def] THEN AP_THM_TAC THEN AP_TERM_TAC THEN
     MATCH_ACCEPT_TAC(WORD_RULE
      `!(a:A word) b c. word_add (word_add a b) (word_sub c b) = word_add a c`);
     ALL_TAC] THEN
@@ -1801,18 +1801,18 @@ let LTTP3AUX_cc_JumpCmp_F = prove
      `p:A word`; `t1:(A)asm_state`; `cmp:cmp`; `rr:num`; `ri:(A)reg_imm`; `jt:lab`;
      `a1:A word`; `a2:byte list`; `a3:num`] IMP_bytes_in_memory_JumpCmp_1) THEN
   ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
-  SUBGOAL_THEN `asm (asm_JumpCmp cmp rr ri tt)
+  SUBGOAL_THEN `asm_asm (asm_JumpCmp cmp rr ri tt)
                   (word_add (asm_state_pc t1) (word (LENGTH (bytes:byte list)))) t1 =
                 asm_upd_pc (word_add p (word (pos_val
                   (lab_state_pc (s1:(A,lab_to_target_config,FFI)lab_state) + 1) 0
                   (code2:((A)sec)list)))) (t1:(A)asm_state)` (LABEL_TAC "asmeq") THENL
-   [ASM_REWRITE_TAC[asm_def; GSYM read_reg_def] THEN
+   [ASM_REWRITE_TAC[asm_asm_def; GSYM read_reg_def] THEN
     REWRITE_TAC[WORD_ADD; WORD_ADD_ASSOC];
     ALL_TAC] THEN
   MP_TAC(ISPECL [`mc_conf:(A,B,C)machine_config`; `t1:(A)asm_state`; `ms1:B`;
      `lab_state_ffi (s1:(A,lab_to_target_config,FFI)lab_state)`;
      `asm_JumpCmp cmp rr ri tt:(A)asm`;
-     `asm (asm_JumpCmp cmp rr ri tt) (word_add (asm_state_pc t1) (word (LENGTH (bytes:byte list))))
+     `asm_asm (asm_JumpCmp cmp rr ri tt) (word_add (asm_state_pc t1) (word (LENGTH (bytes:byte list))))
         (t1:(A)asm_state)`; `bytes:byte list`] asm_step_IMP_evaluate_step_nop) THEN
   USE_THEN "asmeq" SUBST1_TAC THEN
   ASM_REWRITE_TAC[asm_step_nop_def; distinctness "asm"] THEN ANTS_TAC THENL
@@ -1987,13 +1987,13 @@ let LTTP3AUX_cc_LocValue = prove
   FIRST_X_ASSUM(SUBST_ALL_TAC o check (fun th -> try lhs(concl th) = `tt:A word`
                                                with Failure _ -> false)) THEN
   ABBREV_TAC `w = word_add p (word (pos_val x 0 (code2:((A)sec)list))):A word` THEN
-  SUBGOAL_THEN `asm (asm_Loc r (word_sub (word (pos_val x 0 (code2:((A)sec)list))) (word pv)))
+  SUBGOAL_THEN `asm_asm (asm_Loc r (word_sub (word (pos_val x 0 (code2:((A)sec)list))) (word pv)))
                   (word_add (asm_state_pc t1) (word (LENGTH (bytes:byte list)))) t1 =
                 asm_upd_pc (word_add p (word (pos_val
                   (lab_state_pc (s1:(A,lab_to_target_config,FFI)lab_state) + 1) 0
                   (code2:((A)sec)list)))) (asm_upd_reg r w (t1:(A)asm_state))`
     (LABEL_TAC "asmeq") THENL
-   [ASM_REWRITE_TAC[asm_def] THEN BINOP_TAC THENL
+   [ASM_REWRITE_TAC[asm_asm_def] THEN BINOP_TAC THENL
      [REWRITE_TAC[WORD_ADD; WORD_ADD_ASSOC];
       EXPAND_TAC "w" THEN AP_THM_TAC THEN AP_TERM_TAC THEN
       MATCH_ACCEPT_TAC(WORD_RULE
@@ -2002,7 +2002,7 @@ let LTTP3AUX_cc_LocValue = prove
   MP_TAC(ISPECL [`mc_conf:(A,B,C)machine_config`; `t1:(A)asm_state`; `ms1:B`;
      `lab_state_ffi (s1:(A,lab_to_target_config,FFI)lab_state)`;
      `asm_Loc r (word_sub (word (pos_val x 0 (code2:((A)sec)list))) (word pv)):(A)asm`;
-     `asm (asm_Loc r (word_sub (word (pos_val x 0 (code2:((A)sec)list))) (word pv)))
+     `asm_asm (asm_Loc r (word_sub (word (pos_val x 0 (code2:((A)sec)list))) (word pv)))
         (word_add (asm_state_pc t1) (word (LENGTH (bytes:byte list))))
         (t1:(A)asm_state)`; `bytes:byte list`] asm_step_IMP_evaluate_step_nop) THEN
   USE_THEN "asmeq" SUBST1_TAC THEN
@@ -2113,13 +2113,13 @@ let LTTP3AUX_cc_Halt = prove
   FIRST_X_ASSUM(SUBST_ALL_TAC o check (fun th -> try lhs(concl th) = `tt:A word`
                                                with Failure _ -> false)) THEN
   ABBREV_TAC `jj = asm_Jump (word_sub (word 0) (word (pv + ffi_offset))):(A)asm` THEN
-  SUBGOAL_THEN `asm jj (word_add (word_add p (word pv))
+  SUBGOAL_THEN `asm_asm jj (word_add (word_add p (word pv))
                    (word (LENGTH (asm_config_encode
                       (target_config (machine_config_target (mc_conf:(A,B,C)machine_config)))
                       jj)))) t1 =
                 asm_upd_pc (machine_config_halt_pc mc_conf) (t1:(A)asm_state)`
     (LABEL_TAC "asmeq") THENL
-   [EXPAND_TAC "jj" THEN ASM_REWRITE_TAC[asm_def; jump_to_offset_def] THEN
+   [EXPAND_TAC "jj" THEN ASM_REWRITE_TAC[asm_asm_def; jump_to_offset_def] THEN
     AP_THM_TAC THEN AP_TERM_TAC THEN
     FIRST_X_ASSUM(SUBST1_TAC o SYM o check (fun th -> try rhs(concl th) =
       `machine_config_halt_pc (mc_conf:(A,B,C)machine_config)` with Failure _ -> false)) THEN
@@ -2561,12 +2561,12 @@ let LTTP3AUX_cc_Cbw = prove
   ABBREV_TAC `jj = Mem Store8 r2 (Addr r1 (word 0)):(A)inst` THEN
   ABBREV_TAC `t2 = asm_state_mem_fupd (K ((w1 =+ (word_zx (w2:A word):byte))
                      (asm_state_mem t1))) (t1:(A)asm_state)` THEN
-  SUBGOAL_THEN `asm (asm_Inst jj) (word_add (asm_state_pc t1) (word (LENGTH (bytes':byte list))))
+  SUBGOAL_THEN `asm_asm (asm_Inst jj) (word_add (asm_state_pc t1) (word (LENGTH (bytes':byte list))))
                   t1 =
                 asm_upd_pc (word_add p (word (pos_val
                   (lab_state_pc (s1:(A,lab_to_target_config,FFI)lab_state) + 1) 0
                   (code2:((A)sec)list)))) (t2:(A)asm_state)` (LABEL_TAC "asmeq") THENL
-   [REWRITE_TAC[asm_def] THEN BINOP_TAC THENL
+   [REWRITE_TAC[asm_asm_def] THEN BINOP_TAC THENL
      [ASM_REWRITE_TAC[WORD_ADD; WORD_ADD_ASSOC];
       MAP_EVERY EXPAND_TAC ["jj"; "t2"] THEN
       MP_TAC(ISPECL [`t1:(A)asm_state`; `r1:num`; `r2:num`] LTTP3AUX_inst_store8) THEN
@@ -2574,7 +2574,7 @@ let LTTP3AUX_cc_Cbw = prove
     ALL_TAC] THEN
   MP_TAC(ISPECL [`mc_conf:(A,B,C)machine_config`; `t1:(A)asm_state`; `ms1:B`;
      `lab_state_ffi (s1:(A,lab_to_target_config,FFI)lab_state)`; `asm_Inst jj:(A)asm`;
-     `asm (asm_Inst jj) (word_add (asm_state_pc t1) (word (LENGTH (bytes':byte list))))
+     `asm_asm (asm_Inst jj) (word_add (asm_state_pc t1) (word (LENGTH (bytes':byte list))))
         (t1:(A)asm_state)`; `bytes':byte list`] asm_step_IMP_evaluate_step_nop) THEN
   USE_THEN "asmeq" SUBST1_TAC THEN
   ASM_REWRITE_TAC[asm_step_nop_def; distinctness "asm"] THEN ANTS_TAC THENL
@@ -2699,10 +2699,6 @@ let LTTP3AUX_target_evaluate_SharedMem = prove
   (COND_CASES_TAC THENL
     [CASE_REWRITE_TAC[apply_oracle_def] THEN TOP_CASE_TAC THEN CASE_REWRITE_TAC[]; ASM_MESON_TAC[]]));;
 (* the first k bytes of a word *)
-let LTTP3AUX_LENGTH_word_to_bytes_aux = prove
- (`!n (w:N word) be. LENGTH (word_to_bytes_aux n w be) = n`,
-  INDUCT_TAC THEN ASM_REWRITE_TAC[word_to_bytes_aux_def; LENGTH; LENGTH_APPEND] THEN
-  ARITH_TAC);;
 
 let LTTP3AUX_TAKE_word_to_bytes_aux = prove
  (`!k n (w:N word) be. k <= n ==> TAKE k (word_to_bytes_aux n w be) = word_to_bytes_aux k w be`,
@@ -2713,8 +2709,8 @@ let LTTP3AUX_TAKE_word_to_bytes_aux = prove
     ASM_CASES_TAC `k = SUC n` THENL
      [ASM_REWRITE_TAC[GSYM word_to_bytes_aux_def] THEN
       MATCH_MP_TAC TAKE_LENGTH_ID_rwt THEN
-      REWRITE_TAC[LTTP3AUX_LENGTH_word_to_bytes_aux];
-      ASM_SIMP_TAC[TAKE_APPEND1; LTTP3AUX_LENGTH_word_to_bytes_aux;
+      REWRITE_TAC[WORDSAUX_LENGTH_word_to_bytes_aux];
+      ASM_SIMP_TAC[TAKE_APPEND1; WORDSAUX_LENGTH_word_to_bytes_aux;
                    ARITH_RULE `k <= SUC n /\ ~(k = SUC n) ==> k <= n`]]]);;
 (* the byte constants of the shared memory accesses *)
 let LTTP3AUX_byte_consts = prove
@@ -3554,7 +3550,7 @@ let LTTP3AUX_cc_ShareMem_final = prove
      [REPEAT CONJ_TAC THEN TRY(FIRST_ASSUM ACCEPT_TAC) THEN
       UNDISCH_TAC `~(lab_state_clock (s1:(A,lab_to_target_config,FFI)lab_state) = 0)` THEN ARITH_TAC;
       DISCH_THEN SUBST1_TAC] THEN
-    
+
     FIRST_ASSUM(fun th -> if LTTP3AUX_LHS_IS "call_FFI" th then REWRITE_TAC[th]
                           else NO_TAC) THEN
     CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[];
@@ -3652,8 +3648,8 @@ let LTTP3AUX_callffi_index = prove
       EXISTS_TAC `DROP i (machine_config_ffi_names (mc_conf:(A,B,C)machine_config))` THEN
       UNDISCH_TAC `get_ffi_index (machine_config_ffi_names (mc_conf:(A,B,C)machine_config))
                     (ExtCall name) < i` THEN
-      ASM_SIMP_TAC[TAKE_DROP; LENGTH_TAKE; ADD_CLAUSES; get_ffi_index_def; the_def];
-      ASM_REWRITE_TAC[get_ffi_index_def; the_def]];
+      ASM_SIMP_TAC[TAKE_DROP; LENGTH_TAKE; ADD_CLAUSES; get_ffi_index_def; misc_the_def];
+      ASM_REWRITE_TAC[get_ffi_index_def; misc_the_def]];
     MATCH_MP_TAC EL_get_ffi_index_MEM THEN ASM_REWRITE_TAC[];
     FIRST_X_ASSUM(MP_TAC o SPEC `get_ffi_index (machine_config_ffi_names
         (mc_conf:(A,B,C)machine_config)) (ExtCall name)` o check (fun th ->
@@ -3726,14 +3722,14 @@ let LTTP3AUX_callffi_jump = prove
                                                with Failure _ -> false)) THEN
   ABBREV_TAC `jj = asm_Jump (word_sub (word 0)
      (word (pv + (3 + get_ffi_index ffis (ExtCall name)) * ffi_offset))):(A)asm` THEN
-  SUBGOAL_THEN `asm jj (word_add (word_add p (word pv))
+  SUBGOAL_THEN `asm_asm jj (word_add (word_add p (word pv))
                    (word (LENGTH (asm_config_encode
                       (target_config (machine_config_target (mc_conf:(A,B,C)machine_config)))
                       jj)))) t1 =
                 asm_upd_pc (word_sub p (word ((3 + get_ffi_index ffis (ExtCall name)) *
                   ffi_offset))) (t1:(A)asm_state)`
     (LABEL_TAC "asmeq") THENL
-   [EXPAND_TAC "jj" THEN ASM_REWRITE_TAC[asm_def; jump_to_offset_def] THEN
+   [EXPAND_TAC "jj" THEN ASM_REWRITE_TAC[asm_asm_def; jump_to_offset_def] THEN
     AP_THM_TAC THEN AP_TERM_TAC THEN
     REWRITE_TAC[WORD_ADD] THEN CONV_TAC WORD_RULE;
     ALL_TAC] THEN
@@ -4463,13 +4459,13 @@ let LTTP3AUX_install_jump = prove
   FIRST_X_ASSUM(SUBST_ALL_TAC o check (fun th -> try lhs(concl th) = `tt:A word`
                                                with Failure _ -> false)) THEN
   ABBREV_TAC `jj = asm_Jump (word_sub (word 0) (word (pv + 2 * ffi_offset))):(A)asm` THEN
-  SUBGOAL_THEN `asm jj (word_add (word_add p (word pv))
+  SUBGOAL_THEN `asm_asm jj (word_add (word_add p (word pv))
                    (word (LENGTH (asm_config_encode
                       (target_config (machine_config_target (mc_conf:(A,B,C)machine_config)))
                       jj)))) t1 =
                 asm_upd_pc (machine_config_ccache_pc mc_conf) (t1:(A)asm_state)`
     (LABEL_TAC "asmeq") THENL
-   [EXPAND_TAC "jj" THEN ASM_REWRITE_TAC[asm_def; jump_to_offset_def] THEN
+   [EXPAND_TAC "jj" THEN ASM_REWRITE_TAC[asm_asm_def; jump_to_offset_def] THEN
     AP_THM_TAC THEN AP_TERM_TAC THEN
     FIRST_X_ASSUM(SUBST1_TAC o SYM o check (fun th -> try rhs(concl th) =
       `machine_config_ccache_pc (mc_conf:(A,B,C)machine_config)` with Failure _ -> false)) THEN
@@ -5481,8 +5477,8 @@ let LTTP3AUX_DISPATCH_TAC (lem:thm) : tactic =
 (* blocks (HOL4 lines 7560-9356, one per kind of line: Asm, CBW, ShareMemOp, *)
 (* Jump, JumpCmp, Call, LocValue, CallFFI, Install, Halt), suspended after   *)
 (* an induction on labSem's evaluate and case splits on asm_fetch s1: one    *)
-(* theorem here, proved by one part agent.  HOL4's existential t2 is unused  *)
-(* (left out); p is free in HOL4.                                            *)
+(* theorem here.  HOL4's existential t2 is unused (left out); p is free in   *)
+(* HOL4.                                                                     *)
 let lab_to_targetProof_compile_correct = prove
  (`!(s1:(A,lab_to_target_config,FFI)lab_state) res (mc_conf:(A,B,C)machine_config) s2
      code2 labs (t1:(A)asm_state) ms1 p.

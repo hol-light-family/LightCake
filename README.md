@@ -86,10 +86,14 @@ overloads (`thyof`, `tysof`, `|=`, `models`, ...) are written out, so the statem
 than in HOL4, and `===` and `|-` are infix constants, as in HOL Light's `Model/syntax.ml`.
 
 Not ported, because they need parts of CakeML outside the port: the entry points of
-`compiler.ml` for the Pancake language and for parsing target
-names (`compile_pancake` and its 64- and 32-bit versions, `parse_target_64/32`,
-`compile_64/32`, `full_compile_64/32`), and two set-relation lemmas of HOL4's
-`miscScript.sml` (`domain_rrestrict_subset`, `range_rrestrict_subset`).
+`compiler.ml` that choose the target machine from the command line (`parse_target_64/32`,
+`compile_64/32`, `compile_pancake_64/32`, `full_compile_64/32`), and two set-relation lemmas of
+HOL4's `miscScript.sml` (`domain_rrestrict_subset`, `range_rrestrict_subset`). The entry points
+need the assembler configurations `x64_config`, `arm8_config`, `mips_config`, `riscv_config` and
+`arm7_config` of HOL4's target theories, which are built on the L3 models of these ISAs (of the
+targets only ag32 is ported); `compile_64/32` also need the basis library as a CakeML program
+(`basisProg`'s `basis`), and `full_compile_64/32` also its file system (`add_stdout` and
+`add_stderr` of `TextIOProof`, `fastForwardFD` of `fsFFIProps`).
 
 ## Contents
 
@@ -162,7 +166,7 @@ HOL Light session; `check.ml` was run this way with two versions of HOL Light:
 | HOL Light | time of `check.ml` |
 |---|---|
 | commit `1a0c0e6` of jrh13/hol-light | 2.2 hours |
-| commit `55cac39` of jargh/hol-light-dev (pull request #218 of jrh13/hol-light: MESON, X_CHOOSE_TAC and simplifier fixes) | 2.2 hours |
+| commit `049f088` of jargh/hol-light-dev (pull request #218 of jrh13/hol-light: MESON, X_CHOOSE_TAC, simplifier and arithmetic-tactic changes) | 2.3 hours |
 
 After `loadt "src/prelude.ml";;` any single
 file can be loaded on its own with `needs`, for example `needs "semantics/namespace.ml";;`
@@ -192,12 +196,14 @@ file can be loaded on its own with `needs`, for example `needs "semantics/namesp
   `IMP_RES_TAC`, `PAIRARG_TAC`, ... so that a HOL4 proof can usually be followed step by step.
 - **Names.** One global namespace and no overloading: constants of the backend intermediate
   languages carry the language as a prefix (`clos_`, `bvl_`, `bvi_`, `data_`, `wl_` for
-  wordLang, `stack_`, `lab_`, ...), other clashes and constants with common variable names the
-  theory name. `doc/names.tsv` maps every HOL4 type, constructor, constant, field and theorem of
+  wordLang, `stack_`, `lab_`, ...), other clashes and constants with short or common-word
+  names the theory name (`sptree_union`, `misc_the`, `peg_nt`; since update 012 also in the HOL4
+  library layer). `doc/names.tsv` maps every HOL4 type, constructor, constant, field and theorem of
   the closure to its HOL Light name; `doc/library_renames.tsv` lists the HOL4 library names that
   had to change.
   HOL4 library notions that HOL Light already has use HOL Light's constants (`EVERY` is `ALL`,
-  `LIST_REL` is `ALL2`, `set` is `set_of_list`, `FUNPOW f n x` is `ITER n f x`, ...).
+  `LIST_REL` is `ALL2`, `set` is `set_of_list`, `FUNPOW f n x` is `ITER n f x`, `measure` is
+  `MEASURE`, ...).
 
 `doc/CONVENTIONS.md` describes the conventions in detail.
 

@@ -45,11 +45,11 @@ let SND_state_co = prove
   REWRITE_TAC[state_co_def; pair_CASE_def; FST; SND]);;
 
 let the_eqn = prove
- (CASE_TERM `the (x:A) y = match y with NONE -> x | SOME z -> z`,
-  CASES_ON `y:A option` THEN RW[the_def]);;
+ (CASE_TERM `misc_the (x:A) y = match y with NONE -> x | SOME z -> z`,
+  CASES_ON `y:A option` THEN RW[misc_the_def]);;
 
 let the_F_eq = prove
- (`the F opt <=> ?x. opt = SOME x /\ x`,
+ (`misc_the F opt <=> ?x. opt = SOME x /\ x`,
   CASES_ON `opt:bool option` THEN RW[the_eqn]);;
 
 let pure_co_def = cake_def
@@ -113,11 +113,11 @@ let oracle_monotonic_subset = prove
   REWRITE_TAC[oracle_monotonic_def; SUBSET] THEN MESON_TAC[]);;
 
 let oracle_monotonic_shift_subset = prove
- (`(St' SUBSET (IMAGE ((+) (i:num)) St UNION count i) /\
+ (`(St' SUBSET (IMAGE ((+) (i:num)) St UNION pred_set_count i) /\
     (!n. (f':C->num->bool) ((co':num->C) n) SUBSET
          IMAGE ((+) i) ((f:A->num->bool) ((co:num->A) n))))
    ==> oracle_monotonic f (<) St co ==> oracle_monotonic f' (<) St' co'`,
-  REWRITE_TAC[oracle_monotonic_def; SUBSET; IN_UNION; IN_IMAGE; count_DEF;
+  REWRITE_TAC[oracle_monotonic_def; SUBSET; IN_UNION; IN_IMAGE; pred_set_count_DEF;
               IN_ELIM_THM] THEN
   REPEAT STRIP_TAC THENL
    [SUBGOAL_THEN `?x0. x = i + x0 /\ x0 IN (f:A->num->bool) ((co:num->A) i')`

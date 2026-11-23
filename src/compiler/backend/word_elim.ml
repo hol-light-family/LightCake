@@ -7,7 +7,7 @@
 (* and removes unreachable functions from the code.                          *)
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
-(* - The wordLang constructors are wl_... (notes/naming/names.tsv); HOL4 ()  *)
+(* - The wordLang constructors are wl_... (doc/names.tsv); HOL4 ()           *)
 (*   is one; num_set is 1 spt and num_map A spt.                             *)
 (* - The catch-all clause of find_word_ref is completed as HOL4's TFL does  *)
 (*   (sem1aux_def).                                                          *)
@@ -26,9 +26,9 @@ let find_word_loc_def = cake_def
 let find_word_ref_def = sem1aux_def
   `(find_word_ref (MustTerminate p:(A)wl_prog) = find_word_ref p) /\
    (find_word_ref (wl_Call ret target _ handler) =
-      union
+      sptree_union
         (match target with NONE -> LN | SOME n -> insert n one LN)
-        (union
+        (sptree_union
            (match ret with
               NONE -> LN
             | SOME (_,_,ret_handler,l1,_) ->
@@ -36,9 +36,9 @@ let find_word_ref_def = sem1aux_def
            (match handler with
               NONE -> LN
             | SOME (_,ex_handler,_,_) -> find_word_ref ex_handler))) /\
-   (find_word_ref (wl_Seq p1 p2) = union (find_word_ref p1) (find_word_ref p2)) /\
+   (find_word_ref (wl_Seq p1 p2) = sptree_union (find_word_ref p1) (find_word_ref p2)) /\
    (find_word_ref (wl_If _ _ _ p1 p2) =
-      union (find_word_ref p1) (find_word_ref p2)) /\
+      sptree_union (find_word_ref p1) (find_word_ref p2)) /\
    (find_word_ref (wl_LocValue _ n) = insert n one LN) /\
    (find_word_ref (wl_Loop names body exit_names) = find_word_ref body) /\
    (find_word_ref _ = LN:1 spt)`;;

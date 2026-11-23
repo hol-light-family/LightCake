@@ -17,7 +17,7 @@ type_invention_error := true;;
 (* - The mlstring literal of x is implode "x"; s1 ^ s2 is strcat s1 s2 (left *)
 (*   associative); concat is mlstring_concat; mlint$toString is toString;    *)
 (*   #"a" is CHR 97; l1 ++ l2 is APPEND l1 l2 (left associative).            *)
-(* - commas is infer_t_commas (notes/naming/names.tsv).                      *)
+(* - commas is infer_t_commas (doc/names.tsv).                               *)
 (* - HOL4 gives get_tyname, type_ident_to_string and inf_type_to_string_rec  *)
 (*   their most general types: the namespaces have values of type A # t.   *)
 (* ------------------------------------------------------------------------- *)
@@ -115,7 +115,7 @@ let add_parens_def = cake_def
      else x`;;
 
 let inf_type_to_string_rec_def = cake_def_wf
-  `measure (\x:(mlstring,mlstring,A#t)namespace#infer_t +
+  `MEASURE (\x:(mlstring,mlstring,A#t)namespace#infer_t +
                 (mlstring,mlstring,A#t)namespace#(infer_t list).
               match x with
                 INL (_,t) -> infer_t_size t

@@ -54,7 +54,7 @@ let compile_int_def = cake_def
              else BlockOp (Build [clos_Int i])) []`;;
 
 let alloc_glob_count_def = sem1aux_def_wf
-  `measure (\xs:bvl_exp list. list_size bvl_exp_size xs)`
+  `MEASURE (\xs:bvl_exp list. list_size bvl_exp_size xs)`
   SEM1AUX_TC_TAC
   `(alloc_glob_count [] = 0) /\
    (alloc_glob_count (CONS x (CONS y xs)) =
@@ -77,7 +77,7 @@ let alloc_glob_count_def = sem1aux_def_wf
 let alloc_glob_count_ind = cake_ind "alloc_glob_count";;
 
 let global_count_sing_def = sem1aux_def_wf
-  `measure (\x:bvl_exp + bvl_exp list.
+  `MEASURE (\x:bvl_exp + bvl_exp list.
               sum_CASE x (\e. bvl_exp_size e) (\es. list_size bvl_exp_size es))`
   SEM1AUX_TC_TAC
   `(global_count_sing (bvl_Var _) = 0) /\
@@ -475,7 +475,7 @@ let BVIPAUX_B2B_TC_TAC : tactic =
   (TERM_TAC ORELSE (PRINT_GOAL_TAC THEN NO_TAC));;
 
 let bvl_to_bvi_compile_exps_def = sem1aux_def_wf
-  `measure (\p:num # bvl_exp list. list_size bvl_exp_size (SND p))`
+  `MEASURE (\p:num # bvl_exp list. list_size bvl_exp_size (SND p))`
   BVIPAUX_B2B_TC_TAC
   `(bvl_to_bvi_compile_exps n [] = ([],Nil,n)) /\
    (bvl_to_bvi_compile_exps n (CONS x (CONS y xs)) =
@@ -535,7 +535,7 @@ let bvl_to_bvi_compile_exps_def = sem1aux_def_wf
 let bvl_to_bvi_compile_exps_ind = cake_ind "bvl_to_bvi_compile_exps";;
 
 let compile_exps_sing_def = sem1aux_def_wf
-  `measure (\x:(num # bvl_exp) + (num # bvl_exp list).
+  `MEASURE (\x:(num # bvl_exp) + (num # bvl_exp list).
               sum_CASE x (\p. bvl_exp_size (SND p))
                          (\p. list_size bvl_exp_size (SND p)))`
   BVIPAUX_B2B_TC_TAC

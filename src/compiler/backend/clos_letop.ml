@@ -31,7 +31,7 @@ type_invention_error := true;;
 (* HOL4: var_list *)
 
 let clos_letop_var_list_def = sem1aux_def_wf
-  `measure (\p:num # clos_exp list # A list. list_size clos_exp_size (FST (SND p)))`
+  `MEASURE (\p:num # clos_exp list # A list. list_size clos_exp_size (FST (SND p)))`
   SEM1AUX_TC_TAC
   `(clos_letop_var_list n [] ([]:A list) <=> T) /\
    (clos_letop_var_list n (CONS (clos_Var t m) xs) (CONS y ys) <=>
@@ -50,7 +50,7 @@ let clos_letop_dest_op_def = sem1aux_def
 (* HOL4: let_op *)
 
 let clos_letop_let_op_def = sem1aux_def_wf
-  `measure (\es:clos_exp list. list_size clos_exp_size es)`
+  `MEASURE (\es:clos_exp list. list_size clos_exp_size es)`
   SEM1AUX_TC_TAC
   `(clos_letop_let_op [] = []) /\
    (clos_letop_let_op (CONS (x:clos_exp) (CONS y xs)) =
@@ -101,7 +101,7 @@ let clos_letop_LENGTH_let_op = prove
 (* HOL4: let_op_sing, let_op_list, let_op_let *)
 
 let clos_letop_let_op_sing_def = il1aux_def_wf
-  `measure
+  `MEASURE
      (\x:clos_exp + clos_exp list + (num # clos_exp) list.
         sum_CASE x (\e. clos_exp_size e)
           (\y. sum_CASE y (\es. list_size clos_exp_size es)

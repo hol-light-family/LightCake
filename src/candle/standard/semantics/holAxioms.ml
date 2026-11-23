@@ -31,7 +31,7 @@ type_invention_error := true;;
 let CBOOLAUX_STD_TERM_OK_TAC : tactic =
   FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP term_ok_clauses th]) THEN
   REWRITE_TAC[WELLTYPED_CLAUSES; typeof_def; codomain_def; injectivity "hol_type"; CONS_11;
-              CBOOLAUX_EXISTS_REFL; RIGHT_EXISTS_AND_THM; CBOOLAUX_typeof_equation];;
+              CBOOLAUX_EXISTS_REFL; RIGHT_EXISTS_AND_THM; CSYNAUX_typeof_equation];;
 
 let eta_has_model = prove
  (`is_set_theory (mem:U->U->bool) ==>
@@ -72,7 +72,7 @@ let eta_has_model = prove
   SUBGOAL_THEN
    `mem (SND (v:(mlstring->U)#(mlstring#hol_type->U))
           (implode "f",Tyapp (implode "fun") [Tyvar (implode "A"); Tyvar (implode "B")]))
-        (funspace mem (FST v (implode "A")) (FST v (implode "B")))`
+        (setSpec_funspace mem (FST v (implode "A")) (FST v (implode "B")))`
   MP_TAC THENL
    [UNDISCH_TAC `is_valuation0 (mem:U->U->bool)
                    (alist_to_fmap (FLAT (MAP types_of_upd ctxt)))
@@ -120,13 +120,13 @@ let select_has_model_gen = prove
                                                             (conexts_of_upd upd))
                                               (mk_select_ctxt ctxt)))) /\
                     SND i' (implode "@") =
-                    (\ls. abstract mem (funspace mem (HD ls) (two mem)) (HD ls)
-                            (\p. select (HD ls) (holds mem p)))`,
+                    (\ls. abstract mem (setSpec_funspace mem (HD ls) (setSpec_two mem)) (HD ls)
+                            (\p. select (HD ls) (setSpec_holds mem p)))`,
   DISCH_TAC THEN GEN_TAC THEN STRIP_TAC THEN REPEAT GEN_TAC THEN STRIP_TAC THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o REWRITE_RULE[is_std_sig_def; FST; SND] o
               MATCH_MP theory_ok_sig) THEN
-  ABBREV_TAC `sel = \l. abstract (mem:U->U->bool) (funspace mem (HD l) (two mem)) (HD l)
-                           (\p. select (HD l) (holds mem p))` THEN
+  ABBREV_TAC `sel = \l. abstract (mem:U->U->bool) (setSpec_funspace mem (HD l) (setSpec_two mem)) (HD l)
+                           (\p. select (HD l) (setSpec_holds mem p))` THEN
   EXISTS_TAC `(FST (i:(mlstring->U list->U)#(mlstring->U list->U)),
                (implode "@" =+ (sel:U list->U)) (SND i))` THEN
   REWRITE_TAC[FST; SND; APPLY_UPDATE_THM] THEN
@@ -198,7 +198,7 @@ let select_has_model_gen = prove
   SUBGOAL_THEN
    `mem (SND (v:(mlstring->U)#(mlstring#hol_type->U))
           (implode "P", Tyapp (implode "fun") [Tyvar (implode "A"); Tyapp (implode "bool") []]))
-        (funspace mem (FST v (implode "A")) (two mem)) /\
+        (setSpec_funspace mem (FST v (implode "A")) (setSpec_two mem)) /\
     mem (SND v (implode "x", Tyvar (implode "A"))) (FST v (implode "A"))`
   STRIP_ASSUME_TAC THENL
    [UNDISCH_TAC `is_valuation0 (mem:U->U->bool) (alist_to_fmap (FLAT (MAP types_of_upd ctxt)))
@@ -217,17 +217,17 @@ let select_has_model_gen = prove
   ABBREV_TAC `xx = SND (v:(mlstring->U)#(mlstring#hol_type->U))
                       (implode "x", Tyvar (implode "A"))` THEN
   ABBREV_TAC `ta = FST (v:(mlstring->U)#(mlstring#hol_type->U)) (implode "A")` THEN
-  SUBGOAL_THEN `mem ((select:U->(U->bool)->U) ta (holds mem pp)) ta` ASSUME_TAC THENL
+  SUBGOAL_THEN `mem ((select:U->(U->bool)->U) ta (setSpec_holds mem pp)) ta` ASSUME_TAC THENL
    [RULE_ASSUM_TAC(REWRITE_RULE[good_select0_def]) THEN ASM_MESON_TAC[]; ALL_TAC] THEN
   ASM_SIMP_TAC[apply_abstract] THEN
-  SUBGOAL_THEN `mem (apply mem pp xx) (two (mem:U->U->bool)) /\
-                mem (apply mem pp ((select:U->(U->bool)->U) ta (holds mem pp))) (two mem)`
+  SUBGOAL_THEN `mem (setSpec_apply mem pp xx) (setSpec_two (mem:U->U->bool)) /\
+                mem (setSpec_apply mem pp ((select:U->(U->bool)->U) ta (setSpec_holds mem pp))) (setSpec_two mem)`
   STRIP_ASSUME_TAC THENL
    [CONJ_TAC THEN FIRST_ASSUM(MATCH_MP_TAC o MATCH_MP apply_in_rng) THEN
     EXISTS_TAC `ta:U` THEN ASM_REWRITE_TAC[];
     ALL_TAC] THEN
   ASM_SIMP_TAC[CBOOLAUX_apply_boolrel] THEN CBOOLAUX_BOOLEAN_TAC THEN
-  REWRITE_TAC[GSYM holds_def] THEN
+  REWRITE_TAC[GSYM setSpec_holds_def] THEN
   RULE_ASSUM_TAC(REWRITE_RULE[good_select0_def]) THEN ASM_MESON_TAC[]);;
 
 (* HOL4: Definition base_select_def (Overload base_select = base_select0 ^mem) *)
@@ -325,7 +325,7 @@ let CBOOLAUX_TERM_OK_STD_THMS =
    term_ok_equation; type_ok_def; ALL; LENGTH; ARITH_RULE `SUC (SUC 0) = 2`;
    CONJUNCT1 WELLTYPED_CLAUSES; CONJUNCT1 (CONJUNCT2 WELLTYPED_CLAUSES);
    CONJUNCT1 (CONJUNCT2 (CONJUNCT2 WELLTYPED_CLAUSES)); CBOOLAUX_welltyped_Abs_Var;
-   typeof_def; codomain_def; CBOOLAUX_typeof_equation;
+   typeof_def; codomain_def; CSYNAUX_typeof_equation;
    TYPE_SUBST_def; MAP; REV_ASSOCD; option_INJ; UNWIND_THM1; hol_tyvar_inst_exists;
    CBOOLAUX_EXISTS_REFL; RIGHT_EXISTS_AND_THM; FST; SND] @ CBOOLAUX_STRING_THMS;;
 
@@ -458,17 +458,17 @@ let CBOOLAUX_one_one_interp = prove
                           ((hol_Var (implode "x1") (Tyvar (implode "A"))) ===
                            (hol_Var (implode "x2") (Tyvar (implode "A")))))))))) IN SND thy
      ==> interprets0 mem (SND i) (implode "ONE_ONE") [implode "A"; implode "B"]
-           (\l. abstract mem (funspace mem (HD l) (HD (TL l))) (two mem)
+           (\l. abstract mem (setSpec_funspace mem (HD l) (HD (TL l))) (setSpec_two mem)
                   (\g. boolean mem
                          (!a1. mem a1 (HD l)
                                ==> !a2. mem a2 (HD l)
-                                        ==> apply mem g a1 = apply mem g a2 ==> a1 = a2)))`,
+                                        ==> setSpec_apply mem g a1 = setSpec_apply mem g a2 ==> a1 = a2)))`,
   REPEAT STRIP_TAC THEN CBOOLAUX_FROM_AXIOM_TAC
-    `\l. abstract (mem:U->U->bool) (funspace mem (HD l) (HD (TL l))) (two mem)
+    `\l. abstract (mem:U->U->bool) (setSpec_funspace mem (HD l) (HD (TL l))) (setSpec_two mem)
            (\g. boolean mem
                   (!a1. mem a1 (HD l)
                         ==> !a2. mem a2 (HD l)
-                                 ==> apply mem g a1 = apply mem g a2 ==> a1 = a2))` THEN
+                                 ==> setSpec_apply mem g a1 = setSpec_apply mem g a2 ==> a1 = a2))` THEN
   CBOOLAUX_STD_SETUP_TAC THEN
   ONCE_REWRITE_TAC[termsem0_def] THEN
   ASM_REWRITE_TAC [typesem_def; MAP; typeof_def; codomain_def; HD; TL] THEN
@@ -518,13 +518,13 @@ let CBOOLAUX_onto_interp = prove
                                  [Tyvar (implode "A"); Tyvar (implode "B")]))
                            (hol_Var (implode "x") (Tyvar (implode "A")))))))))) IN SND thy
      ==> interprets0 mem (SND i) (implode "ONTO") [implode "A"; implode "B"]
-           (\l. abstract mem (funspace mem (HD l) (HD (TL l))) (two mem)
+           (\l. abstract mem (setSpec_funspace mem (HD l) (HD (TL l))) (setSpec_two mem)
                   (\g. boolean mem
-                         (!b. mem b (HD (TL l)) ==> ?a. mem a (HD l) /\ b = apply mem g a)))`,
+                         (!b. mem b (HD (TL l)) ==> ?a. mem a (HD l) /\ b = setSpec_apply mem g a)))`,
   REPEAT STRIP_TAC THEN CBOOLAUX_FROM_AXIOM_TAC
-    `\l. abstract (mem:U->U->bool) (funspace mem (HD l) (HD (TL l))) (two mem)
+    `\l. abstract (mem:U->U->bool) (setSpec_funspace mem (HD l) (HD (TL l))) (setSpec_two mem)
            (\g. boolean mem
-                  (!b. mem b (HD (TL l)) ==> ?a. mem a (HD l) /\ b = apply mem g a))` THEN
+                  (!b. mem b (HD (TL l)) ==> ?a. mem a (HD l) /\ b = setSpec_apply mem g a))` THEN
   CBOOLAUX_STD_SETUP_TAC THEN
   ONCE_REWRITE_TAC[termsem0_def] THEN
   ASM_REWRITE_TAC [typesem_def; MAP; typeof_def; codomain_def; HD; TL] THEN
@@ -791,11 +791,11 @@ let CBOOLAUX_infinity_core = prove
                  APPLY_UPDATE_THM; K_THM] @ CBOOLAUX_STRING_THMS) THEN
   ASM_SIMP_TAC[apply_abstract; boolean_in_boolset] THEN CBOOLAUX_BOOLEAN_TAC THEN
    ASM_SIMP_TAC[apply_abstract] THEN
-  SUBGOAL_THEN `!a. (mem:U->U->bool) a inf' ==> apply mem (abstract mem inf' inf' fi) a = fi a`
+  SUBGOAL_THEN `!a. (mem:U->U->bool) a inf' ==> setSpec_apply mem (abstract mem inf' inf' fi) a = fi a`
      ASSUME_TAC THENL [ASM_SIMP_TAC[apply_abstract]; ALL_TAC] THEN
    QPAT_X_ASSUM "INJ _ _ _" (MP_TAC o REWRITE_RULE[INJ; IN_ELIM_THM]) THEN
    QPAT_X_ASSUM "~SURJ _ _ _" (MP_TAC o REWRITE_RULE[SURJ; IN_ELIM_THM]) THEN
-   QPAT_X_ASSUM "!a. mem a inf' ==> apply mem (abstract mem inf' inf' fi) a = fi a" MP_TAC THEN
+   QPAT_X_ASSUM "!a. mem a inf' ==> setSpec_apply mem (abstract mem inf' inf' fi) a = fi a" MP_TAC THEN
    POP_ASSUM_LIST(K ALL_TAC) THEN MESON_TAC[]);;
 
 (* the axiom of infinity has a model (HOL4 proves it with extends_consistent *)
@@ -817,7 +817,7 @@ let CBOOLAUX_LENGTH_NEQ_TAC : tactic =
 let CBOOLAUX_CTXT1_TAC : tactic =
   EXPAND_TAC "ctxt1" THEN
   REWRITE_TAC([CBOOLAUX_tysof_ConstSpec; CBOOLAUX_tmsof_ConstDef; FLOOKUP_UPDATE; FDOM_FUPDATE;
-               IN_INSERT; typeof_def; codomain_def; CBOOLAUX_typeof_equation] @
+               IN_INSERT; typeof_def; codomain_def; CSYNAUX_typeof_equation] @
               CBOOLAUX_STRING_THMS) THEN
   ASM_REWRITE_TAC[];;
 
@@ -832,7 +832,7 @@ let CBOOLAUX_AXIOM_IN_CTXT1_TAC : tactic =
   EXPAND_TAC "ctxt1" THEN
   ASM_SIMP_TAC[MAP; FLAT; APPEND; axexts_of_upd_def; CBOOLAUX_conexts_ConstDef;
                IN_SET_OF_LIST; MEM_APPEND; MEM] THEN
-  REWRITE_TAC[typeof_def; codomain_def; CBOOLAUX_typeof_equation];;
+  REWRITE_TAC[typeof_def; codomain_def; CSYNAUX_typeof_equation];;
 (* an interpretation of a constant of type ty of ctxt carries over to an     *)
 (* interpretation equal on the signature of ctxt                             *)
 let CBOOLAUX_INTERP_TAC ty : tactic =

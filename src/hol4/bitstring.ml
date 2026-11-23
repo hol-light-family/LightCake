@@ -9,6 +9,9 @@
 (* GENLIST f n = list_of_seq f n, ZIP (l1,l2) = ZIP l1 l2.  A HOL4           *)
 (* let l = e in t is written with e substituted (fixwidth, bitwise).         *)
 (* Helper lemmas that are not HOL4 theorems have the prefix LSTRAUX_.        *)
+(* HOL4 field is bitstring_field (a short or common word; field is also a    *)
+(* constant of HOL Light's Library/ringtheory.ml), and field_def is          *)
+(* bitstring_field_def.                                                      *)
 (* ========================================================================= *)
 
 needs "hol4/vocab.ml";;
@@ -58,11 +61,11 @@ let shiftl_def = new_definition
 let shiftr_def = new_definition
   `shiftr (v:bool list) m = TAKE (LENGTH v - m) v`;;
 
-let field_def = new_definition
-  `field h l v = fixwidth (SUC h - l) (shiftr v l)`;;
+let bitstring_field_def = new_definition
+  `bitstring_field h l v = fixwidth (SUC h - l) (shiftr v l)`;;
 
 let testbit_def = new_definition
-  `testbit b v <=> field b b v = [T]`;;
+  `testbit b v <=> bitstring_field b b v = [T]`;;
 
 let w2v_def = new_definition
   `w2v (w:N word) = list_of_seq (\i. bit (dimindex(:N) - 1 - i) w) (dimindex(:N))`;;
@@ -125,7 +128,7 @@ let LSTRAUX_DROP_LAST = prove
 let testbit = prove
  (`!b v. testbit b v <=> b < LENGTH v /\ EL (LENGTH v - 1 - b) v`,
   REPEAT GEN_TAC THEN
-  REWRITE_TAC[testbit_def; field_def; shiftr_def; fixwidth_def; zero_extend_def;
+  REWRITE_TAC[testbit_def; bitstring_field_def; shiftr_def; fixwidth_def; zero_extend_def;
               PAD_LEFT] THEN
   REWRITE_TAC[ARITH_RULE `SUC b - b = 1`] THEN
   SUBGOAL_THEN `LENGTH (TAKE (LENGTH v - b) (v:bool list)) = LENGTH v - b`
@@ -237,8 +240,8 @@ let length_fixwidth = prove
   ASM_ARITH_TAC);;
 
 let length_field = prove
- (`!h l v. LENGTH (field h l v) = SUC h - l`,
-  REWRITE_TAC[field_def; length_fixwidth]);;
+ (`!h l v. LENGTH (bitstring_field h l v) = SUC h - l`,
+  REWRITE_TAC[bitstring_field_def; length_fixwidth]);;
 
 let length_shiftr = prove
  (`!v n. LENGTH (shiftr v n) = LENGTH v - n`,

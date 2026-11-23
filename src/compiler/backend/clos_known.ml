@@ -17,6 +17,8 @@
 (* - The many-clause definitions are made with sem1aux_def(_wf)              *)
 (*   (semantics/sem1aux_tfl.ml); HOL4 exp3_size is list_size clos_exp_size. *)
 (* - CLOS2AUX_ names are local proof helpers.                                *)
+(* - HOL4 known is clos_known_known (a short or common word), with the       *)
+(*   theorems renamed alike (known_def is clos_known_known_def, ...).        *)
 (* ========================================================================= *)
 
 needs "misc/misc.ml";;
@@ -100,7 +102,7 @@ let CLOS2AUX_SPLIT_PAIR_TAC : tactic =
 (* possible.  The names of Fn and clos_Letrec (HOL4 t) are nm and nms.      *)
 
 let get_size_sc_aux_def = sem1aux_def_wf
-  `measure (\p:num#clos_exp list. list_size clos_exp_size (SND p))`
+  `MEASURE (\p:num#clos_exp list. list_size clos_exp_size (SND p))`
   CLOS2AUX_SIZE_TC_TAC
   `(get_size_sc_aux n [] = n) /\
    (get_size_sc_aux n (CONS (x:clos_exp) (CONS y xs)) =
@@ -151,7 +153,7 @@ let get_size_sc_def = cake_def
        if n = 0 then NONE else SOME ((limit + 1) - n)`;;
 
 let get_size_aux_def = sem1aux_def_wf
-  `measure (\xs:clos_exp list. list_size clos_exp_size xs)`
+  `MEASURE (\xs:clos_exp list. list_size clos_exp_size xs)`
   CLOS2AUX_SIZE_TC_TAC
   `(get_size_aux [] = 0) /\
    (get_size_aux (CONS (x:clos_exp) (CONS y xs)) =
@@ -200,7 +202,7 @@ let get_size_sc_SOME = prove
 (* HOL4's paired lambda \(n,x). .. is a pair case                           *)
 
 let clos_known_free_def = sem1aux_def_wf
-  `measure (\xs:clos_exp list. list_size clos_exp_size xs)`
+  `MEASURE (\xs:clos_exp list. list_size clos_exp_size xs)`
   CLOS2AUX_SIZE_TC_TAC
   `(clos_known_free [] = ([],db_vars_Empty)) /\
    (clos_known_free (CONS (x:clos_exp) (CONS y xs)) =
@@ -261,7 +263,7 @@ let clos_known_closed_def = cake_def
   `clos_known_closed x <=> db_to_set (SND (clos_known_free [x])) = LN`;;
 
 let contains_closures_def = sem1aux_def_wf
-  `measure (\xs:clos_exp list. list_size clos_exp_size xs)`
+  `MEASURE (\xs:clos_exp list. list_size clos_exp_size xs)`
   CLOS2AUX_SIZE_TC_TAC
   `(contains_closures [] <=> F) /\
    (contains_closures (CONS (x:clos_exp) (CONS y xs)) <=>
@@ -344,7 +346,7 @@ let merge_def =
   let saved = !cake_admissible_rules in
   cake_register_admissible "MAP2" CLOS2AUX_ADMISSIBLE_MAP2;
   let th = try sem1aux_def_wf
-    `measure (\p:val_approx#val_approx. val_approx_size (FST p))`
+    `MEASURE (\p:val_approx#val_approx. val_approx_size (FST p))`
     SEM1AUX_TC_TAC
     `(merge Impossible y = y) /\
      (merge x Impossible = x) /\
@@ -364,11 +366,11 @@ let merge_def =
   cake_admissible_rules := saved; th;;
 
 let merge_ind =
-  let r = `measure (\p:val_approx#val_approx. val_approx_size (FST p))` in
+  let r = `MEASURE (\p:val_approx#val_approx. val_approx_size (FST p))` in
   let tc = prove
    (`!tg1 xs tg2 ys x (y:val_approx).
        (LENGTH xs = LENGTH ys /\ tg1 = tg2) /\ MEM x xs
-       ==> measure (\p:val_approx#val_approx. val_approx_size (FST p))
+       ==> MEASURE (\p:val_approx#val_approx. val_approx_size (FST p))
              (x,y) (clos_known_Tuple tg1 xs,clos_known_Tuple tg2 ys)`,
     SEM1AUX_TC_TAC) in
   let wfth = prove(mk_comb(`WF:(val_approx#val_approx->val_approx#val_approx->bool)->bool`,r),
@@ -398,7 +400,7 @@ let CLOS2AUX_MERGE_TUP_TC_TAC : tactic =
   IMP_RES_TAC CLOS2AUX_MEM_ZIP_FST THEN TERM_TAC;;
 
 let merge_tup_def = sem1aux_def_wf
-  `measure (\p:val_approx#val_approx. val_approx_size (FST p))`
+  `MEASURE (\p:val_approx#val_approx. val_approx_size (FST p))`
   CLOS2AUX_MERGE_TUP_TC_TAC
   `(merge_tup (Impossible,y) = y) /\
    (merge_tup (x,Impossible) = x) /\
@@ -535,7 +537,7 @@ let gO_destApx_def = sem1aux_def
 (* HOL4: mk_Ticks; t ss tc is mk_cons t tc *)
 
 let clos_known_mk_Ticks_def = cake_def_wf
-  `measure (\p:tra#num#num#clos_exp. FST (SND (SND p)))`
+  `MEASURE (\p:tra#num#num#clos_exp. FST (SND (SND p)))`
   TERM_TAC
   `clos_known_mk_Ticks t tc n e =
      if n = 0 then e
@@ -632,51 +634,51 @@ let CLOS2AUX_KNOWN_TC_TAC : tactic =
                              clos_known_config_INFO.ri_accfupds]) THEN
   TERM_TAC;;
 
-let known_def = sem1aux_def_wf
-  `inv_image ((measure (I:num->num)) LEX (measure (I:num->num)))
+let clos_known_known_def = sem1aux_def_wf
+  `inv_image ((MEASURE (I:num->num)) LEX (MEASURE (I:num->num)))
      (\p:clos_known_config # clos_exp list # val_approx list # val_approx spt.
         (clos_known_config_inline_factor (FST p),
          list_size clos_exp_size (FST (SND p))))`
   CLOS2AUX_KNOWN_TC_TAC
-  `(known c [] vs (g:val_approx spt) = ([],g)) /\
-   (known c (CONS (x:clos_exp) (CONS y xs)) vs g =
-      let (eas1,g) = known c [x] vs g in
-      let (eas2,g) = known c (CONS y xs) vs g in
+  `(clos_known_known c [] vs (g:val_approx spt) = ([],g)) /\
+   (clos_known_known c (CONS (x:clos_exp) (CONS y xs)) vs g =
+      let (eas1,g) = clos_known_known c [x] vs g in
+      let (eas2,g) = clos_known_known c (CONS y xs) vs g in
         (APPEND eas1 eas2,g)) /\
-   (known c [clos_Var t v] vs g =
+   (clos_known_known c [clos_Var t v] vs g =
       ([(clos_Var t v,any_el v vs clos_known_Other)],g)) /\
-   (known c [clos_If t x1 x2 x3] vs g =
-      let (ea1,g) = known c [x1] vs g in
-      let (ea2,g) = known c [x2] vs g in
-      let (ea3,g) = known c [x3] vs g in
+   (clos_known_known c [clos_If t x1 x2 x3] vs g =
+      let (ea1,g) = clos_known_known c [x1] vs g in
+      let (ea2,g) = clos_known_known c [x2] vs g in
+      let (ea3,g) = clos_known_known c [x3] vs g in
       let (e1,a1) = HD ea1 in
       let (e2,a2) = HD ea2 in
       let (e3,a3) = HD ea3 in
         ([(clos_If t e1 e2 e3,merge a2 a3)],g)) /\
-   (known c [clos_Let t xs x2] vs g =
-      let (ea1,g) = known c xs vs g in
-      let (ea2,g) = known c [x2] (APPEND (MAP SND ea1) vs) g in
+   (clos_known_known c [clos_Let t xs x2] vs g =
+      let (ea1,g) = clos_known_known c xs vs g in
+      let (ea2,g) = clos_known_known c [x2] (APPEND (MAP SND ea1) vs) g in
       let (e2,a2) = HD ea2 in
         ([(clos_Let t (MAP FST ea1) e2,a2)],g)) /\
-   (known c [clos_Raise t x1] vs g =
-      let (ea1,g) = known c [x1] vs g in
+   (clos_known_known c [clos_Raise t x1] vs g =
+      let (ea1,g) = clos_known_known c [x1] vs g in
       let (e1,a1) = HD ea1 in
         ([(clos_Raise t e1,Impossible)],g)) /\
-   (known c [clos_Tick t x1] vs g =
-      let (ea1,g) = known c [x1] vs g in
+   (clos_known_known c [clos_Tick t x1] vs g =
+      let (ea1,g) = clos_known_known c [x1] vs g in
       let (e1,a1) = HD ea1 in
         ([(clos_Tick t e1,a1)],g)) /\
-   (known c [clos_Handle t x1 x2] vs g =
-      let (ea1,g) = known c [x1] vs g in
-      let (ea2,g) = known c [x2] (CONS clos_known_Other vs) g in
+   (clos_known_known c [clos_Handle t x1 x2] vs g =
+      let (ea1,g) = clos_known_known c [x1] vs g in
+      let (ea2,g) = clos_known_known c [x2] (CONS clos_known_Other vs) g in
       let (e1,a1) = HD ea1 in
       let (e2,a2) = HD ea2 in
         ([(clos_Handle t e1 e2,merge a1 a2)],g)) /\
-   (known c [clos_Call t ticks dest xs] vs g =
-      let (ea1,g) = known c xs vs g in
+   (clos_known_known c [clos_Call t ticks dest xs] vs g =
+      let (ea1,g) = clos_known_known c xs vs g in
         ([(clos_Call t ticks dest (MAP FST ea1),clos_known_Other)],g)) /\
-   (known c [clos_Op t op xs] vs g =
-      let (ea1,g) = known c xs vs g in
+   (clos_known_known c [clos_Op t op xs] vs g =
+      let (ea1,g) = clos_known_known c xs vs g in
       let (a,g) = known_op op (REVERSE (MAP SND ea1)) g in
       let e =
         (if isGlobal op then
@@ -686,9 +688,9 @@ let known_def = sem1aux_def_wf
            | gO_NullTuple tag -> clos_Op t (BlockOp (clos_Cons tag))
          else clos_op_SmartOp t op) (MAP FST ea1) in
         ([(e,a)],g)) /\
-   (known c [clos_App t loc_opt x xs] vs g =
-      let (ea2,g) = known c xs vs g in
-      let (ea1,g) = known c [x] vs g in
+   (clos_known_known c [clos_App t loc_opt x xs] vs g =
+      let (ea2,g) = clos_known_known c xs vs g in
+      let (ea1,g) = clos_known_known c [x] vs g in
       let (e1,a1) = HD ea1 in
         match decide_inline c a1 loc_opt (LENGTH xs) with
           inlD_Nothing ->
@@ -697,7 +699,7 @@ let known_def = sem1aux_def_wf
             ([(clos_App t (SOME new_loc) e1 (MAP FST ea2),clos_known_Other)],g)
         | inlD_LetInline body ->
             let (eabody,_) =
-              known (dec_inline_factor c) [body] (MAP SND ea2) g in
+              clos_known_known (dec_inline_factor c) [body] (MAP SND ea2) g in
             let (ebody,abody) = HD eabody in
               if pure x then
                 ([(clos_Let (mk_cons t 0) (MAP FST ea2)
@@ -705,9 +707,9 @@ let known_def = sem1aux_def_wf
               else
                 ([(clos_Let (mk_cons t 0) (SNOC e1 (MAP FST ea2))
                      (clos_known_mk_Ticks t 1 (LENGTH xs) ebody),abody)],g)) /\
-   (known c [Fn nm loc_opt ws_opt num_args x1] vs g =
+   (clos_known_known c [Fn nm loc_opt ws_opt num_args x1] vs g =
       let (ea1,g) =
-        known c [x1] (APPEND (REPLICATE num_args clos_known_Other) vs) g in
+        clos_known_known c [x1] (APPEND (REPLICATE num_args clos_known_Other) vs) g in
       let (body,a1) = HD ea1 in
         ([(Fn nm loc_opt NONE num_args body,
            match loc_opt with
@@ -715,7 +717,7 @@ let known_def = sem1aux_def_wf
                clos_approx (clos_known_config_inline_max_body_size c)
                  loc num_args x1
            | NONE -> clos_known_Other)],g)) /\
-   (known c [clos_Letrec nms loc_opt _ fns x1] vs g =
+   (clos_known_known c [clos_Letrec nms loc_opt _ fns x1] vs g =
       let clos = (match loc_opt with
                     NONE -> REPLICATE (LENGTH fns) clos_known_Other
                   | SOME loc -> clos_gen_noinline loc 0 fns) in
@@ -725,19 +727,19 @@ let known_def = sem1aux_def_wf
                      let new_vs =
                        APPEND (APPEND (REPLICATE num_args clos_known_Other) clos)
                               vs in
-                     let res = known c [x] new_vs g in
+                     let res = clos_known_known c [x] new_vs g in
                        (num_args,FST (HD (FST res)))) fns in
-      let (ea1,g) = known c [x1] (APPEND clos vs) g in
+      let (ea1,g) = clos_known_known c [x1] (APPEND clos vs) g in
       let (e1,a1) = HD ea1 in
         ([(clos_Letrec nms loc_opt NONE new_fns e1,a1)],g))`;;
 
-let known_ind = cake_ind "known";;
+let clos_known_known_ind = cake_ind "clos_known_known";;
 
 let known_LENGTH = prove
  (`!limit es vs (g:val_approx spt).
-     LENGTH (FST (known limit es vs g)) = LENGTH es`,
-  MATCH_MP_TAC known_ind THEN REPEAT CONJ_TAC THEN REPEAT STRIP_TAC THEN
-  REWRITE_TAC[known_def; LET_DEF; LET_END_DEF] THEN
+     LENGTH (FST (clos_known_known limit es vs g)) = LENGTH es`,
+  MATCH_MP_TAC clos_known_known_ind THEN REPEAT CONJ_TAC THEN REPEAT STRIP_TAC THEN
+  REWRITE_TAC[clos_known_known_def; LET_DEF; LET_END_DEF] THEN
   REPEAT (CLOS2AUX_SPLIT_PAIR_TAC THEN FS[]) THEN FS[LENGTH] THEN
   REPEAT (TOP_CASE_TAC THEN FS[LENGTH]) THEN
   REPEAT (CLOS2AUX_SPLIT_PAIR_TAC THEN FS[]) THEN FS[LENGTH] THEN
@@ -745,16 +747,16 @@ let known_LENGTH = prove
 
 let known_LENGTH_EQ_E = prove
  (`!limit es vs (g0:val_approx spt) alist g.
-     known limit es vs g0 = (alist,g) ==> LENGTH alist = LENGTH es`,
+     clos_known_known limit es vs g0 = (alist,g) ==> LENGTH alist = LENGTH es`,
   MESON_TAC[FST; known_LENGTH]);;
 
 let known_sing = prove
  (`!limit e vs (g:val_approx spt).
-     ?e' a g'. known limit [e] vs g = ([(e',a)],g')`,
+     ?e' a g'. clos_known_known limit [e] vs g = ([(e',a)],g')`,
   REPEAT GEN_TAC THEN
   MP_TAC(SPECL [`limit:clos_known_config`; `[e:clos_exp]`;
                 `vs:val_approx list`; `g:val_approx spt`] known_LENGTH) THEN
-  SPEC_TAC(`known limit [e] vs (g:val_approx spt)`,
+  SPEC_TAC(`clos_known_known limit [e] vs (g:val_approx spt)`,
            `r:(clos_exp#val_approx) list # val_approx spt`) THEN
   REWRITE_TAC[FORALL_PAIR_THM; FST; PAIR_EQ; LENGTH] THEN
   REPEAT GEN_TAC THEN
@@ -764,7 +766,7 @@ let known_sing = prove
 
 let known_sing_EQ_E = prove
  (`!limit e vs (g0:val_approx spt) all g.
-     known limit [e] vs g0 = (all,g) ==> ?e' apx. all = [(e',apx)]`,
+     clos_known_known limit [e] vs g0 = (all,g) ==> ?e' apx. all = [(e',apx)]`,
   MESON_TAC[PAIR_EQ; known_sing]);;
 
 (* HOL4: compile *)
@@ -773,7 +775,7 @@ let clos_known_compile_def = cake_def
   `(clos_known_compile NONE exps = (NONE,exps)) /\
    (clos_known_compile (SOME c) exps =
       let exps = clos_fvs_compile exps in
-      let (es,g) = known c exps [] LN in
+      let (es,g) = clos_known_known c exps [] LN in
       let es1 = clos_ticks_remove_ticks (MAP FST es) in
       let es2 = clos_letop_let_op es1 in
         (SOME (clos_known_config_val_approx_spt_fupd (K g) c),es2))`;;
@@ -782,7 +784,7 @@ let clos_known_compile_def = cake_def
 
 let clos_known_compile_inc_def = cake_def
   `clos_known_compile_inc c g (es,xs:A) =
-     let (eas,g') = known (reset_inline_factor c) es [] g in
+     let (eas,g') = clos_known_known (reset_inline_factor c) es [] g in
        (g',MAP FST eas,xs)`;;
 
 let known_static_conf_def = cake_def

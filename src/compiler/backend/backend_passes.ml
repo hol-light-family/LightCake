@@ -5,7 +5,7 @@
 (* compiler pass.                                                            *)
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
-(* - Names as notes/naming/names.tsv says: the any_prog constructors        *)
+(* - Names as doc/names.tsv says: the any_prog constructors                 *)
 (*   backend_passes_Clos, backend_passes_Data, backend_passes_Word,          *)
 (*   backend_passes_Lab (the others keep their names), the theorems          *)
 (*   backend_passes_to_word_thm, backend_passes_from_data_thm,               *)
@@ -144,7 +144,7 @@ let to_bvi_all_def = cake_def
      let (s,p,l,bl,n1,n2,n3,names) =
        (loc,code',inlines,bvi_inlines,n1,n2,n3,
         bvl_to_bvi_get_names (MAP FST code') names) in
-     let names = union (fromAList (APPEND (APPEND (APPEND
+     let names = sptree_union (fromAList (APPEND (APPEND (APPEND
                    (data_to_word_stub_names one) (word_to_stack_stub_names one))
                    (stack_alloc_stub_names one)) (stack_remove_stub_names one))) names in
      let ps = APPEND ps [(implode "after bvl_to_bvi",Bvi code names)] in
@@ -189,7 +189,7 @@ let to_data_all_def = cake_def
      let ps = APPEND ps [(implode "after bvi_to_data",backend_passes_Data p names)] in
      let p = MAP (\(a,n,e). (a,n,FST (data_live_compile e LN))) p in
      let ps = APPEND ps [(implode "after data_live",backend_passes_Data p names)] in
-     let p = MAP (\(a,n,e). (a,n,simp e data_Skip)) p in
+     let p = MAP (\(a,n,e). (a,n,data_simp_simp e data_Skip)) p in
      let ps = APPEND ps [(implode "after data_simp",backend_passes_Data p names)] in
      let p = MAP (\(a,n,e). (a,n,data_space_compile e)) p in
      let ps = APPEND ps [(implode "after data_space",backend_passes_Data p names)] in
@@ -201,7 +201,7 @@ let to_data_all_def = cake_def
 let BACKDEFAUX_data_compile_MAP = prove
  (`!(l:(num#num#bvi_exp)list).
      MAP (\(a,n,e). (a,n,data_space_compile e))
-       (MAP (\(a,n,e). (a,n,simp e data_Skip))
+       (MAP (\(a,n,e). (a,n,data_simp_simp e data_Skip))
           (MAP (\(a,n,e). (a,n,FST (data_live_compile e LN)))
              (MAP (\(a,n,e). (a,n,FST (bvi_to_data_compile n (COUNT_LIST n) T [] [e]))) l))) =
      bvi_to_data_compile_prog l`,

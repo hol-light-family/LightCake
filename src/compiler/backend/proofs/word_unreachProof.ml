@@ -7,7 +7,7 @@
 (* - The names of wordLang, wordSem, wordProps and word_unreach are those of *)
 (*   their files (wl_evaluate, wl_Seq, word_unreach_merge_moves, ...): HOL4  *)
 (*   s.f is wl_state_f s, s with f := v is wl_state_f_fupd (K v) s.          *)
-(* - copy_vars is word_unreachProof_copy_vars (notes/naming/names.tsv).      *)
+(* - copy_vars is word_unreachProof_copy_vars (doc/names.tsv).               *)
 (* - evaluate_Loop_body_eq comes before evaluate_Seq_assoc_right_lemma,     *)
 (*   whose Loop case (HOL4 suspend/Resume) uses it.                          *)
 (* - WPROOF1AUX_WU_ names are local helpers.                                 *)

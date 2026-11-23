@@ -10,7 +10,7 @@
 (* on chars and strings < and <= are char_lt and string_lt, string_le       *)
 (* (string4.ml); a character literal #"c" is CHR (ORD of c); flip_ord is     *)
 (* invert_comparison; ## is PAIR_MAP (vocab.ml); word8 is byte, n2w is word *)
-(* and w2n is val; HOL4 () is one.  Names (notes/naming/names.tsv): concat, *)
+(* and w2n is val; HOL4 () is one.  Names (doc/names.tsv): concat,          *)
 (* extract, compare, collate_aux and collate are mlstring_concat, ...        *)
 (* Helper lemmas that are not HOL4 theorems are PURE1AUX_.                   *)
 (* ========================================================================= *)
@@ -384,7 +384,7 @@ let splitl_SPLITL = prove
 (* termination by the last argument, given explicitly (HOL4 finds it; the  *)
 (* measure search of cake_def took most of a minute here)                  *)
 let tokens_aux_def = cake_def_wf
-  `measure (\t:(char->bool)#mlstring#(char list)#num#num. SND (SND (SND (SND t))))`
+  `MEASURE (\t:(char->bool)#mlstring#(char list)#num#num. SND (SND (SND (SND t))))`
   (REWRITE_TAC WF_REL_THMS THEN CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
    REWRITE_TAC[FST; SND] THEN REPEAT STRIP_TAC THEN ASM_ARITH_TAC)
   `(tokens_aux (f:char->bool) s [] n 0 = []) /\
@@ -508,7 +508,7 @@ let tokens_append = prove
   MATCH_MP_TAC TOKENS_APPEND THEN ASM_REWRITE_TAC[]);;
 
 let tokens_alt_aux_def = cake_def_wf
-  `measure (\p:(char->bool)#mlstring#num#num#num.
+  `MEASURE (\p:(char->bool)#mlstring#num#num#num.
               SND (SND (SND (SND p))) - FST (SND (SND (SND p))))`
   (REWRITE_TAC[measure_THM] THEN REPEAT STRIP_TAC THEN ASM_ARITH_TAC)
   `tokens_alt_aux f s i j n =
@@ -639,7 +639,7 @@ let tokens_alt = prove
 
 (* termination by the last argument, given explicitly (as tokens_aux) *)
 let fields_aux_def = cake_def_wf
-  `measure (\t:(char->bool)#mlstring#(char list)#num#num. SND (SND (SND (SND t))))`
+  `MEASURE (\t:(char->bool)#mlstring#(char list)#num#num. SND (SND (SND (SND t))))`
   (REWRITE_TAC WF_REL_THMS THEN CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
    REWRITE_TAC[FST; SND] THEN REPEAT STRIP_TAC THEN ASM_ARITH_TAC)
   `(fields_aux (f:char->bool) s ss n 0 = [implode (REVERSE ss)]) /\
@@ -709,7 +709,7 @@ let fields_length = prove
   SIMP_TAC[fields_def; fields_aux_length; ADD_CLAUSES; DROP_0]);;
 
 let fields_alt_aux_def = cake_def_wf
-  `measure (\p:(char->bool)#mlstring#num#num#num.
+  `MEASURE (\p:(char->bool)#mlstring#num#num#num.
               SND (SND (SND (SND p))) - FST (SND (SND (SND p))))`
   (REWRITE_TAC[measure_THM] THEN REPEAT STRIP_TAC THEN ASM_ARITH_TAC)
   `fields_alt_aux f s i j n =
@@ -762,7 +762,7 @@ let fields_alt = prove
   REWRITE_TAC[LE_REFL; LE_0; SUB_0; SUB_REFL; substring_0; explode_thm; REVERSE]);;
 
 let str_findi_def = cake_def_wf
-  `measure (\p:(char->bool)#num#mlstring. strlen (SND (SND p)) - FST (SND p))`
+  `MEASURE (\p:(char->bool)#num#mlstring. strlen (SND (SND p)) - FST (SND p))`
   (REWRITE_TAC[measure_THM] THEN REPEAT STRIP_TAC THEN ASM_ARITH_TAC)
   `str_findi P i s =
      if i < strlen s
@@ -976,7 +976,7 @@ let isSubString_spec = prove
 (* String orderings *)
 
 let compare_aux_def = cake_def_wf
-  `measure (\p:mlstring#mlstring#ordering#num#num. SND (SND (SND (SND p))))`
+  `MEASURE (\p:mlstring#mlstring#ordering#num#num. SND (SND (SND (SND p))))`
   (REWRITE_TAC[measure_THM] THEN REPEAT STRIP_TAC THEN ASM_ARITH_TAC)
   `compare_aux (s1:mlstring) s2 ord start len =
      if len = 0 then ord

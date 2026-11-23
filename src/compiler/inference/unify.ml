@@ -81,7 +81,7 @@ let _ = cake_add_simps [encode_infer_t_11];;
 (* proved.                                                                   *)
 
 let TYSYS2AUX_decode_infer_t_match = cake_def_wf
-  `measure (\x:atom term_term + atom term_term.
+  `MEASURE (\x:atom term_term + atom term_term.
               match x with INL t -> term_term_size (\a:atom. 0) t
                          | INR t -> term_term_size (\a:atom. 0) t)`
   TERM_TAC
@@ -316,7 +316,7 @@ let t_ext_s_check_eqn = prove
 let t_unify_def = cake_def
   `t_unify (s:(num,infer_t)fmap) t1 t2 =
      OPTION_MAP ((o_f) decode_infer_t)
-       (unify (encode_infer_t o_f s) (encode_infer_t t1) (encode_infer_t t2))`;;
+       (unifDef_unify (encode_infer_t o_f s) (encode_infer_t t1) (encode_infer_t t2))`;;
 
 let ts_unify_def = cake_def
   `(ts_unify (s:(num,infer_t)fmap) [] [] = SOME s) /\
@@ -406,8 +406,8 @@ let TYSYS2AUX_encodable_FUPDATE = prove
 let TYSYS2AUX_unify_encodable = prove
  (`!s t1 t2. wfs s /\ (?s0:(num,infer_t)fmap. s = encode_infer_t o_f s0) /\
              TYSYS2AUX_good t1 t2 ==>
-     !sx. unify s t1 t2 = SOME sx ==> ?s1:(num,infer_t)fmap. sx = encode_infer_t o_f s1`,
-  MATCH_MP_TAC unify_ind THEN
+     !sx. unifDef_unify s t1 t2 = SOME sx ==> ?s1:(num,infer_t)fmap. sx = encode_infer_t o_f s1`,
+  MATCH_MP_TAC unifDef_unify_ind THEN
   MAP_EVERY X_GEN_TAC [`s:(num,atom term_term)fmap`; `t1:atom term_term`; `t2:atom term_term`] THEN
   DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "ih1") (LABEL_TAC "ih2")) THEN
   DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC (CONJUNCTS_THEN2
@@ -421,7 +421,7 @@ let TYSYS2AUX_unify_encodable = prove
     (CONJUNCTS_THEN2 (LABEL_TAC "sv2") (LABEL_TAC "sp"))) THEN
   X_GEN_TAC `sx:(num,atom term_term)fmap` THEN
   MP_TAC(ISPECL [`encode_infer_t o_f (s0:(num,infer_t)fmap)`; `t1:atom term_term`;
-                `t2:atom term_term`] unify_def) THEN
+                `t2:atom term_term`] unifDef_unify_def) THEN
   ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN
   CASES_ON `walk (encode_infer_t o_f (s0:(num,infer_t)fmap)) t1` THEN
   CASES_ON `walk (encode_infer_t o_f (s0:(num,infer_t)fmap)) t2` THEN
@@ -431,7 +431,7 @@ let TYSYS2AUX_unify_encodable = prove
     USE_THEN "sp" (MP_TAC o SPECL [`a0:atom term_term`; `a1:atom term_term`;
                                    `a0':atom term_term`; `a1':atom term_term`]) THEN
     REWRITE_TAC[] THEN STRIP_TAC THEN
-    CASES_ON `unify (encode_infer_t o_f (s0:(num,infer_t)fmap)) a0 a0'` THEN
+    CASES_ON `unifDef_unify (encode_infer_t o_f (s0:(num,infer_t)fmap)) a0 a0'` THEN
     REWRITE_TAC[OPTION_BIND_DEF; option_DISTINCT] THEN DISCH_TAC THEN
     REMOVE_THEN "ih2" (MP_TAC o SPECL [`a0:atom term_term`; `a1:atom term_term`;
                                     `a0':atom term_term`; `a1':atom term_term`]) THEN
@@ -466,41 +466,41 @@ let TYSYS2AUX_decode_o_f_encode = prove
 
 let TYSYS2AUX_unify_Const = prove
  (`!(s:(num,A term_term)fmap) c1 c2. wfs s ==>
-     unify s (Const c1) (Const c2) = if c1 = c2 then SOME s else NONE`,
+     unifDef_unify s (Const c1) (Const c2) = if c1 = c2 then SOME s else NONE`,
   REPEAT STRIP_TAC THEN
   MP_TAC(ISPECL [`s:(num,A term_term)fmap`; `Const c1:A term_term`;
-                 `Const c2:A term_term`] unify_def) THEN
+                 `Const c2:A term_term`] unifDef_unify_def) THEN
   ASM_REWRITE_TAC[walk_walk_thm; term_term_CASE]);;
 
 let TYSYS2AUX_unify_Pair = prove
  (`!(s:(num,A term_term)fmap) a b c d. wfs s ==>
-     unify s (Pair a b) (Pair c d) = OPTION_BIND (unify s a c) (\sx. unify sx b d)`,
+     unifDef_unify s (Pair a b) (Pair c d) = OPTION_BIND (unifDef_unify s a c) (\sx. unifDef_unify sx b d)`,
   REPEAT STRIP_TAC THEN
   MP_TAC(ISPECL [`s:(num,A term_term)fmap`; `Pair a b:A term_term`;
-                 `Pair c d:A term_term`] unify_def) THEN
+                 `Pair c d:A term_term`] unifDef_unify_def) THEN
   ASM_REWRITE_TAC[walk_walk_thm; term_term_CASE]);;
 
 let TYSYS2AUX_unify_Pair_Const = prove
  (`!(s:(num,A term_term)fmap) c t1 t2. wfs s ==>
-     unify s (Pair (Const c) t1) (Pair (Const c) t2) = unify s t1 t2`,
+     unifDef_unify s (Pair (Const c) t1) (Pair (Const c) t2) = unifDef_unify s t1 t2`,
   SIMP_TAC[TYSYS2AUX_unify_Pair; TYSYS2AUX_unify_Const; OPTION_BIND_DEF]);;
 
 let TYSYS2AUX_unify_Tapp = prove
  (`!(s:(num,atom term_term)fmap) ts1 ts2 tc. wfs s ==>
-     unify s (encode_infer_t (Infer_Tapp ts1 tc)) (encode_infer_t (Infer_Tapp ts2 tc)) =
-     unify s (encode_infer_ts ts1) (encode_infer_ts ts2)`,
+     unifDef_unify s (encode_infer_t (Infer_Tapp ts1 tc)) (encode_infer_t (Infer_Tapp ts2 tc)) =
+     unifDef_unify s (encode_infer_ts ts1) (encode_infer_ts ts2)`,
   SIMP_TAC[encode_infer_t_def; TYSYS2AUX_unify_Pair_Const]);;
 
 let TYSYS2AUX_unify_good = prove
  (`!(s0:(num,infer_t)fmap) t1 t2. t_wfs s0 /\ TYSYS2AUX_good t1 t2 ==>
      OPTION_MAP ((o_f) encode_infer_t)
-       (OPTION_MAP ((o_f) decode_infer_t) (unify (encode_infer_t o_f s0) t1 t2)) =
-     unify (encode_infer_t o_f s0) t1 t2`,
+       (OPTION_MAP ((o_f) decode_infer_t) (unifDef_unify (encode_infer_t o_f s0) t1 t2)) =
+     unifDef_unify (encode_infer_t o_f s0) t1 t2`,
   REPEAT STRIP_TAC THEN
   MP_TAC(SPECL [`encode_infer_t o_f (s0:(num,infer_t)fmap)`; `t1:atom term_term`;
                 `t2:atom term_term`] TYSYS2AUX_unify_encodable) THEN
   ANTS_TAC THENL [ASM_MESON_TAC[t_wfs_def]; ALL_TAC] THEN
-  CASES_ON `unify (encode_infer_t o_f (s0:(num,infer_t)fmap)) t1 t2` THEN
+  CASES_ON `unifDef_unify (encode_infer_t o_f (s0:(num,infer_t)fmap)) t1 t2` THEN
   REWRITE_TAC[OPTION_MAP_DEF; option_INJ] THEN
   DISCH_THEN(MP_TAC o SPEC `a:(num,atom term_term)fmap`) THEN REWRITE_TAC[] THEN
   DISCH_TAC THEN MATCH_MP_TAC TYSYS2AUX_decode_encodable THEN
@@ -522,7 +522,7 @@ let encode_unify_lemma = prove
          t1' = Infer_Tapp ts1 ARB /\
          t2' = Infer_Tapp ts2 ARB)) /\
      t_wfs s'
-     ==> unify s t1 t2 = OPTION_MAP ((o_f) encode_infer_t) (t_unify s' t1' t2')`,
+     ==> unifDef_unify s t1 t2 = OPTION_MAP ((o_f) encode_infer_t) (t_unify s' t1' t2')`,
   REPEAT GEN_TAC THEN
   DISCH_THEN(CONJUNCTS_THEN2 SUBST1_TAC (CONJUNCTS_THEN2 MP_TAC ASSUME_TAC)) THEN
   SUBGOAL_THEN `wfs (encode_infer_t o_f (s':(num,infer_t)fmap))` ASSUME_TAC THENL
@@ -539,21 +539,21 @@ let encode_unify = prove
      s = encode_infer_t o_f s' /\
      t1 = encode_infer_t t1' /\ t2 = encode_infer_t t2' /\
      t_wfs s'
-     ==> unify s t1 t2 = OPTION_MAP ((o_f) encode_infer_t) (t_unify s' t1' t2')`,
+     ==> unifDef_unify s t1 t2 = OPTION_MAP ((o_f) encode_infer_t) (t_unify s' t1' t2')`,
   MESON_TAC[encode_unify_lemma]);;
 
 let wfs_unify = prove
- (`!(s:(num,A term_term)fmap) t1 t2 s'. wfs s /\ unify s t1 t2 = SOME s' ==> wfs s'`,
+ (`!(s:(num,A term_term)fmap) t1 t2 s'. wfs s /\ unifDef_unify s t1 t2 = SOME s' ==> wfs s'`,
   MESON_TAC[unify_unifier]);;
 
 let TYSYS2AUX_unify_Const_Pair = prove
  (`!(s:(num,A term_term)fmap) c a b. wfs s ==>
-     unify s (Const c) (Pair a b) = NONE /\ unify s (Pair a b) (Const c) = NONE`,
+     unifDef_unify s (Const c) (Pair a b) = NONE /\ unifDef_unify s (Pair a b) (Const c) = NONE`,
   REPEAT STRIP_TAC THENL
    [MP_TAC(ISPECL [`s:(num,A term_term)fmap`; `Const c:A term_term`;
-                   `Pair a b:A term_term`] unify_def);
+                   `Pair a b:A term_term`] unifDef_unify_def);
     MP_TAC(ISPECL [`s:(num,A term_term)fmap`; `Pair a b:A term_term`;
-                   `Const c:A term_term`] unify_def)] THEN
+                   `Const c:A term_term`] unifDef_unify_def)] THEN
   ASM_REWRITE_TAC[walk_walk_thm; term_term_CASE]);;
 
 let ts_unify_thm = prove
@@ -561,7 +561,7 @@ let ts_unify_thm = prove
      t_wfs s
      ==> ts_unify s l1 l2 =
          OPTION_MAP ((o_f) decode_infer_t)
-           (unify (encode_infer_t o_f s) (encode_infer_ts l1) (encode_infer_ts l2))`,
+           (unifDef_unify (encode_infer_t o_f s) (encode_infer_ts l1) (encode_infer_ts l2))`,
   ONCE_REWRITE_TAC[SWAP_FORALL_THM] THEN LIST_INDUCT_TAC THEN
   X_GEN_TAC `s:(num,infer_t)fmap` THEN LIST_INDUCT_TAC THEN DISCH_TAC THEN
   FIRST_ASSUM(ASSUME_TAC o REWRITE_RULE[t_wfs_def]) THEN
@@ -574,7 +574,7 @@ let ts_unify_thm = prove
                TYSYS2AUX_unify_encodable) THEN
   ANTS_TAC THENL
    [ASM_REWRITE_TAC[TYSYS2AUX_good_thms] THEN MESON_TAC[]; ALL_TAC] THEN
-  CASES_ON `unify (encode_infer_t o_f (s:(num,infer_t)fmap)) (encode_infer_t h)
+  CASES_ON `unifDef_unify (encode_infer_t o_f (s:(num,infer_t)fmap)) (encode_infer_t h)
                   (encode_infer_t h')` THEN
   REWRITE_TAC[OPTION_MAP_DEF; OPTION_BIND_DEF; option_CASE] THEN
   DISCH_THEN(X_CHOOSE_THEN `s1:(num,infer_t)fmap` SUBST_ALL_TAC o
@@ -600,7 +600,7 @@ let t_unify_eqn = prove
   FIRST_ASSUM(ASSUME_TAC o REWRITE_RULE[t_wfs_def]) THEN
   REWRITE_TAC[t_unify_def] THEN
   FIRST_ASSUM(fun th ->
-    GEN_REWRITE_TAC (LAND_CONV o RAND_CONV) [MATCH_MP unify_def th]) THEN
+    GEN_REWRITE_TAC (LAND_CONV o RAND_CONV) [MATCH_MP unifDef_unify_def th]) THEN
   ASM_SIMP_TAC[encode_walk] THEN
   CASES_ON `t_walk (s:(num,infer_t)fmap) t1` THEN
   CASES_ON `t_walk (s:(num,infer_t)fmap) t2` THEN
@@ -643,7 +643,7 @@ let t_unify_ind = prove
         (!u1 u2. t1 = encode_infer_ts u1 /\ t2 = encode_infer_ts u2
                  ==> P1 us u1 u2)`
   (LABEL_TAC "Q") THENL
-   [MATCH_MP_TAC unify_ind THEN
+   [MATCH_MP_TAC unifDef_unify_ind THEN
     MAP_EVERY X_GEN_TAC [`s:(num,atom term_term)fmap`; `t1:atom term_term`;
                          `t2:atom term_term`] THEN
     DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "ih1") (LABEL_TAC "ih2")) THEN
@@ -687,7 +687,7 @@ let t_unify_ind = prove
                      TYSYS2AUX_unify_encodable) THEN
         ANTS_TAC THENL
          [ASM_REWRITE_TAC[TYSYS2AUX_good_thms] THEN MESON_TAC[]; ALL_TAC] THEN
-        CASES_ON `unify (encode_infer_t o_f (us:(num,infer_t)fmap))
+        CASES_ON `unifDef_unify (encode_infer_t o_f (us:(num,infer_t)fmap))
                         (encode_infer_t v1) (encode_infer_t v2)` THEN
         REWRITE_TAC[OPTION_MAP_DEF; option_DISTINCT; option_INJ] THEN
         DISCH_THEN(MP_TAC o SPEC `a:(num,atom term_term)fmap`) THEN REWRITE_TAC[] THEN
@@ -972,13 +972,13 @@ let t_walkstar_SUBMAP = prove
   AP_TERM_TAC THEN MATCH_MP_TAC walkstar_SUBMAP THEN
   ASM_REWRITE_TAC[TYSYS2AUX_SUBMAP_encode; GSYM t_wfs_def]);;
 let t_vR_def = cake_def
-  `t_vR (s:(num,infer_t)fmap) = vR (encode_infer_t o_f s)`;;
+  `t_vR (s:(num,infer_t)fmap) = subst_vR (encode_infer_t o_f s)`;;
 
 let t_vR_eqn = prove
  (CASE_TERM `!(s:(num,infer_t)fmap) x y.
      t_vR s y x <=> match FLOOKUP s x with SOME t -> y IN t_vars t | _ -> F`,
   REPEAT GEN_TAC THEN
-  REWRITE_TAC[t_vR_def; vR_def; TYSYS2AUX_FLOOKUP_encode] THEN
+  REWRITE_TAC[t_vR_def; subst_vR_def; TYSYS2AUX_FLOOKUP_encode] THEN
   CASES_ON `FLOOKUP (s:(num,infer_t)fmap) x` THEN
   REWRITE_TAC[OPTION_MAP_DEF; option_CASE; t_vars_def]);;
 

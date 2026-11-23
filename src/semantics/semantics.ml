@@ -4,7 +4,7 @@
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
 (* - HOL4's record type state (hidden after its definition) is              *)
-(*   semantics_state (notes/naming/names.tsv), fields semantics_state_tenv,  *)
+(*   semantics_state (doc/names.tsv), fields semantics_state_tenv,           *)
 (*   semantics_state_type_ids, semantics_state_sem_st and                    *)
 (*   semantics_state_sem_env; its literal is semantics_state_REC tenv        *)
 (*   type_ids sem_st sem_env (fields in order).                              *)

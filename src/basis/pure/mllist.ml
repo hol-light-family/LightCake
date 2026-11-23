@@ -2,12 +2,14 @@
 (* mllist: port of HOL4 basis/pure/mllistScript.sml (CakeML v3479).          *)
 (* Pure functions for the List module.                                       *)
 (*                                                                           *)
-(* Names (notes/naming/names.tsv): HOL4 mapi, mapPartial, foldl, foldli_aux, *)
+(* Names (doc/names.tsv): HOL4 mapi, mapPartial, foldl, foldli_aux,          *)
 (* foldli, tabulate and collate are mllist_mapi, ... (mlvector and mlstring  *)
 (* define the same names).  HOL4 merge (mergesort.ml) is mergesort_merge;    *)
 (* HOL4 l1 ++ l2 is APPEND l1 l2 (left associative), set is set_of_list,     *)
 (* GENLIST f n is list_of_seq f n, FUNPOW f n is ITER n f, $~ o f is (~) o f. *)
 (* Helper lemmas that are not HOL4 theorems are PURE1AUX_.                   *)
+(* HOL4 drop is mllist_drop (a short or common word; drop is also a constant *)
+(* of HOL Light's Multivariate), and drop_def is mllist_drop_def.            *)
 (* ========================================================================= *)
 
 needs "misc/misc.ml";;
@@ -193,8 +195,8 @@ let nth_def = cake_def
 let take_def = cake_def
   `take (l:A list) i = TAKE i l`;;
 
-let drop_def = cake_def
-  `drop (l:A list) i = DROP i l`;;
+let mllist_drop_def = cake_def
+  `mllist_drop (l:A list) i = DROP i l`;;
 
 let takeUntil_def = cake_def
   `(takeUntil (p:A->bool) [] = []) /\
@@ -309,7 +311,7 @@ let mllist_foldli_thm = prove
   REWRITE_TAC[mllist_foldli_def; mllist_foldli_aux_thm; ADD_CLAUSES]);;
 
 let tabulate_aux_def = cake_def_wf
-  `measure (\p:num#num#(num->A)#A list. FST (SND p) - FST p)`
+  `MEASURE (\p:num#num#(num->A)#A list. FST (SND p) - FST p)`
   (REWRITE_TAC[measure_THM] THEN ARITH_TAC)
   `tabulate_aux n m (f:num->A) acc =
      let b = (n >= m) in

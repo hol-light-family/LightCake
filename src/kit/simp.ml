@@ -555,6 +555,11 @@ let cake_context = ref (None : string option);;   (* set by cake_begin *)
 (* the same                                                                  *)
 let cake_ss_cache = ref ([] : (string * simpset * thm list list) list);;
 
+(* the files named by the needs lines of a file (on the load path); a needs  *)
+(* line naming a file that is not on the load path is skipped with a         *)
+(* warning (since 2026-11-22: before, file_on_path's Not_found escaped       *)
+(* mapfilter and the whole list was empty, so cake_begin on a file whose     *)
+(* prerequisites were partly unwritten gave only the global simps)           *)
 let read_needs_lines file =
   try
     let ic = open_in file in
@@ -565,9 +570,12 @@ let read_needs_lines file =
     mapfilter (fun l ->
         let l = String.trim l in
         if String.length l > 7 && String.sub l 0 7 = "needs \"" then
-          let k = String.index_from l 7 '"' in
+          let k = try String.index_from l 7 '"' with Not_found -> failwith "" in
           let f = String.sub l 7 (k - 7) in
-          file_on_path (!load_path) f
+          try file_on_path (!load_path) f with Not_found ->
+            (warn true (file ^ ": needs \"" ^ f ^ "\": no such file on the load path " ^
+                        "(left out of its simpset closure)");
+             failwith "")
         else failwith "") ls
   with _ -> [];;
 
@@ -681,6 +689,106 @@ let cake_type s =
   let res = cake_type s in
   do_list cake_register_type_simps (!cake_last_types);
   res;;
+
+(* ------------------------------------------------------------------------- *)
+(* The bijections of an enumeration type with 0 .. k-1 (HOL4's Datatype      *)
+(* makes them for every type whose constructors are all nullary;             *)
+(* EnumType.sml).  cake_enum_bijections "ty" defines ty2num (ty2num C_i = i, *)
+(* constructors in the order of the type's specification) and num2ty         *)
+(* (num2ty n = C_n for n < k; ARB otherwise, unspecified as in HOL4), and    *)
+(* returns HOL4's theorems by name: ty2num_thm, num2ty_thm, ty2num_11,       *)
+(* num2ty_11, ty2num_ONTO, num2ty_ONTO, num2ty_ty2num, ty2num_num2ty,        *)
+(* ty_EQ_ty, and num2ty_def; ty2num_thm and num2ty_thm are added to the      *)
+(* simpset, as HOL4's TypeBase does.  Not automatic (opt-in): files that     *)
+(* define such functions themselves (ag32) keep working.  Since 2026-11-22.  *)
+(*   let funcT_enum = cake_enum_bijections "funcT";;                         *)
+(*   let funcT2num_11 = assoc "funcT2num_11" funcT_enum;;                    *)
+(* ------------------------------------------------------------------------- *)
+
+(* r < k (k a numeral) as r = k-1 \/ .. \/ r = 0 \/ F                        *)
+let kit_lt_numeral_cases_conv =
+  let lt0,ltsuc = CONJ_PAIR LT in
+  let step t =
+    let l,r = dest_binop `(<):num->num->bool` t in
+    if not (is_numeral r) then failwith "kit_lt_numeral_cases_conv" else
+    if dest_numeral r =/ num_0 then REWR_CONV lt0 t
+    else (RAND_CONV num_CONV THENC REWR_CONV ltsuc) t in
+  REPEATC (CHANGED_CONV (ONCE_DEPTH_CONV step)) THENC REWRITE_CONV[];;
+
+let cake_enum_bijections (tyname:string) : (string * thm) list =
+  let ci = try case_info_of_tyname tyname
+           with Failure _ -> failwith ("cake_enum_bijections: no datatype " ^ tyname) in
+  let pats = ci.ci_pats in
+  if pats = [] || exists (fun (vs,_) -> vs <> []) pats then
+    failwith ("cake_enum_bijections: " ^ tyname ^ " is not an enumeration") else
+  let cs = map snd pats in
+  let ty = type_of (hd cs) in
+  if tyvars ty <> [] then failwith ("cake_enum_bijections: " ^ tyname ^ " is polymorphic") else
+  let k = length cs in
+  let repn = tyname ^ "2num" and absn = "num2" ^ tyname in
+  if can get_const_type repn || can get_const_type absn then
+    failwith ("cake_enum_bijections: " ^ repn ^ " or " ^ absn ^ " is already a constant") else
+  let numty = `:num` in
+  let nums = map mk_small_numeral (0--(k-1)) in
+  let _,_,rth = assoc tyname (!inductive_type_store) in
+  let repv = mk_var(repn,mk_fun_ty ty numty) in
+  let rep_thm = kit_new_recursive_definition rth
+                  (list_mk_conj (map2 (fun c n -> mk_eq(mk_comb(repv,c),n)) cs nums)) in
+  let rep = fst(strip_comb(lhs(hd(conjuncts(concl rep_thm))))) in
+  let absv = mk_var(absn,mk_fun_ty numty ty) and n = mk_var("n",numty) in
+  let chain = itlist2 (fun c i acc -> mk_cond(mk_eq(n,i),c,acc)) cs nums
+                      (mk_const("ARB",[ty,aty])) in
+  let abs_def = new_definition (mk_eq(mk_comb(absv,n),chain)) in
+  let abs = fst(strip_comb(lhs(snd(strip_forall(concl abs_def))))) in
+  let k_tm = mk_small_numeral k in
+  let a = mk_var("a",ty) and a' = mk_var("a'",ty)
+  and r = mk_var("r",numty) and r' = mk_var("r'",numty) in
+  let rep_a = mk_comb(rep,a) and abs_r = mk_comb(abs,r) in
+  let lt x = mk_binop `(<):num->num->bool` x k_tm in
+  let cases_tac = GEN_TAC THEN
+    STRUCT_CASES_TAC (SPEC a ci.ci_nchotomy) in
+  let abs_thm = prove
+   (list_mk_conj (map2 (fun c i -> mk_eq(mk_comb(abs,i),c)) cs nums),
+    REWRITE_TAC[abs_def] THEN CONV_TAC(DEPTH_CONV NUM_EQ_CONV) THEN REWRITE_TAC[]) in
+  let abs_rep = prove
+   (mk_forall(a,mk_eq(mk_comb(abs,rep_a),a)),
+    cases_tac THEN REWRITE_TAC[rep_thm; abs_thm]) in
+  let rep_lt = prove
+   (mk_forall(a,lt rep_a),
+    cases_tac THEN REWRITE_TAC[rep_thm] THEN CONV_TAC NUM_REDUCE_CONV) in
+  let rep_11 = prove
+   (list_mk_forall([a;a'],mk_eq(mk_eq(rep_a,mk_comb(rep,a')),mk_eq(a,a'))),
+    REPEAT GEN_TAC THEN EQ_TAC THENL
+     [DISCH_THEN(MP_TAC o AP_TERM abs) THEN REWRITE_TAC[abs_rep];
+      DISCH_THEN SUBST1_TAC THEN REFL_TAC]) in
+  let eq_ty = prove
+   (list_mk_forall([a;a'],mk_eq(mk_eq(a,a'),mk_eq(rep_a,mk_comb(rep,a')))),
+    REWRITE_TAC[rep_11]) in
+  let rep_abs = prove
+   (mk_forall(r,mk_eq(lt r,mk_eq(mk_comb(rep,abs_r),r))),
+    GEN_TAC THEN EQ_TAC THENL
+     [CONV_TAC(LAND_CONV kit_lt_numeral_cases_conv) THEN
+      DISCH_THEN(REPEAT_TCL DISJ_CASES_THEN SUBST1_TAC) THEN
+      REWRITE_TAC[abs_thm; rep_thm];
+      DISCH_THEN(SUBST1_TAC o SYM) THEN REWRITE_TAC[rep_lt]]) in
+  let abs_11 = prove
+   (list_mk_forall([r;r'],mk_imp(lt r,mk_imp(lt r',
+      mk_eq(mk_eq(abs_r,mk_comb(abs,r')),mk_eq(r,r'))))),
+    REPEAT GEN_TAC THEN REWRITE_TAC[rep_abs] THEN REPEAT DISCH_TAC THEN EQ_TAC THENL
+     [DISCH_THEN(MP_TAC o AP_TERM rep) THEN ASM_REWRITE_TAC[];
+      DISCH_THEN SUBST1_TAC THEN REFL_TAC]) in
+  let rep_onto = prove
+   (mk_forall(r,mk_eq(lt r,mk_exists(a,mk_eq(r,rep_a)))),
+    GEN_TAC THEN EQ_TAC THENL
+     [DISCH_TAC THEN EXISTS_TAC abs_r THEN ASM_MESON_TAC[rep_abs];
+      STRIP_TAC THEN ASM_REWRITE_TAC[rep_lt]]) in
+  let abs_onto = prove
+   (mk_forall(a,mk_exists(r,mk_conj(mk_eq(a,abs_r),lt r))),
+    GEN_TAC THEN EXISTS_TAC rep_a THEN REWRITE_TAC[abs_rep; rep_lt]) in
+  cake_add_global_simps [rep_thm; abs_thm];
+  [repn ^ "_thm",rep_thm; absn ^ "_thm",abs_thm; repn ^ "_11",rep_11; absn ^ "_11",abs_11;
+   repn ^ "_ONTO",rep_onto; absn ^ "_ONTO",abs_onto; absn ^ "_" ^ repn,abs_rep;
+   repn ^ "_" ^ absn,rep_abs; tyname ^ "_EQ_" ^ tyname,eq_ty; absn ^ "_def",abs_def];;
 
 (* ------------------------------------------------------------------------- *)
 (* Conversions and rules.                                                    *)

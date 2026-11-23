@@ -6,7 +6,7 @@
 (* wordLang program.                                                         *)
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
-(* - Names as notes/naming/names.tsv says: the call_tree constructors        *)
+(* - Names as doc/names.tsv says: the call_tree constructors                 *)
 (*   word_depth_Leaf, Unknown, word_depth_Const, word_depth_Call and         *)
 (*   word_depth_Branch; the wordLang constructors wl_....                    *)
 (* - HOL4 prog_size (K 0) is wl_prog_size (K 0); the termination relation    *)
@@ -71,9 +71,9 @@ let WORDP1AUX_CG_TAC : tactic =
 (* the let, is proved from them                                             *)
 
 let WORDP1AUX_call_graph_def = sem1aux_def_wf
-  `inv_image (measure I LEX measure I LEX measure I)
+  `inv_image (MEASURE I LEX MEASURE I LEX MEASURE I)
      (\x:((num#(A)wl_prog)spt)#num#(num list)#num#(A)wl_prog.
-        (size (FST x), FST (SND (SND (SND x))) - LENGTH (FST (SND (SND x))),
+        (sptree_size (FST x), FST (SND (SND (SND x))) - LENGTH (FST (SND (SND x))),
          wl_prog_size (K 0) (SND (SND (SND (SND x))))))`
   WORDP1AUX_CG_TAC
   `(call_graph funs n ns total' (wl_Seq p1 p2:(A)wl_prog) =
@@ -171,7 +171,7 @@ let full_call_graph_def = cake_def
        NONE -> Unknown
      | SOME (a,prog) ->
          word_depth_Branch (word_depth_Call n word_depth_Leaf)
-                           (call_graph funs n [n] (size funs) prog)`;;
+                           (call_graph funs n [n] (sptree_size funs) prog)`;;
 
 let max_depth_graphs_def = cake_def
   `(max_depth_graphs ss [] all (funs:(num#(A)wl_prog)spt)
@@ -182,5 +182,5 @@ let max_depth_graphs_def = cake_def
       | SOME (a,body) ->
           OPTION_MAP2 MAX (lookup n ss)
             (OPTION_MAP2 MAX
-               (max_depth ss (call_graph funs n all (size all_funs) body))
+               (max_depth ss (call_graph funs n all (sptree_size all_funs) body))
                (max_depth_graphs ss ns all funs all_funs)))`;;

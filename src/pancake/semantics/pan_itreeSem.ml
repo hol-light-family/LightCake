@@ -1,6 +1,9 @@
 (* ========================================================================= *)
 (* pan_itreeSem: port of HOL4 pancake/semantics/pan_itreeSemScript.sml      *)
 (* (CakeML v3479).  An itree semantics for Pancake.                          *)
+(* HOL4 ext and bst are pan_itreeSem_ext and pan_itreeSem_bst (short or      *)
+(* common words; ext captured variables of other files), with the theorems   *)
+(* renamed alike (ext_def is pan_itreeSem_ext_def, ...).                     *)
 (* ========================================================================= *)
 
 needs "misc/misc.ml";;
@@ -86,7 +89,7 @@ let kvar_defs2 = end_itlist CONJ
 (* panSem.ml; pan_itreeSem_eval_def has the case constants of HOL4's.      *)
 
 let PITRAUX_eval_def = cake_def_wf_clauses
-  `measure (\p:(A)bstate#(A)panLang_exp. panLang_exp_size ARB (SND p))`
+  `MEASURE (\p:(A)bstate#(A)panLang_exp. panLang_exp_size ARB (SND p))`
   PSEMAUX_EVAL_TC_TAC
   [`(pan_itreeSem_eval (s:(A)bstate) (panLang_Const w) = SOME (pan_Val (Word w))) /\
     (pan_itreeSem_eval s (panLang_Var panLang_Local v) = FLOOKUP (bstate_locals s) v) /\
@@ -730,8 +733,8 @@ let itree_unfold_FUNPOW_Tau = prove
   GEN_TAC THEN INDUCT_TAC THEN REWRITE_TAC[ITER] THEN REPEAT STRIP_TAC THEN
   GEN_REWRITE_TAC LAND_CONV [itree_unfold] THEN SIMP[]);;
 
-let ext_def = cake_def
- `ext (s:(A)bstate) k (ffi:(B)ffi_state) =
+let pan_itreeSem_ext_def = cake_def
+ `pan_itreeSem_ext (s:(A)bstate) k (ffi:(B)ffi_state) =
     pan_state_REC (bstate_locals s) (bstate_globals s) (bstate_structs s)
       (bstate_code s) (bstate_eshapes s) (bstate_memory s) (bstate_memaddrs s)
       (bstate_sh_memaddrs s) k (bstate_be s) ffi (bstate_base_addr s)
@@ -739,25 +742,25 @@ let ext_def = cake_def
 
 let ext_access = prove
  (`!(t:(A)bstate) k (ffi:(B)ffi_state).
-     pan_state_locals (ext t k ffi) = bstate_locals t /\
-     pan_state_globals (ext t k ffi) = bstate_globals t /\
-     pan_state_structs (ext t k ffi) = bstate_structs t /\
-     pan_state_code (ext t k ffi) = bstate_code t /\
-     pan_state_eshapes (ext t k ffi) = bstate_eshapes t /\
-     pan_state_memory (ext t k ffi) = bstate_memory t /\
-     pan_state_memaddrs (ext t k ffi) = bstate_memaddrs t /\
-     pan_state_sh_memaddrs (ext t k ffi) = bstate_sh_memaddrs t /\
-     pan_state_be (ext t k ffi) = bstate_be t /\
-     pan_state_ffi (ext t k ffi) = ffi /\
-     pan_state_base_addr (ext t k ffi) = bstate_base_addr t /\
-     pan_state_top_addr (ext t k ffi) = bstate_top_addr t /\
-     pan_state_clock (ext t k ffi) = k`,
-  RW[ext_def]);;
+     pan_state_locals (pan_itreeSem_ext t k ffi) = bstate_locals t /\
+     pan_state_globals (pan_itreeSem_ext t k ffi) = bstate_globals t /\
+     pan_state_structs (pan_itreeSem_ext t k ffi) = bstate_structs t /\
+     pan_state_code (pan_itreeSem_ext t k ffi) = bstate_code t /\
+     pan_state_eshapes (pan_itreeSem_ext t k ffi) = bstate_eshapes t /\
+     pan_state_memory (pan_itreeSem_ext t k ffi) = bstate_memory t /\
+     pan_state_memaddrs (pan_itreeSem_ext t k ffi) = bstate_memaddrs t /\
+     pan_state_sh_memaddrs (pan_itreeSem_ext t k ffi) = bstate_sh_memaddrs t /\
+     pan_state_be (pan_itreeSem_ext t k ffi) = bstate_be t /\
+     pan_state_ffi (pan_itreeSem_ext t k ffi) = ffi /\
+     pan_state_base_addr (pan_itreeSem_ext t k ffi) = bstate_base_addr t /\
+     pan_state_top_addr (pan_itreeSem_ext t k ffi) = bstate_top_addr t /\
+     pan_state_clock (pan_itreeSem_ext t k ffi) = k`,
+  RW[pan_itreeSem_ext_def]);;
 let _ = cake_add_simps [ext_access];;
 
 let eval_ext = prove
  (`!(s:(A)bstate) e t (ffi:(B)ffi_state).
-     pan_eval (ext s t ffi) e = pan_itreeSem_eval s e`,
+     pan_eval (pan_itreeSem_ext s t ffi) e = pan_itreeSem_eval s e`,
   REC_IND_TAC pan_itreeSem_eval_ind THEN REPEAT STRIP_TAC THEN
   REWRITE_TAC[pan_eval_def; pan_itreeSem_eval_def; ext_access] THEN
   SIMP[CONGR OPT_MMAP_CONG; ETA_AX] THEN REWRITE_TAC[ETA_AX] THEN
@@ -767,7 +770,7 @@ let _ = cake_add_simps [eval_ext];;
 
 let opt_mmap_eval_ext = prove
  (`!(s:(A)bstate) t (ffi:(B)ffi_state) es.
-     OPT_MMAP (pan_eval (ext s t ffi)) es = OPT_MMAP (pan_itreeSem_eval s) es`,
+     OPT_MMAP (pan_eval (pan_itreeSem_ext s t ffi)) es = OPT_MMAP (pan_itreeSem_eval s) es`,
   REPEAT GEN_TAC THEN MATCH_MP_TAC OPT_MMAP_CONG THEN REWRITE_TAC[eval_ext]);;
 let _ = cake_add_simps [opt_mmap_eval_ext];;
 
@@ -775,16 +778,16 @@ let _ = cake_add_simps [opt_mmap_eval_ext];;
 
 let ext_normalise = prove
  (`!(s:(A)bstate) t (f:(B)ffi_state) x m k k' (ffi:(B)ffi_state) ffi'.
-     pan_state_locals_fupd (K x) (ext s t f) = ext (bstate_locals_fupd (K x) s) t f /\
-     pan_state_memory_fupd (K m) (ext s t f) = ext (bstate_memory_fupd (K m) s) t f /\
-     pan_state_clock_fupd (K k') (ext s k ffi) = ext s k' ffi /\
-     pan_state_ffi_fupd (K ffi') (ext s k ffi) = ext s k ffi' /\
-     pan_dec_clock (ext s k f) = ext s (k - 1) f`,
-  RW[ext_def; pan_dec_clock_def]);;
+     pan_state_locals_fupd (K x) (pan_itreeSem_ext s t f) = pan_itreeSem_ext (bstate_locals_fupd (K x) s) t f /\
+     pan_state_memory_fupd (K m) (pan_itreeSem_ext s t f) = pan_itreeSem_ext (bstate_memory_fupd (K m) s) t f /\
+     pan_state_clock_fupd (K k') (pan_itreeSem_ext s k ffi) = pan_itreeSem_ext s k' ffi /\
+     pan_state_ffi_fupd (K ffi') (pan_itreeSem_ext s k ffi) = pan_itreeSem_ext s k ffi' /\
+     pan_dec_clock (pan_itreeSem_ext s k f) = pan_itreeSem_ext s (k - 1) f`,
+  RW[pan_itreeSem_ext_def; pan_dec_clock_def]);;
 let _ = cake_add_simps [ext_normalise];;
 
-let bst_def = cake_def
- `bst (s:(A,B)pan_state) =
+let pan_itreeSem_bst_def = cake_def
+ `pan_itreeSem_bst (s:(A,B)pan_state) =
     bstate_REC (pan_state_locals s) (pan_state_globals s) (pan_state_structs s)
       (pan_state_code s) (pan_state_eshapes s) (pan_state_memory s)
       (pan_state_memaddrs s) (pan_state_sh_memaddrs s) (pan_state_be s)
@@ -792,18 +795,18 @@ let bst_def = cake_def
 
 let bst_access = prove
  (`!t:(A,B)pan_state.
-     bstate_locals (bst t) = pan_state_locals t /\
-     bstate_globals (bst t) = pan_state_globals t /\
-     bstate_structs (bst t) = pan_state_structs t /\
-     bstate_code (bst t) = pan_state_code t /\
-     bstate_eshapes (bst t) = pan_state_eshapes t /\
-     bstate_memory (bst t) = pan_state_memory t /\
-     bstate_memaddrs (bst t) = pan_state_memaddrs t /\
-     bstate_sh_memaddrs (bst t) = pan_state_sh_memaddrs t /\
-     bstate_be (bst t) = pan_state_be t /\
-     bstate_base_addr (bst t) = pan_state_base_addr t /\
-     bstate_top_addr (bst t) = pan_state_top_addr t`,
-  RW[bst_def]);;
+     bstate_locals (pan_itreeSem_bst t) = pan_state_locals t /\
+     bstate_globals (pan_itreeSem_bst t) = pan_state_globals t /\
+     bstate_structs (pan_itreeSem_bst t) = pan_state_structs t /\
+     bstate_code (pan_itreeSem_bst t) = pan_state_code t /\
+     bstate_eshapes (pan_itreeSem_bst t) = pan_state_eshapes t /\
+     bstate_memory (pan_itreeSem_bst t) = pan_state_memory t /\
+     bstate_memaddrs (pan_itreeSem_bst t) = pan_state_memaddrs t /\
+     bstate_sh_memaddrs (pan_itreeSem_bst t) = pan_state_sh_memaddrs t /\
+     bstate_be (pan_itreeSem_bst t) = pan_state_be t /\
+     bstate_base_addr (pan_itreeSem_bst t) = pan_state_base_addr t /\
+     bstate_top_addr (pan_itreeSem_bst t) = pan_state_top_addr t`,
+  RW[pan_itreeSem_bst_def]);;
 let _ = cake_add_simps [bst_access];;
 
 (* HOL4 s with <|locals := x; clock := k|> is written with the locals       *)
@@ -811,21 +814,21 @@ let _ = cake_add_simps [bst_access];;
 
 let bst_normalise = prove
  (`!(s:(A,B)pan_state) x m k.
-     bstate_locals_fupd (K x) (bst s) = bst (pan_state_locals_fupd (K x) s) /\
-     bstate_globals_fupd (K x) (bst s) = bst (pan_state_globals_fupd (K x) s) /\
-     bstate_memory_fupd (K m) (bst s) = bst (pan_state_memory_fupd (K m) s) /\
-     bst (pan_state_locals_fupd (K x) (pan_state_clock_fupd (K k) s)) =
-       bst (pan_state_locals_fupd (K x) s) /\
-     bst (pan_state_globals_fupd (K x) (pan_state_clock_fupd (K k) s)) =
-       bst (pan_state_globals_fupd (K x) s) /\
-     bst (pan_state_memory_fupd (K m) (pan_state_clock_fupd (K k) s)) =
-       bst (pan_state_memory_fupd (K m) s) /\
-     bst (pan_state_clock_fupd (K k) s) = bst s`,
-  RW[bst_def]);;
+     bstate_locals_fupd (K x) (pan_itreeSem_bst s) = pan_itreeSem_bst (pan_state_locals_fupd (K x) s) /\
+     bstate_globals_fupd (K x) (pan_itreeSem_bst s) = pan_itreeSem_bst (pan_state_globals_fupd (K x) s) /\
+     bstate_memory_fupd (K m) (pan_itreeSem_bst s) = pan_itreeSem_bst (pan_state_memory_fupd (K m) s) /\
+     pan_itreeSem_bst (pan_state_locals_fupd (K x) (pan_state_clock_fupd (K k) s)) =
+       pan_itreeSem_bst (pan_state_locals_fupd (K x) s) /\
+     pan_itreeSem_bst (pan_state_globals_fupd (K x) (pan_state_clock_fupd (K k) s)) =
+       pan_itreeSem_bst (pan_state_globals_fupd (K x) s) /\
+     pan_itreeSem_bst (pan_state_memory_fupd (K m) (pan_state_clock_fupd (K k) s)) =
+       pan_itreeSem_bst (pan_state_memory_fupd (K m) s) /\
+     pan_itreeSem_bst (pan_state_clock_fupd (K k) s) = pan_itreeSem_bst s`,
+  RW[pan_itreeSem_bst_def]);;
 let _ = cake_add_simps [bst_normalise];;
 
 let eval_bst = prove
- (`!(s:(A,B)pan_state) e. pan_itreeSem_eval (bst s) e = pan_eval s e`,
+ (`!(s:(A,B)pan_state) e. pan_itreeSem_eval (pan_itreeSem_bst s) e = pan_eval s e`,
   REC_IND_TAC pan_eval_ind THEN REPEAT STRIP_TAC THEN
   REWRITE_TAC[pan_eval_def; pan_itreeSem_eval_def; bst_access] THEN
   SIMP[CONGR OPT_MMAP_CONG; ETA_AX] THEN REWRITE_TAC[ETA_AX] THEN
@@ -835,7 +838,7 @@ let _ = cake_add_simps [eval_bst];;
 
 let opt_mmap_eval_bst = prove
  (`!(s:(A,B)pan_state) es.
-     OPT_MMAP (pan_itreeSem_eval (bst s)) es = OPT_MMAP (pan_eval s) es`,
+     OPT_MMAP (pan_itreeSem_eval (pan_itreeSem_bst s)) es = OPT_MMAP (pan_eval s) es`,
   REPEAT GEN_TAC THEN MATCH_MP_TAC OPT_MMAP_CONG THEN REWRITE_TAC[eval_bst]);;
 let _ = cake_add_simps [opt_mmap_eval_bst];;
 
@@ -844,37 +847,37 @@ let _ = cake_add_simps [opt_mmap_eval_bst];;
 
 let ext_bst_id = prove
  (`!(s:(A,B)pan_state) x m k (ffi:(B)ffi_state).
-     ext (bst s) (pan_state_clock s) (pan_state_ffi s) = s /\
-     ext (bstate_locals_fupd (K x) (bst s)) (pan_state_clock s) (pan_state_ffi s) =
+     pan_itreeSem_ext (pan_itreeSem_bst s) (pan_state_clock s) (pan_state_ffi s) = s /\
+     pan_itreeSem_ext (bstate_locals_fupd (K x) (pan_itreeSem_bst s)) (pan_state_clock s) (pan_state_ffi s) =
        pan_state_locals_fupd (K x) s /\
-     ext (bstate_globals_fupd (K x) (bst s)) (pan_state_clock s) (pan_state_ffi s) =
+     pan_itreeSem_ext (bstate_globals_fupd (K x) (pan_itreeSem_bst s)) (pan_state_clock s) (pan_state_ffi s) =
        pan_state_globals_fupd (K x) s /\
-     ext (bstate_memory_fupd (K m) (bst s)) (pan_state_clock s) (pan_state_ffi s) =
+     pan_itreeSem_ext (bstate_memory_fupd (K m) (pan_itreeSem_bst s)) (pan_state_clock s) (pan_state_ffi s) =
        pan_state_memory_fupd (K m) s /\
-     ext (pan_itreeSem_empty_locals (bst s)) (pan_state_clock s) (pan_state_ffi s) =
+     pan_itreeSem_ext (pan_itreeSem_empty_locals (pan_itreeSem_bst s)) (pan_state_clock s) (pan_state_ffi s) =
        pan_empty_locals s /\
-     ext (bst s) k (pan_state_ffi s) = pan_state_clock_fupd (K k) s /\
-     ext (bst s) (pan_state_clock s) ffi = pan_state_ffi_fupd (K ffi) s /\
-     ext (bst s) k ffi = pan_state_clock_fupd (K k) (pan_state_ffi_fupd (K ffi) s)`,
-  RW[bst_def; ext_def; pan_state_component_equality; empty_locals_defs]);;
+     pan_itreeSem_ext (pan_itreeSem_bst s) k (pan_state_ffi s) = pan_state_clock_fupd (K k) s /\
+     pan_itreeSem_ext (pan_itreeSem_bst s) (pan_state_clock s) ffi = pan_state_ffi_fupd (K ffi) s /\
+     pan_itreeSem_ext (pan_itreeSem_bst s) k ffi = pan_state_clock_fupd (K k) (pan_state_ffi_fupd (K ffi) s)`,
+  RW[pan_itreeSem_bst_def; pan_itreeSem_ext_def; pan_state_component_equality; empty_locals_defs]);;
 let _ = cake_add_simps [ext_bst_id];;
 
 let bst_ext_id = prove
  (`!(s:(A)bstate) t (f:(B)ffi_state) x m k (ffi:(B)ffi_state).
-     bst (ext s t f) = s /\
-     bst (pan_state_locals_fupd (K x) (ext s t f)) = bstate_locals_fupd (K x) s /\
-     bst (pan_state_globals_fupd (K x) (ext s t f)) = bstate_globals_fupd (K x) s /\
-     bst (pan_state_memory_fupd (K m) (ext s t f)) = bstate_memory_fupd (K m) s /\
-     bst (pan_empty_locals (ext s k ffi)) = pan_itreeSem_empty_locals s /\
-     bst (pan_dec_clock (ext s k ffi)) = s`,
-  RW[bst_def; ext_def; bstate_component_equality; empty_locals_defs;
+     pan_itreeSem_bst (pan_itreeSem_ext s t f) = s /\
+     pan_itreeSem_bst (pan_state_locals_fupd (K x) (pan_itreeSem_ext s t f)) = bstate_locals_fupd (K x) s /\
+     pan_itreeSem_bst (pan_state_globals_fupd (K x) (pan_itreeSem_ext s t f)) = bstate_globals_fupd (K x) s /\
+     pan_itreeSem_bst (pan_state_memory_fupd (K m) (pan_itreeSem_ext s t f)) = bstate_memory_fupd (K m) s /\
+     pan_itreeSem_bst (pan_empty_locals (pan_itreeSem_ext s k ffi)) = pan_itreeSem_empty_locals s /\
+     pan_itreeSem_bst (pan_dec_clock (pan_itreeSem_ext s k ffi)) = s`,
+  RW[pan_itreeSem_bst_def; pan_itreeSem_ext_def; bstate_component_equality; empty_locals_defs;
      pan_dec_clock_def]);;
 let _ = cake_add_simps [bst_ext_id];;
 
 let eval_eq = prove
  (`!(s:(A)bstate) (s':(A,B)pan_state) e.
-     (s = bst s' ==> pan_itreeSem_eval s e = pan_eval s' e) /\
-     (!t f. s' = ext s t f ==> pan_itreeSem_eval s e = pan_eval s' e)`,
+     (s = pan_itreeSem_bst s' ==> pan_itreeSem_eval s e = pan_eval s' e) /\
+     (!t f. s' = pan_itreeSem_ext s t f ==> pan_itreeSem_eval s e = pan_eval s' e)`,
   RW[eval_bst; eval_ext]);;
 let _ = cake_add_simps [eval_eq];;
 
@@ -1014,7 +1017,7 @@ let itree_bind_cases = prove
      (?r n. t = ITER n Tau (itree_Ret r) /\ t' = ITER n Tau (k r)) \/
      (?a g n. t = ITER n Tau (Vis a g) /\
               t' = ITER n Tau (Vis a (\x. itree_bind (g x) k))) \/
-     (t = spin /\ t' = spin)`,
+     (t = itree_spin /\ t' = itree_spin)`,
   REPEAT GEN_TAC THEN EQ_TAC THENL
    [DISCH_THEN(SUBST1_TAC o SYM) THEN
     ASM_CASES_TAC `?ht:(A,E,R)itree. strip_tau t ht` THENL
@@ -1160,14 +1163,9 @@ let mrec_Store32 = prove(CASE_TERM
 
 (* HOL4's simp knows LENGTH (word_to_bytes w be) (byteTheory); a local copy *)
 
-let PITRAUX_LENGTH_word_to_bytes_aux = prove
- (`!n (w:A word) be. LENGTH (word_to_bytes_aux n w be) = n`,
-  INDUCT_TAC THEN ASM_REWRITE_TAC[word_to_bytes_aux_def; LENGTH; LENGTH_APPEND] THEN
-  ARITH_TAC);;
-
 let PITRAUX_LENGTH_word_to_bytes = prove
  (`!(w:A word) be. LENGTH (word_to_bytes w be) = dimindex(:A) DIV 8`,
-  REWRITE_TAC[word_to_bytes_def; PITRAUX_LENGTH_word_to_bytes_aux]);;
+  REWRITE_TAC[word_to_bytes_def; WORDSAUX_LENGTH_word_to_bytes_aux]);;
 let _ = cake_add_simps [PITRAUX_LENGTH_word_to_bytes];;
 
 let mrec_ShMemLoad = prove(CASE_TERM
@@ -1496,23 +1494,19 @@ let mrec_FUNPOW_Ret_INR = prove
           all_case_eqs()) THEN
   SIMP[] THEN ASM_MESON_TAC[ARITH_RULE `!a b. b <= SUC (a + b)`]);;
 
-let PITRAUX_word_1_neq_0 = prove
- (`~(word 1:A word = word 0)`,
-  REWRITE_TAC[GSYM VAL_EQ_0; VAL_WORD_1; ARITH_EQ]);;
-
 let PITRAUX_mrec_Skip_loop_unfold = prove
  (`!t:(A)bstate.
      mrec h_prog (h_prog (While (panLang_Const (word 1)) panLang_Skip,t)) =
      Tau (Tau (mrec h_prog (h_prog (While (panLang_Const (word 1)) panLang_Skip,t))))`,
   GEN_TAC THEN GEN_REWRITE_TAC LAND_CONV [mrec_While] THEN
-  SIMP[pan_itreeSem_eval_def; PITRAUX_word_1_neq_0; mrec_prog_triv]);;
+  SIMP[pan_itreeSem_eval_def; WORD_NE_10; mrec_prog_triv]);;
 
 let mrec_Skip_loop_spin = prove
  (`!s:(A)bstate.
-     mrec h_prog (h_prog (While (panLang_Const (word 1)) panLang_Skip,s)) = spin`,
+     mrec h_prog (h_prog (While (panLang_Const (word 1)) panLang_Skip,s)) = itree_spin`,
   GEN_TAC THEN ONCE_REWRITE_TAC[itree_bisimulation] THEN
   QEXISTS_TAC
-   "\\x y. y = spin /\\
+   "\\x y. y = itree_spin /\\
           ((?t. x = mrec h_prog (h_prog (While (panLang_Const (word 1)) panLang_Skip,
                                           t:(A)bstate))) \\/
            (?t. x = Tau (mrec h_prog (h_prog (While (panLang_Const (word 1))
@@ -1529,18 +1523,18 @@ let mrec_Skip_loop_spin = prove
 
 let pan_itreeSem_Skip_loop_spin = prove
  (`!s:(A)bstate.
-     itree_evaluate (While (panLang_Const (word 1)) panLang_Skip,s) = spin`,
+     itree_evaluate (While (panLang_Const (word 1)) panLang_Skip,s) = itree_spin`,
   GEN_TAC THEN
   REWRITE_TAC[itree_evaluate_def; mrec_Skip_loop_spin; LET_DEF; LET_END_DEF] THEN
   CONV_TAC(DEPTH_CONV BETA_CONV) THEN
-  MATCH_GOALSUB_ABBREV_TAC "itree_unfold uf spin" THEN
+  MATCH_GOALSUB_ABBREV_TAC "itree_unfold uf itree_spin" THEN
   QBY "!u. uf (Tau u) = Tau' u" (EXPAND_TAC "uf" THEN SIMP[]) THEN
-  QBY "itree_unfold uf spin = Tau (itree_unfold uf spin)"
+  QBY "itree_unfold uf itree_spin = Tau (itree_unfold uf itree_spin)"
     (GEN_REWRITE_TAC (LAND_CONV o RAND_CONV) [spin] THEN
      GEN_REWRITE_TAC LAND_CONV [itree_unfold] THEN SIMP[]) THEN
-  QPAT_X_ASSUM "itree_unfold uf spin = _" (fun eq ->
+  QPAT_X_ASSUM "itree_unfold uf itree_spin = _" (fun eq ->
     ONCE_REWRITE_TAC[itree_bisimulation] THEN
-    QEXISTS_TAC "\\x y. x = itree_unfold uf spin /\\ y = spin" THEN
+    QEXISTS_TAC "\\x y. x = itree_unfold uf itree_spin /\\ y = itree_spin" THEN
     REWRITE_TAC[] THEN REPEAT STRIP_TAC THEN
     RULE_ASSUM_TAC(ONCE_REWRITE_RULE[eq]) THEN FS[] THEN REWRITE_TAC[GSYM spin]));;
 

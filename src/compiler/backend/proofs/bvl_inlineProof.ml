@@ -18,7 +18,7 @@ type_invention_error := true;;
 let bvl_inlineProof_state_rel_def = cake_def
   `bvl_inlineProof_state_rel (s:(C,FFI)bvl_state) (t:(C,FFI)bvl_state) <=>
      t = bvl_state_code_fupd
-           (K (map (I ## (\x. HD (bvl_inline_remove_ticks [x]))) (bvl_state_code s)))
+           (K (sptree_map (I ## (\x. HD (bvl_inline_remove_ticks [x]))) (bvl_state_code s)))
            (bvl_state_compile_fupd (K (bvl_state_compile t))
               (bvl_state_compile_oracle_fupd
                  (K ((I ## MAP (I ## I ## (\x. HD (bvl_inline_remove_ticks [x])))) o
@@ -38,7 +38,7 @@ let BVLPROPSAUX_state_rel_eq = prove
      bvl_state_compile_oracle t =
        (I ## MAP (I ## I ## (\x. HD (bvl_inline_remove_ticks [x])))) o
        bvl_state_compile_oracle s /\
-     bvl_state_code t = map (I ## (\x. HD (bvl_inline_remove_ticks [x]))) (bvl_state_code s) /\
+     bvl_state_code t = sptree_map (I ## (\x. HD (bvl_inline_remove_ticks [x]))) (bvl_state_code s) /\
      bvl_state_ffi t = bvl_state_ffi s /\
      bvl_state_compile s =
        (\cfg prog. bvl_state_compile t cfg
@@ -94,7 +94,7 @@ let BVLPROPSAUX_do_app_map = prove
      bvl_state_globals t = bvl_state_globals s /\ bvl_state_refs t = bvl_state_refs s /\
      bvl_state_clock t = bvl_state_clock s /\
      bvl_state_compile_oracle t = (I ## MAP (I ## f)) o bvl_state_compile_oracle s /\
-     bvl_state_code t = map f (bvl_state_code s) /\ bvl_state_ffi t = bvl_state_ffi s /\
+     bvl_state_code t = sptree_map f (bvl_state_code s) /\ bvl_state_ffi t = bvl_state_ffi s /\
      bvl_state_compile s = (\cfg prog. bvl_state_compile t cfg (MAP (I ## f) prog)) ==>
      match bvl_do_app op a s with
        Rerr e -> bvl_do_app op a t = Rerr e
@@ -102,7 +102,7 @@ let BVLPROPSAUX_do_app_map = prove
          (bvl_state_globals t2 = bvl_state_globals s2 /\ bvl_state_refs t2 = bvl_state_refs s2 /\
           bvl_state_clock t2 = bvl_state_clock s2 /\
           bvl_state_compile_oracle t2 = (I ## MAP (I ## f)) o bvl_state_compile_oracle s2 /\
-          bvl_state_code t2 = map f (bvl_state_code s2) /\ bvl_state_ffi t2 = bvl_state_ffi s2 /\
+          bvl_state_code t2 = sptree_map f (bvl_state_code s2) /\ bvl_state_ffi t2 = bvl_state_ffi s2 /\
           bvl_state_compile s2 = (\cfg prog. bvl_state_compile t2 cfg (MAP (I ## f) prog))) /\
          bvl_do_app op a t = Rval (v,t2)`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN ASM_CASES_TAC `op = clos_Install` THENL
@@ -139,7 +139,7 @@ let BVLPROPSAUX_rt_do_app_lemma = prove
 (* table, the clock, refs and code of related states, and the induction    *)
 let BVLPROPSAUX_find_code_map = prove
  (`!dest args code (f:bvl_exp->bvl_exp).
-     bvl_find_code dest args (map (I ## f) code) =
+     bvl_find_code dest args (sptree_map (I ## f) code) =
      OPTION_MAP (I ## f) (bvl_find_code dest args code)`,
   GEN_TAC THEN CASES_ON `dest:num option` THEN
   RW[bvl_find_code_def; lookup_map] THEN REPEAT (TOP_CASE_TAC THEN FS[]));;
@@ -291,7 +291,7 @@ let BVLPROPSAUX_inc_initial_state = prove
 let bvl_inlineProof_evaluate_compile_prog = prove
  (`!start ffi0 prog (co:num -> C # (num#num#bvl_exp) list) cc k r (s:(C,FFI)bvl_state).
      bvl_evaluate ([bvl_Call 0 (SOME start) []],[],
-        bvl_initial_state ffi0 (map (I ## (\x. HD (bvl_inline_remove_ticks [x]))) prog)
+        bvl_initial_state ffi0 (sptree_map (I ## (\x. HD (bvl_inline_remove_ticks [x]))) prog)
           (bvl_inlineProof_remove_ticks_co o co) cc k) = (r,s) ==>
      ?ck (s2:(C,FFI)bvl_state).
        bvl_evaluate ([bvl_Call 0 (SOME start) []],[],
@@ -542,7 +542,7 @@ let BVLPROPSAUX_bvl_semantics_sim_all = prove
 
 let bvl_inlineProof_semantics_remove_ticks = prove
  (`!(ffi:(FFI)ffi_state) prog (co:num -> C # (num#num#bvl_exp) list) cc start.
-     bvl_semantics ffi (map (I ## (\x. HD (bvl_inline_remove_ticks [x]))) prog)
+     bvl_semantics ffi (sptree_map (I ## (\x. HD (bvl_inline_remove_ticks [x]))) prog)
        (bvl_inlineProof_remove_ticks_co o co) cc start =
      bvl_semantics ffi prog co (bvl_inlineProof_remove_ticks_cc cc) start`,
   REPEAT GEN_TAC THEN MATCH_MP_TAC BVLPROPSAUX_bvl_semantics_sim_all THEN
@@ -673,7 +673,7 @@ let BVLPROPSAUX_tick_compile_prog_IMP = prove
 let BVLPROPSAUX_subspt_union_lemma = prove
  (`!(t1:A spt) t2 c x.
      (!k. lookup k t1 = lookup k t2) ==>
-     subspt x (union c t1) ==> subspt x (union c t2)`,
+     subspt x (sptree_union c t1) ==> subspt x (sptree_union c t2)`,
   REWRITE_TAC[subspt_def; domain_union; lookup_union; domain_lookup] THEN
   REPEAT GEN_TAC THEN DISCH_TAC THEN ASM_REWRITE_TAC[]);;
 
@@ -682,8 +682,8 @@ let BVLPROPSAUX_subspt_union_lemma = prove
 let BVLPROPSAUX_subspt_insert_union = prove
  (`!(cs0:A spt) c x v.
      subspt cs0 c /\ ~(x IN domain c) ==>
-     subspt (insert x v cs0) (union c (insert x v LN)) /\
-     subspt cs0 (union c (insert x v LN))`,
+     subspt (insert x v cs0) (sptree_union c (insert x v LN)) /\
+     subspt cs0 (sptree_union c (insert x v LN))`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN CONJ_TAC THENL
    [REWRITE_TAC[subspt_lookup; lookup_insert; lookup_union; lookup_def] THEN
     REPEAT GEN_TAC THEN COND_CASES_TAC THENL
@@ -698,7 +698,7 @@ let BVLPROPSAUX_subspt_insert_union = prove
     ASM_REWRITE_TAC[subspt_union]]);;
 
 let BVLPROPSAUX_union_insert_LN = prove
- (`!x (v:A) r k. lookup k (union (insert x v LN) r) = lookup k (insert x v r)`,
+ (`!x (v:A) r k. lookup k (sptree_union (insert x v LN) r) = lookup k (insert x v r)`,
   REWRITE_TAC[lookup_union; lookup_insert; lookup_def] THEN REPEAT GEN_TAC THEN
   COND_CASES_TAC THEN REWRITE_TAC[case_def "option"]);;
 
@@ -707,7 +707,7 @@ let tick_compile_prog_res_range = prove
      tick_compile_prog limit cs0 in1 = (cs1,in2) /\
      ALL_DISTINCT (MAP FST in1) /\
      subspt cs0 c /\ domain c INTER set_of_list (MAP FST in1) = {} ==>
-     subspt cs1 (union c (fromAList in2))`,
+     subspt cs1 (sptree_union c (fromAList in2))`,
   REWRITE_TAC[tick_compile_prog_def] THEN LIST_INDUCT_TAC THENL
    [REWRITE_TAC[tick_inline_all_def; REVERSE; PAIR_EQ] THEN
     REPEAT STRIP_TAC THEN RVEQ_TAC THEN ASM_REWRITE_TAC[fromAList_def; union_LN];
@@ -728,7 +728,7 @@ let tick_compile_prog_res_range = prove
     ALL_TAC] THEN
   FIRST_X_ASSUM(MP_TAC o SPECL
     [`limit:num`; `SND (tick_inline_all limit (cs2:(num#bvl_exp)spt) t [])`;
-     `union c (insert x (x',e2) LN):(num#bvl_exp)spt`; `cs2:(num#bvl_exp)spt`;
+     `sptree_union c (insert x (x',e2) LN):(num#bvl_exp)spt`; `cs2:(num#bvl_exp)spt`;
      `FST (tick_inline_all limit (cs2:(num#bvl_exp)spt) t [])`]) THEN
   REWRITE_TAC[PAIR] THEN ANTS_TAC THENL
    [ASM_REWRITE_TAC[] THEN CONJ_TAC THENL
@@ -766,9 +766,9 @@ let exp_rel_swap = prove
 let BVLPROPSAUX_exp_rel_rw1 = prove
  (`!src_code p1 p2 p3 in1 exp exp2.
      bvl_inlineProof_exp_rel
-       (union (union src_code (insert p1 (p2,p3) LN)) (fromAList in1)) [exp] [exp2] <=>
+       (sptree_union (sptree_union src_code (insert p1 (p2,p3) LN)) (fromAList in1)) [exp] [exp2] <=>
      bvl_inlineProof_exp_rel
-       (union src_code (fromAList (CONS (p1,p2,p3) in1))) [exp] [exp2]`,
+       (sptree_union src_code (fromAList (CONS (p1,p2,p3) in1))) [exp] [exp2]`,
   REPEAT GEN_TAC THEN MATCH_MP_TAC exp_rel_swap THEN
   REWRITE_TAC[fromAList_def; GSYM union_assoc] THEN
   REWRITE_TAC[lookup_union; BVLPROPSAUX_union_insert_LN]);;
@@ -795,11 +795,11 @@ let BVLPROPSAUX_cs2_rel = prove
      ~(x IN domain src_code) /\ ~(x IN domain cs0) /\
      bvl_inlineProof_exp_rel src_code [y] [e2] ==>
      !k a v. lookup k (if b then insert x (arity,e2) cs0 else cs0) = SOME (a,v) ==>
-             ?exp. lookup k (union src_code (insert x (arity,y) LN)) = SOME (a,exp) /\
-                   bvl_inlineProof_exp_rel (union src_code (insert x (arity,y) LN))
+             ?exp. lookup k (sptree_union src_code (insert x (arity,y) LN)) = SOME (a,exp) /\
+                   bvl_inlineProof_exp_rel (sptree_union src_code (insert x (arity,y) LN))
                      [exp] [v]`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN REPEAT GEN_TAC THEN
-  SUBGOAL_THEN `subspt (src_code:(num#bvl_exp)spt) (union src_code (insert x (arity,y) LN))`
+  SUBGOAL_THEN `subspt (src_code:(num#bvl_exp)spt) (sptree_union src_code (insert x (arity,y) LN))`
     ASSUME_TAC THENL [REWRITE_TAC[subspt_union]; ALL_TAC] THEN
   RULE_ASSUM_TAC(REWRITE_RULE[GSYM lookup_NONE_domain]) THEN
   ASM_CASES_TAC `k = (x:num)` THENL
@@ -836,7 +836,7 @@ let tick_compile_prog_IMP_exp_rel = prove
      DISJOINT (domain src_code) (set_of_list (MAP FST in1)) /\
      DISJOINT (domain cs0) (set_of_list (MAP FST in1)) ==>
      ?exp2. ALOOKUP in2 k = SOME (arity,exp2) /\
-            bvl_inlineProof_exp_rel (union src_code (fromAList in1)) [exp] [exp2]`,
+            bvl_inlineProof_exp_rel (sptree_union src_code (fromAList in1)) [exp] [exp2]`,
   SUBGOAL_THEN
    `!in1 limit (cs0:(num#bvl_exp)spt) cs1 in2 k arity exp src_code.
      tick_compile_prog limit cs0 in1 = (cs1,in2) /\
@@ -848,7 +848,7 @@ let tick_compile_prog_IMP_exp_rel = prove
      DISJOINT (domain src_code) (set_of_list (MAP FST in1)) /\
      DISJOINT (domain cs0) (set_of_list (MAP FST in1)) ==>
      ?exp2. ALOOKUP in2 k = SOME (arity,exp2) /\
-            bvl_inlineProof_exp_rel (union src_code (fromAList in1)) [exp] [exp2]`
+            bvl_inlineProof_exp_rel (sptree_union src_code (fromAList in1)) [exp] [exp2]`
    (fun th -> REPEAT GEN_TAC THEN MATCH_ACCEPT_TAC (SPEC_ALL th)) THEN
   REWRITE_TAC[tick_compile_prog_def] THEN LIST_INDUCT_TAC THENL
    [REWRITE_TAC[ALOOKUP_def; option_DISTINCT]; ALL_TAC] THEN
@@ -861,7 +861,7 @@ let tick_compile_prog_IMP_exp_rel = prove
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   ABBREV_TAC `e2 = HD (tick_inline (cs0:(num#bvl_exp)spt) [y'])` THEN
   SUBGOAL_THEN
-   `bvl_inlineProof_exp_rel (union src_code (fromAList (CONS (x,x',y') t))) [y'] [e2]`
+   `bvl_inlineProof_exp_rel (sptree_union src_code (fromAList (CONS (x,x',y') t))) [y'] [e2]`
    ASSUME_TAC THENL
    [MATCH_MP_TAC subspt_exp_rel THEN EXISTS_TAC `src_code:(num#bvl_exp)spt` THEN
     REWRITE_TAC[subspt_union] THEN EXPAND_TAC "e2" THEN
@@ -885,7 +885,7 @@ let tick_compile_prog_IMP_exp_rel = prove
      `FST (tick_inline_all limit (cs2:(num#bvl_exp)spt) t [])`;
      `SND (tick_inline_all limit (cs2:(num#bvl_exp)spt) t [])`;
      `k:num`; `arity:num`; `exp:bvl_exp`;
-     `union src_code (insert x (x',y') LN):(num#bvl_exp)spt`] o
+     `sptree_union src_code (insert x (x',y') LN):(num#bvl_exp)spt`] o
      check (is_forall o concl)) THEN
   REWRITE_TAC[PAIR; BVLPROPSAUX_exp_rel_rw1] THEN DISCH_THEN MATCH_MP_TAC THEN
   ASM_REWRITE_TAC[] THEN
@@ -938,7 +938,7 @@ let BVLPROPSAUX_do_install_Rval = prove
        progs = CONS (k,prog) rest /\
        FST (bvl_state_compile_oracle s 1) = cfg' /\
        v = bvl_CodePtr k /\
-       s' = bvl_state_code_fupd (K (union (bvl_state_code s) (fromAList progs)))
+       s' = bvl_state_code_fupd (K (sptree_union (bvl_state_code s) (fromAList progs)))
               (bvl_state_compile_oracle_fupd
                  (K (shift_seq 1 (bvl_state_compile_oracle s))) s)`,
   RW[bvl_do_install_def] THEN GVS(shift_seq_def :: all_case_eqs()) THEN
@@ -978,10 +978,10 @@ let BVLPROPSAUX_in_state_rel_install = prove
      ALL_DISTINCT (MAP FST progs) /\
      FST (FST (bvl_state_compile_oracle s1 1)) = cs1 ==>
      bvl_inlineProof_in_state_rel limit
-       (bvl_state_code_fupd (K (union (bvl_state_code s1) (fromAList progs)))
+       (bvl_state_code_fupd (K (sptree_union (bvl_state_code s1) (fromAList progs)))
           (bvl_state_compile_oracle_fupd
              (K (shift_seq 1 (bvl_state_compile_oracle s1))) s1))
-       (bvl_state_code_fupd (K (union (bvl_state_code t1) (fromAList prog1)))
+       (bvl_state_code_fupd (K (sptree_union (bvl_state_code t1) (fromAList prog1)))
           (bvl_state_compile_oracle_fupd
              (K (shift_seq 1 (bvl_state_compile_oracle t1))) t1))`,
   REPEAT STRIP_TAC THEN QPAT_ASSUM "bvl_inlineProof_in_state_rel _ _ _"
@@ -1207,15 +1207,15 @@ let MAP_FST_tick_inline_all = prove
 let BVLPROPSAUX_lookup_insert_swap = prove
  (`!x (y:A) (prog:(num#A)list) acc k.
      ~MEM x (MAP FST prog) ==>
-     lookup k (union (insert x y (fromAList prog)) acc) =
-     lookup k (union (fromAList prog) (insert x y acc))`,
+     lookup k (sptree_union (insert x y (fromAList prog)) acc) =
+     lookup k (sptree_union (fromAList prog) (insert x y acc))`,
   RW[lookup_union; lookup_insert; lookup_fromAList] THEN FS[GSYM ALOOKUP_NONE]);;
 
 let BVLPROPSAUX_exp_rel_rw2 = prove
  (`!x y (prog:(num#num#bvl_exp)list) acc exp exp2.
      ~MEM x (MAP FST prog) ==>
-     (bvl_inlineProof_exp_rel (union (insert x y (fromAList prog)) acc) [exp] [exp2] <=>
-      bvl_inlineProof_exp_rel (union (fromAList prog) (insert x y acc)) [exp] [exp2])`,
+     (bvl_inlineProof_exp_rel (sptree_union (insert x y (fromAList prog)) acc) [exp] [exp2] <=>
+      bvl_inlineProof_exp_rel (sptree_union (fromAList prog) (insert x y acc)) [exp] [exp2])`,
   REPEAT STRIP_TAC THEN MATCH_MP_TAC exp_rel_swap THEN GEN_TAC THEN
   MATCH_MP_TAC BVLPROPSAUX_lookup_insert_swap THEN ASM_REWRITE_TAC[]);;
 
@@ -1223,8 +1223,8 @@ let BVLPROPSAUX_exp_rel_rw2 = prove
 let BVLPROPSAUX_lookup_tick_inline_all = prove
  (`!prog limit (cs0:(num#bvl_exp)spt) acc.
      (!k arity v. lookup k cs0 = SOME (arity,v) ==>
-        ?exp. lookup k (union (fromAList prog) acc) = SOME (arity,exp) /\
-              bvl_inlineProof_exp_rel (union (fromAList prog) acc) [exp] [v]) /\
+        ?exp. lookup k (sptree_union (fromAList prog) acc) = SOME (arity,exp) /\
+              bvl_inlineProof_exp_rel (sptree_union (fromAList prog) acc) [exp] [v]) /\
      DISJOINT (set_of_list (MAP FST prog)) (domain cs0) /\
      DISJOINT (set_of_list (MAP FST prog)) (domain acc) /\
      ALL_DISTINCT (MAP FST prog) ==>
@@ -1232,7 +1232,7 @@ let BVLPROPSAUX_lookup_tick_inline_all = prove
        lookup k (fromAList prog) = SOME (arity,exp) ==>
        ?exp2. lookup k (fromAList (SND (tick_inline_all limit cs0 prog []))) =
                 SOME (arity,exp2) /\
-              bvl_inlineProof_exp_rel (union (fromAList prog) acc) [exp] [exp2]`,
+              bvl_inlineProof_exp_rel (sptree_union (fromAList prog) acc) [exp] [exp2]`,
   LIST_INDUCT_TAC THENL
    [REWRITE_TAC[fromAList_def; lookup_fromAList; ALOOKUP_DEF; distinctness "option"];
     ALL_TAC] THEN
@@ -1412,7 +1412,7 @@ let let_opt_def = cake_def
 
 let let_state_rel_def = cake_def
   `let_state_rel split_seq cut_size (s:(C,FFI)bvl_state) (t:(C,FFI)bvl_state) <=>
-     t = bvl_state_code_fupd (K (map (let_opt split_seq cut_size) (bvl_state_code s)))
+     t = bvl_state_code_fupd (K (sptree_map (let_opt split_seq cut_size) (bvl_state_code s)))
            (bvl_state_compile_fupd (K (bvl_state_compile t))
               (bvl_state_compile_oracle_fupd
                  (K ((I ## MAP (I ## let_opt split_seq cut_size)) o
@@ -1431,7 +1431,7 @@ let BVLPROPSAUX_let_state_rel_eq = prove
      bvl_state_clock t = bvl_state_clock s /\
      bvl_state_compile_oracle t =
        (I ## MAP (I ## let_opt split_seq cut_size)) o bvl_state_compile_oracle s /\
-     bvl_state_code t = map (let_opt split_seq cut_size) (bvl_state_code s) /\
+     bvl_state_code t = sptree_map (let_opt split_seq cut_size) (bvl_state_code s) /\
      bvl_state_ffi t = bvl_state_ffi s /\
      bvl_state_compile s =
        (\cfg prog. bvl_state_compile t cfg (MAP (I ## let_opt split_seq cut_size) prog))`,
@@ -1585,11 +1585,11 @@ let let_evaluate_Call = prove
                    bvl_initial_state ffi0 prog co (let_op_cc q4 l4 cc) k) = (r,s) /\
      ~(r = Rerr (Rabort Rtype_error)) ==>
      ?s2. bvl_evaluate ([bvl_Call 0 (SOME start) []],[],
-                        bvl_initial_state ffi0 (map (let_opt q4 l4) prog)
+                        bvl_initial_state ffi0 (sptree_map (let_opt q4 l4) prog)
                           ((I ## MAP (I ## let_opt q4 l4)) o co) cc k) = (r,s2) /\
           bvl_state_ffi s2 = bvl_state_ffi s /\ bvl_state_clock s = bvl_state_clock s2`,
   REPEAT STRIP_TAC THEN DRULE_AT (Pos (el 1)) bvl_inlineProof_evaluate_let_op THEN
-  DISCH_THEN (QSPECL_THEN ["q4"; "l4"; "bvl_initial_state ffi0 (map (let_opt q4 l4) prog)
+  DISCH_THEN (QSPECL_THEN ["q4"; "l4"; "bvl_initial_state ffi0 (sptree_map (let_opt q4 l4) prog)
     ((I ## MAP (I ## let_opt q4 l4)) o co) cc k"] MP_TAC) THEN
   RW[BVLPROPSAUX_let_state_rel_eq; bvl_initial_state_simp; let_op_cc_def;
      bvl_inline_let_op_def] THEN ASM_EXISTS_TAC THEN FS[]);;
@@ -1599,7 +1599,7 @@ let BVLPROPSAUX_semantics_let_op = prove
  (`!q4 l4 (ffi:(FFI)ffi_state) prog (co:num->C#(num#num#bvl_exp)list)
      (cc:C->(num#num#bvl_exp)list->(((8)word)list#((64)word)list#C)option) start.
      ~(bvl_semantics ffi prog co (let_op_cc q4 l4 cc) start = Fail) ==>
-     bvl_semantics ffi (map (let_opt q4 l4) prog)
+     bvl_semantics ffi (sptree_map (let_opt q4 l4) prog)
        ((I ## MAP (I ## let_opt q4 l4)) o co) cc start =
      bvl_semantics ffi prog co (let_op_cc q4 l4 cc) start`,
   RW[] THEN MATCH_MP_TAC BVLPROPSAUX_bvl_semantics_sim THEN RW[] THEN QEXISTS_TAC "0" THEN
@@ -1613,7 +1613,7 @@ let let_opt_remove_def = cake_def
 (* HOL4 map_fromAList; sptree.ml already has map_fromAList (the form with *)
 (* a paired lambda), hence the prefix                                       *)
 let bvl_inlineProof_map_fromAList = prove
- (`!xs (f:A->B). map f (fromAList xs) = fromAList (MAP (I ## f) xs)`,
+ (`!xs (f:A->B). sptree_map f (fromAList xs) = fromAList (MAP (I ## f) xs)`,
   REWRITE_TAC[map_fromAList; BVLPROPSAUX_PAIR_LAMBDA_MAP]);;
 
 (* HOL4 [local val] ticks and lets: the semantics of remove_ticks and of  *)

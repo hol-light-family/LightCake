@@ -27,7 +27,7 @@ type_invention_error := true;;
 let type_eDeterm_sub_completion_empty = prove
  (`!m n s s'.
      sub_completion m n s [] s' <=>
-     count n SUBSET FDOM s' /\
+     pred_set_count n SUBSET FDOM s' /\
      (!uv. uv IN FDOM s' ==> check_t m {} (t_walkstar s' (Infer_Tuvar uv))) /\ s = s'`,
   REWRITE_TAC[sub_completion_def; pure_add_constraints_def] THEN MESON_TAC[]);;
 
@@ -129,7 +129,7 @@ let infer_pe_complete = prove
            infer_p loc ienv p st = (M_success (t',new_bindings),st') /\
            t_unify (infer_st_subst st') t t' = SOME s /\
            sub_completion tvs (infer_st_next_uvar st') s constrs s' /\
-           FDOM s' = count (infer_st_next_uvar st') /\
+           FDOM s' = pred_set_count (infer_st_next_uvar st') /\
            t1 = convert_t (t_walkstar s' t') /\
            t1 = convert_t (t_walkstar s' t) /\
            t_wfs s /\
@@ -142,7 +142,7 @@ let infer_pe_complete = prove
   SUBGOAL_THEN `inf_env_inf_t ienv = type_env_t tenv /\ inf_env_inf_c ienv = type_env_c tenv`
     STRIP_ASSUME_TAC THENL
    [ASM_MESON_TAC[env_rel_complete_def]; ALL_TAC] THEN
-  SUBGOAL_THEN `ienv_val_ok (count 0) (inf_env_inf_v ienv) /\
+  SUBGOAL_THEN `ienv_val_ok (pred_set_count 0) (inf_env_inf_v ienv) /\
                 tenv_ctor_ok (type_env_c tenv) /\ tenv_abbrev_ok (type_env_t tenv)`
     STRIP_ASSUME_TAC THENL
    [UNDISCH_TAC `ienv_ok {} ienv` THEN ASM_REWRITE_TAC[ienv_ok_def; COUNT_ZERO] THEN
@@ -164,7 +164,7 @@ let infer_pe_complete = prove
                           `init_infer_state ss`; `t:infer_t`] THEN
     ASM_REWRITE_TAC[t_wfs_FEMPTY];
     ALL_TAC] THEN
-  SUBGOAL_THEN `check_t 0 (count (infer_st_next_uvar st)) t` ASSUME_TAC THENL
+  SUBGOAL_THEN `check_t 0 (pred_set_count (infer_st_next_uvar st)) t` ASSUME_TAC THENL
    [MATCH_MP_TAC(CONJUNCT1 infer_e_check_t) THEN
     MAP_EVERY EXISTS_TAC [`loc:loc_err_info`; `ienv:inf_env`; `e:exp`;
                           `init_infer_state ss`] THEN
@@ -429,11 +429,11 @@ let INFER1AUX_pac_fresh_list = prove
 (* completing a substitution by mapping its unconstrained variables to a constant *)
 let INFER1AUX_const_completion = prove
  (`!s n l tc.
-     t_wfs s /\ check_s 0 (count n) s /\
-     set_of_list l = count n DIFF FDOM s /\ ALL_DISTINCT l
+     t_wfs s /\ check_s 0 (pred_set_count n) s /\
+     set_of_list l = pred_set_count n DIFF FDOM s /\ ALL_DISTINCT l
      ==> sub_completion 0 n s (MAP (\m. (Infer_Tuvar m,Infer_Tapp [] tc)) l)
            (s |++ MAP (\m. (m,Infer_Tapp [] tc)) l) /\
-         check_s 0 (count n) (s |++ MAP (\m. (m,Infer_Tapp [] tc)) l) /\
+         check_s 0 (pred_set_count n) (s |++ MAP (\m. (m,Infer_Tapp [] tc)) l) /\
          (!m. MEM m l
               ==> t_walkstar (s |++ MAP (\m. (m,Infer_Tapp [] tc)) l) (Infer_Tuvar m) =
                   Infer_Tapp [] tc)`,
@@ -450,9 +450,9 @@ let INFER1AUX_const_completion = prove
    [EXPAND_TAC "s1" THEN REWRITE_TAC[FDOM_FUPDATE_LIST; MAP_MAP_o; o_DEF; ETA_AX] THEN
     REWRITE_TAC[MAP_ID];
     ALL_TAC] THEN
-  SUBGOAL_THEN `count n SUBSET FDOM (s1:(num,infer_t)fmap)` ASSUME_TAC THENL
+  SUBGOAL_THEN `pred_set_count n SUBSET FDOM (s1:(num,infer_t)fmap)` ASSUME_TAC THENL
    [ASM_REWRITE_TAC[] THEN SET_TAC[]; ALL_TAC] THEN
-  SUBGOAL_THEN `check_s 0 (count n) (s1:(num,infer_t)fmap)` ASSUME_TAC THENL
+  SUBGOAL_THEN `check_s 0 (pred_set_count n) (s1:(num,infer_t)fmap)` ASSUME_TAC THENL
    [MATCH_MP_TAC pure_add_constraints_check_s THEN
     MAP_EVERY EXISTS_TAC [`s:(num,infer_t)fmap`;
                           `MAP (\m. (Infer_Tuvar m,Infer_Tapp [] tc)) l`] THEN
@@ -462,7 +462,7 @@ let INFER1AUX_const_completion = prove
   REWRITE_TAC[sub_completion_def] THEN ASM_REWRITE_TAC[] THEN CONJ_TAC THENL
    [X_GEN_TAC `uv:num` THEN DISCH_TAC THEN MATCH_MP_TAC t_walkstar_check THEN
     ASM_REWRITE_TAC[UNION_EMPTY; check_t_def] THEN
-    MATCH_MP_TAC check_s_more5 THEN EXISTS_TAC `count n` THEN
+    MATCH_MP_TAC check_s_more5 THEN EXISTS_TAC `pred_set_count n` THEN
     CONJ_TAC THENL [FIRST_ASSUM ACCEPT_TAC; SET_TAC[]];
     X_GEN_TAC `m:num` THEN DISCH_TAC THEN
     MP_TAC(SPECL [`s:(num,infer_t)fmap`; `MAP (\m. (Infer_Tuvar m,Infer_Tapp [] tc)) l`;
@@ -487,7 +487,7 @@ let type_pe_determ_infer_e = prove
   SUBGOAL_THEN `infer_st_next_uvar (init_infer_state ss) = 0 /\
                 infer_st_subst (init_infer_state ss) = FEMPTY` STRIP_ASSUME_TAC THENL
    [REWRITE_TAC[init_infer_state_def; infer_st_INFO.ri_accfupds; K_THM]; ALL_TAC] THEN
-  SUBGOAL_THEN `ienv_val_ok (count 0) (inf_env_inf_v ienv) /\
+  SUBGOAL_THEN `ienv_val_ok (pred_set_count 0) (inf_env_inf_v ienv) /\
                 tenv_ctor_ok (inf_env_inf_c ienv) /\ tenv_abbrev_ok (inf_env_inf_t ienv)`
     STRIP_ASSUME_TAC THENL
    [UNDISCH_TAC `ienv_ok {} ienv` THEN REWRITE_TAC[ienv_ok_def; COUNT_ZERO]; ALL_TAC] THEN
@@ -511,19 +511,19 @@ let type_pe_determ_infer_e = prove
    [ASM_MESON_TAC[t_unify_wfs]; ALL_TAC] THEN
   SUBGOAL_THEN `infer_st_next_uvar st <= infer_st_next_uvar st'` ASSUME_TAC THENL
    [ASM_MESON_TAC[infer_p_next_uvar_mono]; ALL_TAC] THEN
-  SUBGOAL_THEN `check_t 0 (count (infer_st_next_uvar st)) t` ASSUME_TAC THENL
+  SUBGOAL_THEN `check_t 0 (pred_set_count (infer_st_next_uvar st)) t` ASSUME_TAC THENL
    [MATCH_MP_TAC(CONJUNCT1 infer_e_check_t) THEN
     MAP_EVERY EXISTS_TAC [`loc:loc_err_info`; `ienv:inf_env`; `e:exp`;
                           `init_infer_state ss`] THEN
     ASM_REWRITE_TAC[];
     ALL_TAC] THEN
-  SUBGOAL_THEN `check_s 0 (count (infer_st_next_uvar st)) (infer_st_subst st)` ASSUME_TAC THENL
+  SUBGOAL_THEN `check_s 0 (pred_set_count (infer_st_next_uvar st)) (infer_st_subst st)` ASSUME_TAC THENL
    [MATCH_MP_TAC(CONJUNCT1 infer_e_check_s) THEN
     MAP_EVERY EXISTS_TAC [`loc:loc_err_info`; `ienv:inf_env`; `e:exp`;
                           `init_infer_state ss`; `t:infer_t`] THEN
     ASM_REWRITE_TAC[t_wfs_FEMPTY; check_s_def; FDOM_FEMPTY; NOT_IN_EMPTY; COUNT_ZERO];
     ALL_TAC] THEN
-  SUBGOAL_THEN `check_s 0 (count (infer_st_next_uvar st')) (infer_st_subst st')` ASSUME_TAC THENL
+  SUBGOAL_THEN `check_s 0 (pred_set_count (infer_st_next_uvar st')) (infer_st_subst st')` ASSUME_TAC THENL
    [MATCH_MP_TAC(CONJUNCT1 infer_p_check_s) THEN
     MAP_EVERY EXISTS_TAC [`loc:loc_err_info`; `ienv:inf_env`; `p:pat`; `st:infer_st`;
                           `t':infer_t`; `new_bindings:(mlstring#infer_t)list`] THEN
@@ -531,11 +531,11 @@ let type_pe_determ_infer_e = prove
     ALL_TAC] THEN
   MP_TAC(MATCH_MP (CONJUNCT1 infer_p_check_t)
     (ASSUME `infer_p loc ienv p st = (M_success (t',new_bindings),st')`)) THEN STRIP_TAC THEN
-  SUBGOAL_THEN `check_t 0 (count (infer_st_next_uvar st')) t` ASSUME_TAC THENL
+  SUBGOAL_THEN `check_t 0 (pred_set_count (infer_st_next_uvar st')) t` ASSUME_TAC THENL
    [MATCH_MP_TAC(MATCH_MP (CONJUNCT1 check_t_more4)
-      (ASSUME `check_t 0 (count (infer_st_next_uvar st)) t`)) THEN ASM_REWRITE_TAC[];
+      (ASSUME `check_t 0 (pred_set_count (infer_st_next_uvar st)) t`)) THEN ASM_REWRITE_TAC[];
     ALL_TAC] THEN
-  SUBGOAL_THEN `check_s 0 (count (infer_st_next_uvar st')) s` ASSUME_TAC THENL
+  SUBGOAL_THEN `check_s 0 (pred_set_count (infer_st_next_uvar st')) s` ASSUME_TAC THENL
    [MATCH_MP_TAC t_unify_check_s THEN
     MAP_EVERY EXISTS_TAC [`infer_st_subst st'`; `t:infer_t`; `t':infer_t`] THEN
     ASM_REWRITE_TAC[];
@@ -543,9 +543,9 @@ let type_pe_determ_infer_e = prove
   SUBGOAL_THEN `t_walkstar s t = t_walkstar s t'` ASSUME_TAC THENL
    [ASM_MESON_TAC[t_unify_unifier]; ALL_TAC] THEN
   (* the unconstrained variables, and two completions instantiating them differently *)
-  SUBGOAL_THEN `?l. set_of_list l = count (infer_st_next_uvar st') DIFF FDOM (s:(num,infer_t)fmap) /\
+  SUBGOAL_THEN `?l. set_of_list l = pred_set_count (infer_st_next_uvar st') DIFF FDOM (s:(num,infer_t)fmap) /\
                     ALL_DISTINCT l` STRIP_ASSUME_TAC THENL
-   [EXISTS_TAC `list_of_set (count (infer_st_next_uvar st') DIFF FDOM (s:(num,infer_t)fmap))` THEN
+   [EXISTS_TAC `list_of_set (pred_set_count (infer_st_next_uvar st') DIFF FDOM (s:(num,infer_t)fmap))` THEN
     SIMP_TAC[SET_OF_LIST_OF_SET; FMAPAUX_ALL_DISTINCT_LIST_OF_SET; FINITE_DIFF; FINITE_COUNT];
     ALL_TAC] THEN
   MP_TAC(SPECL [`s:(num,infer_t)fmap`; `infer_st_next_uvar st'`; `l:num list`; `Tbool_num`]
@@ -598,7 +598,7 @@ let type_pe_determ_infer_e = prove
       UNDISCH_TAC `sub_completion 0 (infer_st_next_uvar st') (infer_st_subst st')
                      (CONS (t,t') csx) sx` THEN
       REWRITE_TAC[sub_completion_def] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
-      MATCH_MP_TAC SUBSET_TRANS THEN EXISTS_TAC `count (infer_st_next_uvar st')` THEN
+      MATCH_MP_TAC SUBSET_TRANS THEN EXISTS_TAC `pred_set_count (infer_st_next_uvar st')` THEN
       ASM_REWRITE_TAC[SUBSET; IN_COUNT] THEN ASM_ARITH_TAC;
       FIRST_X_ASSUM(SUBST1_TAC o check (fun th ->
         concl th = `t_walkstar sx t = t_walkstar sx t'`)) THEN
@@ -629,20 +629,20 @@ let type_pe_determ_infer_e = prove
   MAP_EVERY X_GEN_TAC [`x:mlstring`; `tt:infer_t`] THEN DISCH_TAC THEN
   CONV_TAC(ONCE_DEPTH_CONV GEN_BETA_CONV) THEN
   ASM_CASES_TAC `check_t 0 {} (t_walkstar s tt)` THEN ASM_REWRITE_TAC[] THEN
-  SUBGOAL_THEN `check_t 0 (count (infer_st_next_uvar st')) tt` ASSUME_TAC THENL
-   [UNDISCH_TAC `ALL (\(x:mlstring,t). check_t 0 (count (infer_st_next_uvar st')) t)
+  SUBGOAL_THEN `check_t 0 (pred_set_count (infer_st_next_uvar st')) tt` ASSUME_TAC THENL
+   [UNDISCH_TAC `ALL (\(x:mlstring,t). check_t 0 (pred_set_count (infer_st_next_uvar st')) t)
                      new_bindings` THEN
     REWRITE_TAC[GSYM ALL_MEM] THEN DISCH_THEN(MP_TAC o SPEC `(x:mlstring,tt:infer_t)`) THEN
     ASM_REWRITE_TAC[] THEN CONV_TAC(ONCE_DEPTH_CONV GEN_BETA_CONV) THEN REWRITE_TAC[];
     ALL_TAC] THEN
-  SUBGOAL_THEN `check_t 0 (count (infer_st_next_uvar st')) (t_walkstar s tt)` ASSUME_TAC THENL
+  SUBGOAL_THEN `check_t 0 (pred_set_count (infer_st_next_uvar st')) (t_walkstar s tt)` ASSUME_TAC THENL
    [MATCH_MP_TAC t_walkstar_check THEN ASM_REWRITE_TAC[] THEN CONJ_TAC THENL
-     [MATCH_MP_TAC check_s_more5 THEN EXISTS_TAC `count (infer_st_next_uvar st')` THEN
+     [MATCH_MP_TAC check_s_more5 THEN EXISTS_TAC `pred_set_count (infer_st_next_uvar st')` THEN
       ASM_REWRITE_TAC[] THEN SET_TAC[];
       MATCH_MP_TAC(MATCH_MP (CONJUNCT1 check_t_more5)
-        (ASSUME `check_t 0 (count (infer_st_next_uvar st')) tt`)) THEN SET_TAC[]];
+        (ASSUME `check_t 0 (pred_set_count (infer_st_next_uvar st')) tt`)) THEN SET_TAC[]];
     ALL_TAC] THEN
-  MP_TAC(SPEC `t_walkstar s tt` (CONJUNCT1 (INST [`count (infer_st_next_uvar st')`,`s:num->bool`]
+  MP_TAC(SPEC `t_walkstar s tt` (CONJUNCT1 (INST [`pred_set_count (infer_st_next_uvar st')`,`s:num->bool`]
     t_vars_check_t))) THEN
   ASM_REWRITE_TAC[IN_COUNT] THEN
   DISCH_THEN(X_CHOOSE_THEN `n':num` STRIP_ASSUME_TAC) THEN
@@ -661,16 +661,16 @@ let type_pe_determ_infer_e = prove
     (fun th -> ASM_SIMP_TAC[th]) THENL
    [SIMP_TAC[t_compat_def]; ALL_TAC] THEN
   SUBGOAL_THEN `!sx csx. sub_completion 0 (infer_st_next_uvar st') s csx sx /\
-                         check_s 0 (count (infer_st_next_uvar st')) sx
+                         check_s 0 (pred_set_count (infer_st_next_uvar st')) sx
                          ==> check_t 0 {} (t_walkstar sx tt)` ASSUME_TAC THENL
    [REPEAT GEN_TAC THEN REWRITE_TAC[sub_completion_def] THEN STRIP_TAC THEN
     MATCH_MP_TAC t_walkstar_check THEN REWRITE_TAC[UNION_EMPTY] THEN
     REPEAT CONJ_TAC THENL
      [ASM_MESON_TAC[pure_add_constraints_wfs];
-      MATCH_MP_TAC check_s_more5 THEN EXISTS_TAC `count (infer_st_next_uvar st')` THEN
+      MATCH_MP_TAC check_s_more5 THEN EXISTS_TAC `pred_set_count (infer_st_next_uvar st')` THEN
       ASM_REWRITE_TAC[];
       MATCH_MP_TAC(MATCH_MP (CONJUNCT1 check_t_more5)
-        (ASSUME `check_t 0 (count (infer_st_next_uvar st')) tt`)) THEN ASM_REWRITE_TAC[]];
+        (ASSUME `check_t 0 (pred_set_count (infer_st_next_uvar st')) tt`)) THEN ASM_REWRITE_TAC[]];
     ALL_TAC] THEN
   SUBGOAL_THEN `check_t 0 {} (t_walkstar s1 tt) /\ check_t 0 {} (t_walkstar s2 tt)`
     STRIP_ASSUME_TAC THENL
@@ -741,9 +741,9 @@ let infer_funs_complete = prove
              (ZIP (MAP (\n. Infer_Tuvar (infer_st_next_uvar (init_infer_state ss) + n))
                        (COUNT_LIST (LENGTH funs))) funs_ts)
              (infer_st_subst st') /\
-           check_s 0 (count (infer_st_next_uvar st')) (infer_st_subst st') /\
+           check_s 0 (pred_set_count (infer_st_next_uvar st')) (infer_st_subst st') /\
            sub_completion tvs (infer_st_next_uvar st') (infer_st_subst st') constr s /\
-           FDOM s = count (infer_st_next_uvar st') /\
+           FDOM s = pred_set_count (infer_st_next_uvar st') /\
            MAP SND bindings = MAP (convert_t o t_walkstar s) funs_ts`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   SUBGOAL_THEN `infer_st_next_uvar (init_infer_state ss) = 0 /\
@@ -790,7 +790,7 @@ let infer_funs_complete = prove
   SUBGOAL_THEN `t_wfs (s0:(num,infer_t)fmap)` ASSUME_TAC THENL
    [ASM_REWRITE_TAC[]; ALL_TAC] THEN
   SUBGOAL_THEN (CASE_TERM
-    `ienv_ok (count (LENGTH (funs:(mlstring#mlstring#exp)list)))
+    `ienv_ok (pred_set_count (LENGTH (funs:(mlstring#mlstring#exp)list)))
        (inf_env_inf_v_fupd
           (K (nsAppend
                 (alist_to_ns (MAP (\nt. match nt with (n,t) -> (n,(0,t)))
@@ -844,7 +844,7 @@ let infer_funs_complete = prove
   REWRITE_TAC[infer_st_rewrs] THEN DISCH_TAC THEN
   INFER1AUX_IFN_TAC (REWRITE_RULE[IMP_CONJ] (CONJUNCT2(CONJUNCT2(CONJUNCT2 infer_e_check_t)))) THEN
   ASM_REWRITE_TAC[infer_st_rewrs; inf_env_INFO.ri_accfupds; K_THM] THEN DISCH_TAC THEN
-  SUBGOAL_THEN `check_s 0 (count (infer_st_next_uvar st2)) (infer_st_subst st2)` ASSUME_TAC THENL
+  SUBGOAL_THEN `check_s 0 (pred_set_count (infer_st_next_uvar st2)) (infer_st_subst st2)` ASSUME_TAC THENL
    [INFER1AUX_IFN_TAC (REWRITE_RULE[IMP_CONJ] (CONJUNCT2(CONJUNCT2(CONJUNCT2 infer_e_check_s)))) THEN
     ASM_REWRITE_TAC[infer_st_rewrs; t_wfs_FEMPTY] THEN
     DISCH_THEN(MP_TAC o SPEC `0`) THEN
@@ -908,8 +908,8 @@ let infer_funs_complete = prove
    [MATCH_MP_TAC pure_add_constraints_check_s THEN
     MAP_EVERY EXISTS_TAC [`infer_st_subst st2`; `ZIP (us:infer_t list) (env1:infer_t list)`] THEN
     ASM_REWRITE_TAC[] THEN
-    MP_TAC(ISPECL [`check_t 0 (count (infer_st_next_uvar st2))`;
-                   `check_t 0 (count (infer_st_next_uvar st2))`;
+    MP_TAC(ISPECL [`check_t 0 (pred_set_count (infer_st_next_uvar st2))`;
+                   `check_t 0 (pred_set_count (infer_st_next_uvar st2))`;
                    `us:infer_t list`; `env1:infer_t list`] INFER1AUX_ALL_ZIP) THEN
     ANTS_TAC THENL
      [ASM_REWRITE_TAC[] THEN EXPAND_TAC "us" THEN

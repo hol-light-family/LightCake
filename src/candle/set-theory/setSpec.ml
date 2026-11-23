@@ -3,6 +3,10 @@
 (* v3479).  Specification of (roughly) Zermelo's set theory.  Two main       *)
 (* definitions: is_set_theory (mem : U -> U -> bool) and                     *)
 (* is_model (mem,indset,ch).                                                 *)
+(* HOL4 funspace, two, holds and apply are setSpec_funspace, setSpec_two,    *)
+(* setSpec_holds and setSpec_apply (short or common words; funspace is also  *)
+(* a constant of HOL Light's Multivariate), with the theorems renamed alike  *)
+(* (funspace_def is setSpec_funspace_def, ...).                              *)
 (* ========================================================================= *)
 
 needs "misc/misc.ml";;
@@ -33,8 +37,9 @@ let CSETAUX_SELECT_ELIM_TAC : tactic = fun (asl,w as gl) ->
 (* the constants are written with their mem argument, e.g. x suchthat P is *)
 (* setSpec_sub mem x P and f ' x is apply mem f x.  The parameters sub,     *)
 (* power, union and upair of is_separation, is_power, is_union and          *)
-(* is_upair are written sub', power', union', upair' (sub and union are    *)
-(* constants of other files; power and upair are constants of this file).   *)
+(* is_upair are written sub', power', union', upair' (sub and union were   *)
+(* constants of other files, now regexp_compiler_sub and sptree_union;       *)
+(* power and upair are constants of this file).                             *)
 
 let extensional_def = cake_def
   `extensional (mem:U->U->bool) <=> !x y. x = y <=> !a. mem a x <=> mem a y`;;
@@ -170,13 +175,13 @@ let mem_one = prove
    !x. mem x (setSpec_one mem) <=> x = setSpec_empty mem`,
   STRIP_TAC THEN ASM_SIMP_TAC[mem_unit; setSpec_one_def]);;
 
-let two_def = cake_def
-  `two (mem:U->U->bool) = upair mem (setSpec_empty mem) (setSpec_one mem)`;;
+let setSpec_two_def = cake_def
+  `setSpec_two (mem:U->U->bool) = upair mem (setSpec_empty mem) (setSpec_one mem)`;;
 
 let mem_two = prove
  (`is_set_theory (mem:U->U->bool) ==>
-   !x. mem x (two mem) <=> x = setSpec_empty mem \/ x = setSpec_one mem`,
-  STRIP_TAC THEN ASM_SIMP_TAC[mem_upair; mem_one; two_def]);;
+   !x. mem x (setSpec_two mem) <=> x = setSpec_empty mem \/ x = setSpec_one mem`,
+  STRIP_TAC THEN ASM_SIMP_TAC[mem_upair; mem_one; setSpec_two_def]);;
 
 let setSpec_pair_def = cake_def
   `setSpec_pair (mem:U->U->bool) x y = upair mem (unit mem x) (upair mem x y)`;;
@@ -243,13 +248,13 @@ let CSETAUX_mem_pair_product = prove
 let relspace_def = cake_def
   `relspace (mem:U->U->bool) x y = power mem (setSpec_product mem x y)`;;
 
-let funspace_def = cake_def
-  `funspace (mem:U->U->bool) x y =
+let setSpec_funspace_def = cake_def
+  `setSpec_funspace (mem:U->U->bool) x y =
      setSpec_sub mem (relspace mem x y)
        (\f. !a. mem a x ==> ?!b. mem (setSpec_pair mem a b) f)`;;
 
-let apply_def = cake_def
-  `apply (mem:U->U->bool) x y = @a. mem (setSpec_pair mem y a) x`;;
+let setSpec_apply_def = cake_def
+  `setSpec_apply (mem:U->U->bool) x y = @a. mem (setSpec_pair mem y a) x`;;
 
 let setSpec_true_def = cake_def
   `setSpec_true (mem:U->U->bool) = setSpec_empty mem`;;
@@ -264,7 +269,7 @@ let true_neq_false = prove
 
 let mem_boolset = prove
  (`is_set_theory (mem:U->U->bool) ==>
-   !x. mem x (two mem) <=> (x = setSpec_true mem \/ x = setSpec_false mem)`,
+   !x. mem x (setSpec_two mem) <=> (x = setSpec_true mem \/ x = setSpec_false mem)`,
   STRIP_TAC THEN ASM_SIMP_TAC[mem_two; setSpec_true_def; setSpec_false_def]);;
 
 let boolean_def = cake_def
@@ -272,7 +277,7 @@ let boolean_def = cake_def
      if b then setSpec_true mem else setSpec_false mem`;;
 
 let boolean_in_boolset = prove
- (`is_set_theory (mem:U->U->bool) ==> !b. mem (boolean mem b) (two mem)`,
+ (`is_set_theory (mem:U->U->bool) ==> !b. mem (boolean mem b) (setSpec_two mem)`,
   STRIP_TAC THEN IMP_RES_TAC mem_boolset THEN GEN_TAC THEN BOOL_CASES_TAC `b:bool` THEN
   ASM_SIMP_TAC[boolean_def]);;
 
@@ -280,8 +285,8 @@ let boolean_eq_true = prove
  (`is_set_theory (mem:U->U->bool) ==> !b. boolean mem b = setSpec_true mem <=> b`,
   STRIP_TAC THEN RW[boolean_def] THEN ASM_MESON_TAC[true_neq_false]);;
 
-let holds_def = cake_def
-  `holds (mem:U->U->bool) s x <=> apply mem s x = setSpec_true mem`;;
+let setSpec_holds_def = cake_def
+  `setSpec_holds (mem:U->U->bool) s x <=> setSpec_apply mem s x = setSpec_true mem`;;
 
 let abstract_def = cake_def
   `abstract (mem:U->U->bool) dom rng f =
@@ -290,20 +295,20 @@ let abstract_def = cake_def
 
 let apply_abstract = prove
  (`is_set_theory (mem:U->U->bool) ==>
-   !f x s t. mem x s /\ mem (f x) t ==> apply mem (abstract mem s t f) x = f x`,
-  STRIP_TAC THEN RW[apply_def; abstract_def] THEN CSETAUX_SELECT_ELIM_TAC THEN
+   !f x s t. mem x s /\ mem (f x) t ==> setSpec_apply mem (abstract mem s t f) x = f x`,
+  STRIP_TAC THEN RW[setSpec_apply_def; abstract_def] THEN CSETAUX_SELECT_ELIM_TAC THEN
   ASM_SIMP_TAC[mem_sub; mem_product; pair_inj] THEN ASM_MESON_TAC[]);;
 
 let apply_abstract_matchable = prove
  (`!f x s t u. mem x s /\ mem (f x) t /\ is_set_theory (mem:U->U->bool) /\
-               f x = u ==> apply mem (abstract mem s t f) x = u`,
+               f x = u ==> setSpec_apply mem (abstract mem s t f) x = u`,
   MESON_TAC[apply_abstract]);;
 
 let apply_in_rng = prove
  (`is_set_theory (mem:U->U->bool) ==>
-   !f x s t. mem x s /\ mem f (funspace mem s t) ==> mem (apply mem f x) t`,
+   !f x s t. mem x s /\ mem f (setSpec_funspace mem s t) ==> mem (setSpec_apply mem f x) t`,
   STRIP_TAC THEN
-  ASM_SIMP_TAC[funspace_def; mem_sub; relspace_def; mem_power; apply_def;
+  ASM_SIMP_TAC[setSpec_funspace_def; mem_sub; relspace_def; mem_power; setSpec_apply_def;
                mem_product; EXISTS_UNIQUE_THM] THEN
   REPEAT STRIP_TAC THEN CSETAUX_SELECT_ELIM_TAC THEN
   FIRST_ASSUM(ASSUME_TAC o MATCH_MP pair_inj) THEN ASM_MESON_TAC[]);;
@@ -311,15 +316,15 @@ let apply_in_rng = prove
 let abstract_in_funspace = prove
  (`is_set_theory (mem:U->U->bool) ==>
    !f s t. (!x. mem x s ==> mem (f x) t) ==>
-           mem (abstract mem s t f) (funspace mem s t)`,
+           mem (abstract mem s t f) (setSpec_funspace mem s t)`,
   STRIP_TAC THEN
-  ASM_SIMP_TAC[funspace_def; relspace_def; abstract_def; mem_power;
+  ASM_SIMP_TAC[setSpec_funspace_def; relspace_def; abstract_def; mem_power;
                mem_product; mem_sub] THEN
   ASM_SIMP_TAC[EXISTS_UNIQUE_THM; pair_inj] THEN MESON_TAC[]);;
 
 let abstract_in_funspace_matchable = prove
  (`is_set_theory (mem:U->U->bool) ==>
-   !f s t fs. (!x. mem x s ==> mem (f x) t) /\ fs = funspace mem s t ==>
+   !f s t fs. (!x. mem x s ==> mem (f x) t) /\ fs = setSpec_funspace mem s t ==>
               mem (abstract mem s t f) fs`,
   MESON_TAC[abstract_in_funspace]);;
 
@@ -335,9 +340,9 @@ let abstract_eq = prove
 
 let in_funspace_abstract = prove
  (`is_set_theory (mem:U->U->bool) ==>
-   !z s t. mem z (funspace mem s t) ==>
+   !z s t. mem z (setSpec_funspace mem s t) ==>
            ?f. z = abstract mem s t f /\ (!x. mem x s ==> mem (f x) t)`,
-  RW[funspace_def; mem_sub; relspace_def; mem_power] THEN
+  RW[setSpec_funspace_def; mem_sub; relspace_def; mem_power] THEN
   QEXISTS_TAC "\\x. @y. mem (setSpec_pair mem x y) z" THEN
   FIRST_ASSUM(ASSUME_TAC o MATCH_MP CSETAUX_mem_pair_product) THEN
   QBY "!x y. mem (setSpec_pair mem x y) z ==> mem x s /\\ mem y t"
@@ -362,11 +367,11 @@ let in_funspace_abstract = prove
 let axiom_of_choice = UNDISCH(prove
  (`is_set_theory (mem:U->U->bool) ==>
    !x. (!a. mem a x ==> ?b. mem b a) ==>
-       ?f. !a. mem a x ==> mem (apply mem f a) a`,
+       ?f. !a. mem a x ==> mem (setSpec_apply mem f a) a`,
   RW[] THEN
   QEXISTS_TAC "abstract mem x (setSpec_union mem x) (\\a. @b. mem b a)" THEN
   RW[] THEN
-  QSUFF_TAC "apply mem (abstract mem x (setSpec_union mem x) (\\a. @b. mem b a)) a =
+  QSUFF_TAC "setSpec_apply mem (abstract mem x (setSpec_union mem x) (\\a. @b. mem b a)) a =
              (@b. mem b a)" THENL
    [DISCH_THEN SUBST1_TAC THEN CSETAUX_SELECT_ELIM_TAC THEN ASM_MESON_TAC[];
     ALL_TAC] THEN
@@ -396,7 +401,7 @@ let indset_inhabited = prove
 
 let funspace_inhabited = prove
  (`is_set_theory (mem:U->U->bool) ==>
-   !s t. (?x. mem x s) /\ (?x. mem x t) ==> ?f. mem f (funspace mem s t)`,
+   !s t. (?x. mem x s) /\ (?x. mem x t) ==> ?f. mem f (setSpec_funspace mem s t)`,
   RW[] THEN QEXISTS_TAC "abstract mem s t (\\x. @x. mem x t)" THEN
   FIRST_ASSUM(MATCH_MP_TAC o MATCH_MP abstract_in_funspace) THEN
   REPEAT STRIP_TAC THEN CSETAUX_SELECT_ELIM_TAC THEN ASM_MESON_TAC[]);;

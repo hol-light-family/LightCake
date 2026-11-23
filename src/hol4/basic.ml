@@ -7,6 +7,8 @@
 (* The constants shared with the other units are in vocab.ml; HOL4 names     *)
 (* already bound in HOL Light with another statement get a theory prefix     *)
 (* (arithmetic_, pred_set_, pair_, relation_, bool_, marker_).               *)
+(* HOL4 count_def is pred_set_count_def (HOL4 count is pred_set_count, a     *)
+(* short common word).                                                       *)
 (* ========================================================================= *)
 
 needs "hol4/vocab.ml";;
@@ -234,8 +236,8 @@ let FORALL_SUM = prove
   MATCH_MP_TAC sum_INDUCT THEN ASM_REWRITE_TAC[]);;
 
 (* ------------------------------------------------------------------------- *)
-(* num and prim_rec (HOL4 src/num/theories).  HOL4 measure is the kit's      *)
-(* measure (= HOL Light MEASURE), WF_measure is the kit's.                   *)
+(* num and prim_rec (HOL4 src/num/theories).  HOL4 measure and WF_measure   *)
+(* are HOL Light's MEASURE and WF_MEASURE (wf.ml).                           *)
 (* ------------------------------------------------------------------------- *)
 
 let INV_SUC = prove
@@ -1807,7 +1809,7 @@ let BIGUNION = UNIONS;;
 let PSUBSET_DEF = PSUBSET;;
 let INFINITE_NUM_UNIV = num_INFINITE;;
 let DIFF_SUBSET = SUBSET_DIFF;;
-let count_def = count_DEF;;
+let pred_set_count_def = pred_set_count_DEF;;
 
 (* HOL4 GSPECIFICATION is about HOL4's GSPEC (f:'b -> 'a # bool); HOL Light
    encodes set comprehensions with GSPEC and SETSPEC, whose membership rule
@@ -1993,35 +1995,35 @@ let SUBSET_EQ_CARD = prove
 (* count *)
 
 let IN_COUNT = prove
- (`!m n. m IN count n <=> m < n`,
-  REWRITE_TAC[count_DEF; IN_ELIM_THM]);;
+ (`!m n. m IN pred_set_count n <=> m < n`,
+  REWRITE_TAC[pred_set_count_DEF; IN_ELIM_THM]);;
 
 let COUNT_ZERO = prove
- (`count 0 = {}`,
+ (`pred_set_count 0 = {}`,
   REWRITE_TAC[EXTENSION; IN_COUNT; NOT_IN_EMPTY] THEN ARITH_TAC);;
 
 let COUNT_SUC = prove
- (`!n. count (SUC n) = n INSERT count n`,
+ (`!n. pred_set_count (SUC n) = n INSERT pred_set_count n`,
   REWRITE_TAC[EXTENSION; IN_COUNT; IN_INSERT] THEN ARITH_TAC);;
 
 let count_add1 = prove
- (`!n. count (n + 1) = n INSERT count n`,
+ (`!n. pred_set_count (n + 1) = n INSERT pred_set_count n`,
   REWRITE_TAC[EXTENSION; IN_COUNT; IN_INSERT] THEN ARITH_TAC);;
 
 let FINITE_COUNT = prove
- (`!n. FINITE (count n)`,
-  REWRITE_TAC[count_DEF; FINITE_NUMSEG_LT]);;
+ (`!n. FINITE (pred_set_count n)`,
+  REWRITE_TAC[pred_set_count_DEF; FINITE_NUMSEG_LT]);;
 
 let CARD_COUNT = prove
- (`!n. CARD (count n) = n`,
-  REWRITE_TAC[count_DEF; CARD_NUMSEG_LT]);;
+ (`!n. CARD (pred_set_count n) = n`,
+  REWRITE_TAC[pred_set_count_DEF; CARD_NUMSEG_LT]);;
 
 let COUNT_MONO = prove
- (`!m n. m <= n ==> (count m) SUBSET (count n)`,
+ (`!m n. m <= n ==> (pred_set_count m) SUBSET (pred_set_count n)`,
   REWRITE_TAC[SUBSET; IN_COUNT] THEN ARITH_TAC);;
 
 let count_add = prove
- (`!n m. count (n + m) = count n UNION IMAGE ((+) n) (count m)`,
+ (`!n m. pred_set_count (n + m) = pred_set_count n UNION IMAGE ((+) n) (pred_set_count m)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[EXTENSION; IN_UNION; IN_IMAGE; IN_COUNT] THEN
   X_GEN_TAC `x:num` THEN EQ_TAC THENL
    [DISCH_TAC THEN ASM_CASES_TAC `x < n` THEN ASM_REWRITE_TAC[] THEN
@@ -2069,7 +2071,7 @@ let SUM_SET_IN_LE = prove
   ASM_REWRITE_TAC[] THEN ARITH_TAC);;
 
 let SUM_SET_count = prove
- (`SUM_SET (count n) = (n * (n - 1)) DIV 2`,
+ (`SUM_SET (pred_set_count n) = (n * (n - 1)) DIV 2`,
   SUBGOAL_THEN `!n. nsum {m | m < n} (\x. x) * 2 = n * (n - 1)` ASSUME_TAC THENL
    [INDUCT_TAC THEN
     REWRITE_TAC[NUMSEG_CLAUSES_LT; NSUM_CLAUSES; MULT_CLAUSES] THEN
@@ -2078,7 +2080,7 @@ let SUM_SET_count = prove
     STRUCT_CASES_TAC (SPEC `n:num` num_CASES) THEN
     REWRITE_TAC[SUC_SUB1; SUB_0; MULT_CLAUSES] THEN ARITH_TAC;
     ALL_TAC] THEN
-  REWRITE_TAC[SUM_SET_DEF; count_DEF] THEN
+  REWRITE_TAC[SUM_SET_DEF; pred_set_count_DEF] THEN
   CONV_TAC SYM_CONV THEN MATCH_MP_TAC DIV_UNIQ THEN EXISTS_TAC `0` THEN
   ASM_REWRITE_TAC[ADD_CLAUSES] THEN ARITH_TAC);;
 (* INJ, SURJ, BIJ; LINV_OPT and LINV as in HOL4 (LINV_LO) *)
@@ -2253,7 +2255,7 @@ let _ = cake_add_simps
   CURRY_UNCURRY_THM; UNCURRY_CURRY_THM; transitive_LEX; reflexive_LEX;
   symmetric_LEX; total_LEX;
   (* prim_rec and arithmetic *)
-  WF_measure; measure_thm; EQ_MULT_LCANCEL; arithmetic_EQ_MULT_RCANCEL;
+  WF_MEASURE; measure_thm; EQ_MULT_LCANCEL; arithmetic_EQ_MULT_RCANCEL;
   arithmetic_EXP_1; EXP_EQ_1; arithmetic_EXP_EQ_0; LT1_EQ0; MAX_EQ_0;
   MIN_EQ_0; arithmetic_DIV_0; arithmetic_MOD_0; MOD_ID; DIV_ID;
   NOT_LT_ZERO_EQ_ZERO; SUC_SUB; ZERO_LT_EXP; ONE_LE_EXP; ONE_LT_EXP;
@@ -2278,3 +2280,21 @@ let _ = cake_add_simps
   FINITE_COUNT; IMAGE_CLAUSES; IMAGE_UNION; IMAGE_EQ_EMPTY; IMAGE_ID; IMAGE_I;
   CARD_CLAUSES; CARD_EQ_0; CARD_COUNT; COUNT_ZERO; COMPL_INTER;
   INFINITE_NUM_UNIV];;
+
+(* ------------------------------------------------------------------------- *)
+(* Lemmas used by several later files.                                       *)
+(* ------------------------------------------------------------------------- *)
+
+let BASICAUX_some_unique = prove
+ (`!P (a:A). P a /\ (!x. P x ==> x = a) ==> (some) P = SOME a`,
+  REPEAT STRIP_TAC THEN REWRITE_TAC[some_def] THEN
+  COND_CASES_TAC THENL [ALL_TAC; ASM_MESON_TAC[]] THEN
+  REWRITE_TAC[option_INJ] THEN ASM_MESON_TAC[]);;
+
+let BASICAUX_PAIR_SND = prove
+ (`!(p:A#B) x. p = (x,SND p) <=> FST p = x`,
+  REWRITE_TAC[FORALL_PAIR_THM; PAIR_EQ; FST; SND]);;
+
+let BASICAUX_pair_CASE_K = prove
+ (`!(p:A#B) (x:C). pair_CASE p (\a b. x) = x`,
+  REWRITE_TAC[FORALL_PAIR_THM; pair_CASE]);;

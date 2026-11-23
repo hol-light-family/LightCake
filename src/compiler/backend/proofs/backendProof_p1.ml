@@ -323,7 +323,7 @@ let BKP1AUX_known_syntax = prove
   REWRITE_TAC[clos_known_compile_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   MP_TAC(ISPECL [`a:clos_known_config`; `clos_fvs_compile es`; `[]:val_approx list`;
                  `LN:(val_approx)spt`] known_every_Fn_SOME) THEN
-  SPEC_TAC(`known a (clos_fvs_compile es) [] LN`,
+  SPEC_TAC(`clos_known_known a (clos_fvs_compile es) [] LN`,
            `p:(clos_exp#val_approx)list#(val_approx)spt`) THEN
   REWRITE_TAC[FORALL_PAIR_THM; FST; SND] THEN CASE_REWRITE_TAC[] THEN
   REPEAT GEN_TAC THEN
@@ -470,7 +470,7 @@ let backendProof_known_compile_IS_SOME = prove
   REPEAT GEN_TAC THEN STRUCT_CASES_TAC(ISPEC `kc:clos_known_config option` (cases "option")) THEN
   REWRITE_TAC[clos_known_compile_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THENL
    [REWRITE_TAC[PAIR_EQ] THEN MESON_TAC[]; ALL_TAC] THEN
-  SPEC_TAC(`known a (clos_fvs_compile es) [] LN`,
+  SPEC_TAC(`clos_known_known a (clos_fvs_compile es) [] LN`,
            `p:(clos_exp#val_approx)list#(val_approx)spt`) THEN
   REWRITE_TAC[FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[] THEN
   REWRITE_TAC[PAIR_EQ] THEN REPEAT STRIP_TAC THEN
@@ -499,7 +499,7 @@ let known_compile_static_conf = prove
   REPEAT GEN_TAC THEN STRUCT_CASES_TAC(ISPEC `kc:clos_known_config option` (cases "option")) THEN
   REWRITE_TAC[clos_known_compile_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THENL
    [REWRITE_TAC[PAIR_EQ] THEN MESON_TAC[]; ALL_TAC] THEN
-  SPEC_TAC(`known a (clos_fvs_compile es) [] LN`,
+  SPEC_TAC(`clos_known_known a (clos_fvs_compile es) [] LN`,
            `p:(clos_exp#val_approx)list#(val_approx)spt`) THEN
   REWRITE_TAC[FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[] THEN
   REWRITE_TAC[PAIR_EQ] THEN REPEAT STRIP_TAC THEN
@@ -972,9 +972,9 @@ let BKP1AUX_MAP_TAC : tactic = fun (asl,w) ->
 
 let BKP1AUX_known_reset_spt = prove
  (`!f kc xs vs g.
-     known (clos_known_config_val_approx_spt_fupd f kc) xs vs g = known kc xs vs g`,
-  GEN_TAC THEN MATCH_MP_TAC known_ind THEN REPEAT CONJ_TAC THEN
-  REPEAT STRIP_TAC THEN ONCE_REWRITE_TAC[known_def] THEN
+     clos_known_known (clos_known_config_val_approx_spt_fupd f kc) xs vs g = clos_known_known kc xs vs g`,
+  GEN_TAC THEN MATCH_MP_TAC clos_known_known_ind THEN REPEAT CONJ_TAC THEN
+  REPEAT STRIP_TAC THEN ONCE_REWRITE_TAC[clos_known_known_def] THEN
   REPEAT(PAIRARG_TAC THEN GVS[decide_inline_reset_spt]) THEN
   GVS[decide_inline_reset_spt] THEN
   FIRST
@@ -985,13 +985,13 @@ let BKP1AUX_known_reset_spt = prove
 
 (* HOL4 line 450 *)
 let known_reset_spt = prove
- (`!kc f. known (clos_known_config_val_approx_spt_fupd f kc) = known kc`,
+ (`!kc f. clos_known_known (clos_known_config_val_approx_spt_fupd f kc) = clos_known_known kc`,
   REWRITE_TAC[FUN_EQ_THM; BKP1AUX_known_reset_spt]);;
 
 (* HOL4 line 465 *)
 let known_reset_to_static_conf = prove
  (`!kc.
-     known (reset_inline_factor kc) = known (THE (known_static_conf (SOME kc)))`,
+     clos_known_known (reset_inline_factor kc) = clos_known_known (THE (known_static_conf (SOME kc)))`,
   REWRITE_TAC[known_static_conf_def] THEN CASE_REWRITE_TAC[THE_DEF; known_reset_spt]);;
 
 (* BKP1AUX: resetting the inline factor of a reset configuration *)
@@ -1516,19 +1516,19 @@ let BKP1AUX_ns_add = prove
 
 let BKP1AUX_tailrec_next_ns = prove
  (`!b n xs. (bvl_num_stubs <= n ==> bvl_num_stubs <= FST (bvi_tailrec_compile_prog b n xs)) /\
-            (!j. in_ns j n ==> in_ns j (FST (bvi_tailrec_compile_prog b n xs)))`,
+            (!j. bvl_to_bviProof_in_ns j n ==> bvl_to_bviProof_in_ns j (FST (bvi_tailrec_compile_prog b n xs)))`,
   REPEAT GEN_TAC THEN MP_TAC(ISPEC `bvi_tailrec_compile_prog b n xs` PAIR_SURJECTIVE) THEN
   STRIP_TAC THEN ASM_REWRITE_TAC[FST] THEN
   FIRST_X_ASSUM(STRIP_ASSUME_TAC o MATCH_MP bvi_tailrecProof_compile_prog_next_mono) THEN
-  ASM_REWRITE_TAC[in_ns_def; BKP1AUX_ns_add] THEN ARITH_TAC);;
+  ASM_REWRITE_TAC[bvl_to_bviProof_in_ns_def; BKP1AUX_ns_add] THEN ARITH_TAC);;
 
 let BKP1AUX_tmc_next_ns = prove
  (`!b n xs. (bvl_num_stubs <= n ==> bvl_num_stubs <= FST (bvi_tmc_compile_prog b n xs)) /\
-            (!j. in_ns j n ==> in_ns j (FST (bvi_tmc_compile_prog b n xs)))`,
+            (!j. bvl_to_bviProof_in_ns j n ==> bvl_to_bviProof_in_ns j (FST (bvi_tmc_compile_prog b n xs)))`,
   REPEAT GEN_TAC THEN MP_TAC(ISPEC `bvi_tmc_compile_prog b n xs` PAIR_SURJECTIVE) THEN
   STRIP_TAC THEN ASM_REWRITE_TAC[FST] THEN
   FIRST_X_ASSUM(STRIP_ASSUME_TAC o MATCH_MP bvi_tmcProof_compile_prog_next_mono) THEN
-  ASM_REWRITE_TAC[in_ns_def; BKP1AUX_ns_add] THEN ARITH_TAC);;
+  ASM_REWRITE_TAC[bvl_to_bviProof_in_ns_def; BKP1AUX_ns_add] THEN ARITH_TAC);;
 
 let BKP1AUX_tailrec_next = prove
  (`!b n xs. ?k. FST (bvi_tailrec_compile_prog b n xs) = n + bvl_to_bvi_namespaces * k`,
@@ -1593,7 +1593,7 @@ let bvl_to_bvi_compile_semantics2 = prove
     IMP_RES_TAC bvi_tmcProof_compile_prog_next_mono THEN ASM_MESON_TAC[];
     ALL_TAC] THEN
   INDUCT_TAC THENL
-   [ASM_REWRITE_TAC[FST; SND; in_ns_def; BKP1AUX_ns_add] THEN
+   [ASM_REWRITE_TAC[FST; SND; bvl_to_bviProof_in_ns_def; BKP1AUX_ns_add] THEN
     REWRITE_TAC[bvl_num_stubs_def; data_num_stubs_def; word_num_stubs_def;
                 stack_num_stubs_def; bvl_to_bvi_namespaces_def] THEN
     CONV_TAC NUM_REDUCE_CONV THEN ARITH_TAC;
@@ -2897,7 +2897,7 @@ let BKP1AUX_stack_to_lab_names = prove
 let MAP_Section_num_stack_to_lab_SUBSET = prove
  (`!prog labs scc dc max_heap sp offset.
      set_of_list (MAP FST (prog:(num#(A)stack_prog)list)) SUBSET labs /\
-   count (SUC gc_stub_location) SUBSET labs
+   pred_set_count (SUC gc_stub_location) SUBSET labs
    ==> set_of_list (MAP Section_num (stack_to_lab_compile scc dc max_heap sp offset prog))
        SUBSET labs`,
   REPEAT GEN_TAC THEN REWRITE_TAC[BKP1AUX_stack_to_lab_names; SET_OF_LIST_APPEND;
@@ -3531,7 +3531,7 @@ let monotonic_labels_stack_to_lab = prove
    backend_config_ok asm_conf c
    ==> oracle_monotonic (set_of_list o MAP FST o FST o SND) (\x y. ~(x = y))
          (set_of_list (MAP FST (FST (SND (SND (to_stack asm_conf c prog))))) UNION
-          count (SUC gc_stub_location))
+          pred_set_count (SUC gc_stub_location))
          (cake_orac asm_conf c' syntax (SND o SND o SND o SND o SND o SND o config_tuple2)
             (\ps. (backend_progs_stack_prog ps,backend_progs_cur_bm ps)))
    ==> oracle_monotonic (set_of_list o MAP Section_num o SND) (\x y. ~(x = y))
@@ -3569,12 +3569,12 @@ let monotonic_labels_bvi_down_to_stack = prove
      backend_compile (asm_conf:(A)asm_config) c prog = SOME (b,bm,c') /\
    backend_config_ok asm_conf c
    ==> oracle_monotonic (set_of_list o MAP FST o SND) (\x y. ~(x = y))
-         (set_of_list (MAP FST (FST (SND (to_bvi c prog)))) UNION count (SUC data_num_stubs))
+         (set_of_list (MAP FST (FST (SND (to_bvi c prog)))) UNION pred_set_count (SUC data_num_stubs))
          (cake_orac asm_conf c' syntax (SND o SND o SND o SND o SND o config_tuple2)
             (\ps. backend_progs_bvi_prog ps))
    ==> oracle_monotonic (set_of_list o MAP FST o FST o SND) (\x y. ~(x = y))
          (set_of_list (MAP FST (FST (SND (SND (to_stack asm_conf c prog))))) UNION
-          count (SUC gc_stub_location))
+          pred_set_count (SUC gc_stub_location))
          (cake_orac asm_conf c' syntax (SND o SND o SND o SND o SND o SND o config_tuple2)
             (\ps. (backend_progs_stack_prog ps,backend_progs_cur_bm ps)))`,
   (REPEAT GEN_TAC THEN STRIP_TAC THEN MATCH_MP_TAC oracle_monotonic_subset THEN CONJ_TAC THENL
@@ -3969,7 +3969,7 @@ let BKP1AUX_bvl_to_bvi_ns1 = prove
    backend_config_ok asm_conf c
    ==> oracle_monotonic (\x. (set_of_list o MAP FST o SND) x INTER
                              PREIMAGE (\i. i MOD bvl_to_bvi_namespaces) {1}) (\x y. ~(x = y))
-         ((set_of_list (MAP FST (FST (SND (to_bvi c prog)))) UNION count (SUC data_num_stubs))
+         ((set_of_list (MAP FST (FST (SND (to_bvi c prog)))) UNION pred_set_count (SUC data_num_stubs))
           INTER PREIMAGE (\i. i MOD bvl_to_bvi_namespaces) {1})
          (cake_orac asm_conf c' syntax (SND o SND o SND o SND o SND o config_tuple2)
             (\ps. backend_progs_bvi_prog ps))`,
@@ -4005,7 +4005,7 @@ let BKP1AUX_bvl_to_bvi_ns2 = prove
    backend_config_ok asm_conf c
    ==> oracle_monotonic (\x. (set_of_list o MAP FST o SND) x INTER
                              PREIMAGE (\i. i MOD bvl_to_bvi_namespaces) {2}) (\x y. ~(x = y))
-         ((set_of_list (MAP FST (FST (SND (to_bvi c prog)))) UNION count (SUC data_num_stubs))
+         ((set_of_list (MAP FST (FST (SND (to_bvi c prog)))) UNION pred_set_count (SUC data_num_stubs))
           INTER PREIMAGE (\i. i MOD bvl_to_bvi_namespaces) {2})
          (cake_orac asm_conf c' syntax (SND o SND o SND o SND o SND o config_tuple2)
             (\ps. backend_progs_bvi_prog ps))`,
@@ -4042,7 +4042,7 @@ let BKP1AUX_bvl_to_bvi_ns3 = prove
    backend_config_ok asm_conf c
    ==> oracle_monotonic (\x. (set_of_list o MAP FST o SND) x INTER
                              PREIMAGE (\i. i MOD bvl_to_bvi_namespaces) {3}) (\x y. ~(x = y))
-         ((set_of_list (MAP FST (FST (SND (to_bvi c prog)))) UNION count (SUC data_num_stubs))
+         ((set_of_list (MAP FST (FST (SND (to_bvi c prog)))) UNION pred_set_count (SUC data_num_stubs))
           INTER PREIMAGE (\i. i MOD bvl_to_bvi_namespaces) {3})
          (cake_orac asm_conf c' syntax (SND o SND o SND o SND o SND o config_tuple2)
             (\ps. backend_progs_bvi_prog ps))`,
@@ -4081,7 +4081,7 @@ let BKP1AUX_bvl_to_bvi_ns0 = prove
        (cake_orac asm_conf c' syntax config_tuple2 (\ps. backend_progs_bvl_prog ps))
    ==> oracle_monotonic (\x. (set_of_list o MAP FST o SND) x INTER
                              PREIMAGE (\i. i MOD bvl_to_bvi_namespaces) {0}) (\x y. ~(x = y))
-         ((set_of_list (MAP FST (FST (SND (to_bvi c prog)))) UNION count (SUC data_num_stubs))
+         ((set_of_list (MAP FST (FST (SND (to_bvi c prog)))) UNION pred_set_count (SUC data_num_stubs))
           INTER PREIMAGE (\i. i MOD bvl_to_bvi_namespaces) {0})
          (cake_orac asm_conf c' syntax (SND o SND o SND o SND o SND o config_tuple2)
             (\ps. backend_progs_bvi_prog ps))`,
@@ -4130,7 +4130,7 @@ let monotonic_labels_bvl_to_bvi = prove
          (set_of_list (MAP FST (FST (SND (to_bvl c prog)))))
          (cake_orac asm_conf c' syntax config_tuple2 (\ps. backend_progs_bvl_prog ps))
    ==> oracle_monotonic (set_of_list o MAP FST o SND) (\x y. ~(x = y))
-         (set_of_list (MAP FST (FST (SND (to_bvi c prog)))) UNION count (SUC data_num_stubs))
+         (set_of_list (MAP FST (FST (SND (to_bvi c prog)))) UNION pred_set_count (SUC data_num_stubs))
          (cake_orac asm_conf c' syntax (SND o SND o SND o SND o SND o config_tuple2)
             (\ps. backend_progs_bvi_prog ps))`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN DISCH_TAC THEN
@@ -4152,4 +4152,3 @@ let monotonic_labels_bvl_to_bvi = prove
   POP_ASSUM_LIST(MP_TAC o end_itlist CONJ o filter (fun th -> bkp1aux_mentions "z" th ||
     can (find_term (fun t -> t = `z:num`)) (concl th))) THEN
   ARITH_TAC);;
-

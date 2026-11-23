@@ -20,6 +20,9 @@
 (*   definitions up to insert, the invariant, to_fmap, and the theorems      *)
 (*   leading to insert_thm and lookup_thm.                                   *)
 (* - Lemmas named LBMAPAUX_... are helpers of this file (not HOL4 names).   *)
+(* - HOL4 delta and member are balanced_map_delta and balanced_map_member    *)
+(*   (short or common words), with the theorems renamed alike (delta_def is  *)
+(*   balanced_map_delta_def, ...).                                           *)
 (* ========================================================================= *)
 
 needs "hol4/vocab.ml";;
@@ -105,7 +108,7 @@ let balanced_map_INDUCT,balanced_map_RECURSION =
 
 let ratio_def = new_definition `ratio = 2:num`;;
 
-let delta_def = new_definition `delta = 3:num`;;
+let balanced_map_delta_def = new_definition `balanced_map_delta = 3:num`;;
 
 (* HOL4: size_def *)
 
@@ -130,12 +133,12 @@ let balanced_map_lookup_def = new_recursive_definition balanced_map_RECURSION (C
       | GREATER -> balanced_map_lookup cmp k r
       | EQUAL -> SOME v)`);;
 
-let member_def = new_recursive_definition balanced_map_RECURSION (CASE_TERM
-  `(member (cmp:K->K->ordering) k (Tip:(K,V)balanced_map) <=> F) /\
-   (member cmp k (Bin s k' v l r) <=>
+let balanced_map_member_def = new_recursive_definition balanced_map_RECURSION (CASE_TERM
+  `(balanced_map_member (cmp:K->K->ordering) k (Tip:(K,V)balanced_map) <=> F) /\
+   (balanced_map_member cmp k (Bin s k' v l r) <=>
       match cmp k k' with
-        LESS -> member cmp k l
-      | GREATER -> member cmp k r
+        LESS -> balanced_map_member cmp k l
+      | GREATER -> balanced_map_member cmp k r
       | EQUAL -> T)`);;
 
 let balanced_map_empty_def = new_definition
@@ -171,7 +174,7 @@ let LBMAPAUX_balanceL_DEF = new_definition (CASE_TERM
          (match l with
             Tip -> Bin (1 + rs) k x Tip r
           | Bin ls lk lx ll lr ->
-              if ls > delta * rs then
+              if ls > balanced_map_delta * rs then
                 (match (ll, lr) with
                    (Bin lls k2 v2 t3 t4, Bin lrs lrk lrx lrl lrr) ->
                      if lrs < ratio * lls then
@@ -203,7 +206,7 @@ let balanceL_def = LBMAPAUX_GEN_CONJ (prove (CASE_TERM
    (balanceL k x Tip (Bin rs k' v' l' r') =
       Bin (1 + rs) k x Tip (Bin rs k' v' l' r')) /\
    (balanceL k x (Bin ls lk lx ll lr) (Bin rs k' v' l' r') =
-      if ls > delta * rs then
+      if ls > balanced_map_delta * rs then
         match (ll, lr) with
           (Bin lls k2 v2 l2 r2, Bin lrs lrk lrx lrl lrr) ->
             if lrs < ratio * lls then
@@ -244,7 +247,7 @@ let LBMAPAUX_balanceR_DEF = new_definition (CASE_TERM
          (match r with
             Tip -> Bin (1 + ls) k x l Tip
           | Bin rs rk rx rl rr ->
-              if rs > delta * ls then
+              if rs > balanced_map_delta * ls then
                 (match (rl, rr) with
                    (Bin rls rlk rlx rll rlr, Bin rrs k2 v2 t3 t4) ->
                      if rls < ratio * rrs then
@@ -274,7 +277,7 @@ let balanceR_def = LBMAPAUX_GEN_CONJ (prove (CASE_TERM
    (balanceR k x (Bin ls k' v' l' r') Tip =
       Bin (1 + ls) k x (Bin ls k' v' l' r') Tip) /\
    (balanceR k x (Bin ls k' v' l' r') (Bin rs rk rx rl rr) =
-      if rs > delta * ls then
+      if rs > balanced_map_delta * ls then
         match (rl, rr) with
           (Bin rls rlk rlx rll rlr, Bin rrs k2 v2 l2 r2) ->
             if rls < ratio * rrs then
@@ -308,7 +311,7 @@ let to_fmap_def = new_recursive_definition balanced_map_RECURSION (CASE_TERM
       FUNION (to_fmap cmp l) (to_fmap cmp r) |+ (key_set cmp k,v))`);;
 
 let balanced_def = new_definition
-  `balanced l r <=> l + r <= 1 \/ MAX l r <= delta * MIN l r`;;
+  `balanced l r <=> l + r <= 1 \/ MAX l r <= balanced_map_delta * MIN l r`;;
 
 let structure_size_def = new_recursive_definition balanced_map_RECURSION (CASE_TERM
   `(structure_size (Tip:(K,V)balanced_map) = 0) /\
@@ -505,9 +508,9 @@ let lookup_thm = prove
 
 let member_eq_lookup = prove
  (`!(cmp:K->K->ordering) k (t:(K,V)balanced_map).
-     member cmp k t <=> IS_SOME (balanced_map_lookup cmp k t)`,
+     balanced_map_member cmp k t <=> IS_SOME (balanced_map_lookup cmp k t)`,
   GEN_TAC THEN GEN_TAC THEN MATCH_MP_TAC balanced_map_INDUCT THEN
-  REWRITE_TAC[member_def; balanced_map_lookup_def; IS_SOME_DEF] THEN
+  REWRITE_TAC[balanced_map_member_def; balanced_map_lookup_def; IS_SOME_DEF] THEN
   REPEAT STRIP_TAC THEN
   MP_TAC(ISPEC `(cmp:K->K->ordering) k a1` ordering_nchotomy) THEN
   STRIP_TAC THEN ASM_REWRITE_TAC[ordering_case_def; IS_SOME_DEF]);;
@@ -515,7 +518,7 @@ let member_eq_lookup = prove
 let member_thm = prove
  (`!(cmp:K->K->ordering) k (t:(K,V)balanced_map).
      good_cmp cmp /\ balanced_map_invariant cmp t
-     ==> (member cmp k t <=> key_set cmp k IN FDOM (to_fmap cmp t))`,
+     ==> (balanced_map_member cmp k t <=> key_set cmp k IN FDOM (to_fmap cmp t))`,
   SIMP_TAC[member_eq_lookup; lookup_thm; FDOM_FLOOKUP] THEN
   REPEAT GEN_TAC THEN
   STRUCT_CASES_TAC(ISPEC `FLOOKUP (to_fmap cmp (t:(K,V)balanced_map)) (key_set cmp k)`
@@ -577,7 +580,7 @@ let balL_def = new_definition
   `balL (k:K) (x:V) l r =
      if balanced_map_size' l + balanced_map_size' r <= 1 then
        Bin (balanced_map_size' l + balanced_map_size' r + 1) k x l r
-     else if balanced_map_size' l > delta * balanced_map_size' r then
+     else if balanced_map_size' l > balanced_map_delta * balanced_map_size' r then
        rotateR k x l r
      else
        Bin (balanced_map_size' l + balanced_map_size' r + 1) k x l r`;;
@@ -586,33 +589,33 @@ let balR_def = new_definition
   `balR (k:K) (x:V) l r =
      if balanced_map_size' l + balanced_map_size' r <= 1 then
        Bin (balanced_map_size' l + balanced_map_size' r + 1) k x l r
-     else if balanced_map_size' r > delta * balanced_map_size' l then
+     else if balanced_map_size' r > balanced_map_delta * balanced_map_size' l then
        rotateL k x l r
      else
        Bin (balanced_map_size' l + balanced_map_size' r + 1) k x l r`;;
 
 let almost_balancedL_def = new_definition
   `almost_balancedL l r <=>
-     if l + r <= 1 \/ l <= delta * r then balanced l r
+     if l + r <= 1 \/ l <= balanced_map_delta * r then balanced l r
      else if r = 0 then l < 5
      else if r = 1 then l < 8
-     else 2 * l < (2 * delta + 3) * r + 2`;;
+     else 2 * l < (2 * balanced_map_delta + 3) * r + 2`;;
 
 let almost_balancedR_def = new_definition
   `almost_balancedR l r <=>
-     if l + r <= 1 \/ r <= delta * l then balanced l r
+     if l + r <= 1 \/ r <= balanced_map_delta * l then balanced l r
      else if l = 0 then r < 5
      else if l = 1 then r < 8
-     else 2 * r < (2 * delta + 3) * l + 2`;;
+     else 2 * r < (2 * balanced_map_delta + 3) * l + 2`;;
 
 let LBMAPAUX_balanced_alt = prove
  (`!l r. balanced l r <=> l + r <= 1 \/ l <= 3 * r /\ r <= 3 * l`,
-  REWRITE_TAC[balanced_def; delta_def; MAX; MIN] THEN
+  REWRITE_TAC[balanced_def; balanced_map_delta_def; MAX; MIN] THEN
   REPEAT GEN_TAC THEN COND_CASES_TAC THEN ASM_ARITH_TAC);;
 
 let LBMAPAUX_BAL_TAC =
   REWRITE_TAC[LBMAPAUX_balanced_alt; almost_balancedL_def; almost_balancedR_def;
-              delta_def; ratio_def; GT; COND_EXPAND] THEN
+              balanced_map_delta_def; ratio_def; GT; COND_EXPAND] THEN
   ARITH_TAC;;
 
 let balanced_lem1 = prove
@@ -620,20 +623,20 @@ let balanced_lem1 = prove
   LBMAPAUX_BAL_TAC);;
 
 let balanced_lem2 = prove
- (`!l r. ~(l > delta * r) /\ almost_balancedL l r /\ ~(l + r <= 1)
+ (`!l r. ~(l > balanced_map_delta * r) /\ almost_balancedL l r /\ ~(l + r <= 1)
          ==> balanced l r`,
   LBMAPAUX_BAL_TAC);;
 
 let balanced_lem3 = prove
  (`!b b0 r.
-     almost_balancedL (b + b0 + 1) r /\ b + b0 + 1 > delta * r /\
+     almost_balancedL (b + b0 + 1) r /\ b + b0 + 1 > balanced_map_delta * r /\
      b0 < ratio * b /\ balanced b b0
      ==> balanced b (b0 + r + 1) /\ balanced b0 r`,
   LBMAPAUX_BAL_TAC);;
 
 let balanced_lem4 = prove
  (`!b b' b0' r.
-     almost_balancedL (b + b' + b0' + 2) r /\ b + b' + b0' + 2 > delta * r /\
+     almost_balancedL (b + b' + b0' + 2) r /\ b + b' + b0' + 2 > balanced_map_delta * r /\
      ~(b' + b0' + 1 < ratio * b) /\ balanced b (b' + b0' + 1) /\
      balanced b' b0'
      ==> balanced (b + b' + 1) (b0' + r + 1) /\ balanced b b' /\
@@ -641,19 +644,19 @@ let balanced_lem4 = prove
   LBMAPAUX_BAL_TAC);;
 
 let balanced_lem5 = prove
- (`!l r. ~(r > delta * l) /\ almost_balancedR l r ==> balanced l r`,
+ (`!l r. ~(r > balanced_map_delta * l) /\ almost_balancedR l r ==> balanced l r`,
   LBMAPAUX_BAL_TAC);;
 
 let balanced_lem6 = prove
  (`!b b0 l.
-     almost_balancedR l (b + b0 + 1) /\ b + b0 + 1 > delta * l /\
+     almost_balancedR l (b + b0 + 1) /\ b + b0 + 1 > balanced_map_delta * l /\
      b < ratio * b0 /\ balanced b b0
      ==> balanced (b + l + 1) b0 /\ balanced l b`,
   LBMAPAUX_BAL_TAC);;
 
 let balanced_lem7 = prove
  (`!(b:num) (b0:num) (b0':num) (l:num) (b':num).
-     almost_balancedR l (b' + b0 + b0' + 2) /\ b' + b0 + b0' + 2 > delta * l /\
+     almost_balancedR l (b' + b0 + b0' + 2) /\ b' + b0 + b0' + 2 > balanced_map_delta * l /\
      ~(b' + b0' + 1 < ratio * b0) /\ balanced (b' + b0' + 1) b0 /\
      balanced b' b0'
      ==> balanced (b' + l + 1) (b0 + b0' + 1) /\ balanced l b' /\
@@ -735,7 +738,7 @@ let singleR_thm = prove
      key_ordered cmp k r LESS /\
      almost_balancedL n (balanced_map_size' r) /\
      ~(balanced_map_size' r + n <= 1) /\
-     n > delta * balanced_map_size' r /\
+     n > balanced_map_delta * balanced_map_size' r /\
      balanced_map_size' b0 < ratio * balanced_map_size' b /\
      balanced_map_invariant cmp (Bin n k' v' b b0) /\
      balanced_map_invariant cmp r
@@ -781,7 +784,7 @@ let doubleR_thm = prove
      key_ordered cmp k r LESS /\
      almost_balancedL n (balanced_map_size' r) /\
      ~(balanced_map_size' r + n <= 1) /\
-     n > delta * balanced_map_size' r /\
+     n > balanced_map_delta * balanced_map_size' r /\
      ~(balanced_map_size' b0 < ratio * balanced_map_size' b) /\
      balanced_map_invariant cmp (Bin n k' v' b b0) /\
      balanced_map_invariant cmp r
@@ -798,7 +801,7 @@ let doubleR_thm = prove
    [REWRITE_TAC[key_ordered_def; balanced_map_invariant_def;
                 balanced_map_size'_def; structure_size_def] THEN
     STRIP_TAC THEN LBMAPAUX_SS_TAC [`b:(K,V)balanced_map`; `r:(K,V)balanced_map`] THEN
-    RULE_ASSUM_TAC(REWRITE_RULE[ratio_def; delta_def]) THEN ASM_ARITH_TAC;
+    RULE_ASSUM_TAC(REWRITE_RULE[ratio_def; balanced_map_delta_def]) THEN ASM_ARITH_TAC;
     ALL_TAC] THEN
   REWRITE_TAC[key_ordered_def; balanced_map_invariant_def;
               balanced_map_size'_def; structure_size_def] THEN
@@ -857,7 +860,7 @@ let rotateR_thm = prove
      key_ordered cmp k l GREATER /\
      key_ordered cmp k r LESS /\
      ~(balanced_map_size' l + balanced_map_size' r <= 1) /\
-     balanced_map_size' l > delta * balanced_map_size' r /\
+     balanced_map_size' l > balanced_map_delta * balanced_map_size' r /\
      almost_balancedL (balanced_map_size' l) (balanced_map_size' r) /\
      balanced_map_invariant cmp l /\
      balanced_map_invariant cmp r
@@ -893,7 +896,7 @@ let LBMAPAUX_BAL_LEAF_TAC (defs:thm list) : tactic =
   LBMAPAUX_ALL_SS_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[LBMAPAUX_balanced_alt]) THEN
   REWRITE_TAC(defs @ [bin_def; balanced_map_size'_def; structure_size_def;
-                      ratio_def; delta_def; GT; case_def "balanced_map"]) THEN
+                      ratio_def; balanced_map_delta_def; GT; case_def "balanced_map"]) THEN
   REPEAT COND_CASES_TAC THEN
   REWRITE_TAC[injectivity "balanced_map"; distinctness "balanced_map"] THEN
   (ASM_ARITH_TAC ORELSE (MATCH_MP_TAC(TAUT `F ==> p`) THEN ASM_ARITH_TAC));;
@@ -959,7 +962,7 @@ let singleL_thm = prove
      key_ordered cmp k l GREATER /\
      almost_balancedR (balanced_map_size' l) n /\
      ~(balanced_map_size' l + n <= 1) /\
-     n > delta * balanced_map_size' l /\
+     n > balanced_map_delta * balanced_map_size' l /\
      balanced_map_size' b < ratio * balanced_map_size' b0 /\
      balanced_map_invariant cmp (Bin n k' v' b b0) /\
      balanced_map_invariant cmp l
@@ -1010,7 +1013,7 @@ let doubleL_thm = prove
      key_ordered cmp k l GREATER /\
      almost_balancedR (balanced_map_size' l) n /\
      ~(n + balanced_map_size' l <= 1) /\
-     n > delta * balanced_map_size' l /\
+     n > balanced_map_delta * balanced_map_size' l /\
      ~(balanced_map_size' b < ratio * balanced_map_size' b0) /\
      balanced_map_invariant cmp (Bin n k' v' b b0) /\
      balanced_map_invariant cmp l
@@ -1027,7 +1030,7 @@ let doubleL_thm = prove
    [REWRITE_TAC[key_ordered_def; balanced_map_invariant_def;
                 balanced_map_size'_def; structure_size_def] THEN
     STRIP_TAC THEN LBMAPAUX_SS_TAC [`b0:(K,V)balanced_map`; `l:(K,V)balanced_map`] THEN
-    RULE_ASSUM_TAC(REWRITE_RULE[ratio_def; delta_def]) THEN ASM_ARITH_TAC;
+    RULE_ASSUM_TAC(REWRITE_RULE[ratio_def; balanced_map_delta_def]) THEN ASM_ARITH_TAC;
     ALL_TAC] THEN
   REWRITE_TAC[key_ordered_def; balanced_map_invariant_def;
               balanced_map_size'_def; structure_size_def] THEN
@@ -1095,7 +1098,7 @@ let rotateL_thm = prove
      key_ordered cmp k r LESS /\
      key_ordered cmp k l GREATER /\
      ~(balanced_map_size' l + balanced_map_size' r <= 1) /\
-     balanced_map_size' r > delta * balanced_map_size' l /\
+     balanced_map_size' r > balanced_map_delta * balanced_map_size' l /\
      almost_balancedR (balanced_map_size' l) (balanced_map_size' r) /\
      balanced_map_invariant cmp l /\
      balanced_map_invariant cmp r

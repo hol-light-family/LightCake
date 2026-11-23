@@ -29,11 +29,11 @@ type_invention_error := true;;
 
 let simpleSexpPEG_tokeq_def = new_definition
   `simpleSexpPEG_tokeq (t:char) =
-     (tok ((=) t) (K (SX_SYM [t])):(char,B,simpleSexp_sexp,E)pegsym)`;;
+     (peg_tok ((=) t) (K (SX_SYM [t])):(char,B,simpleSexp_sexp,E)pegsym)`;;
 
 let grabWS_def = new_definition
   `grabWS (s:(char,B,simpleSexp_sexp,E)pegsym) =
-     ignoreL (rpt (tok isSpace (K arb_sexp)) (K arb_sexp)) s`;;
+     ignoreL (peg_rpt (peg_tok isSpace (K arb_sexp)) (K arb_sexp)) s`;;
 
 let simpleSexpPEG_peg0_tokeq = prove
  (`!(G:(char,B,simpleSexp_sexp,E)peg) t. peg0 G (simpleSexpPEG_tokeq t) <=> F`,
@@ -42,7 +42,7 @@ let simpleSexpPEG_peg0_tokeq = prove
 (* HOL4: pnt_def *)
 
 let simpleSexpPEG_pnt_def = new_definition
-  `simpleSexpPEG_pnt (ntsym:sexpNT) = (nt (INL ntsym) I:(A,sexpNT,C,E)pegsym)`;;
+  `simpleSexpPEG_pnt (ntsym:sexpNT) = (peg_nt (INL ntsym) I:(A,sexpNT,C,E)pegsym)`;;
 
 let replace_nil_def = cake_def
   `(replace_nil (SX_SYM s) z = if s = "nil" then z else SX_SYM s) /\
@@ -59,7 +59,7 @@ let simpleSexpPEG_sumID_def = new_recursive_definition sum_RECURSION
 
 let simpleSexpPEG_choicel_def = new_recursive_definition list_RECURSION
   `(simpleSexpPEG_choicel [] =
-      (not (empty arb_sexp) arb_sexp:(A,B,simpleSexp_sexp,E)pegsym)) /\
+      (peg_not (empty arb_sexp) arb_sexp:(A,B,simpleSexp_sexp,E)pegsym)) /\
    (!h t. simpleSexpPEG_choicel (CONS h t) =
           choice h (simpleSexpPEG_choicel t) simpleSexpPEG_sumID)`;;
 
@@ -67,14 +67,14 @@ let simpleSexpPEG_choicel_def = new_recursive_definition list_RECURSION
 
 let simpleSexpPEG_pegf_def = new_definition
   `simpleSexpPEG_pegf (sym:(A,B,simpleSexp_sexp,E)pegsym) f =
-     seq sym (empty arb_sexp) (\l1 l2. f l1)`;;
+     peg_seq sym (empty arb_sexp) (\l1 l2. f l1)`;;
 
 (* HOL4: peg_eval_choicel_NIL *)
 
 let simpleSexpPEG_peg_eval_choicel_NIL = prove
  (`!(G:(A,B,simpleSexp_sexp,E)peg) i0 x.
      peg_eval G (i0, simpleSexpPEG_choicel []) x <=>
-     x = Failure (sloc i0) (peg_notFAIL G)`,
+     x = Failure (peg_sloc i0) (peg_notFAIL G)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[simpleSexpPEG_choicel_def] THEN
   GEN_REWRITE_TAC LAND_CONV [peg_eval_cases] THEN
   REWRITE_TAC[PAIR_EQ; pegsym_distinct; pegsym_inject; peg_eval_empty] THEN
@@ -114,8 +114,8 @@ let sexpPEG_def = new_definition
     (FEMPTY |++
      [(INL sxnt_sexp,
        ignoreR (simpleSexpPEG_pnt sxnt_WSsexp)
-         (seq (rpt (tok isSpace (K arb_sexp)) (K arb_sexp))
-              (not (any (K arb_sexp)) arb_sexp)
+         (peg_seq (peg_rpt (peg_tok isSpace (K arb_sexp)) (K arb_sexp))
+              (peg_not (peg_any (K arb_sexp)) arb_sexp)
               (K (K arb_sexp))));
       (INL sxnt_sexp0,
        simpleSexpPEG_choicel
@@ -124,7 +124,7 @@ let sexpPEG_def = new_definition
          ignoreR
            (ignoreL (simpleSexpPEG_tokeq (CHR 34))
                     (simpleSexpPEG_pnt sxnt_strcontents))
-           (choice (simpleSexpPEG_tokeq (CHR 34)) (error "Expected \"")
+           (choice (simpleSexpPEG_tokeq (CHR 34)) (peg_error "Expected \"")
                    simpleSexpPEG_sumID);
          simpleSexpPEG_pegf
            (ignoreL (simpleSexpPEG_tokeq (CHR 39))
@@ -135,9 +135,9 @@ let sexpPEG_def = new_definition
        simpleSexpPEG_choicel
         [simpleSexpPEG_pegf (grabWS (simpleSexpPEG_tokeq (CHR 41)))
                             (K (SX_SYM "nil"));
-         seq (grabWS (simpleSexpPEG_pnt sxnt_sexp0))
-             (seq
-               (rpt (grabWS (simpleSexpPEG_pnt sxnt_sexp0))
+         peg_seq (grabWS (simpleSexpPEG_pnt sxnt_sexp0))
+             (peg_seq
+               (peg_rpt (grabWS (simpleSexpPEG_pnt sxnt_sexp0))
                     (\l. ITLIST SX_CONS l (SX_SYM "nil")))
                (simpleSexpPEG_choicel
                  [simpleSexpPEG_pegf (grabWS (simpleSexpPEG_tokeq (CHR 41)))
@@ -149,24 +149,24 @@ let sexpPEG_def = new_definition
                replace_nil)
              SX_CONS]);
       (INL sxnt_WSsexp,
-       ignoreL (rpt (tok isSpace (K arb_sexp)) (K arb_sexp))
+       ignoreL (peg_rpt (peg_tok isSpace (K arb_sexp)) (K arb_sexp))
                (simpleSexpPEG_pnt sxnt_sexp0));
       (INL sxnt_sexpnum,
-       seq (simpleSexpPEG_pnt sxnt_digit)
-           (rpt (simpleSexpPEG_pnt sxnt_digit)
+       peg_seq (simpleSexpPEG_pnt sxnt_digit)
+           (peg_rpt (simpleSexpPEG_pnt sxnt_digit)
                 (UNCURRY SX_CONS o (SX_NUM ## SX_NUM) o
                  FOLDL (\(l,n) d. (10 * l, 10 * n + destSXNUM d)) (1,0)))
            (\s1. (\(l,n). SX_NUM (destSXNUM s1 * l + n)) o
                  (destSXNUM ## destSXNUM) o destSXCONS));
       (INL sxnt_digit,
-       tok isDigit (\(c,l). SX_NUM (ORD c - ORD (CHR 48))));
+       peg_tok isDigit (\(c,l). SX_NUM (ORD c - ORD (CHR 48))));
       (INL sxnt_sexpsym,
-       seq (tok valid_first_symchar (\(c,l). SX_SYM [c]))
-           (rpt (tok valid_symchar (\(c,l). SX_SYM [c]))
+       peg_seq (peg_tok valid_first_symchar (\(c,l). SX_SYM [c]))
+           (peg_rpt (peg_tok valid_symchar (\(c,l). SX_SYM [c]))
                 (SX_SYM o (\l. ITLIST (\s a. APPEND (destSXSYM s) a) l [])))
            (\s1 s2. SX_SYM (APPEND (destSXSYM s1) (destSXSYM s2))));
       (INL sxnt_strcontents,
-       rpt (simpleSexpPEG_pnt sxnt_strchar)
+       peg_rpt (simpleSexpPEG_pnt sxnt_strchar)
            (SX_STR o (\l. ITLIST (\s a. APPEND (destSXSYM s) a) l [])));
       (INL sxnt_strchar,
        simpleSexpPEG_choicel
@@ -176,9 +176,9 @@ let sexpPEG_def = new_definition
       (INL sxnt_escapedstrchar,
        simpleSexpPEG_choicel
         [simpleSexpPEG_tokeq (CHR 92); simpleSexpPEG_tokeq (CHR 34);
-         error "Illegal string-escape"]);
+         peg_error "Illegal string-escape"]);
       (INL sxnt_normstrchar,
-       tok (\c. isPrint c /\ ~(c = CHR 34) /\ ~(c = CHR 92))
+       peg_tok (\c. isPrint c /\ ~(c = CHR 34) /\ ~(c = CHR 92))
            (\(c,l). SX_SYM [c]))])`;;
 
 let sexpPEG_start = prove

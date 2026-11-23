@@ -4,7 +4,7 @@
 (* that of Pancake, but we flatten locals from struct-layout to word-layout. *)
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
-(* - Names as notes/naming/names.tsv says: crep_exp, crep_prog and the       *)
+(* - Names as doc/names.tsv says: crep_exp, crep_prog and the                *)
 (*   constructors that clash with other languages (crep_Const, crep_Var,     *)
 (*   crep_Seq, ...); LoadGlob, StoreGlob and Crepop keep their names.        *)
 (* - HOL4 Type shift = ast$shift, varname = num and funname = mlstring are   *)

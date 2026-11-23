@@ -24,8 +24,8 @@
 (*   (pair_CASE; statements with them go through CASE_TERM).                 *)
 (* - Free variables of the HOL4 statements are universally quantified at the *)
 (*   front.                                                                  *)
-(* - HOL4 id (line 2162) is linear_scanProof_id (a common word, docs/        *)
-(*   CONVENTIONS.md section 3).                                              *)
+(* - HOL4 id (line 2162) is linear_scanProof_id (a common word, see          *)
+(*   doc/CONVENTIONS.md).                                                    *)
 (* - HOL4 LENGTH_toAList (line 5922, "TODO: move") is the LENGTH_toAList of  *)
 (*   hol4/sptree.ml (the same statement, HOL4's sptree has it too).          *)
 (* - LSCANPAUX_ names are local helpers (not HOL4 names).                    *)
@@ -775,7 +775,7 @@ let LSCANPAUX_get_intervals_withlive_EQ = prove
         (n2,int_beg2,int_end2) = get_intervals_withlive lt2 n b e live /\
         (no,int_beg1,eo) =
           get_intervals_withlive lt1 n2 (difference int_beg2 live) int_end2 live /\
-        bo = difference int_beg1 (union (get_live_backward lt1 live)
+        bo = difference int_beg1 (sptree_union (get_live_backward lt1 live)
                                         (get_live_backward lt2 live))) /\
    (!lt1 lt2 n b e live no bo eo.
       (no,bo,eo) = get_intervals_withlive (linear_scan_Seq lt1 lt2) n b e live <=>
@@ -798,13 +798,13 @@ let LSCANPAUX_get_intervals_ct_aux_EQ = prove
    (!cutset n b e live no bo eo lo.
       (no,bo,eo,lo) = get_intervals_ct_aux (reg_alloc_Set cutset) n b e live <=>
       no = n - &1 /\ bo = b /\ eo = numset_list_add_if_gt (MAP FST (toAList cutset)) n e /\
-      lo = union cutset live) /\
+      lo = sptree_union cutset live) /\
    (!ct1 ct2 n b e live no bo eo lo.
       (no,bo,eo,lo) = get_intervals_ct_aux (reg_alloc_Branch NONE ct1 ct2) n b e live <=>
       ?n2 int_beg2 int_end2 live2 live1.
         (n2,int_beg2,int_end2,live2) = get_intervals_ct_aux ct2 n b e live /\
         (no,bo,eo,live1) = get_intervals_ct_aux ct1 n2 int_beg2 int_end2 live /\
-        lo = union live1 live2) /\
+        lo = sptree_union live1 live2) /\
    (!cutset ct1 ct2 n b e live no bo eo lo.
       (no,bo,eo,lo) =
         get_intervals_ct_aux (reg_alloc_Branch (SOME cutset) ct1 ct2) n b e live <=>
@@ -812,7 +812,7 @@ let LSCANPAUX_get_intervals_ct_aux_EQ = prove
         (n2,int_beg2,int_end2,live2) = get_intervals_ct_aux ct2 n b e live /\
         (n1,bo,int_end1,live1) = get_intervals_ct_aux ct1 n2 int_beg2 int_end2 live /\
         no = n1 - &1 /\ eo = numset_list_add_if_gt (MAP FST (toAList cutset)) n1 int_end1 /\
-        lo = union cutset (union live1 live2)) /\
+        lo = sptree_union cutset (sptree_union live1 live2)) /\
    (!ct1 ct2 n b e live no bo eo lo.
       (no,bo,eo,lo) = get_intervals_ct_aux (reg_alloc_Seq ct1 ct2) n b e live <=>
       ?n2 int_beg2 int_end2 live2.
@@ -1222,7 +1222,7 @@ let get_intervals_withlive_intbeg_reduce = prove
     ASM_REWRITE_TAC[lookup_difference] THEN CONJ_TAC THEN X_GEN_TAC `r:num` THEN
     REPEAT(FIRST_X_ASSUM(MP_TAC o SPEC `r:num` o check (is_forall o concl))) THEN
     LSCANPAUX_OPT_TAC
-      [`lookup r (union (get_live_backward lt1 live) (get_live_backward lt2 live))`;
+      [`lookup r (sptree_union (get_live_backward lt1 live) (get_live_backward lt2 live))`;
        `lookup r (live:1 spt)`; `lookup r (int_beg1:int spt)`;
        `lookup r (int_beg2:int spt)`; `lookup r (beg_in:int spt)`];
     (* Seq *)
@@ -1379,7 +1379,7 @@ let get_intervals_withlive_beg_less_live = prove
         check (fun th -> is_forall (concl th) && free_in `live':1 spt` (concl th))) THEN
       ASM_REWRITE_TAC[] THEN
       LSCANPAUX_OPT_TAC
-        [`lookup r (union (get_live_backward lt1 live_in) (get_live_backward lt2 live_in))`;
+        [`lookup r (sptree_union (get_live_backward lt1 live_in) (get_live_backward lt2 live_in))`;
          `lookup r (int_beg1:int spt)`];
       (* lt2 *)
       MATCH_MP_TAC check_number_property_strong_monotone THEN
@@ -1392,14 +1392,14 @@ let get_intervals_withlive_beg_less_live = prove
       ASM_REWRITE_TAC[] THEN USE_THEN "a1" (MP_TAC o SPEC `r:num`) THEN
       REWRITE_TAC[lookup_difference] THEN
       LSCANPAUX_OPT_TAC
-        [`lookup r (union (get_live_backward lt1 live_in) (get_live_backward lt2 live_in))`;
+        [`lookup r (sptree_union (get_live_backward lt1 live_in) (get_live_backward lt2 live_in))`;
          `lookup r (live_in:1 spt)`; `lookup r (int_beg1:int spt)`;
          `lookup r (int_beg2:int spt)`];
       (* the live set of the whole branch *)
       REWRITE_TAC[get_live_backward_def; LET_DEF; LET_END_DEF;
         linear_scanProof_domain_numset_list_insert; branch_domain; lookup_difference] THEN
       X_GEN_TAC `r:num` THEN DISCH_TAC THEN
-      SUBGOAL_THEN `~(lookup r (union (get_live_backward lt1 live_in)
+      SUBGOAL_THEN `~(lookup r (sptree_union (get_live_backward lt1 live_in)
                                       (get_live_backward lt2 live_in)) = NONE)`
         (fun th -> REWRITE_TAC[th; case_def "option"]) THENL
        [ASM_REWRITE_TAC[lookup_NONE_domain; domain_union];
@@ -1693,11 +1693,11 @@ let get_intervals_withlive_registers_subset_beg = prove
     SUBGOAL_THEN `domain (int_end2:int spt) SUBSET domain (int_beg2:int spt) UNION
                   domain (get_live_backward lt2 live_in)` ASSUME_TAC THENL
      [REMOVE_THEN "ih2" MATCH_MP_TAC THEN ASM_MESON_TAC[]; ALL_TAC] THEN
-    ABBREV_TAC `tl = map (K (&0:int)) (get_live_backward lt2 live_in)` THEN
+    ABBREV_TAC `tl = sptree_map (K (&0:int)) (get_live_backward lt2 live_in)` THEN
     SUBGOAL_THEN `domain (tl:int spt) = domain (get_live_backward lt2 live_in)`
     ASSUME_TAC THENL [EXPAND_TAC "tl" THEN REWRITE_TAC[domain_map]; ALL_TAC] THEN
     RAPROOFAUX_TRIPLE_TAC
-      `get_intervals_withlive lt1 n2 (union (difference int_beg2 live_in) tl) int_end2
+      `get_intervals_withlive lt1 n2 (sptree_union (difference int_beg2 live_in) tl) int_end2
          live_in` `n1':int` `ib1':int spt` `ie1':int spt` THEN
     RAPROOFAUX_TRIPLE_TAC `get_intervals lt1 n2 LN int_end2` `na:int` `ba:int spt`
       `ea:int spt` THEN
@@ -1707,7 +1707,7 @@ let get_intervals_withlive_registers_subset_beg = prove
         `ba:int spt`; `ea:int spt`; `n_out:int`; `int_beg1:int spt`; `end_out:int spt`;
         `live_in:1 spt`] get_intervals_withlive_end_eq_get_intervals_end) THEN
       MP_TAC(ISPECL [`lt1:live_tree`; `n2:int`; `LN:int spt`;
-        `union (difference (int_beg2:int spt) (live_in:1 spt)) tl`; `int_end2:int spt`;
+        `sptree_union (difference (int_beg2:int spt) (live_in:1 spt)) tl`; `int_end2:int spt`;
         `na:int`; `ba:int spt`; `ea:int spt`; `n1':int`; `ib1':int spt`; `ie1':int spt`;
         `live_in:1 spt`] get_intervals_withlive_end_eq_get_intervals_end) THEN
       ASM_REWRITE_TAC[] THEN MESON_TAC[];
@@ -1715,7 +1715,7 @@ let get_intervals_withlive_registers_subset_beg = prove
     SUBGOAL_THEN `domain (end_out:int spt) SUBSET domain (ib1':int spt) UNION
                   domain (get_live_backward lt1 live_in)` ASSUME_TAC THENL
      [REMOVE_THEN "ih1" (MP_TAC o SPECL [`n2:int`;
-        `union (difference (int_beg2:int spt) (live_in:1 spt)) tl`; `int_end2:int spt`;
+        `sptree_union (difference (int_beg2:int spt) (live_in:1 spt)) tl`; `int_end2:int spt`;
         `n1':int`; `ib1':int spt`; `end_out:int spt`; `live_in:1 spt`]) THEN
       ASM_REWRITE_TAC[] THEN DISCH_THEN MATCH_MP_TAC THEN
       ASM_REWRITE_TAC[domain_union; domain_difference] THEN ASM SET_TAC[];
@@ -1725,7 +1725,7 @@ let get_intervals_withlive_registers_subset_beg = prove
     ASSUME_TAC THENL
      [MP_TAC(ISPECL [`lt1:live_tree`; `n2:int`; `difference (int_beg2:int spt) (live_in:1 spt)`;
         `int_end2:int spt`; `live_in:1 spt`; `n2:int`;
-        `union (difference (int_beg2:int spt) (live_in:1 spt)) tl`; `int_end2:int spt`;
+        `sptree_union (difference (int_beg2:int spt) (live_in:1 spt)) tl`; `int_end2:int spt`;
         `tl:int spt`; `n_out:int`; `int_beg1:int spt`; `end_out:int spt`; `n1':int`;
         `ib1':int spt`; `end_out:int spt`] get_intervals_withlive_beg_lipschitz) THEN
       ASM_REWRITE_TAC[] THEN DISCH_THEN MATCH_MP_TAC THEN
@@ -3709,8 +3709,8 @@ let edges_to_adjlist_step_def = cake_def
      else if (((<):int->int->bool) LEX ((<=):num->num->bool))
                (EL a (linear_scan_hidden_state_int_beg sth),a)
                (EL b (linear_scan_hidden_state_int_beg sth),b)
-     then insert b (CONS a (the [] (lookup b acc))) acc
-     else insert a (CONS b (the [] (lookup a acc))) acc`;;
+     then insert b (CONS a (misc_the [] (lookup b acc))) acc
+     else insert a (CONS b (misc_the [] (lookup a acc))) acc`;;
 (* HOL4 line 2957 *)
 let edges_to_adjlist_FOLDL = prove
  (CASE_TERM
@@ -3780,11 +3780,11 @@ let LSCANPAUX_LEX_TOTAL = prove
 let edges_to_adjlist_FOLDR_output = prove
  (`!forced sth. !reg.
      forbidden_is_from_forced forced (linear_scan_hidden_state_int_beg sth) reg
-       (the [] (lookup reg (ITLIST (\pair acc. edges_to_adjlist_step sth pair acc)
+       (misc_the [] (lookup reg (ITLIST (\pair acc. edges_to_adjlist_step sth pair acc)
                                    forced LN)))`,
     GEN_REWRITE_TAC I [SWAP_FORALL_THM] THEN GEN_TAC THEN
   REWRITE_TAC[forbidden_is_from_forced_def] THEN
-  LIST_INDUCT_TAC THENL [REWRITE_TAC[ITLIST; MEM; lookup_def; the_def]; ALL_TAC] THEN
+  LIST_INDUCT_TAC THENL [REWRITE_TAC[ITLIST; MEM; lookup_def; misc_the_def]; ALL_TAC] THEN
   POP_ASSUM MP_TAC THEN
   MP_TAC(ISPEC `h:num#num` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `a:num` (X_CHOOSE_THEN `b:num` SUBST_ALL_TAC)) THEN
@@ -3804,7 +3804,7 @@ let edges_to_adjlist_FOLDR_output = prove
                    (EL b (linear_scan_hidden_state_int_beg sth),b)` THEN
   POP_ASSUM(fun th -> REWRITE_TAC[th; lookup_insert] THEN ASSUME_TAC th) THENL
    [ASM_CASES_TAC `reg:num = b` THENL
-     [FIRST_X_ASSUM SUBST_ALL_TAC THEN REWRITE_TAC[the_def; MEM] THEN
+     [FIRST_X_ASSUM SUBST_ALL_TAC THEN REWRITE_TAC[misc_the_def; MEM] THEN
       REMOVE_THEN "ih" (fun th -> REWRITE_TAC[GSYM th]) THEN
       ASM_CASES_TAC `reg2:num = a` THEN ASM_REWRITE_TAC[] THEN ASM_MESON_TAC[];
       POP_ASSUM(fun th -> REWRITE_TAC[th] THEN ASSUME_TAC th) THEN
@@ -3812,7 +3812,7 @@ let edges_to_adjlist_FOLDR_output = prove
       ASM_MESON_TAC[LSCANPAUX_LEX_ANTISYM]];
     FIRST_ASSUM(ASSUME_TAC o MATCH_MP LSCANPAUX_LEX_TOTAL) THEN
     ASM_CASES_TAC `reg:num = a` THENL
-     [FIRST_X_ASSUM SUBST_ALL_TAC THEN REWRITE_TAC[the_def; MEM] THEN
+     [FIRST_X_ASSUM SUBST_ALL_TAC THEN REWRITE_TAC[misc_the_def; MEM] THEN
       REMOVE_THEN "ih" (fun th -> REWRITE_TAC[GSYM th]) THEN
       ASM_CASES_TAC `reg2:num = b` THEN ASM_REWRITE_TAC[] THEN ASM_MESON_TAC[];
       POP_ASSUM(fun th -> REWRITE_TAC[th] THEN ASSUME_TAC th) THEN
@@ -3829,7 +3829,7 @@ let edges_to_adjlist_output = prove
          forced ==>
      ?adjlist. edges_to_adjlist forced LN sth = (M_success adjlist,sth) /\
                !reg. forbidden_is_from_forced forced (linear_scan_hidden_state_int_beg sth)
-                       reg (the [] (lookup reg adjlist))`,
+                       reg (misc_the [] (lookup reg adjlist))`,
     REPEAT STRIP_TAC THEN ASM_SIMP_TAC[edges_to_adjlist_FOLDL] THEN
   (fun (asl,w as g) ->
      let eq = fst(dest_conj(snd(dest_exists w))) in
@@ -4742,10 +4742,10 @@ let linear_reg_alloc_step_pass1_invariants = prove
      good_linear_scan_state st sth l pos forced mincol /\
      pos <= EL reg (linear_scan_hidden_state_int_beg sth) /\
      reg < LENGTH (linear_scan_hidden_state_colors sth) /\
-     forbidden_is_from_forced_list forced l reg (the [] (lookup reg forced_adj)) /\
-     ALL (\r. MEM r l) (the [] (lookup reg forced_adj)) /\
-     ALL (\r. r < LENGTH (linear_scan_hidden_state_colors sth)) (the [] (lookup reg forced_adj)) /\
-     ALL (\r. r < LENGTH (linear_scan_hidden_state_colors sth)) (the [] (lookup reg moves)) /\
+     forbidden_is_from_forced_list forced l reg (misc_the [] (lookup reg forced_adj)) /\
+     ALL (\r. MEM r l) (misc_the [] (lookup reg forced_adj)) /\
+     ALL (\r. r < LENGTH (linear_scan_hidden_state_colors sth)) (misc_the [] (lookup reg forced_adj)) /\
+     ALL (\r. r < LENGTH (linear_scan_hidden_state_colors sth)) (misc_the [] (lookup reg moves)) /\
      EL reg (linear_scan_hidden_state_int_beg sth) <=
        EL reg (linear_scan_hidden_state_int_end sth) ==>
      ?stout sthout.
@@ -4803,7 +4803,7 @@ let linear_reg_alloc_step_pass1_invariants = prove
   USE_THEN "fadjlt" (fun th -> REWRITE_TAC[MATCH_MP st_ex_MAP_colors_sub th]) THEN
   REWRITE_TAC[case_def "prod"; case_def "exc"; LET_DEF; LET_END_DEF] THEN
   MP_TAC(SPECL [`forced:(num#num)list`; `l:num list`; `reg:num`;
-    `the [] (lookup reg forced_adj):num list`; `linear_scan_hidden_state_colors sth`]
+    `misc_the [] (lookup reg forced_adj):num list`; `linear_scan_hidden_state_colors sth`]
     LSCANPAUX_forced_forbidden) THEN
   ANTS_TAC THENL
    [USE_THEN "ffl" (fun a -> USE_THEN "fadjl" (fun b -> REWRITE_TAC[a; b])); ALL_TAC] THEN
@@ -4815,9 +4815,9 @@ let linear_reg_alloc_step_pass1_invariants = prove
      [POP_ASSUM(fun th -> REWRITE_TAC[th] THEN ASSUME_TAC th) THEN
       MP_TAC(SPECL [`st1:linear_scan_state`; `sth:linear_scan_hidden_state`; `l:num list`;
         `[]:num list`;
-        `union (linear_scan_state_phyregs st1)
+        `sptree_union (linear_scan_state_phyregs st1)
            (fromAList (MAP (\c. (c,one)) (MAP (\r. EL r (linear_scan_hidden_state_colors sth))
-              (the [] (lookup reg forced_adj)))))`;
+              (misc_the [] (lookup reg forced_adj)))))`;
         `forced:(num#num)list`; `reg:num`; `T`; `mincol:num`]
         linear_reg_alloc_step_aux_invariants) THEN
       ANTS_TAC THENL
@@ -4855,9 +4855,9 @@ let linear_reg_alloc_step_pass1_invariants = prove
     USE_THEN "movlt" (fun th -> REWRITE_TAC[MATCH_MP st_ex_MAP_colors_sub th]) THEN
     REWRITE_TAC[case_def "prod"; case_def "exc"] THEN
     MP_TAC(SPECL [`st1:linear_scan_state`; `sth:linear_scan_hidden_state`; `l:num list`;
-      `MAP (\r. EL r (linear_scan_hidden_state_colors sth)) (the [] (lookup reg moves))`;
+      `MAP (\r. EL r (linear_scan_hidden_state_colors sth)) (misc_the [] (lookup reg moves))`;
       `fromAList (MAP (\c. (c,one)) (MAP (\r. EL r (linear_scan_hidden_state_colors sth))
-         (the [] (lookup reg forced_adj))))`;
+         (misc_the [] (lookup reg forced_adj))))`;
       `forced:(num#num)list`; `reg:num`; `F`; `mincol:num`]
       linear_reg_alloc_step_aux_invariants) THEN
     ANTS_TAC THENL
@@ -4884,10 +4884,10 @@ let linear_reg_alloc_step_pass2_invariants = prove
      good_linear_scan_state st sth l pos forced mincol /\
      pos <= EL reg (linear_scan_hidden_state_int_beg sth) /\
      reg < LENGTH (linear_scan_hidden_state_colors sth) /\
-     forbidden_is_from_forced_list forced l reg (the [] (lookup reg forced_adj)) /\
-     ALL (\r. MEM r l) (the [] (lookup reg forced_adj)) /\
-     ALL (\r. r < LENGTH (linear_scan_hidden_state_colors sth)) (the [] (lookup reg forced_adj)) /\
-     ALL (\r. r < LENGTH (linear_scan_hidden_state_colors sth)) (the [] (lookup reg moves)) /\
+     forbidden_is_from_forced_list forced l reg (misc_the [] (lookup reg forced_adj)) /\
+     ALL (\r. MEM r l) (misc_the [] (lookup reg forced_adj)) /\
+     ALL (\r. r < LENGTH (linear_scan_hidden_state_colors sth)) (misc_the [] (lookup reg forced_adj)) /\
+     ALL (\r. r < LENGTH (linear_scan_hidden_state_colors sth)) (misc_the [] (lookup reg moves)) /\
      EL reg (linear_scan_hidden_state_int_beg sth) <=
        EL reg (linear_scan_hidden_state_int_end sth) ==>
      ?stout sthout.
@@ -4935,7 +4935,7 @@ let linear_reg_alloc_step_pass2_invariants = prove
   USE_THEN "movlt" (fun th -> REWRITE_TAC[MATCH_MP st_ex_MAP_colors_sub th]) THEN
   REWRITE_TAC[case_def "prod"; case_def "exc"; LET_DEF; LET_END_DEF] THEN
   MP_TAC(SPECL [`forced:(num#num)list`; `l:num list`; `reg:num`;
-    `the [] (lookup reg forced_adj):num list`; `linear_scan_hidden_state_colors sth`]
+    `misc_the [] (lookup reg forced_adj):num list`; `linear_scan_hidden_state_colors sth`]
     LSCANPAUX_forced_forbidden) THEN
   ANTS_TAC THENL
    [USE_THEN "ffl" (fun a -> USE_THEN "fadjl" (fun b -> REWRITE_TAC[a; b])); ALL_TAC] THEN
@@ -4945,9 +4945,9 @@ let linear_reg_alloc_step_pass2_invariants = prove
   THENL
    [MP_TAC(SPECL [`st1:linear_scan_state`; `sth:linear_scan_hidden_state`; `l:num list`;
       `[]:num list`;
-      `union (linear_scan_state_phyregs st1)
+      `sptree_union (linear_scan_state_phyregs st1)
          (fromAList (MAP (\c. (c,one)) (MAP (\r. EL r (linear_scan_hidden_state_colors sth))
-            (the [] (lookup reg forced_adj)))))`;
+            (misc_the [] (lookup reg forced_adj)))))`;
       `forced:(num#num)list`; `reg:num`; `F`; `mincol:num`]
       linear_reg_alloc_step_aux_invariants) THEN
     ANTS_TAC THENL
@@ -4965,9 +4965,9 @@ let linear_reg_alloc_step_pass2_invariants = prove
         REWRITE_TAC[SUBSET; IN_ELIM_THM] THEN MESON_TAC[]];
       ALL_TAC];
     MP_TAC(SPECL [`st1:linear_scan_state`; `sth:linear_scan_hidden_state`; `l:num list`;
-      `MAP (\r. EL r (linear_scan_hidden_state_colors sth)) (the [] (lookup reg moves))`;
+      `MAP (\r. EL r (linear_scan_hidden_state_colors sth)) (misc_the [] (lookup reg moves))`;
       `fromAList (MAP (\c. (c,one)) (MAP (\r. EL r (linear_scan_hidden_state_colors sth))
-         (the [] (lookup reg forced_adj))))`;
+         (misc_the [] (lookup reg forced_adj))))`;
       `forced:(num#num)list`; `reg:num`; `F`; `mincol:num`]
       linear_reg_alloc_step_aux_invariants) THEN
     ANTS_TAC THENL
@@ -5079,13 +5079,13 @@ let st_ex_FOLDL_linear_reg_alloc_step_passn_invariants_lemma = prove
      ALL (\r. pos <= EL r (linear_scan_hidden_state_int_beg sth)) regl /\
      ALL (\r. r < LENGTH (linear_scan_hidden_state_colors sth)) regl /\
      (!r. forbidden_is_from_forced_sublist (APPEND l regl) forced
-            (linear_scan_hidden_state_int_beg sth) r (the [] (lookup r forced_adj))) /\
+            (linear_scan_hidden_state_int_beg sth) r (misc_the [] (lookup r forced_adj))) /\
      ALL (\r12. match r12 with
                   (r1,r2) -> MEM r1 (APPEND l regl) /\ MEM r2 (APPEND l regl)) forced /\
      (!r1. ALL (\r2. r2 < LENGTH (linear_scan_hidden_state_colors sth))
-               (the [] (lookup r1 forced_adj))) /\
+               (misc_the [] (lookup r1 forced_adj))) /\
      (!r1. ALL (\r2. r2 < LENGTH (linear_scan_hidden_state_colors sth))
-               (the [] (lookup r1 moves))) /\
+               (misc_the [] (lookup r1 moves))) /\
      ALL (\r. EL r (linear_scan_hidden_state_int_beg sth) <=
               EL r (linear_scan_hidden_state_int_end sth)) regl ==>
      ?stout sthout posout.
@@ -5126,7 +5126,7 @@ let st_ex_FOLDL_linear_reg_alloc_step_passn_invariants_lemma = prove
   SUBGOAL_THEN `~MEM (h:num) l` (LABEL_TAC "hnl") THENL
    [USE_THEN "disj" MP_TAC THEN REWRITE_TAC[GSYM ALL_MEM; MEM] THEN MESON_TAC[]; ALL_TAC] THEN
   MP_TAC(SPECL [`linear_scan_hidden_state_int_beg sth`; `l:num list`; `h:num`; `t:num list`;
-    `forced:(num#num)list`; `the [] (lookup h forced_adj):num list`] LSCANPAUX_passn_forced) THEN
+    `forced:(num#num)list`; `misc_the [] (lookup h forced_adj):num list`] LSCANPAUX_passn_forced) THEN
   ANTS_TAC THENL
    [USE_THEN "sorted" (fun th -> REWRITE_TAC[th]) THEN
     USE_THEN "less" (fun th -> REWRITE_TAC[th]) THEN
@@ -5240,12 +5240,12 @@ let st_ex_FOLDL_linear_reg_alloc_step_passn_invariants = prove
      ALL (\r. pos <= EL r (linear_scan_hidden_state_int_beg sth)) regl /\
      ALL (\r. r < LENGTH (linear_scan_hidden_state_colors sth)) regl /\
      (!r. forbidden_is_from_forced_sublist regl forced
-            (linear_scan_hidden_state_int_beg sth) r (the [] (lookup r forced_adj))) /\
+            (linear_scan_hidden_state_int_beg sth) r (misc_the [] (lookup r forced_adj))) /\
      ALL (\r12. match r12 with (r1,r2) -> MEM r1 regl /\ MEM r2 regl) forced /\
      (!r1. ALL (\r2. r2 < LENGTH (linear_scan_hidden_state_colors sth))
-               (the [] (lookup r1 forced_adj))) /\
+               (misc_the [] (lookup r1 forced_adj))) /\
      (!r1. ALL (\r2. r2 < LENGTH (linear_scan_hidden_state_colors sth))
-               (the [] (lookup r1 moves))) /\
+               (misc_the [] (lookup r1 moves))) /\
      ALL (\r. EL r (linear_scan_hidden_state_int_beg sth) <=
               EL r (linear_scan_hidden_state_int_end sth)) regl ==>
      ?stout sthout posout.
@@ -6351,9 +6351,9 @@ let forbidden_is_from_forced_take_sublist = prove
  (CASE_TERM
   `!l forced int_beg forced_adj.
      ALL (\r12. match r12 with (r1,r2) -> MEM r1 l /\ MEM r2 l) forced /\
-     (!r. forbidden_is_from_forced forced int_beg r (the [] (lookup r forced_adj))) ==>
+     (!r. forbidden_is_from_forced forced int_beg r (misc_the [] (lookup r forced_adj))) ==>
      (!r. forbidden_is_from_forced_sublist l forced int_beg r
-            (the [] (lookup r forced_adj)))`,
+            (misc_the [] (lookup r forced_adj)))`,
     REPEAT GEN_TAC THEN
   REWRITE_TAC[forbidden_is_from_forced_def; forbidden_is_from_forced_sublist_def;
               GSYM ALL_MEM; FORALL_PAIR_THM; pair_CASE] THEN
@@ -6949,7 +6949,7 @@ let LSCANPAUX_ffs_restrict = prove
 
 (* LSCANPAUX_the_lookup_map_FILTER *)
 let LSCANPAUX_the_lookup_map_FILTER = prove
- (`!(P:A->bool) r t. the [] (lookup r (map (FILTER P) t)) = FILTER P (the [] (lookup r t))`,
+ (`!(P:A->bool) r t. misc_the [] (lookup r (sptree_map (FILTER P) t)) = FILTER P (misc_the [] (lookup r t))`,
   REPEAT GEN_TAC THEN REWRITE_TAC[lookup_map] THEN MATCH_MP_TAC the_OPTION_MAP THEN
   REWRITE_TAC[FILTER]);;
 
@@ -7074,13 +7074,13 @@ let linear_reg_alloc_intervals_correct = prove
     ASM_MESON_TAC[];
     ALL_TAC] THEN
   SUBGOAL_THEN `!r. forbidden_is_from_forced_sublist reglist forced
-                      (linear_scan_hidden_state_int_beg sth) r (the [] (lookup r fadj))`
+                      (linear_scan_hidden_state_int_beg sth) r (misc_the [] (lookup r fadj))`
     (LABEL_TAC "fsub") THENL
    [MATCH_MP_TAC forbidden_is_from_forced_take_sublist THEN
     USE_THEN "fr" (fun a -> USE_THEN "fff" (fun b -> REWRITE_TAC[a; b]));
     ALL_TAC] THEN
   SUBGOAL_THEN `!r1. ALL (\r2. r2 < LENGTH (linear_scan_hidden_state_colors sth))
-                         (the [] (lookup r1 fadj))` (LABEL_TAC "fadjlt") THENL
+                         (misc_the [] (lookup r1 fadj))` (LABEL_TAC "fadjlt") THENL
    [X_GEN_TAC `r1:num` THEN REWRITE_TAC[GSYM ALL_MEM] THEN X_GEN_TAC `r2:num` THEN
     USE_THEN "fff" (fun th -> REWRITE_TAC[GSYM(REWRITE_RULE[forbidden_is_from_forced_def]
       (SPEC `r1:num` th))]) THEN
@@ -7089,7 +7089,7 @@ let linear_reg_alloc_intervals_correct = prove
     USE_THEN "rlt" (MP_TAC o REWRITE_RULE[GSYM ALL_MEM]) THEN ASM_MESON_TAC[];
     ALL_TAC] THEN
   SUBGOAL_THEN `!r1. ALL (\r2. r2 < LENGTH (linear_scan_hidden_state_colors sth))
-                         (the [] (lookup r1 madj))` (LABEL_TAC "madjlt") THENL
+                         (misc_the [] (lookup r1 madj))` (LABEL_TAC "madjlt") THENL
    [X_GEN_TAC `r1:num` THEN REWRITE_TAC[GSYM ALL_MEM] THEN X_GEN_TAC `r2:num` THEN
     USE_THEN "mff" (fun th -> REWRITE_TAC[GSYM(REWRITE_RULE[forbidden_is_from_forced_def]
       (SPEC `r1:num` th))]) THEN
@@ -7189,9 +7189,9 @@ let linear_reg_alloc_intervals_correct = prove
   MP_TAC(SPECL [`stacklist:num list`;
     `linear_reg_alloc_pass2_initial_state k (LENGTH (stacklist:num list))`;
     `s2:linear_scan_hidden_state`; `pos2:int`; `F`;
-    `map (FILTER (\r. ~(lookup r (fromAList (MAP (\r. (r,one)) (stacklist:num list))) = NONE)))
+    `sptree_map (FILTER (\r. ~(lookup r (fromAList (MAP (\r. (r,one)) (stacklist:num list))) = NONE)))
          (madj:(num list)spt)`;
-    `map (FILTER (\r. ~(lookup r (fromAList (MAP (\r. (r,one)) (stacklist:num list))) = NONE)))
+    `sptree_map (FILTER (\r. ~(lookup r (fromAList (MAP (\r. (r,one)) (stacklist:num list))) = NONE)))
          (fadj:(num list)spt)`;
     CASE_TERM `FILTER (\r12. match r12 with (r1,r2) -> MEM r1 (stacklist:num list) /\
                                                        MEM r2 stacklist)
@@ -7299,16 +7299,16 @@ let good_bijection_state_def = cake_def
      (sp_inverts (bijection_state_bij st) (bijection_state_invbij st) /\
       sp_inverts (bijection_state_invbij st) (bijection_state_bij st)) /\
      ((!r. r IN regset ==>
-           (is_stack_var r <=> is_stack_var (the 0 (lookup r (bijection_state_bij st))))) /\
+           (is_stack_var r <=> is_stack_var (misc_the 0 (lookup r (bijection_state_bij st))))) /\
       (!r. r IN regset ==>
-           (is_alloc_var r <=> is_alloc_var (the 0 (lookup r (bijection_state_bij st))))) /\
-      (!r. r IN regset /\ is_phy_var r ==> r = the 0 (lookup r (bijection_state_bij st)))) /\
+           (is_alloc_var r <=> is_alloc_var (misc_the 0 (lookup r (bijection_state_bij st))))) /\
+      (!r. r IN regset /\ is_phy_var r ==> r = misc_the 0 (lookup r (bijection_state_bij st)))) /\
      (!r. r IN domain (bijection_state_invbij st) /\ is_stack_var r ==>
           r < bijection_state_nstack st) /\
      (!r. r IN domain (bijection_state_invbij st) /\ is_alloc_var r ==>
           r < bijection_state_nalloc st) /\
      (is_stack_var (bijection_state_nstack st) /\ is_alloc_var (bijection_state_nalloc st)) /\
-     (!r. the 0 (lookup r (bijection_state_bij st)) <= bijection_state_nmax st)`;;
+     (!r. misc_the 0 (lookup r (bijection_state_bij st)) <= bijection_state_nmax st)`;;
 (* HOL4 line 5018 *)
 let convention_partitions_or = prove
  (`!r. (is_phy_var r /\ ~is_stack_var r /\ ~is_alloc_var r) \/
@@ -7358,13 +7358,13 @@ let LSCANPAUX_gbs_insert = prove
     MATCH_MP_TAC sp_inverts_insert THEN ASM_REWRITE_TAC[];
     MATCH_MP_TAC sp_inverts_insert THEN ASM_REWRITE_TAC[];
     REWRITE_TAC[IN_INSERT; lookup_insert] THEN X_GEN_TAC `y:num` THEN
-    ASM_CASES_TAC `y:num = r` THEN ASM_REWRITE_TAC[the_def];
+    ASM_CASES_TAC `y:num = r` THEN ASM_REWRITE_TAC[misc_the_def];
     REWRITE_TAC[IN_INSERT; lookup_insert] THEN X_GEN_TAC `y:num` THEN
-    ASM_CASES_TAC `y:num = r` THEN ASM_REWRITE_TAC[the_def];
+    ASM_CASES_TAC `y:num = r` THEN ASM_REWRITE_TAC[misc_the_def];
     REWRITE_TAC[IN_INSERT; lookup_insert] THEN X_GEN_TAC `y:num` THEN
-    ASM_CASES_TAC `y:num = r` THEN ASM_REWRITE_TAC[the_def];
+    ASM_CASES_TAC `y:num = r` THEN ASM_REWRITE_TAC[misc_the_def];
     REWRITE_TAC[lookup_insert] THEN X_GEN_TAC `y:num` THEN
-    COND_CASES_TAC THEN REWRITE_TAC[the_def] THENL
+    COND_CASES_TAC THEN REWRITE_TAC[misc_the_def] THENL
      [ARITH_TAC;
       MATCH_MP_TAC LE_TRANS THEN EXISTS_TAC `bijection_state_nmax st` THEN
       ASM_REWRITE_TAC[] THEN ARITH_TAC]]);;
@@ -7401,13 +7401,13 @@ let find_bijection_invariants = prove
       MP_TAC(SPEC `fr:num` convention_partitions_or) THEN STRIP_TAC THENL
        [USE_THEN "g6" (fun th -> MP_TAC(MATCH_MP th (CONJ
           (ASSUME `fr IN domain (bijection_state_bij st)`) (ASSUME `is_phy_var fr`)))) THEN
-        ASM_REWRITE_TAC[the_def] THEN
+        ASM_REWRITE_TAC[misc_the_def] THEN
         DISCH_THEN SUBST_ALL_TAC THEN USE_THEN "rn" MP_TAC THEN
         REWRITE_TAC[domain_lookup] THEN ASM_MESON_TAC[];
         USE_THEN "g4" (fun th -> MP_TAC(MATCH_MP th
-          (ASSUME `fr IN domain (bijection_state_bij st)`))) THEN ASM_REWRITE_TAC[the_def];
+          (ASSUME `fr IN domain (bijection_state_bij st)`))) THEN ASM_REWRITE_TAC[misc_the_def];
         USE_THEN "g5" (fun th -> MP_TAC(MATCH_MP th
-          (ASSUME `fr IN domain (bijection_state_bij st)`))) THEN ASM_REWRITE_TAC[the_def]];
+          (ASSUME `fr IN domain (bijection_state_bij st)`))) THEN ASM_REWRITE_TAC[misc_the_def]];
       ALL_TAC] THEN
     ASM_REWRITE_TAC[domain_insert; IN_INSERT] THEN CONJ_TAC THEN X_GEN_TAC `y:num` THEN
     ASM_CASES_TAC `y:num = r` THEN ASM_REWRITE_TAC[] THEN ASM_MESON_TAC[];
@@ -7549,7 +7549,7 @@ let find_bijection_clash_tree_invariants = prove
 let find_bijection_init_invariants = prove
  (`good_bijection_state find_bijection_init {}`,
     REWRITE_TAC(good_bijection_state_def :: find_bijection_init_def :: LSCANPAUX_bs_record) THEN
-  REWRITE_TAC[sp_inverts_def; lookup_def; domain_def; NOT_IN_EMPTY; the_def; LE_REFL;
+  REWRITE_TAC[sp_inverts_def; lookup_def; domain_def; NOT_IN_EMPTY; misc_the_def; LE_REFL;
               option_DISTINCT; is_stack_var_def; is_alloc_var_def] THEN
   CONV_TAC NUM_REDUCE_CONV);;
 
@@ -8197,11 +8197,11 @@ let fix_domination_live_tree_registers = prove
 (* HOL4 line 5419 *)
 let get_intervals_beg_less_end = prove
  (`!lt n_in beg_in end_in n_out beg_out end_out.
-     (!r. r IN domain beg_in ==> the (&0) (lookup r beg_in) <= the (&0) (lookup r end_in)) /\
+     (!r. r IN domain beg_in ==> misc_the (&0) (lookup r beg_in) <= misc_the (&0) (lookup r end_in)) /\
      domain beg_in SUBSET domain end_in /\
      (n_out,beg_out,end_out) = get_intervals lt n_in beg_in end_in ==>
      (!r. r IN domain beg_out ==>
-          the (&0) (lookup r beg_out) <= the (&0) (lookup r end_out)) /\
+          misc_the (&0) (lookup r beg_out) <= misc_the (&0) (lookup r end_out)) /\
      domain beg_out SUBSET domain end_out`,
     MATCH_MP_TAC live_tree_INDUCT THEN REWRITE_TAC[get_intervals_def; PAIR_EQ] THEN
   REPEAT CONJ_TAC THENL
@@ -8216,10 +8216,10 @@ let get_intervals_beg_less_end = prove
        [MATCH_MP_TAC INT_LE_TRANS THEN EXISTS_TAC `n_in:int` THEN CONJ_TAC THENL
          [CASES_ON `lookup r (beg_in:int spt)` THEN
           REWRITE_TAC[case_def "option"] THEN TRY COND_CASES_TAC THEN
-          REWRITE_TAC[the_def] THEN ASM_INT_ARITH_TAC;
+          REWRITE_TAC[misc_the_def] THEN ASM_INT_ARITH_TAC;
           CASES_ON `lookup r (end_in:int spt)` THEN
           REWRITE_TAC[case_def "option"] THEN TRY COND_CASES_TAC THEN
-          REWRITE_TAC[the_def] THEN ASM_INT_ARITH_TAC];
+          REWRITE_TAC[misc_the_def] THEN ASM_INT_ARITH_TAC];
         USE_THEN "le" MATCH_MP_TAC THEN ASM_MESON_TAC[]];
       USE_THEN "sub" MP_TAC THEN SET_TAC[]];
     X_GEN_TAC `l:num list` THEN REPEAT GEN_TAC THEN
@@ -8231,9 +8231,9 @@ let get_intervals_beg_less_end = prove
        [USE_THEN "sub" MP_TAC THEN ASM SET_TAC[]; ALL_TAC] THEN
       REWRITE_TAC[domain_lookup] THEN DISCH_THEN(X_CHOOSE_TAC `ve:int`) THEN
       REMOVE_THEN "le" (MP_TAC o SPEC `r:num`) THEN
-      ASM_REWRITE_TAC[lookup_numset_list_add_if_gt; case_def "option"; the_def] THEN
-      ASM_CASES_TAC `MEM (r:num) l` THEN ASM_REWRITE_TAC[the_def] THEN
-      ASM_CASES_TAC `ve <= n_in:int` THEN ASM_REWRITE_TAC[the_def] THEN
+      ASM_REWRITE_TAC[lookup_numset_list_add_if_gt; case_def "option"; misc_the_def] THEN
+      ASM_CASES_TAC `MEM (r:num) l` THEN ASM_REWRITE_TAC[misc_the_def] THEN
+      ASM_CASES_TAC `ve <= n_in:int` THEN ASM_REWRITE_TAC[misc_the_def] THEN
       POP_ASSUM MP_TAC THEN INT_ARITH_TAC;
       USE_THEN "sub" MP_TAC THEN SET_TAC[]];
     MAP_EVERY X_GEN_TAC [`lt1:live_tree`; `lt2:live_tree`] THEN
@@ -8383,7 +8383,7 @@ let linear_reg_alloc_without_renaming_correct = prove
       REMOVE_THEN "ble" (MP_TAC o SPEC `r:num`) THEN
       USE_THEN "dib" (fun th -> REWRITE_TAC[th]) THEN
       USE_THEN "lk" (fun th -> REWRITE_TAC[MATCH_MP th (ASSUME `in_clash_tree ct r`)]) THEN
-      ASM_REWRITE_TAC[the_def];
+      ASM_REWRITE_TAC[misc_the_def];
       USE_THEN "Rd" ACCEPT_TAC;
       REWRITE_TAC[GSYM ALL_MEM] THEN ASM_MESON_TAC[];
       USE_THEN "lcb" ACCEPT_TAC;
@@ -8642,10 +8642,10 @@ let check_clash_tree_output_subset = prove
 (* HOL4 line 5676 *)
 let domain_apply_bij_set = prove
  (`!(s:A spt) bij.
-     domain (foldi (\r v acc. insert (the 0 (lookup r bij)) one acc) 0 LN s) =
-     IMAGE (\r. the 0 (lookup r bij)) (domain s)`,
+     domain (foldi (\r v acc. insert (misc_the 0 (lookup r bij)) one acc) 0 LN s) =
+     IMAGE (\r. misc_the 0 (lookup r bij)) (domain s)`,
     REPEAT GEN_TAC THEN
-  MP_TAC(ISPECL [`s:A spt`; `\r. the 0 (lookup r (bij:num spt))`]
+  MP_TAC(ISPECL [`s:A spt`; `\r. misc_the 0 (lookup r (bij:num spt))`]
     LSCANPAUX_domain_foldi_insert) THEN
   BETA_TAC THEN DISCH_THEN ACCEPT_TAC);;
 
@@ -8654,7 +8654,7 @@ let in_clash_tree_apply_bij = prove
  (`!bij ct.
      in_clash_tree ct SUBSET domain bij ==>
      in_clash_tree (apply_bij_on_clash_tree ct bij) =
-     IMAGE (\r. the 0 (lookup r bij)) (in_clash_tree ct)`,
+     IMAGE (\r. misc_the 0 (lookup r bij)) (in_clash_tree ct)`,
     GEN_TAC THEN MATCH_MP_TAC clash_tree_INDUCT THEN REPEAT CONJ_TAC THENL
    [REWRITE_TAC[apply_bij_on_clash_tree_def; in_clash_tree_set_eq; SET_OF_LIST_MAP;
                 IMAGE_UNION];
@@ -8687,12 +8687,12 @@ let LSCANPAUX_sp_inverts_app = prove
  (`!bij invbij.
      sp_inverts bij invbij ==>
      !r. r IN domain bij ==>
-         the 0 (lookup r bij) IN domain invbij /\
-         the 0 (lookup (the 0 (lookup r bij)) invbij) = r`,
+         misc_the 0 (lookup r bij) IN domain invbij /\
+         misc_the 0 (lookup (misc_the 0 (lookup r bij)) invbij) = r`,
   REWRITE_TAC[sp_inverts_def; domain_lookup] THEN REPEAT GEN_TAC THEN DISCH_TAC THEN
   X_GEN_TAC `r:num` THEN DISCH_THEN(X_CHOOSE_TAC `v:num`) THEN
-  FIRST_X_ASSUM(MP_TAC o SPECL [`r:num`; `v:num`]) THEN ASM_REWRITE_TAC[the_def] THEN
-  DISCH_TAC THEN ASM_REWRITE_TAC[the_def; option_INJ] THEN MESON_TAC[]);;
+  FIRST_X_ASSUM(MP_TAC o SPECL [`r:num`; `v:num`]) THEN ASM_REWRITE_TAC[misc_the_def] THEN
+  DISCH_TAC THEN ASM_REWRITE_TAC[misc_the_def; option_INJ] THEN MESON_TAC[]);;
 
 (* LSCANPAUX_INJ_bij: the renamed colouring is injective on the renamed set *)
 let LSCANPAUX_INJ_bij = prove
@@ -8948,15 +8948,15 @@ let check_clash_tree_apply_bijection = prove
      in_clash_tree ct SUBSET domain bij /\
      domain live SUBSET domain invbij /\
      domain flive = IMAGE f (domain live) /\
-     domain flive' = IMAGE (\r. f (the 0 (lookup r bij))) (domain live') /\
-     domain live' = IMAGE (\r. the 0 (lookup r invbij)) (domain live) /\
+     domain flive' = IMAGE (\r. f (misc_the 0 (lookup r bij))) (domain live') /\
+     domain live' = IMAGE (\r. misc_the 0 (lookup r invbij)) (domain live) /\
      INJ f (domain live) UNIV /\
      check_clash_tree f (apply_bij_on_clash_tree ct bij) live flive =
        SOME (livein,flivein) ==>
      ?livein' flivein'.
-       check_clash_tree (\r. f (the 0 (lookup r bij))) ct live' flive' =
+       check_clash_tree (\r. f (misc_the 0 (lookup r bij))) ct live' flive' =
          SOME (livein',flivein') /\
-       domain livein' = IMAGE (\r. the 0 (lookup r invbij)) (domain livein)`,
+       domain livein' = IMAGE (\r. misc_the 0 (lookup r invbij)) (domain livein)`,
     MAP_EVERY X_GEN_TAC [`bij:num spt`; `invbij:num spt`; `f:num->num`] THEN
   MATCH_MP_TAC clash_tree_INDUCT THEN REPEAT CONJ_TAC THENL
    [(* Delta *)
@@ -8966,7 +8966,7 @@ let check_clash_tree_apply_bijection = prove
     REWRITE_TAC[apply_bij_on_clash_tree_def; in_clash_tree_set_eq; UNION_SUBSET] THEN
     STRIP_TAC THEN
     MP_TAC(ISPECL [`domain (bij:num spt)`; `domain (invbij:num spt)`;
-      `\x. the 0 (lookup x (bij:num spt))`; `\x. the 0 (lookup x (invbij:num spt))`;
+      `\x. misc_the 0 (lookup x (bij:num spt))`; `\x. misc_the 0 (lookup x (invbij:num spt))`;
       `f:num->num`; `wl:num list`; `rl:num list`; `live:1 spt`; `flive:1 spt`;
       `live':1 spt`; `flive':1 spt`; `livein:1 spt`; `flivein:1 spt`]
       LSCANPAUX_cct_bij_delta) THEN
@@ -8981,7 +8981,7 @@ let check_clash_tree_apply_bijection = prove
                 LSCANPAUX_check_clash_tree_SOME] THEN
     STRIP_TAC THEN
     MP_TAC(ISPECL [`domain (bij:num spt)`; `domain (invbij:num spt)`;
-      `\x. the 0 (lookup x (bij:num spt))`; `\x. the 0 (lookup x (invbij:num spt))`;
+      `\x. misc_the 0 (lookup x (bij:num spt))`; `\x. misc_the 0 (lookup x (invbij:num spt))`;
       `s:1 spt`; `livein:1 spt`; `flivein:1 spt`; `f:num->num`]
       check_col_apply_bijection) THEN
     BETA_TAC THEN DISCH_THEN MATCH_MP_TAC THEN
@@ -9005,12 +9005,12 @@ let check_clash_tree_apply_bijection = prove
       (CONJUNCTS_THEN2 (LABEL_TAC "c1") (CONJUNCTS_THEN2 (LABEL_TAC "c2")
         (LABEL_TAC "c3"))))))))))))))) THEN
     (SUBGOAL_THEN `!x. x IN domain (bij:num spt) ==>
-                      the 0 (lookup x bij) IN domain (invbij:num spt) /\
-                      the 0 (lookup (the 0 (lookup x bij)) invbij) = x` (LABEL_TAC "B1") THENL
+                      misc_the 0 (lookup x bij) IN domain (invbij:num spt) /\
+                      misc_the 0 (lookup (misc_the 0 (lookup x bij)) invbij) = x` (LABEL_TAC "B1") THENL
      [MATCH_MP_TAC LSCANPAUX_sp_inverts_app THEN USE_THEN "sp1" ACCEPT_TAC; ALL_TAC]) THEN
     (SUBGOAL_THEN `!x. x IN domain (invbij:num spt) ==>
-                      the 0 (lookup x invbij) IN domain (bij:num spt) /\
-                      the 0 (lookup (the 0 (lookup x invbij)) bij) = x` (LABEL_TAC "B2") THENL
+                      misc_the 0 (lookup x invbij) IN domain (bij:num spt) /\
+                      misc_the 0 (lookup (misc_the 0 (lookup x invbij)) bij) = x` (LABEL_TAC "B2") THENL
      [MATCH_MP_TAC LSCANPAUX_sp_inverts_app THEN USE_THEN "sp2" ACCEPT_TAC; ALL_TAC]) THEN
     USE_THEN "ih1" (MP_TAC o SPECL [`live:1 spt`; `flive:1 spt`; `live':1 spt`; `flive':1 spt`;
       `t1_out:1 spt`; `ft1_out:1 spt`]) THEN
@@ -9024,7 +9024,7 @@ let check_clash_tree_apply_bijection = prove
       (CONJUNCTS_THEN2 (LABEL_TAC "d2") (LABEL_TAC "e2")))) THENL
      [(* a cut set *)
       MP_TAC(ISPECL [`domain (bij:num spt)`; `domain (invbij:num spt)`;
-        `\x. the 0 (lookup x (bij:num spt))`; `\x. the 0 (lookup x (invbij:num spt))`;
+        `\x. misc_the 0 (lookup x (bij:num spt))`; `\x. misc_the 0 (lookup x (invbij:num spt))`;
         `s:1 spt`; `livein:1 spt`; `flivein:1 spt`; `f:num->num`]
         check_col_apply_bijection) THEN
       BETA_TAC THEN ANTS_TAC THENL [REPEAT CONJ_TAC THEN FIRST_ASSUM ACCEPT_TAC; ALL_TAC] THEN
@@ -9034,10 +9034,10 @@ let check_clash_tree_apply_bijection = prove
         `flivein2:1 spt`] THEN
       ASM_REWRITE_TAC[];
       (* no cut set *)
-      SUBGOAL_THEN `INJ (\x. (f:num->num) (the 0 (lookup x (bij:num spt)))) (domain (live':1 spt))
+      SUBGOAL_THEN `INJ (\x. (f:num->num) (misc_the 0 (lookup x (bij:num spt)))) (domain (live':1 spt))
                       UNIV` (LABEL_TAC "inj'") THENL
        [MP_TAC(ISPECL [`domain (bij:num spt)`; `domain (invbij:num spt)`;
-          `\x. the 0 (lookup x (bij:num spt))`; `\x. the 0 (lookup x (invbij:num spt))`;
+          `\x. misc_the 0 (lookup x (bij:num spt))`; `\x. misc_the 0 (lookup x (invbij:num spt))`;
           `f:num->num`; `live:1 spt`; `live':1 spt`] LSCANPAUX_INJ_bij) THEN
         BETA_TAC THEN DISCH_THEN MATCH_MP_TAC THEN REPEAT CONJ_TAC THEN FIRST_ASSUM ACCEPT_TAC;
         ALL_TAC] THEN
@@ -9055,13 +9055,13 @@ let check_clash_tree_apply_bijection = prove
         `flive:1 spt`; `t1_out:1 spt`; `ft1_out:1 spt`] check_clash_tree_output) THEN
       ANTS_TAC THENL [REPEAT CONJ_TAC THEN FIRST_ASSUM ACCEPT_TAC; ALL_TAC] THEN
       DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "df1") (LABEL_TAC "inj1")) THEN
-      MP_TAC(ISPECL [`\x. (f:num->num) (the 0 (lookup x (bij:num spt)))`; `t1:clash_tree`;
+      MP_TAC(ISPECL [`\x. (f:num->num) (misc_the 0 (lookup x (bij:num spt)))`; `t1:clash_tree`;
         `live':1 spt`; `flive':1 spt`; `livein1:1 spt`; `flivein1:1 spt`]
         check_clash_tree_output) THEN
       ANTS_TAC THENL [REPEAT CONJ_TAC THEN FIRST_ASSUM ACCEPT_TAC; ALL_TAC] THEN
       DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "dfl1") (K ALL_TAC)) THEN
       MP_TAC(ISPECL [`domain (bij:num spt)`; `domain (invbij:num spt)`;
-        `\x. the 0 (lookup x (bij:num spt))`; `\x. the 0 (lookup x (invbij:num spt))`;
+        `\x. misc_the 0 (lookup x (bij:num spt))`; `\x. misc_the 0 (lookup x (invbij:num spt))`;
         `f:num->num`; `t1_out:1 spt`; `ft1_out:1 spt`; `t2_out:1 spt`; `livein1:1 spt`;
         `flivein1:1 spt`; `livein2:1 spt`; `livein:1 spt`; `flivein:1 spt`]
         LSCANPAUX_cct_bij_branch) THEN
@@ -9090,10 +9090,10 @@ let check_clash_tree_apply_bijection = prove
     ANTS_TAC THENL [REPEAT CONJ_TAC THEN FIRST_ASSUM ACCEPT_TAC; ALL_TAC] THEN
     DISCH_THEN(X_CHOOSE_THEN `livein2:1 spt` (X_CHOOSE_THEN `flivein2:1 spt`
       (CONJUNCTS_THEN2 (LABEL_TAC "d2") (LABEL_TAC "e2")))) THEN
-    SUBGOAL_THEN `INJ (\x. (f:num->num) (the 0 (lookup x (bij:num spt)))) (domain (live':1 spt))
+    SUBGOAL_THEN `INJ (\x. (f:num->num) (misc_the 0 (lookup x (bij:num spt)))) (domain (live':1 spt))
                     UNIV` (LABEL_TAC "inj'") THENL
      [MP_TAC(ISPECL [`domain (bij:num spt)`; `domain (invbij:num spt)`;
-        `\x. the 0 (lookup x (bij:num spt))`; `\x. the 0 (lookup x (invbij:num spt))`;
+        `\x. misc_the 0 (lookup x (bij:num spt))`; `\x. misc_the 0 (lookup x (invbij:num spt))`;
         `f:num->num`; `live:1 spt`; `live':1 spt`] LSCANPAUX_INJ_bij) THEN
       BETA_TAC THEN DISCH_THEN MATCH_MP_TAC THEN REPEAT CONJ_TAC THEN
       FIRST [FIRST_ASSUM ACCEPT_TAC;
@@ -9108,7 +9108,7 @@ let check_clash_tree_apply_bijection = prove
       `flive:1 spt`; `t2_out:1 spt`; `ft2_out:1 spt`] check_clash_tree_output) THEN
     ANTS_TAC THENL [REPEAT CONJ_TAC THEN FIRST_ASSUM ACCEPT_TAC; ALL_TAC] THEN
     DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "df2") (LABEL_TAC "inj2")) THEN
-    MP_TAC(ISPECL [`\x. (f:num->num) (the 0 (lookup x (bij:num spt)))`; `t2:clash_tree`;
+    MP_TAC(ISPECL [`\x. (f:num->num) (misc_the 0 (lookup x (bij:num spt)))`; `t2:clash_tree`;
       `live':1 spt`; `flive':1 spt`; `livein2:1 spt`; `flivein2:1 spt`]
       check_clash_tree_output) THEN
     ANTS_TAC THENL [REPEAT CONJ_TAC THEN FIRST_ASSUM ACCEPT_TAC; ALL_TAC] THEN
@@ -9131,9 +9131,9 @@ let extract_coloration_output = prove
      ?col.
        extract_coloration invbij l acc sth = (M_success col,sth) /\
        (!r. r IN domain bij ==>
-            (if MEM (the 0 (lookup r bij)) l
+            (if MEM (misc_the 0 (lookup r bij)) l
              then lookup r col =
-                  SOME (EL (the 0 (lookup r bij)) (linear_scan_hidden_state_colors sth))
+                  SOME (EL (misc_the 0 (lookup r bij)) (linear_scan_hidden_state_colors sth))
              else lookup r col = lookup r acc)) /\
        domain col SUBSET domain bij UNION domain acc`,
     MAP_EVERY X_GEN_TAC [`bij:num spt`; `invbij:num spt`; `sth:linear_scan_hidden_state`] THEN
@@ -9145,7 +9145,7 @@ let extract_coloration_output = prove
   DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "sp1") (CONJUNCTS_THEN2 (LABEL_TAC "sp2")
     (CONJUNCTS_THEN2 (CONJUNCTS_THEN2 (LABEL_TAC "hdom") (LABEL_TAC "tdom"))
       (CONJUNCTS_THEN2 (LABEL_TAC "hlt") (LABEL_TAC "tlt"))))) THEN
-  FIRST_X_ASSUM(MP_TAC o SPEC `insert (the 0 (lookup h (invbij:num spt)))
+  FIRST_X_ASSUM(MP_TAC o SPEC `insert (misc_the 0 (lookup h (invbij:num spt)))
     (EL h (linear_scan_hidden_state_colors sth)) (acc:num spt)`) THEN
   ANTS_TAC THENL [ASM_REWRITE_TAC[]; ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_THEN `col:num spt` (CONJUNCTS_THEN2 (LABEL_TAC "ex")
@@ -9159,22 +9159,22 @@ let extract_coloration_output = prove
     USE_THEN "ex" ACCEPT_TAC;
     X_GEN_TAC `r:num` THEN DISCH_TAC THEN
     REMOVE_THEN "lk" (MP_TAC o SPEC `r:num`) THEN ASM_REWRITE_TAC[MEM] THEN
-    ASM_CASES_TAC `MEM (the 0 (lookup r (bij:num spt))) t` THEN ASM_REWRITE_TAC[] THEN
+    ASM_CASES_TAC `MEM (misc_the 0 (lookup r (bij:num spt))) t` THEN ASM_REWRITE_TAC[] THEN
     REWRITE_TAC[lookup_insert] THEN
-    SUBGOAL_THEN `(r = the 0 (lookup h (invbij:num spt))) <=> (the 0 (lookup r (bij:num spt)) = h)`
+    SUBGOAL_THEN `(r = misc_the 0 (lookup h (invbij:num spt))) <=> (misc_the 0 (lookup r (bij:num spt)) = h)`
       (fun th -> REWRITE_TAC[th]) THENL
      [USE_THEN "sp1" (MP_TAC o REWRITE_RULE[sp_inverts_def]) THEN
       USE_THEN "sp2" (MP_TAC o REWRITE_RULE[sp_inverts_def]) THEN
       UNDISCH_TAC `(r:num) IN domain (bij:num spt)` THEN USE_THEN "hdom" MP_TAC THEN
       REWRITE_TAC[domain_lookup] THEN
       DISCH_THEN(X_CHOOSE_TAC `y:num`) THEN DISCH_THEN(X_CHOOSE_TAC `x:num`) THEN
-      ASM_REWRITE_TAC[the_def] THEN ASM_MESON_TAC[option_INJ];
+      ASM_REWRITE_TAC[misc_the_def] THEN ASM_MESON_TAC[option_INJ];
       ALL_TAC] THEN
     COND_CASES_TAC THEN ASM_REWRITE_TAC[];
     USE_THEN "dc" MP_TAC THEN REWRITE_TAC[domain_insert] THEN
-    SUBGOAL_THEN `the 0 (lookup h (invbij:num spt)) IN domain (bij:num spt)` MP_TAC THENL
+    SUBGOAL_THEN `misc_the 0 (lookup h (invbij:num spt)) IN domain (bij:num spt)` MP_TAC THENL
      [USE_THEN "hdom" (MP_TAC o REWRITE_RULE[domain_lookup]) THEN
-      DISCH_THEN(X_CHOOSE_TAC `y:num`) THEN ASM_REWRITE_TAC[the_def; domain_lookup] THEN
+      DISCH_THEN(X_CHOOSE_TAC `y:num`) THEN ASM_REWRITE_TAC[misc_the_def; domain_lookup] THEN
       USE_THEN "sp2" (MP_TAC o REWRITE_RULE[sp_inverts_def]) THEN ASM_MESON_TAC[];
       SET_TAC[]]]);;
 
@@ -9321,9 +9321,9 @@ let LSCANPAUX_ibind_assoc = prove
 (* LSCANPAUX_MEM_MAP_SND_toAList: the values of an sptree *)
 let LSCANPAUX_MEM_MAP_SND_toAList = prove
  (`!(bij:num spt) x.
-     MEM x (MAP SND (toAList bij)) <=> ?r. r IN domain bij /\ x = the 0 (lookup r bij)`,
+     MEM x (MAP SND (toAList bij)) <=> ?r. r IN domain bij /\ x = misc_the 0 (lookup r bij)`,
   REWRITE_TAC[MEM_MAP; EXISTS_PAIR_THM; MEM_toAList; domain_lookup; SND] THEN
-  MESON_TAC[the_def]);;
+  MESON_TAC[misc_the_def]);;
 
 (* LSCANPAUX_ALL_DISTINCT_MAP_SND_toAList: an invertible sptree has distinct values *)
 let LSCANPAUX_ALL_DISTINCT_MAP_SND_toAList = prove
@@ -9390,7 +9390,7 @@ let linear_scan_reg_alloc_correct = prove
     ALL_TAC] THEN
   USE_THEN "sp1" (LABEL_TAC "bin" o MATCH_MP LSCANPAUX_sp_inverts_app) THEN
   SUBGOAL_THEN `!x. in_clash_tree ct' x <=>
-                    ?r. r IN domain (bij:num spt) /\ x = the 0 (lookup r bij)` (LABEL_TAC "ict'")
+                    ?r. r IN domain (bij:num spt) /\ x = misc_the 0 (lookup r bij)` (LABEL_TAC "ict'")
   THENL
    [X_GEN_TAC `x:num` THEN
     MP_TAC(ISPECL [`bij:num spt`; `ct:clash_tree`] in_clash_tree_apply_bij) THEN
@@ -9399,7 +9399,7 @@ let linear_scan_reg_alloc_correct = prove
     DISCH_THEN(fun th -> GEN_REWRITE_TAC LAND_CONV [GSYM IN] THEN REWRITE_TAC[th; IN_IMAGE]) THEN
     BETA_TAC THEN MESON_TAC[];
     ALL_TAC] THEN
-  SUBGOAL_THEN `!x. MEM x rl <=> ?r. r IN domain (bij:num spt) /\ x = the 0 (lookup r bij)`
+  SUBGOAL_THEN `!x. MEM x rl <=> ?r. r IN domain (bij:num spt) /\ x = misc_the 0 (lookup r bij)`
     (LABEL_TAC "memrl") THENL
    [REWRITE_TAC[GSYM(ASSUME `MAP SND (toAList (bij:num spt)) = rl`);
                 LSCANPAUX_MEM_MAP_SND_toAList];
@@ -9494,25 +9494,25 @@ let linear_scan_reg_alloc_correct = prove
   SUBGOAL_THEN
    `!r. in_clash_tree ct r ==>
         lookup r col =
-        SOME (EL (the 0 (lookup r (bij:num spt))) (linear_scan_hidden_state_colors sthout))`
+        SOME (EL (misc_the 0 (lookup r (bij:num spt))) (linear_scan_hidden_state_colors sthout))`
     (LABEL_TAC "lkc") THENL
    [X_GEN_TAC `r:num` THEN USE_THEN "domr" (fun th -> REWRITE_TAC[th]) THEN DISCH_TAC THEN
     USE_THEN "lk" (fun th -> MP_TAC(MATCH_MP th (ASSUME `(r:num) IN domain (bij:num spt)`))) THEN
-    SUBGOAL_THEN `MEM (the 0 (lookup r (bij:num spt))) rl`
+    SUBGOAL_THEN `MEM (misc_the 0 (lookup r (bij:num spt))) rl`
       (fun th -> REWRITE_TAC[th] THEN DISCH_THEN ACCEPT_TAC) THEN
     USE_THEN "memrl" (fun th -> REWRITE_TAC[th]) THEN EXISTS_TAC `r:num` THEN ASM_REWRITE_TAC[];
     ALL_TAC] THEN
   SUBGOAL_THEN
    `!r. in_clash_tree ct r ==>
         sp_default col r =
-        EL (the 0 (lookup r (bij:num spt))) (linear_scan_hidden_state_colors sthout)`
+        EL (misc_the 0 (lookup r (bij:num spt))) (linear_scan_hidden_state_colors sthout)`
     (LABEL_TAC "spd") THENL
    [X_GEN_TAC `r:num` THEN DISCH_TAC THEN
     USE_THEN "lkc" (fun th -> REWRITE_TAC[sp_default_def; MATCH_MP th
       (ASSUME `in_clash_tree ct r`); case_def "option"]);
     ALL_TAC] THEN
   MP_TAC(ISPECL [`sp_default col`;
-    `\r. EL (the 0 (lookup r (bij:num spt))) (linear_scan_hidden_state_colors sthout)`;
+    `\r. EL (misc_the 0 (lookup r (bij:num spt))) (linear_scan_hidden_state_colors sthout)`;
     `ct:clash_tree`; `LN:1 spt`; `LN:1 spt`] check_clash_tree_equal_col) THEN
   ANTS_TAC THENL
    [REWRITE_TAC[domain_def; NOT_IN_EMPTY] THEN BETA_TAC THEN REWRITE_TAC[IN] THEN
@@ -9528,28 +9528,28 @@ let linear_scan_reg_alloc_correct = prove
      [USE_THEN "domr" (fun th -> REWRITE_TAC[GSYM th]) THEN FIRST_ASSUM ACCEPT_TAC; ALL_TAC] THEN
     CONJ_TAC THENL
      [REWRITE_TAC[domain_lookup] THEN EXISTS_TAC
-        `EL (the 0 (lookup r (bij:num spt))) (linear_scan_hidden_state_colors sthout)` THEN
+        `EL (misc_the 0 (lookup r (bij:num spt))) (linear_scan_hidden_state_colors sthout)` THEN
       USE_THEN "lkc" (fun th -> MATCH_MP_TAC th) THEN FIRST_ASSUM ACCEPT_TAC;
       ALL_TAC] THEN
     USE_THEN "spd" (fun th -> REWRITE_TAC[MATCH_MP th (ASSUME `in_clash_tree ct r`)]) THEN
-    SUBGOAL_THEN `in_clash_tree ct' (the 0 (lookup r (bij:num spt)))` ASSUME_TAC THENL
+    SUBGOAL_THEN `in_clash_tree ct' (misc_the 0 (lookup r (bij:num spt)))` ASSUME_TAC THENL
      [USE_THEN "ict'" (fun th -> REWRITE_TAC[th]) THEN EXISTS_TAC `r:num` THEN ASM_REWRITE_TAC[];
       ALL_TAC] THEN
     USE_THEN "colo" (fun th -> MP_TAC(MATCH_MP th
-      (ASSUME `in_clash_tree ct' (the 0 (lookup r (bij:num spt)))`))) THEN
-    SUBGOAL_THEN `(is_stack_var r <=> is_stack_var (the 0 (lookup r (bij:num spt))))`
+      (ASSUME `in_clash_tree ct' (misc_the 0 (lookup r (bij:num spt)))`))) THEN
+    SUBGOAL_THEN `(is_stack_var r <=> is_stack_var (misc_the 0 (lookup r (bij:num spt))))`
       ASSUME_TAC THENL
      [USE_THEN "stk" MATCH_MP_TAC THEN USE_THEN "dom" (fun th -> REWRITE_TAC[th]) THEN
       FIRST_ASSUM ACCEPT_TAC;
       ALL_TAC] THEN
     ASM_CASES_TAC `is_phy_var r` THEN ASM_REWRITE_TAC[] THENL
-     [SUBGOAL_THEN `the 0 (lookup r (bij:num spt)) = r` (fun th -> REWRITE_TAC[th]) THENL
+     [SUBGOAL_THEN `misc_the 0 (lookup r (bij:num spt)) = r` (fun th -> REWRITE_TAC[th]) THENL
        [CONV_TAC SYM_CONV THEN USE_THEN "phy" MATCH_MP_TAC THEN
         USE_THEN "dom" (fun th -> REWRITE_TAC[th]) THEN ASM_REWRITE_TAC[];
         ALL_TAC] THEN
       ASM_REWRITE_TAC[];
-      ASM_CASES_TAC `is_stack_var (the 0 (lookup r (bij:num spt)))` THEN ASM_REWRITE_TAC[] THEN
-      SUBGOAL_THEN `~is_phy_var (the 0 (lookup r (bij:num spt)))` (fun th -> REWRITE_TAC[th]) THEN
+      ASM_CASES_TAC `is_stack_var (misc_the 0 (lookup r (bij:num spt)))` THEN ASM_REWRITE_TAC[] THEN
+      SUBGOAL_THEN `~is_phy_var (misc_the 0 (lookup r (bij:num spt)))` (fun th -> REWRITE_TAC[th]) THEN
       ASM_MESON_TAC[convention_partitions]];
     (* the domain of the colouring *)
     USE_THEN "dc" MP_TAC THEN REWRITE_TAC[domain_def; UNION_EMPTY; SUBSET] THEN
@@ -9573,5 +9573,3 @@ let linear_scan_reg_alloc_correct = prove
       MP_TAC(CONJUNCT2(MATCH_MP th (ASSUME `(r1:num) IN domain (bij:num spt)`))) THEN
       MP_TAC(CONJUNCT2(MATCH_MP th (ASSUME `(r2:num) IN domain (bij:num spt)`)))) THEN
     ASM_REWRITE_TAC[] THEN MESON_TAC[]]);;
-
-

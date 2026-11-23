@@ -77,9 +77,9 @@ let initial_condition_def = cake_def
                 ctMap FEMPTY {} (semantics_state_tenv st) /\
               FRANGE ((SND o SND) o_f ctMap) SUBSET semantics_state_type_ids st) /\
      envRel_env_rel (semantics_state_tenv st) (compiler_config_inferencer_config cc) /\
-     semantics_state_type_ids st = count start_type_id /\
-     set_tids_tenv (count start_type_id) (semantics_state_tenv st) /\
-     inf_set_tids_ienv (count start_type_id) (compiler_config_inferencer_config cc) /\
+     semantics_state_type_ids st = pred_set_count start_type_id /\
+     set_tids_tenv (pred_set_count start_type_id) (semantics_state_tenv st) /\
+     inf_set_tids_ienv (pred_set_count start_type_id) (compiler_config_inferencer_config cc) /\
      ~compiler_config_input_is_sexp cc /\
      ~compiler_config_exclude_prelude cc /\
      ~compiler_config_skip_type_inference cc /\
@@ -96,7 +96,7 @@ let initial_condition_def = cake_def
 (* the PEG run on the whole input succeeds with the tree of any parse *)
 let CPPAUX_peg_eval_complete = prove
  (`!(s:(token#locs)list) pt r.
-     peg_eval cmlPEG (s,nt (INL nTopLevelDecs) I) r /\
+     peg_eval cmlPEG (s,peg_nt (INL nTopLevelDecs) I) r /\
      valid_lptree cmlG pt /\ ptree_head pt = NT (INL nTopLevelDecs) /\
      real_fringe pt = MAP (TOK ## I) s
      ==> ?eo. r = peg_Success [] [pt] eo`,
@@ -111,7 +111,7 @@ let CPPAUX_peg_eval_complete = prove
 (* a successful run on the whole input gives a parse tree *)
 let CPPAUX_peg_eval_sound = prove
  (`!(s:(token#locs)list) pts eo.
-     peg_eval cmlPEG (s,nt (INL nTopLevelDecs) I) (peg_Success [] pts eo)
+     peg_eval cmlPEG (s,peg_nt (INL nTopLevelDecs) I) (peg_Success [] pts eo)
      ==> ?pt. pts = [pt] /\ valid_lptree cmlG pt /\
               ptree_head pt = NT (INL nTopLevelDecs) /\
               real_fringe pt = MAP (TOK ## I) s`,
@@ -121,18 +121,18 @@ let CPPAUX_peg_eval_sound = prove
 
 (* the PEG run on any input terminates *)
 let CPPAUX_peg_eval_total = prove
- (`!s:(token#locs)list. ?r. peg_eval cmlPEG (s,nt (INL nTopLevelDecs) I) r`,
+ (`!s:(token#locs)list. ?r. peg_eval cmlPEG (s,peg_nt (INL nTopLevelDecs) I) r`,
   GEN_TAC THEN MP_TAC (ISPEC `cmlPEG` peg_eval_total) THEN
   REWRITE_TAC[PEG_wellformed] THEN
   DISCH_THEN(MP_TAC o SPECL [`s:(token#locs)list`;
-    `nt (INL nTopLevelDecs) I:(token,MMLnonT,(mlptree)list,string)pegsym`]) THEN
-  REWRITE_TAC[REWRITE_RULE[pnt_def] NTS_in_PEG_exprs]);;
+    `peg_nt (INL nTopLevelDecs) I:(token,MMLnonT,(mlptree)list,string)pegsym`]) THEN
+  REWRITE_TAC[REWRITE_RULE[cmlPEG_pnt_def] NTS_in_PEG_exprs]);;
 
 (* parse_prog in terms of the result of the PEG run *)
 let CPPAUX_parse_prog_exec = prove
  (CASE_TERM
   `!s:(token#locs)list r.
-     peg_eval cmlPEG (s,nt (INL nTopLevelDecs) I) r
+     peg_eval cmlPEG (s,peg_nt (INL nTopLevelDecs) I) r
      ==> parse_prog s =
          (match destResult (Result r:(token,MMLnonT,(mlptree)list,string)evalcase)
                  :((token#locs)list,(mlptree)list,string)pegresult with
@@ -142,7 +142,7 @@ let CPPAUX_parse_prog_exec = prove
                | Failure fl fe -> Failure fl fe)
           | Failure fl fe -> Failure fl fe)`,
   REPEAT STRIP_TAC THEN
-  REWRITE_TAC[parse_prog_def; pegresult_bind_def; o_THM; pnt_def] THEN
+  REWRITE_TAC[parse_prog_def; pegresult_bind_def; o_THM; cmlPEG_pnt_def] THEN
   FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP pegexec th]));;
 
 (* HOL4 parserProof line 11 *)
@@ -208,9 +208,9 @@ let parse_prog_correct = prove
 let infertype_prog_correct = prove
  (`!st ienv p.
      envRel_env_rel (semantics_state_tenv (st:(FFI)semantics_state)) ienv /\
-   semantics_state_type_ids st = count start_type_id /\
-   inf_set_tids_ienv (count start_type_id) ienv /\
-   set_tids_tenv (count start_type_id) (semantics_state_tenv st)
+   semantics_state_type_ids st = pred_set_count start_type_id /\
+   inf_set_tids_ienv (pred_set_count start_type_id) ienv /\
+   set_tids_tenv (pred_set_count start_type_id) (semantics_state_tenv st)
    ==> ?c' x. infertype_prog ienv p =
               (if can_type_prog st p then M_success c' else M_failure x)`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[infertype_prog_def] THEN
@@ -376,7 +376,7 @@ let compile_correct_gen = prove
 
 (* HOL4 compile_correct_lemma: EVAL of prim_type_ids = count start_type_id *)
 let CPPAUX_prim_type_ids_count = prove
- (`prim_type_ids = count start_type_id`,
+ (`prim_type_ids = pred_set_count start_type_id`,
   REWRITE_TAC([prim_type_ids_def; prim_type_nums_def; start_type_id_def; EXTENSION;
                IN_COUNT; IN_SET_OF_LIST; MEM] @ TPROPSAUX_type_num_defs) THEN
   (* x < 15 expanded into its cases (ARITH_TAC took 50 s on the disjunction) *)
@@ -388,7 +388,7 @@ let CPPAUX_prim_type_ids_count = prove
 (* HOL4 compile_correct_lemma: EVAL of set_tids_tenv (count start_type_id)  *)
 (* prim_tenv                                                                *)
 let CPPAUX_set_tids_tenv_prim_tenv = prove
- (`set_tids_tenv (count start_type_id) prim_tenv`,
+ (`set_tids_tenv (pred_set_count start_type_id) prim_tenv`,
   REWRITE_TAC[set_tids_tenv_def; prim_tenv_def; type_env_INFO.ri_accessors;
               nsAll_nsEmpty] THEN
   CONJ_TAC THEN MATCH_MP_TAC nsAll_alist_to_ns THEN

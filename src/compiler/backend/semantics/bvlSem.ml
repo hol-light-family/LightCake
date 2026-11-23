@@ -69,7 +69,7 @@ let bvl_state_INFO = cake_record "bvl_state"
 let bvl_state_component_equality = bvl_state_INFO.ri_component_equality;;
 
 let bvl_v_to_list_def = sem1aux_def_wf
-  `measure bvl_v_size`
+  `MEASURE bvl_v_size`
   SEM1AUX_TC_TAC
   `(bvl_v_to_list (bvl_Block tag []) =
       if tag = nil_tag then SOME [] else NONE) /\
@@ -166,7 +166,7 @@ let bvl_do_install_def = cake_def
                   (SOME (bytes',data',cfg'), CONS (k,prog) _) ->
                     if bytes = bytes' /\ data = data' /\ FST (new_oracle 0) = cfg' then
                       let s' =
-                        bvl_state_code_fupd (K (union (bvl_state_code s) (fromAList progs)))
+                        bvl_state_code_fupd (K (sptree_union (bvl_state_code s) (fromAList progs)))
                           (bvl_state_compile_oracle_fupd (K new_oracle) s)
                       in
                         Rval (bvl_CodePtr k, s')
@@ -235,7 +235,7 @@ let CLOSSEMAUX_cases_ind (def:thm) =
                 (CONJUNCTS def) in
   let c = fst(strip_comb(lhs(snd(strip_forall(concl(hd(CONJUNCTS def))))))) in
   let tty = mk_tuple_ty (map type_of (snd(hd cls))) in
-  let wfth = ISPEC (mk_abs(mk_var("p",tty),`0`)) WF_measure in
+  let wfth = ISPEC (mk_abs(mk_var("p",tty),`0`)) WF_MEASURE in
   derive_induction c cls [] wfth;;
 
 let CLOSSEMAUX_do_int_app_cases = CLOSSEMAUX_cases_ind bvl_do_int_app_def;;
@@ -783,7 +783,7 @@ let CLOSSEMAUX_bvl_evaluate_clauses =
 (*             (\(xs,env,s). (s.clock,xs))                                   *)
 
 let CLOSSEMAUX_bvl_evaluate_rel =
-  `inv_image (measure (I:num->num) LEX measure (list_size bvl_exp_size))
+  `inv_image (MEASURE (I:num->num) LEX MEASURE (list_size bvl_exp_size))
      (\x:bvl_exp list # bvl_v list # (C,FFI)bvl_state.
         bvl_state_clock (SND (SND x)),FST x)`;;
 

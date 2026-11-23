@@ -683,7 +683,7 @@ let word_gen_gc_move_bitmaps_unroll = prove
     REWRITE_TAC[];
     REWRITE_TAC[GSYM get_bits_def] THEN ASM_REWRITE_TAC[] THEN
     CASE_REWRITE_TAC[STALLOCAUX_option_tuple8_id] THEN DISCH_THEN(K ALL_TAC) THEN
-    REWRITE_TAC[STALLOCAUX_option_tuple8_id; STALLOCAUX_pair_CASE_K]]);;
+    REWRITE_TAC[STALLOCAUX_option_tuple8_id; BASICAUX_pair_CASE_K]]);;
 
 (* HOL4 line 2334 *)
 let word_gen_gc_partial_move_bitmaps_unroll = prove
@@ -744,7 +744,7 @@ let word_gen_gc_partial_move_bitmaps_unroll = prove
     REWRITE_TAC[];
     REWRITE_TAC[GSYM get_bits_def] THEN ASM_REWRITE_TAC[] THEN
     CASE_REWRITE_TAC[STALLOCAUX_option_tuple6_id] THEN DISCH_THEN(K ALL_TAC) THEN
-    REWRITE_TAC[STALLOCAUX_option_tuple6_id; STALLOCAUX_pair_CASE_K]]);;
+    REWRITE_TAC[STALLOCAUX_option_tuple6_id; BASICAUX_pair_CASE_K]]);;
 
 (* HOL4 line 2414 *)
 let word_gen_gc_move_bitmap_unroll = prove

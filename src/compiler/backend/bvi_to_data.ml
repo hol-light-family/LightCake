@@ -95,7 +95,7 @@ new_type_abbrev("WORDP3AUX_bcty",
   `:num->num list->bool->num list->bvi_exp list->data_prog#num list#num`);;
 
 let bvi_to_data_compile_def = sem1aux_def_wf
-  `measure (\(n:num,env:num list,tail:bool,live:num list,xs:bvi_exp list).
+  `MEASURE (\(n:num,env:num list,tail:bool,live:num list,xs:bvi_exp list).
               list_size bvi_exp_size xs)`
   SEM1AUX_TC_TAC
   (list_mk_conj
@@ -176,7 +176,7 @@ new_type_abbrev("WORDP3AUX_lty",
 
 let bvi_to_data_compile_sing_def = sem1aux_def_wf
   (CASE_TERM
-   `measure (\x:(num#num list#bool#num list#bvi_exp)+(num#num list#num list#bvi_exp list).
+   `MEASURE (\x:(num#num list#bool#num list#bvi_exp)+(num#num list#num list#bvi_exp list).
       match x with
         INL (n,env,t,l,x) -> bvi_exp_size x
       | INR (n,env,l,xs) -> list_size bvi_exp_size xs)`)
@@ -397,7 +397,7 @@ let compile_SING_IMP = prove
 
 let bvi_to_data_optimise_def = cake_def
   `bvi_to_data_optimise prog =
-     data_space_compile (simp (FST (data_live_compile prog LN)) data_Skip)`;;
+     data_space_compile (data_simp_simp (FST (data_live_compile prog LN)) data_Skip)`;;
 
 (* the top-level compiler includes the optimisations, because the           *)
 (* correctness proofs are combined                                          *)

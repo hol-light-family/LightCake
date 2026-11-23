@@ -3,7 +3,7 @@
 (* v3479).  crepLang Properties.                                             *)
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
-(* - Names as notes/naming/names.tsv says (crep_update_locals_not_vars_     *)
+(* - Names as doc/names.tsv says (crep_update_locals_not_vars_              *)
 (*   eval_eq, crep_eval_upd_clock_eq, crep_evaluate_add_clock_eq, ...,       *)
 (*   crep_exps_of, crep_every_exp); the other theorems keep their HOL4      *)
 (*   names.                                                                  *)
@@ -776,10 +776,10 @@ let crep_evaluate_io_events_mono = prove
   ASM_MESON_TAC[IS_PREFIX_TRANS; IS_PREFIX_REFL]);;
 
 (* ------------------------------------------------------------------------- *)
-(* Tools for crep_evaluate_add_clock_io_events_mono (as in loopProps, agent  *)
-(* PLOOP): add_clock_eq at the evaluation facts whose result is not a time   *)
-(* out; the evaluations of the goal named one at a time; a goal isPREFIX x y *)
-(* from a chain of isPREFIX assumptions.                                     *)
+(* Tools for crep_evaluate_add_clock_io_events_mono (as in loopProps):       *)
+(* add_clock_eq at the evaluation facts whose result is not a time out; the  *)
+(* evaluations of the goal named one at a time; a goal isPREFIX x y from a   *)
+(* chain of isPREFIX assumptions.                                            *)
 (* ------------------------------------------------------------------------- *)
 
 let PCREPAUX_is_eval_eq tm =
@@ -949,7 +949,7 @@ let crep_exps_of_def = cake_def
 (* (exp_size ARB o SND), MEM_IMP_exp_size                                   *)
 
 let crep_every_exp_def = cake_def_wf
-  `measure ((crep_exp_size ARB o SND):((A)crep_exp->bool)#(A)crep_exp->num)`
+  `MEASURE ((crep_exp_size ARB o SND):((A)crep_exp->bool)#(A)crep_exp->num)`
   (REWRITE_TAC[measure_THM; o_THM] THEN TERM_TAC)
   (list_mk_conj
    [`(crep_every_exp P (crep_Const (w:A word)) <=> P (crep_Const w)) /\

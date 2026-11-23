@@ -16,8 +16,8 @@ type_invention_error := true;;
 
 let LUNIFAUX_vR_SUBMAP = prove
  (`!(s:(num,A term_term)fmap) sx u v.
-     s SUBMAP sx ==> vR s u v ==> vR sx u v`,
-  REPEAT GEN_TAC THEN DISCH_TAC THEN REWRITE_TAC[vR_def] THEN
+     s SUBMAP sx ==> subst_vR s u v ==> subst_vR sx u v`,
+  REPEAT GEN_TAC THEN DISCH_TAC THEN REWRITE_TAC[subst_vR_def] THEN
   CASES_ON `FLOOKUP (s:(num,A term_term)fmap) v` THEN
   REWRITE_TAC[option_CASE] THEN
   SUBGOAL_THEN `FLOOKUP (sx:(num,A term_term)fmap) v = SOME a`
@@ -26,14 +26,14 @@ let LUNIFAUX_vR_SUBMAP = prove
 
 let TC_vR_SUBMAP = prove
  (`!(s:(num,A term_term)fmap) sx.
-     s SUBMAP sx ==> !u v. TC (vR s) u v ==> TC (vR sx) u v`,
+     s SUBMAP sx ==> !u v. TC (subst_vR s) u v ==> TC (subst_vR sx) u v`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN MATCH_MP_TAC TC_MONO THEN
   ASM_MESON_TAC[LUNIFAUX_vR_SUBMAP]);;
 
 let vwalk_irrelevant_FUPDATE = prove
  (`!(s:(num,A term_term)fmap) vx tx.
      wfs (s |+ (vx,tx)) /\ ~(vx IN FDOM s) ==>
-     !v. ~RTC (vR s) vx v ==> vwalk (s |+ (vx,tx)) v = vwalk s v`,
+     !v. ~RTC (subst_vR s) vx v ==> vwalk (s |+ (vx,tx)) v = vwalk s v`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   SUBGOAL_THEN `wfs (s:(num,A term_term)fmap)` ASSUME_TAC THENL
    [ASM_MESON_TAC[wfs_SUBMAP; SUBMAP_FUPDATE_EQN]; ALL_TAC] THEN
@@ -56,9 +56,9 @@ let vwalk_irrelevant_FUPDATE = prove
   DISCH_THEN SUBST1_TAC THEN DISCH_THEN SUBST1_TAC THEN
   FIRST_X_ASSUM(MP_TAC o SPEC `a':num`) THEN REWRITE_TAC[] THEN
   DISCH_THEN MATCH_MP_TAC THEN DISCH_TAC THEN
-  UNDISCH_TAC `~RTC (vR (s:(num,A term_term)fmap)) vx v` THEN
+  UNDISCH_TAC `~RTC (subst_vR (s:(num,A term_term)fmap)) vx v` THEN
   REWRITE_TAC[] THEN MATCH_MP_TAC RTC_TRANS_L THEN EXISTS_TAC `a':num` THEN
-  ASM_REWRITE_TAC[vR_def; option_CASE; term_vars_def; IN_SING]);;
+  ASM_REWRITE_TAC[subst_vR_def; option_CASE; term_vars_def; IN_SING]);;
 
 let vwalk_FUPDATE_var = prove
  (`!(s:(num,A term_term)fmap) v1 v2.
@@ -68,15 +68,15 @@ let vwalk_FUPDATE_var = prove
   MP_TAC(SPECL [`s:(num,A term_term)fmap`; `v1:num`; `term_Var v2:A term_term`]
                vwalk_irrelevant_FUPDATE) THEN
   ASM_REWRITE_TAC[] THEN DISCH_THEN MATCH_MP_TAC THEN
-  SUBGOAL_THEN `vR ((s:(num,A term_term)fmap) |+ (v1,term_Var v2)) v2 v1`
+  SUBGOAL_THEN `subst_vR ((s:(num,A term_term)fmap) |+ (v1,term_Var v2)) v2 v1`
     ASSUME_TAC THENL
-   [REWRITE_TAC[vR_def; FLOOKUP_UPDATE; option_CASE; term_vars_def; IN_SING];
+   [REWRITE_TAC[subst_vR_def; FLOOKUP_UPDATE; option_CASE; term_vars_def; IN_SING];
     ALL_TAC] THEN
   SUBGOAL_THEN `(s:(num,A term_term)fmap) SUBMAP (s |+ (v1,term_Var v2))`
     ASSUME_TAC THENL [ASM_REWRITE_TAC[SUBMAP_FUPDATE_EQN]; ALL_TAC] THEN
   REWRITE_TAC[RTC; RC_EXPLICIT; DE_MORGAN_THM] THEN CONJ_TAC THENL
    [DISCH_TAC THEN
-    SUBGOAL_THEN `TC (vR ((s:(num,A term_term)fmap) |+ (v1,term_Var v2))) v1 v1`
+    SUBGOAL_THEN `TC (subst_vR ((s:(num,A term_term)fmap) |+ (v1,term_Var v2))) v1 v1`
       MP_TAC THENL
      [MATCH_MP_TAC TC_TRANS_L THEN EXISTS_TAC `v2:num` THEN
       ASM_REWRITE_TAC[] THEN ASM_MESON_TAC[TC_vR_SUBMAP];
@@ -144,13 +144,13 @@ let walkstar_extend = prove
     DISCH_THEN SUBST1_TAC THEN ASM_SIMP_TAC[term_term_CASE; walkstar_thm]]);;
 
 let LUNIFAUX_unify_same = prove
- (`!(s:(num,A term_term)fmap) t1 t2. wfs s /\ t1 = t2 ==> unify s t1 t2 = SOME s`,
-  MATCH_MP_TAC unify_ind THEN
+ (`!(s:(num,A term_term)fmap) t1 t2. wfs s /\ t1 = t2 ==> unifDef_unify s t1 t2 = SOME s`,
+  MATCH_MP_TAC unifDef_unify_ind THEN
   MAP_EVERY X_GEN_TAC [`s:(num,A term_term)fmap`; `t1:A term_term`; `t2:A term_term`] THEN
   DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "ih1") (LABEL_TAC "ih2")) THEN
   STRIP_TAC THEN FIRST_X_ASSUM SUBST_ALL_TAC THEN
   MP_TAC(SPECL [`s:(num,A term_term)fmap`; `t2:A term_term`; `t2:A term_term`]
-               unify_def) THEN
+               unifDef_unify_def) THEN
   ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN
   CASES_ON `walk (s:(num,A term_term)fmap) t2` THEN
   REWRITE_TAC[term_term_CASE] THEN
@@ -171,7 +171,7 @@ let LUNIFAUX_unify_same = prove
   REWRITE_TAC[]);;
 
 let unify_same = prove
- (`!s:(num,A term_term)fmap. wfs s ==> !t. unify s t t = SOME s`,
+ (`!s:(num,A term_term)fmap. wfs s ==> !t. unifDef_unify s t t = SOME s`,
   MESON_TAC[LUNIFAUX_unify_same]);;
 
 let wex = prove
@@ -202,10 +202,10 @@ let LUNIFAUX_mgu_ext_tac =
 
 let unify_mgu = prove
  (`!(s:(num,A term_term)fmap) t1 t2 sx s2.
-     wfs s /\ unify s t1 t2 = SOME sx /\ wfs s2 /\
+     wfs s /\ unifDef_unify s t1 t2 = SOME sx /\ wfs s2 /\
      walkstar s2 (walkstar s t1) = walkstar s2 (walkstar s t2)
      ==> !t. walkstar s2 (walkstar sx t) = walkstar s2 (walkstar s t)`,
-  MATCH_MP_TAC unify_ind THEN
+  MATCH_MP_TAC unifDef_unify_ind THEN
   MAP_EVERY X_GEN_TAC [`s:(num,A term_term)fmap`; `t1:A term_term`; `t2:A term_term`] THEN
   DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "ih1") (LABEL_TAC "ih2")) THEN
   MAP_EVERY X_GEN_TAC [`sx:(num,A term_term)fmap`; `s2:(num,A term_term)fmap`] THEN
@@ -220,9 +220,9 @@ let unify_mgu = prove
     MP_TAC THENL
    [REWRITE_TAC[MATCH_MP walkstar_walk (ASSUME `wfs (s:(num,A term_term)fmap)`)] THEN
     FIRST_ASSUM ACCEPT_TAC; ALL_TAC] THEN
-  UNDISCH_TAC `unify (s:(num,A term_term)fmap) t1 t2 = SOME sx` THEN
+  UNDISCH_TAC `unifDef_unify (s:(num,A term_term)fmap) t1 t2 = SOME sx` THEN
   MP_TAC(SPECL [`s:(num,A term_term)fmap`; `t1:A term_term`; `t2:A term_term`]
-               unify_def) THEN
+               unifDef_unify_def) THEN
   ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN
   CASES_ON `walk (s:(num,A term_term)fmap) t1` THEN
   CASES_ON `walk (s:(num,A term_term)fmap) t2` THEN
@@ -234,7 +234,7 @@ let unify_mgu = prove
     LUNIFAUX_mgu_ext_tac;
     LUNIFAUX_mgu_ext_tac;
     LUNIFAUX_mgu_ext_tac;
-    CASES_ON `unify (s:(num,A term_term)fmap) a0 a0'` THEN
+    CASES_ON `unifDef_unify (s:(num,A term_term)fmap) a0 a0'` THEN
     REWRITE_TAC[OPTION_BIND_DEF; option_DISTINCT] THEN
     DISCH_TAC THEN
     REWRITE_TAC[MATCH_MP walkstar_thm (ASSUME `wfs (s:(num,A term_term)fmap)`)] THEN
@@ -261,7 +261,7 @@ let unify_mgu = prove
                                     `a0':A term_term`; `a1':A term_term`;
                                     `a:(num,A term_term)fmap`]) THEN
     REWRITE_TAC[ASSUME `wfs (s:(num,A term_term)fmap)`;
-                ASSUME `unify (s:(num,A term_term)fmap) a0 a0' = SOME a`] THEN
+                ASSUME `unifDef_unify (s:(num,A term_term)fmap) a0 a0' = SOME a`] THEN
     DISCH_THEN MATCH_MP_TAC THEN ASM_REWRITE_TAC[];
     LUNIFAUX_mgu_ext_tac;
     COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT; option_INJ] THEN
@@ -269,7 +269,7 @@ let unify_mgu = prove
 
 let unify_mgu_FEMPTY = prove
  (`!(t1:A term_term) t2 sx.
-     unify FEMPTY t1 t2 = SOME sx
+     unifDef_unify FEMPTY t1 t2 = SOME sx
      ==> !s. wfs s /\ walkstar s t1 = walkstar s t2
              ==> ?s'. !t. walkstar s' (walkstar sx t) = walkstar s t`,
   REPEAT STRIP_TAC THEN EXISTS_TAC `s:(num,A term_term)fmap` THEN
@@ -305,9 +305,9 @@ let LUNIFAUX_unifier_ext_tac sym =
 
 let unify_unifier = prove
  (`!(s:(num,A term_term)fmap) t1 t2 sx.
-     wfs s /\ unify s t1 t2 = SOME sx
+     wfs s /\ unifDef_unify s t1 t2 = SOME sx
      ==> wfs sx /\ s SUBMAP sx /\ walkstar sx t1 = walkstar sx t2`,
-  MATCH_MP_TAC unify_ind THEN
+  MATCH_MP_TAC unifDef_unify_ind THEN
   MAP_EVERY X_GEN_TAC [`s:(num,A term_term)fmap`; `t1:A term_term`; `t2:A term_term`] THEN
   DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "ih1") (LABEL_TAC "ih2")) THEN
   X_GEN_TAC `sx:(num,A term_term)fmap` THEN STRIP_TAC THEN
@@ -322,9 +322,9 @@ let unify_unifier = prove
   MP_TAC(SPECL [`s:(num,A term_term)fmap`; `sx:(num,A term_term)fmap`; `t2:A term_term`]
                walkstar_walk_SUBMAP) THEN
   ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN DISCH_THEN SUBST1_TAC THEN
-  UNDISCH_TAC `unify (s:(num,A term_term)fmap) t1 t2 = SOME sx` THEN
+  UNDISCH_TAC `unifDef_unify (s:(num,A term_term)fmap) t1 t2 = SOME sx` THEN
   MP_TAC(SPECL [`s:(num,A term_term)fmap`; `t1:A term_term`; `t2:A term_term`]
-               unify_def) THEN
+               unifDef_unify_def) THEN
   ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN
   CASES_ON `walk (s:(num,A term_term)fmap) t1` THEN
   CASES_ON `walk (s:(num,A term_term)fmap) t2` THEN
@@ -335,22 +335,22 @@ let unify_unifier = prove
     LUNIFAUX_unifier_ext_tac false;
     LUNIFAUX_unifier_ext_tac false;
     LUNIFAUX_unifier_ext_tac true;
-    CASES_ON `unify (s:(num,A term_term)fmap) a0 a0'` THEN
+    CASES_ON `unifDef_unify (s:(num,A term_term)fmap) a0 a0'` THEN
    REWRITE_TAC[OPTION_BIND_DEF; option_DISTINCT] THEN DISCH_TAC THEN
    USE_THEN "ih2" (MP_TAC o SPECL [`a0:A term_term`; `a1:A term_term`;
                                    `a0':A term_term`; `a1':A term_term`]) THEN
    REWRITE_TAC[ASSUME `wfs (s:(num,A term_term)fmap)`] THEN
    DISCH_THEN(MP_TAC o SPEC `a:(num,A term_term)fmap`) THEN
-   REWRITE_TAC[ASSUME `unify (s:(num,A term_term)fmap) a0 a0' = SOME a`] THEN
+   REWRITE_TAC[ASSUME `unifDef_unify (s:(num,A term_term)fmap) a0 a0' = SOME a`] THEN
    STRIP_TAC THEN
    USE_THEN "ih1" (MP_TAC o SPECL [`a0:A term_term`; `a1:A term_term`;
                                    `a0':A term_term`; `a1':A term_term`;
                                    `a:(num,A term_term)fmap`]) THEN
    REWRITE_TAC[ASSUME `wfs (s:(num,A term_term)fmap)`;
-               ASSUME `unify (s:(num,A term_term)fmap) a0 a0' = SOME a`;
+               ASSUME `unifDef_unify (s:(num,A term_term)fmap) a0 a0' = SOME a`;
                ASSUME `wfs (a:(num,A term_term)fmap)`] THEN
    DISCH_THEN(MP_TAC o SPEC `sx:(num,A term_term)fmap`) THEN
-   REWRITE_TAC[ASSUME `unify (a:(num,A term_term)fmap) a1 a1' = SOME sx`] THEN
+   REWRITE_TAC[ASSUME `unifDef_unify (a:(num,A term_term)fmap) a1 a1' = SOME sx`] THEN
    STRIP_TAC THEN
    REWRITE_TAC[MATCH_MP walkstar_thm (ASSUME `wfs (sx:(num,A term_term)fmap)`);
                term_term_11] THEN
@@ -382,7 +382,7 @@ let LUNIFAUX_vars_pc_le = prove
 let vars_measure = prove
  (`!(s:(num,A term_term)fmap) v t.
      v IN term_vars t /\ (!w. ~(t = term_Var w)) /\ wfs s
-     ==> measure (pair_count o walkstar s) (term_Var v) t`,
+     ==> MEASURE (pair_count o walkstar s) (term_Var v) t`,
   REPEAT GEN_TAC THEN CASES_ON `t:A term_term` THEN
   REWRITE_TAC[term_vars_def; NOT_IN_EMPTY; term_term_distinct; term_term_11] THENL
    [MESON_TAC[]; ALL_TAC] THEN
@@ -439,8 +439,8 @@ let LUNIFAUX_eqs_var_tac =
 let eqs_unify = prove
  (`!(s:(num,A term_term)fmap) t1 t2 s2.
      wfs s /\ wfs s2 /\ walkstar s2 (walkstar s t1) = walkstar s2 (walkstar s t2)
-     ==> ?sx. unify s t1 t2 = SOME sx`,
-  MATCH_MP_TAC unify_ind THEN
+     ==> ?sx. unifDef_unify s t1 t2 = SOME sx`,
+  MATCH_MP_TAC unifDef_unify_ind THEN
   MAP_EVERY X_GEN_TAC [`s:(num,A term_term)fmap`; `t1:A term_term`; `t2:A term_term`] THEN
   DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "ih1") (LABEL_TAC "ih2")) THEN
   X_GEN_TAC `s2:(num,A term_term)fmap` THEN STRIP_TAC THEN
@@ -450,7 +450,7 @@ let eqs_unify = prove
    [REWRITE_TAC[MATCH_MP walkstar_walk (ASSUME `wfs (s:(num,A term_term)fmap)`)] THEN
     FIRST_ASSUM ACCEPT_TAC; ALL_TAC] THEN
   MP_TAC(SPECL [`s:(num,A term_term)fmap`; `t1:A term_term`; `t2:A term_term`]
-               unify_def) THEN
+               unifDef_unify_def) THEN
   ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN
   CASES_ON `walk (s:(num,A term_term)fmap) t1` THEN
   CASES_ON `walk (s:(num,A term_term)fmap) t2` THEN
@@ -481,7 +481,7 @@ let eqs_unify = prove
                                     `a0':A term_term`; `a1':A term_term`;
                                     `x:(num,A term_term)fmap`]) THEN
     REWRITE_TAC[ASSUME `wfs (s:(num,A term_term)fmap)`;
-                ASSUME `unify (s:(num,A term_term)fmap) a0 a0' = SOME x`] THEN
+                ASSUME `unifDef_unify (s:(num,A term_term)fmap) a0 a0' = SOME x`] THEN
     DISCH_THEN(MP_TAC o SPEC `s2:(num,A term_term)fmap`) THEN
     ASM_REWRITE_TAC[];
     LUNIFAUX_wsthm_tac THEN REWRITE_TAC[term_term_distinct];
@@ -529,7 +529,7 @@ let COMPAT_extend = prove
 let COMPAT_eqs_unify = prove
  (`!(s:(num,A term_term)fmap) t1 t2 sx.
      sx COMPAT s /\ walkstar sx t1 = walkstar sx t2
-     ==> ?si. unify s t1 t2 = SOME si /\ sx COMPAT si`,
+     ==> ?si. unifDef_unify s t1 t2 = SOME si /\ sx COMPAT si`,
   REPEAT GEN_TAC THEN REWRITE_TAC[COMPAT_def] THEN STRIP_TAC THEN
   MP_TAC(SPECL [`s:(num,A term_term)fmap`; `t1:A term_term`; `t2:A term_term`;
                 `sx:(num,A term_term)fmap`] eqs_unify) THEN

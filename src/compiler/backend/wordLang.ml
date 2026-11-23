@@ -8,7 +8,7 @@
 (* Notes on the rendering:                                                   *)
 (* - Names: the prefix wl_ for the constructors and constants that clash     *)
 (*   with other ILs (wl_exp, wl_prog, wl_Var, wl_Call, wl_every_var, ...), as *)
-(*   notes/naming/names.tsv says.                                            *)
+(*   doc/names.tsv says.                                                     *)
 (* - HOL4 Type shift = ast$shift is the type abbreviation wl_shift (the     *)
 (*   type shift of ast); Type cutsets = num_set # num_set is the type       *)
 (*   abbreviation cutsets.                                                   *)

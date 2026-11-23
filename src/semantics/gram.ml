@@ -29,7 +29,7 @@
 (*   and mlptree are HOL Light type abbreviations.                           *)
 (* - HOL4 mlstring literals are implode of a string literal; a character     *)
 (*   literal is CHR of its code.                                             *)
-(* - Names from notes/naming/names.tsv: the token constructors IntT, WordT   *)
+(* - Names from doc/names.tsv: the token constructors IntT, WordT            *)
 (*   and CharT are tokens_IntT, tokens_WordT and tokens_CharT (tokens.ml);   *)
 (*   Ndl_def and Lfl_def are gram_Ndl_def and gram_Lfl_def.                  *)
 (* - nt_distinct_ths (HOL4: for computeLib) is built as in HOL4, from the    *)

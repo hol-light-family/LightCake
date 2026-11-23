@@ -1,6 +1,6 @@
 (* ========================================================================= *)
 (* sem1aux_tfl: definitions with many clauses, compiled as HOL4's TFL does   *)
-(* (a helper of unit SEM1, written to be moved into the kit).                *)
+(* (an extension of the kit's definition tools).                             *)
 (*                                                                           *)
 (*   sem1aux_def `clauses`              like cake_def                        *)
 (*   sem1aux_def_wf `R` tac `clauses`   like cake_def_wf                     *)

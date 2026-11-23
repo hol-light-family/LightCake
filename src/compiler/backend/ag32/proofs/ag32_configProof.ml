@@ -195,7 +195,7 @@ let compile_imp_ffi_names = prove
      lab_to_target_config_shmem_extra (backend_config_lab_conf c1) = [] /\ ~(f = []) /\
      lab_to_target_config_ffi_names (backend_config_lab_conf c) = NONE /\
      ffinames_to_string_list
-       (the [] (lab_to_target_config_ffi_names (backend_config_lab_conf c1))) = f
+       (misc_the [] (lab_to_target_config_ffi_names (backend_config_lab_conf c1))) = f
      ==> lab_to_target_config_ffi_names (backend_config_lab_conf c1) =
          SOME (MAP ExtCall f)`,
   let lab_rwts = [(record_info "lab_to_target_config").ri_accfupds;
@@ -216,5 +216,5 @@ let compile_imp_ffi_names = prove
       then SUBST_ALL_TAC th else failwith "") THEN
   FIRST_ASSUM(fun th -> MP_TAC(MATCH_MP (REWRITE_RULE[IMP_CONJ] get_shmem_info_LENGTH) th)) THEN
   REWRITE_TAC[LENGTH; LENGTH_EQ_NIL] THEN DISCH_THEN SUBST_ALL_TAC THEN
-  REWRITE_TAC[APPEND_NIL; the_def; option_INJ] THEN MATCH_MP_TAC MAP_ExtCall_ffinames THEN
+  REWRITE_TAC[APPEND_NIL; misc_the_def; option_INJ] THEN MATCH_MP_TAC MAP_ExtCall_ffinames THEN
   REWRITE_TAC[find_ffi_names_ExtCall]);;

@@ -4,7 +4,7 @@
 (* Craig McLaughlin, March--April 2022).                                     *)
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
-(* - Names as notes/naming/names.tsv says: the types token and atom are      *)
+(* - Names as doc/names.tsv says: the types token and atom are               *)
 (*   panLexer_token and panLexer_atom; the constructors AndT, ArrowT, StarT, *)
 (*   IntT, CommaT, ColonT and LexErrorT are panLexer_AndT, ...; get_token,   *)
 (*   read_while, next_loc, next_line, skip_comment, unhex_alt,               *)
@@ -290,7 +290,7 @@ let panLexer_num_from_dec_string_alt_def = cake_def
 (* unrecognised character                                                  *)
 
 let next_atom_def = cake_def_wf
-  `measure ((LENGTH:string->num) o (FST:string#locn->string))`
+  `MEASURE ((LENGTH:string->num) o (FST:string#locn->string))`
   (REWRITE_TAC[measure_THM; o_THM] THEN REPEAT STRIP_TAC THEN
    ASM_REWRITE_TAC[LENGTH; LENGTH_DROP] THEN ASM_ARITH_TAC)
   `(next_atom "" (_:locn) = NONE) /\
@@ -368,7 +368,7 @@ let panLexer_init_loc_def = cake_def
   `panLexer_init_loc = POSN 1 1`;;
 
 let pancake_lex_aux_def = cake_def_wf
-  `measure ((LENGTH:string->num) o (FST:string#locn->string))`
+  `MEASURE ((LENGTH:string->num) o (FST:string#locn->string))`
   (REWRITE_TAC[measure_THM; o_THM; FST] THEN REPEAT STRIP_TAC THEN GVS[] THEN
    IMP_RES_TAC panLexer_next_token_LESS THEN ASM_REWRITE_TAC[])
   `pancake_lex_aux input loc =
@@ -387,5 +387,4 @@ let safe_pancake_lex_def = cake_def
      let output = pancake_lex input in
      match FILTER (isLexErrorT o FST) output with
        [] -> INL output
-     | xs -> INR (MAP ((the (implode "") o destLexErrorT) ## I) xs)`;;
-
+     | xs -> INR (MAP ((misc_the (implode "") o destLexErrorT) ## I) xs)`;;

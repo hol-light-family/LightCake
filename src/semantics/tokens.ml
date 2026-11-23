@@ -6,7 +6,7 @@
 (* Notes on the rendering:                                                   *)
 (* - The HOL4 type path of this theory is tokens_path: HOL Light already has *)
 (*   a type path (HOL4's pathTheory, src/hol4/path.ml, loaded by misc).      *)
-(* - Constructor names from notes/naming/names.tsv: Mod, IntT, WordT and     *)
+(* - Constructor names from doc/names.tsv: Mod, IntT, WordT and              *)
 (*   CharT are tokens_Mod, tokens_IntT, tokens_WordT and tokens_CharT.       *)
 (* ========================================================================= *)
 

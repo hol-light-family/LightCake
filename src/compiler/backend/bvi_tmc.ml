@@ -10,6 +10,8 @@
 (*   arguments of LetCall in pure_exp get their own names.                   *)
 (* - Definitions with catch-all or overlapping clauses are made with         *)
 (*   sem1aux_def(_wf) (HOL4's TFL completion).                               *)
+(* - HOL4 bind is bvi_tmc_bind (a short or common word), and bind_def is     *)
+(*   bvi_tmc_bind_def.                                                       *)
 (* ========================================================================= *)
 
 needs "misc/misc.ml";;
@@ -33,7 +35,7 @@ let bvi_tmc_pure_op_def = sem1aux_def
    (bvi_tmc_pure_op (clos_ThunkOp _) _ <=> F)`;;
 
 let pure_exp_def = sem1aux_def_wf
-  `measure (\x:(num # bvi_exp) + (num # bvi_exp list).
+  `MEASURE (\x:(num # bvi_exp) + (num # bvi_exp list).
               sum_CASE x (\p. bvi_exp_size (SND p))
                          (\p. list_size bvi_exp_size (SND p)))`
   SEM1AUX_TC_TAC
@@ -108,15 +110,15 @@ let call_block_INDUCT,call_block_RECURSION = cake_type
   "call_block = CallBlock num (num list) call_block (num list)
               | RCall num (num list)";;
 
-let bind_def = cake_def
-  `(bind (n:num) ([]:A list) = ([],n)) /\
-   (bind (n:num) (CONS (_:A) t) =
-      match bind (n + 1) t with
+let bvi_tmc_bind_def = cake_def
+  `(bvi_tmc_bind (n:num) ([]:A list) = ([],n)) /\
+   (bvi_tmc_bind (n:num) (CONS (_:A) t) =
+      match bvi_tmc_bind (n + 1) t with
         (vs,n') -> (CONS n vs,n'))`;;
 
 let bind_size = prove
- (`!args n vs n'. bind n (args:A list) = (vs,n') ==> LENGTH args = LENGTH vs`,
-  LIST_INDUCT_TAC THEN REWRITE_TAC[bind_def; PAIR_EQ] THENL
+ (`!args n vs n'. bvi_tmc_bind n (args:A list) = (vs,n') ==> LENGTH args = LENGTH vs`,
+  LIST_INDUCT_TAC THEN REWRITE_TAC[bvi_tmc_bind_def; PAIR_EQ] THENL
    [MESON_TAC[LENGTH]; ALL_TAC] THEN
   REPEAT GEN_TAC THEN PAIRARG_TAC THEN REWRITE_TAC[PAIR_EQ] THEN
   STRIP_TAC THEN RVEQ_TAC THEN REWRITE_TAC[LENGTH; SUC_INJ] THEN
@@ -137,7 +139,7 @@ let shift_cb_def = cake_def
 let call_to_cb_def = cake_def
   `call_to_cb (loc:A) call_ts call_loc (call_args0:C list) (call_h:B option) =
      if call_loc = SOME loc /\ call_h = NONE then
-       match bind 0 call_args0 with
+       match bvi_tmc_bind 0 call_args0 with
          (vs,_) -> SOME (call_args0,RCall call_ts vs)
      else NONE`;;
 
@@ -169,7 +171,7 @@ let shift_cb_dist = prove
 (* last are let bound.                                                      *)
 
 let bvi_to_cb_aux_def = sem1aux_def_wf
-  `measure (\x:(num # num # num # bvi_exp) + (num # num # num # bvi_exp list).
+  `MEASURE (\x:(num # num # num # bvi_exp) + (num # num # num # bvi_exp list).
               sum_CASE x (\p. bvi_exp_size (SND (SND (SND p))))
                          (\p. list_size bvi_exp_size (SND (SND (SND p)))))`
   SEM1AUX_TC_TAC
@@ -250,8 +252,8 @@ let wf_vars_cons = prove
   SIMP_TAC[wf_vars_def; ALL]);;
 
 let wf_vars_bind = prove
- (`!bs vs n n'. bind n (bs:A list) = (vs,n') ==> wf_vars (n + LENGTH bs) vs`,
-  LIST_INDUCT_TAC THEN REWRITE_TAC[bind_def; PAIR_EQ] THENL
+ (`!bs vs n n'. bvi_tmc_bind n (bs:A list) = (vs,n') ==> wf_vars (n + LENGTH bs) vs`,
+  LIST_INDUCT_TAC THEN REWRITE_TAC[bvi_tmc_bind_def; PAIR_EQ] THENL
    [MESON_TAC[wf_vars_empty]; ALL_TAC] THEN
   REPEAT GEN_TAC THEN PAIRARG_TAC THEN REWRITE_TAC[PAIR_EQ] THEN
   STRIP_TAC THEN RVEQ_TAC THEN MATCH_MP_TAC wf_vars_cons THEN
@@ -468,7 +470,7 @@ let call_block_size_shift = prove
   ASM_REWRITE_TAC[cb_size_def; shift_cb_def; LET_DEF; LET_END_DEF]);;
 
 let cb_to_bvi_worker_aux_def = cake_def_wf
-  `measure (\p:call_block # num # num # num. cb_size (FST p))`
+  `MEASURE (\p:call_block # num # num # num. cb_size (FST p))`
   (REWRITE_TAC[measure_THM; FST; call_block_size_shift; cb_size_def] THEN
    ARITH_TAC)
   `(cb_to_bvi_worker_aux (RCall call_ts call_args0) loc_opt ptr idx =
@@ -535,7 +537,7 @@ let cb_to_bvi_wrapper_def = cake_def
 (* Expression rewriting *)
 
 let rewrite_wrapper_def = sem1aux_def_wf
-  `measure (\p:num # num # num # bvi_exp. bvi_exp_size (SND (SND (SND p))))`
+  `MEASURE (\p:num # num # num # bvi_exp. bvi_exp_size (SND (SND (SND p))))`
   SEM1AUX_TC_TAC
   `(rewrite_wrapper loc loc_opt _ (bvi_Var n) = NONE) /\
    (rewrite_wrapper loc loc_opt n (bvi_If xi xt xe) =
@@ -568,7 +570,7 @@ let rewrite_wrapper_ind = cake_ind "rewrite_wrapper";;
 (* checked by rewrite_wrapper.                                              *)
 
 let rewrite_worker_def = sem1aux_def_wf
-  `measure (\p:num # num # num # num # num # bvi_exp.
+  `MEASURE (\p:num # num # num # num # num # bvi_exp.
               bvi_exp_size (SND (SND (SND (SND (SND p))))))`
   SEM1AUX_TC_TAC
   `(rewrite_worker loc loc_opt i_old_ptr i_old_idx n (bvi_If xi xt xe) =

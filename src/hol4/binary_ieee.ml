@@ -32,6 +32,8 @@
 (* rounding-error lemmas (diff_float_ULP ... round_roundTiesToEven,          *)
 (* round_roundTiesToEven_is_zero ...) and the bounds on next_hi, next_lo     *)
 (* and float_ulp (next_hi_difference, abs_float_bounds ...).                 *)
+(* HOL4 round is binary_ieee_round (a short or common word), and round_def   *)
+(* is binary_ieee_round_def.                                                 *)
 (* ========================================================================= *)
 
 needs "hol4/vocab.ml";;
@@ -303,8 +305,8 @@ let ulp_def = prove
 
 (* rounding                                                                  *)
 
-let round_def = cake_def
-  `round mode (x:real) =
+let binary_ieee_round_def = cake_def
+  `binary_ieee_round mode (x:real) =
      match mode with
        roundTiesToEven ->
          (let t = threshold(:T#W) in
@@ -393,7 +395,7 @@ let float_some_qnan_def = new_definition
 
 let float_round_def = new_definition
   `float_round mode toneg (r:real) =
-     let x = round mode r :(T,W)float in
+     let x = binary_ieee_round mode r :(T,W)float in
      if float_is_zero x
      then if toneg then float_minus_zero(:T#W) else float_plus_zero(:T#W)
      else x`;;
@@ -1354,52 +1356,52 @@ let LIEEE_ROUND_TAC =
   REPEAT GEN_TAC THEN DISCH_TAC THEN
   MP_TAC threshold_is_positive THEN MP_TAC largest_is_positive THEN
   REPEAT DISCH_TAC THEN
-  REWRITE_TAC[round_def; rounding_CASE; LET_DEF; LET_END_DEF] THEN
+  REWRITE_TAC[binary_ieee_round_def; rounding_CASE; LET_DEF; LET_END_DEF] THEN
   REPEAT(COND_CASES_TAC THEN ASM_REWRITE_TAC[]) THEN
   ASM_REAL_ARITH_TAC;;
 
 let round_roundTiesToEven_plus_infinity = prove
  (`!y:(T,W)float x.
      threshold(:T#W) <= x
-     ==> round roundTiesToEven x = float_plus_infinity(:T#W)`,
+     ==> binary_ieee_round roundTiesToEven x = float_plus_infinity(:T#W)`,
   LIEEE_ROUND_TAC);;
 
 let round_roundTiesToEven_minus_infinity = prove
  (`!y:(T,W)float x.
      x <= --threshold(:T#W)
-     ==> round roundTiesToEven x = float_minus_infinity(:T#W)`,
+     ==> binary_ieee_round roundTiesToEven x = float_minus_infinity(:T#W)`,
   LIEEE_ROUND_TAC);;
 
 let round_roundTowardZero_top = prove
  (`!y:(T,W)float x.
-     largest(:T#W) < x ==> round roundTowardZero x = float_top(:T#W)`,
+     largest(:T#W) < x ==> binary_ieee_round roundTowardZero x = float_top(:T#W)`,
   LIEEE_ROUND_TAC);;
 
 let round_roundTowardZero_bottom = prove
  (`!y:(T,W)float x.
-     x < --largest(:T#W) ==> round roundTowardZero x = float_bottom(:T#W)`,
+     x < --largest(:T#W) ==> binary_ieee_round roundTowardZero x = float_bottom(:T#W)`,
   LIEEE_ROUND_TAC);;
 
 let round_roundTowardPositive_plus_infinity = prove
  (`!y:(T,W)float x.
      largest(:T#W) < x
-     ==> round roundTowardPositive x = float_plus_infinity(:T#W)`,
+     ==> binary_ieee_round roundTowardPositive x = float_plus_infinity(:T#W)`,
   LIEEE_ROUND_TAC);;
 
 let round_roundTowardPositive_bottom = prove
  (`!y:(T,W)float x.
-     x < --largest(:T#W) ==> round roundTowardPositive x = float_bottom(:T#W)`,
+     x < --largest(:T#W) ==> binary_ieee_round roundTowardPositive x = float_bottom(:T#W)`,
   LIEEE_ROUND_TAC);;
 
 let round_roundTowardNegative_top = prove
  (`!y:(T,W)float x.
-     largest(:T#W) < x ==> round roundTowardNegative x = float_top(:T#W)`,
+     largest(:T#W) < x ==> binary_ieee_round roundTowardNegative x = float_top(:T#W)`,
   LIEEE_ROUND_TAC);;
 
 let round_roundTowardNegative_minus_infinity = prove
  (`!y:(T,W)float x.
      x < --largest(:T#W)
-     ==> round roundTowardNegative x = float_minus_infinity(:T#W)`,
+     ==> binary_ieee_round roundTowardNegative x = float_minus_infinity(:T#W)`,
   LIEEE_ROUND_TAC);;
 
 let LIEEE_FLOAT_ROUND_TAC thl =
@@ -1454,7 +1456,7 @@ let float_minus_infinity = prove
 
 let float_round_non_zero = prove
  (`!mode toneg r s e f.
-     round mode r = float_REC s e f /\ (~(e = word 0) \/ ~(f = word 0))
+     binary_ieee_round mode r = float_REC s e f /\ (~(e = word 0) \/ ~(f = word 0))
      ==> float_round mode toneg r = (float_REC s e f:(T,W)float)`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   ASM_REWRITE_TAC[float_round_def; LET_DEF; LET_END_DEF; float_is_zero;
@@ -1462,28 +1464,28 @@ let float_round_non_zero = prove
 
 let float_round_plus_infinity = prove
  (`!mode toneg r.
-     round mode r = float_plus_infinity(:T#W)
+     binary_ieee_round mode r = float_plus_infinity(:T#W)
      ==> float_round mode toneg r = float_plus_infinity(:T#W)`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN
   ASM_REWRITE_TAC[float_round_def; LET_DEF; LET_END_DEF; infinity_properties]);;
 
 let float_round_minus_infinity = prove
  (`!mode toneg r.
-     round mode r = float_minus_infinity(:T#W)
+     binary_ieee_round mode r = float_minus_infinity(:T#W)
      ==> float_round mode toneg r = float_minus_infinity(:T#W)`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN
   ASM_REWRITE_TAC[float_round_def; LET_DEF; LET_END_DEF; infinity_properties]);;
 
 let float_round_top = prove
  (`!mode toneg r.
-     round mode r = float_top(:T#W)
+     binary_ieee_round mode r = float_top(:T#W)
      ==> float_round mode toneg r = float_top(:T#W)`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN
   ASM_REWRITE_TAC[float_round_def; LET_DEF; LET_END_DEF; top_properties]);;
 
 let float_round_bottom = prove
  (`!mode toneg r.
-     round mode r = float_bottom(:T#W)
+     binary_ieee_round mode r = float_bottom(:T#W)
      ==> float_round mode toneg r = float_bottom(:T#W)`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN
   ASM_REWRITE_TAC[float_round_def; LET_DEF; LET_END_DEF; bottom_properties]);;
@@ -2204,13 +2206,13 @@ let LIEEE_IS_CLOSEST_FLOAT = prove
 let LIEEE_ROUND_FINITE_FLOAT = prove
  (`!a:(T,W)float.
      float_is_finite a /\ ~float_is_zero a
-     ==> round roundTiesToEven (float_to_real a) = a`,
+     ==> binary_ieee_round roundTiesToEven (float_to_real a) = a`,
   REPEAT STRIP_TAC THEN
   MP_TAC(ISPEC `a:(T,W)float` LIEEE_ABS_FLOAT_LE_LARGEST) THEN
   ASM_REWRITE_TAC[] THEN
   MP_TAC largest_lt_threshold THEN MP_TAC threshold_is_positive THEN
   REPEAT DISCH_TAC THEN
-  REWRITE_TAC[round_def; rounding_CASE; LET_DEF; LET_END_DEF] THEN
+  REWRITE_TAC[binary_ieee_round_def; rounding_CASE; LET_DEF; LET_END_DEF] THEN
   SUBGOAL_THEN `~(float_to_real (a:(T,W)float) <= --threshold(:T#W)) /\
                 ~(float_to_real (a:(T,W)float) >= threshold(:T#W))`
   STRIP_ASSUME_TAC THENL [ASM_REAL_ARITH_TAC; ALL_TAC] THEN
@@ -2247,9 +2249,9 @@ let LIEEE_SND_FLOAT_ROUND_WITH_FLAGS = prove
   REWRITE_TAC[float_round_with_flags_def; LET_DEF; LET_END_DEF]);;
 
 let LIEEE_ROUND_TIES_ZERO = prove
- (`float_is_zero (round roundTiesToEven (&0):(T,W)float)`,
+ (`float_is_zero (binary_ieee_round roundTiesToEven (&0):(T,W)float)`,
   MP_TAC threshold_is_positive THEN DISCH_TAC THEN
-  REWRITE_TAC[round_def; rounding_CASE; LET_DEF; LET_END_DEF] THEN
+  REWRITE_TAC[binary_ieee_round_def; rounding_CASE; LET_DEF; LET_END_DEF] THEN
   ASM_SIMP_TAC[REAL_ARITH `&0 < t ==> ~(&0 <= --t) /\ ~(&0 >= t)`] THEN
   MP_TAC(BETA_RULE(SELECT_RULE(ISPECL
     [`\a:(T,W)float. ~bit 0 (float_Significand a)`; `&0`]

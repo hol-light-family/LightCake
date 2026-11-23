@@ -407,7 +407,7 @@ let lab_to_loc_def = cake_def
 (* HOL4 proves termination automatically: the size of the code decreases *)
 
 let loc_to_pc_def = cake_def_wf
-  `measure (\x:num#num#((A)sec)list. list_size (sec_size (\x:A. 0)) (SND (SND x)))`
+  `MEASURE (\x:num#num#((A)sec)list. list_size (sec_size (\x:A. 0)) (SND (SND x)))`
   TERM_TAC
   `(loc_to_pc n1 n2 ([]:((A)sec)list) = NONE) /\
    (loc_to_pc n1 n2 (CONS (Section k xs) ys) =
@@ -465,7 +465,7 @@ let get_pc_value_def = cake_def
      match lab with lab_Lab n1 n2 -> loc_to_pc n1 n2 (lab_state_code s)`;;
 
 let next_label_def = cake_def_wf
-  `measure (list_size (sec_size (\x:A. 0)))`
+  `MEASURE (list_size (sec_size (\x:A. 0)))`
   TERM_TAC
   `(next_label ([]:((A)sec)list) = NONE:((A)word_loc)option) /\
    (next_label (CONS (Section k []) xs) = next_label xs) /\
@@ -477,7 +477,7 @@ let next_label_def = cake_def_wf
 let next_label_ind = cake_ind "next_label";;
 
 let get_lab_after_def = cake_def_wf
-  `measure (\x:num#((A)sec)list. list_size (sec_size (\x:A. 0)) (SND x))`
+  `MEASURE (\x:num#((A)sec)list. list_size (sec_size (\x:A. 0)) (SND x))`
   TERM_TAC
   `(get_lab_after pos ([]:((A)sec)list) = NONE:((A)word_loc)option) /\
    (get_lab_after pos (CONS (Section k []) xs) = get_lab_after pos xs) /\
@@ -566,7 +566,7 @@ let STACKPAUX_share_mem_op_clock = prove
 (* asm_inst_consts and the definitions of the state updates                 *)
 
 let lab_evaluate_def = cake_def_wf
-  `measure (lab_state_clock:(A,C,FFI)lab_state->num)`
+  `MEASURE (lab_state_clock:(A,C,FFI)lab_state->num)`
   (REWRITE_TAC[measure_THM] THEN REPEAT STRIP_TAC THEN RVEQ_TAC THEN
    RULE_ASSUM_TAC(REWRITE_RULE[inc_pc_def; lab_dec_clock_def; lab_upd_pc_def;
                                 lab_upd_reg_def]) THEN

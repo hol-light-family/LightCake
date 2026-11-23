@@ -27,7 +27,7 @@ type_invention_error := true;;
 (*   infer_st_next_uvar s, ienv.inf_v is inf_env_inf_v ienv; r with f := v  *)
 (*   is R_f_fupd (K v) r (several fields: the first field outermost); record *)
 (*   literals are R_REC with the fields in declaration order.               *)
-(* - Names (notes/naming/names.tsv): HOL4 read, write, guard and init_config *)
+(* - Names (doc/names.tsv): HOL4 read, write, guard and init_config          *)
 (*   are infer_read, infer_write, infer_guard and infer_init_config.         *)
 (* - The mlstring literal of x is implode "x"; concat is mlstring_concat;   *)
 (*   mlint$toString is toString (on int), toString on num is num_to_str;     *)
@@ -165,7 +165,7 @@ let inf_env_component_equality = inf_env_INFO.ri_component_equality;;
 (* type, and a substitution that describes the generalisation.            *)
 
 let generalise_def = cake_def_wf
-  `measure (\x:num#num#(num,num)fmap#infer_t + num#num#(num,num)fmap#(infer_t list).
+  `MEASURE (\x:num#num#(num,num)fmap#infer_t + num#num#(num,num)fmap#(infer_t list).
               match x with INL (_,_,_,t) -> infer_t_size t
                          | INR (_,_,_,ts) -> list_size infer_t_size ts)`
   TERM_TAC
@@ -231,7 +231,7 @@ let infer_deBruijn_subst_alt = prove
   AP_TERM_TAC THEN SPEC_TAC(`ts:infer_t list`,`ts:infer_t list`) THEN
   LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[infer_deBruijn_subst_def; MAP]);;
 let type_name_check_subst_def = cake_def_wf
-  `measure (\x:loc_err_info#(mlstring->mlstring)#(mlstring,mlstring,mlstring list#t)namespace#
+  `MEASURE (\x:loc_err_info#(mlstring->mlstring)#(mlstring,mlstring,mlstring list#t)namespace#
                 (mlstring list)#ast_t +
               loc_err_info#(mlstring->mlstring)#(mlstring,mlstring,mlstring list#t)namespace#
                 (mlstring list)#(ast_t list).
@@ -324,7 +324,7 @@ let st_ex_bind_triple = prove
 (* HOL4's equations are derived from those.                                 *)
 
 let TYSYS2AUX_type_name_check_sub_curried = cake_def_wf
-  `measure (\x:loc_err_info#(mlstring,mlstring,mlstring list#t)namespace#
+  `MEASURE (\x:loc_err_info#(mlstring,mlstring,mlstring list#t)namespace#
                 (mlstring list)#ast_t#S +
               loc_err_info#(mlstring,mlstring,mlstring list#t)namespace#
                 (mlstring list)#(ast_t list)#S.
@@ -773,7 +773,7 @@ let check_type_definition_expand = prove
   CONV_TAC(DEPTH_CONV BETA_CONV) THEN REWRITE_TAC[]);;
 
 let infer_p_def = cake_def_wf
-  `measure (\x:loc_err_info#inf_env#pat + loc_err_info#inf_env#(pat list).
+  `MEASURE (\x:loc_err_info#inf_env#pat + loc_err_info#inf_env#(pat list).
               match x with INL (_,_,p) -> pat_size p
                          | INR (_,_,ps) -> list_size pat_size ps)`
   TERM_TAC
@@ -1157,7 +1157,7 @@ let constrain_op_error_msg_sanity = prove
 (* the four functions                                                        *)
 
 let infer_e_def = sem1aux_def_wf
-  `measure (\x:loc_err_info#inf_env#exp +
+  `MEASURE (\x:loc_err_info#inf_env#exp +
                 loc_err_info#inf_env#(exp list) +
                 loc_err_info#inf_env#((pat#exp)list)#infer_t#infer_t +
                 loc_err_info#inf_env#((varN#varN#exp)list).
@@ -1335,7 +1335,7 @@ let lift_ienv_def = cake_def
 (* constant num_tvs: written ntvs                                           *)
 
 let infer_d_def = sem1aux_def_wf
-  `measure (\x:inf_env#dec + inf_env#(dec list).
+  `MEASURE (\x:inf_env#dec + inf_env#(dec list).
               match x with INL (_,d) -> dec_size d
                          | INR (_,ds) -> list_size dec_size ds)`
   SEM1AUX_TC_TAC
@@ -1545,13 +1545,13 @@ let sub_completion_def = cake_def
   `sub_completion (tvs:num) (next_uvar:num) (s1:(num,infer_t)fmap)
                   extra_constraints s2 <=>
      pure_add_constraints s1 extra_constraints s2 /\
-     count next_uvar SUBSET FDOM s2 /\
+     pred_set_count next_uvar SUBSET FDOM s2 /\
      (!uv. uv IN FDOM s2 ==> check_t tvs {} (t_walkstar s2 (Infer_Tuvar uv)))`;;
 
 (* printing of types *)
 
 let alist_nub_def = cake_def_wf
-  `measure (\l:(A#B)list. LENGTH l)`
+  `MEASURE (\l:(A#B)list. LENGTH l)`
   (REWRITE_TAC[measure_THM; LENGTH] THEN REPEAT STRIP_TAC THEN
    MATCH_MP_TAC(ARITH_RULE `m <= n ==> m < SUC n`) THEN
    REWRITE_TAC[LENGTH_FILTER])

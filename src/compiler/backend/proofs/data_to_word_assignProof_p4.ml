@@ -62,7 +62,7 @@ let ASP4AUX_state_rel_get_vars = prove
           memory_rel c (wl_state_be t) (THE (data_state_tstamps s)) (data_state_refs s)
             (data_state_space s) (wl_state_store t) (wl_state_memory t) (wl_state_mdomain t)
             (APPEND (ZIP vals ws) (APPEND (join_env (data_state_locals s)
-                 (toAList (inter (wl_state_locals t) (adjust_set (data_state_locals s)))))
+                 (toAList (sptree_inter (wl_state_locals t) (adjust_set (data_state_locals s)))))
               (APPEND [(the_global (data_state_global s),FAPPLY (wl_state_store t) Globals)]
                  (data_to_word_gcProof_flat (data_state_stack s) (wl_state_stack t)))))`,
   REPEAT STRIP_TAC THEN
@@ -80,7 +80,7 @@ let ASP4AUX_state_rel_get_var1 = prove
           memory_rel c (wl_state_be t) (THE (data_state_tstamps s)) (data_state_refs s)
             (data_state_space s) (wl_state_store t) (wl_state_memory t) (wl_state_mdomain t)
             (CONS (v1,w1) (APPEND (join_env (data_state_locals s)
-                 (toAList (inter (wl_state_locals t) (adjust_set (data_state_locals s)))))
+                 (toAList (sptree_inter (wl_state_locals t) (adjust_set (data_state_locals s)))))
               (APPEND [(the_global (data_state_global s),FAPPLY (wl_state_store t) Globals)]
                  (data_to_word_gcProof_flat (data_state_stack s) (wl_state_stack t)))))`,
   REPEAT STRIP_TAC THEN DRULE_ALL ASP4AUX_state_rel_get_vars THEN
@@ -101,7 +101,7 @@ let ASP4AUX_state_rel_get_var2 = prove
           memory_rel c (wl_state_be t) (THE (data_state_tstamps s)) (data_state_refs s)
             (data_state_space s) (wl_state_store t) (wl_state_memory t) (wl_state_mdomain t)
             (CONS (v1,w1) (CONS (v2,w2) (APPEND (join_env (data_state_locals s)
-                 (toAList (inter (wl_state_locals t) (adjust_set (data_state_locals s)))))
+                 (toAList (sptree_inter (wl_state_locals t) (adjust_set (data_state_locals s)))))
               (APPEND [(the_global (data_state_global s),FAPPLY (wl_state_store t) Globals)]
                  (data_to_word_gcProof_flat (data_state_stack s) (wl_state_stack t))))))`,
   REPEAT STRIP_TAC THEN DRULE_ALL ASP4AUX_state_rel_get_vars THEN
@@ -122,7 +122,7 @@ let ASP4AUX_state_rel_do_stack_set_var = prove
        (data_state_space s) (wl_state_store t) (wl_state_memory t) (wl_state_mdomain t)
        (CONS (v,w)
          (APPEND (join_env (data_state_locals s)
-                   (toAList (inter (wl_state_locals t) (adjust_set (data_state_locals s)))))
+                   (toAList (sptree_inter (wl_state_locals t) (adjust_set (data_state_locals s)))))
             (APPEND [(the_global (data_state_global s),FAPPLY (wl_state_store t) Globals)]
                (data_to_word_gcProof_flat (data_state_stack s) (wl_state_stack t))))) ==>
      data_to_word_gcProof_state_rel c l1 l2
@@ -141,7 +141,7 @@ let ASP4AUX_state_rel_do_stack_set_var_1 = prove
        (data_state_space s) (wl_state_store t) (wl_state_memory t) (wl_state_mdomain t)
        (CONS (v,w)
          (APPEND (join_env (data_state_locals s)
-                   (toAList (inter (wl_state_locals t) (adjust_set (data_state_locals s)))))
+                   (toAList (sptree_inter (wl_state_locals t) (adjust_set (data_state_locals s)))))
             (APPEND [(the_global (data_state_global s),FAPPLY (wl_state_store t) Globals)]
                (data_to_word_gcProof_flat (data_state_stack s) (wl_state_stack t))))) ==>
      data_to_word_gcProof_state_rel c l1 l2
@@ -362,7 +362,7 @@ let ASP4AUX_cut_state_opt_SOME = prove
      (names_opt = NONE /\ x = s) \/
      (?names. names_opt = SOME names /\
               domain names SUBSET domain (data_state_locals s) /\
-              x = data_state_locals_fupd (K (mk_wf (inter (data_state_locals s) names))) s)`,
+              x = data_state_locals_fupd (K (mk_wf (sptree_inter (data_state_locals s) names))) s)`,
   GEN_TAC THEN CASES_ON `names_opt:(1 spt)option` THEN
   REWRITE_TAC[data_cut_state_opt_def; data_cut_state_def; data_cut_env_def] THEN
   CASE_REWRITE_TAC[] THEN REPEAT GEN_TAC THEN
@@ -596,7 +596,7 @@ let ASP4AUX_RefArray_code_thm = prove
 let ASP4AUX_lookup_pop_locals = prove
  (`!(y1:(A word_loc)spt) y2 p q1 p1.
      env_to_list y2 p = (q1,p1) ==>
-     !kk. lookup kk (union (fromAList q1) (fromAList (toAList y1))) = lookup kk (union y2 y1)`,
+     !kk. lookup kk (sptree_union (fromAList q1) (fromAList (toAList y1))) = lookup kk (sptree_union y2 y1)`,
   REPEAT GEN_TAC THEN DISCH_THEN(STRIP_ASSUME_TAC o MATCH_MP env_to_list_lookup_equiv) THEN
   ASM_REWRITE_TAC[lookup_union; lookup_fromAList; lookup_fromAList_toAList]);;
 
@@ -611,7 +611,7 @@ let ASP4AUX_RefArray_mr0 = prove
        (data_state_space x1) (wl_state_store t) (wl_state_memory t) (wl_state_mdomain t)
        (CONS (vv,w2)
          (APPEND (join_env (data_state_locals x1)
-                   (toAList (inter L (adjust_set (data_state_locals x1)))))
+                   (toAList (sptree_inter L (adjust_set (data_state_locals x1)))))
             (APPEND [(the_global (data_state_global x1),FAPPLY (wl_state_store t) Globals)]
                (data_to_word_gcProof_flat (data_state_stack x1) (wl_state_stack t)))))`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
@@ -625,7 +625,7 @@ let ASP4AUX_RefArray_mr0 = prove
   REWRITE_TAC[MEM; MEM_APPEND] THEN X_GEN_TAC `p:data_v#A word_loc` THEN
   STRIP_TAC THEN ASM_REWRITE_TAC[] THEN DISJ2_TAC THEN DISJ1_TAC THEN
   MATCH_MP_TAC join_env_submap_MEM THEN
-  MAP_EVERY EXISTS_TAC [`mk_wf (inter (data_state_locals (s1:(C,FFI)data_state)) (names:1 spt))`;
+  MAP_EVERY EXISTS_TAC [`mk_wf (sptree_inter (data_state_locals (s1:(C,FFI)data_state)) (names:1 spt))`;
                         `L:(A word_loc)spt`] THEN
   ASM_REWRITE_TAC[lookup_mk_wf; lookup_inter_alt] THEN
   MESON_TAC[option_DISTINCT]);;
@@ -707,17 +707,17 @@ let ASP4AUX_RefArray_call = prove
                  `wl_state_permute (t:(A,C,FFI)wl_state)`; `q1:(num#(A)word_loc)list`;
                  `p1:num->num->num`] ASP4AUX_lookup_pop_locals) THEN
   ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
-  SUBGOAL_THEN `!kk vx. lookup kk (union (fromAList (q1:(num#(A)word_loc)list))
+  SUBGOAL_THEN `!kk vx. lookup kk (sptree_union (fromAList (q1:(num#(A)word_loc)list))
                    (fromAList (toAList (y1:(A word_loc)spt)))) = SOME vx ==>
                  lookup kk (wl_state_locals (t:(A,C,FFI)wl_state)) = SOME vx` ASSUME_TAC THENL
    [ASM_REWRITE_TAC[] THEN REPEAT STRIP_TAC THEN MATCH_MP_TAC cut_env_lookup THEN
-    MAP_EVERY EXISTS_TAC [`adjust_sets (names:1 spt)`; `union (y2:(A word_loc)spt) y1`] THEN
+    MAP_EVERY EXISTS_TAC [`adjust_sets (names:1 spt)`; `sptree_union (y2:(A word_loc)spt) y1`] THEN
     ASM_MESON_TAC[];
     ALL_TAC] THEN
   MP_TAC(ISPECL [`c:data_to_word_config`; `l1:num`; `l2:num`; `s1:(C,FFI)data_state`;
                  `t:(A,C,FFI)wl_state`; `locs:(num#num)list`; `names:1 spt`;
                  `x1:(C,FFI)data_state`; `a2:num`; `vv:data_v`; `w2:A word_loc`;
-                 `union (fromAList (q1:(num#(A)word_loc)list))
+                 `sptree_union (fromAList (q1:(num#(A)word_loc)list))
                     (fromAList (toAList (y1:(A word_loc)spt)))`] ASP4AUX_RefArray_mr0) THEN
   ANTS_TAC THENL [REPEAT CONJ_TAC THEN FIRST_ASSUM ACCEPT_TAC; ALL_TAC] THEN
   DISCH_TAC) THEN
@@ -960,7 +960,7 @@ let assign_RefArray = prove
     ASM_REWRITE_TAC[MP6AUX_SMALLNUM_NUM] THEN DISCH_THEN MATCH_MP_TAC THEN
     EXISTS_TAC `CONS (vv,w2:A word_loc) (APPEND
        (join_env (data_state_locals (s:(C,FFI)data_state))
-       (toAList (inter (wl_state_locals (t:(A,C,FFI)wl_state))
+       (toAList (sptree_inter (wl_state_locals (t:(A,C,FFI)wl_state))
           (adjust_set (data_state_locals s)))))
       (APPEND [the_global (data_state_global s),FAPPLY (wl_state_store t) Globals]
       (data_to_word_gcProof_flat (data_state_stack s) (wl_state_stack t))))` THEN
@@ -2490,7 +2490,7 @@ let ASP4AUX_state_rel_set_var_sp = prove
        (data_state_space s2) (wl_state_store t) (wl_state_memory t) (wl_state_mdomain t)
        (CONS (v,w)
          (APPEND (join_env (data_state_locals s)
-                   (toAList (inter (wl_state_locals t) (adjust_set (data_state_locals s)))))
+                   (toAList (sptree_inter (wl_state_locals t) (adjust_set (data_state_locals s)))))
             (APPEND [(the_global (data_state_global s),FAPPLY (wl_state_store t) Globals)]
                (data_to_word_gcProof_flat (data_state_stack s) (wl_state_stack t))))) ==>
      data_to_word_gcProof_state_rel c l1 l2 (data_set_var dest v s2)
@@ -2643,7 +2643,7 @@ let ASP4AUX_arith_slow = prove
     STRIP_ASSUME_TAC)) THEN
   MAP_EVERY EXISTS_TAC [`q:((A)wl_result)option`; `r':(A,C,FFI)wl_state`] THEN
   ASM_REWRITE_TAC[] THEN
-  SUBGOAL_THEN `(x:(C,FFI)data_state) = data_state_locals_fupd (K (mk_wf (inter (data_state_locals s) (names:1 spt))))
+  SUBGOAL_THEN `(x:(C,FFI)data_state) = data_state_locals_fupd (K (mk_wf (sptree_inter (data_state_locals s) (names:1 spt))))
                       (s:(C,FFI)data_state)` SUBST_ALL_TAC THENL
    [ASM_MESON_TAC[cut_state_opt_SOME_eq]; ALL_TAC] THEN
   UNDISCH_TAC `data_to_word_gcProof_state_rel c l1 l2 (s:(C,FFI)data_state)
@@ -2990,8 +2990,8 @@ let ASP4AUX_state_rel_odd = prove
      data_to_word_gcProof_state_rel c l1 l2 s (wl_state_locals_fupd (K L) t) v locs`,
   REPEAT GEN_TAC THEN REWRITE_TAC[data_to_word_gcProof_state_rel_thm] THEN
   REWRITE_TAC[wl_state_INFO.ri_accfupds; K_THM] THEN STRIP_TAC THEN
-  SUBGOAL_THEN `inter L (adjust_set (data_state_locals (s:(C,FFI)data_state))) =
-                inter (wl_state_locals (t:(A,C,FFI)wl_state))
+  SUBGOAL_THEN `sptree_inter L (adjust_set (data_state_locals (s:(C,FFI)data_state))) =
+                sptree_inter (wl_state_locals (t:(A,C,FFI)wl_state))
                   (adjust_set (data_state_locals s))` SUBST1_TAC THENL
    [SIMP_TAC[spt_eq_thm; wf_inter] THEN REWRITE_TAC[lookup_inter_alt] THEN
     GEN_TAC THEN COND_CASES_TAC THEN REWRITE_TAC[] THEN
@@ -3010,7 +3010,7 @@ let ASP4AUX_state_rel_arith_fast2 = prove
        (wl_state_store t) (wl_state_memory t) (wl_state_mdomain t)
        (CONS (data_Number i,wl_Word w)
          (APPEND (join_env (data_state_locals x)
-                   (toAList (inter (wl_state_locals t) (adjust_set (data_state_locals x)))))
+                   (toAList (sptree_inter (wl_state_locals t) (adjust_set (data_state_locals x)))))
             (APPEND [(the_global (data_state_global x),FAPPLY (wl_state_store t) Globals)]
                (data_to_word_gcProof_flat (data_state_stack x) (wl_state_stack t))))) ==>
      data_to_word_gcProof_state_rel c l1 l2
@@ -3029,8 +3029,8 @@ let ASP4AUX_state_rel_arith_fast2 = prove
   ASM_REWRITE_TAC[do_space_def; THE_DEF; do_stack_def; do_lim_safe; LET_DEF; LET_END_DEF;
                   data_state_INFO.ri_accfupds; K_THM; option_le_max_right; option_le_refl] THEN
   CONJ_TAC THENL [ASM_MESON_TAC[data_to_word_gcProof_state_rel_thm]; ALL_TAC] THEN
-  SUBGOAL_THEN `inter L (adjust_set (data_state_locals (x:(C,FFI)data_state))) =
-                inter (wl_state_locals (t:(A,C,FFI)wl_state))
+  SUBGOAL_THEN `sptree_inter L (adjust_set (data_state_locals (x:(C,FFI)data_state))) =
+                sptree_inter (wl_state_locals (t:(A,C,FFI)wl_state))
                   (adjust_set (data_state_locals x))` SUBST1_TAC THENL
    [SIMP_TAC[spt_eq_thm; wf_inter] THEN REWRITE_TAC[lookup_inter_alt] THEN
     GEN_TAC THEN COND_CASES_TAC THEN REWRITE_TAC[] THEN
@@ -3087,10 +3087,10 @@ let ASP4AUX_memory_rel_cut = prove
      data_cut_state_opt (SOME names) s = SOME x /\
      memory_rel c be ts refs sp st m dm
        (CONS hd (APPEND (join_env (data_state_locals s)
-          (toAList (inter L (adjust_set (data_state_locals s))))) rest)) ==>
+          (toAList (sptree_inter L (adjust_set (data_state_locals s))))) rest)) ==>
      memory_rel c be ts refs 0 st m dm
        (CONS hd (APPEND (join_env (data_state_locals x)
-          (toAList (inter L (adjust_set (data_state_locals x))))) rest))`,
+          (toAList (sptree_inter L (adjust_set (data_state_locals x))))) rest))`,
   REPEAT STRIP_TAC THEN MATCH_MP_TAC memory_rel_zero_space THEN
   EXISTS_TAC `sp:num` THEN
   MATCH_MP_TAC(REWRITE_RULE[IMP_IMP] memory_rel_rearrange) THEN
@@ -3435,9 +3435,9 @@ let ASP4AUX_state_rel_frame = prove
      data_to_word_gcProof_state_rel c l1 l2 (data_state_stack_max_fupd (K SM) x) t' NONE locs`,
   REPEAT GEN_TAC THEN REWRITE_TAC[data_to_word_gcProof_state_rel_thm] THEN
   REWRITE_TAC[data_state_INFO.ri_accfupds; K_THM] THEN STRIP_TAC THEN
-  SUBGOAL_THEN `inter (wl_state_locals (t':(A,C,FFI)wl_state))
+  SUBGOAL_THEN `sptree_inter (wl_state_locals (t':(A,C,FFI)wl_state))
                   (adjust_set (data_state_locals (x:(C,FFI)data_state))) =
-                inter (wl_state_locals (t:(A,C,FFI)wl_state)) (adjust_set (data_state_locals x))`
+                sptree_inter (wl_state_locals (t:(A,C,FFI)wl_state)) (adjust_set (data_state_locals x))`
     ASSUME_TAC THENL
    [SIMP_TAC[spt_eq_thm; wf_inter] THEN REWRITE_TAC[lookup_inter_alt] THEN
     GEN_TAC THEN COND_CASES_TAC THEN ASM_SIMP_TAC[];
@@ -3565,8 +3565,8 @@ let ASP4AUX_LongDiv_call = prove
   ASM_REWRITE_TAC[wl_state_INFO.ri_accfupds; wl_state_INFO.ri_fupdfupds; K_o_THM; K_THM] THEN
   REWRITE_TAC[lookup_insert; lookup_union; lookup_fromAList; lookup_fromAList_toAList; ARITH] THEN
   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
-  SUBGOAL_THEN `y1 = inter (wl_state_locals (t:(A,C,FFI)wl_state)) (LS one) /\
-                y2 = inter (wl_state_locals t) (adjust_set (names:1 spt))` STRIP_ASSUME_TAC THENL
+  SUBGOAL_THEN `y1 = sptree_inter (wl_state_locals (t:(A,C,FFI)wl_state)) (LS one) /\
+                y2 = sptree_inter (wl_state_locals t) (adjust_set (names:1 spt))` STRIP_ASSUME_TAC THENL
    [UNDISCH_TAC `cut_envs (adjust_sets (names:1 spt)) (wl_state_locals (t:(A,C,FFI)wl_state)) =
                  SOME (y1,y2)` THEN
     REWRITE_TAC[cut_envs_def; cut_names_def; adjust_sets_def; FST; SND] THEN
@@ -4045,4 +4045,3 @@ let assign_Mod = prove
         MESON_TAC[ASP4AUX_EVEN_NOT_1_3];
         ALL_TAC] THEN
       DISCH_THEN ACCEPT_TAC]);;
-

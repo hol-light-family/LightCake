@@ -759,7 +759,7 @@ let stack_alloc_stub_names_def = cake_def
 (* compiler *)
 
 let next_lab_def = cake_def_wf
-  `measure (\(p:(A)stack_prog,aux:num). stack_prog_size (\x:A. 0) p)`
+  `MEASURE (\(p:(A)stack_prog,aux:num). stack_prog_size (\x:A. 0) p)`
   TERM_TAC
   `next_lab (p:(A)stack_prog) aux =
      match p with
@@ -786,7 +786,7 @@ let next_lab_pmatch = prove
 (* HOL4: comp_def *)
 
 let stack_alloc_comp_def = cake_def_wf
-  `measure (\(n:num,m:num,p:(A)stack_prog). stack_prog_size (\x:A. 0) p)`
+  `MEASURE (\(n:num,m:num,p:(A)stack_prog). stack_prog_size (\x:A. 0) p)`
   TERM_TAC
   `stack_alloc_comp n m (p:(A)stack_prog) =
      match p with

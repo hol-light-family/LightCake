@@ -44,7 +44,7 @@ type_invention_error := true;;
 (* local def of mutually recursive funs.                                     *)
 
 let is_hidden_def = sem1aux_def_wf
-  `measure flat_exp_size`
+  `MEASURE flat_exp_size`
   SEM1AUX_TC_TAC
   `(is_hidden (flat_Raise t e) <=> is_hidden e) /\
    (is_hidden (flat_Handle t e pes) <=> F) /\
@@ -93,7 +93,7 @@ let IL1AUX_FLAT_TC_TAC : tactic =
 (* HOL4: is_pure *)
 
 let flat_elim_is_pure_def = sem1aux_def_wf
-  `measure flat_exp_size`
+  `MEASURE flat_exp_size`
   IL1AUX_FLAT_TC_TAC
   `(flat_elim_is_pure (flat_Handle t e pes) <=> flat_elim_is_pure e) /\
    (flat_elim_is_pure (flat_Lit t l) <=> T) /\
@@ -118,7 +118,7 @@ let flat_elim_is_pure_ind = cake_ind "flat_elim_is_pure";;
 let is_pure_def1 = CONV_RULE (DEPTH_CONV ETA_CONV) flat_elim_is_pure_def;;
 
 let has_Eval_def = il1aux_def_wf
-  `measure
+  `MEASURE
      (\x:flat_exp + flat_exp list + (flat_pat # flat_exp) list +
          (varN # varN # flat_exp) list.
         sum_CASE x flat_exp_size
@@ -170,12 +170,12 @@ let exp_size_map_snd_snd = prove
   ASM_ARITH_TAC);;
 
 let find_loc_def = sem1aux_def_wf
-  `measure (\x:flat_exp + flat_exp list.
+  `MEASURE (\x:flat_exp + flat_exp list.
               sum_CASE x flat_exp_size (list_size flat_exp_size))`
   IL1AUX_FLAT_TC_TAC
   `(find_loc (flat_Raise _ er) = find_loc er) /\
    (find_loc (flat_Handle _ eh p_es) =
-      union (find_loc eh) (find_locL (MAP SND p_es))) /\
+      sptree_union (find_loc eh) (find_locL (MAP SND p_es))) /\
    (find_loc (flat_Lit _ _) = LN:num_set) /\
    (find_loc (flat_Con _ _ es) = find_locL es) /\
    (find_loc (Var_local _ _) = LN) /\
@@ -185,24 +185,24 @@ let find_loc_def = sem1aux_def_wf
         SOME n -> insert n one (find_locL es)
       | NONE -> find_locL es) /\
    (find_loc (flat_If _ ei1 ei2 ei3) =
-      union (find_loc ei1) (union (find_loc ei2) (find_loc ei3))) /\
+      sptree_union (find_loc ei1) (sptree_union (find_loc ei2) (find_loc ei3))) /\
    (find_loc (flat_Mat _ em p_es) =
-      union (find_loc em) (find_locL (MAP SND p_es))) /\
-   (find_loc (flat_Let _ _ el1 el2) = union (find_loc el1) (find_loc el2)) /\
+      sptree_union (find_loc em) (find_locL (MAP SND p_es))) /\
+   (find_loc (flat_Let _ _ el1 el2) = sptree_union (find_loc el1) (find_loc el2)) /\
    (find_loc (flat_Letrec _ vv_es elr1) =
-      union (find_locL (MAP (SND o SND) vv_es)) (find_loc elr1)) /\
+      sptree_union (find_locL (MAP (SND o SND) vv_es)) (find_loc elr1)) /\
    (find_locL [] = LN) /\
-   (find_locL (CONS e es) = union (find_loc e) (find_locL es))`;;
+   (find_locL (CONS e es) = sptree_union (find_loc e) (find_locL es))`;;
 
 let find_loc_ind = cake_ind "find_loc";;
 
 let find_lookups_def = sem1aux_def_wf
-  `measure (\x:flat_exp + flat_exp list.
+  `MEASURE (\x:flat_exp + flat_exp list.
               sum_CASE x flat_exp_size (list_size flat_exp_size))`
   IL1AUX_FLAT_TC_TAC
   `(find_lookups (flat_Raise _ er) = find_lookups er) /\
    (find_lookups (flat_Handle _ eh p_es) =
-      union (find_lookups eh) (find_lookupsL (MAP SND p_es))) /\
+      sptree_union (find_lookups eh) (find_lookupsL (MAP SND p_es))) /\
    (find_lookups (flat_Lit _ _) = LN:num_set) /\
    (find_lookups (flat_Con _ _ es) = find_lookupsL es) /\
    (find_lookups (Var_local _ _) = LN) /\
@@ -212,16 +212,16 @@ let find_lookups_def = sem1aux_def_wf
         SOME n -> insert n one (find_lookupsL es)
       | NONE -> find_lookupsL es) /\
    (find_lookups (flat_If _ ei1 ei2 ei3) =
-      union (find_lookups ei1)
-            (union (find_lookups ei2) (find_lookups ei3))) /\
+      sptree_union (find_lookups ei1)
+            (sptree_union (find_lookups ei2) (find_lookups ei3))) /\
    (find_lookups (flat_Mat _ em p_es) =
-      union (find_lookups em) (find_lookupsL (MAP SND p_es))) /\
+      sptree_union (find_lookups em) (find_lookupsL (MAP SND p_es))) /\
    (find_lookups (flat_Let _ _ el1 el2) =
-      union (find_lookups el1) (find_lookups el2)) /\
+      sptree_union (find_lookups el1) (find_lookups el2)) /\
    (find_lookups (flat_Letrec _ vv_es elr1) =
-      union (find_lookupsL (MAP (SND o SND) vv_es)) (find_lookups elr1)) /\
+      sptree_union (find_lookupsL (MAP (SND o SND) vv_es)) (find_lookups elr1)) /\
    (find_lookupsL [] = LN) /\
-   (find_lookupsL (CONS e es) = union (find_lookups e) (find_lookupsL es))`;;
+   (find_lookupsL (CONS e es) = sptree_union (find_lookups e) (find_lookupsL es))`;;
 
 let find_lookups_ind = cake_ind "find_lookups";;
 
@@ -230,13 +230,13 @@ let analyse_exp_def = cake_def
      let locs = find_loc e in
      let lookups = find_lookups e in
      if flat_elim_is_pure e then
-       (if is_hidden e then (LN:num_set, map (K lookups) locs)
-        else (locs, map (K lookups) locs))
-     else (union locs lookups, map (K (LN:num_set)) (union locs lookups))`;;
+       (if is_hidden e then (LN:num_set, sptree_map (K lookups) locs)
+        else (locs, sptree_map (K lookups) locs))
+     else (sptree_union locs lookups, sptree_map (K (LN:num_set)) (sptree_union locs lookups))`;;
 
 let code_analysis_union_def = cake_def
   `code_analysis_union (r1:A spt,t1) (r2,t2) =
-     (union r1 r2, num_set_tree_union t1 t2)`;;
+     (sptree_union r1 r2, num_set_tree_union t1 t2)`;;
 
 let analyse_code_def = cake_def
   `(analyse_code [] = (LN:num_set, LN:num_set spt)) /\
@@ -252,7 +252,7 @@ let analyse_code_def = cake_def
 
 let keep_def = cake_def
   `keep (reachable:B spt) e <=>
-     if inter (find_loc e) reachable = LN then ~(flat_elim_is_pure e) else T`;;
+     if sptree_inter (find_loc e) reachable = LN then ~(flat_elim_is_pure e) else T`;;
 
 let remove_unreachable_def = cake_def
   `remove_unreachable (reachable:B spt) l = FILTER (keep reachable) l`;;

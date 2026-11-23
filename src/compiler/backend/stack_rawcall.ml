@@ -74,7 +74,7 @@ let comp_seq_def = cake_def
 (* the program)                                                              *)
 
 let stack_rawcall_comp_def = cake_def_wf
-  `measure (\(i:num spt,p:(A)stack_prog). stack_prog_size (\x:A. 0) p)`
+  `MEASURE (\(i:num spt,p:(A)stack_prog). stack_prog_size (\x:A. 0) p)`
   TERM_TAC
   `stack_rawcall_comp (i:num spt) (p:(A)stack_prog) =
      match p with

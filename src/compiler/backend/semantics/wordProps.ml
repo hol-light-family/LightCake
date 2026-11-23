@@ -56,7 +56,7 @@ let mem_list_rearrange = prove
   REPEAT GEN_TAC THEN REWRITE_TAC[list_rearrange_def] THEN
   COND_CASES_TAC THEN REWRITE_TAC[MEM_GENLIST] THEN
   REWRITE_TAC[MEM_EXISTS_EL] THEN
-  FIRST_X_ASSUM(STRIP_ASSUME_TAC o REWRITE_RULE[BIJ_IFF_INV; count_DEF; IN_ELIM_THM]) THEN
+  FIRST_X_ASSUM(STRIP_ASSUME_TAC o REWRITE_RULE[BIJ_IFF_INV; pred_set_count_DEF; IN_ELIM_THM]) THEN
   ASM_MESON_TAC[]);;
 
 let PERM_list_rearrange = prove
@@ -65,7 +65,7 @@ let PERM_list_rearrange = prove
   ASM_REWRITE_TAC[mem_list_rearrange] THEN
   REWRITE_TAC[list_rearrange_def] THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
   REWRITE_TAC[ALL_DISTINCT_GENLIST] THEN
-  FIRST_X_ASSUM(STRIP_ASSUME_TAC o REWRITE_RULE[BIJ_DEF; INJ; SURJ; count_DEF;
+  FIRST_X_ASSUM(STRIP_ASSUME_TAC o REWRITE_RULE[BIJ_DEF; INJ; SURJ; pred_set_count_DEF;
                                                 IN_ELIM_THM]) THEN
   FIRST_X_ASSUM(MP_TAC o GEN_REWRITE_RULE I [EL_ALL_DISTINCT_EL_EQ]) THEN
   ASM_MESON_TAC[]);;
@@ -2748,7 +2748,7 @@ let IL2AUX_pop_env_cons = prove
  (`!(t:(A,C,FFI)wl_state) m e0 e h ls.
      wl_state_stack t = CONS (StackFrame m e0 e h) ls
      ==> ?y. wl_pop_env t = SOME y /\
-             wl_state_locals y = union (fromAList e) (fromAList e0) /\
+             wl_state_locals y = sptree_union (fromAList e) (fromAList e0) /\
              wl_state_stack y = ls`,
   REWRITE_TAC[wl_pop_env_def] THEN REPEAT GEN_TAC THEN
   SPEC_TAC(`h:(num#num#num)option`,`h:(num#num#num)option`) THEN
@@ -2761,7 +2761,7 @@ let push_env_pop_env_s_key_eq = prove
      ==> ?n l ls opt.
            wl_state_stack t = CONS (StackFrame n (toAList (FST x)) l opt) ls /\
            ?y. wl_pop_env t = SOME y /\
-               wl_state_locals y = union (fromAList l) (fromAList (toAList (FST x))) /\
+               wl_state_locals y = sptree_union (fromAList l) (fromAList (toAList (FST x))) /\
                domain (SND x) UNION domain (FST x) = domain (wl_state_locals y) /\
                s_key_eq (wl_state_stack s) (wl_state_stack y)`,
   REPEAT GEN_TAC THEN
@@ -3011,7 +3011,7 @@ let IL2AUX_ss_exc_def = cake_def
          CONS (StackFrame m e0 e (SOME n)) ls /\
        m = wl_state_locals_size s1 /\
        (MAP FST e = MAP FST lss /\
-        wl_state_locals s1 = union (fromAList lss) (fromAList e0)) /\
+        wl_state_locals s1 = sptree_union (fromAList lss) (fromAList e0)) /\
        s_key_eq (wl_state_stack s1) ls /\
        wl_state_handler s1 = (match n with (a,b,d) -> a) /\
        (!xs e0' e' ls'.
@@ -3024,7 +3024,7 @@ let IL2AUX_ss_exc_def = cake_def
                      (wl_state_handler_fupd (K (match n with (a,b,d) -> a))
                         (wl_state_locals_fupd (K locs) s1))) /\
                 (?lss'. MAP FST e' = MAP FST lss' /\
-                        locs = union (fromAList lss') (fromAList e0') /\
+                        locs = sptree_union (fromAList lss') (fromAList e0') /\
                         MAP SND lss = MAP SND lss') /\
                 s_val_eq (wl_state_stack s1) st /\ s_key_eq ls' st))`;;
 
@@ -3635,7 +3635,7 @@ let IL2AUX_ss_raise = prove
                        `e':(num#(A)word_loc)list`; `ls':((A)stack_frame)list`] THEN
   STRIP_TAC THEN
   MAP_EVERY EXISTS_TAC [`ls':((A)stack_frame)list`;
-                        `union (fromAList (e':(num#(A)word_loc)list)) (fromAList e0')`] THEN
+                        `sptree_union (fromAList (e':(num#(A)word_loc)list)) (fromAList e0')`] THEN
   MP_TAC (ISPECL [`wl_state_stack (s:(A,C,FFI)wl_state)`; `xs:((A)stack_frame)list`;
                   `wl_state_handler (s:(A,C,FFI)wl_state) + 1`] s_val_eq_LASTN) THEN
   ASM_REWRITE_TAC[s_val_eq_def; s_frame_val_eq_def2] THEN STRIP_TAC THEN
@@ -4377,7 +4377,7 @@ let wl_evaluate_stack_swap = prove
               CONS (StackFrame m e0 e (SOME n)) ls /\
             m = wl_state_locals_size s1 /\
             (MAP FST e = MAP FST lss /\
-             wl_state_locals s1 = union (fromAList lss) (fromAList e0)) /\
+             wl_state_locals s1 = sptree_union (fromAList lss) (fromAList e0)) /\
             s_key_eq (wl_state_stack s1) ls /\
             wl_state_handler s1 = (match n with (a,b,c) -> a) /\
             (!xs e0' e' ls'.
@@ -4390,7 +4390,7 @@ let wl_evaluate_stack_swap = prove
                           (wl_state_handler_fupd (K (match n with (a,b,c) -> a))
                              (wl_state_locals_fupd (K locs) s1))) /\
                      (?lss'. MAP FST e' = MAP FST lss' /\
-                             locs = union (fromAList lss') (fromAList e0') /\
+                             locs = sptree_union (fromAList lss') (fromAList e0') /\
                              MAP SND lss = MAP SND lss') /\
                      s_val_eq (wl_state_stack s1) st /\ s_key_eq ls' st))
      | (res,s1) ->
@@ -4879,8 +4879,8 @@ let IL2AUX_locals_rel_cut_names = prove
     REWRITE_TAC[SUBSET] THEN REWRITE_TAC[domain_lookup] THEN ASM_MESON_TAC[domain_lookup];
     ALL_TAC] THEN
   ASM_REWRITE_TAC[option_INJ] THEN FIRST_X_ASSUM(SUBST1_TAC o SYM) THEN
-  MP_TAC (ISPECL [`inter (loc':((A)word_loc)spt) (ns:(B)spt)`;
-                  `inter (loc:((A)word_loc)spt) (ns:(B)spt)`] spt_eq_thm) THEN
+  MP_TAC (ISPECL [`sptree_inter (loc':((A)word_loc)spt) (ns:(B)spt)`;
+                  `sptree_inter (loc:((A)word_loc)spt) (ns:(B)spt)`] spt_eq_thm) THEN
   REWRITE_TAC[wf_inter] THEN DISCH_THEN SUBST1_TAC THEN
   REWRITE_TAC[lookup_inter_alt] THEN ASM_MESON_TAC[]);;
 
@@ -5653,12 +5653,12 @@ let evaluate_stack_max = prove
      wl_evaluate (c,s1) = (res,s2)
      ==> match wl_state_stack_max s1 with
            NONE -> wl_state_stack_max s2 = NONE
-         | SOME stack_max -> the stack_max (wl_state_stack_max s2) >= stack_max`,
+         | SOME stack_max -> misc_the stack_max (wl_state_stack_max s2) >= stack_max`,
   REPEAT GEN_TAC THEN DISCH_THEN(MP_TAC o MATCH_MP evaluate_stack_max_le) THEN
   MAP_EVERY (fun t -> STRUCT_CASES_TAC (ISPEC t (cases "option")))
    [`wl_state_stack_max (s1:(A,C,FFI)wl_state)`;
     `wl_state_stack_max (s2:(A,C,FFI)wl_state)`] THEN
-  REWRITE_TAC[option_le_def; option_CASE; the_def] THEN ARITH_TAC);;
+  REWRITE_TAC[option_le_def; option_CASE; misc_the_def] THEN ARITH_TAC);;
 
 let evaluate_stack_max_IS_SOME = prove
  (`!c (s1:(A,C,FFI)wl_state) res s2.
@@ -5680,8 +5680,8 @@ let wl_evaluate_stack_limit = prove
 let evaluate_stack_limit_stack_max_eq = prove
  (`!c (s1:(A,C,FFI)wl_state) res s2.
      wl_evaluate (c,s1) = (res,s2) /\
-     the (wl_state_stack_limit s1) (wl_state_stack_max s1) >= wl_state_stack_limit s1
-     ==> the (wl_state_stack_limit s2) (wl_state_stack_max s2) >= wl_state_stack_limit s2`,
+     misc_the (wl_state_stack_limit s1) (wl_state_stack_max s1) >= wl_state_stack_limit s1
+     ==> misc_the (wl_state_stack_limit s2) (wl_state_stack_max s2) >= wl_state_stack_limit s2`,
   REPEAT GEN_TAC THEN
   DISCH_THEN(CONJUNCTS_THEN2 (fun th -> MP_TAC (MATCH_MP evaluate_stack_max_le th) THEN
                                        MP_TAC (MATCH_MP wl_evaluate_stack_limit th)) MP_TAC) THEN
@@ -5689,13 +5689,13 @@ let evaluate_stack_limit_stack_max_eq = prove
   MAP_EVERY (fun t -> STRUCT_CASES_TAC (ISPEC t (cases "option")))
    [`wl_state_stack_max (s1:(A,C,FFI)wl_state)`;
     `wl_state_stack_max (s2:(A,C,FFI)wl_state)`] THEN
-  REWRITE_TAC[option_le_def; the_def] THEN ARITH_TAC);;
+  REWRITE_TAC[option_le_def; misc_the_def] THEN ARITH_TAC);;
 
 let evaluate_stack_limit_stack_max = prove
  (`!c (s1:(A,C,FFI)wl_state) res s2.
      wl_evaluate (c,s1) = (res,s2) /\
-     the (wl_state_stack_limit s1 + 1) (wl_state_stack_max s1) > wl_state_stack_limit s1
-     ==> the (wl_state_stack_limit s2 + 1) (wl_state_stack_max s2) > wl_state_stack_limit s2`,
+     misc_the (wl_state_stack_limit s1 + 1) (wl_state_stack_max s1) > wl_state_stack_limit s1
+     ==> misc_the (wl_state_stack_limit s2 + 1) (wl_state_stack_max s2) > wl_state_stack_limit s2`,
   REPEAT GEN_TAC THEN
   DISCH_THEN(CONJUNCTS_THEN2 (fun th -> MP_TAC (MATCH_MP evaluate_stack_max_le th) THEN
                                        MP_TAC (MATCH_MP wl_evaluate_stack_limit th)) MP_TAC) THEN
@@ -5703,7 +5703,7 @@ let evaluate_stack_limit_stack_max = prove
   MAP_EVERY (fun t -> STRUCT_CASES_TAC (ISPEC t (cases "option")))
    [`wl_state_stack_max (s1:(A,C,FFI)wl_state)`;
     `wl_state_stack_max (s2:(A,C,FFI)wl_state)`] THEN
-  REWRITE_TAC[option_le_def; the_def] THEN ARITH_TAC);;
+  REWRITE_TAC[option_le_def; misc_the_def] THEN ARITH_TAC);;
 
 (* HOL4: inc_clock_def *)
 let wl_inc_clock_def = cake_def

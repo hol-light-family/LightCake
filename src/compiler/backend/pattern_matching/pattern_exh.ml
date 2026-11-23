@@ -80,7 +80,7 @@ let mk_conses_def = cake_def
    (mk_conses t (CONS ps pss) = CONS (pattern_semantics_Cons t ps) (mk_conses t pss))`;;
 
 let expand_def = sem1aux_def_wf
-  `measure (\x:pattern_semantics_pat + pattern_semantics_pat list.
+  `MEASURE (\x:pattern_semantics_pat + pattern_semantics_pat list.
               sum_CASE x pattern_semantics_pat_size
                          (list_size pattern_semantics_pat_size))`
   SEM1AUX_TC_TAC
@@ -221,7 +221,7 @@ let default_mat_def = cake_def
 (* that count, and strictly decreases the total number of columns.          *)
 
 let pat_weight_def = sem1aux_def_wf
-  `measure (\x:pattern_semantics_pat + pattern_semantics_pat list.
+  `MEASURE (\x:pattern_semantics_pat + pattern_semantics_pat list.
               sum_CASE x pattern_semantics_pat_size
                          (list_size pattern_semantics_pat_size))`
   SEM1AUX_TC_TAC
@@ -388,7 +388,7 @@ let exh_steps_list_append = prove
   LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[APPEND; exh_steps_def] THEN ARITH_TAC);;
 
 let exh_all_def = sem1aux_def_wf
-  `measure exh_steps_list`
+  `MEASURE exh_steps_list`
   (RW(WF_REL_THMS @ [exh_steps_def; exh_steps_list_append]))
   `(exh_all [] <=> T) /\
    (exh_all (CONS [] ms) <=> F) /\

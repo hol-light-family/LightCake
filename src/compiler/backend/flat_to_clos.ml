@@ -402,7 +402,7 @@ let IL1AUX_F2C_TC_TAC : tactic =
 (* HOL4: compile *)
 
 let flat_to_clos_compile_def = sem1aux_def_wf
-  `measure (\p:(mlstring option) list # flat_exp list.
+  `MEASURE (\p:(mlstring option) list # flat_exp list.
               list_size flat_exp_size (SND p))`
   IL1AUX_F2C_TC_TAC
   `(flat_to_clos_compile m [] = []) /\

@@ -12,7 +12,7 @@ type_invention_error := true;;
 (* TAKE and DROP of half of a list with at least two elements              *)
 
 let JumpList_def = cake_def_wf
-  `measure ((LENGTH:bvl_exp list->num) o (SND:num#bvl_exp list->bvl_exp list))`
+  `MEASURE ((LENGTH:bvl_exp list->num) o (SND:num#bvl_exp list->bvl_exp list))`
   (REWRITE_TAC[measure_THM; o_THM; FST; SND; LENGTH_TAKE_EQ; LENGTH_DROP] THEN
    REPEAT STRIP_TAC THEN TRY COND_CASES_TAC THEN ASM_ARITH_TAC)
   `JumpList n (xs:bvl_exp list) =

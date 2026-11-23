@@ -829,12 +829,12 @@ let lift_exps_fv = prove
  (`!xs n binds ys k binds2.
      lift_exps xs n binds = (ys,k,binds2) /\ n = LENGTH binds ==>
      k = LENGTH binds2 /\
-     (!l. fv l binds2 ==> fv l xs \/ fv l binds) /\
-     (!l. fv l ys ==> l < k)`,
+     (!l. clos_fv l binds2 ==> clos_fv l xs \/ clos_fv l binds) /\
+     (!l. clos_fv l ys ==> l < k)`,
   SUFF_TAC
    `!xs n binds ys k binds2.
       lift_exps xs n binds = (ys,k,binds2) /\ n = LENGTH binds ==>
-      (!l. fv l binds2 ==> fv l xs \/ fv l binds) /\ (!l. fv l ys ==> l < LENGTH binds2)` THENL
+      (!l. clos_fv l binds2 ==> clos_fv l xs \/ clos_fv l binds) /\ (!l. clos_fv l ys ==> l < LENGTH binds2)` THENL
    [MESON_TAC[lift_exps_n]; ALL_TAC] THEN
   CLOSP2AUX_OP_LIFT_EXPS_TAC THEN IMP_RES_TAC lift_exps_n THEN IMP_RES_TAC lift_exps_acc THEN
   GVS[dont_lift_thm; dest_Op_thm; dest_Cons_thm; fv1_thm; LENGTH_APPEND] THEN
@@ -842,27 +842,27 @@ let lift_exps_fv = prove
 
 (* HOL4: fv1_ConjList *)
 let fv1_ConjList = prove
- (`!xs. fv1 n (ConjList xs) <=> fv n xs`,
+ (`!xs. clos_fv1 n (ConjList xs) <=> clos_fv n xs`,
   MATCH_MP_TAC ConjList_ind THEN SIMP[ConjList_def; fv1_thm; MakeBool_def]);;
 
 (* HOL4: fv1_EL *)
 let fv1_EL = prove
- (`!xs n k. fv1 n (EL k xs) /\ k < LENGTH xs ==> fv n xs`,
+ (`!xs n k. clos_fv1 n (EL k xs) /\ k < LENGTH xs ==> clos_fv n xs`,
   LIST_INDUCT_TAC THEN SIMP[ARITH_ss; LENGTH] THEN GEN_TAC THEN INDUCT_TAC THEN
   SIMP[EL; HD; TL; LT_SUC] THEN ASM_MESON_TAC[]);;
 
 (* a local helper for fv1_eq_pure: fv1_EL on a reversed list *)
 let CLOSP2AUX_op_fv_EL_REVERSE = prove
- (`!l i. fv1 n (EL i (REVERSE l)) /\ i < LENGTH l ==> fv n l`,
+ (`!l i. clos_fv1 n (EL i (REVERSE l)) /\ i < LENGTH l ==> clos_fv n l`,
   REPEAT STRIP_TAC THEN MATCH_MP_TAC fv1_EL THEN
   QEXISTS_TAC "PRE (LENGTH l - i)" THEN
   ASM_SIMP_TAC[GSYM EL_REVERSE; ARITH_RULE `i < l ==> PRE (l - i) < l`]);;
 
 (* HOL4: fv1_eq_pure *)
 let fv1_eq_pure = prove
- (`fv1 n (eq_pure x y) ==> fv1 n x \/ fv1 n y`,
+ (`clos_fv1 n (eq_pure x y) ==> clos_fv1 n x \/ clos_fv1 n y`,
   REWRITE_TAC[eq_pure_def; fv1_ConjList] THEN
-  SUFF_TAC `!xs. fv n (append (eq_pure_list xs)) ==> EX (\(x,y). fv1 n x \/ fv1 n y) xs` THENL
+  SUFF_TAC `!xs. clos_fv n (append (eq_pure_list xs)) ==> EX (\(x,y). clos_fv1 n x \/ clos_fv1 n y) xs` THENL
    [DISCH_THEN(MP_TAC o SPEC `[x,y]:(clos_exp#clos_exp)list`) THEN SIMP[EX]; ALL_TAC] THEN
   MATCH_MP_TAC eq_pure_list_ind THEN REPEAT STRIP_TAC THEN POP_ASSUM MP_TAC THEN
   ONCE_REWRITE_TAC[eq_pure_list_def] THEN SIMP[append_thm] THENL
@@ -878,7 +878,7 @@ let fv1_eq_pure = prove
 
 (* HOL4: eq_op_fv *)
 let eq_op_fv = prove
- (`eq_op x y = SOME z ==> fv n [z] ==> fv n [x] \/ fv n [y]`,
+ (`eq_op x y = SOME z ==> clos_fv n [z] ==> clos_fv n [x] \/ clos_fv n [y]`,
   SIMP[eq_op_def] THEN CASES_ON `eq_direct x y` THEN SIMP[] THEN STRIP_TAC THENL
    [GVS([eq_any_def] @ all_case_eqs()) THEN
     MP_TAC(ISPECL [`[x;y]:clos_exp list`; `0`; `[]:clos_exp list`] lift_exps_fv) THEN
@@ -889,7 +889,7 @@ let eq_op_fv = prove
 
 (* HOL4: fv1_SmartOp *)
 let fv1_SmartOp = prove
- (`fv1 n (clos_op_SmartOp t op xs) ==> fv1 n (clos_Op t op xs)`,
+ (`clos_fv1 n (clos_op_SmartOp t op xs) ==> clos_fv1 n (clos_Op t op xs)`,
   SIMP[clos_op_SmartOp_def] THEN TOP_CASE_TAC THEN SIMP[] THEN
   POP_ASSUM MP_TAC THEN SPEC_TAC(`xs:clos_exp list`,`xs:clos_exp list`) THEN
   MATCH_MP_TAC list_split3 THEN SIMP[SmartOp'_def] THEN REPEAT STRIP_TAC THENL

@@ -43,7 +43,7 @@ let sort3_def = new_definition
      else [z; y; x]`;;
 
 let mergesort_merge_def = cake_def_wf
-  `measure (\p:(A->A->bool)#A list#A list.
+  `MEASURE (\p:(A->A->bool)#A list#A list.
               LENGTH (FST (SND p)) + LENGTH (SND (SND p)))`
   (REWRITE_TAC[measure_THM; FST; SND; LENGTH] THEN ARITH_TAC)
   `(mergesort_merge R ([]:A list) [] = []) /\
@@ -56,7 +56,7 @@ let mergesort_merge_def = cake_def_wf
 let mergesort_merge_ind = cake_ind "mergesort_merge";;
 
 let LSORTAUX_mergesortN_eqn = cake_def_wf
-  `measure (\p:(A->A->bool)#num#A list. FST (SND p))`
+  `MEASURE (\p:(A->A->bool)#num#A list. FST (SND p))`
   (REWRITE_TAC[measure_THM; FST; SND; DIV2_DEF] THEN REPEAT STRIP_TAC THEN
    ASM_ARITH_TAC)
   `mergesortN R n (l:A list) =
@@ -91,7 +91,7 @@ let sort3_tail_def = new_definition
      else [z; y; x]`;;
 
 let merge_tail_def = cake_def_wf
-  `measure (\p:bool#(A->A->bool)#A list#A list#A list.
+  `MEASURE (\p:bool#(A->A->bool)#A list#A list#A list.
               LENGTH (FST (SND (SND p))) + LENGTH (FST (SND (SND (SND p)))))`
   (REWRITE_TAC[measure_THM; FST; SND; LENGTH] THEN ARITH_TAC)
   `(merge_tail (negate:bool) R ([]:A list) [] acc = acc) /\
@@ -104,7 +104,7 @@ let merge_tail_def = cake_def_wf
 let merge_tail_ind = cake_ind "merge_tail";;
 
 let LSORTAUX_mergesortN_tail_eqn = cake_def_wf
-  `measure (\p:bool#(A->A->bool)#num#A list. FST (SND (SND p)))`
+  `MEASURE (\p:bool#(A->A->bool)#num#A list. FST (SND (SND p)))`
   (REWRITE_TAC[measure_THM; FST; SND; DIV2_DEF] THEN REPEAT STRIP_TAC THEN
    ASM_ARITH_TAC)
   `mergesortN_tail (negate:bool) R n (l:A list) =

@@ -16,10 +16,10 @@
 (*   parameter) is written out: a HOL Light abbreviation takes no parameter  *)
 (*   and a type :M would capture the type variable M of every later file.    *)
 (*   The local abbreviation ptree is mlptree.                                *)
-(* - The variables nt, tok and seq of HOL4 are the constants nt, tok and seq *)
-(*   (pegsym constructors) here: they are nt', tok' and seq'; the variable   *)
-(*   pnt of ptree_Expr is patnt (pnt is a constant of cmlPEG, which may be   *)
-(*   loaded before this file).                                               *)
+(* - The variables nt, tok and seq of HOL4 were the pegsym constructors nt, *)
+(*   tok and seq here (now peg_nt, peg_tok and peg_seq): they are nt', tok'  *)
+(*   and seq'; the variable pnt of ptree_Expr is patnt (pnt was a constant   *)
+(*   of cmlPEG, now cmlPEG_pnt).                                             *)
 (* - As in HOL4, the functions that do not use the locations of the parse    *)
 (*   tree (ptree_UQTyop, ptree_Type, ptree_Pattern, ...) are polymorphic in  *)
 (*   the location type (C); ptree_Op and singleSymP also in the module name *)
@@ -29,7 +29,7 @@
 (* - Not ported: the computeLib theorems ptree_Pattern_pevaled and           *)
 (*   ptree_Expr_pevaled (made by ML partial evaluation) and the local        *)
 (*   ptree_Expr_def' from which the latter is computed.                      *)
-(* - Names (notes/naming/names.tsv): Papply_def and Eseq_encode_def are       *)
+(* - Names (doc/names.tsv): Papply_def and Eseq_encode_def are                *)
 (*   cmlPtreeConversion_Papply_def and cmlPtreeConversion_Eseq_encode_def,   *)
 (*   the induction theorem of Eseq_encode cmlPtreeConversion_Eseq_encode_ind,*)
 (*   mpop_anonscope_def is mpopscope_def.  NAME_ind theorems are the         *)
@@ -75,7 +75,7 @@ let PTREEAUX_measure (tys:hol_type list) =
         let s = mk_var("s",sty) in
         mk_abs(s,list_mk_icomb "sum_CASE" [s; arg_size ty; g])
     | [] -> failwith "PTREEAUX_measure" in
-  mk_icomb(mk_const("measure",[]),combine tys);;
+  mk_icomb(mk_const("MEASURE",[]),combine tys);;
 
 
 (* The recursion package's rule for a case expression on a parse tree,      *)
@@ -259,7 +259,7 @@ let tokcheckl_def = cake_def
 let tokcheckl_ind = cake_ind "tokcheckl";;
 
 let ptree_linfix_def = cake_def_wf
-  `measure (\x:MMLnonT#token#(mlptree->A option)#mlptree.
+  `MEASURE (\x:MMLnonT#token#(mlptree->A option)#mlptree.
               parsetree_size (\x:token. 0) (\x:MMLnonT. 0) (\x:locs. 0)
                 (SND (SND (SND x))))`
   TERM_TAC
@@ -289,7 +289,7 @@ let tuplify_def = cake_def
 
 
 let ptree_Type_def = cake_def_wf_clauses
-  `measure (\x:(MMLnonT#(token,MMLnonT,C)parsetree) +
+  `MEASURE (\x:(MMLnonT#(token,MMLnonT,C)parsetree) +
                (token,MMLnonT,C)parsetree + (token,MMLnonT,C)parsetree +
                (token,MMLnonT,C)parsetree.
               sum_CASE x
@@ -483,7 +483,7 @@ let ptree_PTbase_def = cake_def
          else NONE`;;
 
 let ptree_TbaseList_def = cake_def_wf
-  `measure (\pt:(token,MMLnonT,C)parsetree.
+  `MEASURE (\pt:(token,MMLnonT,C)parsetree.
               parsetree_size (\x:token. 0) (\x:MMLnonT. 0) (\x:C. 0) pt)`
   TERM_TAC
   `ptree_TbaseList (ast:(token,MMLnonT,C)parsetree) =
@@ -694,7 +694,7 @@ let maybe_handleRef_def = cake_def
      | _ -> p`;;
 
 let ptree_Pattern_def = cake_def_wf_clauses
-  `measure (\x:(MMLnonT#(token,MMLnonT,C)parsetree) + (token,MMLnonT,C)parsetree.
+  `MEASURE (\x:(MMLnonT#(token,MMLnonT,C)parsetree) + (token,MMLnonT,C)parsetree.
               sum_CASE x
                 (\p. parsetree_size (\x:token. 0) (\x:MMLnonT. 0) (\x:C. 0) (SND p))
                 (\pt. parsetree_size (\x:token. 0) (\x:MMLnonT. 0) (\x:C. 0) pt))`
@@ -826,7 +826,7 @@ let ptree_Plist_thm =
   end_itlist CONJ (fst(chop_list 2 (rev(CONJUNCTS ptree_Pattern_def))));;
 
 let ptree_PbaseList1_def = cake_def_wf
-  `measure (\pt:(token,MMLnonT,C)parsetree.
+  `MEASURE (\pt:(token,MMLnonT,C)parsetree.
               parsetree_size (\x:token. 0) (\x:MMLnonT. 0) (\x:C. 0) pt)`
   TERM_TAC
   `(ptree_PbaseList1 (Lf (_:(token,MMLnonT)symbol#C)) = NONE) /\
@@ -1384,7 +1384,7 @@ let ptree_SpecLine_def = cake_def
         | _ -> NONE)`;;
 
 let ptree_SpeclineList_def = cake_def_wf
-  `measure (\pt:mlptree.
+  `MEASURE (\pt:mlptree.
               parsetree_size (\x:token. 0) (\x:MMLnonT. 0) (\x:locs. 0) pt)`
   TERM_TAC
   `(ptree_SpeclineList (Lf (_:(token,MMLnonT)symbol#locs)) = NONE) /\

@@ -820,10 +820,10 @@ let RAPROOFAUX_list_remap_bij = prove
      list_remap ls (ta,fa,n) = (ta',fa',n') /\
      sp_inverts ta fa /\
      sp_inverts fa ta /\
-     domain fa = count n ==>
+     domain fa = pred_set_count n ==>
      sp_inverts ta' fa' /\
      sp_inverts fa' ta' /\
-     domain fa' = count n'`,
+     domain fa' = pred_set_count n'`,
   LIST_INDUCT_TAC THEN REWRITE_TAC[list_remap_def; PAIR_EQ] THENL
    [MESON_TAC[]; ALL_TAC] THEN
   REPEAT GEN_TAC THEN CASES_ON `lookup h (ta:num spt)` THEN SIMP[] THEN STRIP_TAC THENL
@@ -900,14 +900,14 @@ let RAPROOFAUX_mk_bij_aux_bij = prove
      mk_bij_aux ct (ta,fa,n) = (ta',fa',n') /\
      sp_inverts ta fa /\
      sp_inverts fa ta /\
-     domain fa = count n ==>
+     domain fa = pred_set_count n ==>
      sp_inverts ta' fa' /\
      sp_inverts fa' ta' /\
-     domain fa' = count n'`,
+     domain fa' = pred_set_count n'`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   MP_TAC(ISPEC `\tfn:num spt#num spt#num. sp_inverts (FST tfn) (FST (SND tfn)) /\
                   sp_inverts (FST (SND tfn)) (FST tfn) /\
-                  domain (FST (SND tfn)) = count (SND (SND tfn))`
+                  domain (FST (SND tfn)) = pred_set_count (SND (SND tfn))`
     RAPROOFAUX_mk_bij_aux_inv) THEN
   REWRITE_TAC[FORALL_PAIR_THM] THEN ANTS_TAC THENL
    [MAP_EVERY X_GEN_TAC [`ls:num list`; `a:num spt`; `b:num spt`; `c:num`] THEN
@@ -922,8 +922,8 @@ let RAPROOFAUX_mk_bij_aux_bij = prove
 
 let list_remap_wf = prove
  (`!l (ta:num spt) (fa:num spt) n ta' fa' n'.
-     list_remap l (ta,fa,n) = (ta',fa',n') /\ wf ta /\ wf fa ==>
-     wf ta' /\ wf fa'`,
+     list_remap l (ta,fa,n) = (ta',fa',n') /\ sptree_wf ta /\ sptree_wf fa ==>
+     sptree_wf ta' /\ sptree_wf fa'`,
   LIST_INDUCT_TAC THEN REWRITE_TAC[list_remap_def; PAIR_EQ] THENL
    [MESON_TAC[]; ALL_TAC] THEN
   REPEAT GEN_TAC THEN CASES_ON `lookup h (ta:num spt)` THEN
@@ -936,10 +936,10 @@ let list_remap_wf = prove
 let mk_bij_aux_wf = prove
  (`!ct (ta:num spt) (fa:num spt) n ta' fa' n'.
      mk_bij_aux ct (ta,fa,n) = (ta',fa',n') /\
-     wf ta /\ wf fa ==>
-     Abbrev(wf ta' /\ wf fa')`,
+     sptree_wf ta /\ sptree_wf fa ==>
+     Abbrev(sptree_wf ta' /\ sptree_wf fa')`,
   REWRITE_TAC[marker_Abbrev_def] THEN REPEAT GEN_TAC THEN STRIP_TAC THEN
-  MP_TAC(ISPEC `\tfn:num spt#num spt#num. wf (FST tfn) /\ wf (FST (SND tfn))`
+  MP_TAC(ISPEC `\tfn:num spt#num spt#num. sptree_wf (FST tfn) /\ sptree_wf (FST (SND tfn))`
     RAPROOFAUX_mk_bij_aux_inv) THEN
   REWRITE_TAC[FORALL_PAIR_THM] THEN ANTS_TAC THENL
    [MAP_EVERY X_GEN_TAC [`ls:num list`; `a:num spt`; `b:num spt`; `c:num`] THEN
@@ -1281,7 +1281,7 @@ let RAPROOFAUX_mk_graph_P (ct:string) =
   "!(ta:num->num) liveout s.
      good_ra_state s /\\
      (!x. in_clash_tree ("^ct^") x ==> ta x < ra_state_dim s) /\\
-     INJ ta {x | in_clash_tree ("^ct^") x} (count (LENGTH (ra_state_adj_ls s))) /\\
+     INJ ta {x | in_clash_tree ("^ct^") x} (pred_set_count (LENGTH (ra_state_adj_ls s))) /\\
      is_clique liveout (ra_state_adj_ls s) /\\
      ALL_DISTINCT liveout /\\
      ALL (\\y. y < ra_state_dim s) liveout
@@ -1366,7 +1366,7 @@ let RAPROOFAUX_mk_graph_Set = prove
   CONJ_TAC THENL
    [MATCH_MP_TAC ALL_DISTINCT_MAP_INJ THEN REWRITE_TAC[ALL_DISTINCT_MAP_FST_toAList] THEN
     UNDISCH_TAC `INJ (ta:num->num) {x | x IN domain (t:1 spt)}
-                   (count (LENGTH (ra_state_adj_ls s)))` THEN
+                   (pred_set_count (LENGTH (ra_state_adj_ls s)))` THEN
     REWRITE_TAC[INJ; IN_ELIM_THM; toAList_domain] THEN MESON_TAC[];
     REWRITE_TAC[SUBSET; IN_SET_OF_LIST] THEN ONCE_REWRITE_TAC[MEM_MAP] THEN
     REWRITE_TAC[toAList_domain; IN_UNION; IN_IMAGE; IN_ELIM_THM; IN_SET_OF_LIST] THEN
@@ -1439,7 +1439,7 @@ let RAPROOFAUX_mk_graph_Branch = prove
   REPEAT CONJ_TAC THENL
    [MATCH_MP_TAC ALL_DISTINCT_MAP_INJ THEN REWRITE_TAC[ALL_DISTINCT_MAP_FST_toAList] THEN
     UNDISCH_TAC `INJ (ta:num->num) {x | in_clash_tree t1 x \/ in_clash_tree t2 x \/
-                    x IN domain (a:1 spt)} (count (LENGTH (ra_state_adj_ls s)))` THEN
+                    x IN domain (a:1 spt)} (pred_set_count (LENGTH (ra_state_adj_ls s)))` THEN
     REWRITE_TAC[INJ; IN_ELIM_THM; toAList_domain] THEN MESON_TAC[];
     REWRITE_TAC[SUBSET; IN_SET_OF_LIST] THEN ONCE_REWRITE_TAC[MEM_MAP] THEN
     REWRITE_TAC[toAList_domain; IN_UNION; IN_IMAGE; IN_ELIM_THM; IN_SET_OF_LIST] THEN
@@ -1485,7 +1485,7 @@ let mk_graph_succeeds = prove
  (`!ct (ta:num->num) liveout s.
      good_ra_state s /\
      (!x. in_clash_tree ct x ==> ta x < ra_state_dim s) /\
-     INJ ta {x | in_clash_tree ct x} (count (LENGTH (ra_state_adj_ls s))) /\
+     INJ ta {x | in_clash_tree ct x} (pred_set_count (LENGTH (ra_state_adj_ls s))) /\
      is_clique liveout (ra_state_adj_ls s) /\
      ALL_DISTINCT liveout /\
      ALL (\y. y < ra_state_dim s) liveout
@@ -1643,7 +1643,7 @@ let RAPROOFAUX_mk_graph_props = prove
      mk_graph ta ct liveout s = (M_success livein,s') /\
      good_ra_state s /\
      (!x. in_clash_tree ct x ==> ta x < ra_state_dim s) /\
-     INJ ta {x | in_clash_tree ct x} (count (LENGTH (ra_state_adj_ls s))) /\
+     INJ ta {x | in_clash_tree ct x} (pred_set_count (LENGTH (ra_state_adj_ls s))) /\
      is_clique liveout (ra_state_adj_ls s) /\
      ALL_DISTINCT liveout /\
      ALL (\y. y < ra_state_dim s) liveout
@@ -1669,7 +1669,7 @@ let RAPROOFAUX_mk_graph_check_P (ct:string) =
      mk_graph ta ("^ct^") livelist s = (M_success livelist',s') /\\
      colouring_satisfactory col (ra_state_adj_ls s') /\\
      INJ ta ({x | in_clash_tree ("^ct^") x} UNION domain live)
-       (count (LENGTH (ra_state_adj_ls s))) /\\
+       (pred_set_count (LENGTH (ra_state_adj_ls s))) /\\
      IMAGE ta (domain live) = set_of_list livelist /\\
      ALL_DISTINCT livelist /\\
      ALL (\\y. y < ra_state_dim s) livelist /\\
@@ -1693,7 +1693,7 @@ let RAPROOFAUX_mk_graph_check_Delta = prove
   RVEQ_TAC THEN TRY(FIRST_X_ASSUM CONTR_TAC) THEN
   SUBGOAL_THEN `!x. MEM x w \/ MEM x r ==> (ta:num->num) x < ra_state_dim s` ASSUME_TAC THENL
    [UNDISCH_TAC `INJ (ta:num->num) ({x | MEM x w \/ MEM x r} UNION domain (live:1 spt))
-      (count (LENGTH (ra_state_adj_ls s)))` THEN
+      (pred_set_count (LENGTH (ra_state_adj_ls s)))` THEN
     SUBGOAL_THEN `LENGTH (ra_state_adj_ls s) = ra_state_dim s` SUBST1_TAC THENL
      [ASM_MESON_TAC[good_ra_state_def]; ALL_TAC] THEN
     REWRITE_TAC[INJ; IN_UNION; IN_ELIM_THM; IN_COUNT] THEN MESON_TAC[];
@@ -1738,7 +1738,7 @@ let RAPROOFAUX_mk_graph_check_Delta = prove
     ASM_MESON_TAC[is_clique_subgraph];
     ALL_TAC] THEN
   SUBGOAL_THEN `INJ (ta:num->num) (set_of_list w UNION set_of_list r UNION domain (live:1 spt))
-                  (count (LENGTH (ra_state_adj_ls s)))` ASSUME_TAC THENL
+                  (pred_set_count (LENGTH (ra_state_adj_ls s)))` ASSUME_TAC THENL
    [MATCH_MP_TAC reg_allocProof_INJ_less THEN
     EXISTS_TAC `{x | MEM x w \/ MEM x r} UNION domain (live:1 spt)` THEN
     ASM_REWRITE_TAC[] THEN REWRITE_TAC[SUBSET; IN_UNION; IN_SET_OF_LIST; IN_ELIM_THM] THEN
@@ -1752,7 +1752,7 @@ let RAPROOFAUX_mk_graph_check_Delta = prove
                 set_of_list livelist'` ASSUME_TAC THENL
    [ASM_REWRITE_TAC[LIST_TO_SET_APPEND; set_FILTER; IMAGE_UNION; LIST_TO_SET_MAP] THEN
     UNDISCH_TAC `INJ (ta:num->num) (set_of_list w UNION set_of_list r UNION domain (live:1 spt))
-                  (count (LENGTH (ra_state_adj_ls s)))` THEN
+                  (pred_set_count (LENGTH (ra_state_adj_ls s)))` THEN
     UNDISCH_TAC `IMAGE (ta:num->num) (domain (live:1 spt)) = set_of_list livelist` THEN
     REWRITE_TAC[EXTENSION; INJ; IN_UNION; IN_DIFF; IN_IMAGE; IN_SET_OF_LIST; MEM_APPEND;
                 MEM_MAP] THEN
@@ -1761,7 +1761,7 @@ let RAPROOFAUX_mk_graph_check_Delta = prove
   SUBGOAL_THEN `INJ ((col:num->num) o (ta:num->num))
                   (set_of_list w UNION domain (live:1 spt)) UNIV` ASSUME_TAC THENL
    [MATCH_MP_TAC INJ_COMPOSE_IMAGE THEN
-    EXISTS_TAC `count (LENGTH (ra_state_adj_ls s))` THEN CONJ_TAC THENL
+    EXISTS_TAC `pred_set_count (LENGTH (ra_state_adj_ls s))` THEN CONJ_TAC THENL
      [MATCH_MP_TAC reg_allocProof_INJ_less THEN
       EXISTS_TAC `set_of_list w UNION set_of_list r UNION domain (live:1 spt)` THEN
       ASM_REWRITE_TAC[] THEN SET_TAC[];
@@ -1783,7 +1783,7 @@ let RAPROOFAUX_mk_graph_check_Delta = prove
       MATCH_MP_TAC reg_allocProof_IMAGE_DIFF THEN
       ONCE_REWRITE_TAC[UNION_COMM] THEN FIRST_ASSUM ACCEPT_TAC;
       MATCH_MP_TAC INJ_COMPOSE_IMAGE THEN
-      EXISTS_TAC `count (LENGTH (ra_state_adj_ls s))` THEN CONJ_TAC THENL
+      EXISTS_TAC `pred_set_count (LENGTH (ra_state_adj_ls s))` THEN CONJ_TAC THENL
        [MATCH_MP_TAC reg_allocProof_INJ_less THEN
         EXISTS_TAC `set_of_list w UNION set_of_list r UNION domain (live:1 spt)` THEN
         ASM_REWRITE_TAC[] THEN SET_TAC[];
@@ -1815,7 +1815,7 @@ let RAPROOFAUX_mk_graph_check_Set = prove
   SUBGOAL_THEN `ALL (\y. y < ra_state_dim s) (MAP (ta:num->num) (MAP FST (toAList (t:1 spt))))`
   ASSUME_TAC THENL
    [UNDISCH_TAC `INJ (ta:num->num) ({x | x IN domain (t:1 spt)} UNION domain (live:1 spt))
-      (count (LENGTH (ra_state_adj_ls s)))` THEN
+      (pred_set_count (LENGTH (ra_state_adj_ls s)))` THEN
     ASM_REWRITE_TAC[INJ; IN_UNION; IN_ELIM_THM; IN_COUNT; GSYM ALL_MEM] THEN
     ONCE_REWRITE_TAC[MEM_MAP] THEN REWRITE_TAC[toAList_domain] THEN MESON_TAC[];
     ALL_TAC] THEN
@@ -1825,7 +1825,7 @@ let RAPROOFAUX_mk_graph_check_Set = prove
   SUBGOAL_THEN `ALL_DISTINCT (MAP (ta:num->num) (MAP FST (toAList (t:1 spt))))` ASSUME_TAC THENL
    [MATCH_MP_TAC ALL_DISTINCT_MAP_INJ THEN REWRITE_TAC[ALL_DISTINCT_MAP_FST_toAList] THEN
     UNDISCH_TAC `INJ (ta:num->num) ({x | x IN domain (t:1 spt)} UNION domain (live:1 spt))
-      (count (LENGTH (ra_state_adj_ls s)))` THEN
+      (pred_set_count (LENGTH (ra_state_adj_ls s)))` THEN
     REWRITE_TAC[INJ; IN_ELIM_THM; IN_UNION; toAList_domain] THEN MESON_TAC[];
     ALL_TAC] THEN
   REPEAT CONJ_TAC THENL
@@ -1855,7 +1855,7 @@ let RAPROOFAUX_mk_graph_check_Branch_NONE = prove
   SUBGOAL_THEN `!x. in_clash_tree t1 x \/ in_clash_tree t2 x ==> (ta:num->num) x < ra_state_dim s`
   ASSUME_TAC THENL
    [UNDISCH_TAC `INJ (ta:num->num) ({x | in_clash_tree t1 x \/ in_clash_tree t2 x} UNION
-      domain (live:1 spt)) (count (LENGTH (ra_state_adj_ls s)))` THEN
+      domain (live:1 spt)) (pred_set_count (LENGTH (ra_state_adj_ls s)))` THEN
     REWRITE_TAC[CONJUNCT1(MATCH_MP RAPROOFAUX_good_lengths (ASSUME `good_ra_state s`))] THEN
     REWRITE_TAC[INJ; IN_UNION; IN_ELIM_THM; IN_COUNT] THEN
     DISCH_THEN(MP_TAC o CONJUNCT1) THEN MESON_TAC[];
@@ -1937,7 +1937,7 @@ let RAPROOFAUX_mk_graph_check_Branch_NONE = prove
     ASM_REWRITE_TAC[GSYM ALL_MEM; EXTENSION; IN_SET_OF_LIST; MEM_APPEND] THEN MESON_TAC[];
     ALL_TAC] THEN
   SUBGOAL_THEN `INJ (ta:num->num) (domain (l2:1 spt) UNION domain (l1:1 spt))
-                  (count (LENGTH (ra_state_adj_ls s)))` ASSUME_TAC THENL
+                  (pred_set_count (LENGTH (ra_state_adj_ls s)))` ASSUME_TAC THENL
    [MATCH_MP_TAC reg_allocProof_INJ_less THEN
     EXISTS_TAC `{x | in_clash_tree t1 x \/ in_clash_tree t2 x} UNION domain (live:1 spt)` THEN
     ASM_REWRITE_TAC[] THEN
@@ -1953,7 +1953,7 @@ let RAPROOFAUX_mk_graph_check_Branch_NONE = prove
     `(col:num->num) o (ta:num->num)`] check_partial_col_success) THEN
   ANTS_TAC THENL
    [ASM_REWRITE_TAC[] THEN MATCH_MP_TAC INJ_COMPOSE_IMAGE THEN
-    EXISTS_TAC `count (LENGTH (ra_state_adj_ls s))` THEN ASM_REWRITE_TAC[];
+    EXISTS_TAC `pred_set_count (LENGTH (ra_state_adj_ls s))` THEN ASM_REWRITE_TAC[];
     ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_THEN `livein:1 spt` (X_CHOOSE_THEN `flivein:1 spt` STRIP_ASSUME_TAC)) THEN
   MAP_EVERY EXISTS_TAC [`livein:1 spt`; `flivein:1 spt`] THEN ASM_REWRITE_TAC[] THEN
@@ -1976,7 +1976,7 @@ let RAPROOFAUX_mk_graph_check_Branch_SOME = prove
   ASSUME_TAC THENL
    [UNDISCH_TAC `INJ (ta:num->num)
       ({x | in_clash_tree t1 x \/ in_clash_tree t2 x \/ x IN domain (t:1 spt)} UNION
-      domain (live:1 spt)) (count (LENGTH (ra_state_adj_ls s)))` THEN
+      domain (live:1 spt)) (pred_set_count (LENGTH (ra_state_adj_ls s)))` THEN
     REWRITE_TAC[CONJUNCT1(MATCH_MP RAPROOFAUX_good_lengths (ASSUME `good_ra_state s`))] THEN
     REWRITE_TAC[INJ; IN_UNION; IN_ELIM_THM; IN_COUNT] THEN
     DISCH_THEN(MP_TAC o CONJUNCT1) THEN MESON_TAC[];
@@ -2012,7 +2012,7 @@ let RAPROOFAUX_mk_graph_check_Branch_SOME = prove
   SUBGOAL_THEN `ALL (\y. y < ra_state_dim s) (MAP (ta:num->num) (MAP FST (toAList (t:1 spt))))`
   ASSUME_TAC THENL
    [UNDISCH_TAC `INJ (ta:num->num) ({x | in_clash_tree t1 x \/ in_clash_tree t2 x \/
-      x IN domain (t:1 spt)} UNION domain (live:1 spt)) (count (LENGTH (ra_state_adj_ls s)))` THEN
+      x IN domain (t:1 spt)} UNION domain (live:1 spt)) (pred_set_count (LENGTH (ra_state_adj_ls s)))` THEN
     REWRITE_TAC[CONJUNCT1(MATCH_MP RAPROOFAUX_good_lengths (ASSUME `good_ra_state s`))] THEN
     REWRITE_TAC[INJ; IN_UNION; IN_ELIM_THM; IN_COUNT; GSYM ALL_MEM] THEN
     ONCE_REWRITE_TAC[MEM_MAP] THEN REWRITE_TAC[toAList_domain] THEN
@@ -2054,7 +2054,7 @@ let RAPROOFAUX_mk_graph_check_Branch_SOME = prove
   SUBGOAL_THEN `ALL_DISTINCT (MAP (ta:num->num) (MAP FST (toAList (t:1 spt))))` ASSUME_TAC THENL
    [MATCH_MP_TAC ALL_DISTINCT_MAP_INJ THEN REWRITE_TAC[ALL_DISTINCT_MAP_FST_toAList] THEN
     UNDISCH_TAC `INJ (ta:num->num) ({x | in_clash_tree t1 x \/ in_clash_tree t2 x \/
-      x IN domain (t:1 spt)} UNION domain (live:1 spt)) (count (LENGTH (ra_state_adj_ls s)))` THEN
+      x IN domain (t:1 spt)} UNION domain (live:1 spt)) (pred_set_count (LENGTH (ra_state_adj_ls s)))` THEN
     REWRITE_TAC[INJ; IN_ELIM_THM; IN_UNION; toAList_domain] THEN
     DISCH_THEN(MP_TAC o CONJUNCT2) THEN MESON_TAC[];
     ALL_TAC] THEN
@@ -2087,7 +2087,7 @@ let RAPROOFAUX_mk_graph_check_Seq = prove
   SUBGOAL_THEN `!x. in_clash_tree t1 x \/ in_clash_tree t2 x ==> (ta:num->num) x < ra_state_dim s`
   ASSUME_TAC THENL
    [UNDISCH_TAC `INJ (ta:num->num) ({x | in_clash_tree t1 x \/ in_clash_tree t2 x} UNION
-      domain (live:1 spt)) (count (LENGTH (ra_state_adj_ls s)))` THEN
+      domain (live:1 spt)) (pred_set_count (LENGTH (ra_state_adj_ls s)))` THEN
     REWRITE_TAC[CONJUNCT1(MATCH_MP RAPROOFAUX_good_lengths (ASSUME `good_ra_state s`))] THEN
     REWRITE_TAC[INJ; IN_UNION; IN_ELIM_THM; IN_COUNT] THEN
     DISCH_THEN(MP_TAC o CONJUNCT1) THEN MESON_TAC[];
@@ -2146,7 +2146,7 @@ let mk_graph_check_clash_tree = prove
      mk_graph ta ct livelist s = (M_success livelist',s') /\
      colouring_satisfactory col (ra_state_adj_ls s') /\
      INJ ta ({x | in_clash_tree ct x} UNION domain live)
-       (count (LENGTH (ra_state_adj_ls s))) /\
+       (pred_set_count (LENGTH (ra_state_adj_ls s))) /\
      IMAGE ta (domain live) = set_of_list livelist /\
      ALL_DISTINCT livelist /\
      ALL (\y. y < ra_state_dim s) livelist /\
@@ -2331,9 +2331,9 @@ let extract_color_succeeds = prove
  (`!s (ta:num spt).
      good_ra_state s /\
      (!x y. lookup x ta = SOME y ==> y < ra_state_dim s) /\
-     wf ta ==>
+     sptree_wf ta ==>
      extract_color ta s =
-     (M_success (map (\v. extract_tag (EL v (ra_state_node_tag s))) ta),s)`,
+     (M_success (sptree_map (\v. extract_tag (EL v (ra_state_node_tag s))) ta),s)`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   REWRITE_TAC[extract_color_def; RAPROOFAUX_bind_return_left] THEN
   MP_TAC(SPECL [`toAList (ta:num spt)`; `s:ra_state`] extract_color_st_ex_MAP_lem) THEN
@@ -4140,7 +4140,7 @@ let RAPROOFAUX_mk_bij_props = prove
      mk_bij ct = (ta,fa,n) ==>
      mk_bij_aux ct (LN,LN,0) = (ta,fa,n) /\
      domain ta = {x | in_clash_tree ct x} /\ sp_inverts ta fa /\ sp_inverts fa ta /\
-     domain fa = count n /\ wf ta /\ wf fa`,
+     domain fa = pred_set_count n /\ sptree_wf ta /\ sptree_wf fa`,
   REPEAT GEN_TAC THEN REWRITE_TAC[mk_bij_def] THEN
   RAPROOFAUX_TRIPLE_TAC `mk_bij_aux ct (LN,LN,0)` `ta1:num spt` `fa1:num spt` `n1:num` THEN
   ASM_REWRITE_TAC[] THEN SIMP[] THEN REWRITE_TAC[PAIR_EQ] THEN
@@ -4151,12 +4151,12 @@ let RAPROOFAUX_mk_bij_props = prove
                  `ta:num spt`; `fa:num spt`; `n:num`] RAPROOFAUX_mk_bij_aux_bij) THEN
   MP_TAC(ISPECL [`ct:clash_tree`; `LN:num spt`; `LN:num spt`; `0`;
                  `ta:num spt`; `fa:num spt`; `n:num`] mk_bij_aux_wf) THEN
-  ASM_REWRITE_TAC[marker_Abbrev_def; wf_def; sp_inverts_def; lookup_def; domain_def;
+  ASM_REWRITE_TAC[marker_Abbrev_def; sptree_wf_def; sp_inverts_def; lookup_def; domain_def;
                   COUNT_ZERO] THEN
   SIMP[]);;
 let RAPROOFAUX_mk_tags_no_clash = prove
  (CASE_TERM `!adjls tags (fa:num spt) (ta:num spt) n.
-     LENGTH (adjls:(num list)list) = n /\ sp_inverts fa ta /\ domain fa = count n /\
+     LENGTH (adjls:(num list)list) = n /\ sp_inverts fa ta /\ domain fa = pred_set_count n /\
      (!x y. x < n /\ y = sp_default fa x ==>
         (if is_phy_var y then EL x tags = Fixed (y DIV 2)
          else if is_stack_var y then EL x tags = Stemp
@@ -4229,7 +4229,7 @@ let do_reg_alloc_correct = prove
     SUBGOAL_THEN `lookup y (fa:num spt) = SOME x` ASSUME_TAC THENL
      [ASM_MESON_TAC[sp_inverts_def]; ALL_TAC] THEN
     ASM_REWRITE_TAC[GSYM IN_COUNT] THEN
-    FIRST_X_ASSUM(SUBST1_TAC o SYM o check (fun th -> rhs(concl th) = `count n`)) THEN
+    FIRST_X_ASSUM(SUBST1_TAC o SYM o check (fun th -> rhs(concl th) = `pred_set_count n`)) THEN
     REWRITE_TAC[domain_lookup] THEN ASM_MESON_TAC[]; ALL_TAC]) THEN
   (* the initial state is good *)
   (SUBGOAL_THEN `good_ra_state st` ASSUME_TAC THENL
@@ -4342,7 +4342,7 @@ let do_reg_alloc_correct = prove
     SUBGOAL_THEN `lookup y (fa:num spt) = SOME x` ASSUME_TAC THENL
      [ASM_MESON_TAC[sp_inverts_def]; ALL_TAC] THEN
     REWRITE_TAC[GSYM IN_COUNT] THEN
-    FIRST_X_ASSUM(SUBST1_TAC o SYM o check (fun th -> rhs(concl th) = `count n`)) THEN
+    FIRST_X_ASSUM(SUBST1_TAC o SYM o check (fun th -> rhs(concl th) = `pred_set_count n`)) THEN
     REWRITE_TAC[domain_lookup] THEN ASM_MESON_TAC[];
     DISCH_TAC] THEN
    FIRST_ASSUM RAPROOFAUX_BIND_TAC THEN REWRITE_TAC[st_ex_return_def]) THEN
@@ -4354,14 +4354,14 @@ let do_reg_alloc_correct = prove
     MP_TAC(MATCH_MP RAPROOFAUX_good_lengths (ASSUME `good_ra_state s4`)) THEN
     ASM_REWRITE_TAC[] THEN REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[]; ALL_TAC]) THEN
   (* the colouring spcol and the evolution of the tags *)
-  (EXISTS_TAC `map (\v. extract_tag (EL v (ra_state_node_tag s6))) (ta:num spt)` THEN
+  (EXISTS_TAC `sptree_map (\v. extract_tag (EL v (ra_state_node_tag s6))) (ta:num spt)` THEN
    EXISTS_TAC `s6:ra_state` THEN REWRITE_TAC[] THEN
    SUBGOAL_THEN `!x y. lookup x ta = SOME y ==>
-       sp_default (map (\v. extract_tag (EL v (ra_state_node_tag s6))) ta) x =
+       sp_default (sptree_map (\v. extract_tag (EL v (ra_state_node_tag s6))) ta) x =
        extract_tag (EL y (ra_state_node_tag s6))` (LABEL_TAC "SP") THENL
     [REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[sp_default_def; lookup_map] THEN SIMP[];
      ALL_TAC] THEN
-   SUBGOAL_THEN `domain (map (\v. extract_tag (EL v (ra_state_node_tag s6))) ta) =
+   SUBGOAL_THEN `domain (sptree_map (\v. extract_tag (EL v (ra_state_node_tag s6))) ta) =
                  {x | in_clash_tree ct x}` (LABEL_TAC "DOM") THENL
     [ASM_REWRITE_TAC[domain_map]; ALL_TAC]) THEN
   (SUBGOAL_THEN `!y. y < n ==> ~(EL y (ra_state_node_tag s6) = Atemp) /\

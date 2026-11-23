@@ -3,7 +3,7 @@
 (* Semantics of panLang.                                                     *)
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
-(* - Names as notes/naming/names.tsv says: pan_v (constructors pan_Val,      *)
+(* - Names as doc/names.tsv says: pan_v (constructors pan_Val,               *)
 (*   pan_RStruct, pan_NStruct), pan_state (fields pan_state_locals, ...),    *)
 (*   pan_result (pan_Error, pan_TimeOut, ...), pan_eval, pan_evaluate, ...   *)
 (* - The HOL4 Overload ValWord w = Val (Word w) is written out as            *)
@@ -115,33 +115,6 @@ let pan_mem_load_32_def = cake_def
               else NONE
      else NONE`;;
 
-(* the bytes of a 32-bit word as one word (for pan_mem_load_32_alt; the     *)
-(* same as wordSem's IL2AUX_word_of_bytes_32, which panSem does not load)   *)
-
-let PSEMAUX_word_of_bytes_32 = prove
- (`!be (b0:byte) b1 b2 b3.
-     word_of_bytes be (word 0:int32) [b0;b1;b2;b3] =
-     if be then
-       word_or (word_or (word_or (word_shl (word_zx b0) 24)
-                                 (word_shl (word_zx b1) 16))
-                        (word_shl (word_zx b2) 8))
-               (word_zx b3)
-     else
-       word_or (word_or (word_or (word_zx b0) (word_shl (word_zx b1) 8))
-                        (word_shl (word_zx b2) 16))
-               (word_shl (word_zx b3) 24)`,
-  REPEAT GEN_TAC THEN
-  REWRITE_TAC[word_of_bytes_def; set_byte_def; byte_index_def; DIMINDEX_32] THEN
-  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
-  CONV_TAC WORD_REDUCE_CONV THEN CONV_TAC NUM_REDUCE_CONV THEN
-  COND_CASES_TAC THEN
-  REWRITE_TAC[WORD_EQ_BITS_ALT; DIMINDEX_32] THEN
-  CONV_TAC EXPAND_CASES_CONV THEN
-  REWRITE_TAC[BIT_WORD_OR; BIT_WORD_SHL; BIT_WORD_ZX; BIT_WORD_SLICE_ALT;
-              BIT_WORD_0; DIMINDEX_32; DIMINDEX_8] THEN
-  CONV_TAC NUM_REDUCE_CONV THEN
-  SIMP_TAC[BIT_TRIVIAL; DIMINDEX_8; ARITH]);;
-
 let pan_mem_load_32_alt = prove
  (CASE_TERM `pan_mem_load_32 (m:A word->(A)word_lab) dm be (w:A word) =
    if alignment_aligned 2 w
@@ -166,7 +139,7 @@ let pan_mem_load_32_alt = prove
               SOME (v':int32)
             else NONE
    else NONE`,
-  REWRITE_TAC[pan_mem_load_32_def; PSEMAUX_word_of_bytes_32] THEN
+  REWRITE_TAC[pan_mem_load_32_def; WORDSAUX_word_of_bytes_32] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REFL_TAC);;
 
 (* mem_load, mem_loads, mem_load_flds.  HOL4's case (mem_load .., mem_loads *)
@@ -179,24 +152,18 @@ let pan_mem_load_32_alt = prove
 (* variable fields of the last clause is flds here (fields is mlstring's     *)
 (* constant).                                                                *)
 
-let PSEMAUX_dropWhile_LENGTH_LT = prove
- (`!P (l:A list) h t. dropWhile P l = CONS h t ==> LENGTH t < LENGTH l`,
-  REPEAT STRIP_TAC THEN
-  MP_TAC(ISPECL [`P:A->bool`; `l:A list`] LENGTH_dropWhile_LESS_EQ) THEN
-  ASM_REWRITE_TAC[LENGTH] THEN ARITH_TAC);;
-
 (* HOL4: rw [] >> disj1_tac >> irule LESS_LESS_EQ_TRANS >> irule_at Any     *)
 (* LENGTH_dropWhile_LESS_EQ >> ... *)
 
 let PSEMAUX_MEM_LOAD_TC_TAC : tactic =
   REWRITE_TAC[IMP_CONJ] THEN REPEAT GEN_TAC THEN REPEAT DISCH_TAC THEN
-  REPEAT(FIRST_X_ASSUM(ASSUME_TAC o MATCH_MP PSEMAUX_dropWhile_LENGTH_LT)) THEN
+  REPEAT(FIRST_X_ASSUM(ASSUME_TAC o MATCH_MP LIBXAUX_dropWhile_CONS)) THEN
   REWRITE_TAC[inv_image_THM; sum_CASE; FST; SND; MAP] THEN TERM_TAC;;
 
 let PSEMAUX_mem_load_def = cake_def_wf
   (CASE_TERM
-   `inv_image (measure LENGTH LEX
-               measure (\x:shape + shape list.
+   `inv_image (MEASURE LENGTH LEX
+               MEASURE (\x:shape + shape list.
                           match x with INL x -> shape_size x
                                      | INR x -> list_size shape_size x))
       (\x:(shape#A word#(A word->bool)#(A word->(A)word_lab)#
@@ -289,7 +256,7 @@ let PSEMAUX_EVAL_TC_TAC : tactic =
   TERM_TAC;;
 
 let PSEMAUX_eval_def = cake_def_wf_clauses
-  `measure (\p:(A,FFI)pan_state#(A)panLang_exp. panLang_exp_size ARB (SND p))`
+  `MEASURE (\p:(A,FFI)pan_state#(A)panLang_exp. panLang_exp_size ARB (SND p))`
   PSEMAUX_EVAL_TC_TAC
   [`(pan_eval (s:(A,FFI)pan_state) (panLang_Const w) = SOME (pan_Val (Word w))) /\
     (pan_eval s (panLang_Var panLang_Local v) = FLOOKUP (pan_state_locals s) v) /\
@@ -426,25 +393,6 @@ let pan_mem_store_32_def = cake_def
               else NONE
      else NONE`;;
 
-(* the bytes of a 32-bit word (for pan_mem_store_32_alt; the same as        *)
-(* wordSem's IL2AUX_get_byte_32, which panSem does not load)                *)
-
-let PSEMAUX_get_byte_32 = prove
- (`!(hw:int32) be.
-     get_byte (word 0:int32) hw be =
-       (if be then word_zx (word_ushr hw 24) else word_zx hw) /\
-     get_byte (word 1:int32) hw be =
-       (if be then word_zx (word_ushr hw 16) else word_zx (word_ushr hw 8)) /\
-     get_byte (word 2:int32) hw be =
-       (if be then word_zx (word_ushr hw 8) else word_zx (word_ushr hw 16)) /\
-     get_byte (word 3:int32) hw be =
-       (if be then word_zx hw else word_zx (word_ushr hw 24))`,
-  REPEAT GEN_TAC THEN
-  REWRITE_TAC[get_byte_def; byte_index_def; DIMINDEX_32] THEN
-  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
-  CONV_TAC WORD_REDUCE_CONV THEN CONV_TAC NUM_REDUCE_CONV THEN
-  COND_CASES_TAC THEN REWRITE_TAC[WORD_USHR_ZERO]);;
-
 let pan_mem_store_32_alt = prove
  (CASE_TERM `pan_mem_store_32 (m:A word->(A)word_lab) dm be (w:A word) (hw:int32) =
    if alignment_aligned 2 w
@@ -472,7 +420,7 @@ let pan_mem_store_32_alt = prove
                   SOME ((byte_align w =+ Word v3) m)
             else NONE
    else NONE`,
-  REWRITE_TAC[pan_mem_store_32_def; PSEMAUX_get_byte_32] THEN
+  REWRITE_TAC[pan_mem_store_32_def; WORDSAUX_get_byte_32] THEN
   BOOL_CASES_TAC `be:bool` THEN REWRITE_TAC[]);;
 
 let pan_mem_store_def = cake_def
@@ -512,7 +460,7 @@ let PSEMAUX_V_TC_TAC : tactic =
   TERM_TAC;;
 
 let flatten_def = cake_def_wf
-  `measure (pan_v_size (ARB:A->num))`
+  `MEASURE (pan_v_size (ARB:A->num))`
   PSEMAUX_V_TC_TAC
   `(flatten (pan_Val (w:(A)word_lab)) = [w]) /\
    (flatten (pan_RStruct vs) = FLAT (MAP flatten vs)) /\
@@ -714,7 +662,7 @@ let PSEMAUX_TC_TAC : tactic =
   ARITH_TAC;;
 
 let PSEMAUX_evaluate_rel =
-  `inv_image (measure I LEX measure (panLang_prog_size (\x:A. 0)))
+  `inv_image (MEASURE I LEX MEASURE (panLang_prog_size (\x:A. 0)))
      (\p:(A)panLang_prog#(A,FFI)pan_state. (pan_state_clock (SND p), FST p))`;;
 
 (* the clauses, parsed in four quotations *)

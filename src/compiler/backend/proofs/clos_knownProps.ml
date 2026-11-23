@@ -210,7 +210,7 @@ let CLOSPROPSAUX_KNOWN_BDG_TAC : tactic =
   REPEAT GEN_TAC THEN
   TRY(DISCH_THEN(fun th -> if is_eq (concl th) then MP_TAC th else STRIP_ASSUME_TAC th)) THEN
   REPEAT GEN_TAC THEN
-  ONCE_REWRITE_TAC[known_def] THEN REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
+  ONCE_REWRITE_TAC[clos_known_known_def] THEN REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
   REPEAT PAIRARG_TAC THEN REPEAT (TOP_CASE_TAC ORELSE COND_CASES_TAC) THEN
   REPEAT PAIRARG_TAC THEN
   REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN RVEQ_TAC THEN
@@ -220,8 +220,8 @@ let CLOSPROPSAUX_KNOWN_BDG_TAC : tactic =
 (* HOL4: known_better_definedg *)
 let known_better_definedg = prove
  (`!c es apxs (g0:val_approx spt) alist g.
-     known c es apxs g0 = (alist,g) ==> better_definedg g0 g`,
-  MATCH_MP_TAC known_ind THEN REPEAT CONJ_TAC THEN CLOSPROPSAUX_KNOWN_BDG_TAC);;
+     clos_known_known c es apxs g0 = (alist,g) ==> better_definedg g0 g`,
+  MATCH_MP_TAC clos_known_known_ind THEN REPEAT CONJ_TAC THEN CLOSPROPSAUX_KNOWN_BDG_TAC);;
 
 (* HOL4: mk_Ticks_alt (HOL4 mk_Ticks is clos_known_mk_Ticks; the trace     *)
 (* t extended with tc is mk_cons t tc)                                      *)

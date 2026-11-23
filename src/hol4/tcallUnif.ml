@@ -136,7 +136,7 @@ let tvwalk_thm = prove
   REWRITE_TAC[GSYM tvwalk_def]);;
 
 let tvwalk_correct = prove
- (`!(s:(A term_term)spt) nm. swfs s /\ wf s ==> svwalk s nm = tvwalk s nm`,
+ (`!(s:(A term_term)spt) nm. swfs s /\ sptree_wf s ==> svwalk s nm = tvwalk s nm`,
   GEN_TAC THEN REWRITE_TAC[RIGHT_FORALL_IMP_THM] THEN STRIP_TAC THEN
   SUBGOAL_THEN `wfs (sp2fm (s:(A term_term)spt))` ASSUME_TAC THENL
    [ASM_REWRITE_TAC[GSYM swfs_def]; ALL_TAC] THEN
@@ -155,7 +155,7 @@ let twalk_def = cake_def
                 | Const c -> Const c`;;
 
 let twalk_correct = prove
- (`!(s:(A term_term)spt) t. swfs s /\ wf s ==> swalk s t = twalk s t`,
+ (`!(s:(A term_term)spt) t. swfs s /\ sptree_wf s ==> swalk s t = twalk s t`,
   REPEAT STRIP_TAC THEN ASM_SIMP_TAC[swalk_thm; twalk_def] THEN
   CASES_ON `t:A term_term` THEN REWRITE_TAC[term_term_CASE] THEN
   ASM_SIMP_TAC[tvwalk_correct]);;
@@ -237,7 +237,7 @@ let option_CASE_COND = prove
 
 let twalk_to_var = prove
  (`!(s:(A term_term)spt) t v.
-     swfs s /\ wf s /\ twalk s t = term_Var v ==>
+     swfs s /\ sptree_wf s /\ twalk s t = term_Var v ==>
      ~(v IN domain s) /\ ?u. t = term_Var u`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   MP_TAC(SPECL [`sp2fm (s:(A term_term)spt)`; `t:A term_term`; `v:num`]
@@ -306,7 +306,7 @@ let LUNIFAUX_mlt1_tail = prove
   REWRITE_TAC[BAG_OF_LIST_THM] THEN MESON_TAC[mlt1_BAG_INSERT; FINITE_BAG_OF_LIST]);;
 
 let LUNIFAUX_tocwl_EX = prove
- (`!(s:(A term_term)spt) v. swfs s /\ wf s ==>
+ (`!(s:(A term_term)spt) v. swfs s /\ sptree_wf s ==>
       !k. tocwl s v k <=> EX (\t. soc s t v) k`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   SUBGOAL_THEN
@@ -347,12 +347,12 @@ let LUNIFAUX_tocwl_EX = prove
     FIRST_X_ASSUM MATCH_MP_TAC THEN REWRITE_TAC[LUNIFAUX_mlt1_tail]]);;
 
 let tocwl_correct = prove
- (`!(s:(A term_term)spt) t v. swfs s /\ wf s ==> (soc s t v <=> tocwl s v [t])`,
+ (`!(s:(A term_term)spt) t v. swfs s /\ sptree_wf s ==> (soc s t v <=> tocwl s v [t])`,
   SIMP_TAC[LUNIFAUX_tocwl_EX; EX]);;
 
 let disj_oc = prove
  (`!(s:(A term_term)spt) t1 t2 v.
-     swfs s /\ wf s ==> (soc s t1 v \/ soc s t2 v <=> tocwl s v [t1; t2])`,
+     swfs s /\ sptree_wf s ==> (soc s t1 v \/ soc s t2 v <=> tocwl s v [t1; t2])`,
   SIMP_TAC[LUNIFAUX_tocwl_EX; EX]);;
 
 let _ = cake_add_simps

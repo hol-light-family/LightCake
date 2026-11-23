@@ -48,10 +48,6 @@ let is_set_theory_pred_def = cake_def
 (* Numbers as finite sets of numbers: numbit k n means that k is in n.       *)
 (* ------------------------------------------------------------------------- *)
 
-let CSETAUX_numbit_eq = prove
- (`!m n. m = n <=> (!k. numbit k m <=> numbit k n)`,
-  REWRITE_TAC[GSYM BITS_OF_NUM_EQ; EXTENSION; bits_of_num; IN_ELIM_THM]);;
-
 let CSETAUX_numbit_exists = prove
  (`!P. FINITE {k | P k} ==> ?n. !k. numbit k n <=> P k`,
   REPEAT STRIP_TAC THEN EXISTS_TAC `nsum {k | P k} (\i. 2 EXP i)` THEN
@@ -80,7 +76,7 @@ let l_model_exists = prove
   REWRITE_TAC[is_set_theory_pred_def] THEN
   QEXISTS_TAC "\\l1 l2:A+num. numbit (OUTR l1) (OUTR l2)" THEN
   SIMP[PULL_EXISTS; OUTR] THEN REPEAT CONJ_TAC THENL
-   [REWRITE_TAC[GSYM CSETAUX_numbit_eq];
+   [REWRITE_TAC[GSYM NUMBIT_EQ];
     REPEAT GEN_TAC THEN MATCH_MP_TAC CSETAUX_numbit_exists THEN
     MATCH_MP_TAC FINITE_SUBSET THEN EXISTS_TAC `{k:num | k < n}` THEN
     REWRITE_TAC[FINITE_NUMSEG_LT; SUBSET; IN_ELIM_THM] THEN

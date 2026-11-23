@@ -148,7 +148,7 @@ let INJ_ALL_DISTINCT_MAP = prove
 (* exception handler; the rest: live before must be fine, and the clash set *)
 (* must be fine) *)
 let colouring_ok_def = sem1aux_def_wf
-  `measure (\(f:num->B,p:(A)wl_prog,live:num_set,lt:(num_set#num_set)list).
+  `MEASURE (\(f:num->B,p:(A)wl_prog,live:num_set,lt:(num_set#num_set)list).
               wl_prog_size (\x:A. 0) p)`
   SEM1AUX_TC_TAC (list_mk_conj
  [`(colouring_ok:(num->B)->(A)wl_prog->num_set->(num_set#num_set)list->bool)
@@ -161,7 +161,7 @@ let colouring_ok_def = sem1aux_def_wf
       f (wl_If cmp r1 ri e2 e3) live lt <=>
      let e2_live = get_live e2 live lt in
      let e3_live = get_live e3 live lt in
-     let union_live = union e2_live e3_live in
+     let union_live = sptree_union e2_live e3_live in
      let merged = match ri with
                     Reg r2 -> insert r2 one (insert r1 one union_live)
                   | _ -> insert r1 one union_live in
@@ -170,8 +170,8 @@ let colouring_ok_def = sem1aux_def_wf
   `(colouring_ok:(num->B)->(A)wl_prog->num_set->(num_set#num_set)list->bool)
       f (wl_Call (SOME (v,cutset,ret_handler,l1,l2)) dest args h) live lt <=>
      let args_set = word_alloc_numset_list_insert args LN in
-     let allnames = union (SND cutset) (FST cutset) in
-       INJ f (domain (union allnames args_set)) UNIV /\
+     let allnames = sptree_union (SND cutset) (FST cutset) in
+       INJ f (domain (sptree_union allnames args_set)) UNIV /\
        INJ f (domain (word_alloc_numset_list_insert v allnames)) UNIV /\
        colouring_ok f ret_handler live lt /\
        (match h with
@@ -190,7 +190,7 @@ let colouring_ok_def = sem1aux_def_wf
   `(colouring_ok:(num->B)->(A)wl_prog->num_set->(num_set#num_set)list->bool)
       f prog live lt <=>
      let lset = get_live prog live lt in
-     let iset = union (get_writes prog) live in
+     let iset = sptree_union (get_writes prog) live in
        INJ f (domain lset) UNIV /\ INJ f (domain iset) UNIV`]);;
 let colouring_ok_ind = cake_ind "colouring_ok";;
 
@@ -318,7 +318,7 @@ let cut_names_lemma = prove
   REPEAT GEN_TAC THEN REWRITE_TAC[cut_names_def; apply_nummap_key_domain] THEN
   COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT; option_INJ] THEN
   REPEAT STRIP_TAC THEN FIRST_X_ASSUM(SUBST_ALL_TAC o SYM) THEN
-  SUBGOAL_THEN `domain (inter (slocs:A spt) (names:B spt)) = domain names`
+  SUBGOAL_THEN `domain (sptree_inter (slocs:A spt) (names:B spt)) = domain names`
     ASSUME_TAC THENL [REWRITE_TAC[domain_inter] THEN ASM SET_TAC[]; ALL_TAC] THEN
   SUBGOAL_THEN `IMAGE (f:num->num) (domain (names:B spt)) SUBSET domain (tlocs:A spt)`
     ASSUME_TAC THENL
@@ -327,7 +327,7 @@ let cut_names_lemma = prove
     REWRITE_TAC[domain_lookup] THEN ASM_MESON_TAC[];
     ALL_TAC] THEN
   ASM_REWRITE_TAC[option_INJ] THEN
-  EXISTS_TAC `inter (tlocs:A spt) (apply_nummap_key f (names:B spt))` THEN
+  EXISTS_TAC `sptree_inter (tlocs:A spt) (apply_nummap_key f (names:B spt))` THEN
   ASM_REWRITE_TAC[domain_inter; apply_nummap_key_domain] THEN
   CONJ_TAC THENL [ASM SET_TAC[]; ALL_TAC] THEN
   REWRITE_TAC[strong_locals_rel_def; lookup_inter] THEN
@@ -370,7 +370,7 @@ let WALLOCPAUX_cut_envs_SOME = prove
 let WALLOCPAUX_cut_env_SOME = prove
  (`!names (env:A spt) x.
      wl_cut_env names env = SOME x <=>
-     ?x1 x2. cut_envs names env = SOME (x1,x2) /\ x = union x2 x1`,
+     ?x1 x2. cut_envs names env = SOME (x1,x2) /\ x = sptree_union x2 x1`,
   REWRITE_TAC[wl_cut_env_def; pair_case_eq; option_case_eq;
               option_DISTINCT; option_INJ; PAIR_EQ] THEN
   MESON_TAC[PAIR]);;
@@ -431,7 +431,7 @@ let cut_env_lemma = prove
     ASM_MESON_TAC[INJ_UNION];
     ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_THEN `y1:A spt` (X_CHOOSE_THEN `y2:A spt` STRIP_ASSUME_TAC)) THEN
-  EXISTS_TAC `union (y2:A spt) y1` THEN
+  EXISTS_TAC `sptree_union (y2:A spt) y1` THEN
   CONJ_TAC THENL
    [MAP_EVERY EXISTS_TAC [`y1:A spt`; `y2:A spt`] THEN ASM_REWRITE_TAC[]; ALL_TAC] THEN
   ASM_REWRITE_TAC[domain_union; IMAGE_UNION] THEN
@@ -703,7 +703,7 @@ let s_key_eq_val_eq_pop_env = prove
      ==> ?lsz' ls' rest.
            vals = CONS (StackFrame n lsz' ls' opt) rest /\
            wl_state_locals s' =
-             union (fromAList (ZIP (MAP FST ls) (MAP SND ls'))) (fromAList lsz) /\
+             sptree_union (fromAList (ZIP (MAP FST ls) (MAP SND ls'))) (fromAList lsz) /\
            s_key_eq (wl_state_stack s') keys /\
            s_val_eq (wl_state_stack s') rest /\
            (match opt with
@@ -1719,7 +1719,7 @@ let WALLOCPAUX_inst_colour = prove
  (`!i (live:num_set) f (st:(A,C,FFI)wl_state) cst s1.
      wl_inst i st = SOME s1 /\
      INJ f (domain (get_live_inst i live)) UNIV /\
-     INJ f (domain (union (get_writes_inst i) live)) UNIV /\
+     INJ f (domain (sptree_union (get_writes_inst i) live)) UNIV /\
      word_state_eq_rel st cst /\
      strong_locals_rel f (domain (get_live_inst i live))
        (wl_state_locals st) (wl_state_locals cst)
@@ -2223,8 +2223,8 @@ let WALLOCPAUX_union_alist_slr = prove
      INJ f (domain x1 UNION set_of_list (MAP FST lsB)) UNIV /\
      strong_locals_rel f (domain x1) x1 y1 /\
      MAP FST lss = MAP FST lsB /\ MAP FST lss' = MAP FST lsA /\ MAP SND lss = MAP SND lss'
-     ==> strong_locals_rel f UNIV (union (fromAList lss) (fromAList (toAList x1)))
-                                  (union (fromAList lss') (fromAList (toAList y1)))`,
+     ==> strong_locals_rel f UNIV (sptree_union (fromAList lss) (fromAList (toAList x1)))
+                                  (sptree_union (fromAList lss') (fromAList (toAList y1)))`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   REWRITE_TAC[strong_locals_rel_def; IN_UNIV; lookup_union; lookup_fromAList;
               ALOOKUP_toAList] THEN
@@ -2407,7 +2407,7 @@ let WALLOCPAUX_eac_Call_ret = prove
   RULE_ASSUM_TAC(REWRITE_RULE[DE_MORGAN_THM]) THEN
   SUBGOAL_THEN `ALL_DISTINCT (MAP (f:num->num) n)` ASSUME_TAC THENL
    [MATCH_MP_TAC ALL_DISTINCT_MAP_INJ THEN ASM_REWRITE_TAC[] THEN
-    UNDISCH_TAC `INJ (f:num->num) (domain (word_alloc_numset_list_insert n (union p1 p0)))
+    UNDISCH_TAC `INJ (f:num->num) (domain (word_alloc_numset_list_insert n (sptree_union p1 p0)))
                    (:num)` THEN
     REWRITE_TAC[word_allocProof_domain_numset_list_insert; INJ; IN_UNION; IN_SET_OF_LIST;
                 IN_UNIV] THEN MESON_TAC[];
@@ -2684,7 +2684,7 @@ let WALLOCPAUX_eac_Call_ret = prove
        [REWRITE_TAC[wl_set_vars_def] THEN MATCH_MP_TAC WALLOCPAUX_wser_locals THEN
         FIRST_ASSUM ACCEPT_TAC;
         MATCH_MP_TAC strong_locals_rel_set_vars_dom THEN
-        EXISTS_TAC `domain (word_alloc_numset_list_insert (n:num list) (union p1 (p0:num_set)))` THEN
+        EXISTS_TAC `domain (word_alloc_numset_list_insert (n:num list) (sptree_union p1 (p0:num_set)))` THEN
         REPEAT CONJ_TAC THENL
          [ASM_REWRITE_TAC[];
           FIRST_ASSUM ACCEPT_TAC;
@@ -2843,9 +2843,9 @@ let WALLOCPAUX_eac_Call_ret = prove
     ASM_REWRITE_TAC[] THEN DISCH_THEN(fun th -> REWRITE_TAC[th]) THEN
     REWRITE_TAC[pair_CASE; option_CASE; WALLOCPAUX_wl_result_CASE] THEN
     ASM_CASES_TAC `(a0:(A)word_loc) = wl_Loc k1 k2` THEN ASM_REWRITE_TAC[pair_CASE] THEN
-    SUBGOAL_THEN `domain (union (fromAList lss) (fromAList (toAList (x1:((A)word_loc)spt)))) =
+    SUBGOAL_THEN `domain (sptree_union (fromAList lss) (fromAList (toAList (x1:((A)word_loc)spt)))) =
                   domain (p0:num_set) UNION domain (p1:num_set) /\
-                  domain (union (fromAList lss2) (fromAList (toAList (y1:((A)word_loc)spt)))) =
+                  domain (sptree_union (fromAList lss2) (fromAList (toAList (y1:((A)word_loc)spt)))) =
                   IMAGE (f:num->num) (domain p0) UNION IMAGE f (domain p1)` STRIP_ASSUME_TAC THENL
      [CONJ_TAC THEN
       ASM_REWRITE_TAC[domain_union; domain_fromAList; set_MAP_FST_toAList_domain] THENL
@@ -2859,10 +2859,10 @@ let WALLOCPAUX_eac_Call_ret = prove
       ASM_REWRITE_TAC[pair_CASE] THEN DISCH_THEN SUBST1_TAC THEN ASM_REWRITE_TAC[] THEN SET_TAC[];
       ALL_TAC] THEN
     SUBGOAL_THEN `strong_locals_rel (f:num->num) (:num) (wl_state_locals (s1:(A,C,FFI)wl_state))
-                    (union (fromAList lss2) (fromAList (toAList (y1:((A)word_loc)spt))))`
+                    (sptree_union (fromAList lss2) (fromAList (toAList (y1:((A)word_loc)spt))))`
       ASSUME_TAC THENL
      [UNDISCH_TAC `wl_state_locals (s1:(A,C,FFI)wl_state) =
-                   union (fromAList lss) (fromAList (toAList (x1:((A)word_loc)spt)))` THEN
+                   sptree_union (fromAList lss) (fromAList (toAList (x1:((A)word_loc)spt)))` THEN
       DISCH_THEN SUBST1_TAC THEN
       MATCH_MP_TAC WALLOCPAUX_union_alist_slr THEN
       EXISTS_TAC `lsB:(num#(A)word_loc)list` THEN EXISTS_TAC `lsA:(num#(A)word_loc)list` THEN
@@ -2898,7 +2898,7 @@ let WALLOCPAUX_eac_Call_ret = prove
         REWRITE_TAC[wl_set_var_def] THEN MATCH_MP_TAC WALLOCPAUX_wser_locals THEN
         REWRITE_TAC[word_state_eq_rel_def; wl_state_INFO.ri_accfupds; K_THM] THEN ASM_REWRITE_TAC[];
         MATCH_MP_TAC strong_locals_rel_set_var_dom THEN
-        EXISTS_TAC `domain (insert n' one (union p1 (p0:num_set)))` THEN
+        EXISTS_TAC `domain (insert n' one (sptree_union p1 (p0:num_set)))` THEN
         REPEAT CONJ_TAC THENL
          [ASM_REWRITE_TAC[];
           ASM_REWRITE_TAC[domain_insert; domain_union] THEN SET_TAC[];
@@ -3535,7 +3535,7 @@ let word_allocProof_check_col_INJ = prove
 (* HOL4 line 2608 *)
 let wf_insert_swap = prove
  (`!(t:num_set) a c.
-     wf t ==> insert (a:num) one (insert c one t) = insert (c:num) one (insert a one t)`,
+     sptree_wf t ==> insert (a:num) one (insert c one t) = insert (c:num) one (insert a one t)`,
   REPEAT STRIP_TAC THEN
   W(fun (asl,w) -> MP_TAC (ISPECL [lhs w; rhs w] spt_eq_thm)) THEN
   ASM_SIMP_TAC[wf_insert] THEN DISCH_THEN SUBST1_TAC THEN
@@ -3546,8 +3546,8 @@ let wf_insert_swap = prove
 (* HOL4 line 2620 *)
 let numset_list_insert_swap = prove
  (`!ls h (live:num_set).
-     wf live
-     ==> wf (word_alloc_numset_list_insert ls live) /\
+     sptree_wf live
+     ==> sptree_wf (word_alloc_numset_list_insert ls live) /\
          word_alloc_numset_list_insert ls (insert h one live) =
          insert h one (word_alloc_numset_list_insert ls live)`,
   LIST_INDUCT_TAC THEN REWRITE_TAC[word_alloc_numset_list_insert_def] THEN
@@ -3557,11 +3557,11 @@ let numset_list_insert_swap = prove
 (* HOL4 line 2632: check_partial_col_INJ *)
 let word_allocProof_check_partial_col_INJ = prove
  (`!ls f (live:num_set) flive live' flive'.
-     wf live /\
+     sptree_wf live /\
      domain flive = IMAGE f (domain live) /\
      INJ f (domain live) UNIV /\
      check_partial_col f ls live flive = SOME (live',flive')
-     ==> wf live' /\
+     ==> sptree_wf live' /\
          live' = word_alloc_numset_list_insert ls live /\
          INJ f (domain live') UNIV /\
          domain flive' = IMAGE f (domain live')`,
@@ -3601,14 +3601,14 @@ let word_allocProof_check_partial_col_INJ = prove
 (* HOL4 line 2685 *)
 let domain_insert_eq_union = prove
  (`!num (live:num_set).
-     domain (insert num one live) = domain (union (insert num one LN) live)`,
+     domain (insert num one live) = domain (sptree_union (insert num one LN) live)`,
   REWRITE_TAC[domain_union; domain_insert; domain_def] THEN SET_TAC[]);;
 
 (* HOL4 line 2692 *)
 let domain_numset_list_insert_eq_union = prove
  (`!ls (live:num_set).
      domain (word_alloc_numset_list_insert ls live) =
-     domain (union (word_alloc_numset_list_insert ls LN) live)`,
+     domain (sptree_union (word_alloc_numset_list_insert ls LN) live)`,
   REWRITE_TAC[domain_union; word_allocProof_domain_numset_list_insert; domain_def] THEN
   SET_TAC[]);;
 
@@ -3624,8 +3624,8 @@ let lookup_numset_list_insert = prove
 (* HOL4 line 2729 *)
 let numset_list_insert_eq_UNION = prove
  (`!(t:num_set) t' ls.
-     wf t /\ wf t' /\ domain t' = set_of_list ls
-     ==> word_alloc_numset_list_insert ls t = union t' t`,
+     sptree_wf t /\ sptree_wf t' /\ domain t' = set_of_list ls
+     ==> word_alloc_numset_list_insert ls t = sptree_union t' t`,
   REPEAT STRIP_TAC THEN
   W(fun (asl,w) -> MP_TAC (ISPECL [lhs w; rhs w] spt_eq_thm)) THEN
   ASM_SIMP_TAC[wf_union; numset_list_insert_swap] THEN DISCH_THEN SUBST1_TAC THEN
@@ -3640,7 +3640,7 @@ let numset_list_insert_eq_UNION = prove
 
 (* HOL4 line 2751 *)
 let wf_delete_swap = prove
- (`!(t:A spt) a c. wf t ==> delete a (delete c t) = delete c (delete a t)`,
+ (`!(t:A spt) a c. sptree_wf t ==> delete a (delete c t) = delete c (delete a t)`,
   REPEAT STRIP_TAC THEN
   W(fun (asl,w) -> MP_TAC (ISPECL [lhs w; rhs w] spt_eq_thm)) THEN
   ASM_SIMP_TAC[wf_delete] THEN DISCH_THEN SUBST1_TAC THEN
@@ -3650,8 +3650,8 @@ let wf_delete_swap = prove
 (* HOL4 line 2762 *)
 let numset_list_delete_swap = prove
  (`!ls h (live:A spt).
-     wf live
-     ==> wf (numset_list_delete ls live) /\
+     sptree_wf live
+     ==> sptree_wf (numset_list_delete ls live) /\
          numset_list_delete ls (delete h live) = delete h (numset_list_delete ls live)`,
   LIST_INDUCT_TAC THEN REWRITE_TAC[numset_list_delete_def] THEN
   REPEAT STRIP_TAC THEN ASM_SIMP_TAC[wf_delete] THEN
@@ -3659,17 +3659,17 @@ let numset_list_delete_swap = prove
 
 (* HOL4 line 2774 *)
 let wf_numset_list_delete_eq = prove
- (`!ls (t:A spt) (live:B). wf t ==> ITLIST delete ls t = numset_list_delete ls t`,
+ (`!ls (t:A spt) (live:B). sptree_wf t ==> ITLIST delete ls t = numset_list_delete ls t`,
   LIST_INDUCT_TAC THEN REWRITE_TAC[numset_list_delete_def; ITLIST] THEN
   REPEAT STRIP_TAC THEN ASM_SIMP_TAC[numset_list_delete_swap]);;
 
 (* HOL4 line 2782 *)
 let wf_get_live_exp = prove
- (`!exp:(A)wl_exp. wf (get_live_exp exp)`,
+ (`!exp:(A)wl_exp. sptree_wf (get_live_exp exp)`,
   MATCH_MP_TAC get_live_exp_ind THEN
-  SIMP_TAC[get_live_exp_def; wf_insert; wf_union; wf_def] THEN
+  SIMP_TAC[get_live_exp_def; wf_insert; wf_union; sptree_wf_def] THEN
   LIST_INDUCT_TAC THEN
-  REWRITE_TAC[big_union_def; ITLIST; MAP; MEM; wf_def] THEN
+  REWRITE_TAC[big_union_def; ITLIST; MAP; MEM; sptree_wf_def] THEN
   REWRITE_TAC[GSYM big_union_def] THEN ASM_MESON_TAC[wf_union]);;
 
 (* HOL4 lines 2791-2801: val start_tac, subset_tac (ML) *)
@@ -3685,14 +3685,14 @@ let word_allocProof_IMAGE_DIFF = prove
 (* then the reads on the live set without the writes                        *)
 
 let WALLOCPAUX_wf_numset_list_delete = prove
- (`!l (t:A spt). wf t ==> wf (numset_list_delete l t)`,
+ (`!l (t:A spt). sptree_wf t ==> sptree_wf (numset_list_delete l t)`,
   LIST_INDUCT_TAC THEN ASM_SIMP_TAC[numset_list_delete_def; wf_delete]);;
 
 let WALLOCPAUX_ctc_delta = prove
  (`!w r f (live:num_set) flive livein flivein.
-     wf live /\ domain flive = IMAGE f (domain live) /\ INJ f (domain live) UNIV /\
+     sptree_wf live /\ domain flive = IMAGE f (domain live) /\ INJ f (domain live) UNIV /\
      check_clash_tree f (Delta w r) live flive = SOME (livein,flivein)
-     ==> wf livein /\ INJ f (domain livein) UNIV /\
+     ==> sptree_wf livein /\ INJ f (domain livein) UNIV /\
          livein = word_alloc_numset_list_insert r (numset_list_delete w live) /\
          domain flivein = IMAGE f (domain livein) /\
          INJ f (domain (word_alloc_numset_list_insert w live)) UNIV`,
@@ -3724,11 +3724,11 @@ let WALLOCPAUX_ctc_delta = prove
     STRIP_TAC THEN ASM_REWRITE_TAC[]]);;
 
 let WALLOCPAUX_spt_eq = prove
- (`!t1 t2:A spt. wf t1 /\ wf t2 /\ (!n. lookup n t1 = lookup n t2) ==> t1 = t2`,
+ (`!t1 t2:A spt. sptree_wf t1 /\ sptree_wf t2 /\ (!n. lookup n t1 = lookup n t2) ==> t1 = t2`,
   MESON_TAC[spt_eq_thm]);;
 
 let WALLOCPAUX_wf_numset_list_insert = prove
- (`!ls (t:num_set). wf t ==> wf (word_alloc_numset_list_insert ls t)`,
+ (`!ls (t:num_set). sptree_wf t ==> sptree_wf (word_alloc_numset_list_insert ls t)`,
   MESON_TAC[numset_list_insert_swap]);;
 
 (* equality of number sets built from wf sets by insert, delete and their  *)
@@ -3739,11 +3739,11 @@ let WALLOCPAUX_SPT_EQ_TAC : tactic =
    [REPEAT(MATCH_MP_TAC wf_insert ORELSE MATCH_MP_TAC wf_delete ORELSE
            MATCH_MP_TAC WALLOCPAUX_wf_numset_list_insert ORELSE
            MATCH_MP_TAC WALLOCPAUX_wf_numset_list_delete ORELSE MATCH_MP_TAC wf_union) THEN
-    ASM_REWRITE_TAC[wf_def];
+    ASM_REWRITE_TAC[sptree_wf_def];
     REPEAT(MATCH_MP_TAC wf_insert ORELSE MATCH_MP_TAC wf_delete ORELSE
            MATCH_MP_TAC WALLOCPAUX_wf_numset_list_insert ORELSE
            MATCH_MP_TAC WALLOCPAUX_wf_numset_list_delete ORELSE MATCH_MP_TAC wf_union) THEN
-    ASM_REWRITE_TAC[wf_def];
+    ASM_REWRITE_TAC[sptree_wf_def];
     GEN_TAC THEN
     REWRITE_TAC[lookup_insert; lookup_delete; lookup_numset_list_insert;
                 lookup_numset_list_delete; MEM; lookup_union] THEN
@@ -3762,13 +3762,13 @@ let WALLOCPAUX_ctc_P_def = new_definition (CASE_TERM
  `WALLOCPAUX_ctc_P (prog:(A)wl_prog) (lt:(num_set#num_set)list) <=>
    !f live flive livein flivein.
      wf_cutsets prog /\
-     wf live /\
-     ALL (\ne. match ne with (n,e) -> wf n /\ wf e) lt /\
+     sptree_wf live /\
+     ALL (\ne. match ne with (n,e) -> sptree_wf n /\ sptree_wf e) lt /\
      domain flive = IMAGE f (domain live) /\
      INJ f (domain live) UNIV /\
      check_clash_tree f (get_clash_tree prog lt) live flive = SOME (livein,flivein)
      ==> word_allocProof_hide
-           (wf livein /\
+           (sptree_wf livein /\
             INJ f (domain livein) UNIV /\
             colouring_ok f prog live lt /\
             livein = get_live prog live lt /\
@@ -3802,14 +3802,14 @@ let WALLOCPAUX_CTC_DELTA_TAC : tactic =
 
 let WALLOCPAUX_nli_reads = prove
  (`!(e:(A)wl_exp) (t:num_set).
-     wf t ==> word_alloc_numset_list_insert (get_reads_exp e) t = union (get_live_exp e) t`,
+     sptree_wf t ==> word_alloc_numset_list_insert (get_reads_exp e) t = sptree_union (get_live_exp e) t`,
   REPEAT STRIP_TAC THEN MATCH_MP_TAC numset_list_insert_eq_UNION THEN
   ASM_REWRITE_TAC[wf_get_live_exp; get_reads_exp_get_live_exp]);;
 
 (* equality of wf number sets by their domains *)
 
 let WALLOCPAUX_numset_eq = prove
- (`!t1 t2:num_set. wf t1 /\ wf t2 /\ domain t1 = domain t2 ==> t1 = t2`,
+ (`!t1 t2:num_set. sptree_wf t1 /\ sptree_wf t2 /\ domain t1 = domain t2 ==> t1 = t2`,
   REPEAT STRIP_TAC THEN ASM_SIMP_TAC[spt_eq_thm] THEN X_GEN_TAC `n:num` THEN
   UNDISCH_TAC `domain (t1:num_set) = domain (t2:num_set)` THEN
   REWRITE_TAC[EXTENSION; domain_lookup] THEN DISCH_THEN(MP_TAC o SPEC `n:num`) THEN
@@ -3825,12 +3825,12 @@ let WALLOCPAUX_NUMSET_EQ_TAC : tactic =
            MATCH_MP_TAC WALLOCPAUX_wf_numset_list_insert ORELSE
            MATCH_MP_TAC WALLOCPAUX_wf_numset_list_delete ORELSE
            (MATCH_MP_TAC wf_union THEN CONJ_TAC)) THEN
-    ASM_REWRITE_TAC[wf_def; wf_get_live_exp];
+    ASM_REWRITE_TAC[sptree_wf_def; wf_get_live_exp];
     REPEAT(MATCH_MP_TAC wf_insert ORELSE MATCH_MP_TAC wf_delete ORELSE
            MATCH_MP_TAC WALLOCPAUX_wf_numset_list_insert ORELSE
            MATCH_MP_TAC WALLOCPAUX_wf_numset_list_delete ORELSE
            (MATCH_MP_TAC wf_union THEN CONJ_TAC)) THEN
-    ASM_REWRITE_TAC[wf_def; wf_get_live_exp];
+    ASM_REWRITE_TAC[sptree_wf_def; wf_get_live_exp];
     REWRITE_TAC[domain_union; domain_insert; domain_delete; domain_def;
                 word_allocProof_domain_numset_list_insert;
                 reg_allocProof_domain_numset_list_delete; set_of_list;
@@ -3859,7 +3859,7 @@ let WALLOCPAUX_WF_TAC : tactic =
          MATCH_MP_TAC WALLOCPAUX_wf_numset_list_insert ORELSE
          MATCH_MP_TAC WALLOCPAUX_wf_numset_list_delete ORELSE
          (MATCH_MP_TAC wf_union THEN CONJ_TAC)) THEN
-  ASM_REWRITE_TAC[wf_def; wf_get_live_exp];;
+  ASM_REWRITE_TAC[sptree_wf_def; wf_get_live_exp];;
 
 (* apply a labelled induction hypothesis WALLOCPAUX_ctc_P P lt to the      *)
 (* assumption that checks the clash tree of P                               *)
@@ -4022,7 +4022,7 @@ let WALLOCPAUX_ctc_Alloc = prove
                 check (is_exists o concl)) THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP WALLOCPAUX_ctc_set) THEN
   FIRST_X_ASSUM(SUBST_ALL_TAC o check (fun th -> lhs(concl th) = `l2:num_set`)) THEN
-  SUBGOAL_THEN `wf (union (FST (numset:num_set#num_set)) (SND numset))` ASSUME_TAC THENL
+  SUBGOAL_THEN `sptree_wf (sptree_union (FST (numset:num_set#num_set)) (SND numset))` ASSUME_TAC THENL
    [MATCH_MP_TAC wf_union THEN ASM_REWRITE_TAC[]; ALL_TAC] THEN
   WALLOCPAUX_CTC_DELTA_TAC THEN WALLOCPAUX_CTC_FINISH_TAC);;
 
@@ -4035,7 +4035,7 @@ let WALLOCPAUX_ctc_Install = prove
                 check (is_exists o concl)) THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP WALLOCPAUX_ctc_set) THEN
   FIRST_X_ASSUM(SUBST_ALL_TAC o check (fun th -> lhs(concl th) = `l2:num_set`)) THEN
-  SUBGOAL_THEN `wf (union (FST (numset:num_set#num_set)) (SND numset))` ASSUME_TAC THENL
+  SUBGOAL_THEN `sptree_wf (sptree_union (FST (numset:num_set#num_set)) (SND numset))` ASSUME_TAC THENL
    [MATCH_MP_TAC wf_union THEN ASM_REWRITE_TAC[]; ALL_TAC] THEN
   WALLOCPAUX_CTC_DELTA_TAC THEN WALLOCPAUX_CTC_DELTA_TAC THEN
   WALLOCPAUX_CTC_FINISH_TAC);;
@@ -4057,7 +4057,7 @@ let WALLOCPAUX_ctc_FFI = prove
                 check (is_exists o concl)) THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP WALLOCPAUX_ctc_set) THEN
   FIRST_X_ASSUM(SUBST_ALL_TAC o check (fun th -> lhs(concl th) = `l2:num_set`)) THEN
-  SUBGOAL_THEN `wf (union (FST (numset:num_set#num_set)) (SND numset))` ASSUME_TAC THENL
+  SUBGOAL_THEN `sptree_wf (sptree_union (FST (numset:num_set#num_set)) (SND numset))` ASSUME_TAC THENL
    [MATCH_MP_TAC wf_union THEN ASM_REWRITE_TAC[]; ALL_TAC] THEN
   WALLOCPAUX_CTC_DELTA_TAC THEN WALLOCPAUX_CTC_FINISH_TAC);;
 
@@ -4125,7 +4125,7 @@ let WALLOCPAUX_ctc_Break = prove
   REWRITE_TAC[option_CASE] THENL
    [REPEAT GEN_TAC THEN STRIP_TAC THEN
     FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP WALLOCPAUX_ctc_set) THEN
-    ASM_REWRITE_TAC[wf_def; domain_union; domain_def; UNION_EMPTY] THEN
+    ASM_REWRITE_TAC[sptree_wf_def; domain_union; domain_def; UNION_EMPTY] THEN
     REWRITE_TAC[INJ; NOT_IN_EMPTY];
     ALL_TAC] THEN
   WALLOCPAUX_TUPLE_TAC `p:num_set#num_set` [`nm:num_set`; `en:num_set`] THEN
@@ -4150,7 +4150,7 @@ let WALLOCPAUX_ctc_Continue = prove
   REWRITE_TAC[option_CASE] THENL
    [REPEAT GEN_TAC THEN STRIP_TAC THEN
     FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP WALLOCPAUX_ctc_set) THEN
-    ASM_REWRITE_TAC[wf_def; domain_union; domain_def; UNION_EMPTY] THEN
+    ASM_REWRITE_TAC[sptree_wf_def; domain_union; domain_def; UNION_EMPTY] THEN
     REWRITE_TAC[INJ; NOT_IN_EMPTY];
     ALL_TAC] THEN
   WALLOCPAUX_TUPLE_TAC `p:num_set#num_set` [`nm:num_set`; `en:num_set`] THEN
@@ -4183,7 +4183,7 @@ let WALLOCPAUX_ctc_Call = prove
     FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP WALLOCPAUX_ctc_set) THEN
     ASM_REWRITE_TAC[colouring_ok_def; get_live_def; get_writes_def; LET_DEF; LET_END_DEF;
                     domain_union; domain_def; UNION_EMPTY] THEN
-    MATCH_MP_TAC WALLOCPAUX_wf_numset_list_insert THEN REWRITE_TAC[wf_def];
+    MATCH_MP_TAC WALLOCPAUX_wf_numset_list_insert THEN REWRITE_TAC[sptree_wf_def];
     ALL_TAC] THEN
   WALLOCPAUX_TUPLE_TAC `rr:num list#(num_set#num_set)#(A)wl_prog#num#num`
     [`vs:num list`; `cutsets:num_set#num_set`; `rh:(A)wl_prog`; `x:num`; `y:num`] THEN
@@ -4227,13 +4227,13 @@ let clash_tree_colouring_ok = prove
  (CASE_TERM
   `!(prog:(A)wl_prog) lt f live flive livein flivein.
      wf_cutsets prog /\
-     wf live /\
-     ALL (\ne. match ne with (n,e) -> wf n /\ wf e) lt /\
+     sptree_wf live /\
+     ALL (\ne. match ne with (n,e) -> sptree_wf n /\ sptree_wf e) lt /\
      domain flive = IMAGE f (domain live) /\
      INJ f (domain live) UNIV /\
      check_clash_tree f (get_clash_tree prog lt) live flive = SOME (livein,flivein)
      ==> word_allocProof_hide
-           (wf livein /\
+           (sptree_wf livein /\
             INJ f (domain livein) UNIV /\
             colouring_ok f prog live lt /\
             livein = get_live prog live lt /\
@@ -4439,7 +4439,7 @@ let WALLOCPAUX_colouring_from_check = prove
   MP_TAC(ISPECL [`prog:(A)wl_prog`; `[]:(num_set#num_set)list`; `f:num->num`;
                  `LN:num_set`; `LN:num_set`; `q:num_set`; `r:num_set`]
     clash_tree_colouring_ok) THEN
-  ASM_REWRITE_TAC[word_allocProof_hide_def; wf_def; ALL; domain_def; IMAGE_CLAUSES;
+  ASM_REWRITE_TAC[word_allocProof_hide_def; sptree_wf_def; ALL; domain_def; IMAGE_CLAUSES;
                   INJ; NOT_IN_EMPTY] THEN
   SIMP_TAC[]);;
 
@@ -4623,7 +4623,7 @@ let WALLOCPAUX_mem_load_fupd = prove
 let strong_locals_rel_I_word_exp = prove
  (`!(st:(A,C,FFI)wl_state) exp res live t nlive tstore.
      wl_word_exp st exp = SOME res /\
-     strong_locals_rel I (domain (union (get_live_exp exp) live)) (wl_state_locals st) t /\
+     strong_locals_rel I (domain (sptree_union (get_live_exp exp) live)) (wl_state_locals st) t /\
      live_store_rel nlive (wl_state_store st) tstore /\
      nlive_store nlive exp
      ==> wl_word_exp (wl_state_locals_fupd (K t) (wl_state_store_fupd (K tstore) st)) exp =
@@ -4658,7 +4658,7 @@ let strong_locals_rel_I_word_exp = prove
       EXISTS_TAC `live:num_set` THEN EXISTS_TAC `nlive:store_name list` THEN
       ASM_REWRITE_TAC[] THEN CONJ_TAC THENL
        [MATCH_MP_TAC strong_locals_rel_subset THEN
-        EXISTS_TAC `domain (union (big_union (MAP get_live_exp
+        EXISTS_TAC `domain (sptree_union (big_union (MAP get_live_exp
                                      (wexps:((A)wl_exp)list))) (live:num_set))` THEN
         ASM_REWRITE_TAC[domain_union] THEN
         MP_TAC(ISPECL [`wexps:((A)wl_exp)list`; `e:(A)wl_exp`]
@@ -5918,7 +5918,7 @@ let WALLOCPAUX_rd_CallSome = prove
   SUBGOAL_THEN `wl_get_vars args (wl_state_locals_fupd (K t) (st:(A,C,FFI)wl_state)) =
                 SOME xs` SUBST1_TAC THENL
    [MATCH_MP_TAC strong_locals_rel_I_get_vars' THEN
-    EXISTS_TAC `domain (union (union (FST (cutsets:1 spt#1 spt)) (SND cutsets))
+    EXISTS_TAC `domain (sptree_union (sptree_union (FST (cutsets:1 spt#1 spt)) (SND cutsets))
                   (word_alloc_numset_list_insert args LN))` THEN
     ASM_REWRITE_TAC[domain_union; word_allocProof_domain_numset_list_insert; IN_UNION;
                     IN_SET_OF_LIST] THEN MESON_TAC[];
@@ -5944,7 +5944,7 @@ let WALLOCPAUX_rd_CallSome = prove
     SUBST1_TAC THENL
    [MATCH_MP_TAC strong_locals_rel_I_cut_envs THEN EXISTS_TAC `st:(A,C,FFI)wl_state` THEN
     ASM_REWRITE_TAC[] THEN MATCH_MP_TAC strong_locals_rel_subset THEN
-    EXISTS_TAC `domain (union (union (FST (cutsets:1 spt#1 spt)) (SND cutsets))
+    EXISTS_TAC `domain (sptree_union (sptree_union (FST (cutsets:1 spt#1 spt)) (SND cutsets))
                   (word_alloc_numset_list_insert args LN))` THEN
     ASM_REWRITE_TAC[domain_union] THEN SET_TAC[];
     ALL_TAC] THEN
@@ -6557,7 +6557,7 @@ let merge_moves_frame2 = prove
      let (moveL,moveR,na',ssaL',ssaR') = word_alloc_merge_moves ls ssaL ssaR na in
        domain ssaL' = domain ssaL /\
        domain ssaR' = domain ssaR /\
-       !x. MEM x ls /\ x IN domain (inter ssaL ssaR) ==> lookup x ssaL' = lookup x ssaR'`,
+       !x. MEM x ls /\ x IN domain (sptree_inter ssaL ssaR) ==> lookup x ssaL' = lookup x ssaR'`,
   LIST_INDUCT_TAC THEN REWRITE_TAC[word_alloc_merge_moves_def; pair_CASE; MEM] THEN
   REPEAT GEN_TAC THEN
   FIRST_X_ASSUM(MP_TAC o SPECL [`na:num`; `ssaL:num spt`; `ssaR:num spt`]) THEN
@@ -6581,7 +6581,7 @@ let merge_moves_frame3 = prove
  (CASE_TERM
   `!ls na (ssaL:num spt) (ssaR:num spt).
      let (moveL,moveR,na',ssaL',ssaR') = word_alloc_merge_moves ls ssaL ssaR na in
-       !x. ~MEM x ls \/ ~(x IN domain (inter ssaL ssaR))
+       !x. ~MEM x ls \/ ~(x IN domain (sptree_inter ssaL ssaR))
            ==> lookup x ssaL' = lookup x ssaL /\ lookup x ssaR' = lookup x ssaR`,
   LIST_INDUCT_TAC THEN REWRITE_TAC[word_alloc_merge_moves_def; pair_CASE; MEM] THEN
   REPEAT GEN_TAC THEN
@@ -6881,7 +6881,7 @@ let fake_moves_frame2 = prove
          domain ssaL UNION (set_of_list ls INTER (domain ssaR UNION domain ssaL)) /\
        domain ssaR' =
          domain ssaR UNION (set_of_list ls INTER (domain ssaR UNION domain ssaL)) /\
-       !x. MEM x ls /\ ~(x IN domain (inter ssaL ssaR)) ==> lookup x ssaL' = lookup x ssaR'`,
+       !x. MEM x ls /\ ~(x IN domain (sptree_inter ssaL ssaR)) ==> lookup x ssaL' = lookup x ssaR'`,
   GEN_TAC THEN LIST_INDUCT_TAC THEN
   REWRITE_TAC[fake_moves_def; pair_CASE; set_of_list; MEM; INTER_EMPTY; UNION_EMPTY] THEN
   REPEAT GEN_TAC THEN
@@ -6909,7 +6909,7 @@ let fake_moves_frame3 = prove
   `!prio ls na (ssaL:num spt) (ssaR:num spt).
      let (moveL:(A)wl_prog,moveR:(A)wl_prog,na',ssaL',ssaR') =
          fake_moves prio ls ssaL ssaR na in
-       !x. ~MEM x ls \/ x IN domain (inter ssaL ssaR)
+       !x. ~MEM x ls \/ x IN domain (sptree_inter ssaL ssaR)
            ==> lookup x ssaL' = lookup x ssaL /\ lookup x ssaR' = lookup x ssaR`,
   GEN_TAC THEN LIST_INDUCT_TAC THEN REWRITE_TAC[fake_moves_def; pair_CASE; MEM] THEN
   REPEAT GEN_TAC THEN
@@ -7254,7 +7254,7 @@ let fix_inconsistencies_correctL = prove
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   REWRITE_TAC[fix_inconsistencies_def; LET_DEF; LET_END_DEF] THEN
   CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
-  ABBREV_TAC `vu = MAP FST (toAList (union (ssaL:num spt) ssaR))` THEN
+  ABBREV_TAC `vu = MAP FST (toAList (sptree_union (ssaL:num spt) ssaR))` THEN
   SUBGOAL_THEN `ALL_DISTINCT (vu:num list)` ASSUME_TAC THENL
    [EXPAND_TAC "vu" THEN REWRITE_TAC[ALL_DISTINCT_MAP_FST_toAList]; ALL_TAC] THEN
   MP_TAC(ISPECL [`vu:num list`; `na:num`; `ssaL:num spt`; `ssaR:num spt`]
@@ -7303,7 +7303,7 @@ let fix_inconsistencies_correctR = prove
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   REWRITE_TAC[fix_inconsistencies_def; LET_DEF; LET_END_DEF] THEN
   CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
-  ABBREV_TAC `vu = MAP FST (toAList (union (ssaL:num spt) ssaR))` THEN
+  ABBREV_TAC `vu = MAP FST (toAList (sptree_union (ssaL:num spt) ssaR))` THEN
   SUBGOAL_THEN `ALL_DISTINCT (vu:num list)` ASSUME_TAC THENL
    [EXPAND_TAC "vu" THEN REWRITE_TAC[ALL_DISTINCT_MAP_FST_toAList]; ALL_TAC] THEN
   SUBGOAL_THEN `!x. MEM x vu <=> x IN domain (ssaL:num spt) \/ x IN domain (ssaR:num spt)`
@@ -7377,17 +7377,6 @@ let WALLOCPAUX_lookup_alist_insert_notin = prove
   REPEAT STRIP_TAC THEN ASM_SIMP_TAC[lookup_alist_insert] THEN
   SUBGOAL_THEN `ALOOKUP (ZIP (ks:num list) (vs:A list)) z = NONE` SUBST1_TAC THENL
    [ASM_SIMP_TAC[ALOOKUP_ZIP_FAIL]; REWRITE_TAC[option_CASE]]);;
-
-let WALLOCPAUX_lookup_alist_insert_EL = prove
- (`!ks vs (t:A spt) k.
-     ALL_DISTINCT ks /\ LENGTH ks = LENGTH vs /\ k < LENGTH ks
-     ==> lookup (EL k ks) (alist_insert ks vs t) = SOME (EL k vs)`,
-  REPEAT STRIP_TAC THEN ASM_SIMP_TAC[lookup_alist_insert] THEN
-  SUBGOAL_THEN `ALOOKUP (ZIP (ks:num list) (vs:A list)) (EL k ks) = SOME (EL k vs)`
-    SUBST1_TAC THENL
-   [MATCH_MP_TAC ALOOKUP_ALL_DISTINCT_MEM THEN ASM_SIMP_TAC[MAP_FST_ZIP; MEM_ZIP] THEN
-    ASM_MESON_TAC[];
-    REWRITE_TAC[option_CASE]]);;
 
 (* the facts about list_next_var_rename that the move lemmas below use: the  *)
 (* new names are at least na (and not physical when na is not), one per     *)
@@ -7503,7 +7492,7 @@ let list_next_var_rename_move_preserve = prove
         FIRST_X_ASSUM SUBST_ALL_TAC THEN ASM_SIMP_TAC[] THEN
         MP_TAC(ISPECL [`nls:num list`; `vs:((A)word_loc)list`;
                        `wl_state_locals (cst:(A,C,FFI)wl_state)`; `k:num`]
-          WALLOCPAUX_lookup_alist_insert_EL) THEN
+          MISC3AUX_lookup_alist_insert_EL) THEN
         ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN
         EXPAND_TAC "vs" THEN ASM_SIMP_TAC[EL_MAP; THE_DEF];
         ASM_SIMP_TAC[]];
@@ -7585,7 +7574,7 @@ let list_next_var_rename_move_preserve_weak = prove
         FIRST_X_ASSUM SUBST_ALL_TAC THEN ASM_SIMP_TAC[] THEN
         MP_TAC(ISPECL [`nls:num list`; `vs:((A)word_loc)list`;
                        `wl_state_locals (cst:(A,C,FFI)wl_state)`; `k:num`]
-          WALLOCPAUX_lookup_alist_insert_EL) THEN
+          MISC3AUX_lookup_alist_insert_EL) THEN
         ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN
         MAP_EVERY EXPAND_TAC ["vs"; "cls"] THEN
         ASM_SIMP_TAC[EL_MAP; LENGTH_MAP] THEN
@@ -7625,7 +7614,7 @@ let get_vars_list_insert_eq_gen = prove
   ASM_SIMP_TAC[EL_MAP] THEN SIMP[] THEN
   SUBGOAL_THEN `~MEM (EL k ls) (a:num list)` ASSUME_TAC THENL
    [FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_MESON_TAC[MEM_EL]; ALL_TAC] THEN
-  ASM_SIMP_TAC[WALLOCPAUX_lookup_alist_insert_notin; WALLOCPAUX_lookup_alist_insert_EL; THE_DEF]);;
+  ASM_SIMP_TAC[WALLOCPAUX_lookup_alist_insert_notin; MISC3AUX_lookup_alist_insert_EL; THE_DEF]);;
 
 (* HOL4 line 5546 *)
 let get_vars_set_vars_eq = prove

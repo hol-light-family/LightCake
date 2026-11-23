@@ -3,8 +3,8 @@
 (* (CakeML v3479).  Correctness proof for pan_to_crep.                       *)
 (*                                                                           *)
 (* Notes on the port:                                                        *)
-(* - Names: notes/naming/names.tsv; local helpers are PP2CAUX_ (PP2CAUX_A_,  *)
-(*   PP2CAUX_B_ for the parts written by two helper agents).                 *)
+(* - Names: doc/names.tsv; local helpers are PP2CAUX_ (PP2CAUX_A_ and        *)
+(*   PP2CAUX_B_ in two parts of the file, marked below).                     *)
 (* - HOL4 s.f is pan_state_f s / crep_state_f s, s with f := v is           *)
 (*   ..._f_fupd (K v) s; GENLIST is list_of_seq; FOLDR MAX 0 l is            *)
 (*   ITLIST MAX l 0; ZIP (xs,ys) is ZIP xs ys, always with equal lengths     *)
@@ -3842,11 +3842,10 @@ let not_none_then_some = prove
   REWRITE_TAC[distinctness "option"; injectivity "option"] THEN MESON_TAC[]);;
 
 (* ------------------------------------------------------------------------- *)
-(* HOL4 pan_to_crepProofScript.sml lines 4054-4554 without the Call cases    *)
-(* (fork A of PP2C): the lemmas before the DecCall case, the DecCall and     *)
-(* ExtCall cases of pc_compile_correct (PP2CAUX_pc_DecCall,                   *)
-(* PP2CAUX_pc_ExtCall) and the MAX_LIST lemmas.  Local helpers are           *)
-(* PP2CAUX_A_.                                                               *)
+(* HOL4 pan_to_crepProofScript.sml lines 4054-4554 without the Call cases:   *)
+(* the lemmas before the DecCall case, the DecCall and ExtCall cases of      *)
+(* pc_compile_correct (PP2CAUX_pc_DecCall, PP2CAUX_pc_ExtCall) and the       *)
+(* MAX_LIST lemmas.  Local helpers are PP2CAUX_A_.                           *)
 (* ------------------------------------------------------------------------- *)
 
 (* HOL4 [local] *)
@@ -4718,9 +4717,8 @@ let pc_compile_correct = prove
     PP2CAUX_pc_ExtCall]));;
 
 (* ========================================================================= *)
-(* PP2C fork B: the top level of pan_to_crepProof (HOL4 pan_to_crepProof-     *)
-(* Script.sml after Finalise pc_compile_correct).  Appended to                 *)
-(* src/pancake/proofs/pan_to_crepProof.ml after pc_compile_correct.            *)
+(* The top level of pan_to_crepProof (HOL4 pan_to_crepProofScript.sml after    *)
+(* Finalise pc_compile_correct).                                               *)
 (* HOL4 EVERY is ALL; s with structs := [] is pan_state_structs_fupd (K []) s; *)
 (* the theorems that HOL4 states with free variables are quantified.  HOL4    *)
 (* proves state_rel_imp_semantics_to_crep by the lprefix_lub argument; here   *)
@@ -5199,12 +5197,6 @@ let decs_stcnames_lemma = prove
 
 (* the code of the program after evaluate_decls *)
 
-let PP2CAUX_B_fupdate_list_alist = prove
- (`!l:(A#B)list. ALL_DISTINCT (MAP FST l) ==> FEMPTY |++ l = alist_to_fmap l`,
-  REPEAT STRIP_TAC THEN REWRITE_TAC[fmap_eq_flookup; FLOOKUP_FUPDATE_LIST] THEN
-  ASM_SIMP_TAC[alookup_distinct_reverse; CONJUNCT1 ALOOKUP_EQ_FLOOKUP; FLOOKUP_EMPTY] THEN
-  GEN_TAC THEN QCASES_ON "ALOOKUP (l:(A#B)list) x" THEN REWRITE_TAC[case_def "option"]);;
-
 let PP2CAUX_B_fdom_get_eids = prove
  (`!pc:((A)decl)list.
      FDOM (get_eids_from_decls pc) = set_of_list (MAP FST (exceptions pc))`,
@@ -5236,7 +5228,7 @@ let state_rel_imp_semantics_decls_to_crep = prove
   ASM_REWRITE_TAC[pan_state_INFO.ri_accfupds; K_THM] THEN DISCH_THEN SUBST_ALL_TAC THEN
   MATCH_MP_TAC state_rel_imp_semantics_to_crep THEN EXISTS_TAC `pan_code:((A)decl)list` THEN
   ASM_REWRITE_TAC[pan_state_INFO.ri_accfupds; K_THM] THEN
-  ASM_SIMP_TAC[PP2CAUX_B_fupdate_list_alist; FDOM_FUPDATE_LIST; FDOM_FEMPTY; UNION_EMPTY;
+  ASM_SIMP_TAC[FMAPAUX_FEMPTY_FUPDATE_LIST; FDOM_FUPDATE_LIST; FDOM_FEMPTY; UNION_EMPTY;
                PP2CAUX_B_fdom_get_eids] THEN
   QPAT_X_ASSUM "pan_to_crepProof_state_rel _ t" MP_TAC THEN
   REWRITE_TAC[pan_to_crepProof_state_rel_def; pan_state_INFO.ri_accfupds; K_THM]);;
@@ -5327,7 +5319,7 @@ let pan_to_crepProof_state_rel_imp_semantics_decls = prove
   MATCH_MP_TAC pan_to_crepProof_state_rel_imp_semantics THEN
   EXISTS_TAC `pan_code:((A)decl)list` THEN
   ASM_REWRITE_TAC[pan_state_INFO.ri_accfupds; K_THM] THEN
-  ASM_SIMP_TAC[PP2CAUX_B_fupdate_list_alist; FDOM_FUPDATE_LIST; FDOM_FEMPTY; UNION_EMPTY;
+  ASM_SIMP_TAC[FMAPAUX_FEMPTY_FUPDATE_LIST; FDOM_FUPDATE_LIST; FDOM_FEMPTY; UNION_EMPTY;
                PP2CAUX_B_fdom_get_eids] THEN
   QPAT_X_ASSUM "pan_to_crepProof_state_rel _ t" MP_TAC THEN
   REWRITE_TAC[pan_to_crepProof_state_rel_def; pan_state_INFO.ri_accfupds; K_THM]);;

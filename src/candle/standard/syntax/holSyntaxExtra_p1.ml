@@ -110,11 +110,11 @@ let TYPE_SUBST_compose = prove
 let TYPE_SUBST_tyvars = prove
  (`!ty tyin tyin'.
      TYPE_SUBST tyin ty = TYPE_SUBST tyin' ty <=>
-     !x. MEM x (tyvars ty)
+     !x. MEM x (hol_tyvars ty)
          ==> REV_ASSOCD (Tyvar x) tyin' (Tyvar x) =
              REV_ASSOCD (Tyvar x) tyin (Tyvar x)`,
   MATCH_MP_TAC type_ind THEN
-  REWRITE_TAC[tyvars_def; TYPE_SUBST_def; injectivity "hol_type"; MEM; MAP_EQ_f;
+  REWRITE_TAC[hol_tyvars_def; TYPE_SUBST_def; injectivity "hol_type"; MEM; MAP_EQ_f;
               MEM_FOLDR_LIST_UNION; GSYM ALL_MEM] THEN
   CONJ_TAC THENL [MESON_TAC[]; REPEAT STRIP_TAC THEN ASM_SIMP_TAC[] THEN MESON_TAC[]]);;
 

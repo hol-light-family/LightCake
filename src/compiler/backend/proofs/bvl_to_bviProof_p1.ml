@@ -36,6 +36,8 @@
 (* - HOL4 theorems derived by rules (Theorem X = ..., val X = ... |> RULE)  *)
 (*   are stated with their resulting statement; ML vals that are tactics,   *)
 (*   abbreviations or prints are comments.                                   *)
+(* - HOL4 in_ns is bvl_to_bviProof_in_ns (a short or common word), and       *)
+(*   in_ns_def is bvl_to_bviProof_in_ns_def.                                 *)
 (* ========================================================================= *)
 
 needs "misc/misc.ml";;
@@ -68,7 +70,7 @@ type_invention_error := true;;
 
 (* HOL4 line 28 (Termination: measure v_size o SND) *)
 let adjust_bv_def = cake_def_wf
-  `measure (\(b:num->num,v:bvl_v). bvl_v_size v)`
+  `MEASURE (\(b:num->num,v:bvl_v). bvl_v_size v)`
   TERM_TAC
   `(adjust_bv b (bvl_Number i) = bvl_Number i) /\
    (adjust_bv b (bvl_Word64 w) = bvl_Word64 w) /\
@@ -151,7 +153,7 @@ let bvl_to_bviProof_state_rel_def = cake_def
               ?z. FLOOKUP (bvi_state_refs t) p =
                     SOME (bvl_ValueArray
                       (CONS (bvl_Number (&(SUC (LENGTH (bvl_state_globals s)))))
-                         (APPEND (MAP (the (bvl_Number (&0)) o OPTION_MAP (adjust_bv b))
+                         (APPEND (MAP (misc_the (bvl_Number (&0)) o OPTION_MAP (adjust_bv b))
                                     (bvl_state_globals s))
                             (REPLICATE (z - SUC (LENGTH (bvl_state_globals s)))
                                (bvl_Number (&0)))))) /\
@@ -222,7 +224,7 @@ let state_rel_FLOOKUP_Thunk = prove
 
 (* HOL4 line 168 (Termination: measure v_size o SND) *)
 let bv_ok_def = cake_def_wf
-  `measure (\(refs:(num,(bvl_v)bvl_ref)fmap,v:bvl_v). bvl_v_size v)`
+  `MEASURE (\(refs:(num,(bvl_v)bvl_ref)fmap,v:bvl_v). bvl_v_size v)`
   TERM_TAC
   `(bv_ok (refs:(num,(bvl_v)bvl_ref)fmap) (bvl_RefPtr l r) <=> r IN FDOM refs) /\
    (bv_ok refs (bvl_Block tag vs) <=> ALL (bv_ok refs) vs) /\
@@ -1946,10 +1948,6 @@ let B2BP1AUX_state_rel_upd_ba = prove
            (bvi_state_refs_fupd (K (rt |+ (b ptr,bvl_ByteArray f ws))) t)`,
   B2BP1AUX_STATE_REL_UPD_TAC);;
 
-let B2BP1AUX_FLOOKUP_IN = prove
- (`!(f:(A,B)fmap) k v. FLOOKUP f k = SOME v ==> k IN FDOM f`,
-  REWRITE_TAC[FLOOKUP_DEF] THEN MESON_TAC[option_DISTINCT]);;
-
 let B2BP1AUX_SPLIT_TAC : tactic = fun (asl,w as g) ->
   let x = first_case_scrutinee w w in
   if type_of x = bool_ty && is_var x then (ASM_CASES_TAC x THEN CASE_TIDY_TAC) g
@@ -1997,7 +1995,7 @@ let B2BP1AUX_DAA_LEAF_TAC : tactic =
   REWRITE_TAC[bvl_state_INFO.ri_accfupds; bvi_state_INFO.ri_accfupds; K_THM] THEN
   REPEAT CONJ_TAC THEN
   TRY (FIRST_ASSUM ACCEPT_TAC) THEN
-  TRY (FIRST_ASSUM (fun th -> MATCH_ACCEPT_TAC (MATCH_MP B2BP1AUX_FLOOKUP_IN th))) THEN
+  TRY (FIRST_ASSUM (fun th -> MATCH_ACCEPT_TAC (MATCH_MP FMAPAUX_FLOOKUP_SOME_FDOM th))) THEN
   TRY (MATCH_MP_TAC B2BP1AUX_state_rel_ffi THEN FIRST_ASSUM ACCEPT_TAC);;
 
 (* do_app_adjust for any argument list vs (HOL4's REVERSE a) *)
@@ -2114,7 +2112,7 @@ let eval_ind_alt = prove
   SUBGOAL_THEN `!x:bvl_exp list#bvl_v list#(C,FFI)bvl_state. P x`
     (fun th -> REWRITE_TAC[th]) THEN
   MATCH_MP_TAC(REWRITE_RULE[WF_IND] (prove
-   (`WF (inv_image (measure (I:num->num) LEX measure (list_size bvl_exp_size))
+   (`WF (inv_image (MEASURE (I:num->num) LEX MEASURE (list_size bvl_exp_size))
           (\x:bvl_exp list#bvl_v list#(C,FFI)bvl_state.
              bvl_state_clock (SND (SND x)),FST x))`, WF_TAC))) THEN
   REWRITE_TAC[FORALL_PAIR_THM] THEN
@@ -2175,8 +2173,8 @@ let bvl_to_bviProof_do_app_Ref = prove
 let B2BP1AUX_globals_adjust_eq = prove
  (`!(s:(D,FFI)bvl_state) b b'.
      bvl_to_bviProof_state_ok s /\ (!a. a IN FDOM (bvl_state_refs s) ==> b' a = b a)
-     ==> MAP (the (bvl_Number (&0)) o OPTION_MAP (adjust_bv b')) (bvl_state_globals s) =
-         MAP (the (bvl_Number (&0)) o OPTION_MAP (adjust_bv b)) (bvl_state_globals s)`,
+     ==> MAP (misc_the (bvl_Number (&0)) o OPTION_MAP (adjust_bv b')) (bvl_state_globals s) =
+         MAP (misc_the (bvl_Number (&0)) o OPTION_MAP (adjust_bv b)) (bvl_state_globals s)`,
   REWRITE_TAC[bvl_to_bviProof_state_ok_def] THEN REPEAT STRIP_TAC THEN
   MATCH_MP_TAC MAP_EQ THEN
   FIRST_X_ASSUM(MP_TAC o check (fun th -> is_comb (concl th) &&
@@ -2381,17 +2379,17 @@ let aux_code_installed_sublist = prove
 (* of the aux code for SmartAppend and compile_aux                         *)
 let B2BP1AUX_between_mono = prove
  (`!a b a' b' (l:num list).
-     ALL (between a b) l /\ a' <= a /\ b <= b' ==> ALL (between a' b') l`,
+     ALL (misc_between a b) l /\ a' <= a /\ b <= b' ==> ALL (misc_between a' b') l`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_X_ASSUM(MP_TAC o check (is_comb o concl) o
     check (fun th -> try fst(dest_const(fst(strip_comb(concl th)))) = "ALL"
                      with Failure _ -> false)) THEN
-  MATCH_MP_TAC MONO_ALL THEN REWRITE_TAC[between_def] THEN ASM_ARITH_TAC);;
+  MATCH_MP_TAC MONO_ALL THEN REWRITE_TAC[misc_between_def] THEN ASM_ARITH_TAC);;
 
 let B2BP1AUX_aux_Q_nil = prove
  (`!n. SORTED (<) (MAP FST (append (Nil:(num#num#bvi_exp)app_list))) /\
        ALL (\x. ?n. x = bvl_num_stubs + bvl_to_bvi_namespaces * n + 1)
          (MAP FST (append (Nil:(num#num#bvi_exp)app_list))) /\
-       ALL (between (bvl_num_stubs + bvl_to_bvi_namespaces * n)
+       ALL (misc_between (bvl_num_stubs + bvl_to_bvi_namespaces * n)
               (bvl_num_stubs + bvl_to_bvi_namespaces * n))
          (MAP FST (append (Nil:(num#num#bvi_exp)app_list))) /\
        n <= n`,
@@ -2401,29 +2399,29 @@ let B2BP1AUX_aux_Q_append = prove
  (`!n (a1:(num#num#bvi_exp)app_list) n1 a2 n2.
      (SORTED (<) (MAP FST (append a1)) /\
       ALL (\x. ?n. x = bvl_num_stubs + bvl_to_bvi_namespaces * n + 1) (MAP FST (append a1)) /\
-      ALL (between (bvl_num_stubs + bvl_to_bvi_namespaces * n)
+      ALL (misc_between (bvl_num_stubs + bvl_to_bvi_namespaces * n)
              (bvl_num_stubs + bvl_to_bvi_namespaces * n1)) (MAP FST (append a1)) /\
       n <= n1) /\
      (SORTED (<) (MAP FST (append a2)) /\
       ALL (\x. ?n. x = bvl_num_stubs + bvl_to_bvi_namespaces * n + 1) (MAP FST (append a2)) /\
-      ALL (between (bvl_num_stubs + bvl_to_bvi_namespaces * n1)
+      ALL (misc_between (bvl_num_stubs + bvl_to_bvi_namespaces * n1)
              (bvl_num_stubs + bvl_to_bvi_namespaces * n2)) (MAP FST (append a2)) /\
       n1 <= n2)
      ==> SORTED (<) (MAP FST (append (SmartAppend a1 a2))) /\
          ALL (\x. ?n. x = bvl_num_stubs + bvl_to_bvi_namespaces * n + 1)
            (MAP FST (append (SmartAppend a1 a2))) /\
-         ALL (between (bvl_num_stubs + bvl_to_bvi_namespaces * n)
+         ALL (misc_between (bvl_num_stubs + bvl_to_bvi_namespaces * n)
                 (bvl_num_stubs + bvl_to_bvi_namespaces * n2))
            (MAP FST (append (SmartAppend a1 a2))) /\
          n <= n2`,
   REPEAT GEN_TAC THEN REWRITE_TAC[append_SmartAppend; MAP_APPEND; ALL_APPEND] THEN
   STRIP_TAC THEN ASM_REWRITE_TAC[sorted_lt_append] THEN REPEAT CONJ_TAC THENL
    [MAP_EVERY UNDISCH_TAC
-     [`ALL (between (bvl_num_stubs + bvl_to_bvi_namespaces * n)
+     [`ALL (misc_between (bvl_num_stubs + bvl_to_bvi_namespaces * n)
              (bvl_num_stubs + bvl_to_bvi_namespaces * n1)) (MAP FST (append (a1:(num#num#bvi_exp)app_list)))`;
-      `ALL (between (bvl_num_stubs + bvl_to_bvi_namespaces * n1)
+      `ALL (misc_between (bvl_num_stubs + bvl_to_bvi_namespaces * n1)
              (bvl_num_stubs + bvl_to_bvi_namespaces * n2)) (MAP FST (append (a2:(num#num#bvi_exp)app_list)))`] THEN
-    REWRITE_TAC[GSYM ALL_MEM; between_def] THEN REPEAT STRIP_TAC THEN
+    REWRITE_TAC[GSYM ALL_MEM; misc_between_def] THEN REPEAT STRIP_TAC THEN
     RES_TAC THEN B2BP1AUX_ARITH_TAC;
     MATCH_MP_TAC B2BP1AUX_between_mono THEN
     MAP_EVERY EXISTS_TAC [`bvl_num_stubs + bvl_to_bvi_namespaces * n`;
@@ -2441,19 +2439,19 @@ let B2BP1AUX_aux_Q_aux = prove
  (`!n (a:(num#num#bvi_exp)app_list) n2 k e.
      (SORTED (<) (MAP FST (append a)) /\
       ALL (\x. ?n. x = bvl_num_stubs + bvl_to_bvi_namespaces * n + 1) (MAP FST (append a)) /\
-      ALL (between (bvl_num_stubs + bvl_to_bvi_namespaces * n)
+      ALL (misc_between (bvl_num_stubs + bvl_to_bvi_namespaces * n)
              (bvl_num_stubs + bvl_to_bvi_namespaces * n2)) (MAP FST (append a)) /\
       n <= n2)
      ==> SORTED (<) (MAP FST (append (SmartAppend a (compile_aux (n2,k,e))))) /\
          ALL (\x. ?n. x = bvl_num_stubs + bvl_to_bvi_namespaces * n + 1)
            (MAP FST (append (SmartAppend a (compile_aux (n2,k,e))))) /\
-         ALL (between (bvl_num_stubs + bvl_to_bvi_namespaces * n)
+         ALL (misc_between (bvl_num_stubs + bvl_to_bvi_namespaces * n)
                 (bvl_num_stubs + bvl_to_bvi_namespaces * (n2 + 1)))
            (MAP FST (append (SmartAppend a (compile_aux (n2,k,e))))) /\
          n <= n2 + 1`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN MATCH_MP_TAC B2BP1AUX_aux_Q_append THEN
   EXISTS_TAC `n2:num` THEN ASM_REWRITE_TAC[compile_aux_def; append_thm; MAP; ALL;
-    SORTED_DEF; between_def] THEN
+    SORTED_DEF; misc_between_def] THEN
   REWRITE_TAC[bvl_to_bvi_namespaces_def] THEN
   CONJ_TAC THENL [MESON_TAC[]; ARITH_TAC]);;
 
@@ -2502,7 +2500,7 @@ let compile_exps_aux_sorted = prove
      bvl_to_bvi_compile_exps n es = (c,aux,n1)
      ==> SORTED (<) (MAP FST (append aux)) /\
          ALL (\x. ?n. x = bvl_num_stubs + bvl_to_bvi_namespaces * n + 1) (MAP FST (append aux)) /\
-         ALL (between (bvl_num_stubs + bvl_to_bvi_namespaces * n)
+         ALL (misc_between (bvl_num_stubs + bvl_to_bvi_namespaces * n)
                 (bvl_num_stubs + bvl_to_bvi_namespaces * n1))
            (MAP FST (append aux)) /\
          n <= n1`,
@@ -2516,12 +2514,12 @@ let compile_exps_aux_sorted = prove
   B2BP1AUX_RES_TAC [] [] THEN B2BP1AUX_AUXQ_TAC);;
 
 (* HOL4 line 1971 *)
-let in_ns_def = cake_def
-  `in_ns k n <=> n MOD bvl_to_bvi_namespaces = k`;;
+let bvl_to_bviProof_in_ns_def = cake_def
+  `bvl_to_bviProof_in_ns k n <=> n MOD bvl_to_bvi_namespaces = k`;;
 
 (* local helpers for the namespace lemmas (not in HOL4): nss = 4 and    *)
 (* num_stubs = 72 = 18 * 4                                                *)
-let B2BP1AUX_NSS_RWS = [in_ns_def; bvl_to_bvi_namespaces_def];;
+let B2BP1AUX_NSS_RWS = [bvl_to_bviProof_in_ns_def; bvl_to_bvi_namespaces_def];;
 
 let B2BP1AUX_num_stubs = prove
  (`bvl_num_stubs = 18 * 4`,
@@ -2530,14 +2528,14 @@ let B2BP1AUX_num_stubs = prove
 
 (* HOL4 line 1975 [simp] *)
 let nss_in_ns = prove
- (`!k. in_ns k bvl_to_bvi_namespaces <=> k = 0`,
+ (`!k. bvl_to_bviProof_in_ns k bvl_to_bvi_namespaces <=> k = 0`,
   REWRITE_TAC B2BP1AUX_NSS_RWS THEN CONV_TAC NUM_REDUCE_CONV THEN MESON_TAC[]);;
 
 let _ = cake_add_simps [nss_in_ns];;
 
 (* HOL4 line 1981 [simp] *)
 let mult_nss_in_ns = prove
- (`!k m. in_ns k (m * bvl_to_bvi_namespaces) <=> k = 0`,
+ (`!k m. bvl_to_bviProof_in_ns k (m * bvl_to_bvi_namespaces) <=> k = 0`,
   REWRITE_TAC B2BP1AUX_NSS_RWS THEN ONCE_REWRITE_TAC[MULT_SYM] THEN
   SIMP_TAC[MOD_MULT; ARITH_EQ] THEN MESON_TAC[]);;
 
@@ -2545,7 +2543,7 @@ let _ = cake_add_simps [mult_nss_in_ns];;
 
 (* HOL4 line 1987 [simp] *)
 let mult_nss_in_ns_1 = prove
- (`!k m. in_ns k (m * bvl_to_bvi_namespaces + 1) <=> k = 1`,
+ (`!k m. bvl_to_bviProof_in_ns k (m * bvl_to_bvi_namespaces + 1) <=> k = 1`,
   REWRITE_TAC(MOD_MULT_ADD :: B2BP1AUX_NSS_RWS) THEN CONV_TAC NUM_REDUCE_CONV THEN
   MESON_TAC[]);;
 
@@ -2553,7 +2551,7 @@ let _ = cake_add_simps [mult_nss_in_ns_1];;
 
 (* HOL4 line 1993 [simp] *)
 let mult_nss_in_ns_2 = prove
- (`!k m. in_ns k (m * bvl_to_bvi_namespaces + 2) <=> k = 2`,
+ (`!k m. bvl_to_bviProof_in_ns k (m * bvl_to_bvi_namespaces + 2) <=> k = 2`,
   REWRITE_TAC(MOD_MULT_ADD :: B2BP1AUX_NSS_RWS) THEN CONV_TAC NUM_REDUCE_CONV THEN
   MESON_TAC[]);;
 
@@ -2561,7 +2559,7 @@ let _ = cake_add_simps [mult_nss_in_ns_2];;
 
 (* HOL4 line 1999 *)
 let in_ns_1_add_1 = prove
- (`!x. in_ns 0 x ==> in_ns 1 (x + 1)`,
+ (`!x. bvl_to_bviProof_in_ns 0 x ==> bvl_to_bviProof_in_ns 1 (x + 1)`,
   REWRITE_TAC B2BP1AUX_NSS_RWS THEN REPEAT STRIP_TAC THEN
   ONCE_REWRITE_TAC[GSYM MOD_ADD_MOD] THEN ASM_REWRITE_TAC[] THEN
   CONV_TAC NUM_REDUCE_CONV);;
@@ -2569,12 +2567,12 @@ let in_ns_1_add_1 = prove
 (* HOL4 line 2007: val ODD_num_stubs = EVAL in_ns 0 num_stubs (its         *)
 (* resulting statement) *)
 let ODD_num_stubs = prove
- (`in_ns 0 bvl_num_stubs <=> T`,
+ (`bvl_to_bviProof_in_ns 0 bvl_num_stubs <=> T`,
   REWRITE_TAC(B2BP1AUX_num_stubs :: B2BP1AUX_NSS_RWS) THEN CONV_TAC NUM_REDUCE_CONV);;
 
 (* HOL4 line 2009 [simp] *)
 let in_ns_add_num_stubs = prove
- (`!k x. in_ns k (bvl_num_stubs + x) <=> in_ns k x`,
+ (`!k x. bvl_to_bviProof_in_ns k (bvl_num_stubs + x) <=> bvl_to_bviProof_in_ns k x`,
   REWRITE_TAC(B2BP1AUX_num_stubs :: MOD_MULT_ADD :: B2BP1AUX_NSS_RWS));;
 
 let _ = cake_add_simps [in_ns_add_num_stubs];;
@@ -2591,7 +2589,7 @@ let B2BP1AUX_aux_ALOOKUP_NONE = prove
   FIRST_X_ASSUM(fun th -> FIRST_ASSUM(MP_TAC o MATCH_MP th)) THEN STRIP_TAC THEN
   SUBGOAL_THEN `name * bvl_to_bvi_namespaces = n * bvl_to_bvi_namespaces + 1` MP_TAC THENL
    [POP_ASSUM MP_TAC THEN ARITH_TAC;
-    DISCH_THEN(MP_TAC o AP_TERM `in_ns 0`) THEN
+    DISCH_THEN(MP_TAC o AP_TERM `bvl_to_bviProof_in_ns 0`) THEN
     REWRITE_TAC[mult_nss_in_ns; mult_nss_in_ns_1; ARITH_EQ]]);;
 
 (* HOL4 line 2017 [local] *)
@@ -2651,7 +2649,7 @@ let nss_lemma = prove
 
 (* HOL4 line 2070 [local] *)
 let in_ns_0_simp = prove
- (`!p_1. in_ns 0 (bvl_to_bvi_namespaces * p_1 + bvl_num_stubs)`,
+ (`!p_1. bvl_to_bviProof_in_ns 0 (bvl_to_bvi_namespaces * p_1 + bvl_num_stubs)`,
   REWRITE_TAC(B2BP1AUX_num_stubs :: B2BP1AUX_NSS_RWS) THEN GEN_TAC THEN
   REWRITE_TAC[ARITH_RULE `4 * p + 18 * 4 = (p + 18) * 4`; MOD_MULT_ADD] THEN
   ONCE_REWRITE_TAC[MULT_SYM] THEN SIMP_TAC[MOD_MULT; ARITH_EQ]);;
@@ -2663,15 +2661,15 @@ let B2BP1AUX_nss_comm = prove
   REWRITE_TAC[MULT_SYM]);;
 
 let B2BP1AUX_in_ns_stub = prove
- (`(!k m. in_ns k (bvl_num_stubs + bvl_to_bvi_namespaces * m) <=> k = 0) /\
-   (!k m. in_ns k (bvl_num_stubs + m * bvl_to_bvi_namespaces) <=> k = 0) /\
-   (!k m. in_ns k (bvl_num_stubs + bvl_to_bvi_namespaces * m + 1) <=> k = 1)`,
+ (`(!k m. bvl_to_bviProof_in_ns k (bvl_num_stubs + bvl_to_bvi_namespaces * m) <=> k = 0) /\
+   (!k m. bvl_to_bviProof_in_ns k (bvl_num_stubs + m * bvl_to_bvi_namespaces) <=> k = 0) /\
+   (!k m. bvl_to_bviProof_in_ns k (bvl_num_stubs + bvl_to_bvi_namespaces * m + 1) <=> k = 1)`,
   REWRITE_TAC[in_ns_add_num_stubs; GSYM ADD_ASSOC; B2BP1AUX_nss_comm] THEN
   REWRITE_TAC[mult_nss_in_ns; mult_nss_in_ns_1]);;
 
 let B2BP1AUX_in_ns_unique = prove
- (`!p. ~(in_ns 0 p /\ in_ns 1 p)`,
-  REWRITE_TAC[in_ns_def] THEN ARITH_TAC);;
+ (`!p. ~(bvl_to_bviProof_in_ns 0 p /\ bvl_to_bviProof_in_ns 1 p)`,
+  REWRITE_TAC[bvl_to_bviProof_in_ns_def] THEN ARITH_TAC);;
 
 let B2BP1AUX_stub_name_11 = prove
  (`!p q. bvl_num_stubs + p * bvl_to_bvi_namespaces = bvl_num_stubs + bvl_to_bvi_namespaces * q
@@ -2688,8 +2686,8 @@ let B2BP1AUX_compile_list_ok = prove
          (!p. MEM (bvl_num_stubs + p * bvl_to_bvi_namespaces) (MAP FST (append p1))
               ==> MEM p (MAP FST prog1)) /\
          (!p. MEM p (MAP FST (append p1))
-              ==> if in_ns 0 p then (?q. bvl_num_stubs + q * bvl_to_bvi_namespaces = p)
-                  else (in_ns 1 p /\ bvl_num_stubs + bvl_to_bvi_namespaces * next1 <= p /\
+              ==> if bvl_to_bviProof_in_ns 0 p then (?q. bvl_num_stubs + q * bvl_to_bvi_namespaces = p)
+                  else (bvl_to_bviProof_in_ns 1 p /\ bvl_num_stubs + bvl_to_bvi_namespaces * next1 <= p /\
                         p < bvl_num_stubs + bvl_to_bvi_namespaces * n1))`,
   (LIST_INDUCT_TAC THENL
    [REWRITE_TAC[bvl_to_bvi_compile_list_def; PAIR_EQ] THEN REPEAT GEN_TAC THEN
@@ -2707,16 +2705,16 @@ let B2BP1AUX_compile_list_ok = prove
   B2BP1AUX_RES_TAC [] [] THEN
   REWRITE_TAC[append_SmartAppend; append_thm; MAP_APPEND; MAP; APPEND; MEM_APPEND; MEM;
               ALL_DISTINCT; ALL_DISTINCT_APPEND]) THEN
-  (RULE_ASSUM_TAC(REWRITE_RULE[GSYM ALL_MEM; between_def]) THEN
+  (RULE_ASSUM_TAC(REWRITE_RULE[GSYM ALL_MEM; misc_between_def]) THEN
    SUBGOAL_THEN `ALL_DISTINCT (MAP FST (append (v':(num#num#bvi_exp)app_list)))` ASSUME_TAC THENL
     [MATCH_MP_TAC(MATCH_MP SORTED_ALL_DISTINCT
        (prove(`irreflexive ((<):num->num->bool) /\ transitive ((<):num->num->bool)`,
               REWRITE_TAC[irreflexive_DEF; transitive_DEF] THEN ARITH_TAC))) THEN
      ASM_REWRITE_TAC[];
      ALL_TAC] THEN
-   SUBGOAL_THEN `!e. MEM e (MAP FST (append (v':(num#num#bvi_exp)app_list))) ==> ~in_ns 0 e`
+   SUBGOAL_THEN `!e. MEM e (MAP FST (append (v':(num#num#bvi_exp)app_list))) ==> ~bvl_to_bviProof_in_ns 0 e`
      ASSUME_TAC THENL
-    [REPEAT STRIP_TAC THEN RES_TAC THEN UNDISCH_TAC `in_ns 0 e` THEN
+    [REPEAT STRIP_TAC THEN RES_TAC THEN UNDISCH_TAC `bvl_to_bviProof_in_ns 0 e` THEN
      ASM_REWRITE_TAC[B2BP1AUX_in_ns_stub; ARITH_EQ];
      ALL_TAC] THEN
    SUBGOAL_THEN `!e. MEM e (MAP FST (append (v':(num#num#bvi_exp)app_list))) ==>
@@ -2730,7 +2728,7 @@ let B2BP1AUX_compile_list_ok = prove
                      (MAP FST (append (v':(num#num#bvi_exp)app_list)))` ASSUME_TAC THENL
     [DISCH_TAC THEN
      FIRST_X_ASSUM(MP_TAC o SPEC `bvl_num_stubs + bvl_to_bvi_namespaces * name` o
-       check (fun th -> can (find_term (fun t -> t = `in_ns 0`)) (concl th) &&
+       check (fun th -> can (find_term (fun t -> t = `bvl_to_bviProof_in_ns 0`)) (concl th) &&
                         is_forall (concl th) && not (is_cond (rand(snd(strip_forall(concl th))))))) THEN
      ASM_REWRITE_TAC[B2BP1AUX_in_ns_stub];
      ALL_TAC] THEN
@@ -2745,7 +2743,7 @@ let B2BP1AUX_compile_list_ok = prove
     [DISJ1_TAC THEN RULE_ASSUM_TAC(REWRITE_RULE[B2BP1AUX_stub_name_11]) THEN
      ASM_REWRITE_TAC[];
      MP_TAC(SPEC `bvl_num_stubs + p * bvl_to_bvi_namespaces` (ASSUME
-       `!e. MEM e (MAP FST (append (v':(num#num#bvi_exp)app_list))) ==> ~in_ns 0 e`)) THEN
+       `!e. MEM e (MAP FST (append (v':(num#num#bvi_exp)app_list))) ==> ~bvl_to_bviProof_in_ns 0 e`)) THEN
      REWRITE_TAC[B2BP1AUX_in_ns_stub] THEN ASM_REWRITE_TAC[];
      DISJ2_TAC THEN FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[]]);
    (GEN_TAC THEN STRIP_TAC THENL
@@ -2769,8 +2767,8 @@ let compile_inc_lemma = prove
          (!p. MEM (bvl_num_stubs + p * bvl_to_bvi_namespaces) (MAP FST prog2)
               ==> MEM p (MAP FST prog1)) /\
          (!p. MEM p (MAP FST prog2)
-              ==> if in_ns 0 p then (?q. bvl_num_stubs + q * bvl_to_bvi_namespaces = p)
-                  else (in_ns 1 p /\ bvl_num_stubs + bvl_to_bvi_namespaces * next1 <= p /\
+              ==> if bvl_to_bviProof_in_ns 0 p then (?q. bvl_num_stubs + q * bvl_to_bvi_namespaces = p)
+                  else (bvl_to_bviProof_in_ns 1 p /\ bvl_num_stubs + bvl_to_bvi_namespaces * next1 <= p /\
                         p < bvl_num_stubs + bvl_to_bvi_namespaces * next2))`,
   REPEAT GEN_TAC THEN REWRITE_TAC[bvl_to_bvi_compile_inc_def] THEN
   B2BP1AUX_PAIR_SPLIT_TAC "bvl_to_bvi_compile_list" THEN
@@ -2803,7 +2801,7 @@ let compile_inc_next_range = prove
   FIRST_X_ASSUM(STRIP_ASSUME_TAC o MATCH_MP compile_inc_lemma) THEN
   FIRST_X_ASSUM(MP_TAC o C MATCH_MP
     (ASSUME `MEM x (MAP FST (prog2:(num#num#bvi_exp)list))`)) THEN
-  REWRITE_TAC[in_ns_def] THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[ARITH_EQ] THENL
+  REWRITE_TAC[bvl_to_bviProof_in_ns_def] THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[ARITH_EQ] THENL
    [DISCH_THEN(X_CHOOSE_THEN `q:num` (SUBST_ALL_TAC o SYM)) THEN
     REWRITE_TAC[ADD_SUB2; LE_ADD] THEN
     SIMP_TAC[bvl_to_bvi_namespaces_def; DIV_MULT; ARITH_EQ; ONCE_REWRITE_RULE[MULT_SYM] DIV_MULT] THEN

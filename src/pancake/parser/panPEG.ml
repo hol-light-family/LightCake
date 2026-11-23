@@ -4,7 +4,7 @@
 (* development), with a proof that the PEG is well-formed.                   *)
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
-(* - Names as notes/naming/names.tsv says: choicel, pegf, seql, try, parse,  *)
+(* - Names as doc/names.tsv says: choicel, pegf, seql, try, parse,           *)
 (*   frange_image, peg0_pegf, peg0_seql, peg0_choicel and PEG_wellformed are *)
 (*   panPEG_choicel, ... (cmlPEG and semantics have the bare names); the     *)
 (*   token constructors of panLexer.ml (panLexer_CommaT, ...).               *)
@@ -57,7 +57,7 @@ let pancakeNT_INDUCT,pancakeNT_RECURSION = cake_type
              | ExnDecNT";;
 
 let mknt_def = cake_def
-  `mknt (ntsym:pancakeNT) = nt (INL ntsym) I:(A,pancakeNT,C,E)pegsym`;;
+  `mknt (ntsym:pancakeNT) = peg_nt (INL ntsym) I:(A,pancakeNT,C,E)pegsym`;;
 
 let mkleaf_def = cake_def
   `mkleaf (t:A#C) = [Lf (TOK (FST t),SND t):(A,B,C)parsetree]`;;
@@ -74,13 +74,13 @@ let mksubtree_def = cake_def
 (* Accept a token without storing it. *)
 
 let consume_tok_def = cake_def
-  `consume_tok (t:A) = tok ((=) t) (\t:A#locs. []):(A,B,(C)list,E)pegsym`;;
+  `consume_tok (t:A) = peg_tok ((=) t) (\t:A#locs. []):(A,B,(C)list,E)pegsym`;;
 
 (* Accept and store a token in the parse tree. *)
 
 let keep_tok_def = cake_def
   `keep_tok (t:A) =
-     tok ((=) t) mkleaf:(A,B,((A,D,locs)parsetree)list,E)pegsym`;;
+     peg_tok ((=) t) mkleaf:(A,B,((A,D,locs)parsetree)list,E)pegsym`;;
 
 (* Similar functions for keyword tokens *)
 
@@ -94,27 +94,27 @@ let keep_kw_def = cake_def
 
 let keep_ident_def = cake_def
   `keep_ident =
-     tok (\t. match t with IdentT _ -> T | _ -> F) mkleaf
+     peg_tok (\t. match t with IdentT _ -> T | _ -> F) mkleaf
        :(panLexer_token,B,((panLexer_token,D,locs)parsetree)list,E)pegsym`;;
 
 let keep_annot_def = cake_def
   `keep_annot =
-     tok (\t. match t with AnnotCommentT _ -> T | _ -> F) mkleaf
+     peg_tok (\t. match t with AnnotCommentT _ -> T | _ -> F) mkleaf
        :(panLexer_token,B,((panLexer_token,D,locs)parsetree)list,E)pegsym`;;
 
 let keep_ffi_ident_def = cake_def
   `keep_ffi_ident =
-     tok (\t. match t with ForeignIdent _ -> T | _ -> F) mkleaf
+     peg_tok (\t. match t with ForeignIdent _ -> T | _ -> F) mkleaf
        :(panLexer_token,B,((panLexer_token,D,locs)parsetree)list,E)pegsym`;;
 
 let keep_int_def = cake_def
   `keep_int =
-     tok (\t. match t with panLexer_IntT _ -> T | _ -> F) mkleaf
+     peg_tok (\t. match t with panLexer_IntT _ -> T | _ -> F) mkleaf
        :(panLexer_token,B,((panLexer_token,D,locs)parsetree)list,E)pegsym`;;
 
 let keep_nat_def = cake_def
   `keep_nat =
-     tok (\t. match t with
+     peg_tok (\t. match t with
                 panLexer_IntT n -> if n >= &0 then T else F
               | _ -> F) mkleaf
        :(panLexer_token,B,((panLexer_token,D,locs)parsetree)list,E)pegsym`;;
@@ -124,16 +124,16 @@ let extract_sum_def = cake_def
    (extract_sum (INR (x:A)) = x)`;;
 
 let panPEG_choicel_def = cake_def
-  `(panPEG_choicel [] = not (empty []) []:(A,B,(C)list,E)pegsym) /\
+  `(panPEG_choicel [] = peg_not (empty []) []:(A,B,(C)list,E)pegsym) /\
    (panPEG_choicel (CONS h t) = choice h (panPEG_choicel t) extract_sum)`;;
 
 let panPEG_pegf_def = cake_def
   `panPEG_pegf (s:(A,B,(C)list,E)pegsym) (f:(C)list->(C)list) =
-     seq s (empty []) (\l1 l2. f l1)`;;
+     peg_seq s (empty []) (\l1 l2. f l1)`;;
 
 let panPEG_seql_def = cake_def
   `panPEG_seql (l:((A,B,(C)list,E)pegsym)list) f =
-     panPEG_pegf (ITLIST (\p acc. seq p acc APPEND) l (empty [])) f`;;
+     panPEG_pegf (ITLIST (\p acc. peg_seq p acc APPEND) l (empty [])) f`;;
 
 let panPEG_try_def = cake_def
   `panPEG_try (s:(A,B,(C)list,E)pegsym) = panPEG_choicel [s; empty []]`;;
@@ -168,7 +168,7 @@ let pancake_peg_def = cake_def
     (FEMPTY |++ [
       (INL TopDecListNT,
        panPEG_choicel
-         [not (any (K (mksubtree TopDecListNT []))) (mksubtree TopDecListNT []);
+         [peg_not (peg_any (K (mksubtree TopDecListNT []))) (mksubtree TopDecListNT []);
           panPEG_seql [mknt FunNT; mknt TopDecListNT] (mksubtree TopDecListNT);
           panPEG_seql [mknt GlobalDecNT; mknt TopDecListNT]
                       (mksubtree TopDecListNT);
@@ -187,7 +187,7 @@ let pancake_peg_def = cake_def
                    (mksubtree StructNameNT));
       (INL FieldNameListNT,
        panPEG_seql [mknt ShapedIdentNT;
-                    rpt (panPEG_seql [consume_tok panLexer_CommaT;
+                    peg_rpt (panPEG_seql [consume_tok panLexer_CommaT;
                                       mknt ShapedIdentNT] I)
                         FLAT]
                    (mksubtree FieldNameListNT));
@@ -206,7 +206,7 @@ let pancake_peg_def = cake_def
                    (mksubtree FunNT));
       (INL ParamListNT,
        panPEG_seql [mknt ShapedIdentNT;
-                    rpt (panPEG_seql [consume_tok panLexer_CommaT;
+                    peg_rpt (panPEG_seql [consume_tok panLexer_CommaT;
                                       mknt ShapedIdentNT] I)
                         FLAT]
                    (mksubtree ParamListNT));
@@ -335,18 +335,18 @@ let pancake_peg_def = cake_def
                    (mksubtree ReturnNT));
       (INL ArgListNT,
        panPEG_seql [mknt ExpNT;
-                    rpt (panPEG_seql [consume_tok panLexer_CommaT;
+                    peg_rpt (panPEG_seql [consume_tok panLexer_CommaT;
                                       mknt ExpNT] I)
                         FLAT]
                    (mksubtree ArgListNT));
       (INL ExpNT,
        panPEG_seql [mknt EBoolAndNT;
-                    rpt (panPEG_seql [consume_tok BoolOrT; mknt EBoolAndNT] I)
+                    peg_rpt (panPEG_seql [consume_tok BoolOrT; mknt EBoolAndNT] I)
                         FLAT]
                    (mksubtree ExpNT));
       (INL EBoolAndNT,
        panPEG_seql [mknt EEqNT;
-                    rpt (panPEG_seql [consume_tok BoolAndT; mknt EEqNT] I)
+                    peg_rpt (panPEG_seql [consume_tok BoolAndT; mknt EEqNT] I)
                         FLAT]
                    (mksubtree EBoolAndNT));
       (INL EEqNT,
@@ -372,39 +372,39 @@ let pancake_peg_def = cake_def
                        mknt EOrNT]);
       (INL EOrNT,
        panPEG_seql [mknt EXorNT;
-                    rpt (panPEG_seql [keep_tok OrT; mknt EXorNT] I)
+                    peg_rpt (panPEG_seql [keep_tok OrT; mknt EXorNT] I)
                         FLAT]
                    (mksubtree EOrNT));
       (INL EXorNT,
        panPEG_seql [mknt EAndNT;
-                    rpt (panPEG_seql [keep_tok XorT; mknt EAndNT] I)
+                    peg_rpt (panPEG_seql [keep_tok XorT; mknt EAndNT] I)
                         FLAT]
                    (mksubtree EXorNT));
       (INL EAndNT,
        panPEG_seql [mknt EShiftNT;
-                    rpt (panPEG_seql [keep_tok panLexer_AndT; mknt EShiftNT] I)
+                    peg_rpt (panPEG_seql [keep_tok panLexer_AndT; mknt EShiftNT] I)
                         FLAT]
                    (mksubtree EAndNT));
       (INL EShiftNT,
        panPEG_seql [mknt EAddNT;
-                    rpt (panPEG_seql [mknt ShiftOpsNT; mknt EAddNT] I)
+                    peg_rpt (panPEG_seql [mknt ShiftOpsNT; mknt EAddNT] I)
                         FLAT]
                    (mksubtree EShiftNT));
       (INL EAddNT,
        panPEG_seql [mknt EMulNT;
-                    rpt (panPEG_seql [mknt AddOpsNT; mknt EMulNT] I)
+                    peg_rpt (panPEG_seql [mknt AddOpsNT; mknt EMulNT] I)
                         FLAT]
                    (mksubtree EAddNT));
       (INL EMulNT,
        panPEG_seql [mknt ENotNT;
-                    rpt (panPEG_seql [mknt MulOpsNT; mknt ENotNT] I) FLAT]
+                    peg_rpt (panPEG_seql [mknt MulOpsNT; mknt ENotNT] I) FLAT]
                    (mksubtree EMulNT));
       (INL ENotNT,
        panPEG_seql [panPEG_try (keep_tok NotT); mknt EFieldNT]
                    (mksubtree ENotNT));
       (INL EFieldNT,
        panPEG_seql [mknt EBaseNT;
-                    rpt (panPEG_seql [consume_tok DotT;
+                    peg_rpt (panPEG_seql [consume_tok DotT;
                                       panPEG_choicel [keep_nat; keep_ident]
                                      ] I)
                         FLAT]
@@ -428,7 +428,7 @@ let pancake_peg_def = cake_def
                    (mksubtree NmdStructNT));
       (INL NmdFieldListNT,
        panPEG_seql [mknt NmdFieldNT;
-                    rpt (panPEG_seql [consume_tok panLexer_CommaT;
+                    peg_rpt (panPEG_seql [consume_tok panLexer_CommaT;
                                       mknt NmdFieldNT] I)
                         FLAT]
                    (mksubtree NmdFieldListNT));
@@ -452,7 +452,7 @@ let pancake_peg_def = cake_def
                       ]);
       (INL ShapeCombNT,
        panPEG_seql [mknt ShapeNT;
-                    rpt (seq (consume_tok panLexer_CommaT)
+                    peg_rpt (peg_seq (consume_tok panLexer_CommaT)
                              (mknt ShapeNT) (flip K)) FLAT]
                    (mksubtree ShapeCombNT));
       (INL EqOpsNT, panPEG_choicel [keep_tok EqT; keep_tok NeqT]);
@@ -527,17 +527,9 @@ let PPARSEAUX_NT_EQ_CONV tm =
 let PPARSEAUX_INL_EQ_CONV =
   REWR_CONV(CONJUNCT1(injectivity "sum")) THENC PPARSEAUX_NT_EQ_CONV;;
 
-let PPARSEAUX_FUL_CONS = prove
- (`!(f:(A,B)fmap) h t. f |++ CONS h t = FUPDATE f h |++ t`,
-  REWRITE_TAC[FUPDATE_LIST_THM]);;
-
-let PPARSEAUX_FUL_NIL = prove
- (`!(f:(A,B)fmap). f |++ [] = f`,
-  REWRITE_TAC[FUPDATE_LIST_THM]);;
-
 let rec PPARSEAUX_FUPDATE_LIST_CONV tm =
-  ((REWR_CONV PPARSEAUX_FUL_CONS THENC PPARSEAUX_FUPDATE_LIST_CONV) ORELSEC
-   REWR_CONV PPARSEAUX_FUL_NIL) tm;;
+  ((REWR_CONV FMAPAUX_FUL_CONS THENC PPARSEAUX_FUPDATE_LIST_CONV) ORELSEC
+   REWR_CONV FMAPAUX_FUL_NIL) tm;;
 
 (* peg_rules pancake_peg = FEMPTY |+ (INL TopDecListNT,..) |+ ... *)
 
@@ -630,13 +622,13 @@ let pancake_exec_thm =
 
 let parse_statement_def = cake_def
   `parse_statement s =
-     match peg_exec pancake_peg (mknt ProgNT) s [] NONE [] done failed with
+     match peg_exec pancake_peg (mknt ProgNT) s [] NONE [] pegexec_done failed with
        Result (peg_Success [] [e] _) -> SOME e
      | _ -> NONE`;;
 
 let panPEG_parse_def = cake_def
   `panPEG_parse s =
-     match peg_exec pancake_peg (mknt TopDecListNT) s [] NONE [] done failed with
+     match peg_exec pancake_peg (mknt TopDecListNT) s [] NONE [] pegexec_done failed with
        Result (peg_Success [] [e] _) -> INL e
      | Result (peg_Success toks _ _) ->
          INR [(implode "Parser could not consume all tokens",unknown_loc)]
@@ -653,99 +645,9 @@ let panPEG_frange_image = prove
  (`!fm:(A,B)fmap. FRANGE fm = IMAGE (FAPPLY fm) (FDOM fm)`,
   REWRITE_TAC[FRANGE_DEF; EXTENSION; IN_ELIM_THM; IN_IMAGE] THEN MESON_TAC[]);;
 
-(* ------------------------------------------------------------------------- *)
-(* The cases of peg0, peggt0, pegfail and wfpeg for each kind of expression  *)
-(* (HOL4 builds them as the ML values peg0_rwts, wfpeg_rwts, pegnt_case_ths  *)
-(* and wfpeg_mknt from peg0_cases and wfpeg_cases).                          *)
-(* ------------------------------------------------------------------------- *)
-
-let PPARSEAUX_CASES_TAC (cth:thm) : tactic =
-  REPEAT GEN_TAC THEN REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
-  GEN_REWRITE_TAC LAND_CONV [cth] THEN
-  REWRITE_TAC[pegsym_distinct; pegsym_inject] THEN
-  REWRITE_TAC[RIGHT_EXISTS_AND_THM; LEFT_EXISTS_AND_THM; UNWIND_THM1;
-              UNWIND_THM2; GSYM CONJ_ASSOC; EXISTS_REFL] THEN
-  MESON_TAC[];;
-
-let PPARSEAUX_peg0_clauses = prove
- (`!G:(A,B,C,E)peg.
-     (!c. peg0 G (empty c) <=> T) /\
-     (!f. peg0 G (any f) <=> F) /\
-     (!t f. peg0 G (tok t f) <=> F) /\
-     (!e. peg0 G (error e) <=> F) /\
-     (!e c. peg0 G (not e c) <=> pegfail G e) /\
-     (!e f. peg0 G (rpt e f) <=> pegfail G e) /\
-     (!e1 e2 f. peg0 G (seq e1 e2 f) <=> peg0 G e1 /\ peg0 G e2) /\
-     (!e1 e2 f. peg0 G (choice e1 e2 f) <=>
-                peg0 G e1 \/ pegfail G e1 /\ peg0 G e2)`,
-  PPARSEAUX_CASES_TAC peg0_cases);;
-
-let PPARSEAUX_peggt0_clauses = prove
- (`!G:(A,B,C,E)peg.
-     (!c. peggt0 G (empty c) <=> F) /\
-     (!f. peggt0 G (any f) <=> T) /\
-     (!t f. peggt0 G (tok t f) <=> T) /\
-     (!e. peggt0 G (error e) <=> F) /\
-     (!e c. peggt0 G (not e c) <=> F) /\
-     (!e f. peggt0 G (rpt e f) <=> peggt0 G e) /\
-     (!e1 e2 f. peggt0 G (seq e1 e2 f) <=>
-                peggt0 G e1 /\ (peg0 G e2 \/ peggt0 G e2) \/
-                (peg0 G e1 \/ peggt0 G e1) /\ peggt0 G e2) /\
-     (!e1 e2 f. peggt0 G (choice e1 e2 f) <=>
-                peggt0 G e1 \/ pegfail G e1 /\ peggt0 G e2)`,
-  PPARSEAUX_CASES_TAC peg0_cases);;
-
-let PPARSEAUX_pegfail_clauses = prove
- (`!G:(A,B,C,E)peg.
-     (!c. pegfail G (empty c) <=> F) /\
-     (!f. pegfail G (any f) <=> T) /\
-     (!t f. pegfail G (tok t f) <=> T) /\
-     (!e. pegfail G (error e) <=> T) /\
-     (!e c. pegfail G (not e c) <=> peg0 G e \/ peggt0 G e) /\
-     (!e f. pegfail G (rpt e f) <=> F) /\
-     (!e1 e2 f. pegfail G (seq e1 e2 f) <=>
-                pegfail G e1 \/ peg0 G e1 /\ pegfail G e2 \/
-                peggt0 G e1 /\ pegfail G e2) /\
-     (!e1 e2 f. pegfail G (choice e1 e2 f) <=> pegfail G e1 /\ pegfail G e2)`,
-  PPARSEAUX_CASES_TAC peg0_cases);;
-
-let PPARSEAUX_peg0_nt_clauses = prove
- (`!G:(A,B,C,E)peg.
-     (!n f. peg0 G (nt n f) <=>
-            n IN FDOM (peg_rules G) /\ peg0 G (FAPPLY (peg_rules G) n)) /\
-     (!n f. peggt0 G (nt n f) <=>
-            n IN FDOM (peg_rules G) /\ peggt0 G (FAPPLY (peg_rules G) n)) /\
-     (!n f. pegfail G (nt n f) <=>
-            n IN FDOM (peg_rules G) /\ pegfail G (FAPPLY (peg_rules G) n))`,
-  PPARSEAUX_CASES_TAC peg0_cases);;
-
-let PPARSEAUX_wfpeg_clauses = prove
- (`!G:(A,B,C,E)peg.
-     (!c. wfpeg G (empty c) <=> T) /\
-     (!f. wfpeg G (any f) <=> T) /\
-     (!t f. wfpeg G (tok t f) <=> T) /\
-     (!e. wfpeg G (error e) <=> T) /\
-     (!e c. wfpeg G (not e c) <=> wfpeg G e) /\
-     (!e f. wfpeg G (rpt e f) <=> wfpeg G e /\ ~peg0 G e) /\
-     (!e1 e2 f. wfpeg G (seq e1 e2 f) <=>
-                wfpeg G e1 /\ (peg0 G e1 ==> wfpeg G e2)) /\
-     (!e1 e2 f. wfpeg G (choice e1 e2 f) <=> wfpeg G e1 /\ wfpeg G e2)`,
-  GEN_TAC THEN REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
-  GEN_REWRITE_TAC LAND_CONV [wfpeg_cases] THEN
-  REWRITE_TAC[pegsym_distinct; pegsym_inject] THEN
-  REWRITE_TAC[RIGHT_EXISTS_AND_THM; LEFT_EXISTS_AND_THM; UNWIND_THM1;
-              UNWIND_THM2; GSYM CONJ_ASSOC; EXISTS_REFL] THEN
-  MESON_TAC[]);;
-
-let PPARSEAUX_wfpeg_nt = prove
- (`!(G:(A,B,C,E)peg) n f.
-     wfpeg G (nt n f) <=>
-     n IN FDOM (peg_rules G) /\ wfpeg G (FAPPLY (peg_rules G) n)`,
-  REPEAT GEN_TAC THEN GEN_REWRITE_TAC LAND_CONV [wfpeg_cases] THEN
-  REWRITE_TAC[pegsym_distinct; pegsym_inject] THEN
-  REWRITE_TAC[RIGHT_EXISTS_AND_THM; LEFT_EXISTS_AND_THM; UNWIND_THM1;
-              UNWIND_THM2; GSYM CONJ_ASSOC; EXISTS_REFL] THEN
-  MESON_TAC[]);;
+(* HOL4's ML values peg0_rwts, wfpeg_rwts and pegnt_case_ths (the cases of   *)
+(* peg0, peggt0, pegfail and wfpeg for each kind of expression) are the     *)
+(* clause theorems LPARSEAUX_peg0_clauses, ... of hol4/peg.ml.              *)
 
 (* ------------------------------------------------------------------------- *)
 (* peg0 of the derived forms (HOL4 [simp]).                                  *)
@@ -753,7 +655,7 @@ let PPARSEAUX_wfpeg_nt = prove
 
 let panPEG_peg0_pegf = prove
  (`!(G:(A,B,(C)list,E)peg) s f. peg0 G (panPEG_pegf s f) <=> peg0 G s`,
-  REWRITE_TAC[panPEG_pegf_def; PPARSEAUX_peg0_clauses]);;
+  REWRITE_TAC[panPEG_pegf_def; LPARSEAUX_peg0_clauses]);;
 let _ = cake_add_simps [panPEG_peg0_pegf];;
 
 let panPEG_peg0_seql = prove
@@ -762,17 +664,17 @@ let panPEG_peg0_seql = prove
      (peg0 G (panPEG_seql (CONS h t) f) <=>
       peg0 G h /\ peg0 G (panPEG_seql t I))`,
   REWRITE_TAC[panPEG_seql_def; panPEG_pegf_def; ITLIST;
-              PPARSEAUX_peg0_clauses]);;
+              LPARSEAUX_peg0_clauses]);;
 let _ = cake_add_simps [panPEG_peg0_seql];;
 
 let peg0_keep_tok = prove
  (`!(G:(A,B,((A,D,locs)parsetree)list,E)peg) t. peg0 G (keep_tok t) <=> F`,
-  REWRITE_TAC[keep_tok_def; PPARSEAUX_peg0_clauses]);;
+  REWRITE_TAC[keep_tok_def; LPARSEAUX_peg0_clauses]);;
 let _ = cake_add_simps [peg0_keep_tok];;
 
 let peg0_consume_tok = prove
  (`!(G:(A,B,(C)list,E)peg) t. peg0 G (consume_tok t) <=> F`,
-  REWRITE_TAC[consume_tok_def; PPARSEAUX_peg0_clauses]);;
+  REWRITE_TAC[consume_tok_def; LPARSEAUX_peg0_clauses]);;
 let _ = cake_add_simps [peg0_consume_tok];;
 
 let peg0_keep_kw = prove
@@ -789,7 +691,7 @@ let _ = cake_add_simps [peg0_consume_kw];;
 let peg0_keep_int = prove
  (`!(G:(panLexer_token,B,((panLexer_token,D,locs)parsetree)list,E)peg).
      peg0 G keep_int <=> F`,
-  REWRITE_TAC[keep_int_def; PPARSEAUX_peg0_clauses]);;
+  REWRITE_TAC[keep_int_def; LPARSEAUX_peg0_clauses]);;
 let _ = cake_add_simps [peg0_keep_int];;
 
 (* HOL4 states peg0_keep_nat about keep_int (the same statement as          *)
@@ -805,13 +707,13 @@ let _ = cake_add_simps [peg0_keep_nat];;
 let peg0_keep_ident = prove
  (`!(G:(panLexer_token,B,((panLexer_token,D,locs)parsetree)list,E)peg).
      peg0 G keep_ident <=> F`,
-  REWRITE_TAC[keep_ident_def; PPARSEAUX_peg0_clauses]);;
+  REWRITE_TAC[keep_ident_def; LPARSEAUX_peg0_clauses]);;
 let _ = cake_add_simps [peg0_keep_ident];;
 
 let peg0_keep_ffi_ident = prove
  (`!(G:(panLexer_token,B,((panLexer_token,D,locs)parsetree)list,E)peg).
      peg0 G keep_ffi_ident <=> F`,
-  REWRITE_TAC[keep_ffi_ident_def; PPARSEAUX_peg0_clauses]);;
+  REWRITE_TAC[keep_ffi_ident_def; LPARSEAUX_peg0_clauses]);;
 let _ = cake_add_simps [peg0_keep_ffi_ident];;
 
 let panPEG_peg0_choicel = prove
@@ -819,8 +721,8 @@ let panPEG_peg0_choicel = prove
      (peg0 G (panPEG_choicel []) <=> F) /\
      (peg0 G (panPEG_choicel (CONS h t)) <=>
       peg0 G h \/ pegfail G h /\ peg0 G (panPEG_choicel t))`,
-  REWRITE_TAC[panPEG_choicel_def; PPARSEAUX_peg0_clauses;
-              PPARSEAUX_pegfail_clauses]);;
+  REWRITE_TAC[panPEG_choicel_def; LPARSEAUX_peg0_clauses;
+              LPARSEAUX_pegfail_clauses]);;
 let _ = cake_add_simps [panPEG_peg0_choicel];;
 
 (* ------------------------------------------------------------------------- *)
@@ -836,13 +738,13 @@ let PPARSEAUX_peg0_mknt = prove
  (`!(G:(A,pancakeNT,C,E)peg) n.
      peg0 G (mknt n) <=>
      INL n IN FDOM (peg_rules G) /\ peg0 G (FAPPLY (peg_rules G) (INL n))`,
-  REWRITE_TAC[mknt_def; PPARSEAUX_peg0_nt_clauses]);;
+  REWRITE_TAC[mknt_def; LPARSEAUX_peg0_nt_clauses]);;
 
 let PPARSEAUX_wfpeg_mknt = prove
  (`!(G:(A,pancakeNT,C,E)peg) n.
      wfpeg G (mknt n) <=>
      INL n IN FDOM (peg_rules G) /\ wfpeg G (FAPPLY (peg_rules G) (INL n))`,
-  REWRITE_TAC[mknt_def; PPARSEAUX_wfpeg_nt]);;
+  REWRITE_TAC[mknt_def; LPARSEAUX_wfpeg_nt]);;
 
 (* the derived forms and named expressions, unfolded (mknt is kept) *)
 
@@ -853,8 +755,8 @@ let PPARSEAUX_PEG_DEFS =
    keep_annot_def; keep_ffi_ident_def; keep_int_def; keep_nat_def];;
 
 let PPARSEAUX_PEG0_RWTS =
-  [PPARSEAUX_peg0_clauses; PPARSEAUX_peggt0_clauses;
-   PPARSEAUX_pegfail_clauses];;
+  [LPARSEAUX_peg0_clauses; LPARSEAUX_peggt0_clauses;
+   LPARSEAUX_pegfail_clauses];;
 
 (* for the grammar G1 = pancake_peg with start := mknt FunNT: its rules are *)
 (* those of pancake_peg                                                     *)
@@ -1066,7 +968,7 @@ let PPARSEAUX_WFNT (k:int) (c:term) =
     GEN_REWRITE_TAC I [PPARSEAUX_wfpeg_mknt] THEN
     CONV_TAC(LAND_CONV inconv) THEN
     REWRITE_TAC[rule c] THEN
-    REWRITE_TAC(PPARSEAUX_PEG_DEFS @ [PPARSEAUX_wfpeg_clauses] @
+    REWRITE_TAC(PPARSEAUX_PEG_DEFS @ [LPARSEAUX_wfpeg_clauses] @
                 PPARSEAUX_PEG0_RWTS @ !npeg0 @ !acc)) in
   acc := th :: !acc; th;;
 
@@ -1118,52 +1020,17 @@ let PPARSEAUX_peg_start = prove
 (* expression (for the proof of PEG_wellformed; HOL4 simplifies with        *)
 (* subexprs_def, DISJ_IMP_THM and FORALL_AND_THM)                           *)
 
-let PPARSEAUX_ALLWF = prove
- (`!(G:(A,B,C,E)peg) c f1 t f2 err s f e e1 e2 f3 f4 f5.
-     ((!x. x IN subexprs (empty c) ==> wfpeg G x) <=> T) /\
-     ((!x. x IN subexprs (any f1) ==> wfpeg G x) <=> T) /\
-     ((!x. x IN subexprs (tok t f2) ==> wfpeg G x) <=> T) /\
-     ((!x. x IN subexprs (error err) ==> wfpeg G x) <=> T) /\
-     ((!x. x IN subexprs (nt s f) ==> wfpeg G x) <=> wfpeg G (nt s f)) /\
-     ((!x. x IN subexprs (not e c) ==> wfpeg G x) <=>
-      (!x. x IN subexprs e ==> wfpeg G x)) /\
-     ((!x. x IN subexprs (seq e1 e2 f3) ==> wfpeg G x) <=>
-      (!x. x IN subexprs e1 ==> wfpeg G x) /\
-      (!x. x IN subexprs e2 ==> wfpeg G x)) /\
-     ((!x. x IN subexprs (choice e1 e2 f4) ==> wfpeg G x) <=>
-      (!x. x IN subexprs e1 ==> wfpeg G x) /\
-      (!x. x IN subexprs e2 ==> wfpeg G x)) /\
-     ((!x. x IN subexprs (rpt e f5) ==> wfpeg G x) <=>
-      (!x. x IN subexprs e ==> wfpeg G x) /\ ~peg0 G e)`,
-  REPEAT GEN_TAC THEN
-  REWRITE_TAC[subexprs_def; IN_INSERT; IN_UNION; NOT_IN_EMPTY] THEN
-  REWRITE_TAC[TAUT `(a \/ b ==> c) <=> (a ==> c) /\ (b ==> c)`;
-              FORALL_AND_THM; FORALL_UNWIND_THM2] THEN
-  REWRITE_TAC[PPARSEAUX_wfpeg_clauses] THEN
-  MESON_TAC[subexprs_included]);;
-
 let PPARSEAUX_ALLWF_mknt = prove
  (`!(G:(A,pancakeNT,C,E)peg) n.
      (!x. x IN subexprs (mknt n) ==> wfpeg G x) <=> wfpeg G (mknt n)`,
   REWRITE_TAC[subexprs_mknt; IN_SING; FORALL_UNWIND_THM2]);;
 
-let PPARSEAUX_FORALL_GEXPRS = prove
- (`!(G:(A,B,C,E)peg) P.
-     (!e. e IN Gexprs G ==> P e) <=>
-     (!e. e IN subexprs (peg_start G) ==> P e) /\
-     (!n. n IN FDOM (peg_rules G) ==>
-          !e. e IN subexprs (FAPPLY (peg_rules G) n) ==> P e)`,
-  REWRITE_TAC[peg_Gexprs_def; IN_UNIONS; IN_IMAGE; IN_INSERT; FRANGE_DEF;
-              IN_ELIM_THM] THEN
-  MESON_TAC[]);;
-
 let panPEG_PEG_wellformed = prove
  (`wfG pancake_peg`,
-  REWRITE_TAC[wfG_def; PPARSEAUX_FORALL_GEXPRS; PPARSEAUX_peg_start;
+  REWRITE_TAC[wfG_def; LPARSEAUX_FORALL_GEXPRS; PPARSEAUX_peg_start;
               FDOM_pancake_peg; FORALL_IN_INSERT; NOT_IN_EMPTY] THEN
   REWRITE_TAC[pancake_peg_applied] THEN
-  REWRITE_TAC(PPARSEAUX_PEG_DEFS @ [PPARSEAUX_ALLWF; PPARSEAUX_ALLWF_mknt] @
+  REWRITE_TAC(PPARSEAUX_PEG_DEFS @ [LPARSEAUX_ALLWF; PPARSEAUX_ALLWF_mknt] @
               CONJUNCTS pancake_wfpeg_thm @ PPARSEAUX_PEG0_RWTS @
               !(let _,_,_,a = el 0 PPARSEAUX_GRAMMARS in a)));;
 let _ = cake_add_simps [panPEG_PEG_wellformed];;
-

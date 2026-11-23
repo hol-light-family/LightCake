@@ -18,7 +18,7 @@ type_invention_error := true;;
 (* quote, 92 the backslash); string ++ is APPEND; toString is toString on   *)
 (* int and num_to_str on num; concat is mlstring_concat; EVERY is ALL.      *)
 (* The local HOL4 overload ++ = misc$Append is written misc_Append, and     *)
-(* misc$List is misc_List.  Names (notes/naming/names.tsv): the             *)
+(* misc$List is misc_List.  Names (doc/names.tsv): the                      *)
 (* constructors String, Int and Bool are jsonLang_String, jsonLang_Int and  *)
 (* jsonLang_Bool.                                                            *)
 
@@ -72,7 +72,7 @@ let encode_str_def = cake_def
 (* obs.                                                                      *)
 
 let json_to_mlstring_def = CONV_RULE (ONCE_DEPTH_CONV ETA_CONV) (cake_def_wf
-  `measure (\x:obj + (mlstring#obj).
+  `MEASURE (\x:obj + (mlstring#obj).
               sum_CASE x (\ob. obj_size ob)
                          (\p. pair_size mlstring_size obj_size p))`
   TERM_TAC

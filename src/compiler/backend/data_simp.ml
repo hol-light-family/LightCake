@@ -13,6 +13,8 @@
 (* Notes on the rendering: simp (a catch-all clause completed into one       *)
 (* clause per remaining constructor, as HOL4's TFL does) is defined with     *)
 (* sem1aux_def (semantics/sem1aux_tfl.ml).                                   *)
+(* HOL4 simp is data_simp_simp (a short or common word), with the theorems   *)
+(* renamed alike (simp_def is data_simp_simp_def, ...).                      *)
 (* ========================================================================= *)
 
 needs "misc/misc.ml";;
@@ -24,15 +26,15 @@ type_invention_error := true;;
 let pSeq_def = cake_def
   `pSeq c1 c2 = if c2 = data_Skip then c1 else data_Seq c1 c2`;;
 
-let simp_def = sem1aux_def (list_mk_conj
-  [`(simp:data_prog->data_prog->data_prog) data_Skip c = c`;
-   `(simp:data_prog->data_prog->data_prog) (data_Return n) c = data_Return n`;
-   `(simp:data_prog->data_prog->data_prog) (data_Raise n) c = data_Raise n`;
-   `(simp:data_prog->data_prog->data_prog) (data_Seq c1 c2) c = simp c1 (simp c2 c)`;
-   `(simp:data_prog->data_prog->data_prog) (data_If n c2 c3) c =
-      pSeq (data_If n (simp c2 data_Skip) (simp c3 data_Skip)) c`;
-   `(simp:data_prog->data_prog->data_prog) (data_Call ret dest args (SOME (v,handler))) c =
-      pSeq (data_Call ret dest args (SOME (v,simp handler data_Skip))) c`;
-   `(simp:data_prog->data_prog->data_prog) c1 c2 = pSeq c1 c2`]);;
+let data_simp_simp_def = sem1aux_def (list_mk_conj
+  [`(data_simp_simp:data_prog->data_prog->data_prog) data_Skip c = c`;
+   `(data_simp_simp:data_prog->data_prog->data_prog) (data_Return n) c = data_Return n`;
+   `(data_simp_simp:data_prog->data_prog->data_prog) (data_Raise n) c = data_Raise n`;
+   `(data_simp_simp:data_prog->data_prog->data_prog) (data_Seq c1 c2) c = data_simp_simp c1 (data_simp_simp c2 c)`;
+   `(data_simp_simp:data_prog->data_prog->data_prog) (data_If n c2 c3) c =
+      pSeq (data_If n (data_simp_simp c2 data_Skip) (data_simp_simp c3 data_Skip)) c`;
+   `(data_simp_simp:data_prog->data_prog->data_prog) (data_Call ret dest args (SOME (v,handler))) c =
+      pSeq (data_Call ret dest args (SOME (v,data_simp_simp handler data_Skip))) c`;
+   `(data_simp_simp:data_prog->data_prog->data_prog) c1 c2 = pSeq c1 c2`]);;
 
-let simp_ind = cake_ind "simp";;
+let data_simp_simp_ind = cake_ind "data_simp_simp";;

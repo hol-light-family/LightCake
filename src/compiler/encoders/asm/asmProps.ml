@@ -98,7 +98,7 @@ let interference_ok_def = cake_def
 (* HOL4 exports arithmetic.ZERO_LT_EXP as a termination simp for all_pcs *)
 
 let all_pcs_def = cake_def_wf
-  `measure (\(n:num,a:A word,k:num). n)`
+  `MEASURE (\(n:num,a:A word,k:num). n)`
   (REWRITE_TAC[measure_THM] THEN REPEAT STRIP_TAC THEN
    MP_TAC(SPECL [`2`; `k:num`] EXP_EQ_0) THEN ARITH_TAC)
   `(all_pcs 0 (a:A word) k = {}) /\
@@ -321,15 +321,15 @@ let upd_pc_simps = prove
 let _ = cake_add_simps [upd_pc_simps];;
 
 let asm_failed_ignore_new_pc = prove
- (`!i (v:A word) w s. asm_state_failed (asm i w s) <=> asm_state_failed (asm i v s)`,
+ (`!i (v:A word) w s. asm_state_failed (asm_asm i w s) <=> asm_state_failed (asm_asm i v s)`,
   GEN_TAC THEN CASES_ON `i:(A)asm` THEN
-  FS[asm_def; asm_upd_pc_def; jump_to_offset_def; asm_upd_reg_def] THEN
+  FS[asm_asm_def; asm_upd_pc_def; jump_to_offset_def; asm_upd_reg_def] THEN
   RW[] THEN FS[]);;
 
 let asm_mem_ignore_new_pc = prove
- (`!i (v:A word) w s. asm_state_mem (asm i w s) = asm_state_mem (asm i v s)`,
+ (`!i (v:A word) w s. asm_state_mem (asm_asm i w s) = asm_state_mem (asm_asm i v s)`,
   GEN_TAC THEN CASES_ON `i:(A)asm` THEN
-  FS[asm_def; asm_upd_pc_def; jump_to_offset_def; asm_upd_reg_def] THEN
+  FS[asm_asm_def; asm_upd_pc_def; jump_to_offset_def; asm_upd_reg_def] THEN
   RW[] THEN FS[]);;
 
 (* HOL4 [local] *)
@@ -435,12 +435,12 @@ let ASMAUX_inst_consts = prove
 
 let asm_consts = prove
  (`!i (w:A word) s.
-     (asm_state_be (asm i w s) <=> asm_state_be s) /\
-     asm_state_lr (asm i w s) = asm_state_lr s /\
-     asm_state_align (asm i w s) = asm_state_align s /\
-     asm_state_mem_domain (asm i w s) = asm_state_mem_domain s`,
+     (asm_state_be (asm_asm i w s) <=> asm_state_be s) /\
+     asm_state_lr (asm_asm i w s) = asm_state_lr s /\
+     asm_state_align (asm_asm i w s) = asm_state_align s /\
+     asm_state_mem_domain (asm_asm i w s) = asm_state_mem_domain s`,
   REPEAT GEN_TAC THEN CASES_ON `i:(A)asm` THEN
-  SIMP[asm_def; jump_to_offset_def; asm_upd_reg_def; asm_assert_def; LET_DEF;
+  SIMP[asm_asm_def; jump_to_offset_def; asm_upd_reg_def; asm_assert_def; LET_DEF;
        LET_END_DEF; ASMAUX_inst_consts] THEN
   RW[] THEN SIMP[]);;
 let _ = cake_add_simps [asm_consts];;
@@ -503,10 +503,10 @@ let inst_outside_mem_domain = prove
 
 let asm_outside_mem_domain = prove
  (`!i p (s:(A)asm_state) x.
-     ~(x IN asm_state_mem_domain s) /\ ~asm_state_failed (asm i p s)
-     ==> asm_state_mem (asm i p s) x = asm_state_mem s x`,
+     ~(x IN asm_state_mem_domain s) /\ ~asm_state_failed (asm_asm i p s)
+     ==> asm_state_mem (asm_asm i p s) x = asm_state_mem s x`,
   REPEAT GEN_TAC THEN CASES_ON `i:(A)asm` THEN
-  SIMP[asm_def; jump_to_offset_def; asm_upd_reg_def; asm_assert_def; LET_DEF;
+  SIMP[asm_asm_def; jump_to_offset_def; asm_upd_reg_def; asm_assert_def; LET_DEF;
        LET_END_DEF; inst_outside_mem_domain] THEN
   RW[] THEN SIMP[]);;
 

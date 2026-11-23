@@ -3,6 +3,9 @@
 (* lines 3036-4478 of the script (SUM_COUNT_LIST .. TotOrd_pair_cmp).       *)
 (* Miscellaneous definitions and minor lemmas used throughout the           *)
 (* development (lists, options, finite maps, words, sptrees, bytes).        *)
+(* HOL4 steps and range are misc_steps and misc_range (short or common       *)
+(* words), with the theorems renamed alike (steps_def is misc_steps_def,     *)
+(* ...).                                                                     *)
 (* ========================================================================= *)
 
 needs "hol4/vocab.ml";;
@@ -51,9 +54,9 @@ let OPTION_MAP_INJ = prove
 let the_OPTION_MAP = prove
  (`!(f:A->A) d opt.
      f d = d ==>
-     the d (OPTION_MAP f opt) = f (the d opt)`,
+     misc_the d (OPTION_MAP f opt) = f (misc_the d opt)`,
   REPEAT STRIP_TAC THEN CASES_ON `opt:A option` THEN
-  ASM_REWRITE_TAC[OPTION_MAP_DEF; the_def]);;
+  ASM_REWRITE_TAC[OPTION_MAP_DEF; misc_the_def]);;
 
 let TAKE_FLAT_REPLICATE_LEQ = prove
  (`!j k (ls:A list) len.
@@ -161,14 +164,14 @@ let TAKE_DROP_SUBLIST = prove
 
 (* helpers for the termination of Lnext *)
 let MISC3AUX_eventually_ITER = prove
- (`!P (ll:A llist). eventually P ll ==> ?n. P (ITER n (\l. THE (LTL l)) ll)`,
-  GEN_TAC THEN MATCH_MP_TAC eventually_ind THEN CONJ_TAC THENL
+ (`!P (ll:A llist). llist_eventually P ll ==> ?n. P (ITER n (\l. THE (LTL l)) ll)`,
+  GEN_TAC THEN MATCH_MP_TAC llist_eventually_ind THEN CONJ_TAC THENL
    [REPEAT STRIP_TAC THEN EXISTS_TAC `0` THEN ASM_REWRITE_TAC[ITER_ALT];
     REPEAT STRIP_TAC THEN EXISTS_TAC `SUC n` THEN
     ASM_REWRITE_TAC[ITER_ALT; LTL_THM; THE_DEF]]);;
 
 let MISC3AUX_Lnext_TC = prove
- (`!P (ll:A llist). eventually P ll /\ ~P ll ==>
+ (`!P (ll:A llist). llist_eventually P ll /\ ~P ll ==>
      (minimal n. P (ITER n (\l. THE (LTL l)) (THE (LTL ll)))) <
      (minimal n. P (ITER n (\l. THE (LTL l)) ll))`,
   REPEAT STRIP_TAC THEN
@@ -190,11 +193,11 @@ let MISC3AUX_Lnext_TC = prove
 (* HOL4 Termination: a relation shown well founded by eventually_ind; here
    the measure of the distance to the next position where P holds *)
 let misc_Lnext_def = cake_def_wf
- `measure (\p:(A llist->bool)#(A llist).
+ `MEASURE (\p:(A llist->bool)#(A llist).
              minimal n. FST p (ITER n (\l. THE (LTL l)) (SND p)))`
  (REWRITE_TAC(FST::SND::WF_REL_THMS) THEN REPEAT STRIP_TAC THEN
   MATCH_MP_TAC MISC3AUX_Lnext_TC THEN ASM_REWRITE_TAC[])
- `Lnext P (ll:A llist) = if eventually P ll then
+ `Lnext P (ll:A llist) = if llist_eventually P ll then
                            if P ll then 0
                            else SUC (Lnext P (THE (LTL ll)))
                          else ARB`;;
@@ -449,7 +452,7 @@ let BAG_ALL_DISTINCT_FOLDR_BAG_UNION = prove
 (* N.B.: there is a different is_subsequence defined in lcsTheory; these
    should be merged *)
 let is_subseq_def = cake_def_wf
- `measure (\p:(A list)#(A list). LENGTH (FST p))`
+ `MEASURE (\p:(A list)#(A list). LENGTH (FST p))`
  (REPEAT STRIP_TAC THEN REWRITE_TAC[measure_THM; FST; SND; LENGTH] THEN
   ARITH_TAC)
  `(is_subseq (ls:A list) [] <=> T) /\
@@ -682,18 +685,18 @@ let toPath_fromList = prove
  (`(toPath ((x:A), llist_fromList ([]:(B#A)list)) = stopped_at x) /\
    (toPath (x, llist_fromList (CONS ((y:B),(z:A)) t)) =
     pcons x y (toPath (z, llist_fromList t)))`,
-  REWRITE_TAC[llist_fromList_def; stopped_at_def; pcons_def; first_def;
+  REWRITE_TAC[llist_fromList_def; stopped_at_def; pcons_def; path_first_def;
               path_rep_bijections_thm]);;
 
-let steps_def = cake_def
- `(steps (f:A->B->A) x [] = []) /\
-  (steps f x (CONS j js) =
+let misc_steps_def = cake_def
+ `(misc_steps (f:A->B->A) x [] = []) /\
+  (misc_steps f x (CONS j js) =
      let y = f x j in
-     let tr = steps f y js in
+     let tr = misc_steps f y js in
        CONS (j,y) tr)`;;
 
 let steps_rel_def = cake_def_wf
- `measure (\p:(A->B->A->bool)#A#((B#A)list). LENGTH (SND (SND p)))`
+ `MEASURE (\p:(A->B->A->bool)#A#((B#A)list). LENGTH (SND (SND p)))`
  (REPEAT STRIP_TAC THEN REWRITE_TAC[measure_THM; FST; SND; LENGTH] THEN
   ARITH_TAC)
  `(steps_rel (R:A->B->A->bool) x [] <=> T) /\
@@ -707,7 +710,7 @@ let steps_rel_okpath = prove
  (`!R (x:A) (tr:(B#A)list).
      steps_rel R x tr <=> okpath R (toPath (x,llist_fromList tr))`,
   MATCH_MP_TAC steps_rel_ind THEN REWRITE_TAC[toPath_fromList] THEN
-  REWRITE_TAC[steps_rel_def; okpath_thm; first_def; path_rep_bijections_thm] THEN
+  REWRITE_TAC[steps_rel_def; okpath_thm; path_first_def; path_rep_bijections_thm] THEN
   SIMP_TAC[]);;
 
 let steps_rel_LRC = prove
@@ -721,10 +724,10 @@ let steps_rel_LRC = prove
   CONJ_TAC THENL [ASM_MESON_TAC[]; ASM_SIMP_TAC[]]);;
 
 let LAST_MAP_SND_steps_FOLDL = prove
- (`!f (x:A) (ls:B list). LAST (CONS x (MAP SND (steps f x ls))) = FOLDL f x ls`,
+ (`!f (x:A) (ls:B list). LAST (CONS x (MAP SND (misc_steps f x ls))) = FOLDL f x ls`,
   GEN_TAC THEN ONCE_REWRITE_TAC[SWAP_FORALL_THM] THEN
   LIST_INDUCT_TAC THEN
-  ASM_REWRITE_TAC[steps_def; MAP; LAST_DEF; FOLDL; LET_DEF; LET_END_DEF;
+  ASM_REWRITE_TAC[misc_steps_def; MAP; LAST_DEF; FOLDL; LET_DEF; LET_END_DEF;
                   NOT_CONS_NIL]);;
 
 let all_words_def = cake_def
@@ -916,7 +919,7 @@ let asm_write_bytearray_EL = prove
 (* HOL4 completes the last clause eq_shape _ _ = F into the 12 clauses
    below it *)
 let eq_shape_def = cake_def_wf
- `measure (\p:(A spt)#(B spt). spt_size (\x:A. 0) (FST p))`
+ `MEASURE (\p:(A spt)#(B spt). spt_size (\x:A. 0) (FST p))`
  TERM_TAC
  `(eq_shape (LN:A spt) (LN:B spt) <=> T) /\
   (eq_shape (LS (a:A)) (LS (b:B)) <=> T) /\
@@ -968,10 +971,10 @@ let spt_eq = prove
   MESON_TAC[]);;
 
 let eq_shape_map = prove
- (`!(t1:A spt) (t2:C spt) (f:A->B). eq_shape (map f t1) t2 <=> eq_shape t1 t2`,
+ (`!(t1:A spt) (t2:C spt) (f:A->B). eq_shape (sptree_map f t1) t2 <=> eq_shape t1 t2`,
   MATCH_MP_TAC spt_INDUCT THEN REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
   TRY DISCH_TAC THEN REPEAT GEN_TAC THEN CASES_ON `t2:C spt` THEN
-  ASM_REWRITE_TAC[eq_shape_def; map_def]);;
+  ASM_REWRITE_TAC[eq_shape_def; sptree_map_def]);;
 
 let eq_shape_IMP_domain = prove
  (`!(t1:A spt) (t2:B spt). eq_shape t1 t2 ==> domain t1 = domain t2`,
@@ -979,7 +982,7 @@ let eq_shape_IMP_domain = prove
   REPEAT STRIP_TAC THEN RES_TAC THEN ASM_REWRITE_TAC[]);;
 
 let copy_shape_def = cake_def_wf
- `measure (\p:(A spt)#(B spt).
+ `MEASURE (\p:(A spt)#(B spt).
      spt_size (\x:A. 0) (FST p) + spt_size (\x:B. 0) (SND p))`
  TERM_TAC
  `(copy_shape (LN:A spt) (LN:B spt) = LN) /\
@@ -1069,7 +1072,7 @@ let lookup_copy_shape = prove
 (* BEGIN TODO: move to sptreeTheory *)
 
 let lookup_zero = prove
- (`!n (t:A spt) x. (lookup n t = SOME x) ==> ~(size t = 0)`,
+ (`!n (t:A spt) x. (lookup n t = SOME x) ==> ~(sptree_size t = 0)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[size_domain] THEN
   SIMP_TAC[CARD_EQ_0; FINITE_domain; GSYM MEMBER_NOT_EMPTY; domain_lookup] THEN
   MESON_TAC[]);;
@@ -1087,12 +1090,12 @@ let subspt_delete = prove
 
 let inter_union_empty = prove
  (`!(a:A spt) b (c:B spt).
-     inter (union a b) c = LN <=> inter a c = LN /\ inter b c = LN`,
+     sptree_inter (sptree_union a b) c = LN <=> sptree_inter a c = LN /\ sptree_inter b c = LN`,
   SIMP_TAC[wf_inter; domain_empty; domain_inter; domain_union] THEN SET_TAC[]);;
 
 let inter_insert_empty = prove
- (`!n (t1:1 spt) (t2:B spt). inter (insert n one t1) t2 = LN ==>
-     ~(n IN domain t2) /\ inter t1 t2 = LN`,
+ (`!n (t1:1 spt) (t2:B spt). sptree_inter (insert n one t1) t2 = LN ==>
+     ~(n IN domain t2) /\ sptree_inter t1 t2 = LN`,
   SIMP_TAC[wf_inter; domain_empty; domain_inter; domain_insert] THEN SET_TAC[]);;
 
 let fromList2_value = prove
@@ -1108,19 +1111,19 @@ let fromList2_value = prove
 
 (* The range is the set of values taken on by an sptree.
    Not sure if these are worth moving. *)
-let range_def = cake_def
- `range (s:A spt) = {v | ?n. lookup n s = SOME v}`;;
+let misc_range_def = cake_def
+ `misc_range (s:A spt) = {v | ?n. lookup n s = SOME v}`;;
 
 let range_delete = prove
- (`range (delete h (v:A spt)) SUBSET range v`,
-  REWRITE_TAC[range_def; lookup_delete; SUBSET; IN_ELIM_THM] THEN
+ (`misc_range (delete h (v:A spt)) SUBSET misc_range v`,
+  REWRITE_TAC[misc_range_def; lookup_delete; SUBSET; IN_ELIM_THM] THEN
   REPEAT STRIP_TAC THEN EXISTS_TAC `n:num` THEN POP_ASSUM MP_TAC THEN
   COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT]);;
 
 let range_insert = prove
  (`~(n IN domain (fml:A spt)) ==>
-   range (insert n l fml) = l INSERT range fml`,
-  REWRITE_TAC[range_def; EXTENSION; lookup_insert; domain_lookup; IN_ELIM_THM;
+   misc_range (insert n l fml) = l INSERT misc_range fml`,
+  REWRITE_TAC[misc_range_def; EXTENSION; lookup_insert; domain_lookup; IN_ELIM_THM;
               IN_INSERT] THEN
   STRIP_TAC THEN X_GEN_TAC `x:A` THEN EQ_TAC THENL
    [DISCH_THEN(X_CHOOSE_THEN `m:num` MP_TAC) THEN COND_CASES_TAC THEN
@@ -1131,13 +1134,13 @@ let range_insert = prove
 
 (* HOL4 names the element C, a constant of HOL Light *)
 let range_insert_2 = prove
- (`(c:A) IN range (insert n l fml) ==> c IN range fml \/ c = l`,
-  REWRITE_TAC[range_def; lookup_insert; IN_ELIM_THM] THEN
+ (`(c:A) IN misc_range (insert n l fml) ==> c IN misc_range fml \/ c = l`,
+  REWRITE_TAC[misc_range_def; lookup_insert; IN_ELIM_THM] THEN
   DISCH_THEN(X_CHOOSE_THEN `m:num` MP_TAC) THEN COND_CASES_TAC THEN
   REWRITE_TAC[option_INJ] THEN MESON_TAC[]);;
 
 let range_insert_SUBSET = prove
- (`range (insert n l (fml:A spt)) SUBSET l INSERT range fml`,
+ (`misc_range (insert n l (fml:A spt)) SUBSET l INSERT misc_range fml`,
   REWRITE_TAC[SUBSET; IN_INSERT] THEN MESON_TAC[range_insert_2]);;
 
 (* END TODO *)
@@ -1368,7 +1371,7 @@ let WORD_LS_IMP = prove
 
 (* TODO: move to HOL *)
 let size_fromAList = prove
- (`!xs:(num#A)list. ALL_DISTINCT (MAP FST xs) ==> size (fromAList xs) = LENGTH xs`,
+ (`!xs:(num#A)list. ALL_DISTINCT (MAP FST xs) ==> sptree_size (fromAList xs) = LENGTH xs`,
   LIST_INDUCT_TAC THEN REWRITE_TAC[fromAList_def; sptree_size_def; LENGTH] THEN
   SPEC_TAC(`h:num#A`,`h:num#A`) THEN REWRITE_TAC[FORALL_PAIR_THM] THEN
   REWRITE_TAC[fromAList_def; MAP; ALL_DISTINCT; size_insert; domain_fromAList;
@@ -1629,3 +1632,18 @@ let TotOrd_pair_cmp = prove
  (`TotOrd (c1:A->A->ordering) /\ TotOrd (c2:B->B->ordering) ==>
    TotOrd (pair_compare c1 c2)`,
   SIMP_TAC[pair_cmp_lexTO; TO_lexTO]);;
+
+(* ------------------------------------------------------------------------- *)
+(* Lemmas used by several later files.                                       *)
+(* ------------------------------------------------------------------------- *)
+
+let MISC3AUX_lookup_alist_insert_EL = prove
+ (`!ks vs (t:A spt) k.
+     ALL_DISTINCT ks /\ LENGTH ks = LENGTH vs /\ k < LENGTH ks
+     ==> lookup (EL k ks) (alist_insert ks vs t) = SOME (EL k vs)`,
+  REPEAT STRIP_TAC THEN ASM_SIMP_TAC[lookup_alist_insert] THEN
+  SUBGOAL_THEN `ALOOKUP (ZIP (ks:num list) (vs:A list)) (EL k ks) = SOME (EL k vs)`
+    SUBST1_TAC THENL
+   [MATCH_MP_TAC ALOOKUP_ALL_DISTINCT_MEM THEN ASM_SIMP_TAC[MAP_FST_ZIP; MEM_ZIP] THEN
+    ASM_MESON_TAC[];
+    REWRITE_TAC[option_CASE]]);;

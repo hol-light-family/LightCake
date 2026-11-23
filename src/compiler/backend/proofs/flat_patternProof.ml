@@ -782,7 +782,7 @@ let max_dec_name_LESS_EVERY = prove
   REWRITE_TAC[CONJ_ACI]);;
 
 let encode_val_def = cake_def_wf
-  `measure flat_v_size`
+  `MEASURE flat_v_size`
   TERM_TAC
   `(encode_val (flat_Litv l) = pattern_semantics_Litv l) /\
    (encode_val (flat_Conv stmp xs) =
@@ -812,7 +812,7 @@ let app_pos_Term_IMP = prove
 let encode_refs_def = cake_def
   `encode_refs (s:(C,FFI)flat_state) =
      FUN_FMAP (\i. encode_val (match EL i (flat_state_refs s) with Refv v -> v))
-       (count (LENGTH (flat_state_refs s)) INTER
+       (pred_set_count (LENGTH (flat_state_refs s)) INTER
         {i | ?v. EL i (flat_state_refs s) = Refv v})`;;
 
 let FLOOKUP_encode_refs = prove
@@ -823,7 +823,7 @@ let FLOOKUP_encode_refs = prove
              Refv v -> SOME (encode_val v)
            | _ -> NONE)
      else NONE`,
-  SIMP[encode_refs_def; FLOOKUP_FUN_FMAP; FINITE_INTER; count_DEF; FINITE_NUMSEG_LT; IN_INTER;
+  SIMP[encode_refs_def; FLOOKUP_FUN_FMAP; FINITE_INTER; pred_set_count_DEF; FINITE_NUMSEG_LT; IN_INTER;
        IN_ELIM_THM] THEN
   EVERY_CASE_TAC THEN FS[]);;
 

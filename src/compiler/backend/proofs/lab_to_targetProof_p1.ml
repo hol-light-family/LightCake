@@ -24,7 +24,7 @@ needs "compiler/backend/proofs/lab_filterProof.ml";;
 prioritize_num();;
 type_invention_error := true;;
 
-(* Notes on the rendering (as in the skeleton of the four parts):          *)
+(* Notes on the rendering (common to the four parts):                      *)
 (* - Records: mc_conf.f is machine_config_f mc_conf, mc.target.f is          *)
 (*   target_f (machine_config_target mc), c.f is asm_config_f c, t.f        *)
 (*   (asm_state) is asm_state_f t, s.f (labSem state) is lab_state_f s,      *)
@@ -204,7 +204,7 @@ let asm_step_nop_def = cake_def
      (match asm_config_link_reg c with NONE -> T | SOME r -> asm_state_lr s1 = r) /\
      (asm_state_be s1 <=> asm_config_big_endian c) /\
      asm_state_align s1 = asm_config_code_alignment c /\
-     asm i (word_add (asm_state_pc s1) (word (LENGTH bytes))) s1 = s2 /\
+     asm_asm i (word_add (asm_state_pc s1) (word (LENGTH bytes))) s1 = s2 /\
      ~asm_state_failed s2 /\
      asm_ok i c`;;
 
@@ -266,7 +266,7 @@ let LTTP1AUX_evaluate_nop_step = prove
   MP_TAC(SPECL [`c:(A,B,C)machine_config`; `s1:(A)asm_state`; `ms1:B`;
                 `io:(FFI)ffi_state`; `asm_Inst asm_Skip:(A)asm`]
          asm_step_IMP_evaluate_step_find_next) THEN
-  ASM_REWRITE_TAC[asm_step_def; asm_def; asmSem_inst_def; asm_ok_def; inst_ok_def] THEN
+  ASM_REWRITE_TAC[asm_step_def; asm_asm_def; asmSem_inst_def; asm_ok_def; inst_ok_def] THEN
   REWRITE_TAC[asm_upd_pc_def] THEN SIMP[]);;
 
 let LTTP1AUX_ffi_entry_pcs_disjoint_shift = prove
@@ -390,9 +390,9 @@ let LTTP1AUX_asm_nonjump = prove
      (!x. ~(i = asm_Jump x)) /\ (!r. ~(i = JumpReg r)) /\ (!x. ~(i = asm_Call x)) /\
      (!cmp r ri x. i = asm_JumpCmp cmp r ri x
                    ==> ~asm_word_cmp cmp (read_reg r s) (asm_reg_imm ri s))
-     ==> asm i w s = asm_upd_pc w (asm i v s) /\ asm_state_pc (asm i w s) = w`,
+     ==> asm_asm i w s = asm_upd_pc w (asm_asm i v s) /\ asm_state_pc (asm_asm i w s) = w`,
   GEN_TAC THEN CASES_ON `i:(A)asm` THEN
-  REWRITE_TAC[asm_def; injectivity "asm"; distinctness "asm"] THEN
+  REWRITE_TAC[asm_asm_def; injectivity "asm"; distinctness "asm"] THEN
   SIMP[asm_upd_pc_def] THEN MESON_TAC[]);;
 
 let LTTP1AUX_asm_jump = prove
@@ -400,9 +400,9 @@ let LTTP1AUX_asm_jump = prove
      ~((!x. ~(i = asm_Jump x)) /\ (!r. ~(i = JumpReg r)) /\
        (!cmp r ri x. i = asm_JumpCmp cmp r ri x
                      ==> ~asm_word_cmp cmp (read_reg r s) (asm_reg_imm ri s)))
-     ==> asm i w s = asm i v s`,
+     ==> asm_asm i w s = asm_asm i v s`,
   GEN_TAC THEN CASES_ON `i:(A)asm` THEN
-  REWRITE_TAC[asm_def; injectivity "asm"; distinctness "asm"] THEN
+  REWRITE_TAC[asm_asm_def; injectivity "asm"; distinctness "asm"] THEN
   SIMP[] THEN MESON_TAC[]);;
 
 (* HOL4 line 249 *)
@@ -415,7 +415,7 @@ let asm_step_IMP_evaluate_step_nop = prove
        (target_proj (machine_config_target c) (asm_state_mem_domain s1)) /\
      bytes_in_memory (asm_state_pc s1) bytes (asm_state_mem s2) (asm_state_mem_domain s1) /\
      asm_step_nop bytes (target_config (machine_config_target c)) s1 i s2 /\
-     s2 = asm i (word_add (asm_state_pc s1) (word (LENGTH bytes))) s1 /\
+     s2 = asm_asm i (word_add (asm_state_pc s1) (word (LENGTH bytes))) s1 /\
      target_state_rel (machine_config_target c) s1 ms1 /\
      (!x. ~(i = asm_Call x))
      ==> ?l ms2.
@@ -470,7 +470,7 @@ let asm_step_IMP_evaluate_step_nop = prove
          (target_config (machine_config_target (c:(A,B,C)machine_config))) (i:(A)asm))))`]
       LTTP1AUX_asm_nonjump) THEN
   ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
-  ABBREV_TAC `s2' = asm i (word_add (asm_state_pc s1) (word (LENGTH (asm_config_encode
+  ABBREV_TAC `s2' = asm_asm i (word_add (asm_state_pc s1) (word (LENGTH (asm_config_encode
          (target_config (machine_config_target (c:(A,B,C)machine_config))) (i:(A)asm)))))
          (s1:(A)asm_state)` THEN
   SUBGOAL_THEN `machine_config_target (shift_interfer l (c:(A,B,C)machine_config)) =
@@ -822,7 +822,7 @@ let lines_ok_ind = cake_ind "lines_ok";;
 (* HOL4 line 580 (HOL4 proves termination by itself: the size of the       *)
 (* sections; the measure is given here, which is much faster)                *)
 let all_enc_ok_def = cake_def_wf
-  `measure (\(c:(A)asm_config,labs:(num spt)spt,ffis:ffiname list,pos:num,
+  `MEASURE (\(c:(A)asm_config,labs:(num spt)spt,ffis:ffiname list,pos:num,
               xs:((A)sec)list). list_size (sec_size (\x:A. 0)) xs)`
   TERM_TAC
   `(all_enc_ok (c:(A)asm_config) labs ffis pos ([]:((A)sec)list) <=> T) /\
@@ -3571,7 +3571,7 @@ let LTTP1AUX_wob32_bit = prove
   REPEAT GEN_TAC THEN ASM_CASES_TAC `i < 32` THENL
    [ALL_TAC; ASM_SIMP_TAC[BIT_TRIVIAL; DIMINDEX_32; ARITH_RULE `~(i < 32) ==> 32 <= i`]] THEN
   ASM_REWRITE_TAC[] THEN POP_ASSUM MP_TAC THEN SPEC_TAC(`i:num`,`i:num`) THEN
-  REWRITE_TAC[IL2AUX_word_of_bytes_32] THEN
+  REWRITE_TAC[WORDSAUX_word_of_bytes_32] THEN
   BOOL_CASES_TAC `be:bool` THEN REWRITE_TAC[] THEN
   CONV_TAC EXPAND_CASES_CONV THEN
   REWRITE_TAC[BIT_WORD_OR; BIT_WORD_SHL; BIT_WORD_ZX; DIMINDEX_32; DIMINDEX_8] THEN
@@ -3585,7 +3585,7 @@ let LTTP1AUX_get_byte_32_zx = prove
          word_zx (word_ushr V (8 * (if be then 3 - j else j)))`,
   REPEAT GEN_TAC THEN DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC MP_TAC) THEN
   SPEC_TAC(`j:num`,`j:num`) THEN CONV_TAC EXPAND_CASES_CONV THEN
-  REWRITE_TAC[IL2AUX_get_byte_32] THEN BOOL_CASES_TAC `be:bool` THEN REWRITE_TAC[] THEN
+  REWRITE_TAC[WORDSAUX_get_byte_32] THEN BOOL_CASES_TAC `be:bool` THEN REWRITE_TAC[] THEN
   CONV_TAC NUM_REDUCE_CONV THEN
   REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_ZX; BIT_WORD_USHR; DIMINDEX_8; DIMINDEX_32] THEN
   REWRITE_TAC[WORD_USHR_ZERO; ADD_CLAUSES] THEN

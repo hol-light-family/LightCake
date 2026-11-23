@@ -80,6 +80,17 @@ let pat_head p =
   let h = fst(strip_comb p) in
   if is_const h then fst(dest_const h) else "";;
 
+(* opt-in (since 2026-11-22): match (f x, f y) with .. compiles to           *)
+(* pair_CASE (f x,f y) (\a b. ..) as in HOL4, so the recursion package sees  *)
+(* both calls outside the arms (unconditional induction hypotheses for f x   *)
+(* and f y, as HOL4's TFL gives).  By default a tuple scrutinee is split     *)
+(* into its components (case on f x, then case on f y inside its arms, so    *)
+(* the call f y gets the context f x = ..), as before                        *)
+let cake_match_tuple_case = ref false;;
+
+let rec pm_tuple_comps t =
+  if is_pair t then let a,b = dest_pair t in pm_tuple_comps a @ pm_tuple_comps b else [t];;
+
 let rec compile_rows (avoid0:term list) (scruts:term list)
                      (rows:pm_row list) (dflt:term) : term =
   match rows with
@@ -116,7 +127,9 @@ let rec compile_rows (avoid0:term list) (scruts:term list)
                  else mk_eq(s,p0) in
         mk_cond(eq,compile_rows avoid0 scruts yes dflt,
                    compile_rows avoid0 scruts no dflt)
-      else if is_pair p0 && is_pair s then
+      else if is_pair p0 && is_pair s &&
+              not (!cake_match_tuple_case &&
+                   exists (fun t -> not (is_var t)) (pm_tuple_comps s)) then
         (* an explicit tuple scrutinee: split the column without pair_CASE *)
         let a,b = dest_pair s in
         let rows' = map (fun r' ->
@@ -257,6 +270,12 @@ let rec cases_of_matches_rec tm =
 let cases_of_matches tm = cases_of_matches_rec (elim_gabs tm);;
 
 let CASE_TERM tm = cases_of_matches tm;;
+
+(* the q-tactics compile the matches of their strings (since 2026-11-22),    *)
+(* and so does g (HOL Light's g sets the goal as parsed)                     *)
+kit_q_compile_matches := cases_of_matches;;
+
+let g tm = g (if kit_has_match tm then cases_of_matches tm else tm);;
 
 (* ------------------------------------------------------------------------- *)
 (* HOL4 oneline (DefnBase.one_line_ify): the clauses of a definition by      *)

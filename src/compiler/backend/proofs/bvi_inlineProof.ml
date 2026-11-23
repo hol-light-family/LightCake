@@ -327,7 +327,7 @@ let bvi_inlineProof_compile_prog_code_labels = prove
 let subspt_insert_union_fresh = prove
  (`!(cs:A spt) old name value.
      subspt cs old /\ ~(name IN domain old) ==>
-     subspt (insert name value cs) (union old (insert name value LN))`,
+     subspt (insert name value cs) (sptree_union old (insert name value LN))`,
   REWRITE_TAC[subspt_lookup; lookup_insert; lookup_union; GSYM lookup_NONE_domain] THEN
   REPEAT STRIP_TAC THEN POP_ASSUM MP_TAC THEN COND_CASES_TAC THEN
   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[lookup_rwts] THEN
@@ -339,7 +339,7 @@ let inline_all_cache_subspt = prove
      inline_all cs prog = (final_cache,out) /\ subspt cs old /\
      DISJOINT (set_of_list (MAP FST prog)) (domain old) /\
      ALL_DISTINCT (MAP FST prog) ==>
-     subspt final_cache (union old (fromAList out))`,
+     subspt final_cache (sptree_union old (fromAList out))`,
   LIST_INDUCT_TAC THENL
    [REWRITE_TAC[inline_all_def; PAIR_EQ] THEN REPEAT STRIP_TAC THEN RVEQ_TAC THEN
     ASM_REWRITE_TAC[fromAList_def; union_LN]; ALL_TAC] THEN
@@ -360,7 +360,7 @@ let inline_all_cache_subspt = prove
   REWRITE_TAC[fromAList_def] THEN ONCE_REWRITE_TAC[GSYM union_insert_LN] THEN
   REWRITE_TAC[union_assoc] THEN
   FIRST_X_ASSUM MATCH_MP_TAC THEN EXISTS_TAC `cs1:(num#bvi_exp)spt` THEN
-  ASM_REWRITE_TAC[] THEN 
+  ASM_REWRITE_TAC[] THEN
   CONJ_TAC THENL
    [EXPAND_TAC "cs1" THEN COND_CASES_TAC THENL
      [MATCH_MP_TAC subspt_insert_union_fresh THEN ASM_REWRITE_TAC[] THEN
@@ -672,7 +672,7 @@ let inline_all_ALOOKUP = prove
      ALL_DISTINCT (MAP FST prog) /\
      ALOOKUP prog k = SOME (wanted_arity,wanted_body) ==>
      ?body1. ALOOKUP out k = SOME (wanted_arity,body1) /\
-             bvi_inlineProof_exp_rel (union old_target (fromAList out)) wanted_body body1`,
+             bvi_inlineProof_exp_rel (sptree_union old_target (fromAList out)) wanted_body body1`,
   LIST_INDUCT_TAC THENL [REWRITE_TAC[ALOOKUP_THM; distinctness "option"]; ALL_TAC] THEN
   MP_TAC(ISPEC `h:num#num#bvi_exp` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `name:num` (X_CHOOSE_THEN `ab:num#bvi_exp` SUBST1_TAC)) THEN
@@ -697,7 +697,7 @@ let inline_all_ALOOKUP = prove
     REWRITE_TAC[injectivity "option"; PAIR_EQ] THEN
     EXISTS_TAC `inline_exp (cs:(num#bvi_exp)spt) body` THEN REWRITE_TAC[] THEN
     SUBGOAL_THEN `subspt (cs:(num#bvi_exp)spt)
-         (union old_target (fromAList (CONS (k,arity,inline_exp cs body) prog2)))`
+         (sptree_union old_target (fromAList (CONS (k,arity,inline_exp cs body) prog2)))`
       ASSUME_TAC THENL
      [MATCH_MP_TAC (GEN_ALL subspt_trans) THEN EXISTS_TAC `old_target:(num#bvi_exp)spt` THEN
       ASM_REWRITE_TAC[subspt_union];
@@ -809,9 +809,9 @@ let inline_all_lookup_union = prove
      DISJOINT (set_of_list (MAP FST prog)) (domain target) /\
      ALL_DISTINCT (MAP FST prog) ==>
      !k arity exp.
-       lookup k (union source (fromAList prog)) = SOME (arity,exp) ==>
-       ?exp1. lookup k (union target (fromAList out)) = SOME (arity,exp1) /\
-              bvi_inlineProof_exp_rel (union target (fromAList out)) exp exp1`,
+       lookup k (sptree_union source (fromAList prog)) = SOME (arity,exp) ==>
+       ?exp1. lookup k (sptree_union target (fromAList out)) = SOME (arity,exp1) /\
+              bvi_inlineProof_exp_rel (sptree_union target (fromAList out)) exp exp1`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN REPEAT GEN_TAC THEN
   REWRITE_TAC[lookup_union; lookup_fromAList] THEN
   CASES_ON `lookup k (source:(num#bvi_exp)spt)` THEN CASE_REWRITE_TAC[] THENL
@@ -855,7 +855,7 @@ let BVLPROPSAUX_bi_do_install_Rval = prove
        progs = CONS (k,prog) rest /\
        FST (bvi_state_compile_oracle s 1) = cfg' /\
        v = bvl_CodePtr k /\
-       s' = bvi_state_code_fupd (K (union (bvi_state_code s) (fromAList progs)))
+       s' = bvi_state_code_fupd (K (sptree_union (bvi_state_code s) (fromAList progs)))
               (bvi_state_compile_oracle_fupd
                  (K (shift_seq 1 (bvi_state_compile_oracle s))) s)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[bvi_do_install_def; LET_DEF; LET_END_DEF] THEN
@@ -882,7 +882,7 @@ let BVLPROPSAUX_bi_do_install_eq_Rval = prove
      bvi_do_install [v1; v2; bvl_Number (&(LENGTH bytes)); bvl_Number (&(LENGTH data))] s =
        (Rval (bvl_CodePtr k,
               bvi_state_code_fupd
-                (K (union (bvi_state_code s) (fromAList (CONS (k,prog) rest))))
+                (K (sptree_union (bvi_state_code s) (fromAList (CONS (k,prog) rest))))
                 (bvi_state_compile_oracle_fupd
                    (K (shift_seq 1 (bvi_state_compile_oracle s))) s))
         :(bvl_v#(C,FFI)bvi_state,E)result)`,
@@ -929,10 +929,10 @@ let BVLPROPSAUX_bi_in_state_rel_install = prove
      ALL_DISTINCT (MAP FST progs) /\
      FST (FST (bvi_state_compile_oracle s1 1)) = cs1 ==>
      bvi_inlineProof_in_state_rel
-       (bvi_state_code_fupd (K (union (bvi_state_code s1) (fromAList progs)))
+       (bvi_state_code_fupd (K (sptree_union (bvi_state_code s1) (fromAList progs)))
           (bvi_state_compile_oracle_fupd
              (K (shift_seq 1 (bvi_state_compile_oracle s1))) s1))
-       (bvi_state_code_fupd (K (union (bvi_state_code t1) (fromAList prog1)))
+       (bvi_state_code_fupd (K (sptree_union (bvi_state_code t1) (fromAList prog1)))
           (bvi_state_compile_oracle_fupd
              (K (shift_seq 1 (bvi_state_compile_oracle t1))) t1))`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
@@ -1570,7 +1570,7 @@ let remove_state_rel_def = cake_def
   `remove_state_rel (s:(C,FFI)bvi_state) (t:(C,FFI)bvi_state) <=>
      bvi_state_refs t = bvi_state_refs s /\ bvi_state_clock t = bvi_state_clock s /\
      bvi_state_global t = bvi_state_global s /\ bvi_state_ffi t = bvi_state_ffi s /\
-     bvi_state_code t = map ((I:num->num) ## remove_ticks_exp) (bvi_state_code s) /\
+     bvi_state_code t = sptree_map ((I:num->num) ## remove_ticks_exp) (bvi_state_code s) /\
      bvi_state_compile_oracle t =
        bvi_inlineProof_remove_ticks_co o bvi_state_compile_oracle s /\
      bvi_state_compile s = bvi_inlineProof_remove_ticks_cc (bvi_state_compile t)`;;
@@ -1646,9 +1646,9 @@ let clean_prog_CONS = prove
 (* HOL4 [local,simp] *)
 let clean_prog_simps = prove
  (`!prog. MAP FST (clean_prog prog) = MAP FST prog /\
-          map ((I:num->num) ## remove_ticks_exp) (fromAList prog) =
+          sptree_map ((I:num->num) ## remove_ticks_exp) (fromAList prog) =
           fromAList (clean_prog prog)`,
-  LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[clean_prog_CONS; MAP; fromAList_def; map_def] THEN
+  LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[clean_prog_CONS; MAP; fromAList_def; sptree_map_def] THEN
   MP_TAC(ISPEC `h:num#num#bvi_exp` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `name:num` (X_CHOOSE_THEN `ab:num#bvi_exp` SUBST1_TAC)) THEN
   MP_TAC(ISPEC `ab:num#bvi_exp` PAIR_SURJECTIVE) THEN

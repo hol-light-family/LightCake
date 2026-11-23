@@ -427,8 +427,8 @@ let fringe_lengths_V = prove
 
 let parsing_ind =
   let r = CASE_TERM
-    `inv_image (measure (LENGTH:((token,MMLnonT)symbol#locs)list->num) LEX
-                measure (\n:(token,MMLnonT)symbol.
+    `inv_image (MEASURE (LENGTH:((token,MMLnonT)symbol#locs)list->num) LEX
+                MEASURE (\n:(token,MMLnonT)symbol.
                            match n with TOK _ -> 0 | NT n -> NT_rank n))
                (\pt:mlptree. real_fringe pt,ptree_head pt)` in
   let wf = prove(mk_comb(`WF:(mlptree->mlptree->bool)->bool`,r), WF_TAC) in

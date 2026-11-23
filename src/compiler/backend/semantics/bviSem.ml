@@ -57,7 +57,7 @@ let bvi_to_bvl_def = cake_def
   `bvi_to_bvl (s:(C,FFI)bvi_state) =
      bvl_state_refs_fupd (K (bvi_state_refs s))
        (bvl_state_clock_fupd (K (bvi_state_clock s))
-         (bvl_state_code_fupd (K (map (K (ARB:num # bvl_exp)) (bvi_state_code s)))
+         (bvl_state_code_fupd (K (sptree_map (K (ARB:num # bvl_exp)) (bvi_state_code s)))
            (bvl_state_ffi_fupd (K (bvi_state_ffi s)) (ARB:(C,FFI)bvl_state))))`;;
 
 let bvl_to_bvi_def = cake_def
@@ -70,7 +70,7 @@ let bvl_to_bvi_def = cake_def
 (* APPEND (APPEND l [c']) r                                                  *)
 
 let bvi_finalise_cons_def = sem1aux_def_wf
-  `measure (\p:bvl_v # (num,(bvl_v)bvl_ref)fmap. CARD (FDOM (SND p)))`
+  `MEASURE (\p:bvl_v # (num,(bvl_v)bvl_ref)fmap. CARD (FDOM (SND p)))`
   (REWRITE_TAC[IMP_CONJ] THEN REPEAT GEN_TAC THEN REPEAT DISCH_TAC THEN
    RVEQ_TAC THEN REWRITE_TAC[measure_THM; SND; FDOM_DOMSUB] THEN
    POP_ASSUM_LIST(MP_TAC o end_itlist CONJ) THEN
@@ -208,7 +208,7 @@ let bvi_do_install_def = cake_def
                    (SOME (bytes',data',cfg'), CONS (k,prog) _) ->
                      if bytes = bytes' /\ data = data' /\ FST (new_oracle 0) = cfg' then
                        let s' =
-                         bvi_state_code_fupd (K (union (bvi_state_code s) (fromAList progs)))
+                         bvi_state_code_fupd (K (sptree_union (bvi_state_code s) (fromAList progs)))
                            (bvi_state_compile_oracle_fupd (K new_oracle) s)
                        in
                          Rval (bvl_CodePtr k, s')
@@ -385,7 +385,7 @@ let CLOSSEMAUX_bvi_evaluate_clauses =
 (*             (\(xs,env,s). (s.clock,xs))                                   *)
 
 let CLOSSEMAUX_bvi_evaluate_rel =
-  `inv_image (measure (I:num->num) LEX measure (list_size bvi_exp_size))
+  `inv_image (MEASURE (I:num->num) LEX MEASURE (list_size bvi_exp_size))
      (\x:bvi_exp list # bvl_v list # (C,FFI)bvi_state.
         bvi_state_clock (SND (SND x)),FST x)`;;
 

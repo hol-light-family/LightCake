@@ -4,7 +4,7 @@
 (* Compiler from Pancake to machine code.                                    *)
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
-(* - Names as notes/naming/names.tsv says: compile_prog is                  *)
+(* - Names as doc/names.tsv says: compile_prog is                           *)
 (*   pan_to_target_compile_prog; exports and compile_prog_eq keep theirs.   *)
 (* - The record literal <| name := ..; ...; return := One |> of fun_decl is  *)
 (*   fun_decl_REC with the fields in order; strlit s is implode s; 0w is     *)
@@ -59,7 +59,7 @@ let pan_to_target_compile_prog_def = cake_def
      let names = fromAList (ZIP (sort (<) (MAP FST prog2))
                                 (CONS (implode "generated_main")
                                       (MAP FST (functions prog1)))) : mlstring spt in
-     let names = union (fromAList (APPEND (APPEND (word_to_stack_stub_names one)
+     let names = sptree_union (fromAList (APPEND (APPEND (word_to_stack_stub_names one)
                                                   (stack_alloc_stub_names one))
                                           (stack_remove_stub_names one))) names in
      let c = backend_config_exported_fupd (K (exports prog)) c in
@@ -83,7 +83,7 @@ let compile_prog_eq = prove
      let names = fromAList (ZIP (sort (<) (MAP FST prog2))
                                 (CONS (implode "generated_main")
                                       (MAP FST (functions prog1)))) : mlstring spt in
-     let names = union (fromAList (APPEND (APPEND (word_to_stack_stub_names one)
+     let names = sptree_union (fromAList (APPEND (APPEND (word_to_stack_stub_names one)
                                                   (stack_alloc_stub_names one))
                                           (stack_remove_stub_names one))) names in
      let c = backend_config_exported_fupd (K (exports prog)) c in

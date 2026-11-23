@@ -7,8 +7,11 @@
 (* has type variables, so it is written out where it is used, and HOL4's    *)
 (* Overload emret = errorMonad$return is errorMonad_return.  The constants  *)
 (* return, error, bind and choice take the prefix errorLogMonad_            *)
-(* (errorMonad has them too); log and silently keep their names.  Not       *)
+(* (errorMonad has them too); silently keeps its name.  Not                 *)
 (* ported: the monadsyntax declaration (HOL4 parser support).               *)
+(* HOL4 log is errorLogMonad_log (a short or common word; log is also a      *)
+(* constant of HOL Light's Multivariate), and log_def is                     *)
+(* errorLogMonad_log_def.                                                    *)
 (* ========================================================================= *)
 
 needs "hol4/errorMonad.ml";;
@@ -24,8 +27,8 @@ let M_CASES = prove
 let errorLogMonad_return_def = cake_def
   `errorLogMonad_return (v:A) = (errorMonad_return v,[]):(A,E)error#(W)list`;;
 
-let log_def = cake_def
-  `log (m:L) = (errorMonad_return one,[m]):(1,E)error#(L)list`;;
+let errorLogMonad_log_def = cake_def
+  `errorLogMonad_log (m:L) = (errorMonad_return one,[m]):(1,E)error#(L)list`;;
 
 let errorLogMonad_error_def = cake_def
   `errorLogMonad_error (e:E) = (errorMonad_error e,[]):(A,E)error#(L)list`;;

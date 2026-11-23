@@ -39,7 +39,7 @@ let no_overlap_def = cake_def
    (no_overlap (SUC n) l <=> if has_var n l then F else no_overlap n l)`;;
 
 let alt_free_def = sem1aux_def_wf
-  `measure (\es:clos_exp list. list_size clos_exp_size es)`
+  `MEASURE (\es:clos_exp list. list_size clos_exp_size es)`
   SEM1AUX_TC_TAC
   `(alt_free [] = ([],db_vars_Empty)) /\
    (alt_free (CONS (x:clos_exp) (CONS y xs)) =
@@ -100,7 +100,7 @@ let alt_free_def = sem1aux_def_wf
 let alt_free_ind = cake_ind "alt_free";;
 
 let alt_free_sing_def = il1aux_def_wf
-  `measure
+  `MEASURE
      (\x:clos_exp + clos_exp list + (num # (num # clos_exp) list).
         sum_CASE x clos_exp_size
           (\y. sum_CASE y (list_size clos_exp_size)
@@ -278,7 +278,7 @@ let shifted_env_def = cake_def
    (shifted_env n (CONS x xs) = insert x (n:num) (shifted_env (n + 1) xs))`;;
 
 let clos_annotate_shift_def = sem1aux_def_wf
-  `measure (\p:clos_exp list # num # num # num spt.
+  `MEASURE (\p:clos_exp list # num # num # num spt.
               list_size clos_exp_size (FST p))`
   SEM1AUX_TC_TAC
   `(clos_annotate_shift [] (m:num) (l:num) (i:num spt) = []) /\
@@ -340,7 +340,7 @@ let clos_annotate_shift_def = sem1aux_def_wf
 let clos_annotate_shift_ind = cake_ind "clos_annotate_shift";;
 
 let shift_sing_def = il1aux_def_wf
-  `measure
+  `MEASURE
      (\x:(clos_exp # num # num # num spt) + (clos_exp list # num # num # num spt) +
          (num # num # num spt # (num # clos_exp) list).
         sum_CASE x (\p. clos_exp_size (FST p))

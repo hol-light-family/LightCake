@@ -774,7 +774,7 @@ let constspec_conext_well_formed = prove
  (`!thy eqs prop.
      theory_ok' thy /\
      proves' (thy,{},MAP (\(s,t). hol_Var s (typeof t) === t) eqs) prop /\
-     ALL (\t. CLOSED t /\ (!v. MEM v (tvars t) ==> MEM v (tyvars (typeof t))))
+     ALL (\t. CLOSED t /\ (!v. MEM v (tvars t) ==> MEM v (hol_tyvars (typeof t))))
          (MAP SND eqs) /\
      ALL_DISTINCT (MAP FST eqs) /\
      (!x ty. VFREE_IN (hol_Var x ty) prop
@@ -794,7 +794,7 @@ let constspec_conext_well_formed = prove
    [MATCH_MP_TAC term_ok'_VSUBST THEN CONJ_TAC THENL
      [MATCH_MP_TAC term_ok'_tms_FUNION_fresh THEN ASM_REWRITE_TAC[MAP_FST_MAP];
       REWRITE_TAC[CLITAUX_C_MEM_ConstVar] THEN REPEAT STRIP_TAC THEN
-      ASM_REWRITE_TAC[injectivity "hol_term"; CSYNAUX_P4_has_type_Const] THEN
+      ASM_REWRITE_TAC[injectivity "hol_term"; CSYNAUX_P3_has_type_Const] THEN
       MAP_EVERY EXISTS_TAC [`n:mlstring`; `typeof t`] THEN REWRITE_TAC[term_ok'_def] THEN
       EXISTS_TAC `typeof t` THEN
       REWRITE_TAC[ctms_def; ctys_def; ethy_INFO.ri_accfupds; K_THM; FLOOKUP_FUNION;
@@ -809,7 +809,7 @@ let constspec_conext_well_formed = prove
        [MATCH_MP_TAC type_ok_weakening THEN ASM_MESON_TAC[];
         EXISTS_TAC `[]:(hol_type#hol_type)list` THEN REWRITE_TAC[TYPE_SUBST_NIL]]];
     MATCH_MP_TAC VSUBST_HAS_TYPE THEN ASM_REWRITE_TAC[CLITAUX_C_MEM_ConstVar] THEN
-    REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[injectivity "hol_term"; CSYNAUX_P4_has_type_Const] THEN
+    REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[injectivity "hol_term"; CSYNAUX_P3_has_type_Const] THEN
     MESON_TAC[]]);;
 
 (* HOL4 variables abs, rep are abs_name, rep_name *)
@@ -890,10 +890,6 @@ let CLITAUX_C_typedefn_facts = prove
   ASM_REWRITE_TAC[] THEN MATCH_MP_TAC hol_term_ok_extend THEN
   MAP_EVERY EXISTS_TAC [`ctys thy`; `ctms thy`] THEN ASM_SIMP_TAC[term_ok'_imp_term_ok]);;
 
-let CLITAUX_C_typeof_eq = prove
- (`!s t. typeof (s === t) = Tyapp (implode "bool") []`,
-  REWRITE_TAC[equation_def; typeof_def; codomain_def]);;
-
 (* the common start of typedefn_eq1_well_formed and typedefn_eq2_well_formed *)
 let CLITAUX_C_TYPEDEFN_TAC =
   REPEAT GEN_TAC THEN STRIP_TAC THEN
@@ -917,10 +913,10 @@ let CLITAUX_C_TYPEDEFN_TAC =
     ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
     FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP term_ok_clauses th]) THEN
     ASM_REWRITE_TAC[hol_term_ok_def; FST; SND; WELLTYPED_CLAUSES; typeof_def;
-                    codomain_def; CLITAUX_C_typeof_eq] THEN
+                    codomain_def; CSYNAUX_typeof_equation] THEN
     FIRST_ASSUM(fun th -> REWRITE_TAC[REWRITE_RULE[FST; SND] (MATCH_MP term_ok_clauses th)]) THEN
     ASM_REWRITE_TAC[];
-    ASM_REWRITE_TAC[EQUATION_HAS_TYPE_BOOL; welltyped_equation; CLITAUX_C_typeof_eq;
+    ASM_REWRITE_TAC[EQUATION_HAS_TYPE_BOOL; welltyped_equation; CSYNAUX_typeof_equation;
                     WELLTYPED_CLAUSES; typeof_def; codomain_def]];;
 
 let typedefn_eq1_well_formed = prove
@@ -1022,13 +1018,6 @@ let CLITAUX_C_IN_FRANGE_FUPDATE = prove
   DISCH_THEN(X_CHOOSE_THEN `k':A` MP_TAC) THEN COND_CASES_TAC THEN
   REWRITE_TAC[option_INJ] THEN MESON_TAC[]);;
 
-let CLITAUX_C_IN_FRANGE_FUNION = prove
- (`!(f:(A,B)fmap) g y. y IN FRANGE (FUNION f g) ==> y IN FRANGE f \/ y IN FRANGE g`,
-  REWRITE_TAC[IN_FRANGE_FLOOKUP; FLOOKUP_FUNION] THEN REPEAT GEN_TAC THEN
-  DISCH_THEN(X_CHOOSE_THEN `k:A` MP_TAC) THEN
-  MP_TAC(ISPEC `FLOOKUP (f:(A,B)fmap) k` (cases "option")) THEN STRIP_TAC THEN
-  ASM_REWRITE_TAC[option_CASE] THEN ASM_MESON_TAC[option_INJ]);;
-
 let CLITAUX_C_IN_FRANGE_eqs = prove
  (`!(eqs:(mlstring#hol_term)list) ty.
      ty IN FRANGE (alist_to_fmap (MAP (\(s,t). (s,typeof t)) eqs))
@@ -1120,7 +1109,7 @@ let updates'_theory_ok' = prove
       REWRITE_TAC[GSYM FUNION_ASSOC] THEN MATCH_MP_TAC(CONJUNCT2 SUBMAP_FUNION_ID) THEN
       ASM_REWRITE_TAC[FDOM_FUNION];
       ASM_REWRITE_TAC[FDOM_FUNION; DISJOINT_UNION];
-      GEN_TAC THEN DISCH_THEN(DISJ_CASES_TAC o MATCH_MP CLITAUX_C_IN_FRANGE_FUNION) THEN
+      GEN_TAC THEN DISCH_THEN(DISJ_CASES_TAC o MATCH_MP FMAPAUX_IN_FRANGE_FUNION) THEN
       ASM_REWRITE_TAC[] THEN DISJ2_TAC THEN
       FIRST_X_ASSUM(STRIP_ASSUME_TAC o MATCH_MP CLITAUX_C_IN_FRANGE_eqs) THEN ASM_MESON_TAC[];
       SIMP_TAC[];

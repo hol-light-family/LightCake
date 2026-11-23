@@ -230,15 +230,15 @@ let GCP1AUX_WORD_BITS_TAC k =
   REWRITE_TAC[WORD_EQ_BITS_ALT] THEN REWRITE_TAC MP4AUX_BIT_REWRS THEN
   GCP1AUX_BITS_CASES_TAC k;;
 
-(* split the cond leaves of a STAR assertion: |- P s gives the conditions  *)
+(* split the set_sep_cond leaves of a STAR assertion: |- P s gives the conditions  *)
 (* and the assertion without them (as a list of theorems)                  *)
 let rec GCP1AUX_SEP_COND_RULE th =
   let p,s = dest_comb (concl th) in
   let leaves = gcp1_star_leaves p in
-  match filter (gcp1_is_app "cond") leaves with
+  match filter (gcp1_is_app "set_sep_cond") leaves with
     [] -> [th]
   | cd::_ ->
-      if length leaves = 1 then [CONJUNCT2 (REWRITE_RULE[cond_def] th)]
+      if length leaves = 1 then [CONJUNCT2 (REWRITE_RULE[set_sep_cond_def] th)]
       else
         let th1 = GCP1AUX_STAR_FOCUS (fun l -> l == cd) th in
         let th2 = CONV_RULE (REWR_CONV (CONJUNCT1 (SPEC_ALL cond_STAR))) th1 in
@@ -248,7 +248,7 @@ let GCP1AUX_SEP_COND_TAC : tactic =
   REPEAT(FIRST_X_ASSUM(fun th ->
     let c = concl th in
     if gcp1_is_fun2set_asm c &&
-       exists (gcp1_is_app "cond") (gcp1_star_leaves (rator c))
+       exists (gcp1_is_app "set_sep_cond") (gcp1_star_leaves (rator c))
     then MAP_EVERY STRIP_ASSUME_TAC (GCP1AUX_SEP_COND_RULE th)
     else failwith "GCP1AUX_SEP_COND_TAC"));;
 
@@ -865,7 +865,7 @@ let GCP1AUX_ML_INV_REARR_TAC : tactic =
 let GCP1AUX_MEM_join_env = prove
  (`!(l1:A spt) (l2:(B)spt) n x w.
      lookup n l1 = SOME x /\ lookup (adjust_var n) l2 = SOME w ==>
-     MEM (x,w) (join_env l1 (toAList (inter l2 (adjust_set l1))))`,
+     MEM (x,w) (join_env l1 (toAList (sptree_inter l2 (adjust_set l1))))`,
   REPEAT STRIP_TAC THEN
   REWRITE_TAC[join_env_def; MEM_MAP; MEM_FILTER; EXISTS_PAIR_THM] THEN
   CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
@@ -882,12 +882,12 @@ let GCP1AUX_MEM_join_env = prove
 let word_ml_inv_lookup = prove
  (`!heap be a sp sp1 gens limit ts c refs ys (l1:data_v spt) l2 xs n x (w:A word_loc).
      word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs
-       (APPEND (APPEND ys (join_env l1 (toAList (inter l2 (adjust_set l1))))) xs) /\
+       (APPEND (APPEND ys (join_env l1 (toAList (sptree_inter l2 (adjust_set l1))))) xs) /\
      lookup n l1 = SOME x /\
      lookup (adjust_var n) l2 = SOME w ==>
      word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs
        (APPEND (APPEND (APPEND ys [(x,w)])
-          (join_env l1 (toAList (inter l2 (adjust_set l1))))) xs)`,
+          (join_env l1 (toAList (sptree_inter l2 (adjust_set l1))))) xs)`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   MP_TAC(ISPECL [`l1:data_v spt`; `l2:(A word_loc)spt`; `n:num`; `x:data_v`;
                 `w:A word_loc`] GCP1AUX_MEM_join_env) THEN
@@ -897,13 +897,13 @@ let word_ml_inv_lookup = prove
 let word_ml_inv_get_var_IMP_lemma = prove
  (`!heap be a sp sp1 gens limit ts c refs ll (t:(A,C,FFI)wl_state) envs n x w.
      word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs
-       (APPEND (join_env ll (toAList (inter (wl_state_locals t) (adjust_set ll))))
+       (APPEND (join_env ll (toAList (sptree_inter (wl_state_locals t) (adjust_set ll))))
           envs) /\
      data_get_var n ll = SOME x /\
      wl_get_var (adjust_var n) t = SOME w ==>
      word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs
        (APPEND (APPEND [(x,w)]
-          (join_env ll (toAList (inter (wl_state_locals t) (adjust_set ll)))))
+          (join_env ll (toAList (sptree_inter (wl_state_locals t) (adjust_set ll)))))
           envs)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[data_get_var_def; wl_get_var_def] THEN STRIP_TAC THEN
   MP_TAC(ISPECL [`ll:data_v spt`; `wl_state_locals (t:(A,C,FFI)wl_state)`; `n:num`;
@@ -916,14 +916,14 @@ let word_ml_inv_get_var_IMP = prove
     (t:(A,C,FFI)wl_state) envs n x w.
      word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs
        (APPEND (join_env (data_state_locals s)
-          (toAList (inter (wl_state_locals t) (adjust_set (data_state_locals s)))))
+          (toAList (sptree_inter (wl_state_locals t) (adjust_set (data_state_locals s)))))
           envs) /\
      data_get_var n (data_state_locals s) = SOME x /\
      wl_get_var (adjust_var n) t = SOME w ==>
      word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs
        (APPEND (APPEND [(x,w)]
           (join_env (data_state_locals s)
-             (toAList (inter (wl_state_locals t) (adjust_set (data_state_locals s))))))
+             (toAList (sptree_inter (wl_state_locals t) (adjust_set (data_state_locals s))))))
           envs)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[data_get_var_def; wl_get_var_def] THEN STRIP_TAC THEN
   MP_TAC(ISPECL [`data_state_locals (s:(C,FFI)data_state)`;
@@ -934,12 +934,12 @@ let word_ml_inv_get_var_IMP = prove
 let GCP1AUX_ml_inv_cons = prove
  (`!heap be a sp sp1 gens limit ts c refs ll (t:(A,C,FFI)wl_state) envs n x w.
      word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs
-       (APPEND (join_env ll (toAList (inter (wl_state_locals t) (adjust_set ll))))
+       (APPEND (join_env ll (toAList (sptree_inter (wl_state_locals t) (adjust_set ll))))
           envs) /\
      data_get_var n ll = SOME x /\
      wl_get_var (adjust_var n) t = SOME w ==>
      word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs
-       (APPEND (join_env ll (toAList (inter (wl_state_locals t) (adjust_set ll))))
+       (APPEND (join_env ll (toAList (sptree_inter (wl_state_locals t) (adjust_set ll))))
           (CONS (x,w) envs))`,
   REPEAT GEN_TAC THEN
   DISCH_THEN(MP_TAC o MATCH_MP word_ml_inv_get_var_IMP_lemma) THEN
@@ -950,13 +950,13 @@ let GCP1AUX_ml_inv_cons = prove
 let word_ml_inv_get_vars_IMP_lemma = prove
  (`!heap be a sp sp1 gens limit ts c refs ll (t:(A,C,FFI)wl_state) n x w envs.
      word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs
-       (APPEND (join_env ll (toAList (inter (wl_state_locals t) (adjust_set ll))))
+       (APPEND (join_env ll (toAList (sptree_inter (wl_state_locals t) (adjust_set ll))))
           envs) /\
      data_get_vars n ll = SOME x /\
      wl_get_vars (MAP adjust_var n) t = SOME w ==>
      word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs
        (APPEND (APPEND (ZIP x w)
-          (join_env ll (toAList (inter (wl_state_locals t) (adjust_set ll)))))
+          (join_env ll (toAList (sptree_inter (wl_state_locals t) (adjust_set ll)))))
           envs)`,
   REPLICATE_TAC 12 GEN_TAC THEN LIST_INDUCT_TAC THEN
   REWRITE_TAC[data_get_vars_def; wl_get_vars_def; MAP] THENL
@@ -987,14 +987,14 @@ let word_ml_inv_get_vars_IMP = prove
     (t:(A,C,FFI)wl_state) n x w envs.
      word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs
        (APPEND (join_env (data_state_locals s)
-          (toAList (inter (wl_state_locals t) (adjust_set (data_state_locals s)))))
+          (toAList (sptree_inter (wl_state_locals t) (adjust_set (data_state_locals s)))))
           envs) /\
      data_get_vars n (data_state_locals s) = SOME x /\
      wl_get_vars (MAP adjust_var n) t = SOME w ==>
      word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs
        (APPEND (APPEND (ZIP x w)
           (join_env (data_state_locals s)
-             (toAList (inter (wl_state_locals t) (adjust_set (data_state_locals s))))))
+             (toAList (sptree_inter (wl_state_locals t) (adjust_set (data_state_locals s))))))
           envs)`,
   REPEAT GEN_TAC THEN MATCH_ACCEPT_TAC word_ml_inv_get_vars_IMP_lemma);;
 
@@ -1031,10 +1031,10 @@ let GCP1AUX_adjust_var_IN_adjust_set = prove
 let word_ml_inv_insert = prove
  (`!heap be a sp sp1 gens limit ts c refs x (w:A word_loc) d l xs dest.
      word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs
-       (APPEND (APPEND [(x,w)] (join_env d (toAList (inter l (adjust_set d))))) xs) ==>
+       (APPEND (APPEND [(x,w)] (join_env d (toAList (sptree_inter l (adjust_set d))))) xs) ==>
      word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs
        (APPEND (join_env (insert dest x d)
-          (toAList (inter (insert (adjust_var dest) w l)
+          (toAList (sptree_inter (insert (adjust_var dest) w l)
                           (adjust_set (insert dest x d))))) xs)`,
   REPEAT GEN_TAC THEN MATCH_MP_TAC word_ml_inv_rearrange THEN
   REWRITE_TAC[MEM_APPEND; MEM] THEN GEN_TAC THEN

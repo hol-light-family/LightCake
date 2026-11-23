@@ -4,7 +4,7 @@
 (* Correctness proof for loop_to_word.                                       *)
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
-(* - Names as notes/naming/names.tsv says (loop_to_wordProof_locals_rel,     *)
+(* - Names as doc/names.tsv says (loop_to_wordProof_locals_rel,              *)
 (*   loop_to_wordProof_state_rel, loop_to_wordProof_compile_correct, ...);   *)
 (*   local helpers that are not HOL4 theorems are PL2WAUX_.                  *)
 (* - compile_correct: HOL4 states the conclusion of loopSem's evaluate_ind   *)
@@ -463,7 +463,7 @@ let cut_env_mk_new_cutset = prove
  (`loop_to_wordProof_locals_rel ctxt l1 (l2:(A)spt) /\ domain x1 SUBSET domain l1 /\
    lookup 0 l2 = SOME y ==>
    ?env1. wl_cut_env (mk_new_cutset ctxt x1,LN) l2 = SOME env1 /\
-          loop_to_wordProof_locals_rel ctxt (inter l1 x1) env1`,
+          loop_to_wordProof_locals_rel ctxt (sptree_inter l1 x1) env1`,
   STRIP_TAC THEN
   SUBGOAL_THEN `domain (mk_new_cutset ctxt x1) SUBSET domain (l2:(A)spt)` ASSUME_TAC THENL
    [REWRITE_TAC[PL2WAUX_domain_mk_new_cutset; INSERT_SUBSET] THEN
@@ -704,7 +704,7 @@ let PL2WAUX_compile_correct_Loop = prove
   (SUBGOAL_THEN
       `cut_res (live_in:num_set) (NONE:((A)loop_result)option,s:(A,FFI)loop_state) =
        (NONE,loop_dec_clock (loop_state_locals_fupd
-                               (K (inter (loop_state_locals s) live_in)) s))`
+                               (K (sptree_inter (loop_state_locals s) live_in)) s))`
       ASSUME_TAC THENL
       [REWRITE_TAC[cut_res_def; cut_state_def] THEN ASM_REWRITE_TAC[] THEN SIMP[] THEN
        ASM_REWRITE_TAC[];
@@ -724,7 +724,7 @@ let PL2WAUX_compile_correct_Loop = prove
      SIMP[wl_cut_state_def] THEN ASM_REWRITE_TAC[] THEN SIMP[] THEN
      PAIR_CASES_ON `loop_evaluate (body:(A)loop_prog,
                       loop_dec_clock (loop_state_locals_fupd
-                        (K (inter (loop_state_locals s) (live_in:num_set))) (s:(A,FFI)loop_state)))` THEN
+                        (K (sptree_inter (loop_state_locals s) (live_in:num_set))) (s:(A,FFI)loop_state)))` THEN
      RENAME1 "loop_evaluate _ = (resb,sb)" THEN SIMP[] THEN DISCH_TAC) THEN
   (QBY "~(resb = SOME loop_Error)" (DISCH_TAC THEN GVS[loop_exit_loop_def]) THEN
      RULE_ASSUM_TAC(fun th ->
@@ -775,7 +775,7 @@ let PL2WAUX_compile_correct_Loop = prove
        `?env2. wl_cut_env (mk_new_cutset ctxt live_out,LN)
                  (wl_state_locals (t1:(A,C,FFI)wl_state)) = SOME env2 /\
                loop_to_wordProof_locals_rel ctxt
-                 (inter (loop_state_locals (sb:(A,FFI)loop_state)) live_out) env2`
+                 (sptree_inter (loop_state_locals (sb:(A,FFI)loop_state)) live_out) env2`
         STRIP_ASSUME_TAC THENL
        [MATCH_MP_TAC (GEN_ALL cut_env_mk_new_cutset) THEN EXISTS_TAC `retv:(A)word_loc` THEN
         ASM_REWRITE_TAC[];
@@ -1082,7 +1082,7 @@ let PL2WAUX_get_var_imm = prove
 
 let PL2WAUX_locals_rel_inter = prove
  (`loop_to_wordProof_locals_rel ctxt (l1:(A)spt) l2 ==>
-   loop_to_wordProof_locals_rel ctxt (inter l1 (x:(B)spt)) l2`,
+   loop_to_wordProof_locals_rel ctxt (sptree_inter l1 (x:(B)spt)) l2`,
   REWRITE_TAC[loop_to_wordProof_locals_rel_def; lookup_inter_alt] THEN
   STRIP_TAC THEN ASM_REWRITE_TAC[] THEN REPEAT GEN_TAC THEN
   COND_CASES_TAC THEN ASM_REWRITE_TAC[option_DISTINCT]);;
@@ -1261,11 +1261,6 @@ let PL2WAUX_jump_exc_push = prove
    [MATCH_MP_TAC LASTN_ADD_CONS THEN ASM_ARITH_TAC; ALL_TAC] THEN
   ASM_REWRITE_TAC[] THEN ASM_ARITH_TAC);;
 
-let PL2WAUX_LASTN_CONS_ALL = prove
- (`!(x:A) l. LASTN (LENGTH l + 1) (CONS x l) = CONS x l`,
-  REPEAT GEN_TAC THEN MP_TAC(ISPEC `CONS (x:A) l` LASTN_LENGTH_ID) THEN
-  REWRITE_TAC[LENGTH; ADD1]);;
-
 (* PAIR_CASES_ON the first loop_evaluate (p,_) of the goal or assumptions *)
 
 let PL2WAUX_EVAL_CASES_TAC (p:term) : tactic = fun (asl,w as g) ->
@@ -1400,13 +1395,13 @@ let PL2WAUX_compile_correct_Call = prove
          PAIR_CASES_ON `loop_evaluate (new_code:(A)loop_prog,
                           loop_state_locals_fupd (K (new_env:((A)word_loc)spt))
                            (loop_dec_clock (loop_state_locals_fupd
-                             (K (inter (loop_state_locals s) (live:num_set))) (s:(A,FFI)loop_state))))` THEN
+                             (K (sptree_inter (loop_state_locals s) (live:num_set))) (s:(A,FFI)loop_state))))` THEN
          RENAME1 "loop_evaluate _ = (rb,st)" THEN SIMP[] THEN DISCH_TAC THEN
          SUBGOAL_THEN `~(rb = SOME (loop_Error:(A)loop_result))` ASSUME_TAC THENL
           [DISCH_TAC THEN UNDISCH_TAC `~(res = SOME (loop_Error:(A)loop_result))` THEN GVS[];
            ALL_TAC] THEN
          FIRST_X_ASSUM(MP_TAC o SPECL [`ns:num list`; `live:num_set`;
-           `loop_dec_clock (loop_state_locals_fupd (K (inter (loop_state_locals s) (live:num_set)))
+           `loop_dec_clock (loop_state_locals_fupd (K (sptree_inter (loop_state_locals s) (live:num_set)))
                              (s:(A,FFI)loop_state))`] o
            check (fun th -> try fst(dest_var(fst(dest_forall(concl th)))) = "ns'"
                             with Failure _ -> false)) THEN
@@ -1485,13 +1480,13 @@ let PL2WAUX_compile_correct_Call = prove
          PAIR_CASES_ON `loop_evaluate (new_code:(A)loop_prog,
                           loop_state_locals_fupd (K (new_env:((A)word_loc)spt))
                            (loop_dec_clock (loop_state_locals_fupd
-                             (K (inter (loop_state_locals s) (live:num_set))) (s:(A,FFI)loop_state))))` THEN
+                             (K (sptree_inter (loop_state_locals s) (live:num_set))) (s:(A,FFI)loop_state))))` THEN
          RENAME1 "loop_evaluate _ = (rb,st)" THEN SIMP[] THEN DISCH_TAC THEN
          SUBGOAL_THEN `~(rb = SOME (loop_Error:(A)loop_result))` ASSUME_TAC THENL
           [DISCH_TAC THEN UNDISCH_TAC `~(res = SOME (loop_Error:(A)loop_result))` THEN GVS[];
            ALL_TAC]) THEN
       (FIRST_X_ASSUM(MP_TAC o SPECL [`ns:num list`; `live:num_set`;
-           `loop_dec_clock (loop_state_locals_fupd (K (inter (loop_state_locals s) (live:num_set)))
+           `loop_dec_clock (loop_state_locals_fupd (K (sptree_inter (loop_state_locals s) (live:num_set)))
                              (s:(A,FFI)loop_state))`] o
            check (fun th -> try let vs,_ = strip_forall(concl th) in
                                 fst(dest_var(hd vs)) = "ns'" && length vs = 3
@@ -1528,7 +1523,7 @@ let PL2WAUX_compile_correct_Call = prove
              GVS[cut_res_def];
              ALL_TAC] THEN
            FIRST_X_ASSUM(MP_TAC o SPECL [`retvs:((A)word_loc)list`;
-             `loop_dec_clock (loop_state_locals_fupd (K (inter (loop_state_locals s) (live:num_set)))
+             `loop_dec_clock (loop_state_locals_fupd (K (sptree_inter (loop_state_locals s) (live:num_set)))
                                (s:(A,FFI)loop_state))`; `st:(A,FFI)loop_state`] o
              check (fun th -> try let vs,_ = strip_forall(concl th) in
                                   map (fst o dest_var) vs = ["retvs"; "s'"; "st"]
@@ -1579,7 +1574,7 @@ let PL2WAUX_compile_correct_Call = prove
              if is_forall(concl th) &&
                 can (find_term (fun t -> try fst(dest_const t) = "wl_jump_exc" with Failure _ -> false))
                     (concl th)
-             then MP_TAC(CAKE_SIMP_RULE[] (REWRITE_RULE[PL2WAUX_LASTN_CONS_ALL]
+             then MP_TAC(CAKE_SIMP_RULE[] (REWRITE_RULE[RICHAUX_LASTN_CONS]
                     (CAKE_SIMP_RULE[] (REWRITE_RULE[wl_jump_exc_def; LENGTH; ARITH_RULE `n < SUC n`] th))))
              else NO_TAC)) THEN
         (DISCH_THEN(CONJUNCTS_THEN2 SUBST_ALL_TAC (fun th ->
@@ -1595,7 +1590,7 @@ let PL2WAUX_compile_correct_Call = prove
              GVS[cut_res_def];
              ALL_TAC]) THEN
         (FIRST_X_ASSUM(MP_TAC o SPECL [`exn:(A)word_loc`;
-             `loop_dec_clock (loop_state_locals_fupd (K (inter (loop_state_locals s) (live:num_set)))
+             `loop_dec_clock (loop_state_locals_fupd (K (sptree_inter (loop_state_locals s) (live:num_set)))
                                (s:(A,FFI)loop_state))`; `st:(A,FFI)loop_state`] o
              check (fun th -> try let vs,_ = strip_forall(concl th) in
                                   map (fst o dest_var) vs = ["exn"; "s'"; "st"]
@@ -1615,7 +1610,7 @@ let PL2WAUX_compile_correct_Call = prove
               [FS[loop_to_wordProof_state_rel_def];
                MATCH_MP_TAC locals_rel_insert THEN ASM_REWRITE_TAC[] THEN
                UNDISCH_TAC `loop_to_wordProof_locals_rel ctxt
-                              (inter (loop_state_locals (s:(A,FFI)loop_state)) (live:num_set)) env1` THEN
+                              (sptree_inter (loop_state_locals (s:(A,FFI)loop_state)) (live:num_set)) env1` THEN
                REWRITE_TAC[loop_to_wordProof_locals_rel_def; lookup_fromAList_toAList]];
              ALL_TAC] THEN
            STRIP_TAC THEN ASM_REWRITE_TAC[] THEN SIMP[]) THEN

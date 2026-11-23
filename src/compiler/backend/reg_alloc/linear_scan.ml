@@ -157,7 +157,7 @@ let get_intervals_withlive_def = cake_def
         get_intervals_withlive lt2 n int_beg int_end live in
       let (n1,int_beg1,int_end1) =
         get_intervals_withlive lt1 n2 (difference int_beg2 live) int_end2 live in
-      (n1,difference int_beg1 (union (get_live_backward lt1 live)
+      (n1,difference int_beg1 (sptree_union (get_live_backward lt1 live)
                                      (get_live_backward lt2 live)),int_end1)) /\
    (get_intervals_withlive (linear_scan_Seq lt1 lt2) n int_beg int_end live =
       let (n2,int_beg2,int_end2) =
@@ -250,18 +250,18 @@ let get_intervals_ct_aux_def = cake_def
        linear_scan_numset_list_insert rd (numset_list_delete wr live))) /\
    (get_intervals_ct_aux (reg_alloc_Set cutset) n int_beg int_end live =
       (n - &1,int_beg,numset_list_add_if_gt (MAP FST (toAList cutset)) n int_end,
-       union cutset live)) /\
+       sptree_union cutset live)) /\
    (get_intervals_ct_aux (reg_alloc_Branch optcutset ct1 ct2) n int_beg int_end live =
       let (n2,int_beg2,int_end2,live2) =
         get_intervals_ct_aux ct2 n int_beg int_end live in
       let (n1,int_beg1,int_end1,live1) =
         get_intervals_ct_aux ct1 n2 int_beg2 int_end2 live in
       match optcutset with
-        NONE -> (n1,int_beg1,int_end1,union live1 live2)
+        NONE -> (n1,int_beg1,int_end1,sptree_union live1 live2)
       | SOME cutset ->
           (n1 - &1,int_beg1,
            numset_list_add_if_gt (MAP FST (toAList cutset)) n1 int_end1,
-           union cutset (union live1 live2))) /\
+           sptree_union cutset (sptree_union live1 live2))) /\
    (get_intervals_ct_aux (reg_alloc_Seq ct1 ct2) n int_beg int_end live =
       let (n2,int_beg2,int_end2,live2) =
         get_intervals_ct_aux ct2 n int_beg int_end live in
@@ -503,18 +503,18 @@ let get_intervals_ct_monad_aux_def = cake_def
          (n - &2,linear_scan_numset_list_insert rd (numset_list_delete wr live)))))) /\
    (get_intervals_ct_monad_aux (reg_alloc_Set cutset) n live =
       st_ex_ignore_bind (numset_list_add_if_gt_monad (MAP FST (toAList cutset)) n)
-      (st_ex_return (n - &1,union cutset live))) /\
+      (st_ex_return (n - &1,sptree_union cutset live))) /\
    (get_intervals_ct_monad_aux (reg_alloc_Branch optcutset ct1 ct2) n live =
       st_ex_bind (get_intervals_ct_monad_aux ct2 n live) (\p.
       match p with (n2,live2) ->
       st_ex_bind (get_intervals_ct_monad_aux ct1 n2 live) (\p.
       match p with (n1,live1) ->
       match optcutset with
-        NONE -> st_ex_return (n1,union live1 live2)
+        NONE -> st_ex_return (n1,sptree_union live1 live2)
       | SOME cutset ->
           st_ex_ignore_bind
             (numset_list_add_if_gt_monad (MAP FST (toAList cutset)) n1)
-            (st_ex_return (n1 - &1,union cutset (union live1 live2)))))) /\
+            (st_ex_return (n1 - &1,sptree_union cutset (sptree_union live1 live2)))))) /\
    (get_intervals_ct_monad_aux (reg_alloc_Seq ct1 ct2) n live =
       st_ex_bind (get_intervals_ct_monad_aux ct2 n live) (\p.
       match p with (n2,live2) ->
@@ -530,7 +530,7 @@ let get_intervals_ct_monad_def = cake_def
 
 (* HOL4 Termination: WF_REL_TAC measure (\(_,st). LENGTH st.active) >> rw [] *)
 let remove_inactive_intervals_def = cake_def_wf
-  `measure (\(beg:int,st:linear_scan_state). LENGTH (linear_scan_state_active st))`
+  `MEASURE (\(beg:int,st:linear_scan_state). LENGTH (linear_scan_state_active st))`
   (REWRITE_TAC[measure_THM] THEN CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
    RW[LENGTH])
   `remove_inactive_intervals beg st =
@@ -646,16 +646,16 @@ let linear_reg_alloc_step_pass1_def = cake_def
      st_ex_bind (remove_inactive_intervals rbeg st) (\st'.
      if is_stack_var reg then spill_register st' reg
      else
-       st_ex_bind (st_ex_MAP colors_sub (the [] (lookup reg forced)))
+       st_ex_bind (st_ex_MAP colors_sub (misc_the [] (lookup reg forced)))
          (\forced_forbidden_list.
        let forced_forbidden = fromAList (MAP (\c. (c,one)) forced_forbidden_list) in
        if is_phy_var reg then
          if reg < 2 * linear_scan_state_colormax st' then
-           let forbidden = union (linear_scan_state_phyregs st') forced_forbidden in
+           let forbidden = sptree_union (linear_scan_state_phyregs st') forced_forbidden in
            linear_reg_alloc_step_aux st' forbidden [] reg rend T
          else spill_register st' reg
        else
-         st_ex_bind (st_ex_MAP colors_sub (the [] (lookup reg moves)))
+         st_ex_bind (st_ex_MAP colors_sub (misc_the [] (lookup reg moves)))
            (\moves_preferred.
          linear_reg_alloc_step_aux st' forced_forbidden moves_preferred reg rend F)))))`;;
 
@@ -664,13 +664,13 @@ let linear_reg_alloc_step_pass2_def = cake_def
      st_ex_bind (int_beg_sub reg) (\rbeg.
      st_ex_bind (int_end_sub reg) (\rend.
      st_ex_bind (remove_inactive_intervals rbeg st) (\st'.
-     st_ex_bind (st_ex_MAP colors_sub (the [] (lookup reg forced)))
+     st_ex_bind (st_ex_MAP colors_sub (misc_the [] (lookup reg forced)))
        (\forced_forbidden_list.
      st_ex_bind (st_ex_return (fromAList (MAP (\c. (c,one)) forced_forbidden_list)))
        (\forced_forbidden.
-     st_ex_bind (st_ex_MAP colors_sub (the [] (lookup reg moves))) (\moves_preferred.
+     st_ex_bind (st_ex_MAP colors_sub (misc_the [] (lookup reg moves))) (\moves_preferred.
      if is_phy_var reg then
-       let forbidden = union (linear_scan_state_phyregs st') forced_forbidden in
+       let forbidden = sptree_union (linear_scan_state_phyregs st') forced_forbidden in
        linear_reg_alloc_step_aux st' forbidden [] reg rend F
      else
        linear_reg_alloc_step_aux st' forced_forbidden moves_preferred reg rend F))))))`;;
@@ -729,9 +729,9 @@ let edges_to_adjlist_def = cake_def
         st_ex_bind (int_beg_sub a) (\bega.
         st_ex_bind (int_beg_sub b) (\begb.
         if bega < begb \/ (bega = begb /\ a <= b) then
-          edges_to_adjlist abs' (insert b (CONS a (the [] (lookup b acc))) acc)
+          edges_to_adjlist abs' (insert b (CONS a (misc_the [] (lookup b acc))) acc)
         else
-          edges_to_adjlist abs' (insert a (CONS b (the [] (lookup a acc))) acc))))`;;
+          edges_to_adjlist abs' (insert a (CONS b (misc_the [] (lookup a acc))) acc))))`;;
 
 let sort_moves_rev_def = cake_def
   `sort_moves_rev (ls:(num#A)list) =
@@ -753,7 +753,7 @@ let MONADAUX_DIFF_TAC : tactic =
 
 (* HOL4 Termination: WF_REL_TAC measure (\l,rpiv,begrpiv,r. r-l) *)
 let partition_regs_def = cake_def_wf
-  `measure (\(l:num,rpiv:num,begrpiv:int,r:num). r - l)` MONADAUX_DIFF_TAC
+  `MEASURE (\(l:num,rpiv:num,begrpiv:int,r:num). r - l)` MONADAUX_DIFF_TAC
   `partition_regs l rpiv begrpiv r =
      if r <= l then st_ex_return l
      else
@@ -780,7 +780,7 @@ let partition_regs_ind = prove
 (* HOL4 Termination: WF_REL_TAC measure (\l,r. r-l); the test m <= l \/ r < m *)
 (* is necessary for the termination argument, but useless in practice       *)
 let sort_regs_def = cake_def_wf
-  `measure (\(l:num,r:num). r - l)` MONADAUX_DIFF_TAC
+  `MEASURE (\(l:num,r:num). r - l)` MONADAUX_DIFF_TAC
   `sort_regs l r =
      if r <= l + 1 then st_ex_return one
      else
@@ -805,7 +805,7 @@ let list_to_sorted_regs_def = cake_def
 
 (* HOL4 Termination: WF_REL_TAC measure (\n,last. last-n) *)
 let sorted_regs_to_list_def = cake_def_wf
-  `measure (\(n:num,last:num). last - n)` MONADAUX_DIFF_TAC
+  `MEASURE (\(n:num,last:num). last - n)` MONADAUX_DIFF_TAC
   `sorted_regs_to_list n last =
      if last <= n then st_ex_return []
      else
@@ -823,7 +823,7 @@ let swap_moves_def = cake_def
 
 (* HOL4 Termination: WF_REL_TAC measure (\l,piv,r. r-l) *)
 let partition_moves_def = cake_def_wf
-  `measure (\(l:num,piv:num,r:num). r - l)` MONADAUX_DIFF_TAC
+  `MEASURE (\(l:num,piv:num,r:num). r - l)` MONADAUX_DIFF_TAC
   `partition_moves l ppiv r =
      if r <= l then st_ex_return l
      else
@@ -842,7 +842,7 @@ let partition_moves_ind = prove
 
 (* HOL4: sort_moves; Termination: WF_REL_TAC measure (\l,r. r-l) *)
 let linear_scan_sort_moves_def = cake_def_wf
-  `measure (\(l:num,r:num). r - l)` MONADAUX_DIFF_TAC
+  `MEASURE (\(l:num,r:num). r - l)` MONADAUX_DIFF_TAC
   `linear_scan_sort_moves l r =
      if r <= l + 1 then st_ex_return one
      else
@@ -867,7 +867,7 @@ let list_to_sorted_moves_def = cake_def
 
 (* HOL4 Termination: WF_REL_TAC measure (\n,len. len-n) *)
 let sorted_moves_to_list_def = cake_def_wf
-  `measure (\(n:num,len:num). len - n)` MONADAUX_DIFF_TAC
+  `MEASURE (\(n:num,len:num). len - n)` MONADAUX_DIFF_TAC
   `sorted_moves_to_list n len =
      if len <= n then st_ex_return []
      else
@@ -907,10 +907,10 @@ let linear_reg_alloc_intervals_def = cake_def
         st_ex_bind (st_ex_return (fromAList (MAP (\r. (r,one)) stacklist)))
           (\stackset.
         st_ex_bind
-          (st_ex_return (map (FILTER (\r. ~(lookup r stackset = NONE))) forced_adjlist))
+          (st_ex_return (sptree_map (FILTER (\r. ~(lookup r stackset = NONE))) forced_adjlist))
           (\forced_adjlist'.
         st_ex_bind
-          (st_ex_return (map (FILTER (\r. ~(lookup r stackset = NONE))) moves_adjlist))
+          (st_ex_return (sptree_map (FILTER (\r. ~(lookup r stackset = NONE))) moves_adjlist))
           (\moves_adjlist'.
         st_ex_bind
           (st_ex_FOLDL (linear_reg_alloc_step_pass2 forced_adjlist' moves_adjlist')
@@ -921,7 +921,7 @@ let extract_coloration_def = cake_def
   `(extract_coloration invbij [] acc = st_ex_return acc) /\
    (extract_coloration invbij (CONS r rs) acc =
       st_ex_bind (colors_sub r) (\col.
-      extract_coloration invbij rs (insert (the 0 (lookup r invbij)) col acc)))`;;
+      extract_coloration invbij rs (insert (misc_the 0 (lookup r invbij)) col acc)))`;;
 
 let bijection_state_INFO = cake_record "bijection_state"
   ["bij","num spt";
@@ -977,7 +977,7 @@ let find_bijection_clash_tree_def = cake_def
 
 let apply_bijection_def = cake_def
   `apply_bijection bij (interval:int spt) =
-     foldi (\r i acc. insert (the 0 (lookup r bij)) i acc) 0 LN interval`;;
+     foldi (\r i acc. insert (misc_the 0 (lookup r bij)) i acc) 0 LN interval`;;
 
 (* HOL4 define_run with the array fields colors, int_beg, int_end,          *)
 (* sorted_regs, sorted_moves: each becomes a pair (size, initial element)   *)
@@ -1033,12 +1033,12 @@ let run_linear_reg_alloc_intervals_def = cake_def
 
 let apply_bij_on_clash_tree_def = cake_def
   `(apply_bij_on_clash_tree (Delta wr rd) bij =
-      Delta (MAP (\r. the 0 (lookup r bij)) wr) (MAP (\r. the 0 (lookup r bij)) rd)) /\
+      Delta (MAP (\r. misc_the 0 (lookup r bij)) wr) (MAP (\r. misc_the 0 (lookup r bij)) rd)) /\
    (apply_bij_on_clash_tree (reg_alloc_Set cutset) bij =
-      reg_alloc_Set (foldi (\r v acc. insert (the 0 (lookup r bij)) one acc) 0 LN cutset)) /\
+      reg_alloc_Set (foldi (\r v acc. insert (misc_the 0 (lookup r bij)) one acc) 0 LN cutset)) /\
    (apply_bij_on_clash_tree (reg_alloc_Branch optcutset ct1 ct2) bij =
       reg_alloc_Branch
-        (OPTION_MAP (foldi (\r v acc. insert (the 0 (lookup r bij)) one acc) 0 LN)
+        (OPTION_MAP (foldi (\r v acc. insert (misc_the 0 (lookup r bij)) one acc) 0 LN)
            optcutset)
         (apply_bij_on_clash_tree ct1 bij) (apply_bij_on_clash_tree ct2 bij)) /\
    (apply_bij_on_clash_tree (reg_alloc_Seq ct1 ct2) bij =
@@ -1050,14 +1050,14 @@ let linear_scan_reg_alloc_def = cake_def
      let ct' = apply_bij_on_clash_tree ct (bijection_state_bij bijstate) in
      let forced' =
        MAP (\r12. match r12 with
-                    (r1,r2) -> (the 0 (lookup r1 (bijection_state_bij bijstate)),
-                                the 0 (lookup r2 (bijection_state_bij bijstate))))
+                    (r1,r2) -> (misc_the 0 (lookup r1 (bijection_state_bij bijstate)),
+                                misc_the 0 (lookup r2 (bijection_state_bij bijstate))))
            forced in
      let moves' =
        MAP (\pr12. match pr12 with
                      (p,(r1,r2)) ->
-                       (p,(the 0 (lookup r1 (bijection_state_bij bijstate)),
-                           the 0 (lookup r2 (bijection_state_bij bijstate)))))
+                       (p,(misc_the 0 (lookup r1 (bijection_state_bij bijstate)),
+                           misc_the 0 (lookup r2 (bijection_state_bij bijstate)))))
            moves in
      let reglist_unsorted = MAP SND (toAList (bijection_state_bij bijstate)) in
      run_linear_reg_alloc_intervals ct' k forced' moves' reglist_unsorted

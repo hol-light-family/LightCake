@@ -234,7 +234,7 @@ let EL_get_ffi_index_MEM = prove
   REPEAT STRIP_TAC THEN
   MP_TAC(ISPECL [`ls:A list`; `s:A`; `0`] find_index_MEM) THEN
   ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
-  ASM_REWRITE_TAC[get_ffi_index_def; the_def; ADD_CLAUSES]);;
+  ASM_REWRITE_TAC[get_ffi_index_def; misc_the_def; ADD_CLAUSES]);;
 
 (* HOL4 line 3110 *)
 let has_io_name_EXISTS = prove
@@ -1577,7 +1577,7 @@ let lines_enc_with_nop_append = prove
 
 (* HOL4 line 4375 (the measure, the size of the sections, is given here)   *)
 let all_enc_with_nop_def = cake_def_wf
-  `measure (\(enc:(A)asm->byte list,labs:(num spt)spt,ffis:ffiname list,pos:num,
+  `MEASURE (\(enc:(A)asm->byte list,labs:(num spt)spt,ffis:ffiname list,pos:num,
               xs:((A)sec)list). list_size (sec_size (\x:A. 0)) xs)`
   TERM_TAC
   `(all_enc_with_nop (enc:(A)asm->byte list) labs ffis pos ([]:((A)sec)list) <=> T) /\

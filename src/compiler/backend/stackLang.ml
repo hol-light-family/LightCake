@@ -10,7 +10,7 @@
 (* Notes on the rendering:                                                   *)
 (* - The constructors of prog (stack_prog) that clash with other ILs carry   *)
 (*   the prefix stack_ (stack_Skip, stack_Inst, stack_Call, ...), as         *)
-(*   notes/naming/names.tsv says; the others keep their HOL4 names.          *)
+(*   doc/names.tsv says; the others keep their HOL4 names.                   *)
 (* - Words: n2w = word; 5 word is the HOL Light type 5 word.                 *)
 (* - The HOL4 Overloads are abbreviations only; their expansions are         *)
 (*   written out where used (see the comment after the datatypes).           *)

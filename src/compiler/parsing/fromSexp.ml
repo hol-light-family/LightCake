@@ -608,7 +608,7 @@ let FSEXPAUX_TC_TAC : tactic =
 
 
 let sexpid_def = cake_def_wf
-  `measure ((simpleSexp_sexp_size o SND):
+  `MEASURE ((simpleSexp_sexp_size o SND):
               (simpleSexp_sexp->A option)#simpleSexp_sexp->num)`
   FSEXPAUX_TC_TAC
   `sexpid (p:simpleSexp_sexp->A option) s =
@@ -627,7 +627,7 @@ let sexpid_def = cake_def_wf
 let sexpid_ind = cake_ind "sexpid";;
 
 let sexptype_def = cake_def_wf
-  `measure simpleSexp_sexp_size`
+  `MEASURE simpleSexp_sexp_size`
   FSEXPAUX_TC_TAC
   `sexptype s =
      OPTION_BIND (dstrip_sexp s)
@@ -656,7 +656,7 @@ let sexptype_ind = cake_ind "sexptype";;
 (* translator friendly version for bootstrapping *)
 
 let sexptype_alt_def = cake_def_wf
-  `inv_image (measure simpleSexp_sexp_size)
+  `inv_image (MEASURE simpleSexp_sexp_size)
      (\x:simpleSexp_sexp+simpleSexp_sexp. match x with INL y -> y | INR y -> y)`
   FSEXPAUX_TC_TAC
   `(sexptype_alt s =
@@ -766,7 +766,7 @@ let sexplit_def = cake_def
    Unclear if this sort of special-casing is ever likely to be helpful *)
 
 let sexppat_def = cake_def_wf
-  `measure simpleSexp_sexp_size`
+  `MEASURE simpleSexp_sexp_size`
   FSEXPAUX_TC_TAC
   `sexppat s =
      OPTION_CHOICE
@@ -807,7 +807,7 @@ let sexppat_ind = cake_ind "sexppat";;
 (* translator friendly version for bootstrapping *)
 
 let sexppat_alt_def = cake_def_wf
-  `inv_image (measure simpleSexp_sexp_size)
+  `inv_image (MEASURE simpleSexp_sexp_size)
      (\x:simpleSexp_sexp+simpleSexp_sexp. match x with INL y -> y | INR y -> y)`
   FSEXPAUX_TC_TAC
   `(sexppat_alt s =
@@ -1015,7 +1015,7 @@ let sexplocn_def = cake_def
                                  (sexplocpt (EL 1 ls))))`;;
 
 let sexpexp_def = cake_def_wf
-  `measure simpleSexp_sexp_size`
+  `MEASURE simpleSexp_sexp_size`
   FSEXPAUX_TC_TAC
   `sexpexp s =
      OPTION_BIND (dstrip_sexp s)
@@ -1067,7 +1067,7 @@ let sexpexp_ind = cake_ind "sexpexp";;
 (* translator friendly version for bootstrapping *)
 
 let sexpexp_alt_def = cake_def_wf
-  `inv_image (measure simpleSexp_sexp_size)
+  `inv_image (MEASURE simpleSexp_sexp_size)
      (\x:simpleSexp_sexp+simpleSexp_sexp+simpleSexp_sexp+simpleSexp_sexp+
          simpleSexp_sexp+simpleSexp_sexp.
         match x with
@@ -1339,7 +1339,7 @@ let sexptype_def_def = cake_def
              (sexplist (sexppair odestSEXSTR (sexplist sexptype)))))`;;
 
 let sexpdec_def = cake_def_wf
-  `measure simpleSexp_sexp_size`
+  `MEASURE simpleSexp_sexp_size`
   FSEXPAUX_TC_TAC
   `sexpdec s =
      OPTION_BIND (dstrip_sexp s)
@@ -1378,7 +1378,7 @@ let sexpdec_ind = cake_ind "sexpdec";;
 (* translator friendly version for bootstrapping *)
 
 let sexpdec_alt_def = cake_def_wf
-  `inv_image (measure simpleSexp_sexp_size)
+  `inv_image (MEASURE simpleSexp_sexp_size)
      (\x:simpleSexp_sexp+simpleSexp_sexp. match x with INL y -> y | INR y -> y)`
   FSEXPAUX_TC_TAC
   `(sexpdec_alt s =

@@ -611,7 +611,7 @@ let NSPAUX_nsSub_compute_exists = prove
    (MATCH_MP WF_REC (ISPEC
     `\x:M list#((M,N)id->V1->V2->bool)#(M,N,V1)namespace#(M,N,V2)namespace.
        namespace_size (\x:M. 0) (\x:N. 0) (\x:V1. 0) (FST(SND(SND x)))`
-    WF_measure))) THEN
+    WF_MEASURE))) THEN
   REWRITE_TAC[] THEN ANTS_TAC THENL
    [MAP_EVERY X_GEN_TAC
      [`f:M list#((M,N)id->V1->V2->bool)#(M,N,V1)namespace#
@@ -656,7 +656,7 @@ let nsSub_compute_ind = prove
          (M,N,V2)namespace->bool) x1 x2 x3 x4`
     (fun th -> MESON_TAC[th]) THEN
   MATCH_MP_TAC(REWRITE_RULE[WF_IND]
-    (ISPEC `namespace_size (\x:M. 0) (\x:N. 0) (\x:V1. 0)` WF_measure)) THEN
+    (ISPEC `namespace_size (\x:M. 0) (\x:N. 0) (\x:V1. 0)` WF_MEASURE)) THEN
   X_GEN_TAC `x3:(M,N,V1)namespace` THEN REWRITE_TAC[measure_THM] THEN
   DISCH_TAC THEN CASES_ON `x3:(M,N,V1)namespace` THEN
   X_GEN_TAC `x1:M list` THEN X_GEN_TAC `x2:(M,N)id->V1->V2->bool` THEN

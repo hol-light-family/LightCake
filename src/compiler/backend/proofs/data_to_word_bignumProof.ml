@@ -669,10 +669,10 @@ let get_real_addr_lemma = prove
 let memory_rel_lookup = prove
  (`!c be ts refs s st (m:A word->A word_loc) dm l1 l2 xs n x w.
      memory_rel c be ts refs s st m dm
-       (APPEND (join_env l1 (toAList (inter l2 (adjust_set l1)))) xs) /\
+       (APPEND (join_env l1 (toAList (sptree_inter l2 (adjust_set l1)))) xs) /\
      lookup n l1 = SOME x /\ lookup (adjust_var n) l2 = SOME w ==>
      memory_rel c be ts refs s st m dm
-       (CONS (x,w) (APPEND (join_env l1 (toAList (inter l2 (adjust_set l1)))) xs))`,
+       (CONS (x,w) (APPEND (join_env l1 (toAList (sptree_inter l2 (adjust_set l1)))) xs))`,
   REPEAT GEN_TAC THEN REWRITE_TAC[memory_rel_def] THEN STRIP_TAC THEN
   MAP_EVERY EXISTS_TAC [`heap:((A word_loc,data_to_word_memoryProof_tag#(A word_loc)list)
                                 heap_element)list`;
@@ -1163,7 +1163,7 @@ let cut_env_fromList_sing = prove
            SOME (insert 0 (wl_Loc l1 l2) LN)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[fromList_def; FOLDL] THEN
   CASE_REWRITE_TAC[] THEN ONCE_REWRITE_TAC[insert_def] THEN REWRITE_TAC[] THEN
-  REWRITE_TAC[data_cut_env_def; domain_def; inter_def; mk_wf_def] THEN
+  REWRITE_TAC[data_cut_env_def; domain_def; sptree_inter_def; mk_wf_def] THEN
   CASE_REWRITE_TAC[] THEN REWRITE_TAC[SUBSET_REFL; mk_wf_def]);;
 
 (* HOL4 line 797 *)
@@ -1638,12 +1638,12 @@ let BIGPAUX_cut_env_3 = prove
      data_cut_env (fromList [one;one;one]) env = SOME (fromList [x0;x1;x2])`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[data_cut_env_def; domain_fromList; LENGTH] THEN
   CONV_TAC NUM_REDUCE_CONV THEN
-  SUBGOAL_THEN `count 3 SUBSET domain (env:A spt)` (fun th -> REWRITE_TAC[th]) THENL
+  SUBGOAL_THEN `pred_set_count 3 SUBSET domain (env:A spt)` (fun th -> REWRITE_TAC[th]) THENL
    [REWRITE_TAC[SUBSET; IN_COUNT; domain_lookup] THEN X_GEN_TAC `n:num` THEN
     DISCH_THEN(REPEAT_TCL DISJ_CASES_THEN SUBST1_TAC o MATCH_MP (ARITH_RULE
       `n < 3 ==> n = 0 \/ n = 1 \/ n = 2`)) THEN ASM_MESON_TAC[]; ALL_TAC] THEN
   REWRITE_TAC[option_INJ] THEN
-  MP_TAC(ISPECL [`mk_wf (inter (env:A spt) (fromList [one;one;one]))`;
+  MP_TAC(ISPECL [`mk_wf (sptree_inter (env:A spt) (fromList [one;one;one]))`;
                  `fromList [x0;x1;x2:A]`] spt_eq_thm) THEN
   REWRITE_TAC[wf_mk_wf; wf_fromList] THEN DISCH_THEN SUBST1_TAC THEN
   X_GEN_TAC `n:num` THEN
@@ -1937,7 +1937,7 @@ let BIGPAUX_bignum_arg_payload = prove
     envs n i w x st curr ha hb N frame m dm.
      word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs
        (APPEND (join_env (data_state_locals s0)
-          (toAList (inter (wl_state_locals t) (adjust_set (data_state_locals s0)))))
+          (toAList (sptree_inter (wl_state_locals t) (adjust_set (data_state_locals s0)))))
           envs) /\
      data_get_var n (data_state_locals s0) = SOME (data_Number i) /\
      wl_get_var (adjust_var n) t = SOME (wl_Word w) /\
@@ -1957,7 +1957,7 @@ let BIGPAUX_bignum_arg_payload = prove
   FIRST_ASSUM(MP_TAC o MATCH_MP word_ml_inv_get_var_IMP o
     CONJ (ASSUME `word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs
        (APPEND (join_env (data_state_locals (s0:(C,FFI)data_state))
-          (toAList (inter (wl_state_locals (t:(A,C,FFI)wl_state))
+          (toAList (sptree_inter (wl_state_locals (t:(A,C,FFI)wl_state))
              (adjust_set (data_state_locals s0)))))
           envs)`) o
     CONJ (ASSUME `data_get_var n (data_state_locals (s0:(C,FFI)data_state)) =
@@ -4070,7 +4070,7 @@ let BIGPAUX_pop_locals = prove
        (SOME (wl_Result v vs), s4) /\
      wl_pop_env s4 = SOME s5 ==>
      ?e. domain (fromAList e) = domain y2 /\
-         wl_state_locals s5 = union (fromAList e) (fromAList (toAList y1))`,
+         wl_state_locals s5 = sptree_union (fromAList e) (fromAList (toAList y1))`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   FIRST_X_ASSUM(MP_TAC o MATCH_MP IL2AUX_evaluate_stack_swap o check (IL2AUX_is_eval_eq o concl)) THEN
   REWRITE_TAC[IL2AUX_ss_thms; IL2AUX_ss_norm_def] THEN
@@ -4155,11 +4155,11 @@ let BIGPAUX_lookup0_pop = prove
 let BIGPAUX_memory_rel_insert = prove
  (`!c be ts refs st (m:A word -> A word_loc) dm d l (w:A word_loc) x dest g xs.
      memory_rel c be ts refs 0 st m dm
-       (APPEND (APPEND (APPEND [(x,w)] (join_env d (toAList (inter l (adjust_set d))))) [g]) xs) ==>
+       (APPEND (APPEND (APPEND [(x,w)] (join_env d (toAList (sptree_inter l (adjust_set d))))) [g]) xs) ==>
      memory_rel c be ts refs 0 st m dm
        (APPEND (APPEND (APPEND []
           (join_env (insert dest x d)
-            (toAList (inter (insert (adjust_var dest) w (insert 1 w l))
+            (toAList (sptree_inter (insert (adjust_var dest) w (insert 1 w l))
                             (adjust_set (insert dest x d)))))) [g]) xs)`,
   REPEAT GEN_TAC THEN
   SIMP_TAC[inter_insert_ODD_adjust_set; ARITH_RULE `ODD 1`] THEN

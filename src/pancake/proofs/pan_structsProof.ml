@@ -4,7 +4,7 @@
 (* raw structs).                                                             *)
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
-(* - Names as notes/naming/names.tsv says (pan_structsProof_compile_correct, *)
+(* - Names as doc/names.tsv says (pan_structsProof_compile_correct,          *)
 (*   pan_structsProof_compile_exp_correct, ...); PPASS1AUX_ names are local  *)
 (*   helpers (lemmas and the case tactics of compile_correct).               *)
 (* - HOL4 paired lambdas are written with match; HOL4 r.f is RECTYPE_f r and *)
@@ -60,7 +60,7 @@ let PPASS1AUX_V_TC_TAC : tactic =
   RULE_ASSUM_TAC(REWRITE_RULE[SND]) THEN TERM_TAC;;
 
 let convert_v_def = cake_def_wf
-  `measure (pan_v_size (ARB:A->num))`
+  `MEASURE (pan_v_size (ARB:A->num))`
   PPASS1AUX_V_TC_TAC
   `(convert_v (pan_Val x:(A)pan_v) = pan_Val x) /\
    (convert_v (pan_RStruct xs) = pan_RStruct (MAP convert_v xs)) /\
@@ -71,7 +71,7 @@ let convert_v_def = cake_def_wf
 let convert_v_ind = cake_ind "convert_v";;
 
 let v_flds_ok_def = cake_def_wf
-  `measure (\p:(mlstring#struct_info)list#(A)pan_v. pan_v_size (ARB:A->num) (SND p))`
+  `MEASURE (\p:(mlstring#struct_info)list#(A)pan_v. pan_v_size (ARB:A->num) (SND p))`
   PPASS1AUX_V_TC_TAC
   `(v_flds_ok (_:(mlstring#struct_info)list) (pan_Val x:(A)pan_v) <=> T) /\
    (v_flds_ok ctxt (pan_RStruct vs) <=> ALL (v_flds_ok ctxt) vs) /\
@@ -379,7 +379,7 @@ let PPASS1AUX_SHAPE_N_TC_TAC : tactic =
   REWRITE_TAC(I_THM :: WF_REL_THMS) THEN TERM_TAC;;
 
 let compile_shape_n_def = cake_def_wf
-  `inv_image (measure I LEX measure shape_size)
+  `inv_image (MEASURE I LEX MEASURE shape_size)
      (\x:(stcname#((B#shape)list))list#num#shape.
         (LENGTH (FST x) - FST (SND x),SND (SND x)))`
   PPASS1AUX_SHAPE_N_TC_TAC

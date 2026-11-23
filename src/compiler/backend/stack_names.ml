@@ -64,7 +64,7 @@ let dest_find_name_def = cake_def
 (* the program)                                                              *)
 
 let stack_names_comp_def = cake_def_wf
-  `measure (\(f:num spt,p:(A)stack_prog). stack_prog_size (\x:A. 0) p)`
+  `MEASURE (\(f:num spt,p:(A)stack_prog). stack_prog_size (\x:A. 0) p)`
   TERM_TAC
   `stack_names_comp f (p:(A)stack_prog) =
      match p with

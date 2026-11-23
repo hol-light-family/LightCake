@@ -74,15 +74,15 @@ let PITRAUX_evaluate_ltree = prove
  (`!p (s:(A,B)pan_state) res t.
      pan_evaluate (p,s) = (res,t) /\ ~(res = SOME pan_TimeOut)
      ==> (?n. ltree (ffi_state_oracle (pan_state_ffi s),ffi_state_ffi_state (pan_state_ffi s))
-                    (mrec h_prog (h_prog (p,bst s))) =
-              ITER n Tau (itree_Ret (INR (res,bst t)))) /\
+                    (mrec h_prog (h_prog (p,pan_itreeSem_bst s))) =
+              ITER n Tau (itree_Ret (INR (res,pan_itreeSem_bst t)))) /\
          SND (comp_ffi (ffi_state_oracle (pan_state_ffi s),ffi_state_ffi_state (pan_state_ffi s))
-                       (mrec h_prog (h_prog (p,bst s)))) =
+                       (mrec h_prog (h_prog (p,pan_itreeSem_bst s)))) =
          ffi_state_ffi_state (pan_state_ffi t) /\
          llist_fromList (ffi_state_io_events (pan_state_ffi t)) =
          LAPPEND (llist_fromList (ffi_state_io_events (pan_state_ffi s)))
            (trace_prefix (ffi_state_oracle (pan_state_ffi s),ffi_state_ffi_state (pan_state_ffi s))
-              (mrec h_prog (h_prog (p,bst s))))`,
+              (mrec h_prog (h_prog (p,pan_itreeSem_bst s))))`,
   REC_IND_TAC pan_evaluate_ind THEN REPEAT CONJ_TAC THEN
    REPEAT(GEN_TAC ORELSE DISCH_THEN STRIP_ASSUME_TAC) THEN
    QPAT_X_ASSUM "pan_evaluate _ = _" (MP_TAC o ONCE_REWRITE_RULE[pan_evaluate_def]) THEN
@@ -95,7 +95,7 @@ let PITRAUX_evaluate_ltree = prove
    REPEAT(CASE_TAC THEN GVS[LAPPEND_NIL_2ND]) THEN
    TRY(QEXISTS_TAC "0" THEN SIMP[ITER] THEN NO_TAC) THEN
    PITRAUX_EVAL_STEP_TAC THEN PITRAUX_EVAL_STEP_TAC THEN PITRAUX_EVAL_STEP_TAC THEN
-   TRY(SIMP[bst_def; GSYM LAPPEND_fromList] THEN NO_TAC));;
+   TRY(SIMP[pan_itreeSem_bst_def; GSYM LAPPEND_fromList] THEN NO_TAC));;
 
 (* HOL4 proves nondiv_evaluate by induction on n and on the program; here  *)
 (* it follows from PITRAUX_evaluate_ltree for the state with clock k       *)
@@ -103,14 +103,14 @@ let PITRAUX_evaluate_ltree = prove
 let nondiv_evaluate = prove
  (`!(s:(A,B)pan_state) p n r k res t.
      ltree (ffi_state_oracle (pan_state_ffi s),ffi_state_ffi_state (pan_state_ffi s))
-           (mrec h_prog (h_prog (p,bst s))) = ITER n Tau (itree_Ret (INR r)) /\
+           (mrec h_prog (h_prog (p,pan_itreeSem_bst s))) = ITER n Tau (itree_Ret (INR r)) /\
      pan_evaluate (p,pan_state_clock_fupd (K k) s) = (res,t) /\
      ~(res = SOME pan_TimeOut)
-     ==> res = FST r /\ bst t = SND r /\
+     ==> res = FST r /\ pan_itreeSem_bst t = SND r /\
          ffi_state_ffi_state (pan_state_ffi t) =
          SND (comp_ffi (ffi_state_oracle (pan_state_ffi s),
                         ffi_state_ffi_state (pan_state_ffi s))
-                       (mrec h_prog (h_prog (p,bst s))))`,
+                       (mrec h_prog (h_prog (p,pan_itreeSem_bst s))))`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   MP_TAC(ISPECL [`p:(A)panLang_prog`; `pan_state_clock_fupd (K k) (s:(A,B)pan_state)`;
                  `res:((A)pan_result)option`; `t:(A,B)pan_state`]
@@ -120,16 +120,16 @@ let nondiv_evaluate = prove
 let nondiv_evaluate' = prove
  (`!(fs:(ffiname->B->byte list->byte list->(B)oracle_result)#B) (s:(A,B)pan_state)
     p n r k res t.
-     ltree fs (mrec h_prog (h_prog (p,bst s))) = ITER n Tau (itree_Ret (INR r)) /\
+     ltree fs (mrec h_prog (h_prog (p,pan_itreeSem_bst s))) = ITER n Tau (itree_Ret (INR r)) /\
      pan_evaluate (p,pan_state_clock_fupd (K k) s) = (res,t) /\
      ~(res = SOME pan_TimeOut) /\
      FST fs = ffi_state_oracle (pan_state_ffi s) /\
      SND fs = ffi_state_ffi_state (pan_state_ffi s)
-     ==> res = FST r /\ bst t = SND r /\
+     ==> res = FST r /\ pan_itreeSem_bst t = SND r /\
          ffi_state_ffi_state (pan_state_ffi t) =
          SND (comp_ffi (ffi_state_oracle (pan_state_ffi s),
                         ffi_state_ffi_state (pan_state_ffi s))
-                       (mrec h_prog (h_prog (p,bst s))))`,
+                       (mrec h_prog (h_prog (p,pan_itreeSem_bst s))))`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN MATCH_MP_TAC nondiv_evaluate THEN
   MAP_EVERY EXISTS_TAC [`n:num`; `k:num`] THEN
   ASM_MESON_TAC[PAIR]);;
@@ -138,8 +138,8 @@ let evaluate_imp_nondiv = prove
  (`!p (s:(A,B)pan_state) res t.
      pan_evaluate (p,s) = (res,t) /\ ~(res = SOME pan_TimeOut)
      ==> ?n. ltree (ffi_state_oracle (pan_state_ffi s),ffi_state_ffi_state (pan_state_ffi s))
-                   (mrec h_prog (h_prog (p,bst s))) =
-             ITER n Tau (itree_Ret (INR (res,bst t)))`,
+                   (mrec h_prog (h_prog (p,pan_itreeSem_bst s))) =
+             ITER n Tau (itree_Ret (INR (res,pan_itreeSem_bst t)))`,
   MESON_TAC[PITRAUX_evaluate_ltree]);;
 
 (* the remaining goals of an induction on n: the induction hypothesis      *)
@@ -212,10 +212,10 @@ let PITRAUX_IMP_RULES () =
   PITRAUX_NONDIV_RULES();;
 
 (* the induction hypothesis !m. m (<|<=) b ==> !p s res t. ltree (oracle, *)
-(* ffi state of s) (mrec h_prog (h_prog (p,bst s))) = ITER m Tau (Ret     *)
+(* ffi state of s) (mrec h_prog (h_prog (p,pan_itreeSem_bst s))) = ITER m Tau (Ret     *)
 (* (INR (res,t))) ==> C p s res t, applied to the assumption ltree _      *)
 (* (mrec h_prog (h_prog (q,_))) = ITER k Tau (Ret (INR (r,y))) about the *)
-(* program q, at the state x (by default the x of bst x in the           *)
+(* program q, at the state x (by default the x of pan_itreeSem_bst x in the           *)
 (* assumption; the other assumptions must turn the IH's premise into the *)
 (* assumption): adds C q x r y                                           *)
 
@@ -276,7 +276,7 @@ let PITRAUX_LEAF_IMP_TAC : tactic =
                           then MP_TAC(MATCH_MP evaluate_invariant_oracle eq) else failwith "")) THEN
   SIMP[] THEN REPEAT STRIP_TAC THEN TRY(QEXISTS_TAC "t0") THEN ASM_MESON_TAC[];;
 
-(* the itree assumption ltree _ (mrec h_prog (h_prog (C,bst s))) = _ back *)
+(* the itree assumption ltree _ (mrec h_prog (h_prog (C,pan_itreeSem_bst s))) = _ back *)
 (* into the goal (for PITRAUX_LEAF_IMP_TAC after splits)                  *)
 
 let PITRAUX_UNDISCH_ITREE_TAC : tactic =
@@ -388,7 +388,7 @@ let PITRAUX_IMP_WHILE_TAC =
     GVS[]];;
 
 (* PITRAUX_SUBRUN_TAC for the sub-run on a program other than q0, at the  *)
-(* state x of its bst x                                                    *)
+(* state x of its pan_itreeSem_bst x                                       *)
 
 let PITRAUX_SUBRUN_OTHER_TAC (q0:term) : tactic = fun (asl,w as g) ->
   let is_run th =
@@ -396,7 +396,7 @@ let PITRAUX_SUBRUN_OTHER_TAC (q0:term) : tactic = fun (asl,w as g) ->
     is_eq c &&
     (try let l = lhs c in fst(dest_const(fst(strip_comb l))) = "ltree" &&
          let q,st = dest_pair(rand(rand(rand l))) in
-         is_var q && not (q = q0) && fst(dest_const(rator st)) = "bst"
+         is_var q && not (q = q0) && fst(dest_const(rator st)) = "pan_itreeSem_bst"
      with Failure _ -> false) &&
     (try fst(dest_const(fst(strip_comb(rhs c)))) = "ITER" with Failure _ -> false) in
   let th = snd(find (fun (_,th) -> is_run th) asl) in
@@ -457,13 +457,13 @@ let PITRAUX_IMP_CALL_TAC (rw:thm) =
 let PITRAUX_ltree_imp_evaluate = prove
  (`!n p (s:(A,B)pan_state) res t.
      ltree (ffi_state_oracle (pan_state_ffi s),ffi_state_ffi_state (pan_state_ffi s))
-           (mrec h_prog (h_prog (p,bst s))) = ITER n Tau (itree_Ret (INR (res,t)))
+           (mrec h_prog (h_prog (p,pan_itreeSem_bst s))) = ITER n Tau (itree_Ret (INR (res,t)))
      ==> ?k t'. pan_evaluate (p,pan_state_clock_fupd (K k) s) = (res,t') /\
-                bst t' = t /\ ~(res = SOME pan_TimeOut) /\
+                pan_itreeSem_bst t' = t /\ ~(res = SOME pan_TimeOut) /\
                 ffi_state_ffi_state (pan_state_ffi t') =
                 SND (comp_ffi (ffi_state_oracle (pan_state_ffi s),
                                ffi_state_ffi_state (pan_state_ffi s))
-                              (mrec h_prog (h_prog (p,bst s)))) /\
+                              (mrec h_prog (h_prog (p,pan_itreeSem_bst s)))) /\
                 ffi_state_oracle (pan_state_ffi t') = ffi_state_oracle (pan_state_ffi s)`,
   MATCH_MP_TAC num_WF THEN X_GEN_TAC `n:num` THEN DISCH_TAC THEN
   GEN_TAC THEN GEN_TAC THEN QCASES_ON "p" THEN REPEAT GEN_TAC THENL
@@ -479,25 +479,25 @@ let PITRAUX_ltree_imp_evaluate = prove
 let nondiv_imp_evaluate = prove
  (`!(s:(A,B)pan_state) p n res t.
      ltree (ffi_state_oracle (pan_state_ffi s),ffi_state_ffi_state (pan_state_ffi s))
-           (mrec h_prog (h_prog (p,bst s))) = ITER n Tau (itree_Ret (INR (res,t)))
+           (mrec h_prog (h_prog (p,pan_itreeSem_bst s))) = ITER n Tau (itree_Ret (INR (res,t)))
      ==> ?k t'. pan_evaluate (p,pan_state_clock_fupd (K k) s) = (res,t') /\
-                bst t' = t /\ ~(res = SOME pan_TimeOut)`,
+                pan_itreeSem_bst t' = t /\ ~(res = SOME pan_TimeOut)`,
   MESON_TAC[PITRAUX_ltree_imp_evaluate]);;
 
 let nondiv_imp_evaluate' = prove
  (`!(fs:(ffiname->B->byte list->byte list->(B)oracle_result)#B) (s:(A,B)pan_state)
     p n res t.
-     ltree fs (mrec h_prog (h_prog (p,bst s))) = ITER n Tau (itree_Ret (INR (res,t))) /\
+     ltree fs (mrec h_prog (h_prog (p,pan_itreeSem_bst s))) = ITER n Tau (itree_Ret (INR (res,t))) /\
      FST fs = ffi_state_oracle (pan_state_ffi s) /\
      SND fs = ffi_state_ffi_state (pan_state_ffi s)
      ==> ?k t'. pan_evaluate (p,pan_state_clock_fupd (K k) s) = (res,t') /\
-                bst t' = t /\ ~(res = SOME pan_TimeOut)`,
+                pan_itreeSem_bst t' = t /\ ~(res = SOME pan_TimeOut)`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN MATCH_MP_TAC nondiv_imp_evaluate THEN
   QEXISTS_TAC "n" THEN ASM_MESON_TAC[PAIR]);;
 
 let div_imp_timeout = prove
  (`!(fs:(ffiname->B->byte list->byte list->(B)oracle_result)#B) (s:(A,B)pan_state) p.
-     pan_itreeSem_div fs (mrec h_prog (h_prog (p,bst s))) /\
+     pan_itreeSem_div fs (mrec h_prog (h_prog (p,pan_itreeSem_bst s))) /\
      FST fs = ffi_state_oracle (pan_state_ffi s) /\
      SND fs = ffi_state_ffi_state (pan_state_ffi s)
      ==> !k. ?t. pan_evaluate (p,pan_state_clock_fupd (K k) s) = (SOME pan_TimeOut,t)`,
@@ -523,19 +523,19 @@ let evaluate_nondiv_trace_eq = prove
          LAPPEND (llist_fromList (ffi_state_io_events (pan_state_ffi s)))
            (trace_prefix (ffi_state_oracle (pan_state_ffi s),
                           ffi_state_ffi_state (pan_state_ffi s))
-              (mrec h_prog (h_prog (p,bst s))))`,
+              (mrec h_prog (h_prog (p,pan_itreeSem_bst s))))`,
   MESON_TAC[PITRAUX_evaluate_ltree]);;
 
 let nondiv_timeout_add_clock = prove
  (`!(fs:(ffiname->B->byte list->byte list->(B)oracle_result)#B) (s:(A,B)pan_state)
     p t n r.
      pan_evaluate (p,s) = (SOME pan_TimeOut,t) /\
-     ltree fs (mrec h_prog (h_prog (p,bst s))) = ITER n Tau (itree_Ret r) /\
+     ltree fs (mrec h_prog (h_prog (p,pan_itreeSem_bst s))) = ITER n Tau (itree_Ret r) /\
      FST fs = ffi_state_oracle (pan_state_ffi s) /\
      SND fs = ffi_state_ffi_state (pan_state_ffi s)
      ==> ?k q t'. pan_evaluate (p,pan_state_clock_fupd (K (pan_state_clock s + k)) s) =
                   (q,t') /\
-                  r = INR (q,bst t') /\ ~(q = SOME pan_TimeOut) /\
+                  r = INR (q,pan_itreeSem_bst t') /\ ~(q = SOME pan_TimeOut) /\
                   ?l. ffi_state_io_events (pan_state_ffi t') =
                       APPEND (ffi_state_io_events (pan_state_ffi t)) l`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
@@ -653,7 +653,7 @@ let PITRAUX_evaluate_LPREFIX = prove
            (LAPPEND (llist_fromList (ffi_state_io_events (pan_state_ffi s)))
               (trace_prefix (ffi_state_oracle (pan_state_ffi s),
                              ffi_state_ffi_state (pan_state_ffi s))
-                 (mrec h_prog (h_prog (p,bst s)))))`,
+                 (mrec h_prog (h_prog (p,pan_itreeSem_bst s)))))`,
   REC_IND_TAC pan_evaluate_ind THEN REPEAT CONJ_TAC THEN
   REPEAT(GEN_TAC ORELSE DISCH_THEN STRIP_ASSUME_TAC) THEN
   (ASM_CASES_TAC `res = SOME (pan_TimeOut:(A)pan_result)` THENL
@@ -685,12 +685,12 @@ let timeout_div_LPREFIX = prove
      pan_evaluate (p,s) = (SOME pan_TimeOut,t) /\
      pan_itreeSem_div (ffi_state_oracle (pan_state_ffi s),
                        ffi_state_ffi_state (pan_state_ffi s))
-       (mrec h_prog (h_prog (p,bst s)))
+       (mrec h_prog (h_prog (p,pan_itreeSem_bst s)))
      ==> LPREFIX (llist_fromList (ffi_state_io_events (pan_state_ffi t)))
            (LAPPEND (llist_fromList (ffi_state_io_events (pan_state_ffi s)))
               (trace_prefix (ffi_state_oracle (pan_state_ffi s),
                              ffi_state_ffi_state (pan_state_ffi s))
-                 (mrec h_prog (h_prog (p,bst s)))))`,
+                 (mrec h_prog (h_prog (p,pan_itreeSem_bst s)))))`,
   MESON_TAC[PITRAUX_evaluate_LPREFIX]);;
 
 (* a monotone function on num that is bounded is eventually constant *)
@@ -764,9 +764,9 @@ let PITRAUX_eval_ffi_fupd = prove
      OPT_MMAP (pan_eval (pan_state_ffi_fupd (K ffi) s)) es = OPT_MMAP (pan_eval s) es`,
   REWRITE_TAC[GSYM eval_bst; GSYM opt_mmap_eval_bst] THEN
   SUBGOAL_THEN `!(s:(A,B)pan_state) (ffi:(B)ffi_state).
-                  bst (pan_state_ffi_fupd (K ffi) s) = bst s`
+                  pan_itreeSem_bst (pan_state_ffi_fupd (K ffi) s) = pan_itreeSem_bst s`
     (fun th -> REWRITE_TAC[th]) THEN
-  REWRITE_TAC[bst_def] THEN SIMP[]);;
+  REWRITE_TAC[pan_itreeSem_bst_def] THEN SIMP[]);;
 
 let PITRAUX_call_FFI_empty = prove
  (`!(st:(B)ffi_state) conf bytes.
@@ -879,11 +879,11 @@ let PITRAUX_ltree_FUNPOW_Ret = prove
                                 (ffi_outcome+byte list)+((A)pan_result)option#(A)bstate)itree)`,
   SIMP[ltree_FUNPOW_Tau; ltree_simps]);;
 
-(* a state with another ffi state, as an ext *)
+(* a state with another ffi state, as a pan_itreeSem_ext *)
 
 let PITRAUX_ffi_fupd_ext = prove
  (`!(t:(A,B)pan_state) (ffi:(B)ffi_state).
-     pan_state_ffi_fupd (K ffi) t = ext (bst t) (pan_state_clock t) ffi`,
+     pan_state_ffi_fupd (K ffi) t = pan_itreeSem_ext (pan_itreeSem_bst t) (pan_state_clock t) ffi`,
   REPEAT GEN_TAC THEN
   GEN_REWRITE_TAC (LAND_CONV o RAND_CONV) [GSYM(CONJUNCT1(SPEC_ALL ext_bst_id))] THEN
   REWRITE_TAC[ext_normalise]);;
@@ -904,13 +904,13 @@ let PITRAUX_ON_EVAL_TAC (f:thm->tactic) : tactic =
 let PITRAUX_mrec_FUNPOW_Ret_evaluate = prove
  (`!n p (s:(A)bstate) res t.
      mrec h_prog (h_prog (p,s)) = ITER n Tau (itree_Ret (INR (res,t)))
-     ==> ?k k'. (!ffi:(B)ffi_state. pan_evaluate (p,ext s k ffi) = (res,ext t k' ffi)) /\
+     ==> ?k k'. (!ffi:(B)ffi_state. pan_evaluate (p,pan_itreeSem_ext s k ffi) = (res,pan_itreeSem_ext t k' ffi)) /\
                 k' <= k /\ ~(res = SOME pan_TimeOut) /\
                 (!fe. ~(res = SOME (pan_FinalFFI fe)))`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN
   SUBGOAL_THEN `!fe. ~(res = SOME (pan_FinalFFI fe:(A)pan_result))` ASSUME_TAC THENL
    [ASM_MESON_TAC[PITRAUX_mrec_Ret_not_FinalFFI]; ALL_TAC] THEN
-  MP_TAC(ISPECL [`n:num`; `p:(A)panLang_prog`; `ext (s:(A)bstate) 0 (ARB:(B)ffi_state)`;
+  MP_TAC(ISPECL [`n:num`; `p:(A)panLang_prog`; `pan_itreeSem_ext (s:(A)bstate) 0 (ARB:(B)ffi_state)`;
                  `res:((A)pan_result)option`; `t:(A)bstate`] PITRAUX_ltree_imp_evaluate) THEN
   ASM_REWRITE_TAC[bst_ext_id; PITRAUX_ltree_FUNPOW_Ret] THEN
   DISCH_THEN(X_CHOOSE_THEN `k:num` (X_CHOOSE_THEN `t':(A,B)pan_state` STRIP_ASSUME_TAC)) THEN
@@ -920,7 +920,7 @@ let PITRAUX_mrec_FUNPOW_Ret_evaluate = prove
            LAPPEND_NIL_2ND; fromList_11] THEN
   DISCH_TAC THEN
   MP_TAC(ISPECL [`p:(A)panLang_prog`;
-                 `pan_state_clock_fupd (K k) (ext (s:(A)bstate) 0 (ARB:(B)ffi_state))`;
+                 `pan_state_clock_fupd (K k) (pan_itreeSem_ext (s:(A)bstate) 0 (ARB:(B)ffi_state))`;
                  `res:((A)pan_result)option`; `t':(A,B)pan_state`] PITRAUX_evaluate_ffi_indep) THEN
   SIMP[ext_normalise; ext_access; LE_REFL] THEN STRIP_TAC THEN
   MAP_EVERY EXISTS_TAC [`k:num`; `pan_state_clock (t':(A,B)pan_state)`] THEN
@@ -932,7 +932,7 @@ let mrec_Ret_evaluate = prove
  (`!p (s:(A)bstate) res t.
      mrec h_prog (h_prog (p,s)) = itree_Ret (INR (res,t))
      ==> ?k k'. !ffi:(B)ffi_state.
-           pan_evaluate (p,ext s k ffi) = (res,ext t k' ffi) /\
+           pan_evaluate (p,pan_itreeSem_ext s k ffi) = (res,pan_itreeSem_ext t k' ffi) /\
            ~(res = SOME pan_TimeOut) /\ (!fe. ~(res = SOME (pan_FinalFFI fe))) /\
            k' <= k`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN
@@ -950,7 +950,7 @@ let LFINITE_LAPPEND_EQ_NIL = prove
 let mrec_FUNPOW_Ret_evaluate = prove
  (`!n p (s:(A)bstate) res t.
      mrec h_prog (h_prog (p,s)) = ITER n Tau (itree_Ret (INR (res,t)))
-     ==> ?k k'. (!ffi:(B)ffi_state. pan_evaluate (p,ext s k ffi) = (res,ext t k' ffi)) /\
+     ==> ?k k'. (!ffi:(B)ffi_state. pan_evaluate (p,pan_itreeSem_ext s k ffi) = (res,pan_itreeSem_ext t k' ffi)) /\
                 k' <= k /\ ~(res = SOME pan_TimeOut) /\
                 (!fe. ~(res = SOME (pan_FinalFFI fe)))`,
   REWRITE_TAC[PITRAUX_mrec_FUNPOW_Ret_evaluate]);;
@@ -1031,7 +1031,7 @@ let PITRAUX_mrec_Vis_fail = prove
 
 let PITRAUX_itree_cases3 = prove
  (`!t:(A,E,R)itree.
-     t = spin \/ (?n r. t = ITER n Tau (itree_Ret r)) \/ (?n e k. t = ITER n Tau (Vis e k))`,
+     t = itree_spin \/ (?n r. t = ITER n Tau (itree_Ret r)) \/ (?n e k. t = ITER n Tau (Vis e k))`,
   GEN_TAC THEN
   MP_TAC(ISPECL [`t:(A,E,R)itree`; `itree_Ret:R->(A,E,R)itree`; `t:(A,E,R)itree`]
                 itree_bind_cases) THEN
@@ -1325,13 +1325,13 @@ let PITRAUX_ttrace_nil = prove
               !n. PITRAUX_ttrace (FST (fs:(ffiname->B->byte list->byte list->(B)oracle_result)#B),st) n
                     (Y:((ffi_outcome+byte list)+((A)pan_result)option#(A)bstate,ev,
                         (ffi_outcome+byte list)+((A)pan_result)option#(A)bstate)itree) = [])
-      ==> every ((=) LNIL) ll` MATCH_MP_TAC THENL
+      ==> llist_every ((=) LNIL) ll` MATCH_MP_TAC THENL
    [ALL_TAC;
     MAP_EVERY EXISTS_TAC [`SND (fs:(ffiname->B->byte list->byte list->(B)oracle_result)#B)`;
       `X:((ffi_outcome+byte list)+((A)pan_result)option#(A)bstate,ev,
           (ffi_outcome+byte list)+((A)pan_result)option#(A)bstate)itree`] THEN
     ASM_REWRITE_TAC[PAIR]] THEN
-  MATCH_MP_TAC every_coind THEN REPEAT GEN_TAC THEN
+  MATCH_MP_TAC llist_every_coind THEN REPEAT GEN_TAC THEN
   DISCH_THEN(X_CHOOSE_THEN `st:B` (X_CHOOSE_THEN
     `Y:((ffi_outcome+byte list)+((A)pan_result)option#(A)bstate,ev,
         (ffi_outcome+byte list)+((A)pan_result)option#(A)bstate)itree` STRIP_ASSUME_TAC)) THEN
@@ -1431,7 +1431,7 @@ let PITRAUX_ttrace_nonto = prove
      ==> !n. APPEND (ffi_state_io_events (pan_state_ffi s))
                (PITRAUX_ttrace (ffi_state_oracle (pan_state_ffi s),
                                 ffi_state_ffi_state (pan_state_ffi s)) n
-                  (mrec h_prog (h_prog (p,bst s))))
+                  (mrec h_prog (h_prog (p,pan_itreeSem_bst s))))
              <<= ffi_state_io_events (pan_state_ffi t)`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN GEN_TAC THEN
   FIRST_ASSUM(MP_TAC o MATCH_MP evaluate_nondiv_trace_eq) THEN
@@ -1469,14 +1469,6 @@ let PITRAUX_ttrace_bind_ret = prove
   ASM_REWRITE_TAC[REWRITE_RULE[ITER] (ISPEC `0` PITRAUX_ttrace_FUNPOW_Ret); APPEND_NIL] THEN
   FIRST_X_ASSUM(MP_TAC o MATCH_MP PITRAUX_ttrace_Ret) THEN ASM_MESON_TAC[]);;
 
-let PITRAUX_io_mono_SND = prove
- (`!q (x:(A,B)pan_state).
-     ffi_state_io_events (pan_state_ffi x) <<=
-     ffi_state_io_events (pan_state_ffi (SND (pan_evaluate (q,x))))`,
-  REPEAT GEN_TAC THEN MP_TAC(ISPEC `pan_evaluate (q,x:(A,B)pan_state)` PAIR_SURJECTIVE) THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
-  FIRST_X_ASSUM(MP_TAC o MATCH_MP pan_evaluate_io_events_mono) THEN REWRITE_TAC[]);;
-
 let PITRAUX_EXISTS_PAIR_SND = prove
  (`!(E:A#B) (Q:B->bool). (?r t. E = (r,t) /\ Q t) <=> Q (SND E)`,
   REPEAT GEN_TAC THEN EQ_TAC THENL
@@ -1489,7 +1481,7 @@ let PITRAUX_io_mono_SND2 = prove
      ffi_state_io_events (pan_state_ffi y) = ffi_state_io_events (pan_state_ffi x)
      ==> ffi_state_io_events (pan_state_ffi y) <<=
          ffi_state_io_events (pan_state_ffi (SND (pan_evaluate (q,x))))`,
-  MESON_TAC[PITRAUX_io_mono_SND]);;
+  MESON_TAC[PSEMAUX_io_events_mono_SND]);;
 
 (* the case split of PITRAUX_ttrace_bind for the n-step I/O of a bind in *)
 (* the goal                                                               *)
@@ -1545,8 +1537,8 @@ let PITRAUX_C_LEAF_TAC : tactic =
   SIMP[];;
 
 (* the backward simulation for the sub-run of the assumption ltree _      *)
-(* (mrec h_prog (h_prog (q0,bst s0))) = ITER m1 Tau (Ret rr): rr becomes  *)
-(* INR (q1,bst t1) for a run pan_evaluate (q0,clock k1 s0) = (q1,t1) that *)
+(* (mrec h_prog (h_prog (q0,pan_itreeSem_bst s0))) = ITER m1 Tau (Ret rr): rr becomes  *)
+(* INR (q1,pan_itreeSem_bst t1) for a run pan_evaluate (q0,clock k1 s0) = (q1,t1) that *)
 (* does not time out, whose I/O is that of s0 and the m1-step I/O         *)
 
 let PITRAUX_C_BACK_TAC : tactic = fun (asl,w as g) ->
@@ -1568,7 +1560,7 @@ let PITRAUX_C_BACK_TAC : tactic = fun (asl,w as g) ->
    DISCH_THEN(X_CHOOSE_THEN `k1:num` (X_CHOOSE_THEN `t1:(A,B)pan_state`
      (STRIP_ASSUME_TAC o CAKE_SIMP_RULE []))) THEN
    FIRST_X_ASSUM(SUBST_ALL_TAC o SYM o check (fun th' ->
-     try fst(dest_const(fst(strip_comb(lhs(concl th'))))) = "bst" with Failure _ -> false)) THEN
+     try fst(dest_const(fst(strip_comb(lhs(concl th'))))) = "pan_itreeSem_bst" with Failure _ -> false)) THEN
    PITRAUX_ON_EVAL_TAC (fun eq -> FIRST_ASSUM(MP_TAC o MATCH_MP evaluate_nondiv_trace_eq o
                                                CONJ eq)) THEN
    SIMP[] THEN
@@ -1735,7 +1727,7 @@ let PITRAUX_ttrace_evaluate = prove
              APPEND (ffi_state_io_events (pan_state_ffi s))
                (PITRAUX_ttrace (ffi_state_oracle (pan_state_ffi s),
                                 ffi_state_ffi_state (pan_state_ffi s)) n
-                  (mrec h_prog (h_prog (p,bst s))))
+                  (mrec h_prog (h_prog (p,pan_itreeSem_bst s))))
              <<= ffi_state_io_events (pan_state_ffi t)`,
   MATCH_MP_TAC num_WF THEN X_GEN_TAC `n:num` THEN DISCH_TAC THEN
   GEN_TAC THEN GEN_TAC THEN ASM_CASES_TAC `n = 0` THENL
@@ -1766,7 +1758,7 @@ let PITRAUX_no_io_ttrace_nil = prove
      pan_state_clock s = 0
      ==> !n. PITRAUX_ttrace (ffi_state_oracle (pan_state_ffi s),
                              ffi_state_ffi_state (pan_state_ffi s)) n
-               (mrec h_prog (h_prog (p,bst s))) = []`,
+               (mrec h_prog (h_prog (p,pan_itreeSem_bst s))) = []`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN X_GEN_TAC `n:num` THEN
   MP_TAC(ISPECL [`n:num`; `p:(A)panLang_prog`; `s:(A,B)pan_state`] PITRAUX_ttrace_evaluate) THEN
   DISCH_THEN(X_CHOOSE_THEN `k:num` (X_CHOOSE_THEN `r:((A)pan_result)option`
@@ -1784,7 +1776,7 @@ let PITRAUX_no_io_ttrace_nil = prove
 
 let mrec_Vis_no_trace_lemma = prove
  (`!p (s:(A,B)pan_state) n a g (fs:(ffiname->B->byte list->byte list->(B)oracle_result)#B) X.
-     mrec h_prog (h_prog (p,bst s)) = ITER n Tau (Vis a g) /\
+     mrec h_prog (h_prog (p,pan_itreeSem_bst s)) = ITER n Tau (Vis a g) /\
      (!k. ffi_state_io_events (pan_state_ffi s) =
           ffi_state_io_events (pan_state_ffi (SND (pan_evaluate
             (p,pan_state_clock_fupd (K (k + pan_state_clock s)) s))))) /\
@@ -1814,10 +1806,10 @@ let mrec_Vis_no_trace_lemma = prove
 
 let evaluate_mrec_FUNPOW_Ret_io_events = prove
  (`!p (s0:(A,B)pan_state) res t s k ffi.
-     pan_evaluate (p,s0) = (res,t) /\ s0 = ext s k ffi /\
+     pan_evaluate (p,s0) = (res,t) /\ s0 = pan_itreeSem_ext s k ffi /\
      ffi_state_io_events (pan_state_ffi t) = ffi_state_io_events ffi /\
      (!fe. ~(res = SOME (pan_FinalFFI fe))) /\ ~(res = SOME pan_TimeOut)
-     ==> ?n. mrec h_prog (h_prog (p,s)) = ITER n Tau (itree_Ret (INR (res,bst t)))`,
+     ==> ?n. mrec h_prog (h_prog (p,s)) = ITER n Tau (itree_Ret (INR (res,pan_itreeSem_bst t)))`,
   REPEAT GEN_TAC THEN
   DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC (CONJUNCTS_THEN2 SUBST_ALL_TAC STRIP_ASSUME_TAC)) THEN
   PITRAUX_ON_EVAL_TAC (fun eq -> FIRST_ASSUM(MP_TAC o MATCH_MP PITRAUX_evaluate_ltree o
@@ -1836,8 +1828,8 @@ let evaluate_mrec_FUNPOW_Ret = prove
  (`!p (s:(A,B)pan_state) res t.
      pan_evaluate (p,s) = (res,t) /\ pan_state_ffi t = pan_state_ffi s /\
      (!fe. ~(res = SOME (pan_FinalFFI fe))) /\ ~(res = SOME pan_TimeOut)
-     ==> ?n. mrec h_prog (h_prog (p,bst s)) =
-             ITER n Tau (itree_Ret (INR (res,bst t)))`,
+     ==> ?n. mrec h_prog (h_prog (p,pan_itreeSem_bst s)) =
+             ITER n Tau (itree_Ret (INR (res,pan_itreeSem_bst t)))`,
   REPEAT STRIP_TAC THEN MATCH_MP_TAC evaluate_mrec_FUNPOW_Ret_io_events THEN
   MAP_EVERY EXISTS_TAC [`s:(A,B)pan_state`; `pan_state_clock (s:(A,B)pan_state)`;
                         `pan_state_ffi (s:(A,B)pan_state)`] THEN
@@ -1857,14 +1849,14 @@ let PITRAUX_FAIL_INST_GOAL_TAC : tactic = fun (asl,w as g) ->
 
 let mrec_Vis_nondiv_lemma = prove
  (`!p (s:(A,B)pan_state) n a g (fs:(ffiname->B->byte list->byte list->(B)oracle_result)#B).
-     mrec h_prog (h_prog (p,bst s)) = ITER n Tau (Vis a g) /\
+     mrec h_prog (h_prog (p,pan_itreeSem_bst s)) = ITER n Tau (Vis a g) /\
      (!k. ffi_state_io_events (pan_state_ffi s) =
           ffi_state_io_events (pan_state_ffi (SND (pan_evaluate
             (p,pan_state_clock_fupd (K (k + pan_state_clock s)) s))))) /\
      FST fs = ffi_state_oracle (pan_state_ffi s) /\
      SND fs = ffi_state_ffi_state (pan_state_ffi s) /\
      pan_state_clock s = 0
-     ==> ~pan_itreeSem_div fs (mrec h_prog (h_prog (p,bst s)))`,
+     ==> ~pan_itreeSem_div fs (mrec h_prog (h_prog (p,pan_itreeSem_bst s)))`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   MP_TAC(ISPECL [`p:(A)panLang_prog`; `s:(A,B)pan_state`; `n:num`; `a:ev`;
                  `g:(ffi_outcome+byte list)+((A)pan_result)option#(A)bstate->
@@ -1886,14 +1878,14 @@ let mrec_Vis_nondiv_lemma = prove
 
 let div_no_trace_LNIL = prove
  (`!p (s:(A,B)pan_state) (fs:(ffiname->B->byte list->byte list->(B)oracle_result)#B).
-     pan_itreeSem_div fs (mrec h_prog (h_prog (p,bst s))) /\
+     pan_itreeSem_div fs (mrec h_prog (h_prog (p,pan_itreeSem_bst s))) /\
      (!k. ffi_state_io_events (pan_state_ffi s) =
           ffi_state_io_events (pan_state_ffi (SND (pan_evaluate
             (p,pan_state_clock_fupd (K (k + pan_state_clock s)) s))))) /\
      FST fs = ffi_state_oracle (pan_state_ffi s) /\
      SND fs = ffi_state_ffi_state (pan_state_ffi s) /\
      pan_state_clock s = 0
-     ==> trace_prefix fs (mrec h_prog (h_prog (p,bst s))) = LNIL`,
+     ==> trace_prefix fs (mrec h_prog (h_prog (p,pan_itreeSem_bst s))) = LNIL`,
   REPEAT STRIP_TAC THEN
   SUBGOAL_THEN `(fs:(ffiname->B->byte list->byte list->(B)oracle_result)#B) =
                 (ffi_state_oracle (pan_state_ffi (s:(A,B)pan_state)),
@@ -1914,11 +1906,11 @@ let bounded_trace_eq = prove
            ffi_state_io_events (pan_state_ffi (SND (pan_evaluate
              (p,pan_state_clock_fupd (K (k' + pan_state_clock s)) s))))) /\
      pan_itreeSem_div (ffi_state_oracle (pan_state_ffi s),ffi_state_ffi_state (pan_state_ffi s))
-       (mrec h_prog (h_prog (p,bst s)))
+       (mrec h_prog (h_prog (p,pan_itreeSem_bst s)))
      ==> LAPPEND (llist_fromList (ffi_state_io_events (pan_state_ffi s)))
            (trace_prefix (ffi_state_oracle (pan_state_ffi s),
                           ffi_state_ffi_state (pan_state_ffi s))
-              (mrec h_prog (h_prog (p,bst s)))) =
+              (mrec h_prog (h_prog (p,pan_itreeSem_bst s)))) =
          llist_fromList (ffi_state_io_events (pan_state_ffi (SND (pan_evaluate (p,s)))))`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   ABBREV_TAC `L = ffi_state_io_events (pan_state_ffi (SND (pan_evaluate (p,s:(A,B)pan_state))))` THEN
@@ -1929,7 +1921,7 @@ let bounded_trace_eq = prove
   SUBGOAL_THEN
    `!n. APPEND (ffi_state_io_events (pan_state_ffi (s:(A,B)pan_state)))
                (PITRAUX_ttrace (fs:(ffiname->B->byte list->byte list->(B)oracle_result)#B) n
-                  (mrec h_prog (h_prog (p,bst s)))) <<= L`
+                  (mrec h_prog (h_prog (p,pan_itreeSem_bst s)))) <<= L`
    ASSUME_TAC THENL
    [X_GEN_TAC `n:num` THEN
     MP_TAC(ISPECL [`n:num`; `p:(A)panLang_prog`; `s:(A,B)pan_state`] PITRAUX_ttrace_evaluate) THEN
@@ -1955,7 +1947,7 @@ let bounded_trace_eq = prove
       DISCH_THEN(SUBST1_TAC o SYM) THEN REWRITE_TAC[IS_PREFIX_REFL]];
     ALL_TAC] THEN
   MP_TAC(ISPECL [`\n. LENGTH (PITRAUX_ttrace (fs:(ffiname->B->byte list->byte list->(B)oracle_result)#B) n
-                          (mrec h_prog (h_prog (p,bst (s:(A,B)pan_state)))))`;
+                          (mrec h_prog (h_prog (p,pan_itreeSem_bst (s:(A,B)pan_state)))))`;
                  `LENGTH (L:io_event list)`] PITRAUX_MONO_BOUNDED_CONST) THEN
   REWRITE_TAC[] THEN ANTS_TAC THENL
    [CONJ_TAC THENL
@@ -1967,7 +1959,7 @@ let bounded_trace_eq = prove
     ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_TAC `n0:num`) THEN
   MP_TAC(ISPECL [`n0:num`; `fs:(ffiname->B->byte list->byte list->(B)oracle_result)#B`;
-                 `mrec h_prog (h_prog (p,bst (s:(A,B)pan_state)))`] PITRAUX_ttrace_split) THEN
+                 `mrec h_prog (h_prog (p,pan_itreeSem_bst (s:(A,B)pan_state)))`] PITRAUX_ttrace_split) THEN
   DISCH_THEN(X_CHOOSE_THEN `fs':(ffiname->B->byte list->byte list->(B)oracle_result)#B`
     (X_CHOOSE_THEN `Y:((ffi_outcome+byte list)+((A)pan_result)option#(A)bstate,ev,
           (ffi_outcome+byte list)+((A)pan_result)option#(A)bstate)itree` STRIP_ASSUME_TAC)) THEN
@@ -2045,13 +2037,6 @@ let itree_behaviour_def = cake_def
 
 (* helpers for evaluate_to_itree *)
 
-let PITRAUX_some_unique = prove
- (`!P (a:A). P a /\ (!x. P x ==> x = a) ==> (some) P = SOME a`,
-  REPEAT STRIP_TAC THEN REWRITE_TAC[some_DEF] THEN
-  COND_CASES_TAC THENL [ALL_TAC; ASM_MESON_TAC[]] THEN
-  AP_TERM_TAC THEN FIRST_X_ASSUM MATCH_MP_TAC THEN
-  CONV_TAC SELECT_CONV THEN ASM_MESON_TAC[]);;
-
 let PITRAUX_some_none = prove
  (`!P:A->bool. (!x. ~P x) ==> (some) P = NONE`,
   REWRITE_TAC[some_DEF] THEN MESON_TAC[]);;
@@ -2062,12 +2047,12 @@ let PITRAUX_fwd_clock = prove
  (`!prog (s:(A,B)pan_state) k r t.
      pan_evaluate (prog,pan_state_clock_fupd (K k) s) = (r,t) /\ ~(r = SOME pan_TimeOut)
      ==> (?n. ltree (ffi_state_oracle (pan_state_ffi s),ffi_state_ffi_state (pan_state_ffi s))
-                    (mrec h_prog (h_prog (prog,bst s))) =
-              ITER n Tau (itree_Ret (INR (r,bst t)))) /\
+                    (mrec h_prog (h_prog (prog,pan_itreeSem_bst s))) =
+              ITER n Tau (itree_Ret (INR (r,pan_itreeSem_bst t)))) /\
          llist_fromList (ffi_state_io_events (pan_state_ffi t)) =
          LAPPEND (llist_fromList (ffi_state_io_events (pan_state_ffi s)))
            (trace_prefix (ffi_state_oracle (pan_state_ffi s),ffi_state_ffi_state (pan_state_ffi s))
-              (mrec h_prog (h_prog (prog,bst s))))`,
+              (mrec h_prog (h_prog (prog,pan_itreeSem_bst s))))`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN
   FIRST_ASSUM(MP_TAC o MATCH_MP PITRAUX_evaluate_ltree) THEN SIMP[]);;
 
@@ -2095,7 +2080,7 @@ let PITRAUX_lub_trace = prove
                          (SND (pan_evaluate (prog,pan_state_clock_fupd (K k) s)))))) (:num)) =
          LAPPEND (llist_fromList (ffi_state_io_events (pan_state_ffi s)))
            (trace_prefix (ffi_state_oracle (pan_state_ffi s),ffi_state_ffi_state (pan_state_ffi s))
-              (mrec h_prog (h_prog (prog,bst s))))`,
+              (mrec h_prog (h_prog (prog,pan_itreeSem_bst s))))`,
   REPEAT STRIP_TAC THEN MATCH_MP_TAC EQ_SYM THEN
   MP_TAC(ISPECL [`prog:(A)panLang_prog`; `s:(A,B)pan_state`]
                 evaluate_io_events_lprefix_chain) THEN
@@ -2106,7 +2091,7 @@ let PITRAUX_lub_trace = prove
                   (SND (pan_evaluate (prog,pan_state_clock_fupd (K k) (s:(A,B)pan_state)))))))
           (LAPPEND (llist_fromList (ffi_state_io_events (pan_state_ffi s)))
              (trace_prefix (ffi_state_oracle (pan_state_ffi s),ffi_state_ffi_state (pan_state_ffi s))
-                (mrec h_prog (h_prog (prog,bst s)))))`
+                (mrec h_prog (h_prog (prog,pan_itreeSem_bst s)))))`
    ASSUME_TAC THENL
    [X_GEN_TAC `k:num` THEN
     MP_TAC(ISPECL [`prog:(A)panLang_prog`; `pan_state_clock_fupd (K k) (s:(A,B)pan_state)`;
@@ -2126,7 +2111,7 @@ let PITRAUX_lub_trace = prove
                   (SND (pan_evaluate (prog,pan_state_clock_fupd (K k) (s:(A,B)pan_state)))))` THEN
     EXISTS_TAC `LAPPEND (llist_fromList (ffi_state_io_events (pan_state_ffi (s:(A,B)pan_state))))
            (trace_prefix (ffi_state_oracle (pan_state_ffi s),ffi_state_ffi_state (pan_state_ffi s))
-              (mrec h_prog (h_prog (prog,bst s))))` THEN
+              (mrec h_prog (h_prog (prog,pan_itreeSem_bst s))))` THEN
     ASM_REWRITE_TAC[];
     ALL_TAC] THEN
   FIRST_X_ASSUM(X_CHOOSE_TAC `n:num` o REWRITE_RULE[NOT_FORALL_THM; NOT_EXISTS_THM]) THEN
@@ -2198,7 +2183,7 @@ let evaluate_to_itree = prove
  (`!prog (s:(A,B)pan_state).
      evaluate_behaviour (prog,s) =
      itree_behaviour (ffi_state_io_events (pan_state_ffi s))
-       (ffi_state_oracle (pan_state_ffi s),ffi_state_ffi_state (pan_state_ffi s)) (prog,bst s)`,
+       (ffi_state_oracle (pan_state_ffi s),ffi_state_ffi_state (pan_state_ffi s)) (prog,pan_itreeSem_bst s)`,
   REPEAT GEN_TAC THEN
   REWRITE_TAC[evaluate_behaviour_def; itree_behaviour_def; trace_prefix0_eq_trace_prefix;
               LET_DEF; LET_END_DEF] THEN
@@ -2249,12 +2234,12 @@ let evaluate_to_itree = prove
     ALL_TAC] THEN
   PITRAUX_SOME_SUBGOAL_TAC `SOME (r:((A)pan_result)option)`
     (fun t -> type_of t = `:(((A)pan_result)option)option`) THENL
-   [MATCH_MP_TAC PITRAUX_some_unique THEN BETA_TAC THEN CONJ_TAC THENL
+   [MATCH_MP_TAC BASICAUX_some_unique THEN BETA_TAC THEN CONJ_TAC THENL
      [ASM_MESON_TAC[];
       REPEAT STRIP_TAC THEN
       UNDISCH_TAC `ltree (ffi_state_oracle (pan_state_ffi (s:(A,B)pan_state)),ffi_state_ffi_state (pan_state_ffi s))
-                    (mrec h_prog (h_prog (prog,bst s))) =
-                  ITER n Tau (itree_Ret (INR (r,bst (t:(A,B)pan_state))))` THEN
+                    (mrec h_prog (h_prog (prog,pan_itreeSem_bst s))) =
+                  ITER n Tau (itree_Ret (INR (r,pan_itreeSem_bst (t:(A,B)pan_state))))` THEN
       ASM_REWRITE_TAC[FUNPOW_Tau_Ret_eq_simp; injectivity "sum"; PAIR_EQ] THEN MESON_TAC[]];
     ALL_TAC] THEN
   FIRST_ASSUM(MP_TAC o MATCH_MP PITRAUX_toList_LAPPEND o check (fun th ->
@@ -2289,7 +2274,7 @@ let evaluate_to_itree = prove
           mk_comb(mk_comb(`Terminate`,out),
                   `ffi_state_io_events (pan_state_ffi (t:(A,B)pan_state))`)))
           (fun t -> type_of t = `:behaviour option`)) THENL
-       [MATCH_MP_TAC PITRAUX_some_unique THEN BETA_TAC THEN CONJ_TAC THENL
+       [MATCH_MP_TAC BASICAUX_some_unique THEN BETA_TAC THEN CONJ_TAC THENL
          [MAP_EVERY EXISTS_TAC [`k:num`; `t:(A,B)pan_state`] THEN ASM_REWRITE_TAC[] THEN SIMP[];
           REPEAT STRIP_TAC THEN
           FIRST_X_ASSUM(MP_TAC o SPECL [`k':num`; `r':((A)pan_result)option`; `t':(A,B)pan_state`] o

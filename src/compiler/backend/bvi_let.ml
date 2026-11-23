@@ -95,7 +95,7 @@ let BVIPAUX_LET_TC_TAC : tactic =
 (* the definition with the lets l and k written out *)
 
 let BVIPAUX_LET_compile_def0 = sem1aux_def_wf
-  `measure (\p:num list # num # bvi_exp list. list_size bvi_exp_size (SND (SND p)))`
+  `MEASURE (\p:num list # num # bvi_exp list. list_size bvi_exp_size (SND (SND p)))`
   BVIPAUX_LET_TC_TAC
   `(bvi_let_compile env d [] = []) /\
    (bvi_let_compile env d (CONS x (CONS y xs)) =
@@ -166,7 +166,7 @@ let bvi_let_compile_def =
 (* the mutual definition with the lets l and k written out *)
 
 let BVIPAUX_LET_compile_sing_def0 = sem1aux_def_wf
-  `measure (\x:(num list # num # bvi_exp) + (num list # num # bvi_exp list).
+  `MEASURE (\x:(num list # num # bvi_exp) + (num list # num # bvi_exp list).
               sum_CASE x (\p. bvi_exp_size (SND (SND p)))
                          (\p. list_size bvi_exp_size (SND (SND p))))`
   BVIPAUX_LET_TC_TAC

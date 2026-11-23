@@ -174,7 +174,7 @@ let num_from_hex_string_alt_def = cake_def
   `num_from_hex_string_alt = s2n 16 unhex_alt`;;
 
 let next_sym_alt_def = cake_def_wf
-  `measure ((LENGTH:string->num) o (FST:string#locn->string))`
+  `MEASURE ((LENGTH:string->num) o (FST:string#locn->string))`
   (REWRITE_TAC[measure_THM; o_THM] THEN REPEAT STRIP_TAC THEN GVS[] THEN
    TRY (FIRST_X_ASSUM (MP_TAC o SEM2AUX_MATCH_EITHER skip_comment_thm)) THEN
    CASES_ON `str:string` THEN GVS[isPREFIX] THEN ASM_ARITH_TAC)
@@ -338,7 +338,7 @@ let next_sym_eq = prove
 (* HOL4: lex_aux (names.tsv: lexer_impl_lex_aux) *)
 
 let lexer_impl_lex_aux_def = cake_def_wf
-  `measure ((LENGTH:string->num) o (FST:string#locn->string) o
+  `MEASURE ((LENGTH:string->num) o (FST:string#locn->string) o
             (SND:num#string#locn->string#locn) o
             (SND:(token#locs)list#num#string#locn->num#string#locn))`
   (REWRITE_TAC[measure_THM; o_THM; FST; SND] THEN REPEAT STRIP_TAC THEN GVS[] THEN
@@ -408,7 +408,7 @@ let lex_until_toplevel_semicolon_LESS = prove
 (* ------------------------------------------------------------------------- *)
 
 let lex_aux_alt_def = cake_def_wf
-  `measure ((LENGTH:string->num) o (FST:string#locn->string) o
+  `MEASURE ((LENGTH:string->num) o (FST:string#locn->string) o
             (SND:num#string#locn->string#locn) o
             (SND:(lexer_fun_symbol#locs)list#num#string#locn->num#string#locn))`
   (REWRITE_TAC[measure_THM; o_THM; FST; SND] THEN REPEAT STRIP_TAC THEN GVS[] THEN
@@ -580,7 +580,7 @@ let lex_until_top_semicolon_alt_thm = prove
               lex_aux_alt_thm]);;
 
 let lex_impl_all_def = cake_def_wf
-  `measure ((LENGTH:string->num) o (FST:string#locn->string))`
+  `MEASURE ((LENGTH:string->num) o (FST:string#locn->string))`
   (REWRITE_TAC[measure_THM; o_THM] THEN REPEAT STRIP_TAC THEN GVS[] THEN
    FIRST_X_ASSUM (MP_TAC o SEM2AUX_MATCH_EITHER lex_until_toplevel_semicolon_LESS) THEN
    SIMP[])
@@ -629,7 +629,7 @@ let lex_aux_tokens_LESS = prove
   LEX2AUX_LESS_LEAF_TAC);;
 
 let lex_impl_all_tokens_def = cake_def_wf
-  `measure (LENGTH:(token#A)list->num)`
+  `MEASURE (LENGTH:(token#A)list->num)`
   (REWRITE_TAC[measure_THM] THEN REPEAT STRIP_TAC THEN
    GVS[lex_until_toplevel_semicolon_tokens_def] THEN
    FIRST_X_ASSUM (MP_TAC o SEM2AUX_MATCH_EITHER lex_aux_tokens_LESS) THEN SIMP[])

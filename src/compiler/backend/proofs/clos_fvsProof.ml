@@ -674,13 +674,13 @@ let CLOSP1AUX_is_app name tm =
   try fst(dest_const(fst(strip_comb tm))) = name with Failure _ -> false;;
 
 let CLOSP1AUX_rfs_fv = prove
- (`(!fvs e. every_Fn_vs_NONE [e] ==> !v. fv1 v (remove_fvs_sing fvs e) ==> v < fvs) /\
-   (!fvs es. every_Fn_vs_NONE es ==> !v. fv v (remove_fvs_list fvs es) ==> v < fvs) /\
+ (`(!fvs e. every_Fn_vs_NONE [e] ==> !v. clos_fv1 v (remove_fvs_sing fvs e) ==> v < fvs) /\
+   (!fvs es. every_Fn_vs_NONE es ==> !v. clos_fv v (remove_fvs_list fvs es) ==> v < fvs) /\
    (!m fvs fns. every_Fn_vs_NONE (MAP SND fns) ==>
-                !v n x. MEM (n,x) (remove_fvs_let m fvs fns) /\ fv1 v x ==> v < n + m + fvs)`,
+                !v n x. MEM (n,x) (remove_fvs_let m fvs fns) /\ clos_fv1 v x ==> v < n + m + fvs)`,
   MATCH_MP_TAC remove_fvs_sing_ind THEN REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
   REWRITE_TAC[remove_fvs_sing_def; LET_DEF; LET_END_DEF] THEN
-  REWRITE_TAC[fv1_thm; fv_def; every_Fn_vs_NONE_def; MEM; fv_cons; MAP;
+  REWRITE_TAC[fv1_thm; clos_fv_def; every_Fn_vs_NONE_def; MEM; fv_cons; MAP;
               CLOSP1AUX_IS_NONE_EQ; CLOSP1AUX_LENGTH_remove_fvs_let; GSYM EX_MEM;
               EXISTS_PAIR_THM; PAIR_EQ] THEN
   REPEAT STRIP_TAC THEN RVEQ_TAC THEN CASE_REWRITE_TAC[] THEN
@@ -692,11 +692,11 @@ let CLOSP1AUX_rfs_fv = prove
     else NO_TAC)) THEN
   RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN
   TRY(FIRST_X_ASSUM(MP_TAC o check (fun th -> can (find_term is_cond) (concl th))) THEN
-      COND_CASES_TAC THEN REWRITE_TAC[fv1_thm; fv_def] THEN ASM_ARITH_TAC) THEN
+      COND_CASES_TAC THEN REWRITE_TAC[fv1_thm; clos_fv_def] THEN ASM_ARITH_TAC) THEN
   CLOSPROPSAUX_RES_TAC THEN TRY ASM_ARITH_TAC);;
 
 let fv_max_remove_fvs = prove
- (`!fvs xs. every_Fn_vs_NONE xs ==> (!v. fv v (remove_fvs fvs xs) ==> v < fvs)`,
+ (`!fvs xs. every_Fn_vs_NONE xs ==> (!v. clos_fv v (remove_fvs fvs xs) ==> v < fvs)`,
   REWRITE_TAC[CLOSP1AUX_remove_fvs_list] THEN MESON_TAC[CLOSP1AUX_rfs_fv]);;
 
 let CLOSP1AUX_rfs_every_Fn = prove

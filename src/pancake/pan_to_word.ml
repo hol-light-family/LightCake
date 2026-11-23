@@ -3,7 +3,7 @@
 (* Compiler from pan to word.                                                *)
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
-(* - Names as notes/naming/names.tsv says: compile_prog is                  *)
+(* - Names as doc/names.tsv says: compile_prog is                           *)
 (*   pan_to_word_compile_prog; the passes are pan_simp_compile_prog,         *)
 (*   pan_structs_compile_top, pan_globals_compile_top,                       *)
 (*   pan_to_crep_compile_prog, crep_to_loop_compile_prog and                 *)

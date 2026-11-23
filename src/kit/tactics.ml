@@ -310,19 +310,20 @@ let kit_irule_plain th : tactic =
      if is_exists w then ALL_TAC gl else REPEAT CONJ_TAC gl);;
 
 (* !xs. a1 ==> !ys. a2 ==> .. ==> c  as  !xs ys .. a1 /\ a2 /\ .. ==> c, *)
-(* for at least two antecedents (else failure)                             *)
+(* for at least two antecedents, or one followed by quantifiers              *)
+(* (!xs. a ==> !ys. c as !xs ys. a ==> c, since 2026-11-22); else failure    *)
 let kit_uncurry_rule th =
   let th1 = GEN_ALL th in
-  let rec strip th avoid vs ants =
+  let rec strip th avoid vs ants late =
     let c = concl th in
     if is_forall c then
       let v = fst(dest_forall c) in
       let v' = if mem v avoid then variant avoid v else v in
-      strip (SPEC v' th) (v'::avoid) (vs @ [v']) ants
-    else if is_imp c then strip (UNDISCH th) avoid vs (ants @ [fst(dest_imp c)])
-    else th,vs,ants in
-  let thc,vs,ants = strip th1 (thm_frees th1) [] [] in
-  if length ants < 2 then failwith "kit_uncurry_rule" else
+      strip (SPEC v' th) (v'::avoid) (vs @ [v']) ants (late || ants <> [])
+    else if is_imp c then strip (UNDISCH th) avoid vs (ants @ [fst(dest_imp c)]) late
+    else th,vs,ants,late in
+  let thc,vs,ants,late = strip th1 (thm_frees th1) [] [] false in
+  if length ants < 2 && not (late && ants <> []) then failwith "kit_uncurry_rule" else
   let ant = list_mk_conj ants in
   let parts = kit_conj_split_n (length ants) (ASSUME ant) in
   GENL vs (DISCH ant (itlist PROVE_HYP parts thc));;
@@ -982,19 +983,189 @@ let SUFF_TAC (t:term) : tactic = fun (asl,w) ->
 (*                    and SUFF_TAC with the term parsed in the goal context. *)
 (* ------------------------------------------------------------------------- *)
 
+(* ------------------------------------------------------------------------- *)
+(* Parsing the strings of the q-tactics (since 2026-11-22).                  *)
+(*                                                                           *)
+(* OCaml string literals: a backslash followed by a space is a space, and a  *)
+(* backslash at the end of a line continues the string on the next line      *)
+(* (dropping the leading blanks there), so a conjunction a /\ b written      *)
+(* with a space or a line end after /\ reaches the kit as a / b or a /b.     *)
+(* The parser then reads real division, and the typechecker fails with a     *)
+(* message that does not point there (= has type A->A->bool, or find, HOL    *)
+(* Light's message for a type error at an overloaded symbol such as /).  So  *)
+(* a string with a lone / (a token / or a symbol token starting with /,      *)
+(* other than /\) is read first with /\ in its place, then as it is; a       *)
+(* warning names the string when the first reading is used.  (Real           *)
+(* division in a q-string: real_div x y.)                                    *)
+(*                                                                           *)
+(* The free variables of the goal type the names of the string, as HOL4's    *)
+(* parse_in_context does.  A goal can have two free variables of one name    *)
+(* and different types (case splits name new variables after old ones of     *)
+(* other types); a name then gets the type of the first in kit_goal_frees    *)
+(* (newest assumption first, the goal last).  When the string does not       *)
+(* typecheck that way, the other choices for such names are tried; for a     *)
+(* pattern (QPAT_X_ASSUM, RENAME1, ...), names whose goal type conflicts     *)
+(* with the pattern are then read as pattern variables.  A string that       *)
+(* typechecks at once is read exactly as before.  The failure message        *)
+(* gives hints (lone /, OCaml escapes such as \n in a lambda, names with     *)
+(* several types in the goal).                                               *)
+(* ------------------------------------------------------------------------- *)
+
+let kit_q_is_slash (t:lexcode) =
+  match t with
+    Ident s -> String.length s >= 1 && s.[0] = '/' && s <> "/\\" &&
+               (s = "/" || not (exists (fun (n,_) -> n = s) (infixes())))
+  | _ -> false;;
+
+(* the tokens with each lone / (or /-prefixed symbol token) read as /\       *)
+let kit_q_unslash (toks:lexcode list) : lexcode list option =
+  if not (exists kit_q_is_slash toks) then None else
+  Some (flat (map (fun t ->
+           match t with
+             Ident s when kit_q_is_slash t ->
+               Ident "/\\" :: (if String.length s = 1 then []
+                               else lex (explode (String.sub s 1 (String.length s - 1))))
+           | _ -> [t]) toks));;
+
+(* hints for a failure message                                               *)
+let kit_q_hints (s:string) (venv:(string*hol_type) list) (toks:lexcode list) (msg:string) =
+  let n = String.length msg in
+  let rec has_sub i = i + 6 <= n && (String.sub msg i 6 = "):find" || has_sub (i + 1)) in
+  let h1 = if has_sub 0
+           then [" (find: HOL Light's message for a type error at an overloaded symbol)"]
+           else [] in
+  let h2 = if exists kit_q_is_slash toks
+           then [" (the string has a lone /: in an OCaml string /\\ before a space or " ^
+                 "a line end loses its backslash; write /\\\\)"]
+           else [] in
+  let ctrl c = c = '\n' || c = '\t' || c = '\b' || c = '\r' in
+  let lambda_after i =
+    (* a control character followed by names and a dot: \n. or \t x. *)
+    let j = ref (i + 1) in
+    while !j < String.length s && (s.[!j] = ' ' || isalnum (String.make 1 s.[!j])) do incr j done;
+    !j < String.length s && s.[!j] = '.' in
+  let h3 = if exists (fun i -> ctrl s.[i] && lambda_after i) (0--(String.length s - 1))
+           then [" (an OCaml escape such as \\n, \\t, \\b or \\r in the string, " ^
+                 "e.g. a lambda \\n.: write \\\\n)"]
+           else [] in
+  let names = setify (mapfilter (fun t -> match t with Ident x -> x | _ -> fail()) toks) in
+  let amb = filter (fun x -> length (filter (fun (m,_) -> m = x) venv) > 1) names in
+  let h4 = map (fun x -> " (the goal has free variables " ^ x ^ " of types " ^
+                  String.concat ", " (map (fun (_,ty) -> string_of_type ty)
+                                         (filter (fun (m,_) -> m = x) venv)) ^ ")") amb in
+  msg ^ String.concat "" (h1 @ h2 @ h3 @ h4);;
+
+(* a match in a q-string is compiled into case constants, as cake_def and    *)
+(* CASE_TERM do (the goals have case constants); set in pmatch.ml            *)
+let kit_q_compile_matches = ref (fun (t:term) -> t);;
+
+let kit_has_match (tm:term) =
+  can (find_term (fun t -> is_const t && fst(dest_const t) = "_MATCH")) tm;;
+
+(* one reading: the tokens typechecked with the variables venv (name, type)  *)
+(* typed, as a term of type ty (if given); quiet: type invention without     *)
+(* error or warning (the patterns); want_bool: the term must be a boolean    *)
+(* or of a type variable (patterns of assumptions); a syntax error is a      *)
+(* failure here (HOL Light's parser raises Noparse)                          *)
+let kit_q_attempt (s:string) (venv:(string*hol_type) list) (ty:hol_type option)
+                  (quiet:bool) (want_bool:bool) (toks:lexcode list) : term =
+  let ptm,l = try parse_preterm toks with Noparse -> failwith "syntax error (Noparse)" in
+  if l <> [] then failwith "unparsed input" else
+  let pv = map (fun (n,t) -> n,pretype_of_type t) venv in
+  let ptm' = match ty with Some t -> Typing(ptm,pretype_of_type t) | None -> ptm in
+  let tm = if quiet then with_quiet_type_invention (fun p -> cake_preterm_to_term s pv p) ptm'
+           else cake_preterm_to_term s pv ptm' in
+  let tm = if kit_has_match tm then !kit_q_compile_matches tm else tm in
+  if want_bool && not (type_of tm = bool_ty) && not (is_vartype (type_of tm))
+  then failwith "not a boolean term" else tm;;
+
+let kit_q_max_choices = ref 64;;
+
+(* the readings of the string s in the context of the variables vars (see    *)
+(* above), in order: for each token list (with /\ for a lone / first, then   *)
+(* as written), the goal's types, then the other types of names that have    *)
+(* several in the goal, then (patterns only) with the names whose goal type  *)
+(* conflicts as pattern variables.  Each is a thunk (nothing is parsed       *)
+(* before it is needed), with a note: the first reading has none             *)
+let kit_q_readings (vars:term list) (ty:hol_type option) (quiet:bool) (want_bool:bool)
+                   (s:string) : lexcode list * (string * (unit -> term)) list =
+  let toks = flat (map cake_wild_tokens (lex (explode s))) in
+  let venv0 = map dest_var vars in
+  let attempt venv toks () = kit_q_attempt s venv ty quiet want_bool toks in
+  let names = setify (mapfilter (fun t -> match t with Ident x -> x | _ -> fail()) toks) in
+  let amb = filter (fun x -> length (filter (fun (m,_) -> m = x) venv0) > 1) names in
+  let rest = filter (fun (m,_) -> not (mem m amb)) venv0 in
+  let alts = map (fun x -> filter (fun (m,_) -> m = x) venv0) amb in
+  let combos = itlist (fun alt acc -> flat (map (fun e -> map (fun c -> e :: c) acc) alt))
+                      alts [[]] in
+  let combos = if length combos > !kit_q_max_choices
+               then fst (chop_list !kit_q_max_choices combos) else combos in
+  let choices = map (fun c -> c @ rest) (tl combos) in
+  let drop_conflicts first_ok toks () =
+    if !first_ok then failwith "kit_q_readings: no conflict" else
+    let ctx = filter (fun x -> exists (fun (m,_) -> m = x) venv0) names in
+    let without d = filter (fun (m,_) -> not (mem m d)) venv0 in
+    let ok d = can (attempt (without d) toks) () in
+    let rec grow d l = match l with
+        [] -> None
+      | x::r -> let d' = d @ [x] in if ok d' then Some d' else grow d' r in
+    match grow [] ctx with
+      None -> failwith "kit_q_readings"
+    | Some d ->
+        let d' = itlist (fun x d -> let d2 = filter (fun y -> not (y = x)) d in
+                                    if ok d2 then d2 else d) d d in
+        attempt (without d') toks () in
+  let of_toks note toks =
+    let first_ok = ref false in
+    (note,(fun () -> let t = attempt venv0 toks () in first_ok := true; t)) ::
+    map (fun venv -> note ^ "other type of a name with several",attempt venv toks) choices @
+    (if quiet && names <> [] then
+       [note ^ "conflicting names as pattern variables",drop_conflicts first_ok toks]
+     else []) in
+  toks,
+  (match kit_q_unslash toks with
+     None -> of_toks "" toks
+   | Some toks' -> of_toks "slash; " toks' @ of_toks "" toks);;
+
+(* the first reading that parses (and the notes and warnings of a fallback)  *)
+let kit_q_report (s:string) (note:string) =
+  if note <> "" then
+   (kit_note ("q-string: " ^ note ^ ": " ^ s);
+    let n = String.length note in
+    if n >= 5 && String.sub note 0 5 = "slash" then
+      warn true ("q-string read with /\\ for a lone / (OCaml drops the backslash of " ^
+                 "/\\ before a space or a line end): " ^ s));;
+
+(* the messages of the failed readings with the goal's types (as written     *)
+(* first, then with /\ for /), with hints                                    *)
+let kit_q_failure (s:string) (vars:term list) (toks:lexcode list) (errs:(string*string) list) =
+  let main = map snd (filter (fun (n,_) -> n = "") errs)
+  and sl = map (fun (_,m) -> "with /\\ for /: " ^ m) (filter (fun (n,_) -> n = "slash; ") errs) in
+  failwith (kit_q_hints s (map dest_var vars) toks (String.concat "; " (main @ sl)));;
+
+let kit_q_parse (vars:term list) (ty:hol_type option) (quiet:bool) (want_bool:bool)
+                (s:string) : term =
+  let toks,rs = kit_q_readings vars ty quiet want_bool s in
+  let rec go l errs =
+    match l with
+      [] -> kit_q_failure s vars toks (rev errs)
+    | (note,f)::rest ->
+        match (try Ok (f ()) with Failure m -> Error m) with
+          Ok t -> kit_q_report s note; t
+        | Error m -> go rest ((note,m) :: errs) in
+  go rs [];;
+
 (* parse s with the free variables vars typed (other types invented) *)
 let kit_parse_in (vars:term list) (s:string) : term =
-  let venv = map (fun v -> let n,ty = dest_var v in n,pretype_of_type ty) vars in
-  let ptm,l = (parse_preterm o flat o map cake_wild_tokens o lex o explode) s in
-  if l <> [] then failwith "RENAME: unparsed input in pattern" else
-  with_quiet_type_invention (fun p -> cake_preterm_to_term s venv p) ptm;;
+  kit_q_parse vars None true false s;;
+
+(* the same, for a pattern of an assumption (boolean)                        *)
+let kit_parse_asm_pat (vars:term list) (s:string) : term =
+  kit_q_parse vars None true true s;;
 
 (* parse s with the free variables vars typed, as a term of type ty *)
 let kit_parse_typed (vars:term list) (ty:hol_type) (s:string) : term =
-  let venv = map (fun v -> let n,t = dest_var v in n,pretype_of_type t) vars in
-  let ptm,l = (parse_preterm o flat o map cake_wild_tokens o lex o explode) s in
-  if l <> [] then failwith "unparsed input" else
-  cake_preterm_to_term s venv (Typing(ptm,pretype_of_type ty));;
+  kit_q_parse vars (Some ty) false false s;;
 
 (* HOL4 qexists_tac and qsuff_tac: the term is a string parsed in the goal's *)
 (* context (its free variables have the goal's types, the witness the type  *)
@@ -1015,19 +1186,49 @@ let QSUFF_TAC (s:string) : tactic = fun g ->
 (* in the goal context, typed by the bound variables (ISPEC if their types  *)
 (* have type variables): FIRST_X_ASSUM (QSPEC_THEN "ck" MP_TAC).            *)
 
-let kit_qpat (s:string) (g:goal) =
+(* (since 2026-11-22) the readings of the pattern are tried in order (see    *)
+(* kit_q_readings): the first that matches an assumption is used, so a       *)
+(* name of several goal variables is also tried at its other types; a        *)
+(* pattern that does not parse fails with its parse error                    *)
+let kit_qpat_select_gen (want_bool:bool) (s:string) ((asl,w) as g:goal)
+                        (found:term * term list -> 'a option) : 'a =
   let fr = kit_goal_frees g in
-  let pat = kit_parse_in fr s in
-  pat, intersect (frees pat) fr;;
+  let toks,rs = kit_q_readings fr None true want_bool s in
+  let rec go l errs parsed =
+    match l with
+      [] -> if parsed then failwith ("QPAT: no assumption matches " ^ s)
+            else kit_q_failure s fr toks (rev errs)
+    | (note,f)::rest ->
+        match (try Ok (f ()) with Failure m -> Error m) with
+          Error m -> go rest ((note,m) :: errs) parsed
+        | Ok pat ->
+            match found (pat,intersect (frees pat) fr) with
+              Some r -> kit_q_report s note; r
+            | None -> go rest errs true in
+  go rs [] false;;
+
+let kit_qpat_select s g found = kit_qpat_select_gen true s g found;;
+
+(* the pattern and its fixed variables: the first reading that matches an    *)
+(* assumption, else the first that parses (IGNASM; a pattern of any type,    *)
+(* as before)                                                                *)
+let kit_qpat (s:string) ((asl,w) as g:goal) =
+  let first = ref None in
+  try kit_qpat_select_gen false s g (fun (pat,fixed) ->
+        (if !first = None then first := Some (pat,fixed));
+        if exists (fun (_,th) -> can (term_match fixed pat) (concl th)) asl
+        then Some (pat,fixed) else None)
+  with Failure _ as e -> (match !first with Some r -> r | None -> raise e);;
 
 let kit_qpat_find (s:string) ((asl,w) as g:goal) =
-  let pat,fixed = kit_qpat s g in
-  let ok th = can (term_match fixed pat) (concl th) in
-  let rec split acc l =
-    match l with
-      [] -> failwith ("QPAT: no assumption matches " ^ s)
-    | (_,th as a)::rest -> if ok th then th,List.rev_append acc rest else split (a::acc) rest in
-  split [] asl;;
+  kit_qpat_select s g (fun (pat,fixed) ->
+    let ok th = can (term_match fixed pat) (concl th) in
+    let rec split acc l =
+      match l with
+        [] -> None
+      | (_,th as a)::rest -> if ok th then Some (th,List.rev_append acc rest)
+                             else split (a::acc) rest in
+    split [] asl);;
 
 let QPAT_X_ASSUM (s:string) (ttac:thm_tactic) : tactic = fun (asl,w as g) ->
   let th,asl' = kit_qpat_find s g in ttac th (asl',w);;
@@ -1060,12 +1261,19 @@ let QSPECL_THEN (sl:string list) (ttac:thm_tactic) (th:thm) : tactic =
 (* HOL4 Cases_on `t`: CASES_ON with t parsed in the goal context, so that it *)
 (* needs no annotation (QCASES_ON "res"); a type that cannot be inferred is *)
 (* an error, as for any term                                                 *)
+(* (since 2026-11-22) a name of several free variables of the goal (of       *)
+(* different types) is the first in kit_goal_frees; when CASES_ON fails on   *)
+(* it (no cases theorem for its type), the others are tried                  *)
 let QCASES_ON (s:string) : tactic = fun g ->
   let fr = kit_goal_frees g in
-  let venv = map (fun v -> let n,t = dest_var v in n,pretype_of_type t) fr in
-  let ptm,l = (parse_preterm o flat o map cake_wild_tokens o lex o explode) s in
-  if l <> [] then failwith "QCASES_ON: unparsed input" else
-  CASES_ON (cake_preterm_to_term s venv ptm) g;;
+  let tm = kit_q_parse fr None false false s in
+  try CASES_ON tm g with Failure _ as e ->
+    let others = if is_var tm then
+                   filter (fun v -> name_of v = name_of tm && not (v = tm)) fr
+                 else [] in
+    try tryfind (fun v -> let r = CASES_ON v g in
+                          kit_note ("QCASES_ON: another variable " ^ s); r) others
+    with Failure _ -> raise e;;
 
 (* HOL4 last_assum, last_x_assum: FIRST_ASSUM and FIRST_X_ASSUM from the    *)
 (* oldest assumption (often an induction hypothesis) to the newest           *)
@@ -1143,6 +1351,10 @@ let kit_rename_with (sel:string list) (allbind:bool) (s:string) (k:tactic) : tac
     let fr = kit_goal_frees g in
     let pat = kit_parse_in (if allbind then [] else fr) s in
     let fixed = if allbind then [] else intersect (frees pat) fr in
+    (* a bare variable as the pattern would stand for the whole goal (HOL4  *)
+    (* replaces the goal by the variable); it fails (since 2026-11-22)      *)
+    if is_var pat && not (mem pat fixed) && not (kit_is_uscore pat) then
+      failwith ("RENAME: the pattern is a bare variable (it would match the whole goal): " ^ s) else
     let rec try_places ps =
       match ps with
         [] -> failwith ("RENAME: no match for " ^ s)
@@ -1477,10 +1689,7 @@ let kit_named_nchotomy (names:string list) (ty:hol_type) : thm =
 
 let NAMED_CASES_ON (s:string) (names:string list) : tactic = fun (asl,w as g) ->
   let fr = kit_goal_frees g in
-  let venv = map (fun v -> let n,t = dest_var v in n,pretype_of_type t) fr in
-  let ptm,l = (parse_preterm o flat o map cake_wild_tokens o lex o explode) s in
-  if l <> [] then failwith "NAMED_CASES_ON: unparsed input" else
-  let tm = cake_preterm_to_term s venv ptm in
+  let tm = kit_q_parse fr None false false s in
   let nch = ISPEC tm (kit_named_nchotomy names (type_of tm)) in
   (* the new variables keep their names unless they are in use *)
   let avoid = itlist (union o thm_frees o snd) asl (frees w) in
@@ -1592,9 +1801,258 @@ let kit_with_ignasm (tac:thm list -> tactic) (thl:thm list) : tactic = fun (asl,
   let (meta,gs,just) = tac thl' (kept,w) in
   (meta,map (fun (a,w') -> (a @ ignored,w')) gs,just);;
 
-let SIMP thl = kit_with_ignasm SIMP thl;;
-let FS thl = kit_with_ignasm FS thl;;
-let RFS thl = kit_with_ignasm RFS thl;;
-let GVS thl = kit_with_ignasm GVS thl;;
-let GVS_ASM thl = kit_with_ignasm GVS_ASM thl;;
-let RW thl = kit_with_ignasm RW thl;;
+(* a stack overflow of a simplification tactic on a goal with an assumption  *)
+(* F (or ~T), or with p and ~p, closes the goal by the contradiction (the    *)
+(* ag32 proofs met such overflows and closed contradictions first); other    *)
+(* overflows are raised again.  Since 2026-11-22.                            *)
+let kit_overflow_guard (tac:tactic) : tactic = fun (asl,w as g) ->
+  try tac g with Stack_overflow ->
+    let cs = map (concl o snd) asl in
+    let bad c = c = cake_false_tm || c = mk_neg cake_true_tm ||
+                (is_neg c && exists (aconv (dest_neg c)) cs) in
+    if not (exists bad cs) then raise Stack_overflow else
+    (kit_note "simplifier: stack overflow, contradictory assumptions";
+     (FIRST_ASSUM (fun th -> CONTR_TAC (REWRITE_RULE[] th)) ORELSE
+      FIRST_ASSUM (fun th -> if is_neg (concl th) then
+                               FIRST_ASSUM (fun th' -> CONTR_TAC (MP (NOT_ELIM th) th'))
+                             else NO_TAC)) g);;
+
+let SIMP thl = kit_overflow_guard (kit_with_ignasm SIMP thl);;
+let FS thl = kit_overflow_guard (kit_with_ignasm FS thl);;
+let RFS thl = kit_overflow_guard (kit_with_ignasm RFS thl);;
+let GVS thl = kit_overflow_guard (kit_with_ignasm GVS thl);;
+let GVS_ASM thl = kit_overflow_guard (kit_with_ignasm GVS_ASM thl);;
+let RW thl = kit_overflow_guard (kit_with_ignasm RW thl);;
+
+(* ========================================================================= *)
+(* More HOL4 tactics (since 2026-11-22).                                     *)
+(*                                                                           *)
+(*   HOL4_SELECT_ELIM_TAC  HOL4's SELECT_ELIM_TAC.  HOL Light has a tactic   *)
+(*                    of that name (canon.ml, used inside MESON) that does   *)
+(*                    something else: it replaces every select term by a     *)
+(*                    function variable; a port that writes SELECT_ELIM_TAC  *)
+(*                    gets that one.                                         *)
+(* ========================================================================= *)
+
+(* ------------------------------------------------------------------------- *)
+(* HOL4_SELECT_ELIM_TAC (HOL4 Tactic.SELECT_ELIM_TAC = DEEP_INTRO_TAC        *)
+(* SELECT_ELIM_THM): the first select term (@x. P x), in HOL4's order        *)
+(* (pre-order, operator before operand), that has no variable bound around   *)
+(* it is taken out of the goal:                                              *)
+(*        Q (@x. P x)                                                        *)
+(*   =========================                                               *)
+(*   (?x. P x) /\ (!x. P x ==> Q x)                                          *)
+(* (every occurrence of the select term is replaced; beta-reduced).  Fails   *)
+(* if there is no such select term.                                          *)
+(* ------------------------------------------------------------------------- *)
+
+let HOL4_SELECT_ELIM_THM = prove
+ (`!P (Q:A->bool). (?x. P x) /\ (!x. P x ==> Q x) ==> Q ((@) P)`,
+  MESON_TAC[SELECT_AX]);;
+
+let HOL4_SELECT_ELIM_TAC : tactic = fun (asl,w as g) ->
+  let is_sel t = is_comb t && is_const (rator t) && fst(dest_const(rator t)) = "@" in
+  let cands = ref [] in
+  let rec go bvs t =
+    (if is_sel t && not (exists (fun v -> vfree_in v t) bvs) then cands := t :: !cands);
+    match t with
+      Comb(f,x) -> go bvs f; go bvs x
+    | Abs(v,b) -> go (v::bvs) b
+    | _ -> () in
+  go [] w;
+  let try_one t =
+    let p = rand t in
+    let v = genvar (type_of t) in
+    let q = mk_abs(v,subst [v,t] w) in
+    let th = ISPECL [p; q] HOL4_SELECT_ELIM_THM in
+    (MATCH_MP_TAC (CONV_RULE (RAND_CONV BETA_CONV) th) THEN BETA_TAC) g in
+  match rev !cands with
+    [] -> failwith "HOL4_SELECT_ELIM_TAC: no select term without bound variables"
+  | cs -> tryfind try_one cs;;
+
+(* ------------------------------------------------------------------------- *)
+(* HOL4_INDUCT_ON "x", HOL4_INDUCT_TAC (HOL4 Induct_on and Induct): the      *)
+(* goals HOL4's INDUCT_THEN gives.  The kit's INDUCT_ON and QINDUCT_ON leave *)
+(* each case as it comes out of MATCH_MP_TAC with the induction theorem      *)
+(* (!a0 a1. P a1 ==> P (CONS a0 a1)), and existing proofs are written for    *)
+(* that; HOL4 strips each case: the arguments of the type of x are named     *)
+(* after x (x, x', ..), the others keep their names (the head of a list is  *)
+(* h, as in HOL4's list_INDUCT), and each induction hypothesis becomes an    *)
+(* assumption (ASSUME_TAC), so a HOL4 proof                                  *)
+(* Induct_on l >> rw[..] ports as HOL4_INDUCT_ON "l" THEN RW[..].            *)
+(* As in HOL4, the assumptions that mention x are first moved into the goal  *)
+(* (and so are part of the induction hypotheses), and a variable x bound by  *)
+(* the goal's leading quantifiers is freed (the others stay quantified).     *)
+(* The cases are split exactly as the induction theorem has them (a case     *)
+(* whose goal is a conjunction stays one goal).  Types with one induction    *)
+(* predicate only (not nested types).  Since 2026-11-22.                     *)
+(* ------------------------------------------------------------------------- *)
+
+let kit_hol4_induct (x:term) : tactic = fun (asl,w as g) ->
+  let ith = try induction_thm_of_type (type_of x)
+            with Failure _ -> failwith ("HOL4_INDUCT_ON: no induction theorem for the type of " ^
+                                        name_of x) in
+  let p,ibody = dest_forall (concl ith) in
+  if is_forall ibody then
+    failwith "HOL4_INDUCT_ON: a nested or mutual type (several induction predicates)" else
+  let ant,_ = dest_imp ibody in
+  let icases = conjuncts ant in
+  let nih = map (fun c -> let vs,b = strip_forall c in
+                          length vs,
+                          if is_imp b then length (conjuncts (fst(dest_imp b))) else 0) icases in
+  let xty = type_of x in
+  let rec split n = if n <= 1 then ALL_TAC else CONJ_TAC THENL [ALL_TAC; split (n-1)] in
+  let rec split_th n th = if n <= 1 then [th] else
+                          let a,b = CONJ_PAIR th in a :: split_th (n-1) b in
+  let case_tac (k,m) : tactic = fun (asl,w as g) ->
+    let rec strip k t = if k = 0 then [] else
+                        let v,b = dest_forall t in v :: strip (k-1) b in
+    let vs = strip k w in
+    let avoid = ref (kit_goal_frees g) in
+    (* the head of a list is h, as in HOL4's list_INDUCT (HOL Light's has a0) *)
+    let is_list = (try fst(dest_type xty) = "list" with Failure _ -> false) in
+    let fresh v =
+      let v0 = if type_of v = xty then mk_var(name_of x,xty)
+               else if is_list then mk_var("h",type_of v) else v in
+      let v' = kit_primed_var !avoid v0 in avoid := v' :: !avoid; v' in
+    let vs' = map fresh vs in
+    (MAP_EVERY X_GEN_TAC vs' THEN
+     (if m = 0 then ALL_TAC
+      else DISCH_THEN (fun th -> MAP_EVERY ASSUME_TAC (split_th m th)))) g in
+  let rec cases_tac l =
+    match l with
+      [] -> ALL_TAC
+    | [m] -> case_tac m
+    | m::rest -> CONJ_TAC THENL [case_tac m; cases_tac rest] in
+  (REPEAT (FIRST_X_ASSUM (fun th ->
+     if free_in x (concl th) then MP_TAC th else failwith "keep")) THEN
+   SPEC_TAC(x,x) THEN
+   MATCH_MP_TAC ith THEN
+   cases_tac nih) g;;
+
+let HOL4_INDUCT_ON (s:string) : tactic = fun (asl,w as g) ->
+  let n = String.trim s in
+  let fr = kit_goal_frees g in
+  match filter (fun v -> fst(dest_var v) = n) fr with
+    v::_ -> kit_hol4_induct v g
+  | [] ->
+      let vs,_ = strip_forall w in
+      match filter (fun v -> fst(dest_var v) = n) vs with
+        v::_ ->
+          (* HOL4's FREEUP: the leading quantifiers stripped, the others     *)
+          (* quantified again (as kit_induct_bound)                          *)
+          let avoid = ref (filter (fun u -> not (u = v)) fr) in
+          let vs' = map (fun u -> if u = v then v else
+                           let u' = kit_primed_var (v :: !avoid) u in
+                           avoid := u' :: !avoid; u') vs in
+          let others = filter (fun u -> not (u = v)) vs' in
+          (MAP_EVERY X_GEN_TAC vs' THEN MAP_EVERY (fun u -> SPEC_TAC(u,u)) (rev others) THEN
+           kit_hol4_induct v) g
+      | [] -> failwith ("HOL4_INDUCT_ON: no variable " ^ n ^
+                        " free in the goal or bound by its quantifiers");;
+
+let HOL4_INDUCT_TAC : tactic = fun (asl,w as g) ->
+  let v = try fst(dest_forall w) with Failure _ -> failwith "HOL4_INDUCT_TAC: not universal" in
+  let vs,_ = strip_forall w in
+  if exists (fun (_,th) -> free_in v (concl th)) asl || length (filter ((=) v) vs) > 1
+  then failwith "HOL4_INDUCT_TAC: the variable is free elsewhere" else
+  let fr = kit_goal_frees g in
+  let avoid = ref fr in
+  let vs' = map (fun u -> if u = v then v else
+                   let u' = kit_primed_var (v :: !avoid) u in avoid := u' :: !avoid; u') vs in
+  let others = filter (fun u -> not (u = v)) vs' in
+  (MAP_EVERY X_GEN_TAC vs' THEN MAP_EVERY (fun u -> SPEC_TAC(u,u)) (rev others) THEN
+   kit_hol4_induct v) g;;
+
+(* ------------------------------------------------------------------------- *)
+(* Case types that are not HOL Light datatypes (a type made with             *)
+(* new_type_definition or new_coinductive_definition, such as itree or       *)
+(* llist): registered with the kit like a cake_type (case constant, CASES_ON *)
+(* and NAMED_CASES_ON, TOP_CASE_TAC, match patterns in cake_def and          *)
+(* CASE_TERM, case_eq "ty", all_case_eqs (), the simpset, the case net, the  *)
+(* rewrites of HOL Light's rectype net, and recursion through the case       *)
+(* constant).  Since 2026-11-22 (src/hol4/itreeTau.ml did this by hand).     *)
+(*   cake_register_case_type "ty" case_def nchotomy distinct inject          *)
+(*     case_def: the clauses ty_CASE (Ci x1 .. xk) f1 .. fn = fi x1 .. xk,   *)
+(*     in the order of the nchotomy !x. (?xs. x = C1 xs) \/ ..;              *)
+(*     distinct: the conjunction of ~(Ci .. = Cj ..), i < j (or TRUTH);      *)
+(*     inject: the conjunction of Ci xs = Ci ys <=> xs = ys (or TRUTH).      *)
+(*   cake_define_case_type "ty" nchotomy distinct inject defines the case    *)
+(*     constant ty_CASE (by choice: the value of the arm whose pattern the   *)
+(*     scrutinee is) and registers it; it returns the clauses (case_def "ty") *)
+(*   cake_register_induction "ty" th  for INDUCT_ON, QINDUCT_ON and          *)
+(*     HOL4_INDUCT_ON (th: !P. .. ==> !x. P x).                              *)
+(* HOL Light's distinctness "ty" store is not used (its type differs between *)
+(* HOL Light versions): use the theorems themselves.                         *)
+(* ------------------------------------------------------------------------- *)
+
+let cake_register_induction (tyname:string) (th:thm) =
+  cake_induction_thms := (tyname,th) :: filter (fun (n,_) -> n <> tyname) !cake_induction_thms;;
+
+let kit_conjuncts_th (th:thm) =
+  if concl th = cake_true_tm then [] else CONJUNCTS th;;
+
+let cake_register_case_type (tyname:string) (case_def:thm) (nch:thm)
+                            (distinct:thm) (inject:thm) : case_info =
+  let ty = type_of (fst(dest_forall(concl nch))) in
+  if (try fst(dest_type ty) <> tyname with Failure _ -> true) then
+    failwith ("cake_register_case_type: the nchotomy is not about " ^ tyname) else
+  let pats = patterns_of_nchotomy nch in
+  let cls = conjuncts (concl case_def) in
+  if length cls <> length pats then
+    failwith "cake_register_case_type: one clause per disjunct of the nchotomy" else
+  let c = fst(strip_comb(lhs(snd(strip_forall(hd cls))))) in
+  let ds = kit_conjuncts_th distinct and is = kit_conjuncts_th inject in
+  let ds2 = ds @ map sym_neg ds in
+  (* the rectype net first: REWRITE_TAC then knows the constructors *)
+  basic_rectype_net :=
+    itlist (net_of_thm true) (itlist (mk_rewrites false) (ds2 @ is) []) (!basic_rectype_net);
+  (if is <> [] then injectivity_store := (tyname,end_itlist CONJ is) :: !injectivity_store);
+  let r = funpow (length pats) (fun t -> snd(dest_fun_ty t)) (snd(dest_fun_ty(type_of c))) in
+  let fs = map2 (fun (vs,_) i -> mk_var("f"^string_of_int i,itlist (mk_fun_ty o type_of) vs r))
+                pats (1--length pats) in
+  let x = mk_var("x",ty) and v = mk_var("v",r) in
+  let lhs_ = mk_eq(list_mk_comb(c,x::fs),v) in
+  let rhs_ = list_mk_disj
+    (map2 (fun (vs,pat) f -> list_mk_exists(vs,mk_conj(mk_eq(x,pat),
+                                                        mk_eq(list_mk_comb(f,vs),v))))
+          pats fs) in
+  let ceq = list_mk_forall(x::(fs @ [v]),mk_eq(lhs_,rhs_)) in
+  let case_eq = prove(ceq,
+    GEN_TAC THEN REPEAT GEN_TAC THEN
+    STRUCT_CASES_TAC (SPEC x (nchotomy_fresh (variables ceq) nch)) THEN
+    REWRITE_TAC[case_def] THEN REWRITE_TAC(ds2 @ is) THEN MESON_TAC[]) in
+  let ci = { ci_tyname = tyname; ci_case = c; ci_def = case_def; ci_pats = pats;
+             ci_nchotomy = nch; ci_case_eq = case_eq; ci_match = ref None;
+             ci_distinct = ds2; ci_inject = is } in
+  the_case_infos := (tyname,ci) :: !the_case_infos;
+  cake_register_type_simps tyname;
+  cake_update_case_net();
+  ci;;
+
+let cake_define_case_type (tyname:string) (nch:thm) (distinct:thm) (inject:thm) : thm =
+  let x0,_ = dest_forall (concl nch) in
+  let ty = type_of x0 in
+  let pats = patterns_of_nchotomy nch in
+  let r = fresh_tyvar (tyvars ty) in
+  let fs = map2 (fun (vs,_) i -> mk_var("f"^string_of_int i,itlist (mk_fun_ty o type_of) vs r))
+                pats (1--length pats) in
+  let cname = tyname ^ "_CASE" in
+  let cv = mk_var(cname,itlist (mk_fun_ty o type_of) (x0::fs) r) in
+  let x = mk_var("x",ty) and v = mk_var("v",r) in
+  let body = mk_select(v,list_mk_disj
+    (map2 (fun (vs,pat) f -> list_mk_exists(vs,mk_conj(mk_eq(x,pat),
+                                                        mk_eq(v,list_mk_comb(f,vs)))))
+          pats fs)) in
+  let def = new_definition (mk_eq(list_mk_comb(cv,x::fs),body)) in
+  let c = fst(strip_comb(lhs(snd(strip_forall(concl def))))) in
+  let ds = kit_conjuncts_th distinct and is = kit_conjuncts_th inject in
+  let ds2 = ds @ map sym_neg ds in
+  let clause (vs,pat) f =
+    let tm = list_mk_forall(vs @ fs,mk_eq(list_mk_comb(c,pat::fs),list_mk_comb(f,vs))) in
+    prove(tm,
+      REPEAT GEN_TAC THEN REWRITE_TAC[def] THEN MATCH_MP_TAC SELECT_UNIQUE THEN
+      GEN_TAC THEN REWRITE_TAC(ds2 @ is) THEN MESON_TAC[]) in
+  let case_def = end_itlist CONJ (map2 clause pats fs) in
+  ignore (cake_register_case_type tyname case_def nch distinct inject);
+  case_def;;

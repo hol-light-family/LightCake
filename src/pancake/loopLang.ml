@@ -3,7 +3,7 @@
 (* loopLang intermediate language.                                           *)
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
-(* - Names as notes/naming/names.tsv says: loop_exp, loop_prog and the       *)
+(* - Names as doc/names.tsv says: loop_exp, loop_prog and the                *)
 (*   constructors that clash with other languages (loop_Const, loop_Var,     *)
 (*   loop_Seq, ...); Mark, LocValue and the loop_arith constructors keep     *)
 (*   their names.                                                            *)

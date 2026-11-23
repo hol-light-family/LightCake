@@ -52,7 +52,7 @@ let _ = cake_add_simps [Success_COND_Failure];;
 
 let peg_eval_choicel_NIL = prove
  (`!(G:(A,B,(C)list,E)peg) i0 x.
-     peg_eval G (i0, choicel []) x <=> x = Failure (sloc i0) (peg_notFAIL G)`,
+     peg_eval G (i0, choicel []) x <=> x = Failure (peg_sloc i0) (peg_notFAIL G)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[choicel_def] THEN
   GEN_REWRITE_TAC LAND_CONV [peg_eval_cases] THEN
   REWRITE_TAC[PAIR_EQ; pegsym_distinct; pegsym_inject; peg_eval_empty] THEN
@@ -165,7 +165,7 @@ let peg_eval_choicel_SING = prove
       peg_eval G (i0, choicel [sym]) (Failure fl fe) <=>
       ?fl1 fe1. peg_eval G (i0, sym) (Failure fl1 fe1) /\
                 (Failure fl fe:((A#locs)list,(C)list,E)pegresult) =
-                UNCURRY Failure (MAXerr (fl1,fe1) (sloc i0,peg_notFAIL G)))`,
+                UNCURRY Failure (MAXerr (fl1,fe1) (peg_sloc i0,peg_notFAIL G)))`,
   REWRITE_TAC[peg_eval_choicel_CONS; peg_eval_choicel_NIL] THEN
   REWRITE_TAC[pegresult_distinct; pegresult_inject; UNCURRY_Failure_EQ_Success;
               PARSE3AUX_Success_EQ_UNCURRY_Failure] THEN
@@ -201,7 +201,7 @@ let FADISJ_EQ_IMP' = prove
 
 (* ------------------------------------------------------------------------- *)
 (* Successful evaluation of the derived forms, as iff theorems for           *)
-(* decomposing a hypothesis, and the token classes of the tok expressions    *)
+(* decomposing a hypothesis, and the token classes of the peg_tok expressions    *)
 (* as constructor forms (helpers of this file).                              *)
 (* ------------------------------------------------------------------------- *)
 
@@ -285,7 +285,7 @@ let PARSE3AUX_S_tokSymP = prove
   REWRITE_TAC[peg_eval_tokSymP; EXISTS_PAIR_THM; mktokLf_def] THEN
   MESON_TAC[]);;
 
-(* the token classes of the PEG's tok expressions, as constructor forms *)
+(* the token classes of the PEG's peg_tok expressions, as constructor forms *)
 
 let PARSE3AUX_isInt_EQ = prove
  (`!t. isInt t <=> ?i. t = tokens_IntT i`,
@@ -331,7 +331,7 @@ let PARSE3AUX_DECOMP_RWTS =
   [PARSE3AUX_S_seql_NIL; PARSE3AUX_S_seql_CONS; PARSE3AUX_S_choicel_NIL;
    PARSE3AUX_S_choicel_CONS; PARSE3AUX_S_try; PARSE3AUX_S_pegf;
    PARSE3AUX_S_tokeq; PARSE3AUX_S_empty; PARSE3AUX_S_choice;
-   peg_eval_tok_SOME; PARSE3AUX_S_tokSymP; peg_eval_seq_SOME; pnt_def; MAP];;
+   peg_eval_tok_SOME; PARSE3AUX_S_tokSymP; peg_eval_seq_SOME; cmlPEG_pnt_def; MAP];;
 
 let PARSE3AUX_TOKPRED_RWTS =
   [OPTION_BIND_EQUALS_OPTION; OPTION_GUARD_EQ_THM; destAlphaT_EQ_SOME;
@@ -354,38 +354,38 @@ let PARSE3AUX_WRONGTOK_TAC ths =
 let peg_eval_TypeDec_wrongtok = prove
  (`!(tk:token#locs) i f i' r eo.
      ~(FST tk = DatatypeT) ==>
-     ~peg_eval cmlPEG (CONS tk i, nt (INL nTypeDec) f) (peg_Success i' r eo)`,
+     ~peg_eval cmlPEG (CONS tk i, peg_nt (INL nTypeDec) f) (peg_Success i' r eo)`,
   PARSE3AUX_WRONGTOK_TAC [PARSE2AUX_rule `nTypeDec`; peg_TypeDec_def]);;
 
 let peg_eval_TypeAbbrevDec_wrongtok = prove
  (`!(tk:token#locs) i f i' r eo.
      ~(FST tk = TypeT) ==>
-     ~peg_eval cmlPEG (CONS tk i, nt (INL nTypeAbbrevDec) f) (peg_Success i' r eo)`,
+     ~peg_eval cmlPEG (CONS tk i, peg_nt (INL nTypeAbbrevDec) f) (peg_Success i' r eo)`,
   PARSE3AUX_WRONGTOK_TAC [PARSE2AUX_rule `nTypeAbbrevDec`]);;
 
 let peg_eval_Structure_wrongtok = prove
  (`!(tk:token#locs) i f i' r e0.
      ~(FST tk = StructureT) ==>
-     ~peg_eval cmlPEG (CONS tk i, nt (INL nStructure) f) (peg_Success i' r e0)`,
+     ~peg_eval cmlPEG (CONS tk i, peg_nt (INL nStructure) f) (peg_Success i' r e0)`,
   PARSE3AUX_WRONGTOK_TAC [PARSE2AUX_rule `nStructure`]);;
 
 let peg_eval_LetDec_wrongtok = prove
  (`!(tk:token#locs) i f i' r eo.
      FST tk = SemicolonT ==>
-     ~peg_eval cmlPEG (CONS tk i, nt (INL nLetDec) f) (peg_Success i' r eo)`,
+     ~peg_eval cmlPEG (CONS tk i, peg_nt (INL nLetDec) f) (peg_Success i' r eo)`,
   PARSE3AUX_WRONGTOK_TAC [PARSE2AUX_rule `nLetDec`]);;
 
 let peg_eval_nUQConstructor_wrongtok = prove
  (`!(t:token#locs) i f i' r eo.
      (!s. ~(FST t = AlphaT s)) ==>
-     ~peg_eval cmlPEG (CONS t i, nt (INL nUQConstructorName) f) (peg_Success i' r eo)`,
+     ~peg_eval cmlPEG (CONS t i, peg_nt (INL nUQConstructorName) f) (peg_Success i' r eo)`,
   PARSE3AUX_WRONGTOK_TAC [PARSE2AUX_rule `nUQConstructorName`;
                           peg_UQConstructorName_def]);;
 
 let peg_eval_nConstructor_wrongtok = prove
  (`!(t:token#locs) i f i' r eo.
      (!s. ~(FST t = AlphaT s)) /\ (!s1 s2. ~(FST t = LongidT s1 s2)) ==>
-     ~peg_eval cmlPEG (CONS t i, nt (INL nConstructorName) f) (peg_Success i' r eo)`,
+     ~peg_eval cmlPEG (CONS t i, peg_nt (INL nConstructorName) f) (peg_Success i' r eo)`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN
   REWRITE_TAC[peg_eval_NT_SOME; PARSE2AUX_rule `nConstructorName`] THEN
   REWRITE_TAC(PARSE3AUX_DECOMP_RWTS @ PARSE3AUX_TOKPRED_RWTS) THEN
@@ -395,14 +395,14 @@ let peg_eval_nConstructor_wrongtok = prove
 let peg_eval_nV_wrongtok = prove
  (`!(t:token#locs) i f i' r eo.
      (!s. ~(FST t = AlphaT s)) /\ (!s. ~(FST t = SymbolT s)) ==>
-     ~peg_eval cmlPEG (CONS t i, nt (INL nV) f) (peg_Success i' r eo)`,
+     ~peg_eval cmlPEG (CONS t i, peg_nt (INL nV) f) (peg_Success i' r eo)`,
   PARSE3AUX_WRONGTOK_TAC [PARSE2AUX_rule `nV`; peg_V_def]);;
 
 let peg_eval_nFQV_wrongtok = prove
  (`!(t:token#locs) i f i' r eo.
      (!s. ~(FST t = AlphaT s)) /\ (!s. ~(FST t = SymbolT s)) /\
      (!s1 s2. ~(FST t = LongidT s1 s2)) ==>
-     ~peg_eval cmlPEG (CONS t i, nt (INL nFQV) f) (peg_Success i' r eo)`,
+     ~peg_eval cmlPEG (CONS t i, peg_nt (INL nFQV) f) (peg_Success i' r eo)`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN
   REWRITE_TAC[peg_eval_NT_SOME; PARSE2AUX_rule `nFQV`; peg_longV_def] THEN
   REWRITE_TAC(PARSE3AUX_DECOMP_RWTS @ PARSE3AUX_TOKPRED_RWTS) THEN
@@ -414,14 +414,14 @@ let peg_eval_nFQV_wrongtok = prove
 (* ------------------------------------------------------------------------- *)
 
 let peg_eval_rpt_never_NONE = prove
- (`!(G:(A,B,C,E)peg) i sym f fl fe. ~peg_eval G (i, rpt sym f) (Failure fl fe)`,
+ (`!(G:(A,B,C,E)peg) i sym f fl fe. ~peg_eval G (i, peg_rpt sym f) (Failure fl fe)`,
   REWRITE_TAC[peg_eval_rpt; pegresult_distinct]);;
 let _ = cake_add_simps [peg_eval_rpt_never_NONE];;
 
 let pegsym_to_sym_def = cake_def
-  `(pegsym_to_sym (tok P f:(token,MMLnonT,(mlptree)list,E)pegsym) =
+  `(pegsym_to_sym (peg_tok P f:(token,MMLnonT,(mlptree)list,E)pegsym) =
       if f = mktokLf then {TOK t | t | P t} else {}) /\
-   (pegsym_to_sym (nt N g) = {NT N}) /\
+   (pegsym_to_sym (peg_nt N g) = {NT N}) /\
    (pegsym_to_sym _ = {})`;;
 
 let valid_ptree_mkNd = prove
@@ -519,7 +519,7 @@ let PARSE3AUX_linfix_rpt = prove
         gsep IN pegsym_to_sym sepsym /\ gsym IN pegsym_to_sym sym} SUBSET
        FAPPLY (grammar_rules cmlG) UpperN ==>
      !l i1 i err acc.
-       peg_eval_list cmlPEG (i1, seq sepsym sym APPEND) (i, l, err) /\
+       peg_eval_list cmlPEG (i1, peg_seq sepsym sym APPEND) (i, l, err) /\
        LENGTH i1 < LENGTH i0 /\
        ptree_head acc = NT UpperN /\ valid_lptree cmlG acc ==>
        ptree_head (mk_linfix UpperN acc (FLAT l)) = NT UpperN /\
@@ -667,7 +667,7 @@ let _ = cake_add_simps [MAP_TK_11];;
 let peg_eval_nTyOp_wrongtok = prove
  (`!(tk:token#locs) i f i' r eo.
      FST tk = LparT ==>
-     ~peg_eval cmlPEG (CONS tk i, nt (INL nTyOp) f) (peg_Success i' r eo)`,
+     ~peg_eval cmlPEG (CONS tk i, peg_nt (INL nTyOp) f) (peg_Success i' r eo)`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN
   REWRITE_TAC[peg_eval_NT_SOME; PARSE2AUX_rule `nTyOp`] THEN
   REWRITE_TAC(PARSE3AUX_DECOMP_RWTS @ PARSE3AUX_TOKPRED_RWTS) THEN
@@ -715,7 +715,7 @@ let PARSE3AUX_sound_goal (x:string) =
       (!N i0' i' pts' eo'.
          (LENGTH i0' < LENGTH i0 \\/
           LENGTH i0' = LENGTH i0 /\\ NT_rank N < NT_rank (INL " ^ x ^ ")) /\\
-         peg_eval cmlPEG (i0', nt N I) (peg_Success i' pts' eo') ==>
+         peg_eval cmlPEG (i0', peg_nt N I) (peg_Success i' pts' eo') ==>
          ?pt. pts' = [pt] /\\ ptree_head pt = NT N /\\ valid_lptree cmlG pt /\\
               MAP (TOK ## I) i0' = APPEND (real_fringe pt) (MAP (TOK ## I) i')) /\\
       peg_eval cmlPEG (i0, FAPPLY (peg_rules cmlPEG) (INL " ^ x ^ "))
@@ -729,16 +729,16 @@ let PARSE3AUX_IH_SPLIT = prove
      (!N i0' i' pts' eo'.
         (LENGTH i0' < LENGTH i0 \/
          LENGTH i0' = LENGTH i0 /\ NT_rank N < NT_rank X) /\
-        peg_eval cmlPEG (i0', nt N I) (peg_Success i' pts' eo') ==>
+        peg_eval cmlPEG (i0', peg_nt N I) (peg_Success i' pts' eo') ==>
         ?pt. pts' = [pt] /\ ptree_head pt = NT N /\ valid_lptree cmlG pt /\
              MAP (TOK ## I) i0' = APPEND (real_fringe pt) (MAP (TOK ## I) i'))
      ==> (!N j j' pts eo.
-            peg_eval cmlPEG (j, nt N I) (peg_Success j' pts eo) ==>
+            peg_eval cmlPEG (j, peg_nt N I) (peg_Success j' pts eo) ==>
             LENGTH j < LENGTH i0 ==>
             ?pt. pts = [pt] /\ ptree_head pt = NT N /\ valid_lptree cmlG pt /\
                  MAP (TOK ## I) j = APPEND (real_fringe pt) (MAP (TOK ## I) j')) /\
          (!N j' pts eo.
-            peg_eval cmlPEG (i0, nt N I) (peg_Success j' pts eo) ==>
+            peg_eval cmlPEG (i0, peg_nt N I) (peg_Success j' pts eo) ==>
             NT_rank N < NT_rank X ==>
             ?pt. pts = [pt] /\ ptree_head pt = NT N /\ valid_lptree cmlG pt /\
                  MAP (TOK ## I) i0 = APPEND (real_fringe pt) (MAP (TOK ## I) j'))`,
@@ -773,7 +773,7 @@ let PARSE3AUX_is_success tm =
 
 let PARSE3AUX_is_ntfact tm =
   PARSE3AUX_is_success tm &&
-  (try fst(dest_const(fst(strip_comb(rand(el 1 (snd(strip_comb tm))))))) = "nt"
+  (try fst(dest_const(fst(strip_comb(rand(el 1 (snd(strip_comb tm))))))) = "peg_nt"
    with Failure _ -> false);;
 
 let PARSE3AUX_LEN_FACTS_TAC : tactic = fun (asl,w) ->
@@ -925,7 +925,7 @@ let peg_EbaseParen_sound = prove
      peg_eval cmlPEG (i0, peg_EbaseParen) (peg_Success i pts eo) ==>
      (!i0' N i pts eo.
         LENGTH i0' < LENGTH i0 /\
-        peg_eval cmlPEG (i0', nt (INL N) I) (peg_Success i pts eo) ==>
+        peg_eval cmlPEG (i0', peg_nt (INL N) I) (peg_Success i pts eo) ==>
         ?pt. pts = [pt] /\ ptree_head pt = NT (INL N) /\
              valid_lptree cmlG pt /\
              MAP (TOK ## I) i0' = APPEND (real_fringe pt) (MAP (TOK ## I) i)) ==>
@@ -979,12 +979,12 @@ let ptPapply_lemma = prove
  (`!limit (i:(token#locs)list).
      (!i0 i pts eo.
         LENGTH i0 < limit ==>
-        peg_eval cmlPEG (i0, nt (INL nPbase) I) (peg_Success i pts eo) ==>
+        peg_eval cmlPEG (i0, peg_nt (INL nPbase) I) (peg_Success i pts eo) ==>
         ?pt. pts = [pt] /\ ptree_head pt = NT (INL nPbase) /\
              valid_lptree cmlG pt /\
              MAP (TOK ## I) i0 = APPEND (real_fringe pt) (MAP (TOK ## I) i)) ==>
      !ptlist pt0 acc i0 err.
-       peg_eval_list cmlPEG (i0, nt (INL nPbase) I) (i, ptlist, err) /\
+       peg_eval_list cmlPEG (i0, peg_nt (INL nPbase) I) (i, ptlist, err) /\
        ptree_head pt0 = NT (INL nPbase) /\ valid_lptree cmlG pt0 /\
        ptree_head acc = NT (INL nPConApp) /\ valid_lptree cmlG acc /\
        LENGTH i0 < limit ==>
@@ -1053,21 +1053,21 @@ let pair_EQ_components = prove
 (* cmlPEG; here each case is a lemma PARSE3AUX_sound_nX.                    *)
 (* ------------------------------------------------------------------------- *)
 
-(* left recursive rules in the grammar turn into calls to rpt in the PEG;   *)
+(* left recursive rules in the grammar turn into calls to peg_rpt in the PEG;   *)
 (* nEapp and nDType fold the repetitions with FOLDL (the inductions inside  *)
 (* HOL4's proof of peg_sound)                                                *)
 
 let PARSE3AUX_rpt_foldl = prove
  (`!X Y (i0:(token#locs)list).
      (!j j' pts eo.
-        peg_eval cmlPEG (j, nt (INL Y) I) (peg_Success j' pts eo) ==>
+        peg_eval cmlPEG (j, peg_nt (INL Y) I) (peg_Success j' pts eo) ==>
         LENGTH j < LENGTH i0 ==>
         ?pt. pts = [pt] /\ ptree_head pt = NT (INL Y) /\ valid_lptree cmlG pt /\
              MAP (TOK ## I) j = APPEND (real_fringe pt) (MAP (TOK ## I) j')) /\
-     ~peg0 cmlPEG (nt (INL Y) I) /\
+     ~peg0 cmlPEG (peg_nt (INL Y) I) /\
      [NT (INL X); NT (INL Y)] IN FAPPLY (grammar_rules cmlG) (INL X) ==>
      !l i1 i err acc.
-       peg_eval_list cmlPEG (i1, nt (INL Y) I) (i, l, err) /\
+       peg_eval_list cmlPEG (i1, peg_nt (INL Y) I) (i, l, err) /\
        LENGTH i1 < LENGTH i0 /\
        ptree_head acc = NT (INL X) /\ valid_lptree cmlG acc ==>
        ptree_head (FOLDL (\a b. mkNd (INL X) [a; b]) acc (FLAT l)) = NT (INL X) /\
@@ -1108,10 +1108,10 @@ let PARSE3AUX_rpt_foldl = prove
 let PARSE3AUX_is_rptfact tm =
   PARSE3AUX_is_success tm &&
   (try fst(dest_const(fst(strip_comb(rand(el 1 (snd(strip_comb tm)))))))
-         = "rpt"
+         = "peg_rpt"
    with Failure _ -> false);;
 
-(* replace each successful rpt by its peg_eval_list *)
+(* replace each successful peg_rpt by its peg_eval_list *)
 
 let PARSE3AUX_RPT_TAC : tactic =
   REPEAT(FIRST_X_ASSUM(fun th ->
@@ -1384,7 +1384,7 @@ let PARSE3AUX_sound_nV = PARSE3AUX_SOUND "nV"
 
 let peg_sound = prove
  (`!N i0 i pts eo.
-     peg_eval cmlPEG (i0,nt N I) (peg_Success i pts eo) ==>
+     peg_eval cmlPEG (i0,peg_nt N I) (peg_Success i pts eo) ==>
      ?pt. pts = [pt] /\ ptree_head pt = NT N /\ valid_lptree cmlG pt /\
           MAP (TOK ## I) i0 = APPEND (real_fringe pt) (MAP (TOK ## I) i)`,
   (* well-founded induction on the length of the input, then the rank of *)
@@ -1393,7 +1393,7 @@ let peg_sound = prove
    `!n r (i0:(token#locs)list) N.
       LENGTH i0 = n /\ NT_rank N = r ==>
       !i pts eo.
-        peg_eval cmlPEG (i0,nt N I) (peg_Success i pts eo) ==>
+        peg_eval cmlPEG (i0,peg_nt N I) (peg_Success i pts eo) ==>
         ?pt. pts = [pt] /\ ptree_head pt = NT N /\ valid_lptree cmlG pt /\
              MAP (TOK ## I) i0 = APPEND (real_fringe pt) (MAP (TOK ## I) i)`
    (fun th -> MESON_TAC[th]) THEN
@@ -1405,7 +1405,7 @@ let peg_sound = prove
    `!N' i0' i' pts' eo'.
       (LENGTH i0' < LENGTH (i0:(token#locs)list) \/
        LENGTH i0' = LENGTH i0 /\ NT_rank N' < NT_rank (N:MMLnonT+num)) /\
-      peg_eval cmlPEG (i0', nt N' I) (peg_Success i' pts' eo') ==>
+      peg_eval cmlPEG (i0', peg_nt N' I) (peg_Success i' pts' eo') ==>
       ?pt. pts' = [pt] /\ ptree_head pt = NT N' /\ valid_lptree cmlG pt /\
            MAP (TOK ## I) i0' = APPEND (real_fringe pt) (MAP (TOK ## I) i')`
    (LABEL_TAC "ih") THENL

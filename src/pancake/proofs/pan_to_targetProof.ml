@@ -4,7 +4,7 @@
 (* Composing semantics correctness from pan to target.                      *)
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
-(* - Names as notes/naming/names.tsv says; HOL4's local Overloads           *)
+(* - Names as doc/names.tsv says; HOL4's local Overloads                    *)
 (*   stack_remove_prog_comp, ..., pan_to_word_compile_prog are the port's    *)
 (*   constant names.  The headline theorem pan_to_target_compile_semantics  *)
 (*   is checked against the term of pan_to_target_statement.ml, which also *)
@@ -1044,29 +1044,6 @@ let memory_swap_lemma = prove
   EXISTS_TAC `m':A word->(A)word_loc` THEN
   RULE_ASSUM_TAC (CAKE_SIMP_RULE []) THEN ASM_REWRITE_TAC[]);;
 
-(* wordSem's semantics depends only on the results and the ffi states of   *)
-(* the runs                                                                 *)
-let PTOPAUX_wl_semantics_cong = prove
- (`!(s1:(A,C,FFI)wl_state) (s2:(A,C,FFI)wl_state) start.
-     (!k. FST (wl_evaluate (wl_Call NONE (SOME start) [0] NONE,
-                            wl_state_clock_fupd (K k) s1)) =
-          FST (wl_evaluate (wl_Call NONE (SOME start) [0] NONE,
-                            wl_state_clock_fupd (K k) s2)) /\
-          wl_state_ffi (SND (wl_evaluate (wl_Call NONE (SOME start) [0] NONE,
-                                          wl_state_clock_fupd (K k) s1))) =
-          wl_state_ffi (SND (wl_evaluate (wl_Call NONE (SOME start) [0] NONE,
-                                          wl_state_clock_fupd (K k) s2)))) ==>
-     wl_semantics s1 start = wl_semantics s2 start`,
-  REPEAT GEN_TAC THEN DISCH_TAC THEN REWRITE_TAC[wl_semantics_def] THEN
-  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
-  SUBGOAL_THEN `!(p:((A)wl_result)option#(A,C,FFI)wl_state) r t.
-                  p = (r,t) <=> FST p = r /\ SND p = t`
-    (fun th -> REWRITE_TAC[th]) THENL
-   [REWRITE_TAC[FORALL_PAIR_THM; PAIR_EQ; FST; SND]; ALL_TAC] THEN
-  REWRITE_TAC[RIGHT_EXISTS_AND_THM; LEFT_EXISTS_AND_THM; UNWIND_THM1; UNWIND_THM2;
-              GSYM CONJ_ASSOC] THEN
-  ASM_REWRITE_TAC[]);;
-
 let word_semantics_memory_update = prove
  (`!(s:(A,C,FFI)wl_state) m start.
      fun2set (wl_state_memory s,wl_state_mdomain s) = fun2set (m,wl_state_mdomain s) /\
@@ -1076,7 +1053,7 @@ let word_semantics_memory_update = prove
   REPEAT GEN_TAC THEN STRIP_TAC THEN DISCH_TAC THEN
   MATCH_MP_TAC (ISPECL [`s:(A,C,FFI)wl_state`;
                         `wl_state_memory_fupd (K (m:A word->(A)word_loc)) (s:(A,C,FFI)wl_state)`;
-                        `start:num`] PTOPAUX_wl_semantics_cong) THEN
+                        `start:num`] W2WPAUX_sem_obs) THEN
   X_GEN_TAC `k:num` THEN
   MP_TAC (ISPECL [`wl_Call NONE (SOME start) [0] NONE:(A)wl_prog`;
                   `wl_state_clock_fupd (K k) (s:(A,C,FFI)wl_state)`;
@@ -1141,7 +1118,7 @@ let word_to_word_compile_no_install_no_alloc = prove
                    (word_to_word_config_col_oracle wconf)` THEN
   CASE_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN
   FIRST_X_ASSUM (ASSUME_TAC o MATCH_MP BACKDEFAUX_LENGTH_next_n_oracle) THEN
-  FIRST_X_ASSUM (SUBST1_TAC o SYM o check (fun th -> is_var (rhs (concl th)) && 
+  FIRST_X_ASSUM (SUBST1_TAC o SYM o check (fun th -> is_var (rhs (concl th)) &&
      (try fst(dest_const(fst(strip_comb (lhs (concl th))))) = "MAP" with Failure _ -> false))) THEN
   W(fun (asl,w) -> MP_TAC (ISPECL
      [`progs0:(num#num#(A)wl_prog)list`; `p0:((num spt)option)list`;
@@ -1371,7 +1348,7 @@ let PTOPAUX_wle_addresses = prove
      good_dimindex(:A) /\ m < dimword(:A) DIV (dimindex(:A) DIV 8) /\
      word_list_exists a n (fun2set (d,addresses a m)) ==> n = m`,
   INDUCT_TAC THEN REWRITE_TAC[stack_removeProof_word_list_exists_thm] THENL
-  [REPEAT GEN_TAC THEN REWRITE_TAC[emp_def; fun2set_EMPTY] THEN
+  [REPEAT GEN_TAC THEN REWRITE_TAC[set_sep_emp_def; fun2set_EMPTY] THEN
    STRUCT_CASES_TAC (SPEC `m:num` num_CASES) THEN
    REWRITE_TAC[addresses_def; NOT_INSERT_EMPTY; NOT_SUC];
    ALL_TAC] THEN
@@ -2981,4 +2958,3 @@ let () =
   if hyp pan_to_target_compile_semantics = [] &&
      aconv (concl pan_to_target_compile_semantics) pan_to_target_compile_semantics_statement
   then () else failwith "pan_to_target_compile_semantics is not the headline statement";;
-

@@ -11,6 +11,9 @@
 (*   constant); its theorem fromList_def is regexp_compiler_fromList_def.    *)
 (* - The type is :A vector (the HOL Light constant vector of cart.ml lives   *)
 (*   in the namespace of constants, the type in that of types).              *)
+(* - HOL4 sub and length are regexp_compiler_sub and regexp_compiler_length  *)
+(*   (short or common words), with the theorems renamed alike (sub_def is    *)
+(*   regexp_compiler_sub_def, ...).                                          *)
 (* ========================================================================= *)
 
 needs "hol4/vocab.ml";;
@@ -47,14 +50,14 @@ let vector_case_eq = case_eq "vector";;
 
 let vector_size_def = type_size_def "vector";;
 
-let sub_def =
-  let th = cake_def `sub (Vector (l:A list)) n = EL n l` in
+let regexp_compiler_sub_def =
+  let th = cake_def `regexp_compiler_sub (Vector (l:A list)) n = EL n l` in
   prove
-   (`!(l:A list) n. sub (Vector l) n = EL n l`,
+   (`!(l:A list) n. regexp_compiler_sub (Vector l) n = EL n l`,
     REWRITE_TAC[th]);;
 
-let length_def = cake_def
-  `length (Vector (l:A list)) = LENGTH l`;;
+let regexp_compiler_length_def = cake_def
+  `regexp_compiler_length (Vector (l:A list)) = LENGTH l`;;
 
 (* HOL4: fromList_def *)
 

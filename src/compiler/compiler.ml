@@ -6,19 +6,21 @@
 (* (the latter containing the generated machine code if successful).        *)
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
-(* - Names as notes/naming/names.tsv says: compiler_config (fields          *)
+(* - Names as doc/names.tsv says: compiler_config (fields                   *)
 (*   compiler_config_inferencer_config, ...), compiler_compile.              *)
-(* - The definitions that need theories outside the port are not here:      *)
-(*   compile_pancake, compile_pancake_64, compile_pancake_32 (pancake:       *)
-(*   panPtreeConversion, panStatic, pan_passes), parse_target_64 and         *)
-(*   parse_target_32 (the asm configurations x64_config, ... of the target   *)
-(*   theories x64_target, ...), compile_64 and compile_32 (they need those   *)
-(*   and basisProg's basis), full_compile_64 and full_compile_32 (they need  *)
-(*   those and the file system of the basis library).                        *)
-(* - HOL4 compile_error has a constructor StaticError of panStatic's type   *)
-(*   staterr; panStatic is outside the port, so its datatype is defined here *)
-(*   as BACKDEFAUX_staterr (constructors BACKDEFAUX_ScopeErr, ...WarningErr, *)
-(*   ...GenErr, ...ShapeErr), a local stand-in for panStatic$staterr.        *)
+(* - The definitions that need theories outside the port are not here:     *)
+(*   parse_target_64 and parse_target_32 (the asm configurations           *)
+(*   x64_config, arm8_config, mips_config, riscv_config and arm7_config of *)
+(*   the target theories x64_target, ..., which are built on the L3 models *)
+(*   of the ISAs; only ag32_target is ported), compile_64 and compile_32   *)
+(*   (they need those and basisProg's basis), compile_pancake_64 and       *)
+(*   compile_pancake_32 (they need parse_target_64 and parse_target_32),   *)
+(*   full_compile_64 and full_compile_32 (they need those and the file     *)
+(*   system of the basis library: add_stdout, add_stderr of TextIOProof,   *)
+(*   fastForwardFD of fsFFIProps).                                         *)
+(* - compile_pancake: HOL4's pattern return () is errorMonad_return _ (the *)
+(*   unit type has one value); its paired lambda is HOL Light's            *)
+(*   \(msg,loc). t; staterr and its constructors are panStatic's.          *)
 (* - The build information (git commit of CakeML and of HOL4, version of     *)
 (*   Poly/ML, date of the build) that HOL4 computes in ML when the theory is *)
 (*   built is not available: current_build_info_str is the HOL4 expression  *)
@@ -48,6 +50,9 @@ needs "compiler/parsing/fromSexp.ml";;
 needs "hol4/simpleSexpParse.ml";;
 needs "compiler/backend/backend.ml";;
 needs "compiler/backend/backend_passes.ml";;
+needs "pancake/parser/panPtreeConversion.ml";;
+needs "pancake/panStatic.ml";;
+needs "pancake/pan_passes.ml";;
 
 prioritize_num();;
 type_invention_error := true;;
@@ -190,23 +195,15 @@ let help_string_def =
    "                --call-graph fp\096 produces correct call graphs (x64 only)\n" ^
    "\n"))));;
 
-(* the error categories of panStatic (outside the port), for StaticError *)
-
-let BACKDEFAUX_staterr_INDUCT,BACKDEFAUX_staterr_RECURSION = cake_type
-  "BACKDEFAUX_staterr = BACKDEFAUX_ScopeErr mlstring
-                      | BACKDEFAUX_WarningErr mlstring
-                      | BACKDEFAUX_GenErr mlstring
-                      | BACKDEFAUX_ShapeErr mlstring";;
-
 let compile_error_INDUCT,compile_error_RECURSION = cake_type
   "compile_error = ParseError mlstring
                  | TypeError mlstring
                  | AssembleError
                  | ConfigError mlstring
-                 | StaticError BACKDEFAUX_staterr";;
+                 | StaticError staterr";;
 
 let find_next_newline_def = cake_def_wf
-  `measure (\(n:num,s:mlstring). strlen s - n)`
+  `MEASURE (\(n:num,s:mlstring). strlen s - n)`
   (REWRITE_TAC[FORALL_PAIR_THM] THEN REPEAT GEN_TAC THEN REWRITE_TAC WF_REL_THMS THEN
    CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN ARITH_TAC)
   `find_next_newline n s =
@@ -300,6 +297,27 @@ let compiler_compile_def = cake_def
                    (NONE,td) -> (M_failure AssembleError,td)
                  | (SOME (bytes,data,c),td) -> (M_success (bytes,data,c),td)))`;;
 
+let compile_pancake_def = cake_def
+  `compile_pancake (asm_conf:(A)asm_config) (c:backend_config) input =
+     let _ = empty_ffi (implode "finished: start up") in
+     match parse_topdecs_to_ast input with
+       INR errs ->
+         (M_failure (ParseError (mlstring_concat
+            (MAP (\(msg,loc). mlstring_concat
+                    [msg; implode " at "; locs_to_string (implode input) (SOME loc);
+                     implode "\n"])
+                 errs))),Nil,[])
+     | INL funs ->
+         (match static_check funs with
+            (errorMonad_error e,warns) ->
+              (M_failure (StaticError e),Nil,MAP StaticError warns)
+          | (errorMonad_return _,warns) ->
+              let _ = empty_ffi (implode "finished: lexing and parsing") in
+              (match pan_compile_tap asm_conf c funs with
+                 (NONE,td) -> (M_failure AssembleError,td,MAP StaticError warns)
+               | (SOME (bytes,data,c),td) ->
+                   (M_success (bytes,data,c),td,MAP StaticError warns)))`;;
+
 (* The top-level compiler *)
 
 (* TypeError: if the first char in the message is a newline char then it   *)
@@ -317,13 +335,13 @@ let error_to_str_def = cake_def
    (error_to_str AssembleError = implode "### ERROR: assembly error\n") /\
    (error_to_str (StaticError e) =
       match e with
-        BACKDEFAUX_ScopeErr s ->
+        ScopeErr s ->
           mlstring_concat [implode "### ERROR: scope error\n"; s; implode "\n"]
-      | BACKDEFAUX_WarningErr s ->
+      | WarningErr s ->
           mlstring_concat [implode "# WARNING:\n"; s; implode "\n"]
-      | BACKDEFAUX_GenErr s ->
+      | GenErr s ->
           mlstring_concat [implode "### ERROR: static error\n"; s; implode "\n"]
-      | BACKDEFAUX_ShapeErr s ->
+      | ShapeErr s ->
           mlstring_concat [implode "### ERROR: shape error\n"; s; implode "\n"])`;;
 
 let is_error_msg_def = cake_def
@@ -641,7 +659,7 @@ let format_compiler_result_def = cake_def
       (misc_List []:(mlstring)app_list,error_to_str err)) /\
    (format_compiler_result bytes_export
       (M_success (bytes:byte list,data:(A word)list,c:backend_config)) =
-      (bytes_export (the [] (lab_to_target_config_ffi_names (backend_config_lab_conf c)))
+      (bytes_export (misc_the [] (lab_to_target_config_ffi_names (backend_config_lab_conf c)))
          bytes data,implode ""))`;;
 
 (* FIXME TODO: this is an awful workaround to avoid implementing a file      *)

@@ -655,7 +655,7 @@ let consistency_ok_def = cake_def
   and collapse along the way
   (special case: x is coalesced to a fixed color already)
 *)
-let coalesce_parent_def = cake_def_wf `measure (\x:num. x)` TERM_TAC
+let coalesce_parent_def = cake_def_wf `MEASURE (\x:num. x)` TERM_TAC
   `coalesce_parent x =
      st_ex_bind (coalesced_sub x) (\xt.
      st_ex_bind (is_Fixed xt) (\bx.
@@ -809,7 +809,7 @@ let MONADAUX_LEN_TAC : tactic =
   REWRITE_TAC[LENGTH] THEN ARITH_TAC;;
 
 let st_ex_list_MIN_cost_def = cake_def_wf
-  `measure (\(scost:num spt,l:num list,d:num,k:num,v:num,acc:num list). LENGTH l)`
+  `MEASURE (\(scost:num spt,l:num list,d:num,k:num,v:num,acc:num list). LENGTH l)`
   MONADAUX_LEN_TAC
   `(st_ex_list_MIN_cost (scost:num spt) [] d k v acc = st_ex_return (k,acc)) /\
    (st_ex_list_MIN_cost scost (CONS x xs) d k v acc =
@@ -821,7 +821,7 @@ let st_ex_list_MIN_cost_def = cake_def_wf
       else st_ex_list_MIN_cost scost xs d k v acc)`;;
 
 let st_ex_list_MAX_deg_def = cake_def_wf
-  `measure (\(l:num list,d:num,k:num,v:num,acc:num list). LENGTH l)`
+  `MEASURE (\(l:num list,d:num,k:num,v:num,acc:num list). LENGTH l)`
   MONADAUX_LEN_TAC
   `(st_ex_list_MAX_deg [] d (k:num) (v:num) acc = st_ex_return (k,acc)) /\
    (st_ex_list_MAX_deg (CONS x xs) d k v acc =
@@ -1252,7 +1252,7 @@ let moves_to_sp_def = cake_def
 (*Do a consistency sort after setting up the sptree of moves*)
 let resort_moves_def = cake_def
   `resort_moves (acc:((num#A)list)spt) =
-     map (\ls. MAP SND (reg_alloc_sort_moves ls)) acc`;;
+     sptree_map (\ls. MAP SND (reg_alloc_sort_moves ls)) acc`;;
 
 let algorithm_INDUCT,algorithm_RECURSION = cake_type
   "algorithm = reg_alloc_Simple | IRC";;
@@ -1260,7 +1260,7 @@ let algorithm_INDUCT,algorithm_RECURSION = cake_type
 (* Read-only version of coalesce_parent: follows the coalesce chain
    to the root without path compression. Safe for use in biased_pref
    where state must not be modified. *)
-let coalesce_root_def = cake_def_wf `measure (\x:num. x)` TERM_TAC
+let coalesce_root_def = cake_def_wf `MEASURE (\x:num. x)` TERM_TAC
   `coalesce_root x =
      st_ex_bind (coalesced_sub x) (\xt.
      st_ex_bind (is_Fixed xt) (\bx.

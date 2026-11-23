@@ -599,3 +599,12 @@ let _ = cake_add_simps
    MAP_KEYS_I; set_MAP_FST_fmap_to_alist; MAP_FST_AFUPDKEY; LENGTH_AFUPDKEY;
    MEM_ADELKEY; ADELKEY_AFUPDKEY_same];;
 
+(* ------------------------------------------------------------------------- *)
+(* Lemmas used by several later files.                                       *)
+(* ------------------------------------------------------------------------- *)
+
+let FMAPAUX_FEMPTY_FUPDATE_LIST = prove
+ (`!l:(A#B)list. ALL_DISTINCT (MAP FST l) ==> FEMPTY |++ l = alist_to_fmap l`,
+  REPEAT STRIP_TAC THEN REWRITE_TAC[fmap_eq_flookup; FLOOKUP_FUPDATE_LIST] THEN
+  ASM_SIMP_TAC[alookup_distinct_reverse; CONJUNCT1 ALOOKUP_EQ_FLOOKUP; FLOOKUP_EMPTY] THEN
+  GEN_TAC THEN QCASES_ON "ALOOKUP (l:(A#B)list) x" THEN REWRITE_TAC[case_def "option"]);;

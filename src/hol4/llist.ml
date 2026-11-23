@@ -28,6 +28,10 @@
 (*   LFLATTEN, LZIP, LGENLIST, LREPEAT, LSET, llist_rel, fromSeq, LSUFFIX,   *)
 (*   until, LTAKE_WHILE, LDROP_WHILE, lbind, linear_order_to_llist.          *)
 (* - Lemmas named LLISTAUX_... are helpers of this file (not HOL4 names).    *)
+(* - HOL4 eventually and every are llist_eventually and llist_every (short   *)
+(*   or common words; eventually is also a constant of HOL Light's           *)
+(*   Multivariate), with the theorems renamed alike (eventually_cases is     *)
+(*   llist_eventually_cases, ...).                                           *)
 (* ========================================================================= *)
 
 needs "hol4/vocab.ml";;
@@ -1549,23 +1553,23 @@ let exists_thm_strong = prove
   ASM_REWRITE_TAC[] THEN ANTS_TAC THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
   MESON_TAC[]);;
 
-let every_def = new_definition
-  `every P (ll:A llist) <=> ~llist_exists ((~) o P) ll`;;
+let llist_every_def = new_definition
+  `llist_every P (ll:A llist) <=> ~llist_exists ((~) o P) ll`;;
 
 let every_LNTH = prove
- (`!P (ll:A llist). every P ll <=> !n e. LNTH n ll = SOME e ==> P e`,
-  REWRITE_TAC[every_def; exists_LNTH; o_THM] THEN MESON_TAC[]);;
+ (`!P (ll:A llist). llist_every P ll <=> !n e. LNTH n ll = SOME e ==> P e`,
+  REWRITE_TAC[llist_every_def; exists_LNTH; o_THM] THEN MESON_TAC[]);;
 
 let every_thm = prove
- (`(every P (LNIL:A llist) <=> T) /\
-   (every P (LCONS (h:A) t) <=> P h /\ every P t)`,
-  REWRITE_TAC[every_def; exists_thm; o_THM; DE_MORGAN_THM]);;
+ (`(llist_every P (LNIL:A llist) <=> T) /\
+   (llist_every P (LCONS (h:A) t) <=> P h /\ llist_every P t)`,
+  REWRITE_TAC[llist_every_def; exists_thm; o_THM; DE_MORGAN_THM]);;
 
 let LL_ALL_THM = every_thm;;
 
-let every_coind = prove
+let llist_every_coind = prove
  (`!P (Q:A llist->bool).
-     (!h t. Q (LCONS h t) ==> P h /\ Q t) ==> !ll. Q ll ==> every P ll`,
+     (!h t. Q (LCONS h t) ==> P h /\ Q t) ==> !ll. Q ll ==> llist_every P ll`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN REWRITE_TAC[every_LNTH] THEN
   SUBGOAL_THEN `!n (ll:A llist) e. Q ll /\ LNTH n ll = SOME e ==> P e`
     (fun th -> MESON_TAC[th]) THEN
@@ -1573,23 +1577,23 @@ let every_coind = prove
   REWRITE_TAC[LNTH_THM; option_DISTINCT; option_INJ] THEN ASM_MESON_TAC[]);;
 
 let MONO_every = prove
- (`(!x:A. P x ==> Q x) ==> (every P l ==> every Q l)`,
+ (`(!x:A. P x ==> Q x) ==> (llist_every P l ==> llist_every Q l)`,
   REWRITE_TAC[every_LNTH] THEN MESON_TAC[]);;
 
 let every_strong_coind = prove
  (`!P (Q:A llist->bool).
-     (!h t. Q (LCONS h t) ==> P h) /\ (!h t. Q (LCONS h t) ==> Q t \/ every P t)
-     ==> !ll. Q ll ==> every P ll`,
+     (!h t. Q (LCONS h t) ==> P h) /\ (!h t. Q (LCONS h t) ==> Q t \/ llist_every P t)
+     ==> !ll. Q ll ==> llist_every P ll`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
-  MP_TAC(ISPECL [`P:A->bool`; `\ll:A llist. Q ll \/ every P ll`] every_coind) THEN
+  MP_TAC(ISPECL [`P:A->bool`; `\ll:A llist. Q ll \/ llist_every P ll`] llist_every_coind) THEN
   REWRITE_TAC[every_thm] THEN ANTS_TAC THENL [ASM_MESON_TAC[]; MESON_TAC[]]);;
 
 let every_LDROP = prove
- (`!f i (ll1:A llist) ll2. every f ll1 /\ LDROP i ll1 = SOME ll2 ==> every f ll2`,
+ (`!f i (ll1:A llist) ll2. llist_every f ll1 /\ LDROP i ll1 = SOME ll2 ==> llist_every f ll2`,
   REWRITE_TAC[every_LNTH] THEN MESON_TAC[LLISTAUX_LDROP_LNTH]);;
 
 let every_LAPPEND1 = prove
- (`!P (ll1:A llist) ll2. every P (LAPPEND ll1 ll2) ==> every P ll1`,
+ (`!P (ll1:A llist) ll2. llist_every P (LAPPEND ll1 ll2) ==> llist_every P ll1`,
   REPEAT GEN_TAC THEN REWRITE_TAC[every_LNTH; LNTH_LAPPEND] THEN
   MP_TAC(ISPEC `LLENGTH (ll1:A llist)` (cases "option")) THEN STRIP_TAC THEN
   ASM_REWRITE_TAC[option_CASE] THEN DISCH_TAC THEN
@@ -1599,16 +1603,16 @@ let every_LAPPEND1 = prove
   ASM_MESON_TAC[LNTH_LLENGTH_NONE; NOT_LT; option_DISTINCT]);;
 
 let every_fromList_EVERY = prove
- (`!l:A list P. every P (llist_fromList l) <=> ALL P l`,
+ (`!l:A list P. llist_every P (llist_fromList l) <=> ALL P l`,
   LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[llist_fromList_def; every_thm; ALL]);;
 
 let every_LAPPEND2_LFINITE = prove
- (`!(l:A llist) P ll. LFINITE l /\ every P (LAPPEND l ll) ==> every P ll`,
+ (`!(l:A llist) P ll. LFINITE l /\ llist_every P (LAPPEND l ll) ==> llist_every P ll`,
   REWRITE_TAC[IMP_CONJ; RIGHT_FORALL_IMP_THM] THEN
   MATCH_MP_TAC LFINITE_ind THEN SIMP_TAC[LAPPEND; every_thm]);;
 
 let every_APPEND_EQN = prove
- (`every P (LAPPEND l1 l2) <=> every P (l1:A llist) /\ (LFINITE l1 ==> every P l2)`,
+ (`llist_every P (LAPPEND l1 l2) <=> llist_every P (l1:A llist) /\ (LFINITE l1 ==> llist_every P l2)`,
   ASM_CASES_TAC `LFINITE (l1:A llist)` THEN
   ASM_SIMP_TAC[NOT_LFINITE_APPEND] THEN
   POP_ASSUM MP_TAC THEN SPEC_TAC(`l1:A llist`,`l1:A llist`) THEN
@@ -1624,7 +1628,7 @@ let exists_APPEND = prove
   MATCH_MP_TAC LFINITE_ind THEN SIMP_TAC[LAPPEND; exists_thm; DISJ_ACI]);;
 
 let every_LMAP = prove
- (`every P (LMAP (f:A->B) l) <=> every (P o f) l`,
+ (`llist_every P (LMAP (f:A->B) l) <=> llist_every (P o f) l`,
   REWRITE_TAC[every_LNTH; LNTH_LMAP; LLISTAUX_OPTION_MAP_EQ_SOME; o_THM] THEN
   MESON_TAC[]);;
 
@@ -1841,14 +1845,14 @@ let LPREFIX_LUNFOLD = prove
 (* (coinductive).                                                            *)
 (* ------------------------------------------------------------------------- *)
 
-let eventually_rules,eventually_ind,eventually_cases = new_inductive_definition
-  `(!ll:A llist. P ll ==> eventually P ll) /\
-   (!(h:A) t. eventually P t ==> eventually P (LCONS h t))`;;
+let llist_eventually_rules,llist_eventually_ind,llist_eventually_cases = new_inductive_definition
+  `(!ll:A llist. P ll ==> llist_eventually P ll) /\
+   (!(h:A) t. llist_eventually P t ==> llist_eventually P (LCONS h t))`;;
 
 let eventually_thm = prove
- (`(eventually P (LNIL:A llist) <=> P LNIL) /\
-   (eventually P (LCONS (h:A) t) <=> P (LCONS h t) \/ eventually P t)`,
-  CONJ_TAC THEN GEN_REWRITE_TAC LAND_CONV [eventually_cases] THEN
+ (`(llist_eventually P (LNIL:A llist) <=> P LNIL) /\
+   (llist_eventually P (LCONS (h:A) t) <=> P (LCONS h t) \/ llist_eventually P t)`,
+  CONJ_TAC THEN GEN_REWRITE_TAC LAND_CONV [llist_eventually_cases] THEN
   REWRITE_TAC[LCONS_NOT_NIL; LCONS_11] THEN MESON_TAC[]);;
 
 (* always is coinductive (HOL4 Hol_coreln): the greatest fixpoint, given by *)
@@ -1900,10 +1904,10 @@ let always_conj_l = prove
 
 let always_eventually_ind = prove
  (`(!ll:A llist. (P ll \/ (~P ll /\ Q (THE (LTL ll)))) ==> Q ll) ==>
-   !ll. ~(ll = LNIL) ==> always (eventually P) ll ==> Q ll`,
+   !ll. ~(ll = LNIL) ==> always (llist_eventually P) ll ==> Q ll`,
   DISCH_TAC THEN
-  SUBGOAL_THEN `!ll:A llist. eventually P ll ==> Q ll` ASSUME_TAC THENL
-   [MATCH_MP_TAC eventually_ind THEN ASM_SIMP_TAC[] THEN
+  SUBGOAL_THEN `!ll:A llist. llist_eventually P ll ==> Q ll` ASSUME_TAC THENL
+   [MATCH_MP_TAC llist_eventually_ind THEN ASM_SIMP_TAC[] THEN
     REPEAT STRIP_TAC THEN FIRST_X_ASSUM MATCH_MP_TAC THEN
     REWRITE_TAC[LTL_THM; THE_DEF] THEN ASM_MESON_TAC[];
     GEN_TAC THEN DISCH_TAC THEN

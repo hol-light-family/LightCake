@@ -4,7 +4,7 @@
 (* loop_call proof.                                                          *)
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
-(* - Names as notes/naming/names.tsv says: compile_correct is                *)
+(* - Names as doc/names.tsv says: compile_correct is                         *)
 (*   loop_callProof_compile_correct; comp is loop_call_comp.                 *)
 (* - FRONT is BUTLAST.                                                       *)
 (* - The proof of compile_correct is by induction on the semantics, with the *)

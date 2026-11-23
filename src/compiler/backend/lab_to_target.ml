@@ -23,9 +23,9 @@ type_invention_error := true;;
 (*   ITLIST f l e.                                                           *)
 (* - HOL4 Overload all_enc_ok_light c ls = EVERY (sec_ok_light c) ls is      *)
 (*   written out where used.                                                 *)
-(* - The HOL4 variable done is isdone (done is a constructor of the type     *)
-(*   kont of hol4/pegexec.ml, which shares the session; the induction        *)
-(*   theorem unprimes variables, so done' would come out as done there).     *)
+(* - The HOL4 variable done is isdone (done was a constructor of the type    *)
+(*   kont of hol4/pegexec.ml, now pegexec_done; the induction theorem        *)
+(*   unprimes variables, so done' would have come out as done there).        *)
 (* - HOL4 r with <| f1 := x; f2 := y |> is f1_fupd (K x) (f2_fupd (K y) r).  *)
 
 (* Number of bytes per FFI *)
@@ -114,7 +114,7 @@ let get_label_def = cake_def
 (* painful side conditions.                                                  *)
 
 let get_ffi_index_def = cake_def
-  `get_ffi_index (ffis:A list) s = the 0 (find_index s ffis 0)`;;
+  `get_ffi_index (ffis:A list) s = misc_the 0 (find_index s ffis 0)`;;
 
 let get_jump_offset_def = cake_def
   `(get_jump_offset (CallFFI s:(A)asm_with_lab) ffis (labs:(num spt)spt) pos =
@@ -401,7 +401,7 @@ let get_memop_info_def = cake_def
 (* the program (three times faster than the kit's own search)               *)
 
 let get_shmem_info_def = cake_def_wf
-  `measure (\(code:((A)sec)list,pos:num,ffi_names:ffiname list,
+  `MEASURE (\(code:((A)sec)list,pos:num,ffi_names:ffiname list,
               shmem_info:shmem_info_num list). list_size (sec_size (\x:A. 0)) code)`
   TERM_TAC
   `(get_shmem_info ([]:((A)sec)list) pos ffi_names

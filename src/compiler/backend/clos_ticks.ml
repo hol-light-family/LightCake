@@ -29,7 +29,7 @@ type_invention_error := true;;
 (* HOL4: remove_ticks *)
 
 let clos_ticks_remove_ticks_def = sem1aux_def_wf
-  `measure (\es:clos_exp list. list_size clos_exp_size es)`
+  `MEASURE (\es:clos_exp list. list_size clos_exp_size es)`
   SEM1AUX_TC_TAC
   `(clos_ticks_remove_ticks [] = []) /\
    (clos_ticks_remove_ticks (CONS (x:clos_exp) (CONS y xs)) =
@@ -70,7 +70,7 @@ let clos_ticks_remove_ticks_ind = cake_ind "clos_ticks_remove_ticks";;
 (* HOL4: remove_ticks_sing, remove_ticks_list, remove_ticks_let *)
 
 let clos_ticks_remove_ticks_sing_def = il1aux_def_wf
-  `measure
+  `MEASURE
      (\x:clos_exp + clos_exp list + (num # clos_exp) list.
         sum_CASE x (\e. clos_exp_size e)
           (\y. sum_CASE y (\es. list_size clos_exp_size es)

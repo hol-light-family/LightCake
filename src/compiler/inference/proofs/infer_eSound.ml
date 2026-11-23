@@ -58,7 +58,7 @@ let sub_completion_infer = prove
   EXISTS_TAC `ts:(infer_t#infer_t)list` THEN ASM_REWRITE_TAC[] THEN CONJ_TAC THENL
    [EXISTS_TAC `infer_st_subst st2` THEN ASM_REWRITE_TAC[];
     MATCH_MP_TAC SUBSET_TRANS THEN
-    EXISTS_TAC `count (infer_st_next_uvar st2)` THEN ASM_REWRITE_TAC[] THEN
+    EXISTS_TAC `pred_set_count (infer_st_next_uvar st2)` THEN ASM_REWRITE_TAC[] THEN
     REWRITE_TAC[SUBSET; IN_COUNT] THEN ASM_ARITH_TAC]);;
 
 let sub_completion_add_constraints = prove
@@ -84,7 +84,7 @@ let sub_completion_infer_es = prove
   EXISTS_TAC `ts:(infer_t#infer_t)list` THEN ASM_REWRITE_TAC[] THEN CONJ_TAC THENL
    [EXISTS_TAC `infer_st_subst st2` THEN ASM_REWRITE_TAC[];
     MATCH_MP_TAC SUBSET_TRANS THEN
-    EXISTS_TAC `count (infer_st_next_uvar st2)` THEN ASM_REWRITE_TAC[] THEN
+    EXISTS_TAC `pred_set_count (infer_st_next_uvar st2)` THEN ASM_REWRITE_TAC[] THEN
     REWRITE_TAC[SUBSET; IN_COUNT] THEN ASM_ARITH_TAC]);;
 
 let INFER1AUX_sub_completion_back = prove
@@ -98,7 +98,7 @@ let INFER1AUX_sub_completion_back = prove
   EXISTS_TAC `ts:(infer_t#infer_t)list` THEN ASM_REWRITE_TAC[] THEN CONJ_TAC THENL
    [EXISTS_TAC `infer_st_subst st2` THEN ASM_REWRITE_TAC[];
     MATCH_MP_TAC SUBSET_TRANS THEN
-    EXISTS_TAC `count (infer_st_next_uvar st2)` THEN ASM_REWRITE_TAC[] THEN
+    EXISTS_TAC `pred_set_count (infer_st_next_uvar st2)` THEN ASM_REWRITE_TAC[] THEN
     REWRITE_TAC[SUBSET; IN_COUNT] THEN ASM_ARITH_TAC]);;
 
 let sub_completion_infer_p = prove
@@ -782,7 +782,7 @@ let INFER1AUX_IENV_TAC : tactic =
     let tms = mapfilter (fun (x,ie) ->
        let base = find (fun th -> rand(concl th) = ie) ienv_oks in
        let tm = rhs(concl(conv (list_mk_comb(`ienv_ok`,
-                  [mk_comb(`count`, mk_comb(INFER1AUX_tm_nuv, x)); ie])))) in
+                  [mk_comb(`pred_set_count`, mk_comb(INFER1AUX_tm_nuv, x)); ie])))) in
        (tm,base)) runs in
     let tms = filter (fun (tm,_) -> not (mem tm (map concl ths))) tms in
     MAP_EVERY (fun (tm,base) ->
@@ -870,8 +870,8 @@ let INFER1AUX_ienv_ok_upd = prove
 
 let INFER1AUX_ienv_ok_bind = prove
  (`!n m x t ienv.
-     ienv_ok (count n) ienv /\ n <= m /\ check_t 0 (count m) t
-     ==> ienv_ok (count m)
+     ienv_ok (pred_set_count n) ienv /\ n <= m /\ check_t 0 (pred_set_count m) t
+     ==> ienv_ok (pred_set_count m)
            (inf_env_inf_v_fupd (K (nsBind x (0,t) (inf_env_inf_v ienv))) ienv)`,
   REWRITE_TAC[INFER1AUX_ienv_ok_upd; ienv_ok_def] THEN REPEAT STRIP_TAC THEN
   ASM_REWRITE_TAC[] THEN MATCH_MP_TAC TYSYS2AUX_ienv_val_ok_nsBind THEN
@@ -879,8 +879,8 @@ let INFER1AUX_ienv_ok_bind = prove
 
 let INFER1AUX_ienv_ok_optbind = prove
  (`!n m xo t ienv.
-     ienv_ok (count n) ienv /\ n <= m /\ check_t 0 (count m) t
-     ==> ienv_ok (count m)
+     ienv_ok (pred_set_count n) ienv /\ n <= m /\ check_t 0 (pred_set_count m) t
+     ==> ienv_ok (pred_set_count m)
            (inf_env_inf_v_fupd (K (nsOptBind xo (0,t) (inf_env_inf_v ienv))) ienv)`,
   REWRITE_TAC[INFER1AUX_ienv_ok_upd; ienv_ok_def] THEN REPEAT STRIP_TAC THEN
   ASM_REWRITE_TAC[] THEN MATCH_MP_TAC TYSYS2AUX_ienv_val_ok_nsOptBind THEN
@@ -907,7 +907,7 @@ let INFER1AUX_WALK_CHECK_TAC : tactic =
 (* sub_completion bound                                                    *)
 let INFER1AUX_sc_check_freevars = prove
  (`!n m s1 ec s k t.
-     sub_completion n m s1 ec s /\ t_wfs s /\ check_t 0 (count k) t /\ k <= m
+     sub_completion n m s1 ec s /\ t_wfs s /\ check_t 0 (pred_set_count k) t /\ k <= m
      ==> check_freevars n [] (convert_t (t_walkstar s t))`,
   REPEAT STRIP_TAC THEN MATCH_MP_TAC check_t_to_check_freevars THEN
   MATCH_MP_TAC (CONJUNCT1 check_t_walkstar) THEN ASM_REWRITE_TAC[] THEN
@@ -915,11 +915,11 @@ let INFER1AUX_sc_check_freevars = prove
     check (fun th -> INFER1AUX_is_app "sub_completion" (concl th))) THEN
   ASM_REWRITE_TAC[] THEN
   MATCH_MP_TAC (REWRITE_RULE[RIGHT_IMP_FORALL_THM; IMP_IMP] (CONJUNCT1 check_t_more5)) THEN
-  EXISTS_TAC `count k` THEN
+  EXISTS_TAC `pred_set_count k` THEN
   CONJ_TAC THENL
-   [MP_TAC(SPECL [`t:infer_t`; `0`; `count k`] (CONJUNCT1 check_t_more2)) THEN
+   [MP_TAC(SPECL [`t:infer_t`; `0`; `pred_set_count k`] (CONJUNCT1 check_t_more2)) THEN
     ASM_REWRITE_TAC[] THEN DISCH_THEN(MP_TAC o SPEC `n:num`) THEN REWRITE_TAC[ADD_CLAUSES];
-    MATCH_MP_TAC SUBSET_TRANS THEN EXISTS_TAC `count m` THEN ASM_REWRITE_TAC[] THEN
+    MATCH_MP_TAC SUBSET_TRANS THEN EXISTS_TAC `pred_set_count m` THEN ASM_REWRITE_TAC[] THEN
     REWRITE_TAC[SUBSET; IN_COUNT] THEN ASM_ARITH_TAC]);;
 let INFER1AUX_ienv_fupd_id = prove
  (`!ienv. inf_env_inf_v_fupd (K (inf_env_inf_v ienv)) ienv = ienv`,
@@ -928,27 +928,27 @@ let INFER1AUX_ienv_fupd_id = prove
 (* check_t over FDOM s of a type whose uvars are below a sub_completion bound *)
 let INFER1AUX_sc_check_t_fdom = prove
  (`!n m s1 ec s k t.
-     sub_completion n m s1 ec s /\ check_t 0 (count k) t /\ k <= m
+     sub_completion n m s1 ec s /\ check_t 0 (pred_set_count k) t /\ k <= m
      ==> check_t n (FDOM s) t`,
   REPEAT STRIP_TAC THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o REWRITE_RULE[sub_completion_def] o
     check (fun th -> INFER1AUX_is_app "sub_completion" (concl th))) THEN
   MATCH_MP_TAC (REWRITE_RULE[RIGHT_IMP_FORALL_THM; IMP_IMP] (CONJUNCT1 check_t_more5)) THEN
-  EXISTS_TAC `count k` THEN CONJ_TAC THENL
-   [MP_TAC(SPECL [`t:infer_t`; `0`; `count k`] (CONJUNCT1 check_t_more2)) THEN
+  EXISTS_TAC `pred_set_count k` THEN CONJ_TAC THENL
+   [MP_TAC(SPECL [`t:infer_t`; `0`; `pred_set_count k`] (CONJUNCT1 check_t_more2)) THEN
     ASM_REWRITE_TAC[] THEN DISCH_THEN(MP_TAC o SPEC `n:num`) THEN REWRITE_TAC[ADD_CLAUSES];
-    MATCH_MP_TAC SUBSET_TRANS THEN EXISTS_TAC `count m` THEN ASM_REWRITE_TAC[] THEN
+    MATCH_MP_TAC SUBSET_TRANS THEN EXISTS_TAC `pred_set_count m` THEN ASM_REWRITE_TAC[] THEN
     REWRITE_TAC[SUBSET; IN_COUNT] THEN ASM_ARITH_TAC]);;
 
 (* check_t over FDOM s of types whose uvars are below a sub_completion bound *)
 let INFER1AUX_sc_all_check_t_fdom = prove
  (`!n m s1 ec s k tvs ts.
-     sub_completion n m s1 ec s /\ ALL (check_t tvs (count k)) ts /\ k <= m
+     sub_completion n m s1 ec s /\ ALL (check_t tvs (pred_set_count k)) ts /\ k <= m
      ==> ALL (check_t tvs (FDOM s)) ts`,
   REPEAT STRIP_TAC THEN
   MATCH_MP_TAC (REWRITE_RULE[RIGHT_IMP_FORALL_THM; IMP_IMP] (CONJUNCT2 check_t_more5)) THEN
-  EXISTS_TAC `count k` THEN ASM_REWRITE_TAC[] THEN
-  MATCH_MP_TAC SUBSET_TRANS THEN EXISTS_TAC `count m` THEN CONJ_TAC THENL
+  EXISTS_TAC `pred_set_count k` THEN ASM_REWRITE_TAC[] THEN
+  MATCH_MP_TAC SUBSET_TRANS THEN EXISTS_TAC `pred_set_count m` THEN CONJ_TAC THENL
    [REWRITE_TAC[SUBSET; IN_COUNT] THEN ASM_ARITH_TAC;
     ASM_MESON_TAC[sub_completion_def]]);;
 
@@ -1068,7 +1068,7 @@ let INFER1AUX_ies_var = prove
   ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN
   INFER1AUX_ES_RULE_TAC INFER1AUX_type_e_rules THEN EXISTS_TAC `tvs':num` THEN
   ASM_REWRITE_TAC[LENGTH_MAP; ALL_MAP; o_DEF] THEN
-  FIRST_X_ASSUM(MP_TAC o check (fun th -> is_comb(concl th) && 
+  FIRST_X_ASSUM(MP_TAC o check (fun th -> is_comb(concl th) &&
     (try fst(dest_const(rator(rator(concl th)))) = "ALL" with Failure _ -> false))) THEN
   MATCH_MP_TAC MONO_ALL THEN REPEAT STRIP_TAC THEN BETA_TAC THEN
   MATCH_MP_TAC check_t_to_check_freevars THEN
@@ -1220,7 +1220,7 @@ let INFER1AUX_IES_CON_TAC =
 
 let INFER1AUX_IES_FUN_TAC =
   REPEAT STRIP_TAC THEN INFER1AUX_IES_EXPAND_TAC [] THEN INFER1AUX_IES_REST1_TAC THEN
-  SUBGOAL_THEN `ienv_ok (count (infer_st_next_uvar st + 1))
+  SUBGOAL_THEN `ienv_ok (pred_set_count (infer_st_next_uvar st + 1))
                   (inf_env_inf_v_fupd (K (nsBind x (0,Infer_Tuvar (infer_st_next_uvar st))
                      (inf_env_inf_v ienv))) ienv)` ASSUME_TAC THENL
    [MATCH_MP_TAC INFER1AUX_ienv_ok_bind THEN EXISTS_TAC `infer_st_next_uvar st` THEN
@@ -1276,9 +1276,9 @@ let INFER1AUX_IES_LET_TAC =
       then EXISTS_TAC (rand c) else failwith "") THEN
     REWRITE_TAC[opt_bind_name_def] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[];
     FIRST_ASSUM(STRIP_ASSUME_TAC o REWRITE_RULE[ienv_ok_def] o
-      check (fun th -> concl th = `ienv_ok (count (infer_st_next_uvar st)) ienv`)) THEN
+      check (fun th -> concl th = `ienv_ok (pred_set_count (infer_st_next_uvar st)) ienv`)) THEN
     INFER1AUX_FWD_TAC (CONJUNCT1 infer_e_check_t) THEN
-    SUBGOAL_THEN `ienv_ok (count (infer_st_next_uvar st''))
+    SUBGOAL_THEN `ienv_ok (pred_set_count (infer_st_next_uvar st''))
                     (inf_env_inf_v_fupd (K (nsBind a (0,v') (inf_env_inf_v ienv))) ienv)`
       ASSUME_TAC THENL
      [MATCH_MP_TAC INFER1AUX_ienv_ok_bind THEN EXISTS_TAC `infer_st_next_uvar st` THEN
@@ -1298,14 +1298,14 @@ let INFER1AUX_IES_LET_TAC =
 let INFER1AUX_IES_LETREC_TAC =
   REPEAT STRIP_TAC THEN INFER1AUX_IES_EXPAND_TAC [] THEN INFER1AUX_IES_REST1_TAC THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o REWRITE_RULE[ienv_ok_def] o
-    check (fun th -> concl th = `ienv_ok (count (infer_st_next_uvar st)) ienv`)) THEN
+    check (fun th -> concl th = `ienv_ok (pred_set_count (infer_st_next_uvar st)) ienv`)) THEN
   (fun (asl,w as gl) ->
     let ths = map snd asl in
     let run = find (fun th -> try INFER1AUX_is_app "infer_funs" (lhs(concl th))
                               with Failure _ -> false) ths in
     let ie = el 1 (snd(strip_comb(lhs(concl run)))) in
     let g1 = vsubst [ie, `IE:inf_env`]
-      `ienv_ok (count (infer_st_next_uvar st + LENGTH (funs:(mlstring#mlstring#exp)list))) IE` in
+      `ienv_ok (pred_set_count (infer_st_next_uvar st + LENGTH (funs:(mlstring#mlstring#exp)list))) IE` in
     let g3 = vsubst [ie, `IE:inf_env`] (CASE_TERM
       `env_rel_sound s IE tenv
          (bind_var_list 0
@@ -1329,7 +1329,7 @@ let INFER1AUX_IES_LETREC_TAC =
 let INFER1AUX_IES_TANNOT_TAC =
   INFER1AUX_IES_GEN_TAC THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o REWRITE_RULE[ienv_ok_def] o
-    check (fun th -> concl th = `ienv_ok (count (infer_st_next_uvar st)) ienv`)) THEN
+    check (fun th -> concl th = `ienv_ok (pred_set_count (infer_st_next_uvar st)) ienv`)) THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o REWRITE_RULE[env_rel_sound_def] o
     check (fun th -> INFER1AUX_is_app "env_rel_sound" (concl th))) THEN
   FIRST_X_ASSUM(SUBST_ALL_TAC o
@@ -1353,7 +1353,7 @@ let INFER1AUX_IES_FUNSNIL_TAC =
 let INFER1AUX_IES_PESCONS_TAC =
   REPEAT STRIP_TAC THEN INFER1AUX_IES_EXPAND_TAC [] THEN INFER1AUX_IES_REST1_TAC THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o REWRITE_RULE[ienv_ok_def] o
-    check (fun th -> concl th = `ienv_ok (count (infer_st_next_uvar st)) ienv`)) THEN
+    check (fun th -> concl th = `ienv_ok (pred_set_count (infer_st_next_uvar st)) ienv`)) THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o REWRITE_RULE[env_rel_sound_def] o
     check (fun th -> INFER1AUX_is_app "env_rel_sound" (concl th))) THEN
   INFER1AUX_FWDS_TAC (CONJUNCT1 infer_p_check_t) THEN
@@ -1368,7 +1368,7 @@ let INFER1AUX_IES_PESCONS_TAC =
                                with Failure _ -> false) ths in
     let ie = el 1 (snd(strip_comb(lhs(concl erun)))) in
     let g1 = vsubst [ie, `IE:inf_env`; sto, `STO:infer_st`]
-      `ienv_ok (count (infer_st_next_uvar STO)) IE` in
+      `ienv_ok (pred_set_count (infer_st_next_uvar STO)) IE` in
     let g2 = vsubst [ie, `IE:inf_env`; env, `ENV:(mlstring#infer_t)list`]
       `env_rel_sound s IE tenv (bind_var_list 0 (convert_env s ENV) tenvE)` in
     (SUBGOAL_THEN g1 ASSUME_TAC THENL
@@ -1402,7 +1402,7 @@ let INFER1AUX_IES_FUNSCONS_TAC =
   REPEAT STRIP_TAC THEN INFER1AUX_IES_EXPAND_TAC [] THEN INFER1AUX_IES_REST1_TAC THEN
   FIRST_X_ASSUM(STRIP_ASSUME_TAC o REWRITE_RULE[MAP; ALL_DISTINCT; FST] o
     check (fun th -> INFER1AUX_is_app "ALL_DISTINCT" (concl th))) THEN
-  SUBGOAL_THEN `ienv_ok (count (infer_st_next_uvar st + 1))
+  SUBGOAL_THEN `ienv_ok (pred_set_count (infer_st_next_uvar st + 1))
                   (inf_env_inf_v_fupd (K (nsBind x (0,Infer_Tuvar (infer_st_next_uvar st))
                      (inf_env_inf_v ienv))) ienv)` ASSUME_TAC THENL
    [MATCH_MP_TAC INFER1AUX_ienv_ok_bind THEN EXISTS_TAC `infer_st_next_uvar st` THEN
@@ -1418,7 +1418,7 @@ let INFER1AUX_IES_FUNSCONS_TAC =
     ALL_TAC] THEN
   INFER1AUX_IES_REST2_TAC THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o REWRITE_RULE[ienv_ok_def] o
-    check (fun th -> concl th = `ienv_ok (count (infer_st_next_uvar st + 1))
+    check (fun th -> concl th = `ienv_ok (pred_set_count (infer_st_next_uvar st + 1))
                   (inf_env_inf_v_fupd (K (nsBind x (0,Infer_Tuvar (infer_st_next_uvar st))
                      (inf_env_inf_v ienv))) ienv)`)) THEN
   INFER1AUX_FWD_TAC (CONJUNCT1 infer_e_check_t) THEN
@@ -1437,7 +1437,7 @@ let infer_e_sound = prove
  (CASE_TERM
  `(!l ienv e st st' tenv tenvE t extra_constraints s.
      infer_e l ienv e st = (M_success t,st') /\
-     ienv_ok (count (infer_st_next_uvar st)) ienv /\
+     ienv_ok (pred_set_count (infer_st_next_uvar st)) ienv /\
      env_rel_sound s ienv tenv tenvE /\
      t_wfs (infer_st_subst st) /\
      sub_completion (num_tvs tenvE) (infer_st_next_uvar st') (infer_st_subst st')
@@ -1445,7 +1445,7 @@ let infer_e_sound = prove
      ==> type_e tenv tenvE e (convert_t (t_walkstar s t))) /\
   (!l ienv es st st' tenv tenvE ts extra_constraints s.
      infer_es l ienv es st = (M_success ts,st') /\
-     ienv_ok (count (infer_st_next_uvar st)) ienv /\
+     ienv_ok (pred_set_count (infer_st_next_uvar st)) ienv /\
      env_rel_sound s ienv tenv tenvE /\
      t_wfs (infer_st_subst st) /\
      sub_completion (num_tvs tenvE) (infer_st_next_uvar st') (infer_st_subst st')
@@ -1453,7 +1453,7 @@ let infer_e_sound = prove
      ==> type_es tenv tenvE es (MAP (convert_t o t_walkstar s) ts)) /\
   (!l ienv pes t1 t2 st st' tenv tenvE extra_constraints s.
      infer_pes l ienv pes t1 t2 st = (M_success one,st') /\
-     ienv_ok (count (infer_st_next_uvar st)) ienv /\
+     ienv_ok (pred_set_count (infer_st_next_uvar st)) ienv /\
      env_rel_sound s ienv tenv tenvE /\
      t_wfs (infer_st_subst st) /\
      sub_completion (num_tvs tenvE) (infer_st_next_uvar st') (infer_st_subst st')
@@ -1462,7 +1462,7 @@ let infer_e_sound = prove
            (convert_t (t_walkstar s t2))) /\
   (!l ienv funs st st' tenv tenvE extra_constraints s ts.
      infer_funs l ienv funs st = (M_success ts,st') /\
-     ienv_ok (count (infer_st_next_uvar st)) ienv /\
+     ienv_ok (pred_set_count (infer_st_next_uvar st)) ienv /\
      env_rel_sound s ienv tenv tenvE /\
      t_wfs (infer_st_subst st) /\
      sub_completion (num_tvs tenvE) (infer_st_next_uvar st') (infer_st_subst st')

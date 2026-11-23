@@ -8,7 +8,7 @@
 (* collector and bignum library, among other things.                        *)
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
-(* - Names as notes/naming/names.tsv says: the prefix data_to_word_ for the  *)
+(* - Names as doc/names.tsv says: the prefix data_to_word_ for the           *)
 (*   names that clash with other theories (data_to_word_config,              *)
 (*   data_to_word_list_Seq, data_to_word_Unit, data_to_word_get_names,       *)
 (*   data_to_word_arg1, data_to_word_arg2, data_to_word_assign,              *)
@@ -1374,7 +1374,7 @@ let D2WAUX_getWords_LENGTH = prove
   RES_TAC THEN ASM_ARITH_TAC);;
 
 let StoreAnyConsts_def = cake_def_wf_clauses
-  `measure (\(r1:num,r2:num,r3:num,vs:(bool#(A)word_loc)list,v:bool#(A)word_loc). LENGTH vs)`
+  `MEASURE (\(r1:num,r2:num,r3:num,vs:(bool#(A)word_loc)list,v:bool#(A)word_loc). LENGTH vs)`
   (REWRITE_TAC[measure_THM; FORALL_PAIR_THM] THEN
    CONV_TAC(DEPTH_CONV GEN_BETA_CONV) THEN
    REPEAT GEN_TAC THEN REWRITE_TAC[SND] THEN STRIP_TAC THEN

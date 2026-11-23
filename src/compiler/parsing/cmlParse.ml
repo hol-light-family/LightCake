@@ -6,7 +6,7 @@
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
 (* - HOL4's overload cmlpegexec n is written out:                            *)
-(*   (\t. peg_exec cmlPEG (pnt n) t [] NONE [] done failed).                 *)
+(*   (\t. peg_exec cmlPEG (cmlPEG_pnt n) t [] NONE [] pegexec_done failed).  *)
 (* - HOL4's local type abbreviation M (a parser monad with a type            *)
 (*   parameter; names.tsv: cmlParse_M) is written out:                       *)
 (*   (token#locs)list->((token#locs)list,A,string)pegresult.                 *)
@@ -68,7 +68,7 @@ let optlift_def = cake_def
 let cmlParseExpr_def = cake_def
   `cmlParseExpr =
      pegresult_bind
-       (destResult o (\t. peg_exec cmlPEG (pnt nE) t [] NONE [] done failed))
+       (destResult o (\t. peg_exec cmlPEG (cmlPEG_pnt nE) t [] NONE [] pegexec_done failed))
        (\pts.
         pegresult_bind (optlift (oHD pts)) (\pt.
         pegresult_bind (optlift (ptree_Expr nE pt)) (\ast.
@@ -78,7 +78,7 @@ let parse_prog_def = cake_def
   `parse_prog =
      pegresult_bind
        (destResult o
-        (\t. peg_exec cmlPEG (pnt nTopLevelDecs) t [] NONE [] done failed))
+        (\t. peg_exec cmlPEG (cmlPEG_pnt nTopLevelDecs) t [] NONE [] pegexec_done failed))
        (\pts.
         pegresult_bind (optlift (oHD pts)) (\pt.
         optlift (ptree_TopLevelDecs pt)))`;;

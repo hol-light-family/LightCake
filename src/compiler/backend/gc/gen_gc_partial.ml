@@ -79,7 +79,7 @@ let gen_gc_partial_gc_move_list_IMP = prove
   SIMP_TAC[]);;
 
 let gen_gc_partial_gc_move_data_def = cake_def_wf
-  `measure (\(conf:B gen_gc_partial_conf,state:(A,B)gc_state).
+  `MEASURE (\(conf:B gen_gc_partial_conf,state:(A,B)gc_state).
               gen_gc_partial_conf_limit conf - heap_length (gc_state_h1 state))`
   (REPEAT STRIP_TAC THEN RVEQ_TAC THEN
    FIRST_X_ASSUM(MP_TAC o GC2AUX_MATCH_MP_EITHER gen_gc_partial_gc_move_list_IMP) THEN

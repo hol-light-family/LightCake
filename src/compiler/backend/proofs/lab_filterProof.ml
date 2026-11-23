@@ -27,7 +27,7 @@ type_invention_error := true;;
 (* - STACKPROPSAUX_ names are local helpers (the unit's helper prefix).      *)
 
 let adjust_pc_def = cake_def_wf
-  `measure (\x:num#((A)sec)list. list_size (sec_size (\x:A. 0)) (SND x))`
+  `MEASURE (\x:num#((A)sec)list. list_size (sec_size (\x:A. 0)) (SND x))`
   TERM_TAC
   `adjust_pc p (xs:((A)sec)list) =
      if p = 0 then 0 else
@@ -1536,4 +1536,3 @@ let sec_ends_with_label_filter_skip = prove
   STRUCT_CASES_TAC(ISPEC `h:(A)sec` (cases "sec")) THEN
   REWRITE_TAC[filter_skip_def; ALL] THEN CASE_REWRITE_TAC[] THEN
   ASM_MESON_TAC[STACKPROPSAUX_FILTER_ends_with_label]);;
-

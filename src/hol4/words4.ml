@@ -2483,3 +2483,54 @@ let _ = cake_add_simps
   ZERO_LT_TWOEXP; aligned_add_pow; i2w_w2n_w2w;
   integer_NUM_OF_INT; INT_OF_NUM; INT_ABS_NUM; INT_ABS_EQ_ID; integer_INT_LT;
   INT_EQ_NEG];;
+
+(* ------------------------------------------------------------------------- *)
+(* Lemmas used by several later files.                                       *)
+(* ------------------------------------------------------------------------- *)
+
+(* the bytes of a 32-bit word *)
+let WORDSAUX_word_of_bytes_32 = prove
+ (`!be (b0:byte) b1 b2 b3.
+     word_of_bytes be (word 0:int32) [b0;b1;b2;b3] =
+     if be then
+       word_or (word_or (word_or (word_shl (word_zx b0) 24)
+                                 (word_shl (word_zx b1) 16))
+                        (word_shl (word_zx b2) 8))
+               (word_zx b3)
+     else
+       word_or (word_or (word_or (word_zx b0) (word_shl (word_zx b1) 8))
+                        (word_shl (word_zx b2) 16))
+               (word_shl (word_zx b3) 24)`,
+  REPEAT GEN_TAC THEN
+  REWRITE_TAC[word_of_bytes_def; set_byte_def; byte_index_def; DIMINDEX_32] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+  CONV_TAC WORD_REDUCE_CONV THEN CONV_TAC NUM_REDUCE_CONV THEN
+  COND_CASES_TAC THEN
+  REWRITE_TAC[WORD_EQ_BITS_ALT; DIMINDEX_32] THEN
+  CONV_TAC EXPAND_CASES_CONV THEN
+  REWRITE_TAC[BIT_WORD_OR; BIT_WORD_SHL; BIT_WORD_ZX; BIT_WORD_SLICE_ALT;
+              BIT_WORD_0; DIMINDEX_32; DIMINDEX_8] THEN
+  CONV_TAC NUM_REDUCE_CONV THEN
+  SIMP_TAC[BIT_TRIVIAL; DIMINDEX_8; ARITH]);;
+
+(* the bytes of a 32-bit word, one at a time *)
+let WORDSAUX_get_byte_32 = prove
+ (`!(hw:int32) be.
+     get_byte (word 0:int32) hw be =
+       (if be then word_zx (word_ushr hw 24) else word_zx hw) /\
+     get_byte (word 1:int32) hw be =
+       (if be then word_zx (word_ushr hw 16) else word_zx (word_ushr hw 8)) /\
+     get_byte (word 2:int32) hw be =
+       (if be then word_zx (word_ushr hw 8) else word_zx (word_ushr hw 16)) /\
+     get_byte (word 3:int32) hw be =
+       (if be then word_zx hw else word_zx (word_ushr hw 24))`,
+  REPEAT GEN_TAC THEN
+  REWRITE_TAC[get_byte_def; byte_index_def; DIMINDEX_32] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+  CONV_TAC WORD_REDUCE_CONV THEN CONV_TAC NUM_REDUCE_CONV THEN
+  COND_CASES_TAC THEN REWRITE_TAC[WORD_USHR_ZERO]);;
+
+let WORDSAUX_LENGTH_word_to_bytes_aux = prove
+ (`!n (w:N word) be. LENGTH (word_to_bytes_aux n w be) = n`,
+  INDUCT_TAC THEN ASM_REWRITE_TAC[word_to_bytes_aux_def; LENGTH; LENGTH_APPEND] THEN
+  ARITH_TAC);;

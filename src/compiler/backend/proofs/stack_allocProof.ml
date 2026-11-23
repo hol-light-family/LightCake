@@ -2222,8 +2222,8 @@ let STALLOCAUX_ALOOKUP_MAP_prog_comp = prove
 
 let STALLOCAUX_compile_union = prove
  (`!c (code:((A)stack_prog)spt) progs.
-     fromAList (stack_alloc_compile c (toAList (union code (fromAList progs)))) =
-     union (fromAList (stack_alloc_compile c (toAList code)))
+     fromAList (stack_alloc_compile c (toAList (sptree_union code (fromAList progs)))) =
+     sptree_union (fromAList (stack_alloc_compile c (toAList code)))
            (fromAList (MAP stack_alloc_prog_comp progs))`,
   REPEAT GEN_TAC THEN
   SIMP_TAC[spt_eq_thm; wf_union; wf_fromAList] THEN

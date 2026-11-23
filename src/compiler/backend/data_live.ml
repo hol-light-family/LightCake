@@ -121,34 +121,34 @@ let data_live_compile_def = sem1aux_def
         (data_Seq d1 d2,l1)) /\
    (data_live_compile data_Tick live = (data_Tick,live)) /\
    (data_live_compile (MakeSpace k names) live =
-      let l1 = inter names live in (MakeSpace k l1,l1)) /\
+      let l1 = sptree_inter names live in (MakeSpace k l1,l1)) /\
    (data_live_compile (data_Assign v op vs NONE) live =
       if IS_NONE (lookup v live) /\ data_live_is_pure op then (data_Skip,live) else
         let l1 = list_insert vs (delete v live) in
           (data_Assign v op vs NONE,l1)) /\
    (data_live_compile (data_Assign v op vs (SOME names)) live =
-      let l1 = inter names (delete v live) in
+      let l1 = sptree_inter names (delete v live) in
         (data_Assign v op vs (SOME l1),list_insert vs l1)) /\
    (data_live_compile (data_If n c2 c3) live =
       let (d3,l3) = data_live_compile c3 live in
       let (d2,l2) = data_live_compile c2 live in
-        (data_If n d2 d3,insert n one (union l2 l3))) /\
+        (data_If n d2 d3,insert n one (sptree_union l2 l3))) /\
    (data_live_compile (data_Force NONE loc src) live =
       (data_Force NONE loc src,insert src one LN)) /\
    (data_live_compile (data_Force (SOME (n,names)) loc src) live =
-      let l1 = inter names (delete n live) in
+      let l1 = sptree_inter names (delete n live) in
       let l2 = insert src one l1 in
         (data_Force (SOME (n,l1)) loc src,l2)) /\
    (data_live_compile (data_Call NONE dest vs handler) live =
       (data_Call NONE dest vs handler,list_to_num_set vs)) /\
    (data_live_compile (data_Call (SOME (ns,names)) dest vs NONE) live =
-      let l1 = inter names (list_delete ns live) in
+      let l1 = sptree_inter names (list_delete ns live) in
       let l2 = list_insert vs l1 in
         (data_Call (SOME (ns,l1)) dest vs NONE,l2)) /\
    (data_live_compile (data_Call (SOME (ns,names)) dest vs (SOME (v,c))) live =
       let (d,l3) = data_live_compile c live in
-      let l0 = union (list_delete ns live) (delete v l3) in
-      let l1 = inter names l0 in
+      let l0 = sptree_union (list_delete ns live) (delete v l3) in
+      let l1 = sptree_inter names l0 in
       let l2 = list_insert vs l1 in
         (data_Call (SOME (ns,l1)) dest vs (SOME (v,d)),l2))`;;
 

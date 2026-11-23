@@ -85,7 +85,7 @@ let mw2i_def = prove
    (!xs:(N word)list. mw2i (T,xs) = --(&(mw2n xs)))`,
   REWRITE_TAC[mw2i_DEF]);;
 
-let n2mw_def = cake_def_wf `measure (I:num->num)`
+let n2mw_def = cake_def_wf `MEASURE (I:num->num)`
   (REWRITE_TAC(I_THM::WF_REL_THMS) THEN REPEAT STRIP_TAC THEN
    MATCH_MP_TAC DIV_LESS THEN REWRITE_TAC[ONE_LT_dimword] THEN ASM_ARITH_TAC)
   `n2mw n = if n = 0 then []:(N word)list
@@ -305,7 +305,7 @@ let LENGTH_n2mw_LESS_LENGTH_n2mw = prove
 (* fix and zerofix                                                           *)
 (* ------------------------------------------------------------------------- *)
 
-let mw_fix_def = cake_def_wf `measure (LENGTH:(N word)list->num)`
+let mw_fix_def = cake_def_wf `MEASURE (LENGTH:(N word)list->num)`
   (REWRITE_TAC WF_REL_THMS THEN REPEAT STRIP_TAC THEN
    MP_TAC(ISPEC `xs:(N word)list` LENGTH_FRONT) THEN ASM_REWRITE_TAC[] THEN
    FIRST_X_ASSUM(MP_TAC o check (is_neg o concl)) THEN
@@ -950,7 +950,7 @@ let LENGTH_mw_shift = prove
 (* ------------------------------------------------------------------------- *)
 
 let mw_cmp_def = cake_def_wf
-  `measure ((LENGTH:(N word)list->num) o (FST:(N word)list#(N word)list->(N word)list))`
+  `MEASURE ((LENGTH:(N word)list->num) o (FST:(N word)list#(N word)list->(N word)list))`
   (REWRITE_TAC(o_THM::WF_REL_THMS) THEN REPEAT STRIP_TAC THEN
    MP_TAC(ISPEC `xs:(N word)list` LENGTH_FRONT) THEN ASM_REWRITE_TAC[] THEN
    FIRST_X_ASSUM(MP_TAC o check (is_neg o concl)) THEN
@@ -1205,7 +1205,7 @@ let LBIGAUX_VAL_DOUBLE = prove
   SUBGOAL_THEN `val (v:N word) * 2 < 2 * 2 EXP (dimindex(:N) - 1)`
     (fun th -> REWRITE_TAC[MATCH_MP MOD_LT th]) THEN
   ASM_ARITH_TAC);;
-let calc_d_def = cake_def_wf `measure (\p:N word#N word. dimword(:N) - val(FST p))`
+let calc_d_def = cake_def_wf `MEASURE (\p:N word#N word. dimword(:N) - val(FST p))`
   (REWRITE_TAC WF_REL_THMS THEN BETA_TAC THEN
    REWRITE_TAC[FST; DE_MORGAN_THM; d_word_msb; NOT_LE] THEN
    REPEAT STRIP_TAC THEN MP_TAC(SPEC `v1:N word` LBIGAUX_VAL_DOUBLE) THEN
@@ -1249,7 +1249,7 @@ let mw_simple_div_def = cake_def
       match mw_simple_div r xs y with (qs,r,c) -> (CONS q qs,r,(c /\ c1)))`;;
 
 let mw_div_test_def = cake_def_wf
-  `measure (\p:N word#N word#N word#N word#N word#N word. val (FST p))`
+  `MEASURE (\p:N word#N word#N word#N word#N word#N word. val (FST p))`
   (REWRITE_TAC WF_REL_THMS THEN BETA_TAC THEN REWRITE_TAC[FST] THEN
    REPEAT STRIP_TAC THEN POP_ASSUM MP_TAC THEN REWRITE_TAC[w2n_n2w] THEN
    MP_TAC(SPECL [`val (q:N word) - 1`; `dimword(:N)`] MOD_LE) THEN ARITH_TAC)
@@ -1314,7 +1314,7 @@ let mw_div_adjust_def = new_definition
      if mw_cmp zs (mw_mul_by_single q ys) = SOME T then word (val q - 1) else q`;;
 
 let mw_div_aux_def = cake_def_wf
-  `measure (\p:(N word)list#(N word)list#(N word)list. LENGTH (FST p))`
+  `MEASURE (\p:(N word)list#(N word)list#(N word)list. LENGTH (FST p))`
   (REWRITE_TAC WF_REL_THMS THEN BETA_TAC THEN REWRITE_TAC[FST] THEN
    REPEAT STRIP_TAC THEN ASM_SIMP_TAC[LENGTH_FRONT] THEN
    FIRST_X_ASSUM(MP_TAC o check (is_neg o concl)) THEN
@@ -2521,7 +2521,7 @@ let mw_mul_pass_top_thm = prove
 (* extra lemmas about single_div by repeated subtraction (to be used on    *)
 (* architectures without division)                                         *)
 
-let num_div_loop_def = cake_def_wf `measure (FST:num#num#num#num->num)`
+let num_div_loop_def = cake_def_wf `MEASURE (FST:num#num#num#num->num)`
   (REWRITE_TAC WF_REL_THMS THEN REWRITE_TAC[FST] THEN ARITH_TAC)
   `num_div_loop (k:num,n:num,m:num,i:num) =
      if k = 0 then (m,i) else
@@ -2560,7 +2560,7 @@ let num_div_loop_thm = prove
            ==> num_div_loop (k,n * 2 EXP k,0,i) = (i DIV n,i MOD n)`,
   SIMP_TAC[num_div_loop_lemma; MULT_CLAUSES; ADD_CLAUSES]);;
 let single_div_loop_def = cake_def_wf
-  `measure (\p:N word#(N word)list#N word#(N word)list. val (FST p))`
+  `MEASURE (\p:N word#(N word)list#N word#(N word)list. val (FST p))`
   (REWRITE_TAC WF_REL_THMS THEN BETA_TAC THEN REWRITE_TAC[FST] THEN
    REPEAT STRIP_TAC THEN
    SUBGOAL_THEN `val (word_sub (k:N word) (word 1)) < val k` ASSUME_TAC THENL

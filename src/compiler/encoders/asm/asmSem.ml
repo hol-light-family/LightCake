@@ -1,6 +1,7 @@
 (* ========================================================================= *)
 (* asmSem: port of HOL4 compiler/encoders/asm/asmSemScript.sml (CakeML       *)
 (* v3479).  The semantics of the asm instruction description.                *)
+(* HOL4 asm is asm_asm (a short or common word), and asm_def is asm_asm_def. *)
 (* ========================================================================= *)
 
 needs "compiler/encoders/asm/asm.ml";;
@@ -23,7 +24,7 @@ type_invention_error := true;;
 (*   asm_assert, asm_reg_imm, asm_binop_upd, asm_word_shift, asm_arith_upd,  *)
 (*   asm_fp_upd, asm_addr, asm_mem_load, asm_mem_store, asm_mem_op and       *)
 (*   asmSem_inst (HOL4 inst); read_reg, read_mem_word, write_mem_word,       *)
-(*   is_test, jump_to_offset, asm and asm_step keep their names.             *)
+(*   is_test, jump_to_offset and asm_step keep their names; asm is asm_asm.  *)
 (* - HOL4 + is left-associative: a + b + c is written (a + b) + c.           *)
 
 (* -- semantics of ASM program -- *)
@@ -247,18 +248,18 @@ let asmSem_inst_def = cake_def
 let jump_to_offset_def = cake_def
   `jump_to_offset w (s:(A)asm_state) = asm_upd_pc (word_add (asm_state_pc s) w) s`;;
 
-let asm_def = cake_def
-  `(asm (asm_Inst i) pc (s:(A)asm_state) = asm_upd_pc pc (asmSem_inst i s)) /\
-   (asm (asm_Jump l) pc s = jump_to_offset l s) /\
-   (asm (asm_JumpCmp cmp r ri l) pc s =
+let asm_asm_def = cake_def
+  `(asm_asm (asm_Inst i) pc (s:(A)asm_state) = asm_upd_pc pc (asmSem_inst i s)) /\
+   (asm_asm (asm_Jump l) pc s = jump_to_offset l s) /\
+   (asm_asm (asm_JumpCmp cmp r ri l) pc s =
       if asm_word_cmp cmp (read_reg r s) (asm_reg_imm ri s)
       then jump_to_offset l s
       else asm_upd_pc pc s) /\
-   (asm (asm_Call l) pc s = jump_to_offset l (asm_upd_reg (asm_state_lr s) pc s)) /\
-   (asm (JumpReg r) pc s =
+   (asm_asm (asm_Call l) pc s = jump_to_offset l (asm_upd_reg (asm_state_lr s) pc s)) /\
+   (asm_asm (JumpReg r) pc s =
       let a = read_reg r s in
       asm_upd_pc a (asm_assert (alignment_aligned (asm_state_align s) a) s)) /\
-   (asm (asm_Loc r l) pc s =
+   (asm_asm (asm_Loc r l) pc s =
       asm_upd_pc pc (asm_upd_reg r (word_add (asm_state_pc s) l) s))`;;
 
 let asm_step_def = cake_def
@@ -268,5 +269,5 @@ let asm_step_def = cake_def
      (match asm_config_link_reg c with SOME r -> asm_state_lr s1 = r | NONE -> T) /\
      asm_state_be s1 = asm_config_big_endian c /\
      asm_state_align s1 = asm_config_code_alignment c /\
-     asm i (word_add (asm_state_pc s1) (word (LENGTH (asm_config_encode c i)))) s1 = s2 /\
+     asm_asm i (word_add (asm_state_pc s1) (word (LENGTH (asm_config_encode c i)))) s1 = s2 /\
      ~asm_state_failed s2 /\ asm_ok i c`;;

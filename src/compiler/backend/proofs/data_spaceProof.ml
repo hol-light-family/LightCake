@@ -13,13 +13,13 @@ type_invention_error := true;;
 
 (* HOL4 [local] *)
 let IMP_sptree_eq = prove
- (`!(x:A spt) y. wf x /\ wf y /\ (!a. lookup a x = lookup a y) ==> x = y`,
+ (`!(x:A spt) y. sptree_wf x /\ sptree_wf y /\ (!a. lookup a x = lookup a y) ==> x = y`,
   MESON_TAC[spt_eq_thm]);;
 
 (* HOL4 [local] mk_wf_inter; renamed: data_to_word_assignProof_p1 binds    *)
 (* mk_wf_inter to the converse equation                                    *)
 let data_spaceProof_mk_wf_inter = prove
- (`!(t1:A spt) (t2:B spt). inter t1 t2 = mk_wf (inter t1 t2)`,
+ (`!(t1:A spt) (t2:B spt). sptree_inter t1 t2 = mk_wf (sptree_inter t1 t2)`,
   MESON_TAC[wf_mk_id; wf_inter]);;
 
 let data_spaceProof_get_vars_IMP_LENGTH = prove
@@ -358,7 +358,7 @@ let DATAPAUX_SPACE_cut_inter = prove
      locals_ok (data_state_locals s) l /\
      data_cut_env names1 (data_state_locals s) = SOME x1 /\
      data_cut_env names2 x1 = SOME x2 ==>
-     data_cut_env (inter names1 names2) l = SOME x2`,
+     data_cut_env (sptree_inter names1 names2) l = SOME x2`,
   REPEAT GEN_TAC THEN REWRITE_TAC[data_cut_env_def] THEN
   REPEAT (COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT; option_INJ]) THEN
   REPEAT STRIP_TAC THEN RVEQ_TAC THENL
@@ -372,7 +372,7 @@ let DATAPAUX_SPACE_cut_inter = prove
     MP_TAC(ISPECL [`data_state_locals (s:(C,FFI)data_state)`; `l:data_v spt`; `x:num`;
                    `v:data_v`] locals_ok_get_var) THEN
     ASM_REWRITE_TAC[data_get_var_def];
-    UNDISCH_TAC `~(domain (inter (names1:num_set) (names2:num_set)) SUBSET domain (l:data_v spt))` THEN
+    UNDISCH_TAC `~(domain (sptree_inter (names1:num_set) (names2:num_set)) SUBSET domain (l:data_v spt))` THEN
     REWRITE_TAC[SUBSET; domain_inter; IN_INTER] THEN X_GEN_TAC `x:num` THEN STRIP_TAC THEN
     UNDISCH_TAC `domain (names1:num_set) SUBSET domain (data_state_locals (s:(C,FFI)data_state))` THEN
     REWRITE_TAC[SUBSET] THEN DISCH_THEN(MP_TAC o SPEC `x:num`) THEN
@@ -393,7 +393,7 @@ let DATAPAUX_SPACE_ms_merge = prove
                     add_space (data_state_locals_fupd (K x1) s) k1) = (r,z) /\
      ~(r = SOME (Rerr (Rabort Rtype_error))) ==>
      ?safe peak.
-       data_evaluate (data_Seq (MakeSpace k2 (inter names1 names2)) c4,
+       data_evaluate (data_Seq (MakeSpace k2 (sptree_inter names1 names2)) c4,
                       data_state_locals_fupd (K l) s) =
        (r,data_state_safe_for_space_fupd (K safe) (data_state_peak_heap_length_fupd (K peak) z))`,
   REPEAT GEN_TAC THEN REWRITE_TAC[data_evaluate_def] THEN
@@ -425,7 +425,7 @@ let DATAPAUX_SPACE_ms_merge = prove
 
 let DATAPAUX_SPACE_SEQ_MS_INR = prove
  (DATAPAUX_SPACE_SEQ_TM `MakeSpace k1 names1`
-    `data_Seq (MakeSpace k2 (inter names1 (names2:num_set))) c4`
+    `data_Seq (MakeSpace k2 (sptree_inter names1 (names2:num_set))) c4`
     (Some `space c2 = INR (k2,(names2:num_set),c4)`),
   REPEAT GEN_TAC THEN DISCH_TAC THEN
   DISCH_THEN(CONJUNCTS_THEN2 (K ALL_TAC) (LABEL_TAC "ih2")) THEN
@@ -915,7 +915,7 @@ let DATAPAUX_SPACE_MS_INR_CASE_TAC =
     let _ = k1 in
     mk_comb(mk_comb(`data_Seq`,
       mk_comb(mk_comb(`MakeSpace`,`k2:num`),
-              mk_comb(mk_comb(`inter:num_set->num_set->num_set`,n1),`names2:num_set`))),
+              mk_comb(mk_comb(`sptree_inter:num_set->num_set->num_set`,n1),`names2:num_set`))),
       `c4:data_prog`)) THEN
   DATAPAUX_SPACE_USE_TAC DATAPAUX_SPACE_SEQ_MS_INR;;
 let DATAPAUX_SPACE_MOVE_INR_CASE_TAC =

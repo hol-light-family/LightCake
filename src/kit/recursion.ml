@@ -477,12 +477,42 @@ let instantiate_casewise_recursion,
           -> APPLY_PROFORMA_TAC ADMISSIBLE_COMB gl
     | _ -> failwith "MAIN_ADMISS_TAC" in
 
+  (* a binder in the body named like a variable of the tuple of all clause  *)
+  (* variables (\f (x,ty,..). ?x. .. f (s,tm) ..): the shadowing defeats the *)
+  (* matching of the rules (CAKE_ADMISSIBLE_LAMBDA), and the condition was   *)
+  (* left as a termination condition that cannot be proved; such binders    *)
+  (* are renamed apart (HOL4's TFL handles these calls).  Only where no     *)
+  (* other step applies, so other definitions are as before.  Since          *)
+  (* 2026-11-22.                                                             *)
+  let UNCLASH_TAC (asl,w as gl) =
+    let had,args = strip_comb w in
+    if not(is_const had) then failwith "UNCLASH_TAC" else
+    let f,fbod = dest_abs(last args) in
+    let xtup,bod = dest_gabs fbod in
+    let tvs = f :: frees xtup in
+    let avoid = ref (tvs @ variables bod) in
+    let rec ren t =
+      match t with
+        Abs(v,b) -> let b' = ren b in
+                    if mem v tvs then
+                      let v' = variant !avoid v in
+                      avoid := v' :: !avoid; mk_abs(v',vsubst [v',v] b')
+                    else mk_abs(v,b')
+      | Comb(a,b) -> mk_comb(ren a,ren b)
+      | _ -> t in
+    let bod' = ren bod in
+    if bod' = bod then failwith "UNCLASH_TAC" else
+    let w' = list_mk_comb(had,butlast args @ [mk_abs(f,mk_gabs(xtup,bod'))]) in
+    kit_note "recursion: binders renamed apart from the clause variables";
+    CONV_TAC (fun tm -> ALPHA tm w') gl in
+
   let ADMISS_TAC =
     CONJ_TAC ORELSE
     MATCH_ACCEPT_TAC ADMISSIBLE_CONST ORELSE
     MATCH_ACCEPT_TAC SUPERADMISSIBLE_CONST ORELSE
     MAIN_ADMISS_TAC ORELSE
-    MATCH_MP_TAC ADMISSIBLE_IMP_SUPERADMISSIBLE in
+    MATCH_MP_TAC ADMISSIBLE_IMP_SUPERADMISSIBLE ORELSE
+    (UNCLASH_TAC THEN MAIN_ADMISS_TAC) in
 
 (* ------------------------------------------------------------------------- *)
 (* Instantiate the casewise recursion theorem for existential claim.         *)

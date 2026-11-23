@@ -13,6 +13,8 @@
 (* - Not ported (the CakeML closure does not use them): s_o_s, selfapp, vR1  *)
 (*   and the fixpoint characterisation of wfs (wfs_iff_fixpoint); of that   *)
 (*   part only IN_vars_APPLY is here.  Helper lemmas are LUNIFAUX_.         *)
+(* - HOL4 vR is subst_vR (a short or common word), and vR_def is             *)
+(*   subst_vR_def.                                                           *)
 (* ========================================================================= *)
 
 needs "hol4/vocab.ml";;
@@ -58,30 +60,30 @@ let FINITE_substvars = prove
  (`!s:(num,A term_term)fmap. FINITE (substvars s)`,
   SIMP_TAC[substvars_def; FINITE_UNION; FDOM_FINITE; FINITE_rangevars]);;
 
-let vR_def = cake_def
-  `vR (s:(B,A term_term)fmap) y x =
+let subst_vR_def = cake_def
+  `subst_vR (s:(B,A term_term)fmap) y x =
      match FLOOKUP s x with SOME t -> y IN term_vars t | _ -> F`;;
 
 let LUNIFAUX_vR_FDOM = prove
- (`!(s:(B,A term_term)fmap) y x. vR s y x ==> x IN FDOM s`,
-  REWRITE_TAC[vR_def; FLOOKUP_DEF] THEN REPEAT GEN_TAC THEN
+ (`!(s:(B,A term_term)fmap) y x. subst_vR s y x ==> x IN FDOM s`,
+  REWRITE_TAC[subst_vR_def; FLOOKUP_DEF] THEN REPEAT GEN_TAC THEN
   COND_CASES_TAC THEN ASM_REWRITE_TAC[option_CASE]);;
 
 let wfs_def = new_definition
-  `wfs (s:(num,A term_term)fmap) <=> WF (vR s)`;;
+  `wfs (s:(num,A term_term)fmap) <=> WF (subst_vR s)`;;
 
 let wfs_FEMPTY = prove
  (`wfs (FEMPTY:(num,A term_term)fmap)`,
   REWRITE_TAC[wfs_def] THEN MATCH_MP_TAC WF_SUBSET THEN
   EXISTS_TAC `\x:num y:num. F` THEN
-  REWRITE_TAC[WF_FALSE; vR_def; FLOOKUP_EMPTY; option_CASE]);;
+  REWRITE_TAC[WF_FALSE; subst_vR_def; FLOOKUP_EMPTY; option_CASE]);;
 
 let wfs_SUBMAP = prove
  (`!(s:(num,A term_term)fmap) sx. wfs sx /\ s SUBMAP sx ==> wfs s`,
   REPEAT GEN_TAC THEN REWRITE_TAC[wfs_def] THEN STRIP_TAC THEN
-  MATCH_MP_TAC WF_SUBSET THEN EXISTS_TAC `vR (sx:(num,A term_term)fmap)` THEN
+  MATCH_MP_TAC WF_SUBSET THEN EXISTS_TAC `subst_vR (sx:(num,A term_term)fmap)` THEN
   ASM_REWRITE_TAC[] THEN MAP_EVERY X_GEN_TAC [`u:num`; `v:num`] THEN
-  REWRITE_TAC[vR_def] THEN
+  REWRITE_TAC[subst_vR_def] THEN
   CASES_ON `FLOOKUP (s:(num,A term_term)fmap) v` THEN
   REWRITE_TAC[option_CASE] THEN
   SUBGOAL_THEN `FLOOKUP (sx:(num,A term_term)fmap) v = SOME a`
@@ -89,7 +91,7 @@ let wfs_SUBMAP = prove
   ASM_MESON_TAC[FLOOKUP_SUBMAP]);;
 
 let wfs_no_cycles = prove
- (`!s:(num,A term_term)fmap. wfs s <=> !v. ~TC (vR s) v v`,
+ (`!s:(num,A term_term)fmap. wfs s <=> !v. ~TC (subst_vR s) v v`,
   GEN_TAC THEN REWRITE_TAC[wfs_def] THEN EQ_TAC THENL
    [DISCH_TAC THEN GEN_TAC THEN MATCH_MP_TAC WF_REFL THEN
     REWRITE_TAC[ETA_AX; WF_TC] THEN ASM_REWRITE_TAC[];
@@ -99,7 +101,7 @@ let wfs_no_cycles = prove
   SUBGOAL_THEN `!n. (f:num->num) n IN FDOM (s:(num,A term_term)fmap)`
     ASSUME_TAC THENL [ASM_MESON_TAC[LUNIFAUX_vR_FDOM]; ALL_TAC] THEN
   SUBGOAL_THEN
-    `!m n. m < n ==> TC (vR (s:(num,A term_term)fmap)) ((f:num->num) n) (f m)`
+    `!m n. m < n ==> TC (subst_vR (s:(num,A term_term)fmap)) ((f:num->num) n) (f m)`
     ASSUME_TAC THENL
    [GEN_TAC THEN INDUCT_TAC THEN REWRITE_TAC[LT] THEN STRIP_TAC THENL
      [ASM_MESON_TAC[TC_INC]; ASM_MESON_TAC[TC_TRANS_R]];
@@ -155,7 +157,7 @@ let wfs_noids = prove
   REWRITE_TAC[wfs_no_cycles; noids_def] THEN REPEAT STRIP_TAC THEN
   FIRST_X_ASSUM(MP_TAC o SPEC `v:num`) THEN REWRITE_TAC[] THEN
   MATCH_MP_TAC TC_INC THEN
-  ASM_REWRITE_TAC[vR_def; option_CASE; term_vars_def; IN_SING]);;
+  ASM_REWRITE_TAC[subst_vR_def; option_CASE; term_vars_def; IN_SING]);;
 
 let LUNIFAUX_EXISTS_EQ_R = prove
  (`!(P:B->bool) a. (?x. P x /\ x = a) <=> P a`,
@@ -164,18 +166,18 @@ let LUNIFAUX_EXISTS_EQ_R = prove
 let IN_vars_APPLY = prove
  (`!(s:(num,A term_term)fmap) t v.
      v IN term_vars (subst_APPLY s t) <=>
-     ~(v IN FDOM s) /\ v IN term_vars t \/ ?x. vR s v x /\ x IN term_vars t`,
+     ~(v IN FDOM s) /\ v IN term_vars t \/ ?x. subst_vR s v x /\ x IN term_vars t`,
   GEN_TAC THEN MATCH_MP_TAC term_term_INDUCT THEN REPEAT STRIP_TAC THEN
   ASM_REWRITE_TAC[subst_APPLY_def; term_vars_def; IN_SING; NOT_IN_EMPTY;
                   IN_UNION; LUNIFAUX_EXISTS_EQ_R] THENL
-   [REWRITE_TAC[vR_def; FLOOKUP_DEF] THEN COND_CASES_TAC THEN
+   [REWRITE_TAC[subst_vR_def; FLOOKUP_DEF] THEN COND_CASES_TAC THEN
     ASM_REWRITE_TAC[option_CASE; term_vars_def; IN_SING] THEN ASM_MESON_TAC[];
     MESON_TAC[]]);;
 
 let LUNIFAUX_vR_ALT = prove
  (`!(s:(B,A term_term)fmap) y x.
-     vR s y x <=> x IN FDOM s /\ y IN term_vars (FAPPLY s x)`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[vR_def; FLOOKUP_DEF] THEN
+     subst_vR s y x <=> x IN FDOM s /\ y IN term_vars (FAPPLY s x)`,
+  REPEAT GEN_TAC THEN REWRITE_TAC[subst_vR_def; FLOOKUP_DEF] THEN
   COND_CASES_TAC THEN ASM_REWRITE_TAC[option_CASE]);;
 
 let LUNIFAUX_IN_rangevars = prove
@@ -216,7 +218,7 @@ let wfs_FAPPLY_var = prove
 
 let TC_vR_vars_FRANGE = prove
  (`!(s:(num,A term_term)fmap) u v.
-     TC (vR s) u v ==> v IN FDOM s ==> u IN UNIONS (IMAGE term_vars (FRANGE s))`,
+     TC (subst_vR s) u v ==> v IN FDOM s ==> u IN UNIONS (IMAGE term_vars (FRANGE s))`,
   REWRITE_TAC[GSYM rangevars_def; LUNIFAUX_IN_rangevars] THEN
   REPEAT GEN_TAC THEN ONCE_REWRITE_TAC[TC_CASES_R] THEN
   REWRITE_TAC[LUNIFAUX_vR_ALT] THEN MESON_TAC[]);;

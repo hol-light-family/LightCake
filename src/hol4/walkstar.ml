@@ -34,19 +34,19 @@ type_invention_error := true;;
 
 let walkstarR_def = new_definition
   `walkstarR (s:(num,A term_term)fmap) =
-     inv_image (TC (mlt1 (TC (vR s))) LEX measure pair_count)
+     inv_image (TC (mlt1 (TC (subst_vR s))) LEX MEASURE pair_count)
                (\t:A term_term. (varb t, t))`;;
 
 let walkstar_thWF = prove
  (`!s:(num,A term_term)fmap. wfs s ==> WF (walkstarR s)`,
   REWRITE_TAC[wfs_def; walkstarR_def] THEN REPEAT STRIP_TAC THEN
   MATCH_MP_TAC WF_inv_image THEN MATCH_MP_TAC WF_LEX_HOL4 THEN
-  REWRITE_TAC[WF_measure; WF_TC] THEN MATCH_MP_TAC WF_mlt1 THEN
+  REWRITE_TAC[WF_MEASURE; WF_TC] THEN MATCH_MP_TAC WF_mlt1 THEN
   ASM_REWRITE_TAC[WF_TC]);;
 
 let LUNIFAUX_walkstarR_Var = prove
  (`!(s:(num,A term_term)fmap) n t.
-     wfs s /\ (!e. e IN term_vars t ==> TC (vR s) e n)
+     wfs s /\ (!e. e IN term_vars t ==> TC (subst_vR s) e n)
      ==> walkstarR s t (term_Var n)`,
   REPEAT STRIP_TAC THEN
   REWRITE_TAC[walkstarR_def; inv_image_THM; LEX_THM; varb_def] THEN
@@ -166,15 +166,15 @@ let NOT_FDOM_walkstar = prove
 
 let vwalk_EQ_var_vR = prove
  (`!s:(num,A term_term)fmap. wfs s ==>
-     !u v1 v2. vwalk s u = term_Var v1 /\ TC (vR s) v2 u /\ ~(v2 IN FDOM s)
+     !u v1 v2. vwalk s u = term_Var v1 /\ TC (subst_vR s) v2 u /\ ~(v2 IN FDOM s)
                ==> v1 = v2`,
   GEN_TAC THEN DISCH_TAC THEN
   FIRST_ASSUM(MATCH_MP_TAC o MATCH_MP vwalk_ind) THEN
   X_GEN_TAC `u:num` THEN DISCH_TAC THEN MAP_EVERY X_GEN_TAC [`v1:num`; `v2:num`] THEN
   STRIP_TAC THEN
-  SUBGOAL_THEN `?y. vR (s:(num,A term_term)fmap) y u` MP_TAC THENL
+  SUBGOAL_THEN `?y. subst_vR (s:(num,A term_term)fmap) y u` MP_TAC THENL
    [ASM_MESON_TAC[TC_CASES_L]; ALL_TAC] THEN
-  REWRITE_TAC[vR_def] THEN
+  REWRITE_TAC[subst_vR_def] THEN
   CASES_ON `FLOOKUP (s:(num,A term_term)fmap) u` THEN REWRITE_TAC[option_CASE] THEN
   UNDISCH_TAC `vwalk (s:(num,A term_term)fmap) u = term_Var v1` THEN
   FIRST_ASSUM(fun th ->
@@ -184,9 +184,9 @@ let vwalk_EQ_var_vR = prove
   REWRITE_TAC[term_term_CASE; term_term_distinct; term_vars_def; IN_SING;
               NOT_IN_EMPTY] THEN
   DISCH_TAC THEN DISCH_TAC THEN
-  UNDISCH_TAC `TC (vR (s:(num,A term_term)fmap)) v2 u` THEN
+  UNDISCH_TAC `TC (subst_vR (s:(num,A term_term)fmap)) v2 u` THEN
   ONCE_REWRITE_TAC[TC_CASES_L] THEN
-  ASM_REWRITE_TAC[vR_def; option_CASE; term_vars_def; IN_SING;
+  ASM_REWRITE_TAC[subst_vR_def; option_CASE; term_vars_def; IN_SING;
                   LUNIFAUX_EXISTS_EQ_R] THEN
   STRIP_TAC THENL
    [UNDISCH_TAC `vwalk (s:(num,A term_term)fmap) a' = term_Var v1` THEN
@@ -208,11 +208,11 @@ let LUNIFAUX_vwalk_FLOOKUP = prove
 
 let LUNIFAUX_vR_CASES = prove
  (`!(s:(num,A term_term)fmap) y u.
-     wfs s /\ vR s y u
+     wfs s /\ subst_vR s y u
      ==> (FLOOKUP s u = SOME (term_Var y) /\ vwalk s u = vwalk s y) \/
          (?t1 t2. FLOOKUP s u = SOME (Pair t1 t2) /\ vwalk s u = Pair t1 t2 /\
                   (y IN term_vars t1 \/ y IN term_vars t2))`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[vR_def] THEN
+  REPEAT GEN_TAC THEN REWRITE_TAC[subst_vR_def] THEN
   CASES_ON `FLOOKUP (s:(num,A term_term)fmap) u` THEN
   REWRITE_TAC[option_CASE] THEN STRIP_TAC THEN
   MP_TAC(SPECL [`s:(num,A term_term)fmap`; `u:num`] LUNIFAUX_vwalk_FLOOKUP) THEN
@@ -224,7 +224,7 @@ let LUNIFAUX_vR_CASES = prove
 
 let vwalk_EQ_const_vR = prove
  (`!(s:(num,A term_term)fmap) v u.
-     TC (vR s) v u ==> ~(v IN FDOM s) /\ wfs s ==> !c. ~(vwalk s u = Const c)`,
+     TC (subst_vR s) v u ==> ~(v IN FDOM s) /\ wfs s ==> !c. ~(vwalk s u = Const c)`,
   GEN_TAC THEN MATCH_MP_TAC TC_INDUCT_L THEN CONJ_TAC THEN
   REPEAT STRIP_TAC THEN
   FIRST_X_ASSUM(MP_TAC o MATCH_MP LUNIFAUX_vR_CASES o
@@ -236,9 +236,9 @@ let vwalk_EQ_const_vR = prove
 
 let vwalk_EQ_pair_vR = prove
  (`!(s:(num,A term_term)fmap) v u.
-     TC (vR s) v u ==>
+     TC (subst_vR s) v u ==>
      !t1 t2. ~(v IN FDOM s) /\ wfs s /\ vwalk s u = Pair t1 t2
-             ==> ?u. (u IN term_vars t1 \/ u IN term_vars t2) /\ RTC (vR s) v u`,
+             ==> ?u. (u IN term_vars t1 \/ u IN term_vars t2) /\ RTC (subst_vR s) v u`,
   GEN_TAC THEN MATCH_MP_TAC TC_STRONG_INDUCT_RIGHT1 THEN CONJ_TAC THEN
   REPEAT STRIP_TAC THEN
   FIRST_X_ASSUM(MP_TAC o MATCH_MP LUNIFAUX_vR_CASES o
@@ -262,11 +262,11 @@ let vwalk_EQ_pair_vR = prove
 
 let TC_vR_vars_walkstar = prove
  (`!(s:(num,A term_term)fmap) u t v.
-     wfs s /\ u IN term_vars t /\ TC (vR s) v u /\ ~(v IN FDOM s)
+     wfs s /\ u IN term_vars t /\ TC (subst_vR s) v u /\ ~(v IN FDOM s)
      ==> v IN term_vars (walkstar s t)`,
   SUBGOAL_THEN
    `!s:(num,A term_term)fmap. wfs s ==>
-     !t v u. TC (vR s) v u /\ ~(v IN FDOM s) /\ u IN term_vars t
+     !t v u. TC (subst_vR s) v u /\ ~(v IN FDOM s) /\ u IN term_vars t
              ==> v IN term_vars (walkstar s t)`
    (fun th -> MESON_TAC[th]) THEN
   GEN_TAC THEN DISCH_TAC THEN

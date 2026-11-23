@@ -3,7 +3,7 @@
 (* (CakeML v3479).  Correctness proof for crep_to_loop.                      *)
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
-(* - Names as notes/naming/names.tsv says (state_rel, globals_rel, ctxt_fc,  *)
+(* - Names as doc/names.tsv says (state_rel, globals_rel, ctxt_fc,           *)
 (*   code_rel, ctxt_max, locals_rel, ... get the prefix crep_to_loopProof_). *)
 (*   crepSem's names are crep_..., loopSem's loop_..., wordLang's word_loc   *)
 (*   constructors wl_Word and wl_Loc; panSem's word_lab constructor is Word. *)
@@ -626,7 +626,7 @@ let PC2LAUX_locals_rel_cmp = prove
      crep_to_loopProof_locals_rel ctxt L sl tl /\
      crep_to_loop_context_vmax ctxt < n /\ crep_to_loop_context_vmax ctxt < m ==>
      crep_to_loopProof_locals_rel ctxt (list_insert [n; m] L) sl
-       (inter (insert n a (insert m b (insert n c tl))) (list_insert [n; m] L))`,
+       (sptree_inter (insert n a (insert m b (insert n c tl))) (list_insert [n; m] L))`,
   REWRITE_TAC[crep_to_loopProof_locals_rel_def; crep_to_loopProof_ctxt_max_def] THEN
   REPEAT GEN_TAC THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CONJ_TAC THENL
    [REWRITE_TAC[SUBSET; domain_inter; IN_INTER; domain_insert; IN_INSERT;
@@ -1365,7 +1365,7 @@ let PC2LAUX_ncompile_case =
 
 (* ------------------------------------------------------------------------- *)
 
-(* shared local helpers for the cases of ncompile_correct (PC2L): the     *)
+(* shared local helpers for the cases of ncompile_correct: the          *)
 (* locals relation after compiling an expression and after an assignment *)
 
 (* local helpers: the locals relation after compiling an expression (the     *)
@@ -2204,7 +2204,7 @@ let PC2LAUX_ncompile_Dec = prove
 let PC2LAUX_locals_rel_inter = prove
  (`!ctxt l (sl:(num,(A)word_lab)fmap) tl.
      crep_to_loopProof_locals_rel ctxt l sl tl ==>
-     crep_to_loopProof_locals_rel ctxt l sl (inter tl l)`,
+     crep_to_loopProof_locals_rel ctxt l sl (sptree_inter tl l)`,
   REWRITE_TAC[crep_to_loopProof_locals_rel_def; domain_inter] THEN
   REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[] THENL [ASM SET_TAC[]; ALL_TAC] THEN
   FIRST_X_ASSUM(fun th -> FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP th)) THEN
@@ -2356,9 +2356,9 @@ let PC2LAUX_loop_entry = prove
      if loop_state_clock s = 0
      then (SOME loop_TimeOut,
            loop_state_locals_fupd (K LN)
-             (loop_state_locals_fupd (K (inter (loop_state_locals s) l)) s))
+             (loop_state_locals_fupd (K (sptree_inter (loop_state_locals s) l)) s))
      else (NONE,loop_dec_clock
-                  (loop_state_locals_fupd (K (inter (loop_state_locals s) l)) s))`,
+                  (loop_state_locals_fupd (K (sptree_inter (loop_state_locals s) l)) s))`,
   SIMP[cut_res_def; cut_state_def] THEN REPEAT STRIP_TAC);;
 
 let PC2LAUX_ONE_BINDER_TAC (ttac:thm_tactic) : tactic =
@@ -2387,7 +2387,7 @@ let PC2LAUX_WHILE_EXIT_TAC : tactic =
   QPAT_X_ASSUM "loop_state_clock t = crep_state_clock s" (ASSUME_TAC o SYM) THEN
   QEXISTS_TAC "ck + ck'" THEN
   QBY "loop_evaluate (loop_nested_seq np,
-         loop_state_locals_fupd (K (inter (loop_state_locals t) l))
+         loop_state_locals_fupd (K (sptree_inter (loop_state_locals t) l))
            (loop_state_clock_fupd (K ((loop_state_clock t + ck + ck') - 1)) t)) =
        (NONE,loop_state_clock_fupd (K (loop_state_clock st + ck')) st)"
    (QPAT_X_ASSUM "loop_evaluate (loop_nested_seq np,_) = (NONE,st)"
@@ -2412,7 +2412,7 @@ let PC2LAUX_WHILE_EXIT_TAC : tactic =
 let PC2LAUX_WHILE_NEXT_TAC : tactic =
   QEXISTS_TAC "ck + ck' + ck''" THEN
   QBY "loop_evaluate (loop_nested_seq np,
-         loop_state_locals_fupd (K (inter (loop_state_locals t) l))
+         loop_state_locals_fupd (K (sptree_inter (loop_state_locals t) l))
            (loop_state_clock_fupd (K ((loop_state_clock t + ck + ck' + ck'') - 1)) t)) =
        (NONE,loop_state_clock_fupd (K (loop_state_clock st + ck' + ck'')) st)"
    (QPAT_X_ASSUM "loop_evaluate (loop_nested_seq np,_) = (NONE,st)"
@@ -2462,7 +2462,7 @@ let PC2LAUX_ncompile_While = prove
     REWRITE_TAC[PAIR_EQ] THEN
     DISCH_THEN(CONJUNCTS_THEN2 (SUBST_ALL_TAC o SYM) (SUBST_ALL_TAC o SYM)) THEN
     MP_TAC(ISPECL [`s:(A,FFI)crep_state`; `e:(A)crep_exp`; `Word (w:A word)`;
-       `loop_state_locals_fupd (K (inter (loop_state_locals (t:(A,FFI)loop_state))
+       `loop_state_locals_fupd (K (sptree_inter (loop_state_locals (t:(A,FFI)loop_state))
           (l:num_set))) t`;
        `ctxt:crep_to_loop_context`; `crep_to_loop_context_vmax ctxt + 1`; `l:num_set`;
        `np:((A)loop_prog)list`; `le:(A)loop_exp`; `tmp:num`; `nl:num_set`]
@@ -2502,7 +2502,7 @@ let PC2LAUX_ncompile_While = prove
       MATCH_MP_TAC locals_rel_insert_gt_vmax THEN CONJ_TAC THENL
        [MATCH_MP_TAC PC2LAUX_locals_rel_exp_restrict THEN ASM_EXISTS_TAC THEN
         ASM_REWRITE_TAC[] THEN
-        EXISTS_TAC `inter (loop_state_locals (t:(A,FFI)loop_state)) (l:num_set)` THEN
+        EXISTS_TAC `sptree_inter (loop_state_locals (t:(A,FFI)loop_state)) (l:num_set)` THEN
         MATCH_MP_TAC PC2LAUX_locals_rel_inter THEN ASM_REWRITE_TAC[];
         ASM_ARITH_TAC]];
     ALL_TAC] THEN
@@ -2520,7 +2520,7 @@ let PC2LAUX_ncompile_While = prove
   NAMED_CASES_ON "crep_evaluate (c,crep_dec_clock s)" ["r s2"] THEN CASE_REWRITE_TAC[] THEN
   MP_TAC(ISPECL [`crep_dec_clock (s:(A,FFI)crep_state)`; `e:(A)crep_exp`; `Word (w:A word)`;
      `loop_state_clock_fupd (K (loop_state_clock t - 1))
-        (loop_state_locals_fupd (K (inter (loop_state_locals (t:(A,FFI)loop_state))
+        (loop_state_locals_fupd (K (sptree_inter (loop_state_locals (t:(A,FFI)loop_state))
            (l:num_set))) t)`;
      `ctxt:crep_to_loop_context`; `crep_to_loop_context_vmax ctxt + 1`; `l:num_set`;
      `np:((A)loop_prog)list`; `le:(A)loop_exp`; `tmp:num`; `nl:num_set`]
@@ -2545,7 +2545,7 @@ let PC2LAUX_ncompile_While = prove
     MATCH_MP_TAC locals_rel_insert_gt_vmax THEN CONJ_TAC THENL
      [MATCH_MP_TAC PC2LAUX_locals_rel_exp_restrict THEN ASM_EXISTS_TAC THEN
       ASM_REWRITE_TAC[] THEN
-      EXISTS_TAC `inter (loop_state_locals (t:(A,FFI)loop_state)) (l:num_set)` THEN
+      EXISTS_TAC `sptree_inter (loop_state_locals (t:(A,FFI)loop_state)) (l:num_set)` THEN
       MATCH_MP_TAC PC2LAUX_locals_rel_inter THEN ASM_REWRITE_TAC[];
       ASM_ARITH_TAC];
     ALL_TAC] THEN
@@ -2566,7 +2566,7 @@ let PC2LAUX_ncompile_While = prove
       QPAT_X_ASSUM "loop_state_clock t = crep_state_clock s" (ASSUME_TAC o SYM) THEN
       QEXISTS_TAC "ck + ck' + 1" THEN
       QBY "loop_evaluate (loop_nested_seq np,
-             loop_state_locals_fupd (K (inter (loop_state_locals t) l))
+             loop_state_locals_fupd (K (sptree_inter (loop_state_locals t) l))
                (loop_state_clock_fupd (K ((loop_state_clock t + ck + ck' + 1) - 1)) t)) =
            (NONE,loop_state_clock_fupd (K (loop_state_clock st + ck' + 1)) st)"
        (QPAT_X_ASSUM "loop_evaluate (loop_nested_seq np,_) = (NONE,st)"
@@ -2729,7 +2729,7 @@ let locals_rel_inter_helper = prove
  (`crep_to_loopProof_locals_rel ctxt l locs1 (locs2:((A)word_loc)spt) ==>
    ALL (\i. lookup i l = NONE) xs ==>
    LENGTH xs = LENGTH ys ==>
-   crep_to_loopProof_locals_rel ctxt l locs1 (inter (alist_insert xs ys locs2) l)`,
+   crep_to_loopProof_locals_rel ctxt l locs1 (sptree_inter (alist_insert xs ys locs2) l)`,
   SIMP[crep_to_loopProof_locals_rel_def; SUBSET; domain_lookup; lookup_inter;
        lookup_alist_insert] THEN
   RW[] THENL
@@ -2971,22 +2971,13 @@ let PC2LAUX_CALL_NONE_TAC : tactic =
   TRY(FIRST_X_ASSUM(MP_TAC o SPEC `a':num`) THEN REWRITE_TAC[] THEN NO_TAC) THEN
   PC2LAUX_TAILCALL_RES_TAC;;
 
-(* the returning call: caltyp = SOME (rts,hdl) (helper H2 of PC2L) *)
+(* the returning call: caltyp = SOME (rts,hdl) *)
 
 let PC2LAUX_domain_alist_insert_sub = prove
  (`!(l:num_set) xs (ys:A list) t.
      LENGTH xs = LENGTH ys /\ domain l SUBSET domain t ==>
      domain l SUBSET domain (alist_insert xs ys t)`,
   SIMP_TAC[domain_alist_insert] THEN SET_TAC[]);;
-
-let PC2LAUX_lookup_alist_insert_el = prove
- (`!xs (ys:A list) t i.
-     ALL_DISTINCT xs /\ LENGTH xs = LENGTH ys /\ i < LENGTH xs ==>
-     lookup (EL i xs) (alist_insert xs ys t) = SOME (EL i ys)`,
-  REPEAT STRIP_TAC THEN ASM_SIMP_TAC[lookup_alist_insert] THEN
-  MP_TAC(ISPECL [`ZIP (xs:num list) (ys:A list)`; `i:num`] ALOOKUP_ALL_DISTINCT_EL) THEN
-  ASM_SIMP_TAC[LENGTH_ZIP; MAP_FST_ZIP; EL_ZIP] THEN
-  ANTS_TAC THENL [ASM_MESON_TAC[]; DISCH_THEN SUBST1_TAC THEN CASE_REWRITE_TAC[]]);;
 
 let PC2LAUX_lookup_alist_insert_not_mem = prove
  (`!xs (ys:A list) t n.
@@ -3004,7 +2995,7 @@ let PC2LAUX_locals_rel_call_ret = prove
      domain l SUBSET domain X /\
      (!n. n IN domain l /\ n <= crep_to_loop_context_vmax ctxt ==> lookup n X = lookup n tl) ==>
      crep_to_loopProof_locals_rel ctxt l (sl |++ ZIP rts retvs)
-       (inter (alist_insert nrhss (MAP wlab_wloc retvs) X) l)`,
+       (sptree_inter (alist_insert nrhss (MAP wlab_wloc retvs) X) l)`,
   REWRITE_TAC[crep_to_loopProof_locals_rel_def; crep_to_loopProof_ctxt_max_def] THEN
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   SUBGOAL_THEN `LENGTH (nrhss:num list) = LENGTH (rts:num list)` ASSUME_TAC THENL
@@ -3032,7 +3023,7 @@ let PC2LAUX_locals_rel_call_ret = prove
       DISCH_THEN MATCH_MP_TAC THEN ASM_MESON_TAC[MEM_EL];
       ALL_TAC] THEN
     MP_TAC(ISPECL [`nrhss:num list`; `MAP wlab_wloc (retvs:((A)word_lab)list)`;
-      `X:((A)word_loc)spt`; `i:num`] PC2LAUX_lookup_alist_insert_el) THEN
+      `X:((A)word_loc)spt`; `i:num`] MISC3AUX_lookup_alist_insert_EL) THEN
     ASM_REWRITE_TAC[LENGTH_MAP] THEN DISCH_THEN SUBST1_TAC THEN
     AP_TERM_TAC THEN MATCH_MP_TAC EL_MAP THEN ASM_ARITH_TAC]);
     (SUBGOAL_THEN `FLOOKUP (sl:(num,(A)word_lab)fmap) vname = SOME v` ASSUME_TAC THENL
@@ -3137,7 +3128,7 @@ let PC2LAUX_HANDLER_RUN_TAC (ttac:thm_tactic) : tactic =
      with _ -> false)));;
 
 let PC2LAUX_domain_inter_sub = prove
- (`!(l:num_set) (t:A spt). domain l SUBSET domain t ==> domain l SUBSET domain (inter t l)`,
+ (`!(l:num_set) (t:A spt). domain l SUBSET domain t ==> domain l SUBSET domain (sptree_inter t l)`,
   REWRITE_TAC[domain_inter] THEN SET_TAC[]);;
 
 let PC2LAUX_CUT_RES_TAC (dtac:tactic) : tactic = fun (asl,w as g) ->
@@ -3306,7 +3297,7 @@ let PC2LAUX_CALL_SOME_TAC : tactic =
             SUBGOAL_THEN `crep_to_loopProof_locals_rel ctxt l (crep_state_locals
                 (s:(A,FFI)crep_state))
                (insert (crep_to_loop_context_vmax ctxt + 1) (wl_Word a')
-                 (inter (alist_insert (gen_temps tmp (LENGTH (argexps:((A)crep_exp)list)))
+                 (sptree_inter (alist_insert (gen_temps tmp (LENGTH (argexps:((A)crep_exp)list)))
                     (MAP wlab_wloc (args:((A)word_lab)list)) (loop_state_locals
                       (st:(A,FFI)loop_state))) l))`
               ASSUME_TAC THENL
@@ -3329,7 +3320,7 @@ let PC2LAUX_CALL_SOME_TAC : tactic =
             DISCH_THEN(MP_TAC o SPECL [`res:((A)crep_result)option`; `s1:(A,FFI)crep_state`;
               `loop_state_locals_fupd (K (insert (crep_to_loop_context_vmax ctxt + 1) (wl_Word
                   (a':A word))
-                 (inter (alist_insert (gen_temps tmp (LENGTH (argexps:((A)crep_exp)list)))
+                 (sptree_inter (alist_insert (gen_temps tmp (LENGTH (argexps:((A)crep_exp)list)))
                     (MAP wlab_wloc (args:((A)word_lab)list)) (loop_state_locals
                       (st:(A,FFI)loop_state))) (l:num_set))))
                  (t1:(A,FFI)loop_state)`;

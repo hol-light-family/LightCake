@@ -409,7 +409,7 @@ let full_inst_ok_less_ind = cake_ind "full_inst_ok_less";;
 (* All cutsets are well-formed *)
 
 let wf_names_def = cake_def
-  `wf_names (t:A spt#B spt) <=> wf (FST t) /\ wf (SND t)`;;
+  `wf_names (t:A spt#B spt) <=> sptree_wf (FST t) /\ sptree_wf (SND t)`;;
 
 let wf_cutsets_def = sem1aux_def (list_mk_conj
  [`wf_cutsets (wl_Alloc n s:(A)wl_prog) <=> wf_names s`;
@@ -427,7 +427,7 @@ let wf_cutsets_def = sem1aux_def (list_mk_conj
   `wf_cutsets (MustTerminate s:(A)wl_prog) <=> wf_cutsets s`;
   `wf_cutsets (wl_Seq s1 s2:(A)wl_prog) <=> wf_cutsets s1 /\ wf_cutsets s2`;
   `wf_cutsets (wl_Loop names p exit_names:(A)wl_prog) <=>
-     wf names /\ wf exit_names /\ wf_cutsets p`;
+     sptree_wf names /\ sptree_wf exit_names /\ wf_cutsets p`;
   `wf_cutsets (wl_If cmp r1 ri e2 e3:(A)wl_prog) <=>
      wf_cutsets e2 /\ wf_cutsets e3`;
   `wf_cutsets (_:(A)wl_prog) <=> T`]);;

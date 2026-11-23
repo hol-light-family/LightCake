@@ -3,7 +3,7 @@
 (* Convert named structs to raw structs.                                     *)
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
-(* - Names as notes/naming/names.tsv says: the record type                   *)
+(* - Names as doc/names.tsv says: the record type                            *)
 (*   pan_structs_context (HOL4 context) with the fields                      *)
 (*   pan_structs_context_structs, _locals and _globals;                      *)
 (*   pan_structs_compile_exp, _compile_exps, _compile, _compile_decs and     *)
@@ -78,8 +78,8 @@ let PPASS1AUX_SHAPE_TC_TAC : tactic =
 
 let compile_shape_def = cake_def_wf
   `inv_image
-     (measure LENGTH LEX
-      measure (\x. sum_CASE x (\sh:shape. shape_size sh)
+     (MEASURE LENGTH LEX
+      MEASURE (\x. sum_CASE x (\sh:shape. shape_size sh)
                               (\shs. list_size shape_size shs)))
      (\x. sum_CASE x
             (\p:(stcname#((B#shape)list))list#shape. FST p,INL (SND p))
@@ -101,7 +101,7 @@ let compile_shape_ind = cake_ind "compile_shape";;
 (* Returns unconverted shape of an expression *)
 
 let old_exp_shape_def = sem1aux_def_wf
-  `measure (\x. sum_CASE x
+  `MEASURE (\x. sum_CASE x
                   (\p:pan_structs_context#(A)panLang_exp.
                      panLang_exp_size ARB (SND p))
                   (\q:pan_structs_context#((A)panLang_exp)list.
@@ -141,7 +141,7 @@ let old_exp_shape_def = sem1aux_def_wf
 (* Returns converted expression *)
 
 let pan_structs_compile_exp_def = sem1aux_def_wf
-  `measure (\x. sum_CASE x
+  `MEASURE (\x. sum_CASE x
                   (\p:pan_structs_context#(A)panLang_exp.
                      panLang_exp_size ARB (SND p))
                   (\y. sum_CASE y
@@ -212,7 +212,7 @@ let pan_structs_compile_exp_ind = cake_ind "pan_structs_compile_exp";;
 (* Returns converted statement *)
 
 let pan_structs_compile_def = sem1aux_def_wf
-  `measure (\p:pan_structs_context#(A)panLang_prog.
+  `MEASURE (\p:pan_structs_context#(A)panLang_prog.
               panLang_prog_size ARB (SND p))`
   SEM1AUX_TC_TAC
   (list_mk_conj

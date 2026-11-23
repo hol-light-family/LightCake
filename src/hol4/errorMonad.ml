@@ -2,7 +2,7 @@
 (* errorMonad: port of HOL4 src/monad/more_monads/errorMonadScript.sml      *)
 (* (HOL4 library).  The error monad: a value or an error.                   *)
 (*                                                                           *)
-(* Names (notes/naming/names.tsv): the type error keeps its name; the       *)
+(* Names (doc/names.tsv): the type error keeps its name; the                *)
 (* constructors return and error and the constants bind, try, choice and    *)
 (* guard take the prefix errorMonad_ (errorMonad_return, errorMonad_error,  *)
 (* errorMonad_bind, ...; peg, bvi_tmc, cmlPEG and errorLogMonad have        *)

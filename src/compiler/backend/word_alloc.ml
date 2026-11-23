@@ -7,7 +7,7 @@
 (* allocator.                                                                *)
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
-(* - wordLang and asm names as in notes/naming/names.tsv (wl_Seq, wl_Move,   *)
+(* - wordLang and asm names as in doc/names.tsv (wl_Seq, wl_Move,            *)
 (*   asm_Arith, Mem asm_Load, ...); the clash_tree constructors of reg_alloc *)
 (*   are Delta, reg_alloc_Set, reg_alloc_Branch, reg_alloc_Seq.              *)
 (* - HOL4's Overloads Move0 and Move1 (Move 0 and Move 1) are written out.   *)
@@ -120,7 +120,7 @@ let fake_moves_def = cake_def
 
 let fix_inconsistencies_def = cake_def
   `fix_inconsistencies prio ssa_L ssa_R na =
-     let var_union = MAP FST (toAList (union ssa_L ssa_R)) in
+     let var_union = MAP FST (toAList (sptree_union ssa_L ssa_R)) in
      let (Lmov,Rmov,na',ssa_L',ssa_R') =
        word_alloc_merge_moves var_union ssa_L ssa_R na in
      let (Lseq,Rseq,na'',ssa_L'',ssa_R'') =
@@ -329,7 +329,7 @@ let ssa_reconcile_def = cake_def
    and fake_move-initialise the corresponding target registers. *)
 let loop_setup_def = cake_def
   `loop_setup (names:1 spt) (exit_names:1 spt) ssa na =
-     let all_vars_ls = MAP FST (toAList (union names exit_names)) in
+     let all_vars_ls = MAP FST (toAList (sptree_union names exit_names)) in
      let extend_ls = FILTER (\v. lookup v ssa = NONE) all_vars_ls in
      let refresh_ls = FILTER (\v. IS_SOME (lookup v ssa)) all_vars_ls in
      let (fresh_pos_ls,ssa_ext,na_ext) =
@@ -353,7 +353,7 @@ let loop_setup_def = cake_def
 (* reconciliation.  Break n reconciles the current ssa with the target exit *)
 (* ssa, Continue n with the target entry ssa.                               *)
 let ssa_cc_trans_def = sem1aux_def_wf
-  `measure (\(p:(A)wl_prog,ssa:num spt,na:num,lt:(num spt#1 spt#1 spt)list).
+  `MEASURE (\(p:(A)wl_prog,ssa:num spt,na:num,lt:(num spt#1 spt#1 spt)list).
               wl_prog_size (\x:A. 0) p)`
   SEM1AUX_TC_TAC (list_mk_conj
  [`ssa_cc_trans (wl_Skip:(A)wl_prog) (ssa:num spt) (na:num)
@@ -416,12 +416,12 @@ let ssa_cc_trans_def = sem1aux_def_wf
       ssa_fin,na_fin)`;
   `ssa_cc_trans (wl_Alloc num numset:(A)wl_prog) (ssa:num spt) (na:num)
      (lt:(num spt#1 spt#1 spt)list) =
-     let names_all = union (FST numset) (SND numset) in
+     let names_all = sptree_union (FST numset) (SND numset) in
      let ls = MAP FST (toAList names_all) in
      let (stack_mov,ssa',na') = list_next_var_rename_move ssa (na + 2) ls in
      let num' = option_lookup ssa' num in
      let stack_set = apply_nummaps_key (option_lookup ssa') numset in
-     let ssa_cut = inter ssa' names_all in
+     let ssa_cut = sptree_inter ssa' names_all in
      let (ret_mov,ssa'',na'') =
        list_next_var_rename_move ssa_cut (na' + 2) ls in
      let prog = wl_Seq stack_mov
@@ -457,7 +457,7 @@ let ssa_cc_trans_def = sem1aux_def_wf
      (wl_LocValue r' l1:(A)wl_prog,ssa',na')`;
   `ssa_cc_trans (wl_Install ptr len dptr dlen numset:(A)wl_prog) (ssa:num spt) (na:num)
      (lt:(num spt#1 spt#1 spt)list) =
-     let names_all = union (FST numset) (SND numset) in
+     let names_all = sptree_union (FST numset) (SND numset) in
      let ls = MAP FST (toAList names_all) in
      let (stack_mov,ssa',na') = list_next_var_rename_move ssa (na + 2) ls in
      let stack_set = apply_nummaps_key (option_lookup ssa') numset in
@@ -465,7 +465,7 @@ let ssa_cc_trans_def = sem1aux_def_wf
      let len' = option_lookup ssa' len in
      let dptr' = option_lookup ssa' dptr in
      let dlen' = option_lookup ssa' dlen in
-     let ssa_cut = inter ssa' names_all in
+     let ssa_cut = sptree_inter ssa' names_all in
      let (ptr'',ssa'',na'') = next_var_rename ptr ssa_cut (na' + 2) in
      let (ret_mov,ssa''',na''') = list_next_var_rename_move ssa'' na'' ls in
      let prog = wl_Seq stack_mov
@@ -485,7 +485,7 @@ let ssa_cc_trans_def = sem1aux_def_wf
      (wl_DataBufferWrite r1' r2':(A)wl_prog,ssa,na)`;
   `ssa_cc_trans (wl_FFI ffi_index ptr1 len1 ptr2 len2 numset:(A)wl_prog) (ssa:num spt) (na:num)
      (lt:(num spt#1 spt#1 spt)list) =
-     let names_all = union (FST numset) (SND numset) in
+     let names_all = sptree_union (FST numset) (SND numset) in
      let ls = MAP FST (toAList names_all) in
      let (stack_mov,ssa',na') = list_next_var_rename_move ssa (na + 2) ls in
      let stack_set = apply_nummaps_key (option_lookup ssa') numset in
@@ -493,7 +493,7 @@ let ssa_cc_trans_def = sem1aux_def_wf
      let clen1 = option_lookup ssa' len1 in
      let cptr2 = option_lookup ssa' ptr2 in
      let clen2 = option_lookup ssa' len2 in
-     let ssa_cut = inter ssa' names_all in
+     let ssa_cut = sptree_inter ssa' names_all in
      let (ret_mov,ssa'',na'') =
        list_next_var_rename_move ssa_cut (na' + 2) ls in
      let prog = wl_Seq stack_mov
@@ -509,14 +509,14 @@ let ssa_cc_trans_def = sem1aux_def_wf
      (prog:(A)wl_prog,ssa,na)`;
   `ssa_cc_trans (wl_Call (SOME (ret,numset,ret_handler,l1,l2)) dest args h:(A)wl_prog)
      (ssa:num spt) (na:num) (lt:(num spt#1 spt#1 spt)list) =
-     let names_all = union (FST numset) (SND numset) in
+     let names_all = sptree_union (FST numset) (SND numset) in
      let ls = MAP FST (toAList names_all) in
      let (stack_mov,ssa',na') = list_next_var_rename_move ssa (na + 2) ls in
      let stack_set = apply_nummaps_key (option_lookup ssa') numset in
      let names = MAP (option_lookup ssa) args in
      let conv_args = list_of_seq (\x. 2 * (x + 1)) (LENGTH names) in
      let move_args = wl_Move 1 (ZIP conv_args names) in
-     let ssa_cut = inter ssa' names_all in
+     let ssa_cut = sptree_inter ssa' names_all in
      let (ret_mov,ssa'',na'') =
        list_next_var_rename_move ssa_cut (na' + 2) ls in
      let (ret',ssa_2_p,na_2_p) = list_next_var_rename ret ssa'' na'' in
@@ -561,7 +561,7 @@ let ssa_cc_trans_def = sem1aux_def_wf
        loop_setup names exit_names ssa na in
      let ssa_names = apply_nummap_key (option_lookup ssa_refreshed) names in
      let ssa_exit = apply_nummap_key (option_lookup ssa_refreshed) exit_names in
-     let ssa_body = inter ssa_refreshed names in
+     let ssa_body = sptree_inter ssa_refreshed names in
      let (body',ssa',na') =
        ssa_cc_trans body ssa_body na_refreshed
          (CONS (ssa_refreshed,names,exit_names) lt) in
@@ -569,7 +569,7 @@ let ssa_cc_trans_def = sem1aux_def_wf
      let body_final = if back_moves = wl_Skip then body'
                       else wl_Seq body' back_moves in
      (wl_Seq setup_prog (wl_Loop ssa_names body_final ssa_exit):(A)wl_prog,
-      inter ssa_refreshed exit_names,na':num)`;
+      sptree_inter ssa_refreshed exit_names,na':num)`;
   `ssa_cc_trans (wl_Break n:(A)wl_prog) (ssa:num spt) (na:num)
      (lt:(num spt#1 spt#1 spt)list) =
      match oEL n lt with
@@ -644,7 +644,7 @@ let apply_colour_inst_def = sem1aux_def
 let _ = cake_add_simps [apply_colour_inst_def];;
 
 let apply_colour_def = sem1aux_def_wf
-  `measure (\(f:num->num,p:(A)wl_prog). wl_prog_size (\x:A. 0) p)`
+  `MEASURE (\(f:num->num,p:(A)wl_prog). wl_prog_size (\x:A. 0) p)`
   SEM1AUX_TC_TAC (list_mk_conj
  [`(apply_colour:(num->num)->(A)wl_prog->(A)wl_prog) f (wl_Skip:(A)wl_prog) = wl_Skip`;
   `(apply_colour:(num->num)->(A)wl_prog->(A)wl_prog) f (wl_Move pri ls:(A)wl_prog) =
@@ -781,14 +781,14 @@ let get_live_inst_def = sem1aux_def
    (get_live_inst (x:(A)inst) live = live)`;;
 
 let big_union_def = cake_def
-  `big_union (ls:(A spt)list) = ITLIST (\x y. union x y) ls LN`;;
+  `big_union (ls:(A spt)list) = ITLIST (\x y. sptree_union x y) ls LN`;;
 
 let get_live_exp_def = sem1aux_def
   `(get_live_exp (wl_Var num:(A)wl_exp) = insert num one LN) /\
    (get_live_exp (wl_Load exp) = get_live_exp exp) /\
    (get_live_exp (wl_Op wop ls) = big_union (MAP get_live_exp ls)) /\
    (get_live_exp (wl_Shift sh exp nexp) =
-      union (get_live_exp exp) (get_live_exp nexp)) /\
+      sptree_union (get_live_exp exp) (get_live_exp nexp)) /\
    (get_live_exp expr = LN)`;;
 let get_live_exp_ind = cake_ind "get_live_exp";;
 
@@ -812,7 +812,7 @@ let word_alloc_numset_list_insert_def = cake_def
 (* cutsets are live.  (The second StoreConsts clause is HOL4's: it is       *)
 (* shadowed by the first.)                                                  *)
 let get_live_def = sem1aux_def_wf
-  `measure (\(p:(A)wl_prog,live:1 spt,lt:(1 spt#1 spt)list). wl_prog_size (\x:A. 0) p)`
+  `MEASURE (\(p:(A)wl_prog,live:1 spt,lt:(1 spt#1 spt)list). wl_prog_size (\x:A. 0) p)`
   SEM1AUX_TC_TAC (list_mk_conj
  [`(get_live:(A)wl_prog->1 spt->(1 spt#1 spt)list->1 spt)
       (wl_Skip:(A)wl_prog) (live:1 spt) (lt:(1 spt#1 spt)list) = live`;
@@ -826,13 +826,13 @@ let get_live_def = sem1aux_def_wf
   `(get_live:(A)wl_prog->1 spt->(1 spt#1 spt)list->1 spt)
       (wl_Assign num exp:(A)wl_prog) (live:1 spt) (lt:(1 spt#1 spt)list) =
      let sub = get_live_exp exp in
-     union sub (delete num live)`;
+     sptree_union sub (delete num live)`;
   `(get_live:(A)wl_prog->1 spt->(1 spt#1 spt)list->1 spt)
       (wl_Get num store:(A)wl_prog) (live:1 spt) (lt:(1 spt#1 spt)list) =
      delete num live`;
   `(get_live:(A)wl_prog->1 spt->(1 spt#1 spt)list->1 spt)
       (wl_Store exp num:(A)wl_prog) (live:1 spt) (lt:(1 spt#1 spt)list) =
-     insert num one (union (get_live_exp exp) live)`;
+     insert num one (sptree_union (get_live_exp exp) live)`;
   `(get_live:(A)wl_prog->1 spt->(1 spt#1 spt)list->1 spt)
       (wl_Seq s1 s2:(A)wl_prog) (live:1 spt) (lt:(1 spt#1 spt)list) =
      get_live s1 (get_live s2 live lt) lt`;
@@ -843,13 +843,13 @@ let get_live_def = sem1aux_def_wf
       (wl_If cmp r1 ri e2 e3:(A)wl_prog) (live:1 spt) (lt:(1 spt#1 spt)list) =
      let e2_live = get_live e2 live lt in
      let e3_live = get_live e3 live lt in
-     let union_live = union e2_live e3_live in
+     let union_live = sptree_union e2_live e3_live in
      match ri with
        Reg r2 -> insert r2 one (insert r1 one union_live)
      | _ -> insert r1 one union_live`;
   `(get_live:(A)wl_prog->1 spt->(1 spt#1 spt)list->1 spt)
       (wl_Alloc num numset:(A)wl_prog) (live:1 spt) (lt:(1 spt#1 spt)list) =
-     insert num one (union (FST numset) (SND numset))`;
+     insert num one (sptree_union (FST numset) (SND numset))`;
   `(get_live:(A)wl_prog->1 spt->(1 spt#1 spt)list->1 spt)
       (wl_StoreConsts a b c d ws:(A)wl_prog) (live:1 spt)
      (lt:(1 spt#1 spt)list) =
@@ -857,7 +857,7 @@ let get_live_def = sem1aux_def_wf
   `(get_live:(A)wl_prog->1 spt->(1 spt#1 spt)list->1 spt)
       (wl_Install r1 r2 r3 r4 numset:(A)wl_prog) (live:1 spt)
      (lt:(1 spt#1 spt)list) =
-     list_insert [r1;r2;r3;r4] (union (FST numset) (SND numset))`;
+     list_insert [r1;r2;r3;r4] (sptree_union (FST numset) (SND numset))`;
   `(get_live:(A)wl_prog->1 spt->(1 spt#1 spt)list->1 spt)
       (wl_CodeBufferWrite r1 r2:(A)wl_prog) (live:1 spt)
      (lt:(1 spt#1 spt)list) = list_insert [r1;r2] live`;
@@ -868,7 +868,7 @@ let get_live_def = sem1aux_def_wf
       (wl_FFI ffi_index ptr1 len1 ptr2 len2 numset:(A)wl_prog) (live:1 spt)
      (lt:(1 spt#1 spt)list) =
      insert ptr1 one (insert len1 one
-       (insert ptr2 one (insert len2 one (union (FST numset) (SND numset)))))`;
+       (insert ptr2 one (insert len2 one (sptree_union (FST numset) (SND numset)))))`;
   `(get_live:(A)wl_prog->1 spt->(1 spt#1 spt)list->1 spt)
       (wl_StoreConsts a b c d ws:(A)wl_prog) (live:1 spt)
      (lt:(1 spt#1 spt)list) = insert c one (insert d one live)`;
@@ -885,7 +885,7 @@ let get_live_def = sem1aux_def_wf
      delete r live`;
   `(get_live:(A)wl_prog->1 spt->(1 spt#1 spt)list->1 spt)
       (wl_Set n exp:(A)wl_prog) (live:1 spt) (lt:(1 spt#1 spt)list) =
-     union (get_live_exp exp) live`;
+     sptree_union (get_live_exp exp) live`;
   `(get_live:(A)wl_prog->1 spt->(1 spt#1 spt)list->1 spt)
       (wl_OpCurrHeap b n1 n2:(A)wl_prog) (live:1 spt) (lt:(1 spt#1 spt)list) =
      insert n2 one (delete n1 live)`;
@@ -893,8 +893,8 @@ let get_live_def = sem1aux_def_wf
       (ShareInst mop v exp:(A)wl_prog) (live:1 spt) (lt:(1 spt#1 spt)list) =
      let sub = get_live_exp exp in
      if mop = asm_Store \/ mop = Store8 \/ mop = Store16 \/ mop = asm_Store32
-     then union sub (insert v one live)
-     else union sub (delete v live)`;
+     then sptree_union sub (insert v one live)
+     else sptree_union sub (delete v live)`;
   `(get_live:(A)wl_prog->1 spt->(1 spt#1 spt)list->1 spt)
       (wl_Loop names body exit_names:(A)wl_prog) (live:1 spt)
      (lt:(1 spt#1 spt)list) = names`;
@@ -914,7 +914,7 @@ let get_live_def = sem1aux_def_wf
   `(get_live:(A)wl_prog->1 spt->(1 spt#1 spt)list->1 spt)
       (wl_Call (SOME (_,cutset,_)) dest args h:(A)wl_prog) (live:1 spt)
      (lt:(1 spt#1 spt)list) =
-     union (union (FST cutset) (SND cutset)) (word_alloc_numset_list_insert args LN)`]);;
+     sptree_union (sptree_union (FST cutset) (SND cutset)) (word_alloc_numset_list_insert args LN)`]);;
 
 (* Dead instruction removal; catchall -- for other instructions *)
 let remove_dead_inst_def = sem1aux_def
@@ -966,7 +966,7 @@ let remove_dead_inst_def = sem1aux_def
   so store-DCE cannot propagate dead-set info across them.)
 *)
 let remove_dead_def = sem1aux_def_wf
-  `measure (\(p:(A)wl_prog,live:1 spt,nlive:store_name list,lt:(1 spt#1 spt)list).
+  `MEASURE (\(p:(A)wl_prog,live:1 spt,nlive:store_name list,lt:(1 spt#1 spt)list).
               wl_prog_size (\x:A. 0) p)`
   SEM1AUX_TC_TAC (list_mk_conj
  [`(remove_dead:(A)wl_prog->1 spt->store_name list->(1 spt#1 spt)list->(A)wl_prog#1 spt#store_name list)
@@ -1027,7 +1027,7 @@ let remove_dead_def = sem1aux_def_wf
      (nlive:store_name list) (lt:(1 spt#1 spt)list) =
      let (e2,e2_live,e2_nlive) = remove_dead e2 live nlive lt in
      let (e3,e3_live,e3_nlive) = remove_dead e3 live nlive lt in
-     let union_live = union e2_live e3_live in
+     let union_live = sptree_union e2_live e3_live in
      let liveset = (match ri with
                       Reg r2 -> insert r2 one (insert r1 one union_live)
                     | _ -> insert r1 one union_live) in
@@ -1039,8 +1039,8 @@ let remove_dead_def = sem1aux_def_wf
       (wl_Call (SOME (v,cutsets,ret_handler,l1,l2)) dest args h:(A)wl_prog)
      (live:1 spt) (nlive:store_name list) (lt:(1 spt#1 spt)list) =
      let args_set = word_alloc_numset_list_insert args LN in
-     let cutset = union (FST cutsets) (SND cutsets) in
-     let live_set = union cutset args_set in
+     let cutset = sptree_union (FST cutsets) (SND cutsets) in
+     let live_set = sptree_union cutset args_set in
      let (ret_handler,_) = remove_dead ret_handler live nlive lt in
      let h = (match h with
                 NONE -> NONE
@@ -1173,7 +1173,7 @@ let get_reads_exp_ind = cake_ind "get_reads_exp";;
 (* live; Continue n: the names vars must all be live; Call: might be        *)
 (* inefficient                                                               *)
 let get_clash_tree_def = sem1aux_def_wf
-  `measure (\(p:(A)wl_prog,lt:(1 spt#1 spt)list). wl_prog_size (\x:A. 0) p)`
+  `MEASURE (\(p:(A)wl_prog,lt:(1 spt#1 spt)list). wl_prog_size (\x:A. 0) p)`
   SEM1AUX_TC_TAC (list_mk_conj
  [`(get_clash_tree:(A)wl_prog->(1 spt#1 spt)list->clash_tree)
       (wl_Skip:(A)wl_prog) (lt:(1 spt#1 spt)list) = Delta [] []`;
@@ -1206,11 +1206,11 @@ let get_clash_tree_def = sem1aux_def_wf
      get_clash_tree s lt`;
   `(get_clash_tree:(A)wl_prog->(1 spt#1 spt)list->clash_tree)
       (wl_Alloc num numset:(A)wl_prog) (lt:(1 spt#1 spt)list) =
-     reg_alloc_Seq (Delta [] [num]) (reg_alloc_Set (union (FST numset) (SND numset)))`;
+     reg_alloc_Seq (Delta [] [num]) (reg_alloc_Set (sptree_union (FST numset) (SND numset)))`;
   `(get_clash_tree:(A)wl_prog->(1 spt#1 spt)list->clash_tree)
       (wl_Install r1 r2 r3 r4 numset:(A)wl_prog) (lt:(1 spt#1 spt)list) =
      reg_alloc_Seq (Delta [] [r4;r3;r2;r1])
-       (reg_alloc_Seq (reg_alloc_Set (union (FST numset) (SND numset)))
+       (reg_alloc_Seq (reg_alloc_Set (sptree_union (FST numset) (SND numset)))
           (Delta [r1] []))`;
   `(get_clash_tree:(A)wl_prog->(1 spt#1 spt)list->clash_tree)
       (wl_CodeBufferWrite r1 r2:(A)wl_prog) (lt:(1 spt#1 spt)list) =
@@ -1222,7 +1222,7 @@ let get_clash_tree_def = sem1aux_def_wf
       (wl_FFI ffi_index ptr1 len1 ptr2 len2 numset:(A)wl_prog)
      (lt:(1 spt#1 spt)list) =
      reg_alloc_Seq (Delta [] [ptr1;len1;ptr2;len2])
-       (reg_alloc_Set (union (FST numset) (SND numset)))`;
+       (reg_alloc_Set (sptree_union (FST numset) (SND numset)))`;
   `(get_clash_tree:(A)wl_prog->(1 spt#1 spt)list->clash_tree)
       (wl_Raise num:(A)wl_prog) (lt:(1 spt#1 spt)list) = Delta [] [num]`;
   `(get_clash_tree:(A)wl_prog->(1 spt#1 spt)list->clash_tree)
@@ -1268,8 +1268,8 @@ let get_clash_tree_def = sem1aux_def_wf
      match ret with
        NONE -> reg_alloc_Set args_set
      | SOME (vs,cutsets,ret_handler,_,_) ->
-         let cutset = union (FST cutsets) (SND cutsets) in
-         let live_set = union cutset args_set in
+         let cutset = sptree_union (FST cutsets) (SND cutsets) in
+         let live_set = sptree_union cutset args_set in
          let ret_tree = reg_alloc_Seq
                           (reg_alloc_Set (word_alloc_numset_list_insert vs cutset))
                           (get_clash_tree ret_handler lt) in
@@ -1286,7 +1286,7 @@ let get_clash_tree_ind = cake_ind "get_clash_tree";;
   The allocator tries hard to coalesce these edges
 *)
 let get_prefs_def = sem1aux_def_wf
-  `measure (\(p:(A)wl_prog,acc:(num#num#num)list). wl_prog_size (\x:A. 0) p)`
+  `MEASURE (\(p:(A)wl_prog,acc:(num#num#num)list). wl_prog_size (\x:A. 0) p)`
   SEM1AUX_TC_TAC (list_mk_conj
  [`(get_prefs:(A)wl_prog->(num#num#num)list->(num#num#num)list) (wl_Move pri ls:(A)wl_prog) acc =
      APPEND (MAP (\xy. match xy with (x,y) -> (pri,x,y)) ls) acc`;
@@ -1423,24 +1423,24 @@ let heu_max_def = cake_def
 let heu_max_all_def = cake_def
   `heu_max_all (t1:(heu_data)spt) t2 =
      let t1r = difference t1 t2 in
-     union t1r
+     sptree_union t1r
        (mapi (\k v. match lookup k t1 with
                       NONE -> v
                     | SOME v' -> heu_max v v') t2)`;;
 
 let heu_merge_call_def = cake_def
-  `heu_merge_call (t1:1 spt) t2 = union t1 t2`;;
+  `heu_merge_call (t1:1 spt) t2 = sptree_union t1 t2`;;
 
 (* We use lr to approximate any new vars not already tracked in calls *)
 let add_call_def = cake_def
-  `add_call (lr:A spt) (calls:1 spt) = union (map (\v. one) lr) calls`;;
+  `add_call (lr:A spt) (calls:1 spt) = sptree_union (sptree_map (\v. one) lr) calls`;;
 
 (* The remaining ones are exps, or otherwise unimportant from the pov of    *)
 (* register allocation, since all their temps are already forced into       *)
 (* specific registers.  Omitted: Skip, Assign, Store, FFI, Alloc, Raise,    *)
 (* Tick, Call NONE.  (A general Set exp is ignored.)                        *)
 let get_heu_def = sem1aux_def_wf
-  `measure (\(fc:num,p:(A)wl_prog,lr:(heu_data)spt#1 spt). wl_prog_size (\x:A. 0) p)`
+  `MEASURE (\(fc:num,p:(A)wl_prog,lr:(heu_data)spt#1 spt). wl_prog_size (\x:A. 0) p)`
   SEM1AUX_TC_TAC (list_mk_conj
  [`(get_heu:num->(A)wl_prog->(heu_data)spt#1 spt->(heu_data)spt#1 spt)
       (fc:num) (wl_Move pri ls:(A)wl_prog) (lr:(heu_data)spt,calls:1 spt) =
@@ -1528,7 +1528,7 @@ let get_heu_def = sem1aux_def_wf
 
 (* Forced edges for certain instructions *)
 let get_forced_def = sem1aux_def_wf
-  `measure (\(c:(A)asm_config,p:(A)wl_prog,acc:(num#num)list). wl_prog_size (\x:A. 0) p)`
+  `MEASURE (\(c:(A)asm_config,p:(A)wl_prog,acc:(num#num)list). wl_prog_size (\x:A. 0) p)`
   SEM1AUX_TC_TAC (list_mk_conj
  [`(get_forced:(A)asm_config->(A)wl_prog->(num#num)list->(num#num)list)
       (c:(A)asm_config) (wl_Inst i:(A)wl_prog) acc =
@@ -1756,9 +1756,9 @@ let merge_stack_only_def = cake_def
 
 let merge_stack_sets_def = cake_def
   `merge_stack_sets (ts:A spt,fs:B) (tsL:C spt,fsL:D spt) (tsR,fsR) =
-     let keep1 = inter tsR (inter tsL ts) in
-     let keep2 = union (difference tsL ts) (difference tsR ts) in
-     (union keep1 keep2,union fsL fsR)`;;
+     let keep1 = sptree_inter tsR (sptree_inter tsL ts) in
+     let keep2 = sptree_union (difference tsL ts) (difference tsR ts) in
+     (sptree_union keep1 keep2,sptree_union fsL fsR)`;;
 
 let remove_temp_stack_def = cake_def
   `remove_temp_stack ls (ts:A spt,fs:B) = (ITLIST delete ls ts,fs)`;;
@@ -1766,7 +1766,7 @@ let remove_temp_stack_def = cake_def
 (* Alloc variables that are already stack or
   only ever involved in stack moves *)
 let get_stack_only_aux_def = sem1aux_def_wf
-  `measure (\(tfs:1 spt#1 spt,p:(A)wl_prog). wl_prog_size (\x:A. 0) p)`
+  `MEASURE (\(tfs:1 spt#1 spt,p:(A)wl_prog). wl_prog_size (\x:A. 0) p)`
   SEM1AUX_TC_TAC (list_mk_conj
  [`(get_stack_only_aux:1 spt#1 spt->(A)wl_prog->1 spt#1 spt)
       (tfs:1 spt#1 spt) (wl_Move pri ls:(A)wl_prog) =
@@ -1852,4 +1852,3 @@ let full_ssa_cc_trans_def = cake_def
      let (mov,ssa,na) = setup_ssa n lim prog in
      let (prog',ssa',na') = ssa_cc_trans prog ssa na [] in
      wl_Seq mov prog'`;;
-

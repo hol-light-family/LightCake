@@ -10,8 +10,8 @@
 (*   is ITLIST f l e, (++) is APPEND, mlstring literals are implode of a     *)
 (*   string literal, the record literal of cmlPEG is peg_REC with the fields *)
 (*   start, anyEOF, tokFALSE, tokEOF, notFAIL, rules.                        *)
-(* - cmlPEG's own sumID, choicel, pegf, tokeq and pnt keep their HOL4 names  *)
-(*   (the PEG library's are peg_choicel and peg_pegf); the definitions are   *)
+(* - cmlPEG's own sumID, choicel, pegf and tokeq keep their HOL4 names (the  *)
+(*   PEG library's are peg_choicel and peg_pegf); the definitions are        *)
 (*   as polymorphic as HOL4's.  mk_linfix_ind, mk_rinfix_ind and              *)
 (*   ptPapply0_ind are the induction theorems of the recursive definitions.  *)
 (* - HOL4 computes cmlpeg_rules_applied, FDOM_cmlPEG, cmlPEG_exec_thm, the   *)
@@ -23,6 +23,7 @@
 (*   is coreloop_TopLevelDecs_total with coreloop_def unfolded by            *)
 (*   rewriting (HOL4 also applies srw_ss to it).                             *)
 (* - Helpers that are not HOL4 names have the prefix PARSE2AUX_.             *)
+(* - HOL4 pnt is cmlPEG_pnt (a short name), and pnt_def is cmlPEG_pnt_def.   *)
 (* ========================================================================= *)
 
 needs "misc/misc.ml";;
@@ -70,53 +71,53 @@ let mk_rinfix_ind = cake_ind "mk_rinfix";;
 let peg_linfix_def = cake_def
   `peg_linfix (tgtnt:B+num)
               (rptsym:(T0,N,((A,B,locs)parsetree)list,E)pegsym) opsym =
-     seq rptsym (rpt (seq opsym rptsym APPEND) FLAT)
+     peg_seq rptsym (peg_rpt (peg_seq opsym rptsym APPEND) FLAT)
          (\a b. match a with
                   [] -> []
                 | CONS h _ -> [mk_linfix tgtnt (mkNd tgtnt [h]) b])`;;
 
 let choicel_def = cake_def
-  `(choicel [] = not (empty []) []:(A,B,(C)list,E)pegsym) /\
+  `(choicel [] = peg_not (empty []) []:(A,B,(C)list,E)pegsym) /\
    (choicel (CONS h t) = choice h (choicel t) sumID)`;;
 
 let pegf_def = cake_def
   `pegf (sym:(A,B,(C)list,E)pegsym) (f:(C)list->(C)list) =
-     seq sym (empty []) (\l1 l2. f l1)`;;
+     peg_seq sym (empty []) (\l1 l2. f l1)`;;
 
 let seql_def = cake_def
   `seql (l:((A,B,(C)list,E)pegsym)list) f =
-     pegf (ITLIST (\p acc. seq p acc APPEND) l (empty [])) f`;;
+     pegf (ITLIST (\p acc. peg_seq p acc APPEND) l (empty [])) f`;;
 
 let try_def = cake_def
   `try (sym:(A,B,(C)list,E)pegsym) = choicel [sym; empty []]`;;
 
 let tokeq_def = cake_def
-  `tokeq (t:token) = tok ((=) t) mktokLf:(token,B,(mlptree)list,E)pegsym`;;
+  `tokeq (t:token) = peg_tok ((=) t) mktokLf:(token,B,(mlptree)list,E)pegsym`;;
 
 let tokSymP_def = cake_def
   `tokSymP (P:mlstring->bool) =
-     tok (\t. OPTION_BIND (destSymbolT t) (\s. OPTION_GUARD (P s)) = SOME one)
+     peg_tok (\t. OPTION_BIND (destSymbolT t) (\s. OPTION_GUARD (P s)) = SOME one)
          mktokLf:(token,B,(mlptree)list,E)pegsym`;;
 
-let pnt_def = cake_def
-  `pnt (ntsym:MMLnonT) = nt (INL ntsym) I:(A,MMLnonT,C,E)pegsym`;;
+let cmlPEG_pnt_def = cake_def
+  `cmlPEG_pnt (ntsym:MMLnonT) = peg_nt (INL ntsym) I:(A,MMLnonT,C,E)pegsym`;;
 let peg_UQConstructorName_def = cake_def
   `peg_UQConstructorName =
-     tok (\t. OPTION_BIND (destAlphaT t)
+     peg_tok (\t. OPTION_BIND (destAlphaT t)
                 (\s. OPTION_GUARD (~(s = implode "") /\ isUpper (strsub s 0))) =
               SOME one)
          (bindNT nUQConstructorName o mktokLf):(token,B,(mlptree)list,E)pegsym`;;
 
 let peg_TypeDec_def = cake_def
   `peg_TypeDec =
-     seq (tokeq DatatypeT)
-         (peg_linfix (INL nDtypeDecls) (pnt nDtypeDecl) (tokeq AndT))
+     peg_seq (tokeq DatatypeT)
+         (peg_linfix (INL nDtypeDecls) (cmlPEG_pnt nDtypeDecl) (tokeq AndT))
          (\l1 l2. bindNT nTypeDec (APPEND l1 l2))
        :(token,MMLnonT,(mlptree)list,E)pegsym`;;
 
 let peg_V_def = cake_def
   `peg_V =
-     choicel [tok (\t. OPTION_BIND (destAlphaT t)
+     choicel [peg_tok (\t. OPTION_BIND (destAlphaT t)
                          (\s. OPTION_GUARD
                                 (~(s IN {implode "before", implode "div",
                                          implode "mod", implode "o"}) /\
@@ -128,7 +129,7 @@ let peg_V_def = cake_def
 
 let peg_longV_def = cake_def
   `peg_longV =
-     tok (\t. OPTION_BIND (destLongidT t)
+     peg_tok (\t. OPTION_BIND (destLongidT t)
                 (\(str,s). OPTION_GUARD
                              (~(s = implode "") /\
                               (isAlpha (strsub s 0) ==> ~isUpper (strsub s 0)))) =
@@ -156,15 +157,15 @@ let peg_EbaseParenFn_def = cake_def
 
 let peg_EbaseParen_def = cake_def
   `peg_EbaseParen =
-     seql [tokeq LparT; pnt nE;
+     seql [tokeq LparT; cmlPEG_pnt nE;
            choicel [tokeq RparT;
-                    seql [tokeq CommaT; pnt nElist1; tokeq RparT] I;
-                    seql [tokeq SemicolonT; pnt nEseq; tokeq RparT] I]]
+                    seql [tokeq CommaT; cmlPEG_pnt nElist1; tokeq RparT] I;
+                    seql [tokeq SemicolonT; cmlPEG_pnt nEseq; tokeq RparT] I]]
           peg_EbaseParenFn:(token,MMLnonT,(mlptree)list,E)pegsym`;;
 
 let peg_StructName_def = cake_def
   `peg_StructName =
-     tok (\t. OPTION_BIND (destAlphaT t) (\s. OPTION_GUARD (~(s = implode ""))) =
+     peg_tok (\t. OPTION_BIND (destAlphaT t) (\s. OPTION_GUARD (~(s = implode ""))) =
               SOME one)
          (bindNT nStructName o mktokLf):(token,B,(mlptree)list,E)pegsym`;;
 
@@ -181,23 +182,23 @@ let ptPapply_def = cake_def
    (ptPapply (CONS c rest) = ptPapply0 (bindNT0 nPConApp [c]) rest)`;;
 let cmlPEG_def = cake_def
  `cmlPEG:(token,MMLnonT,(mlptree)list,string)peg =
-  peg_REC (pnt nTopLevelDecs)
+  peg_REC (cmlPEG_pnt nTopLevelDecs)
     "Didn't expect an EOF"
     "Failed to see expected token"
     "Failed to see expected token; saw EOF instead"
     "Not combinator failed"
     (FEMPTY |++
      [(INL nV, peg_V);
-      (INL nTyvarN, pegf (tok isTyvarT mktokLf) (bindNT nTyvarN));
-      (INL nFQV, choicel [pegf (pnt nV) (bindNT nFQV); peg_longV]);
+      (INL nTyvarN, pegf (peg_tok isTyvarT mktokLf) (bindNT nTyvarN));
+      (INL nFQV, choicel [pegf (cmlPEG_pnt nV) (bindNT nFQV); peg_longV]);
       (INL nEapp,
-       seql [pnt nEbase; rpt (pnt nEbase) FLAT]
+       seql [cmlPEG_pnt nEbase; peg_rpt (cmlPEG_pnt nEbase) FLAT]
             (\l. match l with
                    [] -> []
                  | CONS h t -> [FOLDL (\a b. mkNd (INL nEapp) [a; b])
                                       (mkNd (INL nEapp) [h]) t]));
       (INL nElist1,
-       seql [pnt nE; try (seql [tokeq CommaT; pnt nElist1] I)]
+       seql [cmlPEG_pnt nE; try (seql [tokeq CommaT; cmlPEG_pnt nElist1] I)]
             (bindNT nElist1));
       (INL nMultOps,
        pegf (choicel
@@ -214,152 +215,152 @@ let cmlPEG_def = cake_def
                                     tokeq (AlphaT (implode "o"))])
                           (bindNT nCompOps));
       (INL nOpID,
-       choicel [tok (\t. OPTION_BIND (destLongidT t)
+       choicel [peg_tok (\t. OPTION_BIND (destLongidT t)
                            (\(str,s). OPTION_GUARD (~(s = implode ""))) =
                          SOME one)
                     (bindNT nOpID o mktokLf);
-                tok (\t. OPTION_BIND (destSymbolT t)
+                peg_tok (\t. OPTION_BIND (destSymbolT t)
                            (\s. OPTION_GUARD (~(s = implode ""))) = SOME one)
                     (bindNT nOpID o mktokLf);
-                tok (\t. OPTION_BIND (destAlphaT t)
+                peg_tok (\t. OPTION_BIND (destAlphaT t)
                            (\s. OPTION_GUARD (~(s = implode ""))) = SOME one)
                     (bindNT nOpID o mktokLf);
                 pegf (tokeq StarT) (bindNT nOpID);
                 pegf (tokeq EqualsT) (bindNT nOpID)]);
       (INL nEliteral,
-       choicel [tok isInt (bindNT nEliteral o mktokLf);
-                tok isString (bindNT nEliteral o mktokLf);
-                tok isCharT (bindNT nEliteral o mktokLf);
-                tok isWordT (bindNT nEliteral o mktokLf);
-                tok (IS_SOME o destFFIT) (bindNT nEliteral o mktokLf)]);
+       choicel [peg_tok isInt (bindNT nEliteral o mktokLf);
+                peg_tok isString (bindNT nEliteral o mktokLf);
+                peg_tok isCharT (bindNT nEliteral o mktokLf);
+                peg_tok isWordT (bindNT nEliteral o mktokLf);
+                peg_tok (IS_SOME o destFFIT) (bindNT nEliteral o mktokLf)]);
       (INL nEbase,
-       choicel [pegf (pnt nEliteral) (bindNT nEbase);
+       choicel [pegf (cmlPEG_pnt nEliteral) (bindNT nEbase);
                 seql [tokeq LparT; tokeq RparT] (bindNT nEbase);
                 peg_EbaseParen;
-                seql [tokeq LbrackT; try (pnt nElist1); tokeq RbrackT]
+                seql [tokeq LbrackT; try (cmlPEG_pnt nElist1); tokeq RbrackT]
                      (bindNT nEbase);
-                seql [tokeq LetT; pnt nLetDecs; tokeq InT; pnt nEseq;
+                seql [tokeq LetT; cmlPEG_pnt nLetDecs; tokeq InT; cmlPEG_pnt nEseq;
                       tokeq EndT] (bindNT nEbase);
-                pegf (pnt nFQV) (bindNT nEbase);
-                pegf (pnt nConstructorName) (bindNT nEbase);
-                seql [tokeq OpT; pnt nOpID] (bindNT nEbase)]);
+                pegf (cmlPEG_pnt nFQV) (bindNT nEbase);
+                pegf (cmlPEG_pnt nConstructorName) (bindNT nEbase);
+                seql [tokeq OpT; cmlPEG_pnt nOpID] (bindNT nEbase)]);
       (INL nEseq,
-       seql [pnt nE; try (seql [tokeq SemicolonT; pnt nEseq] I)]
+       seql [cmlPEG_pnt nE; try (seql [tokeq SemicolonT; cmlPEG_pnt nEseq] I)]
             (bindNT nEseq));
       (INL nEmult,
-       peg_linfix (INL nEmult) (pnt nEapp) (pnt nMultOps));
-      (INL nEadd, peg_linfix (INL nEadd) (pnt nEmult) (pnt nAddOps));
+       peg_linfix (INL nEmult) (cmlPEG_pnt nEapp) (cmlPEG_pnt nMultOps));
+      (INL nEadd, peg_linfix (INL nEadd) (cmlPEG_pnt nEmult) (cmlPEG_pnt nAddOps));
       (INL nElistop,
-       seql [pnt nEadd; try (seql [pnt nListOps; pnt nElistop] I)]
+       seql [cmlPEG_pnt nEadd; try (seql [cmlPEG_pnt nListOps; cmlPEG_pnt nElistop] I)]
             (bindNT nElistop));
-      (INL nErel, peg_linfix (INL nErel) (pnt nElistop) (pnt nRelOps));
-      (INL nEcomp, peg_linfix (INL nEcomp) (pnt nErel) (pnt nCompOps));
-      (INL nEbefore, peg_linfix (INL nEbefore) (pnt nEcomp)
+      (INL nErel, peg_linfix (INL nErel) (cmlPEG_pnt nElistop) (cmlPEG_pnt nRelOps));
+      (INL nEcomp, peg_linfix (INL nEcomp) (cmlPEG_pnt nErel) (cmlPEG_pnt nCompOps));
+      (INL nEbefore, peg_linfix (INL nEbefore) (cmlPEG_pnt nEcomp)
                                 (tokeq (AlphaT (implode "before"))));
-      (INL nEtyped, seql [pnt nEbefore;
-                          try (seql [tokeq ColonT; pnt nType] I)]
+      (INL nEtyped, seql [cmlPEG_pnt nEbefore;
+                          try (seql [tokeq ColonT; cmlPEG_pnt nType] I)]
                          (bindNT nEtyped));
       (INL nElogicAND,
-       peg_linfix (INL nElogicAND) (pnt nEtyped) (tokeq AndalsoT));
+       peg_linfix (INL nElogicAND) (cmlPEG_pnt nEtyped) (tokeq AndalsoT));
       (INL nElogicOR,
-       peg_linfix (INL nElogicOR) (pnt nElogicAND) (tokeq OrelseT));
+       peg_linfix (INL nElogicOR) (cmlPEG_pnt nElogicAND) (tokeq OrelseT));
       (INL nEhandle,
-       seql [pnt nElogicOR; try (seql [tokeq HandleT; pnt nPEs] I)]
+       seql [cmlPEG_pnt nElogicOR; try (seql [tokeq HandleT; cmlPEG_pnt nPEs] I)]
             (bindNT nEhandle));
       (INL nE,
-       choicel [seql [tokeq RaiseT; pnt nE] (bindNT nE);
-                pegf (pnt nEhandle) (bindNT nE);
-                seql [tokeq IfT; pnt nE; tokeq ThenT; pnt nE;
-                      tokeq ElseT; pnt nE]
+       choicel [seql [tokeq RaiseT; cmlPEG_pnt nE] (bindNT nE);
+                pegf (cmlPEG_pnt nEhandle) (bindNT nE);
+                seql [tokeq IfT; cmlPEG_pnt nE; tokeq ThenT; cmlPEG_pnt nE;
+                      tokeq ElseT; cmlPEG_pnt nE]
                      (bindNT nE);
-                seql [tokeq FnT; pnt nPattern; tokeq DarrowT; pnt nE]
+                seql [tokeq FnT; cmlPEG_pnt nPattern; tokeq DarrowT; cmlPEG_pnt nE]
                      (bindNT nE);
-                seql [tokeq CaseT; pnt nE; tokeq OfT; pnt nPEs]
+                seql [tokeq CaseT; cmlPEG_pnt nE; tokeq OfT; cmlPEG_pnt nPEs]
                      (bindNT nE)]);
       (INL nPEs,
-       seql [pnt nPattern; tokeq DarrowT; pnt nPE] (bindNT nPEs));
+       seql [cmlPEG_pnt nPattern; tokeq DarrowT; cmlPEG_pnt nPE] (bindNT nPEs));
       (INL nPE,
-       choicel [seql [tokeq IfT; pnt nE; tokeq ThenT; pnt nE;
-                      tokeq ElseT; pnt nPE]
+       choicel [seql [tokeq IfT; cmlPEG_pnt nE; tokeq ThenT; cmlPEG_pnt nE;
+                      tokeq ElseT; cmlPEG_pnt nPE]
                      (bindNT nPE);
-                seql [tokeq CaseT; pnt nE; tokeq OfT; pnt nPEs]
+                seql [tokeq CaseT; cmlPEG_pnt nE; tokeq OfT; cmlPEG_pnt nPEs]
                      (bindNT nPE);
-                seql [tokeq FnT; pnt nPattern; tokeq DarrowT; pnt nE]
+                seql [tokeq FnT; cmlPEG_pnt nPattern; tokeq DarrowT; cmlPEG_pnt nE]
                      (bindNT nPE);
-                seql [tokeq RaiseT; pnt nPE] (bindNT nPE);
-                seql [pnt nElogicOR; pnt nPEsfx] (bindNT nPE)]);
+                seql [tokeq RaiseT; cmlPEG_pnt nPE] (bindNT nPE);
+                seql [cmlPEG_pnt nElogicOR; cmlPEG_pnt nPEsfx] (bindNT nPE)]);
       (INL nPEsfx,
-       choicel [seql [tokeq HandleT; pnt nPEs] (bindNT nPEsfx);
-                seql [tokeq BarT; pnt nPEs] (bindNT nPEsfx);
+       choicel [seql [tokeq HandleT; cmlPEG_pnt nPEs] (bindNT nPEsfx);
+                seql [tokeq BarT; cmlPEG_pnt nPEs] (bindNT nPEsfx);
                 pegf (empty []) (bindNT nPEsfx)]);
       (INL nAndFDecls,
-       peg_linfix (INL nAndFDecls) (pnt nFDecl) (tokeq AndT));
+       peg_linfix (INL nAndFDecls) (cmlPEG_pnt nFDecl) (tokeq AndT));
       (INL nFDecl,
-       seql [pnt nV; pnt nPbaseList1; tokeq EqualsT; pnt nE]
+       seql [cmlPEG_pnt nV; cmlPEG_pnt nPbaseList1; tokeq EqualsT; cmlPEG_pnt nE]
             (bindNT nFDecl));
       (INL nPbaseList1,
-       seql [pnt nPbase; try (pnt nPbaseList1)]
+       seql [cmlPEG_pnt nPbase; try (cmlPEG_pnt nPbaseList1)]
             (bindNT nPbaseList1));
       (INL nType,
-       seql [pnt nPType; try (seql [tokeq ArrowT; pnt nType] I)]
+       seql [cmlPEG_pnt nPType; try (seql [tokeq ArrowT; cmlPEG_pnt nType] I)]
             (bindNT nType));
       (INL nDType,
-       seql [pnt nTbase; rpt (pnt nTyOp) FLAT]
+       seql [cmlPEG_pnt nTbase; peg_rpt (cmlPEG_pnt nTyOp) FLAT]
             (\subs. match subs with
                       [] -> []
                     | CONS h t -> [FOLDL (\a b. mkNd (INL nDType) [a; b])
                                          (mkNd (INL nDType) [h]) t]));
       (INL nTbase,
        choicel [
-         seql [tokeq LparT; pnt nType; tokeq RparT] (bindNT nTbase);
-         seql [tokeq LparT; pnt nTypeList2; tokeq RparT; pnt nTyOp]
+         seql [tokeq LparT; cmlPEG_pnt nType; tokeq RparT] (bindNT nTbase);
+         seql [tokeq LparT; cmlPEG_pnt nTypeList2; tokeq RparT; cmlPEG_pnt nTyOp]
               (bindNT nTbase);
-         tok isTyvarT (bindNT nTbase o mktokLf);
-         pegf (pnt nTyOp) (bindNT nTbase)]);
+         peg_tok isTyvarT (bindNT nTbase o mktokLf);
+         pegf (cmlPEG_pnt nTyOp) (bindNT nTbase)]);
       (INL nPTbase,
        choicel [
-         seql [tokeq LparT; pnt nType; tokeq RparT] (bindNT nPTbase);
-         tok isTyvarT (bindNT nPTbase o mktokLf);
-         pegf (pnt nTyOp) (bindNT nPTbase)]);
+         seql [tokeq LparT; cmlPEG_pnt nType; tokeq RparT] (bindNT nPTbase);
+         peg_tok isTyvarT (bindNT nPTbase o mktokLf);
+         pegf (cmlPEG_pnt nTyOp) (bindNT nPTbase)]);
       (INL nTypeList2,
-       seql [pnt nType; tokeq CommaT; pnt nTypeList1]
+       seql [cmlPEG_pnt nType; tokeq CommaT; cmlPEG_pnt nTypeList1]
             (bindNT nTypeList2));
       (INL nTypeList1,
-       seql [pnt nType; try (seql [tokeq CommaT; pnt nTypeList1] I)]
+       seql [cmlPEG_pnt nType; try (seql [tokeq CommaT; cmlPEG_pnt nTypeList1] I)]
             (bindNT nTypeList1));
       (INL nTbaseList,
-       pegf (try (seql [pnt nPTbase; pnt nTbaseList] I))
+       pegf (try (seql [cmlPEG_pnt nPTbase; cmlPEG_pnt nTbaseList] I))
             (bindNT nTbaseList));
       (INL nTyOp,
-       pegf (choicel [pnt nUQTyOp; tok isLongidT mktokLf])
+       pegf (choicel [cmlPEG_pnt nUQTyOp; peg_tok isLongidT mktokLf])
             (bindNT nTyOp));
       (INL nUQTyOp,
-       pegf (tok isAlphaSym mktokLf) (bindNT nUQTyOp));
+       pegf (peg_tok isAlphaSym mktokLf) (bindNT nUQTyOp));
       (INL nPType,
-       seql [pnt nDType; try (seql [tokeq StarT; pnt nPType] I)]
+       seql [cmlPEG_pnt nDType; try (seql [tokeq StarT; cmlPEG_pnt nPType] I)]
             (bindNT nPType));
       (INL nTypeName,
-       choicel [pegf (pnt nUQTyOp) (bindNT nTypeName);
-                seql [tokeq LparT; pnt nTyVarList;
-                      tokeq RparT; pnt nUQTyOp] (bindNT nTypeName);
-                seql [tok isTyvarT mktokLf; pnt nUQTyOp]
+       choicel [pegf (cmlPEG_pnt nUQTyOp) (bindNT nTypeName);
+                seql [tokeq LparT; cmlPEG_pnt nTyVarList;
+                      tokeq RparT; cmlPEG_pnt nUQTyOp] (bindNT nTypeName);
+                seql [peg_tok isTyvarT mktokLf; cmlPEG_pnt nUQTyOp]
                      (bindNT nTypeName)]);
       (INL nTyVarList,
-       peg_linfix (INL nTyVarList) (pnt nTyvarN) (tokeq CommaT));
+       peg_linfix (INL nTyVarList) (cmlPEG_pnt nTyvarN) (tokeq CommaT));
       (INL nTypeDec, peg_TypeDec);
       (INL nDtypeDecl,
-       seql [pnt nTypeName;
+       seql [cmlPEG_pnt nTypeName;
              tokeq EqualsT;
-             peg_linfix (INL nDtypeCons) (pnt nDconstructor) (tokeq BarT)]
+             peg_linfix (INL nDtypeCons) (cmlPEG_pnt nDconstructor) (tokeq BarT)]
             (bindNT nDtypeDecl));
       (INL nDconstructor,
-       seql [pnt nUQConstructorName; pnt nTbaseList]
+       seql [cmlPEG_pnt nUQConstructorName; cmlPEG_pnt nTbaseList]
             (bindNT nDconstructor));
       (INL nUQConstructorName, peg_UQConstructorName);
       (INL nConstructorName,
        choicel [
-         pegf (pnt nUQConstructorName) (bindNT nConstructorName);
-         tok (\t. OPTION_BIND (destLongidT t)
+         pegf (cmlPEG_pnt nUQConstructorName) (bindNT nConstructorName);
+         peg_tok (\t. OPTION_BIND (destLongidT t)
                     (\(str,s). OPTION_GUARD (~(s = implode "") /\
                                              isAlpha (strsub s 0) /\
                                              isUpper (strsub s 0))) =
@@ -367,15 +368,15 @@ let cmlPEG_def = cake_def
              (bindNT nConstructorName o mktokLf)]);
       (INL nPbase,
        pegf
-         (choicel [pnt nV; pnt nConstructorName; tok isInt mktokLf;
-                   tok isString mktokLf; tok isCharT mktokLf;
-                   pnt nPtuple; tokeq UnderbarT;
-                   seql [tokeq LbrackT; try (pnt nPatternList);
+         (choicel [cmlPEG_pnt nV; cmlPEG_pnt nConstructorName; peg_tok isInt mktokLf;
+                   peg_tok isString mktokLf; peg_tok isCharT mktokLf;
+                   cmlPEG_pnt nPtuple; tokeq UnderbarT;
+                   seql [tokeq LbrackT; try (cmlPEG_pnt nPatternList);
                          tokeq RbrackT] I;
-                   seql [tokeq OpT; pnt nOpID] I])
+                   seql [tokeq OpT; cmlPEG_pnt nOpID] I])
          (bindNT nPbase));
       (INL nPapp,
-       choicel [seql [pnt nConstructorName; rpt (pnt nPbase) FLAT]
+       choicel [seql [cmlPEG_pnt nConstructorName; peg_rpt (cmlPEG_pnt nPbase) FLAT]
                  (\pts. if LENGTH pts = 1 then
                            bindNT nPapp (bindNT nPbase pts)
                          else
@@ -383,94 +384,94 @@ let cmlPEG_def = cake_def
                              [] -> []
                            | [c] -> []
                            | _ -> ptPapply pts);
-                pegf (pnt nPbase) (bindNT nPapp)]);
+                pegf (cmlPEG_pnt nPbase) (bindNT nPapp)]);
       (INL nPcons,
-       seql [pnt nPapp;
-             try (seql [tokeq (SymbolT (implode "::")); pnt nPcons] I)]
+       seql [cmlPEG_pnt nPapp;
+             try (seql [tokeq (SymbolT (implode "::")); cmlPEG_pnt nPcons] I)]
             (bindNT nPcons));
       (INL nPas,
-       seql [try (seql [pnt nV; tokeq AsT] I);
-             pnt nPcons]
+       seql [try (seql [cmlPEG_pnt nV; tokeq AsT] I);
+             cmlPEG_pnt nPcons]
             (bindNT nPas));
       (INL nPattern,
-       seql [pnt nPas; try (seql [tokeq ColonT; pnt nType] I)]
+       seql [cmlPEG_pnt nPas; try (seql [tokeq ColonT; cmlPEG_pnt nType] I)]
             (bindNT nPattern));
       (INL nPatternList,
-       seql [pnt nPattern;
-             try (seql [tokeq CommaT; pnt nPatternList] I)]
+       seql [cmlPEG_pnt nPattern;
+             try (seql [tokeq CommaT; cmlPEG_pnt nPatternList] I)]
             (bindNT nPatternList));
       (INL nPtuple,
        choicel [seql [tokeq LparT; tokeq RparT] (bindNT nPtuple);
-                seql [tokeq LparT; pnt nPatternList; tokeq RparT]
+                seql [tokeq LparT; cmlPEG_pnt nPatternList; tokeq RparT]
                      (bindNT nPtuple)]);
       (INL nLetDec,
-       choicel [seql [tokeq ValT; pnt nPattern; tokeq EqualsT; pnt nE]
+       choicel [seql [tokeq ValT; cmlPEG_pnt nPattern; tokeq EqualsT; cmlPEG_pnt nE]
                      (bindNT nLetDec);
-                seql [tokeq FunT; pnt nAndFDecls] (bindNT nLetDec)]);
+                seql [tokeq FunT; cmlPEG_pnt nAndFDecls] (bindNT nLetDec)]);
       (INL nLetDecs,
-       choicel [seql [pnt nLetDec; pnt nLetDecs] (bindNT nLetDecs);
-                seql [tokeq SemicolonT; pnt nLetDecs] (bindNT nLetDecs);
+       choicel [seql [cmlPEG_pnt nLetDec; cmlPEG_pnt nLetDecs] (bindNT nLetDecs);
+                seql [tokeq SemicolonT; cmlPEG_pnt nLetDecs] (bindNT nLetDecs);
                 pegf (empty []) (bindNT nLetDecs)]);
       (INL nDecl,
        choicel [
-         seql [tokeq ValT; pnt nPattern; tokeq EqualsT; pnt nE]
+         seql [tokeq ValT; cmlPEG_pnt nPattern; tokeq EqualsT; cmlPEG_pnt nE]
               (bindNT nDecl);
-         seql [tokeq FunT; pnt nAndFDecls] (bindNT nDecl);
-         seql [tokeq ExceptionT; pnt nDconstructor] (bindNT nDecl);
-         seql [tokeq LocalT; pnt nDecls; tokeq InT; pnt nDecls;
+         seql [tokeq FunT; cmlPEG_pnt nAndFDecls] (bindNT nDecl);
+         seql [tokeq ExceptionT; cmlPEG_pnt nDconstructor] (bindNT nDecl);
+         seql [tokeq LocalT; cmlPEG_pnt nDecls; tokeq InT; cmlPEG_pnt nDecls;
                tokeq EndT] (bindNT nDecl);
-         seql [pnt nTypeDec] (bindNT nDecl);
-         seql [pnt nTypeAbbrevDec] (bindNT nDecl);
-         seql [pnt nStructure] (bindNT nDecl)]);
+         seql [cmlPEG_pnt nTypeDec] (bindNT nDecl);
+         seql [cmlPEG_pnt nTypeAbbrevDec] (bindNT nDecl);
+         seql [cmlPEG_pnt nStructure] (bindNT nDecl)]);
       (INL nTypeAbbrevDec,
-       seql [tokeq TypeT; pnt nTypeName; tokeq EqualsT; pnt nType]
+       seql [tokeq TypeT; cmlPEG_pnt nTypeName; tokeq EqualsT; cmlPEG_pnt nType]
             (bindNT nTypeAbbrevDec));
       (INL nDecls,
-       choicel [seql [pnt nDecl; pnt nDecls] (bindNT nDecls);
-                seql [tokeq SemicolonT; pnt nDecls] (bindNT nDecls);
+       choicel [seql [cmlPEG_pnt nDecl; cmlPEG_pnt nDecls] (bindNT nDecls);
+                seql [tokeq SemicolonT; cmlPEG_pnt nDecls] (bindNT nDecls);
                 pegf (empty []) (bindNT nDecls)]);
       (INL nOptTypEqn,
-       choicel [seql [tokeq EqualsT; pnt nType] (bindNT nOptTypEqn);
+       choicel [seql [tokeq EqualsT; cmlPEG_pnt nType] (bindNT nOptTypEqn);
                 pegf (empty []) (bindNT nOptTypEqn)]);
       (INL nSpecLine,
-       choicel [seql [tokeq ValT; pnt nV; tokeq ColonT; pnt nType]
+       choicel [seql [tokeq ValT; cmlPEG_pnt nV; tokeq ColonT; cmlPEG_pnt nType]
                      (bindNT nSpecLine);
-                seql [tokeq TypeT; pnt nTypeName; pnt nOptTypEqn]
+                seql [tokeq TypeT; cmlPEG_pnt nTypeName; cmlPEG_pnt nOptTypEqn]
                      (bindNT nSpecLine);
-                seql [tokeq ExceptionT; pnt nDconstructor] (bindNT nSpecLine);
-                pegf (pnt nTypeDec) (bindNT nSpecLine)]);
+                seql [tokeq ExceptionT; cmlPEG_pnt nDconstructor] (bindNT nSpecLine);
+                pegf (cmlPEG_pnt nTypeDec) (bindNT nSpecLine)]);
       (INL nSpecLineList,
-       choicel [seql [pnt nSpecLine; pnt nSpecLineList]
+       choicel [seql [cmlPEG_pnt nSpecLine; cmlPEG_pnt nSpecLineList]
                      (bindNT nSpecLineList);
-                seql [tokeq SemicolonT; pnt nSpecLineList]
+                seql [tokeq SemicolonT; cmlPEG_pnt nSpecLineList]
                      (bindNT nSpecLineList);
                 pegf (empty []) (bindNT nSpecLineList)]);
       (INL nSignatureValue,
-       seql [tokeq SigT; pnt nSpecLineList; tokeq EndT]
+       seql [tokeq SigT; cmlPEG_pnt nSpecLineList; tokeq EndT]
             (bindNT nSignatureValue));
       (INL nOptionalSignatureAscription,
-       pegf (try (seql [tokeq SealT; pnt nSignatureValue] I))
+       pegf (try (seql [tokeq SealT; cmlPEG_pnt nSignatureValue] I))
             (bindNT nOptionalSignatureAscription));
       (INL nStructName, peg_StructName);
       (INL nStructure,
-       seql [tokeq StructureT; pnt nStructName;
-             pnt nOptionalSignatureAscription;
-             tokeq EqualsT; tokeq StructT; pnt nDecls; tokeq EndT]
+       seql [tokeq StructureT; cmlPEG_pnt nStructName;
+             cmlPEG_pnt nOptionalSignatureAscription;
+             tokeq EqualsT; tokeq StructT; cmlPEG_pnt nDecls; tokeq EndT]
             (bindNT nStructure));
       (INL nTopLevelDecs,
        choicel [
-         seql [pnt nE; tokeq SemicolonT; pnt nTopLevelDecs]
+         seql [cmlPEG_pnt nE; tokeq SemicolonT; cmlPEG_pnt nTopLevelDecs]
               (bindNT nTopLevelDecs);
-         seql [pnt nDecl; pnt nNonETopLevelDecs]
+         seql [cmlPEG_pnt nDecl; cmlPEG_pnt nNonETopLevelDecs]
               (bindNT nTopLevelDecs);
-         seql [tokeq SemicolonT; pnt nTopLevelDecs]
+         seql [tokeq SemicolonT; cmlPEG_pnt nTopLevelDecs]
               (bindNT nTopLevelDecs);
          pegf (empty []) (bindNT nTopLevelDecs)]);
       (INL nNonETopLevelDecs,
        choicel [
-         seql [pnt nDecl; pnt nNonETopLevelDecs]
+         seql [cmlPEG_pnt nDecl; cmlPEG_pnt nNonETopLevelDecs]
               (bindNT nNonETopLevelDecs);
-         seql [tokeq SemicolonT; pnt nTopLevelDecs]
+         seql [tokeq SemicolonT; cmlPEG_pnt nTopLevelDecs]
               (bindNT nNonETopLevelDecs);
          pegf (empty []) (bindNT nNonETopLevelDecs)])])`;;
 
@@ -498,17 +499,9 @@ let PARSE2AUX_NT_EQ_CONV tm =
 let PARSE2AUX_INL_EQ_CONV =
   REWR_CONV(CONJUNCT1(injectivity "sum")) THENC PARSE2AUX_NT_EQ_CONV;;
 
-let PARSE2AUX_FUL_CONS = prove
- (`!(f:(A,B)fmap) h t. f |++ CONS h t = FUPDATE f h |++ t`,
-  REWRITE_TAC[FUPDATE_LIST_THM]);;
-
-let PARSE2AUX_FUL_NIL = prove
- (`!(f:(A,B)fmap). f |++ [] = f`,
-  REWRITE_TAC[FUPDATE_LIST_THM]);;
-
 let rec PARSE2AUX_FUPDATE_LIST_CONV tm =
-  ((REWR_CONV PARSE2AUX_FUL_CONS THENC PARSE2AUX_FUPDATE_LIST_CONV) ORELSEC
-   REWR_CONV PARSE2AUX_FUL_NIL) tm;;
+  ((REWR_CONV FMAPAUX_FUL_CONS THENC PARSE2AUX_FUPDATE_LIST_CONV) ORELSEC
+   REWR_CONV FMAPAUX_FUL_NIL) tm;;
 
 (* peg_rules cmlPEG = FEMPTY |+ (INL nV,peg_V) |+ ... *)
 
@@ -586,99 +579,9 @@ let frange_image = prove
  (`!fm:(A,B)fmap. FRANGE fm = IMAGE (FAPPLY fm) (FDOM fm)`,
   REWRITE_TAC[FRANGE_DEF; EXTENSION; IN_ELIM_THM; IN_IMAGE] THEN MESON_TAC[]);;
 
-(* ------------------------------------------------------------------------- *)
-(* The cases of peg0, peggt0, pegfail and wfpeg for each kind of expression  *)
-(* (HOL4 builds them as ML values peg0_rwts, wfpeg_rwts, pegnt_case_ths and  *)
-(* wfpeg_pnt from peg0_cases and wfpeg_cases).                               *)
-(* ------------------------------------------------------------------------- *)
-
-let PARSE2AUX_CASES_TAC (cth:thm) : tactic =
-  REPEAT GEN_TAC THEN REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
-  GEN_REWRITE_TAC LAND_CONV [cth] THEN
-  REWRITE_TAC[pegsym_distinct; pegsym_inject] THEN
-  REWRITE_TAC[RIGHT_EXISTS_AND_THM; LEFT_EXISTS_AND_THM; UNWIND_THM1;
-              UNWIND_THM2; GSYM CONJ_ASSOC; EXISTS_REFL] THEN
-  MESON_TAC[];;
-
-let PARSE2AUX_peg0_clauses = prove
- (`!G:(A,B,C,E)peg.
-     (!c. peg0 G (empty c) <=> T) /\
-     (!f. peg0 G (any f) <=> F) /\
-     (!t f. peg0 G (tok t f) <=> F) /\
-     (!e. peg0 G (error e) <=> F) /\
-     (!e c. peg0 G (not e c) <=> pegfail G e) /\
-     (!e f. peg0 G (rpt e f) <=> pegfail G e) /\
-     (!e1 e2 f. peg0 G (seq e1 e2 f) <=> peg0 G e1 /\ peg0 G e2) /\
-     (!e1 e2 f. peg0 G (choice e1 e2 f) <=>
-                peg0 G e1 \/ pegfail G e1 /\ peg0 G e2)`,
-  PARSE2AUX_CASES_TAC peg0_cases);;
-
-let PARSE2AUX_peggt0_clauses = prove
- (`!G:(A,B,C,E)peg.
-     (!c. peggt0 G (empty c) <=> F) /\
-     (!f. peggt0 G (any f) <=> T) /\
-     (!t f. peggt0 G (tok t f) <=> T) /\
-     (!e. peggt0 G (error e) <=> F) /\
-     (!e c. peggt0 G (not e c) <=> F) /\
-     (!e f. peggt0 G (rpt e f) <=> peggt0 G e) /\
-     (!e1 e2 f. peggt0 G (seq e1 e2 f) <=>
-                peggt0 G e1 /\ (peg0 G e2 \/ peggt0 G e2) \/
-                (peg0 G e1 \/ peggt0 G e1) /\ peggt0 G e2) /\
-     (!e1 e2 f. peggt0 G (choice e1 e2 f) <=>
-                peggt0 G e1 \/ pegfail G e1 /\ peggt0 G e2)`,
-  PARSE2AUX_CASES_TAC peg0_cases);;
-
-let PARSE2AUX_pegfail_clauses = prove
- (`!G:(A,B,C,E)peg.
-     (!c. pegfail G (empty c) <=> F) /\
-     (!f. pegfail G (any f) <=> T) /\
-     (!t f. pegfail G (tok t f) <=> T) /\
-     (!e. pegfail G (error e) <=> T) /\
-     (!e c. pegfail G (not e c) <=> peg0 G e \/ peggt0 G e) /\
-     (!e f. pegfail G (rpt e f) <=> F) /\
-     (!e1 e2 f. pegfail G (seq e1 e2 f) <=>
-                pegfail G e1 \/ peg0 G e1 /\ pegfail G e2 \/
-                peggt0 G e1 /\ pegfail G e2) /\
-     (!e1 e2 f. pegfail G (choice e1 e2 f) <=> pegfail G e1 /\ pegfail G e2)`,
-  PARSE2AUX_CASES_TAC peg0_cases);;
-
-let PARSE2AUX_peg0_nt_clauses = prove
- (`!G:(A,B,C,E)peg.
-     (!n f. peg0 G (nt n f) <=>
-            n IN FDOM (peg_rules G) /\ peg0 G (FAPPLY (peg_rules G) n)) /\
-     (!n f. peggt0 G (nt n f) <=>
-            n IN FDOM (peg_rules G) /\ peggt0 G (FAPPLY (peg_rules G) n)) /\
-     (!n f. pegfail G (nt n f) <=>
-            n IN FDOM (peg_rules G) /\ pegfail G (FAPPLY (peg_rules G) n))`,
-  PARSE2AUX_CASES_TAC peg0_cases);;
-
-let PARSE2AUX_wfpeg_clauses = prove
- (`!G:(A,B,C,E)peg.
-     (!c. wfpeg G (empty c) <=> T) /\
-     (!f. wfpeg G (any f) <=> T) /\
-     (!t f. wfpeg G (tok t f) <=> T) /\
-     (!e. wfpeg G (error e) <=> T) /\
-     (!e c. wfpeg G (not e c) <=> wfpeg G e) /\
-     (!e f. wfpeg G (rpt e f) <=> wfpeg G e /\ ~peg0 G e) /\
-     (!e1 e2 f. wfpeg G (seq e1 e2 f) <=>
-                wfpeg G e1 /\ (peg0 G e1 ==> wfpeg G e2)) /\
-     (!e1 e2 f. wfpeg G (choice e1 e2 f) <=> wfpeg G e1 /\ wfpeg G e2)`,
-  GEN_TAC THEN REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
-  GEN_REWRITE_TAC LAND_CONV [wfpeg_cases] THEN
-  REWRITE_TAC[pegsym_distinct; pegsym_inject] THEN
-  REWRITE_TAC[RIGHT_EXISTS_AND_THM; LEFT_EXISTS_AND_THM; UNWIND_THM1;
-              UNWIND_THM2; GSYM CONJ_ASSOC; EXISTS_REFL] THEN
-  MESON_TAC[]);;
-
-let PARSE2AUX_wfpeg_nt = prove
- (`!(G:(A,B,C,E)peg) n f.
-     wfpeg G (nt n f) <=>
-     n IN FDOM (peg_rules G) /\ wfpeg G (FAPPLY (peg_rules G) n)`,
-  REPEAT GEN_TAC THEN GEN_REWRITE_TAC LAND_CONV [wfpeg_cases] THEN
-  REWRITE_TAC[pegsym_distinct; pegsym_inject] THEN
-  REWRITE_TAC[RIGHT_EXISTS_AND_THM; LEFT_EXISTS_AND_THM; UNWIND_THM1;
-              UNWIND_THM2; GSYM CONJ_ASSOC; EXISTS_REFL] THEN
-  MESON_TAC[]);;
+(* HOL4's ML values peg0_rwts, wfpeg_rwts and pegnt_case_ths (the cases of   *)
+(* peg0, peggt0, pegfail and wfpeg for each kind of expression) are the     *)
+(* clause theorems LPARSEAUX_peg0_clauses, ... of hol4/peg.ml.              *)
 
 (* ------------------------------------------------------------------------- *)
 (* peg0 of the derived forms.                                                *)
@@ -686,24 +589,24 @@ let PARSE2AUX_wfpeg_nt = prove
 
 let peg0_pegf = prove
  (`!(G:(A,B,(C)list,E)peg) s f. peg0 G (pegf s f) <=> peg0 G s`,
-  REWRITE_TAC[pegf_def; PARSE2AUX_peg0_clauses]);;
+  REWRITE_TAC[pegf_def; LPARSEAUX_peg0_clauses]);;
 let _ = cake_add_simps [peg0_pegf];;
 
 let peg0_seql = prove
  (`!(G:(A,B,(C)list,E)peg) h t f.
      (peg0 G (seql [] f) <=> T) /\
      (peg0 G (seql (CONS h t) f) <=> peg0 G h /\ peg0 G (seql t I))`,
-  REWRITE_TAC[seql_def; pegf_def; ITLIST; PARSE2AUX_peg0_clauses]);;
+  REWRITE_TAC[seql_def; pegf_def; ITLIST; LPARSEAUX_peg0_clauses]);;
 let _ = cake_add_simps [peg0_seql];;
 
 let peg0_tokeq = prove
  (`!(G:(token,B,(mlptree)list,E)peg) t. peg0 G (tokeq t) <=> F`,
-  REWRITE_TAC[tokeq_def; PARSE2AUX_peg0_clauses]);;
+  REWRITE_TAC[tokeq_def; LPARSEAUX_peg0_clauses]);;
 let _ = cake_add_simps [peg0_tokeq];;
 
 let peg0_tokSymP = prove
  (`!(G:(token,B,(mlptree)list,E)peg) P. peg0 G (tokSymP P) <=> F`,
-  REWRITE_TAC[tokSymP_def; PARSE2AUX_peg0_clauses]);;
+  REWRITE_TAC[tokSymP_def; LPARSEAUX_peg0_clauses]);;
 let _ = cake_add_simps [peg0_tokSymP];;
 
 let peg0_choicel = prove
@@ -711,7 +614,7 @@ let peg0_choicel = prove
      (peg0 G (choicel []) <=> F) /\
      (peg0 G (choicel (CONS h t)) <=>
       peg0 G h \/ pegfail G h /\ peg0 G (choicel t))`,
-  REWRITE_TAC[choicel_def; PARSE2AUX_peg0_clauses; PARSE2AUX_pegfail_clauses]);;
+  REWRITE_TAC[choicel_def; LPARSEAUX_peg0_clauses; LPARSEAUX_pegfail_clauses]);;
 let _ = cake_add_simps [peg0_choicel];;
 
 (* ------------------------------------------------------------------------- *)
@@ -719,22 +622,22 @@ let _ = cake_add_simps [peg0_choicel];;
 (* over a list of non-terminals, each theorem saved as peg0_nX and exported  *)
 (* as a rewrite).  As in HOL4, each proof unfolds the rule of the            *)
 (* non-terminal once and then uses the theorems proved before it for the     *)
-(* non-terminals it mentions (kept as pnt Y).                               *)
+(* non-terminals it mentions (kept as cmlPEG_pnt Y).                        *)
 (* ------------------------------------------------------------------------- *)
 
 let PARSE2AUX_peg0_pnt = prove
  (`!(G:(A,MMLnonT,C,E)peg) n.
-     peg0 G (pnt n) <=>
+     peg0 G (cmlPEG_pnt n) <=>
      INL n IN FDOM (peg_rules G) /\ peg0 G (FAPPLY (peg_rules G) (INL n))`,
-  REWRITE_TAC[pnt_def; PARSE2AUX_peg0_nt_clauses]);;
+  REWRITE_TAC[cmlPEG_pnt_def; LPARSEAUX_peg0_nt_clauses]);;
 
 let PARSE2AUX_wfpeg_pnt = prove
  (`!(G:(A,MMLnonT,C,E)peg) n.
-     wfpeg G (pnt n) <=>
+     wfpeg G (cmlPEG_pnt n) <=>
      INL n IN FDOM (peg_rules G) /\ wfpeg G (FAPPLY (peg_rules G) (INL n))`,
-  REWRITE_TAC[pnt_def; PARSE2AUX_wfpeg_nt]);;
+  REWRITE_TAC[cmlPEG_pnt_def; LPARSEAUX_wfpeg_nt]);;
 
-(* the derived forms and named expressions, unfolded (pnt is kept) *)
+(* the derived forms and named expressions, unfolded (cmlPEG_pnt is kept) *)
 
 let PARSE2AUX_PEG_DEFS =
   [seql_def; ITLIST; choicel_def; pegf_def; try_def; tokeq_def; tokSymP_def;
@@ -742,12 +645,12 @@ let PARSE2AUX_PEG_DEFS =
    peg_StructName_def; peg_TypeDec_def; peg_EbaseParen_def; MAP];;
 
 let PARSE2AUX_PEG0_RWTS =
-  [PARSE2AUX_peg0_clauses; PARSE2AUX_peggt0_clauses; PARSE2AUX_pegfail_clauses];;
+  [LPARSEAUX_peg0_clauses; LPARSEAUX_peggt0_clauses; LPARSEAUX_pegfail_clauses];;
 
 let PARSE2AUX_npeg0 = ref ([]:thm list);;
 
 let PARSE2AUX_PEGNT (c:term) =
-  let p = mk_comb(`pnt:MMLnonT->(token,MMLnonT,(mlptree)list,string)pegsym`, c) in
+  let p = mk_comb(`cmlPEG_pnt:MMLnonT->(token,MMLnonT,(mlptree)list,string)pegsym`, c) in
   let g = mk_neg(mk_comb(`peg0 cmlPEG`, p)) in
   let th = prove(g,
     GEN_REWRITE_TAC RAND_CONV [PARSE2AUX_peg0_pnt] THEN
@@ -755,7 +658,7 @@ let PARSE2AUX_PEGNT (c:term) =
     REWRITE_TAC[PARSE2AUX_rule c] THEN
     REWRITE_TAC(PARSE2AUX_PEG_DEFS @ PARSE2AUX_PEG0_RWTS @ !PARSE2AUX_npeg0)) in
   PARSE2AUX_npeg0 := th :: !PARSE2AUX_npeg0;
-  REWRITE_RULE[pnt_def] th;;
+  REWRITE_RULE[cmlPEG_pnt_def] th;;
 let peg0_nTypeDec = PARSE2AUX_PEGNT `nTypeDec`;;
 let peg0_nTypeAbbrevDec = PARSE2AUX_PEGNT `nTypeAbbrevDec`;;
 let peg0_nOpID = PARSE2AUX_PEGNT `nOpID`;;
@@ -836,13 +739,13 @@ let _ = cake_add_simps
 let PARSE2AUX_wfpeg_acc = ref ([]:thm list);;
 
 let PARSE2AUX_WFNT (c:term) =
-  let p = mk_comb(`pnt:MMLnonT->(token,MMLnonT,(mlptree)list,string)pegsym`, c) in
+  let p = mk_comb(`cmlPEG_pnt:MMLnonT->(token,MMLnonT,(mlptree)list,string)pegsym`, c) in
   let g = mk_comb(`wfpeg cmlPEG`, p) in
   let th = prove(g,
     GEN_REWRITE_TAC I [PARSE2AUX_wfpeg_pnt] THEN
     CONV_TAC(LAND_CONV PARSE2AUX_IN_FDOM_CONV) THEN
     REWRITE_TAC[PARSE2AUX_rule c] THEN
-    REWRITE_TAC(PARSE2AUX_PEG_DEFS @ [PARSE2AUX_wfpeg_clauses] @
+    REWRITE_TAC(PARSE2AUX_PEG_DEFS @ [LPARSEAUX_wfpeg_clauses] @
                 PARSE2AUX_PEG0_RWTS @ !PARSE2AUX_npeg0 @ !PARSE2AUX_wfpeg_acc)) in
   PARSE2AUX_wfpeg_acc := th :: !PARSE2AUX_wfpeg_acc; th;;
 
@@ -870,18 +773,19 @@ let cml_wfpeg_thm =
 (* HOL4: subexprs_pnt (local) *)
 
 let subexprs_pnt = prove
- (`!n. subexprs (pnt n:(A,MMLnonT,C,E)pegsym) = {pnt n}`,
-  REWRITE_TAC[subexprs_def; pnt_def]);;
+ (`!n. subexprs (cmlPEG_pnt n:(A,MMLnonT,C,E)pegsym) = {cmlPEG_pnt n}`,
+  REWRITE_TAC[subexprs_def; cmlPEG_pnt_def]);;
 
 (* HOL4: the ML value peg_start *)
 
 let PARSE2AUX_peg_start = prove
- (`peg_start cmlPEG = pnt nTopLevelDecs`,
+ (`peg_start cmlPEG = cmlPEG_pnt nTopLevelDecs`,
   REWRITE_TAC[cmlPEG_def; (record_info "peg").ri_accessors]);;
 
 (* HOL4: PEG_exprs, computed by SIMP_CONV from Gexprs_def, subexprs_def and  *)
-(* the definitions of the derived forms.  Here the derived forms (pnt kept)  *)
-(* are unfolded in the same way and the set is given as the enumeration of  *)
+(* the definitions of the derived forms.  Here the derived forms           *)
+(* (cmlPEG_pnt kept) are unfolded in the same way and the set is given as   *)
+(* the enumeration of                                                       *)
 (* its distinct elements, in the order of their first occurrence (the       *)
 (* start symbol, then the rules in the order of FDOM_cmlPEG).               *)
 
@@ -910,63 +814,29 @@ let PEG_exprs =
 (* every subexpression of an expression is well-formed, by the form of the  *)
 (* expression (for the proof of PEG_wellformed)                             *)
 
-let PARSE2AUX_ALLWF = prove
- (`!(G:(A,B,C,E)peg) c f1 t f2 err s f e e1 e2 f3 f4 f5.
-     ((!x. x IN subexprs (empty c) ==> wfpeg G x) <=> T) /\
-     ((!x. x IN subexprs (any f1) ==> wfpeg G x) <=> T) /\
-     ((!x. x IN subexprs (tok t f2) ==> wfpeg G x) <=> T) /\
-     ((!x. x IN subexprs (error err) ==> wfpeg G x) <=> T) /\
-     ((!x. x IN subexprs (nt s f) ==> wfpeg G x) <=> wfpeg G (nt s f)) /\
-     ((!x. x IN subexprs (not e c) ==> wfpeg G x) <=>
-      (!x. x IN subexprs e ==> wfpeg G x)) /\
-     ((!x. x IN subexprs (seq e1 e2 f3) ==> wfpeg G x) <=>
-      (!x. x IN subexprs e1 ==> wfpeg G x) /\
-      (!x. x IN subexprs e2 ==> wfpeg G x)) /\
-     ((!x. x IN subexprs (choice e1 e2 f4) ==> wfpeg G x) <=>
-      (!x. x IN subexprs e1 ==> wfpeg G x) /\
-      (!x. x IN subexprs e2 ==> wfpeg G x)) /\
-     ((!x. x IN subexprs (rpt e f5) ==> wfpeg G x) <=>
-      (!x. x IN subexprs e ==> wfpeg G x) /\ ~peg0 G e)`,
-  REPEAT GEN_TAC THEN
-  REWRITE_TAC[subexprs_def; IN_INSERT; IN_UNION; NOT_IN_EMPTY] THEN
-  REWRITE_TAC[TAUT `(a \/ b ==> c) <=> (a ==> c) /\ (b ==> c)`;
-              FORALL_AND_THM; FORALL_UNWIND_THM2] THEN
-  REWRITE_TAC[PARSE2AUX_wfpeg_clauses] THEN
-  MESON_TAC[subexprs_included]);;
-
 let PARSE2AUX_ALLWF_pnt = prove
  (`!(G:(A,MMLnonT,C,E)peg) n.
-     (!x. x IN subexprs (pnt n) ==> wfpeg G x) <=> wfpeg G (pnt n)`,
+     (!x. x IN subexprs (cmlPEG_pnt n) ==> wfpeg G x) <=> wfpeg G (cmlPEG_pnt n)`,
   REWRITE_TAC[subexprs_pnt; IN_SING; FORALL_UNWIND_THM2]);;
-
-let PARSE2AUX_FORALL_GEXPRS = prove
- (`!(G:(A,B,C,E)peg) P.
-     (!e. e IN Gexprs G ==> P e) <=>
-     (!e. e IN subexprs (peg_start G) ==> P e) /\
-     (!n. n IN FDOM (peg_rules G) ==>
-          !e. e IN subexprs (FAPPLY (peg_rules G) n) ==> P e)`,
-  REWRITE_TAC[peg_Gexprs_def; IN_UNIONS; IN_IMAGE; IN_INSERT; FRANGE_DEF;
-              IN_ELIM_THM] THEN
-  MESON_TAC[]);;
 
 let PEG_wellformed = prove
  (`wfG cmlPEG`,
-  REWRITE_TAC[wfG_def; PARSE2AUX_FORALL_GEXPRS; PARSE2AUX_peg_start;
+  REWRITE_TAC[wfG_def; LPARSEAUX_FORALL_GEXPRS; PARSE2AUX_peg_start;
               FDOM_cmlPEG; FORALL_IN_INSERT; NOT_IN_EMPTY] THEN
   REWRITE_TAC[cmlpeg_rules_applied] THEN
-  REWRITE_TAC(PARSE2AUX_PEG_DEFS @ [PARSE2AUX_ALLWF; PARSE2AUX_ALLWF_pnt] @
+  REWRITE_TAC(PARSE2AUX_PEG_DEFS @ [LPARSEAUX_ALLWF; PARSE2AUX_ALLWF_pnt] @
               CONJUNCTS cml_wfpeg_thm @ PARSE2AUX_PEG0_RWTS @
               !PARSE2AUX_npeg0));;
 let _ = cake_add_simps [PEG_wellformed];;
 
 let parse_TopLevelDecs_total = prove
- (`!i. ?r. peg_exec cmlPEG (pnt nTopLevelDecs) i [] NONE [] done failed =
+ (`!i. ?r. peg_exec cmlPEG (cmlPEG_pnt nTopLevelDecs) i [] NONE [] pegexec_done failed =
            Result r`,
   GEN_TAC THEN REWRITE_TAC[GSYM PARSE2AUX_peg_start] THEN
   MATCH_MP_TAC peg_exec_total THEN REWRITE_TAC[PEG_wellformed]);;
 
 let coreloop_TopLevelDecs_total = prove
- (`!i. ?r. coreloop cmlPEG (EV (pnt nTopLevelDecs) i [] NONE [] done failed) =
+ (`!i. ?r. coreloop cmlPEG (EV (cmlPEG_pnt nTopLevelDecs) i [] NONE [] pegexec_done failed) =
            SOME (Result r)`,
   GEN_TAC THEN REWRITE_TAC[GSYM PARSE2AUX_peg_start] THEN
   MATCH_MP_TAC coreloop_total THEN REWRITE_TAC[PEG_wellformed]);;
@@ -1000,11 +870,11 @@ let rec PARSE2AUX_IN_ENUM_PROVE x s =
                 (PARSE2AUX_IN_ENUM_PROVE x s');;
 
 let NTS_in_PEG_exprs =
-  let pnt = `pnt:MMLnonT->(token,MMLnonT,(mlptree)list,string)pegsym` in
+  let pnt = `cmlPEG_pnt:MMLnonT->(token,MMLnonT,(mlptree)list,string)pegsym` in
   let s = rhs(concl PEG_exprs) in
   let p x =
     let c = rand x in
     let th = PARSE2AUX_IN_ENUM_PROVE (mk_comb(pnt,c)) s in
-    REWRITE_RULE[pnt_def] (CONV_RULE (RAND_CONV (K (SYM PEG_exprs))) th) in
+    REWRITE_RULE[cmlPEG_pnt_def] (CONV_RULE (RAND_CONV (K (SYM PEG_exprs))) th) in
   end_itlist CONJ (map p PARSE2AUX_FDOM_nts);;
 let _ = cake_add_simps [NTS_in_PEG_exprs];;

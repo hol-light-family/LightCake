@@ -854,9 +854,9 @@ let SORTED_ALL_DISTINCT_LIST_TO_SET_EQ = prove
   ASM_REWRITE_TAC[GSYM IN_SET_OF_LIST]);;
 
 let LSORTAUX_BIJ_COUNT = prove
- (`!f n. BIJ f (count n) (count n) <=>
+ (`!f n. BIJ f (pred_set_count n) (pred_set_count n) <=>
          (!i. i < n ==> f i < n) /\ (!i j. i < n /\ j < n /\ f i = f j ==> i = j)`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[BIJ; INJ; SURJ; count_DEF; IN_ELIM_THM] THEN
+  REPEAT GEN_TAC THEN REWRITE_TAC[BIJ; INJ; SURJ; pred_set_count_DEF; IN_ELIM_THM] THEN
   MP_TAC(ISPECL [`{m:num | m < n}`; `f:num->num`] SURJECTIVE_IFF_INJECTIVE) THEN
   REWRITE_TAC[FINITE_NUMSEG_LT; SUBSET; FORALL_IN_IMAGE; IN_ELIM_THM] THEN
   MESON_TAC[]);;
@@ -870,7 +870,7 @@ let LSORTAUX_EQ_LIST_OF_SEQ = prove
 let LSORTAUX_PERM_BIJ_EL = prove
  (`!l1 l2:A list.
      PERM l1 l2
-     ==> ?f. BIJ f (count (LENGTH l1)) (count (LENGTH l1)) /\
+     ==> ?f. BIJ f (pred_set_count (LENGTH l1)) (pred_set_count (LENGTH l1)) /\
              LENGTH l2 = LENGTH l1 /\
              !i. i < LENGTH l1 ==> EL i l2 = EL (f i) l1`,
   MATCH_MP_TAC PERM_IND THEN REWRITE_TAC[LSORTAUX_BIJ_COUNT; LENGTH] THEN
@@ -938,7 +938,7 @@ let LSORTAUX_PERM_BIJ_EL = prove
 let PERM_BIJ = prove
  (`!l1 l2:A list.
      PERM l1 l2
-     ==> ?f. BIJ f (count (LENGTH l1)) (count (LENGTH l1)) /\
+     ==> ?f. BIJ f (pred_set_count (LENGTH l1)) (pred_set_count (LENGTH l1)) /\
              l2 = list_of_seq (\i. EL (f i) l1) (LENGTH l1)`,
   REWRITE_TAC[LSORTAUX_EQ_LIST_OF_SEQ] THEN MESON_TAC[LSORTAUX_PERM_BIJ_EL]);;
 

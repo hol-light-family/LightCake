@@ -400,8 +400,8 @@ let STACKPROPSAUX_lookup_compile = prove
 
 let STACKPROPSAUX_install_code = prove
  (`fromAList (stack_names_compile f
-      (toAList (union (t:((A)stack_prog)spt) (insert k p (fromAList l))))) =
-   union (fromAList (stack_names_compile f (toAList t)))
+      (toAList (sptree_union (t:((A)stack_prog)spt) (insert k p (fromAList l))))) =
+   sptree_union (fromAList (stack_names_compile f (toAList t)))
      (insert k (stack_names_comp f p) (fromAList (stack_names_compile f l)))`,
   W(fun (_,w) -> MP_TAC(ISPECL [lhs w; rhs w] spt_eq_thm)) THEN
   SIMP_TAC[wf_fromAList; wf_union; wf_insert] THEN DISCH_THEN SUBST1_TAC THEN
@@ -559,10 +559,6 @@ let STACKPROPSAUX_semantics_run = prove
   REWRITE_TAC[STACKPROPSAUX_comp_thms; dest_find_name_def] THEN CASE_REWRITE_TAC[] THEN
   SIMP[]);;
 
-let STACKPROPSAUX_pair_eq_snd = prove
- (`!(p:A#B) x. p = (x,SND p) <=> FST p = x`,
-  REWRITE_TAC[FORALL_PAIR_THM; PAIR_EQ; FST; SND] THEN MESON_TAC[]);;
-
 let stack_namesProof_compile_semantics = prove
  (`BIJ (tlookup f) UNIV UNIV /\ ~stack_state_use_alloc s /\ ~stack_state_use_store s /\
    ~stack_state_use_stack s /\
@@ -580,7 +576,7 @@ let stack_namesProof_compile_semantics = prove
       `SND (stack_evaluate (stack_Call NONE (INL start) NONE:(A)stack_prog,
                             stack_state_clock_fupd (K k) (s:(A,C,FFI)stack_state)))`;
       `r:(A)stack_result`; `outcome:outcome`] THEN
-    RVEQ_TAC THEN ASM_REWRITE_TAC[STACKPROPSAUX_rename_acc; STACKPROPSAUX_pair_eq_snd];
+    RVEQ_TAC THEN ASM_REWRITE_TAC[STACKPROPSAUX_rename_acc; BASICAUX_PAIR_SND];
     MAP_EVERY EXISTS_TAC
      [`k:num`; `rename_state c f (t:(A,C,FFI)stack_state)`;
       `r:(A)stack_result`; `outcome:outcome`] THEN

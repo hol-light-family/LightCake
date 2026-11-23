@@ -1837,7 +1837,7 @@ let bvi_tailrecProof_state_rel_code_rel = prove
   SIMP_TAC[bvi_tailrecProof_state_rel_def]);;
 
 let BVITAILAUX_lookup_union_SOME = prove
- (`!m1 m2 k (v:A). lookup k (union m1 m2) = SOME v <=>
+ (`!m1 m2 k (v:A). lookup k (sptree_union m1 m2) = SOME v <=>
                lookup k m1 = SOME v \/ (lookup k m1 = NONE /\ lookup k m2 = SOME v)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[lookup_union] THEN
   CASES_ON `lookup k (m1:A spt)` THEN CASE_REWRITE_TAC[]);;
@@ -1845,7 +1845,7 @@ let BVITAILAUX_lookup_union_SOME = prove
 let bvi_tailrecProof_code_rel_union = prove
  (`bvi_tailrecProof_code_rel x y /\ bvi_tailrecProof_code_rel t s /\
    DISJOINT (domain s) (domain y) ==>
-   bvi_tailrecProof_code_rel (union x t) (union y s)`,
+   bvi_tailrecProof_code_rel (sptree_union x t) (sptree_union y s)`,
   REWRITE_TAC[bvi_tailrecProof_code_rel_def; BVITAILAUX_lookup_union_SOME;
               IN_DISJOINT; domain_lookup] THEN
   DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "x") (CONJUNCTS_THEN2 (LABEL_TAC "t")
@@ -1881,7 +1881,7 @@ let bvi_tailrecProof_code_rel_union = prove
 let bvi_tailrecProof_namespace_rel_union = prove
  (`bvi_tailrecProof_namespace_rel (x:A spt) y /\ bvi_tailrecProof_namespace_rel t s /\
    DISJOINT (domain s) (domain y) ==>
-   bvi_tailrecProof_namespace_rel (union x t) (union y s)`,
+   bvi_tailrecProof_namespace_rel (sptree_union x t) (sptree_union y s)`,
   REWRITE_TAC[bvi_tailrecProof_namespace_rel_def; domain_union; IN_UNION; IN_DISJOINT] THEN
   MESON_TAC[]);;
 
@@ -2020,7 +2020,7 @@ let BVITAILAUX_bvi_to_bvl_REC = prove
      bvl_state_REC (bvl_state_globals (ARB:(C,FFI)bvl_state)) (bvi_state_refs t)
        (bvi_state_clock t) (bvl_state_compile (ARB:(C,FFI)bvl_state))
        (bvl_state_compile_oracle (ARB:(C,FFI)bvl_state))
-       (map (K (ARB:num#bvl_exp)) (bvi_state_code t)) (bvi_state_ffi t)`,
+       (sptree_map (K (ARB:num#bvl_exp)) (bvi_state_code t)) (bvi_state_ffi t)`,
   GEN_TAC THEN REWRITE_TAC[bvi_to_bvl_def; bvl_state_component_equality] THEN
   REWRITE_TAC[bvl_state_INFO.ri_accessors; bvl_state_INFO.ri_accfupds; K_THM]);;
 
@@ -2933,7 +2933,7 @@ let BVITAILAUX_do_install_Rval = prove
        progs = CONS (k,prog) rest /\
        FST (bvi_state_compile_oracle s 1) = cfg' /\
        v = bvl_CodePtr k /\
-       s' = bvi_state_code_fupd (K (union (bvi_state_code s) (fromAList progs)))
+       s' = bvi_state_code_fupd (K (sptree_union (bvi_state_code s) (fromAList progs)))
               (bvi_state_compile_oracle_fupd
                  (K (shift_seq 1 (bvi_state_compile_oracle s))) s)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[bvi_do_install_def; LET_DEF; LET_END_DEF] THEN
@@ -2960,7 +2960,7 @@ let BVITAILAUX_do_install_eq_Rval = prove
      bvi_do_install [v1; v2; bvl_Number (&(LENGTH bytes)); bvl_Number (&(LENGTH data))] s =
        (Rval (bvl_CodePtr k,
               bvi_state_code_fupd
-                (K (union (bvi_state_code s) (fromAList (CONS (k,prog) rest))))
+                (K (sptree_union (bvi_state_code s) (fromAList (CONS (k,prog) rest))))
                 (bvi_state_compile_oracle_fupd
                    (K (shift_seq 1 (bvi_state_compile_oracle s))) s))
         :(bvl_v#(A,FFI)bvi_state,E)result)`,
@@ -3046,7 +3046,7 @@ let BVITAILAUX_install_ns_bound = prove
      bvi_tailrec_compile_each next1 progs = (next2,progs2) /\
      bvi_tailrecProof_input_condition next1 progs /\
      (!n. n IN domain c2 /\ n MOD bvl_to_bvi_namespaces = 2 ==> n < next1) /\
-     n IN domain (union c2 (fromAList progs2)) /\ n MOD bvl_to_bvi_namespaces = 2 ==>
+     n IN domain (sptree_union c2 (fromAList progs2)) /\ n MOD bvl_to_bvi_namespaces = 2 ==>
      n < next2`,
   REPEAT GEN_TAC THEN REWRITE_TAC[domain_union; domain_fromAList; IN_UNION; IN_SET_OF_LIST] THEN
   STRIP_TAC THEN
@@ -3134,7 +3134,7 @@ let BVITAILAUX_state_rel_do_install = prove
               bvi_tailrecProof_compile_each_ALL_DISTINCT) THEN
   ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
   EXISTS_TAC `bvi_state_code_fupd
-      (K (union (bvi_state_code (t:(C,FFI)bvi_state)) (fromAList (CONS (k,p2) rest2))))
+      (K (sptree_union (bvi_state_code (t:(C,FFI)bvi_state)) (fromAList (CONS (k,p2) rest2))))
      (bvi_state_compile_oracle_fupd
       (K (shift_seq 1 (bvi_state_compile_oracle t))) t)` THEN
   CONJ_TAC THENL

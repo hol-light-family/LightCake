@@ -12,8 +12,7 @@
 (*   st_ex_ignore_bind m r, return x is st_ex_return x, ++ is otherwise.    *)
 (* - otherwise is an infix (HOL4: 400 RIGHT, the level of /\; here 8 right, *)
 (*   the level of /\).  HOL4 () is one.                                      *)
-(* - HOL4 run is ml_monadBase_run (a common word: docs/CONVENTIONS.md       *)
-(*   section 3).                                                             *)
+(* - HOL4 run is ml_monadBase_run (a common word, see doc/CONVENTIONS.md).   *)
 (* - HOL4 defines Mdref_aux and Mref_assign_aux as e n = \s. ..., with the   *)
 (*   recursive call applied to the lambda's variable; the kit's recursion   *)
 (*   package does not handle that shape, so both constants are defined with  *)
@@ -29,6 +28,8 @@
 (*   package cannot otherwise analyse) are then admissible, with the         *)
 (*   lambda's variable in their context, as with HOL4's TFL.                 *)
 (* - MONADAUX_ names are local helpers (not HOL4 names).                     *)
+(* - HOL4 can is ml_monadBase_can (a short or common word), and can_def is   *)
+(*   ml_monadBase_can_def.                                                   *)
 (* ========================================================================= *)
 
 needs "misc/misc.ml";;
@@ -114,8 +115,8 @@ let otherwise_def = cake_def
 (*   m ++ m'             is  m otherwise m'.                                 *)
 (* The port writes these constants.                                          *)
 
-let can_def = cake_def
-  `can (f:X->A->(B,C)exc#A) (x:X) =
+let ml_monadBase_can_def = cake_def
+  `ml_monadBase_can (f:X->A->(B,C)exc#A) (x:X) =
      (st_ex_ignore_bind (f x) (st_ex_return T) otherwise st_ex_return F)`;;
 
 (* Dynamic allocation of references *)
@@ -373,8 +374,8 @@ let otherwise_eq = prove
   RW[otherwise_success; otherwise_failure] THEN METIS_TAC[]);;
 
 let can_success = prove
- (`!(f:X->A->(B,C)exc#A) x s e s'. can f x s = (M_failure e,s') <=> F`,
-  RW[can_def; otherwise_def; st_ex_ignore_bind_def; st_ex_return_def] THEN
+ (`!(f:X->A->(B,C)exc#A) x s e s'. ml_monadBase_can f x s = (M_failure e,s') <=> F`,
+  RW[ml_monadBase_can_def; otherwise_def; st_ex_ignore_bind_def; st_ex_return_def] THEN
   EVERY_CASE_TAC THEN RW[]);;
 
 let ml_monadBase_Marray_length_success = prove
@@ -460,7 +461,7 @@ let monad_eqs = end_itlist CONJ
 
 (* Run *)
 
-(* HOL4 run: ml_monadBase_run in the port, a common word (docs/CONVENTIONS.md *)
-(* section 3)                                                                *)
+(* HOL4 run: ml_monadBase_run in the port, a common word (see                *)
+(* doc/CONVENTIONS.md)                                                       *)
 let ml_monadBase_run_def = cake_def
   `ml_monadBase_run (x:A->(B,C)exc#A) state = FST (x state)`;;

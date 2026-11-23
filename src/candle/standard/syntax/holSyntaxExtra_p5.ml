@@ -8,6 +8,8 @@
 (* and union are hol_insert and hol_union (names.tsv); HOL4 s ^ t is         *)
 (* strcat s t; SUM_SET and BIGUNION (UNIONS) as in hol4/basic.ml.  Local     *)
 (* helpers that are not HOL4 theorems are CSYNAUX_P5_.                       *)
+(* HOL4 frees and fresh are hol_frees and hol_fresh (short or common words), *)
+(* with the theorems renamed alike (frees_def is hol_frees_def, ...).        *)
 (* ========================================================================= *)
 
 needs "candle/standard/syntax/holSyntaxExtra_p4.ml";;
@@ -226,7 +228,7 @@ let simple_inst_has_type = prove
 (* rename bound variables from a source of names *)
 
 let rename_bvars_def = cake_def_wf
-  `measure (\(names:mlstring list,env:(mlstring#mlstring#hol_type)list,tm).
+  `MEASURE (\(names:mlstring list,env:(mlstring#mlstring#hol_type)list,tm).
               hol_term_size tm)`
   TERM_TAC
   `(rename_bvars names env (hol_Var s ty) =
@@ -411,7 +413,7 @@ let rename_bvars_welltyped = prove
 (* HOL4 derives the existence from IN_INFINITE_NOT_FINITE and              *)
 (* INFINITE_LIST_UNIV; here PRIMED_INFINITE gives an infinite set of        *)
 (* strings.                                                                  *)
-let fresh_def = new_specification ["fresh"]
+let hol_fresh_def = new_specification ["hol_fresh"]
  (prove
    (`?f. !s:string->bool. FINITE s ==> ~(f s IN s)`,
     REWRITE_TAC[GSYM SKOLEM_THM; RIGHT_EXISTS_IMP_THM] THEN REPEAT STRIP_TAC THEN
@@ -421,8 +423,8 @@ let fresh_def = new_specification ["fresh"]
     MESON_TAC[]));;
 
 let fresh_union = prove
- (`FINITE s /\ FINITE t ==> ~(fresh (s UNION t) IN s) /\ ~(fresh (s UNION t) IN t)`,
-  MESON_TAC[fresh_def; FINITE_UNION; IN_UNION]);;
+ (`FINITE s /\ FINITE t ==> ~(hol_fresh (s UNION t) IN s) /\ ~(hol_fresh (s UNION t) IN t)`,
+  MESON_TAC[hol_fresh_def; FINITE_UNION; IN_UNION]);;
 
 let fresh_names_exist = prove
  (`!s n. FINITE (s:string->bool)
@@ -432,7 +434,7 @@ let fresh_names_exist = prove
    [EXISTS_TAC `[]:string list` THEN
     REWRITE_TAC[LENGTH; ALL_DISTINCT; set_of_list; DISJOINT_EMPTY];
     FIRST_X_ASSUM(fun th -> FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP th)) THEN
-    EXISTS_TAC `CONS (fresh (s UNION set_of_list names)) names` THEN
+    EXISTS_TAC `CONS (hol_fresh (s UNION set_of_list names)) names` THEN
     ASM_SIMP_TAC[LENGTH; ALL_DISTINCT; set_of_list; DISJOINT_INSERT;
                  GSYM IN_SET_OF_LIST; fresh_union; FINITE_SET_OF_LIST]]);;
 
@@ -561,7 +563,7 @@ let CSYNAUX_P5_FINITE_STRLEN = prove
 
 (* HOL4's measure, with its let n = .. in written out *)
 let variant_def = cake_def_wf
-  (CASE_TERM `measure (\(avoid:hol_term list,v:hol_term).
+  (CASE_TERM `MEASURE (\(avoid:hol_term list,v:hol_term).
      SUM_SET (UNIONS (set_of_list
        (MAP (\a. {strlen x + 1 | x | ?ty. VFREE_IN (hol_Var x ty) a}) avoid))) -
      (match v with hol_Var x ty -> strlen x | _ -> 0))`)
@@ -709,35 +711,35 @@ let EXISTS_union = prove
  (`!xs ys. EX (P:A->bool) (hol_union xs ys) <=> EX P xs \/ EX P ys`,
   REWRITE_TAC[EXISTS_MEM; MEM_union] THEN MESON_TAC[]);;
 
-let frees_def = cake_def
-  `frees tm =
+let hol_frees_def = cake_def
+  `hol_frees tm =
      match tm with
        hol_Var _ _ -> [tm]
      | hol_Const _ _ -> []
-     | hol_Abs bv bod -> subtract (frees bod) [bv]
-     | hol_Comb s t -> hol_union (frees s) (frees t)`;;
+     | hol_Abs bv bod -> subtract (hol_frees bod) [bv]
+     | hol_Comb s t -> hol_union (hol_frees s) (hol_frees t)`;;
 
 let MEM_frees_EQ = prove
- (`!a x. MEM x (frees a) <=> ?n ty. x = hol_Var n ty /\ MEM (hol_Var n ty) (frees a)`,
-  MATCH_MP_TAC hol_term_INDUCT THEN REPEAT STRIP_TAC THEN ONCE_REWRITE_TAC[frees_def] THEN
+ (`!a x. MEM x (hol_frees a) <=> ?n ty. x = hol_Var n ty /\ MEM (hol_Var n ty) (hol_frees a)`,
+  MATCH_MP_TAC hol_term_INDUCT THEN REPEAT STRIP_TAC THEN ONCE_REWRITE_TAC[hol_frees_def] THEN
   CASE_REWRITE_TAC[MEM; MEM_union; subtract_def; MEM_FILTER] THEN ASM_MESON_TAC[]);;
 
-(* the elements of frees a are the free variables of a *)
+(* the elements of hol_frees a are the free variables of a *)
 let CSYNAUX_P5_MEM_frees = prove
- (`!a n ty. MEM (hol_Var n ty) (frees a) <=> VFREE_IN (hol_Var n ty) a`,
-  MATCH_MP_TAC hol_term_INDUCT THEN REPEAT STRIP_TAC THEN ONCE_REWRITE_TAC[frees_def] THEN
+ (`!a n ty. MEM (hol_Var n ty) (hol_frees a) <=> VFREE_IN (hol_Var n ty) a`,
+  MATCH_MP_TAC hol_term_INDUCT THEN REPEAT STRIP_TAC THEN ONCE_REWRITE_TAC[hol_frees_def] THEN
   CASE_REWRITE_TAC[MEM; MEM_union; subtract_def; MEM_FILTER; VFREE_IN_def] THEN
   ASM_MESON_TAC[]);;
 
 let CSYNAUX_P5_EX_frees = prove
- (`!a n ty. EX (vfree_in (hol_Var n ty)) (frees a) <=> MEM (hol_Var n ty) (frees a)`,
+ (`!a n ty. EX (vfree_in (hol_Var n ty)) (hol_frees a) <=> MEM (hol_Var n ty) (hol_frees a)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[EXISTS_MEM] THEN
   ONCE_REWRITE_TAC[MEM_frees_EQ] THEN REWRITE_TAC[GSYM vfree_in_thm; VFREE_IN_def] THEN
   SIMP[LEFT_AND_EXISTS_THM; GSYM CONJ_ASSOC; VFREE_IN_def] THEN MESON_TAC[]);;
 
 let variant_inst_thm = prove
  (`welltyped a
-   ==> variant (frees a) (hol_Var name ty1) =
+   ==> variant (hol_frees a) (hol_Var name ty1) =
        hol_Var (VARIANT a (explode name) ty1) ty1`,
   DISCH_TAC THEN MATCH_MP_TAC CSYNAUX_P5_variant_VARIANT THEN
   REWRITE_TAC[CSYNAUX_P5_EX_frees; CSYNAUX_P5_MEM_frees]);;
@@ -758,7 +760,7 @@ let INST_CORE_Abs_thm = prove
              if ~(w = v') then tres
              else
                (let (x',_) =
-                  dest_var (variant (frees (RESULT (INST_CORE [] tyin t)))
+                  dest_var (variant (hol_frees (RESULT (INST_CORE [] tyin t)))
                                     (hol_Var x ty')) in
                 let t' = VSUBST [(hol_Var x' ty,hol_Var x ty)] t in
                 let env'' = CONS (hol_Var x' ty,hol_Var x' ty') env in

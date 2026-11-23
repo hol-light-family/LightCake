@@ -229,7 +229,7 @@ let get_pos_def = cake_def
    (get_pos (CONS n ns) = Pos n (get_pos ns))`;;
 
 let pat_to_guard_def = sem1aux_def_wf
-  `measure (\x:(num list # pattern_semantics_pat) +
+  `MEASURE (\x:(num list # pattern_semantics_pat) +
                (num list # num # (pattern_semantics_pat)list).
               sum_CASE x (\(_,p). pattern_semantics_pat_size p)
                          (\(_,k,p). list_size pattern_semantics_pat_size p))`

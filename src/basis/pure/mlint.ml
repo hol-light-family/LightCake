@@ -11,7 +11,7 @@
 (*   ABS is abs, ~&n is --(&n); HOL4 gcd a b is num_gcd(a,b).                *)
 (* - HOL4 Overload toString = num_to_str: written num_to_str; on num with a  *)
 (*   string result, HOL4 toString (ASCIInumbers) is num_to_dec_string.       *)
-(* - Names (notes/naming/names.tsv): HOL4 fromString, int_cmp, num_gcd and   *)
+(* - Names (doc/names.tsv): HOL4 fromString, int_cmp, num_gcd and            *)
 (*   int_gcd are mlint_fromString, mlint_int_cmp, mlint_num_gcd and         *)
 (*   mlint_int_gcd.  Helper lemmas that are not HOL4 theorems are PURE2AUX_. *)
 (* - The free variables of a HOL4 statement are universally quantified.      *)
@@ -79,7 +79,7 @@ let PURE2AUX_NUM_TO_CHARS_DEC = prove
   ASM_ARITH_TAC);;
 
 let num_to_chars_def = cake_def_wf
-  `inv_image (measure (I:num->num) LEX measure (I:num->num))
+  `inv_image (MEASURE (I:num->num) LEX MEASURE (I:num->num))
      (\p:num#num#num#string. (FST p * 10 EXP FST (SND p) + FST (SND (SND p)),
                               exp_for_dec_enc - FST (SND p)))`
   (REWRITE_TAC[inv_image_THM; I_THM; FST; SND; exp_for_dec_enc_def] THEN
@@ -253,7 +253,7 @@ let fromChars_range_eq_unsafe = prove
   REWRITE_TAC[MULT_SYM]);;
 
 let fromChars_unsafe_def = cake_def_wf
-  `measure (FST:num#mlstring->num)`
+  `MEASURE (FST:num#mlstring->num)`
   (REWRITE_TAC(WF_REL_THMS @ [FST; SND; padLen_DEC_eq]) THEN
    REPEAT STRIP_TAC THEN ASM_ARITH_TAC)
   `(fromChars_unsafe 0 (str:mlstring) = 0) /\
@@ -267,7 +267,7 @@ let fromChars_unsafe_def = cake_def_wf
 let fromChars_unsafe_ind = cake_ind "fromChars_unsafe";;
 
 let fromChars_def = cake_def_wf
-  `measure (FST:num#mlstring->num)`
+  `MEASURE (FST:num#mlstring->num)`
   (REWRITE_TAC(WF_REL_THMS @ [FST; SND; padLen_DEC_eq]) THEN
    REPEAT STRIP_TAC THEN ASM_ARITH_TAC)
   `(fromChars 0 (str:mlstring) = NONE) /\
@@ -653,7 +653,7 @@ let mlint_int_cmp_def = cake_def
 (* HOL4: num_gcd_def (termination by HOL4's automatic measure on a) *)
 
 let mlint_num_gcd_def = cake_def_wf
-  `measure (FST:num#num->num)`
+  `MEASURE (FST:num#num->num)`
   (REWRITE_TAC(WF_REL_THMS @ [FST; SND]) THEN REPEAT STRIP_TAC THEN
    MP_TAC(SPECL [`b:num`; `a:num`] MOD_LT_EQ) THEN ASM_ARITH_TAC)
   `mlint_num_gcd a b = if a = 0 then b else mlint_num_gcd (b MOD a) a`;;

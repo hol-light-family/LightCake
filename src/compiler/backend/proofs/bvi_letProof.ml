@@ -680,4 +680,3 @@ let bvi_letProof_compile_exp_code_labels = prove
   REWRITE_TAC[BVLPROPSAUX_gcl_HD_compile; bvi_letProof_compile_code_labels] THEN
   REWRITE_TAC BVLPROPSAUX_BVI_LABELS_RWS);;
 let _ = cake_add_simps [bvi_letProof_compile_exp_code_labels];;
-

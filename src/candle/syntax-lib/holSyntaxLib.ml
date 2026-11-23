@@ -4,7 +4,7 @@
 (* syntax.                                                                   *)
 (*                                                                           *)
 (* Notes on the rendering:                                                   *)
-(* - Names as notes/naming/names.tsv says: the type result is hol_result,    *)
+(* - Names as doc/names.tsv says: the type result is hol_result,             *)
 (*   its constructors Clash and hol_Result; tyvar_inst_exists is             *)
 (*   hol_tyvar_inst_exists.                                                  *)
 (* - EVERY is ALL, set is set_of_list, FOLDR f e l is ITLIST f l e, GENLIST  *)
