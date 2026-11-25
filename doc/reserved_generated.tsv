@@ -1,0 +1,886 @@
+hol4_name	hol_light_name	kind	pattern	generator	how_found	referenced_by	reason
+APP_LIST_TYPE	APP_LIST_TYPE	constant	FOO_TYPE	std_prelude	register_type	basisProg	unique
+OPTION_TYPE	OPTION_TYPE	constant	FOO_TYPE	std_prelude	register_type	ListProg MapProg Word8ArrayProof TextIOProof SexpProg	unique
+ORDERING_TYPE	ORDERING_TYPE	constant	FOO_TYPE	std_prelude	register_type	IntProg RatProg	unique
+SUM_TYPE	SUM_TYPE	constant	FOO_TYPE	std_prelude	register_type	TextIOProof	unique
+APP_LIST_TYPE_def	APP_LIST_TYPE_def	theorem	FOO_TYPE_def	std_prelude	register_type	basisProg	unique
+OPTION_TYPE_def	OPTION_TYPE_def	theorem	FOO_TYPE_def	std_prelude	register_type	Word8ArrayProof TextIOProof SexpProg	unique
+SUM_TYPE_def	SUM_TYPE_def	theorem	FOO_TYPE_def	std_prelude	register_type	TextIOProof	unique
+least_side	least_side	constant	NAME_side	std_prelude	side condition of a translation in the referencing theory	std_prelude	unique
+least_side_def	least_side_def	theorem	NAME_side_def	std_prelude	side condition of a translation in the referencing theory	std_prelude	unique
+exp_1_v	exp_1_v	constant	NAME_v	std_prelude	qualified reference (of exp_1_v_def)	candle_kernel_perms	unique
+exp_aux_v	exp_aux_v	constant	NAME_v	std_prelude	qualified reference	-	unique
+fst_v	fst_v	constant	NAME_v	std_prelude	qualified reference (of fst_v_def)	candle_kernel_perms	unique
+funpow_v	funpow_v	constant	NAME_v	std_prelude	qualified reference (of funpow_v_def)	candle_kernel_perms	unique
+i_v	i_v	constant	NAME_v	std_prelude	qualified reference (of i_v_def)	candle_kernel_perms	unique
+o_1_v	o_1_v	constant	NAME_v	std_prelude	qualified reference (of o_1_v_def)	candle_kernel_perms	unique
+snd_v	snd_v	constant	NAME_v	std_prelude	qualified reference (of snd_v_def)	candle_kernel_perms	unique
+exp_1_v_def	exp_1_v_def	theorem	NAME_v_def	std_prelude	qualified reference	candle_kernel_perms	unique
+exp_aux_v_def	exp_aux_v_def	theorem	NAME_v_def	std_prelude	qualified reference	candle_kernel_perms	unique
+fst_v_def	fst_v_def	theorem	NAME_v_def	std_prelude	qualified reference	candle_kernel_perms	unique
+funpow_v_def	funpow_v_def	theorem	NAME_v_def	std_prelude	qualified reference	candle_kernel_perms	unique
+i_v_def	i_v_def	theorem	NAME_v_def	std_prelude	qualified reference	candle_kernel_perms	unique
+o_1_v_def	o_1_v_def	theorem	NAME_v_def	std_prelude	qualified reference	candle_kernel_perms	unique
+snd_v_def	snd_v_def	theorem	NAME_v_def	std_prelude	qualified reference	candle_kernel_perms	unique
+repeat_v	repeat_v	constant	NAME_v	cfDiv	inferred (earliest referencing TOOL theory)	-	unique
+repeat_v_def	repeat_v_def	theorem	NAME_v_def	cfDiv	inferred (earliest referencing TOOL theory)	cfDiv	unique
+Runtime_exit_v	Runtime_exit_v	constant	NAME_v	RuntimeProg	closure of a CakeML-source (Quote) function in module Runtime	RuntimeProof	unique
+the_side	the_side	constant	NAME_side	OptionProg	side condition of a translation in the referencing theory	OptionProg	unique
+the_side_def	the_side_def	theorem	NAME_side_def	OptionProg	side condition of a translation in the referencing theory	OptionProg	unique
+mergesortn_tail_ind	mergesortn_tail_ind	constant	NAME_ind (hidden induction goal)	ListProg	induction goal left open (hide_ind_goal_rule)	-	unique
+mergesortn_tail_ind_def	mergesortn_tail_ind_def	theorem	NAME_ind_def	ListProg	induction goal left open (hide_ind_goal_rule)	ListProg	unique
+exists_side	exists_side	constant	NAME_side	ListProg	qualified reference (of exists_v_def)	-	unique
+hd_side	hd_side	constant	NAME_side	ListProg	side condition of a translation in the referencing theory	ListProg	unique
+last_side	last_side	constant	NAME_side	ListProg	side condition of a translation in the referencing theory	ListProg	unique
+mergesortn_tail_side	mergesortn_tail_side	constant	NAME_side	ListProg	side condition of a translation in the referencing theory	-	unique
+nth_side	nth_side	constant	NAME_side	ListProg	side condition of a translation in the referencing theory	ListProg	unique
+exists_side_def	exists_side_def	theorem	NAME_side_def	ListProg	qualified reference (of exists_v_def)	VectorProg	unique
+hd_side_def	hd_side_def	theorem	NAME_side_def	ListProg	side condition of a translation in the referencing theory	ListProg	unique
+last_side_def	last_side_def	theorem	NAME_side_def	ListProg	side condition of a translation in the referencing theory	ListProg	unique
+mergesortn_tail_side_def	mergesortn_tail_side_def	theorem	NAME_side_def	ListProg	side condition of a translation in the referencing theory	ListProg	unique
+nth_side_def	nth_side_def	theorem	NAME_side_def	ListProg	side condition of a translation in the referencing theory	ListProg	unique
+all_distinct_v	all_distinct_v	constant	NAME_v	ListProg	qualified reference (of all_distinct_v_def)	candle_kernel_perms	unique
+alookup_v	alookup_v	constant	NAME_v	ListProg	qualified reference (of alookup_v_def)	candle_kernel_perms	unique
+div2_v	div2_v	constant	NAME_v	ListProg	qualified reference (of div2_v_def)	candle_kernel_perms	unique
+drop_1_v	drop_1_v	constant	NAME_v	ListProg	qualified reference (of drop_1_v_def)	candle_kernel_perms	unique
+every_v	every_v	constant	NAME_v	ListProg	qualified reference (of every_v_def)	candle_kernel_perms	unique
+exists_v	exists_v	constant	NAME_v	ListProg	qualified reference (of exists_v_def)	candle_kernel_perms	unique
+filter_v	ListProg_filter_v	constant	NAME_v	ListProg	qualified reference	-	clash-library (full load B_B5:hol4/sptree.ml) (filter_v_def)
+flat_v	flat_v	constant	NAME_v	ListProg	qualified reference	-	unique
+hd_v	hd_v	constant	NAME_v	ListProg	qualified reference	candle_kernel_perms	unique
+length_aux_v	length_aux_v	constant	NAME_v	ListProg	qualified reference (of length_aux_v_def)	candle_kernel_perms	unique
+length_v	length_v	constant	NAME_v	ListProg	qualified reference (of length_v_def)	candle_kernel_perms	unique
+map_1_v	map_1_v	constant	NAME_v	ListProg	qualified reference (of map_1_v_def)	candle_kernel_perms	unique
+member_v	member_v	constant	NAME_v	ListProg	qualified reference (of member_v_def)	candle_kernel_perms	unique
+merge_tail_v	merge_tail_v	constant	NAME_v	ListProg	qualified reference (of merge_tail_v_def)	candle_kernel_perms	unique
+mergesort_tail_v	mergesort_tail_v	constant	NAME_v	ListProg	qualified reference (of mergesort_tail_v_def)	candle_kernel_perms	unique
+mergesortn_tail_v	mergesortn_tail_v	constant	NAME_v	ListProg	qualified reference (of mergesortn_tail_v_def)	candle_kernel_perms	unique
+null_v	null_v	constant	NAME_v	ListProg	qualified reference (of null_v_def)	candle_kernel_perms	unique
+rev_1_v	rev_1_v	constant	NAME_v	ListProg	qualified reference (of rev_1_v_def)	candle_kernel_perms	unique
+rev_v	rev_v	constant	NAME_v	ListProg	qualified reference (of rev_v_def)	candle_kernel_perms	unique
+reverse_v	reverse_v	constant	NAME_v	ListProg	qualified reference	candle_kernel_perms	unique
+sort2_tail_v	sort2_tail_v	constant	NAME_v	ListProg	qualified reference (of sort2_tail_v_def)	candle_kernel_perms	unique
+sort3_tail_v	sort3_tail_v	constant	NAME_v	ListProg	qualified reference (of sort3_tail_v_def)	candle_kernel_perms	unique
+sort_v	sort_v	constant	NAME_v	ListProg	qualified reference (of sort_v_def)	candle_kernel_perms	unique
+tl_v	tl_v	constant	NAME_v	ListProg	qualified reference	-	unique
+zip_v	zip_v	constant	NAME_v	ListProg	qualified reference (of zip_v_def)	candle_kernel_perms	unique
+all_distinct_v_def	all_distinct_v_def	theorem	NAME_v_def	ListProg	qualified reference	candle_kernel_perms	unique
+alookup_v_def	alookup_v_def	theorem	NAME_v_def	ListProg	qualified reference	candle_kernel_perms	unique
+div2_v_def	div2_v_def	theorem	NAME_v_def	ListProg	qualified reference	candle_kernel_perms	unique
+drop_1_v_def	drop_1_v_def	theorem	NAME_v_def	ListProg	qualified reference	candle_kernel_perms	unique
+every_v_def	every_v_def	theorem	NAME_v_def	ListProg	qualified reference	candle_kernel_perms	unique
+exists_v_def	exists_v_def	theorem	NAME_v_def	ListProg	qualified reference	candle_kernel_perms	unique
+filter_v_def	ListProg_filter_v_def	theorem	NAME_v_def	ListProg	qualified reference	candle_kernel_perms	clash-library (full load B_B5:hol4/sptree.ml) (filter_v_def)
+flat_v_def	flat_v_def	theorem	NAME_v_def	ListProg	qualified reference	candle_kernel_perms	unique
+hd_v_def	hd_v_def	theorem	NAME_v_def	ListProg	qualified reference	candle_kernel_perms	unique
+length_aux_v_def	length_aux_v_def	theorem	NAME_v_def	ListProg	qualified reference	candle_kernel_perms	unique
+length_v_def	length_v_def	theorem	NAME_v_def	ListProg	qualified reference	candle_kernel_perms	unique
+map_1_v_def	map_1_v_def	theorem	NAME_v_def	ListProg	qualified reference	candle_kernel_perms	unique
+member_v_def	member_v_def	theorem	NAME_v_def	ListProg	qualified reference	candle_kernel_perms	unique
+merge_tail_v_def	merge_tail_v_def	theorem	NAME_v_def	ListProg	qualified reference	candle_kernel_perms	unique
+mergesort_tail_v_def	mergesort_tail_v_def	theorem	NAME_v_def	ListProg	qualified reference	candle_kernel_perms	unique
+mergesortn_tail_v_def	mergesortn_tail_v_def	theorem	NAME_v_def	ListProg	qualified reference	candle_kernel_perms	unique
+null_v_def	null_v_def	theorem	NAME_v_def	ListProg	qualified reference	candle_kernel_perms	unique
+rev_1_v_def	rev_1_v_def	theorem	NAME_v_def	ListProg	qualified reference	candle_kernel_perms	unique
+rev_v_def	rev_v_def	theorem	NAME_v_def	ListProg	qualified reference	candle_kernel_perms	unique
+reverse_v_def	reverse_v_def	theorem	NAME_v_def	ListProg	qualified reference	candle_kernel_perms	unique
+sort2_tail_v_def	sort2_tail_v_def	theorem	NAME_v_def	ListProg	qualified reference	candle_kernel_perms	unique
+sort3_tail_v_def	sort3_tail_v_def	theorem	NAME_v_def	ListProg	qualified reference	candle_kernel_perms	unique
+sort_v_def	sort_v_def	theorem	NAME_v_def	ListProg	qualified reference	candle_kernel_perms	unique
+zip_v_def	zip_v_def	theorem	NAME_v_def	ListProg	qualified reference	candle_kernel_perms	unique
+hd_v_thm	hd_v_thm	theorem	NAME_v_thm	ListProg	qualified reference	CommandLineProof	unique
+reverse_v_thm	reverse_v_thm	theorem	NAME_v_thm	ListProg	qualified reference	TextIOProof	unique
+tl_v_thm	tl_v_thm	theorem	NAME_v_thm	ListProg	qualified reference	CommandLineProof	unique
+all_1_side	all_1_side	constant	NAME_side	VectorProg	side condition of a translation in the referencing theory	VectorProg	unique
+all_aux_side	all_aux_side	constant	NAME_side	VectorProg	side condition of a translation in the referencing theory	VectorProg	unique
+all_side	all_side	constant	NAME_side	VectorProg	side condition of a translation in the referencing theory	-	unique
+collate_1_side	collate_1_side	constant	NAME_side	VectorProg	side condition of a translation in the referencing theory	VectorProg StringProg	unique
+collate_aux_side	collate_aux_side	constant	NAME_side	VectorProg	side condition of a translation in the referencing theory	VectorProg StringProg	unique
+collate_side	collate_side	constant	NAME_side	VectorProg	side condition of a translation in the referencing theory	-	unique
+exists_1_side	exists_1_side	constant	NAME_side	VectorProg	side condition of a translation in the referencing theory	VectorProg	unique
+exists_aux_side	exists_aux_side	constant	NAME_side	VectorProg	side condition of a translation in the referencing theory	VectorProg	unique
+find_1_side	find_1_side	constant	NAME_side	VectorProg	side condition of a translation in the referencing theory	VectorProg	unique
+find_aux_side	find_aux_side	constant	NAME_side	VectorProg	side condition of a translation in the referencing theory	VectorProg	unique
+find_side	find_side	constant	NAME_side	VectorProg	side condition of a translation in the referencing theory	-	unique
+findi_aux_side	findi_aux_side	constant	NAME_side	VectorProg	side condition of a translation in the referencing theory	VectorProg	unique
+findi_side	findi_side	constant	NAME_side	VectorProg	side condition of a translation in the referencing theory	VectorProg	unique
+foldl_1_side	foldl_1_side	constant	NAME_side	VectorProg	side condition of a translation in the referencing theory	VectorProg	unique
+foldl_aux_side	foldl_aux_side	constant	NAME_side	VectorProg	side condition of a translation in the referencing theory	VectorProg	unique
+foldl_side	foldl_side	constant	NAME_side	VectorProg	side condition of a translation in the referencing theory	-	unique
+foldli_1_side	foldli_1_side	constant	NAME_side	VectorProg	side condition of a translation in the referencing theory	VectorProg	unique
+foldli_aux_side	foldli_aux_side	constant	NAME_side	VectorProg	side condition of a translation in the referencing theory	VectorProg	unique
+foldli_side	foldli_side	constant	NAME_side	VectorProg	side condition of a translation in the referencing theory	-	unique
+foldr_1_side	foldr_1_side	constant	NAME_side	VectorProg	side condition of a translation in the referencing theory	VectorProg	unique
+foldr_aux_side	foldr_aux_side	constant	NAME_side	VectorProg	side condition of a translation in the referencing theory	VectorProg	unique
+foldr_side	foldr_side	constant	NAME_side	VectorProg	side condition of a translation in the referencing theory	-	unique
+foldri_1_side	foldri_1_side	constant	NAME_side	VectorProg	side condition of a translation in the referencing theory	VectorProg	unique
+foldri_aux_side	foldri_aux_side	constant	NAME_side	VectorProg	side condition of a translation in the referencing theory	VectorProg	unique
+foldri_side	foldri_side	constant	NAME_side	VectorProg	side condition of a translation in the referencing theory	-	unique
+all_1_side_def	all_1_side_def	theorem	NAME_side_def	VectorProg	side condition of a translation in the referencing theory	VectorProg	unique
+all_aux_side_def	all_aux_side_def	theorem	NAME_side_def	VectorProg	side condition of a translation in the referencing theory	VectorProg	unique
+all_side_def	all_side_def	theorem	NAME_side_def	VectorProg	side condition of a translation in the referencing theory	VectorProg	unique
+collate_1_side_def	collate_1_side_def	theorem	NAME_side_def	VectorProg	side condition of a translation in the referencing theory	VectorProg StringProg	unique
+collate_aux_side_def	collate_aux_side_def	theorem	NAME_side_def	VectorProg	side condition of a translation in the referencing theory	VectorProg StringProg	unique
+collate_side_def	collate_side_def	theorem	NAME_side_def	VectorProg	side condition of a translation in the referencing theory	VectorProg StringProg	unique
+exists_1_side_def	exists_1_side_def	theorem	NAME_side_def	VectorProg	side condition of a translation in the referencing theory	VectorProg	unique
+exists_aux_side_def	exists_aux_side_def	theorem	NAME_side_def	VectorProg	side condition of a translation in the referencing theory	VectorProg	unique
+find_1_side_def	find_1_side_def	theorem	NAME_side_def	VectorProg	side condition of a translation in the referencing theory	VectorProg	unique
+find_aux_side_def	find_aux_side_def	theorem	NAME_side_def	VectorProg	side condition of a translation in the referencing theory	VectorProg	unique
+find_side_def	find_side_def	theorem	NAME_side_def	VectorProg	side condition of a translation in the referencing theory	VectorProg	unique
+findi_aux_side_def	findi_aux_side_def	theorem	NAME_side_def	VectorProg	side condition of a translation in the referencing theory	VectorProg	unique
+findi_side_def	findi_side_def	theorem	NAME_side_def	VectorProg	side condition of a translation in the referencing theory	VectorProg	unique
+foldl_1_side_def	foldl_1_side_def	theorem	NAME_side_def	VectorProg	side condition of a translation in the referencing theory	VectorProg	unique
+foldl_aux_side_def	foldl_aux_side_def	theorem	NAME_side_def	VectorProg	side condition of a translation in the referencing theory	VectorProg	unique
+foldl_side_def	foldl_side_def	theorem	NAME_side_def	VectorProg	side condition of a translation in the referencing theory	VectorProg	unique
+foldli_1_side_def	foldli_1_side_def	theorem	NAME_side_def	VectorProg	side condition of a translation in the referencing theory	VectorProg	unique
+foldli_aux_side_def	foldli_aux_side_def	theorem	NAME_side_def	VectorProg	side condition of a translation in the referencing theory	VectorProg	unique
+foldli_side_def	foldli_side_def	theorem	NAME_side_def	VectorProg	side condition of a translation in the referencing theory	VectorProg	unique
+foldr_1_side_def	foldr_1_side_def	theorem	NAME_side_def	VectorProg	side condition of a translation in the referencing theory	VectorProg	unique
+foldr_aux_side_def	foldr_aux_side_def	theorem	NAME_side_def	VectorProg	side condition of a translation in the referencing theory	VectorProg	unique
+foldr_side_def	foldr_side_def	theorem	NAME_side_def	VectorProg	side condition of a translation in the referencing theory	VectorProg	unique
+foldri_1_side_def	foldri_1_side_def	theorem	NAME_side_def	VectorProg	side condition of a translation in the referencing theory	VectorProg	unique
+foldri_aux_side_def	foldri_aux_side_def	theorem	NAME_side_def	VectorProg	side condition of a translation in the referencing theory	VectorProg	unique
+foldri_side_def	foldri_side_def	theorem	NAME_side_def	VectorProg	side condition of a translation in the referencing theory	VectorProg	unique
+extract_side	extract_side	constant	NAME_side	StringProg	side condition of a translation in the referencing theory	StringProg	unique
+fields_alt_aux_side	fields_alt_aux_side	constant	NAME_side	StringProg	side condition of a translation in the referencing theory	StringProg	unique
+fields_side	fields_side	constant	NAME_side	StringProg	side condition of a translation in the referencing theory	StringProg	unique
+isPrefix_side	isPrefix_side	constant	NAME_side	StringProg	side condition of a translation in the referencing theory	-	unique
+isStringThere_aux_side	isStringThere_aux_side	constant	NAME_side	StringProg	side condition of a translation in the referencing theory	-	unique
+isSubstring_aux_side	isSubstring_aux_side	constant	NAME_side	StringProg	side condition of a translation in the referencing theory	-	unique
+isSubstring_side	isSubstring_side	constant	NAME_side	StringProg	side condition of a translation in the referencing theory	-	unique
+isSuffix_side	isSuffix_side	constant	NAME_side	StringProg	side condition of a translation in the referencing theory	-	unique
+isprefix_side	isprefix_side	constant	NAME_side	StringProg	side condition of a translation in the referencing theory	StringProg	unique
+isstringthere_aux_side	isstringthere_aux_side	constant	NAME_side	StringProg	side condition of a translation in the referencing theory	StringProg	unique
+issubstring_aux_side	issubstring_aux_side	constant	NAME_side	StringProg	side condition of a translation in the referencing theory	StringProg	unique
+issubstring_side	issubstring_side	constant	NAME_side	StringProg	side condition of a translation in the referencing theory	StringProg	unique
+issuffix_side	issuffix_side	constant	NAME_side	StringProg	side condition of a translation in the referencing theory	StringProg	unique
+tokens_alt_aux_side	tokens_alt_aux_side	constant	NAME_side	StringProg	side condition of a translation in the referencing theory	StringProg	unique
+tokens_side	tokens_side	constant	NAME_side	StringProg	side condition of a translation in the referencing theory	StringProg	unique
+translate_aux_side	translate_aux_side	constant	NAME_side	StringProg	side condition of a translation in the referencing theory	StringProg	unique
+translate_side	translate_side	constant	NAME_side	StringProg	side condition of a translation in the referencing theory	StringProg	unique
+extract_side_def	extract_side_def	theorem	NAME_side_def	StringProg	side condition of a translation in the referencing theory	StringProg	unique
+fields_alt_aux_side_def	fields_alt_aux_side_def	theorem	NAME_side_def	StringProg	side condition of a translation in the referencing theory	StringProg	unique
+fields_side_def	fields_side_def	theorem	NAME_side_def	StringProg	side condition of a translation in the referencing theory	StringProg	unique
+isPrefix_side_def	isPrefix_side_def	theorem	NAME_side_def	StringProg	side condition of a translation in the referencing theory	StringProg	unique
+isStringThere_aux_side_def	isStringThere_aux_side_def	theorem	NAME_side_def	StringProg	side condition of a translation in the referencing theory	StringProg	unique
+isSubstring_aux_side_def	isSubstring_aux_side_def	theorem	NAME_side_def	StringProg	side condition of a translation in the referencing theory	StringProg	unique
+isSubstring_side_def	isSubstring_side_def	theorem	NAME_side_def	StringProg	side condition of a translation in the referencing theory	StringProg	unique
+isSuffix_side_def	isSuffix_side_def	theorem	NAME_side_def	StringProg	side condition of a translation in the referencing theory	StringProg	unique
+isprefix_side_def	isprefix_side_def	theorem	NAME_side_def	StringProg	side condition of a translation in the referencing theory	StringProg	unique
+isstringthere_aux_side_def	isstringthere_aux_side_def	theorem	NAME_side_def	StringProg	side condition of a translation in the referencing theory	StringProg	unique
+issubstring_aux_side_def	issubstring_aux_side_def	theorem	NAME_side_def	StringProg	side condition of a translation in the referencing theory	StringProg	unique
+issubstring_side_def	issubstring_side_def	theorem	NAME_side_def	StringProg	side condition of a translation in the referencing theory	StringProg	unique
+issuffix_side_def	issuffix_side_def	theorem	NAME_side_def	StringProg	side condition of a translation in the referencing theory	StringProg	unique
+tokens_alt_aux_side_def	tokens_alt_aux_side_def	theorem	NAME_side_def	StringProg	side condition of a translation in the referencing theory	StringProg	unique
+tokens_side_def	tokens_side_def	theorem	NAME_side_def	StringProg	side condition of a translation in the referencing theory	StringProg	unique
+translate_aux_side_def	translate_aux_side_def	theorem	NAME_side_def	StringProg	side condition of a translation in the referencing theory	StringProg	unique
+translate_side_def	translate_side_def	theorem	NAME_side_def	StringProg	side condition of a translation in the referencing theory	StringProg	unique
+char_escape_seq_v	char_escape_seq_v	constant	NAME_v	StringProg	qualified reference (of char_escape_seq_v_def)	candle_kernel_perms	unique
+char_escaped_v	char_escaped_v	constant	NAME_v	StringProg	qualified reference (of char_escaped_v_def)	candle_kernel_perms	unique
+compare_1_v	compare_1_v	constant	NAME_v	StringProg	qualified reference (of compare_1_v_def)	candle_kernel_perms	unique
+escape_str_v	escape_str_v	constant	NAME_v	StringProg	qualified reference (of escape_str_v_def)	candle_kernel_perms	unique
+strcat_v	strcat_v	constant	NAME_v	StringProg	qualified reference (of strcat_v_def)	candle_kernel_perms	unique
+char_escape_seq_v_def	char_escape_seq_v_def	theorem	NAME_v_def	StringProg	qualified reference	candle_kernel_perms	unique
+char_escaped_v_def	char_escaped_v_def	theorem	NAME_v_def	StringProg	qualified reference	candle_kernel_perms	unique
+compare_1_v_def	compare_1_v_def	theorem	NAME_v_def	StringProg	qualified reference	candle_kernel_perms	unique
+escape_str_v_def	escape_str_v_def	theorem	NAME_v_def	StringProg	qualified reference	candle_kernel_perms	unique
+strcat_v_def	strcat_v_def	theorem	NAME_v_def	StringProg	qualified reference	candle_kernel_perms	unique
+deref_v	deref_v	constant	NAME_v	mlbasicsProg	qualified reference (of deref_v_def)	candle_kernel_funs	unique
+eq_v	eq_v	constant	NAME_v	mlbasicsProg	qualified reference	-	unique
+neq_v	neq_v	constant	NAME_v	mlbasicsProg	qualified reference	-	unique
+deref_v_def	deref_v_def	theorem	NAME_v_def	mlbasicsProg	qualified reference	candle_kernel_funs	unique
+eq_v_thm	eq_v_thm	theorem	NAME_v_thm	mlbasicsProg	qualified reference	CommandLineProof TextIOProof	unique
+neq_v_thm	neq_v_thm	theorem	NAME_v_thm	mlbasicsProg	qualified reference	TextIOProof	unique
+fromString_side	fromString_side	constant	NAME_side	IntProg	side condition of a translation in the referencing theory	IntProg	unique
+fromString_unsafe_side	fromString_unsafe_side	constant	NAME_side	IntProg	side condition of a translation in the referencing theory	IntProg	unique
+fromchars_range_side	fromchars_range_side	constant	NAME_side	IntProg	side condition of a translation in the referencing theory	-	unique
+fromchars_range_unsafe_side	fromchars_range_unsafe_side	constant	NAME_side	IntProg	side condition of a translation in the referencing theory	-	unique
+fromchars_side	fromchars_side	constant	NAME_side	IntProg	side condition of a translation in the referencing theory	IntProg	unique
+fromchars_unsafe_side	fromchars_unsafe_side	constant	NAME_side	IntProg	side condition of a translation in the referencing theory	IntProg	unique
+fromstring_side	fromstring_side	constant	NAME_side	IntProg	side condition of a translation in the referencing theory	IntProg	unique
+fromstring_unsafe_side	fromstring_unsafe_side	constant	NAME_side	IntProg	side condition of a translation in the referencing theory	IntProg	unique
+num_to_chars_side	num_to_chars_side	constant	NAME_side	IntProg	side condition of a translation in the referencing theory	-	unique
+tochar_side	tochar_side	constant	NAME_side	IntProg	side condition of a translation in the referencing theory	IntProg	unique
+fromchars_range_side_def	fromchars_range_side_def	theorem	NAME_side_def	IntProg	side condition of a translation in the referencing theory	IntProg	unique
+fromchars_range_unsafe_side_def	fromchars_range_unsafe_side_def	theorem	NAME_side_def	IntProg	side condition of a translation in the referencing theory	IntProg	unique
+fromchars_side_def	fromchars_side_def	theorem	NAME_side_def	IntProg	side condition of a translation in the referencing theory	IntProg	unique
+fromchars_unsafe_side_def	fromchars_unsafe_side_def	theorem	NAME_side_def	IntProg	side condition of a translation in the referencing theory	IntProg	unique
+fromstring_side_def	fromstring_side_def	theorem	NAME_side_def	IntProg	side condition of a translation in the referencing theory	IntProg	unique
+fromstring_unsafe_side_def	fromstring_unsafe_side_def	theorem	NAME_side_def	IntProg	side condition of a translation in the referencing theory	IntProg	unique
+num_to_chars_side_def	num_to_chars_side_def	theorem	NAME_side_def	IntProg	side condition of a translation in the referencing theory	IntProg	unique
+exp_for_dec_enc_v	exp_for_dec_enc_v	constant	NAME_v	IntProg	qualified reference (of exp_for_dec_enc_v_thm)	candle_kernel_perms	unique
+int_cmp_v	int_cmp_v	constant	NAME_v	IntProg	inferred from the translate calls	IntProg	unique
+int_gcd_v	int_gcd_v	constant	NAME_v	IntProg	inferred from the translate calls	IntProg	unique
+int_to_string_v	int_to_string_v	constant	NAME_v	IntProg	inferred from the translate calls	candle_kernel_perms	unique
+num_to_chars_v	num_to_chars_v	constant	NAME_v	IntProg	qualified reference (of num_to_chars_v_def)	candle_kernel_perms	unique
+tochar_v	tochar_v	constant	NAME_v	IntProg	qualified reference (of tochar_v_def)	candle_kernel_perms	unique
+tostring_v	tostring_v	constant	NAME_v	IntProg	qualified reference (of tostring_v_def)	candle_kernel_perms	unique
+int_to_string_v_def	int_to_string_v_def	theorem	NAME_v_def	IntProg	qualified reference	candle_kernel_perms	unique
+num_to_chars_v_def	num_to_chars_v_def	theorem	NAME_v_def	IntProg	qualified reference	candle_kernel_perms	unique
+tochar_v_def	tochar_v_def	theorem	NAME_v_def	IntProg	qualified reference	candle_kernel_perms	unique
+tostring_v_def	tostring_v_def	theorem	NAME_v_def	IntProg	qualified reference	candle_kernel_perms	unique
+exp_for_dec_enc_v_thm	exp_for_dec_enc_v_thm	theorem	NAME_v_thm	IntProg	qualified reference	candle_kernel_perms	unique
+int_cmp_v_thm	int_cmp_v_thm	theorem	NAME_v_thm	IntProg	inferred from the translate calls	IntProg	unique
+int_gcd_v_thm	int_gcd_v_thm	theorem	NAME_v_thm	IntProg	inferred from the translate calls	IntProg	unique
+int_to_string_v_thm	int_to_string_v_thm	theorem	NAME_v_thm	IntProg	inferred from the translate calls	IntProg	unique
+PP_DATA_TYPE	PP_DATA_TYPE	constant	FOO_TYPE	PrettyPrinterProg	register_type	basisProg	unique
+escape_str_app_list_side	escape_str_app_list_side	constant	NAME_side	PrettyPrinterProg	side condition of a translation in the referencing theory	-	unique
+escape_str_app_list_side_def	escape_str_app_list_side_def	theorem	NAME_side_def	PrettyPrinterProg	side condition of a translation in the referencing theory	PrettyPrinterProg	unique
+RATIONAL_TYPE	RATIONAL_TYPE	constant	FOO_TYPE	RatProg	register_type	RatProg	unique
+RATIONAL_TYPE_def	RATIONAL_TYPE_def	theorem	FOO_TYPE_def	RatProg	register_type	RatProg	unique
+pair_floor_side	pair_floor_side	constant	NAME_side	RatProg	side condition of a translation in the referencing theory	RatProg	unique
+rat_div_side	rat_div_side	constant	NAME_side	RatProg	side condition of a translation in the referencing theory	RatProg	unique
+pair_floor_side_def	pair_floor_side_def	theorem	NAME_side_def	RatProg	side condition of a translation in the referencing theory	RatProg	unique
+rat_div_side_def	rat_div_side_def	theorem	NAME_side_def	RatProg	side condition of a translation in the referencing theory	RatProg	unique
+pair_add_v	pair_add_v	constant	NAME_v	RatProg	inferred from the translate calls	-	unique
+pair_compare_v	pair_compare_v	constant	NAME_v	RatProg	inferred from the translate calls	-	unique
+pair_inv_v	pair_inv_v	constant	NAME_v	RatProg	inferred from the translate calls	-	unique
+pair_le_v	pair_le_v	constant	NAME_v	RatProg	inferred from the translate calls	-	unique
+pair_lt_v	pair_lt_v	constant	NAME_v	RatProg	inferred from the translate calls	-	unique
+pair_mul_v	pair_mul_v	constant	NAME_v	RatProg	inferred from the translate calls	-	unique
+pair_sub_v	pair_sub_v	constant	NAME_v	RatProg	inferred from the translate calls	-	unique
+rational_of_int_v	rational_of_int_v	constant	NAME_v	RatProg	inferred from the translate calls	RatProg	unique
+pair_add_v_thm	pair_add_v_thm	theorem	NAME_v_thm	RatProg	inferred from the translate calls	RatProg	unique
+pair_compare_v_thm	pair_compare_v_thm	theorem	NAME_v_thm	RatProg	inferred from the translate calls	RatProg	unique
+pair_inv_v_thm	pair_inv_v_thm	theorem	NAME_v_thm	RatProg	inferred from the translate calls	RatProg	unique
+pair_le_v_thm	pair_le_v_thm	theorem	NAME_v_thm	RatProg	inferred from the translate calls	RatProg	unique
+pair_lt_v_thm	pair_lt_v_thm	theorem	NAME_v_thm	RatProg	inferred from the translate calls	RatProg	unique
+pair_mul_v_thm	pair_mul_v_thm	theorem	NAME_v_thm	RatProg	inferred from the translate calls	RatProg	unique
+pair_sub_v_thm	pair_sub_v_thm	theorem	NAME_v_thm	RatProg	inferred from the translate calls	RatProg	unique
+rational_of_int_v_thm	rational_of_int_v_thm	theorem	NAME_v_thm	RatProg	inferred from the translate calls	RatProg	unique
+some_char_side	some_char_side	constant	NAME_side	CharProg	side condition of a translation in the referencing theory	CharProg	unique
+some_char_side_def	some_char_side_def	theorem	NAME_side_def	CharProg	side condition of a translation in the referencing theory	CharProg	unique
+isspace_v	isspace_v	constant	NAME_v	CharProg	qualified reference (of isspace_v_def)	candle_kernel_perms	unique
+isspace_v_def	isspace_v_def	theorem	NAME_v_def	CharProg	qualified reference	candle_kernel_perms	unique
+var_word_ror_side	var_word_ror_side	constant	NAME_side	Word64Prog	side condition of a translation in the referencing theory	-	unique
+var_word_ror_side_def	var_word_ror_side_def	theorem	NAME_side_def	Word64Prog	side condition of a translation in the referencing theory	Word64Prog Word8Prog	unique
+word8_fromint_v	word8_fromint_v	constant	NAME_v	Word8Prog	qualified reference (of word8_fromint_v_def)	candle_kernel_perms	unique
+word8_fromint_v_def	word8_fromint_v_def	theorem	NAME_v_def	Word8Prog	qualified reference	candle_kernel_perms	unique
+word8_fromint_v_thm	word8_fromint_v_thm	theorem	NAME_v_thm	Word8Prog	qualified reference	candle_kernel_funs	unique
+Word8Array_array_v	Word8Array_array_v	constant	NAME_v	Word8ArrayProg	closure of a CakeML-source (Quote) function in module Word8Array	-	unique
+Word8Array_findi_aux_v	Word8Array_findi_aux_v	constant	NAME_v	Word8ArrayProg	closure of a CakeML-source (Quote) function in module Word8Array	Word8ArrayProof	unique
+Word8Array_findi_v	Word8Array_findi_v	constant	NAME_v	Word8ArrayProg	closure of a CakeML-source (Quote) function in module Word8Array	Word8ArrayProof	unique
+Word8Array_array_v_def	Word8Array_array_v_def	theorem	NAME_v_def	Word8ArrayProg	closure of a CakeML-source (Quote) function in module Word8Array	candle_kernel_funs	unique
+Word8Array_findi_aux_v_def	Word8Array_findi_aux_v_def	theorem	NAME_v_def	Word8ArrayProg	closure of a CakeML-source (Quote) function in module Word8Array	Word8ArrayProof	unique
+Word8Array_findi_v_def	Word8Array_findi_v_def	theorem	NAME_v_def	Word8ArrayProg	closure of a CakeML-source (Quote) function in module Word8Array	Word8ArrayProof	unique
+MAP_TYPE	MAP_TYPE	constant	FOO_TYPE	MapProg	register_type	MapProg	unique
+deletefindmax_side	deletefindmax_side	constant	NAME_side	MapProg	side condition of a translation in the referencing theory	MapProg SetProg	unique
+deletefindmin_side	deletefindmin_side	constant	NAME_side	MapProg	side condition of a translation in the referencing theory	MapProg SetProg	unique
+glue_side	glue_side	constant	NAME_side	MapProg	side condition of a translation in the referencing theory	MapProg SetProg	unique
+deletefindmax_side_def	deletefindmax_side_def	theorem	NAME_side_def	MapProg	side condition of a translation in the referencing theory	MapProg SetProg	unique
+deletefindmin_side_def	deletefindmin_side_def	theorem	NAME_side_def	MapProg	side condition of a translation in the referencing theory	MapProg SetProg	unique
+glue_side_def	glue_side_def	theorem	NAME_side_def	MapProg	side condition of a translation in the referencing theory	MapProg SetProg	unique
+CommandLine_arguments_v	CommandLine_arguments_v	constant	NAME_v	CommandLineProg	closure of a CakeML-source (Quote) function in module CommandLine	CommandLineProof	unique
+CommandLine_cline_v	CommandLine_cline_v	constant	NAME_v	CommandLineProg	closure of a CakeML-source (Quote) function in module CommandLine	CommandLineProof	unique
+CommandLine_cloop_v	CommandLine_cloop_v	constant	NAME_v	CommandLineProg	closure of a CakeML-source (Quote) function in module CommandLine	CommandLineProof	unique
+CommandLine_name_v	CommandLine_name_v	constant	NAME_v	CommandLineProg	closure of a CakeML-source (Quote) function in module CommandLine	CommandLineProof	unique
+CommandLine_read16bit_v	CommandLine_read16bit_v	constant	NAME_v	CommandLineProg	closure of a CakeML-source (Quote) function in module CommandLine	CommandLineProof	unique
+CommandLine_write16bit_v	CommandLine_write16bit_v	constant	NAME_v	CommandLineProg	closure of a CakeML-source (Quote) function in module CommandLine	CommandLineProof	unique
+CommandLine_arguments_v_def	CommandLine_arguments_v_def	theorem	NAME_v_def	CommandLineProg	closure of a CakeML-source (Quote) function in module CommandLine	CommandLineProof	unique
+CommandLine_cline_v_def	CommandLine_cline_v_def	theorem	NAME_v_def	CommandLineProg	closure of a CakeML-source (Quote) function in module CommandLine	CommandLineProof	unique
+CommandLine_cloop_v_def	CommandLine_cloop_v_def	theorem	NAME_v_def	CommandLineProg	closure of a CakeML-source (Quote) function in module CommandLine	CommandLineProof	unique
+CommandLine_name_v_def	CommandLine_name_v_def	theorem	NAME_v_def	CommandLineProg	closure of a CakeML-source (Quote) function in module CommandLine	CommandLineProof	unique
+CommandLine_read16bit_v_def	CommandLine_read16bit_v_def	theorem	NAME_v_def	CommandLineProg	closure of a CakeML-source (Quote) function in module CommandLine	CommandLineProof	unique
+CommandLine_write16bit_v_def	CommandLine_write16bit_v_def	theorem	NAME_v_def	CommandLineProg	closure of a CakeML-source (Quote) function in module CommandLine	CommandLineProof	unique
+bytes_loc	bytes_loc	constant	define_abbrev	DoubleProg	define_abbrev	-	unique
+bytes_loc_def	bytes_loc_def	theorem	define_abbrev _def	DoubleProg	define_abbrev	-	unique
+INSTREAM_TYPE	INSTREAM_TYPE	constant	FOO_TYPE	TextIOProg	register_type	TextIOProof	unique
+OUTSTREAM_TYPE	OUTSTREAM_TYPE	constant	FOO_TYPE	TextIOProg	register_type	TextIOProof	unique
+INSTREAM_TYPE_def	INSTREAM_TYPE_def	theorem	FOO_TYPE_def	TextIOProg	register_type	TextIOProof	unique
+TextIO_closeIn_v	TextIO_closeIn_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_closeOut_v	TextIO_closeOut_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_consume_rest_v	TextIO_consume_rest_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_extend_array_v	TextIO_extend_array_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_find_surplus_v	TextIO_find_surplus_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_foldChars_v	TextIO_foldChars_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_foldLines_v	TextIO_foldLines_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_fold_chars_loop_v	TextIO_fold_chars_loop_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_fold_lines_loop_v	TextIO_fold_lines_loop_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_input1_aux_v	TextIO_input1_aux_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_input1_v	TextIO_input1_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_inputAllFrom_v	TextIO_inputAllFrom_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_inputAllTokensFile_v	TextIO_inputAllTokensFile_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_inputAllTokensFrom_v	TextIO_inputAllTokensFrom_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_inputAllTokens_aux_v	TextIO_inputAllTokens_aux_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_inputAllTokens_v	TextIO_inputAllTokens_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_inputAll_aux_v	TextIO_inputAll_aux_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_inputAll_v	TextIO_inputAll_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_inputBuff_v	TextIO_inputBuff_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_inputLineTokens_v	TextIO_inputLineTokens_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_inputLineWith_v	TextIO_inputLineWith_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_inputLine_v	TextIO_inputLine_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_inputLinesFile_v	TextIO_inputLinesFile_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_inputLinesStdIn_v	TextIO_inputLinesStdIn_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_inputLines_aux_v	TextIO_inputLines_aux_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_inputLines_v	TextIO_inputLines_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_inputUntil_1_v	TextIO_inputUntil_1_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_inputUntil_2_v	TextIO_inputUntil_2_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_input_aux_v	TextIO_input_aux_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_input_v	TextIO_input_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_openInSetBufferSize_v	TextIO_openInSetBufferSize_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_openIn_v	TextIO_openIn_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_openStdInSetBufferSize_v	TextIO_openStdInSetBufferSize_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_openStdIn_v	TextIO_openStdIn_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_open_option_v	TextIO_open_option_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_output1_v	TextIO_output1_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_output_aux_v	TextIO_output_aux_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_output_v	TextIO_output_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_peekChar_aux_v	TextIO_peekChar_aux_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_peekChar_v	TextIO_peekChar_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_print_err_v	TextIO_print_err_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_print_list_v	TextIO_print_list_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_print_v	TextIO_print_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_raw_closeIn_v	TextIO_raw_closeIn_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_raw_input_v	TextIO_raw_input_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_raw_openIn_v	TextIO_raw_openIn_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_read_into_v	TextIO_read_into_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_read_v	TextIO_read_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_refillBuffer_with_read_guard_v	TextIO_refillBuffer_with_read_guard_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_refillBuffer_with_read_v	TextIO_refillBuffer_with_read_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_write_v	TextIO_write_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_writei_v	TextIO_writei_v	constant	NAME_v	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+raw_stdin_v	raw_stdin_v	constant	NAME_v	TextIOProg	inferred from the translate calls	TextIOProof	unique
+stderr_v	stderr_v	constant	NAME_v	TextIOProg	inferred from the translate calls	TextIOProof	unique
+stdout_v	stdout_v	constant	NAME_v	TextIOProg	inferred from the translate calls	TextIOProof	unique
+TextIO_closeIn_v_def	TextIO_closeIn_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_closeOut_v_def	TextIO_closeOut_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_consume_rest_v_def	TextIO_consume_rest_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_extend_array_v_def	TextIO_extend_array_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_find_surplus_v_def	TextIO_find_surplus_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_foldChars_v_def	TextIO_foldChars_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_foldLines_v_def	TextIO_foldLines_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_fold_chars_loop_v_def	TextIO_fold_chars_loop_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_fold_lines_loop_v_def	TextIO_fold_lines_loop_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_input1_aux_v_def	TextIO_input1_aux_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_input1_v_def	TextIO_input1_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_inputAllFrom_v_def	TextIO_inputAllFrom_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_inputAllTokensFile_v_def	TextIO_inputAllTokensFile_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_inputAllTokensFrom_v_def	TextIO_inputAllTokensFrom_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_inputAllTokens_aux_v_def	TextIO_inputAllTokens_aux_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_inputAllTokens_v_def	TextIO_inputAllTokens_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_inputAll_aux_v_def	TextIO_inputAll_aux_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_inputAll_v_def	TextIO_inputAll_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_inputBuff_v_def	TextIO_inputBuff_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_inputLineTokens_v_def	TextIO_inputLineTokens_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_inputLineWith_v_def	TextIO_inputLineWith_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_inputLine_v_def	TextIO_inputLine_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_inputLinesFile_v_def	TextIO_inputLinesFile_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_inputLinesStdIn_v_def	TextIO_inputLinesStdIn_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_inputLines_aux_v_def	TextIO_inputLines_aux_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_inputLines_v_def	TextIO_inputLines_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_inputUntil_1_v_def	TextIO_inputUntil_1_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_inputUntil_2_v_def	TextIO_inputUntil_2_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_input_aux_v_def	TextIO_input_aux_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_input_v_def	TextIO_input_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_openInSetBufferSize_v_def	TextIO_openInSetBufferSize_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_openIn_v_def	TextIO_openIn_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_openStdInSetBufferSize_v_def	TextIO_openStdInSetBufferSize_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_openStdIn_v_def	TextIO_openStdIn_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_open_option_v_def	TextIO_open_option_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_output1_v_def	TextIO_output1_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_output_aux_v_def	TextIO_output_aux_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_output_v_def	TextIO_output_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_peekChar_aux_v_def	TextIO_peekChar_aux_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_peekChar_v_def	TextIO_peekChar_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_print_err_v_def	TextIO_print_err_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_print_list_v_def	TextIO_print_list_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_print_v_def	TextIO_print_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_raw_closeIn_v_def	TextIO_raw_closeIn_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_raw_input_v_def	TextIO_raw_input_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_raw_openIn_v_def	TextIO_raw_openIn_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_read_into_v_def	TextIO_read_into_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_read_v_def	TextIO_read_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_refillBuffer_with_read_guard_v_def	TextIO_refillBuffer_with_read_guard_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_refillBuffer_with_read_v_def	TextIO_refillBuffer_with_read_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_write_v_def	TextIO_write_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+TextIO_writei_v_def	TextIO_writei_v_def	theorem	NAME_v_def	TextIOProg	closure of a CakeML-source (Quote) function in module TextIO	TextIOProof	unique
+raw_stdin_v_thm	raw_stdin_v_thm	theorem	NAME_v_thm	TextIOProg	inferred from the translate calls	TextIOProof	unique
+stderr_v_thm	stderr_v_thm	theorem	NAME_v_thm	TextIOProg	inferred from the translate calls	TextIOProof	unique
+stdout_v_thm	stdout_v_thm	theorem	NAME_v_thm	TextIOProg	inferred from the translate calls	TextIOProof	unique
+iobuff_loc	iobuff_loc	constant	define_abbrev	TextIOProg	define_abbrev	-	unique
+iobuff_loc_def	iobuff_loc_def	theorem	define_abbrev _def	TextIOProg	define_abbrev	-	unique
+MLSEXP_TOKEN_TYPE	MLSEXP_TOKEN_TYPE	constant	FOO_TYPE	SexpProg	register_type	SexpProg	unique
+SEXP_TYPE	SEXP_TYPE	constant	FOO_TYPE	SexpProg	register_type	SexpProg	unique
+MLSEXP_TOKEN_TYPE_def	MLSEXP_TOKEN_TYPE_def	theorem	FOO_TYPE_def	SexpProg	register_type	SexpProg	unique
+lex_aux_ind	lex_aux_ind	constant	NAME_ind (hidden induction goal)	SexpProg	induction goal left open (hide_ind_goal_rule)	-	unique
+lex_aux_ind_def	lex_aux_ind_def	theorem	NAME_ind_def	SexpProg	induction goal left open (hide_ind_goal_rule)	SexpProg	unique
+make_str_safe_side	make_str_safe_side	constant	NAME_side	SexpProg	side condition of a translation in the referencing theory	-	unique
+str_every_side	str_every_side	constant	NAME_side	SexpProg	side condition of a translation in the referencing theory	-	unique
+make_str_safe_side_def	make_str_safe_side_def	theorem	NAME_side_def	SexpProg	side condition of a translation in the referencing theory	SexpProg	unique
+str_every_side_def	str_every_side_def	theorem	NAME_side_def	SexpProg	side condition of a translation in the referencing theory	SexpProg	unique
+Sexp_inputSexp_v	Sexp_inputSexp_v	constant	NAME_v	SexpProg	closure of a CakeML-source (Quote) function in module Sexp	SexpProg	unique
+Sexp_lex_aux_imp_v	Sexp_lex_aux_imp_v	constant	NAME_v	SexpProg	closure of a CakeML-source (Quote) function in module Sexp	SexpProg	unique
+Sexp_lex_imp_v	Sexp_lex_imp_v	constant	NAME_v	SexpProg	closure of a CakeML-source (Quote) function in module Sexp	SexpProg	unique
+Sexp_read_string_aux_imp_v	Sexp_read_string_aux_imp_v	constant	NAME_v	SexpProg	closure of a CakeML-source (Quote) function in module Sexp	SexpProg	unique
+Sexp_read_string_imp_v	Sexp_read_string_imp_v	constant	NAME_v	SexpProg	closure of a CakeML-source (Quote) function in module Sexp	SexpProg	unique
+Sexp_read_symbol_imp_v	Sexp_read_symbol_imp_v	constant	NAME_v	SexpProg	closure of a CakeML-source (Quote) function in module Sexp	SexpProg	unique
+annotate_v	annotate_v	constant	NAME_v	SexpProg	qualified reference (of annotate_v_def)	candle_kernel_perms	unique
+flatten_v	flatten_v	constant	NAME_v	SexpProg	qualified reference (of flatten_v_def)	candle_kernel_perms	unique
+get_next_size_v	get_next_size_v	constant	NAME_v	SexpProg	qualified reference (of get_next_size_v_def)	candle_kernel_perms	unique
+get_size_v	get_size_v	constant	NAME_v	SexpProg	qualified reference (of get_size_v_def)	candle_kernel_perms	unique
+is_safe_char_v	is_safe_char_v	constant	NAME_v	SexpProg	qualified reference (of is_safe_char_v_def)	candle_kernel_perms	unique
+make_str_safe_v	make_str_safe_v	constant	NAME_v	SexpProg	qualified reference (of make_str_safe_v_def)	candle_kernel_perms	unique
+newlines_v	newlines_v	constant	NAME_v	SexpProg	qualified reference (of newlines_v_def)	candle_kernel_perms	unique
+remove_all_v	remove_all_v	constant	NAME_v	SexpProg	qualified reference (of remove_all_v_def)	candle_kernel_perms	unique
+sexp2tree_v	sexp2tree_v	constant	NAME_v	SexpProg	qualified reference (of sexp2tree_v_def)	candle_kernel_perms	unique
+sexp_to_pretty_string_v	sexp_to_pretty_string_v	constant	NAME_v	SexpProg	qualified reference (of sexp_to_pretty_string_v_def)	candle_kernel_perms	unique
+smart_remove_v	smart_remove_v	constant	NAME_v	SexpProg	qualified reference (of smart_remove_v_def)	candle_kernel_perms	unique
+str_every_v	str_every_v	constant	NAME_v	SexpProg	qualified reference (of str_every_v_def)	candle_kernel_perms	unique
+str_tree_to_strs_v	str_tree_to_strs_v	constant	NAME_v	SexpProg	qualified reference (of str_tree_to_strs_v_def)	candle_kernel_perms	unique
+v2pretty_v	v2pretty_v	constant	NAME_v	SexpProg	qualified reference (of v2pretty_v_def)	candle_kernel_perms	unique
+Sexp_inputSexp_v_def	Sexp_inputSexp_v_def	theorem	NAME_v_def	SexpProg	closure of a CakeML-source (Quote) function in module Sexp	SexpProg	unique
+Sexp_lex_aux_imp_v_def	SexpProg_Sexp_lex_aux_imp_v_def	theorem	NAME_v_def	SexpProg	closure of a CakeML-source (Quote) function in module Sexp	SexpProg	reserved (OCaml reads Sexp_lex_aux_imp_v_def as a constructor)
+Sexp_lex_imp_v_def	SexpProg_Sexp_lex_imp_v_def	theorem	NAME_v_def	SexpProg	closure of a CakeML-source (Quote) function in module Sexp	SexpProg	reserved (OCaml reads Sexp_lex_imp_v_def as a constructor)
+Sexp_read_string_aux_imp_v_def	SexpProg_Sexp_read_string_aux_imp_v_def	theorem	NAME_v_def	SexpProg	closure of a CakeML-source (Quote) function in module Sexp	SexpProg	reserved (OCaml reads Sexp_read_string_aux_imp_v_def as a constructor)
+Sexp_read_string_imp_v_def	SexpProg_Sexp_read_string_imp_v_def	theorem	NAME_v_def	SexpProg	closure of a CakeML-source (Quote) function in module Sexp	SexpProg	reserved (OCaml reads Sexp_read_string_imp_v_def as a constructor)
+Sexp_read_symbol_imp_v_def	SexpProg_Sexp_read_symbol_imp_v_def	theorem	NAME_v_def	SexpProg	closure of a CakeML-source (Quote) function in module Sexp	SexpProg	reserved (OCaml reads Sexp_read_symbol_imp_v_def as a constructor)
+annotate_v_def	annotate_v_def	theorem	NAME_v_def	SexpProg	qualified reference	candle_kernel_perms	unique
+flatten_v_def	flatten_v_def	theorem	NAME_v_def	SexpProg	qualified reference	candle_kernel_perms	unique
+get_next_size_v_def	get_next_size_v_def	theorem	NAME_v_def	SexpProg	qualified reference	candle_kernel_perms	unique
+get_size_v_def	get_size_v_def	theorem	NAME_v_def	SexpProg	qualified reference	candle_kernel_perms	unique
+is_safe_char_v_def	is_safe_char_v_def	theorem	NAME_v_def	SexpProg	qualified reference	candle_kernel_perms	unique
+make_str_safe_v_def	make_str_safe_v_def	theorem	NAME_v_def	SexpProg	qualified reference	candle_kernel_perms	unique
+newlines_v_def	newlines_v_def	theorem	NAME_v_def	SexpProg	qualified reference	candle_kernel_perms	unique
+remove_all_v_def	remove_all_v_def	theorem	NAME_v_def	SexpProg	qualified reference	candle_kernel_perms	unique
+sexp2tree_v_def	sexp2tree_v_def	theorem	NAME_v_def	SexpProg	qualified reference	candle_kernel_perms	unique
+sexp_to_pretty_string_v_def	sexp_to_pretty_string_v_def	theorem	NAME_v_def	SexpProg	qualified reference	candle_kernel_perms	unique
+smart_remove_v_def	smart_remove_v_def	theorem	NAME_v_def	SexpProg	qualified reference	candle_kernel_perms	unique
+str_every_v_def	str_every_v_def	theorem	NAME_v_def	SexpProg	qualified reference	candle_kernel_perms	unique
+str_tree_to_strs_v_def	str_tree_to_strs_v_def	theorem	NAME_v_def	SexpProg	qualified reference	candle_kernel_perms	unique
+v2pretty_v_def	v2pretty_v_def	theorem	NAME_v_def	SexpProg	qualified reference	candle_kernel_perms	unique
+print_app_list_aux_v	print_app_list_aux_v	constant	NAME_v	basisProg	inferred (earliest referencing TOOL theory)	basisProg	unique
+print_app_list_v	print_app_list_v	constant	NAME_v	basisProg	inferred (earliest referencing TOOL theory)	basisProg	unique
+print_app_list_aux_v_def	print_app_list_aux_v_def	theorem	NAME_v_def	basisProg	inferred (earliest referencing TOOL theory)	basisProg	unique
+print_app_list_v_def	print_app_list_v_def	theorem	NAME_v_def	basisProg	inferred (earliest referencing TOOL theory)	basisProg	unique
+HOL_EXN_TYPE	HOL_EXN_TYPE	constant	FOO_TYPE	ml_hol_kernel_funsProg	register_type	candle_kernel_funs	unique
+TERM_TYPE	TERM_TYPE	constant	FOO_TYPE	ml_hol_kernel_funsProg	register_type	candle_kernel_vals candle_prover_inv candle_kernel_funs	unique
+THM_TYPE	THM_TYPE	constant	FOO_TYPE	ml_hol_kernel_funsProg	register_type	candle_kernel_vals candle_prover_inv candle_kernel_funs	unique
+TYPE_TYPE	TYPE_TYPE	constant	FOO_TYPE	ml_hol_kernel_funsProg	register_type	candle_kernel_vals candle_prover_inv candle_kernel_funs	unique
+UPDATE_TYPE	UPDATE_TYPE	constant	FOO_TYPE	ml_hol_kernel_funsProg	register_type	candle_prover_inv candle_kernel_funs	unique
+HOL_EXN_TYPE_def	HOL_EXN_TYPE_def	theorem	FOO_TYPE_def	ml_hol_kernel_funsProg	register_type	ml_hol_kernel_funsProg candle_kernel_funs	unique
+TERM_TYPE_def	TERM_TYPE_def	theorem	FOO_TYPE_def	ml_hol_kernel_funsProg	register_type	candle_kernel_vals candle_prover_inv candle_kernel_funs	unique
+THM_TYPE_def	THM_TYPE_def	theorem	FOO_TYPE_def	ml_hol_kernel_funsProg	register_type	candle_kernel_vals candle_prover_inv candle_kernel_funs	unique
+TYPE_TYPE_def	TYPE_TYPE_def	theorem	FOO_TYPE_def	ml_hol_kernel_funsProg	register_type	candle_kernel_vals candle_prover_inv candle_kernel_funs candle_prover_evaluate	unique
+UPDATE_TYPE_def	UPDATE_TYPE_def	theorem	FOO_TYPE_def	ml_hol_kernel_funsProg	register_type	candle_prover_inv	unique
+TYPE_TYPE_ind	TYPE_TYPE_ind	theorem	FOO_TYPE_ind	ml_hol_kernel_funsProg	register_type	candle_prover_inv	unique
+aty_refs	aty_refs	constant	NAME_refs	ml_hol_kernel_funsProg	translated value (new_specification)	-	unique
+bool_ty_refs	bool_ty_refs	constant	NAME_refs	ml_hol_kernel_funsProg	translated value (new_specification)	-	unique
+bty_refs	bty_refs	constant	NAME_refs	ml_hol_kernel_funsProg	translated value (new_specification)	-	unique
+aty_refs_def	aty_refs_def	theorem	NAME_refs_def	ml_hol_kernel_funsProg	translated value (new_specification)	candle_prover_semantics	unique
+bool_ty_refs_def	bool_ty_refs_def	theorem	NAME_refs_def	ml_hol_kernel_funsProg	translated value (new_specification)	candle_prover_semantics	unique
+bty_refs_def	bty_refs_def	theorem	NAME_refs_def	ml_hol_kernel_funsProg	translated value (new_specification)	candle_prover_semantics	unique
+abs_1_v	abs_1_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	ml_hol_kernel_funsProg	unique
+abs_v	abs_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	ml_hol_kernel_funsProg candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+aconv_v	aconv_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+add_constants_v	add_constants_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+add_def_v	add_def_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+add_type_v	add_type_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+alphavars_v	alphavars_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+assoc_v	assoc_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+assume_v	assume_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+aty_v	aty_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+axioms_v	axioms_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+beta_v	beta_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+bool_ty_v	bool_ty_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+call_frees_v	call_frees_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+call_freesin_v	call_freesin_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+call_new_type_v	call_new_type_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+call_type_of_v	call_type_of_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+call_type_subst_v	call_type_subst_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+call_type_vars_in_term_v	call_type_vars_in_term_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+call_tyvars_v	call_tyvars_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+call_variant_v	call_variant_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+call_vfree_in_v	call_vfree_in_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+can_v	can_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+check_for_dups_v	check_for_dups_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+check_thm_v	check_thm_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms	unique
+check_tm_tm_v	check_tm_tm_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms	unique
+check_tm_v	check_tm_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms	unique
+check_ty_ty_v	check_ty_ty_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms	unique
+check_ty_v	check_ty_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms	unique
+codomain_v	codomain_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+concl_v	concl_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+constants_v	constants_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+deduct_antisym_rule_v	deduct_antisym_rule_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+dest_abs_v	dest_abs_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+dest_comb_v	dest_comb_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+dest_const_v	dest_const_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+dest_eq_v	dest_eq_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+dest_thm_v	dest_thm_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+dest_type_v	dest_type_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+dest_var_v	dest_var_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+dest_vartype_v	dest_vartype_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+eq_mp_v	eq_mp_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+forall_v	forall_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+frees_v	frees_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+freesin_v	freesin_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+freesl_v	freesl_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+get_const_type_v	get_const_type_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+get_type_arity_v	get_type_arity_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+hyp_v	hyp_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+image_v	image_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+insert_1_v	insert_1_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+inst_1_v	inst_1_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+inst_aux_v	inst_aux_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+inst_type_v	inst_type_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+inst_v	inst_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+is_abs_v	is_abs_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+is_comb_v	is_comb_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+is_const_v	is_const_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+is_type_v	is_type_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+is_var_v	is_var_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+is_vartype_v	is_vartype_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+itlist_v	itlist_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+mk_abs_v	mk_abs_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+mk_comb_1_v	mk_comb_1_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+mk_comb_v	mk_comb_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+mk_const_v	mk_const_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+mk_eq_v	mk_eq_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+mk_fun_ty_v	mk_fun_ty_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+mk_type_v	mk_type_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+mk_var_v	mk_var_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+mk_vartype_v	mk_vartype_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+new_axiom_v	new_axiom_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+new_basic_definition_v	new_basic_definition_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+new_basic_type_definition_v	new_basic_type_definition_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+new_constant_v	new_constant_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+new_specification_v	new_specification_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+new_type_v	new_type_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+orda_v	orda_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+ordav_v	ordav_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+raconv_v	raconv_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+rand_v	rand_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+rator_v	rator_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+refl_v	refl_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+rev_assocd_v	rev_assocd_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+safe_mk_eq_v	safe_mk_eq_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+string_le_v	string_le_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+string_lt_v	string_lt_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+subset_v	subset_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+subtract_v	subtract_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+term_cmp_v	term_cmp_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+term_remove_v	term_remove_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+term_union_v	term_union_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+trans_v	trans_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+try_v	try_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+type_cmp_v	type_cmp_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+type_of_v	type_of_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+type_subst_v	type_subst_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+type_vars_in_term_v	type_vars_in_term_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+typeof_v	typeof_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+types_v	types_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+tyvars_v	tyvars_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+union_1_v	union_1_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+variant_v	variant_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+vfree_in_v	vfree_in_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+vsubst_aux_v	vsubst_aux_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+vsubst_v	vsubst_v	constant	NAME_v	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+abs_1_v_def	abs_1_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	ml_hol_kernel_funsProg	unique
+aconv_v_def	aconv_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+add_constants_v_def	add_constants_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+add_def_v_def	add_def_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+add_type_v_def	add_type_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+alphavars_v_def	alphavars_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+assoc_v_def	assoc_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+assume_v_def	assume_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+axioms_v_def	axioms_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+beta_v_def	beta_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+call_frees_v_def	call_frees_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+call_freesin_v_def	call_freesin_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+call_new_type_v_def	call_new_type_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+call_type_of_v_def	call_type_of_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+call_type_subst_v_def	call_type_subst_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+call_type_vars_in_term_v_def	call_type_vars_in_term_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+call_tyvars_v_def	call_tyvars_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+call_variant_v_def	call_variant_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+call_vfree_in_v_def	call_vfree_in_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+can_v_def	can_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+check_for_dups_v_def	check_for_dups_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+check_thm_v_def	check_thm_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms	unique
+check_tm_tm_v_def	check_tm_tm_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms	unique
+check_tm_v_def	check_tm_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms	unique
+check_ty_ty_v_def	check_ty_ty_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms	unique
+check_ty_v_def	check_ty_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms	unique
+codomain_v_def	codomain_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+concl_v_def	concl_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+constants_v_def	constants_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms	unique
+deduct_antisym_rule_v_def	deduct_antisym_rule_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+dest_abs_v_def	dest_abs_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+dest_comb_v_def	dest_comb_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+dest_const_v_def	dest_const_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+dest_eq_v_def	dest_eq_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+dest_thm_v_def	dest_thm_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+dest_type_v_def	dest_type_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+dest_var_v_def	dest_var_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+dest_vartype_v_def	dest_vartype_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+eq_mp_v_def	eq_mp_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+forall_v_def	forall_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+frees_v_def	frees_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+freesin_v_def	freesin_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+freesl_v_def	freesl_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+get_const_type_v_def	get_const_type_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+get_type_arity_v_def	get_type_arity_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+hyp_v_def	hyp_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+image_v_def	image_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+insert_1_v_def	insert_1_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+inst_1_v_def	inst_1_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+inst_aux_v_def	inst_aux_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+inst_type_v_def	inst_type_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+inst_v_def	inst_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+is_abs_v_def	is_abs_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+is_comb_v_def	is_comb_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+is_const_v_def	is_const_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+is_type_v_def	is_type_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+is_var_v_def	is_var_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+is_vartype_v_def	is_vartype_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+itlist_v_def	itlist_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+mk_abs_v_def	mk_abs_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+mk_comb_1_v_def	mk_comb_1_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+mk_comb_v_def	mk_comb_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+mk_const_v_def	mk_const_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+mk_eq_v_def	mk_eq_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+mk_fun_ty_v_def	mk_fun_ty_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+mk_type_v_def	mk_type_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+mk_var_v_def	mk_var_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+mk_vartype_v_def	mk_vartype_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms	unique
+new_axiom_v_def	new_axiom_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+new_basic_definition_v_def	new_basic_definition_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+new_basic_type_definition_v_def	new_basic_type_definition_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+new_constant_v_def	new_constant_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+new_specification_v_def	new_specification_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+new_type_v_def	new_type_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+orda_v_def	orda_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+ordav_v_def	ordav_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+raconv_v_def	raconv_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+rand_v_def	rand_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+rator_v_def	rator_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+refl_v_def	refl_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+rev_assocd_v_def	rev_assocd_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+safe_mk_eq_v_def	safe_mk_eq_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+string_le_v_def	string_le_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+string_lt_v_def	string_lt_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+subset_v_def	subset_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+subtract_v_def	subtract_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+term_cmp_v_def	term_cmp_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+term_remove_v_def	term_remove_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+term_union_v_def	term_union_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+trans_v_def	trans_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+try_v_def	try_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+type_cmp_v_def	type_cmp_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+type_of_v_def	type_of_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+type_subst_v_def	type_subst_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+type_vars_in_term_v_def	type_vars_in_term_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+typeof_v_def	typeof_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+types_v_def	types_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+tyvars_v_def	tyvars_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+union_1_v_def	union_1_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+variant_v_def	variant_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+vfree_in_v_def	vfree_in_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+vsubst_aux_v_def	vsubst_aux_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+vsubst_v_def	vsubst_v_def	theorem	NAME_v_def	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+abs_1_v_thm	abs_1_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	ml_hol_kernel_funsProg	unique
+assume_v_thm	assume_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+aty_v_thm	aty_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+axioms_v_thm	axioms_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+beta_v_thm	beta_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+bool_ty_v_thm	bool_ty_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+call_frees_v_thm	call_frees_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+call_freesin_v_thm	call_freesin_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+call_new_type_v_thm	call_new_type_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+call_type_of_v_thm	call_type_of_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+call_type_subst_v_thm	call_type_subst_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+call_type_vars_in_term_v_thm	call_type_vars_in_term_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+call_tyvars_v_thm	call_tyvars_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+call_variant_v_thm	call_variant_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+call_vfree_in_v_thm	call_vfree_in_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+concl_v_thm	concl_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+constants_v_thm	constants_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+deduct_antisym_rule_v_thm	deduct_antisym_rule_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+dest_abs_v_thm	dest_abs_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+dest_comb_v_thm	dest_comb_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+dest_const_v_thm	dest_const_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+dest_eq_v_thm	dest_eq_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+dest_thm_v_thm	dest_thm_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+dest_type_v_thm	dest_type_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+dest_var_v_thm	dest_var_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+dest_vartype_v_thm	dest_vartype_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+eq_mp_v_thm	eq_mp_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+freesl_v_thm	freesl_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+get_const_type_v_thm	get_const_type_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+get_type_arity_v_thm	get_type_arity_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+hyp_v_thm	hyp_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+inst_1_v_thm	inst_1_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+inst_type_v_thm	inst_type_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+inst_v_thm	inst_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+is_abs_v_thm	is_abs_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+is_comb_v_thm	is_comb_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+is_const_v_thm	is_const_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+is_type_v_thm	is_type_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+is_var_v_thm	is_var_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+is_vartype_v_thm	is_vartype_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+mk_abs_v_thm	mk_abs_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+mk_comb_1_v_thm	mk_comb_1_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+mk_comb_v_thm	mk_comb_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+mk_const_v_thm	mk_const_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+mk_type_v_thm	mk_type_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+mk_var_v_thm	mk_var_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+mk_vartype_v_thm	mk_vartype_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+new_axiom_v_thm	new_axiom_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+new_basic_definition_v_thm	new_basic_definition_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+new_basic_type_definition_v_thm	new_basic_type_definition_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+new_constant_v_thm	new_constant_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+new_specification_v_thm	new_specification_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+rand_v_thm	rand_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+rator_v_thm	rator_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+refl_v_thm	refl_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+trans_v_thm	trans_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+types_v_thm	types_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+vsubst_v_thm	vsubst_v_thm	theorem	NAME_v_thm	ml_hol_kernel_funsProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+get_the_context_thm	get_the_context_thm	theorem	store getter certificate	ml_hol_kernel_funsProg	monadic store translation	candle_kernel_funs	unique
+init_axioms_v	init_axioms_v	constant	store initial value	ml_hol_kernel_funsProg	monadic store translation	candle_prover_semantics	unique
+init_context_v	init_context_v	constant	store initial value	ml_hol_kernel_funsProg	monadic store translation	candle_prover_semantics	unique
+init_term_constants_v	init_term_constants_v	constant	store initial value	ml_hol_kernel_funsProg	monadic store translation	candle_prover_semantics	unique
+init_type_constants_v	init_type_constants_v	constant	store initial value	ml_hol_kernel_funsProg	monadic store translation	candle_prover_semantics	unique
+init_axioms_v_thm	init_axioms_v_thm	theorem	store initial value certificate	ml_hol_kernel_funsProg	monadic store translation	candle_prover_semantics	unique
+init_context_v_thm	init_context_v_thm	theorem	store initial value certificate	ml_hol_kernel_funsProg	monadic store translation	candle_prover_semantics	unique
+init_term_constants_v_thm	init_term_constants_v_thm	theorem	store initial value certificate	ml_hol_kernel_funsProg	monadic store translation	candle_prover_semantics	unique
+init_type_constants_v_thm	init_type_constants_v_thm	theorem	store initial value certificate	ml_hol_kernel_funsProg	monadic store translation	candle_prover_semantics	unique
+the_axioms	the_axioms	constant	store location (Loc T n)	ml_hol_kernel_funsProg	monadic store translation	holKernel holKernelProof ml_hol_kernel_funsProg candle_kernel_vals candle_prover_inv candle_kernel_perms candle_prover_semantics	unique
+the_context	the_context	constant	store location (Loc T n)	ml_hol_kernel_funsProg	monadic store translation	holKernel holKernelProof ml_hol_kernel_funsProg candle_kernelProg candle_kernel_vals candle_prover_inv candle_kernel_perms compute_evalProof candle_kernel_funs candle_prover_semantics	unique
+the_term_constants	the_term_constants	constant	store location (Loc T n)	ml_hol_kernel_funsProg	monadic store translation	holKernel holKernelProof ml_hol_kernel_funsProg candle_kernel_vals candle_prover_inv candle_kernel_perms candle_prover_semantics	unique
+the_type_constants	the_type_constants	constant	store location (Loc T n)	ml_hol_kernel_funsProg	monadic store translation	holKernel holKernelProof ml_hol_kernel_funsProg candle_kernel_vals candle_prover_inv candle_kernel_perms candle_prover_semantics	unique
+the_axioms_def	the_axioms_def	theorem	store location (Loc T n) _def	ml_hol_kernel_funsProg	monadic store translation	candle_kernel_vals candle_kernel_perms candle_kernel_funs candle_prover_semantics	unique
+the_context_def	the_context_def	theorem	store location (Loc T n) _def	ml_hol_kernel_funsProg	monadic store translation	candle_kernel_vals candle_kernel_perms candle_kernel_funs candle_prover_semantics	unique
+the_term_constants_def	the_term_constants_def	theorem	store location (Loc T n) _def	ml_hol_kernel_funsProg	monadic store translation	candle_kernel_vals candle_kernel_perms candle_kernel_funs candle_prover_semantics	unique
+the_type_constants_def	the_type_constants_def	theorem	store location (Loc T n) _def	ml_hol_kernel_funsProg	monadic store translation	candle_kernel_vals candle_kernel_perms candle_kernel_funs candle_prover_semantics	unique
+HOL_STORE	HOL_STORE	constant	store predicate	ml_hol_kernel_funsProg	monadic store translation	ml_hol_kernel_funsProg candle_kernel_funs	unique
+HOL_STORE_def	HOL_STORE_def	theorem	store predicate _def	ml_hol_kernel_funsProg	monadic store translation	candle_kernel_funs	unique
+check_cexp_closed_ind	check_cexp_closed_ind	constant	NAME_ind (hidden induction goal)	candle_kernelProg	induction goal left open (hide_ind_goal_rule)	-	unique
+check_cexp_closed_ind_def	check_cexp_closed_ind_def	theorem	NAME_ind_def	candle_kernelProg	induction goal left open (hide_ind_goal_rule)	candle_kernelProg	unique
+compute_default_clock_refs	compute_default_clock_refs	constant	NAME_refs	candle_kernelProg	translated value (new_specification)	-	unique
+compute_thms_refs	compute_thms_refs	constant	NAME_refs	candle_kernelProg	translated value (new_specification)	-	unique
+cv_f_refs	cv_f_refs	constant	NAME_refs	candle_kernelProg	translated value (new_specification)	-	unique
+cv_t_refs	cv_t_refs	constant	NAME_refs	candle_kernelProg	translated value (new_specification)	-	unique
+compute_default_clock_refs_def	compute_default_clock_refs_def	theorem	NAME_refs_def	candle_kernelProg	translated value (new_specification)	candle_prover_semantics	unique
+compute_thms_refs_def	compute_thms_refs_def	theorem	NAME_refs_def	candle_kernelProg	translated value (new_specification)	candle_prover_semantics	unique
+cv_f_refs_def	cv_f_refs_def	theorem	NAME_refs_def	candle_kernelProg	translated value (new_specification)	candle_kernel_vals	unique
+cv_t_refs_def	cv_t_refs_def	theorem	NAME_refs_def	candle_kernelProg	translated value (new_specification)	candle_kernel_vals	unique
+dest_cexp_side	dest_cexp_side	constant	NAME_side	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	-	unique
+dest_cexp_side_def	dest_cexp_side_def	theorem	NAME_side_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernelProg	unique
+Kernel_print_thm_v	Kernel_print_thm_v	constant	NAME_v	candle_kernelProg	closure of a CakeML-source (Quote) function in module Kernel	candle_kernel_vals candle_kernel_funs	unique
+app_type_v	app_type_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+binop_add_v	binop_add_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+binop_div_v	binop_div_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+binop_eq_v	binop_eq_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+binop_less_v	binop_less_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+binop_mod_v	binop_mod_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+binop_mul_v	binop_mul_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+binop_sub_v	binop_sub_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+binop_v	binop_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+build_funs_v	build_funs_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+check_cexp_closed_v	check_cexp_closed_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+check_consts_v	check_consts_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+check_eqn_v	check_eqn_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+check_v	check_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+check_var_v	check_var_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+compile_to_ce_v	compile_to_ce_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+compute_add_v	compute_add_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+compute_default_clock_v	compute_default_clock_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+compute_init_v	compute_init_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+compute_thms_v	compute_thms_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+compute_v	compute_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_vals candle_kernel_perms candle_kernel_funs	unique
+const_list_v	const_list_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+cv2term_v	cv2term_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+cv_f_v	cv_f_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+cv_t_v	cv_t_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+dest_binary_v	dest_binary_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+dest_cexp_v	dest_cexp_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+dest_num_v	dest_num_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+dest_numeral_opt_v	dest_numeral_opt_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+dest_numeral_v	dest_numeral_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+env_lookup_v	env_lookup_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+exec_v	exec_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+findi_1_v	findi_1_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+get_code_v	get_code_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+list_dest_comb_v	list_dest_comb_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+map_2_v	map_2_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+mapoption_v	mapoption_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+monop_fst_v	monop_fst_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+monop_ispair_v	monop_ispair_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+monop_snd_v	monop_snd_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+monop_v	monop_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+num2bit_v	num2bit_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+option_v	option_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+safediv_v	safediv_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+safemod_v	safemod_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+term_to_v_v	term_to_v_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+thm_to_string_v	thm_to_string_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms candle_kernel_funs	unique
+thm_to_v_v	thm_to_v_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+to_ce_v	to_ce_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+to_num_v	to_num_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+ty_to_v_v	ty_to_v_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+update_to_v_v	update_to_v_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+var_list_v	var_list_v	constant	NAME_v	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+Kernel_print_thm_v_def	candle_Kernel_print_thm_v_def	theorem	NAME_v_def	candle_kernelProg	closure of a CakeML-source (Quote) function in module Kernel	candle_kernel_funs	reserved (OCaml reads Kernel_print_thm_v_def as a constructor)
+app_type_v_def	app_type_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+binop_add_v_def	binop_add_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+binop_div_v_def	binop_div_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+binop_eq_v_def	binop_eq_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+binop_less_v_def	binop_less_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+binop_mod_v_def	binop_mod_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+binop_mul_v_def	binop_mul_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+binop_sub_v_def	binop_sub_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+binop_v_def	binop_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+build_funs_v_def	build_funs_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+check_cexp_closed_v_def	check_cexp_closed_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+check_consts_v_def	check_consts_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+check_eqn_v_def	check_eqn_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+check_v_def	check_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+check_var_v_def	check_var_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+compile_to_ce_v_def	compile_to_ce_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+compute_add_v_def	compute_add_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+compute_init_v_def	compute_init_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+compute_v_def	compute_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+const_list_v_def	const_list_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+cv2term_v_def	cv2term_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+dest_binary_v_def	dest_binary_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+dest_cexp_v_def	dest_cexp_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+dest_num_v_def	dest_num_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+dest_numeral_opt_v_def	dest_numeral_opt_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+dest_numeral_v_def	dest_numeral_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+env_lookup_v_def	env_lookup_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+exec_v_def	exec_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+findi_1_v_def	findi_1_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+get_code_v_def	get_code_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+list_dest_comb_v_def	list_dest_comb_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+map_2_v_def	map_2_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+mapoption_v_def	mapoption_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+monop_fst_v_def	monop_fst_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+monop_ispair_v_def	monop_ispair_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+monop_snd_v_def	monop_snd_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+monop_v_def	monop_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+num2bit_v_def	num2bit_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+option_v_def	option_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+safediv_v_def	safediv_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+safemod_v_def	safemod_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+term_to_v_v_def	term_to_v_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+thm_to_string_v_def	thm_to_string_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms candle_kernel_funs	unique
+thm_to_v_v_def	thm_to_v_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+to_ce_v_def	to_ce_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+to_num_v_def	to_num_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+ty_to_v_v_def	ty_to_v_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+update_to_v_v_def	update_to_v_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+var_list_v_def	var_list_v_def	theorem	NAME_v_def	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+compute_add_v_thm	compute_add_v_thm	theorem	NAME_v_thm	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+compute_default_clock_v_thm	compute_default_clock_v_thm	theorem	NAME_v_thm	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+compute_thms_v_thm	compute_thms_v_thm	theorem	NAME_v_thm	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_perms	unique
+compute_v_thm	compute_v_thm	theorem	NAME_v_thm	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+cv_f_v_thm	cv_f_v_thm	theorem	NAME_v_thm	candle_kernelProg	qualified reference	candle_kernel_perms	unique
+cv_t_v_thm	cv_t_v_thm	theorem	NAME_v_thm	candle_kernelProg	qualified reference	candle_kernel_perms	unique
+thm_to_string_v_thm	thm_to_string_v_thm	theorem	NAME_v_thm	candle_kernelProg	inferred (unqualified in the Candle scripts: kernel or compute translation)	candle_kernel_funs	unique
+candle_code	candle_code	constant	define_abbrev	candle_kernelProg	define_abbrev	-	unique
+candle_init_env	candle_init_env	constant	define_abbrev	candle_kernelProg	define_abbrev	candle_kernelProg candle_prover_semantics	unique
+candle_init_state	candle_init_state	constant	define_abbrev	candle_kernelProg	define_abbrev	-	unique
+candle_code_def	candle_code_def	theorem	define_abbrev _def	candle_kernelProg	define_abbrev	-	unique
+candle_init_env_def	candle_init_env_def	theorem	define_abbrev _def	candle_kernelProg	define_abbrev	-	unique
+candle_init_state_def	candle_init_state_def	theorem	define_abbrev _def	candle_kernelProg	define_abbrev	-	unique

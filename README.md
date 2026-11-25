@@ -7,17 +7,25 @@ https://github.com/CakeML/cakeml. LightCake proves the main correctness theorem 
 compiler, HOL4's `compilerProofTheory.compile_correct`, and its instance for the ag32
 ("Silver") target, HOL4's `ag32_configProofTheory.ag32_compile_correct`, in HOL Light from HOL
 Light's three axioms only. It also ports the compiler for Pancake, CakeML's low-level language,
-with its end-to-end correctness theorem (HOL4's `pan_to_target_compile_semantics`), and the
-logic part of Candle, the "HOL in HOL" development behind CakeML's verified HOL Light kernel,
-with the soundness and consistency theorems of HOL (`proves_sound`, `extends_consistent`,
-`hol_consistent` and `hol_light_consistent`).
+with its end-to-end correctness theorem (HOL4's `pan_to_target_compile_semantics`); the logic
+part of Candle, the "HOL in HOL" development behind CakeML's verified HOL Light kernel, with the
+soundness and consistency theorems of HOL (`proves_sound`, `extends_consistent`,
+`hol_consistent` and `hol_light_consistent`); and CakeML's proof-producing translator from HOL
+functions to CakeML programs. With the translator it builds the CakeML code of the basis
+library and of the Candle kernel, and proves the soundness theorem of the Candle prover (HOL4's
+`candle_prover_semanticsTheory.semantics_thm`): if a program running on top of the kernel
+neither builds kernel values nor writes on the kernel's output channel itself, every theorem
+that it prints through the kernel is provable in HOL, in the context of definitions and axioms
+in which the kernel proved it.
 
 The port follows CakeML release v3479 (commit `e8eca63`, 2026-08-24). Every HOL4 script
 `foo/barScript.sml` of the dependency closures of these theorems becomes a HOL Light file
 `src/foo/bar.ml` with the same definitions and theorems, in the same order, with the same
 names (made unique where HOL4 relies on theory-qualified names), and with proofs written
 in HOL Light. Long scripts are split into consecutive parts `bar_p1.ml`, `bar_p2.ml`, ...,
-and `bar.ml` then loads them.
+and `bar.ml` then loads them. The HOL4 tool libraries that the scripts call, `foo/barLib.sml`,
+become OCaml files `src/foo/barLib.ml`. Of the basis scripts that mix CakeML code with its
+specifications, only the code part is ported (see the end of the next section).
 
 ## The headline theorems
 
@@ -85,24 +93,55 @@ stated in closed form, for the set model of `src/candle/set-theory/setModel.ml`)
 overloads (`thyof`, `tysof`, `|=`, `models`, ...) are written out, so the statements are longer
 than in HOL4, and `===` and `|-` are infix constants, as in HOL Light's `Model/syntax.ml`.
 
+`src/candle/prover/candle_prover_statement.ml` states the soundness theorem of the Candle
+prover, HOL4's `semantics_thm` (`candle_prover_semanticsScript.sml`), as the term
+`candle_prover_semantics_statement`; its header lists the notions it uses and the files that
+define them. `candle_code` is the Candle program: the CakeML code of the basis library followed
+by the kernel's datatypes and the kernel module, which the translator produces from the monadic
+kernel `src/candle/standard/monadic/holKernel.ml`, proving a certificate theorem for each kernel
+function. In words: run `candle_code` followed by any program `prog` that is safe (`safe_dec`:
+it neither builds values with the constructors of the kernel's types, such as theorems, nor
+makes FFI calls on the kernel's channel), from the initial state, with any evaluation state that
+is ok (`candle_eval_state_ok`) and an FFI state with no events yet. If the result is not `Fail`,
+every event of the terminating or diverging run is ok (`ok_event`): whatever is written on the
+kernel's FFI channel is the printed form (`thm2bytes`) of a theorem that the kernel's logic
+proves (`holKernelProof_THM`) in a context that extends HOL's initial context `init_ctxt`. As in
+HOL4, that context may contain axioms that the program added through the kernel; the printed
+form includes it. The statement keeps HOL4's hypothesis `prog_syntax_ok candle_code`;
+`candle_prover_semantics_strong_statement` (not in HOL4) is the same theorem without it, since
+LightCake proves the hypothesis by evaluation. `src/candle/prover/candle_prover_semantics.ml`
+proves both, as `semantics_thm` and `semantics_thm_strong`, and checks them against the
+statements in the same way.
+
 Not ported, because they need parts of CakeML outside the port: the entry points of
 `compiler.ml` that choose the target machine from the command line (`parse_target_64/32`,
 `compile_64/32`, `compile_pancake_64/32`, `full_compile_64/32`), and two set-relation lemmas of
 HOL4's `miscScript.sml` (`domain_rrestrict_subset`, `range_rrestrict_subset`). The entry points
 need the assembler configurations `x64_config`, `arm8_config`, `mips_config`, `riscv_config` and
 `arm7_config` of HOL4's target theories, which are built on the L3 models of these ISAs (of the
-targets only ag32 is ported); `compile_64/32` also need the basis library as a CakeML program
-(`basisProg`'s `basis`), and `full_compile_64/32` also its file system (`add_stdout` and
-`add_stderr` of `TextIOProof`, `fastForwardFD` of `fsFFIProps`).
+targets only ag32 is ported); `full_compile_64/32` also need the basis library's model of the
+file system (`add_stdout` and `add_stderr` of `TextIOProof`, `fastForwardFD` of `fsFFIProps`).
+
+Not yet ported: the characteristic formulae (CF) proper (HOL4's `cfScript.sml`,
+`cfAppScript.sml`, `cfNormaliseScript.sml`, `cfTacticsScript.sml`, `cfMainScript.sml` and the
+CF tactics of `cfTacticsLib` and its companions), and with them the specifications of the basis
+library. Of the basis scripts that mix CakeML code with CF specifications (`basisProg`,
+`ListProg`, `mlbasicsProg`, `MarshallingProg`, `DoubleProg`, `SexpProg`, `TextIOProg`, `cfDiv`,
+...) only the code part is ported: the definitions, translations and CakeML declarations, in
+HOL4's order and with HOL4's names (comments marked M10, the next milestone, name the omitted
+theorems). The proof scripts (`TextIOProof`, `CommandLineProof`, `ListProof`, ...) and the FFI
+models (`fsFFI`, `fsFFIProps`, `clFFI`, `basis_ffi`) are not ported. The soundness theorem of
+the Candle prover needs none of them: it is about the code of the basis library, not its
+specifications.
 
 ## Contents
 
 | directory | files |
 |---|---|
 | `src/kit/` | the proof kit (see below) |
-| `src/hol4/` | the HOL4 library layer (58 files): `alist`, `ASCIInumbers`, `bag`, `balanced_map`, `balanced_map_part2`, `basic`, `binary_ieee`, `bitstring`, `collapse`, `comparison`, `cps`, `errorLogMonad`, `errorMonad`, `finite_map`, `fmsp`, `gcd`, `grammar`, `int_bitwise`, `itreeTau`, `libext`, `list`, `llist`, `location`, `lprefix_lub`, `machine_ieee`, `mc_multiword`, `mergesort`, `multiword`, `NTproperties`, `numposrep`, `path`, `peg`, `pegexec`, `regexp_compiler`, `rich_list`, `rmfmap`, `set_sep`, `simpleSexp`, `simpleSexpParse`, `simpleSexpPEG`, `sorting`, `sptree`, `spt_closure`, `state_transformer`, `string4`, `subst`, `tailrec`, `tcallUnif`, `term`, `ternaryComparisons`, `toto`, `transfer`, `unifDef`, `unifProps`, `vocab`, `walk`, `walkstar`, `words4` |
+| `src/hol4/` | the HOL4 library layer (61 files): `alist`, `alist_tree`, `alist_treeLib`, `ASCIInumbers`, `bag`, `balanced_map`, `balanced_map_part2`, `basic`, `binary_ieee`, `bitstring`, `collapse`, `comparison`, `cps`, `errorLogMonad`, `errorMonad`, `finite_map`, `fmsp`, `gcd`, `grammar`, `int_bitwise`, `itreeTau`, `libext`, `list`, `llist`, `location`, `lprefix_lub`, `machine_ieee`, `mc_multiword`, `mergesort`, `multiword`, `NTproperties`, `numposrep`, `path`, `peg`, `pegexec`, `rat`, `regexp_compiler`, `rich_list`, `rmfmap`, `set_sep`, `simpleSexp`, `simpleSexpParse`, `simpleSexpPEG`, `sorting`, `spt_closure`, `sptree`, `state_transformer`, `string4`, `subst`, `tailrec`, `tcallUnif`, `term`, `ternaryComparisons`, `toto`, `transfer`, `unifDef`, `unifProps`, `vocab`, `walk`, `walkstar`, `words4` |
 | `src/misc/` | `misc`, `misc_p1`, `misc_p2`, `misc_p3` |
-| `src/basis/pure/` | `mlint`, `mllist`, `mlmap`, `mloption`, `mlsexp`, `mlstring`, `mlvector` |
+| `src/basis/pure/` | `mlint`, `mllist`, `mlmap`, `mloption`, `mlprettyprinter`, `mlrat`, `mlset`, `mlsexp`, `mlstring`, `mlvector` |
 | `src/semantics/` | `ast`, `cmlPtreeConversion`, `evaluate`, `fpSem`, `gram`, `lexer_fun`, `namespace`, `primTypes`, `sem1aux_tfl`, `semanticPrimitives`, `semantics`, `tokenUtils`, `tokens`, `typeSystem` |
 | `src/semantics/ffi/` | `ffi` |
 | `src/semantics/proofs/` | `evaluateProps`, `gramProps`, `namespaceProps`, `primSemEnv`, `semanticPrimitivesProps`, `semanticsProps`, `typeSound`, `typeSoundInvariants`, `typeSysProps`, `weakening` |
@@ -110,7 +149,7 @@ targets only ag32 is ported); `compile_64/32` also need the basis library as a C
 | `src/compiler/parsing/proofs/` | `cmlNTProps`, `pegComplete`, `pegSound` |
 | `src/compiler/inference/` | `infer`, `inferProps`, `infer_t`, `unify` |
 | `src/compiler/encoders/asm/` | `asm`, `asmProps`, `asmSem` |
-| `src/translator/monadic/monad_base/` | `ml_monadBase` |
+| `src/translator/monadic/monad_base/` | `ml_monadBase`, `ml_monadBaseLib` |
 | `src/compiler/backend/` | `backend`, `backend_common`, `backend_passes`, `bvi`, `bvi_inline`, `bvi_let`, `bvi_tailrec`, `bvi_tmc`, `bvi_to_data`, `bvl`, `bvl_const`, `bvl_handle`, `bvl_inline`, `bvl_jump`, `bvl_to_bvi`, `closLang`, `clos_annotate`, `clos_call`, `clos_fvs`, `clos_interp`, `clos_known`, `clos_letop`, `clos_mti`, `clos_number`, `clos_op`, `clos_ticks`, `clos_to_bvl`, `dataLang`, `data_live`, `data_simp`, `data_space`, `data_to_word`, `db_vars`, `displayLang`, `export`, `flatLang`, `flat_elim`, `flat_pattern`, `flat_to_clos`, `il1aux_mutual`, `jsonLang`, `labLang`, `lab_filter`, `lab_to_target`, `presLang`, `source_let`, `source_to_flat`, `source_to_source`, `stackLang`, `stack_alloc`, `stack_names`, `stack_rawcall`, `stack_remove`, `stack_to_lab`, `wordLang`, `word_alloc`, `word_bignum`, `word_copy`, `word_cse`, `word_depth`, `word_elim`, `word_inst`, `word_remove`, `word_simp`, `word_to_stack`, `word_to_word`, `word_unreach` |
 | `src/compiler/backend/semantics/` | `backendProps`, `bviProps`, `bviSem`, `bvlProps`, `bvlSem`, `closProps`, `closSem`, `dataProps`, `dataSem`, `flatProps`, `flatSem`, `labProps`, `labSem`, `stackProps`, `stackSem`, `targetProps`, `targetSem`, `wordConvs`, `wordProps`, `wordSem` |
 | `src/compiler/backend/gc/` | `copying_gc`, `gc_combined`, `gc_shared`, `gen_gc`, `gen_gc_partial` |
@@ -139,16 +178,25 @@ targets only ag32 is ported); `compile_64/32` also need the basis library as a C
 | `src/candle/standard/syntax/` | `holAxiomsSyntax`, `holBoolSyntax`, `holConservative`, `holSyntax`, `holSyntaxExtra`, `holSyntaxExtra_p1`, `holSyntaxExtra_p2`, `holSyntaxExtra_p3`, `holSyntaxExtra_p4`, `holSyntaxExtra_p5`, `holSyntaxExtra_p6`, `holSyntaxExtra_p7`, `holSyntaxExtra_p8` |
 | `src/candle/standard/syntax/little_theories/` | `littleTheoriesSyntax`, `littleTheoriesSyntaxNewSystem`, `littleTheoriesSyntaxOldSystem`, `littleTheoriesSyntaxOldSystem_p1`, `littleTheoriesSyntaxOldSystem_p2`, `littleTheoriesSyntaxOldSystem_p3`, `littleTheoriesSyntaxOldSystem_p4`, `littleTheoriesSyntaxOldSystem_p5`, `littleTheoriesSyntaxOldSystem_p6`, `littleTheoriesSyntaxOldSystem_p7` |
 | `src/candle/standard/semantics/` | `candle_logic_statement`, `holAxioms`, `holBool`, `holConsistency`, `holExtension`, `holLightConsistency`, `holSemantics`, `holSemanticsExtra`, `holSoundness` |
+| `src/translator/` | `evaluate_dec`, `ml_optimise`, `ml_parseLib`, `ml_prog`, `ml_progLib`, `ml_translator`, `ml_translatorLib`, `ml_translatorSyntax`, `std_prelude` |
+| `src/translator/monadic/` | `ml_monadStore`, `ml_monadStoreLib`, `ml_monad_translator`, `ml_monad_translatorBase`, `ml_monad_translatorLib`, `ml_monad_translator_interfaceLib` |
+| `src/characteristic/` | `cfDiv`, `cfFFIType`, `cfHeaps`, `cfHeapsBase`, `cfLetAuto`, `cfStore` |
+| `src/compiler/printing/` | `typeDecToPP` |
+| `src/basis/` | `ArrayProg`, `CharProg`, `CommandLineProg`, `DoubleProg`, `HashtableProg`, `IntProg`, `ListProg`, `MapProg`, `Marshalling`, `MarshallingProg`, `OptionProg`, `PrettyPrinterProg`, `RatProg`, `RuntimeProg`, `SetProg`, `SexpProg`, `StringProg`, `TextIOProg`, `VectorProg`, `Word64Prog`, `Word8ArrayProg`, `Word8Prog`, `addPrettyPrintersLib`, `basisFunctionsLib`, `basisProg`, `mlbasicsProg` |
+| `src/candle/standard/monadic/` | `holKernel`, `holKernelProof` |
+| `src/candle/standard/ml_kernel/` | `ml_hol_kernel_funsProg`, `print_thm`, `runtime_check`, `runtime_checkLib` |
+| `src/candle/prover/compute/` | `compute`, `computeProof`, `compute_eval`, `compute_evalProof`, `compute_exec`, `compute_execProof`, `compute_syntax`, `compute_syntaxProof` |
+| `src/candle/prover/` | `ast_extras`, `candle_basis_evaluate`, `candle_kernelProg`, `candle_kernel_funs`, `candle_kernel_perms`, `candle_kernel_vals`, `candle_prover_evaluate`, `candle_prover_inv`, `candle_prover_semantics`, `candle_prover_statement`, `perms` |
 
 The numbers of files, lines and theorems are in `doc/contents.tsv`. Everything loads in one
 fresh HOL Light session with no axioms beyond HOL Light's three (`check.ml` shows it).
 
 ## Loading
 
-You need HOL Light from commit `1a0c0e6` (19 November 2026) or later; the port uses its core (with
-`new_coinductive_definition` and the datatype tables of that commit) and
-`Library/words.ml`, `Library/rstc.ml` and `Library/iter.ml`. Start HOL Light in the root
-directory of this repository and load everything with
+You need HOL Light from commit `1a0c0e6` (19 November 2026) or later; the port uses its core
+(with `new_coinductive_definition` and the datatype tables of that commit) and
+`Library/words.ml`, `Library/rstc.ml`, `Library/iter.ml` and `Library/floor.ml`. Start HOL Light
+in the root directory of this repository and load everything with
 
     loadt "make.ml";;
 
@@ -158,15 +206,16 @@ or check it with
 
 which loads `make.ml`, prints the number of axioms (3) and the list of axioms, checks the
 headline theorems (`HEADLINE true`: no hypotheses, conclusions alpha-equivalent to the
-statements of `compile_correct_statement.ml`; `HEADLINE_AG32 true`, `HEADLINE_PANCAKE true` and
-`HEADLINE_CANDLE true`: the same for `ag32_compile_correct_statement.ml`,
-`pan_to_target_statement.ml` and `candle_logic_statement.ml`) and ends with `CHECK_OK`. Everything loads in one
-HOL Light session; `check.ml` was run this way with two versions of HOL Light:
+statements of `compile_correct_statement.ml`; `HEADLINE_AG32 true`, `HEADLINE_PANCAKE true`,
+`HEADLINE_CANDLE true` and `HEADLINE_CANDLE_PROVER true`: the same for
+`ag32_compile_correct_statement.ml`, `pan_to_target_statement.ml`, `candle_logic_statement.ml`
+and `candle_prover_statement.ml`) and ends with `CHECK_OK`. Everything loads in one HOL Light
+session; `check.ml` was run this way with two versions of HOL Light:
 
 | HOL Light | time of `check.ml` |
 |---|---|
-| commit `1a0c0e6` of jrh13/hol-light | 2.2 hours |
-| commit `049f088` of jargh/hol-light-dev (pull request #218 of jrh13/hol-light: MESON, X_CHOOSE_TAC, simplifier and arithmetic-tactic changes) | 2.3 hours |
+| commit `1a0c0e6` of jrh13/hol-light (19 November 2026) | 2.6 hours |
+| commit `096417c` of jrh13/hol-light (24 November 2026, with pull request #218: MESON, X_CHOOSE_TAC, simplifier and arithmetic-tactic changes) | 2.6 hours |
 
 After `loadt "src/prelude.ml";;` any single
 file can be loaded on its own with `needs`, for example `needs "semantics/namespace.ml";;`
@@ -203,7 +252,19 @@ file can be loaded on its own with `needs`, for example `needs "semantics/namesp
   had to change.
   HOL4 library notions that HOL Light already has use HOL Light's constants (`EVERY` is `ALL`,
   `LIST_REL` is `ALL2`, `set` is `set_of_list`, `FUNPOW f n x` is `ITER n f x`, `measure` is
-  `MEASURE`, ...).
+  `MEASURE`, ...). HOL4's rationals are the subtype of HOL Light's reals of the rational numbers
+  (`src/hol4/rat.ml`), with HOL4's names and theorems for what the basis library uses.
+- **Translations.** The translator (`src/translator/ml_translatorLib.ml`), the monadic
+  translator (`src/translator/monadic/`) and `ml_progLib` follow HOL4's algorithms step by step
+  (the same certificate theorems, refinement invariants and generated names), so that the basis
+  and Candle scripts port one to one, and the CakeML identifiers in the generated programs are
+  HOL4's. CakeML source text in the basis scripts is parsed, as in HOL4, by evaluating CakeML's
+  verified lexer and parser (`src/translator/ml_parseLib.ml`, with HOL Light's `Compute`).
+  Pattern matching is translated from the case constants, not from HOL4's `PMATCH`
+  restatements: the bodies of 27 kernel functions in `candle_code` are nested one-level `Mat`s
+  where HOL4's have one `Mat` with nested patterns, and a few others may split cases in another
+  order than HOL4's. The names, constructors, type stamps and exports of `candle_code` are
+  HOL4's, and so is every theorem about it.
 
 `doc/CONVENTIONS.md` describes the conventions in detail.
 
@@ -216,7 +277,7 @@ file can be loaded on its own with `needs`, for example `needs "semantics/namesp
                           printing
     src/hol4/             the HOL4 library theories CakeML uses
     src/<CakeML path>/    the CakeML theories, at the paths of the CakeML sources
-    doc/                  conventions, the naming table, contents
+    doc/                  conventions, the naming tables, contents
 
 ## Credits and licence
 

@@ -112,3 +112,45 @@
 - The kit's simplifier tactics use HOL Light's simplifier without its `satisfy_prover` (part of
   `basic_ss` since November 2026), as HOL4's default simpsets have no `SATISFY_ss`. HOL Light's
   own `SIMP_TAC` and `ASM_SIMP_TAC` keep it.
+
+## Translations
+- The proof-producing translator (`src/translator/ml_translatorLib.ml`, HOL4's
+  ml_translatorLib), the monadic translator (`src/translator/monadic/`), the program state of
+  `src/translator/ml_progLib.ml` (HOL4's ml_progLib) and the CakeML parser of the basis
+  scripts (`src/translator/ml_parseLib.ml`: `add_cakeml` and `process_topdecs` parse CakeML
+  text by evaluating CakeML's verified lexer and parser with `Compute`) follow HOL4's
+  algorithms step by step: the same certificate theorems, refinement invariants and generated
+  names, so that the basis and Candle scripts port one to one.
+- HOL Light has no theory database: the translator keeps its state in OCaml tables, and a
+  translation file starts with `translation_extends "THY";;` (or `translation_reset ();;`) and
+  ends with `finalise_translation ();;`.
+- Generated names are HOL4's: per translated function `f` the closure `f_v` with `f_v_def`,
+  the certificate `f_v_thm`, the side condition `f_side` with `f_side_def`; per registered type
+  the refinement invariant `FOO_TYPE` with `FOO_TYPE_def`; ml_progLib's abbreviations
+  `THY_env_N` and `THY_st_N`. All files share one session, so if a generated name is taken,
+  every name generated for that function gets the theory name as a prefix
+  (`ListProg_filter_v`: sptree has `filter_v`), and a side-condition constant made a second
+  time under the same HOL4 name becomes `THY_f_side` (`StringProg_collate_aux_side`; the
+  theorem keeps HOL4's name). `doc/reserved_generated.tsv` lists the generated names that
+  later files use.
+- The CakeML identifiers (the names of values, constructors and modules in generated programs)
+  are HOL4's, whatever the HOL Light names: `doc/ident_map.tsv` maps the HOL Light names that
+  differ back to them.
+- Pattern matching is translated from the case constants (`ty_CASE`): nested patterns give
+  nested one-level `Mat` expressions, where HOL4's PMATCH route gives one `Mat` with nested
+  patterns (PMATCH is not ported). The Candle kernel's code differs from HOL4's in this way in
+  27 functions; the theorems about it keep HOL4's statements.
+- HOL Light gives no value to the cases that no clause of a definition covers: a partial
+  function's certificate has the precondition `pattern_complete`, as HOL4's has when TFL's
+  definition contains `ARB`. Bound variables that the translator invents are named
+  `v1`, `v2`, ... (HOL4's names contain a session counter). HOL4's `case v of () => e` is
+  `one_CASE v e`.
+- The CF heap notation keeps HOL4's infixes where HOL Light's lexer takes them (`*+`, `==>>`,
+  `==+>`, `~~>>`, `~~>`); HOL4's `==v>`, `==e>`, `==f>`, `==d>` are the constants
+  `SEP_IMPPOSTv`, `SEP_IMPPOSTe`, `SEP_IMPPOSTf`, `SEP_IMPPOSTd`.
+- Comments of the translator files refer to the design decisions of this part of the port:
+  D2 (a basis script that mixes CakeML code with CF specifications is ported in its code part;
+  the specifications are left for the next milestone, M10), D4 (the CakeML identifiers are
+  HOL4's), D5 (pattern matching is translated from the case constants; PMATCH is not ported),
+  D6 (`rat` is a subtype of `real`), D8 (the corollary `semantics_thm_strong` without the
+  hypothesis `prog_syntax_ok candle_code`).

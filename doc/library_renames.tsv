@@ -176,3 +176,29 @@ hol4/unifDef.ml	unifDef	theorem	unify_def	unifDef_unify_def	common word, user ru
 hol4/unifDef.ml	unifDef	theorem	unify_ind	unifDef_unify_ind	common word, user rule 2026-11-22
 hol4/cps.ml	cps	constant	cwc	cps_cwc	common word, user rule 2026-11-22
 hol4/cps.ml	cps	theorem	cwc_def	cps_cwc_def	common word, user rule 2026-11-22
+hol4/balanced_map_part2.ml	balanced_map	constant	glue	balanced_map_glue	bound so in src/hol4, no library_renames.tsv row; short or common word (section 10); used by the NAMING4 theories
+hol4/balanced_map_part2.ml	balanced_map	constant	delete	balanced_map_delete	bound so in src/hol4, no library_renames.tsv row; full load B_B5 binds delete; used by the NAMING4 theories
+hol4/balanced_map_part2.ml	balanced_map	constant	trim	balanced_map_trim	bound so in src/hol4, no library_renames.tsv row; short or common word (section 10); used by the NAMING4 theories
+hol4/balanced_map_part2.ml	balanced_map	constant	link	balanced_map_link	bound so in src/hol4, no library_renames.tsv row; short or common word (section 10); used by the NAMING4 theories
+hol4/balanced_map_part2.ml	balanced_map	constant	link2	balanced_map_link2	bound so in src/hol4, no library_renames.tsv row; short or common word (section 10); used by the NAMING4 theories
+hol4/balanced_map_part2.ml	balanced_map	constant	union	balanced_map_union	bound so in src/hol4, no library_renames.tsv row; short or common word (section 10); used by the NAMING4 theories
+hol4/balanced_map_part2.ml	balanced_map	constant	filter	balanced_map_filter	bound so in src/hol4, no library_renames.tsv row; names.tsv mloption has filter; full load B_B5 binds filter; used by the NAMING4 theories
+hol4/balanced_map_part2.ml	balanced_map	constant	map	balanced_map_map	bound so in src/hol4, no library_renames.tsv row; short or common word (section 10); used by the NAMING4 theories
+hol4/balanced_map_part2.ml	balanced_map	constant	fromList	balanced_map_fromList	bound so in src/hol4, no library_renames.tsv row; full load B_B5 binds fromList; used by the NAMING4 theories
+hol4/balanced_map_part2.ml	balanced_map	constant	every	balanced_map_every	bound so in src/hol4, no library_renames.tsv row; short or common word (section 10); used by the NAMING4 theories
+hol4/balanced_map_part2.ml	balanced_map	constant	exists	balanced_map_exists	bound so in src/hol4, no library_renames.tsv row; exists is a HOL Light special name; used by the NAMING4 theories
+hol4/balanced_map_part2.ml	balanced_map	theorem	lookup_def	balanced_map_lookup_def	bound so in src/hol4, no library_renames.tsv row; full load B_B5:hol4/sptree.ml binds lookup_def; used by the NAMING4 theories
+hol4/balanced_map_part2.ml	balanced_map	theorem	insert_def	balanced_map_insert_def	bound so in src/hol4, no library_renames.tsv row; full load B_B5:hol4/sptree.ml binds insert_def; used by the NAMING4 theories
+hol4/balanced_map_part2.ml	balanced_map	theorem	glue_def	balanced_map_glue_def	bound so in src/hol4, no library_renames.tsv row; follows the constant; used by the NAMING4 theories
+hol4/balanced_map_part2.ml	balanced_map	theorem	delete_def	balanced_map_delete_def	bound so in src/hol4, no library_renames.tsv row; full load B_B5:hol4/sptree.ml binds delete_def; used by the NAMING4 theories
+hol4/balanced_map_part2.ml	balanced_map	theorem	trim_def	balanced_map_trim_def	bound so in src/hol4, no library_renames.tsv row; follows the constant; used by the NAMING4 theories
+hol4/balanced_map_part2.ml	balanced_map	theorem	link_def	balanced_map_link_def	bound so in src/hol4, no library_renames.tsv row; follows the constant; used by the NAMING4 theories
+hol4/balanced_map_part2.ml	balanced_map	theorem	link2_def	balanced_map_link2_def	bound so in src/hol4, no library_renames.tsv row; follows the constant; used by the NAMING4 theories
+hol4/balanced_map_part2.ml	balanced_map	theorem	union_def	balanced_map_union_def	bound so in src/hol4, no library_renames.tsv row; follows the constant; used by the NAMING4 theories
+hol4/balanced_map_part2.ml	balanced_map	theorem	filter_def	balanced_map_filter_def	bound so in src/hol4, no library_renames.tsv row; names.tsv mloption has filter_def; full load B_B5:basis/pure/mloption.ml binds filter_def; used by the NAMING4 theories
+hol4/balanced_map_part2.ml	balanced_map	theorem	map_def	balanced_map_map_def	bound so in src/hol4, no library_renames.tsv row; follows the constant; used by the NAMING4 theories
+hol4/balanced_map_part2.ml	balanced_map	theorem	fromList_def	balanced_map_fromList_def	bound so in src/hol4, no library_renames.tsv row; full load B_B5:hol4/sptree.ml binds fromList_def; used by the NAMING4 theories
+hol4/balanced_map_part2.ml	balanced_map	theorem	every_def	balanced_map_every_def	bound so in src/hol4, no library_renames.tsv row; follows the constant; used by the NAMING4 theories
+hol4/balanced_map_part2.ml	balanced_map	theorem	exists_def	balanced_map_exists_def	bound so in src/hol4, no library_renames.tsv row; follows the constant; used by the NAMING4 theories
+hol4/llist.ml	llist	theorem	fromList_def	llist_fromList_def	bound so in src/hol4, no library_renames.tsv row; full load B_B5:hol4/sptree.ml binds fromList_def; used by the NAMING4 theories
+hol4/regexp_compiler.ml	regexp_compiler	theorem	fromList_def	regexp_compiler_fromList_def	bound so in src/hol4, no library_renames.tsv row; full load B_B5:hol4/sptree.ml binds fromList_def; used by the NAMING4 theories
