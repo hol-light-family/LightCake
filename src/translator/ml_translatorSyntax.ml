@@ -701,6 +701,9 @@ let tr_hol4_type_table = ref [
   ];;
 
 let tr_hol4_name_table = ref [
+  ("combin_K",("combin","K","k"));
+  ("mlstring_shrink",("mlstring","shrink","shrink"));
+  ("PAIR_MAP",("pair","##","map"));
   ("DoubleProg_construct",("DoubleProg","construct","construct"));
   ("DoubleProg_exponent",("DoubleProg","exponent","exponent"));
   ("DoubleProg_sign",("DoubleProg","sign","sign"));

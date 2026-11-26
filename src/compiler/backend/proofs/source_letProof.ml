@@ -35,13 +35,13 @@ let env_c_lemma = prove
 (* ------------------------------------------------------------------------- *)
 
 let SLETPAUX_REC_fupd = prove
- (`!v e:v sem_env. sem_env_REC v (sem_env_c e) = sem_env_v_fupd (K v) e`,
+ (`!v e:v sem_env. sem_env_REC v (sem_env_c e) = sem_env_v_fupd (combin_K v) e`,
   REWRITE_TAC[sem_env_component_equality; sem_env_INFO.ri_accessors; sem_env_INFO.ri_accfupds;
               K_THM]);;
 
 let SLETPAUX_alist_sing = prove
  (`!(a:N) (x:V) (e:(M,N,V)namespace). nsAppend (alist_to_ns [(a,x)]) e = nsBind a x e`,
-  REWRITE_TAC[nsAppend_to_nsBindList; nsBindList_def; ITLIST] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[nsAppend_to_nsBindList; nsBindList_def; ITLIST] THEN CAKE_REWRITE_TAC[]);;
 
 let SLETPAUX_ENV_RW =
   [sem_env_INFO.ri_accessors; nsAppend_nsEmpty; unchanged_env; alist_to_ns_nil;
@@ -53,7 +53,7 @@ let SLETPAUX_ENV_RW =
 let SLETPAUX_CORE_TAC : tactic =
   REPEAT STRIP_TAC THEN
   REPEAT(FIRST_X_ASSUM(fun th -> if is_conj (concl th) then STRIP_ASSUME_TAC th else NO_TAC)) THEN
-  RULE_ASSUM_TAC(CASE_REWRITE_RULE[] o CONV_RULE(DEPTH_CONV BETA_CONV) o
+  RULE_ASSUM_TAC(CAKE_REWRITE_RULE[] o CONV_RULE(DEPTH_CONV BETA_CONV) o
                  REWRITE_RULE SLETPAUX_ENV_RW) THEN
   SEVPAUX_FUNC_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE([PAIR_EQ; injectivity "result"; distinctness "result";
@@ -70,13 +70,13 @@ let SLETPAUX_CLOSE_TAC : tactic =
 
 (* the declaration is Dlet of a Let *)
 let SLETPAUX_LET_TAC : tactic =
-  CASES_ON `a0':mlstring option` THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON `a0':mlstring option` THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[injectivity "option"; PAIR_EQ] THEN STRIP_TAC THEN RVEQ_TAC THEN
   FIRST_X_ASSUM(MP_TAC o check (fun th -> EVPROPSAUX_is_eval_eq (concl th))) THEN
   REWRITE_TAC[evaluate_decs_def] THEN ONCE_REWRITE_TAC[full_evaluate_def] THEN
   REWRITE_TAC([every_exp_def; one_con_check_def; pat_bindings_def; ALL_DISTINCT; nsOptBind_def;
-              pmatch_def; extend_dec_env_def] @ SLETPAUX_ENV_RW) THEN CASE_REWRITE_TAC[] THEN
-  REWRITE_TAC SLETPAUX_ENV_RW THEN CASE_REWRITE_TAC[] THEN
+              pmatch_def; extend_dec_env_def] @ SLETPAUX_ENV_RW) THEN CAKE_REWRITE_TAC[] THEN
+  REWRITE_TAC SLETPAUX_ENV_RW THEN CAKE_REWRITE_TAC[] THEN
   EVERY_CASE_TAC THEN
   ASM_REWRITE_TAC[] THEN
   REWRITE_TAC([injectivity "result"; distinctness "result"; PAIR_EQ] @ SLETPAUX_ENV_RW) THEN
@@ -88,8 +88,8 @@ let SLETPAUX_LETREC_TAC : tactic =
   FIRST_X_ASSUM(MP_TAC o check (fun th -> EVPROPSAUX_is_eval_eq (concl th))) THEN
   REWRITE_TAC[evaluate_decs_def] THEN ONCE_REWRITE_TAC[full_evaluate_def] THEN
   REWRITE_TAC([every_exp_def; one_con_check_def; pat_bindings_def; ALL_DISTINCT;
-               extend_dec_env_def] @ SLETPAUX_ENV_RW) THEN CASE_REWRITE_TAC[] THEN
-  REWRITE_TAC SLETPAUX_ENV_RW THEN CASE_REWRITE_TAC[] THEN
+               extend_dec_env_def] @ SLETPAUX_ENV_RW) THEN CAKE_REWRITE_TAC[] THEN
+  REWRITE_TAC SLETPAUX_ENV_RW THEN CAKE_REWRITE_TAC[] THEN
   EVERY_CASE_TAC THEN
   ASM_REWRITE_TAC[] THEN
   REWRITE_TAC([injectivity "result"; distinctness "result"; PAIR_EQ] @ SLETPAUX_ENV_RW) THEN
@@ -103,7 +103,7 @@ let evaluate_lift_let = prove
   W (fun (_,w) ->
        let v = find_term (fun t -> is_var t && type_of t = `:exp`) w in
        STRUCT_CASES_TAC (ISPEC v (nchotomy_of_type `:exp`))) THEN
-  REWRITE_TAC[dest_Let_def; dest_Letrec_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[dest_Let_def; dest_Letrec_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[distinctness "option"] THENL [SLETPAUX_LET_TAC; SLETPAUX_LETREC_TAC]);;
 
 let lift_lets_is_prefix = prove
@@ -112,13 +112,13 @@ let lift_lets_is_prefix = prove
   DISCH_TAC THEN REPEAT GEN_TAC THEN ONCE_REWRITE_TAC[lift_lets_def] THEN
   MP_TAC(ISPEC `lift_let d` (cases "option")) THEN
   DISCH_THEN(DISJ_CASES_THEN2 SUBST1_TAC (X_CHOOSE_THEN `p:dec#dec` SUBST_ALL_TAC)) THEN
-  CASE_REWRITE_TAC[] THENL
-   [STRUCT_CASES_TAC (ISPEC `sofar:dec list` list_CASES) THEN CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THENL
+   [STRUCT_CASES_TAC (ISPEC `sofar:dec list` list_CASES) THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[option_DISTINCT; option_INJ; PAIR_EQ] THEN STRIP_TAC THEN
     ASM_REWRITE_TAC[IS_PREFIX_REFL];
     MP_TAC(ISPEC `p:dec#dec` PAIR_SURJECTIVE) THEN
     DISCH_THEN(X_CHOOSE_THEN `d1:dec` (X_CHOOSE_THEN `d2:dec` SUBST_ALL_TAC)) THEN
-    CASE_REWRITE_TAC[] THEN DISCH_TAC THEN
+    CAKE_REWRITE_TAC[] THEN DISCH_TAC THEN
     FIRST_X_ASSUM(MP_TAC o SPECL [`ds1:dec list`; `ds2:dec`] o
                   C MP (REFL `SOME (d1:dec,d2:dec)`) o SPECL [`d1:dec`; `d2:dec`]) THEN
     ASM_REWRITE_TAC[REVERSE] THEN
@@ -137,20 +137,20 @@ let evaluate_lift_lets = prove
   ONCE_REWRITE_TAC[lift_lets_def] THEN
   MP_TAC(ISPEC `lift_let d` (cases "option")) THEN
   DISCH_THEN(DISJ_CASES_THEN2 ASSUME_TAC (X_CHOOSE_THEN `p:dec#dec` ASSUME_TAC)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THENL
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THENL
    [(* no let to lift: the declarations so far form the local part *)
     MP_TAC(ISPEC `ds:dec list` list_CASES) THEN
     DISCH_THEN(DISJ_CASES_THEN2 SUBST_ALL_TAC
       (X_CHOOSE_THEN `h:dec` (X_CHOOSE_THEN `t:dec list` SUBST_ALL_TAC))) THEN
-    CASE_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[option_DISTINCT; option_INJ; PAIR_EQ] THEN STRIP_TAC THEN RVEQ_TAC THEN
-    REWRITE_TAC[evaluate_decs_def] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[evaluate_decs_def] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
     ASM_REWRITE_TAC[];
     ALL_TAC] THEN
   (* a let is lifted *)
   MP_TAC(ISPEC `p:dec#dec` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `d1:dec` (X_CHOOSE_THEN `d2:dec` SUBST_ALL_TAC)) THEN
-  CASE_REWRITE_TAC[] THEN DISCH_TAC THEN
+  CAKE_REWRITE_TAC[] THEN DISCH_TAC THEN
   MP_TAC(INST [`s1:(FFI)state`,`s:(FFI)state`; `extend_dec_env env1 env:v sem_env`,`env:v sem_env`;
                `s2:(FFI)state`,`s':(FFI)state`] evaluate_lift_let) THEN
   ASM_REWRITE_TAC[] THEN
@@ -162,7 +162,7 @@ let evaluate_lift_lets = prove
   MP_TAC(ISPEC `r3:(v sem_env,v)result` (cases "result")) THEN
   DISCH_THEN(DISJ_CASES_THEN2 (X_CHOOSE_THEN `env3:v sem_env` SUBST_ALL_TAC)
                               (X_CHOOSE_THEN `e3:(v)error_result` SUBST_ALL_TAC)) THEN
-  CASE_REWRITE_TAC[] THEN DISCH_TAC THENL
+  CAKE_REWRITE_TAC[] THEN DISCH_TAC THENL
    [(* the lifted declaration succeeds: induction hypothesis *)
     FIRST_X_ASSUM(MP_TAC o SPECL [`s:(FFI)state`; `env:v sem_env`; `s3:(FFI)state`;
        `extend_dec_env env3 env1:v sem_env`; `s2:(FFI)state`; `res:(v sem_env,v)result`;
@@ -171,8 +171,8 @@ let evaluate_lift_lets = prove
     ANTS_TAC THENL
      [REPEAT CONJ_TAC THENL
        [REWRITE_TAC[REVERSE; evaluate_decs_append] THEN
-        REPEAT(CHANGED_TAC(ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[])) THEN
-        REWRITE_TAC[combine_dec_result_def; extend_dec_env_def] THEN CASE_REWRITE_TAC[];
+        REPEAT(CHANGED_TAC(ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[])) THEN
+        REWRITE_TAC[combine_dec_result_def; extend_dec_env_def] THEN CAKE_REWRITE_TAC[];
         ASM_REWRITE_TAC[GSYM extend_dec_env_assoc];
         ASM_REWRITE_TAC[];
         ASM_REWRITE_TAC[]];
@@ -184,15 +184,15 @@ let evaluate_lift_lets = prove
     REWRITE_TAC[IS_PREFIX_APPEND; REVERSE] THEN STRIP_TAC THEN
     ASM_REWRITE_TAC[GSYM APPEND_ASSOC] THEN
     REWRITE_TAC[evaluate_decs_append] THEN
-    REPEAT(CHANGED_TAC(ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[])) THEN
-    REWRITE_TAC[combine_dec_result_def] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]]);;
+    REPEAT(CHANGED_TAC(ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[])) THEN
+    REWRITE_TAC[combine_dec_result_def] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]]);;
 
 (* HOL4 [local,simp]: not registered (descendants do not see it in HOL4)     *)
 let lift_lets_mod_local = prove
  (`(!ds1 ds2. lift_lets [] (Dlocal ds1 ds2) = NONE) /\
    (!mn ds. lift_lets [] (Dmod mn ds) = NONE)`,
   REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN ONCE_REWRITE_TAC[lift_lets_def] THEN
-  REWRITE_TAC[lift_let_def] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[lift_let_def] THEN CAKE_REWRITE_TAC[]);;
 
 let evaluate_lift_start = prove
  (`!d s env s2 res ds1 ds2.
@@ -216,11 +216,11 @@ let SLETPAUX_compile_cons = prove
           APPEND (source_let_compile_decs [d]) (source_let_compile_decs ds)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[source_let_compile_decs_def] THEN
   MP_TAC(ISPEC `lift_lets [] d` (cases "option")) THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[] THENL
-   [STRUCT_CASES_TAC (ISPEC `d:dec` (nchotomy_of_type `:dec`)) THEN CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THENL
+   [STRUCT_CASES_TAC (ISPEC `d:dec` (nchotomy_of_type `:dec`)) THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[APPEND];
     MP_TAC(ISPEC `a:dec list#dec` PAIR_SURJECTIVE) THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[APPEND]]);;
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[APPEND]]);;
 
 (* a single declaration other than Dmod and Dlocal *)
 let SLETPAUX_SINGLE_TAC : tactic =
@@ -228,9 +228,9 @@ let SLETPAUX_SINGLE_TAC : tactic =
   (fun (asl,w as gl) ->
      let t = find_term (fun t -> EVPROPSAUX_is_const_app ["lift_lets"] t) w in
      MP_TAC(ISPEC t (cases "option")) gl) THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   TRY(MP_TAC(ISPEC `a:dec list#dec` PAIR_SURJECTIVE) THEN STRIP_TAC THEN
-      ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+      ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
       MATCH_MP_TAC evaluate_lift_start THEN
       FIRST_ASSUM(fun th -> if is_eq (concl th) &&
                                EVPROPSAUX_is_const_app ["lift_lets"] (lhs (concl th))
@@ -259,15 +259,15 @@ let source_letProof_compile_decs_correct = prove
     MP_TAC(ISPEC `r1:(v sem_env,v)result` (cases "result")) THEN
     DISCH_THEN(DISJ_CASES_THEN2 (X_CHOOSE_THEN `env1:v sem_env` SUBST_ALL_TAC)
                                 (X_CHOOSE_THEN `e1:(v)error_result` SUBST_ALL_TAC)) THEN
-    CASE_REWRITE_TAC[] THENL
+    CAKE_REWRITE_TAC[] THENL
      [FIRST_X_ASSUM(MP_TAC o SPECL [`s1:(FFI)state`; `Rval env1:(v sem_env,v)result`] o
                     check (fun th -> is_forall (concl th) &&
                              not (can (find_term ((=) `d2:dec`)) (concl th)))) THEN
-      ASM_REWRITE_TAC[distinctness "result"] THEN DISCH_THEN SUBST1_TAC THEN CASE_REWRITE_TAC[] THEN
+      ASM_REWRITE_TAC[distinctness "result"] THEN DISCH_THEN SUBST1_TAC THEN CAKE_REWRITE_TAC[] THEN
       MP_TAC(ISPEC `evaluate_decs (s1:(FFI)state) (extend_dec_env env1 env) (CONS d2 ds)`
                PAIR_SURJECTIVE) THEN
       DISCH_THEN(X_CHOOSE_THEN `s2:(FFI)state` (X_CHOOSE_THEN `r2:(v sem_env,v)result` ASSUME_TAC)) THEN
-      ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+      ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
       REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN
       FIRST_X_ASSUM(MP_TAC o SPECL [`s1:(FFI)state`; `env1:v sem_env`] o
                     check (fun th -> is_forall (concl th) &&
@@ -275,32 +275,32 @@ let source_letProof_compile_decs_correct = prove
       ASM_REWRITE_TAC[] THEN DISCH_THEN(MP_TAC o SPECL [`s2:(FFI)state`; `r2:(v sem_env,v)result`]) THEN
       ASM_REWRITE_TAC[] THEN ANTS_TAC THENL
        [ASM_MESON_TAC[SEVPAUX_combine_tyerr]; DISCH_THEN SUBST1_TAC] THEN
-      CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[];
+      CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[];
       REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN RVEQ_TAC THEN
       FIRST_X_ASSUM(MP_TAC o SPECL [`s':(FFI)state`; `Rerr e1:(v sem_env,v)result`] o
                     check (fun th -> is_forall (concl th) &&
                              not (can (find_term ((=) `d2:dec`)) (concl th)))) THEN
-      ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN CASE_REWRITE_TAC[]];
+      ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN CAKE_REWRITE_TAC[]];
     (* Dlet, Dletrec, Dtype, Dtabbrev, Denv, Dexn *)
     SLETPAUX_SINGLE_TAC; SLETPAUX_SINGLE_TAC; SLETPAUX_SINGLE_TAC; SLETPAUX_SINGLE_TAC;
     SLETPAUX_SINGLE_TAC; SLETPAUX_SINGLE_TAC;
     (* Dmod *)
     (REPEAT GEN_TAC THEN DISCH_TAC THEN REPEAT GEN_TAC THEN
-     REWRITE_TAC[source_let_compile_decs_def; lift_lets_mod_local] THEN CASE_REWRITE_TAC[] THEN
+     REWRITE_TAC[source_let_compile_decs_def; lift_lets_mod_local] THEN CAKE_REWRITE_TAC[] THEN
      REWRITE_TAC[evaluate_decs_def] THEN
      MP_TAC(ISPEC `evaluate_decs (st:(FFI)state) env ds` PAIR_SURJECTIVE) THEN
      DISCH_THEN(X_CHOOSE_THEN `s1:(FFI)state` (X_CHOOSE_THEN `r1:(v sem_env,v)result` ASSUME_TAC)) THEN
-     ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN STRIP_TAC) THEN
+     ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN STRIP_TAC) THEN
     SUBGOAL_THEN `~(r1 = Rerr (Rabort Rtype_error):(v sem_env,v)result)` ASSUME_TAC THENL
-     [DISCH_THEN SUBST_ALL_TAC THEN RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN ASM_MESON_TAC[];
+     [DISCH_THEN SUBST_ALL_TAC THEN RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN ASM_MESON_TAC[];
       ALL_TAC] THEN
     FIRST_X_ASSUM(MP_TAC o SPECL [`s1:(FFI)state`; `r1:(v sem_env,v)result`] o
                   check (is_forall o concl)) THEN
-    ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN CAKE_REWRITE_TAC[] THEN
     ASM_REWRITE_TAC[PAIR_EQ];
     (* Dlocal *)
     (REPEAT GEN_TAC THEN STRIP_TAC THEN REPEAT GEN_TAC THEN
-     REWRITE_TAC[source_let_compile_decs_def; lift_lets_mod_local] THEN CASE_REWRITE_TAC[] THEN
+     REWRITE_TAC[source_let_compile_decs_def; lift_lets_mod_local] THEN CAKE_REWRITE_TAC[] THEN
      REWRITE_TAC[evaluate_decs_def] THEN
      MP_TAC(ISPEC `evaluate_decs (st:(FFI)state) env lds` PAIR_SURJECTIVE) THEN
      DISCH_THEN(X_CHOOSE_THEN `s1:(FFI)state` (X_CHOOSE_THEN `r1:(v sem_env,v)result` ASSUME_TAC)) THEN
@@ -308,10 +308,10 @@ let source_letProof_compile_decs_correct = prove
      MP_TAC(ISPEC `r1:(v sem_env,v)result` (cases "result")) THEN
      DISCH_THEN(DISJ_CASES_THEN2 (X_CHOOSE_THEN `env1:v sem_env` SUBST_ALL_TAC)
                                  (X_CHOOSE_THEN `e1:(v)error_result` SUBST_ALL_TAC)) THEN
-     CASE_REWRITE_TAC[] THEN STRIP_TAC) THENL
+     CAKE_REWRITE_TAC[] THEN STRIP_TAC) THENL
      [FIRST_X_ASSUM(MP_TAC o SPECL [`s1:(FFI)state`; `Rval env1:(v sem_env,v)result`] o
                     check (fun th -> is_forall (concl th) && SLETPAUX_no_ext th)) THEN
-      ASM_REWRITE_TAC[distinctness "result"] THEN DISCH_THEN SUBST1_TAC THEN CASE_REWRITE_TAC[] THEN
+      ASM_REWRITE_TAC[distinctness "result"] THEN DISCH_THEN SUBST1_TAC THEN CAKE_REWRITE_TAC[] THEN
       FIRST_X_ASSUM(MP_TAC o SPECL [`s1:(FFI)state`; `env1:v sem_env`] o
                     check (is_forall o concl)) THEN
       ASM_REWRITE_TAC[] THEN
@@ -322,7 +322,7 @@ let source_letProof_compile_decs_correct = prove
         check (fun th -> concl th = `Rerr e1:(v sem_env,v)result = res`)) THEN
       FIRST_X_ASSUM(MP_TAC o SPECL [`s':(FFI)state`; `Rerr e1:(v sem_env,v)result`] o
                     check (fun th -> is_forall (concl th) && SLETPAUX_no_ext th)) THEN
-      ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN CASE_REWRITE_TAC[]]]);;
+      ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN CAKE_REWRITE_TAC[]]]);;
 
 (* local: without Fail, the compiled program runs as the original for every *)
 (* clock                                                                     *)
@@ -333,10 +333,10 @@ let SLETPAUX_runs = prove
   DISCH_TAC THEN GEN_TAC THEN
   FIRST_ASSUM(MP_TAC o SPEC `k:num` o MATCH_MP SEVPAUX_not_fail) THEN
   REWRITE_TAC[SEVPAUX_evaluate_prog_with_clock] THEN
-  MP_TAC(ISPEC `evaluate_decs (state_clock_fupd (K k) (s:(FFI)state)) env prog` PAIR_SURJECTIVE) THEN
+  MP_TAC(ISPEC `evaluate_decs (state_clock_fupd (combin_K k) (s:(FFI)state)) env prog` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `s1:(FFI)state` (X_CHOOSE_TAC `r1:(v sem_env,v)result`)) THEN
   ASM_REWRITE_TAC[FST; SND] THEN DISCH_TAC THEN
-  MP_TAC(SPECL [`state_clock_fupd (K k) (s:(FFI)state)`; `env:v sem_env`; `prog:dec list`;
+  MP_TAC(SPECL [`state_clock_fupd (combin_K k) (s:(FFI)state)`; `env:v sem_env`; `prog:dec list`;
                 `s1:(FFI)state`; `r1:(v sem_env,v)result`] source_letProof_compile_decs_correct) THEN
   ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN REWRITE_TAC[FST; SND]);;
 

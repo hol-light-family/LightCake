@@ -28,21 +28,21 @@ type_invention_error := true;;
 
 (* HOL4 [simp] *)
 let with_same_code = prove
- (`!s:(C,FFI)bvl_state. bvl_state_code_fupd (K (bvl_state_code s)) s = s`,
+ (`!s:(C,FFI)bvl_state. bvl_state_code_fupd (combin_K (bvl_state_code s)) s = s`,
   SIMP[bvl_state_component_equality]);;
 let _ = cake_add_simps [with_same_code];;
 
 (* HOL4 [simp] *)
 let bvl_with_same_clock = prove
- (`!st:(A,B)bvl_state. bvl_state_clock_fupd (K (bvl_state_clock st)) st = st`,
+ (`!st:(A,B)bvl_state. bvl_state_clock_fupd (combin_K (bvl_state_clock st)) st = st`,
   SIMP[bvl_state_component_equality]);;
 let _ = cake_add_simps [bvl_with_same_clock];;
 
 (* HOL4 [simp] *)
 let bvl_dec_clock_with_code = prove
  (`!n c (s:(C,FFI)bvl_state).
-     bvl_dec_clock n (bvl_state_code_fupd (K c) s) =
-     bvl_state_code_fupd (K c) (bvl_dec_clock n s)`,
+     bvl_dec_clock n (bvl_state_code_fupd (combin_K c) s) =
+     bvl_state_code_fupd (combin_K c) (bvl_dec_clock n s)`,
   SIMP[bvl_dec_clock_def; bvl_state_component_equality]);;
 let _ = cake_add_simps [bvl_dec_clock_with_code];;
 
@@ -118,10 +118,10 @@ let bvl_do_app_with_code = prove
  (`!op vs (s:(C,FFI)bvl_state) r s' c cc co.
      bvl_do_app op vs s = Rval (r,s') /\ ~(op = clos_Install) ==>
      domain (bvl_state_code s) SUBSET domain c ==>
-     bvl_do_app op vs (bvl_state_code_fupd (K c) (bvl_state_compile_fupd (K cc)
-                        (bvl_state_compile_oracle_fupd (K co) s))) =
-     Rval (r,bvl_state_code_fupd (K c) (bvl_state_compile_fupd (K cc)
-               (bvl_state_compile_oracle_fupd (K co) s')))`,
+     bvl_do_app op vs (bvl_state_code_fupd (combin_K c) (bvl_state_compile_fupd (combin_K cc)
+                        (bvl_state_compile_oracle_fupd (combin_K co) s))) =
+     Rval (r,bvl_state_code_fupd (combin_K c) (bvl_state_compile_fupd (combin_K cc)
+               (bvl_state_compile_oracle_fupd (combin_K co) s')))`,
   REPEAT GEN_TAC THEN
   REWRITE_TAC[bvl_do_app_def] THEN
   REWRITE_TAC[LET_DEF; LET_END_DEF; bvl_state_INFO.ri_accfupds; K_THM] THEN
@@ -153,8 +153,8 @@ let do_app_with_code_err_not_Install = prove
  (`!op vs (s:(C,FFI)bvl_state) e c cc co.
      bvl_do_app op vs s = Rerr e /\ ~(op = clos_Install) ==>
      (domain c SUBSET domain (bvl_state_code s) \/ ~(e = Rabort Rtype_error)) ==>
-     bvl_do_app op vs (bvl_state_code_fupd (K c) (bvl_state_compile_fupd (K cc)
-                        (bvl_state_compile_oracle_fupd (K co) s))) = Rerr e`,
+     bvl_do_app op vs (bvl_state_code_fupd (combin_K c) (bvl_state_compile_fupd (combin_K cc)
+                        (bvl_state_compile_oracle_fupd (combin_K co) s))) = Rerr e`,
   REPEAT GEN_TAC THEN
   REWRITE_TAC[bvl_do_app_def] THEN
   REWRITE_TAC[LET_DEF; LET_END_DEF; bvl_state_INFO.ri_accfupds; K_THM] THEN
@@ -167,7 +167,7 @@ let bvl_do_app_with_code_err = prove
  (`!op vs (s:(C,FFI)bvl_state) e c.
      bvl_do_app op vs s = Rerr e ==>
      (domain c = domain (bvl_state_code s) \/ ~(e = Rabort Rtype_error)) ==>
-     bvl_do_app op vs (bvl_state_code_fupd (K c) s) = Rerr e`,
+     bvl_do_app op vs (bvl_state_code_fupd (combin_K c) s) = Rerr e`,
   REPEAT GEN_TAC THEN
   REWRITE_TAC[bvl_do_app_def; bvl_do_install_def] THEN
   REWRITE_TAC[LET_DEF; LET_END_DEF; bvl_state_INFO.ri_accfupds; K_THM] THEN
@@ -192,9 +192,9 @@ let _ = cake_add_simps [bvl_initial_state_simp];;
 (* HOL4 [simp] *)
 let bvl_initial_state_with_simp = prove
  (`!(f:(FFI)ffi_state) c (co:num -> C # (num # num # bvl_exp) list) cc k k1 c1.
-     bvl_state_clock_fupd (K k1) (bvl_initial_state f c co cc k) =
+     bvl_state_clock_fupd (combin_K k1) (bvl_initial_state f c co cc k) =
      bvl_initial_state f c co cc k1 /\
-     bvl_state_code_fupd (K c1) (bvl_initial_state f c co cc k) =
+     bvl_state_code_fupd (combin_K c1) (bvl_initial_state f c co cc k) =
      bvl_initial_state f c1 co cc k`,
   REWRITE_TAC[bvl_initial_state_def; bvl_state_INFO.ri_fupds; K_THM]);;
 let _ = cake_add_simps [bvl_initial_state_with_simp];;
@@ -444,7 +444,7 @@ let BVLPROPSAUX_code_inv_trans = prove
 let BVLPROPSAUX_do_app_Install = prove
  (`!vs (s:(C,FFI)bvl_state).
      bvl_do_app clos_Install vs s = bvl_do_install vs s`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[bvl_do_app_def] THEN CASE_REWRITE_TAC[]);;
+  REPEAT GEN_TAC THEN REWRITE_TAC[bvl_do_app_def] THEN CAKE_REWRITE_TAC[]);;
 
 let BVLPROPSAUX_do_install_code = prove
  (`!vs (s:(C,FFI)bvl_state) v s'.
@@ -504,7 +504,7 @@ let evaluate_mk_tick = prove
  (`!exp env (s:(C,FFI)bvl_state) n.
      bvl_evaluate ([mk_tick n exp],env,s) =
      if bvl_state_clock s < n then
-       (Rerr (Rabort Rtimeout_error),bvl_state_clock_fupd (K 0) s)
+       (Rerr (Rabort Rtimeout_error),bvl_state_clock_fupd (combin_K 0) s)
      else bvl_evaluate ([exp],env,bvl_dec_clock n s)`,
   GEN_TAC THEN GEN_TAC THEN REWRITE_TAC[mk_tick_def] THEN
   ONCE_REWRITE_TAC[SWAP_FORALL_THM] THEN INDUCT_TAC THEN GEN_TAC THENL
@@ -523,14 +523,14 @@ let evaluate_mk_tick = prove
 
 let evaluate_MAP_Const = prove
  (`!i env (t1:(C,FFI)bvl_state) (exps:A list).
-     bvl_evaluate (MAP (K (bvl_Op (IntOp (clos_Const i)) [])) exps,env,t1) =
-     (Rval (MAP (K (bvl_Number i)) exps),t1)`,
+     bvl_evaluate (MAP (combin_K (bvl_Op (IntOp (clos_Const i)) [])) exps,env,t1) =
+     (Rval (MAP (combin_K (bvl_Number i)) exps),t1)`,
   GEN_TAC THEN GEN_TAC THEN GEN_TAC THEN LIST_INDUCT_TAC THEN
   REWRITE_TAC[MAP; bvl_evaluate_def] THEN
   ONCE_REWRITE_TAC[bvl_evaluate_CONS] THEN ASM_REWRITE_TAC[K_THM] THEN
   REWRITE_TAC[bvl_evaluate_def; bvl_do_app_def] THEN
-  CASE_REWRITE_TAC[REVERSE; bvl_do_int_app_def; HD] THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[HD]);;
+  CAKE_REWRITE_TAC[REVERSE; bvl_do_int_app_def; HD] THEN ASM_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[HD]);;
 
 (* HOL4 [simp] *)
 let bvl_evaluate_Bool = prove
@@ -538,7 +538,7 @@ let bvl_evaluate_Bool = prove
      bvl_evaluate ([bvl_Bool b],env,s) = (Rval [bvl_Boolv b],s)`,
   REWRITE_TAC[bvl_Bool_def; bvl_Boolv_def; bvl_evaluate_def; REVERSE;
               bvl_do_app_Cons] THEN
-  CASE_REWRITE_TAC[REVERSE]);;
+  CAKE_REWRITE_TAC[REVERSE]);;
 let _ = cake_add_simps [bvl_evaluate_Bool];;
 
 (* a local tactic for evaluate_expand_env: split the first evaluation of  *)
@@ -577,7 +577,7 @@ let bvl_evaluate_expand_env = prove
 
 let bvl_inc_clock_def = cake_def
   `bvl_inc_clock ck (s:(C,FFI)bvl_state) =
-     bvl_state_clock_fupd (K (bvl_state_clock s + ck)) s`;;
+     bvl_state_clock_fupd (combin_K (bvl_state_clock s + ck)) s`;;
 
 (* HOL4 [simp] *)
 let bvl_inc_clock_code = prove
@@ -652,14 +652,14 @@ let BVLPROPSAUX_do_app_clock = prove
 let bvl_do_app_change_clock = prove
  (`!op args (s1:(C,FFI)bvl_state) res s2 ck.
      bvl_do_app op args s1 = Rval (res,s2) ==>
-     bvl_do_app op args (bvl_state_clock_fupd (K ck) s1) =
-     Rval (res,bvl_state_clock_fupd (K ck) s2)`,
+     bvl_do_app op args (bvl_state_clock_fupd (combin_K ck) s1) =
+     Rval (res,bvl_state_clock_fupd (combin_K ck) s2)`,
   SIMP_TAC[BVLPROPSAUX_do_app_clock; map_result_def; pair_CASE]);;
 
 let bvl_do_app_change_clock_err = prove
  (`!op args (s1:(C,FFI)bvl_state) e ck.
      bvl_do_app op args s1 = Rerr e ==>
-     bvl_do_app op args (bvl_state_clock_fupd (K ck) s1) = Rerr e`,
+     bvl_do_app op args (bvl_state_clock_fupd (combin_K ck) s1) = Rerr e`,
   SIMP_TAC[BVLPROPSAUX_do_app_clock; map_result_def; map_error_result_I; I_THM]);;
 
 (* ------------------------------------------------------------------------- *)
@@ -763,7 +763,7 @@ let bvl_do_app_inc_clock = prove
  (CASE_TERM `!op vs x (y:(C,FFI)bvl_state).
      bvl_do_app op vs (bvl_inc_clock x y) =
      map_result (\p. match p with
-                       (v,s) -> (v,bvl_state_clock_fupd (K (x + bvl_state_clock y)) s))
+                       (v,s) -> (v,bvl_state_clock_fupd (combin_K (x + bvl_state_clock y)) s))
                 I (bvl_do_app op vs y)`,
   REWRITE_TAC[bvl_inc_clock_def; BVLPROPSAUX_do_app_clock] THEN
   REWRITE_TAC[ADD_AC]);;
@@ -841,7 +841,7 @@ let bvl_evaluate_add_clock_initial_state = prove
      ~(r = Rerr (Rabort Rtimeout_error)) ==>
      !extra.
        bvl_evaluate (es,env,bvl_initial_state ffi code co cc (k + extra)) =
-       (r,bvl_state_clock_fupd (K (bvl_state_clock s' + extra)) s')`,
+       (r,bvl_state_clock_fupd (combin_K (bvl_state_clock s' + extra)) s')`,
   REPEAT GEN_TAC THEN DISCH_THEN(MP_TAC o MATCH_MP bvl_evaluate_add_clock) THEN
   REWRITE_TAC[bvl_initial_state_def; bvl_inc_clock_def; bvl_state_INFO.ri_accessors;
               bvl_state_INFO.ri_fupds; K_THM]);;

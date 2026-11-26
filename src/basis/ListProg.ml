@@ -240,7 +240,7 @@ let UNZIP_eq = prove
        | CONS (y,z) xs -> let (ys,zs) = UNZIP xs in (CONS y ys, CONS z zs)`,
   LIST_INDUCT_TAC THEN REWRITE_TAC[UNZIP_DEF; MAP; list_CASE] THEN
   PAIR_CASES_ON `h:A#B` THEN REWRITE_TAC[pair_CASE; MAP; FST; SND] THEN
-  REWRITE_TAC[LET_DEF; LET_END_DEF] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[LET_DEF; LET_END_DEF] THEN CAKE_REWRITE_TAC[]);;
 
 let UNZIP_ind = prove
  (`!P. (!v:(A#B)list. (!x4 x3. v = CONS x4 x3 ==> !x2 x1. x4 = (x2,x1) ==> P x3) ==> P v) ==>
@@ -272,7 +272,7 @@ let SPLITP_alt = prove
        (CONS x l',l'')`,
   REWRITE_TAC[SPLITP] THEN COND_CASES_TAC THEN REWRITE_TAC[] THEN
   MP_TAC (ISPEC `SPLITP (P:A->bool) l` PAIR_SURJECTIVE) THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[FST; SND] THEN CASE_REWRITE_TAC[]);;
+  STRIP_TAC THEN ASM_REWRITE_TAC[FST; SND] THEN CAKE_REWRITE_TAC[]);;
 next_ml_names := ["split"];;
 let _ = translate SPLITP_alt;;
 

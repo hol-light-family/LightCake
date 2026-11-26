@@ -86,7 +86,7 @@ let new_constant_correct = prove
    EXISTS_TAC
     `(FST (i:(mlstring->U list->U)#(mlstring->U list->U)),
       (name =+ (\l. @v. (mem:U->U->bool) v
-                  (typesem (FST i) (K (setSpec_two mem) =++ REVERSE (ZIP vars l)) ty)))
+                  (typesem (FST i) (combin_K (setSpec_two mem) =++ REVERSE (ZIP vars l)) ty)))
       (SND i))` THEN
    SUBGOAL_THEN `is_std_sig (tys:tysig,tms:tmsig)` ASSUME_TAC THENL
     [ASM_MESON_TAC[theory_ok_sig; FST]; ALL_TAC] THEN
@@ -96,7 +96,7 @@ let new_constant_correct = prove
    SUBGOAL_THEN `equal_on (tys:tysig,tms:tmsig) i
       (FST (i:(mlstring->U list->U)#(mlstring->U list->U)),
        (name =+ (\l. @v. (mem:U->U->bool) v
-                  (typesem (FST i) (K (setSpec_two mem) =++ REVERSE (ZIP vars l)) ty)))
+                  (typesem (FST i) (combin_K (setSpec_two mem) =++ REVERSE (ZIP vars l)) ty)))
        (SND i))` ASSUME_TAC THENL
     [REWRITE_TAC[equal_on_def; APPLY_UPDATE_THM] THEN ASM_MESON_TAC[];
      ASM_REWRITE_TAC[]] THEN
@@ -117,7 +117,7 @@ let new_constant_correct = prove
      FIRST_X_ASSUM(SUBST_ALL_TAC o SYM) THEN REWRITE_TAC[] THEN
      X_GEN_TAC `tau:mlstring->U` THEN DISCH_TAC THEN ASM_REWRITE_TAC[] THEN
      SUBGOAL_THEN `typesem (FST (i:(mlstring->U list->U)#(mlstring->U list->U)))
-                     (K (setSpec_two (mem:U->U->bool)) =++ REVERSE (ZIP vars (MAP tau vars))) ty =
+                     (combin_K (setSpec_two (mem:U->U->bool)) =++ REVERSE (ZIP vars (MAP tau vars))) ty =
                    typesem (FST i) tau ty` SUBST1_TAC THENL
       [MATCH_MP_TAC typesem_tyvars THEN ASM_SIMP_TAC[CSEMAUX_UPDATE_LIST_ZIP_MAP];
        ALL_TAC] THEN
@@ -157,7 +157,7 @@ let CSEMAUX_termsem_closed_tyvars = prove
      hol_term_ok G t /\ CLOSED t /\
      (!v. MEM v (tvars t) ==> MEM v (hol_tyvars (typeof t)))
      ==> termsem0 (mem:U->U->bool) (SND G) i
-           (K (setSpec_two mem) =++
+           (combin_K (setSpec_two mem) =++
             REVERSE (ZIP (MAP implode (STRING_SORT (MAP explode (hol_tyvars (typeof t)))))
                          (MAP tau (MAP implode (STRING_SORT (MAP explode (hol_tyvars (typeof t))))))),
             ARB) t =
@@ -257,7 +257,7 @@ let new_specification_correct = prove
      ALL_TAC] THEN
   ABBREV_TAC `gm = SND (i:(mlstring->U list->U)#(mlstring->U list->U)) =++
      MAP (\(s,t). (s, \l. termsem0 (mem:U->U->bool) tms i
-                            (K (setSpec_two mem) =++
+                            (combin_K (setSpec_two mem) =++
                              REVERSE (ZIP (MAP implode (STRING_SORT (MAP explode
                                                           (hol_tyvars (typeof t))))) l),
                              ARB) t))
@@ -266,7 +266,7 @@ let new_specification_correct = prove
     `(!k. ALOOKUP eqs k = NONE ==> gm k = SND (i:(mlstring->U list->U)#(mlstring->U list->U)) k) /\
      (!k t. ALOOKUP eqs k = SOME t
             ==> gm k = \l. termsem0 (mem:U->U->bool) tms i
-                             (K (setSpec_two mem) =++
+                             (combin_K (setSpec_two mem) =++
                               REVERSE (ZIP (MAP implode (STRING_SORT (MAP explode
                                                            (hol_tyvars (typeof t))))) l),
                               ARB) t)`
@@ -554,7 +554,7 @@ let new_type_correct = prove
   ABBREV_TAC `axs = set_of_list (FLAT (MAP (\upd. APPEND (axexts_of_upd upd)
                                                    (conexts_of_upd upd)) ctxt))` THEN
   STRIP_TAC THEN X_GEN_TAC `i:(mlstring->U list->U)#(mlstring->U list->U)` THEN DISCH_TAC THEN
-  EXISTS_TAC `((name =+ K (setSpec_two (mem:U->U->bool)))
+  EXISTS_TAC `((name =+ combin_K (setSpec_two (mem:U->U->bool)))
                  (FST (i:(mlstring->U list->U)#(mlstring->U list->U))), SND i)` THEN
   SUBGOAL_THEN `is_std_sig (tys:tysig,tms:tmsig)` ASSUME_TAC THENL
    [ASM_MESON_TAC[theory_ok_sig; FST]; ALL_TAC] THEN
@@ -562,11 +562,11 @@ let new_type_correct = prove
    [RULE_ASSUM_TAC(REWRITE_RULE[is_std_sig_def]) THEN ASM_MESON_TAC[FLOOKUP_DEF; option_DISTINCT];
     ALL_TAC] THEN
   SUBGOAL_THEN `!k. k IN FDOM (tys:tysig)
-                    ==> (name =+ K (setSpec_two (mem:U->U->bool)))
+                    ==> (name =+ combin_K (setSpec_two (mem:U->U->bool)))
                           (FST (i:(mlstring->U list->U)#(mlstring->U list->U))) k = FST i k`
     ASSUME_TAC THENL [REWRITE_TAC[APPLY_UPDATE_THM] THEN ASM_MESON_TAC[]; ALL_TAC] THEN
   SUBGOAL_THEN `equal_on (tys:tysig,tms:tmsig) i
-      ((name =+ K (setSpec_two (mem:U->U->bool)))
+      ((name =+ combin_K (setSpec_two (mem:U->U->bool)))
          (FST (i:(mlstring->U list->U)#(mlstring->U list->U))), SND i)`
     ASSUME_TAC THENL
    [REWRITE_TAC[equal_on_def] THEN ASM_MESON_TAC[]; ASM_REWRITE_TAC[]] THEN
@@ -591,7 +591,7 @@ let new_type_correct = prove
       FIRST_X_ASSUM(MATCH_MP_TAC o CONJUNCT1 o check (is_conj o concl)) THEN
       REWRITE_TAC[IN_FRANGE] THEN ASM_MESON_TAC[FLOOKUP_DEF; option_DISTINCT; injectivity "option"];
       ALL_TAC] THEN
-    SUBGOAL_THEN `typesem ((name =+ K (setSpec_two (mem:U->U->bool)))
+    SUBGOAL_THEN `typesem ((name =+ combin_K (setSpec_two (mem:U->U->bool)))
                     (FST (i:(mlstring->U list->U)#(mlstring->U list->U)))) tau tk =
                   typesem (FST i) tau tk` SUBST1_TAC THENL
      [MATCH_MP_TAC typesem_sig THEN EXISTS_TAC `tys:tysig` THEN ASM_REWRITE_TAC[];
@@ -741,7 +741,7 @@ let new_type_definition_correct = prove
    MP_TAC(SPECL [`pred:hol_term`; `rty:hol_type`; `name:mlstring`]
                 CSEMAUX_sorted_tyvars_typedef) THEN
    ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
-   ABBREV_TAC `tv = \args:U list. K (setSpec_two (mem:U->U->bool)) =++
+   ABBREV_TAC `tv = \args:U list. combin_K (setSpec_two (mem:U->U->bool)) =++
                       REVERSE (ZIP (argv:mlstring list) args)` THEN
    ABBREV_TAC `sv = \tau:mlstring->U. \(x:mlstring,ty:hol_type).
                       @v. (mem:U->U->bool) v

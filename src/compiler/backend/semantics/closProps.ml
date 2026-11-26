@@ -14,7 +14,7 @@ needs "semantics/sem1aux_tfl.ml";;
 type_invention_error := true;;
 (* HOL4: with_same_clock *)
 let clos_with_same_clock = prove
- (`!s:(C,FFI)clos_state. clos_state_clock_fupd (K (clos_state_clock s)) s = s`,
+ (`!s:(C,FFI)clos_state. clos_state_clock_fupd (combin_K (clos_state_clock s)) s = s`,
   REWRITE_TAC[clos_state_component_equality; clos_state_INFO.ri_accfupds; K_THM]);;
 let _ = cake_add_simps [clos_with_same_clock];;
 
@@ -1043,7 +1043,7 @@ let lookup_vars_MEM = prove
 
 (* HOL4: clock_lemmas *)
 let clos_clock_lemmas = prove
- (`!s:(C,FFI)clos_state. clos_state_clock_fupd (K (clos_state_clock s)) s = s`,
+ (`!s:(C,FFI)clos_state. clos_state_clock_fupd (combin_K (clos_state_clock s)) s = s`,
   REWRITE_TAC[clos_with_same_clock]);;
 
 let evaluate_app_rw = prove
@@ -1054,11 +1054,11 @@ let evaluate_app_rw = prove
        NONE -> (Rerr (Rabort Rtype_error),s)
      | SOME (Partial_app v) ->
          if clos_state_clock s < LENGTH args then
-           (Rerr (Rabort Rtimeout_error),clos_state_clock_fupd (K 0) s)
+           (Rerr (Rabort Rtimeout_error),clos_state_clock_fupd (combin_K 0) s)
          else (Rval [v], clos_dec_clock (LENGTH args) s)
      | SOME (Full_app exp env rest_args) ->
          if clos_state_clock s < LENGTH args - LENGTH rest_args then
-           (Rerr (Rabort Rtimeout_error),clos_state_clock_fupd (K 0) s)
+           (Rerr (Rabort Rtimeout_error),clos_state_clock_fupd (combin_K 0) s)
          else
            (match clos_evaluate ([exp],env,clos_dec_clock (LENGTH args - LENGTH rest_args) s)
             with
@@ -1502,7 +1502,7 @@ let CLOSPROPSAUX_dec_clock_dec_clock = prove
 
 let CLOSPROPSAUX_dec_clock_clock0 = prove
  (`!k (s:(C,FFI)clos_state).
-     clos_state_clock_fupd (K 0) (clos_dec_clock k s) = clos_state_clock_fupd (K 0) s`,
+     clos_state_clock_fupd (combin_K 0) (clos_dec_clock k s) = clos_state_clock_fupd (combin_K 0) s`,
   REWRITE_TAC[clos_dec_clock_def; clos_state_component_equality;
               clos_state_INFO.ri_accfupds; K_THM]);;
 let CLOSPROPSAUX_max_app_dec_clock = prove
@@ -1517,7 +1517,7 @@ let CLOSPROPSAUX_app_append_partial = prove
      dest_closure (clos_state_max_app s) NONE f args2 = SOME (Partial_app cl) ==>
      evaluate_app NONE f (APPEND args1 args2) s =
      (if clos_state_clock s < LENGTH args2
-      then (Rerr (Rabort Rtimeout_error),clos_state_clock_fupd (K 0) s)
+      then (Rerr (Rabort Rtimeout_error),clos_state_clock_fupd (combin_K 0) s)
       else evaluate_app NONE cl args1 (clos_dec_clock (LENGTH args2) s))`,
   REPEAT STRIP_TAC THEN ASM_CASES_TAC `args1:clos_v list = []` THENL
    [ASM_SIMP_TAC[APPEND; evaluate_app_rw; case_def "option"; case_def "app_kind";
@@ -1567,7 +1567,7 @@ let CLOSPROPSAUX_app_append_full = prove
      dest_closure (clos_state_max_app s) NONE f args2 = SOME (Full_app exp env rest) ==>
      evaluate_app NONE f (APPEND args1 args2) s =
      (if clos_state_clock s < LENGTH args2 - LENGTH rest
-      then (Rerr (Rabort Rtimeout_error),clos_state_clock_fupd (K 0) s)
+      then (Rerr (Rabort Rtimeout_error),clos_state_clock_fupd (combin_K 0) s)
       else
         match clos_evaluate ([exp],env,clos_dec_clock (LENGTH args2 - LENGTH rest) s) with
           (Rval [v],s1) -> evaluate_app NONE v (APPEND args1 rest) s1
@@ -1750,7 +1750,7 @@ let dest_closure_NONE_Full_to_Partial = prove
 (* HOL4 [simp] *)
 let dec_clock_with_clock = prove
  (`!n (s:(C,FFI)clos_state) y.
-     clos_state_clock_fupd (K y) (clos_dec_clock n s) = clos_state_clock_fupd (K y) s`,
+     clos_state_clock_fupd (combin_K y) (clos_dec_clock n s) = clos_state_clock_fupd (combin_K y) s`,
   REWRITE_TAC[clos_dec_clock_def; clos_state_component_equality;
               clos_state_INFO.ri_accfupds; K_THM]);;
 let _ = cake_add_simps [dec_clock_with_clock];;
@@ -1781,9 +1781,9 @@ let CLOSPROPSAUX_do_app_clock = prove
 (* HOL4: do_app_add_to_clock *)
 let clos_do_app_add_to_clock = prove
  (CASE_TERM `!op vs (s:(C,FFI)clos_state) extra.
-     clos_do_app op vs (clos_state_clock_fupd (K (clos_state_clock s + extra)) s) =
+     clos_do_app op vs (clos_state_clock_fupd (combin_K (clos_state_clock s + extra)) s) =
      map_result (\p. match p with
-                       (v,s1) -> (v,clos_state_clock_fupd (K (clos_state_clock s1 + extra)) s1))
+                       (v,s1) -> (v,clos_state_clock_fupd (combin_K (clos_state_clock s1 + extra)) s1))
                 I (clos_do_app op vs s)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[CLOSPROPSAUX_do_app_clock] THEN
   MP_TAC(ISPECL [`op:clos_op`; `vs:clos_v list`; `s:(C,FFI)clos_state`]
@@ -1795,8 +1795,8 @@ let clos_do_app_add_to_clock = prove
 let do_install_add_to_clock = prove
  (`!vs (s:(C,FFI)clos_state) e s' extra.
      clos_do_install vs s = (Rval e,s') ==>
-     clos_do_install vs (clos_state_clock_fupd (K (clos_state_clock s + extra)) s) =
-     (Rval e,clos_state_clock_fupd (K (clos_state_clock s' + extra)) s')`,
+     clos_do_install vs (clos_state_clock_fupd (combin_K (clos_state_clock s + extra)) s) =
+     (Rval e,clos_state_clock_fupd (combin_K (clos_state_clock s' + extra)) s')`,
   REPEAT GEN_TAC THEN REWRITE_TAC[clos_do_install_def] THEN
   REWRITE_TAC[clos_state_INFO.ri_accfupds; K_THM] THEN
   REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
@@ -1810,8 +1810,8 @@ let do_install_add_to_clock = prove
 let do_install_type_error_add_to_clock = prove
  (`!vs (s:(C,FFI)clos_state) t extra.
      clos_do_install vs s = (Rerr (Rabort Rtype_error),t) ==>
-     clos_do_install vs (clos_state_clock_fupd (K (clos_state_clock s + extra)) s) =
-     (Rerr (Rabort Rtype_error),clos_state_clock_fupd (K (clos_state_clock t + extra)) t)`,
+     clos_do_install vs (clos_state_clock_fupd (combin_K (clos_state_clock s + extra)) s) =
+     (Rerr (Rabort Rtype_error),clos_state_clock_fupd (combin_K (clos_state_clock t + extra)) t)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[clos_do_install_def] THEN
   REWRITE_TAC[clos_state_INFO.ri_accfupds; K_THM] THEN
   REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
@@ -1848,8 +1848,8 @@ let do_install_not_Rffi_error = prove
 let CLOSPROPSAUX_do_install_err_add = prove
  (`!vs (s:(C,FFI)clos_state) e t extra.
      clos_do_install vs s = (Rerr e,t) /\ ~(e = Rabort Rtimeout_error) ==>
-     clos_do_install vs (clos_state_clock_fupd (K (clos_state_clock s + extra)) s) =
-     (Rerr e,clos_state_clock_fupd (K (clos_state_clock t + extra)) t)`,
+     clos_do_install vs (clos_state_clock_fupd (combin_K (clos_state_clock s + extra)) s) =
+     (Rerr e,clos_state_clock_fupd (combin_K (clos_state_clock t + extra)) t)`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   CASES_ON `e:(clos_v)error_result` THENL
    [FIRST_ASSUM(MP_TAC o SPEC `a:clos_v` o MATCH_MP do_install_not_Rraise) THEN
@@ -1865,8 +1865,8 @@ let CLOSPROPSAUX_do_install_err_add = prove
 let CLOSPROPSAUX_dec_clock_add = prove
  (`!k (s:(C,FFI)clos_state) extra.
      ~(clos_state_clock s < k) ==>
-     clos_dec_clock k (clos_state_clock_fupd (K (clos_state_clock s + extra)) s) =
-     clos_state_clock_fupd (K (clos_state_clock (clos_dec_clock k s) + extra))
+     clos_dec_clock k (clos_state_clock_fupd (combin_K (clos_state_clock s + extra)) s) =
+     clos_state_clock_fupd (combin_K (clos_state_clock (clos_dec_clock k s) + extra))
        (clos_dec_clock k s)`,
   REWRITE_TAC[clos_dec_clock_def; clos_state_component_equality;
               clos_state_INFO.ri_accfupds; K_THM] THEN ARITH_TAC);;
@@ -1874,23 +1874,23 @@ let CLOSPROPSAUX_dec_clock_add = prove
 let CLOSPROPSAUX_dec_clock_add1 = prove
  (`!(s:(C,FFI)clos_state) extra.
      ~(clos_state_clock s = 0) ==>
-     clos_dec_clock 1 (clos_state_clock_fupd (K (clos_state_clock s + extra)) s) =
-     clos_state_clock_fupd (K (clos_state_clock (clos_dec_clock 1 s) + extra))
+     clos_dec_clock 1 (clos_state_clock_fupd (combin_K (clos_state_clock s + extra)) s) =
+     clos_state_clock_fupd (combin_K (clos_state_clock (clos_dec_clock 1 s) + extra))
        (clos_dec_clock 1 s)`,
   REWRITE_TAC[clos_dec_clock_def; clos_state_component_equality;
               clos_state_INFO.ri_accfupds; K_THM] THEN ARITH_TAC);;
 
 let CLOSPROPSAUX_clock_add_refs = prove
  (`!(s:(C,FFI)clos_state) extra r.
-     clos_state_refs_fupd (K r) (clos_state_clock_fupd (K (clos_state_clock s + extra)) s) =
-     clos_state_clock_fupd (K (clos_state_clock (clos_state_refs_fupd (K r) s) + extra))
-       (clos_state_refs_fupd (K r) s)`,
+     clos_state_refs_fupd (combin_K r) (clos_state_clock_fupd (combin_K (clos_state_clock s + extra)) s) =
+     clos_state_clock_fupd (combin_K (clos_state_clock (clos_state_refs_fupd (combin_K r) s) + extra))
+       (clos_state_refs_fupd (combin_K r) s)`,
   REWRITE_TAC[clos_state_component_equality; clos_state_INFO.ri_accfupds; K_THM]);;
 
 let CLOSPROPSAUX_clock_add_0 = prove
  (`!(s:(C,FFI)clos_state) extra.
-     clos_state_clock_fupd (K 0) (clos_state_clock_fupd (K (clos_state_clock s + extra)) s) =
-     clos_state_clock_fupd (K 0) s`,
+     clos_state_clock_fupd (combin_K 0) (clos_state_clock_fupd (combin_K (clos_state_clock s + extra)) s) =
+     clos_state_clock_fupd (combin_K 0) s`,
   REWRITE_TAC[clos_state_component_equality; clos_state_INFO.ri_accfupds; K_THM]);;
 
 let CLOSPROPSAUX_add_simps =
@@ -1933,12 +1933,12 @@ let CLOSPROPSAUX_ADD_TAC =
 let CLOSPROPSAUX_evaluate_add_to_clock = prove
  (`(!xs env (s:(C,FFI)clos_state) r s' extra.
       clos_evaluate (xs,env,s) = (r,s') /\ ~(r = Rerr (Rabort Rtimeout_error)) ==>
-      clos_evaluate (xs,env,clos_state_clock_fupd (K (clos_state_clock s + extra)) s) =
-      (r,clos_state_clock_fupd (K (clos_state_clock s' + extra)) s')) /\
+      clos_evaluate (xs,env,clos_state_clock_fupd (combin_K (clos_state_clock s + extra)) s) =
+      (r,clos_state_clock_fupd (combin_K (clos_state_clock s' + extra)) s')) /\
    (!loc_opt v rest_args (s:(C,FFI)clos_state) r s' extra.
       evaluate_app loc_opt v rest_args s = (r,s') /\ ~(r = Rerr (Rabort Rtimeout_error)) ==>
-      evaluate_app loc_opt v rest_args (clos_state_clock_fupd (K (clos_state_clock s + extra)) s) =
-      (r,clos_state_clock_fupd (K (clos_state_clock s' + extra)) s'))`,
+      evaluate_app loc_opt v rest_args (clos_state_clock_fupd (combin_K (clos_state_clock s + extra)) s) =
+      (r,clos_state_clock_fupd (combin_K (clos_state_clock s' + extra)) s'))`,
   MATCH_MP_TAC CLOSPROPSAUX_evaluate_ind THEN REPEAT CONJ_TAC THEN CLOSPROPSAUX_ADD_TAC);;
 
 (* HOL4: evaluate_add_to_clock (HOL4 leaves extra free) *)
@@ -1946,14 +1946,14 @@ let clos_evaluate_add_to_clock = prove
  (`(!p es env (s:(C,FFI)clos_state) r s' extra.
       p = (es,env,s) /\ clos_evaluate (es,env,s) = (r,s') /\
       ~(r = Rerr (Rabort Rtimeout_error)) ==>
-      clos_evaluate (es,env,clos_state_clock_fupd (K (clos_state_clock s + extra)) s) =
-      (r,clos_state_clock_fupd (K (clos_state_clock s' + extra)) s')) /\
+      clos_evaluate (es,env,clos_state_clock_fupd (combin_K (clos_state_clock s + extra)) s) =
+      (r,clos_state_clock_fupd (combin_K (clos_state_clock s' + extra)) s')) /\
    (!loc_opt v rest_args (s:(C,FFI)clos_state) r s' extra.
       evaluate_app loc_opt v rest_args s = (r,s') /\
       ~(r = Rerr (Rabort Rtimeout_error)) ==>
       evaluate_app loc_opt v rest_args
-        (clos_state_clock_fupd (K (clos_state_clock s + extra)) s) =
-      (r,clos_state_clock_fupd (K (clos_state_clock s' + extra)) s'))`,
+        (clos_state_clock_fupd (combin_K (clos_state_clock s + extra)) s) =
+      (r,clos_state_clock_fupd (combin_K (clos_state_clock s' + extra)) s'))`,
   MESON_TAC[CLOSPROPSAUX_evaluate_add_to_clock]);;
 
 (* HOL4: evaluate_add_clock *)
@@ -1961,8 +1961,8 @@ let clos_evaluate_add_clock = prove
  (`!es env (s:(C,FFI)clos_state) r s'.
      clos_evaluate (es,env,s) = (r,s') /\ ~(r = Rerr (Rabort Rtimeout_error)) ==>
      !extra.
-       clos_evaluate (es,env,clos_state_clock_fupd (K (clos_state_clock s + extra)) s) =
-       (r,clos_state_clock_fupd (K (clos_state_clock s' + extra)) s')`,
+       clos_evaluate (es,env,clos_state_clock_fupd (combin_K (clos_state_clock s + extra)) s) =
+       (r,clos_state_clock_fupd (combin_K (clos_state_clock s' + extra)) s')`,
   MESON_TAC[CLOSPROPSAUX_evaluate_add_to_clock]);;
 
 (* HOL4: evaluate_add_clock_initial_state *)
@@ -1972,7 +1972,7 @@ let clos_evaluate_add_clock_initial_state = prove
      ~(r = Rerr (Rabort Rtimeout_error)) ==>
      !extra.
        clos_evaluate (es,env,clos_initial_state ffi ma code co cc (k + extra)) =
-       (r,clos_state_clock_fupd (K (clos_state_clock s' + extra)) s')`,
+       (r,clos_state_clock_fupd (combin_K (clos_state_clock s' + extra)) s')`,
   REPEAT GEN_TAC THEN DISCH_THEN(MP_TAC o MATCH_MP clos_evaluate_add_clock) THEN
   REWRITE_TAC[clos_initial_state_def; clos_state_INFO.ri_accessors;
               clos_state_INFO.ri_fupds; K_THM]);;
@@ -2024,14 +2024,14 @@ let clos_evaluate_io_events_mono_imp = prove
 
 (* HOL4: with_clock_ffi [local] *)
 let clos_with_clock_ffi = prove
- (`!(s:(C,FFI)clos_state) k. clos_state_ffi (clos_state_clock_fupd (K k) s) = clos_state_ffi s`,
+ (`!(s:(C,FFI)clos_state) k. clos_state_ffi (clos_state_clock_fupd (combin_K k) s) = clos_state_ffi s`,
   REWRITE_TAC[clos_state_INFO.ri_accfupds]);;
 
 (* local tactics for evaluate_add_to_clock_io_events_mono: strip a theorem *)
 (* after renaming all its bound variables apart from the goal (HOL Light's  *)
 (* CHOOSE fails when a bound name is free in the goal)                      *)
 let CLOSPROPSAUX_FRESH_TAC (ttac:thm_tactic) th : tactic = fun (asl,w as g) ->
-  let avoid0 = itlist (union o frees o concl o snd) asl
+  let avoid0 = itlist (union o thm_frees o snd) asl
                  (union (frees w) (union (frees (concl th)) (freesl (hyp th)))) in
   let rec rn avoid tm =
     match tm with
@@ -2110,11 +2110,11 @@ let CLOSPROPSAUX_IOADD_TAC =
 let CLOSPROPSAUX_add_to_clock_io_events_mono = prove
  (`(!xs env (s:(C,FFI)clos_state) extra r s' r2 s2.
       clos_evaluate (xs,env,s) = (r,s') /\
-      clos_evaluate (xs,env,clos_state_clock_fupd (K (clos_state_clock s + extra)) s) = (r2,s2)
+      clos_evaluate (xs,env,clos_state_clock_fupd (combin_K (clos_state_clock s + extra)) s) = (r2,s2)
       ==> ffi_state_io_events (clos_state_ffi s') <<= ffi_state_io_events (clos_state_ffi s2)) /\
    (!loc_opt v rest (s:(C,FFI)clos_state) extra r s' r2 s2.
       evaluate_app loc_opt v rest s = (r,s') /\
-      evaluate_app loc_opt v rest (clos_state_clock_fupd (K (clos_state_clock s + extra)) s) =
+      evaluate_app loc_opt v rest (clos_state_clock_fupd (combin_K (clos_state_clock s + extra)) s) =
       (r2,s2)
       ==> ffi_state_io_events (clos_state_ffi s') <<= ffi_state_io_events (clos_state_ffi s2))`,
   MATCH_MP_TAC CLOSPROPSAUX_evaluate_ind THEN REPEAT CONJ_TAC THEN
@@ -2128,11 +2128,11 @@ let clos_evaluate_add_to_clock_io_events_mono = prove
       p = (es,env,s) ==>
       ffi_state_io_events (clos_state_ffi (SND (clos_evaluate p))) <<=
       ffi_state_io_events (clos_state_ffi (SND (clos_evaluate
-        (es,env,clos_state_clock_fupd (K (clos_state_clock s + extra)) s))))) /\
+        (es,env,clos_state_clock_fupd (combin_K (clos_state_clock s + extra)) s))))) /\
    (!l v r (s:(C,FFI)clos_state) extra.
       ffi_state_io_events (clos_state_ffi (SND (evaluate_app l v r s))) <<=
       ffi_state_io_events (clos_state_ffi (SND (evaluate_app l v r
-        (clos_state_clock_fupd (K (clos_state_clock s + extra)) s)))))`,
+        (clos_state_clock_fupd (combin_K (clos_state_clock s + extra)) s)))))`,
   CONJ_TAC THEN REPEAT GEN_TAC THENL
    [DISCH_THEN SUBST1_TAC THEN
     MATCH_MP_TAC(CONJUNCT1 CLOSPROPSAUX_add_to_clock_io_events_mono);
@@ -2451,22 +2451,22 @@ let clos_simple_state_rel_def = cake_def
                        FDOM (clos_state_refs s) = FDOM (clos_state_refs t) /\
                        ALL2 (OPTREL vr) (clos_state_globals s) (clos_state_globals t)) /\
      (!f s t.
-        sr s t ==> sr (clos_state_ffi_fupd (K f) s) (clos_state_ffi_fupd (K f) t)) /\
+        sr s t ==> sr (clos_state_ffi_fupd (combin_K f) s) (clos_state_ffi_fupd (combin_K f) t)) /\
      (!bs s t p.
         sr s t ==>
-        sr (clos_state_refs_fupd (K (clos_state_refs s |+ (p,clos_ByteArray bs))) s)
-           (clos_state_refs_fupd (K (clos_state_refs t |+ (p,clos_ByteArray bs))) t)) /\
+        sr (clos_state_refs_fupd (combin_K (clos_state_refs s |+ (p,clos_ByteArray bs))) s)
+           (clos_state_refs_fupd (combin_K (clos_state_refs t |+ (p,clos_ByteArray bs))) t)) /\
      (!s t p xs ys.
         sr s t /\ ALL2 vr xs ys ==>
-        sr (clos_state_refs_fupd (K (clos_state_refs s |+ (p,clos_ValueArray xs))) s)
-           (clos_state_refs_fupd (K (clos_state_refs t |+ (p,clos_ValueArray ys))) t)) /\
+        sr (clos_state_refs_fupd (combin_K (clos_state_refs s |+ (p,clos_ValueArray xs))) s)
+           (clos_state_refs_fupd (combin_K (clos_state_refs t |+ (p,clos_ValueArray ys))) t)) /\
      (!s t p m v w.
         sr s t /\ vr v w ==>
-        sr (clos_state_refs_fupd (K (clos_state_refs s |+ (p,clos_Thunk m v))) s)
-           (clos_state_refs_fupd (K (clos_state_refs t |+ (p,clos_Thunk m w))) t)) /\
+        sr (clos_state_refs_fupd (combin_K (clos_state_refs s |+ (p,clos_Thunk m v))) s)
+           (clos_state_refs_fupd (combin_K (clos_state_refs t |+ (p,clos_Thunk m w))) t)) /\
      (!s t xs ys.
         sr s t /\ ALL2 (OPTREL vr) xs ys ==>
-        sr (clos_state_globals_fupd (K xs) s) (clos_state_globals_fupd (K ys) t))`;;
+        sr (clos_state_globals_fupd (combin_K xs) s) (clos_state_globals_fupd (combin_K ys) t))`;;
 
 let simple_state_rel_ffi = prove
  (`!vr (sr:(D,FFI)clos_state->(C,FFI)clos_state->bool) s t.
@@ -2483,38 +2483,38 @@ let simple_state_rel_fdom = prove
 let simple_state_rel_update_ffi = prove
  (`!vr (sr:(D,FFI)clos_state->(C,FFI)clos_state->bool) s t f.
      clos_simple_state_rel vr sr /\ sr s t ==>
-     sr (clos_state_ffi_fupd (K f) s) (clos_state_ffi_fupd (K f) t)`,
+     sr (clos_state_ffi_fupd (combin_K f) s) (clos_state_ffi_fupd (combin_K f) t)`,
   REWRITE_TAC[clos_simple_state_rel_def] THEN MESON_TAC[]);;
 
 (* HOL4 [local] *)
 let simple_state_rel_update_bytes = prove
  (`!vr (sr:(D,FFI)clos_state->(C,FFI)clos_state->bool) s t p bs.
      clos_simple_state_rel vr sr /\ sr s t ==>
-     sr (clos_state_refs_fupd (K (clos_state_refs s |+ (p,clos_ByteArray bs))) s)
-        (clos_state_refs_fupd (K (clos_state_refs t |+ (p,clos_ByteArray bs))) t)`,
+     sr (clos_state_refs_fupd (combin_K (clos_state_refs s |+ (p,clos_ByteArray bs))) s)
+        (clos_state_refs_fupd (combin_K (clos_state_refs t |+ (p,clos_ByteArray bs))) t)`,
   REWRITE_TAC[clos_simple_state_rel_def] THEN MESON_TAC[]);;
 
 (* HOL4 [local] *)
 let simple_state_rel_update_values = prove
  (`!vr (sr:(D,FFI)clos_state->(C,FFI)clos_state->bool) s t xs ys p.
      clos_simple_state_rel vr sr /\ sr s t /\ ALL2 vr xs ys ==>
-     sr (clos_state_refs_fupd (K (clos_state_refs s |+ (p,clos_ValueArray xs))) s)
-        (clos_state_refs_fupd (K (clos_state_refs t |+ (p,clos_ValueArray ys))) t)`,
+     sr (clos_state_refs_fupd (combin_K (clos_state_refs s |+ (p,clos_ValueArray xs))) s)
+        (clos_state_refs_fupd (combin_K (clos_state_refs t |+ (p,clos_ValueArray ys))) t)`,
   REWRITE_TAC[clos_simple_state_rel_def] THEN MESON_TAC[]);;
 
 (* HOL4 [local] *)
 let simple_state_rel_update_thunks = prove
  (`!vr (sr:(D,FFI)clos_state->(C,FFI)clos_state->bool) s t v w p m.
      clos_simple_state_rel vr sr /\ sr s t /\ vr v w ==>
-     sr (clos_state_refs_fupd (K (clos_state_refs s |+ (p,clos_Thunk m v))) s)
-        (clos_state_refs_fupd (K (clos_state_refs t |+ (p,clos_Thunk m w))) t)`,
+     sr (clos_state_refs_fupd (combin_K (clos_state_refs s |+ (p,clos_Thunk m v))) s)
+        (clos_state_refs_fupd (combin_K (clos_state_refs t |+ (p,clos_Thunk m w))) t)`,
   REWRITE_TAC[clos_simple_state_rel_def] THEN MESON_TAC[]);;
 
 (* HOL4 [local] *)
 let simple_state_rel_update_globals = prove
  (`!vr (sr:(D,FFI)clos_state->(C,FFI)clos_state->bool) s t xs ys.
      clos_simple_state_rel vr sr /\ sr s t /\ ALL2 (OPTREL vr) xs ys ==>
-     sr (clos_state_globals_fupd (K xs) s) (clos_state_globals_fupd (K ys) t)`,
+     sr (clos_state_globals_fupd (combin_K xs) s) (clos_state_globals_fupd (combin_K ys) t)`,
   REWRITE_TAC[clos_simple_state_rel_def] THEN MESON_TAC[]);;
 
 (* HOL4 [local] *)
@@ -2760,8 +2760,8 @@ let simple_state_rel_FLOOKUP_refs_IMP = prove
 (* HOL4 [local]: s with <| refs := r; ffi := f |> *)
 let refs_ffi_lemma = prove
  (`!(s:(C,FFI)clos_state) refs' ffi'.
-     clos_state_refs_fupd (K refs') (clos_state_ffi_fupd (K ffi') s) =
-     clos_state_ffi_fupd (K ffi') (clos_state_refs_fupd (K refs') s)`,
+     clos_state_refs_fupd (combin_K refs') (clos_state_ffi_fupd (combin_K ffi') s) =
+     clos_state_ffi_fupd (combin_K ffi') (clos_state_refs_fupd (combin_K refs') s)`,
   REWRITE_TAC[clos_state_component_equality; clos_state_INFO.ri_accfupds; K_THM]);;
 
 (* a local helper: related lists give related list values *)
@@ -2998,7 +2998,7 @@ let CLOSPROPSAUX_do_word_app_rel = prove
   REWRITE_TAC[distinctness "option"; injectivity "option"] THEN
   DISCH_THEN(SUBST_ALL_TAC o SYM) THEN CLOSPROPSAUX_SHAPE_TAC THEN
   REPEAT(CHANGED_TAC(ASM_REWRITE_TAC(clos_do_word_app_def :: CLOSPROPSAUX_vr_rws ()) THEN
-                     CASE_REWRITE_TAC[])));;
+                     CAKE_REWRITE_TAC[])));;
 
 let CLOSPROPSAUX_bad_thunk_rel = prove
  (`!vr (sr:(D,FFI)clos_state->(C,FFI)clos_state->bool) s t x y m.
@@ -3025,9 +3025,9 @@ let CLOSPROPSAUX_bad_thunk_rel = prove
   CASES_ON `FLOOKUP (clos_state_refs (t:(C,FFI)clos_state)) a1` THEN
   REWRITE_TAC[case_def "option"] THEN
   TRY(CASES_ON `a:(clos_v)clos_ref`) THEN REWRITE_TAC[case_def "clos_ref"] THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
-  TRY(CASES_ON `a0':thunk_mode`) THEN CASE_REWRITE_TAC[] THEN
-  TRY COND_CASES_TAC THEN CASE_REWRITE_TAC[]);;
+  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
+  TRY(CASES_ON `a0':thunk_mode`) THEN CAKE_REWRITE_TAC[] THEN
+  TRY COND_CASES_TAC THEN CAKE_REWRITE_TAC[]);;
 
 let CLOSPROPSAUX_make_const_rel = prove
  (`!vr. clos_simple_val_rel vr ==> !c. vr (make_const c) (make_const c)`,
@@ -3039,14 +3039,14 @@ let CLOSPROPSAUX_make_const_rel = prove
 let CLOSPROPSAUX_ssr_ffi_bytes = prove
  (`!vr (sr:(D,FFI)clos_state->(C,FFI)clos_state->bool) s t p ws f.
      clos_simple_state_rel vr sr /\ sr s t ==>
-     sr (clos_state_refs_fupd (K (clos_state_refs s |+ (p,clos_ByteArray ws)))
-           (clos_state_ffi_fupd (K f) s))
-        (clos_state_refs_fupd (K (clos_state_refs t |+ (p,clos_ByteArray ws)))
-           (clos_state_ffi_fupd (K f) t))`,
+     sr (clos_state_refs_fupd (combin_K (clos_state_refs s |+ (p,clos_ByteArray ws)))
+           (clos_state_ffi_fupd (combin_K f) s))
+        (clos_state_refs_fupd (combin_K (clos_state_refs t |+ (p,clos_ByteArray ws)))
+           (clos_state_ffi_fupd (combin_K f) t))`,
   REPEAT STRIP_TAC THEN
   MP_TAC(ISPECL [`vr:clos_v->clos_v->bool`; `sr:(D,FFI)clos_state->(C,FFI)clos_state->bool`;
-                 `clos_state_ffi_fupd (K (f:(FFI)ffi_state)) (s:(D,FFI)clos_state)`;
-                 `clos_state_ffi_fupd (K (f:(FFI)ffi_state)) (t:(C,FFI)clos_state)`;
+                 `clos_state_ffi_fupd (combin_K (f:(FFI)ffi_state)) (s:(D,FFI)clos_state)`;
+                 `clos_state_ffi_fupd (combin_K (f:(FFI)ffi_state)) (t:(C,FFI)clos_state)`;
                  `p:num`; `ws:byte list`] simple_state_rel_update_bytes) THEN
   ASM_SIMP_TAC[simple_state_rel_update_ffi; clos_state_INFO.ri_accfupds; K_THM] THEN
   ASM_MESON_TAC[simple_state_rel_update_ffi]);;
@@ -3082,10 +3082,10 @@ let CLOSPROPSAUX_SYNC_TAC : tactic = fun (asl,w as gl) ->
       let l = lhs c and r = rhs c in
       match headc l with
         "FLOOKUP" when rand(rator l) = refs_t && is_constr_value r ->
-          [CASE_REWRITE_RULE []
+          [CAKE_REWRITE_RULE []
              (MATCH_MP simple_state_rel_FLOOKUP_refs_IMP (CONJ ssr (CONJ srst th)))]
       | "get_global" when rand l = globs_t && is_constr_value r ->
-          [CASE_REWRITE_RULE []
+          [CAKE_REWRITE_RULE []
              (MATCH_MP simple_state_rel_get_global (CONJ ssr (CONJ srst th)))]
       | "clos_v_to_list" ->
           let vth = find_vr (rand l) in
@@ -3144,7 +3144,7 @@ let CLOSPROPSAUX_LENGTH_TAC : tactic = fun (asl,w as gl) ->
 (* evaluate the source side *)
 let CLOSPROPSAUX_EVAL_TAC : tactic =
   REWRITE_TAC[clos_do_app_def; LET_DEF; LET_END_DEF] THEN
-  REPEAT(CHANGED_TAC(ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[])) THEN
+  REPEAT(CHANGED_TAC(ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[])) THEN
   REWRITE_TAC[result_rel_def; exc_rel_def; PAIR_REL_THM];;
 
 (* the target condition of BoolTest: ~(~(v = Boolv T) /\ ~(v = Boolv F)) *)
@@ -3265,14 +3265,14 @@ let simple_compile_state_rel_def = cake_def
            comp (p,aux) = (exps,res) ==>
            res = [] /\ LENGTH exps = LENGTH p /\ cr p exps) /\
         (!n. SND (SND (clos_state_compile_oracle s n)) = []) /\
-        (!n. sr (clos_state_clock_fupd (K n)
+        (!n. sr (clos_state_clock_fupd (combin_K n)
                   (clos_state_compile_oracle_fupd
-                     (K (shift_seq 1 (clos_state_compile_oracle s)))
-                     (clos_state_code_fupd (K (clos_state_code s)) s)))
-                (clos_state_clock_fupd (K n)
+                     (combin_K (shift_seq 1 (clos_state_compile_oracle s)))
+                     (clos_state_code_fupd (combin_K (clos_state_code s)) s)))
+                (clos_state_clock_fupd (combin_K n)
                   (clos_state_compile_oracle_fupd
-                     (K (shift_seq 1 (clos_state_compile_oracle t)))
-                     (clos_state_code_fupd (K (clos_state_code t)) t)))))`;;
+                     (combin_K (shift_seq 1 (clos_state_compile_oracle t)))
+                     (clos_state_code_fupd (combin_K (clos_state_code t)) t)))))`;;
 
 (* HOL4: simple_val_rel_v_to_bytes *)
 let clos_simple_val_rel_v_to_bytes = prove
@@ -3337,7 +3337,7 @@ let CLOSPROPSAUX_do_install_not2 = prove
 (* installs no auxiliary code                                               *)
 let CLOSPROPSAUX_code_fupd_same = prove
  (`!f g (s:(C,FFI)clos_state).
-     clos_state_code_fupd (K (clos_state_code s))
+     clos_state_code_fupd (combin_K (clos_state_code s))
        (clos_state_compile_oracle_fupd f (clos_state_clock_fupd g s)) =
      clos_state_compile_oracle_fupd f (clos_state_clock_fupd g s)`,
   REWRITE_TAC[clos_state_component_equality; clos_state_INFO.ri_accfupds; K_THM]);;
@@ -3351,8 +3351,8 @@ let CLOSPROPSAUX_do_install_char = prove
            clos_state_compile s cfg (p,[]) = SOME (bytes,data,cfg') /\
            FST (clos_state_compile_oracle s 1) = cfg') /\ ~(p = [])
      then ((if clos_state_clock s = 0 then Rerr (Rabort Rtimeout_error) else Rval p),
-           clos_state_compile_oracle_fupd (K (shift_seq 1 (clos_state_compile_oracle s)))
-             (clos_state_clock_fupd (K (clos_state_clock s - 1)) s))
+           clos_state_compile_oracle_fupd (combin_K (shift_seq 1 (clos_state_compile_oracle s)))
+             (clos_state_clock_fupd (combin_K (clos_state_clock s - 1)) s))
      else (Rerr (Rabort Rtype_error),s)`,
   REPEAT STRIP_TAC THEN
   REWRITE_TAC[clos_do_install_def; case_def "list"; LET_DEF; LET_END_DEF] THEN
@@ -3460,10 +3460,10 @@ let simple_val_rel_do_install = prove
     ASM_REWRITE_TAC[exc_rel_def]] THEN
   SUBGOAL_THEN
    `(sr:(C,FFI)clos_state->(C,FFI)clos_state->bool)
-      (clos_state_compile_oracle_fupd (K (shift_seq 1 (clos_state_compile_oracle s)))
-          (clos_state_clock_fupd (K (clos_state_clock s - 1)) (s:(C,FFI)clos_state)))
-       (clos_state_compile_oracle_fupd (K (shift_seq 1 (clos_state_compile_oracle t)))
-          (clos_state_clock_fupd (K (clos_state_clock t - 1)) (t:(C,FFI)clos_state)))`
+      (clos_state_compile_oracle_fupd (combin_K (shift_seq 1 (clos_state_compile_oracle s)))
+          (clos_state_clock_fupd (combin_K (clos_state_clock s - 1)) (s:(C,FFI)clos_state)))
+       (clos_state_compile_oracle_fupd (combin_K (shift_seq 1 (clos_state_compile_oracle t)))
+          (clos_state_clock_fupd (combin_K (clos_state_clock t - 1)) (t:(C,FFI)clos_state)))`
     ASSUME_TAC THENL
    [FIRST_X_ASSUM(MP_TAC o SPEC `clos_state_clock (s:(C,FFI)clos_state) - 1` o
       check (fun th -> try fst(dest_var(fst(dest_forall(concl th)))) = "n" &&
@@ -3527,7 +3527,7 @@ let clos_eval_sim_def = cake_def
 let clos_initial_state_with_clock = prove
  (`!(ffi:(FFI)ffi_state) ma code (co:num -> C # clos_prog) cc k ck.
      clos_state_clock_fupd
-       (K (clos_state_clock (clos_initial_state ffi ma code co cc k) + ck))
+       (combin_K (clos_state_clock (clos_initial_state ffi ma code co cc k) + ck))
        (clos_initial_state ffi ma code co cc k) =
      clos_initial_state ffi ma code co cc (k + ck)`,
   REWRITE_TAC[clos_initial_state_def; clos_state_INFO.ri_accessors;
@@ -3914,7 +3914,7 @@ let clos_do_install_adj_orac = prove
   ASM_REWRITE_TAC[OPTION_MAP_DEF; PAIR_MAP_THM; I_THM] THEN DISCH_THEN(ASSUME_TAC o SYM) THEN
   REWRITE_TAC[clos_do_install_def; LET_DEF; LET_END_DEF; clos_state_INFO.ri_accessors; o_THM;
               PAIR_MAP; shift_seq_def; ADD_CLAUSES; clos_state_INFO.ri_accfupds; K_THM] THEN
-  REPEAT(CHANGED_TAC(ASM_REWRITE_TAC[FST; SND; I_THM] THEN CASE_REWRITE_TAC[])) THEN
+  REPEAT(CHANGED_TAC(ASM_REWRITE_TAC[FST; SND; I_THM] THEN CAKE_REWRITE_TAC[])) THEN
   REWRITE_TAC[UNWIND_THM1] THEN
   REWRITE_TAC[clos_state_component_equality; clos_state_INFO.ri_accessors;
               clos_state_INFO.ri_accfupds; K_THM; FUN_EQ_THM; o_THM; PAIR_MAP; I_THM]);;
@@ -4018,11 +4018,11 @@ let CLOSPROPSAUX_adj_acc = prove
 let CLOSPROPSAUX_adj_clock = prove
  (`!(cc:B -> clos_prog -> (byte list # int64 list # B) option) (f:A -> B)
      (s:(A,FFI)clos_state) k.
-     clos_state_clock_fupd (K k) (CLOSPROPSAUX_adj cc f s) =
-     CLOSPROPSAUX_adj cc f (clos_state_clock_fupd (K k) s) /\
+     clos_state_clock_fupd (combin_K k) (CLOSPROPSAUX_adj cc f s) =
+     CLOSPROPSAUX_adj cc f (clos_state_clock_fupd (combin_K k) s) /\
      clos_dec_clock k (CLOSPROPSAUX_adj cc f s) =
      CLOSPROPSAUX_adj cc f (clos_dec_clock k s) /\
-     (CLOSPROPSAUX_orac_ok cc f (clos_state_clock_fupd (K k) s) <=>
+     (CLOSPROPSAUX_orac_ok cc f (clos_state_clock_fupd (combin_K k) s) <=>
       CLOSPROPSAUX_orac_ok cc f s) /\
      (CLOSPROPSAUX_orac_ok cc f (clos_dec_clock k s) <=> CLOSPROPSAUX_orac_ok cc f s)`,
   REWRITE_TAC[CLOSPROPSAUX_adj_def; CLOSPROPSAUX_orac_ok_def; clos_dec_clock_def;
@@ -4084,9 +4084,9 @@ let CLOSPROPSAUX_do_app_adj_Rerr = prove
 let CLOSPROPSAUX_adj_refs = prove
  (`!(cc:B -> clos_prog -> (byte list # int64 list # B) option) (f:A -> B)
      (s:(A,FFI)clos_state) r.
-     clos_state_refs_fupd (K r) (CLOSPROPSAUX_adj cc f s) =
-     CLOSPROPSAUX_adj cc f (clos_state_refs_fupd (K r) s) /\
-     (CLOSPROPSAUX_orac_ok cc f (clos_state_refs_fupd (K r) s) <=>
+     clos_state_refs_fupd (combin_K r) (CLOSPROPSAUX_adj cc f s) =
+     CLOSPROPSAUX_adj cc f (clos_state_refs_fupd (combin_K r) s) /\
+     (CLOSPROPSAUX_orac_ok cc f (clos_state_refs_fupd (combin_K r) s) <=>
       CLOSPROPSAUX_orac_ok cc f s)`,
   REWRITE_TAC[CLOSPROPSAUX_adj_def; CLOSPROPSAUX_orac_ok_def;
               clos_state_component_equality; clos_state_INFO.ri_accessors;
@@ -4286,7 +4286,7 @@ let find_code_SUBMAP = prove
 (* HOL4: SUBMAP_rel_def *)
 let SUBMAP_rel_def = cake_def
   `SUBMAP_rel (z1:(C,FFI)clos_state) (z2:(C,FFI)clos_state) <=>
-     z2 = clos_state_code_fupd (K (clos_state_code z2)) z1 /\
+     z2 = clos_state_code_fupd (combin_K (clos_state_code z2)) z1 /\
      clos_state_code z1 SUBMAP clos_state_code z2 /\
      oracle_monotonic (set_of_list o MAP FST o SND o SND) (<) (FDOM (clos_state_code z2))
        (clos_state_compile_oracle z1)`;;
@@ -4302,7 +4302,7 @@ let find_code_SUBMAP_rel = prove
 let SUBMAP_rel_EX = prove
  (`!(z1:(C,FFI)clos_state) z2.
      SUBMAP_rel z1 z2 ==>
-     ?code. z2 = clos_state_code_fupd (K code) z1 /\ clos_state_code z1 SUBMAP code`,
+     ?code. z2 = clos_state_code_fupd (combin_K code) z1 /\ clos_state_code z1 SUBMAP code`,
   REWRITE_TAC[SUBMAP_rel_def] THEN MESON_TAC[]);;
 
 (* a local helper for do_install_SUBMAP: the oracle stays monotonic after an *)
@@ -4340,7 +4340,7 @@ let do_install_SUBMAP = prove
   RULE_ASSUM_TAC(REWRITE_RULE[]) THEN TRY(FIRST_ASSUM CONTR_TAC) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[FST; SND]) THEN
   REWRITE_TAC[clos_do_install_def; LET_DEF; LET_END_DEF; clos_state_INFO.ri_accfupds; K_THM] THEN
-  REPEAT(CHANGED_TAC(ASM_REWRITE_TAC[FST; SND] THEN CASE_REWRITE_TAC[])) THEN
+  REPEAT(CHANGED_TAC(ASM_REWRITE_TAC[FST; SND] THEN CAKE_REWRITE_TAC[])) THEN
   REWRITE_TAC[UNWIND_THM1; SUBMAP_rel_def] THEN
   REWRITE_TAC[clos_state_component_equality; clos_state_INFO.ri_accfupds; K_THM] THEN
   (CONJ_TAC THENL
@@ -4352,7 +4352,7 @@ let do_install_SUBMAP = prove
 let CLOSPROPSAUX_SUBMAP_rel_alt = prove
  (`!(z1:(C,FFI)clos_state) z2.
      SUBMAP_rel z1 z2 <=>
-     ?c. z2 = clos_state_code_fupd (K c) z1 /\ clos_state_code z1 SUBMAP c /\
+     ?c. z2 = clos_state_code_fupd (combin_K c) z1 /\ clos_state_code z1 SUBMAP c /\
          oracle_monotonic (set_of_list o MAP FST o SND o SND) (<) (FDOM c)
            (clos_state_compile_oracle z1)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[SUBMAP_rel_def] THEN EQ_TAC THENL
@@ -4439,20 +4439,20 @@ let CLOSPROPSAUX_cok_def = new_definition
 
 let CLOSPROPSAUX_SUBMAP_rel_cok = prove
  (`!(z1:(C,FFI)clos_state) z2.
-     SUBMAP_rel z1 z2 <=> ?c. z2 = clos_state_code_fupd (K c) z1 /\ CLOSPROPSAUX_cok c z1`,
+     SUBMAP_rel z1 z2 <=> ?c. z2 = clos_state_code_fupd (combin_K c) z1 /\ CLOSPROPSAUX_cok c z1`,
   REWRITE_TAC[CLOSPROPSAUX_SUBMAP_rel_alt; CLOSPROPSAUX_cok_def]);;
 
 let CLOSPROPSAUX_code_upd = prove
  (`!(c:(num,num#clos_exp)fmap) (s:(C,FFI)clos_state) k r.
-     clos_state_clock_fupd (K k) (clos_state_code_fupd (K c) s) =
-     clos_state_code_fupd (K c) (clos_state_clock_fupd (K k) s) /\
-     clos_dec_clock k (clos_state_code_fupd (K c) s) =
-     clos_state_code_fupd (K c) (clos_dec_clock k s) /\
-     clos_state_refs_fupd (K r) (clos_state_code_fupd (K c) s) =
-     clos_state_code_fupd (K c) (clos_state_refs_fupd (K r) s) /\
-     (CLOSPROPSAUX_cok c (clos_state_clock_fupd (K k) s) <=> CLOSPROPSAUX_cok c s) /\
+     clos_state_clock_fupd (combin_K k) (clos_state_code_fupd (combin_K c) s) =
+     clos_state_code_fupd (combin_K c) (clos_state_clock_fupd (combin_K k) s) /\
+     clos_dec_clock k (clos_state_code_fupd (combin_K c) s) =
+     clos_state_code_fupd (combin_K c) (clos_dec_clock k s) /\
+     clos_state_refs_fupd (combin_K r) (clos_state_code_fupd (combin_K c) s) =
+     clos_state_code_fupd (combin_K c) (clos_state_refs_fupd (combin_K r) s) /\
+     (CLOSPROPSAUX_cok c (clos_state_clock_fupd (combin_K k) s) <=> CLOSPROPSAUX_cok c s) /\
      (CLOSPROPSAUX_cok c (clos_dec_clock k s) <=> CLOSPROPSAUX_cok c s) /\
-     (CLOSPROPSAUX_cok c (clos_state_refs_fupd (K r) s) <=> CLOSPROPSAUX_cok c s)`,
+     (CLOSPROPSAUX_cok c (clos_state_refs_fupd (combin_K r) s) <=> CLOSPROPSAUX_cok c s)`,
   REWRITE_TAC[CLOSPROPSAUX_cok_def; clos_dec_clock_def; clos_state_component_equality;
               clos_state_INFO.ri_accfupds; K_THM]);;
 
@@ -4465,11 +4465,11 @@ let CLOSPROPSAUX_cok_find_code = prove
 let CLOSPROPSAUX_do_app_cok_Rval = prove
  (`!(c:(num,num#clos_exp)fmap) op xs (s:(C,FFI)clos_state) v s1.
      CLOSPROPSAUX_cok c s /\ clos_do_app op xs s = Rval (v,s1) ==>
-     clos_do_app op xs (clos_state_code_fupd (K c) s) = Rval (v,clos_state_code_fupd (K c) s1) /\
+     clos_do_app op xs (clos_state_code_fupd (combin_K c) s) = Rval (v,clos_state_code_fupd (combin_K c) s1) /\
      CLOSPROPSAUX_cok c s1`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   MP_TAC(ISPECL [`op:clos_op`; `xs:clos_v list`; `s:(C,FFI)clos_state`;
-                 `clos_state_code_fupd (K (c:(num,num#clos_exp)fmap)) (s:(C,FFI)clos_state)`;
+                 `clos_state_code_fupd (combin_K (c:(num,num#clos_exp)fmap)) (s:(C,FFI)clos_state)`;
                  `v:clos_v`; `s1:(C,FFI)clos_state`] do_app_SUBMAP_Rval) THEN
   ANTS_TAC THENL
    [ASM_REWRITE_TAC[CLOSPROPSAUX_SUBMAP_rel_cok] THEN ASM_MESON_TAC[]; ALL_TAC] THEN
@@ -4481,7 +4481,7 @@ let CLOSPROPSAUX_do_app_cok_Rval = prove
 let CLOSPROPSAUX_do_app_cok_Rerr = prove
  (`!(c:(num,num#clos_exp)fmap) op xs (s:(C,FFI)clos_state) e.
      CLOSPROPSAUX_cok c s /\ clos_do_app op xs s = Rerr e ==>
-     clos_do_app op xs (clos_state_code_fupd (K c) s) = Rerr e`,
+     clos_do_app op xs (clos_state_code_fupd (combin_K c) s) = Rerr e`,
   REPEAT STRIP_TAC THEN MATCH_MP_TAC do_app_SUBMAP_Rerr THEN
   EXISTS_TAC `s:(C,FFI)clos_state` THEN
   ASM_REWRITE_TAC[CLOSPROPSAUX_SUBMAP_rel_cok] THEN ASM_MESON_TAC[]);;
@@ -4490,11 +4490,11 @@ let CLOSPROPSAUX_do_install_cok = prove
  (`!(c:(num,num#clos_exp)fmap) xs (s:(C,FFI)clos_state) r s1.
      CLOSPROPSAUX_cok c s /\ clos_do_install xs s = (r,s1) /\
      ~(r = Rerr (Rabort Rtype_error)) ==>
-     ?c'. clos_do_install xs (clos_state_code_fupd (K c) s) = (r,clos_state_code_fupd (K c') s1) /\
+     ?c'. clos_do_install xs (clos_state_code_fupd (combin_K c) s) = (r,clos_state_code_fupd (combin_K c') s1) /\
           CLOSPROPSAUX_cok c' s1`,
   REPEAT STRIP_TAC THEN
   MP_TAC(ISPECL [`xs:clos_v list`; `s:(C,FFI)clos_state`;
-                 `clos_state_code_fupd (K (c:(num,num#clos_exp)fmap)) (s:(C,FFI)clos_state)`;
+                 `clos_state_code_fupd (combin_K (c:(num,num#clos_exp)fmap)) (s:(C,FFI)clos_state)`;
                  `r:(clos_exp list,clos_v)result`; `s1:(C,FFI)clos_state`] do_install_SUBMAP) THEN
   ASM_REWRITE_TAC[CLOSPROPSAUX_SUBMAP_rel_cok] THEN ANTS_TAC THENL
    [ASM_MESON_TAC[]; ALL_TAC] THEN
@@ -4526,13 +4526,13 @@ let CLOSPROPSAUX_evaluate_cok = prove
  (`(!xs env (s:(C,FFI)clos_state) r s' c.
       clos_evaluate (xs,env,s) = (r,s') /\ ~(r = Rerr (Rabort Rtype_error)) /\
       CLOSPROPSAUX_cok c s ==>
-      ?c'. clos_evaluate (xs,env,clos_state_code_fupd (K c) s) =
-           (r,clos_state_code_fupd (K c') s') /\ CLOSPROPSAUX_cok c' s') /\
+      ?c'. clos_evaluate (xs,env,clos_state_code_fupd (combin_K c) s) =
+           (r,clos_state_code_fupd (combin_K c') s') /\ CLOSPROPSAUX_cok c' s') /\
    (!loc_opt v rest_args (s:(C,FFI)clos_state) r s' c.
       evaluate_app loc_opt v rest_args s = (r,s') /\ ~(r = Rerr (Rabort Rtype_error)) /\
       CLOSPROPSAUX_cok c s ==>
-      ?c'. evaluate_app loc_opt v rest_args (clos_state_code_fupd (K c) s) =
-           (r,clos_state_code_fupd (K c') s') /\ CLOSPROPSAUX_cok c' s')`,
+      ?c'. evaluate_app loc_opt v rest_args (clos_state_code_fupd (combin_K c) s) =
+           (r,clos_state_code_fupd (combin_K c') s') /\ CLOSPROPSAUX_cok c' s')`,
   MATCH_MP_TAC CLOSPROPSAUX_evaluate_ind THEN REPEAT CONJ_TAC THEN CLOSPROPSAUX_COK_TAC);;
 
 (* HOL4: evaluate_code_SUBMAP *)
@@ -4758,7 +4758,7 @@ let get_code_labels_code_locs = prove
 let clos_initial_state_clock = prove
  (`!(ffi:(FFI)ffi_state) max_app f (co:num -> C # clos_prog) cc k k'.
      clos_state_clock (clos_initial_state ffi max_app f co cc k) = k /\
-     clos_state_clock_fupd (K k) (clos_initial_state ffi max_app f co cc k') =
+     clos_state_clock_fupd (combin_K k) (clos_initial_state ffi max_app f co cc k') =
      clos_initial_state ffi max_app f co cc k`,
   REWRITE_TAC[clos_initial_state_def; clos_state_INFO.ri_accessors;
               clos_state_INFO.ri_fupds; K_THM]);;
@@ -4776,8 +4776,8 @@ let CLOSPROPSAUX_eval_SING_NIL = prove
 let CLOSPROPSAUX_do_app_not_Rraise = prove
  (`!op ls (s:(C,FFI)clos_state) v. ~(clos_do_app op ls s = Rerr (Rraise v))`,
   REPEAT GEN_TAC THEN ASM_CASES_TAC `op = BlockOp clos_Equal` THENL
-   [ASM_REWRITE_TAC[clos_do_app_def] THEN CASE_REWRITE_TAC[] THEN
-    REPEAT(TOP_CASE_TAC THEN CASE_REWRITE_TAC[]);
+   [ASM_REWRITE_TAC[clos_do_app_def] THEN CAKE_REWRITE_TAC[] THEN
+    REPEAT(TOP_CASE_TAC THEN CAKE_REWRITE_TAC[]);
     DISCH_THEN(MP_TAC o MATCH_MP clos_do_app_err) THEN ASM_REWRITE_TAC[] THEN
     REWRITE_TAC[distinctness "error_result"]]);;
 
@@ -4829,16 +4829,16 @@ let CLOSPROPSAUX_dest_thunk_rel = prove
                 CLOSPROPSAUX_vr_RefPtr_shape) THEN
   ASM_REWRITE_TAC[] THEN STRIP_TAC THENL
    [ALL_TAC;
-    ASM_SIMP_TAC[CLOSSEMAUX_dest_thunk_NotThunk] THEN CASE_REWRITE_TAC[]] THEN
+    ASM_SIMP_TAC[CLOSSEMAUX_dest_thunk_NotThunk] THEN CAKE_REWRITE_TAC[]] THEN
   ASM_REWRITE_TAC[clos_dest_thunk_def] THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o REWRITE_RULE[clos_simple_state_rel_def] o
     check (fun th -> CLOSPROPSAUX_is_app "clos_simple_state_rel" (concl th))) THEN
-  CASES_ON `FLOOKUP (clos_state_refs (t:(C,FFI)clos_state)) ptr` THEN CASE_REWRITE_TAC[] THENL
-   [RES_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]; ALL_TAC] THEN
-  CASES_ON `a:(clos_v)clos_ref` THEN CASE_REWRITE_TAC[] THEN
-  RES_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
-  TRY(CASES_ON `a0:thunk_mode` THEN CASE_REWRITE_TAC[] THEN COND_CASES_TAC THEN
-      CASE_REWRITE_TAC[] THEN ASM_MESON_TAC[]));;
+  CASES_ON `FLOOKUP (clos_state_refs (t:(C,FFI)clos_state)) ptr` THEN CAKE_REWRITE_TAC[] THENL
+   [RES_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]; ALL_TAC] THEN
+  CASES_ON `a:(clos_v)clos_ref` THEN CAKE_REWRITE_TAC[] THEN
+  RES_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
+  TRY(CASES_ON `a0:thunk_mode` THEN CAKE_REWRITE_TAC[] THEN COND_CASES_TAC THEN
+      CAKE_REWRITE_TAC[] THEN ASM_MESON_TAC[]));;
 
 (* the top implication of !vs. a1 /\ ... /\ an ==> c, curried (no change if it *)
 (* has no implication)                                                        *)

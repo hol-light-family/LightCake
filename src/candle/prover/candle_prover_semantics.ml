@@ -39,8 +39,6 @@
 (*   the clock) or times out without events, and then applies              *)
 (*   evaluate_v_ok to prog; here that argument is one lemma for any clock   *)
 (*   (CAN3AUX_semantics_events) used by both cases.                          *)
-(* - HOL4 llist's LSET, which hol4/llist.ml does not port, is CAN3AUX_LSET  *)
-(*   here (used by events_of_def only).                                      *)
 (* - Decision D8 (not in HOL4): at the end, prog_syntax_ok_candle_code       *)
 (*   proves the hypothesis prog_syntax_ok candle_code of semantics_thm by    *)
 (*   evaluation, and semantics_thm_strong is semantics_thm without it (its  *)
@@ -144,10 +142,10 @@ let CAN3AUX_safe_exp_eval = prove
                                     | _ -> T)
                     | _ -> T)`,
   REWRITE_TAC[safe_exp_def] THEN AP_TERM_TAC THEN REWRITE_TAC[FUN_EQ_THM] THEN
-  X_GEN_TAC `x:exp` THEN QCASES_ON "x" THEN CASE_REWRITE_TAC[] THENL
-   [QCASES_ON "a0" THEN CASE_REWRITE_TAC[] THEN
+  X_GEN_TAC `x:exp` THEN QCASES_ON "x" THEN CAKE_REWRITE_TAC[] THENL
+   [QCASES_ON "a0" THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[option_DISTINCT; option_INJ] THEN MESON_TAC[];
-    QCASES_ON "a0" THEN CASE_REWRITE_TAC[] THEN
+    QCASES_ON "a0" THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[distinctness "op"; injectivity "op"]]);;
 
 (* HOL4 EVAL of simple_dec and safe_dec *)
@@ -267,7 +265,7 @@ let env_ok_basis_env = prove
     (REWRITE_RULE[GSYM AND_IMP_INTRO] evaluate_basis_v_ok_decs)) THEN
   REWRITE_TAC[post_state_ok_with_clock; post_state_ok_basis_state; basis_decs_ok;
               env_ok_init_env; CAN3AUX_init_env_not_kernel_types] THEN
-  CASE_REWRITE_TAC[] THEN MESON_TAC[CAN3AUX_env_ok_extend_dec_env_left]);;
+  CAKE_REWRITE_TAC[] THEN MESON_TAC[CAN3AUX_env_ok_extend_dec_env_left]);;
 
 (* ------------------------------------------------------------------------- *)
 (* Show that the candle_init_state is state_ok.                              *)
@@ -548,10 +546,10 @@ let init_context_init_ctxt = prove
 let CAN3AUX_candle_Prog = prove
  (`prog_syntax_ok candle_code ==>
    ?ck1 ck2.
-     evaluate_decs (state_clock_fupd (K ck1)
-                      (state_eval_state_fupd (K es) (ml_init_state (ffi:(FFI)ffi_state))))
+     evaluate_decs (state_clock_fupd (combin_K ck1)
+                      (state_eval_state_fupd (combin_K es) (ml_init_state (ffi:(FFI)ffi_state))))
                    ml_init_env candle_code =
-     (state_clock_fupd (K ck2) (state_eval_state_fupd (K es) (candle_init_state ffi)),
+     (state_clock_fupd (combin_K ck2) (state_eval_state_fupd (combin_K es) (candle_init_state ffi)),
       Rval candle_init_env)`,
   DISCH_TAC THEN
   SUBGOAL_THEN `state_eval_state (ml_init_state (ffi:(FFI)ffi_state)) = NONE` ASSUME_TAC THENL
@@ -564,46 +562,46 @@ let CAN3AUX_candle_Prog = prove
 
 (* two states that differ at most in their clocks *)
 let CAN3AUX_clock_fupd_eq = prove
- (`state_clock_fupd (K a) (s1:(FFI)state) = state_clock_fupd (K b) s2 ==>
-   s1 = state_clock_fupd (K (state_clock s1)) s2`,
+ (`state_clock_fupd (combin_K a) (s1:(FFI)state) = state_clock_fupd (combin_K b) s2 ==>
+   s1 = state_clock_fupd (combin_K (state_clock s1)) s2`,
   REWRITE_TAC[state_component_equality; state_INFO.ri_accfupds; K_THM] THEN
   SIMP_TAC[]);;
 
 (* evaluate_decs_clock_determ when the second run returns a value *)
 let CAN3AUX_clock_determ_Rval = prove
- (`evaluate_decs (state_clock_fupd (K k1) (s:(FFI)state)) env p = (s1,r1) /\
-   evaluate_decs (state_clock_fupd (K k2) s) env p = (s2,Rval x) ==>
+ (`evaluate_decs (state_clock_fupd (combin_K k1) (s:(FFI)state)) env p = (s1,r1) /\
+   evaluate_decs (state_clock_fupd (combin_K k2) s) env p = (s2,Rval x) ==>
    r1 = Rval x \/ (r1 = Rerr (Rabort Rtimeout_error) /\ k1 < k2)`,
   DISCH_THEN (MP_TAC o MATCH_MP evaluate_decs_clock_determ) THEN
-  QCASES_ON "r1" THEN CASE_REWRITE_TAC[] THENL
+  QCASES_ON "r1" THEN CAKE_REWRITE_TAC[] THENL
    [MESON_TAC[];
-    QCASES_ON "a" THEN CASE_REWRITE_TAC[] THEN
-    QCASES_ON "a'" THEN CASE_REWRITE_TAC[]]);;
+    QCASES_ON "a" THEN CAKE_REWRITE_TAC[] THEN
+    QCASES_ON "a'" THEN CAKE_REWRITE_TAC[]]);;
 
 (* a run of candle_code that returns gives candle_init_env, in the state of *)
 (* candle_prog_thm up to the clock (HOL4: evaluate_decs_add_to_clock twice)  *)
 let CAN3AUX_candle_code_Rval = prove
  (`prog_syntax_ok candle_code /\
-   evaluate_decs (state_clock_fupd (K k)
-                    (state_eval_state_fupd (K es) (ml_init_state (ffi:(FFI)ffi_state))))
+   evaluate_decs (state_clock_fupd (combin_K k)
+                    (state_eval_state_fupd (combin_K es) (ml_init_state (ffi:(FFI)ffi_state))))
                  ml_init_env candle_code = (s1,Rval env1) ==>
    env1 = candle_init_env /\
-   s1 = state_clock_fupd (K (state_clock s1))
-          (state_eval_state_fupd (K es) (candle_init_state ffi))`,
+   s1 = state_clock_fupd (combin_K (state_clock s1))
+          (state_eval_state_fupd (combin_K es) (candle_init_state ffi))`,
   STRIP_TAC THEN
   FIRST_X_ASSUM (X_CHOOSE_THEN `ck1:num` (X_CHOOSE_TAC `ck2:num`) o
                  MATCH_MP CAN3AUX_candle_Prog) THEN
   MP_TAC (ISPECL
-    [`state_clock_fupd (K k)
-        (state_eval_state_fupd (K es) (ml_init_state (ffi:(FFI)ffi_state)))`;
+    [`state_clock_fupd (combin_K k)
+        (state_eval_state_fupd (combin_K es) (ml_init_state (ffi:(FFI)ffi_state)))`;
      `ml_init_env`; `candle_code`; `s1:(FFI)state`; `Rval env1:(v sem_env,v)result`;
      `ck1:num`] evaluate_decs_add_to_clock) THEN
   MP_TAC (ISPECL
-    [`state_clock_fupd (K ck1)
-        (state_eval_state_fupd (K es) (ml_init_state (ffi:(FFI)ffi_state)))`;
+    [`state_clock_fupd (combin_K ck1)
+        (state_eval_state_fupd (combin_K es) (ml_init_state (ffi:(FFI)ffi_state)))`;
      `ml_init_env`; `candle_code`;
-     `state_clock_fupd (K ck2)
-        (state_eval_state_fupd (K es) (candle_init_state (ffi:(FFI)ffi_state)))`;
+     `state_clock_fupd (combin_K ck2)
+        (state_eval_state_fupd (combin_K es) (candle_init_state (ffi:(FFI)ffi_state)))`;
      `Rval candle_init_env:(v sem_env,v)result`; `k:num`] evaluate_decs_add_to_clock) THEN
   ASM_REWRITE_TAC[distinctness "result"; state_INFO.ri_accfupds; state_INFO.ri_fupdfupds;
                   K_o_THM; K_THM] THEN
@@ -619,8 +617,8 @@ let CAN3AUX_candle_code_Rval = prove
 (* evaluate_decs_clock_determ and evaluate_decs_ffi_mono_clock)              *)
 let CAN3AUX_candle_code_Rerr = prove
  (`prog_syntax_ok candle_code /\ ffi_state_io_events (ffi:(FFI)ffi_state) = [] /\
-   evaluate_decs (state_clock_fupd (K k)
-                    (state_eval_state_fupd (K es) (ml_init_state ffi)))
+   evaluate_decs (state_clock_fupd (combin_K k)
+                    (state_eval_state_fupd (combin_K es) (ml_init_state ffi)))
                  ml_init_env candle_code = (s1,Rerr e) ==>
    ffi_state_io_events (state_ffi s1) = []`,
   STRIP_TAC THEN
@@ -631,7 +629,7 @@ let CAN3AUX_candle_code_Rerr = prove
     ASSUME_TAC a1 THEN ASSUME_TAC a2)) THEN
   REWRITE_TAC[distinctness "result"; injectivity "result"] THEN STRIP_TAC THEN
   MP_TAC (ISPECL [`k:num`; `ck1:num`;
-                  `state_eval_state_fupd (K es) (ml_init_state (ffi:(FFI)ffi_state))`;
+                  `state_eval_state_fupd (combin_K es) (ml_init_state (ffi:(FFI)ffi_state))`;
                   `ml_init_env`; `candle_code`] evaluate_decs_ffi_mono_clock) THEN
   ASM_SIMP_TAC[LT_IMP_LE; FST; io_events_mono_def; state_INFO.ri_accfupds;
                candle_init_state_ffi; isPREFIX_NILR]);;
@@ -650,14 +648,14 @@ let CAN3AUX_prog_events = prove
             (el 2 (CONJUNCTS evaluate_v_ok))) THEN
   ASM_SIMP_TAC[env_ok_extend_dec_env; env_ok_candle_init_env; env_ok_init_env] THEN
   DISCH_THEN (X_CHOOSE_THEN `ctxt1:update list` (MP_TAC o CONJUNCT2)) THEN
-  QCASES_ON "r" THEN CASE_REWRITE_TAC[] THENL
+  QCASES_ON "r" THEN CAKE_REWRITE_TAC[] THENL
    [SIMP_TAC[candle_state_ok_def];
-    QCASES_ON "a" THEN CASE_REWRITE_TAC[] THEN SIMP_TAC[candle_state_ok_def]]);;
+    QCASES_ON "a" THEN CAKE_REWRITE_TAC[] THEN SIMP_TAC[candle_state_ok_def]]);;
 
 (* the state of candle_prog_thm with another clock and eval state es *)
 let CAN3AUX_state_ok_with = prove
  (`candle_state_ok ctxt (s:(FFI)state) /\ candle_eval_state_ok es ==>
-   candle_state_ok ctxt (state_clock_fupd (K c) (state_eval_state_fupd (K es) s))`,
+   candle_state_ok ctxt (state_clock_fupd (combin_K c) (state_eval_state_fupd (combin_K es) s))`,
   REWRITE_TAC[candle_state_ok_def; state_INFO.ri_accfupds; K_THM] THEN MESON_TAC[]);;
 
 (* every event of a run of candle_code followed by a safe program is ok,   *)
@@ -666,8 +664,8 @@ let CAN3AUX_semantics_events = prove
  (`!(ffi:(FFI)ffi_state) es prog k s2 r.
    candle_eval_state_ok es /\ prog_syntax_ok candle_code /\ ALL safe_dec prog /\
    ffi_state_io_events ffi = [] /\
-   evaluate_decs (state_clock_fupd (K k)
-                    (state_eval_state_fupd (K es) (ml_init_state ffi)))
+   evaluate_decs (state_clock_fupd (combin_K k)
+                    (state_eval_state_fupd (combin_K es) (ml_init_state ffi)))
                  ml_init_env (APPEND candle_code prog) = (s2,r) ==>
    ALL ok_event (ffi_state_io_events (state_ffi s2))`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN POP_ASSUM MP_TAC THEN
@@ -692,14 +690,14 @@ let CAN3AUX_prog_with_clock_events = prove
    ffi_state_io_events (ffi:(FFI)ffi_state) = [] ==>
    ALL ok_event
      (ffi_state_io_events
-        (FST (evaluate_prog_with_clock (state_eval_state_fupd (K es) (ml_init_state ffi))
+        (FST (evaluate_prog_with_clock (state_eval_state_fupd (combin_K es) (ml_init_state ffi))
                 ml_init_env k (APPEND candle_code prog))))`,
   STRIP_TAC THEN REWRITE_TAC[evaluate_prog_with_clock_def] THEN
-  MP_TAC (ISPEC `evaluate_decs (state_clock_fupd (K k)
-                    (state_eval_state_fupd (K es) (ml_init_state (ffi:(FFI)ffi_state))))
+  MP_TAC (ISPEC `evaluate_decs (state_clock_fupd (combin_K k)
+                    (state_eval_state_fupd (combin_K es) (ml_init_state (ffi:(FFI)ffi_state))))
                  ml_init_env (APPEND candle_code prog)` PAIR_SURJECTIVE) THEN
   DISCH_THEN (X_CHOOSE_THEN `s2:(FFI)state` (X_CHOOSE_TAC `r:(v sem_env,v)result`)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[FST] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[FST] THEN
   MATCH_MP_TAC (SPECL [`ffi:(FFI)ffi_state`; `es:(eval_state)option`; `prog:dec list`;
                        `k:num`; `s2:(FFI)state`; `r:(v sem_env,v)result`]
                  CAN3AUX_semantics_events) THEN
@@ -737,7 +735,7 @@ let semantics_thm = prove
    `!k. ALL ok_event
           (ffi_state_io_events
              (FST (evaluate_prog_with_clock
-                     (state_eval_state_fupd (K es) (ml_init_state (ffi:(FFI)ffi_state)))
+                     (state_eval_state_fupd (combin_K es) (ml_init_state (ffi:(FFI)ffi_state)))
                      ml_init_env k (APPEND candle_code prog))))`
    ASSUME_TAC THENL
    [GEN_TAC THEN MATCH_MP_TAC CAN3AUX_prog_with_clock_events THEN ASM_REWRITE_TAC[];
@@ -763,14 +761,9 @@ let semantics_thm = prove
     FIRST_X_ASSUM (MP_TAC o SPEC `k:num`) THEN REWRITE_TAC[GSYM ALL_EL] THEN
     DISCH_THEN MATCH_MP_TAC THEN ASM_REWRITE_TAC[]]);;
 
-(* HOL4 llist's LSET (LSET_def), which hol4/llist.ml does not port: the set *)
-(* of the elements of a lazy list                                            *)
-let CAN3AUX_LSET_def = new_definition
-  `CAN3AUX_LSET (l:A llist) x <=> ?n. LNTH n l = SOME x`;;
-
 let events_of_def = cake_def
   `(events_of (Terminate _ io_list) = set_of_list io_list) /\
-   (events_of (Diverge io_llist) = CAN3AUX_LSET io_llist) /\
+   (events_of (Diverge io_llist) = LSET io_llist) /\
    (events_of Fail = (:io_event))`;;
 
 let events_of_semantics = prove
@@ -780,7 +773,7 @@ let events_of_semantics = prove
    !e. e IN events_of res ==> ok_event e`,
   STRIP_TAC THEN
   SUBGOAL_THEN `ml_init_state (ffi:(FFI)ffi_state) =
-                state_eval_state_fupd (K NONE) (ml_init_state ffi)` SUBST_ALL_TAC THENL
+                state_eval_state_fupd (combin_K NONE) (ml_init_state ffi)` SUBST_ALL_TAC THENL
    [REWRITE_TAC[ml_init_state_def; state_INFO.ri_fupds; K_THM]; ALL_TAC] THEN
   SUBGOAL_THEN `candle_eval_state_ok NONE` ASSUME_TAC THENL
    [REWRITE_TAC[candle_eval_state_ok_def]; ALL_TAC] THEN
@@ -789,11 +782,11 @@ let events_of_semantics = prove
   ASM_REWRITE_TAC[] THEN
   QCASES_ON "res" THEN REWRITE_TAC[events_of_def; distinctness "behaviour";
                                     injectivity "behaviour"] THEN
-  REWRITE_TAC[every_LNTH; GSYM ALL_MEM; IN_SET_OF_LIST; CAN3AUX_LSET_def; IN] THEN
+  REWRITE_TAC[every_LNTH; GSYM ALL_MEM; IN_SET_OF_LIST; LSET_def; IN] THEN
   ASM_MESON_TAC[]);;
 
 let events_of_semantics_with_eval_state = prove
- (`semantics_prog (state_eval_state_fupd (K ev) (ml_init_state ffi)) ml_init_env
+ (`semantics_prog (state_eval_state_fupd (combin_K ev) (ml_init_state ffi)) ml_init_env
      (APPEND candle_code prog) res /\ candle_eval_state_ok ev /\
    prog_syntax_ok candle_code /\
    ALL safe_dec prog /\ ffi_state_io_events (ffi:(FFI)ffi_state) = [] /\ ~(res = Fail) ==>
@@ -804,7 +797,7 @@ let events_of_semantics_with_eval_state = prove
   ASM_REWRITE_TAC[] THEN
   QCASES_ON "res" THEN REWRITE_TAC[events_of_def; distinctness "behaviour";
                                     injectivity "behaviour"] THEN
-  REWRITE_TAC[every_LNTH; GSYM ALL_MEM; IN_SET_OF_LIST; CAN3AUX_LSET_def; IN] THEN
+  REWRITE_TAC[every_LNTH; GSYM ALL_MEM; IN_SET_OF_LIST; LSET_def; IN] THEN
   ASM_MESON_TAC[]);;
 
 (* ------------------------------------------------------------------------- *)
@@ -823,16 +816,16 @@ let CAN3AUX_check_cons_APPEND = prove
    [REWRITE_TAC[option_INJ] THEN DISCH_THEN (SUBST1_TAC o SYM) THEN
     REWRITE_TAC[nsAppend_nsEmpty];
     MP_TAC (ISPEC `check_cons_dec env h` (cases "option")) THEN
-    STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+    STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[option_DISTINCT] THEN
     MP_TAC (ISPEC `check_cons_dec_list (nsAppend a env) t` (cases "option")) THEN
-    STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+    STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[option_DISTINCT; option_INJ] THEN DISCH_THEN (SUBST1_TAC o SYM) THEN
     FIRST_X_ASSUM (MP_TAC o SPECL [`nsAppend a env:(mlstring,mlstring,num#stamp)namespace`;
                                    `l2:dec list`; `a':(mlstring,mlstring,num#stamp)namespace`]) THEN
     ASM_REWRITE_TAC[GSYM nsAppend_assoc] THEN DISCH_THEN (SUBST1_TAC o SYM) THEN
     MP_TAC (ISPEC `check_cons_dec_list (nsAppend a env) (APPEND t l2)` (cases "option")) THEN
-    STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[IS_SOME_DEF]]);;
+    STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[IS_SOME_DEF]]);;
 
 (* prog_syntax_ok candle_code: the basis part by CAN3AUX_check_cons_basis,  *)
 (* the kernel's declarations by evaluation (the theorem that splits the      *)

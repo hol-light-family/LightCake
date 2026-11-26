@@ -37,7 +37,7 @@ let letrec_lemma2 = prove
   REWRITE_TAC[LENGTH; NOT_SUC; GSYM NOT_SUC; SUC_INJ; MAP; MAP2; CONS_11] THEN
   REPEAT STRIP_TAC THENL
    [SPEC_TAC(`h':A#B#C`,`h':A#B#C`) THEN REWRITE_TAC[FORALL_PAIR_THM] THEN
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN REPEAT GEN_TAC THEN AP_TERM_TAC THEN
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN REPEAT GEN_TAC THEN AP_TERM_TAC THEN
     FIRST_X_ASSUM(MATCH_MP_TAC o check (fun th -> is_forall(concl th) &&
       (try is_eq(snd(dest_imp(snd(strip_forall(concl th))))) with Failure _ -> false) &&
       length(fst(strip_forall(concl th))) = 2)) THEN
@@ -64,11 +64,11 @@ let generalise_none = prove
     MP_TAC(ISPEC `r1:(num,num)fmap#infer_t list` PAIR_SURJECTIVE) THEN
     DISCH_THEN(X_CHOOSE_THEN `s1:(num,num)fmap` (X_CHOOSE_THEN `ts1:infer_t list`
       SUBST1_TAC)) THEN
-    DISCH_TAC THEN ASM_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN CASE_REWRITE_TAC[] THEN
+    DISCH_TAC THEN ASM_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN
     FIRST_X_ASSUM(MP_TAC o SPECL [`s1:(num,num)fmap`; `ts1:infer_t list`; `x:num->bool`]) THEN
     ASM_REWRITE_TAC[] THEN ASM_MESON_TAC[];
-    REWRITE_TAC[generalise_def; FLOOKUP_EMPTY] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[generalise_def; FLOOKUP_EMPTY] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[LE_0; PAIR_EQ; ARITH_EQ];
     REWRITE_TAC[generalise_def; PAIR_EQ] THEN MESON_TAC[];
     REWRITE_TAC[generalise_def] THEN REPEAT GEN_TAC THEN STRIP_TAC THEN REPEAT GEN_TAC THEN
@@ -78,14 +78,14 @@ let generalise_none = prove
     MP_TAC(ISPEC `r1:(num,num)fmap#infer_t` PAIR_SURJECTIVE) THEN
     DISCH_THEN(X_CHOOSE_THEN `s1:(num,num)fmap` (X_CHOOSE_THEN `t1:infer_t`
       SUBST1_TAC)) THEN DISCH_TAC THEN
-    ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
     MP_TAC(ISPEC `generalise_list 0 (n1 + 0) s1 a1` PAIR_SURJECTIVE) THEN
     DISCH_THEN(X_CHOOSE_THEN `n2:num` (X_CHOOSE_THEN `r2:(num,num)fmap#infer_t list`
       MP_TAC)) THEN
     MP_TAC(ISPEC `r2:(num,num)fmap#infer_t list` PAIR_SURJECTIVE) THEN
     DISCH_THEN(X_CHOOSE_THEN `s2:(num,num)fmap` (X_CHOOSE_THEN `ts2:infer_t list`
       SUBST1_TAC)) THEN DISCH_TAC THEN
-    ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[PAIR_EQ; ADD_EQ_0] THEN STRIP_TAC THEN
     FIRST_X_ASSUM(MP_TAC o SPECL [`s1:(num,num)fmap`; `t1:infer_t`; `x:num->bool`] o
       check (fun th -> is_forall(concl th) &&
@@ -102,7 +102,7 @@ let lookup_var_empty = prove
  (`!x tvs tenv. lookup_var x (bind_tvar tvs Empty) tenv = lookup_var x Empty tenv`,
   REPEAT GEN_TAC THEN REWRITE_TAC[lookup_var_def; lookup_varE_def] THEN
   MP_TAC(ISPEC `x:(mlstring,mlstring)id` (cases "id")) THEN STRIP_TAC THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[bind_tvar_rewrites; tveLookup_def]);;
 
 let inferSound_env_rel_complete_bind = prove
@@ -406,13 +406,13 @@ let INFER1AUX_dlet_success = prove
            (ntvs = 0 \/ is_value e) /\
            ienv' = inf_env_REC (alist_to_ns (ZIP (MAP FST env') (MAP (\t. (ntvs,t)) ts')))
                      nsEmpty nsEmpty /\
-           st2 = infer_st_subst_fupd (K s) st''`,
+           st2 = infer_st_subst_fupd (combin_K s) st''`,
   REPEAT GEN_TAC THEN REWRITE_TAC[infer_d_def] THEN
   REPEAT(CHANGED_TAC(REWRITE_TAC[inferProps_st_ex_bind_success; st_ex_ignore_bind_success;
               inferProps_st_ex_return_success; init_state_def; get_next_uvar_success;
               check_dups_success; add_constraint_success; TYSYS2AUX_apply_subst_list_success;
               guard_success; PAIR_EQ; injectivity "exc"; EXISTS_PAIR_THM] THEN
-         CASE_REWRITE_TAC[])) THEN
+         CAKE_REWRITE_TAC[])) THEN
   STRIP_TAC THEN RVEQ_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[INFER1AUX_init_infer_state; infer_st_rewrs]) THEN
   INFER1AUX_RUN_WITNESS_TAC
@@ -434,7 +434,7 @@ let INFER1AUX_ienv_to_tenv_let = prove
   SPEC_TAC(`env':(mlstring#infer_t)list`,`l:(mlstring#infer_t)list`) THEN
   LIST_INDUCT_TAC THEN REWRITE_TAC[MAP; ZIP] THEN ASM_REWRITE_TAC[CONS_11; o_THM] THEN
   SPEC_TAC(`h:mlstring#infer_t`,`h:mlstring#infer_t`) THEN REWRITE_TAC[FORALL_PAIR_THM] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[FST; SND]);;
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[FST; SND]);;
 
 let INFER1AUX_ALL2_tenv_add_tvs = prove
  (`!tvs1 s1 tvs2 s2 (env':(mlstring#infer_t)list).
@@ -447,7 +447,7 @@ let INFER1AUX_ALL2_tenv_add_tvs = prove
   SPEC_TAC(`env':(mlstring#infer_t)list`,`l:(mlstring#infer_t)list`) THEN
   LIST_INDUCT_TAC THEN REWRITE_TAC[MAP; ALL2; MEM] THEN
   SPEC_TAC(`h:mlstring#infer_t`,`h:mlstring#infer_t`) THEN REWRITE_TAC[FORALL_PAIR_THM] THEN
-  REWRITE_TAC[o_THM] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[SND] THEN
+  REWRITE_TAC[o_THM] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[SND] THEN
   REPEAT STRIP_TAC THENL
    [FIRST_X_ASSUM MATCH_MP_TAC THEN REWRITE_TAC[];
     FIRST_X_ASSUM(MATCH_MP_TAC o check (is_imp o concl)) THEN
@@ -465,7 +465,7 @@ let INFER1AUX_ids_dlet = prove
      generalise_list 0 0 FEMPTY (MAP (t_walkstar s) (MAP SND env')) = (ntvs,s2,ts') /\
      (ntvs = 0 \/ is_value e)
      ==> type_d T tenv (Dlet locs p e)
-           (set_ids (infer_st_next_id st1) (infer_st_next_id (infer_st_subst_fupd (K s) st'')))
+           (set_ids (infer_st_next_id st1) (infer_st_next_id (infer_st_subst_fupd (combin_K s) st'')))
            (ienv_to_tenv (inf_env_REC (alist_to_ns (ZIP (MAP FST env') (MAP (\t. (ntvs,t)) ts')))
                             nsEmpty nsEmpty))`,
   REPEAT GEN_TAC THEN DISCH_THEN(fun th -> MAP_EVERY ASSUME_TAC (CONJUNCTS th)) THEN
@@ -480,7 +480,7 @@ let INFER1AUX_ids_dlet = prove
     STRIP_ASSUME_TAC THENL
    [ASM_MESON_TAC[env_rel_sound_def]; ALL_TAC] THEN
   (* next ids *)
-  SUBGOAL_THEN `infer_st_next_id (infer_st_subst_fupd (K s) st'') = infer_st_next_id st1`
+  SUBGOAL_THEN `infer_st_next_id (infer_st_subst_fupd (combin_K s) st'') = infer_st_next_id st1`
     SUBST1_TAC THENL
    [REWRITE_TAC[infer_st_INFO.ri_accfupds] THEN
     MP_TAC(MATCH_MP (CONJUNCT1 infer_e_next_id_const)
@@ -662,13 +662,13 @@ let INFER1AUX_dletrec_success = prove
            ALL_DISTINCT (MAP FST funs) /\
            infer_funs (loc_err_info_REC (SOME locs) (inf_env_inf_t ienv))
              (inf_env_inf_v_fupd
-                (K (nsAppend
+                (combin_K (nsAppend
                       (alist_to_ns
                          (MAP2 (\fxe uvar. match fxe with (f,x,e) -> (f,(0,uvar))) funs
                             (MAP Infer_Tuvar (COUNT_LIST (LENGTH funs)))))
                       (inf_env_inf_v ienv))) ienv)
              funs
-             (infer_st_next_uvar_fupd (K (LENGTH funs)) (init_infer_state st1)) =
+             (infer_st_next_uvar_fupd (combin_K (LENGTH funs)) (init_infer_state st1)) =
              (M_success funs_ts,st3) /\
            LENGTH funs = LENGTH funs_ts /\
            infer_st_next_uvar st3 = infer_st_next_uvar st4 /\
@@ -688,7 +688,7 @@ let INFER1AUX_dletrec_success = prove
               inferProps_st_ex_return_success; init_state_def; get_next_uvar_success;
               check_dups_success; add_constraints_success; TYSYS2AUX_apply_subst_list_success;
               n_fresh_uvar_success; PAIR_EQ; injectivity "exc"; EXISTS_PAIR_THM] THEN
-         CASE_REWRITE_TAC[])) THEN
+         CAKE_REWRITE_TAC[])) THEN
   STRIP_TAC THEN RVEQ_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[INFER1AUX_init_infer_state; infer_st_rewrs; ADD_CLAUSES;
                               LENGTH_MAP; LENGTH_COUNT_LIST; ETA_AX]) THEN
@@ -707,7 +707,7 @@ let INFER1AUX_MAP2_fxe = prove
   REWRITE_TAC[LENGTH; NOT_SUC; GSYM NOT_SUC; SUC_INJ; MAP2; MAP; ZIP] THEN
   DISCH_TAC THEN ASM_SIMP_TAC[CONS_11] THEN
   SPEC_TAC(`h:mlstring#mlstring#exp`,`h:mlstring#mlstring#exp`) THEN
-  REWRITE_TAC[FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[FST]);;
+  REWRITE_TAC[FORALL_PAIR_THM] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[FST]);;
 
 let INFER1AUX_convert_env_ZIP = prove
  (`!s (a:mlstring list) (b:infer_t list).
@@ -715,7 +715,7 @@ let INFER1AUX_convert_env_ZIP = prove
      ==> convert_env s (ZIP a b) = ZIP a (MAP (convert_t o t_walkstar s) b)`,
   REPEAT STRIP_TAC THEN ASM_SIMP_TAC[convert_env_def; ZIP_MAP] THEN
   AP_THM_TAC THEN AP_TERM_TAC THEN REWRITE_TAC[FUN_EQ_THM; FORALL_PAIR_THM] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[o_THM]);;
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[o_THM]);;
 
 let INFER1AUX_walk_compat_map = prove
  (`!s s' (l1:infer_t list) l2.
@@ -731,13 +731,13 @@ let INFER1AUX_ids_dletrec = prove
      ALL_DISTINCT (MAP FST funs) /\
      infer_funs (loc_err_info_REC (SOME locs) (inf_env_inf_t ienv))
        (inf_env_inf_v_fupd
-          (K (nsAppend
+          (combin_K (nsAppend
                 (alist_to_ns
                    (MAP2 (\fxe uvar. match fxe with (f,x,e) -> (f,(0,uvar))) funs
                       (MAP Infer_Tuvar (COUNT_LIST (LENGTH funs)))))
                 (inf_env_inf_v ienv))) ienv)
        funs
-       (infer_st_next_uvar_fupd (K (LENGTH funs)) (init_infer_state st1)) =
+       (infer_st_next_uvar_fupd (combin_K (LENGTH funs)) (init_infer_state st1)) =
        (M_success funs_ts,st3) /\
      LENGTH funs = LENGTH funs_ts /\
      infer_st_next_uvar st3 = infer_st_next_uvar st4 /\
@@ -767,9 +767,9 @@ let INFER1AUX_ids_dletrec = prove
   FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP INFER1AUX_MAP2_funs (SYM th)]) THEN
   ABBREV_TAC `bindings = ZIP (MAP FST (funs:(mlstring#mlstring#exp)list)) (us:infer_t list)` THEN
   ABBREV_TAC (CASE_TERM `ienv1 = inf_env_inf_v_fupd
-      (K (nsAppend (alist_to_ns (MAP (\nt. match nt with (n,t) -> (n,(0,t))) bindings))
+      (combin_K (nsAppend (alist_to_ns (MAP (\nt. match nt with (n,t) -> (n,(0,t))) bindings))
                    (inf_env_inf_v ienv))) ienv`) THEN
-  ABBREV_TAC `st0 = infer_st_next_uvar_fupd (K (LENGTH (funs:(mlstring#mlstring#exp)list)))
+  ABBREV_TAC `st0 = infer_st_next_uvar_fupd (combin_K (LENGTH (funs:(mlstring#mlstring#exp)list)))
                       (init_infer_state st1)` THEN
   SUBGOAL_THEN `infer_st_next_uvar st0 = LENGTH (funs:(mlstring#mlstring#exp)list) /\
                 infer_st_subst st0 = FEMPTY /\ infer_st_next_id st0 = infer_st_next_id st1`

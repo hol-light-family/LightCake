@@ -140,18 +140,18 @@ let ALU_def = cake_def
          fAdd ->
            let ret = word_add a b in
            (ret,
-            ag32_state_OverflowFlag_fupd (K (~(ival ret = ival a + ival b)))
-              (ag32_state_CarryFlag_fupd (K (2 EXP 32 <= val a + val b)) state))
+            ag32_state_OverflowFlag_fupd (combin_K (~(ival ret = ival a + ival b)))
+              (ag32_state_CarryFlag_fupd (combin_K (2 EXP 32 <= val a + val b)) state))
        | fAddWithCarry ->
            (word_add (word_add a b) (v2w [ag32_state_CarryFlag state]),
             ag32_state_CarryFlag_fupd
-              (K (2 EXP 32 <=
+              (combin_K (2 EXP 32 <=
                   (val a + val b) + (if ag32_state_CarryFlag state then 1 else 0)))
               state)
        | fSub ->
            let ret = word_sub a b in
            (ret,
-            ag32_state_OverflowFlag_fupd (K (~(ival ret = ival a - ival b))) state)
+            ag32_state_OverflowFlag_fupd (combin_K (~(ival ret = ival a - ival b))) state)
        | fCarry -> (v2w [ag32_state_CarryFlag state],state)
        | fOverflow -> (v2w [ag32_state_OverflowFlag state],state)
        | fInc -> (word_add a (word 1),state)
@@ -177,15 +177,15 @@ let ag32_shift_def = cake_def
 
 let incPC_def = cake_def
   `incPC (u:one) =
-     \state. ag32_state_PC_fupd (K (word_add (ag32_state_PC state) (word 4))) state`;;
+     \state. ag32_state_PC_fupd (combin_K (word_add (ag32_state_PC state) (word 4))) state`;;
 
 let ag32_norm_def = cake_def
   `ag32_norm (func,wback,out,w:(6)word,a:int32,b:int32) =
      \state.
        let (v,s) = ALU (func,a,b) state in
-       let s = if wback then ag32_state_R_fupd (K ((w =+ v) (ag32_state_R s))) s
+       let s = if wback then ag32_state_R_fupd (combin_K ((w =+ v) (ag32_state_R s))) s
                else s in
-       incPC one (if out then ag32_state_data_out_fupd (K (word_zx v)) s else s)`;;
+       incPC one (if out then ag32_state_data_out_fupd (combin_K (word_zx v)) s else s)`;;
 
 let ri2word_def = cake_def
   `ri2word ri =
@@ -198,7 +198,7 @@ let dfn'LoadUpperConstant_def = cake_def
      \state.
        incPC one
          (ag32_state_R_fupd
-            (K ((reg =+ word_insert (ag32_state_R state reg) (23,9) imm)
+            (combin_K ((reg =+ word_insert (ag32_state_R state reg) (23,9) imm)
                 (ag32_state_R state)))
             state)`;;
 
@@ -208,7 +208,7 @@ let dfn'LoadConstant_def = cake_def
        let v = (word_zx imm:int32) in
        incPC one
          (ag32_state_R_fupd
-            (K ((reg =+ (if neg then word_neg v else v)) (ag32_state_R state)))
+            (combin_K ((reg =+ (if neg then word_neg v else v)) (ag32_state_R state)))
             state)`;;
 
 let dfn'Normal_def = cake_def
@@ -220,7 +220,7 @@ let dfn'Shift_def = cake_def
      \state.
        incPC one
          (ag32_state_R_fupd
-            (K ((w =+ ag32_shift (shiftOp,ri2word a state,ri2word b state))
+            (combin_K ((w =+ ag32_shift (shiftOp,ri2word a state,ri2word b state))
                 (ag32_state_R state)))
             state)`;;
 
@@ -232,19 +232,19 @@ let dfn'StoreMEM_def = cake_def
          (word_join (word_extract 31 2 (ri2word b state):(30)word)
                     (word 0:(2)word):int32) in
        let s = ag32_state_MEM_fupd
-                 (K ((alignedAddr =+ word_extract 7 0 v) (ag32_state_MEM state)))
+                 (combin_K ((alignedAddr =+ word_extract 7 0 v) (ag32_state_MEM state)))
                  state in
        let s = ag32_state_MEM_fupd
-                 (K ((word_add alignedAddr (word 1) =+ word_extract 15 8 v)
+                 (combin_K ((word_add alignedAddr (word 1) =+ word_extract 15 8 v)
                      (ag32_state_MEM s)))
                  s in
        let s = ag32_state_MEM_fupd
-                 (K ((word_add alignedAddr (word 2) =+ word_extract 23 16 v)
+                 (combin_K ((word_add alignedAddr (word 2) =+ word_extract 23 16 v)
                      (ag32_state_MEM s)))
                  s in
        incPC one
          (ag32_state_MEM_fupd
-            (K ((word_add alignedAddr (word 3) =+ word_extract 31 24 v)
+            (combin_K ((word_add alignedAddr (word 3) =+ word_extract 31 24 v)
                 (ag32_state_MEM s)))
             s)`;;
 
@@ -253,7 +253,7 @@ let dfn'StoreMEMByte_def = cake_def
      \state.
        incPC one
          (ag32_state_MEM_fupd
-            (K ((ri2word b state =+ word_extract 7 0 (ri2word a state))
+            (combin_K ((ri2word b state =+ word_extract 7 0 (ri2word a state))
                 (ag32_state_MEM state)))
             state)`;;
 
@@ -265,7 +265,7 @@ let dfn'LoadMEM_def = cake_def
                     (word 0:(2)word):int32) in
        incPC one
          (ag32_state_R_fupd
-            (K ((w =+
+            (combin_K ((w =+
                  (word_join (ag32_state_MEM state (word_add alignedAddr (word 3)))
                    (word_join (ag32_state_MEM state (word_add alignedAddr (word 2)))
                       (word_join (ag32_state_MEM state (word_add alignedAddr (word 1)))
@@ -278,7 +278,7 @@ let dfn'LoadMEMByte_def = cake_def
      \state.
        incPC one
          (ag32_state_R_fupd
-            (K ((w =+ (word_zx (ag32_state_MEM state (ri2word a state)):int32))
+            (combin_K ((w =+ (word_zx (ag32_state_MEM state (ri2word a state)):int32))
                 (ag32_state_R state)))
             state)`;;
 
@@ -291,7 +291,7 @@ let dfn'In_def = cake_def
      \state.
        incPC one
          (ag32_state_R_fupd
-            (K ((w =+ (word_zx (ag32_state_data_in state):int32))
+            (combin_K ((w =+ (word_zx (ag32_state_data_in state):int32))
                 (ag32_state_R state)))
             state)`;;
 
@@ -305,23 +305,23 @@ let dfn'Accelerator_def = cake_def
      \state.
        incPC one
          (ag32_state_R_fupd
-            (K ((w =+ accelerator_f (ri2word a state)) (ag32_state_R state)))
+            (combin_K ((w =+ accelerator_f (ri2word a state)) (ag32_state_R state)))
             state)`;;
 
 let dfn'Jump_def = cake_def
   `dfn'Jump (func,w,a) =
      \state.
        let s = (let (v,s) = ALU (func,ag32_state_PC state,ri2word a state) state in
-                ag32_state_PC_fupd (K v) s) in
+                ag32_state_PC_fupd (combin_K v) s) in
        ag32_state_R_fupd
-         (K ((w =+ word_add (ag32_state_PC state) (word 4)) (ag32_state_R s))) s`;;
+         (combin_K ((w =+ word_add (ag32_state_PC state) (word 4)) (ag32_state_R s))) s`;;
 
 let dfn'JumpIfZero_def = cake_def
   `dfn'JumpIfZero (func,w,a,b) =
      \state.
        let (v,s) = (let (v,s) = ALU (func,ri2word a state,ri2word b state) state in
                     ((v = word 0),s)) in
-       if v then ag32_state_PC_fupd (K (word_add (ag32_state_PC s) (ri2word w s))) s
+       if v then ag32_state_PC_fupd (combin_K (word_add (ag32_state_PC s) (ri2word w s))) s
        else incPC one s`;;
 
 let dfn'JumpIfNotZero_def = cake_def
@@ -331,14 +331,14 @@ let dfn'JumpIfNotZero_def = cake_def
                                                state in
                                  ((v = word 0),s)) in
                     (~v,s)) in
-       if v then ag32_state_PC_fupd (K (word_add (ag32_state_PC s) (ri2word w s))) s
+       if v then ag32_state_PC_fupd (combin_K (word_add (ag32_state_PC s) (ri2word w s))) s
        else incPC one s`;;
 
 let dfn'Interrupt_def = cake_def
   `dfn'Interrupt state =
      incPC one
        (ag32_state_io_events_fupd
-          (K (APPEND (ag32_state_io_events state) [ag32_state_MEM state])) state)`;;
+          (combin_K (APPEND (ag32_state_io_events state) [ag32_state_MEM state])) state)`;;
 
 let dfn'ReservedInstr_def = new_definition
   `dfn'ReservedInstr = one`;;

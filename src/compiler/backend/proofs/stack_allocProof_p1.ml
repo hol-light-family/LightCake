@@ -58,7 +58,7 @@ let get_var_imm_case = prove
      stack_get_var_imm ri s =
      match ri with Reg n -> stack_get_var n s | Imm w -> SOME (wl_Word w)`,
   GEN_TAC THEN CASES_ON `ri:(A)reg_imm` THEN REWRITE_TAC[stack_get_var_imm_def] THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[]);;
 
 (* HOL4 line 75 *)
 let prog_comp_lemma = prove
@@ -85,7 +85,7 @@ let lookup_IMP_lookup_compile = prove
     SUBST1_TAC THENL
    [REWRITE_TAC[stack_alloc_stubs_def; ALOOKUP_THM] THEN ASM_MESON_TAC[];
     ALL_TAC] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[prog_comp_lemma; ALOOKUP_MAP_2] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[prog_comp_lemma; ALOOKUP_MAP_2] THEN
   ASM_REWRITE_TAC[ALOOKUP_toAList; OPTION_MAP_DEF; option_INJ] THEN MESON_TAC[]);;
 
 (* HOL4 line 100 *)
@@ -97,7 +97,7 @@ let map_bitmap_APPEND = prove
          match map_bitmap x q stack with
            NONE -> NONE
          | SOME (hd,ts,ws) -> SOME (hd,APPEND ts q',ws)`,
-  LIST_INDUCT_TAC THENL [REWRITE_TAC[map_bitmap_def] THEN CASE_REWRITE_TAC[]; ALL_TAC] THEN
+  LIST_INDUCT_TAC THENL [REWRITE_TAC[map_bitmap_def] THEN CAKE_REWRITE_TAC[]; ALL_TAC] THEN
   BOOL_CASES_TAC `h:bool` THEN GEN_TAC THEN GEN_TAC THEN
   STRUCT_CASES_TAC(ISPEC `stack:A list` list_CASES) THEN
   REWRITE_TAC[filter_bitmap_def; option_DISTINCT] THEN REPEAT GEN_TAC THEN STRIP_TAC THEN
@@ -111,8 +111,8 @@ let map_bitmap_APPEND = prove
     FIRST_X_ASSUM(MP_TAC o SPECL [`q:A list`; `t':A list`; `p0:A list`; `p1:A list`;
                                   `q':A list`]) THEN
     ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC] THEN
-  CASE_TAC THEN CASE_REWRITE_TAC[] THEN
-  CASE_TAC THEN CASE_REWRITE_TAC[] THEN CASE_TAC THEN CASE_REWRITE_TAC[]);;
+  CASE_TAC THEN CAKE_REWRITE_TAC[] THEN
+  CASE_TAC THEN CAKE_REWRITE_TAC[] THEN CASE_TAC THEN CAKE_REWRITE_TAC[]);;
 
 (* HOL4 line 119 *)
 let filter_bitmap_map_bitmap = prove
@@ -204,14 +204,14 @@ let filter_bitmap_APPEND = prove
             NONE -> NONE
           | SOME (zs2,rs) -> SOME (APPEND zs zs2,rs))`,
   LIST_INDUCT_TAC THENL
-   [REWRITE_TAC[APPEND; filter_bitmap_def] THEN CASE_REWRITE_TAC[] THEN
-    REPEAT GEN_TAC THEN CASE_TAC THEN CASE_REWRITE_TAC[APPEND] THEN
-    CASE_TAC THEN CASE_REWRITE_TAC[APPEND];
+   [REWRITE_TAC[APPEND; filter_bitmap_def] THEN CAKE_REWRITE_TAC[] THEN
+    REPEAT GEN_TAC THEN CASE_TAC THEN CAKE_REWRITE_TAC[APPEND] THEN
+    CASE_TAC THEN CAKE_REWRITE_TAC[APPEND];
     ALL_TAC] THEN
   BOOL_CASES_TAC `h:bool` THEN GEN_TAC THEN
   STRUCT_CASES_TAC(ISPEC `stack:A list` list_CASES) THEN
-  ASM_REWRITE_TAC[APPEND; filter_bitmap_def] THEN CASE_REWRITE_TAC[] THEN
-  GEN_TAC THEN REPEAT (CASE_TAC THEN CASE_REWRITE_TAC[APPEND]));;
+  ASM_REWRITE_TAC[APPEND; filter_bitmap_def] THEN CAKE_REWRITE_TAC[] THEN
+  GEN_TAC THEN REPEAT (CASE_TAC THEN CAKE_REWRITE_TAC[APPEND]));;
 
 (* HOL4 line 226 *)
 let bit_length_minus_1 = prove
@@ -393,7 +393,7 @@ let _ = cake_add_simps [stack_allocProof_lt_dimindex_MOD_dimword];;
 (* the clause of stack_evaluate_def for a constructor *)
 
 let STALLOCAUX_RW_TAC thl =
-  REPEAT (CHANGED_TAC (ASM_REWRITE_TAC thl THEN CASE_REWRITE_TAC thl));;
+  REPEAT (CHANGED_TAC (ASM_REWRITE_TAC thl THEN CAKE_REWRITE_TAC thl));;
 
 let STALLOCAUX_ev_clause (name:string) : thm =
   find (fun th -> try let l = lhs(snd(strip_forall(concl th))) in
@@ -406,14 +406,14 @@ let STALLOCAUX_seq_none = prove
      stack_evaluate (c1,s) = (NONE,s1)
      ==> stack_evaluate (stack_Seq c1 c2,s) = stack_evaluate (c2,s1)`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[STALLOCAUX_ev_clause "stack_Seq"] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]);;
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]);;
 
 let STALLOCAUX_seq_some = prove
  (`!c1 c2 (s:(A,C,FFI)stack_state) s1 r.
      stack_evaluate (c1,s) = (SOME r,s1)
      ==> stack_evaluate (stack_Seq c1 c2,s) = (SOME r,s1)`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[STALLOCAUX_ev_clause "stack_Seq"] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[option_DISTINCT]);;
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[option_DISTINCT]);;
 
 let STALLOCAUX_seq_cong = prove
  (`!c1 c1' c2 (s:(A,C,FFI)stack_state) s'.
@@ -429,8 +429,8 @@ let STALLOCAUX_seq_assoc = prove
   REPEAT GEN_TAC THEN REWRITE_TAC[STALLOCAUX_ev_clause "stack_Seq"] THEN
   MP_TAC(ISPEC `stack_evaluate (a:(A)stack_prog,s:(A,C,FFI)stack_state)`
            PAIR_SURJECTIVE) THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
-  COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
+  COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[]);;
 
 let STALLOCAUX_if_lemma = prove
@@ -448,7 +448,7 @@ let STALLOCAUX_loop_break = prove
      ==> stack_evaluate (stack_Loop c,s) = (NONE,s1)`,
   REPEAT STRIP_TAC THEN
   GEN_REWRITE_TAC LAND_CONV [STALLOCAUX_ev_clause "stack_Loop"] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[stack_cont_loop_def; stack_exit_loop_def]);;
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[stack_cont_loop_def; stack_exit_loop_def]);;
 
 let STALLOCAUX_loop_cont = prove
  (`!c (s:(A,C,FFI)stack_state) s1.
@@ -473,27 +473,27 @@ let STALLOCAUX_ev_halt = prove
      FLOOKUP (stack_state_regs s) v = SOME w
      ==> stack_evaluate (stack_Halt v,s) = (SOME (stackSem_Halt w),stack_empty_env s)`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[STALLOCAUX_ev_clause "stack_Halt"] THEN
-  ASM_REWRITE_TAC[stack_get_var_def] THEN CASE_REWRITE_TAC[]);;
+  ASM_REWRITE_TAC[stack_get_var_def] THEN CAKE_REWRITE_TAC[]);;
 
 let STALLOCAUX_ev_inst = prove
  (`!i (s:(A,C,FFI)stack_state) s1.
      stack_inst i s = SOME s1 ==> stack_evaluate (stack_Inst i,s) = (NONE,s1)`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[STALLOCAUX_ev_clause "stack_Inst"] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]);;
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]);;
 
 let STALLOCAUX_ev_get = prove
  (`!v name x (s:(A,C,FFI)stack_state).
      stack_state_use_store s /\ FLOOKUP (stack_state_store s) name = SOME x
      ==> stack_evaluate (stack_Get v name,s) = (NONE,stack_set_var v x s)`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[STALLOCAUX_ev_clause "stack_Get"] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]);;
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]);;
 
 let STALLOCAUX_ev_set = prove
  (`!v name w (s:(A,C,FFI)stack_state).
      stack_state_use_store s /\ FLOOKUP (stack_state_regs s) v = SOME w
      ==> stack_evaluate (stack_Set name v,s) = (NONE,stack_set_store name w s)`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[STALLOCAUX_ev_clause "stack_Set"] THEN
-  ASM_REWRITE_TAC[stack_get_var_def] THEN CASE_REWRITE_TAC[]);;
+  ASM_REWRITE_TAC[stack_get_var_def] THEN CAKE_REWRITE_TAC[]);;
 
 let STALLOCAUX_ev_stackloadany = prove
  (`!r rn (w:A word) (s:(A,C,FFI)stack_state).
@@ -508,7 +508,7 @@ let STALLOCAUX_ev_stackloadany = prove
                       val (word_ushr w (backend_common_word_shift (:A))))
                      (stack_state_stack s)) s)`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[STALLOCAUX_ev_clause "StackLoadAny"] THEN
-  ASM_REWRITE_TAC[stack_get_var_def] THEN CASE_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
+  ASM_REWRITE_TAC[stack_get_var_def] THEN CAKE_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
   ASM_REWRITE_TAC[]);;
 
 let STALLOCAUX_ev_stackstoreany = prove
@@ -521,11 +521,11 @@ let STALLOCAUX_ev_stackstoreany = prove
        (backend_common_word_shift (:A)) = w
      ==> stack_evaluate (StackStoreAny r rn,s) =
          (NONE,stack_state_stack_fupd
-                 (K (LUPDATE v (stack_state_stack_space s +
+                 (combin_K (LUPDATE v (stack_state_stack_space s +
                                 val (word_ushr w (backend_common_word_shift (:A))))
                        (stack_state_stack s))) s)`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[STALLOCAUX_ev_clause "StackStoreAny"] THEN
-  ASM_REWRITE_TAC[stack_get_var_def] THEN CASE_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
+  ASM_REWRITE_TAC[stack_get_var_def] THEN CAKE_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
   ASM_REWRITE_TAC[]);;
 
 let STALLOCAUX_ev_bitmapload = prove
@@ -545,8 +545,8 @@ let STALLOCAUX_inst_move = prove
      FLOOKUP (stack_state_regs s) r2 = SOME v
      ==> stack_inst (asm_Arith (Binop asm_Or r1 r2 (Reg r2))) s =
          SOME (stack_set_var r1 v s)`,
-  REPEAT STRIP_TAC THEN REWRITE_TAC[stack_inst_def] THEN CASE_REWRITE_TAC[] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]);;
+  REPEAT STRIP_TAC THEN REWRITE_TAC[stack_inst_def] THEN CAKE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]);;
 
 let STALLOCAUX_inst_binop_reg = prove
  (`!b r1 r2 r3 (x:A word) y z (s:(A,C,FFI)stack_state).
@@ -557,10 +557,10 @@ let STALLOCAUX_inst_binop_reg = prove
      ==> stack_inst (asm_Arith (Binop b r1 r2 (Reg r3))) s =
          SOME (stack_set_var r1 (wl_Word z) s)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[DE_MORGAN_THM] THEN STRIP_TAC THEN
-  REWRITE_TAC[stack_inst_def] THEN CASE_REWRITE_TAC[injectivity "reg_imm"] THEN
+  REWRITE_TAC[stack_inst_def] THEN CAKE_REWRITE_TAC[injectivity "reg_imm"] THEN
   ASM_REWRITE_TAC[stack_assign_def; stack_word_exp_def; LET_DEF; LET_END_DEF; MAP] THEN
-  CASE_REWRITE_TAC[ALL; IS_SOME_DEF; MAP; THE_DEF] THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[ALL; IS_SOME_DEF; MAP; THE_DEF] THEN ASM_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[]);;
 
 let STALLOCAUX_inst_binop_imm = prove
  (`!b r1 r2 (w:A word) x z (s:(A,C,FFI)stack_state).
@@ -569,10 +569,10 @@ let STALLOCAUX_inst_binop_imm = prove
      ==> stack_inst (asm_Arith (Binop b r1 r2 (Imm w))) s =
          SOME (stack_set_var r1 (wl_Word z) s)`,
   REPEAT STRIP_TAC THEN
-  REWRITE_TAC[stack_inst_def] THEN CASE_REWRITE_TAC[distinctness "reg_imm"] THEN
+  REWRITE_TAC[stack_inst_def] THEN CAKE_REWRITE_TAC[distinctness "reg_imm"] THEN
   ASM_REWRITE_TAC[stack_assign_def; stack_word_exp_def; LET_DEF; LET_END_DEF; MAP] THEN
-  CASE_REWRITE_TAC[ALL; IS_SOME_DEF; MAP; THE_DEF] THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[ALL; IS_SOME_DEF; MAP; THE_DEF] THEN ASM_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[]);;
 
 let STALLOCAUX_inst_shift = prove
  (CASE_TERM `!sh r1 r2 n (x:A word) (s:(A,C,FFI)stack_state).
@@ -588,16 +588,16 @@ let STALLOCAUX_inst_shift = prove
    [REWRITE_TAC[VAL_WORD] THEN MATCH_MP_TAC MOD_LT THEN
     TRANS_TAC LTE_TRANS `dimindex(:A)` THEN ASM_REWRITE_TAC[] THEN
     MATCH_MP_TAC LT_IMP_LE THEN REWRITE_TAC[LT_POW2_REFL]; ALL_TAC] THEN
-  REWRITE_TAC[stack_inst_def] THEN CASE_REWRITE_TAC[] THEN
-  ASM_REWRITE_TAC[stack_assign_def; stack_word_exp_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[stack_inst_def] THEN CAKE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[stack_assign_def; stack_word_exp_def] THEN CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[word_sh_def; GE; GSYM NOT_LT] THEN
-  CASES_ON `sh:shift` THEN CASE_REWRITE_TAC[]);;
+  CASES_ON `sh:shift` THEN CAKE_REWRITE_TAC[]);;
 
 let STALLOCAUX_inst_const = prove
  (`!r (w:A word) (s:(A,C,FFI)stack_state).
      stack_inst (asm_Const r w) s = SOME (stack_set_var r (wl_Word w) s)`,
   REWRITE_TAC[stack_inst_def; stack_assign_def; stack_word_exp_def] THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[]);;
 
 let STALLOCAUX_inst_load = prove
  (`!r a (w:A word) x (s:(A,C,FFI)stack_state).
@@ -605,9 +605,9 @@ let STALLOCAUX_inst_load = prove
      word_add x w IN stack_state_mdomain s
      ==> stack_inst (Mem asm_Load r (Addr a w)) s =
          SOME (stack_set_var r (stack_state_memory s (word_add x w)) s)`,
-  REPEAT STRIP_TAC THEN REWRITE_TAC[stack_inst_def] THEN CASE_REWRITE_TAC[] THEN
+  REPEAT STRIP_TAC THEN REWRITE_TAC[stack_inst_def] THEN CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[stack_word_exp_def; LET_DEF; LET_END_DEF; MAP] THEN
-  CASE_REWRITE_TAC[ALL; IS_SOME_DEF; MAP; THE_DEF; word_op_def; ITLIST] THEN
+  CAKE_REWRITE_TAC[ALL; IS_SOME_DEF; MAP; THE_DEF; word_op_def; ITLIST] THEN
   STALLOCAUX_RW_TAC[stack_mem_load_def; WORD_ADD_0]);;
 
 let STALLOCAUX_inst_store = prove
@@ -617,10 +617,10 @@ let STALLOCAUX_inst_store = prove
      word_add x w IN stack_state_mdomain s
      ==> stack_inst (Mem asm_Store r (Addr a w)) s =
          SOME (stack_state_memory_fupd
-                 (K ((word_add x w =+ v) (stack_state_memory s))) s)`,
-  REPEAT STRIP_TAC THEN REWRITE_TAC[stack_inst_def] THEN CASE_REWRITE_TAC[] THEN
+                 (combin_K ((word_add x w =+ v) (stack_state_memory s))) s)`,
+  REPEAT STRIP_TAC THEN REWRITE_TAC[stack_inst_def] THEN CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[stack_word_exp_def; stack_get_var_def; LET_DEF; LET_END_DEF; MAP] THEN
-  CASE_REWRITE_TAC[ALL; IS_SOME_DEF; MAP; THE_DEF; word_op_def; ITLIST] THEN
+  CAKE_REWRITE_TAC[ALL; IS_SOME_DEF; MAP; THE_DEF; word_op_def; ITLIST] THEN
   REWRITE_TAC[WORD_ADD_0] THEN STALLOCAUX_RW_TAC[stack_mem_store_def]);;
 
 (* ------------------------------------------------------------------------- *)
@@ -771,7 +771,7 @@ let STALLOCAUX_ev_store = prove
      word_add x w IN stack_state_mdomain s
      ==> stack_evaluate (stack_Inst (Mem asm_Store r (Addr a w)),s) =
          (NONE,stack_state_memory_fupd
-                 (K ((word_add x w =+ v) (stack_state_memory s))) s)`,
+                 (combin_K ((word_add x w =+ v) (stack_state_memory s))) s)`,
   STALLOCAUX_ev_inst_tac STALLOCAUX_inst_store);;
 
 let STALLOCAUX_leaf_lemmas = ref
@@ -909,7 +909,7 @@ let STALLOCAUX_FMAP_EQ_TAC (facts:thm list) : tactic = fun (asl,w as g) ->
   let keys = setify (map fst (u1 @ u2)) in
   let kty = fst(dest_fun_ty (type_of (mk_icomb(`FLOOKUP:(A,B)fmap->A->B option`,l))))
   in
-  let k = variant (freesl (w :: map (concl o snd) asl)) (mk_var("k",kty)) in
+  let k = variant (freesl (w :: map (concl o snd) asl @ flat (map (hyp o snd) asl))) (mk_var("k",kty)) in
   let rws = facts @ [FLOOKUP_UPDATE; FAPPLY_FUPDATE_THM] in
   let branch key =
     FIRST_X_ASSUM(SUBST_ALL_TAC o SYM) THEN
@@ -1077,10 +1077,10 @@ let STALLOCAUX_memcpy_code_n = prove
       stack_get_var 3 s = SOME (wl_Word b) ==>
       ?r1.
         stack_evaluate (memcpy_code,
-          stack_state_clock_fupd (K (stack_state_clock s + n)) s) =
-          (NONE,stack_state_memory_fupd (K m1)
+          stack_state_clock_fupd (combin_K (stack_state_clock s + n)) s) =
+          (NONE,stack_state_memory_fupd (combin_K m1)
                   (stack_state_regs_fupd
-                     (K (stack_state_regs s |++
+                     (combin_K (stack_state_regs s |++
                          [(0,wl_Word (word 0)); (1,r1);
                           (2,wl_Word (word_add a (word_mul (word n) bytes_in_word)));
                           (3,wl_Word b1)])) s))`,
@@ -1123,10 +1123,10 @@ let memcpy_code_thm = prove
       stack_get_var 3 s = SOME (wl_Word b) ==>
       ?r1.
         stack_evaluate (memcpy_code,
-          stack_state_clock_fupd (K (stack_state_clock s + val w)) s) =
-          (NONE,stack_state_memory_fupd (K m1)
+          stack_state_clock_fupd (combin_K (stack_state_clock s + val w)) s) =
+          (NONE,stack_state_memory_fupd (combin_K m1)
                   (stack_state_regs_fupd
-                     (K (stack_state_regs s |++
+                     (combin_K (stack_state_regs s |++
                          [(0,wl_Word (word 0)); (1,r1);
                           (2,wl_Word (word_add a (word_mul w bytes_in_word)));
                           (3,wl_Word b1)])) s))`,
@@ -1151,7 +1151,7 @@ let STALLOCAUX_SPLIT_TAC (tm:term) (vs:term list) : tactic = fun (asl,w as g) ->
   (SUBGOAL_THEN ex MP_TAC THENL
    [MAP_EVERY EXISTS_TAC ps THEN REWRITE_TAC[PAIR];
     DISCH_THEN(REPEAT_TCL CHOOSE_THEN (fun th -> ASSUME_TAC th THEN
-                      REWRITE_TAC[th] THEN CASE_REWRITE_TAC[]))]) g;;
+                      REWRITE_TAC[th] THEN CAKE_REWRITE_TAC[]))]) g;;
 
 (* the first application of the constant c in the goal whose free variables *)
 (* are free in the goal (not bound inside it)                               *)
@@ -1168,7 +1168,7 @@ let STALLOCAUX_SPLIT_FN_TAC (c:string) (names:string list) : tactic = fun (asl,w
       let a,b = (match dest_type ty with (_,[a;b]) -> a,b | _ -> failwith "tys") in
       a :: tys b (n - 1) in
   let vs0 = map2 (fun n ty -> mk_var(n,ty)) names (tys (type_of t) (length names)) in
-  let avoid = freesl (w :: map (concl o snd) asl) in
+  let avoid = freesl (w :: map (concl o snd) asl @ flat (map (hyp o snd) asl)) in
   let vs = rev(snd(itlist (fun v (av,acc) -> let v' = variant av v in (v'::av, v'::acc))
                           (rev vs0) (avoid,[]))) in
   STALLOCAUX_SPLIT_TAC t vs g;;
@@ -1209,7 +1209,7 @@ let word_gc_fun_thm = prove
         if word_gc_fun_assum conf s /\ c2 then SOME (ws2,m1,s1) else NONE`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN
   REWRITE_TAC[word_gc_fun_def; word_full_gc_def] THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[LET_DEF; LET_END_DEF; word_gc_move_roots_def] THEN
+  CAKE_REWRITE_TAC[LET_DEF; LET_END_DEF; word_gc_move_roots_def] THEN
   REPEAT (PAIRARG_TAC THEN ASM_REWRITE_TAC[]) THEN
   REPEAT (FIRST_X_ASSUM (CONJUNCTS_THEN ASSUME_TAC o check (is_conj o concl))) THEN
   RVEQ_TAC THEN REWRITE_TAC[HD; TL]);;
@@ -1282,10 +1282,10 @@ let gc_thm = prove
             (Globals,w1);
             (GlobReal,glob_real conf (theWord (FAPPLY (stack_state_store s) OtherHeap)) w1)] in
        if word_gc_fun_assum conf (stack_state_store s) /\ c2 then
-         SOME (stack_state_stack_fupd (K (APPEND unused stack))
-                (stack_state_store_fupd (K s1)
-                  (stack_state_regs_fupd (K FEMPTY)
-                    (stack_state_memory_fupd (K m1) s))))
+         SOME (stack_state_stack_fupd (combin_K (APPEND unused stack))
+                (stack_state_store_fupd (combin_K s1)
+                  (stack_state_regs_fupd (combin_K FEMPTY)
+                    (stack_state_memory_fupd (combin_K m1) s))))
        else NONE`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN REWRITE_TAC[stack_gc_def] THEN
   COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
@@ -1293,7 +1293,7 @@ let gc_thm = prove
   ASM_SIMP_TAC[word_gc_fun_thm] THEN
   CASES_ON `stack_enc_stack (stack_state_bitmaps (s:(A,C,FFI)stack_state))
               (DROP (stack_state_stack_space s) (stack_state_stack s))` THEN
-  CASE_REWRITE_TAC[LET_DEF; LET_END_DEF] THENL
+  CAKE_REWRITE_TAC[LET_DEF; LET_END_DEF] THENL
    [REPEAT (PAIRARG_TAC THEN ASM_REWRITE_TAC[]) THEN
     FIRST_ASSUM(fun th -> try ASSUME_TAC (MATCH_MP word_gc_move_loop_F (REWRITE_RULE[] th))
                           with Failure _ -> failwith "") THEN
@@ -1304,13 +1304,13 @@ let gc_thm = prove
   STALLOCAUX_SPLIT_FN_TAC "word_gc_move_loop" ["i3";"pa3";"m3";"c3"] THEN
   CASES_ON `stack_dec_stack (stack_state_bitmaps (s:(A,C,FFI)stack_state)) ws2
               (DROP (stack_state_stack_space s) (stack_state_stack s))` THEN
-  CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THENL
+  CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THENL
    [STALLOCAUX_SPLIT_FN_TAC "word_gc_move_loop" ["i4";"pa4";"m4";"c4"] THEN
     FIRST_ASSUM(fun th -> try ASSUME_TAC (MATCH_MP word_gc_move_loop_F th)
                           with Failure _ -> failwith "") THEN
     ASM_REWRITE_TAC[];
     ALL_TAC] THEN
-  COND_CASES_TAC THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]);;
+  COND_CASES_TAC THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]);;
 
 (* HOL4 line 613 *)
 let word_gc_move_bitmaps_def = cake_def
@@ -1338,14 +1338,14 @@ let word_gc_move_roots_APPEND = prove
           (APPEND ws1 ws2,i2,pa2,m2,(c1 /\ c2))`,
   GEN_TAC THEN LIST_INDUCT_TAC THEN
   REWRITE_TAC[APPEND; word_gc_move_roots_def; LET_DEF; LET_END_DEF] THEN
-  CASE_REWRITE_TAC[] THENL
+  CAKE_REWRITE_TAC[] THENL
    [REPEAT GEN_TAC THEN
     STALLOCAUX_SPLIT_FN_TAC "word_gc_move_roots" ["ws2";"i2";"pa2";"m2";"c2"] THEN
     REWRITE_TAC[APPEND];
     ALL_TAC] THEN
   REPEAT GEN_TAC THEN
   STALLOCAUX_SPLIT_FN_TAC "word_gc_move" ["w1";"i3";"pa3";"m3";"c3"] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   STALLOCAUX_SPLIT_FN_TAC "word_gc_move_roots" ["ws1";"i4";"pa4";"m4";"c4"] THEN
   STALLOCAUX_SPLIT_FN_TAC "word_gc_move_roots" ["ws2";"i5";"pa5";"m5";"c5"] THEN
   REWRITE_TAC[APPEND; CONJ_ACI]);;
@@ -1383,22 +1383,22 @@ let word_gc_move_roots_bitmaps = prove
   REPEAT GEN_TAC THEN DISCH_THEN(fun th -> REWRITE_TAC[th] THEN MP_TAC th) THEN
   STRUCT_CASES_TAC(ISPEC `stack:((A)word_loc)list` list_CASES) THEN
   REWRITE_TAC[word_gc_move_roots_bitmaps_def; stack_enc_stack_def] THEN
-  CASE_REWRITE_TAC[PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[PAIR_EQ] THEN
   COND_CASES_TAC THENL
-   [ASM_REWRITE_TAC[] THEN COND_CASES_TAC THEN CASE_REWRITE_TAC[PAIR_EQ] THEN
-    ASM_REWRITE_TAC[word_gc_move_roots_def] THEN CASE_REWRITE_TAC[stack_dec_stack_def] THEN
+   [ASM_REWRITE_TAC[] THEN COND_CASES_TAC THEN CAKE_REWRITE_TAC[PAIR_EQ] THEN
+    ASM_REWRITE_TAC[word_gc_move_roots_def] THEN CAKE_REWRITE_TAC[stack_dec_stack_def] THEN
     REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN RVEQ_TAC THEN REWRITE_TAC[];
     ALL_TAC] THEN
   REWRITE_TAC[word_gc_move_bitmaps_def] THEN
   CASES_ON `full_read_bitmap (bitmaps:(A word)list) (h:(A)word_loc)` THEN
-  CASE_REWRITE_TAC[PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[PAIR_EQ] THEN
   CASES_ON `filter_bitmap a (t:((A)word_loc)list)` THEN
-  CASE_REWRITE_TAC[PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[PAIR_EQ] THEN
   STALLOCAUX_SPLIT_TAC `a':((A)word_loc)list#((A)word_loc)list`
     [`ts:((A)word_loc)list`; `ws':((A)word_loc)list`] THEN
   CASES_ON `stack_enc_stack (bitmaps:(A word)list) (ws':((A)word_loc)list)` THEN
-  CASE_REWRITE_TAC[PAIR_EQ] THEN
-  REWRITE_TAC[word_gc_move_roots_APPEND; LET_DEF; LET_END_DEF] THEN CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[PAIR_EQ] THEN
+  REWRITE_TAC[word_gc_move_roots_APPEND; LET_DEF; LET_END_DEF] THEN CAKE_REWRITE_TAC[] THEN
   STALLOCAUX_SPLIT_FN_TAC "word_gc_move_roots" ["ws1";"i3";"pa3";"m3";"c3"] THEN
   STALLOCAUX_SPLIT_FN_TAC "word_gc_move_roots" ["ws2";"i4";"pa4";"m4";"c4"] THEN
   SUBGOAL_THEN `LENGTH (ws1:((A)word_loc)list) = LENGTH (ts:((A)word_loc)list)` ASSUME_TAC THENL
@@ -1409,18 +1409,18 @@ let word_gc_move_roots_bitmaps = prove
                  `ts:((A)word_loc)list`; `ws':((A)word_loc)list`; `ws2:((A)word_loc)list`]
          map_bitmap_APPEND) THEN
   ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
-  ASM_REWRITE_TAC[stack_dec_stack_def] THEN CASE_REWRITE_TAC[] THEN
-  CASES_ON `map_bitmap a (ws1:((A)word_loc)list) t` THEN CASE_REWRITE_TAC[PAIR_EQ] THEN
+  ASM_REWRITE_TAC[stack_dec_stack_def] THEN CAKE_REWRITE_TAC[] THEN
+  CASES_ON `map_bitmap a (ws1:((A)word_loc)list) t` THEN CAKE_REWRITE_TAC[PAIR_EQ] THEN
   STALLOCAUX_SPLIT_TAC `a''':((A)word_loc)list#((A)word_loc)list#((A)word_loc)list`
     [`hd:((A)word_loc)list`; `tsx:((A)word_loc)list`; `wsx:((A)word_loc)list`] THEN
   MP_TAC(ISPECL [`a:bool list`; `t:((A)word_loc)list`; `ws1:((A)word_loc)list`;
                  `ts:((A)word_loc)list`; `ws':((A)word_loc)list`; `tsx:((A)word_loc)list`;
                  `hd:((A)word_loc)list`; `wsx:((A)word_loc)list`] filter_bitmap_map_bitmap) THEN
   ASM_REWRITE_TAC[] THEN STRIP_TAC THEN RVEQ_TAC THEN
-  ASM_REWRITE_TAC[APPEND] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[APPEND] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[APPEND] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[APPEND] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   CASES_ON `stack_dec_stack (bitmaps:(A word)list) ws2 ws'` THEN
-  CASE_REWRITE_TAC[PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[PAIR_EQ] THEN
   STRIP_TAC THEN RVEQ_TAC THEN ASM_REWRITE_TAC[APPEND]);;
 
 (* the content types of a tuple type, n components *)
@@ -1448,7 +1448,7 @@ let STALLOCAUX_OPT_CASES_TAC (tm:term) (names:string list) : tactic = fun (asl,w
   let a = genvar cty in
   let rec projs t n = if n = 1 then [t] else
       mk_icomb(`FST:A#B->A`,t) :: projs (mk_icomb(`SND:A#B->B`,t)) (n - 1) in
-  let use th = ASSUME_TAC th THEN REWRITE_TAC[th] THEN CASE_REWRITE_TAC[] in
+  let use th = ASSUME_TAC th THEN REWRITE_TAC[th] THEN CAKE_REWRITE_TAC[] in
   (SUBGOAL_THEN disj MP_TAC THENL
    [MP_TAC(ISPEC tm (cases "option")) THEN
     DISCH_THEN(DISJ_CASES_THEN2 (fun th -> REWRITE_TAC[th])
@@ -1487,9 +1487,9 @@ let map_bitmap_APPEND_APPEND = prove
    [REWRITE_TAC[filter_bitmap_def; option_INJ; PAIR_EQ] THEN REPEAT GEN_TAC THEN
     STRIP_TAC THEN RVEQ_TAC THEN
     RULE_ASSUM_TAC(REWRITE_RULE[LENGTH; ARITH_RULE `0 = n <=> n = 0`; LENGTH_EQ_NIL]) THEN
-    RVEQ_TAC THEN REWRITE_TAC[APPEND; map_bitmap_def] THEN CASE_REWRITE_TAC[APPEND] THEN
-    CASE_TAC THEN CASE_REWRITE_TAC[] THEN CASE_TAC THEN CASE_REWRITE_TAC[] THEN
-    CASE_TAC THEN CASE_REWRITE_TAC[APPEND];
+    RVEQ_TAC THEN REWRITE_TAC[APPEND; map_bitmap_def] THEN CAKE_REWRITE_TAC[APPEND] THEN
+    CASE_TAC THEN CAKE_REWRITE_TAC[] THEN CASE_TAC THEN CAKE_REWRITE_TAC[] THEN
+    CASE_TAC THEN CAKE_REWRITE_TAC[APPEND];
     ALL_TAC] THEN
   POP_ASSUM(LABEL_TAC "ih") THEN BOOL_CASES_TAC `h:bool` THEN GEN_TAC THEN
   STRUCT_CASES_TAC(ISPEC `stack:A list` list_CASES) THEN
@@ -1520,18 +1520,18 @@ let map_bitmap_APPEND_APPEND = prove
 let word_gc_move_bitmaps_Loc = prove
  (`!conf l1 l2 stack bitmaps i1 pa1 (curr:A word) m dm.
      word_gc_move_bitmaps conf (wl_Loc l1 l2,stack,bitmaps,i1,pa1,curr,m,dm) = NONE`,
-  REWRITE_TAC[word_gc_move_bitmaps_def; full_read_bitmap_def] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[word_gc_move_bitmaps_def; full_read_bitmap_def] THEN CAKE_REWRITE_TAC[]);;
 
 (* a case split on a list term: tm = [], or tm = CONS h t with the names *)
 (* given; the equation is assumed and the goal rewritten                 *)
 let STALLOCAUX_LIST_CASES_TAC (tm:term) (names:string list) : tactic = fun (asl,w as g) ->
   let ety = hd(snd(dest_type(type_of tm))) in
-  let avoid = freesl (w :: map (concl o snd) asl) in
+  let avoid = freesl (w :: map (concl o snd) asl @ flat (map (hyp o snd) asl)) in
   let h = variant avoid (mk_var(hd names,ety)) in
   let t = variant (h::avoid) (mk_var(el 1 names,type_of tm)) in
   let nil = inst [ety,`:A`] `[]:A list` in
   let disj = mk_disj(mk_eq(tm,nil), list_mk_exists([h;t], mk_eq(tm,mk_cons h t))) in
-  let use th = ASSUME_TAC th THEN REWRITE_TAC[th] THEN CASE_REWRITE_TAC[] in
+  let use th = ASSUME_TAC th THEN REWRITE_TAC[th] THEN CAKE_REWRITE_TAC[] in
   (SUBGOAL_THEN disj MP_TAC THENL
    [MESON_TAC[list_CASES];
     DISCH_THEN(DISJ_CASES_THEN2 use (REPEAT_TCL CHOOSE_THEN use))]) g;;
@@ -1588,23 +1588,23 @@ let word_gc_move_bitmaps_unroll = prove
                     SOME (APPEND hd hd3,ws3,i3,pa3,m3,(c2 /\ c3))))`,
   REPEAT GEN_TAC THEN DISCH_THEN(fun th -> MP_TAC th THEN ASSUME_TAC th) THEN
   REWRITE_TAC[word_gc_move_bitmaps_def; full_read_bitmap_def] THEN
-  ASM_CASES_TAC `w:A word = word 0` THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_CASES_TAC `w:A word = word 0` THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[option_DISTINCT] THEN
   STALLOCAUX_LIST_CASES_TAC `DROP (val (word_sub (w:A word) (word 1))) (bitmaps:(A word)list)`
     ["y";"ys"] THEN
-  REWRITE_TAC[read_bitmap_def] THEN CASE_REWRITE_TAC[option_DISTINCT] THEN
+  REWRITE_TAC[read_bitmap_def] THEN CAKE_REWRITE_TAC[option_DISTINCT] THEN
   MP_TAC(ISPECL [`w:A word`; `bitmaps:(A word)list`; `y:A word`; `ys:(A word)list`]
            STALLOCAUX_bitmaps_next) THEN
   (ANTS_TAC THENL [ASM_MESON_TAC[]; STRIP_TAC]) THEN
   ASM_REWRITE_TAC[read_bitmap_def; word_gc_move_bitmap_def; LET_DEF; LET_END_DEF] THEN
-  COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THENL
+  COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THENL
    [FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP get_bits_intro th]) THEN
     STALLOCAUX_OPT_CASES_TAC `read_bitmap (ys:(A word)list)` ["bs"] THEN
     REWRITE_TAC[option_DISTINCT; filter_bitmap_APPEND] THEN
     STALLOCAUX_OPT_CASES_TAC `filter_bitmap (get_bits (y:A word)) (stack:((A)word_loc)list)`
       ["zs";"rs"] THEN
     STALLOCAUX_OPT_CASES_TAC `filter_bitmap bs (rs:((A)word_loc)list)` ["zs2";"rs2"] THEN
-    REWRITE_TAC[word_gc_move_roots_APPEND; LET_DEF; LET_END_DEF] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[word_gc_move_roots_APPEND; LET_DEF; LET_END_DEF] THEN CAKE_REWRITE_TAC[] THEN
     STALLOCAUX_SPLIT_FN_TAC "word_gc_move_roots" ["wl1";"i3";"pa3";"m3";"c3"] THEN
     STALLOCAUX_SPLIT_FN_TAC "word_gc_move_roots" ["wl2";"i4";"pa4";"m4";"c4"] THEN
     SUBGOAL_THEN `LENGTH (zs:((A)word_loc)list) = LENGTH (wl1:((A)word_loc)list)`
@@ -1620,12 +1620,12 @@ let word_gc_move_bitmaps_unroll = prove
                    `zs:((A)word_loc)list`; `rs:((A)word_loc)list`; `t2:((A)word_loc)list`;
                    `t1:((A)word_loc)list`; `t3:((A)word_loc)list`] filter_bitmap_map_bitmap) THEN
     (ANTS_TAC THENL [ASM_MESON_TAC[]; STRIP_TAC]) THEN RVEQ_TAC THEN
-    ASM_REWRITE_TAC[APPEND] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
-    CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[APPEND] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN
     STALLOCAUX_OPT_CASES_TAC `map_bitmap bs (wl2:((A)word_loc)list) rs` ["u1";"u2";"u3"] THEN
     REWRITE_TAC[];
     REWRITE_TAC[GSYM get_bits_def] THEN ASM_REWRITE_TAC[] THEN
-    CASE_REWRITE_TAC[STALLOCAUX_option_tuple6_id] THEN DISCH_THEN(K ALL_TAC) THEN
+    CAKE_REWRITE_TAC[STALLOCAUX_option_tuple6_id] THEN DISCH_THEN(K ALL_TAC) THEN
     REWRITE_TAC[STALLOCAUX_option_tuple6_id; BASICAUX_pair_CASE_K]]);;
 
 let STALLOCAUX_get_bits_cons = prove
@@ -1678,15 +1678,15 @@ let word_gc_move_bitmap_unroll = prove
     ALL_TAC] THEN
   ASM_SIMP_TAC[word_gc_move_bitmap_def; LET_DEF; LET_END_DEF; STALLOCAUX_get_bits_cons] THEN
   STRUCT_CASES_TAC(ISPEC `stack:((A)word_loc)list` list_CASES) THEN
-  REWRITE_TAC[filter_bitmap_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[filter_bitmap_def] THEN CAKE_REWRITE_TAC[] THEN
   ASM_CASES_TAC `bit 0 (w:A word)` THEN ASM_REWRITE_TAC[filter_bitmap_def] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   STALLOCAUX_OPT_CASES_TAC
     `filter_bitmap (get_bits (word_ushr (w:A word) 1)) (t:((A)word_loc)list)` ["ts";"ws"] THEN
-  REWRITE_TAC[word_gc_move_roots_def; LET_DEF; LET_END_DEF] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[word_gc_move_roots_def; LET_DEF; LET_END_DEF] THEN CAKE_REWRITE_TAC[] THEN
   TRY (STALLOCAUX_SPLIT_FN_TAC "word_gc_move" ["x1";"i3";"pa3";"m3";"c3"]) THEN
   TRY (STALLOCAUX_SPLIT_FN_TAC "word_gc_move_roots" ["wl";"i4";"pa4";"m4";"c4"]) THEN
-  REWRITE_TAC[map_bitmap_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[map_bitmap_def] THEN CAKE_REWRITE_TAC[] THEN
   TRY (STALLOCAUX_OPT_CASES_TAC
     `map_bitmap (get_bits (word_ushr (w:A word) 1)) (wl:((A)word_loc)list) t`
     ["hd";"p";"q"]) THEN
@@ -1715,10 +1715,10 @@ let word_gc_move_code_thm = prove
     6 IN FDOM (stack_state_regs s) ==>
     ?ck r0 r1 r2 r6.
       stack_evaluate (word_gc_move_code conf,
-                      stack_state_clock_fupd (K (stack_state_clock s + ck)) s) =
-        (NONE,stack_state_memory_fupd (K m1)
+                      stack_state_clock_fupd (combin_K (stack_state_clock s + ck)) s) =
+        (NONE,stack_state_memory_fupd (combin_K m1)
                 (stack_state_regs_fupd
-                   (K (stack_state_regs s |++
+                   (combin_K (stack_state_regs s |++
                        [(0,r0); (1,r1); (2,r2); (3,wl_Word pa1); (4,wl_Word i1);
                         (5,w1); (6,r6)])) s))`,
   REPEAT GEN_TAC THEN
@@ -1787,7 +1787,7 @@ let STALLOCAUX_LOOP_UNFOLD_TAC : tactic =
 (* after the body of an unfolded loop has run: reduce the loop's case, the  *)
 (* clock test, STOP; normalise the states                                   *)
 let STALLOCAUX_LOOP_STEP_TAC : tactic =
-  CASE_REWRITE_TAC[stack_cont_loop_def; stack_exit_loop_def; stack_STOP_def] THEN
+  CAKE_REWRITE_TAC[stack_cont_loop_def; stack_exit_loop_def; stack_STOP_def] THEN
   CONV_TAC (stallocaux_norm []) THEN REWRITE_TAC[ADD_EQ_0; ARITH_EQ] THEN
   CONV_TAC (stallocaux_norm []);;
 
@@ -1811,10 +1811,10 @@ let STALLOCAUX_word_gc_move_list_code_n = prove
       stack_get_var 8 s = SOME (wl_Word a) ==>
       ?ck r0 r1 r2 r5 r6.
         stack_evaluate (word_gc_move_list_code conf,
-                        stack_state_clock_fupd (K (stack_state_clock s + ck)) s) =
-          (NONE,stack_state_memory_fupd (K m1)
+                        stack_state_clock_fupd (combin_K (stack_state_clock s + ck)) s) =
+          (NONE,stack_state_memory_fupd (combin_K m1)
                   (stack_state_regs_fupd
-                     (K (stack_state_regs s |++
+                     (combin_K (stack_state_regs s |++
                          [(0,r0); (1,r1); (2,r2); (3,wl_Word pa1); (4,wl_Word i1);
                           (5,r5); (6,r6); (7,wl_Word (word 0)); (8,wl_Word a1)])) s))`,
   INDUCT_TAC THENL
@@ -1884,10 +1884,10 @@ let word_gc_move_list_code_thm = prove
       stack_get_var 8 s = SOME (wl_Word a) ==>
       ?ck r0 r1 r2 r5 r6.
         stack_evaluate (word_gc_move_list_code conf,
-                        stack_state_clock_fupd (K (stack_state_clock s + ck)) s) =
-          (NONE,stack_state_memory_fupd (K m1)
+                        stack_state_clock_fupd (combin_K (stack_state_clock s + ck)) s) =
+          (NONE,stack_state_memory_fupd (combin_K m1)
                   (stack_state_regs_fupd
-                     (K (stack_state_regs s |++
+                     (combin_K (stack_state_regs s |++
                          [(0,r0); (1,r1); (2,r2); (3,wl_Word pa1); (4,wl_Word i1);
                           (5,r5); (6,r6); (7,wl_Word (word 0)); (8,wl_Word a1)])) s))`,
   REPEAT GEN_TAC THEN
@@ -1949,10 +1949,10 @@ let word_gc_move_loop_code_thm = prove
   stack_get_var 8 s = SOME (wl_Word pb1) /\ c1 ==>
   ?ck r0 r1 r2 r5 r6 r7.
     stack_evaluate (word_gc_move_loop_code conf,
-                    stack_state_clock_fupd (K (stack_state_clock s + ck)) s) =
-    (NONE,stack_state_memory_fupd (K m2)
+                    stack_state_clock_fupd (combin_K (stack_state_clock s + ck)) s) =
+    (NONE,stack_state_memory_fupd (combin_K m2)
             (stack_state_regs_fupd
-               (K (stack_state_regs s |++
+               (combin_K (stack_state_regs s |++
                    [(0,r0); (1,r1); (2,r2); (3,wl_Word pa2); (4,wl_Word i2); (5,r5); (6,r6);
                     (7,r7); (8,wl_Word pa2)])) s))`,
   GEN_TAC THEN INDUCT_TAC THENL [ALL_TAC; POP_ASSUM(LABEL_TAC "ih")] THEN
@@ -2075,7 +2075,7 @@ let STALLOCAUX_ev_stackstoreany_n = prove
      stack_state_stack_space s + n < LENGTH (stack_state_stack s)
      ==> stack_evaluate (StackStoreAny r rn,s) =
          (NONE,stack_state_stack_fupd
-                 (K (LUPDATE v (stack_state_stack_space s + n) (stack_state_stack s))) s)`,
+                 (combin_K (LUPDATE v (stack_state_stack_space s + n) (stack_state_stack s))) s)`,
   REPEAT STRIP_TAC THEN
   MP_TAC(SPEC `n:num` STALLOCAUX_bytes_n_facts) THEN ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
   MP_TAC(ISPECL [`r:num`; `rn:num`; `v:(A)word_loc`; `word_mul bytes_in_word (word n):A word`;
@@ -2133,11 +2133,11 @@ let word_gc_move_bitmap_code_thm = prove
       (dimindex (:A) DIV 8) * LENGTH (stack_state_stack s) < dimword (:A) ==>
       ?ck r0 r1 r2 r5 r6 r7.
         stack_evaluate (word_gc_move_bitmap_code conf,
-                        stack_state_clock_fupd (K (stack_state_clock s + ck)) s) =
-          (NONE,stack_state_memory_fupd (K m1)
-                  (stack_state_stack_fupd (K (APPEND (APPEND (APPEND init old) new) stack1))
+                        stack_state_clock_fupd (combin_K (stack_state_clock s + ck)) s) =
+          (NONE,stack_state_memory_fupd (combin_K m1)
+                  (stack_state_stack_fupd (combin_K (APPEND (APPEND (APPEND init old) new) stack1))
                      (stack_state_regs_fupd
-                        (K (stack_state_regs s |++
+                        (combin_K (stack_state_regs s |++
                             [(0,r0); (1,r1); (2,r2); (3,wl_Word pa1); (4,wl_Word i1);
                              (5,r5); (6,r6); (7,r7);
                              (8,wl_Word (word_mul bytes_in_word
@@ -2258,7 +2258,7 @@ let STALLOCAUX_ELIM_TAC (vs:term list) : tactic =
 (* !x1 .. xk. body: the goal becomes the step for n, with the assumption   *)
 (* m = n and the induction hypothesis !xs. m < n ==> !rest. body (ih)      *)
 let STALLOCAUX_MEASURE_INDUCT_TAC (xs:term list) (m:term) : tactic = fun (asl,w as g) ->
-  let n = variant (freesl (w :: map (concl o snd) asl)) `n:num` in
+  let n = variant (freesl (w :: map (concl o snd) asl @ flat (map (hyp o snd) asl))) `n:num` in
   let ys,body = strip_forall w in
   let ys' = subtract ys xs in
   let body' = list_mk_forall(ys', body) in
@@ -2299,7 +2299,7 @@ let STALLOCAUX_bitmaps_nonzero = prove
      word_gc_move_bitmaps conf (wl_Word w,stack,bitmaps,i,pa,curr,m,dm) = SOME x
      ==> ~(w = word 0)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[word_gc_move_bitmaps_def; full_read_bitmap_def] THEN
-  COND_CASES_TAC THEN CASE_REWRITE_TAC[option_DISTINCT]);;
+  COND_CASES_TAC THEN CAKE_REWRITE_TAC[option_DISTINCT]);;
 
 (* HOL4 line 1323 *)
 let word_gc_move_bitmaps_code_thm = prove
@@ -2326,12 +2326,12 @@ let word_gc_move_bitmaps_code_thm = prove
     (dimindex (:A) DIV 8) * LENGTH (stack_state_stack s) < dimword (:A) ==>
     ?ck r0 r1 r2 r5 r6 r7 r9.
       stack_evaluate (word_gc_move_bitmaps_code conf,
-                      stack_state_clock_fupd (K (stack_state_clock s + ck)) s) =
-        (NONE,stack_state_memory_fupd (K m1)
-                (stack_state_stack_fupd (K (APPEND (APPEND (APPEND init old) new) stack1))
-                  (stack_state_clock_fupd (K (stack_state_clock s))
+                      stack_state_clock_fupd (combin_K (stack_state_clock s + ck)) s) =
+        (NONE,stack_state_memory_fupd (combin_K m1)
+                (stack_state_stack_fupd (combin_K (APPEND (APPEND (APPEND init old) new) stack1))
+                  (stack_state_clock_fupd (combin_K (stack_state_clock s))
                     (stack_state_regs_fupd
-                       (K (stack_state_regs s |++
+                       (combin_K (stack_state_regs s |++
                            [(0,r0); (1,r1); (2,r2); (3,wl_Word pa1); (4,wl_Word i1);
                             (5,r5); (6,r6); (7,r7);
                             (8,wl_Word (word_mul bytes_in_word
@@ -2514,12 +2514,12 @@ let word_gc_move_roots_bitmaps_code_thm = prove
     (dimindex (:A) DIV 8) * LENGTH (stack_state_stack s) < dimword (:A) ==>
     ?ck r0 r1 r2 r5 r6 r7 r8 (r9:(A)word_loc).
       stack_evaluate (word_gc_move_roots_bitmaps_code conf,
-                      stack_state_clock_fupd (K (stack_state_clock s + ck)) s) =
-        (NONE,stack_state_memory_fupd (K m1)
-                (stack_state_stack_fupd (K (APPEND (APPEND init old) stack1))
-                  (stack_state_clock_fupd (K (stack_state_clock s))
+                      stack_state_clock_fupd (combin_K (stack_state_clock s + ck)) s) =
+        (NONE,stack_state_memory_fupd (combin_K m1)
+                (stack_state_stack_fupd (combin_K (APPEND (APPEND init old) stack1))
+                  (stack_state_clock_fupd (combin_K (stack_state_clock s))
                     (stack_state_regs_fupd
-                       (K (stack_state_regs s |++
+                       (combin_K (stack_state_regs s |++
                            [(0,r0); (1,r1); (2,r2); (3,wl_Word pa1); (4,wl_Word i1);
                             (5,r5); (6,r6); (7,r7); (8,r8); (9,wl_Word (word 0))])) s))))`,
   (GEN_TAC THEN
@@ -2648,7 +2648,7 @@ let STALLOCAUX_word_gc_move_Word = prove
 let STALLOCAUX_STORE_WORD_TAC (st:term) (k:term) (name:string) : tactic = fun (asl,w as g) ->
   let vty = el 1 (snd(dest_type(type_of st))) in
   let wty = mk_type("word",[hd(snd(dest_type vty))]) in
-  let x = variant (freesl (w :: map (concl o snd) asl)) (mk_var(name,wty)) in
+  let x = variant (freesl (w :: map (concl o snd) asl @ flat (map (hyp o snd) asl))) (mk_var(name,wty)) in
   let fap = mk_icomb(mk_icomb(`FAPPLY:(B,C)fmap->B->C`,st),k) in
   let isw = mk_icomb(`isWord:(A)word_loc->bool`,fap) in
   let eq = mk_eq(fap, mk_icomb(`wl_Word:A word->(A)word_loc`,x)) in
@@ -2699,22 +2699,22 @@ let alloc_correct_lemma_Simple = prove
    ?ck l2.
      stack_evaluate
        (word_gc_code conf,
-        stack_state_use_store_fupd (K T)
-        (stack_state_use_stack_fupd (K T)
-        (stack_state_use_alloc_fupd (K F)
-        (stack_state_clock_fupd (K (stack_state_clock s + ck))
-        (stack_state_regs_fupd (K l)
-        (stack_state_gc_fun_fupd (K anything)
+        stack_state_use_store_fupd (combin_K T)
+        (stack_state_use_stack_fupd (combin_K T)
+        (stack_state_use_alloc_fupd (combin_K F)
+        (stack_state_clock_fupd (combin_K (stack_state_clock s + ck))
+        (stack_state_regs_fupd (combin_K l)
+        (stack_state_gc_fun_fupd (combin_K anything)
         (stack_state_code_fupd
-           (K (fromAList (stack_alloc_compile c (toAList (stack_state_code s))))) s))))))) =
+           (combin_K (fromAList (stack_alloc_compile c (toAList (stack_state_code s))))) s))))))) =
        (r,
-        stack_state_use_store_fupd (K T)
-        (stack_state_use_stack_fupd (K T)
-        (stack_state_use_alloc_fupd (K F)
+        stack_state_use_store_fupd (combin_K T)
+        (stack_state_use_stack_fupd (combin_K T)
+        (stack_state_use_alloc_fupd (combin_K F)
         (stack_state_code_fupd
-           (K (fromAList (stack_alloc_compile c (toAList (stack_state_code s)))))
-        (stack_state_regs_fupd (K l2)
-        (stack_state_gc_fun_fupd (K anything) t)))))) /\
+           (combin_K (fromAList (stack_alloc_compile c (toAList (stack_state_code s)))))
+        (stack_state_regs_fupd (combin_K l2)
+        (stack_state_gc_fun_fupd (combin_K anything) t)))))) /\
      (~(r = NONE) ==> r = SOME (stackSem_Halt (wl_Word (word 1)))) /\
      stack_state_regs t SUBMAP l2 /\
      (r = NONE ==> FLOOKUP l2 0 = SOME ret)`,
@@ -2729,14 +2729,14 @@ let alloc_correct_lemma_Simple = prove
                      DISCH_THEN SUBST1_TAC]) THEN
     CONV_TAC (stallocaux_norm [])) THEN
   (COND_CASES_TAC THENL
-     [CASE_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN ASM_MESON_TAC[]; ALL_TAC] THEN
-    REWRITE_TAC[LET_DEF; LET_END_DEF] THEN CASE_REWRITE_TAC[] THEN
+     [CAKE_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN ASM_MESON_TAC[]; ALL_TAC] THEN
+    REWRITE_TAC[LET_DEF; LET_END_DEF] THEN CAKE_REWRITE_TAC[] THEN
     STALLOCAUX_SPLIT_FN_TAC "word_gc_move" ["w1";"i1";"pa1";"m1";"c1"] THEN
     STALLOCAUX_SPLIT_FN_TAC "word_gc_move_roots_bitmaps" ["stk2";"i2";"pa2";"m2";"c2"] THEN
     STALLOCAUX_SPLIT_FN_TAC "word_gc_move_loop" ["i3";"pa3";"m3";"c3"]) THEN
   (REWRITE_TAC[FAPPLY_FUPDATE_THM; distinctness "store_name"] THEN
     COND_CASES_TAC THENL
-     [ALL_TAC; CASE_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN ASM_MESON_TAC[]] THEN
+     [ALL_TAC; CAKE_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN ASM_MESON_TAC[]] THEN
     FIRST_X_ASSUM(CONJUNCTS_THEN2 MP_TAC ASSUME_TAC) THEN
     REWRITE_TAC[word_gc_fun_assum_def; FDOM_FUPDATE; INSERT_SUBSET; IN_INSERT;
                 FAPPLY_FUPDATE_THM; distinctness "store_name"] THEN
@@ -2787,7 +2787,7 @@ let alloc_correct_lemma_Simple = prove
     STALLOCAUX_ELIM_TAC [`ys2:((A)word_loc)list`]) THEN
   (REWRITE_TAC[word_gc_code_def;
                 ASSUME `data_to_word_config_gc_kind conf = data_to_word_Simple`] THEN
-    CASE_REWRITE_TAC[] THEN STALLOCAUX_EV_TAC) THEN
+    CAKE_REWRITE_TAC[] THEN STALLOCAUX_EV_TAC) THEN
   (fun (asl,w as g) ->
       let s0 = stallocaux_goal_state w in
       let args,res = stallocaux_assum_args "word_gc_move" asl in

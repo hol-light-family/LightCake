@@ -140,7 +140,7 @@ let env_ok = el 10 (CONJUNCTS candle_v_ok_rules);;
 let CAN2AAUX_do_partial_app_SOME = prove
  (`do_partial_app f v = SOME g <=>
    ?env n n' e. f = Closure env n (Fun n' e) /\
-                g = Closure (sem_env_v_fupd (K (nsBind n v (sem_env_v env))) env) n' e`,
+                g = Closure (sem_env_v_fupd (combin_K (nsBind n v (sem_env_v env))) env) n' e`,
   REWRITE_TAC[do_partial_app_def] THEN
   CASES_ON `f:v` THEN SIMP[] THEN
   MATCH_GOALSUB_RENAME_TAC "exp_CASE xx" THEN CASES_ON `xx:exp` THEN SIMP[] THEN
@@ -323,14 +323,14 @@ let env_ok_merge_env = prove
   STRIP_TAC THEN CONJ_TAC THEN REPEAT GEN_TAC THEN RW[] THEN ASM_MESON_TAC[]);;
 
 let env_ok_with = prove
- (`candle_env_ok ctxt (sem_env_c_fupd (K (sem_env_c env)) env1) ==>
-   candle_env_ok ctxt (sem_env_v_fupd (K (sem_env_v env1)) env)`,
+ (`candle_env_ok ctxt (sem_env_c_fupd (combin_K (sem_env_c env)) env1) ==>
+   candle_env_ok ctxt (sem_env_v_fupd (combin_K (sem_env_v env1)) env)`,
   RW[candle_env_ok_def] THEN ASM_MESON_TAC[]);;
 
 let env_ok_with_nsBind = prove
  (`candle_v_ok ctxt v /\
-   candle_env_ok ctxt (sem_env_c_fupd (K (sem_env_c env)) env2) ==>
-   candle_env_ok ctxt (sem_env_v_fupd (K (nsBind n v (sem_env_v env2))) env)`,
+   candle_env_ok ctxt (sem_env_c_fupd (combin_K (sem_env_c env)) env2) ==>
+   candle_env_ok ctxt (sem_env_v_fupd (combin_K (nsBind n v (sem_env_v env2))) env)`,
   SIMP[candle_env_ok_def] THEN STRIP_TAC THEN
   REPEAT GEN_TAC THEN QCASES_ON "n'" THEN
   RW[nsLookup_nsBind_compute] THEN ASM_MESON_TAC[]);;
@@ -466,7 +466,7 @@ let v_ok_LIST_TYPE_HEAD = prove
    LIST_TYPE_HEAD A_HEAD v ==>
    ?tms. LIST_TYPE A tms v`,
   REWRITE_TAC[LIST_TYPE_HEAD_def] THEN STRIP_TAC THEN
-  SUBGOAL_THEN `!(l:1 list) w. candle_v_ok ctxt w /\ LIST_TYPE (K A_HEAD) l w ==>
+  SUBGOAL_THEN `!(l:1 list) w. candle_v_ok ctxt w /\ LIST_TYPE (combin_K A_HEAD) l w ==>
                                ?tms. LIST_TYPE (A:A->v->bool) tms w`
     (fun th -> ASM_MESON_TAC[th]) THEN
   LIST_INDUCT_TAC THEN REWRITE_TAC[LIST_TYPE_def; K_THM] THEN REPEAT STRIP_TAC THENL

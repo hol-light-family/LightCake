@@ -102,7 +102,7 @@ let holKernel_get_the_type_constants_def = cake_def
 let holKernel_set_the_type_constants_def = cake_def
   `(holKernel_set_the_type_constants:
       (mlstring#num)list->hol_refs->(1,C)exc#hol_refs) x =
-     \state. (M_success one,hol_refs_the_type_constants_fupd (K x) state)`;;
+     \state. (M_success one,hol_refs_the_type_constants_fupd (combin_K x) state)`;;
 
 let holKernel_get_the_term_constants_def = cake_def
   `(holKernel_get_the_term_constants:
@@ -112,7 +112,7 @@ let holKernel_get_the_term_constants_def = cake_def
 let holKernel_set_the_term_constants_def = cake_def
   `(holKernel_set_the_term_constants:
       (mlstring#hol_type)list->hol_refs->(1,C)exc#hol_refs) x =
-     \state. (M_success one,hol_refs_the_term_constants_fupd (K x) state)`;;
+     \state. (M_success one,hol_refs_the_term_constants_fupd (combin_K x) state)`;;
 
 let holKernel_get_the_axioms_def = cake_def
   `(holKernel_get_the_axioms:hol_refs->(thm list,C)exc#hol_refs) =
@@ -120,7 +120,7 @@ let holKernel_get_the_axioms_def = cake_def
 
 let holKernel_set_the_axioms_def = cake_def
   `(holKernel_set_the_axioms:thm list->hol_refs->(1,C)exc#hol_refs) x =
-     \state. (M_success one,hol_refs_the_axioms_fupd (K x) state)`;;
+     \state. (M_success one,hol_refs_the_axioms_fupd (combin_K x) state)`;;
 
 let holKernel_get_the_context_def = cake_def
   `(holKernel_get_the_context:hol_refs->(update list,C)exc#hol_refs) =
@@ -128,7 +128,7 @@ let holKernel_get_the_context_def = cake_def
 
 let holKernel_set_the_context_def = cake_def
   `(holKernel_set_the_context:update list->hol_refs->(1,C)exc#hol_refs) x =
-     \state. (M_success one,hol_refs_the_context_fupd (K x) state)`;;
+     \state. (M_success one,hol_refs_the_context_fupd (combin_K x) state)`;;
 
 (* failwith (HOL4 define_monad_exception_functions ``:hol_exn``            *)
 (* ``:hol_refs``)                                                            *)
@@ -683,7 +683,7 @@ let vfree_in_IMP = prove
  (`!(t:hol_term) x v ty. vfree_in (hol_Var v ty) x ==> MEM (hol_Var v ty) (hol_frees x)`,
   GEN_TAC THEN MATCH_MP_TAC hol_term_INDUCT THEN REPEAT STRIP_TAC THEN
   POP_ASSUM MP_TAC THEN ONCE_REWRITE_TAC[vfree_in_def; hol_frees_def] THEN
-  CASE_REWRITE_TAC[MEM; MEM_union; holKernel_MEM_subtract; injectivity "hol_term";
+  CAKE_REWRITE_TAC[MEM; MEM_union; holKernel_MEM_subtract; injectivity "hol_term";
                    distinctness "hol_term"] THEN
   REPEAT STRIP_TAC THEN ASM_SIMP_TAC[] THEN ASM_MESON_TAC[]);;
 
@@ -781,7 +781,7 @@ let my_term_size_variant = prove
   COND_CASES_TAC THEN REWRITE_TAC[] THEN
   POP_ASSUM MP_TAC THEN POP_ASSUM MP_TAC THEN
   STRUCT_CASES_TAC(SPEC `v:hol_term` (cases "hol_term")) THEN
-  CASE_REWRITE_TAC[injectivity "hol_term"; distinctness "hol_term"] THEN
+  CAKE_REWRITE_TAC[injectivity "hol_term"; distinctness "hol_term"] THEN
   DISCH_THEN(MP_TAC o SPECL [`a0:mlstring`; `a1:hol_type`]) THEN
   SIMP_TAC[holKernel_my_term_size_def]);;
 
@@ -792,7 +792,7 @@ let is_var_variant = prove
   COND_CASES_TAC THEN REWRITE_TAC[] THEN
   POP_ASSUM MP_TAC THEN POP_ASSUM MP_TAC THEN
   STRUCT_CASES_TAC(SPEC `v:hol_term` (cases "hol_term")) THEN
-  CASE_REWRITE_TAC[injectivity "hol_term"; distinctness "hol_term"] THEN
+  CAKE_REWRITE_TAC[injectivity "hol_term"; distinctness "hol_term"] THEN
   DISCH_THEN(MP_TAC o SPECL [`a0:mlstring`; `a1:hol_type`]) THEN
   SIMP[holKernel_is_var_def]);;
 
@@ -807,8 +807,8 @@ let HOLKAUX_my_term_size_rev_assocd = prove
      ALL (\x. holKernel_is_var (FST x)) xs /\ holKernel_my_term_size d = 1
      ==> holKernel_my_term_size (holKernel_rev_assocd a xs d) = 1`,
   LIST_INDUCT_TAC THEN ONCE_REWRITE_TAC[holKernel_rev_assocd_def] THEN
-  CASE_REWRITE_TAC[ALL] THEN REPEAT GEN_TAC THEN
-  PAIR_CASES_ON `h:hol_term#hol_term` THEN CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[ALL] THEN REPEAT GEN_TAC THEN
+  PAIR_CASES_ON `h:hol_term#hol_term` THEN CAKE_REWRITE_TAC[] THEN
   COND_CASES_TAC THEN ASM_SIMP_TAC[HOLKAUX_is_var_size]);;
 
 (* HOL4: my_term_size_vsubst_aux (a val, Q.prove), before and after its     *)
@@ -818,7 +818,7 @@ let HOLKAUX_my_term_size_vsubst_aux_gen = prove
           ==> holKernel_my_term_size (holKernel_vsubst_aux xs t) =
               holKernel_my_term_size t`,
   MATCH_MP_TAC hol_term_INDUCT THEN REPEAT STRIP_TAC THEN
-  ONCE_REWRITE_TAC[holKernel_vsubst_aux_def] THEN CASE_REWRITE_TAC[] THEN
+  ONCE_REWRITE_TAC[holKernel_vsubst_aux_def] THEN CAKE_REWRITE_TAC[] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THENL
    [REWRITE_TAC[holKernel_my_term_size_def] THEN
     MATCH_MP_TAC HOLKAUX_my_term_size_rev_assocd THEN
@@ -838,7 +838,7 @@ let HOLKAUX_my_term_size_vsubst_aux = prove
  (`!t v ty x. holKernel_my_term_size (holKernel_vsubst_aux [(hol_Var v ty,x)] t) =
               holKernel_my_term_size t`,
   REPEAT GEN_TAC THEN MATCH_MP_TAC HOLKAUX_my_term_size_vsubst_aux_gen THEN
-  REWRITE_TAC[ALL; holKernel_is_var_def] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[ALL; holKernel_is_var_def] THEN CAKE_REWRITE_TAC[]);;
 
 let ZERO_LT_term_size = prove
  (`!t. 0 < holKernel_my_term_size t`,

@@ -74,9 +74,9 @@ let call_FFI_def = cake_def
          Oracle_return ffi' bytes' ->
            if LENGTH bytes' = LENGTH bytes then
              FFI_return
-               (ffi_state_ffi_state_fupd (K ffi')
+               (ffi_state_ffi_state_fupd (combin_K ffi')
                   (ffi_state_io_events_fupd
-                     (K (APPEND (ffi_state_io_events st)
+                     (combin_K (APPEND (ffi_state_io_events st)
                                 [IO_event s conf (ZIP bytes bytes')])) st))
                bytes'
            else FFI_final (Final_event s conf bytes FFI_failed)

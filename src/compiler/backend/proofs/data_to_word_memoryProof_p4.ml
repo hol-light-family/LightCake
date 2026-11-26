@@ -491,7 +491,7 @@ let MP4AUX_word_heap_el_cond = prove
   REPEAT GEN_TAC THEN REWRITE_TAC[word_heap_APPEND; word_heap_def; word_el_def] THEN
   SPEC_TAC(`word_payload xs l tag qs conf:A word#(A word_loc)list#bool`,
            `w:A word#(A word_loc)list#bool`) THEN
-  REWRITE_TAC[FORALL_PAIR_THM] THEN REPEAT GEN_TAC THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[FORALL_PAIR_THM] THEN REPEAT GEN_TAC THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[FST; SND] THEN
   DISCH_THEN(MP_TAC o MP4AUX_STAR_FOCUS (mp4_is_app "set_sep_cond")) THEN
   REWRITE_TAC[cond_STAR] THEN SIMP_TAC[]);;
@@ -544,7 +544,7 @@ let MP4AUX_memory_rel_ValueArray_LENGTH = prove
     REWRITE_TAC[MEM; get_refs_def; RTC_REFL]; ALL_TAC] THEN
   FIRST_X_ASSUM(MP_TAC o SPEC `nn:num` o check (fun th -> is_forall (concl th) &&
     can (find_term (mp4_is_app "bc_ref_inv")) (concl th))) THEN
-  ASM_REWRITE_TAC[bc_ref_inv_def; FLOOKUP_DEF] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[bc_ref_inv_def; FLOOKUP_DEF] THEN CAKE_REWRITE_TAC[] THEN
   DISCH_THEN(X_CHOOSE_THEN `zs:((A word_loc)heap_address)list` STRIP_ASSUME_TAC) THEN
   MP4_X_EQ_ASM "heap_lookup" (X_CHOOSE_THEN
     `ha:((A word_loc,data_to_word_memoryProof_tag#(A word_loc)list)heap_element)list`
@@ -667,7 +667,7 @@ let MP4AUX_memory_rel_MutBlock_LENGTH = prove
     REWRITE_TAC[MEM; get_refs_def; RTC_REFL]; ALL_TAC] THEN
   FIRST_X_ASSUM(MP_TAC o SPEC `nn:num` o check (fun th -> is_forall (concl th) &&
     can (find_term (mp4_is_app "bc_ref_inv")) (concl th))) THEN
-  ASM_REWRITE_TAC[bc_ref_inv_def; FLOOKUP_DEF] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[bc_ref_inv_def; FLOOKUP_DEF] THEN CAKE_REWRITE_TAC[] THEN
   DISCH_THEN(X_CHOOSE_THEN `zs:((A word_loc)heap_address)list` STRIP_ASSUME_TAC o
              CONJUNCT2 o CONJUNCT2) THEN
   MP4_X_EQ_ASM "heap_lookup" (X_CHOOSE_THEN
@@ -794,7 +794,7 @@ let MP4AUX_heap_split_heap_length = prove
   REWRITE_TAC[heap_length_CONS] THEN
   MP_TAC(ISPEC `h:(A,B)heap_element` el_length_NOT_0) THEN
   ASM_SIMP_TAC[ADD_EQ_0; ARITH_RULE `~(a + b < a:num)`; ADD_SUB2] THEN
-  DISCH_TAC THEN CASE_REWRITE_TAC[]);;
+  DISCH_TAC THEN CAKE_REWRITE_TAC[]);;
 
 let MP4AUX_heap_split_le = prove
  (CASE_TERM `!n (ha:((A,B)heap_element)list) hb.
@@ -827,7 +827,7 @@ let gc_kind_update_Ref = prove
      gc_kind_inv c a sp sp1 gens
        (APPEND ha (CONS (DataElement (APPEND ys1 (CONS z ys2)) l (RefTag,[])) hb))`,
   REPEAT GEN_TAC THEN REWRITE_TAC[gc_kind_inv_def] THEN
-  CASES_ON `data_to_word_config_gc_kind c` THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON `data_to_word_config_gc_kind c` THEN CAKE_REWRITE_TAC[] THEN
   STRIP_TAC THEN
   SUBGOAL_THEN `a + sp + sp1 <= heap_length
                   (ha:((A,data_to_word_memoryProof_tag#B list)heap_element)list)`
@@ -1528,7 +1528,7 @@ let word_el_IMP_word_list_exists = prove
   SPEC_TAC(`word_payload a0 a1 (FST (a2:data_to_word_memoryProof_tag#((B)word_loc)list))
               (SND a2) conf:B word#(B word_loc)list#bool`,
            `w:B word#(B word_loc)list#bool`) THEN
-  REWRITE_TAC[FORALL_PAIR_THM] THEN REPEAT GEN_TAC THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[FORALL_PAIR_THM] THEN REPEAT GEN_TAC THEN CAKE_REWRITE_TAC[] THEN
   DISCH_TAC THEN DISCH_THEN(STRIP_ASSUME_TAC o REWRITE_RULE[cond_STAR] o
     MP4AUX_STAR_FOCUS (mp4_is_app "set_sep_cond")) THEN
   SUBGOAL_THEN `LENGTH (p1':(B word_loc)list) = a1` ASSUME_TAC THENL
@@ -2324,7 +2324,7 @@ let reachable_refs_MutBlock_centre = prove
    [MAP_EVERY EXISTS_TAC [`data_RefPtr b ptr`; `ptr:num`] THEN
     REWRITE_TAC[MEM; get_refs_def] THEN MATCH_MP_TAC RTC_TRANS THEN
     EXISTS_TAC `r:num` THEN ASM_REWRITE_TAC[] THEN MATCH_MP_TAC RTC_INC THEN
-    ASM_REWRITE_TAC[ref_edge_def] THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[ref_edge_def] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[get_refs_def; MEM_FLAT; MEM_MAP; MEM_APPEND; MEM] THEN
     ASM_MESON_TAC[];
     ASM_MESON_TAC[];
@@ -2337,7 +2337,7 @@ let ref_edge_insert_MutBlock = prove
      ref_edge (insert ptr (MutBlock tg fin2 l c r) refs) = ref_edge refs`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[FUN_EQ_THM; ref_edge_MutBlock] THEN
   REPEAT GEN_TAC THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[ref_edge_def] THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[]);;
 
 (* HOL4 line 9500 *)
 let reachable_refs_MutBlock_T = prove
@@ -2360,7 +2360,7 @@ let reachable_refs_MutBlock_T = prove
       MAP_EVERY EXISTS_TAC [`data_RefPtr b ptr`; `ptr:num`]] THEN
     REWRITE_TAC[MEM; get_refs_def] THEN TRY(ASM_MESON_TAC[]) THEN
     MATCH_MP_TAC RTC_TRANS THEN EXISTS_TAC `r:num` THEN ASM_REWRITE_TAC[] THEN
-    MATCH_MP_TAC RTC_INC THEN ASM_REWRITE_TAC[ref_edge_def] THEN CASE_REWRITE_TAC[] THEN
+    MATCH_MP_TAC RTC_INC THEN ASM_REWRITE_TAC[ref_edge_def] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[get_refs_def; MEM_FLAT; MEM_MAP; MEM_APPEND; MEM] THEN
     ASM_MESON_TAC[];
     ASM_MESON_TAC[]]);;
@@ -2374,7 +2374,7 @@ let dest_thunk_insert_MutBlock = prove
   REPEAT GEN_TAC THEN DISCH_TAC THEN CASES_ON `v:data_v` THEN
   REWRITE_TAC[data_dest_thunk_def; lookup_insert] THEN
   COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN RVEQ_TAC THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[]);;
 
 (* HOL4 line 9532 *)
 let bc_stack_ref_inv_MutBlock_centre = prove
@@ -2400,7 +2400,7 @@ let bc_stack_ref_inv_MutBlock_centre = prove
     REWRITE_TAC[MEM; get_refs_def; RTC_REFL]; ALL_TAC] THEN
   FIRST_ASSUM(fun th -> if is_forall (concl th) &&
       can (find_term (mp4_is_app "bc_ref_inv")) (concl th)
-    then MP_TAC (CASE_REWRITE_RULE[] (REWRITE_RULE[bc_ref_inv_def; FLOOKUP_DEF;
+    then MP_TAC (CAKE_REWRITE_RULE[] (REWRITE_RULE[bc_ref_inv_def; FLOOKUP_DEF;
            ASSUME `ptr IN FDOM (f:(num,num)fmap)`;
            ASSUME `lookup ptr (refs:(data_v bvl_ref)spt) =
                    SOME (MutBlock tag F (left:data_v list) cen right)`]
@@ -2446,7 +2446,7 @@ let bc_stack_ref_inv_union_del_ins_lemma = prove
   REPEAT STRIP_TAC THEN MATCH_MP_TAC bc_stack_ref_inv_swap_refs THEN
   EXISTS_TAC `sptree_union refs frame:(data_v bvl_ref)spt` THEN ASM_REWRITE_TAC[] THEN
   X_GEN_TAC `n:num` THEN REWRITE_TAC[lookup_union; lookup_delete; lookup_insert] THEN
-  ASM_CASES_TAC `n:num = ptr` THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]);;
+  ASM_CASES_TAC `n:num = ptr` THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]);;
 
 (* values keep their invariant when a MutBlock is finalised and a time stamp *)
 (* is added for the new block                                                *)
@@ -2496,7 +2496,7 @@ let bc_stack_ref_inv_MutBlock_F = prove
      REWRITE_TAC[MEM; get_refs_def; RTC_REFL]; ALL_TAC] THEN
    FIRST_ASSUM(fun th -> if is_forall (concl th) &&
        can (find_term (mp4_is_app "bc_ref_inv")) (concl th)
-     then MP_TAC (CASE_REWRITE_RULE[] (REWRITE_RULE[bc_ref_inv_def; FLOOKUP_DEF;
+     then MP_TAC (CAKE_REWRITE_RULE[] (REWRITE_RULE[bc_ref_inv_def; FLOOKUP_DEF;
             ASSUME `ptr IN FDOM (f:(num,num)fmap)`;
             ASSUME `lookup ptr (refs:(data_v bvl_ref)spt) =
                     SOME (MutBlock tag F (left:data_v list) cen right)`]
@@ -2600,7 +2600,7 @@ let bc_stack_ref_inv_MutBlock_F = prove
      ASM_REWRITE_TAC[]; ALL_TAC] THEN
    ASM_REWRITE_TAC[bc_ref_inv_def; FLOOKUP_DEF; lookup_insert] THEN
    ASM_CASES_TAC `n:num = ptr` THEN ASM_REWRITE_TAC[] THENL
-   [CASE_REWRITE_TAC[] THEN
+   [CAKE_REWRITE_TAC[] THEN
    DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC (X_CHOOSE_THEN
      `zs2:((A word_loc)heap_address)list` STRIP_ASSUME_TAC)) THEN
    EXISTS_TAC `zs2:((A word_loc)heap_address)list` THEN ASM_REWRITE_TAC[] THEN
@@ -2609,9 +2609,9 @@ let bc_stack_ref_inv_MutBlock_F = prove
      rand(rator(concl th)) = `zs2:((A word_loc)heap_address)list`)) THEN
    MATCH_MP_TAC MONO_ALL2 THEN BETA_TAC THEN REPEAT STRIP_TAC THEN
    MATCH_MP_TAC MP4AUX_v_inv_MutBlock_T THEN ASM_REWRITE_TAC[];
-    CASE_REWRITE_TAC[] THEN
-   CASES_ON `lookup n (refs:(data_v bvl_ref)spt)` THEN CASE_REWRITE_TAC[] THEN
-   CASES_ON `a:data_v bvl_ref` THEN CASE_REWRITE_TAC[] THENL
+    CAKE_REWRITE_TAC[] THEN
+   CASES_ON `lookup n (refs:(data_v bvl_ref)spt)` THEN CAKE_REWRITE_TAC[] THEN
+   CASES_ON `a:data_v bvl_ref` THEN CAKE_REWRITE_TAC[] THENL
     [DISCH_THEN(X_CHOOSE_THEN `zs2:((A word_loc)heap_address)list` STRIP_ASSUME_TAC) THEN
      EXISTS_TAC `zs2:((A word_loc)heap_address)list` THEN ASM_REWRITE_TAC[] THEN
      FIRST_X_ASSUM(MP_TAC o check (fun th -> mp4_is_app "ALL2" (concl th) &&
@@ -2657,7 +2657,7 @@ let bc_stack_ref_inv_FinaliseCons_lemma = prove
   FIRST_X_ASSUM(SUBST_ALL_TAC o EQF_INTRO o check (fun th -> concl th = `~(a1:bool)`)) THEN
   SUBGOAL_THEN `lookup ptr (sptree_union refs frame) =
                 SOME (MutBlock a0 F (a2:data_v list) a3 a4)` ASSUME_TAC THENL
-   [ASM_REWRITE_TAC[lookup_union] THEN CASE_REWRITE_TAC[]; ALL_TAC] THEN
+   [ASM_REWRITE_TAC[lookup_union] THEN CAKE_REWRITE_TAC[]; ALL_TAC] THEN
   MP4_X_ASM "bc_stack_ref_inv" (fun th -> MP_TAC(MATCH_MP bc_stack_ref_inv_MutBlock_centre
     (CONJ th (ASSUME `lookup ptr (sptree_union refs frame) =
                 SOME (MutBlock a0 F (a2:data_v list) a3 a4)`)))) THEN
@@ -3027,7 +3027,7 @@ let MP4AUX_thunk_header = prove
      data_to_word_config_len_size c + 5 < dimindex (:A) /\ good_dimindex (:A) ==>
      make_header c (word_or (word_shl (thunk_tag_to_bits ev) 3) (word 6)) 1 = hd /\
      decode_length c hd = word 1`,
-  GEN_TAC THEN MATCH_MP_TAC thunk_mode_INDUCT THEN CASE_REWRITE_TAC[] THEN
+  GEN_TAC THEN MATCH_MP_TAC thunk_mode_INDUCT THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[thunk_tag_bits_lemma] THEN
   REWRITE_TAC[thunk_tag_to_bits_def; WORD_SHL_0; WORD_OR_0] THEN
   CONJ_TAC THEN GEN_TAC THEN STRIP_TAC THEN CONJ_TAC THENL
@@ -4539,7 +4539,7 @@ let MP4AUX_heap_in_memory_store_header = prove
     check (fun th -> mp4_is_fun2set_asm (concl th))) THEN
   SPEC_TAC(`word_payload xs l tag qs c:A word#(A word_loc)list#bool`,
            `w:A word#(A word_loc)list#bool`) THEN
-  REWRITE_TAC[FORALL_PAIR_THM] THEN REPEAT GEN_TAC THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[FORALL_PAIR_THM] THEN REPEAT GEN_TAC THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[FST; SND; misc_word_list_def] THEN
   DISCH_THEN(MP_TAC o MATCH_MP read_fun2set o MP4AUX_STAR_FOCUS mp4_is_one) THEN
   SIMP_TAC[]);;
@@ -4892,8 +4892,8 @@ let MP4AUX_copy_list_gen = prove
    ASM_REWRITE_TAC[LENGTH; ZIP; APPEND] THEN
     CONJ_TAC THENL
      [ONCE_REWRITE_TAC[copy_list_def] THEN
-      ASM_REWRITE_TAC[LET_DEF; LET_END_DEF; NOT_SUC; SUC_SUB1] THEN CASE_REWRITE_TAC[] THEN
-      ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
+      ASM_REWRITE_TAC[LET_DEF; LET_END_DEF; NOT_SUC; SUC_SUB1] THEN CAKE_REWRITE_TAC[] THEN
+      ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
       REWRITE_TAC[option_INJ; PAIR_EQ] THEN
       FIRST_X_ASSUM(fun th -> if concl th = `LENGTH (t:data_v list) = LENGTH (xs:(A word_loc)list)`
         then RULE_ASSUM_TAC(REWRITE_RULE[th]) THEN ASSUME_TAC th else failwith "") THEN

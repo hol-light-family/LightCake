@@ -166,6 +166,10 @@ let ast_t_INDUCT,ast_t_RECURSION = cake_type
 
 (* Patterns; Pcon NONE is a tuple pattern; Pas is a pattern alias *)
 
+(* the size function of pat is ast_pat_size (NAMING.md 10: pat_size is a short *)
+(* name that Library/bitmatch.ml defines)                                    *)
+cake_size_names := ("pat","ast_pat_size") :: !cake_size_names;;
+
 let pat_INDUCT,pat_RECURSION = cake_type
   "pat = Pany
        | Pvar varN

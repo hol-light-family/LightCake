@@ -60,11 +60,11 @@ let mknt_def = cake_def
   `mknt (ntsym:pancakeNT) = peg_nt (INL ntsym) I:(A,pancakeNT,C,E)pegsym`;;
 
 let mkleaf_def = cake_def
-  `mkleaf (t:A#C) = [Lf (TOK (FST t),SND t):(A,B,C)parsetree]`;;
+  `mkleaf (t:A#C) = [grammar_Lf (grammar_TOK (FST t),SND t):(A,B,C)parsetree]`;;
 
 let mknode_def = cake_def
   `mknode (x:B) (ts:((A,B,locs)parsetree)list) =
-     Nd (INL x,ptree_list_loc ts) ts`;;
+     grammar_Nd (INL x,ptree_list_loc ts) ts`;;
 
 (* Make a sub-parsetree with a single child *)
 
@@ -168,7 +168,7 @@ let pancake_peg_def = cake_def
     (FEMPTY |++ [
       (INL TopDecListNT,
        panPEG_choicel
-         [peg_not (peg_any (K (mksubtree TopDecListNT []))) (mksubtree TopDecListNT []);
+         [peg_not (peg_any (combin_K (mksubtree TopDecListNT []))) (mksubtree TopDecListNT []);
           panPEG_seql [mknt FunNT; mknt TopDecListNT] (mksubtree TopDecListNT);
           panPEG_seql [mknt GlobalDecNT; mknt TopDecListNT]
                       (mksubtree TopDecListNT);
@@ -453,7 +453,7 @@ let pancake_peg_def = cake_def
       (INL ShapeCombNT,
        panPEG_seql [mknt ShapeNT;
                     peg_rpt (peg_seq (consume_tok panLexer_CommaT)
-                             (mknt ShapeNT) (flip K)) FLAT]
+                             (mknt ShapeNT) (flip combin_K)) FLAT]
                    (mksubtree ShapeCombNT));
       (INL EqOpsNT, panPEG_choicel [keep_tok EqT; keep_tok NeqT]);
       (INL CmpOpsNT,
@@ -543,7 +543,7 @@ let PPARSEAUX_rules =
 (* of theorems; its rules are those of pancake_peg                          *)
 
 let PPARSEAUX_G1 =
-  `peg_start_fupd (K (mknt FunNT)) pancake_peg
+  `peg_start_fupd (combin_K (mknt FunNT)) pancake_peg
      :(panLexer_token,pancakeNT,
        ((panLexer_token,pancakeNT,locs)parsetree)list,string)peg`;;
 

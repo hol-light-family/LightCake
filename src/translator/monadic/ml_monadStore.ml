@@ -31,7 +31,7 @@ let ALLOCATE_ARRAY_evaluate = prove
  (`!(env:v sem_env) (s:(FFI)state) n xname xv.
      nsLookup (sem_env_v env) (Short xname) = SOME xv ==>
      eval_rel s env (App Aalloc [Lit (IntLit (&n)); Var (Short xname)])
-       (state_refs_fupd (K (APPEND (state_refs s) [Varray (REPLICATE n xv)])) s)
+       (state_refs_fupd (combin_K (APPEND (state_refs s) [Varray (REPLICATE n xv)])) s)
        (Loc T (LENGTH (state_refs s)))`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[eval_rel_def] THEN SIMP[] THEN
   MAP_EVERY EXISTS_TAC [`state_clock (s:(FFI)state)`; `state_clock (s:(FFI)state)`] THEN
@@ -42,7 +42,7 @@ let ALLOCATE_EMPTY_RARRAY_evaluate = prove
  (`!(env:v sem_env) (s:(FFI)state).
      eval_rel s env (App Opref [App AallocEmpty [Con NONE []]])
        (state_refs_fupd
-         (K (APPEND (APPEND (state_refs s) [Varray []])
+         (combin_K (APPEND (APPEND (state_refs s) [Varray []])
                     [Refv (Loc T (LENGTH (state_refs s)))])) s)
        (Loc T (LENGTH (state_refs s) + 1))`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[eval_rel_def] THEN SIMP[] THEN
@@ -162,4 +162,3 @@ let H_STAR_empty = prove
 let ml_monadStore_H_STAR_TRUE = prove
  (`((H:(A->bool)->bool) STAR set_sep_cond T = H) /\ (set_sep_cond T STAR H = H)`,
   REWRITE_TAC[SEP_CLAUSES]);;
-

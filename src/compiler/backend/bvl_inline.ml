@@ -471,7 +471,7 @@ let bvl_inline_let_op_sing_def = cake_def
 
 let bvl_inline_let_op_sing_eq = prove
  (`!x. bvl_inline_let_op_sing x = let_op_one x`,
-  REWRITE_TAC[bvl_inline_let_op_sing_def; let_op_one] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[bvl_inline_let_op_sing_def; let_op_one] THEN CAKE_REWRITE_TAC[]);;
 
 let bvl_inline_optimise_def = cake_def
   `bvl_inline_optimise split_seq cut_size (name:A,arity,exp) =

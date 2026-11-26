@@ -861,10 +861,10 @@ let type_p_bvl = prove
 let type_p_tenvV_indep = prove
  (`(!p tvs tenv t bindings tenvV.
       type_p tvs tenv p t bindings =
-      type_p tvs (type_env_v_fupd (K tenvV) tenv) p t bindings) /\
+      type_p tvs (type_env_v_fupd (combin_K tenvV) tenv) p t bindings) /\
    (!ps tvs tenv t bindings tenvV.
       type_ps tvs tenv ps t bindings =
-      type_ps tvs (type_env_v_fupd (K tenvV) tenv) ps t bindings)`,
+      type_ps tvs (type_env_v_fupd (combin_K tenvV) tenv) ps t bindings)`,
   MATCH_MP_TAC pat_INDUCT THEN REPEAT STRIP_TAC THEN
   ONCE_REWRITE_TAC[type_p_cases] THEN SIMP_NOASM[] THEN
   ASM_MESON_TAC[]);;
@@ -1045,23 +1045,23 @@ let TPROPSAUX_type_e_subst_var = prove
   UNDISCH_TAC `lookup_var n (db_merge tenvE1 (bind_tvar (LENGTH (targs':t list)) tenvE2)) tenv =
                SOME (LENGTH (targs:t list),t)` THEN
   REWRITE_TAC[lookup_var_def; lookup_varE_def] THEN
-  CASES_ON `n:(mlstring,mlstring)id` THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON `n:(mlstring,mlstring)id` THEN CAKE_REWRITE_TAC[] THEN
   RULE_ASSUM_TAC(REWRITE_RULE[tenv_val_ok_def]) THENL
    [ASM_CASES_TAC `tveLookup a 0 (db_merge tenvE1 (bind_tvar (LENGTH (targs':t list)) tenvE2)) =
                    NONE` THENL
      [SUBGOAL_THEN `tveLookup a 0 (db_merge (deBruijn_subst_tenvE targs' tenvE1)
                                             (bind_tvar tvs' tenvE2)) = NONE`
         ASSUME_TAC THENL [ASM_MESON_TAC[TPROPSAUX_tveLookup_merge_none]; ALL_TAC] THEN
-      ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN GLOBAL_TAC;
+      ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN GLOBAL_TAC;
       FIRST_X_ASSUM(MP_TAC o MATCH_MP (MESON[cases "option"]
         `~(x:(num#t)option = NONE) ==> ?y. x = SOME y`)) THEN
-      STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+      STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
       REWRITE_TAC[option_INJ] THEN DISCH_THEN SUBST_ALL_TAC THEN
       MP_TAC(SPECL [`a:mlstring`; `tenvE1:tenv_val_exp`; `tenvE2:tenv_val_exp`;
                     `targs:t list`; `t:t`; `targs':t list`; `tvs':num`]
         TPROPSAUX_type_e_subst_var_local) THEN
       ASM_REWRITE_TAC[] THEN STRIP_TAC THEN EXISTS_TAC `t'':t` THEN
-      ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]];
+      ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]];
     GLOBAL_TAC]);;
 
 let TPROPSAUX_deBruijn_subst_t_of = prove
@@ -1229,8 +1229,8 @@ let type_e_subst = prove
                     `e1:exp`; `t1:t`] (CONJUNCT1 type_e_freevars)) THEN
       ASM_REWRITE_TAC[tenv_val_ok_def; num_tvs_db_merge; bind_tvar_rewrites; ADD_CLAUSES];
       ALL_TAC] THEN
-    CASES_ON `n:mlstring option` THEN CASE_REWRITE_TAC[] THEN
-    RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THENL
+    CASES_ON `n:mlstring option` THEN CAKE_REWRITE_TAC[] THEN
+    RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THENL
      [FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[];
       BIND_NAME_TAC `a:mlstring` `t1:t`];
     (* Letrec *)
@@ -1266,7 +1266,7 @@ let type_e_subst = prove
     BIND_NAME_TAC `n:mlstring` `t1:t`;
     (* type_funs: the name is new *)
     UNDISCH_TAC `ALOOKUP (bindings:(mlstring#t)list) fn = NONE` THEN
-    REWRITE_TAC[ALOOKUP_FAILS; MEM_MAP; EXISTS_PAIR_THM] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[ALOOKUP_FAILS; MEM_MAP; EXISTS_PAIR_THM] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[PAIR_EQ] THEN MESON_TAC[]]);;
 
 let type_funs_Tfn = prove
@@ -1291,7 +1291,7 @@ let type_funs_find_recfun = prove
      ==> ?n e. find_recfun fn funs = SOME (n,e)`,
   GEN_TAC THEN GEN_TAC THEN LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN
   ONCE_REWRITE_TAC[type_e_cases] THEN RW[] THEN FS[] THEN
-  ONCE_REWRITE_TAC[find_recfun_def] THEN CASE_REWRITE_TAC[] THEN
+  ONCE_REWRITE_TAC[find_recfun_def] THEN CAKE_REWRITE_TAC[] THEN
   COND_CASES_TAC THEN REWRITE_TAC[option_INJ; PAIR_EQ] THEN
   POP_ASSUM MP_TAC THEN ASM_REWRITE_TAC[] THEN ASM_MESON_TAC[]);;
 
@@ -1318,10 +1318,10 @@ let type_recfun_lookup = prove
      ==> type_e tenv (Bind_name n 0 t1 tenvE) e t2 /\
          check_freevars (num_tvs tenvE) [] (Tfn t1 t2)`,
   GEN_TAC THEN LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN
-  ONCE_REWRITE_TAC[find_recfun_def] THEN CASE_REWRITE_TAC[] THEN
+  ONCE_REWRITE_TAC[find_recfun_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[option_DISTINCT] THEN
   SPEC_TAC(`h:mlstring#mlstring#exp`,`h:mlstring#mlstring#exp`) THEN
-  REWRITE_TAC[FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[FORALL_PAIR_THM] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[TPROPSAUX_type_funs_cases] THEN REPEAT GEN_TAC THEN
   COND_CASES_TAC THEN REWRITE_TAC[option_INJ; PAIR_EQ] THEN STRIP_TAC THEN
   GVS[ALOOKUP_THM] THEN ASM_MESON_TAC[]);;
@@ -1333,10 +1333,10 @@ let type_funs_distinct = prove
   GEN_TAC THEN GEN_TAC THEN LIST_INDUCT_TAC THEN
   REWRITE_TAC[MAP; ALL_DISTINCT] THEN
   SPEC_TAC(`h:mlstring#mlstring#exp`,`h:mlstring#mlstring#exp`) THEN
-  REWRITE_TAC[FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[FORALL_PAIR_THM] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[TPROPSAUX_type_funs_cases] THEN REPEAT STRIP_TAC THENL
    [FIRST_X_ASSUM(MP_TAC o GEN_REWRITE_RULE I [MEM_MAP]) THEN
-    REWRITE_TAC[EXISTS_PAIR_THM] THEN CASE_REWRITE_TAC[] THEN STRIP_TAC THEN
+    REWRITE_TAC[EXISTS_PAIR_THM] THEN CAKE_REWRITE_TAC[] THEN STRIP_TAC THEN
     MP_TAC(SPECL [`p1:mlstring`; `tenvE:tenv_val_exp`; `t:(mlstring#mlstring#exp)list`;
                   `bindings':(mlstring#t)list`] type_funs_lookup) THEN
     ASM_REWRITE_TAC[] THEN ASM_MESON_TAC[option_DISTINCT];
@@ -1404,7 +1404,7 @@ let mem_type_def_to_ctMap = prove
     MAP_EVERY EXISTS_TAC [`cn:mlstring`; `i:num`] THEN ASM_REWRITE_TAC[] THEN
     ASM_ARITH_TAC;
     FIRST_X_ASSUM(MP_TAC o GEN_REWRITE_RULE I [MEM_MAP]) THEN
-    REWRITE_TAC[EXISTS_PAIR_THM] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[EXISTS_PAIR_THM] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN
     MAP_EVERY EXISTS_TAC [`p1:mlstring`; `next_stamp:num`] THEN
     ASM_REWRITE_TAC[] THEN ARITH_TAC]);;
@@ -1412,13 +1412,13 @@ let mem_type_def_to_ctMap = prove
 let o_f_FRANGE2 = prove
  (`(?x:B. (y:C) = f x /\ x IN FRANGE (g:(A,B)fmap)) ==> y IN FRANGE (f o_f g)`,
   REWRITE_TAC[IN_FRANGE_FLOOKUP; FLOOKUP_o_f] THEN STRIP_TAC THEN
-  EXISTS_TAC `k:A` THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]);;
+  EXISTS_TAC `k:A` THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]);;
 
 let TPROPSAUX_ti_IN_FRANGE = prove
  (`!(m:ctMap) k tvs ts ti.
      FLOOKUP m k = SOME (tvs,ts,ti) ==> ti IN FRANGE ((SND o SND) o_f m)`,
   REWRITE_TAC[IN_FRANGE_FLOOKUP; FLOOKUP_o_f] THEN REPEAT STRIP_TAC THEN
-  EXISTS_TAC `k:stamp` THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  EXISTS_TAC `k:stamp` THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[o_THM]);;
 
 let ctMap_ok_merge_imp = prove
@@ -1430,14 +1430,14 @@ let ctMap_ok_merge_imp = prove
   REPEAT CONJ_TAC THENL
    [MATCH_MP_TAC fevery_funion THEN ASM_REWRITE_TAC[];
     REWRITE_TAC[FLOOKUP_FUNION] THEN REPEAT GEN_TAC THEN
-    CASES_ON `FLOOKUP (ctMap1:ctMap) (ExnStamp ex)` THEN CASE_REWRITE_TAC[] THEN
+    CASES_ON `FLOOKUP (ctMap1:ctMap) (ExnStamp ex)` THEN CAKE_REWRITE_TAC[] THEN
     ASM_MESON_TAC[];
     REWRITE_TAC[FLOOKUP_FUNION] THEN REPEAT GEN_TAC THEN
-    CASES_ON `FLOOKUP (ctMap1:ctMap) (TypeStamp cn x)` THEN CASE_REWRITE_TAC[] THEN
+    CASES_ON `FLOOKUP (ctMap1:ctMap) (TypeStamp cn x)` THEN CAKE_REWRITE_TAC[] THEN
     ASM_MESON_TAC[];
     REWRITE_TAC[FLOOKUP_FUNION] THEN REPEAT GEN_TAC THEN
     CASES_ON `FLOOKUP (ctMap1:ctMap) stamp1` THEN
-    CASES_ON `FLOOKUP (ctMap1:ctMap) stamp2` THEN CASE_REWRITE_TAC[] THEN
+    CASES_ON `FLOOKUP (ctMap1:ctMap) stamp2` THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[option_INJ] THEN STRIP_TAC THENL
      [ASM_MESON_TAC[]; ALL_TAC; ALL_TAC; ASM_MESON_TAC[]] THEN
     (* the mixed cases: ti is in the range of both maps *)
@@ -1457,7 +1457,7 @@ let TPROPSAUX_ASM_CASE_TAC : tactic =
     if is_eq c && is_case_app (lhs c) then
       let _,x,_ = dest_case_app (lhs c) in MP_TAC th THEN CASES_ON x
     else NO_TAC) THEN
-  CASE_REWRITE_TAC[];;
+  CAKE_REWRITE_TAC[];;
 
 let type_def_to_ctMap_mem = prove
  (`!tenvT next tds tids.
@@ -1468,7 +1468,7 @@ let type_def_to_ctMap_mem = prove
   RW[type_def_to_ctMap_def; ALOOKUP_APPEND] THEN FS[] THEN
   TPROPSAUX_ASM_CASE_TAC THEN RW[] THEN FS[] THEN
   FIRST_X_ASSUM(MP_TAC o MATCH_MP ALOOKUP_MEM) THEN
-  REWRITE_TAC[MEM_REVERSE; MEM_MAP; EXISTS_PAIR_THM] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[MEM_REVERSE; MEM_MAP; EXISTS_PAIR_THM] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN ASM_REWRITE_TAC[]);;
 
 let fupdate2_union = prove
@@ -1476,7 +1476,7 @@ let fupdate2_union = prove
   REWRITE_TAC[FLOOKUP_EXT; FUN_EQ_THM; FLOOKUP_FUNION; flookup_fupdate_list;
               FLOOKUP_EMPTY] THEN
   REPEAT GEN_TAC THEN CASES_ON `ALOOKUP (REVERSE (a2:(A#B)list)) x` THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[]);;
 
 (* the constructor map of one type definition *)
 let TPROPSAUX_ctMap_ok_ctors = prove
@@ -1501,12 +1501,12 @@ let TPROPSAUX_ctMap_ok_ctors = prove
                       v = (tvs:mlstring list, MAP (type_name_subst (tenvT:tenv_abbrev)) ts, id)`)
     ASSUME_TAC THENL
    [REPEAT GEN_TAC THEN DISCH_THEN(MP_TAC o MATCH_MP ALOOKUP_MEM) THEN
-    REWRITE_TAC[MEM_REVERSE; MEM_MAP; EXISTS_PAIR_THM] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[MEM_REVERSE; MEM_MAP; EXISTS_PAIR_THM] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[PAIR_EQ] THEN MESON_TAC[];
     ALL_TAC] THEN
   REPEAT CONJ_TAC THEN REPEAT GEN_TAC THENL
    [DISCH_THEN(fun th -> FIRST_ASSUM(STRIP_ASSUME_TAC o C MATCH_MP th)) THEN
-    ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[EVERY_MAP] THEN
+    ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[EVERY_MAP] THEN
     FIRST_X_ASSUM(MP_TAC o SPECL [`cn:mlstring`; `ts:ast_t list`]) THEN
     ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
     REWRITE_TAC[GSYM ALL_MEM] THEN REPEAT STRIP_TAC THEN BETA_TAC THEN
@@ -1528,7 +1528,7 @@ let TPROPSAUX_FRANGE_fupdate_list = prove
               SPTAUX_optcase_lemma] THEN
   REPEAT GEN_TAC THEN DISCH_THEN(X_CHOOSE_THEN `k:stamp` MP_TAC) THEN
   CASES_ON `ALOOKUP (REVERSE (l:(stamp#(mlstring list#t list#num))list)) k` THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[option_INJ; o_THM] THEN ASM_MESON_TAC[]);;
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[option_INJ; o_THM] THEN ASM_MESON_TAC[]);;
 
 let TPROPSAUX_FRANGE_ctors = prove
  (CASE_TERM `!next (tvs:mlstring list) (ctors:(mlstring#ast_t list)list) (id:num)
@@ -1540,7 +1540,7 @@ let TPROPSAUX_FRANGE_ctors = prove
      ==> ti = id`,
   REPEAT GEN_TAC THEN DISCH_THEN(STRIP_ASSUME_TAC o MATCH_MP TPROPSAUX_FRANGE_fupdate_list) THEN
   FIRST_X_ASSUM(MP_TAC o MATCH_MP ALOOKUP_MEM) THEN
-  ASM_REWRITE_TAC[MEM_REVERSE; MEM_MAP; EXISTS_PAIR_THM] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[MEM_REVERSE; MEM_MAP; EXISTS_PAIR_THM] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN ASM_REWRITE_TAC[]);;
 
 let TPROPSAUX_FRANGE_type_def_to_ctMap = prove
@@ -1584,7 +1584,7 @@ let ctMap_ok_type_defs = prove
     MATCH_MP_TAC TPROPSAUX_ctMap_ok_ctors THEN ASM_REWRITE_TAC[] THEN CONJ_TAC THENL
      [REPEAT STRIP_TAC THEN FIRST_X_ASSUM(MP_TAC o GEN_REWRITE_RULE I [GSYM ALL_MEM]) THEN
       DISCH_THEN(MP_TAC o SPEC `(cn,ts):mlstring#ast_t list`) THEN ASM_REWRITE_TAC[] THEN
-      CASE_REWRITE_TAC[] THEN SIMP_TAC[];
+      CAKE_REWRITE_TAC[] THEN SIMP_TAC[];
       ASM_MESON_TAC[IN_DISJOINT; IN_INSERT; IN_SET_OF_LIST]]]);;
 
 let all_distinct_map_fst_lemma = prove
@@ -1592,8 +1592,8 @@ let all_distinct_map_fst_lemma = prove
      ALL_DISTINCT (MAP (\p. match p with (x,y) -> x) (l:(A#B)list))
      ==> ALL_DISTINCT (MAP (\p. match p with (x,y) -> (x,v)) l)`,
   LIST_INDUCT_TAC THEN REWRITE_TAC[MAP; ALL_DISTINCT] THEN
-  SPEC_TAC(`h:A#B`,`h:A#B`) THEN REWRITE_TAC[FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[] THEN
-  REWRITE_TAC[MEM_MAP; EXISTS_PAIR_THM] THEN CASE_REWRITE_TAC[] THEN
+  SPEC_TAC(`h:A#B`,`h:A#B`) THEN REWRITE_TAC[FORALL_PAIR_THM] THEN CAKE_REWRITE_TAC[] THEN
+  REWRITE_TAC[MEM_MAP; EXISTS_PAIR_THM] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[PAIR_EQ] THEN ASM_MESON_TAC[]);;
 
 let check_ctor_tenv_change_tenvT = prove
@@ -1606,8 +1606,8 @@ let check_ctor_tenv_change_tenvT = prove
      ==> check_ctor_tenv tenvT2 env`,
   MATCH_MP_TAC check_ctor_tenv_ind THEN
   RW[check_ctor_tenv_def] THEN FS[EVERY_MEM; MEM_FLAT; MEM_MAP; o_THM] THEN
-  RULE_ASSUM_TAC(CASE_REWRITE_RULE[] o REWRITE_RULE[FORALL_PAIR_THM]) THEN
-  REWRITE_TAC[FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[] THEN ASM_MESON_TAC[]);;
+  RULE_ASSUM_TAC(CAKE_REWRITE_RULE[] o REWRITE_RULE[FORALL_PAIR_THM]) THEN
+  REWRITE_TAC[FORALL_PAIR_THM] THEN CAKE_REWRITE_TAC[] THEN ASM_MESON_TAC[]);;
 
 let check_ctor_tenv_EVERY = prove
  (CASE_TERM `!tenvT tds.
@@ -1622,12 +1622,12 @@ let check_ctor_tenv_EVERY = prove
      ALL_DISTINCT (MAP (FST o SND) tds)`,
   MATCH_MP_TAC check_ctor_tenv_ind THEN
   REWRITE_TAC[check_ctor_tenv_def; ALL; MAP; ALL_DISTINCT; o_THM] THEN
-  REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   SUBGOAL_THEN (CASE_TERM `MAP (\p. match p with (x,tn,y) -> tn)
                    (tds:(mlstring list#mlstring#(mlstring#ast_t list)list)list) =
                  MAP (FST o SND) tds`) SUBST1_TAC THENL
    [MATCH_MP_TAC MAP_EQ THEN REWRITE_TAC[GSYM ALL_MEM; FORALL_PAIR_THM; o_THM] THEN
-    CASE_REWRITE_TAC[];
+    CAKE_REWRITE_TAC[];
     ALL_TAC] THEN
   REWRITE_TAC[CONJ_ACI]);;
 
@@ -1706,7 +1706,7 @@ let type_v_freevars = prove
 
 let remove_lambda_prod = prove
  (CASE_TERM `(\p. match p with (x,y) -> (P:A->B->C) x y) = (\xy. P (FST xy) (SND xy))`,
-  REWRITE_TAC[FUN_EQ_THM; FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[FUN_EQ_THM; FORALL_PAIR_THM] THEN CAKE_REWRITE_TAC[]);;
 
 let TPROPSAUX_FEMPTY_FUPDATE_LIST_REVERSE = prove
  (`!l:(A#B)list. FEMPTY |++ REVERSE l = alist_to_fmap l`,
@@ -1725,7 +1725,7 @@ let TPROPSAUX_ALOOKUP_MAP_SND = prove
      ALOOKUP l k = SOME v
      ==> ALOOKUP (MAP (\p. match p with (x,y) -> (x, f y)) l) k = SOME (f v)`,
   GEN_TAC THEN LIST_INDUCT_TAC THEN REWRITE_TAC[ALOOKUP_THM; MAP; option_DISTINCT] THEN
-  SPEC_TAC(`h:A#B`,`h:A#B`) THEN REWRITE_TAC[FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[] THEN
+  SPEC_TAC(`h:A#B`,`h:A#B`) THEN REWRITE_TAC[FORALL_PAIR_THM] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[ALOOKUP_THM] THEN REPEAT GEN_TAC THEN COND_CASES_TAC THEN
   ASM_SIMP_TAC[option_INJ]);;
 
@@ -1741,8 +1741,9 @@ let TPROPSAUX_NSALL2_MONO_TAC : tactic =
        then MP_TAC th else NO_TAC) THEN
      MATCH_MP_TAC nsAll2_mono) gl;;
 
-(* HOL4's statement has targs and tvs' free *)
-let type_subst = prove
+(* HOL4's statement has targs and tvs' free; HOL4 type_subst (the kernel's   *)
+(* type_subst is an OCaml function of HOL Light, so the theory prefix)       *)
+let typeSysProps_type_subst = prove
  (`!tvs ctMap tenvS v t.
      type_v tvs ctMap tenvS v t
      ==> tvs = LENGTH targs /\ ctMap_ok ctMap /\ ALL (check_freevars tvs' []) targs /\
@@ -1789,7 +1790,7 @@ let type_subst = prove
     (* Closure *)
     MAP_EVERY EXISTS_TAC [`tenv:type_env`; `tenvE:tenv_val_exp`] THEN ASM_REWRITE_TAC[] THEN
     REPEAT CONJ_TAC THENL
-     [TPROPSAUX_NSALL2_MONO_TAC THEN REWRITE_TAC[FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[] THEN
+     [TPROPSAUX_NSALL2_MONO_TAC THEN REWRITE_TAC[FORALL_PAIR_THM] THEN CAKE_REWRITE_TAC[] THEN
       MESON_TAC[];
       MATCH_MP_TAC deBruijn_subst_check_freevars2 THEN ASM_REWRITE_TAC[];
       MATCH_MP_TAC type_e_subst_lem THEN FS[tenv_ok_def; bind_tvar_rewrites]];
@@ -1798,7 +1799,7 @@ let type_subst = prove
     EXISTS_TAC (CASE_TERM `MAP (\p. match p with (x,t) -> (x, deBruijn_subst 0 targs t))
                                (bindings:(mlstring#t)list)`) THEN
     ASM_REWRITE_TAC[] THEN REPEAT CONJ_TAC THENL
-     [TPROPSAUX_NSALL2_MONO_TAC THEN REWRITE_TAC[FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[] THEN
+     [TPROPSAUX_NSALL2_MONO_TAC THEN REWRITE_TAC[FORALL_PAIR_THM] THEN CAKE_REWRITE_TAC[] THEN
       MESON_TAC[];
       MP_TAC(SPECL [`tenv:type_env`;
                     `bind_var_list 0 bindings (bind_tvar (LENGTH (targs:t list)) tenvE)`;
@@ -1833,8 +1834,8 @@ let check_ctor_tenv_ok = prove
   MATCH_MP_TAC nsAll_nsAppend THEN ASM_SIMP_TAC[] THEN
   MATCH_MP_TAC nsAll_alist_to_ns THEN
   REWRITE_TAC[EVERY_REVERSE; EVERY_MAP] THEN
-  RULE_ASSUM_TAC(CASE_REWRITE_RULE[] o REWRITE_RULE[GSYM ALL_MEM; FORALL_PAIR_THM]) THEN
-  REWRITE_TAC[GSYM ALL_MEM; FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[] THEN
+  RULE_ASSUM_TAC(CAKE_REWRITE_RULE[] o REWRITE_RULE[GSYM ALL_MEM; FORALL_PAIR_THM]) THEN
+  REWRITE_TAC[GSYM ALL_MEM; FORALL_PAIR_THM] THEN CAKE_REWRITE_TAC[] THEN
   REPEAT STRIP_TAC THEN
   FIRST_X_ASSUM(MP_TAC o SPECL [`p1:mlstring`; `p2:ast_t list`]) THEN
   ASM_REWRITE_TAC[] THEN REPEAT STRIP_TAC THEN
@@ -1856,7 +1857,7 @@ let nsMap_build_ctor_tenv = prove
   RW[nsMap_nsAppend; nsMap_alist_to_ns; MAP_REVERSE; MAP_MAP_o; o_DEF] THEN
   AP_TERM_TAC THEN AP_TERM_TAC THEN MATCH_MP_TAC MAP_EQ THEN
   REWRITE_TAC[GSYM ALL_MEM; FORALL_PAIR_THM; MEM_REVERSE] THEN BETA_TAC THEN
-  REWRITE_TAC[PAIR_MAP_THM; I_THM] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[PAIR_MAP_THM; I_THM] THEN CAKE_REWRITE_TAC[] THEN
   REPEAT STRIP_TAC THEN REWRITE_TAC[PAIR_EQ] THEN
   CONV_TAC SYM_CONV THEN FIRST_X_ASSUM MATCH_MP_TAC THEN DISJ1_TAC THEN
   REWRITE_TAC[MEM_MAP; EXISTS_PAIR_THM] THEN ASM_MESON_TAC[]);;
@@ -1884,7 +1885,7 @@ let TPROPSAUX_tenv_ok_tenv_add_tvs = prove
   MATCH_MP_TAC nsAll_alist_to_ns THEN
   REWRITE_TAC[tenv_add_tvs_def; EVERY_MAP] THEN
   POP_ASSUM MP_TAC THEN REWRITE_TAC[EVERY_MAP] THEN MATCH_MP_TAC MONO_ALL THEN
-  REWRITE_TAC[FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[FORALL_PAIR_THM] THEN CAKE_REWRITE_TAC[]);;
 
 let TPROPSAUX_tenv_abbrev_ok_tdefs = prove
  (CASE_TERM `!tdefs (ids:num list).
@@ -1901,7 +1902,7 @@ let TPROPSAUX_tenv_abbrev_ok_tdefs = prove
   CONJ_TAC THENL [ALL_TAC; ASM_REWRITE_TAC[]] THEN
   SPEC_TAC(`h:mlstring list#mlstring#(mlstring#ast_t list)list`,
            `h:mlstring list#mlstring#(mlstring#ast_t list)list`) THEN
-  REWRITE_TAC[FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[FORALL_PAIR_THM] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[check_freevars_def; EVERY_MAP; GSYM ALL_MEM]);;
 
 let type_d_tenv_ok_helper = prove
@@ -1933,10 +1934,10 @@ let type_d_tenv_ok_helper = prove
     MATCH_MP_TAC tenv_abbrev_ok_merge THEN REWRITE_TAC[TPROPSAUX_tenv_abbrev_ok_tdefs] THEN
     FS[tenv_ok_def];
     (* Dtabbrev *)
-    FS[tenv_ok_def; tenv_abbrev_ok_def; nsAll_nsSing] THEN CASE_REWRITE_TAC[] THEN
+    FS[tenv_ok_def; tenv_abbrev_ok_def; nsAll_nsSing] THEN CAKE_REWRITE_TAC[] THEN
     MATCH_MP_TAC check_freevars_type_name_subst THEN ASM_REWRITE_TAC[tenv_abbrev_ok_def];
     (* Dexn *)
-    FS[tenv_ok_def; tenv_ctor_ok_def; nsAll_nsSing] THEN CASE_REWRITE_TAC[] THEN
+    FS[tenv_ok_def; tenv_ctor_ok_def; nsAll_nsSing] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[EVERY_MAP] THEN FS[EVERY_MEM] THEN REPEAT STRIP_TAC THEN
     MATCH_MP_TAC check_freevars_type_name_subst THEN ASM_SIMP_TAC[tenv_abbrev_ok_def];
     (* Dmod *)

@@ -39,7 +39,7 @@ let stack_rawcallProof_state_ok_def = cake_def
 let stack_rawcallProof_state_rel_def = cake_def
   `stack_rawcallProof_state_rel i (s:(A,C,FFI)stack_state) t <=>
      ?c. domain c = domain (stack_state_code s) /\
-         t = stack_state_code_fupd (K c) s /\
+         t = stack_state_code_fupd (combin_K c) s /\
          stack_rawcallProof_state_ok i (stack_state_code s) /\
          !n b. lookup n (stack_state_code s) = SOME b ==>
                ?i. stack_rawcallProof_state_ok i (stack_state_code s) /\
@@ -85,7 +85,7 @@ let stack_rawcallProof_state_rel_thm = prove
 (* HOL4 [local] *)
 
 let with_stack_space = prove
- (`stack_state_stack_space_fupd (K (stack_state_stack_space t1)) (t1:(A,C,FFI)stack_state) =
+ (`stack_state_stack_space_fupd (combin_K (stack_state_stack_space t1)) (t1:(A,C,FFI)stack_state) =
    t1`,
   REWRITE_TAC[stack_state_component_equality] THEN SIMP[]);;
 
@@ -101,7 +101,7 @@ let STACKPROPSAUX_rc_comp_thms =
             let tyi = type_match (type_of pat) ty [] in
             let pat = inst tyi pat in
             let tm = mk_comb(mk_comb(c,i),pat) in
-            GEN_ALL ((REWR_CONV d THENC CASE_REWRITE_CONV[]) tm))
+            GEN_ALL ((REWR_CONV d THENC CAKE_REWRITE_CONV[]) tm))
           ci.ci_pats) in
   CONJ (mk `stack_rawcall_comp:num spt->(A)stack_prog->(A)stack_prog`
            stack_rawcall_comp_def)
@@ -117,8 +117,8 @@ let comp_LN = prove
     RULE_ASSUM_TAC(REWRITE_RULE STACKPROPSAUX_RC_IH_RWS) THEN
     REWRITE_TAC[STACKPROPSAUX_rc_comp_thms; comp_seq_def; lookup_def] THEN
     EVERY_CASE_TAC THEN
-    RULE_ASSUM_TAC(CASE_REWRITE_RULE[] o REWRITE_RULE STACKPROPSAUX_RC_IH_RWS) THEN
-    ASM_REWRITE_TAC[lookup_def] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[];
+    RULE_ASSUM_TAC(CAKE_REWRITE_RULE[] o REWRITE_RULE STACKPROPSAUX_RC_IH_RWS) THEN
+    ASM_REWRITE_TAC[lookup_def] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[];
     FIRST_X_ASSUM(ASSUME_TAC o REWRITE_RULE[] o SPEC `LN:num spt`) THEN
     REPEAT GEN_TAC THEN ASM_REWRITE_TAC[] THEN CASES_ON `b:(A)stack_prog` THEN
     ASM_REWRITE_TAC[STACKPROPSAUX_rc_comp_thms]]);;
@@ -127,8 +127,8 @@ let comp_seq_neq_IMP = prove
  (`~(comp_seq p1 p2 i (default:(A)stack_prog) = default) ==>
    ?k dest. p1 = StackFree k /\ p2 = stack_Call NONE (INL dest) NONE`,
   REWRITE_TAC[comp_seq_def; dest_case_def] THEN
-  CASES_ON `p1:(A)stack_prog` THEN CASE_REWRITE_TAC[] THEN
-  CASES_ON `p2:(A)stack_prog` THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON `p1:(A)stack_prog` THEN CAKE_REWRITE_TAC[] THEN
+  CASES_ON `p2:(A)stack_prog` THEN CAKE_REWRITE_TAC[] THEN
   EVERY_CASE_TAC THEN REWRITE_TAC[] THEN MESON_TAC[]);;
 
 (* comp keeps the syntactic properties of the programs (HOL4: by comp_ind, *)
@@ -142,7 +142,7 @@ let STACKPROPSAUX_COMP_SEQ_TAC : tactic = fun (asl,w as g) ->
   (ASM_CASES_TAC (mk_eq(cs,rand cs)) THENL
     [ASM_REWRITE_TAC[];
      FIRST_ASSUM (STRIP_ASSUME_TAC o MATCH_MP comp_seq_neq_IMP) THEN RVEQ_TAC THEN
-     REWRITE_TAC[comp_seq_def; dest_case_def] THEN CASE_REWRITE_TAC[] THEN
+     REWRITE_TAC[comp_seq_def; dest_case_def] THEN CAKE_REWRITE_TAC[] THEN
      REPEAT TOP_CASE_TAC]) g;;
 
 let STACKPROPSAUX_RC_SYNTAX_TAC (defs:thm list) : tactic =
@@ -151,7 +151,7 @@ let STACKPROPSAUX_RC_SYNTAX_TAC (defs:thm list) : tactic =
   RULE_ASSUM_TAC(REWRITE_RULE STACKPROPSAUX_RC_IH_RWS) THEN
   REWRITE_TAC[STACKPROPSAUX_rc_comp_thms] THEN
   TRY STACKPROPSAUX_COMP_SEQ_TAC THEN EVERY_CASE_TAC THEN
-  RULE_ASSUM_TAC(CASE_REWRITE_RULE[] o REWRITE_RULE STACKPROPSAUX_RC_IH_RWS) THEN
+  RULE_ASSUM_TAC(CAKE_REWRITE_RULE[] o REWRITE_RULE STACKPROPSAUX_RC_IH_RWS) THEN
   REPEAT (FIRST_X_ASSUM (CONJUNCTS_THEN ASSUME_TAC o check (is_conj o concl))) THEN
   SIMP defs;;
 
@@ -173,10 +173,10 @@ let STACKPROPSAUX_state_rel_upd = prove
    stack_rawcallProof_state_rel i (stack_dec_clock s) (stack_dec_clock t) /\
    stack_rawcallProof_state_rel i (stack_empty_env s) (stack_empty_env t) /\
    (!x y. stack_rawcallProof_state_rel i (stack_set_var x y s) (stack_set_var x y t)) /\
-   (!n. stack_rawcallProof_state_rel i (stack_state_clock_fupd (K n) s)
-                                       (stack_state_clock_fupd (K n) t)) /\
-   (!n. stack_rawcallProof_state_rel i (stack_state_stack_space_fupd (K n) s)
-                                       (stack_state_stack_space_fupd (K n) t))`,
+   (!n. stack_rawcallProof_state_rel i (stack_state_clock_fupd (combin_K n) s)
+                                       (stack_state_clock_fupd (combin_K n) t)) /\
+   (!n. stack_rawcallProof_state_rel i (stack_state_stack_space_fupd (combin_K n) s)
+                                       (stack_state_stack_space_fupd (combin_K n) t))`,
   REWRITE_TAC[stack_rawcallProof_state_rel_def] THEN STRIP_TAC THEN RVEQ_TAC THEN
   REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN EXISTS_TAC `c:((A)stack_prog)spt` THEN
   REWRITE_TAC[stack_dec_clock_def; stack_empty_env_def; stack_set_var_def] THEN
@@ -249,7 +249,7 @@ let STACKPROPSAUX_comp_call_some = prove
      stack_rawcall_comp i (stack_Call (SOME (rh,lr,l1,l2)) dest handler:(A)stack_prog) =
      stack_Call (SOME (stack_rawcall_comp i rh,lr,l1,l2)) dest
        (OPTION_MAP (\(p2,k1,k2). (stack_rawcall_comp i p2,k1,k2)) handler)`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[STACKPROPSAUX_rc_comp_thms] THEN CASE_REWRITE_TAC[] THEN
+  REPEAT GEN_TAC THEN REWRITE_TAC[STACKPROPSAUX_rc_comp_thms] THEN CAKE_REWRITE_TAC[] THEN
   REPEAT TOP_CASE_TAC THEN SIMP[]);;
 
 let STACKPROPSAUX_dest_Seq_SOME = prove
@@ -261,11 +261,11 @@ let STACKPROPSAUX_dest_Seq_SOME = prove
 
 let STACKPROPSAUX_rel_code_fupd = prove
  (`stack_rawcallProof_state_rel i s (t:(A,C,FFI)stack_state) ==>
-   t = stack_state_code_fupd (K (stack_state_code t)) s`,
+   t = stack_state_code_fupd (combin_K (stack_state_code t)) s`,
   REWRITE_TAC[stack_rawcallProof_state_rel_def] THEN STRIP_TAC THEN RVEQ_TAC THEN SIMP[]);;
 
 let STACKPROPSAUX_word_exp_code = prove
- (`stack_word_exp (stack_state_code_fupd (K c) (s:(A,C,FFI)stack_state)) e =
+ (`stack_word_exp (stack_state_code_fupd (combin_K c) (s:(A,C,FFI)stack_state)) e =
    stack_word_exp s e`,
   MATCH_MP_TAC STACKPROPSAUX_word_exp_frame THEN SIMP[]);;
 
@@ -388,8 +388,8 @@ let evaluate_comp_Inst = prove
    ?ck t1 k1.
      stack_rawcallProof_state_rel i' s1 t1 /\
      stack_evaluate (stack_rawcall_comp i' (stack_Inst i),
-                     stack_state_clock_fupd (K (ck + stack_state_clock t)) t) =
-     (r,stack_state_stack_space_fupd (K k1) t1) /\
+                     stack_state_clock_fupd (combin_K (ck + stack_state_clock t)) t) =
+     (r,stack_state_stack_space_fupd (combin_K k1) t1) /\
      (~(r = SOME stack_TimeOut) /\ ~(r = SOME (stackSem_Halt (wl_Word (word 2)))) ==>
       k1 = stack_state_stack_space t1)`,
   STRIP_TAC THEN EXISTS_TAC `0` THEN
@@ -411,15 +411,15 @@ let stack_rawcallProof_comp_correct = prove
      ==> (?ck t1 k1.
             stack_rawcallProof_state_rel i s1 t1 /\
             stack_evaluate (comp_top i p,
-                            stack_state_clock_fupd (K (stack_state_clock t + ck)) t) =
-            (r,stack_state_stack_space_fupd (K k1) t1) /\
+                            stack_state_clock_fupd (combin_K (stack_state_clock t + ck)) t) =
+            (r,stack_state_stack_space_fupd (combin_K k1) t1) /\
             (~(r = SOME stack_TimeOut) /\ ~(r = SOME (stackSem_Halt (wl_Word (word 2)))) ==>
              k1 = stack_state_stack_space t1)) /\
          (?ck t1 k1.
             stack_rawcallProof_state_rel i s1 t1 /\
             stack_evaluate (stack_rawcall_comp i p,
-                            stack_state_clock_fupd (K (stack_state_clock t + ck)) t) =
-            (r,stack_state_stack_space_fupd (K k1) t1) /\
+                            stack_state_clock_fupd (combin_K (stack_state_clock t + ck)) t) =
+            (r,stack_state_stack_space_fupd (combin_K k1) t1) /\
             (~(r = SOME stack_TimeOut) /\ ~(r = SOME (stackSem_Halt (wl_Word (word 2)))) ==>
              k1 = stack_state_stack_space t1))`,
   let simple = STACKPROPSAUX_RC_SIMPLE_TAC and src = STACKPROPSAUX_RC_SRC_TAC
@@ -449,7 +449,7 @@ let stack_rawcallProof_comp_correct = prove
       ASM_REWRITE_TAC[] THEN DISCH_THEN (choose3 "ck2" "t2" "k2" o CONJUNCT2) THEN
       MP_TAC (INST [`ck2:num`,`extra:num`]
         (ISPECL [`stack_rawcall_comp i (c1:(A)stack_prog)`;
-                 `stack_state_clock_fupd (K (stack_state_clock t + ck1)) (t:(A,C,FFI)stack_state)`;
+                 `stack_state_clock_fupd (combin_K (stack_state_clock t + ck1)) (t:(A,C,FFI)stack_state)`;
                  `NONE:((A)stack_result)option`; `t1:(A,C,FFI)stack_state`]
                 stack_evaluate_add_clock)) THEN
       FS[option_DISTINCT] THEN DISCH_TAC THEN
@@ -466,11 +466,11 @@ let stack_rawcallProof_comp_correct = prove
     ASM_CASES_TAC `stack_rawcall_comp i (stack_Seq c1 c2) =
       stack_Seq (stack_rawcall_comp i c1) (stack_rawcall_comp i (c2:(A)stack_prog))` THEN
     ASM_REWRITE_TAC[] THEN
-    FIRST_X_ASSUM (STRIP_ASSUME_TAC o MATCH_MP comp_seq_neq_IMP o CASE_REWRITE_RULE[] o
+    FIRST_X_ASSUM (STRIP_ASSUME_TAC o MATCH_MP comp_seq_neq_IMP o CAKE_REWRITE_RULE[] o
                    REWRITE_RULE[STACKPROPSAUX_rc_comp_thms] o check (is_neg o concl)) THEN
     RVEQ_TAC THEN REWRITE_TAC[STACKPROPSAUX_rc_comp_thms; comp_seq_def; dest_case_def] THEN
-    CASE_REWRITE_TAC[] THEN CASES_ON `lookup dest (i:num spt)` THEN CASE_REWRITE_TAC[] THENL
-     [RULE_ASSUM_TAC(CASE_REWRITE_RULE[] o REWRITE_RULE[STACKPROPSAUX_rc_comp_thms]) THEN
+    CAKE_REWRITE_TAC[] THEN CASES_ON `lookup dest (i:num spt)` THEN CAKE_REWRITE_TAC[] THENL
+     [RULE_ASSUM_TAC(CAKE_REWRITE_RULE[] o REWRITE_RULE[STACKPROPSAUX_rc_comp_thms]) THEN
       ASM_REWRITE_TAC[];
       ALL_TAC] THEN
     src [stack_find_code_def] THEN IMP_RES_TAC STACKPROPSAUX_rel_get THENL
@@ -483,7 +483,7 @@ let stack_rawcallProof_comp_correct = prove
     DISCH_THEN (MP_TAC o SPECL [`dest:num`; `a:num`]) THEN ASM_REWRITE_TAC[] THEN
     DISCH_THEN (X_CHOOSE_TAC `p:(A)stack_prog`) THEN
     IMP_RES_TAC STACKPROPSAUX_rel_lookup THEN
-    RULE_ASSUM_TAC(CASE_REWRITE_RULE[] o REWRITE_RULE[comp_top_def; STACKPROPSAUX_rc_comp_thms]) THEN
+    RULE_ASSUM_TAC(CAKE_REWRITE_RULE[] o REWRITE_RULE[comp_top_def; STACKPROPSAUX_rc_comp_thms]) THEN
     FIRST_X_ASSUM (CAKE_STRIP_ASSUME_TAC o CAKE_SIMP_RULE[sf_eq; COND_CASE_EQ] o
                    check (fun th -> is_src th && free_in `StackFree k:(A)stack_prog` (concl th))) THEN
     RVEQ_TAC THEN RULE_ASSUM_TAC(REWRITE_RULE[]) THEN TRY (FIRST_ASSUM CONTR_TAC) THEN
@@ -495,21 +495,21 @@ let stack_rawcallProof_comp_correct = prove
       FIRST_X_ASSUM (MP_TAC o check is_src) THEN REWRITE_TAC[call_eq] THEN SIMP[] THEN
       STRIP_TAC THEN RVEQ_TAC THEN EXISTS_TAC `0` THEN
       EXISTS_TAC `stack_empty_env (stack_state_stack_space_fupd
-        (K (stack_state_stack_space (s:(A,C,FFI)stack_state) + k)) (t:(A,C,FFI)stack_state))` THEN
+        (combin_K (stack_state_stack_space (s:(A,C,FFI)stack_state) + k)) (t:(A,C,FFI)stack_state))` THEN
       SIMP[STACKPROPSAUX_state_rel_upd] THEN REPEAT COND_CASES_TAC THEN
       FS[stack_evaluate_def; stack_dest_Seq_def; stack_empty_env_def;
          stack_state_component_equality];
       ALL_TAC] THEN
     (* the induction hypothesis for the call, after StackFree k *)
     SUBGOAL_THEN `stack_rawcallProof_state_rel i
-       (stack_state_stack_space_fupd (K (stack_state_stack_space s + k)) (s:(A,C,FFI)stack_state))
-       (stack_state_stack_space_fupd (K (stack_state_stack_space s + k)) (t:(A,C,FFI)stack_state))`
+       (stack_state_stack_space_fupd (combin_K (stack_state_stack_space s + k)) (s:(A,C,FFI)stack_state))
+       (stack_state_stack_space_fupd (combin_K (stack_state_stack_space s + k)) (t:(A,C,FFI)stack_state))`
       ASSUME_TAC THENL [ASM_MESON_TAC[STACKPROPSAUX_state_rel_upd]; ALL_TAC] THEN
     FIRST_X_ASSUM (MP_TAC o SPEC `stack_state_stack_space_fupd
-      (K (stack_state_stack_space s + k)) (s:(A,C,FFI)stack_state)`) THEN
+      (combin_K (stack_state_stack_space s + k)) (s:(A,C,FFI)stack_state)`) THEN
     ASM_REWRITE_TAC[sf_eq] THEN
     DISCH_THEN (MP_TAC o SPECL [`stack_state_stack_space_fupd
-      (K (stack_state_stack_space (s:(A,C,FFI)stack_state) + k)) (t:(A,C,FFI)stack_state)`;
+      (combin_K (stack_state_stack_space (s:(A,C,FFI)stack_state) + k)) (t:(A,C,FFI)stack_state)`;
       `i:num spt`; `r:((A)stack_result)option`; `s1:(A,C,FFI)stack_state`]) THEN
     ASM_REWRITE_TAC[] THEN DISCH_THEN (choose3 "ck" "t1" "k1") THEN
     STACKPROPSAUX_DROP_IHS_TAC THEN
@@ -556,7 +556,7 @@ let stack_rawcallProof_comp_correct = prove
       DISCH_THEN (choose3 "ck2" "t2" "k2" o CONJUNCT2) THEN
       MP_TAC (INST [`ck2:num`,`extra:num`]
         (ISPECL [`stack_rawcall_comp i (c1:(A)stack_prog)`;
-                 `stack_state_clock_fupd (K (stack_state_clock t + ck')) (t:(A,C,FFI)stack_state)`;
+                 `stack_state_clock_fupd (combin_K (stack_state_clock t + ck')) (t:(A,C,FFI)stack_state)`;
                  `res:((A)stack_result)option`; `t1':(A,C,FFI)stack_state`]
                 stack_evaluate_add_clock)) THEN
       ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
@@ -566,7 +566,7 @@ let stack_rawcallProof_comp_correct = prove
          STACKPROPSAUX_dec_clock_clock]]
   and loop_exit =
     STRIP_TAC THEN RVEQ_TAC THEN MAP_EVERY EXISTS_TAC wit' THEN
-    ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
     STRIP_TAC THEN FIRST_X_ASSUM MATCH_MP_TAC THEN
     CONJ_TAC THEN DISCH_TAC THEN RVEQ_TAC THEN FS[] in
   (* Call (SOME ...): the callee, then the return or exception handler *)
@@ -590,7 +590,7 @@ let stack_rawcallProof_comp_correct = prove
   and call_unf =
     FIRST_X_ASSUM (MP_TAC o check is_callee) THEN ONCE_REWRITE_TAC[stack_evaluate_def] THEN
     FS[stack_find_code_def] THEN STACKPROPSAUX_SAME_RUN_TAC THEN DISCH_TAC THEN
-    ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] in
+    ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] in
   let call_direct = callee THEN MAP_EVERY EXISTS_TAC wit THEN call_unf THEN mono_fin
   and call_cont =
     callee THEN RVEQ_TAC THEN RULE_ASSUM_TAC(REWRITE_RULE[with_stack_space]) THEN
@@ -603,7 +603,7 @@ let stack_rawcallProof_comp_correct = prove
     MAP_EVERY EXISTS_TAC [`ck + ck2`; `t2:(A,C,FFI)stack_state`; `k2:num`] THEN call_unf
   and call_none = FIRST [zero empty THEN NO_TAC; call wit] in
   STACKPROPSAUX_EVAL_IND_TAC THEN REPEAT GEN_TAC THEN STRIP_TAC THEN
-  REWRITE_TAC[comp_top_def] THEN CASE_REWRITE_TAC[] THENL
+  REWRITE_TAC[comp_top_def] THEN CAKE_REWRITE_TAC[] THENL
    [(* Skip *) simple;
     (* Halt *) simple;
     (* Alloc *) simple;
@@ -633,32 +633,32 @@ let stack_rawcallProof_comp_correct = prove
     MAP_EVERY EXISTS_TAC wit' THEN STACKPROPSAUX_DROP_IHS_TAC THEN
     IMP_RES_TAC STACKPROPSAUX_rel_get THEN FS[EXISTS_BOOL_THM];
     (* Loop *)
-    REPEAT STRIP_TAC THEN REWRITE_TAC[STACKPROPSAUX_rc_comp_thms] THEN CASE_REWRITE_TAC[] THEN
+    REPEAT STRIP_TAC THEN REWRITE_TAC[STACKPROPSAUX_rc_comp_thms] THEN CAKE_REWRITE_TAC[] THEN
     FIRST_X_ASSUM (MP_TAC o check is_src) THEN ONCE_REWRITE_TAC[stack_evaluate_def] THEN
     PAIRARG_TAC THEN ASM_CASES_TAC `res = SOME (stack_Error:(A)stack_result)` THEN FS[] THEN
     RES_TAC THEN CASES_ON `stack_cont_loop (res:((A)stack_result)option)` THEN FS[] THENL
      [loop_cont; loop_exit];
     (* JumpLower *)
-    REPEAT STRIP_TAC THEN REWRITE_TAC[STACKPROPSAUX_rc_comp_thms] THEN CASE_REWRITE_TAC[] THEN
+    REPEAT STRIP_TAC THEN REWRITE_TAC[STACKPROPSAUX_rc_comp_thms] THEN CAKE_REWRITE_TAC[] THEN
     src [stack_find_code_def] THEN RULE_ASSUM_TAC(REWRITE_RULE[stack_find_code_def]) THEN
     IMP_RES_TAC STACKPROPSAUX_rel_get THEN IMP_RES_TAC STACKPROPSAUX_rel_lookup THEN
     FIRST [zero I THEN NO_TAC; zero empty THEN NO_TAC; call wit];
     (* RawCall *)
-    REPEAT STRIP_TAC THEN REWRITE_TAC[STACKPROPSAUX_rc_comp_thms] THEN CASE_REWRITE_TAC[] THEN
+    REPEAT STRIP_TAC THEN REWRITE_TAC[STACKPROPSAUX_rc_comp_thms] THEN CAKE_REWRITE_TAC[] THEN
     src [] THEN RULE_ASSUM_TAC(CAKE_SIMP_RULE[STACKPROPSAUX_dest_Seq_SOME]) THEN RVEQ_TAC THEN
     IMP_RES_TAC STACKPROPSAUX_rel_get THEN IMP_RES_TAC STACKPROPSAUX_rel_lookup THEN
     RULE_ASSUM_TAC(REWRITE_RULE[comp_top_def; STACKPROPSAUX_rc_comp_thms]) THEN
-    RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN
+    RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN
     FIRST [zero empty THEN NO_TAC; call wit'];
     (* Call *)
     REPEAT STRIP_TAC THEN
     FIRST_X_ASSUM (MP_TAC o ONCE_REWRITE_RULE[stack_evaluate_def] o check is_src) THEN
-    CASES_ON `ret:((A)stack_prog#num#num#num)option` THEN CASE_REWRITE_TAC[] THEN
+    CASES_ON `ret:((A)stack_prog#num#num#num)option` THEN CAKE_REWRITE_TAC[] THEN
     REPEAT PAIRARG_TAC THEN
     DISCH_THEN(CAKE_STRIP_ASSUME_TAC o CAKE_SIMP_RULE (CONJUNCTS stack_case_eq_thms)) THEN
     RVEQ_TAC THEN RULE_ASSUM_TAC(REWRITE_RULE[]) THEN TRY (FIRST_ASSUM CONTR_TAC) THEN
     REWRITE_TAC[STACKPROPSAUX_comp_call_some] THEN REWRITE_TAC[STACKPROPSAUX_rc_comp_thms] THEN
-    CASE_REWRITE_TAC[] THEN IMP_RES_TAC STACKPROPSAUX_rel_get THEN
+    CAKE_REWRITE_TAC[] THEN IMP_RES_TAC STACKPROPSAUX_rel_get THEN
     IMP_RES_TAC STACKPROPSAUX_rel_find_code THENL
      [(* tail call: timeout, run; call: timeout *) call_none; call_none; call_none;
       (* Result *) call_cont; (* Exception, no handler *) call_direct;
@@ -718,7 +718,7 @@ let lookup_collect_info = prove
        NONE -> lookup n rest
      | SOME body -> lookup n (collect_info [(n,body)] rest)`,
   LIST_INDUCT_TAC THEN REWRITE_TAC[collect_info_def; ALOOKUP_DEF] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   SPEC_TAC(`h:num#(A)stack_prog`,`h:num#(A)stack_prog`) THEN
   REWRITE_TAC[FORALL_PAIR_THM; MAP; ALL_DISTINCT; FST; SND; collect_info_def] THEN
   MAP_EVERY X_GEN_TAC [`p1:num`; `p2:(A)stack_prog`; `n:num`; `rest:num spt`] THEN
@@ -739,17 +739,17 @@ let lookup_collect_info = prove
     ASM_REWRITE_TAC[FST];
     ALL_TAC] THEN
   ASM_CASES_TAC `p1:num = n` THENL
-   [FIRST_X_ASSUM SUBST_ALL_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[];
+   [FIRST_X_ASSUM SUBST_ALL_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[];
     ALL_TAC] THEN
   ASM_REWRITE_TAC[] THEN
   CASES_ON `ALOOKUP (t:(num#(A)stack_prog)list) n` THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[] THEN
-  CASES_ON `seq_stack_alloc (p2:(A)stack_prog)` THEN CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
+  CASES_ON `seq_stack_alloc (p2:(A)stack_prog)` THEN CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[lookup_insert] THEN
   (fun (asl,w as g) ->
      let tm = find_term (fun t -> try fst(dest_const(fst(strip_comb t))) = "seq_stack_alloc"
                                   with Failure _ -> false) w in
-     (CASES_ON tm THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[lookup_insert]) g));;
+     (CASES_ON tm THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[lookup_insert]) g));;
 
 let STACKPROPSAUX_seq_stack_alloc_cases = prove
  (`!p:(A)stack_prog. seq_stack_alloc p = NONE \/
@@ -764,12 +764,12 @@ let state_ok_collect_info = prove
   MAP_EVERY X_GEN_TAC [`n:num`; `v:num`] THEN
   ASM_SIMP_TAC[lookup_collect_info; lookup_fromAList] THEN
   CASES_ON `ALOOKUP (code:(num#(A)stack_prog)list) n` THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[lookup_def; option_DISTINCT; collect_info_def] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[lookup_def; option_DISTINCT; collect_info_def] THEN
   (fun (asl,w as g) ->
      let tm = find_term (fun t -> try fst(dest_const(fst(strip_comb t))) = "seq_stack_alloc"
                                   with Failure _ -> false) w in
      (MP_TAC(ISPEC (rand tm) STACKPROPSAUX_seq_stack_alloc_cases) THEN
-      STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+      STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
       REWRITE_TAC[lookup_insert; lookup_def; option_DISTINCT; option_INJ] THEN
       DISCH_THEN SUBST_ALL_TAC THEN ASM_MESON_TAC[]) g));;
 
@@ -780,20 +780,20 @@ let state_ok_collect_info = prove
 
 let STACKPROPSAUX_eval_det = prove
  (`!p (x:(A,C,FFI)stack_state) k1 k2 r1 r2 x1 x2.
-     stack_evaluate (p,stack_state_clock_fupd (K k1) x) = (r1,x1) /\
-     stack_evaluate (p,stack_state_clock_fupd (K k2) x) = (r2,x2) /\
+     stack_evaluate (p,stack_state_clock_fupd (combin_K k1) x) = (r1,x1) /\
+     stack_evaluate (p,stack_state_clock_fupd (combin_K k2) x) = (r2,x2) /\
      ~(r1 = SOME stack_TimeOut) /\ ~(r2 = SOME stack_TimeOut)
      ==> r1 = r2 /\ stack_state_ffi x1 = stack_state_ffi x2`,
   SUBGOAL_THEN
    `!p (x:(A,C,FFI)stack_state) k1 d r1 r2 x1 x2.
-     stack_evaluate (p,stack_state_clock_fupd (K k1) x) = (r1,x1) /\
-     stack_evaluate (p,stack_state_clock_fupd (K (k1 + d)) x) = (r2,x2) /\
+     stack_evaluate (p,stack_state_clock_fupd (combin_K k1) x) = (r1,x1) /\
+     stack_evaluate (p,stack_state_clock_fupd (combin_K (k1 + d)) x) = (r2,x2) /\
      ~(r1 = SOME stack_TimeOut)
      ==> r1 = r2 /\ stack_state_ffi x1 = stack_state_ffi x2`
    ASSUME_TAC THENL
    [REPEAT GEN_TAC THEN STRIP_TAC THEN
     MP_TAC(INST [`d:num`,`extra:num`]
-      (ISPECL [`p:(A)stack_prog`; `stack_state_clock_fupd (K k1) (x:(A,C,FFI)stack_state)`;
+      (ISPECL [`p:(A)stack_prog`; `stack_state_clock_fupd (combin_K k1) (x:(A,C,FFI)stack_state)`;
                `r1:((A)stack_result)option`; `x1:(A,C,FFI)stack_state`]
               stack_evaluate_add_clock)) THEN
     ASM_REWRITE_TAC[] THEN SIMP[] THEN ASM_REWRITE_TAC[PAIR_EQ] THEN
@@ -806,15 +806,15 @@ let STACKPROPSAUX_eval_det = prove
 
 let STACKPROPSAUX_eval_mono_clock = prove
  (`!p (x:(A,C,FFI)stack_state) k1 k2 r1 x1.
-     stack_evaluate (p,stack_state_clock_fupd (K k1) x) = (r1,x1) /\
+     stack_evaluate (p,stack_state_clock_fupd (combin_K k1) x) = (r1,x1) /\
      ~(r1 = SOME stack_TimeOut) /\ k1 <= k2
-     ==> FST (stack_evaluate (p,stack_state_clock_fupd (K k2) x)) = r1 /\
-         stack_state_ffi (SND (stack_evaluate (p,stack_state_clock_fupd (K k2) x))) =
+     ==> FST (stack_evaluate (p,stack_state_clock_fupd (combin_K k2) x)) = r1 /\
+         stack_state_ffi (SND (stack_evaluate (p,stack_state_clock_fupd (combin_K k2) x))) =
          stack_state_ffi x1`,
   REPEAT GEN_TAC THEN REWRITE_TAC[LE_EXISTS] THEN STRIP_TAC THEN
   FIRST_X_ASSUM SUBST_ALL_TAC THEN
   MP_TAC(INST [`d:num`,`extra:num`]
-    (ISPECL [`p:(A)stack_prog`; `stack_state_clock_fupd (K k1) (x:(A,C,FFI)stack_state)`;
+    (ISPECL [`p:(A)stack_prog`; `stack_state_clock_fupd (combin_K k1) (x:(A,C,FFI)stack_state)`;
              `r1:((A)stack_result)option`; `x1:(A,C,FFI)stack_state`]
             stack_evaluate_add_clock)) THEN
   ASM_REWRITE_TAC[] THEN SIMP[]);;
@@ -822,7 +822,7 @@ let STACKPROPSAUX_eval_mono_clock = prove
 let STACKPROPSAUX_sem_ev (x:term) (k:term) =
   vsubst [x,`x:(A,C,FFI)stack_state`; k,`k:num`]
    `stack_evaluate (stack_Call NONE (INL start) NONE:(A)stack_prog,
-                    stack_state_clock_fupd (K k) (x:(A,C,FFI)stack_state))`;;
+                    stack_state_clock_fupd (combin_K k) (x:(A,C,FFI)stack_state))`;;
 
 (* the pair of a run: names r, s1 for stack_evaluate (P,clock_fupd (K k) x) *)
 let STACKPROPSAUX_SEM_RUN_TAC (x:term) (k:term) (r:term) (x1:term) : tactic =
@@ -845,27 +845,27 @@ let STACKPROPSAUX_sem_oks (x:term) =
 let STACKPROPSAUX_semantics_sim = prove
  (`!start (s:(A,C,FFI)stack_state) (t:(A,C,FFI)stack_state).
      (!k r s1.
-        stack_evaluate (stack_Call NONE (INL start) NONE,stack_state_clock_fupd (K k) s) =
+        stack_evaluate (stack_Call NONE (INL start) NONE,stack_state_clock_fupd (combin_K k) s) =
         (r,s1) /\ ~(r = SOME stack_Error)
         ==> ?ck t1.
               stack_evaluate (stack_Call NONE (INL start) NONE,
-                              stack_state_clock_fupd (K (k + ck)) t) = (r,t1) /\
+                              stack_state_clock_fupd (combin_K (k + ck)) t) = (r,t1) /\
               stack_state_ffi t1 = stack_state_ffi s1) /\
      ~(stack_semantics start s = Fail)
      ==> stack_semantics start t = stack_semantics start s`,
   REPEAT GEN_TAC THEN DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "sim") ASSUME_TAC) THEN
   SUBGOAL_THEN
    `!k. FST (stack_evaluate (stack_Call NONE (INL start) NONE:(A)stack_prog,
-                             stack_state_clock_fupd (K k) (s:(A,C,FFI)stack_state))) =
+                             stack_state_clock_fupd (combin_K k) (s:(A,C,FFI)stack_state))) =
           SOME stack_TimeOut \/
         FST (stack_evaluate (stack_Call NONE (INL start) NONE:(A)stack_prog,
-                             stack_state_clock_fupd (K k) s)) =
+                             stack_state_clock_fupd (combin_K k) s)) =
           SOME (stack_Result (wl_Loc 1 0)) \/
         (?w. FST (stack_evaluate (stack_Call NONE (INL start) NONE:(A)stack_prog,
-                                  stack_state_clock_fupd (K k) s)) =
+                                  stack_state_clock_fupd (combin_K k) s)) =
                SOME (stackSem_Halt (wl_Word w))) \/
         (?f. FST (stack_evaluate (stack_Call NONE (INL start) NONE:(A)stack_prog,
-                                  stack_state_clock_fupd (K k) s)) =
+                                  stack_state_clock_fupd (combin_K k) s)) =
                SOME (stack_FinalFFI f))`
    (LABEL_TAC "oks") THENL
    [UNDISCH_TAC `~(stack_semantics start (s:(A,C,FFI)stack_state) = Fail)` THEN
@@ -900,10 +900,10 @@ let STACKPROPSAUX_semantics_sim = prove
   SUBGOAL_THEN
     `!k r (t1:(A,C,FFI)stack_state).
        stack_evaluate (stack_Call NONE (INL start) NONE:(A)stack_prog,
-                       stack_state_clock_fupd (K k) t) = (r,t1) /\
+                       stack_state_clock_fupd (combin_K k) t) = (r,t1) /\
        ~(r = SOME stack_TimeOut)
        ==> ?s1. stack_evaluate (stack_Call NONE (INL start) NONE:(A)stack_prog,
-                                stack_state_clock_fupd (K k) (s:(A,C,FFI)stack_state)) =
+                                stack_state_clock_fupd (combin_K k) (s:(A,C,FFI)stack_state)) =
                 (r,s1) /\ stack_state_ffi s1 = stack_state_ffi t1`
     (LABEL_TAC "back") THENL
    [REPEAT GEN_TAC THEN STRIP_TAC THEN
@@ -1004,7 +1004,7 @@ let STACKPROPSAUX_semantics_sim = prove
                      (ffi_state_io_events (stack_state_ffi (s1:(A,C,FFI)stack_state)))` THEN
        MAP_EVERY EXISTS_TAC [`k:num`; `s1:(A,C,FFI)stack_state`;
                              `stack_FinalFFI f:(A)stack_result`; `FFI_outcome f`]] THEN
-     ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[];
+     ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[];
      ALL_TAC] THEN
    MATCH_MP_TAC IMP_build_lprefix_lub_EQ THEN REWRITE_TAC[STACKPROPSAUX_io_chain] THEN
    REWRITE_TAC[lprefix_rel_def; FORALL_IN_IMAGE; EXISTS_IN_IMAGE; IN_UNIV] THEN
@@ -1033,7 +1033,7 @@ let STACKPROPSAUX_rel_init = prove
  (`ALL_DISTINCT (MAP FST (code:(num#(A)stack_prog)list)) /\
    stack_state_code s = fromAList code
    ==> stack_rawcallProof_state_rel (collect_info code LN) (s:(A,C,FFI)stack_state)
-         (stack_state_code_fupd (K (fromAList (stack_rawcall_compile code))) s)`,
+         (stack_state_code_fupd (combin_K (fromAList (stack_rawcall_compile code))) s)`,
   STRIP_TAC THEN REWRITE_TAC[stack_rawcallProof_state_rel_def] THEN
   EXISTS_TAC `fromAList (stack_rawcall_compile (code:(num#(A)stack_prog)list))` THEN
   ASM_SIMP_TAC[domain_fromAList_compile; state_ok_collect_info] THEN
@@ -1055,7 +1055,7 @@ let stack_rawcallProof_compile_semantics = prove
  (`ALL_DISTINCT (MAP FST (code:(num#(A)stack_prog)list)) /\ stack_state_use_stack s /\
    stack_state_code s = fromAList code /\ ~(stack_semantics start s = Fail)
    ==> stack_semantics start
-         (stack_state_code_fupd (K (fromAList (stack_rawcall_compile code)))
+         (stack_state_code_fupd (combin_K (fromAList (stack_rawcall_compile code)))
             (s:(A,C,FFI)stack_state)) =
        stack_semantics start s`,
   STRIP_TAC THEN MATCH_MP_TAC STACKPROPSAUX_semantics_sim THEN ASM_REWRITE_TAC[] THEN
@@ -1068,19 +1068,19 @@ let stack_rawcallProof_compile_semantics = prove
              MATCH_MP STACKPROPSAUX_state_rel_upd) THEN
   DISCH_TAC THEN
   MP_TAC(ISPECL [`stack_Call NONE (INL start) NONE:(A)stack_prog`;
-                 `stack_state_clock_fupd (K k) (s:(A,C,FFI)stack_state)`;
-                 `stack_state_clock_fupd (K k)
-                    (stack_state_code_fupd (K (fromAList (stack_rawcall_compile code)))
+                 `stack_state_clock_fupd (combin_K k) (s:(A,C,FFI)stack_state)`;
+                 `stack_state_clock_fupd (combin_K k)
+                    (stack_state_code_fupd (combin_K (fromAList (stack_rawcall_compile code)))
                       (s:(A,C,FFI)stack_state))`;
                  `collect_info (code:(num#(A)stack_prog)list) LN`;
                  `r:((A)stack_result)option`; `s1:(A,C,FFI)stack_state`]
                 stack_rawcallProof_comp_correct) THEN
   ANTS_TAC THENL [ASM_REWRITE_TAC[]; ALL_TAC] THEN
   DISCH_THEN(MP_TAC o CONJUNCT1) THEN
-  REWRITE_TAC[STACKPROPSAUX_rc_comp_thms] THEN CASE_REWRITE_TAC[] THEN SIMP[] THEN
+  REWRITE_TAC[STACKPROPSAUX_rc_comp_thms] THEN CAKE_REWRITE_TAC[] THEN SIMP[] THEN
   STRIP_TAC THEN
   MAP_EVERY EXISTS_TAC [`ck:num`;
-    `stack_state_stack_space_fupd (K k1) (t1:(A,C,FFI)stack_state)`] THEN
+    `stack_state_stack_space_fupd (combin_K k1) (t1:(A,C,FFI)stack_state)`] THEN
   ASM_REWRITE_TAC[] THEN SIMP[] THEN
   MATCH_MP_TAC STACKPROPSAUX_rel_ffi THEN
   EXISTS_TAC `collect_info (code:(num#(A)stack_prog)list) LN` THEN ASM_REWRITE_TAC[]);;

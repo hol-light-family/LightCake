@@ -30,7 +30,7 @@ type_invention_error := true;;
 (* ------------------------------------------------------------------------- *)
 
 let EMPTY_BAG = new_definition
-  `EMPTY_BAG:A->num = K 0`;;
+  `EMPTY_BAG:A->num = combin_K 0`;;
 
 let EMPTY_BAG_alt = prove
  (`EMPTY_BAG:A->num = \x. 0`,

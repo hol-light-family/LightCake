@@ -95,7 +95,7 @@ let sec_ends_with_label_def = cake_def
   `sec_ends_with_label (Section _ ls:(A)sec) <=> ~NULL ls /\ is_Label (LAST ls)`;;
 
 let reg_imm_with_clock = prove
- (`lab_reg_imm r (lab_state_clock_fupd (K z) (s:(A,C,FFI)lab_state)) =
+ (`lab_reg_imm r (lab_state_clock_fupd (combin_K z) (s:(A,C,FFI)lab_state)) =
    lab_reg_imm r s`,
   CASES_ON `r:(A)reg_imm` THEN SIMP[lab_reg_imm_def]);;
 
@@ -111,8 +111,8 @@ let LABPROPSAUX_UNFOLD =
    lab_read_fp_reg_def; lab_reg_imm_def];;
 
 let asm_inst_with_clock = prove
- (`asm_inst i (lab_state_clock_fupd (K z) (s:(A,C,FFI)lab_state)) =
-   lab_state_clock_fupd (K z) (asm_inst i s)`,
+ (`asm_inst i (lab_state_clock_fupd (combin_K z) (s:(A,C,FFI)lab_state)) =
+   lab_state_clock_fupd (combin_K z) (asm_inst i s)`,
   CASES_ON `i:(A)inst` THEN
   STACKPAUX_TYPE_CASES_TAC `:(A)asm_arith` THEN
   STACKPAUX_TYPE_CASES_TAC `:memop` THEN
@@ -132,7 +132,7 @@ let _ = cake_add_simps [read_reg_inc_pc];;
 (* HOL4: with_same_clock [simp] *)
 
 let lab_with_same_clock = prove
- (`lab_state_clock_fupd (K (lab_state_clock s)) (s:(A,C,FFI)lab_state) = s`,
+ (`lab_state_clock_fupd (combin_K (lab_state_clock s)) (s:(A,C,FFI)lab_state) = s`,
   REWRITE_TAC[lab_state_component_equality] THEN SIMP[]);;
 
 let _ = cake_add_simps [lab_with_same_clock];;
@@ -382,11 +382,11 @@ let LABPROPSAUX_addr_clock = prove
   CASES_ON `a:(A)addr` THEN REWRITE_TAC[lab_addr_def] THEN SIMP[]);;
 
 let LABPROPSAUX_share_mem_op_clock = prove
- (CASE_TERM `share_mem_op m r ad (lab_state_clock_fupd (K c) (s:(A,C,FFI)lab_state)) =
+ (CASE_TERM `share_mem_op m r ad (lab_state_clock_fupd (combin_K c) (s:(A,C,FFI)lab_state)) =
    match share_mem_op m r ad s with
      NONE -> NONE
-   | SOME (FFI_final f,t) -> SOME (FFI_final f,lab_state_clock_fupd (K c) t)
-   | SOME (FFI_return f l,t) -> SOME (FFI_return f l,lab_state_clock_fupd (K (c - 1)) t)`,
+   | SOME (FFI_final f,t) -> SOME (FFI_final f,lab_state_clock_fupd (combin_K c) t)
+   | SOME (FFI_return f l,t) -> SOME (FFI_return f l,lab_state_clock_fupd (combin_K (c - 1)) t)`,
   CASES_ON `m:memop` THEN
   REWRITE_TAC[share_mem_op_def; share_mem_load_def; share_mem_store_def] THEN
   SIMP[LABPROPSAUX_addr_clock] THEN EVERY_CASE_TAC THEN
@@ -425,8 +425,8 @@ let LABPROPSAUX_ADD_CLOCK_LEAF_TAC : tactic =
 let evaluate_ADD_clock = prove
  (`!s res r k.
       lab_evaluate (s:(A,C,FFI)lab_state) = (res,r) /\ ~(res = target_TimeOut) ==>
-      lab_evaluate (lab_state_clock_fupd (K (lab_state_clock s + k)) s) =
-      (res,lab_state_clock_fupd (K (lab_state_clock r + k)) r)`,
+      lab_evaluate (lab_state_clock_fupd (combin_K (lab_state_clock s + k)) s) =
+      (res,lab_state_clock_fupd (combin_K (lab_state_clock r + k)) r)`,
   MATCH_MP_TAC LABPROPSAUX_CLOCK_INDUCT THEN GEN_TAC THEN DISCH_THEN(LABEL_TAC "ih") THEN
   REPEAT GEN_TAC THEN
   GEN_REWRITE_TAC (LAND_CONV o LAND_CONV o LAND_CONV) [lab_evaluate_def] THEN
@@ -440,21 +440,21 @@ let evaluate_ADD_clock = prove
   REPEAT TOP_CASE_TAC THEN LABPROPSAUX_ADD_CLOCK_LEAF_TAC);;
 
 let addr_add_clock_eq = prove
- (`lab_addr a (lab_state_clock_fupd (K (extra + lab_state_clock s))
+ (`lab_addr a (lab_state_clock_fupd (combin_K (extra + lab_state_clock s))
                  (s:(A,C,FFI)lab_state)) = lab_addr a s`,
   REWRITE_TAC[LABPROPSAUX_addr_clock]);;
 
 let share_mem_op_add_clock_same = prove
  (`(~(lab_state_clock s = 0) /\ share_mem_op m n a (s:(A,C,FFI)lab_state) = NONE ==>
-    share_mem_op m n a (lab_state_clock_fupd (K (extra + lab_state_clock s)) s) = NONE) /\
+    share_mem_op m n a (lab_state_clock_fupd (combin_K (extra + lab_state_clock s)) s) = NONE) /\
    (~(lab_state_clock s = 0) /\ share_mem_op m n a s = SOME (FFI_return f l',r) ==>
-    share_mem_op m n a (lab_state_clock_fupd (K (extra + lab_state_clock s)) s) =
-      SOME (FFI_return f l',lab_state_clock_fupd (K (extra + lab_state_clock r)) r)) /\
+    share_mem_op m n a (lab_state_clock_fupd (combin_K (extra + lab_state_clock s)) s) =
+      SOME (FFI_return f l',lab_state_clock_fupd (combin_K (extra + lab_state_clock r)) r)) /\
    (~(lab_state_clock s = 0) /\ share_mem_op m n a s = SOME (FFI_final f2,r2) ==>
-    share_mem_op m n a (lab_state_clock_fupd (K (extra + lab_state_clock s)) s) =
-      SOME (FFI_final f2,lab_state_clock_fupd (K (extra + lab_state_clock r2)) r2))`,
+    share_mem_op m n a (lab_state_clock_fupd (combin_K (extra + lab_state_clock s)) s) =
+      SOME (FFI_final f2,lab_state_clock_fupd (combin_K (extra + lab_state_clock r2)) r2))`,
   REPEAT CONJ_TAC THEN STRIP_TAC THEN
-  ASM_REWRITE_TAC[LABPROPSAUX_share_mem_op_clock] THEN CASE_REWRITE_TAC[] THENL
+  ASM_REWRITE_TAC[LABPROPSAUX_share_mem_op_clock] THEN CAKE_REWRITE_TAC[] THENL
    [FIRST_ASSUM(MP_TAC o MATCH_MP STACKPAUX_share_mem_op_clock) THEN
     DISCH_THEN SUBST1_TAC THEN REWRITE_TAC[injectivity "option"; PAIR_EQ] THEN
     AP_THM_TAC THEN AP_TERM_TAC THEN AP_TERM_TAC THEN ASM_ARITH_TAC;
@@ -467,11 +467,11 @@ let lab_evaluate_add_clock_io_events_mono = prove
  (`!s:(A,C,FFI)lab_state.
      ffi_state_io_events (lab_state_ffi (SND (lab_evaluate s))) <<=
      ffi_state_io_events (lab_state_ffi (SND (lab_evaluate
-       (lab_state_clock_fupd (K (lab_state_clock s + extra)) s))))`,
+       (lab_state_clock_fupd (combin_K (lab_state_clock s + extra)) s))))`,
   MATCH_MP_TAC LABPROPSAUX_CLOCK_INDUCT THEN GEN_TAC THEN DISCH_THEN(LABEL_TAC "ih") THEN
   GEN_REWRITE_TAC (LAND_CONV o RAND_CONV o RAND_CONV o RAND_CONV) [lab_evaluate_def] THEN
   ASM_CASES_TAC `lab_state_clock (s:(A,C,FFI)lab_state) = 0` THEN ASM_REWRITE_TAC[SND] THENL
-   [MP_TAC(ISPEC `lab_state_clock_fupd (K (lab_state_clock s + extra))
+   [MP_TAC(ISPEC `lab_state_clock_fupd (combin_K (lab_state_clock s + extra))
                     (s:(A,C,FFI)lab_state)` LABPROPSAUX_io_SND) THEN SIMP[];
     ALL_TAC] THEN
   GEN_REWRITE_TAC (RAND_CONV o RAND_CONV o RAND_CONV o RAND_CONV) [lab_evaluate_def] THEN
@@ -499,7 +499,7 @@ let lab_evaluate_add_clock_io_events_mono = prove
 
 let align_dm_def = cake_def
   `align_dm (s:(A,C,FFI)lab_state) =
-     lab_state_mem_domain_fupd (K (lab_state_mem_domain s INTER byte_aligned)) s`;;
+     lab_state_mem_domain_fupd (combin_K (lab_state_mem_domain s INTER byte_aligned)) s`;;
 
 let align_dm_const = prove
  (`lab_state_clock (align_dm s) = lab_state_clock (s:(A,C,FFI)lab_state) /\
@@ -525,8 +525,8 @@ let align_dm_const = prove
 let _ = cake_add_simps [align_dm_const];;
 
 let align_dm_with_clock = prove
- (`align_dm (lab_state_clock_fupd (K k) s) =
-   lab_state_clock_fupd (K k) (align_dm (s:(A,C,FFI)lab_state))`,
+ (`align_dm (lab_state_clock_fupd (combin_K k) s) =
+   lab_state_clock_fupd (combin_K k) (align_dm (s:(A,C,FFI)lab_state))`,
   REWRITE_TAC[align_dm_def] THEN SIMP[]);;
 
 let asm_fetch_align_dm = prove
@@ -715,7 +715,7 @@ let mem_load_align_dm = prove
    align_dm (lab_mem_load n a (s:(A,C,FFI)lab_state))`,
   DISCH_TAC THEN REWRITE_TAC[lab_mem_load_def; addr_align_dm] THEN
   CASES_ON `lab_addr (a:(A)addr) (s:(A,C,FFI)lab_state)` THEN
-  CASE_REWRITE_TAC[assert_align_dm] THEN
+  CAKE_REWRITE_TAC[assert_align_dm] THEN
   REWRITE_TAC[assert_align_dm; upd_reg_align_dm; align_dm_const;
               LABPROPSAUX_align_dm_mem_domain] THEN
   ASM_SIMP_TAC[LABPROPSAUX_aligned_IN_INTER]);;
@@ -756,7 +756,7 @@ let mem_store_align_dm = prove
    align_dm (lab_mem_store n a (s:(A,C,FFI)lab_state))`,
   DISCH_TAC THEN REWRITE_TAC[lab_mem_store_def; addr_align_dm] THEN
   CASES_ON `lab_addr (a:(A)addr) (s:(A,C,FFI)lab_state)` THEN
-  CASE_REWRITE_TAC[assert_align_dm] THEN
+  CAKE_REWRITE_TAC[assert_align_dm] THEN
   REWRITE_TAC[assert_align_dm; upd_mem_align_dm; read_reg_align_dm;
               LABPROPSAUX_align_dm_mem_domain] THEN
   ASM_SIMP_TAC[LABPROPSAUX_aligned_IN_INTER]);;
@@ -875,7 +875,7 @@ let share_mem_op_align_dm_simp = prove
    (share_mem_op m r a s = SOME (FFI_return fs l,s') ==>
     share_mem_op m r a (align_dm s) = SOME (FFI_return fs l,align_dm s'))`,
   REWRITE_TAC[LABPROPSAUX_share_mem_op_align_dm] THEN REPEAT STRIP_TAC THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]);;
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]);;
 
 let _ = cake_add_simps [share_mem_op_align_dm_simp];;
 
@@ -901,7 +901,7 @@ let evaluate_align_dm = prove
      let (r,s') = lab_evaluate s in (r,align_dm s')`,
   DISCH_THEN(ASSUME_TAC o MATCH_MP LABPROPSAUX_evaluate_align_dm) THEN
   GEN_TAC THEN FIRST_ASSUM(fun th -> REWRITE_TAC[GSYM th]) THEN
-  CASES_ON `lab_evaluate (s:(A,C,FFI)lab_state)` THEN CASE_REWRITE_TAC[]);;
+  CASES_ON `lab_evaluate (s:(A,C,FFI)lab_state)` THEN CAKE_REWRITE_TAC[]);;
 
 let LABPROPSAUX_semantics_align_dm = prove
  (`good_dimindex(:A) ==>
@@ -925,7 +925,7 @@ let implements_align_dm = prove
 let align_sdm_def = cake_def
   `align_sdm (s:(A,C,FFI)lab_state) =
      lab_state_shared_mem_domain_fupd
-       (K (lab_state_shared_mem_domain s INTER byte_aligned)) s`;;
+       (combin_K (lab_state_shared_mem_domain s INTER byte_aligned)) s`;;
 
 let align_sdm_const = prove
  (`lab_state_clock (align_sdm s) = lab_state_clock (s:(A,C,FFI)lab_state) /\
@@ -951,8 +951,8 @@ let align_sdm_const = prove
 let _ = cake_add_simps [align_sdm_const];;
 
 let align_sdm_with_clock = prove
- (`align_sdm (lab_state_clock_fupd (K k) s) =
-   lab_state_clock_fupd (K k) (align_sdm (s:(A,C,FFI)lab_state))`,
+ (`align_sdm (lab_state_clock_fupd (combin_K k) s) =
+   lab_state_clock_fupd (combin_K k) (align_sdm (s:(A,C,FFI)lab_state))`,
   REWRITE_TAC[align_sdm_def] THEN SIMP[]);;
 
 let asm_fetch_align_sdm = prove
@@ -1225,8 +1225,8 @@ let share_mem_load_align_sdm = prove
   DISCH_THEN(fun th -> REWRITE_TAC[MATCH_MP LABPROPSAUX_share_mem_load_align_sdm th]) THEN
   CONJ_TAC THENL
    [CASES_ON `share_mem_load r (ad:(A)addr) (s:(A,C,FFI)lab_state) n` THEN
-    CASE_REWRITE_TAC[] THEN PAIRARG_TAC THEN CASE_REWRITE_TAC[];
-    DISCH_THEN SUBST1_TAC THEN CASE_REWRITE_TAC[]]);;
+    CAKE_REWRITE_TAC[] THEN PAIRARG_TAC THEN CAKE_REWRITE_TAC[];
+    DISCH_THEN SUBST1_TAC THEN CAKE_REWRITE_TAC[]]);;
 
 let share_mem_store_align_sdm = prove
  (`good_dimindex(:A) ==>
@@ -1237,8 +1237,8 @@ let share_mem_store_align_sdm = prove
   DISCH_THEN(fun th -> REWRITE_TAC[MATCH_MP LABPROPSAUX_share_mem_store_align_sdm th]) THEN
   CONJ_TAC THENL
    [CASES_ON `share_mem_store r (ad:(A)addr) (s:(A,C,FFI)lab_state) n` THEN
-    CASE_REWRITE_TAC[] THEN PAIRARG_TAC THEN CASE_REWRITE_TAC[];
-    DISCH_THEN SUBST1_TAC THEN CASE_REWRITE_TAC[]]);;
+    CAKE_REWRITE_TAC[] THEN PAIRARG_TAC THEN CAKE_REWRITE_TAC[];
+    DISCH_THEN SUBST1_TAC THEN CAKE_REWRITE_TAC[]]);;
 
 let LABPROPSAUX_share_mem_op_align_sdm = prove
  (CASE_TERM `good_dimindex(:A) ==>
@@ -1261,8 +1261,8 @@ let share_mem_op_align_sdm_simp = prove
   DISCH_THEN(fun th -> REWRITE_TAC[MATCH_MP LABPROPSAUX_share_mem_op_align_sdm th]) THEN
   CONJ_TAC THENL
    [CASES_ON `share_mem_op m r (a:(A)addr) (s:(A,C,FFI)lab_state)` THEN
-    CASE_REWRITE_TAC[] THEN PAIRARG_TAC THEN CASE_REWRITE_TAC[];
-    DISCH_THEN SUBST1_TAC THEN CASE_REWRITE_TAC[]]);;
+    CAKE_REWRITE_TAC[] THEN PAIRARG_TAC THEN CAKE_REWRITE_TAC[];
+    DISCH_THEN SUBST1_TAC THEN CAKE_REWRITE_TAC[]]);;
 
 (* evaluate_align_sdm, with FST and SND instead of the paired let *)
 
@@ -1287,7 +1287,7 @@ let evaluate_align_sdm = prove
      let (r,s') = lab_evaluate s in (r,align_sdm s')`,
   DISCH_THEN(ASSUME_TAC o MATCH_MP LABPROPSAUX_evaluate_align_sdm) THEN
   GEN_TAC THEN FIRST_ASSUM(fun th -> REWRITE_TAC[GSYM th]) THEN
-  CASES_ON `lab_evaluate (s:(A,C,FFI)lab_state)` THEN CASE_REWRITE_TAC[]);;
+  CASES_ON `lab_evaluate (s:(A,C,FFI)lab_state)` THEN CAKE_REWRITE_TAC[]);;
 
 let LABPROPSAUX_semantics_align_sdm = prove
  (`good_dimindex(:A) ==>

@@ -180,7 +180,7 @@ let bvi_to_data_compile_sing_def = sem1aux_def_wf
       match x with
         INL (n,env,t,l,x) -> bvi_exp_size x
       | INR (n,env,l,xs) -> list_size bvi_exp_size xs)`)
-  (REWRITE_TAC[measure_THM] THEN CASE_REWRITE_TAC[] THEN SEM1AUX_TC_TAC)
+  (REWRITE_TAC[measure_THM] THEN CAKE_REWRITE_TAC[] THEN SEM1AUX_TC_TAC)
   (list_mk_conj
   [`((bvi_to_data_compile_sing:WORDP3AUX_sty) n env tail live (bvi_Var v) =
       let var = any_el v env 0 in
@@ -275,7 +275,7 @@ let WORDP3AUX_PAIRARG_ANT_TAC : tactic =
       try let a,b = dest_abs f in let b1,_ = dest_abs b in
           fst(dest_var a),fst(dest_var b1)
       with Failure _ -> "p1","p2" in
-    let avoid = frees whole in
+    let avoid = itlist (union o thm_frees o snd) asl (frees whole) in
     let v1 = variant avoid (mk_var(n1,tya)) in
     let v2 = variant (v1::avoid) (mk_var(n2,tyb)) in
     let nch = ISPEC x (nchotomy_of_type (type_of x)) in
@@ -283,7 +283,7 @@ let WORDP3AUX_PAIRARG_ANT_TAC : tactic =
      DISCH_THEN(X_CHOOSE_THEN v1 (X_CHOOSE_THEN v2
        (fun th -> if is_var x then SUBST_ALL_TAC th
                   else SUBST_ALL_TAC th THEN ASSUME_TAC th))) THEN
-     CASE_ASM_TIDY_TAC THEN CASE_REWRITE_TAC[]) gl;;
+     CASE_ASM_TIDY_TAC THEN CAKE_REWRITE_TAC[]) gl;;
 
 let WORDP3AUX_head_is c t =
   try let h = repeat rator t in is_const h && fst (dest_const h) = c
@@ -314,7 +314,7 @@ let WORDP3AUX_SING_TAC =
 let WORDP3AUX_LETCALL_TAC =
   WORDP3AUX_SING_TAC THEN
   FIRST_X_ASSUM (fun ih -> FIRST_ASSUM (fun eq -> MP_TAC (MATCH_MP ih eq))) THEN
-  DISCH_THEN SUBST1_TAC THEN CASE_REWRITE_TAC[];;
+  DISCH_THEN SUBST1_TAC THEN CAKE_REWRITE_TAC[];;
 
 let WORDP3AUX_NIL_TAC =
   REPEAT GEN_TAC THEN GEN_REWRITE_TAC LAND_CONV [bvi_to_data_compile_sing_def] THEN

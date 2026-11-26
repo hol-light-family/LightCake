@@ -66,13 +66,13 @@ let eval_ri_def = cake_def
 
 let word_bignumProof_dec_clock_def = cake_def
   `word_bignumProof_dec_clock (s:(A)word_bignumProof_state) =
-     word_bignumProof_state_clock_fupd (K (word_bignumProof_state_clock s - 1)) s`;;
+     word_bignumProof_state_clock_fupd (combin_K (word_bignumProof_state_clock s - 1)) s`;;
 
 let reg_write_def = cake_def
   `(reg_write v NONE (s:(A)word_bignumProof_state) =
-      word_bignumProof_state_regs_fupd (K (word_bignumProof_state_regs s \\ v)) s) /\
+      word_bignumProof_state_regs_fupd (combin_K (word_bignumProof_state_regs s \\ v)) s) /\
    (reg_write n (SOME w) s =
-      word_bignumProof_state_regs_fupd (K (word_bignumProof_state_regs s |+ (n,w))) s)`;;
+      word_bignumProof_state_regs_fupd (combin_K (word_bignumProof_state_regs s |+ (n,w))) s)`;;
 
 let delete_vars_def = cake_def
   `(delete_vars [] (s:(A)word_bignumProof_state) = s) /\
@@ -80,10 +80,10 @@ let delete_vars_def = cake_def
 
 let array_write_def = cake_def
   `array_write n v (s:(A)word_bignumProof_state) =
-     word_bignumProof_state_arrays_fupd (K ((n =+ v) (word_bignumProof_state_arrays s))) s`;;
+     word_bignumProof_state_arrays_fupd (combin_K ((n =+ v) (word_bignumProof_state_arrays s))) s`;;
 
 let clock_write_def = cake_def
-  `clock_write l (s:(A)word_bignumProof_state) = word_bignumProof_state_clock_fupd (K l) s`;;
+  `clock_write l (s:(A)word_bignumProof_state) = word_bignumProof_state_clock_fupd (combin_K l) s`;;
 
 let word_bignumProof_copy_vars_def = cake_def
   `(word_bignumProof_copy_vars [] (s:(num,A word)fmap) (t:(A)word_bignumProof_state) =
@@ -288,14 +288,14 @@ let WBIGPAUX_div_code_assum_DEF = new_definition
          wl_evaluate
            (DivCode n l i0 i1 i2 i3 i4,
             wl_state_locals_fupd
-              (K (insert i2 (wl_Word w3) (insert i3 (wl_Word w4)
+              (combin_K (insert i2 (wl_Word w3) (insert i3 (wl_Word w4)
                     (insert i4 (wl_Word w5) (wl_state_locals t1))))) t1) =
          (NONE,
           pair_CASE (single_div w3 w4 w5) (\w1 w2.
             (wl_set_var 0 ret_val o wl_set_var i1 (wl_Word w2) o
              wl_set_var i0 (wl_Word w1) o wl_set_store (Temp (word 28)) (wl_Word w2))
-            (wl_state_permute_fupd (K (\n. wl_state_permute t1 (n + 1)))
-              (wl_state_locals_fupd (K LN) (wl_state_stack_max_fupd (K max) t1)))))`;;
+            (wl_state_permute_fupd (combin_K (\n. wl_state_permute t1 (n + 1)))
+              (wl_state_locals_fupd (combin_K LN) (wl_state_stack_max_fupd (combin_K max) t1)))))`;;
 
 let div_code_assum_def = prove
  (`div_code_assum (:FFI) (:C) (code:(num#(A)wl_prog)spt) <=>
@@ -308,14 +308,14 @@ let div_code_assum_def = prove
          wl_evaluate
            (DivCode n l i0 i1 i2 i3 i4,
             wl_state_locals_fupd
-              (K (insert i2 (wl_Word w3) (insert i3 (wl_Word w4)
+              (combin_K (insert i2 (wl_Word w3) (insert i3 (wl_Word w4)
                     (insert i4 (wl_Word w5) (wl_state_locals t1))))) t1) =
          (NONE,
           pair_CASE (single_div w3 w4 w5) (\w1 w2.
             (wl_set_var 0 ret_val o wl_set_var i1 (wl_Word w2) o
              wl_set_var i0 (wl_Word w1) o wl_set_store (Temp (word 28)) (wl_Word w2))
-            (wl_state_permute_fupd (K (\n. wl_state_permute t1 (n + 1)))
-              (wl_state_locals_fupd (K LN) (wl_state_stack_max_fupd (K max) t1)))))`,
+            (wl_state_permute_fupd (combin_K (\n. wl_state_permute t1 (n + 1)))
+              (wl_state_locals_fupd (combin_K LN) (wl_state_stack_max_fupd (combin_K max) t1)))))`,
   REWRITE_TAC[WBIGPAUX_div_code_assum_DEF]);;
 
 (* HOL4 Overload max_var_name = 25n is written out *)
@@ -498,7 +498,7 @@ let syntax_ok_aux_def = prove
    (syntax_ok_aux (word_bignum_Continue:(A)mini) <=> T)`,
   REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
   GEN_REWRITE_TAC LAND_CONV [WBIGPAUX_syntax_ok_aux_match] THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[]);;
 
 let WBIGPAUX_syntax_ok_match = cake_def
   `word_bignumProof_syntax_ok (p:(A)mini) <=>
@@ -543,7 +543,7 @@ let word_bignumProof_syntax_ok_def = prove
               syntax_ok_aux (Rec v39 v40:(A)mini))`,
   REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
   GEN_REWRITE_TAC LAND_CONV [WBIGPAUX_syntax_ok_match] THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[]);;
 
 
 (* the clauses of wordSem's evaluate used below *)
@@ -577,8 +577,8 @@ let evaluate_Seq_Seq = prove
   MP_TAC(ISPEC `wl_evaluate (p1:(A)wl_prog,t1:(A,C,FFI)wl_state)` PAIR_SURJECTIVE) THEN
   REWRITE_TAC[LEFT_IMP_EXISTS_THM] THEN
   MAP_EVERY X_GEN_TAC [`r1:((A)wl_result)option`; `u1:(A,C,FFI)wl_state`] THEN
-  DISCH_THEN SUBST1_TAC THEN CASE_REWRITE_TAC[] THEN
-  COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  DISCH_THEN SUBST1_TAC THEN CAKE_REWRITE_TAC[] THEN
+  COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[]);;
 
 
@@ -782,7 +782,7 @@ let evaluate_LoadRegs = prove
      ALL2 (\n v. FLOOKUP (word_bignumProof_state_regs s1) n = SOME v) save_regs vals ==>
      wl_evaluate (LoadRegs save_regs p,t1) =
      wl_evaluate (p,wl_state_locals_fupd
-                      (K (list_update (MAP (\n. n + 2) save_regs) (MAP wl_Word vals)
+                      (combin_K (list_update (MAP (\n. n + 2) save_regs) (MAP wl_Word vals)
                             (wl_state_locals t1))) t1)`,
   LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN QCASES_ON "vals" THEN
   FS[LoadRegs_def; list_update_def; ALL2; MAP; ALL; ALL_DISTINCT] THEN REPEAT STRIP_TAC THENL
@@ -835,13 +835,13 @@ let evaluate_SaveRegs = prove
      ALL_DISTINCT save_regs /\ ALL (\n. n < 25) save_regs ==>
      wl_evaluate (SaveRegs save_regs,t7) =
      (NONE,wl_state_store_fupd
-             (K (list_store save_regs (MAP wl_Word vals) (wl_state_store t7))) t7)`,
+             (combin_K (list_store save_regs (MAP wl_Word vals) (wl_state_store t7))) t7)`,
   LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN QCASES_ON "vals" THEN
   FS[list_store_def; SaveRegs_def; WBIGPAUX_ev_Skip; WBIGPAUX_ev_Seq; WBIGPAUX_ev_Set;
      wl_word_exp_def; wl_get_var_def; ALL2; ALL_DISTINCT; ALL; MAP] THEN REPEAT STRIP_TAC THEN
   FS[wl_state_component_equality; wl_set_store_def] THEN
   FIRST_X_ASSUM (QSPECL_THEN
-    ["wl_state_store_fupd (K (wl_state_store t7 |+ (Temp (word h),wl_Word a0))) t7"; "a1"]
+    ["wl_state_store_fupd (combin_K (wl_state_store t7 |+ (Temp (word h),wl_Word a0))) t7"; "a1"]
     MP_TAC) THEN
   FS[list_store_FUPDATE]);;
 
@@ -971,7 +971,7 @@ let WBIGPAUX_state_rel_array_write = prove
    array_rel ((Out =+ xs) (word_bignumProof_state_arrays s))
      (FLOOKUP (wl_state_store t) TempIn1) (FLOOKUP (wl_state_store t) TempIn2)
      (FLOOKUP (wl_state_store t) TempOut) m (wl_state_mdomain t) frame ==>
-   word_bignumProof_state_rel (array_write Out xs s) (wl_state_memory_fupd (K m) t)
+   word_bignumProof_state_rel (array_write Out xs s) (wl_state_memory_fupd (combin_K m) t)
      cs t0 frame`,
   REWRITE_TAC[word_bignumProof_state_rel_def; WBIGPAUX_array_write_simp;
               wl_state_INFO.ri_accfupds; K_THM] THEN CONV_TAC TAUT);;
@@ -1020,7 +1020,7 @@ let WBIGPAUX_state_rel_copy_vars = prove
      ALL_DISTINCT save_regs /\ ALL (\n. n < 25) save_regs /\
      word_bignumProof_state_rel s2 u cs t0 frame ==>
      word_bignumProof_state_rel s3
-       (wl_state_store_fupd (K (list_store save_regs (MAP wl_Word vals) (wl_state_store u))) u)
+       (wl_state_store_fupd (combin_K (list_store save_regs (MAP wl_Word vals) (wl_state_store u))) u)
        cs t0 frame`,
   LIST_INDUCT_TAC THENL
    [SIMP[word_bignumProof_copy_vars_def; list_store_def] THEN
@@ -1071,7 +1071,7 @@ let WBIGPAUX_word_sh_shift = prove
    word_sh Lsl (w:A word) (val (word (backend_common_word_shift (:A)):A word)) =
    SOME (word_mul w bytes_in_word)`,
   DISCH_TAC THEN FIRST_ASSUM (SUBST1_TAC o SYM o MATCH_MP shift_eq_bytes_in_word) THEN
-  REWRITE_TAC[word_sh_def; VAL_WORD; GSYM dimword_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[word_sh_def; VAL_WORD; GSYM dimword_def] THEN CAKE_REWRITE_TAC[] THEN
   POP_ASSUM MP_TAC THEN
   REWRITE_TAC[good_dimindex_def; backend_common_word_shift_def; dimword_def] THEN
   STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CONV_TAC NUM_REDUCE_CONV);;
@@ -1114,7 +1114,7 @@ let WBIGPAUX_cut_envs_ret = prove
   REWRITE_TAC[EMPTY_SUBSET; SING_SUBSET; domain_lookup; inter_LN] THEN
   SUBGOAL_THEN `?v':A. lookup 0 env = SOME v'` (fun th -> REWRITE_TAC[th]) THENL
    [ASM_MESON_TAC[]; ALL_TAC] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[option_INJ; PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[option_INJ; PAIR_EQ] THEN
   SIMP_TAC[spt_eq_thm; wf_inter; wf_insert; sptree_wf_def] THEN
   REWRITE_TAC[lookup_inter_alt; lookup_insert; domain_def; IN_SING] THEN
   GEN_TAC THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[lookup_def]);;
@@ -1369,7 +1369,7 @@ let word_bignumProof_compile_thm = prove
     WBIGPAUX_BY "0 IN domain (wl_state_locals t1)" (FS[domain_lookup; GSYM wl_get_var_def]) THEN
     FS[cut_envs_def; cut_names_def; domain_list_update; SUBSET_DEF; domain_list_insert;
        domain_def; MEM_MAP; IN_SING; NOT_IN_EMPTY] THEN
-    WBIGPAUX_GOALSUB_ABBREV_TAC "wl_state_locals_fupd (K L) t1" THEN
+    WBIGPAUX_GOALSUB_ABBREV_TAC "wl_state_locals_fupd (combin_K L) t1" THEN
     WBIGPAUX_GOALSUB_ABBREV_TAC "wl_evaluate (_,t6)" THEN
     WBIGPAUX_BY "word_bignumProof_state_rel (delete_vars vs (word_bignumProof_dec_clock s1)) t6
                    cs2 t0 frame /\\ lookup 0 (wl_state_locals t6) = SOME (wl_Loc n l) /\\
@@ -1401,7 +1401,7 @@ let word_bignumProof_compile_thm = prove
            lookup_union; lookup_inter_alt; domain_list_insert; domain_def; MEM_MAP;
            NOT_IN_EMPTY; ARITH_ss]) THEN
     DRULE_ALL (GEN_ALL evaluate_SaveRegs) THEN DISCH_TAC THEN
-    WBIGPAUX_BY "word_bignumProof_state_rel s3 (wl_state_store_fupd (K (list_store save_regs
+    WBIGPAUX_BY "word_bignumProof_state_rel s3 (wl_state_store_fupd (combin_K (list_store save_regs
                    (MAP wl_Word vals) (wl_state_store t7))) t7) cs2 t0 frame"
       (IRULE WBIGPAUX_state_rel_copy_vars THEN ASM_EXISTS_TAC THEN
        QPAT_X_ASSUM "_ = t7" (SUBST1_TAC o SYM) THEN
@@ -1442,7 +1442,7 @@ let compile_LESS_mini_size = prove
  (`!k l1 l2 (yy5:num#((A)mini#num#(A)wl_prog)list) code xx1 xx2 xx3 xx5.
      word_bignum_compile k l1 l2 yy5 code = (xx1,xx2,xx3,xx5) ==>
      !x. MEM x (SND xx5) /\ ~MEM x (SND yy5) ==>
-         mini_size (K 0) (FST x) < mini_size (K 0) code`,
+         mini_size (combin_K 0) (FST x) < mini_size (combin_K 0) code`,
   MATCH_MP_TAC word_bignum_compile_ind THEN REPEAT STRIP_TAC THEN
   FS[word_bignum_compile_def] THEN RFS[] THEN
   TRY (RES_TAC THEN SIMP[type_size_def "mini"; ARITH_ss] THEN NO_TAC) THEN
@@ -2413,7 +2413,7 @@ let WBIGPAUX_Q_TAC : tactic =
   REPEAT CONJ_TAC THEN
   (fun (asl,w as g) ->
      if is_forall w then
-       (REWRITE_TAC[FORALL_PAIR_THM] THEN REPEAT GEN_TAC THEN CASE_REWRITE_TAC[] THEN
+       (REWRITE_TAC[FORALL_PAIR_THM] THEN REPEAT GEN_TAC THEN CAKE_REWRITE_TAC[] THEN
         WBIGPAUX_STATE_EQ_TAC) g
      else if is_eq w && type_of (lhs w) = WBIGPAUX_state_ty then
        WBIGPAUX_STATE_EQ_TAC g
@@ -2425,7 +2425,7 @@ let WBIGPAUX_LEAF_TAC : tactic =
   REWRITE_TAC([FST; SND; WBIGPAUX_FORALL_UNWIND] @ WBIGPAUX_sum_rws) THEN
   DISCH_THEN(fun th -> MAP_EVERY (fun c -> LABEL_TAC "wbigp_pre" (WBIGPAUX_protect c))
                          (CONJUNCTS th)) THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   (fun (asl,w as g) ->
      let r,bod = dest_exists w in
      let ev,q = dest_conj bod in
@@ -2553,7 +2553,7 @@ let WBIGPAUX_derive_corr code_def =
       let w_eq = prove(mk_forall(z,mk_eq(WBIGPAUX_BETA (list_mk_comb(w,[z;s1])),
                                          WBIGPAUX_BETA (list_mk_comb(w,[z;s])))),
                        REWRITE_TAC[FORALL_PAIR_THM] THEN REPEAT GEN_TAC THEN
-                       CASE_REWRITE_TAC[] THEN WBIGPAUX_STATE_EQ_TAC) in
+                       CAKE_REWRITE_TAC[] THEN WBIGPAUX_STATE_EQ_TAC) in
       GEN_TAC THEN REWRITE_TAC[word_bignumProof_Corr_def; code_def] THEN
       REWRITE_TAC[def_thm; pre_thm] THEN STRIP_TAC THEN
       MATCH_MP_TAC WBIGPAUX_eval_Loop THEN ASM_REWRITE_TAC[] THEN
@@ -2658,7 +2658,7 @@ let WBIGPAUX_syntax_ok_code def =
   let gl = mk_icomb(`syntax_ok_aux:(A)mini->bool`,c) in
   let th = prove(gl,
     REWRITE_TAC(def :: syntax_ok_aux_def :: !WBIGPAUX_syntax_ok_thms) THEN
-    REWRITE_TAC[exp_ok_def] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[exp_ok_def] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[injectivity "reg_imm"; distinctness "reg_imm"; FORALL_UNWIND_THM1;
                 FORALL_UNWIND_THM2; ALL; ALL_DISTINCT; MEM] THEN
     CONV_TAC NUM_REDUCE_CONV) in
@@ -2701,7 +2701,7 @@ let evaluate_mc_iop = prove
        (word_bignumProof_state_REC
           (((FEMPTY |+ (0,mc_header (i2mw i1))) |+ (1,mc_header (i2mw i2))) |+
            (3,int_op_rep iop))
-          ((In1 =+ SND (i2mw i1)) ((In2 =+ SND (i2mw i2)) (K zs))) l)
+          ((In1 =+ SND (i2mw i1)) ((In2 =+ SND (i2mw i2)) (combin_K zs))) l)
        t cs t frame /\
      wl_get_var 0 t = SOME ret_val /\ good_dimindex (:A) /\ 3 < dimindex (:A) /\
      (mc_header (i2mw i1:bool#(A word)list) = word 0 <=>
@@ -2735,7 +2735,7 @@ let evaluate_mc_iop = prove
                      (word_bignumProof_state_REC
                         (((FEMPTY |+ (0,mc_header (i2mw i1))) |+
                           (1,mc_header (i2mw i2))) |+ (3,int_op_rep iop))
-                        ((In1 =+ SND (i2mw i1)) ((In2 =+ SND (i2mw i2)) (K zs))) l)))))))
+                        ((In1 =+ SND (i2mw i1)) ((In2 =+ SND (i2mw i2)) (combin_K zs))) l)))))))
          t2 cs t frame /\
        wl_state_code t2 = wl_state_code t`,
   (REPEAT GEN_TAC THEN STRIP_TAC THEN
@@ -2749,12 +2749,12 @@ let evaluate_mc_iop = prove
      (((FEMPTY |+ (0,mc_header (i2mw i1:bool#(A word)list))) |+
        (1,mc_header (i2mw i2:bool#(A word)list))) |+ (3,int_op_rep iop))
      ((In1 =+ SND (i2mw i1:bool#(A word)list))
-        ((In2 =+ SND (i2mw i2:bool#(A word)list)) (K (zs:(A word)list)))) l`
+        ((In2 =+ SND (i2mw i2:bool#(A word)list)) (combin_K (zs:(A word)list)))) l`
      mc_iop_corr_thm) THEN
   REWRITE_TAC[word_bignumProof_Corr_def; word_bignumProof_state_INFO.ri_accessors;
               FAPPLY_FUPDATE_THM; APPLY_UPDATE_THM; K_THM; FDOM_FUPDATE; IN_INSERT;
               distinctness "address"; ARITH_EQ] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]) THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]) THEN
   (SUBGOAL_THEN `word_bignumProof_syntax_ok (mc_iop_code:(A)mini) /\
                 (!body. ~(mc_iop_code = LoopBody body:(A)mini))` STRIP_ASSUME_TAC THENL
    [SUBGOAL_THEN `!body. ~(mc_iop_code = LoopBody body:(A)mini)` ASSUME_TAC THENL
@@ -2769,7 +2769,7 @@ let evaluate_mc_iop = prove
     `cs:num#((A)mini#num#(A)wl_prog)list`; `cs:num#((A)mini#num#(A)wl_prog)list`;
     `t:(A,C,FFI)wl_state`; `ret_val:(A)word_loc`; `wl_Return 0 [0]:(A)wl_prog`]) THEN
   ASM_REWRITE_TAC[ARITH_RULE `0 < 1`; code_subset_refl; option_DISTINCT] THEN
-  CASE_REWRITE_TAC[]) THEN
+  CAKE_REWRITE_TAC[]) THEN
   (DISCH_THEN(X_CHOOSE_THEN `t2:(A,C,FFI)wl_state` (X_CHOOSE_THEN
     `res:((A)wl_result)option#(A,C,FFI)wl_state` STRIP_ASSUME_TAC)) THEN
   MAP_EVERY EXISTS_TAC [`zs1:(A word)list`; `l2:num`; `t2:(A,C,FFI)wl_state`] THEN

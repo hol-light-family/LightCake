@@ -174,7 +174,7 @@ let GSPEC_applied = prove
 
 let nullloop_th = prove
  (`!(G:(A,B)grammar) N sn rest.
-     nullableML G (N INSERT sn) (CONS (NT N) rest) <=> F`,
+     nullableML G (N INSERT sn) (CONS (grammar_NT N) rest) <=> F`,
   REWRITE_TAC[nullableML_def; IN_INSERT]);;
 
 let null2 = prove
@@ -205,12 +205,12 @@ let PARSE1AUX_cmlG_FDOM_INL = prove
   MATCH_MP_TAC MMLnonT_INDUCT THEN REWRITE_TAC[]);;
 
 let PARSE1AUX_nullable_NT = prove
- (`!n. nullable cmlG [NT (INL n)] <=>
+ (`!n. nullable cmlG [grammar_NT (INL n)] <=>
        ?r. r IN FAPPLY (grammar_rules cmlG) (INL n) /\ nullable cmlG r`,
   REWRITE_TAC[nullable_CONS_NT; nullable_NIL; PARSE1AUX_cmlG_FDOM_INL]);;
 
 let PARSE1AUX_not_nullable_NT = prove
- (`!n. ~nullable cmlG [NT (INL n)] <=>
+ (`!n. ~nullable cmlG [grammar_NT (INL n)] <=>
        !r. r IN FAPPLY (grammar_rules cmlG) (INL n) ==> ~nullable cmlG r`,
   REWRITE_TAC[PARSE1AUX_nullable_NT] THEN MESON_TAC[]);;
 
@@ -240,123 +240,123 @@ let PARSE1AUX_NULLABLE_PROVE tm =
   PARSE1AUX_nullable_thms := th :: !PARSE1AUX_nullable_thms; th;;
 
 let nullable_UQConstructorName = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nUQConstructorName)]`;;
+  `~nullable cmlG [grammar_NT (INL nUQConstructorName)]`;;
 let nullable_ConstructorName = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nConstructorName)]`;;
+  `~nullable cmlG [grammar_NT (INL nConstructorName)]`;;
 let nullable_Eliteral = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nEliteral)]`;;
+  `~nullable cmlG [grammar_NT (INL nEliteral)]`;;
 let nullable_Etuple = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nEtuple)]`;;
+  `~nullable cmlG [grammar_NT (INL nEtuple)]`;;
 let nullable_V = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nV)]`;;
+  `~nullable cmlG [grammar_NT (INL nV)]`;;
 let nullable_FQV = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nFQV)]`;;
+  `~nullable cmlG [grammar_NT (INL nFQV)]`;;
 let nullable_Ebase = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nEbase)]`;;
+  `~nullable cmlG [grammar_NT (INL nEbase)]`;;
 let nullable_Eapp = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nEapp)]`;;
+  `~nullable cmlG [grammar_NT (INL nEapp)]`;;
 let nullable_Emult = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nEmult)]`;;
+  `~nullable cmlG [grammar_NT (INL nEmult)]`;;
 let nullable_Eadd = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nEadd)]`;;
+  `~nullable cmlG [grammar_NT (INL nEadd)]`;;
 let nullable_Elistop = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nElistop)]`;;
+  `~nullable cmlG [grammar_NT (INL nElistop)]`;;
 let nullable_Erel = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nErel)]`;;
+  `~nullable cmlG [grammar_NT (INL nErel)]`;;
 let nullable_Ecomp = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nEcomp)]`;;
+  `~nullable cmlG [grammar_NT (INL nEcomp)]`;;
 let nullable_Ebefore = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nEbefore)]`;;
+  `~nullable cmlG [grammar_NT (INL nEbefore)]`;;
 let nullable_Etyped = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nEtyped)]`;;
+  `~nullable cmlG [grammar_NT (INL nEtyped)]`;;
 let nullable_ElogicAND = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nElogicAND)]`;;
+  `~nullable cmlG [grammar_NT (INL nElogicAND)]`;;
 let nullable_ElogicOR = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nElogicOR)]`;;
+  `~nullable cmlG [grammar_NT (INL nElogicOR)]`;;
 let nullable_Ehandle = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nEhandle)]`;;
+  `~nullable cmlG [grammar_NT (INL nEhandle)]`;;
 let nullable_E = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nE)]`;;
+  `~nullable cmlG [grammar_NT (INL nE)]`;;
 let nullable_UQTyOp = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nUQTyOp)]`;;
+  `~nullable cmlG [grammar_NT (INL nUQTyOp)]`;;
 let nullable_TyOp = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nTyOp)]`;;
+  `~nullable cmlG [grammar_NT (INL nTyOp)]`;;
 let nullable_PTbase = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nPTbase)]`;;
+  `~nullable cmlG [grammar_NT (INL nPTbase)]`;;
 let nullable_TbaseList = PARSE1AUX_NULLABLE_PROVE
-  `nullable cmlG [NT (INL nTbaseList)]`;;
+  `nullable cmlG [grammar_NT (INL nTbaseList)]`;;
 let nullable_Tbase = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nTbase)]`;;
+  `~nullable cmlG [grammar_NT (INL nTbase)]`;;
 let nullable_DType = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nDType)]`;;
+  `~nullable cmlG [grammar_NT (INL nDType)]`;;
 let nullable_PType = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nPType)]`;;
+  `~nullable cmlG [grammar_NT (INL nPType)]`;;
 let nullable_Type = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nType)]`;;
+  `~nullable cmlG [grammar_NT (INL nType)]`;;
 let nullable_TyvarN = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nTyvarN)]`;;
+  `~nullable cmlG [grammar_NT (INL nTyvarN)]`;;
 let nullable_TypeDec = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nTypeDec)]`;;
+  `~nullable cmlG [grammar_NT (INL nTypeDec)]`;;
 let nullable_SpecLine = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nSpecLine)]`;;
+  `~nullable cmlG [grammar_NT (INL nSpecLine)]`;;
 let nullable_Ptuple = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nPtuple)]`;;
+  `~nullable cmlG [grammar_NT (INL nPtuple)]`;;
 let nullable_Pbase = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nPbase)]`;;
+  `~nullable cmlG [grammar_NT (INL nPbase)]`;;
 let nullable_PConApp = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nPConApp)]`;;
+  `~nullable cmlG [grammar_NT (INL nPConApp)]`;;
 let nullable_LetDec = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nLetDec)]`;;
+  `~nullable cmlG [grammar_NT (INL nLetDec)]`;;
 let nullable_TyVarList = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nTyVarList)]`;;
+  `~nullable cmlG [grammar_NT (INL nTyVarList)]`;;
 let nullable_DtypeDecl = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nDtypeDecl)]`;;
+  `~nullable cmlG [grammar_NT (INL nDtypeDecl)]`;;
 let nullable_Structure = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nStructure)]`;;
+  `~nullable cmlG [grammar_NT (INL nStructure)]`;;
 let nullable_TypeAbbrevDec = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nTypeAbbrevDec)]`;;
+  `~nullable cmlG [grammar_NT (INL nTypeAbbrevDec)]`;;
 let nullable_Decl = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nDecl)]`;;
+  `~nullable cmlG [grammar_NT (INL nDecl)]`;;
 let nullable_PE = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nPE)]`;;
+  `~nullable cmlG [grammar_NT (INL nPE)]`;;
 let nullable_Elist1 = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nElist1)]`;;
+  `~nullable cmlG [grammar_NT (INL nElist1)]`;;
 let nullable_CompOps = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nCompOps)]`;;
+  `~nullable cmlG [grammar_NT (INL nCompOps)]`;;
 let nullable_ListOps = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nListOps)]`;;
+  `~nullable cmlG [grammar_NT (INL nListOps)]`;;
 let nullable_PEsfx = PARSE1AUX_NULLABLE_PROVE
-  `nullable cmlG [NT (INL nPEsfx)]`;;
+  `nullable cmlG [grammar_NT (INL nPEsfx)]`;;
 let nullable_Papp = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nPapp)]`;;
+  `~nullable cmlG [grammar_NT (INL nPapp)]`;;
 let nullable_Pcons = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nPcons)]`;;
+  `~nullable cmlG [grammar_NT (INL nPcons)]`;;
 let nullable_Pas = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nPas)]`;;
+  `~nullable cmlG [grammar_NT (INL nPas)]`;;
 let nullable_Pattern = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nPattern)]`;;
+  `~nullable cmlG [grammar_NT (INL nPattern)]`;;
 let nullable_PEs = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nPEs)]`;;
+  `~nullable cmlG [grammar_NT (INL nPEs)]`;;
 let nullable_RelOps = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nRelOps)]`;;
+  `~nullable cmlG [grammar_NT (INL nRelOps)]`;;
 let nullable_MultOps = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nMultOps)]`;;
+  `~nullable cmlG [grammar_NT (INL nMultOps)]`;;
 let nullable_AddOps = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nAddOps)]`;;
+  `~nullable cmlG [grammar_NT (INL nAddOps)]`;;
 let nullable_Dconstructor = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nDconstructor)]`;;
+  `~nullable cmlG [grammar_NT (INL nDconstructor)]`;;
 let nullable_FDecl = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nFDecl)]`;;
+  `~nullable cmlG [grammar_NT (INL nFDecl)]`;;
 let nullable_PatternList = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nPatternList)]`;;
+  `~nullable cmlG [grammar_NT (INL nPatternList)]`;;
 let nullable_PbaseList1 = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nPbaseList1)]`;;
+  `~nullable cmlG [grammar_NT (INL nPbaseList1)]`;;
 let nullable_Elist2 = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nElist2)]`;;
+  `~nullable cmlG [grammar_NT (INL nElist2)]`;;
 let nullable_Eseq = PARSE1AUX_NULLABLE_PROVE
-  `~nullable cmlG [NT (INL nEseq)]`;;
+  `~nullable cmlG [grammar_NT (INL nEseq)]`;;
 let nullable_TopLevelDecs = PARSE1AUX_NULLABLE_PROVE
-  `nullable cmlG [NT (INL nTopLevelDecs)]`;;
+  `nullable cmlG [grammar_NT (INL nTopLevelDecs)]`;;
 
 let _ = cake_add_simps (!PARSE1AUX_nullable_thms);;
 
@@ -366,11 +366,11 @@ let _ = cake_add_simps (!PARSE1AUX_nullable_thms);;
 
 let fringe_lengths_def = cake_def
   `fringe_lengths (G:(A,B)grammar) sf =
-     {LENGTH i | i | RTC (derive G) sf (MAP TOK i)}`;;
+     {LENGTH i | i | RTC (derive G) sf (MAP grammar_TOK i)}`;;
 
 let fringe_length_ptree = prove
  (`!(G:(A,B)grammar) i (pt:(A,B,C)parsetree).
-     ptree_fringe pt = MAP TOK i /\ valid_ptree G pt ==>
+     ptree_fringe pt = MAP grammar_TOK i /\ valid_ptree G pt ==>
      LENGTH i IN fringe_lengths G [ptree_head pt]`,
   REWRITE_TAC[fringe_lengths_def; IN_ELIM_THM] THEN
   MESON_TAC[valid_ptree_derive]);;
@@ -388,14 +388,14 @@ let fringe_length_not_nullable = prove
   ASM_REWRITE_TAC[]);;
 
 let derives_singleTOK = prove
- (`!(G:(A,B)grammar) t l. RTC (derive G) [TOK t] l <=> l = [TOK t]`,
+ (`!(G:(A,B)grammar) t l. RTC (derive G) [grammar_TOK t] l <=> l = [grammar_TOK t]`,
   REPEAT GEN_TAC THEN
-  SUBGOAL_THEN `!y. ~derive (G:(A,B)grammar) [TOK t] y` ASSUME_TAC THENL
+  SUBGOAL_THEN `!y. ~derive (G:(A,B)grammar) [grammar_TOK t] y` ASSUME_TAC THENL
    [REWRITE_TAC[derive_def; NOT_EXISTS_THM] THEN
     MAP_EVERY X_GEN_TAC [`y:((A,B)symbol)list`; `p:((A,B)symbol)list`;
                          `n:B+num`; `r:((A,B)symbol)list`;
                          `s:((A,B)symbol)list`] THEN
-    DISCH_THEN(MP_TAC o AP_TERM `MEM (NT (n:B+num):(A,B)symbol)` o CONJUNCT1) THEN
+    DISCH_THEN(MP_TAC o AP_TERM `MEM (grammar_NT (n:B+num):(A,B)symbol)` o CONJUNCT1) THEN
     REWRITE_TAC[MEM; MEM_APPEND; symbol_distinct];
     ALL_TAC] THEN
   GEN_REWRITE_TAC LAND_CONV [RTC_CASES_R] THEN ASM_REWRITE_TAC[] THEN
@@ -403,8 +403,8 @@ let derives_singleTOK = prove
 let _ = cake_add_simps [derives_singleTOK];;
 
 let fringe_lengths_V = prove
- (`fringe_lengths cmlG [NT (INL nV)] = {1}`,
-  SUBGOAL_THEN `!i. ~([NT (INL nV)] = MAP (TOK:token->(token,MMLnonT)symbol) i)`
+ (`fringe_lengths cmlG [grammar_NT (INL nV)] = {1}`,
+  SUBGOAL_THEN `!i. ~([grammar_NT (INL nV)] = MAP (grammar_TOK:token->(token,MMLnonT)symbol) i)`
     ASSUME_TAC THENL
    [LIST_INDUCT_TAC THEN REWRITE_TAC[MAP; NOT_CONS_NIL; CONS_11; symbol_distinct];
     ALL_TAC] THEN
@@ -418,7 +418,7 @@ let fringe_lengths_V = prove
     DISCH_THEN SUBST1_TAC THEN
     EXISTS_TAC `[AlphaT (implode "foo")]` THEN
     REWRITE_TAC[MAP; LENGTH; ARITH_RULE `SUC 0 = 1`] THEN
-    EXISTS_TAC `[TOK (AlphaT (implode "foo"))]:((token,MMLnonT)symbol)list` THEN
+    EXISTS_TAC `[grammar_TOK (AlphaT (implode "foo"))]:((token,MMLnonT)symbol)list` THEN
     REWRITE_TAC[RTC_REFL] THEN DISJ1_TAC THEN EXISTS_TAC `implode "foo"` THEN
     REWRITE_TAC[IN_INSERT; NOT_IN_EMPTY; injectivity "mlstring"; strsub_def] THEN
     CONV_TAC(DEPTH_CONV STRING_EQ_CONV) THEN
@@ -429,7 +429,7 @@ let parsing_ind =
   let r = CASE_TERM
     `inv_image (MEASURE (LENGTH:((token,MMLnonT)symbol#locs)list->num) LEX
                 MEASURE (\n:(token,MMLnonT)symbol.
-                           match n with TOK _ -> 0 | NT n -> NT_rank n))
+                           match n with grammar_TOK _ -> 0 | grammar_NT n -> NT_rank n))
                (\pt:mlptree. real_fringe pt,ptree_head pt)` in
   let wf = prove(mk_comb(`WF:(mlptree->mlptree->bool)->bool`,r), WF_TAC) in
   prove
@@ -437,8 +437,8 @@ let parsing_ind =
     `!P. (!x:mlptree.
             (!y. LENGTH (real_fringe y) < LENGTH (real_fringe x) \/
                  real_fringe y = real_fringe x /\
-                 (match ptree_head y with TOK _ -> 0 | NT n -> NT_rank n) <
-                 (match ptree_head x with TOK _ -> 0 | NT n -> NT_rank n)
+                 (match ptree_head y with grammar_TOK _ -> 0 | grammar_NT n -> NT_rank n) <
+                 (match ptree_head x with grammar_TOK _ -> 0 | grammar_NT n -> NT_rank n)
                  ==> P y)
             ==> P x)
          ==> !x. P x`,

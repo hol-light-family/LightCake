@@ -46,7 +46,7 @@ let exc_INDUCT,exc_RECURSION = cake_type "exc = M_success A | M_failure B";;
 
 let liftM_def = cake_def
   `liftM (read:D->A) (write:(A->A)->D->D) (op:A->(B,C)exc#A) =
-     (\state:D. let (ret,new) = op (read state) in (ret,write (K new) state))`;;
+     (\state:D. let (ret,new) = op (read state) in (ret,write (combin_K new) state))`;;
 
 (* Definitions using monadic syntax *)
 

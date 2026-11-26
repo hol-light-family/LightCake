@@ -230,9 +230,9 @@ let analyse_exp_def = cake_def
      let locs = find_loc e in
      let lookups = find_lookups e in
      if flat_elim_is_pure e then
-       (if is_hidden e then (LN:num_set, sptree_map (K lookups) locs)
-        else (locs, sptree_map (K lookups) locs))
-     else (sptree_union locs lookups, sptree_map (K (LN:num_set)) (sptree_union locs lookups))`;;
+       (if is_hidden e then (LN:num_set, sptree_map (combin_K lookups) locs)
+        else (locs, sptree_map (combin_K lookups) locs))
+     else (sptree_union locs lookups, sptree_map (combin_K (LN:num_set)) (sptree_union locs lookups))`;;
 
 let code_analysis_union_def = cake_def
   `code_analysis_union (r1:A spt,t1) (r2,t2) =

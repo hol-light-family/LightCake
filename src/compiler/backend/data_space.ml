@@ -132,7 +132,7 @@ let space_pmatch = prove
          INL (data_If n (pMakeSpace (space c2)) (pMakeSpace (space c3)))
      | c -> INL c`,
   GEN_TAC THEN CASES_ON `c:data_prog` THEN REWRITE_TAC[space_def] THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[]);;
 
 let data_space_compile_def = cake_def
   `data_space_compile c = pMakeSpace (space c)`;;

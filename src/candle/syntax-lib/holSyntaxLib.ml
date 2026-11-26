@@ -56,7 +56,7 @@ let REV_ASSOCD_ALOOKUP = prove
   RW[] THEN FS[]);;
 
 let PRIMED_INFINITE = prove
- (`INFINITE (IMAGE (\n. APPEND x (list_of_seq (K (CHR 39)) n)) (:num))`,
+ (`INFINITE (IMAGE (\n. APPEND x (list_of_seq (combin_K (CHR 39)) n)) (:num))`,
   MATCH_MP_TAC(REWRITE_RULE[RIGHT_IMP_FORALL_THM; IMP_IMP] INFINITE_IMAGE_INJ) THEN
   REWRITE_TAC[num_INFINITE] THEN
   REPEAT GEN_TAC THEN DISCH_THEN(MP_TAC o AP_TERM `LENGTH:(char)list->num`) THEN

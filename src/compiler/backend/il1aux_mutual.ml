@@ -174,4 +174,4 @@ let IL1AUX_PAIRARG_TAC : tactic =
      DISCH_THEN(X_CHOOSE_THEN v1 (X_CHOOSE_THEN v2
        (fun th -> if is_var x then SUBST_ALL_TAC th
                   else SUBST_ALL_TAC th THEN ASSUME_TAC th))) THEN
-     CASE_ASM_TIDY_TAC THEN CASE_REWRITE_TAC[]) gl;;
+     CASE_ASM_TIDY_TAC THEN CAKE_REWRITE_TAC[]) gl;;

@@ -880,7 +880,7 @@ let esubst_not_VFREE_IN = prove
                  `tm:hol_term`; `sig:sig`; `[]:mlstring list`] esubst_ty0_always_returns) THEN
   ASM_REWRITE_TAC[] THEN DISCH_THEN(X_CHOOSE_TAC `tm1:hol_term`) THEN
   UNDISCH_TAC `VFREE_IN (hol_Var x (ty_esubst sigma ty)) (esubst sigma [] tm)` THEN
-  ASM_REWRITE_TAC[esubst_def; esubst_ty_def] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[esubst_def; esubst_ty_def] THEN CAKE_REWRITE_TAC[] THEN
   MP_TAC(ISPECL [`sig:sig`; `x:mlstring`;
                  `ty_esubst (sigma:(mlstring,mlstring list#hol_type)fmap#
                                    (mlstring,hol_term#hol_type)fmap) ty`;

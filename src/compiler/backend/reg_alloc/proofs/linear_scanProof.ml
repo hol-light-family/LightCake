@@ -1693,7 +1693,7 @@ let get_intervals_withlive_registers_subset_beg = prove
     SUBGOAL_THEN `domain (int_end2:int spt) SUBSET domain (int_beg2:int spt) UNION
                   domain (get_live_backward lt2 live_in)` ASSUME_TAC THENL
      [REMOVE_THEN "ih2" MATCH_MP_TAC THEN ASM_MESON_TAC[]; ALL_TAC] THEN
-    ABBREV_TAC `tl = sptree_map (K (&0:int)) (get_live_backward lt2 live_in)` THEN
+    ABBREV_TAC `tl = sptree_map (combin_K (&0:int)) (get_live_backward lt2 live_in)` THEN
     SUBGOAL_THEN `domain (tl:int spt) = domain (get_live_backward lt2 live_in)`
     ASSUME_TAC THENL [EXPAND_TAC "tl" THEN REWRITE_TAC[domain_map]; ALL_TAC] THEN
     RAPROOFAUX_TRIPLE_TAC
@@ -2488,7 +2488,7 @@ let update_colors_eqn = prove
        if n < LENGTH (linear_scan_hidden_state_colors s)
        then (M_success one,
              linear_scan_hidden_state_colors_fupd
-               (K (LUPDATE t n (linear_scan_hidden_state_colors s))) s)
+               (combin_K (LUPDATE t n (linear_scan_hidden_state_colors s))) s)
        else (M_failure Subscript,s)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[update_colors_def; ml_monadBase_Marray_update_def] THEN
   COND_CASES_TAC THENL
@@ -2516,7 +2516,7 @@ let update_int_beg_eqn = prove
        if n < LENGTH (linear_scan_hidden_state_int_beg s)
        then (M_success one,
              linear_scan_hidden_state_int_beg_fupd
-               (K (LUPDATE t n (linear_scan_hidden_state_int_beg s))) s)
+               (combin_K (LUPDATE t n (linear_scan_hidden_state_int_beg s))) s)
        else (M_failure Subscript,s)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[update_int_beg_def; ml_monadBase_Marray_update_def] THEN
   COND_CASES_TAC THENL
@@ -2544,7 +2544,7 @@ let update_int_end_eqn = prove
        if n < LENGTH (linear_scan_hidden_state_int_end s)
        then (M_success one,
              linear_scan_hidden_state_int_end_fupd
-               (K (LUPDATE t n (linear_scan_hidden_state_int_end s))) s)
+               (combin_K (LUPDATE t n (linear_scan_hidden_state_int_end s))) s)
        else (M_failure Subscript,s)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[update_int_end_def; ml_monadBase_Marray_update_def] THEN
   COND_CASES_TAC THENL
@@ -2572,7 +2572,7 @@ let update_sorted_regs_eqn = prove
        if n < LENGTH (linear_scan_hidden_state_sorted_regs s)
        then (M_success one,
              linear_scan_hidden_state_sorted_regs_fupd
-               (K (LUPDATE t n (linear_scan_hidden_state_sorted_regs s))) s)
+               (combin_K (LUPDATE t n (linear_scan_hidden_state_sorted_regs s))) s)
        else (M_failure Subscript,s)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[update_sorted_regs_def; ml_monadBase_Marray_update_def] THEN
   COND_CASES_TAC THENL
@@ -2600,7 +2600,7 @@ let update_sorted_moves_eqn = prove
        if n < LENGTH (linear_scan_hidden_state_sorted_moves s)
        then (M_success one,
              linear_scan_hidden_state_sorted_moves_fupd
-               (K (LUPDATE t n (linear_scan_hidden_state_sorted_moves s))) s)
+               (combin_K (LUPDATE t n (linear_scan_hidden_state_sorted_moves s))) s)
        else (M_failure Subscript,s)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[update_sorted_moves_def; ml_monadBase_Marray_update_def] THEN
   COND_CASES_TAC THENL
@@ -2861,7 +2861,7 @@ let MAP_colors_eq_lemma = prove
   SUBGOAL_THEN `n < LENGTH (linear_scan_hidden_state_colors sth)` ASSUME_TAC THENL
    [ASM_ARITH_TAC; ALL_TAC] THEN
   ABBREV_TAC `sth' = linear_scan_hidden_state_colors_fupd
-                       (K (LUPDATE ((f:num->num) (EL n (linear_scan_hidden_state_colors sth))) n
+                       (combin_K (LUPDATE ((f:num->num) (EL n (linear_scan_hidden_state_colors sth))) n
                              (linear_scan_hidden_state_colors sth))) sth` THEN
   FIRST_X_ASSUM(MP_TAC o SPECL [`sth':linear_scan_hidden_state`; `f:num->num`]) THEN
   EXPAND_TAC "sth'" THEN REWRITE_TAC(K_THM :: LENGTH_LUPDATE :: LSCANPAUX_hs_record) THEN
@@ -3266,8 +3266,8 @@ let find_color_in_colornum_invariants = prove
      linear_scan_state_colornum st <= col /\ col < linear_scan_state_colornum stout /\
      linear_scan_state_colornum st <= linear_scan_state_colornum stout /\
      ~(col IN domain forbidden) /\
-     st = linear_scan_state_colorpool_fupd (K (linear_scan_state_colorpool st))
-            (linear_scan_state_colornum_fupd (K (linear_scan_state_colornum st)) stout)`,
+     st = linear_scan_state_colorpool_fupd (combin_K (linear_scan_state_colorpool st))
+            (linear_scan_state_colornum_fupd (combin_K (linear_scan_state_colornum st)) stout)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[find_color_in_colornum_def] THEN
   COND_CASES_TAC THEN REWRITE_TAC[PAIR_EQ; option_DISTINCT; option_INJ] THEN
   DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "gls") (CONJUNCTS_THEN2 (LABEL_TAC "forb")
@@ -3329,8 +3329,8 @@ let find_color_invariants = prove
        sth l pos forced mincol /\
      col < linear_scan_state_colornum stout /\
      ~(col IN domain forbidden) /\
-     st = linear_scan_state_colorpool_fupd (K (linear_scan_state_colorpool st))
-            (linear_scan_state_colornum_fupd (K (linear_scan_state_colornum st)) stout)`,
+     st = linear_scan_state_colorpool_fupd (combin_K (linear_scan_state_colorpool st))
+            (linear_scan_state_colornum_fupd (combin_K (linear_scan_state_colornum st)) stout)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[find_color_def] THEN
   CASES_ON `find_color_in_list (linear_scan_state_colorpool st) forbidden` THEN
   REWRITE_TAC[case_def "option"] THENL
@@ -3514,7 +3514,7 @@ let spill_register_FILTER_invariants_hidden = prove
        (M_success stout,sthout) =
          spill_register
            (linear_scan_state_active_fupd
-              (K (FILTER (\er. match er with (e,r) -> ~(r = reg))
+              (combin_K (FILTER (\er. match er with (e,r) -> ~(r = reg))
                          (linear_scan_state_active st))) st) reg sth /\
        good_linear_scan_state stout sthout (CONS reg l) pos forced mincol /\
        LENGTH (linear_scan_hidden_state_colors sthout) =
@@ -3692,7 +3692,7 @@ let spill_register_invariants = prove
   REPEAT GEN_TAC THEN DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "nomem") MP_TAC) THEN
   DISCH_THEN(MP_TAC o MATCH_MP spill_register_FILTER_invariants) THEN
   USE_THEN "nomem" (fun th -> REWRITE_TAC[MATCH_MP FILTER_MEM_active th]) THEN
-  SUBGOAL_THEN `linear_scan_state_active_fupd (K (linear_scan_state_active st)) st = st`
+  SUBGOAL_THEN `linear_scan_state_active_fupd (combin_K (linear_scan_state_active st)) st = st`
     (fun th -> REWRITE_TAC[th]) THENL
    [REWRITE_TAC[linear_scan_state_component_equality] THEN
     REWRITE_TAC(K_THM :: LSCANPAUX_st_record);
@@ -3956,7 +3956,7 @@ let color_register_eq = prove
          (st_ex_return
             (linear_scan_state_active_fupd (add_active_interval (rend,reg))
                (linear_scan_state_phyregs_fupd
-                  (K (if is_phy_var reg then insert col one (linear_scan_state_phyregs st)
+                  (combin_K (if is_phy_var reg then insert col one (linear_scan_state_phyregs st)
                       else linear_scan_state_phyregs st)) st)))`,
     REPEAT GEN_TAC THEN REWRITE_TAC[color_register_def] THEN COND_CASES_TAC THEN
   REPEAT AP_TERM_TAC THEN REWRITE_TAC[linear_scan_state_component_equality] THEN
@@ -5281,7 +5281,7 @@ let swap_regs_eq = prove
        swap_regs i1 i2 sth = (M_success one,sthout) /\
        sthout =
          linear_scan_hidden_state_sorted_regs_fupd
-           (K (LUPDATE (EL i1 (linear_scan_hidden_state_sorted_regs sth)) i2
+           (combin_K (LUPDATE (EL i1 (linear_scan_hidden_state_sorted_regs sth)) i2
                  (LUPDATE (EL i2 (linear_scan_hidden_state_sorted_regs sth)) i1
                     (linear_scan_hidden_state_sorted_regs sth)))) sth`,
     REPEAT GEN_TAC THEN STRIP_TAC THEN
@@ -5426,7 +5426,7 @@ let partition_regs_correct = prove
      ?mid sthout.
        partition_regs l rpiv begrpiv r sth = (M_success mid,sthout) /\
        sthout = linear_scan_hidden_state_sorted_regs_fupd
-                  (K (linear_scan_hidden_state_sorted_regs sthout)) sth /\
+                  (combin_K (linear_scan_hidden_state_sorted_regs sthout)) sth /\
        LENGTH (linear_scan_hidden_state_sorted_regs sthout) =
          LENGTH (linear_scan_hidden_state_sorted_regs sth) /\
        (l <= r ==> l <= mid /\ mid <= r) /\
@@ -5523,7 +5523,7 @@ let partition_regs_correct = prove
     USE_THEN "cond" (fun th -> REWRITE_TAC[th; LET_DEF; LET_END_DEF]) THEN
     DISCH_THEN(MP_TAC o SPEC
      `linear_scan_hidden_state_sorted_regs_fupd
-        (K (LUPDATE (EL l (linear_scan_hidden_state_sorted_regs sth)) (r - 1)
+        (combin_K (LUPDATE (EL l (linear_scan_hidden_state_sorted_regs sth)) (r - 1)
               (LUPDATE (EL (r - 1) (linear_scan_hidden_state_sorted_regs sth)) l
                  (linear_scan_hidden_state_sorted_regs sth)))) sth`) THEN
     REWRITE_TAC(K_THM :: LENGTH_LUPDATE :: LSCANPAUX_hs_record) THEN
@@ -5737,7 +5737,7 @@ let sort_regs_correct = prove
      ?sthout.
        sort_regs l r sth = (M_success one,sthout) /\
        sthout = linear_scan_hidden_state_sorted_regs_fupd
-                  (K (linear_scan_hidden_state_sorted_regs sthout)) sth /\
+                  (combin_K (linear_scan_hidden_state_sorted_regs sthout)) sth /\
        LENGTH (linear_scan_hidden_state_sorted_regs sthout) =
          LENGTH (linear_scan_hidden_state_sorted_regs sth) /\
        (!n. l <= n /\ r <= n /\ n <= LENGTH (linear_scan_hidden_state_sorted_regs sth) ==>
@@ -6008,7 +6008,7 @@ let swap_moves_eq = prove
        swap_moves i1 i2 sth = (M_success one,sthout) /\
        sthout =
          linear_scan_hidden_state_sorted_moves_fupd
-           (K (LUPDATE (EL i1 (linear_scan_hidden_state_sorted_moves sth)) i2
+           (combin_K (LUPDATE (EL i1 (linear_scan_hidden_state_sorted_moves sth)) i2
                  (LUPDATE (EL i2 (linear_scan_hidden_state_sorted_moves sth)) i1
                     (linear_scan_hidden_state_sorted_moves sth)))) sth`,
     REPEAT GEN_TAC THEN STRIP_TAC THEN
@@ -6028,7 +6028,7 @@ let swap_moves_correct = prove
      ?sthout.
        swap_moves i1 i2 sth = (M_success one,sthout) /\
        sthout = linear_scan_hidden_state_sorted_moves_fupd
-                  (K (linear_scan_hidden_state_sorted_moves sthout)) sth /\
+                  (combin_K (linear_scan_hidden_state_sorted_moves sthout)) sth /\
        LENGTH (linear_scan_hidden_state_sorted_moves sthout) =
          LENGTH (linear_scan_hidden_state_sorted_moves sth) /\
        (!n. i1 < n /\ i2 < n /\ n <= LENGTH (linear_scan_hidden_state_sorted_moves sth) ==>
@@ -6065,7 +6065,7 @@ let partition_moves_correct = prove
        partition_moves l ppiv r sth = (M_success mid,sthout) /\
        (l <= r ==> l <= mid /\ mid <= r) /\
        sthout = linear_scan_hidden_state_sorted_moves_fupd
-                  (K (linear_scan_hidden_state_sorted_moves sthout)) sth /\
+                  (combin_K (linear_scan_hidden_state_sorted_moves sthout)) sth /\
        LENGTH (linear_scan_hidden_state_sorted_moves sthout) =
          LENGTH (linear_scan_hidden_state_sorted_moves sth) /\
        (!n. l <= n /\ r <= n /\ n <= LENGTH (linear_scan_hidden_state_sorted_moves sth) ==>
@@ -6146,7 +6146,7 @@ let sort_moves_correct = prove
      ?sthout.
        linear_scan_sort_moves l r sth = (M_success one,sthout) /\
        sthout = linear_scan_hidden_state_sorted_moves_fupd
-                  (K (linear_scan_hidden_state_sorted_moves sthout)) sth /\
+                  (combin_K (linear_scan_hidden_state_sorted_moves sthout)) sth /\
        LENGTH (linear_scan_hidden_state_sorted_moves sthout) =
          LENGTH (linear_scan_hidden_state_sorted_moves sth) /\
        (!n. l <= n /\ r <= n /\ n <= LENGTH (linear_scan_hidden_state_sorted_moves sth) ==>
@@ -6408,7 +6408,7 @@ let list_to_sorted_regs_correct = prove
        LENGTH (linear_scan_hidden_state_sorted_regs sthout) =
          LENGTH (linear_scan_hidden_state_sorted_regs sth) /\
        sthout = linear_scan_hidden_state_sorted_regs_fupd
-                  (K (linear_scan_hidden_state_sorted_regs sthout)) sth /\
+                  (combin_K (linear_scan_hidden_state_sorted_regs sthout)) sth /\
        TAKE n (linear_scan_hidden_state_sorted_regs sthout) =
          TAKE n (linear_scan_hidden_state_sorted_regs sth) /\
        TAKE (LENGTH l) (DROP n (linear_scan_hidden_state_sorted_regs sthout)) = l`,
@@ -6423,7 +6423,7 @@ let list_to_sorted_regs_correct = prove
   REWRITE_TAC(list_to_sorted_regs_def :: update_sorted_regs_eqn :: RAPROOFAUX_msimps) THEN
   ASM_REWRITE_TAC[case_def "prod"; case_def "exc"] THEN
   FIRST_X_ASSUM(MP_TAC o SPECL [`n + 1`;
-    `linear_scan_hidden_state_sorted_regs_fupd (K (LUPDATE h n (linear_scan_hidden_state_sorted_regs sth))) sth`]) THEN
+    `linear_scan_hidden_state_sorted_regs_fupd (combin_K (LUPDATE h n (linear_scan_hidden_state_sorted_regs sth))) sth`]) THEN
   REWRITE_TAC(K_THM :: LENGTH_LUPDATE :: LSCANPAUX_hs_record) THEN
   ANTS_TAC THENL [ASM_ARITH_TAC; ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_THEN `sthout:linear_scan_hidden_state`
@@ -6491,7 +6491,7 @@ let list_to_sorted_moves_correct = prove
        LENGTH (linear_scan_hidden_state_sorted_moves sthout) =
          LENGTH (linear_scan_hidden_state_sorted_moves sth) /\
        sthout = linear_scan_hidden_state_sorted_moves_fupd
-                  (K (linear_scan_hidden_state_sorted_moves sthout)) sth /\
+                  (combin_K (linear_scan_hidden_state_sorted_moves sthout)) sth /\
        TAKE n (linear_scan_hidden_state_sorted_moves sthout) =
          TAKE n (linear_scan_hidden_state_sorted_moves sth) /\
        TAKE (LENGTH l) (DROP n (linear_scan_hidden_state_sorted_moves sthout)) = l`,
@@ -6506,7 +6506,7 @@ let list_to_sorted_moves_correct = prove
   REWRITE_TAC(list_to_sorted_moves_def :: update_sorted_moves_eqn :: RAPROOFAUX_msimps) THEN
   ASM_REWRITE_TAC[case_def "prod"; case_def "exc"] THEN
   FIRST_X_ASSUM(MP_TAC o SPECL [`n + 1`;
-    `linear_scan_hidden_state_sorted_moves_fupd (K (LUPDATE h n (linear_scan_hidden_state_sorted_moves sth))) sth`]) THEN
+    `linear_scan_hidden_state_sorted_moves_fupd (combin_K (LUPDATE h n (linear_scan_hidden_state_sorted_moves sth))) sth`]) THEN
   REWRITE_TAC(K_THM :: LENGTH_LUPDATE :: LSCANPAUX_hs_record) THEN
   ANTS_TAC THENL [ASM_ARITH_TAC; ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_THEN `sthout:linear_scan_hidden_state`
@@ -6820,7 +6820,7 @@ let LSCANPAUX_ivl_phaseA = prove
             (st_ex_ignore_bind (sort_regs 0 (LENGTH R))
               (st_ex_bind (sorted_regs_to_list 0 (LENGTH R)) f)) sth = f reglist sth') /\
        sth' = linear_scan_hidden_state_sorted_regs_fupd
-                (K (linear_scan_hidden_state_sorted_regs sth')) sth /\
+                (combin_K (linear_scan_hidden_state_sorted_regs sth')) sth /\
        PERM R reglist /\
        SORTED (intbeg_less (linear_scan_hidden_state_int_beg sth)) reglist`,
   REPEAT GEN_TAC THEN DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "rb") (LABEL_TAC "rl")) THEN
@@ -6893,7 +6893,7 @@ let LSCANPAUX_ivl_phaseB = prove
             (st_ex_ignore_bind (linear_scan_sort_moves 0 (LENGTH moves))
               (st_ex_bind (sorted_moves_to_list 0 (LENGTH moves)) f)) sth = f smoves sth') /\
        sth' = linear_scan_hidden_state_sorted_moves_fupd
-                (K (linear_scan_hidden_state_sorted_moves sth')) sth /\
+                (combin_K (linear_scan_hidden_state_sorted_moves sth')) sth /\
        PERM moves smoves`,
   REPEAT GEN_TAC THEN DISCH_THEN(LABEL_TAC "ml") THEN
   MP_TAC(SPECL [`moves:(num#num#num)list`; `0`; `sth:linear_scan_hidden_state`]
@@ -7571,7 +7571,7 @@ let numset_list_add_if_lt_monad_correct = prove
        sptree_eq_list (numset_list_add_if_lt l v int_beg)
          (linear_scan_hidden_state_int_beg sthout) /\
        sthout = linear_scan_hidden_state_int_beg_fupd
-                  (K (linear_scan_hidden_state_int_beg sthout)) sth /\
+                  (combin_K (linear_scan_hidden_state_int_beg sthout)) sth /\
        LENGTH (linear_scan_hidden_state_int_beg sthout) =
          LENGTH (linear_scan_hidden_state_int_beg sth)`,
     REPEAT GEN_TAC THEN
@@ -7608,17 +7608,17 @@ let numset_list_add_if_lt_monad_correct = prove
    `?sthout.
        numset_list_add_if_lt_monad t v
          (linear_scan_hidden_state_int_beg_fupd
-            (K (LUPDATE v h (linear_scan_hidden_state_int_beg sth))) sth) =
+            (combin_K (LUPDATE v h (linear_scan_hidden_state_int_beg sth))) sth) =
          (M_success one,sthout) /\
        sptree_eq_list (numset_list_add_if_lt t v (insert h v s))
          (linear_scan_hidden_state_int_beg sthout) /\
        sthout = linear_scan_hidden_state_int_beg_fupd
-                  (K (linear_scan_hidden_state_int_beg sthout)) sth /\
+                  (combin_K (linear_scan_hidden_state_int_beg sthout)) sth /\
        LENGTH (linear_scan_hidden_state_int_beg sthout) =
          LENGTH (linear_scan_hidden_state_int_beg sth)` (LABEL_TAC "updcase") THENL
    [FIRST_X_ASSUM(MP_TAC o SPECL [`v:int`;
       `linear_scan_hidden_state_int_beg_fupd
-         (K (LUPDATE v h (linear_scan_hidden_state_int_beg sth))) sth`;
+         (combin_K (LUPDATE v h (linear_scan_hidden_state_int_beg sth))) sth`;
       `insert h v (s:int spt)`]) THEN
     REWRITE_TAC(K_THM :: LENGTH_LUPDATE :: LSCANPAUX_hs_record) THEN
     ANTS_TAC THENL
@@ -7666,7 +7666,7 @@ let numset_list_add_if_gt_monad_correct = prove
        sptree_eq_list (numset_list_add_if_gt l v int_end)
          (linear_scan_hidden_state_int_end sthout) /\
        sthout = linear_scan_hidden_state_int_end_fupd
-                  (K (linear_scan_hidden_state_int_end sthout)) sth /\
+                  (combin_K (linear_scan_hidden_state_int_end sthout)) sth /\
        LENGTH (linear_scan_hidden_state_int_end sthout) =
          LENGTH (linear_scan_hidden_state_int_end sth)`,
     REPEAT GEN_TAC THEN
@@ -7703,17 +7703,17 @@ let numset_list_add_if_gt_monad_correct = prove
    `?sthout.
        numset_list_add_if_gt_monad t v
          (linear_scan_hidden_state_int_end_fupd
-            (K (LUPDATE v h (linear_scan_hidden_state_int_end sth))) sth) =
+            (combin_K (LUPDATE v h (linear_scan_hidden_state_int_end sth))) sth) =
          (M_success one,sthout) /\
        sptree_eq_list (numset_list_add_if_gt t v (insert h v s))
          (linear_scan_hidden_state_int_end sthout) /\
        sthout = linear_scan_hidden_state_int_end_fupd
-                  (K (linear_scan_hidden_state_int_end sthout)) sth /\
+                  (combin_K (linear_scan_hidden_state_int_end sthout)) sth /\
        LENGTH (linear_scan_hidden_state_int_end sthout) =
          LENGTH (linear_scan_hidden_state_int_end sth)` (LABEL_TAC "updcase") THENL
    [FIRST_X_ASSUM(MP_TAC o SPECL [`v:int`;
       `linear_scan_hidden_state_int_end_fupd
-         (K (LUPDATE v h (linear_scan_hidden_state_int_end sth))) sth`;
+         (combin_K (LUPDATE v h (linear_scan_hidden_state_int_end sth))) sth`;
       `insert h v (s:int spt)`]) THEN
     REWRITE_TAC(K_THM :: LENGTH_LUPDATE :: LSCANPAUX_hs_record) THEN
     ANTS_TAC THENL
@@ -7754,14 +7754,14 @@ let numset_list_add_if_gt_monad_correct = prove
 (* LSCANPAUX_hs2_eq: the two-field record equation of the interval monad *)
 let LSCANPAUX_hs2_trans = prove
  (`!s1 s2 s3.
-     s2 = linear_scan_hidden_state_int_beg_fupd (K (linear_scan_hidden_state_int_beg s2))
-            (linear_scan_hidden_state_int_end_fupd (K (linear_scan_hidden_state_int_end s2))
+     s2 = linear_scan_hidden_state_int_beg_fupd (combin_K (linear_scan_hidden_state_int_beg s2))
+            (linear_scan_hidden_state_int_end_fupd (combin_K (linear_scan_hidden_state_int_end s2))
                s1) /\
-     s3 = linear_scan_hidden_state_int_beg_fupd (K (linear_scan_hidden_state_int_beg s3))
-            (linear_scan_hidden_state_int_end_fupd (K (linear_scan_hidden_state_int_end s3))
+     s3 = linear_scan_hidden_state_int_beg_fupd (combin_K (linear_scan_hidden_state_int_beg s3))
+            (linear_scan_hidden_state_int_end_fupd (combin_K (linear_scan_hidden_state_int_end s3))
                s2) ==>
-     s3 = linear_scan_hidden_state_int_beg_fupd (K (linear_scan_hidden_state_int_beg s3))
-            (linear_scan_hidden_state_int_end_fupd (K (linear_scan_hidden_state_int_end s3))
+     s3 = linear_scan_hidden_state_int_beg_fupd (combin_K (linear_scan_hidden_state_int_beg s3))
+            (linear_scan_hidden_state_int_end_fupd (combin_K (linear_scan_hidden_state_int_end s3))
                s1)`,
   REPEAT GEN_TAC THEN DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC (fun th ->
     GEN_REWRITE_TAC LAND_CONV [th])) THEN
@@ -7790,9 +7790,9 @@ let get_intervals_ct_monad_aux_correct = prove
          LENGTH (linear_scan_hidden_state_int_end sth) /\
        (!r. r IN domain liveout ==> r < LENGTH (linear_scan_hidden_state_int_beg sth)) /\
        sthout = linear_scan_hidden_state_int_beg_fupd
-                  (K (linear_scan_hidden_state_int_beg sthout))
+                  (combin_K (linear_scan_hidden_state_int_beg sthout))
                   (linear_scan_hidden_state_int_end_fupd
-                     (K (linear_scan_hidden_state_int_end sthout)) sth) /\
+                     (combin_K (linear_scan_hidden_state_int_end sthout)) sth) /\
        nout <= &0`,
     MATCH_MP_TAC clash_tree_INDUCT THEN REPEAT CONJ_TAC THENL
    [(* Delta *)
@@ -8075,9 +8075,9 @@ let get_intervals_ct_monad_correct = prove
        LENGTH (linear_scan_hidden_state_int_end sthout) =
          LENGTH (linear_scan_hidden_state_int_end sth) /\
        sthout = linear_scan_hidden_state_int_beg_fupd
-                  (K (linear_scan_hidden_state_int_beg sthout))
+                  (combin_K (linear_scan_hidden_state_int_beg sthout))
                   (linear_scan_hidden_state_int_end_fupd
-                     (K (linear_scan_hidden_state_int_end sthout)) sth)`,
+                     (combin_K (linear_scan_hidden_state_int_end sthout)) sth)`,
     REPEAT GEN_TAC THEN
   DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "pb") (CONJUNCTS_THEN2 (LABEL_TAC "pe")
     (CONJUNCTS_THEN2 (LABEL_TAC "gi") (CONJUNCTS_THEN2 (LABEL_TAC "len") (LABEL_TAC "ct"))))) THEN

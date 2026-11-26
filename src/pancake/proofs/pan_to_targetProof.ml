@@ -81,10 +81,10 @@ let pan_to_lab_good_code_lemma = prove
    SUBGOAL_THEN (CASE_TERM `(\s. match s with Section n _ -> n) = (Section_num:(A)sec->num)`)
      SUBST1_TAC THENL
    [REWRITE_TAC[FUN_EQ_THM] THEN GEN_TAC THEN CASES_ON `x:(A)sec` THEN
-    CASE_REWRITE_TAC[] THEN SIMP[lab_Section_num_def]; ALL_TAC] THEN
+    CAKE_REWRITE_TAC[] THEN SIMP[lab_Section_num_def]; ALL_TAC] THEN
    STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CONJ_TAC THEN
    FIRST_X_ASSUM(MP_TAC o check (is_comb o concl)) THEN MATCH_MP_TAC MONO_ALL THEN
-   GEN_TAC THEN CASES_ON `x:(A)sec` THEN CASE_REWRITE_TAC[] THEN
+   GEN_TAC THEN CASES_ON `x:(A)sec` THEN CAKE_REWRITE_TAC[] THEN
    CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN SIMP[EVERY_sec_label_ok; o_THM]; ALL_TAC] THEN
   ASM_REWRITE_TAC[labs_domain_LN; UNION_EMPTY; domain_def; DISJOINT_EMPTY] THEN
   CONJ_TAC THENL
@@ -218,7 +218,7 @@ let pan_to_stack_compile_lab_pres = prove
                    `pan_code:((A)decl)list`; `wprog0:(num#num#(A)wl_prog)list`]
                   pan_to_word_compile_lab_pres) THEN
    ASM_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[];
-   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
    SIMP_TAC[]]);;
 
 let pan_to_lab_labels_ok = prove
@@ -390,45 +390,45 @@ let fun2set_update_eq = prove
 
 let get_var_const_memory = prove
  (`!x m (y:(A,C,FFI)wl_state).
-     wl_get_var x (wl_state_memory_fupd (K m) y) = wl_get_var x y`,
+     wl_get_var x (wl_state_memory_fupd (combin_K m) y) = wl_get_var x y`,
   SIMP[wl_get_var_def]);;
 
 let _ = cake_add_simps [get_var_const_memory];;
 
 let set_var_const_memory = prove
  (`!v x m (y:(A,C,FFI)wl_state).
-     wl_set_var v x (wl_state_memory_fupd (K m) y) =
-     wl_state_memory_fupd (K m) (wl_set_var v x y)`,
+     wl_set_var v x (wl_state_memory_fupd (combin_K m) y) =
+     wl_state_memory_fupd (combin_K m) (wl_set_var v x y)`,
   SIMP[wl_set_var_def]);;
 
 let _ = cake_add_simps [set_var_const_memory];;
 
 let unset_var_const_memory = prove
  (`!v m (y:(A,C,FFI)wl_state).
-     wl_unset_var v (wl_state_memory_fupd (K m) y) =
-     wl_state_memory_fupd (K m) (wl_unset_var v y)`,
+     wl_unset_var v (wl_state_memory_fupd (combin_K m) y) =
+     wl_state_memory_fupd (combin_K m) (wl_unset_var v y)`,
   SIMP[wl_unset_var_def]);;
 
 let _ = cake_add_simps [unset_var_const_memory];;
 
 let get_vars_const_memory = prove
  (`!x m (y:(A,C,FFI)wl_state).
-     wl_get_vars x (wl_state_memory_fupd (K m) y) = wl_get_vars x y`,
+     wl_get_vars x (wl_state_memory_fupd (combin_K m) y) = wl_get_vars x y`,
   LIST_INDUCT_TAC THEN SIMP[wl_get_vars_def]);;
 
 let _ = cake_add_simps [get_vars_const_memory];;
 
 let set_vars_const_memory = prove
  (`!vs xs m (y:(A,C,FFI)wl_state).
-     wl_set_vars vs xs (wl_state_memory_fupd (K m) y) =
-     wl_state_memory_fupd (K m) (wl_set_vars vs xs y)`,
+     wl_set_vars vs xs (wl_state_memory_fupd (combin_K m) y) =
+     wl_state_memory_fupd (combin_K m) (wl_set_vars vs xs y)`,
   SIMP[wl_set_vars_def]);;
 
 let _ = cake_add_simps [set_vars_const_memory];;
 
 let get_var_imm_const_memory = prove
  (`!ri m (s:(A,C,FFI)wl_state).
-     wl_get_var_imm ri (wl_state_memory_fupd (K m) s) = wl_get_var_imm ri s`,
+     wl_get_var_imm ri (wl_state_memory_fupd (combin_K m) s) = wl_get_var_imm ri s`,
   GEN_TAC THEN QCASES_ON "ri:(A)reg_imm" THEN SIMP[wl_get_var_imm_def]);;
 
 let _ = cake_add_simps [get_var_imm_const_memory];;
@@ -437,7 +437,7 @@ let mem_load_const_memory = prove
  (`!(s:(A,C,FFI)wl_state) m ad.
      fun2set (wl_state_memory s,wl_state_mdomain s) =
      fun2set (m,wl_state_mdomain s) ==>
-     wl_mem_load ad (wl_state_memory_fupd (K m) s) = wl_mem_load ad s`,
+     wl_mem_load ad (wl_state_memory_fupd (combin_K m) s) = wl_mem_load ad s`,
   REWRITE_TAC[fun2set_eq] THEN REPEAT STRIP_TAC THEN
   SIMP[wl_mem_load_def] THEN COND_CASES_TAC THEN SIMP[]);;
 
@@ -448,11 +448,11 @@ let mem_store_const_memory = prove
      fun2set (wl_state_memory s,wl_state_mdomain s) =
      fun2set (m,wl_state_mdomain s) ==>
      (wl_mem_store ad w s = NONE <=>
-      wl_mem_store ad w (wl_state_memory_fupd (K m) s) = NONE) /\
+      wl_mem_store ad w (wl_state_memory_fupd (combin_K m) s) = NONE) /\
      (wl_mem_store ad w s =
-        SOME (wl_state_memory_fupd (K ((ad =+ w) (wl_state_memory s))) s) <=>
-      wl_mem_store ad w (wl_state_memory_fupd (K m) s) =
-        SOME (wl_state_memory_fupd (K ((ad =+ w) m)) s))`,
+        SOME (wl_state_memory_fupd (combin_K ((ad =+ w) (wl_state_memory s))) s) <=>
+      wl_mem_store ad w (wl_state_memory_fupd (combin_K m) s) =
+        SOME (wl_state_memory_fupd (combin_K ((ad =+ w) m)) s))`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN SIMP[wl_mem_store_def] THEN
   COND_CASES_TAC THEN SIMP[]);;
 
@@ -469,7 +469,7 @@ let mem_load_32_const_memory = prove
   ASM_CASES_TAC `byte_align (ad:A word) IN dm` THEN ASM_SIMP_TAC[] THEN
   QCASES_ON "(m:A word->(A)word_loc) (byte_align ad)" THEN
   QCASES_ON "(m':A word->(A)word_loc) (byte_align ad)" THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]);;
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]);;
 
 (* HOL4 [simp]; not registered here: its condition or right side has a  *)
 (* variable that the left side does not bind, and the kit's simplifier  *)
@@ -488,9 +488,9 @@ let mem_store_32_const_memory = prove
    [ALL_TAC;
     QCASES_ON "(m:A word->(A)word_loc) (byte_align ad)" THEN
     QCASES_ON "(m':A word->(A)word_loc) (byte_align ad)" THEN
-    ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]] THEN
+    ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]] THEN
   QCASES_ON "(m':A word->(A)word_loc) (byte_align ad)" THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   CONV_TAC (TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[THE_DEF; option_DISTINCT] THEN
   MATCH_MP_TAC fun2set_update_eq THEN ASM_REWRITE_TAC[]);;
 
@@ -498,11 +498,11 @@ let word_exp_const_memory = prove
  (`!(s:(A,C,FFI)wl_state) exp m.
      fun2set (wl_state_memory s,wl_state_mdomain s) =
      fun2set (m,wl_state_mdomain s) ==>
-     wl_word_exp (wl_state_memory_fupd (K m) s) exp = wl_word_exp s exp`,
+     wl_word_exp (wl_state_memory_fupd (combin_K m) s) exp = wl_word_exp s exp`,
   REC_IND_TAC wl_word_exp_ind THEN REPEAT STRIP_TAC THEN
   ONCE_REWRITE_TAC[wl_word_exp_def] THEN SIMP[wl_get_store_def] THEN
   SUBGOAL_THEN
-    `MAP (wl_word_exp (wl_state_memory_fupd (K (m:A word->(A)word_loc)) s)) wexps =
+    `MAP (wl_word_exp (wl_state_memory_fupd (combin_K (m:A word->(A)word_loc)) s)) wexps =
      MAP (wl_word_exp (s:(A,C,FFI)wl_state)) wexps`
     SUBST1_TAC THEN REWRITE_TAC[] THEN
   MATCH_MP_TAC MAP_EQ THEN REWRITE_TAC[GSYM ALL_MEM] THEN ASM_MESON_TAC[]);;
@@ -517,7 +517,7 @@ let mem_load_byte_aux_const_memory = prove
   ASM_CASES_TAC `byte_align (w:A word) IN dm` THEN ASM_SIMP_TAC[] THEN
   QCASES_ON "(m:A word->(A)word_loc) (byte_align w)" THEN
   QCASES_ON "(m':A word->(A)word_loc) (byte_align w)" THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]);;
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]);;
 
 (* HOL4 [simp]; not registered here: its condition or right side has a  *)
 (* variable that the left side does not bind, and the kit's simplifier  *)
@@ -536,9 +536,9 @@ let mem_store_byte_aux_const_memory = prove
    [ALL_TAC;
     QCASES_ON "(m:A word->(A)word_loc) (byte_align w)" THEN
     QCASES_ON "(m':A word->(A)word_loc) (byte_align w)" THEN
-    ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]] THEN
+    ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]] THEN
   QCASES_ON "(m':A word->(A)word_loc) (byte_align w)" THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[THE_DEF; option_DISTINCT] THEN
   MATCH_MP_TAC fun2set_update_eq THEN ASM_MESON_TAC[fun2set_eq]);;
 
@@ -570,7 +570,7 @@ let write_bytearray_const_memory = prove
   QCASES_ON "mem_store_byte_aux (write_bytearray (word_add ptr (word 1)) t (m:A word->(A)word_loc) dm be) dm be ptr h" THEN
   QCASES_ON "mem_store_byte_aux (write_bytearray (word_add ptr (word 1)) t (m':A word->(A)word_loc) dm be) dm be ptr h" THEN
   RULE_ASSUM_TAC (REWRITE_RULE[option_DISTINCT; THE_DEF]) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN ASM_MESON_TAC[]);;
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN ASM_MESON_TAC[]);;
 
 (* HOL4 [simp]; not registered here: its condition or right side has a  *)
 (* variable that the left side does not bind, and the kit's simplifier  *)
@@ -620,10 +620,10 @@ let inst_const_memory = prove
  (`!i (s:(A,C,FFI)wl_state) m.
      fun2set (wl_state_memory s,wl_state_mdomain s) =
      fun2set (m,wl_state_mdomain s) ==>
-     (wl_inst i s = NONE <=> wl_inst i (wl_state_memory_fupd (K m) s) = NONE) /\
+     (wl_inst i s = NONE <=> wl_inst i (wl_state_memory_fupd (combin_K m) s) = NONE) /\
      (~(wl_inst i s = NONE) ==>
-      ?m'. THE (wl_inst i (wl_state_memory_fupd (K m) s)) =
-           wl_state_memory_fupd (K m') (THE (wl_inst i s)) /\
+      ?m'. THE (wl_inst i (wl_state_memory_fupd (combin_K m) s)) =
+           wl_state_memory_fupd (combin_K m') (THE (wl_inst i s)) /\
            (let x = THE (wl_inst i s) in
             fun2set (wl_state_memory x,wl_state_mdomain x) =
             fun2set (m',wl_state_mdomain x)))`,
@@ -631,7 +631,7 @@ let inst_const_memory = prove
   PTOPAUX_CASES_IF_FREE `a:(A)asm_arith` THEN PTOPAUX_CASES_IF_FREE `a:fp` THEN
   PTOPAUX_CASES_IF_FREE `a0:memop` THEN PTOPAUX_CASES_IF_FREE `a2:(A)addr` THEN
   REPEAT GEN_TAC THEN DISCH_TAC THEN
-  ONCE_REWRITE_TAC[wl_inst_def] THEN CASE_REWRITE_TAC[] THEN
+  ONCE_REWRITE_TAC[wl_inst_def] THEN CAKE_REWRITE_TAC[] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   SIMP[] THEN PTOPAUX_INST_MEM_RW_TAC THEN
   SIMP[THE_DEF; wl_assign_def; wl_get_fp_var_def; wl_set_fp_var_def; wl_get_var_def;
@@ -666,8 +666,8 @@ let share_inst_const_memory = prove
      fun2set (m,wl_state_mdomain s) /\
      share_inst op v c s = (res,t) ==>
      wl_state_memory t = wl_state_memory s /\ wl_state_mdomain t = wl_state_mdomain s /\
-     share_inst op v c (wl_state_memory_fupd (K m) s) =
-       (res,wl_state_memory_fupd (K m) t)`,
+     share_inst op v c (wl_state_memory_fupd (combin_K m) s) =
+       (res,wl_state_memory_fupd (combin_K m) t)`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN QCASES_ON "op:memop" THEN
   POP_ASSUM MP_TAC THEN
   SIMP[share_inst_def; wl_sh_mem_load_def; wl_sh_mem_load_byte_def; wl_sh_mem_load16_def;
@@ -684,16 +684,16 @@ let share_inst_const_memory = prove
 (* HOL4 [local] *)
 let mem_upd_lemma = prove
  (`!(s:(A,B,C)wl_state) t.
-     wl_state_memory_fupd (K ARB) s = wl_state_memory_fupd (K ARB) t ==>
-     ?m. s = wl_state_memory_fupd (K m) t`,
+     wl_state_memory_fupd (combin_K ARB) s = wl_state_memory_fupd (combin_K ARB) t ==>
+     ?m. s = wl_state_memory_fupd (combin_K m) t`,
   REWRITE_TAC[wl_state_component_equality] THEN SIMP[] THEN REPEAT STRIP_TAC THEN
   QEXISTS_TAC "wl_state_memory (s:(A,B,C)wl_state)" THEN ASM_SIMP_TAC[]);;
 
 (* HOL4 [local] *)
 let push_env_mem_upd = prove
  (`!env params (s:(A,C,FFI)wl_state) m.
-     wl_push_env env params (wl_state_memory_fupd (K m) s) =
-     wl_state_memory_fupd (K m) (wl_push_env env params s)`,
+     wl_push_env env params (wl_state_memory_fupd (combin_K m) s) =
+     wl_state_memory_fupd (combin_K m) (wl_push_env env params s)`,
   GEN_TAC THEN REWRITE_TAC[FORALL_OPTION_THM; FORALL_PAIR_THM; wl_push_env_def] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN SIMP[] THEN
   REPEAT STRIP_TAC THEN PAIRARG_TAC THEN SIMP[]);;
@@ -710,8 +710,8 @@ let push_env_mem_const = prove
 (* HOL4 [local] *)
 let cut_state_with_mem_const = prove
  (`!x (s:(A,C,FFI)wl_state) m.
-     wl_cut_state x (wl_state_memory_fupd (K m) s) =
-     OPTION_MAP (\s'. wl_state_memory_fupd (K m) s') (wl_cut_state x s)`,
+     wl_cut_state x (wl_state_memory_fupd (combin_K m) s) =
+     OPTION_MAP (\s'. wl_state_memory_fupd (combin_K m) s') (wl_cut_state x s)`,
   REPEAT GEN_TAC THEN SIMP[wl_cut_state_def] THEN
   QCASES_ON "wl_cut_env x (wl_state_locals (s:(A,C,FFI)wl_state))" THEN SIMP[OPTION_MAP_DEF]);;
 
@@ -724,8 +724,8 @@ let cut_state_with_mem_const = prove
 
 let PTOPAUX_jump_exc_mem = prove
  (`!(s:(A,C,FFI)wl_state) m.
-     wl_jump_exc (wl_state_memory_fupd (K m) s) =
-     OPTION_MAP (\(t,l1,l2). (wl_state_memory_fupd (K m) t,l1,l2)) (wl_jump_exc s)`,
+     wl_jump_exc (wl_state_memory_fupd (combin_K m) s) =
+     OPTION_MAP (\(t,l1,l2). (wl_state_memory_fupd (combin_K m) t,l1,l2)) (wl_jump_exc s)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[wl_jump_exc_def] THEN SIMP[] THEN
   COND_CASES_TAC THEN SIMP[OPTION_MAP_DEF] THEN
   REPEAT (TOP_CASE_TAC THEN SIMP[OPTION_MAP_DEF]));;
@@ -739,14 +739,14 @@ let PTOPAUX_jump_exc_memory = prove
 
 let PTOPAUX_call_env_mem = prove
  (`!args sz (s:(A,C,FFI)wl_state) m.
-     wl_call_env args sz (wl_state_memory_fupd (K m) s) =
-     wl_state_memory_fupd (K m) (wl_call_env args sz s)`,
+     wl_call_env args sz (wl_state_memory_fupd (combin_K m) s) =
+     wl_state_memory_fupd (combin_K m) (wl_call_env args sz s)`,
   SIMP[wl_call_env_def]);;
 
 let PTOPAUX_pop_env_mem = prove
  (`!(s:(A,C,FFI)wl_state) m.
-     wl_pop_env (wl_state_memory_fupd (K m) s) =
-     OPTION_MAP (wl_state_memory_fupd (K m)) (wl_pop_env s)`,
+     wl_pop_env (wl_state_memory_fupd (combin_K m) s) =
+     OPTION_MAP (wl_state_memory_fupd (combin_K m)) (wl_pop_env s)`,
   REPEAT GEN_TAC THEN SIMP[wl_pop_env_def] THEN
   REPEAT (TOP_CASE_TAC THEN SIMP[OPTION_MAP_DEF]));;
 
@@ -894,7 +894,7 @@ let PTOPAUX_ANT_EVAL_FIRST w =
 
 let PTOPAUX_MS_EVAL_STEP_TAC : tactic = fun (asl,w as g) ->
   if not (PTOPAUX_ANT_EVAL_FIRST w) then failwith "PTOPAUX_MS_EVAL_STEP_TAC" else
-  (PTOPAUX_PAIR_EVAL_TAC THEN CASE_REWRITE_TAC[] THEN DISCH_TAC THEN PTOPAUX_MS_STEP_TAC THEN
+  (PTOPAUX_PAIR_EVAL_TAC THEN CAKE_REWRITE_TAC[] THEN DISCH_TAC THEN PTOPAUX_MS_STEP_TAC THEN
    TRY (FIRST_X_ASSUM (MP_TAC o check (fun th -> is_eq (concl th) &&
                          rhs (concl th) = rand (lhand w))))) g;;
 
@@ -944,10 +944,10 @@ let PTOPAUX_MS_INST_TAC : tactic =
   FIRST_X_ASSUM (MP_TAC o check (IL2AUX_is_eval_eq o concl)) THEN
   ONCE_REWRITE_TAC[wl_evaluate_def] THEN
   QCASES_ON "wl_inst (i:(A)inst) (s:(A,C,FFI)wl_state)" THEN
-  CASE_REWRITE_TAC[THE_DEF; option_DISTINCT; PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[THE_DEF; option_DISTINCT; PAIR_EQ] THEN
   REPEAT STRIP_TAC THEN RVEQ_TAC THEN SIMP[] THEN
   RULE_ASSUM_TAC (CONV_RULE (TOP_DEPTH_CONV let_CONV)) THEN
-  QCASES_ON "wl_inst (i:(A)inst) (wl_state_memory_fupd (K (m:A word->(A)word_loc)) s)" THEN
+  QCASES_ON "wl_inst (i:(A)inst) (wl_state_memory_fupd (combin_K (m:A word->(A)word_loc)) s)" THEN
   FS[THE_DEF] THEN GVS[];;
 
 let PTOPAUX_MS_RAISE_TAC : tactic =
@@ -991,7 +991,7 @@ let PTOPAUX_MS_LOOP_TAC : tactic =
   PTOPAUX_MS_START_TAC THEN SIMP[cut_state_with_mem_const; OPTION_MAP_DEF] THEN
   TOP_CASE_TAC THEN SIMP[OPTION_MAP_DEF] THEN TRY (PTOPAUX_MS_FIN_TAC THEN NO_TAC) THEN
   IL2AUX_FACTS_TAC [cut_state_const] THEN RVEQ_TAC THEN
-  PTOPAUX_PAIR_EVAL_TAC THEN CASE_REWRITE_TAC[] THEN DISCH_TAC THEN PTOPAUX_MS_STEP_TAC THEN
+  PTOPAUX_PAIR_EVAL_TAC THEN CAKE_REWRITE_TAC[] THEN DISCH_TAC THEN PTOPAUX_MS_STEP_TAC THEN
   FIRST_X_ASSUM (MP_TAC o check (fun th -> is_eq (concl th) && is_cond (lhs (concl th)))) THEN
   COND_CASES_TAC THEN ASM_REWRITE_TAC[] THENL
    [COND_CASES_TAC THEN ASM_REWRITE_TAC[] THENL
@@ -1008,8 +1008,8 @@ let memory_swap_lemma1 = prove
      fun2set (m,wl_state_mdomain st) /\
      no_alloc_code (wl_state_code st) /\ no_install_code (wl_state_code st) /\
      no_alloc prog /\ wordConvs_no_install prog ==>
-     ?st'. wl_evaluate (prog,wl_state_memory_fupd (K m) st) = (res,st') /\
-           wl_state_memory_fupd (K ARB) st' = wl_state_memory_fupd (K ARB) rst /\
+     ?st'. wl_evaluate (prog,wl_state_memory_fupd (combin_K m) st) = (res,st') /\
+           wl_state_memory_fupd (combin_K ARB) st' = wl_state_memory_fupd (combin_K ARB) rst /\
            fun2set (wl_state_memory rst,wl_state_mdomain rst) =
            fun2set (wl_state_memory st',wl_state_mdomain rst)`,
   IL2AUX_EVAL_IND_TAC wl_evaluate_ind THEN REPEAT CONJ_TAC THENL
@@ -1033,8 +1033,8 @@ let memory_swap_lemma = prove
      fun2set (m,wl_state_mdomain st) /\
      no_alloc_code (wl_state_code st) /\ no_install_code (wl_state_code st) /\
      no_alloc prog /\ wordConvs_no_install prog ==>
-     ?m'. wl_evaluate (prog,wl_state_memory_fupd (K m) st) =
-          (res,wl_state_memory_fupd (K m') rst) /\
+     ?m'. wl_evaluate (prog,wl_state_memory_fupd (combin_K m) st) =
+          (res,wl_state_memory_fupd (combin_K m') rst) /\
           fun2set (wl_state_memory rst,wl_state_mdomain rst) =
           fun2set (m',wl_state_mdomain rst)`,
   REPEAT GEN_TAC THEN DISCH_THEN (MP_TAC o MATCH_MP memory_swap_lemma1) THEN
@@ -1048,19 +1048,19 @@ let word_semantics_memory_update = prove
  (`!(s:(A,C,FFI)wl_state) m start.
      fun2set (wl_state_memory s,wl_state_mdomain s) = fun2set (m,wl_state_mdomain s) /\
      no_alloc_code (wl_state_code s) /\ no_install_code (wl_state_code s) ==>
-     ~(wl_semantics (wl_state_memory_fupd (K m) s) start = Fail) ==>
-     wl_semantics s start = wl_semantics (wl_state_memory_fupd (K m) s) start`,
+     ~(wl_semantics (wl_state_memory_fupd (combin_K m) s) start = Fail) ==>
+     wl_semantics s start = wl_semantics (wl_state_memory_fupd (combin_K m) s) start`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN DISCH_TAC THEN
   MATCH_MP_TAC (ISPECL [`s:(A,C,FFI)wl_state`;
-                        `wl_state_memory_fupd (K (m:A word->(A)word_loc)) (s:(A,C,FFI)wl_state)`;
+                        `wl_state_memory_fupd (combin_K (m:A word->(A)word_loc)) (s:(A,C,FFI)wl_state)`;
                         `start:num`] W2WPAUX_sem_obs) THEN
   X_GEN_TAC `k:num` THEN
   MP_TAC (ISPECL [`wl_Call NONE (SOME start) [0] NONE:(A)wl_prog`;
-                  `wl_state_clock_fupd (K k) (s:(A,C,FFI)wl_state)`;
+                  `wl_state_clock_fupd (combin_K k) (s:(A,C,FFI)wl_state)`;
                   `FST (wl_evaluate (wl_Call NONE (SOME start) [0] NONE:(A)wl_prog,
-                                     wl_state_clock_fupd (K k) (s:(A,C,FFI)wl_state)))`;
+                                     wl_state_clock_fupd (combin_K k) (s:(A,C,FFI)wl_state)))`;
                   `SND (wl_evaluate (wl_Call NONE (SOME start) [0] NONE:(A)wl_prog,
-                                     wl_state_clock_fupd (K k) (s:(A,C,FFI)wl_state)))`;
+                                     wl_state_clock_fupd (combin_K k) (s:(A,C,FFI)wl_state)))`;
                   `m:A word->(A)word_loc`] memory_swap_lemma) THEN
   ANTS_TAC THENL [SIMP[no_alloc_def; wordConvs_no_install_def] THEN ASM_REWRITE_TAC[];
                   ALL_TAC] THEN
@@ -1116,7 +1116,7 @@ let word_to_word_compile_no_install_no_alloc = prove
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   PAIR_CASES_ON `next_n_oracle (LENGTH (progs0:(num#num#(A)wl_prog)list))
                    (word_to_word_config_col_oracle wconf)` THEN
-  CASE_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN
+  CAKE_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN
   FIRST_X_ASSUM (ASSUME_TAC o MATCH_MP BACKDEFAUX_LENGTH_next_n_oracle) THEN
   FIRST_X_ASSUM (SUBST1_TAC o SYM o check (fun th -> is_var (rhs (concl th)) &&
      (try fst(dest_const(fst(strip_comb (lhs (concl th))))) = "MAP" with Failure _ -> false))) THEN
@@ -1147,8 +1147,8 @@ let PTOPAUX_EVAL_FWD_TAC (facts:thm list) (fin:tactic) : tactic =
   REWRITE_TAC(IL2AUX_clock_case_eqs @ [PAIR_EQ; LET_DEF; LET_END_DEF]) THEN
   DISCH_THEN(REPEAT_TCL STRIP_THM_THEN ASSUME_TAC) THEN RVEQ_TAC THEN
   RULE_ASSUM_TAC (fun th -> if is_forall (concl th) || is_imp (concl th) then th
-                            else CASE_REWRITE_RULE []
-                                   (REWRITE_RULE rws (CASE_REWRITE_RULE [] th))) THEN
+                            else CAKE_REWRITE_RULE []
+                                   (REWRITE_RULE rws (CAKE_REWRITE_RULE [] th))) THEN
   REPEAT (FIRST_X_ASSUM (CONJUNCTS_THEN ASSUME_TAC o check (is_conj o concl))) THEN
   RULE_ASSUM_TAC(REWRITE_RULE (injectivity "wl_prog" :: distinctness "wl_prog" ::
                                IL2AUX_res_rws)) THEN
@@ -1195,7 +1195,7 @@ let no_alloc_word_evaluate = prove
 let panLang_wordSem_neq_NotEnoughSpace = prove
  (`!start (s:(A,C,FFI)wl_state) k res t (pan_code:((A)decl)list) (c:backend_config)
     (mc:(A,B,D)machine_config) col wprog.
-     wl_evaluate (wl_Call NONE (SOME start) [0] NONE,wl_state_clock_fupd (K k) s) =
+     wl_evaluate (wl_Call NONE (SOME start) [0] NONE,wl_state_clock_fupd (combin_K k) s) =
        (res,t) /\
      ALL_DISTINCT (MAP FST (functions pan_code)) /\
      word_to_word_compile (backend_config_word_to_word_conf c)
@@ -1222,7 +1222,7 @@ let panLang_wordSem_neq_NotEnoughSpace = prove
   ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
   MATCH_MP_TAC no_alloc_word_evaluate THEN
   MAP_EVERY EXISTS_TAC [`wl_Call NONE (SOME start) [0] NONE:(A)wl_prog`;
-                        `wl_state_clock_fupd (K k) (s:(A,C,FFI)wl_state)`;
+                        `wl_state_clock_fupd (combin_K k) (s:(A,C,FFI)wl_state)`;
                         `t:(A,C,FFI)wl_state`] THEN
   ASM_REWRITE_TAC[] THEN SIMP[no_alloc_def; wordConvs_no_install_def] THEN
   ASM_REWRITE_TAC[]);;
@@ -1246,9 +1246,9 @@ let share_inst_modifies = prove
  (`!op v ad (s:(A,C,FFI)wl_state) (res:((W)wl_result)option) t.
      share_inst op v ad s = (res,t) ==>
      ?ls ffi stk lsz st.
-       t = wl_state_locals_fupd (K ls) (wl_state_ffi_fupd (K ffi)
-             (wl_state_stack_fupd (K stk) (wl_state_locals_size_fupd (K lsz)
-               (wl_state_store_fupd (K st) s))))`,
+       t = wl_state_locals_fupd (combin_K ls) (wl_state_ffi_fupd (combin_K ffi)
+             (wl_state_stack_fupd (combin_K stk) (wl_state_locals_size_fupd (combin_K lsz)
+               (wl_state_store_fupd (combin_K st) s))))`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN
   MAP_EVERY EXISTS_TAC [`wl_state_locals (t:(A,C,FFI)wl_state)`; `wl_state_ffi (t:(A,C,FFI)wl_state)`;
                         `wl_state_stack (t:(A,C,FFI)wl_state)`;
@@ -1429,10 +1429,10 @@ let PTOPAUX_compile_prog_max_SOME = prove
                    (target_config (machine_config_target (mc:(A,B,C)machine_config)))
                    (pan_to_word_compile_prog (asm_config_ISA (target_config
                       (machine_config_target mc))) (pan_code:((A)decl)list))` THEN
-  CASE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+  CAKE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   PAIR_CASES_ON `word_to_stack_compile (target_config (machine_config_target
                    (mc:(A,B,C)machine_config))) F (p1:(num#num#(A)wl_prog)list)` THEN
-  CASE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+  CAKE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   W(fun (asl,w) ->
     let t = find_term (fun t -> try let h,args = strip_comb t in
                                    fst(dest_const h) = "lab_to_target_compile" &&
@@ -1463,7 +1463,7 @@ let PTOPAUX_sorac_ok = prove
      compiler_oracle_ok (\n:num. (ltconf,[]:((A)sec)list)) (lab_to_target_config_labels ltconf)
        n0 ac ffis`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN REWRITE_TAC[compiler_oracle_ok_def] THEN
-  BETA_TAC THEN CASE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+  BETA_TAC THEN CAKE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   ASM_REWRITE_TAC[lab_to_targetProof_good_code_def; ALL; ALL_DISTINCT; MAP; set_of_list;
                   DISJOINT_EMPTY; no_share_mem_inst_def; asm_fetch_aux_def; option_DISTINCT;
                   lab_get_labels_def; IMAGE_CLAUSES; UNIONS_0; restrict_nonzero_def;
@@ -1941,7 +1941,7 @@ let PTOPAUX_word_step = prove
   [FIRST_X_ASSUM(MP_TAC o check (fun th -> can (find_term (fun t -> try fst (dest_const t) =
                       "list_CASE" with Failure _ -> false)) (concl th))) THEN
    SPEC_TAC(`bitmaps:(A word)list`,`l:(A word)list`) THEN
-   LIST_INDUCT_TAC THEN CASE_REWRITE_TAC[TL; CONS_11] THEN MESON_TAC[];
+   LIST_INDUCT_TAC THEN CAKE_REWRITE_TAC[TL; CONS_11] THEN MESON_TAC[];
    ALL_TAC] THEN
   CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
   REWRITE_TAC[ALL; FUN_EQ_THM; compile_word_to_stack_def; append_def; append_aux_def] THEN
@@ -1992,7 +1992,7 @@ let PTOPAUX_init_code = prove
                     APPEND; ALOOKUP_THM; stack_err_lab_def] THEN
     CONV_TAC NUM_REDUCE_CONV];
    ALL_TAC] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   STRIP_TAC THEN
   FIRST_X_ASSUM(STRIP_ASSUME_TAC o CONV_RULE(TOP_DEPTH_CONV let_CONV) o
      REWRITE_RULE[stack_removeProof_state_rel_def] o
@@ -2094,7 +2094,7 @@ let PTOPAUX_fmi_facts = prove
   FIRST_X_ASSUM(MP_TAC o check (fun th -> is_eq (concl th) && is_comb (lhs (concl th)) &&
      (try fst (dest_const (fst (strip_comb (lhs (concl th))))) = "stack_allocProof_make_init"
       with Failure _ -> false))) THEN
-  REWRITE_TAC[make_init_any_def] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[make_init_any_def] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   DISCH_THEN(SUBST_ALL_TAC o SYM) THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o REWRITE_RULE[memory_assumption_def] o
     check (fun th -> try fst(dest_const(fst(strip_comb(concl th)))) = "memory_assumption"
@@ -2274,7 +2274,7 @@ let PTOPAUX_pan_step = prove
      pan_state_eshapes s = FEMPTY /\ good_dimindex (:A) /\
      ~(semantics_decls s start pan_code = Fail)
      ==> wl_semantics
-           (wl_state_code_fupd (K (fromAList (pan_to_word_compile_prog isa pan_code)))
+           (wl_state_code_fupd (combin_K (fromAList (pan_to_word_compile_prog isa pan_code)))
               (word_to_stackProof_make_init ac k sst wcode coracle))
            first_name =
          semantics_decls s start pan_code`,
@@ -2297,10 +2297,10 @@ let PTOPAUX_w2w_step = prove
      wl_state_code wst = fromAList wprog /\
      lookup 0 (wl_state_locals wst) = SOME (wl_Loc 1 0) /\
      ~(wl_semantics
-         (wl_state_code_fupd (K (fromAList (pan_to_word_compile_prog isa pan_code))) wst)
+         (wl_state_code_fupd (combin_K (fromAList (pan_to_word_compile_prog isa pan_code))) wst)
          start = Fail)
      ==> wl_semantics
-           (wl_state_code_fupd (K (fromAList (pan_to_word_compile_prog isa pan_code))) wst)
+           (wl_state_code_fupd (combin_K (fromAList (pan_to_word_compile_prog isa pan_code))) wst)
            start =
          wl_semantics wst start`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
@@ -2343,7 +2343,7 @@ let PTOPAUX_limit_step = prove
      wl_state_stack_max wst = SOME 1 /\ wl_state_stack wst = [] /\
      no_install_code (wl_state_code wst) /\ no_alloc_code (wl_state_code wst) /\
      (!kk res t. wl_evaluate (wl_Call NONE (SOME start) [0] NONE,
-                              wl_state_clock_fupd (K kk) wst) = (res,t)
+                              wl_state_clock_fupd (combin_K kk) wst) = (res,t)
                  ==> ~(res = SOME wl_Error)) /\
      max_depth (wl_state_stack_size wst) (full_call_graph start (wl_state_code wst)) =
        SOME m /\
@@ -2353,7 +2353,7 @@ let PTOPAUX_limit_step = prove
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   MAP_EVERY X_GEN_TAC [`kk:num`; `res:((A)wl_result)option`;
                        `t:(A,C,FFI)wl_state`] THEN DISCH_TAC THEN
-  MP_TAC (ISPECL [`start:num`; `[0]`; `wl_state_clock_fupd (K kk) (wst:(A,C,FFI)wl_state)`;
+  MP_TAC (ISPECL [`start:num`; `[0]`; `wl_state_clock_fupd (combin_K kk) (wst:(A,C,FFI)wl_state)`;
                   `res:((A)wl_result)option`; `t:(A,C,FFI)wl_state`;
                   `wl_state_code (wst:(A,C,FFI)wl_state)`] max_depth_Call_NONE) THEN
   ANTS_TAC THENL
@@ -2361,7 +2361,7 @@ let PTOPAUX_limit_step = prove
    ASM_MESON_TAC[];
    ALL_TAC] THEN
   MP_TAC (ISPECL [`wl_Call NONE (SOME start) [0] NONE:(A)wl_prog`;
-                  `wl_state_clock_fupd (K kk) (wst:(A,C,FFI)wl_state)`;
+                  `wl_state_clock_fupd (combin_K kk) (wst:(A,C,FFI)wl_state)`;
                   `res:((A)wl_result)option`; `t:(A,C,FFI)wl_state`]
                  evaluate_stack_size_limit_const_panLang) THEN
   ANTS_TAC THENL
@@ -2379,7 +2379,7 @@ let PTOPAUX_limit_step = prove
 let PTOPAUX_wl_sem_no_error = prove
  (`!(s:(A,C,FFI)wl_state) start.
      ~(wl_semantics s start = Fail) ==>
-     !k res t. wl_evaluate (wl_Call NONE (SOME start) [0] NONE,wl_state_clock_fupd (K k) s) =
+     !k res t. wl_evaluate (wl_Call NONE (SOME start) [0] NONE,wl_state_clock_fupd (combin_K k) s) =
                  (res,t)
                ==> ~(res = SOME wl_Error)`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN REPEAT GEN_TAC THEN DISCH_TAC THEN DISCH_TAC THEN
@@ -2387,7 +2387,7 @@ let PTOPAUX_wl_sem_no_error = prove
   REWRITE_TAC[wl_semantics_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   COND_CASES_TAC THEN REWRITE_TAC[] THEN
   FIRST_X_ASSUM(MP_TAC o SPEC `k:num` o REWRITE_RULE[NOT_EXISTS_THM]) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]);;
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]);;
 
 (* splitting a range of word addresses *)
 let PTOPAUX_addresses_split = prove

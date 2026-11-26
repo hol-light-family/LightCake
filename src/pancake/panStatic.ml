@@ -274,20 +274,20 @@ let sh_bd_branch_def = cake_def
 let branch_loc_inf_def = cake_def
   `branch_loc_inf (vctxt:(mlstring,local_info)map) x y =
      let x' =
-       mlmap_mapWithKey (\k v. local_info_vsh_bd_fupd (K
+       mlmap_mapWithKey (\k v. local_info_vsh_bd_fupd (combin_K
            (if ~(mlmap_member k y) then
               match mlmap_lookup vctxt k with
                 SOME v' -> sh_bd_branch (local_info_vsh_bd v) (local_info_vsh_bd v')
               | NONE -> sh_bd_from_bd NotTrusted (local_info_vsh_bd v)
             else local_info_vsh_bd v)) v) x in
      let y' =
-       mlmap_mapWithKey (\k v. local_info_vsh_bd_fupd (K
+       mlmap_mapWithKey (\k v. local_info_vsh_bd_fupd (combin_K
            (if ~(mlmap_member k x) then
               match mlmap_lookup vctxt k with
                 SOME v' -> sh_bd_branch (local_info_vsh_bd v) (local_info_vsh_bd v')
               | NONE -> sh_bd_from_bd NotTrusted (local_info_vsh_bd v)
             else local_info_vsh_bd v)) v) y in
-     mlmap_unionWith (\vx vy. local_info_vsh_bd_fupd (K
+     mlmap_unionWith (\vx vy. local_info_vsh_bd_fupd (combin_K
          (sh_bd_branch (local_info_vsh_bd vx) (local_info_vsh_bd vy))) vx) x' y'`;;
 
 (* Combine the local var state deltas of Seq'd progs *)
@@ -353,7 +353,7 @@ let reached_warnable_def = cake_def
      | _ ->
          if panStatic_context_is_reachable ctxt = WarnReach then
            (SOME (panStatic_context_last ctxt),
-            panStatic_context_is_reachable_fupd (K NotReach) ctxt)
+            panStatic_context_is_reachable_fupd (combin_K NotReach) ctxt)
          else (NONE,ctxt)`;;
 
 (* Determine the exit-ness of branches, based on whether a definite func or *)
@@ -999,9 +999,9 @@ let static_check_prog_def = cake_def_wf
              (panStatic_context_loc ctxt) (panStatic_context_scope ctxt)))
          else errorLogMonad_return one) (\u.
       let ctxt' =
-        panStatic_context_last_fupd (K OtherLast)
+        panStatic_context_last_fupd (combin_K OtherLast)
           (panStatic_context_locals_fupd
-             (K (mlmap_insert (panStatic_context_locals ctxt) vname
+             (combin_K (mlmap_insert (panStatic_context_locals ctxt) vname
                               (local_info_REC (exp_return_sh_bd eret)))) ctxt) in
       errorLogMonad_bind (static_check_prog ctxt' prog) (\pret.
       errorLogMonad_return
@@ -1033,9 +1033,9 @@ let static_check_prog_def = cake_def_wf
              (implode "static analysis failed to convert in-scope shape")
              (panStatic_context_loc ctxt) (panStatic_context_scope ctxt)))) (\sb.
       let ctxt' =
-        panStatic_context_last_fupd (K OtherLast)
+        panStatic_context_last_fupd (combin_K OtherLast)
           (panStatic_context_locals_fupd
-             (K (mlmap_insert (panStatic_context_locals ctxt) vname
+             (combin_K (mlmap_insert (panStatic_context_locals ctxt) vname
                               (local_info_REC sb))) ctxt) in
       errorLogMonad_bind (static_check_prog ctxt' prog) (\pret.
       errorLogMonad_return
@@ -1057,7 +1057,7 @@ let static_check_prog_def = cake_def_wf
       errorLogMonad_return
         (prog_return_REC F F OtherLast
            (mlmap_singleton mlstring_compare vname
-              (local_info_vsh_bd_fupd (K (exp_return_sh_bd eret)) vinf))
+              (local_info_vsh_bd_fupd (combin_K (exp_return_sh_bd eret)) vinf))
            (panStatic_context_loc ctxt)))))) /\
    (static_check_prog ctxt (panLang_Assign panLang_Global vname exp) =
       errorLogMonad_bind (check_global_var ctxt vname) (\vinf.
@@ -1119,15 +1119,15 @@ let static_check_prog_def = cake_def_wf
              errorLogMonad_bind
                (static_check_prog
                   (panStatic_context_locals_fupd
-                     (K (mlmap_insert (panStatic_context_locals ctxt) evar
-                           (local_info_vsh_bd_fupd (K sb) evinf))) ctxt)
+                     (combin_K (mlmap_insert (panStatic_context_locals ctxt) evar
+                           (local_info_vsh_bd_fupd (combin_K sb) evinf))) ctxt)
                   prog) (\u.
              errorLogMonad_return one)))))) (\u.
       errorLogMonad_return
         (prog_return_REC F F OtherLast
            (mlmap_singleton mlstring_compare vname
               (local_info_vsh_bd_fupd
-                 (K (sh_bd_from_bd Trusted (local_info_vsh_bd vinf))) vinf))
+                 (combin_K (sh_bd_from_bd Trusted (local_info_vsh_bd vinf))) vinf))
            (panStatic_context_loc ctxt))))))))) /\
    (static_check_prog ctxt
       (panLang_Call (SOME (SOME (panLang_Global,vname),hdl)) fname args) =
@@ -1154,9 +1154,9 @@ let static_check_prog_def = cake_def_wf
              errorLogMonad_bind
                (static_check_prog
                   (panStatic_context_locals_fupd
-                     (K (mlmap_insert (panStatic_context_locals ctxt) evar
+                     (combin_K (mlmap_insert (panStatic_context_locals ctxt) evar
                            (local_info_vsh_bd_fupd
-                              (K (sh_bd_from_bd Trusted (local_info_vsh_bd evinf)))
+                              (combin_K (sh_bd_from_bd Trusted (local_info_vsh_bd evinf)))
                               evinf))) ctxt)
                   prog) (\u.
              errorLogMonad_return one))) (\u.
@@ -1179,7 +1179,7 @@ let static_check_prog_def = cake_def_wf
       errorLogMonad_return
         (prog_return_REC F F OtherLast
            (mlmap_singleton mlstring_compare vname
-              (local_info_vsh_bd_fupd (K res_sb) vinf))
+              (local_info_vsh_bd_fupd (combin_K res_sb) vinf))
            (panStatic_context_loc ctxt))))))) /\
    (static_check_prog ctxt (panLang_Return exp) =
       errorLogMonad_bind (static_check_exp ctxt exp) (\eret.
@@ -1259,8 +1259,8 @@ let static_check_prog_def = cake_def_wf
              errorLogMonad_bind
                (static_check_prog
                   (panStatic_context_locals_fupd
-                     (K (mlmap_insert (panStatic_context_locals ctxt) evar
-                           (local_info_vsh_bd_fupd (K sb) evinf))) ctxt)
+                     (combin_K (mlmap_insert (panStatic_context_locals ctxt) evar
+                           (local_info_vsh_bd_fupd (combin_K sb) evinf))) ctxt)
                   prog) (\u.
              errorLogMonad_return one)))))) (\u.
       errorLogMonad_return
@@ -1289,13 +1289,13 @@ let static_check_prog_def = cake_def_wf
       let next_r = next_is_reachable (panStatic_context_is_reachable ctxt1)
                                      (prog_return_last pret1) in
       let ctxt2 =
-        panStatic_context_loc_fupd (K (prog_return_curr_loc pret1))
+        panStatic_context_loc_fupd (combin_K (prog_return_curr_loc pret1))
           (panStatic_context_last_fupd
-             (K (if next_now_unreachable (panStatic_context_is_reachable ctxt1) next_r
+             (combin_K (if next_now_unreachable (panStatic_context_is_reachable ctxt1) next_r
                  then prog_return_last pret1 else panStatic_context_last ctxt1))
-             (panStatic_context_is_reachable_fupd (K next_r)
+             (panStatic_context_is_reachable_fupd (combin_K next_r)
                 (panStatic_context_locals_fupd
-                   (K (seq_loc_inf (panStatic_context_locals ctxt1)
+                   (combin_K (seq_loc_inf (panStatic_context_locals ctxt1)
                                    (prog_return_var_delta pret1))) ctxt1))) in
       let (warn_p2,ctxt3) = reached_warnable prog2 ctxt2 in
       errorLogMonad_bind
@@ -1322,7 +1322,7 @@ let static_check_prog_def = cake_def_wf
       errorLogMonad_bind (static_check_prog ctxt prog1) (\pret1.
       errorLogMonad_bind
         (static_check_prog
-           (panStatic_context_loc_fupd (K (prog_return_curr_loc pret1)) ctxt)
+           (panStatic_context_loc_fupd (combin_K (prog_return_curr_loc pret1)) ctxt)
            prog2) (\pret2.
       let double_ret = (prog_return_exits_fun pret1 /\ prog_return_exits_fun pret2) in
       let double_loop_exit =
@@ -1342,7 +1342,7 @@ let static_check_prog_def = cake_def_wf
              (panStatic_context_scope ctxt)))
          else errorLogMonad_return one) (\u.
       errorLogMonad_bind
-        (static_check_prog (panStatic_context_in_loop_fupd (K T) ctxt) prog) (\pret.
+        (static_check_prog (panStatic_context_in_loop_fupd (combin_K T) ctxt) prog) (\pret.
       errorLogMonad_return
         (prog_return_REC F F OtherLast
            (branch_loc_inf (panStatic_context_locals ctxt) (prog_return_var_delta pret)
@@ -1492,7 +1492,7 @@ let static_check_prog_def = cake_def_wf
         (prog_return_REC F F OtherLast
            (mlmap_singleton mlstring_compare vname
               (local_info_vsh_bd_fupd
-                 (K (sh_bd_from_bd Trusted (local_info_vsh_bd vinf))) vinf))
+                 (combin_K (sh_bd_from_bd Trusted (local_info_vsh_bd vinf))) vinf))
            (panStatic_context_loc ctxt))))))) /\
    (static_check_prog ctxt (ShMemLoad mop panLang_Global vname addr) =
       errorLogMonad_bind (check_global_var ctxt vname) (\vinf.
@@ -1633,7 +1633,7 @@ let static_check_decls_def = cake_def_wf
           (mlmap_empty mlstring_compare) gctxt (mlmap_empty mlstring_compare)
           ectxt sctxt (DeclScope vname) F IsReach InvisLast (implode "") in
       errorLogMonad_bind
-        (check_redec_var (panStatic_context_scope_fupd (K TopLevel) ctxt) vname) (\u.
+        (check_redec_var (panStatic_context_scope_fupd (combin_K TopLevel) ctxt) vname) (\u.
       errorLogMonad_bind
         (check_shape sctxt (implode "") (panStatic_context_scope ctxt) shape) (\u.
       errorLogMonad_bind (static_check_exp ctxt exp) (\eret.

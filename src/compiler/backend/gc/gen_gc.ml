@@ -26,18 +26,18 @@ let gen_gc_gc_move_def = cake_def
               match gc_forward_ptr ptr (gc_state_heap state) (gc_state_a state + n) d ok
               with (heap,ok) ->
                 (Pointer (gc_state_a state + n) d,
-                 gc_state_ok_fupd (K ok) (gc_state_heap_fupd (K heap)
-                   (gc_state_n_fupd (K n) (gc_state_r4_fupd (K r4) state)))))
+                 gc_state_ok_fupd (combin_K ok) (gc_state_heap_fupd (combin_K heap)
+                   (gc_state_n_fupd (combin_K n) (gc_state_r4_fupd (combin_K r4) state)))))
            else
              (let h2 = APPEND (gc_state_h2 state) [DataElement xs l dd] in
               match gc_forward_ptr ptr (gc_state_heap state) (gc_state_a state) d ok
               with (heap,ok) ->
                 (let a = gc_state_a state + l + 1 in
                  (Pointer (gc_state_a state) d,
-                  gc_state_ok_fupd (K ok) (gc_state_heap_fupd (K heap)
-                    (gc_state_a_fupd (K a) (gc_state_n_fupd (K n)
-                      (gc_state_h2_fupd (K h2) state))))))))
-      | _ -> (Pointer ptr d,gc_state_ok_fupd (K F) state))`;;
+                  gc_state_ok_fupd (combin_K ok) (gc_state_heap_fupd (combin_K heap)
+                    (gc_state_a_fupd (combin_K a) (gc_state_n_fupd (combin_K n)
+                      (gc_state_h2_fupd (combin_K h2) state))))))))
+      | _ -> (Pointer ptr d,gc_state_ok_fupd (combin_K F) state))`;;
 
 (* the prefix and suffix facts that the HOL4 proofs get from IS_SUFFIX_compute *)
 let GC2AUX_PREFIX_SUFFIX = prove
@@ -111,7 +111,7 @@ let gen_gc_gc_move_data_def = cake_def_wf
        [] -> state
      | CONS h h2 ->
          if gen_gc_conf_limit conf < heap_length (APPEND (gc_state_h1 state) (CONS h h2))
-         then gc_state_ok_fupd (K F) state else
+         then gc_state_ok_fupd (combin_K F) state else
          (match h with
             DataElement xs l d ->
               (match gen_gc_gc_move_list conf state xs with
@@ -121,9 +121,9 @@ let gen_gc_gc_move_data_def = cake_def_wf
                    let ok = (gc_state_ok state /\ ~(gc_state_h2 state = []) /\
                              HD (gc_state_h2 state) = h) in
                    gen_gc_gc_move_data conf
-                     (gc_state_ok_fupd (K ok) (gc_state_h2_fupd (K h2)
-                       (gc_state_h1_fupd (K h1) state))))
-          | _ -> gc_state_ok_fupd (K F) state)`;;
+                     (gc_state_ok_fupd (combin_K ok) (gc_state_h2_fupd (combin_K h2)
+                       (gc_state_h1_fupd (combin_K h1) state))))
+          | _ -> gc_state_ok_fupd (combin_K F) state)`;;
 
 let gen_gc_gc_move_data_ind = cake_ind "gen_gc_gc_move_data";;
 
@@ -139,8 +139,8 @@ let gc_move_refs_def = cake_def_wf
    SIMP[GC1AUX_heap_length_CONS; el_length_def] THEN ARITH_TAC)
   `gc_move_refs (conf:B gen_gc_conf) (state:(A,B)gc_state) =
      match gc_state_r2 state with
-       [] -> gc_state_r1_fupd (K (APPEND (gc_state_r3 state) (gc_state_r1 state)))
-               (gc_state_r3_fupd (K []) state)
+       [] -> gc_state_r1_fupd (combin_K (APPEND (gc_state_r3 state) (gc_state_r1 state)))
+               (gc_state_r3_fupd (combin_K []) state)
      | CONS ref r2 ->
          (match ref with
             DataElement xs l d ->
@@ -148,8 +148,8 @@ let gc_move_refs_def = cake_def_wf
                  (xs,state) ->
                    let r3 = APPEND (gc_state_r3 state) [DataElement xs l d] in
                    gc_move_refs conf
-                     (gc_state_r3_fupd (K r3) (gc_state_r2_fupd (K r2) state)))
-          | _ -> gc_state_ok_fupd (K F) state)`;;
+                     (gc_state_r3_fupd (combin_K r3) (gc_state_r2_fupd (combin_K r2) state)))
+          | _ -> gc_state_ok_fupd (combin_K F) state)`;;
 
 let gc_move_refs_ind = cake_ind "gc_move_refs";;
 
@@ -162,22 +162,22 @@ let gen_gc_gc_move_loop_def = cake_def
             [] -> state
           | CONS h h2 ->
               (let state = gen_gc_gc_move_data conf state in
-               if clock = 0 then gc_state_ok_fupd (K F) state
+               if clock = 0 then gc_state_ok_fupd (combin_K F) state
                else gen_gc_gc_move_loop conf state (clock - 1)))
      | CONS h r4 ->
          (let state = gc_move_refs conf
-                        (gc_state_r4_fupd (K [])
-                           (gc_state_r2_fupd (K (gc_state_r4 state)) state)) in
-          if clock = 0 then gc_state_ok_fupd (K F) state
+                        (gc_state_r4_fupd (combin_K [])
+                           (gc_state_r2_fupd (combin_K (gc_state_r4 state)) state)) in
+          if clock = 0 then gc_state_ok_fupd (combin_K F) state
           else gen_gc_gc_move_loop conf state (clock - 1))`;;
 
 let gen_gc_gc_move_loop_ind = cake_ind "gen_gc_gc_move_loop";;
 
 let gen_gc_def = cake_def
   `gen_gc (conf:B gen_gc_conf) (roots:(A heap_address)list,heap:((A,B)heap_element)list) =
-     let state = gc_state_ok_fupd (K (heap_length heap = gen_gc_conf_limit conf))
-                   (gc_state_n_fupd (K (gen_gc_conf_limit conf))
-                     (gc_state_heap_fupd (K heap) empty_state)) in
+     let state = gc_state_ok_fupd (combin_K (heap_length heap = gen_gc_conf_limit conf))
+                   (gc_state_n_fupd (combin_K (gen_gc_conf_limit conf))
+                     (gc_state_heap_fupd (combin_K heap) empty_state)) in
      match gen_gc_gc_move_list conf state roots with
        (roots,state) ->
          (let state = gen_gc_gc_move_loop conf state (gen_gc_conf_limit conf) in
@@ -718,10 +718,10 @@ let gen_gc_gc_move_thm = prove
 let gen_gc_gc_move_ALT = prove
  (CASE_TERM `!(conf:B gen_gc_conf) (state:(A,B)gc_state) y.
      gen_gc_gc_move conf state y =
-     match gen_gc_gc_move conf (gc_state_r4_fupd (K []) (gc_state_h2_fupd (K []) state)) y with
+     match gen_gc_gc_move conf (gc_state_r4_fupd (combin_K []) (gc_state_h2_fupd (combin_K []) state)) y with
        (y',state') ->
-         (y',gc_state_r4_fupd (K (APPEND (gc_state_r4 state') (gc_state_r4 state)))
-               (gc_state_h2_fupd (K (APPEND (gc_state_h2 state) (gc_state_h2 state')))
+         (y',gc_state_r4_fupd (combin_K (APPEND (gc_state_r4 state') (gc_state_r4 state)))
+               (gc_state_h2_fupd (combin_K (APPEND (gc_state_h2 state) (gc_state_h2 state')))
                   state'))`,
   REPEAT GEN_TAC THEN CASES_ON `state:(A,B)gc_state` THEN CASES_ON `y:A heap_address` THEN
   SIMP[gen_gc_gc_move_def] THEN EVERY_CASE_TAC THEN SIMP[APPEND_NIL]);;
@@ -791,10 +791,10 @@ let gen_gc_gc_move_list_thm = prove
 let gen_gc_gc_move_list_ALT = prove
  (CASE_TERM `!ys (state:(A,B)gc_state) (conf:B gen_gc_conf).
      gen_gc_gc_move_list conf state ys =
-     match gen_gc_gc_move_list conf (gc_state_r4_fupd (K []) (gc_state_h2_fupd (K []) state)) ys
+     match gen_gc_gc_move_list conf (gc_state_r4_fupd (combin_K []) (gc_state_h2_fupd (combin_K []) state)) ys
      with (ys',state') ->
-       (ys',gc_state_r4_fupd (K (APPEND (gc_state_r4 state') (gc_state_r4 state)))
-              (gc_state_h2_fupd (K (APPEND (gc_state_h2 state) (gc_state_h2 state'))) state'))`,
+       (ys',gc_state_r4_fupd (combin_K (APPEND (gc_state_r4 state') (gc_state_r4 state)))
+              (gc_state_h2_fupd (combin_K (APPEND (gc_state_h2 state) (gc_state_h2 state'))) state'))`,
   LIST_INDUCT_TAC THENL
    [REPEAT GEN_TAC THEN CASES_ON `state:(A,B)gc_state` THEN
     SIMP[gen_gc_gc_move_list_def; APPEND_NIL];
@@ -803,14 +803,14 @@ let gen_gc_gc_move_list_ALT = prove
   SUBST1_TAC(ISPECL [`conf:B gen_gc_conf`; `state:(A,B)gc_state`; `h:A heap_address`]
              gen_gc_gc_move_ALT) THEN
   SPEC_TAC(`gen_gc_gc_move (conf:B gen_gc_conf)
-              (gc_state_r4_fupd (K []) (gc_state_h2_fupd (K []) (state:(A,B)gc_state))) h`,
+              (gc_state_r4_fupd (combin_K []) (gc_state_h2_fupd (combin_K []) (state:(A,B)gc_state))) h`,
            `p:(A heap_address)#(A,B)gc_state`) THEN
   REWRITE_TAC[FORALL_PAIR_THM; pair_CASE] THEN
   MAP_EVERY X_GEN_TAC [`x:A heap_address`; `s1:(A,B)gc_state`] THEN
   (* the induction hypothesis is used once on each side, then dropped *)
   FIRST_X_ASSUM(fun th -> ONCE_REWRITE_TAC[th]) THEN SIMP[] THEN
   SPEC_TAC(`gen_gc_gc_move_list (conf:B gen_gc_conf)
-              (gc_state_h2_fupd (K []) (gc_state_r4_fupd (K []) (s1:(A,B)gc_state))) t`,
+              (gc_state_h2_fupd (combin_K []) (gc_state_r4_fupd (combin_K []) (s1:(A,B)gc_state))) t`,
            `q:(A heap_address)list#(A,B)gc_state`) THEN
   REWRITE_TAC[FORALL_PAIR_THM; pair_CASE] THEN SIMP[APPEND_ASSOC]);;
 
@@ -821,7 +821,7 @@ let gen_gc_gc_move_list_APPEND_lemma = prove
                    gc_state_r4 state' = APPEND r4' (gc_state_r4 state)`,
   REPEAT GEN_TAC THEN ONCE_REWRITE_TAC[gen_gc_gc_move_list_ALT] THEN
   SPEC_TAC(`gen_gc_gc_move_list (conf:B gen_gc_conf)
-              (gc_state_r4_fupd (K []) (gc_state_h2_fupd (K []) (state:(A,B)gc_state))) ys`,
+              (gc_state_r4_fupd (combin_K []) (gc_state_h2_fupd (combin_K []) (state:(A,B)gc_state))) ys`,
            `q:(A heap_address)list#(A,B)gc_state`) THEN
   REWRITE_TAC[FORALL_PAIR_THM; pair_CASE; PAIR_EQ] THEN REPEAT GEN_TAC THEN
   DISCH_THEN(CONJUNCTS_THEN2 (K ALL_TAC) (SUBST1_TAC o SYM)) THEN
@@ -1165,7 +1165,7 @@ let gc_move_data_thm = prove
   MP_TAC(ISPEC `h2:((A,B)heap_element)list` list_CASES) THEN
   DISCH_THEN(DISJ_CASES_THEN2 SUBST_ALL_TAC (X_CHOOSE_THEN `h:(A,B)heap_element`
     (X_CHOOSE_THEN `t:((A,B)heap_element)list` SUBST_ALL_TAC))) THEN
-  CASE_REWRITE_TAC[] THENL
+  CAKE_REWRITE_TAC[] THENL
    [EXISTS_TAC `gc_state_REC old h1 [] r4 [] [] r1 a n ok heap (hp0:((A,B)heap_element)list)` THEN
     REWRITE_TAC[gc_state_FIELDS.ri_accessors; SUBMAP_REFL] THEN USE_THEN "inv" ACCEPT_TAC;
     ALL_TAC] THEN
@@ -1180,7 +1180,7 @@ let gc_move_data_thm = prove
     (DISJ_CASES_THEN2 (REPEAT_TCL CHOOSE_THEN SUBST_ALL_TAC)
       (X_CHOOSE_THEN `zs:(A heap_address)list` (X_CHOOSE_THEN `l:num`
         (X_CHOOSE_THEN `d:B` SUBST_ALL_TAC))))) THEN
-  CASE_REWRITE_TAC[] THENL
+  CAKE_REWRITE_TAC[] THENL
    [USE_THEN "inv" (MP_TAC o GC2AUX_INV_CONJ 8) THEN
     REWRITE_TAC[ALL; isDataElement_def; heap_element_distinct];
     USE_THEN "inv" (MP_TAC o GC2AUX_INV_CONJ 8) THEN
@@ -1323,8 +1323,8 @@ let gc_move_refs_lemma = prove
                   ==> isSomeDataOrForward (heap_lookup ptr (gc_state_heap state)) /\
                       reachable_addresses roots0 heap0 ptr)
      ==> gen_gc_gc_inv conf
-           (gc_state_r2_fupd (K t)
-              (gc_state_r3_fupd (K (APPEND (gc_state_r3 state') [DataElement xs' n b]))
+           (gc_state_r2_fupd (combin_K t)
+              (gc_state_r3_fupd (combin_K (APPEND (gc_state_r3 state') [DataElement xs' n b]))
                  state'))
            heap0 roots0`,
   REPEAT GEN_TAC THEN
@@ -1386,7 +1386,7 @@ let gc_move_refs_thm = prove
   MP_TAC(ISPEC `r2:((A,B)heap_element)list` list_CASES) THEN
   DISCH_THEN(DISJ_CASES_THEN2 SUBST_ALL_TAC (X_CHOOSE_THEN `h:(A,B)heap_element`
     (X_CHOOSE_THEN `t:((A,B)heap_element)list` SUBST_ALL_TAC))) THEN
-  CASE_REWRITE_TAC[] THENL
+  CAKE_REWRITE_TAC[] THENL
    [REWRITE_TAC[gc_state_FIELDS.ri_fupds; K_THM] THEN
     EXISTS_TAC `gc_state_REC old h1 h2 r4 [] [] (APPEND r3 r1) a n ok heap
                   (hp0:((A,B)heap_element)list)` THEN
@@ -1398,7 +1398,7 @@ let gc_move_refs_thm = prove
     (DISJ_CASES_THEN2 (REPEAT_TCL CHOOSE_THEN SUBST_ALL_TAC)
       (X_CHOOSE_THEN `zs:(A heap_address)list` (X_CHOOSE_THEN `l:num`
         (X_CHOOSE_THEN `d:B` SUBST_ALL_TAC))))) THEN
-  CASE_REWRITE_TAC[] THENL
+  CAKE_REWRITE_TAC[] THENL
    [USE_THEN "inv" (MP_TAC o GC2AUX_INV_CONJ 10) THEN
     REWRITE_TAC[ALL; isDataElement_def; heap_element_distinct];
     USE_THEN "inv" (MP_TAC o GC2AUX_INV_CONJ 10) THEN
@@ -1512,17 +1512,17 @@ let gc_move_data_heap_length = prove
   ONCE_REWRITE_TAC[gen_gc_gc_move_data_def] THEN
   MP_TAC(ISPEC `gc_state_h2 (state:(A,B)gc_state)` list_CASES) THEN
   DISCH_THEN(DISJ_CASES_THEN2
-    (fun th -> REWRITE_TAC[th] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[LE_REFL])
+    (fun th -> REWRITE_TAC[th] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[LE_REFL])
     (X_CHOOSE_THEN `h:(A,B)heap_element` (X_CHOOSE_THEN `t:((A,B)heap_element)list`
       (LABEL_TAC "h2")))) THEN
-  USE_THEN "h2" (fun th -> REWRITE_TAC[th]) THEN CASE_REWRITE_TAC[] THEN
+  USE_THEN "h2" (fun th -> REWRITE_TAC[th]) THEN CAKE_REWRITE_TAC[] THEN
   COND_CASES_TAC THEN REWRITE_TAC[gc_state_FIELDS.ri_accfupds; LE_REFL] THEN
   MP_TAC(ISPEC `h:(A,B)heap_element` (cases "heap_element")) THEN
   DISCH_THEN(DISJ_CASES_THEN2 (CHOOSE_THEN SUBST_ALL_TAC)
     (DISJ_CASES_THEN2 (REPEAT_TCL CHOOSE_THEN SUBST_ALL_TAC)
       (X_CHOOSE_THEN `zs:(A heap_address)list` (X_CHOOSE_THEN `l:num`
         (X_CHOOSE_THEN `d:B` SUBST_ALL_TAC))))) THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[gc_state_FIELDS.ri_accfupds; LE_REFL] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[gc_state_FIELDS.ri_accfupds; LE_REFL] THEN
   PAIRARG_TAC THEN REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
   FIRST_ASSUM(MP_TAC o MATCH_MP gen_gc_gc_move_list_IMP) THEN
   DISCH_THEN(CONJUNCTS_THEN2 SUBST1_TAC (CONJUNCTS_THEN2 (K ALL_TAC)
@@ -1543,18 +1543,18 @@ let gc_move_refs_heap_length = prove
   ONCE_REWRITE_TAC[gc_move_refs_def] THEN
   MP_TAC(ISPEC `gc_state_r2 (state:(A,B)gc_state)` list_CASES) THEN
   DISCH_THEN(DISJ_CASES_THEN2
-    (fun th -> REWRITE_TAC[th] THEN CASE_REWRITE_TAC[] THEN
+    (fun th -> REWRITE_TAC[th] THEN CAKE_REWRITE_TAC[] THEN
                REWRITE_TAC[gc_state_FIELDS.ri_accfupds; K_THM; heap_length_APPEND] THEN
                ARITH_TAC)
     (X_CHOOSE_THEN `h:(A,B)heap_element` (X_CHOOSE_THEN `t:((A,B)heap_element)list`
       (LABEL_TAC "r2")))) THEN
-  USE_THEN "r2" (fun th -> REWRITE_TAC[th]) THEN CASE_REWRITE_TAC[] THEN
+  USE_THEN "r2" (fun th -> REWRITE_TAC[th]) THEN CAKE_REWRITE_TAC[] THEN
   MP_TAC(ISPEC `h:(A,B)heap_element` (cases "heap_element")) THEN
   DISCH_THEN(DISJ_CASES_THEN2 (CHOOSE_THEN SUBST_ALL_TAC)
     (DISJ_CASES_THEN2 (REPEAT_TCL CHOOSE_THEN SUBST_ALL_TAC)
       (X_CHOOSE_THEN `zs:(A heap_address)list` (X_CHOOSE_THEN `l:num`
         (X_CHOOSE_THEN `d:B` SUBST_ALL_TAC))))) THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[gc_state_FIELDS.ri_accfupds; LE_REFL] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[gc_state_FIELDS.ri_accfupds; LE_REFL] THEN
   PAIRARG_TAC THEN REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
   FIRST_ASSUM(MP_TAC o MATCH_MP gen_gc_gc_move_list_IMP) THEN
   DISCH_THEN(CONJUNCTS_THEN2 SUBST1_TAC (CONJUNCTS_THEN2 (K ALL_TAC)
@@ -1590,7 +1590,7 @@ let gc_move_loop_gc_inv = prove
      gen_gc_gc_inv conf state heap0 roots0 /\ gc_state_r2 state = [] /\
      gc_state_r4 state = CONS h t /\ gc_state_r3 state = []
      ==> gen_gc_gc_inv conf
-           (gc_state_r4_fupd (K []) (gc_state_r2_fupd (K (CONS h t)) state)) heap0 roots0`,
+           (gc_state_r4_fupd (combin_K []) (gc_state_r2_fupd (combin_K (CONS h t)) state)) heap0 roots0`,
   GEN_TAC THEN GEN_TAC THEN
   GC2AUX_STATE_TAC GC2AUX_FIELDS `state:(A,B)gc_state` THEN
   REWRITE_TAC[gc_state_FIELDS.ri_accessors; gc_state_FIELDS.ri_fupds; K_THM] THEN
@@ -1643,7 +1643,7 @@ let GC2AUX_gc_move_data_progress = prove
                        `h:(A,B)heap_element`; `t:((A,B)heap_element)list`] THEN
   DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "inv") (REPEAT_TCL CONJUNCTS_THEN SUBST_ALL_TAC)) THEN
   ONCE_REWRITE_TAC[gen_gc_gc_move_data_def] THEN
-  REWRITE_TAC[gc_state_FIELDS.ri_accessors] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[gc_state_FIELDS.ri_accessors] THEN CAKE_REWRITE_TAC[] THEN
   SUBGOAL_THEN `~(gen_gc_conf_limit (conf:B gen_gc_conf) <
                   heap_length (APPEND h1 (CONS h t):((A,B)heap_element)list))`
     (fun th -> REWRITE_TAC[th]) THENL
@@ -1655,7 +1655,7 @@ let GC2AUX_gc_move_data_progress = prove
     (DISJ_CASES_THEN2 (REPEAT_TCL CHOOSE_THEN SUBST_ALL_TAC)
       (X_CHOOSE_THEN `zs:(A heap_address)list` (X_CHOOSE_THEN `l:num`
         (X_CHOOSE_THEN `d:B` SUBST_ALL_TAC))))) THEN
-  CASE_REWRITE_TAC[] THENL
+  CAKE_REWRITE_TAC[] THENL
    [USE_THEN "inv" (MP_TAC o GC2AUX_INV_CONJ 8) THEN
     REWRITE_TAC[ALL; isDataElement_def; heap_element_distinct];
     USE_THEN "inv" (MP_TAC o GC2AUX_INV_CONJ 8) THEN
@@ -1667,10 +1667,10 @@ let GC2AUX_gc_move_data_progress = prove
   DISCH_THEN(CONJUNCTS_THEN2 SUBST1_TAC (CONJUNCTS_THEN2 (K ALL_TAC)
     (CONJUNCTS_THEN2 (K ALL_TAC) (CONJUNCTS_THEN2 SUBST1_TAC (K ALL_TAC))))) THEN
   MP_TAC(ISPECL [`conf:B gen_gc_conf`;
-    `gc_state_ok_fupd (K (gc_state_ok state' /\ ~(gc_state_h2 state' = []) /\
+    `gc_state_ok_fupd (combin_K (gc_state_ok state' /\ ~(gc_state_h2 state' = []) /\
         HD (gc_state_h2 state') = DataElement zs l d))
-      (gc_state_h2_fupd (K (TL (gc_state_h2 state')))
-        (gc_state_h1_fupd (K (APPEND (gc_state_h1 state') [DataElement xs' l d]))
+      (gc_state_h2_fupd (combin_K (TL (gc_state_h2 state')))
+        (gc_state_h1_fupd (combin_K (APPEND (gc_state_h1 state') [DataElement xs' l d]))
            (state':(A,B)gc_state)))`] gc_move_data_heap_length) THEN
   REWRITE_TAC[marker_Abbrev_def; MESON[] `(!y:C. y = f ==> P y) <=> P f`] THEN
   REWRITE_TAC[gc_state_FIELDS.ri_accfupds; K_THM; heap_length_APPEND; heap_length_CONS;
@@ -1683,7 +1683,7 @@ let GC2AUX_gc_move_refs_progress = prove
      gc_state_r3 state = [] /\ gc_state_r2 state = []
      ==> heap_length (gc_state_r1 state) <
          heap_length (gc_state_r1 (gc_move_refs conf
-           (gc_state_r4_fupd (K []) (gc_state_r2_fupd (K (CONS h t)) state))))`,
+           (gc_state_r4_fupd (combin_K []) (gc_state_r2_fupd (combin_K (CONS h t)) state))))`,
   GEN_TAC THEN GEN_TAC THEN
   GC2AUX_STATE_TAC GC2AUX_FIELDS `state:(A,B)gc_state` THEN
   REWRITE_TAC[gc_state_FIELDS.ri_accessors] THEN
@@ -1703,7 +1703,7 @@ let GC2AUX_gc_move_refs_progress = prove
     ALL_TAC] THEN
   USE_THEN "inv" (LABEL_TAC "inv0" o MATCH_MP GC2AUX_r4_to_r2_inv) THEN
   ONCE_REWRITE_TAC[gc_move_refs_def] THEN
-  REWRITE_TAC[gc_state_FIELDS.ri_accessors] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[gc_state_FIELDS.ri_accessors] THEN CAKE_REWRITE_TAC[] THEN
   PAIRARG_TAC THEN REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
   SUBGOAL_THEN `!ptr (u:A). MEM (Pointer ptr u) zs
                   ==> isSomeDataOrForward (heap_lookup ptr (heap:((A,B)heap_element)list)) /\
@@ -1755,13 +1755,13 @@ let gen_gc_gc_move_loop_thm = prove
   MP_TAC(ISPEC `gc_state_r4 (state:(A,B)gc_state)` list_CASES) THEN
   DISCH_THEN(DISJ_CASES_THEN2 (LABEL_TAC "r4") (X_CHOOSE_THEN `h:(A,B)heap_element`
     (X_CHOOSE_THEN `t:((A,B)heap_element)list` (LABEL_TAC "r4")))) THEN
-  USE_THEN "r4" (fun th -> REWRITE_TAC[th]) THEN CASE_REWRITE_TAC[] THEN
+  USE_THEN "r4" (fun th -> REWRITE_TAC[th]) THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[LET_DEF; LET_END_DEF] THENL
    [(* r4 = [] *)
     MP_TAC(ISPEC `gc_state_h2 (state:(A,B)gc_state)` list_CASES) THEN
     DISCH_THEN(DISJ_CASES_THEN2 (LABEL_TAC "h2") (X_CHOOSE_THEN `h:(A,B)heap_element`
       (X_CHOOSE_THEN `t:((A,B)heap_element)list` (LABEL_TAC "h2")))) THEN
-    USE_THEN "h2" (fun th -> REWRITE_TAC[th]) THEN CASE_REWRITE_TAC[] THENL
+    USE_THEN "h2" (fun th -> REWRITE_TAC[th]) THEN CAKE_REWRITE_TAC[] THENL
      [EXISTS_TAC `state:(A,B)gc_state` THEN ASM_REWRITE_TAC[SUBMAP_REFL]; ALL_TAC] THEN
     SUBGOAL_THEN `~(clock = 0)` (fun th -> REWRITE_TAC[th] THEN ASSUME_TAC th) THENL
      [DISCH_TAC THEN USE_THEN "lim" MP_TAC THEN
@@ -1805,9 +1805,9 @@ let gen_gc_gc_move_loop_thm = prove
                    `roots0:(A heap_address)list`] gc_move_loop_gc_inv) THEN
     ANTS_TAC THENL [ASM_REWRITE_TAC[]; DISCH_THEN(LABEL_TAC "inv0")] THEN
     MP_TAC(ISPECL [`conf:B gen_gc_conf`;
-      `gc_state_r4_fupd (K []) (gc_state_r2_fupd (K (CONS h t)) (state:(A,B)gc_state))`;
+      `gc_state_r4_fupd (combin_K []) (gc_state_r2_fupd (combin_K (CONS h t)) (state:(A,B)gc_state))`;
       `gc_move_refs (conf:B gen_gc_conf)
-         (gc_state_r4_fupd (K []) (gc_state_r2_fupd (K (CONS h t)) (state:(A,B)gc_state)))`]
+         (gc_state_r4_fupd (combin_K []) (gc_state_r2_fupd (combin_K (CONS h t)) (state:(A,B)gc_state)))`]
       gc_move_refs_heap_length) THEN
     REWRITE_TAC[gc_state_FIELDS.ri_accfupds] THEN DISCH_THEN(LABEL_TAC "hl") THEN
     REMOVE_THEN "IHr" (fun th -> USE_THEN "r4" (fun r4 ->
@@ -1833,9 +1833,9 @@ let gen_gc_gc_inv_init = prove
  (`!(heap:((A,B)heap_element)list) (conf:B gen_gc_conf) (roots:(A heap_address)list).
      heap_ok heap (gen_gc_conf_limit conf)
      ==> gen_gc_gc_inv conf
-           (gc_state_ok_fupd (K (heap_length heap = gen_gc_conf_limit conf))
-              (gc_state_n_fupd (K (gen_gc_conf_limit conf))
-                 (gc_state_heap_fupd (K heap) empty_state))) heap roots`,
+           (gc_state_ok_fupd (combin_K (heap_length heap = gen_gc_conf_limit conf))
+              (gc_state_n_fupd (combin_K (gen_gc_conf_limit conf))
+                 (gc_state_heap_fupd (combin_K heap) empty_state))) heap roots`,
   REPEAT GEN_TAC THEN DISCH_THEN(fun th -> ASSUME_TAC th THEN
     STRIP_ASSUME_TAC(REWRITE_RULE[heap_ok_def] th)) THEN
   FIRST_ASSUM(ASSUME_TAC o SPEC `0` o MATCH_MP heap_map_EMPTY) THEN
@@ -2276,10 +2276,10 @@ let gen_gc_gc_move_list_ok = prove
 let GC2AUX_LIST_CASES_TAC (tm:term) nil_tac : tactic =
   MP_TAC(ISPEC tm list_CASES) THEN
   DISCH_THEN(DISJ_CASES_THEN2
-    (fun th -> ASSUME_TAC th THEN REWRITE_TAC[th] THEN CASE_REWRITE_TAC[] THEN nil_tac)
+    (fun th -> ASSUME_TAC th THEN REWRITE_TAC[th] THEN CAKE_REWRITE_TAC[] THEN nil_tac)
     (X_CHOOSE_THEN `h:(A,B)heap_element` (X_CHOOSE_THEN `t:((A,B)heap_element)list`
       (LABEL_TAC "hd")))) THEN
-  USE_THEN "hd" (fun th -> REWRITE_TAC[th]) THEN CASE_REWRITE_TAC[];;
+  USE_THEN "hd" (fun th -> REWRITE_TAC[th]) THEN CAKE_REWRITE_TAC[];;
 
 let GC2AUX_ELEMENT_CASES_TAC : tactic =
   MP_TAC(ISPEC `h:(A,B)heap_element` (cases "heap_element")) THEN
@@ -2287,7 +2287,7 @@ let GC2AUX_ELEMENT_CASES_TAC : tactic =
     (DISJ_CASES_THEN2 (REPEAT_TCL CHOOSE_THEN SUBST_ALL_TAC)
       (X_CHOOSE_THEN `zs:(A heap_address)list` (X_CHOOSE_THEN `l:num`
         (X_CHOOSE_THEN `d:B` SUBST_ALL_TAC))))) THEN
-  CASE_REWRITE_TAC[];;
+  CAKE_REWRITE_TAC[];;
 
 let gc_move_data_ok = prove
  (`!(conf:B gen_gc_conf) (s:(A,B)gc_state).
@@ -2351,12 +2351,12 @@ let gen_gc_gc_move_loop_ok = prove
   MP_TAC(ISPEC `gc_state_r4 (state:(A,B)gc_state)` list_CASES) THEN
   DISCH_THEN(DISJ_CASES_THEN2 (LABEL_TAC "r4") (X_CHOOSE_THEN `h:(A,B)heap_element`
     (X_CHOOSE_THEN `t:((A,B)heap_element)list` (LABEL_TAC "r4")))) THEN
-  USE_THEN "r4" (fun th -> REWRITE_TAC[th]) THEN CASE_REWRITE_TAC[] THEN
+  USE_THEN "r4" (fun th -> REWRITE_TAC[th]) THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[LET_DEF; LET_END_DEF] THENL
    [MP_TAC(ISPEC `gc_state_h2 (state:(A,B)gc_state)` list_CASES) THEN
     DISCH_THEN(DISJ_CASES_THEN2 (LABEL_TAC "h2") (X_CHOOSE_THEN `h:(A,B)heap_element`
       (X_CHOOSE_THEN `t:((A,B)heap_element)list` (LABEL_TAC "h2")))) THEN
-    USE_THEN "h2" (fun th -> REWRITE_TAC[th]) THEN CASE_REWRITE_TAC[] THEN
+    USE_THEN "h2" (fun th -> REWRITE_TAC[th]) THEN CAKE_REWRITE_TAC[] THEN
     COND_CASES_TAC THEN REWRITE_TAC[gc_state_FIELDS.ri_accfupds; K_THM] THEN
     USE_THEN "IHd" (MP_TAC o SPECL [`h:(A,B)heap_element`; `t:((A,B)heap_element)list`]) THEN
     ANTS_TAC THENL [ASM_REWRITE_TAC[]; ALL_TAC] THEN

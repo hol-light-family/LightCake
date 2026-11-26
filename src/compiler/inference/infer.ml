@@ -87,7 +87,7 @@ let infer_st_component_equality = infer_st_INFO.ri_component_equality;;
 let fresh_uvar_def = cake_def
   `(fresh_uvar:infer_st->(infer_t,A)exc#infer_st) =
      \s. (M_success (Infer_Tuvar (infer_st_next_uvar s)),
-          infer_st_next_uvar_fupd (K (infer_st_next_uvar s + 1)) s)`;;
+          infer_st_next_uvar_fupd (combin_K (infer_st_next_uvar s + 1)) s)`;;
 
 let n_fresh_uvar_def = cake_def
   `n_fresh_uvar (n:num) =
@@ -103,13 +103,13 @@ let n_fresh_uvar_ind = cake_ind "n_fresh_uvar";;
 let n_fresh_id_def = cake_def
   `n_fresh_id (n:num) =
      \s:infer_st. (M_success (list_of_seq (\x. infer_st_next_id s + x) n):(num list,A)exc,
-          infer_st_next_id_fupd (K (infer_st_next_id s + n)) s)`;;
+          infer_st_next_id_fupd (combin_K (infer_st_next_id s + n)) s)`;;
 
 (* Doesn't reset the ID component *)
 
 let init_infer_state_def = cake_def
   `init_infer_state (st:infer_st) =
-     infer_st_next_uvar_fupd (K 0) (infer_st_subst_fupd (K FEMPTY) st)`;;
+     infer_st_next_uvar_fupd (combin_K 0) (infer_st_subst_fupd (combin_K FEMPTY) st)`;;
 
 let init_state_def = cake_def
   `init_state = \st:infer_st. (M_success one:(1,A)exc,init_infer_state st)`;;
@@ -127,7 +127,7 @@ let add_constraint_def = cake_def
                           inf_type_to_string (loc_err_info_err l)
                             (t_walkstar (infer_st_subst st) t2)]):(1,locs option#mlstring)exc,
             st)
-       | SOME s -> (M_success one,infer_st_subst_fupd (K s) st)`;;
+       | SOME s -> (M_success one,infer_st_subst_fupd (combin_K s) st)`;;
 
 let add_constraints_def = cake_def
   `(add_constraints (l:loc_err_info) [] [] =
@@ -774,8 +774,8 @@ let check_type_definition_expand = prove
 
 let infer_p_def = cake_def_wf
   `MEASURE (\x:loc_err_info#inf_env#pat + loc_err_info#inf_env#(pat list).
-              match x with INL (_,_,p) -> pat_size p
-                         | INR (_,_,ps) -> list_size pat_size ps)`
+              match x with INL (_,_,p) -> ast_pat_size p
+                         | INR (_,_,ps) -> list_size ast_pat_size ps)`
   TERM_TAC
   `(infer_p (l:loc_err_info) (ienv:inf_env) (Pvar n) =
       st_ex_bind fresh_uvar (\t.
@@ -1119,7 +1119,7 @@ let TYSYS2AUX_SANITY_TAC =
   DISCH_THEN(CONJUNCTS_THEN2
     (fun th -> STRIP_ASSUME_TAC(REWRITE_RULE[TYSYS2AUX_LENGTH_EQ_NUM] th) ORELSE
                ASSUME_TAC th) MP_TAC) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[LENGTH; MAP; I_THM] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[LENGTH; MAP; I_THM] THEN
   REPEAT COND_CASES_TAC THEN
   REWRITE_TAC[failwith_def] THEN
   REPEAT(CHANGED_TAC(REWRITE_TAC[st_ex_bind_failure; fresh_uvar_def; st_ex_return_def;
@@ -1150,7 +1150,7 @@ let constrain_op_error_msg_sanity = prove
   REPEAT GEN_TAC THEN CASES_ON `op:op` THEN
   REWRITE_TAC[op_to_string_def; SND] THEN
   REWRITE_TAC[constrain_op_def; op_simple_constraints_def] THEN
-  CASE_REWRITE_TAC[] THEN TYSYS2AUX_SPLIT_ARITH_TAC THEN TYSYS2AUX_SANITY_TAC);;
+  CAKE_REWRITE_TAC[] THEN TYSYS2AUX_SPLIT_ARITH_TAC THEN TYSYS2AUX_SANITY_TAC);;
 
 (* defined with sem1aux_def_wf (semantics/sem1aux_tfl.ml): the kit's        *)
 (* casewise recursion package needs a very long time for the 25 clauses of  *)
@@ -1165,7 +1165,7 @@ let infer_e_def = sem1aux_def_wf
                 INL (_,_,e) -> exp_size e
               | INR (INL (_,_,es)) -> list_size exp_size es
               | INR (INR (INL (_,_,pes,_,_))) ->
-                  list_size (pair_size pat_size exp_size) pes
+                  list_size (pair_size ast_pat_size exp_size) pes
               | INR (INR (INR (_,_,funs))) ->
                   list_size (pair_size mlstring_size
                                (pair_size mlstring_size exp_size)) funs)`
@@ -1217,7 +1217,7 @@ let infer_e_def = sem1aux_def_wf
    (infer_e l ienv (Fun x e) =
       st_ex_bind fresh_uvar (\t1.
       st_ex_bind
-        (infer_e l (inf_env_inf_v_fupd (K (nsBind x (0,t1) (inf_env_inf_v ienv))) ienv) e)
+        (infer_e l (inf_env_inf_v_fupd (combin_K (nsBind x (0,t1) (inf_env_inf_v ienv))) ienv) e)
         (\t2. st_ex_return (Infer_Tapp [t1; t2] Tfn_num)))) /\
    (infer_e l ienv (App op es) =
       st_ex_bind (infer_es l ienv es) (\ts.
@@ -1246,7 +1246,7 @@ let infer_e_def = sem1aux_def_wf
    (infer_e l ienv (Let xo e1 e2) =
       st_ex_bind (infer_e l ienv e1) (\t1.
       st_ex_bind
-        (infer_e l (inf_env_inf_v_fupd (K (nsOptBind xo (0,t1) (inf_env_inf_v ienv))) ienv)
+        (infer_e l (inf_env_inf_v_fupd (combin_K (nsOptBind xo (0,t1) (inf_env_inf_v ienv))) ienv)
            e2)
         (\t2. st_ex_return t2))) /\
    (infer_e l ienv (Letrec funs e) =
@@ -1263,9 +1263,9 @@ let infer_e_def = sem1aux_def_wf
                   (MAP2 (\fxe uvar. match fxe with (f,x,e) -> (f,(0,uvar))) funs uvars))
                (inf_env_inf_v ienv)))
          (\env'.
-       st_ex_bind (infer_funs l (inf_env_inf_v_fupd (K env') ienv) funs) (\funs_ts.
+       st_ex_bind (infer_funs l (inf_env_inf_v_fupd (combin_K env') ienv) funs) (\funs_ts.
        st_ex_bind (add_constraints l uvars funs_ts) (\u.
-       st_ex_bind (infer_e l (inf_env_inf_v_fupd (K env') ienv) e) (\t.
+       st_ex_bind (infer_e l (inf_env_inf_v_fupd (combin_K env') ienv) e) (\t.
        st_ex_return t))))))) /\
    (infer_e l ienv (Tannot e t) =
       st_ex_bind (infer_e l ienv e) (\t'.
@@ -1278,7 +1278,7 @@ let infer_e_def = sem1aux_def_wf
       st_ex_bind (add_constraint l t' (infer_type_subst [] t'')) (\u.
       st_ex_return t')))) /\
    (infer_e l ienv (Lannot e new_l) =
-      infer_e (loc_err_info_loc_fupd (K (SOME new_l)) l) ienv e) /\
+      infer_e (loc_err_info_loc_fupd (combin_K (SOME new_l)) l) ienv e) /\
    (infer_es l ienv [] = st_ex_return []) /\
    (infer_es l ienv (CONS e es) =
       st_ex_bind (infer_e l ienv e) (\t.
@@ -1297,7 +1297,7 @@ let infer_e_def = sem1aux_def_wf
            st_ex_bind
              (infer_e l
                 (inf_env_inf_v_fupd
-                   (K (nsAppend
+                   (combin_K (nsAppend
                          (alist_to_ns (MAP (\nt. match nt with (n,t) -> (n,(0,t))) env'))
                          (inf_env_inf_v ienv))) ienv) e)
              (\t2'.
@@ -1308,7 +1308,7 @@ let infer_e_def = sem1aux_def_wf
    (infer_funs l ienv (CONS (f,x,e) funs) =
       st_ex_bind fresh_uvar (\uvar.
       st_ex_bind
-        (infer_e l (inf_env_inf_v_fupd (K (nsBind x (0,uvar) (inf_env_inf_v ienv))) ienv) e)
+        (infer_e l (inf_env_inf_v_fupd (combin_K (nsBind x (0,uvar) (inf_env_inf_v ienv))) ienv) e)
         (\t.
       st_ex_bind (infer_funs l ienv funs) (\ts.
       st_ex_return (CONS (Infer_Tapp [uvar; t] Tfn_num) ts)))))`;;
@@ -1386,7 +1386,7 @@ let infer_d_def = sem1aux_def_wf
          (\env'.
        st_ex_bind
          (infer_funs (loc_err_info_REC (SOME locs) (inf_env_inf_t ienv))
-            (inf_env_inf_v_fupd (K env') ienv) funs) (\funs_ts.
+            (inf_env_inf_v_fupd (combin_K env') ienv) funs) (\funs_ts.
        st_ex_bind
          (add_constraints (loc_err_info_REC (SOME locs) (inf_env_inf_t ienv)) uvars funs_ts)
          (\u.
@@ -1486,7 +1486,7 @@ let infertype_prog_def = cake_def
 let infertype_prog_inc_def = cake_def
   `infertype_prog_inc (ienv:inf_env,next_id:num) prog =
      match infer_ds ienv prog
-             (init_infer_state (infer_st_next_id_fupd (K next_id) ARB)) with
+             (init_infer_state (infer_st_next_id_fupd (combin_K next_id) ARB)) with
        (M_success new_ienv,st) ->
          M_success (extend_dec_ienv new_ienv ienv,infer_st_next_id st)
      | (M_failure x,_) -> (M_failure x:(inf_env#num,locs option#mlstring)exc)`;;

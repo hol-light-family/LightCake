@@ -94,7 +94,7 @@ let pmatchResult_case_NONE = prove
                 PMatchSuccess -> NONE
               | PMatchFailure -> NONE
               | PTypeFailure -> NONE) = NONE:A option`,
-  CASES_ON `x:pmatchResult` THEN CASE_REWRITE_TAC[]);;
+  CASES_ON `x:pmatchResult` THEN CAKE_REWRITE_TAC[]);;
 
 let is_const_row_lemma = prove
  (`(!t. ~(v = Term t [])) /\ is_const_row (p_1,p_2:A) /\

@@ -137,11 +137,11 @@ let IL2AUX_INST_SPLIT_TAC : tactic =
 
 (* line 103 [simp] *)
 let state_const = prove
- (`((wl_state_locals_fupd (K l) (s:(A,C,FFI)wl_state)) = (wl_state_locals_fupd (K l') s) <=> l
+ (`((wl_state_locals_fupd (combin_K l) (s:(A,C,FFI)wl_state)) = (wl_state_locals_fupd (combin_K l') s) <=> l
      = l') /\
-   ((wl_state_permute_fupd (K p) s) = (wl_state_permute_fupd (K p') s) <=> p = p') /\
-   ((wl_state_clock_fupd (K clk) s) = (wl_state_clock_fupd (K clk') s) <=> clk = clk') /\
-   ((wl_state_stack_fupd (K xs) s) = (wl_state_stack_fupd (K xs') s) <=> xs = xs')`,
+   ((wl_state_permute_fupd (combin_K p) s) = (wl_state_permute_fupd (combin_K p') s) <=> p = p') /\
+   ((wl_state_clock_fupd (combin_K clk) s) = (wl_state_clock_fupd (combin_K clk') s) <=> clk = clk') /\
+   ((wl_state_stack_fupd (combin_K xs) s) = (wl_state_stack_fupd (combin_K xs') s) <=> xs = xs')`,
   REWRITE_TAC[wl_state_component_equality] THEN SIMP[]);;
 
 let _ = cake_add_simps [state_const];;
@@ -170,56 +170,56 @@ let OPTION_CASE_MAP = prove
 
 (* HOL4: get_var_with_const[simp]; line 137 *)
 let wl_get_var_with_const = prove
- (`wl_get_var x (wl_state_locals_size_fupd (K ls) (y:(A,C,FFI)wl_state)) = wl_get_var x y /\
-   wl_get_var x (wl_state_fp_regs_fupd (K fp) y) = wl_get_var x y /\
-   wl_get_var x (wl_state_store_fupd (K store) y) = wl_get_var x y /\
-   wl_get_var x (wl_state_stack_fupd (K xs) y) = wl_get_var x y /\
-   wl_get_var x (wl_state_stack_limit_fupd (K sl) y) = wl_get_var x y /\
-   wl_get_var x (wl_state_stack_max_fupd (K sm) y) = wl_get_var x y /\
-   wl_get_var x (wl_state_stack_size_fupd (K ssize) y) = wl_get_var x y /\
-   wl_get_var x (wl_state_memory_fupd (K m) y) = wl_get_var x y /\
-   wl_get_var x (wl_state_mdomain_fupd (K md) y) = wl_get_var x y /\
-   wl_get_var x (wl_state_sh_mdomain_fupd (K smd) y) = wl_get_var x y /\
-   wl_get_var x (wl_state_permute_fupd (K p) y) = wl_get_var x y /\
-   wl_get_var x (wl_state_compile_fupd (K c) y) = wl_get_var x y /\
-   wl_get_var x (wl_state_compile_oracle_fupd (K co) y) = wl_get_var x y /\
-   wl_get_var x (wl_state_code_buffer_fupd (K cb) y) = wl_get_var x y /\
-   wl_get_var x (wl_state_data_buffer_fupd (K db) y) = wl_get_var x y /\
-   wl_get_var x (wl_state_gc_fun_fupd (K g) y) = wl_get_var x y /\
-   wl_get_var x (wl_state_handler_fupd (K hd) y) = wl_get_var x y /\
-   wl_get_var x (wl_state_clock_fupd (K clk) y) = wl_get_var x y /\
-   wl_get_var x (wl_state_termdep_fupd (K tdep) y) = wl_get_var x y /\
-   wl_get_var x (wl_state_code_fupd (K cd) y) = wl_get_var x y /\
-   wl_get_var x (wl_state_be_fupd (K b) y) = wl_get_var x y /\
-   wl_get_var x (wl_state_ffi_fupd (K ffi) y) = wl_get_var x y`,
+ (`wl_get_var x (wl_state_locals_size_fupd (combin_K ls) (y:(A,C,FFI)wl_state)) = wl_get_var x y /\
+   wl_get_var x (wl_state_fp_regs_fupd (combin_K fp) y) = wl_get_var x y /\
+   wl_get_var x (wl_state_store_fupd (combin_K store) y) = wl_get_var x y /\
+   wl_get_var x (wl_state_stack_fupd (combin_K xs) y) = wl_get_var x y /\
+   wl_get_var x (wl_state_stack_limit_fupd (combin_K sl) y) = wl_get_var x y /\
+   wl_get_var x (wl_state_stack_max_fupd (combin_K sm) y) = wl_get_var x y /\
+   wl_get_var x (wl_state_stack_size_fupd (combin_K ssize) y) = wl_get_var x y /\
+   wl_get_var x (wl_state_memory_fupd (combin_K m) y) = wl_get_var x y /\
+   wl_get_var x (wl_state_mdomain_fupd (combin_K md) y) = wl_get_var x y /\
+   wl_get_var x (wl_state_sh_mdomain_fupd (combin_K smd) y) = wl_get_var x y /\
+   wl_get_var x (wl_state_permute_fupd (combin_K p) y) = wl_get_var x y /\
+   wl_get_var x (wl_state_compile_fupd (combin_K c) y) = wl_get_var x y /\
+   wl_get_var x (wl_state_compile_oracle_fupd (combin_K co) y) = wl_get_var x y /\
+   wl_get_var x (wl_state_code_buffer_fupd (combin_K cb) y) = wl_get_var x y /\
+   wl_get_var x (wl_state_data_buffer_fupd (combin_K db) y) = wl_get_var x y /\
+   wl_get_var x (wl_state_gc_fun_fupd (combin_K g) y) = wl_get_var x y /\
+   wl_get_var x (wl_state_handler_fupd (combin_K hd) y) = wl_get_var x y /\
+   wl_get_var x (wl_state_clock_fupd (combin_K clk) y) = wl_get_var x y /\
+   wl_get_var x (wl_state_termdep_fupd (combin_K tdep) y) = wl_get_var x y /\
+   wl_get_var x (wl_state_code_fupd (combin_K cd) y) = wl_get_var x y /\
+   wl_get_var x (wl_state_be_fupd (combin_K b) y) = wl_get_var x y /\
+   wl_get_var x (wl_state_ffi_fupd (combin_K ffi) y) = wl_get_var x y`,
   REPEAT GEN_TAC THEN REWRITE_TAC IL2AUX_state_defs THEN SIMP[]);;
 
 let _ = cake_add_simps [wl_get_var_with_const];;
 
 (* HOL4: get_vars_with_const[simp]; line 164 *)
 let wl_get_vars_with_const = prove
- (`wl_get_vars x (wl_state_locals_size_fupd (K ls) (y:(A,C,FFI)wl_state)) = wl_get_vars x y /\
-   wl_get_vars x (wl_state_fp_regs_fupd (K fp) y) = wl_get_vars x y /\
-   wl_get_vars x (wl_state_store_fupd (K store) y) = wl_get_vars x y /\
-   wl_get_vars x (wl_state_stack_fupd (K xs) y) = wl_get_vars x y /\
-   wl_get_vars x (wl_state_stack_limit_fupd (K sl) y) = wl_get_vars x y /\
-   wl_get_vars x (wl_state_stack_max_fupd (K sm) y) = wl_get_vars x y /\
-   wl_get_vars x (wl_state_stack_size_fupd (K ssize) y) = wl_get_vars x y /\
-   wl_get_vars x (wl_state_memory_fupd (K m) y) = wl_get_vars x y /\
-   wl_get_vars x (wl_state_mdomain_fupd (K md) y) = wl_get_vars x y /\
-   wl_get_vars x (wl_state_sh_mdomain_fupd (K smd) y) = wl_get_vars x y /\
-   wl_get_vars x (wl_state_permute_fupd (K p) y) = wl_get_vars x y /\
-   wl_get_vars x (wl_state_compile_fupd (K c) y) = wl_get_vars x y /\
-   wl_get_vars x (wl_state_compile_oracle_fupd (K co) y) = wl_get_vars x y /\
-   wl_get_vars x (wl_state_code_buffer_fupd (K cb) y) = wl_get_vars x y /\
-   wl_get_vars x (wl_state_data_buffer_fupd (K db) y) = wl_get_vars x y /\
-   wl_get_vars x (wl_state_gc_fun_fupd (K g) y) = wl_get_vars x y /\
-   wl_get_vars x (wl_state_handler_fupd (K hd) y) = wl_get_vars x y /\
-   wl_get_vars x (wl_state_clock_fupd (K clk) y) = wl_get_vars x y /\
-   wl_get_vars x (wl_state_termdep_fupd (K tdep) y) = wl_get_vars x y /\
-   wl_get_vars x (wl_state_code_fupd (K cd) y) = wl_get_vars x y /\
-   wl_get_vars x (wl_state_be_fupd (K b) y) = wl_get_vars x y /\
-   wl_get_vars x (wl_state_ffi_fupd (K ffi) y) = wl_get_vars x y`,
+ (`wl_get_vars x (wl_state_locals_size_fupd (combin_K ls) (y:(A,C,FFI)wl_state)) = wl_get_vars x y /\
+   wl_get_vars x (wl_state_fp_regs_fupd (combin_K fp) y) = wl_get_vars x y /\
+   wl_get_vars x (wl_state_store_fupd (combin_K store) y) = wl_get_vars x y /\
+   wl_get_vars x (wl_state_stack_fupd (combin_K xs) y) = wl_get_vars x y /\
+   wl_get_vars x (wl_state_stack_limit_fupd (combin_K sl) y) = wl_get_vars x y /\
+   wl_get_vars x (wl_state_stack_max_fupd (combin_K sm) y) = wl_get_vars x y /\
+   wl_get_vars x (wl_state_stack_size_fupd (combin_K ssize) y) = wl_get_vars x y /\
+   wl_get_vars x (wl_state_memory_fupd (combin_K m) y) = wl_get_vars x y /\
+   wl_get_vars x (wl_state_mdomain_fupd (combin_K md) y) = wl_get_vars x y /\
+   wl_get_vars x (wl_state_sh_mdomain_fupd (combin_K smd) y) = wl_get_vars x y /\
+   wl_get_vars x (wl_state_permute_fupd (combin_K p) y) = wl_get_vars x y /\
+   wl_get_vars x (wl_state_compile_fupd (combin_K c) y) = wl_get_vars x y /\
+   wl_get_vars x (wl_state_compile_oracle_fupd (combin_K co) y) = wl_get_vars x y /\
+   wl_get_vars x (wl_state_code_buffer_fupd (combin_K cb) y) = wl_get_vars x y /\
+   wl_get_vars x (wl_state_data_buffer_fupd (combin_K db) y) = wl_get_vars x y /\
+   wl_get_vars x (wl_state_gc_fun_fupd (combin_K g) y) = wl_get_vars x y /\
+   wl_get_vars x (wl_state_handler_fupd (combin_K hd) y) = wl_get_vars x y /\
+   wl_get_vars x (wl_state_clock_fupd (combin_K clk) y) = wl_get_vars x y /\
+   wl_get_vars x (wl_state_termdep_fupd (combin_K tdep) y) = wl_get_vars x y /\
+   wl_get_vars x (wl_state_code_fupd (combin_K cd) y) = wl_get_vars x y /\
+   wl_get_vars x (wl_state_be_fupd (combin_K b) y) = wl_get_vars x y /\
+   wl_get_vars x (wl_state_ffi_fupd (combin_K ffi) y) = wl_get_vars x y`,
   SPEC_TAC(`x:num list`,`x:num list`) THEN LIST_INDUCT_TAC THEN
   SIMP[wl_get_vars_def]);;
 
@@ -255,44 +255,44 @@ let _ = cake_add_simps [wl_set_var_const];;
 
 (* HOL4: set_var_with_const[simp]; line 218 *)
 let wl_set_var_with_const = prove
- (`wl_set_var x y (wl_state_locals_size_fupd (K ls) (z:(A,C,FFI)wl_state))
-     = wl_state_locals_size_fupd (K ls) (wl_set_var x y z) /\
-   wl_set_var x y (wl_state_fp_regs_fupd (K fp) z)
-       = wl_state_fp_regs_fupd (K fp) (wl_set_var x y z) /\
-   wl_set_var x y (wl_state_store_fupd (K store) z)
-       = wl_state_store_fupd (K store) (wl_set_var x y z) /\
-   wl_set_var x y (wl_state_stack_fupd (K xs) z) = wl_state_stack_fupd (K xs) (wl_set_var x y z) /\
-   wl_set_var x y (wl_state_stack_limit_fupd (K sl) z)
-       = wl_state_stack_limit_fupd (K sl) (wl_set_var x y z) /\
-   wl_set_var x y (wl_state_stack_max_fupd (K sm) z)
-       = wl_state_stack_max_fupd (K sm) (wl_set_var x y z) /\
-   wl_set_var x y (wl_state_stack_size_fupd (K ssize) z)
-       = wl_state_stack_size_fupd (K ssize) (wl_set_var x y z) /\
-   wl_set_var x y (wl_state_memory_fupd (K m) z) = wl_state_memory_fupd (K m) (wl_set_var x y z) /\
-   wl_set_var x y (wl_state_mdomain_fupd (K md) z)
-       = wl_state_mdomain_fupd (K md) (wl_set_var x y z) /\
-   wl_set_var x y (wl_state_sh_mdomain_fupd (K smd) z)
-       = wl_state_sh_mdomain_fupd (K smd) (wl_set_var x y z) /\
-   wl_set_var x y (wl_state_permute_fupd (K p) z)
-       = wl_state_permute_fupd (K p) (wl_set_var x y z) /\
-   wl_set_var x y (wl_state_compile_fupd (K c) z)
-       = wl_state_compile_fupd (K c) (wl_set_var x y z) /\
-   wl_set_var x y (wl_state_compile_oracle_fupd (K co) z)
-       = wl_state_compile_oracle_fupd (K co) (wl_set_var x y z) /\
-   wl_set_var x y (wl_state_code_buffer_fupd (K cb) z)
-       = wl_state_code_buffer_fupd (K cb) (wl_set_var x y z) /\
-   wl_set_var x y (wl_state_data_buffer_fupd (K db) z)
-       = wl_state_data_buffer_fupd (K db) (wl_set_var x y z) /\
-   wl_set_var x y (wl_state_gc_fun_fupd (K g) z) = wl_state_gc_fun_fupd (K g) (wl_set_var x y z) /\
-   wl_set_var x y (wl_state_handler_fupd (K hd) z)
-       = wl_state_handler_fupd (K hd) (wl_set_var x y z) /\
-   wl_set_var x y (wl_state_clock_fupd (K clk) z)
-       = wl_state_clock_fupd (K clk) (wl_set_var x y z) /\
-   wl_set_var x y (wl_state_termdep_fupd (K tdep) z)
-       = wl_state_termdep_fupd (K tdep) (wl_set_var x y z) /\
-   wl_set_var x y (wl_state_code_fupd (K cd) z) = wl_state_code_fupd (K cd) (wl_set_var x y z) /\
-   wl_set_var x y (wl_state_be_fupd (K b) z) = wl_state_be_fupd (K b) (wl_set_var x y z) /\
-   wl_set_var x y (wl_state_ffi_fupd (K ffi) z) = wl_state_ffi_fupd (K ffi) (wl_set_var x y z)`,
+ (`wl_set_var x y (wl_state_locals_size_fupd (combin_K ls) (z:(A,C,FFI)wl_state))
+     = wl_state_locals_size_fupd (combin_K ls) (wl_set_var x y z) /\
+   wl_set_var x y (wl_state_fp_regs_fupd (combin_K fp) z)
+       = wl_state_fp_regs_fupd (combin_K fp) (wl_set_var x y z) /\
+   wl_set_var x y (wl_state_store_fupd (combin_K store) z)
+       = wl_state_store_fupd (combin_K store) (wl_set_var x y z) /\
+   wl_set_var x y (wl_state_stack_fupd (combin_K xs) z) = wl_state_stack_fupd (combin_K xs) (wl_set_var x y z) /\
+   wl_set_var x y (wl_state_stack_limit_fupd (combin_K sl) z)
+       = wl_state_stack_limit_fupd (combin_K sl) (wl_set_var x y z) /\
+   wl_set_var x y (wl_state_stack_max_fupd (combin_K sm) z)
+       = wl_state_stack_max_fupd (combin_K sm) (wl_set_var x y z) /\
+   wl_set_var x y (wl_state_stack_size_fupd (combin_K ssize) z)
+       = wl_state_stack_size_fupd (combin_K ssize) (wl_set_var x y z) /\
+   wl_set_var x y (wl_state_memory_fupd (combin_K m) z) = wl_state_memory_fupd (combin_K m) (wl_set_var x y z) /\
+   wl_set_var x y (wl_state_mdomain_fupd (combin_K md) z)
+       = wl_state_mdomain_fupd (combin_K md) (wl_set_var x y z) /\
+   wl_set_var x y (wl_state_sh_mdomain_fupd (combin_K smd) z)
+       = wl_state_sh_mdomain_fupd (combin_K smd) (wl_set_var x y z) /\
+   wl_set_var x y (wl_state_permute_fupd (combin_K p) z)
+       = wl_state_permute_fupd (combin_K p) (wl_set_var x y z) /\
+   wl_set_var x y (wl_state_compile_fupd (combin_K c) z)
+       = wl_state_compile_fupd (combin_K c) (wl_set_var x y z) /\
+   wl_set_var x y (wl_state_compile_oracle_fupd (combin_K co) z)
+       = wl_state_compile_oracle_fupd (combin_K co) (wl_set_var x y z) /\
+   wl_set_var x y (wl_state_code_buffer_fupd (combin_K cb) z)
+       = wl_state_code_buffer_fupd (combin_K cb) (wl_set_var x y z) /\
+   wl_set_var x y (wl_state_data_buffer_fupd (combin_K db) z)
+       = wl_state_data_buffer_fupd (combin_K db) (wl_set_var x y z) /\
+   wl_set_var x y (wl_state_gc_fun_fupd (combin_K g) z) = wl_state_gc_fun_fupd (combin_K g) (wl_set_var x y z) /\
+   wl_set_var x y (wl_state_handler_fupd (combin_K hd) z)
+       = wl_state_handler_fupd (combin_K hd) (wl_set_var x y z) /\
+   wl_set_var x y (wl_state_clock_fupd (combin_K clk) z)
+       = wl_state_clock_fupd (combin_K clk) (wl_set_var x y z) /\
+   wl_set_var x y (wl_state_termdep_fupd (combin_K tdep) z)
+       = wl_state_termdep_fupd (combin_K tdep) (wl_set_var x y z) /\
+   wl_set_var x y (wl_state_code_fupd (combin_K cd) z) = wl_state_code_fupd (combin_K cd) (wl_set_var x y z) /\
+   wl_set_var x y (wl_state_be_fupd (combin_K b) z) = wl_state_be_fupd (combin_K b) (wl_set_var x y z) /\
+   wl_set_var x y (wl_state_ffi_fupd (combin_K ffi) z) = wl_state_ffi_fupd (combin_K ffi) (wl_set_var x y z)`,
   REPEAT GEN_TAC THEN REWRITE_TAC IL2AUX_state_defs THEN SIMP[]);;
 
 let _ = cake_add_simps [wl_set_var_with_const];;
@@ -327,44 +327,44 @@ let _ = cake_add_simps [unset_var_const];;
 
 (* line 272 [simp] *)
 let unset_var_with_const = prove
- (`wl_unset_var x (wl_state_locals_size_fupd (K ls) (z:(A,C,FFI)wl_state))
-     = wl_state_locals_size_fupd (K ls) (wl_unset_var x z) /\
-   wl_unset_var x (wl_state_fp_regs_fupd (K fp) z)
-       = wl_state_fp_regs_fupd (K fp) (wl_unset_var x z) /\
-   wl_unset_var x (wl_state_store_fupd (K store) z)
-       = wl_state_store_fupd (K store) (wl_unset_var x z) /\
-   wl_unset_var x (wl_state_stack_fupd (K xs) z) = wl_state_stack_fupd (K xs) (wl_unset_var x z) /\
-   wl_unset_var x (wl_state_stack_limit_fupd (K sl) z)
-       = wl_state_stack_limit_fupd (K sl) (wl_unset_var x z) /\
-   wl_unset_var x (wl_state_stack_max_fupd (K sm) z)
-       = wl_state_stack_max_fupd (K sm) (wl_unset_var x z) /\
-   wl_unset_var x (wl_state_stack_size_fupd (K ssize) z)
-       = wl_state_stack_size_fupd (K ssize) (wl_unset_var x z) /\
-   wl_unset_var x (wl_state_memory_fupd (K m) z) = wl_state_memory_fupd (K m) (wl_unset_var x z) /\
-   wl_unset_var x (wl_state_mdomain_fupd (K md) z)
-       = wl_state_mdomain_fupd (K md) (wl_unset_var x z) /\
-   wl_unset_var x (wl_state_sh_mdomain_fupd (K smd) z)
-       = wl_state_sh_mdomain_fupd (K smd) (wl_unset_var x z) /\
-   wl_unset_var x (wl_state_permute_fupd (K p) z)
-       = wl_state_permute_fupd (K p) (wl_unset_var x z) /\
-   wl_unset_var x (wl_state_compile_fupd (K c) z)
-       = wl_state_compile_fupd (K c) (wl_unset_var x z) /\
-   wl_unset_var x (wl_state_compile_oracle_fupd (K co) z)
-       = wl_state_compile_oracle_fupd (K co) (wl_unset_var x z) /\
-   wl_unset_var x (wl_state_code_buffer_fupd (K cb) z)
-       = wl_state_code_buffer_fupd (K cb) (wl_unset_var x z) /\
-   wl_unset_var x (wl_state_data_buffer_fupd (K db) z)
-       = wl_state_data_buffer_fupd (K db) (wl_unset_var x z) /\
-   wl_unset_var x (wl_state_gc_fun_fupd (K g) z) = wl_state_gc_fun_fupd (K g) (wl_unset_var x z) /\
-   wl_unset_var x (wl_state_handler_fupd (K hd) z)
-       = wl_state_handler_fupd (K hd) (wl_unset_var x z) /\
-   wl_unset_var x (wl_state_clock_fupd (K clk) z)
-       = wl_state_clock_fupd (K clk) (wl_unset_var x z) /\
-   wl_unset_var x (wl_state_termdep_fupd (K tdep) z)
-       = wl_state_termdep_fupd (K tdep) (wl_unset_var x z) /\
-   wl_unset_var x (wl_state_code_fupd (K cd) z) = wl_state_code_fupd (K cd) (wl_unset_var x z) /\
-   wl_unset_var x (wl_state_be_fupd (K b) z) = wl_state_be_fupd (K b) (wl_unset_var x z) /\
-   wl_unset_var x (wl_state_ffi_fupd (K ffi) z) = wl_state_ffi_fupd (K ffi) (wl_unset_var x z)`,
+ (`wl_unset_var x (wl_state_locals_size_fupd (combin_K ls) (z:(A,C,FFI)wl_state))
+     = wl_state_locals_size_fupd (combin_K ls) (wl_unset_var x z) /\
+   wl_unset_var x (wl_state_fp_regs_fupd (combin_K fp) z)
+       = wl_state_fp_regs_fupd (combin_K fp) (wl_unset_var x z) /\
+   wl_unset_var x (wl_state_store_fupd (combin_K store) z)
+       = wl_state_store_fupd (combin_K store) (wl_unset_var x z) /\
+   wl_unset_var x (wl_state_stack_fupd (combin_K xs) z) = wl_state_stack_fupd (combin_K xs) (wl_unset_var x z) /\
+   wl_unset_var x (wl_state_stack_limit_fupd (combin_K sl) z)
+       = wl_state_stack_limit_fupd (combin_K sl) (wl_unset_var x z) /\
+   wl_unset_var x (wl_state_stack_max_fupd (combin_K sm) z)
+       = wl_state_stack_max_fupd (combin_K sm) (wl_unset_var x z) /\
+   wl_unset_var x (wl_state_stack_size_fupd (combin_K ssize) z)
+       = wl_state_stack_size_fupd (combin_K ssize) (wl_unset_var x z) /\
+   wl_unset_var x (wl_state_memory_fupd (combin_K m) z) = wl_state_memory_fupd (combin_K m) (wl_unset_var x z) /\
+   wl_unset_var x (wl_state_mdomain_fupd (combin_K md) z)
+       = wl_state_mdomain_fupd (combin_K md) (wl_unset_var x z) /\
+   wl_unset_var x (wl_state_sh_mdomain_fupd (combin_K smd) z)
+       = wl_state_sh_mdomain_fupd (combin_K smd) (wl_unset_var x z) /\
+   wl_unset_var x (wl_state_permute_fupd (combin_K p) z)
+       = wl_state_permute_fupd (combin_K p) (wl_unset_var x z) /\
+   wl_unset_var x (wl_state_compile_fupd (combin_K c) z)
+       = wl_state_compile_fupd (combin_K c) (wl_unset_var x z) /\
+   wl_unset_var x (wl_state_compile_oracle_fupd (combin_K co) z)
+       = wl_state_compile_oracle_fupd (combin_K co) (wl_unset_var x z) /\
+   wl_unset_var x (wl_state_code_buffer_fupd (combin_K cb) z)
+       = wl_state_code_buffer_fupd (combin_K cb) (wl_unset_var x z) /\
+   wl_unset_var x (wl_state_data_buffer_fupd (combin_K db) z)
+       = wl_state_data_buffer_fupd (combin_K db) (wl_unset_var x z) /\
+   wl_unset_var x (wl_state_gc_fun_fupd (combin_K g) z) = wl_state_gc_fun_fupd (combin_K g) (wl_unset_var x z) /\
+   wl_unset_var x (wl_state_handler_fupd (combin_K hd) z)
+       = wl_state_handler_fupd (combin_K hd) (wl_unset_var x z) /\
+   wl_unset_var x (wl_state_clock_fupd (combin_K clk) z)
+       = wl_state_clock_fupd (combin_K clk) (wl_unset_var x z) /\
+   wl_unset_var x (wl_state_termdep_fupd (combin_K tdep) z)
+       = wl_state_termdep_fupd (combin_K tdep) (wl_unset_var x z) /\
+   wl_unset_var x (wl_state_code_fupd (combin_K cd) z) = wl_state_code_fupd (combin_K cd) (wl_unset_var x z) /\
+   wl_unset_var x (wl_state_be_fupd (combin_K b) z) = wl_state_be_fupd (combin_K b) (wl_unset_var x z) /\
+   wl_unset_var x (wl_state_ffi_fupd (combin_K ffi) z) = wl_state_ffi_fupd (combin_K ffi) (wl_unset_var x z)`,
   REPEAT GEN_TAC THEN REWRITE_TAC IL2AUX_state_defs THEN SIMP[]);;
 
 let _ = cake_add_simps [unset_var_with_const];;
@@ -399,75 +399,75 @@ let _ = cake_add_simps [wl_set_vars_const];;
 
 (* HOL4: set_vars_with_const[simp]; line 326 *)
 let wl_set_vars_with_const = prove
- (`wl_set_vars x y (wl_state_locals_size_fupd (K ls) (z:(A,C,FFI)wl_state))
-     = wl_state_locals_size_fupd (K ls) (wl_set_vars x y z) /\
-   wl_set_vars x y (wl_state_fp_regs_fupd (K fp) z)
-       = wl_state_fp_regs_fupd (K fp) (wl_set_vars x y z) /\
-   wl_set_vars x y (wl_state_store_fupd (K store) z)
-       = wl_state_store_fupd (K store) (wl_set_vars x y z) /\
-   wl_set_vars x y (wl_state_stack_fupd (K xs) z)
-       = wl_state_stack_fupd (K xs) (wl_set_vars x y z) /\
-   wl_set_vars x y (wl_state_stack_limit_fupd (K sl) z)
-       = wl_state_stack_limit_fupd (K sl) (wl_set_vars x y z) /\
-   wl_set_vars x y (wl_state_stack_max_fupd (K sm) z)
-       = wl_state_stack_max_fupd (K sm) (wl_set_vars x y z) /\
-   wl_set_vars x y (wl_state_stack_size_fupd (K ssize) z)
-       = wl_state_stack_size_fupd (K ssize) (wl_set_vars x y z) /\
-   wl_set_vars x y (wl_state_memory_fupd (K m) z)
-       = wl_state_memory_fupd (K m) (wl_set_vars x y z) /\
-   wl_set_vars x y (wl_state_mdomain_fupd (K md) z)
-       = wl_state_mdomain_fupd (K md) (wl_set_vars x y z) /\
-   wl_set_vars x y (wl_state_sh_mdomain_fupd (K smd) z)
-       = wl_state_sh_mdomain_fupd (K smd) (wl_set_vars x y z) /\
-   wl_set_vars x y (wl_state_permute_fupd (K p) z)
-       = wl_state_permute_fupd (K p) (wl_set_vars x y z) /\
-   wl_set_vars x y (wl_state_compile_fupd (K c) z)
-       = wl_state_compile_fupd (K c) (wl_set_vars x y z) /\
-   wl_set_vars x y (wl_state_compile_oracle_fupd (K co) z)
-       = wl_state_compile_oracle_fupd (K co) (wl_set_vars x y z) /\
-   wl_set_vars x y (wl_state_code_buffer_fupd (K cb) z)
-       = wl_state_code_buffer_fupd (K cb) (wl_set_vars x y z) /\
-   wl_set_vars x y (wl_state_data_buffer_fupd (K db) z)
-       = wl_state_data_buffer_fupd (K db) (wl_set_vars x y z) /\
-   wl_set_vars x y (wl_state_gc_fun_fupd (K g) z)
-       = wl_state_gc_fun_fupd (K g) (wl_set_vars x y z) /\
-   wl_set_vars x y (wl_state_handler_fupd (K hd) z)
-       = wl_state_handler_fupd (K hd) (wl_set_vars x y z) /\
-   wl_set_vars x y (wl_state_clock_fupd (K clk) z)
-       = wl_state_clock_fupd (K clk) (wl_set_vars x y z) /\
-   wl_set_vars x y (wl_state_termdep_fupd (K tdep) z)
-       = wl_state_termdep_fupd (K tdep) (wl_set_vars x y z) /\
-   wl_set_vars x y (wl_state_code_fupd (K cd) z) = wl_state_code_fupd (K cd) (wl_set_vars x y z) /\
-   wl_set_vars x y (wl_state_be_fupd (K b) z) = wl_state_be_fupd (K b) (wl_set_vars x y z) /\
-   wl_set_vars x y (wl_state_ffi_fupd (K ffi) z) = wl_state_ffi_fupd (K ffi) (wl_set_vars x y z)`,
+ (`wl_set_vars x y (wl_state_locals_size_fupd (combin_K ls) (z:(A,C,FFI)wl_state))
+     = wl_state_locals_size_fupd (combin_K ls) (wl_set_vars x y z) /\
+   wl_set_vars x y (wl_state_fp_regs_fupd (combin_K fp) z)
+       = wl_state_fp_regs_fupd (combin_K fp) (wl_set_vars x y z) /\
+   wl_set_vars x y (wl_state_store_fupd (combin_K store) z)
+       = wl_state_store_fupd (combin_K store) (wl_set_vars x y z) /\
+   wl_set_vars x y (wl_state_stack_fupd (combin_K xs) z)
+       = wl_state_stack_fupd (combin_K xs) (wl_set_vars x y z) /\
+   wl_set_vars x y (wl_state_stack_limit_fupd (combin_K sl) z)
+       = wl_state_stack_limit_fupd (combin_K sl) (wl_set_vars x y z) /\
+   wl_set_vars x y (wl_state_stack_max_fupd (combin_K sm) z)
+       = wl_state_stack_max_fupd (combin_K sm) (wl_set_vars x y z) /\
+   wl_set_vars x y (wl_state_stack_size_fupd (combin_K ssize) z)
+       = wl_state_stack_size_fupd (combin_K ssize) (wl_set_vars x y z) /\
+   wl_set_vars x y (wl_state_memory_fupd (combin_K m) z)
+       = wl_state_memory_fupd (combin_K m) (wl_set_vars x y z) /\
+   wl_set_vars x y (wl_state_mdomain_fupd (combin_K md) z)
+       = wl_state_mdomain_fupd (combin_K md) (wl_set_vars x y z) /\
+   wl_set_vars x y (wl_state_sh_mdomain_fupd (combin_K smd) z)
+       = wl_state_sh_mdomain_fupd (combin_K smd) (wl_set_vars x y z) /\
+   wl_set_vars x y (wl_state_permute_fupd (combin_K p) z)
+       = wl_state_permute_fupd (combin_K p) (wl_set_vars x y z) /\
+   wl_set_vars x y (wl_state_compile_fupd (combin_K c) z)
+       = wl_state_compile_fupd (combin_K c) (wl_set_vars x y z) /\
+   wl_set_vars x y (wl_state_compile_oracle_fupd (combin_K co) z)
+       = wl_state_compile_oracle_fupd (combin_K co) (wl_set_vars x y z) /\
+   wl_set_vars x y (wl_state_code_buffer_fupd (combin_K cb) z)
+       = wl_state_code_buffer_fupd (combin_K cb) (wl_set_vars x y z) /\
+   wl_set_vars x y (wl_state_data_buffer_fupd (combin_K db) z)
+       = wl_state_data_buffer_fupd (combin_K db) (wl_set_vars x y z) /\
+   wl_set_vars x y (wl_state_gc_fun_fupd (combin_K g) z)
+       = wl_state_gc_fun_fupd (combin_K g) (wl_set_vars x y z) /\
+   wl_set_vars x y (wl_state_handler_fupd (combin_K hd) z)
+       = wl_state_handler_fupd (combin_K hd) (wl_set_vars x y z) /\
+   wl_set_vars x y (wl_state_clock_fupd (combin_K clk) z)
+       = wl_state_clock_fupd (combin_K clk) (wl_set_vars x y z) /\
+   wl_set_vars x y (wl_state_termdep_fupd (combin_K tdep) z)
+       = wl_state_termdep_fupd (combin_K tdep) (wl_set_vars x y z) /\
+   wl_set_vars x y (wl_state_code_fupd (combin_K cd) z) = wl_state_code_fupd (combin_K cd) (wl_set_vars x y z) /\
+   wl_set_vars x y (wl_state_be_fupd (combin_K b) z) = wl_state_be_fupd (combin_K b) (wl_set_vars x y z) /\
+   wl_set_vars x y (wl_state_ffi_fupd (combin_K ffi) z) = wl_state_ffi_fupd (combin_K ffi) (wl_set_vars x y z)`,
   REPEAT GEN_TAC THEN REWRITE_TAC IL2AUX_state_defs THEN SIMP[]);;
 
 let _ = cake_add_simps [wl_set_vars_with_const];;
 
 (* line 353 [simp] *)
 let get_store_with_const = prove
- (`wl_get_store x (wl_state_locals_fupd (K l) (y:(A,C,FFI)wl_state)) = wl_get_store x y /\
-   wl_get_store x (wl_state_locals_size_fupd (K ls) y) = wl_get_store x y /\
-   wl_get_store x (wl_state_fp_regs_fupd (K fp) y) = wl_get_store x y /\
-   wl_get_store x (wl_state_stack_fupd (K xs) y) = wl_get_store x y /\
-   wl_get_store x (wl_state_stack_limit_fupd (K sl) y) = wl_get_store x y /\
-   wl_get_store x (wl_state_stack_max_fupd (K sm) y) = wl_get_store x y /\
-   wl_get_store x (wl_state_stack_size_fupd (K ssize) y) = wl_get_store x y /\
-   wl_get_store x (wl_state_memory_fupd (K m) y) = wl_get_store x y /\
-   wl_get_store x (wl_state_mdomain_fupd (K md) y) = wl_get_store x y /\
-   wl_get_store x (wl_state_sh_mdomain_fupd (K smd) y) = wl_get_store x y /\
-   wl_get_store x (wl_state_permute_fupd (K p) y) = wl_get_store x y /\
-   wl_get_store x (wl_state_compile_fupd (K c) y) = wl_get_store x y /\
-   wl_get_store x (wl_state_compile_oracle_fupd (K co) y) = wl_get_store x y /\
-   wl_get_store x (wl_state_code_buffer_fupd (K cb) y) = wl_get_store x y /\
-   wl_get_store x (wl_state_data_buffer_fupd (K db) y) = wl_get_store x y /\
-   wl_get_store x (wl_state_gc_fun_fupd (K g) y) = wl_get_store x y /\
-   wl_get_store x (wl_state_handler_fupd (K hd) y) = wl_get_store x y /\
-   wl_get_store x (wl_state_clock_fupd (K clk) y) = wl_get_store x y /\
-   wl_get_store x (wl_state_termdep_fupd (K tdep) y) = wl_get_store x y /\
-   wl_get_store x (wl_state_code_fupd (K cd) y) = wl_get_store x y /\
-   wl_get_store x (wl_state_be_fupd (K b) y) = wl_get_store x y /\
-   wl_get_store x (wl_state_ffi_fupd (K ffi) y) = wl_get_store x y`,
+ (`wl_get_store x (wl_state_locals_fupd (combin_K l) (y:(A,C,FFI)wl_state)) = wl_get_store x y /\
+   wl_get_store x (wl_state_locals_size_fupd (combin_K ls) y) = wl_get_store x y /\
+   wl_get_store x (wl_state_fp_regs_fupd (combin_K fp) y) = wl_get_store x y /\
+   wl_get_store x (wl_state_stack_fupd (combin_K xs) y) = wl_get_store x y /\
+   wl_get_store x (wl_state_stack_limit_fupd (combin_K sl) y) = wl_get_store x y /\
+   wl_get_store x (wl_state_stack_max_fupd (combin_K sm) y) = wl_get_store x y /\
+   wl_get_store x (wl_state_stack_size_fupd (combin_K ssize) y) = wl_get_store x y /\
+   wl_get_store x (wl_state_memory_fupd (combin_K m) y) = wl_get_store x y /\
+   wl_get_store x (wl_state_mdomain_fupd (combin_K md) y) = wl_get_store x y /\
+   wl_get_store x (wl_state_sh_mdomain_fupd (combin_K smd) y) = wl_get_store x y /\
+   wl_get_store x (wl_state_permute_fupd (combin_K p) y) = wl_get_store x y /\
+   wl_get_store x (wl_state_compile_fupd (combin_K c) y) = wl_get_store x y /\
+   wl_get_store x (wl_state_compile_oracle_fupd (combin_K co) y) = wl_get_store x y /\
+   wl_get_store x (wl_state_code_buffer_fupd (combin_K cb) y) = wl_get_store x y /\
+   wl_get_store x (wl_state_data_buffer_fupd (combin_K db) y) = wl_get_store x y /\
+   wl_get_store x (wl_state_gc_fun_fupd (combin_K g) y) = wl_get_store x y /\
+   wl_get_store x (wl_state_handler_fupd (combin_K hd) y) = wl_get_store x y /\
+   wl_get_store x (wl_state_clock_fupd (combin_K clk) y) = wl_get_store x y /\
+   wl_get_store x (wl_state_termdep_fupd (combin_K tdep) y) = wl_get_store x y /\
+   wl_get_store x (wl_state_code_fupd (combin_K cd) y) = wl_get_store x y /\
+   wl_get_store x (wl_state_be_fupd (combin_K b) y) = wl_get_store x y /\
+   wl_get_store x (wl_state_ffi_fupd (combin_K ffi) y) = wl_get_store x y`,
   REPEAT GEN_TAC THEN REWRITE_TAC IL2AUX_state_defs THEN SIMP[]);;
 
 let _ = cake_add_simps [get_store_with_const];;
@@ -502,48 +502,48 @@ let _ = cake_add_simps [wl_set_store_const];;
 
 (* HOL4: set_store_with_const[simp]; line 407 *)
 let wl_set_store_with_const = prove
- (`wl_set_store x y (wl_state_locals_fupd (K l) (z:(A,C,FFI)wl_state))
-     = wl_state_locals_fupd (K l) (wl_set_store x y z) /\
-   wl_set_store x y (wl_state_locals_size_fupd (K ls) z)
-       = wl_state_locals_size_fupd (K ls) (wl_set_store x y z) /\
-   wl_set_store x y (wl_state_fp_regs_fupd (K fp) z)
-       = wl_state_fp_regs_fupd (K fp) (wl_set_store x y z) /\
-   wl_set_store x y (wl_state_stack_fupd (K xs) z)
-       = wl_state_stack_fupd (K xs) (wl_set_store x y z) /\
-   wl_set_store x y (wl_state_stack_limit_fupd (K sl) z)
-       = wl_state_stack_limit_fupd (K sl) (wl_set_store x y z) /\
-   wl_set_store x y (wl_state_stack_max_fupd (K sm) z)
-       = wl_state_stack_max_fupd (K sm) (wl_set_store x y z) /\
-   wl_set_store x y (wl_state_stack_size_fupd (K ssize) z)
-       = wl_state_stack_size_fupd (K ssize) (wl_set_store x y z) /\
-   wl_set_store x y (wl_state_memory_fupd (K m) z)
-       = wl_state_memory_fupd (K m) (wl_set_store x y z) /\
-   wl_set_store x y (wl_state_mdomain_fupd (K md) z)
-       = wl_state_mdomain_fupd (K md) (wl_set_store x y z) /\
-   wl_set_store x y (wl_state_sh_mdomain_fupd (K smd) z)
-       = wl_state_sh_mdomain_fupd (K smd) (wl_set_store x y z) /\
-   wl_set_store x y (wl_state_permute_fupd (K p) z)
-       = wl_state_permute_fupd (K p) (wl_set_store x y z) /\
-   wl_set_store x y (wl_state_compile_fupd (K c) z)
-       = wl_state_compile_fupd (K c) (wl_set_store x y z) /\
-   wl_set_store x y (wl_state_compile_oracle_fupd (K co) z)
-       = wl_state_compile_oracle_fupd (K co) (wl_set_store x y z) /\
-   wl_set_store x y (wl_state_code_buffer_fupd (K cb) z)
-       = wl_state_code_buffer_fupd (K cb) (wl_set_store x y z) /\
-   wl_set_store x y (wl_state_data_buffer_fupd (K db) z)
-       = wl_state_data_buffer_fupd (K db) (wl_set_store x y z) /\
-   wl_set_store x y (wl_state_gc_fun_fupd (K g) z)
-       = wl_state_gc_fun_fupd (K g) (wl_set_store x y z) /\
-   wl_set_store x y (wl_state_handler_fupd (K hd) z)
-       = wl_state_handler_fupd (K hd) (wl_set_store x y z) /\
-   wl_set_store x y (wl_state_clock_fupd (K clk) z)
-       = wl_state_clock_fupd (K clk) (wl_set_store x y z) /\
-   wl_set_store x y (wl_state_termdep_fupd (K tdep) z)
-       = wl_state_termdep_fupd (K tdep) (wl_set_store x y z) /\
-   wl_set_store x y (wl_state_code_fupd (K cd) z)
-       = wl_state_code_fupd (K cd) (wl_set_store x y z) /\
-   wl_set_store x y (wl_state_be_fupd (K b) z) = wl_state_be_fupd (K b) (wl_set_store x y z) /\
-   wl_set_store x y (wl_state_ffi_fupd (K ffi) z) = wl_state_ffi_fupd (K ffi) (wl_set_store x y z)`,
+ (`wl_set_store x y (wl_state_locals_fupd (combin_K l) (z:(A,C,FFI)wl_state))
+     = wl_state_locals_fupd (combin_K l) (wl_set_store x y z) /\
+   wl_set_store x y (wl_state_locals_size_fupd (combin_K ls) z)
+       = wl_state_locals_size_fupd (combin_K ls) (wl_set_store x y z) /\
+   wl_set_store x y (wl_state_fp_regs_fupd (combin_K fp) z)
+       = wl_state_fp_regs_fupd (combin_K fp) (wl_set_store x y z) /\
+   wl_set_store x y (wl_state_stack_fupd (combin_K xs) z)
+       = wl_state_stack_fupd (combin_K xs) (wl_set_store x y z) /\
+   wl_set_store x y (wl_state_stack_limit_fupd (combin_K sl) z)
+       = wl_state_stack_limit_fupd (combin_K sl) (wl_set_store x y z) /\
+   wl_set_store x y (wl_state_stack_max_fupd (combin_K sm) z)
+       = wl_state_stack_max_fupd (combin_K sm) (wl_set_store x y z) /\
+   wl_set_store x y (wl_state_stack_size_fupd (combin_K ssize) z)
+       = wl_state_stack_size_fupd (combin_K ssize) (wl_set_store x y z) /\
+   wl_set_store x y (wl_state_memory_fupd (combin_K m) z)
+       = wl_state_memory_fupd (combin_K m) (wl_set_store x y z) /\
+   wl_set_store x y (wl_state_mdomain_fupd (combin_K md) z)
+       = wl_state_mdomain_fupd (combin_K md) (wl_set_store x y z) /\
+   wl_set_store x y (wl_state_sh_mdomain_fupd (combin_K smd) z)
+       = wl_state_sh_mdomain_fupd (combin_K smd) (wl_set_store x y z) /\
+   wl_set_store x y (wl_state_permute_fupd (combin_K p) z)
+       = wl_state_permute_fupd (combin_K p) (wl_set_store x y z) /\
+   wl_set_store x y (wl_state_compile_fupd (combin_K c) z)
+       = wl_state_compile_fupd (combin_K c) (wl_set_store x y z) /\
+   wl_set_store x y (wl_state_compile_oracle_fupd (combin_K co) z)
+       = wl_state_compile_oracle_fupd (combin_K co) (wl_set_store x y z) /\
+   wl_set_store x y (wl_state_code_buffer_fupd (combin_K cb) z)
+       = wl_state_code_buffer_fupd (combin_K cb) (wl_set_store x y z) /\
+   wl_set_store x y (wl_state_data_buffer_fupd (combin_K db) z)
+       = wl_state_data_buffer_fupd (combin_K db) (wl_set_store x y z) /\
+   wl_set_store x y (wl_state_gc_fun_fupd (combin_K g) z)
+       = wl_state_gc_fun_fupd (combin_K g) (wl_set_store x y z) /\
+   wl_set_store x y (wl_state_handler_fupd (combin_K hd) z)
+       = wl_state_handler_fupd (combin_K hd) (wl_set_store x y z) /\
+   wl_set_store x y (wl_state_clock_fupd (combin_K clk) z)
+       = wl_state_clock_fupd (combin_K clk) (wl_set_store x y z) /\
+   wl_set_store x y (wl_state_termdep_fupd (combin_K tdep) z)
+       = wl_state_termdep_fupd (combin_K tdep) (wl_set_store x y z) /\
+   wl_set_store x y (wl_state_code_fupd (combin_K cd) z)
+       = wl_state_code_fupd (combin_K cd) (wl_set_store x y z) /\
+   wl_set_store x y (wl_state_be_fupd (combin_K b) z) = wl_state_be_fupd (combin_K b) (wl_set_store x y z) /\
+   wl_set_store x y (wl_state_ffi_fupd (combin_K ffi) z) = wl_state_ffi_fupd (combin_K ffi) (wl_set_store x y z)`,
   REPEAT GEN_TAC THEN REWRITE_TAC IL2AUX_state_defs THEN SIMP[]);;
 
 let _ = cake_add_simps [wl_set_store_with_const];;
@@ -577,18 +577,18 @@ let _ = cake_add_simps [wl_push_env_const];;
 
 (* HOL4: push_env_with_const[simp]; line 461 *)
 let wl_push_env_with_const = prove
- (`(wl_push_env x y (wl_state_clock_fupd (K k) (z:(A,C,FFI)wl_state))
-     = wl_state_clock_fupd (K k) (wl_push_env x y z)) /\
-   (wl_push_env x y (wl_state_compile_fupd (K c) z)
-       = wl_state_compile_fupd (K c) (wl_push_env x y z)) /\
-   (wl_push_env x y (wl_state_compile_oracle_fupd (K co) z)
-       = wl_state_compile_oracle_fupd (K co) (wl_push_env x y z)) /\
-   (wl_push_env x y (wl_state_code_fupd (K code) z)
-       = wl_state_code_fupd (K code) (wl_push_env x y z)) /\
-   (wl_push_env x y (wl_state_termdep_fupd (K termdep) z)
-       = wl_state_termdep_fupd (K termdep) (wl_push_env x y z)) /\
-   (wl_push_env x y (wl_state_locals_fupd (K l) z)
-       = wl_state_locals_fupd (K l) (wl_push_env x y z))`,
+ (`(wl_push_env x y (wl_state_clock_fupd (combin_K k) (z:(A,C,FFI)wl_state))
+     = wl_state_clock_fupd (combin_K k) (wl_push_env x y z)) /\
+   (wl_push_env x y (wl_state_compile_fupd (combin_K c) z)
+       = wl_state_compile_fupd (combin_K c) (wl_push_env x y z)) /\
+   (wl_push_env x y (wl_state_compile_oracle_fupd (combin_K co) z)
+       = wl_state_compile_oracle_fupd (combin_K co) (wl_push_env x y z)) /\
+   (wl_push_env x y (wl_state_code_fupd (combin_K code) z)
+       = wl_state_code_fupd (combin_K code) (wl_push_env x y z)) /\
+   (wl_push_env x y (wl_state_termdep_fupd (combin_K termdep) z)
+       = wl_state_termdep_fupd (combin_K termdep) (wl_push_env x y z)) /\
+   (wl_push_env x y (wl_state_locals_fupd (combin_K l) z)
+       = wl_state_locals_fupd (combin_K l) (wl_push_env x y z))`,
   SPEC_TAC(`y:(num#(A)wl_prog#num#num)option`,`y:(num#(A)wl_prog#num#num)option`) THEN
   REWRITE_TAC[FORALL_OPTION_THM; FORALL_PAIR_THM; wl_push_env_def] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN SIMP[] THEN REPEAT STRIP_TAC THEN
@@ -622,20 +622,20 @@ let wl_pop_env_const = prove
 
 (* HOL4: pop_env_with_const[simp]; line 501 *)
 let wl_pop_env_with_const = prove
- (`wl_pop_env (wl_state_clock_fupd (K k) (z:(A,C,FFI)wl_state))
-     = OPTION_MAP (\s. wl_state_clock_fupd (K k) s) (wl_pop_env z) /\
-   wl_pop_env (wl_state_compile_fupd (K c) z)
-       = OPTION_MAP (\s. wl_state_compile_fupd (K c) s) (wl_pop_env z) /\
-   wl_pop_env (wl_state_compile_oracle_fupd (K co) z)
-       = OPTION_MAP (\s. wl_state_compile_oracle_fupd (K co) s) (wl_pop_env z) /\
-   wl_pop_env (wl_state_code_fupd (K code) z)
-       = OPTION_MAP (\s. wl_state_code_fupd (K code) s) (wl_pop_env z) /\
-   wl_pop_env (wl_state_termdep_fupd (K termdep) z)
-       = OPTION_MAP (\s. wl_state_termdep_fupd (K termdep) s) (wl_pop_env z) /\
-   wl_pop_env (wl_state_permute_fupd (K perm) z)
-       = OPTION_MAP (\s. wl_state_permute_fupd (K perm) s) (wl_pop_env z) /\
-   wl_pop_env (wl_state_locals_fupd (K l) z) = wl_pop_env z /\
-   wl_pop_env (wl_state_locals_size_fupd (K ls) z) = wl_pop_env z`,
+ (`wl_pop_env (wl_state_clock_fupd (combin_K k) (z:(A,C,FFI)wl_state))
+     = OPTION_MAP (\s. wl_state_clock_fupd (combin_K k) s) (wl_pop_env z) /\
+   wl_pop_env (wl_state_compile_fupd (combin_K c) z)
+       = OPTION_MAP (\s. wl_state_compile_fupd (combin_K c) s) (wl_pop_env z) /\
+   wl_pop_env (wl_state_compile_oracle_fupd (combin_K co) z)
+       = OPTION_MAP (\s. wl_state_compile_oracle_fupd (combin_K co) s) (wl_pop_env z) /\
+   wl_pop_env (wl_state_code_fupd (combin_K code) z)
+       = OPTION_MAP (\s. wl_state_code_fupd (combin_K code) s) (wl_pop_env z) /\
+   wl_pop_env (wl_state_termdep_fupd (combin_K termdep) z)
+       = OPTION_MAP (\s. wl_state_termdep_fupd (combin_K termdep) s) (wl_pop_env z) /\
+   wl_pop_env (wl_state_permute_fupd (combin_K perm) z)
+       = OPTION_MAP (\s. wl_state_permute_fupd (combin_K perm) s) (wl_pop_env z) /\
+   wl_pop_env (wl_state_locals_fupd (combin_K l) z) = wl_pop_env z /\
+   wl_pop_env (wl_state_locals_size_fupd (combin_K ls) z) = wl_pop_env z`,
   IL2AUX_WITH_TAC[wl_pop_env_def]);;
 
 let _ = cake_add_simps [wl_pop_env_with_const];;
@@ -684,21 +684,21 @@ let _ = cake_add_simps [wl_call_env_const];;
 
 (* HOL4: call_env_with_const[simp]; line 558 *)
 let wl_call_env_with_const = prove
- (`wl_call_env x ss (wl_state_locals_fupd (K l) (y:(A,C,FFI)wl_state)) = wl_call_env x ss y /\
-   wl_call_env x ss (wl_state_clock_fupd (K k) y)
-       = wl_state_clock_fupd (K k) (wl_call_env x ss y) /\
-   wl_call_env x ss (wl_state_termdep_fupd (K termdep) y)
-       = wl_state_termdep_fupd (K termdep) (wl_call_env x ss y) /\
-   wl_call_env x ss (wl_state_compile_fupd (K c) y)
-       = wl_state_compile_fupd (K c) (wl_call_env x ss y) /\
-   wl_call_env x ss (wl_state_compile_oracle_fupd (K co) y)
-       = wl_state_compile_oracle_fupd (K co) (wl_call_env x ss y) /\
-   wl_call_env x ss (wl_state_code_fupd (K code) y)
-       = wl_state_code_fupd (K code) (wl_call_env x ss y) /\
-   wl_call_env x ss (wl_state_handler_fupd (K k) y)
-       = wl_state_handler_fupd (K k) (wl_call_env x ss y) /\
-   wl_call_env x ss (wl_state_permute_fupd (K perm) y)
-       = wl_state_permute_fupd (K perm) (wl_call_env x ss y)`,
+ (`wl_call_env x ss (wl_state_locals_fupd (combin_K l) (y:(A,C,FFI)wl_state)) = wl_call_env x ss y /\
+   wl_call_env x ss (wl_state_clock_fupd (combin_K k) y)
+       = wl_state_clock_fupd (combin_K k) (wl_call_env x ss y) /\
+   wl_call_env x ss (wl_state_termdep_fupd (combin_K termdep) y)
+       = wl_state_termdep_fupd (combin_K termdep) (wl_call_env x ss y) /\
+   wl_call_env x ss (wl_state_compile_fupd (combin_K c) y)
+       = wl_state_compile_fupd (combin_K c) (wl_call_env x ss y) /\
+   wl_call_env x ss (wl_state_compile_oracle_fupd (combin_K co) y)
+       = wl_state_compile_oracle_fupd (combin_K co) (wl_call_env x ss y) /\
+   wl_call_env x ss (wl_state_code_fupd (combin_K code) y)
+       = wl_state_code_fupd (combin_K code) (wl_call_env x ss y) /\
+   wl_call_env x ss (wl_state_handler_fupd (combin_K k) y)
+       = wl_state_handler_fupd (combin_K k) (wl_call_env x ss y) /\
+   wl_call_env x ss (wl_state_permute_fupd (combin_K perm) y)
+       = wl_state_permute_fupd (combin_K perm) (wl_call_env x ss y)`,
   REPEAT GEN_TAC THEN REWRITE_TAC IL2AUX_state_defs THEN SIMP[]);;
 
 let _ = cake_add_simps [wl_call_env_with_const];;
@@ -723,28 +723,28 @@ let _ = cake_add_simps [flush_state_const];;
 
 (* line 588 [simp] *)
 let flush_state_with_const = prove
- (`wl_flush_state b (wl_state_locals_fupd (K l) (y:(A,C,FFI)wl_state)) = wl_flush_state b y /\
-   wl_flush_state b (wl_state_locals_size_fupd (K ls) y) = wl_flush_state b y /\
-   wl_flush_state T (wl_state_stack_fupd (K xs) y) = wl_flush_state T y /\
-   wl_flush_state b (wl_state_permute_fupd (K p) y)
-       = wl_state_permute_fupd (K p) (wl_flush_state b y) /\
-   wl_flush_state b (wl_state_stack_max_fupd (K sm) y)
-       = wl_state_stack_max_fupd (K sm) (wl_flush_state b y) /\
-   wl_flush_state b (wl_state_clock_fupd (K k) y) = wl_state_clock_fupd (K k) (wl_flush_state b y)`,
+ (`wl_flush_state b (wl_state_locals_fupd (combin_K l) (y:(A,C,FFI)wl_state)) = wl_flush_state b y /\
+   wl_flush_state b (wl_state_locals_size_fupd (combin_K ls) y) = wl_flush_state b y /\
+   wl_flush_state T (wl_state_stack_fupd (combin_K xs) y) = wl_flush_state T y /\
+   wl_flush_state b (wl_state_permute_fupd (combin_K p) y)
+       = wl_state_permute_fupd (combin_K p) (wl_flush_state b y) /\
+   wl_flush_state b (wl_state_stack_max_fupd (combin_K sm) y)
+       = wl_state_stack_max_fupd (combin_K sm) (wl_flush_state b y) /\
+   wl_flush_state b (wl_state_clock_fupd (combin_K k) y) = wl_state_clock_fupd (combin_K k) (wl_flush_state b y)`,
   BOOL_CASES_TAC `b:bool` THEN REWRITE_TAC[wl_flush_state_def] THEN SIMP[]);;
 
 let _ = cake_add_simps [flush_state_with_const];;
 
 (* line 599 [simp] *)
 let has_space_with_const = prove
- (`wl_has_space x (wl_state_clock_fupd (K k) (y:(A,C,FFI)wl_state)) = wl_has_space x y /\
-   wl_has_space x (wl_state_compile_fupd (K c) y) = wl_has_space x y /\
-   wl_has_space x (wl_state_compile_oracle_fupd (K co) y) = wl_has_space x y /\
-   wl_has_space x (wl_state_code_fupd (K code) y) = wl_has_space x y /\
-   wl_has_space x (wl_state_termdep_fupd (K termdep) y) = wl_has_space x y /\
-   wl_has_space x (wl_state_locals_fupd (K l) y) = wl_has_space x y /\
-   wl_has_space x (wl_state_locals_size_fupd (K ls) y) = wl_has_space x y /\
-   wl_has_space x (wl_state_stack_fupd (K xs) y) = wl_has_space x y`,
+ (`wl_has_space x (wl_state_clock_fupd (combin_K k) (y:(A,C,FFI)wl_state)) = wl_has_space x y /\
+   wl_has_space x (wl_state_compile_fupd (combin_K c) y) = wl_has_space x y /\
+   wl_has_space x (wl_state_compile_oracle_fupd (combin_K co) y) = wl_has_space x y /\
+   wl_has_space x (wl_state_code_fupd (combin_K code) y) = wl_has_space x y /\
+   wl_has_space x (wl_state_termdep_fupd (combin_K termdep) y) = wl_has_space x y /\
+   wl_has_space x (wl_state_locals_fupd (combin_K l) y) = wl_has_space x y /\
+   wl_has_space x (wl_state_locals_size_fupd (combin_K ls) y) = wl_has_space x y /\
+   wl_has_space x (wl_state_stack_fupd (combin_K xs) y) = wl_has_space x y`,
   REWRITE_TAC IL2AUX_state_defs THEN SIMP[]);;
 
 let _ = cake_add_simps [has_space_with_const];;
@@ -769,21 +769,21 @@ let gc_const = prove
 
 (* HOL4: gc_with_const[simp]; line 632 *)
 let wl_gc_with_const = prove
- (`wl_gc (wl_state_clock_fupd (K k) (x:(A,C,FFI)wl_state))
-     = OPTION_MAP (\s. wl_state_clock_fupd (K k) s) (wl_gc x) /\
-   wl_gc (wl_state_compile_fupd (K c) x)
-       = OPTION_MAP (\s. wl_state_compile_fupd (K c) s) (wl_gc x) /\
-   wl_gc (wl_state_compile_oracle_fupd (K co) x)
-       = OPTION_MAP (\s. wl_state_compile_oracle_fupd (K co) s) (wl_gc x) /\
-   wl_gc (wl_state_code_fupd (K code) x)
-       = OPTION_MAP (\s. wl_state_code_fupd (K code) s) (wl_gc x) /\
-   wl_gc (wl_state_permute_fupd (K perm) x)
-       = OPTION_MAP (\s. wl_state_permute_fupd (K perm) s) (wl_gc x) /\
-   wl_gc (wl_state_termdep_fupd (K t) x)
-       = OPTION_MAP (\s. wl_state_termdep_fupd (K t) s) (wl_gc x) /\
-   wl_gc (wl_state_locals_fupd (K l) x) = OPTION_MAP (\s. wl_state_locals_fupd (K l) s) (wl_gc x) /\
-   wl_gc (wl_state_locals_size_fupd (K ls) x)
-       = OPTION_MAP (\s. wl_state_locals_size_fupd (K ls) s) (wl_gc x)`,
+ (`wl_gc (wl_state_clock_fupd (combin_K k) (x:(A,C,FFI)wl_state))
+     = OPTION_MAP (\s. wl_state_clock_fupd (combin_K k) s) (wl_gc x) /\
+   wl_gc (wl_state_compile_fupd (combin_K c) x)
+       = OPTION_MAP (\s. wl_state_compile_fupd (combin_K c) s) (wl_gc x) /\
+   wl_gc (wl_state_compile_oracle_fupd (combin_K co) x)
+       = OPTION_MAP (\s. wl_state_compile_oracle_fupd (combin_K co) s) (wl_gc x) /\
+   wl_gc (wl_state_code_fupd (combin_K code) x)
+       = OPTION_MAP (\s. wl_state_code_fupd (combin_K code) s) (wl_gc x) /\
+   wl_gc (wl_state_permute_fupd (combin_K perm) x)
+       = OPTION_MAP (\s. wl_state_permute_fupd (combin_K perm) s) (wl_gc x) /\
+   wl_gc (wl_state_termdep_fupd (combin_K t) x)
+       = OPTION_MAP (\s. wl_state_termdep_fupd (combin_K t) s) (wl_gc x) /\
+   wl_gc (wl_state_locals_fupd (combin_K l) x) = OPTION_MAP (\s. wl_state_locals_fupd (combin_K l) s) (wl_gc x) /\
+   wl_gc (wl_state_locals_size_fupd (combin_K ls) x)
+       = OPTION_MAP (\s. wl_state_locals_size_fupd (combin_K ls) s) (wl_gc x)`,
   IL2AUX_WITH_TAC[wl_gc_def]);;
 
 let _ = cake_add_simps [wl_gc_with_const];;
@@ -848,44 +848,44 @@ let alloc_code_gc_fun_const = prove
 
 (* HOL4: alloc_with_const[simp]; line 690 *)
 let wl_alloc_with_const = prove
- (`wl_alloc c names (wl_state_clock_fupd (K k) (s:(A,C,FFI)wl_state))
-     = (I ## (\s. wl_state_clock_fupd (K k) s)) (wl_alloc c names s) /\
-   wl_alloc c names (wl_state_termdep_fupd (K t) s)
-       = (I ## (\s. wl_state_termdep_fupd (K t) s)) (wl_alloc c names s) /\
-   wl_alloc c names (wl_state_code_fupd (K code) s)
-       = (I ## (\s. wl_state_code_fupd (K code) s)) (wl_alloc c names s) /\
-   wl_alloc c names (wl_state_compile_oracle_fupd (K compile_oracle) s)
-       = (I ## (\s. wl_state_compile_oracle_fupd (K compile_oracle) s)) (wl_alloc c names s) /\
-   wl_alloc c names (wl_state_compile_fupd (K comp) s)
-       = (I ## (\s. wl_state_compile_fupd (K comp) s)) (wl_alloc c names s)`,
+ (`wl_alloc c names (wl_state_clock_fupd (combin_K k) (s:(A,C,FFI)wl_state))
+     = (I ## (\s. wl_state_clock_fupd (combin_K k) s)) (wl_alloc c names s) /\
+   wl_alloc c names (wl_state_termdep_fupd (combin_K t) s)
+       = (I ## (\s. wl_state_termdep_fupd (combin_K t) s)) (wl_alloc c names s) /\
+   wl_alloc c names (wl_state_code_fupd (combin_K code) s)
+       = (I ## (\s. wl_state_code_fupd (combin_K code) s)) (wl_alloc c names s) /\
+   wl_alloc c names (wl_state_compile_oracle_fupd (combin_K compile_oracle) s)
+       = (I ## (\s. wl_state_compile_oracle_fupd (combin_K compile_oracle) s)) (wl_alloc c names s) /\
+   wl_alloc c names (wl_state_compile_fupd (combin_K comp) s)
+       = (I ## (\s. wl_state_compile_fupd (combin_K comp) s)) (wl_alloc c names s)`,
   IL2AUX_WITH_TAC[wl_alloc_def; wl_flush_state_def]);;
 
 let _ = cake_add_simps [wl_alloc_with_const];;
 
 (* HOL4: get_fp_var_with_const[simp]; line 700 *)
 let wl_get_fp_var_with_const = prove
- (`wl_get_fp_var x (wl_state_locals_fupd (K l) (y:(A,C,FFI)wl_state)) = wl_get_fp_var x y /\
-   wl_get_fp_var x (wl_state_locals_size_fupd (K ls) y) = wl_get_fp_var x y /\
-   wl_get_fp_var x (wl_state_store_fupd (K store) y) = wl_get_fp_var x y /\
-   wl_get_fp_var x (wl_state_stack_fupd (K xs) y) = wl_get_fp_var x y /\
-   wl_get_fp_var x (wl_state_stack_limit_fupd (K sl) y) = wl_get_fp_var x y /\
-   wl_get_fp_var x (wl_state_stack_max_fupd (K sm) y) = wl_get_fp_var x y /\
-   wl_get_fp_var x (wl_state_stack_size_fupd (K ssize) y) = wl_get_fp_var x y /\
-   wl_get_fp_var x (wl_state_memory_fupd (K m) y) = wl_get_fp_var x y /\
-   wl_get_fp_var x (wl_state_mdomain_fupd (K md) y) = wl_get_fp_var x y /\
-   wl_get_fp_var x (wl_state_sh_mdomain_fupd (K smd) y) = wl_get_fp_var x y /\
-   wl_get_fp_var x (wl_state_permute_fupd (K p) y) = wl_get_fp_var x y /\
-   wl_get_fp_var x (wl_state_compile_fupd (K c) y) = wl_get_fp_var x y /\
-   wl_get_fp_var x (wl_state_compile_oracle_fupd (K co) y) = wl_get_fp_var x y /\
-   wl_get_fp_var x (wl_state_code_buffer_fupd (K cb) y) = wl_get_fp_var x y /\
-   wl_get_fp_var x (wl_state_data_buffer_fupd (K db) y) = wl_get_fp_var x y /\
-   wl_get_fp_var x (wl_state_gc_fun_fupd (K g) y) = wl_get_fp_var x y /\
-   wl_get_fp_var x (wl_state_handler_fupd (K hd) y) = wl_get_fp_var x y /\
-   wl_get_fp_var x (wl_state_clock_fupd (K clk) y) = wl_get_fp_var x y /\
-   wl_get_fp_var x (wl_state_termdep_fupd (K tdep) y) = wl_get_fp_var x y /\
-   wl_get_fp_var x (wl_state_code_fupd (K cd) y) = wl_get_fp_var x y /\
-   wl_get_fp_var x (wl_state_be_fupd (K b) y) = wl_get_fp_var x y /\
-   wl_get_fp_var x (wl_state_ffi_fupd (K ffi) y) = wl_get_fp_var x y`,
+ (`wl_get_fp_var x (wl_state_locals_fupd (combin_K l) (y:(A,C,FFI)wl_state)) = wl_get_fp_var x y /\
+   wl_get_fp_var x (wl_state_locals_size_fupd (combin_K ls) y) = wl_get_fp_var x y /\
+   wl_get_fp_var x (wl_state_store_fupd (combin_K store) y) = wl_get_fp_var x y /\
+   wl_get_fp_var x (wl_state_stack_fupd (combin_K xs) y) = wl_get_fp_var x y /\
+   wl_get_fp_var x (wl_state_stack_limit_fupd (combin_K sl) y) = wl_get_fp_var x y /\
+   wl_get_fp_var x (wl_state_stack_max_fupd (combin_K sm) y) = wl_get_fp_var x y /\
+   wl_get_fp_var x (wl_state_stack_size_fupd (combin_K ssize) y) = wl_get_fp_var x y /\
+   wl_get_fp_var x (wl_state_memory_fupd (combin_K m) y) = wl_get_fp_var x y /\
+   wl_get_fp_var x (wl_state_mdomain_fupd (combin_K md) y) = wl_get_fp_var x y /\
+   wl_get_fp_var x (wl_state_sh_mdomain_fupd (combin_K smd) y) = wl_get_fp_var x y /\
+   wl_get_fp_var x (wl_state_permute_fupd (combin_K p) y) = wl_get_fp_var x y /\
+   wl_get_fp_var x (wl_state_compile_fupd (combin_K c) y) = wl_get_fp_var x y /\
+   wl_get_fp_var x (wl_state_compile_oracle_fupd (combin_K co) y) = wl_get_fp_var x y /\
+   wl_get_fp_var x (wl_state_code_buffer_fupd (combin_K cb) y) = wl_get_fp_var x y /\
+   wl_get_fp_var x (wl_state_data_buffer_fupd (combin_K db) y) = wl_get_fp_var x y /\
+   wl_get_fp_var x (wl_state_gc_fun_fupd (combin_K g) y) = wl_get_fp_var x y /\
+   wl_get_fp_var x (wl_state_handler_fupd (combin_K hd) y) = wl_get_fp_var x y /\
+   wl_get_fp_var x (wl_state_clock_fupd (combin_K clk) y) = wl_get_fp_var x y /\
+   wl_get_fp_var x (wl_state_termdep_fupd (combin_K tdep) y) = wl_get_fp_var x y /\
+   wl_get_fp_var x (wl_state_code_fupd (combin_K cd) y) = wl_get_fp_var x y /\
+   wl_get_fp_var x (wl_state_be_fupd (combin_K b) y) = wl_get_fp_var x y /\
+   wl_get_fp_var x (wl_state_ffi_fupd (combin_K ffi) y) = wl_get_fp_var x y`,
   REPEAT GEN_TAC THEN REWRITE_TAC IL2AUX_state_defs THEN SIMP[]);;
 
 let _ = cake_add_simps [wl_get_fp_var_with_const];;
@@ -920,63 +920,63 @@ let _ = cake_add_simps [wl_set_fp_var_const];;
 
 (* HOL4: set_fp_var_with_const[simp]; line 754 *)
 let wl_set_fp_var_with_const = prove
- (`wl_set_fp_var x y (wl_state_locals_fupd (K l) (z:(A,C,FFI)wl_state))
-     = wl_state_locals_fupd (K l) (wl_set_fp_var x y z) /\
-   wl_set_fp_var x y (wl_state_locals_size_fupd (K ls) z)
-       = wl_state_locals_size_fupd (K ls) (wl_set_fp_var x y z) /\
-   wl_set_fp_var x y (wl_state_store_fupd (K store) z)
-       = wl_state_store_fupd (K store) (wl_set_fp_var x y z) /\
-   wl_set_fp_var x y (wl_state_stack_fupd (K xs) z)
-       = wl_state_stack_fupd (K xs) (wl_set_fp_var x y z) /\
-   wl_set_fp_var x y (wl_state_stack_limit_fupd (K sl) z)
-       = wl_state_stack_limit_fupd (K sl) (wl_set_fp_var x y z) /\
-   wl_set_fp_var x y (wl_state_stack_max_fupd (K sm) z)
-       = wl_state_stack_max_fupd (K sm) (wl_set_fp_var x y z) /\
-   wl_set_fp_var x y (wl_state_stack_size_fupd (K ssize) z)
-       = wl_state_stack_size_fupd (K ssize) (wl_set_fp_var x y z) /\
-   wl_set_fp_var x y (wl_state_memory_fupd (K m) z)
-       = wl_state_memory_fupd (K m) (wl_set_fp_var x y z) /\
-   wl_set_fp_var x y (wl_state_mdomain_fupd (K md) z)
-       = wl_state_mdomain_fupd (K md) (wl_set_fp_var x y z) /\
-   wl_set_fp_var x y (wl_state_sh_mdomain_fupd (K smd) z)
-       = wl_state_sh_mdomain_fupd (K smd) (wl_set_fp_var x y z) /\
-   wl_set_fp_var x y (wl_state_permute_fupd (K p) z)
-       = wl_state_permute_fupd (K p) (wl_set_fp_var x y z) /\
-   wl_set_fp_var x y (wl_state_compile_fupd (K c) z)
-       = wl_state_compile_fupd (K c) (wl_set_fp_var x y z) /\
-   wl_set_fp_var x y (wl_state_compile_oracle_fupd (K co) z)
-       = wl_state_compile_oracle_fupd (K co) (wl_set_fp_var x y z) /\
-   wl_set_fp_var x y (wl_state_code_buffer_fupd (K cb) z)
-       = wl_state_code_buffer_fupd (K cb) (wl_set_fp_var x y z) /\
-   wl_set_fp_var x y (wl_state_data_buffer_fupd (K db) z)
-       = wl_state_data_buffer_fupd (K db) (wl_set_fp_var x y z) /\
-   wl_set_fp_var x y (wl_state_gc_fun_fupd (K g) z)
-       = wl_state_gc_fun_fupd (K g) (wl_set_fp_var x y z) /\
-   wl_set_fp_var x y (wl_state_handler_fupd (K hd) z)
-       = wl_state_handler_fupd (K hd) (wl_set_fp_var x y z) /\
-   wl_set_fp_var x y (wl_state_clock_fupd (K clk) z)
-       = wl_state_clock_fupd (K clk) (wl_set_fp_var x y z) /\
-   wl_set_fp_var x y (wl_state_termdep_fupd (K tdep) z)
-       = wl_state_termdep_fupd (K tdep) (wl_set_fp_var x y z) /\
-   wl_set_fp_var x y (wl_state_code_fupd (K cd) z)
-       = wl_state_code_fupd (K cd) (wl_set_fp_var x y z) /\
-   wl_set_fp_var x y (wl_state_be_fupd (K b) z) = wl_state_be_fupd (K b) (wl_set_fp_var x y z) /\
-   wl_set_fp_var x y (wl_state_ffi_fupd (K ffi) z)
-       = wl_state_ffi_fupd (K ffi) (wl_set_fp_var x y z)`,
+ (`wl_set_fp_var x y (wl_state_locals_fupd (combin_K l) (z:(A,C,FFI)wl_state))
+     = wl_state_locals_fupd (combin_K l) (wl_set_fp_var x y z) /\
+   wl_set_fp_var x y (wl_state_locals_size_fupd (combin_K ls) z)
+       = wl_state_locals_size_fupd (combin_K ls) (wl_set_fp_var x y z) /\
+   wl_set_fp_var x y (wl_state_store_fupd (combin_K store) z)
+       = wl_state_store_fupd (combin_K store) (wl_set_fp_var x y z) /\
+   wl_set_fp_var x y (wl_state_stack_fupd (combin_K xs) z)
+       = wl_state_stack_fupd (combin_K xs) (wl_set_fp_var x y z) /\
+   wl_set_fp_var x y (wl_state_stack_limit_fupd (combin_K sl) z)
+       = wl_state_stack_limit_fupd (combin_K sl) (wl_set_fp_var x y z) /\
+   wl_set_fp_var x y (wl_state_stack_max_fupd (combin_K sm) z)
+       = wl_state_stack_max_fupd (combin_K sm) (wl_set_fp_var x y z) /\
+   wl_set_fp_var x y (wl_state_stack_size_fupd (combin_K ssize) z)
+       = wl_state_stack_size_fupd (combin_K ssize) (wl_set_fp_var x y z) /\
+   wl_set_fp_var x y (wl_state_memory_fupd (combin_K m) z)
+       = wl_state_memory_fupd (combin_K m) (wl_set_fp_var x y z) /\
+   wl_set_fp_var x y (wl_state_mdomain_fupd (combin_K md) z)
+       = wl_state_mdomain_fupd (combin_K md) (wl_set_fp_var x y z) /\
+   wl_set_fp_var x y (wl_state_sh_mdomain_fupd (combin_K smd) z)
+       = wl_state_sh_mdomain_fupd (combin_K smd) (wl_set_fp_var x y z) /\
+   wl_set_fp_var x y (wl_state_permute_fupd (combin_K p) z)
+       = wl_state_permute_fupd (combin_K p) (wl_set_fp_var x y z) /\
+   wl_set_fp_var x y (wl_state_compile_fupd (combin_K c) z)
+       = wl_state_compile_fupd (combin_K c) (wl_set_fp_var x y z) /\
+   wl_set_fp_var x y (wl_state_compile_oracle_fupd (combin_K co) z)
+       = wl_state_compile_oracle_fupd (combin_K co) (wl_set_fp_var x y z) /\
+   wl_set_fp_var x y (wl_state_code_buffer_fupd (combin_K cb) z)
+       = wl_state_code_buffer_fupd (combin_K cb) (wl_set_fp_var x y z) /\
+   wl_set_fp_var x y (wl_state_data_buffer_fupd (combin_K db) z)
+       = wl_state_data_buffer_fupd (combin_K db) (wl_set_fp_var x y z) /\
+   wl_set_fp_var x y (wl_state_gc_fun_fupd (combin_K g) z)
+       = wl_state_gc_fun_fupd (combin_K g) (wl_set_fp_var x y z) /\
+   wl_set_fp_var x y (wl_state_handler_fupd (combin_K hd) z)
+       = wl_state_handler_fupd (combin_K hd) (wl_set_fp_var x y z) /\
+   wl_set_fp_var x y (wl_state_clock_fupd (combin_K clk) z)
+       = wl_state_clock_fupd (combin_K clk) (wl_set_fp_var x y z) /\
+   wl_set_fp_var x y (wl_state_termdep_fupd (combin_K tdep) z)
+       = wl_state_termdep_fupd (combin_K tdep) (wl_set_fp_var x y z) /\
+   wl_set_fp_var x y (wl_state_code_fupd (combin_K cd) z)
+       = wl_state_code_fupd (combin_K cd) (wl_set_fp_var x y z) /\
+   wl_set_fp_var x y (wl_state_be_fupd (combin_K b) z) = wl_state_be_fupd (combin_K b) (wl_set_fp_var x y z) /\
+   wl_set_fp_var x y (wl_state_ffi_fupd (combin_K ffi) z)
+       = wl_state_ffi_fupd (combin_K ffi) (wl_set_fp_var x y z)`,
   REPEAT GEN_TAC THEN REWRITE_TAC IL2AUX_state_defs THEN SIMP[]);;
 
 let _ = cake_add_simps [wl_set_fp_var_with_const];;
 
 (* HOL4: mem_load_with_const[simp]; line 781 *)
 let wl_mem_load_with_const = prove
- (`wl_mem_load x (wl_state_locals_fupd (K l) (y:(A,C,FFI)wl_state)) = wl_mem_load x y /\
-   wl_mem_load x (wl_state_termdep_fupd (K td) y) = wl_mem_load x y /\
-   wl_mem_load x (wl_state_clock_fupd (K k) y) = wl_mem_load x y /\
-   wl_mem_load x (wl_state_stack_fupd (K xs) y) = wl_mem_load x y /\
-   wl_mem_load x (wl_state_permute_fupd (K perm) y) = wl_mem_load x y /\
-   wl_mem_load x (wl_state_code_fupd (K c) y) = wl_mem_load x y /\
-   wl_mem_load x (wl_state_compile_oracle_fupd (K co) y) = wl_mem_load x y /\
-   wl_mem_load x (wl_state_compile_fupd (K cc) y) = wl_mem_load x y`,
+ (`wl_mem_load x (wl_state_locals_fupd (combin_K l) (y:(A,C,FFI)wl_state)) = wl_mem_load x y /\
+   wl_mem_load x (wl_state_termdep_fupd (combin_K td) y) = wl_mem_load x y /\
+   wl_mem_load x (wl_state_clock_fupd (combin_K k) y) = wl_mem_load x y /\
+   wl_mem_load x (wl_state_stack_fupd (combin_K xs) y) = wl_mem_load x y /\
+   wl_mem_load x (wl_state_permute_fupd (combin_K perm) y) = wl_mem_load x y /\
+   wl_mem_load x (wl_state_code_fupd (combin_K c) y) = wl_mem_load x y /\
+   wl_mem_load x (wl_state_compile_oracle_fupd (combin_K co) y) = wl_mem_load x y /\
+   wl_mem_load x (wl_state_compile_fupd (combin_K cc) y) = wl_mem_load x y`,
   REPEAT GEN_TAC THEN REWRITE_TAC IL2AUX_state_defs THEN SIMP[]);;
 
 let _ = cake_add_simps [wl_mem_load_with_const];;
@@ -1006,20 +1006,20 @@ let mem_store_const = prove
 
 (* line 819 [simp] *)
 let mem_store_with_const = prove
- (`wl_mem_store x z (wl_state_locals_fupd (K l) (y:(A,C,FFI)wl_state))
-     = OPTION_MAP (\s. wl_state_locals_fupd (K l) s) (wl_mem_store x z y) /\
-   wl_mem_store x z (wl_state_clock_fupd (K k) y)
-       = OPTION_MAP (\s. wl_state_clock_fupd (K k) s) (wl_mem_store x z y) /\
-   wl_mem_store x z (wl_state_code_fupd (K code) y)
-       = OPTION_MAP (\s. wl_state_code_fupd (K code) s) (wl_mem_store x z y) /\
-   wl_mem_store x z (wl_state_compile_fupd (K c) y)
-       = OPTION_MAP (\s. wl_state_compile_fupd (K c) s) (wl_mem_store x z y) /\
-   wl_mem_store x z (wl_state_compile_oracle_fupd (K co) y)
-       = OPTION_MAP (\s. wl_state_compile_oracle_fupd (K co) s) (wl_mem_store x z y) /\
-   wl_mem_store x z (wl_state_permute_fupd (K perm) y)
-       = OPTION_MAP (\s. wl_state_permute_fupd (K perm) s) (wl_mem_store x z y) /\
-   wl_mem_store x z (wl_state_stack_fupd (K xs) y)
-       = OPTION_MAP (\s. wl_state_stack_fupd (K xs) s) (wl_mem_store x z y)`,
+ (`wl_mem_store x z (wl_state_locals_fupd (combin_K l) (y:(A,C,FFI)wl_state))
+     = OPTION_MAP (\s. wl_state_locals_fupd (combin_K l) s) (wl_mem_store x z y) /\
+   wl_mem_store x z (wl_state_clock_fupd (combin_K k) y)
+       = OPTION_MAP (\s. wl_state_clock_fupd (combin_K k) s) (wl_mem_store x z y) /\
+   wl_mem_store x z (wl_state_code_fupd (combin_K code) y)
+       = OPTION_MAP (\s. wl_state_code_fupd (combin_K code) s) (wl_mem_store x z y) /\
+   wl_mem_store x z (wl_state_compile_fupd (combin_K c) y)
+       = OPTION_MAP (\s. wl_state_compile_fupd (combin_K c) s) (wl_mem_store x z y) /\
+   wl_mem_store x z (wl_state_compile_oracle_fupd (combin_K co) y)
+       = OPTION_MAP (\s. wl_state_compile_oracle_fupd (combin_K co) s) (wl_mem_store x z y) /\
+   wl_mem_store x z (wl_state_permute_fupd (combin_K perm) y)
+       = OPTION_MAP (\s. wl_state_permute_fupd (combin_K perm) s) (wl_mem_store x z y) /\
+   wl_mem_store x z (wl_state_stack_fupd (combin_K xs) y)
+       = OPTION_MAP (\s. wl_state_stack_fupd (combin_K xs) s) (wl_mem_store x z y)`,
   IL2AUX_WITH_TAC[wl_mem_store_def]);;
 
 let _ = cake_add_simps [mem_store_with_const];;
@@ -1050,13 +1050,13 @@ let IL2AUX_word_exp_cong = prove
 (* HOL4: word_exp_with_const[simp]; line 831 *)
 let wl_word_exp_with_const = prove
  (`!(x:(A,C,FFI)wl_state) y.
-   wl_word_exp (wl_state_clock_fupd (K k) x) y = wl_word_exp x y /\
-   wl_word_exp (wl_state_stack_fupd (K xs) x) y = wl_word_exp x y /\
-   wl_word_exp (wl_state_permute_fupd (K perm) x) y = wl_word_exp x y /\
-   wl_word_exp (wl_state_termdep_fupd (K termdep) x) y = wl_word_exp x y /\
-   wl_word_exp (wl_state_code_fupd (K c) x) y = wl_word_exp x y /\
-   wl_word_exp (wl_state_compile_oracle_fupd (K co) x) y = wl_word_exp x y /\
-   wl_word_exp (wl_state_compile_fupd (K cc) x) y = wl_word_exp x y`,
+   wl_word_exp (wl_state_clock_fupd (combin_K k) x) y = wl_word_exp x y /\
+   wl_word_exp (wl_state_stack_fupd (combin_K xs) x) y = wl_word_exp x y /\
+   wl_word_exp (wl_state_permute_fupd (combin_K perm) x) y = wl_word_exp x y /\
+   wl_word_exp (wl_state_termdep_fupd (combin_K termdep) x) y = wl_word_exp x y /\
+   wl_word_exp (wl_state_code_fupd (combin_K c) x) y = wl_word_exp x y /\
+   wl_word_exp (wl_state_compile_oracle_fupd (combin_K co) x) y = wl_word_exp x y /\
+   wl_word_exp (wl_state_compile_fupd (combin_K cc) x) y = wl_word_exp x y`,
   REPEAT GEN_TAC THEN REPEAT CONJ_TAC THEN MATCH_MP_TAC IL2AUX_word_exp_cong THEN
   SIMP[]);;
 
@@ -1089,36 +1089,36 @@ let assign_const = prove
 
 (* HOL4: assign_with_const[simp]; line 877 *)
 let wl_assign_with_const = prove
- (`wl_assign x y (wl_state_clock_fupd (K k) (z:(A,C,FFI)wl_state))
-     = OPTION_MAP (\s. wl_state_clock_fupd (K k) s) (wl_assign x y z) /\
-   wl_assign x y (wl_state_code_fupd (K code) z)
-       = OPTION_MAP (\s. wl_state_code_fupd (K code) s) (wl_assign x y z) /\
-   wl_assign x y (wl_state_compile_fupd (K c) z)
-       = OPTION_MAP (\s. wl_state_compile_fupd (K c) s) (wl_assign x y z) /\
-   wl_assign x y (wl_state_compile_oracle_fupd (K co) z)
-       = OPTION_MAP (\s. wl_state_compile_oracle_fupd (K co) s) (wl_assign x y z) /\
-   wl_assign x y (wl_state_permute_fupd (K perm) z)
-       = OPTION_MAP (\s. wl_state_permute_fupd (K perm) s) (wl_assign x y z) /\
-   wl_assign x y (wl_state_stack_fupd (K xs) z)
-       = OPTION_MAP (\s. wl_state_stack_fupd (K xs) s) (wl_assign x y z)`,
+ (`wl_assign x y (wl_state_clock_fupd (combin_K k) (z:(A,C,FFI)wl_state))
+     = OPTION_MAP (\s. wl_state_clock_fupd (combin_K k) s) (wl_assign x y z) /\
+   wl_assign x y (wl_state_code_fupd (combin_K code) z)
+       = OPTION_MAP (\s. wl_state_code_fupd (combin_K code) s) (wl_assign x y z) /\
+   wl_assign x y (wl_state_compile_fupd (combin_K c) z)
+       = OPTION_MAP (\s. wl_state_compile_fupd (combin_K c) s) (wl_assign x y z) /\
+   wl_assign x y (wl_state_compile_oracle_fupd (combin_K co) z)
+       = OPTION_MAP (\s. wl_state_compile_oracle_fupd (combin_K co) s) (wl_assign x y z) /\
+   wl_assign x y (wl_state_permute_fupd (combin_K perm) z)
+       = OPTION_MAP (\s. wl_state_permute_fupd (combin_K perm) s) (wl_assign x y z) /\
+   wl_assign x y (wl_state_stack_fupd (combin_K xs) z)
+       = OPTION_MAP (\s. wl_state_stack_fupd (combin_K xs) s) (wl_assign x y z)`,
   IL2AUX_WITH_TAC[wl_assign_def]);;
 
 let _ = cake_add_simps [wl_assign_with_const];;
 
 (* HOL4: inst_with_const[simp]; line 888 *)
 let wl_inst_with_const = prove
- (`wl_inst i (wl_state_clock_fupd (K k) (s:(A,C,FFI)wl_state))
-     = OPTION_MAP (\s. wl_state_clock_fupd (K k) s) (wl_inst i s) /\
-   wl_inst i (wl_state_code_fupd (K code) s)
-       = OPTION_MAP (\s. wl_state_code_fupd (K code) s) (wl_inst i s) /\
-   wl_inst i (wl_state_compile_fupd (K c) s)
-       = OPTION_MAP (\s. wl_state_compile_fupd (K c) s) (wl_inst i s) /\
-   wl_inst i (wl_state_compile_oracle_fupd (K co) s)
-       = OPTION_MAP (\s. wl_state_compile_oracle_fupd (K co) s) (wl_inst i s) /\
-   wl_inst i (wl_state_permute_fupd (K perm) s)
-       = OPTION_MAP (\s. wl_state_permute_fupd (K perm) s) (wl_inst i s) /\
-   wl_inst i (wl_state_stack_fupd (K xs) s)
-       = OPTION_MAP (\s. wl_state_stack_fupd (K xs) s) (wl_inst i s)`,
+ (`wl_inst i (wl_state_clock_fupd (combin_K k) (s:(A,C,FFI)wl_state))
+     = OPTION_MAP (\s. wl_state_clock_fupd (combin_K k) s) (wl_inst i s) /\
+   wl_inst i (wl_state_code_fupd (combin_K code) s)
+       = OPTION_MAP (\s. wl_state_code_fupd (combin_K code) s) (wl_inst i s) /\
+   wl_inst i (wl_state_compile_fupd (combin_K c) s)
+       = OPTION_MAP (\s. wl_state_compile_fupd (combin_K c) s) (wl_inst i s) /\
+   wl_inst i (wl_state_compile_oracle_fupd (combin_K co) s)
+       = OPTION_MAP (\s. wl_state_compile_oracle_fupd (combin_K co) s) (wl_inst i s) /\
+   wl_inst i (wl_state_permute_fupd (combin_K perm) s)
+       = OPTION_MAP (\s. wl_state_permute_fupd (combin_K perm) s) (wl_inst i s) /\
+   wl_inst i (wl_state_stack_fupd (combin_K xs) s)
+       = OPTION_MAP (\s. wl_state_stack_fupd (combin_K xs) s) (wl_inst i s)`,
   REPEAT GEN_TAC THEN REPEAT CONJ_TAC THEN IL2AUX_INST_SPLIT_TAC THEN
   SIMP[wl_inst_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   REPEAT (TOP_CASE_TAC THEN SIMP[OPTION_MAP_DEF]) THEN REPEAT PAIRARG_TAC THEN
@@ -1195,11 +1195,11 @@ let jump_exc_const = prove
 (* the paired lambda of HOL4 is a match on the pair (pair_CASE)          *)
 let wl_jump_exc_with_const = prove
  (CASE_TERM
-  `wl_jump_exc (wl_state_clock_fupd (K k) (s:(A,C,FFI)wl_state)) =
-     OPTION_MAP (\x. match x with (s,t) -> (wl_state_clock_fupd (K k) s, t))
+  `wl_jump_exc (wl_state_clock_fupd (combin_K k) (s:(A,C,FFI)wl_state)) =
+     OPTION_MAP (\x. match x with (s,t) -> (wl_state_clock_fupd (combin_K k) s, t))
        (wl_jump_exc s) /\
-   wl_jump_exc (wl_state_permute_fupd (K perm) s) =
-     OPTION_MAP (\x. match x with (s,t) -> (wl_state_permute_fupd (K perm) s, t))
+   wl_jump_exc (wl_state_permute_fupd (combin_K perm) s) =
+     OPTION_MAP (\x. match x with (s,t) -> (wl_state_permute_fupd (combin_K perm) s, t))
        (wl_jump_exc s)`,
   IL2AUX_WITH_TAC[wl_jump_exc_def]);;
 
@@ -1207,13 +1207,13 @@ let _ = cake_add_simps [wl_jump_exc_with_const];;
 
 (* HOL4: get_var_imm_with_const[simp]; line 970 *)
 let wl_get_var_imm_with_const = prove
- (`wl_get_var_imm x (wl_state_clock_fupd (K k) (y:(A,C,FFI)wl_state)) = wl_get_var_imm x y /\
-   wl_get_var_imm x (wl_state_code_fupd (K code) y) = wl_get_var_imm x y /\
-   wl_get_var_imm x (wl_state_compile_fupd (K compile) y) = wl_get_var_imm x y /\
-   wl_get_var_imm x (wl_state_compile_oracle_fupd (K compile_oracle) y) = wl_get_var_imm x y /\
-   wl_get_var_imm x (wl_state_termdep_fupd (K td) y) = wl_get_var_imm x y /\
-   wl_get_var_imm x (wl_state_stack_fupd (K xs) y) = wl_get_var_imm x y /\
-   wl_get_var_imm x (wl_state_permute_fupd (K perm) y) = wl_get_var_imm x y`,
+ (`wl_get_var_imm x (wl_state_clock_fupd (combin_K k) (y:(A,C,FFI)wl_state)) = wl_get_var_imm x y /\
+   wl_get_var_imm x (wl_state_code_fupd (combin_K code) y) = wl_get_var_imm x y /\
+   wl_get_var_imm x (wl_state_compile_fupd (combin_K compile) y) = wl_get_var_imm x y /\
+   wl_get_var_imm x (wl_state_compile_oracle_fupd (combin_K compile_oracle) y) = wl_get_var_imm x y /\
+   wl_get_var_imm x (wl_state_termdep_fupd (combin_K td) y) = wl_get_var_imm x y /\
+   wl_get_var_imm x (wl_state_stack_fupd (combin_K xs) y) = wl_get_var_imm x y /\
+   wl_get_var_imm x (wl_state_permute_fupd (combin_K perm) y) = wl_get_var_imm x y`,
   STRUCT_CASES_TAC (ISPEC `x:(A)reg_imm` (cases "reg_imm")) THEN
   REWRITE_TAC[wl_get_var_imm_def] THEN SIMP[wl_get_var_def]);;
 
@@ -1243,9 +1243,9 @@ let wl_dec_clock_const = prove
    (wl_state_code (wl_dec_clock s)) = (wl_state_code s) /\
    ((wl_state_be (wl_dec_clock s)) <=> (wl_state_be s)) /\
    (wl_state_ffi (wl_dec_clock s)) = (wl_state_ffi s) /\
-   (wl_state_clock (wl_dec_clock (wl_state_locals_fupd (K locs) s)))
+   (wl_state_clock (wl_dec_clock (wl_state_locals_fupd (combin_K locs) s)))
        = (wl_state_clock (wl_dec_clock s)) /\
-   (wl_state_clock (wl_dec_clock (wl_state_permute_fupd (K p) s)))
+   (wl_state_clock (wl_dec_clock (wl_state_permute_fupd (combin_K p) s)))
        = (wl_state_clock (wl_dec_clock s))`,
   REPEAT GEN_TAC THEN REWRITE_TAC IL2AUX_state_defs THEN SIMP[]);;
 
@@ -1415,11 +1415,11 @@ let share_inst_const = prove
 
 (* line 1187 [simp] *)
 let sh_mem_set_var_with_const = prove
- (`sh_mem_set_var res v (wl_state_permute_fupd (K p) (s:(A,C,FFI)wl_state)) =
-   (I ## (\s. wl_state_permute_fupd (K p) s)) (sh_mem_set_var res v
+ (`sh_mem_set_var res v (wl_state_permute_fupd (combin_K p) (s:(A,C,FFI)wl_state)) =
+   (I ## (\s. wl_state_permute_fupd (combin_K p) s)) (sh_mem_set_var res v
        s:((W)wl_result)option#(A,C,FFI)wl_state) /\
-   sh_mem_set_var res v (wl_state_clock_fupd (K k) s) =
-   (I ## (\s. wl_state_clock_fupd (K k) s)) (sh_mem_set_var res v
+   sh_mem_set_var res v (wl_state_clock_fupd (combin_K k) s) =
+   (I ## (\s. wl_state_clock_fupd (combin_K k) s)) (sh_mem_set_var res v
        s:((W)wl_result)option#(A,C,FFI)wl_state)`,
   STRUCT_CASES_TAC (ISPEC `res:((FFI)ffi_result)option` (cases "option")) THEN
   TRY(STRUCT_CASES_TAC (ISPEC `a:(FFI)ffi_result` (cases "ffi_result"))) THEN
@@ -1429,52 +1429,52 @@ let _ = cake_add_simps [sh_mem_set_var_with_const];;
 
 (* HOL4: sh_mem_load_with_const[simp]; line 1200 *)
 let wl_sh_mem_load_with_const = prove
- (`wl_sh_mem_load a (wl_state_locals_fupd (K l) (s:(A,C,FFI)wl_state)) = wl_sh_mem_load a s /\
-   wl_sh_mem_load a (wl_state_permute_fupd (K p) s) = wl_sh_mem_load a s /\
-   wl_sh_mem_load a (wl_state_clock_fupd (K k) s) = wl_sh_mem_load a s /\
-   wl_sh_mem_load a (wl_state_stack_fupd (K xs) s) = wl_sh_mem_load a s`,
+ (`wl_sh_mem_load a (wl_state_locals_fupd (combin_K l) (s:(A,C,FFI)wl_state)) = wl_sh_mem_load a s /\
+   wl_sh_mem_load a (wl_state_permute_fupd (combin_K p) s) = wl_sh_mem_load a s /\
+   wl_sh_mem_load a (wl_state_clock_fupd (combin_K k) s) = wl_sh_mem_load a s /\
+   wl_sh_mem_load a (wl_state_stack_fupd (combin_K xs) s) = wl_sh_mem_load a s`,
   SIMP[wl_sh_mem_load_def]);;
 
 let _ = cake_add_simps [wl_sh_mem_load_with_const];;
 
 (* HOL4: sh_mem_load_byte_with_const[simp]; line 1209 *)
 let wl_sh_mem_load_byte_with_const = prove
- (`wl_sh_mem_load_byte a (wl_state_locals_fupd (K l) (s:(A,C,FFI)wl_state))
+ (`wl_sh_mem_load_byte a (wl_state_locals_fupd (combin_K l) (s:(A,C,FFI)wl_state))
      = wl_sh_mem_load_byte a s /\
-   wl_sh_mem_load_byte a (wl_state_permute_fupd (K p) s) = wl_sh_mem_load_byte a s /\
-   wl_sh_mem_load_byte a (wl_state_clock_fupd (K k) s) = wl_sh_mem_load_byte a s /\
-   wl_sh_mem_load_byte a (wl_state_stack_fupd (K xs) s) = wl_sh_mem_load_byte a s`,
+   wl_sh_mem_load_byte a (wl_state_permute_fupd (combin_K p) s) = wl_sh_mem_load_byte a s /\
+   wl_sh_mem_load_byte a (wl_state_clock_fupd (combin_K k) s) = wl_sh_mem_load_byte a s /\
+   wl_sh_mem_load_byte a (wl_state_stack_fupd (combin_K xs) s) = wl_sh_mem_load_byte a s`,
   SIMP[wl_sh_mem_load_byte_def]);;
 
 let _ = cake_add_simps [wl_sh_mem_load_byte_with_const];;
 
 (* HOL4: sh_mem_load16_with_const[simp]; line 1218 *)
 let wl_sh_mem_load16_with_const = prove
- (`wl_sh_mem_load16 a (wl_state_locals_fupd (K l) (s:(A,C,FFI)wl_state)) = wl_sh_mem_load16 a s /\
-   wl_sh_mem_load16 a (wl_state_permute_fupd (K p) s) = wl_sh_mem_load16 a s /\
-   wl_sh_mem_load16 a (wl_state_clock_fupd (K k) s) = wl_sh_mem_load16 a s /\
-   wl_sh_mem_load16 a (wl_state_stack_fupd (K xs) s) = wl_sh_mem_load16 a s`,
+ (`wl_sh_mem_load16 a (wl_state_locals_fupd (combin_K l) (s:(A,C,FFI)wl_state)) = wl_sh_mem_load16 a s /\
+   wl_sh_mem_load16 a (wl_state_permute_fupd (combin_K p) s) = wl_sh_mem_load16 a s /\
+   wl_sh_mem_load16 a (wl_state_clock_fupd (combin_K k) s) = wl_sh_mem_load16 a s /\
+   wl_sh_mem_load16 a (wl_state_stack_fupd (combin_K xs) s) = wl_sh_mem_load16 a s`,
   SIMP[wl_sh_mem_load16_def]);;
 
 let _ = cake_add_simps [wl_sh_mem_load16_with_const];;
 
 (* HOL4: sh_mem_load32_with_const[simp]; line 1227 *)
 let wl_sh_mem_load32_with_const = prove
- (`wl_sh_mem_load32 a (wl_state_locals_fupd (K l) (s:(A,C,FFI)wl_state)) = wl_sh_mem_load32 a s /\
-   wl_sh_mem_load32 a (wl_state_permute_fupd (K p) s) = wl_sh_mem_load32 a s /\
-   wl_sh_mem_load32 a (wl_state_clock_fupd (K k) s) = wl_sh_mem_load32 a s /\
-   wl_sh_mem_load32 a (wl_state_stack_fupd (K xs) s) = wl_sh_mem_load32 a s`,
+ (`wl_sh_mem_load32 a (wl_state_locals_fupd (combin_K l) (s:(A,C,FFI)wl_state)) = wl_sh_mem_load32 a s /\
+   wl_sh_mem_load32 a (wl_state_permute_fupd (combin_K p) s) = wl_sh_mem_load32 a s /\
+   wl_sh_mem_load32 a (wl_state_clock_fupd (combin_K k) s) = wl_sh_mem_load32 a s /\
+   wl_sh_mem_load32 a (wl_state_stack_fupd (combin_K xs) s) = wl_sh_mem_load32 a s`,
   SIMP[wl_sh_mem_load32_def]);;
 
 let _ = cake_add_simps [wl_sh_mem_load32_with_const];;
 
 (* HOL4: sh_mem_store_with_const[simp]; line 1236 *)
 let wl_sh_mem_store_with_const = prove
- (`wl_sh_mem_store a w (wl_state_permute_fupd (K p) (s:(A,C,FFI)wl_state)) =
-   (I ## (\s. wl_state_permute_fupd (K p) s)) (wl_sh_mem_store a w
+ (`wl_sh_mem_store a w (wl_state_permute_fupd (combin_K p) (s:(A,C,FFI)wl_state)) =
+   (I ## (\s. wl_state_permute_fupd (combin_K p) s)) (wl_sh_mem_store a w
        s:((W)wl_result)option#(A,C,FFI)wl_state) /\
-   wl_sh_mem_store a w (wl_state_clock_fupd (K k) s) =
-   (I ## (\s. wl_state_clock_fupd (K k) s)) (wl_sh_mem_store a w
+   wl_sh_mem_store a w (wl_state_clock_fupd (combin_K k) s) =
+   (I ## (\s. wl_state_clock_fupd (combin_K k) s)) (wl_sh_mem_store a w
        s:((W)wl_result)option#(A,C,FFI)wl_state)`,
   IL2AUX_WITH_TAC[wl_sh_mem_store_def; wl_flush_state_def]);;
 
@@ -1482,11 +1482,11 @@ let _ = cake_add_simps [wl_sh_mem_store_with_const];;
 
 (* HOL4: sh_mem_store_byte_with_const[simp]; line 1245 *)
 let wl_sh_mem_store_byte_with_const = prove
- (`wl_sh_mem_store_byte a w (wl_state_permute_fupd (K p) (s:(A,C,FFI)wl_state)) =
-   (I ## (\s. wl_state_permute_fupd (K p) s)) (wl_sh_mem_store_byte a w
+ (`wl_sh_mem_store_byte a w (wl_state_permute_fupd (combin_K p) (s:(A,C,FFI)wl_state)) =
+   (I ## (\s. wl_state_permute_fupd (combin_K p) s)) (wl_sh_mem_store_byte a w
        s:((W)wl_result)option#(A,C,FFI)wl_state) /\
-   wl_sh_mem_store_byte a w (wl_state_clock_fupd (K k) s) =
-   (I ## (\s. wl_state_clock_fupd (K k) s)) (wl_sh_mem_store_byte a w
+   wl_sh_mem_store_byte a w (wl_state_clock_fupd (combin_K k) s) =
+   (I ## (\s. wl_state_clock_fupd (combin_K k) s)) (wl_sh_mem_store_byte a w
        s:((W)wl_result)option#(A,C,FFI)wl_state)`,
   IL2AUX_WITH_TAC[wl_sh_mem_store_byte_def; wl_flush_state_def]);;
 
@@ -1494,11 +1494,11 @@ let _ = cake_add_simps [wl_sh_mem_store_byte_with_const];;
 
 (* HOL4: sh_mem_store16_with_const[simp]; line 1254 *)
 let wl_sh_mem_store16_with_const = prove
- (`wl_sh_mem_store16 a w (wl_state_permute_fupd (K p) (s:(A,C,FFI)wl_state)) =
-   (I ## (\s. wl_state_permute_fupd (K p) s)) (wl_sh_mem_store16 a w
+ (`wl_sh_mem_store16 a w (wl_state_permute_fupd (combin_K p) (s:(A,C,FFI)wl_state)) =
+   (I ## (\s. wl_state_permute_fupd (combin_K p) s)) (wl_sh_mem_store16 a w
        s:((W)wl_result)option#(A,C,FFI)wl_state) /\
-   wl_sh_mem_store16 a w (wl_state_clock_fupd (K k) s) =
-   (I ## (\s. wl_state_clock_fupd (K k) s)) (wl_sh_mem_store16 a w
+   wl_sh_mem_store16 a w (wl_state_clock_fupd (combin_K k) s) =
+   (I ## (\s. wl_state_clock_fupd (combin_K k) s)) (wl_sh_mem_store16 a w
        s:((W)wl_result)option#(A,C,FFI)wl_state)`,
   IL2AUX_WITH_TAC[wl_sh_mem_store16_def; wl_flush_state_def]);;
 
@@ -1506,11 +1506,11 @@ let _ = cake_add_simps [wl_sh_mem_store16_with_const];;
 
 (* HOL4: sh_mem_store32_with_const[simp]; line 1263 *)
 let wl_sh_mem_store32_with_const = prove
- (`wl_sh_mem_store32 a w (wl_state_permute_fupd (K p) (s:(A,C,FFI)wl_state)) =
-   (I ## (\s. wl_state_permute_fupd (K p) s)) (wl_sh_mem_store32 a w
+ (`wl_sh_mem_store32 a w (wl_state_permute_fupd (combin_K p) (s:(A,C,FFI)wl_state)) =
+   (I ## (\s. wl_state_permute_fupd (combin_K p) s)) (wl_sh_mem_store32 a w
        s:((W)wl_result)option#(A,C,FFI)wl_state) /\
-   wl_sh_mem_store32 a w (wl_state_clock_fupd (K k) s) =
-   (I ## (\s. wl_state_clock_fupd (K k) s)) (wl_sh_mem_store32 a w
+   wl_sh_mem_store32 a w (wl_state_clock_fupd (combin_K k) s) =
+   (I ## (\s. wl_state_clock_fupd (combin_K k) s)) (wl_sh_mem_store32 a w
        s:((W)wl_result)option#(A,C,FFI)wl_state)`,
   IL2AUX_WITH_TAC[wl_sh_mem_store32_def; wl_flush_state_def]);;
 
@@ -1518,11 +1518,11 @@ let _ = cake_add_simps [wl_sh_mem_store32_with_const];;
 
 (* line 1272 [simp] *)
 let share_inst_with_const = prove
- (`share_inst op v c (wl_state_permute_fupd (K p) (s:(A,C,FFI)wl_state)) =
-   (I ## (\s. wl_state_permute_fupd (K p) s)) (share_inst op v c
+ (`share_inst op v c (wl_state_permute_fupd (combin_K p) (s:(A,C,FFI)wl_state)) =
+   (I ## (\s. wl_state_permute_fupd (combin_K p) s)) (share_inst op v c
        s:((W)wl_result)option#(A,C,FFI)wl_state) /\
-   share_inst op v c (wl_state_clock_fupd (K k) s) =
-   (I ## (\s. wl_state_clock_fupd (K k) s)) (share_inst op v c
+   share_inst op v c (wl_state_clock_fupd (combin_K k) s) =
+   (I ## (\s. wl_state_clock_fupd (combin_K k) s)) (share_inst op v c
        s:((W)wl_result)option#(A,C,FFI)wl_state)`,
   STRUCT_CASES_TAC (ISPEC `op:memop` (cases "memop")) THEN
   IL2AUX_WITH_TAC[share_inst_def; wl_sh_mem_store_def; wl_sh_mem_store_byte_def;
@@ -1532,18 +1532,18 @@ let _ = cake_add_simps [share_inst_with_const];;
 
 (* line 1281 [simp] *)
 let cut_state_with_const = prove
- (`wl_cut_state x (wl_state_clock_fupd (K k) (z:(A,C,FFI)wl_state))
-     = OPTION_MAP (\s. wl_state_clock_fupd (K k) s) (wl_cut_state x z) /\
-   wl_cut_state x (wl_state_code_fupd (K code) z)
-       = OPTION_MAP (\s. wl_state_code_fupd (K code) s) (wl_cut_state x z) /\
-   wl_cut_state x (wl_state_compile_fupd (K c) z)
-       = OPTION_MAP (\s. wl_state_compile_fupd (K c) s) (wl_cut_state x z) /\
-   wl_cut_state x (wl_state_compile_oracle_fupd (K co) z)
-       = OPTION_MAP (\s. wl_state_compile_oracle_fupd (K co) s) (wl_cut_state x z) /\
-   wl_cut_state x (wl_state_permute_fupd (K perm) z)
-       = OPTION_MAP (\s. wl_state_permute_fupd (K perm) s) (wl_cut_state x z) /\
-   wl_cut_state x (wl_state_stack_fupd (K xs) z)
-       = OPTION_MAP (\s. wl_state_stack_fupd (K xs) s) (wl_cut_state x z)`,
+ (`wl_cut_state x (wl_state_clock_fupd (combin_K k) (z:(A,C,FFI)wl_state))
+     = OPTION_MAP (\s. wl_state_clock_fupd (combin_K k) s) (wl_cut_state x z) /\
+   wl_cut_state x (wl_state_code_fupd (combin_K code) z)
+       = OPTION_MAP (\s. wl_state_code_fupd (combin_K code) s) (wl_cut_state x z) /\
+   wl_cut_state x (wl_state_compile_fupd (combin_K c) z)
+       = OPTION_MAP (\s. wl_state_compile_fupd (combin_K c) s) (wl_cut_state x z) /\
+   wl_cut_state x (wl_state_compile_oracle_fupd (combin_K co) z)
+       = OPTION_MAP (\s. wl_state_compile_oracle_fupd (combin_K co) s) (wl_cut_state x z) /\
+   wl_cut_state x (wl_state_permute_fupd (combin_K perm) z)
+       = OPTION_MAP (\s. wl_state_permute_fupd (combin_K perm) s) (wl_cut_state x z) /\
+   wl_cut_state x (wl_state_stack_fupd (combin_K xs) z)
+       = OPTION_MAP (\s. wl_state_stack_fupd (combin_K xs) s) (wl_cut_state x z)`,
   IL2AUX_WITH_TAC[wl_cut_state_def]);;
 
 let _ = cake_add_simps [cut_state_with_const];;
@@ -1551,7 +1551,7 @@ let _ = cake_add_simps [cut_state_with_const];;
 (* line 1293 *)
 let cut_state_const = prove
  (`wl_cut_state x (s:(A,C,FFI)wl_state) = SOME s' ==>
-   ?l. s' = wl_state_locals_fupd (K l) s`,
+   ?l. s' = wl_state_locals_fupd (combin_K l) s`,
   REWRITE_TAC[wl_cut_state_def] THEN EVERY_CASE_TAC THEN
   REWRITE_TAC[option_INJ; option_DISTINCT] THEN MESON_TAC[]);;
 
@@ -1615,8 +1615,8 @@ let evaluate_clock_with_const = prove
  (IL2AUX_select_goals
     (IL2AUX_ind_goals
        `\(p:(A)wl_prog,s:(A,C,FFI)wl_state).
-          !k. wl_evaluate (p, wl_state_clock_fupd (K k) s) =
-              pair_CASE (wl_evaluate (p,s)) (\r s. (r, wl_state_clock_fupd (K k) s))`)
+          !k. wl_evaluate (p, wl_state_clock_fupd (combin_K k) s) =
+              pair_CASE (wl_evaluate (p,s)) (\r s. (r, wl_state_clock_fupd (combin_K k) s))`)
     IL2AUX_nonrec_cons,
   REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN ONCE_REWRITE_TAC[wl_evaluate_def] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN SIMP[] THEN
@@ -1713,7 +1713,7 @@ let IL2AUX_USE_IHS_RW_TAC (rws:thm list) : tactic = fun (asl,w as g) ->
       let vs,bod = strip_forall (concl th') in
       if is_imp bod && exists IL2AUX_is_eval_eq (conjuncts(fst(dest_imp bod)))
       then th' else failwith "") asl in
-  let avoid = freesl (w :: map (concl o snd) asl) in
+  let avoid = freesl (w :: map (concl o snd) asl @ flat (map (hyp o snd) asl)) in
   let inst_of ih0 e =
     let vs0,_ = strip_forall (concl ih0) in
     let vs1 = rev(itlist (fun v acc -> variant (acc @ avoid) v :: acc) (rev vs0) []) in
@@ -1844,9 +1844,9 @@ let IL2AUX_ADD_CLOCK_LOOP_TAC : tactic =
       DISCH_THEN(MP_TAC o SPECL [`r:((A)wl_result)option`; `s':(A,C,FFI)wl_state`]) THEN
       ASM_REWRITE_TAC[] THEN
       SUBGOAL_THEN
-       `wl_dec_clock (wl_state_clock_fupd (K (wl_state_clock s1 + extra))
+       `wl_dec_clock (wl_state_clock_fupd (combin_K (wl_state_clock s1 + extra))
                         (s1:(A,C,FFI)wl_state)) =
-        wl_state_clock_fupd (K (wl_state_clock (wl_dec_clock s1) + extra))
+        wl_state_clock_fupd (combin_K (wl_state_clock (wl_dec_clock s1) + extra))
           (wl_dec_clock s1)` SUBST1_TAC THENL
        [REWRITE_TAC[wl_dec_clock_def] THEN SIMP[] THEN ASM_ARITH_TAC;
         REWRITE_TAC[]]];
@@ -1880,8 +1880,8 @@ let IL2AUX_ADD_CLOCK_CALL_TAC : tactic =
 let wl_evaluate_add_clock = prove
  (`!p (s:(A,C,FFI)wl_state) r s'.
      wl_evaluate (p,s) = (r,s') /\ ~(r = SOME wl_TimeOut)
-     ==> wl_evaluate (p, wl_state_clock_fupd (K (wl_state_clock s + extra)) s) =
-         (r, wl_state_clock_fupd (K (wl_state_clock s' + extra)) s')`,
+     ==> wl_evaluate (p, wl_state_clock_fupd (combin_K (wl_state_clock s + extra)) s) =
+         (r, wl_state_clock_fupd (combin_K (wl_state_clock s' + extra)) s')`,
   IL2AUX_EVAL_IND_TAC wl_evaluate_ind THEN REPEAT CONJ_TAC THENL
    (replicate IL2AUX_NONREC_CLOCK_TAC 10 @
     [IL2AUX_ADD_CLOCK_TICK_TAC; IL2AUX_ADD_CLOCK_MT_TAC; IL2AUX_ADD_CLOCK_SEQ_TAC] @
@@ -1898,9 +1898,9 @@ let wl_evaluate_add_clock = prove
 (* program, and can be characterized by st.clock - rst.clock                *)
 
 let with_locals_same_clock = prove
- (`wl_state_locals_fupd (K l)
-     (wl_state_clock_fupd (K (wl_state_clock (s:(A,C,FFI)wl_state))) s) =
-   wl_state_locals_fupd (K l) s`,
+ (`wl_state_locals_fupd (combin_K l)
+     (wl_state_clock_fupd (combin_K (wl_state_clock (s:(A,C,FFI)wl_state))) s) =
+   wl_state_locals_fupd (combin_K l) s`,
   REWRITE_TAC[wl_state_component_equality] THEN SIMP[]);;
 
 let _ = cake_add_simps [with_locals_same_clock];;
@@ -1917,8 +1917,8 @@ let cont_loop_not_timeout = prove
 let evaluate_add_clock_body = prove
  (`wl_evaluate (c,s:(A,C,FFI)wl_state) = (res,s') /\ wl_cont_loop res ==>
    !extra.
-     wl_evaluate (c, wl_state_clock_fupd (K (wl_state_clock s + extra)) s) =
-     (res, wl_state_clock_fupd (K (wl_state_clock s' + extra)) s')`,
+     wl_evaluate (c, wl_state_clock_fupd (combin_K (wl_state_clock s + extra)) s) =
+     (res, wl_state_clock_fupd (combin_K (wl_state_clock s' + extra)) s')`,
   STRIP_TAC THEN FIRST_ASSUM(ASSUME_TAC o MATCH_MP cont_loop_not_timeout) THEN
   GEN_TAC THEN MATCH_MP_TAC wl_evaluate_add_clock THEN ASM_REWRITE_TAC[]);;
 
@@ -1956,11 +1956,11 @@ let IL2AUX_DEC_CLOCK_MT_TAC : tactic =
 
 let IL2AUX_add_clock_shift = prove
  (`!p (s:(A,C,FFI)wl_state) r s' a c.
-     wl_evaluate (p, wl_state_clock_fupd (K a) s) =
-       (r, wl_state_clock_fupd (K 0) s') /\
+     wl_evaluate (p, wl_state_clock_fupd (combin_K a) s) =
+       (r, wl_state_clock_fupd (combin_K 0) s') /\
      ~(r = SOME wl_TimeOut) /\ a <= c
-     ==> wl_evaluate (p, wl_state_clock_fupd (K c) s) =
-         (r, wl_state_clock_fupd (K (c - a)) s')`,
+     ==> wl_evaluate (p, wl_state_clock_fupd (combin_K c) s) =
+         (r, wl_state_clock_fupd (combin_K (c - a)) s')`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   FIRST_X_ASSUM(MP_TAC o
     MATCH_MP (INST [`c - a:num`,`extra:num`] wl_evaluate_add_clock) o
@@ -1975,7 +1975,7 @@ let IL2AUX_dest_clock_upd t =
   let f,args = strip_comb t in
   if fst(dest_const f) = "wl_state_clock_fupd" && length args = 2 then
     let k = hd args in
-    if fst(dest_const(rator k)) = "K" then rand k, el 1 args else failwith ""
+    if fst(dest_const(rator k)) = "combin_K" then rand k, el 1 args else failwith ""
   else failwith "";;
 
 (* for an assumption evaluate (p, s with clock := a) = (r, y with clock := 0) *)
@@ -2110,8 +2110,8 @@ let evaluate_dec_clock = prove
  (`!prog (st:(A,C,FFI)wl_state) res rst.
      wl_evaluate (prog,st) = (res,rst)
      ==> wl_evaluate (prog, wl_state_clock_fupd
-                              (K (wl_state_clock st - wl_state_clock rst)) st) =
-         (res, wl_state_clock_fupd (K 0) rst)`,
+                              (combin_K (wl_state_clock st - wl_state_clock rst)) st) =
+         (res, wl_state_clock_fupd (combin_K 0) rst)`,
   IL2AUX_EVAL_IND_TAC wl_evaluate_ind THEN REPEAT CONJ_TAC THENL
    (replicate IL2AUX_NONREC_DEC_TAC 10 @
     [IL2AUX_DEC_CLOCK_TICK_TAC; IL2AUX_DEC_CLOCK_MT_TAC; IL2AUX_DEC_GEN_TAC] @
@@ -2209,8 +2209,8 @@ let SND_alt_def = prove
 let IL2AUX_add_clock_extra = prove
  (`!p (s:(A,C,FFI)wl_state) r s'.
      wl_evaluate (p,s) = (r,s') /\ ~(r = SOME wl_TimeOut)
-     ==> wl_evaluate (p, wl_state_clock_fupd (K (wl_state_clock s + extra)) s) =
-         (r, wl_state_clock_fupd (K (wl_state_clock s' + extra)) s')`,
+     ==> wl_evaluate (p, wl_state_clock_fupd (combin_K (wl_state_clock s + extra)) s) =
+         (r, wl_state_clock_fupd (combin_K (wl_state_clock s' + extra)) s')`,
   REWRITE_TAC[wl_evaluate_add_clock]);;
 
 (* the facts of IL2AUX_add_clock_extra for the evaluate assumptions *)
@@ -2291,7 +2291,7 @@ let IL2AUX_acio_lemma = prove
      wl_evaluate (p,s) = (r1,s1)
      ==> ffi_state_io_events (wl_state_ffi s1) <<=
          ffi_state_io_events (wl_state_ffi (SND (wl_evaluate
-           (p, wl_state_clock_fupd (K (wl_state_clock s + extra)) s))))`,
+           (p, wl_state_clock_fupd (combin_K (wl_state_clock s + extra)) s))))`,
   IL2AUX_EVAL_IND_TAC wl_evaluate_ind THEN REPEAT CONJ_TAC THENL
    (replicate IL2AUX_NONREC_ACIO_TAC 10 @ replicate IL2AUX_ACIO_TAC 3 @
     replicate IL2AUX_NONREC_ACIO_TAC 4 @ replicate IL2AUX_ACIO_TAC 2 @
@@ -2302,7 +2302,7 @@ let wl_evaluate_add_clock_io_events_mono = prove
  (`!exps (s:(A,C,FFI)wl_state) extra.
      ffi_state_io_events (wl_state_ffi (SND (wl_evaluate (exps,s)))) <<=
      ffi_state_io_events (wl_state_ffi (SND (wl_evaluate
-       (exps, wl_state_clock_fupd (K (wl_state_clock s + extra)) s))))`,
+       (exps, wl_state_clock_fupd (combin_K (wl_state_clock s + extra)) s))))`,
   REPEAT GEN_TAC THEN
   MP_TAC (ISPEC `wl_evaluate (exps:(A)wl_prog, s:(A,C,FFI)wl_state)` PAIR_SURJECTIVE) THEN
   REWRITE_TAC[LEFT_IMP_EXISTS_THM] THEN
@@ -2637,7 +2637,7 @@ let s_val_eq_dec_stack = prove
 let gc_s_val_eq = prove
  (`!(s:(A,C,FFI)wl_state) (x:B) st y.
      s_val_eq (wl_state_stack s) st /\ wl_gc s = SOME y
-     ==> ?z. wl_gc (wl_state_stack_fupd (K st) s) = SOME (wl_state_stack_fupd (K z) y) /\
+     ==> ?z. wl_gc (wl_state_stack_fupd (combin_K st) s) = SOME (wl_state_stack_fupd (combin_K z) y) /\
              s_val_eq (wl_state_stack y) z /\ s_key_eq z st`,
   REPEAT GEN_TAC THEN REWRITE_TAC[wl_gc_def; LET_DEF; LET_END_DEF] THEN
   CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
@@ -2660,8 +2660,8 @@ let gc_s_val_eq_word_state = prove
  (`!(s:(A,C,FFI)wl_state) tlocs tstack y.
      s_val_eq (wl_state_stack s) tstack /\ wl_gc s = SOME y
      ==> ?zlocs zstack.
-           wl_gc (wl_state_locals_fupd (K tlocs) (wl_state_stack_fupd (K tstack) s)) =
-           SOME (wl_state_locals_fupd (K zlocs) (wl_state_stack_fupd (K zstack) y)) /\
+           wl_gc (wl_state_locals_fupd (combin_K tlocs) (wl_state_stack_fupd (combin_K tstack) s)) =
+           SOME (wl_state_locals_fupd (combin_K zlocs) (wl_state_stack_fupd (combin_K zstack) y)) /\
            s_val_eq (wl_state_stack y) zstack /\ s_key_eq zstack tstack`,
   REPEAT GEN_TAC THEN REWRITE_TAC[wl_gc_def; LET_DEF; LET_END_DEF] THEN
   CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
@@ -2897,7 +2897,7 @@ let LASTN_LENGTH_cond = prove
 
 (* HOL4 [local] *)
 let handler_eq = prove
- (`wl_state_handler_fupd (K (wl_state_handler x)) (x:(A,C,FFI)wl_state) = x`,
+ (`wl_state_handler_fupd (combin_K (wl_state_handler x)) (x:(A,C,FFI)wl_state) = x`,
   REWRITE_TAC[wl_state_component_equality] THEN SIMP[]);;
 
 let IL2AUX_stack_size_frame_alt = prove
@@ -2992,15 +2992,15 @@ let IL2AUX_ss_stop_def = cake_def
  `IL2AUX_ss_stop (c:(A)wl_prog) (s:(A,C,FFI)wl_state) r s1 <=>
     wl_state_stack s1 = [] /\ wl_state_locals s1 = LN /\
     (!xs. s_val_eq (wl_state_stack s) xs
-          ==> wl_evaluate (c,wl_state_stack_fupd (K xs) s) = (r,s1))`;;
+          ==> wl_evaluate (c,wl_state_stack_fupd (combin_K xs) s) = (r,s1))`;;
 
 let IL2AUX_ss_norm_def = cake_def
  `IL2AUX_ss_norm (c:(A)wl_prog) (s:(A,C,FFI)wl_state) r s1 <=>
     s_key_eq (wl_state_stack s) (wl_state_stack s1) /\
     wl_state_handler s1 = wl_state_handler s /\
     (!xs. s_val_eq (wl_state_stack s) xs
-          ==> ?st. wl_evaluate (c,wl_state_stack_fupd (K xs) s) =
-                     (r,wl_state_stack_fupd (K st) s1) /\
+          ==> ?st. wl_evaluate (c,wl_state_stack_fupd (combin_K xs) s) =
+                     (r,wl_state_stack_fupd (combin_K st) s1) /\
                    s_val_eq (wl_state_stack s1) st /\ s_key_eq xs st)`;;
 
 let IL2AUX_ss_exc_def = cake_def
@@ -3018,11 +3018,11 @@ let IL2AUX_ss_exc_def = cake_def
           LASTN (wl_state_handler s + 1) xs = CONS (StackFrame m e0' e' (SOME n)) ls' /\
           s_val_eq (wl_state_stack s) xs
           ==> ?st locs.
-                wl_evaluate (c,wl_state_stack_fupd (K xs) s) =
+                wl_evaluate (c,wl_state_stack_fupd (combin_K xs) s) =
                   (SOME (wl_Exception x y),
-                   wl_state_stack_fupd (K st)
-                     (wl_state_handler_fupd (K (match n with (a,b,d) -> a))
-                        (wl_state_locals_fupd (K locs) s1))) /\
+                   wl_state_stack_fupd (combin_K st)
+                     (wl_state_handler_fupd (combin_K (match n with (a,b,d) -> a))
+                        (wl_state_locals_fupd (combin_K locs) s1))) /\
                 (?lss'. MAP FST e' = MAP FST lss' /\
                         locs = sptree_union (fromAList lss') (fromAList e0') /\
                         MAP SND lss = MAP SND lss') /\
@@ -3060,10 +3060,10 @@ let IL2AUX_ss_norm_transfer = prove
      wl_state_stack s' = wl_state_stack s /\ wl_state_handler s' = wl_state_handler s /\
      wl_state_stack s2 = wl_state_stack s1 /\ wl_state_handler s2 = wl_state_handler s1 /\
      (!xs st. s_val_eq (wl_state_stack s) xs /\
-              wl_evaluate (p, wl_state_stack_fupd (K xs) s') =
-                (r, wl_state_stack_fupd (K st) s1)
-              ==> wl_evaluate (P, wl_state_stack_fupd (K xs) s) =
-                    (r', wl_state_stack_fupd (K st) s2))
+              wl_evaluate (p, wl_state_stack_fupd (combin_K xs) s') =
+                (r, wl_state_stack_fupd (combin_K st) s1)
+              ==> wl_evaluate (P, wl_state_stack_fupd (combin_K xs) s) =
+                    (r', wl_state_stack_fupd (combin_K st) s2))
      ==> IL2AUX_ss_norm P s r' s2`,
   REWRITE_TAC[IL2AUX_ss_norm_def] THEN REPEAT GEN_TAC THEN STRIP_TAC THEN
   ASM_REWRITE_TAC[] THEN
@@ -3078,8 +3078,8 @@ let IL2AUX_ss_stop_transfer = prove
      IL2AUX_ss_stop p s' r s1 /\ wl_state_stack s' = wl_state_stack s /\
      wl_state_stack s2 = [] /\ wl_state_locals s2 = LN /\
      (!xs. s_val_eq (wl_state_stack s) xs /\
-           wl_evaluate (p, wl_state_stack_fupd (K xs) s') = (r,s1)
-           ==> wl_evaluate (P, wl_state_stack_fupd (K xs) s) = (r',s2))
+           wl_evaluate (p, wl_state_stack_fupd (combin_K xs) s') = (r,s1)
+           ==> wl_evaluate (P, wl_state_stack_fupd (combin_K xs) s) = (r',s2))
      ==> IL2AUX_ss_stop P s r' s2`,
   REWRITE_TAC[IL2AUX_ss_stop_def] THEN MESON_TAC[]);;
 
@@ -3092,14 +3092,14 @@ let IL2AUX_ss_exc_transfer = prove
      wl_state_locals_size s2 = wl_state_locals_size s1 /\
      (!xs st h locs.
         s_val_eq (wl_state_stack s) xs /\
-        wl_evaluate (p, wl_state_stack_fupd (K xs) s') =
+        wl_evaluate (p, wl_state_stack_fupd (combin_K xs) s') =
           (SOME (wl_Exception x y),
-           wl_state_stack_fupd (K st)
-             (wl_state_handler_fupd (K h) (wl_state_locals_fupd (K locs) s1)))
-        ==> wl_evaluate (P, wl_state_stack_fupd (K xs) s) =
+           wl_state_stack_fupd (combin_K st)
+             (wl_state_handler_fupd (combin_K h) (wl_state_locals_fupd (combin_K locs) s1)))
+        ==> wl_evaluate (P, wl_state_stack_fupd (combin_K xs) s) =
               (SOME (wl_Exception x y),
-               wl_state_stack_fupd (K st)
-                 (wl_state_handler_fupd (K h) (wl_state_locals_fupd (K locs) s2))))
+               wl_state_stack_fupd (combin_K st)
+                 (wl_state_handler_fupd (combin_K h) (wl_state_locals_fupd (combin_K locs) s2))))
      ==> IL2AUX_ss_exc P s x y s2`,
   REWRITE_TAC[IL2AUX_ss_exc_def] THEN REPEAT GEN_TAC THEN STRIP_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[ASSUME `wl_state_stack (s':(A,C,FFI)wl_state) =
@@ -3130,8 +3130,8 @@ let IL2AUX_ss_aseq_stop = prove
      wl_state_stack s1b = wl_state_stack s1 /\
      (!xs. s_val_eq (wl_state_stack s) xs
            ==> ?st1. s_val_eq (wl_state_stack s1) st1 /\ s_key_eq xs st1 /\
-                     wl_evaluate (P, wl_state_stack_fupd (K xs) s) =
-                     wl_evaluate (c2, wl_state_stack_fupd (K st1) s1b)) /\
+                     wl_evaluate (P, wl_state_stack_fupd (combin_K xs) s) =
+                     wl_evaluate (c2, wl_state_stack_fupd (combin_K st1) s1b)) /\
      IL2AUX_ss_stop c2 s1b r s2
      ==> IL2AUX_ss_stop P s r s2`,
   REWRITE_TAC[IL2AUX_ss_stop_def] THEN MESON_TAC[]);;
@@ -3144,8 +3144,8 @@ let IL2AUX_ss_aseq_norm = prove
      wl_state_stack s1b = wl_state_stack s1 /\ wl_state_handler s1b = wl_state_handler s1 /\
      (!xs. s_val_eq (wl_state_stack s) xs
            ==> ?st1. s_val_eq (wl_state_stack s1) st1 /\ s_key_eq xs st1 /\
-                     wl_evaluate (P, wl_state_stack_fupd (K xs) s) =
-                     wl_evaluate (c2, wl_state_stack_fupd (K st1) s1b)) /\
+                     wl_evaluate (P, wl_state_stack_fupd (combin_K xs) s) =
+                     wl_evaluate (c2, wl_state_stack_fupd (combin_K st1) s1b)) /\
      IL2AUX_ss_norm c2 s1b r s2
      ==> IL2AUX_ss_norm P s r s2`,
   REWRITE_TAC[IL2AUX_ss_norm_def] THEN REPEAT GEN_TAC THEN STRIP_TAC THEN
@@ -3170,8 +3170,8 @@ let IL2AUX_ss_aseq_exc = prove
      wl_state_stack s1b = wl_state_stack s1 /\ wl_state_handler s1b = wl_state_handler s1 /\
      (!xs. s_val_eq (wl_state_stack s) xs
            ==> ?st1. s_val_eq (wl_state_stack s1) st1 /\ s_key_eq xs st1 /\
-                     wl_evaluate (P, wl_state_stack_fupd (K xs) s) =
-                     wl_evaluate (c2, wl_state_stack_fupd (K st1) s1b)) /\
+                     wl_evaluate (P, wl_state_stack_fupd (combin_K xs) s) =
+                     wl_evaluate (c2, wl_state_stack_fupd (combin_K st1) s1b)) /\
      IL2AUX_ss_exc c2 s1b x y s2
      ==> IL2AUX_ss_exc P s x y s2`,
   REWRITE_TAC[IL2AUX_ss_exc_def] THEN REPEAT GEN_TAC THEN STRIP_TAC THEN
@@ -3239,8 +3239,8 @@ let IL2AUX_ss_aseq = prove
      wl_state_stack s1b = wl_state_stack s1 /\ wl_state_handler s1b = wl_state_handler s1 /\
      (!xs. s_val_eq (wl_state_stack s) xs
            ==> ?st1. s_val_eq (wl_state_stack s1) st1 /\ s_key_eq xs st1 /\
-                     wl_evaluate (P, wl_state_stack_fupd (K xs) s) =
-                     wl_evaluate (c2, wl_state_stack_fupd (K st1) s1b)) /\
+                     wl_evaluate (P, wl_state_stack_fupd (combin_K xs) s) =
+                     wl_evaluate (c2, wl_state_stack_fupd (combin_K st1) s1b)) /\
      IL2AUX_ss c2 s1b r s2
      ==> IL2AUX_ss P s r s2`,
   REPEAT GEN_TAC THEN
@@ -3269,8 +3269,8 @@ let IL2AUX_ss_transfer = prove
  (`!P p (s:(A,C,FFI)wl_state) (s':(A,C,FFI)wl_state) r (s1:(A,C,FFI)wl_state).
      wl_state_stack s' = wl_state_stack s /\ wl_state_handler s' = wl_state_handler s /\
      (!xs t. s_val_eq (wl_state_stack s) xs /\
-             wl_evaluate (p, wl_state_stack_fupd (K xs) s') = (r,t)
-             ==> wl_evaluate (P, wl_state_stack_fupd (K xs) s) = (r,t)) /\
+             wl_evaluate (p, wl_state_stack_fupd (combin_K xs) s') = (r,t)
+             ==> wl_evaluate (P, wl_state_stack_fupd (combin_K xs) s) = (r,t)) /\
      IL2AUX_ss p s' r s1
      ==> IL2AUX_ss P s r s1`,
   REPEAT GEN_TAC THEN
@@ -3315,14 +3315,14 @@ let IL2AUX_stopr_thms = prove
 
 let IL2AUX_dec_clock_stack = prove
  (`!(s:(A,C,FFI)wl_state) xs.
-     wl_dec_clock (wl_state_stack_fupd (K xs) s) = wl_state_stack_fupd (K xs) (wl_dec_clock s)`,
+     wl_dec_clock (wl_state_stack_fupd (combin_K xs) s) = wl_state_stack_fupd (combin_K xs) (wl_dec_clock s)`,
   REWRITE_TAC[wl_dec_clock_def; wl_state_component_equality] THEN SIMP[]);;
 
 let IL2AUX_share_inst_stack = prove
  (`!op v ad (s:(A,C,FFI)wl_state) r t xs.
      share_inst op v ad s = (r:((A)wl_result)option,t)
-     ==> share_inst op v ad (wl_state_stack_fupd (K xs) s) =
-         (r, if IL2AUX_stopr r then t else wl_state_stack_fupd (K xs) t)`,
+     ==> share_inst op v ad (wl_state_stack_fupd (combin_K xs) s) =
+         (r, if IL2AUX_stopr r then t else wl_state_stack_fupd (combin_K xs) t)`,
   GEN_TAC THEN STRUCT_CASES_TAC (ISPEC `op:memop` (cases "memop")) THEN
   REWRITE_TAC[share_inst_def; wl_sh_mem_load_def; wl_sh_mem_load_byte_def;
               wl_sh_mem_load16_def; wl_sh_mem_load32_def; wl_sh_mem_store_def;
@@ -3365,16 +3365,16 @@ let IL2AUX_evaluate_stack_with = prove
  (IL2AUX_select_goals
     (IL2AUX_ind_goals
        `\(p:(A)wl_prog,s:(A,C,FFI)wl_state).
-          !xs. wl_evaluate (p, wl_state_stack_fupd (K xs) s) =
+          !xs. wl_evaluate (p, wl_state_stack_fupd (combin_K xs) s) =
                pair_CASE (wl_evaluate (p,s))
-                 (\r t. (r, if IL2AUX_stopr r then t else wl_state_stack_fupd (K xs) t))`)
+                 (\r t. (r, if IL2AUX_stopr r then t else wl_state_stack_fupd (combin_K xs) t))`)
     IL2AUX_transp_cons,
   REPEAT CONJ_TAC THEN IL2AUX_SW_TAC);;
 
 let IL2AUX_ss_simple = prove
  (`!p (s:(A,C,FFI)wl_state) r t.
-     (!xs. wl_evaluate (p, wl_state_stack_fupd (K xs) s) =
-           (r, if IL2AUX_stopr r then t else wl_state_stack_fupd (K xs) t)) /\
+     (!xs. wl_evaluate (p, wl_state_stack_fupd (combin_K xs) s) =
+           (r, if IL2AUX_stopr r then t else wl_state_stack_fupd (combin_K xs) t)) /\
      (IL2AUX_stopr r ==> wl_state_stack t = [] /\ wl_state_locals t = LN) /\
      (~IL2AUX_stopr r /\ ~(r = SOME wl_Error)
       ==> wl_state_stack t = wl_state_stack s /\ wl_state_handler t = wl_state_handler s) /\
@@ -3466,24 +3466,24 @@ let IL2AUX_KIND_TRANSFER2_TAC (p:term) (s':term) (s1:term) : tactic = fun (asl,w
 let IL2AUX_ss_mt = prove
  (`!p (s:(A,C,FFI)wl_state) r (s1:(A,C,FFI)wl_state).
      ~(wl_state_termdep s = 0) /\ ~(r = SOME wl_TimeOut) /\
-     IL2AUX_ss p (wl_state_clock_fupd (K (MustTerminate_limit (:A)))
-                    (wl_state_termdep_fupd (K (wl_state_termdep s - 1)) s)) r s1
+     IL2AUX_ss p (wl_state_clock_fupd (combin_K (MustTerminate_limit (:A)))
+                    (wl_state_termdep_fupd (combin_K (wl_state_termdep s - 1)) s)) r s1
      ==> IL2AUX_ss (MustTerminate p) s r
-           (wl_state_clock_fupd (K (wl_state_clock s))
-              (wl_state_termdep_fupd (K (wl_state_termdep s)) s1))`,
+           (wl_state_clock_fupd (combin_K (wl_state_clock s))
+              (wl_state_termdep_fupd (combin_K (wl_state_termdep s)) s1))`,
   REPEAT GEN_TAC THEN
   STRUCT_CASES_TAC (ISPEC `r:((A)wl_result)option` IL2AUX_res_cases) THEN
   REWRITE_TAC([IL2AUX_ss_thms] @ IL2AUX_res_rws) THEN STRIP_TAC THEN
-  (ABBREV_TAC `s0 = wl_state_clock_fupd (K (MustTerminate_limit (:A)))
-                     (wl_state_termdep_fupd (K (wl_state_termdep s - 1))
+  (ABBREV_TAC `s0 = wl_state_clock_fupd (combin_K (MustTerminate_limit (:A)))
+                     (wl_state_termdep_fupd (combin_K (wl_state_termdep s - 1))
                         (s:(A,C,FFI)wl_state))` THEN
   SUBGOAL_THEN
-   `!xs. wl_evaluate (MustTerminate p, wl_state_stack_fupd (K xs) s) =
-         pair_CASE (wl_evaluate (p, wl_state_stack_fupd (K xs) s0))
+   `!xs. wl_evaluate (MustTerminate p, wl_state_stack_fupd (combin_K xs) s) =
+         pair_CASE (wl_evaluate (p, wl_state_stack_fupd (combin_K xs) s0))
            (\res t. if res = SOME wl_TimeOut
-                    then (SOME wl_Error, wl_state_stack_fupd (K xs) (s:(A,C,FFI)wl_state))
-                    else (res, wl_state_clock_fupd (K (wl_state_clock s))
-                                 (wl_state_termdep_fupd (K (wl_state_termdep s)) t)))`
+                    then (SOME wl_Error, wl_state_stack_fupd (combin_K xs) (s:(A,C,FFI)wl_state))
+                    else (res, wl_state_clock_fupd (combin_K (wl_state_clock s))
+                                 (wl_state_termdep_fupd (combin_K (wl_state_termdep s)) t)))`
    ASSUME_TAC THENL
    [GEN_TAC THEN ONCE_REWRITE_TAC[wl_evaluate_def] THEN EXPAND_TAC "s0" THEN
     ASM_REWRITE_TAC[] THEN SIMP[]; ALL_TAC] THEN
@@ -3653,8 +3653,8 @@ let IL2AUX_ss_raise = prove
 let IL2AUX_push_env_stack_swap = prove
  (`!envs b (s:(A,C,FFI)wl_state) xs.
      s_val_eq (wl_state_stack s) xs
-     ==> wl_push_env envs b (wl_state_stack_fupd (K xs) s) =
-         wl_state_stack_fupd (K (CONS (HD (wl_state_stack (wl_push_env envs b s))) xs))
+     ==> wl_push_env envs b (wl_state_stack_fupd (combin_K xs) s) =
+         wl_state_stack_fupd (combin_K (CONS (HD (wl_state_stack (wl_push_env envs b s))) xs))
            (wl_push_env envs b s) /\
          s_val_eq (wl_state_stack (wl_push_env envs b s))
                   (CONS (HD (wl_state_stack (wl_push_env envs b s))) xs)`,
@@ -3670,16 +3670,16 @@ let IL2AUX_push_env_stack_swap = prove
 let IL2AUX_call_env_stack_swap = prove
  (`!args ss (s:(A,C,FFI)wl_state) xs.
      s_val_eq (wl_state_stack s) xs
-     ==> wl_call_env args ss (wl_state_stack_fupd (K xs) s) =
-         wl_state_stack_fupd (K xs) (wl_call_env args ss s)`,
+     ==> wl_call_env args ss (wl_state_stack_fupd (combin_K xs) s) =
+         wl_state_stack_fupd (combin_K xs) (wl_call_env args ss s)`,
   REPEAT STRIP_TAC THEN FIRST_ASSUM(ASSUME_TAC o MATCH_MP s_val_eq_stack_size) THEN
   REWRITE_TAC[wl_call_env_def; wl_state_component_equality] THEN SIMP[]);;
 
 let IL2AUX_pop_env_stack_swap = prove
  (`!(t:(A,C,FFI)wl_state) t1 f rest rest'.
      wl_pop_env t = SOME t1 /\ wl_state_stack t = CONS f rest
-     ==> wl_pop_env (wl_state_stack_fupd (K (CONS f rest')) t) =
-         SOME (wl_state_stack_fupd (K rest') t1)`,
+     ==> wl_pop_env (wl_state_stack_fupd (combin_K (CONS f rest')) t) =
+         SOME (wl_state_stack_fupd (combin_K rest') t1)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[wl_pop_env_def] THEN
   STRUCT_CASES_TAC (ISPEC `f:(A)stack_frame` (cases "stack_frame")) THEN
   STRUCT_CASES_TAC (ISPEC `a3:(num#num#num)option` (cases "option")) THEN
@@ -3746,10 +3746,10 @@ let IL2AUX_alloc_stack_swap = prove
      ==> s_key_eq (wl_state_stack s) (wl_state_stack s2) /\
          wl_state_handler s2 = wl_state_handler s /\
          ?z1 z. wl_gc (wl_push_env envs (NONE:(num#(A)wl_prog#num#num)option)
-                         (wl_state_stack_fupd (K xs) (wl_set_store AllocSize (wl_Word w) s))) =
-                SOME (wl_state_stack_fupd (K z1) s1) /\
-                wl_pop_env (wl_state_stack_fupd (K z1) s1) =
-                  SOME (wl_state_stack_fupd (K z) s2) /\
+                         (wl_state_stack_fupd (combin_K xs) (wl_set_store AllocSize (wl_Word w) s))) =
+                SOME (wl_state_stack_fupd (combin_K z1) s1) /\
+                wl_pop_env (wl_state_stack_fupd (combin_K z1) s1) =
+                  SOME (wl_state_stack_fupd (combin_K z) s2) /\
                 s_val_eq (wl_state_stack s2) z /\ s_key_eq xs z`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   ABBREV_TAC `u = wl_set_store AllocSize (wl_Word w) (s:(A,C,FFI)wl_state)` THEN
@@ -3839,9 +3839,9 @@ let IL2AUX_ss_alloc = prove
 let IL2AUX_call_stack_swap = prove
  (`!args1 ss envs b (s:(A,C,FFI)wl_state) xs.
      s_val_eq (wl_state_stack s) xs
-     ==> wl_call_env args1 ss (wl_push_env envs b (wl_dec_clock (wl_state_stack_fupd (K xs) s))) =
+     ==> wl_call_env args1 ss (wl_push_env envs b (wl_dec_clock (wl_state_stack_fupd (combin_K xs) s))) =
          wl_state_stack_fupd
-           (K (CONS (HD (wl_state_stack (wl_push_env envs b (wl_dec_clock s)))) xs))
+           (combin_K (CONS (HD (wl_state_stack (wl_push_env envs b (wl_dec_clock s)))) xs))
            (wl_call_env args1 ss (wl_push_env envs b (wl_dec_clock s))) /\
          s_val_eq (wl_state_stack (wl_call_env args1 ss (wl_push_env envs b (wl_dec_clock s))))
                   (CONS (HD (wl_state_stack (wl_push_env envs b (wl_dec_clock s)))) xs) /\
@@ -3906,9 +3906,9 @@ let IL2AUX_ss_call_ret0 = prove
      ==> IL2AUX_ss_stop (wl_Call (SOME (n,names,rh,l1,l2)) dest args handler) s
            (SOME wl_TimeOut)
            (wl_flush_state T
-              (wl_state_stack_fupd (K [])
+              (wl_state_stack_fupd (combin_K [])
                  (wl_state_stack_max_fupd
-                    (K (wl_state_stack_max (wl_call_env args1 ss (wl_push_env envs handler s))))
+                    (combin_K (wl_state_stack_max (wl_call_env args1 ss (wl_push_env envs handler s))))
                     s)))`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN REWRITE_TAC[IL2AUX_ss_stop_def] THEN
   SIMP[wl_flush_state_def] THEN REPEAT STRIP_TAC THEN
@@ -3930,8 +3930,8 @@ let IL2AUX_ss_call_ret0 = prove
 let IL2AUX_CALL_UNFOLD_TAC : tactic =
   ONCE_REWRITE_TAC[wl_evaluate_def] THEN
   REWRITE_TAC[wl_state_INFO.ri_accfupds; K_THM; wl_get_vars_with_const] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[];;
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[];;
 
 let IL2AUX_ss_call_stop = prove
  (`!n names rh l1 l2 dest args handler (s:(A,C,FFI)wl_state) vs args1 prog ss envs r
@@ -4013,10 +4013,10 @@ let IL2AUX_call_pop_facts = prove
          !xs. s_val_eq (wl_state_stack s) xs
               ==> ?st2 st1.
                     wl_evaluate (prog, wl_call_env args1 ss (wl_push_env envs handler
-                                   (wl_dec_clock (wl_state_stack_fupd (K xs) s)))) =
-                      (r2, wl_state_stack_fupd (K st2) s2) /\
-                    wl_pop_env (wl_state_stack_fupd (K st2) s2) =
-                      SOME (wl_state_stack_fupd (K st1) s1) /\
+                                   (wl_dec_clock (wl_state_stack_fupd (combin_K xs) s)))) =
+                      (r2, wl_state_stack_fupd (combin_K st2) s2) /\
+                    wl_pop_env (wl_state_stack_fupd (combin_K st2) s2) =
+                      SOME (wl_state_stack_fupd (combin_K st1) s1) /\
                     s_val_eq (wl_state_stack s1) st1 /\ s_key_eq xs st1`,
   REPEAT GEN_TAC THEN REWRITE_TAC[IL2AUX_ss_norm_def] THEN STRIP_TAC THEN
   MP_TAC (REWRITE_RULE[s_val_eq_refl]
@@ -4116,8 +4116,8 @@ let IL2AUX_call_exc_facts = prove
          wl_state_handler s2 = wl_state_handler s /\
          !xs. s_val_eq (wl_state_stack s) xs
               ==> ?st. wl_evaluate (prog, wl_call_env args1 ss (wl_push_env envs
-                         (SOME (hn,h,hl1,hl2)) (wl_dec_clock (wl_state_stack_fupd (K xs) s)))) =
-                         (SOME (wl_Exception x y), wl_state_stack_fupd (K st) s2) /\
+                         (SOME (hn,h,hl1,hl2)) (wl_dec_clock (wl_state_stack_fupd (combin_K xs) s)))) =
+                         (SOME (wl_Exception x y), wl_state_stack_fupd (combin_K st) s2) /\
                        s_val_eq (wl_state_stack s2) st /\ s_key_eq xs st`,
   REPEAT GEN_TAC THEN
   ABBREV_TAC `cs = wl_call_env args1 ss (wl_push_env envs (SOME (hn,h,hl1,hl2))
@@ -4361,15 +4361,15 @@ let wl_evaluate_stack_swap = prove
      | (SOME (wl_FinalFFI e),s1) ->
          wl_state_stack s1 = [] /\ wl_state_locals s1 = LN /\
          (!xs. s_val_eq (wl_state_stack s) xs
-               ==> wl_evaluate (c,wl_state_stack_fupd (K xs) s) = (SOME (wl_FinalFFI e),s1))
+               ==> wl_evaluate (c,wl_state_stack_fupd (combin_K xs) s) = (SOME (wl_FinalFFI e),s1))
      | (SOME wl_TimeOut,s1) ->
          wl_state_stack s1 = [] /\ wl_state_locals s1 = LN /\
          (!xs. s_val_eq (wl_state_stack s) xs
-               ==> wl_evaluate (c,wl_state_stack_fupd (K xs) s) = (SOME wl_TimeOut,s1))
+               ==> wl_evaluate (c,wl_state_stack_fupd (combin_K xs) s) = (SOME wl_TimeOut,s1))
      | (SOME NotEnoughSpace,s1) ->
          wl_state_stack s1 = [] /\ wl_state_locals s1 = LN /\
          (!xs. s_val_eq (wl_state_stack s) xs
-               ==> wl_evaluate (c,wl_state_stack_fupd (K xs) s) = (SOME NotEnoughSpace,s1))
+               ==> wl_evaluate (c,wl_state_stack_fupd (combin_K xs) s) = (SOME NotEnoughSpace,s1))
      | (SOME (wl_Exception x y),s1) ->
          wl_state_handler s < LENGTH (wl_state_stack s) /\
          (?e0 e n ls m lss.
@@ -4384,11 +4384,11 @@ let wl_evaluate_stack_swap = prove
                LASTN (wl_state_handler s + 1) xs = CONS (StackFrame m e0' e' (SOME n)) ls' /\
                s_val_eq (wl_state_stack s) xs
                ==> ?st locs.
-                     wl_evaluate (c,wl_state_stack_fupd (K xs) s) =
+                     wl_evaluate (c,wl_state_stack_fupd (combin_K xs) s) =
                        (SOME (wl_Exception x y),
-                        wl_state_stack_fupd (K st)
-                          (wl_state_handler_fupd (K (match n with (a,b,c) -> a))
-                             (wl_state_locals_fupd (K locs) s1))) /\
+                        wl_state_stack_fupd (combin_K st)
+                          (wl_state_handler_fupd (combin_K (match n with (a,b,c) -> a))
+                             (wl_state_locals_fupd (combin_K locs) s1))) /\
                      (?lss'. MAP FST e' = MAP FST lss' /\
                              locs = sptree_union (fromAList lss') (fromAList e0') /\
                              MAP SND lss = MAP SND lss') /\
@@ -4397,8 +4397,8 @@ let wl_evaluate_stack_swap = prove
          s_key_eq (wl_state_stack s) (wl_state_stack s1) /\
          wl_state_handler s1 = wl_state_handler s /\
          (!xs. s_val_eq (wl_state_stack s) xs
-               ==> ?st. wl_evaluate (c,wl_state_stack_fupd (K xs) s) =
-                          (res,wl_state_stack_fupd (K st) s1) /\
+               ==> ?st. wl_evaluate (c,wl_state_stack_fupd (combin_K xs) s) =
+                          (res,wl_state_stack_fupd (combin_K st) s1) /\
                         s_val_eq (wl_state_stack s1) st /\ s_key_eq xs st)`,
   REPEAT GEN_TAC THEN
   MP_TAC (ISPECL [`c:(A)wl_prog`; `s:(A,C,FFI)wl_state`] IL2AUX_evaluate_stack_swap) THEN
@@ -4427,8 +4427,8 @@ let IL2AUX_evaluate_permute_with_const = prove
  (IL2AUX_select_goals
     (IL2AUX_ind_goals
        `\(p:(A)wl_prog,s:(A,C,FFI)wl_state).
-          !k. wl_evaluate (p, wl_state_permute_fupd (K k) s) =
-              pair_CASE (wl_evaluate (p,s)) (\r s. (r, wl_state_permute_fupd (K k) s))`)
+          !k. wl_evaluate (p, wl_state_permute_fupd (combin_K k) s) =
+              pair_CASE (wl_evaluate (p,s)) (\r s. (r, wl_state_permute_fupd (combin_K k) s))`)
     (filter (fun c -> c <> "wl_Alloc") IL2AUX_nonrec_cons),
   REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN ONCE_REWRITE_TAC[wl_evaluate_def] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN SIMP[] THEN
@@ -4444,8 +4444,8 @@ let IL2AUX_evaluate_permute_with_const = prove
 let IL2AUX_push_env_permute = prove
  (`!envs b (s:(A,C,FFI)wl_state) q.
      q 0 = wl_state_permute s 0
-     ==> wl_push_env envs b (wl_state_permute_fupd (K q) s) =
-         wl_state_permute_fupd (K (\n. q (n + 1))) (wl_push_env envs b s)`,
+     ==> wl_push_env envs b (wl_state_permute_fupd (combin_K q) s) =
+         wl_state_permute_fupd (combin_K (\n. q (n + 1))) (wl_push_env envs b s)`,
   GEN_TAC THEN GEN_TAC THEN
   SPEC_TAC(`b:(num#(A)wl_prog#num#num)option`,`b:(num#(A)wl_prog#num#num)option`) THEN
   REWRITE_TAC[FORALL_OPTION_THM; FORALL_PAIR_THM; wl_push_env_def; env_to_list_def] THEN
@@ -4456,8 +4456,8 @@ let IL2AUX_alloc_permute = prove
  (`!w names (st:(A,C,FFI)wl_state) res rst q.
      wl_alloc w names st = (res,rst) /\ ~(res = SOME wl_Error) /\
      q 0 = wl_state_permute st 0
-     ==> wl_alloc w names (wl_state_permute_fupd (K q) st) =
-         (res, wl_state_permute_fupd (K (\n. q (n + 1))) rst)`,
+     ==> wl_alloc w names (wl_state_permute_fupd (combin_K q) st) =
+         (res, wl_state_permute_fupd (combin_K (\n. q (n + 1))) rst)`,
   REPEAT GEN_TAC THEN DISCH_THEN(fun th -> MAP_EVERY ASSUME_TAC (CONJUNCTS th)) THEN
   FIRST_X_ASSUM (MP_TAC o check (fun th ->
     try fst(dest_const(fst(strip_comb(lhs(concl th))))) = "wl_alloc" with Failure _ -> false)) THEN
@@ -4474,8 +4474,8 @@ let IL2AUX_alloc_permute2 = prove
      wl_alloc w names st = (res,rst) /\ ~(res = SOME wl_Error)
      ==> wl_alloc w names
            (wl_state_permute_fupd
-              (K (\x. if x = 0 then wl_state_permute st 0 else perm (x - 1))) st) =
-         (res, wl_state_permute_fupd (K perm) rst)`,
+              (combin_K (\x. if x = 0 then wl_state_permute st 0 else perm (x - 1))) st) =
+         (res, wl_state_permute_fupd (combin_K perm) rst)`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   MP_TAC (ISPECL [`w:A word`; `names:cutsets`; `st:(A,C,FFI)wl_state`;
                   `res:((A)wl_result)option`; `rst:(A,C,FFI)wl_state`;
@@ -4490,7 +4490,7 @@ let IL2AUX_alloc_permute2 = prove
 
 let IL2AUX_dec_clock_permute = prove
  (`!(s:(A,C,FFI)wl_state) q.
-     wl_dec_clock (wl_state_permute_fupd (K q) s) = wl_state_permute_fupd (K q) (wl_dec_clock s)`,
+     wl_dec_clock (wl_state_permute_fupd (combin_K q) s) = wl_state_permute_fupd (combin_K q) (wl_dec_clock s)`,
   REWRITE_TAC[wl_dec_clock_def; wl_state_component_equality] THEN SIMP[]);;
 
 let IL2AUX_call_push_permute = prove
@@ -4499,8 +4499,8 @@ let IL2AUX_call_push_permute = prove
        (wl_push_env envs b
           (wl_dec_clock
              (wl_state_permute_fupd
-                (K (\x. if x = 0 then wl_state_permute s 0 else pc (x - 1))) s))) =
-     wl_state_permute_fupd (K pc) (wl_call_env args1 ss (wl_push_env envs b (wl_dec_clock s)))`,
+                (combin_K (\x. if x = 0 then wl_state_permute s 0 else pc (x - 1))) s))) =
+     wl_state_permute_fupd (combin_K pc) (wl_call_env args1 ss (wl_push_env envs b (wl_dec_clock s)))`,
   REPEAT GEN_TAC THEN REWRITE_TAC[IL2AUX_dec_clock_permute] THEN
   MP_TAC (ISPECL [`envs:((A)word_loc)spt#((A)word_loc)spt`; `b:(num#(A)wl_prog#num#num)option`;
                   `wl_dec_clock (s:(A,C,FFI)wl_state)`;
@@ -4515,9 +4515,9 @@ let IL2AUX_call_push_permute = prove
 
 let IL2AUX_push_env_permute_sm = prove
  (`!envs b (s:(A,C,FFI)wl_state) q.
-     wl_state_stack_max (wl_push_env envs b (wl_state_permute_fupd (K q) s)) =
+     wl_state_stack_max (wl_push_env envs b (wl_state_permute_fupd (combin_K q) s)) =
        wl_state_stack_max (wl_push_env envs b s) /\
-     wl_stack_size (wl_state_stack (wl_push_env envs b (wl_state_permute_fupd (K q) s))) =
+     wl_stack_size (wl_state_stack (wl_push_env envs b (wl_state_permute_fupd (combin_K q) s))) =
        wl_stack_size (wl_state_stack (wl_push_env envs b s))`,
   GEN_TAC THEN GEN_TAC THEN
   SPEC_TAC(`b:(num#(A)wl_prog#num#num)option`,`b:(num#(A)wl_prog#num#num)option`) THEN
@@ -4528,7 +4528,7 @@ let IL2AUX_push_env_permute_sm = prove
 let IL2AUX_call_push_sm_permute = prove
  (`!args1 ss envs b (s:(A,C,FFI)wl_state) q.
      wl_state_stack_max
-       (wl_call_env args1 ss (wl_push_env envs b (wl_state_permute_fupd (K q) s))) =
+       (wl_call_env args1 ss (wl_push_env envs b (wl_state_permute_fupd (combin_K q) s))) =
      wl_state_stack_max (wl_call_env args1 ss (wl_push_env envs b s))`,
   REPEAT GEN_TAC THEN REWRITE_TAC[wl_call_env_def] THEN SIMP[IL2AUX_push_env_permute_sm]);;
 
@@ -4718,8 +4718,8 @@ let IL2AUX_CALL_PS_TAC : tactic =
 let IL2AUX_permute_swap = prove
  (`!prog (st:(A,C,FFI)wl_state) res rst.
      wl_evaluate (prog,st) = (res,rst) /\ ~(res = SOME wl_Error)
-     ==> !perm. ?perm'. wl_evaluate (prog, wl_state_permute_fupd (K perm') st) =
-                        (res, wl_state_permute_fupd (K perm) rst)`,
+     ==> !perm. ?perm'. wl_evaluate (prog, wl_state_permute_fupd (combin_K perm') st) =
+                        (res, wl_state_permute_fupd (combin_K perm) rst)`,
   IL2AUX_EVAL_IND_TAC wl_evaluate_ind THEN REPEAT CONJ_TAC THENL
    ([IL2AUX_NONREC_PS_TAC; IL2AUX_ALLOC_PS_TAC] @ replicate IL2AUX_NONREC_PS_TAC 8 @
     [IL2AUX_TICK_PS_TAC; IL2AUX_MT_PS_TAC; IL2AUX_SEQ_PS_TAC] @
@@ -4731,8 +4731,8 @@ let permute_swap_lemma = prove
   `!(prog:(A)wl_prog) (st:(A,C,FFI)wl_state) perm.
      let (res,rst) = wl_evaluate (prog,st) in
        ~(res = SOME wl_Error)
-       ==> ?perm'. wl_evaluate (prog,wl_state_permute_fupd (K perm') st) =
-                   (res,wl_state_permute_fupd (K perm) rst)`,
+       ==> ?perm'. wl_evaluate (prog,wl_state_permute_fupd (combin_K perm') st) =
+                   (res,wl_state_permute_fupd (combin_K perm) rst)`,
   REPEAT GEN_TAC THEN
   MP_TAC (ISPECL [`prog:(A)wl_prog`; `st:(A,C,FFI)wl_state`] IL2AUX_permute_swap) THEN
   SPEC_TAC(`wl_evaluate (prog:(A)wl_prog,st:(A,C,FFI)wl_state)`,
@@ -4757,10 +4757,10 @@ let locals_rel_get_vars = prove
      wl_get_vars ls (st:(A,C,FFI)wl_state) = SOME vs /\
      ALL (\x. x < temp) ls /\
      locals_rel temp (wl_state_locals st) loc
-     ==> wl_get_vars ls (wl_state_locals_fupd (K loc) st) = SOME vs`,
+     ==> wl_get_vars ls (wl_state_locals_fupd (combin_K loc) st) = SOME vs`,
   REPEAT STRIP_TAC THEN
   SUBGOAL_THEN `!l. ALL (\x. x < temp) l
-                    ==> wl_get_vars l (wl_state_locals_fupd (K loc) st) =
+                    ==> wl_get_vars l (wl_state_locals_fupd (combin_K loc) st) =
                         wl_get_vars l (st:(A,C,FFI)wl_state)`
     (fun th -> ASM_SIMP_TAC[th]) THEN
   LIST_INDUCT_TAC THEN REWRITE_TAC[wl_get_vars_def; ALL] THEN STRIP_TAC THEN
@@ -4779,20 +4779,20 @@ let locals_rel_alist_insert = prove
 let locals_rel_get_var = prove
  (`r < temp /\ wl_get_var r (st:(A,C,FFI)wl_state) = SOME x /\
    locals_rel temp (wl_state_locals st) loc
-   ==> wl_get_var r (wl_state_locals_fupd (K loc) st) = SOME x`,
+   ==> wl_get_var r (wl_state_locals_fupd (combin_K loc) st) = SOME x`,
   REWRITE_TAC[wl_get_var_def; locals_rel_def] THEN SIMP[] THEN MESON_TAC[]);;
 
 let locals_rel_get_var_simp = prove
  (`r < temp /\ locals_rel temp (wl_state_locals (st:(A,C,FFI)wl_state)) loc
-   ==> wl_get_var r (wl_state_locals_fupd (K loc) st) = wl_get_var r st`,
+   ==> wl_get_var r (wl_state_locals_fupd (combin_K loc) st) = wl_get_var r st`,
   REWRITE_TAC[wl_get_var_def; locals_rel_def] THEN SIMP[] THEN MESON_TAC[]);;
 
 let locals_rel_get_vars_simp = prove
  (`ALL (\x. x < temp) l /\ locals_rel temp (wl_state_locals (st:(A,C,FFI)wl_state)) loc
-   ==> wl_get_vars l (wl_state_locals_fupd (K loc) st) = wl_get_vars l st`,
+   ==> wl_get_vars l (wl_state_locals_fupd (combin_K loc) st) = wl_get_vars l st`,
   SPEC_TAC(`l:num list`,`l:num list`) THEN LIST_INDUCT_TAC THEN
   REWRITE_TAC[wl_get_vars_def; ALL] THEN STRIP_TAC THEN ASM_SIMP_TAC[] THEN
-  SUBGOAL_THEN `wl_get_var h (wl_state_locals_fupd (K loc) st) =
+  SUBGOAL_THEN `wl_get_var h (wl_state_locals_fupd (combin_K loc) st) =
                 wl_get_var h (st:(A,C,FFI)wl_state)` SUBST1_TAC THENL
    [MATCH_MP_TAC (GEN_ALL locals_rel_get_var_simp) THEN EXISTS_TAC `temp:num` THEN
     ASM_REWRITE_TAC[];
@@ -4801,14 +4801,14 @@ let locals_rel_get_vars_simp = prove
 let locals_rel_get_var_imm = prove
  (`every_var_imm (\x. x < temp) r /\ wl_get_var_imm r (st:(A,C,FFI)wl_state) = SOME x /\
    locals_rel temp (wl_state_locals st) loc
-   ==> wl_get_var_imm r (wl_state_locals_fupd (K loc) st) = SOME x`,
+   ==> wl_get_var_imm r (wl_state_locals_fupd (combin_K loc) st) = SOME x`,
   STRUCT_CASES_TAC (ISPEC `r:(A)reg_imm` (cases "reg_imm")) THEN
   REWRITE_TAC[wl_get_var_imm_def; every_var_imm_def] THEN
   MESON_TAC[locals_rel_get_var]);;
 
 let locals_rel_get_var_imm_simp = prove
  (`every_var_imm (\x. x < temp) r /\ locals_rel temp (wl_state_locals (st:(A,C,FFI)wl_state)) loc
-   ==> wl_get_var_imm r (wl_state_locals_fupd (K loc) st) = wl_get_var_imm r st`,
+   ==> wl_get_var_imm r (wl_state_locals_fupd (combin_K loc) st) = wl_get_var_imm r st`,
   STRUCT_CASES_TAC (ISPEC `r:(A)reg_imm` (cases "reg_imm")) THEN
   REWRITE_TAC[wl_get_var_imm_def; every_var_imm_def] THEN
   MESON_TAC[locals_rel_get_var_simp]);;
@@ -4818,7 +4818,7 @@ let locals_rel_get_var_imm_simp = prove
 let IL2AUX_locals_rel_word_exp_eq = prove
  (`!s exp.
      every_var_exp (\x. x < temp) exp /\ locals_rel temp (wl_state_locals s) loc
-     ==> wl_word_exp (wl_state_locals_fupd (K loc) (s:(A,C,FFI)wl_state)) exp =
+     ==> wl_word_exp (wl_state_locals_fupd (combin_K loc) (s:(A,C,FFI)wl_state)) exp =
          wl_word_exp s exp`,
   MATCH_MP_TAC wl_word_exp_ind THEN REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
   REWRITE_TAC[every_var_exp_def] THEN ONCE_REWRITE_TAC[wl_word_exp_def] THEN
@@ -4826,7 +4826,7 @@ let IL2AUX_locals_rel_word_exp_eq = prove
   TRY (MATCH_MP_TAC (GEN_ALL locals_rel_get_var_simp) THEN EXISTS_TAC `temp:num` THEN
        ASM_REWRITE_TAC[] THEN NO_TAC) THEN
   ASM_SIMP_TAC[] THEN SIMP[] THEN
-  SUBGOAL_THEN `MAP (wl_word_exp (wl_state_locals_fupd (K loc) (s:(A,C,FFI)wl_state))) wexps =
+  SUBGOAL_THEN `MAP (wl_word_exp (wl_state_locals_fupd (combin_K loc) (s:(A,C,FFI)wl_state))) wexps =
                 MAP (wl_word_exp s) wexps` SUBST1_TAC THENL
    [MATCH_MP_TAC MAP_EQ THEN REWRITE_TAC[GSYM ALL_MEM] THEN
     X_GEN_TAC `a:(A)wl_exp` THEN DISCH_TAC THEN
@@ -4840,13 +4840,13 @@ let locals_rel_word_exp = prove
  (`!s exp w.
      every_var_exp (\x. x < temp) exp /\ wl_word_exp s exp = SOME w /\
      locals_rel temp (wl_state_locals s) loc
-     ==> wl_word_exp (wl_state_locals_fupd (K loc) (s:(A,C,FFI)wl_state)) exp = SOME w`,
+     ==> wl_word_exp (wl_state_locals_fupd (combin_K loc) (s:(A,C,FFI)wl_state)) exp = SOME w`,
   MESON_TAC[IL2AUX_locals_rel_word_exp_eq]);;
 
 let locals_rel_word_exp_simp = prove
  (`!s exp.
      every_var_exp (\x. x < temp) exp /\ locals_rel temp (wl_state_locals s) loc
-     ==> wl_word_exp (wl_state_locals_fupd (K loc) (s:(A,C,FFI)wl_state)) exp =
+     ==> wl_word_exp (wl_state_locals_fupd (combin_K loc) (s:(A,C,FFI)wl_state)) exp =
          wl_word_exp s exp`,
   ACCEPT_TAC IL2AUX_locals_rel_word_exp_eq);;
 
@@ -4917,25 +4917,25 @@ let locals_rel_cut_env = prove
 
 let IL2AUX_lr_get_var = prove
  (`!temp (st:(A,C,FFI)wl_state) loc. locals_rel temp (wl_state_locals st) loc
-     ==> !r. r < temp ==> wl_get_var r (wl_state_locals_fupd (K loc) st) = wl_get_var r st`,
+     ==> !r. r < temp ==> wl_get_var r (wl_state_locals_fupd (combin_K loc) st) = wl_get_var r st`,
   MESON_TAC[locals_rel_get_var_simp]);;
 
 let IL2AUX_lr_get_vars = prove
  (`!temp (st:(A,C,FFI)wl_state) loc. locals_rel temp (wl_state_locals st) loc
      ==> !l. ALL (\x. x < temp) l
-             ==> wl_get_vars l (wl_state_locals_fupd (K loc) st) = wl_get_vars l st`,
+             ==> wl_get_vars l (wl_state_locals_fupd (combin_K loc) st) = wl_get_vars l st`,
   MESON_TAC[locals_rel_get_vars_simp]);;
 
 let IL2AUX_lr_get_var_imm = prove
  (`!temp (st:(A,C,FFI)wl_state) loc. locals_rel temp (wl_state_locals st) loc
      ==> !r. every_var_imm (\x. x < temp) r
-             ==> wl_get_var_imm r (wl_state_locals_fupd (K loc) st) = wl_get_var_imm r st`,
+             ==> wl_get_var_imm r (wl_state_locals_fupd (combin_K loc) st) = wl_get_var_imm r st`,
   MESON_TAC[locals_rel_get_var_imm_simp]);;
 
 let IL2AUX_lr_word_exp = prove
  (`!temp (st:(A,C,FFI)wl_state) loc. locals_rel temp (wl_state_locals st) loc
      ==> !e. every_var_exp (\x. x < temp) e
-             ==> wl_word_exp (wl_state_locals_fupd (K loc) st) e = wl_word_exp st e`,
+             ==> wl_word_exp (wl_state_locals_fupd (combin_K loc) st) e = wl_word_exp st e`,
   MESON_TAC[locals_rel_word_exp_simp]);;
 
 let IL2AUX_lr_cut_envs = prove
@@ -5008,14 +5008,14 @@ let IL2AUX_LR_REL_TAC : tactic =
   ASM_REWRITE_TAC[IL2AUX_locals_rel_refl];;
 
 let IL2AUX_jump_exc_locals = prove
- (`!l (s:(A,C,FFI)wl_state). wl_jump_exc (wl_state_locals_fupd (K l) s) = wl_jump_exc s`,
+ (`!l (s:(A,C,FFI)wl_state). wl_jump_exc (wl_state_locals_fupd (combin_K l) s) = wl_jump_exc s`,
   REPEAT GEN_TAC THEN REWRITE_TAC[wl_jump_exc_def] THEN SIMP[] THEN
   REPEAT (TOP_CASE_TAC THEN SIMP[]));;
 
 let IL2AUX_alloc_locals = prove
  (`!w names (s:(A,C,FFI)wl_state) loc.
      cut_envs names loc = cut_envs names (wl_state_locals s)
-     ==> wl_alloc w names (wl_state_locals_fupd (K loc) s) = wl_alloc w names s`,
+     ==> wl_alloc w names (wl_state_locals_fupd (combin_K loc) s) = wl_alloc w names s`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN REWRITE_TAC[wl_alloc_def] THEN SIMP[] THEN
   REPEAT (TOP_CASE_TAC THEN SIMP[]));;
 
@@ -5023,7 +5023,7 @@ let IL2AUX_alloc_lr = prove
  (`!temp (s:(A,C,FFI)wl_state) loc. locals_rel temp (wl_state_locals s) loc
      ==> !w names res rst. wl_alloc w names s = (res,rst) ==> ~(res = SOME wl_Error) ==>
          every_name (\x. x < temp) names
-         ==> wl_alloc w names (wl_state_locals_fupd (K loc) s) = (res,rst)`,
+         ==> wl_alloc w names (wl_state_locals_fupd (combin_K loc) s) = (res,rst)`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN REPEAT GEN_TAC THEN
   CASES_ON `cut_envs (names:cutsets) (wl_state_locals (s:(A,C,FFI)wl_state))` THENL
    [REWRITE_TAC[wl_alloc_def] THEN ASM_REWRITE_TAC[option_CASE; PAIR_EQ] THEN MESON_TAC[];
@@ -5054,13 +5054,13 @@ let IL2AUX_loop_lr = prove
  (`!names c exit_names (s:(A,C,FFI)wl_state) res rst temp loc.
      wl_evaluate (wl_Loop names c exit_names, s) = (res,rst) /\ ~(res = SOME wl_Error) /\
      ALL (\x. x < temp) (MAP FST (toAList names)) /\ locals_rel temp (wl_state_locals s) loc
-     ==> wl_evaluate (wl_Loop names c exit_names, wl_state_locals_fupd (K loc) s) = (res,rst)`,
+     ==> wl_evaluate (wl_Loop names c exit_names, wl_state_locals_fupd (combin_K loc) s) = (res,rst)`,
   REPEAT GEN_TAC THEN ONCE_REWRITE_TAC[wl_evaluate_def] THEN
   CASES_ON `wl_cut_state (names,LN) (s:(A,C,FFI)wl_state)` THEN
   REWRITE_TAC[option_CASE] THENL
    [REWRITE_TAC[PAIR_EQ] THEN MESON_TAC[]; ALL_TAC] THEN
   STRIP_TAC THEN
-  SUBGOAL_THEN `wl_cut_state (names,LN) (wl_state_locals_fupd (K loc) (s:(A,C,FFI)wl_state)) =
+  SUBGOAL_THEN `wl_cut_state (names,LN) (wl_state_locals_fupd (combin_K loc) (s:(A,C,FFI)wl_state)) =
                 SOME a` (fun th -> ASM_REWRITE_TAC[th; option_CASE]) THEN
   UNDISCH_TAC `wl_cut_state (names,LN) (s:(A,C,FFI)wl_state) = SOME a` THEN
   REWRITE_TAC[wl_cut_state_def] THEN SIMP[] THEN
@@ -5112,8 +5112,8 @@ let IL2AUX_share_inst_lr = prove
   `!op v ad (s:(A,C,FFI)wl_state) (res:((A)wl_result)option) rst temp loc.
      share_inst op v ad s = (res,rst) /\ ~(res = SOME wl_Error) /\ v < temp /\
      locals_rel temp (wl_state_locals s) loc
-     ==> ?loc'. share_inst op v ad (wl_state_locals_fupd (K loc) s) =
-                (res, wl_state_locals_fupd (K loc') rst) /\
+     ==> ?loc'. share_inst op v ad (wl_state_locals_fupd (combin_K loc) s) =
+                (res, wl_state_locals_fupd (combin_K loc') rst) /\
                 (match res with
                    NONE -> locals_rel temp (wl_state_locals rst) loc'
                  | SOME (wordSem_Break _) -> locals_rel temp (wl_state_locals rst) loc'
@@ -5145,15 +5145,15 @@ let IL2AUX_LR_SPLIT_TAC : tactic =
   RULE_ASSUM_TAC(REWRITE_RULE IL2AUX_res_rws) THEN
   TRY (FIRST_ASSUM (CONTR_TAC o check (fun th -> concl th = `F`))) THEN
   RULE_ASSUM_TAC (fun th -> if is_forall (concl th) || is_imp (concl th) then th
-                            else REWRITE_RULE IL2AUX_dec_rws (CASE_REWRITE_RULE [] th)) THEN
+                            else REWRITE_RULE IL2AUX_dec_rws (CAKE_REWRITE_RULE [] th)) THEN
   REPEAT (FIRST_X_ASSUM (CONJUNCTS_THEN ASSUME_TAC o check (is_conj o concl)));;
 
 let IL2AUX_inst_lr = prove
  (`!i (s:(A,C,FFI)wl_state) rst temp loc.
      wl_inst i s = SOME rst /\ every_var_inst (\x. x < temp) i /\
      locals_rel temp (wl_state_locals s) loc
-     ==> ?loc'. wl_inst i (wl_state_locals_fupd (K loc) s) =
-                SOME (wl_state_locals_fupd (K loc') rst) /\
+     ==> ?loc'. wl_inst i (wl_state_locals_fupd (combin_K loc) s) =
+                SOME (wl_state_locals_fupd (combin_K loc') rst) /\
                 locals_rel temp (wl_state_locals rst) loc'`,
   GEN_TAC THEN IL2AUX_INST_SPLIT_TAC THEN IL2AUX_ALL_REGIMM_CASES_TAC THEN
   IL2AUX_INST_LR_TAC);;
@@ -5180,8 +5180,8 @@ let locals_rel_evaluate_thm = prove
   `!prog (st:(A,C,FFI)wl_state) res rst loc temp.
      wl_evaluate (prog,st) = (res,rst) /\ ~(res = SOME wl_Error) /\
      wl_every_var (\x. x < temp) prog /\ locals_rel temp (wl_state_locals st) loc
-     ==> ?loc'. wl_evaluate (prog, wl_state_locals_fupd (K loc) st) =
-                (res, wl_state_locals_fupd (K loc') rst) /\
+     ==> ?loc'. wl_evaluate (prog, wl_state_locals_fupd (combin_K loc) st) =
+                (res, wl_state_locals_fupd (combin_K loc') rst) /\
                 (match res with
                    NONE -> locals_rel temp (wl_state_locals rst) loc'
                  | SOME (wordSem_Break _) -> locals_rel temp (wl_state_locals rst) loc'
@@ -5708,7 +5708,7 @@ let evaluate_stack_limit_stack_max = prove
 (* HOL4: inc_clock_def *)
 let wl_inc_clock_def = cake_def
   `wl_inc_clock n (t:(A,C,FFI)wl_state) =
-     wl_state_clock_fupd (K (wl_state_clock t + n)) t`;;
+     wl_state_clock_fupd (combin_K (wl_state_clock t + n)) t`;;
 
 (* HOL4: inc_clock_0[simp] *)
 let wl_inc_clock_0 = prove
@@ -5728,7 +5728,7 @@ let evaluate_call_push_dec_option_le_stack_max = prove
  (`!p args sz env handler (s:(A,C,FFI)wl_state) res t ck.
      wl_evaluate (p, wl_call_env args sz
                        (wl_push_env env handler
-                          (wl_dec_clock (wl_state_clock_fupd (K ck) s)))) = (res,t)
+                          (wl_dec_clock (wl_state_clock_fupd (combin_K ck) s)))) = (res,t)
      ==> option_le (wl_state_stack_max (wl_call_env args sz (wl_push_env env handler s)))
                    (wl_state_stack_max t)`,
   REPEAT GEN_TAC THEN DISCH_THEN(MP_TAC o MATCH_MP evaluate_stack_max_le) THEN
@@ -5780,7 +5780,7 @@ let IL2AUX_smog_lemma = prove
      wl_evaluate (p,s) = (r1,s1)
      ==> option_le (wl_state_stack_max s1)
            (wl_state_stack_max (SND (wl_evaluate
-              (p, wl_state_clock_fupd (K (wl_state_clock s + extra)) s))))`,
+              (p, wl_state_clock_fupd (combin_K (wl_state_clock s + extra)) s))))`,
   IL2AUX_EVAL_IND_TAC wl_evaluate_ind THEN REPEAT CONJ_TAC THENL
    (replicate IL2AUX_NONREC_SMOG_TAC 10 @ replicate IL2AUX_SMOG_TAC 3 @
     replicate IL2AUX_NONREC_SMOG_TAC 4 @ replicate IL2AUX_SMOG_TAC 2 @
@@ -5955,9 +5955,9 @@ let IL2AUX_NI_TAC : tactic =
   REWRITE_TAC(IL2AUX_clock_case_eqs @ [PAIR_EQ; LET_DEF; LET_END_DEF]) THEN
   DISCH_THEN(REPEAT_TCL STRIP_THM_THEN ASSUME_TAC) THEN RVEQ_TAC THEN
   RULE_ASSUM_TAC (fun th -> if is_forall (concl th) || is_imp (concl th) then th
-                            else CASE_REWRITE_RULE []
+                            else CAKE_REWRITE_RULE []
                                    (REWRITE_RULE (wordConvs_no_install_def :: IL2AUX_dec_rws)
-                                      (CASE_REWRITE_RULE [] th))) THEN
+                                      (CAKE_REWRITE_RULE [] th))) THEN
   REPEAT (FIRST_X_ASSUM (CONJUNCTS_THEN ASSUME_TAC o check (is_conj o concl))) THEN
   RULE_ASSUM_TAC(REWRITE_RULE (injectivity "wl_prog" :: distinctness "wl_prog" ::
                                IL2AUX_res_rws)) THEN
@@ -6094,10 +6094,10 @@ let IL2AUX_evaluate_ps_with = prove
  (IL2AUX_select_goals
     (IL2AUX_ind_goals
        `\(p:(A)wl_prog,s:(A,C,FFI)wl_state).
-          !q xs. wl_evaluate (p, wl_state_permute_fupd (K q) (wl_state_stack_fupd (K xs) s)) =
+          !q xs. wl_evaluate (p, wl_state_permute_fupd (combin_K q) (wl_state_stack_fupd (combin_K xs) s)) =
                  pair_CASE (wl_evaluate (p,s))
-                   (\r t. (r, wl_state_permute_fupd (K q)
-                                (if IL2AUX_stopr r then t else wl_state_stack_fupd (K xs) t)))`)
+                   (\r t. (r, wl_state_permute_fupd (combin_K q)
+                                (if IL2AUX_stopr r then t else wl_state_stack_fupd (combin_K xs) t)))`)
     IL2AUX_transp_cons,
   REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
   REWRITE_TAC[IL2AUX_evaluate_permute_with_const] THEN
@@ -6111,21 +6111,21 @@ let IL2AUX_evaluate_ps_with = prove
   REWRITE_TAC[FORALL_PAIR_THM; pair_CASE]);;
 
 let IL2AUX_stack_fupd_nil = prove
- (`!t:(A,C,FFI)wl_state. wl_state_stack t = [] ==> wl_state_stack_fupd (K []) t = t`,
+ (`!t:(A,C,FFI)wl_state. wl_state_stack t = [] ==> wl_state_stack_fupd (combin_K []) t = t`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[wl_state_component_equality] THEN SIMP[]);;
 
 let IL2AUX_ps2_simple = prove
  (`!p (s:(A,C,FFI)wl_state) r t.
-     (!q xs. wl_evaluate (p, wl_state_permute_fupd (K q) (wl_state_stack_fupd (K xs) s)) =
-             (r, wl_state_permute_fupd (K q)
-                   (if IL2AUX_stopr r then t else wl_state_stack_fupd (K xs) t))) /\
+     (!q xs. wl_evaluate (p, wl_state_permute_fupd (combin_K q) (wl_state_stack_fupd (combin_K xs) s)) =
+             (r, wl_state_permute_fupd (combin_K q)
+                   (if IL2AUX_stopr r then t else wl_state_stack_fupd (combin_K xs) t))) /\
      (IL2AUX_stopr r ==> wl_state_stack t = []) /\
      (~IL2AUX_stopr r ==> wl_state_stack t = wl_state_stack s)
      ==> !perm stack.
            ALL2 IL2AUX_permf stack (wl_state_stack s)
            ==> ?perm' stack'.
-                 wl_evaluate (p, wl_state_permute_fupd (K perm) (wl_state_stack_fupd (K stack) s)) =
-                 (r, wl_state_permute_fupd (K perm') (wl_state_stack_fupd (K stack') t)) /\
+                 wl_evaluate (p, wl_state_permute_fupd (combin_K perm) (wl_state_stack_fupd (combin_K stack) s)) =
+                 (r, wl_state_permute_fupd (combin_K perm') (wl_state_stack_fupd (combin_K stack') t)) /\
                  ALL2 IL2AUX_permf stack' (wl_state_stack t)`,
   REPEAT STRIP_TAC THEN EXISTS_TAC `perm:num->num->num` THEN ASM_REWRITE_TAC[] THEN
   ASM_CASES_TAC `IL2AUX_stopr (r:((A)wl_result)option)` THEN ASM_REWRITE_TAC[] THENL
@@ -6146,8 +6146,8 @@ let IL2AUX_ALL2_CONS_R = prove
 let IL2AUX_jump_exc_permf = prove
  (`!(s:(A,C,FFI)wl_state) t l1 l2 q stack.
      wl_jump_exc s = SOME (t,l1,l2) /\ ALL2 IL2AUX_permf stack (wl_state_stack s)
-     ==> ?stack'. wl_jump_exc (wl_state_permute_fupd (K q) (wl_state_stack_fupd (K stack) s)) =
-                    SOME (wl_state_permute_fupd (K q) (wl_state_stack_fupd (K stack') t),l1,l2) /\
+     ==> ?stack'. wl_jump_exc (wl_state_permute_fupd (combin_K q) (wl_state_stack_fupd (combin_K stack) s)) =
+                    SOME (wl_state_permute_fupd (combin_K q) (wl_state_stack_fupd (combin_K stack') t),l1,l2) /\
                   ALL2 IL2AUX_permf stack' (wl_state_stack t)`,
   REPEAT GEN_TAC THEN DISCH_THEN(CONJUNCTS_THEN2 MP_TAC ASSUME_TAC) THEN
   GEN_REWRITE_TAC (LAND_CONV o LAND_CONV) [wl_jump_exc_def] THEN
@@ -6194,8 +6194,8 @@ let IL2AUX_stack_size_permf = prove
 let IL2AUX_call_env_stack_size = prove
  (`!args ss (s:(A,C,FFI)wl_state) xs.
      wl_stack_size xs = wl_stack_size (wl_state_stack s)
-     ==> wl_call_env args ss (wl_state_stack_fupd (K xs) s) =
-         wl_state_stack_fupd (K xs) (wl_call_env args ss s)`,
+     ==> wl_call_env args ss (wl_state_stack_fupd (combin_K xs) s) =
+         wl_state_stack_fupd (combin_K xs) (wl_call_env args ss s)`,
   REPEAT STRIP_TAC THEN
   REWRITE_TAC[wl_call_env_def; wl_state_component_equality] THEN SIMP[]);;
 
@@ -6204,10 +6204,10 @@ let IL2AUX_call_env_stack_size = prove
 let IL2AUX_push_env_ps2 = prove
  (`!envs b (s:(A,C,FFI)wl_state) perm stack.
      ALL2 IL2AUX_permf stack (wl_state_stack s)
-     ==> ?fr. wl_push_env envs b (wl_state_permute_fupd (K perm) (wl_state_stack_fupd (K stack)
+     ==> ?fr. wl_push_env envs b (wl_state_permute_fupd (combin_K perm) (wl_state_stack_fupd (combin_K stack)
          s)) =
-              wl_state_permute_fupd (K (\n. perm (n + 1)))
-                (wl_state_stack_fupd (K (CONS fr stack)) (wl_push_env envs b s)) /\
+              wl_state_permute_fupd (combin_K (\n. perm (n + 1)))
+                (wl_state_stack_fupd (combin_K (CONS fr stack)) (wl_push_env envs b s)) /\
               ALL2 IL2AUX_permf (CONS fr stack) (wl_state_stack (wl_push_env envs b s))`,
   GEN_TAC THEN GEN_TAC THEN
   SPEC_TAC(`b:(num#(A)wl_prog#num#num)option`,`b:(num#(A)wl_prog#num#num)option`) THEN
@@ -6230,9 +6230,9 @@ let IL2AUX_call_ps2 = prove
  (`!args1 ss envs b (s:(A,C,FFI)wl_state) perm stack.
      ALL2 IL2AUX_permf stack (wl_state_stack s)
      ==> ?fr. wl_call_env args1 ss (wl_push_env envs b (wl_dec_clock
-                (wl_state_permute_fupd (K perm) (wl_state_stack_fupd (K stack) s)))) =
-              wl_state_permute_fupd (K (\n. perm (n + 1)))
-                (wl_state_stack_fupd (K (CONS fr stack))
+                (wl_state_permute_fupd (combin_K perm) (wl_state_stack_fupd (combin_K stack) s)))) =
+              wl_state_permute_fupd (combin_K (\n. perm (n + 1)))
+                (wl_state_stack_fupd (combin_K (CONS fr stack))
                    (wl_call_env args1 ss (wl_push_env envs b (wl_dec_clock s)))) /\
               ALL2 IL2AUX_permf (CONS fr stack)
                 (wl_state_stack (wl_call_env args1 ss (wl_push_env envs b (wl_dec_clock s))))`,
@@ -6250,8 +6250,8 @@ let IL2AUX_call_ps2 = prove
 let IL2AUX_pop_env_ps2 = prove
  (`!(t:(A,C,FFI)wl_state) t1 q stk.
      wl_pop_env t = SOME t1 /\ ALL2 IL2AUX_permf stk (wl_state_stack t)
-     ==> ?stk1. wl_pop_env (wl_state_permute_fupd (K q) (wl_state_stack_fupd (K stk) t)) =
-                  SOME (wl_state_permute_fupd (K q) (wl_state_stack_fupd (K stk1) t1)) /\
+     ==> ?stk1. wl_pop_env (wl_state_permute_fupd (combin_K q) (wl_state_stack_fupd (combin_K stk) t)) =
+                  SOME (wl_state_permute_fupd (combin_K q) (wl_state_stack_fupd (combin_K stk1) t1)) /\
                 ALL2 IL2AUX_permf stk1 (wl_state_stack t1)`,
   REPEAT GEN_TAC THEN
   MP_TAC (ISPEC `wl_state_stack (t:(A,C,FFI)wl_state)` list_CASES) THEN
@@ -6289,10 +6289,10 @@ let IL2AUX_pop_env_ps2 = prove
 let IL2AUX_call_dec_ps2 = prove
  (`!args ss (s:(A,C,FFI)wl_state) perm stack.
      wl_stack_size stack = wl_stack_size (wl_state_stack s)
-     ==> wl_call_env args ss (wl_dec_clock (wl_state_permute_fupd (K perm)
-                                             (wl_state_stack_fupd (K stack) s))) =
-         wl_state_permute_fupd (K perm)
-           (wl_state_stack_fupd (K stack) (wl_call_env args ss (wl_dec_clock s)))`,
+     ==> wl_call_env args ss (wl_dec_clock (wl_state_permute_fupd (combin_K perm)
+                                             (wl_state_stack_fupd (combin_K stack) s))) =
+         wl_state_permute_fupd (combin_K perm)
+           (wl_state_stack_fupd (combin_K stack) (wl_call_env args ss (wl_dec_clock s)))`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[IL2AUX_dec_clock_permute; IL2AUX_dec_clock_stack] THEN
   REWRITE_TAC[wl_call_env_with_const] THEN AP_TERM_TAC THEN
   MATCH_MP_TAC IL2AUX_call_env_stack_size THEN ASM_REWRITE_TAC[wl_dec_clock_const]);;
@@ -6301,7 +6301,7 @@ let IL2AUX_call_sm_ps2 = prove
  (`!args1 ss envs b (s:(A,C,FFI)wl_state) perm stack.
      ALL2 IL2AUX_permf stack (wl_state_stack s)
      ==> wl_state_stack_max (wl_call_env args1 ss (wl_push_env envs b
-           (wl_state_permute_fupd (K perm) (wl_state_stack_fupd (K stack) s)))) =
+           (wl_state_permute_fupd (combin_K perm) (wl_state_stack_fupd (combin_K stack) s)))) =
          wl_state_stack_max (wl_call_env args1 ss (wl_push_env envs b s))`,
   REPEAT STRIP_TAC THEN
   MP_TAC (ISPECL [`envs:((A)word_loc)spt#((A)word_loc)spt`; `b:(num#(A)wl_prog#num#num)option`;
@@ -6310,9 +6310,9 @@ let IL2AUX_call_sm_ps2 = prove
   ASM_REWRITE_TAC[] THEN DISCH_THEN(X_CHOOSE_THEN `fr:(A)stack_frame` STRIP_ASSUME_TAC) THEN
   ASM_REWRITE_TAC[wl_call_env_with_const] THEN
   SUBGOAL_THEN
-   `wl_call_env args1 ss (wl_state_stack_fupd (K (CONS (fr:(A)stack_frame) stack))
+   `wl_call_env args1 ss (wl_state_stack_fupd (combin_K (CONS (fr:(A)stack_frame) stack))
       (wl_push_env envs b (s:(A,C,FFI)wl_state))) =
-    wl_state_stack_fupd (K (CONS fr stack)) (wl_call_env args1 ss (wl_push_env envs b s))`
+    wl_state_stack_fupd (combin_K (CONS fr stack)) (wl_call_env args1 ss (wl_push_env envs b s))`
     SUBST1_TAC THENL
    [MATCH_MP_TAC IL2AUX_call_env_stack_size THEN
     MATCH_MP_TAC IL2AUX_stack_size_permf THEN ASM_REWRITE_TAC[];
@@ -6392,9 +6392,9 @@ let IL2AUX_is_ps2_inst th =
 
 let IL2AUX_PS2_IHS_TAC : tactic =
   RULE_ASSUM_TAC (fun th -> if is_forall (concl th) || is_imp (concl th) then th
-                            else CASE_REWRITE_RULE []
+                            else CAKE_REWRITE_RULE []
                                    (REWRITE_RULE [no_alloc_def; wordConvs_no_install_def]
-                                      (CASE_REWRITE_RULE [] th))) THEN
+                                      (CAKE_REWRITE_RULE [] th))) THEN
   REPEAT (FIRST_X_ASSUM (CONJUNCTS_THEN ASSUME_TAC o check (is_conj o concl))) THEN
   REPEAT (FIRST_X_ASSUM (fun ih (asl,w as g) ->
     if not (is_forall (concl ih) || is_imp (concl ih)) || IL2AUX_is_ps2_inst ih
@@ -6428,9 +6428,9 @@ let IL2AUX_PS2_PREP_TAC : tactic =
   IL2AUX_PS2_SPLIT_TAC THEN IL2AUX_NOERR_TAC THEN
   IL2AUX_FACTS_TAC [IL2AUX_cut_state_code; IL2AUX_cut_state_stack_handler] THEN
   RULE_ASSUM_TAC (fun th -> if is_forall (concl th) || is_imp (concl th) then th
-                            else CASE_REWRITE_RULE []
+                            else CAKE_REWRITE_RULE []
                                    (REWRITE_RULE [no_alloc_def; wordConvs_no_install_def]
-                                      (CASE_REWRITE_RULE [] th))) THEN
+                                      (CAKE_REWRITE_RULE [] th))) THEN
   REPEAT (FIRST_X_ASSUM (CONJUNCTS_THEN ASSUME_TAC o check (is_conj o concl))) THEN
   IL2AUX_LEMMA_FWD_TAC [no_alloc_find_code; no_install_find_code] THEN
   IL2AUX_POP_CONST_TAC THEN
@@ -6554,8 +6554,8 @@ let IL2AUX_PS2_CALL_FIN_TAC (pv:term) (sv:term) : tactic =
   MAP_EVERY EXISTS_TAC [pv; sv] THEN
   ONCE_REWRITE_TAC[wl_evaluate_def] THEN
   REWRITE_TAC[wl_state_INFO.ri_accfupds; K_THM; wl_get_vars_with_const] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
   SIMP[wl_flush_state_def; ALL2] THEN
   RULE_ASSUM_TAC (fun th -> if IL2AUX_is_eval_eq (concl th) then CAKE_SIMP_RULE [] th else th) THEN
   ASM_REWRITE_TAC[] THEN SIMP[] THEN NO_TAC;;
@@ -6590,9 +6590,9 @@ let IL2AUX_permute_swap2 = prove
      ==> !perm stack.
            ALL2 IL2AUX_permf stack (wl_state_stack st)
            ==> ?perm' stack'.
-                 wl_evaluate (prog, wl_state_permute_fupd (K perm)
-                                      (wl_state_stack_fupd (K stack) st)) =
-                 (res, wl_state_permute_fupd (K perm') (wl_state_stack_fupd (K stack') rst)) /\
+                 wl_evaluate (prog, wl_state_permute_fupd (combin_K perm)
+                                      (wl_state_stack_fupd (combin_K stack) st)) =
+                 (res, wl_state_permute_fupd (combin_K perm') (wl_state_stack_fupd (combin_K stack') rst)) /\
                  ALL2 IL2AUX_permf stack' (wl_state_stack rst)`,
   IL2AUX_EVAL_IND_TAC wl_evaluate_ind THEN REPEAT CONJ_TAC THENL
    ([IL2AUX_PS2_TRANSP_TAC; IL2AUX_PS2_ALLOC_TAC] @ replicate IL2AUX_PS2_TRANSP_TAC 9 @
@@ -6612,9 +6612,9 @@ let permute_swap_lemma2 = prove
                          ALL_DISTINCT (MAP FST env))
             stack (wl_state_stack st)
        ==> ?perm' stack'.
-             wl_evaluate (prog, wl_state_permute_fupd (K perm)
-                                  (wl_state_stack_fupd (K stack) st)) =
-               (res, wl_state_permute_fupd (K perm') (wl_state_stack_fupd (K stack') rst)) /\
+             wl_evaluate (prog, wl_state_permute_fupd (combin_K perm)
+                                  (wl_state_stack_fupd (combin_K stack) st)) =
+               (res, wl_state_permute_fupd (combin_K perm') (wl_state_stack_fupd (combin_K stack') rst)) /\
              ALL2 (\s1 s2. match (s1,s2) with
                              (StackFrame ss l env h, StackFrame ss' l' env' h') ->
                                ss = ss' /\ h = h' /\ l = l' /\ PERM env env' /\
@@ -6635,8 +6635,8 @@ let permute_swap_lemma3 = prove
        ALL (\fr. match fr with StackFrame _ _ vs handler -> ALL_DISTINCT (MAP FST vs))
            (wl_state_stack st)
        ==> ?perm' stack'.
-             wl_evaluate (prog, wl_state_permute_fupd (K perm) st) =
-               (res, wl_state_permute_fupd (K perm') (wl_state_stack_fupd (K stack') rst)) /\
+             wl_evaluate (prog, wl_state_permute_fupd (combin_K perm) st) =
+               (res, wl_state_permute_fupd (combin_K perm') (wl_state_stack_fupd (combin_K stack') rst)) /\
              ALL2 (\s1 s2. match (s1,s2) with
                              (StackFrame ss l env h, StackFrame ss' l' env' h') ->
                                ss = ss' /\ h = h' /\ l = l' /\ PERM env env' /\
@@ -6661,7 +6661,7 @@ let permute_swap_lemma3 = prove
   ASM_REWRITE_TAC[] THEN
   DISCH_THEN(MP_TAC o SPECL [`perm:num->num->num`; `wl_state_stack (st:(A,C,FFI)wl_state)`]) THEN
   ANTS_TAC THENL [FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[]; ALL_TAC] THEN
-  SUBGOAL_THEN `wl_state_stack_fupd (K (wl_state_stack st)) (st:(A,C,FFI)wl_state) = st`
+  SUBGOAL_THEN `wl_state_stack_fupd (combin_K (wl_state_stack st)) (st:(A,C,FFI)wl_state) = st`
     SUBST1_TAC THENL
    [REWRITE_TAC[wl_state_component_equality] THEN SIMP[]; REWRITE_TAC[]]);;
 

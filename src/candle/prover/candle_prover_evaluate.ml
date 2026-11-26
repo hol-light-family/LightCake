@@ -102,7 +102,7 @@ let CAN2DAUX_pmatch_env_ok = prove
 
 let CAN2DAUX_env_ok_nsOptBind = prove
  (`candle_env_ok ctxt env /\ candle_v_ok ctxt v ==>
-   candle_env_ok ctxt (sem_env_v_fupd (K (nsOptBind xo v (sem_env_v env))) env)`,
+   candle_env_ok ctxt (sem_env_v_fupd (combin_K (nsOptBind xo v (sem_env_v env))) env)`,
   REWRITE_TAC[candle_env_ok_def] THEN STRIP_TAC THEN SIMP[] THEN
   QCASES_ON "xo" THEN REWRITE_TAC[nsOptBind_def; option_CASE] THEN
   TRY (FIRST_ASSUM ACCEPT_TAC) THEN GEN_TAC THEN QCASES_ON "n" THEN
@@ -112,7 +112,7 @@ let CAN2DAUX_env_ok_build_rec_env = prove
  (`candle_env_ok ctxt env /\ candle_env_ok ctxt cle /\
    ALL safe_exp (MAP (SND o SND) funs) ==>
    candle_env_ok ctxt
-     (sem_env_v_fupd (K (build_rec_env funs cle (sem_env_v env))) env)`,
+     (sem_env_v_fupd (combin_K (build_rec_env funs cle (sem_env_v env))) env)`,
   STRIP_TAC THEN
   SUBGOAL_THEN `!f. candle_v_ok ctxt (Recclosure cle funs f)` ASSUME_TAC THENL
    [GEN_TAC THEN MATCH_MP_TAC candle_v_ok_Recclosure THEN ASM_REWRITE_TAC[];
@@ -128,7 +128,7 @@ let CAN2DAUX_env_ok_build_rec_env = prove
 let CAN2DAUX_env_ok_nsAppend_alist = prove
  (`candle_env_ok ctxt env /\ ALL (candle_v_ok ctxt) (MAP SND l) ==>
    candle_env_ok ctxt
-     (sem_env_v_fupd (K (nsAppend (alist_to_ns l) (sem_env_v env))) env)`,
+     (sem_env_v_fupd (combin_K (nsAppend (alist_to_ns l) (sem_env_v env))) env)`,
   REWRITE_TAC[candle_env_ok_def] THEN STRIP_TAC THEN SIMP[] THEN
   REWRITE_TAC[nsLookup_nsAppend_some; nsLookup_alist_to_ns_some] THEN
   REPEAT STRIP_TAC THENL
@@ -423,7 +423,7 @@ let CAN2DAUX_env_ok_nsLift = prove
 
 let CAN2DAUX_state_ok_eval_state = prove
  (`candle_state_ok ctxt (s:(FFI)state) /\ candle_eval_state_ok es ==>
-   candle_state_ok ctxt (state_eval_state_fupd (K es) s)`,
+   candle_state_ok ctxt (state_eval_state_fupd (combin_K es) s)`,
   REWRITE_TAC[candle_state_ok_def; state_INFO.ri_accfupds; K_THM] THEN MESON_TAC[]);;
 
 (* HOL4: gvs [declare_env_def, CaseEqs ["option", "eval_state", "prod"]] \\ *)
@@ -434,7 +434,7 @@ let CAN2DAUX_declare_env_ok = prove
    candle_eval_state_ok es' /\ candle_v_ok ctxt x`,
   QCASES_ON "es" THEN REWRITE_TAC[declare_env_def; option_CASE; option_DISTINCT] THEN
   MATCH_GOALSUB_RENAME_TAC "eval_state_CASE e" THEN QCASES_ON "e" THEN
-  REWRITE_TAC[candle_eval_state_ok_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[candle_eval_state_ok_def] THEN CAKE_REWRITE_TAC[] THEN
   STRIP_TAC THEN GVS[pair_case_eq] THEN
   ASM_REWRITE_TAC[candle_eval_state_ok_def; candle_v_ok_def;
                   eval_decs_state_INFO.ri_accfupds]);;
@@ -687,7 +687,7 @@ let state_ok_update_thunk = prove
  (`candle_state_ok ctxt (s:(FFI)state) /\ ALL (candle_v_ok ctxt) vs /\
    ALL (candle_v_ok ctxt) vs2 /\
    update_thunk (REVERSE vs) (state_refs s) vs2 = SOME refs ==>
-   candle_state_ok ctxt (state_refs_fupd (K refs) s)`,
+   candle_state_ok ctxt (state_refs_fupd (combin_K refs) s)`,
   REWRITE_TAC[candle_state_ok_def; state_INFO.ri_accfupds; K_THM] THEN STRIP_TAC THEN
   POP_ASSUM MP_TAC THEN REWRITE_TAC[ONELINE update_thunk_def] THEN
   GVS(all_case_eqs() @ [store_assign_def]) THEN
@@ -785,14 +785,14 @@ let CAN2DAUX_evaluate_v_ok_App_Eval = prove
   ASM_MESON_TAC[CAN2DAUX_state_ok_ok_event]);;
 
 let CAN2DAUX_env_ok_nsBind = prove
- (`candle_env_ok ctxt (sem_env_v_fupd (K e) env) /\ candle_v_ok ctxt v ==>
-   candle_env_ok ctxt (sem_env_v_fupd (K (nsBind n v e)) env)`,
+ (`candle_env_ok ctxt (sem_env_v_fupd (combin_K e) env) /\ candle_v_ok ctxt v ==>
+   candle_env_ok ctxt (sem_env_v_fupd (combin_K (nsBind n v e)) env)`,
   REWRITE_TAC[candle_env_ok_def; sem_env_INFO.ri_accfupds; K_THM] THEN STRIP_TAC THEN
   ASM_REWRITE_TAC[] THEN GEN_TAC THEN QCASES_ON "n'" THEN
   REWRITE_TAC[nsLookup_nsBind_compute] THEN RW[] THEN ASM_MESON_TAC[]);;
 
 let CAN2DAUX_env_ok_self = prove
- (`candle_env_ok ctxt (sem_env_v_fupd (K (sem_env_v env)) env) <=> candle_env_ok ctxt env`,
+ (`candle_env_ok ctxt (sem_env_v_fupd (combin_K (sem_env_v env)) env) <=> candle_env_ok ctxt env`,
   REWRITE_TAC[candle_env_ok_def; sem_env_INFO.ri_accfupds; K_THM]);;
 
 (* HOL4 App_Opapp (and the Force case): the closure of an application of a  *)
@@ -836,11 +836,11 @@ let CAN2DAUX_evaluate_v_ok_App_Opapp = prove
   ASM_CASES_TAC `candle_kernel_vals ctxt1 f` THENL
    [FIRST_ASSUM (MP_TAC o MATCH_MP kernel_vals_ok) THEN
     DISCH_THEN (fun th -> DRULE_ALL th) THEN STRIP_TAC THENL
-     [QEXISTS_TAC "ctxt1" THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+     [QEXISTS_TAC "ctxt1" THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
       REWRITE_TAC[dec_clock_def; state_INFO.ri_accfupds] THEN
       ASM_MESON_TAC[CAN2DAUX_state_ok_ok_event];
       QEXISTS_TAC "ctxt'" THEN CONJ_TAC THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
-      QCASES_ON "res" THEN CASE_REWRITE_TAC[] THENL
+      QCASES_ON "res" THEN CAKE_REWRITE_TAC[] THENL
        [ASM_MESON_TAC[];
         TOP_CASE_TAC THEN ASM_MESON_TAC[CAN2DAUX_state_ok_ok_event]]];
     DRULE_ALL CAN2DAUX_do_opapp_ok THEN STRIP_TAC THEN
@@ -888,7 +888,7 @@ let CAN2DAUX_state_ok_do_app = prove
    do_app (state_refs s,state_ffi s) op vs = SOME ((refs1,ffi1),res) /\
    ~(op = Opapp) /\ ~(op = Eval) /\ ~(op = FFI kernel_ffi) /\
    ALL (candle_v_ok ctxt) vs ==>
-   candle_state_ok ctxt (state_refs_fupd (K refs1) (state_ffi_fupd (K ffi1) s)) /\
+   candle_state_ok ctxt (state_refs_fupd (combin_K refs1) (state_ffi_fupd (combin_K ffi1) s)) /\
    ALL ok_event (ffi_state_io_events ffi1) /\
    (match list_result res with
       Rval vs -> ALL (candle_v_ok ctxt) vs
@@ -932,7 +932,7 @@ let CAN2DAUX_evaluate_v_ok_App_Op = prove
     REWRITE_TAC[PERMSAUX_getOpClass] THEN ASM_REWRITE_TAC[] THEN
     STRIP_TAC THEN REPEAT GEN_TAC THEN STRIP_TAC THEN
     QPAT_X_ASSUM "evaluate _ _ [App _ _] = _" (MP_TAC o ONCE_REWRITE_RULE[evaluate_def]) THEN
-    ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
     QPAT_X_ASSUM "getOpClass op = Simple" (K ALL_TAC) THEN DISCH_TAC THEN
     RULE_ASSUM_TAC (REWRITE_RULE[ALL; safe_exp_simps]) THEN
     GVS[pair_case_eq; case_eq "result"; option_case_eq] THEN

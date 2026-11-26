@@ -96,19 +96,19 @@ let convert_code_def = cake_def
        match p with
          (nm,(params,prog,rshape)) ->
            (MAP (I ## compile_shape (pan_structs_context_structs ctxt)) params,
-            pan_structs_compile (pan_structs_context_locals_fupd (K params) ctxt) prog,
+            pan_structs_compile (pan_structs_context_locals_fupd (combin_K params) ctxt) prog,
             compile_shape (pan_structs_context_structs ctxt) rshape))`;;
 
 let convert_s_def = cake_def
   `convert_s (ctxt:pan_structs_context) (s:(A,FFI)pan_state) =
      pan_state_locals_fupd
-       (K (FMAP_MAP2 (\p. match p with (nm,v) -> convert_v v) (pan_state_locals s)))
+       (combin_K (FMAP_MAP2 (\p. match p with (nm,v) -> convert_v v) (pan_state_locals s)))
      (pan_state_globals_fupd
-       (K (FMAP_MAP2 (\p. match p with (nm,v) -> convert_v v) (pan_state_globals s)))
-     (pan_state_structs_fupd (K [])
-     (pan_state_code_fupd (K (convert_code ctxt (pan_state_code s)))
+       (combin_K (FMAP_MAP2 (\p. match p with (nm,v) -> convert_v v) (pan_state_globals s)))
+     (pan_state_structs_fupd (combin_K [])
+     (pan_state_code_fupd (combin_K (convert_code ctxt (pan_state_code s)))
      (pan_state_eshapes_fupd
-       (K (convert_eshapes (pan_structs_context_structs ctxt) (pan_state_eshapes s))) s))))`;;
+       (combin_K (convert_eshapes (pan_structs_context_structs ctxt) (pan_state_eshapes s))) s))))`;;
 
 let struct_infos_ok_def = cake_def
  `struct_infos_ok (sh_ctxt:(mlstring#struct_info)list) <=>
@@ -138,7 +138,7 @@ let alookup_drop_helper = prove
   ASM_REWRITE_TAC[] THEN
   GEN_REWRITE_TAC (LAND_CONV o LAND_CONV) [GSYM(ISPEC `n:num` TAKE_DROP)] THEN
   RULE_ASSUM_TAC(REWRITE_RULE[GSYM ALOOKUP_NONE]) THEN
-  ASM_REWRITE_TAC[ALOOKUP_APPEND] THEN CASE_REWRITE_TAC[]);;
+  ASM_REWRITE_TAC[ALOOKUP_APPEND] THEN CAKE_REWRITE_TAC[]);;
 
 let size_of_sh_with_ctxt_drop = prove
  (`!sh_ctxt sh. is_wf_shape (DROP n sh_ctxt) sh /\ ALL_DISTINCT (MAP FST sh_ctxt) ==>
@@ -158,7 +158,7 @@ let is_wf_shape_drop = prove
     EVERY_CASE_TAC THEN FS[] THEN
     MP_TAC(ISPECL [`TAKE n (ctxt:(mlstring#A)list)`; `DROP n (ctxt:(mlstring#A)list)`;
                    `nm:mlstring`] ALOOKUP_APPEND) THEN
-    ASM_REWRITE_TAC[TAKE_DROP] THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[TAKE_DROP] THEN CAKE_REWRITE_TAC[] THEN
     TOP_CASE_TAC THEN SIMP[]]);;
 
 (* size_of_sh_with_ctxt_drop with n = 1 (HOL4: its SPEC x :: xs, n = 1) *)
@@ -180,7 +180,7 @@ let struct_infos_ok_cons = prove
    size_of_sh_with_ctxt xs (Comb (MAP SND (struct_info_fields info)))
    ==> struct_infos_ok (CONS (nm,info) xs)`,
   REWRITE_TAC[struct_infos_ok_def; ALL; MAP; ALL_DISTINCT; LENGTH] THEN
-  CASE_REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
   REPEAT CONJ_TAC THENL
    [GEN_TAC THEN STRUCT_CASES_TAC(SPEC `i:num` num_CASES) THEN
     REWRITE_TAC[EL; HD; TL; LT_SUC; ADD_CLAUSES; DROP; DROP_DEF; ARITH;
@@ -196,8 +196,8 @@ let struct_infos_ok_cons = prove
       FIRST_X_ASSUM(MP_TAC o SPECL [`i:num`; `nm':mlstring`; `info':struct_info`]) THEN
       ASM_REWRITE_TAC[] THEN MATCH_MP_TAC MONO_ALL THEN MESON_TAC[is_wf_shape_drop];
       ALL_TAC] THEN
-    RULE_ASSUM_TAC(CASE_REWRITE_RULE[EVERY_MEM; FORALL_PAIR_THM]) THEN
-    REWRITE_TAC[EVERY_MEM; FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[] THEN
+    RULE_ASSUM_TAC(CAKE_REWRITE_RULE[EVERY_MEM; FORALL_PAIR_THM]) THEN
+    REWRITE_TAC[EVERY_MEM; FORALL_PAIR_THM] THEN CAKE_REWRITE_TAC[] THEN
     MAP_EVERY X_GEN_TAC [`nm':mlstring`; `info':struct_info`] THEN DISCH_TAC THEN
     SUBGOAL_THEN
      `size_of_sh_with_ctxt (CONS (nm,info) xs)
@@ -233,7 +233,7 @@ let struct_infos_ok_drop = prove
   ASM_SIMP_TAC[EVERY_DROP; MAP_DROP; ALL_DISTINCT_DROP] THEN
   ONCE_REWRITE_TAC[EVERY_EL] THEN X_GEN_TAC `i:num` THEN DISCH_TAC THEN
   PAIR_CASES_ON `EL i (DROP n (sh_ctxt:(mlstring#struct_info)list))` THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   SUBGOAL_THEN
    `size_of_sh_with_ctxt (DROP n (sh_ctxt:(mlstring#struct_info)list))
       (Comb (MAP SND (struct_info_fields p1))) =
@@ -253,7 +253,7 @@ let struct_infos_ok_drop = prove
   REWRITE_TAC[EVERY_EL] THEN
   DISCH_THEN(MP_TAC o SPEC `i + n:num`) THEN ASM_SIMP_TAC[] THEN
   SUBGOAL_THEN `EL (i + n) (sh_ctxt:(mlstring#struct_info)list) = (p0,p1)`
-    SUBST1_TAC THENL [ASM_MESON_TAC[]; CASE_REWRITE_TAC[]]);;
+    SUBST1_TAC THENL [ASM_MESON_TAC[]; CAKE_REWRITE_TAC[]]);;
 
 let struct_infos_ok_append = prove
  (`struct_infos_ok (APPEND xs ys) ==> struct_infos_ok ys`,
@@ -288,12 +288,12 @@ let fields_in_order_reorder_noop = prove
   REWRITE_TAC[MAP; FLAT; NOT_CONS_NIL; CONS_11; ALL_DISTINCT] THEN
   PAIR_CASES_ON `h:mlstring#(A)panLang_exp` THEN PAIR_CASES_ON `h':mlstring#B` THEN
   REWRITE_TAC[pan_structs_compile_exp_def; ALOOKUP_THM; o_THM] THEN
-  CASE_REWRITE_TAC[FST; SND] THEN STRIP_TAC THEN
-  ASM_REWRITE_TAC[APPEND; CONS_11] THEN CASE_REWRITE_TAC[APPEND; CONS_11] THEN
+  CAKE_REWRITE_TAC[FST; SND] THEN STRIP_TAC THEN
+  ASM_REWRITE_TAC[APPEND; CONS_11] THEN CAKE_REWRITE_TAC[APPEND; CONS_11] THEN
   FIRST_X_ASSUM(MP_TAC o SPEC `t':(mlstring#B)list`) THEN ASM_REWRITE_TAC[] THEN
   DISCH_THEN(SUBST1_TAC o SYM) THEN AP_TERM_TAC THEN
   MATCH_MP_TAC MAP_CONG THEN REWRITE_TAC[FORALL_PAIR_THM] THEN
-  CASE_REWRITE_TAC[] THEN REPEAT STRIP_TAC THEN
+  CAKE_REWRITE_TAC[] THEN REPEAT STRIP_TAC THEN
   COND_CASES_TAC THEN REWRITE_TAC[] THEN ASM_MESON_TAC[MEM_MAP; FST]);;
 
 let alookup_map_structs_ok = prove
@@ -302,7 +302,7 @@ let alookup_map_structs_ok = prove
   RW[] THEN IMP_RES_TAC ALOOKUP_MEM THEN
   FS[struct_infos_ok_def; EVERY_MEM] THEN
   REPEAT(FIRST_X_ASSUM(MP_TAC o SPEC `nm:mlstring,info:struct_info`)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN SIMP_TAC[]);;
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN SIMP_TAC[]);;
 
 let opt_mmap_eq_every = prove
  (`OPT_MMAP (f:A->B option) xs = SOME ys /\
@@ -318,7 +318,7 @@ let every_convert_v_eq = prove
   RW[EVERY_EL; LIST_EQ_REWRITE; LENGTH_MAP] THEN RES_TAC THEN
   ASM_SIMP_TAC[EL_MAP] THEN
   POP_ASSUM MP_TAC THEN QCASES_ON "EL x (vs:((A)pan_v)list)" THEN
-  CASE_REWRITE_TAC[convert_v_def]);;
+  CAKE_REWRITE_TAC[convert_v_def]);;
 
 let map_fst_eq_alookup = prove
  (`!(xs:(A#B)list) (ys:(A#C)list). MAP FST xs = MAP FST ys /\ ALOOKUP xs nm = SOME v ==>
@@ -345,7 +345,7 @@ let map_fst_eq_alookup = prove
   STRIP_TAC THEN EXISTS_TAC `1 + i` THEN
   ASM_REWRITE_TAC[LENGTH; ARITH_RULE `1 + i < SUC n <=> i < n`;
                   ARITH_RULE `1 + i = SUC i`; EL; TL; LT_SUC] THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[]);;
 
 let is_wf_shape_compile_shape = prove
  (`(!(sh_ctxt:(stcname#((fldname#shape)list))list) sh.
@@ -399,11 +399,11 @@ let dropWhile_afindi = prove
   `dropWhile (\p. match p with (k,v) -> ~(k = kx)) (xs:(A#B)list) =
    (match afindi kx xs with NONE -> [] | SOME n -> DROP n xs)`,
   (SPEC_TAC(`xs:(A#B)list`,`xs:(A#B)list`) THEN LIST_INDUCT_TAC THEN
-  REWRITE_TAC[dropWhile_def; afindi_def] THEN CASE_REWRITE_TAC[]) THEN
-  (PAIR_CASES_ON `h:A#B` THEN CASE_REWRITE_TAC[afindi_def]) THEN
+  REWRITE_TAC[dropWhile_def; afindi_def] THEN CAKE_REWRITE_TAC[]) THEN
+  (PAIR_CASES_ON `h:A#B` THEN CAKE_REWRITE_TAC[afindi_def]) THEN
   (REWRITE_TAC[ISPECL [`kx:A`; `h0:A`] EQ_SYM_EQ] THEN
-   ASM_CASES_TAC `(h0:A) = kx` THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[DROP] THEN
-   TOP_CASE_TAC THEN CASE_REWRITE_TAC[ARITH_RULE `1 + n = SUC n`; DROP]));;
+   ASM_CASES_TAC `(h0:A) = kx` THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[DROP] THEN
+   TOP_CASE_TAC THEN CAKE_REWRITE_TAC[ARITH_RULE `1 + n = SUC n`; DROP]));;
 
 let afindi_less_length = prove
  (`!(xs:(A#B)list) n. afindi kx xs = SOME n ==> n < LENGTH xs`,
@@ -436,7 +436,7 @@ let compile_shape_n_eq = prove
    [REWRITE_TAC[compile_shapes_eq_map; injectivity "shape"] THEN
     MATCH_MP_TAC MAP_CONG THEN ASM_REWRITE_TAC[];
     ALL_TAC]) THEN
-  (REWRITE_TAC[dropWhile_afindi] THEN TOP_CASE_TAC THEN CASE_REWRITE_TAC[]) THEN
+  (REWRITE_TAC[dropWhile_afindi] THEN TOP_CASE_TAC THEN CAKE_REWRITE_TAC[]) THEN
   (SUBGOAL_THEN `n + a < LENGTH (sctxt:(stcname#((B#shape)list))list)` ASSUME_TAC THENL
     [IMP_RES_TAC afindi_less_length THEN RULE_ASSUM_TAC(REWRITE_RULE[LENGTH_DROP]) THEN
      ASM_ARITH_TAC;
@@ -446,7 +446,7 @@ let compile_shape_n_eq = prove
    MP_TAC(ISPECL [`sctxt:(stcname#((B#shape)list))list`; `n + a:num`] DROP_EL_CONS) THEN
    ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN
    PAIR_CASES_ON `EL (n + a) (sctxt:(stcname#((B#shape)list))list)` THEN
-   CASE_REWRITE_TAC[compile_shapes_eq_map; injectivity "shape"] THEN
+   CAKE_REWRITE_TAC[compile_shapes_eq_map; injectivity "shape"] THEN
    MATCH_MP_TAC MAP_CONG THEN REWRITE_TAC[] THEN REPEAT STRIP_TAC THEN
    FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_MESON_TAC[]));;
 
@@ -492,13 +492,13 @@ let afindi_append = prove
         NONE -> OPTION_MAP ((+) (LENGTH xs)) (afindi k ys)
       | SOME i -> SOME i)`,
   GEN_TAC THEN LIST_INDUCT_TAC THEN
-  REWRITE_TAC[APPEND; afindi_def; LENGTH; ADD_CLAUSES] THEN CASE_REWRITE_TAC[] THENL
+  REWRITE_TAC[APPEND; afindi_def; LENGTH; ADD_CLAUSES] THEN CAKE_REWRITE_TAC[] THENL
    [GEN_TAC THEN QCASES_ON "afindi (k:A) (ys:(A#B)list)" THEN
     REWRITE_TAC[OPTION_MAP_DEF; ADD_CLAUSES];
     PAIR_CASES_ON `h:A#B` THEN REWRITE_TAC[afindi_def] THEN GEN_TAC THEN
-    COND_CASES_TAC THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
-    QCASES_ON "afindi (k:A) (t:(A#B)list)" THEN CASE_REWRITE_TAC[] THEN
-    QCASES_ON "afindi (k:A) (ys:(A#B)list)" THEN CASE_REWRITE_TAC[OPTION_MAP_DEF] THEN
+    COND_CASES_TAC THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
+    QCASES_ON "afindi (k:A) (t:(A#B)list)" THEN CAKE_REWRITE_TAC[] THEN
+    QCASES_ON "afindi (k:A) (ys:(A#B)list)" THEN CAKE_REWRITE_TAC[OPTION_MAP_DEF] THEN
     REWRITE_TAC[option_INJ] THEN ARITH_TAC]);;
 
 let afindi_EL = prove
@@ -550,7 +550,7 @@ let wf_shape_struct_infos_ok_helper = prove
    THENL [ASM_MESON_TAC[ALOOKUP_NONE; ALOOKUP_eq_afindi; OPTION_MAP_EQ_NONE]; ALL_TAC] THEN
    MP_TAC(ISPECL [`nm:mlstring`; `TAKE n (ctxt:(mlstring#struct_info)list)`;
                   `DROP n (ctxt:(mlstring#struct_info)list)`] afindi_append) THEN
-   ASM_REWRITE_TAC[TAKE_DROP] THEN CASE_REWRITE_TAC[OPTION_MAP_DEF] THEN
+   ASM_REWRITE_TAC[TAKE_DROP] THEN CAKE_REWRITE_TAC[OPTION_MAP_DEF] THEN
    DISCH_THEN SUBST1_TAC THEN REWRITE_TAC[option_INJ] THEN
    SUBGOAL_THEN `LENGTH (TAKE n (ctxt:(mlstring#struct_info)list)) = n` SUBST1_TAC THENL
     [MATCH_MP_TAC LENGTH_TAKE THEN ASM_ARITH_TAC; ARITH_TAC]));;
@@ -569,7 +569,7 @@ let size_of_compile_shape_n = prove
    [REWRITE_TAC[MAP_MAP_o] THEN AP_TERM_TAC THEN MATCH_MP_TAC MAP_CONG THEN
    REWRITE_TAC[o_THM] THEN REPEAT STRIP_TAC THEN ASM_MESON_TAC[EVERY_MEM];
     (QCASES_ON "ALOOKUP (DROP n (ctxt:(mlstring#struct_info)list)) nm" THEN
-   RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN ASM_REWRITE_TAC[] THEN
+   RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN ASM_REWRITE_TAC[] THEN
    TRY(FIRST_X_ASSUM CONTR_TAC) THEN
    FIRST_ASSUM(MP_TAC o MATCH_MP wf_shape_struct_infos_ok_helper o
      C CONJ (ASSUME `struct_infos_ok (ctxt:(mlstring#struct_info)list)`)) THEN
@@ -581,16 +581,16 @@ let size_of_compile_shape_n = prove
                              (ctxt:(mlstring#struct_info)list))) = SOME i`) ASSUME_TAC THENL
     [REWRITE_TAC[GSYM MAP_DROP] THEN
      SUBST1_TAC(SYM(ASSUME `afindi nm (DROP n (ctxt:(mlstring#struct_info)list)) = SOME i`)) THEN
-     MATCH_MP_TAC afindi_MAP_eq THEN CASE_REWRITE_TAC[FST];
+     MATCH_MP_TAC afindi_MAP_eq THEN CAKE_REWRITE_TAC[FST];
      ALL_TAC] THEN
    SUBGOAL_THEN (CASE_TERM
      `EL (n + i) (MAP (\p. match p with (nm,info) -> (nm,struct_info_fields info))
                       (ctxt:(mlstring#struct_info)list)) =
       (nm,struct_info_fields a)`) ASSUME_TAC THENL
     [REWRITE_TAC[MATCH_MP EL_MAP (ASSUME `n + i < LENGTH (ctxt:(mlstring#struct_info)list)`)] THEN
-     ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[];
+     ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[];
      ALL_TAC] THEN
-   ASM_REWRITE_TAC[ALOOKUP_eq_afindi] THEN CASE_REWRITE_TAC[OPTION_MAP_DEF] THEN
+   ASM_REWRITE_TAC[ALOOKUP_eq_afindi] THEN CAKE_REWRITE_TAC[OPTION_MAP_DEF] THEN
    ASM_REWRITE_TAC[SND; size_of_sh_with_ctxt_def] THEN
    SUBGOAL_THEN `struct_info_size a =
                  size_of_sh_with_ctxt ctxt (Comb (MAP SND (struct_info_fields a)))`
@@ -598,9 +598,9 @@ let size_of_compile_shape_n = prove
     [UNDISCH_TAC `struct_infos_ok (ctxt:(mlstring#struct_info)list)` THEN
      REWRITE_TAC[struct_infos_ok_def; EVERY_MEM] THEN
      DISCH_THEN(MP_TAC o SPEC `(nm:mlstring,a:struct_info)` o last o CONJUNCTS) THEN
-     ANTS_TAC THENL [ASM_MESON_TAC[MEM_EL]; CASE_REWRITE_TAC[]];
+     ANTS_TAC THENL [ASM_MESON_TAC[MEM_EL]; CAKE_REWRITE_TAC[]];
      ALL_TAC] THEN
-   CASE_REWRITE_TAC[size_of_sh_with_ctxt_def; MAP_MAP_o] THEN AP_TERM_TAC THEN
+   CAKE_REWRITE_TAC[size_of_sh_with_ctxt_def; MAP_MAP_o] THEN AP_TERM_TAC THEN
    MATCH_MP_TAC MAP_CONG THEN REWRITE_TAC[o_THM] THEN REPEAT STRIP_TAC THEN
    FIRST_X_ASSUM(MP_TAC o SPECL [`nm:mlstring`; `struct_info_fields a`; `i:num`;
                                  `SND (x:mlstring#shape)`]) THEN
@@ -628,7 +628,7 @@ let v_flds_ok_append = prove
   FIRST
    [ASM_MESON_TAC[];
     QCASES_ON "ALOOKUP (ctxt:(mlstring#struct_info)list) nm" THEN
-    RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN ASM_REWRITE_TAC[] THEN
+    RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN ASM_REWRITE_TAC[] THEN
     TRY(FIRST_ASSUM CONTR_TAC) THEN
     SUBGOAL_THEN `ALOOKUP (pfx:(mlstring#struct_info)list) nm = NONE` ASSUME_TAC THENL
      [REWRITE_TAC[ALOOKUP_NONE] THEN
@@ -638,7 +638,7 @@ let v_flds_ok_append = prove
       IMP_RES_TAC ALOOKUP_MEM THEN REWRITE_TAC[MEM_MAP] THEN
       ASM_MESON_TAC[FST];
       ALL_TAC] THEN
-    ASM_REWRITE_TAC[ALOOKUP_APPEND] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]]);;
+    ASM_REWRITE_TAC[ALOOKUP_APPEND] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]]);;
 
 let dropWhile_MAP_helper = prove
  (`!xs. dropWhile P xs = ys /\ (!x:A. MEM x xs ==> P x = Q ((f:A->B) x)) ==>
@@ -658,7 +658,7 @@ let dropWhile_MAP_helper = prove
 (* \p. match p with (x,y) -> f y here                                   *)
 let UNCURRY_EQ_o_SND = prove
  (CASE_TERM `(\p. match p with (x:A,y:B) -> (f:B->C) y) = f o SND`,
-  REWRITE_TAC[FUN_EQ_THM; FORALL_PAIR_THM; o_THM] THEN CASE_REWRITE_TAC[SND]);;
+  REWRITE_TAC[FUN_EQ_THM; FORALL_PAIR_THM; o_THM] THEN CAKE_REWRITE_TAC[SND]);;
 
 (* HOL4: cj 1 mem_load_def |> Q.SPEC stcs and its instances for the three shapes *)
 let mem_load_rec1 = CONJUNCT1 pan_mem_load_def;;
@@ -729,13 +729,13 @@ let mem_load_conversion = prove
    [(* One *)
     REPEAT STRIP_TAC THEN RVEQ_TAC THEN
    RULE_ASSUM_TAC(REWRITE_RULE[mem_load_rec]) THEN REWRITE_TAC[compile_shape_n_def; mem_load_rec] THEN
-   RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN CASE_REWRITE_TAC[] THEN
+   RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN CAKE_REWRITE_TAC[] THEN
    GVS(all_case_eqs()) THEN REWRITE_TAC[convert_v_def; v_flds_ok_def];
     (* Comb *)
     (REPEAT GEN_TAC THEN DISCH_TAC THEN REPEAT GEN_TAC THEN STRIP_TAC THEN RVEQ_TAC THEN
    RULE_ASSUM_TAC(REWRITE_RULE[mem_load_rec; is_wf_shape_def]) THEN
-   RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN
-   REWRITE_TAC[compile_shape_n_def; mem_load_rec] THEN CASE_REWRITE_TAC[] THEN
+   RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN
+   REWRITE_TAC[compile_shape_n_def; mem_load_rec] THEN CAKE_REWRITE_TAC[] THEN
    GVS(all_case_eqs())) THEN
     (FIRST_ASSUM((fun th -> DEP_REWRITE_TAC[GEN_ALL(MATCH_MP
      (REWRITE_RULE[IMP_CONJ] (GEN_ALL mem_loads_convert_helper)) th)]) o
@@ -761,44 +761,44 @@ let mem_load_conversion = prove
     (REPEAT GEN_TAC THEN DISCH_TAC THEN REPEAT GEN_TAC THEN STRIP_TAC THEN RVEQ_TAC THEN
    UNDISCH_TAC `pan_mem_load (Named nm) (x:A word) madd memry (DROP n str_ctxt) = SOME v` THEN
    RULE_ASSUM_TAC(REWRITE_RULE[is_wf_shape_def]) THEN
-   RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN
+   RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN
    QCASES_ON "ALOOKUP (DROP n (str_ctxt:(mlstring#struct_info)list)) nm" THEN
-   RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN TRY(FIRST_ASSUM CONTR_TAC) THEN
+   RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN TRY(FIRST_ASSUM CONTR_TAC) THEN
    FIRST_ASSUM(MP_TAC o MATCH_MP wf_shape_struct_infos_ok_helper o C CONJ
      (ASSUME `struct_infos_ok (str_ctxt:(mlstring#struct_info)list)`)) THEN
    DISCH_THEN(X_CHOOSE_THEN `i:num` STRIP_ASSUME_TAC) THEN
    SUBGOAL_THEN `i + n = n + i:num` (fun th -> RULE_ASSUM_TAC(REWRITE_RULE[th])) THENL
     [ARITH_TAC; ALL_TAC] THEN
-   REWRITE_TAC[mem_load_rec; dropWhile_afindi] THEN CASE_REWRITE_TAC[] THEN
-   ASM_REWRITE_TAC[DROP_DROP_T] THEN CASE_REWRITE_TAC[] THEN
+   REWRITE_TAC[mem_load_rec; dropWhile_afindi] THEN CAKE_REWRITE_TAC[] THEN
+   ASM_REWRITE_TAC[DROP_DROP_T] THEN CAKE_REWRITE_TAC[] THEN
    SUBGOAL_THEN `i + n = n + i:num` SUBST1_TAC THENL [ARITH_TAC; ALL_TAC] THEN
    MP_TAC(ISPECL [`str_ctxt:(mlstring#struct_info)list`; `n + i:num`] DROP_EL_CONS) THEN
-   ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN CASE_REWRITE_TAC[]) THEN
+   ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN CAKE_REWRITE_TAC[]) THEN
     (QCASES_ON "mem_load_flds (struct_info_fields a) (x:A word) madd memry
                 (DROP ((n + i) + 1) (str_ctxt:(mlstring#struct_info)list))" THEN
-   CASE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN DISCH_THEN(SUBST_ALL_TAC o SYM) THEN
+   CAKE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN DISCH_THEN(SUBST_ALL_TAC o SYM) THEN
    SUBGOAL_THEN (CASE_TERM
      `afindi nm (DROP n (MAP (\p. match p with (nm,info) -> (nm,struct_info_fields info))
                              (str_ctxt:(mlstring#struct_info)list))) = SOME i`) ASSUME_TAC THENL
     [REWRITE_TAC[GSYM MAP_DROP] THEN
      SUBST1_TAC(SYM(ASSUME `afindi nm (DROP n (str_ctxt:(mlstring#struct_info)list)) = SOME i`)) THEN
-     MATCH_MP_TAC afindi_MAP_eq THEN CASE_REWRITE_TAC[FST];
+     MATCH_MP_TAC afindi_MAP_eq THEN CAKE_REWRITE_TAC[FST];
      ALL_TAC] THEN
    SUBGOAL_THEN (CASE_TERM
      `EL (n + i) (MAP (\p. match p with (nm,info) -> (nm,struct_info_fields info))
                       (str_ctxt:(mlstring#struct_info)list)) =
       (nm,struct_info_fields a)`) ASSUME_TAC THENL
     [REWRITE_TAC[MATCH_MP EL_MAP (ASSUME `n + i < LENGTH (str_ctxt:(mlstring#struct_info)list)`)] THEN
-     ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[];
+     ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[];
      ALL_TAC] THEN
-   REWRITE_TAC[compile_shape_n_def] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[mem_load_rec] THEN
+   REWRITE_TAC[compile_shape_n_def] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[mem_load_rec] THEN
    FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP mem_load_flds_eq) THEN RVEQ_TAC) THEN
-    (ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[mem_load_rec]) THEN
+    (ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[mem_load_rec]) THEN
     (FIRST_ASSUM((fun th -> DEP_REWRITE_TAC[GEN_ALL(MATCH_MP
      (REWRITE_RULE[IMP_CONJ] (GEN_ALL mem_loads_convert_helper)) th)]) o
      check (fun th -> try fst(dest_const(fst(strip_comb(lhs(concl th))))) = "mem_loads"
                       with Failure _ -> false)) THEN
-   CASE_REWRITE_TAC[] THEN
+   CAKE_REWRITE_TAC[] THEN
    FIRST_ASSUM(STRIP_ASSUME_TAC o REWRITE_RULE[struct_infos_ok_def] o
      check (fun th -> try fst(dest_const(rator(concl th))) = "struct_infos_ok"
                       with Failure _ -> false))) THEN
@@ -822,7 +822,7 @@ let mem_load_conversion = prove
      (ASSUME `ALL_DISTINCT (MAP FST (str_ctxt:(mlstring#struct_info)list))`) o
      check (fun th -> try fst(dest_const(fst(strip_comb(lhs(concl th))))) = "ALOOKUP"
                       with Failure _ -> false)) THEN
-   STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+   STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
    REWRITE_TAC[MAP_o] THEN ASM_SIMP_TAC[MAP_SND_ZIP; LENGTH_MAP] THEN
    CONJ_TAC THENL
     [REWRITE_TAC[EVERY_MEM] THEN X_GEN_TAC `w:(A)pan_v` THEN DISCH_TAC THEN
@@ -865,14 +865,14 @@ let PPASS1AUX_ALOOKUP_MAP_fields = prove
   `!l k. ALOOKUP (MAP (\p. match p with (nm,info) -> (nm,struct_info_fields info)) l) k =
          OPTION_MAP struct_info_fields (ALOOKUP (l:(mlstring#struct_info)list) k)`,
   LIST_INDUCT_TAC THEN REWRITE_TAC[MAP; ALOOKUP_THM; OPTION_MAP_DEF] THEN
-  PAIR_CASES_ON `h:mlstring#struct_info` THEN CASE_REWRITE_TAC[ALOOKUP_THM] THEN
+  PAIR_CASES_ON `h:mlstring#struct_info` THEN CAKE_REWRITE_TAC[ALOOKUP_THM] THEN
   GEN_TAC THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[OPTION_MAP_DEF]);;
 
 (* word_lab has one constructor: (case a of Word w => T) = T, so the pattern *)
 (* Val (Word _) of eval's checks is HOL4's Val _ of every_convert_v_eq       *)
 let PPASS1AUX_word_lab_case_T = prove
  (CASE_TERM `!a:(A)word_lab. (match a with Word w -> T) = T`,
-  GEN_TAC THEN QCASES_ON "a:(A)word_lab" THEN CASE_REWRITE_TAC[]);;
+  GEN_TAC THEN QCASES_ON "a:(A)word_lab" THEN CAKE_REWRITE_TAC[]);;
 
 (* compile_exp_correct: tactics for the cases of the induction on eval *)
 
@@ -882,8 +882,8 @@ let PPASS1AUX_EXP_GEN_TAC : tactic =
        convert_s_def; FLOOKUP_FMAP_MAP2; old_exp_shape_def; shape_of_def] @ all_case_eqs()) THEN
   SIMP[compile_exp_correct_mmap_helper; EL_MAP] THEN
   REWRITE_TAC[GSYM(CONJUNCT1 ALOOKUP_EQ_FLOOKUP)] THEN ASM_REWRITE_TAC[FLOOKUP_FMAP_MAP2] THEN
-  CASE_REWRITE_TAC[o_THM; SND; OPTION_MAP_DEF] THEN
-  IMP_RES_TAC FEVERY_FLOOKUP THEN RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN
+  CAKE_REWRITE_TAC[o_THM; SND; OPTION_MAP_DEF] THEN
+  IMP_RES_TAC FEVERY_FLOOKUP THEN RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN
   FS[] THEN TRY(COND_CASES_TAC THEN ASM_REWRITE_TAC[]);;
 
 let PPASS1AUX_EXP_RSTRUCT0_TAC : tactic = REPEAT GEN_TAC THEN DISCH_TAC THEN REPEAT GEN_TAC THEN STRIP_TAC THEN
@@ -910,16 +910,16 @@ let PPASS1AUX_EXP_RFIELD_TAC : tactic = REPEAT GEN_TAC THEN DISCH_TAC THEN REPEA
 let PPASS1AUX_EXP_NFIELD_TAC : tactic = REPEAT GEN_TAC THEN DISCH_TAC THEN REPEAT GEN_TAC THEN STRIP_TAC THEN
   GVS([pan_eval_def; pan_structs_compile_exp_def] @ all_case_eqs()) THEN
   REWRITE_TAC[convert_v_def; shape_of_def; old_exp_shape_def; LET_DEF; LET_END_DEF] THEN
-  ASM_REWRITE_TAC[shape_of_def; PPASS1AUX_ALOOKUP_MAP_fields] THEN CASE_REWRITE_TAC[] THEN
-  RULE_ASSUM_TAC(REWRITE_RULE[v_flds_ok_def]) THEN RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN
+  ASM_REWRITE_TAC[shape_of_def; PPASS1AUX_ALOOKUP_MAP_fields] THEN CAKE_REWRITE_TAC[] THEN
+  RULE_ASSUM_TAC(REWRITE_RULE[v_flds_ok_def]) THEN RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN
   QCASES_ON "ALOOKUP (pan_state_structs (s:(A,FFI)pan_state)) a0" THEN
-  RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN TRY(FIRST_ASSUM CONTR_TAC) THEN
-  CASE_REWRITE_TAC[OPTION_MAP_DEF] THEN
+  RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN TRY(FIRST_ASSUM CONTR_TAC) THEN
+  CAKE_REWRITE_TAC[OPTION_MAP_DEF] THEN
   REPEAT(FIRST_X_ASSUM(CONJUNCTS_THEN ASSUME_TAC o check (is_conj o concl))) THEN
   MP_TAC(INST [`fld:mlstring`,`nm:mlstring`]
            (ISPECL [`a1:(mlstring#(A)pan_v)list`; `struct_info_fields a'`] map_fst_eq_alookup)) THEN
   ASM_REWRITE_TAC[] THEN DISCH_THEN(X_CHOOSE_THEN `i:num` STRIP_ASSUME_TAC) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REPEAT CONJ_TAC THENL
    [UNDISCH_TAC `MAP (shape_of o SND) (a1:(mlstring#(A)pan_v)list) =
                  MAP SND (struct_info_fields a')` THEN
@@ -928,9 +928,9 @@ let PPASS1AUX_EXP_NFIELD_TAC : tactic = REPEAT GEN_TAC THEN DISCH_TAC THEN REPEA
     UNDISCH_TAC (CASE_TERM `ALL (\p. match p with (nm,v) -> v_flds_ok (pan_state_structs (s:(A,FFI)pan_state)) v)
                      (a1:(mlstring#(A)pan_v)list)`) THEN
     REWRITE_TAC[EVERY_EL] THEN DISCH_THEN(MP_TAC o SPEC `i:num`) THEN ASM_REWRITE_TAC[] THEN
-    PAIR_CASES_ON `EL i (a1:(mlstring#(A)pan_v)list)` THEN CASE_REWRITE_TAC[SND];
+    PAIR_CASES_ON `EL i (a1:(mlstring#(A)pan_v)list)` THEN CAKE_REWRITE_TAC[SND];
     SIMP[LENGTH_MAP] THEN ASM_SIMP_TAC[EL_MAP] THEN
-    PAIR_CASES_ON `EL i (a1:(mlstring#(A)pan_v)list)` THEN CASE_REWRITE_TAC[SND]];;
+    PAIR_CASES_ON `EL i (a1:(mlstring#(A)pan_v)list)` THEN CAKE_REWRITE_TAC[SND]];;
 
 let PPASS1AUX_EXP_LOAD_TAC : tactic = REPEAT GEN_TAC THEN DISCH_TAC THEN REPEAT GEN_TAC THEN STRIP_TAC THEN
   GVS([pan_eval_def; pan_structs_compile_exp_def; convert_v_def; old_exp_shape_def] @
@@ -954,14 +954,14 @@ let PPASS1AUX_EXP_OP_TAC : tactic = REPEAT GEN_TAC THEN DISCH_TAC THEN REPEAT GE
    [MATCH_MP_TAC compile_exp_correct_mmap_helper THEN ASM_MESON_TAC[]; ALL_TAC] THEN
   RULE_ASSUM_TAC(REWRITE_RULE[PPASS1AUX_word_lab_case_T]) THEN
   IMP_RES_TAC every_convert_v_eq THEN ASM_REWRITE_TAC[PPASS1AUX_word_lab_case_T] THEN
-  CASE_REWRITE_TAC[] THEN ASM_MESON_TAC[];;
+  CAKE_REWRITE_TAC[] THEN ASM_MESON_TAC[];;
 
 let PPASS1AUX_EXP_NSTRUCT0_TAC : tactic = REPEAT GEN_TAC THEN DISCH_TAC THEN REPEAT GEN_TAC THEN STRIP_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[UNZIP_MAP]) THEN
   GVS([pan_eval_def; UNZIP_MAP; PAIR_EQ] @ all_case_eqs()) THEN
   REWRITE_TAC[pan_structs_compile_exp_def; LET_DEF; LET_END_DEF; convert_v_def;
               shape_of_def; old_exp_shape_def] THEN
-  ASM_REWRITE_TAC[PPASS1AUX_ALOOKUP_MAP_fields; OPTION_MAP_DEF] THEN CASE_REWRITE_TAC[];;
+  ASM_REWRITE_TAC[PPASS1AUX_ALOOKUP_MAP_fields; OPTION_MAP_DEF] THEN CAKE_REWRITE_TAC[];;
 
 let PPASS1AUX_EXP_NSTRUCT1_TAC : tactic = PPASS1AUX_EXP_NSTRUCT0_TAC THEN RENAME1 "ALOOKUP (pan_state_structs s) nm = SOME info" THEN
   SUBGOAL_THEN `LENGTH (a:((A)pan_v)list) = LENGTH (eflds:(mlstring#(A)panLang_exp)list)`
@@ -987,12 +987,12 @@ let PPASS1AUX_EXP_NSTRUCT2_TAC : tactic = PPASS1AUX_EXP_NSTRUCT1_TAC THEN
                 SOME (MAP convert_v (a:((A)pan_v)list))`
     ASSUME_TAC THENL
    [MATCH_MP_TAC compile_exp_correct_mmap_helper THEN ASM_MESON_TAC[]; ALL_TAC] THEN
-  ASM_REWRITE_TAC[pan_eval_def] THEN CASE_REWRITE_TAC[];;
+  ASM_REWRITE_TAC[pan_eval_def] THEN CAKE_REWRITE_TAC[];;
 
 let PPASS1AUX_EXP_NSTRUCT_TAC : tactic = PPASS1AUX_EXP_NSTRUCT2_TAC THEN
   REWRITE_TAC[v_flds_ok_def; UNCURRY_EQ_o_SND; GSYM ALL_MAP] THEN
   ASM_SIMP_TAC[MAP_SND_ZIP; MAP_FST_ZIP; LENGTH_MAP] THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[MAP_o] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[MAP_o] THEN
   ASM_SIMP_TAC[MAP_SND_ZIP; LENGTH_MAP] THEN REPEAT CONJ_TAC THENL
    [FIRST_ASSUM(MATCH_MP_TAC o MATCH_MP (REWRITE_RULE[IMP_CONJ] opt_mmap_eq_every) o
       check (fun th -> try fst(dest_const(fst(strip_comb(lhs(concl th))))) = "OPT_MMAP"
@@ -1008,7 +1008,7 @@ let PPASS1AUX_EXP_NSTRUCT_TAC : tactic = PPASS1AUX_EXP_NSTRUCT2_TAC THEN
       ASM_REWRITE_TAC[LENGTH_MAP];
       ALL_TAC] THEN
     ASM_SIMP_TAC[EVERY_EL; LIST_EQ_REWRITE; EL_ZIP; LENGTH_ZIP; LENGTH_MAP; EL_MAP] THEN
-    CASE_REWRITE_TAC[] THEN RULE_ASSUM_TAC(REWRITE_RULE[LENGTH_MAP]) THEN
+    CAKE_REWRITE_TAC[] THEN RULE_ASSUM_TAC(REWRITE_RULE[LENGTH_MAP]) THEN
     ASM_SIMP_TAC[] THEN MESON_TAC[]];;
 
 let pan_structsProof_compile_exp_correct = prove
@@ -1055,7 +1055,7 @@ let evaluate_structs_code_inv = prove
 
 (* HOL4 [local] *)
 let eval_upd_code_eq2 = prove
- (`pan_eval (pan_state_code_fupd (K code) (t:(A,FFI)pan_state)) = pan_eval t`,
+ (`pan_eval (pan_state_code_fupd (combin_K code) (t:(A,FFI)pan_state)) = pan_eval t`,
   REWRITE_TAC[FUN_EQ_THM; eval_upd_code_eq]);;
 
 let res_var_FMAP_MAP2 = prove
@@ -1091,8 +1091,8 @@ let shape_of_convert_v_ind = prove
   [(* One *)
    REPEAT GEN_TAC THEN QCASES_ON "v:(A)pan_v" THEN
    REWRITE_TAC[shape_of_def; compile_shape_n_def; convert_v_def; LET_DEF; LET_END_DEF] THEN
-   CASE_REWRITE_TAC[distinctness "shape"] THEN QCASES_ON "a:(A)word_lab" THEN
-   CASE_REWRITE_TAC[shape_of_def];
+   CAKE_REWRITE_TAC[distinctness "shape"] THEN QCASES_ON "a:(A)word_lab" THEN
+   CAKE_REWRITE_TAC[shape_of_def];
    (* Comb *)
    REPEAT GEN_TAC THEN DISCH_TAC THEN GEN_TAC THEN QCASES_ON "v:(A)pan_v" THEN
    REWRITE_TAC[shape_of_val; shape_of_def; distinctness "shape"; injectivity "shape"] THEN
@@ -1110,7 +1110,7 @@ let shape_of_convert_v_ind = prove
    STRIP_TAC THEN RVEQ_TAC THEN
    RULE_ASSUM_TAC(REWRITE_RULE[is_wf_shape_def]) THEN
    QCASES_ON "ALOOKUP (DROP n (ctxt:(mlstring#struct_info)list)) nm" THEN
-   RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN TRY(FIRST_ASSUM CONTR_TAC) THEN
+   RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN TRY(FIRST_ASSUM CONTR_TAC) THEN
    RENAME1 "ALOOKUP (DROP n ctxt) nm = SOME info" THEN
    FIRST_ASSUM(MP_TAC o MATCH_MP wf_shape_struct_infos_ok_helper o C CONJ
      (ASSUME `struct_infos_ok (ctxt:(mlstring#struct_info)list)`)) THEN
@@ -1122,17 +1122,17 @@ let shape_of_convert_v_ind = prove
                              (ctxt:(mlstring#struct_info)list))) = SOME i`) ASSUME_TAC THENL
     [REWRITE_TAC[GSYM MAP_DROP] THEN
      SUBST1_TAC(SYM(ASSUME `afindi nm (DROP n (ctxt:(mlstring#struct_info)list)) = SOME i`)) THEN
-     MATCH_MP_TAC afindi_MAP_eq THEN CASE_REWRITE_TAC[FST];
+     MATCH_MP_TAC afindi_MAP_eq THEN CAKE_REWRITE_TAC[FST];
      ALL_TAC] THEN
    SUBGOAL_THEN (CASE_TERM
      `EL (n + i) (MAP (\p. match p with (nm,info) -> (nm,struct_info_fields info))
                       (ctxt:(mlstring#struct_info)list)) =
       (nm,struct_info_fields info)`) ASSUME_TAC THENL
     [REWRITE_TAC[MATCH_MP EL_MAP (ASSUME `n + i < LENGTH (ctxt:(mlstring#struct_info)list)`)] THEN
-     ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[];
+     ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[];
      ALL_TAC] THEN
-   REWRITE_TAC[compile_shape_n_def] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
-   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+   REWRITE_TAC[compile_shape_n_def] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
+   ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
    FIRST_ASSUM(STRIP_ASSUME_TAC o REWRITE_RULE[struct_infos_ok_def] o
      check (fun th -> try fst(dest_const(rator(concl th))) = "struct_infos_ok"
                       with Failure _ -> false)) THEN
@@ -1142,7 +1142,7 @@ let shape_of_convert_v_ind = prove
                       with Failure _ -> false)) THEN
    STRIP_TAC THEN
    UNDISCH_TAC `v_flds_ok ctxt (pan_NStruct nm (a1:(mlstring#(A)pan_v)list))` THEN
-   ASM_REWRITE_TAC[v_flds_ok_def] THEN CASE_REWRITE_TAC[] THEN STRIP_TAC THEN
+   ASM_REWRITE_TAC[v_flds_ok_def] THEN CAKE_REWRITE_TAC[] THEN STRIP_TAC THEN
    FIRST_ASSUM(SUBST1_TAC o SYM o check (fun th -> try
      rand(rator(rhs(concl th))) = `SND:mlstring#shape->shape` with Failure _ -> false)) THEN
    REWRITE_TAC[convert_v_def; LET_DEF; LET_END_DEF; shape_of_def; injectivity "shape";
@@ -1165,7 +1165,7 @@ let shape_of_convert_v_ind = prove
      UNDISCH_TAC (CASE_TERM `ALL (\p. match p with (nm,v) -> v_flds_ok ctxt v)
                                  (a1:(mlstring#(A)pan_v)list)`) THEN
      REWRITE_TAC[EVERY_MEM] THEN DISCH_THEN(MP_TAC o SPEC `p:mlstring#(A)pan_v`) THEN
-     ASM_REWRITE_TAC[] THEN PAIR_CASES_ON `p:mlstring#(A)pan_v` THEN CASE_REWRITE_TAC[SND]])]);;
+     ASM_REWRITE_TAC[] THEN PAIR_CASES_ON `p:mlstring#(A)pan_v` THEN CAKE_REWRITE_TAC[SND]])]);;
 
 let shape_of_convert_v = prove
  (CASE_TERM
@@ -1196,7 +1196,7 @@ let flatten_convert_v = prove
   REWRITE_TAC[convert_v_def; flatten_def; LET_DEF; LET_END_DEF; MAP_MAP_o] THEN
   DISCH_TAC THEN AP_TERM_TAC THEN MATCH_MP_TAC MAP_CONG THEN
   REWRITE_TAC[o_THM] THEN TRY(FIRST_ASSUM ACCEPT_TAC) THEN
-  REWRITE_TAC[FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[SND] THEN
+  REWRITE_TAC[FORALL_PAIR_THM] THEN CAKE_REWRITE_TAC[SND] THEN
   ASM_MESON_TAC[]);;
 
 let map_uncurry_zip_again = prove
@@ -1207,7 +1207,7 @@ let map_uncurry_zip_again = prove
   SPEC_TAC(`ys:B list`,`ys:B list`) THEN SPEC_TAC(`xs:A list`,`xs:A list`) THEN
   LIST_INDUCT_TAC THEN LIST_INDUCT_TAC THEN
   REWRITE_TAC[LENGTH; NOT_SUC; GSYM NOT_SUC; SUC_INJ; ZIP; MAP] THEN
-  CASE_REWRITE_TAC[injectivity "list"] THEN ASM_MESON_TAC[]);;
+  CAKE_REWRITE_TAC[injectivity "list"] THEN ASM_MESON_TAC[]);;
 
 let fupdate_elim2 = prove
  (`FLOOKUP (fm:(A,B)fmap) x = SOME y ==> fm |+ (x,y) = fm`,
@@ -1237,7 +1237,7 @@ let lookup_code_flds_ok = prove
    ALL (\v. v_flds_ok (pan_state_structs s) v) args /\
    (?new_l.
       pan_lookup_code (pan_state_code (convert_s ctxt s)) fname (MAP convert_v args) =
-        SOME (pan_structs_compile (pan_structs_context_locals_fupd (K new_l) ctxt) prog,
+        SOME (pan_structs_compile (pan_structs_context_locals_fupd (combin_K new_l) ctxt) prog,
               FMAP_MAP2 (\p. match p with (nm,v) -> convert_v v) newlocals,
               compile_shape (pan_structs_context_structs ctxt) rshape) /\
       alist_to_fmap new_l = FMAP_MAP2 (shape_of o SND) (newlocals:(mlstring,(A)pan_v)fmap)) /\
@@ -1265,9 +1265,9 @@ let lookup_code_flds_ok = prove
                     SOME (prog,newlocals,rshape)` THEN
      REWRITE_TAC[pan_lookup_code_def] THEN
      QCASES_ON "FLOOKUP (pan_state_code (s:(A,FFI)pan_state)) fname" THEN
-     CASE_REWRITE_TAC[distinctness "option"] THEN
+     CAKE_REWRITE_TAC[distinctness "option"] THEN
      PAIR_CASES_ON `a:(mlstring#shape)list#(A)panLang_prog#shape` THEN
-     CASE_REWRITE_TAC[] THEN COND_CASES_TAC THEN
+     CAKE_REWRITE_TAC[] THEN COND_CASES_TAC THEN
      REWRITE_TAC[distinctness "option"; injectivity "option"; PAIR_EQ] THEN
      ASM_MESON_TAC[];
      ALL_TAC]) THEN
@@ -1279,7 +1279,7 @@ let lookup_code_flds_ok = prove
      REPEAT GEN_TAC THEN
      QCASES_ON "ALOOKUP (REVERSE (ZIP (MAP FST (vshapes:(mlstring#shape)list))
                                       (args:((A)pan_v)list))) k" THEN
-     CASE_REWRITE_TAC[distinctness "option"; injectivity "option"] THEN
+     CAKE_REWRITE_TAC[distinctness "option"; injectivity "option"] THEN
      DISCH_THEN SUBST_ALL_TAC THEN
      FIRST_X_ASSUM(MP_TAC o MATCH_MP ALOOKUP_MEM) THEN REWRITE_TAC[MEM_REVERSE] THEN
      DISCH_TAC THEN
@@ -1316,7 +1316,7 @@ let lookup_code_flds_ok = prove
                       `I:mlstring->mlstring`; `convert_v:(A)pan_v->(A)pan_v`] ZIP_MAP) THEN
        ASM_REWRITE_TAC[LENGTH_MAP] THEN DISCH_THEN(SUBST1_TAC o CONJUNCT2) THEN
        MATCH_MP_TAC MAP_CONG THEN REWRITE_TAC[FORALL_PAIR_THM] THEN
-       CONV_TAC(DEPTH_CONV GEN_BETA_CONV) THEN CASE_REWRITE_TAC[];
+       CONV_TAC(DEPTH_CONV GEN_BETA_CONV) THEN CAKE_REWRITE_TAC[];
        REWRITE_TAC[FMAP_MAP2_FUPDATE_LIST; FMAP_MAP2_FEMPTY] THEN
        MATCH_MP_TAC EQ_TRANS THEN
        EXISTS_TAC `FEMPTY |++ ZIP (MAP FST (vshapes:(mlstring#shape)list))
@@ -1341,12 +1341,12 @@ let lookup_code_flds_ok = prove
                               (newlocals:(mlstring,(A)pan_v)fmap)`) THEN
      UNDISCH_TAC `ALL (\v. is_wf_shape_v (pan_state_structs (s:(A,FFI)pan_state)) v /\
                            v_flds_ok (pan_state_structs s) v) (args:((A)pan_v)list)` THEN
-     REWRITE_TAC[FEVERY_ALL_FLOOKUP; EVERY_MEM] THEN CASE_REWRITE_TAC[] THEN MESON_TAC[];
+     REWRITE_TAC[FEVERY_ALL_FLOOKUP; EVERY_MEM] THEN CAKE_REWRITE_TAC[] THEN MESON_TAC[];
      UNDISCH_TAC (CASE_TERM `FEVERY (\p. match p with (nm,v) -> MEM v args)
                               (newlocals:(mlstring,(A)pan_v)fmap)`) THEN
      UNDISCH_TAC `ALL (\v. is_wf_shape_v (pan_state_structs (s:(A,FFI)pan_state)) v /\
                            v_flds_ok (pan_state_structs s) v) (args:((A)pan_v)list)` THEN
-     REWRITE_TAC[FEVERY_ALL_FLOOKUP; EVERY_MEM] THEN CASE_REWRITE_TAC[] THEN MESON_TAC[]]));;
+     REWRITE_TAC[FEVERY_ALL_FLOOKUP; EVERY_MEM] THEN CAKE_REWRITE_TAC[] THEN MESON_TAC[]]));;
 
 (* HOL4: [local, simp] *)
 let convert_code_locals_upd = prove
@@ -1384,7 +1384,7 @@ let convert_res_eq_case1 = prove
      SOME pan_Break -> convert_res (SOME pan_Break)
    | SOME x -> convert_res (SOME x)
    | NONE -> NONE`,
-  EVERY_CASE_TAC THEN CASE_REWRITE_TAC[convert_res_def]);;
+  EVERY_CASE_TAC THEN CAKE_REWRITE_TAC[convert_res_def]);;
 
 let convert_res_eq_case = REWRITE_RULE[convert_res_def] convert_res_eq_case1;;
 
@@ -1393,7 +1393,7 @@ let convert_res_eq_case = REWRITE_RULE[convert_res_def] convert_res_eq_case1;;
 let convert_res_eq_NONE = prove
  (`convert_res (res:((A)pan_result)option) = NONE <=> res = NONE`,
   ONCE_REWRITE_TAC[convert_res_eq_case] THEN EVERY_CASE_TAC THEN
-  CASE_REWRITE_TAC[distinctness "option"]);;
+  CAKE_REWRITE_TAC[distinctness "option"]);;
 
 let res_vs_def = sem1aux_def
   `(res_vs (SOME (pan_Return v)) = [v:(A)pan_v]) /\
@@ -1410,7 +1410,7 @@ let PPASS1AUX_FEVERY_VAL = prove
   REPEAT STRIP_TAC THEN
   MP_TAC(ISPECL [CASE_TERM `\p:C#D. match p with (nm,v) -> (P:D->bool) v`;
                  `m:(C,D)fmap`; `k:C`; `x:D`] FEVERY_FLOOKUP) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]);;
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]);;
 
 let PPASS1AUX_ASG_CLOSE_TAC (fld:term) : tactic =
   SUBGOAL_THEN `v_flds_ok (pan_state_structs (s:(A,FFI)pan_state)) (w:(A)pan_v) /\
@@ -1435,12 +1435,12 @@ let PPASS1AUX_ASG_CLOSE_TAC (fld:term) : tactic =
     ASM_REWRITE_TAC[] THEN REPEAT DISCH_TAC THEN ASM_REWRITE_TAC[];
     ALL_TAC] THEN
   REWRITE_TAC[pan_structs_compile_def; pan_evaluate_def] THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[pan_is_valid_value_def; kvar_simps] THEN
+  CAKE_REWRITE_TAC[pan_is_valid_value_def; kvar_simps] THEN
   SIMP[convert_s_def; FLOOKUP_FMAP_MAP2; pan_set_var_def; pan_set_global_def;
        FMAP_MAP2_FUPDATE; FEVERY_FUPDATE; convert_res_def; is_cont_res_def; res_vs_def;
        ALL; o_THM] THEN
   ASM_SIMP_TAC[fevery_to_drestrict; fupdate_elim2; FLOOKUP_FMAP_MAP2; o_THM] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   TRY(CONV_TAC SYM_CONV THEN MATCH_MP_TAC fupdate_elim2 THEN
       ASM_REWRITE_TAC[FLOOKUP_FMAP_MAP2; OPTION_MAP_DEF; o_THM]);;
 
@@ -1449,7 +1449,7 @@ let PPASS1AUX_CC_SRC_TAC : tactic =
   FIRST_X_ASSUM(MP_TAC o check (fun th -> try fst(dest_const(fst(strip_comb(lhs(concl th))))) =
                                               "pan_evaluate" with Failure _ -> false)) THEN
   GEN_REWRITE_TAC (LAND_CONV o LAND_CONV) [pan_evaluate_def] THEN
-  REPEAT(TOP_CASE_TAC THEN CASE_REWRITE_TAC[]) THEN
+  REPEAT(TOP_CASE_TAC THEN CAKE_REWRITE_TAC[]) THEN
   REWRITE_TAC[PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
   TRY(FIRST_X_ASSUM(MP_TAC o check (fun th -> try rand(concl th) = rand(rand(concl th)) && false
@@ -1475,8 +1475,8 @@ let PPASS1AUX_CC_EXPS_TAC : tactic = fun (asl,w as g) ->
 
 let PPASS1AUX_CC_TGT_TAC : tactic =
   REWRITE_TAC[pan_structs_compile_def; pan_evaluate_def] THEN
-  ASM_REWRITE_TAC[convert_v_def; flatten_convert_v] THEN CASE_REWRITE_TAC[flatten_convert_v] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[convert_v_def; flatten_convert_v] THEN CAKE_REWRITE_TAC[flatten_convert_v] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   SIMP[convert_s_def; convert_res_def; is_cont_res_def; res_vs_def; ALL;
        pan_state_component_equality] THEN
   ASM_REWRITE_TAC[];;
@@ -1490,7 +1490,7 @@ let PPASS1AUX_CC_SRC2_TAC (ths:thm list) : tactic =
                                               "pan_evaluate" with Failure _ -> false)) THEN
   GEN_REWRITE_TAC (LAND_CONV o LAND_CONV) [pan_evaluate_def] THEN
   REWRITE_TAC ths THEN
-  REPEAT((TOP_CASE_TAC ORELSE COND_CASES_TAC) THEN CASE_REWRITE_TAC ths) THEN
+  REPEAT((TOP_CASE_TAC ORELSE COND_CASES_TAC) THEN CAKE_REWRITE_TAC ths) THEN
   REWRITE_TAC[PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[]) THEN
@@ -1501,26 +1501,26 @@ let PPASS1AUX_CC_FIN_TAC : tactic =
        pan_state_component_equality; FMAP_MAP2_FUPDATE; FMAP_MAP2_FEMPTY; FEVERY_FUPDATE;
        FEVERY_FEMPTY; is_cont_res_def; res_vs_def; ALL; v_flds_ok_def; convert_v_def;
        o_THM; shape_of_val; convert_s_def] THEN
-  ASM_SIMP_TAC[fevery_to_drestrict] THEN CASE_REWRITE_TAC[] THEN
+  ASM_SIMP_TAC[fevery_to_drestrict] THEN CAKE_REWRITE_TAC[] THEN
   TRY(CONV_TAC SYM_CONV THEN MATCH_MP_TAC fupdate_elim2 THEN
       ASM_REWRITE_TAC[FLOOKUP_FMAP_MAP2; OPTION_MAP_DEF; o_THM; shape_of_val]);;
 
 let PPASS1AUX_CC_SHL_TAC : tactic =
-  QCASES_ON "vk:varkind" THEN RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN
+  QCASES_ON "vk:varkind" THEN RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN
   PPASS1AUX_CC_EXPS_TAC THEN
   REWRITE_TAC[pan_structs_compile_def; pan_evaluate_def] THEN
-  ASM_REWRITE_TAC[convert_v_def] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[convert_v_def] THEN CAKE_REWRITE_TAC[] THEN
   SIMP[convert_s_def; FLOOKUP_FMAP_MAP2; kvar_simps; pan_lookup_kvar_def] THEN
-  ASM_REWRITE_TAC[OPTION_MAP_DEF] THEN CASE_REWRITE_TAC[convert_v_def] THEN
+  ASM_REWRITE_TAC[OPTION_MAP_DEF] THEN CAKE_REWRITE_TAC[convert_v_def] THEN
   REWRITE_TAC[pan_sh_mem_load_def] THEN SIMP[] THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[] THEN PPASS1AUX_CC_FIN_TAC;;
+  CAKE_REWRITE_TAC[] THEN PPASS1AUX_CC_FIN_TAC;;
 
 let PPASS1AUX_CC_SHS_TAC : tactic =
   PPASS1AUX_CC_EXPS_TAC THEN
   REWRITE_TAC[pan_structs_compile_def; pan_evaluate_def] THEN
-  ASM_REWRITE_TAC[convert_v_def] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[convert_v_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[pan_sh_mem_store_def] THEN SIMP[convert_s_def] THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[] THEN PPASS1AUX_CC_FIN_TAC;;
+  CAKE_REWRITE_TAC[] THEN PPASS1AUX_CC_FIN_TAC;;
 
 let PPASS1AUX_CC_SRC3_TAC (ths:thm list) : tactic =
   FIRST_X_ASSUM(MP_TAC o check (fun th -> try fst(dest_const(fst(strip_comb(lhs(concl th))))) =
@@ -1530,7 +1530,7 @@ let PPASS1AUX_CC_SRC3_TAC (ths:thm list) : tactic =
                                           with Failure _ -> false)) THEN
   GEN_REWRITE_TAC (LAND_CONV o LAND_CONV) [pan_evaluate_def] THEN
   REWRITE_TAC ths THEN
-  REPEAT((TOP_CASE_TAC ORELSE COND_CASES_TAC) THEN CASE_REWRITE_TAC ths) THEN
+  REPEAT((TOP_CASE_TAC ORELSE COND_CASES_TAC) THEN CAKE_REWRITE_TAC ths) THEN
   REWRITE_TAC[PAIR_EQ] THEN
   (DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) ORELSE DISCH_TAC) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[]) THEN
@@ -1552,7 +1552,7 @@ let PPASS1AUX_CC_IF_TAC : tactic =
   PPASS1AUX_CC_EXPS_TAC THEN
   REWRITE_TAC[pan_structs_compile_def] THEN
   GEN_REWRITE_TAC (LAND_CONV o LAND_CONV) [pan_evaluate_def] THEN
-  ASM_REWRITE_TAC[convert_v_def] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[convert_v_def] THEN CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[] THEN
   PPASS1AUX_IH_AT_WORD_TAC THEN
   DISCH_THEN(MP_TAC o SPECL [`res:((A)pan_result)option`; `s':(A,FFI)pan_state`;
@@ -1570,7 +1570,7 @@ let PPASS1AUX_convert_s_clock = prove
 let PPASS1AUX_CC_WTGT_TAC : tactic =
   REWRITE_TAC[pan_structs_compile_def] THEN
   GEN_REWRITE_TAC (LAND_CONV o LAND_CONV) [pan_evaluate_def] THEN
-  ASM_REWRITE_TAC[convert_v_def] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[convert_v_def] THEN CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[PPASS1AUX_convert_s_clock; PPASS1AUX_convert_s_dec_clock];;
 
 let PPASS1AUX_pan_state_accfupds = (record_info "pan_state").ri_accfupds;;
@@ -1633,12 +1633,12 @@ let PPASS1AUX_WHILE_LOOP_TAC (lab:string) : tactic =
 
 let PPASS1AUX_CC_WLOOP_TAC (lab:string) : tactic =
   PPASS1AUX_CC_EXPS_TAC THEN PPASS1AUX_WHILE_BODY_TAC THEN
-  PPASS1AUX_CC_WTGT_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[convert_res_def] THEN
+  PPASS1AUX_CC_WTGT_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[convert_res_def] THEN
   PPASS1AUX_WHILE_LOOP_TAC lab;;
 
 let PPASS1AUX_CC_WSTOP_TAC : tactic =
   PPASS1AUX_CC_EXPS_TAC THEN PPASS1AUX_WHILE_BODY_TAC THEN
-  PPASS1AUX_CC_WTGT_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[convert_res_def] THEN
+  PPASS1AUX_CC_WTGT_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[convert_res_def] THEN
   RULE_ASSUM_TAC(REWRITE_RULE[is_cont_res_def]) THEN
   ASM_REWRITE_TAC[convert_res_def; is_cont_res_def; res_vs_def; ALL] THEN
   TRY(ASM_MESON_TAC[]);;
@@ -1669,9 +1669,9 @@ let PPASS1AUX_convert_s_locals_upd = prove
 let PPASS1AUX_convert_s_callee = prove
  (CASE_TERM
   `pan_state_locals_fupd
-     (K (FMAP_MAP2 (\p. match p with (nm,v) -> convert_v v) (l:(mlstring,(A)pan_v)fmap)))
+     (combin_K (FMAP_MAP2 (\p. match p with (nm,v) -> convert_v v) (l:(mlstring,(A)pan_v)fmap)))
      (pan_dec_clock (convert_s ctxt (s:(A,FFI)pan_state))) =
-   convert_s ctxt (pan_state_locals_fupd (K l) (pan_dec_clock s))`,
+   convert_s ctxt (pan_state_locals_fupd (combin_K l) (pan_dec_clock s))`,
   SIMP[convert_s_def; pan_dec_clock_def; pan_state_component_equality]);;
 
 (* the assumption pan_lookup_code (pan_state_code s) fname args = SOME (prog,nl,rsh) *)
@@ -1710,16 +1710,16 @@ let PPASS1AUX_compile_call = prove
                                   SOME (eid,evar,pan_structs_compile ctxt p)))
                 f (pan_structs_compile_exps ctxt es)`,
   REWRITE_TAC[pan_structs_compile_def; LET_DEF; LET_END_DEF] THEN
-  REPEAT(TOP_CASE_TAC THEN CASE_REWRITE_TAC[]));;
+  REPEAT(TOP_CASE_TAC THEN CAKE_REWRITE_TAC[]));;
 
 (* the target call up to the run of the callee *)
 let PPASS1AUX_CALL_TGT_TAC : tactic =
   REWRITE_TAC[PPASS1AUX_compile_call] THEN
   GEN_REWRITE_TAC (LAND_CONV o LAND_CONV) [pan_evaluate_def] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[PPASS1AUX_convert_s_clock; PPASS1AUX_convert_s_callee;
                   LET_DEF; LET_END_DEF] THEN
-  CASE_REWRITE_TAC[];;
+  CAKE_REWRITE_TAC[];;
 
 (* the run of the callee: pan_evaluate (prog,pan_state_locals_fupd (K nl) (pan_dec_clock s)) = R,st *)
 let PPASS1AUX_IS_CALLEE_RUN (th:thm) =
@@ -1740,7 +1740,7 @@ let PPASS1AUX_CALL_IH_TAC : tactic = fun (asl,w as g) ->
   let rr,st = dest_pair r in
   (REMOVE_THEN "ihm" (MP_TAC o SPECL [args; rsh; prog; nl]) THEN
    ANTS_TAC THENL [ASM_REWRITE_TAC[]; ALL_TAC] THEN
-   DISCH_THEN(MP_TAC o SPECL [rr; st; `pan_structs_context_locals_fupd (K new_l) ctxt`]) THEN
+   DISCH_THEN(MP_TAC o SPECL [rr; st; `pan_structs_context_locals_fupd (combin_K new_l) ctxt`]) THEN
    ANTS_TAC THENL
     [ASM_REWRITE_TAC[] THEN SIMP[pan_dec_clock_def] THEN ASM_REWRITE_TAC[] THEN
      REWRITE_TAC[distinctness "option"; distinctness "pan_result"];
@@ -1755,7 +1755,7 @@ let PPASS1AUX_CALL_IH_TAC : tactic = fun (asl,w as g) ->
 
 let PPASS1AUX_CALL_TGT2_TAC : tactic =
   PPASS1AUX_CALL_TGT_TAC THEN REWRITE_TAC[PPASS1AUX_convert_s_callee] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[convert_res_def];;
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[convert_res_def];;
 
 (* the shape of the converted value of the callee's result Return r / Exception e r *)
 let PPASS1AUX_CALL_RESV_TAC : tactic = fun (asl,w as g) ->
@@ -1779,10 +1779,10 @@ let PPASS1AUX_CC_CALLR_TAC : tactic =
 let PPASS1AUX_CALL_ASG_KIND_TAC (fld:term) (rt:term) (v:term) : tactic =
   let lk = mk_comb(mk_comb(`FLOOKUP:(mlstring,(A)pan_v)fmap->mlstring->((A)pan_v)option`,
                            mk_comb(fld,`s:(A,FFI)pan_state`)), rt) in
-  DISJ_CASES_THEN2 (fun th -> REWRITE_TAC[th] THEN CASE_REWRITE_TAC[])
+  DISJ_CASES_THEN2 (fun th -> REWRITE_TAC[th] THEN CAKE_REWRITE_TAC[])
     (X_CHOOSE_THEN `w:(A)pan_v` (fun th -> REWRITE_TAC[th] THEN ASSUME_TAC th))
     (ISPEC lk (cases "option")) THEN
-  CASE_REWRITE_TAC[] THEN DISCH_TAC THEN
+  CAKE_REWRITE_TAC[] THEN DISCH_TAC THEN
   SUBGOAL_THEN `v_flds_ok (pan_state_structs (s:(A,FFI)pan_state)) (w:(A)pan_v) /\
                 is_wf_shape_v (pan_state_structs s) w` STRIP_ASSUME_TAC THENL
    [CONJ_TAC THENL
@@ -1826,11 +1826,11 @@ let PPASS1AUX_GLOBALS_SHAPE_TAC : tactic =
 let PPASS1AUX_convert_s_set_var = prove
  (CASE_TERM
   `pan_set_var x (convert_v (v:(A)pan_v))
-     (pan_state_locals_fupd (K (pan_state_locals (convert_s ctxt (s:(A,FFI)pan_state))))
+     (pan_state_locals_fupd (combin_K (pan_state_locals (convert_s ctxt (s:(A,FFI)pan_state))))
         (convert_s ctxt (st:(A,FFI)pan_state))) =
-   convert_s ctxt (pan_set_var x v (pan_state_locals_fupd (K (pan_state_locals s)) st))`,
+   convert_s ctxt (pan_set_var x v (pan_state_locals_fupd (combin_K (pan_state_locals s)) st))`,
   SIMP[convert_s_def; pan_set_var_def; FMAP_MAP2_FUPDATE; pan_state_component_equality] THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[]);;
 
 (* the handler: the induction hypothesis "ihh" at the handler run *)
 let PPASS1AUX_CALL_HANDLER_IH_TAC : tactic = fun (asl,w as g) ->
@@ -1855,7 +1855,7 @@ let PPASS1AUX_CALL_HANDLER_IH_TAC : tactic = fun (asl,w as g) ->
    ANTS_TAC THENL
     [ASM_REWRITE_TAC[] THEN
      SIMP[pan_set_var_def; FEVERY_FUPDATE; FMAP_MAP2_FUPDATE; o_THM] THEN
-     ASM_SIMP_TAC[fevery_to_drestrict] THEN CASE_REWRITE_TAC[] THEN
+     ASM_SIMP_TAC[fevery_to_drestrict] THEN CAKE_REWRITE_TAC[] THEN
      TRY(CONV_TAC SYM_CONV THEN MATCH_MP_TAC fupdate_elim2 THEN
          ASM_REWRITE_TAC[FLOOKUP_FMAP_MAP2; OPTION_MAP_DEF; o_THM]);
      ALL_TAC] THEN
@@ -1874,14 +1874,14 @@ let PPASS1AUX_convert_s_fields = prove
 let PPASS1AUX_DCALL_TGT_TAC : tactic =
   REWRITE_TAC[pan_structs_compile_def] THEN
   GEN_REWRITE_TAC (LAND_CONV o LAND_CONV) [pan_evaluate_def] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[PPASS1AUX_convert_s_clock; PPASS1AUX_convert_s_callee;
                   LET_DEF; LET_END_DEF] THEN
-  CASE_REWRITE_TAC[];;
+  CAKE_REWRITE_TAC[];;
 
 let PPASS1AUX_DCALL_TGT2_TAC : tactic =
   PPASS1AUX_DCALL_TGT_TAC THEN REWRITE_TAC[PPASS1AUX_convert_s_callee] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[convert_res_def];;
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[convert_res_def];;
 
 (* DecCall: the induction hypothesis "ihd" of the continuation prog1 *)
 let PPASS1AUX_DCALL_IH2_TAC : tactic = fun (asl,w as g) ->
@@ -1896,7 +1896,7 @@ let PPASS1AUX_DCALL_IH2_TAC : tactic = fun (asl,w as g) ->
     with Failure _ -> false) asl) in
   let rr2,st2 = dest_pair(rand(concl crun)) in
   let ctxt1 = mk_comb(mk_comb(`pan_structs_context_locals_fupd`,
-     mk_comb(`K:(mlstring#shape)list->(mlstring#shape)list->(mlstring#shape)list`,
+     mk_comb(`combin_K:(mlstring#shape)list->(mlstring#shape)list->(mlstring#shape)list`,
        mk_comb(mk_comb(`CONS:mlstring#shape->(mlstring#shape)list->(mlstring#shape)list`,
                        mk_pair(`rt:mlstring`,mk_comb(`shape_of:(A)pan_v->shape`,retv))),
                `pan_structs_context_locals ctxt`))), `ctxt:pan_structs_context`) in
@@ -1906,7 +1906,7 @@ let PPASS1AUX_DCALL_IH2_TAC : tactic = fun (asl,w as g) ->
    ANTS_TAC THENL
     [ASM_REWRITE_TAC[] THEN
      SIMP[pan_set_var_def; FEVERY_FUPDATE; FMAP_MAP2_FUPDATE; o_THM; alist_to_fmap_thm] THEN
-     ASM_SIMP_TAC[fevery_to_drestrict] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[];
+     ASM_SIMP_TAC[fevery_to_drestrict] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[];
      ALL_TAC] THEN
    REWRITE_TAC[PPASS1AUX_convert_s_locals_upd] THEN SIMP[alist_to_fmap_thm] THEN STRIP_TAC) g;;
 
@@ -1957,7 +1957,7 @@ let pan_structsProof_compile_correct = prove
     ((REPEAT GEN_TAC THEN DISCH_TAC THEN REPEAT GEN_TAC THEN STRIP_TAC THEN
    UNDISCH_TAC `pan_evaluate (Dec v sh e prog,s:(A,FFI)pan_state) = res,s'` THEN
    GEN_REWRITE_TAC (LAND_CONV o LAND_CONV) [pan_evaluate_def] THEN
-   QCASES_ON "pan_eval (s:(A,FFI)pan_state) e" THEN CASE_REWRITE_TAC[PAIR_EQ] THEN
+   QCASES_ON "pan_eval (s:(A,FFI)pan_state) e" THEN CAKE_REWRITE_TAC[PAIR_EQ] THEN
    TRY(DISCH_THEN(MP_TAC o CONJUNCT1) THEN ASM_REWRITE_TAC[] THEN NO_TAC) THEN
    RENAME1 "pan_eval s e = SOME value" THEN
    COND_CASES_TAC THEN REWRITE_TAC[PAIR_EQ] THENL
@@ -1986,30 +1986,30 @@ let pan_structsProof_compile_correct = prove
    FIRST_X_ASSUM(MP_TAC o SPECL
      [`res:((A)pan_result)option`; `st:(A,FFI)pan_state`;
       `pan_structs_context_locals_fupd
-         (K (CONS (v,shape_of (value:(A)pan_v)) (pan_structs_context_locals ctxt))) ctxt`])) THEN
+         (combin_K (CONS (v,shape_of (value:(A)pan_v)) (pan_structs_context_locals ctxt))) ctxt`])) THEN
     (ANTS_TAC THENL
     [ASM_REWRITE_TAC[] THEN SIMP[] THEN ASM_REWRITE_TAC[] THEN
      SIMP[FEVERY_FUPDATE; alist_to_fmap_thm; FMAP_MAP2_FUPDATE; o_THM] THEN
-     ASM_SIMP_TAC[fevery_to_drestrict] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
+     ASM_SIMP_TAC[fevery_to_drestrict] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
      NO_TAC;
      STRIP_TAC]) THEN
     (FS[alist_to_fmap_thm]) THEN
     (SUBGOAL_THEN
      `pan_state_locals_fupd
-        (K (pan_state_locals (convert_s ctxt (s:(A,FFI)pan_state)) |+ (v,convert_v value)))
+        (combin_K (pan_state_locals (convert_s ctxt (s:(A,FFI)pan_state)) |+ (v,convert_v value)))
         (convert_s ctxt s) =
       convert_s (pan_structs_context_locals_fupd
-                   (K (CONS (v,shape_of (value:(A)pan_v)) (pan_structs_context_locals ctxt)))
+                   (combin_K (CONS (v,shape_of (value:(A)pan_v)) (pan_structs_context_locals ctxt)))
                    ctxt)
-                (pan_state_locals_fupd (K (pan_state_locals s |+ (v,value))) s)`
+                (pan_state_locals_fupd (combin_K (pan_state_locals s |+ (v,value))) s)`
      ASSUME_TAC THENL
     [SIMP[convert_s_def; FMAP_MAP2_FUPDATE; pan_state_component_equality] THEN
-     CASE_REWRITE_TAC[];
+     CAKE_REWRITE_TAC[];
      ALL_TAC]) THEN
     (CONJ_TAC THENL
     [REWRITE_TAC[pan_structs_compile_def] THEN
      GEN_REWRITE_TAC LAND_CONV [pan_evaluate_def] THEN
-     ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+     ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
      SUBGOAL_THEN (CASE_TERM
                    `shape_of (convert_v (value:(A)pan_v)) =
                     compile_shape
@@ -2018,7 +2018,7 @@ let pan_structsProof_compile_correct = prove
                       (shape_of value)`) (fun th -> REWRITE_TAC[th]) THENL
       [MATCH_MP_TAC shape_of_convert_v_rev THEN ASM_REWRITE_TAC[];
        ALL_TAC] THEN
-     ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[LET_DEF; LET_END_DEF; PAIR_EQ] THEN
+     ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[LET_DEF; LET_END_DEF; PAIR_EQ] THEN
      SIMP[convert_s_def; res_var_FMAP_MAP2_rev; FLOOKUP_FMAP_MAP2; pan_state_component_equality];
      ALL_TAC] THEN
    CONJ_TAC THENL
@@ -2029,7 +2029,7 @@ let pan_structsProof_compile_correct = prove
                                        (nm,v) -> v_flds_ok (pan_state_structs (s:(A,FFI)pan_state)) v`;
                       `pan_state_locals (s:(A,FFI)pan_state)`; `v:mlstring`; `w:(A)pan_v`]
                      FEVERY_FLOOKUP) THEN
-       ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]];
+       ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]];
      DISCH_TAC THEN FIRST_X_ASSUM(MP_TAC o check (is_imp o concl)) THEN
      ASM_REWRITE_TAC[] THEN
      REWRITE_TAC[fmap_eq_flookup; FLOOKUP_FMAP_MAP2; FLOOKUP_pan_res_var_thm; FLOOKUP_UPDATE] THEN
@@ -2041,7 +2041,7 @@ let pan_structsProof_compile_correct = prove
     ((REPEAT GEN_TAC THEN STRIP_TAC THEN
    UNDISCH_TAC `pan_evaluate (panLang_Assign vk v src,s:(A,FFI)pan_state) = res,s'` THEN
    GEN_REWRITE_TAC (LAND_CONV o LAND_CONV) [pan_evaluate_def] THEN
-   QCASES_ON "pan_eval (s:(A,FFI)pan_state) src" THEN CASE_REWRITE_TAC[PAIR_EQ] THEN
+   QCASES_ON "pan_eval (s:(A,FFI)pan_state) src" THEN CAKE_REWRITE_TAC[PAIR_EQ] THEN
    TRY(DISCH_THEN(MP_TAC o CONJUNCT1) THEN ASM_REWRITE_TAC[] THEN NO_TAC) THEN
    RENAME1 "pan_eval s src = SOME value" THEN
    COND_CASES_TAC THEN REWRITE_TAC[PAIR_EQ] THENL
@@ -2065,17 +2065,17 @@ let pan_structsProof_compile_correct = prove
    QCASES_ON "vk:varkind" THEN REWRITE_TAC[kvar_simps] THENL
     [QCASES_ON "FLOOKUP (pan_state_locals (s:(A,FFI)pan_state)) v";
      QCASES_ON "FLOOKUP (pan_state_globals (s:(A,FFI)pan_state)) v"] THEN
-   CASE_REWRITE_TAC[] THEN DISCH_TAC THEN RENAME1 "SOME w") THENL
+   CAKE_REWRITE_TAC[] THEN DISCH_TAC THEN RENAME1 "SOME w") THENL
     [PPASS1AUX_ASG_CLOSE_TAC `pan_state_locals:(A,FFI)pan_state->(mlstring,(A)pan_v)fmap`;
      PPASS1AUX_ASG_CLOSE_TAC `pan_state_globals:(A,FFI)pan_state->(mlstring,(A)pan_v)fmap`]);
     (* Primitive *)
     ((REPEAT GEN_TAC THEN STRIP_TAC THEN
    UNDISCH_TAC `pan_evaluate (Primitive v pop es,s:(A,FFI)pan_state) = res,s'` THEN
    GEN_REWRITE_TAC (LAND_CONV o LAND_CONV) [pan_evaluate_def] THEN
-   QCASES_ON "OPT_MMAP (pan_eval (s:(A,FFI)pan_state)) es" THEN CASE_REWRITE_TAC[PAIR_EQ] THEN
+   QCASES_ON "OPT_MMAP (pan_eval (s:(A,FFI)pan_state)) es" THEN CAKE_REWRITE_TAC[PAIR_EQ] THEN
    TRY(DISCH_THEN(MP_TAC o CONJUNCT1) THEN ASM_REWRITE_TAC[] THEN NO_TAC) THEN
    RENAME1 "OPT_MMAP (pan_eval s) es = SOME vs" THEN
-   QCASES_ON "pan_primop pop (vs:((A)pan_v)list)" THEN CASE_REWRITE_TAC[PAIR_EQ] THEN
+   QCASES_ON "pan_primop pop (vs:((A)pan_v)list)" THEN CAKE_REWRITE_TAC[PAIR_EQ] THEN
    TRY(DISCH_THEN(MP_TAC o CONJUNCT1) THEN ASM_REWRITE_TAC[] THEN NO_TAC) THEN
    RENAME1 "pan_primop pop vs = SOME value" THEN
    COND_CASES_TAC THEN REWRITE_TAC[PAIR_EQ] THENL
@@ -2106,12 +2106,12 @@ let pan_structsProof_compile_correct = prove
      UNDISCH_TAC `LENGTH (vs:((A)pan_v)list) = 3 /\ ALL isValWord vs` THEN
      DISCH_THEN(MP_TAC o CONJUNCT2) THEN MATCH_MP_TAC MONO_ALL THEN
      X_GEN_TAC `w:(A)pan_v` THEN QCASES_ON "w:(A)pan_v" THEN
-     REWRITE_TAC[isValWord_def] THEN CASE_REWRITE_TAC[];
+     REWRITE_TAC[isValWord_def] THEN CAKE_REWRITE_TAC[];
      ALL_TAC]) THEN
     (UNDISCH_TAC `pan_is_valid_value (s:(A,FFI)pan_state) panLang_Local v value` THEN
    REWRITE_TAC[pan_is_valid_value_def; kvar_simps] THEN
    QCASES_ON "FLOOKUP (pan_state_locals (s:(A,FFI)pan_state)) v" THEN
-   CASE_REWRITE_TAC[] THEN DISCH_TAC THEN RENAME1 "SOME w" THEN
+   CAKE_REWRITE_TAC[] THEN DISCH_TAC THEN RENAME1 "SOME w" THEN
    SUBGOAL_THEN `v_flds_ok (pan_state_structs (s:(A,FFI)pan_state)) (w:(A)pan_v) /\
                  is_wf_shape_v (pan_state_structs s) w` STRIP_ASSUME_TAC THENL
     [CONJ_TAC THENL
@@ -2135,12 +2135,12 @@ let pan_structsProof_compile_correct = prove
                    shape_of value` THEN ASM_REWRITE_TAC[]);
      ALL_TAC] THEN
    REWRITE_TAC[pan_structs_compile_def; pan_evaluate_def] THEN ASM_REWRITE_TAC[] THEN
-   CASE_REWRITE_TAC[pan_is_valid_value_def; kvar_simps] THEN
+   CAKE_REWRITE_TAC[pan_is_valid_value_def; kvar_simps] THEN
    SIMP[convert_s_def; FLOOKUP_FMAP_MAP2; pan_set_var_def;
         FMAP_MAP2_FUPDATE; FEVERY_FUPDATE; convert_res_def; is_cont_res_def; res_vs_def;
         ALL; o_THM] THEN
    ASM_SIMP_TAC[fevery_to_drestrict; fupdate_elim2; FLOOKUP_FMAP_MAP2; o_THM] THEN
-   CASE_REWRITE_TAC[] THEN
+   CAKE_REWRITE_TAC[] THEN
    TRY(CONV_TAC SYM_CONV THEN MATCH_MP_TAC fupdate_elim2 THEN
        ASM_REWRITE_TAC[FLOOKUP_FMAP_MAP2; OPTION_MAP_DEF; o_THM])));
     (* Store *)
@@ -2164,7 +2164,7 @@ let pan_structsProof_compile_correct = prove
    DISCH_TAC THEN
    UNDISCH_TAC `pan_evaluate (panLang_Seq c1 c2,s:(A,FFI)pan_state) = res,s'` THEN
    GEN_REWRITE_TAC (LAND_CONV o LAND_CONV) [pan_evaluate_def] THEN
-   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN DISCH_TAC THEN
+   ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN DISCH_TAC THEN
    SUBGOAL_THEN `~(res1 = SOME (pan_Error:(A)pan_result))` ASSUME_TAC THENL
     [DISCH_TAC THEN UNDISCH_TAC `(if res1 = NONE then pan_evaluate (c2,s1)
                                   else res1,s1) = res,(s':(A,FFI)pan_state)` THEN
@@ -2180,7 +2180,7 @@ let pan_structsProof_compile_correct = prove
    ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
    REWRITE_TAC[pan_structs_compile_def] THEN
    GEN_REWRITE_TAC (LAND_CONV o LAND_CONV) [pan_evaluate_def] THEN
-   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[convert_res_eq_NONE] THEN
+   ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[convert_res_eq_NONE] THEN
    ASM_CASES_TAC `res1:((A)pan_result)option = NONE` THENL
     [FIRST_X_ASSUM SUBST_ALL_TAC THEN RULE_ASSUM_TAC(REWRITE_RULE[]) THEN
      REMOVE_THEN "ih2" (MP_TAC o SPEC `s1:(A,FFI)pan_state`) THEN ASM_REWRITE_TAC[] THEN
@@ -2214,14 +2214,14 @@ let pan_structsProof_compile_correct = prove
     (* Return *)
     (PPASS1AUX_CC_SRC_TAC THEN PPASS1AUX_CC_EXPS_TAC THEN PPASS1AUX_CC_SIZE_TAC THEN
    REWRITE_TAC[pan_structs_compile_def; pan_evaluate_def] THEN
-   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN SIMP[convert_s_def] THEN ASM_REWRITE_TAC[] THEN
+   ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN SIMP[convert_s_def] THEN ASM_REWRITE_TAC[] THEN
    PPASS1AUX_CC_FIN_TAC);
     (* Raise *)
     ((PPASS1AUX_CC_SRC_TAC THEN PPASS1AUX_CC_EXPS_TAC THEN PPASS1AUX_CC_SIZE_TAC THEN
    REWRITE_TAC[pan_structs_compile_def; pan_evaluate_def] THEN
-   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+   ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
    SIMP[convert_s_def; convert_eshapes_def; FLOOKUP_FMAP_MAP2] THEN ASM_REWRITE_TAC[OPTION_MAP_DEF] THEN
-   CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
+   CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
    PPASS1AUX_CC_FIN_TAC) THEN
     (FIRST_X_ASSUM(CONJUNCTS_THEN ASSUME_TAC o check (is_conj o concl)) THEN
    FIRST_X_ASSUM(SUBST_ALL_TAC o check (fun th -> try
@@ -2247,7 +2247,7 @@ let pan_structsProof_compile_correct = prove
      PPASS1AUX_CALL_LOOKUP_TAC THEN PPASS1AUX_CALL_IH_TAC THEN PPASS1AUX_CALL_TGT2_TAC THEN
    PPASS1AUX_CALL_RESV_TAC THEN ASM_REWRITE_TAC[] THEN PPASS1AUX_CALL_ASG_TAC THEN
    SIMP[convert_s_def; FLOOKUP_FMAP_MAP2] THEN ASM_REWRITE_TAC[OPTION_MAP_DEF] THEN
-   CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
+   CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
      PPASS1AUX_CC_FIN_TAC THEN TRY PPASS1AUX_GLOBALS_SHAPE_TAC;
      PPASS1AUX_CC_CALLR_TAC;
      PPASS1AUX_CC_CALLR_TAC;
@@ -2262,7 +2262,7 @@ let pan_structsProof_compile_correct = prove
    PPASS1AUX_CALL_HANDLER_IH_TAC) THEN
      (REWRITE_TAC[PPASS1AUX_convert_s_set_var] THEN ASM_REWRITE_TAC[] THEN
    REWRITE_TAC[PPASS1AUX_convert_s_fields; convert_eshapes_def; FLOOKUP_FMAP_MAP2] THEN
-   ASM_REWRITE_TAC[OPTION_MAP_DEF] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]);
+   ASM_REWRITE_TAC[OPTION_MAP_DEF] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]);
      PPASS1AUX_CC_CALLR_TAC;
      PPASS1AUX_CALL_LOOKUP_TAC THEN PPASS1AUX_CALL_IH_TAC THEN PPASS1AUX_CALL_TGT2_TAC THEN PPASS1AUX_CC_FIN_TAC]);
     (* DecCall *)
@@ -2277,7 +2277,7 @@ let pan_structsProof_compile_correct = prove
      rhs(concl th) = `shape:shape` with Failure _ -> false)) THEN
    PPASS1AUX_CALL_RESV_TAC THEN ASM_REWRITE_TAC[]) THEN
      (REWRITE_TAC[PPASS1AUX_convert_s_set_var] THEN PPASS1AUX_DCALL_IH2_TAC THEN
-   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]) THEN
+   ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]) THEN
      (FIRST_ASSUM(fun th ->
      if (try let l = lhs(concl th) in
              fst(dest_const(fst(strip_comb l))) = "pan_evaluate" &&
@@ -2298,7 +2298,7 @@ let pan_structsProof_compile_correct = prove
                                    (nm,v) -> v_flds_ok (pan_state_structs (s:(A,FFI)pan_state)) v`;
                       `pan_state_locals (s:(A,FFI)pan_state)`; `rt:mlstring`; `w:(A)pan_v`]
                      FEVERY_FLOOKUP) THEN
-       ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]];
+       ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]];
      DISCH_TAC THEN
      FIRST_X_ASSUM(MP_TAC o check (fun th -> try is_imp(concl th) &&
        fst(dest_const(fst(strip_comb(lhand(concl th))))) = "is_cont_res"
@@ -2314,8 +2314,8 @@ let pan_structsProof_compile_correct = prove
     (* ExtCall *)
     (PPASS1AUX_CC_SRC2_TAC [LET_DEF; LET_END_DEF] THEN PPASS1AUX_CC_EXPS_TAC THEN
    REWRITE_TAC[pan_structs_compile_def; pan_evaluate_def] THEN
-   ASM_REWRITE_TAC[convert_v_def] THEN CASE_REWRITE_TAC[] THEN
-   SIMP[convert_s_def] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
+   ASM_REWRITE_TAC[convert_v_def] THEN CAKE_REWRITE_TAC[] THEN
+   SIMP[convert_s_def] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
    PPASS1AUX_CC_FIN_TAC)]);;
 
 let compile_decs_structs = prove
@@ -2343,7 +2343,7 @@ let compile_decls_correct = prove
        FMAP_MAP2 (shape_of o SND) (pan_state_globals s) /\
      pan_structs_compile_decs ctxt (decs:((A)decl)list) = (decs',ctxt') ==>
      evaluate_decls (convert_s ctxt' s) decs' = SOME (convert_s ctxt' s') /\
-     (?gb. ctxt' = pan_structs_context_globals_fupd (K gb) ctxt /\
+     (?gb. ctxt' = pan_structs_context_globals_fupd (combin_K gb) ctxt /\
            FEVERY (\p. match p with (nm,v) -> v_flds_ok (pan_state_structs s) v)
                   (pan_state_globals s') /\
            FEVERY (\p. match p with (nm,v) -> is_wf_shape_v (pan_state_structs s) v)
@@ -2364,9 +2364,9 @@ let compile_decls_correct = prove
    FIRST_X_ASSUM MATCH_ACCEPT_TAC);
    (REPEAT GEN_TAC THEN DISCH_TAC THEN REPEAT GEN_TAC THEN
    REWRITE_TAC[evaluate_decls_def; pan_structs_compile_decs_def] THEN
-   QCASES_ON "pan_eval (pan_state_locals_fupd (K FEMPTY) (s:(A,FFI)pan_state)) e" THEN
-   CASE_REWRITE_TAC[distinctness "option"] THEN
-   RENAME1 "pan_eval (pan_state_locals_fupd (K FEMPTY) s) e = SOME res" THEN
+   QCASES_ON "pan_eval (pan_state_locals_fupd (combin_K FEMPTY) (s:(A,FFI)pan_state)) e" THEN
+   CAKE_REWRITE_TAC[distinctness "option"] THEN
+   RENAME1 "pan_eval (pan_state_locals_fupd (combin_K FEMPTY) s) e = SOME res" THEN
    COND_CASES_TAC THEN REWRITE_TAC[distinctness "option"] THEN
    FIRST_X_ASSUM(MP_TAC o SPEC `res:(A)pan_v`) THEN ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
    PAIRARG_TAC) THEN
@@ -2376,23 +2376,23 @@ let compile_decls_correct = prove
    SUBGOAL_THEN
      `old_exp_shape ctxt e = shape_of (res:(A)pan_v) /\
       v_flds_ok (pan_state_structs (s:(A,FFI)pan_state)) res /\
-      pan_eval (convert_s ctxt (pan_state_locals_fupd (K FEMPTY) s))
+      pan_eval (convert_s ctxt (pan_state_locals_fupd (combin_K FEMPTY) s))
                (pan_structs_compile_exp ctxt e) = SOME (convert_v res)`
      STRIP_ASSUME_TAC THENL
-    [MP_TAC(ISPECL [`pan_state_locals_fupd (K FEMPTY) (s:(A,FFI)pan_state)`;
+    [MP_TAC(ISPECL [`pan_state_locals_fupd (combin_K FEMPTY) (s:(A,FFI)pan_state)`;
                     `e:(A)panLang_exp`; `res:(A)pan_v`]
        pan_structsProof_compile_exp_correct) THEN
      SIMP[alist_to_fmap_thm; FMAP_MAP2_FEMPTY; FEVERY_FEMPTY] THEN ASM_REWRITE_TAC[];
      ALL_TAC] THEN
    SUBGOAL_THEN `is_wf_shape_v (pan_state_structs (s:(A,FFI)pan_state)) (res:(A)pan_v)`
      ASSUME_TAC THENL
-    [MP_TAC(ISPECL [`pan_state_locals_fupd (K FEMPTY) (s:(A,FFI)pan_state)`;
+    [MP_TAC(ISPECL [`pan_state_locals_fupd (combin_K FEMPTY) (s:(A,FFI)pan_state)`;
                     `e:(A)panLang_exp`; `res:(A)pan_v`] eval_is_wf_shape_v) THEN
      ASM_REWRITE_TAC[] THEN SIMP[FEVERY_FEMPTY] THEN ASM_REWRITE_TAC[];
      ALL_TAC]) THEN
    (FIRST_X_ASSUM(MP_TAC o SPECL
      [`pan_structs_context_globals_fupd
-         (K (CONS (v,shape_of (res:(A)pan_v)) (pan_structs_context_globals ctxt))) ctxt`;
+         (combin_K (CONS (v,shape_of (res:(A)pan_v)) (pan_structs_context_globals ctxt))) ctxt`;
       `ds':((A)decl)list`; `ctxt':pan_structs_context`] o check (is_forall o concl)) THEN
    SIMP[alist_to_fmap_thm; FMAP_MAP2_FUPDATE; FEVERY_FUPDATE; o_THM] THEN
    ASM_SIMP_TAC[fevery_to_drestrict]) THEN
@@ -2400,19 +2400,19 @@ let compile_decls_correct = prove
      ASSUME_TAC THENL
     [FIRST_ASSUM(MP_TAC o MATCH_MP compile_decs_structs) THEN SIMP[]; ALL_TAC] THEN
    SUBGOAL_THEN
-     `pan_eval (pan_state_locals_fupd (K FEMPTY) (convert_s ctxt' (s:(A,FFI)pan_state)))
+     `pan_eval (pan_state_locals_fupd (combin_K FEMPTY) (convert_s ctxt' (s:(A,FFI)pan_state)))
                (pan_structs_compile_exp ctxt e) = SOME (convert_v (res:(A)pan_v))`
      ASSUME_TAC THENL
     [SUBGOAL_THEN
-       `pan_state_locals_fupd (K FEMPTY) (convert_s ctxt' (s:(A,FFI)pan_state)) =
-        pan_state_code_fupd (K (convert_code ctxt' (pan_state_code s)))
-          (convert_s ctxt (pan_state_locals_fupd (K FEMPTY) s))` SUBST1_TAC THENL
+       `pan_state_locals_fupd (combin_K FEMPTY) (convert_s ctxt' (s:(A,FFI)pan_state)) =
+        pan_state_code_fupd (combin_K (convert_code ctxt' (pan_state_code s)))
+          (convert_s ctxt (pan_state_locals_fupd (combin_K FEMPTY) s))` SUBST1_TAC THENL
       [SIMP[convert_s_def; pan_state_component_equality; FMAP_MAP2_FEMPTY] THEN
        ASM_REWRITE_TAC[];
        ALL_TAC] THEN
      ASM_REWRITE_TAC[eval_upd_code_eq];
      ALL_TAC] THEN
-   ASM_REWRITE_TAC[evaluate_decls_def] THEN CASE_REWRITE_TAC[] THEN
+   ASM_REWRITE_TAC[evaluate_decls_def] THEN CAKE_REWRITE_TAC[] THEN
    ASM_SIMP_TAC[shape_of_convert_v_rev] THEN
    DISCH_THEN(MP_TAC o CONJUNCT1) THEN MATCH_MP_TAC EQ_IMP THEN
    AP_THM_TAC THEN AP_TERM_TAC THEN AP_THM_TAC THEN AP_TERM_TAC THEN
@@ -2445,10 +2445,10 @@ let compile_decls_correct = prove
                          (pan_state_structs s)))
             (fun_decl_params fi)`) SUBST1_TAC THENL
     [MATCH_MP_TAC MAP_CONG THEN REWRITE_TAC[FORALL_PAIR_THM; PAIR_MAP_THM; I_THM] THEN
-     CASE_REWRITE_TAC[];
+     CAKE_REWRITE_TAC[];
      ALL_TAC] THEN
    REWRITE_TAC[ALL_MAP; o_DEF; SND_PAIR_MAP; is_wf_shape_compile_shape; ALL_T] THEN
-   REWRITE_TAC[convert_code_def; FMAP_MAP2_FUPDATE] THEN CASE_REWRITE_TAC[] THEN
+   REWRITE_TAC[convert_code_def; FMAP_MAP2_FUPDATE] THEN CAKE_REWRITE_TAC[] THEN
    ASM_REWRITE_TAC[]);
    (REPEAT GEN_TAC THEN DISCH_TAC THEN REPEAT GEN_TAC THEN
    REWRITE_TAC[evaluate_decls_def; pan_structs_compile_decs_def] THEN
@@ -2468,7 +2468,7 @@ let compile_decls_correct = prove
    REWRITE_TAC[evaluate_decls_def] THEN SIMP[convert_s_def] THEN
    REWRITE_TAC[convert_eshapes_def; FLOOKUP_FMAP_MAP2; FMAP_MAP2_FUPDATE;
                is_wf_shape_compile_shape] THEN
-   ASM_REWRITE_TAC[OPTION_MAP_DEF] THEN CASE_REWRITE_TAC[])]);;
+   ASM_REWRITE_TAC[OPTION_MAP_DEF] THEN CAKE_REWRITE_TAC[])]);;
 
 let decs_stcnames_compile_decs = prove
  (`!ctxt (decs:((A)decl)list).
@@ -2486,7 +2486,7 @@ let decs_stcnames_to_get_names = prove
        MAP (\p. match p with (nm,info) -> (nm,struct_info_fields info)) acc ==>
      get_names ctxt code =
        pan_structs_context_structs_fupd
-         (K (MAP (\p. match p with (nm,info) -> (nm,struct_info_fields info)) res)) ctxt`,
+         (combin_K (MAP (\p. match p with (nm,info) -> (nm,struct_info_fields info)) res)) ctxt`,
   REC_IND_TAC decs_stcnames_ind THEN
   SIMP[decs_stcnames_def; get_names_def] THEN RW[] THEN
   FS(all_case_eqs()) THEN SIMP[pan_structs_context_component_equality]);;
@@ -2522,20 +2522,20 @@ let PPASS1AUX_convert_res_outcome = prove
          | SOME (pan_Return _) -> outcome = Success
          | _ -> F))`,
   GEN_TAC THEN QCASES_ON "r:((A)pan_result)option" THEN
-  REWRITE_TAC[convert_res_def] THEN CASE_REWRITE_TAC[] THEN
-  QCASES_ON "a:(A)pan_result" THEN REWRITE_TAC[convert_res_def] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[convert_res_def] THEN CAKE_REWRITE_TAC[] THEN
+  QCASES_ON "a:(A)pan_result" THEN REWRITE_TAC[convert_res_def] THEN CAKE_REWRITE_TAC[]);;
 
 (* the two semantics are equal when the runs of the program of pan_semantics *)
 (* agree clock by clock, up to convert_res in the result                    *)
 let PPASS1AUX_pan_semantics_cong2 = prove
  (`!(s:(A,FFI)pan_state) (t:(A,FFI)pan_state) start.
-     (!k. FST (pan_evaluate (panLang_Call NONE start [],pan_state_clock_fupd (K k) t)) =
+     (!k. FST (pan_evaluate (panLang_Call NONE start [],pan_state_clock_fupd (combin_K k) t)) =
           convert_res
-            (FST (pan_evaluate (panLang_Call NONE start [],pan_state_clock_fupd (K k) s)))) /\
+            (FST (pan_evaluate (panLang_Call NONE start [],pan_state_clock_fupd (combin_K k) s)))) /\
      (!k. pan_state_ffi
-            (SND (pan_evaluate (panLang_Call NONE start [],pan_state_clock_fupd (K k) t))) =
+            (SND (pan_evaluate (panLang_Call NONE start [],pan_state_clock_fupd (combin_K k) t))) =
           pan_state_ffi
-            (SND (pan_evaluate (panLang_Call NONE start [],pan_state_clock_fupd (K k) s))))
+            (SND (pan_evaluate (panLang_Call NONE start [],pan_state_clock_fupd (combin_K k) s))))
      ==> pan_semantics t start = pan_semantics s start`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   REWRITE_TAC[pan_semantics_def; LET_DEF; LET_END_DEF] THEN
@@ -2544,7 +2544,7 @@ let PPASS1AUX_pan_semantics_cong2 = prove
     (CASE_TERM
      `!res. (?k t' r outcome.
                pan_evaluate (panLang_Call NONE (start:mlstring) [],
-                             pan_state_clock_fupd (K k) (t:(A,FFI)pan_state)) =
+                             pan_state_clock_fupd (combin_K k) (t:(A,FFI)pan_state)) =
                  (r,t') /\
                (match r with
                   SOME (pan_FinalFFI e) -> outcome = FFI_outcome e
@@ -2553,7 +2553,7 @@ let PPASS1AUX_pan_semantics_cong2 = prove
                res = Terminate outcome (ffi_state_io_events (pan_state_ffi t'))) <=>
             (?k t' r outcome.
                pan_evaluate (panLang_Call NONE start [],
-                             pan_state_clock_fupd (K k) (s:(A,FFI)pan_state)) =
+                             pan_state_clock_fupd (combin_K k) (s:(A,FFI)pan_state)) =
                  (r,t') /\
                (match r with
                   SOME (pan_FinalFFI e) -> outcome = FFI_outcome e
@@ -2602,15 +2602,15 @@ let semantics_eq = prove
   STRIP_TAC THEN MATCH_MP_TAC PPASS1AUX_pan_semantics_cong2 THEN
   SUBGOAL_THEN
     `!k. pan_evaluate (panLang_Call NONE start [],
-                       pan_state_clock_fupd (K k) (convert_s ctxt (s:(A,FFI)pan_state))) =
+                       pan_state_clock_fupd (combin_K k) (convert_s ctxt (s:(A,FFI)pan_state))) =
          (convert_res (FST (pan_evaluate (panLang_Call NONE start [],
-                                          pan_state_clock_fupd (K k) s))),
+                                          pan_state_clock_fupd (combin_K k) s))),
           convert_s ctxt (SND (pan_evaluate (panLang_Call NONE start [],
-                                             pan_state_clock_fupd (K k) s))))`
+                                             pan_state_clock_fupd (combin_K k) s))))`
     (fun th -> REWRITE_TAC[th] THEN SIMP[convert_s_def]) THEN
   X_GEN_TAC `k:num` THEN
   MP_TAC(ISPEC `pan_evaluate (panLang_Call NONE start [],
-                              pan_state_clock_fupd (K k) (s:(A,FFI)pan_state))`
+                              pan_state_clock_fupd (combin_K k) (s:(A,FFI)pan_state))`
          PAIR_SURJECTIVE) THEN
   REWRITE_TAC[LEFT_IMP_EXISTS_THM] THEN
   MAP_EVERY X_GEN_TAC [`r:((A)pan_result)option`; `s1:(A,FFI)pan_state`] THEN
@@ -2620,10 +2620,10 @@ let semantics_eq = prove
     REWRITE_TAC[pan_semantics_def; LET_DEF; LET_END_DEF] THEN
     COND_CASES_TAC THEN REWRITE_TAC[] THEN DISCH_TAC THEN DISCH_TAC THEN
     FIRST_X_ASSUM(MP_TAC o SPEC `k:num` o REWRITE_RULE[NOT_EXISTS_THM]) THEN
-    ASM_REWRITE_TAC[FST] THEN CASE_REWRITE_TAC[];
+    ASM_REWRITE_TAC[FST] THEN CAKE_REWRITE_TAC[];
     ALL_TAC] THEN
   MP_TAC(ISPECL [`panLang_Call NONE start []:(A)panLang_prog`;
-                 `pan_state_clock_fupd (K k) (s:(A,FFI)pan_state)`;
+                 `pan_state_clock_fupd (combin_K k) (s:(A,FFI)pan_state)`;
                  `r:((A)pan_result)option`; `s1:(A,FFI)pan_state`;
                  `ctxt:pan_structs_context`] pan_structsProof_compile_correct) THEN
   ANTS_TAC THENL
@@ -2633,10 +2633,10 @@ let semantics_eq = prove
   DISCH_THEN(MP_TAC o CONJUNCT1) THEN
   SUBGOAL_THEN `pan_structs_compile ctxt (panLang_Call NONE start []:(A)panLang_prog) =
                 panLang_Call NONE start []` SUBST1_TAC THENL
-   [REWRITE_TAC[PPASS1AUX_compile_call; pan_structs_compile_exp_def] THEN CASE_REWRITE_TAC[];
+   [REWRITE_TAC[PPASS1AUX_compile_call; pan_structs_compile_exp_def] THEN CAKE_REWRITE_TAC[];
     ALL_TAC] THEN
-  SUBGOAL_THEN `convert_s ctxt (pan_state_clock_fupd (K k) (s:(A,FFI)pan_state)) =
-                pan_state_clock_fupd (K k) (convert_s ctxt s)` SUBST1_TAC THENL
+  SUBGOAL_THEN `convert_s ctxt (pan_state_clock_fupd (combin_K k) (s:(A,FFI)pan_state)) =
+                pan_state_clock_fupd (combin_K k) (convert_s ctxt s)` SUBST1_TAC THENL
    [SIMP[convert_s_def; pan_state_component_equality]; ALL_TAC] THEN
   SIMP_TAC[]);;
 
@@ -2651,26 +2651,26 @@ let pan_structsProof_compile_top_semantics_decls = prove
    semantics_decls s start (code:((A)decl)list) =
    semantics_decls
      (pan_state_eshapes_fupd
-        (K (FMAP_MAP2
+        (combin_K (FMAP_MAP2
               (\p. match p with
                      (eid,sh) ->
                        compile_shape
                          (pan_structs_context_structs
-                            (get_names (pan_structs_context_structs_fupd (K [])
+                            (get_names (pan_structs_context_structs_fupd (combin_K [])
                                           (ARB:pan_structs_context)) code)) sh)
               (pan_state_eshapes s))) s)
      start (pan_structs_compile_top code)`,
   (STRIP_TAC THEN
    UNDISCH_TAC `~(semantics_decls (s:(A,FFI)pan_state) start (code:((A)decl)list) = Fail)` THEN
    REWRITE_TAC[semantics_decls_def] THEN
-   QCASES_ON "decs_stcnames [] (code:((A)decl)list)" THEN CASE_REWRITE_TAC[] THEN
+   QCASES_ON "decs_stcnames [] (code:((A)decl)list)" THEN CAKE_REWRITE_TAC[] THEN
    RENAME1 "decs_stcnames [] code = SOME st_ctxt" THEN
-   QCASES_ON "evaluate_decls (pan_state_structs_fupd (K st_ctxt) (s:(A,FFI)pan_state)) code" THEN
-   CASE_REWRITE_TAC[] THEN
-   RENAME1 "evaluate_decls (pan_state_structs_fupd (K st_ctxt) s) code = SOME s1" THEN
+   QCASES_ON "evaluate_decls (pan_state_structs_fupd (combin_K st_ctxt) (s:(A,FFI)pan_state)) code" THEN
+   CAKE_REWRITE_TAC[] THEN
+   RENAME1 "evaluate_decls (pan_state_structs_fupd (combin_K st_ctxt) s) code = SOME s1" THEN
    DISCH_TAC THEN
    REWRITE_TAC[pan_structs_compile_top_def; LET_DEF; LET_END_DEF; decs_stcnames_compile_decs] THEN
-   CASE_REWRITE_TAC[]) THEN
+   CAKE_REWRITE_TAC[]) THEN
   (SUBGOAL_THEN `struct_infos_ok ([]:(mlstring#struct_info)list)` ASSUME_TAC THENL
     [REWRITE_TAC[struct_infos_ok_def; ALL; MAP; ALL_DISTINCT; LENGTH; LT]; ALL_TAC] THEN
    SUBGOAL_THEN `struct_infos_ok (st_ctxt:(mlstring#struct_info)list)` ASSUME_TAC THENL
@@ -2683,7 +2683,7 @@ let pan_structsProof_compile_top_semantics_decls = prove
                   `pan_structs_context_REC [] [] []`] decs_stcnames_to_get_names) THEN
    MP_TAC(ISPECL [`[]:(mlstring#struct_info)list`; `code:((A)decl)list`;
                   `st_ctxt:(mlstring#struct_info)list`;
-                  `pan_structs_context_structs_fupd (K []) (ARB:pan_structs_context)`]
+                  `pan_structs_context_structs_fupd (combin_K []) (ARB:pan_structs_context)`]
                  decs_stcnames_to_get_names) THEN
    ASM_REWRITE_TAC[MAP] THEN SIMP[] THEN
    DISCH_THEN SUBST1_TAC THEN DISCH_THEN SUBST1_TAC THEN SIMP[]) THEN
@@ -2695,7 +2695,7 @@ let pan_structsProof_compile_top_semantics_decls = prove
    REWRITE_TAC[LEFT_IMP_EXISTS_THM] THEN
    MAP_EVERY X_GEN_TAC [`decs':((A)decl)list`; `ctxt':pan_structs_context`] THEN
    DISCH_TAC THEN ASM_REWRITE_TAC[] THEN
-   MP_TAC(ISPECL [`pan_state_structs_fupd (K st_ctxt) (s:(A,FFI)pan_state)`;
+   MP_TAC(ISPECL [`pan_state_structs_fupd (combin_K st_ctxt) (s:(A,FFI)pan_state)`;
                   `code:((A)decl)list`;
                   CASE_TERM `pan_structs_context_REC
                        (MAP (\p. match p with (nm,info) -> (nm,struct_info_fields info))
@@ -2710,22 +2710,22 @@ let pan_structsProof_compile_top_semantics_decls = prove
      (X_CHOOSE_THEN `gb:(mlstring#shape)list` STRIP_ASSUME_TAC))) THEN
   (SUBGOAL_THEN
      (CASE_TERM
-      `pan_state_structs_fupd (K [])
+      `pan_state_structs_fupd (combin_K [])
          (pan_state_eshapes_fupd
-            (K (FMAP_MAP2
+            (combin_K (FMAP_MAP2
                   (\p. match p with
                          (eid,sh) ->
                            compile_shape
                              (MAP (\p. match p with (nm,info) -> (nm,struct_info_fields info))
                                   (st_ctxt:(mlstring#struct_info)list)) sh)
                   (pan_state_eshapes s))) (s:(A,FFI)pan_state)) =
-       convert_s ctxt' (pan_state_structs_fupd (K st_ctxt) s)`) SUBST1_TAC THENL
+       convert_s ctxt' (pan_state_structs_fupd (combin_K st_ctxt) s)`) SUBST1_TAC THENL
     [ASM_REWRITE_TAC[] THEN
      SIMP[convert_s_def; convert_code_def; convert_eshapes_def; FMAP_MAP2_FEMPTY;
           pan_state_component_equality] THEN
      ASM_REWRITE_TAC[FMAP_MAP2_FEMPTY];
      ALL_TAC] THEN
-   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN CONV_TAC SYM_CONV THEN
+   ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN CONV_TAC SYM_CONV THEN
    MATCH_MP_TAC semantics_eq THEN ASM_REWRITE_TAC[] THEN SIMP[] THEN
    ASM_REWRITE_TAC[]));;
 

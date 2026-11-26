@@ -29,11 +29,11 @@ type_invention_error := true;;
 
 let simpleSexpPEG_tokeq_def = new_definition
   `simpleSexpPEG_tokeq (t:char) =
-     (peg_tok ((=) t) (K (SX_SYM [t])):(char,B,simpleSexp_sexp,E)pegsym)`;;
+     (peg_tok ((=) t) (combin_K (SX_SYM [t])):(char,B,simpleSexp_sexp,E)pegsym)`;;
 
 let grabWS_def = new_definition
   `grabWS (s:(char,B,simpleSexp_sexp,E)pegsym) =
-     ignoreL (peg_rpt (peg_tok isSpace (K arb_sexp)) (K arb_sexp)) s`;;
+     ignoreL (peg_rpt (peg_tok isSpace (combin_K arb_sexp)) (combin_K arb_sexp)) s`;;
 
 let simpleSexpPEG_peg0_tokeq = prove
  (`!(G:(char,B,simpleSexp_sexp,E)peg) t. peg0 G (simpleSexpPEG_tokeq t) <=> F`,
@@ -114,9 +114,9 @@ let sexpPEG_def = new_definition
     (FEMPTY |++
      [(INL sxnt_sexp,
        ignoreR (simpleSexpPEG_pnt sxnt_WSsexp)
-         (peg_seq (peg_rpt (peg_tok isSpace (K arb_sexp)) (K arb_sexp))
-              (peg_not (peg_any (K arb_sexp)) arb_sexp)
-              (K (K arb_sexp))));
+         (peg_seq (peg_rpt (peg_tok isSpace (combin_K arb_sexp)) (combin_K arb_sexp))
+              (peg_not (peg_any (combin_K arb_sexp)) arb_sexp)
+              (combin_K (combin_K arb_sexp))));
       (INL sxnt_sexp0,
        simpleSexpPEG_choicel
         [simpleSexpPEG_pnt sxnt_sexpnum;
@@ -134,14 +134,14 @@ let sexpPEG_def = new_definition
       (INL sxnt_sexpseq,
        simpleSexpPEG_choicel
         [simpleSexpPEG_pegf (grabWS (simpleSexpPEG_tokeq (CHR 41)))
-                            (K (SX_SYM "nil"));
+                            (combin_K (SX_SYM "nil"));
          peg_seq (grabWS (simpleSexpPEG_pnt sxnt_sexp0))
              (peg_seq
                (peg_rpt (grabWS (simpleSexpPEG_pnt sxnt_sexp0))
                     (\l. ITLIST SX_CONS l (SX_SYM "nil")))
                (simpleSexpPEG_choicel
                  [simpleSexpPEG_pegf (grabWS (simpleSexpPEG_tokeq (CHR 41)))
-                                     (K (SX_SYM "nil"));
+                                     (combin_K (SX_SYM "nil"));
                   ignoreR
                     (ignoreL (grabWS (simpleSexpPEG_tokeq (CHR 46)))
                              (grabWS (simpleSexpPEG_pnt sxnt_sexp0)))
@@ -149,7 +149,7 @@ let sexpPEG_def = new_definition
                replace_nil)
              SX_CONS]);
       (INL sxnt_WSsexp,
-       ignoreL (peg_rpt (peg_tok isSpace (K arb_sexp)) (K arb_sexp))
+       ignoreL (peg_rpt (peg_tok isSpace (combin_K arb_sexp)) (combin_K arb_sexp))
                (simpleSexpPEG_pnt sxnt_sexp0));
       (INL sxnt_sexpnum,
        peg_seq (simpleSexpPEG_pnt sxnt_digit)

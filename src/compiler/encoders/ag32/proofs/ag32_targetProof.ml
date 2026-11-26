@@ -254,7 +254,7 @@ let AG32AUX_FORALL_ASM = map AG32AUX_FORALL_TY
 let AG32AUX_ENC_LENGTH = prove
  (`!i. LENGTH (ag32_enc i) MOD 4 = 0 /\ ~(LENGTH (ag32_enc i) = 0)`,
   REWRITE_TAC AG32AUX_FORALL_ASM THEN REPEAT(CONJ_TAC ORELSE GEN_TAC) THEN
-  CONV_TAC(CASE_REWRITE_CONV[ag32_enc_def; AG32AUX_ENCODE1_SING; ag32_constant_def;
+  CONV_TAC(CAKE_REWRITE_CONV[ag32_enc_def; AG32AUX_ENCODE1_SING; ag32_constant_def;
                              ag32_jump_constant_def]) THEN
   REPEAT COND_CASES_TAC THEN
   SIMP[AG32AUX_LENGTH_ENCODE; LENGTH; LENGTH_APPEND; AG32AUX_ENCODE_CLAUSES; APPEND_EQ_NIL;
@@ -267,7 +267,7 @@ let ag32_target_ok = prove
    [REWRITE_TAC[enc_ok_def; offset_monotonic_def; ag32_config] THEN
     CONV_TAC NUM_REDUCE_CONV THEN REWRITE_TAC[AG32AUX_ENC_LENGTH] THEN
     REWRITE_TAC[AG32AUX_FORALL_TY reg_imm_INDUCT] THEN
-    CONV_TAC(CASE_REWRITE_CONV (AG32AUX_ENC_RWTS @ [LET_DEF; LET_END_DEF; LENGTH_APPEND;
+    CONV_TAC(CAKE_REWRITE_CONV (AG32AUX_ENC_RWTS @ [LET_DEF; LET_END_DEF; LENGTH_APPEND;
                                                     AG32AUX_LENGTH_ENCODE]) THENC
              NUM_REDUCE_CONV) THEN
     REWRITE_TAC[LE_REFL];
@@ -372,7 +372,7 @@ let AG32AUX_DECODE_ENCODE_CONV =
   let bits_conv = DEPTH_CONV (AG32AUX_BIT_V2W_CONV ORELSEC
                               CHANGED_CONV (BIT_WORD_CONV THENC REWRITE_CONV[])) in
   fun tm ->
-    let th1 = CASE_REWRITE_CONV[ag32_Encode_def; ag32_enc'_def; encShift_def; ri2bits_def] tm in
+    let th1 = CAKE_REWRITE_CONV[ag32_Encode_def; ag32_enc'_def; encShift_def; ri2bits_def] tm in
     let th2 = CONV_RULE (RAND_CONV (ONCE_REWRITE_CONV[ag32_Decode_def])) th1 in
     let btm = find_term (fun t -> try fst(dest_const(rator t)) = "boolify32" with _ -> false)
                 (rand(concl th2)) in
@@ -384,7 +384,7 @@ let AG32AUX_DECODE_ENCODE_CONV =
        DEPTH_CONV (AG32AUX_V2W_LIT_CONV ORELSEC AG32AUX_V2W_BITS_CONV) THENC
        REWRITE_CONV[DecodeReg_imm_def; AG32AUX_NUM2FUNCT; AG32AUX_NUM2SHIFTT] THENC
        DEPTH_CONV WORD_RED_CONV THENC
-       CASE_REWRITE_CONV[])) th3;;
+       CAKE_REWRITE_CONV[])) th3;;
 
 (* The encoder and decoder are well-behaved *)
 
@@ -544,14 +544,14 @@ let AG32AUX_WRITE_MEM_WORD4 = prove
      ~asm_state_be s
      ==> write_mem_word a 4 w s =
          asm_state_mem_fupd
-           (K ((a =+ word_zx w)
+           (combin_K ((a =+ word_zx w)
                ((word_add a (word 1) =+ word_zx (word_ushr w 8))
                 ((word_add a (word 2) =+ word_zx (word_ushr (word_ushr w 8) 8))
                  ((word_add a (word 3) =+
                    word_zx (word_ushr (word_ushr (word_ushr w 8) 8) 8))
                   (asm_state_mem s))))))
            (asm_state_failed_fupd
-              (K (~(a IN asm_state_mem_domain s) \/
+              (combin_K (~(a IN asm_state_mem_domain s) \/
                   ~(word_add a (word 1) IN asm_state_mem_domain s) \/
                   ~(word_add a (word 2) IN asm_state_mem_domain s) \/
                   ~(word_add a (word 3) IN asm_state_mem_domain s) \/
@@ -562,9 +562,9 @@ let AG32AUX_WRITE_MEM_WORD4 = prove
 let AG32AUX_WRITE_MEM_WORD1 = prove
  (`!w (a:int32) (s:(32)asm_state).
      write_mem_word a 1 w s =
-     asm_state_mem_fupd (K ((a =+ word_zx w) (asm_state_mem s)))
+     asm_state_mem_fupd (combin_K ((a =+ word_zx w) (asm_state_mem s)))
        (asm_state_failed_fupd
-          (K (~(a IN asm_state_mem_domain s) \/ asm_state_failed s)) s)`,
+          (combin_K (~(a IN asm_state_mem_domain s) \/ asm_state_failed s)) s)`,
   AG32AUX_MEMWORD_TAC);;
 
 let AG32AUX_READ_MEM_WORD4 = prove
@@ -583,7 +583,7 @@ let AG32AUX_READ_MEM_WORD4 = prove
                8)
             (word_zx (asm_state_mem s a)),
           asm_state_failed_fupd
-            (K (~(a IN asm_state_mem_domain s) \/
+            (combin_K (~(a IN asm_state_mem_domain s) \/
                 ~(word_add a (word 1) IN asm_state_mem_domain s) \/
                 ~(word_add a (word 2) IN asm_state_mem_domain s) \/
                 ~(word_add a (word 3) IN asm_state_mem_domain s) \/
@@ -596,7 +596,7 @@ let AG32AUX_READ_MEM_WORD1 = prove
      read_mem_word a 1 s =
      (word_zx (asm_state_mem s a),
       asm_state_failed_fupd
-        (K (~(a IN asm_state_mem_domain s) \/ asm_state_failed s)) s)`,
+        (combin_K (~(a IN asm_state_mem_domain s) \/ asm_state_failed s)) s)`,
   AG32AUX_MEMWORD_TAC);;
 
 let AG32AUX_MEMWORD_RWTS = [AG32AUX_WRITE_MEM_WORD4; AG32AUX_WRITE_MEM_WORD1;
@@ -688,7 +688,7 @@ let AG32AUX_CONTR_TAC : tactic =
 let AG32AUX_SETUP_TAC =
   REPEAT GEN_TAC THEN
   REWRITE_TAC[asm_step_def; target_state_rel_def; AG32AUX_TARGET_FIELDS; ag32_config] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[o_THM; MEM; CONJUNCT1 LT] THEN
   STRIP_TAC THEN
   SUBGOAL_THEN `alignment_aligned 2 (asm_state_pc (s1:(32)asm_state))` ASSUME_TAC THENL
@@ -696,7 +696,7 @@ let AG32AUX_SETUP_TAC =
   RULE_ASSUM_TAC(REWRITE_RULE[asm_ok_def; inst_ok_def; arith_ok_def; reg_ok_def;
      reg_imm_ok_def; fp_ok_def; fp_reg_ok_def; cmp_ok_def; asm_offset_ok_def; ag32_config;
      MEM; CONJUNCT1 LT; IN_INSERT; NOT_IN_EMPTY; ISL]) THEN
-  RULE_ASSUM_TAC(CONV_RULE(CASE_REWRITE_CONV[])) THEN
+  RULE_ASSUM_TAC(CONV_RULE(CAKE_REWRITE_CONV[])) THEN
   REPEAT(FIRST_X_ASSUM(fun th -> if is_conj(concl th) then STRIP_ASSUME_TAC th
                                  else failwith "")) THEN
   AG32AUX_CONTR_TAC;;
@@ -708,15 +708,15 @@ let AG32AUX_WRED_TAC =
 (* the encoding, as ag32_encode of a list of ag32 instructions *)
 
 let AG32AUX_ENC_TAC =
-  RULE_ASSUM_TAC(CONV_RULE(CASE_REWRITE_CONV AG32AUX_ENC_RWTS THENC NUM_REDUCE_CONV)) THEN
-  CONV_TAC(CASE_REWRITE_CONV AG32AUX_ENC_RWTS THENC NUM_REDUCE_CONV) THEN
+  RULE_ASSUM_TAC(CONV_RULE(CAKE_REWRITE_CONV AG32AUX_ENC_RWTS THENC NUM_REDUCE_CONV)) THEN
+  CONV_TAC(CAKE_REWRITE_CONV AG32AUX_ENC_RWTS THENC NUM_REDUCE_CONV) THEN
   AG32AUX_WRED_TAC;;
 
 let AG32AUX_CLEAN_TAC =
   let rwts = [COND_CLAUSES; LET_DEF; LET_END_DEF; pair_CASE; APPEND; LENGTH;
               AG32AUX_LENGTH_ENCODE; IN_INSERT; NOT_IN_EMPTY] in
-  RULE_ASSUM_TAC(CONV_RULE(CASE_REWRITE_CONV rwts THENC NUM_REDUCE_CONV)) THEN
-  CONV_TAC(CASE_REWRITE_CONV rwts THENC NUM_REDUCE_CONV) THEN
+  RULE_ASSUM_TAC(CONV_RULE(CAKE_REWRITE_CONV rwts THENC NUM_REDUCE_CONV)) THEN
+  CONV_TAC(CAKE_REWRITE_CONV rwts THENC NUM_REDUCE_CONV) THEN
   AG32AUX_WRED_TAC;;
 
 (* a case split on the innermost conditional of the encoding *)
@@ -753,7 +753,7 @@ let AG32AUX_ASM_TAC =
   FIRST_X_ASSUM(fun th -> if is_eq(concl th) &&
      (try fst(dest_const(fst(strip_comb(lhs(concl th))))) = "asm_asm" with Failure _ -> false)
      then MP_TAC th else failwith "") THEN
-  CONV_TAC(LAND_CONV(LAND_CONV(CASE_REWRITE_CONV AG32AUX_ASM_RWTS THENC
+  CONV_TAC(LAND_CONV(LAND_CONV(CAKE_REWRITE_CONV AG32AUX_ASM_RWTS THENC
     DEPTH_CONV (DIMINDEX_CONV ORELSEC NUM_RED_CONV ORELSEC LOG2_CONV)))) THEN
   ASSUM_LIST(fun thl -> CONV_TAC(LAND_CONV(LAND_CONV(CAKE_SIMP_CONV
     (GSYM WORD_ADD_ASSOC :: AG32AUX_MEMWORD_RWTS @ filter AG32AUX_SIMPLE_FACT thl))))) THEN
@@ -776,7 +776,7 @@ let AG32AUX_ENV_TAC =
 (* instruction of the encoding (HOL4 next_state_tac)                        *)
 
 let AG32AUX_RUN_CONV =
-  CASE_REWRITE_CONV AG32AUX_RUN_RWTS THENC CAKE_SIMP_CONV[];;
+  CAKE_REWRITE_CONV AG32AUX_RUN_RWTS THENC CAKE_SIMP_CONV[];;
 
 let AG32AUX_NEXT_TAC : tactic =
   let next_tm = `ag32_Next` and run_tm = `ag32_Run`

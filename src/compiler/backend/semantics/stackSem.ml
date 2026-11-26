@@ -226,7 +226,7 @@ let stack_state_component_equality = stack_state_INFO.ri_component_equality;;
 let stack_mem_store_def = cake_def
   `stack_mem_store (addr:A word) (w:(A)word_loc) (s:(A,C,FFI)stack_state) =
      if addr IN stack_state_mdomain s then
-       SOME (stack_state_memory_fupd (K ((addr =+ w) (stack_state_memory s))) s)
+       SOME (stack_state_memory_fupd (combin_K ((addr =+ w) (stack_state_memory s))) s)
      else NONE`;;
 
 let stack_mem_load_def = cake_def
@@ -236,7 +236,7 @@ let stack_mem_load_def = cake_def
 
 let stack_dec_clock_def = cake_def
   `stack_dec_clock (s:(A,C,FFI)stack_state) =
-     stack_state_clock_fupd (K (stack_state_clock s - 1)) s`;;
+     stack_state_clock_fupd (combin_K (stack_state_clock s - 1)) s`;;
 
 (* HOL4: word_exp_def; Termination WF_REL_TAC measure (exp_size ARB o SND) *)
 
@@ -307,19 +307,19 @@ let stack_get_fp_var_def = cake_def
 
 let stack_set_var_def = cake_def
   `stack_set_var v x (s:(A,C,FFI)stack_state) =
-     stack_state_regs_fupd (K (stack_state_regs s |+ (v,x))) s`;;
+     stack_state_regs_fupd (combin_K (stack_state_regs s |+ (v,x))) s`;;
 
 let stack_set_fp_var_def = cake_def
   `stack_set_fp_var v x (s:(A,C,FFI)stack_state) =
-     stack_state_fp_regs_fupd (K (stack_state_fp_regs s |+ (v,x))) s`;;
+     stack_state_fp_regs_fupd (combin_K (stack_state_fp_regs s |+ (v,x))) s`;;
 
 let stack_set_store_def = cake_def
   `stack_set_store v x (s:(A,C,FFI)stack_state) =
-     stack_state_store_fupd (K (stack_state_store s |+ (v,x))) s`;;
+     stack_state_store_fupd (combin_K (stack_state_store s |+ (v,x))) s`;;
 
 let stack_empty_env_def = cake_def
   `stack_empty_env (s:(A,C,FFI)stack_state) =
-     stack_state_regs_fupd (K FEMPTY) (stack_state_stack_fupd (K []) s)`;;
+     stack_state_regs_fupd (combin_K FEMPTY) (stack_state_stack_fupd (combin_K []) s)`;;
 
 (* HOL4: sh_mem_store_def ... sh_mem_load32_def *)
 
@@ -331,7 +331,7 @@ let stack_sh_mem_store_def = cake_def
            (match call_FFI (stack_state_ffi s) (SharedMem MappedWrite) [word 0:byte]
                     (APPEND (word_to_bytes w F) (word_to_bytes a F)) with
               FFI_final outcome -> (SOME (stack_FinalFFI outcome:(A)stack_result),s)
-            | FFI_return new_ffi new_bytes -> (NONE,stack_state_ffi_fupd (K new_ffi) s))
+            | FFI_return new_ffi new_bytes -> (NONE,stack_state_ffi_fupd (combin_K new_ffi) s))
          else (SOME stack_Error,s)
      | _ -> (SOME stack_Error,s)`;;
 
@@ -344,9 +344,9 @@ let stack_sh_mem_load_def = cake_def
         | FFI_return new_ffi new_bytes ->
             (NONE,
              stack_state_regs_fupd
-               (K (stack_state_regs s |+
+               (combin_K (stack_state_regs s |+
                    (r,wl_Word (word_of_bytes F (word 0) new_bytes))))
-               (stack_state_ffi_fupd (K new_ffi) s)))
+               (stack_state_ffi_fupd (combin_K new_ffi) s)))
      else (SOME stack_Error,s)`;;
 
 let stack_sh_mem_store_byte_def = cake_def
@@ -357,7 +357,7 @@ let stack_sh_mem_store_byte_def = cake_def
            (match call_FFI (stack_state_ffi s) (SharedMem MappedWrite) [word 1:byte]
                     (APPEND [get_byte (word 0) w F] (word_to_bytes a F)) with
               FFI_final outcome -> (SOME (stack_FinalFFI outcome:(A)stack_result),s)
-            | FFI_return new_ffi new_bytes -> (NONE,stack_state_ffi_fupd (K new_ffi) s))
+            | FFI_return new_ffi new_bytes -> (NONE,stack_state_ffi_fupd (combin_K new_ffi) s))
          else (SOME stack_Error,s)
      | _ -> (SOME stack_Error,s)`;;
 
@@ -369,7 +369,7 @@ let stack_sh_mem_store16_def = cake_def
            (match call_FFI (stack_state_ffi s) (SharedMem MappedWrite) [word 2:byte]
                     (APPEND (TAKE 2 (word_to_bytes w F)) (word_to_bytes a F)) with
               FFI_final outcome -> (SOME (stack_FinalFFI outcome:(A)stack_result),s)
-            | FFI_return new_ffi new_bytes -> (NONE,stack_state_ffi_fupd (K new_ffi) s))
+            | FFI_return new_ffi new_bytes -> (NONE,stack_state_ffi_fupd (combin_K new_ffi) s))
          else (SOME stack_Error,s)
      | _ -> (SOME stack_Error,s)`;;
 
@@ -381,7 +381,7 @@ let stack_sh_mem_store32_def = cake_def
            (match call_FFI (stack_state_ffi s) (SharedMem MappedWrite) [word 4:byte]
                     (APPEND (TAKE 4 (word_to_bytes w F)) (word_to_bytes a F)) with
               FFI_final outcome -> (SOME (stack_FinalFFI outcome:(A)stack_result),s)
-            | FFI_return new_ffi new_bytes -> (NONE,stack_state_ffi_fupd (K new_ffi) s))
+            | FFI_return new_ffi new_bytes -> (NONE,stack_state_ffi_fupd (combin_K new_ffi) s))
          else (SOME stack_Error,s)
      | _ -> (SOME stack_Error,s)`;;
 
@@ -394,9 +394,9 @@ let stack_sh_mem_load_byte_def = cake_def
         | FFI_return new_ffi new_bytes ->
             (NONE,
              stack_state_regs_fupd
-               (K (stack_state_regs s |+
+               (combin_K (stack_state_regs s |+
                    (r,wl_Word (word_of_bytes F (word 0) new_bytes))))
-               (stack_state_ffi_fupd (K new_ffi) s)))
+               (stack_state_ffi_fupd (combin_K new_ffi) s)))
      else (SOME stack_Error,s)`;;
 
 let stack_sh_mem_load16_def = cake_def
@@ -408,9 +408,9 @@ let stack_sh_mem_load16_def = cake_def
         | FFI_return new_ffi new_bytes ->
             (NONE,
              stack_state_regs_fupd
-               (K (stack_state_regs s |+
+               (combin_K (stack_state_regs s |+
                    (r,wl_Word (word_of_bytes F (word 0) new_bytes))))
-               (stack_state_ffi_fupd (K new_ffi) s)))
+               (stack_state_ffi_fupd (combin_K new_ffi) s)))
      else (SOME stack_Error,s)`;;
 
 let stack_sh_mem_load32_def = cake_def
@@ -422,9 +422,9 @@ let stack_sh_mem_load32_def = cake_def
         | FFI_return new_ffi new_bytes ->
             (NONE,
              stack_state_regs_fupd
-               (K (stack_state_regs s |+
+               (combin_K (stack_state_regs s |+
                    (r,wl_Word (word_of_bytes F (word 0) new_bytes))))
-               (stack_state_ffi_fupd (K new_ffi) s)))
+               (stack_state_ffi_fupd (combin_K new_ffi) s)))
      else (SOME stack_Error,s)`;;
 
 let sh_mem_op_def = cake_def
@@ -524,10 +524,10 @@ let stack_gc_def = cake_def
                 (match stack_dec_stack (stack_state_bitmaps s) wl stack with
                    NONE -> NONE
                  | SOME stack ->
-                     SOME (stack_state_stack_fupd (K (APPEND unused stack))
-                             (stack_state_store_fupd (K st)
-                                (stack_state_regs_fupd (K FEMPTY)
-                                   (stack_state_memory_fupd (K m) s))))))`;;
+                     SOME (stack_state_stack_fupd (combin_K (APPEND unused stack))
+                             (stack_state_store_fupd (combin_K st)
+                                (stack_state_regs_fupd (combin_K FEMPTY)
+                                   (stack_state_memory_fupd (combin_K m) s))))))`;;
 
 (* HOL4: has_space_def *)
 
@@ -678,7 +678,7 @@ let stack_inst_def = cake_def
             (SOME a,SOME (wl_Word w)) ->
               (match mem_store_byte_aux (stack_state_memory s) (stack_state_mdomain s)
                        (stack_state_be s) a (word_zx w) with
-                 SOME new_m -> SOME (stack_state_memory_fupd (K new_m) s)
+                 SOME new_m -> SOME (stack_state_memory_fupd (combin_K new_m) s)
                | NONE -> NONE)
           | _ -> NONE)
      | Mem Store16 _ _ -> NONE
@@ -688,7 +688,7 @@ let stack_inst_def = cake_def
             (SOME a,SOME (wl_Word w)) ->
               (match mem_store_32 (stack_state_memory s) (stack_state_mdomain s)
                        (stack_state_be s) a (word_zx w) with
-                 SOME new_m -> SOME (stack_state_memory_fupd (K new_m) s)
+                 SOME new_m -> SOME (stack_state_memory_fupd (combin_K new_m) s)
                | NONE -> NONE)
           | _ -> NONE)
      | FP (FPLess r d1 d2) ->
@@ -826,7 +826,7 @@ let stack_find_code_def = cake_def
 let stack_fix_clock_def = cake_def
   `stack_fix_clock (s:(A,C,FFI)stack_state) (res:B,(s1:(D,E,G)stack_state)) =
      (res,stack_state_clock_fupd
-            (K (MIN (stack_state_clock s) (stack_state_clock s1))) s1)`;;
+            (combin_K (MIN (stack_state_clock s) (stack_state_clock s1))) s1)`;;
 
 (* HOL4: [local] fix_clock_IMP *)
 
@@ -926,7 +926,7 @@ let copy_words_ind = cake_ind "copy_words";;
 
 let stack_unset_var_def = cake_def
   `stack_unset_var v (s:(A,C,FFI)stack_state) =
-     stack_state_regs_fupd (K (stack_state_regs s \\ v)) s`;;
+     stack_state_regs_fupd (combin_K (stack_state_regs s \\ v)) s`;;
 
 let store_const_sem_def = cake_def
   `store_const_sem t1 t2 (s:(A,C,FFI)stack_state) =
@@ -944,7 +944,7 @@ let store_const_sem_def = cake_def
                       (stack_set_var t2 (wl_Word (word 1))
                          (stack_set_var 1 (wl_Word (word 1))
                             (stack_set_var 2 (wl_Word a)
-                               (stack_state_memory_fupd (K m) s)))))))
+                               (stack_state_memory_fupd (combin_K m) s)))))))
        | _ -> (SOME stack_Error,s)`;;
 
 let check_store_consts_opt_def = cake_def
@@ -1172,16 +1172,16 @@ let STACKPAUX_evaluate_clauses = list_mk_conj
                  (SOME (bytes',cfg'),CONS (k,prog) _) ->
                    if bytes = bytes' /\ data = bm /\ FST (new_oracle 0) = cfg' then
                      let s' =
-                       stack_state_bitmaps_fupd (K (APPEND (stack_state_bitmaps s) bm))
-                       (stack_state_code_buffer_fupd (K cb)
-                       (stack_state_data_buffer_fupd (K db)
+                       stack_state_bitmaps_fupd (combin_K (APPEND (stack_state_bitmaps s) bm))
+                       (stack_state_code_buffer_fupd (combin_K cb)
+                       (stack_state_data_buffer_fupd (combin_K db)
                        (stack_state_code_fupd
-                          (K (sptree_union (stack_state_code s) (fromAList progs)))
+                          (combin_K (sptree_union (stack_state_code s) (fromAList progs)))
                        (stack_state_regs_fupd
-                          (K (DRESTRICT (stack_state_regs s) (stack_state_ffi_save_regs s)
+                          (combin_K (DRESTRICT (stack_state_regs s) (stack_state_ffi_save_regs s)
                               |+ (ptr,wl_Loc k 0)))
-                       (stack_state_fp_regs_fupd (K FEMPTY)
-                       (stack_state_compile_oracle_fupd (K new_oracle) s)))))) in
+                       (stack_state_fp_regs_fupd (combin_K FEMPTY)
+                       (stack_state_compile_oracle_fupd (combin_K new_oracle) s)))))) in
                      (NONE,s')
                    else (SOME (stack_Error:(A)stack_result),s)
                | _ -> (SOME stack_Error,s))
@@ -1199,7 +1199,7 @@ let STACKPAUX_evaluate_clauses = list_mk_conj
        (SOME (wl_Word w1),SOME (wl_Word w2)) ->
          (match buffer_write (stack_state_code_buffer s) w1 (word_zx w2) with
             SOME new_cb ->
-              (NONE:((A)stack_result)option,stack_state_code_buffer_fupd (K new_cb) s)
+              (NONE:((A)stack_result)option,stack_state_code_buffer_fupd (combin_K new_cb) s)
           | _ -> (SOME stack_Error,s))
      | _ -> (SOME stack_Error,s)`;
   `stack_evaluate (stack_DataBufferWrite r1 r2:(A)stack_prog,s:(A,C,FFI)stack_state) =
@@ -1207,7 +1207,7 @@ let STACKPAUX_evaluate_clauses = list_mk_conj
      match (stack_get_var r1 s,stack_get_var r2 s) with
        (SOME (wl_Word w1),SOME (wl_Word w2)) ->
          (match buffer_write (stack_state_data_buffer s) w1 w2 with
-            SOME new_db -> (NONE,stack_state_data_buffer_fupd (K new_db) s)
+            SOME new_db -> (NONE,stack_state_data_buffer_fupd (combin_K new_db) s)
           | _ -> (SOME stack_Error,s))
      | _ -> (SOME stack_Error,s)`;
   `stack_evaluate (stack_FFI ffi_index ptr len ptr2 len2 ret:(A)stack_prog,
@@ -1229,11 +1229,11 @@ let STACKPAUX_evaluate_clauses = list_mk_conj
                    let new_m = write_bytearray w4 new_bytes (stack_state_memory s)
                                  (stack_state_mdomain s) (stack_state_be s) in
                    (NONE,
-                    stack_state_memory_fupd (K new_m)
+                    stack_state_memory_fupd (combin_K new_m)
                     (stack_state_regs_fupd
-                       (K (DRESTRICT (stack_state_regs s) (stack_state_ffi_save_regs s)))
-                    (stack_state_fp_regs_fupd (K FEMPTY)
-                    (stack_state_ffi_fupd (K new_ffi) s)))))
+                       (combin_K (DRESTRICT (stack_state_regs s) (stack_state_ffi_save_regs s)))
+                    (stack_state_fp_regs_fupd (combin_K FEMPTY)
+                    (stack_state_ffi_fupd (combin_K new_ffi) s)))))
           | _ -> (SOME stack_Error,s))
      | res -> (SOME stack_Error,s)`;
   `stack_evaluate (stack_LocValue r l1 l2:(A)stack_prog,s:(A,C,FFI)stack_state) =
@@ -1244,12 +1244,12 @@ let STACKPAUX_evaluate_clauses = list_mk_conj
      if ~stack_state_use_stack s then (SOME (stack_Error:(A)stack_result),s) else
      if stack_state_stack_space s < n
      then (SOME (stackSem_Halt (wl_Word (word 2))),stack_empty_env s)
-     else (NONE,stack_state_stack_space_fupd (K (stack_state_stack_space s - n)) s)`;
+     else (NONE,stack_state_stack_space_fupd (combin_K (stack_state_stack_space s - n)) s)`;
   `stack_evaluate (StackFree n:(A)stack_prog,s:(A,C,FFI)stack_state) =
      if ~stack_state_use_stack s then (SOME (stack_Error:(A)stack_result),s) else
      if LENGTH (stack_state_stack s) < stack_state_stack_space s + n
      then (SOME stack_Error,stack_empty_env s)
-     else (NONE,stack_state_stack_space_fupd (K (stack_state_stack_space s + n)) s)`;
+     else (NONE,stack_state_stack_space_fupd (combin_K (stack_state_stack_space s + n)) s)`;
   `stack_evaluate (StackLoad r n:(A)stack_prog,s:(A,C,FFI)stack_state) =
      if ~stack_state_use_stack s then (SOME (stack_Error:(A)stack_result),s) else
      if stack_state_stack_space s + n < LENGTH (stack_state_stack s)
@@ -1277,7 +1277,7 @@ let STACKPAUX_evaluate_clauses = list_mk_conj
          NONE -> (SOME stack_Error,stack_empty_env s)
        | SOME v ->
            (NONE,stack_state_stack_fupd
-                   (K (LUPDATE v (stack_state_stack_space s + n) (stack_state_stack s)))
+                   (combin_K (LUPDATE v (stack_state_stack_space s + n) (stack_state_stack s)))
                    s)`;
   `stack_evaluate (StackStoreAny r rn:(A)stack_prog,s:(A,C,FFI)stack_state) =
      if ~stack_state_use_stack s then (SOME (stack_Error:(A)stack_result),s) else
@@ -1288,7 +1288,7 @@ let STACKPAUX_evaluate_clauses = list_mk_conj
          if i < LENGTH (stack_state_stack s) /\
             word_shl (word_ushr w (backend_common_word_shift (:A)))
               (backend_common_word_shift (:A)) = w
-         then (NONE,stack_state_stack_fupd (K (LUPDATE v i (stack_state_stack s))) s)
+         then (NONE,stack_state_stack_fupd (combin_K (LUPDATE v i (stack_state_stack s))) s)
          else (SOME stack_Error,stack_empty_env s)
      | _ -> (SOME stack_Error,stack_empty_env s)`;
   `stack_evaluate (StackGetSize r:(A)stack_prog,s:(A,C,FFI)stack_state) =
@@ -1300,7 +1300,7 @@ let STACKPAUX_evaluate_clauses = list_mk_conj
        SOME (wl_Word (w:A word)) ->
          if LENGTH (stack_state_stack s) <= val w then (SOME stack_Error,stack_empty_env s)
          else (NONE,stack_set_var r (wl_Word (word_shl w (backend_common_word_shift (:A))))
-                      (stack_state_stack_space_fupd (K (val w)) s))
+                      (stack_state_stack_space_fupd (combin_K (val w)) s))
      | _ -> (SOME stack_Error,s)`;
   `stack_evaluate (BitmapLoad r v:(A)stack_prog,s:(A,C,FFI)stack_state) =
      if ~stack_state_use_stack s \/ r = v then (SOME (stack_Error:(A)stack_result),s)
@@ -1405,7 +1405,7 @@ let STACKPAUX_USE_IHS_TAC : tactic = fun (asl,w as g) ->
       let vs,bod = strip_forall (concl th') in
       if is_imp bod && exists STACKPAUX_is_eval_eq (conjuncts(fst(dest_imp bod)))
       then th' else failwith "") asl in
-  let avoid = freesl (w :: map (concl o snd) asl) in
+  let avoid = freesl (w :: map (concl o snd) asl @ flat (map (hyp o snd) asl)) in
   let inst_of ih0 e =
     let vs0,_ = strip_forall (concl ih0) in
     let vs1 = rev(itlist (fun v acc -> variant (acc @ avoid) v :: acc) (rev vs0) []) in
@@ -1494,7 +1494,7 @@ let () = cake_ind_store := ("stack_evaluate",stack_evaluate_ind) :: !cake_ind_st
 let stack_semantics_def = cake_def
   `stack_semantics start (s:(A,C,FFI)stack_state) =
      let prog = stack_Call NONE (INL start) NONE:(A)stack_prog in
-     if ?k. let res = FST (stack_evaluate (prog,stack_state_clock_fupd (K k) s)) in
+     if ?k. let res = FST (stack_evaluate (prog,stack_state_clock_fupd (combin_K k) s)) in
             ~(res = SOME stack_TimeOut) /\ ~(res = SOME (stack_Result (wl_Loc 1 0))) /\
             (!w. ~(res = SOME (stackSem_Halt (wl_Word w)))) /\
             !f. ~(res = SOME (stack_FinalFFI f))
@@ -1502,7 +1502,7 @@ let stack_semantics_def = cake_def
      else
        match some res.
                ?k t r outcome.
-                 stack_evaluate (prog,stack_state_clock_fupd (K k) s) = (SOME r,t) /\
+                 stack_evaluate (prog,stack_state_clock_fupd (combin_K k) s) = (SOME r,t) /\
                  (match r with
                     stack_FinalFFI e -> outcome = FFI_outcome e
                   | stackSem_Halt w -> outcome = if w = wl_Word (word 0) then Success
@@ -1518,7 +1518,7 @@ let stack_semantics_def = cake_def
                               (ffi_state_io_events
                                  (stack_state_ffi
                                     (SND (stack_evaluate
-                                            (prog,stack_state_clock_fupd (K k) s))))))
+                                            (prog,stack_state_clock_fupd (combin_K k) s))))))
                        UNIV))`;;
 
 (* record accessors *)

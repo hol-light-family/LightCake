@@ -24,8 +24,6 @@
 (* - HOL4 proves the five check_X_head lemmas by complete induction on       *)
 (*   v_size v each; here CAN2AAUX_LIST_CHECK_GEN does the induction once,    *)
 (*   for any list check function, and each lemma gives its element check.    *)
-(* - The translator stores no NAME_refs_def for some_chars_vector and pp_fun *)
-(*   (see refs_defs): NAME_refs = [] is derived here from the specification. *)
 (* - HOL4's EVAL_TAC on closures is rewriting with the closure definitions   *)
 (*   and the distinctness of the value constructors.                         *)
 (* ========================================================================= *)
@@ -178,18 +176,8 @@ let IN_kernel_locs = prove
   REWRITE_TAC[kernel_locs_def; IN_ELIM_THM; IN_INSERT; NOT_IN_EMPTY]);;
 
 (* HOL4 context_refs_defs: the definitions NAME_refs_def of the constants    *)
-(* NAME_refs under LENGTH in the_context_def.  The translator stores no      *)
-(* NAME_refs_def for some_chars_vector and pp_fun (its rewriting does not    *)
-(* decide no_change_refs on code with an operator test; HOL4 uses EVAL):     *)
-(* NAME_refs = [] is derived here from the specification of NAME_refs, as   *)
-(* HOL4's translator does                                                    *)
-let can2aaux_refs_def c =
-  let n = fst (dest_const c) in
-  try can2aaux_fetch (n ^ "_def") with Failure _ ->
-  let sp = snd (find (fun ((names,_),_) -> mem n names) (!the_specifications)) in
-  let th = CONJUNCT2 sp in
-  MP th (EQT_ELIM (CASE_REWRITE_CONV [ALL; MAP; SND; no_change_refs_def]
-                     (lhand (concl th))));;
+(* NAME_refs under LENGTH in the_context_def, as the translator stores them *)
+let can2aaux_refs_def c = can2aaux_fetch (fst (dest_const c) ^ "_def");;
 
 let can2aaux_context_refs_defs =
   map (can2aaux_refs_def o rand)
@@ -313,10 +301,10 @@ let THM_TYPE_HEAD_def = prove
   REWRITE_TAC[CAN2AAUX_THM_TYPE_HEAD_def0; IN_SING] THEN MESON_TAC[]);;
 
 let LIST_TYPE_HEAD_def = cake_def
-  `LIST_TYPE_HEAD h v <=> ?l:1 list. LIST_TYPE (K h) l v`;;
+  `LIST_TYPE_HEAD h v <=> ?l:1 list. LIST_TYPE (combin_K h) l v`;;
 
 let PAIR_TYPE_HEAD_def = cake_def
-  `PAIR_TYPE_HEAD h1 h2 v <=> PAIR_TYPE (K h1) (K h2) (one,one) v`;;
+  `PAIR_TYPE_HEAD h1 h2 v <=> PAIR_TYPE (combin_K h1) (combin_K h2) (one,one) v`;;
 
 let STRING_TYPE_HEAD_def = cake_def
   `STRING_TYPE_HEAD v <=> ?s. STRING_TYPE s v`;;
@@ -391,28 +379,28 @@ let THM_from_THM_TYPE = prove
 
 let do_opapp_clos = prove
  (`do_opapp [Closure env v e; argv] = SOME (env1,e1) <=>
-   sem_env_v_fupd (K (nsBind v argv (sem_env_v env))) env = env1 /\ e = e1`,
+   sem_env_v_fupd (combin_K (nsBind v argv (sem_env_v env))) env = env1 /\ e = e1`,
   SIMP[do_opapp_def; option_INJ; PAIR_EQ]);;
 
 let do_partial_app_clos = prove
  (`do_partial_app (Closure env v (Fun n e)) argv = SOME g <=>
-   Closure (sem_env_v_fupd (K (nsBind v argv (sem_env_v env))) env) n e = g`,
+   Closure (sem_env_v_fupd (combin_K (nsBind v argv (sem_env_v env))) env) n e = g`,
   SIMP[do_partial_app_def; option_INJ]);;
 
 (* the clock updates of states (as semanticsProps' clock_lemmas, which this   *)
 (* file does not load)                                                       *)
 let CAN2AAUX_clock_lemmas = prove
- (`state_clock (state_clock_fupd (K c) (x:(FFI)state)) = c /\
-   state_clock_fupd (K d) (state_clock_fupd (K c) x) = state_clock_fupd (K d) x /\
-   state_clock_fupd (K (state_clock x)) x = x`,
+ (`state_clock (state_clock_fupd (combin_K c) (x:(FFI)state)) = c /\
+   state_clock_fupd (combin_K d) (state_clock_fupd (combin_K c) x) = state_clock_fupd (combin_K d) x /\
+   state_clock_fupd (combin_K (state_clock x)) x = x`,
   REWRITE_TAC[(record_info "state").ri_accfupds; (record_info "state").ri_fupdfupds; K_THM;
               with_same_clock] THEN
   AP_THM_TAC THEN AP_TERM_TAC THEN REWRITE_TAC[FUN_EQ_THM; o_THM; K_THM]);;
 
 (* HOL4 [local] *)
 let same_clock_exists = prove
- (`((?k. s = state_clock_fupd (K k) (s:(FFI)state)) <=> T) /\
-   ((?k. state_clock_fupd (K k') s = state_clock_fupd (K k) s) <=> T)`,
+ (`((?k. s = state_clock_fupd (combin_K k) (s:(FFI)state)) <=> T) /\
+   ((?k. state_clock_fupd (combin_K k') s = state_clock_fupd (combin_K k) s) <=> T)`,
   REWRITE_TAC[] THEN CONJ_TAC THENL
    [EXISTS_TAC `state_clock (s:(FFI)state)` THEN REWRITE_TAC[CAN2AAUX_clock_lemmas];
     EXISTS_TAC `k':num` THEN REWRITE_TAC[]]);;
@@ -434,9 +422,9 @@ let CAN2AAUX_MAT_CHECK_TAC head_defs =
   GVS([same_ctor_def; IN_INSERT; NOT_IN_EMPTY] @ head_defs);;
 
 let evaluate_unit_check = prove
- (`evaluate s (sem_env_v_fupd (K (nsBind v w env1)) env)
+ (`evaluate s (sem_env_v_fupd (combin_K (nsBind v w env1)) env)
       [Mat (Var (Short v)) [(Pcon NONE [],ee)]] = (s',res) ==>
-    (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+    (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
          (res = Rerr (Rabort Rtype_error) \/
           res = Rerr (Rraise bind_exn_v) \/
           res = Rerr (Rabort Rtimeout_error))) \/ UNIT_TYPE one w`,
@@ -449,7 +437,7 @@ let evaluate_unit_check = prove
 let evaluate_str_check = prove
  (`evaluate s env [Let NONE (App Strlen [Var (Short v)]) ee] = (s',res) /\
     nsLookup (sem_env_v env) (Short v) = SOME w ==>
-    (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+    (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
          (res = Rerr (Rabort Rtype_error) \/
           res = Rerr (Rraise bind_exn_v) \/
           res = Rerr (Rabort Rtimeout_error))) \/ STRING_TYPE_HEAD w /\ evaluate s env [ee] = (s',res)`,
@@ -472,7 +460,7 @@ let evaluate_ty_check = prove
     nsLookup (sem_env_c env) (Short (implode "Tyapp")) =
       SOME (2,TypeStamp (implode "Tyapp") type_stamp_n) /\
     nsLookup (sem_env_v env) (Short v) = SOME w ==>
-    (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+    (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
          (res = Rerr (Rabort Rtype_error) \/
           res = Rerr (Rraise bind_exn_v) \/
           res = Rerr (Rabort Rtimeout_error))) \/ TYPE_TYPE_HEAD w /\ evaluate s env [ee] = (s',res)`,
@@ -497,7 +485,7 @@ let evaluate_tm_check = prove
     nsLookup (sem_env_c env) (Short (implode "Abs")) =
       SOME (2,TypeStamp (implode "Abs") term_stamp_n) /\
     nsLookup (sem_env_v env) (Short v) = SOME w ==>
-    (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+    (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
          (res = Rerr (Rabort Rtype_error) \/
           res = Rerr (Rraise bind_exn_v) \/
           res = Rerr (Rabort Rtimeout_error))) \/ TERM_TYPE_HEAD w /\ evaluate s env [ee] = (s',res)`,
@@ -513,7 +501,7 @@ let evaluate_thm_check = prove
     nsLookup (sem_env_c env) (Short (implode "Sequent")) =
       SOME (2,TypeStamp (implode "Sequent") thm_stamp_n) /\
     nsLookup (sem_env_v env) (Short v) = SOME w ==>
-    (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+    (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
          (res = Rerr (Rabort Rtype_error) \/
           res = Rerr (Rraise bind_exn_v) \/
           res = Rerr (Rabort Rtimeout_error))) \/ THM_TYPE_HEAD w /\ evaluate s env [ee] = (s',res)`,
@@ -523,13 +511,13 @@ let evaluate_mat_pair = prove
  (`evaluate s env
       [Mat (Var (Short v)) [(Pcon NONE [Pvar a1; Pvar a2], ee)]] = (s',res) /\
     nsLookup (sem_env_v env) (Short v) = SOME w ==>
-    (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+    (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
          (res = Rerr (Rabort Rtype_error) \/
           res = Rerr (Rraise bind_exn_v) \/
           res = Rerr (Rabort Rtimeout_error))) \/
     ?v1 v2.
       w = Conv NONE [v1; v2] /\
-      evaluate s (sem_env_v_fupd (K (nsBind a2 v2 (nsBind a1 v1 (sem_env_v env)))) env)
+      evaluate s (sem_env_v_fupd (combin_K (nsBind a2 v2 (nsBind a1 v1 (sem_env_v env)))) env)
         [ee] = (s',res)`,
   CAN2AAUX_MAT_CHECK_TAC []);;
 
@@ -541,13 +529,13 @@ let evaluate_mat_thm = prove
     nsLookup (sem_env_c env) (Short (implode "Sequent")) =
       SOME (2,TypeStamp (implode "Sequent") thm_stamp_n) /\
     nsLookup (sem_env_v env) (Short v) = SOME w ==>
-    (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+    (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
          (res = Rerr (Rabort Rtype_error) \/
           res = Rerr (Rraise bind_exn_v) \/
           res = Rerr (Rabort Rtimeout_error))) \/
     ?v1 v2.
       THM_TYPE_HEAD w /\
-      evaluate s (sem_env_v_fupd (K (nsBind a2 v2 (nsBind a1 v1 (sem_env_v env)))) env)
+      evaluate s (sem_env_v_fupd (combin_K (nsBind a2 v2 (nsBind a1 v1 (sem_env_v env)))) env)
         [ee] = (s',res)`,
   CAN2AAUX_MAT_CHECK_TAC [THM_TYPE_HEAD_def] THEN ASM_MESON_TAC[]);;
 
@@ -622,7 +610,7 @@ let CAN2AAUX_HEAD_DEFS = [PAIR_TYPE_HEAD_def; PAIR_TYPE_def; K_THM; injectivity 
 
 let CAN2AAUX_do_opapp_Recclosure1 = prove
  (`do_opapp [Recclosure ENV [(f,p,b)] f; v] =
-   SOME (sem_env_v_fupd (K (nsBind p v (nsBind f (Recclosure ENV [(f,p,b)] f) (sem_env_v ENV))))
+   SOME (sem_env_v_fupd (combin_K (nsBind p v (nsBind f (Recclosure ENV [(f,p,b)] f) (sem_env_v ENV))))
            ENV, b)`,
   SIMP[do_opapp_def] THEN ONCE_REWRITE_TAC[find_recfun_def] THEN
   SIMP[build_rec_env_def; ITLIST]);;
@@ -677,18 +665,18 @@ let CAN2AAUX_LIST_CHECK_GEN = prove
      nsLookup (sem_env_c ENV) (Short (implode "::")) = SOME (2,TypeStamp (implode "::") 1) /\
      (!s v x y s' res.
         evaluate s
-          (sem_env_v_fupd (K (nsBind tnm y (nsBind hnm x (nsBind pnm v
+          (sem_env_v_fupd (combin_K (nsBind tnm y (nsBind hnm x (nsBind pnm v
              (nsBind fnm (Recclosure ENV
                   [(fnm,pnm,Mat (Var (Short pnm))
                      [(Pcon (SOME (Short (implode "[]"))) [], Con NONE []);
                       (Pcon (SOME (Short (implode "::"))) [Pvar hnm; Pvar tnm], CHK)])] fnm)
                (sem_env_v ENV)))))) ENV) [CHK] = (s',res) ==>
-        (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+        (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
              (res = Rerr (Rabort Rtype_error) \/
               res = Rerr (Rraise bind_exn_v) \/
               res = Rerr (Rabort Rtimeout_error))) \/
         A x /\
-        ?k env'. evaluate (state_clock_fupd (K k) s) env'
+        ?k env'. evaluate (state_clock_fupd (combin_K k) s) env'
                    [App Opapp [Var (Short fnm); Var (Short tnm)]] = (s',res) /\
                  nsLookup (sem_env_v env') (Short fnm) =
                    SOME (Recclosure ENV
@@ -704,11 +692,11 @@ let CAN2AAUX_LIST_CHECK_GEN = prove
                          (Pcon (SOME (Short (implode "::"))) [Pvar hnm; Pvar tnm], CHK)])] fnm;
                    v] = SOME (env,e) /\
          evaluate (dec_clock s) env [e] = (s',res) /\
-         ((?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+         ((?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
                (res = Rerr (Rabort Rtype_error) \/
                 res = Rerr (Rraise bind_exn_v) \/
                 res = Rerr (Rabort Rtimeout_error))) \/
-          ?k z. s' = state_clock_fupd (K k) s /\ res = Rval [z] /\ LIST_TYPE_HEAD A v)`,
+          ?k z. s' = state_clock_fupd (combin_K k) s /\ res = Rval [z] /\ LIST_TYPE_HEAD A v)`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN GEN_TAC THEN WF_INDUCT_TAC `v_size v` THEN GEN_TAC THEN
   REWRITE_TAC[CAN2AAUX_do_opapp_Recclosure1; option_INJ; PAIR_EQ] THEN
   MATCH_MP_TAC CAN2AAUX_EXISTS_EVAL THEN REPEAT GEN_TAC THEN DISCH_TAC THEN
@@ -735,7 +723,7 @@ let CAN2AAUX_LIST_CHECK_GEN = prove
     check (fun th -> is_forall (concl th) &&
                      fst (dest_var (fst (dest_forall (concl th)))) = "v'")) THEN
   REWRITE_TAC[CAN2AAUX_v_size_cons2] THEN
-  DISCH_THEN (MP_TAC o SPEC `state_clock_fupd (K k) (s:(FFI)state)`) THEN
+  DISCH_THEN (MP_TAC o SPEC `state_clock_fupd (combin_K k) (s:(FFI)state)`) THEN
   REWRITE_TAC[CAN2AAUX_do_opapp_Recclosure1; option_INJ; PAIR_EQ] THEN
   STRIP_TAC THEN GVS(CAN2AAUX_IGN @ [CAN2AAUX_clock_lemmas; same_clock_exists]) THEN
   EXISTS_TAC `k':num` THEN REWRITE_TAC[] THEN
@@ -762,11 +750,11 @@ let check_tm_head = prove
       ?env e s' res.
         do_opapp [check_tm_v; v] = SOME (env,e) /\
         evaluate (dec_clock s) env [e] = (s',res) /\
-        ((?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+        ((?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
               (res = Rerr (Rabort Rtype_error) \/
                res = Rerr (Rraise bind_exn_v) \/
                res = Rerr (Rabort Rtimeout_error))) \/
-         ?k z. s' = state_clock_fupd (K k) s /\ res = Rval [z] /\
+         ?k z. s' = state_clock_fupd (combin_K k) s /\ res = Rval [z] /\
                LIST_TYPE_HEAD TERM_TYPE_HEAD v)`,
   CAN2AAUX_LIST_CHECK_TAC check_tm_v_def [evaluate_tm_check]);;
 
@@ -775,11 +763,11 @@ let check_ty_head = prove
       ?env e s' res.
         do_opapp [check_ty_v; v] = SOME (env,e) /\
         evaluate (dec_clock s) env [e] = (s',res) /\
-        ((?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+        ((?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
               (res = Rerr (Rabort Rtype_error) \/
                res = Rerr (Rraise bind_exn_v) \/
                res = Rerr (Rabort Rtimeout_error))) \/
-         ?k z. s' = state_clock_fupd (K k) s /\ res = Rval [z] /\
+         ?k z. s' = state_clock_fupd (combin_K k) s /\ res = Rval [z] /\
                LIST_TYPE_HEAD TYPE_TYPE_HEAD v)`,
   CAN2AAUX_LIST_CHECK_TAC check_ty_v_def [evaluate_ty_check]);;
 
@@ -788,11 +776,11 @@ let check_thm_head = prove
       ?env e s' res.
         do_opapp [check_thm_v; v] = SOME (env,e) /\
         evaluate (dec_clock s) env [e] = (s',res) /\
-        ((?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+        ((?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
               (res = Rerr (Rabort Rtype_error) \/
                res = Rerr (Rraise bind_exn_v) \/
                res = Rerr (Rabort Rtimeout_error))) \/
-         ?k z. s' = state_clock_fupd (K k) s /\ res = Rval [z] /\
+         ?k z. s' = state_clock_fupd (combin_K k) s /\ res = Rval [z] /\
                LIST_TYPE_HEAD THM_TYPE_HEAD v)`,
   CAN2AAUX_LIST_CHECK_TAC check_thm_v_def [evaluate_thm_check]);;
 
@@ -801,11 +789,11 @@ let check_tm_tm_head = prove
       ?env e s' res.
         do_opapp [check_tm_tm_v; v] = SOME (env,e) /\
         evaluate (dec_clock s) env [e] = (s',res) /\
-        ((?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+        ((?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
               (res = Rerr (Rabort Rtype_error) \/
                res = Rerr (Rraise bind_exn_v) \/
                res = Rerr (Rabort Rtimeout_error))) \/
-         ?k z. s' = state_clock_fupd (K k) s /\ res = Rval [z] /\
+         ?k z. s' = state_clock_fupd (combin_K k) s /\ res = Rval [z] /\
                LIST_TYPE_HEAD (PAIR_TYPE_HEAD TERM_TYPE_HEAD TERM_TYPE_HEAD) v)`,
   CAN2AAUX_LIST_CHECK_TAC check_tm_tm_v_def [evaluate_mat_pair; evaluate_tm_check]);;
 
@@ -814,11 +802,11 @@ let check_ty_ty_head = prove
       ?env e s' res.
         do_opapp [check_ty_ty_v; v] = SOME (env,e) /\
         evaluate (dec_clock s) env [e] = (s',res) /\
-        ((?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+        ((?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
               (res = Rerr (Rabort Rtype_error) \/
                res = Rerr (Rraise bind_exn_v) \/
                res = Rerr (Rabort Rtimeout_error))) \/
-         ?k z. s' = state_clock_fupd (K k) s /\ res = Rval [z] /\
+         ?k z. s' = state_clock_fupd (combin_K k) s /\ res = Rval [z] /\
                LIST_TYPE_HEAD (PAIR_TYPE_HEAD TYPE_TYPE_HEAD TYPE_TYPE_HEAD) v)`,
   CAN2AAUX_LIST_CHECK_TAC check_ty_ty_v_def [evaluate_mat_pair; evaluate_ty_check]);;
 
@@ -835,12 +823,12 @@ let evaluate_ty_list_check = prove
       [Let NONE (App Opapp [Var (Short (implode "check_ty")); Var (Short v)]) ee] = (s',res) /\
     nsLookup (sem_env_v env) (Short (implode "check_ty")) = SOME check_ty_v /\
     nsLookup (sem_env_v env) (Short v) = SOME w ==>
-    (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+    (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
          (res = Rerr (Rabort Rtype_error) \/
           res = Rerr (Rraise bind_exn_v) \/
           res = Rerr (Rabort Rtimeout_error))) \/
     LIST_TYPE_HEAD TYPE_TYPE_HEAD w /\
-    ?k. evaluate (state_clock_fupd (K k) s) env [ee] = (s',res)`,
+    ?k. evaluate (state_clock_fupd (combin_K k) s) env [ee] = (s',res)`,
   CAN2AAUX_LIST_EVAL_TAC check_ty_head);;
 
 let evaluate_thm_list_check = prove
@@ -848,12 +836,12 @@ let evaluate_thm_list_check = prove
       [Let NONE (App Opapp [Var (Short (implode "check_thm")); Var (Short v)]) ee] = (s',res) /\
     nsLookup (sem_env_v env) (Short (implode "check_thm")) = SOME check_thm_v /\
     nsLookup (sem_env_v env) (Short v) = SOME w ==>
-    (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+    (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
          (res = Rerr (Rabort Rtype_error) \/
           res = Rerr (Rraise bind_exn_v) \/
           res = Rerr (Rabort Rtimeout_error))) \/
     LIST_TYPE_HEAD THM_TYPE_HEAD w /\
-    ?k. evaluate (state_clock_fupd (K k) s) env [ee] = (s',res)`,
+    ?k. evaluate (state_clock_fupd (combin_K k) s) env [ee] = (s',res)`,
   CAN2AAUX_LIST_EVAL_TAC check_thm_head);;
 
 let evaluate_ty_ty_list_check = prove
@@ -862,12 +850,12 @@ let evaluate_ty_ty_list_check = prove
       (s',res) /\
     nsLookup (sem_env_v env) (Short (implode "check_ty_ty")) = SOME check_ty_ty_v /\
     nsLookup (sem_env_v env) (Short v) = SOME w ==>
-    (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+    (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
          (res = Rerr (Rabort Rtype_error) \/
           res = Rerr (Rraise bind_exn_v) \/
           res = Rerr (Rabort Rtimeout_error))) \/
     LIST_TYPE_HEAD (PAIR_TYPE_HEAD TYPE_TYPE_HEAD TYPE_TYPE_HEAD) w /\
-    ?k. evaluate (state_clock_fupd (K k) s) env [ee] = (s',res)`,
+    ?k. evaluate (state_clock_fupd (combin_K k) s) env [ee] = (s',res)`,
   CAN2AAUX_LIST_EVAL_TAC check_ty_ty_head);;
 
 let evaluate_tm_list_check = prove
@@ -875,12 +863,12 @@ let evaluate_tm_list_check = prove
       [Let NONE (App Opapp [Var (Short (implode "check_tm")); Var (Short v)]) ee] = (s',res) /\
     nsLookup (sem_env_v env) (Short (implode "check_tm")) = SOME check_tm_v /\
     nsLookup (sem_env_v env) (Short v) = SOME w ==>
-    (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+    (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
          (res = Rerr (Rabort Rtype_error) \/
           res = Rerr (Rraise bind_exn_v) \/
           res = Rerr (Rabort Rtimeout_error))) \/
     LIST_TYPE_HEAD TERM_TYPE_HEAD w /\
-    ?k. evaluate (state_clock_fupd (K k) s) env [ee] = (s',res)`,
+    ?k. evaluate (state_clock_fupd (combin_K k) s) env [ee] = (s',res)`,
   CAN2AAUX_LIST_EVAL_TAC check_tm_head);;
 
 let evaluate_tm_tm_list_check = prove
@@ -889,12 +877,12 @@ let evaluate_tm_tm_list_check = prove
       (s',res) /\
     nsLookup (sem_env_v env) (Short (implode "check_tm_tm")) = SOME check_tm_tm_v /\
     nsLookup (sem_env_v env) (Short v) = SOME w ==>
-    (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+    (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
          (res = Rerr (Rabort Rtype_error) \/
           res = Rerr (Rraise bind_exn_v) \/
           res = Rerr (Rabort Rtimeout_error))) \/
     LIST_TYPE_HEAD (PAIR_TYPE_HEAD TERM_TYPE_HEAD TERM_TYPE_HEAD) w /\
-    ?k. evaluate (state_clock_fupd (K k) s) env [ee] = (s',res)`,
+    ?k. evaluate (state_clock_fupd (combin_K k) s) env [ee] = (s',res)`,
   CAN2AAUX_LIST_EVAL_TAC check_tm_tm_head);;
 
 (* ------------------------------------------------------------------------- *)
@@ -911,7 +899,7 @@ let CAN2AAUX_evaluate_int_check = prove
  (`evaluate s env
       [If (App (Test (Compare Leq) IntT) [Lit (IntLit i); Var (Short v)]) e1 e2] = (s',res) /\
     nsLookup (sem_env_v env) (Short v) = SOME w ==>
-    (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+    (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
          (res = Rerr (Rabort Rtype_error) \/
           res = Rerr (Rraise bind_exn_v) \/
           res = Rerr (Rabort Rtimeout_error))) \/ INT_HEAD w`,
@@ -954,7 +942,7 @@ let CAN2AAUX_HEAD_TAC v_def =
 let types_v_head = prove
  (`do_opapp [types_v; v] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -964,7 +952,7 @@ let types_v_head = prove
 let constants_v_head = prove
  (`do_opapp [constants_v; v] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -974,7 +962,7 @@ let constants_v_head = prove
 let axioms_v_head = prove
  (`do_opapp [axioms_v; v] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -984,7 +972,7 @@ let axioms_v_head = prove
 let mk_vartype_v_head = prove
  (`do_opapp [mk_vartype_v; v] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -994,7 +982,7 @@ let mk_vartype_v_head = prove
 let call_new_type_v_head = prove
  (`do_opapp [call_new_type_v; v] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1004,7 +992,7 @@ let call_new_type_v_head = prove
 let is_type_v_head = prove
  (`do_opapp [is_type_v; w] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1014,7 +1002,7 @@ let is_type_v_head = prove
 let concl_v_head = prove
  (`do_opapp [concl_v; v] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1025,7 +1013,7 @@ let trans_v_head = prove
  (`do_partial_app trans_v v = SOME g /\
     do_opapp [g; w] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1035,7 +1023,7 @@ let trans_v_head = prove
 let beta_v_head = prove
  (`do_opapp [beta_v; v] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1046,7 +1034,7 @@ let call_variant_v_head = prove
  (`do_partial_app call_variant_v v = SOME g /\
     do_opapp [g; w] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1058,7 +1046,7 @@ let vsubst_v_head = prove
  (`do_partial_app vsubst_v v = SOME g /\
     do_opapp [g; w] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1069,7 +1057,7 @@ let vsubst_v_head = prove
 let dest_type_v_head = prove
  (`do_opapp [dest_type_v; v] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1079,7 +1067,7 @@ let dest_type_v_head = prove
 let is_vartype_v_head = prove
  (`do_opapp [is_vartype_v; v] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1089,7 +1077,7 @@ let is_vartype_v_head = prove
 let is_var_v_head = prove
  (`do_opapp [is_var_v; v] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1099,7 +1087,7 @@ let is_var_v_head = prove
 let is_const_v_head = prove
  (`do_opapp [is_const_v; v] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1109,7 +1097,7 @@ let is_const_v_head = prove
 let is_abs_v_head = prove
  (`do_opapp [is_abs_v; v] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1119,7 +1107,7 @@ let is_abs_v_head = prove
 let is_comb_v_head = prove
  (`do_opapp [is_comb_v; v] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1129,7 +1117,7 @@ let is_comb_v_head = prove
 let rand_v_head = prove
  (`do_opapp [rand_v; v] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1139,7 +1127,7 @@ let rand_v_head = prove
 let rator_v_head = prove
  (`do_opapp [rator_v; v] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1149,7 +1137,7 @@ let rator_v_head = prove
 let dest_var_v_head = prove
  (`do_opapp [dest_var_v; v] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1159,7 +1147,7 @@ let dest_var_v_head = prove
 let dest_const_v_head = prove
  (`do_opapp [dest_const_v; v] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1169,7 +1157,7 @@ let dest_const_v_head = prove
 let dest_comb_v_head = prove
  (`do_opapp [dest_comb_v; v] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1179,7 +1167,7 @@ let dest_comb_v_head = prove
 let dest_abs_v_head = prove
  (`do_opapp [dest_abs_v; v] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1189,7 +1177,7 @@ let dest_abs_v_head = prove
 let dest_vartype_v_head = prove
  (`do_opapp [dest_vartype_v; v] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1199,7 +1187,7 @@ let dest_vartype_v_head = prove
 let dest_eq_v_head = prove
  (`do_opapp [dest_eq_v; v] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1209,7 +1197,7 @@ let dest_eq_v_head = prove
 let call_tyvars_v_head = prove
  (`do_opapp [call_tyvars_v; v] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1219,7 +1207,7 @@ let call_tyvars_v_head = prove
 let call_type_vars_in_term_v_head = prove
  (`do_opapp [call_type_vars_in_term_v; v] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1229,7 +1217,7 @@ let call_type_vars_in_term_v_head = prove
 let new_basic_definition_v_head = prove
  (`do_opapp [new_basic_definition_v; v] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1239,7 +1227,7 @@ let new_basic_definition_v_head = prove
 let new_specification_v_head = prove
  (`do_opapp [new_specification_v; v] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1249,7 +1237,7 @@ let new_specification_v_head = prove
 let get_const_type_v_head = prove
  (`do_opapp [get_const_type_v; v] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1259,7 +1247,7 @@ let get_const_type_v_head = prove
 let new_constant_v_head = prove
  (`do_opapp [new_constant_v; v] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1269,7 +1257,7 @@ let new_constant_v_head = prove
 let mk_var_v_head = prove
  (`do_opapp [mk_var_v; v] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1279,7 +1267,7 @@ let mk_var_v_head = prove
 let mk_comb_v_head = prove
  (`do_opapp [mk_comb_v; v] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1289,7 +1277,7 @@ let mk_comb_v_head = prove
 let get_type_arity_v_head = prove
  (`do_opapp [get_type_arity_v; v] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1299,7 +1287,7 @@ let get_type_arity_v_head = prove
 let mk_type_v_head = prove
  (`do_opapp [mk_type_v; v] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1309,7 +1297,7 @@ let mk_type_v_head = prove
 let refl_v_head = prove
  (`do_opapp [refl_v; v] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1319,7 +1307,7 @@ let refl_v_head = prove
 let mk_const_v_head = prove
  (`do_opapp [mk_const_v; v] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1330,7 +1318,7 @@ let mk_const_v_head = prove
 let freesl_v_head = prove
  (`do_opapp [freesl_v; v] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1340,7 +1328,7 @@ let freesl_v_head = prove
 let assume_v_head = prove
  (`do_opapp [assume_v; v] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1350,7 +1338,7 @@ let assume_v_head = prove
 let hyp_v_head = prove
  (`do_opapp [hyp_v; v] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1360,7 +1348,7 @@ let hyp_v_head = prove
 let dest_thm_v_head = prove
  (`do_opapp [dest_thm_v; v] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1370,7 +1358,7 @@ let dest_thm_v_head = prove
 let mk_comb_1_v_head = prove
  (`do_opapp [mk_comb_1_v; v] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1380,7 +1368,7 @@ let mk_comb_1_v_head = prove
 let new_basic_type_definition_v_head = prove
  (`do_opapp [new_basic_type_definition_v; v] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1393,7 +1381,7 @@ let call_type_subst_v_head = prove
  (`do_partial_app call_type_subst_v v = SOME g /\
     do_opapp [g; w] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1405,7 +1393,7 @@ let inst_v_head = prove
  (`do_partial_app inst_v v = SOME g /\
     do_opapp [g; w] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1417,7 +1405,7 @@ let abs_v_head = prove
  (`do_partial_app abs_v v = SOME g /\
     do_opapp [g; w] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1429,7 +1417,7 @@ let eq_mp_v_head = prove
  (`do_partial_app eq_mp_v v = SOME g /\
     do_opapp [g; w] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1441,7 +1429,7 @@ let deduct_antisym_rule_v_head = prove
  (`do_partial_app deduct_antisym_rule_v v = SOME g /\
     do_opapp [g; w] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1453,7 +1441,7 @@ let inst_type_v_head = prove
  (`do_partial_app inst_type_v v = SOME g /\
     do_opapp [g; w] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1465,7 +1453,7 @@ let inst_1_v_head = prove
  (`do_partial_app inst_1_v v = SOME g /\
     do_opapp [g; w] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1476,7 +1464,7 @@ let inst_1_v_head = prove
 let new_axiom_v_head = prove
  (`do_opapp [new_axiom_v; v] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1486,7 +1474,7 @@ let new_axiom_v_head = prove
 let call_type_of_v_head = prove
  (`do_opapp [call_type_of_v; v] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1497,7 +1485,7 @@ let call_vfree_in_v_head = prove
  (`do_partial_app call_vfree_in_v v = SOME g /\
     do_opapp [g; w] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1509,7 +1497,7 @@ let call_freesin_v_head = prove
  (`do_partial_app call_freesin_v v = SOME g /\
     do_opapp [g; w] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1520,7 +1508,7 @@ let call_freesin_v_head = prove
 let mk_abs_v_head = prove
  (`do_opapp [mk_abs_v; v] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1530,7 +1518,7 @@ let mk_abs_v_head = prove
 let call_frees_v_head = prove
  (`do_opapp [call_frees_v; v] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1540,7 +1528,7 @@ let call_frees_v_head = prove
 let candle_Kernel_print_thm_v_head = prove
  (`do_opapp [Kernel_print_thm_v; v] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1551,7 +1539,7 @@ let compute_add_v_head = prove
  (`do_partial_app compute_add_v v = SOME g /\
     do_opapp [g; w] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/
@@ -1563,7 +1551,7 @@ let compute_v_head = prove
  (`do_partial_app compute_v v = SOME g /\
     do_opapp [g; w] = SOME (env,exp) /\
     evaluate s env [exp] = (s',res) ==>
-      (?k. s' = state_clock_fupd (K k) (s:(FFI)state) /\
+      (?k. s' = state_clock_fupd (combin_K k) (s:(FFI)state) /\
            (res = Rerr (Rabort Rtype_error) \/
             res = Rerr (Rraise bind_exn_v) \/
             res = Rerr (Rabort Rtimeout_error))) \/

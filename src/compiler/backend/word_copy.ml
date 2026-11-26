@@ -243,7 +243,7 @@ let set_store_eq_def = cake_def
              (copy_state_next cs + 1)
        | SOME c ->
            copy_state_store_to_eq_fupd
-             (K (CONS (s,c) (copy_state_store_to_eq cs))) cs
+             (combin_K (CONS (s,c) (copy_state_store_to_eq cs))) cs
      else empty_eq`;;
 
 let lookup_store_eq_def = cake_def

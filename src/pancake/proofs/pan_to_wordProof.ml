@@ -210,7 +210,7 @@ let FDOM_get_eids_pan_globals_compile_eq = prove
      FDOM (get_eids_from_decls (pan_globals_compile_top pan_code main)) =
      FDOM (get_eids_from_decls pan_code)`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[PP2CAUX_B_fdom_get_eids] THEN
-  ASM_REWRITE_TAC[pan_globals_compile_top_def] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[pan_globals_compile_top_def] THEN CAKE_REWRITE_TAC[] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   PAIR_CASES_ON `pan_globals_compile_decs
      (pan_globals_context_REC FEMPTY (word 0)
@@ -219,7 +219,7 @@ let FDOM_get_eids_pan_globals_compile_eq = prove
              (dec_shapes (fperm_decs main (new_main_name pan_code)
                                       (resort_decls pan_code))))))))
      (fperm_decs main (new_main_name pan_code) (resort_decls (pan_code:((A)decl)list)))` THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   FIRST_ASSUM (ASSUME_TAC o MATCH_MP compile_decs_EVERY_is_function) THEN
   FIRST_ASSUM (ASSUME_TAC o MATCH_MP compile_decs_exns_are_exns) THEN
   ASM_SIMP_TAC[exceptions_append; exceptions_def; PTOPAUX_exceptions_functions;
@@ -384,7 +384,7 @@ let size_of_eids_compile_top = prove
      ALOOKUP (functions (pan_code:((A)decl)list)) main = SOME (args,body,rshape) ==>
      size_of_eids (pan_globals_compile_top pan_code main) = size_of_eids pan_code`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[size_of_eids_def] THEN
-  ASM_REWRITE_TAC[pan_globals_compile_top_def] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[pan_globals_compile_top_def] THEN CAKE_REWRITE_TAC[] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   PAIR_CASES_ON `pan_globals_compile_decs
      (pan_globals_context_REC FEMPTY (word 0)
@@ -393,7 +393,7 @@ let size_of_eids_compile_top = prove
              (dec_shapes (fperm_decs main (new_main_name pan_code)
                                       (resort_decls pan_code))))))))
      (fperm_decs main (new_main_name pan_code) (resort_decls (pan_code:((A)decl)list)))` THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   FIRST_ASSUM (ASSUME_TAC o MATCH_MP compile_decs_EVERY_is_function) THEN
   FIRST_ASSUM (ASSUME_TAC o MATCH_MP compile_decs_exns_are_exns) THEN
   ASM_SIMP_TAC[FILTER_APPEND; FILTER; is_exn_decl_def; PTOPAUX_FILTER_exn_functions;
@@ -413,7 +413,7 @@ let FLOOKUP_make_funcs_main = prove
                 (pan_to_crep_compile_prog (pan_globals_compile_top pan_code main))) main =
      SOME (first_name,0)`,
   REPEAT STRIP_TAC THEN
-  ASM_REWRITE_TAC[pan_globals_compile_top_def] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[pan_globals_compile_top_def] THEN CAKE_REWRITE_TAC[] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   PAIR_CASES_ON `pan_globals_compile_decs
      (pan_globals_context_REC FEMPTY (word 0)
@@ -422,7 +422,7 @@ let FLOOKUP_make_funcs_main = prove
              (dec_shapes (fperm_decs main (new_main_name pan_code)
                                       (resort_decls pan_code))))))))
      (fperm_decs main (new_main_name pan_code) (resort_decls (pan_code:((A)decl)list)))` THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   FIRST_ASSUM (ASSUME_TAC o MATCH_MP compile_decs_exns_are_exns) THEN
   ASM_REWRITE_TAC[pan_to_crep_compile_prog_def; compile_to_crep_def; compile_inl_top_def;
                   compile_inl_prog_def; crep_to_loop_make_funcs_def] THEN
@@ -465,7 +465,7 @@ let size_decs_stcnames_compile_decs_structs = prove
   (* Decl *)
   SUBGOAL_THEN `is_wf_shape_v (pan_state_structs (s:(A,FFI)pan_state)) (a:(A)pan_v)`
     ASSUME_TAC THENL
-   [MP_TAC (ISPECL [`pan_state_locals_fupd (K FEMPTY) (s:(A,FFI)pan_state)`;
+   [MP_TAC (ISPECL [`pan_state_locals_fupd (combin_K FEMPTY) (s:(A,FFI)pan_state)`;
                     `e:(A)panLang_exp`; `a:(A)pan_v`] eval_is_wf_shape_v) THEN
     SIMP[FEVERY_FEMPTY];
     ALL_TAC] THEN
@@ -476,9 +476,9 @@ let size_decs_stcnames_compile_decs_structs = prove
   FIRST_X_ASSUM MATCH_MP_TAC THEN
   MAP_EVERY EXISTS_TAC
    [`pan_structs_context_globals_fupd
-       (K (CONS (v,shape_of (a:(A)pan_v)) (pan_structs_context_globals ctxt))) ctxt`;
+       (combin_K (CONS (v,shape_of (a:(A)pan_v)) (pan_structs_context_globals ctxt))) ctxt`;
     `ctxt':pan_structs_context`] THEN
-  SIMP[FEVERY_FUPDATE; fevery_to_drestrict] THEN CASE_REWRITE_TAC[] THEN
+  SIMP[FEVERY_FUPDATE; fevery_to_drestrict] THEN CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[]);;
 
 let semantics_size_decs_stcnames_compile_structs = prove
@@ -498,7 +498,7 @@ let semantics_size_decs_stcnames_compile_structs = prove
    [ASM_REWRITE_TAC[struct_infos_ok_def; ALL; MAP; ALL_DISTINCT; LENGTH; LT];
     DISCH_TAC] THEN
   MP_TAC (ISPECL
-   [`pan_state_structs_fupd (K (a:(stcname#struct_info)list)) (s:(A,FFI)pan_state)`;
+   [`pan_state_structs_fupd (combin_K (a:(stcname#struct_info)list)) (s:(A,FFI)pan_state)`;
     `pan_code:((A)decl)list`;
     `get_names (pan_structs_context_REC [] [] []) (pan_code:((A)decl)list)`;
     `a':(A,FFI)pan_state`;
@@ -540,7 +540,7 @@ let functions_compile_decs_exns = prove
 (* pan_to_crep, crep_to_loop, loop_to_word)                                   *)
 let PTOPAUX_state_rel_imp_semantics = prove
  (`(!(s:(A,FFI)pan_state) (t:(A,FFI)crep_state) (pan_code:((A)decl)list) start.
-      pan_to_crepProof_state_rel (pan_state_structs_fupd (K []) s) t /\
+      pan_to_crepProof_state_rel (pan_state_structs_fupd (combin_K []) s) t /\
       ALL_DISTINCT (MAP FST (functions pan_code)) /\
       pan_state_code s = FEMPTY /\
       crep_state_code t = alist_to_fmap (pan_to_crep_compile_prog pan_code) /\
@@ -614,7 +614,7 @@ let PTOPAUX_state_rel_imp_semantics = prove
     ALL_TAC] THEN
 
   (* pan_structs *)
-  SUBGOAL_THEN `pan_state_eshapes_fupd (K FEMPTY) (s:(A,FFI)pan_state) = s` ASSUME_TAC THENL
+  SUBGOAL_THEN `pan_state_eshapes_fupd (combin_K FEMPTY) (s:(A,FFI)pan_state) = s` ASSUME_TAC THENL
    [REWRITE_TAC[pan_state_component_equality; pan_state_INFO.ri_accfupds; K_THM] THEN
     ASM_REWRITE_TAC[];
     ALL_TAC] THEN
@@ -649,11 +649,11 @@ let PTOPAUX_state_rel_imp_semantics = prove
       (pan_structs_compile_top (pan_simp_compile_prog pan_code)) =
     semantics_decls
       (pan_state_top_addr_fupd
-         (K (word_add (pan_state_top_addr s) (word_mul bytes_in_word (word globals_size))))
+         (combin_K (word_add (pan_state_top_addr s) (word_mul bytes_in_word (word globals_size))))
          (pan_state_memaddrs_fupd
-            (K (pan_state_memaddrs s UNION addresses (pan_state_top_addr s) globals_size))
-            (pan_state_memory_fupd (K (wloc_wlab o wl_state_memory (t:(A,B,FFI)wl_state)))
-               (pan_state_locals_fupd (K (pan_state_locals s)) (s:(A,FFI)pan_state)))))
+            (combin_K (pan_state_memaddrs s UNION addresses (pan_state_top_addr s) globals_size))
+            (pan_state_memory_fupd (combin_K (wloc_wlab o wl_state_memory (t:(A,B,FFI)wl_state)))
+               (pan_state_locals_fupd (combin_K (pan_state_locals s)) (s:(A,FFI)pan_state)))))
       (implode "main")
       (pan_globals_compile_top (pan_structs_compile_top (pan_simp_compile_prog pan_code))
          (implode "main"))`
@@ -668,11 +668,11 @@ let PTOPAUX_state_rel_imp_semantics = prove
        `addresses (pan_state_top_addr (s:(A,FFI)pan_state)) globals_size`,
          `free_addrs:A word->bool`;
        `pan_state_top_addr_fupd
-         (K (word_add (pan_state_top_addr s) (word_mul bytes_in_word (word globals_size))))
+         (combin_K (word_add (pan_state_top_addr s) (word_mul bytes_in_word (word globals_size))))
          (pan_state_memaddrs_fupd
-            (K (pan_state_memaddrs s UNION addresses (pan_state_top_addr s) globals_size))
-            (pan_state_memory_fupd (K (wloc_wlab o wl_state_memory (t:(A,B,FFI)wl_state)))
-               (pan_state_locals_fupd (K (pan_state_locals s)) (s:(A,FFI)pan_state))))`,
+            (combin_K (pan_state_memaddrs s UNION addresses (pan_state_top_addr s) globals_size))
+            (pan_state_memory_fupd (combin_K (wloc_wlab o wl_state_memory (t:(A,B,FFI)wl_state)))
+               (pan_state_locals_fupd (combin_K (pan_state_locals s)) (s:(A,FFI)pan_state))))`,
          `t:(A,FFI)pan_state`]
       pan_globalsProof_compile_top_semantics_decls) THEN
     REWRITE_TAC[function_names_structs_compile_top; function_names_compile_prog;
@@ -706,18 +706,18 @@ let PTOPAUX_state_rel_imp_semantics = prove
   (* pan_to_crep *)
   USE_THEN "p2c" (MP_TAC o SPECL
    [`pan_state_top_addr_fupd
-       (K (word_add (pan_state_top_addr s) (word_mul bytes_in_word (word globals_size))))
+       (combin_K (word_add (pan_state_top_addr s) (word_mul bytes_in_word (word globals_size))))
        (pan_state_memaddrs_fupd
-          (K (pan_state_memaddrs s UNION addresses (pan_state_top_addr s) globals_size))
-          (pan_state_memory_fupd (K (wloc_wlab o wl_state_memory (t:(A,B,FFI)wl_state)))
-             (pan_state_locals_fupd (K (pan_state_locals s)) (s:(A,FFI)pan_state))))`;
+          (combin_K (pan_state_memaddrs s UNION addresses (pan_state_top_addr s) globals_size))
+          (pan_state_memory_fupd (combin_K (wloc_wlab o wl_state_memory (t:(A,B,FFI)wl_state)))
+             (pan_state_locals_fupd (combin_K (pan_state_locals s)) (s:(A,FFI)pan_state))))`;
     `crep_state
        (pan_state_top_addr_fupd
-         (K (word_add (pan_state_top_addr s) (word_mul bytes_in_word (word globals_size))))
+         (combin_K (word_add (pan_state_top_addr s) (word_mul bytes_in_word (word globals_size))))
          (pan_state_memaddrs_fupd
-            (K (pan_state_memaddrs s UNION addresses (pan_state_top_addr s) globals_size))
-            (pan_state_memory_fupd (K (wloc_wlab o wl_state_memory (t:(A,B,FFI)wl_state)))
-               (pan_state_locals_fupd (K (pan_state_locals s)) (s:(A,FFI)pan_state)))))
+            (combin_K (pan_state_memaddrs s UNION addresses (pan_state_top_addr s) globals_size))
+            (pan_state_memory_fupd (combin_K (wloc_wlab o wl_state_memory (t:(A,B,FFI)wl_state)))
+               (pan_state_locals_fupd (combin_K (pan_state_locals s)) (s:(A,FFI)pan_state)))))
        (pan_globals_compile_top (pan_structs_compile_top (pan_simp_compile_prog pan_code))
           (implode "main"))
        (wloc_wlab o wl_state_memory t)`;
@@ -743,11 +743,11 @@ let PTOPAUX_state_rel_imp_semantics = prove
    `~(crep_semantics
        (crep_state
          (pan_state_top_addr_fupd
-           (K (word_add (pan_state_top_addr s) (word_mul bytes_in_word (word globals_size))))
+           (combin_K (word_add (pan_state_top_addr s) (word_mul bytes_in_word (word globals_size))))
            (pan_state_memaddrs_fupd
-              (K (pan_state_memaddrs s UNION addresses (pan_state_top_addr s) globals_size))
-              (pan_state_memory_fupd (K (wloc_wlab o wl_state_memory (t:(A,B,FFI)wl_state)))
-                 (pan_state_locals_fupd (K (pan_state_locals s)) (s:(A,FFI)pan_state)))))
+              (combin_K (pan_state_memaddrs s UNION addresses (pan_state_top_addr s) globals_size))
+              (pan_state_memory_fupd (combin_K (wloc_wlab o wl_state_memory (t:(A,B,FFI)wl_state)))
+                 (pan_state_locals_fupd (combin_K (pan_state_locals s)) (s:(A,FFI)pan_state)))))
          (pan_globals_compile_top (pan_structs_compile_top (pan_simp_compile_prog pan_code))
             (implode "main"))
          (wloc_wlab o wl_state_memory t)) (implode "main") = Fail)`
@@ -755,22 +755,22 @@ let PTOPAUX_state_rel_imp_semantics = prove
   MP_TAC (ISPECL
    [`crep_state
        (pan_state_top_addr_fupd
-         (K (word_add (pan_state_top_addr s) (word_mul bytes_in_word (word globals_size))))
+         (combin_K (word_add (pan_state_top_addr s) (word_mul bytes_in_word (word globals_size))))
          (pan_state_memaddrs_fupd
-            (K (pan_state_memaddrs s UNION addresses (pan_state_top_addr s) globals_size))
-            (pan_state_memory_fupd (K (wloc_wlab o wl_state_memory (t:(A,B,FFI)wl_state)))
-               (pan_state_locals_fupd (K (pan_state_locals s)) (s:(A,FFI)pan_state)))))
+            (combin_K (pan_state_memaddrs s UNION addresses (pan_state_top_addr s) globals_size))
+            (pan_state_memory_fupd (combin_K (wloc_wlab o wl_state_memory (t:(A,B,FFI)wl_state)))
+               (pan_state_locals_fupd (combin_K (pan_state_locals s)) (s:(A,FFI)pan_state)))))
        (pan_globals_compile_top (pan_structs_compile_top (pan_simp_compile_prog pan_code))
           (implode "main"))
        (wloc_wlab o wl_state_memory t)`;
     `loop_state
       (crep_state
        (pan_state_top_addr_fupd
-         (K (word_add (pan_state_top_addr s) (word_mul bytes_in_word (word globals_size))))
+         (combin_K (word_add (pan_state_top_addr s) (word_mul bytes_in_word (word globals_size))))
          (pan_state_memaddrs_fupd
-            (K (pan_state_memaddrs s UNION addresses (pan_state_top_addr s) globals_size))
-            (pan_state_memory_fupd (K (wloc_wlab o wl_state_memory (t:(A,B,FFI)wl_state)))
-               (pan_state_locals_fupd (K (pan_state_locals s)) (s:(A,FFI)pan_state)))))
+            (combin_K (pan_state_memaddrs s UNION addresses (pan_state_top_addr s) globals_size))
+            (pan_state_memory_fupd (combin_K (wloc_wlab o wl_state_memory (t:(A,B,FFI)wl_state)))
+               (pan_state_locals_fupd (combin_K (pan_state_locals s)) (s:(A,FFI)pan_state)))))
        (pan_globals_compile_top (pan_structs_compile_top (pan_simp_compile_prog pan_code))
           (implode "main"))
        (wloc_wlab o wl_state_memory t))
@@ -810,11 +810,11 @@ let PTOPAUX_state_rel_imp_semantics = prove
       (loop_state
        (crep_state
         (pan_state_top_addr_fupd
-          (K (word_add (pan_state_top_addr s) (word_mul bytes_in_word (word globals_size))))
+          (combin_K (word_add (pan_state_top_addr s) (word_mul bytes_in_word (word globals_size))))
           (pan_state_memaddrs_fupd
-             (K (pan_state_memaddrs s UNION addresses (pan_state_top_addr s) globals_size))
-             (pan_state_memory_fupd (K (wloc_wlab o wl_state_memory (t:(A,B,FFI)wl_state)))
-                (pan_state_locals_fupd (K (pan_state_locals s)) (s:(A,FFI)pan_state)))))
+             (combin_K (pan_state_memaddrs s UNION addresses (pan_state_top_addr s) globals_size))
+             (pan_state_memory_fupd (combin_K (wloc_wlab o wl_state_memory (t:(A,B,FFI)wl_state)))
+                (pan_state_locals_fupd (combin_K (pan_state_locals s)) (s:(A,FFI)pan_state)))))
         (pan_globals_compile_top (pan_structs_compile_top (pan_simp_compile_prog pan_code))
            (implode "main"))
         (wloc_wlab o wl_state_memory t))
@@ -827,11 +827,11 @@ let PTOPAUX_state_rel_imp_semantics = prove
    [`loop_state
       (crep_state
        (pan_state_top_addr_fupd
-         (K (word_add (pan_state_top_addr s) (word_mul bytes_in_word (word globals_size))))
+         (combin_K (word_add (pan_state_top_addr s) (word_mul bytes_in_word (word globals_size))))
          (pan_state_memaddrs_fupd
-            (K (pan_state_memaddrs s UNION addresses (pan_state_top_addr s) globals_size))
-            (pan_state_memory_fupd (K (wloc_wlab o wl_state_memory (t:(A,B,FFI)wl_state)))
-               (pan_state_locals_fupd (K (pan_state_locals s)) (s:(A,FFI)pan_state)))))
+            (combin_K (pan_state_memaddrs s UNION addresses (pan_state_top_addr s) globals_size))
+            (pan_state_memory_fupd (combin_K (wloc_wlab o wl_state_memory (t:(A,B,FFI)wl_state)))
+               (pan_state_locals_fupd (combin_K (pan_state_locals s)) (s:(A,FFI)pan_state)))))
        (pan_globals_compile_top (pan_structs_compile_top (pan_simp_compile_prog pan_code))
           (implode "main"))
        (wloc_wlab o wl_state_memory t))
@@ -1508,7 +1508,7 @@ let every_inst_ok_less_pan_structs_compile_exp = prove
   (* NStruct *)
   TOP_CASE_TAC THEN REWRITE_TAC[ALL; EVERY_FLAT; ALL_MAP; o_DEF] THEN
   REWRITE_TAC[GSYM ALL_MEM] THEN X_GEN_TAC `p:fldname#shape` THEN DISCH_TAC THEN
-  PAIR_CASES_ON `p:fldname#shape` THEN CASE_REWRITE_TAC[] THEN
+  PAIR_CASES_ON `p:fldname#shape` THEN CAKE_REWRITE_TAC[] THEN
   TOP_CASE_TAC THEN REWRITE_TAC[ALL; MEM] THEN
   FIRST_X_ASSUM(MP_TAC o MATCH_MP ALOOKUP_MEM) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[GSYM ALL_MEM]) THEN
@@ -1645,7 +1645,7 @@ let every_inst_ok_less_pan_globals_compile_top = prove
              (dec_shapes (fperm_decs main (new_main_name pan_code)
                                       (resort_decls pan_code))))))))
      (fperm_decs main (new_main_name pan_code) (resort_decls (pan_code:((A)decl)list)))` THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   SUBGOAL_THEN `ALL good_panops (fperm_decs main (new_main_name pan_code)
                   (resort_decls (pan_code:((A)decl)list)))` ASSUME_TAC THENL
    [MATCH_MP_TAC every_inst_ok_less_fperm_decs THEN

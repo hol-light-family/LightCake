@@ -69,7 +69,7 @@ let mul_const_def = cake_def
 cake_let_cong := true;;
 
 let simp_exp_def = cake_def_wf
-  `MEASURE (crep_exp_size (K 0):(A)crep_exp->num)`
+  `MEASURE (crep_exp_size (combin_K 0):(A)crep_exp->num)`
   TERM_TAC
   `(simp_exp (Crepop op exps:(A)crep_exp) =
       let exps = MAP simp_exp exps in

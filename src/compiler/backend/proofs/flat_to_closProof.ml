@@ -219,7 +219,7 @@ let v_rel_to_list = prove
   FS[COND_CASE_EQ; option_case_eq] THEN RVEQ_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[]) THEN RES_TAC THEN
   ASM_REWRITE_TAC[clos_v_to_list_def; ALL2] THEN
-  CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[option_INJ; ALL2; UNWIND_THM1]);;
+  CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[option_INJ; ALL2; UNWIND_THM1]);;
 
 (* HOL4 line 117 *)
 let IMP_v_rel_to_list = prove
@@ -240,7 +240,7 @@ let F2CPAUX_LOOKUP_TAC : tactic =
   REPEAT STRIP_TAC THEN FIRST_X_ASSUM(MP_TAC o SPEC `i:num`) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[COND_CASE_EQ; distinctness "option";
                               injectivity "option"]) THEN
-  ASM_REWRITE_TAC[GSYM NOT_LT] THEN CASE_REWRITE_TAC[] THEN MESON_TAC[];;
+  ASM_REWRITE_TAC[GSYM NOT_LT] THEN CAKE_REWRITE_TAC[] THEN MESON_TAC[];;
 
 (* HOL4 line 126 *)
 let lookup_refv = prove
@@ -302,14 +302,14 @@ let env_rel_CONS_upd = prove
 (* HOL4 line 170 *)
 let env_rel_CONS = prove
  (`!env xs m db v1 v2 n.
-     flat_to_closProof_env_rel (flat_environment_v_fupd (K xs) env) m db /\
+     flat_to_closProof_env_rel (flat_environment_v_fupd (combin_K xs) env) m db /\
      flat_to_closProof_v_rel v1 v2
      ==> flat_to_closProof_env_rel
-           (flat_environment_v_fupd (K (CONS (n,v1) xs)) env)
+           (flat_environment_v_fupd (combin_K (CONS (n,v1) xs)) env)
            (CONS (SOME n) m) (CONS v2 db)`,
   REPEAT STRIP_TAC THEN
   MP_TAC(ISPECL [`env:(flat_v)flat_environment`;
-                 `(K (xs:(mlstring#flat_v)list)):(mlstring#flat_v)list->(mlstring#flat_v)list`;
+                 `(combin_K (xs:(mlstring#flat_v)list)):(mlstring#flat_v)list->(mlstring#flat_v)list`;
                  `m:(mlstring option)list`; `db:clos_v list`; `v1:flat_v`;
                  `v2:clos_v`; `n:mlstring`] env_rel_CONS_upd) THEN
   ASM_REWRITE_TAC[K_THM] THEN MATCH_MP_TAC EQ_IMP THEN
@@ -323,7 +323,7 @@ let flat_to_closProof_env_rel_APPEND = prove
      ALL2 flat_to_closProof_v_rel (MAP SND prefix) db_prefix /\
      name_prefix = MAP (SOME o FST) prefix
      ==> flat_to_closProof_env_rel
-           (flat_environment_v_fupd (K (APPEND prefix (flat_environment_v env)))
+           (flat_environment_v_fupd (combin_K (APPEND prefix (flat_environment_v env)))
               (env1:(flat_v)flat_environment))
            (APPEND name_prefix m) (APPEND db_prefix db)`,
   LIST_INDUCT_TAC THEN GEN_TAC THEN
@@ -353,7 +353,7 @@ let initial_state'_def = cake_def
 (* HOL4 line 203 *)
 let initate_state'_clock = prove
  (`!b ffi max_app co cc k' k.
-     clos_state_clock_fupd (K k)
+     clos_state_clock_fupd (combin_K k)
        (initial_state' b (ffi:(FFI)ffi_state) max_app FEMPTY
           (co:num -> C # clos_prog) cc k') =
      initial_state' b ffi max_app FEMPTY co cc k /\
@@ -457,9 +457,9 @@ let dest_Constant_evaluate = prove
      flat_to_clos_dest_Constant x = SOME c
      ==> clos_evaluate ([x],db,(s:(C,FFI)clos_state)) = (Rval [make_const c],s)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[dest_Constant_IMP] THEN STRIP_TAC THEN
-  ASM_REWRITE_TAC[clos_evaluate_def] THEN CASE_REWRITE_TAC[distinctness "clos_op"] THEN
-  REWRITE_TAC[REVERSE; clos_do_app_def] THEN CASE_REWRITE_TAC[] THEN
-  REWRITE_TAC[clos_do_int_app_def; make_const_def; MAP] THEN CASE_REWRITE_TAC[]);;
+  ASM_REWRITE_TAC[clos_evaluate_def] THEN CAKE_REWRITE_TAC[distinctness "clos_op"] THEN
+  REWRITE_TAC[REVERSE; clos_do_app_def] THEN CAKE_REWRITE_TAC[] THEN
+  REWRITE_TAC[clos_do_int_app_def; make_const_def; MAP] THEN CAKE_REWRITE_TAC[]);;
 
 (* HOL4 line 467 *)
 let dest_Constants_evaluate = prove
@@ -473,7 +473,7 @@ let dest_Constants_evaluate = prove
   STRIP_TAC THEN FS[option_case_eq; distinctness "option"; injectivity "option"] THEN
   RVEQ_TAC THEN ONCE_REWRITE_TAC[clos_evaluate_CONS] THEN
   RES_TAC THEN IMP_RES_TAC dest_Constant_evaluate THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[HD; MAP]);;
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[HD; MAP]);;
 
 (* HOL4 line 478 *)
 let evaluate_SmartCons = prove
@@ -485,8 +485,8 @@ let evaluate_SmartCons = prove
    [RULE_ASSUM_TAC(REWRITE_RULE[NULL_EQ]) THEN ASM_REWRITE_TAC[]; ALL_TAC] THEN
   TOP_CASE_TAC THEN REWRITE_TAC[] THEN
   FIRST_ASSUM(ASSUME_TAC o MATCH_MP dest_Constants_evaluate) THEN
-  ASM_REWRITE_TAC[clos_evaluate_def] THEN CASE_REWRITE_TAC[distinctness "clos_op"] THEN
-  REWRITE_TAC[REVERSE; clos_do_app_def] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[clos_evaluate_def] THEN CAKE_REWRITE_TAC[distinctness "clos_op"] THEN
+  REWRITE_TAC[REVERSE; clos_do_app_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[make_const_def; MAP_REVERSE]);;
 
 (* HOL4 line 519 *)
@@ -526,14 +526,14 @@ let evaluate_Let_error = prove
  (`!es env s err s' t e.
      clos_evaluate (es,env,(s:(C,FFI)clos_state)) = (Rerr err,s')
      ==> clos_evaluate ([clos_Let t es e],env,s) = (Rerr err,s')`,
-  REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[clos_evaluate_def] THEN CASE_REWRITE_TAC[]);;
+  REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[clos_evaluate_def] THEN CAKE_REWRITE_TAC[]);;
 
 (* HOL4 line 588 *)
 let evaluate_Op_error = prove
  (`!es env s err s' t op.
      clos_evaluate (es,env,(s:(C,FFI)clos_state)) = (Rerr err,s')
      ==> clos_evaluate ([clos_Op t op es],env,s) = (Rerr err,s')`,
-  REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[clos_evaluate_def] THEN CASE_REWRITE_TAC[]);;
+  REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[clos_evaluate_def] THEN CAKE_REWRITE_TAC[]);;
 
 (* helpers for compile_op_evaluates_args: the argument errors propagate     *)
 (* through each shape of compiled op                                         *)
@@ -567,10 +567,10 @@ let F2CPAUX_arg1_op_error = prove
   TRY F2CPAUX_OP_LET_ERR_TAC THEN
   MATCH_MP_TAC evaluate_Op_error THEN
   ONCE_REWRITE_TAC[clos_evaluate_CONS] THEN
-  REWRITE_TAC[clos_evaluate_def] THEN CASE_REWRITE_TAC[distinctness "clos_op"] THEN
-  REWRITE_TAC[REVERSE; clos_do_app_def] THEN CASE_REWRITE_TAC[] THEN
-  REWRITE_TAC[clos_do_int_app_def] THEN CASE_REWRITE_TAC[] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[clos_evaluate_def] THEN CAKE_REWRITE_TAC[distinctness "clos_op"] THEN
+  REWRITE_TAC[REVERSE; clos_do_app_def] THEN CAKE_REWRITE_TAC[] THEN
+  REWRITE_TAC[clos_do_int_app_def] THEN CAKE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]);;
 
 let F2CPAUX_evaluate_const_cons = prove
  (CASE_TERM
@@ -581,9 +581,9 @@ let F2CPAUX_evaluate_const_cons = prove
        (Rval vs,s1) -> (Rval (CONS (clos_Number i) vs),s1)
      | res -> res`,
   REPEAT GEN_TAC THEN ONCE_REWRITE_TAC[clos_evaluate_CONS] THEN
-  REWRITE_TAC[clos_evaluate_def] THEN CASE_REWRITE_TAC[distinctness "clos_op"] THEN
-  REWRITE_TAC[REVERSE; clos_do_app_def] THEN CASE_REWRITE_TAC[] THEN
-  REWRITE_TAC[clos_do_int_app_def] THEN CASE_REWRITE_TAC[HD]);;
+  REWRITE_TAC[clos_evaluate_def] THEN CAKE_REWRITE_TAC[distinctness "clos_op"] THEN
+  REWRITE_TAC[REVERSE; clos_do_app_def] THEN CAKE_REWRITE_TAC[] THEN
+  REWRITE_TAC[clos_do_int_app_def] THEN CAKE_REWRITE_TAC[HD]);;
 
 let F2CPAUX_arg2_op_error = prove
  (`!xs db t err t1 tt op t2 i.
@@ -612,7 +612,7 @@ let compile_op_evaluates_args = prove
   RULE_ASSUM_TAC(REWRITE_RULE[injectivity "flat_op"; distinctness "op";
                               injectivity "op"; injectivity "thunk_op"]) THEN
   TRY (FIRST_ASSUM CONTR_TAC) THEN
-  REWRITE_TAC[flat_to_clos_compile_op_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[flat_to_clos_compile_op_def] THEN CAKE_REWRITE_TAC[] THEN
   REPEAT (TOP_CASE_TAC THEN REWRITE_TAC[]) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[injectivity "flat_op"; distinctness "op";
                               injectivity "op"; injectivity "thunk_op"]) THEN
@@ -668,20 +668,20 @@ let F2CPAUX_evaluate_Op = prove
             Rerr err -> (Rerr err,t1)
           | Rval (v,s) -> (Rval [v],s))`,
   REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[clos_evaluate_def] THEN
-  CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]);;
 
 let F2CPAUX_evaluate_Let = prove
  (`!xs db t ws t1.
      clos_evaluate (xs,db,(t:(C,FFI)clos_state)) = (Rval ws,t1)
      ==> !tt e. clos_evaluate ([clos_Let tt xs e],db,t) = clos_evaluate ([e],APPEND ws db,t1)`,
-  REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[clos_evaluate_def] THEN CASE_REWRITE_TAC[]);;
+  REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[clos_evaluate_def] THEN CAKE_REWRITE_TAC[]);;
 
 let F2CPAUX_state_rel_refs = prove
  (`!s t refs trefs.
      flat_to_closProof_state_rel (s:(C,FFI)flat_state) (t:(C,FFI)clos_state) /\
      store_rel refs trefs
-     ==> flat_to_closProof_state_rel (flat_state_refs_fupd (K refs) s)
-           (clos_state_refs_fupd (K trefs) t)`,
+     ==> flat_to_closProof_state_rel (flat_state_refs_fupd (combin_K refs) s)
+           (clos_state_refs_fupd (combin_K trefs) t)`,
   SIMP_TAC[flat_to_closProof_state_rel_def; flat_state_INFO.ri_accfupds;
            clos_state_INFO.ri_accfupds; K_THM]);;
 
@@ -701,7 +701,7 @@ let F2CPAUX_store_rel_APPEND = prove
   ASM_CASES_TAC `i = LENGTH (refs:(flat_v store_v)list)` THENL
    [FIRST_X_ASSUM SUBST_ALL_TAC THEN
     REWRITE_TAC[ARITH_RULE `~(n + SUC 0 <= n)`; LT_REFL; SUB_REFL; EL; HD] THEN
-    POP_ASSUM MP_TAC THEN CASES_ON `sv:(flat_v)store_v` THEN CASE_REWRITE_TAC[] THEN
+    POP_ASSUM MP_TAC THEN CASES_ON `sv:(flat_v)store_v` THEN CAKE_REWRITE_TAC[] THEN
     SIMP_TAC[injectivity "option"];
     ALL_TAC] THEN
   FIRST_X_ASSUM(MP_TAC o SPEC `i:num`) THEN
@@ -730,7 +730,7 @@ let F2CPAUX_store_rel_LUPDATE = prove
   REWRITE_TAC[LENGTH_LUPDATE; FLOOKUP_UPDATE; EL_LUPDATE] THEN
   ASM_CASES_TAC `i' = i:num` THENL
    [FIRST_X_ASSUM SUBST_ALL_TAC THEN ASM_REWRITE_TAC[GSYM NOT_LT] THEN
-    POP_ASSUM MP_TAC THEN CASES_ON `sv:(flat_v)store_v` THEN CASE_REWRITE_TAC[] THEN
+    POP_ASSUM MP_TAC THEN CASES_ON `sv:(flat_v)store_v` THEN CAKE_REWRITE_TAC[] THEN
     SIMP_TAC[injectivity "option"];
     ALL_TAC] THEN
   FIRST_X_ASSUM(MP_TAC o SPEC `i':num`) THEN
@@ -764,12 +764,12 @@ let F2CPAUX_evaluate_CONS_Rval = prove
     (X_CHOOSE_THEN `s1:(C,FFI)clos_state` (fun th -> GEN_REWRITE_TAC (LAND_CONV o LAND_CONV o ONCE_DEPTH_CONV) [th] THEN
                 ASSUME_TAC th))) THEN
   REWRITE_TAC[pair_CASE] THEN CASES_ON `r1:(clos_v list,clos_v)result` THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ; distinctness "result"] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ; distinctness "result"] THEN
   MP_TAC(ISPEC `clos_evaluate (CONS y ys,env,(s1:(C,FFI)clos_state))` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `r2:(clos_v list,clos_v)result`
     (X_CHOOSE_THEN `s2:(C,FFI)clos_state` (fun th -> GEN_REWRITE_TAC (LAND_CONV o LAND_CONV o ONCE_DEPTH_CONV) [th] THEN
                 ASSUME_TAC th))) THEN
-  CASES_ON `r2:(clos_v list,clos_v)result` THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON `r2:(clos_v list,clos_v)result` THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[PAIR_EQ; distinctness "result"; injectivity "result"] THEN STRIP_TAC THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP clos_evaluate_SING) THEN
   MAP_EVERY EXISTS_TAC [`r1':clos_v`; `s1:(C,FFI)clos_state`; `a':clos_v list`] THEN
@@ -851,7 +851,7 @@ let F2CPAUX_is_do_app_eq th =
 let F2CPAUX_OP_SPLIT_TAC : tactic =
   STRIP_TAC THEN
   FIRST_X_ASSUM(MP_TAC o check F2CPAUX_is_do_app_eq) THEN
-  REWRITE_TAC[flat_do_app_def] THEN CASE_REWRITE_TAC[] THEN DISCH_TAC THEN
+  REWRITE_TAC[flat_do_app_def] THEN CAKE_REWRITE_TAC[] THEN DISCH_TAC THEN
   FLATSEMAUX_SPLIT_TAC THEN
   GVS[LIST_REL_CONS1; LIST_REL_NIL; SWAP_REVERSE_SYM; REVERSE; APPEND;
       store_alloc_def; flat_to_closProof_v_rel_def];;
@@ -926,7 +926,7 @@ let F2CPAUX_CLOS_DO_EQ_CONV tm =
   let f,args = strip_comb tm in
   if is_const f && fst(dest_const f) = "clos_do_eq" && length args = 2 &&
      forall (fun a -> is_constructor_app a) args
-  then (REWR_CONV (CONJUNCT1 clos_do_eq_def) THENC CASE_REWRITE_CONV []) tm
+  then (REWR_CONV (CONJUNCT1 clos_do_eq_def) THENC CAKE_REWRITE_CONV []) tm
   else failwith "F2CPAUX_CLOS_DO_EQ_CONV";;
 
 (* flat_do_eq unfolded only when both arguments are constructor applications *)
@@ -934,7 +934,7 @@ let F2CPAUX_FLAT_DO_EQ_CONV tm =
   let f,args = strip_comb tm in
   if is_const f && fst(dest_const f) = "flat_do_eq" && length args = 2 &&
      forall (fun a -> is_constructor_app a) args
-  then (REWRITE_CONV[flat_do_eq_def] THENC CASE_REWRITE_CONV []) tm
+  then (REWRITE_CONV[flat_do_eq_def] THENC CAKE_REWRITE_CONV []) tm
   else failwith "F2CPAUX_FLAT_DO_EQ_CONV";;
 
 (* small facts for the evaluation of compiled code *)
@@ -1076,13 +1076,13 @@ let F2CPAUX_EVAL_TAC : tactic = fun (asl,w as g) ->
 (* the evaluation of the compiled op: compile_op, arg1/arg2, then the lazy  *)
 (* evaluation of the closLang code                                          *)
 let F2CPAUX_CLOS_EVAL_TAC : tactic =
-  REWRITE_TAC[flat_to_clos_compile_op_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[flat_to_clos_compile_op_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[flat_to_clos_arg1_def; flat_to_clos_arg2_def; compile_arith_def] THEN
-  CASE_REWRITE_TAC[] THEN F2CPAUX_EVAL_TAC;;
+  CAKE_REWRITE_TAC[] THEN F2CPAUX_EVAL_TAC;;
 
 let F2CPAUX_LEAST_TAC : tactic =
   TRY (FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP state_rel_LEAST th])) THEN
-  CONV_TAC(DEPTH_CONV let_CONV) THEN CASE_REWRITE_TAC[];;
+  CONV_TAC(DEPTH_CONV let_CONV) THEN CAKE_REWRITE_TAC[];;
 
 (* state_rel after a store update (HOL4: fs [state_rel_def,store_rel_def]   *)
 (* \\ strip_tac \\ first_x_assum (qspec_then i mp_tac) ...)                  *)
@@ -1096,7 +1096,7 @@ let F2CPAUX_STORE_TAC : tactic =
    [FIRST_ASSUM ACCEPT_TAC; ALL_TAC] THEN
   (MATCH_MP_TAC F2CPAUX_store_rel_APPEND ORELSE
    MATCH_MP_TAC F2CPAUX_store_rel_LUPDATE) THEN
-  CASE_REWRITE_TAC[] THEN REPEAT CONJ_TAC THEN
+  CAKE_REWRITE_TAC[] THEN REPEAT CONJ_TAC THEN
   FIRST [MATCH_MP_TAC F2CPAUX_state_rel_store_rel THEN FIRST_ASSUM ACCEPT_TAC;
          FIRST_ASSUM ACCEPT_TAC;
          SIMP[injectivity "clos_ref"; LIST_REL_REPLICATE_same] THEN NO_TAC;
@@ -1116,12 +1116,12 @@ let F2CPAUX_STORE_FACTS_TAC : tactic = fun (asl,w as g) ->
   let facts = flat (map (fun (_,s) -> mapfilter (fun (_,l) ->
                 MATCH_MP F2CPAUX_state_rel_store (CONJ s l)) lts) srels) in
   (MAP_EVERY (fun th -> MP_TAC th THEN
-                ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+                ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
                 DISCH_THEN F2CPAUX_STRIP_ASSUME_TAC) facts) g;;
 
 let F2CPAUX_thunk_mode_CASE_same = prove
  (CASE_TERM `!m (x:A). (match m with Evaluated -> x | NotEvaluated -> x) = x`,
-  GEN_TAC THEN CASES_ON `m:thunk_mode` THEN CASE_REWRITE_TAC[]);;
+  GEN_TAC THEN CASES_ON `m:thunk_mode` THEN CAKE_REWRITE_TAC[]);;
 
 (* HOL4: Cases_on EL i s1.refs \\ fs [store_v_same_type_def] *)
 let F2CPAUX_SAME_TYPE_TAC : tactic = fun (asl,w as g) ->
@@ -1161,7 +1161,7 @@ let F2CPAUX_OP_BODY_GEN_TAC (extra:tactic) : tactic =
       F2CPAUX_num_of_int_cmp; INT_OF_NUM_LT; INT_OF_NUM_LE; INT_OF_NUM_EQ;
       GT; GE; INT_GT; INT_GE; ORD_11; VAL_EQ; F2CPAUX_MAP_word_ORD_11; explode_11] THEN
   TRY F2CPAUX_EVAL_TAC THEN
-  CASE_REWRITE_TAC[LENGTH; HD; LUPDATE_DEF; clos_Unit_def; tuple_tag_def] THEN
+  CAKE_REWRITE_TAC[LENGTH; HD; LUPDATE_DEF; clos_Unit_def; tuple_tag_def] THEN
   CONV_TAC NUM_REDUCE_CONV THEN SIMP[] THEN
   REPEAT CONJ_TAC THEN F2CPAUX_CLOSE_TAC;;
 
@@ -1175,7 +1175,7 @@ let F2CPAUX_OP_TAC : tactic =
 let F2CPAUX_UNFOLD_SPLIT_TAC (c:string) (def:thm) : tactic =
   REPEAT (FIRST_X_ASSUM (fun th ->
     if (try fst(dest_const(fst(strip_comb(lhs(concl th))))) = c with Failure _ -> false)
-    then MP_TAC th THEN REWRITE_TAC[def] THEN CASE_REWRITE_TAC[] THEN DISCH_TAC THEN
+    then MP_TAC th THEN REWRITE_TAC[def] THEN CAKE_REWRITE_TAC[] THEN DISCH_TAC THEN
          FLATSEMAUX_SPLIT_TAC
     else failwith "F2CPAUX_UNFOLD_SPLIT_TAC"));;
 
@@ -1312,7 +1312,7 @@ let F2CPAUX3_eval_CopyByteAw8_ByteVector = prove
           | SOME ds' ->
               (Rval [clos_Unit],
                clos_state_refs_fupd
-                 (K (clos_state_refs s |+ (dst,clos_ByteArray ds'))) s))`,
+                 (combin_K (clos_state_refs s |+ (dst,clos_ByteArray ds'))) s))`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN REWRITE_TAC[CopyByteAw8_def] THEN
   F2CPAUX3_COPY_CASES_TAC [`len:int < &0`; `off:int < &0`;
                            `&(LENGTH (bs:byte list)) < (off:int) + len`;
@@ -1333,7 +1333,7 @@ let F2CPAUX3_eval_CopyByteAw8_RefPtr = prove
           | SOME ds' ->
               (Rval [clos_Unit],
                clos_state_refs_fupd
-                 (K (clos_state_refs s |+ (dst,clos_ByteArray ds'))) s))`,
+                 (combin_K (clos_state_refs s |+ (dst,clos_ByteArray ds'))) s))`,
   REPEAT GEN_TAC THEN REPEAT DISCH_TAC THEN REWRITE_TAC[CopyByteAw8_def] THEN
   F2CPAUX3_COPY_CASES_TAC [`len:int < &0`; `off:int < &0`;
                            `&(LENGTH (ws:byte list)) < (off:int) + len`;
@@ -1351,7 +1351,7 @@ let F2CPAUX3_copy_array_MAP = prove
       copy_array (MAP f l,off) len (SOME (MAP f d,doff)) =
       OPTION_MAP (MAP f) (copy_array (l,off) len (SOME (d,doff))))`,
   REWRITE_TAC[copy_array_def; I_THM] THEN
-  CONV_TAC(DEPTH_CONV let_CONV) THEN CASE_REWRITE_TAC[] THEN
+  CONV_TAC(DEPTH_CONV let_CONV) THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[LENGTH_MAP] THEN REPEAT STRIP_TAC THEN
   REPEAT COND_CASES_TAC THEN RULE_ASSUM_TAC(REWRITE_RULE[]) THEN
   TRY (FIRST_ASSUM CONTR_TAC) THEN
@@ -1409,7 +1409,7 @@ let op_byte_copy = prove
   REWRITE_TAC[F2CPAUX3_chars_to_ws; F2CPAUX3_MAP_word_ORD_ws_to_chars] THEN
   F2CPAUX3_EVAL_COPY_TAC THEN
   REWRITE_TAC[F2CPAUX3_copy_array_MAP; F2CPAUX3_copy_array_MAP_ws] THEN
-  ASM_REWRITE_TAC[OPTION_MAP_DEF] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[OPTION_MAP_DEF] THEN CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[PAIR_EQ; clos_Unit_def; tuple_tag_def; UNWIND_THM1] THEN
   F2CPAUX_STORE_TAC);;
 
@@ -1445,12 +1445,12 @@ let F2CPAUX_do_eq_v_rel = prove
   GVS[flat_ctor_same_type_def; INT_OF_NUM_EQ; ORD_11; MAP_n2w_o_ORD_11; explode_11;
       VAL_EQ] THEN
   REWRITE_TAC[F2CPAUX_clos_do_eq_list_clauses] THEN
-  CONV_TAC (ONCE_DEPTH_CONV F2CPAUX_CLOS_DO_EQ_CONV) THEN CASE_REWRITE_TAC[] THEN
+  CONV_TAC (ONCE_DEPTH_CONV F2CPAUX_CLOS_DO_EQ_CONV) THEN CAKE_REWRITE_TAC[] THEN
   GVS[INT_OF_NUM_EQ; ORD_11; MAP_n2w_o_ORD_11; explode_11; VAL_EQ] THEN
   (* the list cons case (HOL4: fs [CaseEq"eq_result",bool_case_eq]) *)
   TRY (CASES_ON `flat_do_eq (v1:flat_v) v2` THEN
        FS[distinctness "eq_result"; injectivity "eq_result"] THEN RES_TAC THEN
-       ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+       ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
        RULE_ASSUM_TAC(REWRITE_RULE[COND_CASE_EQ]) THEN FS[] THEN NO_TAC));;
 
 (* HOL4 line 885 *)
@@ -1470,7 +1470,7 @@ let op_eq_gc = prove
                  (list_result res2) res2'`,
   F2CPAUX_OP_TAC THEN
   IMP_RES_TAC (CONJUNCT1 F2CPAUX_do_eq_v_rel) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN SIMP[]);;
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN SIMP[]);;
 
 (* HOL4 line 923 *)
 let v_rel_v_to_char_list = prove
@@ -1484,7 +1484,7 @@ let v_rel_v_to_char_list = prove
   FS[COND_CASE_EQ; option_case_eq; LIST_REL_CONS1; LIST_REL_NIL] THEN RVEQ_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[flat_to_closProof_v_rel_def]) THEN RVEQ_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[]) THEN RES_TAC THEN
-  ASM_REWRITE_TAC[clos_v_to_list_def; MAP; o_THM] THEN CASE_REWRITE_TAC[]);;
+  ASM_REWRITE_TAC[clos_v_to_list_def; MAP; o_THM] THEN CAKE_REWRITE_TAC[]);;
 
 let F2CPAUX_ALL2_chars = prove
  (`!l. ALL2 flat_to_closProof_v_rel (MAP (\c. flat_Litv (Char c)) l)
@@ -1526,7 +1526,7 @@ let F2CPAUX_strcat = prove
   FS[COND_CASE_EQ; option_case_eq; LIST_REL_CONS1; LIST_REL_NIL] THEN RVEQ_TAC THENL
    [FS[flat_vs_to_string_def; injectivity "option"] THEN RVEQ_TAC THEN
     EXISTS_TAC `[]:(byte list)list` THEN
-    REWRITE_TAC[clos_v_to_list_def; MAP; FLAT; explode_thm] THEN CASE_REWRITE_TAC[];
+    REWRITE_TAC[clos_v_to_list_def; MAP; FLAT; explode_thm] THEN CAKE_REWRITE_TAC[];
     ALL_TAC] THEN
   CASES_ON `v1:flat_v` THEN F2CPAUX_CASES_TYPES_TAC [`:lit`] THEN
   FS[flat_vs_to_string_def; option_case_eq; distinctness "option";
@@ -1540,7 +1540,7 @@ let F2CPAUX_strcat = prove
      EXISTS_TAC (mk_comb(mk_comb(`CONS:(byte list)->(byte list)list->(byte list)list`,
                                  rand bv), wss)) g) THEN
   ASM_REWRITE_TAC[clos_v_to_list_def; MAP; FLAT; explode_strcat; MAP_APPEND] THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[]);;
 
 let F2CPAUX_MAP_ByteVector_11 = prove
  (`!l1 l2. MAP ByteVector l1 = MAP ByteVector l2 <=> l1 = l2`,
@@ -1619,9 +1619,9 @@ let F2CPAUX_globals_init = prove
      ==> flat_to_closProof_v_rel v w
      ==> get_global (n + 1) (clos_state_globals t) = SOME NONE /\
          flat_to_closProof_state_rel
-           (flat_state_globals_fupd (K (LUPDATE (SOME v) n (flat_state_globals s))) s)
+           (flat_state_globals_fupd (combin_K (LUPDATE (SOME v) n (flat_state_globals s))) s)
            (clos_state_globals_fupd
-              (K (LUPDATE (SOME w) (n + 1) (clos_state_globals t))) t)`,
+              (combin_K (LUPDATE (SOME w) (n + 1) (clos_state_globals t))) t)`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP F2CPAUX_state_rel_globals) THEN
   REPEAT DISCH_TAC THEN
@@ -1647,9 +1647,9 @@ let F2CPAUX_globals_alloc = prove
      flat_to_closProof_state_rel (s:(C,FFI)flat_state) (t:(C,FFI)clos_state)
      ==> flat_to_closProof_state_rel
            (flat_state_globals_fupd
-              (K (APPEND (flat_state_globals s) (REPLICATE n NONE))) s)
+              (combin_K (APPEND (flat_state_globals s) (REPLICATE n NONE))) s)
            (clos_state_globals_fupd
-              (K (APPEND (clos_state_globals t) (REPLICATE n NONE))) t)`,
+              (combin_K (APPEND (clos_state_globals t) (REPLICATE n NONE))) t)`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP F2CPAUX_state_rel_globals) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[flat_to_closProof_state_rel_def]) THEN
@@ -1963,8 +1963,8 @@ let F2CPAUX_state_rel_refs_ffi = prove
      flat_to_closProof_state_rel (s:(C,FFI)flat_state) (t:(C,FFI)clos_state) /\
      store_rel refs trefs
      ==> flat_to_closProof_state_rel
-           (flat_state_refs_fupd (K refs) (flat_state_ffi_fupd (K f) s))
-           (clos_state_refs_fupd (K trefs) (clos_state_ffi_fupd (K f) t))`,
+           (flat_state_refs_fupd (combin_K refs) (flat_state_ffi_fupd (combin_K f) s))
+           (clos_state_refs_fupd (combin_K trefs) (clos_state_ffi_fupd (combin_K f) t))`,
   SIMP_TAC[flat_to_closProof_state_rel_def; flat_state_INFO.ri_accfupds;
            clos_state_INFO.ri_accfupds; K_THM]);;
 
@@ -1985,9 +1985,9 @@ let op_ffi = prove
                  (list_result res2) res2'`,
   F2CPAUX_OP_TAC THEN
   FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP F2CPAUX_state_rel_ffi th]) THEN
-  ASM_REWRITE_TAC[o_DEF] THEN CASE_REWRITE_TAC[] THEN SIMP[] THEN
+  ASM_REWRITE_TAC[o_DEF] THEN CAKE_REWRITE_TAC[] THEN SIMP[] THEN
   TRY (MATCH_MP_TAC F2CPAUX_state_rel_refs_ffi THEN ASM_REWRITE_TAC[] THEN
-       MATCH_MP_TAC F2CPAUX_store_rel_LUPDATE THEN CASE_REWRITE_TAC[] THEN
+       MATCH_MP_TAC F2CPAUX_store_rel_LUPDATE THEN CAKE_REWRITE_TAC[] THEN
        ASM_SIMP_TAC[F2CPAUX_state_rel_store_rel]));;
 
 (* HOL4 line 1558 *)
@@ -2041,32 +2041,32 @@ let F2CPAUX_dest_thunk_rel = prove
   STRUCT_CASES_TAC (ISPEC `vs:flat_v list` list_CASES) THEN
   STRUCT_CASES_TAC (ISPEC `ws:clos_v list` list_CASES) THEN
   REWRITE_TAC[ALL2] THEN
-  TRY (REWRITE_TAC[flat_dest_thunk_def; clos_dest_thunk_def] THEN CASE_REWRITE_TAC[] THEN
+  TRY (REWRITE_TAC[flat_dest_thunk_def; clos_dest_thunk_def] THEN CAKE_REWRITE_TAC[] THEN
        NO_TAC) THEN
   STRUCT_CASES_TAC (ISPEC `t':flat_v list` list_CASES) THEN
   STRUCT_CASES_TAC (ISPEC `t'':clos_v list` list_CASES) THEN
   REWRITE_TAC[ALL2] THEN
-  TRY (REWRITE_TAC[flat_dest_thunk_def; clos_dest_thunk_def] THEN CASE_REWRITE_TAC[] THEN
+  TRY (REWRITE_TAC[flat_dest_thunk_def; clos_dest_thunk_def] THEN CAKE_REWRITE_TAC[] THEN
        NO_TAC) THEN
   STRIP_TAC THEN
   FIRST_ASSUM(ASSUME_TAC o MATCH_MP F2CPAUX_state_rel_store_rel) THEN
   CASES_ON `h:flat_v` THEN F2CPAUX_CASES_FREE_TAC [`a:lit`] THEN
   FS[flat_to_closProof_v_rel_def] THEN RVEQ_TAC THEN
-  REWRITE_TAC[flat_dest_thunk_def; clos_dest_thunk_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[flat_dest_thunk_def; clos_dest_thunk_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[store_lookup_def] THEN
   ASM_CASES_TAC `a1 < LENGTH (flat_state_refs (s:(C,FFI)flat_state))` THENL
    [ALL_TAC;
-    ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
     UNDISCH_TAC `store_rel (flat_state_refs (s:(C,FFI)flat_state))
                            (clos_state_refs (t:(C,FFI)clos_state))` THEN
     REWRITE_TAC[store_rel_def] THEN DISCH_THEN(MP_TAC o SPEC `a1:num`) THEN
-    ASM_REWRITE_TAC[GSYM NOT_LT] THEN DISCH_THEN SUBST1_TAC THEN CASE_REWRITE_TAC[]] THEN
+    ASM_REWRITE_TAC[GSYM NOT_LT] THEN DISCH_THEN SUBST1_TAC THEN CAKE_REWRITE_TAC[]] THEN
   MP_TAC(ISPECL [`s:(C,FFI)flat_state`; `t:(C,FFI)clos_state`; `a1:num`]
            F2CPAUX_state_rel_store) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
-  CASES_ON `EL a1 (flat_state_refs (s:(C,FFI)flat_state))` THEN CASE_REWRITE_TAC[] THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
-  F2CPAUX_CASES_TYPES_TAC [`:thunk_mode`; `:bool`] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
+  CASES_ON `EL a1 (flat_state_refs (s:(C,FFI)flat_state))` THEN CAKE_REWRITE_TAC[] THEN
+  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
+  F2CPAUX_CASES_TYPES_TAC [`:thunk_mode`; `:bool`] THEN CAKE_REWRITE_TAC[] THEN
   ASM_MESON_TAC[]);;
 
 let F2CPAUX_bad_thunk_update_rel = prove
@@ -2080,7 +2080,7 @@ let F2CPAUX_bad_thunk_update_rel = prove
            F2CPAUX_dest_thunk_rel) THEN
   ASM_REWRITE_TAC[ALL2] THEN
   CASES_ON `flat_dest_thunk [v] (flat_state_refs (s:(C,FFI)flat_state))` THEN
-  CASE_REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]);;
 
 (* HOL4: gvs [bad_thunk_update_def, ...] on the related values of the goal *)
 let F2CPAUX_BAD_THUNK_TAC : tactic = fun (asl,w as g) ->
@@ -2157,7 +2157,7 @@ let compile_op_correct = prove
    [CASES_ON `a:op`; ALL_TAC; ALL_TAC; ALL_TAC; ALL_TAC; ALL_TAC; ALL_TAC; ALL_TAC] THEN
   FIRST (map use lemmas @
          [FIRST_X_ASSUM(MP_TAC o check F2CPAUX_is_do_app_eq) THEN
-          REWRITE_TAC[flat_do_app_def] THEN CASE_REWRITE_TAC[distinctness "option"] THEN
+          REWRITE_TAC[flat_do_app_def] THEN CAKE_REWRITE_TAC[distinctness "option"] THEN
           NO_TAC;
           FIRST_ASSUM(CONTR_TAC o REWRITE_RULE[])]));;
 
@@ -2227,7 +2227,7 @@ let do_eval_install = prove
      flat_to_closProof_state_rel s (t:(C,FFI)clos_state) /\
      ALL2 flat_to_closProof_v_rel xs ys
      ==> ?decs exps eval_config t'.
-           flat_to_closProof_state_rel (flat_state_eval_config_fupd (K eval_config) s) t' /\
+           flat_to_closProof_state_rel (flat_state_eval_config_fupd (combin_K eval_config) s) t' /\
            res = (decs,eval_config,Unitv) /\
            clos_do_install ys t =
              (if clos_state_clock t' = 0
@@ -2244,7 +2244,7 @@ let do_eval_install = prove
   F2CPAUX_HEAD_X_ASSUM "install_config_rel'"
     (STRIP_ASSUME_TAC o REWRITE_RULE[install_config_rel'_def]) THEN
   F2CPAUX_HEAD_X_ASSUM "flat_do_eval" MP_TAC THEN
-  REWRITE_TAC[flat_do_eval_def] THEN CASE_REWRITE_TAC[] THEN DISCH_TAC THEN
+  REWRITE_TAC[flat_do_eval_def] THEN CAKE_REWRITE_TAC[] THEN DISCH_TAC THEN
   FLATSEMAUX_SPLIT_TAC THEN RVEQ_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[LIST_REL_CONS1; LIST_REL_NIL]) THEN
   REPEAT (FIRST_X_ASSUM (F2CPAUX_STRIP_ASSUME_TAC o
@@ -2259,17 +2259,17 @@ let do_eval_install = prove
   MAP_EVERY EXISTS_TAC
    [`y:flat_exp list`; `flat_to_clos_compile_decs y`;
     `install_config_compile_oracle_fupd
-       (K (shift_seq 1 (install_config_compile_oracle
+       (combin_K (shift_seq 1 (install_config_compile_oracle
                           (flat_state_eval_config (s:(C,FFI)flat_state)))))
        (flat_state_eval_config s)`;
-    `clos_state_code_fupd (K (clos_state_code (t:(C,FFI)clos_state) |++ []))
-       (clos_state_compile_oracle_fupd (K (shift_seq 1 (clos_state_compile_oracle t))) t)`] THEN
+    `clos_state_code_fupd (combin_K (clos_state_code (t:(C,FFI)clos_state) |++ []))
+       (clos_state_compile_oracle_fupd (combin_K (shift_seq 1 (clos_state_compile_oracle t))) t)`] THEN
   ASM_REWRITE_TAC[CONS_11; PAIR_EQ] THEN
-  REWRITE_TAC[clos_do_install_def] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[clos_do_install_def] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[o_THM; pure_co_def; PAIR_MAP_THM; I_THM; inc_compile_decs'_def] THEN
-  CONV_TAC(DEPTH_CONV let_CONV) THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
-  REWRITE_TAC[MAP; set_of_list; DISJOINT_EMPTY; ALL_DISTINCT] THEN CASE_REWRITE_TAC[] THEN
+  CONV_TAC(DEPTH_CONV let_CONV) THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
+  REWRITE_TAC[MAP; set_of_list; DISJOINT_EMPTY; ALL_DISTINCT] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[shift_seq_def; o_THM; PAIR_MAP_DEF; FST; SND; I_THM] THEN
   REWRITE_TAC[flat_to_clos_compile_decs_def; APPEND_NIL; APPEND_EQ_NIL; compile_NOT_NIL] THEN
   REWRITE_TAC[clos_state_INFO.ri_accfupds; K_THM; clos_dec_clock_def; FUPDATE_LIST_THM] THEN
@@ -2302,8 +2302,8 @@ let flat_to_closProof_rel_update_thunk = prove
      ==> (flat_update_thunk [flat_Loc v ptr] (flat_state_refs s1) vs = SOME refs1
           ==> ?refs2. clos_update_thunk [clos_RefPtr v ptr] (clos_state_refs s2) ys =
                       SOME refs2 /\
-                      flat_to_closProof_state_rel (flat_state_refs_fupd (K refs1) s1)
-                        (clos_state_refs_fupd (K refs2) s2))`,
+                      flat_to_closProof_state_rel (flat_state_refs_fupd (combin_K refs1) s1)
+                        (clos_state_refs_fupd (combin_K refs2) s2))`,
   REPEAT GEN_TAC THEN
   STRUCT_CASES_TAC (ISPEC `vs:flat_v list` list_CASES) THEN
   REWRITE_TAC[flat_update_thunk_def; distinctness "option"] THEN
@@ -2316,15 +2316,15 @@ let flat_to_closProof_rel_update_thunk = prove
            F2CPAUX_dest_thunk_rel) THEN
   ASM_REWRITE_TAC[ALL2] THEN
   CASES_ON `flat_dest_thunk [h] (flat_state_refs (s1:(C,FFI)flat_state))` THEN
-  CASE_REWRITE_TAC[distinctness "option"] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[distinctness "option"] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[store_assign_def; store_thunk_def] THEN
   COND_CASES_TAC THEN REWRITE_TAC[distinctness "option"; injectivity "option"] THEN
   FIRST_X_ASSUM(CONJUNCTS_THEN ASSUME_TAC) THEN
   CASES_ON `EL ptr (flat_state_refs (s1:(C,FFI)flat_state))` THEN
   FS[store_v_same_type_def; F2CPAUX_thunk_mode_CASE_same] THEN
   F2CPAUX_CASES_TYPES_TAC [`:thunk_mode`] THEN FS[] THEN
-  F2CPAUX_STORE_FACTS_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  F2CPAUX_STORE_FACTS_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   DISCH_THEN(SUBST1_TAC o SYM) THEN SIMP[] THEN F2CPAUX_STORE_TAC);;
 
 (* HOL4 lines 232-252: the ML values exps_goal and dec_goal, the induction  *)
@@ -2441,7 +2441,7 @@ let F2CPAUX_CC_INTRO_TAC : tactic =
 
 let F2CPAUX_CC_EVAL_TAC : tactic =
   REWRITE_TAC[flat_to_clos_compile_def] THEN CONV_TAC(DEPTH_CONV let_CONV) THEN
-  CASE_REWRITE_TAC[] THEN F2CPAUX_EVAL_TAC THEN
+  CAKE_REWRITE_TAC[] THEN F2CPAUX_EVAL_TAC THEN
   IMP_RES_TAC flat_evaluate_sing THEN IMP_RES_TAC clos_evaluate_SING THEN RVEQ_TAC THEN
   GVS[ALL2; APPEND; HD; LIST_REL_CONS1];;
 
@@ -2450,7 +2450,7 @@ let F2CPAUX_PAIR_CASES_TAC (name:string) : tactic = fun (asl,w as g) ->
   let v = find (fun v -> fst(dest_var v) = name)
             (freesl (w :: map (concl o snd) asl)) in
   let ty1,ty2 = (match dest_type (type_of v) with (_,[t1;t2]) -> t1,t2 | _ -> failwith "pair") in
-  let avoid = freesl (w :: map (concl o snd) asl) in
+  let avoid = freesl (w :: map (concl o snd) asl @ flat (map (hyp o snd) asl)) in
   let a = variant avoid (mk_var(name ^ "0",ty1)) in
   let b = variant (a::avoid) (mk_var(name ^ "1",ty2)) in
   (MP_TAC(ISPEC v PAIR_SURJECTIVE) THEN
@@ -2472,7 +2472,7 @@ let F2CPAUX_cc_cons = prove
   REPEAT (F2CPAUX_IH_TAC F2CPAUX_SIDE_TAC THEN RVEQ_TAC) THEN
   REWRITE_TAC[flat_to_clos_compile_def] THEN
   ONCE_REWRITE_TAC[clos_evaluate_APPEND] THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   IMP_RES_TAC flat_evaluate_sing THEN IMP_RES_TAC clos_evaluate_SING THEN RVEQ_TAC THEN
   GVS[ALL2; APPEND; HD; LIST_REL_CONS1]);;
 
@@ -2483,7 +2483,7 @@ let F2CPAUX_cc_Lit = prove
   F2CPAUX_HEAD_X_ASSUM "flat_evaluate" (MP_TAC o ONCE_REWRITE_RULE[flat_evaluate_def]) THEN
   REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN RVEQ_TAC THEN
   REWRITE_TAC[flat_to_clos_compile_def; compile_lit_def] THEN
-  CASES_ON `l:lit` THEN CASE_REWRITE_TAC[] THEN F2CPAUX_EVAL_TAC THEN
+  CASES_ON `l:lit` THEN CAKE_REWRITE_TAC[] THEN F2CPAUX_EVAL_TAC THEN
   SIMP[flat_to_closProof_v_rel_def; make_const_def]);;
 
 (* HOL4 line 332: Resume compile_correct[Raise] *)
@@ -2534,7 +2534,7 @@ let F2CPAUX_env_rel_opt_bind = prove
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   REWRITE_TAC[flat_to_closProof_env_rel_def; flat_environment_INFO.ri_accfupds] THEN
   X_GEN_TAC `k:mlstring` THEN X_GEN_TAC `x:flat_v` THEN
-  CASES_ON `n:mlstring option` THEN REWRITE_TAC[opt_bind_def] THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON `n:mlstring option` THEN REWRITE_TAC[opt_bind_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[ALOOKUP_THM; findi_def; distinctness "option"; injectivity "option"] THENL
    [DISCH_TAC;
     ASM_CASES_TAC `a:mlstring = k` THENL
@@ -2576,7 +2576,7 @@ let F2CPAUX_env_rel_letrec = prove
      ALL no_Mat (MAP (SND o SND) funs)
      ==> flat_to_closProof_env_rel
            (flat_environment_v_fupd
-              (K (flat_build_rec_env funs env (flat_environment_v env))) env)
+              (combin_K (flat_build_rec_env funs env (flat_environment_v env))) env)
            (APPEND (MAP (\n. SOME (FST n)) funs) m)
            (APPEND (list_of_seq
                       (clos_Recclosure NONE [] db
@@ -2597,10 +2597,10 @@ let F2CPAUX_env_rel_letrec = prove
       `!p:mlstring#mlstring#flat_exp.
          (match p with (f,x,e) -> (f,flat_Recclosure env funs f)) =
          (FST p,flat_Recclosure env funs (FST p))`) (fun th -> REWRITE_TAC[th; SND]) THENL
-     [REWRITE_TAC[FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[FST]; ALL_TAC] THEN
+     [REWRITE_TAC[FORALL_PAIR_THM] THEN CAKE_REWRITE_TAC[FST]; ALL_TAC] THEN
     MATCH_MP_TAC F2CPAUX_Recclosure_rule THEN ASM_REWRITE_TAC[];
     REWRITE_TAC[MAP_MAP_o; o_DEF] THEN AP_THM_TAC THEN AP_TERM_TAC THEN
-    REWRITE_TAC[FUN_EQ_THM; FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[]]);;
+    REWRITE_TAC[FUN_EQ_THM; FORALL_PAIR_THM] THEN CAKE_REWRITE_TAC[]]);;
 
 let F2CPAUX_ALL_arity = prove
  (CASE_TERM
@@ -2611,7 +2611,7 @@ let F2CPAUX_ALL_arity = prove
                      (1, HD (flat_to_clos_compile (CONS (SOME v) mm) [x]))) l)`,
   LIST_INDUCT_TAC THEN ASM_SIMP_TAC[MAP; ALL] THEN REPEAT STRIP_TAC THEN
   SPEC_TAC(`h:mlstring#mlstring#flat_exp`,`h:mlstring#mlstring#flat_exp`) THEN
-  REWRITE_TAC[FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[] THEN ASM_ARITH_TAC);;
+  REWRITE_TAC[FORALL_PAIR_THM] THEN CAKE_REWRITE_TAC[] THEN ASM_ARITH_TAC);;
 
 (* HOL4 line 408: Resume compile_correct[Letrec] *)
 let F2CPAUX_cc_Letrec = prove
@@ -2623,9 +2623,9 @@ let F2CPAUX_cc_Letrec = prove
   ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
   F2CPAUX_IH_TAC F2CPAUX_SIDE_TAC THEN RVEQ_TAC THEN
   REWRITE_TAC[flat_to_clos_compile_def] THEN CONV_TAC(DEPTH_CONV let_CONV) THEN
-  CASE_REWRITE_TAC[] THEN F2CPAUX_EVAL_TAC THEN
+  CAKE_REWRITE_TAC[] THEN F2CPAUX_EVAL_TAC THEN
   ASM_SIMP_TAC[F2CPAUX_ALL_arity; LENGTH_MAP] THEN
-  CONV_TAC(DEPTH_CONV let_CONV) THEN CASE_REWRITE_TAC[] THEN
+  CONV_TAC(DEPTH_CONV let_CONV) THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[HD_compile] THEN ASM_REWRITE_TAC[PAIR_EQ] THEN
   ASM_MESON_TAC[]);;
 
@@ -2635,7 +2635,7 @@ let F2CPAUX_env_rel_handle = prove
      flat_to_closProof_env_rel env m db /\ flat_to_closProof_v_rel v1 v2
      ==> !nm. flat_to_closProof_env_rel
                 (flat_environment_v_fupd
-                   (K (CONS (nm,v1) (flat_environment_v env))) env)
+                   (combin_K (CONS (nm,v1) (flat_environment_v env))) env)
                 (CONS (SOME nm) m) (CONS v2 db)`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN GEN_TAC THEN
   MP_TAC (SPECL [`env:(flat_v)flat_environment`; `m:(mlstring option)list`;
@@ -2643,13 +2643,13 @@ let F2CPAUX_env_rel_handle = prove
             F2CPAUX_env_rel_opt_bind) THEN
   ASM_REWRITE_TAC[flat_to_closProof_env_rel_def; flat_environment_INFO.ri_accfupds;
                   K_THM; APPEND] THEN
-  REWRITE_TAC[opt_bind_def] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[opt_bind_def] THEN CAKE_REWRITE_TAC[]);;
 
 let F2CPAUX_pmatch_rows_Pvar = prove
  (`!nm (rhs:flat_exp) s v.
      pmatch_rows [(flat_Pvar nm, rhs)] (s:(C,FFI)flat_state) v =
      Match ([(nm,v)], flat_Pvar nm, rhs)`,
-  REWRITE_TAC[pmatch_rows_def; CONJUNCT1 flat_pmatch_def] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[pmatch_rows_def; CONJUNCT1 flat_pmatch_def] THEN CAKE_REWRITE_TAC[]);;
 
 (* HOL4 line 347: Resume compile_correct[Handle]; the IH of the handler is  *)
 (* specialised to the only pattern Pvar nm and kept out of the GVS          *)
@@ -2749,7 +2749,7 @@ let F2CPAUX_do_opapp_SOME = prove
             vs = [flat_Recclosure env1 funs n; v] /\ ALL_DISTINCT (MAP FST funs) /\
             find_recfun n funs = SOME (n',e) /\
             env' = flat_environment_v_fupd
-                     (K (CONS (n',v) (flat_build_rec_env funs env1
+                     (combin_K (CONS (n',v) (flat_build_rec_env funs env1
                                         (flat_environment_v env1)))) env1)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[flat_do_opapp_def] THEN
   REPEAT (TOP_CASE_TAC THEN
@@ -2775,7 +2775,7 @@ let F2CPAUX_evaluate_pair = prove
   MP_TAC (ISPEC `clos_evaluate ([x],env,s:(C,FFI)clos_state)` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `r1:(clos_v list,clos_v)result`
     (X_CHOOSE_THEN `s2:(C,FFI)clos_state` SUBST1_TAC)) THEN
-  CASES_ON `r1:(clos_v list,clos_v)result` THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON `r1:(clos_v list,clos_v)result` THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[distinctness "result"; injectivity "result"; PAIR_EQ] THEN
   DISCH_THEN(MP_TAC o SPECL [`a:clos_v list`; `s2:(C,FFI)clos_state`]) THEN
   REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[HD] THEN
@@ -2783,12 +2783,12 @@ let F2CPAUX_evaluate_pair = prove
   MP_TAC (ISPEC `clos_evaluate ([y],env,s2:(C,FFI)clos_state)` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `r2:(clos_v list,clos_v)result`
     (X_CHOOSE_THEN `s3:(C,FFI)clos_state` (fun th -> ASSUME_TAC th THEN REWRITE_TAC[th]))) THEN
-  CASES_ON `r2:(clos_v list,clos_v)result` THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON `r2:(clos_v list,clos_v)result` THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[distinctness "result"; injectivity "result"; PAIR_EQ] THEN
   DISCH_THEN(MP_TAC o SPECL [`a':clos_v list`; `s3:(C,FFI)clos_state`]) THEN
   REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[HD] THEN
   REWRITE_TAC[clos_evaluate_def; PAIR_EQ; injectivity "result"] THEN
-  CASE_REWRITE_TAC[PAIR_EQ; injectivity "result"] THEN
+  CAKE_REWRITE_TAC[PAIR_EQ; injectivity "result"] THEN
   STRIP_TAC THEN MAP_EVERY EXISTS_TAC [`r1:clos_v`; `r1':clos_v`; `s2:(C,FFI)clos_state`] THEN
   RULE_ASSUM_TAC(REWRITE_RULE[]) THEN ASM_REWRITE_TAC[]);;
 
@@ -2803,12 +2803,12 @@ let F2CPAUX_env_rel_CONS_fun = prove
                  `db:clos_v list`; `SOME (n:mlstring)`; `v1:flat_v`; `v2:clos_v`]
             F2CPAUX_env_rel_opt_bind) THEN
   ASM_REWRITE_TAC[flat_to_closProof_env_rel_def; flat_environment_INFO.ri_accfupds] THEN
-  REWRITE_TAC[opt_bind_def] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[opt_bind_def] THEN CAKE_REWRITE_TAC[]);;
 
 let F2CPAUX_state_rel_clock0 = prove
  (`!s t. flat_to_closProof_state_rel (s:(C,FFI)flat_state) (t:(C,FFI)clos_state) /\
          flat_state_clock s = 0
-         ==> flat_to_closProof_state_rel s (clos_state_clock_fupd (K 0) t)`,
+         ==> flat_to_closProof_state_rel s (clos_state_clock_fupd (combin_K 0) t)`,
   REWRITE_TAC[flat_to_closProof_state_rel_def; clos_state_INFO.ri_accfupds; K_THM] THEN
   SIMP_TAC[]);;
 
@@ -2834,8 +2834,8 @@ let F2CPAUX_APP_EVAL_TAC : tactic = fun (asl,w as g) ->
 let F2CPAUX_APP_COMPILE_TAC : tactic =
   REWRITE_TAC[flat_to_clos_compile_def; dest_nop_def; injectivity "flat_op";
               distinctness "op"; injectivity "op"] THEN
-  CASE_REWRITE_TAC[] THEN
-  REWRITE_TAC[flat_to_clos_compile_op_def] THEN CASE_REWRITE_TAC[];;
+  CAKE_REWRITE_TAC[] THEN
+  REWRITE_TAC[flat_to_clos_compile_op_def] THEN CAKE_REWRITE_TAC[];;
 
 let F2CPAUX_LENGTH_2 = prove
  (`!l:A list. LENGTH l = 2 ==> ?x y. l = [x;y]`,
@@ -2881,7 +2881,7 @@ let F2CPAUX_OPAPP_SHAPE_TAC : tactic =
                               F2CPAUX_head_is "flat_to_closProof_v_rel" (CONJUNCT1 th)
                            then STRIP_ASSUME_TAC th else failwith "conj") THEN
   REWRITE_TAC[REVERSE; APPEND; F2CPAUX_compile_pair; flat_to_clos_arg2_def] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   F2CPAUX_HEAD_X_ASSUM "flat_to_closProof_v_rel"
     (fun th -> if can (find_term (fun t -> try let c = fst(dest_const(fst(strip_comb t))) in
                                                c = "flat_Closure" || c = "flat_Recclosure"
@@ -2977,7 +2977,7 @@ let F2CPAUX_cc_App_Opapp = prove
       SUBGOAL_THEN (CASE_TERM
         `flat_to_closProof_env_rel
            (flat_environment_v_fupd
-              (K (CONS (n',v) (flat_build_rec_env funs env1 (flat_environment_v env1))))
+              (combin_K (CONS (n',v) (flat_build_rec_env funs env1 (flat_environment_v env1))))
               env1)
            (CONS (SOME n') (APPEND (MAP (\n. SOME (FST n)) funs) m'))
            (CONS w1 (APPEND (list_of_seq (clos_Recclosure NONE [] db'
@@ -3004,9 +3004,9 @@ let F2CPAUX_compile_AppUnit = prove
   REWRITE_TAC[flat_AppUnit_def; clos_AppUnit_def] THEN
   F2CPAUX_APP_COMPILE_TAC THEN
   REWRITE_TAC[REVERSE; APPEND; F2CPAUX_compile_pair; flat_to_clos_arg2_def] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[flat_to_clos_compile_def; findi_def; REVERSE; HD] THEN
-  CONV_TAC(DEPTH_CONV let_CONV) THEN CASE_REWRITE_TAC[] THEN
+  CONV_TAC(DEPTH_CONV let_CONV) THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[SmartCons_def; NULL; HD]);;
 
 let F2CPAUX_env_rel_thunk = prove
@@ -3072,13 +3072,13 @@ let F2CPAUX_cc_App_Force = prove
         MP_TAC (MATCH_MP F2CPAUX_dest_thunk_rel (CONJ sth vth)))
       else failwith "F2CPAUX_cc_App_Force") THEN
     F2CPAUX_HEAD_ASSUM "flat_dest_thunk" (fun th -> REWRITE_TAC[th]) THEN
-    CASE_REWRITE_TAC[] THEN STRIP_TAC THEN
-    CASES_ON `a0:thunk_mode` THEN CASE_REWRITE_TAC[] THEN
-    RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THENL
+    CAKE_REWRITE_TAC[] THEN STRIP_TAC THEN
+    CASES_ON `a0:thunk_mode` THEN CAKE_REWRITE_TAC[] THEN
+    RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THENL
      [FIRST_X_ASSUM (STRIP_ASSUME_TAC o check (is_conj o concl)) THEN RVEQ_TAC THEN
       F2CPAUX_EVAL_TAC THEN
       F2CPAUX_HEAD_ASSUM "clos_dest_thunk" (fun th -> REWRITE_TAC[th]) THEN
-      CASE_REWRITE_TAC[] THEN GVS[];
+      CAKE_REWRITE_TAC[] THEN GVS[];
       F2CPAUX_HEAD_ASSUM "flat_dest_thunk"
         (STRIP_ASSUME_TAC o MATCH_MP F2CPAUX_dest_thunk_IsThunk) THEN
       FIRST_X_ASSUM (SUBST_ALL_TAC o check (is_var o lhs o concl)) THEN
@@ -3090,17 +3090,17 @@ let F2CPAUX_cc_App_Force = prove
         `flat_evaluate (flat_environment_REC [implode "f",a1:flat_v])
            (x:(C,FFI)flat_state)
            [flat_AppUnit (Var_local backend_common_None (implode "f"))]` "s2" "r2" THEN
-      RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN
+      RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN
       FIRST_ASSUM (fun th -> if F2CPAUX_head_is "flat_to_closProof_v_rel" th &&
                                 rand(rator(concl th)) = `a1:flat_v`
                              then ASSUME_TAC (MATCH_MP F2CPAUX_env_rel_thunk th)
                              else failwith "F2CPAUX_cc_App_Force") THEN
       CASES_ON `r2:(flat_v list,flat_v)result` THEN
-      RULE_ASSUM_TAC(CASE_REWRITE_RULE[PAIR_EQ]) THENL
+      RULE_ASSUM_TAC(CAKE_REWRITE_RULE[PAIR_EQ]) THENL
        [F2CPAUX_OPTION_SPLIT_TAC
           `flat_update_thunk [flat_Loc b n] (flat_state_refs (s2:(C,FFI)flat_state)) a'`
           "refs" THEN
-        RULE_ASSUM_TAC(CASE_REWRITE_RULE[PAIR_EQ]) THEN
+        RULE_ASSUM_TAC(CAKE_REWRITE_RULE[PAIR_EQ]) THEN
         FIRST_X_ASSUM (STRIP_ASSUME_TAC o check (fun th -> is_conj (concl th))) THEN
         RVEQ_TAC THENL
          [RULE_ASSUM_TAC(REWRITE_RULE[distinctness "result"; injectivity "result"]) THEN
@@ -3149,7 +3149,7 @@ let F2CPAUX_CASES_REWRITE_TAC (tm:term) : tactic =
 (* the result relation of a decs IH: let res1' = ... in result_rel ... *)
 let F2CPAUX_EVAL_RES_TAC (rr:thm) : tactic =
   FIRST_X_ASSUM (fun th -> if is_let (concl th) then
-     F2CPAUX_STRIP_ASSUME_TAC (REWRITE_RULE[rr] (CASE_REWRITE_RULE[]
+     F2CPAUX_STRIP_ASSUME_TAC (REWRITE_RULE[rr] (CAKE_REWRITE_RULE[]
        (CONV_RULE (DEPTH_CONV let_CONV) th)))
      else failwith "F2CPAUX_EVAL_RES_TAC") THEN
   FIRST_X_ASSUM (SUBST_ALL_TAC o check (fun th ->
@@ -3159,7 +3159,7 @@ let F2CPAUX_EVAL_DECS_FINISH_TAC (rr:thm) : tactic =
   F2CPAUX_EVAL_RES_TAC rr THEN
   RULE_ASSUM_TAC(REWRITE_RULE[flat_to_clos_compile_def; REVERSE]) THEN
   RULE_ASSUM_TAC(CONV_RULE(DEPTH_CONV let_CONV)) THEN
-  RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN
+  RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN
   F2CPAUX_ASM_EVAL_TAC THEN REWRITE_TAC[LAST_APPEND; LAST; NOT_CONS_NIL] THEN
   F2CPAUX_HIDE_DEP_IHS_THEN (GVS[]);;
 
@@ -3203,17 +3203,17 @@ let F2CPAUX_cc_App_Eval = prove
         else failwith "F2CPAUX_cc_App_Eval") THEN
       POP_ASSUM (fun th -> RULE_ASSUM_TAC(REWRITE_RULE[th]) THEN ASSUME_TAC th) THEN
       SUBGOAL_THEN `~(flat_state_clock (flat_state_eval_config_fupd
-                       (K (eval_config:(C)install_config)) (x:(C,FFI)flat_state)) = 0)`
+                       (combin_K (eval_config:(C)install_config)) (x:(C,FFI)flat_state)) = 0)`
         ASSUME_TAC THENL
        [REWRITE_TAC[flat_state_INFO.ri_accfupds; K_THM] THEN FIRST_ASSUM ACCEPT_TAC;
         ALL_TAC] THEN
       F2CPAUX_DEC_CLOCK_TAC "t'" THEN
       F2CPAUX_PAIR_SPLIT_TAC
         `flat_evaluate_decs (flat_dec_clock (flat_state_eval_config_fupd
-           (K (eval_config:(C)install_config)) (x:(C,FFI)flat_state))) decs` "s2" "r2" THEN
-      RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN
+           (combin_K (eval_config:(C)install_config)) (x:(C,FFI)flat_state))) decs` "s2" "r2" THEN
+      RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN
       CASES_ON `r2:(flat_v error_result) option` THEN
-      RULE_ASSUM_TAC(CASE_REWRITE_RULE[PAIR_EQ]) THEN
+      RULE_ASSUM_TAC(CAKE_REWRITE_RULE[PAIR_EQ]) THEN
       FIRST_X_ASSUM (STRIP_ASSUME_TAC o check (fun th -> is_conj (concl th))) THEN
       RVEQ_TAC THEN
       F2CPAUX_IH_TAC F2CPAUX_APP_SIDE_TAC THEN RVEQ_TAC THENL
@@ -3229,7 +3229,7 @@ let F2CPAUX_cc_App_op = prove
     `dest_nop (op:flat_op) es = NONE /\ ~(op = Src Opapp) /\ ~(op = Src Eval) /\
      ~(op = Src (ThunkOp ForceThunk))`,
   F2CPAUX_APP_INTRO_TAC THEN ASM_REWRITE_TAC[flat_to_clos_compile_def] THEN
-  CASE_REWRITE_TAC[] THENL
+  CAKE_REWRITE_TAC[] THENL
    [F2CPAUX_HIDE_DEP_IHS_THEN (GVS[option_case_eq; pair_case_eq]) THEN
     F2CPAUX_HEAD_ASSUM "ALL2" (fun th ->
       ASSUME_TAC (ONCE_REWRITE_RULE[GSYM LIST_REL_REVERSE_EQ] th)) THEN
@@ -3262,13 +3262,13 @@ let F2CPAUX_evaluate_nop_inner = prove
   REPEAT GEN_TAC THEN F2CPAUX_APP_COMPILE_TAC THEN REWRITE_TAC[REVERSE; APPEND] THEN
   X_CHOOSE_THEN `c:clos_exp` SUBST1_TAC
     (SPECL [`m:(mlstring option)list`; `yy:flat_exp`] F2CPAUX_compile_SING) THEN
-  REWRITE_TAC[flat_to_clos_arg1_def; REVERSE] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[flat_to_clos_arg1_def; REVERSE] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[clos_evaluate_def] THEN
   MP_TAC (ISPECL [`c:clos_exp`; `db:clos_v list`; `t:(C,FFI)clos_state`]
             clos_evaluate_SING) THEN
   F2CPAUX_PAIR_SPLIT_TAC `clos_evaluate ([c],db,t:(C,FFI)clos_state)` "r" "s1" THEN
   ASM_REWRITE_TAC[] THEN
-  CASES_ON `r:(clos_v list,clos_v)result` THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON `r:(clos_v list,clos_v)result` THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[injectivity "result"] THEN
   DISCH_THEN(MP_TAC o SPECL [`a:clos_v list`; `s1:(C,FFI)clos_state`]) THEN
   REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[APPEND; LENGTH; EL; HD; LT_0]);;
@@ -3282,7 +3282,7 @@ let F2CPAUX_BYTE_FINISH_TAC : tactic =
                 ARITH_RULE `n < 256 ==> ~(255 < n)`];;
 
 let F2CPAUX_NOP_CONV_TAC : tactic =
-  REPEAT GEN_TAC THEN REWRITE_TAC[flat_do_app_def] THEN CASE_REWRITE_TAC[] THEN
+  REPEAT GEN_TAC THEN REWRITE_TAC[flat_do_app_def] THEN CAKE_REWRITE_TAC[] THEN
   DISCH_TAC THEN FLATSEMAUX_SPLIT_TAC THEN
   F2CPAUX_UNFOLD_SPLIT_TAC "do_conversion" do_conversion_def THEN GVS[] THEN
   TRY (FIRST_X_ASSUM (F2CPAUX_STRIP_ASSUME_TAC o MATCH_MP check_type_CharT_flat_to_v)) THEN
@@ -3419,11 +3419,11 @@ let F2CPAUX_cc_decs_cons = prove
     REWRITE_TAC[flat_to_clos_compile_decs_def] THEN
     CASES_ON `res1:(flat_v error_result) option` THEN
     F2CPAUX_HIDE_DEP_IHS_THEN (GVS[]) THEN
-    ONCE_REWRITE_TAC[clos_evaluate_APPEND] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+    ONCE_REWRITE_TAC[clos_evaluate_APPEND] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
     F2CPAUX_HIDE_DEP_IHS_THEN (GVS[F2CPAUX_ALL2_T_EQ]);
     RULE_ASSUM_TAC(REWRITE_RULE[flat_to_clos_compile_decs_def; APPEND_NIL]) THEN
     REWRITE_TAC[flat_to_clos_compile_decs_def] THEN
-    ONCE_REWRITE_TAC[clos_evaluate_APPEND] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+    ONCE_REWRITE_TAC[clos_evaluate_APPEND] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
     F2CPAUX_HIDE_DEP_IHS_THEN (GVS[])]);;
 
 (* HOL4 line 1995: Finalise compile_correct *)
@@ -3496,7 +3496,7 @@ let compile_decs_correct2 = prove
             (INST_TYPE [`:A`,`:A`] flat_to_closProof_compile_decs_correct)) THEN
   ASM_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN RVEQ_TAC THEN
   POP_ASSUM MP_TAC THEN CONV_TAC(DEPTH_CONV let_CONV) THEN
-  CASES_ON `p2:(flat_v error_result) option` THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON `p2:(flat_v error_result) option` THEN CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[] THEN SIMP[] THEN MESON_TAC[]);;
 
 (* HOL4 line 2016 *)
@@ -3549,7 +3549,7 @@ let evaluate_compile_prog_initial_state_FST_Err = prove
   F2CPAUX_SPLIT_GOAL_EVAL_TAC
     (fun t -> can (find_term (fun u -> try fst(dest_const u) = "flat_to_clos_compile_decs"
                                        with Failure _ -> false)) t) "r" "s1" THEN
-  ASM_REWRITE_TAC[] THEN CASES_ON `r:(clos_v list,clos_v)result` THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CASES_ON `r:(clos_v list,clos_v)result` THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[FST; distinctness "result"]);;
 
 (* compile_decs_correct2 on the initial states (HOL4: drule_then drule        *)
@@ -3610,10 +3610,10 @@ let F2CPAUX_semantics_k = prove
                          then ASSUME_TAC (MATCH_MP F2CPAUX_state_rel_ffi th)
                          else failwith "F2CPAUX_semantics_k") THEN
   CASES_ON `fr:(flat_v error_result) option` THEN
-  RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THENL
+  RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THENL
    [ALL_TAC; CASES_ON `a:flat_v error_result` THEN TRY (CASES_ON `a':abort`)] THEN
-  RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN
-  F2CPAUX_HIDE_DEP_IHS_THEN (GVS[]) THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]);;
+  RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN
+  F2CPAUX_HIDE_DEP_IHS_THEN (GVS[]) THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]);;
 
 let F2CPAUX_EXISTS_PAIR_EQ = prove
  (`!(X:A#B) P. (?r s. X = (r,s) /\ P r s) <=> P (FST X) (SND X)`,
@@ -3856,7 +3856,7 @@ let F2CPAUX2_set_globals_compile_op = prove
 let F2CPAUX2_dest_Constant_compile_lit = prove
  (`!t l. ?c. flat_to_clos_dest_Constant (compile_lit t l) = SOME c`,
   REPEAT GEN_TAC THEN CASES_ON `l:lit` THEN REWRITE_TAC[compile_lit_def] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[flat_to_clos_dest_Constant_def] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[flat_to_clos_dest_Constant_def] THEN
   MESON_TAC[]);;
 
 let F2CPAUX2_compile_lit_props = prove
@@ -3942,7 +3942,7 @@ let compile_set_globals = prove
     (* Letrec *)
     AP_TERM_TAC THEN REWRITE_TAC[GSYM MAP_o] THEN
     MATCH_MP_TAC F2CPAUX2_set_globals_MAP THEN
-    REWRITE_TAC[FORALL_PAIR_THM; o_THM] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[FORALL_PAIR_THM; o_THM] THEN CAKE_REWRITE_TAC[] THEN
     REPEAT STRIP_TAC THEN REWRITE_TAC[F2CPAUX2_HD_compile_props] THEN
     SUBGOAL_THEN `no_Mat p2` ASSUME_TAC THENL
      [FIRST_X_ASSUM (MP_TAC o CONJUNCT1 o check (is_conj o concl)) THEN
@@ -4005,7 +4005,7 @@ let F2CPAUX2_set_globals_Letrec = prove
          BAG_IMAGE SUC (flat_elist_globals (MAP (SND o SND) funs))`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[GSYM MAP_o] THEN
   MATCH_MP_TAC F2CPAUX2_set_globals_MAP THEN
-  REWRITE_TAC[FORALL_PAIR_THM; o_THM] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[FORALL_PAIR_THM; o_THM] THEN CAKE_REWRITE_TAC[] THEN
   REPEAT STRIP_TAC THEN REWRITE_TAC[F2CPAUX2_HD_compile_props] THEN
   SUBGOAL_THEN `no_Mat p2` ASSUME_TAC THENL
    [UNDISCH_TAC `ALL no_Mat (MAP (SND o SND) (funs:(mlstring # mlstring # flat_exp)list))` THEN
@@ -4171,7 +4171,7 @@ let compile_syntactic_props = prove
     (* Letrec *)
     ONCE_REWRITE_TAC[contains_App_SOME_EXISTS; every_Fn_vs_NONE_EVERY] THEN
     REWRITE_TAC[GSYM MAP_o; NOT_EX; ALL_MAP] THEN
-    REWRITE_TAC[GSYM ALL_MEM; FORALL_PAIR_THM; o_THM] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[GSYM ALL_MEM; FORALL_PAIR_THM; o_THM] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[HD_compile; F2CPAUX2_HD_compile_props; FST; SND] THEN
     REPEAT STRIP_TAC THEN ASM_MESON_TAC[]]);;
 

@@ -604,7 +604,7 @@ let remove_word_code_MAP_FST_lemma = prove
 let WELIMAUX_word_state_rel_code = prove
  (`!reachable (s:(A,C,FFI)wl_state) t.
      word_state_rel reachable s t
-     ==> t = wl_state_code_fupd (K (wl_state_code t)) s`,
+     ==> t = wl_state_code_fupd (combin_K (wl_state_code t)) s`,
   REWRITE_TAC[word_state_rel_def; wl_state_component_equality] THEN
   REPEAT STRIP_TAC THEN SIMP[]);;
 
@@ -743,7 +743,7 @@ let WELIMAUX_word_state_rel_step = prove
      word_state_rel reachable s t /\ wl_state_code s1 = wl_state_code s /\
      domain (find_loc_state s1) SUBSET domain (find_loc_state s)
      ==> word_state_rel reachable s1
-           (wl_state_code_fupd (K (wl_state_code t)) s1)`,
+           (wl_state_code_fupd (combin_K (wl_state_code t)) s1)`,
   REWRITE_TAC[word_state_rel_def] THEN REPEAT STRIP_TAC THEN SIMP[] THEN
   ASM_MESON_TAC[SUBSET_TRANS]);;
 
@@ -799,7 +799,7 @@ let WELIMAUX_fls_set_var_loc = prove
 let WELIMAUX_fls_memory_word = prove
  (`!(s:(A,C,FFI)wl_state) a w.
      domain (find_loc_state
-       (wl_state_memory_fupd (K ((a =+ wl_Word w) (wl_state_memory s))) s))
+       (wl_state_memory_fupd (combin_K ((a =+ wl_Word w) (wl_state_memory s))) s))
      SUBSET domain (find_loc_state s)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[domain_find_loc_state] THEN SIMP[] THEN
   MP_TAC(ISPECL [`a:A word`; `wl_Word w:(A)word_loc`;
@@ -846,7 +846,7 @@ let word_state_rel_assign_SOME = prove
   FIRST_ASSUM(fun th -> ONCE_REWRITE_TAC[MATCH_MP WELIMAUX_word_state_rel_code th]) THEN
   REWRITE_TAC[wl_assign_with_const] THEN STRIP_TAC THEN
   UNDISCH_TAC `OPTION_MAP (\s:(A,C,FFI)wl_state.
-                 wl_state_code_fupd (K (wl_state_code (t:(A,C,FFI)wl_state))) s)
+                 wl_state_code_fupd (combin_K (wl_state_code (t:(A,C,FFI)wl_state))) s)
                (wl_assign reg exp s) = SOME t1` THEN
   ASM_REWRITE_TAC[OPTION_MAP_DEF; option_INJ] THEN
   DISCH_THEN(SUBST1_TAC o SYM) THEN
@@ -889,7 +889,7 @@ let WELIMAUX_mem_store_fls = prove
 let WELIMAUX_mem_store_byte_fls = prove
  (`!(s:(A,C,FFI)wl_state) be a b m'.
      mem_store_byte_aux (wl_state_memory s) (wl_state_mdomain s) be a b = SOME m'
-     ==> domain (find_loc_state (wl_state_memory_fupd (K m') s)) SUBSET
+     ==> domain (find_loc_state (wl_state_memory_fupd (combin_K m') s)) SUBSET
          domain (find_loc_state s)`,
   REPEAT GEN_TAC THEN
   DISCH_THEN(X_CHOOSE_THEN `x:A word` (X_CHOOSE_THEN `w:A word` SUBST1_TAC) o
@@ -899,7 +899,7 @@ let WELIMAUX_mem_store_byte_fls = prove
 let WELIMAUX_mem_store_32_fls = prove
  (`!(s:(A,C,FFI)wl_state) be a hw m'.
      mem_store_32 (wl_state_memory s) (wl_state_mdomain s) be a hw = SOME m'
-     ==> domain (find_loc_state (wl_state_memory_fupd (K m') s)) SUBSET
+     ==> domain (find_loc_state (wl_state_memory_fupd (combin_K m') s)) SUBSET
          domain (find_loc_state s)`,
   REPEAT GEN_TAC THEN
   DISCH_THEN(X_CHOOSE_THEN `x:A word` (X_CHOOSE_THEN `w:A word` SUBST1_TAC) o
@@ -940,7 +940,7 @@ let word_state_rel_inst_SOME = prove
   FIRST_ASSUM(fun th -> ONCE_REWRITE_TAC[MATCH_MP WELIMAUX_word_state_rel_code th]) THEN
   REWRITE_TAC[wl_inst_with_const] THEN STRIP_TAC THEN
   UNDISCH_TAC `OPTION_MAP (\s:(A,C,FFI)wl_state.
-                 wl_state_code_fupd (K (wl_state_code (t:(A,C,FFI)wl_state))) s)
+                 wl_state_code_fupd (combin_K (wl_state_code (t:(A,C,FFI)wl_state))) s)
                (wl_inst i s) = SOME t1` THEN
   ASM_REWRITE_TAC[OPTION_MAP_DEF; option_INJ] THEN
   DISCH_THEN(SUBST1_TAC o SYM) THEN
@@ -993,8 +993,8 @@ let WELIMAUX_jump_exc_fls = prove
      wl_jump_exc s = SOME (s1,l1,l2)
      ==> domain (find_loc_state s1) SUBSET domain (find_loc_state s) /\
          wl_state_code s1 = wl_state_code s /\
-         !c. wl_jump_exc (wl_state_code_fupd (K c) s) =
-             SOME (wl_state_code_fupd (K c) s1,l1,l2)`,
+         !c. wl_jump_exc (wl_state_code_fupd (combin_K c) s) =
+             SOME (wl_state_code_fupd (combin_K c) s1,l1,l2)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[wl_jump_exc_def] THEN SIMP[] THEN
   EVERY_CASE_TAC THEN REWRITE_TAC[option_INJ; option_DISTINCT; PAIR_EQ] THEN
   STRIP_TAC THEN RVEQ_TAC THEN SIMP[] THEN
@@ -1179,12 +1179,12 @@ let push_env_def2 = prove
                     | SOME (w,h,l1,l2) -> SOME (wl_state_handler s,l1,l2)) in
      let stack = CONS (StackFrame (wl_state_locals_size s) l0 l handler)
                       (wl_state_stack s) in
-       wl_state_stack_fupd (K stack)
+       wl_state_stack_fupd (combin_K stack)
         (wl_state_stack_max_fupd
-           (K (OPTION_MAP2 MAX (wl_state_stack_max s) (wl_stack_size stack)))
-         (wl_state_permute_fupd (K permute)
+           (combin_K (OPTION_MAP2 MAX (wl_state_stack_max s) (wl_stack_size stack)))
+         (wl_state_permute_fupd (combin_K permute)
           (wl_state_handler_fupd
-             (K (match handler with
+             (combin_K (match handler with
                    NONE -> wl_state_handler s
                  | SOME x -> LENGTH (wl_state_stack s))) s)))`,
   SPEC_TAC(`handler:(num#(A)wl_prog#num#num)option`,
@@ -1211,32 +1211,32 @@ let get_locals_inter_subset = prove
 
 let WELIMAUX_flush_code = prove
  (`!b c (s:(A,C,FFI)wl_state).
-     wl_flush_state b (wl_state_code_fupd (K c) s) =
-     wl_state_code_fupd (K c) (wl_flush_state b s)`,
+     wl_flush_state b (wl_state_code_fupd (combin_K c) s) =
+     wl_state_code_fupd (combin_K c) (wl_flush_state b s)`,
   MATCH_MP_TAC bool_INDUCT THEN REWRITE_TAC[wl_flush_state_def] THEN SIMP[]);;
 
 let WELIMAUX_jump_exc_code = prove
  (CASE_TERM
   `!c (s:(A,C,FFI)wl_state).
-     wl_jump_exc (wl_state_code_fupd (K c) s) =
+     wl_jump_exc (wl_state_code_fupd (combin_K c) s) =
      match wl_jump_exc s with
        NONE -> NONE
-     | SOME (s1,l1,l2) -> SOME (wl_state_code_fupd (K c) s1,l1,l2)`,
+     | SOME (s1,l1,l2) -> SOME (wl_state_code_fupd (combin_K c) s1,l1,l2)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[wl_jump_exc_def] THEN SIMP[] THEN
   REPEAT (TOP_CASE_TAC THEN SIMP[]));;
 
 let WELIMAUX_sh_mem_set_var_code = prove
  (`!r v c (s:(A,C,FFI)wl_state).
-     sh_mem_set_var r v (wl_state_code_fupd (K c) s) =
-     (I ## wl_state_code_fupd (K c)) (sh_mem_set_var r v s):((A)wl_result)option#(A,C,FFI)wl_state`,
+     sh_mem_set_var r v (wl_state_code_fupd (combin_K c) s) =
+     (I ## wl_state_code_fupd (combin_K c)) (sh_mem_set_var r v s):((A)wl_result)option#(A,C,FFI)wl_state`,
   GEN_TAC THEN STRUCT_CASES_TAC (ISPEC `r:((FFI)ffi_result)option` (cases "option")) THEN
   TRY (STRUCT_CASES_TAC (ISPEC `a:(FFI)ffi_result` (cases "ffi_result"))) THEN
   SIMP[sh_mem_set_var_def; WELIMAUX_flush_code; PAIR_MAP_THM; I_THM]);;
 
 let WELIMAUX_share_inst_code = prove
  (`!op v ad c (s:(A,C,FFI)wl_state).
-     share_inst op v ad (wl_state_code_fupd (K c) s) =
-     (I ## wl_state_code_fupd (K c)) (share_inst op v ad s):((A)wl_result)option#(A,C,FFI)wl_state`,
+     share_inst op v ad (wl_state_code_fupd (combin_K c) s) =
+     (I ## wl_state_code_fupd (combin_K c)) (share_inst op v ad s):((A)wl_result)option#(A,C,FFI)wl_state`,
   REPEAT GEN_TAC THEN
   STRUCT_CASES_TAC (ISPEC `op:memop` (cases "memop")) THEN
   REWRITE_TAC[share_inst_def; wl_sh_mem_load_def; wl_sh_mem_load_byte_def;
@@ -1248,7 +1248,7 @@ let WELIMAUX_share_inst_code = prove
          PAIR_MAP_THM; I_THM]));;
 
 let WELIMAUX_code_eta = prove
- (`!c. (\s:(A,C,FFI)wl_state. wl_state_code_fupd (K c) s) = wl_state_code_fupd (K c)`,
+ (`!c. (\s:(A,C,FFI)wl_state. wl_state_code_fupd (combin_K c) s) = wl_state_code_fupd (combin_K c)`,
   REWRITE_TAC[ETA_AX]);;
 
 let WELIMAUX_EVAL_CODE_TAC : tactic =
@@ -1264,8 +1264,8 @@ let WELIMAUX_EVAL_CODE_TAC : tactic =
 
 let WELIMAUX_evaluate_code =
   let tmpl = `!c (s:(A,C,FFI)wl_state).
-     wl_evaluate (p:(A)wl_prog, wl_state_code_fupd (K c) s) =
-     (I ## wl_state_code_fupd (K c)) (wl_evaluate (p, s))` in
+     wl_evaluate (p:(A)wl_prog, wl_state_code_fupd (combin_K c) s) =
+     (I ## wl_state_code_fupd (combin_K c)) (wl_evaluate (p, s))` in
   let stmt pat = list_mk_forall(frees pat, vsubst [pat,`p:(A)wl_prog`] tmpl) in
   let pats =
     [`wl_Skip:(A)wl_prog`; `wl_Alloc n names:(A)wl_prog`;
@@ -1304,7 +1304,7 @@ let WELIMAUX_fls_unset_var = prove
 let WELIMAUX_fls_const_writes = prove
  (`!a off words (s:(A,C,FFI)wl_state).
      domain (find_loc_state (wl_state_memory_fupd
-       (K (const_writes a off words (wl_state_memory s))) s)) SUBSET
+       (combin_K (const_writes a off words (wl_state_memory s))) s)) SUBSET
      domain (find_loc_state s)`,
   REPEAT GEN_TAC THEN
   SUBGOAL_THEN `domain (get_memory (const_writes a off words
@@ -1591,7 +1591,7 @@ let WELIMAUX_rel_fupd = prove
  (`!reachable (s:(A,C,FFI)wl_state) c.
      word_elimProof_code_rel reachable c (wl_state_code s) /\
      domain (find_loc_state s) SUBSET domain reachable
-     ==> word_state_rel reachable s (wl_state_code_fupd (K c) s)`,
+     ==> word_state_rel reachable s (wl_state_code_fupd (combin_K c) s)`,
   SIMP[word_state_rel_def]);;
 
 let WELIMAUX_is_eval_eq th =
@@ -1619,8 +1619,8 @@ let WELIMAUX_SIMPLE_TAC (safe:thm) : tactic =
 let WELIMAUX_rel_clock_termdep = prove
  (`!reachable (s:(A,C,FFI)wl_state) t c d.
      word_state_rel reachable s t
-     ==> word_state_rel reachable (wl_state_clock_fupd (K c) (wl_state_termdep_fupd (K d) s))
-                                  (wl_state_clock_fupd (K c) (wl_state_termdep_fupd (K d) t))`,
+     ==> word_state_rel reachable (wl_state_clock_fupd (combin_K c) (wl_state_termdep_fupd (combin_K d) s))
+                                  (wl_state_clock_fupd (combin_K c) (wl_state_termdep_fupd (combin_K d) t))`,
   REWRITE_TAC[word_state_rel_def; domain_find_loc_state] THEN SIMP[]);;
 
 let WELIMAUX_rel_fields = prove
@@ -1662,15 +1662,15 @@ let WELIMAUX_MT_TAC : tactic =
    [REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN ASM_MESON_TAC[]; ALL_TAC] THEN
   REMOVE_THEN "ih" (MP_TAC o C MATCH_MP
     (ASSUME `~(wl_state_termdep (s:(A,C,FFI)wl_state) = 0)`)) THEN
-  CASES_ON `wl_evaluate (p, wl_state_clock_fupd (K (MustTerminate_limit (:A)))
-             (wl_state_termdep_fupd (K (wl_state_termdep (s:(A,C,FFI)wl_state) - 1)) s))` THEN
+  CASES_ON `wl_evaluate (p, wl_state_clock_fupd (combin_K (MustTerminate_limit (:A)))
+             (wl_state_termdep_fupd (combin_K (wl_state_termdep (s:(A,C,FFI)wl_state) - 1)) s))` THEN
   REWRITE_TAC[pair_CASE] THEN COND_CASES_TAC THENL
    [REWRITE_TAC[PAIR_EQ] THEN REPEAT STRIP_TAC THEN ASM_MESON_TAC[]; ALL_TAC] THEN
   REWRITE_TAC[PAIR_EQ] THEN REPEAT STRIP_TAC THEN RVEQ_TAC THEN
   FIRST_X_ASSUM(MP_TAC o SPECL [`result:((A)wl_result)option`; `y:(A,C,FFI)wl_state`;
      `reachable:1 spt`;
-     `wl_state_clock_fupd (K (MustTerminate_limit (:A)))
-        (wl_state_termdep_fupd (K (wl_state_termdep (s:(A,C,FFI)wl_state) - 1))
+     `wl_state_clock_fupd (combin_K (MustTerminate_limit (:A)))
+        (wl_state_termdep_fupd (combin_K (wl_state_termdep (s:(A,C,FFI)wl_state) - 1))
            (removed_state:(A,C,FFI)wl_state))`]) THEN
   ANTS_TAC THENL
    [ASM_REWRITE_TAC[] THEN
@@ -1997,8 +1997,8 @@ let WELIMAUX_rel_flush_stack = prove
  (`!reachable (s:(A,C,FFI)wl_state) t m.
      word_state_rel reachable s t
      ==> word_state_rel reachable
-           (wl_flush_state T (wl_state_stack_fupd (K []) (wl_state_stack_max_fupd (K m) s)))
-           (wl_flush_state T (wl_state_stack_fupd (K []) (wl_state_stack_max_fupd (K m) t)))`,
+           (wl_flush_state T (wl_state_stack_fupd (combin_K []) (wl_state_stack_max_fupd (combin_K m) s)))
+           (wl_flush_state T (wl_state_stack_fupd (combin_K []) (wl_state_stack_max_fupd (combin_K m) t)))`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP WELIMAUX_word_state_rel_fls) THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP WELIMAUX_rel_fields) THEN
@@ -2022,7 +2022,7 @@ let WELIMAUX_find_word_ref_call = prove
      (!n h l1 l2. handler = SOME (n,h,l1,l2) ==> domain (find_word_ref h) SUBSET domain r)`,
   REWRITE_TAC[RIGHT_FORALL_IMP_THM] THEN
   REWRITE_TAC[FORALL_OPTION_THM; FORALL_PAIR_THM] THEN
-  REWRITE_TAC[find_word_ref_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[find_word_ref_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[domain_union; UNION_SUBSET; domain_insert; INSERT_SUBSET; domain_def;
     EMPTY_SUBSET; option_DISTINCT; option_INJ; PAIR_EQ] THEN
   MESON_TAC[]);;
@@ -2033,7 +2033,7 @@ let WELIMAUX_no_install_call = prove
      (!n names rh l1 l2. ret = SOME (n,names,rh,l1,l2) ==> wordConvs_no_install rh) /\
      (!n h l1 l2. handler = SOME (n,h,l1,l2) ==> wordConvs_no_install h)`,
   REWRITE_TAC[FORALL_OPTION_THM; FORALL_PAIR_THM] THEN
-  REWRITE_TAC[wordConvs_no_install_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[wordConvs_no_install_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[distinctness "wl_prog"; option_DISTINCT; option_INJ; PAIR_EQ] THEN
   MESON_TAC[]);;
 
@@ -2506,13 +2506,13 @@ let word_removal_thm = prove
      reachable = closure_spt (insert start one LN) (analyse_word_code code1) /\
      ALL_DISTINCT (MAP FST code1) /\ no_install_code (wl_state_code state)
      ==> ?s. wl_evaluate (wl_Call NONE (SOME start) [0] NONE,
-               wl_state_code_fupd (K (fromAList (remove_word_code reachable code1)))
+               wl_state_code_fupd (combin_K (fromAList (remove_word_code reachable code1)))
                  state) = (result,s)`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   MP_TAC(ISPECL [`wl_Call NONE (SOME start) [0] NONE:(A)wl_prog`;
     `state:(A,C,FFI)wl_state`; `result:((A)wl_result)option`;
     `new_state:(A,C,FFI)wl_state`; `reachable:1 spt`;
-    `wl_state_code_fupd (K (fromAList (remove_word_code (reachable:1 spt)
+    `wl_state_code_fupd (combin_K (fromAList (remove_word_code (reachable:1 spt)
        (code1:(num#num#(A)wl_prog)list)))) (state:(A,C,FFI)wl_state)`]
     word_removal_lemma) THEN
   ANTS_TAC THENL [ALL_TAC; MESON_TAC[]] THEN
@@ -2529,14 +2529,14 @@ let word_removal_thm = prove
     SIMP_TAC[domain_lookup; IS_SOME_EXISTS];
     (* no_install *)
     REWRITE_TAC[wordConvs_no_install_def; distinctness "wl_prog"] THEN
-    CASE_REWRITE_TAC[];
+    CAKE_REWRITE_TAC[];
     (* no_install_code *)
     UNDISCH_TAC `no_install_code (wl_state_code (state:(A,C,FFI)wl_state))` THEN
     ASM_REWRITE_TAC[] THEN SIMP[] THEN
     REWRITE_TAC[no_install_code_def; lookup_fromAList; WELIMAUX_ALOOKUP_remove] THEN
     MESON_TAC[option_DISTINCT];
     (* find_word_ref *)
-    ASM_REWRITE_TAC[find_word_ref_def] THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[find_word_ref_def] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[domain_union; domain_insert; domain_def; UNION_EMPTY;
                 SING_SUBSET; IN_ELIM_THM; IN_INSERT; NOT_IN_EMPTY] THEN
     MESON_TAC[is_reachable_def; RTC_REFL];

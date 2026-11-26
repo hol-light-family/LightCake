@@ -27,11 +27,11 @@ let LTTP4AUX_sim = prove
  (`!(mc_conf:(A,B,C)machine_config) p (ms:B) (s1:(A,lab_to_target_config,FFI)lab_state) k
      res s2.
      encoder_correct (machine_config_target mc_conf) /\ init_ok (mc_conf,p) s1 ms /\
-     lab_evaluate (lab_state_clock_fupd (K k) s1) = (res,s2) /\ ~(res = target_Error)
+     lab_evaluate (lab_state_clock_fupd (combin_K k) s1) = (res,s2) /\ ~(res = target_Error)
      ==> ?k' ms2. target_evaluate mc_conf (lab_state_ffi s1) (k + k') ms =
                   (res,ms2,lab_state_ffi s2)`,
   REWRITE_TAC[init_ok_def] THEN REPEAT STRIP_TAC THEN
-  MP_TAC(ISPECL [`lab_state_clock_fupd (K k) (s1:(A,lab_to_target_config,FFI)lab_state)`;
+  MP_TAC(ISPECL [`lab_state_clock_fupd (combin_K k) (s1:(A,lab_to_target_config,FFI)lab_state)`;
                  `res:machine_result`; `mc_conf:(A,B,C)machine_config`;
                  `s2:(A,lab_to_target_config,FFI)lab_state`; `code2:((A)sec)list`;
                  `labs:(num spt)spt`; `t1:(A)asm_state`; `ms:B`; `p:A word`]
@@ -112,21 +112,21 @@ let LTTP4AUX_lub_equiv = prove
 let LTTP4AUX_machine_sem_Diverge = prove
  (`!(mc_conf:(A,B,C)machine_config) p (ms:B) (s1:(A,lab_to_target_config,FFI)lab_state).
      encoder_correct (machine_config_target mc_conf) /\ init_ok (mc_conf,p) s1 ms /\
-     (!k. FST (lab_evaluate (lab_state_clock_fupd (K k) s1)) = target_TimeOut)
+     (!k. FST (lab_evaluate (lab_state_clock_fupd (combin_K k) s1)) = target_TimeOut)
      ==> machine_sem mc_conf (lab_state_ffi s1) ms =
          {Diverge (build_lprefix_lub
             (IMAGE (\k. llist_fromList (ffi_state_io_events
-               (lab_state_ffi (SND (lab_evaluate (lab_state_clock_fupd (K k) s1)))))) (:num)))}`,
+               (lab_state_ffi (SND (lab_evaluate (lab_state_clock_fupd (combin_K k) s1)))))) (:num)))}`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   ABBREV_TAC `g = \k. ffi_state_io_events
-     (lab_state_ffi (SND (lab_evaluate (lab_state_clock_fupd (K k)
+     (lab_state_ffi (SND (lab_evaluate (lab_state_clock_fupd (combin_K k)
         (s1:(A,lab_to_target_config,FFI)lab_state)))))` THEN
   ABBREV_TAC `f = \k. ffi_state_io_events (SND (SND (target_evaluate
      (mc_conf:(A,B,C)machine_config) (lab_state_ffi (s1:(A,lab_to_target_config,FFI)lab_state))
      k (ms:B))))` THEN
   SUBGOAL_THEN `!k. ?k' ms2. target_evaluate (mc_conf:(A,B,C)machine_config)
       (lab_state_ffi (s1:(A,lab_to_target_config,FFI)lab_state)) (k + k') (ms:B) =
-      (target_TimeOut,ms2,lab_state_ffi (SND (lab_evaluate (lab_state_clock_fupd (K k) s1))))`
+      (target_TimeOut,ms2,lab_state_ffi (SND (lab_evaluate (lab_state_clock_fupd (combin_K k) s1))))`
     (LABEL_TAC "sim") THENL
    [GEN_TAC THEN MATCH_MP_TAC LTTP4AUX_sim THEN EXISTS_TAC `p:A word` THEN
     ASM_REWRITE_TAC[distinctness "machine_result"] THEN
@@ -156,7 +156,7 @@ let LTTP4AUX_machine_sem_Diverge = prove
    [EXPAND_TAC "g" THEN REPEAT STRIP_TAC THEN
     FIRST_X_ASSUM(X_CHOOSE_THEN `d:num` SUBST1_TAC o REWRITE_RULE[LE_EXISTS]) THEN
     MP_TAC(ISPECL [`d:num`;
-                   `lab_state_clock_fupd (K k1) (s1:(A,lab_to_target_config,FFI)lab_state)`]
+                   `lab_state_clock_fupd (combin_K k1) (s1:(A,lab_to_target_config,FFI)lab_state)`]
                   (GEN `extra:num` lab_evaluate_add_clock_io_events_mono)) THEN
     SIMP[];
     ALL_TAC] THEN
@@ -196,10 +196,10 @@ let machine_sem_EQ_sem = prove
                                    fst(dest_const(rator t)) = "some") w in
       MP_TAC(ISPEC (rand tm) LTTP4AUX_some_cases)) THEN
   BETA_TAC THEN DISCH_THEN(DISJ_CASES_THEN STRIP_ASSUME_TAC) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN TRY DISCH_TAC THENL
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN TRY DISCH_TAC THENL
    [MATCH_MP_TAC LTTP4AUX_machine_sem_Diverge THEN EXISTS_TAC `p:A word` THEN
     ASM_REWRITE_TAC[] THEN X_GEN_TAC `k:num` THEN
-    SUBGOAL_THEN `?r t. lab_evaluate (lab_state_clock_fupd (K k)
+    SUBGOAL_THEN `?r t. lab_evaluate (lab_state_clock_fupd (combin_K k)
                     (s1:(A,lab_to_target_config,FFI)lab_state)) = (r,t)`
       STRIP_ASSUME_TAC THENL [MESON_TAC[PAIR]; ALL_TAC] THEN
     ASM_REWRITE_TAC[] THEN
@@ -329,7 +329,7 @@ let LTTP4AUX_get_shmem_info_APPEND = prove
   REWRITE_TAC[get_shmem_info_def] THEN DISCH_TAC THEN
   SUBGOAL_THEN `?name nb. get_memop_info m = (name,nb:byte)` STRIP_ASSUME_TAC THENL
    [MESON_TAC[PAIR]; ALL_TAC] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   FIRST_X_ASSUM(MP_TAC o SPECL [`name:shmem_op`; `nb:byte`]) THEN
   ASM_REWRITE_TAC[GSYM APPEND_ASSOC]);;
 
@@ -435,7 +435,7 @@ let LTTP4AUX_get_shmem_info_thm = prove
     FIRST_X_ASSUM(MP_TAC o SPEC `p' + LENGTH (bytes:byte list)`) THEN ASM_REWRITE_TAC[] THEN
     DISCH_TAC THEN ASM_SIMP_TAC[LTTP4AUX_MAP_line_to_info; is_Label_def] THEN
     REWRITE_TAC[get_shmem_info_def; line_to_info_def; line_length_def] THEN
-    CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[FLAT; APPEND] in
+    CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[FLAT; APPEND] in
   GEN_TAC THEN GEN_TAC THEN GEN_TAC THEN MATCH_MP_TAC get_shmem_info_ind THEN
   REPEAT CONJ_TAC THENL
    [REWRITE_TAC[get_shmem_info_def; num_pcs_def; list_of_seq; MAP; FLAT; APPEND_NIL];
@@ -464,7 +464,7 @@ let LTTP4AUX_get_shmem_info_thm = prove
     DISCH_TAC THEN
     ASM_SIMP_TAC[LTTP4AUX_MAP_line_to_info; is_Label_def] THEN
     ASM_REWRITE_TAC[get_shmem_info_def; line_to_info_def; line_length_def] THEN
-    CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
     FIRST_X_ASSUM(fun th -> REWRITE_TAC[th]) THEN
     REWRITE_TAC[pos_val_def; is_Label_def; FLAT; MAP; GSYM APPEND_ASSOC; APPEND];
     tac_other; tac_other; tac_other]);;
@@ -479,7 +479,7 @@ let get_shmem_info_thm = prove
           (APPEND ffi_names new_ffis,APPEND shmem_info new_info))`,
   REPEAT STRIP_TAC THEN FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP LTTP4AUX_get_shmem_info_thm
       th]) THEN
-  REWRITE_TAC[UNZIP_DEF] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[UNZIP_DEF] THEN CAKE_REWRITE_TAC[]);;
 
 (* HOL4 line 9745 *)
 let FILTER_NOT_MEM_Mapped = prove
@@ -547,8 +547,8 @@ let MEM_get_shmem_info = prove
     EXISTS_TAC `pc:num` THEN REWRITE_TAC[] THEN
     MATCH_MP_TAC asm_fetch_SOME_IMP_LESS_num_pcs THEN ASM_MESON_TAC[];
     ALL_TAC] THEN
-  ASM_REWRITE_TAC[line_to_info_def] THEN CASE_REWRITE_TAC[] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[MEM; PAIR_EQ] THEN
+  ASM_REWRITE_TAC[line_to_info_def] THEN CAKE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[MEM; PAIR_EQ] THEN
   AP_TERM_TAC THEN ONCE_REWRITE_TAC[GSYM pos_val_acc_0] THEN ARITH_TAC);;
 
 (* HOL4 line 9811 *)
@@ -618,8 +618,8 @@ let line_to_info_offset_FST_eq = prove
 let line_to_info_offset_SND_eq = prove
  (`!(code:((A)sec)list) p accum.
      MAP SND (line_to_info code p accum) =
-     MAP (\x. shmem_info_num_entry_pc_fupd (K (p + shmem_info_num_entry_pc (SND x)))
-                (shmem_info_num_exit_pc_fupd (K (p + shmem_info_num_exit_pc (SND x))) (SND x)))
+     MAP (\x. shmem_info_num_entry_pc_fupd (combin_K (p + shmem_info_num_entry_pc (SND x)))
+                (shmem_info_num_exit_pc_fupd (combin_K (p + shmem_info_num_exit_pc (SND x))) (SND x)))
        (line_to_info code 0 accum)`,
   REWRITE_TAC[line_to_info_def] THEN REPEAT GEN_TAC THEN
   TOP_CASE_TAC THEN REWRITE_TAC[MAP] THEN TOP_CASE_TAC THEN REWRITE_TAC[MAP] THEN
@@ -632,8 +632,8 @@ let get_shmem_info_init_pc_offset = prove
  (`!(c:(A)asm_config) labs ffis p' (code:((A)sec)list) p.
      all_enc_ok c labs ffis p' code
      ==> FST (get_shmem_info code 0 [] []) = FST (get_shmem_info code p [] []) /\
-         MAP (\rec. shmem_info_num_entry_pc_fupd (K (p + shmem_info_num_entry_pc rec))
-                      (shmem_info_num_exit_pc_fupd (K (p + shmem_info_num_exit_pc rec)) rec))
+         MAP (\rec. shmem_info_num_entry_pc_fupd (combin_K (p + shmem_info_num_entry_pc rec))
+                      (shmem_info_num_exit_pc_fupd (combin_K (p + shmem_info_num_exit_pc rec)) rec))
            (SND (get_shmem_info code 0 [] [])) =
          SND (get_shmem_info code p [] [])`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN
@@ -723,7 +723,7 @@ let get_shmem_info_ok_lemma = prove
    REWRITE_TAC[option_INJ] THEN STRIP_TAC THEN FIRST_X_ASSUM(SUBST_ALL_TAC o SYM) THEN
    SUBGOAL_THEN `?q r. get_memop_info op = (q,r:byte)` STRIP_ASSUME_TAC THENL
     [MESON_TAC[PAIR]; ALL_TAC] THEN
-   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+   ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
    MP_TAC(ISPECL [`c:(A)asm_config`; `labs:(num spt)spt`; `ffis':ffiname list`; `p':num`;
      `code2:((A)sec)list`; `pc:num`; `op:memop`; `re:num`; `a:(A)addr`; `inst:byte list`;
      `len:num`; `q:shmem_op`; `r:byte`; `p:num`] MEM_get_shmem_info) THEN
@@ -942,8 +942,8 @@ let LTTP4AUX_get_shmem_info_shift = prove
      get_shmem_info code2 0 [] [] = (new_ffi_names,shmem_info)
      ==> get_shmem_info code2 p l [] =
          (APPEND l new_ffi_names,
-          MAP (\rec. shmem_info_num_entry_pc_fupd (K (p + shmem_info_num_entry_pc rec))
-                       (shmem_info_num_exit_pc_fupd (K (p + shmem_info_num_exit_pc rec)) rec))
+          MAP (\rec. shmem_info_num_entry_pc_fupd (combin_K (p + shmem_info_num_entry_pc rec))
+                       (shmem_info_num_exit_pc_fupd (combin_K (p + shmem_info_num_exit_pc rec)) rec))
               shmem_info)`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   MP_TAC(ISPECL [`code2:((A)sec)list`; `p:num`; `[]:ffiname list`; `[]:shmem_info_num list`;
@@ -989,10 +989,10 @@ let IMP_state_rel_make_init = prove
      get_shmem_info code2 0 [] [] = (new_ffi_names,shmem_info) /\
      new_shmem_info =
        MAP (\rec. shmem_info_num_entry_pc_fupd
-                    (K (val (target_get_pc (machine_config_target mc_conf) ms) +
+                    (combin_K (val (target_get_pc (machine_config_target mc_conf) ms) +
                         shmem_info_num_entry_pc rec))
                     (shmem_info_num_exit_pc_fupd
-                       (K (val (target_get_pc (machine_config_target mc_conf) ms) +
+                       (combin_K (val (target_get_pc (machine_config_target mc_conf) ms) +
                            shmem_info_num_exit_pc rec)) rec)) shmem_info /\
      DROP i (machine_config_ffi_names mc_conf) = new_ffi_names /\
      mmio_pcs_min_index (machine_config_ffi_names mc_conf) = SOME i /\
@@ -1029,7 +1029,7 @@ let IMP_state_rel_make_init = prove
     UNDISCH_TAC `mc_conf_ok (mc_conf:(A,B,C)machine_config)` THEN
     ASM_REWRITE_TAC[lab_to_targetProof_good_code_def; mc_conf_ok_def; EVEN] THEN
     REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
-    REWRITE_TAC[lab_lookup_def; lookup_def] THEN CASE_REWRITE_TAC[OPTION_ALL_def];
+    REWRITE_TAC[lab_lookup_def; lookup_def] THEN CAKE_REWRITE_TAC[OPTION_ALL_def];
     ALL_TAC] THEN
   STRIP_TAC THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o REWRITE_RULE[good_init_state_def; target_configured_def;
@@ -1116,11 +1116,11 @@ let IMP_state_rel_make_init = prove
       ASSUME_TAC)) THEN
     USE_THEN "all" (MP_TAC o REWRITE_RULE[ASSUME
       `(coracle:num->lab_to_target_config#((A)sec)list) k = (x,y)`] o SPEC `k:num`) THEN
-    ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
     STRIP_TAC THEN ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST_ALL_TAC THEN
     USE_THEN "zero" (MP_TAC o REWRITE_RULE[ASSUME
       `(coracle:num->lab_to_target_config#((A)sec)list) 0 = (x,y)`]) THEN
-    CASE_REWRITE_TAC[];
+    CAKE_REWRITE_TAC[];
     ALL_TAC] THEN
   CONJ_TAC THENL [ONCE_REWRITE_TAC[WORD_AND_SYM] THEN ASM_REWRITE_TAC[]; ALL_TAC] THEN
   CONJ_TAC THENL
@@ -1146,7 +1146,7 @@ let IMP_state_rel_make_init = prove
       FIRST_ASSUM(MP_TAC o SPEC `0` o MATCH_MP find_index_MEM o check (fun th ->
         is_comb(concl th) && (try fst(dest_const(fst(strip_comb(concl th)))) = "MEM"
                               with Failure _ -> false))) THEN
-      STRIP_TAC THEN ASM_REWRITE_TAC[the_eqn; ADD_CLAUSES] THEN CASE_REWRITE_TAC[] THEN
+      STRIP_TAC THEN ASM_REWRITE_TAC[the_eqn; ADD_CLAUSES] THEN CAKE_REWRITE_TAC[] THEN
       ASM_REWRITE_TAC[];
       ALL_TAC] THEN
     CONJ_TAC THENL
@@ -1179,7 +1179,7 @@ let IMP_state_rel_make_init = prove
         can (find_term (fun t -> try fst(dest_const t) = "get_byte" with Failure _ -> false))
           (concl th) then MP_TAC (SPEC `a:A word` th) else NO_TAC) THEN
     STRIP_TAC THEN ASM_REWRITE_TAC[word_loc_val_byte_def; word_loc_val_def] THEN
-    CASE_REWRITE_TAC[];
+    CAKE_REWRITE_TAC[];
     ALL_TAC] THEN
   CONJ_TAC THENL
    [X_GEN_TAC `n:num` THEN DISCH_TAC THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
@@ -1310,7 +1310,7 @@ let IMP_state_rel_make_init = prove
           is_eq(concl th) && rand(concl th) = `SOME (i:num)`)) THEN
       ASM_REWRITE_TAC[] THEN DISCH_THEN(X_CHOOSE_TAC `op:shmem_op`) THEN
       EXISTS_TAC `op:shmem_op` THEN ASM_REWRITE_TAC[] THEN
-      CASES_ON `op:shmem_op` THEN CASE_REWRITE_TAC[] THEN
+      CASES_ON `op:shmem_op` THEN CAKE_REWRITE_TAC[] THEN
       RULE_ASSUM_TAC(REWRITE_RULE[FST; SND]) THEN STRIP_TAC THEN
       FIRST_ASSUM(fun eq -> FIRST_X_ASSUM(fun imp -> MP_TAC (MP imp eq))) THEN
       MESON_TAC[];
@@ -1499,7 +1499,7 @@ let IMP_state_rel_make_init = prove
       MP_TAC(ISPECL [`TAKE i (machine_config_ffi_entry_pcs (mc_conf:(A,B,C)machine_config))`;
         `word_add (target_get_pc (machine_config_target (mc_conf:(A,B,C)machine_config)) (ms:B))
            (word (pos_val pc' 0 (code2:((A)sec)list)))`; `0`] find_index_NOT_MEM) THEN
-      ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN CASE_REWRITE_TAC[] THEN
+      ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN CAKE_REWRITE_TAC[] THEN
       ONCE_REWRITE_TAC[find_index_shift_0] THEN ASM_SIMP_TAC[LENGTH_TAKE; ADD_CLAUSES] THEN
       REWRITE_TAC[OPTION_MAP_DEF];
       ALL_TAC] THEN
@@ -1510,7 +1510,7 @@ let IMP_state_rel_make_init = prove
     FIRST_X_ASSUM(MP_TAC o check (fun th -> can (find_term (fun t ->
       t = `get_memop_info op`)) (concl th) && not(is_eq(concl th) &&
       lhand(concl th) = `get_memop_info op`))) THEN
-    ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
     SUBGOAL_THEN `index < LENGTH (shmem_info:shmem_info_num list)` ASSUME_TAC THENL
      [FIRST_ASSUM(MP_TAC o MATCH_MP find_index_LESS_LENGTH o check (fun th -> is_eq(concl th) &&
         (try fst(dest_const(fst(strip_comb(lhand(concl th))))) = "find_index" with Failure _ ->
@@ -1534,7 +1534,7 @@ let IMP_state_rel_make_init = prove
     REWRITE_TAC[shmem_info_num_INFO.ri_accessors; shmem_info_num_INFO.ri_accfupds; K_THM] THEN
     ASM_REWRITE_TAC[] THEN
     CONJ_TAC THENL
-     [CASES_ON `a:(A)addr` THEN CASE_REWRITE_TAC[WORD_VAL];
+     [CASES_ON `a:(A)addr` THEN CAKE_REWRITE_TAC[WORD_VAL];
       REWRITE_TAC[WORD_ADD; WORD_VAL]];
     MAP_EVERY X_GEN_TAC [`pc':num`; `line:(A)line`] THEN STRIP_TAC THEN
     USE_THEN "B" (MP_TAC o C MP (CONJ (ASSUME
@@ -1632,10 +1632,10 @@ let semantics_make_init = prove
      get_shmem_info code2 0 [] [] = (new_ffi_names,shmem_info) /\
      new_shmem_info =
        MAP (\rec. shmem_info_num_entry_pc_fupd
-                    (K (val (target_get_pc (machine_config_target mc_conf) ms) +
+                    (combin_K (val (target_get_pc (machine_config_target mc_conf) ms) +
                         shmem_info_num_entry_pc rec))
                     (shmem_info_num_exit_pc_fupd
-                       (K (val (target_get_pc (machine_config_target mc_conf) ms) +
+                       (combin_K (val (target_get_pc (machine_config_target mc_conf) ms) +
                            shmem_info_num_exit_pc rec)) rec)) shmem_info /\
      DROP i (machine_config_ffi_names mc_conf) = new_ffi_names /\
      mmio_pcs_min_index (machine_config_ffi_names mc_conf) = SOME i /\
@@ -1720,7 +1720,7 @@ let find_ffi_names_filter_skip = prove
     GEN_REWRITE_TAC (RAND_CONV o ONCE_DEPTH_CONV) [find_ffi_names_def] THEN
     ASM_REWRITE_TAC[];
     FIRST_X_ASSUM(MP_TAC o REWRITE_RULE[STACKPROPSAUX_not_skip_eq]) THEN
-    STRIP_TAC THEN ASM_REWRITE_TAC[find_ffi_names_def] THEN CASE_REWRITE_TAC[]]);;
+    STRIP_TAC THEN ASM_REWRITE_TAC[find_ffi_names_def] THEN CAKE_REWRITE_TAC[]]);;
 
 (* HOL4 line 10564 *)
 let all_enc_ok_pre_filter_skip = prove
@@ -2024,7 +2024,7 @@ let LTTP4AUX_compile_SOME = prove
   REPEAT GEN_TAC THEN
   REWRITE_TAC[lab_to_target_compile_def; compile_lab_def; LET_DEF; LET_END_DEF;
               find_ffi_names_filter_skip] THEN
-  CASES_ON `lab_to_target_config_ffi_names (c:lab_to_target_config)` THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON `lab_to_target_config_ffi_names (c:lab_to_target_config)` THEN CAKE_REWRITE_TAC[] THEN
   TRY COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT] THEN
   TOP_CASE_TAC THEN REWRITE_TAC[option_DISTINCT] THEN
   TOP_CASE_TAC THEN TOP_CASE_TAC THEN REWRITE_TAC[option_INJ; PAIR_EQ] THEN STRIP_TAC THEN
@@ -2063,12 +2063,12 @@ let LTTP4AUX_good_code_filter_skip = prove
                   (\s. match s with Section _ ls -> ~NULL ls /\ is_Label (LAST ls))`)
       SUBST1_TAC THENL
      [REWRITE_TAC[FUN_EQ_THM] THEN GEN_TAC THEN CASES_ON `x:(A)sec` THEN
-      CASE_REWRITE_TAC[sec_ends_with_label_def];
+      CAKE_REWRITE_TAC[sec_ends_with_label_def];
       MATCH_MP_TAC sec_ends_with_label_filter_skip THEN
       UNDISCH_TAC `ALL sec_ends_with_label (code:((A)sec)list)` THEN
       MATCH_MP_TAC(TAUT `(a <=> b) ==> a ==> b`) THEN AP_THM_TAC THEN AP_TERM_TAC THEN
       REWRITE_TAC[FUN_EQ_THM] THEN GEN_TAC THEN CASES_ON `x:(A)sec` THEN
-      CASE_REWRITE_TAC[sec_ends_with_label_def]];
+      CAKE_REWRITE_TAC[sec_ends_with_label_def]];
     UNDISCH_TAC `ALL (ALL_DISTINCT o lab_extract_labels o Section_lines) (code:((A)sec)list)` THEN
     REWRITE_TAC[GSYM ALL_MAP; filter_skip_extract_labels]]);;
 
@@ -2082,7 +2082,7 @@ let LTTP4AUX_compiler_oracle_ok_filter_skip = prove
   REWRITE_TAC[SKOLEM_THM] THEN
   DISCH_THEN(X_CHOOSE_THEN `xf:num->lab_to_target_config`
     (X_CHOOSE_THEN `yf:num->((A)sec)list` ASSUME_TAC)) THEN
-  ASM_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN CAKE_REWRITE_TAC[] THEN
   MESON_TAC[LTTP4AUX_good_code_filter_skip; no_share_mem_filter_skip]);;
 
 let LTTP4AUX_ffi_pc_neq = prove
@@ -2163,7 +2163,7 @@ let semantics_compile_lemma' = prove
    [UNDISCH_TAC (CASE_TERM `(match lab_to_target_config_ffi_names c with
                     SOME fs -> ffis = fs /\ list_subset (find_ffi_names (code:((A)sec)list)) fs
                   | NONE -> ffis = find_ffi_names code)`) THEN
-    CASES_ON `lab_to_target_config_ffi_names c` THEN CASE_REWRITE_TAC[] THEN STRIP_TAC THEN
+    CASES_ON `lab_to_target_config_ffi_names c` THEN CAKE_REWRITE_TAC[] THEN STRIP_TAC THEN
     ASM_SIMP_TAC[] THEN ASM_MESON_TAC[find_ffi_names_EVERY];
     ALL_TAC] THEN
   SUBGOAL_THEN `i = LENGTH (ffis:ffiname list)` SUBST_ALL_TAC THENL
@@ -2193,11 +2193,11 @@ let semantics_compile_lemma' = prove
     `m:A word->(A)word_loc`; `dm:A word->bool`; `sdm:A word->bool`; `new_ffis:ffiname list`;
     `shmem_infos:shmem_info_num list`;
     `MAP (\rec. shmem_info_num_entry_pc_fupd
-                   (K (val (target_get_pc (machine_config_target (mc_conf:(A,B,C)machine_config))
+                   (combin_K (val (target_get_pc (machine_config_target (mc_conf:(A,B,C)machine_config))
                               (ms:B)) +
                        shmem_info_num_entry_pc rec))
                    (shmem_info_num_exit_pc_fupd
-                      (K (val (target_get_pc (machine_config_target mc_conf) ms) +
+                      (combin_K (val (target_get_pc (machine_config_target mc_conf) ms) +
                           shmem_info_num_exit_pc rec)) rec)) shmem_infos`;
     `ffi:(FFI)ffi_state`] semantics_make_init) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[ASSUME `lab_to_target_config_pos c = 0`;
@@ -2223,7 +2223,7 @@ let semantics_compile_lemma' = prove
     UNDISCH_TAC (CASE_TERM `(match lab_to_target_config_ffi_names c with
                     SOME fs -> ffis = fs /\ list_subset (find_ffi_names (code:((A)sec)list)) fs
                   | NONE -> ffis = find_ffi_names code)`) THEN
-    CASES_ON `lab_to_target_config_ffi_names c` THEN CASE_REWRITE_TAC[] THEN STRIP_TAC THEN
+    CASES_ON `lab_to_target_config_ffi_names c` THEN CAKE_REWRITE_TAC[] THEN STRIP_TAC THEN
     ASM_REWRITE_TAC[list_subset_refl];
     ALL_TAC] THEN
   CONJ_TAC THENL

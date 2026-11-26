@@ -53,7 +53,7 @@ let buffer_flush_def = cake_def
           (word_mul (word (dimindex(:B) DIV 8))
                     (word (LENGTH (buffer_buffer cb)))) = w2
      then SOME (buffer_buffer cb,
-                buffer_position_fupd (K w2) (buffer_buffer_fupd (K []) cb))
+                buffer_position_fupd (combin_K w2) (buffer_buffer_fupd (combin_K []) cb))
      else NONE`;;
 
 let buffer_write_def = cake_def
@@ -62,8 +62,8 @@ let buffer_write_def = cake_def
           (word_mul (word (dimindex(:B) DIV 8))
                     (word (LENGTH (buffer_buffer cb)))) = w /\
         0 < buffer_space_left cb
-     then SOME (buffer_buffer_fupd (K (APPEND (buffer_buffer cb) [b]))
-                  (buffer_space_left_fupd (K (buffer_space_left cb - 1)) cb))
+     then SOME (buffer_buffer_fupd (combin_K (APPEND (buffer_buffer cb) [b]))
+                  (buffer_space_left_fupd (combin_K (buffer_space_left cb - 1)) cb))
      else NONE`;;
 
 let is_fwd_ptr_def = cake_def
@@ -308,7 +308,7 @@ let isException_def = cake_def
 
 let wl_dec_clock_def = cake_def
   `wl_dec_clock (s:(A,C,FFI)wl_state) =
-     wl_state_clock_fupd (K (wl_state_clock s - 1)) s`;;
+     wl_state_clock_fupd (combin_K (wl_state_clock s - 1)) s`;;
 
 (* HOL4 infers the most general type: old_s and new_s are states of        *)
 (* independent types                                                         *)
@@ -317,9 +317,9 @@ let wl_fix_clock_def = cake_def
   `wl_fix_clock (old_s:(A,C,FFI)wl_state) (res:B,(new_s:(D,E,G)wl_state)) =
      (res,
       wl_state_clock_fupd
-        (K (if wl_state_clock old_s < wl_state_clock new_s
+        (combin_K (if wl_state_clock old_s < wl_state_clock new_s
             then wl_state_clock old_s else wl_state_clock new_s))
-        (wl_state_termdep_fupd (K (wl_state_termdep old_s)) new_s))`;;
+        (wl_state_termdep_fupd (combin_K (wl_state_termdep old_s)) new_s))`;;
 
 let is_word_def = cake_def
   `(is_word (wl_Word (w:A word)) <=> T) /\
@@ -335,7 +335,7 @@ let _ = cake_add_simps [get_word_def];;
 let wl_mem_store_def = cake_def
   `wl_mem_store (addr:A word) (w:(A)word_loc) (s:(A,C,FFI)wl_state) =
      if addr IN wl_state_mdomain s then
-       SOME (wl_state_memory_fupd (K ((addr =+ w) (wl_state_memory s))) s)
+       SOME (wl_state_memory_fupd (combin_K ((addr =+ w) (wl_state_memory s))) s)
      else NONE`;;
 
 let wl_mem_load_def = cake_def
@@ -364,22 +364,22 @@ let wl_get_vars_def = cake_def
 
 let wl_set_var_def = cake_def
   `wl_set_var v x (s:(A,C,FFI)wl_state) =
-     wl_state_locals_fupd (K (insert v x (wl_state_locals s))) s`;;
+     wl_state_locals_fupd (combin_K (insert v x (wl_state_locals s))) s`;;
 
 let wl_unset_var_def = cake_def
   `wl_unset_var v (s:(A,C,FFI)wl_state) =
-     wl_state_locals_fupd (K (delete v (wl_state_locals s))) s`;;
+     wl_state_locals_fupd (combin_K (delete v (wl_state_locals s))) s`;;
 
 let wl_set_vars_def = cake_def
   `wl_set_vars vs xs (s:(A,C,FFI)wl_state) =
-     wl_state_locals_fupd (K (alist_insert vs xs (wl_state_locals s))) s`;;
+     wl_state_locals_fupd (combin_K (alist_insert vs xs (wl_state_locals s))) s`;;
 
 let wl_get_store_def = cake_def
   `wl_get_store v (s:(A,C,FFI)wl_state) = FLOOKUP (wl_state_store s) v`;;
 
 let wl_set_store_def = cake_def
   `wl_set_store v x (s:(A,C,FFI)wl_state) =
-     wl_state_store_fupd (K (wl_state_store s |+ (v,x))) s`;;
+     wl_state_store_fupd (combin_K (wl_state_store s |+ (v,x))) s`;;
 
 let wl_word_exp_def = cake_def_wf
   `MEASURE (\p:(A,C,FFI)wl_state#(A)wl_exp. wl_exp_size (\x:A. 0) (SND p))`
@@ -426,12 +426,12 @@ let wl_word_exp_ind = prove
 
 let wl_flush_state_def = cake_def
   `(wl_flush_state T (s:(A,C,FFI)wl_state) =
-      wl_state_locals_fupd (K LN)
-        (wl_state_stack_fupd (K [])
-           (wl_state_store_fupd (K FEMPTY)
-              (wl_state_locals_size_fupd (K (SOME 0)) s)))) /\
+      wl_state_locals_fupd (combin_K LN)
+        (wl_state_stack_fupd (combin_K [])
+           (wl_state_store_fupd (combin_K FEMPTY)
+              (wl_state_locals_size_fupd (combin_K (SOME 0)) s)))) /\
    (wl_flush_state F s =
-      wl_state_locals_fupd (K LN) (wl_state_locals_size_fupd (K (SOME 0)) s))`;;
+      wl_state_locals_fupd (combin_K LN) (wl_state_locals_size_fupd (combin_K (SOME 0)) s))`;;
 
 let wl_sh_mem_store_def = cake_def
   `wl_sh_mem_store (a:A word) (w:A word) (s:(A,C,FFI)wl_state) =
@@ -440,7 +440,7 @@ let wl_sh_mem_store_def = cake_def
                (APPEND (word_to_bytes w F) (word_to_bytes a F)) with
          FFI_final outcome ->
            (SOME (wl_FinalFFI outcome:(W)wl_result), wl_flush_state T s)
-       | FFI_return new_ffi new_bytes -> (NONE, wl_state_ffi_fupd (K new_ffi) s)
+       | FFI_return new_ffi new_bytes -> (NONE, wl_state_ffi_fupd (combin_K new_ffi) s)
      else (SOME wl_Error, s)`;;
 
 let wl_sh_mem_load_def = cake_def
@@ -457,7 +457,7 @@ let wl_sh_mem_store_byte_def = cake_def
                (APPEND [get_byte (word 0) w F] (word_to_bytes a F)) with
          FFI_final outcome ->
            (SOME (wl_FinalFFI outcome:(W)wl_result), wl_flush_state T s)
-       | FFI_return new_ffi new_bytes -> (NONE, wl_state_ffi_fupd (K new_ffi) s)
+       | FFI_return new_ffi new_bytes -> (NONE, wl_state_ffi_fupd (combin_K new_ffi) s)
      else (SOME wl_Error, s)`;;
 
 let wl_sh_mem_store16_def = cake_def
@@ -467,7 +467,7 @@ let wl_sh_mem_store16_def = cake_def
                (APPEND (TAKE 2 (word_to_bytes w F)) (word_to_bytes a F)) with
          FFI_final outcome ->
            (SOME (wl_FinalFFI outcome:(W)wl_result), wl_flush_state T s)
-       | FFI_return new_ffi new_bytes -> (NONE, wl_state_ffi_fupd (K new_ffi) s)
+       | FFI_return new_ffi new_bytes -> (NONE, wl_state_ffi_fupd (combin_K new_ffi) s)
      else (SOME wl_Error, s)`;;
 
 let wl_sh_mem_store32_def = cake_def
@@ -477,7 +477,7 @@ let wl_sh_mem_store32_def = cake_def
                (APPEND (TAKE 4 (word_to_bytes w F)) (word_to_bytes a F)) with
          FFI_final outcome ->
            (SOME (wl_FinalFFI outcome:(W)wl_result), wl_flush_state T s)
-       | FFI_return new_ffi new_bytes -> (NONE, wl_state_ffi_fupd (K new_ffi) s)
+       | FFI_return new_ffi new_bytes -> (NONE, wl_state_ffi_fupd (combin_K new_ffi) s)
      else (SOME wl_Error, s)`;;
 
 let wl_sh_mem_load_byte_def = cake_def
@@ -508,7 +508,7 @@ let sh_mem_set_var_def = cake_def
       (SOME (wl_FinalFFI outcome:(W)wl_result), wl_flush_state T s)) /\
    (sh_mem_set_var (SOME (FFI_return new_ffi new_bytes)) v s =
       (NONE, wl_set_var v (wl_Word (word_of_bytes F (word 0) new_bytes))
-               (wl_state_ffi_fupd (K new_ffi) s))) /\
+               (wl_state_ffi_fupd (combin_K new_ffi) s))) /\
    (sh_mem_set_var _ _ s = (SOME wl_Error, s))`;;
 
 let share_inst_def = cake_def
@@ -536,10 +536,10 @@ let share_inst_def = cake_def
 
 let wl_call_env_def = cake_def
   `wl_call_env args (size':num option) (s:(A,C,FFI)wl_state) =
-     wl_state_locals_fupd (K (fromList2 args))
-       (wl_state_locals_size_fupd (K size')
+     wl_state_locals_fupd (combin_K (fromList2 args))
+       (wl_state_locals_size_fupd (combin_K size')
           (wl_state_stack_max_fupd
-             (K (OPTION_MAP2 MAX (wl_state_stack_max s)
+             (combin_K (OPTION_MAP2 MAX (wl_state_stack_max s)
                    (OPTION_MAP2 (+) (wl_stack_size (wl_state_stack s)) size')))
              s))`;;
 
@@ -585,21 +585,21 @@ let wl_push_env_def = cake_def
       let (l,permute) = env_to_list (SND envs) (wl_state_permute s) in
       let stack = CONS (StackFrame (wl_state_locals_size s) l0 l NONE)
                        (wl_state_stack s) in
-        wl_state_stack_fupd (K stack)
+        wl_state_stack_fupd (combin_K stack)
           (wl_state_stack_max_fupd
-             (K (OPTION_MAP2 MAX (wl_state_stack_max s) (wl_stack_size stack)))
-             (wl_state_permute_fupd (K permute) s))) /\
+             (combin_K (OPTION_MAP2 MAX (wl_state_stack_max s) (wl_stack_size stack)))
+             (wl_state_permute_fupd (combin_K permute) s))) /\
    (wl_push_env envs (SOME (w:num,h:(A)wl_prog,l1,l2)) s =
       let l0 = toAList (FST envs) in
       let (l,permute) = env_to_list (SND envs) (wl_state_permute s) in
       let handler = SOME (wl_state_handler s,l1,l2) in
       let stack = CONS (StackFrame (wl_state_locals_size s) l0 l handler)
                        (wl_state_stack s) in
-        wl_state_stack_fupd (K stack)
+        wl_state_stack_fupd (combin_K stack)
           (wl_state_stack_max_fupd
-             (K (OPTION_MAP2 MAX (wl_state_stack_max s) (wl_stack_size stack)))
-             (wl_state_permute_fupd (K permute)
-                (wl_state_handler_fupd (K (LENGTH (wl_state_stack s))) s))))`;;
+             (combin_K (OPTION_MAP2 MAX (wl_state_stack_max s) (wl_stack_size stack)))
+             (wl_state_permute_fupd (combin_K permute)
+                (wl_state_handler_fupd (combin_K (LENGTH (wl_state_stack s))) s))))`;;
 
 let wl_push_env_ind = IL2AUX_case_ind wl_push_env_def;;
 
@@ -607,13 +607,13 @@ let wl_pop_env_def = cake_def
   `wl_pop_env (s:(A,C,FFI)wl_state) =
      match wl_state_stack s with
        CONS (StackFrame m e0 e NONE) xs ->
-         SOME (wl_state_locals_fupd (K (sptree_union (fromAList e) (fromAList e0)))
-                 (wl_state_stack_fupd (K xs) (wl_state_locals_size_fupd (K m) s)))
+         SOME (wl_state_locals_fupd (combin_K (sptree_union (fromAList e) (fromAList e0)))
+                 (wl_state_stack_fupd (combin_K xs) (wl_state_locals_size_fupd (combin_K m) s)))
      | CONS (StackFrame m e0 e (SOME (n,_,_))) xs ->
-         SOME (wl_state_locals_fupd (K (sptree_union (fromAList e) (fromAList e0)))
-                 (wl_state_stack_fupd (K xs)
-                    (wl_state_locals_size_fupd (K m)
-                       (wl_state_handler_fupd (K n) s))))
+         SOME (wl_state_locals_fupd (combin_K (sptree_union (fromAList e) (fromAList e0)))
+                 (wl_state_stack_fupd (combin_K xs)
+                    (wl_state_locals_size_fupd (combin_K m)
+                       (wl_state_handler_fupd (combin_K n) s))))
      | _ -> NONE`;;
 
 (* HOL4 [local] *)
@@ -638,10 +638,10 @@ let wl_jump_exc_def = cake_def
      if wl_state_handler s < LENGTH (wl_state_stack s) then
        match LASTN (wl_state_handler s + 1) (wl_state_stack s) with
          CONS (StackFrame m e0 e (SOME (n,l1,l2))) xs ->
-           SOME (wl_state_handler_fupd (K n)
-                   (wl_state_locals_fupd (K (sptree_union (fromAList e) (fromAList e0)))
-                      (wl_state_stack_fupd (K xs)
-                         (wl_state_locals_size_fupd (K m) s))),
+           SOME (wl_state_handler_fupd (combin_K n)
+                   (wl_state_locals_fupd (combin_K (sptree_union (fromAList e) (fromAList e0)))
+                      (wl_state_stack_fupd (combin_K xs)
+                         (wl_state_locals_size_fupd (combin_K m) s))),
                  l1,l2)
        | _ -> NONE
      else NONE`;;
@@ -667,7 +667,7 @@ let wl_cut_state_def = cake_def
   `wl_cut_state (names:cutsets) (s:(A,C,FFI)wl_state) =
      match wl_cut_env names (wl_state_locals s) with
        NONE -> NONE
-     | SOME env -> SOME (wl_state_locals_fupd (K env) s)`;;
+     | SOME env -> SOME (wl_state_locals_fupd (combin_K env) s)`;;
 
 let wl_cut_state_opt_def = cake_def
   `wl_cut_state_opt (names:cutsets option) (s:(A,C,FFI)wl_state) =
@@ -725,9 +725,9 @@ let wl_gc_def = cake_def
          (match wl_dec_stack wl (wl_state_stack s) with
             NONE -> NONE
           | SOME stack ->
-              SOME (wl_state_stack_fupd (K stack)
-                      (wl_state_store_fupd (K st)
-                         (wl_state_memory_fupd (K m) s))))`;;
+              SOME (wl_state_stack_fupd (combin_K stack)
+                      (wl_state_store_fupd (combin_K st)
+                         (wl_state_memory_fupd (combin_K m) s))))`;;
 
 let wl_has_space_def = cake_def
   `wl_has_space (wl:(A)word_loc) (s:(A,C,FFI)wl_state) =
@@ -772,7 +772,7 @@ let wl_get_fp_var_def = cake_def
 
 let wl_set_fp_var_def = cake_def
   `wl_set_fp_var v x (s:(A,C,FFI)wl_state) =
-     wl_state_fp_regs_fupd (K (wl_state_fp_regs s |+ (v,x))) s`;;
+     wl_state_fp_regs_fupd (combin_K (wl_state_fp_regs s |+ (v,x))) s`;;
 
 let wl_inst_def = cake_def
   `wl_inst (i:(A)inst) (s:(A,C,FFI)wl_state) =
@@ -878,7 +878,7 @@ let wl_inst_def = cake_def
             (SOME (wl_Word a), SOME (wl_Word w)) ->
               (match mem_store_byte_aux (wl_state_memory s) (wl_state_mdomain s)
                        (wl_state_be s) a (word_zx w) with
-                 SOME new_m -> SOME (wl_state_memory_fupd (K new_m) s)
+                 SOME new_m -> SOME (wl_state_memory_fupd (combin_K new_m) s)
                | NONE -> NONE)
           | _ -> NONE)
      | Mem Store16 _ _ -> NONE
@@ -888,7 +888,7 @@ let wl_inst_def = cake_def
             (SOME (wl_Word a), SOME (wl_Word w)) ->
               (match mem_store_32 (wl_state_memory s) (wl_state_mdomain s)
                        (wl_state_be s) a (word_zx w) with
-                 SOME new_m -> SOME (wl_state_memory_fupd (K new_m) s)
+                 SOME new_m -> SOME (wl_state_memory_fupd (combin_K new_m) s)
                | NONE -> NONE)
           | _ -> NONE)
      | FP (FPLess r d1 d2) ->
@@ -1172,7 +1172,7 @@ let IL2AUX_evaluate_clauses = list_mk_conj
              (SOME wl_Error, s)
            else
              let s = wl_state_memory_fupd
-                       (K (const_writes a off words (wl_state_memory s))) s in
+                       (combin_K (const_writes a off words (wl_state_memory s))) s in
              let s = wl_set_var offset (wl_Word off)
                        (wl_unset_var t1 (wl_unset_var t2 s)) in
                (NONE, wl_set_var addr
@@ -1220,12 +1220,12 @@ let IL2AUX_evaluate_clauses = list_mk_conj
    (wl_evaluate (MustTerminate p, s) =
       if wl_state_termdep s = 0 then (SOME wl_Error, s) else
         let (res,s1) = wl_evaluate (p, wl_state_clock_fupd
-                                         (K (MustTerminate_limit (:A)))
+                                         (combin_K (MustTerminate_limit (:A)))
                                          (wl_state_termdep_fupd
-                                            (K (wl_state_termdep s - 1)) s)) in
+                                            (combin_K (wl_state_termdep s - 1)) s)) in
           if res = SOME wl_TimeOut then (SOME wl_Error, s)
-          else (res, wl_state_clock_fupd (K (wl_state_clock s))
-                       (wl_state_termdep_fupd (K (wl_state_termdep s)) s1))) /\
+          else (res, wl_state_clock_fupd (combin_K (wl_state_clock s))
+                       (wl_state_termdep_fupd (combin_K (wl_state_termdep s)) s1))) /\
    (wl_evaluate (wl_Seq c1 c2, s) =
       let (res,s1) = wl_fix_clock s (wl_evaluate (c1,s)) in
         if res = NONE then wl_evaluate (c2,s1) else (res,s1)) /\
@@ -1287,15 +1287,15 @@ let IL2AUX_evaluate_clauses = list_mk_conj
                     if bytes = bytes' /\ data = data' /\ FST (new_oracle 0) = cfg'
                     then
                       let s' =
-                        wl_state_code_buffer_fupd (K cb)
-                         (wl_state_data_buffer_fupd (K db)
+                        wl_state_code_buffer_fupd (combin_K cb)
+                         (wl_state_data_buffer_fupd (combin_K db)
                           (wl_state_code_fupd
-                             (K (sptree_union (wl_state_code s) (fromAList progs)))
-                           (wl_state_locals_fupd (K (insert ptr (wl_Loc k 0) env))
-                            (wl_state_fp_regs_fupd (K FEMPTY)
-                             (wl_state_compile_oracle_fupd (K new_oracle)
-                              (wl_state_stack_max_fupd (K NONE)
-                               (wl_state_stack_size_fupd (K LN) s))))))) in
+                             (combin_K (sptree_union (wl_state_code s) (fromAList progs)))
+                           (wl_state_locals_fupd (combin_K (insert ptr (wl_Loc k 0) env))
+                            (wl_state_fp_regs_fupd (combin_K FEMPTY)
+                             (wl_state_compile_oracle_fupd (combin_K new_oracle)
+                              (wl_state_stack_max_fupd (combin_K NONE)
+                               (wl_state_stack_size_fupd (combin_K LN) s))))))) in
                         (NONE, s')
                     else (SOME wl_Error, s)
                 | _ -> (SOME wl_Error, s))
@@ -1305,14 +1305,14 @@ let IL2AUX_evaluate_clauses = list_mk_conj
       match (wl_get_var r1 s, wl_get_var r2 s) with
         (SOME (wl_Word w1), SOME (wl_Word w2)) ->
           (match buffer_write (wl_state_code_buffer s) w1 (word_zx w2) with
-             SOME new_cb -> (NONE, wl_state_code_buffer_fupd (K new_cb) s)
+             SOME new_cb -> (NONE, wl_state_code_buffer_fupd (combin_K new_cb) s)
            | _ -> (SOME wl_Error, s))
       | _ -> (SOME wl_Error, s)) /\
    (wl_evaluate (wl_DataBufferWrite r1 r2, s) =
       match (wl_get_var r1 s, wl_get_var r2 s) with
         (SOME (wl_Word w1), SOME (wl_Word w2)) ->
           (match buffer_write (wl_state_data_buffer s) w1 w2 with
-             SOME new_db -> (NONE, wl_state_data_buffer_fupd (K new_db) s)
+             SOME new_db -> (NONE, wl_state_data_buffer_fupd (combin_K new_db) s)
            | _ -> (SOME wl_Error, s))
       | _ -> (SOME wl_Error, s)) /\
    (wl_evaluate (wl_FFI ffi_index ptr1 len1 ptr2 len2 names, s) =
@@ -1336,10 +1336,10 @@ let IL2AUX_evaluate_clauses = list_mk_conj
                      | FFI_return new_ffi new_bytes ->
                          let new_m = write_bytearray w4 new_bytes (wl_state_memory s)
                                        (wl_state_mdomain s) (wl_state_be s) in
-                           (NONE, wl_state_memory_fupd (K new_m)
-                                    (wl_state_locals_fupd (K env)
-                                       (wl_state_fp_regs_fupd (K FEMPTY)
-                                          (wl_state_ffi_fupd (K new_ffi) s)))))
+                           (NONE, wl_state_memory_fupd (combin_K new_m)
+                                    (wl_state_locals_fupd (combin_K env)
+                                       (wl_state_fp_regs_fupd (combin_K FEMPTY)
+                                          (wl_state_ffi_fupd (combin_K new_ffi) s)))))
                 | _ -> (SOME wl_Error, s)))
       | res -> (SOME wl_Error, s)) /\
    (wl_evaluate (ShareInst op v exp, s) =
@@ -1375,9 +1375,9 @@ let IL2AUX_evaluate_clauses = list_mk_conj
                    if wl_state_clock s = 0 then
                      (SOME wl_TimeOut,
                       wl_flush_state T
-                        (wl_state_stack_fupd (K [])
+                        (wl_state_stack_fupd (combin_K [])
                            (wl_state_stack_max_fupd
-                              (K (wl_state_stack_max
+                              (combin_K (wl_state_stack_max
                                     (wl_call_env args1 ss (wl_push_env envs handler s))))
                               s)))
                    else
@@ -1574,7 +1574,7 @@ let IL2AUX_USE_IHS_TAC : tactic = fun (asl,w as g) ->
       let vs,bod = strip_forall (concl th') in
       if is_imp bod && exists IL2AUX_is_eval_eq (conjuncts(fst(dest_imp bod)))
       then th' else failwith "") asl in
-  let avoid = freesl (w :: map (concl o snd) asl) in
+  let avoid = freesl (w :: map (concl o snd) asl @ flat (map (hyp o snd) asl)) in
   let inst_of ih0 e =
     let vs0,_ = strip_forall (concl ih0) in
     let vs1 = rev(itlist (fun v acc -> variant (acc @ avoid) v :: acc) (rev vs0) []) in
@@ -1673,7 +1673,7 @@ let () = cake_ind_store := ("wl_evaluate",wl_evaluate_ind) :: !cake_ind_store;;
 let wl_semantics_def = cake_def
   `wl_semantics (s:(A,C,FFI)wl_state) start =
      let prog = wl_Call NONE (SOME start) [0] NONE in
-     if ?k. match FST (wl_evaluate (prog, wl_state_clock_fupd (K k) s)) with
+     if ?k. match FST (wl_evaluate (prog, wl_state_clock_fupd (combin_K k) s)) with
               SOME (wl_Exception _ _) -> T
             | SOME (wl_Result ret _) -> ~(ret = wl_Loc 1 0)
             | SOME wl_Error -> T
@@ -1683,7 +1683,7 @@ let wl_semantics_def = cake_def
      else
        match (some res.
                 ?k t r outcome.
-                  wl_evaluate (prog, wl_state_clock_fupd (K k) s) = (r,t) /\
+                  wl_evaluate (prog, wl_state_clock_fupd (combin_K k) s) = (r,t) /\
                   (match r with
                      SOME (wl_FinalFFI e) -> outcome = FFI_outcome e
                    | SOME (wl_Result _ _) -> outcome = Success
@@ -1698,14 +1698,14 @@ let wl_semantics_def = cake_def
                               (ffi_state_io_events
                                  (wl_state_ffi
                                     (SND (wl_evaluate
-                                            (prog, wl_state_clock_fupd (K k) s))))))
+                                            (prog, wl_state_clock_fupd (combin_K k) s))))))
                        (:num)))`;;
 
 let word_lang_safe_for_space_def = cake_def
   `word_lang_safe_for_space (s:(A,C,FFI)wl_state) start <=>
      let prog = wl_Call NONE (SOME start) [0] NONE in
        !k res t.
-         wl_evaluate (prog, wl_state_clock_fupd (K k) s) = (res,t)
+         wl_evaluate (prog, wl_state_clock_fupd (combin_K k) s) = (res,t)
          ==> ?max'. wl_state_stack_max t = SOME max' /\
                     max' <= wl_state_stack_limit t`;;
 
@@ -1717,4 +1717,4 @@ let IL2AUX_evaluate_Seq_NONE = prove
  (`!c1 c2 (s:(A,C,FFI)wl_state) s1.
      wl_evaluate (c1,s) = (NONE,s1) ==> wl_evaluate (wl_Seq c1 c2,s) = wl_evaluate (c2,s1)`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[wl_evaluate_def] THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[]);;

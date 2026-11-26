@@ -38,8 +38,8 @@ type_invention_error := true;;
 let rev_assocd_thm = prove
  (`(holKernel_rev_assocd:A->(B#A)list->B->B) = REV_ASSOCD`,
   REWRITE_TAC[FUN_EQ_THM] THEN GEN_TAC THEN LIST_INDUCT_TAC THEN
-  ONCE_REWRITE_TAC[holKernel_rev_assocd_def] THEN CASE_REWRITE_TAC[REV_ASSOCD] THEN
-  PAIR_CASES_ON `h:B#A` THEN ASM_SIMP_TAC[REV_ASSOCD] THEN CASE_REWRITE_TAC[]);;
+  ONCE_REWRITE_TAC[holKernel_rev_assocd_def] THEN CAKE_REWRITE_TAC[REV_ASSOCD] THEN
+  PAIR_CASES_ON `h:B#A` THEN ASM_SIMP_TAC[REV_ASSOCD] THEN CAKE_REWRITE_TAC[]);;
 
 (* HOL4: val REPLICATE_GENLIST = rich_listTheory.REPLICATE_GENLIST (an      *)
 (* unused alias)                                                             *)
@@ -289,7 +289,7 @@ let THM = prove
 let type_subst_EMPTY = prove
  (`!ty. holKernel_type_subst [] ty = ty`,
   MATCH_MP_TAC type_ind THEN REPEAT STRIP_TAC THEN
-  ONCE_REWRITE_TAC[holKernel_type_subst_def] THEN CASE_REWRITE_TAC[] THEN
+  ONCE_REWRITE_TAC[holKernel_type_subst_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[rev_assocd_thm; REV_ASSOCD] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   SUBGOAL_THEN `MAP (holKernel_type_subst []) l = l` (fun th -> REWRITE_TAC[th]) THEN
@@ -379,7 +379,7 @@ let can_thm = prove
   MP_TAC(ISPEC `(f:X->A->(B,C)exc#A) x s` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `r:(B,C)exc` (X_CHOOSE_THEN `s1:A` SUBST1_TAC)) THEN
   STRUCT_CASES_TAC(ISPEC `r:(B,C)exc` (cases "exc")) THEN
-  CASE_REWRITE_TAC[st_ex_return_def]);;
+  CAKE_REWRITE_TAC[st_ex_return_def]);;
 
 let assoc_thm = prove
  (`!xs (y:A) (z:(B,hol_exn)exc) s s'.
@@ -387,9 +387,9 @@ let assoc_thm = prove
      ==> s' = s /\ (!i. z = M_success i ==> MEM (y,i) xs) /\
          (!e. z = M_failure e ==> !i. ~MEM (y,i) xs)`,
   LIST_INDUCT_TAC THEN ONCE_REWRITE_TAC[holKernel_assoc_def] THEN
-  CASE_REWRITE_TAC[holKernel_raise_Failure_def; MEM] THENL
+  CAKE_REWRITE_TAC[holKernel_raise_Failure_def; MEM] THENL
    [MESON_TAC[distinctness "exc"];
-    PAIR_CASES_ON `h:A#B` THEN CASE_REWRITE_TAC[PAIR_EQ] THEN REPEAT GEN_TAC THEN
+    PAIR_CASES_ON `h:A#B` THEN CAKE_REWRITE_TAC[PAIR_EQ] THEN REPEAT GEN_TAC THEN
     COND_CASES_TAC THEN ASM_REWRITE_TAC[st_ex_return_def; PAIR_EQ] THEN
     ASM_MESON_TAC[injectivity "exc"; distinctness "exc"]]);;
 
@@ -401,7 +401,7 @@ let get_type_arity_thm = prove
          (!e. z = M_failure e ==> !i. ~MEM (name,i) (hol_refs_the_type_constants s))`,
   REWRITE_TAC[holKernel_get_type_arity_def; st_ex_bind_def;
               holKernel_get_the_type_constants_def] THEN
-  CASE_REWRITE_TAC[] THEN REPEAT GEN_TAC THEN
+  CAKE_REWRITE_TAC[] THEN REPEAT GEN_TAC THEN
   DISCH_THEN(MP_TAC o MATCH_MP assoc_thm) THEN REWRITE_TAC[]);;
 
 let mk_vartype_thm = prove
@@ -422,7 +422,7 @@ let mk_type_thm = prove
   REPEAT GEN_TAC THEN QCASES_ON "holKernel_get_type_arity tyop s" THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP get_type_arity_thm) THEN
   QCASES_ON "x" THEN
-  CASE_REWRITE_TAC[holKernel_raise_Failure_def; st_ex_return_def] THEN
+  CAKE_REWRITE_TAC[holKernel_raise_Failure_def; st_ex_return_def] THEN
   RW[] THEN RFS[holKernel_raise_Failure_def; st_ex_return_def; PAIR_EQ] THEN
   TRY(MATCH_MP_TAC TYPE_Tyapp THEN ASM_MESON_TAC[] THEN NO_TAC) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[holKernelProof_STATE_def]) THEN
@@ -447,7 +447,7 @@ let mk_type_bool = prove
   QCASES_ON "holKernel_get_type_arity (implode \"bool\") s" THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP get_type_arity_thm) THEN
   QCASES_ON "x" THEN
-  CASE_REWRITE_TAC[holKernel_raise_Failure_def; st_ex_return_def; LENGTH] THEN
+  CAKE_REWRITE_TAC[holKernel_raise_Failure_def; st_ex_return_def; LENGTH] THEN
   ASM_MESON_TAC[]);;
 
 let dest_type_thm = prove
@@ -460,7 +460,7 @@ let dest_type_thm = prove
                          ALL (holKernelProof_TYPE defs) tys`,
   GEN_TAC THEN QCASES_ON "ty" THEN
   REWRITE_TAC[holKernel_dest_type_def] THEN
-  CASE_REWRITE_TAC[holKernel_raise_Failure_def; st_ex_return_def; PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[holKernel_raise_Failure_def; st_ex_return_def; PAIR_EQ] THEN
   RW[] THEN GVS[distinctness "exc"; injectivity "exc"; injectivity "hol_type"] THEN
   ASM_MESON_TAC[TYPE]);;
 
@@ -470,21 +470,21 @@ let dest_vartype_thm = prove
      ==> s' = s /\ !i. z = M_success i ==> ty = Tyvar i`,
   GEN_TAC THEN QCASES_ON "ty" THEN
   REWRITE_TAC[holKernel_dest_vartype_def] THEN
-  CASE_REWRITE_TAC[holKernel_raise_Failure_def; st_ex_return_def; PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[holKernel_raise_Failure_def; st_ex_return_def; PAIR_EQ] THEN
   RW[] THEN GVS[distinctness "exc"; injectivity "exc"]);;
 
 let is_type_thm = prove
  (`!ty. holKernel_is_type ty <=> ?s tys. ty = Tyapp s tys`,
   GEN_TAC THEN QCASES_ON "ty" THEN
   REWRITE_TAC[holKernel_is_type_def] THEN
-  CASE_REWRITE_TAC[injectivity "hol_type"; distinctness "hol_type"] THEN
+  CAKE_REWRITE_TAC[injectivity "hol_type"; distinctness "hol_type"] THEN
   MESON_TAC[]);;
 
 let is_vartype_thm = prove
  (`!ty. holKernel_is_vartype ty <=> ?s. ty = Tyvar s`,
   GEN_TAC THEN QCASES_ON "ty" THEN
   REWRITE_TAC[holKernel_is_vartype_def] THEN
-  CASE_REWRITE_TAC[injectivity "hol_type"; distinctness "hol_type"] THEN
+  CAKE_REWRITE_TAC[injectivity "hol_type"; distinctness "hol_type"] THEN
   MESON_TAC[]);;
 
 (* the members of a union of lists, for both kinds of tyvars *)
@@ -492,14 +492,14 @@ let HOLKPAUX_MEM_itlist_union = prove
  (`!l (f:A->B list) s.
      MEM s (itlist hol_union (MAP f l) []) <=> ?a. MEM a l /\ MEM s (f a)`,
   LIST_INDUCT_TAC THEN ONCE_REWRITE_TAC[itlist_def] THEN
-  ASM_REWRITE_TAC[MAP; MEM; MEM_union] THEN CASE_REWRITE_TAC[MEM] THEN
+  ASM_REWRITE_TAC[MAP; MEM; MEM_union] THEN CAKE_REWRITE_TAC[MEM] THEN
   ASM_REWRITE_TAC[MEM_union] THEN MESON_TAC[]);;
 
 let tyvars_thm = prove
  (`!ty s. MEM s (holKernel_tyvars ty) <=> MEM s (hol_tyvars ty)`,
   MATCH_MP_TAC holKernel_tyvars_ind THEN GEN_TAC THEN DISCH_TAC THEN GEN_TAC THEN
   QCASES_ON "x" THEN ONCE_REWRITE_TAC[holKernel_tyvars_def] THEN
-  CASE_REWRITE_TAC[hol_tyvars_def; HOLKPAUX_MEM_itlist_union;
+  CAKE_REWRITE_TAC[hol_tyvars_def; HOLKPAUX_MEM_itlist_union;
                    MEM_FOLDR_LIST_UNION; MEM] THEN
   ASM_MESON_TAC[]);;
 
@@ -508,7 +508,7 @@ let HOLKPAUX_type_subst_TYPE_SUBST = prove
  (`!i ty. holKernel_type_subst i ty = TYPE_SUBST i ty`,
   MATCH_MP_TAC holKernel_type_subst_ind THEN REPEAT GEN_TAC THEN DISCH_TAC THEN
   QCASES_ON "ty" THEN ONCE_REWRITE_TAC[holKernel_type_subst_def] THEN
-  CASE_REWRITE_TAC[TYPE_SUBST_def; rev_assocd_thm] THEN
+  CAKE_REWRITE_TAC[TYPE_SUBST_def; rev_assocd_thm] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   SUBGOAL_THEN `MAP (holKernel_type_subst i) a1 = MAP (TYPE_SUBST i) a1` SUBST1_TAC THENL
    [MATCH_MP_TAC MAP_EQ THEN REWRITE_TAC[GSYM ALL_MEM] THEN ASM_MESON_TAC[];
@@ -550,7 +550,7 @@ let get_const_type_thm = prove
          (!e. z = M_failure e ==> !i. ~MEM (name,i) (hol_refs_the_term_constants s))`,
   REWRITE_TAC[holKernel_get_const_type_def; st_ex_bind_def;
               holKernel_get_the_term_constants_def] THEN
-  CASE_REWRITE_TAC[] THEN REPEAT GEN_TAC THEN
+  CAKE_REWRITE_TAC[] THEN REPEAT GEN_TAC THEN
   DISCH_THEN(MP_TAC o MATCH_MP assoc_thm) THEN REWRITE_TAC[]);;
 
 let term_type_def = cake_def
@@ -571,9 +571,9 @@ let term_type = prove
              ==> term_type tm = typeof tm /\ holKernelProof_TYPE defs (term_type tm)`,
   GEN_TAC THEN MATCH_MP_TAC hol_term_INDUCT THEN REPEAT CONJ_TAC THEN
   REPEAT GEN_TAC THENL
-   [ONCE_REWRITE_TAC[term_type_def] THEN CASE_REWRITE_TAC[typeof_def] THEN
+   [ONCE_REWRITE_TAC[term_type_def] THEN CAKE_REWRITE_TAC[typeof_def] THEN
     MESON_TAC[TERM];
-    ONCE_REWRITE_TAC[term_type_def] THEN CASE_REWRITE_TAC[typeof_def] THEN
+    ONCE_REWRITE_TAC[term_type_def] THEN CAKE_REWRITE_TAC[typeof_def] THEN
     MESON_TAC[TERM];
     STRIP_TAC THEN STRIP_TAC THEN
     FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP (el 3 (CONJUNCTS TERM))) THEN
@@ -582,8 +582,8 @@ let term_type = prove
     STRIP_TAC THEN
     SUBGOAL_THEN `term_type a0 = typeof a0 /\ holKernelProof_TYPE defs (term_type a0)`
       STRIP_ASSUME_TAC THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
-    ONCE_REWRITE_TAC[term_type_def] THEN CASE_REWRITE_TAC[typeof_def] THEN
-    ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[codomain_def] THEN
+    ONCE_REWRITE_TAC[term_type_def] THEN CAKE_REWRITE_TAC[typeof_def] THEN
+    ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[codomain_def] THEN
     UNDISCH_TAC `holKernelProof_TYPE defs (term_type a0)` THEN
     ASM_REWRITE_TAC[holKernelProof_TYPE_def; type_ok_def; ALL] THEN
     SIMP_TAC[];
@@ -593,7 +593,7 @@ let term_type = prove
     FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP (el 2 (CONJUNCTS TERM))) THEN
     SUBGOAL_THEN `term_type a1 = typeof a1 /\ holKernelProof_TYPE defs (term_type a1)`
       STRIP_ASSUME_TAC THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
-    ONCE_REWRITE_TAC[term_type_def] THEN CASE_REWRITE_TAC[typeof_def] THEN
+    ONCE_REWRITE_TAC[term_type_def] THEN CAKE_REWRITE_TAC[typeof_def] THEN
     ASM_REWRITE_TAC[] THEN MATCH_MP_TAC TYPE_Fun THEN ASM_MESON_TAC[]]);;
 
 (* HOL4 proves type_of_has_type before type_of_thm, from type_of_def; here *)
@@ -606,10 +606,10 @@ let type_of_thm = prove
   SUBGOAL_THEN `holKernelProof_CONTEXT defs` ASSUME_TAC THENL
    [ASM_MESON_TAC[holKernelProof_STATE_def]; ALL_TAC] THEN
   QCASES_ON "tm" THEN ONCE_REWRITE_TAC[holKernel_type_of_def] THEN
-  CASE_REWRITE_TAC[st_ex_return_def] THEN
+  CAKE_REWRITE_TAC[st_ex_return_def] THEN
   RFS[injectivity "hol_term"; distinctness "hol_term"] THENL
-   [ONCE_REWRITE_TAC[term_type_def] THEN CASE_REWRITE_TAC[];
-    ONCE_REWRITE_TAC[term_type_def] THEN CASE_REWRITE_TAC[];
+   [ONCE_REWRITE_TAC[term_type_def] THEN CAKE_REWRITE_TAC[];
+    ONCE_REWRITE_TAC[term_type_def] THEN CAKE_REWRITE_TAC[];
     FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP (el 3 (CONJUNCTS TERM))) THEN
     SUBGOAL_THEN `holKernel_type_of a0 s = M_success (term_type a0),s` ASSUME_TAC THENL
      [ASM_MESON_TAC[]; ALL_TAC] THEN
@@ -620,19 +620,19 @@ let type_of_thm = prove
       ASM_MESON_TAC[term_type];
       ALL_TAC] THEN
     ASM_REWRITE_TAC[st_ex_bind_def] THEN
-    CASE_REWRITE_TAC[holKernel_dest_type_def; st_ex_return_def] THEN
+    CAKE_REWRITE_TAC[holKernel_dest_type_def; st_ex_return_def] THEN
     REWRITE_TAC[PAIR_EQ; injectivity "exc"] THEN
-    ONCE_REWRITE_TAC[term_type_def] THEN CASE_REWRITE_TAC[] THEN
-    ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[];
+    ONCE_REWRITE_TAC[term_type_def] THEN CAKE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[];
     FIRST_ASSUM(X_CHOOSE_THEN `nm:mlstring` (X_CHOOSE_THEN `ty:hol_type`
       SUBST_ALL_TAC) o MATCH_MP Abs_Var) THEN
-    CASE_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN
     SUBGOAL_THEN `holKernel_type_of a1 s = M_success (term_type a1),s` ASSUME_TAC THENL
      [ASM_MESON_TAC[TERM]; ALL_TAC] THEN
     ASM_REWRITE_TAC[st_ex_bind_def] THEN
-    CASE_REWRITE_TAC[holKernel_mk_fun_ty_def] THEN
+    CAKE_REWRITE_TAC[holKernel_mk_fun_ty_def] THEN
     REWRITE_TAC[PAIR_EQ; injectivity "exc"] THEN
-    GEN_REWRITE_TAC RAND_CONV [term_type_def] THEN CASE_REWRITE_TAC[]]);;
+    GEN_REWRITE_TAC RAND_CONV [term_type_def] THEN CAKE_REWRITE_TAC[]]);;
 
 let type_of_has_type = prove
  (`!tm refs ty refs' defs.
@@ -657,9 +657,9 @@ let alphavars_thm = prove
          ==> (holKernel_alphavars env tm1 tm2 <=> ALPHAVARS env (tm1,tm2))`,
   LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN
   ONCE_REWRITE_TAC[holKernel_alphavars_def] THEN
-  CASE_REWRITE_TAC[ALPHAVARS_def] THEN
+  CAKE_REWRITE_TAC[ALPHAVARS_def] THEN
   PAIR_CASES_ON `h:hol_term#hol_term` THEN
-  CASE_REWRITE_TAC[ALL; ALPHAVARS_def; PAIR_EQ] THEN STRIP_TAC THEN
+  CAKE_REWRITE_TAC[ALL; ALPHAVARS_def; PAIR_EQ] THEN STRIP_TAC THEN
   FIRST_X_ASSUM(MP_TAC o SPECL [`s:hol_refs`; `defs:update list`; `tm1:hol_term`;
                                 `tm2:hol_term`]) THEN
   ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN MESON_TAC[]);;
@@ -672,14 +672,14 @@ let raconv_thm = prove
      ==> (holKernel_raconv env tm1 tm2 <=> RACONV env (tm1,tm2))`,
   MATCH_MP_TAC hol_term_INDUCT THEN REPEAT STRIP_TAC THEN QCASES_ON "tm2" THEN
   ONCE_REWRITE_TAC[holKernel_raconv_def] THEN
-  CASE_REWRITE_TAC[RACONV; injectivity "hol_term"; distinctness "hol_term"] THENL
+  CAKE_REWRITE_TAC[RACONV; injectivity "hol_term"; distinctness "hol_term"] THENL
    [MATCH_MP_TAC alphavars_thm THEN ASM_MESON_TAC[];
     ASM_MESON_TAC[TERM];
     QPAT_ASSUM "holKernelProof_TERM defs (hol_Abs a0 a1)"
       (MP_TAC o MATCH_MP Abs_Var) THEN
     QPAT_ASSUM "holKernelProof_TERM defs (hol_Abs a0' a1')"
       (MP_TAC o MATCH_MP Abs_Var) THEN
-    REPEAT STRIP_TAC THEN GVS[] THEN CASE_REWRITE_TAC[typeof_def] THEN
+    REPEAT STRIP_TAC THEN GVS[] THEN CAKE_REWRITE_TAC[typeof_def] THEN
     ASM_CASES_TAC `ty = ty':hol_type` THEN ASM_REWRITE_TAC[] THEN
     FIRST_X_ASSUM MATCH_MP_TAC THEN
     ASM_REWRITE_TAC[ALL] THEN ASM_MESON_TAC[TERM; TERM_Var]]);;
@@ -702,7 +702,7 @@ let is_term_thm = prove
   GEN_TAC THEN QCASES_ON "tm" THEN
   REWRITE_TAC[holKernel_is_var_def; holKernel_is_const_def; holKernel_is_abs_def;
               holKernel_is_comb_def] THEN
-  CASE_REWRITE_TAC[injectivity "hol_term"; distinctness "hol_term"] THEN
+  CAKE_REWRITE_TAC[injectivity "hol_term"; distinctness "hol_term"] THEN
   MESON_TAC[]);;
 
 let mk_var_thm = prove
@@ -717,7 +717,7 @@ let mk_abs_thm = prove
              !t. res = M_success t ==> holKernelProof_TERM defs t /\
                                        t = hol_Abs bvar bod`,
   REPEAT GEN_TAC THEN REWRITE_TAC[holKernel_mk_abs_def] THEN QCASES_ON "bvar" THEN
-  CASE_REWRITE_TAC[st_ex_return_def; holKernel_raise_Failure_def; PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[st_ex_return_def; holKernel_raise_Failure_def; PAIR_EQ] THEN
   RW[] THEN GVS[distinctness "exc"; injectivity "exc"] THEN
   ASM_MESON_TAC[IMP_TERM_Abs]);;
 
@@ -745,7 +745,7 @@ let dest_var_thm = prove
    ==> holKernel_dest_var v s = (res,s')
    ==> s' = s /\ !n ty. res = M_success (n,ty) ==> holKernelProof_TYPE defs ty`,
   REPEAT GEN_TAC THEN QCASES_ON "v" THEN REWRITE_TAC[holKernel_dest_var_def] THEN
-  CASE_REWRITE_TAC[st_ex_return_def; holKernel_raise_Failure_def; PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[st_ex_return_def; holKernel_raise_Failure_def; PAIR_EQ] THEN
   RW[] THEN GVS[distinctness "exc"; injectivity "exc"] THEN ASM_MESON_TAC[TERM]);;
 
 (* HOL4: dest_const_thm *)
@@ -754,7 +754,7 @@ let holKernelProof_dest_const_thm = prove
    ==> holKernel_dest_const v s = (res,s')
    ==> s' = s /\ !n ty. res = M_success (n,ty) ==> holKernelProof_TYPE defs ty`,
   REPEAT GEN_TAC THEN QCASES_ON "v" THEN REWRITE_TAC[holKernel_dest_const_def] THEN
-  CASE_REWRITE_TAC[st_ex_return_def; holKernel_raise_Failure_def; PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[st_ex_return_def; holKernel_raise_Failure_def; PAIR_EQ] THEN
   RW[] THEN GVS[distinctness "exc"; injectivity "exc"] THEN ASM_MESON_TAC[TERM]);;
 
 let dest_comb_thm = prove
@@ -764,7 +764,7 @@ let dest_comb_thm = prove
        !x y. res = M_success (x,y) ==> holKernelProof_TERM defs x /\
                                        holKernelProof_TERM defs y`,
   REPEAT GEN_TAC THEN QCASES_ON "v" THEN REWRITE_TAC[holKernel_dest_comb_def] THEN
-  CASE_REWRITE_TAC[st_ex_return_def; holKernel_raise_Failure_def; PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[st_ex_return_def; holKernel_raise_Failure_def; PAIR_EQ] THEN
   RW[] THEN GVS[distinctness "exc"; injectivity "exc"] THEN ASM_MESON_TAC[TERM]);;
 
 let dest_abs_thm = prove
@@ -774,7 +774,7 @@ let dest_abs_thm = prove
        !x y. res = M_success (x,y) ==> holKernelProof_TERM defs x /\
                                        holKernelProof_TERM defs y`,
   REPEAT GEN_TAC THEN QCASES_ON "v" THEN REWRITE_TAC[holKernel_dest_abs_def] THEN
-  CASE_REWRITE_TAC[st_ex_return_def; holKernel_raise_Failure_def; PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[st_ex_return_def; holKernel_raise_Failure_def; PAIR_EQ] THEN
   RW[] THEN GVS[distinctness "exc"; injectivity "exc"] THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP Abs_Var) THEN
   GVS[] THEN ASM_MESON_TAC[TERM; TERM_Var]);;
@@ -784,7 +784,7 @@ let rator_thm = prove
    ==> holKernel_rator v s = (res,s')
    ==> s' = s /\ !x. res = M_success x ==> holKernelProof_TERM defs x`,
   REPEAT GEN_TAC THEN QCASES_ON "v" THEN REWRITE_TAC[holKernel_rator_def] THEN
-  CASE_REWRITE_TAC[st_ex_return_def; holKernel_raise_Failure_def; PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[st_ex_return_def; holKernel_raise_Failure_def; PAIR_EQ] THEN
   RW[] THEN GVS[distinctness "exc"; injectivity "exc"] THEN ASM_MESON_TAC[TERM]);;
 
 let rand_thm = prove
@@ -792,7 +792,7 @@ let rand_thm = prove
    ==> holKernel_rand v s = (res,s')
    ==> s' = s /\ !x. res = M_success x ==> holKernelProof_TERM defs x`,
   REPEAT GEN_TAC THEN QCASES_ON "v" THEN REWRITE_TAC[holKernel_rand_def] THEN
-  CASE_REWRITE_TAC[st_ex_return_def; holKernel_raise_Failure_def; PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[st_ex_return_def; holKernel_raise_Failure_def; PAIR_EQ] THEN
   RW[] THEN GVS[distinctness "exc"; injectivity "exc"] THEN ASM_MESON_TAC[TERM]);;
 let type_subst_bool = prove
  (`!i. holKernel_type_subst i (Tyapp (implode "bool") []) = Tyapp (implode "bool") []`,
@@ -878,7 +878,7 @@ let mk_const_thm = prove
   REPEAT GEN_TAC THEN QCASES_ON "holKernel_get_const_type name s" THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP get_const_type_thm) THEN
   QCASES_ON "x" THEN
-  CASE_REWRITE_TAC[holKernel_raise_Failure_def; st_ex_return_def; PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[holKernel_raise_Failure_def; st_ex_return_def; PAIR_EQ] THEN
   RW[] THEN GVS[distinctness "exc"; injectivity "exc"] THEN
   MATCH_MP_TAC TERM_Const_type_subst THEN ASM_REWRITE_TAC[] THEN
   MATCH_MP_TAC TERM_Const THEN ASM_MESON_TAC[]);;
@@ -895,7 +895,7 @@ let mk_const_eq = prove
   FIRST_ASSUM(ASSUME_TAC o MATCH_MP get_const_type_Equal) THEN
   ASM_REWRITE_TAC[holKernel_mk_const_def; st_ex_bind_def; holKernel_try_def;
                   otherwise_def] THEN
-  CASE_REWRITE_TAC[st_ex_return_def; type_subst_EMPTY]);;
+  CAKE_REWRITE_TAC[st_ex_return_def; type_subst_EMPTY]);;
 
 let mk_eq_lemma = prove
  (`!x s.
@@ -910,7 +910,7 @@ let mk_eq_lemma = prove
           [term_type x;
            Tyapp (implode "fun") [term_type x; Tyapp (implode "bool") []]])) s`,
   REPEAT GEN_TAC THEN REWRITE_TAC[holKernel_inst_def; NOT_CONS_NIL] THEN
-  ONCE_REWRITE_TAC[holKernel_inst_aux_def] THEN CASE_REWRITE_TAC[] THEN
+  ONCE_REWRITE_TAC[holKernel_inst_aux_def] THEN CAKE_REWRITE_TAC[] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   REWRITE_TAC[HOLKPAUX_type_subst_TYPE_SUBST; TYPE_SUBST_def; MAP; REV_ASSOCD] THEN
   COND_CASES_TAC THEN REWRITE_TAC[] THEN
@@ -937,7 +937,7 @@ let safe_mk_eq_thm = prove
    [ASM_MESON_TAC[type_of_thm]; ALL_TAC] THEN
   UNDISCH_TAC `holKernel_safe_mk_eq x y s = (res,s')` THEN
   ASM_REWRITE_TAC[holKernel_safe_mk_eq_def; st_ex_bind_def] THEN
-  CASE_REWRITE_TAC[st_ex_return_def; PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[st_ex_return_def; PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
   REWRITE_TAC[injectivity "exc"; distinctness "exc"; holKernel_bool_ty_def] THEN
   SUBGOAL_THEN `term_type x = typeof x` SUBST1_TAC THENL
@@ -950,7 +950,7 @@ let safe_mk_eq_thm = prove
 (* type_of on constants and combinations (HOL4: SIMP_CONV with Once type_of_def) *)
 let HOLKPAUX_type_of_Const = prove
  (`!n ty. holKernel_type_of (hol_Const n ty) = st_ex_return ty`,
-  ONCE_REWRITE_TAC[holKernel_type_of_def] THEN CASE_REWRITE_TAC[]);;
+  ONCE_REWRITE_TAC[holKernel_type_of_def] THEN CAKE_REWRITE_TAC[]);;
 
 let HOLKPAUX_type_of_Comb = prove
  (CASE_TERM
@@ -961,7 +961,7 @@ let HOLKPAUX_type_of_Comb = prove
            (_,CONS _ (CONS ty1 _)) -> st_ex_return ty1
          | _ -> holKernel_raise_Failure (implode "match")))`,
   REPEAT GEN_TAC THEN GEN_REWRITE_TAC LAND_CONV [holKernel_type_of_def] THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[]);;
 
 let mk_eq_thm = prove
  (`!x y s res s' defs.
@@ -1101,7 +1101,7 @@ let SELECT_LEMMA2 = prove
 let is_var_thm = prove
  (`!x. holKernel_is_var x <=> ?v ty. x = hol_Var v ty`,
   GEN_TAC THEN QCASES_ON "x" THEN REWRITE_TAC[holKernel_is_var_def] THEN
-  CASE_REWRITE_TAC[injectivity "hol_term"; distinctness "hol_term"] THEN
+  CAKE_REWRITE_TAC[injectivity "hol_term"; distinctness "hol_term"] THEN
   MESON_TAC[]);;
 
 let VSUBST_EMPTY = prove
@@ -1130,7 +1130,7 @@ let VFREE_IN_IMP_MEM = prove
 
 let term_type_Var = prove
  (`!v ty. term_type (hol_Var v ty) = ty`,
-  ONCE_REWRITE_TAC[term_type_def] THEN CASE_REWRITE_TAC[]);;
+  ONCE_REWRITE_TAC[term_type_def] THEN CAKE_REWRITE_TAC[]);;
 
 (* vsubst_aux is VSUBST on welltyped terms, for substitutions of variables *)
 let HOLKPAUX_EX_vfree_in = prove
@@ -1139,7 +1139,7 @@ let HOLKPAUX_EX_vfree_in = prove
      ==> (EX (\(t,x). vfree_in (hol_Var n ty) t /\ vfree_in x tm) l <=>
           EX (\(t,x). VFREE_IN (hol_Var n ty) t /\ VFREE_IN x tm) l)`,
   LIST_INDUCT_TAC THEN REWRITE_TAC[ALL; EX] THEN
-  PAIR_CASES_ON `h:hol_term#hol_term` THEN CASE_REWRITE_TAC[] THEN
+  PAIR_CASES_ON `h:hol_term#hol_term` THEN CAKE_REWRITE_TAC[] THEN
   REPEAT STRIP_TAC THEN ASM_SIMP_TAC[] THEN
   UNDISCH_TAC `holKernel_is_var h1` THEN REWRITE_TAC[is_var_thm] THEN
   STRIP_TAC THEN ASM_REWRITE_TAC[GSYM vfree_in_thm]);;
@@ -1149,12 +1149,12 @@ let HOLKPAUX_vsubst_aux_VSUBST = prove
               ==> holKernel_vsubst_aux theta tm = VSUBST theta tm`,
   MATCH_MP_TAC hol_term_INDUCT THEN REPEAT STRIP_TAC THEN
   ONCE_REWRITE_TAC[holKernel_vsubst_aux_def] THEN
-  CASE_REWRITE_TAC[VSUBST_def; rev_assocd_thm] THEN
+  CAKE_REWRITE_TAC[VSUBST_def; rev_assocd_thm] THEN
   RULE_ASSUM_TAC(REWRITE_RULE[WELLTYPED_CLAUSES]) THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN ASM_SIMP_TAC[] THEN
   FIRST_X_ASSUM(X_CHOOSE_THEN `n:mlstring` (X_CHOOSE_THEN `ty:hol_type`
     STRIP_ASSUME_TAC)) THEN FIRST_X_ASSUM SUBST_ALL_TAC THEN
-  REWRITE_TAC[holKernel_is_var_def; dest_var_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[holKernel_is_var_def; dest_var_def] THEN CAKE_REWRITE_TAC[] THEN
   SUBGOAL_THEN `ALL (\(t1,t2). holKernel_is_var t2)
                   (FILTER (\(t,x). ~(x = hol_Var n ty)) (theta:(hol_term#hol_term)list))`
     ASSUME_TAC THENL
@@ -1223,13 +1223,13 @@ let forall_thm = prove
      ==> s' = s /\ (res = M_success T ==> ALL (\x. FST (f x s) = M_success T) xs)`,
   GEN_TAC THEN GEN_TAC THEN LIST_INDUCT_TAC THEN
   ONCE_REWRITE_TAC[holKernel_forall_def] THEN
-  CASE_REWRITE_TAC[st_ex_return_def; st_ex_bind_def; PAIR_EQ; ALL] THENL
+  CAKE_REWRITE_TAC[st_ex_return_def; st_ex_bind_def; PAIR_EQ; ALL] THENL
    [MESON_TAC[]; ALL_TAC] THEN
   REPEAT GEN_TAC THEN DISCH_THEN(fun th -> DISCH_TAC THEN MP_TAC th) THEN
   FIRST_ASSUM(X_CHOOSE_TAC `r:(bool,E)exc` o SPEC `h:hol_term#hol_term`) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
-  QCASES_ON "r" THEN CASE_REWRITE_TAC[PAIR_EQ; FST] THENL
-   [COND_CASES_TAC THEN CASE_REWRITE_TAC[PAIR_EQ] THENL
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
+  QCASES_ON "r" THEN CAKE_REWRITE_TAC[PAIR_EQ; FST] THENL
+   [COND_CASES_TAC THEN CAKE_REWRITE_TAC[PAIR_EQ] THENL
      [ASM_MESON_TAC[];
       RW[] THEN GVS[injectivity "exc"]];
     RW[] THEN GVS[distinctness "exc"]]);;
@@ -1237,9 +1237,9 @@ let forall_thm = prove
 let assoc_state = prove
  (`!xs (x:A) s. ?r. holKernel_assoc x xs s = (r:(B,hol_exn)exc,s)`,
   LIST_INDUCT_TAC THEN ONCE_REWRITE_TAC[holKernel_assoc_def] THEN
-  CASE_REWRITE_TAC[holKernel_raise_Failure_def; PAIR_EQ] THENL
+  CAKE_REWRITE_TAC[holKernel_raise_Failure_def; PAIR_EQ] THENL
    [MESON_TAC[]; ALL_TAC] THEN
-  PAIR_CASES_ON `h:A#B` THEN CASE_REWRITE_TAC[] THEN REPEAT GEN_TAC THEN
+  PAIR_CASES_ON `h:A#B` THEN CAKE_REWRITE_TAC[] THEN REPEAT GEN_TAC THEN
   COND_CASES_TAC THEN ASM_REWRITE_TAC[st_ex_return_def; PAIR_EQ] THEN
   MESON_TAC[]);;
 
@@ -1250,20 +1250,20 @@ let HOLKPAUX_st_ex_bind_state = prove
      ==> ?r. st_ex_bind m f s = (r,s)`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   FIRST_X_ASSUM(X_CHOOSE_TAC `r:(A,E)exc` o SPEC `s:S`) THEN
-  ASM_REWRITE_TAC[st_ex_bind_def] THEN CASE_REWRITE_TAC[] THEN
-  QCASES_ON "r" THEN CASE_REWRITE_TAC[PAIR_EQ] THEN ASM_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[st_ex_bind_def] THEN CAKE_REWRITE_TAC[] THEN
+  QCASES_ON "r" THEN CAKE_REWRITE_TAC[PAIR_EQ] THEN ASM_REWRITE_TAC[] THEN
   REWRITE_TAC[EXISTS_REFL] THEN MESON_TAC[]);;
 
 let HOLKPAUX_dest_type_state = prove
  (`!x s. ?r. holKernel_dest_type x s = (r,s)`,
   GEN_TAC THEN QCASES_ON "x" THEN REWRITE_TAC[holKernel_dest_type_def] THEN
-  CASE_REWRITE_TAC[st_ex_return_def; holKernel_raise_Failure_def; PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[st_ex_return_def; holKernel_raise_Failure_def; PAIR_EQ] THEN
   MESON_TAC[]);;
 
 let type_of_state = prove
  (`!tm s. ?r. holKernel_type_of tm s = (r,s)`,
   MATCH_MP_TAC holKernel_type_of_ind THEN GEN_TAC THEN DISCH_TAC THEN GEN_TAC THEN
-  QCASES_ON "tm" THEN ONCE_REWRITE_TAC[holKernel_type_of_def] THEN CASE_REWRITE_TAC[] THENL
+  QCASES_ON "tm" THEN ONCE_REWRITE_TAC[holKernel_type_of_def] THEN CAKE_REWRITE_TAC[] THENL
    [REWRITE_TAC[st_ex_return_def] THEN MESON_TAC[];
     REWRITE_TAC[st_ex_return_def] THEN MESON_TAC[];
     MATCH_MP_TAC HOLKPAUX_st_ex_bind_state THEN CONJ_TAC THENL
@@ -1271,14 +1271,14 @@ let type_of_state = prove
       REWRITE_TAC[];
       REPEAT GEN_TAC THEN BETA_TAC THEN MATCH_MP_TAC HOLKPAUX_st_ex_bind_state THEN
       REWRITE_TAC[HOLKPAUX_dest_type_state] THEN
-      REWRITE_TAC[FORALL_PAIR_THM] THEN REPEAT GEN_TAC THEN CASE_REWRITE_TAC[] THEN
+      REWRITE_TAC[FORALL_PAIR_THM] THEN REPEAT GEN_TAC THEN CAKE_REWRITE_TAC[] THEN
       STRUCT_CASES_TAC(ISPEC `p2:hol_type list` list_CASES) THEN
-      CASE_REWRITE_TAC[holKernel_raise_Failure_def] THEN
+      CAKE_REWRITE_TAC[holKernel_raise_Failure_def] THEN
       REWRITE_TAC[PAIR_EQ] THENL [MESON_TAC[]; ALL_TAC] THEN
       STRUCT_CASES_TAC(ISPEC `t:hol_type list` list_CASES) THEN
-      CASE_REWRITE_TAC[holKernel_raise_Failure_def; st_ex_return_def] THEN
+      CAKE_REWRITE_TAC[holKernel_raise_Failure_def; st_ex_return_def] THEN
       REWRITE_TAC[PAIR_EQ] THEN MESON_TAC[]];
-    QCASES_ON "a0" THEN CASE_REWRITE_TAC[holKernel_raise_Failure_def] THEN
+    QCASES_ON "a0" THEN CAKE_REWRITE_TAC[holKernel_raise_Failure_def] THEN
     REWRITE_TAC[PAIR_EQ] THENL
      [MATCH_MP_TAC HOLKPAUX_st_ex_bind_state THEN CONJ_TAC THENL
        [FIRST_X_ASSUM(MP_TAC o SPECL [`a0':mlstring`; `a1':hol_type`; `a1:hol_term`] o
@@ -1298,7 +1298,7 @@ let variant_thm = prove
   POP_ASSUM MP_TAC THEN POP_ASSUM MP_TAC THEN POP_ASSUM MP_TAC THEN
   POP_ASSUM MP_TAC THEN POP_ASSUM MP_TAC THEN
   STRUCT_CASES_TAC(SPEC `v:hol_term` (cases "hol_term")) THEN
-  CASE_REWRITE_TAC[injectivity "hol_term"] THEN REPEAT STRIP_TAC THEN
+  CAKE_REWRITE_TAC[injectivity "hol_term"] THEN REPEAT STRIP_TAC THEN
   TRY(FIRST_ASSUM ACCEPT_TAC) THEN
   FIRST_X_ASSUM(MP_TAC o SPECL [`a0:mlstring`; `a1:hol_type`]) THEN
   ASM_REWRITE_TAC[] THEN
@@ -1315,7 +1315,7 @@ let HOLKPAUX_vsubst_test_state = prove
   MATCH_MP_TAC HOLKPAUX_st_ex_bind_state THEN REWRITE_TAC[type_of_state] THEN
   REPEAT GEN_TAC THEN MATCH_MP_TAC HOLKPAUX_st_ex_bind_state THEN CONJ_TAC THENL
    [GEN_TAC THEN QCASES_ON "p2" THEN REWRITE_TAC[holKernel_dest_var_def] THEN
-    CASE_REWRITE_TAC[st_ex_return_def; holKernel_raise_Failure_def; PAIR_EQ] THEN
+    CAKE_REWRITE_TAC[st_ex_return_def; holKernel_raise_Failure_def; PAIR_EQ] THEN
     MESON_TAC[];
     REWRITE_TAC[st_ex_return_def] THEN MESON_TAC[]]);;
 
@@ -1329,9 +1329,9 @@ let HOLKPAUX_vsubst_test = prove
   REPEAT STRIP_TAC THEN
   SUBGOAL_THEN `holKernel_type_of t1 s = (M_success (term_type t1),s)` ASSUME_TAC THENL
    [ASM_MESON_TAC[type_of_thm]; ALL_TAC] THEN
-  ASM_REWRITE_TAC[st_ex_bind_def] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[st_ex_bind_def] THEN CAKE_REWRITE_TAC[] THEN
   QCASES_ON "t2" THEN REWRITE_TAC[holKernel_dest_var_def] THEN
-  CASE_REWRITE_TAC[st_ex_return_def; holKernel_raise_Failure_def; FST;
+  CAKE_REWRITE_TAC[st_ex_return_def; holKernel_raise_Failure_def; FST;
                    injectivity "exc"; distinctness "exc"; injectivity "hol_term";
                    distinctness "hol_term"] THEN
   MESON_TAC[]);;
@@ -1366,8 +1366,8 @@ let vsubst_thm = prove
   DISCH_THEN(MP_TAC o SPECL [`r:(bool,hol_exn)exc`; `s1:hol_refs`]) THEN
   ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
   FIRST_X_ASSUM SUBST_ALL_TAC THEN
-  QPAT_X_ASSUM "_ = (res,s')" MP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
-  QCASES_ON "r" THEN CASE_REWRITE_TAC[] THENL
+  QPAT_X_ASSUM "_ = (res,s')" MP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
+  QCASES_ON "r" THEN CAKE_REWRITE_TAC[] THENL
    [ALL_TAC;
     DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
     REWRITE_TAC[distinctness "exc"]] THEN
@@ -1410,7 +1410,7 @@ let inst_aux_Var = prove
      holKernel_inst_aux [] theta (hol_Var v ty) state =
      (M_success (hol_Var v (holKernel_type_subst theta ty)),state)`,
   REPEAT GEN_TAC THEN GEN_REWRITE_TAC (LAND_CONV o RATOR_CONV) [holKernel_inst_aux_def] THEN
-  CASE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+  CAKE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   REWRITE_TAC[rev_assocd_thm; REV_ASSOCD] THEN
   COND_CASES_TAC THEN ASM_REWRITE_TAC[st_ex_return_def]);;
 
@@ -1424,7 +1424,7 @@ let MEM_frees = prove
                ==> ?v ty. y = hol_Var v ty /\ holKernelProof_TYPE defs ty`,
   MATCH_MP_TAC hol_term_INDUCT THEN REPEAT STRIP_TAC THEN POP_ASSUM MP_TAC THEN
   ONCE_REWRITE_TAC[hol_frees_def] THEN
-  CASE_REWRITE_TAC[MEM; MEM_union; holKernelProof_MEM_subtract] THEN
+  CAKE_REWRITE_TAC[MEM; MEM_union; holKernelProof_MEM_subtract] THEN
   REPEAT STRIP_TAC THENL
    [ASM_MESON_TAC[TERM]; ASM_MESON_TAC[TERM]; ASM_MESON_TAC[TERM];
     FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP Abs_Var) THEN
@@ -1434,7 +1434,7 @@ let MEM_freesl = prove
  (`!tms y defs. ALL (holKernelProof_TERM defs) tms /\ MEM y (holKernel_freesl tms)
                 ==> ?v ty. y = hol_Var v ty /\ holKernelProof_TYPE defs ty`,
   LIST_INDUCT_TAC THEN REWRITE_TAC[holKernel_freesl_def] THEN
-  ONCE_REWRITE_TAC[itlist_def] THEN CASE_REWRITE_TAC[MEM; ALL] THEN
+  ONCE_REWRITE_TAC[itlist_def] THEN CAKE_REWRITE_TAC[MEM; ALL] THEN
   REWRITE_TAC[o_THM; MEM_union; GSYM holKernel_freesl_def] THEN
   REPEAT STRIP_TAC THENL [ASM_MESON_TAC[MEM_frees]; ASM_MESON_TAC[]]);;
 
@@ -1446,7 +1446,7 @@ let HOLKPAUX_inst_aux_Var_gen = prove
        then M_success (hol_Var n (TYPE_SUBST theta ty))
        else M_failure (holKernel_Clash (hol_Var n (TYPE_SUBST theta ty)))),s)`,
   REPEAT GEN_TAC THEN GEN_REWRITE_TAC (LAND_CONV o RATOR_CONV) [holKernel_inst_aux_def] THEN
-  CASE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+  CAKE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   REWRITE_TAC[rev_assocd_thm; HOLKPAUX_type_subst_TYPE_SUBST] THEN
   SUBGOAL_THEN `(if TYPE_SUBST theta ty = ty then hol_Var n ty
                  else hol_Var n (TYPE_SUBST theta ty)) = hol_Var n (TYPE_SUBST theta ty)`
@@ -1459,7 +1459,7 @@ let HOLKPAUX_inst_aux_Const = prove
      holKernel_inst_aux env theta (hol_Const c ty) s =
      (M_success (hol_Const c (TYPE_SUBST theta ty)),s)`,
   REPEAT GEN_TAC THEN GEN_REWRITE_TAC (LAND_CONV o RATOR_CONV) [holKernel_inst_aux_def] THEN
-  CASE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+  CAKE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   REWRITE_TAC[HOLKPAUX_type_subst_TYPE_SUBST] THEN
   COND_CASES_TAC THEN ASM_REWRITE_TAC[st_ex_return_def]);;
 
@@ -1484,11 +1484,11 @@ let inst_aux_thm = prove
      REWRITE_TAC[HOLKPAUX_inst_aux_Var_gen; PAIR_EQ] THEN
      DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
      REWRITE_TAC[INST_CORE_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
-     COND_CASES_TAC THEN CASE_REWRITE_TAC[];
+     COND_CASES_TAC THEN CAKE_REWRITE_TAC[];
      QPAT_X_ASSUM "holKernel_inst_aux _ _ _ _ = _" MP_TAC THEN
      REWRITE_TAC[HOLKPAUX_inst_aux_Const; PAIR_EQ] THEN
      DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
-     REWRITE_TAC[INST_CORE_def] THEN CASE_REWRITE_TAC[];
+     REWRITE_TAC[INST_CORE_def] THEN CAKE_REWRITE_TAC[];
      SUBGOAL_THEN `holKernelProof_TERM defs a0 /\ holKernelProof_TERM defs a1`
        STRIP_ASSUME_TAC THENL [ASM_MESON_TAC[TERM]; ALL_TAC] THEN
      MP_TAC(ISPEC `holKernel_inst_aux env tyin a0 s` PAIR_SURJECTIVE) THEN
@@ -1508,29 +1508,29 @@ let inst_aux_thm = prove
      ASM_REWRITE_TAC[] THEN DISCH_THEN(CONJUNCTS_THEN2 SUBST_ALL_TAC ASSUME_TAC) THEN
      QPAT_X_ASSUM "holKernel_inst_aux _ _ (hol_Comb _ _) _ = _" MP_TAC THEN
      GEN_REWRITE_TAC (LAND_CONV o LAND_CONV o RATOR_CONV) [holKernel_inst_aux_def] THEN
-     CASE_REWRITE_TAC[] THEN REWRITE_TAC[st_ex_bind_def] THEN ASM_REWRITE_TAC[] THEN
-     CASE_REWRITE_TAC[] THEN REWRITE_TAC[INST_CORE_def] THEN
+     CAKE_REWRITE_TAC[] THEN REWRITE_TAC[st_ex_bind_def] THEN ASM_REWRITE_TAC[] THEN
+     CAKE_REWRITE_TAC[] THEN REWRITE_TAC[INST_CORE_def] THEN
      CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
      POP_ASSUM MP_TAC THEN POP_ASSUM MP_TAC THEN
-     QCASES_ON "r1" THEN QCASES_ON "r2" THEN CASE_REWRITE_TAC[] THENL
+     QCASES_ON "r1" THEN QCASES_ON "r2" THEN CAKE_REWRITE_TAC[] THENL
       [REPEAT DISCH_TAC THEN FIRST_X_ASSUM MP_TAC THEN ASM_REWRITE_TAC[] THEN
-       CASE_REWRITE_TAC[IS_CLASH_def; RESULT_def] THEN
+       CAKE_REWRITE_TAC[IS_CLASH_def; RESULT_def] THEN
        COND_CASES_TAC THEN REWRITE_TAC[st_ex_return_def; PAIR_EQ] THEN
-       DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN CASE_REWRITE_TAC[] THEN
+       DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN CAKE_REWRITE_TAC[] THEN
        ASM_REWRITE_TAC[];
        REPEAT DISCH_TAC THEN FIRST_X_ASSUM MP_TAC THEN ASM_REWRITE_TAC[] THEN
-       CASE_REWRITE_TAC[IS_CLASH_def; RESULT_def; PAIR_EQ] THEN
-       DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN CASE_REWRITE_TAC[] THEN
+       CAKE_REWRITE_TAC[IS_CLASH_def; RESULT_def; PAIR_EQ] THEN
+       DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN CAKE_REWRITE_TAC[] THEN
        QPAT_X_ASSUM "match a' with holKernel_Failure _ -> F | holKernel_Clash v -> _"
          MP_TAC THEN
-       QCASES_ON "a'" THEN CASE_REWRITE_TAC[IS_CLASH_def] THEN
+       QCASES_ON "a'" THEN CAKE_REWRITE_TAC[IS_CLASH_def] THEN
        DISCH_THEN SUBST1_TAC THEN REWRITE_TAC[IS_CLASH_def];
-       DISCH_TAC THEN QCASES_ON "a" THEN CASE_REWRITE_TAC[] THEN
+       DISCH_TAC THEN QCASES_ON "a" THEN CAKE_REWRITE_TAC[] THEN
        DISCH_TAC THEN DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
-       CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[IS_CLASH_def];
-       DISCH_THEN(K ALL_TAC) THEN QCASES_ON "a" THEN CASE_REWRITE_TAC[] THEN
+       CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[IS_CLASH_def];
+       DISCH_THEN(K ALL_TAC) THEN QCASES_ON "a" THEN CAKE_REWRITE_TAC[] THEN
        DISCH_TAC THEN DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
-       CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[IS_CLASH_def]];
+       CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[IS_CLASH_def]];
      ((FIRST_ASSUM(X_CHOOSE_THEN `vn:mlstring` (X_CHOOSE_THEN `vty:hol_type` SUBST_ALL_TAC) o
      MATCH_MP Abs_Var) THEN
    SUBGOAL_THEN `holKernelProof_TYPE defs vty /\ holKernelProof_TERM defs a1` STRIP_ASSUME_TAC
@@ -1544,12 +1544,12 @@ let inst_aux_thm = prove
      ALL_TAC] THEN
    QPAT_X_ASSUM "holKernel_inst_aux _ _ (hol_Abs _ _) _ = _" MP_TAC THEN
    GEN_REWRITE_TAC (LAND_CONV o LAND_CONV o RATOR_CONV) [holKernel_inst_aux_def] THEN
-   CASE_REWRITE_TAC[] THEN
+   CAKE_REWRITE_TAC[] THEN
    ONCE_REWRITE_TAC[st_ex_bind_def] THEN BETA_TAC THEN
    REWRITE_TAC[inst_aux_Var; HOLKPAUX_type_subst_TYPE_SUBST] THEN ASM_REWRITE_TAC[] THEN
-   CASE_REWRITE_TAC[] THEN
+   CAKE_REWRITE_TAC[] THEN
    ONCE_REWRITE_TAC[st_ex_bind_def] THEN BETA_TAC THEN
-   REWRITE_TAC[st_ex_return_def] THEN CASE_REWRITE_TAC[] THEN
+   REWRITE_TAC[st_ex_return_def] THEN CAKE_REWRITE_TAC[] THEN
    MP_TAC(ISPEC `holKernel_inst_aux (CONS (hol_Var vn vty,hol_Var vn ty1) env) tyin a1 s`
      PAIR_SURJECTIVE) THEN
    DISCH_THEN(X_CHOOSE_THEN `r2:(hol_term,hol_exn)exc` (X_CHOOSE_THEN `s2:hol_refs`
@@ -1564,18 +1564,18 @@ let inst_aux_thm = prove
    ANTS_TAC THENL [ASM_MESON_TAC[TERM_Var]; ALL_TAC] THEN
    DISCH_THEN(CONJUNCTS_THEN2 SUBST_ALL_TAC ASSUME_TAC) THEN
    REWRITE_TAC[holKernel_handle_Clash_def; st_ex_bind_def] THEN ASM_REWRITE_TAC[] THEN
-   CASE_REWRITE_TAC[] THEN REWRITE_TAC[INST_CORE_def; dest_var_def] THEN
-   CASE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN ASM_REWRITE_TAC[] THEN
-   POP_ASSUM MP_TAC THEN QCASES_ON "r2" THEN CASE_REWRITE_TAC[] THENL
-    [DISCH_TAC THEN COND_CASES_TAC THEN CASE_REWRITE_TAC[PAIR_EQ] THEN
-     DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN CASE_REWRITE_TAC[] THEN
+   CAKE_REWRITE_TAC[] THEN REWRITE_TAC[INST_CORE_def; dest_var_def] THEN
+   CAKE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN ASM_REWRITE_TAC[] THEN
+   POP_ASSUM MP_TAC THEN QCASES_ON "r2" THEN CAKE_REWRITE_TAC[] THENL
+    [DISCH_TAC THEN COND_CASES_TAC THEN CAKE_REWRITE_TAC[PAIR_EQ] THEN
+     DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN CAKE_REWRITE_TAC[] THEN
      ASM_REWRITE_TAC[IS_RESULT_def; RESULT_def] THEN
      FIRST_X_ASSUM(CONJUNCTS_THEN SUBST_ALL_TAC) THEN REWRITE_TAC[];
      ALL_TAC] THEN
-   QCASES_ON "a" THEN CASE_REWRITE_TAC[] THEN DISCH_TAC THEN
+   QCASES_ON "a" THEN CAKE_REWRITE_TAC[] THEN DISCH_TAC THEN
    COND_CASES_TAC THENL
     [REWRITE_TAC[holKernel_raise_Clash_def; PAIR_EQ] THEN
-     DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN CASE_REWRITE_TAC[] THEN
+     DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN CAKE_REWRITE_TAC[] THEN
      ASM_REWRITE_TAC[IS_RESULT_def; CLASH_def];
      ALL_TAC] THEN
    FIRST_X_ASSUM SUBST_ALL_TAC) THEN
@@ -1591,17 +1591,17 @@ let inst_aux_thm = prove
    MP_TAC(SPECL [`tyin:(hol_type#hol_type)list`; `a1:hol_term`] HOLKPAUX_INST_CORE_LEMMA) THEN
    ASM_REWRITE_TAC[] THEN
    DISCH_THEN(X_CHOOSE_THEN `tm1:hol_term` STRIP_ASSUME_TAC) THEN ASM_REWRITE_TAC[] THEN
-   QCASES_ON "r3" THEN CASE_REWRITE_TAC[] THENL
+   QCASES_ON "r3" THEN CAKE_REWRITE_TAC[] THENL
     [ALL_TAC;
      ASM_REWRITE_TAC[distinctness "hol_result"] THEN TOP_CASE_TAC THEN
-     CASE_REWRITE_TAC[]] THEN
+     CAKE_REWRITE_TAC[]] THEN
    REWRITE_TAC[injectivity "hol_result"] THEN DISCH_THEN(SUBST_ALL_TAC o SYM) THEN
-   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]) THEN
+   ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]) THEN
    (SUBGOAL_THEN `welltyped tm1` ASSUME_TAC THENL
     [ASM_MESON_TAC[WELLTYPED; WELLTYPED_LEMMA]; ALL_TAC] THEN
-   ASM_SIMP_TAC[variant_inst_thm] THEN
+   CAKE_ASM_SIMP_TAC[variant_inst_thm] THEN
    ABBREV_TAC `x1 = VARIANT tm1 (explode vn) ty1` THEN
-   REWRITE_TAC[holKernel_dest_var_def] THEN CASE_REWRITE_TAC[st_ex_return_def] THEN
+   REWRITE_TAC[holKernel_dest_var_def] THEN CAKE_REWRITE_TAC[st_ex_return_def] THEN
    REWRITE_TAC[RESULT_def; IS_RESULT_def; CLASH_def] THEN ASM_REWRITE_TAC[] THEN
    SUBGOAL_THEN `holKernel_vsubst_aux [hol_Var x1 vty,hol_Var vn vty] a1 =
                  VSUBST [hol_Var x1 vty,hol_Var vn vty] a1 /\
@@ -1628,12 +1628,12 @@ let inst_aux_thm = prove
    ANTS_TAC THENL [ASM_MESON_TAC[TERM_Var]; ALL_TAC] THEN
    DISCH_THEN(CONJUNCTS_THEN2 SUBST_ALL_TAC MP_TAC) THEN
    STRUCT_CASES_TAC(ISPEC `r4:(hol_term,hol_exn)exc` (cases "exc")) THEN
-   CASE_REWRITE_TAC[PAIR_EQ] THENL
+   CAKE_REWRITE_TAC[PAIR_EQ] THENL
     [DISCH_TAC THEN ASM_REWRITE_TAC[IS_RESULT_def; RESULT_def] THEN
-     DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN CASE_REWRITE_TAC[];
-     TOP_CASE_TAC THEN CASE_REWRITE_TAC[] THEN DISCH_TAC THEN
+     DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN CAKE_REWRITE_TAC[];
+     TOP_CASE_TAC THEN CAKE_REWRITE_TAC[] THEN DISCH_TAC THEN
      ASM_REWRITE_TAC[IS_RESULT_def] THEN
-     DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN CASE_REWRITE_TAC[]]))]);;
+     DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN CAKE_REWRITE_TAC[]]))]);;
 
 let inst_lemma = prove
  (`!theta tm s res s' defs.
@@ -1659,7 +1659,7 @@ let inst_lemma = prove
   ASM_REWRITE_TAC[ALL] THEN DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC MP_TAC) THEN
   ASM_REWRITE_TAC[] THEN
   STRUCT_CASES_TAC(ISPEC `res:(hol_term,hol_exn)exc` (cases "exc")) THEN
-  CASE_REWRITE_TAC[injectivity "exc"; distinctness "exc"] THEN
+  CAKE_REWRITE_TAC[injectivity "exc"; distinctness "exc"] THEN
   SIMP_TAC[RESULT_def]);;
 
 let inst_thm = prove
@@ -1693,9 +1693,9 @@ let inst_thm = prove
                     `res:(hol_term,hol_exn)exc`; `defs:update list`] inst_aux_thm) THEN
       ASM_REWRITE_TAC[ALL] THEN
       STRUCT_CASES_TAC(ISPEC `res:(hol_term,hol_exn)exc` (cases "exc")) THEN
-      REWRITE_TAC[injectivity "exc"; distinctness "exc"] THEN CASE_REWRITE_TAC[] THEN
+      REWRITE_TAC[injectivity "exc"; distinctness "exc"] THEN CAKE_REWRITE_TAC[] THEN
       ASM_REWRITE_TAC[INST_def; RESULT_def; injectivity "hol_result"] THENL
-       [MESON_TAC[]; TOP_CASE_TAC THEN CASE_REWRITE_TAC[distinctness "hol_result"]]];
+       [MESON_TAC[]; TOP_CASE_TAC THEN CAKE_REWRITE_TAC[distinctness "hol_result"]]];
     REWRITE_TAC[INST_def; holKernelProof_TERM_def] THEN
     MATCH_MP_TAC term_ok_INST_CORE THEN
     ASM_REWRITE_TAC[MEM; IS_RESULT_def] THEN
@@ -1713,7 +1713,7 @@ let freesin_IMP = prove
   MATCH_MP_TAC hol_term_INDUCT THEN REPEAT STRIP_TAC THEN
   POP_ASSUM MP_TAC THEN POP_ASSUM MP_TAC THEN POP_ASSUM MP_TAC THEN
   ONCE_REWRITE_TAC[holKernel_freesin_def] THEN
-  CASE_REWRITE_TAC[VFREE_IN_def; injectivity "hol_term"] THEN
+  CAKE_REWRITE_TAC[VFREE_IN_def; injectivity "hol_term"] THEN
   REPEAT STRIP_TAC THENL
    [ASM_MESON_TAC[];
     ASM_MESON_TAC[TERM];
@@ -1728,7 +1728,7 @@ let freesin_IMP = prove
 let ALL_DISTINCT_union = prove
  (`!xs (ys:A list). ALL_DISTINCT (hol_union xs ys) <=> ALL_DISTINCT ys`,
   LIST_INDUCT_TAC THEN ONCE_REWRITE_TAC[hol_union_def] THEN
-  ONCE_REWRITE_TAC[itlist_def] THEN CASE_REWRITE_TAC[] THEN
+  ONCE_REWRITE_TAC[itlist_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[GSYM hol_union_def; hol_insert_def] THEN GEN_TAC THEN
   COND_CASES_TAC THEN ASM_REWRITE_TAC[ALL_DISTINCT] THEN
   ASM_MESON_TAC[]);;
@@ -1736,16 +1736,16 @@ let ALL_DISTINCT_union = prove
 let ALL_DISTINCT_tyvars_ALT = prove
  (`!h. ALL_DISTINCT (holKernel_tyvars h)`,
   MATCH_MP_TAC type_ind THEN REPEAT STRIP_TAC THEN
-  ONCE_REWRITE_TAC[holKernel_tyvars_def] THEN CASE_REWRITE_TAC[ALL_DISTINCT; MEM] THEN
+  ONCE_REWRITE_TAC[holKernel_tyvars_def] THEN CAKE_REWRITE_TAC[ALL_DISTINCT; MEM] THEN
   POP_ASSUM MP_TAC THEN SPEC_TAC(`l:hol_type list`,`l:hol_type list`) THEN
   LIST_INDUCT_TAC THEN ONCE_REWRITE_TAC[itlist_def] THEN
-  CASE_REWRITE_TAC[MAP; ALL; ALL_DISTINCT] THEN STRIP_TAC THEN
+  CAKE_REWRITE_TAC[MAP; ALL; ALL_DISTINCT] THEN STRIP_TAC THEN
   ASM_SIMP_TAC[ALL_DISTINCT_union]);;
 
 let ALL_DISTINCT_type_vars_in_term = prove
  (`!P. ALL_DISTINCT (holKernel_type_vars_in_term P)`,
   MATCH_MP_TAC hol_term_INDUCT THEN REPEAT STRIP_TAC THEN
-  ONCE_REWRITE_TAC[holKernel_type_vars_in_term_def] THEN CASE_REWRITE_TAC[] THEN
+  ONCE_REWRITE_TAC[holKernel_type_vars_in_term_def] THEN CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[ALL_DISTINCT_union; ALL_DISTINCT_tyvars_ALT]);;
 
 let MEM_type_vars_in_term = prove
@@ -1754,7 +1754,7 @@ let MEM_type_vars_in_term = prove
      ==> (MEM v (holKernel_type_vars_in_term rhs) <=> MEM v (tvars rhs))`,
   MATCH_MP_TAC hol_term_INDUCT THEN REPEAT STRIP_TAC THEN
   ONCE_REWRITE_TAC[holKernel_type_vars_in_term_def] THEN
-  CASE_REWRITE_TAC[tvars_def; tyvars_thm; MEM_union] THEN
+  CAKE_REWRITE_TAC[tvars_def; tyvars_thm; MEM_union] THEN
   REWRITE_TAC[GSYM IN_SET_OF_LIST; MEM_LIST_UNION; IN_UNION] THEN
   REWRITE_TAC[IN_SET_OF_LIST] THENL
    [SUBGOAL_THEN `holKernelProof_TERM defs a0 /\ holKernelProof_TERM defs a1`
@@ -1764,7 +1764,7 @@ let MEM_type_vars_in_term = prove
     SUBGOAL_THEN `holKernelProof_TERM defs a1` ASSUME_TAC THENL
       [ASM_MESON_TAC[TERM]; ALL_TAC] THEN ASM_SIMP_TAC[] THEN
     ONCE_REWRITE_TAC[holKernel_type_vars_in_term_def] THEN
-    CASE_REWRITE_TAC[tvars_def; tyvars_thm]]);;
+    CAKE_REWRITE_TAC[tvars_def; tyvars_thm]]);;
 
 let sort_type_vars_in_term = prove
  (`!P defs.
@@ -1860,11 +1860,11 @@ let REFL_thm = prove
   MP_TAC(SPECL [`tm:hol_term`; `tm:hol_term`; `s:hol_refs`; `r:(hol_term,hol_exn)exc`;
                 `s1:hol_refs`; `defs:update list`] safe_mk_eq_thm) THEN
   ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
-  FIRST_X_ASSUM SUBST_ALL_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  FIRST_X_ASSUM SUBST_ALL_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   QCASES_ON "r" THEN
   RULE_ASSUM_TAC(REWRITE_RULE[distinctness "exc"; injectivity "exc"]) THENL
    [ALL_TAC; ASM_MESON_TAC[]] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[st_ex_return_def; PAIR_EQ] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[st_ex_return_def; PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
   REWRITE_TAC[injectivity "exc"] THEN GEN_TAC THEN DISCH_THEN(SUBST1_TAC o SYM) THEN
   FIRST_X_ASSUM(MP_TAC o SPEC `a:hol_term`) THEN REWRITE_TAC[] THEN
@@ -2021,18 +2021,18 @@ let map_type_of = prove
      holKernel_map holKernel_type_of ls s = (M_success r,s')
      ==> s' = s /\ r = MAP term_type ls`,
   LIST_INDUCT_TAC THEN ONCE_REWRITE_TAC[holKernel_map_def] THEN
-  CASE_REWRITE_TAC[st_ex_return_def; PAIR_EQ; injectivity "exc"; MAP; ALL] THENL
+  CAKE_REWRITE_TAC[st_ex_return_def; PAIR_EQ; injectivity "exc"; MAP; ALL] THENL
    [MESON_TAC[]; ALL_TAC] THEN
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   SUBGOAL_THEN `holKernel_type_of h s = (M_success (term_type h),s)` ASSUME_TAC THENL
    [ASM_MESON_TAC[type_of_thm]; ALL_TAC] THEN
   QPAT_X_ASSUM "st_ex_bind _ _ _ = _" MP_TAC THEN
-  ASM_REWRITE_TAC[st_ex_bind_def] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[st_ex_bind_def] THEN CAKE_REWRITE_TAC[] THEN
   MP_TAC(ISPEC `holKernel_map holKernel_type_of t s` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `r1:(hol_type list,hol_exn)exc` (X_CHOOSE_THEN `s1:hol_refs`
     ASSUME_TAC)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
-  QCASES_ON "r1" THEN CASE_REWRITE_TAC[st_ex_return_def; PAIR_EQ; injectivity "exc";
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
+  QCASES_ON "r1" THEN CAKE_REWRITE_TAC[st_ex_return_def; PAIR_EQ; injectivity "exc";
                                        distinctness "exc"] THEN
   STRIP_TAC THEN
   FIRST_X_ASSUM(MP_TAC o SPECL [`s:hol_refs`; `a:hol_type list`; `s1:hol_refs`;
@@ -2043,7 +2043,7 @@ let map_type_of_state = prove
  (`!ls s r s'. holKernel_map holKernel_type_of ls s = (r,s') ==> s' = s`,
   SUBGOAL_THEN `!ls s. ?r. holKernel_map holKernel_type_of ls s = (r,s)` MP_TAC THENL
    [LIST_INDUCT_TAC THEN ONCE_REWRITE_TAC[holKernel_map_def] THEN
-    CASE_REWRITE_TAC[st_ex_return_def; PAIR_EQ] THENL [MESON_TAC[]; ALL_TAC] THEN
+    CAKE_REWRITE_TAC[st_ex_return_def; PAIR_EQ] THENL [MESON_TAC[]; ALL_TAC] THEN
     GEN_TAC THEN MATCH_MP_TAC HOLKPAUX_st_ex_bind_state THEN
     REWRITE_TAC[type_of_state] THEN REPEAT GEN_TAC THEN BETA_TAC THEN
     MATCH_MP_TAC HOLKPAUX_st_ex_bind_state THEN ASM_REWRITE_TAC[] THEN
@@ -2086,8 +2086,8 @@ let ALPHA_THM_thm = prove
    DISCH_THEN(X_CHOOSE_THEN `r1:(hol_type list,hol_exn)exc` (X_CHOOSE_THEN `s1:hol_refs`
      ASSUME_TAC)) THEN
    FIRST_ASSUM(ASSUME_TAC o MATCH_MP map_type_of_state) THEN
-   FIRST_X_ASSUM SUBST_ALL_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
-   QCASES_ON "r1" THEN CASE_REWRITE_TAC[PAIR_EQ] THENL [ALL_TAC;
+   FIRST_X_ASSUM SUBST_ALL_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
+   QCASES_ON "r1" THEN CAKE_REWRITE_TAC[PAIR_EQ] THENL [ALL_TAC;
      DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN REWRITE_TAC[distinctness "exc"]] THEN
    COND_CASES_TAC THEN
    REWRITE_TAC[holKernel_raise_Failure_def; st_ex_return_def; PAIR_EQ] THEN
@@ -2161,7 +2161,7 @@ let HOLKPAUX_MK_COMB_ok = prove
      STRIP_ASSUME_TAC THENL
     [CONJ_TAC THEN MATCH_MP_TAC HOLKPAUX_EQ_FORM THEN ASM_MESON_TAC[]; ALL_TAC] THEN
    QPAT_X_ASSUM "holKernel_MK_COMB _ _ = _" MP_TAC THEN
-   REWRITE_TAC[holKernel_MK_COMB_def] THEN CASE_REWRITE_TAC[] THEN
+   REWRITE_TAC[holKernel_MK_COMB_def] THEN CAKE_REWRITE_TAC[] THEN
   (RULE_ASSUM_TAC(REWRITE_RULE[ASSUME
      `hol_Comb (hol_Comb (hol_Const (implode "=") ty1) l1) r1 = l1 === r1`;
      ASSUME `hol_Comb (hol_Comb (hol_Const (implode "=") ty2) l2) r2 = l2 === r2`]) THEN
@@ -2178,7 +2178,7 @@ let HOLKPAUX_MK_COMB_ok = prove
    SUBGOAL_THEN `term_type r1 = typeof r1 /\ term_type r2 = typeof r2 /\
                  term_type l1 = typeof l1 /\ term_type l2 = typeof l2` STRIP_ASSUME_TAC THENL
     [ASM_MESON_TAC[term_type]; ALL_TAC] THEN
-   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]) THEN
+   ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]) THEN
   (EVERY_CASE_TAC THEN
    REWRITE_TAC[holKernel_raise_Failure_def; st_ex_return_def; PAIR_EQ] THEN
    TRY(DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
@@ -2232,7 +2232,7 @@ let MK_COMB_thm = prove
 
 let term_type_Const = prove
  (`!n ty. term_type (hol_Const n ty) = ty`,
-  ONCE_REWRITE_TAC[term_type_def] THEN CASE_REWRITE_TAC[]);;
+  ONCE_REWRITE_TAC[term_type_def] THEN CAKE_REWRITE_TAC[]);;
 
 let term_type_Comb_Equal = prove
  (`!ty ty'.
@@ -2240,7 +2240,7 @@ let term_type_Comb_Equal = prove
        (Tyapp (implode "fun") [ty; Tyapp (implode "fun") [ty; Tyapp (implode "bool") []]]))
        ty') =
      Tyapp (implode "fun") [ty; Tyapp (implode "bool") []]`,
-  ONCE_REWRITE_TAC[term_type_def] THEN CASE_REWRITE_TAC[term_type_Const]);;
+  ONCE_REWRITE_TAC[term_type_def] THEN CAKE_REWRITE_TAC[term_type_Const]);;
 
 (* ABS on a variable and an equation *)
 let HOLKPAUX_ABS_ok = prove
@@ -2260,7 +2260,7 @@ let HOLKPAUX_ABS_ok = prove
   SUBGOAL_THEN `hol_Comb (hol_Comb (hol_Const (implode "=") ty0) l) r = l === r`
     ASSUME_TAC THENL [MATCH_MP_TAC HOLKPAUX_EQ_FORM THEN ASM_MESON_TAC[]; ALL_TAC] THEN
   QPAT_X_ASSUM "holKernel_ABS _ _ _ = _" MP_TAC THEN
-  REWRITE_TAC[holKernel_ABS_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[holKernel_ABS_def] THEN CAKE_REWRITE_TAC[] THEN
   RULE_ASSUM_TAC(REWRITE_RULE[ASSUME
     `hol_Comb (hol_Comb (hol_Const (implode "=") ty0) l) r = l === r`]) THEN
   SUBGOAL_THEN `holKernelProof_TERM defs l /\ holKernelProof_TERM defs r /\
@@ -2278,7 +2278,7 @@ let HOLKPAUX_ABS_ok = prove
   MP_TAC(SPECL [`defs:update list`; `s:hol_refs`; `hol_Abs (hol_Var x ty) l`;
                 `hol_Abs (hol_Var x ty) r`] HOLKPAUX_safe_mk_eq_ok) THEN
   ASM_REWRITE_TAC[st_ex_bind_def] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[st_ex_return_def; PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[st_ex_return_def; PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
   REWRITE_TAC[injectivity "exc"] THEN GEN_TAC THEN DISCH_THEN(SUBST1_TAC o SYM) THEN
   UNDISCH_TAC `holKernelProof_THM defs (Sequent asl (l === r))` THEN
@@ -2328,8 +2328,8 @@ let HOLKPAUX_BETA_ok = prove
          HOLKPAUX_safe_mk_eq_ok) THEN
   ASM_REWRITE_TAC[typeof_def; codomain_def] THEN STRIP_TAC THEN
   QPAT_X_ASSUM "holKernel_BETA _ _ = _" MP_TAC THEN
-  REWRITE_TAC[holKernel_BETA_def] THEN CASE_REWRITE_TAC[] THEN
-  ASM_REWRITE_TAC[st_ex_bind_def] THEN CASE_REWRITE_TAC[st_ex_return_def; PAIR_EQ] THEN
+  REWRITE_TAC[holKernel_BETA_def] THEN CAKE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[st_ex_bind_def] THEN CAKE_REWRITE_TAC[st_ex_return_def; PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
   REWRITE_TAC[injectivity "exc"] THEN GEN_TAC THEN DISCH_THEN(SUBST1_TAC o SYM) THEN
   REWRITE_TAC[holKernelProof_THM_def] THEN MATCH_MP_TAC proves_BETA THEN
@@ -2375,7 +2375,7 @@ let ASSUME_thm = prove
   ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
   QPAT_X_ASSUM "holKernel_ASSUME _ _ = _" MP_TAC THEN
   ASM_REWRITE_TAC[holKernel_ASSUME_def; st_ex_bind_def] THEN
-  CASE_REWRITE_TAC[] THEN COND_CASES_TAC THEN
+  CAKE_REWRITE_TAC[] THEN COND_CASES_TAC THEN
   REWRITE_TAC[holKernel_raise_Failure_def; st_ex_return_def; PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
   REWRITE_TAC[injectivity "exc"; distinctness "exc"] THEN
@@ -2411,7 +2411,7 @@ let HOLKPAUX_EQ_MP_ok = prove
   SUBGOAL_THEN `holKernel_aconv l c <=> ACONV l c` ASSUME_TAC THENL
    [MATCH_MP_TAC aconv_thm THEN ASM_MESON_TAC[]; ALL_TAC] THEN
   QPAT_X_ASSUM "holKernel_EQ_MP _ _ _ = _" MP_TAC THEN
-  REWRITE_TAC[holKernel_EQ_MP_def] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
+  REWRITE_TAC[holKernel_EQ_MP_def] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
   COND_CASES_TAC THEN
   REWRITE_TAC[holKernel_raise_Failure_def; st_ex_return_def; PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
@@ -2472,7 +2472,7 @@ let DEDUCT_ANTISYM_RULE_thm = prove
   REWRITE_TAC[holKernel_DEDUCT_ANTISYM_RULE_def] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   ASM_REWRITE_TAC[st_ex_bind_def] THEN
-  CASE_REWRITE_TAC[st_ex_return_def; PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[st_ex_return_def; PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
   REWRITE_TAC[injectivity "exc"] THEN GEN_TAC THEN DISCH_THEN(SUBST1_TAC o SYM) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[holKernelProof_THM_def]) THEN
@@ -2486,7 +2486,7 @@ let image_lemma = prove
      ==> ALL (\x. !s. holKernelProof_STATE defs s ==> f x s = (M_success (g x),s)) l
      ==> s' = s /\ res = M_success (term_image g l)`,
   GEN_TAC THEN LIST_INDUCT_TAC THEN ONCE_REWRITE_TAC[holKernel_image_def] THEN
-  CASE_REWRITE_TAC[ALL] THENL
+  CAKE_REWRITE_TAC[ALL] THENL
    [REWRITE_TAC[st_ex_return_def; PAIR_EQ; term_image_nil] THEN MESON_TAC[];
     ALL_TAC] THEN
   REPEAT GEN_TAC THEN STRIP_TAC THEN STRIP_TAC THEN
@@ -2501,7 +2501,7 @@ let image_lemma = prove
                                 `r:(hol_term list,B)exc`; `s1:hol_refs`]) THEN
   ASM_REWRITE_TAC[] THEN DISCH_THEN(CONJUNCTS_THEN SUBST_ALL_TAC) THEN
   QPAT_X_ASSUM "st_ex_bind _ _ _ = _" MP_TAC THEN
-  ASM CASE_REWRITE_TAC[st_ex_bind_def; st_ex_return_def; PAIR_EQ] THEN
+  ASM CAKE_REWRITE_TAC[st_ex_bind_def; st_ex_return_def; PAIR_EQ] THEN
   REWRITE_TAC[CSYNAUX_P3_term_image_cons] THEN MESON_TAC[]);;
 
 let INST_TYPE_thm = prove
@@ -2542,7 +2542,7 @@ let INST_TYPE_thm = prove
     ASSUME_TAC THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
   QPAT_X_ASSUM "holKernel_INST_TYPE _ _ _ = _" MP_TAC THEN
   REWRITE_TAC[holKernel_INST_TYPE_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
-  ASM CASE_REWRITE_TAC[st_ex_bind_def; st_ex_return_def; PAIR_EQ] THEN
+  ASM CAKE_REWRITE_TAC[st_ex_bind_def; st_ex_return_def; PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
   REWRITE_TAC[injectivity "exc"; RIGHT_EXISTS_AND_THM; UNWIND_THM1] THEN
   REWRITE_TAC[holKernelProof_THM_def] THEN MATCH_MP_TAC proves_INST_TYPE THEN
@@ -2562,7 +2562,7 @@ let image_lemma = prove
                                             (!t. r = M_success t ==> t = g x)) l
      ==> s' = s /\ !ts. res = M_success ts ==> ts = term_image g l`,
   GEN_TAC THEN LIST_INDUCT_TAC THEN ONCE_REWRITE_TAC[holKernel_image_def] THEN
-  CASE_REWRITE_TAC[ALL] THENL
+  CAKE_REWRITE_TAC[ALL] THENL
    [REWRITE_TAC[st_ex_return_def; PAIR_EQ; term_image_nil] THEN REPEAT GEN_TAC THEN
     DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM) o CONJUNCT1) THEN
     REWRITE_TAC[injectivity "exc"] THEN MESON_TAC[];
@@ -2581,7 +2581,7 @@ let image_lemma = prove
   ASM_REWRITE_TAC[] THEN STRIP_TAC THEN FIRST_X_ASSUM SUBST_ALL_TAC THEN
   QPAT_X_ASSUM "st_ex_bind _ _ _ = _" MP_TAC THEN
   QCASES_ON "r" THEN QCASES_ON "r2" THEN
-  ASM CASE_REWRITE_TAC[st_ex_bind_def; st_ex_return_def; PAIR_EQ; injectivity "exc";
+  ASM CAKE_REWRITE_TAC[st_ex_bind_def; st_ex_return_def; PAIR_EQ; injectivity "exc";
                        distinctness "exc"] THEN
   DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[injectivity "exc"; distinctness "exc"; FORALL_UNWIND_THM1]) THEN
@@ -2627,7 +2627,7 @@ let INST_thm = prove
   QPAT_X_ASSUM "holKernel_INST _ _ _ = _" MP_TAC THEN
   REWRITE_TAC[holKernel_INST_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   QCASES_ON "r" THEN QCASES_ON "r2" THEN
-  ASM CASE_REWRITE_TAC[st_ex_bind_def; st_ex_return_def; PAIR_EQ] THEN
+  ASM CAKE_REWRITE_TAC[st_ex_bind_def; st_ex_return_def; PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
   REWRITE_TAC[injectivity "exc"; distinctness "exc"] THEN
   GEN_TAC THEN DISCH_THEN(SUBST1_TAC o SYM) THEN
@@ -2723,7 +2723,7 @@ let first_dup_thm = prove
      holKernel_first_dup ls acc = NONE
      ==> ALL_DISTINCT ls /\ (!x. MEM x ls ==> ~MEM x acc)`,
   LIST_INDUCT_TAC THEN ONCE_REWRITE_TAC[holKernel_first_dup_def] THEN
-  CASE_REWRITE_TAC[ALL_DISTINCT; MEM] THEN GEN_TAC THEN
+  CAKE_REWRITE_TAC[ALL_DISTINCT; MEM] THEN GEN_TAC THEN
   COND_CASES_TAC THEN REWRITE_TAC[distinctness "option"] THEN
   DISCH_THEN(fun th -> FIRST_X_ASSUM(MP_TAC o C MATCH_MP th)) THEN
   REWRITE_TAC[MEM] THEN ASM_MESON_TAC[]);;
@@ -2732,7 +2732,7 @@ let first_dup_SOME = prove
  (`!(ls:A list) acc x.
      holKernel_first_dup ls acc = SOME x ==> ~ALL_DISTINCT (APPEND ls acc)`,
   LIST_INDUCT_TAC THEN ONCE_REWRITE_TAC[holKernel_first_dup_def] THEN
-  CASE_REWRITE_TAC[distinctness "option"] THEN REPEAT GEN_TAC THEN
+  CAKE_REWRITE_TAC[distinctness "option"] THEN REPEAT GEN_TAC THEN
   COND_CASES_TAC THENL
    [REWRITE_TAC[APPEND; ALL_DISTINCT; MEM_APPEND] THEN ASM_MESON_TAC[];
     DISCH_THEN(fun th -> FIRST_X_ASSUM(MP_TAC o C MATCH_MP th)) THEN
@@ -2747,7 +2747,7 @@ let add_constants_thm = prove
               ==> ALL_DISTINCT (APPEND (MAP FST ls)
                                        (MAP FST (hol_refs_the_term_constants s))) /\
                   s' = hol_refs_the_term_constants_fupd
-                         (K (APPEND ls (hol_refs_the_term_constants s))) s) /\
+                         (combin_K (APPEND ls (hol_refs_the_term_constants s))) s) /\
          (!msg. res = M_failure msg
                 ==> s' = s /\
                     ~ALL_DISTINCT (APPEND (MAP FST ls)
@@ -2755,11 +2755,11 @@ let add_constants_thm = prove
   REPEAT GEN_TAC THEN
   REWRITE_TAC[holKernel_add_constants_def; st_ex_bind_def;
               holKernel_get_the_term_constants_def] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   MP_TAC(ISPEC `holKernel_first_dup (MAP FST (ls:(mlstring#hol_type)list))
                   (MAP FST (hol_refs_the_term_constants s))` (cases "option")) THEN
   STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[holKernel_raise_Failure_def; holKernel_set_the_term_constants_def;
+  CAKE_REWRITE_TAC[holKernel_raise_Failure_def; holKernel_set_the_term_constants_def;
                    PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
   REWRITE_TAC[distinctness "exc"; injectivity "exc"] THENL
@@ -2771,7 +2771,7 @@ let add_constants_thm = prove
 let HOLKPAUX_itlist_ITLIST = prove
  (`!(f:A->B->B) l b. itlist f l b = ITLIST f l b`,
   GEN_TAC THEN LIST_INDUCT_TAC THEN ONCE_REWRITE_TAC[itlist_def] THEN
-  CASE_REWRITE_TAC[ITLIST] THEN ASM_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[ITLIST] THEN ASM_REWRITE_TAC[]);;
 
 let HOLKPAUX_union_LIST_UNION = prove
  (`!(l1:A list) l2. hol_union l1 l2 = LIST_UNION l1 l2`,
@@ -2785,7 +2785,7 @@ let tyvars_EQ_thm = prove
  (`holKernel_tyvars = hol_tyvars`,
   REWRITE_TAC[FUN_EQ_THM] THEN MATCH_MP_TAC holKernel_tyvars_ind THEN
   GEN_TAC THEN DISCH_TAC THEN QCASES_ON "x" THEN
-  ONCE_REWRITE_TAC[holKernel_tyvars_def] THEN CASE_REWRITE_TAC[hol_tyvars_def] THEN
+  ONCE_REWRITE_TAC[holKernel_tyvars_def] THEN CAKE_REWRITE_TAC[hol_tyvars_def] THEN
   SUBGOAL_THEN `!a. MEM a a1 ==> holKernel_tyvars a = hol_tyvars a` MP_TAC THENL
    [ASM_MESON_TAC[]; ALL_TAC] THEN
   POP_ASSUM(K ALL_TAC) THEN SPEC_TAC(`a1:hol_type list`,`l:hol_type list`) THEN
@@ -2837,24 +2837,24 @@ let HOLKPAUX_new_spec_f = prove
   MP_TAC(SPECL [`e:hol_term`; `st:hol_refs`; `r1:(hol_term#hol_term,hol_exn)exc`;
                 `s1:hol_refs`; `defs:update list`] dest_eq_thm) THEN
   ASM_REWRITE_TAC[] THEN DISCH_THEN(CONJUNCTS_THEN2 SUBST_ALL_TAC ASSUME_TAC) THEN
-  ASM_REWRITE_TAC[] THEN QCASES_ON "r1" THEN CASE_REWRITE_TAC[PAIR_EQ] THENL
+  ASM_REWRITE_TAC[] THEN QCASES_ON "r1" THEN CAKE_REWRITE_TAC[PAIR_EQ] THENL
    [ALL_TAC;
     DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
     REWRITE_TAC[distinctness "exc"]] THEN
   MP_TAC(ISPEC `a:hol_term#hol_term` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `l:hol_term` (X_CHOOSE_THEN `r:hol_term` SUBST_ALL_TAC)) THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   FIRST_X_ASSUM(MP_TAC o SPECL [`l:hol_term`; `r:hol_term`]) THEN
   REWRITE_TAC[] THEN STRIP_TAC THEN
   SUBGOAL_THEN `e = l === r` SUBST_ALL_TAC THENL
    [ASM_REWRITE_TAC[equation_def]; ALL_TAC] THEN
   QCASES_ON "l" THEN
   REWRITE_TAC[holKernel_dest_var_def] THEN
-  CASE_REWRITE_TAC[holKernel_raise_Failure_def; PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[holKernel_raise_Failure_def; PAIR_EQ] THEN
   TRY(DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
       REWRITE_TAC[distinctness "exc"] THEN NO_TAC) THEN
-  CASE_REWRITE_TAC[st_ex_return_def] THEN
-  REPEAT COND_CASES_TAC THEN CASE_REWRITE_TAC[st_ex_return_def; PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[st_ex_return_def] THEN
+  REPEAT COND_CASES_TAC THEN CAKE_REWRITE_TAC[st_ex_return_def; PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
   REWRITE_TAC[distinctness "exc"; injectivity "exc"] THEN
   GEN_TAC THEN DISCH_THEN(SUBST1_TAC o SYM) THEN
@@ -2881,7 +2881,7 @@ let HOLKPAUX_map_REL = prove
            holKernel_map f l st = (res,st1) /\ holKernelProof_STATE defs st /\ ALL P l
            ==> st1 = st /\ !xs. res = M_success xs ==> ALL2 R l xs`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN LIST_INDUCT_TAC THEN
-  ONCE_REWRITE_TAC[holKernel_map_def] THEN CASE_REWRITE_TAC[ALL; ALL2] THENL
+  ONCE_REWRITE_TAC[holKernel_map_def] THEN CAKE_REWRITE_TAC[ALL; ALL2] THENL
    [REWRITE_TAC[st_ex_return_def; PAIR_EQ] THEN REPEAT GEN_TAC THEN
     DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM) o CONJUNCT1) THEN
     REWRITE_TAC[injectivity "exc"] THEN MESON_TAC[ALL2];
@@ -2899,7 +2899,7 @@ let HOLKPAUX_map_REL = prove
   DISCH_THEN(CONJUNCTS_THEN2 SUBST_ALL_TAC ASSUME_TAC) THEN
   QPAT_X_ASSUM "st_ex_bind _ _ _ = _" MP_TAC THEN
   QCASES_ON "r1" THEN QCASES_ON "r2" THEN
-  ASM CASE_REWRITE_TAC[st_ex_bind_def; st_ex_return_def; PAIR_EQ] THEN
+  ASM CAKE_REWRITE_TAC[st_ex_bind_def; st_ex_return_def; PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
   REWRITE_TAC[distinctness "exc"; injectivity "exc"; ALL2] THEN
   RULE_ASSUM_TAC(REWRITE_RULE[injectivity "exc"; distinctness "exc"; FORALL_UNWIND_THM1]) THEN
@@ -2985,9 +2985,9 @@ let HOLKPAUX_STATE_add_consts = prove
      holKernelProof_STATE defs s /\ d updates defs /\
      types_of_upd d = [] /\ axexts_of_upd d = []
      ==> holKernelProof_STATE (CONS d defs)
-           (hol_refs_the_context_fupd (K (CONS d (hol_refs_the_context s)))
+           (hol_refs_the_context_fupd (combin_K (CONS d (hol_refs_the_context s)))
               (hol_refs_the_term_constants_fupd
-                 (K (APPEND (consts_of_upd d) (hol_refs_the_term_constants s))) s))`,
+                 (combin_K (APPEND (consts_of_upd d) (hol_refs_the_term_constants s))) s))`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP HOLKPAUX_STATE_CONJ) THEN
   SUBGOAL_THEN `hol_refs_the_context s = defs` ASSUME_TAC THENL
@@ -3009,7 +3009,7 @@ let HOLKPAUX_ilist_ok = prove
   GEN_TAC THEN GEN_TAC THEN LIST_INDUCT_TAC THEN REWRITE_TAC[ALL; MAP] THEN
   PAIR_CASES_ON `h:mlstring#hol_type` THEN REWRITE_TAC[] THEN STRIP_TAC THEN
   ASM_SIMP_TAC[term_type_Const] THEN
-  ONCE_REWRITE_TAC[term_type_def] THEN CASE_REWRITE_TAC[holKernel_is_var_def] THEN
+  ONCE_REWRITE_TAC[term_type_def] THEN CAKE_REWRITE_TAC[holKernel_is_var_def] THEN
   ASM_MESON_TAC[TERM_Const; TERM_Var]);;
 
 (* the theorem returned by new_specification *)
@@ -3101,7 +3101,7 @@ let HOLKPAUX_new_spec_ok = prove
   DISCH_THEN(CONJUNCTS_THEN2 SUBST_ALL_TAC ASSUME_TAC) THEN
   REWRITE_TAC[holKernel_new_specification_def] THEN
   ONCE_REWRITE_TAC[st_ex_bind_def] THEN ASM_REWRITE_TAC[] THEN
-  QCASES_ON "r1" THEN CASE_REWRITE_TAC[] THENL
+  QCASES_ON "r1" THEN CAKE_REWRITE_TAC[] THENL
    [ALL_TAC;
     REWRITE_TAC[PAIR_EQ] THEN DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
     REWRITE_TAC[distinctness "exc"]] THEN
@@ -3117,7 +3117,7 @@ let HOLKPAUX_new_spec_ok = prove
   DISCH_THEN(X_CHOOSE_THEN `r3:(1,hol_exn)exc` (X_CHOOSE_THEN `s3:hol_refs` ASSUME_TAC)) THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP add_constants_thm) THEN
   ONCE_REWRITE_TAC[st_ex_ignore_bind_def] THEN ASM_REWRITE_TAC[] THEN
-  QCASES_ON "r3" THEN CASE_REWRITE_TAC[] THENL
+  QCASES_ON "r3" THEN CAKE_REWRITE_TAC[] THENL
    [ALL_TAC;
     DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
     REWRITE_TAC[distinctness "exc"] THEN ASM_MESON_TAC[]] THEN
@@ -3128,7 +3128,7 @@ let HOLKPAUX_new_spec_ok = prove
   REWRITE_TAC[st_ex_ignore_bind_def; holKernel_add_def_def; st_ex_bind_def;
               holKernel_get_the_context_def; holKernel_set_the_context_def;
               st_ex_return_def] THEN
-  CASE_REWRITE_TAC[PAIR_EQ; hol_refs_INFO.ri_accfupds] THEN
+  CAKE_REWRITE_TAC[PAIR_EQ; hol_refs_INFO.ri_accfupds] THEN
   DISCH_THEN(CONJUNCTS_THEN2 (SUBST_ALL_TAC o SYM) (ASSUME_TAC o SYM)) THEN
   REWRITE_TAC[distinctness "exc"; injectivity "exc"] THEN
   GEN_TAC THEN DISCH_THEN(SUBST1_TAC o SYM) THEN
@@ -3180,7 +3180,7 @@ let new_specification_thm = prove
                 `res:(thm,hol_exn)exc`; `s1:hol_refs`; `defs:update list`]
                HOLKPAUX_new_spec_ok) THEN
   ASM_REWRITE_TAC[] THEN QCASES_ON "res" THEN
-  CASE_REWRITE_TAC[distinctness "exc"; injectivity "exc"] THEN MESON_TAC[]);;
+  CAKE_REWRITE_TAC[distinctness "exc"; injectivity "exc"] THEN MESON_TAC[]);;
 
 (* HOL4: val _ = delete_const "STRCAT_SHADOW" (no counterpart) *)
 
@@ -3203,7 +3203,7 @@ let new_basic_definition_thm = prove
   MP_TAC(SPECL [`tm:hol_term`; `s:hol_refs`; `r:(thm,hol_exn)exc`; `s1:hol_refs`;
                 `defs:update list`] ASSUME_thm) THEN
   ASM_REWRITE_TAC[] THEN DISCH_THEN(CONJUNCTS_THEN2 SUBST_ALL_TAC ASSUME_TAC) THEN
-  QCASES_ON "r" THEN CASE_REWRITE_TAC[] THEN
+  QCASES_ON "r" THEN CAKE_REWRITE_TAC[] THEN
   FIRST_X_ASSUM(MP_TAC o SPEC `a:thm`) THEN REWRITE_TAC[] THEN DISCH_TAC THEN
   MATCH_MP_TAC new_specification_thm THEN ASM_REWRITE_TAC[]);;
 
@@ -3218,7 +3218,7 @@ let HOLKPAUX_can_get_type_arity = prove
   DISCH_THEN(X_CHOOSE_THEN `r:(num,hol_exn)exc` (X_CHOOSE_THEN `s1:hol_refs` ASSUME_TAC)) THEN
   FIRST_ASSUM(MP_TAC o MATCH_MP get_type_arity_thm) THEN ASM_REWRITE_TAC[] THEN
   DISCH_THEN(CONJUNCTS_THEN2 SUBST_ALL_TAC MP_TAC) THEN
-  QCASES_ON "r" THEN CASE_REWRITE_TAC[injectivity "exc"; distinctness "exc"; PAIR_EQ] THEN
+  QCASES_ON "r" THEN CAKE_REWRITE_TAC[injectivity "exc"; distinctness "exc"; PAIR_EQ] THEN
   MESON_TAC[]);;
 
 let HOLKPAUX_can_get_const_type = prove
@@ -3230,7 +3230,7 @@ let HOLKPAUX_can_get_const_type = prove
   DISCH_THEN(X_CHOOSE_THEN `r:(hol_type,hol_exn)exc` (X_CHOOSE_THEN `s1:hol_refs` ASSUME_TAC)) THEN
   FIRST_ASSUM(MP_TAC o MATCH_MP get_const_type_thm) THEN ASM_REWRITE_TAC[] THEN
   DISCH_THEN(CONJUNCTS_THEN2 SUBST_ALL_TAC MP_TAC) THEN
-  QCASES_ON "r" THEN CASE_REWRITE_TAC[injectivity "exc"; distinctness "exc"; PAIR_EQ] THEN
+  QCASES_ON "r" THEN CAKE_REWRITE_TAC[injectivity "exc"; distinctness "exc"; PAIR_EQ] THEN
   MESON_TAC[]);;
 
 (* the state after an update without axioms, field by field *)
@@ -3257,13 +3257,13 @@ let HOLKPAUX_add_type_ok = prove
      ==> holKernel_add_type (name,arity) s =
          (M_success one,
           hol_refs_the_type_constants_fupd
-            (K (CONS (name,arity) (hol_refs_the_type_constants s))) s)`,
+            (combin_K (CONS (name,arity) (hol_refs_the_type_constants s))) s)`,
   REPEAT STRIP_TAC THEN
   REWRITE_TAC[holKernel_add_type_def; st_ex_bind_def; HOLKPAUX_can_get_type_arity] THEN
-  CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
   REWRITE_TAC[st_ex_bind_def; holKernel_get_the_type_constants_def;
               holKernel_set_the_type_constants_def] THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[]);;
 
 let HOLKPAUX_mk_type_new = prove
  (`!name args s l.
@@ -3273,7 +3273,7 @@ let HOLKPAUX_mk_type_new = prove
   REWRITE_TAC[holKernel_mk_type_def; holKernel_try_def; otherwise_def; st_ex_bind_def;
               holKernel_get_type_arity_def; holKernel_get_the_type_constants_def] THEN
   ASM_REWRITE_TAC[] THEN ONCE_REWRITE_TAC[holKernel_assoc_def] THEN
-  CASE_REWRITE_TAC[st_ex_return_def]);;
+  CAKE_REWRITE_TAC[st_ex_return_def]);;
 
 let HOLKPAUX_add_constants_ok = prove
  (`!ls s.
@@ -3281,7 +3281,7 @@ let HOLKPAUX_add_constants_ok = prove
      ==> holKernel_add_constants ls s =
          (M_success one,
           hol_refs_the_term_constants_fupd
-            (K (APPEND ls (hol_refs_the_term_constants s))) s)`,
+            (combin_K (APPEND ls (hol_refs_the_term_constants s))) s)`,
   REPEAT STRIP_TAC THEN
   SUBGOAL_THEN `ALL_DISTINCT (MAP FST (hol_refs_the_term_constants s))` ASSUME_TAC THENL
    [UNDISCH_TAC `ALL_DISTINCT (APPEND (MAP FST (ls:(mlstring#hol_type)list))
@@ -3298,10 +3298,10 @@ let HOLKPAUX_add_constants_ok = prove
 let HOLKPAUX_add_def_ok = prove
  (`!d s. (holKernel_add_def d s:(1,C)exc#hol_refs) =
          (M_success one,
-          hol_refs_the_context_fupd (K (CONS d (hol_refs_the_context s))) s)`,
+          hol_refs_the_context_fupd (combin_K (CONS d (hol_refs_the_context s))) s)`,
   REWRITE_TAC[holKernel_add_def_def; st_ex_bind_def; holKernel_get_the_context_def;
               holKernel_set_the_context_def] THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[]);;
 
 let HOLKPAUX_mk_const_ok = prove
  (`!name ty s.
@@ -3310,7 +3310,7 @@ let HOLKPAUX_mk_const_ok = prove
   REPEAT STRIP_TAC THEN
   ASM_REWRITE_TAC[holKernel_mk_const_def; holKernel_try_def; otherwise_def;
                   st_ex_bind_def] THEN
-  CASE_REWRITE_TAC[st_ex_return_def; type_subst_EMPTY]);;
+  CAKE_REWRITE_TAC[st_ex_return_def; type_subst_EMPTY]);;
 
 let HOLKPAUX_get_const_type_CONS = prove
  (`!name s n ty l.
@@ -3321,9 +3321,9 @@ let HOLKPAUX_get_const_type_CONS = prove
   REPEAT STRIP_TAC THEN
   REWRITE_TAC[holKernel_get_const_type_def; st_ex_bind_def;
               holKernel_get_the_term_constants_def] THEN
-  CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
   GEN_REWRITE_TAC (LAND_CONV o RATOR_CONV) [holKernel_assoc_def] THEN
-  CASE_REWRITE_TAC[] THEN COND_CASES_TAC THEN REWRITE_TAC[st_ex_return_def]);;
+  CAKE_REWRITE_TAC[] THEN COND_CASES_TAC THEN REWRITE_TAC[st_ex_return_def]);;
 
 let HOLKPAUX_mk_comb_ok = prove
  (`!defs s f a ty.
@@ -3347,7 +3347,7 @@ let HOLKPAUX_try_dest_comb = prove
  (`!f x msg s.
      holKernel_try holKernel_dest_comb (hol_Comb f x) msg s = (M_success (f,x),s)`,
   REWRITE_TAC[holKernel_try_def; otherwise_def; holKernel_dest_comb_def] THEN
-  CASE_REWRITE_TAC[st_ex_return_def]);;
+  CAKE_REWRITE_TAC[st_ex_return_def]);;
 
 (* closes a goal  raise_Failure msg s = (res,s') ==> P  where P holds for *)
 (* failures that keep the state                                           *)
@@ -3360,7 +3360,7 @@ let HOLKPAUX_FAIL_CLOSER =
 let HOLKPAUX_term_type_Comb = prove
  (`!f a x y. term_type f = Tyapp (implode "fun") [x; y] ==> term_type (hol_Comb f a) = y`,
   REPEAT STRIP_TAC THEN GEN_REWRITE_TAC LAND_CONV [term_type_def] THEN
-  CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]);;
 
 
 (* new_basic_type_definition on a theorem, with its result and state (the  *)
@@ -3378,13 +3378,13 @@ let HOLKPAUX_nbtd_ok = prove
                           ==> holKernelProof_THM (APPEND ds defs) th)`,
   REPEAT GEN_TAC THEN
   DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC (CONJUNCTS_THEN2 ASSUME_TAC MP_TAC)) THEN
-  REWRITE_TAC[holKernel_new_basic_type_definition_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[holKernel_new_basic_type_definition_def] THEN CAKE_REWRITE_TAC[] THEN
   ONCE_REWRITE_TAC[st_ex_bind_def] THEN
-  REWRITE_TAC[HOLKPAUX_can_get_type_arity] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[HOLKPAUX_can_get_type_arity] THEN CAKE_REWRITE_TAC[] THEN
   ONCE_REWRITE_TAC[st_ex_bind_def] THEN
-  REWRITE_TAC[HOLKPAUX_can_get_const_type] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[HOLKPAUX_can_get_const_type] THEN CAKE_REWRITE_TAC[] THEN
   ONCE_REWRITE_TAC[st_ex_bind_def] THEN
-  REWRITE_TAC[HOLKPAUX_can_get_const_type] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[HOLKPAUX_can_get_const_type] THEN CAKE_REWRITE_TAC[] THEN
   COND_CASES_TAC THENL [HOLKPAUX_FAIL_CLOSER; ALL_TAC] THEN
   COND_CASES_TAC THENL [HOLKPAUX_FAIL_CLOSER; ALL_TAC] THEN
   COND_CASES_TAC THENL [HOLKPAUX_FAIL_CLOSER; ALL_TAC] THEN
@@ -3394,10 +3394,10 @@ let HOLKPAUX_nbtd_ok = prove
   ONCE_REWRITE_TAC[st_ex_bind_def] THEN
   QCASES_ON "c" THEN REWRITE_TAC[HOLKPAUX_try_dest_comb] THEN
   TRY(REWRITE_TAC[holKernel_try_def; otherwise_def; holKernel_dest_comb_def] THEN
-      CASE_REWRITE_TAC[holKernel_raise_Failure_def; PAIR_EQ] THEN
+      CAKE_REWRITE_TAC[holKernel_raise_Failure_def; PAIR_EQ] THEN
       DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
       REWRITE_TAC[distinctness "exc"] THEN NO_TAC) THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   COND_CASES_TAC THENL [HOLKPAUX_FAIL_CLOSER; ALL_TAC] THEN
   REWRITE_TAC[LET_DEF; LET_END_DEF; holKernel_mk_fun_ty_def; holKernel_mk_var_def] THEN
   BETA_TAC THEN
@@ -3435,7 +3435,7 @@ let HOLKPAUX_nbtd_ok = prove
                HOLKPAUX_add_type_ok) THEN
   ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
   ABBREV_TAC `s1 = hol_refs_the_type_constants_fupd
-                     (K (CONS (tyname,LENGTH (tyvars:hol_type list))
+                     (combin_K (CONS (tyname,LENGTH (tyvars:hol_type list))
                               (hol_refs_the_type_constants s))) s` THEN
   SUBGOAL_THEN `holKernel_mk_type (tyname,tyvars) s1 = (M_success (Tyapp tyname tyvars),s1)`
     ASSUME_TAC THENL
@@ -3463,7 +3463,7 @@ let HOLKPAUX_nbtd_ok = prove
   DISCH_TAC THEN
   ABBREV_TAC
    `s3 = hol_refs_the_term_constants_fupd
-           (K (APPEND [(absname:mlstring,
+           (combin_K (APPEND [(absname:mlstring,
                         Tyapp (implode "fun") [term_type a1; Tyapp tyname tyvars]);
                        (repname:mlstring,
                         Tyapp (implode "fun") [Tyapp tyname tyvars; term_type a1])]
@@ -3473,7 +3473,7 @@ let HOLKPAUX_nbtd_ok = prove
   DISCH_TAC THEN
   ABBREV_TAC
    `s2 = hol_refs_the_context_fupd
-           (K (CONS (hol_TypeDefn tyname a0 absname repname) (hol_refs_the_context s3))) s3` THEN
+           (combin_K (CONS (hol_TypeDefn tyname a0 absname repname) (hol_refs_the_context s3))) s3` THEN
   SUBGOAL_THEN `hol_refs_the_context s = defs` ASSUME_TAC THENL
    [ASM_MESON_TAC[holKernelProof_STATE_def]; ALL_TAC] THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o GSYM o MATCH_MP HOLKPAUX_STATE_CONJ) THEN
@@ -3526,7 +3526,7 @@ let HOLKPAUX_nbtd_ok = prove
    [CONJ_TAC THEN MATCH_MP_TAC HOLKPAUX_mk_const_ok THEN
     FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP HOLKPAUX_get_const_type_CONS th]) THEN
     ASM_REWRITE_TAC[] THEN ONCE_REWRITE_TAC[holKernel_assoc_def] THEN
-    CASE_REWRITE_TAC[st_ex_return_def];
+    CAKE_REWRITE_TAC[st_ex_return_def];
     ALL_TAC] THEN
   ABBREV_TAC `ctx = CONS (hol_TypeDefn tyname a0 absname repname) defs` THEN
   SUBGOAL_THEN `holKernelProof_TYPE ctx (Tyapp tyname tyvars) /\
@@ -3621,7 +3621,7 @@ let HOLKPAUX_nbtd_ok = prove
       hol_Var (implode "r") (term_type a1)`] HOLKPAUX_safe_mk_eq_ok) THEN
   ANTS_TAC THENL [ASM_REWRITE_TAC[typeof_def; codomain_def; CSYNAUX_typeof_equation];
                   STRIP_TAC] THEN
-  ASM CASE_REWRITE_TAC[st_ex_bind_def; st_ex_ignore_bind_def; st_ex_return_def] THEN
+  ASM CAKE_REWRITE_TAC[st_ex_bind_def; st_ex_ignore_bind_def; st_ex_return_def] THEN
   DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
   REWRITE_TAC[distinctness "exc"; injectivity "exc"; PAIR_EQ] THEN
   REPEAT GEN_TAC THEN DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
@@ -3668,10 +3668,10 @@ let new_basic_type_definition_thm = prove
                 `res:(thm#thm,hol_exn)exc`; `s1:hol_refs`; `defs:update list`]
                HOLKPAUX_nbtd_ok) THEN
   ASM_REWRITE_TAC[] THEN QCASES_ON "res" THEN
-  CASE_REWRITE_TAC[distinctness "exc"; injectivity "exc"] THENL
+  CAKE_REWRITE_TAC[distinctness "exc"; injectivity "exc"] THENL
    [MP_TAC(ISPEC `a:thm#thm` PAIR_SURJECTIVE) THEN
     DISCH_THEN(X_CHOOSE_THEN `t1:thm` (X_CHOOSE_THEN `t2:thm` SUBST_ALL_TAC)) THEN
-    CASE_REWRITE_TAC[PAIR_EQ] THEN MESON_TAC[];
+    CAKE_REWRITE_TAC[PAIR_EQ] THEN MESON_TAC[];
     MESON_TAC[]]);;
 
 
@@ -3694,10 +3694,10 @@ let new_type_thm = prove
   REWRITE_TAC[holKernel_new_type_def; st_ex_ignore_bind_def] THEN
   ASM_CASES_TAC `?i. MEM (name,i) (hol_refs_the_type_constants s)` THENL
    [REWRITE_TAC[holKernel_add_type_def; st_ex_bind_def; HOLKPAUX_can_get_type_arity] THEN
-    CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[holKernel_raise_Failure_def] THEN
-    CASE_REWRITE_TAC[];
+    CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[holKernel_raise_Failure_def] THEN
+    CAKE_REWRITE_TAC[];
     ALL_TAC] THEN
-  ASM_SIMP_TAC[HOLKPAUX_add_type_ok] THEN CASE_REWRITE_TAC[HOLKPAUX_add_def_ok] THEN
+  ASM_SIMP_TAC[HOLKPAUX_add_type_ok] THEN CAKE_REWRITE_TAC[HOLKPAUX_add_def_ok] THEN
   EXISTS_TAC `hol_NewType name arity` THEN
   SUBGOAL_THEN `hol_NewType name arity updates defs` ASSUME_TAC THENL
    [MATCH_MP_TAC(el 3 (CONJUNCTS updates_rules)) THEN
@@ -3732,7 +3732,7 @@ let new_constant_thm = prove
   FIRST_ASSUM(MP_TAC o MATCH_MP add_constants_thm) THEN ASM_REWRITE_TAC[] THEN
   QCASES_ON "r" THEN
   REWRITE_TAC[injectivity "exc"; distinctness "exc"; FORALL_UNWIND_THM1] THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[HOLKPAUX_add_def_ok] THEN
+  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[HOLKPAUX_add_def_ok] THEN
   EXISTS_TAC `hol_NewConst name ty` THEN
   SUBGOAL_THEN `hol_NewConst name ty updates defs` ASSUME_TAC THENL
    [MATCH_MP_TAC(el 1 (CONJUNCTS updates_rules)) THEN
@@ -3769,10 +3769,10 @@ let new_axiom_thm = prove
   MP_TAC(SPECL [`p:hol_term`; `defs:update list`; `s:hol_refs`] type_of_thm) THEN
   ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
   ONCE_REWRITE_TAC[holKernel_new_axiom_def] THEN
-  ONCE_REWRITE_TAC[st_ex_bind_def] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ONCE_REWRITE_TAC[st_ex_bind_def] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   COND_CASES_TAC THENL
-   [ALL_TAC; REWRITE_TAC[holKernel_raise_Failure_def] THEN CASE_REWRITE_TAC[]] THEN
-  CASE_REWRITE_TAC[st_ex_bind_def; st_ex_ignore_bind_def; st_ex_return_def;
+   [ALL_TAC; REWRITE_TAC[holKernel_raise_Failure_def] THEN CAKE_REWRITE_TAC[]] THEN
+  CAKE_REWRITE_TAC[st_ex_bind_def; st_ex_ignore_bind_def; st_ex_return_def;
                    holKernel_get_the_axioms_def; holKernel_set_the_axioms_def;
                    HOLKPAUX_add_def_ok] THEN
   EXISTS_TAC `hol_NewAxiom p` THEN
@@ -3814,7 +3814,7 @@ let HOLKPAUX_NC_bind = prove
   REPEAT GEN_TAC THEN STRIP_TAC THEN REWRITE_TAC[st_ex_bind_def] THEN
   MP_TAC(ISPEC `(m:S->(A,hol_exn)exc#S) s` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `r:(A,hol_exn)exc` (X_CHOOSE_THEN `s1:S` ASSUME_TAC)) THEN
-  ASM_REWRITE_TAC[] THEN QCASES_ON "r" THEN CASE_REWRITE_TAC[] THEN ASM_MESON_TAC[]);;
+  ASM_REWRITE_TAC[] THEN QCASES_ON "r" THEN CAKE_REWRITE_TAC[] THEN ASM_MESON_TAC[]);;
 
 let HOLKPAUX_NC_ignore_bind = prove
  (`!(m:S->(A,hol_exn)exc#S) (f:S->(B,hol_exn)exc#S) s tm refs.
@@ -3824,7 +3824,7 @@ let HOLKPAUX_NC_ignore_bind = prove
   REPEAT GEN_TAC THEN STRIP_TAC THEN REWRITE_TAC[st_ex_ignore_bind_def] THEN
   MP_TAC(ISPEC `(m:S->(A,hol_exn)exc#S) s` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `r:(A,hol_exn)exc` (X_CHOOSE_THEN `s1:S` ASSUME_TAC)) THEN
-  ASM_REWRITE_TAC[] THEN QCASES_ON "r" THEN CASE_REWRITE_TAC[] THEN ASM_MESON_TAC[]);;
+  ASM_REWRITE_TAC[] THEN QCASES_ON "r" THEN CAKE_REWRITE_TAC[] THEN ASM_MESON_TAC[]);;
 
 let HOLKPAUX_NC_otherwise = prove
  (`!(x:S->(A,hol_exn)exc#S) y s tm refs.
@@ -3834,7 +3834,7 @@ let HOLKPAUX_NC_otherwise = prove
   MP_TAC(ISPEC `(x:S->(A,hol_exn)exc#S) s` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `r:(A,hol_exn)exc` (X_CHOOSE_THEN `s1:S` ASSUME_TAC)) THEN
   ASM_REWRITE_TAC[] THEN QCASES_ON "r" THEN
-  CASE_REWRITE_TAC[PAIR_EQ; distinctness "exc"] THEN ASM_MESON_TAC[]);;
+  CAKE_REWRITE_TAC[PAIR_EQ; distinctness "exc"] THEN ASM_MESON_TAC[]);;
 
 let HOLKPAUX_NC_return = prove
  (`!(x:A) (s:S) tm refs.
@@ -3861,7 +3861,7 @@ let map_not_clash_thm = prove
      (!x s. ~(f x s = (M_failure (holKernel_Clash tm),refs)))
      ==> ~(holKernel_map f xs s = (M_failure (holKernel_Clash tm),refs))`,
   GEN_TAC THEN LIST_INDUCT_TAC THEN ONCE_REWRITE_TAC[holKernel_map_def] THEN
-  CASE_REWRITE_TAC[HOLKPAUX_NC_return] THEN REPEAT GEN_TAC THEN DISCH_TAC THEN
+  CAKE_REWRITE_TAC[HOLKPAUX_NC_return] THEN REPEAT GEN_TAC THEN DISCH_TAC THEN
   MATCH_MP_TAC HOLKPAUX_NC_bind THEN ASM_REWRITE_TAC[] THEN REPEAT GEN_TAC THEN
   MATCH_MP_TAC HOLKPAUX_NC_bind THEN ASM_SIMP_TAC[HOLKPAUX_NC_return]);;
 
@@ -3870,7 +3870,7 @@ let forall_clash_thm = prove
      (!x s. ~(f x s = (M_failure (holKernel_Clash tm),refs)))
      ==> ~(holKernel_forall f l s = (M_failure (holKernel_Clash tm),refs))`,
   GEN_TAC THEN LIST_INDUCT_TAC THEN ONCE_REWRITE_TAC[holKernel_forall_def] THEN
-  CASE_REWRITE_TAC[HOLKPAUX_NC_return] THEN REPEAT GEN_TAC THEN DISCH_TAC THEN
+  CAKE_REWRITE_TAC[HOLKPAUX_NC_return] THEN REPEAT GEN_TAC THEN DISCH_TAC THEN
   MATCH_MP_TAC HOLKPAUX_NC_bind THEN ASM_REWRITE_TAC[] THEN REPEAT GEN_TAC THEN
   COND_CASES_TAC THEN ASM_SIMP_TAC[HOLKPAUX_NC_return]);;
 
@@ -3879,7 +3879,7 @@ let image_clash_thm = prove
      (!x s. ~(f x s = (M_failure (holKernel_Clash tm),refs)))
      ==> ~(holKernel_image f l s = (M_failure (holKernel_Clash tm),refs))`,
   GEN_TAC THEN LIST_INDUCT_TAC THEN ONCE_REWRITE_TAC[holKernel_image_def] THEN
-  CASE_REWRITE_TAC[HOLKPAUX_NC_return] THEN REPEAT GEN_TAC THEN DISCH_TAC THEN
+  CAKE_REWRITE_TAC[HOLKPAUX_NC_return] THEN REPEAT GEN_TAC THEN DISCH_TAC THEN
   MATCH_MP_TAC HOLKPAUX_NC_bind THEN ASM_REWRITE_TAC[] THEN REPEAT GEN_TAC THEN
   MATCH_MP_TAC HOLKPAUX_NC_bind THEN ASM_SIMP_TAC[HOLKPAUX_NC_return]);;
 
@@ -3892,7 +3892,7 @@ let HOLKPAUX_NC_TAC ths =
               ths in
   REPEAT(FIRST
    [CONJ_TAC;
-    CHANGED_TAC(CASE_REWRITE_TAC simps);
+    CHANGED_TAC(CAKE_REWRITE_TAC simps);
     GEN_TAC;
     MATCH_MP_TAC HOLKPAUX_NC_bind;
     MATCH_MP_TAC HOLKPAUX_NC_ignore_bind;

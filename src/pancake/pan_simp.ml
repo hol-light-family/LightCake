@@ -101,7 +101,7 @@ let pan_simp_compile_prog_def = cake_def
      MAP (\decl. match decl with
                    Function fi ->
                      Function (fun_decl_body_fupd
-                                 (K (pan_simp_compile (fun_decl_body fi))) fi)
+                                 (combin_K (pan_simp_compile (fun_decl_body fi))) fi)
                  | _ -> decl) prog`;;
 
 (* HOL4 proves the pmatch forms with PMATCH_ELIM_CONV; here match is      *)
@@ -133,8 +133,8 @@ let seq_assoc_pmatch = prove
      | Annot _ _ -> p
      | q -> pan_simp_SmartSeq p q`,
   GEN_TAC THEN GEN_TAC THEN CASES_ON `prog:(A)panLang_prog` THEN
-  CASE_REWRITE_TAC[seq_assoc_def] THEN
-  REPEAT(TOP_CASE_TAC THEN CASE_REWRITE_TAC[seq_assoc_def]));;
+  CAKE_REWRITE_TAC[seq_assoc_def] THEN
+  REPEAT(TOP_CASE_TAC THEN CAKE_REWRITE_TAC[seq_assoc_def]));;
 
 let ret_to_tail_pmatch = prove
  (CASE_TERM
@@ -156,8 +156,8 @@ let ret_to_tail_pmatch = prove
      | DecCall v s e es q -> DecCall v s e es (ret_to_tail q)
      | p -> p`,
   GEN_TAC THEN CASES_ON `p:(A)panLang_prog` THEN
-  CASE_REWRITE_TAC[ret_to_tail_def] THEN
-  REPEAT(TOP_CASE_TAC THEN CASE_REWRITE_TAC[ret_to_tail_def]));;
+  CAKE_REWRITE_TAC[ret_to_tail_def] THEN
+  REPEAT(TOP_CASE_TAC THEN CAKE_REWRITE_TAC[ret_to_tail_def]));;
 
 let compile_prog_pmatch = prove
  (CASE_TERM
@@ -165,6 +165,6 @@ let compile_prog_pmatch = prove
      MAP (\decl. match decl with
                    Function fi ->
                      Function (fun_decl_body_fupd
-                                 (K (pan_simp_compile (fun_decl_body fi))) fi)
+                                 (combin_K (pan_simp_compile (fun_decl_body fi))) fi)
                  | _ -> decl) prog`,
   REWRITE_TAC[pan_simp_compile_prog_def]);;

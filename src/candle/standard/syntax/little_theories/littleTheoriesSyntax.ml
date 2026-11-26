@@ -286,9 +286,9 @@ let esubst_def = cake_def
 
 let esubst_thy_def = cake_def
   `esubst_thy sigma thy =
-     ethy_axs_fupd (K (IMAGE (esubst sigma []) (ethy_axs thy)))
-      (ethy_etms_fupd (K (ty_esubst sigma o_f ethy_etms thy))
-        (ethy_eaxs_fupd (K (IMAGE (esubst sigma []) (ethy_eaxs thy))) thy))`;;
+     ethy_axs_fupd (combin_K (IMAGE (esubst sigma []) (ethy_axs thy)))
+      (ethy_etms_fupd (combin_K (ty_esubst sigma o_f ethy_etms thy))
+        (ethy_eaxs_fupd (combin_K (IMAGE (esubst sigma []) (ethy_eaxs thy))) thy))`;;
 
 let vsubst_tys_ok_def = cake_def
   `vsubst_tys_ok ilist <=>

@@ -138,10 +138,10 @@ let float_is_integral_def = cake_def
 
 let float_negate_def = new_definition
   `float_negate (x:(T,W)float) =
-     float_Sign_fupd (K (word_not (float_Sign x))) x`;;
+     float_Sign_fupd (combin_K (word_not (float_Sign x))) x`;;
 
 let float_abs_def = new_definition
-  `float_abs (x:(T,W)float) = float_Sign_fupd (K (word 0)) x`;;
+  `float_abs (x:(T,W)float) = float_Sign_fupd (combin_K (word 0)) x`;;
 
 (* ------------------------------------------------------------------------- *)
 (* Some constants                                                            *)
@@ -229,10 +229,10 @@ let clear_flags_def = new_definition
   `clear_flags = flags_REC F F F F F F`;;
 
 let invalidop_flags_def = new_definition
-  `invalidop_flags = flags_InvalidOp_fupd (K T) clear_flags`;;
+  `invalidop_flags = flags_InvalidOp_fupd (combin_K T) clear_flags`;;
 
 let dividezero_flags_def = new_definition
-  `dividezero_flags = flags_DivideByZero_fupd (K T) clear_flags`;;
+  `dividezero_flags = flags_DivideByZero_fupd (combin_K T) clear_flags`;;
 
 let rounding_INDUCT,rounding_RECURSION = cake_type
   "rounding = roundTiesToEven | roundTowardPositive | roundTowardNegative |
@@ -253,7 +253,7 @@ let closest_such_def = new_definition
      @a. is_closest s x a /\ !b. is_closest s x b /\ p b ==> p a`;;
 
 let closest_def = new_definition
-  `closest = closest_such (K T:(T,W)float->bool)`;;
+  `closest = closest_such (combin_K T:(T,W)float->bool)`;;
 
 let largest_DEF = new_definition
   `largest (s:(T#W)->bool) =
@@ -408,12 +408,12 @@ let float_round_with_flags_def = new_definition
      let x = float_round mode to_neg r :(T,W)float and a = abs r in
      let inexact = ~(float_value x = Float r) in
      (flags_Overflow_fupd
-        (K (float_is_infinite x \/ &2 pow (2 EXP (dimindex(:W) - 1)) <= a))
-        (flags_Precision_fupd (K inexact)
+        (combin_K (float_is_infinite x \/ &2 pow (2 EXP (dimindex(:W) - 1)) <= a))
+        (flags_Precision_fupd (combin_K inexact)
           (flags_Underflow_BeforeRounding_fupd
-             (K (inexact /\ a < &2 / &2 pow (2 EXP (dimindex(:W) - 1) - 1)))
+             (combin_K (inexact /\ a < &2 / &2 pow (2 EXP (dimindex(:W) - 1) - 1)))
              (flags_Underflow_AfterRounding_fupd
-                (K (inexact /\
+                (combin_K (inexact /\
                     word_ule
                       (float_Exponent
                          (float_round mode to_neg r :(T,(W,1)finite_sum)float))
@@ -423,7 +423,7 @@ let float_round_with_flags_def = new_definition
 
 let check_for_signalling_def = new_definition
   `check_for_signalling (l:((T,W)float)list) =
-     flags_InvalidOp_fupd (K (EX float_is_signalling l)) clear_flags`;;
+     flags_InvalidOp_fupd (combin_K (EX float_is_signalling l)) clear_flags`;;
 
 let real_to_float_def = new_definition
   `real_to_float m =
@@ -692,14 +692,14 @@ let float_ulp_def = new_definition
 let next_hi_def = new_definition
   `next_hi (x:(T,W)float) =
      if word_ult (float_Significand x) word_UINT_MAX
-     then float_Significand_fupd (K (word_add (float_Significand x) (word 1))) x
+     then float_Significand_fupd (combin_K (word_add (float_Significand x) (word 1))) x
      else float_REC (float_Sign x) (word_add (float_Exponent x) (word 1))
                     (word 0)`;;
 
 let next_lo_def = new_definition
   `next_lo (x:(T,W)float) =
      if word_ult (word 0) (float_Significand x)
-     then float_Significand_fupd (K (word_sub (float_Significand x) (word 1))) x
+     then float_Significand_fupd (combin_K (word_sub (float_Significand x) (word 1))) x
      else float_REC (float_Sign x) (word_sub (float_Exponent x) (word 1))
                     word_UINT_MAX`;;
 
@@ -2381,7 +2381,7 @@ let LIEEEAUX_WORD_ADD_1_NE = prove
               WORD_SUB_REFL; WORD_NE_10]);;
 
 let LIEEE_FUPD_SELF = prove
- (`!f:(T,W)float. float_Significand_fupd (K (float_Significand f)) f = f`,
+ (`!f:(T,W)float. float_Significand_fupd (combin_K (float_Significand f)) f = f`,
   REWRITE_TAC[float_component_equality; float_accfupds; K_THM]);;
 
 let next_hilo = prove
@@ -2462,11 +2462,11 @@ let float_ulp_negate = prove
 
 let float_ulp_updating_Significand = prove
  (`!f:(T,W)float s.
-     float_ulp (float_Significand_fupd (K s) f) = float_ulp f`,
+     float_ulp (float_Significand_fupd (combin_K s) f) = float_ulp f`,
   REWRITE_TAC[float_ulp_def; float_accfupds]);;
 
 let float_ulp_updating_Sign = prove
- (`!f:(T,W)float s. float_ulp (float_Sign_fupd (K s) f) = float_ulp f`,
+ (`!f:(T,W)float s. float_ulp (float_Sign_fupd (combin_K s) f) = float_ulp f`,
   REWRITE_TAC[float_ulp_def; float_accfupds]);;
 
 let float_ulp_abs = prove

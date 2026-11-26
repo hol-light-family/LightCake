@@ -277,7 +277,7 @@ let rep_exists = prove
    [ASM_MESON_TAC[]; ALL_TAC] THEN
   REWRITE_TAC[ITREEAUX_path_ok_CONS] THEN DISCH_TAC THEN
   QCASES_ON "(f:(A option)list->(E,R)itree_el) []" THEN
-  RULE_ASSUM_TAC(CASE_REWRITE_RULE[IS_SOME_DEF]) THENL
+  RULE_ASSUM_TAC(CAKE_REWRITE_RULE[IS_SOME_DEF]) THENL
    [DISJ2_TAC THEN DISJ2_TAC THEN
     MAP_EVERY EXISTS_TAC
      [`a:E`; `\(x:A) p. (f:(A option)list->(E,R)itree_el) (CONS (SOME x) p)`] THEN
@@ -1512,7 +1512,7 @@ let itree_coind_upto_taus = prove
 (* is one)                                                                   *)
 
 let ITREEAUX_spin_def = cake_def
- `itree_spin = itree_unfold (K (Tau' one)) one:(A,E,R)itree`;;
+ `itree_spin = itree_unfold (combin_K (Tau' one)) one:(A,E,R)itree`;;
 
 let spin = prove
  (`itree_spin:(A,E,R)itree = Tau itree_spin`,

@@ -388,7 +388,7 @@ let esubst_term_ok' = prove
                  `tm:hol_term`; `(ctys thy,ctms thy):sig`; `avds:mlstring list`]
     esubst_ty0_always_returns) THEN
   ASM_SIMP_TAC[term_ok'_imp_term_ok] THEN DISCH_THEN(X_CHOOSE_TAC `v:hol_term`) THEN
-  ASM_REWRITE_TAC[esubst_def; esubst_ty_def] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[esubst_def; esubst_ty_def] THEN CAKE_REWRITE_TAC[] THEN
   MATCH_MP_TAC esubst_ty0_tm_ok' THEN
   MAP_EVERY EXISTS_TAC [`[]:(hol_term#hol_term)list`; `avds:mlstring list`; `tm:hol_term`] THEN
   ASM_REWRITE_TAC[MEM]);;
@@ -650,7 +650,7 @@ let term_ok'_tms_FUNION_fresh = prove
      term_ok' thy p /\
      (!s. MEM s (MAP FST alist) ==> ~(s IN FDOM (ethy_tms thy))) /\
      (!s. MEM s (MAP FST alist) ==> ~(s IN FDOM (ethy_etms thy)))
-     ==> term_ok' (ethy_tms_fupd (K (FUNION (alist_to_fmap alist) (ethy_tms thy))) thy) p`,
+     ==> term_ok' (ethy_tms_fupd (combin_K (FUNION (alist_to_fmap alist) (ethy_tms thy))) thy) p`,
   REPEAT STRIP_TAC THEN
   MATCH_MP_TAC(REWRITE_RULE[IMP_IMP] term_ok'_ctms_ctys_subset) THEN
   EXISTS_TAC `thy:ethy` THEN
@@ -786,7 +786,7 @@ let constspec_conext_well_formed = prove
            VSUBST (MAP (\(s,t). (hol_Const s (typeof t),hol_Var s (typeof t))) eqs) prop in
          let thy' =
            ethy_tms_fupd
-             (K (FUNION (alist_to_fmap (MAP (\(s,t). (s,typeof t)) eqs)) (ethy_tms thy)))
+             (combin_K (FUNION (alist_to_fmap (MAP (\(s,t). (s,typeof t)) eqs)) (ethy_tms thy)))
              thy in
          term_ok' thy' cprop /\ cprop has_type Tyapp (implode "bool") []`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN REWRITE_TAC[LET_DEF; LET_END_DEF] THEN BETA_TAC THEN
@@ -933,9 +933,9 @@ let typedefn_eq1_well_formed = prove
            Tyapp name (MAP Tyvar (MAP implode (STRING_SORT (MAP explode (tvars pred))))) in
          let rep_type = hol_domain (typeof pred) in
          let thy' =
-           ethy_tys_fupd (K (ethy_tys thy |+ (name,LENGTH (tvars pred))))
+           ethy_tys_fupd (combin_K (ethy_tys thy |+ (name,LENGTH (tvars pred))))
              (ethy_tms_fupd
-                (K (ethy_tms thy |+ (abs_name,Tyapp (implode "fun") [rep_type; abs_type])
+                (combin_K (ethy_tms thy |+ (abs_name,Tyapp (implode "fun") [rep_type; abs_type])
                                  |+ (rep_name,Tyapp (implode "fun") [abs_type; rep_type])))
                 thy) in
          let eq1 =
@@ -960,9 +960,9 @@ let typedefn_eq2_well_formed = prove
            Tyapp name (MAP Tyvar (MAP implode (STRING_SORT (MAP explode (tvars pred))))) in
          let rep_type = hol_domain (typeof pred) in
          let thy' =
-           ethy_tys_fupd (K (ethy_tys thy |+ (name,LENGTH (tvars pred))))
+           ethy_tys_fupd (combin_K (ethy_tys thy |+ (name,LENGTH (tvars pred))))
              (ethy_tms_fupd
-                (K (ethy_tms thy |+ (abs_name,Tyapp (implode "fun") [rep_type; abs_type])
+                (combin_K (ethy_tms thy |+ (abs_name,Tyapp (implode "fun") [rep_type; abs_type])
                                  |+ (rep_name,Tyapp (implode "fun") [abs_type; rep_type])))
                 thy) in
          let eq2 =

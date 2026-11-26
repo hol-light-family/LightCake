@@ -74,21 +74,21 @@ let crep_mem_load_def = cake_def
 
 let crep_set_var_def = cake_def
   `crep_set_var v w (s:(A,FFI)crep_state) =
-     crep_state_locals_fupd (K (crep_state_locals s |+ (v,w))) s`;;
+     crep_state_locals_fupd (combin_K (crep_state_locals s |+ (v,w))) s`;;
 
 (* gv: global variable *)
 
 let crep_set_globals_def = cake_def
   `crep_set_globals gv w (s:(A,FFI)crep_state) =
-     crep_state_globals_fupd (K (crep_state_globals s |+ (gv,w))) s`;;
+     crep_state_globals_fupd (combin_K (crep_state_globals s |+ (gv,w))) s`;;
 
 let crep_upd_locals_def = cake_def
   `crep_upd_locals varargs (s:(A,FFI)crep_state) =
-     crep_state_locals_fupd (K (FEMPTY |++ varargs)) s`;;
+     crep_state_locals_fupd (combin_K (FEMPTY |++ varargs)) s`;;
 
 let crep_empty_locals_def = cake_def
   `crep_empty_locals (s:(A,FFI)crep_state) =
-     crep_state_locals_fupd (K FEMPTY) s`;;
+     crep_state_locals_fupd (combin_K FEMPTY) s`;;
 
 let crep_lookup_code_def = cake_def
   `crep_lookup_code (code:(K,(N)list#P)fmap) (fname:K) (args:(V)list) (len:L) =
@@ -198,7 +198,7 @@ let () = cake_ind_store := ("crep_eval",crep_eval_ind) :: !cake_ind_store;;
 
 let crep_dec_clock_def = cake_def
   `crep_dec_clock (s:(A,FFI)crep_state) =
-     crep_state_clock_fupd (K (crep_state_clock s - 1)) s`;;
+     crep_state_clock_fupd (combin_K (crep_state_clock s - 1)) s`;;
 
 (* HOL4 infers the most general type: old_s and new_s are states of        *)
 (* independent types                                                         *)
@@ -207,7 +207,7 @@ let crep_fix_clock_def = cake_def
   `crep_fix_clock (old_s:(A,FFI)crep_state) (res:B,(new_s:(C,D)crep_state)) =
      (res,
       crep_state_clock_fupd
-        (K (if crep_state_clock old_s < crep_state_clock new_s
+        (combin_K (if crep_state_clock old_s < crep_state_clock new_s
             then crep_state_clock old_s else crep_state_clock new_s))
         new_s)`;;
 
@@ -234,7 +234,7 @@ let crep_sh_mem_load_def = cake_def
              FFI_final outcome ->
                (SOME (crep_FinalFFI outcome:(B)crep_result),crep_empty_locals s)
            | FFI_return new_ffi new_bytes ->
-               (NONE,crep_state_ffi_fupd (K new_ffi)
+               (NONE,crep_state_ffi_fupd (combin_K new_ffi)
                        (crep_set_var v (Word (word_of_bytes F (word 0) new_bytes))
                           s)))
         else (SOME crep_Error,s))
@@ -245,7 +245,7 @@ let crep_sh_mem_load_def = cake_def
              FFI_final outcome ->
                (SOME (crep_FinalFFI outcome),crep_empty_locals s)
            | FFI_return new_ffi new_bytes ->
-               (NONE,crep_state_ffi_fupd (K new_ffi)
+               (NONE,crep_state_ffi_fupd (combin_K new_ffi)
                        (crep_set_var v (Word (word_of_bytes F (word 0) new_bytes))
                           s)))
         else (SOME crep_Error,s))`;;
@@ -260,7 +260,7 @@ let crep_sh_mem_store_def = cake_def
                         (APPEND (word_to_bytes w F) (word_to_bytes addr F)) with
                   FFI_final outcome -> (SOME (crep_FinalFFI outcome:(B)crep_result),s)
                 | FFI_return new_ffi new_bytes ->
-                    (NONE,crep_state_ffi_fupd (K new_ffi) s))
+                    (NONE,crep_state_ffi_fupd (combin_K new_ffi) s))
              else (SOME crep_Error,s))
           else
             (if byte_align addr IN crep_state_sh_memaddrs s then
@@ -269,7 +269,7 @@ let crep_sh_mem_store_def = cake_def
                                 (word_to_bytes addr F)) with
                   FFI_final outcome -> (SOME (crep_FinalFFI outcome),s)
                 | FFI_return new_ffi new_bytes ->
-                    (NONE,crep_state_ffi_fupd (K new_ffi) s))
+                    (NONE,crep_state_ffi_fupd (combin_K new_ffi) s))
              else (SOME crep_Error,s)))
      | _ -> (SOME crep_Error,s)`;;
 
@@ -330,7 +330,7 @@ let PCREPAUX_TC_TAC : tactic =
   ARITH_TAC;;
 
 let PCREPAUX_evaluate_rel =
-  `inv_image (MEASURE I LEX MEASURE (crep_prog_size (K 0)))
+  `inv_image (MEASURE I LEX MEASURE (crep_prog_size (combin_K 0)))
      (\p:(A)crep_prog#(A,FFI)crep_state. (crep_state_clock (SND p),FST p))`;;
 
 (* the clauses, parsed in four quotations (HOL4 types each clause on its    *)
@@ -346,9 +346,9 @@ let PCREPAUX_evaluate_clauses = list_mk_conj
         SOME value ->
           let (res,st) =
             crep_evaluate
-              (prog,crep_state_locals_fupd (K (crep_state_locals s |+ (v,value))) s) in
+              (prog,crep_state_locals_fupd (combin_K (crep_state_locals s |+ (v,value))) s) in
           (res,crep_state_locals_fupd
-                 (K (crep_res_var (crep_state_locals st)
+                 (combin_K (crep_res_var (crep_state_locals st)
                        (v,FLOOKUP (crep_state_locals s) v))) st)
       | NONE -> (SOME crep_Error,s)) /\
    (crep_evaluate (crep_Primitive lhss pop rhss,s) =
@@ -360,7 +360,7 @@ let PCREPAUX_evaluate_clauses = list_mk_conj
                   ALL (\v. IS_SOME (FLOOKUP (crep_state_locals s) v)) lhss /\
                   ALL_DISTINCT lhss
                then (NONE,crep_state_locals_fupd
-                            (K (crep_state_locals s |++ ZIP lhss res_ws)) s)
+                            (combin_K (crep_state_locals s |++ ZIP lhss res_ws)) s)
                else (SOME crep_Error,s)
            | NONE -> (SOME crep_Error,s))
       | NONE -> (SOME crep_Error,s)) /\
@@ -370,13 +370,13 @@ let PCREPAUX_evaluate_clauses = list_mk_conj
       | SOME w ->
           (match FLOOKUP (crep_state_locals s) v with
              SOME _ ->
-               (NONE,crep_state_locals_fupd (K (crep_state_locals s |+ (v,w))) s)
+               (NONE,crep_state_locals_fupd (combin_K (crep_state_locals s |+ (v,w))) s)
            | _ -> (SOME crep_Error,s))) /\
    (crep_evaluate (crep_Store dst src,s) =
       match (crep_eval s dst,crep_eval s src) with
         (SOME (Word adr),SOME w) ->
           (match pan_mem_store adr w (crep_state_memaddrs s) (crep_state_memory s) with
-             SOME m -> (NONE,crep_state_memory_fupd (K m) s)
+             SOME m -> (NONE,crep_state_memory_fupd (combin_K m) s)
            | NONE -> (SOME crep_Error,s))
       | _ -> (SOME crep_Error,s))`;
   `(crep_evaluate (crep_Store32 dst src:(A)crep_prog,s:(A,FFI)crep_state) =
@@ -384,7 +384,7 @@ let PCREPAUX_evaluate_clauses = list_mk_conj
         (SOME (Word adr),SOME (Word w)) ->
           (match pan_mem_store_32 (crep_state_memory s) (crep_state_memaddrs s)
                    (crep_state_be s) adr (word_zx w) with
-             SOME m -> (NONE:((A)crep_result)option,crep_state_memory_fupd (K m) s)
+             SOME m -> (NONE:((A)crep_result)option,crep_state_memory_fupd (combin_K m) s)
            | NONE -> (SOME crep_Error,s))
       | _ -> (SOME crep_Error,s)) /\
    (crep_evaluate (crep_StoreByte dst src,s) =
@@ -392,7 +392,7 @@ let PCREPAUX_evaluate_clauses = list_mk_conj
         (SOME (Word adr),SOME (Word w)) ->
           (match pan_mem_store_byte (crep_state_memory s) (crep_state_memaddrs s)
                    (crep_state_be s) adr (word_zx w) with
-             SOME m -> (NONE,crep_state_memory_fupd (K m) s)
+             SOME m -> (NONE,crep_state_memory_fupd (combin_K m) s)
            | NONE -> (SOME crep_Error,s))
       | _ -> (SOME crep_Error,s))`;
   `(crep_evaluate (StoreGlob dst src:(A)crep_prog,s:(A,FFI)crep_state) =
@@ -458,9 +458,9 @@ let PCREPAUX_evaluate_clauses = list_mk_conj
                 then (SOME crep_TimeOut,crep_empty_locals s) else
                 let eval_prog =
                   crep_fix_clock
-                    (crep_state_locals_fupd (K newlocals) (crep_dec_clock s))
+                    (crep_state_locals_fupd (combin_K newlocals) (crep_dec_clock s))
                     (crep_evaluate
-                       (prog,crep_state_locals_fupd (K newlocals)
+                       (prog,crep_state_locals_fupd (combin_K newlocals)
                                (crep_dec_clock s))) in
                 match eval_prog with
                   (NONE,st) -> (SOME crep_Error,st)
@@ -475,7 +475,7 @@ let PCREPAUX_evaluate_clauses = list_mk_conj
                            (match OPT_MMAP (FLOOKUP (crep_state_locals s)) rts with
                               SOME _ ->
                                 (NONE,crep_state_locals_fupd
-                                        (K (crep_state_locals s |++ ZIP rts retvs))
+                                        (combin_K (crep_state_locals s |++ ZIP rts retvs))
                                         st)
                             | _ -> (SOME crep_Error,st)))
                 | (SOME (crep_Exception eid),st) ->
@@ -485,7 +485,7 @@ let PCREPAUX_evaluate_clauses = list_mk_conj
                      | SOME (_,SOME (eid',p)) ->
                          if eid = eid' then
                            crep_evaluate
-                             (p,crep_state_locals_fupd (K (crep_state_locals s)) st)
+                             (p,crep_state_locals_fupd (combin_K (crep_state_locals s)) st)
                          else (SOME (crep_Exception eid),crep_empty_locals st))
                 | (res,st) -> (res,crep_empty_locals st))
            | _ -> (SOME crep_Error,s))
@@ -506,8 +506,8 @@ let PCREPAUX_evaluate_clauses = list_mk_conj
                 | FFI_return new_ffi new_bytes ->
                     let nmem = pan_write_bytearray w4 new_bytes (crep_state_memory s)
                                  (crep_state_memaddrs s) (crep_state_be s) in
-                    (NONE,crep_state_ffi_fupd (K new_ffi)
-                            (crep_state_memory_fupd (K nmem) s)))
+                    (NONE,crep_state_ffi_fupd (combin_K new_ffi)
+                            (crep_state_memory_fupd (combin_K nmem) s)))
            | _ -> (SOME crep_Error,s))
       | res -> (SOME crep_Error,s))`];;
 
@@ -590,7 +590,7 @@ let crep_evaluate_def =
 let crep_semantics_def = cake_def
   `crep_semantics (s:(A,FFI)crep_state) start =
      let prog = crep_Call NONE start [] in
-     if ?k. match FST (crep_evaluate (prog,crep_state_clock_fupd (K k) s)) with
+     if ?k. match FST (crep_evaluate (prog,crep_state_clock_fupd (combin_K k) s)) with
               SOME crep_TimeOut -> F
             | SOME (crep_FinalFFI _) -> F
             | SOME (crepSem_Return _) -> F
@@ -599,7 +599,7 @@ let crep_semantics_def = cake_def
      else
        match (some res.
                 ?k t r outcome.
-                  crep_evaluate (prog,crep_state_clock_fupd (K k) s) = (r,t) /\
+                  crep_evaluate (prog,crep_state_clock_fupd (combin_K k) s) = (r,t) /\
                   (match r with
                      SOME (crep_FinalFFI e) -> outcome = FFI_outcome e
                    | SOME (crepSem_Return _) -> outcome = Success
@@ -613,5 +613,5 @@ let crep_semantics_def = cake_def
                               (ffi_state_io_events
                                  (crep_state_ffi
                                     (SND (crep_evaluate
-                                            (prog,crep_state_clock_fupd (K k) s))))))
+                                            (prog,crep_state_clock_fupd (combin_K k) s))))))
                        (:num)))`;;

@@ -258,25 +258,25 @@ let pmatch_nil = prove
 
 let pmatch_ignore_clock = prove
  (`!(s:(C,FFI)flat_state) s' p v env ps vs.
-     flat_pmatch (flat_state_clock_fupd (K s') s) p v env = flat_pmatch s p v env /\
-     flat_pmatch_list (flat_state_clock_fupd (K s') s) ps vs env =
+     flat_pmatch (flat_state_clock_fupd (combin_K s') s) p v env = flat_pmatch s p v env /\
+     flat_pmatch_list (flat_state_clock_fupd (combin_K s') s) ps vs env =
      flat_pmatch_list s ps vs env`,
   REPEAT GEN_TAC THEN CONJ_TAC THENL
    [MP_TAC(ISPECL [`s:(C,FFI)flat_state`; `p:flat_pat`; `v:flat_v`;
                    `env:(varN#flat_v)list`;
-                   `flat_state_clock_fupd (K s') (s:(C,FFI)flat_state)`;
+                   `flat_state_clock_fupd (combin_K s') (s:(C,FFI)flat_state)`;
                    `flat_pmatch (s:(C,FFI)flat_state) p v env`]
                   (CONJUNCT1 pmatch_state));
     MP_TAC(ISPECL [`s:(C,FFI)flat_state`; `ps:flat_pat list`; `vs:flat_v list`;
                    `env:(varN#flat_v)list`;
-                   `flat_state_clock_fupd (K s') (s:(C,FFI)flat_state)`;
+                   `flat_state_clock_fupd (combin_K s') (s:(C,FFI)flat_state)`;
                    `flat_pmatch_list (s:(C,FFI)flat_state) ps vs env`]
                   (CONJUNCT2 pmatch_state))] THEN
   REWRITE_TAC[flat_state_INFO.ri_accfupds]);;
 
 let pmatch_rows_ignore_clock = prove
  (`!(pes:(flat_pat#A)list) (s:(C,FFI)flat_state) v c.
-     pmatch_rows pes (flat_state_clock_fupd (K c) s) v = pmatch_rows pes s v`,
+     pmatch_rows pes (flat_state_clock_fupd (combin_K c) s) v = pmatch_rows pes s v`,
   MATCH_MP_TAC list_INDUCT THEN
   REWRITE_TAC[FORALL_PAIR_THM; pmatch_rows_def; pmatch_ignore_clock] THEN
   REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[]);;
@@ -409,8 +409,8 @@ let flat_evaluate_decs_append = prove
 let FLATSEMAUX_do_app_clock = prove
  (`!(s:(C,FFI)flat_state) op es t r c.
      flat_do_app s op es = SOME (t,r) ==>
-     flat_do_app (flat_state_clock_fupd (K c) s) op es =
-     SOME (flat_state_clock_fupd (K c) t,r)`,
+     flat_do_app (flat_state_clock_fupd (combin_K c) s) op es =
+     SOME (flat_state_clock_fupd (combin_K c) t,r)`,
   (* do_app is unfolded in the assumption first, and in the conclusion only *)
   (* after the split has fixed op                                           *)
   REPEAT GEN_TAC THEN DISCH_THEN(MP_TAC o REWRITE_RULE[flat_do_app_def]) THEN DISCH_TAC THEN
@@ -418,15 +418,15 @@ let FLATSEMAUX_do_app_clock = prove
   RULE_ASSUM_TAC(REWRITE_RULE[PAIR_EQ]) THEN
   REPEAT(FIRST_X_ASSUM(SUBST_ALL_TAC o SYM o check (is_var o rhs o concl))) THEN
   REPEAT(FIRST_X_ASSUM(SUBST_ALL_TAC o check (is_var o lhs o concl))) THEN
-  REWRITE_TAC[flat_do_app_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[flat_do_app_def] THEN CAKE_REWRITE_TAC[] THEN
   SIMP[LET_DEF; LET_END_DEF] THEN FS[IS_NONE_EQ_NONE]);;
 
 (* HOL4 [local] *)
 let flat_do_app_add_to_clock = prove
  (`!(s:(C,FFI)flat_state) op es t r k.
      flat_do_app s op es = SOME (t,r) ==>
-     flat_do_app (flat_state_clock_fupd (K (flat_state_clock s + k)) s) op es =
-     SOME (flat_state_clock_fupd (K (flat_state_clock t + k)) t,r)`,
+     flat_do_app (flat_state_clock_fupd (combin_K (flat_state_clock s + k)) s) op es =
+     SOME (flat_state_clock_fupd (combin_K (flat_state_clock t + k)) t,r)`,
   REPEAT STRIP_TAC THEN FIRST_ASSUM(SUBST1_TAC o MATCH_MP flat_do_app_const) THEN
   MATCH_MP_TAC FLATSEMAUX_do_app_clock THEN ASM_REWRITE_TAC[]);;
 
@@ -434,9 +434,9 @@ let flat_do_app_add_to_clock = prove
 let do_app_add_to_clock_NONE = prove
  (`!(s:(C,FFI)flat_state) op es k.
      flat_do_app s op es = NONE ==>
-     flat_do_app (flat_state_clock_fupd (K (flat_state_clock s + k)) s) op es = NONE`,
+     flat_do_app (flat_state_clock_fupd (combin_K (flat_state_clock s + k)) s) op es = NONE`,
   REPEAT STRIP_TAC THEN
-  MP_TAC(ISPEC `flat_do_app (flat_state_clock_fupd (K (flat_state_clock s + k))
+  MP_TAC(ISPEC `flat_do_app (flat_state_clock_fupd (combin_K (flat_state_clock s + k))
                                (s:(C,FFI)flat_state)) op es` (cases "option")) THEN
   STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
   MP_TAC(ISPEC `a:(C,FFI)flat_state#(flat_v,flat_v)result` PAIR_SURJECTIVE) THEN
@@ -444,8 +444,8 @@ let do_app_add_to_clock_NONE = prove
               (X_CHOOSE_THEN `r:(flat_v,flat_v)result` SUBST_ALL_TAC)) THEN
   FIRST_ASSUM(MP_TAC o SPEC `flat_state_clock (s:(C,FFI)flat_state)` o
               MATCH_MP FLATSEMAUX_do_app_clock) THEN
-  SUBGOAL_THEN `flat_state_clock_fupd (K (flat_state_clock s))
-                  (flat_state_clock_fupd (K (flat_state_clock s + k))
+  SUBGOAL_THEN `flat_state_clock_fupd (combin_K (flat_state_clock s))
+                  (flat_state_clock_fupd (combin_K (flat_state_clock s + k))
                      (s:(C,FFI)flat_state)) = s` SUBST1_TAC THENL
    [REWRITE_TAC[flat_state_component_equality; flat_state_INFO.ri_accfupds; K_THM];
     ASM_REWRITE_TAC[option_DISTINCT]]);;
@@ -454,8 +454,8 @@ let do_app_add_to_clock_NONE = prove
 let FLATSEMAUX_dec_clock_add = prove
  (`!(s:(C,FFI)flat_state) n extra.
      flat_state_clock s = n /\ ~(n = 0) ==>
-     flat_dec_clock (flat_state_clock_fupd (K (n + extra)) s) =
-     flat_state_clock_fupd (K (flat_state_clock (flat_dec_clock s) + extra))
+     flat_dec_clock (flat_state_clock_fupd (combin_K (n + extra)) s) =
+     flat_state_clock_fupd (combin_K (flat_state_clock (flat_dec_clock s) + extra))
        (flat_dec_clock s)`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[flat_dec_clock_def] THEN
   REWRITE_TAC[flat_state_component_equality; flat_state_INFO.ri_accfupds; K_THM] THEN
@@ -465,16 +465,16 @@ let FLATSEMAUX_dec_clock_add = prove
 let flat_evaluate_add_to_clock = prove
  (`(!env (s:(C,FFI)flat_state) es s' r extra.
       flat_evaluate env s es = (s',r) /\ ~(r = Rerr (Rabort Rtimeout_error)) ==>
-      flat_evaluate env (flat_state_clock_fupd (K (flat_state_clock s + extra)) s) es =
-      (flat_state_clock_fupd (K (flat_state_clock s' + extra)) s',r)) /\
+      flat_evaluate env (flat_state_clock_fupd (combin_K (flat_state_clock s + extra)) s) es =
+      (flat_state_clock_fupd (combin_K (flat_state_clock s' + extra)) s',r)) /\
    (!(s:(C,FFI)flat_state) d s' r extra.
       evaluate_dec s d = (s',r) /\ ~(r = SOME (Rabort Rtimeout_error)) ==>
-      evaluate_dec (flat_state_clock_fupd (K (flat_state_clock s + extra)) s) d =
-      (flat_state_clock_fupd (K (flat_state_clock s' + extra)) s',r)) /\
+      evaluate_dec (flat_state_clock_fupd (combin_K (flat_state_clock s + extra)) s) d =
+      (flat_state_clock_fupd (combin_K (flat_state_clock s' + extra)) s',r)) /\
    (!(s:(C,FFI)flat_state) ds s' r extra.
       flat_evaluate_decs s ds = (s',r) /\ ~(r = SOME (Rabort Rtimeout_error)) ==>
-      flat_evaluate_decs (flat_state_clock_fupd (K (flat_state_clock s + extra)) s) ds =
-      (flat_state_clock_fupd (K (flat_state_clock s' + extra)) s',r))`,
+      flat_evaluate_decs (flat_state_clock_fupd (combin_K (flat_state_clock s + extra)) s) ds =
+      (flat_state_clock_fupd (combin_K (flat_state_clock s' + extra)) s',r))`,
   MATCH_MP_TAC flat_evaluate_ind THEN REPEAT CONJ_TAC THEN
   REPEAT STRIP_TAC THEN
   POP_ASSUM (fun nt -> POP_ASSUM (fun ev -> ASSUME_TAC nt THEN MP_TAC ev)) THEN
@@ -488,8 +488,8 @@ let flat_evaluate_add_to_clock = prove
 let flat_evaluate_decs_add_to_clock = prove
  (`!decs (s:(C,FFI)flat_state) s' r extra.
      ~(r = SOME (Rabort Rtimeout_error)) /\ flat_evaluate_decs s decs = (s',r) ==>
-     flat_evaluate_decs (flat_state_clock_fupd (K (flat_state_clock s + extra)) s) decs =
-     (flat_state_clock_fupd (K (flat_state_clock s' + extra)) s',r)`,
+     flat_evaluate_decs (flat_state_clock_fupd (combin_K (flat_state_clock s + extra)) s) decs =
+     (flat_state_clock_fupd (combin_K (flat_state_clock s' + extra)) s',r)`,
   REPEAT STRIP_TAC THEN
   MATCH_MP_TAC (CONJUNCT2 (CONJUNCT2 flat_evaluate_add_to_clock)) THEN
   ASM_REWRITE_TAC[]);;
@@ -554,7 +554,7 @@ let evaluate_io_events_mono_IMP = prove
 
 let flat_with_clock_ffi = prove
  (`!(s:(C,FFI)flat_state) k.
-     flat_state_ffi (flat_state_clock_fupd (K k) s) = flat_state_ffi s`,
+     flat_state_ffi (flat_state_clock_fupd (combin_K k) s) = flat_state_ffi s`,
   REWRITE_TAC[flat_state_INFO.ri_accfupds]);;
 
 (* local helpers for evaluate_add_to_clock_io_events_mono: evaluate_add_to_clock
@@ -565,18 +565,18 @@ let FLATSEMAUX_atc_curried = prove
  (`(!env (s:(C,FFI)flat_state) es s' r.
       flat_evaluate env s es = (s',r) ==> ~(r = Rerr (Rabort Rtimeout_error)) ==>
       !extra.
-      flat_evaluate env (flat_state_clock_fupd (K (flat_state_clock s + extra)) s) es =
-      (flat_state_clock_fupd (K (flat_state_clock s' + extra)) s',r)) /\
+      flat_evaluate env (flat_state_clock_fupd (combin_K (flat_state_clock s + extra)) s) es =
+      (flat_state_clock_fupd (combin_K (flat_state_clock s' + extra)) s',r)) /\
    (!(s:(C,FFI)flat_state) d s' r.
       evaluate_dec s d = (s',r) ==> ~(r = SOME (Rabort Rtimeout_error)) ==>
       !extra.
-      evaluate_dec (flat_state_clock_fupd (K (flat_state_clock s + extra)) s) d =
-      (flat_state_clock_fupd (K (flat_state_clock s' + extra)) s',r)) /\
+      evaluate_dec (flat_state_clock_fupd (combin_K (flat_state_clock s + extra)) s) d =
+      (flat_state_clock_fupd (combin_K (flat_state_clock s' + extra)) s',r)) /\
    (!(s:(C,FFI)flat_state) ds s' r.
       flat_evaluate_decs s ds = (s',r) ==> ~(r = SOME (Rabort Rtimeout_error)) ==>
       !extra.
-      flat_evaluate_decs (flat_state_clock_fupd (K (flat_state_clock s + extra)) s) ds =
-      (flat_state_clock_fupd (K (flat_state_clock s' + extra)) s',r))`,
+      flat_evaluate_decs (flat_state_clock_fupd (combin_K (flat_state_clock s + extra)) s) ds =
+      (flat_state_clock_fupd (combin_K (flat_state_clock s' + extra)) s',r))`,
   MESON_TAC[flat_evaluate_add_to_clock]);;
 
 let FLATSEMAUX_SPLIT_ONE_P_TAC (p:term->bool) : tactic =
@@ -629,17 +629,17 @@ let FLATSEMAUX_PREFIX_CHAIN_TAC : tactic = fun (asl,w as g) ->
 let FLATSEMAUX_atc_io = prove
  (`(!env (s:(C,FFI)flat_state) es s1 r1 extra s2 r2.
       flat_evaluate env s es = (s1,r1) /\
-      flat_evaluate env (flat_state_clock_fupd (K (flat_state_clock s + extra)) s) es =
+      flat_evaluate env (flat_state_clock_fupd (combin_K (flat_state_clock s + extra)) s) es =
       (s2,r2) ==>
       ffi_state_io_events (flat_state_ffi s1) <<= ffi_state_io_events (flat_state_ffi s2)) /\
    (!(s:(C,FFI)flat_state) d s1 r1 extra s2 r2.
       evaluate_dec s d = (s1,r1) /\
-      evaluate_dec (flat_state_clock_fupd (K (flat_state_clock s + extra)) s) d =
+      evaluate_dec (flat_state_clock_fupd (combin_K (flat_state_clock s + extra)) s) d =
       (s2,r2) ==>
       ffi_state_io_events (flat_state_ffi s1) <<= ffi_state_io_events (flat_state_ffi s2)) /\
    (!(s:(C,FFI)flat_state) ds s1 r1 extra s2 r2.
       flat_evaluate_decs s ds = (s1,r1) /\
-      flat_evaluate_decs (flat_state_clock_fupd (K (flat_state_clock s + extra)) s) ds =
+      flat_evaluate_decs (flat_state_clock_fupd (combin_K (flat_state_clock s + extra)) s) ds =
       (s2,r2) ==>
       ffi_state_io_events (flat_state_ffi s1) <<= ffi_state_io_events (flat_state_ffi s2))`,
   MATCH_MP_TAC flat_evaluate_ind THEN REPEAT CONJ_TAC THEN
@@ -693,15 +693,15 @@ let flat_evaluate_add_to_clock_io_events_mono = prove
  (`(!env (s:(C,FFI)flat_state) es extra.
       ffi_state_io_events (flat_state_ffi (FST (flat_evaluate env s es))) <<=
       ffi_state_io_events (flat_state_ffi (FST (flat_evaluate env
-        (flat_state_clock_fupd (K (flat_state_clock s + extra)) s) es)))) /\
+        (flat_state_clock_fupd (combin_K (flat_state_clock s + extra)) s) es)))) /\
    (!(s:(C,FFI)flat_state) d extra.
       ffi_state_io_events (flat_state_ffi (FST (evaluate_dec s d))) <<=
       ffi_state_io_events (flat_state_ffi (FST (evaluate_dec
-        (flat_state_clock_fupd (K (flat_state_clock s + extra)) s) d)))) /\
+        (flat_state_clock_fupd (combin_K (flat_state_clock s + extra)) s) d)))) /\
    (!(s:(C,FFI)flat_state) ds extra.
       ffi_state_io_events (flat_state_ffi (FST (flat_evaluate_decs s ds))) <<=
       ffi_state_io_events (flat_state_ffi (FST (flat_evaluate_decs
-        (flat_state_clock_fupd (K (flat_state_clock s + extra)) s) ds))))`,
+        (flat_state_clock_fupd (combin_K (flat_state_clock s + extra)) s) ds))))`,
   REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN MESON_TAC[FLATSEMAUX_atc_io; PAIR]);;
 
 let evaluate_dec_io_events_mono = prove
@@ -714,7 +714,7 @@ let evaluate_dec_add_to_clock_io_events_mono = prove
  (`!prog (s:(C,FFI)flat_state) extra.
      ffi_state_io_events (flat_state_ffi (FST (evaluate_dec s prog))) <<=
      ffi_state_io_events (flat_state_ffi (FST (evaluate_dec
-       (flat_state_clock_fupd (K (flat_state_clock s + extra)) s) prog)))`,
+       (flat_state_clock_fupd (combin_K (flat_state_clock s + extra)) s) prog)))`,
   REWRITE_TAC[flat_evaluate_add_to_clock_io_events_mono]);;
 
 let evaluate_decs_io_events_mono = prove
@@ -727,7 +727,7 @@ let flat_evaluate_decs_add_to_clock_io_events_mono = prove
  (`!ds (s:(C,FFI)flat_state) extra.
      ffi_state_io_events (flat_state_ffi (FST (flat_evaluate_decs s ds))) <<=
      ffi_state_io_events (flat_state_ffi (FST (flat_evaluate_decs
-       (flat_state_clock_fupd (K (flat_state_clock s + extra)) s) ds)))`,
+       (flat_state_clock_fupd (combin_K (flat_state_clock s + extra)) s) ds)))`,
   REWRITE_TAC[flat_evaluate_add_to_clock_io_events_mono]);;
 
 (* HOL4 leaves env, xs, vs, s, t free *)
@@ -814,7 +814,7 @@ let evaluate_decs_add_to_clock_initial_state = prove
      ~(r = SOME (Rabort Rtimeout_error)) /\
      flat_evaluate_decs (flat_initial_state ffi k ec) decs = (s',r) ==>
      flat_evaluate_decs (flat_initial_state ffi (ck + k) ec) decs =
-     (flat_state_clock_fupd (K (flat_state_clock s' + ck)) s',r)`,
+     (flat_state_clock_fupd (combin_K (flat_state_clock s' + ck)) s',r)`,
   REPEAT STRIP_TAC THEN
   FIRST_ASSUM(MP_TAC o SPEC `ck:num` o MATCH_MP (CONJUNCT2 (CONJUNCT2
     (REWRITE_RULE[IMP_CONJ] flat_evaluate_add_to_clock)))) THEN
@@ -845,7 +845,7 @@ let evaluate_decs_add_to_clock_initial_state_io_events_mono = prove
 let flat_initial_state_with_clock = prove
  (`!(ffi:(FFI)ffi_state) k (ec:(C)install_config) ck.
      flat_state_clock_fupd
-       (K (flat_state_clock (flat_initial_state ffi k ec) + ck))
+       (combin_K (flat_state_clock (flat_initial_state ffi k ec) + ck))
        (flat_initial_state ffi k ec) =
      flat_initial_state ffi (k + ck) ec`,
   REWRITE_TAC[flat_initial_state_def; flat_state_INFO.ri_fupds;
@@ -1030,7 +1030,7 @@ let flat_IMP_semantics_eq = prove
   USE_THEN "sim" (fun th -> FIRST_ASSUM (MP_TAC o MATCH_MP th)) THEN
   DISCH_THEN(X_CHOOSE_THEN `ck:num` (X_CHOOSE_THEN `r2':((flat_v)error_result)option`
      (X_CHOOSE_THEN `t2:(D,FFI)flat_state` STRIP_ASSUME_TAC))) THEN
-  (SUBGOAL_THEN `t2 = flat_state_clock_fupd (K (flat_state_clock s2 + ck)) (s2:(D,FFI)flat_state) /\
+  (SUBGOAL_THEN `t2 = flat_state_clock_fupd (combin_K (flat_state_clock s2 + ck)) (s2:(D,FFI)flat_state) /\
                 r2' = (r2:((flat_v)error_result)option)` STRIP_ASSUME_TAC THENL
    [MP_TAC(ISPECL [`ffi:(FFI)ffi_state`; `k:num`; `ec2:(D)install_config`;
                    `ds2:flat_exp list`; `s2:(D,FFI)flat_state`;
@@ -1189,7 +1189,7 @@ let elist_globals_REVERSE = prove
 let flat_initial_state_clock = prove
  (`!(ffi:(FFI)ffi_state) k (ec:(C)install_config) k1.
      flat_state_clock (flat_initial_state ffi k ec) = k /\
-     flat_state_clock_fupd (K k1) (flat_initial_state ffi k ec) =
+     flat_state_clock_fupd (combin_K k1) (flat_initial_state ffi k ec) =
      flat_initial_state ffi k1 ec`,
   REWRITE_TAC[flat_initial_state_def; flat_state_INFO.ri_accessors;
               flat_state_INFO.ri_fupds; K_THM]);;
@@ -1206,7 +1206,7 @@ let build_rec_env_eq_MAP = prove
 let evaluate_decs_add_to_clock_io_events_mono_alt = prove
  (`!(s:(C,FFI)flat_state) ds s1 res extra s2 res2.
      flat_evaluate_decs s ds = (s1,res) /\
-     flat_evaluate_decs (flat_state_clock_fupd (K (flat_state_clock s + extra)) s) ds =
+     flat_evaluate_decs (flat_state_clock_fupd (combin_K (flat_state_clock s + extra)) s) ds =
      (s2,res2) ==>
      ffi_state_io_events (flat_state_ffi s1) <<= ffi_state_io_events (flat_state_ffi s2)`,
   REPEAT STRIP_TAC THEN
@@ -1280,13 +1280,13 @@ let flat_simple_state_rel_def = cake_def
      (sr:(C,FFI)flat_state->(D,FFI)flat_state->bool) <=>
      (!s t. sr s t ==> ALL2 (sv_rel vr) (flat_state_refs s) (flat_state_refs t)) /\
      (!s t srefs trefs. sr s t /\ ALL2 (sv_rel vr) srefs trefs
-        ==> sr (flat_state_refs_fupd (K srefs) s) (flat_state_refs_fupd (K trefs) t)) /\
+        ==> sr (flat_state_refs_fupd (combin_K srefs) s) (flat_state_refs_fupd (combin_K trefs) t)) /\
      (!s t. sr s t ==> ALL2 (OPTREL vr) (flat_state_globals s) (flat_state_globals t)) /\
      (!s t sglob tglob. sr s t /\ ALL2 (OPTREL vr) sglob tglob
-        ==> sr (flat_state_globals_fupd (K sglob) s) (flat_state_globals_fupd (K tglob) t)) /\
+        ==> sr (flat_state_globals_fupd (combin_K sglob) s) (flat_state_globals_fupd (combin_K tglob) t)) /\
      (!s t. sr s t ==> flat_state_ffi s = flat_state_ffi t) /\
      (!s t sffi tffi. sr s t /\ sffi = tffi
-        ==> sr (flat_state_ffi_fupd (K sffi) s) (flat_state_ffi_fupd (K tffi) t))`;;
+        ==> sr (flat_state_ffi_fupd (combin_K sffi) s) (flat_state_ffi_fupd (combin_K tffi) t))`;;
 
 (* HOL4 leaves vr free *)
 let simple_do_eq_thm_ind = prove
@@ -1330,7 +1330,7 @@ let simple_state_rel_store_assign = prove
      store_assign lnum x (flat_state_refs s) = SOME srefs' /\
      sr s t /\ sv_rel vr x y ==>
      ?trefs'. store_assign lnum y (flat_state_refs t) = SOME trefs' /\
-              sr (flat_state_refs_fupd (K srefs') s) (flat_state_refs_fupd (K trefs') t)`,
+              sr (flat_state_refs_fupd (combin_K srefs') s) (flat_state_refs_fupd (combin_K trefs') t)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[flat_simple_state_rel_def; store_assign_def] THEN
   REWRITE_TAC[COND_CASE_EQ; option_DISTINCT; option_INJ] THEN STRIP_TAC THEN
   SUBGOAL_THEN `ALL2 (sv_rel vr) (flat_state_refs (s:(C,FFI)flat_state))
@@ -1376,7 +1376,7 @@ let simple_state_rel_store_alloc = prove
      store_alloc x (flat_state_refs s) = (srefs',lnum) /\
      sr s t /\ sv_rel vr x y ==>
      ?trefs'. store_alloc y (flat_state_refs t) = (trefs',lnum) /\
-              sr (flat_state_refs_fupd (K srefs') s) (flat_state_refs_fupd (K trefs') t)`,
+              sr (flat_state_refs_fupd (combin_K srefs') s) (flat_state_refs_fupd (combin_K trefs') t)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[flat_simple_state_rel_def; store_alloc_def; PAIR_EQ] THEN
   STRIP_TAC THEN
   SUBGOAL_THEN `ALL2 (sv_rel vr) (flat_state_refs (s:(C,FFI)flat_state))
@@ -1607,7 +1607,7 @@ let FLATSEMAUX_do_test_rel = prove
     FIRST_X_ASSUM(DISJ_CASES_THEN (fun th ->
       FIRST_X_ASSUM(MP_TAC o REWRITE_RULE[th] o check (fun a ->
         is_eq (concl a) && rhs (concl a) = `Eq_val b`)))) THEN
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "eq_result"] THEN
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "eq_result"] THEN
     REPEAT (TOP_CASE_TAC THEN REWRITE_TAC[distinctness "eq_result"]);
     ALL_TAC] THEN
   RVEQ_TAC THEN ASM_MESON_TAC[FLATSEMAUX_lit_rel]);;
@@ -1647,11 +1647,11 @@ let FLATSEMAUX_dest_thunk_loc_rel = prove
   REWRITE_TAC[flat_dest_thunk_def; store_lookup_def] THEN
   ASM_REWRITE_TAC[] THEN
   ASM_CASES_TAC `n < LENGTH (r2:(flat_v store_v) list)` THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   FIRST_X_ASSUM(MP_TAC o SPEC `n:num`) THEN ASM_REWRITE_TAC[] THEN
   REWRITE_TAC[sv_rel_cases] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[] THEN
-  CASES_ON `m:thunk_mode` THEN CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
+  CASES_ON `m:thunk_mode` THEN CAKE_REWRITE_TAC[] THEN
   COND_CASES_TAC THEN REWRITE_TAC[distinctness "flat_dest_thunk_ret"]);;
 
 let FLATSEMAUX_bad_thunk_update_rel = prove
@@ -1804,7 +1804,7 @@ let simple_do_app_thm = prove
     can (find_term (fun t -> try fst(dest_const t) = "EL" with Failure _ -> false)) (concl th)))) THEN
   GVS[LIST_REL_CONS1; LIST_REL_NIL; sv_rel_cases; OPTREL_DEF] THEN
   REWRITE_TAC[flat_do_app_def; store_lookup_def; store_assign_def; store_alloc_def] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   FLATSEMAUX_FWD_CHAIN_TAC
     (map (fun th -> REWRITE_RULE[IMP_CONJ] (SPEC `vr:flat_v->flat_v->bool` th))
       [simple_do_eq_thm; FLATSEMAUX_do_test_rel; FLATSEMAUX_check_type_rel;
@@ -1823,7 +1823,7 @@ let flat_evaluate_match_def = cake_def
      | Match (env',p',e') ->
          if ALL_DISTINCT (flat_pat_bindings p')
          then flat_evaluate (flat_environment_v_fupd
-                               (K (APPEND env' (flat_environment_v env))) env) s [e']
+                               (combin_K (APPEND env' (flat_environment_v env))) env) s [e']
          else (s,Rerr (Rabort Rtype_error))`;;
 
 (* HOL4 leaves env, s, tra, e, pes free *)
@@ -1869,7 +1869,7 @@ let evaluate_match_CONS = prove
          if ALL_DISTINCT (flat_pat_bindings p) /\
             ~(pmatch_rows pes s v = Match_type_error)
          then flat_evaluate (flat_environment_v_fupd
-                               (K (APPEND env_v' (flat_environment_v env))) env) s [e]
+                               (combin_K (APPEND env_v' (flat_environment_v env))) env) s [e]
          else (s,Rerr (Rabort Rtype_error))`,
   REPEAT GEN_TAC THEN REWRITE_TAC[flat_evaluate_match_def; pmatch_rows_def] THEN
   EVERY_CASE_TAC THEN FS[]);;

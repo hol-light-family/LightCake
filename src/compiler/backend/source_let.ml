@@ -80,7 +80,7 @@ let IL1AUX_LIFT_LET_SIZE = prove
   W (fun (_,w) ->
        let v = find_term (fun t -> is_var t && type_of t = `:exp`) w in
        STRUCT_CASES_TAC (ISPEC v (nchotomy_of_type `:exp`))) THEN
-  REWRITE_TAC[dest_Let_def; dest_Letrec_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[dest_Let_def; dest_Letrec_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[distinctness "option"] THEN
   W (fun (_,w) ->
        match filter (fun t -> is_var t &&
@@ -88,7 +88,7 @@ let IL1AUX_LIFT_LET_SIZE = prove
                     (frees w) with
          v::_ -> CASES_ON v
        | [] -> ALL_TAC) THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[injectivity "option"; PAIR_EQ; distinctness "option"] THEN
   REPEAT STRIP_TAC THEN RVEQ_TAC THEN
   REWRITE_TAC[type_size_def "dec"; type_size_def "exp"] THEN ARITH_TAC);;

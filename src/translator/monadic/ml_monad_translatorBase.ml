@@ -21,15 +21,15 @@ type_invention_error := true;;
 (* a few basics *)
 
 let with_same_refs = prove
- (`state_refs_fupd (K (state_refs s)) (s:(FFI)state) = s`,
+ (`state_refs_fupd (combin_K (state_refs s)) (s:(FFI)state) = s`,
   REWRITE_TAC[state_component_equality] THEN SIMP[]);;
 
 let with_same_ffi = prove
- (`state_ffi_fupd (K (state_ffi s)) (s:(FFI)state) = s`,
+ (`state_ffi_fupd (combin_K (state_ffi s)) (s:(FFI)state) = s`,
   REWRITE_TAC[state_component_equality] THEN SIMP[]);;
 
 let ml_monad_translatorBase_with_same_clock = prove
- (`state_clock_fupd (K (state_clock s)) (s:(FFI)state) = s`,
+ (`state_clock_fupd (combin_K (state_clock s)) (s:(FFI)state) = s`,
   REWRITE_TAC[state_component_equality] THEN SIMP[]);;
 
 (* REF_REL *)
@@ -51,7 +51,7 @@ let VALID_REFS_PRED_def = cake_def
 
 let REFS_PRED_FRAME_def = cake_def
   `REFS_PRED_FRAME ro (h:A->hprop,p) (refs1,(s1:(FFI)state)) (refs2,s2) <=>
-     (ro ==> ?refs. s2 = state_refs_fupd (K refs) s1) /\
+     (ro ==> ?refs. s2 = state_refs_fupd (combin_K refs) s1) /\
      state_next_type_stamp s2 = state_next_type_stamp s1 /\
      state_next_exn_stamp s2 = state_next_exn_stamp s1 /\
      !F'. (h refs1 STAR F') (st2heap p s1) ==>
@@ -203,10 +203,10 @@ let MON1AUX_ffi2heap_DISJOINT = prove
 
 let STATE_APPEND_JUNK = prove
  (`!H p (s:(FFI)state) refs junk.
-     H (st2heap p (state_refs_fupd (K refs) s)) ==>
-     (H STAR cf_GC) (st2heap p (state_refs_fupd (K (APPEND refs junk)) s))`,
+     H (st2heap p (state_refs_fupd (combin_K refs) s)) ==>
+     (H STAR cf_GC) (st2heap p (state_refs_fupd (combin_K (APPEND refs junk)) s))`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[STAR_def] THEN
-  MAP_EVERY EXISTS_TAC [`st2heap p (state_refs_fupd (K refs) (s:(FFI)state))`;
+  MAP_EVERY EXISTS_TAC [`st2heap p (state_refs_fupd (combin_K refs) (s:(FFI)state))`;
     `store2heap_aux (LENGTH (refs:(v store_v)list)) junk`] THEN
   ASM_REWRITE_TAC[SAT_GC] THEN
   SIMP[st2heap_def; SPLIT_def; MON1AUX_store2heap_append_many; DISJOINT_UNION;
@@ -215,8 +215,8 @@ let STATE_APPEND_JUNK = prove
 
 let STATE_SPLIT_REFS = prove
  (`!a b p (s:(FFI)state).
-     SPLIT (st2heap p (state_refs_fupd (K (APPEND a b)) s))
-           (st2heap p (state_refs_fupd (K a) s), store2heap_aux (LENGTH a) b)`,
+     SPLIT (st2heap p (state_refs_fupd (combin_K (APPEND a b)) s))
+           (st2heap p (state_refs_fupd (combin_K a) s), store2heap_aux (LENGTH a) b)`,
   SIMP[st2heap_def; SPLIT_def; MON1AUX_store2heap_append_many; DISJOINT_UNION;
     store2heap_DISJOINT; MON1AUX_ffi2heap_DISJOINT] THEN
   SET_TAC[]);;
@@ -224,7 +224,7 @@ let STATE_SPLIT_REFS = prove
 let REFS_PRED_append = prove
  (`!H (refs:A) (s:(FFI)state).
      REFS_PRED H refs s ==>
-     REFS_PRED H refs (state_refs_fupd (K (APPEND (state_refs s) junk)) s)`,
+     REFS_PRED H refs (state_refs_fupd (combin_K (APPEND (state_refs s) junk)) s)`,
   REWRITE_TAC[FORALL_PAIR_THM; REFS_PRED_def] THEN REPEAT STRIP_TAC THEN
   ONCE_REWRITE_TAC[GSYM GC_STAR_GC] THEN REWRITE_TAC[STAR_ASSOC] THEN
   MATCH_MP_TAC STATE_APPEND_JUNK THEN ASM_REWRITE_TAC[with_same_refs]);;
@@ -232,13 +232,13 @@ let REFS_PRED_append = prove
 let REFS_PRED_qappend = prove
  (`!H (refs:A) (s:(FFI)state).
      REFS_PRED H refs s ==>
-     !junk. REFS_PRED H refs (state_refs_fupd (K (APPEND (state_refs s) junk)) s)`,
+     !junk. REFS_PRED H refs (state_refs_fupd (combin_K (APPEND (state_refs s) junk)) s)`,
   MESON_TAC[REFS_PRED_append]);;
 
 let REFS_PRED_FRAME_append = prove
  (`!H (refs:A) (s:(FFI)state).
      REFS_PRED_FRAME ro H (refs,s)
-       (refs,state_refs_fupd (K (APPEND (state_refs s) junk)) s)`,
+       (refs,state_refs_fupd (combin_K (APPEND (state_refs s) junk)) s)`,
   REWRITE_TAC[FORALL_PAIR_THM; REFS_PRED_FRAME_def] THEN REPEAT STRIP_TAC THEN
   SIMP[] THENL
    [MESON_TAC[];
@@ -408,7 +408,7 @@ let MON1AUX_DELETE_UNION3 = prove
 let STATE_SAT_CELL_STAR_H_EQ = prove
  (`!p (s:(FFI)state) s0 rv s1 H.
      (cf_cell (LENGTH s0) rv STAR H)
-       (st2heap p (state_refs_fupd (K (APPEND (APPEND s0 [rv]) s1)) s)) <=>
+       (st2heap p (state_refs_fupd (combin_K (APPEND (APPEND s0 [rv]) s1)) s)) <=>
      H ((store2heap s0 UNION store2heap_aux (LENGTH s0 + 1) s1) UNION
         ffi2heap p (state_ffi s))`,
   REPEAT GEN_TAC THEN REWRITE_TAC[cf_cell_def; one_STAR; st2heap_def] THEN SIMP[] THEN
@@ -420,7 +420,7 @@ let STATE_SAT_CELL_STAR_H_EQ = prove
 let STATE_SAT_REF_STAR_H_EQ = prove
  (`!p (s:(FFI)state) s0 xv s1 H.
      (cf_REF (Loc T (LENGTH s0)) xv STAR H)
-       (st2heap p (state_refs_fupd (K (APPEND (APPEND s0 [Refv xv]) s1)) s)) <=>
+       (st2heap p (state_refs_fupd (combin_K (APPEND (APPEND s0 [Refv xv]) s1)) s)) <=>
      H ((store2heap s0 UNION store2heap_aux (LENGTH s0 + 1) s1) UNION
         ffi2heap p (state_ffi s))`,
   REWRITE_TAC[cf_REF_def; SEP_CLAUSES; SEP_EXISTS_THM] THEN
@@ -430,7 +430,7 @@ let STATE_SAT_REF_STAR_H_EQ = prove
 let STATE_SAT_ARRAY_STAR_H_EQ = prove
  (`!p (s:(FFI)state) s0 av s1 H.
      (cf_ARRAY (Loc T (LENGTH s0)) av STAR H)
-       (st2heap p (state_refs_fupd (K (APPEND (APPEND s0 [Varray av]) s1)) s)) <=>
+       (st2heap p (state_refs_fupd (combin_K (APPEND (APPEND s0 [Varray av]) s1)) s)) <=>
      H ((store2heap s0 UNION store2heap_aux (LENGTH s0 + 1) s1) UNION
         ffi2heap p (state_ffi s))`,
   REWRITE_TAC[cf_ARRAY_def; SEP_CLAUSES; SEP_EXISTS_THM] THEN
@@ -440,7 +440,7 @@ let STATE_SAT_ARRAY_STAR_H_EQ = prove
 let STATE_UPDATE_HPROP_CELL = prove
  (`(cf_cell l rv STAR H) (st2heap p (s:(FFI)state)) ==>
    (cf_cell l rv' STAR H)
-     (st2heap p (state_refs_fupd (K (LUPDATE rv' l (state_refs s))) s))`,
+     (st2heap p (state_refs_fupd (combin_K (LUPDATE rv' l (state_refs s))) s))`,
   DISCH_TAC THEN
   SUBGOAL_THEN `?s0 s1. state_refs (s:(FFI)state) = APPEND (APPEND s0 [rv]) s1 /\
                         LENGTH s0 = l` STRIP_ASSUME_TAC THENL
@@ -449,7 +449,7 @@ let STATE_UPDATE_HPROP_CELL = prove
     ALL_TAC] THEN
   FIRST_X_ASSUM(SUBST_ALL_TAC o SYM) THEN
   SUBGOAL_THEN `st2heap p (s:(FFI)state) =
-                st2heap p (state_refs_fupd (K (APPEND (APPEND s0 [rv]) s1)) s)`
+                st2heap p (state_refs_fupd (combin_K (APPEND (APPEND s0 [rv]) s1)) s)`
     SUBST_ALL_TAC THENL
    [REWRITE_TAC[st2heap_def] THEN ASM_REWRITE_TAC[] THEN SIMP[]; ALL_TAC] THEN
   ASM_REWRITE_TAC[lupdate_append2] THEN
@@ -459,7 +459,7 @@ let STATE_UPDATE_HPROP_CELL = prove
 let STATE_UPDATE_HPROP_REF = prove
  (`(cf_REF (Loc T l) xv STAR H) (st2heap p (s:(FFI)state)) ==>
    (cf_REF (Loc T l) xv' STAR H)
-     (st2heap p (state_refs_fupd (K (LUPDATE (Refv xv') l (state_refs s))) s))`,
+     (st2heap p (state_refs_fupd (combin_K (LUPDATE (Refv xv') l (state_refs s))) s))`,
   REWRITE_TAC[cf_REF_def; SEP_CLAUSES; SEP_EXISTS_THM] THEN
   REWRITE_TAC[GSYM STAR_ASSOC; cf_HCOND_EXTRACT] THEN SIMP[] THEN
   REWRITE_TAC[UNWIND_THM1; STATE_UPDATE_HPROP_CELL]);;
@@ -467,7 +467,7 @@ let STATE_UPDATE_HPROP_REF = prove
 let STATE_UPDATE_HPROP_ARRAY = prove
  (`(cf_ARRAY (Loc T l) av STAR H) (st2heap p (s:(FFI)state)) ==>
    (cf_ARRAY (Loc T l) av' STAR H)
-     (st2heap p (state_refs_fupd (K (LUPDATE (Varray av') l (state_refs s))) s))`,
+     (st2heap p (state_refs_fupd (combin_K (LUPDATE (Varray av') l (state_refs s))) s))`,
   REWRITE_TAC[cf_ARRAY_def; SEP_CLAUSES; SEP_EXISTS_THM] THEN
   REWRITE_TAC[GSYM STAR_ASSOC; cf_HCOND_EXTRACT] THEN SIMP[] THEN
   REWRITE_TAC[UNWIND_THM1; STATE_UPDATE_HPROP_CELL]);;
@@ -507,7 +507,7 @@ let ml_monad_translatorBase_GC_ABSORB_L = prove
   MESON_TAC[SAT_GC]);;
 
 let st2heap_SPLIT = prove
- (`SPLIT (st2heap ffi (state_refs_fupd (K (APPEND (state_refs s) junk)) (s:(FFI)state)))
+ (`SPLIT (st2heap ffi (state_refs_fupd (combin_K (APPEND (state_refs s) junk)) (s:(FFI)state)))
          (st2heap ffi s, store2heap_aux (LENGTH (state_refs s)) junk)`,
   GEN_REWRITE_TAC (RAND_CONV o LAND_CONV o RAND_CONV) [GSYM with_same_refs] THEN
   MATCH_ACCEPT_TAC STATE_SPLIT_REFS);;
@@ -517,7 +517,7 @@ let MON1AUX_STAR_I = prove
   REWRITE_TAC[STAR_def] THEN MESON_TAC[]);;
 
 let REFS_PRED_FRAME_remove_junk = prove
- (`REFS_PRED_FRAME ro H (n_st,state_refs_fupd (K (APPEND (state_refs s1) junk)) s1)
+ (`REFS_PRED_FRAME ro H (n_st,state_refs_fupd (combin_K (APPEND (state_refs s1) junk)) s1)
      (st2,s2) ==>
    REFS_PRED_FRAME ro H ((n_st:A),(s1:(FFI)state)) (st2,s2)`,
   QCASES_ON "H" THEN REWRITE_TAC[REFS_PRED_FRAME_def] THEN SIMP[] THEN
@@ -530,4 +530,3 @@ let REFS_PRED_FRAME_remove_junk = prove
       `store2heap_aux (LENGTH (state_refs (s1:(FFI)state))) junk`] THEN
     ASM_REWRITE_TAC[st2heap_SPLIT];
     MATCH_ACCEPT_TAC ml_monad_translatorBase_GC_ABSORB_L]);;
-

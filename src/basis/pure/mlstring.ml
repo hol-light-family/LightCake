@@ -1513,13 +1513,13 @@ let make_app_list_ann_def = cake_def
          (let n = sum_sizes ls 0 in
           if n < 2048 then (Small input, n) else (BigList ls, n))`;;
 
-let shrink_def = cake_def
-  `(shrink (Small t) = misc_List [mlstring_concat (append t)]) /\
-   (shrink (BigList ls) = misc_List ls) /\
-   (shrink (BigAppend l1 l2) = misc_Append (shrink l1) (shrink l2))`;;
+let mlstring_shrink_def = cake_def
+  `(mlstring_shrink (Small t) = misc_List [mlstring_concat (append t)]) /\
+   (mlstring_shrink (BigList ls) = misc_List ls) /\
+   (mlstring_shrink (BigAppend l1 l2) = misc_Append (mlstring_shrink l1) (mlstring_shrink l2))`;;
 
 let str_app_list_opt_def = cake_def
-  `str_app_list_opt l = match make_app_list_ann l with (t,n) -> shrink t`;;
+  `str_app_list_opt l = match make_app_list_ann l with (t,n) -> mlstring_shrink t`;;
 
 let str_app_list_opt_test = prove
  (`str_app_list_opt (misc_Append (misc_List [implode "Hello"; implode " there"])
@@ -1533,13 +1533,13 @@ let str_app_list_opt_test = prove
               LET_DEF; LET_END_DEF] THEN
   CONV_TAC NUM_REDUCE_CONV THEN REWRITE_TAC[pair_CASE] THEN
   CONV_TAC NUM_REDUCE_CONV THEN
-  REWRITE_TAC[pair_CASE; shrink_def; append_thm; concat_thm; MAP; FLAT;
+  REWRITE_TAC[pair_CASE; mlstring_shrink_def; append_thm; concat_thm; MAP; FLAT;
               explode_thm; APPEND; injectivity "app_list"; CONS_11;
               injectivity "mlstring"]);;
 
 let str_app_list_opt_thm = prove
  (`mlstring_concat (append (str_app_list_opt l)) = mlstring_concat (append l)`,
-  SUBGOAL_THEN `str_app_list_opt l = shrink (FST (make_app_list_ann l))`
+  SUBGOAL_THEN `str_app_list_opt l = mlstring_shrink (FST (make_app_list_ann l))`
     SUBST1_TAC THENL
    [REWRITE_TAC[str_app_list_opt_def] THEN
     MP_TAC(ISPEC `make_app_list_ann l` PAIR_SURJECTIVE) THEN
@@ -1550,16 +1550,16 @@ let str_app_list_opt_thm = prove
   ONCE_REWRITE_TAC[make_app_list_ann_def] THEN
   REWRITE_TAC[case_def "app_list"; LET_DEF; LET_END_DEF] THENL
    [COND_CASES_TAC THEN
-    REWRITE_TAC[FST; shrink_def; append_thm; concat_cons; concat_nil; strcat_nil];
+    REWRITE_TAC[FST; mlstring_shrink_def; append_thm; concat_cons; concat_nil; strcat_nil];
     MP_TAC(ISPEC `make_app_list_ann a0` PAIR_SURJECTIVE) THEN
     MP_TAC(ISPEC `make_app_list_ann a1` PAIR_SURJECTIVE) THEN
     REPEAT STRIP_TAC THEN
     REPEAT(FIRST_X_ASSUM(SUBST_ALL_TAC o check (is_pair o rand o concl))) THEN
     RULE_ASSUM_TAC(REWRITE_RULE[FST]) THEN REWRITE_TAC[pair_CASE] THEN
     COND_CASES_TAC THEN
-    ASM_REWRITE_TAC[FST; shrink_def; append_thm; concat_cons; concat_nil;
+    ASM_REWRITE_TAC[FST; mlstring_shrink_def; append_thm; concat_cons; concat_nil;
                     strcat_nil; concat_append];
-    REWRITE_TAC[FST; shrink_def; append_thm; concat_cons; concat_nil;
+    REWRITE_TAC[FST; mlstring_shrink_def; append_thm; concat_cons; concat_nil;
                 strcat_nil]]);;
 
 let concat_sing = prove

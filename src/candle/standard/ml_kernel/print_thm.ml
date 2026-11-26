@@ -168,7 +168,7 @@ let thm_to_v_thm = prove
  (`!th. v_to_thm (thm_to_v th) = th`,
   GEN_TAC THEN STRUCT_CASES_TAC(SPEC `th:thm` (cases "thm")) THEN
   REWRITE_TAC[thm_to_v_def; v_to_thm_def] THEN PRTHMAUX_LIT_TAC THEN
-  CASE_REWRITE_TAC[MAP_MAP_o; o_DEF; term_to_v_thm; MAP_ID]);;
+  CAKE_REWRITE_TAC[MAP_MAP_o; o_DEF; term_to_v_thm; MAP_ID]);;
 let _ = cake_add_simps [thm_to_v_thm];;
 
 let update_to_v_update = prove
@@ -177,9 +177,9 @@ let update_to_v_update = prove
   REWRITE_TAC[update_to_v_def] THEN ONCE_REWRITE_TAC[v_to_update_def] THEN
   PRTHMAUX_LIT_TAC THEN
   REWRITE_TAC[term_to_v_thm; ty_to_v_thm; fromNatString_toString; THE_DEF] THEN
-  CASE_REWRITE_TAC[injectivity "update"; MAP_MAP_o; o_DEF] THEN
+  CAKE_REWRITE_TAC[injectivity "update"; MAP_MAP_o; o_DEF] THEN
   REWRITE_TAC[MAP_EQ_ID; FORALL_PAIR_THM] THEN REPEAT STRIP_TAC THEN
-  CASE_REWRITE_TAC[] THEN PRTHMAUX_LIT_TAC THEN REWRITE_TAC[term_to_v_thm]);;
+  CAKE_REWRITE_TAC[] THEN PRTHMAUX_LIT_TAC THEN REWRITE_TAC[term_to_v_thm]);;
 let _ = cake_add_simps [update_to_v_update];;
 
 (* ------------------------------------------------------------------------- *)
@@ -218,7 +218,7 @@ let string_to_thm_def = cake_def
 (* HOL4: [local] *)
 let to_explode = prove
  (CASE_TERM `!s. (match s with implode t -> t) = explode s`,
-  GEN_TAC THEN QCASES_ON "s" THEN CASE_REWRITE_TAC[explode_thm]);;
+  GEN_TAC THEN QCASES_ON "s" THEN CAKE_REWRITE_TAC[explode_thm]);;
 
 (* the newline character literal (HOL4 #"\n") and parse_space for it *)
 let PRTHMAUX_CHR10 = (REWR_CONV CHR_DEF THENC NUM_REDUCE_CONV) `CHR 10`;;
@@ -228,7 +228,7 @@ let PRTHMAUX_parse_space = REWRITE_RULE[PRTHMAUX_CHR10] parse_space;;
 let PRTHMAUX_parse_nil = prove
  (`?msg. mlsexp_parse [] = INL (msg,[])`,
   REWRITE_TAC[mlsexp_parse_def; mlsexp_lex_def; mlsexp_lex_aux_def] THEN
-  CASE_REWRITE_TAC[parse_aux_def] THEN MESON_TAC[]);;
+  CAKE_REWRITE_TAC[parse_aux_def] THEN MESON_TAC[]);;
 
 (* the definitions printed after the theorem are read back *)
 let PRTHMAUX_char_list_to_defs = prove
@@ -241,9 +241,9 @@ let PRTHMAUX_char_list_to_defs = prove
   ONCE_REWRITE_TAC[char_list_to_defs_def] THEN
   REWRITE_TAC[MAP; FLAT; MAP_APPEND; FLAT_APPEND; APPEND; APPEND_NIL; explode_thm;
               PRTHMAUX_parse_space] THENL
-   [X_CHOOSE_THEN `msg:mlstring` SUBST1_TAC PRTHMAUX_parse_nil THEN CASE_REWRITE_TAC[];
+   [X_CHOOSE_THEN `msg:mlstring` SUBST1_TAC PRTHMAUX_parse_nil THEN CAKE_REWRITE_TAC[];
     REWRITE_TAC[parse_sexp_to_pretty_string] THEN
-    CASE_REWRITE_TAC[APPEND; update_to_v_update] THEN ASM_REWRITE_TAC[]]);;
+    CAKE_REWRITE_TAC[APPEND; update_to_v_update] THEN ASM_REWRITE_TAC[]]);;
 
 let string_to_thm_thm_to_string = prove
  (`!ctxt th. string_to_thm (thm_to_string ctxt th) = (ctxt,th)`,
@@ -254,7 +254,7 @@ let string_to_thm_thm_to_string = prove
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   REWRITE_TAC[APPEND; dropWhile_def; PRTHMAUX_CHR10; injectivity "char"] THEN
   REWRITE_TAC[PRTHMAUX_parse_space; parse_sexp_to_pretty_string; OUTR] THEN
-  CASE_REWRITE_TAC[APPEND; TL] THEN
+  CAKE_REWRITE_TAC[APPEND; TL] THEN
   REWRITE_TAC[dropWhile_def; injectivity "char"] THEN
   REWRITE_TAC[thm_to_v_thm; PAIR_EQ] THEN
   REWRITE_TAC[REWRITE_RULE[PRTHMAUX_CHR10] PRTHMAUX_char_list_to_defs]);;

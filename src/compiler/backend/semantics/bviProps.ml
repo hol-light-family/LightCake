@@ -41,9 +41,9 @@ let _ = cake_add_simps [bvi_initial_state_simp];;
 (* HOL4 [simp] *)
 let bvi_initial_state_with_simp = prove
  (`!(f:(FFI)ffi_state) c (co:num -> C # (num # num # bvi_exp) list) cc k k1 c1.
-     bvi_state_clock_fupd (K k1) (bvi_initial_state f c co cc k) =
+     bvi_state_clock_fupd (combin_K k1) (bvi_initial_state f c co cc k) =
      bvi_initial_state f c co cc k1 /\
-     bvi_state_code_fupd (K c1) (bvi_initial_state f c co cc k) =
+     bvi_state_code_fupd (combin_K c1) (bvi_initial_state f c co cc k) =
      bvi_initial_state f c1 co cc k`,
   REWRITE_TAC[bvi_initial_state_def; bvi_state_INFO.ri_fupds; K_THM]);;
 let _ = cake_add_simps [bvi_initial_state_with_simp];;
@@ -54,20 +54,20 @@ let bvl_to_bvi_id = prove
 
 let bvl_to_bvi_with_refs = prove
  (`!(x:(C,FFI)bvl_state) y (z:(C,FFI)bvi_state).
-     bvl_to_bvi (bvl_state_refs_fupd (K y) x) z =
-     bvi_state_refs_fupd (K y) (bvl_to_bvi x z)`,
+     bvl_to_bvi (bvl_state_refs_fupd (combin_K y) x) z =
+     bvi_state_refs_fupd (combin_K y) (bvl_to_bvi x z)`,
   SIMP[bvl_to_bvi_def]);;
 
 let bvl_to_bvi_with_clock = prove
  (`!(x:(C,FFI)bvl_state) y (z:(C,FFI)bvi_state).
-     bvl_to_bvi (bvl_state_clock_fupd (K y) x) z =
-     bvi_state_clock_fupd (K y) (bvl_to_bvi x z)`,
+     bvl_to_bvi (bvl_state_clock_fupd (combin_K y) x) z =
+     bvi_state_clock_fupd (combin_K y) (bvl_to_bvi x z)`,
   SIMP[bvl_to_bvi_def]);;
 
 let bvl_to_bvi_with_ffi = prove
  (`!(x:(C,FFI)bvl_state) y (z:(C,FFI)bvi_state).
-     bvl_to_bvi (bvl_state_ffi_fupd (K y) x) z =
-     bvi_state_ffi_fupd (K y) (bvl_to_bvi x z)`,
+     bvl_to_bvi (bvl_state_ffi_fupd (combin_K y) x) z =
+     bvi_state_ffi_fupd (combin_K y) (bvl_to_bvi x z)`,
   SIMP[bvl_to_bvi_def]);;
 
 (* HOL4 [simp] *)
@@ -90,7 +90,7 @@ let bvi_bvi_to_bvl_refs = prove
 (* HOL4 [simp] *)
 let bvi_to_bvl_code = prove
  (`!x:(C,FFI)bvi_state.
-     bvl_state_code (bvi_to_bvl x) = sptree_map (K (ARB:num # bvl_exp)) (bvi_state_code x)`,
+     bvl_state_code (bvi_to_bvl x) = sptree_map (combin_K (ARB:num # bvl_exp)) (bvi_state_code x)`,
   REWRITE_TAC[bvi_to_bvl_def; bvl_state_INFO.ri_accfupds; K_THM]);;
 
 (* HOL4 [simp] *)
@@ -107,7 +107,7 @@ let _ = cake_add_simps [bvl_to_bvi_code; bvl_to_bvi_clock; bvi_bvi_to_bvl_refs;
 
 let bvi_to_bvl_to_bvi_with_ffi = prove
  (`!(x:(C,FFI)bvi_state) f.
-     bvl_to_bvi (bvl_state_ffi_fupd (K f) (bvi_to_bvl x)) x = bvi_state_ffi_fupd (K f) x`,
+     bvl_to_bvi (bvl_state_ffi_fupd (combin_K f) (bvi_to_bvl x)) x = bvi_state_ffi_fupd (combin_K f) x`,
   SIMP[bvl_to_bvi_def; bvi_to_bvl_def; bvi_state_component_equality]);;
 
 (* HOL4 [simp] *)
@@ -276,7 +276,7 @@ let bvi_evaluate_SNOC = prove
 
 let bvi_inc_clock_def = cake_def
   `bvi_inc_clock n (s:(C,FFI)bvi_state) =
-     bvi_state_clock_fupd (K (bvi_state_clock s + n)) s`;;
+     bvi_state_clock_fupd (combin_K (bvi_state_clock s + n)) s`;;
 
 let inc_clock_ZERO = prove
  (`!s:(C,FFI)bvi_state. bvi_inc_clock 0 s = s`,
@@ -333,8 +333,8 @@ let bvi_dec_clock_refs = prove
 (* HOL4 [simp] *)
 let bvi_dec_clock_with_code = prove
  (`!n c (s:(C,FFI)bvi_state).
-     bvi_dec_clock n (bvi_state_code_fupd (K c) s) =
-     bvi_state_code_fupd (K c) (bvi_dec_clock n s)`,
+     bvi_dec_clock n (bvi_state_code_fupd (combin_K c) s) =
+     bvi_state_code_fupd (combin_K c) (bvi_dec_clock n s)`,
   SIMP[bvi_dec_clock_def; bvi_state_component_equality]);;
 
 (* HOL4 [simp] *)
@@ -667,10 +667,10 @@ let bvi_do_app_aux_const = prove
 (* refs, clock, global and ffi of s; do_app_aux on it                        *)
 let BVLPROPSAUX_swap_def = new_definition
  `BVLPROPSAUX_swap (s:(A,FFI)bvi_state) (t:(B,FFI)bvi_state) =
-    bvi_state_refs_fupd (K (bvi_state_refs s))
-      (bvi_state_clock_fupd (K (bvi_state_clock s))
-        (bvi_state_global_fupd (K (bvi_state_global s))
-          (bvi_state_ffi_fupd (K (bvi_state_ffi s)) t)))`;;
+    bvi_state_refs_fupd (combin_K (bvi_state_refs s))
+      (bvi_state_clock_fupd (combin_K (bvi_state_clock s))
+        (bvi_state_global_fupd (combin_K (bvi_state_global s))
+          (bvi_state_ffi_fupd (combin_K (bvi_state_ffi s)) t)))`;;
 
 let BVLPROPSAUX_swap_acc = prove
  (`!(s:(A,FFI)bvi_state) (t:(B,FFI)bvi_state).
@@ -685,10 +685,10 @@ let BVLPROPSAUX_swap_acc = prove
 
 let BVLPROPSAUX_swap_fupd = prove
  (`!(s:(A,FFI)bvi_state) (t:(B,FFI)bvi_state) r g.
-     bvi_state_refs_fupd (K r) (BVLPROPSAUX_swap s t) =
-     BVLPROPSAUX_swap (bvi_state_refs_fupd (K r) s) t /\
-     bvi_state_global_fupd (K g) (BVLPROPSAUX_swap s t) =
-     BVLPROPSAUX_swap (bvi_state_global_fupd (K g) s) t`,
+     bvi_state_refs_fupd (combin_K r) (BVLPROPSAUX_swap s t) =
+     BVLPROPSAUX_swap (bvi_state_refs_fupd (combin_K r) s) t /\
+     bvi_state_global_fupd (combin_K g) (BVLPROPSAUX_swap s t) =
+     BVLPROPSAUX_swap (bvi_state_global_fupd (combin_K g) s) t`,
   REWRITE_TAC[BVLPROPSAUX_swap_def; bvi_state_INFO.ri_accfupds; K_THM] THEN
   SIMP[bvi_state_component_equality]);;
 
@@ -697,7 +697,7 @@ let BVLPROPSAUX_swap_code = prove
  (`!(s1:(A,FFI)bvi_state) (s:(A,FFI)bvi_state) c.
      bvi_state_compile s1 = bvi_state_compile s /\
      bvi_state_compile_oracle s1 = bvi_state_compile_oracle s ==>
-     BVLPROPSAUX_swap s1 (bvi_state_code_fupd (K c) s) = bvi_state_code_fupd (K c) s1`,
+     BVLPROPSAUX_swap s1 (bvi_state_code_fupd (combin_K c) s) = bvi_state_code_fupd (combin_K c) s1`,
   SIMP[BVLPROPSAUX_swap_def; bvi_state_component_equality]);;
 
 let BVLPROPSAUX_do_app_aux_swap = prove
@@ -773,7 +773,7 @@ let BVLPROPSAUX_bvi_to_bvl_swap = prove
        (bvl_state_refs (bvi_to_bvl s)) (bvi_state_clock s)
        (bvl_state_compile (ARB:(B,FFI)bvl_state))
        (bvl_state_compile_oracle (ARB:(B,FFI)bvl_state))
-       (sptree_map (K (ARB:num # bvl_exp)) (bvi_state_code t)) (bvl_state_ffi (bvi_to_bvl s))`,
+       (sptree_map (combin_K (ARB:num # bvl_exp)) (bvi_state_code t)) (bvl_state_ffi (bvi_to_bvl s))`,
   REWRITE_TAC[bvi_to_bvl_def; BVLPROPSAUX_swap_acc; bvl_state_INFO.ri_accfupds; K_THM] THEN
   REWRITE_TAC[bvl_state_component_equality; bvl_state_INFO.ri_accessors;
               bvl_state_INFO.ri_accfupds; K_THM]);;
@@ -853,7 +853,7 @@ let BVLPROPSAUX_bvi_do_app_swap = prove
      `bvl_state_globals (ARB:(B,FFI)bvl_state)`; `bvi_state_clock (s:(A,FFI)bvi_state)`;
      `bvl_state_compile (ARB:(B,FFI)bvl_state)`;
      `bvl_state_compile_oracle (ARB:(B,FFI)bvl_state)`;
-     `sptree_map (K (ARB:num # bvl_exp)) (bvi_state_code (t:(B,FFI)bvi_state))`]
+     `sptree_map (combin_K (ARB:num # bvl_exp)) (bvi_state_code (t:(B,FFI)bvi_state))`]
      BVLPROPSAUX_bvl_do_app_frame) THEN
   ASM_REWRITE_TAC[bvi_to_bvl_code; domain_map] THEN
   DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC ASSUME_TAC) THEN
@@ -896,23 +896,23 @@ let do_app_cfg_swap = prove
      ((bvi_do_app op args s = Rval (value,s1) /\
        domain (bvi_state_code s) SUBSET domain (bvi_state_code t) ==>
        bvi_do_app op args
-         (bvi_state_refs_fupd (K (bvi_state_refs s))
-           (bvi_state_clock_fupd (K (bvi_state_clock s))
-             (bvi_state_global_fupd (K (bvi_state_global s))
-               (bvi_state_ffi_fupd (K (bvi_state_ffi s)) t)))) =
+         (bvi_state_refs_fupd (combin_K (bvi_state_refs s))
+           (bvi_state_clock_fupd (combin_K (bvi_state_clock s))
+             (bvi_state_global_fupd (combin_K (bvi_state_global s))
+               (bvi_state_ffi_fupd (combin_K (bvi_state_ffi s)) t)))) =
        Rval (value,
-             bvi_state_refs_fupd (K (bvi_state_refs s1))
-               (bvi_state_clock_fupd (K (bvi_state_clock s1))
-                 (bvi_state_global_fupd (K (bvi_state_global s1))
-                   (bvi_state_ffi_fupd (K (bvi_state_ffi s1)) t))))) /\
+             bvi_state_refs_fupd (combin_K (bvi_state_refs s1))
+               (bvi_state_clock_fupd (combin_K (bvi_state_clock s1))
+                 (bvi_state_global_fupd (combin_K (bvi_state_global s1))
+                   (bvi_state_ffi_fupd (combin_K (bvi_state_ffi s1)) t))))) /\
       (bvi_do_app op args s = Rerr error /\
        (domain (bvi_state_code t) SUBSET domain (bvi_state_code s) \/
         ~(error = Rabort Rtype_error)) ==>
        bvi_do_app op args
-         (bvi_state_refs_fupd (K (bvi_state_refs s))
-           (bvi_state_clock_fupd (K (bvi_state_clock s))
-             (bvi_state_global_fupd (K (bvi_state_global s))
-               (bvi_state_ffi_fupd (K (bvi_state_ffi s)) t)))) =
+         (bvi_state_refs_fupd (combin_K (bvi_state_refs s))
+           (bvi_state_clock_fupd (combin_K (bvi_state_clock s))
+             (bvi_state_global_fupd (combin_K (bvi_state_global s))
+               (bvi_state_ffi_fupd (combin_K (bvi_state_ffi s)) t)))) =
        Rerr error))`,
   REWRITE_TAC[GSYM BVLPROPSAUX_swap_def] THEN MESON_TAC[BVLPROPSAUX_bvi_do_app_swap]);;
 
@@ -920,10 +920,10 @@ let bvi_do_app_with_code = prove
  (`!op vs (s:(C,FFI)bvi_state) r s' c.
      bvi_do_app op vs s = Rval (r,s') ==>
      domain (bvi_state_code s) SUBSET domain c /\ ~(op = clos_Install) ==>
-     bvi_do_app op vs (bvi_state_code_fupd (K c) s) =
-     Rval (r,bvi_state_code_fupd (K c) s')`,
+     bvi_do_app op vs (bvi_state_code_fupd (combin_K c) s) =
+     Rval (r,bvi_state_code_fupd (combin_K c) s')`,
   REPEAT STRIP_TAC THEN
-  QSPECL_THEN ["op"; "vs"; "s"; "r"; "s'"; "bvi_state_code_fupd (K c) s"; "ARB"] MP_TAC
+  QSPECL_THEN ["op"; "vs"; "s"; "r"; "s'"; "bvi_state_code_fupd (combin_K c) s"; "ARB"] MP_TAC
     do_app_cfg_swap THEN
   REWRITE_TAC[GSYM BVLPROPSAUX_swap_def] THEN IMP_RES_TAC do_app_oracle THEN
   SIMP[BVLPROPSAUX_swap_code]);;
@@ -933,30 +933,30 @@ let bvi_do_app_with_code_err = prove
      bvi_do_app op vs s = Rerr e ==>
      (domain c SUBSET domain (bvi_state_code s) \/ ~(e = Rabort Rtype_error)) /\
      ~(op = clos_Install) ==>
-     bvi_do_app op vs (bvi_state_code_fupd (K c) s) = Rerr e`,
+     bvi_do_app op vs (bvi_state_code_fupd (combin_K c) s) = Rerr e`,
   REPEAT STRIP_TAC THEN
-  QSPECL_THEN ["op"; "vs"; "s"; "ARB"; "s"; "bvi_state_code_fupd (K c) s"; "e"] MP_TAC
+  QSPECL_THEN ["op"; "vs"; "s"; "ARB"; "s"; "bvi_state_code_fupd (combin_K c) s"; "e"] MP_TAC
     do_app_cfg_swap THEN
   REWRITE_TAC[GSYM BVLPROPSAUX_swap_def] THEN SIMP[BVLPROPSAUX_swap_code]);;
 
 let do_app_aux_with_clock = prove
  (CASE_TERM `!op vs (s:(C,FFI)bvi_state) c.
-     bvi_do_app_aux op vs (bvi_state_clock_fupd (K c) s) =
-     OPTION_MAP (OPTION_MAP (\p. match p with (x,y) -> (x,bvi_state_clock_fupd (K c) y)))
+     bvi_do_app_aux op vs (bvi_state_clock_fupd (combin_K c) s) =
+     OPTION_MAP (OPTION_MAP (\p. match p with (x,y) -> (x,bvi_state_clock_fupd (combin_K c) y)))
                 (bvi_do_app_aux op vs s)`,
   REWRITE_TAC[BVLPROPSAUX_do_app_aux_clock]);;
 
 let bvi_do_app_change_clock = prove
  (`!op args (s1:(C,FFI)bvi_state) res s2 ck.
      bvi_do_app op args s1 = Rval (res,s2) ==>
-     bvi_do_app op args (bvi_state_clock_fupd (K ck) s1) =
-     Rval (res,bvi_state_clock_fupd (K ck) s2)`,
+     bvi_do_app op args (bvi_state_clock_fupd (combin_K ck) s1) =
+     Rval (res,bvi_state_clock_fupd (combin_K ck) s2)`,
   SIMP_TAC[BVLPROPSAUX_bvi_do_app_clock; map_result_def; pair_CASE]);;
 
 let bvi_do_app_change_clock_err = prove
  (`!op vs (s:(C,FFI)bvi_state) e c.
      bvi_do_app op vs s = Rerr e ==>
-     bvi_do_app op vs (bvi_state_clock_fupd (K c) s) = Rerr e`,
+     bvi_do_app op vs (bvi_state_clock_fupd (combin_K c) s) = Rerr e`,
   SIMP_TAC[BVLPROPSAUX_bvi_do_app_clock; map_result_def; map_error_result_I; I_THM]);;
 
 let bvi_evaluate_add_clock = prove
@@ -996,7 +996,7 @@ let bvi_do_app_inc_clock = prove
  (CASE_TERM `!op vs x (y:(C,FFI)bvi_state).
      bvi_do_app op vs (bvi_inc_clock x y) =
      map_result (\p. match p with
-                       (v,s) -> (v,bvi_state_clock_fupd (K (x + bvi_state_clock y)) s))
+                       (v,s) -> (v,bvi_state_clock_fupd (combin_K (x + bvi_state_clock y)) s))
                 I (bvi_do_app op vs y)`,
   REWRITE_TAC[bvi_inc_clock_def; BVLPROPSAUX_bvi_do_app_clock] THEN
   REWRITE_TAC[ADD_AC]);;
@@ -1175,10 +1175,10 @@ let adj_orac_simps = prove
      bvi_state_global (adj_orac cc f s) = bvi_state_global s /\
      bvi_state_ffi (adj_orac cc f s) = bvi_state_ffi s /\
      bvi_dec_clock n (adj_orac cc f s) = adj_orac cc f (bvi_dec_clock n s) /\
-     bvi_state_clock_fupd (K k) (adj_orac cc f s) =
-     adj_orac cc f (bvi_state_clock_fupd (K k) s) /\
+     bvi_state_clock_fupd (combin_K k) (adj_orac cc f s) =
+     adj_orac cc f (bvi_state_clock_fupd (combin_K k) s) /\
      (adj_orac_ok cc f (bvi_dec_clock n s) <=> adj_orac_ok cc f s) /\
-     (adj_orac_ok cc f (bvi_state_clock_fupd (K k) s) <=> adj_orac_ok cc f s)`,
+     (adj_orac_ok cc f (bvi_state_clock_fupd (combin_K k) s) <=> adj_orac_ok cc f s)`,
   REWRITE_TAC[adj_orac_def; adj_orac_ok_def; bvi_dec_clock_def;
               bvi_state_INFO.ri_accessors; bvi_state_INFO.ri_accfupds;
               bvi_state_INFO.ri_fupds; K_THM]);;
@@ -1195,15 +1195,15 @@ let do_app_cfg_swap_Rval = prove
      ~(op = clos_Install) /\ domain (bvi_state_code s) = domain (bvi_state_code t) /\
      bvi_do_app op args s = Rval (value,s1) ==>
      bvi_do_app op args
-       (bvi_state_refs_fupd (K (bvi_state_refs s))
-         (bvi_state_clock_fupd (K (bvi_state_clock s))
-           (bvi_state_global_fupd (K (bvi_state_global s))
-             (bvi_state_ffi_fupd (K (bvi_state_ffi s)) t)))) =
+       (bvi_state_refs_fupd (combin_K (bvi_state_refs s))
+         (bvi_state_clock_fupd (combin_K (bvi_state_clock s))
+           (bvi_state_global_fupd (combin_K (bvi_state_global s))
+             (bvi_state_ffi_fupd (combin_K (bvi_state_ffi s)) t)))) =
      Rval (value,
-           bvi_state_refs_fupd (K (bvi_state_refs s1))
-             (bvi_state_clock_fupd (K (bvi_state_clock s1))
-               (bvi_state_global_fupd (K (bvi_state_global s1))
-                 (bvi_state_ffi_fupd (K (bvi_state_ffi s1)) t))))`,
+           bvi_state_refs_fupd (combin_K (bvi_state_refs s1))
+             (bvi_state_clock_fupd (combin_K (bvi_state_clock s1))
+               (bvi_state_global_fupd (combin_K (bvi_state_global s1))
+                 (bvi_state_ffi_fupd (combin_K (bvi_state_ffi s1)) t))))`,
   MESON_TAC[do_app_cfg_swap; SUBSET_REFL]);;
 
 (* HOL4 [local] *)
@@ -1212,10 +1212,10 @@ let do_app_cfg_swap_Rerr = prove
      ~(op = clos_Install) /\ domain (bvi_state_code s) = domain (bvi_state_code t) /\
      bvi_do_app op args s = Rerr error ==>
      bvi_do_app op args
-       (bvi_state_refs_fupd (K (bvi_state_refs s))
-         (bvi_state_clock_fupd (K (bvi_state_clock s))
-           (bvi_state_global_fupd (K (bvi_state_global s))
-             (bvi_state_ffi_fupd (K (bvi_state_ffi s)) t)))) = Rerr error`,
+       (bvi_state_refs_fupd (combin_K (bvi_state_refs s))
+         (bvi_state_clock_fupd (combin_K (bvi_state_clock s))
+           (bvi_state_global_fupd (combin_K (bvi_state_global s))
+             (bvi_state_ffi_fupd (combin_K (bvi_state_ffi s)) t)))) = Rerr error`,
   MESON_TAC[do_app_cfg_swap; SUBSET_REFL]);;
 
 (* HOL4 [local] *)

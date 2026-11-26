@@ -106,7 +106,7 @@ let STALLOCAUX_word_gc_fun_thm_gen = prove
          then SOME (ws2,m3,s1)
          else NONE)`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN REWRITE_TAC[word_gc_fun_def] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
   ASM_CASES_TAC `word_gc_fun_assum conf (s:(store_name,(A)word_loc)fmap)` THEN
   ASM_REWRITE_TAC[] THEN
   COND_CASES_TAC THEN ASM_REWRITE_TAC[] THENL
@@ -118,7 +118,7 @@ let STALLOCAUX_word_gc_fun_thm_gen = prove
     STALLOCAUX_SPLIT_FN_TAC "memcpy" ["b1";"m4";"c4"] THEN
     REWRITE_TAC[];
     REWRITE_TAC[word_gen_gc_def; LET_DEF; LET_END_DEF; word_gen_gc_move_roots_def] THEN
-    CASE_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN
     STALLOCAUX_SPLIT_FN_TAC "word_gen_gc_move" ["w1";"i1";"pa1";"ib1";"pb1";"m1";"c1"] THEN
     STALLOCAUX_SPLIT_FN_TAC "word_gen_gc_move_roots" ["ws2";"i2";"pa2";"ib2";"pb2";"m2";"c2"] THEN
     STALLOCAUX_SPLIT_FN_TAC "word_gen_gc_move_loop" ["i3";"pa3";"ib3";"pb3";"m3";"c3"] THEN
@@ -227,10 +227,10 @@ let STALLOCAUX_gc_thm_gen = prove
                   (new_trig (word_sub (theWord (FAPPLY (stack_state_store s) EndOfHeap)) b1)
                      (theWord (FAPPLY (stack_state_store s) AllocSize)) gen_sizes)) in
         if word_gc_fun_assum conf (stack_state_store s) /\ c3 /\ c4 /\ c5 /\ c6
-        then SOME (stack_state_stack_fupd (K (APPEND unused ws2))
-                    (stack_state_store_fupd (K s1)
-                     (stack_state_regs_fupd (K FEMPTY)
-                      (stack_state_memory_fupd (K m5) s))))
+        then SOME (stack_state_stack_fupd (combin_K (APPEND unused ws2))
+                    (stack_state_store_fupd (combin_K s1)
+                     (stack_state_regs_fupd (combin_K FEMPTY)
+                      (stack_state_memory_fupd (combin_K m5) s))))
         else NONE)
    else
      (let unused = TAKE (stack_state_stack_space s) (stack_state_stack s) in
@@ -275,10 +275,10 @@ let STALLOCAUX_gc_thm_gen = prove
                (Temp (word 6),wl_Word (word 0))]
       in
         if word_gc_fun_assum conf (stack_state_store s) /\ c1 /\ c2 /\ c3
-        then SOME (stack_state_stack_fupd (K (APPEND unused ws2))
-                    (stack_state_store_fupd (K s1)
-                     (stack_state_regs_fupd (K FEMPTY)
-                      (stack_state_memory_fupd (K m3) s))))
+        then SOME (stack_state_stack_fupd (combin_K (APPEND unused ws2))
+                    (stack_state_store_fupd (combin_K s1)
+                     (stack_state_regs_fupd (combin_K FEMPTY)
+                      (stack_state_memory_fupd (combin_K m3) s))))
         else NONE)`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN REWRITE_TAC[stack_gc_def] THEN
   COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
@@ -286,15 +286,15 @@ let STALLOCAUX_gc_thm_gen = prove
   ASM_CASES_TAC `word_gc_fun_assum conf (stack_state_store (s:(A,C,FFI)stack_state))` THEN
   ASM_REWRITE_TAC[] THENL
    [ALL_TAC;
-    REWRITE_TAC[LET_DEF; LET_END_DEF] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[LET_DEF; LET_END_DEF] THEN CAKE_REWRITE_TAC[] THEN
     STALLOCAUX_OPT_CASES_TAC `stack_enc_stack (stack_state_bitmaps (s:(A,C,FFI)stack_state))
               (DROP (stack_state_stack_space s) (stack_state_stack s))` ["wl"] THEN
-    CASE_REWRITE_TAC[]] THEN
-  REWRITE_TAC[LET_DEF; LET_END_DEF] THEN CASE_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[]] THEN
+  REWRITE_TAC[LET_DEF; LET_END_DEF] THEN CAKE_REWRITE_TAC[] THEN
   STALLOCAUX_OPT_CASES_TAC `stack_enc_stack (stack_state_bitmaps (s:(A,C,FFI)stack_state))
               (DROP (stack_state_stack_space s) (stack_state_stack s))` ["wl"] THEN
   REWRITE_TAC[word_gen_gc_partial_move_roots_bitmaps_def; word_gen_gc_move_roots_bitmaps_def] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
   COND_CASES_TAC THEN REWRITE_TAC[] THENL
    [(STALLOCAUX_SPLIT_FN_TAC "word_gen_gc_partial_move" ["w1";"i1";"pa1";"m1";"c1"] THEN
      STALLOCAUX_SPLIT_FN_TAC "word_gen_gc_partial_move_ref_list" ["i3";"pa3";"m3";"c3"] THEN
@@ -304,7 +304,7 @@ let STALLOCAUX_gc_thm_gen = prove
     (STALLOCAUX_SPLIT_FN_TAC "word_gen_gc_move" ["w1";"i1";"pa1";"ib1";"pb1";"m1";"c1"] THEN
      STALLOCAUX_SPLIT_FN_TAC "word_gen_gc_move_loop" ["i3";"pa3";"ib3";"pb3";"m3";"c3"]);
     (REWRITE_TAC[word_gen_gc_partial_move_roots_def; LET_DEF; LET_END_DEF] THEN
-     CASE_REWRITE_TAC[] THEN
+     CAKE_REWRITE_TAC[] THEN
      STALLOCAUX_SPLIT_FN_TAC "word_gen_gc_partial_move" ["w1";"i1";"pa1";"m1";"c1"] THEN
      STALLOCAUX_SPLIT_FN_TAC "word_gen_gc_partial_move_roots" ["ws";"i2";"pa2";"m2";"c2"] THEN
      STALLOCAUX_SPLIT_FN_TAC "word_gen_gc_partial_move_ref_list" ["i3";"pa3";"m3";"c3"] THEN
@@ -313,25 +313,25 @@ let STALLOCAUX_gc_thm_gen = prove
      REWRITE_TAC[HD; TL] THEN
      STALLOCAUX_OPT_CASES_TAC `stack_dec_stack (stack_state_bitmaps (s:(A,C,FFI)stack_state)) ws
                  (DROP (stack_state_stack_space s) (stack_state_stack s))` ["stk"] THEN
-     CASE_REWRITE_TAC[] THENL
-      [COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
-       CASE_REWRITE_TAC[] THEN
+     CAKE_REWRITE_TAC[] THENL
+      [COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
+       CAKE_REWRITE_TAC[] THEN
        STALLOCAUX_SPLIT_FN_TAC "word_gen_gc_partial_move_ref_list" ["i6";"pa6";"m6";"c6"] THEN
        STALLOCAUX_SPLIT_FN_TAC "word_gen_gc_partial_move_data" ["i7";"pa7";"m7";"c7"] THEN
        STALLOCAUX_SPLIT_FN_TAC "memcpy" ["b2";"m8";"c8"] THEN
        STALLOCAUX_REF_LIST_OK_TAC;
-       ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[GSYM CONJ_ASSOC] THEN
-       COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
-       CASE_REWRITE_TAC[]]);
+       ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[GSYM CONJ_ASSOC] THEN
+       COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
+       CAKE_REWRITE_TAC[]]);
     (STALLOCAUX_SPLIT_FN_TAC "word_gen_gc_move" ["w1";"i1";"pa1";"ib1";"pb1";"m1";"c1"] THEN
      STALLOCAUX_SPLIT_FN_TAC "word_gen_gc_move_roots" ["ws";"i2";"pa2";"ib2";"pb2";"m2";"c2"] THEN
      STALLOCAUX_OPT_CASES_TAC `stack_dec_stack (stack_state_bitmaps (s:(A,C,FFI)stack_state)) ws
                  (DROP (stack_state_stack_space s) (stack_state_stack s))` ["stk"] THEN
-     CASE_REWRITE_TAC[] THEN
+     CAKE_REWRITE_TAC[] THEN
      STALLOCAUX_SPLIT_FN_TAC "word_gen_gc_move_loop" ["i3";"pa3";"ib3";"pb3";"m3";"c3"] THEN
      TRY (STALLOCAUX_SPLIT_FN_TAC "word_gen_gc_move_loop" ["i4";"pa4";"ib4";"pb4";"m4";"c4"]) THEN
-     COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
-     CASE_REWRITE_TAC[])]);;
+     COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
+     CAKE_REWRITE_TAC[])]);;
 
 (* HOL4 line 1999 *)
 let word_gen_gc_move_bitmaps_def = cake_def
@@ -379,14 +379,14 @@ let word_gen_gc_move_roots_APPEND = prove
           (APPEND ws1 ws2,i2,pa2,ib2,pb2,m2,(c1 /\ c2))`,
   GEN_TAC THEN LIST_INDUCT_TAC THEN
   REWRITE_TAC[APPEND; word_gen_gc_move_roots_def; LET_DEF; LET_END_DEF] THEN
-  CASE_REWRITE_TAC[] THENL
+  CAKE_REWRITE_TAC[] THENL
    [REPEAT GEN_TAC THEN
     STALLOCAUX_SPLIT_FN_TAC "word_gen_gc_move_roots" ["ws2";"i2";"pa2";"ib2";"pb2";"m2";"c2"] THEN
     REWRITE_TAC[APPEND];
     ALL_TAC] THEN
   REPEAT GEN_TAC THEN
   STALLOCAUX_SPLIT_FN_TAC "word_gen_gc_move" ["w1";"i3";"pa3";"ib3";"pb3";"m3";"c3"] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   STALLOCAUX_SPLIT_FN_TAC "word_gen_gc_move_roots" ["ws1";"i4";"pa4";"ib4";"pb4";"m4";"c4"] THEN
   STALLOCAUX_SPLIT_FN_TAC "word_gen_gc_move_roots" ["ws2";"i5";"pa5";"ib5";"pb5";"m5";"c5"] THEN
   REWRITE_TAC[APPEND; CONJ_ACI]);;
@@ -403,14 +403,14 @@ let word_gen_gc_partial_move_roots_APPEND = prove
           (APPEND ws1 ws2,i2,pa2,m2,(c1 /\ c2))`,
   GEN_TAC THEN LIST_INDUCT_TAC THEN
   REWRITE_TAC[APPEND; word_gen_gc_partial_move_roots_def; LET_DEF; LET_END_DEF] THEN
-  CASE_REWRITE_TAC[] THENL
+  CAKE_REWRITE_TAC[] THENL
    [REPEAT GEN_TAC THEN
     STALLOCAUX_SPLIT_FN_TAC "word_gen_gc_partial_move_roots" ["ws2";"i2";"pa2";"m2";"c2"] THEN
     REWRITE_TAC[APPEND];
     ALL_TAC] THEN
   REPEAT GEN_TAC THEN
   STALLOCAUX_SPLIT_FN_TAC "word_gen_gc_partial_move" ["w1";"i3";"pa3";"m3";"c3"] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   STALLOCAUX_SPLIT_FN_TAC "word_gen_gc_partial_move_roots" ["ws1";"i4";"pa4";"m4";"c4"] THEN
   STALLOCAUX_SPLIT_FN_TAC "word_gen_gc_partial_move_roots" ["ws2";"i5";"pa5";"m5";"c5"] THEN
   REWRITE_TAC[APPEND; CONJ_ACI]);;
@@ -465,22 +465,22 @@ let word_gen_gc_move_roots_bitmaps = prove
   REPEAT GEN_TAC THEN DISCH_THEN(fun th -> REWRITE_TAC[th] THEN MP_TAC th) THEN
   STRUCT_CASES_TAC(ISPEC `stack:((A)word_loc)list` list_CASES) THEN
   REWRITE_TAC[word_gen_gc_move_roots_bitmaps_def; stack_enc_stack_def] THEN
-  CASE_REWRITE_TAC[PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[PAIR_EQ] THEN
   COND_CASES_TAC THENL
-   [ASM_REWRITE_TAC[] THEN COND_CASES_TAC THEN CASE_REWRITE_TAC[PAIR_EQ] THEN
-    ASM_REWRITE_TAC[word_gen_gc_move_roots_def] THEN CASE_REWRITE_TAC[stack_dec_stack_def] THEN
+   [ASM_REWRITE_TAC[] THEN COND_CASES_TAC THEN CAKE_REWRITE_TAC[PAIR_EQ] THEN
+    ASM_REWRITE_TAC[word_gen_gc_move_roots_def] THEN CAKE_REWRITE_TAC[stack_dec_stack_def] THEN
     REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN RVEQ_TAC THEN REWRITE_TAC[];
     ALL_TAC] THEN
   REWRITE_TAC[word_gen_gc_move_bitmaps_def] THEN
   CASES_ON `full_read_bitmap (bitmaps:(A word)list) (h:(A)word_loc)` THEN
-  CASE_REWRITE_TAC[PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[PAIR_EQ] THEN
   CASES_ON `filter_bitmap a (t:((A)word_loc)list)` THEN
-  CASE_REWRITE_TAC[PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[PAIR_EQ] THEN
   STALLOCAUX_SPLIT_TAC `a':((A)word_loc)list#((A)word_loc)list`
     [`ts:((A)word_loc)list`; `ws':((A)word_loc)list`] THEN
   CASES_ON `stack_enc_stack (bitmaps:(A word)list) (ws':((A)word_loc)list)` THEN
-  CASE_REWRITE_TAC[PAIR_EQ] THEN
-  REWRITE_TAC[word_gen_gc_move_roots_APPEND; LET_DEF; LET_END_DEF] THEN CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[PAIR_EQ] THEN
+  REWRITE_TAC[word_gen_gc_move_roots_APPEND; LET_DEF; LET_END_DEF] THEN CAKE_REWRITE_TAC[] THEN
   STALLOCAUX_SPLIT_FN_TAC "word_gen_gc_move_roots" ["ws1";"i3";"pa3";"ib3";"pb3";"m3";"c3"] THEN
   STALLOCAUX_SPLIT_FN_TAC "word_gen_gc_move_roots" ["ws2";"i4";"pa4";"ib4";"pb4";"m4";"c4"] THEN
   SUBGOAL_THEN `LENGTH (ws1:((A)word_loc)list) = LENGTH (ts:((A)word_loc)list)` ASSUME_TAC THENL
@@ -491,18 +491,18 @@ let word_gen_gc_move_roots_bitmaps = prove
                  `ts:((A)word_loc)list`; `ws':((A)word_loc)list`; `ws2:((A)word_loc)list`]
          map_bitmap_APPEND) THEN
   ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
-  ASM_REWRITE_TAC[stack_dec_stack_def] THEN CASE_REWRITE_TAC[] THEN
-  CASES_ON `map_bitmap a (ws1:((A)word_loc)list) t` THEN CASE_REWRITE_TAC[PAIR_EQ] THEN
+  ASM_REWRITE_TAC[stack_dec_stack_def] THEN CAKE_REWRITE_TAC[] THEN
+  CASES_ON `map_bitmap a (ws1:((A)word_loc)list) t` THEN CAKE_REWRITE_TAC[PAIR_EQ] THEN
   STALLOCAUX_SPLIT_TAC `a''':((A)word_loc)list#((A)word_loc)list#((A)word_loc)list`
     [`hd:((A)word_loc)list`; `tsx:((A)word_loc)list`; `wsx:((A)word_loc)list`] THEN
   MP_TAC(ISPECL [`a:bool list`; `t:((A)word_loc)list`; `ws1:((A)word_loc)list`;
                  `ts:((A)word_loc)list`; `ws':((A)word_loc)list`; `tsx:((A)word_loc)list`;
                  `hd:((A)word_loc)list`; `wsx:((A)word_loc)list`] filter_bitmap_map_bitmap) THEN
   ASM_REWRITE_TAC[] THEN STRIP_TAC THEN RVEQ_TAC THEN
-  ASM_REWRITE_TAC[APPEND] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[APPEND] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[APPEND] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[APPEND] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   CASES_ON `stack_dec_stack (bitmaps:(A word)list) ws2 ws'` THEN
-  CASE_REWRITE_TAC[PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[PAIR_EQ] THEN
   STRIP_TAC THEN RVEQ_TAC THEN ASM_REWRITE_TAC[APPEND]);;
 
 (* HOL4 line 2144 *)
@@ -527,24 +527,24 @@ let word_gen_gc_partial_move_roots_bitmaps = prove
   REPEAT GEN_TAC THEN DISCH_THEN(fun th -> REWRITE_TAC[th] THEN MP_TAC th) THEN
   STRUCT_CASES_TAC(ISPEC `stack:((A)word_loc)list` list_CASES) THEN
   REWRITE_TAC[word_gen_gc_partial_move_roots_bitmaps_def; stack_enc_stack_def] THEN
-  CASE_REWRITE_TAC[PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[PAIR_EQ] THEN
   COND_CASES_TAC THENL
-   [ASM_REWRITE_TAC[] THEN COND_CASES_TAC THEN CASE_REWRITE_TAC[PAIR_EQ] THEN
+   [ASM_REWRITE_TAC[] THEN COND_CASES_TAC THEN CAKE_REWRITE_TAC[PAIR_EQ] THEN
     ASM_REWRITE_TAC[word_gen_gc_partial_move_roots_def] THEN
-    CASE_REWRITE_TAC[stack_dec_stack_def] THEN
+    CAKE_REWRITE_TAC[stack_dec_stack_def] THEN
     REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN RVEQ_TAC THEN REWRITE_TAC[];
     ALL_TAC] THEN
   REWRITE_TAC[word_gen_gc_partial_move_bitmaps_def] THEN
   CASES_ON `full_read_bitmap (bitmaps:(A word)list) (h:(A)word_loc)` THEN
-  CASE_REWRITE_TAC[PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[PAIR_EQ] THEN
   CASES_ON `filter_bitmap a (t:((A)word_loc)list)` THEN
-  CASE_REWRITE_TAC[PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[PAIR_EQ] THEN
   STALLOCAUX_SPLIT_TAC `a':((A)word_loc)list#((A)word_loc)list`
     [`ts:((A)word_loc)list`; `ws':((A)word_loc)list`] THEN
   CASES_ON `stack_enc_stack (bitmaps:(A word)list) (ws':((A)word_loc)list)` THEN
-  CASE_REWRITE_TAC[PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[PAIR_EQ] THEN
   REWRITE_TAC[word_gen_gc_partial_move_roots_APPEND; LET_DEF; LET_END_DEF] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   STALLOCAUX_SPLIT_FN_TAC "word_gen_gc_partial_move_roots" ["ws1";"i3";"pa3";"m3";"c3"] THEN
   STALLOCAUX_SPLIT_FN_TAC "word_gen_gc_partial_move_roots" ["ws2";"i4";"pa4";"m4";"c4"] THEN
   SUBGOAL_THEN `LENGTH (ws1:((A)word_loc)list) = LENGTH (ts:((A)word_loc)list)` ASSUME_TAC THENL
@@ -555,18 +555,18 @@ let word_gen_gc_partial_move_roots_bitmaps = prove
                  `ts:((A)word_loc)list`; `ws':((A)word_loc)list`; `ws2:((A)word_loc)list`]
          map_bitmap_APPEND) THEN
   ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
-  ASM_REWRITE_TAC[stack_dec_stack_def] THEN CASE_REWRITE_TAC[] THEN
-  CASES_ON `map_bitmap a (ws1:((A)word_loc)list) t` THEN CASE_REWRITE_TAC[PAIR_EQ] THEN
+  ASM_REWRITE_TAC[stack_dec_stack_def] THEN CAKE_REWRITE_TAC[] THEN
+  CASES_ON `map_bitmap a (ws1:((A)word_loc)list) t` THEN CAKE_REWRITE_TAC[PAIR_EQ] THEN
   STALLOCAUX_SPLIT_TAC `a''':((A)word_loc)list#((A)word_loc)list#((A)word_loc)list`
     [`hd:((A)word_loc)list`; `tsx:((A)word_loc)list`; `wsx:((A)word_loc)list`] THEN
   MP_TAC(ISPECL [`a:bool list`; `t:((A)word_loc)list`; `ws1:((A)word_loc)list`;
                  `ts:((A)word_loc)list`; `ws':((A)word_loc)list`; `tsx:((A)word_loc)list`;
                  `hd:((A)word_loc)list`; `wsx:((A)word_loc)list`] filter_bitmap_map_bitmap) THEN
   ASM_REWRITE_TAC[] THEN STRIP_TAC THEN RVEQ_TAC THEN
-  ASM_REWRITE_TAC[APPEND] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[APPEND] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[APPEND] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[APPEND] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   CASES_ON `stack_dec_stack (bitmaps:(A word)list) ws2 ws'` THEN
-  CASE_REWRITE_TAC[PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[PAIR_EQ] THEN
   STRIP_TAC THEN RVEQ_TAC THEN ASM_REWRITE_TAC[APPEND]);;
 
 (* HOL4 line 2199 *)
@@ -607,7 +607,7 @@ let word_gen_gc_move_bitmaps_Loc = prove
  (`!conf l1 l2 stack bitmaps i1 pa1 ib1 pb1 (curr:A word) m dm.
      word_gen_gc_move_bitmaps conf
        (wl_Loc l1 l2,stack,bitmaps,i1,pa1,ib1,pb1,curr,m,dm) = NONE`,
-  REWRITE_TAC[word_gen_gc_move_bitmaps_def; full_read_bitmap_def] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[word_gen_gc_move_bitmaps_def; full_read_bitmap_def] THEN CAKE_REWRITE_TAC[]);;
 
 (* HOL4 line 2253 (an ML value in HOL4) *)
 let word_gen_gc_partial_move_bitmaps_Loc = prove
@@ -615,7 +615,7 @@ let word_gen_gc_partial_move_bitmaps_Loc = prove
      word_gen_gc_partial_move_bitmaps conf
        (wl_Loc l1 l2,stack,bitmaps,i1,pa1,curr,m,dm,gs,rs) = NONE`,
   REWRITE_TAC[word_gen_gc_partial_move_bitmaps_def; full_read_bitmap_def] THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[]);;
 
 let STALLOCAUX_option_tuple8_id = prove
  (CASE_TERM
@@ -645,23 +645,23 @@ let word_gen_gc_move_bitmaps_unroll = prove
                     SOME (APPEND hd hd3,ws3,i3,pa3,ib3,pb3,m3,(c2 /\ c3))))`,
   REPEAT GEN_TAC THEN DISCH_THEN(fun th -> MP_TAC th THEN ASSUME_TAC th) THEN
   REWRITE_TAC[word_gen_gc_move_bitmaps_def; full_read_bitmap_def] THEN
-  ASM_CASES_TAC `w:A word = word 0` THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_CASES_TAC `w:A word = word 0` THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[option_DISTINCT] THEN
   STALLOCAUX_LIST_CASES_TAC `DROP (val (word_sub (w:A word) (word 1))) (bitmaps:(A word)list)`
     ["y";"ys"] THEN
-  REWRITE_TAC[read_bitmap_def] THEN CASE_REWRITE_TAC[option_DISTINCT] THEN
+  REWRITE_TAC[read_bitmap_def] THEN CAKE_REWRITE_TAC[option_DISTINCT] THEN
   MP_TAC(ISPECL [`w:A word`; `bitmaps:(A word)list`; `y:A word`; `ys:(A word)list`]
            STALLOCAUX_bitmaps_next) THEN
   (ANTS_TAC THENL [ASM_MESON_TAC[]; STRIP_TAC]) THEN
   ASM_REWRITE_TAC[read_bitmap_def; word_gen_gc_move_bitmap_def; LET_DEF; LET_END_DEF] THEN
-  COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THENL
+  COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THENL
    [FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP get_bits_intro th]) THEN
     STALLOCAUX_OPT_CASES_TAC `read_bitmap (ys:(A word)list)` ["bs"] THEN
     REWRITE_TAC[option_DISTINCT; filter_bitmap_APPEND] THEN
     STALLOCAUX_OPT_CASES_TAC `filter_bitmap (get_bits (y:A word)) (stack:((A)word_loc)list)`
       ["zs";"rs"] THEN
     STALLOCAUX_OPT_CASES_TAC `filter_bitmap bs (rs:((A)word_loc)list)` ["zs2";"rs2"] THEN
-    REWRITE_TAC[word_gen_gc_move_roots_APPEND; LET_DEF; LET_END_DEF] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[word_gen_gc_move_roots_APPEND; LET_DEF; LET_END_DEF] THEN CAKE_REWRITE_TAC[] THEN
     STALLOCAUX_SPLIT_FN_TAC "word_gen_gc_move_roots" ["wl1";"i3";"pa3";"ib3";"pb3";"m3";"c3"] THEN
     STALLOCAUX_SPLIT_FN_TAC "word_gen_gc_move_roots" ["wl2";"i4";"pa4";"ib4";"pb4";"m4";"c4"] THEN
     SUBGOAL_THEN `LENGTH (zs:((A)word_loc)list) = LENGTH (wl1:((A)word_loc)list)`
@@ -677,12 +677,12 @@ let word_gen_gc_move_bitmaps_unroll = prove
                    `zs:((A)word_loc)list`; `rs:((A)word_loc)list`; `t2:((A)word_loc)list`;
                    `t1:((A)word_loc)list`; `t3:((A)word_loc)list`] filter_bitmap_map_bitmap) THEN
     (ANTS_TAC THENL [ASM_MESON_TAC[]; STRIP_TAC]) THEN RVEQ_TAC THEN
-    ASM_REWRITE_TAC[APPEND] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
-    CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[APPEND] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN
     STALLOCAUX_OPT_CASES_TAC `map_bitmap bs (wl2:((A)word_loc)list) rs` ["u1";"u2";"u3"] THEN
     REWRITE_TAC[];
     REWRITE_TAC[GSYM get_bits_def] THEN ASM_REWRITE_TAC[] THEN
-    CASE_REWRITE_TAC[STALLOCAUX_option_tuple8_id] THEN DISCH_THEN(K ALL_TAC) THEN
+    CAKE_REWRITE_TAC[STALLOCAUX_option_tuple8_id] THEN DISCH_THEN(K ALL_TAC) THEN
     REWRITE_TAC[STALLOCAUX_option_tuple8_id; BASICAUX_pair_CASE_K]]);;
 
 (* HOL4 line 2334 *)
@@ -706,23 +706,23 @@ let word_gen_gc_partial_move_bitmaps_unroll = prove
                     SOME (APPEND hd hd3,ws3,i3,pa3,m3,(c2 /\ c3))))`,
   REPEAT GEN_TAC THEN DISCH_THEN(fun th -> MP_TAC th THEN ASSUME_TAC th) THEN
   REWRITE_TAC[word_gen_gc_partial_move_bitmaps_def; full_read_bitmap_def] THEN
-  ASM_CASES_TAC `w:A word = word 0` THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_CASES_TAC `w:A word = word 0` THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[option_DISTINCT] THEN
   STALLOCAUX_LIST_CASES_TAC `DROP (val (word_sub (w:A word) (word 1))) (bitmaps:(A word)list)`
     ["y";"ys"] THEN
-  REWRITE_TAC[read_bitmap_def] THEN CASE_REWRITE_TAC[option_DISTINCT] THEN
+  REWRITE_TAC[read_bitmap_def] THEN CAKE_REWRITE_TAC[option_DISTINCT] THEN
   MP_TAC(ISPECL [`w:A word`; `bitmaps:(A word)list`; `y:A word`; `ys:(A word)list`]
            STALLOCAUX_bitmaps_next) THEN
   (ANTS_TAC THENL [ASM_MESON_TAC[]; STRIP_TAC]) THEN
   ASM_REWRITE_TAC[read_bitmap_def; word_gen_gc_partial_move_bitmap_def; LET_DEF; LET_END_DEF] THEN
-  COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THENL
+  COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THENL
    [FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP get_bits_intro th]) THEN
     STALLOCAUX_OPT_CASES_TAC `read_bitmap (ys:(A word)list)` ["bs"] THEN
     REWRITE_TAC[option_DISTINCT; filter_bitmap_APPEND] THEN
     STALLOCAUX_OPT_CASES_TAC `filter_bitmap (get_bits (y:A word)) (stack:((A)word_loc)list)`
       ["zs";"rest"] THEN
     STALLOCAUX_OPT_CASES_TAC `filter_bitmap bs (rest:((A)word_loc)list)` ["zs2";"rs2"] THEN
-    REWRITE_TAC[word_gen_gc_partial_move_roots_APPEND; LET_DEF; LET_END_DEF] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[word_gen_gc_partial_move_roots_APPEND; LET_DEF; LET_END_DEF] THEN CAKE_REWRITE_TAC[] THEN
     STALLOCAUX_SPLIT_FN_TAC "word_gen_gc_partial_move_roots" ["wl1";"i3";"pa3";"m3";"c3"] THEN
     STALLOCAUX_SPLIT_FN_TAC "word_gen_gc_partial_move_roots" ["wl2";"i4";"pa4";"m4";"c4"] THEN
     SUBGOAL_THEN `LENGTH (zs:((A)word_loc)list) = LENGTH (wl1:((A)word_loc)list)`
@@ -738,12 +738,12 @@ let word_gen_gc_partial_move_bitmaps_unroll = prove
                    `zs:((A)word_loc)list`; `rest:((A)word_loc)list`; `t2:((A)word_loc)list`;
                    `t1:((A)word_loc)list`; `t3:((A)word_loc)list`] filter_bitmap_map_bitmap) THEN
     (ANTS_TAC THENL [ASM_MESON_TAC[]; STRIP_TAC]) THEN RVEQ_TAC THEN
-    ASM_REWRITE_TAC[APPEND] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
-    CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[APPEND] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN
     STALLOCAUX_OPT_CASES_TAC `map_bitmap bs (wl2:((A)word_loc)list) rest` ["u1";"u2";"u3"] THEN
     REWRITE_TAC[];
     REWRITE_TAC[GSYM get_bits_def] THEN ASM_REWRITE_TAC[] THEN
-    CASE_REWRITE_TAC[STALLOCAUX_option_tuple6_id] THEN DISCH_THEN(K ALL_TAC) THEN
+    CAKE_REWRITE_TAC[STALLOCAUX_option_tuple6_id] THEN DISCH_THEN(K ALL_TAC) THEN
     REWRITE_TAC[STALLOCAUX_option_tuple6_id; BASICAUX_pair_CASE_K]]);;
 
 (* HOL4 line 2414 *)
@@ -782,15 +782,15 @@ let word_gen_gc_move_bitmap_unroll = prove
     ALL_TAC] THEN
   ASM_SIMP_TAC[word_gen_gc_move_bitmap_def; LET_DEF; LET_END_DEF; STALLOCAUX_get_bits_cons] THEN
   STRUCT_CASES_TAC(ISPEC `stack:((A)word_loc)list` list_CASES) THEN
-  REWRITE_TAC[filter_bitmap_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[filter_bitmap_def] THEN CAKE_REWRITE_TAC[] THEN
   ASM_CASES_TAC `bit 0 (w:A word)` THEN ASM_REWRITE_TAC[filter_bitmap_def] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   STALLOCAUX_OPT_CASES_TAC
     `filter_bitmap (get_bits (word_ushr (w:A word) 1)) (t:((A)word_loc)list)` ["ts";"ws"] THEN
-  REWRITE_TAC[word_gen_gc_move_roots_def; LET_DEF; LET_END_DEF] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[word_gen_gc_move_roots_def; LET_DEF; LET_END_DEF] THEN CAKE_REWRITE_TAC[] THEN
   TRY (STALLOCAUX_SPLIT_FN_TAC "word_gen_gc_move" ["x1";"i3";"pa3";"ib3";"pb3";"m3";"c3"]) THEN
   TRY (STALLOCAUX_SPLIT_FN_TAC "word_gen_gc_move_roots" ["wl";"i4";"pa4";"ib4";"pb4";"m4";"c4"]) THEN
-  REWRITE_TAC[map_bitmap_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[map_bitmap_def] THEN CAKE_REWRITE_TAC[] THEN
   TRY (STALLOCAUX_OPT_CASES_TAC
     `map_bitmap (get_bits (word_ushr (w:A word) 1)) (wl:((A)word_loc)list) t`
     ["hd";"p";"q"]) THEN
@@ -831,15 +831,15 @@ let word_gen_gc_partial_move_bitmap_unroll = prove
     ALL_TAC] THEN
   ASM_SIMP_TAC[word_gen_gc_partial_move_bitmap_def; LET_DEF; LET_END_DEF; STALLOCAUX_get_bits_cons] THEN
   STRUCT_CASES_TAC(ISPEC `stack:((A)word_loc)list` list_CASES) THEN
-  REWRITE_TAC[filter_bitmap_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[filter_bitmap_def] THEN CAKE_REWRITE_TAC[] THEN
   ASM_CASES_TAC `bit 0 (w:A word)` THEN ASM_REWRITE_TAC[filter_bitmap_def] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   STALLOCAUX_OPT_CASES_TAC
     `filter_bitmap (get_bits (word_ushr (w:A word) 1)) (t:((A)word_loc)list)` ["ts";"ws"] THEN
-  REWRITE_TAC[word_gen_gc_partial_move_roots_def; LET_DEF; LET_END_DEF] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[word_gen_gc_partial_move_roots_def; LET_DEF; LET_END_DEF] THEN CAKE_REWRITE_TAC[] THEN
   TRY (STALLOCAUX_SPLIT_FN_TAC "word_gen_gc_partial_move" ["x1";"i3";"pa3";"m3";"c3"]) THEN
   TRY (STALLOCAUX_SPLIT_FN_TAC "word_gen_gc_partial_move_roots" ["wl";"i4";"pa4";"m4";"c4"]) THEN
-  REWRITE_TAC[map_bitmap_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[map_bitmap_def] THEN CAKE_REWRITE_TAC[] THEN
   TRY (STALLOCAUX_OPT_CASES_TAC
     `map_bitmap (get_bits (word_ushr (w:A word) 1)) (wl:((A)word_loc)list) t`
     ["hd";"p";"q"]) THEN
@@ -897,14 +897,14 @@ let word_gen_gc_move_code_thm = prove
     6 IN FDOM (stack_state_regs s) ==>
     ?ck r0 r1 r2 r6 t0 t1.
       stack_evaluate (word_gen_gc_move_code conf,
-                      stack_state_clock_fupd (K (stack_state_clock s + ck)) s) =
-        (NONE,stack_state_memory_fupd (K m1)
+                      stack_state_clock_fupd (combin_K (stack_state_clock s + ck)) s) =
+        (NONE,stack_state_memory_fupd (combin_K m1)
                 (stack_state_store_fupd
-                   (K (stack_state_store s |++
+                   (combin_K (stack_state_store s |++
                        [(Temp (word 0),t0); (Temp (word 1),t1);
                         (Temp (word 2),wl_Word pb1); (Temp (word 3),wl_Word ib1)]))
                   (stack_state_regs_fupd
-                     (K (stack_state_regs s |++
+                     (combin_K (stack_state_regs s |++
                          [(0,r0); (1,r1); (2,r2); (3,wl_Word pa1); (4,wl_Word i1);
                           (5,w1); (6,r6)])) s)))`,
   REPEAT GEN_TAC THEN
@@ -971,10 +971,10 @@ let word_gen_gc_partial_move_code_thm = prove
     6 IN FDOM (stack_state_regs s) ==>
     ?ck r0 r1 r2 r6.
       stack_evaluate (word_gen_gc_partial_move_code conf,
-                      stack_state_clock_fupd (K (stack_state_clock s + ck)) s) =
-        (NONE,stack_state_memory_fupd (K m1)
+                      stack_state_clock_fupd (combin_K (stack_state_clock s + ck)) s) =
+        (NONE,stack_state_memory_fupd (combin_K m1)
                 (stack_state_regs_fupd
-                   (K (stack_state_regs s |++
+                   (combin_K (stack_state_regs s |++
                        [(0,r0); (1,r1); (2,r2); (3,wl_Word pa1); (4,wl_Word i1);
                         (5,w1); (6,r6)])) s))`,
   (REPEAT GEN_TAC THEN
@@ -1059,15 +1059,15 @@ let word_gen_gc_move_bitmap_code_thm = prove
       (dimindex (:A) DIV 8) * LENGTH (stack_state_stack s) < dimword (:A) ==>
       ?ck r0 r1 r2 r5 r6 r7 t0 t1.
         stack_evaluate (word_gen_gc_move_bitmap_code conf,
-                        stack_state_clock_fupd (K (stack_state_clock s + ck)) s) =
-          (NONE,stack_state_memory_fupd (K m1)
-                  (stack_state_stack_fupd (K (APPEND (APPEND (APPEND init old) new) stack1))
+                        stack_state_clock_fupd (combin_K (stack_state_clock s + ck)) s) =
+          (NONE,stack_state_memory_fupd (combin_K m1)
+                  (stack_state_stack_fupd (combin_K (APPEND (APPEND (APPEND init old) new) stack1))
                   (stack_state_store_fupd
-                     (K (stack_state_store s |++
+                     (combin_K (stack_state_store s |++
                          [(Temp (word 0),t0); (Temp (word 1),t1);
                           (Temp (word 2),wl_Word pb1); (Temp (word 3),wl_Word ib1)]))
                      (stack_state_regs_fupd
-                        (K (stack_state_regs s |++
+                        (combin_K (stack_state_regs s |++
                             [(0,r0); (1,r1); (2,r2); (3,wl_Word pa1); (4,wl_Word i1);
                              (5,r5); (6,r6); (7,r7);
                              (8,wl_Word (word_mul bytes_in_word
@@ -1197,11 +1197,11 @@ let word_gen_gc_partial_move_bitmap_code_thm = prove
       (dimindex (:A) DIV 8) * LENGTH (stack_state_stack s) < dimword (:A) ==>
       ?ck r0 r1 r2 r5 r6 r7.
         stack_evaluate (word_gen_gc_partial_move_bitmap_code conf,
-                        stack_state_clock_fupd (K (stack_state_clock s + ck)) s) =
-          (NONE,stack_state_memory_fupd (K m1)
-                  (stack_state_stack_fupd (K (APPEND (APPEND (APPEND init old) new) stack1))
+                        stack_state_clock_fupd (combin_K (stack_state_clock s + ck)) s) =
+          (NONE,stack_state_memory_fupd (combin_K m1)
+                  (stack_state_stack_fupd (combin_K (APPEND (APPEND (APPEND init old) new) stack1))
                      (stack_state_regs_fupd
-                        (K (stack_state_regs s |++
+                        (combin_K (stack_state_regs s |++
                             [(0,r0); (1,r1); (2,r2); (3,wl_Word pa1); (4,wl_Word i1);
                              (5,r5); (6,r6); (7,r7);
                              (8,wl_Word (word_mul bytes_in_word
@@ -1331,7 +1331,7 @@ let STALLOCAUX_gen_bitmaps_nonzero = prove
      word_gen_gc_move_bitmaps conf (wl_Word w,stack,bitmaps,i,pa,ib,pb,curr,m,dm) = SOME x
      ==> ~(w = word 0)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[word_gen_gc_move_bitmaps_def; full_read_bitmap_def] THEN
-  COND_CASES_TAC THEN CASE_REWRITE_TAC[option_DISTINCT]);;
+  COND_CASES_TAC THEN CAKE_REWRITE_TAC[option_DISTINCT]);;
 
 (* HOL4 line 3146 *)
 let word_gen_gc_partial_move_bitmaps_LENGTH = prove
@@ -1359,7 +1359,7 @@ let STALLOCAUX_partial_bitmaps_nonzero = prove
      word_gen_gc_partial_move_bitmaps conf (wl_Word w,stack,bitmaps,i,pa,curr,m,dm,gs,rs) = SOME x
      ==> ~(w = word 0)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[word_gen_gc_partial_move_bitmaps_def; full_read_bitmap_def] THEN
-  COND_CASES_TAC THEN CASE_REWRITE_TAC[option_DISTINCT]);;
+  COND_CASES_TAC THEN CAKE_REWRITE_TAC[option_DISTINCT]);;
 
 (* HOL4 line 3158 *)
 let word_gen_gc_move_bitmaps_code_thm = prove
@@ -1390,16 +1390,16 @@ let word_gen_gc_move_bitmaps_code_thm = prove
     (dimindex (:A) DIV 8) * LENGTH (stack_state_stack s) < dimword (:A) ==>
     ?ck r0 r1 r2 r5 r6 r7 r9 t0 t1.
       stack_evaluate (word_gen_gc_move_bitmaps_code conf,
-                      stack_state_clock_fupd (K (stack_state_clock s + ck)) s) =
-        (NONE,stack_state_memory_fupd (K m1)
-                (stack_state_stack_fupd (K (APPEND (APPEND (APPEND init old) new) stack1))
-                  (stack_state_clock_fupd (K (stack_state_clock s))
+                      stack_state_clock_fupd (combin_K (stack_state_clock s + ck)) s) =
+        (NONE,stack_state_memory_fupd (combin_K m1)
+                (stack_state_stack_fupd (combin_K (APPEND (APPEND (APPEND init old) new) stack1))
+                  (stack_state_clock_fupd (combin_K (stack_state_clock s))
                   (stack_state_store_fupd
-                     (K (stack_state_store s |++
+                     (combin_K (stack_state_store s |++
                          [(Temp (word 0),t0); (Temp (word 1),t1);
                           (Temp (word 2),wl_Word pb1); (Temp (word 3),wl_Word ib1)]))
                     (stack_state_regs_fupd
-                       (K (stack_state_regs s |++
+                       (combin_K (stack_state_regs s |++
                            [(0,r0); (1,r1); (2,r2); (3,wl_Word pa1); (4,wl_Word i1);
                             (5,r5); (6,r6); (7,r7);
                             (8,wl_Word (word_mul bytes_in_word
@@ -1575,12 +1575,12 @@ let word_gen_gc_partial_move_bitmaps_code_thm = prove
     (dimindex (:A) DIV 8) * LENGTH (stack_state_stack s) < dimword (:A) ==>
     ?ck r0 r1 r2 r5 r6 r7 r9.
       stack_evaluate (word_gen_gc_partial_move_bitmaps_code conf,
-                      stack_state_clock_fupd (K (stack_state_clock s + ck)) s) =
-        (NONE,stack_state_memory_fupd (K m1)
-                (stack_state_stack_fupd (K (APPEND (APPEND (APPEND init old) new) stack1))
-                  (stack_state_clock_fupd (K (stack_state_clock s))
+                      stack_state_clock_fupd (combin_K (stack_state_clock s + ck)) s) =
+        (NONE,stack_state_memory_fupd (combin_K m1)
+                (stack_state_stack_fupd (combin_K (APPEND (APPEND (APPEND init old) new) stack1))
+                  (stack_state_clock_fupd (combin_K (stack_state_clock s))
                     (stack_state_regs_fupd
-                       (K (stack_state_regs s |++
+                       (combin_K (stack_state_regs s |++
                            [(0,r0); (1,r1); (2,r2); (3,wl_Word pa1); (4,wl_Word i1);
                             (5,r5); (6,r6); (7,r7);
                             (8,wl_Word (word_mul bytes_in_word
@@ -1754,16 +1754,16 @@ let word_gen_gc_move_roots_bitmaps_code_thm = prove
     (dimindex (:A) DIV 8) * LENGTH (stack_state_stack s) < dimword (:A) ==>
     ?ck r0 r1 r2 r5 r6 r7 r8 (r9:(A)word_loc) t0 t1.
       stack_evaluate (word_gen_gc_move_roots_bitmaps_code conf,
-                      stack_state_clock_fupd (K (stack_state_clock s + ck)) s) =
-        (NONE,stack_state_memory_fupd (K m1)
-                (stack_state_stack_fupd (K (APPEND (APPEND init old) stack1))
-                  (stack_state_clock_fupd (K (stack_state_clock s))
+                      stack_state_clock_fupd (combin_K (stack_state_clock s + ck)) s) =
+        (NONE,stack_state_memory_fupd (combin_K m1)
+                (stack_state_stack_fupd (combin_K (APPEND (APPEND init old) stack1))
+                  (stack_state_clock_fupd (combin_K (stack_state_clock s))
                   (stack_state_store_fupd
-                     (K (stack_state_store s |++
+                     (combin_K (stack_state_store s |++
                          [(Temp (word 0),t0); (Temp (word 1),t1);
                           (Temp (word 2),wl_Word pb1); (Temp (word 3),wl_Word ib1)]))
                     (stack_state_regs_fupd
-                       (K (stack_state_regs s |++
+                       (combin_K (stack_state_regs s |++
                            [(0,r0); (1,r1); (2,r2); (3,wl_Word pa1); (4,wl_Word i1);
                             (5,r5); (6,r6); (7,r7); (8,r8); (9,wl_Word (word 0))])) s)))))`,
   (GEN_TAC THEN
@@ -1907,12 +1907,12 @@ let word_gen_gc_partial_move_roots_bitmaps_code_thm = prove
     (dimindex (:A) DIV 8) * LENGTH (stack_state_stack s) < dimword (:A) ==>
     ?ck r0 r1 r2 r5 r6 r7 r8 (r9:(A)word_loc).
       stack_evaluate (word_gen_gc_partial_move_roots_bitmaps_code conf,
-                      stack_state_clock_fupd (K (stack_state_clock s + ck)) s) =
-        (NONE,stack_state_memory_fupd (K m1)
-                (stack_state_stack_fupd (K (APPEND (APPEND init old) stack1))
-                  (stack_state_clock_fupd (K (stack_state_clock s))
+                      stack_state_clock_fupd (combin_K (stack_state_clock s + ck)) s) =
+        (NONE,stack_state_memory_fupd (combin_K m1)
+                (stack_state_stack_fupd (combin_K (APPEND (APPEND init old) stack1))
+                  (stack_state_clock_fupd (combin_K (stack_state_clock s))
                     (stack_state_regs_fupd
-                       (K (stack_state_regs s |++
+                       (combin_K (stack_state_regs s |++
                            [(0,r0); (1,r1); (2,r2); (3,wl_Word pa1); (4,wl_Word i1);
                             (5,r5); (6,r6); (7,r7); (8,r8); (9,wl_Word (word 0))])) s))))`,
   (GEN_TAC THEN
@@ -2050,14 +2050,14 @@ let STALLOCAUX_word_gen_gc_move_list_code_n = prove
       stack_get_var 8 s = SOME (wl_Word a) ==>
       ?ck r0 r1 r2 r5 r6 t0 t1.
         stack_evaluate (word_gen_gc_move_list_code conf,
-                        stack_state_clock_fupd (K (stack_state_clock s + ck)) s) =
-          (NONE,stack_state_memory_fupd (K m1)
+                        stack_state_clock_fupd (combin_K (stack_state_clock s + ck)) s) =
+          (NONE,stack_state_memory_fupd (combin_K m1)
                   (stack_state_store_fupd
-                     (K (stack_state_store s |++
+                     (combin_K (stack_state_store s |++
                          [(Temp (word 0),t0); (Temp (word 1),t1);
                           (Temp (word 2),wl_Word pb1); (Temp (word 3),wl_Word ib1)]))
                   (stack_state_regs_fupd
-                     (K (stack_state_regs s |++
+                     (combin_K (stack_state_regs s |++
                          [(0,r0); (1,r1); (2,r2); (3,wl_Word pa1); (4,wl_Word i1);
                           (5,r5); (6,r6); (7,wl_Word (word 0)); (8,wl_Word a1)])) s)))`,
   INDUCT_TAC THENL
@@ -2137,14 +2137,14 @@ let word_gen_gc_move_list_code_thm = prove
       stack_get_var 8 s = SOME (wl_Word a) ==>
       ?ck r0 r1 r2 r5 r6 t0 t1.
         stack_evaluate (word_gen_gc_move_list_code conf,
-                        stack_state_clock_fupd (K (stack_state_clock s + ck)) s) =
-          (NONE,stack_state_memory_fupd (K m1)
+                        stack_state_clock_fupd (combin_K (stack_state_clock s + ck)) s) =
+          (NONE,stack_state_memory_fupd (combin_K m1)
                   (stack_state_store_fupd
-                     (K (stack_state_store s |++
+                     (combin_K (stack_state_store s |++
                          [(Temp (word 0),t0); (Temp (word 1),t1);
                           (Temp (word 2),wl_Word pb1); (Temp (word 3),wl_Word ib1)]))
                   (stack_state_regs_fupd
-                     (K (stack_state_regs s |++
+                     (combin_K (stack_state_regs s |++
                          [(0,r0); (1,r1); (2,r2); (3,wl_Word pa1); (4,wl_Word i1);
                           (5,r5); (6,r6); (7,wl_Word (word 0)); (8,wl_Word a1)])) s)))`,
   REPEAT GEN_TAC THEN
@@ -2184,10 +2184,10 @@ let STALLOCAUX_word_gen_gc_partial_move_list_code_n = prove
       stack_get_var 8 s = SOME (wl_Word a) ==>
       ?ck r0 r1 r2 r5 r6.
         stack_evaluate (word_gen_gc_partial_move_list_code conf,
-                        stack_state_clock_fupd (K (stack_state_clock s + ck)) s) =
-          (NONE,stack_state_memory_fupd (K m1)
+                        stack_state_clock_fupd (combin_K (stack_state_clock s + ck)) s) =
+          (NONE,stack_state_memory_fupd (combin_K m1)
                   (stack_state_regs_fupd
-                     (K (stack_state_regs s |++
+                     (combin_K (stack_state_regs s |++
                          [(0,r0); (1,r1); (2,r2); (3,wl_Word pa1); (4,wl_Word i1);
                           (5,r5); (6,r6); (7,wl_Word (word 0)); (8,wl_Word a1)])) s))`,
   INDUCT_TAC THENL
@@ -2262,10 +2262,10 @@ let word_gen_gc_partial_move_list_code_thm = prove
       stack_get_var 8 s = SOME (wl_Word a) ==>
       ?ck r0 r1 r2 r5 r6.
         stack_evaluate (word_gen_gc_partial_move_list_code conf,
-                        stack_state_clock_fupd (K (stack_state_clock s + ck)) s) =
-          (NONE,stack_state_memory_fupd (K m1)
+                        stack_state_clock_fupd (combin_K (stack_state_clock s + ck)) s) =
+          (NONE,stack_state_memory_fupd (combin_K m1)
                   (stack_state_regs_fupd
-                     (K (stack_state_regs s |++
+                     (combin_K (stack_state_regs s |++
                          [(0,r0); (1,r1); (2,r2); (3,wl_Word pa1); (4,wl_Word i1);
                           (5,r5); (6,r6); (7,wl_Word (word 0)); (8,wl_Word a1)])) s))`,
   REPEAT GEN_TAC THEN
@@ -2306,10 +2306,10 @@ let word_gen_gc_partial_move_ref_list_code_thm = prove
       stack_get_var 9 s = SOME (wl_Word r2a1) ==>
       ?ck r0 r1 r2 r5 r6 r7 r8 r9.
         stack_evaluate (word_gen_gc_partial_move_ref_list_code conf,
-                        stack_state_clock_fupd (K (stack_state_clock s + ck)) s) =
-          (NONE,stack_state_memory_fupd (K m2)
+                        stack_state_clock_fupd (combin_K (stack_state_clock s + ck)) s) =
+          (NONE,stack_state_memory_fupd (combin_K m2)
                   (stack_state_regs_fupd
-                     (K (stack_state_regs s |++
+                     (combin_K (stack_state_regs s |++
                          [(0,r0); (1,r1); (2,r2); (3,wl_Word pa2); (4,wl_Word i2);
                           (5,r5); (6,r6); (7,r7); (8,r8); (9,r9)])) s))`,
   (GEN_TAC THEN GEN_TAC THEN GEN_TAC THEN INDUCT_TAC THENL [ALL_TAC; POP_ASSUM(LABEL_TAC "ih")] THEN
@@ -2394,14 +2394,14 @@ let word_gen_gc_move_data_code_thm = prove
   stack_get_var 8 s = SOME (wl_Word ha1) /\ c1 ==>
   ?ck r0 r1 r2 r5 r6 r7 t0 t1.
     stack_evaluate (word_gen_gc_move_data_code conf,
-                    stack_state_clock_fupd (K (stack_state_clock s + ck)) s) =
-    (NONE,stack_state_memory_fupd (K m2)
+                    stack_state_clock_fupd (combin_K (stack_state_clock s + ck)) s) =
+    (NONE,stack_state_memory_fupd (combin_K m2)
             (stack_state_store_fupd
-               (K (stack_state_store s |++
+               (combin_K (stack_state_store s |++
                    [(Temp (word 0),t0); (Temp (word 1),t1);
                     (Temp (word 2),wl_Word pb2); (Temp (word 3),wl_Word ib2)]))
             (stack_state_regs_fupd
-               (K (stack_state_regs s |++
+               (combin_K (stack_state_regs s |++
                    [(0,r0); (1,r1); (2,r2); (3,wl_Word pa2); (4,wl_Word i2); (5,r5); (6,r6);
                     (7,r7); (8,wl_Word pa2)])) s)))`,
   (GEN_TAC THEN INDUCT_TAC THENL [ALL_TAC; POP_ASSUM(LABEL_TAC "ih")] THEN
@@ -2512,10 +2512,10 @@ let word_gen_gc_partial_move_data_code_thm = prove
   stack_get_var 8 s = SOME (wl_Word ha1) /\ c1 ==>
   ?ck r0 r1 r2 r5 r6 r7.
     stack_evaluate (word_gen_gc_partial_move_data_code conf,
-                    stack_state_clock_fupd (K (stack_state_clock s + ck)) s) =
-    (NONE,stack_state_memory_fupd (K m2)
+                    stack_state_clock_fupd (combin_K (stack_state_clock s + ck)) s) =
+    (NONE,stack_state_memory_fupd (combin_K m2)
             (stack_state_regs_fupd
-               (K (stack_state_regs s |++
+               (combin_K (stack_state_regs s |++
                    [(0,r0); (1,r1); (2,r2); (3,wl_Word pa2); (4,wl_Word i2); (5,r5); (6,r6);
                     (7,r7); (8,wl_Word pa2)])) s))`,
   (GEN_TAC THEN GEN_TAC THEN GEN_TAC THEN INDUCT_TAC THENL [ALL_TAC; POP_ASSUM(LABEL_TAC "ih")] THEN
@@ -2630,14 +2630,14 @@ let word_gen_gc_move_refs_code_thm = prove
   stack_get_var 8 s = SOME (wl_Word r2a1) /\ c1 ==>
   ?ck r1 r2 r5 r6 r7 t0 t1.
     stack_evaluate (word_gen_gc_move_refs_code conf,
-                    stack_state_clock_fupd (K (stack_state_clock s + ck)) s) =
-      (NONE,stack_state_memory_fupd (K m2)
+                    stack_state_clock_fupd (combin_K (stack_state_clock s + ck)) s) =
+      (NONE,stack_state_memory_fupd (combin_K m2)
               (stack_state_store_fupd
-                 (K (stack_state_store s |++
+                 (combin_K (stack_state_store s |++
                      [(Temp (word 0),t0); (Temp (word 1),t1);
                       (Temp (word 2),wl_Word pb2); (Temp (word 3),wl_Word ib2)]))
               (stack_state_regs_fupd
-                 (K (stack_state_regs s |++
+                 (combin_K (stack_state_regs s |++
                      [(0,wl_Word r1a1); (1,r1); (2,r2); (3,wl_Word pa2); (4,wl_Word i2);
                       (5,r5); (6,r6); (7,r7); (8,wl_Word r2a2)])) s)))`,
   (GEN_TAC THEN INDUCT_TAC THENL [ALL_TAC; POP_ASSUM(LABEL_TAC "ih")] THEN
@@ -2729,15 +2729,15 @@ let word_gen_gc_move_loop_code_thm = prove
   6 IN FDOM (stack_state_regs s) /\ c1 ==>
   ?ck r0 r1 r2 r5 r6 r7 r8 t0 t1 t4 t5 t6.
     stack_evaluate (word_gen_gc_move_loop_code conf,
-                    stack_state_clock_fupd (K (stack_state_clock s + ck)) s) =
-      (NONE,stack_state_memory_fupd (K m1)
+                    stack_state_clock_fupd (combin_K (stack_state_clock s + ck)) s) =
+      (NONE,stack_state_memory_fupd (combin_K m1)
               (stack_state_store_fupd
-                 (K (stack_state_store s |++
+                 (combin_K (stack_state_store s |++
                      [(Temp (word 0),t0); (Temp (word 1),t1); (Temp (word 2),wl_Word pb1);
                       (Temp (word 3),wl_Word ib1); (Temp (word 4),t4); (Temp (word 5),t5);
                       (Temp (word 6),t6)]))
               (stack_state_regs_fupd
-                 (K (stack_state_regs s |++
+                 (combin_K (stack_state_regs s |++
                      [(0,r0); (1,r1); (2,r2); (3,wl_Word pa1); (4,wl_Word i1);
                       (5,r5); (6,r6); (7,r7); (8,r8)])) s)))`,
   (GEN_TAC THEN INDUCT_TAC THENL [ALL_TAC; POP_ASSUM(LABEL_TAC "ih")] THEN
@@ -2966,9 +2966,9 @@ let evaluate_SetNewTrigger = prove
      FLOOKUP (stack_state_store s5) AllocSize = SOME (wl_Word w) ==>
      ?r7 r1 r4.
        res = NONE /\
-       new_s = stack_state_regs_fupd (K (stack_state_regs s5 |+ (1,r1) |+ (7,r7) |+ (4,r4)))
+       new_s = stack_state_regs_fupd (combin_K (stack_state_regs s5 |+ (1,r1) |+ (7,r7) |+ (4,r4)))
                  (stack_state_store_fupd
-                   (K (stack_state_store s5 |+
+                   (combin_K (stack_state_store s5 |+
                        (TriggerGC,wl_Word (word_add ib
                           (new_trig (word_sub endh ib) w gen_sizes))))) s5)`,
   (REPEAT GEN_TAC THEN DISCH_TAC THEN REPEAT GEN_TAC THEN STRIP_TAC THEN

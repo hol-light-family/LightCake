@@ -42,19 +42,19 @@ let asm_state_INFO = cake_record "asm_state"
 let asm_state_component_equality = asm_state_INFO.ri_component_equality;;
 
 let asm_upd_pc_def = cake_def
-  `asm_upd_pc pc (s:(A)asm_state) = asm_state_pc_fupd (K pc) s`;;
+  `asm_upd_pc pc (s:(A)asm_state) = asm_state_pc_fupd (combin_K pc) s`;;
 
 let asm_upd_reg_def = cake_def
   `asm_upd_reg r v (s:(A)asm_state) =
-     asm_state_regs_fupd (K ((r =+ v) (asm_state_regs s))) s`;;
+     asm_state_regs_fupd (combin_K ((r =+ v) (asm_state_regs s))) s`;;
 
 let asm_upd_fp_reg_def = cake_def
   `asm_upd_fp_reg r v (s:(A)asm_state) =
-     asm_state_fp_regs_fupd (K ((r =+ v) (asm_state_fp_regs s))) s`;;
+     asm_state_fp_regs_fupd (combin_K ((r =+ v) (asm_state_fp_regs s))) s`;;
 
 let asm_upd_mem_def = cake_def
   `asm_upd_mem a b (s:(A)asm_state) =
-     asm_state_mem_fupd (K ((a =+ b) (asm_state_mem s))) s`;;
+     asm_state_mem_fupd (combin_K ((a =+ b) (asm_state_mem s))) s`;;
 
 let read_reg_def = cake_def
   `read_reg r (s:(A)asm_state) = asm_state_regs s r`;;
@@ -67,7 +67,7 @@ let asm_read_mem_def = cake_def
 
 let asm_assert_def = cake_def
   `asm_assert b (s:(A)asm_state) =
-     asm_state_failed_fupd (K (~b \/ asm_state_failed s)) s`;;
+     asm_state_failed_fupd (combin_K (~b \/ asm_state_failed s)) s`;;
 
 let asm_reg_imm_def = cake_def
   `(asm_reg_imm (Reg r) (s:(A)asm_state) = read_reg r s) /\

@@ -28,7 +28,7 @@ type_invention_error := true;;
 let shift_interfer_def = cake_def
   `shift_interfer k (s:(A,B,C)machine_config) =
      machine_config_next_interfer_fupd
-       (K (shift_seq k (machine_config_next_interfer s))) s`;;
+       (combin_K (shift_seq k (machine_config_next_interfer s))) s`;;
 
 (* HOL4 [local] *)
 
@@ -96,7 +96,7 @@ let find_next_interference_def = cake_def_wf
               (machine_config_prog_addresses mc) then
            let ms1 = target_next (machine_config_target mc) ms in
            let (ms2,new_oracle) = apply_oracle (machine_config_next_interfer mc) ms1 in
-           let mc = machine_config_next_interfer_fupd (K new_oracle) mc in
+           let mc = machine_config_next_interfer_fupd (combin_K new_oracle) mc in
            if ALL (target_state_ok (machine_config_target mc)) [ms; ms1; ms2] /\
               (!x. ~(x IN machine_config_prog_addresses mc) ==>
                    target_get_byte (machine_config_target mc) ms1 x =
@@ -116,7 +116,7 @@ let find_next_interference_def = cake_def_wf
          SOME (CcApp (target_get_reg (machine_config_target mc) ms (machine_config_ptr_reg mc))
                      (target_get_reg (machine_config_target mc) ms (machine_config_len_reg mc))
                      ms ms1,
-               machine_config_ccache_interfer_fupd (K new_oracle) mc,ffi)
+               machine_config_ccache_interfer_fupd (combin_K new_oracle) mc,ffi)
        else
          match find_index (target_get_pc (machine_config_target mc) ms)
                  (machine_config_ffi_entry_pcs mc) 0 with
@@ -151,7 +151,7 @@ let find_next_interference_def = cake_def_wf
                                              (ffi_index,new_bytes,ms) in
                                          SOME (FfiApp ffi_index new_bytes ms ms1,
                                                machine_config_ffi_interfer_fupd
-                                                 (K new_oracle) mc,
+                                                 (combin_K new_oracle) mc,
                                                new_ffi))
                                   else NONE))
                         | MappedWrite ->
@@ -183,7 +183,7 @@ let find_next_interference_def = cake_def_wf
                                              (ffi_index,new_bytes,ms) in
                                          SOME (FfiApp ffi_index new_bytes ms ms1,
                                                machine_config_ffi_interfer_fupd
-                                                 (K new_oracle) mc,
+                                                 (combin_K new_oracle) mc,
                                                new_ffi))
                                   else NONE))))
               | ExtCall _ ->
@@ -200,7 +200,7 @@ let find_next_interference_def = cake_def_wf
                                    apply_oracle (machine_config_ffi_interfer mc)
                                      (ffi_index,new_bytes,ms) in
                                  SOME (FfiApp ffi_index new_bytes ms ms1,
-                                       machine_config_ffi_interfer_fupd (K new_oracle) mc,
+                                       machine_config_ffi_interfer_fupd (combin_K new_oracle) mc,
                                        new_ffi))
                         | _ -> NONE)))`;;
 
@@ -388,7 +388,7 @@ let interference_app_seq_tail = prove
      SOME (app,mc',ffi') ==>
    !n. interference_app_seq mc ffi ms (SUC n) =
        interference_app_seq mc' ffi' (app_post app) n`,
-  DISCH_TAC THEN ASM_REWRITE_TAC[interference_app_seq_def] THEN CASE_REWRITE_TAC[]);;
+  DISCH_TAC THEN ASM_REWRITE_TAC[interference_app_seq_def] THEN CAKE_REWRITE_TAC[]);;
 
 let interference_count_mono = prove
  (`!i m. interference_count P (mc:(A,B,C)machine_config) (ffi:(FFI)ffi_state) (ms:B) m <=
@@ -404,7 +404,7 @@ let interference_count_lt = prove
   SUBGOAL_THEN `interference_count P (mc:(A,B,C)machine_config) (ffi:(FFI)ffi_state)
                   (ms:B) (SUC n) = interference_count P mc ffi ms n + 1`
     ASSUME_TAC THENL
-   [ASM_REWRITE_TAC[interference_count_def] THEN CASE_REWRITE_TAC[] THEN
+   [ASM_REWRITE_TAC[interference_count_def] THEN CAKE_REWRITE_TAC[] THEN
     ASM_REWRITE_TAC[];
     ALL_TAC] THEN
   SUBGOAL_THEN `?i. n2 = SUC n + i` (X_CHOOSE_THEN `i:num` SUBST1_TAC) THENL
@@ -433,7 +433,7 @@ let interference_count_tail = prove
        (if P app0 then 1 else 0) + interference_count P mcc ffic (app_post app0) n`,
   DISCH_TAC THEN INDUCT_TAC THENL
    [ASM_REWRITE_TAC[interference_count_def; interference_app_seq_def] THEN
-    CASE_REWRITE_TAC[] THEN ARITH_TAC;
+    CAKE_REWRITE_TAC[] THEN ARITH_TAC;
     ONCE_REWRITE_TAC[interference_count_def] THEN ASM_REWRITE_TAC[] THEN
     FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP interference_app_seq_tail th]) THEN
     ARITH_TAC]);;
@@ -516,14 +516,14 @@ let interference_pos_tail_miss = prove
 (* nothing changes                                                          *)
 
 let LABPROPSAUX_NORM_TAC thl =
-  REPEAT(CHANGED_TAC(ASM_REWRITE_TAC thl THEN CASE_REWRITE_TAC[]));;
+  REPEAT(CHANGED_TAC(ASM_REWRITE_TAC thl THEN CAKE_REWRITE_TAC[]));;
 
 (* a case split on OPTION_MAP f x is a case split on x *)
 
 let LABPROPSAUX_option_CASE_MAP = prove
  (`!(f:A->B) x (n:C) s. option_CASE (OPTION_MAP f x) n s = option_CASE x n (\y. s (f y))`,
   GEN_TAC THEN MATCH_MP_TAC option_INDUCT THEN REWRITE_TAC[OPTION_MAP_DEF] THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[]);;
 
 let constructed_oracles_ffi_step = prove
  (`next_interference (mc:(A,B,C)machine_config) (ffi:(FFI)ffi_state) (ms:B) =
@@ -669,7 +669,7 @@ let next_interference_ExtCall = prove
    call_FFI ffi (ExtCall name) bytes bytes2 = FFI_return new_ffi new_bytes ==>
    next_interference (mc:(A,B,C)machine_config) (ffi:(FFI)ffi_state) (ms:B) =
    SOME (FfiApp index new_bytes ms (machine_config_ffi_interfer mc 0 (index,new_bytes,ms)),
-         machine_config_ffi_interfer_fupd (K (shift_seq 1 (machine_config_ffi_interfer mc)))
+         machine_config_ffi_interfer_fupd (combin_K (shift_seq 1 (machine_config_ffi_interfer mc)))
            mc,
          new_ffi)`,
   STRIP_TAC THEN LABPROPSAUX_FNI_STEP_TAC);;
@@ -687,7 +687,7 @@ let next_interference_ccache = prove
                    target_get_reg (machine_config_target mc) ms (machine_config_len_reg mc),
                    ms)),
          machine_config_ccache_interfer_fupd
-           (K (shift_seq 1 (machine_config_ccache_interfer mc))) mc,
+           (combin_K (shift_seq 1 (machine_config_ccache_interfer mc))) mc,
          ffi)`,
   STRIP_TAC THEN LABPROPSAUX_FNI_STEP_TAC);;
 
@@ -712,7 +712,7 @@ let next_interference_MappedRead = prove
      FFI_return new_ffi new_bytes ==>
    next_interference (mc:(A,B,C)machine_config) (ffi:(FFI)ffi_state) (ms:B) =
    SOME (FfiApp index new_bytes ms (machine_config_ffi_interfer mc 0 (index,new_bytes,ms)),
-         machine_config_ffi_interfer_fupd (K (shift_seq 1 (machine_config_ffi_interfer mc)))
+         machine_config_ffi_interfer_fupd (combin_K (shift_seq 1 (machine_config_ffi_interfer mc)))
            mc,
          new_ffi)`,
   STRIP_TAC THEN ASM_CASES_TAC `nb:byte = word 0` THENL
@@ -744,7 +744,7 @@ let next_interference_MappedWrite = prove
      FFI_return new_ffi new_bytes ==>
    next_interference (mc:(A,B,C)machine_config) (ffi:(FFI)ffi_state) (ms:B) =
    SOME (FfiApp index new_bytes ms (machine_config_ffi_interfer mc 0 (index,new_bytes,ms)),
-         machine_config_ffi_interfer_fupd (K (shift_seq 1 (machine_config_ffi_interfer mc)))
+         machine_config_ffi_interfer_fupd (combin_K (shift_seq 1 (machine_config_ffi_interfer mc)))
            mc,
          new_ffi)`,
   STRIP_TAC THEN RULE_ASSUM_TAC(CONV_RULE(TOP_DEPTH_CONV let_CONV)) THEN
@@ -784,7 +784,7 @@ let next_interference_SharedMem = prove
       FFI_return new_ffi new_bytes) ==>
    next_interference (mc:(A,B,C)machine_config) (ffi:(FFI)ffi_state) (ms:B) =
    SOME (FfiApp index new_bytes ms (machine_config_ffi_interfer mc 0 (index,new_bytes,ms)),
-         machine_config_ffi_interfer_fupd (K (shift_seq 1 (machine_config_ffi_interfer mc)))
+         machine_config_ffi_interfer_fupd (combin_K (shift_seq 1 (machine_config_ffi_interfer mc)))
            mc,
          new_ffi)`,
   CASES_ON `op:shmem_op` THEN REWRITE_TAC[distinctness "shmem_op"] THEN STRIP_TAC THENL
@@ -814,7 +814,7 @@ let LABPROPSAUX_encoded_bytes_in_mem = prove
   ASM_SIMP_TAC[LENGTH_TAKE; LT_IMP_LE]);;
 
 let LABPROPSAUX_target_step = prove
- (`!(c:(A,B,C)machine_config) (io:(FFI)ffi_state) ms1 K.
+ (`!(c:(A,B,C)machine_config) (io:(FFI)ffi_state) ms1 combin_K.
      target_get_pc (machine_config_target c) ms1 IN
        (machine_config_prog_addresses c DIFF set_of_list (machine_config_ffi_entry_pcs c)) /\
      encoded_bytes_in_mem (target_config (machine_config_target c))
@@ -828,17 +828,17 @@ let LABPROPSAUX_target_step = prove
           target_get_byte (machine_config_target c) (target_next (machine_config_target c) ms1)
             x =
           target_get_byte (machine_config_target c) ms1 x)
-     ==> target_evaluate c io (SUC K) ms1 =
-         target_evaluate (shift_interfer 1 c) io K
+     ==> target_evaluate c io (SUC combin_K) ms1 =
+         target_evaluate (shift_interfer 1 c) io combin_K
            (machine_config_next_interfer c 0 (target_next (machine_config_target c) ms1)) /\
-         find_next_interference c io (SUC K) ms1 =
-         find_next_interference (shift_interfer 1 c) io K
+         find_next_interference c io (SUC combin_K) ms1 =
+         find_next_interference (shift_interfer 1 c) io combin_K
            (machine_config_next_interfer c 0 (target_next (machine_config_target c) ms1))`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN CONJ_TAC THENL
    [GEN_REWRITE_TAC LAND_CONV [target_evaluate_def];
     GEN_REWRITE_TAC LAND_CONV [find_next_interference_def]] THEN
   ASM_REWRITE_TAC[NOT_SUC; SUC_SUB1; apply_oracle_def; ALL; shift_interfer_def] THEN
-  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN CASE_REWRITE_TAC[] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN CAKE_REWRITE_TAC[] THEN
   SIMP[] THEN ASM_REWRITE_TAC[]);;
 
 (* the facts of the first step that the base case and the step case of   *)
@@ -1509,7 +1509,7 @@ let ffi_interfer_ok_post_ffi_asm = prove
    (EL index (machine_config_ffi_names mc_conf) = ExtCall (implode "") ==>
     new_bytes = bytes2) /\
    target_state_rel (machine_config_target mc_conf)
-     (asm_state_pc_fupd (K (word_add (word_neg (word ((3 + index) * ffi_offset))) pc)) t1)
+     (asm_state_pc_fupd (combin_K (word_add (word_neg (word ((3 + index) * ffi_offset))) pc)) t1)
      ms2 /\
    alignment_aligned
      (asm_config_code_alignment (target_config (machine_config_target mc_conf)))
@@ -1534,7 +1534,7 @@ let ffi_interfer_ok_post_ffi_asm = prove
 let ccache_interfer_ok_post_ccache_asm = prove
  (CASE_TERM `ccache_interfer_ok pc (mc_conf:(A,B,C)machine_config) /\
    target_state_rel (machine_config_target mc_conf)
-     (asm_state_pc_fupd (K (word_add (word_neg (word (2 * ffi_offset))) pc)) t1) (ms2:B) /\
+     (asm_state_pc_fupd (combin_K (word_add (word_neg (word (2 * ffi_offset))) pc)) t1) (ms2:B) /\
    alignment_aligned
      (asm_config_code_alignment (target_config (machine_config_target mc_conf)))
      (asm_state_regs t1

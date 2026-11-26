@@ -1287,7 +1287,7 @@ let bc_ref_inv_related = prove
                    (f,tf,heap1:(((A)word_loc,data_to_word_memoryProof_tag#
                                  ((A)word_loc)list)heap_element)list,be)` THEN
     REWRITE_TAC[bc_ref_inv_def; FLOOKUP_DEF] THEN COND_CASES_TAC THEN
-    ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[];
+    ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[];
     ALL_TAC] THEN
   SUBGOAL_THEN
    `FLOOKUP (f:(num,num)fmap) n = SOME (FAPPLY f n) /\
@@ -1297,10 +1297,10 @@ let bc_ref_inv_related = prove
   UNDISCH_TAC `bc_ref_inv conf n refs
                  (f,tf,heap1:(((A)word_loc,data_to_word_memoryProof_tag#
                                ((A)word_loc)list)heap_element)list,be)` THEN
-  ASM_REWRITE_TAC[bc_ref_inv_def] THEN CASE_REWRITE_TAC[] THEN
-  CASES_ON `lookup n (refs:(data_v bvl_ref)spt)` THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[bc_ref_inv_def] THEN CAKE_REWRITE_TAC[] THEN
+  CASES_ON `lookup n (refs:(data_v bvl_ref)spt)` THEN CAKE_REWRITE_TAC[] THEN
   STRUCT_CASES_TAC(ISPEC `a:data_v bvl_ref` (cases "bvl_ref")) THEN
-  CASE_REWRITE_TAC[LET_DEF; LET_END_DEF] THENL
+  CAKE_REWRITE_TAC[LET_DEF; LET_END_DEF] THENL
    [(* ValueArray *)
     DISCH_THEN(X_CHOOSE_THEN `zs:(((A)word_loc)heap_address)list` STRIP_ASSUME_TAC) THEN
     MP_TAC(ISPECL [`g:(num,num)fmap`;
@@ -1556,10 +1556,10 @@ let MP1AUX_bc_ref_inv_not_thunk = prove
      (!ev v. ~(lookup n refs = SOME (bvl_Thunk ev v))) /\
      heap_lookup (FAPPLY f n) heap = SOME (ThunkBlock ev x) ==> F`,
   REPEAT GEN_TAC THEN REWRITE_TAC[bc_ref_inv_def; FLOOKUP_DEF] THEN
-  COND_CASES_TAC THEN CASE_REWRITE_TAC[] THEN
-  CASES_ON `lookup n (refs:(data_v bvl_ref)spt)` THEN CASE_REWRITE_TAC[] THEN
+  COND_CASES_TAC THEN CAKE_REWRITE_TAC[] THEN
+  CASES_ON `lookup n (refs:(data_v bvl_ref)spt)` THEN CAKE_REWRITE_TAC[] THEN
   STRUCT_CASES_TAC(ISPEC `a:data_v bvl_ref` (cases "bvl_ref")) THEN
-  CASE_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
+  CAKE_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
   REWRITE_TAC[injectivity "bvl_ref"; option_INJ] THEN
   ASM_MESON_TAC[ThunkBlock_not_EQ; option_INJ]);;
 
@@ -1580,7 +1580,7 @@ let MP1AUX_reachable_refs_Thunk = prove
   MAP_EVERY EXISTS_TAC [`data_RefPtr b n`; `n:num`] THEN
   REWRITE_TAC[get_refs_def; MEM] THEN MATCH_MP_TAC RTC_TRANS_R THEN
   EXISTS_TAC `r:num` THEN ASM_REWRITE_TAC[ref_edge_def] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[get_refs_def; MAP; FLAT; APPEND_NIL] THEN ASM_MESON_TAC[]);;
 
 let MP1AUX_reachable_refs_RefPtr = prove
@@ -1822,7 +1822,7 @@ let MP1AUX_ref_edge_payload = prove
                       lookup n refs = SOME (MutBlock tg fin l c r))) ==>
      !x. MEM x (get_refs v) ==> ref_edge refs n x`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN ASM_REWRITE_TAC[ref_edge_def] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[get_refs_def; MEM_FLAT; MEM_MAP] THEN ASM_MESON_TAC[MEM]);;
 
 (* MP1AUX: reachability from a member of the stack *)
@@ -1877,11 +1877,11 @@ let MP1AUX_bc_ref_inv_inline = prove
   DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "H")
     (CONJUNCTS_THEN2 MP_TAC (LABEL_TAC "R"))) THEN
   REWRITE_TAC[bc_ref_inv_def] THEN
-  CASES_ON `FLOOKUP (f:(num,num)fmap) n` THEN CASE_REWRITE_TAC[] THEN
-  CASES_ON `lookup n (refs:(data_v bvl_ref)spt)` THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON `FLOOKUP (f:(num,num)fmap) n` THEN CAKE_REWRITE_TAC[] THEN
+  CASES_ON `lookup n (refs:(data_v bvl_ref)spt)` THEN CAKE_REWRITE_TAC[] THEN
   MP_TAC(ISPEC `a':data_v bvl_ref` (cases "bvl_ref")) THEN STRIP_TAC THEN
   FIRST_X_ASSUM SUBST_ALL_TAC THEN
-  CASE_REWRITE_TAC[LET_DEF; LET_END_DEF] THENL
+  CAKE_REWRITE_TAC[LET_DEF; LET_END_DEF] THENL
    [(* ValueArray *)
     DISCH_THEN(X_CHOOSE_THEN `zs:(((A)word_loc)heap_address)list` STRIP_ASSUME_TAC) THEN
     MP_TAC(ISPECL
@@ -2263,7 +2263,7 @@ let data_to_word_memoryProof_full_gc_thm = prove
   REWRITE_TAC[] THEN REPEAT CONJ_TAC THENL
    [ASM_REWRITE_TAC[];
     ASM_REWRITE_TAC[];
-    ASM_REWRITE_TAC[gc_kind_inv_def] THEN CASE_REWRITE_TAC[];
+    ASM_REWRITE_TAC[gc_kind_inv_def] THEN CAKE_REWRITE_TAC[];
     REWRITE_TAC[unused_space_inv_def; ADD_CLAUSES; MP1AUX_heap_lookup_heap_length;
                 heap_length_APPEND; gc_shared_heap_length_heap_expand;
                 data_up_to_APPEND; LE_REFL] THEN
@@ -2323,10 +2323,10 @@ let gc_move_data_refs_split = prove
   REWRITE_TAC[gen_gc_gc_move_def; LET_DEF; LET_END_DEF] THEN REPEAT GEN_TAC THENL
    [ALL_TAC; MP1AUX_SPLIT_LEAF_TAC] THEN
   CASES_ON `heap_lookup a0 (gc_state_heap (s:(A,data_to_word_memoryProof_tag#B)gc_state))` THEN
-  CASE_REWRITE_TAC[] THENL [MP1AUX_SPLIT_LEAF_TAC; ALL_TAC] THEN
+  CAKE_REWRITE_TAC[] THENL [MP1AUX_SPLIT_LEAF_TAC; ALL_TAC] THEN
   STRUCT_CASES_TAC(ISPEC `a:(A,data_to_word_memoryProof_tag#B)heap_element`
                          (cases "heap_element")) THEN
-  CASE_REWRITE_TAC[] THENL [MP1AUX_SPLIT_LEAF_TAC; MP1AUX_SPLIT_LEAF_TAC; ALL_TAC] THEN
+  CAKE_REWRITE_TAC[] THENL [MP1AUX_SPLIT_LEAF_TAC; MP1AUX_SPLIT_LEAF_TAC; ALL_TAC] THEN
   COND_CASES_TAC THEN PAIRARG_TAC THEN MP1AUX_SPLIT_LEAF_TAC);;
 
 (* HOL4 line 1337 *)
@@ -2383,13 +2383,13 @@ let gc_move_refs_data_refs_split = prove
     (X_CHOOSE_THEN `h:(A,data_to_word_memoryProof_tag#B)heap_element`
       (X_CHOOSE_THEN `t:((A,data_to_word_memoryProof_tag#B)heap_element)list`
         (fun th -> REWRITE_TAC[th] THEN ASSUME_TAC th)))) THEN
-  CASE_REWRITE_TAC[] THENL
+  CAKE_REWRITE_TAC[] THENL
    [REWRITE_TAC[gc_state_FIELDS.ri_accfupds; K_THM; ALL_APPEND; ALL] THEN
     RULE_ASSUM_TAC(REWRITE_RULE[ALL_APPEND; ALL]) THEN ASM_REWRITE_TAC[];
     ALL_TAC] THEN
   MP_TAC(ISPEC `h:(A,data_to_word_memoryProof_tag#B)heap_element`
                (cases "heap_element")) THEN
-  STRIP_TAC THEN FIRST_X_ASSUM SUBST_ALL_TAC THEN CASE_REWRITE_TAC[] THENL
+  STRIP_TAC THEN FIRST_X_ASSUM SUBST_ALL_TAC THEN CAKE_REWRITE_TAC[] THENL
    [REWRITE_TAC[gc_state_FIELDS.ri_accfupds; K_THM] THEN ASM_REWRITE_TAC[];
     REWRITE_TAC[gc_state_FIELDS.ri_accfupds; K_THM] THEN ASM_REWRITE_TAC[];
     ALL_TAC] THEN
@@ -2443,13 +2443,13 @@ let gc_move_data_data_refs_split = prove
     (X_CHOOSE_THEN `h:(A,data_to_word_memoryProof_tag#B)heap_element`
       (X_CHOOSE_THEN `t:((A,data_to_word_memoryProof_tag#B)heap_element)list`
         (fun th -> REWRITE_TAC[th] THEN ASSUME_TAC th)))) THEN
-  CASE_REWRITE_TAC[] THENL [ASM_REWRITE_TAC[]; ALL_TAC] THEN
+  CAKE_REWRITE_TAC[] THENL [ASM_REWRITE_TAC[]; ALL_TAC] THEN
   COND_CASES_TAC THENL
    [REWRITE_TAC[gc_state_FIELDS.ri_accfupds; K_THM] THEN ASM_REWRITE_TAC[];
     ALL_TAC] THEN
   MP_TAC(ISPEC `h:(A,data_to_word_memoryProof_tag#B)heap_element`
                (cases "heap_element")) THEN
-  STRIP_TAC THEN FIRST_X_ASSUM SUBST_ALL_TAC THEN CASE_REWRITE_TAC[] THENL
+  STRIP_TAC THEN FIRST_X_ASSUM SUBST_ALL_TAC THEN CAKE_REWRITE_TAC[] THENL
    [REWRITE_TAC[gc_state_FIELDS.ri_accfupds; K_THM] THEN ASM_REWRITE_TAC[];
     REWRITE_TAC[gc_state_FIELDS.ri_accfupds; K_THM] THEN ASM_REWRITE_TAC[];
     ALL_TAC] THEN
@@ -2491,11 +2491,11 @@ let MP1AUX_gc_move_loop_steps = prove
      ALL isRef (APPEND (APPEND (APPEND (gc_state_r1 s) (gc_state_r2 s))
                                (gc_state_r3 s)) (gc_state_r4 s)) ==>
      (!s'. s' = gen_gc_gc_move_data cc s \/
-           s' = gc_move_refs cc (gc_state_r4_fupd (K [])
-                  (gc_state_r2_fupd (K (gc_state_r4 s)) s)) \/
-           s' = gc_state_ok_fupd (K F) (gen_gc_gc_move_data cc s) \/
-           s' = gc_state_ok_fupd (K F) (gc_move_refs cc (gc_state_r4_fupd (K [])
-                  (gc_state_r2_fupd (K (gc_state_r4 s)) s))) ==>
+           s' = gc_move_refs cc (gc_state_r4_fupd (combin_K [])
+                  (gc_state_r2_fupd (combin_K (gc_state_r4 s)) s)) \/
+           s' = gc_state_ok_fupd (combin_K F) (gen_gc_gc_move_data cc s) \/
+           s' = gc_state_ok_fupd (combin_K F) (gc_move_refs cc (gc_state_r4_fupd (combin_K [])
+                  (gc_state_r2_fupd (combin_K (gc_state_r4 s)) s))) ==>
            ALL isDataElement (APPEND (gc_state_h1 s') (gc_state_h2 s')) /\
            ALL (\x. ~isRef x) (APPEND (gc_state_h1 s') (gc_state_h2 s')) /\
            ALL isRef (APPEND (APPEND (APPEND (gc_state_r1 s') (gc_state_r2 s'))
@@ -2507,11 +2507,11 @@ let MP1AUX_gc_move_loop_steps = prove
                    (s:(A,data_to_word_memoryProof_tag#B)gc_state)`]
                gc_move_data_data_refs_split) THEN
   MP_TAC(SPECL [`cc:(data_to_word_memoryProof_tag#B)gen_gc_conf`;
-                `gc_state_r4_fupd (K []) (gc_state_r2_fupd
-                   (K (gc_state_r4 (s:(A,data_to_word_memoryProof_tag#B)gc_state))) s)`;
+                `gc_state_r4_fupd (combin_K []) (gc_state_r2_fupd
+                   (combin_K (gc_state_r4 (s:(A,data_to_word_memoryProof_tag#B)gc_state))) s)`;
                 `gc_move_refs (cc:(data_to_word_memoryProof_tag#B)gen_gc_conf)
-                   (gc_state_r4_fupd (K []) (gc_state_r2_fupd
-                     (K (gc_state_r4 (s:(A,data_to_word_memoryProof_tag#B)gc_state))) s))`]
+                   (gc_state_r4_fupd (combin_K []) (gc_state_r2_fupd
+                     (combin_K (gc_state_r4 (s:(A,data_to_word_memoryProof_tag#B)gc_state))) s))`]
                gc_move_refs_data_refs_split) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[ALL_APPEND]) THEN
   ASM_REWRITE_TAC[gc_state_FIELDS.ri_accfupds; K_THM; ALL_APPEND; ALL] THEN
@@ -2548,9 +2548,9 @@ let gc_move_loop_data_refs_split = prove
   FIRST_ASSUM(ASSUME_TAC o MATCH_MP MP1AUX_gc_move_loop_steps) THEN
   ONCE_REWRITE_TAC[gen_gc_gc_move_loop_def] THEN
   CASES_ON `gc_state_r4 (s:(A,data_to_word_memoryProof_tag#B)gc_state)` THEN
-  CASE_REWRITE_TAC[] THENL
+  CAKE_REWRITE_TAC[] THENL
    [CASES_ON `gc_state_h2 (s:(A,data_to_word_memoryProof_tag#B)gc_state)` THEN
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[LET_DEF; LET_END_DEF] THENL
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[LET_DEF; LET_END_DEF] THENL
      [ASM_REWRITE_TAC[];
       FIRST_X_ASSUM(MATCH_MP_TAC o check (is_forall o concl)) THEN REWRITE_TAC[]];
     MP1AUX_REWRITE_ASMS_WITH
@@ -2558,7 +2558,7 @@ let gc_move_loop_data_refs_split = prove
     REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
     FIRST_X_ASSUM(MATCH_MP_TAC o check (is_forall o concl)) THEN REWRITE_TAC[];
     CASES_ON `gc_state_h2 (s:(A,data_to_word_memoryProof_tag#B)gc_state)` THEN
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[LET_DEF; LET_END_DEF; SUC_SUB1] THENL
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[LET_DEF; LET_END_DEF; SUC_SUB1] THENL
      [ASM_REWRITE_TAC[];
       FIRST_X_ASSUM(MATCH_MP_TAC o check (fun th -> is_forall(concl th) &&
         is_forall(snd(dest_forall(concl th))))) THEN
@@ -2586,11 +2586,11 @@ let gen_gc_data_refs_split = prove
   PAIRARG_TAC THEN REWRITE_TAC[LET_DEF; LET_END_DEF; PAIR_EQ] THEN STRIP_TAC THEN
   MP_TAC(SPECL [`cc:(data_to_word_memoryProof_tag#B)gen_gc_conf`;
                 `roots:(A heap_address)list`; `roots':(A heap_address)list`;
-                `gc_state_ok_fupd (K (heap_length
+                `gc_state_ok_fupd (combin_K (heap_length
                    (heap:((A,data_to_word_memoryProof_tag#B)heap_element)list) =
                    gen_gc_conf_limit (cc:(data_to_word_memoryProof_tag#B)gen_gc_conf)))
-                   (gc_state_n_fupd (K (gen_gc_conf_limit cc))
-                   (gc_state_heap_fupd (K heap) empty_state))`;
+                   (gc_state_n_fupd (combin_K (gen_gc_conf_limit cc))
+                   (gc_state_heap_fupd (combin_K heap) empty_state))`;
                 `state':(A,data_to_word_memoryProof_tag#B)gc_state`]
          gc_move_list_data_refs_split) THEN
   ASM_REWRITE_TAC[empty_state_def; gc_state_FIELDS.ri_accfupds;
@@ -2620,7 +2620,7 @@ let heap_expand_not_isRef = prove
 let reset_gens_def = cake_def
   `reset_gens conf a =
      match data_to_word_config_gc_kind conf with
-       Generational sizes -> GenState 0 (MAP (K a) sizes)
+       Generational sizes -> GenState 0 (MAP (combin_K a) sizes)
      | _ -> GenState 0 []`;;
 
 (* HOL4 line 1449 *)
@@ -2630,7 +2630,7 @@ let gen_state_ok_reset = prove
      gen_state_ok (heap_length h) (n + heap_length h)
        (APPEND (APPEND h (heap_expand n)) r) (reset_gens conf (heap_length h))`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN REWRITE_TAC[reset_gens_def] THEN
-  CASES_ON `data_to_word_config_gc_kind conf` THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON `data_to_word_config_gc_kind conf` THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[gen_state_ok_def; ALL; EVERY_MAP; K_THM; LE_REFL; ALL_T] THEN
   SUBGOAL_THEN
    `gen_start_ok (APPEND (APPEND h (heap_expand n)) (r:((A,B)heap_element)list))
@@ -2704,7 +2704,7 @@ let data_to_word_memoryProof_gen_gc_thm = prove
   RULE_ASSUM_TAC(REWRITE_RULE[ALL_APPEND]) THEN
   ASM_REWRITE_TAC[] THEN REPEAT CONJ_TAC THENL
    [REWRITE_TAC[gc_kind_inv_def] THEN
-  CASES_ON `data_to_word_config_gc_kind conf` THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON `data_to_word_config_gc_kind conf` THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[ADD_CLAUSES] THEN CONJ_TAC THENL
    [ONCE_REWRITE_TAC[ADD_SYM] THEN MATCH_MP_TAC gen_state_ok_reset THEN
     EXISTS_TAC `limit:num` THEN ASM_REWRITE_TAC[];
@@ -2862,7 +2862,7 @@ let gen_gc_partial_thm = prove
   FIRST_X_ASSUM(MP_TAC o check (fun th -> is_comb(concl th) &&
     can (find_term (fun t -> try fst(dest_const t) = "gen_state_ok"
                              with Failure _ -> false)) (concl th))) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[gen_state_ok_def; ALL] THEN STRIP_TAC THEN
   ABBREV_TAC `cc = make_partial_conf (make_gc_conf limit:(data_to_word_memoryProof_tag#
                      ((A)word_loc)list)gen_gc_conf) (GenState a0 (CONS h t)) (a + sp + sp1)` THEN
@@ -2946,11 +2946,11 @@ let gen_gc_partial_thm = prove
                      SOME (ha,hb:(((A)word_loc,data_to_word_memoryProof_tag#
                                   ((A)word_loc)list)heap_element)list)` THEN
         REWRITE_TAC[heap_segment_def] THEN
-        DISCH_THEN(fun th -> REWRITE_TAC[th]) THEN CASE_REWRITE_TAC[] THEN
+        DISCH_THEN(fun th -> REWRITE_TAC[th]) THEN CAKE_REWRITE_TAC[] THEN
         DISCH_THEN(fun th -> REWRITE_TAC[th]) THEN
         SUBGOAL_THEN `~(a + sp + sp1 < h)` (fun th -> REWRITE_TAC[th]) THENL
          [ASM_ARITH_TAC; ALL_TAC] THEN
-        CASE_REWRITE_TAC[];
+        CAKE_REWRITE_TAC[];
         ALL_TAC] THEN
       SUBGOAL_THEN `APPEND (APPEND ha m') hy = heap:(((A)word_loc,
                       data_to_word_memoryProof_tag#((A)word_loc)list)heap_element)list`
@@ -2992,11 +2992,11 @@ let gen_gc_partial_thm = prove
                      SOME (ha,hb:(((A)word_loc,data_to_word_memoryProof_tag#
                                   ((A)word_loc)list)heap_element)list)` THEN
         REWRITE_TAC[heap_segment_def] THEN
-        DISCH_THEN(fun th -> REWRITE_TAC[th]) THEN CASE_REWRITE_TAC[] THEN
+        DISCH_THEN(fun th -> REWRITE_TAC[th]) THEN CAKE_REWRITE_TAC[] THEN
         DISCH_THEN(fun th -> REWRITE_TAC[th]) THEN
         SUBGOAL_THEN `~(a + sp + sp1 < h)` (fun th -> REWRITE_TAC[th]) THENL
          [ASM_ARITH_TAC; ALL_TAC] THEN
-        CASE_REWRITE_TAC[];
+        CAKE_REWRITE_TAC[];
         ALL_TAC] THEN
   MP_TAC(ISPECL [`roots:(((A)word_loc)heap_address)list`;
     `heap:(((A)word_loc,data_to_word_memoryProof_tag#((A)word_loc)list)heap_element)list`;
@@ -3027,7 +3027,7 @@ let gen_gc_partial_thm = prove
   EXISTS_TAC `heap:(((A)word_loc,data_to_word_memoryProof_tag#((A)word_loc)list)heap_element)list` THEN
   ASM_REWRITE_TAC[];
     (* gc_kind_inv *)
-    REWRITE_TAC[gc_kind_inv_def] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[gc_kind_inv_def] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[ADD_CLAUSES; GSYM heap_length_APPEND] THEN CONJ_TAC THENL
    [ONCE_REWRITE_TAC[ADD_SYM] THEN MATCH_MP_TAC gen_state_ok_reset THEN
     EXISTS_TAC `gen_gc_partial_conf_limit (cc:(data_to_word_memoryProof_tag#((A)word_loc)list)gen_gc_partial_conf)` THEN
@@ -3175,7 +3175,7 @@ let data_length_heap_length = prove
   REWRITE_TAC[data_length_def; data_pointers_def; MAP; SUM;
               MP1AUX_SUM_lookup_len_CONS] THEN
   REWRITE_TAC[GSYM data_length_def] THEN ASM_REWRITE_TAC[] THEN
-  REWRITE_TAC[lookup_len_def; heap_lookup_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[lookup_len_def; heap_lookup_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[heap_length_def; MAP; SUM]);;
 
 (* HOL4 line 1773 *)
@@ -3185,7 +3185,7 @@ let data_length_CONS = prove
   STRUCT_CASES_TAC(ISPEC `x:(A,B)heap_element` (cases "heap_element")) THEN
   REWRITE_TAC[data_length_def; data_pointers_def; MAP; SUM;
               MP1AUX_SUM_lookup_len_CONS; ADD_CLAUSES] THEN
-  REWRITE_TAC[lookup_len_def; heap_lookup_def] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[lookup_len_def; heap_lookup_def] THEN CAKE_REWRITE_TAC[]);;
 
 (* HOL4 line 1783 *)
 let data_length_APPEND = prove
@@ -3228,14 +3228,14 @@ let gc_combined_thm = prove
     `gens:gen_state`; `0`; `0`] THEN REWRITE_TAC[] THEN
   UNDISCH_TAC `abs_ml_inv conf stack refs (roots,heap:(((A)word_loc,data_to_word_memoryProof_tag#((A)word_loc)list)heap_element)list,be,a,sp,sp1,gens) limit ts` THEN
   REWRITE_TAC[abs_ml_inv_def; unused_space_inv_def; gc_kind_inv_def; data_up_to_def] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   STRIP_TAC THEN ASM_REWRITE_TAC[LE_0; ADD_CLAUSES; heap_split_0; option_INJ; PAIR_EQ] THEN
   MESON_TAC[ALL];
     (* data_to_word_Simple *)
     FIRST_ASSUM(MP_TAC o MATCH_MP (REWRITE_RULE[IMP_CONJ] data_to_word_memoryProof_full_gc_thm) o
     check (MP1AUX_HEAD "abs_ml_inv")) THEN
   ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
-  ASM_REWRITE_TAC[MP1AUX_make_gc_conf] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[MP1AUX_make_gc_conf] THEN CAKE_REWRITE_TAC[] THEN
   MAP_EVERY EXISTS_TAC [`roots2:(((A)word_loc)heap_address)list`;
     `APPEND heap2 (heap_expand (limit - a2)):(((A)word_loc,data_to_word_memoryProof_tag#((A)word_loc)list)heap_element)list`;
     `gens:gen_state`; `limit - a2:num`; `a2:num`] THEN
@@ -3252,28 +3252,28 @@ let gc_combined_thm = prove
     `be:bool`; `a:num`; `sp:num`; `sp1:num`; `gens:gen_state`; `limit:num`; `ts:num`;
     `a':num list`] gen_gc_partial_thm) THEN
   ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
       FIRST_X_ASSUM(MP_TAC o check (fun th -> MP1AUX_HEAD "abs_ml_inv" th &&
     can (find_term (fun t -> try fst(dest_var t) = "state2" with Failure _ -> false)) (concl th))) THEN
-  ASM_REWRITE_TAC[reset_gens_def] THEN CASE_REWRITE_TAC[] THEN DISCH_TAC THEN
+  ASM_REWRITE_TAC[reset_gens_def] THEN CAKE_REWRITE_TAC[] THEN DISCH_TAC THEN
   MAP_EVERY EXISTS_TAC [`roots2:(((A)word_loc)heap_address)list`;
     `APPEND (APPEND (APPEND (gc_state_old state2) (gc_state_h1 state2))
        (heap_expand (gc_state_n state2))) (gc_state_r1 (state2:(((A)word_loc,data_to_word_memoryProof_tag#((A)word_loc)list)gc_state)))`;
-    `GenState 0 (MAP (K (gc_state_a (state2:(((A)word_loc,data_to_word_memoryProof_tag#((A)word_loc)list)gc_state)))) (a':num list))`;
+    `GenState 0 (MAP (combin_K (gc_state_a (state2:(((A)word_loc,data_to_word_memoryProof_tag#((A)word_loc)list)gc_state)))) (a':num list))`;
     `gc_state_n (state2:(((A)word_loc,data_to_word_memoryProof_tag#((A)word_loc)list)gc_state))`;
     `gc_state_a (state2:(((A)word_loc,data_to_word_memoryProof_tag#((A)word_loc)list)gc_state))`] THEN
   ASM_REWRITE_TAC[];
       (* full generational *)
       FIRST_ASSUM(MP_TAC o MATCH_MP data_to_word_memoryProof_gen_gc_thm o
     check (MP1AUX_HEAD "abs_ml_inv")) THEN STRIP_TAC THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   FIRST_X_ASSUM(MP_TAC o check (fun th -> MP1AUX_HEAD "abs_ml_inv" th &&
     can (find_term (fun t -> try fst(dest_var t) = "state2" with Failure _ -> false)) (concl th))) THEN
-  ASM_REWRITE_TAC[reset_gens_def] THEN CASE_REWRITE_TAC[] THEN DISCH_TAC THEN
+  ASM_REWRITE_TAC[reset_gens_def] THEN CAKE_REWRITE_TAC[] THEN DISCH_TAC THEN
   MAP_EVERY EXISTS_TAC [`roots2:(((A)word_loc)heap_address)list`;
     `APPEND (APPEND (gc_state_h1 state2) (heap_expand (gc_state_n state2)))
        (gc_state_r1 (state2:(((A)word_loc,data_to_word_memoryProof_tag#((A)word_loc)list)gc_state)))`;
-    `GenState 0 (MAP (K (gc_state_a (state2:(((A)word_loc,data_to_word_memoryProof_tag#((A)word_loc)list)gc_state)))) (a':num list))`;
+    `GenState 0 (MAP (combin_K (gc_state_a (state2:(((A)word_loc,data_to_word_memoryProof_tag#((A)word_loc)list)gc_state)))) (a':num list))`;
     `gc_state_n (state2:(((A)word_loc,data_to_word_memoryProof_tag#((A)word_loc)list)gc_state))`;
     `gc_state_a (state2:(((A)word_loc,data_to_word_memoryProof_tag#((A)word_loc)list)gc_state))`] THEN
   ASM_REWRITE_TAC[] THEN
@@ -4019,7 +4019,7 @@ let list_to_BlockReps_heap_length = prove
   GEN_TAC THEN ONCE_REWRITE_TAC[list_to_BlockReps_def] THEN
   MP_TAC(ISPEC `t:(((A)word_loc)heap_address)list` list_CASES) THEN
     STRIP_TAC THEN FIRST_X_ASSUM SUBST_ALL_TAC THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[GC1AUX_heap_length_CONS; heap_length_NIL; BlockRep_def;
               el_length_def; LENGTH] THEN
   ASM_SIMP_TAC[NOT_CONS_NIL; LENGTH] THEN ARITH_TAC);;
@@ -4044,7 +4044,7 @@ let list_to_BlockReps_heap_lookup_0 = prove
   ONCE_REWRITE_TAC[list_to_BlockReps_def] THEN
   MP_TAC(ISPEC `t:(((A)word_loc)heap_address)list` list_CASES) THEN
     STRIP_TAC THEN FIRST_X_ASSUM SUBST_ALL_TAC THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[heap_lookup_def; isSomeDataElement_def; BlockRep_def; option_INJ;
               injectivity "heap_element"] THEN
   MESON_TAC[]);;
@@ -4060,7 +4060,7 @@ let list_to_BlockReps_isDataElement = prove
   REPEAT GEN_TAC THEN ONCE_REWRITE_TAC[list_to_BlockReps_def] THEN
   MP_TAC(ISPEC `t:(((A)word_loc)heap_address)list` list_CASES) THEN
     STRIP_TAC THEN FIRST_X_ASSUM SUBST_ALL_TAC THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[ALL; isDataElement_lemmas] THEN
   FIRST_X_ASSUM MATCH_MP_TAC THEN REWRITE_TAC[NOT_CONS_NIL]);;
 
@@ -4111,7 +4111,7 @@ let list_to_BlockReps_Ref = prove
   REPEAT GEN_TAC THEN ONCE_REWRITE_TAC[list_to_BlockReps_def] THEN
   MP_TAC(ISPEC `t:(((A)word_loc)heap_address)list` list_CASES) THEN
     STRIP_TAC THEN FIRST_X_ASSUM SUBST_ALL_TAC THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[ALL; BlockRep_def; isRef_def; isMutTag_def;
               distinctness "data_to_word_memoryProof_tag"] THEN
   FIRST_X_ASSUM MATCH_MP_TAC THEN REWRITE_TAC[NOT_CONS_NIL]);;
@@ -4127,7 +4127,7 @@ let list_to_BlockReps_NULL = prove
   REWRITE_TAC[NOT_CONS_NIL] THEN ONCE_REWRITE_TAC[list_to_BlockReps_def] THEN
   MP_TAC(ISPEC `t:(((A)word_loc)heap_address)list` list_CASES) THEN
     STRIP_TAC THEN FIRST_X_ASSUM SUBST_ALL_TAC THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[NOT_CONS_NIL]);;
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[NOT_CONS_NIL]);;
 
 (* HOL4 line 2392 *)
 let list_to_BlockReps_MEM = prove
@@ -4142,7 +4142,7 @@ let list_to_BlockReps_MEM = prove
   REPEAT GEN_TAC THEN ONCE_REWRITE_TAC[list_to_BlockReps_def] THEN
   MP_TAC(ISPEC `t:(((A)word_loc)heap_address)list` list_CASES) THEN
     STRIP_TAC THEN FIRST_X_ASSUM SUBST_ALL_TAC THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[MEM] THEN MESON_TAC[]);;
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[MEM] THEN MESON_TAC[]);;
 
 (* HOL4 line 2403 *)
 let list_to_BlockReps_Pointer_lem = prove
@@ -4161,7 +4161,7 @@ let list_to_BlockReps_Pointer_lem = prove
   (GEN_TAC THEN GEN_TAC THEN LIST_INDUCT_TAC THEN REWRITE_TAC[NOT_CONS_NIL] THEN
   REPEAT GEN_TAC THEN ONCE_REWRITE_TAC[list_to_BlockReps_def] THEN
   MP_TAC(ISPEC `t:(((A)word_loc)heap_address)list` list_CASES) THEN
-  STRIP_TAC THEN FIRST_X_ASSUM SUBST_ALL_TAC THEN CASE_REWRITE_TAC[] THENL
+  STRIP_TAC THEN FIRST_X_ASSUM SUBST_ALL_TAC THEN CAKE_REWRITE_TAC[] THENL
    [REWRITE_TAC[MEM; BlockRep_def; injectivity "heap_element"] THEN STRIP_TAC THEN
     UNDISCH_TAC `MEM (Pointer ptr u) (ys:(((A)word_loc)heap_address)list)` THEN
     ASM_REWRITE_TAC[MEM] THEN MESON_TAC[];
@@ -4410,7 +4410,7 @@ let v_inv_list_to_v_lem = prove
                 [BlockRep cons_tag [r; rt]:((A)word_loc,data_to_word_memoryProof_tag#
                                             ((A)word_loc)list)heap_element]`
     (fun th -> RULE_ASSUM_TAC(REWRITE_RULE[th]) THEN REWRITE_TAC[th]) THENL
-   [ONCE_REWRITE_TAC[list_to_BlockReps_def] THEN CASE_REWRITE_TAC[]; ALL_TAC] THEN
+   [ONCE_REWRITE_TAC[list_to_BlockReps_def] THEN CAKE_REWRITE_TAC[]; ALL_TAC] THEN
   SUBGOAL_THEN `heap_length [BlockRep cons_tag [r; rt]:((A)word_loc,
                   data_to_word_memoryProof_tag#((A)word_loc)list)heap_element] = 3`
     (fun th -> RULE_ASSUM_TAC(REWRITE_RULE[th]) THEN REWRITE_TAC[th] THEN
@@ -4473,7 +4473,7 @@ let v_inv_list_to_v_lem = prove
                      (hm:(((A)word_loc,data_to_word_memoryProof_tag#((A)word_loc)list)
                           heap_element)list)` (fun th -> RULE_ASSUM_TAC(REWRITE_RULE[th]) THEN
                                      REWRITE_TAC[th]) THENL
-   [ONCE_REWRITE_TAC[list_to_BlockReps_def] THEN CASE_REWRITE_TAC[] THEN
+   [ONCE_REWRITE_TAC[list_to_BlockReps_def] THEN CAKE_REWRITE_TAC[] THEN
     ASM_REWRITE_TAC[];
     ALL_TAC] THEN
   SUBGOAL_THEN `el_length (B1:((A)word_loc,data_to_word_memoryProof_tag#

@@ -97,7 +97,7 @@ let poplistval_def = cake_def
      match poplist_aux [] l with (values,rest) -> CONS (SOME (f values)) rest`;;
 
 let evalcase_INDUCT,evalcase_RECURSION = cake_type
-  "evalcase = EV ((A,B,C,E)pegsym) ((A # locs) list) ((C option) list)
+  "evalcase = pegexec_EV ((A,B,C,E)pegsym) ((A # locs) list) ((C option) list)
                  ((locs # E) option) ((locs # E) list)
                  ((A,B,C,E)kont) ((A,B,C,E)kont)
             | AP ((A,B,C,E)kont) ((A # locs) list) ((C option) list)
@@ -119,13 +119,13 @@ let coreloop_def = cake_def
  `coreloop (G:(A,B,C,E)peg) =
    OWHILE (\s:(A,B,C,E)evalcase. match s with Result u1 -> F | u2 -> T)
     (\s. match s with
-       EV (empty v) i r eo errs k fk -> AP k i (CONS (SOME v) r) eo errs
-     | EV (peg_any tf) i r eo errs k fk ->
+       pegexec_EV (empty v) i r eo errs k fk -> AP k i (CONS (SOME v) r) eo errs
+     | pegexec_EV (peg_any tf) i r eo errs k fk ->
          (match i with
             [] -> (let err = (Locs EOFpt EOFpt, peg_anyEOF G)
                    in AP fk i r (optmax MAXerr eo (SOME err)) (CONS err errs))
           | CONS h t -> AP k t (CONS (SOME (tf h)) r) eo errs)
-     | EV (peg_tok P tf2) i r eo errs k fk ->
+     | pegexec_EV (peg_tok P tf2) i r eo errs k fk ->
          (match i with
             [] -> (let err = (Locs EOFpt EOFpt, peg_tokEOF G)
                    in AP fk i r (optmax MAXerr eo (SOME err)) (CONS err errs))
@@ -133,25 +133,25 @@ let coreloop_def = cake_def
               if P (FST h) then AP k t (CONS (SOME (tf2 h)) r) eo errs
               else (let err = (peg_sloc i, peg_tokFALSE G)
                     in AP fk i r (optmax MAXerr eo (SOME err)) (CONS err errs)))
-     | EV (peg_nt n tf3) i r eo errs k fk ->
+     | pegexec_EV (peg_nt n tf3) i r eo errs k fk ->
          if n IN FDOM (peg_rules G)
-         then EV (FAPPLY (peg_rules G) n) i r eo errs (appf1 tf3 k) fk
+         then pegexec_EV (FAPPLY (peg_rules G) n) i r eo errs (appf1 tf3 k) fk
          else Looped
-     | EV (peg_seq e1 e2 f) i r eo errs k fk ->
-         EV e1 i r eo errs
+     | pegexec_EV (peg_seq e1 e2 f) i r eo errs k fk ->
+         pegexec_EV e1 i r eo errs
             (restoreEO eo (ksym e2 (appf2 f k) (cmpEO eo (returnTo i r fk))))
             fk
-     | EV (choice e1 e2 cf) i r eo errs k fk ->
-         EV e1 i r eo errs (appf1 (cf o INL) k)
+     | pegexec_EV (choice e1 e2 cf) i r eo errs k fk ->
+         pegexec_EV e1 i r eo errs (appf1 (cf o INL) k)
             (returnTo i r (ksym e2 (dropErr (appf1 (cf o INR) k)) (cmpErrs fk)))
-     | EV (peg_rpt e lf) i r eo errs k fk ->
-         EV e i (CONS NONE r) eo errs (restoreEO eo (listsym e lf k))
+     | pegexec_EV (peg_rpt e lf) i r eo errs k fk ->
+         pegexec_EV e i (CONS NONE r) eo errs (restoreEO eo (listsym e lf k))
             (poplist lf k)
-     | EV (peg_not e v) i r eo errs k fk ->
-         EV e i r eo errs
+     | pegexec_EV (peg_not e v) i r eo errs k fk ->
+         pegexec_EV e i r eo errs
             (restoreEO eo (returnTo i r (addErr (peg_sloc i) (peg_notFAIL G) fk)))
             (restoreEO eo (returnTo i (CONS (SOME v) r) (dropErr k)))
-     | EV (peg_error err0) i r eo errs k fk ->
+     | pegexec_EV (peg_error err0) i r eo errs k fk ->
          (let err = (peg_sloc i, err0)
           in AP fk i r (optmax MAXerr eo (SOME err)) (CONS err errs))
      | AP pegexec_done i [] u3 u4 -> Looped
@@ -171,7 +171,7 @@ let coreloop_def = cake_def
      | AP (cmpEO eo1 k) i r eo2 [] -> Looped
      | AP (cmpEO eo1 k) i r eo2 (CONS (l,err) rest) ->
          AP k i r (optmax MAXerr eo1 (SOME (l,err))) (CONS (l,err) rest)
-     | AP (ksym e k fk) i r eo errs -> EV e i r eo errs k fk
+     | AP (ksym e k fk) i r eo errs -> pegexec_EV e i r eo errs k fk
      | AP (appf1 f1 k) i (CONS (SOME v) r) eo errs ->
          AP k i (CONS (SOME (f1 v)) r) eo errs
      | AP (appf1 u18 u19) u20 u21 u22 u23 -> Looped
@@ -181,7 +181,7 @@ let coreloop_def = cake_def
      | AP (returnTo i r k) i' r' eo errs -> AP k i r eo errs
      | AP (restoreEO eo k) i r eo' errs -> AP k i r eo errs
      | AP (listsym e f k) i r eo errs ->
-         EV e i r eo errs (restoreEO eo (listsym e f k)) (poplist f k)
+         pegexec_EV e i r eo errs (restoreEO eo (listsym e f k)) (poplist f k)
      | AP (poplist f k) i r eo [] -> Looped
      | AP (poplist f k) i r eo (CONS e errs) ->
          AP k i (poplistval f r) eo errs
@@ -190,7 +190,7 @@ let coreloop_def = cake_def
 
 let peg_exec_def = cake_def
   `peg_exec (G:(A,B,C,E)peg) e i r eo errs k fk =
-     match coreloop G (EV e i r eo errs k fk) with
+     match coreloop G (pegexec_EV e i r eo errs k fk) with
        SOME res -> res
      | NONE -> Looped`;;
 
@@ -587,14 +587,14 @@ let peg_exec_total = prove
 let coreloop_total = prove
  (`!(G:(A,B,C,E)peg) i.
      wfG G ==>
-     ?r. coreloop G (EV (peg_start G) i [] NONE [] pegexec_done failed) = SOME (Result r)`,
+     ?r. coreloop G (pegexec_EV (peg_start G) i [] NONE [] pegexec_done failed) = SOME (Result r)`,
   REPEAT STRIP_TAC THEN
   FIRST_ASSUM(X_CHOOSE_TAC `r:((A#locs)list,C,E)pegresult` o
     SPEC `i:(A#locs)list` o MATCH_MP peg_exec_total) THEN
   EXISTS_TAC `r:((A#locs)list,C,E)pegresult` THEN
   POP_ASSUM MP_TAC THEN REWRITE_TAC[peg_exec_def] THEN
   STRUCT_CASES_TAC(ISPEC
-    `coreloop (G:(A,B,C,E)peg) (EV (peg_start G) i [] NONE [] pegexec_done failed)`
+    `coreloop (G:(A,B,C,E)peg) (pegexec_EV (peg_start G) i [] NONE [] pegexec_done failed)`
     LPARSEAUX_option_nchotomy) THEN
   REWRITE_TAC(option_INJ :: evalcase_distinct :: LPARSEAUX_CASE_RWS));;
 

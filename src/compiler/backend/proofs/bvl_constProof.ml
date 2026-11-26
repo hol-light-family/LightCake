@@ -92,8 +92,8 @@ let BVLPROPSAUX_do_app_IntOp = prove
      match bvl_do_int_app op vs with
        SOME res -> Rval (res,s)
      | NONE -> Rerr (Rabort Rtype_error)`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[bvl_do_app_def] THEN CASE_REWRITE_TAC[] THEN
-  CASES_ON `bvl_do_int_app op vs` THEN CASE_REWRITE_TAC[]);;
+  REPEAT GEN_TAC THEN REWRITE_TAC[bvl_do_app_def] THEN CAKE_REWRITE_TAC[] THEN
+  CASES_ON `bvl_do_int_app op vs` THEN CAKE_REWRITE_TAC[]);;
 
 (* HOL4 [local] *)
 let bvl_constProof_evaluate_delete_var_Rerr = prove
@@ -190,7 +190,7 @@ let SmartOp2_thm = prove
   IMP_RES_TAC bvl_evaluate_SING THEN GVS[bvl_do_int_app_def] THEN
   MAP_EVERY IMP_RES_TAC (CONJUNCTS (SPEC_ALL do_int_app_eq_some)) THEN
   GVS[bvl_do_int_app_def] THEN TRY (ASM_INT_ARITH_TAC ORELSE CONV_TAC INT_RING) THEN
-  RULE_ASSUM_TAC(CASE_REWRITE_RULE[bvl_do_app_def]) THEN TRY(CASES_ON `d1:bvl_v`) THEN
+  RULE_ASSUM_TAC(CAKE_REWRITE_RULE[bvl_do_app_def]) THEN TRY(CASES_ON `d1:bvl_v`) THEN
   GVS[bvl_do_eq_def; INT_NOT_LT; num_of_int_lt] THEN REWRITE_TAC[EQ_SYM_EQ]);;
 
 let SmartOp1_thm = prove
@@ -200,7 +200,7 @@ let SmartOp1_thm = prove
      bvl_evaluate ([SmartOp1 op x],env,s) = (res,s2)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[SmartOp1_def] THEN REPEAT TOP_CASE_TAC THEN STRIP_TAC THEN
   GVS(dest_simple_eq :: dest_EqualInt_pmatch :: all_case_eqs()) THEN
-  RULE_ASSUM_TAC(CASE_REWRITE_RULE[bvl_do_app_def; bvl_evaluate_def; BVLPROPSAUX_do_app_IntOp;
+  RULE_ASSUM_TAC(CAKE_REWRITE_RULE[bvl_do_app_def; bvl_evaluate_def; BVLPROPSAUX_do_app_IntOp;
                                    REVERSE; APPEND; HD; bvl_do_int_app_def]) THEN
   GVS[bvl_do_eq_def] THEN REWRITE_TAC[EQ_SYM_EQ]);;
 

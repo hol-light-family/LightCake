@@ -53,8 +53,8 @@ let BVIPAUX_TR_SPLIT_TAC : tactic = fun (asl,w as g) ->
   | t::_ -> CASES_ON (scr t) g;;
 
 let BVIPAUX_TR_PMATCH_TAC (defs:thm list) : tactic =
-  REPEAT GEN_TAC THEN REWRITE_TAC defs THEN CASE_REWRITE_TAC[] THEN
-  REPEAT(BVIPAUX_TR_SPLIT_TAC THEN REWRITE_TAC defs THEN CASE_REWRITE_TAC[]);;
+  REPEAT GEN_TAC THEN REWRITE_TAC defs THEN CAKE_REWRITE_TAC[] THEN
+  REPEAT(BVIPAUX_TR_SPLIT_TAC THEN REWRITE_TAC defs THEN CAKE_REWRITE_TAC[]);;
 
 (* HOL4: dummy *)
 
@@ -142,7 +142,7 @@ let from_op_thm = prove
    (!a. from_op (MemOp a) = Noop) /\
    from_op clos_Install = Noop /\
    (!a. from_op (clos_ThunkOp a) = Noop)`,
-  REWRITE_TAC[from_op_def] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[from_op_def] THEN CAKE_REWRITE_TAC[]);;
 let _ = cake_add_simps [from_op_thm];;
 
 let op_eq_def = sem1aux_def
@@ -169,7 +169,7 @@ let op_eq_to_op = prove
  (`!iop op xs.
      op_eq iop (bvi_Op op xs) <=> op = to_op iop /\ ~(iop = Noop)`,
   GEN_TAC THEN CASES_ON `iop:assoc_op` THEN REWRITE_TAC[op_eq_def; to_op_def] THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[]);;
 let _ = cake_add_simps [op_eq_to_op];;
 
 let apply_op_def = cake_def
@@ -224,7 +224,7 @@ let exp_size_get_bin_args = prove
      get_bin_args x = SOME (x1,x2) ==>
      bvi_exp_size x1 + bvi_exp_size x2 < bvi_exp_size x`,
   GEN_TAC THEN CASES_ON `x:bvi_exp` THEN REWRITE_TAC[get_bin_args_def] THEN
-  CASE_REWRITE_TAC[] THEN EVERY_CASE_TAC THEN
+  CAKE_REWRITE_TAC[] THEN EVERY_CASE_TAC THEN
   REWRITE_TAC[option_DISTINCT; option_INJ; PAIR_EQ] THEN
   REPEAT STRIP_TAC THEN RVEQ_TAC THEN
   REWRITE_TAC[type_size_def "bvi_exp"] THEN
@@ -341,7 +341,7 @@ let is_op_thms = prove
    (!op. ~(op = BlockOp clos_ListAppend) /\ op = BlockOp (clos_Cons 0) <=>
          op = BlockOp (clos_Cons 0))`,
   REPEAT CONJ_TAC THEN BVIPAUX_TR_PMATCH_TAC [is_arith_def; is_rel_def] THEN
-  EQ_TAC THEN SIMP_TAC[] THEN DISCH_THEN SUBST1_TAC THEN CASE_REWRITE_TAC[]);;
+  EQ_TAC THEN SIMP_TAC[] THEN DISCH_THEN SUBST1_TAC THEN CAKE_REWRITE_TAC[]);;
 
 (* HOL4: term_ok_any_ind = term_ok_any_ind |> SRULE [is_op_thms]: the     *)
 (* conditions that op = BlockOp (clos_Cons 0) implies are dropped          *)
@@ -424,7 +424,7 @@ let decide_ty_PMATCH = prove
        | (bvi_tailrec_List,bvi_tailrec_List) -> bvi_tailrec_List
        | _ -> bvi_tailrec_Any`,
   REPEAT GEN_TAC THEN CASES_ON `ty1:v_ty` THEN CASES_ON `ty2:v_ty` THEN
-  REWRITE_TAC[decide_ty_def] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[decide_ty_def] THEN CAKE_REWRITE_TAC[]);;
 
 let LAST1_def = sem1aux_def
   `(LAST1 [] = NONE:A option) /\
@@ -748,7 +748,7 @@ let rewrite_PMATCH = prove
                  | SOME (xs,f) ->
                      (T,push_call next opr acc xs (args_from f))))`,
   REPEAT GEN_TAC THEN CASES_ON `expr:bvi_exp` THEN
-  REWRITE_TAC[rewrite_def] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[rewrite_def] THEN CAKE_REWRITE_TAC[]);;
 
 (* HOL4: rewrite_eq = rewrite_def |> SRULE [scan_expr_eq] *)
 
@@ -828,7 +828,7 @@ let check_exp_def = cake_def
 (* has_rec_eq]                                                               *)
 
 let check_exp_eq =
-  CASE_REWRITE_RULE[]
+  CAKE_REWRITE_RULE[]
     (REWRITE_RULE[CONJUNCT1 scan_expr_eq; has_rec1_def; CONJUNCT1 has_rec_eq]
        check_exp_def);;
 
@@ -901,7 +901,7 @@ let check_exp_SOME_simp = prove
          [(ts,ty,r,SOME op)] /\
        ty = op_type op`,
   REPEAT GEN_TAC THEN REWRITE_TAC[check_exp_def; CONJUNCT1 scan_expr_eq] THEN
-  CASE_REWRITE_TAC[LET_DEF; LET_END_DEF; CONS_11] THEN
+  CAKE_REWRITE_TAC[LET_DEF; LET_END_DEF; CONS_11] THEN
   ASM_CASES_TAC `has_rec1 loc expr` THEN ASM_REWRITE_TAC[option_DISTINCT] THEN
   REPEAT(PAIRARG_TAC THEN TRY(GVS[])) THEN
   REWRITE_TAC[PAIR_EQ] THEN

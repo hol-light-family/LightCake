@@ -100,7 +100,7 @@ let DSEMAUX_size_of_approx_of = prove
     (SUBGOAL_THEN `lookup r (refsT:((data_v)bvl_ref)spt) = lookup r refs`
        ASSUME_TAC THENL [ASM_MESON_TAC[subspt_lookup]; ALL_TAC]) THEN
     ONCE_REWRITE_TAC[approx_of_def] THEN ASM_REWRITE_TAC[] THEN
-    CASE_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN
     TRY (CONJ_TAC THENL [ARITH_TAC; MESON_TAC[DSEMAUX_subspt_delete_self]]) THEN
     FIRST_X_ASSUM(MP_TAC o SPEC `delete r (refsT:((data_v)bvl_ref)spt)`) THEN
     (ANTS_TAC THENL [ASM_MESON_TAC[DSEMAUX_subspt_delete2]; ALL_TAC]) THEN
@@ -167,11 +167,11 @@ let _ = cake_add_simps [data_initial_state_simp];;
 
 let data_initial_state_with_simp = prove
  (`!(f:(FFI)ffi_state) c (co:num -> C # (num # num # data_prog) list) cc ts l ss k k'.
-     data_state_clock_fupd (K k') (data_initial_state f c co cc ts l ss k) =
+     data_state_clock_fupd (combin_K k') (data_initial_state f c co cc ts l ss k) =
      data_initial_state f c co cc ts l ss k' /\
-     data_state_stack_fupd (K []) (data_initial_state f c co cc ts l ss k) =
+     data_state_stack_fupd (combin_K []) (data_initial_state f c co cc ts l ss k) =
      data_initial_state f c co cc ts l ss k /\
-     data_state_locals_fupd (K LN) (data_initial_state f c co cc ts l ss k) =
+     data_state_locals_fupd (combin_K LN) (data_initial_state f c co cc ts l ss k) =
      data_initial_state f c co cc ts l ss k`,
   REWRITE_TAC[data_initial_state_def; data_state_INFO.ri_fupds; K_THM]);;
 let _ = cake_add_simps [data_initial_state_with_simp];;
@@ -206,7 +206,7 @@ let data_Boolv_11 = prove
 let _ = cake_add_simps [data_Boolv_11];;
 
 let data_with_same_locals = prove
- (`!s:(C,FFI)data_state. data_state_locals_fupd (K (data_state_locals s)) s = s`,
+ (`!s:(C,FFI)data_state. data_state_locals_fupd (combin_K (data_state_locals s)) s = s`,
   REWRITE_TAC[data_state_component_equality; data_state_INFO.ri_accfupds; K_THM]);;
 
 let var_corr_def = cake_def
@@ -218,7 +218,7 @@ let get_vars_thm = prove
   LIST_INDUCT_TAC THEN GEN_TAC THEN CASES_ON `a:A list` THEN
   REWRITE_TAC[var_corr_def; ALL2; data_get_vars_def] THEN
   RULE_ASSUM_TAC(REWRITE_RULE[var_corr_def]) THEN
-  REPEAT STRIP_TAC THEN RES_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]);;
+  REPEAT STRIP_TAC THEN RES_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]);;
 
 let get_vars_append = prove
  (`!l1 l2 (s:A spt).
@@ -229,9 +229,9 @@ let get_vars_append = prove
    [REPEAT GEN_TAC THEN REWRITE_TAC[OPTION_BIND_DEF; APPEND] THEN
     CASES_ON `data_get_vars l2 (s:A spt)` THEN REWRITE_TAC[OPTION_BIND_DEF];
     REPEAT GEN_TAC THEN ASM_REWRITE_TAC[] THEN
-    CASES_ON `data_get_var h (s:A spt)` THEN CASE_REWRITE_TAC[OPTION_BIND_DEF] THEN
-    CASES_ON `data_get_vars t (s:A spt)` THEN CASE_REWRITE_TAC[OPTION_BIND_DEF] THEN
-    CASES_ON `data_get_vars l2 (s:A spt)` THEN CASE_REWRITE_TAC[OPTION_BIND_DEF; APPEND]]);;
+    CASES_ON `data_get_var h (s:A spt)` THEN CAKE_REWRITE_TAC[OPTION_BIND_DEF] THEN
+    CASES_ON `data_get_vars t (s:A spt)` THEN CAKE_REWRITE_TAC[OPTION_BIND_DEF] THEN
+    CASES_ON `data_get_vars l2 (s:A spt)` THEN CAKE_REWRITE_TAC[OPTION_BIND_DEF; APPEND]]);;
 
 let get_vars_reverse = prove
  (`!ls (s:A spt) ys.
@@ -239,12 +239,12 @@ let get_vars_reverse = prove
   LIST_INDUCT_TAC THEN REWRITE_TAC[data_get_vars_def; REVERSE; option_INJ] THENL
    [MESON_TAC[REVERSE]; ALL_TAC] THEN
   REPEAT GEN_TAC THEN
-  CASES_ON `data_get_var h (s:A spt)` THEN CASE_REWRITE_TAC[option_DISTINCT] THEN
-  CASES_ON `data_get_vars t (s:A spt)` THEN CASE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN
+  CASES_ON `data_get_var h (s:A spt)` THEN CAKE_REWRITE_TAC[option_DISTINCT] THEN
+  CASES_ON `data_get_vars t (s:A spt)` THEN CAKE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN
   DISCH_THEN(SUBST1_TAC o SYM) THEN REWRITE_TAC[get_vars_append; REVERSE] THEN
   FIRST_X_ASSUM(MP_TAC o SPECL [`s:A spt`; `a':A list`]) THEN ASM_REWRITE_TAC[] THEN
   DISCH_THEN SUBST1_TAC THEN
-  ASM_REWRITE_TAC[OPTION_BIND_DEF; data_get_vars_def] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[OPTION_BIND_DEF; data_get_vars_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[OPTION_BIND_DEF]);;
 
 let EVERY_get_vars = prove
@@ -261,20 +261,20 @@ let data_get_vars_IMP_domain = prove
      MEM x args /\ data_get_vars args s = SOME vs ==> x IN domain s`,
   LIST_INDUCT_TAC THEN REWRITE_TAC[MEM; data_get_vars_def; data_get_var_def] THEN
   REPEAT GEN_TAC THEN
-  CASES_ON `lookup h (s:A spt)` THEN CASE_REWRITE_TAC[option_DISTINCT] THEN
-  CASES_ON `data_get_vars t (s:A spt)` THEN CASE_REWRITE_TAC[option_DISTINCT] THEN
+  CASES_ON `lookup h (s:A spt)` THEN CAKE_REWRITE_TAC[option_DISTINCT] THEN
+  CASES_ON `data_get_vars t (s:A spt)` THEN CAKE_REWRITE_TAC[option_DISTINCT] THEN
   STRIP_TAC THENL
    [ASM_MESON_TAC[domain_lookup];
     ASM_MESON_TAC[]]);;
 
 let cut_state_opt_with_const = prove
  (`!x (y:(C,FFI)data_state) z k lsz.
-     data_cut_state_opt x (data_state_stack_fupd (K z) y) =
-     OPTION_MAP (\s. data_state_stack_fupd (K z) s) (data_cut_state_opt x y) /\
-     data_cut_state_opt x (data_state_clock_fupd (K k) y) =
-     OPTION_MAP (\s. data_state_clock_fupd (K k) s) (data_cut_state_opt x y) /\
-     data_cut_state_opt x (data_state_locals_size_fupd (K lsz) y) =
-     OPTION_MAP (\s. data_state_locals_size_fupd (K lsz) s) (data_cut_state_opt x y)`,
+     data_cut_state_opt x (data_state_stack_fupd (combin_K z) y) =
+     OPTION_MAP (\s. data_state_stack_fupd (combin_K z) s) (data_cut_state_opt x y) /\
+     data_cut_state_opt x (data_state_clock_fupd (combin_K k) y) =
+     OPTION_MAP (\s. data_state_clock_fupd (combin_K k) s) (data_cut_state_opt x y) /\
+     data_cut_state_opt x (data_state_locals_size_fupd (combin_K lsz) y) =
+     OPTION_MAP (\s. data_state_locals_size_fupd (combin_K lsz) s) (data_cut_state_opt x y)`,
   REPEAT GEN_TAC THEN
   REWRITE_TAC[data_cut_state_opt_def; data_cut_state_def;
               data_state_INFO.ri_accfupds] THEN
@@ -284,11 +284,11 @@ let cut_state_opt_with_const = prove
 (* INFO: only used in bvi_to_dataProof *)
 let consume_space_add_space = prove
  (`!k (t:(C,FFI)data_state) env1.
-     ?sf hp. consume_space k (add_space (data_state_locals_fupd (K env1) t) k) =
-             SOME (data_state_locals_fupd (K env1)
-                     (data_state_space_fupd (K 0)
-                        (data_state_safe_for_space_fupd (K sf)
-                           (data_state_peak_heap_length_fupd (K hp) t))))`,
+     ?sf hp. consume_space k (add_space (data_state_locals_fupd (combin_K env1) t) k) =
+             SOME (data_state_locals_fupd (combin_K env1)
+                     (data_state_space_fupd (combin_K 0)
+                        (data_state_safe_for_space_fupd (combin_K sf)
+                           (data_state_peak_heap_length_fupd (combin_K hp) t))))`,
   REPEAT GEN_TAC THEN
   REWRITE_TAC[consume_space_def; add_space_def; data_state_INFO.ri_accfupds; K_THM;
               LT_REFL; SUB_REFL; option_INJ] THEN
@@ -298,8 +298,8 @@ let consume_space_add_space = prove
 (* HOL4 [local] *)
 let consume_space_with_stack = prove
  (`!x (y:(C,FFI)data_state) z.
-     consume_space x (data_state_stack_fupd (K z) y) =
-     OPTION_MAP (\s. data_state_stack_fupd (K z) s) (consume_space x y)`,
+     consume_space x (data_state_stack_fupd (combin_K z) y) =
+     OPTION_MAP (\s. data_state_stack_fupd (combin_K z) s) (consume_space x y)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[consume_space_def; data_state_INFO.ri_accfupds] THEN
   COND_CASES_TAC THEN REWRITE_TAC[OPTION_MAP_DEF; option_INJ] THEN
   REWRITE_TAC[data_state_INFO.ri_fupdcanon]);;
@@ -307,8 +307,8 @@ let consume_space_with_stack = prove
 (* HOL4 [local] *)
 let consume_space_with_locals = prove
  (`!x (y:(C,FFI)data_state) z.
-     consume_space x (data_state_locals_fupd (K z) y) =
-     OPTION_MAP (\s. data_state_locals_fupd (K z) s) (consume_space x y)`,
+     consume_space x (data_state_locals_fupd (combin_K z) y) =
+     OPTION_MAP (\s. data_state_locals_fupd (combin_K z) s) (consume_space x y)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[consume_space_def; data_state_INFO.ri_accfupds] THEN
   COND_CASES_TAC THEN REWRITE_TAC[OPTION_MAP_DEF; option_INJ] THEN
   REWRITE_TAC[data_state_INFO.ri_fupdcanon]);;
@@ -319,7 +319,7 @@ let consume_space_with_locals = prove
 (* ------------------------------------------------------------------------- *)
 
 let DSEMAUX_K_o = prove
- (`!(x:A) (g:B->C). (K x) o g = K x`,
+ (`!(x:A) (g:B->C). (combin_K x) o g = combin_K x`,
   REWRITE_TAC[FUN_EQ_THM; o_THM; K_THM]);;
 
 let DSEMAUX_rec_rws =
@@ -386,7 +386,7 @@ let DSEMAUX_OP_CASES_TAC (op:term) : tactic =
 
 let DSEMAUX_fupd_id =
   let names = map (fun (f,_,_) -> f) data_state_INFO.ri_fields in
-  let cl f = "data_state_" ^ f ^ "_fupd (K (data_state_" ^ f ^ " r)) r = r" in
+  let cl f = "data_state_" ^ f ^ "_fupd (combin_K (data_state_" ^ f ^ " r)) r = r" in
   let tm = parse_term ("!r:(C,FFI)data_state. " ^
                        String.concat " /\\ " (map cl names)) in
   prove(tm, GEN_TAC THEN REWRITE_TAC[data_state_component_equality;
@@ -429,19 +429,19 @@ let DSEMAUX_FINISH_RWS2 =
    injectivity "mem_op"; distinctness "clos_op"; distinctness "mem_op";
    data_OPTION_MAP2_NONE; OPTION_MAP_DEF; misc_the_def] @ DSEMAUX_FINISH_RWS;;
 
-(* do_app is unfolded with CASE_REWRITE_TAC, so that the case on op reduces   *)
+(* do_app is unfolded with CAKE_REWRITE_TAC, so that the case on op reduces   *)
 (* as it is unfolded instead of after every arm has been rewritten; the same  *)
 (* holds for the other users of DSEMAUX_DO_APP_DEFS                           *)
 let DSEMAUX_DO_APP_BRUTE_TAC (defs:thm list) : tactic =
-   REPEAT GEN_TAC THEN CASE_REWRITE_TAC defs THEN
+   REPEAT GEN_TAC THEN CAKE_REWRITE_TAC defs THEN
    CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
-   CASE_REWRITE_TAC DSEMAUX_DO_APP_RWS THEN
+   CAKE_REWRITE_TAC DSEMAUX_DO_APP_RWS THEN
    REPEAT ((COND_CASES_TAC ORELSE TOP_CASE_TAC) THEN
-           CASE_REWRITE_TAC DSEMAUX_DO_APP_RWS) THEN
+           CAKE_REWRITE_TAC DSEMAUX_DO_APP_RWS) THEN
    REWRITE_TAC[map_result_def; map_error_result_I; I_THM] THEN
    CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
    ASM_REWRITE_TAC (lim_safe_def :: DSEMAUX_FINISH_RWS) THEN
-   TRY (GVS DSEMAUX_FINISH_RWS2 THEN CASE_REWRITE_TAC [] THEN
+   TRY (GVS DSEMAUX_FINISH_RWS2 THEN CAKE_REWRITE_TAC [] THEN
         REWRITE_TAC[injectivity "result"; PAIR_EQ; data_state_component_equality] THEN
         ASM_REWRITE_TAC DSEMAUX_FINISH_RWS2 THEN NO_TAC);;
 
@@ -454,16 +454,16 @@ let DSEMAUX_DO_APP_TAC (defs:thm list) : tactic =
 let do_app_with_stack = prove
  (DSEMAUX_expand
   `!op vs (s:(C,FFI)data_state) z.
-     data_do_app op vs (data_state_stack_fupd (K z) s) =
+     data_do_app op vs (data_state_stack_fupd (combin_K z) s) =
      map_result
-       (\(x,y). (x,data_state_stack_fupd (K z)
+       (\(x,y). (x,data_state_stack_fupd (combin_K z)
                      (data_state_safe_for_space_fupd
-                        (K (do_app_safe op vs (data_state_stack_fupd (K z) s)))
+                        (combin_K (do_app_safe op vs (data_state_stack_fupd (combin_K z) s)))
                         (data_state_stack_max_fupd
-                           (K (data_state_stack_max
-                                 (do_stack op vs (data_state_stack_fupd (K z) s))))
+                           (combin_K (data_state_stack_max
+                                 (do_stack op vs (data_state_stack_fupd (combin_K z) s))))
                            (data_state_peak_heap_length_fupd
-                              (K (do_app_peak op vs (data_state_stack_fupd (K z) s)))
+                              (combin_K (do_app_peak op vs (data_state_stack_fupd (combin_K z) s)))
                               y)))))
        I (data_do_app op vs s)`,
   DSEMAUX_DO_APP_TAC DSEMAUX_DO_APP_DEFS);;
@@ -474,20 +474,20 @@ let do_app_with_stack_and_locals = prove
  (DSEMAUX_expand
   `!op vs (s:(C,FFI)data_state) z lsz.
      data_do_app op vs
-       (data_state_locals_size_fupd (K lsz) (data_state_stack_fupd (K z) s)) =
+       (data_state_locals_size_fupd (combin_K lsz) (data_state_stack_fupd (combin_K z) s)) =
      map_result
-       (\(x,y). (x,data_state_stack_fupd (K z)
-                     (data_state_locals_size_fupd (K lsz)
+       (\(x,y). (x,data_state_stack_fupd (combin_K z)
+                     (data_state_locals_size_fupd (combin_K lsz)
                      (data_state_safe_for_space_fupd
-                        (K (do_app_safe op vs (data_state_locals_size_fupd (K lsz)
-                                                 (data_state_stack_fupd (K z) s))))
+                        (combin_K (do_app_safe op vs (data_state_locals_size_fupd (combin_K lsz)
+                                                 (data_state_stack_fupd (combin_K z) s))))
                         (data_state_stack_max_fupd
-                           (K (data_state_stack_max
-                                 (do_stack op vs (data_state_locals_size_fupd (K lsz)
-                                                    (data_state_stack_fupd (K z) s)))))
+                           (combin_K (data_state_stack_max
+                                 (do_stack op vs (data_state_locals_size_fupd (combin_K lsz)
+                                                    (data_state_stack_fupd (combin_K z) s)))))
                            (data_state_peak_heap_length_fupd
-                              (K (do_app_peak op vs (data_state_locals_size_fupd (K lsz)
-                                                       (data_state_stack_fupd (K z) s))))
+                              (combin_K (do_app_peak op vs (data_state_locals_size_fupd (combin_K lsz)
+                                                       (data_state_stack_fupd (combin_K z) s))))
                               y))))))
        I (data_do_app op vs s)`,
   DSEMAUX_DO_APP_TAC DSEMAUX_DO_APP_DEFS);;
@@ -495,16 +495,16 @@ let do_app_with_stack_and_locals = prove
 (*fs[] is slower than full_simp_tac(srw_ss())[]*)
 let do_app_aux_with_space = prove
  (`!op vs (s:(C,FFI)data_state) z.
-     data_do_app_aux op vs (data_state_space_fupd (K z) s) =
-     map_result (\(x,y). (x,data_state_space_fupd (K z) y)) I (data_do_app_aux op vs s)`,
+     data_do_app_aux op vs (data_state_space_fupd (combin_K z) s) =
+     map_result (\(x,y). (x,data_state_space_fupd (combin_K z) y)) I (data_do_app_aux op vs s)`,
   DSEMAUX_DO_APP_TAC [data_do_app_aux_def; with_fresh_ts_def; check_lim_def;
                       LET_DEF; LET_END_DEF]);;
 
 (*fs[] is slower than full_simp_tac(srw_ss())[]*)
 let do_app_aux_with_locals = prove
  (`!op vs (s:(C,FFI)data_state) z.
-     data_do_app_aux op vs (data_state_locals_fupd (K z) s) =
-     map_result (\(x,y). (x,data_state_locals_fupd (K z) y)) I (data_do_app_aux op vs s)`,
+     data_do_app_aux op vs (data_state_locals_fupd (combin_K z) s) =
+     map_result (\(x,y). (x,data_state_locals_fupd (combin_K z) y)) I (data_do_app_aux op vs s)`,
   DSEMAUX_DO_APP_TAC [data_do_app_aux_def; with_fresh_ts_def; check_lim_def;
                       LET_DEF; LET_END_DEF]);;
 
@@ -512,16 +512,16 @@ let do_app_aux_with_locals = prove
 let do_app_with_locals = prove
  (DSEMAUX_expand
   `!op vs (s:(C,FFI)data_state) z.
-     data_do_app op vs (data_state_locals_fupd (K z) s) =
+     data_do_app op vs (data_state_locals_fupd (combin_K z) s) =
      map_result
-       (\(x,y). (x,data_state_locals_fupd (K z)
+       (\(x,y). (x,data_state_locals_fupd (combin_K z)
                      (data_state_safe_for_space_fupd
-                        (K (do_app_safe op vs (data_state_locals_fupd (K z) s)))
+                        (combin_K (do_app_safe op vs (data_state_locals_fupd (combin_K z) s)))
                         (data_state_stack_max_fupd
-                           (K (data_state_stack_max
-                                 (do_stack op vs (data_state_locals_fupd (K z) s))))
+                           (combin_K (data_state_stack_max
+                                 (do_stack op vs (data_state_locals_fupd (combin_K z) s))))
                            (data_state_peak_heap_length_fupd
-                              (K (do_app_peak op vs (data_state_locals_fupd (K z) s)))
+                              (combin_K (do_app_peak op vs (data_state_locals_fupd (combin_K z) s)))
                               y)))))
        I (data_do_app op vs s)`,
   DSEMAUX_DO_APP_TAC DSEMAUX_DO_APP_DEFS);;
@@ -531,11 +531,11 @@ let do_app_with_locals = prove
 
 let DSEMAUX_DO_APP_IMP_TAC (defs:thm list) : tactic =
   X_GEN_TAC `op:clos_op` THEN DSEMAUX_OP_CASES_TAC `op:clos_op` THEN
-  REPEAT GEN_TAC THEN CASE_REWRITE_TAC defs THEN
+  REPEAT GEN_TAC THEN CAKE_REWRITE_TAC defs THEN
   CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
-  CASE_REWRITE_TAC DSEMAUX_DO_APP_RWS THEN
+  CAKE_REWRITE_TAC DSEMAUX_DO_APP_RWS THEN
   REPEAT ((COND_CASES_TAC ORELSE TOP_CASE_TAC) THEN
-          CASE_REWRITE_TAC DSEMAUX_DO_APP_RWS) THEN
+          CAKE_REWRITE_TAC DSEMAUX_DO_APP_RWS) THEN
   REWRITE_TAC[injectivity "result"; distinctness "result"; PAIR_EQ] THEN
   REPEAT STRIP_TAC THEN RVEQ_TAC THEN
   ASM_REWRITE_TAC(injectivity "error_result" :: injectivity "abort" ::
@@ -580,15 +580,15 @@ let do_app_locals = prove
  (DSEMAUX_expand
   `!op x (s:(C,FFI)data_state) q r extra.
      data_do_app op x s = Rval (q,r) ==>
-     data_do_app op x (data_state_locals_fupd (K extra) s) =
-     Rval (q,data_state_locals_fupd (K extra)
+     data_do_app op x (data_state_locals_fupd (combin_K extra) s) =
+     Rval (q,data_state_locals_fupd (combin_K extra)
                (data_state_safe_for_space_fupd
-                  (K (do_app_safe op x (data_state_locals_fupd (K extra) s)))
+                  (combin_K (do_app_safe op x (data_state_locals_fupd (combin_K extra) s)))
                   (data_state_stack_max_fupd
-                     (K (data_state_stack_max
-                           (do_stack op x (data_state_locals_fupd (K extra) s))))
+                     (combin_K (data_state_stack_max
+                           (do_stack op x (data_state_locals_fupd (combin_K extra) s))))
                      (data_state_peak_heap_length_fupd
-                        (K (do_app_peak op x (data_state_locals_fupd (K extra) s)))
+                        (combin_K (do_app_peak op x (data_state_locals_fupd (combin_K extra) s)))
                         r))))`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN
   ASM_REWRITE_TAC[do_app_with_locals; map_result_def] THEN
@@ -599,9 +599,9 @@ let do_space_alt = prove
   `!op vs (s:(C,FFI)data_state).
      do_space op vs s =
      if op_space_reset op
-     then SOME (data_state_space_fupd (K 0)
-                  (data_state_safe_for_space_fupd (K (do_space_safe op vs s))
-                     (data_state_peak_heap_length_fupd (K (do_space_peak op vs s)) s)))
+     then SOME (data_state_space_fupd (combin_K 0)
+                  (data_state_safe_for_space_fupd (combin_K (do_space_safe op vs s))
+                     (data_state_peak_heap_length_fupd (combin_K (do_space_peak op vs s)) s)))
      else consume_space (op_space_req op (LENGTH vs)) s`,
   REPEAT GEN_TAC THEN REWRITE_TAC[do_space_def] THEN
   COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
@@ -632,7 +632,7 @@ let evaluate_peak_alt = prove
 
 let size_of_heap_with_safe = prove
  (`!(s:(C,FFI)data_state) safe.
-     size_of_heap (data_state_safe_for_space_fupd (K safe) s) = size_of_heap s`,
+     size_of_heap (data_state_safe_for_space_fupd (combin_K safe) s) = size_of_heap s`,
   REWRITE_TAC[size_of_heap_def; stack_to_vs_def; data_state_INFO.ri_accfupds]);;
 
 (* for a goal ?v1 .. vn. Rval (q,L) = Rval (q,R) (or L = R) where R updates  *)
@@ -650,7 +650,7 @@ let DSEMAUX_EXISTS_FIELDS_TAC : tactic = fun (asl,w as g) ->
     let t = find_term (fun t ->
               is_comb t && is_comb (rator t) &&
               (let k = rand (rator t) in
-               is_comb k && is_const (rator k) && fst(dest_const(rator k)) = "K" &&
+               is_comb k && is_const (rator k) && fst(dest_const(rator k)) = "combin_K" &&
                rand k = v)) rs in
     let upd = fst(dest_const(rator(rator t))) in
     let fname = String.sub upd 0 (String.length upd - 5) in
@@ -667,17 +667,17 @@ let DSEMAUX_EXISTS_FIELDS_TAC : tactic = fun (asl,w as g) ->
 
 let DSEMAUX_DO_APP_SWAP_TAC (defs:thm list) : tactic =
   X_GEN_TAC `op:clos_op` THEN DSEMAUX_OP_CASES_TAC `op:clos_op` THEN
-  REPEAT GEN_TAC THEN CASE_REWRITE_TAC defs THEN
+  REPEAT GEN_TAC THEN CAKE_REWRITE_TAC defs THEN
   CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
-  CASE_REWRITE_TAC DSEMAUX_DO_APP_RWS THEN
+  CAKE_REWRITE_TAC DSEMAUX_DO_APP_RWS THEN
   REPEAT ((COND_CASES_TAC ORELSE TOP_CASE_TAC) THEN
-          CASE_REWRITE_TAC DSEMAUX_DO_APP_RWS) THEN
+          CAKE_REWRITE_TAC DSEMAUX_DO_APP_RWS) THEN
   REWRITE_TAC[injectivity "result"; distinctness "result"; PAIR_EQ] THEN
   REPEAT STRIP_TAC THEN RVEQ_TAC THEN
   ASM_REWRITE_TAC(injectivity "error_result" :: injectivity "abort" ::
                   DSEMAUX_FINISH_RWS) THEN
   TRY DSEMAUX_EXISTS_FIELDS_TAC THEN
-  TRY (GVS DSEMAUX_FINISH_RWS2 THEN CASE_REWRITE_TAC [] THEN
+  TRY (GVS DSEMAUX_FINISH_RWS2 THEN CAKE_REWRITE_TAC [] THEN
        TRY DSEMAUX_EXISTS_FIELDS_TAC THEN
        REWRITE_TAC[injectivity "result"; PAIR_EQ; data_state_component_equality] THEN
        ASM_REWRITE_TAC DSEMAUX_FINISH_RWS2 THEN NO_TAC);;
@@ -687,10 +687,10 @@ let do_app_aux_safe_peak_swap = prove
      data_do_app_aux op vs s = Rval (q,s') ==>
      ?safe' peak'.
        data_do_app_aux op vs
-         (data_state_safe_for_space_fupd (K safe)
-            (data_state_peak_heap_length_fupd (K peak) s)) =
-       Rval (q,data_state_safe_for_space_fupd (K safe')
-                 (data_state_peak_heap_length_fupd (K peak') s'))`,
+         (data_state_safe_for_space_fupd (combin_K safe)
+            (data_state_peak_heap_length_fupd (combin_K peak) s)) =
+       Rval (q,data_state_safe_for_space_fupd (combin_K safe')
+                 (data_state_peak_heap_length_fupd (combin_K peak') s'))`,
   DSEMAUX_DO_APP_SWAP_TAC [data_do_app_aux_def; with_fresh_ts_def; check_lim_def;
                            LET_DEF; LET_END_DEF]);;
 
@@ -699,18 +699,18 @@ let do_app_safe_peak_swap = prove
      data_do_app op vs s = Rval (q,s') ==>
      ?new_safe new_peak.
        data_do_app op vs
-         (data_state_safe_for_space_fupd (K safe)
-            (data_state_peak_heap_length_fupd (K peak) s)) =
-       Rval (q,data_state_safe_for_space_fupd (K new_safe)
-                 (data_state_peak_heap_length_fupd (K new_peak) s'))`,
+         (data_state_safe_for_space_fupd (combin_K safe)
+            (data_state_peak_heap_length_fupd (combin_K peak) s)) =
+       Rval (q,data_state_safe_for_space_fupd (combin_K new_safe)
+                 (data_state_peak_heap_length_fupd (combin_K new_peak) s'))`,
   DSEMAUX_DO_APP_SWAP_TAC DSEMAUX_DO_APP_DEFS);;
 
 let do_app_err_safe_peak_swap = prove
  (`!op vs (s:(C,FFI)data_state) e safe peak.
      data_do_app op vs s = Rerr e ==>
      data_do_app op vs
-       (data_state_safe_for_space_fupd (K safe)
-          (data_state_peak_heap_length_fupd (K peak) s)) = Rerr e`,
+       (data_state_safe_for_space_fupd (combin_K safe)
+          (data_state_peak_heap_length_fupd (combin_K peak) s)) = Rerr e`,
   DSEMAUX_DO_APP_SWAP_TAC DSEMAUX_DO_APP_DEFS);;
 
 (* HOL4 [local] *)
@@ -719,14 +719,14 @@ let do_app_lss_sm_safe_peak_swap_aux = prove
      data_do_app op vs s = Rval (q,s') ==>
      ?safe' peak' lss' smx'.
        data_do_app op vs
-         (data_state_locals_size_fupd (K lss)
-            (data_state_stack_max_fupd (K smx)
-               (data_state_safe_for_space_fupd (K safe)
-                  (data_state_peak_heap_length_fupd (K peak) s)))) =
-       Rval (q,data_state_locals_size_fupd (K lss')
-                 (data_state_stack_max_fupd (K smx')
-                    (data_state_safe_for_space_fupd (K safe')
-                       (data_state_peak_heap_length_fupd (K peak') s'))))`,
+         (data_state_locals_size_fupd (combin_K lss)
+            (data_state_stack_max_fupd (combin_K smx)
+               (data_state_safe_for_space_fupd (combin_K safe)
+                  (data_state_peak_heap_length_fupd (combin_K peak) s)))) =
+       Rval (q,data_state_locals_size_fupd (combin_K lss')
+                 (data_state_stack_max_fupd (combin_K smx')
+                    (data_state_safe_for_space_fupd (combin_K safe')
+                       (data_state_peak_heap_length_fupd (combin_K peak') s'))))`,
   DSEMAUX_DO_APP_SWAP_TAC DSEMAUX_DO_APP_DEFS);;
 
 (* HOL4: do_app_lss_sm_safe_peak_swap_aux |> SIMP_RULE std_ss [LET_DEF] *)
@@ -738,12 +738,12 @@ let do_app_sm_safe_peak_swap_aux = prove
      data_do_app op vs s = Rval (q,s') ==>
      ?safe' peak' smx'.
        data_do_app op vs
-         (data_state_stack_max_fupd (K smx)
-            (data_state_safe_for_space_fupd (K safe)
-               (data_state_peak_heap_length_fupd (K peak) s))) =
-       Rval (q,data_state_stack_max_fupd (K smx')
-                 (data_state_safe_for_space_fupd (K safe')
-                    (data_state_peak_heap_length_fupd (K peak') s')))`,
+         (data_state_stack_max_fupd (combin_K smx)
+            (data_state_safe_for_space_fupd (combin_K safe)
+               (data_state_peak_heap_length_fupd (combin_K peak) s))) =
+       Rval (q,data_state_stack_max_fupd (combin_K smx')
+                 (data_state_safe_for_space_fupd (combin_K safe')
+                    (data_state_peak_heap_length_fupd (combin_K peak') s')))`,
   DSEMAUX_DO_APP_SWAP_TAC DSEMAUX_DO_APP_DEFS);;
 
 (* HOL4: do_app_sm_safe_peak_swap_aux |> SIMP_RULE std_ss [LET_DEF] *)
@@ -754,12 +754,12 @@ let do_app_aux_sm_safe_peak_swap = prove
      data_do_app_aux op vs s = Rval (q,s') ==>
      ?safe' peak' smx'.
        data_do_app_aux op vs
-         (data_state_stack_max_fupd (K smx)
-            (data_state_safe_for_space_fupd (K safe)
-               (data_state_peak_heap_length_fupd (K peak) s))) =
-       Rval (q,data_state_stack_max_fupd (K smx')
-                 (data_state_safe_for_space_fupd (K safe')
-                    (data_state_peak_heap_length_fupd (K peak') s')))`,
+         (data_state_stack_max_fupd (combin_K smx)
+            (data_state_safe_for_space_fupd (combin_K safe)
+               (data_state_peak_heap_length_fupd (combin_K peak) s))) =
+       Rval (q,data_state_stack_max_fupd (combin_K smx')
+                 (data_state_safe_for_space_fupd (combin_K safe')
+                    (data_state_peak_heap_length_fupd (combin_K peak') s')))`,
   DSEMAUX_DO_APP_SWAP_TAC [data_do_app_aux_def; with_fresh_ts_def; check_lim_def;
                            LET_DEF; LET_END_DEF]);;
 
@@ -768,14 +768,14 @@ let do_app_aux_lss_sm_safe_peak_swap = prove
      data_do_app_aux op vs s = Rval (q,s') ==>
      ?safe' peak' lss' smx'.
        data_do_app_aux op vs
-         (data_state_locals_size_fupd (K lss)
-            (data_state_stack_max_fupd (K smx)
-               (data_state_safe_for_space_fupd (K safe)
-                  (data_state_peak_heap_length_fupd (K peak) s)))) =
-       Rval (q,data_state_locals_size_fupd (K lss')
-                 (data_state_stack_max_fupd (K smx')
-                    (data_state_safe_for_space_fupd (K safe')
-                       (data_state_peak_heap_length_fupd (K peak') s'))))`,
+         (data_state_locals_size_fupd (combin_K lss)
+            (data_state_stack_max_fupd (combin_K smx)
+               (data_state_safe_for_space_fupd (combin_K safe)
+                  (data_state_peak_heap_length_fupd (combin_K peak) s)))) =
+       Rval (q,data_state_locals_size_fupd (combin_K lss')
+                 (data_state_stack_max_fupd (combin_K smx')
+                    (data_state_safe_for_space_fupd (combin_K safe')
+                       (data_state_peak_heap_length_fupd (combin_K peak') s'))))`,
   DSEMAUX_DO_APP_SWAP_TAC [data_do_app_aux_def; with_fresh_ts_def; check_lim_def;
                            LET_DEF; LET_END_DEF]);;
 
@@ -783,19 +783,19 @@ let do_app_err_lss_sm_safe_peak_swap = prove
  (`!op vs (s:(C,FFI)data_state) e lss smx safe peak.
      data_do_app op vs s = Rerr e ==>
      data_do_app op vs
-       (data_state_locals_size_fupd (K lss)
-          (data_state_stack_max_fupd (K smx)
-             (data_state_safe_for_space_fupd (K safe)
-                (data_state_peak_heap_length_fupd (K peak) s)))) = Rerr e`,
+       (data_state_locals_size_fupd (combin_K lss)
+          (data_state_stack_max_fupd (combin_K smx)
+             (data_state_safe_for_space_fupd (combin_K safe)
+                (data_state_peak_heap_length_fupd (combin_K peak) s)))) = Rerr e`,
   DSEMAUX_DO_APP_SWAP_TAC DSEMAUX_DO_APP_DEFS);;
 
 let do_app_err_sm_safe_peak_swap = prove
  (`!op vs (s:(C,FFI)data_state) e smx safe peak.
      data_do_app op vs s = Rerr e ==>
      data_do_app op vs
-       (data_state_stack_max_fupd (K smx)
-          (data_state_safe_for_space_fupd (K safe)
-             (data_state_peak_heap_length_fupd (K peak) s))) = Rerr e`,
+       (data_state_stack_max_fupd (combin_K smx)
+          (data_state_safe_for_space_fupd (combin_K safe)
+             (data_state_peak_heap_length_fupd (combin_K peak) s))) = Rerr e`,
   DSEMAUX_DO_APP_SWAP_TAC DSEMAUX_DO_APP_DEFS);;
 
 (* HOL4 [local] *)
@@ -804,16 +804,16 @@ let do_app_lss_stk_stfrm_swap_aux = prove
      data_do_app op vs s = Rval (q,s') ==>
      ?ss pk smx.
        data_do_app op vs
-         (data_state_locals_size_fupd (K lss)
-            (data_state_stack_fupd (K stk)
-               (data_state_stack_frame_sizes_fupd (K stfrm) s))) =
-       Rval (q,data_state_locals_size_fupd (K lss)
-                 (data_state_stack_fupd (K stk)
+         (data_state_locals_size_fupd (combin_K lss)
+            (data_state_stack_fupd (combin_K stk)
+               (data_state_stack_frame_sizes_fupd (combin_K stfrm) s))) =
+       Rval (q,data_state_locals_size_fupd (combin_K lss)
+                 (data_state_stack_fupd (combin_K stk)
                     (data_state_stack_frame_sizes_fupd
-                       (K (if op = clos_Install then LN else stfrm))
-                       (data_state_stack_max_fupd (K smx)
-                          (data_state_safe_for_space_fupd (K ss)
-                             (data_state_peak_heap_length_fupd (K pk) s'))))))`,
+                       (combin_K (if op = clos_Install then LN else stfrm))
+                       (data_state_stack_max_fupd (combin_K smx)
+                          (data_state_safe_for_space_fupd (combin_K ss)
+                             (data_state_peak_heap_length_fupd (combin_K pk) s'))))))`,
   DSEMAUX_DO_APP_SWAP_TAC DSEMAUX_DO_APP_DEFS);;
 
 (* HOL4: do_app_lss_stk_stfrm_swap_aux |> SIMP_RULE std_ss [LET_DEF] *)
@@ -823,9 +823,9 @@ let do_app_err_lss_stk_stfrm_swap = prove
  (`!op vs (s:(C,FFI)data_state) e lss stk stfrm.
      data_do_app op vs s = Rerr e ==>
      data_do_app op vs
-       (data_state_locals_size_fupd (K lss)
-          (data_state_stack_fupd (K stk)
-             (data_state_stack_frame_sizes_fupd (K stfrm) s))) = Rerr e`,
+       (data_state_locals_size_fupd (combin_K lss)
+          (data_state_stack_fupd (combin_K stk)
+             (data_state_stack_frame_sizes_fupd (combin_K stfrm) s))) = Rerr e`,
   DSEMAUX_DO_APP_SWAP_TAC DSEMAUX_DO_APP_DEFS);;
 
 (* HOL4 [local] *)
@@ -833,11 +833,11 @@ let do_app_lim_swap_aux = prove
  (`!op vs (s:(C,FFI)data_state) q s' lim.
      data_do_app op vs s = Rval (q,s') ==>
      ?safe peak smx.
-       data_do_app op vs (data_state_limits_fupd (K lim) s) =
-       Rval (q,data_state_limits_fupd (K lim)
-                 (data_state_stack_max_fupd (K smx)
-                    (data_state_safe_for_space_fupd (K safe)
-                       (data_state_peak_heap_length_fupd (K peak) s'))))`,
+       data_do_app op vs (data_state_limits_fupd (combin_K lim) s) =
+       Rval (q,data_state_limits_fupd (combin_K lim)
+                 (data_state_stack_max_fupd (combin_K smx)
+                    (data_state_safe_for_space_fupd (combin_K safe)
+                       (data_state_peak_heap_length_fupd (combin_K peak) s'))))`,
   DSEMAUX_DO_APP_SWAP_TAC DSEMAUX_DO_APP_DEFS);;
 
 (* HOL4: do_app_lim_swap_aux |> SIMP_RULE std_ss [LET_DEF] *)
@@ -846,7 +846,7 @@ let do_app_lim_swap = do_app_lim_swap_aux;;
 let do_app_err_lim_swap = prove
  (`!op vs (s:(C,FFI)data_state) e lim.
      data_do_app op vs s = Rerr e ==>
-     data_do_app op vs (data_state_limits_fupd (K lim) s) = Rerr e`,
+     data_do_app op vs (data_state_limits_fupd (combin_K lim) s) = Rerr e`,
   DSEMAUX_DO_APP_SWAP_TAC DSEMAUX_DO_APP_DEFS);;
 
 let size_of_stack_eq = prove
@@ -865,12 +865,12 @@ let size_of_stack_eq = prove
 let cut_state_opt_with_swap = prove
  (`!names_opt (s:(C,FFI)data_state) smx safe peak.
      data_cut_state_opt names_opt
-       (data_state_stack_max_fupd (K smx)
-          (data_state_safe_for_space_fupd (K safe)
-             (data_state_peak_heap_length_fupd (K peak) s))) =
-     OPTION_MAP (\t. data_state_stack_max_fupd (K smx)
-                       (data_state_safe_for_space_fupd (K safe)
-                          (data_state_peak_heap_length_fupd (K peak) t)))
+       (data_state_stack_max_fupd (combin_K smx)
+          (data_state_safe_for_space_fupd (combin_K safe)
+             (data_state_peak_heap_length_fupd (combin_K peak) s))) =
+     OPTION_MAP (\t. data_state_stack_max_fupd (combin_K smx)
+                       (data_state_safe_for_space_fupd (combin_K safe)
+                          (data_state_peak_heap_length_fupd (combin_K peak) t)))
                 (data_cut_state_opt names_opt s)`,
   REPEAT GEN_TAC THEN
   REWRITE_TAC[data_cut_state_opt_def; data_cut_state_def;
@@ -895,11 +895,11 @@ let cut_state_opt_stack_max = prove
 let cut_state_opt_swap_input = prove
  (`!names_opt (s:(C,FFI)data_state) s2 safe peak.
      data_cut_state_opt names_opt s = SOME s2 ==>
-     data_state_stack_max_fupd (K (data_state_stack_max s))
-       (data_state_safe_for_space_fupd (K safe)
-          (data_state_peak_heap_length_fupd (K peak) s2)) =
-     data_state_safe_for_space_fupd (K safe)
-       (data_state_peak_heap_length_fupd (K peak) s2)`,
+     data_state_stack_max_fupd (combin_K (data_state_stack_max s))
+       (data_state_safe_for_space_fupd (combin_K safe)
+          (data_state_peak_heap_length_fupd (combin_K peak) s2)) =
+     data_state_safe_for_space_fupd (combin_K safe)
+       (data_state_peak_heap_length_fupd (combin_K peak) s2)`,
   REPEAT STRIP_TAC THEN FIRST_ASSUM(SUBST1_TAC o SYM o MATCH_MP cut_state_opt_stack_max) THEN
   REWRITE_TAC[data_state_component_equality; data_state_INFO.ri_accfupds; K_THM]);;
 
@@ -913,9 +913,9 @@ let cut_state_opt_swap_input = prove
 
 let DSEMAUX_ssp_def = new_definition
   `DSEMAUX_ssp smx sf pk (s:(C,FFI)data_state) =
-     data_state_stack_max_fupd (K smx)
-       (data_state_safe_for_space_fupd (K sf)
-          (data_state_peak_heap_length_fupd (K pk) s))`;;
+     data_state_stack_max_fupd (combin_K smx)
+       (data_state_safe_for_space_fupd (combin_K sf)
+          (data_state_peak_heap_length_fupd (combin_K pk) s))`;;
 
 let DSEMAUX_ssp_acc =
   let names = map (fun (f,_,_) -> f) data_state_INFO.ri_fields in
@@ -975,12 +975,12 @@ let DSEMAUX_ssp_dec_clock = prove
 
 let DSEMAUX_ssp_fupds = prove
  (`!smx sf pk (s:(C,FFI)data_state) e x l.
-     data_state_locals_fupd (K e) (DSEMAUX_ssp smx sf pk s) =
-     DSEMAUX_ssp smx sf pk (data_state_locals_fupd (K e) s) /\
-     data_state_stack_fupd (K x) (DSEMAUX_ssp smx sf pk s) =
-     DSEMAUX_ssp smx sf pk (data_state_stack_fupd (K x) s) /\
-     data_state_locals_size_fupd (K l) (DSEMAUX_ssp smx sf pk s) =
-     DSEMAUX_ssp smx sf pk (data_state_locals_size_fupd (K l) s)`,
+     data_state_locals_fupd (combin_K e) (DSEMAUX_ssp smx sf pk s) =
+     DSEMAUX_ssp smx sf pk (data_state_locals_fupd (combin_K e) s) /\
+     data_state_stack_fupd (combin_K x) (DSEMAUX_ssp smx sf pk s) =
+     DSEMAUX_ssp smx sf pk (data_state_stack_fupd (combin_K x) s) /\
+     data_state_locals_size_fupd (combin_K l) (DSEMAUX_ssp smx sf pk s) =
+     DSEMAUX_ssp smx sf pk (data_state_locals_size_fupd (combin_K l) s)`,
   DSEMAUX_ssp_tac);;
 
 let DSEMAUX_ssp_size_of_heap = prove
@@ -1194,7 +1194,7 @@ let DSEMAUX_SSP_IH_TAC : tactic = fun (asl,w as g) ->
       let insts = map (fun v -> try rev_assoc v tmi with Failure _ -> v) vs in
       SPECL insts th) asl in
   let th = tryfind try_one targets in
-  let avoid = freesl (w :: map (concl o snd) asl) in
+  let avoid = freesl (w :: map (concl o snd) asl @ flat (map (hyp o snd) asl)) in
   let evs,_ = strip_exists (concl th) in
   let fresh = rev(itlist (fun v acc -> variant (acc @ avoid) v :: acc) (rev evs) []) in
   (MP_TAC th THEN
@@ -1220,7 +1220,7 @@ let DSEMAUX_SSP_DO_APP_RW_TAC : tactic = fun (asl,w as g) ->
                         with Failure _ -> false)) asl) in
   let r = rhs(concl th) in
   let choose_all ex =
-    let avoid = freesl (w :: map (concl o snd) asl) in
+    let avoid = freesl (w :: map (concl o snd) asl @ flat (map (hyp o snd) asl)) in
     let vs,_ = strip_exists (concl ex) in
     let vs' = rev(itlist (fun v acc -> variant (acc @ avoid) v :: acc) (rev vs) []) in
     let rec go vs th = match vs with
@@ -1290,7 +1290,7 @@ let DSEMAUX_EVAL_CLAUSE_TAC (rws:thm list) : tactic =
 
 let DSEMAUX_SSP_LEAF_TAC : tactic =
   REWRITE_TAC DSEMAUX_SSP_RWS THEN
-  REPEAT (CHANGED_TAC (CASE_REWRITE_TAC[] THEN
+  REPEAT (CHANGED_TAC (CAKE_REWRITE_TAC[] THEN
                        ASM_REWRITE_TAC (PAIR_EQ :: o_THM :: DSEMAUX_SSP_RWS)) ORELSE
           DSEMAUX_SSP_IH_TAC ORELSE DSEMAUX_SSP_DO_APP_RW_TAC) THEN
   IMP_RES_TAC DSEMAUX_jump_exc_stack_max THEN IMP_RES_TAC DSEMAUX_pop_env_stack_max THEN
@@ -1313,22 +1313,22 @@ let evaluate_fl_smx_safe_peak_swap_aux = prove
  (`!c (s:(C,FFI)data_state) r s' fl smx safe peak.
      data_evaluate (c,s) = (r,s') ==>
      if fl
-     then (let s0 = data_state_stack_max_fupd (K smx)
-                      (data_state_safe_for_space_fupd (K safe)
-                         (data_state_peak_heap_length_fupd (K peak) s)) in
+     then (let s0 = data_state_stack_max_fupd (combin_K smx)
+                      (data_state_safe_for_space_fupd (combin_K safe)
+                         (data_state_peak_heap_length_fupd (combin_K peak) s)) in
            ?smx safe peak.
              data_evaluate (c,s0) =
-             (r,data_state_stack_max_fupd (K smx)
-                  (data_state_safe_for_space_fupd (K safe)
-                     (data_state_peak_heap_length_fupd (K peak) s'))))
-     else (let s0 = data_state_stack_max_fupd (K (data_state_stack_max s))
-                      (data_state_safe_for_space_fupd (K safe)
-                         (data_state_peak_heap_length_fupd (K peak) s)) in
+             (r,data_state_stack_max_fupd (combin_K smx)
+                  (data_state_safe_for_space_fupd (combin_K safe)
+                     (data_state_peak_heap_length_fupd (combin_K peak) s'))))
+     else (let s0 = data_state_stack_max_fupd (combin_K (data_state_stack_max s))
+                      (data_state_safe_for_space_fupd (combin_K safe)
+                         (data_state_peak_heap_length_fupd (combin_K peak) s)) in
            ?(smx:num option) safe peak.
              data_evaluate (c,s0) =
-             (r,data_state_stack_max_fupd (K (data_state_stack_max s'))
-                  (data_state_safe_for_space_fupd (K safe)
-                     (data_state_peak_heap_length_fupd (K peak) s'))))`,
+             (r,data_state_stack_max_fupd (combin_K (data_state_stack_max s'))
+                  (data_state_safe_for_space_fupd (combin_K safe)
+                     (data_state_peak_heap_length_fupd (combin_K peak) s'))))`,
   REPEAT GEN_TAC THEN
   DISCH_THEN(ASSUME_TAC o REWRITE_RULE[FST; SND] o MATCH_MP DSEMAUX_evaluate_ssp) THEN
   REWRITE_TAC[LET_DEF; LET_END_DEF; GSYM DSEMAUX_ssp_def] THEN
@@ -1347,14 +1347,14 @@ let evaluate_fl_smx_safe_peak_swap_aux = prove
 let evaluate_smx_safe_peak_swap_aux = prove
  (`!c (s:(C,FFI)data_state) r s' smx safe peak.
      data_evaluate (c,s) = (r,s') ==>
-     (let s0 = data_state_stack_max_fupd (K smx)
-                 (data_state_safe_for_space_fupd (K safe)
-                    (data_state_peak_heap_length_fupd (K peak) s)) in
+     (let s0 = data_state_stack_max_fupd (combin_K smx)
+                 (data_state_safe_for_space_fupd (combin_K safe)
+                    (data_state_peak_heap_length_fupd (combin_K peak) s)) in
       ?smx safe peak.
         data_evaluate (c,s0) =
-        (r,data_state_stack_max_fupd (K smx)
-             (data_state_safe_for_space_fupd (K safe)
-                (data_state_peak_heap_length_fupd (K peak) s'))))`,
+        (r,data_state_stack_max_fupd (combin_K smx)
+             (data_state_safe_for_space_fupd (combin_K safe)
+                (data_state_peak_heap_length_fupd (combin_K peak) s'))))`,
   REPEAT GEN_TAC THEN
   MP_TAC(SPECL [`c:data_prog`; `s:(C,FFI)data_state`; `r:((data_v list,data_v)result)option`;
                 `s':(C,FFI)data_state`; `T`; `smx:num option`; `safe:bool`; `peak:num`]
@@ -1365,25 +1365,25 @@ let evaluate_smx_safe_peak_swap = prove
  (`!c (s:(C,FFI)data_state) r s' smx safe peak.
      data_evaluate (c,s) = (r,s') ==>
      ?smx' safe' peak'.
-       data_evaluate (c,data_state_stack_max_fupd (K smx)
-                          (data_state_safe_for_space_fupd (K safe)
-                             (data_state_peak_heap_length_fupd (K peak) s))) =
-       (r,data_state_stack_max_fupd (K smx')
-            (data_state_safe_for_space_fupd (K safe')
-               (data_state_peak_heap_length_fupd (K peak') s')))`,
+       data_evaluate (c,data_state_stack_max_fupd (combin_K smx)
+                          (data_state_safe_for_space_fupd (combin_K safe)
+                             (data_state_peak_heap_length_fupd (combin_K peak) s))) =
+       (r,data_state_stack_max_fupd (combin_K smx')
+            (data_state_safe_for_space_fupd (combin_K safe')
+               (data_state_peak_heap_length_fupd (combin_K peak') s')))`,
   REWRITE_TAC[REWRITE_RULE[LET_DEF; LET_END_DEF] evaluate_smx_safe_peak_swap_aux]);;
 
 let evaluate_safe_peak_swap_aux = prove
  (`!c (s:(C,FFI)data_state) r s' safe peak.
      data_evaluate (c,s) = (r,s') ==>
-     (let s0 = data_state_stack_max_fupd (K (data_state_stack_max s))
-                 (data_state_safe_for_space_fupd (K safe)
-                    (data_state_peak_heap_length_fupd (K peak) s)) in
+     (let s0 = data_state_stack_max_fupd (combin_K (data_state_stack_max s))
+                 (data_state_safe_for_space_fupd (combin_K safe)
+                    (data_state_peak_heap_length_fupd (combin_K peak) s)) in
       ?(smx:num option) safe peak.
         data_evaluate (c,s0) =
-        (r,data_state_stack_max_fupd (K (data_state_stack_max s'))
-             (data_state_safe_for_space_fupd (K safe)
-                (data_state_peak_heap_length_fupd (K peak) s'))))`,
+        (r,data_state_stack_max_fupd (combin_K (data_state_stack_max s'))
+             (data_state_safe_for_space_fupd (combin_K safe)
+                (data_state_peak_heap_length_fupd (combin_K peak) s'))))`,
   REPEAT GEN_TAC THEN
   MP_TAC(SPECL [`c:data_prog`; `s:(C,FFI)data_state`; `r:((data_v list,data_v)result)option`;
                 `s':(C,FFI)data_state`; `F`; `smx:num option`; `safe:bool`; `peak:num`]
@@ -1393,17 +1393,17 @@ let evaluate_safe_peak_swap_aux = prove
 let DSEMAUX_ssp_same_smx = prove
  (`!(t:(C,FFI)data_state) a b.
      DSEMAUX_ssp (data_state_stack_max t) a b t =
-     data_state_safe_for_space_fupd (K a) (data_state_peak_heap_length_fupd (K b) t)`,
+     data_state_safe_for_space_fupd (combin_K a) (data_state_peak_heap_length_fupd (combin_K b) t)`,
   DSEMAUX_ssp_tac);;
 
 let evaluate_safe_peak_swap = prove
  (`!safe (s':(C,FFI)data_state) s r peak c.
      data_evaluate (c,s) = (r,s') ==>
      ?safe' peak'.
-       data_evaluate (c,data_state_safe_for_space_fupd (K safe)
-                          (data_state_peak_heap_length_fupd (K peak) s)) =
-       (r,data_state_safe_for_space_fupd (K safe')
-            (data_state_peak_heap_length_fupd (K peak') s'))`,
+       data_evaluate (c,data_state_safe_for_space_fupd (combin_K safe)
+                          (data_state_peak_heap_length_fupd (combin_K peak) s)) =
+       (r,data_state_safe_for_space_fupd (combin_K safe')
+            (data_state_peak_heap_length_fupd (combin_K peak') s'))`,
   REPEAT GEN_TAC THEN
   DISCH_THEN(MP_TAC o SPECL [`data_state_stack_max (s:(C,FFI)data_state)`;
                              `safe:bool`; `peak:num`] o
@@ -1426,22 +1426,22 @@ let same_stack_size_size_of_stack = prove
 
 let s_peak_heap = prove
  (`!(s:(C,FFI)data_state) smnew clock ssnew plnnew.
-     data_state_peak_heap_length_fupd (K (data_state_peak_heap_length s)) s = s /\
-     data_state_safe_for_space_fupd (K (data_state_safe_for_space s)) s = s /\
-     data_state_stack_max_fupd (K (data_state_stack_max s)) s = s /\
-     data_state_locals_size_fupd (K (data_state_locals_size s)) s = s /\
-     data_state_stack_fupd (K (data_state_stack s))
-       (data_state_stack_max_fupd (K smnew)
-          (data_state_clock_fupd (K clock)
-             (data_state_safe_for_space_fupd (K ssnew) s))) =
-     data_state_stack_max_fupd (K smnew)
-       (data_state_clock_fupd (K clock)
-          (data_state_safe_for_space_fupd (K ssnew) s)) /\
-     data_state_handler_fupd (K (data_state_handler s))
-       (data_state_safe_for_space_fupd (K ssnew)
-          (data_state_peak_heap_length_fupd (K plnnew) s)) =
-     data_state_safe_for_space_fupd (K ssnew)
-       (data_state_peak_heap_length_fupd (K plnnew) s)`,
+     data_state_peak_heap_length_fupd (combin_K (data_state_peak_heap_length s)) s = s /\
+     data_state_safe_for_space_fupd (combin_K (data_state_safe_for_space s)) s = s /\
+     data_state_stack_max_fupd (combin_K (data_state_stack_max s)) s = s /\
+     data_state_locals_size_fupd (combin_K (data_state_locals_size s)) s = s /\
+     data_state_stack_fupd (combin_K (data_state_stack s))
+       (data_state_stack_max_fupd (combin_K smnew)
+          (data_state_clock_fupd (combin_K clock)
+             (data_state_safe_for_space_fupd (combin_K ssnew) s))) =
+     data_state_stack_max_fupd (combin_K smnew)
+       (data_state_clock_fupd (combin_K clock)
+          (data_state_safe_for_space_fupd (combin_K ssnew) s)) /\
+     data_state_handler_fupd (combin_K (data_state_handler s))
+       (data_state_safe_for_space_fupd (combin_K ssnew)
+          (data_state_peak_heap_length_fupd (combin_K plnnew) s)) =
+     data_state_safe_for_space_fupd (combin_K ssnew)
+       (data_state_peak_heap_length_fupd (combin_K plnnew) s)`,
   REWRITE_TAC[data_state_component_equality; data_state_INFO.ri_accfupds; K_THM]);;
 let _ = cake_add_simps [s_peak_heap];;
 (* ------------------------------------------------------------------------- *)
@@ -1452,7 +1452,7 @@ let _ = cake_add_simps [s_peak_heap];;
 
 let DSEMAUX_sl_def = new_definition
   `DSEMAUX_sl xs lsz (s:(C,FFI)data_state) =
-     data_state_stack_fupd (K xs) (data_state_locals_size_fupd (K lsz) s)`;;
+     data_state_stack_fupd (combin_K xs) (data_state_locals_size_fupd (combin_K lsz) s)`;;
 
 let DSEMAUX_sl_tac : tactic =
   REWRITE_TAC[DSEMAUX_sl_def; DSEMAUX_ssp_def; data_state_component_equality;
@@ -1497,8 +1497,8 @@ let DSEMAUX_sl_dec_clock = prove
 
 let DSEMAUX_sl_locals = prove
  (`!xs lsz (s:(C,FFI)data_state) e.
-     data_state_locals_fupd (K e) (DSEMAUX_sl xs lsz s) =
-     DSEMAUX_sl xs lsz (data_state_locals_fupd (K e) s)`,
+     data_state_locals_fupd (combin_K e) (DSEMAUX_sl xs lsz s) =
+     DSEMAUX_sl xs lsz (data_state_locals_fupd (combin_K e) s)`,
   DSEMAUX_sl_tac);;
 
 let DSEMAUX_sl_ssp = prove
@@ -1578,10 +1578,10 @@ let DSEMAUX_ASM_HEAD name th =
 let DSEMAUX_jump_exc_shape = prove
  (`!(s:(C,FFI)data_state) t.
      data_jump_exc s = SOME t ==>
-     t = data_state_handler_fupd (K (data_state_handler t))
-           (data_state_locals_fupd (K (data_state_locals t))
-              (data_state_stack_fupd (K (data_state_stack t))
-                 (data_state_locals_size_fupd (K (data_state_locals_size t)) s)))`,
+     t = data_state_handler_fupd (combin_K (data_state_handler t))
+           (data_state_locals_fupd (combin_K (data_state_locals t))
+              (data_state_stack_fupd (combin_K (data_state_stack t))
+                 (data_state_locals_size_fupd (combin_K (data_state_locals_size t)) s)))`,
   REPEAT GEN_TAC THEN REWRITE_TAC[data_jump_exc_def] THEN
   REPEAT (COND_CASES_TAC ORELSE TOP_CASE_TAC) THEN
   REWRITE_TAC[option_INJ; option_DISTINCT] THEN
@@ -1598,10 +1598,10 @@ let DSEMAUX_jump_exc_cong = prove
      data_state_stack t = data_state_stack s /\
      data_state_handler t = data_state_handler s ==>
      data_jump_exc t =
-     OPTION_MAP (\s'. data_state_handler_fupd (K (data_state_handler s'))
-                        (data_state_locals_fupd (K (data_state_locals s'))
-                           (data_state_stack_fupd (K (data_state_stack s'))
-                              (data_state_locals_size_fupd (K (data_state_locals_size s')) t))))
+     OPTION_MAP (\s'. data_state_handler_fupd (combin_K (data_state_handler s'))
+                        (data_state_locals_fupd (combin_K (data_state_locals s'))
+                           (data_state_stack_fupd (combin_K (data_state_stack s'))
+                              (data_state_locals_size_fupd (combin_K (data_state_locals_size s')) t))))
                 (data_jump_exc s)`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN REWRITE_TAC[data_jump_exc_def] THEN
   ASM_REWRITE_TAC[] THEN
@@ -1623,7 +1623,7 @@ let DSEMAUX_sl_do_app = prove
        I (data_do_app op vs s)`,
   REPEAT GEN_TAC THEN
   SUBGOAL_THEN `DSEMAUX_sl xs lsz (s:(C,FFI)data_state) =
-                data_state_locals_size_fupd (K lsz) (data_state_stack_fupd (K xs) s)`
+                data_state_locals_size_fupd (combin_K lsz) (data_state_stack_fupd (combin_K xs) s)`
     SUBST1_TAC THENL [DSEMAUX_sl_tac; ALL_TAC] THEN
   REWRITE_TAC[do_app_with_stack_and_locals] THEN
   AP_THM_TAC THEN AP_THM_TAC THEN AP_TERM_TAC THEN
@@ -1649,7 +1649,7 @@ let DSEMAUX_SL_RWS =
    DSEMAUX_ssp_ssp; DSEMAUX_sl_ssp_jump_exc] @ DSEMAUX_SSP_RWS;;
 
 let DSEMAUX_SL_LOOP_TAC : tactic =
-  REPEAT (CHANGED_TAC (CASE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
+  REPEAT (CHANGED_TAC (CAKE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
                        ASM_REWRITE_TAC (PAIR_EQ :: DSEMAUX_SL_RWS)) ORELSE
           DSEMAUX_SSP_DO_APP_RW_TAC);;
 
@@ -1699,7 +1699,7 @@ let DSEMAUX_SL_SIMPLE_TAC : tactic =
              ONCE_REWRITE_RULE[data_evaluate_def]) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[PAIR_EQ]) THEN DSEMAUX_SPLIT_CONJ_ASMS THEN RVEQ_TAC THEN
   IMP_RES_TAC data_do_app_err THEN DSEMAUX_SPLIT_DISJ_ASMS THEN RVEQ_TAC THEN
-  REPEAT GEN_TAC THEN DISCH_TAC THEN CASE_REWRITE_TAC[] THEN
+  REPEAT GEN_TAC THEN DISCH_TAC THEN CAKE_REWRITE_TAC[] THEN
   IMP_RES_TAC DSEMAUX_cut_state_opt_stack THEN IMP_RES_TAC data_do_app_const THEN
   REPEAT CONJ_TAC THEN
   TRY (ONCE_REWRITE_TAC[data_evaluate_def] THEN REWRITE_TAC DSEMAUX_SL_RWS THEN
@@ -1711,13 +1711,13 @@ let DSEMAUX_SL_RAISE_TAC : tactic =
   DISCH_THEN(STRIP_ASSUME_TAC o REWRITE_RULE DSEMAUX_EVAL_CASE_EQS o
              ONCE_REWRITE_RULE[data_evaluate_def]) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[PAIR_EQ]) THEN DSEMAUX_SPLIT_CONJ_ASMS THEN RVEQ_TAC THEN
-  REPEAT GEN_TAC THEN DISCH_TAC THEN CASE_REWRITE_TAC[] THEN
+  REPEAT GEN_TAC THEN DISCH_TAC THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[] THEN
   CONJ_TAC THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
   X_GEN_TAC `s7:(C,FFI)data_state` THEN DISCH_TAC THEN
   ONCE_REWRITE_TAC[data_evaluate_def] THEN
   ASM_REWRITE_TAC DSEMAUX_SL_RWS THEN
-  CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC(PAIR_EQ :: DSEMAUX_SL_RWS) THEN
+  CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC(PAIR_EQ :: DSEMAUX_SL_RWS) THEN
   MAP_EVERY EXISTS_TAC [`data_state_locals_size (s7:(C,FFI)data_state)`;
                         `sf:bool`; `smx:num option`; `pk:num`] THEN
   FIRST_ASSUM(fun th -> if DSEMAUX_ASM_HEAD "data_jump_exc" th &&
@@ -1753,8 +1753,8 @@ let DSEMAUX_SL_GOAL = CASE_TERM
                     data_evaluate (FST p,DSEMAUX_sl xs lsz (DSEMAUX_ssp smx sf pk (SND p))) =
                     (r,DSEMAUX_sl (data_state_stack s7) lss
                          (DSEMAUX_ssp smx' sfs phl
-                            (data_state_handler_fupd (K (data_state_handler s7))
-                               (data_state_locals_fupd (K (data_state_locals s7)) s1)))))
+                            (data_state_handler_fupd (combin_K (data_state_handler s7))
+                               (data_state_locals_fupd (combin_K (data_state_locals s7)) s1)))))
         | _ ->
             data_state_stack s1 = data_state_stack (SND p) /\
             data_state_handler s1 = data_state_handler (SND p) /\
@@ -1820,7 +1820,7 @@ let DSEMAUX_SL_SEQ_TAC : tactic =
     USE_THEN "ih1" (fun ih -> MP_TAC (SPECL [`xs:stack list`; `lsz:num option`;
                                             `smx:num option`; `sf:bool`; `pk:num`]
        (MATCH_MP ih (ASSUME `data_evaluate (c1,s:(C,FFI)data_state) = NONE,y`)))) THEN
-    ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
     DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC (CONJUNCTS_THEN2 ASSUME_TAC
       (X_CHOOSE_THEN `lss1:num option` (X_CHOOSE_THEN `sfs1:bool`
         (X_CHOOSE_THEN `smx1:num option` (X_CHOOSE_THEN `phl1:num` ASSUME_TAC)))))) THEN
@@ -1833,7 +1833,7 @@ let DSEMAUX_SL_SEQ_TAC : tactic =
     REMOVE_THEN "ih1" (K ALL_TAC) THEN REMOVE_THEN "ih2" (K ALL_TAC) THEN
     SPEC_TAC (`r:((data_v list,data_v)result)option`,`r:((data_v list,data_v)result)option`) THEN
     MATCH_MP_TAC DSEMAUX_res_CASES THEN REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
-    CASE_REWRITE_TAC[option_DISTINCT] THEN ASM_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[option_DISTINCT] THEN ASM_REWRITE_TAC[] THEN
     STRIP_TAC THEN CONJ_TAC THENL
      [MP_TAC (SPECL [`s:(C,FFI)data_state`; `y:(C,FFI)data_state`; `s2:(C,FFI)data_state`]
                     DSEMAUX_jump_exc_cong2) THEN
@@ -1854,21 +1854,21 @@ let DSEMAUX_SL_SEQ_TAC : tactic =
     UNDISCH_TAC `~(r:((data_v list,data_v)result)option = NONE)` THEN
     SPEC_TAC (`r:((data_v list,data_v)result)option`,`r:((data_v list,data_v)result)option`) THEN
     MATCH_MP_TAC DSEMAUX_res_CASES THEN REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
-    CASE_REWRITE_TAC[option_DISTINCT] THEN
+    CAKE_REWRITE_TAC[option_DISTINCT] THEN
     MESON_TAC[DSEMAUX_Seq_not_NONE; option_DISTINCT]];;
 
 let DSEMAUX_SL_TYERR_TAC : tactic =
   REPEAT GEN_TAC THEN REWRITE_TAC[PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN2 (SUBST_ALL_TAC o SYM) (SUBST_ALL_TAC o SYM)) THEN
-  CASE_REWRITE_TAC[];;
+  CAKE_REWRITE_TAC[];;
 let DSEMAUX_SL_IH_TAC : tactic =
   FIRST_X_ASSUM(fun th -> MP_TAC(SPEC `x:data_v` th) THEN ASM_REWRITE_TAC[] THEN NO_TAC);;
 let DSEMAUX_SL_IF_TAC : tactic =
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   ONCE_REWRITE_TAC[data_evaluate_def] THEN REWRITE_TAC[DSEMAUX_sl_acc; DSEMAUX_ssp_acc] THEN
-  DISJ_CASES_THEN2 (fun th -> REWRITE_TAC[th] THEN CASE_REWRITE_TAC[] THEN DSEMAUX_SL_TYERR_TAC)
+  DISJ_CASES_THEN2 (fun th -> REWRITE_TAC[th] THEN CAKE_REWRITE_TAC[] THEN DSEMAUX_SL_TYERR_TAC)
     (X_CHOOSE_THEN `x:data_v` (fun th -> ASSUME_TAC th THEN REWRITE_TAC[th] THEN
-                                         CASE_REWRITE_TAC[]))
+                                         CAKE_REWRITE_TAC[]))
     (ISPEC `data_get_var n (data_state_locals (s:(C,FFI)data_state))` (cases "option")) THEN
   ASM_CASES_TAC `isBool T x` THEN ASM_REWRITE_TAC[] THENL
    [DSEMAUX_SL_IH_TAC;
@@ -1899,8 +1899,8 @@ let DSEMAUX_SLP_def = new_definition (CASE_TERM
                     data_evaluate (c,DSEMAUX_sl xs lsz (DSEMAUX_ssp smx sf pk s)) =
                     (r,DSEMAUX_sl (data_state_stack s7) lss
                          (DSEMAUX_ssp smx' sfs phl
-                            (data_state_handler_fupd (K (data_state_handler s7))
-                               (data_state_locals_fupd (K (data_state_locals s7)) s1)))))
+                            (data_state_handler_fupd (combin_K (data_state_handler s7))
+                               (data_state_locals_fupd (combin_K (data_state_locals s7)) s1)))))
         | _ ->
             data_state_stack s1 = data_state_stack s /\
             data_state_handler s1 = data_state_handler s /\
@@ -1974,7 +1974,7 @@ let DSEMAUX_SLP_SAME = prove
   UNDISCH_TAC `(r:((data_v list,data_v)result)option) = NONE ==> b` THEN
   SPEC_TAC (`r:((data_v list,data_v)result)option`,`r:((data_v list,data_v)result)option`) THEN
   MATCH_MP_TAC DSEMAUX_res_CASES THEN REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
-  CASE_REWRITE_TAC[option_DISTINCT] THEN REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[option_DISTINCT] THEN REWRITE_TAC[] THEN
   REPEAT DISCH_TAC THEN
   DSEMAUX_SPLIT_CONJ_ASMS THEN
   FIRST [DSEMAUX_TR_PLAIN_TAC; DSEMAUX_TR_RAISE_TAC]);;
@@ -2019,14 +2019,14 @@ let DSEMAUX_set_vars_sh = prove
 
 let DSEMAUX_ssp_handler_fupd = prove
  (`!smx sf pk (s:(C,FFI)data_state) h.
-     data_state_handler_fupd (K h) (DSEMAUX_ssp smx sf pk s) =
-     DSEMAUX_ssp smx sf pk (data_state_handler_fupd (K h) s)`,
+     data_state_handler_fupd (combin_K h) (DSEMAUX_ssp smx sf pk s) =
+     DSEMAUX_ssp smx sf pk (data_state_handler_fupd (combin_K h) s)`,
   DSEMAUX_ssp_tac);;
 
 let DSEMAUX_hl_fupd_id = prove
  (`!h e (s:(C,FFI)data_state).
      data_state_handler s = h /\ data_state_locals s = e ==>
-     data_state_handler_fupd (K h) (data_state_locals_fupd (K e) s) = s`,
+     data_state_handler_fupd (combin_K h) (data_state_locals_fupd (combin_K e) s) = s`,
   REPEAT GEN_TAC THEN DISCH_THEN(CONJUNCTS_THEN (SUBST1_TAC o SYM)) THEN
   REWRITE_TAC[data_state_component_equality; data_state_INFO.ri_accfupds; K_THM]);;
 
@@ -2035,10 +2035,10 @@ let DSEMAUX_jump_exc_Env_cons = prove
      data_state_stack t = CONS (data_Env l e) (data_state_stack s) ==>
      data_state_handler t = data_state_handler s ==>
      data_jump_exc t =
-     OPTION_MAP (\s'. data_state_handler_fupd (K (data_state_handler s'))
-                        (data_state_locals_fupd (K (data_state_locals s'))
-                           (data_state_stack_fupd (K (data_state_stack s'))
-                              (data_state_locals_size_fupd (K (data_state_locals_size s')) t))))
+     OPTION_MAP (\s'. data_state_handler_fupd (combin_K (data_state_handler s'))
+                        (data_state_locals_fupd (combin_K (data_state_locals s'))
+                           (data_state_stack_fupd (combin_K (data_state_stack s'))
+                              (data_state_locals_size_fupd (combin_K (data_state_locals_size s')) t))))
                 (data_jump_exc s)`,
   REPEAT GEN_TAC THEN REPEAT DISCH_TAC THEN REWRITE_TAC[data_jump_exc_def] THEN
   ASM_REWRITE_TAC[LENGTH] THEN
@@ -2049,7 +2049,7 @@ let DSEMAUX_jump_exc_Env_cons = prove
     REWRITE_TAC[data_state_component_equality; data_state_INFO.ri_accfupds; K_THM];
     ASM_REWRITE_TAC[OPTION_MAP_DEF] THEN
     ASM_CASES_TAC `data_state_handler (s:(C,FFI)data_state) = LENGTH (data_state_stack s)` THENL
-     [ASM_REWRITE_TAC[LASTN_LEMMA; ARITH_RULE `n < SUC n`] THEN CASE_REWRITE_TAC[];
+     [ASM_REWRITE_TAC[LASTN_LEMMA; ARITH_RULE `n < SUC n`] THEN CAKE_REWRITE_TAC[];
       ASM_SIMP_TAC[ARITH_RULE `~(n < m) /\ ~(n = m) ==> ~(n < SUC m)`]]]);;
 
 let DSEMAUX_jump_exc_Env_cons2 = prove
@@ -2094,30 +2094,30 @@ let DSEMAUX_jump_exc_Exc_top = prove
  (`!(t:(C,FFI)data_state) l e h xs.
      data_state_stack t = CONS (Exc l e h) xs /\ data_state_handler t = LENGTH xs ==>
      data_jump_exc t =
-     SOME (data_state_handler_fupd (K h) (data_state_locals_fupd (K e)
-             (data_state_stack_fupd (K xs) (data_state_locals_size_fupd (K l) t))))`,
+     SOME (data_state_handler_fupd (combin_K h) (data_state_locals_fupd (combin_K e)
+             (data_state_stack_fupd (combin_K xs) (data_state_locals_size_fupd (combin_K l) t))))`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN REWRITE_TAC[data_jump_exc_def] THEN
-  ASM_REWRITE_TAC[LENGTH; LASTN_LEMMA; ARITH_RULE `n < SUC n`] THEN CASE_REWRITE_TAC[]);;
+  ASM_REWRITE_TAC[LENGTH; LASTN_LEMMA; ARITH_RULE `n < SUC n`] THEN CAKE_REWRITE_TAC[]);;
 
 let DSEMAUX_sl_pop_env = prove
  (`(!l e xs lss (s:(C,FFI)data_state).
       data_pop_env (DSEMAUX_sl (CONS (data_Env l e) xs) lss s) =
-      SOME (DSEMAUX_sl xs l (data_state_locals_fupd (K e) s))) /\
+      SOME (DSEMAUX_sl xs l (data_state_locals_fupd (combin_K e) s))) /\
    (!l e h xs lss (s:(C,FFI)data_state).
       data_pop_env (DSEMAUX_sl (CONS (Exc l e h) xs) lss s) =
-      SOME (DSEMAUX_sl xs l (data_state_locals_fupd (K e) (data_state_handler_fupd (K h) s))))`,
-  REWRITE_TAC[data_pop_env_def; DSEMAUX_sl_acc] THEN CASE_REWRITE_TAC[] THEN
+      SOME (DSEMAUX_sl xs l (data_state_locals_fupd (combin_K e) (data_state_handler_fupd (combin_K h) s))))`,
+  REWRITE_TAC[data_pop_env_def; DSEMAUX_sl_acc] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[option_INJ] THEN DSEMAUX_sl_tac);;
 
 let DSEMAUX_pop_env_frame = prove
  (`(!l e xs (s:(C,FFI)data_state).
       data_state_stack s = CONS (data_Env l e) xs ==>
-      data_pop_env s = SOME (DSEMAUX_sl xs l (data_state_locals_fupd (K e) s))) /\
+      data_pop_env s = SOME (DSEMAUX_sl xs l (data_state_locals_fupd (combin_K e) s))) /\
    (!l e h xs (s:(C,FFI)data_state).
       data_state_stack s = CONS (Exc l e h) xs ==>
       data_pop_env s =
-      SOME (DSEMAUX_sl xs l (data_state_locals_fupd (K e) (data_state_handler_fupd (K h) s))))`,
-  REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[data_pop_env_def] THEN CASE_REWRITE_TAC[] THEN
+      SOME (DSEMAUX_sl xs l (data_state_locals_fupd (combin_K e) (data_state_handler_fupd (combin_K h) s))))`,
+  REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[data_pop_env_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[option_INJ] THEN DSEMAUX_sl_tac);;
 
 (* witnesses for ?v1 .. vn. L = R by matching R against L *)
@@ -2215,7 +2215,7 @@ let DSEMAUX_SLP_FRAME_ABORT = prove
     ASM_REWRITE_TAC[];
     ALL_TAC] THEN
   STRUCT_CASES_TAC (ISPEC `a:abort` (cases "abort")) THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
   USE_THEN "tr" (fun tr -> FIRST_ASSUM (fun th -> MP_TAC (MATCH_MP tr th))) THEN
   DISCH_THEN (fun th -> REWRITE_TAC[th; PAIR_EQ]) THEN DSEMAUX_EQ_EXISTS_TAC);;
@@ -2249,7 +2249,7 @@ let DSEMAUX_SLP_FRAME_RAISE = prove
    [REWRITE_TAC[LENGTH; DSEMAUX_call_env_sh; DSEMAUX_push_env_sh; DSEMAUX_dec_clock_sh] THEN
     ASM_REWRITE_TAC[];
     ALL_TAC] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   DISCH_THEN(CONJUNCTS_THEN2 (X_CHOOSE_THEN `s2:(C,FFI)data_state` STRIP_ASSUME_TAC)
                              (LABEL_TAC "ih2")) THEN
   CONJ_TAC THENL
@@ -2325,7 +2325,7 @@ let DSEMAUX_SLP_POP = prove
   DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "ih") (CONJUNCTS_THEN2 ASSUME_TAC
     (CONJUNCTS_THEN2 ASSUME_TAC (CONJUNCTS_THEN2 ASSUME_TAC
       (CONJUNCTS_THEN2 ASSUME_TAC (LABEL_TAC "tr")))))) THEN
-  REPEAT GEN_TAC THEN DISCH_TAC THEN CASE_REWRITE_TAC[] THEN
+  REPEAT GEN_TAC THEN DISCH_TAC THEN CAKE_REWRITE_TAC[] THEN
   REMOVE_THEN "tr" (MP_TAC o SPECL [`xs:stack list`; `lsz:num option`; `smx:num option`;
                                     `sf:bool`; `pk:num`]) THEN
   ASM_REWRITE_TAC[] THEN
@@ -2333,7 +2333,7 @@ let DSEMAUX_SLP_POP = prove
   DISCH_THEN (CHOOSE_THEN (CHOOSE_THEN (fun th -> REWRITE_TAC[th]))) THEN
   DISCH_THEN (LABEL_TAC "tr") THEN
   DSEMAUX_IH_FROM_TR_TAC THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[DSEMAUX_call_env_sh; DSEMAUX_push_env_sh; DSEMAUX_dec_clock_sh] THEN
   DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC (CONJUNCTS_THEN2 ASSUME_TAC
     (X_CHOOSE_THEN `lss0:num option` (X_CHOOSE_THEN `sfs0:bool`
@@ -2371,7 +2371,7 @@ let DSEMAUX_SLP_HANDLE = prove
       [`data_state_stack (data_call_env args1 ss (data_push_env env T
           (data_dec_clock (s:(C,FFI)data_state))))`;
        `NONE:num option`; `NONE:num option`; `F`; `0`] o REWRITE_RULE[DSEMAUX_SLP_def]) THEN
-    REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
     DISCH_THEN (X_CHOOSE_THEN `s3:(C,FFI)data_state` STRIP_ASSUME_TAC o CONJUNCT1) THEN
     MP_TAC (SPECL [`data_call_env args1 ss (data_push_env env T (data_dec_clock (s:(C,FFI)data_state)))`;
                    `data_state_locals_size (s:(C,FFI)data_state)`; `env:data_v spt`;
@@ -2403,7 +2403,7 @@ let DSEMAUX_SLP_HANDLE = prove
    [REWRITE_TAC[LENGTH; DSEMAUX_call_env_sh; DSEMAUX_push_env_sh; DSEMAUX_dec_clock_sh] THEN
     ASM_REWRITE_TAC[];
     ALL_TAC] THEN
-  CASE_REWRITE_TAC[] THEN DISCH_THEN (MP_TAC o CONJUNCT2) THEN
+  CAKE_REWRITE_TAC[] THEN DISCH_THEN (MP_TAC o CONJUNCT2) THEN
   MP_TAC (SPECL [`DSEMAUX_sl (CONS (Exc lsz env (data_state_handler (s:(C,FFI)data_state))) xs) ss
                     (data_call_env args1 ss (data_push_env env T (data_dec_clock s)))`;
                  `lsz:num option`; `env:data_v spt`; `data_state_handler (s:(C,FFI)data_state)`;
@@ -2459,7 +2459,7 @@ let DSEMAUX_SLP_RULES =
 
 let DSEMAUX_sl_stack_fupd = prove
  (`!x xs lsz (s:(C,FFI)data_state).
-     data_state_stack_fupd (K x) (DSEMAUX_sl xs lsz s) = DSEMAUX_sl x lsz s`,
+     data_state_stack_fupd (combin_K x) (DSEMAUX_sl xs lsz s) = DSEMAUX_sl x lsz s`,
   DSEMAUX_sl_tac);;
 
 (* rewrite data_push_env e b (DSEMAUX_sl X Y S) of the goal *)
@@ -2480,7 +2480,7 @@ let DSEMAUX_SL_PUSH_TAC : tactic = fun (asl,w as g) ->
 let DSEMAUX_SL_RWS2 = DSEMAUX_sl_stack_fupd :: DSEMAUX_SL_RWS;;
 
 let DSEMAUX_SL_LOOP2_TAC : tactic =
-  REPEAT (CHANGED_TAC (CASE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
+  REPEAT (CHANGED_TAC (CAKE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
                        ASM_REWRITE_TAC (PAIR_EQ :: IS_SOME_DEF :: DSEMAUX_SL_RWS2)) ORELSE
           DSEMAUX_SSP_DO_APP_RW_TAC ORELSE DSEMAUX_SL_PUSH_TAC);;
 
@@ -2488,7 +2488,7 @@ let DSEMAUX_SL_LOOP2_TAC : tactic =
 
 let DSEMAUX_SL_LEAF_TAC : tactic =
   REWRITE_TAC[DSEMAUX_SLP_def] THEN
-  REPEAT GEN_TAC THEN DISCH_TAC THEN CASE_REWRITE_TAC[] THEN
+  REPEAT GEN_TAC THEN DISCH_TAC THEN CAKE_REWRITE_TAC[] THEN
   REPEAT CONJ_TAC THEN
   TRY (ONCE_REWRITE_TAC[data_evaluate_def] THEN REWRITE_TAC DSEMAUX_SL_RWS2 THEN
        DSEMAUX_SL_LOOP2_TAC THEN DSEMAUX_SL_FINISH_TAC THEN NO_TAC) THEN
@@ -2502,8 +2502,8 @@ let DSEMAUX_TR_GOAL_TAC : tactic =
   REPEAT (DISCH_THEN (fun th -> if is_eq (concl th) then ASSUME_TAC th else failwith "")) THEN
   ONCE_REWRITE_TAC[data_evaluate_def] THEN
   REPEAT (CHANGED_TAC (ASM_REWRITE_TAC[DSEMAUX_sl_acc; DSEMAUX_ssp_acc; IS_SOME_DEF] THEN
-                       CASE_REWRITE_TAC[])) THEN
-  REPEAT (TOP_CASE_TAC THEN ASM_REWRITE_TAC[option_DISTINCT] THEN CASE_REWRITE_TAC[]);;
+                       CAKE_REWRITE_TAC[])) THEN
+  REPEAT (TOP_CASE_TAC THEN ASM_REWRITE_TAC[option_DISTINCT] THEN CAKE_REWRITE_TAC[]);;
 
 let DSEMAUX_ERR_SPLIT_TAC : tactic = fun (asl,w as g) ->
   let e = find (fun v -> type_of v = `:(data_v)error_result`) (frees w) in
@@ -2570,46 +2570,46 @@ let evaluate_stack_and_locals_swap = prove
          data_state_stack s1 = [] /\
          (!xs lsz. LENGTH (data_state_stack s) = LENGTH xs ==>
             ?lss sfs smx phl.
-              data_evaluate (c,data_state_stack_fupd (K xs)
-                                 (data_state_locals_size_fupd (K lsz) s)) =
+              data_evaluate (c,data_state_stack_fupd (combin_K xs)
+                                 (data_state_locals_size_fupd (combin_K lsz) s)) =
               (SOME (Rerr (Rabort a)),
-               data_state_locals_size_fupd (K lss)
-                 (data_state_safe_for_space_fupd (K sfs)
-                    (data_state_stack_max_fupd (K smx)
-                       (data_state_peak_heap_length_fupd (K phl) s1)))))
+               data_state_locals_size_fupd (combin_K lss)
+                 (data_state_safe_for_space_fupd (combin_K sfs)
+                    (data_state_stack_max_fupd (combin_K smx)
+                       (data_state_peak_heap_length_fupd (combin_K phl) s1)))))
      | (SOME (Rerr (Rraise t)),s1) ->
          (?s2. data_jump_exc s = SOME s2 /\
                data_state_locals s2 = data_state_locals s1 /\
                data_state_stack s2 = data_state_stack s1 /\
                data_state_handler s2 = data_state_handler s1 /\
                (!xs s7 lsz.
-                  data_jump_exc (data_state_stack_fupd (K xs)
-                                   (data_state_locals_size_fupd (K lsz) s)) = SOME s7 /\
+                  data_jump_exc (data_state_stack_fupd (combin_K xs)
+                                   (data_state_locals_size_fupd (combin_K lsz) s)) = SOME s7 /\
                   LENGTH (data_state_stack s) = LENGTH xs ==>
                   ?lss sfs smx phl.
-                    data_evaluate (c,data_state_stack_fupd (K xs)
-                                       (data_state_locals_size_fupd (K lsz) s)) =
+                    data_evaluate (c,data_state_stack_fupd (combin_K xs)
+                                       (data_state_locals_size_fupd (combin_K lsz) s)) =
                     (SOME (Rerr (Rraise t)),
-                     data_state_stack_fupd (K (data_state_stack s7))
-                       (data_state_handler_fupd (K (data_state_handler s7))
-                          (data_state_locals_fupd (K (data_state_locals s7))
-                             (data_state_locals_size_fupd (K lss)
-                                (data_state_safe_for_space_fupd (K sfs)
-                                   (data_state_stack_max_fupd (K smx)
-                                      (data_state_peak_heap_length_fupd (K phl) s1)))))))))
+                     data_state_stack_fupd (combin_K (data_state_stack s7))
+                       (data_state_handler_fupd (combin_K (data_state_handler s7))
+                          (data_state_locals_fupd (combin_K (data_state_locals s7))
+                             (data_state_locals_size_fupd (combin_K lss)
+                                (data_state_safe_for_space_fupd (combin_K sfs)
+                                   (data_state_stack_max_fupd (combin_K smx)
+                                      (data_state_peak_heap_length_fupd (combin_K phl) s1)))))))))
      | (res,s1) ->
          data_state_stack s1 = data_state_stack s /\
          data_state_handler s1 = data_state_handler s /\
          (!xs lsz. LENGTH (data_state_stack s) = LENGTH xs ==>
             ?lss sfs smx phl.
-              data_evaluate (c,data_state_stack_fupd (K xs)
-                                 (data_state_locals_size_fupd (K lsz) s)) =
+              data_evaluate (c,data_state_stack_fupd (combin_K xs)
+                                 (data_state_locals_size_fupd (combin_K lsz) s)) =
               (res,
-               data_state_locals_size_fupd (K lss)
-                 (data_state_stack_fupd (K xs)
-                    (data_state_safe_for_space_fupd (K sfs)
-                       (data_state_stack_max_fupd (K smx)
-                          (data_state_peak_heap_length_fupd (K phl) s1))))))`,
+               data_state_locals_size_fupd (combin_K lss)
+                 (data_state_stack_fupd (combin_K xs)
+                    (data_state_safe_for_space_fupd (combin_K sfs)
+                       (data_state_stack_max_fupd (combin_K smx)
+                          (data_state_peak_heap_length_fupd (combin_K phl) s1))))))`,
   REPEAT GEN_TAC THEN
   MP_TAC (ISPEC `(c:data_prog,s:(C,FFI)data_state)` DSEMAUX_evaluate_sl) THEN
   REWRITE_TAC[FST; SND] THEN
@@ -2627,7 +2627,7 @@ let evaluate_stack_and_locals_swap = prove
   REWRITE_TAC[DSEMAUX_ssp_id] THEN
   SPEC_TAC (`r:((data_v list,data_v)result)option`,`r:((data_v list,data_v)result)option`) THEN
   MATCH_MP_TAC DSEMAUX_res_CASES THEN REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
-  CASE_REWRITE_TAC[] THEN DISCH_THEN (LABEL_TAC "m") THEN
+  CAKE_REWRITE_TAC[] THEN DISCH_THEN (LABEL_TAC "m") THEN
   TRY (USE_THEN "m" (MP_TAC o SPECL [`data_state_stack (s:(C,FFI)data_state)`;
                                     `data_state_locals_size (s:(C,FFI)data_state)`]) THEN
        REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
@@ -2655,42 +2655,42 @@ let data_evaluate_stack_swap = prove
          data_state_stack s1 = [] /\
          (!xs. LENGTH (data_state_stack s) = LENGTH xs ==>
             ?lss sfs smx phl.
-              data_evaluate (c,data_state_stack_fupd (K xs) s) =
+              data_evaluate (c,data_state_stack_fupd (combin_K xs) s) =
               (SOME (Rerr (Rabort a)),
-               data_state_locals_size_fupd (K lss)
-                 (data_state_safe_for_space_fupd (K sfs)
-                    (data_state_stack_max_fupd (K smx)
-                       (data_state_peak_heap_length_fupd (K phl) s1)))))
+               data_state_locals_size_fupd (combin_K lss)
+                 (data_state_safe_for_space_fupd (combin_K sfs)
+                    (data_state_stack_max_fupd (combin_K smx)
+                       (data_state_peak_heap_length_fupd (combin_K phl) s1)))))
      | (SOME (Rerr (Rraise t)),s1) ->
          (?s2. data_jump_exc s = SOME s2 /\
                data_state_locals s2 = data_state_locals s1 /\
                data_state_stack s2 = data_state_stack s1 /\
                data_state_handler s2 = data_state_handler s1 /\
                (!xs s7.
-                  data_jump_exc (data_state_stack_fupd (K xs) s) = SOME s7 /\
+                  data_jump_exc (data_state_stack_fupd (combin_K xs) s) = SOME s7 /\
                   LENGTH (data_state_stack s) = LENGTH xs ==>
                   ?lss sfs smx phl.
-                    data_evaluate (c,data_state_stack_fupd (K xs) s) =
+                    data_evaluate (c,data_state_stack_fupd (combin_K xs) s) =
                     (SOME (Rerr (Rraise t)),
-                     data_state_stack_fupd (K (data_state_stack s7))
-                       (data_state_handler_fupd (K (data_state_handler s7))
-                          (data_state_locals_fupd (K (data_state_locals s7))
-                             (data_state_locals_size_fupd (K lss)
-                                (data_state_safe_for_space_fupd (K sfs)
-                                   (data_state_stack_max_fupd (K smx)
-                                      (data_state_peak_heap_length_fupd (K phl) s1)))))))))
+                     data_state_stack_fupd (combin_K (data_state_stack s7))
+                       (data_state_handler_fupd (combin_K (data_state_handler s7))
+                          (data_state_locals_fupd (combin_K (data_state_locals s7))
+                             (data_state_locals_size_fupd (combin_K lss)
+                                (data_state_safe_for_space_fupd (combin_K sfs)
+                                   (data_state_stack_max_fupd (combin_K smx)
+                                      (data_state_peak_heap_length_fupd (combin_K phl) s1)))))))))
      | (res,s1) ->
          data_state_stack s1 = data_state_stack s /\
          data_state_handler s1 = data_state_handler s /\
          (!xs. LENGTH (data_state_stack s) = LENGTH xs ==>
             ?lss sfs smx phl.
-              data_evaluate (c,data_state_stack_fupd (K xs) s) =
+              data_evaluate (c,data_state_stack_fupd (combin_K xs) s) =
               (res,
-               data_state_locals_size_fupd (K lss)
-                 (data_state_stack_fupd (K xs)
-                    (data_state_safe_for_space_fupd (K sfs)
-                       (data_state_stack_max_fupd (K smx)
-                          (data_state_peak_heap_length_fupd (K phl) s1))))))`,
+               data_state_locals_size_fupd (combin_K lss)
+                 (data_state_stack_fupd (combin_K xs)
+                    (data_state_safe_for_space_fupd (combin_K sfs)
+                       (data_state_stack_max_fupd (combin_K smx)
+                          (data_state_peak_heap_length_fupd (combin_K phl) s1))))))`,
   REPEAT GEN_TAC THEN
   MP_TAC (SPECL [`c:data_prog`; `s:(C,FFI)data_state`] evaluate_stack_and_locals_swap) THEN
   MP_TAC (ISPEC `data_evaluate (c,s:(C,FFI)data_state)` PAIR_SURJECTIVE) THEN
@@ -2698,7 +2698,7 @@ let data_evaluate_stack_swap = prove
     (X_CHOOSE_THEN `s1:(C,FFI)data_state` SUBST1_TAC)) THEN
   SPEC_TAC (`r:((data_v list,data_v)result)option`,`r:((data_v list,data_v)result)option`) THEN
   MATCH_MP_TAC DSEMAUX_res_CASES THEN REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   TRY (STRIP_TAC THEN ASM_REWRITE_TAC[] THEN GEN_TAC THEN
        FIRST_X_ASSUM (MP_TAC o SPECL [`xs:stack list`;
                                       `data_state_locals_size (s:(C,FFI)data_state)`] o
@@ -2733,19 +2733,19 @@ let evaluate_stack = prove
     (X_CHOOSE_THEN `s1:(C,FFI)data_state` SUBST1_TAC)) THEN
   SPEC_TAC (`r:((data_v list,data_v)result)option`,`r:((data_v list,data_v)result)option`) THEN
   MATCH_MP_TAC DSEMAUX_res_CASES THEN REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
-  CASE_REWRITE_TAC[] THEN MESON_TAC[]);;
+  CAKE_REWRITE_TAC[] THEN MESON_TAC[]);;
 
 let evaluate_NONE_jump_exc = prove
  (`!c (s:(C,FFI)data_state) u1 x.
      data_evaluate (c,s) = (NONE,u1) /\ data_jump_exc u1 = SOME x ==>
      data_jump_exc s =
-     SOME (data_state_stack_fupd (K (data_state_stack x))
-             (data_state_handler_fupd (K (data_state_handler x))
-                (data_state_locals_fupd (K (data_state_locals x))
-                   (data_state_locals_size_fupd (K (data_state_locals_size x)) s))))`,
+     SOME (data_state_stack_fupd (combin_K (data_state_stack x))
+             (data_state_handler_fupd (combin_K (data_state_handler x))
+                (data_state_locals_fupd (combin_K (data_state_locals x))
+                   (data_state_locals_size_fupd (combin_K (data_state_locals_size x)) s))))`,
   REPEAT STRIP_TAC THEN
   MP_TAC (SPECL [`c:data_prog`; `s:(C,FFI)data_state`] evaluate_stack) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN STRIP_TAC THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN STRIP_TAC THEN
   MP_TAC (SPECL [`u1:(C,FFI)data_state`; `s:(C,FFI)data_state`] DSEMAUX_jump_exc_cong) THEN
   ASM_REWRITE_TAC[OPTION_MAP_DEF; option_INJ] THEN DISCH_THEN SUBST1_TAC THEN
   CONV_TAC (DEPTH_CONV BETA_CONV) THEN
@@ -2755,13 +2755,13 @@ let evaluate_NONE_jump_exc_ALT = prove
  (`!c (s:(C,FFI)data_state) u1 x.
      data_evaluate (c,s) = (NONE,u1) /\ data_jump_exc s = SOME x ==>
      data_jump_exc u1 =
-     SOME (data_state_stack_fupd (K (data_state_stack x))
-             (data_state_handler_fupd (K (data_state_handler x))
-                (data_state_locals_fupd (K (data_state_locals x))
-                   (data_state_locals_size_fupd (K (data_state_locals_size x)) u1))))`,
+     SOME (data_state_stack_fupd (combin_K (data_state_stack x))
+             (data_state_handler_fupd (combin_K (data_state_handler x))
+                (data_state_locals_fupd (combin_K (data_state_locals x))
+                   (data_state_locals_size_fupd (combin_K (data_state_locals_size x)) u1))))`,
   REPEAT STRIP_TAC THEN
   MP_TAC (SPECL [`c:data_prog`; `s:(C,FFI)data_state`] evaluate_stack) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN STRIP_TAC THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN STRIP_TAC THEN
   MP_TAC (SPECL [`s:(C,FFI)data_state`; `u1:(C,FFI)data_state`] DSEMAUX_jump_exc_cong) THEN
   ASM_REWRITE_TAC[OPTION_MAP_DEF; option_INJ] THEN DISCH_THEN SUBST1_TAC THEN
   CONV_TAC (DEPTH_CONV BETA_CONV) THEN
@@ -2847,17 +2847,17 @@ let locals_ok_get_vars = prove
      locals_ok s l /\ data_get_vars x s = SOME w ==> data_get_vars x l = SOME w`,
   LIST_INDUCT_TAC THEN REWRITE_TAC[data_get_vars_def] THEN REPEAT GEN_TAC THEN
   DISCH_THEN (CONJUNCTS_THEN2 ASSUME_TAC MP_TAC) THEN
-  DISJ_CASES_THEN2 (fun th -> REWRITE_TAC[th] THEN CASE_REWRITE_TAC[option_DISTINCT])
+  DISJ_CASES_THEN2 (fun th -> REWRITE_TAC[th] THEN CAKE_REWRITE_TAC[option_DISTINCT])
     (X_CHOOSE_THEN `a:A` (fun th -> ASSUME_TAC th THEN REWRITE_TAC[th]))
     (ISPEC `data_get_var h (s:A spt)` (cases "option")) THEN
-  CASE_REWRITE_TAC[] THEN
-  DISJ_CASES_THEN2 (fun th -> REWRITE_TAC[th] THEN CASE_REWRITE_TAC[option_DISTINCT])
+  CAKE_REWRITE_TAC[] THEN
+  DISJ_CASES_THEN2 (fun th -> REWRITE_TAC[th] THEN CAKE_REWRITE_TAC[option_DISTINCT])
     (X_CHOOSE_THEN `b:A list` (fun th -> ASSUME_TAC th THEN REWRITE_TAC[th]))
     (ISPEC `data_get_vars t (s:A spt)` (cases "option")) THEN
-  CASE_REWRITE_TAC[option_INJ] THEN DISCH_THEN (SUBST1_TAC o SYM) THEN
+  CAKE_REWRITE_TAC[option_INJ] THEN DISCH_THEN (SUBST1_TAC o SYM) THEN
   SUBGOAL_THEN `data_get_var h (l:A spt) = SOME a /\ data_get_vars t l = SOME b`
     (fun th -> REWRITE_TAC[th]) THENL
-   [ASM_MESON_TAC[locals_ok_get_var]; CASE_REWRITE_TAC[]]);;
+   [ASM_MESON_TAC[locals_ok_get_var]; CAKE_REWRITE_TAC[]]);;
 
 (* HOL4 [local] *)
 let locals_ok_insert = prove
@@ -2871,24 +2871,24 @@ let locals_ok_insert = prove
 let cut_state_opt_locals_ok = prove
  (`!names_opt (s:(C,FFI)data_state) l s1.
      locals_ok (data_state_locals s) l /\ data_cut_state_opt names_opt s = SOME s1 ==>
-     ?l'. data_cut_state_opt names_opt (data_state_locals_fupd (K l) s) =
-          SOME (data_state_locals_fupd (K l') s1) /\
+     ?l'. data_cut_state_opt names_opt (data_state_locals_fupd (combin_K l) s) =
+          SOME (data_state_locals_fupd (combin_K l') s1) /\
           locals_ok (data_state_locals s1) l'`,
   GEN_TAC THEN STRUCT_CASES_TAC (ISPEC `names_opt:num_set option` (cases "option")) THEN
-  REWRITE_TAC[data_cut_state_opt_def; data_cut_state_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[data_cut_state_opt_def; data_cut_state_def] THEN CAKE_REWRITE_TAC[] THEN
   REPEAT GEN_TAC THENL
    [REWRITE_TAC[option_INJ] THEN DISCH_THEN (CONJUNCTS_THEN2 ASSUME_TAC (SUBST1_TAC o SYM)) THEN
     EXISTS_TAC `l:data_v spt` THEN ASM_REWRITE_TAC[];
     ALL_TAC] THEN
   REWRITE_TAC[data_state_INFO.ri_accfupds; K_THM] THEN
   DISCH_THEN (CONJUNCTS_THEN2 ASSUME_TAC MP_TAC) THEN
-  DISJ_CASES_THEN2 (fun th -> REWRITE_TAC[th] THEN CASE_REWRITE_TAC[option_DISTINCT])
+  DISJ_CASES_THEN2 (fun th -> REWRITE_TAC[th] THEN CAKE_REWRITE_TAC[option_DISTINCT])
     (X_CHOOSE_THEN `env:data_v spt` (fun th -> ASSUME_TAC th THEN REWRITE_TAC[th]))
     (ISPEC `data_cut_env a (data_state_locals (s:(C,FFI)data_state))` (cases "option")) THEN
-  CASE_REWRITE_TAC[option_INJ] THEN DISCH_THEN (SUBST1_TAC o SYM) THEN
+  CAKE_REWRITE_TAC[option_INJ] THEN DISCH_THEN (SUBST1_TAC o SYM) THEN
   SUBGOAL_THEN `data_cut_env a (l:data_v spt) = SOME env` (fun th -> REWRITE_TAC[th]) THENL
    [ASM_MESON_TAC[locals_ok_cut_env]; ALL_TAC] THEN
-  CASE_REWRITE_TAC[option_INJ] THEN EXISTS_TAC `env:data_v spt` THEN
+  CAKE_REWRITE_TAC[option_INJ] THEN EXISTS_TAC `env:data_v spt` THEN
   REWRITE_TAC[data_state_INFO.ri_fupdfupds; data_state_INFO.ri_accfupds; K_THM; DSEMAUX_K_o;
               locals_ok_refl]);;
 
@@ -2899,26 +2899,26 @@ let cut_state_opt_locals_ok = prove
 
 let DSEMAUX_l_rws = prove
  (`(!args sz (l:data_v spt) (s:(C,FFI)data_state).
-      data_call_env args sz (data_state_locals_fupd (K l) s) = data_call_env args sz s) /\
+      data_call_env args sz (data_state_locals_fupd (combin_K l) s) = data_call_env args sz s) /\
    (!(l:data_v spt) (s:(C,FFI)data_state).
-      data_dec_clock (data_state_locals_fupd (K l) s) =
-      data_state_locals_fupd (K l) (data_dec_clock s)) /\
+      data_dec_clock (data_state_locals_fupd (combin_K l) s) =
+      data_state_locals_fupd (combin_K l) (data_dec_clock s)) /\
    (!env b (l:data_v spt) (s:(C,FFI)data_state).
-      data_push_env env b (data_state_locals_fupd (K l) s) =
-      data_state_locals_fupd (K l) (data_push_env env b s)) /\
+      data_push_env env b (data_state_locals_fupd (combin_K l) s) =
+      data_state_locals_fupd (combin_K l) (data_push_env env b s)) /\
    (!b (l:data_v spt) (s:(C,FFI)data_state).
-      data_flush_state b (data_state_locals_fupd (K l) s) = data_flush_state b s) /\
+      data_flush_state b (data_state_locals_fupd (combin_K l) s) = data_flush_state b s) /\
    (!n v (l:data_v spt) (s:(C,FFI)data_state).
-      data_set_var n v (data_state_locals_fupd (K l) s) =
-      data_state_locals_fupd (K (insert n v l)) s) /\
+      data_set_var n v (data_state_locals_fupd (combin_K l) s) =
+      data_state_locals_fupd (combin_K (insert n v l)) s) /\
    (!op (l:data_v spt) (s:(C,FFI)data_state).
-      install_sfs op (data_state_locals_fupd (K l) s) =
-      data_state_locals_fupd (K l) (install_sfs op s)) /\
+      install_sfs op (data_state_locals_fupd (combin_K l) s) =
+      data_state_locals_fupd (combin_K l) (install_sfs op s)) /\
    (!(l:data_v spt) (s:(C,FFI)data_state).
-      data_jump_exc (data_state_locals_fupd (K l) s) = data_jump_exc s) /\
+      data_jump_exc (data_state_locals_fupd (combin_K l) s) = data_jump_exc s) /\
    (!e (l:data_v spt) (s:(C,FFI)data_state).
-      data_state_locals_fupd (K e) (data_state_locals_fupd (K l) s) =
-      data_state_locals_fupd (K e) s)`,
+      data_state_locals_fupd (combin_K e) (data_state_locals_fupd (combin_K l) s) =
+      data_state_locals_fupd (combin_K e) s)`,
   REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
   TRY (BOOL_CASES_TAC `b:bool`) THEN
   REWRITE_TAC[data_call_env_def; data_dec_clock_def; data_push_env_def; data_flush_state_def;
@@ -2933,24 +2933,24 @@ let DSEMAUX_l_rws = prove
 let DSEMAUX_l_cut_state_opt = prove
  (`!names_opt (s:(C,FFI)data_state) l s1.
      locals_ok (data_state_locals s) l /\ data_cut_state_opt names_opt s = SOME s1 ==>
-     data_cut_state_opt names_opt (data_state_locals_fupd (K l) s) =
+     data_cut_state_opt names_opt (data_state_locals_fupd (combin_K l) s) =
      SOME (data_state_locals_fupd
-             (K (if names_opt = NONE then l else data_state_locals s1)) s1)`,
+             (combin_K (if names_opt = NONE then l else data_state_locals s1)) s1)`,
   GEN_TAC THEN STRUCT_CASES_TAC (ISPEC `names_opt:num_set option` (cases "option")) THEN
   REWRITE_TAC[data_cut_state_opt_def; data_cut_state_def; option_DISTINCT] THEN
-  CASE_REWRITE_TAC[] THEN REPEAT GEN_TAC THENL
+  CAKE_REWRITE_TAC[] THEN REPEAT GEN_TAC THENL
    [REWRITE_TAC[option_INJ] THEN DISCH_THEN (CONJUNCTS_THEN2 ASSUME_TAC (SUBST1_TAC o SYM)) THEN
     REFL_TAC;
     ALL_TAC] THEN
   REWRITE_TAC[data_state_INFO.ri_accfupds; K_THM] THEN
   DISCH_THEN (CONJUNCTS_THEN2 ASSUME_TAC MP_TAC) THEN
-  DISJ_CASES_THEN2 (fun th -> REWRITE_TAC[th] THEN CASE_REWRITE_TAC[option_DISTINCT])
+  DISJ_CASES_THEN2 (fun th -> REWRITE_TAC[th] THEN CAKE_REWRITE_TAC[option_DISTINCT])
     (X_CHOOSE_THEN `env:data_v spt` (fun th -> ASSUME_TAC th THEN REWRITE_TAC[th]))
     (ISPEC `data_cut_env a (data_state_locals (s:(C,FFI)data_state))` (cases "option")) THEN
-  CASE_REWRITE_TAC[option_INJ] THEN DISCH_THEN (SUBST1_TAC o SYM) THEN
+  CAKE_REWRITE_TAC[option_INJ] THEN DISCH_THEN (SUBST1_TAC o SYM) THEN
   SUBGOAL_THEN `data_cut_env a (l:data_v spt) = SOME env` (fun th -> REWRITE_TAC[th]) THENL
    [ASM_MESON_TAC[locals_ok_cut_env]; ALL_TAC] THEN
-  CASE_REWRITE_TAC[option_INJ] THEN
+  CAKE_REWRITE_TAC[option_INJ] THEN
   REWRITE_TAC[data_state_INFO.ri_fupdfupds; data_state_INFO.ri_accfupds; K_THM; DSEMAUX_K_o]);;
 
 let DSEMAUX_L_GOAL =
@@ -2958,27 +2958,27 @@ let DSEMAUX_L_GOAL =
      data_evaluate p = (r,s1) ==> ~(r = SOME (Rerr (Rabort Rtype_error))) ==>
      !l smx sf pk. locals_ok (data_state_locals (SND p)) l ==>
        ?w safe peak sm.
-         data_evaluate (FST p,DSEMAUX_ssp smx sf pk (data_state_locals_fupd (K l) (SND p))) =
-         (r,if r = NONE then DSEMAUX_ssp sm safe peak (data_state_locals_fupd (K w) s1)
+         data_evaluate (FST p,DSEMAUX_ssp smx sf pk (data_state_locals_fupd (combin_K l) (SND p))) =
+         (r,if r = NONE then DSEMAUX_ssp sm safe peak (data_state_locals_fupd (combin_K w) s1)
             else DSEMAUX_ssp sm safe peak s1) /\
          locals_ok (data_state_locals s1) w`;;
 
 let DSEMAUX_ssp_l_do_app = prove
  (DSEMAUX_expand
   `!op vs smx sf pk z (s:(C,FFI)data_state).
-     data_do_app op vs (DSEMAUX_ssp smx sf pk (data_state_locals_fupd (K z) s)) =
+     data_do_app op vs (DSEMAUX_ssp smx sf pk (data_state_locals_fupd (combin_K z) s)) =
      map_result
-       (\(x,y). (x,data_state_locals_fupd (K z)
+       (\(x,y). (x,data_state_locals_fupd (combin_K z)
                      (data_state_safe_for_space_fupd
-                        (K (do_app_safe op vs
-                              (data_state_locals_fupd (K z) (DSEMAUX_ssp smx sf pk s))))
+                        (combin_K (do_app_safe op vs
+                              (data_state_locals_fupd (combin_K z) (DSEMAUX_ssp smx sf pk s))))
                         (data_state_stack_max_fupd
-                           (K (data_state_stack_max
+                           (combin_K (data_state_stack_max
                                  (do_stack op vs
-                                    (data_state_locals_fupd (K z) (DSEMAUX_ssp smx sf pk s)))))
+                                    (data_state_locals_fupd (combin_K z) (DSEMAUX_ssp smx sf pk s)))))
                            (data_state_peak_heap_length_fupd
-                              (K (do_app_peak op vs
-                                    (data_state_locals_fupd (K z) (DSEMAUX_ssp smx sf pk s))))
+                              (combin_K (do_app_peak op vs
+                                    (data_state_locals_fupd (combin_K z) (DSEMAUX_ssp smx sf pk s))))
                               y)))))
        I (data_do_app op vs (DSEMAUX_ssp smx sf pk s))`,
   REPEAT GEN_TAC THEN REWRITE_TAC[GSYM DSEMAUX_ssp_fupds] THEN REWRITE_TAC[do_app_with_locals]);;
@@ -2989,7 +2989,7 @@ let DSEMAUX_l_cut_state_opt2 = prove
      locals_ok (data_state_locals s1) (if names_opt = NONE then l else data_state_locals s1)`,
   GEN_TAC THEN STRUCT_CASES_TAC (ISPEC `names_opt:num_set option` (cases "option")) THEN
   REWRITE_TAC[data_cut_state_opt_def; option_DISTINCT; locals_ok_refl] THEN
-  CASE_REWRITE_TAC[option_INJ] THEN MESON_TAC[]);;
+  CAKE_REWRITE_TAC[option_INJ] THEN MESON_TAC[]);;
 
 let DSEMAUX_L_RWS =
   [DSEMAUX_ssp_acc; data_state_INFO.ri_accfupds; K_THM; DSEMAUX_l_rws;
@@ -2997,7 +2997,7 @@ let DSEMAUX_L_RWS =
    injectivity "result"; injectivity "error_result"] @ DSEMAUX_SSP_RWS;;
 
 let DSEMAUX_L_LOOP_TAC : tactic =
-  REPEAT (CHANGED_TAC (CASE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
+  REPEAT (CHANGED_TAC (CAKE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
                        ASM_REWRITE_TAC (PAIR_EQ :: IS_SOME_DEF :: option_DISTINCT ::
                                         map_result_def :: DSEMAUX_L_RWS)) ORELSE
           DSEMAUX_SSP_DO_APP_RW_TAC ORELSE DSEMAUX_SSP_IH_TAC);;
@@ -3048,7 +3048,7 @@ let DSEMAUX_L_FINISH_TAC : tactic =
 (* IMP_RES_TAC keeping only the fully resolved facts *)
 
 let DSEMAUX_FULL_RES_TAC (th:thm) : tactic =
-  IMP_RES_THEN (fun th -> if is_imp (snd (strip_forall (concl th))) then ALL_TAC
+  HOL4_IMP_RES_THEN (fun th -> if is_imp (snd (strip_forall (concl th))) then ALL_TAC
                           else STRIP_ASSUME_TAC th) th;;
 
 let DSEMAUX_L_LEAF_TAC : tactic =
@@ -3107,7 +3107,7 @@ let DSEMAUX_L_SEQ_TAC : tactic =
     DISCH_THEN (X_CHOOSE_THEN `w1:data_v spt` (X_CHOOSE_THEN `safe1:bool`
       (X_CHOOSE_THEN `peak1:num` (X_CHOOSE_THEN `sm1:num option` STRIP_ASSUME_TAC)))) THEN
     MP_TAC (SPECL [`c1:data_prog`; `c2:data_prog`;
-                   `DSEMAUX_ssp smx sf pk (data_state_locals_fupd (K l) (s:(C,FFI)data_state))`;
+                   `DSEMAUX_ssp smx sf pk (data_state_locals_fupd (combin_K l) (s:(C,FFI)data_state))`;
                    `r:((data_v list,data_v)result)option`;
                    `DSEMAUX_ssp sm1 safe1 peak1 (s1:(C,FFI)data_state)`] DSEMAUX_Seq_not_NONE) THEN
     ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN
@@ -3123,7 +3123,7 @@ let DSEMAUX_L_IF_TAC : tactic =
   DSEMAUX_FULL_RES_TAC locals_ok_get_var THEN
   ONCE_REWRITE_TAC[data_evaluate_def] THEN
   ASM_REWRITE_TAC[DSEMAUX_ssp_acc; data_state_INFO.ri_accfupds; K_THM] THEN
-  CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
   RULE_ASSUM_TAC(REWRITE_RULE[option_INJ; IMP_CONJ; RIGHT_FORALL_IMP_THM;
                               FORALL_UNWIND_THM1]) THEN
   REPEAT DSEMAUX_RES_TAC THEN
@@ -3141,15 +3141,15 @@ let evaluate_locals = prove
      ~(res = SOME (Rerr (Rabort Rtype_error))) /\ data_evaluate (c,s) = (res,s2) /\
      locals_ok (data_state_locals s) l ==>
      ?w safe peak sm.
-       data_evaluate (c,data_state_locals_fupd (K l) s) =
+       data_evaluate (c,data_state_locals_fupd (combin_K l) s) =
        (res,if res = NONE
-            then data_state_locals_fupd (K w)
-                   (data_state_safe_for_space_fupd (K safe)
-                      (data_state_stack_max_fupd (K sm)
-                         (data_state_peak_heap_length_fupd (K peak) s2)))
-            else data_state_safe_for_space_fupd (K safe)
-                   (data_state_stack_max_fupd (K sm)
-                      (data_state_peak_heap_length_fupd (K peak) s2))) /\
+            then data_state_locals_fupd (combin_K w)
+                   (data_state_safe_for_space_fupd (combin_K safe)
+                      (data_state_stack_max_fupd (combin_K sm)
+                         (data_state_peak_heap_length_fupd (combin_K peak) s2)))
+            else data_state_safe_for_space_fupd (combin_K safe)
+                   (data_state_stack_max_fupd (combin_K sm)
+                      (data_state_peak_heap_length_fupd (combin_K peak) s2))) /\
        locals_ok (data_state_locals s2) w`,
   REPEAT STRIP_TAC THEN
   MP_TAC (ISPECL [`(c:data_prog,s:(C,FFI)data_state)`;
@@ -3161,8 +3161,8 @@ let evaluate_locals = prove
                               `data_state_peak_heap_length (s:(C,FFI)data_state)`]) THEN
   ASM_REWRITE_TAC[] THEN
   SUBGOAL_THEN `DSEMAUX_ssp (data_state_stack_max s) (data_state_safe_for_space s)
-                  (data_state_peak_heap_length s) (data_state_locals_fupd (K l) s) =
-                data_state_locals_fupd (K l) (s:(C,FFI)data_state)` SUBST1_TAC THENL
+                  (data_state_peak_heap_length s) (data_state_locals_fupd (combin_K l) s) =
+                data_state_locals_fupd (combin_K l) (s:(C,FFI)data_state)` SUBST1_TAC THENL
    [REWRITE_TAC[DSEMAUX_ssp_def; data_state_component_equality; data_state_INFO.ri_accfupds;
                 K_THM];
     ALL_TAC] THEN
@@ -3170,7 +3170,7 @@ let evaluate_locals = prove
 
 let funpow_dec_clock_clock = prove
  (`!n (s:(C,FFI)data_state).
-     ITER n data_dec_clock s = data_state_clock_fupd (K (data_state_clock s - n)) s`,
+     ITER n data_dec_clock s = data_state_clock_fupd (combin_K (data_state_clock s - n)) s`,
   INDUCT_TAC THEN REWRITE_TAC[ITER] THENL
    [REWRITE_TAC[SUB_0; DSEMAUX_fupd_id];
     ASM_REWRITE_TAC[data_dec_clock_def; data_state_INFO.ri_accfupds;
@@ -3186,20 +3186,20 @@ let evaluate_mk_ticks = prove
      data_evaluate (mk_ticks n p,s) =
      if data_state_clock s < n then
        (SOME (Rerr (Rabort Rtimeout_error)),
-        data_state_clock_fupd (K 0)
-          (data_state_locals_fupd (K (fromList []))
-             (data_state_stack_fupd (K [])
-                (data_state_locals_size_fupd (K (SOME 0)) s))))
+        data_state_clock_fupd (combin_K 0)
+          (data_state_locals_fupd (combin_K (fromList []))
+             (data_state_stack_fupd (combin_K [])
+                (data_state_locals_size_fupd (combin_K (SOME 0)) s))))
      else data_evaluate (p,ITER n data_dec_clock s)`,
   SUBGOAL_THEN
    `!n p (s:(C,FFI)data_state).
      data_evaluate (mk_ticks n p,s) =
      if data_state_clock s < n then
        (SOME (Rerr (Rabort Rtimeout_error)),
-        data_state_clock_fupd (K 0)
-          (data_state_locals_fupd (K (fromList []))
-             (data_state_stack_fupd (K [])
-                (data_state_locals_size_fupd (K (SOME 0)) s))))
+        data_state_clock_fupd (combin_K 0)
+          (data_state_locals_fupd (combin_K (fromList []))
+             (data_state_stack_fupd (combin_K [])
+                (data_state_locals_size_fupd (combin_K (SOME 0)) s))))
      else data_evaluate (p,ITER n data_dec_clock s)` (fun th -> REWRITE_TAC[th]) THEN
   INDUCT_TAC THEN REWRITE_TAC[mk_ticks_def; ITER_ALT; CONJUNCT1 LT] THEN
   REWRITE_TAC[GSYM mk_ticks_def] THEN ASM_REWRITE_TAC[funpow_dec_clock_clock] THEN
@@ -3213,14 +3213,14 @@ let evaluate_mk_ticks = prove
   ASM_CASES_TAC `data_state_clock (s:(C,FFI)data_state) = n` THENL
    [ASM_REWRITE_TAC[SUB_REFL; ARITH_RULE `n < SUC n`] THEN
     CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
-    REWRITE_TAC[option_DISTINCT] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[option_DISTINCT] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[PAIR_EQ; data_flush_state_def; DSEMAUX_fromList_NIL;
                 data_state_component_equality; data_state_INFO.ri_accfupds; K_THM] THEN
     ASM_REWRITE_TAC[];
     ALL_TAC] THEN
   SUBGOAL_THEN `~(data_state_clock (s:(C,FFI)data_state) - n = 0) /\ ~(data_state_clock s < SUC n)` STRIP_ASSUME_TAC THENL
    [ASM_ARITH_TAC; ALL_TAC] THEN
-  ASM_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[data_dec_clock_def; data_state_INFO.ri_accfupds; data_state_INFO.ri_fupdfupds;
               K_THM; DSEMAUX_K_o; ARITH_RULE `x - n - 1 = x - SUC n`;
               ARITH_RULE `x - 1 - n = x - SUC n`]);;
@@ -3246,12 +3246,12 @@ let _ = cake_add_simps [FUNPOW_dec_clock_code];;
 
 let jump_exc_NONE = prove
  (`!(t:(C,FFI)data_state) x c sm ls safe.
-     (data_jump_exc (data_state_locals_fupd (K x) t) = NONE <=> data_jump_exc t = NONE) /\
-     (data_jump_exc (data_state_clock_fupd (K c) t) = NONE <=> data_jump_exc t = NONE) /\
-     (data_jump_exc (data_state_stack_max_fupd (K sm) t) = NONE <=> data_jump_exc t = NONE) /\
-     (data_jump_exc (data_state_locals_size_fupd (K ls) t) = NONE <=>
+     (data_jump_exc (data_state_locals_fupd (combin_K x) t) = NONE <=> data_jump_exc t = NONE) /\
+     (data_jump_exc (data_state_clock_fupd (combin_K c) t) = NONE <=> data_jump_exc t = NONE) /\
+     (data_jump_exc (data_state_stack_max_fupd (combin_K sm) t) = NONE <=> data_jump_exc t = NONE) /\
+     (data_jump_exc (data_state_locals_size_fupd (combin_K ls) t) = NONE <=>
       data_jump_exc t = NONE) /\
-     (data_jump_exc (data_state_safe_for_space_fupd (K safe) t) = NONE <=>
+     (data_jump_exc (data_state_safe_for_space_fupd (combin_K safe) t) = NONE <=>
       data_jump_exc t = NONE)`,
   REPEAT GEN_TAC THEN REPEAT CONJ_TAC THEN
   W(fun (_,w) -> MP_TAC (SPECL [`t:(C,FFI)data_state`; rand(lhs(lhs w))]
@@ -3264,10 +3264,10 @@ let jump_exc_IMP = prove
      data_jump_exc s = SOME t ==>
      data_state_handler s < LENGTH (data_state_stack s) /\
      ?n e ls xs. LASTN (data_state_handler s + 1) (data_state_stack s) = CONS (Exc ls e n) xs /\
-                 t = data_state_handler_fupd (K n)
-                       (data_state_locals_size_fupd (K ls)
-                          (data_state_locals_fupd (K e)
-                             (data_state_stack_fupd (K xs) s)))`,
+                 t = data_state_handler_fupd (combin_K n)
+                       (data_state_locals_size_fupd (combin_K ls)
+                          (data_state_locals_fupd (combin_K e)
+                             (data_state_stack_fupd (combin_K xs) s)))`,
   REPEAT GEN_TAC THEN REWRITE_TAC[data_jump_exc_def] THEN
   COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT] THEN
   REPEAT TOP_CASE_TAC THEN REWRITE_TAC[option_DISTINCT; option_INJ] THEN
@@ -3282,25 +3282,25 @@ let do_app_Rerr = prove
   REWRITE_TAC[data_do_app_err]);;
 
 let size_of_heap_with_clock = prove
- (`!(s:(C,FFI)data_state) z. size_of_heap (data_state_clock_fupd (K z) s) = size_of_heap s`,
+ (`!(s:(C,FFI)data_state) z. size_of_heap (data_state_clock_fupd (combin_K z) s) = size_of_heap s`,
   REWRITE_TAC[size_of_heap_def; stack_to_vs_def; data_state_INFO.ri_accfupds; K_THM]);;
 
 let size_of_heap_args_with_clock = prove
  (`!(s:(C,FFI)data_state) z a.
-     size_of_heap_args a (data_state_clock_fupd (K z) s) = size_of_heap_args a s`,
+     size_of_heap_args a (data_state_clock_fupd (combin_K z) s) = size_of_heap_args a s`,
   REWRITE_TAC[size_of_heap_args_def; stack_to_vs_def; data_state_INFO.ri_accfupds; K_THM]);;
 
 let space_consumed_with_clock = prove
  (`!(s:(C,FFI)data_state) op vs z.
-     space_consumed (data_state_clock_fupd (K z) s) op vs = space_consumed s op vs`,
+     space_consumed (data_state_clock_fupd (combin_K z) s) op vs = space_consumed s op vs`,
   MATCH_MP_TAC space_consumed_ind THEN REPEAT STRIP_TAC THEN
   REWRITE_TAC[space_consumed_def; data_state_INFO.ri_accfupds; K_THM]);;
 
 (*fs[] is slower than full_simp_tac(srw_ss())[]*)
 let do_app_with_clock = prove
  (`!op vs (s:(C,FFI)data_state) z.
-     data_do_app op vs (data_state_clock_fupd (K z) s) =
-     map_result (\(x,y). (x,data_state_clock_fupd (K z) y)) I (data_do_app op vs s)`,
+     data_do_app op vs (data_state_clock_fupd (combin_K z) s) =
+     map_result (\(x,y). (x,data_state_clock_fupd (combin_K z) y)) I (data_do_app op vs s)`,
   DSEMAUX_DO_APP_TAC (DSEMAUX_DO_APP_DEFS @
                       [size_of_heap_with_clock; size_of_heap_args_with_clock;
                        space_consumed_with_clock]));;
@@ -3308,27 +3308,27 @@ let do_app_with_clock = prove
 let data_do_app_change_clock = prove
  (`!op args (s1:(C,FFI)data_state) res s2 ck.
      data_do_app op args s1 = Rval (res,s2) ==>
-     data_do_app op args (data_state_clock_fupd (K ck) s1) =
-     Rval (res,data_state_clock_fupd (K ck) s2)`,
+     data_do_app op args (data_state_clock_fupd (combin_K ck) s1) =
+     Rval (res,data_state_clock_fupd (combin_K ck) s2)`,
   SIMP_TAC[do_app_with_clock; map_result_def] THEN
   CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN REWRITE_TAC[]);;
 
 let data_do_app_change_clock_err = prove
  (`!op args (s1:(C,FFI)data_state) e ck.
      data_do_app op args s1 = Rerr e ==>
-     data_do_app op args (data_state_clock_fupd (K ck) s1) = Rerr e`,
+     data_do_app op args (data_state_clock_fupd (combin_K ck) s1) = Rerr e`,
   SIMP_TAC[do_app_with_clock; map_result_def; map_error_result_I; I_THM]);;
 
 let cut_state_eq_some = prove
  (`!names (s:(C,FFI)data_state) y.
      data_cut_state names s = SOME y <=>
      ?z. data_cut_env names (data_state_locals s) = SOME z /\
-         y = data_state_locals_fupd (K z) s`,
+         y = data_state_locals_fupd (combin_K z) s`,
   REPEAT GEN_TAC THEN REWRITE_TAC[data_cut_state_def] THEN
-  DISJ_CASES_THEN2 (fun th -> REWRITE_TAC[th] THEN CASE_REWRITE_TAC[option_DISTINCT])
+  DISJ_CASES_THEN2 (fun th -> REWRITE_TAC[th] THEN CAKE_REWRITE_TAC[option_DISTINCT])
     (X_CHOOSE_THEN `env:data_v spt` (fun th -> REWRITE_TAC[th]))
     (ISPEC `data_cut_env names (data_state_locals (s:(C,FFI)data_state))` (cases "option")) THEN
-  CASE_REWRITE_TAC[option_INJ] THEN MESON_TAC[]);;
+  CAKE_REWRITE_TAC[option_INJ] THEN MESON_TAC[]);;
 
 let data_set_var_const = prove
  (`!x y (z:(C,FFI)data_state).
@@ -3339,8 +3339,8 @@ let _ = cake_add_simps [data_set_var_const];;
 
 let data_set_var_with_const = prove
  (`!x y (z:(C,FFI)data_state) k.
-     data_set_var x y (data_state_clock_fupd (K k) z) =
-     data_state_clock_fupd (K k) (data_set_var x y z)`,
+     data_set_var x y (data_state_clock_fupd (combin_K k) z) =
+     data_state_clock_fupd (combin_K k) (data_set_var x y z)`,
   REWRITE_TAC[data_set_var_def; data_state_component_equality; data_state_INFO.ri_accfupds;
               K_THM]);;
 
@@ -3353,8 +3353,8 @@ let _ = cake_add_simps [data_set_vars_const];;
 
 let data_set_vars_with_const = prove
  (`!xs ys (z:(C,FFI)data_state) k.
-     data_set_vars xs ys (data_state_clock_fupd (K k) z) =
-     data_state_clock_fupd (K k) (data_set_vars xs ys z)`,
+     data_set_vars xs ys (data_state_clock_fupd (combin_K k) z) =
+     data_state_clock_fupd (combin_K k) (data_set_vars xs ys z)`,
   REWRITE_TAC[data_set_vars_def; data_state_component_equality; data_state_INFO.ri_accfupds;
               K_THM]);;
 let _ = cake_add_simps [data_set_vars_with_const];;
@@ -3368,8 +3368,8 @@ let _ = cake_add_simps [data_call_env_const];;
 
 let data_call_env_with_const = prove
  (`!x s (y:(C,FFI)data_state) z.
-     data_call_env x s (data_state_clock_fupd (K z) y) =
-     data_state_clock_fupd (K z) (data_call_env x s y)`,
+     data_call_env x s (data_state_clock_fupd (combin_K z) y) =
+     data_state_clock_fupd (combin_K z) (data_call_env x s y)`,
   REWRITE_TAC[data_call_env_def; LET_DEF; LET_END_DEF; data_state_component_equality;
               data_state_INFO.ri_accfupds; K_THM]);;
 
@@ -3388,16 +3388,16 @@ let _ = cake_add_simps [data_push_env_const];;
 
 let data_push_env_with_const = prove
  (`!x y (z:(C,FFI)data_state) k.
-     data_push_env x y (data_state_clock_fupd (K k) z) =
-     data_state_clock_fupd (K k) (data_push_env x y z)`,
+     data_push_env x y (data_state_clock_fupd (combin_K k) z) =
+     data_state_clock_fupd (combin_K k) (data_push_env x y z)`,
   REPEAT GEN_TAC THEN BOOL_CASES_TAC `y:bool` THEN
   REWRITE_TAC[data_push_env_def; LET_DEF; LET_END_DEF; data_state_component_equality;
               data_state_INFO.ri_accfupds; K_THM]);;
 
 let data_pop_env_with_const = prove
  (`!(z:(C,FFI)data_state) k.
-     data_pop_env (data_state_clock_fupd (K k) z) =
-     OPTION_MAP (\z. data_state_clock_fupd (K k) z) (data_pop_env z)`,
+     data_pop_env (data_state_clock_fupd (combin_K k) z) =
+     OPTION_MAP (\z. data_state_clock_fupd (combin_K k) z) (data_pop_env z)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[data_pop_env_def; data_state_INFO.ri_accfupds; K_THM] THEN
   REPEAT TOP_CASE_TAC THEN REWRITE_TAC[OPTION_MAP_DEF; option_INJ] THEN
   REWRITE_TAC[data_state_component_equality; data_state_INFO.ri_accfupds; K_THM]);;
@@ -3416,13 +3416,13 @@ let cut_state_eq_none = prove
  (`!names (s:(C,FFI)data_state).
      data_cut_state names s = NONE <=> data_cut_env names (data_state_locals s) = NONE`,
   REPEAT GEN_TAC THEN REWRITE_TAC[data_cut_state_def] THEN
-  DISJ_CASES_THEN2 (fun th -> REWRITE_TAC[th] THEN CASE_REWRITE_TAC[])
+  DISJ_CASES_THEN2 (fun th -> REWRITE_TAC[th] THEN CAKE_REWRITE_TAC[])
     (X_CHOOSE_THEN `env:data_v spt` (fun th -> REWRITE_TAC[th]))
     (ISPEC `data_cut_env names (data_state_locals (s:(C,FFI)data_state))` (cases "option")) THEN
-  CASE_REWRITE_TAC[option_DISTINCT]);;
+  CAKE_REWRITE_TAC[option_DISTINCT]);;
 
 let data_with_same_clock = prove
- (`!s:(C,FFI)data_state. data_state_clock_fupd (K (data_state_clock s)) s = s`,
+ (`!s:(C,FFI)data_state. data_state_clock_fupd (combin_K (data_state_clock s)) s = s`,
   REWRITE_TAC[DSEMAUX_fupd_id]);;
 let _ = cake_add_simps [data_with_same_clock];;
 
@@ -3432,7 +3432,7 @@ let _ = cake_add_simps [data_with_same_clock];;
 
 let DSEMAUX_ck_def = new_definition
   `DSEMAUX_ck k (s:(C,FFI)data_state) =
-     data_state_clock_fupd (K (data_state_clock s + k)) s`;;
+     data_state_clock_fupd (combin_K (data_state_clock s + k)) s`;;
 
 let DSEMAUX_ck_tac : tactic =
   REWRITE_TAC[DSEMAUX_ck_def; data_state_component_equality; data_state_INFO.ri_accfupds;
@@ -3461,14 +3461,14 @@ let DSEMAUX_ck_rws = prove
    (!env b k (s:(C,FFI)data_state).
       data_push_env env b (DSEMAUX_ck k s) = DSEMAUX_ck k (data_push_env env b s)) /\
    (!e k (s:(C,FFI)data_state).
-      data_state_locals_fupd (K e) (DSEMAUX_ck k s) =
-      DSEMAUX_ck k (data_state_locals_fupd (K e) s)) /\
+      data_state_locals_fupd (combin_K e) (DSEMAUX_ck k s) =
+      DSEMAUX_ck k (data_state_locals_fupd (combin_K e) s)) /\
    (!x k (s:(C,FFI)data_state).
-      data_state_stack_fupd (K x) (DSEMAUX_ck k s) =
-      DSEMAUX_ck k (data_state_stack_fupd (K x) s)) /\
+      data_state_stack_fupd (combin_K x) (DSEMAUX_ck k s) =
+      DSEMAUX_ck k (data_state_stack_fupd (combin_K x) s)) /\
    (!x k (s:(C,FFI)data_state).
-      data_state_locals_size_fupd (K x) (DSEMAUX_ck k s) =
-      DSEMAUX_ck k (data_state_locals_size_fupd (K x) s)) /\
+      data_state_locals_size_fupd (combin_K x) (DSEMAUX_ck k s) =
+      DSEMAUX_ck k (data_state_locals_size_fupd (combin_K x) s)) /\
    (!k n (s:(C,FFI)data_state).
       add_space (DSEMAUX_ck k s) n = DSEMAUX_ck k (add_space s n))`,
   REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN TRY (BOOL_CASES_TAC `b:bool`) THEN
@@ -3558,7 +3558,7 @@ let DSEMAUX_CK_CLAUSE_TAC : tactic =
   DSEMAUX_CK_SIMP_ASMS THEN REPEAT DSEMAUX_CK_RES_TAC THEN
   ONCE_REWRITE_TAC[data_evaluate_def] THEN
   REWRITE_TAC DSEMAUX_CK_RWS THEN
-  REPEAT (CHANGED_TAC (CASE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
+  REPEAT (CHANGED_TAC (CAKE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
                        ASM_REWRITE_TAC (PAIR_EQ :: IS_SOME_DEF :: DSEMAUX_CK_RWS)) ORELSE
           DSEMAUX_CK_DEC_TAC);;
 
@@ -3579,8 +3579,8 @@ let DSEMAUX_evaluate_ck = prove
 let data_evaluate_add_clock = prove
  (`!exps (s1:(C,FFI)data_state) res s2.
      data_evaluate (exps,s1) = (res,s2) /\ ~(res = SOME (Rerr (Rabort Rtimeout_error))) ==>
-     !ck. data_evaluate (exps,data_state_clock_fupd (K (data_state_clock s1 + ck)) s1) =
-          (res,data_state_clock_fupd (K (data_state_clock s2 + ck)) s2)`,
+     !ck. data_evaluate (exps,data_state_clock_fupd (combin_K (data_state_clock s1 + ck)) s1) =
+          (res,data_state_clock_fupd (combin_K (data_state_clock s2 + ck)) s2)`,
   REPEAT STRIP_TAC THEN
   MP_TAC (ISPECL [`(exps:data_prog,s1:(C,FFI)data_state)`;
                   `res:((data_v list,data_v)result)option`; `s2:(C,FFI)data_state`]
@@ -3600,10 +3600,10 @@ let data_do_app_io_events_mono = prove
      data_do_app x y z = Rval (a,b) ==>
      ffi_state_io_events (data_state_ffi z) <<= ffi_state_io_events (data_state_ffi b)`,
   X_GEN_TAC `x:clos_op` THEN DSEMAUX_OP_CASES_TAC `x:clos_op` THEN
-  REPEAT GEN_TAC THEN CASE_REWRITE_TAC DSEMAUX_DO_APP_DEFS THEN
+  REPEAT GEN_TAC THEN CAKE_REWRITE_TAC DSEMAUX_DO_APP_DEFS THEN
   CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
-  CASE_REWRITE_TAC DSEMAUX_DO_APP_RWS THEN
-  REPEAT ((COND_CASES_TAC ORELSE TOP_CASE_TAC) THEN CASE_REWRITE_TAC DSEMAUX_DO_APP_RWS) THEN
+  CAKE_REWRITE_TAC DSEMAUX_DO_APP_RWS THEN
+  REPEAT ((COND_CASES_TAC ORELSE TOP_CASE_TAC) THEN CAKE_REWRITE_TAC DSEMAUX_DO_APP_RWS) THEN
   REWRITE_TAC[injectivity "result"; distinctness "result"; PAIR_EQ] THEN
   REPEAT STRIP_TAC THEN RVEQ_TAC THEN
   ASM_REWRITE_TAC(IS_PREFIX_REFL :: DSEMAUX_FINISH_RWS) THEN
@@ -3665,13 +3665,13 @@ let data_evaluate_io_events_mono = prove
   ASM_MESON_TAC[IS_PREFIX_TRANS; IS_PREFIX_REFL]);;
 
 let data_with_clock_ffi = prove
- (`!(s:(C,FFI)data_state) y. data_state_ffi (data_state_clock_fupd (K y) s) = data_state_ffi s`,
+ (`!(s:(C,FFI)data_state) y. data_state_ffi (data_state_clock_fupd (combin_K y) s) = data_state_ffi s`,
   REWRITE_TAC[data_state_INFO.ri_accfupds; K_THM]);;
 
 let data_jump_exc_with_const = prove
  (`!(s:(C,FFI)data_state) k.
-     data_jump_exc (data_state_clock_fupd (K k) s) =
-     OPTION_MAP (\s. data_state_clock_fupd (K k) s) (data_jump_exc s)`,
+     data_jump_exc (data_state_clock_fupd (combin_K k) s) =
+     OPTION_MAP (\s. data_state_clock_fupd (combin_K k) s) (data_jump_exc s)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[data_jump_exc_def; data_state_INFO.ri_accfupds; K_THM] THEN
   REPEAT (COND_CASES_TAC ORELSE TOP_CASE_TAC) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[]) THEN TRY(FIRST_ASSUM CONTR_TAC) THEN
@@ -3701,11 +3701,11 @@ let DSEMAUX_IOCK_CLAUSE_TAC : tactic =
   RULE_ASSUM_TAC(REWRITE_RULE[IS_SOME_DEF]) THEN
   DSEMAUX_CK_SIMP_ASMS THEN REPEAT DSEMAUX_CK_RES_TAC THEN
   REPEAT GEN_TAC THEN DISCH_TAC THEN
-  IMP_RES_THEN (fun th -> ASSUME_TAC (REWRITE_RULE DSEMAUX_CK_SIMP_RWS th)) DSEMAUX_evaluate_ck THEN
+  HOL4_IMP_RES_THEN (fun th -> ASSUME_TAC (REWRITE_RULE DSEMAUX_CK_SIMP_RWS th)) DSEMAUX_evaluate_ck THEN
   FIRST_X_ASSUM (MP_TAC o ONCE_REWRITE_RULE[data_evaluate_def] o
                  check (DSEMAUX_is_ck_hyp o concl)) THEN
   REWRITE_TAC DSEMAUX_CK_RWS THEN
-  REPEAT (CHANGED_TAC (CASE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
+  REPEAT (CHANGED_TAC (CAKE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
                        ASM_REWRITE_TAC (PAIR_EQ :: IS_SOME_DEF :: DSEMAUX_CK_RWS)) ORELSE
           DSEMAUX_CK_DEC_TAC) THEN
   TRY (DISCH_THEN(STRIP_ASSUME_TAC o REWRITE_RULE DSEMAUX_EVAL_CASE_EQS) THEN
@@ -3734,7 +3734,7 @@ let data_evaluate_add_clock_io_events_mono = prove
  (`!exps (s:(C,FFI)data_state) extra.
      ffi_state_io_events (data_state_ffi (SND (data_evaluate (exps,s)))) <<=
      ffi_state_io_events (data_state_ffi (SND (data_evaluate
-       (exps,data_state_clock_fupd (K (data_state_clock s + extra)) s))))`,
+       (exps,data_state_clock_fupd (combin_K (data_state_clock s + extra)) s))))`,
   REPEAT GEN_TAC THEN
   MP_TAC (ISPECL [`(exps:data_prog,s:(C,FFI)data_state)`;
                   `FST (data_evaluate (exps,s:(C,FFI)data_state))`;
@@ -3752,7 +3752,7 @@ let DSEMAUX_semantics_clock0 = prove
      data_state_ffi (SND (data_evaluate (data_Call NONE (SOME start) [] NONE,
                                          data_initial_state ffi prog co cc T lim ss 0))) = ffi`,
   REPEAT GEN_TAC THEN ONCE_REWRITE_TAC[data_evaluate_def] THEN
-  REWRITE_TAC[data_get_vars_def; data_initial_state_simp] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[data_get_vars_def; data_initial_state_simp] THEN CAKE_REWRITE_TAC[] THEN
   REPEAT (COND_CASES_TAC ORELSE TOP_CASE_TAC) THEN
   REWRITE_TAC[SND; data_flush_state_def; data_state_INFO.ri_accfupds; K_THM;
               data_initial_state_simp]);;
@@ -3763,7 +3763,7 @@ let semantics_Div_IMP_LPREFIX = prove
      LPREFIX (llist_fromList (ffi_state_io_events ffi)) l`,
   REPEAT GEN_TAC THEN REWRITE_TAC[data_semantics_def; LET_DEF; LET_END_DEF] THEN
   COND_CASES_TAC THEN REWRITE_TAC[distinctness "behaviour"] THEN
-  REWRITE_TAC[some_def] THEN COND_CASES_TAC THEN CASE_REWRITE_TAC[] THENL
+  REWRITE_TAC[some_def] THEN COND_CASES_TAC THEN CAKE_REWRITE_TAC[] THENL
    [DISCH_TAC THEN FIRST_X_ASSUM (MP_TAC o SELECT_RULE) THEN
     ASM_REWRITE_TAC[distinctness "behaviour"];
     ALL_TAC] THEN
@@ -3790,7 +3790,7 @@ let semantics_Term_IMP_PREFIX = prove
      ffi_state_io_events ffi <<= l`,
   REPEAT GEN_TAC THEN REWRITE_TAC[data_semantics_def; LET_DEF; LET_END_DEF] THEN
   COND_CASES_TAC THEN REWRITE_TAC[distinctness "behaviour"] THEN
-  REWRITE_TAC[some_def] THEN COND_CASES_TAC THEN CASE_REWRITE_TAC[distinctness "behaviour"] THEN
+  REWRITE_TAC[some_def] THEN COND_CASES_TAC THEN CAKE_REWRITE_TAC[distinctness "behaviour"] THEN
   DISCH_TAC THEN FIRST_X_ASSUM (MP_TAC o SELECT_RULE) THEN ASM_REWRITE_TAC[] THEN
   REWRITE_TAC[injectivity "behaviour"] THEN STRIP_TAC THEN
   FIRST_X_ASSUM (MP_TAC o MATCH_MP data_evaluate_io_events_mono) THEN
@@ -3865,10 +3865,10 @@ let do_app_safe_for_space_mono = prove
      data_do_app op xs s = Rval (r,s1) /\ data_state_safe_for_space s1 ==>
      data_state_safe_for_space s`,
   X_GEN_TAC `op:clos_op` THEN DSEMAUX_OP_CASES_TAC `op:clos_op` THEN
-  REPEAT GEN_TAC THEN CASE_REWRITE_TAC DSEMAUX_DO_APP_DEFS THEN
+  REPEAT GEN_TAC THEN CAKE_REWRITE_TAC DSEMAUX_DO_APP_DEFS THEN
   CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
-  CASE_REWRITE_TAC DSEMAUX_DO_APP_RWS THEN
-  REPEAT ((COND_CASES_TAC ORELSE TOP_CASE_TAC) THEN CASE_REWRITE_TAC DSEMAUX_DO_APP_RWS) THEN
+  CAKE_REWRITE_TAC DSEMAUX_DO_APP_RWS THEN
+  REPEAT ((COND_CASES_TAC ORELSE TOP_CASE_TAC) THEN CAKE_REWRITE_TAC DSEMAUX_DO_APP_RWS) THEN
   REWRITE_TAC[injectivity "result"; distinctness "result"; PAIR_EQ] THEN
   REPEAT STRIP_TAC THEN RVEQ_TAC THEN
   RULE_ASSUM_TAC (REWRITE_RULE DSEMAUX_FINISH_RWS) THEN DSEMAUX_SPLIT_CONJ_ASMS THEN
@@ -3964,15 +3964,15 @@ let evaluate_safe_for_space_mono = prove
 
 let zero_limits_def = cake_def
   `zero_limits =
-     limits_heap_limit_fupd (K 0)
-       (limits_length_limit_fupd (K 0) (limits_stack_limit_fupd (K 0) (ARB:limits)))`;;
+     limits_heap_limit_fupd (combin_K 0)
+       (limits_length_limit_fupd (combin_K 0) (limits_stack_limit_fupd (combin_K 0) (ARB:limits)))`;;
 
 (* HOL4 [local]: the limits-swap commutes through the narrow cut in       *)
 (* evaluate (Assign)                                                       *)
 let cut_state_opt_with_lim = prove
  (`!names_opt (s:(C,FFI)data_state) lim.
-     data_cut_state_opt names_opt (data_state_limits_fupd (K lim) s) =
-     OPTION_MAP (\t. data_state_limits_fupd (K lim) t) (data_cut_state_opt names_opt s)`,
+     data_cut_state_opt names_opt (data_state_limits_fupd (combin_K lim) s) =
+     OPTION_MAP (\t. data_state_limits_fupd (combin_K lim) t) (data_cut_state_opt names_opt s)`,
   REPEAT GEN_TAC THEN
   REWRITE_TAC[data_cut_state_opt_def; data_cut_state_def; data_state_INFO.ri_accfupds; K_THM] THEN
   REPEAT TOP_CASE_TAC THEN REWRITE_TAC[OPTION_MAP_DEF; option_INJ] THEN
@@ -3986,58 +3986,58 @@ let DSEMAUX_lim_tac : tactic =
 
 let DSEMAUX_lim_rws = prove
  (`(!n v lim (s:(C,FFI)data_state).
-      data_set_var n v (data_state_limits_fupd (K lim) s) =
-      data_state_limits_fupd (K lim) (data_set_var n v s)) /\
+      data_set_var n v (data_state_limits_fupd (combin_K lim) s) =
+      data_state_limits_fupd (combin_K lim) (data_set_var n v s)) /\
    (!ns vs lim (s:(C,FFI)data_state).
-      data_set_vars ns vs (data_state_limits_fupd (K lim) s) =
-      data_state_limits_fupd (K lim) (data_set_vars ns vs s)) /\
+      data_set_vars ns vs (data_state_limits_fupd (combin_K lim) s) =
+      data_state_limits_fupd (combin_K lim) (data_set_vars ns vs s)) /\
    (!b lim (s:(C,FFI)data_state).
-      data_flush_state b (data_state_limits_fupd (K lim) s) =
-      data_state_limits_fupd (K lim) (data_flush_state b s)) /\
+      data_flush_state b (data_state_limits_fupd (combin_K lim) s) =
+      data_state_limits_fupd (combin_K lim) (data_flush_state b s)) /\
    (!op lim (s:(C,FFI)data_state).
-      install_sfs op (data_state_limits_fupd (K lim) s) =
-      data_state_limits_fupd (K lim) (install_sfs op s)) /\
+      install_sfs op (data_state_limits_fupd (combin_K lim) s) =
+      data_state_limits_fupd (combin_K lim) (install_sfs op s)) /\
    (!lim (s:(C,FFI)data_state).
-      data_dec_clock (data_state_limits_fupd (K lim) s) =
-      data_state_limits_fupd (K lim) (data_dec_clock s)) /\
+      data_dec_clock (data_state_limits_fupd (combin_K lim) s) =
+      data_state_limits_fupd (combin_K lim) (data_dec_clock s)) /\
    (!e lim (s:(C,FFI)data_state).
-      data_state_locals_fupd (K e) (data_state_limits_fupd (K lim) s) =
-      data_state_limits_fupd (K lim) (data_state_locals_fupd (K e) s)) /\
+      data_state_locals_fupd (combin_K e) (data_state_limits_fupd (combin_K lim) s) =
+      data_state_limits_fupd (combin_K lim) (data_state_locals_fupd (combin_K e) s)) /\
    (!x lim (s:(C,FFI)data_state).
-      data_state_stack_fupd (K x) (data_state_limits_fupd (K lim) s) =
-      data_state_limits_fupd (K lim) (data_state_stack_fupd (K x) s)) /\
+      data_state_stack_fupd (combin_K x) (data_state_limits_fupd (combin_K lim) s) =
+      data_state_limits_fupd (combin_K lim) (data_state_stack_fupd (combin_K x) s)) /\
    (!smx sf pk lim (s:(C,FFI)data_state).
-      data_state_limits_fupd (K lim) (DSEMAUX_ssp smx sf pk s) =
-      DSEMAUX_ssp smx sf pk (data_state_limits_fupd (K lim) s)) /\
+      data_state_limits_fupd (combin_K lim) (DSEMAUX_ssp smx sf pk s) =
+      DSEMAUX_ssp smx sf pk (data_state_limits_fupd (combin_K lim) s)) /\
    (!lim (s:(C,FFI)data_state).
-      data_jump_exc (data_state_limits_fupd (K lim) s) =
-      OPTION_MAP (data_state_limits_fupd (K lim)) (data_jump_exc s)) /\
+      data_jump_exc (data_state_limits_fupd (combin_K lim) s) =
+      OPTION_MAP (data_state_limits_fupd (combin_K lim)) (data_jump_exc s)) /\
    (!lim (s:(C,FFI)data_state).
-      data_pop_env (data_state_limits_fupd (K lim) s) =
-      OPTION_MAP (data_state_limits_fupd (K lim)) (data_pop_env s)) /\
+      data_pop_env (data_state_limits_fupd (combin_K lim) s) =
+      OPTION_MAP (data_state_limits_fupd (combin_K lim)) (data_pop_env s)) /\
    (!args sz lim (s:(C,FFI)data_state).
-      data_call_env args sz (data_state_limits_fupd (K lim) s) =
+      data_call_env args sz (data_state_limits_fupd (combin_K lim) s) =
       DSEMAUX_ssp (data_state_stack_max (data_call_env args sz s))
         (data_state_safe_for_space s /\
          misc_the F (OPTION_MAP ((>) (limits_stack_limit lim))
                   (data_state_stack_max (data_call_env args sz s))))
         (data_state_peak_heap_length s)
-        (data_state_limits_fupd (K lim) (data_call_env args sz s))) /\
+        (data_state_limits_fupd (combin_K lim) (data_call_env args sz s))) /\
    (!env b lim (s:(C,FFI)data_state).
-      data_push_env env b (data_state_limits_fupd (K lim) s) =
+      data_push_env env b (data_state_limits_fupd (combin_K lim) s) =
       DSEMAUX_ssp (data_state_stack_max (data_push_env env b s))
         (data_state_safe_for_space s /\
          misc_the F (OPTION_MAP ((>) (limits_stack_limit lim))
                   (data_state_stack_max (data_push_env env b s))))
         (data_state_peak_heap_length s)
-        (data_state_limits_fupd (K lim) (data_push_env env b s))) /\
+        (data_state_limits_fupd (combin_K lim) (data_push_env env b s))) /\
    (!lim (s:(C,FFI)data_state) k.
-      add_space (data_state_limits_fupd (K lim) s) k =
+      add_space (data_state_limits_fupd (combin_K lim) s) k =
       DSEMAUX_ssp (data_state_stack_max s)
         (data_state_safe_for_space s /\ no_thunks_in_refs (data_state_refs s) /\
-         size_of_heap (data_state_limits_fupd (K lim) s) + k <= limits_heap_limit lim)
-        (MAX (data_state_peak_heap_length s) (size_of_heap (data_state_limits_fupd (K lim) s) + k))
-        (data_state_limits_fupd (K lim) (add_space s k)))`,
+         size_of_heap (data_state_limits_fupd (combin_K lim) s) + k <= limits_heap_limit lim)
+        (MAX (data_state_peak_heap_length s) (size_of_heap (data_state_limits_fupd (combin_K lim) s) + k))
+        (data_state_limits_fupd (combin_K lim) (add_space s k)))`,
   REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN TRY (BOOL_CASES_TAC `b:bool`) THEN
   REWRITE_TAC[data_set_var_def; data_set_vars_def; data_flush_state_def; install_sfs_def;
               data_dec_clock_def; data_call_env_def; data_push_env_def; add_space_def;
@@ -4091,14 +4091,14 @@ let DSEMAUX_LIM_CLAUSE_TAC : tactic =
   RULE_ASSUM_TAC(REWRITE_RULE[IS_SOME_DEF]) THEN
   DSEMAUX_CK_SIMP_ASMS THEN REPEAT DSEMAUX_CK_RES_TAC THEN
   X_GEN_TAC `lim:limits` THEN DSEMAUX_LIM_INST_TAC THEN
-  TRY (IMP_RES_THEN (fun th -> STRIP_ASSUME_TAC (SPEC `lim:limits` th)) do_app_lim_swap) THEN
-  TRY (IMP_RES_THEN (fun th -> ASSUME_TAC (SPEC `lim:limits` th)) do_app_err_lim_swap) THEN
+  TRY (HOL4_IMP_RES_THEN (fun th -> STRIP_ASSUME_TAC (SPEC `lim:limits` th)) do_app_lim_swap) THEN
+  TRY (HOL4_IMP_RES_THEN (fun th -> ASSUME_TAC (SPEC `lim:limits` th)) do_app_err_lim_swap) THEN
   RULE_ASSUM_TAC (REWRITE_RULE [GSYM DSEMAUX_ssp_def]) THEN
   RULE_ASSUM_TAC (REWRITE_RULE [DSEMAUX_lim_rws]) THEN
   IMP_RES_TAC DSEMAUX_evaluate_ssp THEN RULE_ASSUM_TAC (REWRITE_RULE[FST; SND]) THEN
   ONCE_REWRITE_TAC[data_evaluate_def] THEN
   REWRITE_TAC DSEMAUX_LIM_RWS THEN
-  REPEAT (CHANGED_TAC (CASE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
+  REPEAT (CHANGED_TAC (CAKE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
                        ASM_REWRITE_TAC (PAIR_EQ :: IS_SOME_DEF :: DSEMAUX_LIM_RWS)) ORELSE
           DSEMAUX_SSP_IH_TAC ORELSE DSEMAUX_SSP_DO_APP_RW_TAC) THEN
   REWRITE_TAC DSEMAUX_LIM_RWS THEN
@@ -4112,8 +4112,8 @@ let DSEMAUX_LIM_GOAL =
  `!p (r:((data_v list,data_v)result)option) (s':(C,FFI)data_state).
      data_evaluate p = (r,s') ==>
      !lim. ?smx sf pk.
-       data_evaluate (FST p,data_state_limits_fupd (K lim) (SND p)) =
-       (r,DSEMAUX_ssp smx sf pk (data_state_limits_fupd (K lim) s'))`;;
+       data_evaluate (FST p,data_state_limits_fupd (combin_K lim) (SND p)) =
+       (r,DSEMAUX_ssp smx sf pk (data_state_limits_fupd (combin_K lim) s'))`;;
 
 let DSEMAUX_evaluate_lim = prove
  (DSEMAUX_LIM_GOAL,
@@ -4124,11 +4124,11 @@ let evaluate_swap_limits = prove
  (`!c (s:(C,FFI)data_state) r s' limits.
      data_evaluate (c,s) = (r,s') ==>
      ?smx safe peak.
-       data_evaluate (c,data_state_limits_fupd (K limits) s) =
-       (r,data_state_limits_fupd (K limits)
-            (data_state_stack_max_fupd (K smx)
-               (data_state_safe_for_space_fupd (K safe)
-                  (data_state_peak_heap_length_fupd (K peak) s'))))`,
+       data_evaluate (c,data_state_limits_fupd (combin_K limits) s) =
+       (r,data_state_limits_fupd (combin_K limits)
+            (data_state_stack_max_fupd (combin_K smx)
+               (data_state_safe_for_space_fupd (combin_K safe)
+                  (data_state_peak_heap_length_fupd (combin_K peak) s'))))`,
   REPEAT STRIP_TAC THEN
   FIRST_ASSUM (MP_TAC o SPEC `limits:limits` o REWRITE_RULE[FST; SND] o
                MATCH_MP DSEMAUX_evaluate_lim) THEN
@@ -4142,7 +4142,7 @@ let evaluate_swap_limits = prove
 let evaluate_zero_limits_FST = prove
  (`!c (s:(C,FFI)data_state).
      FST (data_evaluate (c,s)) =
-     FST (data_evaluate (c,data_state_limits_fupd (K zero_limits) s))`,
+     FST (data_evaluate (c,data_state_limits_fupd (combin_K zero_limits) s))`,
   REPEAT GEN_TAC THEN
   MP_TAC (ISPEC `data_evaluate (c,s:(C,FFI)data_state)` PAIR_SURJECTIVE) THEN
   DISCH_THEN (X_CHOOSE_THEN `r:((data_v list,data_v)result)option`
@@ -4154,7 +4154,7 @@ let evaluate_zero_limits_FST = prove
 let evaluate_zero_limits_ffi = prove
  (`!c (s:(C,FFI)data_state).
      data_state_ffi (SND (data_evaluate (c,s))) =
-     data_state_ffi (SND (data_evaluate (c,data_state_limits_fupd (K zero_limits) s)))`,
+     data_state_ffi (SND (data_evaluate (c,data_state_limits_fupd (combin_K zero_limits) s)))`,
   REPEAT GEN_TAC THEN
   MP_TAC (ISPEC `data_evaluate (c,s:(C,FFI)data_state)` PAIR_SURJECTIVE) THEN
   DISCH_THEN (X_CHOOSE_THEN `r:((data_v list,data_v)result)option`
@@ -4200,10 +4200,10 @@ let do_app_stack_frame_size_rel = prove
 let cut_state_opt_with_sfs = prove
  (`!names_opt (s:(C,FFI)data_state) lsz xs sfs.
      data_cut_state_opt names_opt
-       (data_state_locals_size_fupd (K lsz) (data_state_stack_fupd (K xs)
-          (data_state_stack_frame_sizes_fupd (K sfs) s))) =
-     OPTION_MAP (\t. data_state_locals_size_fupd (K lsz) (data_state_stack_fupd (K xs)
-                       (data_state_stack_frame_sizes_fupd (K sfs) t)))
+       (data_state_locals_size_fupd (combin_K lsz) (data_state_stack_fupd (combin_K xs)
+          (data_state_stack_frame_sizes_fupd (combin_K sfs) s))) =
+     OPTION_MAP (\t. data_state_locals_size_fupd (combin_K lsz) (data_state_stack_fupd (combin_K xs)
+                       (data_state_stack_frame_sizes_fupd (combin_K sfs) t)))
                 (data_cut_state_opt names_opt s)`,
   REPEAT GEN_TAC THEN
   REWRITE_TAC[data_cut_state_opt_def; data_cut_state_def; data_state_INFO.ri_accfupds; K_THM] THEN
@@ -4223,7 +4223,7 @@ let cut_state_opt_stack = prove
 (* ------------------------------------------------------------------------- *)
 
 let DSEMAUX_sfs_def = new_definition
-  `DSEMAUX_sfs fsz (s:(C,FFI)data_state) = data_state_stack_frame_sizes_fupd (K fsz) s`;;
+  `DSEMAUX_sfs fsz (s:(C,FFI)data_state) = data_state_stack_frame_sizes_fupd (combin_K fsz) s`;;
 
 let DSEMAUX_sfs_tac : tactic =
   REWRITE_TAC[DSEMAUX_sfs_def; DSEMAUX_sl_def; DSEMAUX_ssp_def; data_state_component_equality;
@@ -4250,11 +4250,11 @@ let DSEMAUX_sfs_rws = prove
    (!fsz (s:(C,FFI)data_state).
       data_dec_clock (DSEMAUX_sfs fsz s) = DSEMAUX_sfs fsz (data_dec_clock s)) /\
    (!e fsz (s:(C,FFI)data_state).
-      data_state_locals_fupd (K e) (DSEMAUX_sfs fsz s) =
-      DSEMAUX_sfs fsz (data_state_locals_fupd (K e) s)) /\
+      data_state_locals_fupd (combin_K e) (DSEMAUX_sfs fsz s) =
+      DSEMAUX_sfs fsz (data_state_locals_fupd (combin_K e) s)) /\
    (!x fsz (s:(C,FFI)data_state).
-      data_state_stack_fupd (K x) (DSEMAUX_sfs fsz s) =
-      DSEMAUX_sfs fsz (data_state_stack_fupd (K x) s)) /\
+      data_state_stack_fupd (combin_K x) (DSEMAUX_sfs fsz s) =
+      DSEMAUX_sfs fsz (data_state_stack_fupd (combin_K x) s)) /\
    (!smx sf pk fsz (s:(C,FFI)data_state).
       DSEMAUX_ssp smx sf pk (DSEMAUX_sfs fsz s) = DSEMAUX_sfs fsz (DSEMAUX_ssp smx sf pk s)) /\
    (!xs lsz fsz (s:(C,FFI)data_state).
@@ -4298,9 +4298,9 @@ let DSEMAUX_sfs_do_app = prove
   DISCH_THEN (MP_TAC o SPECL [`data_state_locals_size (s:(C,FFI)data_state)`;
                               `data_state_stack (s:(C,FFI)data_state)`; `fsz:num spt`] o
               MATCH_MP do_app_lss_stk_stfrm_swap) THEN
-  SUBGOAL_THEN `data_state_locals_size_fupd (K (data_state_locals_size s))
-                  (data_state_stack_fupd (K (data_state_stack s))
-                     (data_state_stack_frame_sizes_fupd (K fsz) s)) =
+  SUBGOAL_THEN `data_state_locals_size_fupd (combin_K (data_state_locals_size s))
+                  (data_state_stack_fupd (combin_K (data_state_stack s))
+                     (data_state_stack_frame_sizes_fupd (combin_K fsz) s)) =
                 DSEMAUX_sfs fsz (s:(C,FFI)data_state)` SUBST1_TAC THENL
    [DSEMAUX_sfs_tac; ALL_TAC] THEN
   DISCH_THEN (X_CHOOSE_THEN `sf:bool` (X_CHOOSE_THEN `pk:num`
@@ -4315,9 +4315,9 @@ let DSEMAUX_sfs_do_app_err = prove
   DISCH_THEN (MP_TAC o SPECL [`data_state_locals_size (s:(C,FFI)data_state)`;
                               `data_state_stack (s:(C,FFI)data_state)`; `fsz:num spt`] o
               MATCH_MP do_app_err_lss_stk_stfrm_swap) THEN
-  SUBGOAL_THEN `data_state_locals_size_fupd (K (data_state_locals_size s))
-                  (data_state_stack_fupd (K (data_state_stack s))
-                     (data_state_stack_frame_sizes_fupd (K fsz) s)) =
+  SUBGOAL_THEN `data_state_locals_size_fupd (combin_K (data_state_locals_size s))
+                  (data_state_stack_fupd (combin_K (data_state_stack s))
+                     (data_state_stack_frame_sizes_fupd (combin_K fsz) s)) =
                 DSEMAUX_sfs fsz (s:(C,FFI)data_state)` SUBST1_TAC THENL
    [DSEMAUX_sfs_tac; REWRITE_TAC[]]);;
 
@@ -4360,10 +4360,10 @@ let DSEMAUX_jump_exc_rel = prove
      (data_jump_exc s = NONE ==> data_jump_exc t = NONE) /\
      (!s2. data_jump_exc s = SOME s2 ==>
            ?xs2 l2. data_jump_exc t =
-                    SOME (data_state_handler_fupd (K (data_state_handler s2))
-                            (data_state_locals_fupd (K (data_state_locals s2))
-                               (data_state_stack_fupd (K xs2)
-                                  (data_state_locals_size_fupd (K l2) t)))) /\
+                    SOME (data_state_handler_fupd (combin_K (data_state_handler s2))
+                            (data_state_locals_fupd (combin_K (data_state_locals s2))
+                               (data_state_stack_fupd (combin_K xs2)
+                                  (data_state_locals_size_fupd (combin_K l2) t)))) /\
                     ALL2 stack_frame_size_rel (data_state_stack s2) xs2)`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   FIRST_ASSUM (ASSUME_TAC o MATCH_MP LIST_REL_LENGTH) THEN
@@ -4381,10 +4381,10 @@ let DSEMAUX_jump_exc_rel = prove
             `k:stack list`) THEN
   LIST_INDUCT_TAC THEN GEN_TAC THEN
   STRUCT_CASES_TAC (ISPEC `m:stack list` list_CASES) THEN
-  REWRITE_TAC[ALL2; NOT_CONS_NIL] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[ALL2; NOT_CONS_NIL] THEN CAKE_REWRITE_TAC[] THEN
   STRUCT_CASES_TAC (ISPEC `h:stack` (cases "stack")) THEN
   STRUCT_CASES_TAC (ISPEC `h':stack` (cases "stack")) THEN
-  REWRITE_TAC[stack_frame_size_rel_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[stack_frame_size_rel_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[option_DISTINCT; option_INJ] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
   GEN_TAC THEN DISCH_THEN (SUBST1_TAC o SYM) THEN
   MAP_EVERY EXISTS_TAC [`t'':stack list`; `a0':num option`] THEN
@@ -4407,7 +4407,7 @@ let DSEMAUX_eval_stack = prove
   REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
   DISCH_THEN (fun th -> MP_TAC (SPECL [`c:data_prog`; `s:(C,FFI)data_state`] evaluate_stack) THEN
                         REWRITE_TAC[th]) THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[]);;
 
 let DSEMAUX_sfs_in = prove
  (`(!fsz xs lsz (s:(C,FFI)data_state).
@@ -4451,8 +4451,8 @@ let DSEMAUX_F_FACTS_TAC : tactic =
     DISCH_THEN (fun th -> if is_exists (concl th)
                           then X_CHOOSE_THEN `osz:num option` ASSUME_TAC th
                           else ASSUME_TAC th)) THEN
-  TRY (IMP_RES_THEN (fun th -> STRIP_ASSUME_TAC (SPEC `fsz:num spt` th)) DSEMAUX_sfs_do_app) THEN
-  TRY (IMP_RES_THEN (fun th -> ASSUME_TAC (SPEC `fsz:num spt` th)) DSEMAUX_sfs_do_app_err) THEN
+  TRY (HOL4_IMP_RES_THEN (fun th -> STRIP_ASSUME_TAC (SPEC `fsz:num spt` th)) DSEMAUX_sfs_do_app) THEN
+  TRY (HOL4_IMP_RES_THEN (fun th -> ASSUME_TAC (SPEC `fsz:num spt` th)) DSEMAUX_sfs_do_app_err) THEN
   ALL_TAC;;
 
 (* apply an induction hypothesis !xs lsz fsz smx sf pk. ALL2 .. ==> ?... at a  *)
@@ -4521,7 +4521,7 @@ let DSEMAUX_F_IH_TAC : tactic = fun (asl,w as g) ->
   let (th,i1,i2,ex,fix) = tryfind try_one targets in
   let ex' = vsubst (zip i2 (fst (strip_forall (snd (dest_imp (snd (strip_forall (concl th)))))))) ex in
   let evs,_ = strip_exists ex' in
-  let avoid = freesl (w :: map (concl o snd) asl) in
+  let avoid = freesl (w :: map (concl o snd) asl @ flat (map (hyp o snd) asl)) in
   let fresh = rev(itlist (fun v acc -> variant (acc @ avoid) v :: acc) (rev evs) []) in
   (fix THEN MP_TAC (SPECL i1 th) THEN ANTS_TAC THENL [DSEMAUX_F_ALL2_TAC; ALL_TAC] THEN
    DISCH_THEN (MP_TAC o SPECL i2) THEN
@@ -4585,7 +4585,7 @@ let DSEMAUX_F_POP_CONTR_TAC : tactic =
     (try fst(dest_const(rator(lhs c))) = "data_pop_env" with Failure _ -> false))) THEN
   RULE_ASSUM_TAC (REWRITE_RULE DSEMAUX_F_ACC_RWS) THEN
   ASM_REWRITE_TAC (data_pop_env_def :: DSEMAUX_F_ACC_RWS) THEN
-  CASE_REWRITE_TAC[option_DISTINCT];;
+  CAKE_REWRITE_TAC[option_DISTINCT];;
 
 let DSEMAUX_F_FINISH_TAC : tactic =
   TRY (DSEMAUX_F_POP_CONTR_TAC THEN NO_TAC) THEN
@@ -4620,7 +4620,7 @@ let DSEMAUX_F_PUSH_TAC : tactic = fun (asl,w as g) ->
      DISCH_THEN (fun th -> REWRITE_TAC[th])]) g;;
 
 let DSEMAUX_F_LOOP_TAC : tactic =
-  REPEAT (CHANGED_TAC (CASE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
+  REPEAT (CHANGED_TAC (CAKE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
                        ASM_REWRITE_TAC (PAIR_EQ :: IS_SOME_DEF :: DSEMAUX_F_RWS)) ORELSE
           DSEMAUX_SSP_DO_APP_RW_TAC ORELSE DSEMAUX_F_PUSH_TAC ORELSE
           (DSEMAUX_F_IH_TAC THEN DSEMAUX_F_STACK_TAC THEN REPEAT DSEMAUX_F_CONS_TAC));;
@@ -4721,17 +4721,17 @@ let DSEMAUX_evaluate_F = prove
 let evaluate_swap_stack_frame_sizes_aux = prove
  (`!c (s:(C,FFI)data_state) r s' xs lsz sfs.
      data_evaluate (c,s) = (r,s') /\ ALL2 stack_frame_size_rel (data_state_stack s) xs ==>
-     let s0 = data_state_locals_size_fupd (K lsz)
-                (data_state_stack_fupd (K xs)
-                   (data_state_stack_frame_sizes_fupd (K sfs) s)) in
+     let s0 = data_state_locals_size_fupd (combin_K lsz)
+                (data_state_stack_fupd (combin_K xs)
+                   (data_state_stack_frame_sizes_fupd (combin_K sfs) s)) in
      ?xs lsz smx safe peak sfs'.
        data_evaluate (c,s0) =
-       (r,data_state_locals_size_fupd (K lsz)
-            (data_state_safe_for_space_fupd (K safe)
-               (data_state_stack_fupd (K xs)
-                  (data_state_stack_frame_sizes_fupd (K sfs')
-                     (data_state_stack_max_fupd (K smx)
-                        (data_state_peak_heap_length_fupd (K peak) s')))))) /\
+       (r,data_state_locals_size_fupd (combin_K lsz)
+            (data_state_safe_for_space_fupd (combin_K safe)
+               (data_state_stack_fupd (combin_K xs)
+                  (data_state_stack_frame_sizes_fupd (combin_K sfs')
+                     (data_state_stack_max_fupd (combin_K smx)
+                        (data_state_peak_heap_length_fupd (combin_K peak) s')))))) /\
        ALL2 stack_frame_size_rel (data_state_stack s') xs`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
   MP_TAC (SPECL [`xs:stack list`; `lsz:num option`; `sfs:num spt`;
@@ -4744,8 +4744,8 @@ let evaluate_swap_stack_frame_sizes_aux = prove
   SUBGOAL_THEN `DSEMAUX_sl xs lsz (DSEMAUX_ssp (data_state_stack_max s)
                   (data_state_safe_for_space s) (data_state_peak_heap_length s)
                   (DSEMAUX_sfs sfs s)) =
-                data_state_locals_size_fupd (K lsz) (data_state_stack_fupd (K xs)
-                  (data_state_stack_frame_sizes_fupd (K sfs) (s:(C,FFI)data_state)))`
+                data_state_locals_size_fupd (combin_K lsz) (data_state_stack_fupd (combin_K xs)
+                  (data_state_stack_frame_sizes_fupd (combin_K sfs) (s:(C,FFI)data_state)))`
     SUBST1_TAC THENL [DSEMAUX_sfs_tac; ALL_TAC] THEN
   DISCH_THEN (X_CHOOSE_THEN `xs1:stack list` (X_CHOOSE_THEN `lsz1:num option`
     (X_CHOOSE_THEN `fsz1:num spt` (X_CHOOSE_THEN `smx1:num option`
@@ -4758,13 +4758,13 @@ let evaluate_swap_local_sizes = prove
  (`!c (s:(C,FFI)data_state) r s' lss.
      data_evaluate (c,s) = (r,s') ==>
      ?xs lsz sfs smx safe peak.
-       data_evaluate (c,data_state_locals_size_fupd (K lss) s) =
-       (r,data_state_locals_size_fupd (K lsz)
-            (data_state_safe_for_space_fupd (K safe)
-               (data_state_stack_fupd (K xs)
-                  (data_state_stack_frame_sizes_fupd (K sfs)
-                     (data_state_stack_max_fupd (K smx)
-                        (data_state_peak_heap_length_fupd (K peak) s')))))) /\
+       data_evaluate (c,data_state_locals_size_fupd (combin_K lss) s) =
+       (r,data_state_locals_size_fupd (combin_K lsz)
+            (data_state_safe_for_space_fupd (combin_K safe)
+               (data_state_stack_fupd (combin_K xs)
+                  (data_state_stack_frame_sizes_fupd (combin_K sfs)
+                     (data_state_stack_max_fupd (combin_K smx)
+                        (data_state_peak_heap_length_fupd (combin_K peak) s')))))) /\
        ALL2 stack_frame_size_rel (data_state_stack s') xs`,
   REPEAT STRIP_TAC THEN
   MP_TAC (SPECL [`c:data_prog`; `s:(C,FFI)data_state`; `r:((data_v list,data_v)result)option`;
@@ -4772,10 +4772,10 @@ let evaluate_swap_local_sizes = prove
                  `lss:num option`; `data_state_stack_frame_sizes (s:(C,FFI)data_state)`]
                 evaluate_swap_stack_frame_sizes_aux) THEN
   ASM_REWRITE_TAC[DSEMAUX_ALL2_sfr_refl; LET_DEF; LET_END_DEF] THEN
-  SUBGOAL_THEN `data_state_locals_size_fupd (K lss)
-                  (data_state_stack_fupd (K (data_state_stack s))
-                     (data_state_stack_frame_sizes_fupd (K (data_state_stack_frame_sizes s)) s)) =
-                data_state_locals_size_fupd (K lss) (s:(C,FFI)data_state)` SUBST1_TAC THENL
+  SUBGOAL_THEN `data_state_locals_size_fupd (combin_K lss)
+                  (data_state_stack_fupd (combin_K (data_state_stack s))
+                     (data_state_stack_frame_sizes_fupd (combin_K (data_state_stack_frame_sizes s)) s)) =
+                data_state_locals_size_fupd (combin_K lss) (s:(C,FFI)data_state)` SUBST1_TAC THENL
    [REWRITE_TAC[data_state_component_equality; data_state_INFO.ri_accfupds; K_THM];
     ALL_TAC] THEN
   MESON_TAC[]);;
@@ -4784,13 +4784,13 @@ let evaluate_swap_stack_frame_sizes = prove
  (`!c (s:(C,FFI)data_state) r s' sfs.
      data_evaluate (c,s) = (r,s') ==>
      ?xs lsz smx safe peak sfs'.
-       data_evaluate (c,data_state_stack_frame_sizes_fupd (K sfs) s) =
-       (r,data_state_locals_size_fupd (K lsz)
-            (data_state_safe_for_space_fupd (K safe)
-               (data_state_stack_fupd (K xs)
-                  (data_state_stack_frame_sizes_fupd (K sfs')
-                     (data_state_stack_max_fupd (K smx)
-                        (data_state_peak_heap_length_fupd (K peak) s')))))) /\
+       data_evaluate (c,data_state_stack_frame_sizes_fupd (combin_K sfs) s) =
+       (r,data_state_locals_size_fupd (combin_K lsz)
+            (data_state_safe_for_space_fupd (combin_K safe)
+               (data_state_stack_fupd (combin_K xs)
+                  (data_state_stack_frame_sizes_fupd (combin_K sfs')
+                     (data_state_stack_max_fupd (combin_K smx)
+                        (data_state_peak_heap_length_fupd (combin_K peak) s')))))) /\
        ALL2 stack_frame_size_rel (data_state_stack s') xs`,
   REPEAT STRIP_TAC THEN
   MP_TAC (SPECL [`c:data_prog`; `s:(C,FFI)data_state`; `r:((data_v list,data_v)result)option`;
@@ -4798,10 +4798,10 @@ let evaluate_swap_stack_frame_sizes = prove
                  `data_state_locals_size (s:(C,FFI)data_state)`; `sfs:num spt`]
                 evaluate_swap_stack_frame_sizes_aux) THEN
   ASM_REWRITE_TAC[DSEMAUX_ALL2_sfr_refl; LET_DEF; LET_END_DEF] THEN
-  SUBGOAL_THEN `data_state_locals_size_fupd (K (data_state_locals_size s))
-                  (data_state_stack_fupd (K (data_state_stack s))
-                     (data_state_stack_frame_sizes_fupd (K sfs) s)) =
-                data_state_stack_frame_sizes_fupd (K sfs) (s:(C,FFI)data_state)` SUBST1_TAC THENL
+  SUBGOAL_THEN `data_state_locals_size_fupd (combin_K (data_state_locals_size s))
+                  (data_state_stack_fupd (combin_K (data_state_stack s))
+                     (data_state_stack_frame_sizes_fupd (combin_K sfs) s)) =
+                data_state_stack_frame_sizes_fupd (combin_K sfs) (s:(C,FFI)data_state)` SUBST1_TAC THENL
    [REWRITE_TAC[data_state_component_equality; data_state_INFO.ri_accfupds; K_THM];
     ALL_TAC] THEN
   MESON_TAC[]);;
@@ -4810,7 +4810,7 @@ let evaluate_swap_stack_frame_sizes = prove
 let evaluate_stack_frame_sizes_FST = prove
  (`!c (s:(C,FFI)data_state).
      FST (data_evaluate (c,s)) =
-     FST (data_evaluate (c,data_state_stack_frame_sizes_fupd (K LN) s))`,
+     FST (data_evaluate (c,data_state_stack_frame_sizes_fupd (combin_K LN) s))`,
   REPEAT GEN_TAC THEN
   MP_TAC (ISPEC `data_evaluate (c,s:(C,FFI)data_state)` PAIR_SURJECTIVE) THEN
   DISCH_THEN (X_CHOOSE_THEN `r:((data_v list,data_v)result)option`
@@ -4822,7 +4822,7 @@ let evaluate_stack_frame_sizes_FST = prove
 let evaluate_stack_frame_sizes_ffi = prove
  (`!c (s:(C,FFI)data_state).
      data_state_ffi (SND (data_evaluate (c,s))) =
-     data_state_ffi (SND (data_evaluate (c,data_state_stack_frame_sizes_fupd (K LN) s)))`,
+     data_state_ffi (SND (data_evaluate (c,data_state_stack_frame_sizes_fupd (combin_K LN) s)))`,
   REPEAT GEN_TAC THEN
   MP_TAC (ISPEC `data_evaluate (c,s:(C,FFI)data_state)` PAIR_SURJECTIVE) THEN
   DISCH_THEN (X_CHOOSE_THEN `r:((data_v list,data_v)result)option`
@@ -4866,8 +4866,8 @@ let semantics_zero_limits = prove
     SUBGOAL_THEN
      `data_initial_state (ffi:(FFI)ffi_state) code
         (co:num -> C # (num # num # data_prog) list) cc T zero_limits LN k =
-      data_state_stack_frame_sizes_fupd (K LN)
-        (data_state_limits_fupd (K zero_limits)
+      data_state_stack_frame_sizes_fupd (combin_K LN)
+        (data_state_limits_fupd (combin_K zero_limits)
            (data_initial_state ffi code co cc T lim ss k))` SUBST1_TAC THENL
      [REWRITE_TAC[data_initial_state_def; data_state_INFO.ri_fupds; K_THM]; ALL_TAC] THEN
     REWRITE_TAC[GSYM evaluate_stack_frame_sizes_FST; GSYM evaluate_stack_frame_sizes_ffi;
@@ -4890,10 +4890,10 @@ let do_app_stack_max = prove
      data_do_app op xs s1 = Rval (v,s2) ==>
      option_le (data_state_stack_max s1) (data_state_stack_max s2)`,
   X_GEN_TAC `op:clos_op` THEN DSEMAUX_OP_CASES_TAC `op:clos_op` THEN
-  REPEAT GEN_TAC THEN CASE_REWRITE_TAC DSEMAUX_DO_APP_DEFS THEN
+  REPEAT GEN_TAC THEN CAKE_REWRITE_TAC DSEMAUX_DO_APP_DEFS THEN
   CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
-  CASE_REWRITE_TAC DSEMAUX_DO_APP_RWS THEN
-  REPEAT ((COND_CASES_TAC ORELSE TOP_CASE_TAC) THEN CASE_REWRITE_TAC DSEMAUX_DO_APP_RWS) THEN
+  CAKE_REWRITE_TAC DSEMAUX_DO_APP_RWS THEN
+  REPEAT ((COND_CASES_TAC ORELSE TOP_CASE_TAC) THEN CAKE_REWRITE_TAC DSEMAUX_DO_APP_RWS) THEN
   REWRITE_TAC[injectivity "result"; distinctness "result"; PAIR_EQ] THEN
   REPEAT STRIP_TAC THEN RVEQ_TAC THEN
   ASM_REWRITE_TAC(option_le_refl :: option_le_max_right :: option_le_def :: DSEMAUX_FINISH_RWS));;
@@ -5004,10 +5004,10 @@ let do_app_cc_co_only_diff_rval = prove
                              with Failure _ -> false)
                          then ASSUME_TAC (GEN_ALL (MATCH_MP DSEMAUX_space_consumed_limits th))
                          else NO_TAC) THEN
-  CASE_REWRITE_TAC (DSEMAUX_CC_RWS @ DSEMAUX_DO_APP_DEFS) THEN ASM_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC (DSEMAUX_CC_RWS @ DSEMAUX_DO_APP_DEFS) THEN ASM_REWRITE_TAC[] THEN
   CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
-  CASE_REWRITE_TAC DSEMAUX_DO_APP_RWS THEN ASM_REWRITE_TAC[] THEN
-  REPEAT ((COND_CASES_TAC ORELSE TOP_CASE_TAC) THEN CASE_REWRITE_TAC DSEMAUX_DO_APP_RWS THEN
+  CAKE_REWRITE_TAC DSEMAUX_DO_APP_RWS THEN ASM_REWRITE_TAC[] THEN
+  REPEAT ((COND_CASES_TAC ORELSE TOP_CASE_TAC) THEN CAKE_REWRITE_TAC DSEMAUX_DO_APP_RWS THEN
           ASM_REWRITE_TAC[]) THEN
   REWRITE_TAC[injectivity "result"; distinctness "result"; PAIR_EQ] THEN
   REPEAT STRIP_TAC THEN RVEQ_TAC THEN
@@ -5027,10 +5027,10 @@ let do_app_cc_co_only_diff_rerr = prove
                              with Failure _ -> false)
                          then ASSUME_TAC (GEN_ALL (MATCH_MP DSEMAUX_space_consumed_limits th))
                          else NO_TAC) THEN
-  CASE_REWRITE_TAC (DSEMAUX_CC_RWS @ DSEMAUX_DO_APP_DEFS) THEN ASM_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC (DSEMAUX_CC_RWS @ DSEMAUX_DO_APP_DEFS) THEN ASM_REWRITE_TAC[] THEN
   CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
-  CASE_REWRITE_TAC DSEMAUX_DO_APP_RWS THEN ASM_REWRITE_TAC[] THEN
-  REPEAT ((COND_CASES_TAC ORELSE TOP_CASE_TAC) THEN CASE_REWRITE_TAC DSEMAUX_DO_APP_RWS THEN
+  CAKE_REWRITE_TAC DSEMAUX_DO_APP_RWS THEN ASM_REWRITE_TAC[] THEN
+  REPEAT ((COND_CASES_TAC ORELSE TOP_CASE_TAC) THEN CAKE_REWRITE_TAC DSEMAUX_DO_APP_RWS THEN
           ASM_REWRITE_TAC[]) THEN
   REWRITE_TAC[injectivity "result"; distinctness "result"; PAIR_EQ]);;
 
@@ -5067,7 +5067,7 @@ let cut_state_opt_cc_co_full = prove
  (`!(s:(C,FFI)data_state) (t:(D,FFI)data_state) names_opt.
      data_state_locals t = data_state_locals s ==>
      data_cut_state_opt names_opt t =
-     OPTION_MAP (\u. data_state_locals_fupd (K (data_state_locals u)) t)
+     OPTION_MAP (\u. data_state_locals_fupd (combin_K (data_state_locals u)) t)
                 (data_cut_state_opt names_opt s)`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN
   REWRITE_TAC[data_cut_state_opt_def; data_cut_state_def] THEN ASM_REWRITE_TAC[] THEN
@@ -5149,7 +5149,7 @@ let DSEMAUX_CC_IH_TAC : tactic = fun (asl,w as g) ->
       if p' <> p then failwith "" else SPEC st th) asl in
   let ith = tryfind try_one targets in
   let evs,_ = strip_exists (snd (dest_imp (concl ith))) in
-  let avoid = freesl (w :: map (concl o snd) asl) in
+  let avoid = freesl (w :: map (concl o snd) asl @ flat (map (hyp o snd) asl)) in
   let fresh = rev(itlist (fun v acc -> variant (acc @ avoid) v :: acc) (rev evs) []) in
   (MP_TAC ith THEN
    ANTS_TAC THENL
@@ -5184,12 +5184,12 @@ let DSEMAUX_CC_FACTS_TAC : tactic =
        DISCH_THEN (CONJUNCTS_THEN2
          (fun th -> TRY (FIRST_ASSUM (ASSUME_TAC o MATCH_MP th)))
          (fun th -> TRY (FIRST_ASSUM (STRIP_ASSUME_TAC o MATCH_MP th))))) THEN
-  TRY (IMP_RES_THEN STRIP_ASSUME_TAC cut_cc_co) THEN
-  TRY (IMP_RES_THEN ASSUME_TAC DSEMAUX_cut_cc_none) THEN
-  TRY (IMP_RES_THEN STRIP_ASSUME_TAC pop_env_cc_co_only_diff) THEN
-  TRY (IMP_RES_THEN ASSUME_TAC DSEMAUX_pop_env_cc_none) THEN
-  TRY (IMP_RES_THEN STRIP_ASSUME_TAC do_app_cc_co_only_diff_rval) THEN
-  TRY (IMP_RES_THEN ASSUME_TAC do_app_cc_co_only_diff_rerr);;
+  TRY (HOL4_IMP_RES_THEN STRIP_ASSUME_TAC cut_cc_co) THEN
+  TRY (HOL4_IMP_RES_THEN ASSUME_TAC DSEMAUX_cut_cc_none) THEN
+  TRY (HOL4_IMP_RES_THEN STRIP_ASSUME_TAC pop_env_cc_co_only_diff) THEN
+  TRY (HOL4_IMP_RES_THEN ASSUME_TAC DSEMAUX_pop_env_cc_none) THEN
+  TRY (HOL4_IMP_RES_THEN STRIP_ASSUME_TAC do_app_cc_co_only_diff_rval) THEN
+  TRY (HOL4_IMP_RES_THEN ASSUME_TAC do_app_cc_co_only_diff_rerr);;
 
 (* IMP_RES_TAC that adds only new fully resolved facts, failing otherwise *)
 
@@ -5199,7 +5199,7 @@ let DSEMAUX_NEW_RES_TAC (th:thm) : tactic = fun (asl,w as g) ->
                      exists (fun (_,a) -> aconv (concl a) (concl t)) asl ||
                      exists (fun a -> aconv (concl a) (concl t)) (!news)
                   then ALL_TAC else (news := t :: !news; ALL_TAC) in
-  let _ = try ignore (IMP_RES_THEN collect th g) with Failure _ -> () in
+  let _ = try ignore (HOL4_IMP_RES_THEN collect th g) with Failure _ -> () in
   if !news = [] then failwith "DSEMAUX_NEW_RES_TAC"
   else MAP_EVERY STRIP_ASSUME_TAC (!news) g;;
 
@@ -5226,7 +5226,7 @@ let DSEMAUX_NEW_RES_SIMP_TAC (simp:thm->thm) (th:thm) : tactic = fun (asl,w as g
      do_list (fun c -> if known (concl c) then () else news := c :: !news)
              (CONJUNCTS (simp r)));
     ALL_TAC in
-  let _ = try ignore (IMP_RES_THEN collect th g) with Failure _ -> () in
+  let _ = try ignore (HOL4_IMP_RES_THEN collect th g) with Failure _ -> () in
   if !news = [] then failwith "DSEMAUX_NEW_RES_SIMP_TAC"
   else MAP_EVERY ASSUME_TAC (rev (!news)) g;;
 
@@ -5255,7 +5255,7 @@ let DSEMAUX_CC_CLAUSE_TAC : tactic =
   DSEMAUX_CC_FIELDS_TAC THEN DSEMAUX_CC_FACTS_TAC THEN
   ONCE_REWRITE_TAC[data_evaluate_def] THEN
   ASM_REWRITE_TAC[] THEN
-  REPEAT (CHANGED_TAC (CASE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
+  REPEAT (CHANGED_TAC (CAKE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
                        ASM_REWRITE_TAC[PAIR_EQ; IS_SOME_DEF]) ORELSE
           (DSEMAUX_CC_IH_TAC THEN DSEMAUX_CC_FIELDS_TAC THEN DSEMAUX_CC_FACTS_TAC)) THEN
   REWRITE_TAC[PAIR_EQ; RIGHT_EXISTS_AND_THM; UNWIND_THM1] THEN
@@ -5307,10 +5307,10 @@ let do_app_stack_max_le_stack_limit = prove
      option_le (data_state_stack_max s) (SOME (limits_stack_limit (data_state_limits s))) ==>
      option_le (data_state_stack_max s1) (SOME (limits_stack_limit (data_state_limits s1)))`,
   X_GEN_TAC `op:clos_op` THEN DSEMAUX_OP_CASES_TAC `op:clos_op` THEN
-  REPEAT GEN_TAC THEN CASE_REWRITE_TAC DSEMAUX_DO_APP_DEFS THEN
+  REPEAT GEN_TAC THEN CAKE_REWRITE_TAC DSEMAUX_DO_APP_DEFS THEN
   CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
-  CASE_REWRITE_TAC DSEMAUX_DO_APP_RWS THEN
-  REPEAT ((COND_CASES_TAC ORELSE TOP_CASE_TAC) THEN CASE_REWRITE_TAC DSEMAUX_DO_APP_RWS) THEN
+  CAKE_REWRITE_TAC DSEMAUX_DO_APP_RWS THEN
+  REPEAT ((COND_CASES_TAC ORELSE TOP_CASE_TAC) THEN CAKE_REWRITE_TAC DSEMAUX_DO_APP_RWS) THEN
   REWRITE_TAC[injectivity "result"; distinctness "result"; PAIR_EQ] THEN
   REPEAT STRIP_TAC THEN RVEQ_TAC THEN
   RULE_ASSUM_TAC (REWRITE_RULE DSEMAUX_FINISH_RWS) THEN DSEMAUX_SPLIT_CONJ_ASMS THEN

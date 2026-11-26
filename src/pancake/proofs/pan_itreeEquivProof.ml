@@ -104,7 +104,7 @@ let nondiv_evaluate = prove
  (`!(s:(A,B)pan_state) p n r k res t.
      ltree (ffi_state_oracle (pan_state_ffi s),ffi_state_ffi_state (pan_state_ffi s))
            (mrec h_prog (h_prog (p,pan_itreeSem_bst s))) = ITER n Tau (itree_Ret (INR r)) /\
-     pan_evaluate (p,pan_state_clock_fupd (K k) s) = (res,t) /\
+     pan_evaluate (p,pan_state_clock_fupd (combin_K k) s) = (res,t) /\
      ~(res = SOME pan_TimeOut)
      ==> res = FST r /\ pan_itreeSem_bst t = SND r /\
          ffi_state_ffi_state (pan_state_ffi t) =
@@ -112,7 +112,7 @@ let nondiv_evaluate = prove
                         ffi_state_ffi_state (pan_state_ffi s))
                        (mrec h_prog (h_prog (p,pan_itreeSem_bst s))))`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
-  MP_TAC(ISPECL [`p:(A)panLang_prog`; `pan_state_clock_fupd (K k) (s:(A,B)pan_state)`;
+  MP_TAC(ISPECL [`p:(A)panLang_prog`; `pan_state_clock_fupd (combin_K k) (s:(A,B)pan_state)`;
                  `res:((A)pan_result)option`; `t:(A,B)pan_state`]
                 PITRAUX_evaluate_ltree) THEN
   ASM_REWRITE_TAC[] THEN SIMP[] THEN STRIP_TAC THEN GVS[]);;
@@ -121,7 +121,7 @@ let nondiv_evaluate' = prove
  (`!(fs:(ffiname->B->byte list->byte list->(B)oracle_result)#B) (s:(A,B)pan_state)
     p n r k res t.
      ltree fs (mrec h_prog (h_prog (p,pan_itreeSem_bst s))) = ITER n Tau (itree_Ret (INR r)) /\
-     pan_evaluate (p,pan_state_clock_fupd (K k) s) = (res,t) /\
+     pan_evaluate (p,pan_state_clock_fupd (combin_K k) s) = (res,t) /\
      ~(res = SOME pan_TimeOut) /\
      FST fs = ffi_state_oracle (pan_state_ffi s) /\
      SND fs = ffi_state_ffi_state (pan_state_ffi s)
@@ -184,15 +184,15 @@ let nondiv_not_timeout = prove
 let PITRAUX_evaluate_any_clock = prove
  (`!c (s:(A,B)pan_state) r t k.
      pan_evaluate (c,s) = (r,t) /\ ~(r = SOME pan_TimeOut)
-     ==> ?k'. pan_evaluate (c,pan_state_clock_fupd (K k') s) =
-              (r,pan_state_clock_fupd (K k) t)`,
+     ==> ?k'. pan_evaluate (c,pan_state_clock_fupd (combin_K k') s) =
+              (r,pan_state_clock_fupd (combin_K k) t)`,
   REPEAT STRIP_TAC THEN
   MP_TAC(ISPECL [`c:(A)panLang_prog`; `s:(A,B)pan_state`; `r:((A)pan_result)option`;
                  `t:(A,B)pan_state`] (GEN_ALL evaluate_min_clock)) THEN
   ASM_REWRITE_TAC[] THEN DISCH_THEN(X_CHOOSE_TAC `k0:num`) THEN
-  MP_TAC(ISPECL [`c:(A)panLang_prog`; `pan_state_clock_fupd (K k0) (s:(A,B)pan_state)`;
+  MP_TAC(ISPECL [`c:(A)panLang_prog`; `pan_state_clock_fupd (combin_K k0) (s:(A,B)pan_state)`;
                  `r:((A)pan_result)option`;
-                 `pan_state_clock_fupd (K 0) (t:(A,B)pan_state)`; `k:num`]
+                 `pan_state_clock_fupd (combin_K 0) (t:(A,B)pan_state)`; `k:num`]
                 pan_evaluate_add_clock_eq) THEN
   ASM_REWRITE_TAC[] THEN SIMP[] THEN MESON_TAC[]);;
 
@@ -458,7 +458,7 @@ let PITRAUX_ltree_imp_evaluate = prove
  (`!n p (s:(A,B)pan_state) res t.
      ltree (ffi_state_oracle (pan_state_ffi s),ffi_state_ffi_state (pan_state_ffi s))
            (mrec h_prog (h_prog (p,pan_itreeSem_bst s))) = ITER n Tau (itree_Ret (INR (res,t)))
-     ==> ?k t'. pan_evaluate (p,pan_state_clock_fupd (K k) s) = (res,t') /\
+     ==> ?k t'. pan_evaluate (p,pan_state_clock_fupd (combin_K k) s) = (res,t') /\
                 pan_itreeSem_bst t' = t /\ ~(res = SOME pan_TimeOut) /\
                 ffi_state_ffi_state (pan_state_ffi t') =
                 SND (comp_ffi (ffi_state_oracle (pan_state_ffi s),
@@ -480,7 +480,7 @@ let nondiv_imp_evaluate = prove
  (`!(s:(A,B)pan_state) p n res t.
      ltree (ffi_state_oracle (pan_state_ffi s),ffi_state_ffi_state (pan_state_ffi s))
            (mrec h_prog (h_prog (p,pan_itreeSem_bst s))) = ITER n Tau (itree_Ret (INR (res,t)))
-     ==> ?k t'. pan_evaluate (p,pan_state_clock_fupd (K k) s) = (res,t') /\
+     ==> ?k t'. pan_evaluate (p,pan_state_clock_fupd (combin_K k) s) = (res,t') /\
                 pan_itreeSem_bst t' = t /\ ~(res = SOME pan_TimeOut)`,
   MESON_TAC[PITRAUX_ltree_imp_evaluate]);;
 
@@ -490,7 +490,7 @@ let nondiv_imp_evaluate' = prove
      ltree fs (mrec h_prog (h_prog (p,pan_itreeSem_bst s))) = ITER n Tau (itree_Ret (INR (res,t))) /\
      FST fs = ffi_state_oracle (pan_state_ffi s) /\
      SND fs = ffi_state_ffi_state (pan_state_ffi s)
-     ==> ?k t'. pan_evaluate (p,pan_state_clock_fupd (K k) s) = (res,t') /\
+     ==> ?k t'. pan_evaluate (p,pan_state_clock_fupd (combin_K k) s) = (res,t') /\
                 pan_itreeSem_bst t' = t /\ ~(res = SOME pan_TimeOut)`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN MATCH_MP_TAC nondiv_imp_evaluate THEN
   QEXISTS_TAC "n" THEN ASM_MESON_TAC[PAIR]);;
@@ -500,9 +500,9 @@ let div_imp_timeout = prove
      pan_itreeSem_div fs (mrec h_prog (h_prog (p,pan_itreeSem_bst s))) /\
      FST fs = ffi_state_oracle (pan_state_ffi s) /\
      SND fs = ffi_state_ffi_state (pan_state_ffi s)
-     ==> !k. ?t. pan_evaluate (p,pan_state_clock_fupd (K k) s) = (SOME pan_TimeOut,t)`,
+     ==> !k. ?t. pan_evaluate (p,pan_state_clock_fupd (combin_K k) s) = (SOME pan_TimeOut,t)`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN X_GEN_TAC `k:num` THEN
-  MP_TAC(ISPEC `pan_evaluate (p,pan_state_clock_fupd (K k) (s:(A,B)pan_state))`
+  MP_TAC(ISPEC `pan_evaluate (p,pan_state_clock_fupd (combin_K k) (s:(A,B)pan_state))`
                PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `r:((A)pan_result)option` (X_CHOOSE_TAC `t:(A,B)pan_state`)) THEN
   ASM_REWRITE_TAC[PAIR_EQ] THEN ASM_CASES_TAC `r = SOME (pan_TimeOut:(A)pan_result)` THENL
@@ -512,7 +512,7 @@ let div_imp_timeout = prove
    [ASM_MESON_TAC[PAIR]; ALL_TAC] THEN
   FIRST_X_ASSUM(MP_TAC o GEN_REWRITE_RULE I [pan_itreeSem_div_def]) THEN
   MP_TAC(MATCH_MP evaluate_imp_nondiv (CONJ
-    (ASSUME `pan_evaluate (p,pan_state_clock_fupd (K k) (s:(A,B)pan_state)) = r,t`)
+    (ASSUME `pan_evaluate (p,pan_state_clock_fupd (combin_K k) (s:(A,B)pan_state)) = r,t`)
     (ASSUME `~(r = SOME (pan_TimeOut:(A)pan_result))`))) THEN
   SIMP[] THEN MESON_TAC[]);;
 
@@ -533,7 +533,7 @@ let nondiv_timeout_add_clock = prove
      ltree fs (mrec h_prog (h_prog (p,pan_itreeSem_bst s))) = ITER n Tau (itree_Ret r) /\
      FST fs = ffi_state_oracle (pan_state_ffi s) /\
      SND fs = ffi_state_ffi_state (pan_state_ffi s)
-     ==> ?k q t'. pan_evaluate (p,pan_state_clock_fupd (K (pan_state_clock s + k)) s) =
+     ==> ?k q t'. pan_evaluate (p,pan_state_clock_fupd (combin_K (pan_state_clock s + k)) s) =
                   (q,t') /\
                   r = INR (q,pan_itreeSem_bst t') /\ ~(q = SOME pan_TimeOut) /\
                   ?l. ffi_state_io_events (pan_state_ffi t') =
@@ -557,11 +557,11 @@ let nondiv_timeout_add_clock = prove
     FIRST_X_ASSUM(X_CHOOSE_THEN `d:num` MP_TAC o
       MATCH_MP (MESON[LE_EXISTS; NOT_LT] `!c k. ~(c < k) ==> ?d. c = k + d`)) THEN
     DISCH_TAC THEN
-    MP_TAC(ISPECL [`p:(A)panLang_prog`; `pan_state_clock_fupd (K k) (s:(A,B)pan_state)`;
+    MP_TAC(ISPECL [`p:(A)panLang_prog`; `pan_state_clock_fupd (combin_K k) (s:(A,B)pan_state)`;
                    `q:((A)pan_result)option`; `t':(A,B)pan_state`; `d:num`]
                   pan_evaluate_add_clock_eq) THEN
     ASM_REWRITE_TAC[] THEN SIMP[] THEN
-    SUBGOAL_THEN `pan_state_clock_fupd (K (k + d)) (s:(A,B)pan_state) = s`
+    SUBGOAL_THEN `pan_state_clock_fupd (combin_K (k + d)) (s:(A,B)pan_state) = s`
       SUBST1_TAC THENL
      [ASM_REWRITE_TAC[pan_state_component_equality] THEN SIMP[]; ALL_TAC] THEN
     ASM_REWRITE_TAC[PAIR_EQ] THEN ASM_MESON_TAC[]]);;
@@ -716,22 +716,22 @@ let PITRAUX_MONO_BOUNDED_CONST = prove
 let not_less_opt_lemma = prove
  (`!n (prog:(A)panLang_prog) (s:(A,B)pan_state).
      (!k. ~less_opt n (SOME (LENGTH (ffi_state_io_events (pan_state_ffi
-            (SND (pan_evaluate (prog,pan_state_clock_fupd (K k) s))))))))
+            (SND (pan_evaluate (prog,pan_state_clock_fupd (combin_K k) s))))))))
      ==> ?k'. !k. k' <= k
               ==> LENGTH (ffi_state_io_events (pan_state_ffi
-                    (SND (pan_evaluate (prog,pan_state_clock_fupd (K k) s))))) =
+                    (SND (pan_evaluate (prog,pan_state_clock_fupd (combin_K k) s))))) =
                   LENGTH (ffi_state_io_events (pan_state_ffi
-                    (SND (pan_evaluate (prog,pan_state_clock_fupd (K k') s)))))`,
+                    (SND (pan_evaluate (prog,pan_state_clock_fupd (combin_K k') s)))))`,
   REPEAT GEN_TAC THEN REWRITE_TAC[less_opt_def; NOT_LT] THEN DISCH_TAC THEN
   MP_TAC(ISPECL
    [`\k. LENGTH (ffi_state_io_events (pan_state_ffi
-           (SND (pan_evaluate (prog,pan_state_clock_fupd (K k) (s:(A,B)pan_state))))))`;
+           (SND (pan_evaluate (prog,pan_state_clock_fupd (combin_K k) (s:(A,B)pan_state))))))`;
     `n:num`] PITRAUX_MONO_BOUNDED_CONST) THEN
   REWRITE_TAC[] THEN DISCH_THEN MATCH_MP_TAC THEN ASM_REWRITE_TAC[] THEN
   REPEAT GEN_TAC THEN
   DISCH_THEN(X_CHOOSE_THEN `d:num` SUBST1_TAC o REWRITE_RULE[LE_EXISTS]) THEN
   MATCH_MP_TAC IS_PREFIX_LENGTH THEN
-  MP_TAC(ISPECL [`prog:(A)panLang_prog`; `pan_state_clock_fupd (K k) (s:(A,B)pan_state)`;
+  MP_TAC(ISPECL [`prog:(A)panLang_prog`; `pan_state_clock_fupd (combin_K k) (s:(A,B)pan_state)`;
                  `d:num`] pan_evaluate_add_clock_io_events_mono) THEN
   SIMP[]);;
 
@@ -760,11 +760,11 @@ let PITRAUX_mrec_Ret_not_FinalFFI = prove
 
 let PITRAUX_eval_ffi_fupd = prove
  (`!(s:(A,B)pan_state) (ffi:(B)ffi_state) e es.
-     pan_eval (pan_state_ffi_fupd (K ffi) s) e = pan_eval s e /\
-     OPT_MMAP (pan_eval (pan_state_ffi_fupd (K ffi) s)) es = OPT_MMAP (pan_eval s) es`,
+     pan_eval (pan_state_ffi_fupd (combin_K ffi) s) e = pan_eval s e /\
+     OPT_MMAP (pan_eval (pan_state_ffi_fupd (combin_K ffi) s)) es = OPT_MMAP (pan_eval s) es`,
   REWRITE_TAC[GSYM eval_bst; GSYM opt_mmap_eval_bst] THEN
   SUBGOAL_THEN `!(s:(A,B)pan_state) (ffi:(B)ffi_state).
-                  pan_itreeSem_bst (pan_state_ffi_fupd (K ffi) s) = pan_itreeSem_bst s`
+                  pan_itreeSem_bst (pan_state_ffi_fupd (combin_K ffi) s) = pan_itreeSem_bst s`
     (fun th -> REWRITE_TAC[th]) THEN
   REWRITE_TAC[pan_itreeSem_bst_def] THEN SIMP[]);;
 
@@ -779,8 +779,8 @@ let PITRAUX_call_FFI_empty = prove
 let PITRAUX_FFI_INDEP_def = cake_def
  `PITRAUX_FFI_INDEP (p:(A)panLang_prog) (s:(A,B)pan_state) r t <=>
     pan_state_ffi t = pan_state_ffi s /\
-    !ffi. pan_evaluate (p,pan_state_ffi_fupd (K ffi) s) =
-          (r,pan_state_ffi_fupd (K ffi) t)`;;
+    !ffi. pan_evaluate (p,pan_state_ffi_fupd (combin_K ffi) s) =
+          (r,pan_state_ffi_fupd (combin_K ffi) t)`;;
 
 (* LENGTH x.io <= LENGTH y.io for every run pan_evaluate (q,x) = (r,y) *)
 
@@ -863,8 +863,8 @@ let PITRAUX_evaluate_ffi_indep = prove
      LENGTH (ffi_state_io_events (pan_state_ffi s)) /\
      ~(?fe. r = SOME (pan_FinalFFI fe))
      ==> pan_state_ffi t = pan_state_ffi s /\
-         !ffi. pan_evaluate (p,pan_state_ffi_fupd (K ffi) s) =
-               (r,pan_state_ffi_fupd (K ffi) t)`,
+         !ffi. pan_evaluate (p,pan_state_ffi_fupd (combin_K ffi) s) =
+               (r,pan_state_ffi_fupd (combin_K ffi) t)`,
   REWRITE_TAC[GSYM PITRAUX_FFI_INDEP_def; PITRAUX_evaluate_ffi_indep_lemma]);;
 
 (* ------------------------------------------------------------------------- *)
@@ -883,7 +883,7 @@ let PITRAUX_ltree_FUNPOW_Ret = prove
 
 let PITRAUX_ffi_fupd_ext = prove
  (`!(t:(A,B)pan_state) (ffi:(B)ffi_state).
-     pan_state_ffi_fupd (K ffi) t = pan_itreeSem_ext (pan_itreeSem_bst t) (pan_state_clock t) ffi`,
+     pan_state_ffi_fupd (combin_K ffi) t = pan_itreeSem_ext (pan_itreeSem_bst t) (pan_state_clock t) ffi`,
   REPEAT GEN_TAC THEN
   GEN_REWRITE_TAC (LAND_CONV o RAND_CONV) [GSYM(CONJUNCT1(SPEC_ALL ext_bst_id))] THEN
   REWRITE_TAC[ext_normalise]);;
@@ -920,7 +920,7 @@ let PITRAUX_mrec_FUNPOW_Ret_evaluate = prove
            LAPPEND_NIL_2ND; fromList_11] THEN
   DISCH_TAC THEN
   MP_TAC(ISPECL [`p:(A)panLang_prog`;
-                 `pan_state_clock_fupd (K k) (pan_itreeSem_ext (s:(A)bstate) 0 (ARB:(B)ffi_state))`;
+                 `pan_state_clock_fupd (combin_K k) (pan_itreeSem_ext (s:(A)bstate) 0 (ARB:(B)ffi_state))`;
                  `res:((A)pan_result)option`; `t':(A,B)pan_state`] PITRAUX_evaluate_ffi_indep) THEN
   SIMP[ext_normalise; ext_access; LE_REFL] THEN STRIP_TAC THEN
   MAP_EVERY EXISTS_TAC [`k:num`; `pan_state_clock (t':(A,B)pan_state)`] THEN
@@ -1714,7 +1714,7 @@ let PITRAUX_C_CALL_TAC (rw:thm) =
     PITRAUX_VK_CASES_TAC THEN RULE_ASSUM_TAC(CAKE_SIMP_RULE [kvar_defs2; bst_access]) THEN
     FIRST [PITRAUX_C_FIN_TAC (curry mk_comb `SUC`) THEN NO_TAC;
            PITRAUX_C_CONT_TAC `x00:(A)panLang_prog` (curry mk_comb `SUC`) THEN NO_TAC];
-    PITRAUX_C_FIRST_TAC `x00:(A)panLang_prog` `pan_state_locals_fupd (K x01) (s:(A,B)pan_state)`
+    PITRAUX_C_FIRST_TAC `x00:(A)panLang_prog` `pan_state_locals_fupd (combin_K x01) (s:(A,B)pan_state)`
                         (curry mk_comb `SUC`)];;
 
 (* every n-step I/O of the itree of a program is covered by a run of     *)
@@ -1723,7 +1723,7 @@ let PITRAUX_C_CALL_TAC (rw:thm) =
 
 let PITRAUX_ttrace_evaluate = prove
  (`!n p (s:(A,B)pan_state).
-     ?k r t. pan_evaluate (p,pan_state_clock_fupd (K k) s) = (r,t) /\
+     ?k r t. pan_evaluate (p,pan_state_clock_fupd (combin_K k) s) = (r,t) /\
              APPEND (ffi_state_io_events (pan_state_ffi s))
                (PITRAUX_ttrace (ffi_state_oracle (pan_state_ffi s),
                                 ffi_state_ffi_state (pan_state_ffi s)) n
@@ -1754,7 +1754,7 @@ let PITRAUX_no_io_ttrace_nil = prove
  (`!p (s:(A,B)pan_state).
      (!k. ffi_state_io_events (pan_state_ffi s) =
           ffi_state_io_events (pan_state_ffi (SND (pan_evaluate
-            (p,pan_state_clock_fupd (K (k + pan_state_clock s)) s))))) /\
+            (p,pan_state_clock_fupd (combin_K (k + pan_state_clock s)) s))))) /\
      pan_state_clock s = 0
      ==> !n. PITRAUX_ttrace (ffi_state_oracle (pan_state_ffi s),
                              ffi_state_ffi_state (pan_state_ffi s)) n
@@ -1779,7 +1779,7 @@ let mrec_Vis_no_trace_lemma = prove
      mrec h_prog (h_prog (p,pan_itreeSem_bst s)) = ITER n Tau (Vis a g) /\
      (!k. ffi_state_io_events (pan_state_ffi s) =
           ffi_state_io_events (pan_state_ffi (SND (pan_evaluate
-            (p,pan_state_clock_fupd (K (k + pan_state_clock s)) s))))) /\
+            (p,pan_state_clock_fupd (combin_K (k + pan_state_clock s)) s))))) /\
      FST fs = ffi_state_oracle (pan_state_ffi s) /\
      SND fs = ffi_state_ffi_state (pan_state_ffi s) /\
      pan_state_clock s = 0 /\
@@ -1852,7 +1852,7 @@ let mrec_Vis_nondiv_lemma = prove
      mrec h_prog (h_prog (p,pan_itreeSem_bst s)) = ITER n Tau (Vis a g) /\
      (!k. ffi_state_io_events (pan_state_ffi s) =
           ffi_state_io_events (pan_state_ffi (SND (pan_evaluate
-            (p,pan_state_clock_fupd (K (k + pan_state_clock s)) s))))) /\
+            (p,pan_state_clock_fupd (combin_K (k + pan_state_clock s)) s))))) /\
      FST fs = ffi_state_oracle (pan_state_ffi s) /\
      SND fs = ffi_state_ffi_state (pan_state_ffi s) /\
      pan_state_clock s = 0
@@ -1881,7 +1881,7 @@ let div_no_trace_LNIL = prove
      pan_itreeSem_div fs (mrec h_prog (h_prog (p,pan_itreeSem_bst s))) /\
      (!k. ffi_state_io_events (pan_state_ffi s) =
           ffi_state_io_events (pan_state_ffi (SND (pan_evaluate
-            (p,pan_state_clock_fupd (K (k + pan_state_clock s)) s))))) /\
+            (p,pan_state_clock_fupd (combin_K (k + pan_state_clock s)) s))))) /\
      FST fs = ffi_state_oracle (pan_state_ffi s) /\
      SND fs = ffi_state_ffi_state (pan_state_ffi s) /\
      pan_state_clock s = 0
@@ -1904,7 +1904,7 @@ let bounded_trace_eq = prove
  (`!p (s:(A,B)pan_state).
      (!k'. ffi_state_io_events (pan_state_ffi (SND (pan_evaluate (p,s)))) =
            ffi_state_io_events (pan_state_ffi (SND (pan_evaluate
-             (p,pan_state_clock_fupd (K (k' + pan_state_clock s)) s))))) /\
+             (p,pan_state_clock_fupd (combin_K (k' + pan_state_clock s)) s))))) /\
      pan_itreeSem_div (ffi_state_oracle (pan_state_ffi s),ffi_state_ffi_state (pan_state_ffi s))
        (mrec h_prog (h_prog (p,pan_itreeSem_bst s)))
      ==> LAPPEND (llist_fromList (ffi_state_io_events (pan_state_ffi s)))
@@ -1932,11 +1932,11 @@ let bounded_trace_eq = prove
     EXISTS_TAC `ffi_state_io_events (pan_state_ffi (t:(A,B)pan_state))` THEN
     ASM_REWRITE_TAC[] THEN
     ASM_CASES_TAC `k <= pan_state_clock (s:(A,B)pan_state)` THENL
-     [MP_TAC(ISPECL [`p:(A)panLang_prog`; `pan_state_clock_fupd (K k) (s:(A,B)pan_state)`;
+     [MP_TAC(ISPECL [`p:(A)panLang_prog`; `pan_state_clock_fupd (combin_K k) (s:(A,B)pan_state)`;
                      `pan_state_clock (s:(A,B)pan_state) - k`]
                     pan_evaluate_add_clock_io_events_mono) THEN
       SIMP[] THEN ASM_SIMP_TAC[ARITH_RULE `k <= c ==> k + (c - k) = c`] THEN
-      SUBGOAL_THEN `pan_state_clock_fupd (K (pan_state_clock s)) (s:(A,B)pan_state) = s`
+      SUBGOAL_THEN `pan_state_clock_fupd (combin_K (pan_state_clock s)) (s:(A,B)pan_state) = s`
         (fun th -> REWRITE_TAC[th]) THENL
        [REWRITE_TAC[pan_state_component_equality] THEN SIMP[]; ALL_TAC] THEN
       ASM_REWRITE_TAC[];
@@ -1995,7 +1995,7 @@ let bounded_trace_eq = prove
 
 let evaluate_behaviour_def = cake_def
  `evaluate_behaviour ((prog:(A)panLang_prog),(s:(A,B)pan_state)) =
-    if ?k. match FST (pan_evaluate (prog,pan_state_clock_fupd (K k) s)) with
+    if ?k. match FST (pan_evaluate (prog,pan_state_clock_fupd (combin_K k) s)) with
              SOME pan_TimeOut -> F
            | SOME (pan_FinalFFI _) -> F
            | SOME (pan_Return _) -> F
@@ -2003,7 +2003,7 @@ let evaluate_behaviour_def = cake_def
     then Fail
     else
       match (some res. ?k t r outcome.
-               pan_evaluate (prog,pan_state_clock_fupd (K k) s) = (r,t) /\
+               pan_evaluate (prog,pan_state_clock_fupd (combin_K k) s) = (r,t) /\
                (match r with
                   SOME (pan_FinalFFI e) -> outcome = FFI_outcome e
                 | SOME (pan_Return _) -> outcome = Success
@@ -2013,7 +2013,7 @@ let evaluate_behaviour_def = cake_def
       | NONE ->
           Diverge (build_lprefix_lub
             (IMAGE (\k. llist_fromList (ffi_state_io_events (pan_state_ffi
-                          (SND (pan_evaluate (prog,pan_state_clock_fupd (K k) s))))))
+                          (SND (pan_evaluate (prog,pan_state_clock_fupd (combin_K k) s))))))
                    (:num)))`;;
 
 let itree_behaviour_def = cake_def
@@ -2045,7 +2045,7 @@ let PITRAUX_some_none = prove
 
 let PITRAUX_fwd_clock = prove
  (`!prog (s:(A,B)pan_state) k r t.
-     pan_evaluate (prog,pan_state_clock_fupd (K k) s) = (r,t) /\ ~(r = SOME pan_TimeOut)
+     pan_evaluate (prog,pan_state_clock_fupd (combin_K k) s) = (r,t) /\ ~(r = SOME pan_TimeOut)
      ==> (?n. ltree (ffi_state_oracle (pan_state_ffi s),ffi_state_ffi_state (pan_state_ffi s))
                     (mrec h_prog (h_prog (prog,pan_itreeSem_bst s))) =
               ITER n Tau (itree_Ret (INR (r,pan_itreeSem_bst t)))) /\
@@ -2074,10 +2074,10 @@ let PITRAUX_LPREFIX_LNTH = prove
 
 let PITRAUX_lub_trace = prove
  (`!prog (s:(A,B)pan_state).
-     (!k. FST (pan_evaluate (prog,pan_state_clock_fupd (K k) s)) = SOME pan_TimeOut)
+     (!k. FST (pan_evaluate (prog,pan_state_clock_fupd (combin_K k) s)) = SOME pan_TimeOut)
      ==> build_lprefix_lub
            (IMAGE (\k. llist_fromList (ffi_state_io_events (pan_state_ffi
-                         (SND (pan_evaluate (prog,pan_state_clock_fupd (K k) s)))))) (:num)) =
+                         (SND (pan_evaluate (prog,pan_state_clock_fupd (combin_K k) s)))))) (:num)) =
          LAPPEND (llist_fromList (ffi_state_io_events (pan_state_ffi s)))
            (trace_prefix (ffi_state_oracle (pan_state_ffi s),ffi_state_ffi_state (pan_state_ffi s))
               (mrec h_prog (h_prog (prog,pan_itreeSem_bst s))))`,
@@ -2088,27 +2088,27 @@ let PITRAUX_lub_trace = prove
   REWRITE_TAC[lprefix_lub_def; FORALL_IN_IMAGE; IN_UNIV] THEN
   SUBGOAL_THEN
    `!k. LPREFIX (llist_fromList (ffi_state_io_events (pan_state_ffi
-                  (SND (pan_evaluate (prog,pan_state_clock_fupd (K k) (s:(A,B)pan_state)))))))
+                  (SND (pan_evaluate (prog,pan_state_clock_fupd (combin_K k) (s:(A,B)pan_state)))))))
           (LAPPEND (llist_fromList (ffi_state_io_events (pan_state_ffi s)))
              (trace_prefix (ffi_state_oracle (pan_state_ffi s),ffi_state_ffi_state (pan_state_ffi s))
                 (mrec h_prog (h_prog (prog,pan_itreeSem_bst s)))))`
    ASSUME_TAC THENL
    [X_GEN_TAC `k:num` THEN
-    MP_TAC(ISPECL [`prog:(A)panLang_prog`; `pan_state_clock_fupd (K k) (s:(A,B)pan_state)`;
-                   `FST (pan_evaluate (prog,pan_state_clock_fupd (K k) (s:(A,B)pan_state)))`;
-                   `SND (pan_evaluate (prog,pan_state_clock_fupd (K k) (s:(A,B)pan_state)))`]
+    MP_TAC(ISPECL [`prog:(A)panLang_prog`; `pan_state_clock_fupd (combin_K k) (s:(A,B)pan_state)`;
+                   `FST (pan_evaluate (prog,pan_state_clock_fupd (combin_K k) (s:(A,B)pan_state)))`;
+                   `SND (pan_evaluate (prog,pan_state_clock_fupd (combin_K k) (s:(A,B)pan_state)))`]
                   PITRAUX_evaluate_LPREFIX) THEN
     SIMP[PAIR];
     ALL_TAC] THEN
   ASM_REWRITE_TAC[] THEN X_GEN_TAC `ub:io_event llist` THEN DISCH_TAC THEN
   ASM_CASES_TAC
    `!n. ?k. n < LENGTH (ffi_state_io_events (pan_state_ffi
-                (SND (pan_evaluate (prog,pan_state_clock_fupd (K k) (s:(A,B)pan_state))))))` THENL
+                (SND (pan_evaluate (prog,pan_state_clock_fupd (combin_K k) (s:(A,B)pan_state))))))` THENL
    [REWRITE_TAC[LPREFIX_NTH] THEN MAP_EVERY X_GEN_TAC [`i:num`; `v:io_event`] THEN
     DISCH_TAC THEN FIRST_X_ASSUM(X_CHOOSE_TAC `k:num` o SPEC `i:num`) THEN
     MATCH_MP_TAC PITRAUX_LPREFIX_LNTH THEN
     EXISTS_TAC `ffi_state_io_events (pan_state_ffi
-                  (SND (pan_evaluate (prog,pan_state_clock_fupd (K k) (s:(A,B)pan_state)))))` THEN
+                  (SND (pan_evaluate (prog,pan_state_clock_fupd (combin_K k) (s:(A,B)pan_state)))))` THEN
     EXISTS_TAC `LAPPEND (llist_fromList (ffi_state_io_events (pan_state_ffi (s:(A,B)pan_state))))
            (trace_prefix (ffi_state_oracle (pan_state_ffi s),ffi_state_ffi_state (pan_state_ffi s))
               (mrec h_prog (h_prog (prog,pan_itreeSem_bst s))))` THEN
@@ -2118,13 +2118,13 @@ let PITRAUX_lub_trace = prove
   MP_TAC(ISPECL [`n:num`; `prog:(A)panLang_prog`; `s:(A,B)pan_state`] not_less_opt_lemma) THEN
   ASM_REWRITE_TAC[less_opt_def] THEN
   DISCH_THEN(X_CHOOSE_TAC `k0:num`) THEN
-  MP_TAC(ISPECL [`prog:(A)panLang_prog`; `pan_state_clock_fupd (K k0) (s:(A,B)pan_state)`]
+  MP_TAC(ISPECL [`prog:(A)panLang_prog`; `pan_state_clock_fupd (combin_K k0) (s:(A,B)pan_state)`]
                 bounded_trace_eq) THEN
   ANTS_TAC THENL
    [SIMP[] THEN CONJ_TAC THENL
      [X_GEN_TAC `d:num` THEN
       REWRITE_TAC[GSYM IS_PREFIX_LENGTH_ANTI] THEN CONJ_TAC THENL
-       [MP_TAC(ISPECL [`prog:(A)panLang_prog`; `pan_state_clock_fupd (K k0) (s:(A,B)pan_state)`;
+       [MP_TAC(ISPECL [`prog:(A)panLang_prog`; `pan_state_clock_fupd (combin_K k0) (s:(A,B)pan_state)`;
                        `d:num`] pan_evaluate_add_clock_io_events_mono) THEN
         SIMP[ADD_SYM];
         FIRST_X_ASSUM(MP_TAC o SPEC `d + k0:num`) THEN REWRITE_TAC[LE_ADD] THEN
@@ -2188,7 +2188,7 @@ let evaluate_to_itree = prove
   REWRITE_TAC[evaluate_behaviour_def; itree_behaviour_def; trace_prefix0_eq_trace_prefix;
               LET_DEF; LET_END_DEF] THEN
   CONV_TAC(DEPTH_CONV BETA_CONV) THEN
-  ASM_CASES_TAC `?k. ~(FST (pan_evaluate (prog,pan_state_clock_fupd (K k) (s:(A,B)pan_state))) =
+  ASM_CASES_TAC `?k. ~(FST (pan_evaluate (prog,pan_state_clock_fupd (combin_K k) (s:(A,B)pan_state))) =
                        SOME pan_TimeOut)` THENL
    [ALL_TAC;
     FIRST_X_ASSUM(ASSUME_TAC o REWRITE_RULE[NOT_EXISTS_THM]) THEN
@@ -2207,7 +2207,7 @@ let evaluate_to_itree = prove
       ALL_TAC] THEN
     SIMP[] THEN MATCH_MP_TAC PITRAUX_lub_trace THEN ASM_REWRITE_TAC[]] THEN
   FIRST_X_ASSUM(X_CHOOSE_TAC `k:num`) THEN
-  MP_TAC(ISPEC `pan_evaluate (prog,pan_state_clock_fupd (K k) (s:(A,B)pan_state))` PAIR_SURJECTIVE) THEN
+  MP_TAC(ISPEC `pan_evaluate (prog,pan_state_clock_fupd (combin_K k) (s:(A,B)pan_state))` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `r:((A)pan_result)option` (X_CHOOSE_THEN `t:(A,B)pan_state` ASSUME_TAC)) THEN
   SUBGOAL_THEN `~(r = SOME (pan_TimeOut:(A)pan_result))` ASSUME_TAC THENL
    [FIRST_X_ASSUM(MP_TAC o check (fun th -> is_neg (concl th))) THEN ASM_REWRITE_TAC[];
@@ -2215,7 +2215,7 @@ let evaluate_to_itree = prove
   MP_TAC(SPECL [`prog:(A)panLang_prog`; `s:(A,B)pan_state`; `k:num`; `r:((A)pan_result)option`;
                 `t:(A,B)pan_state`] PITRAUX_fwd_clock) THEN ASM_REWRITE_TAC[] THEN
   DISCH_THEN(CONJUNCTS_THEN2 (X_CHOOSE_TAC `n:num`) ASSUME_TAC) THEN
-  SUBGOAL_THEN `!k' r' t'. pan_evaluate (prog,pan_state_clock_fupd (K k') (s:(A,B)pan_state)) = (r',t') /\
+  SUBGOAL_THEN `!k' r' t'. pan_evaluate (prog,pan_state_clock_fupd (combin_K k') (s:(A,B)pan_state)) = (r',t') /\
                            ~(r' = SOME pan_TimeOut)
                            ==> r' = r /\
                                ffi_state_io_events (pan_state_ffi t') =
@@ -2258,7 +2258,7 @@ let evaluate_to_itree = prove
                          is_exists (dest_neg (concl th)))) THEN SIMP[]] THEN NO_TAC;
     COND_CASES_TAC THENL
      [FIRST_X_ASSUM(X_CHOOSE_TAC `k2:num` o check (fun th -> is_exists (concl th))) THEN
-      MP_TAC(ISPEC `pan_evaluate (prog,pan_state_clock_fupd (K k2) (s:(A,B)pan_state))`
+      MP_TAC(ISPEC `pan_evaluate (prog,pan_state_clock_fupd (combin_K k2) (s:(A,B)pan_state))`
                    PAIR_SURJECTIVE) THEN
       DISCH_THEN(X_CHOOSE_THEN `r2:((A)pan_result)option` (X_CHOOSE_THEN `t2:(A,B)pan_state`
         ASSUME_TAC)) THEN

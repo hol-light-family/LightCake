@@ -103,16 +103,16 @@ let handle_size_non_zero = prove
 let BVLPAUX_dest_handle_Raise_eq = prove
  (`!x r. dest_handle_Raise x = SOME r <=> x = bvl_Raise r /\ ~can_raise r`,
   MATCH_MP_TAC dest_handle_Raise_ind THEN
-  REWRITE_TAC[dest_handle_Raise_def] THEN CASE_REWRITE_TAC[] THEN
-  REPEAT GEN_TAC THEN COND_CASES_TAC THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[dest_handle_Raise_def] THEN CAKE_REWRITE_TAC[] THEN
+  REPEAT GEN_TAC THEN COND_CASES_TAC THEN CAKE_REWRITE_TAC[] THEN
   ASM_MESON_TAC[]);;
 
 let BVLPAUX_dest_handle_Let_eq = prove
  (`!x p. dest_handle_Let x = SOME p <=>
          ?dhl1 dhl2. x = bvl_Let dhl1 dhl2 /\ p = (dhl1,dhl2) /\ ~can_raise1 dhl1`,
   MATCH_MP_TAC (BVLPAUX_case_ind dest_handle_Let_def) THEN
-  REWRITE_TAC[dest_handle_Let_def] THEN CASE_REWRITE_TAC[] THEN
-  REPEAT GEN_TAC THEN COND_CASES_TAC THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[dest_handle_Let_def] THEN CAKE_REWRITE_TAC[] THEN
+  REPEAT GEN_TAC THEN COND_CASES_TAC THEN CAKE_REWRITE_TAC[] THEN
   ASM_MESON_TAC[]);;
 
 let BVLPAUX_dest_handle_If_eq = prove
@@ -122,8 +122,8 @@ let BVLPAUX_dest_handle_If_eq = prove
            ((can_raise dhi2 /\ ~can_raise dhi3 /\ p = INL (dhi1,dhi2,dhi3)) \/
             (~can_raise dhi2 /\ can_raise dhi3 /\ p = INR (dhi1,dhi2,dhi3)))`,
   MATCH_MP_TAC (BVLPAUX_case_ind dest_handle_If_def) THEN
-  REWRITE_TAC[dest_handle_If_def] THEN CASE_REWRITE_TAC[] THEN
-  REPEAT GEN_TAC THEN REPEAT COND_CASES_TAC THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[dest_handle_If_def] THEN CAKE_REWRITE_TAC[] THEN
+  REPEAT GEN_TAC THEN REPEAT COND_CASES_TAC THEN CAKE_REWRITE_TAC[] THEN
   ASM_MESON_TAC[]);;
 
 (* the termination tactic of handle_simp: invert the contexts, then the     *)
@@ -216,7 +216,7 @@ let OptionalLetLet_sing_eq = prove
      (\p. match p with (d,l,s,nr) -> ([d],l,s,nr))
        (OptionalLetLet_sing e sz lv s lim nr)`,
   REWRITE_TAC[OptionalLetLet_def; OptionalLetLet_sing_def] THEN
-  COND_CASES_TAC THEN CASE_REWRITE_TAC[LET_DEF; LET_END_DEF]);;
+  COND_CASES_TAC THEN CAKE_REWRITE_TAC[LET_DEF; LET_END_DEF]);;
 
 (* HOL4 Empty, Var, Shift of db_vars are db_vars_Empty, db_vars_Var,      *)
 (* db_vars_Shift; termination (automatic in HOL4) by the size of the       *)
@@ -359,14 +359,14 @@ let BVLPAUX_PAIRARG_TAC : tactic =
     let lemma = mk_forall(v,mk_imp(mk_eq(x,v),subst [v,x] w)) in
     (SUBGOAL_THEN lemma (fun th -> ACCEPT_TAC (MP (SPEC x th) (REFL x))) THEN
      REWRITE_TAC[FORALL_PAIR_THM] THEN REPEAT GEN_TAC THEN DISCH_TAC THEN
-     CASE_REWRITE_TAC[HD; APPEND]) gl;;
+     CAKE_REWRITE_TAC[HD; APPEND]) gl;;
 
 (* split every pair and every conditional of the goal *)
 
 let BVLPAUX_SPLIT_ALL_TAC : tactic =
   REPEAT (BVLPAUX_PAIRARG_TAC ORELSE
           (COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
-           CASE_REWRITE_TAC[HD; APPEND])) THEN
+           CAKE_REWRITE_TAC[HD; APPEND])) THEN
   REWRITE_TAC[mk_Union_Empty; ADD_CLAUSES; AND_CLAUSES; HD; APPEND];;
 
 let bvl_handle_compile_sing_eq = prove
@@ -416,7 +416,7 @@ let bvl_handle_dest_Seq_pmatch = prove
            bvl_Let [e1; e2] (bvl_Var 1) -> SOME (e1,e2)
          | _ -> NONE`,
   MATCH_MP_TAC bvl_handle_dest_Seq_ind THEN
-  REWRITE_TAC[bvl_handle_dest_Seq_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[bvl_handle_dest_Seq_def] THEN CAKE_REWRITE_TAC[] THEN
   REPEAT GEN_TAC THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[]);;
 
 (* for the termination of compile_seqs (HOL4 uses dest_Seq_ind there) *)
@@ -425,8 +425,8 @@ let BVLPAUX_dest_Seq_eq = prove
  (`!e p. bvl_handle_dest_Seq e = SOME p <=>
          ?ds1 ds2. e = bvl_Let [ds1; ds2] (bvl_Var 1) /\ p = (ds1,ds2)`,
   MATCH_MP_TAC bvl_handle_dest_Seq_ind THEN
-  REWRITE_TAC[bvl_handle_dest_Seq_def] THEN CASE_REWRITE_TAC[] THEN
-  REPEAT GEN_TAC THEN COND_CASES_TAC THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[bvl_handle_dest_Seq_def] THEN CAKE_REWRITE_TAC[] THEN
+  REPEAT GEN_TAC THEN COND_CASES_TAC THEN CAKE_REWRITE_TAC[] THEN
   ASM_MESON_TAC[]);;
 
 (* HOL4: Termination WF_REL_TAC `measure (\(c,e,a). exp_size e)` *)
@@ -484,4 +484,4 @@ let compile_seqs_compute = prove
       | SOME (e1,e2) ->
           compile_seqs e e1 (SOME (compile_seqs e e2 (SOME y))))`,
   CONJ_TAC THEN GEN_REWRITE_TAC LAND_CONV [compile_seqs_def] THEN
-  CASE_REWRITE_TAC[LET_DEF; LET_END_DEF]);;
+  CAKE_REWRITE_TAC[LET_DEF; LET_END_DEF]);;

@@ -93,7 +93,7 @@ let get_var_to_word_exp = prove
        SOME (wl_Word (word_add w (word 3)))`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN
   ASM_REWRITE_TAC[wl_word_exp_def; MAP; the_words_def] THEN
-  CASE_REWRITE_TAC[word_op_def; ITLIST; OPTION_MAP_DEF] THEN
+  CAKE_REWRITE_TAC[word_op_def; ITLIST; OPTION_MAP_DEF] THEN
   REWRITE_TAC[WORD_ADD_0]);;
 
 (* HOL4 line 2938 (local) *)
@@ -110,9 +110,9 @@ let word_exp_set = prove
       | _ -> NONE)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[wl_word_exp_def; MAP] THEN
   CASES_ON `wl_get_var n (s:(A,C,FFI)wl_state)` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[the_words_def] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[the_words_def] THEN
   TRY(CASES_ON `a:A word_loc`) THEN
-  CASE_REWRITE_TAC[the_words_def; word_op_def; ITLIST; OPTION_MAP_DEF; WORD_ADD_0]);;
+  CAKE_REWRITE_TAC[the_words_def; word_op_def; ITLIST; OPTION_MAP_DEF; WORD_ADD_0]);;
 
 (* HOL4 line 2953 (local) *)
 let good_dimindex_w2w_byte = prove
@@ -132,7 +132,7 @@ let set_var_consts = prove
 (* HOL4 line 2971 (local) *)
 let get_var_consts = prove
  (`!r (s:(A,C,FFI)wl_state) m.
-     wl_get_var r (wl_state_memory_fupd (K m) s) = wl_get_var r s`,
+     wl_get_var r (wl_state_memory_fupd (combin_K m) s) = wl_get_var r s`,
   REWRITE_TAC[wl_get_var_def; wl_state_INFO.ri_accfupds]);;
 
 (* ------------------------------------------------------------------------- *)
@@ -142,7 +142,7 @@ let get_var_consts = prove
 (* ------------------------------------------------------------------------- *)
 
 let ASP2AUX_CRW_TAC thl : tactic = fun (asl,w as g) ->
-  CASE_REWRITE_TAC (map snd asl @ thl) g;;
+  CAKE_REWRITE_TAC (map snd asl @ thl) g;;
 
 let asp2_eval_rws =
   [wl_evaluate_def; wl_word_exp_def; wl_get_var_def; wl_set_var_def;
@@ -282,12 +282,12 @@ let CopyByteAdd_thm = prove
      wl_get_var 8 s = SOME ret_val ==>
      wl_evaluate (ByteCopyAdd_code,s) =
        (SOME (wl_Result (wl_Loc l1 l2) [ret_val]),
-        wl_state_clock_fupd (K (wl_state_clock s - val n DIV 4))
-          (wl_state_memory_fupd (K m1)
-             (wl_state_locals_fupd (K LN)
-                (wl_state_locals_size_fupd (K (SOME 0))
+        wl_state_clock_fupd (combin_K (wl_state_clock s - val n DIV 4))
+          (wl_state_memory_fupd (combin_K m1)
+             (wl_state_locals_fupd (combin_K LN)
+                (wl_state_locals_size_fupd (combin_K (SOME 0))
                    (wl_state_stack_max_fupd
-                      (K (if word_ult n (word 4) then wl_state_stack_max s
+                      (combin_K (if word_ult n (word 4) then wl_state_stack_max s
                           else OPTION_MAP2 MAX (wl_state_stack_max s)
                                  (OPTION_MAP2 (+) (wl_stack_size (wl_state_stack s))
                                     (lookup ByteCopyAdd_location (wl_state_stack_size s)))))
@@ -367,12 +367,12 @@ let CopyByteSub_thm = prove
      wl_get_var 8 s = SOME ret_val ==>
      wl_evaluate (ByteCopySub_code,s) =
        (SOME (wl_Result (wl_Loc l1 l2) [ret_val]),
-        wl_state_clock_fupd (K (wl_state_clock s - val n DIV 4))
-          (wl_state_memory_fupd (K m1)
-             (wl_state_locals_fupd (K LN)
-                (wl_state_locals_size_fupd (K (SOME 0))
+        wl_state_clock_fupd (combin_K (wl_state_clock s - val n DIV 4))
+          (wl_state_memory_fupd (combin_K m1)
+             (wl_state_locals_fupd (combin_K LN)
+                (wl_state_locals_size_fupd (combin_K (SOME 0))
                    (wl_state_stack_max_fupd
-                      (K (if word_ult n (word 4) then wl_state_stack_max s
+                      (combin_K (if word_ult n (word 4) then wl_state_stack_max s
                           else OPTION_MAP2 MAX (wl_state_stack_max s)
                                  (OPTION_MAP2 (+) (wl_stack_size (wl_state_stack s))
                                     (lookup ByteCopySub_location (wl_state_stack_size s)))))
@@ -461,7 +461,7 @@ let not_less_zero_int_eq = prove
 (* ------------------------------------------------------------------------- *)
 
 (* rewrite conversion with the case net, the assumptions and thl *)
-let asp2_crw_conv asl thl = CASE_REWRITE_CONV (map snd asl @ thl);;
+let asp2_crw_conv asl thl = CAKE_REWRITE_CONV (map snd asl @ thl);;
 
 (* the first subterm wl_word_exp st (real_addr c v) of the goal: add its   *)
 (* value SOME (wl_Word x) (get_var_get_real_addr_lemma) as an assumption;    *)
@@ -525,7 +525,7 @@ let ASP2AUX_code_rel_stub = prove
   REWRITE_TAC[data_to_word_gcProof_code_rel_def; GSYM ALL_MEM] THEN
   REPEAT STRIP_TAC THEN
   FIRST_X_ASSUM(MP_TAC o SPEC `(n:num,x:num#(A)wl_prog)`) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]);;
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]);;
 
 (* lookup loc (wl_state_code t) = SOME (k,code) for a stub, from the code_rel *)
 (* assumption                                                               *)
@@ -639,7 +639,7 @@ let ASP2AUX_SOME_UNIQ_TAC : tactic = fun (asl,w as g) ->
 (* the vi as assumptions                                                     *)
 let ASP2AUX_GET_VARS_TAC : tactic =
   REWRITE_TAC[wl_get_vars_def; wl_get_var_def] THEN
-  REWRITE_TAC(all_case_eqs()) THEN CASE_REWRITE_TAC[] THEN STRIP_TAC THEN
+  REWRITE_TAC(all_case_eqs()) THEN CAKE_REWRITE_TAC[] THEN STRIP_TAC THEN
   REPEAT(CHANGED_TAC
     (RULE_ASSUM_TAC(REWRITE_RULE[CONS_11; option_INJ]) THEN
      REPEAT(FIRST_X_ASSUM(CONJUNCTS_THEN ASSUME_TAC o check (is_conj o concl))) THEN
@@ -664,14 +664,14 @@ let ASP2AUX_ShiftVar_2 = prove
     REWRITE_TAC[VAL_WORD_EQ_EQ] THEN
     FIRST_X_ASSUM(DISJ_CASES_THEN SUBST1_TAC) THEN CONV_TAC NUM_REDUCE_CONV;
     ALL_TAC] THEN
-  REWRITE_TAC[ShiftVar_def] THEN CASE_REWRITE_TAC[ARITH_EQ] THEN
+  REWRITE_TAC[ShiftVar_def] THEN CAKE_REWRITE_TAC[ARITH_EQ] THEN
   ASM_REWRITE_TAC[] THEN
   REPEAT STRIP_TAC THEN REWRITE_TAC[wl_word_exp_def; wl_get_var_def] THEN
   CASES_ON `lookup v (wl_state_locals (t:(A,C,FFI)wl_state))` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
-  TRY(CASES_ON `a:A word_loc`) THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
+  TRY(CASES_ON `a:A word_loc`) THEN CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[word_sh_def; GE; ARITH_EQ; OPTION_MAP_DEF] THEN
-  CASE_REWRITE_TAC[OPTION_MAP_DEF]);;
+  CAKE_REWRITE_TAC[OPTION_MAP_DEF]);;
 
 let ASP2AUX_IS_SOME_insert_mono = prove
  (`!k a (l:(A word_loc)spt) n. IS_SOME (lookup n l) ==> IS_SOME (lookup n (insert k a l))`,
@@ -687,11 +687,11 @@ let ASP2AUX_do_word_app_WordFromWord = prove
      (b /\ ?w. vals = [data_Word64 w] /\ res = data_Number (&(val (word_zx w:byte)))) \/
      (~b /\ ?w:byte. vals = [data_Number (&(val w))] /\ res = data_Word64 (word_zx w))`,
   REPEAT GEN_TAC THEN CASES_ON `vals:data_v list` THEN
-  CASE_REWRITE_TAC[data_do_word_app_def; option_DISTINCT] THEN
-  CASES_ON `a0:data_v` THEN CASE_REWRITE_TAC[data_do_word_app_def; option_DISTINCT] THEN
-  CASES_ON `a1:data_v list` THEN CASE_REWRITE_TAC[data_do_word_app_def; option_DISTINCT] THENL
+  CAKE_REWRITE_TAC[data_do_word_app_def; option_DISTINCT] THEN
+  CASES_ON `a0:data_v` THEN CAKE_REWRITE_TAC[data_do_word_app_def; option_DISTINCT] THEN
+  CASES_ON `a1:data_v list` THEN CAKE_REWRITE_TAC[data_do_word_app_def; option_DISTINCT] THENL
    [COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT; some_DEF] THEN
-    COND_CASES_TAC THEN CASE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN
+    COND_CASES_TAC THEN CAKE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN
     DISCH_THEN(SUBST1_TAC o SYM) THEN EXISTS_TAC `@x:byte. (a:int) = &(val x)` THEN
     REWRITE_TAC[] THEN FIRST_X_ASSUM(ACCEPT_TAC o SELECT_RULE o
       check (is_exists o concl));
@@ -707,18 +707,18 @@ let ASP2AUX_do_app_WordFromWord = prove
      (~b /\ ?w:byte. vals = [data_Number (&(val w))] /\ v = data_Word64 (word_zx w) /\
                3 <= data_state_space x /\
                s2 = do_stack (WordOp (WordFromWord b)) vals
-                      (do_lim_safe (data_state_space_fupd (K (data_state_space x - 3)) x)
+                      (do_lim_safe (data_state_space_fupd (combin_K (data_state_space x - 3)) x)
                          (WordOp (WordFromWord b)) vals))`,
   REPEAT GEN_TAC THEN BOOL_CASES_TAC `b:bool` THEN
   REWRITE_TAC[data_do_app_def; do_space_def; MEM] THEN
-  CASE_REWRITE_TAC[op_space_reset_def; op_space_req_def; consume_space_def] THEN
+  CAKE_REWRITE_TAC[op_space_reset_def; op_space_req_def; consume_space_def] THEN
   CONV_TAC NUM_REDUCE_CONV THENL
    [ALL_TAC;
-    COND_CASES_TAC THEN CASE_REWRITE_TAC[distinctness "result"] THEN
+    COND_CASES_TAC THEN CAKE_REWRITE_TAC[distinctness "result"] THEN
     FIRST_X_ASSUM(ASSUME_TAC o REWRITE_RULE[NOT_LT])] THEN
   ONCE_REWRITE_TAC[data_do_app_aux_def] THEN
-  CASE_REWRITE_TAC[] THEN
-  REWRITE_TAC(all_case_eqs()) THEN CASE_REWRITE_TAC[distinctness "result"] THEN
+  CAKE_REWRITE_TAC[] THEN
+  REWRITE_TAC(all_case_eqs()) THEN CAKE_REWRITE_TAC[distinctness "result"] THEN
   DISCH_THEN(X_CHOOSE_THEN `res:data_v` STRIP_ASSUME_TAC) THEN
   FIRST_X_ASSUM(MP_TAC o MATCH_MP ASP2AUX_do_word_app_WordFromWord) THEN
   REWRITE_TAC[] THEN STRIP_TAC THEN RVEQ_TAC THEN
@@ -848,8 +848,8 @@ let ASP2AUX_state_rel_WriteWord64 = prove
      IS_SOME (lookup (adjust_var dest) locals') /\
      lookup 0 locals' = lookup 0 (wl_state_locals t) ==>
      data_to_word_gcProof_state_rel c l1 l2 (data_set_var dest v s2)
-       (wl_state_store_fupd (K (wl_state_store t |+ (NextFree,nf)))
-         (wl_state_memory_fupd (K m') (wl_state_locals_fupd (K locals') t))) NONE locs`,
+       (wl_state_store_fupd (combin_K (wl_state_store t |+ (NextFree,nf)))
+         (wl_state_memory_fupd (combin_K m') (wl_state_locals_fupd (combin_K locals') t))) NONE locs`,
   REPEAT GEN_TAC THEN REWRITE_TAC[data_to_word_gcProof_state_rel_thm] THEN
   REWRITE_TAC[data_set_var_def; data_state_INFO.ri_accfupds; wl_state_INFO.ri_accfupds;
               K_THM] THEN
@@ -863,7 +863,7 @@ let ASP2AUX_state_rel_WriteWord64 = prove
     GEN_TAC THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[IS_SOME_DEF] THEN ASM_MESON_TAC[];
     MP5AUX_HEAD_MESON_TAC[option_le_trans];
     MATCH_MP_TAC memory_rel_less_space THEN EXISTS_TAC `sp:num` THEN ASM_REWRITE_TAC[] THEN
-    CASE_REWRITE_TAC[APPEND] THEN REWRITE_TAC[GSYM APPEND_ASSOC; APPEND] THEN
+    CAKE_REWRITE_TAC[APPEND] THEN REWRITE_TAC[GSYM APPEND_ASSOC; APPEND] THEN
     FIRST_X_ASSUM(MP_TAC o check (fun th -> asp2_head_is "memory_rel" (concl th) &&
       free_in `m':A word->A word_loc` (concl th))) THEN
     REWRITE_TAC[join_env_locals_def]]);;
@@ -920,7 +920,7 @@ let assign_WordFromWord = prove
   RULE_ASSUM_TAC(REWRITE_RULE[distinctness "clos_op"]) THEN
   VAR_EQ_TAC THEN
   UNDISCH_TAC `data_cut_state_opt NONE (s:(C,FFI)data_state) = SOME x` THEN
-  REWRITE_TAC[data_cut_state_opt_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[data_cut_state_opt_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[option_INJ] THEN DISCH_THEN(SUBST_ALL_TAC o SYM) THEN
   FIRST_ASSUM(MP_TAC o C MATCH_MP
     (ASSUME `data_get_vars args (data_state_locals (s:(C,FFI)data_state)) = SOME vals`) o
@@ -929,7 +929,7 @@ let assign_WordFromWord = prove
   FIRST_ASSUM(MP_TAC o REWRITE_RULE[data_to_word_gcProof_state_rel_thm] o
     check ((=) `data_to_word_gcProof_state_rel c l1 l2
       (s:(C,FFI)data_state) (t:(A,C,FFI)wl_state) NONE locs` o concl)) THEN
-  CASE_REWRITE_TAC[APPEND] THEN STRIP_TAC THEN
+  CAKE_REWRITE_TAC[APPEND] THEN STRIP_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[GSYM APPEND_ASSOC]) THEN
   DRULE_ALL memory_rel_get_vars_IMP THEN DISCH_TAC THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP ASP2AUX_memory_rel_IMP o
@@ -955,7 +955,7 @@ let assign_WordFromWord = prove
     CONV_TAC NUM_REDUCE_CONV THEN
     REWRITE_TAC[WORD_MUL_LSL] THEN CONV_TAC NUM_REDUCE_CONV THEN STRIP_TAC THEN
     REWRITE_TAC[data_to_word_assign_def] THEN
-    CASE_REWRITE_TAC[data_to_word_arg1_def; assign_WordFromWord_def; LET_DEF; LET_END_DEF] THEN
+    CAKE_REWRITE_TAC[data_to_word_arg1_def; assign_WordFromWord_def; LET_DEF; LET_END_DEF] THEN
     ASM_REWRITE_TAC[] THEN CONV_TAC NUM_REDUCE_CONV THEN
     ASP2AUX_EVAL_TAC (asp2_eval_rws @ asp2_eval_rws2 @
       [adjust_var_NEQ; adjust_var_11; wl_mem_load_def; WORD_AND_NOT0]) THEN
@@ -964,7 +964,7 @@ let assign_WordFromWord = prove
     REWRITE_TAC[data_to_word_gcProof_state_rel_thm] THEN
     REWRITE_TAC[data_set_var_def; data_state_INFO.ri_accfupds; K_THM;
                 ASP2AUX_do_stack_lim_safe; wl_state_INFO.ri_accfupds] THEN
-    CASE_REWRITE_TAC[APPEND] THEN ASM_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[APPEND] THEN ASM_REWRITE_TAC[] THEN
     (REPEAT CONJ_TAC THENL
      [REWRITE_TAC[lookup_insert; adjust_var_NEQ; ARITH_EQ] THEN ASM_REWRITE_TAC[];
       MATCH_MP_TAC ASP2AUX_IS_SOME_set_var THEN
@@ -985,7 +985,7 @@ let assign_WordFromWord = prove
       try asp2_head_is "wl_get_vars" (lhs (concl th)) with Failure _ -> false)) THEN
     ASP2AUX_GET_VARS_TAC THEN
     REWRITE_TAC[data_to_word_assign_def] THEN
-    CASE_REWRITE_TAC[data_to_word_arg1_def; assign_WordFromWord_def; LET_DEF; LET_END_DEF] THEN
+    CAKE_REWRITE_TAC[data_to_word_arg1_def; assign_WordFromWord_def; LET_DEF; LET_END_DEF] THEN
     FIRST_ASSUM(MP_TAC o check ((=) `good_dimindex (:A)` o concl)) THEN
     REWRITE_TAC[good_dimindex_def] THEN
     DISCH_THEN(DISJ_CASES_THEN (fun th -> ASSUME_TAC th THEN REWRITE_TAC[th])) THEN
@@ -1081,7 +1081,7 @@ let IN_adjust_var_lemma = prove
   REPEAT GEN_TAC THEN
   REWRITE_TAC[data_cut_env_def; cut_envs_def; adjust_sets_def; cut_names_def] THEN
   REPEAT COND_CASES_TAC THEN
-  CASE_REWRITE_TAC[option_DISTINCT; option_INJ; PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[option_DISTINCT; option_INJ; PAIR_EQ] THEN
   STRIP_TAC THEN REPEAT(FIRST_X_ASSUM(SUBST_ALL_TAC o SYM)) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[domain_mk_wf; domain_inter; IN_INTER; SUBSET]) THEN
   REWRITE_TAC[domain_inter; IN_INTER] THEN
@@ -1097,7 +1097,7 @@ let cut_env_envs_lookup_lookup = prove
   REPEAT GEN_TAC THEN
   REWRITE_TAC[data_cut_env_def; cut_envs_def; adjust_sets_def; cut_names_def] THEN
   REPEAT COND_CASES_TAC THEN
-  CASE_REWRITE_TAC[option_DISTINCT; option_INJ; PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[option_DISTINCT; option_INJ; PAIR_EQ] THEN
   STRIP_TAC THEN RVEQ_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[SUBSET; mk_wf_inter; IN_domain_adjust_set_inter]) THEN
   ASM_REWRITE_TAC[lookup_inter_alt] THEN
@@ -1122,7 +1122,7 @@ let cut_envs_lookup_0 = prove
   REPEAT GEN_TAC THEN
   REWRITE_TAC[cut_envs_def; adjust_sets_def; cut_names_def] THEN
   REPEAT COND_CASES_TAC THEN
-  CASE_REWRITE_TAC[option_DISTINCT; option_INJ; PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[option_DISTINCT; option_INJ; PAIR_EQ] THEN
   STRIP_TAC THEN RVEQ_TAC THEN
   FIRST_X_ASSUM(MP_TAC o MATCH_MP env_to_list_lookup_equiv) THEN
   ASM_SIMP_TAC[lookup_inter_alt; NOT_0_domain; domain_def; IN_SING]);;
@@ -1143,7 +1143,7 @@ let inter_union_distrib = prove
   SIMP_TAC[spt_eq_thm; wf_inter; wf_union] THEN
   REWRITE_TAC[lookup_inter_alt; lookup_union] THEN
   GEN_TAC THEN COND_CASES_TAC THEN REWRITE_TAC[] THEN
-  CASES_ON `lookup n (x:A spt)` THEN CASE_REWRITE_TAC[]);;
+  CASES_ON `lookup n (x:A spt)` THEN CAKE_REWRITE_TAC[]);;
 
 (* HOL4 line 3456 *)
 let cut_envs_inter = prove
@@ -1154,7 +1154,7 @@ let cut_envs_inter = prove
   REPEAT GEN_TAC THEN
   REWRITE_TAC[data_cut_env_def; cut_envs_def; adjust_sets_def; cut_names_def] THEN
   REPEAT COND_CASES_TAC THEN
-  CASE_REWRITE_TAC[option_DISTINCT; option_INJ; PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[option_DISTINCT; option_INJ; PAIR_EQ] THEN
   STRIP_TAC THEN RVEQ_TAC THEN
   SIMP_TAC[spt_eq_thm; wf_inter; sptree_wf_def] THEN
   REWRITE_TAC[lookup_inter_alt; lookup_fromAList; ALOOKUP_toAList; lookup_def] THEN
@@ -1173,7 +1173,7 @@ let ASP2AUX_join_env_cut_MEM = prove
      MEM x (join_env s_locals (toAList (sptree_inter t_locals (adjust_set s_locals))))`,
   REPEAT GEN_TAC THEN
   REWRITE_TAC[data_cut_env_def; cut_envs_def; adjust_sets_def; cut_names_def] THEN
-  REPEAT COND_CASES_TAC THEN CASE_REWRITE_TAC[option_DISTINCT; option_INJ; PAIR_EQ] THEN
+  REPEAT COND_CASES_TAC THEN CAKE_REWRITE_TAC[option_DISTINCT; option_INJ; PAIR_EQ] THEN
   STRIP_TAC THEN RVEQ_TAC THEN
   FIRST_X_ASSUM(MP_TAC o MATCH_MP env_to_list_lookup_equiv) THEN STRIP_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[SUBSET; mk_wf_inter]) THEN
@@ -1192,7 +1192,7 @@ let ASP2AUX_join_env_cut_MEM = prove
   SUBGOAL_THEN `?w. lookup k (t_locals:(A word_loc)spt) = SOME w` STRIP_ASSUME_TAC THENL
    [ASM_MESON_TAC[domain_lookup]; ALL_TAC] THEN
   ASM_REWRITE_TAC[lookup_union; lookup_fromAList] THEN
-  ASM_REWRITE_TAC[lookup_inter_alt] THEN CASE_REWRITE_TAC[option_INJ] THEN
+  ASM_REWRITE_TAC[lookup_inter_alt] THEN CAKE_REWRITE_TAC[option_INJ] THEN
   DISCH_THEN SUBST_ALL_TAC THEN REWRITE_TAC[] THEN
   SUBGOAL_THEN `(k - 2) DIV 2 IN domain (kept_names:num_set)` ASSUME_TAC THENL
    [UNDISCH_TAC `k IN domain (adjust_set (kept_names:num_set))` THEN
@@ -1207,9 +1207,9 @@ let ASP2AUX_cut_state_opt_cut_env = prove
      data_cut_state_opt (SOME names) s = SOME x ==>
      data_cut_env names (data_state_locals s) = SOME (data_state_locals x)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[data_cut_state_opt_def; data_cut_state_def] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   CASES_ON `data_cut_env names (data_state_locals (s:(C,FFI)data_state))` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN
   DISCH_THEN(SUBST1_TAC o SYM) THEN REWRITE_TAC[data_state_INFO.ri_accfupds; K_THM]);;
 
 (* the locals restored after a call that cut with adjust_sets kept_names  *)
@@ -1224,7 +1224,7 @@ let ASP2AUX_cut_ret_lookup_0 = prove
   REPEAT STRIP_TAC THEN DRULE_ALL cut_envs_lookup_0 THEN
   ASM_REWRITE_TAC[lookup_insert; adjust_var_NEQ; lookup_union; lookup_fromAList;
                   ALOOKUP_toAList] THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]);;
+  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]);;
 
 let ASP2AUX_cut_ret_IS_SOME = prove
  (`!(kept_names:num_set) (s_locals:data_v spt) xl (t_locals:(A word_loc)spt) y1 y2 p q
@@ -1333,16 +1333,16 @@ let ASP2AUX_do_app_CopyByte = prove
        lookup dst (data_state_refs x) = SOME (bvl_ByteArray fl ds) /\
        copy_array (ws,srcoff) le (SOME (ds,dstoff)) = SOME ds1 /\ v = data_Unit /\
        s2 = data_state_refs_fupd
-              (K (insert dst (bvl_ByteArray fl ds1) (data_state_refs x)))
+              (combin_K (insert dst (bvl_ByteArray fl ds1) (data_state_refs x)))
               (do_stack (MemOp (CopyByte F)) vals
                  (do_lim_safe x (MemOp (CopyByte F)) vals))`,
   REPEAT GEN_TAC THEN
   REWRITE_TAC[data_do_app_def; do_space_def; MEM] THEN
-  CASE_REWRITE_TAC[op_space_reset_def; op_space_req_def] THEN
+  CAKE_REWRITE_TAC[op_space_reset_def; op_space_req_def] THEN
   GEN_REWRITE_TAC (LAND_CONV o LAND_CONV) [data_do_app_aux_def] THEN
-  CASE_REWRITE_TAC[ASP2AUX_do_stack_lim_safe] THEN
+  CAKE_REWRITE_TAC[ASP2AUX_do_stack_lim_safe] THEN
   EQ_TAC THENL
-   [REWRITE_TAC(all_case_eqs()) THEN CASE_REWRITE_TAC[] THEN
+   [REWRITE_TAC(all_case_eqs()) THEN CAKE_REWRITE_TAC[] THEN
     STRIP_TAC THEN RVEQ_TAC THEN ASM_REWRITE_TAC[CONS_11; injectivity "data_v"] THEN
     SIMP[];
     STRIP_TAC THEN RVEQ_TAC THEN ASP2AUX_CRW_TAC[ASP2AUX_do_stack_lim_safe]]);;
@@ -1354,7 +1354,7 @@ let ASP2AUX_copy_array_bounds = prove
                xp + n <= LENGTH xs /\ yp + n <= LENGTH ys`,
   REPEAT GEN_TAC THEN REWRITE_TAC[copy_array_def; I_THM] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
-  COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT] THEN CASE_REWRITE_TAC[] THEN
+  COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT] THEN CAKE_REWRITE_TAC[] THEN
   COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT] THEN DISCH_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[DE_MORGAN_THM; not_less_zero_int_eq]) THEN
   REPEAT(FIRST_X_ASSUM(CHOOSE_THEN SUBST_ALL_TAC o check (is_exists o concl)) ORELSE
@@ -1403,9 +1403,9 @@ let ASP2AUX_ByteCopy_code_thm = prove
      ?ck ms.
        wl_evaluate (ByteCopy_code c,t0) =
          (SOME (wl_Result (wl_Loc l1 l2) [wl_Word (word 2)]),
-          wl_state_clock_fupd (K ck) (wl_state_memory_fupd (K m1)
-            (wl_state_locals_fupd (K LN) (wl_state_locals_size_fupd (K (SOME 0))
-              (wl_state_stack_max_fupd (K ms) t0))))) /\
+          wl_state_clock_fupd (combin_K ck) (wl_state_memory_fupd (combin_K m1)
+            (wl_state_locals_fupd (combin_K LN) (wl_state_locals_size_fupd (combin_K (SOME 0))
+              (wl_state_stack_max_fupd (combin_K ms) t0))))) /\
        option_le (wl_state_stack_max t0) ms /\
        option_le ms (OPTION_MAP2 MAX (wl_state_stack_max t0)
          (OPTION_MAP2 (+) (wl_stack_size (wl_state_stack t0))
@@ -1511,7 +1511,7 @@ let assign_CopyByte = prove
   FIRST_ASSUM(MP_TAC o REWRITE_RULE[data_to_word_gcProof_state_rel_thm] o
     check ((=) `data_to_word_gcProof_state_rel c l1 l2
       (s:(C,FFI)data_state) (t:(A,C,FFI)wl_state) NONE locs` o concl)) THEN
-  CASE_REWRITE_TAC[APPEND] THEN STRIP_TAC THEN
+  CAKE_REWRITE_TAC[APPEND] THEN STRIP_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[GSYM APPEND_ASSOC]) THEN
   DRULE_ALL memory_rel_get_vars_IMP THEN
   REWRITE_TAC[ZIP; APPEND; MAP] THEN DISCH_TAC THEN
@@ -1599,7 +1599,7 @@ let assign_CopyByte = prove
   DISCH_THEN(X_CHOOSE_THEN `q:(num#A word_loc)list` (X_CHOOSE_THEN `perm:num->num->num`
     ASSUME_TAC)) THEN
   REWRITE_TAC[data_to_word_assign_def] THEN
-  CASE_REWRITE_TAC[assign_CopyByte_def; data_to_word_get_names_def] THEN
+  CAKE_REWRITE_TAC[assign_CopyByte_def; data_to_word_get_names_def] THEN
   ASP2AUX_EVAL_TAC (asp2_eval_rws @ asp2_eval_rws2 @ asp2_call_rws @
     [domain_adjust_sets; ALL_DISTINCT; MEM; adjust_var_NEQ; adjust_var_11;
      MustTerminate_limit_NOT_0; wl_push_env_def; LET_DEF; LET_END_DEF]) THEN
@@ -1630,7 +1630,7 @@ let assign_CopyByte = prove
   REWRITE_TAC[data_to_word_gcProof_state_rel_thm] THEN
   REWRITE_TAC[data_set_var_def; data_state_INFO.ri_accfupds; K_THM;
               ASP2AUX_do_stack_lim_safe; wl_state_INFO.ri_accfupds] THEN
-  CASE_REWRITE_TAC[APPEND] THEN ASM_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[APPEND] THEN ASM_REWRITE_TAC[] THEN
   FIRST_ASSUM(ASSUME_TAC o REWRITE_RULE[data_state_INFO.ri_accfupds; K_THM] o
     MATCH_MP ASP2AUX_cut_state_opt_cut_env) THEN
   REPEAT CONJ_TAC THENL
@@ -1682,8 +1682,8 @@ let evaluate_StringCmpLoop = prove
      ?ck max_stack.
        wl_evaluate (StringCmpLoop_code,t1) =
          (SOME (wl_Result (wl_Loc l1 l2) [wl_Word x1; wl_Word x2]),
-          wl_state_clock_fupd (K ck) (wl_state_stack_max_fupd (K max_stack)
-            (wl_state_locals_fupd (K LN) (wl_state_locals_size_fupd (K (SOME 0)) t1)))) /\
+          wl_state_clock_fupd (combin_K ck) (wl_state_stack_max_fupd (combin_K max_stack)
+            (wl_state_locals_fupd (combin_K LN) (wl_state_locals_size_fupd (combin_K (SOME 0)) t1)))) /\
        (~(max_stack = wl_state_stack_max t1) ==>
         max_stack = OPTION_MAP2 MAX (wl_state_stack_max t1)
                       (OPTION_MAP2 (+) (wl_stack_size (wl_state_stack t1))
@@ -1703,8 +1703,8 @@ let evaluate_StringCmpLoop = prove
      ?ck max_stack.
        wl_evaluate (StringCmpLoop_code,t1) =
          (SOME (wl_Result (wl_Loc l1 l2) [wl_Word x1; wl_Word x2]),
-          wl_state_clock_fupd (K ck) (wl_state_stack_max_fupd (K max_stack)
-            (wl_state_locals_fupd (K LN) (wl_state_locals_size_fupd (K (SOME 0)) t1)))) /\
+          wl_state_clock_fupd (combin_K ck) (wl_state_stack_max_fupd (combin_K max_stack)
+            (wl_state_locals_fupd (combin_K LN) (wl_state_locals_size_fupd (combin_K (SOME 0)) t1)))) /\
        (~(max_stack = wl_state_stack_max t1) ==>
         max_stack = OPTION_MAP2 MAX (wl_state_stack_max t1)
                       (OPTION_MAP2 (+) (wl_stack_size (wl_state_stack t1))
@@ -1741,9 +1741,9 @@ let evaluate_StringCmpLoop = prove
     REWRITE_TAC[wl_state_component_equality; wl_state_INFO.ri_accfupds; K_THM];
     ALL_TAC] THEN
   ASP2AUX_OPTION_CASES_TAC `mem_load_byte_aux m dm be (a1:A word)` `b1:byte` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[option_DISTINCT] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[option_DISTINCT] THEN
   ASP2AUX_OPTION_CASES_TAC `mem_load_byte_aux m dm be (a2:A word)` `b2:byte` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[option_DISTINCT] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[option_DISTINCT] THEN
   ASM_CASES_TAC `b1:byte = b2` THEN ASM_REWRITE_TAC[] THENL
    [DISCH_TAC THEN
     SUBGOAL_THEN `~(wl_state_clock (t1:(A,C,FFI)wl_state) = 0)` ASSUME_TAC THENL
@@ -1788,7 +1788,7 @@ let evaluate_AssignCmp = prove
   REPEAT GEN_TAC THEN EVERY_CASE_TAC THEN
   CASES_ON `cmp:opb` THEN
   ASM_REWRITE_TAC[AssignCmp_def; SetBool_def; wl_evaluate_def; wl_get_var_imm_def] THEN
-  CASE_REWRITE_TAC[wl_word_cmp_def; wl_word_exp_def; num_cmp_def; WORD_ULT; GT; GE; NOT_LT] THEN
+  CAKE_REWRITE_TAC[wl_word_cmp_def; wl_word_exp_def; num_cmp_def; WORD_ULT; GT; GE; NOT_LT] THEN
   RULE_ASSUM_TAC(REWRITE_RULE[num_cmp_def; GT; GE]) THEN ASM_REWRITE_TAC[]);;
 
 (* HOL4 line 4166 (local) *)
@@ -1798,16 +1798,16 @@ let evaluate_StringCmpMin = prove
      wl_evaluate
        (wl_Seq (wl_Assign 9 (wl_Var 5))
           (wl_Seq (wl_If Lower 7 (Reg 5) (wl_Assign 9 (wl_Var 7)) wl_Skip) p),
-        wl_state_locals_fupd (K l) t1) =
+        wl_state_locals_fupd (combin_K l) t1) =
      match (lookup 5 l,lookup 7 l) with
        (SOME (wl_Word w1),SOME (wl_Word w2)) ->
          wl_evaluate (p,wl_state_locals_fupd
-           (K (insert 9 (wl_Word (word (MIN (val w1) (val w2)))) l)) t1)
+           (combin_K (insert 9 (wl_Word (word (MIN (val w1) (val w2)))) l)) t1)
      | _ ->
          wl_evaluate
            (wl_Seq (wl_Assign 9 (wl_Var 5))
               (wl_Seq (wl_If Lower 7 (Reg 5) (wl_Assign 9 (wl_Var 7)) wl_Skip) p),
-            wl_state_locals_fupd (K l) t1)`,
+            wl_state_locals_fupd (combin_K l) t1)`,
   REPEAT GEN_TAC THEN EVERY_CASE_TAC THEN
   ASP2AUX_CRW_TAC asp2_eval_rws THEN
   REWRITE_TAC[WORD_ULT; MIN] THEN
@@ -1827,11 +1827,11 @@ let ASP2AUX_do_app_StringCmp = prove
               (do_lim_safe x (MemOp (StringCmp b cmp)) vals)`,
   REPEAT GEN_TAC THEN
   REWRITE_TAC[data_do_app_def; do_space_def; MEM] THEN
-  CASE_REWRITE_TAC[op_space_reset_def; op_space_req_def] THEN
+  CAKE_REWRITE_TAC[op_space_reset_def; op_space_req_def] THEN
   GEN_REWRITE_TAC (LAND_CONV o LAND_CONV) [data_do_app_aux_def] THEN
-  CASE_REWRITE_TAC[ASP2AUX_do_stack_lim_safe; LET_DEF; LET_END_DEF] THEN
+  CAKE_REWRITE_TAC[ASP2AUX_do_stack_lim_safe; LET_DEF; LET_END_DEF] THEN
   EQ_TAC THENL
-   [REWRITE_TAC(all_case_eqs()) THEN CASE_REWRITE_TAC[] THEN
+   [REWRITE_TAC(all_case_eqs()) THEN CAKE_REWRITE_TAC[] THEN
     STRIP_TAC THEN RVEQ_TAC THEN ASM_REWRITE_TAC[CONS_11; injectivity "data_v"] THEN
     SIMP[];
     STRIP_TAC THEN RVEQ_TAC THEN ASP2AUX_CRW_TAC[ASP2AUX_do_stack_lim_safe; LET_DEF;
@@ -1844,7 +1844,7 @@ let ASP2AUX_join_env_cut_MEM_nocall = prove
      MEM x (join_env xl (toAList (sptree_inter t_locals (adjust_set xl)))) ==>
      MEM x (join_env s_locals (toAList (sptree_inter t_locals (adjust_set s_locals))))`,
   REPEAT GEN_TAC THEN REWRITE_TAC[data_cut_env_def] THEN
-  COND_CASES_TAC THEN CASE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN
+  COND_CASES_TAC THEN CAKE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN
   STRIP_TAC THEN RVEQ_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[SUBSET; mk_wf_inter]) THEN
   FIRST_X_ASSUM(MP_TAC o check (asp2_head_is "MEM" o concl)) THEN
@@ -1893,7 +1893,7 @@ let ASP2AUX_evaluate_AssignCmp_Word = prove
              (if num_cmp cmp (val x1) (val x2) then wl_Word (word 18)
               else wl_Word (word 2)) s)`,
   REPEAT STRIP_TAC THEN ONCE_REWRITE_TAC[evaluate_AssignCmp] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]);;
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]);;
 
 (* the first wl_evaluate (AssignCmp dest cmp v1 v2,st) of the goal gets its *)
 (* value as an assumption; the variables are computed by rewriting         *)
@@ -1921,7 +1921,7 @@ let ASP2AUX_cut_ret_lookup_0_union = prove
      lookup 0 (sptree_union (fromAList q) (fromAList (toAList y1))) = SOME (wl_Loc l1 l2)`,
   REPEAT STRIP_TAC THEN DRULE_ALL cut_envs_lookup_0 THEN
   ASM_REWRITE_TAC[lookup_union; lookup_fromAList; ALOOKUP_toAList] THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]);;
+  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]);;
 
 let ASP2AUX_cut_ret_IS_SOME_57 = prove
  (`!(kept_names:num_set) (s_locals:data_v spt) xl (t_locals:(A word_loc)spt) y1 y2 p q
@@ -1974,8 +1974,8 @@ let ASP2AUX_StringCmpLoop_cur = prove
      ?ck max_stack.
        wl_evaluate (StringCmpLoop_code,t1) =
          (SOME (wl_Result (wl_Loc l1 l2) [wl_Word x1; wl_Word x2]),
-          wl_state_clock_fupd (K ck) (wl_state_stack_max_fupd (K max_stack)
-            (wl_state_locals_fupd (K LN) (wl_state_locals_size_fupd (K (SOME 0)) t1)))) /\
+          wl_state_clock_fupd (combin_K ck) (wl_state_stack_max_fupd (combin_K max_stack)
+            (wl_state_locals_fupd (combin_K LN) (wl_state_locals_size_fupd (combin_K (SOME 0)) t1)))) /\
        (~(max_stack = wl_state_stack_max t1) ==>
         max_stack = OPTION_MAP2 MAX (wl_state_stack_max t1)
                       (OPTION_MAP2 (+) (wl_stack_size (wl_state_stack t1))
@@ -2035,7 +2035,7 @@ let ASP2AUX_STRCMP_CALL_TAC : tactic =
   REWRITE_TAC[data_to_word_gcProof_state_rel_thm] THEN
   REWRITE_TAC[data_set_var_def; data_state_INFO.ri_accfupds; K_THM;
               ASP2AUX_do_stack_lim_safe; wl_state_INFO.ri_accfupds] THEN
-  CASE_REWRITE_TAC[APPEND] THEN ASM_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[APPEND] THEN ASM_REWRITE_TAC[] THEN
   REPEAT CONJ_TAC THENL
    [REWRITE_TAC[lookup_insert; adjust_var_NEQ; ARITH_EQ] THEN
     ASP2AUX_DRULE_N 3 ASP2AUX_cut_ret_lookup_0_union THEN
@@ -2108,7 +2108,7 @@ let assign_StringCmp = prove
   FIRST_ASSUM(MP_TAC o REWRITE_RULE[data_to_word_gcProof_state_rel_thm] o
     check ((=) `data_to_word_gcProof_state_rel c l1 l2
       (s:(C,FFI)data_state) (t:(A,C,FFI)wl_state) NONE locs` o concl)) THEN
-  CASE_REWRITE_TAC[APPEND] THEN STRIP_TAC THEN
+  CAKE_REWRITE_TAC[APPEND] THEN STRIP_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[GSYM APPEND_ASSOC]) THEN
   DRULE_ALL memory_rel_get_vars_IMP THEN
   REWRITE_TAC[ZIP; APPEND; MAP] THEN DISCH_TAC THEN
@@ -2142,7 +2142,7 @@ let assign_StringCmp = prove
   ASP2AUX_STUB_TAC `lookup StringCmpLoop_location (wl_state_code (t:(A,C,FFI)wl_state)) =
                     SOME (6,StringCmpLoop_code)` THEN
   REWRITE_TAC[data_to_word_assign_def] THEN
-  CASE_REWRITE_TAC[data_to_word_arg2_def; assign_StringCmp_def;
+  CAKE_REWRITE_TAC[data_to_word_arg2_def; assign_StringCmp_def;
                    data_to_word_get_names_def; LET_DEF; LET_END_DEF] THEN
   ASM_REWRITE_TAC[] THEN
   ASP2AUX_EVAL_TAC (asp2_eval_rws @ asp2_eval_rws2 @
@@ -2172,7 +2172,7 @@ let assign_StringCmp = prove
       REWRITE_TAC[data_to_word_gcProof_state_rel_thm] THEN
       REWRITE_TAC[data_set_var_def; data_state_INFO.ri_accfupds; K_THM;
                   ASP2AUX_do_stack_lim_safe; wl_state_INFO.ri_accfupds] THEN
-      CASE_REWRITE_TAC[APPEND] THEN ASM_REWRITE_TAC[] THEN
+      CAKE_REWRITE_TAC[APPEND] THEN ASM_REWRITE_TAC[] THEN
       REPEAT CONJ_TAC THENL
        [REWRITE_TAC[lookup_insert; adjust_var_NEQ; ARITH_EQ] THEN ASM_REWRITE_TAC[];
         MATCH_MP_TAC ASP2AUX_nocall_IS_SOME THEN
@@ -2221,9 +2221,9 @@ let evaluate_XorLoop = prove
      ?ck max_stack.
        wl_evaluate (XorLoop_code,t1) =
          (SOME (wl_Result (wl_Loc l1 l2) [wl_Word (word 2)]),
-          wl_state_memory_fupd (K m1) (wl_state_clock_fupd (K ck)
-            (wl_state_stack_max_fupd (K max_stack)
-               (wl_state_locals_fupd (K LN) (wl_state_locals_size_fupd (K (SOME 0)) t1))))) /\
+          wl_state_memory_fupd (combin_K m1) (wl_state_clock_fupd (combin_K ck)
+            (wl_state_stack_max_fupd (combin_K max_stack)
+               (wl_state_locals_fupd (combin_K LN) (wl_state_locals_size_fupd (combin_K (SOME 0)) t1))))) /\
        (~(max_stack = wl_state_stack_max t1) ==>
         max_stack = OPTION_MAP2 MAX (wl_state_stack_max t1)
                       (OPTION_MAP2 (+) (wl_stack_size (wl_state_stack t1))
@@ -2236,7 +2236,7 @@ let evaluate_XorLoop = prove
                        `m1:A word->A word_loc`] THEN
   DISCH_THEN(CONJUNCTS_THEN2 MP_TAC STRIP_ASSUME_TAC) THEN
   GEN_REWRITE_TAC (LAND_CONV o LAND_CONV) [word_xor_bytes_def] THEN
-  REWRITE_TAC[read_word_def] THEN CASE_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
+  REWRITE_TAC[read_word_def] THEN CAKE_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
   ASM_REWRITE_TAC[] THEN
   RULE_ASSUM_TAC(REWRITE_RULE[wl_get_var_def]) THEN
   CONV_TAC(ONCE_DEPTH_CONV(REWR_CONV XorLoop_code_def)) THEN
@@ -2295,15 +2295,15 @@ let ASP2AUX_do_app_XorByte = prove
        lookup dst (data_state_refs x) = SOME (bvl_ByteArray f ds) /\
        xor_bytes ws ds = SOME ds1 /\ v = data_Unit /\
        s2 = data_state_refs_fupd
-              (K (insert dst (bvl_ByteArray f ds1) (data_state_refs x)))
+              (combin_K (insert dst (bvl_ByteArray f ds1) (data_state_refs x)))
               (do_stack (MemOp XorByte) vals (do_lim_safe x (MemOp XorByte) vals))`,
   REPEAT GEN_TAC THEN
   REWRITE_TAC[data_do_app_def; do_space_def; MEM] THEN
-  CASE_REWRITE_TAC[op_space_reset_def; op_space_req_def] THEN
+  CAKE_REWRITE_TAC[op_space_reset_def; op_space_req_def] THEN
   GEN_REWRITE_TAC (LAND_CONV o LAND_CONV) [data_do_app_aux_def] THEN
-  CASE_REWRITE_TAC[ASP2AUX_do_stack_lim_safe] THEN
+  CAKE_REWRITE_TAC[ASP2AUX_do_stack_lim_safe] THEN
   EQ_TAC THENL
-   [REWRITE_TAC(all_case_eqs()) THEN CASE_REWRITE_TAC[] THEN
+   [REWRITE_TAC(all_case_eqs()) THEN CAKE_REWRITE_TAC[] THEN
     STRIP_TAC THEN RVEQ_TAC THEN ASM_REWRITE_TAC[CONS_11; injectivity "data_v"] THEN
     SIMP[];
     STRIP_TAC THEN RVEQ_TAC THEN ASP2AUX_CRW_TAC[ASP2AUX_do_stack_lim_safe]]);;
@@ -2340,7 +2340,7 @@ let assign_XorByte = prove
   RULE_ASSUM_TAC(REWRITE_RULE[data_state_INFO.ri_accfupds; K_THM; MAP]) THEN
   FIRST_ASSUM(MP_TAC o check ((=) `wl_get_vars [adjust_var a1; adjust_var a2] (t:(A,C,FFI)wl_state) = SOME [w1; w2]` o concl)) THEN
   REWRITE_TAC[wl_get_vars_def; wl_get_var_def] THEN
-  REWRITE_TAC(all_case_eqs()) THEN CASE_REWRITE_TAC[] THEN STRIP_TAC THEN
+  REWRITE_TAC(all_case_eqs()) THEN CAKE_REWRITE_TAC[] THEN STRIP_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[CONS_11; option_INJ]) THEN RVEQ_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[CONS_11; option_INJ]) THEN RVEQ_TAC THEN
   SUBGOAL_THEN `wl_get_vars (MAP adjust_var [a1; a2]) (t:(A,C,FFI)wl_state) = SOME [w1; w2]`
@@ -2348,7 +2348,7 @@ let assign_XorByte = prove
   FIRST_ASSUM(MP_TAC o REWRITE_RULE[data_to_word_gcProof_state_rel_thm] o
     check ((=) `data_to_word_gcProof_state_rel c l1 l2
       (s:(C,FFI)data_state) (t:(A,C,FFI)wl_state) NONE locs` o concl)) THEN
-  CASE_REWRITE_TAC[APPEND] THEN STRIP_TAC THEN
+  CAKE_REWRITE_TAC[APPEND] THEN STRIP_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[GSYM APPEND_ASSOC]) THEN
   DRULE_ALL memory_rel_get_vars_IMP THEN
   REWRITE_TAC[ZIP; APPEND; MAP] THEN DISCH_TAC THEN
@@ -2373,7 +2373,7 @@ let assign_XorByte = prove
   DISCH_THEN(X_CHOOSE_THEN `q:(num#A word_loc)list` (X_CHOOSE_THEN `perm:num->num->num`
     ASSUME_TAC)) THEN
   REWRITE_TAC[data_to_word_assign_def] THEN
-  CASE_REWRITE_TAC[data_to_word_arg2_def; assign_XorByte_def;
+  CAKE_REWRITE_TAC[data_to_word_arg2_def; assign_XorByte_def;
                    data_to_word_get_names_def] THEN
   ASP2AUX_EVAL_TAC (asp2_eval_rws @ asp2_eval_rws2 @ asp2_call_rws @
     [ASP2AUX_cut_envs_ins 1; ASP2AUX_cut_envs_ins 3; ASP2AUX_cut_envs_ins 5;
@@ -2410,7 +2410,7 @@ let assign_XorByte = prove
   REWRITE_TAC[data_to_word_gcProof_state_rel_thm] THEN
   REWRITE_TAC[data_set_var_def; data_state_INFO.ri_accfupds; K_THM;
               ASP2AUX_do_stack_lim_safe; wl_state_INFO.ri_accfupds] THEN
-  CASE_REWRITE_TAC[APPEND] THEN ASM_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[APPEND] THEN ASM_REWRITE_TAC[] THEN
   FIRST_ASSUM(ASSUME_TAC o REWRITE_RULE[data_state_INFO.ri_accfupds; K_THM] o
     MATCH_MP ASP2AUX_cut_state_opt_cut_env) THEN
   REPEAT CONJ_TAC THENL
@@ -2666,12 +2666,12 @@ let evaluate_AppendMainLoop_code = prove
      ?m1 ws smx.
        wl_evaluate (AppendMainLoop_code c,t) =
          (SOME (wl_Result (wl_Loc r1 r2) [tmp2]),
-          wl_state_locals_fupd (K LN) (wl_state_locals_size_fupd (K (SOME 0))
+          wl_state_locals_fupd (combin_K LN) (wl_state_locals_size_fupd (combin_K (SOME 0))
             (wl_state_store_fupd
-               (K (wl_state_store t |+ (NextFree,wl_Word (word_add next_free
+               (combin_K (wl_state_store t |+ (NextFree,wl_Word (word_add next_free
                      (word_mul bytes_in_word (word (3 * LENGTH xs)))))))
-               (wl_state_memory_fupd (K m1) (wl_state_stack_max_fupd (K smx)
-                  (wl_state_clock_fupd (K (wl_state_clock t - (LENGTH xs - 1))) t)))))) /\
+               (wl_state_memory_fupd (combin_K m1) (wl_state_stack_max_fupd (combin_K smx)
+                  (wl_state_clock_fupd (combin_K (wl_state_clock t - (LENGTH xs - 1))) t)))))) /\
        LENGTH ws = LENGTH xs /\
        option_le smx (OPTION_MAP2 MAX (wl_state_stack_max t)
                         (OPTION_MAP2 (+)
@@ -2906,8 +2906,8 @@ let ASP2AUX_bad_fun_seq = prove
         (res,s1) -> if res = NONE then f s1 else (res,s1)) =
      (match e with
         (res,s) -> if wl_bad_fun_return res then (SOME wl_Error,s) else (res,s))`,
-  REWRITE_TAC[FORALL_PAIR_THM] THEN REPEAT GEN_TAC THEN CASE_REWRITE_TAC[] THEN
-  COND_CASES_TAC THEN CASE_REWRITE_TAC[option_DISTINCT] THEN
+  REWRITE_TAC[FORALL_PAIR_THM] THEN REPEAT GEN_TAC THEN CAKE_REWRITE_TAC[] THEN
+  COND_CASES_TAC THEN CAKE_REWRITE_TAC[option_DISTINCT] THEN
   COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
   UNDISCH_TAC `~wl_bad_fun_return (p1:((A)wl_result)option)` THEN
   ASM_REWRITE_TAC[wl_bad_fun_return_def]);;
@@ -2950,13 +2950,13 @@ let evaluate_AppendMainLoop_code_alt = prove
        wl_evaluate (AppendMainLoop_code c,t) =
          (match data_to_word_assignProof_STOP wl_evaluate
                   (AppendLenLoop_code c,
-                   wl_state_locals_fupd (K (fromList2 [wl_Loc r1 r2; wl_Word ww2;
+                   wl_state_locals_fupd (combin_K (fromList2 [wl_Loc r1 r2; wl_Word ww2;
                                                        wl_Word (word 0)]))
                      (wl_state_locals_size_fupd
-                        (K (lookup AppendLenLoop_location (wl_state_stack_size t)))
-                        (wl_state_memory_fupd (K m1) (wl_state_stack_max_fupd (K smx)
+                        (combin_K (lookup AppendLenLoop_location (wl_state_stack_size t)))
+                        (wl_state_memory_fupd (combin_K m1) (wl_state_stack_max_fupd (combin_K smx)
                            (wl_state_clock_fupd
-                              (K (wl_state_clock t - ((sp - k) DIV 3 + 1))) t))))) with
+                              (combin_K (wl_state_clock t - ((sp - k) DIV 3 + 1))) t))))) with
             (res,s) -> if wl_bad_fun_return res then (SOME wl_Error,s) else (res,s)) /\
        option_le (OPTION_MAP2 (+) (wl_stack_size (wl_state_stack t))
                     (lookup AppendLenLoop_location (wl_state_stack_size t))) smx /\
@@ -3149,13 +3149,13 @@ let evaluate_AppendMainLoop_code_alt = prove
        wl_evaluate (AppendMainLoop_code c,t) =
          (match data_to_word_assignProof_STOP wl_evaluate
                   (AppendLenLoop_code c,
-                   wl_state_locals_fupd (K (fromList2 [wl_Loc r1 r2; wl_Word ww2;
+                   wl_state_locals_fupd (combin_K (fromList2 [wl_Loc r1 r2; wl_Word ww2;
                                                        wl_Word (word 0)]))
                      (wl_state_locals_size_fupd
-                        (K (lookup AppendLenLoop_location (wl_state_stack_size t)))
-                        (wl_state_memory_fupd (K m1) (wl_state_stack_max_fupd (K smx)
+                        (combin_K (lookup AppendLenLoop_location (wl_state_stack_size t)))
+                        (wl_state_memory_fupd (combin_K m1) (wl_state_stack_max_fupd (combin_K smx)
                            (wl_state_clock_fupd
-                              (K (wl_state_clock t - (sp DIV 3 + 1))) t))))) with
+                              (combin_K (wl_state_clock t - (sp DIV 3 + 1))) t))))) with
             (res,s) -> if wl_bad_fun_return res then (SOME wl_Error,s) else (res,s)) /\
        option_le (OPTION_MAP2 (+) (wl_stack_size (wl_state_stack t))
                     (lookup AppendLenLoop_location (wl_state_stack_size t))) smx /\
@@ -3194,9 +3194,9 @@ let evaluate_AppendLenLoop_code = prove
        (match wl_evaluate (AppendLenLoop_code c,t) with
           (res,s) -> if wl_bad_fun_return res then (SOME wl_Error,s) else (res,s)) =
        (match wl_evaluate (AppendLenLoop_code c,
-                wl_state_locals_fupd (K locals)
-                  (wl_state_clock_fupd (K (wl_state_clock t - LENGTH xs))
-                     (wl_state_stack_max_fupd (K smx) t))) with
+                wl_state_locals_fupd (combin_K locals)
+                  (wl_state_clock_fupd (combin_K (wl_state_clock t - LENGTH xs))
+                     (wl_state_stack_max_fupd (combin_K smx) t))) with
           (res,s) -> if wl_bad_fun_return res then (SOME wl_Error,s) else (res,s)) /\
        lookup 0 locals = SOME (wl_Loc l1 l2) /\
        lookup 2 locals = SOME (wl_Word (word 2)) /\
@@ -3221,9 +3221,9 @@ let evaluate_AppendLenLoop_code = prove
        (match wl_evaluate (AppendLenLoop_code c,t) with
           (res,s) -> if wl_bad_fun_return res then (SOME wl_Error,s) else (res,s)) =
        (match wl_evaluate (AppendLenLoop_code c,
-                wl_state_locals_fupd (K locals)
-                  (wl_state_clock_fupd (K (wl_state_clock t - LENGTH xs))
-                     (wl_state_stack_max_fupd (K smx) t))) with
+                wl_state_locals_fupd (combin_K locals)
+                  (wl_state_clock_fupd (combin_K (wl_state_clock t - LENGTH xs))
+                     (wl_state_stack_max_fupd (combin_K smx) t))) with
           (res,s) -> if wl_bad_fun_return res then (SOME wl_Error,s) else (res,s)) /\
        lookup 0 locals = SOME (wl_Loc l1 l2) /\
        lookup 2 locals = SOME (wl_Word (word 2)) /\
@@ -3245,9 +3245,9 @@ let evaluate_AppendLenLoop_code = prove
     MAP_EVERY EXISTS_TAC [`wl_state_locals (t:(A,C,FFI)wl_state)`;
                           `wl_state_stack_max (t:(A,C,FFI)wl_state)`] THEN
     SUBGOAL_THEN
-     `wl_state_locals_fupd (K (wl_state_locals t))
-        (wl_state_clock_fupd (K (wl_state_clock t - LENGTH ([]:data_v list)))
-           (wl_state_stack_max_fupd (K (wl_state_stack_max t)) t)) =
+     `wl_state_locals_fupd (combin_K (wl_state_locals t))
+        (wl_state_clock_fupd (combin_K (wl_state_clock t - LENGTH ([]:data_v list)))
+           (wl_state_stack_max_fupd (combin_K (wl_state_stack_max t)) t)) =
       (t:(A,C,FFI)wl_state)` SUBST1_TAC THENL
      [REWRITE_TAC[wl_state_component_equality; wl_state_INFO.ri_accfupds; K_THM;
                   LENGTH; SUB_0];
@@ -3346,9 +3346,9 @@ let evaluate_AppendLenLoop_code = prove
        (match wl_evaluate (AppendLenLoop_code c,t) with
           (res,s) -> if wl_bad_fun_return res then (SOME wl_Error,s) else (res,s)) =
        (match wl_evaluate (AppendLenLoop_code c,
-                wl_state_locals_fupd (K locals)
-                  (wl_state_clock_fupd (K (wl_state_clock t - LENGTH xs))
-                     (wl_state_stack_max_fupd (K smx) t))) with
+                wl_state_locals_fupd (combin_K locals)
+                  (wl_state_clock_fupd (combin_K (wl_state_clock t - LENGTH xs))
+                     (wl_state_stack_max_fupd (combin_K smx) t))) with
           (res,s) -> if wl_bad_fun_return res then (SOME wl_Error,s) else (res,s)) /\
        lookup 0 locals = SOME (wl_Loc l1 l2) /\
        lookup 2 locals = SOME (wl_Word (word 2)) /\
@@ -3402,5 +3402,5 @@ let cut_state_refs_same = prove
      data_cut_state n s = SOME x ==> data_state_refs s = data_state_refs x`,
   REPEAT GEN_TAC THEN REWRITE_TAC[data_cut_state_def] THEN
   CASES_ON `data_cut_env n (data_state_locals (s:(C,FFI)data_state))` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN
   DISCH_THEN(SUBST1_TAC o SYM) THEN REWRITE_TAC[data_state_INFO.ri_accfupds]);;

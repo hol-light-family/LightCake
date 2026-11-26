@@ -173,6 +173,6 @@ let store2heap_LUPDATE = prove
 let st2heap_clock = prove
  (`!st ck.
      st2heap (p:(FFI->(mlstring,ffi)fmap)#(((mlstring)list#ffi_next)list))
-             (state_clock_fupd (K ck) st) =
+             (state_clock_fupd (combin_K ck) st) =
      st2heap p st`,
   SIMP[st2heap_def]);;

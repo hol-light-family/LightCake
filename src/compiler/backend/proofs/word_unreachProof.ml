@@ -88,10 +88,10 @@ let WPROOF1AUX_WU_alist_insert_copy_vars = prove
   SPEC_TAC(`h:num#num`,`h:num#num`) THEN REWRITE_TAC[FORALL_PAIR_THM] THEN
   MAP_EVERY X_GEN_TAC [`a:num`; `b:num`] THEN
   REWRITE_TAC[MAP; wl_get_vars_def] THEN REPEAT GEN_TAC THEN
-  CASES_ON `wl_get_var b (s:(A,C,FFI)wl_state)` THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON `wl_get_var b (s:(A,C,FFI)wl_state)` THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[option_DISTINCT] THEN
   CASES_ON `wl_get_vars (MAP SND (t:(num#num)list)) (s:(A,C,FFI)wl_state)` THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[option_DISTINCT; option_INJ] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[option_DISTINCT; option_INJ] THEN
   DISCH_THEN(SUBST1_TAC o SYM) THEN
   REWRITE_TAC[alist_insert_def; word_unreachProof_copy_vars_def] THEN
   RULE_ASSUM_TAC(REWRITE_RULE[wl_get_var_def]) THEN
@@ -104,12 +104,12 @@ let evaluate_Move = prove
      match wl_get_vars (MAP SND moves) s with
        NONE -> (SOME wl_Error,s)
      | SOME l -> (NONE, wl_state_locals_fupd
-                          (K (word_unreachProof_copy_vars moves (wl_state_locals s)
+                          (combin_K (word_unreachProof_copy_vars moves (wl_state_locals s)
                                 (wl_state_locals s))) s)
    else (SOME wl_Error,s)`,
   REWRITE_TAC[wl_evaluate_def] THEN COND_CASES_TAC THEN REWRITE_TAC[] THEN
   CASES_ON `wl_get_vars (MAP SND (moves:(num#num)list)) (s:(A,C,FFI)wl_state)` THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[wl_set_vars_def] THEN
   FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP WPROOF1AUX_WU_alist_insert_copy_vars th]));;
 
@@ -182,10 +182,10 @@ let get_vars_IS_SOME_lookup = prove
    [MESON_TAC[]; ALL_TAC] THEN
   GEN_TAC THEN REWRITE_TAC[wl_get_var_def] THEN
   CASES_ON `lookup h (wl_state_locals (s:(A,C,FFI)wl_state))` THEN
-  CASE_REWRITE_TAC[IS_SOME_DEF] THEN REWRITE_TAC[option_DISTINCT] THEN
+  CAKE_REWRITE_TAC[IS_SOME_DEF] THEN REWRITE_TAC[option_DISTINCT] THEN
   FIRST_X_ASSUM(fun th -> if is_forall (concl th) then REWRITE_TAC[GSYM th] else NO_TAC) THEN
   CASES_ON `wl_get_vars t (s:(A,C,FFI)wl_state)` THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[option_DISTINCT; option_INJ] THEN MESON_TAC[]);;
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[option_DISTINCT; option_INJ] THEN MESON_TAC[]);;
 
 let IMP_EVERY_MAP_SND_anub = prove
  (`!xs acc (p:B->bool).
@@ -214,7 +214,7 @@ let WPROOF1AUX_WU_copy_vars_l2 = prove
   FIRST_X_ASSUM(MP_TAC o SPECL [`l1:(num#num)list`; `L:(A)spt`; `t0:(A)spt`] o
                 check (is_forall o concl)) THEN
   ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
-  CASES_ON `ALOOKUP (l1:(num#num)list) y` THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON `ALOOKUP (l1:(num#num)list) y` THEN CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[word_unreachProof_copy_vars_def] THENL
    [ASM_SIMP_TAC[lookup_copy_vars_ignore];
     AP_THM_TAC THEN AP_TERM_TAC THEN
@@ -239,7 +239,7 @@ let WPROOF1AUX_WU_merge_moves_reads = prove
   SPEC_TAC(`h:num#num`,`h:num#num`) THEN REWRITE_TAC[FORALL_PAIR_THM] THEN
   MAP_EVERY X_GEN_TAC [`x:num`; `y:num`] THEN REWRITE_TAC[pair_CASE; SND] THEN
   STRIP_TAC THEN ASM_SIMP_TAC[] THEN
-  CASES_ON `ALOOKUP (l1:(num#num)list) y` THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[SND] THENL
+  CASES_ON `ALOOKUP (l1:(num#num)list) y` THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[SND] THENL
    [UNDISCH_TAC `IS_SOME (lookup y (word_unreachProof_copy_vars l1 L (L:(A)spt)))` THEN
     ASM_SIMP_TAC[lookup_copy_vars_ignore];
     UNDISCH_TAC `ALL (\x. IS_SOME (lookup x (L:(A)spt))) (MAP SND (l1:(num#num)list))` THEN
@@ -262,7 +262,7 @@ let WPROOF1AUX_WU_CASES_HEAD_TAC (c:string) : tactic = fun (asl,w as g) ->
              is_const h && fst(dest_const h) = c &&
              subset (frees t) (fvs @ freesl (map (concl o snd) asl)) in
   let t = find_term ok w in
-  (CASES_ON t THEN CASE_REWRITE_TAC[]) g;;
+  (CASES_ON t THEN CAKE_REWRITE_TAC[]) g;;
 
 
 (* the clause of wl_evaluate_def for the constructor named c *)
@@ -284,7 +284,7 @@ let merge_moves_Skip = prove
   ASM_REWRITE_TAC[pair_CASE; option_DISTINCT; PAIR_EQ] THENL
    [ALL_TAC; MESON_TAC[]] THEN
   CASES_ON `wl_get_vars (MAP SND (l1:(num#num)list)) (s:(A,C,FFI)wl_state)` THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[pair_CASE; PAIR_EQ] THENL [MESON_TAC[]; ALL_TAC] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[pair_CASE; PAIR_EQ] THENL [MESON_TAC[]; ALL_TAC] THEN
   ASM_CASES_TAC `ALL_DISTINCT (MAP FST (l2:(num#num)list))` THEN
   ASM_REWRITE_TAC[PAIR_EQ] THENL [ALL_TAC; MESON_TAC[]] THEN
   WPROOF1AUX_WU_CASES_HEAD_TAC "wl_get_vars" THEN REWRITE_TAC[PAIR_EQ] THENL
@@ -301,7 +301,7 @@ let merge_moves_Skip = prove
      [MP_TAC(ISPECL [`MAP SND (l1:(num#num)list)`; `s:(A,C,FFI)wl_state`]
                     get_vars_IS_SOME_lookup) THEN ASM_MESON_TAC[];
       MP_TAC(ISPECL [`MAP SND (l2:(num#num)list)`;
-                     `wl_state_locals_fupd (K (word_unreachProof_copy_vars l1
+                     `wl_state_locals_fupd (combin_K (word_unreachProof_copy_vars l1
                         (wl_state_locals s) (wl_state_locals s))) (s:(A,C,FFI)wl_state)`]
                     get_vars_IS_SOME_lookup) THEN
       SIMP[] THEN ASM_MESON_TAC[]];
@@ -310,7 +310,7 @@ let merge_moves_Skip = prove
                 get_vars_IS_SOME_lookup) THEN
   ASM_SIMP_TAC[WPROOF1AUX_WU_merge_moves_reads] THEN
   DISCH_THEN(X_CHOOSE_THEN `ws:((A)word_loc)list` SUBST1_TAC) THEN
-  CASE_REWRITE_TAC[] THEN SIMP[] THEN
+  CAKE_REWRITE_TAC[] THEN SIMP[] THEN
   REWRITE_TAC[word_unreach_merge_moves_def; LET_DEF; LET_END_DEF] THEN
   REWRITE_TAC[copy_vars_anub; copy_vars_append] THEN
   MATCH_MP_TAC WPROOF1AUX_WU_copy_vars_l2 THEN ASM_REWRITE_TAC[]);;
@@ -342,8 +342,8 @@ let WPROOF1AUX_WU_dest_Seq_Move = prove
      dest_Seq_Move p = SOME (n,l,rest) <=>
      (p = wl_Move n l /\ rest = wl_Skip) \/ p = wl_Seq (wl_Move n l) rest`,
   GEN_TAC THEN CASES_ON `p:(A)wl_prog` THEN REWRITE_TAC[dest_Seq_Move_def] THEN
-  CASE_REWRITE_TAC[] THEN TRY(CASES_ON `a0:(A)wl_prog` THEN
-                              REWRITE_TAC[dest_Seq_Move_def] THEN CASE_REWRITE_TAC[]) THEN
+  CAKE_REWRITE_TAC[] THEN TRY(CASES_ON `a0:(A)wl_prog` THEN
+                              REWRITE_TAC[dest_Seq_Move_def] THEN CAKE_REWRITE_TAC[]) THEN
   REWRITE_TAC[option_INJ; option_DISTINCT; PAIR_EQ] THEN MESON_TAC[]);;
 
 let WPROOF1AUX_WU_seq_not_none = prove
@@ -373,17 +373,17 @@ let evaluate_SimpSeq = prove
   REWRITE_TAC[SimpSeq_def; LET_DEF; LET_END_DEF] THEN
   COND_CASES_TAC THENL
    [ASM_REWRITE_TAC[word_unreachProof_evaluate_Seq_Skip] THEN MESON_TAC[]; ALL_TAC] THEN
-  CASES_ON `p1:(A)wl_prog` THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON `p1:(A)wl_prog` THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[word_unreachProof_evaluate_Skip_Seq] THEN
   TRY(STRIP_TAC THEN ASM_REWRITE_TAC[] THEN NO_TAC) THEN
   TRY(WPROOF1AUX_WU_NOT_NONE_TAC THEN NO_TAC) THEN
   (* Move *)
-  CASES_ON `dest_Seq_Move (p2:(A)wl_prog)` THEN CASE_REWRITE_TAC[] THENL
+  CASES_ON `dest_Seq_Move (p2:(A)wl_prog)` THEN CAKE_REWRITE_TAC[] THENL
    [STRIP_TAC THEN ASM_REWRITE_TAC[]; ALL_TAC] THEN
   MP_TAC(ISPEC `a:num#(num#num)list#(A)wl_prog` BASICAUX_TUPLE3) THEN
   DISCH_THEN(X_CHOOSE_THEN `n2:num` (X_CHOOSE_THEN `l2:(num#num)list`
     (X_CHOOSE_THEN `rest:(A)wl_prog` SUBST_ALL_TAC))) THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   FIRST_X_ASSUM(MP_TAC o REWRITE_RULE[WPROOF1AUX_WU_dest_Seq_Move]) THEN
   STRIP_TAC THEN FIRST_X_ASSUM SUBST_ALL_TAC THEN ASM_REWRITE_TAC[] THENL
    [DISCH_TAC THEN
@@ -405,9 +405,9 @@ let push_env_handler = prove
                    | SOME (y1,q2,y2,y3) -> SOME (y1,Seq_assoc_right q2 wl_Skip,y2,y3))
                   (wl_dec_clock (s:(A,C,FFI)wl_state)) =
    wl_push_env x' handler (wl_dec_clock s)`,
-  CASES_ON `handler:(num#(A)wl_prog#num#num)option` THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON `handler:(num#(A)wl_prog#num#num)option` THEN CAKE_REWRITE_TAC[] THEN
   SPEC_TAC(`a:num#(A)wl_prog#num#num`,`a:num#(A)wl_prog#num#num`) THEN
-  REWRITE_TAC[FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[FORALL_PAIR_THM] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[wl_push_env_def]);;
 
 (* HOL4 [local] *)
@@ -431,7 +431,7 @@ let evaluate_Loop_body_eq = prove
   MAP_EVERY X_GEN_TAC [`s:(A,C,FFI)wl_state`; `res:((A)wl_result)option`;
                        `s1:(A,C,FFI)wl_state`] THEN
   DISCH_TAC THEN ONCE_REWRITE_TAC[WPROOF1AUX_WU_eval_clause "wl_Loop"] THEN
-  CASES_ON `wl_cut_state (names,LN) (s:(A,C,FFI)wl_state)` THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON `wl_cut_state (names,LN) (s:(A,C,FFI)wl_state)` THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[PAIR_EQ] THENL [MESON_TAC[]; ALL_TAC] THEN
   MP_TAC(ISPEC `wl_evaluate (p1:(A)wl_prog,a:(A,C,FFI)wl_state)` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `r:((A)wl_result)option` (X_CHOOSE_THEN `t:(A,C,FFI)wl_state`
@@ -521,7 +521,7 @@ let WPROOF1AUX_WU_ih_use = prove
 (* transformed program, whose evaluation is the original one              *)
 
 let WPROOF1AUX_WU_SIMPSEQ_CONG_TAC : tactic =
-  REWRITE_TAC[word_unreach_Seq_assoc_right_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[word_unreach_Seq_assoc_right_def] THEN CAKE_REWRITE_TAC[] THEN
   MATCH_MP_TAC evaluate_SimpSeq THEN
   ASM_REWRITE_TAC[] THEN
   FIRST_X_ASSUM(fun th -> if WPROOF1AUX_WU_is_eval_eq th then
@@ -632,7 +632,7 @@ let WPROOF1AUX_WU_bfr = prove
 (* returns NONE                                                             *)
 
 let WPROOF1AUX_WU_CALL_NONE_TAC : tactic =
-  REPEAT GEN_TAC THEN REWRITE_TAC[word_unreach_Seq_assoc_right_def] THEN CASE_REWRITE_TAC[] THEN
+  REPEAT GEN_TAC THEN REWRITE_TAC[word_unreach_Seq_assoc_right_def] THEN CAKE_REWRITE_TAC[] THEN
   DISCH_TAC THEN DISCH_TAC THEN
   FIRST_X_ASSUM(MP_TAC o check WPROOF1AUX_WU_is_eval_eq) THEN
   MATCH_MP_TAC(MESON[] `(a:B) = b ==> a = c ==> b = c`) THEN

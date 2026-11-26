@@ -38,15 +38,15 @@ let sumID_def = cake_def
    (sumID (INR (y:A)) = y)`;;
 
 let mktokLf_def = cake_def
-  `mktokLf (t:token#C) = [Lf (TOK (FST t), SND t):(token,MMLnonT,C)parsetree]`;;
+  `mktokLf (t:token#C) = [grammar_Lf (grammar_TOK (FST t), SND t):(token,MMLnonT,C)parsetree]`;;
 
 let mkNd_def = cake_def
   `mkNd (ntnm:B+num) (l:((A,B,locs)parsetree)list) =
-     Nd (ntnm, ptree_list_loc l) l`;;
+     grammar_Nd (ntnm, ptree_list_loc l) l`;;
 
 let bindNT0_def = cake_def
   `bindNT0 (ntnm:MMLnonT) (l:((A,MMLnonT,locs)parsetree)list) =
-     Nd (INL ntnm, ptree_list_loc l) l`;;
+     grammar_Nd (INL ntnm, ptree_list_loc l) l`;;
 
 let bindNT_def = cake_def
   `bindNT (ntnm:MMLnonT) (l:((A,MMLnonT,locs)parsetree)list) =
@@ -836,7 +836,7 @@ let parse_TopLevelDecs_total = prove
   MATCH_MP_TAC peg_exec_total THEN REWRITE_TAC[PEG_wellformed]);;
 
 let coreloop_TopLevelDecs_total = prove
- (`!i. ?r. coreloop cmlPEG (EV (cmlPEG_pnt nTopLevelDecs) i [] NONE [] pegexec_done failed) =
+ (`!i. ?r. coreloop cmlPEG (pegexec_EV (cmlPEG_pnt nTopLevelDecs) i [] NONE [] pegexec_done failed) =
            SOME (Result r)`,
   GEN_TAC THEN REWRITE_TAC[GSYM PARSE2AUX_peg_start] THEN
   MATCH_MP_TAC coreloop_total THEN REWRITE_TAC[PEG_wellformed]);;

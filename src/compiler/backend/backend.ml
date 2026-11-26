@@ -78,10 +78,10 @@ let BACKDEFAUX_PAIRARG_TAC : tactic =
     let lemma = mk_forall(v,mk_imp(mk_eq(x,v),subst [v,x] w)) in
     (SUBGOAL_THEN lemma (fun th -> ACCEPT_TAC (MP (SPEC x th) (REFL x))) THEN
      REWRITE_TAC[FORALL_PAIR_THM] THEN REPEAT GEN_TAC THEN DISCH_TAC THEN
-     CASE_REWRITE_TAC[]) gl;;
+     CAKE_REWRITE_TAC[]) gl;;
 
 let BACKDEFAUX_LETS_RW_TAC rws : tactic =
-  REPEAT (CHANGED_TAC (CONV_TAC (TOP_DEPTH_CONV let_CONV) THEN CASE_REWRITE_TAC[] THEN
+  REPEAT (CHANGED_TAC (CONV_TAC (TOP_DEPTH_CONV let_CONV) THEN CAKE_REWRITE_TAC[] THEN
                        REWRITE_TAC rws) ORELSE
           BACKDEFAUX_PAIRARG_TAC);;
 
@@ -111,9 +111,9 @@ let attach_bitmaps_def = cake_def
   `(attach_bitmaps (names:mlstring spt) (c:backend_config) (bm:B)
       (SOME (bytes:byte list,c':lab_to_target_config)) =
       SOME (bytes,bm,
-            backend_config_lab_conf_fupd (K c')
+            backend_config_lab_conf_fupd (combin_K c')
               (backend_config_symbols_fupd
-                 (K (MAP (\(n,p,l). (lookup_any n names (implode "NOTFOUND"),p,l))
+                 (combin_K (MAP (\(n,p,l). (lookup_any n names (implode "NOTFOUND"),p,l))
                        (lab_to_target_config_sec_pos_len c'))) c))) /\
    (attach_bitmaps names c bm NONE = NONE)`;;
 
@@ -123,30 +123,30 @@ let backend_compile_def = cake_def
      let _ = empty_ffi (implode "finished: source_to_source") in
      let (c',p) = source_to_flat_compile (backend_config_source_conf c) p in
      let _ = empty_ffi (implode "finished: source_to_flat") in
-     let c = backend_config_source_conf_fupd (K c') c in
+     let c = backend_config_source_conf_fupd (combin_K c') c in
      let p = flat_to_clos_compile_prog p in
      let _ = empty_ffi (implode "finished: flat_to_clos") in
      let (c',p,names) = clos_to_bvl_compile (backend_config_clos_conf c) p in
-     let c = backend_config_clos_conf_fupd (K c') c in
+     let c = backend_config_clos_conf_fupd (combin_K c') c in
      let _ = empty_ffi (implode "finished: clos_to_bvl") in
      let (s,p,l,bl,n1,n2,n3,names) =
        bvl_to_bvi_compile (clos_to_bvl_config_start (backend_config_clos_conf c))
          (backend_config_bvl_conf c) names p in
      let c = backend_config_clos_conf_fupd
-               (\c. clos_to_bvl_config_start_fupd (K s) c) c in
+               (\c. clos_to_bvl_config_start_fupd (combin_K s) c) c in
      let c = backend_config_bvl_conf_fupd
-               (\c. bvl_to_bvi_config_inlines_fupd (K l)
-                      (bvl_to_bvi_config_bvi_inlines_fupd (K bl)
-                         (bvl_to_bvi_config_next_name1_fupd (K n1)
-                            (bvl_to_bvi_config_next_name2_fupd (K n2)
-                               (bvl_to_bvi_config_next_name3_fupd (K n3) c))))) c in
+               (\c. bvl_to_bvi_config_inlines_fupd (combin_K l)
+                      (bvl_to_bvi_config_bvi_inlines_fupd (combin_K bl)
+                         (bvl_to_bvi_config_next_name1_fupd (combin_K n1)
+                            (bvl_to_bvi_config_next_name2_fupd (combin_K n2)
+                               (bvl_to_bvi_config_next_name3_fupd (combin_K n3) c))))) c in
      let _ = empty_ffi (implode "finished: bvl_to_bvi") in
      let p = bvi_to_data_compile_prog p in
      let _ = empty_ffi (implode "finished: bvi_to_data") in
      let (col,p) = data_to_word_compile (backend_config_data_conf c)
                      (backend_config_word_to_word_conf c) asm_conf p in
      let c = backend_config_word_to_word_conf_fupd
-               (\c. word_to_word_config_col_oracle_fupd (K col) c) c in
+               (\c. word_to_word_config_col_oracle_fupd (combin_K col) c) c in
      let names = sptree_union (fromAList (APPEND (APPEND (APPEND
                    (data_to_word_stub_names one) (word_to_stack_stub_names one))
                    (stack_alloc_stub_names one)) (stack_remove_stub_names one))) names in
@@ -154,7 +154,7 @@ let backend_compile_def = cake_def
      let (bm,c',fs,p) =
        word_to_stack_compile asm_conf
          (stack_to_lab_config_perf_calls (backend_config_stack_conf c)) p in
-     let c = backend_config_word_conf_fupd (K c') c in
+     let c = backend_config_word_conf_fupd (combin_K c') c in
      let _ = empty_ffi (implode "finished: word_to_stack") in
      let p = stack_to_lab_compile (backend_config_stack_conf c) (backend_config_data_conf c)
                (2 * max_heap_limit (:A) (backend_config_data_conf c) - 1)
@@ -172,7 +172,7 @@ let to_flat_def = cake_def
   `to_flat (c:backend_config) p =
      let p = source_to_source_compile p in
      let (c',p) = source_to_flat_compile (backend_config_source_conf c) p in
-     let c = backend_config_source_conf_fupd (K c') c in
+     let c = backend_config_source_conf_fupd (combin_K c') c in
      (c,p)`;;
 
 let to_clos_def = cake_def
@@ -185,7 +185,7 @@ let to_bvl_def = cake_def
   `to_bvl (c:backend_config) p =
      let (c,p) = to_clos c p in
      let (c',p,names) = clos_to_bvl_compile (backend_config_clos_conf c) p in
-     let c = backend_config_clos_conf_fupd (K c') c in
+     let c = backend_config_clos_conf_fupd (combin_K c') c in
      (c,p,names)`;;
 
 let to_bvi_def = cake_def
@@ -198,13 +198,13 @@ let to_bvi_def = cake_def
                    (data_to_word_stub_names one) (word_to_stack_stub_names one))
                    (stack_alloc_stub_names one)) (stack_remove_stub_names one))) names in
      let c = backend_config_clos_conf_fupd
-               (\c. clos_to_bvl_config_start_fupd (K s) c) c in
+               (\c. clos_to_bvl_config_start_fupd (combin_K s) c) c in
      let c = backend_config_bvl_conf_fupd
-               (\c. bvl_to_bvi_config_inlines_fupd (K l)
-                      (bvl_to_bvi_config_bvi_inlines_fupd (K bl)
-                         (bvl_to_bvi_config_next_name1_fupd (K n1)
-                            (bvl_to_bvi_config_next_name2_fupd (K n2)
-                               (bvl_to_bvi_config_next_name3_fupd (K n3) c))))) c in
+               (\c. bvl_to_bvi_config_inlines_fupd (combin_K l)
+                      (bvl_to_bvi_config_bvi_inlines_fupd (combin_K bl)
+                         (bvl_to_bvi_config_next_name1_fupd (combin_K n1)
+                            (bvl_to_bvi_config_next_name2_fupd (combin_K n2)
+                               (bvl_to_bvi_config_next_name3_fupd (combin_K n3) c))))) c in
      (c,p,names)`;;
 
 let to_data_def = cake_def
@@ -225,7 +225,7 @@ let to_word_def = cake_def
      let (col,p) = data_to_word_compile (backend_config_data_conf c)
                      (backend_config_word_to_word_conf c) asm_conf p in
      let c = backend_config_word_to_word_conf_fupd
-               (\c. word_to_word_config_col_oracle_fupd (K col) c) c in
+               (\c. word_to_word_config_col_oracle_fupd (combin_K col) c) c in
      (c,p,names)`;;
 
 (* HOL4: to_word_thm *)
@@ -236,7 +236,7 @@ let backend_to_word_thm = prove
      let (c,p,names) = to_word_0 asm_conf c p in
      let (col,p) = word_to_word_compile (backend_config_word_to_word_conf c) asm_conf p in
      let c = backend_config_word_to_word_conf_fupd
-               (\c. word_to_word_config_col_oracle_fupd (K col) c) c in
+               (\c. word_to_word_config_col_oracle_fupd (combin_K col) c) c in
      (c,p,names)`,
   REWRITE_TAC[to_word_def; to_word_0_def; compile_0_def; data_to_word_compile_def] THEN
   BACKDEFAUX_LETS_TAC THEN REWRITE_TAC[]);;
@@ -247,7 +247,7 @@ let to_stack_def = cake_def
      let (bm,c',fs,p) =
        word_to_stack_compile asm_conf
          (stack_to_lab_config_perf_calls (backend_config_stack_conf c)) p in
-     let c = backend_config_word_conf_fupd (K c') c in
+     let c = backend_config_word_conf_fupd (combin_K c') c in
      (bm,c,p,names)`;;
 
 let to_lab_def = cake_def
@@ -280,15 +280,15 @@ let prim_src_config_def = cake_def
      let (n0,next,env,envs,ds) =
        source_to_flat_compile_decs [] 1 (source_to_flat_config_next empty_config)
          source_to_flat_empty_env ARB prim_types_program in
-     source_to_flat_config_next_fupd (K next)
-       (source_to_flat_config_mod_env_fupd (K env) empty_config)`;;
+     source_to_flat_config_next_fupd (combin_K next)
+       (source_to_flat_config_mod_env_fupd (combin_K env) empty_config)`;;
 
 (* HOL4 prim_src_config_eq (EVAL of prim_src_config) is not ported (an    *)
 (* evaluation for HOL4 automation); the same for prim_config_eq below      *)
 
 let prim_config_def = cake_def
   `prim_config =
-     FST (to_flat (backend_config_source_conf_fupd (K empty_config) ARB)
+     FST (to_flat (backend_config_source_conf_fupd (combin_K empty_config) ARB)
             prim_types_program)`;;
 
 let from_lab_def = cake_def
@@ -310,7 +310,7 @@ let from_word_def = cake_def
      let (bm,c',fs,p) =
        word_to_stack_compile asm_conf
          (stack_to_lab_config_perf_calls (backend_config_stack_conf c)) p in
-     let c = backend_config_word_conf_fupd (K c') c in
+     let c = backend_config_word_conf_fupd (combin_K c') c in
      from_stack asm_conf c names p bm`;;
 
 let from_word_0_def = cake_def
@@ -318,7 +318,7 @@ let from_word_0_def = cake_def
      let (col,prog) =
        word_to_word_compile (backend_config_word_to_word_conf c) asm_conf p in
      let c = backend_config_word_to_word_conf_fupd
-               (\c. word_to_word_config_col_oracle_fupd (K col) c) c in
+               (\c. word_to_word_config_col_oracle_fupd (combin_K col) c) c in
      from_word asm_conf c names prog`;;
 
 let from_data_def = cake_def
@@ -326,7 +326,7 @@ let from_data_def = cake_def
      let (col,p) = data_to_word_compile (backend_config_data_conf c)
                      (backend_config_word_to_word_conf c) asm_conf p in
      let c = backend_config_word_to_word_conf_fupd
-               (\c. word_to_word_config_col_oracle_fupd (K col) c) c in
+               (\c. word_to_word_config_col_oracle_fupd (combin_K col) c) c in
      from_word asm_conf c names p`;;
 
 (* HOL4: from_data_thm *)
@@ -352,19 +352,19 @@ let from_bvl_def = cake_def
                    (data_to_word_stub_names one) (word_to_stack_stub_names one))
                    (stack_alloc_stub_names one)) (stack_remove_stub_names one))) names in
      let c = backend_config_clos_conf_fupd
-               (\c. clos_to_bvl_config_start_fupd (K s) c) c in
+               (\c. clos_to_bvl_config_start_fupd (combin_K s) c) c in
      let c = backend_config_bvl_conf_fupd
-               (\c. bvl_to_bvi_config_inlines_fupd (K l)
-                      (bvl_to_bvi_config_bvi_inlines_fupd (K bl)
-                         (bvl_to_bvi_config_next_name1_fupd (K n1)
-                            (bvl_to_bvi_config_next_name2_fupd (K n2)
-                               (bvl_to_bvi_config_next_name3_fupd (K n3) c))))) c in
+               (\c. bvl_to_bvi_config_inlines_fupd (combin_K l)
+                      (bvl_to_bvi_config_bvi_inlines_fupd (combin_K bl)
+                         (bvl_to_bvi_config_next_name1_fupd (combin_K n1)
+                            (bvl_to_bvi_config_next_name2_fupd (combin_K n2)
+                               (bvl_to_bvi_config_next_name3_fupd (combin_K n3) c))))) c in
      from_bvi asm_conf c names p`;;
 
 let from_clos_def = cake_def
   `from_clos (asm_conf:(A)asm_config) (c:backend_config) e =
      let (c',p,names) = clos_to_bvl_compile (backend_config_clos_conf c) e in
-     let c = backend_config_clos_conf_fupd (K c') c in
+     let c = backend_config_clos_conf_fupd (combin_K c') c in
      from_bvl asm_conf c names p`;;
 
 let from_flat_def = cake_def
@@ -376,7 +376,7 @@ let from_source_def = cake_def
   `from_source (asm_conf:(A)asm_config) (c:backend_config) p =
      let p = source_to_source_compile p in
      let (c',p) = source_to_flat_compile (backend_config_source_conf c) p in
-     let c = backend_config_source_conf_fupd (K c') c in
+     let c = backend_config_source_conf_fupd (combin_K c') c in
      from_flat asm_conf c p`;;
 
 let compile_eq_from_source = prove
@@ -449,7 +449,7 @@ let from_livesets_def = cake_def
               | SOME col_prog -> (name_num,arg_count,remove_must_terminate col_prog))
          prog_with_oracles in
      let c = backend_config_word_to_word_conf_fupd
-               (\c. word_to_word_config_col_oracle_fupd (K col) c) c in
+               (\c. word_to_word_config_col_oracle_fupd (combin_K col) c) c in
      from_word asm_conf c names p`;;
 
 (* HOL4: ZIP_MAP_MAP (local) *)
@@ -546,9 +546,9 @@ let to_data_change_config = prove
    backend_config_clos_conf c2 = backend_config_clos_conf c1 /\
    backend_config_bvl_conf c2 = backend_config_bvl_conf c1
    ==> to_data c2 prog =
-       (backend_config_source_conf_fupd (K (backend_config_source_conf c1'))
-          (backend_config_clos_conf_fupd (K (backend_config_clos_conf c1'))
-             (backend_config_bvl_conf_fupd (K (backend_config_bvl_conf c1')) c2)),
+       (backend_config_source_conf_fupd (combin_K (backend_config_source_conf c1'))
+          (backend_config_clos_conf_fupd (combin_K (backend_config_clos_conf c1'))
+             (backend_config_bvl_conf_fupd (combin_K (backend_config_bvl_conf c1')) c2)),
         prog')`,
   DISCH_TAC THEN STRIP_TAC THEN UNDISCH_TAC `to_data c1 prog = (c1',prog')` THEN
   REWRITE_TAC[to_data_def; to_bvi_def; to_bvl_def; to_clos_def; to_flat_def] THEN
@@ -559,9 +559,9 @@ let to_data_change_config = prove
 
 let ensure_fp_conf_ok_def = cake_def
   `ensure_fp_conf_ok (asm_c:(A)asm_config) (c:data_to_word_config) =
-     data_to_word_config_has_fp_ops_fupd (K (1 < asm_config_fp_reg_count asm_c))
+     data_to_word_config_has_fp_ops_fupd (combin_K (1 < asm_config_fp_reg_count asm_c))
        (data_to_word_config_has_fp_tern_fupd
-          (K (asm_config_ISA asm_c = ARMv7 /\ 2 < asm_config_fp_reg_count asm_c)) c)`;;
+          (combin_K (asm_config_ISA asm_c = ARMv7 /\ 2 < asm_config_fp_reg_count asm_c)) c)`;;
 
 let backend_progs_INFO = cake_record "backend_progs"
   ["env_id","num#num";
@@ -588,22 +588,22 @@ let keep_progs_def = cake_def
 let compile_inc_progs_def = cake_def
   `compile_inc_progs k (asm_conf:(A)asm_config) (c:backend_config) p_tup =
      let (env_id,p) = p_tup in
-     let ps = backend_progs_env_id_fupd (K env_id)
-                (backend_progs_source_prog_fupd (K p) (empty_progs:(A)backend_progs)) in
+     let ps = backend_progs_env_id_fupd (combin_K env_id)
+                (backend_progs_source_prog_fupd (combin_K p) (empty_progs:(A)backend_progs)) in
      let p = source_to_source_compile p in
      let (c',p) = inc_compile env_id (backend_config_source_conf c) p in
-     let ps = backend_progs_flat_prog_fupd (K (keep_progs k p)) ps in
-     let c = backend_config_source_conf_fupd (K c') c in
+     let ps = backend_progs_flat_prog_fupd (combin_K (keep_progs k p)) ps in
+     let c = backend_config_source_conf_fupd (combin_K c') c in
      let p = inc_compile_decs p in
-     let ps = backend_progs_clos_prog_fupd (K ((keep_progs k ## keep_progs k) p)) ps in
+     let ps = backend_progs_clos_prog_fupd (combin_K ((keep_progs k ## keep_progs k) p)) ps in
      let (c',p) = clos_to_bvl_compile_inc (backend_config_clos_conf c) p in
-     let c = backend_config_clos_conf_fupd (K c') c in
-     let ps = backend_progs_bvl_prog_fupd (K (keep_progs k p)) ps in
+     let c = backend_config_clos_conf_fupd (combin_K c') c in
+     let ps = backend_progs_bvl_prog_fupd (combin_K (keep_progs k p)) ps in
      let (c',p) = bvl_to_bvi_compile_inc_all (backend_config_bvl_conf c) p in
-     let c = backend_config_bvl_conf_fupd (K c') c in
-     let ps = backend_progs_bvi_prog_fupd (K (keep_progs k p)) ps in
+     let c = backend_config_bvl_conf_fupd (combin_K c') c in
+     let ps = backend_progs_bvi_prog_fupd (combin_K (keep_progs k p)) ps in
      let p = bvi_to_data_compile_prog p in
-     let ps = backend_progs_data_prog_fupd (K (keep_progs k p)) ps in
+     let ps = backend_progs_data_prog_fupd (combin_K (keep_progs k p)) ps in
      let dc = ensure_fp_conf_ok asm_conf (backend_config_data_conf c) in
      let p = MAP (data_to_word_compile_part dc) p in
      let reg_count1 = asm_config_reg_count asm_conf -
@@ -611,7 +611,7 @@ let compile_inc_progs_def = cake_def
      let p = MAP (\p. full_compile_single (asm_config_two_reg_arith asm_conf) reg_count1
                         (word_to_word_config_reg_alg (backend_config_word_to_word_conf c))
                         asm_conf (p,NONE)) p in
-     let ps = backend_progs_word_prog_fupd (K (keep_progs k p)) ps in
+     let ps = backend_progs_word_prog_fupd (combin_K (keep_progs k p)) ps in
      let bm0 = word_to_stack_config_bitmaps_length (backend_config_word_conf c) in
      let (p,fs,bm) =
        compile_word_to_stack asm_conf
@@ -619,23 +619,23 @@ let compile_inc_progs_def = cake_def
          (Nil,bm0) in
      let cur_bm = append (FST bm) in
      let c = backend_config_word_conf_fupd
-               (K (word_to_stack_config_bitmaps_length_fupd (K (SND bm))
+               (combin_K (word_to_stack_config_bitmaps_length_fupd (combin_K (SND bm))
                      (backend_config_word_conf c))) c in
-     let ps = backend_progs_stack_prog_fupd (K (keep_progs k p))
-                (backend_progs_cur_bm_fupd (K cur_bm) ps) in
+     let ps = backend_progs_stack_prog_fupd (combin_K (keep_progs k p))
+                (backend_progs_cur_bm_fupd (combin_K cur_bm) ps) in
      let reg_count2 = asm_config_reg_count asm_conf -
                       (3 + LENGTH (asm_config_avoid_regs asm_conf)) in
      let p = compile_no_stubs
                (stack_to_lab_config_reg_names (backend_config_stack_conf c))
                (stack_to_lab_config_jump (backend_config_stack_conf c))
                (asm_config_addr_offset asm_conf) reg_count2 p in
-     let ps = backend_progs_lab_prog_fupd (K (keep_progs k p)) ps in
+     let ps = backend_progs_lab_prog_fupd (combin_K (keep_progs k p)) ps in
      let target = lab_to_target_compile asm_conf (backend_config_lab_conf c)
                     (p:((A)sec)list) in
      let ps = backend_progs_target_prog_fupd
-                (K (OPTION_MAP (\(bytes,c'). (bytes,cur_bm)) target)) ps in
+                (combin_K (OPTION_MAP (\(bytes,c'). (bytes,cur_bm)) target)) ps in
      let c = backend_config_lab_conf_fupd
-               (match target with NONE -> I | SOME (bytes,c') -> K c') c in
+               (match target with NONE -> I | SOME (bytes,c') -> combin_K c') c in
      (c,ps)`;;
 
 let compile_inc_progs_for_eval_def = cake_def
@@ -649,9 +649,9 @@ let to_word_0_invariant = prove
  (CASE_TERM
   `word_to_word_config_reg_alg wc =
    word_to_word_config_reg_alg (backend_config_word_to_word_conf c)
-   ==> to_word_0 (asm_conf:(A)asm_config) (backend_config_word_to_word_conf_fupd (K wc) c) p =
+   ==> to_word_0 (asm_conf:(A)asm_config) (backend_config_word_to_word_conf_fupd (combin_K wc) c) p =
        let (c,p,names) = to_word_0 asm_conf c p in
-       (backend_config_word_to_word_conf_fupd (K wc) c,p,names)`,
+       (backend_config_word_to_word_conf_fupd (combin_K wc) c,p,names)`,
   DISCH_TAC THEN
   REWRITE_TAC[to_word_0_def; to_data_def; to_bvi_def; to_bvl_def; to_clos_def;
               to_flat_def] THEN
@@ -664,15 +664,15 @@ let compile_inc_progs_for_eval_eq = prove
      let p = source_to_source_compile p in
      let (c',p) = inc_compile env_id (backend_config_source_conf c) p in
      let _ = empty_ffi (implode "finished: source_to_flat") in
-     let c = backend_config_source_conf_fupd (K c') c in
+     let c = backend_config_source_conf_fupd (combin_K c') c in
      let p = inc_compile_decs p in
      let _ = empty_ffi (implode "finished: flat_to_clos") in
      let (c',p) = clos_to_bvl_compile_inc (backend_config_clos_conf c) p in
      let _ = empty_ffi (implode "finished: clos_to_bvl") in
-     let c = backend_config_clos_conf_fupd (K c') c in
+     let c = backend_config_clos_conf_fupd (combin_K c') c in
      let (c',p) = bvl_to_bvi_compile_inc_all (backend_config_bvl_conf c) p in
      let _ = empty_ffi (implode "finished: bvl_to_bvi") in
-     let c = backend_config_bvl_conf_fupd (K c') c in
+     let c = backend_config_bvl_conf_fupd (combin_K c') c in
      let p = bvi_to_data_compile_prog p in
      let _ = empty_ffi (implode "finished: bvi_to_data") in
      let dc = ensure_fp_conf_ok asm_conf (backend_config_data_conf c) in
@@ -692,7 +692,7 @@ let compile_inc_progs_for_eval_eq = prove
      let _ = empty_ffi (implode "finished: word_to_stack") in
      let cur_bm = append (FST bm) in
      let c = backend_config_word_conf_fupd
-               (K (word_to_stack_config_bitmaps_length_fupd (K (SND bm))
+               (combin_K (word_to_stack_config_bitmaps_length_fupd (combin_K (SND bm))
                      (backend_config_word_conf c))) c in
      let reg_count2 = asm_config_reg_count asm_conf -
                       (3 + LENGTH (asm_config_avoid_regs asm_conf)) in
@@ -705,7 +705,7 @@ let compile_inc_progs_for_eval_eq = prove
                     (p:((A)sec)list) in
      let _ = empty_ffi (implode "finished: lab_to_target") in
      let c = backend_config_lab_conf_fupd
-               (match target with NONE -> I | SOME (_,c') -> K c') c in
+               (match target with NONE -> I | SOME (_,c') -> combin_K c') c in
      OPTION_MAP (\x. (c,FST x,MAP upper_w2w cur_bm)) target`,
   let rws = [(record_info "backend_config").ri_accfupds;
              (record_info "backend_progs").ri_accfupds; K_THM] in
@@ -725,5 +725,5 @@ let ffinames_to_string_list_def = cake_def
 let set_oracle_def = cake_def
   `set_oracle (c:backend_config) oracle =
      backend_config_word_to_word_conf_fupd
-       (K (word_to_word_config_col_oracle_fupd (K oracle)
+       (combin_K (word_to_word_config_col_oracle_fupd (combin_K oracle)
              (backend_config_word_to_word_conf c))) c`;;

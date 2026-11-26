@@ -50,10 +50,17 @@ let pm_base_name v =
   let n = fst(dest_var v) in
   try let k = String.index n '%' in String.sub n 0 k with Not_found -> n;;
 
+(* the pattern one (HOL4's (), the only value of type :1) matches every    *)
+(* value, as HOL4's one constructor does: no test, nothing bound (before    *)
+(* 2026-11-25 it was a literal, a test x = one, so ONELINE and the compiled *)
+(* matches had if x = one then .. else ARB)                                  *)
+let kit_one_tm = mk_const("one",[]);;
+
 let is_literal_pat p =
   (is_numeral p && dest_numeral p <> num_0) ||
   p = `T` || p = `F` ||
-  (frees p = [] && not (is_numeral p) && not (is_constructor_app p));;
+  (frees p = [] && not (is_numeral p) && not (is_constructor_app p) &&
+   p <> kit_one_tm);;
 
 (* a variant of v whose NAME differs from every name in avoid (HOL Light's  *)
 (* variant only avoids variables of the same name and type)                 *)
@@ -96,9 +103,10 @@ let rec compile_rows (avoid0:term list) (scruts:term list)
   match rows with
     [] -> dflt
   | r::rest ->
-    let nonvar = filter (fun (p,_) -> not (is_var p)) (zip r.pm_pats scruts) in
+    let nonvar = filter (fun (p,_) -> not (is_var p) && p <> kit_one_tm)
+                        (zip r.pm_pats scruts) in
     if nonvar = [] then
-      let s = mapfilter (fun (p,s) -> if is_wildcard p then failwith ""
+      let s = mapfilter (fun (p,s) -> if is_wildcard p || p = kit_one_tm then failwith ""
                                       else (s,p)) (zip r.pm_pats scruts) in
       let rhs_ = vsubst s r.pm_rhs in
       (match r.pm_guard with
@@ -275,6 +283,8 @@ let CASE_TERM tm = cases_of_matches tm;;
 (* and so does g (HOL Light's g sets the goal as parsed)                     *)
 kit_q_compile_matches := cases_of_matches;;
 
+(* Replaces HOL Light's g: a goal written with match gets the kit's case     *)
+(* constants, as the clauses of cake_def and the strings of the q-tactics   *)
 let g tm = g (if kit_has_match tm then cases_of_matches tm else tm);;
 
 (* ------------------------------------------------------------------------- *)
@@ -290,8 +300,15 @@ let g tm = g (if kit_has_match tm then cases_of_matches tm else tm);;
 (* ------------------------------------------------------------------------- *)
 
 let ONELINE_TAC (th:thm) : tactic =
+  (* a variable of type :1 is one (a clause with the pattern one): before  *)
+  (* the clauses are tried, it is replaced by one                          *)
+  let unit_ty = type_of kit_one_tm in
+  let ones : tactic = fun (asl,w as g) ->
+    match filter (fun v -> type_of v = unit_ty) (frees w) with
+      [] -> ALL_TAC g
+    | vs -> MAP_EVERY (fun v -> SUBST1_TAC (SPEC v one)) vs g in
   let rec go g =
-    ((REWRITE_TAC[th] THEN CASE_REWRITE_TAC[] THEN NO_TAC) ORELSE
+    ((ones THEN REWRITE_TAC[th] THEN CAKE_REWRITE_TAC[] THEN NO_TAC) ORELSE
      (TOP_CASE_TAC THEN go)) g in
   REPEAT GEN_TAC THEN go;;
 

@@ -79,10 +79,10 @@ let BVLPROPSAUX_bvi_evaluate_Const0 = prove
  (`!env (s:(C,FFI)bvi_state).
      bvi_evaluate ([bvi_Op (IntOp (clos_Const (&0))) []],env,s) =
      (Rval [bvl_Number (&0)],s)`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[bvi_evaluate_def] THEN CASE_REWRITE_TAC[] THEN
+  REPEAT GEN_TAC THEN REWRITE_TAC[bvi_evaluate_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[bvi_do_app_def; distinctness "clos_op"] THEN
-  REWRITE_TAC[bvi_do_app_aux_def; REVERSE; NULL] THEN CASE_REWRITE_TAC[REVERSE; NULL] THEN
-  REWRITE_TAC[small_enough_int_def] THEN CONV_TAC INT_REDUCE_CONV THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[bvi_do_app_aux_def; REVERSE; NULL] THEN CAKE_REWRITE_TAC[REVERSE; NULL] THEN
+  REWRITE_TAC[small_enough_int_def] THEN CONV_TAC INT_REDUCE_CONV THEN CAKE_REWRITE_TAC[]);;
 
 let BVLPROPSAUX_delete_var_Rval = prove
  (`!h env (s:(C,FFI)bvi_state) a s1.
@@ -420,7 +420,7 @@ let BVLPROPSAUX_LET_VAR_TAC : tactic =
   DISCH_TAC THEN REPEAT GEN_TAC THEN STRIP_TAC THEN BVLPROPSAUX_LET_SPLIT_TAC THEN
   REWRITE_TAC[bvi_let_compile_def] THEN
   FIRST_ASSUM(ASSUME_TAC o MATCH_MP bvi_letProof_env_rel_length) THEN
-  CASES_ON `oEL a (ax:num list)` THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON `oEL a (ax:num list)` THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[bvi_evaluate_def] THENL
    [MP_TAC(ISPECL [`ax:num list`; `env1:bvl_v list`; `env2:bvl_v list`; `a:num`; `d:num`]
              bvi_letProof_env_rel_LLOOKUP_NONE) THEN
@@ -442,7 +442,7 @@ let BVLPROPSAUX_LET_FORCE_TAC : tactic =
     ALL_TAC] THEN
   REWRITE_TAC[bvi_let_compile_def] THEN
   FIRST_ASSUM(ASSUME_TAC o MATCH_MP bvi_letProof_env_rel_length) THEN
-  CASES_ON `oEL a1 (ax:num list)` THEN CASE_REWRITE_TAC[] THENL
+  CASES_ON `oEL a1 (ax:num list)` THEN CAKE_REWRITE_TAC[] THENL
    [MP_TAC(ISPECL [`ax:num list`; `env1:bvl_v list`; `env2:bvl_v list`; `a1:num`; `d:num`]
              bvi_letProof_env_rel_LLOOKUP_NONE) THEN
     ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
@@ -491,7 +491,7 @@ let BVLPROPSAUX_LET_ENV_TAC : tactic = fun (asl,w as g) ->
 let BVLPROPSAUX_LET_CALL_TAC : tactic =
   DISCH_TAC THEN REPEAT GEN_TAC THEN STRIP_TAC THEN
   REWRITE_TAC[bvi_let_compile_def] THEN
-  CASES_ON `a3:bvi_exp option` THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON `a3:bvi_exp option` THEN CAKE_REWRITE_TAC[] THEN
   BVLPROPSAUX_LET_IH_TAC THEN BVLPROPSAUX_LET_SPLIT_TAC THEN
   BVLPROPSAUX_LET_ENV_TAC THEN BVLPROPSAUX_LET_FIN_TAC;;
 
@@ -619,7 +619,7 @@ let bvi_letProof_evaluate_compile_exp = prove
      bvi_evaluate ([d],env,s) = (r,t) /\ ~(r = Rerr (Rabort Rtype_error)) ==>
      bvi_evaluate ([bvi_let_compile_exp d],env,s) = (r,t)`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[bvi_let_compile_exp_def] THEN
-  ONCE_REWRITE_TAC[GSYM bvi_let_compile_HD_SING] THEN CASE_REWRITE_TAC[] THEN
+  ONCE_REWRITE_TAC[GSYM bvi_let_compile_HD_SING] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[bvi_let_compile_HD_SING] THEN MATCH_MP_TAC bvi_letProof_compile_thm THEN
   ASM_REWRITE_TAC[]);;
 
@@ -676,7 +676,7 @@ let bvi_letProof_compile_code_labels = prove
 let bvi_letProof_compile_exp_code_labels = prove
  (`!x. bvi_get_code_labels (bvi_let_compile_exp x) = bvi_get_code_labels x`,
   GEN_TAC THEN REWRITE_TAC[bvi_let_compile_exp_def] THEN
-  ONCE_REWRITE_TAC[GSYM bvi_let_compile_HD_SING] THEN CASE_REWRITE_TAC[] THEN
+  ONCE_REWRITE_TAC[GSYM bvi_let_compile_HD_SING] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[BVLPROPSAUX_gcl_HD_compile; bvi_letProof_compile_code_labels] THEN
   REWRITE_TAC BVLPROPSAUX_BVI_LABELS_RWS);;
 let _ = cake_add_simps [bvi_letProof_compile_exp_code_labels];;

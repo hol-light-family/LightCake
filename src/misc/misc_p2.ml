@@ -1105,7 +1105,7 @@ let MAP_CHR_w2n_11 = prove
   SIMP_TAC[CHR_11; w2n_lt_256; VAL_EQ]);;
 
 let MAP_K_REPLICATE = prove
- (`MAP (K (x:B)) (ls:A list) = REPLICATE (LENGTH ls) x`,
+ (`MAP (combin_K (x:B)) (ls:A list) = REPLICATE (LENGTH ls) x`,
   SPEC_TAC(`ls:A list`,`ls:A list`) THEN
   LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[MAP; LENGTH; REPLICATE; K_THM]);;
 (* HOL4 a << n is word_shl a n, a >>> n is word_ushr a n, 0w is word 0 *)

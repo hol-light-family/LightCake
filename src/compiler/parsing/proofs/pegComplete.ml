@@ -167,7 +167,7 @@ let pegComplete_disjImpI = prove
 
 (* HOL4: [local] *)
 let ptree_head_eq_tok0 = prove
- (`!(pt:(A,B,C)parsetree) tk. (ptree_head pt = TOK tk) <=> ?l. pt = Lf (TOK tk,l)`,
+ (`!(pt:(A,B,C)parsetree) tk. (ptree_head pt = grammar_TOK tk) <=> ?l. pt = grammar_Lf (grammar_TOK tk,l)`,
   MATCH_MP_TAC ptree_ind THEN
   REWRITE_TAC[FORALL_PAIR_THM; ptree_head_def; parsetree_distinct;
               parsetree_inject; PAIR_EQ; symbol_distinct] THEN
@@ -215,7 +215,7 @@ let FLAT_EQ_CONS = prove
 
 let rfirstSet_nonempty_fringe = prove
  (`!(G:(A,B)grammar) (pt:(A,B,locs)parsetree) t l rest.
-     real_fringe pt = CONS (TOK t, l) rest /\ valid_lptree G pt ==>
+     real_fringe pt = CONS (grammar_TOK t, l) rest /\ valid_lptree G pt ==>
      t IN firstSet G [ptree_head pt]`,
   REPEAT STRIP_TAC THEN MATCH_MP_TAC firstSet_nonempty_fringe THEN
   EXISTS_TAC `MAP FST (rest:((A,B)symbol#locs)list)` THEN
@@ -224,7 +224,7 @@ let rfirstSet_nonempty_fringe = prove
 
 let peg_respects_firstSets = prove
  (`!N i0 t l.
-     ~(t IN firstSet cmlG [NT N]) /\ ~peg0 cmlPEG (peg_nt N I) /\
+     ~(t IN firstSet cmlG [grammar_NT N]) /\ ~peg0 cmlPEG (peg_nt N I) /\
      peg_nt N I IN Gexprs cmlPEG ==>
      ?fl fe. peg_eval cmlPEG (CONS (t,l) i0, peg_nt N I) (Failure fl fe)`,
   REPEAT STRIP_TAC THEN
@@ -253,7 +253,7 @@ let peg_respects_firstSets = prove
       check (fun th -> is_eq(concl th) && is_cons(lhs(concl th)))) THEN
     REWRITE_TAC[LENGTH; LENGTH_MAP] THEN ARITH_TAC;
     DISCH_THEN(K ALL_TAC) THEN
-    SUBGOAL_THEN `t IN firstSet cmlG [NT N]` (fun th -> ASM_MESON_TAC[th]) THEN
+    SUBGOAL_THEN `t IN firstSet cmlG [grammar_NT N]` (fun th -> ASM_MESON_TAC[th]) THEN
     FIRST_X_ASSUM(SUBST1_TAC o SYM o check (fun th ->
       try lhand(concl th) = `ptree_head (pt:mlptree)` with Failure _ -> false)) THEN
     MATCH_MP_TAC rfirstSet_nonempty_fringe THEN
@@ -264,7 +264,7 @@ let fFail_def = new_specification ["fFAIL1"; "fFAIL2"]
  (prove
   (`?fFAIL1 fFAIL2.
       !N i0 t l.
-        ~(t IN firstSet cmlG [NT N]) /\ ~peg0 cmlPEG (peg_nt N I) /\
+        ~(t IN firstSet cmlG [grammar_NT N]) /\ ~peg0 cmlPEG (peg_nt N I) /\
         peg_nt N I IN Gexprs cmlPEG ==>
         peg_eval cmlPEG (CONS (t,l) i0, peg_nt N I)
                  (Failure (fFAIL1 N i0 t l) (fFAIL2 N i0 t l))`,
@@ -273,7 +273,7 @@ let fFail_def = new_specification ["fFAIL1"; "fFAIL2"]
 
 let peg_respects_firstSets_rwt = prove
  (`!N i0 t l.
-     ~(t IN firstSet cmlG [NT N]) /\ ~peg0 cmlPEG (peg_nt N I) /\
+     ~(t IN firstSet cmlG [grammar_NT N]) /\ ~peg0 cmlPEG (peg_nt N I) /\
      peg_nt N I IN Gexprs cmlPEG ==>
      !sr'. peg_eval cmlPEG (CONS (t,l) i0, peg_nt N I) sr' <=>
            sr' = Failure (fFAIL1 N i0 t l) (fFAIL2 N i0 t l)`,
@@ -283,7 +283,7 @@ let peg_respects_firstSets_rwt = prove
 let peg_eval_NIL_NT = prove
  (`!N i r eo.
      peg_eval cmlPEG ([], peg_nt N I) (peg_Success i r eo) ==>
-     nullable cmlG [NT N] /\ i = []`,
+     nullable cmlG [grammar_NT N] /\ i = []`,
   REPEAT GEN_TAC THEN DISCH_THEN(STRIP_ASSUME_TAC o MATCH_MP peg_sound) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[MAP]) THEN
   FIRST_X_ASSUM(MP_TAC o SYM o check (fun th -> is_eq(concl th) &&
@@ -291,14 +291,14 @@ let peg_eval_NIL_NT = prove
   REWRITE_TAC[MAP; APPEND_EQ_NIL; MAP_EQ_NIL] THEN STRIP_TAC THEN
   ASM_REWRITE_TAC[] THEN
   MATCH_MP_TAC(TAUT `(~p ==> F) ==> p`) THEN DISCH_TAC THEN
-  MP_TAC(ISPECL [`cmlG`; `NT N:(token,MMLnonT)symbol`]
+  MP_TAC(ISPECL [`cmlG`; `grammar_NT N:(token,MMLnonT)symbol`]
          rfringe_length_not_nullable) THEN
   ASM_REWRITE_TAC[] THEN DISCH_THEN(MP_TAC o SPEC `pt:mlptree`) THEN
   ASM_REWRITE_TAC[LENGTH] THEN ARITH_TAC);;
 
 let not_nullable_input_CONS = prove
  (`!N i0 i r eo.
-     ~nullable cmlG [NT N] ==>
+     ~nullable cmlG [grammar_NT N] ==>
      peg_eval cmlPEG (i0, peg_nt N I) (peg_Success i r eo) ==>
      ?ht l t. i0 = CONS (ht,l) t /\ LENGTH i <= LENGTH t`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN
@@ -309,7 +309,7 @@ let not_nullable_input_CONS = prove
   DISCH_THEN(X_CHOOSE_THEN `tk:token` (X_CHOOSE_THEN `lc:locs` SUBST_ALL_TAC)) THEN
   MAP_EVERY EXISTS_TAC [`tk:token`; `lc:locs`; `t:(token#locs)list`] THEN
   REWRITE_TAC[] THEN
-  MP_TAC(ISPECL [`cmlG`; `NT N:(token,MMLnonT)symbol`]
+  MP_TAC(ISPECL [`cmlG`; `grammar_NT N:(token,MMLnonT)symbol`]
          rfringe_length_not_nullable) THEN
   ASM_REWRITE_TAC[] THEN DISCH_THEN(MP_TAC o SPEC `pt:mlptree`) THEN
   ASM_REWRITE_TAC[] THEN
@@ -321,19 +321,19 @@ let not_nullable_input_CONS = prove
 
 let not_nullable_seql_input_CONS = prove
  (`!N i0 rest f i r eo.
-     ~nullable cmlG [NT N] ==>
+     ~nullable cmlG [grammar_NT N] ==>
      peg_eval cmlPEG (i0, seql (CONS (peg_nt N I) rest) f) (peg_Success i r eo) ==>
      ?ht l t. i0 = CONS (ht,l) t /\ LENGTH i <= LENGTH t`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN REWRITE_TAC[seql_cons_SOME] THEN
   STRIP_TAC THEN
   FIRST_X_ASSUM(MP_TAC o MATCH_MP (MATCH_MP not_nullable_input_CONS
-    (ASSUME `~nullable cmlG [NT N]`))) THEN
+    (ASSUME `~nullable cmlG [grammar_NT N]`))) THEN
   FIRST_X_ASSUM(MP_TAC o MATCH_MP length_no_greater) THEN
   MESON_TAC[LE_TRANS]);;
 
 let sym2peg_def = cake_def
-  `(sym2peg (TOK tk) = tokeq tk:(token,MMLnonT,(mlptree)list,E)pegsym) /\
-   (sym2peg (NT N) = peg_nt N I)`;;
+  `(sym2peg (grammar_TOK tk) = tokeq tk:(token,MMLnonT,(mlptree)list,E)pegsym) /\
+   (sym2peg (grammar_NT N) = peg_nt N I)`;;
 
 let not_peg0_peg_eval_NIL_NONE = prove
  (`!(G:(A,B,C,E)peg) sym.
@@ -359,22 +359,22 @@ let list_case_lemma = prove
   REWRITE_TAC[list_CASE; NOT_CONS_NIL; HD; TL]);;
 (* only the subs = [x] and subs = [x;y] cases are relevant *)
 let left_insert1_def = cake_def
-  `(left_insert1 (pt:(A,B,locs)parsetree) (Lf (tk, l)) =
-      Lf (tk, merge_locs (ptree_loc pt) l)) /\
-   (left_insert1 pt (Nd (n,l0) subs) =
+  `(left_insert1 (pt:(A,B,locs)parsetree) (grammar_Lf (tk, l)) =
+      grammar_Lf (tk, merge_locs (ptree_loc pt) l)) /\
+   (left_insert1 pt (grammar_Nd (n,l0) subs) =
       match subs with
-        [] -> Nd (n, merge_locs (ptree_loc pt) l0) [pt]
+        [] -> grammar_Nd (n, merge_locs (ptree_loc pt) l0) [pt]
       | [x] -> mkNd n [mkNd n [pt]; x]
       | CONS x xs -> mkNd n (CONS (left_insert1 pt x) xs))`;;
 
 let left_insert1_ind = cake_ind "left_insert1";;
 
 let leftmost_def = cake_def
-  `(leftmost (Lf s) = Lf s:(token,MMLnonT,C)parsetree) /\
-   (leftmost (Nd (n,l) args) =
+  `(leftmost (grammar_Lf s) = grammar_Lf s:(token,MMLnonT,C)parsetree) /\
+   (leftmost (grammar_Nd (n,l) args) =
       if ~(args = []) /\ n = INL nTbase then HD args
       else match args with
-             [] -> Nd (n,l) args
+             [] -> grammar_Nd (n,l) args
            | CONS h _ -> leftmost h)`;;
 
 (* pt is a Tbase, and n will be DType all the way down.  The kit cannot   *)
@@ -384,14 +384,14 @@ let leftmost_def = cake_def
 
 let PARSE3AUX_li2_tyop_def = cake_def
   `PARSE3AUX_li2_tyop (subs:((A,B,C)parsetree)list) =
-     match subs with [Nd _ [tyop]] -> SOME tyop | _ -> NONE`;;
+     match subs with [grammar_Nd _ [tyop]] -> SOME tyop | _ -> NONE`;;
 
 let PARSE3AUX_left_insert2_def = cake_def
-  `(left_insert2 (pt:(A,B,locs)parsetree) (Lf (tk, l)) =
-      Lf (tk, merge_locs (ptree_loc pt) l)) /\
-   (left_insert2 pt (Nd (n, l0) subs) =
+  `(left_insert2 (pt:(A,B,locs)parsetree) (grammar_Lf (tk, l)) =
+      grammar_Lf (tk, merge_locs (ptree_loc pt) l)) /\
+   (left_insert2 pt (grammar_Nd (n, l0) subs) =
       match subs with
-        [] -> Nd (n,merge_locs (ptree_loc pt) l0) [pt]
+        [] -> grammar_Nd (n,merge_locs (ptree_loc pt) l0) [pt]
       | CONS x ys ->
           (match PARSE3AUX_li2_tyop subs with
              SOME tyop -> mkNd n [mkNd n [pt]; tyop]
@@ -400,25 +400,25 @@ let PARSE3AUX_left_insert2_def = cake_def
 let left_insert2_def = prove
  (CASE_TERM
   `(!(pt:(A,B,locs)parsetree) tk l.
-      left_insert2 pt (Lf (tk, l)) = Lf (tk, merge_locs (ptree_loc pt) l)) /\
+      left_insert2 pt (grammar_Lf (tk, l)) = grammar_Lf (tk, merge_locs (ptree_loc pt) l)) /\
    (!(pt:(A,B,locs)parsetree) n l0 subs.
-      left_insert2 pt (Nd (n, l0) subs) =
+      left_insert2 pt (grammar_Nd (n, l0) subs) =
       match subs with
-        [] -> Nd (n,merge_locs (ptree_loc pt) l0) [pt]
-      | [Nd _ [tyop]] -> mkNd n [mkNd n [pt]; tyop]
+        [] -> grammar_Nd (n,merge_locs (ptree_loc pt) l0) [pt]
+      | [grammar_Nd _ [tyop]] -> mkNd n [mkNd n [pt]; tyop]
       | CONS x ys -> mkNd n (CONS (left_insert2 pt x) ys))`,
   REWRITE_TAC[PARSE3AUX_left_insert2_def] THEN REPEAT GEN_TAC THEN
   CASES_ON `subs:((A,B,locs)parsetree)list` THEN
-  CASE_REWRITE_TAC[PARSE3AUX_li2_tyop_def] THEN
-  EVERY_CASE_TAC THEN CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[PARSE3AUX_li2_tyop_def] THEN
+  EVERY_CASE_TAC THEN CAKE_REWRITE_TAC[]);;
 
 (* HOL4: left_insert2_ind; here with the hypothesis for every head x of a *)
 (* non-empty subs (the cases [Nd _ [tyop]] included)                       *)
 let left_insert2_ind = prove
  (`!P:(A,B,locs)parsetree->(A,B,locs)parsetree->bool.
-       (!pt tk l. P pt (Lf (tk,l))) /\
+       (!pt tk l. P pt (grammar_Lf (tk,l))) /\
        (!pt n l0 subs. (!x ys. subs = CONS x ys ==> P pt x)
-                       ==> P pt (Nd (n,l0) subs))
+                       ==> P pt (grammar_Nd (n,l0) subs))
        ==> !x1 x2. P x1 x2`,
   GEN_TAC THEN DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "lf") (LABEL_TAC "nd")) THEN
   SUBGOAL_THEN `!(x2:(A,B,locs)parsetree) (x1:(A,B,locs)parsetree).
@@ -435,22 +435,22 @@ let left_insert_def = cake_def_wf
   `MEASURE (\x:(A,B,locs)parsetree#(B+num)#(A,B,locs)parsetree#(A,B,locs)parsetree.
               parsetree_size (\x:A. 0) (\x:B. 0) (\x:locs. 0) (FST x))`
   TERM_TAC
-  `(left_insert (Lf (tk,l)) (p:B+num) (sep:(A,B,locs)parsetree) c =
-      Lf (tk,merge_locs (ptree_loc c) l)) /\
-   (left_insert (Nd (n,l) subs) p sep c =
-      if ~(n = p) then Nd (n,merge_locs (ptree_loc c) l) subs
+  `(left_insert (grammar_Lf (tk,l)) (p:B+num) (sep:(A,B,locs)parsetree) c =
+      grammar_Lf (tk,merge_locs (ptree_loc c) l)) /\
+   (left_insert (grammar_Nd (n,l) subs) p sep c =
+      if ~(n = p) then grammar_Nd (n,merge_locs (ptree_loc c) l) subs
       else match subs with
-             [] -> Nd (n, merge_locs (ptree_loc c) l) subs
+             [] -> grammar_Nd (n, merge_locs (ptree_loc c) l) subs
            | CONS c0 r ->
                (match r with
                   [] -> mkNd p [mkNd p [c]; sep; c0]
                 | CONS s' r2 ->
                     (match r2 with
-                       [] -> Nd (n, merge_locs (ptree_loc c) l) subs
+                       [] -> grammar_Nd (n, merge_locs (ptree_loc c) l) subs
                      | CONS c' r3 ->
                          (match r3 with
                             [] -> mkNd p [left_insert c0 p sep c; s'; c']
-                          | CONS _ _ -> Nd (n, merge_locs (ptree_loc c) l) subs))))`;;
+                          | CONS _ _ -> grammar_Nd (n, merge_locs (ptree_loc c) l) subs))))`;;
 
 let left_insert_ind = cake_ind "left_insert";;
 
@@ -461,7 +461,7 @@ let left_insert1_FOLDL = prove
   GEN_TAC THEN GEN_TAC THEN ONCE_REWRITE_TAC[SWAP_FORALL_THM] THEN
   LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[FOLDL] THEN GEN_TAC THEN
   AP_THM_TAC THEN AP_TERM_TAC THEN
-  REWRITE_TAC[mkNd_def; left_insert1_def] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[mkNd_def; left_insert1_def] THEN CAKE_REWRITE_TAC[]);;
 
 (* HOL4 exports ptree_loc_def (grammar) as a rewrite here *)
 let _ = cake_add_simps [ptree_loc_def];;
@@ -500,9 +500,9 @@ let ptree_loc_left_insert1 = prove
   MATCH_MP_TAC left_insert1_ind THEN CONJ_TAC THEN REPEAT GEN_TAC THEN
   REWRITE_TAC[left_insert1_def; ptree_loc_def] THEN
   DISCH_TAC THEN CASES_ON `subs:((A,B,locs)parsetree)list` THEN
-  CASE_REWRITE_TAC[ptree_loc_def] THEN
+  CAKE_REWRITE_TAC[ptree_loc_def] THEN
   CASES_ON `a1:((A,B,locs)parsetree)list` THEN
-  CASE_REWRITE_TAC[valid_locs_def; ptree_loc_mkNd; ptree_list_loc_def; MAP;
+  CAKE_REWRITE_TAC[valid_locs_def; ptree_loc_mkNd; ptree_list_loc_def; MAP;
                    merge_list_locs_def; ptree_loc_def] THEN
   STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
   FIRST_X_ASSUM(MP_TAC o SPECL [`a0':(A,B,locs)parsetree`;
@@ -534,7 +534,7 @@ let _ = cake_add_simps [rightLoc_merge_locs];;
 
 let PARSE3AUX_MAP_TKI_SING = prove
  (`!pf (s:(token,MMLnonT)symbol) (l:locs).
-     [(s,l)] = MAP (TOK ## I) pf ==> ?t. s = TOK t`,
+     [(s,l)] = MAP (grammar_TOK ## I) pf ==> ?t. s = grammar_TOK t`,
   LIST_INDUCT_TAC THEN REWRITE_TAC[MAP; NOT_CONS_NIL; CONS_11] THEN
   REWRITE_TAC[FORALL_PAIR_THM] THEN
   MP_TAC(ISPEC `h:token#locs` PAIR_SURJECTIVE) THEN
@@ -544,16 +544,16 @@ let PARSE3AUX_MAP_TKI_SING = prove
 let PARSE3AUX_left_insert1_mkNd1 = prove
  (`!(x:(A,B,locs)parsetree) n a.
      left_insert1 x (mkNd n [a]) = mkNd n [mkNd n [x]; a]`,
-  REWRITE_TAC[mkNd_def; left_insert1_def] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[mkNd_def; left_insert1_def] THEN CAKE_REWRITE_TAC[]);;
 
 let PARSE3AUX_left_insert1_mkNd2 = prove
  (`!(x:(A,B,locs)parsetree) n a b.
      left_insert1 x (mkNd n [a; b]) = mkNd n [left_insert1 x a; b]`,
-  REWRITE_TAC[mkNd_def; left_insert1_def] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[mkNd_def; left_insert1_def] THEN CAKE_REWRITE_TAC[]);;
 
 let PARSE3AUX_Nd_mkNd = prove
  (`!n (subs:((A,B,locs)parsetree)list).
-     Nd (n, merge_list_locs (MAP ptree_loc subs)) subs = mkNd n subs`,
+     grammar_Nd (n, merge_list_locs (MAP ptree_loc subs)) subs = mkNd n subs`,
   REWRITE_TAC[mkNd_def; ptree_list_loc_def]);;
 
 (* the assumption MAP ptree_head subs IN FAPPLY (grammar_rules cmlG) n,     *)
@@ -574,7 +574,7 @@ let PARSE3AUX_GRULE_CASES_TAC : tactic =
 let PARSE3AUX_GRULE_MEM_TAC : tactic =
   CONV_TAC(ONCE_DEPTH_CONV PARSE3AUX_GRULE_CONV) THEN
   REWRITE_TAC[IN_INSERT; IN_UNION; NOT_IN_EMPTY; IN_ELIM_THM] THEN
-  CASE_REWRITE_TAC[];;
+  CAKE_REWRITE_TAC[];;
 
 (* Problem with Eapp is that it's left-recursive in the grammar :           *)
 (*   Eapp ::= Eapp Ebase | Ebase                                            *)
@@ -587,17 +587,17 @@ let PARSE3AUX_GRULE_MEM_TAC : tactic =
 
 let eapp_reassociated = prove
  (`!pt bpt pf bf.
-     valid_lptree cmlG pt /\ ptree_head pt = NT (INL nEapp) /\
-     real_fringe pt = MAP (TOK ## I) pf /\
-     valid_lptree cmlG bpt /\ ptree_head bpt = NT (INL nEbase) /\
-     real_fringe bpt = MAP (TOK ## I) bf ==>
+     valid_lptree cmlG pt /\ ptree_head pt = grammar_NT (INL nEapp) /\
+     real_fringe pt = MAP (grammar_TOK ## I) pf /\
+     valid_lptree cmlG bpt /\ ptree_head bpt = grammar_NT (INL nEbase) /\
+     real_fringe bpt = MAP (grammar_TOK ## I) bf ==>
      ?pt' bpt'.
        valid_lptree cmlG pt' /\ valid_lptree cmlG bpt' /\
        leftLoc (ptree_loc bpt') = leftLoc (ptree_loc pt) /\
        rightLoc (ptree_loc pt') = rightLoc (ptree_loc bpt) /\
-       ptree_head pt' = NT (INL nEapp) /\ ptree_head bpt' = NT (INL nEbase) /\
+       ptree_head pt' = grammar_NT (INL nEapp) /\ ptree_head bpt' = grammar_NT (INL nEbase) /\
        APPEND (real_fringe bpt') (real_fringe pt') =
-         MAP (TOK ## I) (APPEND pf bf) /\
+         MAP (grammar_TOK ## I) (APPEND pf bf) /\
        mkNd (INL nEapp) [pt; bpt] = left_insert1 bpt' pt'`,
   MATCH_MP_TAC ptree_ind THEN CONJ_TAC THENL
    [REWRITE_TAC[FORALL_PAIR_THM; ptree_head_def; real_fringe_def] THEN
@@ -626,7 +626,7 @@ let eapp_reassociated = prove
       STRIP_ASSUME_TAC)) THEN
     MAP_EVERY EXISTS_TAC [`mkNd (INL nEapp) [ppt'; bpt]:mlptree`; `bpt':mlptree`] THEN
     SUBGOAL_THEN
-     `Nd (INL nEapp,merge_list_locs [ptree_loc h0; ptree_loc h0']) [h0; h0'] =
+     `grammar_Nd (INL nEapp,merge_list_locs [ptree_loc h0; ptree_loc h0']) [h0; h0'] =
       mkNd (INL nEapp) [h0; h0']:mlptree` SUBST1_TAC THENL
      [REWRITE_TAC[mkNd_def; ptree_list_loc_def; MAP]; ALL_TAC] THEN
     REWRITE_TAC[PARSE3AUX_left_insert1_mkNd2] THEN
@@ -659,7 +659,7 @@ let PARSE3AUX_SPLIT_ND_PAIRS_TAC : tactic = fun (asl,w as g) ->
     map (fun t -> rand(rator t))
       (find_terms (fun t -> is_comb t && is_comb(rator t) &&
                             is_const(rator(rator t)) &&
-                            fst(dest_const(rator(rator t))) = "Nd" &&
+                            fst(dest_const(rator(rator t))) = "grammar_Nd" &&
                             is_var(rand(rator t))) t)) tms)) in
   (MAP_EVERY (fun v ->
      let a,b = PARSE3AUX_dest_pair_ty (type_of v) in
@@ -678,7 +678,7 @@ let ptree_loc_left_insert2 = prove
   DISCH_THEN(LABEL_TAC "ih") THEN REWRITE_TAC[valid_locs_def] THEN
   STRIP_TAC THEN ASM_REWRITE_TAC[left_insert2_def; ptree_loc_def] THEN
   CASES_ON `subs:((A,B,locs)parsetree)list` THEN
-  CASE_REWRITE_TAC[ptree_loc_def; ptree_loc_mkNd; ptree_list_loc_def; MAP] THEN
+  CAKE_REWRITE_TAC[ptree_loc_def; ptree_loc_mkNd; ptree_list_loc_def; MAP] THEN
   RULE_ASSUM_TAC(REWRITE_RULE[MEM; DISJ_IMP_THM; FORALL_AND_THM;
                               FORALL_UNWIND_THM2]) THEN
   USE_THEN "ih" (MP_TAC o SPECL [`a0:(A,B,locs)parsetree`;
@@ -698,7 +698,7 @@ let PARSE3AUX_left_insert2_mkNd2 = prove
  (`!(x:(A,B,locs)parsetree) n a b.
      left_insert2 x (mkNd n [a; b]) = mkNd n [left_insert2 x a; b]`,
   REPEAT GEN_TAC THEN REWRITE_TAC[mkNd_def; left_insert2_def] THEN
-  CASE_REWRITE_TAC[] THEN EVERY_CASE_TAC THEN CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[] THEN EVERY_CASE_TAC THEN CAKE_REWRITE_TAC[]);;
 
 let left_insert2_FOLDL = prove
  (`!(pt:(A,B,locs)parsetree) P acc arg.
@@ -710,7 +710,7 @@ let left_insert2_FOLDL = prove
 let PARSE3AUX_leftmost_DType = prove
  (`!(c:mlptree) cs. leftmost (mkNd (INL nDType) (CONS c cs)) = leftmost c`,
   REWRITE_TAC[mkNd_def; leftmost_def; NOT_CONS_NIL; HD] THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[]);;
 
 let PARSE3AUX_leftmost_Tbase = prove
  (`!(x:mlptree) xs. leftmost (mkNd (INL nTbase) (CONS x xs)) = x`,
@@ -720,7 +720,7 @@ let PARSE3AUX_left_insert2_mkNd1 = prove
  (`!(x:(A,B,locs)parsetree) n m tyop.
      left_insert2 x (mkNd n [mkNd m [tyop]]) = mkNd n [mkNd n [x]; tyop]`,
   REPEAT GEN_TAC THEN REWRITE_TAC[mkNd_def; left_insert2_def] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[GSYM mkNd_def]);;
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[GSYM mkNd_def]);;
 
 (* the situation with DType is similar to that with Eapp and Ebase:         *)
 (*   DType ::= DType TyOp | Tbase                                           *)
@@ -728,17 +728,17 @@ let PARSE3AUX_left_insert2_mkNd1 = prove
 
 let dtype_reassociated = prove
  (`!pt bpt pf bf.
-     valid_lptree cmlG pt /\ ptree_head pt = NT (INL nDType) /\
-     real_fringe pt = MAP (TOK ## I) pf /\
-     valid_lptree cmlG bpt /\ ptree_head bpt = NT (INL nTyOp) /\
-     real_fringe bpt = MAP (TOK ## I) bf ==>
+     valid_lptree cmlG pt /\ ptree_head pt = grammar_NT (INL nDType) /\
+     real_fringe pt = MAP (grammar_TOK ## I) pf /\
+     valid_lptree cmlG bpt /\ ptree_head bpt = grammar_NT (INL nTyOp) /\
+     real_fringe bpt = MAP (grammar_TOK ## I) bf ==>
      ?pt' bpt'.
        valid_lptree cmlG pt' /\ valid_lptree cmlG bpt' /\
        valid_lptree cmlG (leftmost pt') /\
-       ptree_head (leftmost pt') = NT (INL nTyOp) /\
-       ptree_head pt' = NT (INL nDType) /\ ptree_head bpt' = NT (INL nTbase) /\
+       ptree_head (leftmost pt') = grammar_NT (INL nTyOp) /\
+       ptree_head pt' = grammar_NT (INL nDType) /\ ptree_head bpt' = grammar_NT (INL nTbase) /\
        APPEND (real_fringe bpt') (real_fringe pt') =
-         MAP (TOK ## I) (APPEND pf bf) /\
+         MAP (grammar_TOK ## I) (APPEND pf bf) /\
        leftLoc (ptree_loc bpt') = leftLoc (ptree_loc pt) /\
        rightLoc (ptree_loc pt') = rightLoc (ptree_loc bpt) /\
        mkNd (INL nDType) [pt; bpt] = left_insert2 bpt' pt'`,
@@ -769,7 +769,7 @@ let dtype_reassociated = prove
       STRIP_ASSUME_TAC)) THEN
     MAP_EVERY EXISTS_TAC [`mkNd (INL nDType) [ppt'; bpt]:mlptree`; `bpt':mlptree`] THEN
     SUBGOAL_THEN
-     `Nd (INL nDType,merge_list_locs [ptree_loc h0; ptree_loc h0']) [h0; h0'] =
+     `grammar_Nd (INL nDType,merge_list_locs [ptree_loc h0; ptree_loc h0']) [h0; h0'] =
       mkNd (INL nDType) [h0; h0']:mlptree` SUBST1_TAC THENL
      [REWRITE_TAC[mkNd_def; ptree_list_loc_def; MAP]; ALL_TAC] THEN
     REWRITE_TAC[PARSE3AUX_left_insert2_mkNd2; PARSE3AUX_leftmost_DType] THEN
@@ -799,7 +799,7 @@ let left_insert_mkNd = prove
    (!n (sep:(A,B,locs)parsetree) c p' s' c'.
       left_insert (mkNd n [p'; s'; c']) n sep c =
       mkNd n [left_insert p' n sep c; s'; c'])`,
-  REWRITE_TAC[mkNd_def; left_insert_def] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[mkNd_def; left_insert_def] THEN CAKE_REWRITE_TAC[]);;
 let _ = cake_add_simps [left_insert_mkNd];;
 
 let ptree_loc_left_insert = prove
@@ -813,14 +813,14 @@ let ptree_loc_left_insert = prove
   STRIP_TAC THEN REWRITE_TAC[left_insert_def] THEN
   ASM_CASES_TAC `n:B+num = p` THEN ASM_REWRITE_TAC[ptree_loc_def] THEN
   FIRST_X_ASSUM SUBST_ALL_TAC THEN
-  CASES_ON `subs:((A,B,locs)parsetree)list` THEN CASE_REWRITE_TAC[ptree_loc_def] THEN
-  CASES_ON `a1:((A,B,locs)parsetree)list` THEN CASE_REWRITE_TAC[ptree_loc_def] THENL
+  CASES_ON `subs:((A,B,locs)parsetree)list` THEN CAKE_REWRITE_TAC[ptree_loc_def] THEN
+  CASES_ON `a1:((A,B,locs)parsetree)list` THEN CAKE_REWRITE_TAC[ptree_loc_def] THENL
    [ASM_REWRITE_TAC[ptree_loc_mkNd; ptree_list_loc_def; MAP; merge_list_locs_def;
                     ptree_list_loc_SING; merge_list_locs_HDLAST; LAST; NOT_CONS_NIL;
                     PARSE3AUX_merge_locs_LR];
     ALL_TAC] THEN
-  CASES_ON `a1':((A,B,locs)parsetree)list` THEN CASE_REWRITE_TAC[ptree_loc_def] THEN
-  CASES_ON `a1'':((A,B,locs)parsetree)list` THEN CASE_REWRITE_TAC[ptree_loc_def] THEN
+  CASES_ON `a1':((A,B,locs)parsetree)list` THEN CAKE_REWRITE_TAC[ptree_loc_def] THEN
+  CASES_ON `a1'':((A,B,locs)parsetree)list` THEN CAKE_REWRITE_TAC[ptree_loc_def] THEN
   USE_THEN "ih" (MP_TAC o SPECL [`a0':(A,B,locs)parsetree`; `a0'':(A,B,locs)parsetree`;
                                  `a0:(A,B,locs)parsetree`]) THEN
   REWRITE_TAC[] THEN
@@ -837,7 +837,7 @@ let ptree_loc_left_insert = prove
 
 let PARSE3AUX_MAP_TKI_SING_G = prove
  (`!pf (s:(A,B)symbol) (l:locs).
-     [(s,l)] = MAP ((TOK:A->(A,B)symbol) ## I) pf ==> ?t. s = TOK t`,
+     [(s,l)] = MAP ((grammar_TOK:A->(A,B)symbol) ## I) pf ==> ?t. s = grammar_TOK t`,
   LIST_INDUCT_TAC THEN REWRITE_TAC[MAP; NOT_CONS_NIL; CONS_11] THEN
   REWRITE_TAC[FORALL_PAIR_THM] THEN
   MP_TAC(ISPEC `h:A#locs` PAIR_SURJECTIVE) THEN
@@ -846,19 +846,19 @@ let PARSE3AUX_MAP_TKI_SING_G = prove
 
 let lassoc_reassociated = prove
  (`!(G:(A,B)grammar) P SEP C ppt spt cpt pf sf cf.
-     FAPPLY (grammar_rules G) P = {[NT P; SEP; C], [C]} ==>
-     valid_lptree G ppt /\ ptree_head ppt = NT P /\
-       real_fringe ppt = MAP (TOK ## I) pf /\
+     FAPPLY (grammar_rules G) P = {[grammar_NT P; SEP; C], [C]} ==>
+     valid_lptree G ppt /\ ptree_head ppt = grammar_NT P /\
+       real_fringe ppt = MAP (grammar_TOK ## I) pf /\
      valid_lptree G spt /\ ptree_head spt = SEP /\
-       real_fringe spt = MAP (TOK ## I) sf /\
+       real_fringe spt = MAP (grammar_TOK ## I) sf /\
      valid_lptree G cpt /\ ptree_head cpt = C /\
-       real_fringe cpt = MAP (TOK ## I) cf ==>
+       real_fringe cpt = MAP (grammar_TOK ## I) cf ==>
      ?cpt' spt' ppt'.
-       valid_lptree G ppt' /\ ptree_head ppt' = NT P /\
+       valid_lptree G ppt' /\ ptree_head ppt' = grammar_NT P /\
        valid_lptree G spt' /\ ptree_head spt' = SEP /\
        valid_lptree G cpt' /\ ptree_head cpt' = C /\
        APPEND (APPEND (real_fringe cpt') (real_fringe spt')) (real_fringe ppt') =
-         MAP (TOK ## I) (APPEND (APPEND pf sf) cf) /\
+         MAP (grammar_TOK ## I) (APPEND (APPEND pf sf) cf) /\
        leftLoc (ptree_loc cpt') = leftLoc (ptree_loc ppt) /\
        rightLoc (ptree_loc ppt') = rightLoc (ptree_loc cpt) /\
        mkNd P [ppt; spt; cpt] = left_insert ppt' P spt' cpt'`,
@@ -905,7 +905,7 @@ let lassoc_reassociated = prove
     MAP_EVERY EXISTS_TAC [`cpt':(A,B,locs)parsetree`; `spt':(A,B,locs)parsetree`;
                           `mkNd P [ppt'; spt; cpt]:(A,B,locs)parsetree`] THEN
     SUBGOAL_THEN
-     `Nd (P,merge_list_locs [ptree_loc h0; ptree_loc h0'; ptree_loc h0''])
+     `grammar_Nd (P,merge_list_locs [ptree_loc h0; ptree_loc h0'; ptree_loc h0''])
          [h0; h0'; h0''] = mkNd P [h0; h0'; h0'']:(A,B,locs)parsetree`
      SUBST1_TAC THENL [REWRITE_TAC[mkNd_def; ptree_list_loc_def; MAP]; ALL_TAC] THEN
     ASM_REWRITE_TAC[left_insert_mkNd; valid_lptree_mkNd; ptree_head_mkNd;
@@ -957,7 +957,7 @@ let peg_seql_NONE_det = prove
 
 let firstSet_respect_peg_eval_not_success = prove
  (`!N i0 t l i r e0.
-     ~(t IN firstSet cmlG [NT N]) /\ ~peg0 cmlPEG (peg_nt N I) /\
+     ~(t IN firstSet cmlG [grammar_NT N]) /\ ~peg0 cmlPEG (peg_nt N I) /\
      peg_nt N I IN Gexprs cmlPEG ==>
      ~peg_eval cmlPEG (CONS (t,l) i0, peg_nt N I) (peg_Success i r e0)`,
   REPEAT GEN_TAC THEN DISCH_THEN(MP_TAC o MATCH_MP peg_respects_firstSets_rwt) THEN
@@ -984,7 +984,7 @@ let PARSE3AUX_FIRSTSET_TAC : tactic =
   REWRITE_TAC PARSE3AUX_FIRSTSET_RWTS THEN
   REWRITE_TAC[IN_UNION; IN_INSERT; NOT_IN_EMPTY; IN_ELIM_THM; IN_DIFF; IN_UNIV;
               IN_DELETE] THEN
-  CASE_REWRITE_TAC[];;
+  CAKE_REWRITE_TAC[];;
 
 let eOR_wrongtok = prove
  (`!loc i0 i r eo.
@@ -1026,12 +1026,12 @@ let nestoppers_def = new_definition
      (:token) DIFF
      ((((((({AndalsoT, ArrowT, BarT, ColonT, HandleT, OrelseT,
              AlphaT (implode "before")} UNION
-            firstSet cmlG [NT (INL nMultOps)]) UNION
-           firstSet cmlG [NT (INL nRelOps)]) UNION
-          firstSet cmlG [NT (INL nListOps)]) UNION
-         firstSet cmlG [NT (INL nAddOps)]) UNION
-        firstSet cmlG [NT (INL nCompOps)]) UNION
-       firstSet cmlG [NT (INL nEbase)]) UNION firstSet cmlG [NT (INL nTyOp)])`;;
+            firstSet cmlG [grammar_NT (INL nMultOps)]) UNION
+           firstSet cmlG [grammar_NT (INL nRelOps)]) UNION
+          firstSet cmlG [grammar_NT (INL nListOps)]) UNION
+         firstSet cmlG [grammar_NT (INL nAddOps)]) UNION
+        firstSet cmlG [grammar_NT (INL nCompOps)]) UNION
+       firstSet cmlG [grammar_NT (INL nEbase)]) UNION firstSet cmlG [grammar_NT (INL nTyOp)])`;;
 
 (* HOL4 writes stoppers as clauses with a catch-all, which TFL completes   *)
 (* into one clause per constructor of MMLnonT; it is defined here by the   *)
@@ -1042,53 +1042,53 @@ let PARSE3AUX_stoppers_def = cake_def
   `stoppers (n:MMLnonT) =
      match n with
          nAndFDecls -> nestoppers DELETE AndT
-       | nDconstructor -> (:token) DIFF ((({StarT, OfT, ArrowT, LparT} UNION firstSet cmlG [NT (INL nTyOp)]) UNION {TyvarT s | s | T}))
+       | nDconstructor -> (:token) DIFF ((({StarT, OfT, ArrowT, LparT} UNION firstSet cmlG [grammar_NT (INL nTyOp)]) UNION {TyvarT s | s | T}))
        | nDecl -> nestoppers DIFF (({BarT, StarT, AndT, OfT} UNION {TyvarT s | s | T}))
        | nDecls -> nestoppers DIFF (({BarT, StarT, AndT, SemicolonT, FunT, ValT, DatatypeT, OfT, ExceptionT, TypeT, LocalT, StructureT} UNION {TyvarT s | s | T}))
-       | nDType -> (:token) DIFF (firstSet cmlG [NT (INL nTyOp)])
-       | nDtypeCons -> (:token) DIFF ((({ArrowT, BarT, StarT, OfT, LparT} UNION firstSet cmlG [NT (INL nTyOp)]) UNION {TyvarT s | s | T}))
-       | nDtypeDecl -> (:token) DIFF ((({ArrowT, BarT, StarT, OfT, LparT} UNION firstSet cmlG [NT (INL nTyOp)]) UNION {TyvarT s | s | T}))
-       | nDtypeDecls -> (:token) DIFF ((({AndT, ArrowT, BarT, StarT, OfT, LparT} UNION {TyvarT s | s | T}) UNION firstSet cmlG [NT (INL nTyOp)]))
+       | nDType -> (:token) DIFF (firstSet cmlG [grammar_NT (INL nTyOp)])
+       | nDtypeCons -> (:token) DIFF ((({ArrowT, BarT, StarT, OfT, LparT} UNION firstSet cmlG [grammar_NT (INL nTyOp)]) UNION {TyvarT s | s | T}))
+       | nDtypeDecl -> (:token) DIFF ((({ArrowT, BarT, StarT, OfT, LparT} UNION firstSet cmlG [grammar_NT (INL nTyOp)]) UNION {TyvarT s | s | T}))
+       | nDtypeDecls -> (:token) DIFF ((({AndT, ArrowT, BarT, StarT, OfT, LparT} UNION {TyvarT s | s | T}) UNION firstSet cmlG [grammar_NT (INL nTyOp)]))
        | nE -> nestoppers
-       | nEadd -> (:token) DIFF (((firstSet cmlG [NT (INL nMultOps)] UNION firstSet cmlG [NT (INL nAddOps)]) UNION firstSet cmlG [NT (INL nEbase)]))
-       | nEapp -> (:token) DIFF (firstSet cmlG [NT (INL nEbase)])
-       | nEbefore -> (:token) DIFF ((((((({AlphaT (implode "before")} UNION firstSet cmlG [NT (INL nCompOps)]) UNION firstSet cmlG [NT (INL nRelOps)]) UNION firstSet cmlG [NT (INL nListOps)]) UNION firstSet cmlG [NT (INL nMultOps)]) UNION firstSet cmlG [NT (INL nAddOps)]) UNION firstSet cmlG [NT (INL nEbase)]))
-       | nEcomp -> (:token) DIFF ((((((firstSet cmlG [NT (INL nCompOps)] UNION firstSet cmlG [NT (INL nRelOps)]) UNION firstSet cmlG [NT (INL nListOps)]) UNION firstSet cmlG [NT (INL nMultOps)]) UNION firstSet cmlG [NT (INL nAddOps)]) UNION firstSet cmlG [NT (INL nEbase)]))
+       | nEadd -> (:token) DIFF (((firstSet cmlG [grammar_NT (INL nMultOps)] UNION firstSet cmlG [grammar_NT (INL nAddOps)]) UNION firstSet cmlG [grammar_NT (INL nEbase)]))
+       | nEapp -> (:token) DIFF (firstSet cmlG [grammar_NT (INL nEbase)])
+       | nEbefore -> (:token) DIFF ((((((({AlphaT (implode "before")} UNION firstSet cmlG [grammar_NT (INL nCompOps)]) UNION firstSet cmlG [grammar_NT (INL nRelOps)]) UNION firstSet cmlG [grammar_NT (INL nListOps)]) UNION firstSet cmlG [grammar_NT (INL nMultOps)]) UNION firstSet cmlG [grammar_NT (INL nAddOps)]) UNION firstSet cmlG [grammar_NT (INL nEbase)]))
+       | nEcomp -> (:token) DIFF ((((((firstSet cmlG [grammar_NT (INL nCompOps)] UNION firstSet cmlG [grammar_NT (INL nRelOps)]) UNION firstSet cmlG [grammar_NT (INL nListOps)]) UNION firstSet cmlG [grammar_NT (INL nMultOps)]) UNION firstSet cmlG [grammar_NT (INL nAddOps)]) UNION firstSet cmlG [grammar_NT (INL nEbase)]))
        | nEhandle -> nestoppers
        | nElist1 -> nestoppers DELETE CommaT
        | nElist2 -> nestoppers DELETE CommaT
-       | nElistop -> (:token) DIFF ((((firstSet cmlG [NT (INL nMultOps)] UNION firstSet cmlG [NT (INL nAddOps)]) UNION firstSet cmlG [NT (INL nListOps)]) UNION firstSet cmlG [NT (INL nEbase)]))
-       | nElogicAND -> (:token) DIFF (((((((({AndalsoT, ColonT, ArrowT, AlphaT (implode "before")} UNION firstSet cmlG [NT (INL nCompOps)]) UNION firstSet cmlG [NT (INL nRelOps)]) UNION firstSet cmlG [NT (INL nListOps)]) UNION firstSet cmlG [NT (INL nMultOps)]) UNION firstSet cmlG [NT (INL nAddOps)]) UNION firstSet cmlG [NT (INL nEbase)]) UNION firstSet cmlG [NT (INL nTyOp)]))
-       | nElogicOR -> (:token) DIFF (((((((({AndalsoT, ColonT, ArrowT, OrelseT, AlphaT (implode "before")} UNION firstSet cmlG [NT (INL nCompOps)]) UNION firstSet cmlG [NT (INL nRelOps)]) UNION firstSet cmlG [NT (INL nListOps)]) UNION firstSet cmlG [NT (INL nMultOps)]) UNION firstSet cmlG [NT (INL nAddOps)]) UNION firstSet cmlG [NT (INL nEbase)]) UNION firstSet cmlG [NT (INL nTyOp)]))
-       | nEmult -> (:token) DIFF ((firstSet cmlG [NT (INL nEbase)] UNION firstSet cmlG [NT (INL nMultOps)]))
-       | nErel -> (:token) DIFF (((((firstSet cmlG [NT (INL nRelOps)] UNION firstSet cmlG [NT (INL nListOps)]) UNION firstSet cmlG [NT (INL nMultOps)]) UNION firstSet cmlG [NT (INL nAddOps)]) UNION firstSet cmlG [NT (INL nEbase)]))
+       | nElistop -> (:token) DIFF ((((firstSet cmlG [grammar_NT (INL nMultOps)] UNION firstSet cmlG [grammar_NT (INL nAddOps)]) UNION firstSet cmlG [grammar_NT (INL nListOps)]) UNION firstSet cmlG [grammar_NT (INL nEbase)]))
+       | nElogicAND -> (:token) DIFF (((((((({AndalsoT, ColonT, ArrowT, AlphaT (implode "before")} UNION firstSet cmlG [grammar_NT (INL nCompOps)]) UNION firstSet cmlG [grammar_NT (INL nRelOps)]) UNION firstSet cmlG [grammar_NT (INL nListOps)]) UNION firstSet cmlG [grammar_NT (INL nMultOps)]) UNION firstSet cmlG [grammar_NT (INL nAddOps)]) UNION firstSet cmlG [grammar_NT (INL nEbase)]) UNION firstSet cmlG [grammar_NT (INL nTyOp)]))
+       | nElogicOR -> (:token) DIFF (((((((({AndalsoT, ColonT, ArrowT, OrelseT, AlphaT (implode "before")} UNION firstSet cmlG [grammar_NT (INL nCompOps)]) UNION firstSet cmlG [grammar_NT (INL nRelOps)]) UNION firstSet cmlG [grammar_NT (INL nListOps)]) UNION firstSet cmlG [grammar_NT (INL nMultOps)]) UNION firstSet cmlG [grammar_NT (INL nAddOps)]) UNION firstSet cmlG [grammar_NT (INL nEbase)]) UNION firstSet cmlG [grammar_NT (INL nTyOp)]))
+       | nEmult -> (:token) DIFF ((firstSet cmlG [grammar_NT (INL nEbase)] UNION firstSet cmlG [grammar_NT (INL nMultOps)]))
+       | nErel -> (:token) DIFF (((((firstSet cmlG [grammar_NT (INL nRelOps)] UNION firstSet cmlG [grammar_NT (INL nListOps)]) UNION firstSet cmlG [grammar_NT (INL nMultOps)]) UNION firstSet cmlG [grammar_NT (INL nAddOps)]) UNION firstSet cmlG [grammar_NT (INL nEbase)]))
        | nEseq -> nestoppers DELETE SemicolonT
-       | nEtyped -> (:token) DIFF (((((((({ColonT, ArrowT, AlphaT (implode "before")} UNION firstSet cmlG [NT (INL nCompOps)]) UNION firstSet cmlG [NT (INL nListOps)]) UNION firstSet cmlG [NT (INL nRelOps)]) UNION firstSet cmlG [NT (INL nMultOps)]) UNION firstSet cmlG [NT (INL nAddOps)]) UNION firstSet cmlG [NT (INL nEbase)]) UNION firstSet cmlG [NT (INL nTyOp)]))
+       | nEtyped -> (:token) DIFF (((((((({ColonT, ArrowT, AlphaT (implode "before")} UNION firstSet cmlG [grammar_NT (INL nCompOps)]) UNION firstSet cmlG [grammar_NT (INL nListOps)]) UNION firstSet cmlG [grammar_NT (INL nRelOps)]) UNION firstSet cmlG [grammar_NT (INL nMultOps)]) UNION firstSet cmlG [grammar_NT (INL nAddOps)]) UNION firstSet cmlG [grammar_NT (INL nEbase)]) UNION firstSet cmlG [grammar_NT (INL nTyOp)]))
        | nFDecl -> nestoppers
        | nLetDec -> nestoppers DELETE AndT
        | nLetDecs -> nestoppers DIFF ({AndT, FunT, ValT, SemicolonT})
        | nNonETopLevelDecs -> {}
-       | nOptTypEqn -> (:token) DIFF (({ArrowT, StarT, EqualsT} UNION firstSet cmlG [NT (INL nTyOp)]))
-       | nPcons -> (:token) DIFF (((((({LparT, UnderbarT, LbrackT, SymbolT (implode "::"), OpT} UNION {tokens_IntT i | i | T}) UNION {StringT s | s | T}) UNION {tokens_CharT c | c | T}) UNION firstSet cmlG [NT (INL nV)]) UNION firstSet cmlG [NT (INL nConstructorName)]))
-       | nPas -> (:token) DIFF (((((({LparT, UnderbarT, LbrackT, SymbolT (implode "::"), AsT, OpT} UNION {tokens_IntT i | i | T}) UNION {StringT s | s | T}) UNION {tokens_CharT c | c | T}) UNION firstSet cmlG [NT (INL nV)]) UNION firstSet cmlG [NT (INL nConstructorName)]))
-       | nPConApp -> (:token) DIFF (((((({LparT, UnderbarT, LbrackT, OpT} UNION {tokens_IntT i | i | T}) UNION {StringT s | s | T}) UNION {tokens_CharT c | c | T}) UNION firstSet cmlG [NT (INL nV)]) UNION firstSet cmlG [NT (INL nConstructorName)]))
-       | nPapp -> (:token) DIFF (((((({LparT, UnderbarT, LbrackT, OpT} UNION {tokens_IntT i | i | T}) UNION {StringT s | s | T}) UNION {tokens_CharT c | c | T}) UNION firstSet cmlG [NT (INL nV)]) UNION firstSet cmlG [NT (INL nConstructorName)]))
-       | nPattern -> (:token) DIFF ((((((((({LparT, UnderbarT, LbrackT, ColonT, ArrowT, StarT, AsT, OpT} UNION {AlphaT s | s | T}) UNION {SymbolT s | s | T}) UNION {LongidT s1 s2 | s1,s2 | T}) UNION {tokens_IntT i | i | T}) UNION {StringT s | s | T}) UNION {tokens_CharT c | c | T}) UNION firstSet cmlG [NT (INL nV)]) UNION firstSet cmlG [NT (INL nConstructorName)]))
-       | nPatternList -> (:token) DIFF ((((((((({CommaT, LparT, UnderbarT, LbrackT, ColonT, ArrowT, StarT, AsT, OpT} UNION {AlphaT s | s | T}) UNION {SymbolT s | s | T}) UNION {LongidT s1 s2 | s1,s2 | T}) UNION {tokens_IntT i | i | T}) UNION {StringT s | s | T}) UNION {tokens_CharT c | c | T}) UNION firstSet cmlG [NT (INL nV)]) UNION firstSet cmlG [NT (INL nConstructorName)]))
-       | nPbaseList1 -> (:token) DIFF (firstSet cmlG [NT (INL nPbase)])
+       | nOptTypEqn -> (:token) DIFF (({ArrowT, StarT, EqualsT} UNION firstSet cmlG [grammar_NT (INL nTyOp)]))
+       | nPcons -> (:token) DIFF (((((({LparT, UnderbarT, LbrackT, SymbolT (implode "::"), OpT} UNION {tokens_IntT i | i | T}) UNION {StringT s | s | T}) UNION {tokens_CharT c | c | T}) UNION firstSet cmlG [grammar_NT (INL nV)]) UNION firstSet cmlG [grammar_NT (INL nConstructorName)]))
+       | nPas -> (:token) DIFF (((((({LparT, UnderbarT, LbrackT, SymbolT (implode "::"), AsT, OpT} UNION {tokens_IntT i | i | T}) UNION {StringT s | s | T}) UNION {tokens_CharT c | c | T}) UNION firstSet cmlG [grammar_NT (INL nV)]) UNION firstSet cmlG [grammar_NT (INL nConstructorName)]))
+       | nPConApp -> (:token) DIFF (((((({LparT, UnderbarT, LbrackT, OpT} UNION {tokens_IntT i | i | T}) UNION {StringT s | s | T}) UNION {tokens_CharT c | c | T}) UNION firstSet cmlG [grammar_NT (INL nV)]) UNION firstSet cmlG [grammar_NT (INL nConstructorName)]))
+       | nPapp -> (:token) DIFF (((((({LparT, UnderbarT, LbrackT, OpT} UNION {tokens_IntT i | i | T}) UNION {StringT s | s | T}) UNION {tokens_CharT c | c | T}) UNION firstSet cmlG [grammar_NT (INL nV)]) UNION firstSet cmlG [grammar_NT (INL nConstructorName)]))
+       | nPattern -> (:token) DIFF ((((((((({LparT, UnderbarT, LbrackT, ColonT, ArrowT, StarT, AsT, OpT} UNION {AlphaT s | s | T}) UNION {SymbolT s | s | T}) UNION {LongidT s1 s2 | s1,s2 | T}) UNION {tokens_IntT i | i | T}) UNION {StringT s | s | T}) UNION {tokens_CharT c | c | T}) UNION firstSet cmlG [grammar_NT (INL nV)]) UNION firstSet cmlG [grammar_NT (INL nConstructorName)]))
+       | nPatternList -> (:token) DIFF ((((((((({CommaT, LparT, UnderbarT, LbrackT, ColonT, ArrowT, StarT, AsT, OpT} UNION {AlphaT s | s | T}) UNION {SymbolT s | s | T}) UNION {LongidT s1 s2 | s1,s2 | T}) UNION {tokens_IntT i | i | T}) UNION {StringT s | s | T}) UNION {tokens_CharT c | c | T}) UNION firstSet cmlG [grammar_NT (INL nV)]) UNION firstSet cmlG [grammar_NT (INL nConstructorName)]))
+       | nPbaseList1 -> (:token) DIFF (firstSet cmlG [grammar_NT (INL nPbase)])
        | nPE -> nestoppers
        | nPEs -> nestoppers
        | nPEsfx -> nestoppers
-       | nPType -> (:token) DIFF (({StarT} UNION firstSet cmlG [NT (INL nTyOp)]))
-       | nSpecLine -> (:token) DIFF ((({ArrowT, AndT, BarT, StarT, OfT, EqualsT, LparT} UNION firstSet cmlG [NT (INL nTyOp)]) UNION {TyvarT s | s | T}))
-       | nSpecLineList -> (:token) DIFF ((({ValT, DatatypeT, TypeT, ExceptionT, SemicolonT, ArrowT, AndT, BarT, StarT, OfT, EqualsT, LparT} UNION firstSet cmlG [NT (INL nTyOp)]) UNION {TyvarT s | s | T}))
-       | nTbaseList -> (:token) DIFF ((({LparT} UNION firstSet cmlG [NT (INL nTyOp)]) UNION {TyvarT s | s | T}))
+       | nPType -> (:token) DIFF (({StarT} UNION firstSet cmlG [grammar_NT (INL nTyOp)]))
+       | nSpecLine -> (:token) DIFF ((({ArrowT, AndT, BarT, StarT, OfT, EqualsT, LparT} UNION firstSet cmlG [grammar_NT (INL nTyOp)]) UNION {TyvarT s | s | T}))
+       | nSpecLineList -> (:token) DIFF ((({ValT, DatatypeT, TypeT, ExceptionT, SemicolonT, ArrowT, AndT, BarT, StarT, OfT, EqualsT, LparT} UNION firstSet cmlG [grammar_NT (INL nTyOp)]) UNION {TyvarT s | s | T}))
+       | nTbaseList -> (:token) DIFF ((({LparT} UNION firstSet cmlG [grammar_NT (INL nTyOp)]) UNION {TyvarT s | s | T}))
        | nTopLevelDecs -> {}
-       | nType -> (:token) DIFF (({ArrowT, StarT} UNION firstSet cmlG [NT (INL nTyOp)]))
-       | nTypeAbbrevDec -> (:token) DIFF (({ArrowT, StarT} UNION firstSet cmlG [NT (INL nTyOp)]))
-       | nTypeDec -> (:token) DIFF ((({AndT, ArrowT, StarT, BarT, OfT, LparT} UNION {TyvarT s | s | T}) UNION firstSet cmlG [NT (INL nTyOp)]))
-       | nTypeList1 -> (:token) DIFF (({CommaT, ArrowT, StarT} UNION firstSet cmlG [NT (INL nTyOp)]))
-       | nTypeList2 -> (:token) DIFF (({CommaT, ArrowT, StarT} UNION firstSet cmlG [NT (INL nTyOp)]))
+       | nType -> (:token) DIFF (({ArrowT, StarT} UNION firstSet cmlG [grammar_NT (INL nTyOp)]))
+       | nTypeAbbrevDec -> (:token) DIFF (({ArrowT, StarT} UNION firstSet cmlG [grammar_NT (INL nTyOp)]))
+       | nTypeDec -> (:token) DIFF ((({AndT, ArrowT, StarT, BarT, OfT, LparT} UNION {TyvarT s | s | T}) UNION firstSet cmlG [grammar_NT (INL nTyOp)]))
+       | nTypeList1 -> (:token) DIFF (({CommaT, ArrowT, StarT} UNION firstSet cmlG [grammar_NT (INL nTyOp)]))
+       | nTypeList2 -> (:token) DIFF (({CommaT, ArrowT, StarT} UNION firstSet cmlG [grammar_NT (INL nTyOp)]))
        | nTyVarList -> {RparT}
        | nOptionalSignatureAscription -> (:token) DELETE SealT
        | _ -> (:token)`;;
@@ -1110,27 +1110,27 @@ let PARSE3AUX_complete_goal (x:string) =
       (!pt' N' pfx' sfx'.
          (LENGTH pfx' < LENGTH pfx \\/
           pfx' = pfx /\\ NT_rank (INL N') < NT_rank (INL " ^ x ^ ")) /\\
-         valid_lptree cmlG pt' /\\ ptree_head pt' = NT (INL N') /\\
+         valid_lptree cmlG pt' /\\ ptree_head pt' = grammar_NT (INL N') /\\
          INL N' IN FDOM (peg_rules cmlPEG) /\\
          (~(sfx' = []) ==> FST (HD sfx') IN stoppers N') /\\
-         real_fringe pt' = MAP (TOK ## I) pfx' ==>
+         real_fringe pt' = MAP (grammar_TOK ## I) pfx' ==>
          ?eo. peg_eval cmlPEG (APPEND pfx' sfx', peg_nt (INL N') I)
                        (peg_Success sfx' [pt'] eo)) /\\
       valid_lptree cmlG (mkNd (INL " ^ x ^ ") subs) /\\
       (~(sfx = []) ==> FST (HD sfx) IN stoppers " ^ x ^ ") /\\
-      real_fringe (mkNd (INL " ^ x ^ ") subs) = MAP (TOK ## I) pfx ==>
+      real_fringe (mkNd (INL " ^ x ^ ") subs) = MAP (grammar_TOK ## I) pfx ==>
       ?eo. peg_eval cmlPEG (APPEND pfx sfx, peg_nt (INL " ^ x ^ ") I)
                     (peg_Success sfx [mkNd (INL " ^ x ^ ") subs] eo)");;
 
 let PARSE3AUX_PAIR_MAP_TKI_EQ = prove
- (`!(x:token#locs) t l. (TOK ## I) x = (TOK t:(token,MMLnonT)symbol, l) <=> x = (t,l)`,
+ (`!(x:token#locs) t l. (grammar_TOK ## I) x = (grammar_TOK t:(token,MMLnonT)symbol, l) <=> x = (t,l)`,
   REWRITE_TAC[FORALL_PAIR_THM; PAIR_MAP_THM; I_THM; PAIR_EQ; symbol_inject]);;
 
 let PARSE3AUX_EX_TAC : tactic =
   REPEAT(CHANGED_TAC
    (REWRITE_TAC[LEFT_AND_EXISTS_THM; RIGHT_AND_EXISTS_THM] THEN
     CONV_TAC(TOP_DEPTH_CONV UNWIND_CONV) THEN
-    CASE_REWRITE_TAC[PARSE3AUX_EXISTS_REFL']));;
+    CAKE_REWRITE_TAC[PARSE3AUX_EXISTS_REFL']));;
 
 (* split the fringe equation FLAT (MAP real_fringe subs) = MAP (TOK ## I) pfx *)
 let PARSE3AUX_is_map_fact tm =
@@ -1232,7 +1232,7 @@ let PARSE3AUX_DECIDE1_CONV : conv =
   DEPTH_CONV PARSE3AUX_VALIDSYM_LIT_CONV THENC
   REWRITE_CONV[strsub_def; EL; HD] THENC
   DEPTH_CONV PARSE3AUX_CHARPRED_CONV THENC
-  CASE_REWRITE_CONV[PARSE3AUX_EXISTS_REFL'; UNWIND_THM1; UNWIND_THM2] THENC
+  CAKE_REWRITE_CONV[PARSE3AUX_EXISTS_REFL'; UNWIND_THM1; UNWIND_THM2] THENC
   TOP_DEPTH_CONV UNWIND_CONV THENC
   REWRITE_CONV[EXISTS_REFL; PARSE3AUX_EXISTS_REFL'; PARSE3AUX_CHAR_11];;
 
@@ -1279,7 +1279,7 @@ and PARSE3AUX_NULLABLE_TM = `nullable cmlG`
 and PARSE3AUX_FIRSTSET_TM = `firstSet cmlG`
 and PARSE3AUX_VALID_TM = `valid_lptree cmlG`
 and PARSE3AUX_GEXPRS_TM = `Gexprs cmlPEG`
-and PARSE3AUX_NT_TM = `NT:MMLnonT+num->(token,MMLnonT)symbol`
+and PARSE3AUX_NT_TM = `grammar_NT:MMLnonT+num->(token,MMLnonT)symbol`
 and PARSE3AUX_INL_TM = `INL:MMLnonT->MMLnonT+num`
 and PARSE3AUX_PTREE_HEAD_TM = `ptree_head:mlptree->(token,MMLnonT)symbol`
 and PARSE3AUX_REAL_FRINGE_TM =
@@ -1300,7 +1300,7 @@ and PARSE3AUX_NTSYM_TM =
 let PARSE3AUX_nullable_more =
   map (fun c ->
      let t = mk_comb(`nullable cmlG`,
-               mk_list([mk_comb(`NT:MMLnonT+num->(token,MMLnonT)symbol`,
+               mk_list([mk_comb(`grammar_NT:MMLnonT+num->(token,MMLnonT)symbol`,
                                 mk_comb(`INL:MMLnonT->MMLnonT+num`, c))],
                        `:(token,MMLnonT)symbol`)) in
      try PARSE1AUX_NULLABLE_PROVE (mk_neg t)
@@ -1338,11 +1338,11 @@ let PARSE3AUX_nonnull (y:term) =
 
 let PARSE3AUX_FRINGE_CONS = prove
  (`!(x:mlptree) m y.
-     real_fringe x = MAP (TOK ## I) m /\ ptree_head x = NT (INL y) /\
-     valid_lptree cmlG x /\ ~nullable cmlG [NT (INL y)] ==>
-     ?tk lk m'. m = CONS (tk,lk) m' /\ tk IN firstSet cmlG [NT (INL y)]`,
+     real_fringe x = MAP (grammar_TOK ## I) m /\ ptree_head x = grammar_NT (INL y) /\
+     valid_lptree cmlG x /\ ~nullable cmlG [grammar_NT (INL y)] ==>
+     ?tk lk m'. m = CONS (tk,lk) m' /\ tk IN firstSet cmlG [grammar_NT (INL y)]`,
   REPEAT STRIP_TAC THEN
-  MP_TAC(ISPECL [`cmlG`; `NT (INL y):(token,MMLnonT)symbol`]
+  MP_TAC(ISPECL [`cmlG`; `grammar_NT (INL y):(token,MMLnonT)symbol`]
          rfringe_length_not_nullable) THEN
   ASM_REWRITE_TAC[] THEN DISCH_THEN(MP_TAC o SPEC `x:mlptree`) THEN
   ASM_REWRITE_TAC[LENGTH_MAP] THEN
@@ -1358,15 +1358,15 @@ let PARSE3AUX_FRINGE_CONS = prove
   FIRST_X_ASSUM(SUBST1_TAC o SYM o check (fun th ->
     try lhand(concl th) = `ptree_head (x:mlptree)` with Failure _ -> false)) THEN
   MATCH_MP_TAC rfirstSet_nonempty_fringe THEN
-  MAP_EVERY EXISTS_TAC [`lk:locs`; `MAP ((TOK:token->(token,MMLnonT)symbol) ## (I:locs->locs)) t`] THEN
+  MAP_EVERY EXISTS_TAC [`lk:locs`; `MAP ((grammar_TOK:token->(token,MMLnonT)symbol) ## (I:locs->locs)) t`] THEN
   ASM_REWRITE_TAC[MAP; PAIR_MAP_THM; I_THM]);;
 
 let PARSE3AUX_FRINGE_CASES = prove
  (`!(x:mlptree) m y.
-     real_fringe x = MAP (TOK ## I) m /\ ptree_head x = NT (INL y) /\
+     real_fringe x = MAP (grammar_TOK ## I) m /\ ptree_head x = grammar_NT (INL y) /\
      valid_lptree cmlG x ==>
      m = [] \/
-     ?tk lk m'. m = CONS (tk,lk) m' /\ tk IN firstSet cmlG [NT (INL y)]`,
+     ?tk lk m'. m = CONS (tk,lk) m' /\ tk IN firstSet cmlG [grammar_NT (INL y)]`,
   REPEAT STRIP_TAC THEN
   MP_TAC(ISPEC `m:(token#locs)list` list_CASES) THEN
   DISCH_THEN(DISJ_CASES_THEN2 (fun th -> REWRITE_TAC[th])
@@ -1380,7 +1380,7 @@ let PARSE3AUX_FRINGE_CASES = prove
   FIRST_X_ASSUM(SUBST1_TAC o SYM o check (fun th ->
     try lhand(concl th) = `ptree_head (x:mlptree)` with Failure _ -> false)) THEN
   MATCH_MP_TAC rfirstSet_nonempty_fringe THEN
-  MAP_EVERY EXISTS_TAC [`lk:locs`; `MAP ((TOK:token->(token,MMLnonT)symbol) ## (I:locs->locs)) t`] THEN
+  MAP_EVERY EXISTS_TAC [`lk:locs`; `MAP ((grammar_TOK:token->(token,MMLnonT)symbol) ## (I:locs->locs)) t`] THEN
   ASM_REWRITE_TAC[MAP; PAIR_MAP_THM; I_THM]);;
 
 (* destructure the fringe variables of the subtrees: CONS for the         *)
@@ -1754,7 +1754,7 @@ let PARSE3AUX_MONO_SIDE_TAC : tactic =
          DISJ2_TAC THEN CONJ_TAC THENL
           [CONV_TAC(BINOP_CONV PARSE3AUX_NORM_CONV) THEN REFL_TAC;
            PARSE3AUX_RANK_TAC];
-         REWRITE_TAC[IN_INSERT; NOT_IN_EMPTY] THEN CASE_REWRITE_TAC[] THEN NO_TAC;
+         REWRITE_TAC[IN_INSERT; NOT_IN_EMPTY] THEN CAKE_REWRITE_TAC[] THEN NO_TAC;
          PARSE3AUX_STOPPERS_TAC];;
 
 (* the conditional monotonicity lemmas: !N i0 i r sfx eo. side /\ ev ==> ev' *)
@@ -1968,7 +1968,7 @@ let PARSE3AUX_SKOLEM_IH_TAC : tactic =
     `ihf:mlptree->MMLnonT->(token#locs)list->(token#locs)list->(locs#(char)list)option`
     (LABEL_TAC "ihs"));;
 
-(* the result functions that are matches (evaluated by CASE_REWRITE_CONV) *)
+(* the result functions that are matches (evaluated by CAKE_REWRITE_CONV) *)
 let PARSE3AUX_RESULT_CASE_RWTS = [peg_EbaseParenFn_def; destLf_def; destTOK_def];;
 
 let PARSE3AUX_RESULT_RWTS =
@@ -2032,7 +2032,7 @@ let PARSE3AUX_EVAL0_TAC : tactic = fun (asl,w as g) ->
   let th2 = MP (ISPECL [PARSE3AUX_CMLPEG_TM; n; inp'; PARSE3AUX_I_TM;
                         PARSE3AUX_res th1] peg_eval_nt) (CONJ fdom th1) in
   let th3 = CONV_RULE (RAND_CONV (REWRITE_CONV PARSE3AUX_RESULT_RWTS THENC
-                                  CASE_REWRITE_CONV PARSE3AUX_RESULT_CASE_RWTS THENC
+                                  CAKE_REWRITE_CONV PARSE3AUX_RESULT_CASE_RWTS THENC
                                   REWRITE_CONV PARSE3AUX_RESULT_RWTS)) th2 in
   let _,_,eo = PARSE3AUX_succ_parts th3 in
   (EXISTS_TAC eo THEN
@@ -2262,7 +2262,7 @@ let PARSE3AUX_Eapp_intro = prove
     MAP_EVERY EXISTS_TAC [`i:(token#locs)list`; `l:((mlptree)list)list`;
                           `err:locs#(char)list`] THEN
     ASM_REWRITE_TAC[];
-    CASE_REWRITE_TAC[]]);;
+    CAKE_REWRITE_TAC[]]);;
 
 let PARSE3AUX_Eapp_inv = prove
  (`!i0 i r eo.
@@ -2285,12 +2285,12 @@ let PARSE3AUX_Eapp_inv = prove
   ASM_REWRITE_TAC[] THEN
   MP_TAC(ISPEC `APPEND (rh:(mlptree)list) (FLAT (l:((mlptree)list)list))` list_CASES) THEN
   STRIP_TAC THEN ASM_REWRITE_TAC[NOT_CONS_NIL; APPEND_NIL] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   MAP_EVERY EXISTS_TAC [`h:mlptree`; `t:(mlptree)list`] THEN REWRITE_TAC[]);;
 
 let PARSE3AUX_nt_fail = prove
  (`!N sfx. peg_nt (INL N) I IN Gexprs cmlPEG /\ ~peg0 cmlPEG (peg_nt (INL N) I) /\
-           (~(sfx = []) ==> ~(FST (HD sfx) IN firstSet cmlG [NT (INL N)])) ==>
+           (~(sfx = []) ==> ~(FST (HD sfx) IN firstSet cmlG [grammar_NT (INL N)])) ==>
            ?fl fe. peg_eval cmlPEG (sfx, peg_nt (INL N) I) (Failure fl fe)`,
   REPEAT GEN_TAC THEN
   MP_TAC(ISPEC `sfx:(token#locs)list` list_CASES) THEN
@@ -2307,20 +2307,20 @@ let eapp_complete = prove
      (!pt' pfx' sfx' N.
         LENGTH pfx' < LENGTH master /\ valid_lptree cmlG pt' /\
         INL N IN FDOM (peg_rules cmlPEG) /\
-        ptree_head pt' = NT (INL N) /\ real_fringe pt' = MAP (TOK ## I) pfx' /\
+        ptree_head pt' = grammar_NT (INL N) /\ real_fringe pt' = MAP (grammar_TOK ## I) pfx' /\
         (~(sfx' = []) ==> FST (HD sfx') IN stoppers N) ==>
         ?eo. peg_eval cmlPEG (APPEND pfx' sfx', peg_nt (INL N) I)
                       (peg_Success sfx' [pt'] eo)) /\
      (!pt' sfx'.
-        valid_lptree cmlG pt' /\ ptree_head pt' = NT (INL nEbase) /\
-        real_fringe pt' = MAP (TOK ## I) master /\
+        valid_lptree cmlG pt' /\ ptree_head pt' = grammar_NT (INL nEbase) /\
+        real_fringe pt' = MAP (grammar_TOK ## I) master /\
         (~(sfx' = []) ==> FST (HD sfx') IN stoppers nEbase) ==>
         ?eo. peg_eval cmlPEG (APPEND master sfx', peg_nt (INL nEbase) I)
                       (peg_Success sfx' [pt'] eo))
      ==> !pfx apt sfx.
            IS_SUFFIX master pfx /\ valid_lptree cmlG apt /\
-           ptree_head apt = NT (INL nEapp) /\
-           real_fringe apt = MAP (TOK ## I) pfx /\
+           ptree_head apt = grammar_NT (INL nEapp) /\
+           real_fringe apt = MAP (grammar_TOK ## I) pfx /\
            (~(sfx = []) ==> FST (HD sfx) IN stoppers nEapp) ==>
            ?eo. peg_eval cmlPEG (APPEND pfx sfx, peg_nt (INL nEapp) I)
                          (peg_Success sfx [apt] eo)`,
@@ -2328,7 +2328,7 @@ let eapp_complete = prove
   SUBGOAL_THEN
    `!n (pfx:(token#locs)list) apt sfx.
       LENGTH pfx = n /\ IS_SUFFIX master pfx /\ valid_lptree cmlG apt /\
-      ptree_head apt = NT (INL nEapp) /\ real_fringe apt = MAP (TOK ## I) pfx /\
+      ptree_head apt = grammar_NT (INL nEapp) /\ real_fringe apt = MAP (grammar_TOK ## I) pfx /\
       (~(sfx = []) ==> FST (HD sfx) IN stoppers nEapp) ==>
       ?eo. peg_eval cmlPEG (APPEND pfx sfx, peg_nt (INL nEapp) I)
                     (peg_Success sfx [apt] eo)`
@@ -2357,15 +2357,15 @@ let eapp_complete = prove
     DISCH_THEN(X_CHOOSE_THEN `bf:(token#locs)list` (X_CHOOSE_THEN `af:(token#locs)list`
       (CONJUNCTS_THEN2 ASSUME_TAC (CONJUNCTS_THEN (ASSUME_TAC o SYM))))) THEN
     MP_TAC(MATCH_MP PARSE3AUX_FRINGE_CONS
-       (CONJ (ASSUME `real_fringe (bpt':mlptree) = MAP (TOK ## I) bf`)
-       (CONJ (ASSUME `ptree_head (bpt':mlptree) = NT (INL nEbase)`)
+       (CONJ (ASSUME `real_fringe (bpt':mlptree) = MAP (grammar_TOK ## I) bf`)
+       (CONJ (ASSUME `ptree_head (bpt':mlptree) = grammar_NT (INL nEbase)`)
        (CONJ (ASSUME `valid_lptree cmlG (bpt':mlptree)`) nullable_Ebase)))) THEN
     DISCH_THEN(X_CHOOSE_THEN `bt:token` (X_CHOOSE_THEN `bl:locs`
       (X_CHOOSE_THEN `bf_r:(token#locs)list`
         (CONJUNCTS_THEN2 SUBST_ALL_TAC ASSUME_TAC)))) THEN
     MP_TAC(MATCH_MP PARSE3AUX_FRINGE_CONS
-       (CONJ (ASSUME `real_fringe (apt':mlptree) = MAP (TOK ## I) af`)
-       (CONJ (ASSUME `ptree_head (apt':mlptree) = NT (INL nEapp)`)
+       (CONJ (ASSUME `real_fringe (apt':mlptree) = MAP (grammar_TOK ## I) af`)
+       (CONJ (ASSUME `ptree_head (apt':mlptree) = grammar_NT (INL nEapp)`)
        (CONJ (ASSUME `valid_lptree cmlG (apt':mlptree)`) nullable_Eapp)))) THEN
     DISCH_THEN(X_CHOOSE_THEN `at:token` (X_CHOOSE_THEN `al:locs`
       (X_CHOOSE_THEN `af_r:(token#locs)list`
@@ -2454,7 +2454,7 @@ let peg_respects_firstSets' = prove
  (`!N t (l:locs) rest sfx res eo.
      peg_eval cmlPEG (CONS (t,l) rest, peg_nt N I) (peg_Success sfx res eo) /\
      peg_nt N I IN Gexprs cmlPEG /\ ~peg0 cmlPEG (peg_nt N I) ==>
-     t IN firstSet cmlG [NT N]`,
+     t IN firstSet cmlG [grammar_NT N]`,
   REPEAT STRIP_TAC THEN
   MATCH_MP_TAC(TAUT `(~p ==> F) ==> p`) THEN DISCH_TAC THEN
   MP_TAC(SPECL [`N:MMLnonT+num`; `rest:(token#locs)list`; `t:token`; `l:locs`]
@@ -2978,9 +2978,9 @@ let PARSE3AUX_pat_mono_tm =
                  (peg_Success (APPEND i sfx) r eo)) /\
      (N = nPbase ==>
       !rlist i err sfx.
-        (~(i = []) ==> ~(FST (HD i) IN firstSet cmlG [NT (INL nPbase)])) /\
+        (~(i = []) ==> ~(FST (HD i) IN firstSet cmlG [grammar_NT (INL nPbase)])) /\
         (i = [] /\ ~(sfx = []) ==>
-         ~(FST (HD sfx) IN firstSet cmlG [NT (INL nPbase)])) /\
+         ~(FST (HD sfx) IN firstSet cmlG [grammar_NT (INL nPbase)])) /\
         peg_eval_list cmlPEG (i0, peg_nt (INL nPbase) I) (i, rlist, err) ==>
         ?res'. peg_eval_list cmlPEG (APPEND i0 sfx, peg_nt (INL nPbase) I)
                              (APPEND i sfx, rlist, res'))`;;
@@ -3064,9 +3064,9 @@ let pegComplete_Pattern_input_monotone0 = prove
       peg_eval cmlPEG (APPEND i0 sfx, peg_nt (INL N) I)
                (peg_Success (APPEND i sfx) r eo)) /\
      (N = nPbase /\ b /\
-      (~(i = []) ==> ~(FST (HD i) IN firstSet cmlG [NT (INL nPbase)])) /\
+      (~(i = []) ==> ~(FST (HD i) IN firstSet cmlG [grammar_NT (INL nPbase)])) /\
       (i = [] /\ ~(sfx = []) ==>
-       ~(FST (HD sfx) IN firstSet cmlG [NT (INL nPbase)])) /\
+       ~(FST (HD sfx) IN firstSet cmlG [grammar_NT (INL nPbase)])) /\
       peg_eval_list cmlPEG (i0, peg_nt (INL N) I) (i, rlist, l, res) ==>
       ?res'. peg_eval_list cmlPEG (APPEND i0 sfx, peg_nt (INL N) I)
                            (APPEND i sfx, rlist, res'))`,
@@ -3087,7 +3087,7 @@ let extend_Pbase_list = prove
  (`!results pfx sfx sfx' result e eo.
      peg_eval_list cmlPEG (pfx, peg_nt (INL nPbase) I) ([], results, e) /\
      peg_eval cmlPEG (sfx, peg_nt (INL nPbase) I) (peg_Success sfx' result eo) /\
-     (~(sfx' = []) ==> ~(FST (HD sfx') IN firstSet cmlG [NT (INL nPbase)])) ==>
+     (~(sfx' = []) ==> ~(FST (HD sfx') IN firstSet cmlG [grammar_NT (INL nPbase)])) ==>
      ?e'. peg_eval_list cmlPEG (APPEND pfx sfx, peg_nt (INL nPbase) I)
                         (sfx', APPEND results [result], e')`,
   LIST_INDUCT_TAC THENL
@@ -3125,20 +3125,20 @@ let papp_complete = prove
  (`!master.
     (!pt' pfx' N sfx'.
        LENGTH pfx' < LENGTH master /\ valid_lptree cmlG pt' /\
-       INL N IN FDOM (peg_rules cmlPEG) /\ ptree_head pt' = NT (INL N) /\
-       real_fringe pt' = MAP (TOK ## I) pfx' /\
+       INL N IN FDOM (peg_rules cmlPEG) /\ ptree_head pt' = grammar_NT (INL N) /\
+       real_fringe pt' = MAP (grammar_TOK ## I) pfx' /\
        (~(sfx' = []) ==> FST (HD sfx') IN stoppers N) ==>
        ?eo. peg_eval cmlPEG (APPEND pfx' sfx', peg_nt (INL N) I)
                      (peg_Success sfx' [pt'] eo)) /\
     (!pt' sfx'.
-       valid_lptree cmlG pt' /\ ptree_head pt' = NT (INL nConstructorName) /\
-       real_fringe pt' = MAP (TOK ## I) master ==>
+       valid_lptree cmlG pt' /\ ptree_head pt' = grammar_NT (INL nConstructorName) /\
+       real_fringe pt' = MAP (grammar_TOK ## I) master ==>
        ?eo. peg_eval cmlPEG (APPEND master sfx', peg_nt (INL nConstructorName) I)
                      (peg_Success sfx' [pt'] eo)) ==>
     !pfx accpt sfx.
       pfx <<= master /\ valid_lptree cmlG accpt /\
-      ptree_head accpt = NT (INL nPConApp) /\
-      real_fringe accpt = MAP (TOK ## I) pfx /\
+      ptree_head accpt = grammar_NT (INL nPConApp) /\
+      real_fringe accpt = MAP (grammar_TOK ## I) pfx /\
       (~(sfx = []) ==> FST (HD sfx) IN stoppers nPConApp) ==>
       ?cpt i bpts eo e.
         peg_eval cmlPEG (APPEND pfx sfx, peg_nt (INL nConstructorName) I)
@@ -3150,8 +3150,8 @@ let papp_complete = prove
   SUBGOAL_THEN
    `!n (pfx:(token#locs)list) accpt sfx.
       LENGTH pfx = n /\ pfx <<= master /\ valid_lptree cmlG accpt /\
-      ptree_head accpt = NT (INL nPConApp) /\
-      real_fringe accpt = MAP (TOK ## I) pfx /\
+      ptree_head accpt = grammar_NT (INL nPConApp) /\
+      real_fringe accpt = MAP (grammar_TOK ## I) pfx /\
       (~(sfx = []) ==> FST (HD sfx) IN stoppers nPConApp) ==>
       ?cpt i bpts eo e.
         peg_eval cmlPEG (APPEND pfx sfx, peg_nt (INL nConstructorName) I)
@@ -3196,14 +3196,14 @@ let papp_complete = prove
     ASM_REWRITE_TAC[];
     FIRST_X_ASSUM(CONJUNCTS_THEN ASSUME_TAC o check (is_conj o concl)) THEN
   MP_TAC(MATCH_MP PARSE3AUX_FRINGE_CONS
-     (CONJ (ASSUME `real_fringe (h0':mlptree) = MAP (TOK ## I) m2`)
-     (CONJ (ASSUME `ptree_head (h0':mlptree) = NT (INL nPbase)`)
+     (CONJ (ASSUME `real_fringe (h0':mlptree) = MAP (grammar_TOK ## I) m2`)
+     (CONJ (ASSUME `ptree_head (h0':mlptree) = grammar_NT (INL nPbase)`)
      (CONJ (ASSUME `valid_lptree cmlG (h0':mlptree)`) nullable_Pbase)))) THEN
   DISCH_THEN(X_CHOOSE_THEN `bt:token` (X_CHOOSE_THEN `bl:locs`
     (X_CHOOSE_THEN `m2r:(token#locs)list` (CONJUNCTS_THEN2 SUBST_ALL_TAC ASSUME_TAC)))) THEN
   MP_TAC(MATCH_MP PARSE3AUX_FRINGE_CONS
-     (CONJ (ASSUME `real_fringe (h0:mlptree) = MAP (TOK ## I) m1`)
-     (CONJ (ASSUME `ptree_head (h0:mlptree) = NT (INL nPConApp)`)
+     (CONJ (ASSUME `real_fringe (h0:mlptree) = MAP (grammar_TOK ## I) m1`)
+     (CONJ (ASSUME `ptree_head (h0:mlptree) = grammar_NT (INL nPConApp)`)
      (CONJ (ASSUME `valid_lptree cmlG (h0:mlptree)`) nullable_PConApp)))) THEN
   DISCH_THEN(X_CHOOSE_THEN `ct:token` (X_CHOOSE_THEN `cl:locs`
     (X_CHOOSE_THEN `m1r:(token#locs)list` (CONJUNCTS_THEN2 SUBST_ALL_TAC ASSUME_TAC)))) THEN
@@ -3300,7 +3300,7 @@ let PARSE3AUX_DType_intro = prove
     MAP_EVERY EXISTS_TAC [`i:(token#locs)list`; `l:((mlptree)list)list`;
                           `err:locs#(char)list`] THEN
     ASM_REWRITE_TAC[];
-    CASE_REWRITE_TAC[]]);;
+    CAKE_REWRITE_TAC[]]);;
 
 let PARSE3AUX_DType_inv = prove
  (`!i0 i r eo.
@@ -3323,14 +3323,14 @@ let PARSE3AUX_DType_inv = prove
   ASM_REWRITE_TAC[] THEN
   MP_TAC(ISPEC `APPEND (rh:(mlptree)list) (FLAT (l:((mlptree)list)list))` list_CASES) THEN
   STRIP_TAC THEN ASM_REWRITE_TAC[NOT_CONS_NIL; APPEND_NIL] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   MAP_EVERY EXISTS_TAC [`h:mlptree`; `t:(mlptree)list`] THEN REWRITE_TAC[]);;
 
 (* a Tbase whose first token can start a TyOp is a TyOp *)
 let PARSE3AUX_Tbase_TyOp = prove
  (`!x i r eo.
      peg_eval cmlPEG (x, peg_nt (INL nTbase) I) (peg_Success i r eo) /\
-     (~(x = []) ==> FST (HD x) IN firstSet cmlG [NT (INL nTyOp)]) ==>
+     (~(x = []) ==> FST (HD x) IN firstSet cmlG [grammar_NT (INL nTyOp)]) ==>
      ?tr eo'. peg_eval cmlPEG (x, peg_nt (INL nTyOp) I) (peg_Success i tr eo') /\
               r = bindNT nTbase tr`,
   REPEAT GEN_TAC THEN DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "H") ASSUME_TAC) THEN
@@ -3356,7 +3356,7 @@ let PARSE3AUX_leftmost_fringe = prove
     MP_TAC(ISPEC `subs:(mlptree)list` list_CASES) THEN
     DISCH_THEN(DISJ_CASES_THEN2 SUBST_ALL_TAC
       (X_CHOOSE_THEN `a:mlptree` (X_CHOOSE_THEN `as:(mlptree)list` SUBST_ALL_TAC))) THEN
-    CASE_REWRITE_TAC[NOT_CONS_NIL; HD; real_fringe_def; MAP; FLAT] THENL
+    CAKE_REWRITE_TAC[NOT_CONS_NIL; HD; real_fringe_def; MAP; FLAT] THENL
      [MESON_TAC[APPEND_NIL]; ALL_TAC] THEN
     COND_CASES_TAC THENL [MESON_TAC[]; ALL_TAC] THEN
     FIRST_X_ASSUM(MP_TAC o SPEC `a:mlptree` o REWRITE_RULE[MEM]) THEN
@@ -3369,20 +3369,20 @@ let dtype_complete = prove
   (!pt' pfx' sfx' N.
      LENGTH pfx' < LENGTH master /\ valid_lptree cmlG pt' /\
      INL N IN FDOM (peg_rules cmlPEG) /\
-     ptree_head pt' = NT (INL N) /\ real_fringe pt' = MAP (TOK ## I) pfx' /\
+     ptree_head pt' = grammar_NT (INL N) /\ real_fringe pt' = MAP (grammar_TOK ## I) pfx' /\
      (~(sfx' = []) ==> FST (HD sfx') IN stoppers N) ==>
      ?eo. peg_eval cmlPEG (APPEND pfx' sfx', peg_nt (INL N) I)
                    (peg_Success sfx' [pt'] eo)) /\
   (!pt' sfx'.
-     valid_lptree cmlG pt' /\ ptree_head pt' = NT (INL nTbase) /\
-     real_fringe pt' = MAP (TOK ## I) master /\
+     valid_lptree cmlG pt' /\ ptree_head pt' = grammar_NT (INL nTbase) /\
+     real_fringe pt' = MAP (grammar_TOK ## I) master /\
      (~(sfx' = []) ==> FST (HD sfx') IN stoppers nEbase) ==>
      ?eo. peg_eval cmlPEG (APPEND master sfx', peg_nt (INL nTbase) I)
                    (peg_Success sfx' [pt'] eo))
   ==>
   !pfx apt sfx.
     IS_SUFFIX master pfx /\ valid_lptree cmlG apt /\
-    ptree_head apt = NT (INL nDType) /\ real_fringe apt = MAP (TOK ## I) pfx /\
+    ptree_head apt = grammar_NT (INL nDType) /\ real_fringe apt = MAP (grammar_TOK ## I) pfx /\
     (~(sfx = []) ==> FST (HD sfx) IN stoppers nDType) ==>
     ?eo. peg_eval cmlPEG (APPEND pfx sfx, peg_nt (INL nDType) I)
                   (peg_Success sfx [apt] eo)`,
@@ -3390,7 +3390,7 @@ let dtype_complete = prove
   SUBGOAL_THEN
    `!n (pfx:(token#locs)list) apt sfx.
       LENGTH pfx = n /\ IS_SUFFIX master pfx /\ valid_lptree cmlG apt /\
-      ptree_head apt = NT (INL nDType) /\ real_fringe apt = MAP (TOK ## I) pfx /\
+      ptree_head apt = grammar_NT (INL nDType) /\ real_fringe apt = MAP (grammar_TOK ## I) pfx /\
       (~(sfx = []) ==> FST (HD sfx) IN stoppers nDType) ==>
       ?eo. peg_eval cmlPEG (APPEND pfx sfx, peg_nt (INL nDType) I)
                     (peg_Success sfx [apt] eo)`
@@ -3419,15 +3419,15 @@ let dtype_complete = prove
   DISCH_THEN(X_CHOOSE_THEN `bf:(token#locs)list` (X_CHOOSE_THEN `af:(token#locs)list`
     (CONJUNCTS_THEN2 ASSUME_TAC (CONJUNCTS_THEN (ASSUME_TAC o SYM))))) THEN
   MP_TAC(MATCH_MP PARSE3AUX_FRINGE_CONS
-     (CONJ (ASSUME `real_fringe (bpt':mlptree) = MAP (TOK ## I) bf`)
-     (CONJ (ASSUME `ptree_head (bpt':mlptree) = NT (INL nTbase)`)
+     (CONJ (ASSUME `real_fringe (bpt':mlptree) = MAP (grammar_TOK ## I) bf`)
+     (CONJ (ASSUME `ptree_head (bpt':mlptree) = grammar_NT (INL nTbase)`)
      (CONJ (ASSUME `valid_lptree cmlG (bpt':mlptree)`) nullable_Tbase)))) THEN
   DISCH_THEN(X_CHOOSE_THEN `bt:token` (X_CHOOSE_THEN `bl:locs`
     (X_CHOOSE_THEN `bf_r:(token#locs)list`
       (CONJUNCTS_THEN2 SUBST_ALL_TAC ASSUME_TAC)))) THEN
   MP_TAC(MATCH_MP PARSE3AUX_FRINGE_CONS
-     (CONJ (ASSUME `real_fringe (apt':mlptree) = MAP (TOK ## I) af`)
-     (CONJ (ASSUME `ptree_head (apt':mlptree) = NT (INL nDType)`)
+     (CONJ (ASSUME `real_fringe (apt':mlptree) = MAP (grammar_TOK ## I) af`)
+     (CONJ (ASSUME `ptree_head (apt':mlptree) = grammar_NT (INL nDType)`)
      (CONJ (ASSUME `valid_lptree cmlG (apt':mlptree)`) nullable_DType)))) THEN
   DISCH_THEN(X_CHOOSE_THEN `at:token` (X_CHOOSE_THEN `al:locs`
     (X_CHOOSE_THEN `af_r:(token#locs)list`
@@ -3456,7 +3456,7 @@ let dtype_complete = prove
     EXISTS_TAC `APPEND p (CONS (bt:token,bl:locs) bf_r)` THEN
     REWRITE_TAC[APPEND_ASSOC];
     ALL_TAC] THEN
-    SUBGOAL_THEN `at IN firstSet cmlG [NT (INL nTyOp)]` ASSUME_TAC THENL
+    SUBGOAL_THEN `at IN firstSet cmlG [grammar_NT (INL nTyOp)]` ASSUME_TAC THENL
    [MP_TAC(ISPEC `apt':mlptree` PARSE3AUX_leftmost_fringe) THEN
     ASM_REWRITE_TAC[] THEN
     DISCH_THEN(X_CHOOSE_THEN `rest:((token,MMLnonT)symbol#locs)list` MP_TAC) THEN
@@ -3464,8 +3464,8 @@ let dtype_complete = prove
     DISCH_THEN(X_CHOOSE_THEN `f1:(token#locs)list` (X_CHOOSE_THEN `f2:(token#locs)list`
       STRIP_ASSUME_TAC)) THEN
     MP_TAC(MATCH_MP PARSE3AUX_FRINGE_CONS
-       (CONJ (SYM(ASSUME `MAP ((TOK:token->(token,MMLnonT)symbol) ## (I:locs->locs)) f1 = real_fringe (leftmost (apt':mlptree))`))
-       (CONJ (ASSUME `ptree_head (leftmost (apt':mlptree)) = NT (INL nTyOp)`)
+       (CONJ (SYM(ASSUME `MAP ((grammar_TOK:token->(token,MMLnonT)symbol) ## (I:locs->locs)) f1 = real_fringe (leftmost (apt':mlptree))`))
+       (CONJ (ASSUME `ptree_head (leftmost (apt':mlptree)) = grammar_NT (INL nTyOp)`)
        (CONJ (ASSUME `valid_lptree cmlG (leftmost (apt':mlptree))`) nullable_TyOp)))) THEN
     DISCH_THEN(X_CHOOSE_THEN `tk:token` (X_CHOOSE_THEN `lk:locs`
       (X_CHOOSE_THEN `f1r:(token#locs)list` (CONJUNCTS_THEN2 SUBST_ALL_TAC ASSUME_TAC)))) THEN
@@ -3555,7 +3555,7 @@ let PARSE3AUX_linfix_intro = prove
   ASM_REWRITE_TAC[pegresult_inject] THEN CONJ_TAC THENL
    [MAP_EVERY EXISTS_TAC [`i:(token#locs)list`; `l:((mlptree)list)list`;
                           `err:locs#(char)list`] THEN ASM_REWRITE_TAC[];
-    CASE_REWRITE_TAC[]]);;
+    CAKE_REWRITE_TAC[]]);;
 
 let PARSE3AUX_linfix_inv = prove
  (`!tgt (e1:(token,MMLnonT,(mlptree)list,(char)list)pegsym) e2 i0 i r eo.
@@ -3572,13 +3572,13 @@ let PARSE3AUX_linfix_inv = prove
                         `err:locs#(char)list`] THEN
   ASM_REWRITE_TAC[] THEN
   MP_TAC(ISPEC `r1:(mlptree)list` list_CASES) THEN STRIP_TAC THEN
-  ASM_REWRITE_TAC[NOT_CONS_NIL] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[NOT_CONS_NIL] THEN CAKE_REWRITE_TAC[] THEN
   MAP_EVERY EXISTS_TAC [`h:mlptree`; `t:(mlptree)list`] THEN ASM_REWRITE_TAC[]);;
 
 (* the separator fails on a suffix that starts with a stopper of P *)
 let PARSE3AUX_SEP_fail = prove
  (`!SEP P sfx.
-     (!n. SEP = NT n ==> ?nn. n = INL nn /\ peg_nt (INL nn) I IN Gexprs cmlPEG /\
+     (!n. SEP = grammar_NT n ==> ?nn. n = INL nn /\ peg_nt (INL nn) I IN Gexprs cmlPEG /\
                               stoppers nn = (:token)) /\
      (!t. t IN firstSet cmlG [SEP] ==> ~(t IN stoppers P)) /\
      ~peg0 cmlPEG (sym2peg SEP) /\
@@ -3615,7 +3615,7 @@ let PARSE3AUX_SEP_fail = prove
 (* the results of sym2peg C are single trees *)
 let PARSE3AUX_sym2peg_single = prove
  (`!C i j r eo.
-     (!n. C = NT n ==> ?nn. n = INL nn) /\
+     (!n. C = grammar_NT n ==> ?nn. n = INL nn) /\
      peg_eval cmlPEG (i, sym2peg C) (peg_Success j r eo) ==> ?x. r = [x]`,
   GEN_TAC THEN
   MP_TAC(ISPEC `C:(token,MMLnonT)symbol` (cases "symbol")) THEN
@@ -3629,34 +3629,34 @@ let PARSE3AUX_sym2peg_single = prove
 
 let peg_linfix_complete = prove
  (`!master SEP C P.
-  (!n. SEP = NT n ==>
+  (!n. SEP = grammar_NT n ==>
        ?nn. n = INL nn /\ peg_nt (INL nn) I IN Gexprs cmlPEG /\ stoppers nn = (:token)) /\
-  (!n. C = NT n ==> ?nn. n = INL nn) /\
+  (!n. C = grammar_NT n ==> ?nn. n = INL nn) /\
   (!t. t IN firstSet cmlG [SEP] ==> ~(t IN stoppers P)) /\
-  (!n. C = NT (INL n) ==>
+  (!n. C = grammar_NT (INL n) ==>
        (!t. t IN firstSet cmlG [SEP] ==> t IN stoppers n) /\
        (!t. t IN stoppers P ==> t IN stoppers n)) /\
   ~peg0 cmlPEG (sym2peg C) /\ ~nullable cmlG [C] /\
   ~peg0 cmlPEG (sym2peg SEP) /\ ~nullable cmlG [SEP] /\
-  FAPPLY (grammar_rules cmlG) (INL P) = {[NT (INL P); SEP; C], [C]} /\
+  FAPPLY (grammar_rules cmlG) (INL P) = {[grammar_NT (INL P); SEP; C], [C]} /\
   (!pt pfx0 sfx.
      LENGTH pfx0 < LENGTH master /\
-     (!n. ptree_head pt = NT (INL n) /\ ~(sfx = []) ==>
+     (!n. ptree_head pt = grammar_NT (INL n) /\ ~(sfx = []) ==>
           FST (HD sfx) IN stoppers n) /\
      valid_lptree cmlG pt /\ ptree_head pt IN {SEP, C} /\
-     real_fringe pt = MAP (TOK ## I) pfx0 ==>
+     real_fringe pt = MAP (grammar_TOK ## I) pfx0 ==>
      ?eo. peg_eval cmlPEG (APPEND pfx0 sfx, sym2peg (ptree_head pt))
                    (peg_Success sfx [pt] eo)) /\
   (!pt sfx.
      valid_lptree cmlG pt /\ ptree_head pt = C /\
-     (!n. C = NT (INL n) /\ ~(sfx = []) ==> FST (HD sfx) IN stoppers n) /\
-     real_fringe pt = MAP (TOK ## I) master ==>
+     (!n. C = grammar_NT (INL n) /\ ~(sfx = []) ==> FST (HD sfx) IN stoppers n) /\
+     real_fringe pt = MAP (grammar_TOK ## I) master ==>
      ?eo. peg_eval cmlPEG (APPEND master sfx, sym2peg C) (peg_Success sfx [pt] eo))
   ==>
   !pfx pt sfx.
-    IS_SUFFIX master pfx /\ valid_lptree cmlG pt /\ ptree_head pt = NT (INL P) /\
+    IS_SUFFIX master pfx /\ valid_lptree cmlG pt /\ ptree_head pt = grammar_NT (INL P) /\
     (~(sfx = []) ==> FST (HD sfx) IN stoppers P) /\
-    real_fringe pt = MAP (TOK ## I) pfx ==>
+    real_fringe pt = MAP (grammar_TOK ## I) pfx ==>
     ?eo. peg_eval cmlPEG (APPEND pfx sfx, peg_linfix (INL P) (sym2peg C) (sym2peg SEP))
                   (peg_Success sfx [pt] eo)`,
   REPEAT GEN_TAC THEN
@@ -3669,9 +3669,9 @@ let peg_linfix_complete = prove
   SUBGOAL_THEN
    `!n (pfx:(token#locs)list) pt sfx.
       LENGTH pfx = n /\ IS_SUFFIX master pfx /\ valid_lptree cmlG pt /\
-      ptree_head pt = NT (INL P) /\
+      ptree_head pt = grammar_NT (INL P) /\
       (~(sfx = []) ==> FST (HD sfx) IN stoppers P) /\
-      real_fringe pt = MAP (TOK ## I) pfx ==>
+      real_fringe pt = MAP (grammar_TOK ## I) pfx ==>
       ?eo. peg_eval cmlPEG (APPEND pfx sfx, peg_linfix (INL P) (sym2peg C) (sym2peg SEP))
                     (peg_Success sfx [pt] eo)`
    (fun th -> MESON_TAC[th]) THEN
@@ -3725,7 +3725,7 @@ let peg_linfix_complete = prove
     FIRST_X_ASSUM(SUBST1_TAC o SYM o check (fun th ->
       try lhand(concl th) = `ptree_head (spt':mlptree)` with Failure _ -> false)) THEN
     MATCH_MP_TAC rfirstSet_nonempty_fringe THEN
-    MAP_EVERY EXISTS_TAC [`sl:locs`; `MAP ((TOK:token->(token,MMLnonT)symbol) ## (I:locs->locs)) t`] THEN
+    MAP_EVERY EXISTS_TAC [`sl:locs`; `MAP ((grammar_TOK:token->(token,MMLnonT)symbol) ## (I:locs->locs)) t`] THEN
     ASM_REWRITE_TAC[MAP; PAIR_MAP_THM; I_THM];
     ALL_TAC] THEN
   FIRST_X_ASSUM SUBST_ALL_TAC THEN
@@ -3748,7 +3748,7 @@ let peg_linfix_complete = prove
       UNDISCH_TAC `~(cf:(token#locs)list = [])` THEN
       REWRITE_TAC[GSYM LENGTH_EQ_NIL] THEN ARITH_TAC;
       X_GEN_TAC `n:MMLnonT` THEN DISCH_TAC THEN
-      USE_THEN "c4" (MP_TAC o C MP (ASSUME `ptree_head (h0'':mlptree) = NT (INL n)`) o
+      USE_THEN "c4" (MP_TAC o C MP (ASSUME `ptree_head (h0'':mlptree) = grammar_NT (INL n)`) o
                      SPEC `n:MMLnonT`) THEN
       DISCH_THEN(MATCH_MP_TAC o CONJUNCT1) THEN ASM_REWRITE_TAC[]];
     ALL_TAC] THEN
@@ -3762,7 +3762,7 @@ let peg_linfix_complete = prove
       UNDISCH_TAC `~(cf:(token#locs)list = [])` THEN
       REWRITE_TAC[GSYM LENGTH_EQ_NIL] THEN ARITH_TAC;
       X_GEN_TAC `n:MMLnonT` THEN STRIP_TAC THEN
-      USE_THEN "c1" (MP_TAC o C MP (ASSUME `ptree_head (h0':mlptree) = NT (INL n)`) o
+      USE_THEN "c1" (MP_TAC o C MP (ASSUME `ptree_head (h0':mlptree) = grammar_NT (INL n)`) o
                      SPEC `INL n:MMLnonT+num`) THEN
       REWRITE_TAC[injectivity "sum"] THEN
       DISCH_THEN(X_CHOOSE_THEN `nn:MMLnonT` STRIP_ASSUME_TAC) THEN
@@ -3829,10 +3829,10 @@ let peg_linfix_complete = prove
                   LPARSEAUX_IS_SUFFIX_APPEND) THEN
     ASM_REWRITE_TAC[] THEN
     DISCH_THEN(X_CHOOSE_THEN `p:(token#locs)list` SUBST_ALL_TAC) THEN
-    SUBGOAL_THEN `!n. ptree_head (h0:mlptree) = NT (INL n) /\ ~(sfx:(token#locs)list = []) ==>
+    SUBGOAL_THEN `!n. ptree_head (h0:mlptree) = grammar_NT (INL n) /\ ~(sfx:(token#locs)list = []) ==>
                       FST (HD sfx) IN stoppers n` ASSUME_TAC THENL
      [X_GEN_TAC `n:MMLnonT` THEN STRIP_TAC THEN
-      USE_THEN "c4" (MP_TAC o C MP (ASSUME `ptree_head (h0:mlptree) = NT (INL n)`) o
+      USE_THEN "c4" (MP_TAC o C MP (ASSUME `ptree_head (h0:mlptree) = grammar_NT (INL n)`) o
                      SPEC `n:MMLnonT`) THEN
       DISCH_THEN(MATCH_MP_TAC o CONJUNCT2) THEN ASM_MESON_TAC[];
       ALL_TAC] THEN
@@ -3909,7 +3909,7 @@ let FST_NOTIN = prove
 (* a token leaf is parsed by tokeq *)
 let PARSE3AUX_tok_leaf = prove
  (`!(pt:mlptree) t pfx0 sfx.
-     ptree_head pt = TOK t /\ real_fringe pt = MAP (TOK ## I) pfx0 ==>
+     ptree_head pt = grammar_TOK t /\ real_fringe pt = MAP (grammar_TOK ## I) pfx0 ==>
      ?eo. peg_eval cmlPEG (APPEND pfx0 sfx, tokeq t) (peg_Success sfx [pt] eo)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[ptree_head_eq_tok0] THEN STRIP_TAC THEN
   FIRST_X_ASSUM(SUBST_ALL_TAC o check (fun th -> lhs(concl th) = `pt:mlptree`)) THEN
@@ -4057,7 +4057,7 @@ let PARSE3AUX_case_APPEND_SING = prove
  (CASE_TERM `!(l:A list) x (d:B) p.
      (match APPEND l [x] with [] -> d | CONS a b -> p) = p`,
   GEN_TAC THEN MP_TAC(ISPEC `l:A list` list_CASES) THEN STRIP_TAC THEN
-  ASM_REWRITE_TAC[APPEND] THEN CASE_REWRITE_TAC[]);;
+  ASM_REWRITE_TAC[APPEND] THEN CAKE_REWRITE_TAC[]);;
 
 let PARSE3AUX_ptPapply_APPEND = prove
  (`!(c:(A,MMLnonT,locs)parsetree) l x.
@@ -4293,48 +4293,48 @@ let PARSE3AUX_complete_nEbase = prove
 
 let PARSE3AUX_complete_nErel = prove
  (PARSE3AUX_complete_goal "nErel",
-  PARSE3AUX_LINFIX_CASE_TAC `nErel` `NT (INL nRelOps):(token,MMLnonT)symbol`
-                            `NT (INL nElistop):(token,MMLnonT)symbol`);;
+  PARSE3AUX_LINFIX_CASE_TAC `nErel` `grammar_NT (INL nRelOps):(token,MMLnonT)symbol`
+                            `grammar_NT (INL nElistop):(token,MMLnonT)symbol`);;
 
 let PARSE3AUX_complete_nEmult = prove
  (PARSE3AUX_complete_goal "nEmult",
-  PARSE3AUX_LINFIX_CASE_TAC `nEmult` `NT (INL nMultOps):(token,MMLnonT)symbol`
-                            `NT (INL nEapp):(token,MMLnonT)symbol`);;
+  PARSE3AUX_LINFIX_CASE_TAC `nEmult` `grammar_NT (INL nMultOps):(token,MMLnonT)symbol`
+                            `grammar_NT (INL nEapp):(token,MMLnonT)symbol`);;
 
 let PARSE3AUX_complete_nElogicOR = prove
  (PARSE3AUX_complete_goal "nElogicOR",
-  PARSE3AUX_LINFIX_CASE_TAC `nElogicOR` `TOK OrelseT:(token,MMLnonT)symbol`
-                            `NT (INL nElogicAND):(token,MMLnonT)symbol`);;
+  PARSE3AUX_LINFIX_CASE_TAC `nElogicOR` `grammar_TOK OrelseT:(token,MMLnonT)symbol`
+                            `grammar_NT (INL nElogicAND):(token,MMLnonT)symbol`);;
 
 let PARSE3AUX_complete_nElogicAND = prove
  (PARSE3AUX_complete_goal "nElogicAND",
-  PARSE3AUX_LINFIX_CASE_TAC `nElogicAND` `TOK AndalsoT:(token,MMLnonT)symbol`
-                            `NT (INL nEtyped):(token,MMLnonT)symbol`);;
+  PARSE3AUX_LINFIX_CASE_TAC `nElogicAND` `grammar_TOK AndalsoT:(token,MMLnonT)symbol`
+                            `grammar_NT (INL nEtyped):(token,MMLnonT)symbol`);;
 
 let PARSE3AUX_complete_nEcomp = prove
  (PARSE3AUX_complete_goal "nEcomp",
-  PARSE3AUX_LINFIX_CASE_TAC `nEcomp` `NT (INL nCompOps):(token,MMLnonT)symbol`
-                            `NT (INL nErel):(token,MMLnonT)symbol`);;
+  PARSE3AUX_LINFIX_CASE_TAC `nEcomp` `grammar_NT (INL nCompOps):(token,MMLnonT)symbol`
+                            `grammar_NT (INL nErel):(token,MMLnonT)symbol`);;
 
 let PARSE3AUX_complete_nEbefore = prove
  (PARSE3AUX_complete_goal "nEbefore",
-  PARSE3AUX_LINFIX_CASE_TAC `nEbefore` `TOK (AlphaT (implode "before")):(token,MMLnonT)symbol`
-                            `NT (INL nEcomp):(token,MMLnonT)symbol`);;
+  PARSE3AUX_LINFIX_CASE_TAC `nEbefore` `grammar_TOK (AlphaT (implode "before")):(token,MMLnonT)symbol`
+                            `grammar_NT (INL nEcomp):(token,MMLnonT)symbol`);;
 
 let PARSE3AUX_complete_nEadd = prove
  (PARSE3AUX_complete_goal "nEadd",
-  PARSE3AUX_LINFIX_CASE_TAC `nEadd` `NT (INL nAddOps):(token,MMLnonT)symbol`
-                            `NT (INL nEmult):(token,MMLnonT)symbol`);;
+  PARSE3AUX_LINFIX_CASE_TAC `nEadd` `grammar_NT (INL nAddOps):(token,MMLnonT)symbol`
+                            `grammar_NT (INL nEmult):(token,MMLnonT)symbol`);;
 
 let PARSE3AUX_complete_nTyVarList = prove
  (PARSE3AUX_complete_goal "nTyVarList",
-  PARSE3AUX_LINFIX_CASE_TAC `nTyVarList` `TOK CommaT:(token,MMLnonT)symbol`
-                            `NT (INL nTyvarN):(token,MMLnonT)symbol`);;
+  PARSE3AUX_LINFIX_CASE_TAC `nTyVarList` `grammar_TOK CommaT:(token,MMLnonT)symbol`
+                            `grammar_NT (INL nTyvarN):(token,MMLnonT)symbol`);;
 
 let PARSE3AUX_complete_nAndFDecls = prove
  (PARSE3AUX_complete_goal "nAndFDecls",
-  PARSE3AUX_LINFIX_CASE_TAC `nAndFDecls` `TOK AndT:(token,MMLnonT)symbol`
-                            `NT (INL nFDecl):(token,MMLnonT)symbol`);;
+  PARSE3AUX_LINFIX_CASE_TAC `nAndFDecls` `grammar_TOK AndT:(token,MMLnonT)symbol`
+                            `grammar_NT (INL nFDecl):(token,MMLnonT)symbol`);;
 
 let PARSE3AUX_complete_nEapp = prove
  (PARSE3AUX_complete_goal "nEapp", PARSE3AUX_LEMMA_CASE_TAC eapp_complete);;
@@ -4403,8 +4403,8 @@ let PARSE3AUX_complete_nPapp = prove
                 nConstructorName_input_monotone) THEN
   ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
   MP_TAC(MATCH_MP PARSE3AUX_FRINGE_CONS
-     (CONJ (ASSUME `real_fringe (h0:mlptree) = MAP (TOK ## I) m1`)
-     (CONJ (ASSUME `ptree_head (h0:mlptree) = NT (INL nPConApp)`)
+     (CONJ (ASSUME `real_fringe (h0:mlptree) = MAP (grammar_TOK ## I) m1`)
+     (CONJ (ASSUME `ptree_head (h0:mlptree) = grammar_NT (INL nPConApp)`)
      (CONJ (ASSUME `valid_lptree cmlG (h0:mlptree)`) nullable_PConApp)))) THEN
   DISCH_THEN(X_CHOOSE_THEN `ct:token` (X_CHOOSE_THEN `cl:locs`
     (X_CHOOSE_THEN `m1r:(token#locs)list` (CONJUNCTS_THEN2 SUBST_ALL_TAC ASSUME_TAC)))) THEN
@@ -4424,7 +4424,7 @@ let PARSE3AUX_complete_nPapp = prove
     PARSE3AUX_EVAL_EQ_TAC THEN
     REWRITE_TAC[FLAT_APPEND; FLAT; APPEND_NIL; LENGTH_APPEND; LENGTH;
               ARITH_RULE `~(SUC (n + SUC 0) = 1)`] THEN
-  CASE_REWRITE_TAC[PARSE3AUX_case_APPEND_SING] THEN
+  CAKE_REWRITE_TAC[PARSE3AUX_case_APPEND_SING] THEN
   REWRITE_TAC[PARSE3AUX_ptPapply_APPEND; ptPapply0_FOLDL; bindNT0_lemma];
     (* Papp -> Pbase *)
     PARSE3AUX_EXPAND_TAC `nPbase` THEN
@@ -4435,15 +4435,15 @@ let PARSE3AUX_complete_nPapp = prove
 let PARSE3AUX_complete_nTypeDec = prove
  (PARSE3AUX_complete_goal "nTypeDec",
   PARSE3AUX_CSTART_TAC THEN PARSE3AUX_SPLIT_CONJ_ASM_TAC THEN PARSE3AUX_SKOLEM_IH_TAC THEN
-  PARSE3AUX_LINFIX_SUB_TAC `nDtypeDecls` `TOK AndT:(token,MMLnonT)symbol`
-                           `NT (INL nDtypeDecl):(token,MMLnonT)symbol` THEN
+  PARSE3AUX_LINFIX_SUB_TAC `nDtypeDecls` `grammar_TOK AndT:(token,MMLnonT)symbol`
+                           `grammar_NT (INL nDtypeDecl):(token,MMLnonT)symbol` THEN
   PARSE3AUX_EVAL_TAC);;
 
 let PARSE3AUX_complete_nDtypeDecl = prove
  (PARSE3AUX_complete_goal "nDtypeDecl",
   PARSE3AUX_CSTART_TAC THEN PARSE3AUX_SPLIT_CONJ_ASM_TAC THEN PARSE3AUX_SKOLEM_IH_TAC THEN
-  PARSE3AUX_LINFIX_SUB_TAC `nDtypeCons` `TOK BarT:(token,MMLnonT)symbol`
-                           `NT (INL nDconstructor):(token,MMLnonT)symbol` THEN
+  PARSE3AUX_LINFIX_SUB_TAC `nDtypeCons` `grammar_TOK BarT:(token,MMLnonT)symbol`
+                           `grammar_NT (INL nDconstructor):(token,MMLnonT)symbol` THEN
   PARSE3AUX_DESTRUCT_TAC THEN PARSE3AUX_EVAL_TAC);;
 
 let PARSE3AUX_complete_ths =
@@ -4526,17 +4526,17 @@ let PARSE3AUX_COMPLETE_DISPATCH_TAC : tactic = fun (asl,w as g) ->
 
 let completeness = prove
  (`!pt N pfx sfx.
-     valid_lptree cmlG pt /\ ptree_head pt = NT (INL N) /\
+     valid_lptree cmlG pt /\ ptree_head pt = grammar_NT (INL N) /\
      INL N IN FDOM (peg_rules cmlPEG) /\
      (~(sfx = []) ==> FST (HD sfx) IN stoppers N) /\
-     real_fringe pt = MAP (TOK ## I) pfx ==>
+     real_fringe pt = MAP (grammar_TOK ## I) pfx ==>
      ?eo. peg_eval cmlPEG (APPEND pfx sfx, peg_nt (INL N) I) (peg_Success sfx [pt] eo)`,
   SUBGOAL_THEN
    `!N (pfx:(token#locs)list). !pt sfx.
-      valid_lptree cmlG pt /\ ptree_head pt = NT (INL N) /\
+      valid_lptree cmlG pt /\ ptree_head pt = grammar_NT (INL N) /\
       INL N IN FDOM (peg_rules cmlPEG) /\
       (~(sfx = []) ==> FST (HD sfx) IN stoppers N) /\
-      real_fringe pt = MAP (TOK ## I) pfx ==>
+      real_fringe pt = MAP (grammar_TOK ## I) pfx ==>
       ?eo. peg_eval cmlPEG (APPEND pfx sfx, peg_nt (INL N) I) (peg_Success sfx [pt] eo)`
    (fun th -> MESON_TAC[th]) THEN
   MATCH_MP_TAC PARSE3AUX_LEX_IND THEN
@@ -4546,10 +4546,10 @@ let completeness = prove
    `!pt' N' pfx' sfx'.
       (LENGTH pfx' < LENGTH (pfx:(token#locs)list) \/
        pfx' = pfx /\ NT_rank (INL N') < NT_rank (INL N)) /\
-      valid_lptree cmlG pt' /\ ptree_head pt' = NT (INL N') /\
+      valid_lptree cmlG pt' /\ ptree_head pt' = grammar_NT (INL N') /\
       INL N' IN FDOM (peg_rules cmlPEG) /\
       (~(sfx' = []) ==> FST (HD sfx') IN stoppers N') /\
-      real_fringe pt' = MAP (TOK ## I) pfx' ==>
+      real_fringe pt' = MAP (grammar_TOK ## I) pfx' ==>
       ?eo. peg_eval cmlPEG (APPEND pfx' sfx', peg_nt (INL N') I)
                     (peg_Success sfx' [pt'] eo)`
     (LABEL_TAC "ih") THENL
@@ -4560,10 +4560,10 @@ let completeness = prove
                (MP (SPECL [`N':MMLnonT`; `pfx':(token#locs)list`]
                           (ASSUME `!N' pfx'. LENGTH (pfx':(token#locs)list) < LENGTH (pfx:(token#locs)list) \/
                                      pfx' = pfx /\ NT_rank (INL N') < NT_rank (INL N)
-                                     ==> (!pt sfx. valid_lptree cmlG pt /\ ptree_head pt = NT (INL N') /\
+                                     ==> (!pt sfx. valid_lptree cmlG pt /\ ptree_head pt = grammar_NT (INL N') /\
                                            INL N' IN FDOM (peg_rules cmlPEG) /\
                                            (~(sfx = []) ==> FST (HD sfx) IN stoppers N') /\
-                                           real_fringe pt = MAP (TOK ## I) pfx' ==>
+                                           real_fringe pt = MAP (grammar_TOK ## I) pfx' ==>
                                            ?eo. peg_eval cmlPEG (APPEND pfx' sfx, peg_nt (INL N') I)
                                                          (peg_Success sfx [pt] eo))`)) lr)))
       STRIP_ASSUME_TAC) THEN
@@ -4581,7 +4581,7 @@ let completeness = prove
 (* a fringe of tokens is the image of a token list *)
 let PARSE3AUX_tok_fringe = prove
  (`!l:((token,MMLnonT)symbol#locs)list.
-     (!s. MEM s (MAP FST l) ==> ?t. s = TOK t) ==> ?pfx. l = MAP (TOK ## I) pfx`,
+     (!s. MEM s (MAP FST l) ==> ?t. s = grammar_TOK t) ==> ?pfx. l = MAP (grammar_TOK ## I) pfx`,
   LIST_INDUCT_TAC THEN REWRITE_TAC[MAP; MEM] THENL
    [MESON_TAC[MAP]; ALL_TAC] THEN
   REWRITE_TAC[DISJ_IMP_THM; FORALL_AND_THM; FORALL_UNWIND_THM2] THEN
@@ -4596,11 +4596,11 @@ let PARSE3AUX_tok_fringe = prove
 
 let cmlG_unambiguous = prove
  (`!pt1 pt2 N.
-     valid_lptree cmlG pt1 /\ ptree_head pt1 = NT (INL N) /\
-     valid_lptree cmlG pt2 /\ ptree_head pt2 = NT (INL N) /\
+     valid_lptree cmlG pt1 /\ ptree_head pt1 = grammar_NT (INL N) /\
+     valid_lptree cmlG pt2 /\ ptree_head pt2 = grammar_NT (INL N) /\
      INL N IN FDOM (peg_rules cmlPEG) /\
      real_fringe pt2 = real_fringe pt1 /\
-     (!s. s IN set_of_list (ptree_fringe pt1) ==> ?t. s = TOK t) ==>
+     (!s. s IN set_of_list (ptree_fringe pt1) ==> ?t. s = grammar_TOK t) ==>
      pt1 = pt2`,
   REWRITE_TAC[IN_SET_OF_LIST] THEN REPEAT STRIP_TAC THEN
   MP_TAC(ISPEC `real_fringe (pt1:mlptree)` PARSE3AUX_tok_fringe) THEN

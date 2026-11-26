@@ -80,7 +80,7 @@ let word_simp_Seq_assoc_pmatch = prove
          SmartSeq p1 (wl_Loop names (Seq_assoc wl_Skip body) exit_names)
      | other -> SmartSeq p1 other`,
   GEN_TAC THEN GEN_TAC THEN CASES_ON `prog:(A)wl_prog` THEN
-  CASE_REWRITE_TAC[word_simp_Seq_assoc_def]);;
+  CAKE_REWRITE_TAC[word_simp_Seq_assoc_def]);;
 
 (* optimise certain consecutive If statements that arise from data-to-word *)
 (*   If something (q1 ; n := X) (q2 ; n := Y) ;                             *)
@@ -102,7 +102,7 @@ let word_simp_dest_Seq_pmatch = prove
   `!p. word_simp_dest_Seq p =
        match p with wl_Seq p1 p2 -> (p1,p2:(A)wl_prog) | p -> (wl_Skip,p)`,
   GEN_TAC THEN CASES_ON `p:(A)wl_prog` THEN
-  CASE_REWRITE_TAC[word_simp_dest_Seq_def]);;
+  CAKE_REWRITE_TAC[word_simp_dest_Seq_def]);;
 
 let dest_If_def = sem1aux_def
   `(dest_If (wl_If x1 x2 x3 p1 p2) = SOME (x1,x2,x3,p1,p2:(A)wl_prog)) /\
@@ -114,7 +114,7 @@ let dest_If_pmatch = prove
        match p with
          wl_If x1 x2 x3 p1 p2 -> SOME (x1,x2,x3,p1,p2:(A)wl_prog)
        | _ -> NONE`,
-  GEN_TAC THEN CASES_ON `p:(A)wl_prog` THEN CASE_REWRITE_TAC[dest_If_def]);;
+  GEN_TAC THEN CASES_ON `p:(A)wl_prog` THEN CAKE_REWRITE_TAC[dest_If_def]);;
 
 let dest_If_Eq_Imm_def = cake_def
   `dest_If_Eq_Imm (p:(A)wl_prog) =

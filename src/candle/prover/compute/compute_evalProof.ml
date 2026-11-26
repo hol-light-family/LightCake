@@ -353,7 +353,7 @@ let num2bit_dest_numeral = prove
      numeral_thy_ok (thyof (hol_refs_the_context s)) ==>
        s = s' /\ (thyof (hol_refs_the_context s),[]) |- num2bit y === x`,
   REPEAT GEN_TAC THEN REWRITE_TAC[compute_dest_numeral_def] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[] THEN TOP_CASE_TAC THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[] THEN TOP_CASE_TAC THEN
   REWRITE_TAC[holKernel_raise_Failure_def; st_ex_return_def; PAIR_EQ;
               distinctness "exc"; injectivity "exc"] THEN
   STRIP_TAC THEN FIRST_X_ASSUM(SUBST_ALL_TAC o SYM) THEN ASM_REWRITE_TAC[] THEN
@@ -464,10 +464,10 @@ let CMPEVPAUX_dest_cexp_shape = prove
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   FIRST_X_ASSUM(MP_TAC o ONCE_REWRITE_RULE[compute_dest_cexp_def] o
                 check (fun th -> can (find_term ((=) `compute_dest_cexp tm`)) (concl th))) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
   REWRITE_TAC[LET_DEF; LET_END_DEF] THEN BETA_TAC THEN
   DISJ_CASES_THEN STRIP_ASSUME_TAC (ISPEC `xs:hol_term list` CMPEVPAUX_LIST_CASES4) THEN
-  ASM_REWRITE_TAC[MAP] THEN CASE_REWRITE_TAC[] THEN REPEAT TOP_CASE_TAC THEN
+  ASM_REWRITE_TAC[MAP] THEN CAKE_REWRITE_TAC[] THEN REPEAT TOP_CASE_TAC THEN
   REWRITE_TAC[distinctness "option"; injectivity "option"] THEN
   CMPEVPAUX_SHAPE_LEAF_TAC);;
 
@@ -520,10 +520,10 @@ let dest_cexp_thm = prove
   FIRST_X_ASSUM(MP_TAC o check (fun th -> is_eq (concl th) &&
      rhs (concl th) = `SOME (cv:compute_exp)` &&
      not (fst (strip_comb (lhs (concl th))) = `compute_dest_cexp`))) THEN
-  NAMED_CASES_ON "h" ["n ty"; "n ty"; "hf hx"; "hv hb"] THEN CASE_REWRITE_TAC[] THEN
+  NAMED_CASES_ON "h" ["n ty"; "n ty"; "hf hx"; "hv hb"] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[distinctness "option"] THENL
    [(* a variable: xs = [] and ty = Cexp *)
-    STRUCT_CASES_TAC (ISPEC `xs:hol_term list` list_CASES) THEN CASE_REWRITE_TAC[] THEN
+    STRUCT_CASES_TAC (ISPEC `xs:hol_term list` list_CASES) THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[distinctness "option"] THEN COND_CASES_TAC THEN
     REWRITE_TAC[distinctness "option"; injectivity "option"] THEN
     DISCH_THEN(SUBST_ALL_TAC o SYM) THEN FIRST_X_ASSUM SUBST_ALL_TAC THEN
@@ -765,12 +765,12 @@ let CMPEVPAUX_subst_Var = prove
        (MAP (\(s,v). (cexp2term v, hol_Var s Cexp)) env) (hol_Var n Cexp)`,
   REWRITE_TAC[compute_subst_def] THEN
   LIST_INDUCT_TAC THEN REWRITE_TAC[MAP; REV_ASSOCD; ALOOKUP_THM] THENL
-   [CASE_REWRITE_TAC[] THEN REWRITE_TAC[cexp2term_def]; ALL_TAC] THEN
+   [CAKE_REWRITE_TAC[] THEN REWRITE_TAC[cexp2term_def]; ALL_TAC] THEN
   SPEC_TAC(`h:mlstring#compute_exp`,`h:mlstring#compute_exp`) THEN
   REWRITE_TAC[FORALL_PAIR_THM] THEN REPEAT GEN_TAC THEN
   REWRITE_TAC[ALOOKUP_THM; REV_ASSOCD; MAP; injectivity "hol_term"] THEN
   ASM_CASES_TAC `(p1:mlstring) = n` THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[]);;
 
 let CMPEVPAUX_FILTER_ilist = prove
  (`!s env.
@@ -844,7 +844,7 @@ let MAP_subst_MAP_Var = prove
     (ISPEC `ys:compute_exp list` list_CASES) THEN
   REWRITE_TAC[LENGTH; NOT_SUC; ALL_DISTINCT; SUC_INJ; MAP; ZIP] THEN
   STRIP_TAC THEN REWRITE_TAC[CONS_11] THEN CONJ_TAC THENL
-   [REWRITE_TAC[compute_subst_def; ALOOKUP_THM] THEN CASE_REWRITE_TAC[];
+   [REWRITE_TAC[compute_subst_def; ALOOKUP_THM] THEN CAKE_REWRITE_TAC[];
     ALL_TAC] THEN
   TRANS_TAC EQ_TRANS `MAP (compute_subst (ZIP t ys')) (MAP compute_Var t)` THEN
   CONJ_TAC THENL
@@ -1428,7 +1428,7 @@ let CMPEVPAUX_EV_PREP_TAC : tactic =
 
 (* the monadic plumbing *)
 let CMPEVPAUX_EV_SIMP_TAC : tactic =
-  CASE_REWRITE_TAC[st_ex_return_def; st_ex_bind_def; st_ex_ignore_bind_def;
+  CAKE_REWRITE_TAC[st_ex_return_def; st_ex_bind_def; st_ex_ignore_bind_def;
                    PAIR_EQ; injectivity "exc";
                    distinctness "exc"; UNWIND_THM1; holKernel_raise_Failure_def];;
 

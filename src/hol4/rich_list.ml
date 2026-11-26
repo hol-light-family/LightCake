@@ -1136,7 +1136,7 @@ let EL_REPLICATE = prove
   MESON_TAC[MEM_EL; MEM_REPLICATE; LENGTH_REPLICATE]);;
 
 let REPLICATE_GENLIST = prove
- (`!n (x:A). REPLICATE n x = list_of_seq (K x) n`,
+ (`!n (x:A). REPLICATE n x = list_of_seq (combin_K x) n`,
   REWRITE_TAC[LIST_EQ; LENGTH_REPLICATE; LENGTH_LIST_OF_SEQ] THEN
   SIMP_TAC[EL_REPLICATE; EL_LIST_OF_SEQ; K_THM]);;
 
@@ -1318,7 +1318,7 @@ let TAKE_DROP_SWAP = prove
   REWRITE_TAC[RICHAUX_TAKE_DROP_SWAP]);;
 
 let GENLIST_K_CONS = prove
- (`!(e:A) n. list_of_seq (K e) (SUC n) = CONS e (list_of_seq (K e) n)`,
+ (`!(e:A) n. list_of_seq (combin_K e) (SUC n) = CONS e (list_of_seq (combin_K e) n)`,
   REWRITE_TAC[LIST_OF_SEQ; K_THM] THEN
   REPEAT GEN_TAC THEN AP_TERM_TAC THEN AP_THM_TAC THEN AP_TERM_TAC THEN
   REWRITE_TAC[FUN_EQ_THM; o_THM; K_THM]);;

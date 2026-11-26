@@ -58,15 +58,15 @@ let MEM_max_depth_graphs = prove
     `funs:(num#(A)wl_prog)spt`; `code:(num#(A)wl_prog)spt`] THEN
   STRIP_TAC THENL
    [FIRST_X_ASSUM(SUBST_ALL_TAC o check (is_var o lhs o concl)) THEN
-    ASM_REWRITE_TAC[max_depth_graphs_def] THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[max_depth_graphs_def] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[OPTION_MAP2_SOME_0; option_le_max; option_le_max_right; option_le_X_MAX_X;
                 option_le_refl; option_le_SOME_0];
     FIRST_X_ASSUM(MP_TAC o SPECL [`name:num`; `a:num,(body:(A)wl_prog)`; `ss:num spt`;
       `xs:num list`; `funs:(num#(A)wl_prog)spt`; `code:(num#(A)wl_prog)spt`]) THEN
     ASM_REWRITE_TAC[] THEN
     GEN_REWRITE_TAC (RAND_CONV o RAND_CONV) [max_depth_graphs_def] THEN
-    CASES_ON `lookup h (code:(num#(A)wl_prog)spt)` THEN CASE_REWRITE_TAC[option_le_def] THEN
-    CASES_ON `a':num#(A)wl_prog` THEN CASE_REWRITE_TAC[] THEN
+    CASES_ON `lookup h (code:(num#(A)wl_prog)spt)` THEN CAKE_REWRITE_TAC[option_le_def] THEN
+    CASES_ON `a':num#(A)wl_prog` THEN CAKE_REWRITE_TAC[] THEN
     MESON_TAC[option_le_trans; option_le_X_MAX_X]]);;
 
 let WDPAUX_MAX_MONO = prove
@@ -91,7 +91,7 @@ let option_le_max_depth_graph = prove
   MATCH_MP_TAC call_graph_ind THEN REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
   REPEAT STRIP_TAC THEN TRY WDPAUX_CG_MONO_TAC THEN
   REWRITE_TAC[call_graph_def] THEN
-  CASES_ON `dest:num option` THEN CASE_REWRITE_TAC[max_depth_def; option_le_def] THEN
+  CASES_ON `dest:num option` THEN CAKE_REWRITE_TAC[max_depth_def; option_le_def] THEN
   COND_CASES_TAC THEN REWRITE_TAC[max_depth_def; option_le_SOME_0] THEN
   (fun (asl,w as g) ->
      let ret = find_term (fun t -> is_var t && fst(dest_var t) = "ret") w in
@@ -105,14 +105,14 @@ let option_le_max_depth_graph = prove
     REWRITE_TAC[SUBSET; IN_SET_OF_LIST] THEN MESON_TAC[]; ALL_TAC] THEN
   RULE_ASSUM_TAC(REWRITE_RULE[option_INJ; PAIR_EQ]) THEN
   CASES_ON `lookup a (funs:(num#(A)wl_prog)spt)` THEN
-  CASE_REWRITE_TAC[max_depth_def; option_le_def] THEN
-  CASES_ON `a':num#(A)wl_prog` THEN CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[max_depth_def; option_le_def] THEN
+  CASES_ON `a':num#(A)wl_prog` THEN CAKE_REWRITE_TAC[] THEN
   (fun (asl,w as g) ->
      let ret = find_term (fun t -> is_var t && fst(dest_var t) = "ret") w in
      let ty = hd(snd(dest_type(type_of ret))) in
      ASM_CASES_TAC (mk_eq(ret, mk_const("NONE",[ty,`:A`]))) g) THENL
    [FIRST_ASSUM(fun th -> if is_var (lhs (concl th)) && fst(dest_var(lhs(concl th))) = "ret"
-      then SUBST1_TAC th else NO_TAC) THEN CASE_REWRITE_TAC[] THEN
+      then SUBST1_TAC th else NO_TAC) THEN CAKE_REWRITE_TAC[] THEN
     COND_CASES_TAC THEN REWRITE_TAC[max_depth_def; option_le_SOME_0] THEN
     SUBGOAL_THEN `LENGTH (ns2:num list) < total' /\
       set_of_list (CONS (a:num) ns2) SUBSET set_of_list (CONS a ns) /\
@@ -131,13 +131,13 @@ let option_le_max_depth_graph = prove
        DISJ_CASES_THEN MP_TAC (ISPEC ret (cases "option")) g) THEN
     ASM_REWRITE_TAC[EXISTS_PAIR_THM] THEN STRIP_TAC THEN
     FIRST_ASSUM(fun th -> if is_var (lhs (concl th)) && fst(dest_var(lhs(concl th))) = "ret"
-      then SUBST1_TAC th else NO_TAC) THEN CASE_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
+      then SUBST1_TAC th else NO_TAC) THEN CAKE_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
     (fun (asl,w as g) ->
        let h = find_term (fun t -> is_var t && fst(dest_var t) = "handler") w in
        DISJ_CASES_THEN MP_TAC (ISPEC h (cases "option")) g) THEN
     REWRITE_TAC[EXISTS_PAIR_THM] THEN STRIP_TAC THEN
     FIRST_ASSUM(fun th -> if is_var (lhs (concl th)) && fst(dest_var(lhs(concl th))) = "handler"
-      then SUBST1_TAC th else NO_TAC) THEN CASE_REWRITE_TAC[] THEN
+      then SUBST1_TAC th else NO_TAC) THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[max_depth_mk_Branch; max_depth_def] THEN
     REPEAT (MATCH_MP_TAC WDPAUX_MAX_MONO THEN CONJ_TAC) THEN
     REWRITE_TAC[option_le_refl] THEN ASM_MESON_TAC[]]);;
@@ -150,8 +150,8 @@ let option_le_max_depth_graphs = prove
                (max_depth_graphs ss ns ns2 funs funs2)`,
   LIST_INDUCT_TAC THEN REWRITE_TAC[max_depth_graphs_def; option_le_refl] THEN
   REPEAT STRIP_TAC THEN
-  CASES_ON `lookup h (funs2:(num#(A)wl_prog)spt)` THEN CASE_REWRITE_TAC[option_le_def] THEN
-  CASES_ON `a:num#(A)wl_prog` THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON `lookup h (funs2:(num#(A)wl_prog)spt)` THEN CAKE_REWRITE_TAC[option_le_def] THEN
+  CASES_ON `a:num#(A)wl_prog` THEN CAKE_REWRITE_TAC[] THEN
   MATCH_MP_TAC WDPAUX_MAX_MONO THEN REWRITE_TAC[option_le_refl] THEN
   MATCH_MP_TAC WDPAUX_MAX_MONO THEN CONJ_TAC THENL
    [MATCH_MP_TAC option_le_max_depth_graph THEN ASM_REWRITE_TAC[];
@@ -244,7 +244,7 @@ let WDPAUX_push_env_NONE = prove
   MP_TAC(ISPEC `env_to_list (SND (envs:((A)word_loc)spt#((A)word_loc)spt)) (wl_state_permute (s:(A,C,FFI)wl_state))`
     PAIR_SURJECTIVE) THEN
   REWRITE_TAC[LEFT_IMP_EXISTS_THM] THEN MAP_EVERY X_GEN_TAC [`l:(num#(A)word_loc)list`; `p:num->num->num`] THEN
-  DISCH_THEN SUBST1_TAC THEN CASE_REWRITE_TAC[] THEN EXISTS_TAC `l:(num#(A)word_loc)list` THEN
+  DISCH_THEN SUBST1_TAC THEN CAKE_REWRITE_TAC[] THEN EXISTS_TAC `l:(num#(A)word_loc)list` THEN
   REWRITE_TAC[wl_state_INFO.ri_accfupds; K_THM]);;
 
 let WDPAUX_pop_env_locals_size = prove
@@ -255,7 +255,7 @@ let WDPAUX_pop_env_locals_size = prove
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   UNDISCH_TAC `wl_pop_env (x:(A,C,FFI)wl_state) = SOME y` THEN
   ASM_REWRITE_TAC[wl_pop_env_def] THEN
-  CASE_REWRITE_TAC[option_INJ] THEN DISCH_THEN(SUBST1_TAC o SYM) THEN
+  CAKE_REWRITE_TAC[option_INJ] THEN DISCH_THEN(SUBST1_TAC o SYM) THEN
   REWRITE_TAC[wl_state_INFO.ri_accfupds; K_THM]);;
 let WDPAUX_key_eq_pop = prove
  (`!(x:(A,C,FFI)wl_state) y n l0 l rest.
@@ -404,7 +404,7 @@ let WDPAUX_SEQ_TAC : tactic =
   MP_TAC(ISPEC `wl_evaluate (c1:(A)wl_prog,s:(A,C,FFI)wl_state)` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `r0:((A)wl_result)option` (X_CHOOSE_THEN `s0:(A,C,FFI)wl_state`
     ASSUME_TAC)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   ASM_CASES_TAC `r0:((A)wl_result)option = NONE` THEN ASM_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THENL
    [ALL_TAC;
     FIRST_X_ASSUM(SUBST_ALL_TAC o check (fun th -> concl th = `(r0:((A)wl_result)option) = res`)) THEN
@@ -511,7 +511,7 @@ let WDPAUX_stack_size_const = prove
      wl_stack_size (wl_state_stack s1) = wl_stack_size (wl_state_stack s)`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   MP_TAC(ISPECL [`c:(A)wl_prog`; `s:(A,C,FFI)wl_state`] wl_evaluate_stack_swap) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   MESON_TAC[wl_s_key_eq_stack_size]);;
 let WDPAUX_loop_err = prove
  (`!x:((W)wl_result)option.
@@ -632,12 +632,12 @@ let WDPAUX_LOOP_TAC : tactic =
      subspt (funs2:(num#(A)wl_prog)spt) (wl_state_code y)` STRIP_ASSUME_TAC THENL
    [REPEAT CONJ_TAC THENL
      [FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_MESON_TAC[];
-      MP_TAC(ISPECL [`c:(A)wl_prog`; `wl_state_locals_fupd (K l) (s:(A,C,FFI)wl_state)`;
+      MP_TAC(ISPECL [`c:(A)wl_prog`; `wl_state_locals_fupd (combin_K l) (s:(A,C,FFI)wl_state)`;
         `x:((A)wl_result)option`; `y:(A,C,FFI)wl_state`] WDPAUX_stack_size_const) THEN
       REWRITE_TAC[wl_state_INFO.ri_accfupds; K_THM] THEN DISCH_THEN MATCH_MP_TAC THEN
       ASM_MESON_TAC[];
       MATCH_MP_TAC (GEN_ALL subspt_trans) THEN
-      EXISTS_TAC `wl_state_code (wl_state_locals_fupd (K l) (s:(A,C,FFI)wl_state))` THEN
+      EXISTS_TAC `wl_state_code (wl_state_locals_fupd (combin_K l) (s:(A,C,FFI)wl_state))` THEN
       CONJ_TAC THENL [ASM_REWRITE_TAC[wl_state_INFO.ri_accfupds; K_THM];
                       ASM_MESON_TAC[evaluate_code_only_grows]]];
     ALL_TAC]) THEN
@@ -815,7 +815,7 @@ let WDPAUX_call_eval_tail = prove
          ~wl_bad_fun_return res))`,
   REPEAT GEN_TAC THEN
   GEN_REWRITE_TAC (LAND_CONV o LAND_CONV o LAND_CONV) [wl_evaluate_def] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC(IL2AUX_clock_case_eqs @ [PAIR_EQ]) THEN
   REPEAT STRIP_TAC THEN RVEQ_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE IL2AUX_res_rws) THEN TRY (FIRST_ASSUM CONTR_TAC) THEN
@@ -833,9 +833,9 @@ let WDPAUX_call_eval_ret = prove
        ~(domain (FST names) = {} \/ ~ALL_DISTINCT rn) /\
        cut_envs names (wl_state_locals s) = SOME envs /\
        ((wl_state_clock s = 0 /\ res = SOME wl_TimeOut /\
-         s1 = wl_flush_state T (wl_state_stack_fupd (K [])
+         s1 = wl_flush_state T (wl_state_stack_fupd (combin_K [])
                 (wl_state_stack_max_fupd
-                  (K (wl_state_stack_max (wl_call_env args1 ss (wl_push_env envs handler s))))
+                  (combin_K (wl_state_stack_max (wl_call_env args1 ss (wl_push_env envs handler s))))
                   s))) \/
         (~(wl_state_clock s = 0) /\
          ?r2 s2.
@@ -854,7 +854,7 @@ let WDPAUX_call_eval_ret = prove
               (?e. r2 = SOME (wl_FinalFFI e))) /\ res = r2 /\ s1 = s2))))`,
   REPEAT GEN_TAC THEN
   GEN_REWRITE_TAC (LAND_CONV o LAND_CONV o LAND_CONV) [wl_evaluate_def] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC(IL2AUX_clock_case_eqs @ [PAIR_EQ; DE_MORGAN_THM]) THEN
   REPEAT STRIP_TAC THEN RVEQ_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE IL2AUX_res_rws) THEN TRY (FIRST_ASSUM CONTR_TAC) THEN
@@ -910,8 +910,8 @@ let WDPAUX_CG_RWS =
 (* the goal, with the case facts rws                                        *)
 let WDPAUX_D_SIMP_TAC (rws:thm list) : tactic =
   RULE_ASSUM_TAC (fun th -> if WDPAUX_is_D (concl th)
-                            then CASE_REWRITE_RULE (rws @ WDPAUX_CG_RWS) th else th) THEN
-  CASE_REWRITE_TAC (rws @ WDPAUX_CG_RWS) THEN
+                            then CAKE_REWRITE_RULE (rws @ WDPAUX_CG_RWS) th else th) THEN
+  CAKE_REWRITE_TAC (rws @ WDPAUX_CG_RWS) THEN
   TRY (FIRST_X_ASSUM(CONTR_TAC o check (fun th -> concl th = `F`)));;
 
 let WDPAUX_CALL_DEST_TAC : tactic =
@@ -950,7 +950,7 @@ let WDPAUX_IH_X_TAC (insts:(string*term) list) (rws:thm list) (ih0:thm) : tactic
   let th0 = REWRITE_RULE[IMP_IMP; RIGHT_IMP_FORALL_THM] ih0 in
   let gvs = freesl (w :: map (concl o snd) asl) in
   let vs0,_ = strip_forall (concl th0) in
-  let vs1 = rev(itlist (fun v acc -> variant (acc @ gvs) v :: acc) (rev vs0) []) in
+  let vs1 = rev(itlist (fun v acc -> variant (acc @ gvs @ freesl (flat (map (hyp o snd) asl))) v :: acc) (rev vs0) []) in
   let th = GENL vs1 (SPECL vs1 th0) in
   let vs,bod = strip_forall (concl th) in
   let k = length vs - length ivs in
@@ -1074,7 +1074,7 @@ let WDPAUX_TAIL_MEM_TAC : tactic =
   MP_TAC (ISPECL [`ns:num list`; `d:num`; `(LENGTH (xs:((A)word_loc)list), prog:(A)wl_prog)`;
     `wl_state_stack_size (s:(A,C,FFI)wl_state)`; `ns:num list`; `funs:(num#(A)wl_prog)spt`;
     `funs2:(num#(A)wl_prog)spt`] MEM_max_depth_graphs) THEN
-  ASM_REWRITE_TAC[max_depth_graphs_def] THEN CASE_REWRITE_TAC[] THEN DISCH_TAC THEN
+  ASM_REWRITE_TAC[max_depth_graphs_def] THEN CAKE_REWRITE_TAC[] THEN DISCH_TAC THEN
   WDPAUX_FINISH_TAC THEN CONJ_TAC THENL [ASM_REWRITE_TAC[]; WDPAUX_BFR_TAC];;
 
 let WDPAUX_lookup_cases = prove
@@ -1094,7 +1094,7 @@ let WDPAUX_is_lookup_SOME th =
 let WDPAUX_IH_POST_TAC (rws:thm list) : tactic =
   DISCH_THEN(fun th -> ASSUM_LIST(fun asl ->
     let lks = filter WDPAUX_is_lookup_SOME asl in
-    STRIP_ASSUME_TAC (CASE_REWRITE_RULE (rws @ [max_depth_graphs_def] @ lks) th)));;
+    STRIP_ASSUME_TAC (CAKE_REWRITE_RULE (rws @ [max_depth_graphs_def] @ lks) th)));;
 
 let WDPAUX_LOOKUP_SPLIT_TAC : tactic =
   DISJ_CASES_THEN2 ASSUME_TAC (REPEAT_TCL CHOOSE_THEN ASSUME_TAC)
@@ -1209,7 +1209,7 @@ let WDPAUX_IH_POST2_TAC (rws:thm list) : tactic =
   DISCH_THEN(fun th -> ASSUM_LIST(fun asl ->
     let lks = filter WDPAUX_is_lookup_SOME asl in
     let fes = filter WDPAUX_is_field_eq asl in
-    STRIP_ASSUME_TAC (CASE_REWRITE_RULE (rws @ [max_depth_graphs_def] @ lks @ fes) th)));;
+    STRIP_ASSUME_TAC (CAKE_REWRITE_RULE (rws @ [max_depth_graphs_def] @ lks @ fes) th)));;
 
 let WDPAUX_RET_TO_TAC : tactic =
   REWRITE_TAC[wl_flush_state_def; wl_state_INFO.ri_accfupds; K_THM] THEN
@@ -1349,7 +1349,7 @@ let max_depth_call_graph = prove
                     EMPTY_SUBSET; domain_lookup] THEN MESON_TAC[];
     ALL_TAC] THEN
   ASM_REWRITE_TAC[full_call_graph_def; max_depth_graphs_def] THEN
-  CASE_REWRITE_TAC[max_depth_def] THEN
+  CAKE_REWRITE_TAC[max_depth_def] THEN
   DISCH_THEN(MP_TAC o CONJUNCT1) THEN WDPAUX_OPT_DECIDE_TAC);;
 
 (* the stack_max bound of a call with the return program Skip and no      *)
@@ -1358,7 +1358,7 @@ let WDPAUX_CALL_SOME_TAC : tactic = fun (asl,w as g) ->
   if exists (fun (_,th) -> concl th = `wl_state_clock (s:(A,C,FFI)wl_state) = 0`) asl then
     (REWRITE_TAC[wl_flush_state_def; wl_state_INFO.ri_accfupds; K_THM] THEN
      REWRITE_TAC WDPAUX_PUSH_RWS THEN ASM_REWRITE_TAC[full_call_graph_def] THEN
-     CASE_REWRITE_TAC[max_depth_def] THEN WDPAUX_OPT_DECIDE_TAC) g
+     CAKE_REWRITE_TAC[max_depth_def] THEN WDPAUX_OPT_DECIDE_TAC) g
   else
     (TRY (FIRST_X_ASSUM(fun th -> if IL2AUX_is_eval_eq (concl th) &&
             fst(dest_pair(rand(lhs(concl th)))) = `wl_Skip:(A)wl_prog`
@@ -1372,7 +1372,7 @@ let WDPAUX_CALL_SOME_TAC : tactic = fun (asl,w as g) ->
                  max_depth_call_graph)
        else NO_TAC) THEN
      ASM_REWRITE_TAC (WDPAUX_PUSH_RWS @ IL2AUX_res_rws @ [full_call_graph_def]) THEN
-     CASE_REWRITE_TAC[max_depth_def] THEN WDPAUX_OPT_DECIDE_TAC) g;;
+     CAKE_REWRITE_TAC[max_depth_def] THEN WDPAUX_OPT_DECIDE_TAC) g;;
 
 (* HOL4 line 808 *)
 let max_depth_Call_SOME = prove
@@ -1387,7 +1387,7 @@ let max_depth_Call_SOME = prove
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   DISJ_CASES_THEN2 ASSUME_TAC (REPEAT_TCL CHOOSE_THEN ASSUME_TAC)
     (ISPECL [`dest:num`; `funs:(num#(A)wl_prog)spt`] WDPAUX_lookup_cases) THEN
-  ASM_REWRITE_TAC[full_call_graph_def] THEN CASE_REWRITE_TAC[max_depth_def] THEN
+  ASM_REWRITE_TAC[full_call_graph_def] THEN CAKE_REWRITE_TAC[max_depth_def] THEN
   REWRITE_TAC[WDPAUX_MAP2_NONE; option_le_def] THEN
   WDPAUX_EVAL_MP_TAC WDPAUX_call_eval_ret THEN
   STRIP_TAC THEN RVEQ_TAC THEN
@@ -1415,7 +1415,7 @@ let max_depth_Call_NONE = prove
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   DISJ_CASES_THEN2 ASSUME_TAC (REPEAT_TCL CHOOSE_THEN ASSUME_TAC)
     (ISPECL [`dest:num`; `funs:(num#(A)wl_prog)spt`] WDPAUX_lookup_cases) THEN
-  ASM_REWRITE_TAC[full_call_graph_def] THEN CASE_REWRITE_TAC[max_depth_def] THEN
+  ASM_REWRITE_TAC[full_call_graph_def] THEN CAKE_REWRITE_TAC[max_depth_def] THEN
   REWRITE_TAC[WDPAUX_MAP2_NONE; option_le_def] THEN
   FIRST_ASSUM(MP_TAC o MATCH_MP WDPAUX_call_eval_tail o
     CONJ (ASSUME `wl_evaluate (wl_Call NONE (SOME dest) args NONE,s) =
@@ -1437,5 +1437,5 @@ let max_depth_Call_NONE = prove
     `res:((A)wl_result)option`; `s1:(A,C,FFI)wl_state`; `funs:(num#(A)wl_prog)spt`;
     `dest:num`; `a:num`] max_depth_call_graph) THEN
   ASM_REWRITE_TAC WDPAUX_CALL_ENV_RWS THEN
-  ASM_REWRITE_TAC[full_call_graph_def] THEN CASE_REWRITE_TAC[max_depth_def] THEN
+  ASM_REWRITE_TAC[full_call_graph_def] THEN CAKE_REWRITE_TAC[max_depth_def] THEN
   WDPAUX_OPT_DECIDE_TAC);;

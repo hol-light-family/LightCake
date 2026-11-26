@@ -61,8 +61,8 @@ type_invention_error := true;;
 let state_rel_with_locals_sfs = prove
  (`!c l1 l2 (x:(C,FFI)data_state) l m (r:(A,C,FFI)wl_state) t locs.
      data_to_word_gcProof_state_rel c l1 l2
-       (data_state_locals_fupd (K l) (data_state_safe_for_space_fupd (K m) x)) r t locs <=>
-     data_to_word_gcProof_state_rel c l1 l2 (data_state_locals_fupd (K l) x) r t locs`,
+       (data_state_locals_fupd (combin_K l) (data_state_safe_for_space_fupd (combin_K m) x)) r t locs <=>
+     data_to_word_gcProof_state_rel c l1 l2 (data_state_locals_fupd (combin_K l) x) r t locs`,
   REWRITE_TAC[data_to_word_gcProof_state_rel_def; data_state_INFO.ri_accfupds; K_THM]);;
 
 let _ = cake_add_simps [state_rel_with_locals_sfs];;
@@ -141,7 +141,7 @@ let memory_rel_Thunk_bits = prove
   SUBGOAL_THEN `x':A word = x` SUBST_ALL_TAC THENL
    [ASM_MESON_TAC[injectivity "word_loc"]; ALL_TAC] THEN
   DISJ2_TAC THEN ASM_SIMP_TAC[word_test_lemma1; word_test_lemma2] THEN
-  CASES_ON `ev:thunk_mode` THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON `ev:thunk_mode` THEN CAKE_REWRITE_TAC[] THEN
   RULE_ASSUM_TAC(REWRITE_RULE[distinctness "thunk_mode"]) THEN ASM_REWRITE_TAC[]);;
 
 (* the domain of adjust_set depends only on the domain *)
@@ -173,7 +173,7 @@ let MEM_join_env_cut_env = prove
 (* HOL4 line 117 *)
 let jump_exc_locals = prove
  (`!(t:(A,C,FFI)wl_state) l.
-     wl_jump_exc (wl_state_locals_fupd (K l) t) = wl_jump_exc t`,
+     wl_jump_exc (wl_state_locals_fupd (combin_K l) t) = wl_jump_exc t`,
   SIMP[wl_jump_exc_def]);;
 
 (* HOL4 line 123 (HOL4: state_rel_cut_state_opt_SOME |> Q.GEN args |>      *)
@@ -184,15 +184,15 @@ let state_rel_cut_env_IMP_cut_env = prove
      data_to_word_gcProof_state_rel c l1 l2 s t NONE locs /\
      data_cut_env kept_names (data_state_locals s) = SOME env ==>
      ?y. wl_cut_env (adjust_sets kept_names) (wl_state_locals t) = SOME y /\
-         data_to_word_gcProof_state_rel c l1 l2 (data_state_locals_fupd (K env) s) t
+         data_to_word_gcProof_state_rel c l1 l2 (data_state_locals_fupd (combin_K env) s) t
            NONE locs /\
-         data_to_word_gcProof_state_rel c l1 l2 (data_state_locals_fupd (K env) s)
-           (wl_state_locals_fupd (K y) t) NONE locs`,
+         data_to_word_gcProof_state_rel c l1 l2 (data_state_locals_fupd (combin_K env) s)
+           (wl_state_locals_fupd (combin_K y) t) NONE locs`,
   REPEAT STRIP_TAC THEN
   MP_TAC(ISPECL [`c:data_to_word_config`; `l1:num`; `l2:num`; `s:(C,FFI)data_state`;
                  `t:(A,C,FFI)wl_state`; `locs:(num#num)list`; `[]:num list`;
                  `[]:data_v list`; `kept_names:num_set`;
-                 `data_state_locals_fupd (K env) (s:(C,FFI)data_state)`]
+                 `data_state_locals_fupd (combin_K env) (s:(C,FFI)data_state)`]
          state_rel_cut_state_opt_SOME) THEN
   SIMP[data_get_vars_def; data_cut_state_opt_def; data_cut_state_def; MAP; LENGTH;
        wl_get_vars_def] THEN
@@ -256,7 +256,7 @@ let D2WPAUX_lookup_alist_insert_EL = prove
      LENGTH ks = LENGTH vs /\ ALL_DISTINCT ks /\ i < LENGTH ks ==>
      lookup (EL i ks) (alist_insert ks vs t) = SOME (EL i vs)`,
   REPEAT STRIP_TAC THEN ASM_SIMP_TAC[lookup_alist_insert; D2WPAUX_ALOOKUP_ZIP_EL] THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[]);;
 
 let D2WPAUX_lookup_union_ZIP_NOT_MEM = prove
  (`!ks (vs:A list) s k.
@@ -264,7 +264,7 @@ let D2WPAUX_lookup_union_ZIP_NOT_MEM = prove
      lookup k (sptree_union (fromAList (ZIP ks vs)) s) = lookup k s`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[lookup_union; lookup_fromAList] THEN
   SUBGOAL_THEN `ALOOKUP (ZIP (ks:num list) (vs:A list)) k = NONE` SUBST1_TAC THENL
-   [ASM_SIMP_TAC[ALOOKUP_ZIP_FAIL]; CASE_REWRITE_TAC[]]);;
+   [ASM_SIMP_TAC[ALOOKUP_ZIP_FAIL]; CAKE_REWRITE_TAC[]]);;
 
 let D2WPAUX_lookup_union_ZIP_EL = prove
  (`!ks (vs:A list) s i.
@@ -272,7 +272,7 @@ let D2WPAUX_lookup_union_ZIP_EL = prove
      lookup (EL i ks) (sptree_union (fromAList (ZIP ks vs)) s) = SOME (EL i vs)`,
   REPEAT STRIP_TAC THEN
   ASM_SIMP_TAC[lookup_union; lookup_fromAList; D2WPAUX_ALOOKUP_ZIP_EL] THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[]);;
 
 (* the variables of the frame after set_vars, from before or from the     *)
 (* set values (the memory part of state_rel_pop_env_set_vars_IMP)        *)
@@ -364,7 +364,7 @@ let D2WPAUX_state_rel_set_vars = prove
   REPEAT GEN_TAC THEN
   REWRITE_TAC[data_to_word_gcProof_state_rel_thm; data_set_vars_def; wl_set_vars_def;
               data_state_INFO.ri_accfupds; wl_state_INFO.ri_accfupds; K_THM] THEN
-  CASE_REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[APPEND] THEN
+  CAKE_REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[APPEND] THEN
   SUBGOAL_THEN `LENGTH (MAP adjust_var ns) = LENGTH (ws:(A word_loc)list)` ASSUME_TAC THENL
    [REWRITE_TAC[LENGTH_MAP] THEN ASM_REWRITE_TAC[]; ALL_TAC] THEN
   SUBGOAL_THEN `ALL_DISTINCT (MAP adjust_var ns)` ASSUME_TAC THENL
@@ -428,7 +428,7 @@ let D2WPAUX_frame_lookup_0 = prove
   FIRST_X_ASSUM(MP_TAC o check (is_imp o concl)) THEN ASM_REWRITE_TAC[] THEN
   DISCH_TAC THEN
   ASM_SIMP_TAC[lookup_union; lookup_fromAList; GCP2AUX_ALOOKUP_0_NONE] THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[]);;
 
 (* after pop_env of related states, variable 0 holds the return location *)
 let D2WPAUX_pop_env_lookup_0 = prove
@@ -453,13 +453,13 @@ let D2WPAUX_pop_env_lookup_0 = prove
   DISCH_THEN(X_CHOOSE_THEN `m:num option` (X_CHOOSE_THEN `e0:(num#A word_loc)list`
     (X_CHOOSE_THEN `e:(num#A word_loc)list` (X_CHOOSE_THEN `hh:(num#num#num)option`
        SUBST1_TAC)))) THEN
-  CASE_REWRITE_TAC[] THEN REPEAT STRIP_TAC THEN
+  CAKE_REWRITE_TAC[] THEN REPEAT STRIP_TAC THEN
   SUBGOAL_THEN `wl_state_locals (t2:(A,C,FFI)wl_state) = sptree_union (fromAList e) (fromAList e0)`
     SUBST1_TAC THENL
    [POP_ASSUM MP_TAC THEN
     DISJ_CASES_THEN2 SUBST1_TAC (REPEAT_TCL CHOOSE_THEN SUBST1_TAC)
       (ISPEC `hh:(num#num#num)option` D2WPAUX_option_triple_cases) THEN
-    CASE_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[option_INJ] THEN DISCH_THEN(SUBST1_TAC o SYM) THEN
     REWRITE_TAC[wl_state_INFO.ri_accfupds; K_THM];
     MATCH_MP_TAC D2WPAUX_frame_lookup_0 THEN ASM_MESON_TAC[]]);;
@@ -511,7 +511,7 @@ let d2wpaux_clause defth cname =
 
 (* comp unfolded for each constructor of dataLang programs *)
 let D2WPAUX_comp_eqs =
-  let conv = ONCE_REWRITE_CONV[data_to_word_comp_def] THENC CASE_REWRITE_CONV[] in
+  let conv = ONCE_REWRITE_CONV[data_to_word_comp_def] THENC CAKE_REWRITE_CONV[] in
   end_itlist CONJ (map (fun tm -> GEN_ALL (conv tm))
    [`data_to_word_comp c n l data_Skip:(A)wl_prog#num`;
     `data_to_word_comp c n l (data_Move dest src):(A)wl_prog#num`;
@@ -572,7 +572,7 @@ let D2WPAUX_Skip = prove
   FIRST_X_ASSUM(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM) o check (is_conj o concl)) THEN
   REWRITE_TAC[d2wpaux_clause wl_evaluate_def "wl_Skip"; PAIR_EQ] THEN
   MAP_EVERY EXISTS_TAC [`t:(A,C,FFI)wl_state`; `NONE:((A)wl_result)option`] THEN
-  CASE_REWRITE_TAC[option_DISTINCT] THEN ASM_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[option_DISTINCT] THEN ASM_REWRITE_TAC[] THEN
   UNDISCH_TAC `data_to_word_gcProof_state_rel c l1 l2 (s:(C,FFI)data_state)
                  (t:(A,C,FFI)wl_state) NONE locs` THEN
   SIMP_TAC[data_to_word_gcProof_state_rel_thm]);;
@@ -615,10 +615,10 @@ let D2WPAUX_Tick = prove
   DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THENL
    [MAP_EVERY EXISTS_TAC [`wl_flush_state T (t:(A,C,FFI)wl_state)`;
                           `SOME wl_TimeOut:((A)wl_result)option`] THEN
-    CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC D2WPAUX_REC_RWS;
+    CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC D2WPAUX_REC_RWS;
     MAP_EVERY EXISTS_TAC [`wl_dec_clock (t:(A,C,FFI)wl_state)`;
                           `NONE:((A)wl_result)option`] THEN
-    CASE_REWRITE_TAC[option_DISTINCT] THEN ASM_REWRITE_TAC D2WPAUX_REC_RWS THEN
+    CAKE_REWRITE_TAC[option_DISTINCT] THEN ASM_REWRITE_TAC D2WPAUX_REC_RWS THEN
     REWRITE_TAC[GSYM data_dec_clock_def; GSYM wl_dec_clock_def] THEN
     REWRITE_TAC[data_dec_clock_def; wl_dec_clock_def] THEN ASM_REWRITE_TAC[] THEN
     MATCH_MP_TAC data_to_word_gcProof_state_rel_with_clock THEN ASM_REWRITE_TAC[]]);;
@@ -649,7 +649,7 @@ let d2wpaux_type_error_tac : tactic =
 (* split the option term tm (with its equation) in the evaluation assumption *)
 let d2wpaux_split_tac (tm:term) : tactic =
   FIRST_X_ASSUM(MP_TAC o check (d2wpaux_is_eval_asm o concl)) THEN
-  CASES_ON tm THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON tm THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   DISCH_THEN(STRIP_ASSUME_TAC o REWRITE_RULE[PAIR_EQ]) THEN
   TRY(d2wpaux_type_error_tac THEN NO_TAC);;
 
@@ -672,7 +672,7 @@ let D2WPAUX_Raise = prove
   DISCH_THEN(X_CHOOSE_THEN `t1:(A,C,FFI)wl_state` (X_CHOOSE_THEN `d1:num`
     (X_CHOOSE_THEN `d2:num` (X_CHOOSE_THEN `l5:num` (X_CHOOSE_THEN `l6:num`
       (X_CHOOSE_THEN `ll:(num#num)list` STRIP_ASSUME_TAC)))))) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o REWRITE_RULE D2WPAUX_REC_RWS o
               MATCH_MP D2WPAUX_state_rel_IMP o SPEC `0`) THEN
   MAP_EVERY EXISTS_TAC [`t1:(A,C,FFI)wl_state`;
@@ -720,7 +720,7 @@ let D2WPAUX_state_rel_flush_F = prove
   REPEAT GEN_TAC THEN
   REWRITE_TAC[data_to_word_gcProof_state_rel_thm; data_flush_state_def; wl_flush_state_def;
               data_state_INFO.ri_accfupds; wl_state_INFO.ri_accfupds; K_THM] THEN
-  CASE_REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[lookup_def; IS_SOME_DEF] THEN
+  CAKE_REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[lookup_def; IS_SOME_DEF] THEN
   CONJ_TAC THENL
    [FIRST_X_ASSUM(MATCH_ACCEPT_TAC o MATCH_MP D2WPAUX_option_le_locals_0 o
       check (fun th -> try fst(dest_const(fst(strip_comb(concl th)))) = "option_le" &&
@@ -731,7 +731,7 @@ let D2WPAUX_state_rel_flush_F = prove
   REWRITE_TAC[toAList_def] THEN REWRITE_TAC[GSYM toAList_def] THEN
   SUBGOAL_THEN `toAList (sptree_inter (LN:(A word_loc)spt) (adjust_set (LN:data_v spt))) = []`
     SUBST1_TAC THENL
-   [REWRITE_TAC[sptree_inter_def; toAList_def; foldi_def] THEN CASE_REWRITE_TAC[] THEN
+   [REWRITE_TAC[sptree_inter_def; toAList_def; foldi_def] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[foldi_def];
     ALL_TAC] THEN
   REWRITE_TAC[join_env_def; FILTER; MAP; APPEND_NIL] THEN
@@ -772,11 +772,11 @@ let D2WPAUX_Return = prove
                    (t:(A,C,FFI)wl_state) NONE locs` THEN
     SIMP_TAC[data_to_word_gcProof_state_rel_thm];
     ALL_TAC] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   MAP_EVERY EXISTS_TAC [`wl_flush_state F (t:(A,C,FFI)wl_state)`;
                         `SOME (wl_Result (wl_Loc l1 l2) ws):((A)wl_result)option`] THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP D2WPAUX_state_rel_IMP) THEN
-  REWRITE_TAC[distinctness "wl_result"; option_INJ] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[distinctness "wl_result"; option_INJ] THEN CAKE_REWRITE_TAC[] THEN
   CONJ_TAC THENL [REWRITE_TAC D2WPAUX_REC_RWS THEN ASM_REWRITE_TAC[]; ALL_TAC] THEN
   EXISTS_TAC `ws:(A word_loc)list` THEN ASM_REWRITE_TAC[] THEN
   MATCH_MP_TAC D2WPAUX_state_rel_flush_F THEN EXISTS_TAC `ns:num list` THEN
@@ -793,7 +793,7 @@ let D2WPAUX_state_rel_Move = prove
   REPEAT GEN_TAC THEN
   REWRITE_TAC[data_to_word_gcProof_state_rel_thm; data_set_var_def; wl_set_var_def;
               data_state_INFO.ri_accfupds; wl_state_INFO.ri_accfupds; K_THM] THEN
-  CASE_REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[APPEND] THEN
+  CAKE_REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[APPEND] THEN
   REPEAT CONJ_TAC THENL
    [ASM_REWRITE_TAC[lookup_insert; adjust_var_def; ARITH_RULE `~(0 = 2 * n + 2)`];
     X_GEN_TAC `n:num` THEN REWRITE_TAC[lookup_insert; adjust_var_11] THEN
@@ -818,12 +818,12 @@ let D2WPAUX_Move = prove
                  `locs:(num#num)list`; `src:num`; `a:data_v`] state_rel_get_var_IMP) THEN
   ASM_REWRITE_TAC[] THEN DISCH_THEN(X_CHOOSE_TAC `w:A word_loc`) THEN
   REWRITE_TAC[MAP; FST; SND; ALL_DISTINCT; MEM; wl_get_vars_def] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[GSYM wl_set_var_def; wl_set_vars_def; alist_insert_def] THEN
   REWRITE_TAC[GSYM wl_set_var_def] THEN
   MAP_EVERY EXISTS_TAC [`wl_set_var (adjust_var dest) w (t:(A,C,FFI)wl_state)`;
                         `NONE:((A)wl_result)option`] THEN
-  REWRITE_TAC[option_DISTINCT] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[option_DISTINCT] THEN CAKE_REWRITE_TAC[] THEN
   SUBGOAL_THEN `data_to_word_gcProof_state_rel c l1 l2 (data_set_var dest a s)
                   (wl_set_var (adjust_var dest) w (t:(A,C,FFI)wl_state)) NONE locs`
     ASSUME_TAC THENL
@@ -859,7 +859,7 @@ let D2WPAUX_If = prove
   ASM_CASES_TAC `isBool T a` THENL
    [UNDISCH_TAC `isBool T a ==> (w:A word_loc) = wl_Word (word 18)` THEN
     ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST_ALL_TAC THEN
-    ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[wl_word_cmp_def] THEN
+    ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[wl_word_cmp_def] THEN
     FIRST_X_ASSUM(MP_TAC o check (d2wpaux_is_eval_asm o concl)) THEN
     ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
     FIRST_X_ASSUM(MP_TAC o d2wpaux_unfold_ih o SPEC `a:data_v` o
@@ -874,7 +874,7 @@ let D2WPAUX_If = prove
   ASM_CASES_TAC `isBool F a` THENL
    [UNDISCH_TAC `isBool F a ==> (w:A word_loc) = wl_Word (word 2)` THEN
     ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST_ALL_TAC THEN
-    ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[wl_word_cmp_def] THEN
+    ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[wl_word_cmp_def] THEN
     SUBGOAL_THEN `~(word 2 = word 18:A word)` (fun th -> REWRITE_TAC[th]) THENL
      [REWRITE_TAC[WORD_EQ; CONG] THEN
       UNDISCH_TAC `~(18 MOD dimword (:A) = 2 MOD dimword (:A))` THEN
@@ -937,7 +937,7 @@ let D2WPAUX_result_option_cases = prove
 let d2wpaux_result_cases_tac (r:term) : tactic =
   REPEAT_TCL DISJ_CASES_THEN (fun th -> REPEAT_TCL CHOOSE_THEN SUBST_ALL_TAC th)
     (ISPEC r D2WPAUX_result_option_cases) THEN
-  RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN CASE_REWRITE_TAC[];;
+  RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN CAKE_REWRITE_TAC[];;
 
 let D2WPAUX_Seq = prove
  (`!c1 c2 (s:(C,FFI)data_state).
@@ -952,7 +952,7 @@ let D2WPAUX_Seq = prove
   DISCH_THEN(X_CHOOSE_THEN `r0:((data_v list,data_v)result)option`
     (X_CHOOSE_THEN `s0:(C,FFI)data_state` ASSUME_TAC)) THEN
   FIRST_X_ASSUM(MP_TAC o check (d2wpaux_is_eval_asm o concl)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN DISCH_TAC THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN DISCH_TAC THEN
   SUBGOAL_THEN `~(r0 = SOME (Rerr (Rabort Rtype_error)):((data_v list,data_v)result)option)`
     ASSUME_TAC THENL
    [DISCH_THEN SUBST_ALL_TAC THEN
@@ -967,7 +967,7 @@ let D2WPAUX_Seq = prove
   ASM_REWRITE_TAC[] THEN
   DISCH_THEN(X_CHOOSE_THEN `t0:(A,C,FFI)wl_state` (X_CHOOSE_THEN
     `res0:((A)wl_result)option` STRIP_ASSUME_TAC)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   ASM_CASES_TAC `r0:((data_v list,data_v)result)option = NONE` THENL
    [ALL_TAC;
     (* the first program did not finish normally *)
@@ -1000,7 +1000,7 @@ let D2WPAUX_Seq = prove
     ALL_TAC] THEN
   FIRST_X_ASSUM(MP_TAC o check (fun th -> is_imp (concl th) &&
     is_neg (fst (dest_imp (concl th))))) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN STRIP_TAC THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN STRIP_TAC THEN
   FIRST_X_ASSUM SUBST_ALL_TAC THEN REWRITE_TAC[] THEN
   FIRST_X_ASSUM(MP_TAC o SPEC `s0:(C,FFI)data_state` o
     check (fun th -> is_forall (concl th) &&
@@ -1047,7 +1047,7 @@ let D2WPAUX_Assign = prove
     DISCH_THEN(X_CHOOSE_THEN `v:data_v` (X_CHOOSE_THEN `s2:(C,FFI)data_state`
       SUBST_ALL_TAC)) THEN
     FIRST_X_ASSUM(MP_TAC o check (d2wpaux_is_eval_asm o concl)) THEN
-    CASE_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN d2wpaux_res_tac THEN
+    CAKE_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN d2wpaux_res_tac THEN
     FIRST_ASSUM(ASSUME_TAC o MATCH_MP data_do_app_io_events_mono o
       check (fun th -> try fst(dest_const(fst(strip_comb(lhs(concl th))))) = "data_do_app"
                        with Failure _ -> false)) THEN
@@ -1057,7 +1057,7 @@ let D2WPAUX_Assign = prove
     MAP_EVERY EXISTS_TAC [`r:(A,C,FFI)wl_state`; `q:((A)wl_result)option`] THEN
     ASM_REWRITE_TAC[] THEN
     REWRITE_TAC[data_set_var_def; install_sfs_def; data_state_INFO.ri_accfupds; K_THM] THEN
-    CASE_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN
     ASM_CASES_TAC `q = SOME NotEnoughSpace:((A)wl_result)option` THENL
      [FIRST_X_ASSUM SUBST_ALL_TAC THEN
       FIRST_X_ASSUM(MP_TAC o check (fun th -> is_imp (concl th) &&
@@ -1079,7 +1079,7 @@ let D2WPAUX_Assign = prove
     ALL_TAC] THEN
   (* the operation failed: only the FFI can give an error *)
   FIRST_X_ASSUM(MP_TAC o check (d2wpaux_is_eval_asm o concl)) THEN
-  CASE_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN d2wpaux_res_tac THEN
+  CAKE_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN d2wpaux_res_tac THEN
   FIRST_ASSUM(DISJ_CASES_THEN2 SUBST_ALL_TAC
                  (REPEAT_TCL CHOOSE_THEN (CONJUNCTS_THEN SUBST_ALL_TAC)) o
     MATCH_MP do_app_Rerr o
@@ -1090,7 +1090,7 @@ let D2WPAUX_Assign = prove
   DISCH_THEN(X_CHOOSE_THEN `q:((A)wl_result)option` (X_CHOOSE_THEN
     `r:(A,C,FFI)wl_state` STRIP_ASSUME_TAC)) THEN
   MAP_EVERY EXISTS_TAC [`r:(A,C,FFI)wl_state`; `q:((A)wl_result)option`] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[data_flush_state_def; install_sfs_def; data_state_INFO.ri_accfupds; K_THM] THEN
   ASM_REWRITE_TAC[]);;
 
@@ -1105,7 +1105,7 @@ let D2WPAUX_alloc_size_eq = prove
 let D2WPAUX_state_rel_add_space = prove
  (`!c l1 l2 (s:(C,FFI)data_state) k (t:(A,C,FFI)wl_state) v locs.
      data_to_word_gcProof_state_rel c l1 l2 (add_space s k) t v locs <=>
-     data_to_word_gcProof_state_rel c l1 l2 (data_state_space_fupd (K k) s) t v locs`,
+     data_to_word_gcProof_state_rel c l1 l2 (data_state_space_fupd (combin_K k) s) t v locs`,
   REWRITE_TAC[add_space_def; data_to_word_gcProof_state_rel_def;
               data_state_INFO.ri_accfupds; K_THM]);;
 
@@ -1124,7 +1124,7 @@ let D2WPAUX_SilentFFI_eval = prove
      FLOOKUP (wl_state_store t) NextFree = SOME (wl_Word next) /\
      wl_cut_env (adjust_sets names) (wl_state_locals t) = SOME y ==>
      wl_evaluate (SilentFFI c 3 (adjust_sets names), t) =
-       (NONE, wl_state_locals_fupd (K y) (wl_state_fp_regs_fupd (K FEMPTY) t))`,
+       (NONE, wl_state_locals_fupd (combin_K y) (wl_state_fp_regs_fupd (combin_K FEMPTY) t))`,
   REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[SilentFFI_def; data_to_word_list_Seq_def] THEN
   REWRITE_TAC[d2wpaux_clause wl_evaluate_def "wl_Seq";
               d2wpaux_clause wl_evaluate_def "wl_Assign";
@@ -1168,8 +1168,8 @@ let D2WPAUX_state_rel_store = prove
 (* locals and FP registers set after a set_var *)
 let D2WPAUX_fp_locals_set_var = prove
  (`!y f v x (t:(A,C,FFI)wl_state).
-     wl_state_locals_fupd (K y) (wl_state_fp_regs_fupd (K f) (wl_set_var v x t)) =
-     wl_state_locals_fupd (K y) (wl_state_fp_regs_fupd (K f) t)`,
+     wl_state_locals_fupd (combin_K y) (wl_state_fp_regs_fupd (combin_K f) (wl_set_var v x t)) =
+     wl_state_locals_fupd (combin_K y) (wl_state_fp_regs_fupd (combin_K f) t)`,
   REWRITE_TAC[wl_set_var_def; wl_state_component_equality; wl_state_INFO.ri_accfupds;
               K_THM]);;
 
@@ -1205,13 +1205,13 @@ let D2WPAUX_MakeSpace = prove
                  `curr:A word`; `hlen:A word`; `next:A word`; `y:(A word_loc)spt`]
          D2WPAUX_SilentFFI_eval) THEN
   ASM_SIMP_TAC[D2WPAUX_set_var_accs; cut_env_adjust_sets_insert_ODD; ARITH_ODD; ODD] THEN
-  DISCH_TAC THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[D2WPAUX_fp_locals_set_var] THEN
+  DISCH_TAC THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[D2WPAUX_fp_locals_set_var] THEN
       REWRITE_TAC[d2wpaux_clause wl_evaluate_def "wl_Assign"; d2wpaux_clause wl_evaluate_def "wl_Alloc"] THEN
   SIMP[wl_word_exp_def; wl_get_var_def; D2WPAUX_set_var_accs; lookup_insert;
        D2WPAUX_alloc_set_var_1] THEN
       SUBGOAL_THEN `data_to_word_gcProof_state_rel c l1 l2
-                  (data_state_locals_fupd (K a) (s:(C,FFI)data_state))
-                  (wl_state_locals_fupd (K y) (wl_state_fp_regs_fupd (K FEMPTY)
+                  (data_state_locals_fupd (combin_K a) (s:(C,FFI)data_state))
+                  (wl_state_locals_fupd (combin_K y) (wl_state_fp_regs_fupd (combin_K FEMPTY)
                      (t:(A,C,FFI)wl_state))) NONE locs` ASSUME_TAC THENL
    [MP_TAC(ISPECL [`c:data_to_word_config`; `l1:num`; `l2:num`; `s:(C,FFI)data_state`;
                    `t:(A,C,FFI)wl_state`; `locs:(num#num)list`; `names:num_set`;
@@ -1221,25 +1221,25 @@ let D2WPAUX_MakeSpace = prove
     REWRITE_TAC[wl_state_INFO.ri_fupdcanon];
     ALL_TAC] THEN
   MP_TAC(ISPEC `wl_alloc (alloc_size k) (adjust_sets (names:num_set))
-                  (wl_state_locals_fupd (K y) (wl_state_fp_regs_fupd (K FEMPTY)
+                  (wl_state_locals_fupd (combin_K y) (wl_state_fp_regs_fupd (combin_K FEMPTY)
                      (t:(A,C,FFI)wl_state)))` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `q:((A)wl_result)option` (X_CHOOSE_THEN `r:(A,C,FFI)wl_state`
     ASSUME_TAC)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
       FIRST_ASSUM(ASSUME_TAC o MATCH_MP cut_env_idempotent o
     check (fun th -> try fst(dest_const(fst(strip_comb(lhs(concl th))))) = "data_cut_env"
                      with Failure _ -> false)) THEN
   MP_TAC(ISPECL [`c:data_to_word_config`; `l1:num`; `l2:num`;
-                 `data_state_locals_fupd (K a) (s:(C,FFI)data_state)`;
-                 `wl_state_locals_fupd (K y) (wl_state_fp_regs_fupd (K FEMPTY)
+                 `data_state_locals_fupd (combin_K a) (s:(C,FFI)data_state)`;
+                 `wl_state_locals_fupd (combin_K y) (wl_state_fp_regs_fupd (combin_K FEMPTY)
                      (t:(A,C,FFI)wl_state))`; `locs:(num#num)list`; `names:num_set`;
                  `a:data_v spt`; `k:num`; `q:((A)wl_result)option`; `r:(A,C,FFI)wl_state`]
          alloc_lemma) THEN
   ASM_REWRITE_TAC[data_state_INFO.ri_accfupds; K_THM] THEN STRIP_TAC THEN
-      SUBGOAL_THEN `cut_locals names (data_state_locals_fupd (K a) (s:(C,FFI)data_state)) =
-                data_state_locals_fupd (K a) s` (fun th -> RULE_ASSUM_TAC(REWRITE_RULE[th])) THENL
+      SUBGOAL_THEN `cut_locals names (data_state_locals_fupd (combin_K a) (s:(C,FFI)data_state)) =
+                data_state_locals_fupd (combin_K a) s` (fun th -> RULE_ASSUM_TAC(REWRITE_RULE[th])) THENL
    [ASM_REWRITE_TAC[cut_locals_def; data_state_INFO.ri_accfupds; K_THM] THEN
-    CASE_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[data_state_component_equality; data_state_INFO.ri_accfupds; K_THM];
     ALL_TAC] THEN
   ASM_CASES_TAC `q = SOME NotEnoughSpace:((A)wl_result)option` THENL
@@ -1262,9 +1262,9 @@ let D2WPAUX_MakeSpace = prove
       FIRST_X_ASSUM(MP_TAC o check (fun th -> is_imp (concl th) &&
       is_neg (fst (dest_imp (concl th))))) THEN
   ASM_REWRITE_TAC[] THEN STRIP_TAC THEN FIRST_X_ASSUM SUBST_ALL_TAC THEN REWRITE_TAC[] THEN
-  SUBGOAL_THEN `data_state_locals_fupd (K a) (data_state_space_fupd (K k)
-                  (data_state_locals_fupd (K a) (s:(C,FFI)data_state))) =
-                data_state_space_fupd (K k) (data_state_locals_fupd (K a) s)`
+  SUBGOAL_THEN `data_state_locals_fupd (combin_K a) (data_state_space_fupd (combin_K k)
+                  (data_state_locals_fupd (combin_K a) (s:(C,FFI)data_state))) =
+                data_state_space_fupd (combin_K k) (data_state_locals_fupd (combin_K a) s)`
     (fun th -> RULE_ASSUM_TAC(REWRITE_RULE[th])) THENL
    [REWRITE_TAC[data_state_component_equality; data_state_INFO.ri_accfupds; K_THM];
     ALL_TAC] THEN
@@ -1275,7 +1275,7 @@ let D2WPAUX_MakeSpace = prove
                      (try fst(dest_const(fst(strip_comb(concl th)))) =
                             "data_to_word_gcProof_state_rel" with Failure _ -> false))) THEN
   MP_TAC(ISPECL [`c:data_to_word_config`; `l1:num`; `l2:num`;
-                 `data_state_space_fupd (K k) (data_state_locals_fupd (K a) (s:(C,FFI)data_state))`;
+                 `data_state_space_fupd (combin_K k) (data_state_locals_fupd (combin_K a) (s:(C,FFI)data_state))`;
                  `r:(A,C,FFI)wl_state`; `locs:(num#num)list`; `names:num_set`; `a:data_v spt`]
          cut_env_IMP_cut_env) THEN
   ASM_REWRITE_TAC[data_state_INFO.ri_accfupds; K_THM] THEN
@@ -1284,18 +1284,18 @@ let D2WPAUX_MakeSpace = prove
                  `curr2:A word`; `hlen2:A word`; `next2:A word`; `y2:(A word_loc)spt`]
          D2WPAUX_SilentFFI_eval) THEN
   ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN
-  MAP_EVERY EXISTS_TAC [`wl_state_locals_fupd (K y2) (wl_state_fp_regs_fupd (K FEMPTY)
+  MAP_EVERY EXISTS_TAC [`wl_state_locals_fupd (combin_K y2) (wl_state_fp_regs_fupd (combin_K FEMPTY)
                            (r:(A,C,FFI)wl_state))`; `NONE:((A)wl_result)option`] THEN
   REWRITE_TAC[option_DISTINCT; D2WPAUX_state_rel_add_space] THEN
   MP_TAC(ISPECL [`c:data_to_word_config`; `l1:num`; `l2:num`;
-                 `data_state_space_fupd (K k) (data_state_locals_fupd (K a) (s:(C,FFI)data_state))`;
+                 `data_state_space_fupd (combin_K k) (data_state_locals_fupd (combin_K a) (s:(C,FFI)data_state))`;
                  `r:(A,C,FFI)wl_state`; `locs:(num#num)list`; `names:num_set`; `a:data_v spt`;
                  `y2:(A word_loc)spt`] state_rel_cut_env_cut_env) THEN
   ASM_REWRITE_TAC[data_state_INFO.ri_accfupds; K_THM] THEN
   DISCH_THEN(MP_TAC o SPEC `FEMPTY:(num,int64)fmap` o MATCH_MP state_rel_with_fp_regs) THEN
-  SUBGOAL_THEN `data_state_locals_fupd (K a) (data_state_space_fupd (K k)
-                  (data_state_locals_fupd (K a) (s:(C,FFI)data_state))) =
-                data_state_space_fupd (K k) (data_state_locals_fupd (K a) s)` SUBST1_TAC THENL
+  SUBGOAL_THEN `data_state_locals_fupd (combin_K a) (data_state_space_fupd (combin_K k)
+                  (data_state_locals_fupd (combin_K a) (s:(C,FFI)data_state))) =
+                data_state_space_fupd (combin_K k) (data_state_locals_fupd (combin_K a) s)` SUBST1_TAC THENL
    [REWRITE_TAC[data_state_component_equality; data_state_INFO.ri_accfupds; K_THM];
     ALL_TAC] THEN
   REWRITE_TAC[wl_state_INFO.ri_fupdcanon] THEN DISCH_TAC THEN ASM_REWRITE_TAC[] THEN
@@ -1306,14 +1306,14 @@ let D2WPAUX_MakeSpace = prove
       ASM_REWRITE_TAC[SilentFFI_def; data_to_word_list_Seq_def] THEN
   REWRITE_TAC[d2wpaux_clause wl_evaluate_def "wl_Seq"; d2wpaux_clause wl_evaluate_def "wl_Skip";
               d2wpaux_clause wl_evaluate_def "wl_Assign"; d2wpaux_clause wl_evaluate_def "wl_Alloc"] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   SIMP[wl_word_exp_def; wl_get_var_def; D2WPAUX_set_var_accs; lookup_insert;
        D2WPAUX_alloc_set_var_1] THEN
       MP_TAC(ISPEC `wl_alloc (alloc_size k) (adjust_sets (names:num_set)) (t:(A,C,FFI)wl_state)`
      PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `q:((A)wl_result)option` (X_CHOOSE_THEN `r:(A,C,FFI)wl_state`
     ASSUME_TAC)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   MAP_EVERY EXISTS_TAC [`r:(A,C,FFI)wl_state`; `q:((A)wl_result)option`] THEN
   CONJ_TAC THENL [COND_CASES_TAC THEN ASM_REWRITE_TAC[]; ALL_TAC] THEN
   MP_TAC(ISPECL [`c:data_to_word_config`; `l1:num`; `l2:num`; `s:(C,FFI)data_state`;
@@ -1327,9 +1327,9 @@ let D2WPAUX_MakeSpace = prove
     FIRST_X_ASSUM(MP_TAC o check (fun th -> is_imp (concl th) &&
       not (is_neg (fst (dest_imp (concl th)))))) THEN
     REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[IS_PREFIX_REFL] THEN
-    SUBGOAL_THEN `cut_locals names (s:(C,FFI)data_state) = data_state_locals_fupd (K a) s`
+    SUBGOAL_THEN `cut_locals names (s:(C,FFI)data_state) = data_state_locals_fupd (combin_K a) s`
       (fun th -> RULE_ASSUM_TAC(REWRITE_RULE[th])) THENL
-     [REWRITE_TAC[cut_locals_def] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[];
+     [REWRITE_TAC[cut_locals_def] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[];
       ALL_TAC] THEN
     DISCH_TAC THEN
     ASM_CASES_TAC `no_thunks_in_refs (data_state_refs (s:(C,FFI)data_state))` THEN
@@ -1355,7 +1355,7 @@ let D2WPAUX_MakeSpace = prove
     REWRITE_TAC[wl_set_var_def; state_rel_insert_1] THEN
   MATCH_MP_TAC has_space_state_rel THEN CONJ_TAC THENL
    [REWRITE_TAC[wl_has_space_def; wl_get_store_def] THEN ASM_REWRITE_TAC[] THEN
-    CASE_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN
     UNDISCH_TAC `~word_ult (word_sub end next) (alloc_size k:A word)` THEN
     REWRITE_TAC[WORD_ULT; option_INJ] THEN ARITH_TAC;
     MATCH_MP_TAC state_rel_cut_env THEN EXISTS_TAC `names:num_set` THEN
@@ -1372,12 +1372,12 @@ let D2WPAUX_jump_exc_same = prove
   SPEC_TAC(`LASTN (wl_state_handler (s2:(A,C,FFI)wl_state) + 1) (wl_state_stack s2)`,
            `ls:((A)stack_frame)list`) THEN
   GEN_TAC THEN STRUCT_CASES_TAC(ISPEC `ls:((A)stack_frame)list` list_CASES) THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   MP_TAC(ISPEC `h:(A)stack_frame` (cases "stack_frame")) THEN
-  DISCH_THEN(REPEAT_TCL CHOOSE_THEN SUBST1_TAC) THEN CASE_REWRITE_TAC[] THEN
+  DISCH_THEN(REPEAT_TCL CHOOSE_THEN SUBST1_TAC) THEN CAKE_REWRITE_TAC[] THEN
   DISJ_CASES_THEN2 SUBST1_TAC (REPEAT_TCL CHOOSE_THEN SUBST1_TAC)
     (ISPEC `a3:(num#num#num)option` D2WPAUX_option_triple_cases) THEN
-  CASE_REWRITE_TAC[option_DISTINCT; mk_loc_def]);;
+  CAKE_REWRITE_TAC[option_DISTINCT; mk_loc_def]);;
 
 (* a triple is a tuple *)
 let D2WPAUX_triple_cases = prove
@@ -1398,7 +1398,7 @@ let D2WPAUX_jump_exc_call_env_dec_clock = prove
 let d2wpaux_triple_tac (a:term) (x:term) (y:term) (z:term) : tactic =
   MP_TAC(ISPEC a D2WPAUX_triple_cases) THEN
   DISCH_THEN(X_CHOOSE_THEN x (X_CHOOSE_THEN y (X_CHOOSE_THEN z SUBST_ALL_TAC))) THEN
-  RULE_ASSUM_TAC(CASE_REWRITE_RULE[]);;
+  RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]);;
 
 (* HOL4 data_compile_correct [Call], ret = NONE (a tail call) *)
 let D2WPAUX_Call_NONE = prove
@@ -1412,7 +1412,7 @@ let D2WPAUX_Call_NONE = prove
      D2WPAUX_correct (:A) (data_Call NONE dest args handler) s`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN
   d2wpaux_open_tac (d2wpaux_clause data_evaluate_def "data_Call") THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[FST; d2wpaux_clause wl_evaluate_def "wl_Call"] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[FST; d2wpaux_clause wl_evaluate_def "wl_Call"] THEN
   d2wpaux_split_tac `data_get_vars args (data_state_locals (s:(C,FFI)data_state))` THEN
   d2wpaux_split_tac `data_find_code dest a (data_state_code (s:(C,FFI)data_state))
                        (data_state_stack_frame_sizes s)` THEN
@@ -1437,13 +1437,13 @@ let D2WPAUX_Call_NONE = prove
   DISCH_THEN(X_CHOOSE_THEN `args2:(A word_loc)list` (X_CHOOSE_THEN `n1:num`
     (X_CHOOSE_THEN `n2:num` STRIP_ASSUME_TAC))) THEN
   ASM_REWRITE_TAC[bad_dest_args_def; NOT_CONS_NIL; add_ret_loc_def] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   ASM_CASES_TAC `data_state_clock (s:(C,FFI)data_state) = 0` THENL
    [FIRST_X_ASSUM(MP_TAC o check (d2wpaux_is_eval_asm o concl)) THEN
     ASM_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN d2wpaux_res_tac THEN
     MAP_EVERY EXISTS_TAC [`wl_flush_state T (t:(A,C,FFI)wl_state)`;
                           `SOME wl_TimeOut:((A)wl_result)option`] THEN
-    CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC D2WPAUX_REC_RWS;
+    CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC D2WPAUX_REC_RWS;
     ALL_TAC] THEN
   ASM_REWRITE_TAC[] THEN
   MP_TAC(ISPEC `data_evaluate (prog,data_call_env args1 ss
@@ -1451,17 +1451,17 @@ let D2WPAUX_Call_NONE = prove
   DISCH_THEN(X_CHOOSE_THEN `r0:((data_v list,data_v)result)option`
     (X_CHOOSE_THEN `s0:(C,FFI)data_state` ASSUME_TAC)) THEN
   FIRST_X_ASSUM(MP_TAC o check (d2wpaux_is_eval_asm o concl)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN DISCH_TAC THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN DISCH_TAC THEN
   ASM_CASES_TAC `r0:((data_v list,data_v)result)option = NONE` THENL
    [FIRST_X_ASSUM SUBST_ALL_TAC THEN
     FIRST_X_ASSUM(MP_TAC o check (d2wpaux_is_eval_asm o concl)) THEN
-    CASE_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN d2wpaux_type_error_tac;
+    CAKE_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN d2wpaux_type_error_tac;
     ALL_TAC] THEN
   FIRST_X_ASSUM(MP_TAC o check (d2wpaux_is_eval_asm o concl)) THEN
   MP_TAC(ISPEC `r0:((data_v list,data_v)result)option` (cases "option")) THEN
   ASM_REWRITE_TAC[] THEN DISCH_THEN(X_CHOOSE_THEN `rr:(data_v list,data_v)result`
     SUBST_ALL_TAC) THEN
-  CASE_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN d2wpaux_res_tac THEN
+  CAKE_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN d2wpaux_res_tac THEN
   FIRST_X_ASSUM(MP_TAC o d2wpaux_unfold_ih o
     SPECL [`a:data_v list`; `prog:data_prog`; `args1:data_v list`; `ss:num option`]) THEN
   ASM_REWRITE_TAC[] THEN
@@ -1472,7 +1472,7 @@ let D2WPAUX_Call_NONE = prove
   ASM_REWRITE_TAC[termdep_rw] THEN
   DISCH_THEN(X_CHOOSE_THEN `t1:(A,C,FFI)wl_state` (X_CHOOSE_THEN
     `res1:((A)wl_result)option` STRIP_ASSUME_TAC)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   SUBGOAL_THEN `~wl_bad_fun_return (res1:((A)wl_result)option)` ASSUME_TAC THENL
    [ASM_CASES_TAC `res1 = SOME NotEnoughSpace:((A)wl_result)option` THEN
     ASM_REWRITE_TAC[wl_bad_fun_return_def] THEN
@@ -1488,7 +1488,7 @@ let D2WPAUX_Call_NONE = prove
   ASM_REWRITE_TAC[] THEN
   FIRST_X_ASSUM(MP_TAC o check (fun th -> is_imp (concl th) &&
     is_neg (fst (dest_imp (concl th))))) THEN
-  REWRITE_TAC[D2WPAUX_jump_exc_call_env_dec_clock] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[D2WPAUX_jump_exc_call_env_dec_clock] THEN CAKE_REWRITE_TAC[]);;
 
 (* substitute an assumption v = e for the variable named v *)
 let d2wpaux_subst_var_tac (v:string) : tactic =
@@ -1530,9 +1530,9 @@ let d2wpaux_exists_pair_tac : tactic = fun (asl,w as g) ->
 
 (* the end of a call whose callee aborted (timeout or FFI) *)
 let d2wpaux_call_abort_tac : tactic =
-  d2wpaux_res_conj_tac THEN CASE_REWRITE_TAC[] THEN
+  d2wpaux_res_conj_tac THEN CAKE_REWRITE_TAC[] THEN
   ASM_CASES_TAC `res1 = SOME NotEnoughSpace:((A)wl_result)option` THENL
-   [d2wpaux_subst_var_tac "res1" THEN CASE_REWRITE_TAC[] THEN
+   [d2wpaux_subst_var_tac "res1" THEN CAKE_REWRITE_TAC[] THEN
     MAP_EVERY EXISTS_TAC [`t1:(A,C,FFI)wl_state`; `SOME NotEnoughSpace:((A)wl_result)option`] THEN
     REWRITE_TAC[option_DISTINCT] THEN
     FIRST_X_ASSUM(MP_TAC o check (fun th -> is_imp (concl th) &&
@@ -1542,7 +1542,7 @@ let d2wpaux_call_abort_tac : tactic =
   FIRST_X_ASSUM(MP_TAC o check (fun th -> is_imp (concl th) &&
     is_neg (fst (dest_imp (concl th))))) THEN
   ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
-  d2wpaux_subst_var_tac "res1" THEN CASE_REWRITE_TAC[] THEN
+  d2wpaux_subst_var_tac "res1" THEN CAKE_REWRITE_TAC[] THEN
   d2wpaux_exists_pair_tac THEN
   ASM_REWRITE_TAC[distinctness "wl_result"; option_INJ; injectivity "wl_result";
                   option_DISTINCT];;
@@ -1562,7 +1562,7 @@ let D2WPAUX_Call_SOME_NONE = prove
      D2WPAUX_correct (:A) (data_Call (SOME (ns,names)) dest args NONE) s`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN
   d2wpaux_open_tac (d2wpaux_clause data_evaluate_def "data_Call") THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[FST; d2wpaux_clause wl_evaluate_def "wl_Call"] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[FST; d2wpaux_clause wl_evaluate_def "wl_Call"] THEN
   d2wpaux_split_tac `data_get_vars args (data_state_locals (s:(C,FFI)data_state))` THEN
   d2wpaux_split_tac `data_find_code dest a (data_state_code (s:(C,FFI)data_state))
                        (data_state_stack_frame_sizes s)` THEN
@@ -1611,8 +1611,8 @@ let D2WPAUX_Call_SOME_NONE = prove
   SUBGOAL_THEN `ALL_DISTINCT (MAP adjust_var ns)` ASSUME_TAC THENL
    [MATCH_MP_TAC ALL_DISTINCT_MAP_INJ THEN ASM_REWRITE_TAC[adjust_var_11] THEN MESON_TAC[];
     ALL_TAC] THEN
-  CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[add_ret_loc_def; domain_adjust_sets] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[add_ret_loc_def; domain_adjust_sets] THEN
+  CAKE_REWRITE_TAC[] THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP D2WPAUX_state_rel_IMP o
     check (fun th -> can (find_term (fun t -> try fst(dest_const t) = "wl_call_env"
                                               with Failure _ -> false)) (concl th) &&
@@ -1622,11 +1622,11 @@ let D2WPAUX_Call_SOME_NONE = prove
    [FIRST_X_ASSUM(MP_TAC o check (d2wpaux_is_eval_asm o concl)) THEN
     ASM_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN d2wpaux_res_tac THEN
     ASM_REWRITE_TAC[] THEN
-    MAP_EVERY EXISTS_TAC [`wl_flush_state T (wl_state_stack_fupd (K [])
-       (wl_state_stack_max_fupd (K (wl_state_stack_max (wl_call_env args2 ss
+    MAP_EVERY EXISTS_TAC [`wl_flush_state T (wl_state_stack_fupd (combin_K [])
+       (wl_state_stack_max_fupd (combin_K (wl_state_stack_max (wl_call_env args2 ss
           (wl_push_env (y1,y2) NONE (t:(A,C,FFI)wl_state))))) t))`;
        `SOME wl_TimeOut:((A)wl_result)option`] THEN
-    CASE_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN
     UNDISCH_TAC `option_le
       (wl_state_stack_max (wl_call_env args2 ss (wl_push_env (y1,y2) NONE
         (wl_dec_clock (t:(A,C,FFI)wl_state)))))
@@ -1644,12 +1644,12 @@ let D2WPAUX_Call_SOME_NONE = prove
   DISCH_THEN(X_CHOOSE_THEN `r0:((data_v list,data_v)result)option`
     (X_CHOOSE_THEN `s2:(C,FFI)data_state` ASSUME_TAC)) THEN
   FIRST_X_ASSUM(MP_TAC o check (d2wpaux_is_eval_asm o concl)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN DISCH_TAC THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN DISCH_TAC THEN
   SUBGOAL_THEN `~(r0 = NONE:((data_v list,data_v)result)option) /\
                 ~(r0 = SOME (Rerr (Rabort Rtype_error)))` STRIP_ASSUME_TAC THENL
    [CONJ_TAC THEN DISCH_THEN SUBST_ALL_TAC THEN
     FIRST_X_ASSUM(MP_TAC o check (d2wpaux_is_eval_asm o concl)) THEN
-    CASE_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN d2wpaux_type_error_tac;
+    CAKE_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN d2wpaux_type_error_tac;
     ALL_TAC] THEN
   FIRST_X_ASSUM(MP_TAC o d2wpaux_unfold_ih o
     SPECL [`a:data_v list`; `prog:data_prog`; `args1:data_v list`; `ss:num option`;
@@ -1662,7 +1662,7 @@ let D2WPAUX_Call_SOME_NONE = prove
   ASM_REWRITE_TAC[termdep_rw; push_env_termdep] THEN
   DISCH_THEN(X_CHOOSE_THEN `t1:(A,C,FFI)wl_state` (X_CHOOSE_THEN
     `res1:((A)wl_result)option` STRIP_ASSUME_TAC)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   d2wpaux_result_cases_tac `r0:((data_v list,data_v)result)option` THEN
   TRY(FIRST_ASSUM(CONTR_TAC o check (fun th -> concl th = `F`))) THENL
    [(* the callee returned values *)
@@ -1675,9 +1675,9 @@ let D2WPAUX_Call_SOME_NONE = prove
   d2wpaux_split_tac `data_pop_env (s2:(C,FFI)data_state)` THEN d2wpaux_res_tac THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP data_pop_env_const) THEN
   FIRST_ASSUM(ASSUME_TAC o MATCH_MP pop_env_safe_for_space) THEN
-    CASE_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN
   ASM_CASES_TAC `res1 = SOME NotEnoughSpace:((A)wl_result)option` THENL
-   [d2wpaux_subst_var_tac "res1" THEN CASE_REWRITE_TAC[] THEN
+   [d2wpaux_subst_var_tac "res1" THEN CAKE_REWRITE_TAC[] THEN
     MAP_EVERY EXISTS_TAC [`t1:(A,C,FFI)wl_state`; `SOME NotEnoughSpace:((A)wl_result)option`] THEN
     REWRITE_TAC[option_DISTINCT; data_set_vars_def; data_state_INFO.ri_accfupds; K_THM] THEN
     FIRST_X_ASSUM(MP_TAC o check (fun th -> is_imp (concl th) &&
@@ -1688,7 +1688,7 @@ let D2WPAUX_Call_SOME_NONE = prove
     is_neg (fst (dest_imp (concl th))))) THEN
   ASM_REWRITE_TAC[] THEN
   DISCH_THEN(X_CHOOSE_THEN `ws2:(A word_loc)list` STRIP_ASSUME_TAC) THEN
-  d2wpaux_subst_var_tac "res1" THEN CASE_REWRITE_TAC[] THEN
+  d2wpaux_subst_var_tac "res1" THEN CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[LENGTH_MAP] THEN
   MP_TAC(ISPECL [`c:data_to_word_config`; `n:num`; `l:num`; `s2:(C,FFI)data_state`;
                  `t1:(A,C,FFI)wl_state`; `v:data_v list`; `ws2:(A word_loc)list`;
@@ -1700,7 +1700,7 @@ let D2WPAUX_Call_SOME_NONE = prove
   RULE_ASSUM_TAC(REWRITE_RULE[CONS_11; PAIR_EQ]) THEN
   REPEAT(FIRST_X_ASSUM(CONJUNCTS_THEN ASSUME_TAC o check (fun th -> is_conj (concl th) &&
     is_eq (lhand (concl th)) && is_var (rhs (lhand (concl th)))))) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
     FIRST_ASSUM(MP_TAC o MATCH_MP evaluate_IMP_domain_EQ o CONJ (ASSUME
     `wl_evaluate (FST (data_to_word_comp c n1 n2 prog),
        wl_call_env args2 ss (wl_push_env (y1,y2) NONE (wl_dec_clock (t:(A,C,FFI)wl_state)))) =
@@ -1717,9 +1717,9 @@ let D2WPAUX_Call_SOME_NONE = prove
               data_state_INFO.ri_accfupds; K_THM] THEN
   ASM_REWRITE_TAC[];
     (* the callee raised an exception *)
-    d2wpaux_res_conj_tac THEN CASE_REWRITE_TAC[] THEN
+    d2wpaux_res_conj_tac THEN CAKE_REWRITE_TAC[] THEN
     ASM_CASES_TAC `res1 = SOME NotEnoughSpace:((A)wl_result)option` THENL
-   [d2wpaux_subst_var_tac "res1" THEN CASE_REWRITE_TAC[] THEN
+   [d2wpaux_subst_var_tac "res1" THEN CAKE_REWRITE_TAC[] THEN
     MAP_EVERY EXISTS_TAC [`t1:(A,C,FFI)wl_state`; `SOME NotEnoughSpace:((A)wl_result)option`] THEN
     REWRITE_TAC[option_DISTINCT] THEN
     FIRST_X_ASSUM(MP_TAC o check (fun th -> is_imp (concl th) &&
@@ -1731,7 +1731,7 @@ let D2WPAUX_Call_SOME_NONE = prove
     ASM_REWRITE_TAC[D2WPAUX_jump_exc_call_push_NONE] THEN
     DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC (X_CHOOSE_THEN `w:A word_loc` (X_CHOOSE_THEN `l5:num`
     (X_CHOOSE_THEN `l6:num` (X_CHOOSE_THEN `ll:(num#num)list` STRIP_ASSUME_TAC))))) THEN
-    d2wpaux_subst_var_tac "res1" THEN CASE_REWRITE_TAC[] THEN
+    d2wpaux_subst_var_tac "res1" THEN CAKE_REWRITE_TAC[] THEN
     MAP_EVERY EXISTS_TAC [`t1:(A,C,FFI)wl_state`;
     `SOME (wl_Exception (mk_loc (wl_jump_exc (t:(A,C,FFI)wl_state))) w):((A)wl_result)option`] THEN
     ASM_REWRITE_TAC[distinctness "wl_result"; option_INJ; injectivity "wl_result"] THEN
@@ -1799,7 +1799,7 @@ let D2WPAUX_Call_SOME_SOME = prove
      D2WPAUX_correct (:A) (data_Call (SOME (ns,names)) dest args (SOME (n0,h0))) s`,
   REPEAT GEN_TAC THEN DISCH_THEN(CONJUNCTS_THEN ASSUME_TAC) THEN
   d2wpaux_open_tac (d2wpaux_clause data_evaluate_def "data_Call") THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[FST; d2wpaux_clause wl_evaluate_def "wl_Call"] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[FST; d2wpaux_clause wl_evaluate_def "wl_Call"] THEN
   REWRITE_TAC[LET_DEF; LET_END_DEF; pair_CASE_def] THEN
   CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
   REWRITE_TAC[FST; SND; d2wpaux_clause wl_evaluate_def "wl_Call"] THEN
@@ -1850,8 +1850,8 @@ let D2WPAUX_Call_SOME_SOME = prove
   SUBGOAL_THEN `ALL_DISTINCT (MAP adjust_var ns)` ASSUME_TAC THENL
    [MATCH_MP_TAC ALL_DISTINCT_MAP_INJ THEN ASM_REWRITE_TAC[adjust_var_11] THEN MESON_TAC[];
     ALL_TAC] THEN
-  CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[add_ret_loc_def; domain_adjust_sets] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[add_ret_loc_def; domain_adjust_sets] THEN
+  CAKE_REWRITE_TAC[] THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP D2WPAUX_state_rel_IMP o
     check (fun th -> can (find_term (fun t -> try fst(dest_const t) = "wl_call_env"
                                               with Failure _ -> false)) (concl th) &&
@@ -1861,11 +1861,11 @@ let D2WPAUX_Call_SOME_SOME = prove
    [FIRST_X_ASSUM(MP_TAC o check (d2wpaux_is_eval_asm o concl)) THEN
     ASM_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN d2wpaux_res_tac THEN
     ASM_REWRITE_TAC[] THEN
-    MAP_EVERY EXISTS_TAC [`wl_flush_state T (wl_state_stack_fupd (K [])
-       (wl_state_stack_max_fupd (K (wl_state_stack_max (wl_call_env args2 ss
+    MAP_EVERY EXISTS_TAC [`wl_flush_state T (wl_state_stack_fupd (combin_K [])
+       (wl_state_stack_max_fupd (combin_K (wl_state_stack_max (wl_call_env args2 ss
           (wl_push_env (y1,y2) (SOME (adjust_var n0,FST (data_to_word_comp c n (l + 2) h0:(A)wl_prog#num),n,l + 1)) (t:(A,C,FFI)wl_state))))) t))`;
        `SOME wl_TimeOut:((A)wl_result)option`] THEN
-    CASE_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN
     UNDISCH_TAC `option_le
       (wl_state_stack_max (wl_call_env args2 ss (wl_push_env (y1,y2) (SOME (adjust_var n0,FST (data_to_word_comp c n (l + 2) h0:(A)wl_prog#num),n,l + 1))
         (wl_dec_clock (t:(A,C,FFI)wl_state)))))
@@ -1883,12 +1883,12 @@ let D2WPAUX_Call_SOME_SOME = prove
   DISCH_THEN(X_CHOOSE_THEN `r0:((data_v list,data_v)result)option`
     (X_CHOOSE_THEN `s2:(C,FFI)data_state` ASSUME_TAC)) THEN
   FIRST_X_ASSUM(MP_TAC o check (d2wpaux_is_eval_asm o concl)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN DISCH_TAC THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN DISCH_TAC THEN
   SUBGOAL_THEN `~(r0 = NONE:((data_v list,data_v)result)option) /\
                 ~(r0 = SOME (Rerr (Rabort Rtype_error)))` STRIP_ASSUME_TAC THENL
    [CONJ_TAC THEN DISCH_THEN SUBST_ALL_TAC THEN
     FIRST_X_ASSUM(MP_TAC o check (d2wpaux_is_eval_asm o concl)) THEN
-    CASE_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN d2wpaux_type_error_tac;
+    CAKE_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN d2wpaux_type_error_tac;
     ALL_TAC] THEN
   FIRST_X_ASSUM(MP_TAC o d2wpaux_unfold_ih o
     SPECL [`a:data_v list`; `prog:data_prog`; `args1:data_v list`; `ss:num option`;
@@ -1901,7 +1901,7 @@ let D2WPAUX_Call_SOME_SOME = prove
   ASM_REWRITE_TAC[termdep_rw; push_env_termdep] THEN
   DISCH_THEN(X_CHOOSE_THEN `t1:(A,C,FFI)wl_state` (X_CHOOSE_THEN
     `res1:((A)wl_result)option` STRIP_ASSUME_TAC)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   d2wpaux_result_cases_tac `r0:((data_v list,data_v)result)option` THEN
   TRY(FIRST_ASSUM(CONTR_TAC o check (fun th -> concl th = `F`))) THENL
    [(* the callee returned values *)
@@ -1914,9 +1914,9 @@ let D2WPAUX_Call_SOME_SOME = prove
     d2wpaux_split_tac `data_pop_env (s2:(C,FFI)data_state)` THEN d2wpaux_res_tac THEN
     FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP data_pop_env_const) THEN
     FIRST_ASSUM(ASSUME_TAC o MATCH_MP pop_env_safe_for_space) THEN
-      CASE_REWRITE_TAC[] THEN
+      CAKE_REWRITE_TAC[] THEN
     ASM_CASES_TAC `res1 = SOME NotEnoughSpace:((A)wl_result)option` THENL
-     [d2wpaux_subst_var_tac "res1" THEN CASE_REWRITE_TAC[] THEN
+     [d2wpaux_subst_var_tac "res1" THEN CAKE_REWRITE_TAC[] THEN
       MAP_EVERY EXISTS_TAC [`t1:(A,C,FFI)wl_state`; `SOME NotEnoughSpace:((A)wl_result)option`] THEN
       REWRITE_TAC[option_DISTINCT; data_set_vars_def; data_state_INFO.ri_accfupds; K_THM] THEN
       FIRST_X_ASSUM(MP_TAC o check (fun th -> is_imp (concl th) &&
@@ -1927,7 +1927,7 @@ let D2WPAUX_Call_SOME_SOME = prove
       is_neg (fst (dest_imp (concl th))))) THEN
     ASM_REWRITE_TAC[] THEN
     DISCH_THEN(X_CHOOSE_THEN `ws2:(A word_loc)list` STRIP_ASSUME_TAC) THEN
-    d2wpaux_subst_var_tac "res1" THEN CASE_REWRITE_TAC[] THEN
+    d2wpaux_subst_var_tac "res1" THEN CAKE_REWRITE_TAC[] THEN
     ASM_REWRITE_TAC[LENGTH_MAP] THEN
     MP_TAC(ISPECL [`c:data_to_word_config`; `n:num`; `l:num`; `s2:(C,FFI)data_state`;
                    `t1:(A,C,FFI)wl_state`; `v:data_v list`; `ws2:(A word_loc)list`;
@@ -1939,7 +1939,7 @@ let D2WPAUX_Call_SOME_SOME = prove
     RULE_ASSUM_TAC(REWRITE_RULE[CONS_11; PAIR_EQ]) THEN
     REPEAT(FIRST_X_ASSUM(CONJUNCTS_THEN ASSUME_TAC o check (fun th -> is_conj (concl th) &&
       is_eq (lhand (concl th)) && is_var (rhs (lhand (concl th)))))) THEN
-    ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
       FIRST_ASSUM(MP_TAC o MATCH_MP evaluate_IMP_domain_EQ o CONJ (ASSUME
       `wl_evaluate (FST (data_to_word_comp c n1 n2 prog),
          wl_call_env args2 ss (wl_push_env (y1,y2) (SOME (adjust_var n0,FST (data_to_word_comp c n (l + 2) h0:(A)wl_prog#num),n,l + 1)) (wl_dec_clock (t:(A,C,FFI)wl_state)))) =
@@ -1957,7 +1957,7 @@ let D2WPAUX_Call_SOME_SOME = prove
     ASM_REWRITE_TAC[];
     (* the callee raised an exception: the handler runs *)
     ASM_CASES_TAC `res1 = SOME NotEnoughSpace:((A)wl_result)option` THENL
-   [d2wpaux_subst_var_tac "res1" THEN CASE_REWRITE_TAC[] THEN
+   [d2wpaux_subst_var_tac "res1" THEN CAKE_REWRITE_TAC[] THEN
     MAP_EVERY EXISTS_TAC [`t1:(A,C,FFI)wl_state`; `SOME NotEnoughSpace:((A)wl_result)option`] THEN
     REWRITE_TAC[option_DISTINCT] THEN
     FIRST_X_ASSUM(MP_TAC o check (fun th -> is_imp (concl th) &&
@@ -1989,7 +1989,7 @@ let D2WPAUX_Call_SOME_SOME = prove
   STRIP_TAC THEN
   REPEAT(FIRST_X_ASSUM(SUBST_ALL_TAC o SYM o check (fun th -> is_eq (concl th) &&
     is_var (rhs (concl th)) && mem (fst (dest_var (rhs (concl th)))) ["l5"; "l6"; "ll"]))) THEN
-  d2wpaux_subst_var_tac "res1" THEN CASE_REWRITE_TAC[] THEN
+  d2wpaux_subst_var_tac "res1" THEN CAKE_REWRITE_TAC[] THEN
   FIRST_ASSUM(MP_TAC o MATCH_MP evaluate_IMP_domain_EQ_Exc o
     check (fun th -> try fst(dest_const(fst(strip_comb(lhs(concl th))))) = "wl_evaluate"
                      with Failure _ -> false)) THEN
@@ -2134,7 +2134,7 @@ let D2WPAUX_state_rel_return_value = prove
   REPEAT GEN_TAC THEN
   REWRITE_TAC[data_to_word_gcProof_state_rel_thm; data_flush_state_def; wl_flush_state_def;
               data_state_INFO.ri_accfupds; wl_state_INFO.ri_accfupds; K_THM] THEN
-  CASE_REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[lookup_def; IS_SOME_DEF] THEN
+  CAKE_REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[lookup_def; IS_SOME_DEF] THEN
   CONJ_TAC THENL
    [FIRST_X_ASSUM(MATCH_ACCEPT_TAC o MATCH_MP D2WPAUX_option_le_locals_0 o
       check (fun th -> try fst(dest_const(fst(strip_comb(concl th)))) = "option_le" &&
@@ -2145,7 +2145,7 @@ let D2WPAUX_state_rel_return_value = prove
     ALL_TAC] THEN
   SUBGOAL_THEN `toAList (sptree_inter (LN:(A word_loc)spt) (adjust_set (LN:data_v spt))) = []`
     SUBST1_TAC THENL
-   [REWRITE_TAC[sptree_inter_def; toAList_def; foldi_def] THEN CASE_REWRITE_TAC[] THEN
+   [REWRITE_TAC[sptree_inter_def; toAList_def; foldi_def] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[foldi_def];
     ALL_TAC] THEN
   REWRITE_TAC[join_env_def; FILTER; MAP; APPEND] THEN
@@ -2170,12 +2170,12 @@ let D2WPAUX_state_rel_force_assign = prove
             (CONS (the_global (data_state_global s),FAPPLY (wl_state_store t) Globals)
                (data_to_word_gcProof_flat (data_state_stack s) (wl_state_stack t))))) ==>
      data_to_word_gcProof_state_rel c l1 l2
-       (data_set_var dest z (data_state_locals_fupd (K env) s))
+       (data_set_var dest z (data_state_locals_fupd (combin_K env) s))
        (wl_set_var (adjust_var dest) w t) NONE locs`,
   REPEAT GEN_TAC THEN
   REWRITE_TAC[data_to_word_gcProof_state_rel_thm; data_set_var_def; wl_set_var_def;
               data_state_INFO.ri_accfupds; wl_state_INFO.ri_accfupds; K_THM] THEN
-  CASE_REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[APPEND] THEN
+  CAKE_REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[APPEND] THEN
   REPEAT CONJ_TAC THENL
    [ASM_REWRITE_TAC[lookup_insert; adjust_var_def; ARITH_RULE `~(0 = 2 * n + 2)`];
     X_GEN_TAC `k:num` THEN REWRITE_TAC[lookup_insert; adjust_var_11] THEN
@@ -2266,7 +2266,7 @@ let D2WPAUX_force_ptr_prefix = prove
   REWRITE_TAC[data_to_word_list_Seq_def; d2wpaux_clause wl_evaluate_def "wl_Seq";
               wl_fix_clock_evaluate] THEN
   REWRITE_TAC[d2wpaux_clause wl_evaluate_def "wl_Assign"] THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   SIMP[wl_word_exp_def; MAP; the_words_def; wl_get_var_def; D2WPAUX_set_var_accs;
        lookup_insert; wl_mem_load_def; word_op_def; OPTION_MAP_DEF; ITLIST; WORD_AND_NOT0]);;
 
@@ -2335,7 +2335,7 @@ let D2WPAUX_push_env_set_var = prove
   CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
   MP_TAC(ISPEC `env_to_list (SND (y:(A word_loc)spt#(A word_loc)spt))
                   (wl_state_permute (t:(A,C,FFI)wl_state))` PAIR_SURJECTIVE) THEN
-  DISCH_THEN(REPEAT_TCL CHOOSE_THEN SUBST1_TAC) THEN CASE_REWRITE_TAC[] THEN
+  DISCH_THEN(REPEAT_TCL CHOOSE_THEN SUBST1_TAC) THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[LET_DEF; LET_END_DEF] THEN CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
   REWRITE_TAC[wl_state_component_equality; wl_state_INFO.ri_accfupds; K_THM]);;
 
@@ -2364,7 +2364,7 @@ let D2WPAUX_state_rel_add_vals = prove
              (data_to_word_gcProof_flat (data_state_stack s) (wl_state_stack t))))) ==>
      data_to_word_gcProof_state_rel c l1 l2 s t (SOME vs) locs`,
   REPEAT GEN_TAC THEN REWRITE_TAC[data_to_word_gcProof_state_rel_thm] THEN
-  CASE_REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[option_DISTINCT] THEN
+  CAKE_REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[option_DISTINCT] THEN
   FIRST_X_ASSUM(MP_TAC o check (fun th ->
     try fst(dest_const(fst(strip_comb(concl th)))) = "memory_rel" &&
         is_comb (rand (concl th)) &&
@@ -2386,7 +2386,7 @@ let D2WPAUX_state_rel_call_env_vals = prove
   REWRITE_TAC[data_to_word_gcProof_state_rel_thm; data_call_env_def; wl_call_env_def;
               data_dec_clock_def; wl_dec_clock_def; LET_DEF; LET_END_DEF;
               data_state_INFO.ri_accfupds; wl_state_INFO.ri_accfupds; K_THM] THEN
-  CASE_REWRITE_TAC[APPEND] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[APPEND] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
   SUBGOAL_THEN `wl_stack_size (wl_state_stack (t:(A,C,FFI)wl_state)) =
                 size_of_stack (data_state_stack (s:(C,FFI)data_state))` ASSUME_TAC THENL
    [FIRST_ASSUM(fun th -> MATCH_ACCEPT_TAC(MATCH_MP stack_rel_IMP_size_of_stack th));
@@ -2415,7 +2415,7 @@ let D2WPAUX_data_find_code_SOME = prove
   REPEAT GEN_TAC THEN REWRITE_TAC[data_find_code_def] THEN
   TOP_CASE_TAC THEN REWRITE_TAC[option_DISTINCT] THEN
   MP_TAC(ISPEC `a:num#A` PAIR_SURJECTIVE) THEN
-  DISCH_THEN(REPEAT_TCL CHOOSE_THEN SUBST1_TAC) THEN CASE_REWRITE_TAC[] THEN
+  DISCH_THEN(REPEAT_TCL CHOOSE_THEN SUBST1_TAC) THEN CAKE_REWRITE_TAC[] THEN
   COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT; option_INJ; PAIR_EQ] THEN
   REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[]);;
 
@@ -2452,7 +2452,7 @@ let D2WPAUX_Force = prove
   d2wpaux_open_tac (d2wpaux_clause data_evaluate_def "data_Force") THEN
   REWRITE_TAC[force_thunk_def] THEN
   FIRST_ASSUM(X_CHOOSE_TAC `header:A word` o MATCH_MP D2WPAUX_encode_header_thunk) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[FST] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[FST] THEN
   REWRITE_TAC[d2wpaux_clause wl_evaluate_def "wl_If"]) THEN
   (d2wpaux_split_tac `data_get_var src (data_state_locals (s:(C,FFI)data_state))`) THEN
   (d2wpaux_split_tac `data_dest_thunk a (data_state_refs (s:(C,FFI)data_state))`) THEN
@@ -2468,7 +2468,7 @@ let D2WPAUX_Force = prove
   RULE_ASSUM_TAC(REWRITE_RULE[data_get_var_def; wl_get_var_def]) THEN
   ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
   REWRITE_TAC[wl_get_var_def; wl_get_var_imm_def] THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[]) THEN
+  CAKE_REWRITE_TAC[]) THEN
   (SUBGOAL_THEN `?b. wl_word_cmp asm_Test (w:A word_loc) (wl_Word (word 1)) = SOME b /\
                     (b <=> (?l1 l2. w = wl_Loc l1 l2) \/ (?w1. w = wl_Word w1 /\ ~bit 0 w1))`
     STRIP_ASSUME_TAC THENL
@@ -2483,7 +2483,7 @@ let D2WPAUX_Force = prove
       ASM_REWRITE_TAC[data_get_var_def; wl_get_var_def] THEN DISCH_THEN SUBST1_TAC THEN
       REWRITE_TAC[option_INJ] THEN MESON_TAC[]];
     ALL_TAC] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]) THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]) THEN
   (FIRST_ASSUM(ASSUME_TAC o MATCH_MP D2WPAUX_state_rel_good_dimindex) THEN
   COND_CASES_TAC) THENL
   [(MP_TAC(ISPECL [`c:data_to_word_config`; `wl_state_be (t:(A,C,FFI)wl_state)`;
@@ -2498,10 +2498,10 @@ let D2WPAUX_Force = prove
                       (data_to_word_gcProof_flat (data_state_stack s) (wl_state_stack t)))`;
                  `a0:thunk_mode`; `a1:data_v`] memory_rel_Thunk_inlined) THEN
   ASM_REWRITE_TAC[] THEN STRIP_TAC THEN FIRST_X_ASSUM SUBST_ALL_TAC THEN
-  RULE_ASSUM_TAC(CASE_REWRITE_RULE[])) THEN
+  RULE_ASSUM_TAC(CAKE_REWRITE_RULE[])) THEN
   (DISJ_CASES_THEN2 SUBST_ALL_TAC (X_CHOOSE_THEN `rr:num#num_set` SUBST_ALL_TAC)
     (ISPEC `ret:(num#num_set)option` (cases "option")) THEN
-  RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN CASE_REWRITE_TAC[]) THENL
+  RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN CAKE_REWRITE_TAC[]) THENL
   [(RULE_ASSUM_TAC(REWRITE_RULE[PAIR_EQ]) THEN d2wpaux_res_conj_tac THEN
   REWRITE_TAC[d2wpaux_clause wl_evaluate_def "wl_Return"; wl_get_vars_def; wl_get_var_def] THEN
   SUBGOAL_THEN `lookup 0 (wl_state_locals (t:(A,C,FFI)wl_state)) = SOME (wl_Loc l1 l2)`
@@ -2510,7 +2510,7 @@ let D2WPAUX_Force = prove
                    (t:(A,C,FFI)wl_state) NONE locs` THEN
     SIMP_TAC[data_to_word_gcProof_state_rel_thm];
     ALL_TAC] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   MAP_EVERY EXISTS_TAC [`wl_flush_state F (t:(A,C,FFI)wl_state)`;
                         `SOME (wl_Result (wl_Loc l1 l2) [w]):((A)wl_result)option`] THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP D2WPAUX_state_rel_IMP) THEN
@@ -2520,16 +2520,16 @@ let D2WPAUX_Force = prove
   MATCH_MP_TAC D2WPAUX_state_rel_return_value THEN ASM_REWRITE_TAC[]);
    (MP_TAC(ISPEC `rr:num#num_set` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `dest:num` (X_CHOOSE_THEN `names:num_set` SUBST_ALL_TAC)) THEN
-  RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN CASE_REWRITE_TAC[]) THEN
+  RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN CAKE_REWRITE_TAC[]) THEN
   (d2wpaux_split_tac `data_cut_env names (data_state_locals (s:(C,FFI)data_state))` THEN
   d2wpaux_res_tac) THEN
   (REWRITE_TAC[d2wpaux_clause wl_evaluate_def "wl_Assign"; wl_word_exp_def]) THEN
-  (REWRITE_TAC[wl_get_var_def] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  (REWRITE_TAC[wl_get_var_def] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   MAP_EVERY EXISTS_TAC [`wl_set_var (adjust_var dest) w (t:(A,C,FFI)wl_state)`;
                         `NONE:((A)wl_result)option`] THEN
   REWRITE_TAC[option_DISTINCT] THEN
   SUBGOAL_THEN `data_to_word_gcProof_state_rel c l1 l2
-     (data_set_var dest a1 (data_state_locals_fupd (K a') (s:(C,FFI)data_state)))
+     (data_set_var dest a1 (data_state_locals_fupd (combin_K a') (s:(C,FFI)data_state)))
      (wl_set_var (adjust_var dest) w (t:(A,C,FFI)wl_state)) NONE locs` ASSUME_TAC THENL
    [MATCH_MP_TAC D2WPAUX_state_rel_force_assign THEN EXISTS_TAC `names:num_set` THEN
     ASM_REWRITE_TAC[];
@@ -2559,13 +2559,13 @@ let D2WPAUX_Force = prove
   ASM_REWRITE_TAC[] THEN DISCH_THEN(fun th -> REWRITE_TAC[th]) THEN
   REWRITE_TAC[d2wpaux_clause wl_evaluate_def "wl_If"; wl_get_var_def; D2WPAUX_set_var_accs;
               lookup_insert; ARITH_EQ; wl_get_var_imm_def; wl_word_cmp_def] THEN
-  CASE_REWRITE_TAC[]) THENL
-  [(REWRITE_TAC[wl_word_cmp_def] THEN CASE_REWRITE_TAC[]) THEN
+  CAKE_REWRITE_TAC[]) THENL
+  [(REWRITE_TAC[wl_word_cmp_def] THEN CAKE_REWRITE_TAC[]) THEN
   (FIRST_X_ASSUM(SUBST_ALL_TAC o check (fun th -> concl th = `a0 = Evaluated`)) THEN
-  RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN ASM_REWRITE_TAC[] THEN
+  RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN ASM_REWRITE_TAC[] THEN
   DISJ_CASES_THEN2 SUBST_ALL_TAC (X_CHOOSE_THEN `rr:num#num_set` SUBST_ALL_TAC)
     (ISPEC `ret:(num#num_set)option` (cases "option")) THEN
-  RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN CASE_REWRITE_TAC[]) THENL
+  RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN CAKE_REWRITE_TAC[]) THENL
   [(RULE_ASSUM_TAC(REWRITE_RULE[PAIR_EQ]) THEN d2wpaux_res_conj_tac THEN
   REWRITE_TAC[d2wpaux_clause wl_evaluate_def "wl_Return"; wl_get_vars_def; wl_get_var_def;
               D2WPAUX_set_var_accs; lookup_insert; ARITH_EQ; adjust_var_NEQ] THEN
@@ -2575,7 +2575,7 @@ let D2WPAUX_Force = prove
                    (t:(A,C,FFI)wl_state) NONE locs` THEN
     SIMP_TAC[data_to_word_gcProof_state_rel_thm];
     ALL_TAC] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[D2WPAUX_flush_F_set_var] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[D2WPAUX_flush_F_set_var] THEN
   MAP_EVERY EXISTS_TAC [`wl_flush_state F (t:(A,C,FFI)wl_state)`;
                         `SOME (wl_Result (wl_Loc l1 l2) [wl_Word w1]):((A)wl_result)option`] THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP D2WPAUX_state_rel_IMP) THEN
@@ -2585,12 +2585,12 @@ let D2WPAUX_Force = prove
   MATCH_MP_TAC D2WPAUX_state_rel_return_value THEN ASM_REWRITE_TAC[]);
    (MP_TAC(ISPEC `rr:num#num_set` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `dest:num` (X_CHOOSE_THEN `names:num_set` SUBST_ALL_TAC)) THEN
-  RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN CASE_REWRITE_TAC[] THEN
+  RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN CAKE_REWRITE_TAC[] THEN
   d2wpaux_split_tac `data_cut_env names (data_state_locals (s:(C,FFI)data_state))` THEN
   d2wpaux_res_tac) THEN
   (REWRITE_TAC[d2wpaux_clause wl_evaluate_def "wl_Assign"; wl_word_exp_def] THEN
   REWRITE_TAC[wl_get_var_def; D2WPAUX_set_var_accs; lookup_insert; adjust_var_NEQ] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   MAP_EVERY EXISTS_TAC
    [`wl_set_var (adjust_var dest) (wl_Word w1) (wl_set_var 3 (wl_Word (word_and x (word 60)))
        (wl_set_var 1 (wl_Word a) (t:(A,C,FFI)wl_state)))`;
@@ -2598,7 +2598,7 @@ let D2WPAUX_Force = prove
   REWRITE_TAC[option_DISTINCT] THEN
   REWRITE_TAC[D2WPAUX_set_var_adjust_3_1; D2WPAUX_state_rel_set_var_3_1] THEN
   SUBGOAL_THEN `data_to_word_gcProof_state_rel c l1 l2
-     (data_set_var dest a1 (data_state_locals_fupd (K a') (s:(C,FFI)data_state)))
+     (data_set_var dest a1 (data_state_locals_fupd (combin_K a') (s:(C,FFI)data_state)))
      (wl_set_var (adjust_var dest) (wl_Word w1) (t:(A,C,FFI)wl_state)) NONE locs` ASSUME_TAC THENL
    [MATCH_MP_TAC D2WPAUX_state_rel_force_assign THEN EXISTS_TAC `names:num_set` THEN
     ASM_REWRITE_TAC[];
@@ -2607,15 +2607,15 @@ let D2WPAUX_Force = prove
   FIRST_ASSUM(MP_TAC o MATCH_MP D2WPAUX_state_rel_IMP) THEN SIMP_TAC[]) THEN
   (SIMP_TAC[D2WPAUX_set_var_accs])];
    (FIRST_X_ASSUM(SUBST_ALL_TAC o check (fun th -> concl th = `a0 = Evaluated`)) THEN
-  RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN ASM_REWRITE_TAC[] THEN
+  RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN ASM_REWRITE_TAC[] THEN
   DISJ_CASES_THEN2 SUBST_ALL_TAC (X_CHOOSE_THEN `rr:num#num_set` SUBST_ALL_TAC)
     (ISPEC `ret:(num#num_set)option` (cases "option")) THEN
-  RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN CASE_REWRITE_TAC[]) THENL
-  [(REWRITE_TAC[wl_word_cmp_def] THEN CASE_REWRITE_TAC[]) THEN
+  RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN CAKE_REWRITE_TAC[]) THENL
+  [(REWRITE_TAC[wl_word_cmp_def] THEN CAKE_REWRITE_TAC[]) THEN
   (RULE_ASSUM_TAC(REWRITE_RULE[PAIR_EQ]) THEN d2wpaux_res_conj_tac THEN
   REWRITE_TAC[data_to_word_list_Seq_def; d2wpaux_clause wl_evaluate_def "wl_Seq";
               wl_fix_clock_evaluate; d2wpaux_clause wl_evaluate_def "wl_Assign"] THEN
-  ASM_SIMP_TAC[D2WPAUX_force_load_next] THEN CASE_REWRITE_TAC[] THEN
+  ASM_SIMP_TAC[D2WPAUX_force_load_next] THEN CAKE_REWRITE_TAC[] THEN
   SIMP[d2wpaux_clause wl_evaluate_def "wl_Return"; wl_get_vars_def; wl_get_var_def;
        D2WPAUX_set_var_accs; lookup_insert; ARITH_EQ] THEN
   SUBGOAL_THEN `lookup 0 (wl_state_locals (t:(A,C,FFI)wl_state)) = SOME (wl_Loc l1 l2)`
@@ -2624,7 +2624,7 @@ let D2WPAUX_Force = prove
                    (t:(A,C,FFI)wl_state) NONE locs` THEN
     SIMP_TAC[data_to_word_gcProof_state_rel_thm];
     ALL_TAC] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[D2WPAUX_flush_F_set_var]) THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[D2WPAUX_flush_F_set_var]) THEN
   (MAP_EVERY EXISTS_TAC [`wl_flush_state F (t:(A,C,FFI)wl_state)`;
     `SOME (wl_Result (wl_Loc l1 l2)
        [wl_state_memory (t:(A,C,FFI)wl_state) (word_add a bytes_in_word)]):((A)wl_result)option`] THEN
@@ -2637,14 +2637,14 @@ let D2WPAUX_Force = prove
   FIRST_X_ASSUM(MP_TAC o check (fun th ->
     try fst(dest_const(fst(strip_comb(concl th)))) = "memory_rel" with Failure _ -> false)) THEN
   MATCH_MP_TAC memory_rel_rearrange THEN REWRITE_TAC[MEM] THEN MESON_TAC[]);
-   (REWRITE_TAC[wl_word_cmp_def] THEN CASE_REWRITE_TAC[] THEN
+   (REWRITE_TAC[wl_word_cmp_def] THEN CAKE_REWRITE_TAC[] THEN
   MP_TAC(ISPEC `rr:num#num_set` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `dest:num` (X_CHOOSE_THEN `names:num_set` SUBST_ALL_TAC)) THEN
-  RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN CASE_REWRITE_TAC[] THEN
+  RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN CAKE_REWRITE_TAC[] THEN
   d2wpaux_split_tac `data_cut_env names (data_state_locals (s:(C,FFI)data_state))` THEN
   d2wpaux_res_tac THEN
   REWRITE_TAC[d2wpaux_clause wl_evaluate_def "wl_Assign"] THEN
-  ASM_SIMP_TAC[D2WPAUX_force_load_next] THEN CASE_REWRITE_TAC[] THEN
+  ASM_SIMP_TAC[D2WPAUX_force_load_next] THEN CAKE_REWRITE_TAC[] THEN
   MAP_EVERY EXISTS_TAC
    [`wl_set_var (adjust_var dest) (wl_state_memory (t:(A,C,FFI)wl_state) (word_add a bytes_in_word))
       (wl_set_var 3 (wl_Word (word ((8 + 6) * 4))) (wl_set_var 1 (wl_Word a) t))`;
@@ -2652,7 +2652,7 @@ let D2WPAUX_Force = prove
   REWRITE_TAC[option_DISTINCT] THEN
   REWRITE_TAC[D2WPAUX_set_var_adjust_3_1; D2WPAUX_state_rel_set_var_3_1] THEN
   SUBGOAL_THEN `data_to_word_gcProof_state_rel c l1 l2
-     (data_set_var dest a1 (data_state_locals_fupd (K a') (s:(C,FFI)data_state)))
+     (data_set_var dest a1 (data_state_locals_fupd (combin_K a') (s:(C,FFI)data_state)))
      (wl_set_var (adjust_var dest) (wl_state_memory t (word_add a bytes_in_word))
         (t:(A,C,FFI)wl_state)) NONE locs` ASSUME_TAC THENL
    [MATCH_MP_TAC D2WPAUX_state_rel_force_assign THEN EXISTS_TAC `names:num_set` THEN
@@ -2666,12 +2666,12 @@ let D2WPAUX_Force = prove
    (SUBGOAL_THEN `~(word ((0 + 6) * 4) = word ((8 + 6) * 4):A word)` ASSUME_TAC THENL
    [UNDISCH_TAC `~(word_and x (word 60) = word ((8 + 6) * 4):A word)` THEN ASM_REWRITE_TAC[];
     ALL_TAC] THEN
-  REWRITE_TAC[wl_word_cmp_def] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
+  REWRITE_TAC[wl_word_cmp_def] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
   FIRST_X_ASSUM(SUBST_ALL_TAC o check (fun th -> concl th = `a0 = NotEvaluated`)) THEN
-  RULE_ASSUM_TAC(CASE_REWRITE_RULE[])) THEN
+  RULE_ASSUM_TAC(CAKE_REWRITE_RULE[])) THEN
   (REWRITE_TAC[data_to_word_list_Seq_def; d2wpaux_clause wl_evaluate_def "wl_Seq";
               wl_fix_clock_evaluate; d2wpaux_clause wl_evaluate_def "wl_Assign"] THEN
-  ASM_SIMP_TAC[D2WPAUX_force_load_next] THEN CASE_REWRITE_TAC[] THEN SIMP[]) THEN
+  ASM_SIMP_TAC[D2WPAUX_force_load_next] THEN CAKE_REWRITE_TAC[] THEN SIMP[]) THEN
   (d2wpaux_split_tac `data_find_code (SOME loc) [data_RefPtr F p; a1]
                        (data_state_code (s:(C,FFI)data_state)) (data_state_stack_frame_sizes s)`) THEN
   (d2wpaux_triple_tac `a':data_v list#data_prog#num option` `args1:data_v list`
@@ -2698,7 +2698,7 @@ let D2WPAUX_Force = prove
     ALL_TAC]) THEN
   (DISJ_CASES_THEN2 SUBST_ALL_TAC (X_CHOOSE_THEN `rr:num#num_set` SUBST_ALL_TAC)
     (ISPEC `ret:(num#num_set)option` (cases "option")) THEN
-  RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN CASE_REWRITE_TAC[]) THENL
+  RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN CAKE_REWRITE_TAC[]) THENL
   [(SUBGOAL_THEN `lookup 0 (wl_state_locals (t:(A,C,FFI)wl_state)) = SOME (wl_Loc l1 l2)`
     ASSUME_TAC THENL
    [UNDISCH_TAC `data_to_word_gcProof_state_rel c l1 l2 (s:(C,FFI)data_state)
@@ -2707,18 +2707,18 @@ let D2WPAUX_Force = prove
     ALL_TAC]) THEN
   (REWRITE_TAC[d2wpaux_clause wl_evaluate_def "wl_Call"; wl_get_vars_def; wl_get_var_def;
               D2WPAUX_set_var_accs; lookup_insert; ARITH_EQ; adjust_var_NEQ] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[bad_dest_args_def; option_DISTINCT; add_ret_loc_def; wl_find_code_def;
               D2WPAUX_set_var_accs; D2WPAUX_set_var_accs2] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
-  REWRITE_TAC[LENGTH] THEN CONV_TAC NUM_REDUCE_CONV THEN CASE_REWRITE_TAC[]) THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
+  REWRITE_TAC[LENGTH] THEN CONV_TAC NUM_REDUCE_CONV THEN CAKE_REWRITE_TAC[]) THEN
   (REWRITE_TAC[D2WPAUX_flush_T_set_var; D2WPAUX_dec_clock_set_var; D2WPAUX_call_env_set_var] THEN
   ASM_CASES_TAC `data_state_clock (s:(C,FFI)data_state) = 0` THENL
    [FIRST_X_ASSUM(MP_TAC o check (d2wpaux_is_eval_asm o concl)) THEN
     ASM_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN d2wpaux_res_tac THEN
     MAP_EVERY EXISTS_TAC [`wl_flush_state T (t:(A,C,FFI)wl_state)`;
                           `SOME wl_TimeOut:((A)wl_result)option`] THEN
-    CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC D2WPAUX_REC_RWS;
+    CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC D2WPAUX_REC_RWS;
     ALL_TAC]) THEN
   (ASM_REWRITE_TAC[] THEN
   MP_TAC(ISPEC `data_evaluate (prog,data_call_env [data_RefPtr F p; a1]
@@ -2727,17 +2727,17 @@ let D2WPAUX_Force = prove
   DISCH_THEN(X_CHOOSE_THEN `r0:((data_v list,data_v)result)option`
     (X_CHOOSE_THEN `s0:(C,FFI)data_state` ASSUME_TAC)) THEN
   FIRST_X_ASSUM(MP_TAC o check (d2wpaux_is_eval_asm o concl)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN DISCH_TAC THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN DISCH_TAC THEN
   ASM_CASES_TAC `r0:((data_v list,data_v)result)option = NONE` THENL
    [FIRST_X_ASSUM SUBST_ALL_TAC THEN
     FIRST_X_ASSUM(MP_TAC o check (d2wpaux_is_eval_asm o concl)) THEN
-    CASE_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN d2wpaux_type_error_tac;
+    CAKE_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN d2wpaux_type_error_tac;
     ALL_TAC] THEN
   FIRST_X_ASSUM(MP_TAC o check (d2wpaux_is_eval_asm o concl)) THEN
   MP_TAC(ISPEC `r0:((data_v list,data_v)result)option` (cases "option")) THEN
   ASM_REWRITE_TAC[] THEN DISCH_THEN(X_CHOOSE_THEN `rr:(data_v list,data_v)result`
     SUBST_ALL_TAC) THEN
-  CASE_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN d2wpaux_res_tac) THEN
+  CAKE_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN d2wpaux_res_tac) THEN
   (SUBGOAL_THEN `data_to_word_gcProof_state_rel c l1 l2
      (data_call_env [data_RefPtr F p; a1] (lookup loc (data_state_stack_frame_sizes s))
         (data_dec_clock (s:(C,FFI)data_state)))
@@ -2760,7 +2760,7 @@ let D2WPAUX_Force = prove
   ASM_REWRITE_TAC[termdep_rw]) THEN
   (DISCH_THEN(X_CHOOSE_THEN `t1:(A,C,FFI)wl_state` (X_CHOOSE_THEN
     `res1:((A)wl_result)option` STRIP_ASSUME_TAC)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   SUBGOAL_THEN `~wl_bad_fun_return (res1:((A)wl_result)option)` ASSUME_TAC THENL
    [ASM_CASES_TAC `res1 = SOME NotEnoughSpace:((A)wl_result)option` THEN
     ASM_REWRITE_TAC[wl_bad_fun_return_def] THEN
@@ -2776,10 +2776,10 @@ let D2WPAUX_Force = prove
   ASM_REWRITE_TAC[] THEN
   FIRST_X_ASSUM(MP_TAC o check (fun th -> is_imp (concl th) &&
     is_neg (fst (dest_imp (concl th))))) THEN
-  REWRITE_TAC[D2WPAUX_jump_exc_call_env_dec_clock] THEN CASE_REWRITE_TAC[]);
+  REWRITE_TAC[D2WPAUX_jump_exc_call_env_dec_clock] THEN CAKE_REWRITE_TAC[]);
    (MP_TAC(ISPEC `rr:num#num_set` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `dest:num` (X_CHOOSE_THEN `names:num_set` SUBST_ALL_TAC)) THEN
-  RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN CASE_REWRITE_TAC[] THEN
+  RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN CAKE_REWRITE_TAC[] THEN
   d2wpaux_split_tac `data_cut_env names (data_state_locals (s:(C,FFI)data_state))`) THEN
   (SUBGOAL_THEN `lookup 0 (wl_state_locals (t:(A,C,FFI)wl_state)) = SOME (wl_Loc l1 l2)`
     ASSUME_TAC THENL
@@ -2795,14 +2795,14 @@ let D2WPAUX_Force = prove
     STRIP_ASSUME_TAC) o MATCH_MP cut_env_IMP_cut_envs) THEN
   REWRITE_TAC[d2wpaux_clause wl_evaluate_def "wl_Call"; wl_get_vars_def; wl_get_var_def;
               D2WPAUX_set_var_accs; lookup_insert; ARITH_EQ; adjust_var_NEQ] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[bad_dest_args_def; option_DISTINCT; add_ret_loc_def; wl_find_code_def;
               D2WPAUX_set_var_accs; D2WPAUX_set_var_accs2] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
-  REWRITE_TAC[LENGTH] THEN CONV_TAC NUM_REDUCE_CONV THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
+  REWRITE_TAC[LENGTH] THEN CONV_TAC NUM_REDUCE_CONV THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[domain_adjust_sets; ALL_DISTINCT; MEM; NOT_CLAUSES] THEN
   SIMP_TAC[data_to_word_gcProof_cut_envs_adjust_sets_insert_ODD; ARITH_ODD; ODD] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[D2WPAUX_dec_clock_set_var; D2WPAUX_push_env_set_var; D2WPAUX_call_env_set_var]) THEN
   (SUBGOAL_THEN `data_to_word_gcProof_state_rel c n l
      (data_call_env [data_RefPtr F p; a1] (lookup loc (data_state_stack_frame_sizes s))
@@ -2822,7 +2822,7 @@ let D2WPAUX_Force = prove
   ASM_CASES_TAC `data_state_clock (s:(C,FFI)data_state) = 0` THENL
    [FIRST_X_ASSUM(MP_TAC o check (d2wpaux_is_eval_asm o concl)) THEN
     ASM_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN d2wpaux_res_tac THEN
-    ASM_REWRITE_TAC[] THEN d2wpaux_exists_pair_tac THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[] THEN d2wpaux_exists_pair_tac THEN CAKE_REWRITE_TAC[] THEN
     UNDISCH_TAC `option_le
       (wl_state_stack_max (wl_call_env [wl_Loc n l; wl_Word w1;
           wl_state_memory t (word_add a bytes_in_word)]
@@ -2846,12 +2846,12 @@ let D2WPAUX_Force = prove
   DISCH_THEN(X_CHOOSE_THEN `r0:((data_v list,data_v)result)option`
     (X_CHOOSE_THEN `s2:(C,FFI)data_state` ASSUME_TAC)) THEN
   FIRST_X_ASSUM(MP_TAC o check (d2wpaux_is_eval_asm o concl)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN DISCH_TAC THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN DISCH_TAC THEN
   SUBGOAL_THEN `~(r0 = NONE:((data_v list,data_v)result)option) /\
                 ~(r0 = SOME (Rerr (Rabort Rtype_error)))` STRIP_ASSUME_TAC THENL
    [CONJ_TAC THEN DISCH_THEN SUBST_ALL_TAC THEN
     FIRST_X_ASSUM(MP_TAC o check (d2wpaux_is_eval_asm o concl)) THEN
-    CASE_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN d2wpaux_type_error_tac;
+    CAKE_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN d2wpaux_type_error_tac;
     ALL_TAC] THEN
   FIRST_X_ASSUM(MP_TAC o d2wpaux_unfold_ih o
     SPECL [`data_RefPtr F p`; `a1:data_v`; `dest:num`; `names:num_set`; `prog:data_prog`;
@@ -2868,7 +2868,7 @@ let D2WPAUX_Force = prove
   ASM_REWRITE_TAC[termdep_rw; push_env_termdep] THEN
   DISCH_THEN(X_CHOOSE_THEN `t1:(A,C,FFI)wl_state` (X_CHOOSE_THEN
     `res1:((A)wl_result)option` STRIP_ASSUME_TAC)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   d2wpaux_result_cases_tac `r0:((data_v list,data_v)result)option` THEN
   TRY(FIRST_ASSUM(CONTR_TAC o check (fun th -> concl th = `F`)))) THENL
   [(ASM_CASES_TAC `LENGTH (v:data_v list) = 1` THENL
@@ -2880,12 +2880,12 @@ let D2WPAUX_Force = prove
   d2wpaux_split_tac `data_pop_env (s2:(C,FFI)data_state)` THEN d2wpaux_res_tac THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP data_pop_env_const) THEN
   FIRST_ASSUM(ASSUME_TAC o MATCH_MP pop_env_safe_for_space) THEN
-  CASE_REWRITE_TAC[]) THEN
+  CAKE_REWRITE_TAC[]) THEN
   (FIRST_X_ASSUM(X_CHOOSE_THEN `v0:data_v` SUBST_ALL_TAC o
     REWRITE_RULE[sing_list] o check (fun th -> concl th = `LENGTH (v:data_v list) = 1`)) THEN
   REWRITE_TAC[HD] THEN
   ASM_CASES_TAC `res1 = SOME NotEnoughSpace:((A)wl_result)option` THENL
-   [d2wpaux_subst_var_tac "res1" THEN CASE_REWRITE_TAC[] THEN
+   [d2wpaux_subst_var_tac "res1" THEN CAKE_REWRITE_TAC[] THEN
     MAP_EVERY EXISTS_TAC [`t1:(A,C,FFI)wl_state`; `SOME NotEnoughSpace:((A)wl_result)option`] THEN
     REWRITE_TAC[option_DISTINCT; data_set_var_def; data_state_INFO.ri_accfupds; K_THM] THEN
     FIRST_X_ASSUM(MP_TAC o check (fun th -> is_imp (concl th) &&
@@ -2896,7 +2896,7 @@ let D2WPAUX_Force = prove
     is_neg (fst (dest_imp (concl th))))) THEN
   ASM_REWRITE_TAC[] THEN
   DISCH_THEN(X_CHOOSE_THEN `ws2:(A word_loc)list` STRIP_ASSUME_TAC) THEN
-  d2wpaux_subst_var_tac "res1" THEN CASE_REWRITE_TAC[] THEN
+  d2wpaux_subst_var_tac "res1" THEN CAKE_REWRITE_TAC[] THEN
   FIRST_X_ASSUM(X_CHOOSE_THEN `w0:A word_loc` SUBST_ALL_TAC o
     REWRITE_RULE[LENGTH; ARITH_RULE `SUC 0 = 1`; sing_list] o
     check (fun th -> concl th = `LENGTH (ws2:(A word_loc)list) = LENGTH [v0:data_v]`)) THEN
@@ -2912,7 +2912,7 @@ let D2WPAUX_Force = prove
   RULE_ASSUM_TAC(REWRITE_RULE[CONS_11; PAIR_EQ]) THEN
   REPEAT(FIRST_X_ASSUM(CONJUNCTS_THEN ASSUME_TAC o check (fun th -> is_conj (concl th) &&
     is_eq (lhand (concl th)) && is_var (rhs (lhand (concl th)))))) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]) THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]) THEN
   (FIRST_X_ASSUM(fun th -> if is_conj (concl th) && is_conj (lhand (concl th)) &&
                              is_eq (rand (concl th)) then
      let es = CONJUNCTS th in
@@ -2938,9 +2938,9 @@ let D2WPAUX_Force = prove
                      (try fst(dest_const(fst(strip_comb(concl th)))) =
                             "data_to_word_gcProof_state_rel" with Failure _ -> false))) THEN
   SIMP_TAC[]);
-   (d2wpaux_res_conj_tac THEN CASE_REWRITE_TAC[] THEN
+   (d2wpaux_res_conj_tac THEN CAKE_REWRITE_TAC[] THEN
   ASM_CASES_TAC `res1 = SOME NotEnoughSpace:((A)wl_result)option` THENL
-   [d2wpaux_subst_var_tac "res1" THEN CASE_REWRITE_TAC[] THEN
+   [d2wpaux_subst_var_tac "res1" THEN CAKE_REWRITE_TAC[] THEN
     MAP_EVERY EXISTS_TAC [`t1:(A,C,FFI)wl_state`; `SOME NotEnoughSpace:((A)wl_result)option`] THEN
     REWRITE_TAC[option_DISTINCT] THEN
     FIRST_X_ASSUM(MP_TAC o check (fun th -> is_imp (concl th) &&
@@ -2952,7 +2952,7 @@ let D2WPAUX_Force = prove
   ASM_REWRITE_TAC[D2WPAUX_jump_exc_call_push_NONE] THEN
   DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC (X_CHOOSE_THEN `w5:A word_loc` (X_CHOOSE_THEN `l5:num`
     (X_CHOOSE_THEN `l6:num` (X_CHOOSE_THEN `ll:(num#num)list` STRIP_ASSUME_TAC))))) THEN
-  d2wpaux_subst_var_tac "res1" THEN CASE_REWRITE_TAC[] THEN
+  d2wpaux_subst_var_tac "res1" THEN CAKE_REWRITE_TAC[] THEN
   MAP_EVERY EXISTS_TAC [`t1:(A,C,FFI)wl_state`;
     `SOME (wl_Exception (mk_loc (wl_jump_exc (t:(A,C,FFI)wl_state))) w5):((A)wl_result)option`] THEN
   ASM_REWRITE_TAC[distinctness "wl_result"; option_INJ; injectivity "wl_result"] THEN
@@ -3046,7 +3046,7 @@ let data_to_wordProof_compile_correct_lemma = prove
                  `c:data_to_word_config`; `0`; `0`; `l1:num`; `l2:num`;
                  `res:((data_v list,data_v)result)option`; `s1:(C,FFI)data_state`;
                  `t:(A,C,FFI)wl_state`; `[]:(num#num)list`] data_compile_correct) THEN
-  ASM_REWRITE_TAC[D2WPAUX_comp_eqs] THEN CASE_REWRITE_TAC[FST; MAP] THEN
+  ASM_REWRITE_TAC[D2WPAUX_comp_eqs] THEN CAKE_REWRITE_TAC[FST; MAP] THEN
   DISCH_THEN(X_CHOOSE_THEN `t1:(A,C,FFI)wl_state` (X_CHOOSE_THEN
     `res1:((A)wl_result)option` STRIP_ASSUME_TAC)) THEN
   MAP_EVERY EXISTS_TAC [`t1:(A,C,FFI)wl_state`; `res1:((A)wl_result)option`] THEN
@@ -3083,9 +3083,9 @@ let state_rel_ext_def = cake_def
        (!n v. lookup n (wl_state_code t) = SOME v ==>
               ?t' k' a' c' col.
                 lookup n l = SOME (SND (full_compile_single t' k' a' c' ((n,v),col)))) /\
-       u = wl_state_code_fupd (K l) (wl_state_termdep_fupd (K 0)
-             (wl_state_compile_fupd (K (wl_state_compile u))
-                (wl_state_compile_oracle_fupd (K (wl_state_compile_oracle u)) t)))`;;
+       u = wl_state_code_fupd (combin_K l) (wl_state_termdep_fupd (combin_K 0)
+             (wl_state_compile_fupd (combin_K (wl_state_compile u))
+                (wl_state_compile_oracle_fupd (combin_K (wl_state_compile_oracle u)) t)))`;;
 
 (* the code of the word_to_word input, from the compiled code l *)
 let D2WPAUX_code_rel_exists = prove
@@ -3128,12 +3128,12 @@ let D2WPAUX_code_rel_exists = prove
      MP_TAC(ISPEC t D2WPAUX_triple_cases)) THEN
   DISCH_THEN(X_CHOOSE_THEN `x1:num` (X_CHOOSE_THEN `x2:num` (X_CHOOSE_THEN `x3:(A)wl_prog`
     SUBST1_TAC))) THEN
-  CASE_REWRITE_TAC[SND; PAIR_EQ; I_THM; PAIR_MAP_THM]);;
+  CAKE_REWRITE_TAC[SND; PAIR_EQ; I_THM; PAIR_MAP_THM]);;
 
 (* state_rel does not look at permute *)
 let D2WPAUX_state_rel_permute = prove
  (`!c l1 l2 (s:(C,FFI)data_state) (t:(A,C,FFI)wl_state) p v locs.
-     data_to_word_gcProof_state_rel c l1 l2 s (wl_state_permute_fupd (K p) t) v locs <=>
+     data_to_word_gcProof_state_rel c l1 l2 s (wl_state_permute_fupd (combin_K p) t) v locs <=>
      data_to_word_gcProof_state_rel c l1 l2 s t v locs`,
   REWRITE_TAC[data_to_word_gcProof_state_rel_thm; wl_state_INFO.ri_accfupds; K_THM]);;
 
@@ -3186,13 +3186,13 @@ let data_to_wordProof_compile_correct = prove
   DISCH_THEN(X_CHOOSE_THEN `perm':num->num->num` (X_CHOOSE_THEN `clk:num` MP_TAC)) THEN
   MP_TAC(ISPECL [`s:(C,FFI)data_state`; `x:data_to_word_config`; `l1:num`; `l2:num`;
                  `res:((data_v list,data_v)result)option`; `s1:(C,FFI)data_state`;
-                 `wl_state_permute_fupd (K perm') (t2:(A,C,FFI)wl_state)`; `start:num`]
+                 `wl_state_permute_fupd (combin_K perm') (t2:(A,C,FFI)wl_state)`; `start:num`]
          data_to_wordProof_compile_correct_lemma) THEN
   ASM_REWRITE_TAC[D2WPAUX_state_rel_permute; wl_state_INFO.ri_accfupds; K_THM] THEN
   DISCH_THEN(X_CHOOSE_THEN `t1':(A,C,FFI)wl_state` (X_CHOOSE_THEN
     `res1':((A)wl_result)option` STRIP_ASSUME_TAC)) THEN
   ASM_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   SUBGOAL_THEN `~(res1' = SOME wl_Error:((A)wl_result)option)` ASSUME_TAC THENL
    [DISCH_THEN SUBST_ALL_TAC THEN
     FIRST_X_ASSUM(MP_TAC o check (fun th -> is_imp (concl th) &&
@@ -3209,7 +3209,7 @@ let data_to_wordProof_compile_correct = prove
      MP_TAC(ISPEC t PAIR_SURJECTIVE)) THEN
   DISCH_THEN(X_CHOOSE_THEN `r6:((A)wl_result)option` (X_CHOOSE_THEN `s6:(A,C,FFI)wl_state`
     (fun th -> REWRITE_TAC[th] THEN ASSUME_TAC th))) THEN
-  CASE_REWRITE_TAC[] THEN STRIP_TAC THEN
+  CAKE_REWRITE_TAC[] THEN STRIP_TAC THEN
   MAP_EVERY EXISTS_TAC [`clk:num`; `s6:(A,C,FFI)wl_state`; `r6:((A)wl_result)option`] THEN
   CONJ_TAC THENL
    [FIRST_X_ASSUM(fun th -> if is_eq (concl th) &&
@@ -3235,11 +3235,11 @@ let data_to_wordProof_compile_correct = prove
 let state_rel_ext_with_clock = prove
  (`!a b c (s1:(C,FFI)data_state) (s2:(A,C,FFI)wl_state) k.
      state_rel_ext a b c s1 s2 ==>
-     state_rel_ext a b c (data_state_clock_fupd (K k) s1) (wl_state_clock_fupd (K k) s2)`,
+     state_rel_ext a b c (data_state_clock_fupd (combin_K k) s1) (wl_state_clock_fupd (combin_K k) s2)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[state_rel_ext_def] THEN
   DISCH_THEN(X_CHOOSE_THEN `t:(A,C,FFI)wl_state`
     (X_CHOOSE_THEN `l:(num#(A)wl_prog)spt` (REPEAT_TCL CONJUNCTS_THEN ASSUME_TAC))) THEN
-  MAP_EVERY EXISTS_TAC [`wl_state_clock_fupd (K k) (t:(A,C,FFI)wl_state)`;
+  MAP_EVERY EXISTS_TAC [`wl_state_clock_fupd (combin_K k) (t:(A,C,FFI)wl_state)`;
                         `l:(num#(A)wl_prog)spt`] THEN
   ASM_REWRITE_TAC[wl_state_INFO.ri_accfupds; K_THM] THEN
   CONJ_TAC THENL
@@ -3264,7 +3264,7 @@ let D2WPAUX_sem_sim = prove
                         data_initial_state ffi (fromAList prog) co cc T lims
                           (wl_state_stack_size t) k) in
           let (q,u) = wl_evaluate (wl_Call NONE (SOME start) [0] NONE,
-                                   wl_state_clock_fupd (K (k + ck)) t) in
+                                   wl_state_clock_fupd (combin_K (k + ck)) t) in
           option_le (wl_state_stack_max u) (data_state_stack_max s) /\
           (q = SOME NotEnoughSpace ==>
            ffi_state_io_events (wl_state_ffi u) <<= ffi_state_io_events (data_state_ffi s) /\
@@ -3285,7 +3285,7 @@ let D2WPAUX_sem_sim = prove
                    (wl_state_stack_size (t:(A,C,FFI)wl_state)) k)` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `r:((data_v list,data_v)result)option`
     (X_CHOOSE_THEN `s:(C,FFI)data_state` (fun th -> ASSUME_TAC th THEN REWRITE_TAC[th]))) THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   FIRST_X_ASSUM(MP_TAC o SPEC `k:num` o MATCH_MP state_rel_ext_with_clock) THEN
   REWRITE_TAC[data_initial_state_with_simp] THEN DISCH_TAC THEN
   MP_TAC(ISPECL [`conf:data_to_word_config`;
@@ -3293,7 +3293,7 @@ let D2WPAUX_sem_sim = prove
                     (co:num->C#(num#num#data_prog)list) cc T lims
                     (wl_state_stack_size (t:(A,C,FFI)wl_state)) k`;
                  `1`; `0`; `r:((data_v list,data_v)result)option`; `s:(C,FFI)data_state`;
-                 `wl_state_clock_fupd (K k) (t:(A,C,FFI)wl_state)`; `start:num`]
+                 `wl_state_clock_fupd (combin_K k) (t:(A,C,FFI)wl_state)`; `start:num`]
          data_to_wordProof_compile_correct) THEN
   SUBGOAL_THEN `~(r = SOME (Rerr (Rabort Rtype_error)):((data_v list,data_v)result)option)`
     (fun th -> REWRITE_TAC[th]) THENL
@@ -3307,28 +3307,28 @@ let D2WPAUX_sem_sim = prove
               K_o_THM; K_THM] THEN
   DISCH_THEN(X_CHOOSE_THEN `ck:num` (X_CHOOSE_THEN `t1:(A,C,FFI)wl_state`
     (X_CHOOSE_THEN `res1:((A)wl_result)option` STRIP_ASSUME_TAC))) THEN
-  EXISTS_TAC `ck:num` THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]);;
+  EXISTS_TAC `ck:num` THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]);;
 
 (* the word run with a larger clock: the same result if no timeout *)
 let D2WPAUX_word_add_clock = prove
  (`!p (s:(A,C,FFI)wl_state) k1 k2.
      k1 <= k2 /\
-     ~(FST (wl_evaluate (p,wl_state_clock_fupd (K k1) s)) = SOME wl_TimeOut)
-     ==> FST (wl_evaluate (p,wl_state_clock_fupd (K k2) s)) =
-         FST (wl_evaluate (p,wl_state_clock_fupd (K k1) s)) /\
-         wl_state_ffi (SND (wl_evaluate (p,wl_state_clock_fupd (K k2) s))) =
-         wl_state_ffi (SND (wl_evaluate (p,wl_state_clock_fupd (K k1) s)))`,
+     ~(FST (wl_evaluate (p,wl_state_clock_fupd (combin_K k1) s)) = SOME wl_TimeOut)
+     ==> FST (wl_evaluate (p,wl_state_clock_fupd (combin_K k2) s)) =
+         FST (wl_evaluate (p,wl_state_clock_fupd (combin_K k1) s)) /\
+         wl_state_ffi (SND (wl_evaluate (p,wl_state_clock_fupd (combin_K k2) s))) =
+         wl_state_ffi (SND (wl_evaluate (p,wl_state_clock_fupd (combin_K k1) s)))`,
   REPEAT GEN_TAC THEN REWRITE_TAC[LE_EXISTS] THEN STRIP_TAC THEN
   FIRST_X_ASSUM SUBST_ALL_TAC THEN
   MP_TAC (ISPEC `wl_evaluate (p:(A)wl_prog,
-                              wl_state_clock_fupd (K k1) (s:(A,C,FFI)wl_state))`
+                              wl_state_clock_fupd (combin_K k1) (s:(A,C,FFI)wl_state))`
             PAIR_SURJECTIVE) THEN
   REWRITE_TAC[LEFT_IMP_EXISTS_THM] THEN
   MAP_EVERY X_GEN_TAC [`r1:((A)wl_result)option`; `s1:(A,C,FFI)wl_state`] THEN
   DISCH_THEN(fun th -> RULE_ASSUM_TAC(REWRITE_RULE[th; FST]) THEN ASSUME_TAC th THEN
                        REWRITE_TAC[th; FST; SND]) THEN
   MP_TAC (INST [`d:num`,`extra:num`]
-    (ISPECL [`p:(A)wl_prog`; `wl_state_clock_fupd (K k1) (s:(A,C,FFI)wl_state)`;
+    (ISPECL [`p:(A)wl_prog`; `wl_state_clock_fupd (combin_K k1) (s:(A,C,FFI)wl_state)`;
              `r1:((A)wl_result)option`; `s1:(A,C,FFI)wl_state`]
             wl_evaluate_add_clock)) THEN
   ASM_REWRITE_TAC[] THEN SIMP[]);;
@@ -3336,12 +3336,12 @@ let D2WPAUX_word_add_clock = prove
 (* two word runs without timeout have the same result *)
 let D2WPAUX_word_det = prove
  (`!p (s:(A,C,FFI)wl_state) k1 k2.
-     ~(FST (wl_evaluate (p,wl_state_clock_fupd (K k1) s)) = SOME wl_TimeOut) /\
-     ~(FST (wl_evaluate (p,wl_state_clock_fupd (K k2) s)) = SOME wl_TimeOut)
-     ==> FST (wl_evaluate (p,wl_state_clock_fupd (K k1) s)) =
-         FST (wl_evaluate (p,wl_state_clock_fupd (K k2) s)) /\
-         wl_state_ffi (SND (wl_evaluate (p,wl_state_clock_fupd (K k1) s))) =
-         wl_state_ffi (SND (wl_evaluate (p,wl_state_clock_fupd (K k2) s)))`,
+     ~(FST (wl_evaluate (p,wl_state_clock_fupd (combin_K k1) s)) = SOME wl_TimeOut) /\
+     ~(FST (wl_evaluate (p,wl_state_clock_fupd (combin_K k2) s)) = SOME wl_TimeOut)
+     ==> FST (wl_evaluate (p,wl_state_clock_fupd (combin_K k1) s)) =
+         FST (wl_evaluate (p,wl_state_clock_fupd (combin_K k2) s)) /\
+         wl_state_ffi (SND (wl_evaluate (p,wl_state_clock_fupd (combin_K k1) s))) =
+         wl_state_ffi (SND (wl_evaluate (p,wl_state_clock_fupd (combin_K k2) s)))`,
   REPEAT GEN_TAC THEN DISCH_THEN STRIP_ASSUME_TAC THEN
   DISJ_CASES_TAC (SPECL [`k1:num`; `k2:num`] LE_CASES) THENL
    [MP_TAC (SPECL [`p:(A)wl_prog`; `s:(A,C,FFI)wl_state`; `k1:num`; `k2:num`]
@@ -3356,11 +3356,11 @@ let D2WPAUX_word_io_mono = prove
      k1 <= k2 ==>
      isPREFIX
        (ffi_state_io_events (wl_state_ffi
-          (SND (wl_evaluate (p,wl_state_clock_fupd (K k1) x)))))
+          (SND (wl_evaluate (p,wl_state_clock_fupd (combin_K k1) x)))))
        (ffi_state_io_events (wl_state_ffi
-          (SND (wl_evaluate (p,wl_state_clock_fupd (K k2) x)))))`,
+          (SND (wl_evaluate (p,wl_state_clock_fupd (combin_K k2) x)))))`,
   REPEAT GEN_TAC THEN REWRITE_TAC[LE_EXISTS] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
-  MP_TAC(ISPECL [`p:(A)wl_prog`; `wl_state_clock_fupd (K k1) (x:(A,C,FFI)wl_state)`;
+  MP_TAC(ISPECL [`p:(A)wl_prog`; `wl_state_clock_fupd (combin_K k1) (x:(A,C,FFI)wl_state)`;
                  `d:num`] wl_evaluate_add_clock_io_events_mono) THEN
   SIMP[]);;
 
@@ -3368,7 +3368,7 @@ let D2WPAUX_word_io_chain = prove
  (`!p (x:(A,C,FFI)wl_state).
      lprefix_chain
        (IMAGE (\k. llist_fromList (ffi_state_io_events (wl_state_ffi
-          (SND (wl_evaluate (p,wl_state_clock_fupd (K k) x)))))) (:num))`,
+          (SND (wl_evaluate (p,wl_state_clock_fupd (combin_K k) x)))))) (:num))`,
   REPEAT GEN_TAC THEN
   REWRITE_TAC[SET_RULE `IMAGE (\k. (g:B->C) ((f:A->B) k)) s = IMAGE g (IMAGE f s)`] THEN
   MATCH_MP_TAC prefix_chain_lprefix_chain THEN
@@ -3464,14 +3464,14 @@ let d2wpaux_some_intro_tac : tactic = fun (asl,w as g) ->
 let D2WPAUX_word_sem_div = prove
  (`!(s:(A,C,FFI)wl_state) start.
      (!kc. FST (wl_evaluate (wl_Call NONE (SOME start) [0] NONE,
-                             wl_state_clock_fupd (K kc) s)) = SOME wl_TimeOut)
+                             wl_state_clock_fupd (combin_K kc) s)) = SOME wl_TimeOut)
      ==> wl_semantics s start =
          Diverge (build_lprefix_lub
            (IMAGE (\k. llist_fromList (ffi_state_io_events (wl_state_ffi
               (SND (wl_evaluate (wl_Call NONE (SOME start) [0] NONE,
-                                 wl_state_clock_fupd (K k) s)))))) (:num)))`,
+                                 wl_state_clock_fupd (combin_K k) s)))))) (:num)))`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[wl_semantics_def; LET_DEF; LET_END_DEF] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   d2wpaux_some_intro_tac THEN CONJ_TAC THENL
    [X_GEN_TAC `x:behaviour` THEN REWRITE_TAC[LEFT_IMP_EXISTS_THM] THEN
     MAP_EVERY X_GEN_TAC [`kk:num`; `s2:(A,C,FFI)wl_state`; `r:((A)wl_result)option`;
@@ -3480,14 +3480,14 @@ let D2WPAUX_word_sem_div = prove
     FIRST_X_ASSUM(MP_TAC o SPEC `kk:num` o check (is_forall o concl)) THEN
     ASM_REWRITE_TAC[FST] THEN DISCH_THEN SUBST_ALL_TAC THEN
     FIRST_X_ASSUM(MP_TAC o check (fun th -> is_comb (concl th) &&
-      not (is_eq (concl th)))) THEN CASE_REWRITE_TAC[];
-    CASE_REWRITE_TAC[]]);;
+      not (is_eq (concl th)))) THEN CAKE_REWRITE_TAC[];
+    CAKE_REWRITE_TAC[]]);;
 
 (* the word semantics when a run terminates and the semantics is not Fail *)
 let D2WPAUX_word_sem_term = prove
  (`!(s:(A,C,FFI)wl_state) start kw rw sw outcome.
      ~(wl_semantics s start = Fail) /\
-     wl_evaluate (wl_Call NONE (SOME start) [0] NONE,wl_state_clock_fupd (K kw) s) =
+     wl_evaluate (wl_Call NONE (SOME start) [0] NONE,wl_state_clock_fupd (combin_K kw) s) =
        (rw,sw) /\
      ((?e. rw = SOME (wl_FinalFFI e) /\ outcome = FFI_outcome e) \/
       (?w ys. rw = SOME (wl_Result w ys) /\ outcome = Success) \/
@@ -3515,14 +3515,14 @@ let D2WPAUX_word_sem_term = prove
     ANTS_TAC THENL
      [DISCH_THEN SUBST_ALL_TAC THEN
       FIRST_X_ASSUM(MP_TAC o check (fun th -> is_comb (concl th) &&
-        not (is_eq (concl th)) && not (is_neg (concl th)))) THEN CASE_REWRITE_TAC[];
+        not (is_eq (concl th)) && not (is_neg (concl th)))) THEN CAKE_REWRITE_TAC[];
       ALL_TAC] THEN
     DISCH_THEN(CONJUNCTS_THEN2 (SUBST_ALL_TAC o SYM) (SUBST1_TAC o SYM)) THEN
     REWRITE_TAC[injectivity "behaviour"] THEN
     USE_THEN "oc" (REPEAT_TCL DISJ_CASES_THEN (REPEAT_TCL CHOOSE_THEN
       (CONJUNCTS_THEN2 SUBST_ALL_TAC SUBST1_TAC))) THEN
     FIRST_X_ASSUM(MP_TAC o check (fun th -> is_comb (concl th) &&
-      not (is_eq (concl th)) && not (is_neg (concl th)))) THEN CASE_REWRITE_TAC[] THEN
+      not (is_eq (concl th)) && not (is_neg (concl th)))) THEN CAKE_REWRITE_TAC[] THEN
     MESON_TAC[];
     DISCH_THEN(MP_TAC o SPEC `Terminate outcome
                   (ffi_state_io_events (wl_state_ffi (sw:(A,C,FFI)wl_state)))`) THEN
@@ -3531,7 +3531,7 @@ let D2WPAUX_word_sem_term = prove
                           `outcome:outcome`] THEN
     USE_THEN "ev" (fun th -> REWRITE_TAC[th]) THEN
     USE_THEN "oc" (REPEAT_TCL DISJ_CASES_THEN (REPEAT_TCL CHOOSE_THEN
-      (CONJUNCTS_THEN2 SUBST1_TAC SUBST1_TAC))) THEN CASE_REWRITE_TAC[]]);;
+      (CONJUNCTS_THEN2 SUBST1_TAC SUBST1_TAC))) THEN CAKE_REWRITE_TAC[]]);;
 
 (* the data runs of a semantics that is not Fail *)
 let D2WPAUX_data_sem_ok = prove
@@ -3555,7 +3555,7 @@ let D2WPAUX_data_sem_ok = prove
                     (co:num->C#(num#num#data_prog)list) cc T lims ss k))`
          D2WPAUX_result_option_cases) THEN
   DISCH_THEN(REPEAT_TCL DISJ_CASES_THEN (REPEAT_TCL CHOOSE_THEN SUBST1_TAC)) THEN
-  CASE_REWRITE_TAC[injectivity "error_result"; injectivity "abort"; distinctness "abort";
+  CAKE_REWRITE_TAC[injectivity "error_result"; injectivity "abort"; distinctness "abort";
                    distinctness "error_result"; option_INJ; option_DISTINCT;
                    injectivity "result"; distinctness "result"] THEN
   MESON_TAC[]);;
@@ -3597,7 +3597,7 @@ let D2WPAUX_data_sem_div = prove
               (:num)))`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[data_semantics_def; LET_DEF; LET_END_DEF] THEN
   CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[distinctness "abort"; distinctness "error_result"] THEN
   d2wpaux_some_intro_tac THEN CONJ_TAC THENL
    [X_GEN_TAC `x:behaviour` THEN REWRITE_TAC[LEFT_IMP_EXISTS_THM] THEN
@@ -3607,8 +3607,8 @@ let D2WPAUX_data_sem_div = prove
     FIRST_X_ASSUM(MP_TAC o SPEC `kk:num` o check (is_forall o concl)) THEN
     ASM_REWRITE_TAC[FST; option_INJ] THEN DISCH_THEN SUBST_ALL_TAC THEN
     FIRST_X_ASSUM(MP_TAC o check (fun th -> is_comb (concl th) &&
-      not (is_eq (concl th)))) THEN CASE_REWRITE_TAC[];
-    CASE_REWRITE_TAC[]]);;
+      not (is_eq (concl th)))) THEN CAKE_REWRITE_TAC[];
+    CAKE_REWRITE_TAC[]]);;
 
 (* the data semantics when a run terminates and the semantics is not Fail *)
 let D2WPAUX_data_sem_term = prove
@@ -3647,14 +3647,14 @@ let D2WPAUX_data_sem_term = prove
     ANTS_TAC THENL
      [DISCH_THEN SUBST_ALL_TAC THEN
       FIRST_X_ASSUM(MP_TAC o check (fun th -> is_comb (concl th) &&
-        not (is_eq (concl th)) && not (is_neg (concl th)))) THEN CASE_REWRITE_TAC[];
+        not (is_eq (concl th)) && not (is_neg (concl th)))) THEN CAKE_REWRITE_TAC[];
       ALL_TAC] THEN
     DISCH_THEN(CONJUNCTS_THEN2 (SUBST_ALL_TAC o SYM) (SUBST1_TAC o SYM)) THEN
     REWRITE_TAC[injectivity "behaviour"] THEN
     USE_THEN "oc" (REPEAT_TCL DISJ_CASES_THEN (REPEAT_TCL CHOOSE_THEN
       (CONJUNCTS_THEN2 SUBST_ALL_TAC SUBST1_TAC))) THEN
     FIRST_X_ASSUM(MP_TAC o check (fun th -> is_comb (concl th) &&
-      not (is_eq (concl th)) && not (is_neg (concl th)))) THEN CASE_REWRITE_TAC[] THEN
+      not (is_eq (concl th)) && not (is_neg (concl th)))) THEN CAKE_REWRITE_TAC[] THEN
     MESON_TAC[];
     DISCH_THEN(MP_TAC o SPEC `Terminate outcome
                   (ffi_state_io_events (data_state_ffi (sd:(C,FFI)data_state)))`) THEN
@@ -3663,7 +3663,7 @@ let D2WPAUX_data_sem_term = prove
                           `outcome:outcome`] THEN
     USE_THEN "ev" (fun th -> REWRITE_TAC[th]) THEN
     USE_THEN "oc" (REPEAT_TCL DISJ_CASES_THEN (REPEAT_TCL CHOOSE_THEN
-      (CONJUNCTS_THEN2 SUBST1_TAC SUBST1_TAC))) THEN CASE_REWRITE_TAC[]]);;
+      (CONJUNCTS_THEN2 SUBST1_TAC SUBST1_TAC))) THEN CAKE_REWRITE_TAC[]]);;
 
 (* the elements of extend_with_resource_limit *)
 let D2WPAUX_extend_refl = prove
@@ -3685,7 +3685,7 @@ let D2WPAUX_extend_div = prove
 (* the runs of the start call in the semantics theorems *)
 let d2wpaux_W k = vsubst [k,`kk:num`]
   `wl_evaluate (wl_Call NONE (SOME start) [0] NONE:(A)wl_prog,
-                wl_state_clock_fupd (K kk) (t:(A,C,FFI)wl_state))`;;
+                wl_state_clock_fupd (combin_K kk) (t:(A,C,FFI)wl_state))`;;
 
 let d2wpaux_D k = vsubst [k,`kk:num`]
   `data_evaluate (data_Call NONE (SOME start) [] NONE,
@@ -3703,18 +3703,18 @@ let D2WPAUX_sem_sim2 = prove
      ~(data_semantics ffi (fromAList prog) co cc lims (wl_state_stack_size t) start = Fail) ==>
      !k. ?ck.
        (FST (wl_evaluate (wl_Call NONE (SOME start) [0] NONE,
-                          wl_state_clock_fupd (K (k + ck)) t)) = SOME NotEnoughSpace /\
+                          wl_state_clock_fupd (combin_K (k + ck)) t)) = SOME NotEnoughSpace /\
         isPREFIX
           (ffi_state_io_events (wl_state_ffi (SND (wl_evaluate
-             (wl_Call NONE (SOME start) [0] NONE,wl_state_clock_fupd (K (k + ck)) t)))))
+             (wl_Call NONE (SOME start) [0] NONE,wl_state_clock_fupd (combin_K (k + ck)) t)))))
           (ffi_state_io_events (data_state_ffi (SND (data_evaluate
              (data_Call NONE (SOME start) [] NONE,
               data_initial_state ffi (fromAList prog) co cc T lims
                 (wl_state_stack_size t) k)))))) \/
        (~(FST (wl_evaluate (wl_Call NONE (SOME start) [0] NONE,
-                            wl_state_clock_fupd (K (k + ck)) t)) = SOME NotEnoughSpace) /\
+                            wl_state_clock_fupd (combin_K (k + ck)) t)) = SOME NotEnoughSpace) /\
         wl_state_ffi (SND (wl_evaluate (wl_Call NONE (SOME start) [0] NONE,
-                                        wl_state_clock_fupd (K (k + ck)) t))) =
+                                        wl_state_clock_fupd (combin_K (k + ck)) t))) =
         data_state_ffi (SND (data_evaluate (data_Call NONE (SOME start) [] NONE,
                                             data_initial_state ffi (fromAList prog) co cc T
                                               lims (wl_state_stack_size t) k))) /\
@@ -3722,18 +3722,18 @@ let D2WPAUX_sem_sim2 = prove
                        data_initial_state ffi (fromAList prog) co cc T lims
                          (wl_state_stack_size t) k)) = SOME (Rval v) /\
                 FST (wl_evaluate (wl_Call NONE (SOME start) [0] NONE,
-                       wl_state_clock_fupd (K (k + ck)) t)) =
+                       wl_state_clock_fupd (combin_K (k + ck)) t)) =
                   SOME (wl_Result (wl_Loc 1 0) w)) \/
          (FST (data_evaluate (data_Call NONE (SOME start) [] NONE,
                  data_initial_state ffi (fromAList prog) co cc T lims
                    (wl_state_stack_size t) k)) = SOME (Rerr (Rabort Rtimeout_error)) /\
           FST (wl_evaluate (wl_Call NONE (SOME start) [0] NONE,
-                 wl_state_clock_fupd (K (k + ck)) t)) = SOME wl_TimeOut) \/
+                 wl_state_clock_fupd (combin_K (k + ck)) t)) = SOME wl_TimeOut) \/
          (?f. FST (data_evaluate (data_Call NONE (SOME start) [] NONE,
                      data_initial_state ffi (fromAList prog) co cc T lims
                        (wl_state_stack_size t) k)) = SOME (Rerr (Rabort (Rffi_error f))) /\
               FST (wl_evaluate (wl_Call NONE (SOME start) [0] NONE,
-                     wl_state_clock_fupd (K (k + ck)) t)) = SOME (wl_FinalFFI f))))`,
+                     wl_state_clock_fupd (combin_K (k + ck)) t)) = SOME (wl_FinalFFI f))))`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN GEN_TAC THEN
   FIRST_ASSUM(MP_TAC o SPEC `k:num` o MATCH_MP D2WPAUX_data_sem_ok) THEN
   DISCH_THEN(LABEL_TAC "dk") THEN
@@ -3752,19 +3752,19 @@ let D2WPAUX_sem_sim2 = prove
   DISCH_THEN(X_CHOOSE_THEN `r:((data_v list,data_v)result)option`
     (X_CHOOSE_THEN `s:(C,FFI)data_state` (fun th -> REWRITE_TAC[th] THEN
        USE_THEN "dk" (MP_TAC o REWRITE_RULE[th; FST])))) THEN
-  CASE_REWRITE_TAC[] THEN DISCH_THEN(LABEL_TAC "rk") THEN
+  CAKE_REWRITE_TAC[] THEN DISCH_THEN(LABEL_TAC "rk") THEN
   DISCH_THEN(X_CHOOSE_THEN `ck:num` (fun th -> EXISTS_TAC `ck:num` THEN MP_TAC th)) THEN
   MP_TAC(ISPEC (d2wpaux_W `k + ck:num`) PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `q:((A)wl_result)option`
     (X_CHOOSE_THEN `u:(A,C,FFI)wl_state` (fun th -> REWRITE_TAC[th]))) THEN
-  CASE_REWRITE_TAC[] THEN STRIP_TAC THEN
+  CAKE_REWRITE_TAC[] THEN STRIP_TAC THEN
   REWRITE_TAC[FST; SND] THEN
   ASM_CASES_TAC `q = SOME NotEnoughSpace:((A)wl_result)option` THEN
   ASM_REWRITE_TAC[] THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
   FIRST_X_ASSUM(MP_TAC o check (fun th -> is_imp (concl th) &&
     is_neg (fst (dest_imp (concl th))))) THEN ASM_REWRITE_TAC[] THEN
   USE_THEN "rk" (REPEAT_TCL DISJ_CASES_THEN (REPEAT_TCL CHOOSE_THEN SUBST1_TAC)) THEN
-  CASE_REWRITE_TAC[option_INJ; distinctness "result"; injectivity "result";
+  CAKE_REWRITE_TAC[option_INJ; distinctness "result"; injectivity "result";
                    injectivity "error_result"; distinctness "abort"; distinctness "error_result"] THEN
   MESON_TAC[]);;
 
@@ -3789,14 +3789,14 @@ let compile_semantics_lemma = prove
   ASM_REWRITE_TAC[] THEN DISCH_THEN(LABEL_TAC "sim") THEN
   SUBGOAL_THEN
    `!k. FST (wl_evaluate (wl_Call NONE (SOME start) [0] NONE,
-                          wl_state_clock_fupd (K k) (t:(A,C,FFI)wl_state))) = SOME wl_TimeOut \/
+                          wl_state_clock_fupd (combin_K k) (t:(A,C,FFI)wl_state))) = SOME wl_TimeOut \/
         (?ys. FST (wl_evaluate (wl_Call NONE (SOME start) [0] NONE,
-                                wl_state_clock_fupd (K k) t)) =
+                                wl_state_clock_fupd (combin_K k) t)) =
                 SOME (wl_Result (wl_Loc 1 0) ys)) \/
         FST (wl_evaluate (wl_Call NONE (SOME start) [0] NONE,
-                          wl_state_clock_fupd (K k) t)) = SOME NotEnoughSpace \/
+                          wl_state_clock_fupd (combin_K k) t)) = SOME NotEnoughSpace \/
         (?f. FST (wl_evaluate (wl_Call NONE (SOME start) [0] NONE,
-                               wl_state_clock_fupd (K k) t)) = SOME (wl_FinalFFI f))`
+                               wl_state_clock_fupd (combin_K k) t)) = SOME (wl_FinalFFI f))`
     (LABEL_TAC "wok") THENL
    [GEN_TAC THEN
     ASM_CASES_TAC (mk_eq(mk_comb(`FST:((A)wl_result)option#(A,C,FFI)wl_state->
@@ -3814,9 +3814,9 @@ let compile_semantics_lemma = prove
     COND_CASES_TAC THENL
      [FIRST_X_ASSUM(X_CHOOSE_THEN `kk:num` MP_TAC) THEN USE_THEN "wok" (MP_TAC o SPEC `kk:num`) THEN
       DISCH_THEN(REPEAT_TCL DISJ_CASES_THEN (REPEAT_TCL CHOOSE_THEN SUBST1_TAC)) THEN
-      CASE_REWRITE_TAC[];
+      CAKE_REWRITE_TAC[];
       d2wpaux_some_intro_tac THEN REWRITE_TAC[distinctness "behaviour"] THEN
-      CASE_REWRITE_TAC[distinctness "behaviour"] THEN
+      CAKE_REWRITE_TAC[distinctness "behaviour"] THEN
       REWRITE_TAC[LEFT_IMP_EXISTS_THM] THEN REPEAT GEN_TAC THEN STRIP_TAC THEN
       ASM_REWRITE_TAC[distinctness "behaviour"]];
     ALL_TAC]) THEN
@@ -3977,7 +3977,7 @@ let compile_semantics_lemma = prove
   ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN
   SUBGOAL_THEN
    `!kd. ?ck. wl_state_ffi (SND (wl_evaluate (wl_Call NONE (SOME start) [0] NONE,
-                  wl_state_clock_fupd (K (kd + ck)) (t:(A,C,FFI)wl_state)))) =
+                  wl_state_clock_fupd (combin_K (kd + ck)) (t:(A,C,FFI)wl_state)))) =
               data_state_ffi (SND (data_evaluate (data_Call NONE (SOME start) [] NONE,
                   data_initial_state (ffi:(FFI)ffi_state) (fromAList prog)
                     (co:num->C#(num#num#data_prog)list) cc T lims
@@ -3995,7 +3995,7 @@ let compile_semantics_lemma = prove
    `build_lprefix_lub
       (IMAGE (\k. llist_fromList (ffi_state_io_events (wl_state_ffi
          (SND (wl_evaluate (wl_Call NONE (SOME start) [0] NONE,
-                            wl_state_clock_fupd (K k) (t:(A,C,FFI)wl_state))))))) (:num)) =
+                            wl_state_clock_fupd (combin_K k) (t:(A,C,FFI)wl_state))))))) (:num)) =
     build_lprefix_lub
       (IMAGE (\k. llist_fromList (ffi_state_io_events (data_state_ffi
          (SND (data_evaluate (data_Call NONE (SOME start) [] NONE,
@@ -4029,7 +4029,7 @@ let D2WPAUX_safe_all = prove
                     (ARB:num->1#(num#num#data_prog)list) ARB T lims ss k)` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `res:((data_v list,data_v)result)option`
     (X_CHOOSE_THEN `s0:(1,FFI)data_state` (fun th -> REWRITE_TAC[th] THEN ASSUME_TAC th))) THEN
-  CASE_REWRITE_TAC[] THEN DISCH_TAC THEN
+  CAKE_REWRITE_TAC[] THEN DISCH_TAC THEN
   MP_TAC(ISPECL [`data_Call NONE (SOME start) [] NONE`;
                  `data_initial_state (ffi:(FFI)ffi_state) code
                     (ARB:num->1#(num#num#data_prog)list) ARB T lims ss k`;
@@ -4053,9 +4053,9 @@ let D2WPAUX_sem_sim3 = prove
      data_lang_safe_for_space ffi (fromAList prog) lims (wl_state_stack_size t) start ==>
      !k. ?ck.
        (~(FST (wl_evaluate (wl_Call NONE (SOME start) [0] NONE,
-                            wl_state_clock_fupd (K (k + ck)) t)) = SOME NotEnoughSpace) /\
+                            wl_state_clock_fupd (combin_K (k + ck)) t)) = SOME NotEnoughSpace) /\
         wl_state_ffi (SND (wl_evaluate (wl_Call NONE (SOME start) [0] NONE,
-                                        wl_state_clock_fupd (K (k + ck)) t))) =
+                                        wl_state_clock_fupd (combin_K (k + ck)) t))) =
         data_state_ffi (SND (data_evaluate (data_Call NONE (SOME start) [] NONE,
                                             data_initial_state ffi (fromAList prog) co cc T
                                               lims (wl_state_stack_size t) k))) /\
@@ -4063,18 +4063,18 @@ let D2WPAUX_sem_sim3 = prove
                        data_initial_state ffi (fromAList prog) co cc T lims
                          (wl_state_stack_size t) k)) = SOME (Rval v) /\
                 FST (wl_evaluate (wl_Call NONE (SOME start) [0] NONE,
-                       wl_state_clock_fupd (K (k + ck)) t)) =
+                       wl_state_clock_fupd (combin_K (k + ck)) t)) =
                   SOME (wl_Result (wl_Loc 1 0) w)) \/
          (FST (data_evaluate (data_Call NONE (SOME start) [] NONE,
                  data_initial_state ffi (fromAList prog) co cc T lims
                    (wl_state_stack_size t) k)) = SOME (Rerr (Rabort Rtimeout_error)) /\
           FST (wl_evaluate (wl_Call NONE (SOME start) [0] NONE,
-                 wl_state_clock_fupd (K (k + ck)) t)) = SOME wl_TimeOut) \/
+                 wl_state_clock_fupd (combin_K (k + ck)) t)) = SOME wl_TimeOut) \/
          (?f. FST (data_evaluate (data_Call NONE (SOME start) [] NONE,
                      data_initial_state ffi (fromAList prog) co cc T lims
                        (wl_state_stack_size t) k)) = SOME (Rerr (Rabort (Rffi_error f))) /\
               FST (wl_evaluate (wl_Call NONE (SOME start) [0] NONE,
-                     wl_state_clock_fupd (K (k + ck)) t)) = SOME (wl_FinalFFI f))))`,
+                     wl_state_clock_fupd (combin_K (k + ck)) t)) = SOME (wl_FinalFFI f))))`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN GEN_TAC THEN
   FIRST_ASSUM(MP_TAC o SPEC `k:num` o MATCH_MP D2WPAUX_data_sem_ok) THEN
   DISCH_THEN(LABEL_TAC "dk") THEN
@@ -4098,19 +4098,19 @@ let D2WPAUX_sem_sim3 = prove
     (X_CHOOSE_THEN `s:(C,FFI)data_state` (fun th -> REWRITE_TAC[th] THEN
        USE_THEN "sf" (ASSUME_TAC o REWRITE_RULE[th; SND]) THEN
        USE_THEN "dk" (MP_TAC o REWRITE_RULE[th; FST])))) THEN
-  CASE_REWRITE_TAC[] THEN DISCH_THEN(LABEL_TAC "rk") THEN
+  CAKE_REWRITE_TAC[] THEN DISCH_THEN(LABEL_TAC "rk") THEN
   DISCH_THEN(X_CHOOSE_THEN `ck:num` (fun th -> EXISTS_TAC `ck:num` THEN MP_TAC th)) THEN
   MP_TAC(ISPEC (d2wpaux_W `k + ck:num`) PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `q:((A)wl_result)option`
     (X_CHOOSE_THEN `u:(A,C,FFI)wl_state` (fun th -> REWRITE_TAC[th]))) THEN
-  CASE_REWRITE_TAC[] THEN STRIP_TAC THEN
+  CAKE_REWRITE_TAC[] THEN STRIP_TAC THEN
   REWRITE_TAC[FST; SND] THEN
   ASM_CASES_TAC `q = SOME NotEnoughSpace:((A)wl_result)option` THEN
   ASM_REWRITE_TAC[] THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
   FIRST_X_ASSUM(MP_TAC o check (fun th -> is_imp (concl th) &&
     is_neg (fst (dest_imp (concl th))))) THEN ASM_REWRITE_TAC[] THEN
   USE_THEN "rk" (REPEAT_TCL DISJ_CASES_THEN (REPEAT_TCL CHOOSE_THEN SUBST1_TAC)) THEN
-  CASE_REWRITE_TAC[option_INJ; distinctness "result"; injectivity "result";
+  CAKE_REWRITE_TAC[option_INJ; distinctness "result"; injectivity "result";
                    injectivity "error_result"; distinctness "abort"; distinctness "error_result"] THEN
   MESON_TAC[]);;
 
@@ -4139,12 +4139,12 @@ let compile_semantics_precise_lemma = prove
   ASM_REWRITE_TAC[] THEN DISCH_THEN(LABEL_TAC "sim") THEN
   SUBGOAL_THEN
    `!k. FST (wl_evaluate (wl_Call NONE (SOME start) [0] NONE,
-                          wl_state_clock_fupd (K k) (t:(A,C,FFI)wl_state))) = SOME wl_TimeOut \/
+                          wl_state_clock_fupd (combin_K k) (t:(A,C,FFI)wl_state))) = SOME wl_TimeOut \/
         (?ys. FST (wl_evaluate (wl_Call NONE (SOME start) [0] NONE,
-                                wl_state_clock_fupd (K k) t)) =
+                                wl_state_clock_fupd (combin_K k) t)) =
                 SOME (wl_Result (wl_Loc 1 0) ys)) \/
         (?f. FST (wl_evaluate (wl_Call NONE (SOME start) [0] NONE,
-                               wl_state_clock_fupd (K k) t)) = SOME (wl_FinalFFI f))`
+                               wl_state_clock_fupd (combin_K k) t)) = SOME (wl_FinalFFI f))`
     (LABEL_TAC "wok") THENL
    [GEN_TAC THEN
     ASM_CASES_TAC (mk_eq(mk_comb(`FST:((A)wl_result)option#(A,C,FFI)wl_state->
@@ -4162,9 +4162,9 @@ let compile_semantics_precise_lemma = prove
     COND_CASES_TAC THENL
      [FIRST_X_ASSUM(X_CHOOSE_THEN `kk:num` MP_TAC) THEN USE_THEN "wok" (MP_TAC o SPEC `kk:num`) THEN
       DISCH_THEN(REPEAT_TCL DISJ_CASES_THEN (REPEAT_TCL CHOOSE_THEN SUBST1_TAC)) THEN
-      CASE_REWRITE_TAC[];
+      CAKE_REWRITE_TAC[];
       d2wpaux_some_intro_tac THEN REWRITE_TAC[distinctness "behaviour"] THEN
-      CASE_REWRITE_TAC[distinctness "behaviour"] THEN
+      CAKE_REWRITE_TAC[distinctness "behaviour"] THEN
       REWRITE_TAC[LEFT_IMP_EXISTS_THM] THEN REPEAT GEN_TAC THEN STRIP_TAC THEN
       ASM_REWRITE_TAC[distinctness "behaviour"]];
     ALL_TAC]) THEN
@@ -4307,7 +4307,7 @@ let compile_semantics_precise_lemma = prove
   ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN
   SUBGOAL_THEN
    `!kd. ?ck. wl_state_ffi (SND (wl_evaluate (wl_Call NONE (SOME start) [0] NONE,
-                  wl_state_clock_fupd (K (kd + ck)) (t:(A,C,FFI)wl_state)))) =
+                  wl_state_clock_fupd (combin_K (kd + ck)) (t:(A,C,FFI)wl_state)))) =
               data_state_ffi (SND (data_evaluate (data_Call NONE (SOME start) [] NONE,
                   data_initial_state (ffi:(FFI)ffi_state) (fromAList prog)
                     (co:num->C#(num#num#data_prog)list) cc T lims
@@ -4410,15 +4410,15 @@ let D2WPAUX_cs_state_rel_ext = prove
           (wl_state_stack_size t) (wl_state_clock t)) t`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN REWRITE_TAC[state_rel_ext_def] THEN
   MAP_EVERY EXISTS_TAC
-   [`wl_state_code_fupd (K x1) (wl_state_termdep_fupd (K 2)
-       (wl_state_compile_oracle_fupd (K tco)
-          (wl_state_compile_fupd (K tcc) (t:(A,C,FFI)wl_state))))`;
+   [`wl_state_code_fupd (combin_K x1) (wl_state_termdep_fupd (combin_K 2)
+       (wl_state_compile_oracle_fupd (combin_K tco)
+          (wl_state_compile_fupd (combin_K tcc) (t:(A,C,FFI)wl_state))))`;
     `wl_state_code (t:(A,C,FFI)wl_state)`] THEN
   REWRITE_TAC[wl_state_INFO.ri_accfupds; K_THM] THEN
   REPEAT CONJ_TAC THENL
-   [MP_TAC(ISPECL [`wl_state_code_fupd (K x1) (wl_state_termdep_fupd (K 2)
-       (wl_state_compile_oracle_fupd (K tco)
-          (wl_state_compile_fupd (K tcc) (t:(A,C,FFI)wl_state))))`;
+   [MP_TAC(ISPECL [`wl_state_code_fupd (combin_K x1) (wl_state_termdep_fupd (combin_K 2)
+       (wl_state_compile_oracle_fupd (combin_K tco)
+          (wl_state_compile_fupd (combin_K tcc) (t:(A,C,FFI)wl_state))))`;
      `wl_state_ffi (t:(A,C,FFI)wl_state)`; `c:data_to_word_config`;
      `fromAList prog:(num#data_prog)spt`;
      `cc:C->(num#num#data_prog)list->((8 word)list#(64 word)list#C)option`;
@@ -4489,14 +4489,14 @@ let D2WPAUX_cs_safe = prove
   DISCH_THEN(X_CHOOSE_THEN `r:((data_v list,data_v)result)option`
     (X_CHOOSE_THEN `s:(C,FFI)data_state` (fun th -> REWRITE_TAC[th] THEN
        USE_THEN "sf" (ASSUME_TAC o REWRITE_RULE[th; SND]) THEN LABEL_TAC "evd" th))) THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   DISCH_THEN(X_CHOOSE_THEN `ck:num` MP_TAC) THEN
   MP_TAC(ISPEC (d2wpaux_W `k + ck:num`) PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `q:((A)wl_result)option`
     (X_CHOOSE_THEN `u:(A,C,FFI)wl_state` (fun th -> REWRITE_TAC[th] THEN LABEL_TAC "evw" th))) THEN
-  CASE_REWRITE_TAC[] THEN DISCH_THEN(LABEL_TAC "le1" o CONJUNCT1) THEN
+  CAKE_REWRITE_TAC[] THEN DISCH_THEN(LABEL_TAC "le1" o CONJUNCT1) THEN
   MP_TAC(ISPECL [`wl_Call NONE (SOME start) [0] NONE:(A)wl_prog`;
-                 `wl_state_clock_fupd (K k) (t:(A,C,FFI)wl_state)`;
+                 `wl_state_clock_fupd (combin_K k) (t:(A,C,FFI)wl_state)`;
                  `res:((A)wl_result)option`; `t1:(A,C,FFI)wl_state`; `ck:num`;
                  `q:((A)wl_result)option`; `u:(A,C,FFI)wl_state`]
          evaluate_stack_max_only_grows) THEN
@@ -4520,7 +4520,7 @@ let D2WPAUX_cs_safe = prove
   ANTS_TAC THENL [UNDISCH_TAC `~(wl_state_stack_limit (t:(A,C,FFI)wl_state) = 0)` THEN ARITH_TAC;
                   DISCH_TAC] THEN
   MP_TAC(ISPECL [`wl_Call NONE (SOME start) [0] NONE:(A)wl_prog`;
-                 `wl_state_clock_fupd (K k) (t:(A,C,FFI)wl_state)`;
+                 `wl_state_clock_fupd (combin_K k) (t:(A,C,FFI)wl_state)`;
                  `res:((A)wl_result)option`; `t1:(A,C,FFI)wl_state`] wl_evaluate_stack_limit) THEN
   USE_THEN "ev1" (fun th -> REWRITE_TAC[th]) THEN
   REWRITE_TAC[wl_state_INFO.ri_accfupds] THEN DISCH_THEN SUBST1_TAC THEN
@@ -4628,13 +4628,13 @@ let d2wpaux_sac_tac (rws:thm list) : tactic =
   MATCH_MP_TAC StoreAnyConsts_ind THEN CONJ_TAC THEN REPEAT GEN_TAC THENL
    [ONCE_REWRITE_TAC[StoreAnyConsts_def] THEN
     MP_TAC(ISPEC `SND (v:bool#A word_loc)` (cases "word_loc")) THEN
-    STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC rws;
+    STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC rws;
     STRIP_TAC THEN ONCE_REWRITE_TAC[StoreAnyConsts_def] THEN
     MP_TAC(ISPEC `SND (v:bool#A word_loc)` (cases "word_loc")) THEN
-    STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+    STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
     TRY(MP_TAC(ISPEC `getWords (CONS (v:bool#A word_loc) vs) []` PAIR_SURJECTIVE) THEN
         DISCH_THEN(REPEAT_TCL CHOOSE_THEN ASSUME_TAC) THEN ASM_REWRITE_TAC[] THEN
-        CASE_REWRITE_TAC[]) THEN
+        CAKE_REWRITE_TAC[]) THEN
     REWRITE_TAC rws THEN ASM_MESON_TAC[]];;
 
 (* HOL4 line 1934 *)
@@ -4647,7 +4647,7 @@ let extract_labels_StoreAnyConsts = prove
 let extract_labels_WordOp64_on_32 = prove
  (`!f. wordConvs_extract_labels (WordOp64_on_32 f:(A)wl_prog) = []`,
   GEN_TAC THEN CASES_ON `f:opw` THEN REWRITE_TAC[WordOp64_on_32_def] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[data_to_word_list_Seq_def; wordConvs_extract_labels_def; APPEND]);;
 
 (* HOL4 line 1953 (local) *)
@@ -4655,7 +4655,7 @@ let extract_labels_WordShift64_on_32 = prove
  (`!f g. wordConvs_extract_labels (WordShift64_on_32 f g:(A)wl_prog) = []`,
   REPEAT GEN_TAC THEN REWRITE_TAC[WordShift64_on_32_def; LET_DEF; LET_END_DEF] THEN
   CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
-  CASES_ON `f:shift` THEN CASE_REWRITE_TAC[distinctness "shift"] THEN
+  CASES_ON `f:shift` THEN CAKE_REWRITE_TAC[distinctness "shift"] THEN
   REPEAT COND_CASES_TAC THEN
   REWRITE_TAC[data_to_word_list_Seq_def; wordConvs_extract_labels_def; APPEND]);;
 
@@ -4749,7 +4749,7 @@ let d2wpaux_case_id_conv : conv = fun tm ->
 (* beta, pushing into conditionals and cases, and collapsing them           *)
 let d2wpaux_PUSH_CONV (heads:string list) (rws:thm list) : conv =
   let rw = GEN_REWRITE_CONV I (rws @ [COND_ID; COND_CLAUSES; ARITH_EQ; AND_CLAUSES; OR_CLAUSES; NOT_CLAUSES; IMP_CLAUSES]) in
-  let cr = CASE_REWRITE_CONV [] in
+  let cr = CAKE_REWRITE_CONV [] in
   let pc = d2wpaux_push_conv heads in
   TOP_DEPTH_CONV (FIRST_CONV [GEN_BETA_CONV; rw; NUM_RED_CONV; d2wpaux_case_id_conv; pc])
   THENC cr THENC
@@ -4766,7 +4766,7 @@ let D2WPAUX_AssignCmp_oneline = prove
      | Leq -> SetBool dest NotLower v2 (Reg v1)
      | Geq -> SetBool dest NotLower v1 (Reg v2)`,
   REPEAT GEN_TAC THEN CASES_ON `cmp:opb` THEN REWRITE_TAC[AssignCmp_def] THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[]);;
 
 (* the definitions that the code of assign is made of *)
 let D2WPAUX_assign_unfold_defs =
@@ -4788,7 +4788,7 @@ let d2wpaux_nolab_tac : tactic =
   REPEAT GEN_TAC THEN DISCH_TAC THEN
   REWRITE_TAC[GSYM D2WPAUX_nolab_pair] THEN
   FIRST_X_ASSUM(SUBST1_TAC o SYM) THEN
-  CONV_TAC(ONCE_DEPTH_CONV(REWR_CONV data_to_word_assign_def)) THEN CASE_REWRITE_TAC[] THEN
+  CONV_TAC(ONCE_DEPTH_CONV(REWR_CONV data_to_word_assign_def)) THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[data_to_word_arg1_def; data_to_word_arg2_def; arg3_def; arg4_def] THEN
   REWRITE_TAC D2WPAUX_assign_unfold_defs THEN
   CONV_TAC(d2wpaux_PUSH_CONV ["D2WPAUX_nolab"; "wordConvs_extract_labels";
@@ -4831,7 +4831,7 @@ let D2WPAUX_lab_ok_assign = prove
  (`!c secn l dest op args names.
      D2WPAUX_lab_ok secn l (data_to_word_assign c secn l dest op args names:(A)wl_prog#num)`,
   REPEAT GEN_TAC THEN CONV_TAC(ONCE_DEPTH_CONV(REWR_CONV data_to_word_assign_def)) THEN
-  CASE_REWRITE_TAC[] THEN REPEAT TOP_CASE_TAC THEN
+  CAKE_REWRITE_TAC[] THEN REPEAT TOP_CASE_TAC THEN
   REWRITE_TAC[data_to_word_arg1_def; data_to_word_arg2_def; arg3_def; arg4_def] THEN
   REWRITE_TAC D2WPAUX_assign_unfold_defs THEN
   CONV_TAC(d2wpaux_PUSH_CONV ["D2WPAUX_lab_ok"; "wordConvs_extract_labels";
@@ -4929,7 +4929,7 @@ let data_to_word_lab_pres_lem = prove
   ASM_REWRITE_TAC[] THEN
   MP_TAC(ISPEC `data_to_word_comp c n l p:(A)wl_prog#num` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `cp:(A)wl_prog` (X_CHOOSE_THEN `l':num` SUBST1_TAC)) THEN
-  REWRITE_TAC[D2WPAUX_lab_ok_pair] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[D2WPAUX_lab_ok_pair] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[LET_DEF; LET_END_DEF] THEN CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
   REWRITE_TAC[]);;
 
@@ -5018,7 +5018,7 @@ let stub_labels = prove
 (* HOL4 line 2061 *)
 let stubs_with_has_fp_ops = prove
  (`!data_conf b.
-     data_to_word_stubs (:A) (data_to_word_config_has_fp_ops_fupd (K b) data_conf) =
+     data_to_word_stubs (:A) (data_to_word_config_has_fp_ops_fupd (combin_K b) data_conf) =
      data_to_word_stubs (:A) data_conf`,
   REWRITE_TAC[data_to_word_stubs_def] THEN
   REWRITE_TAC D2WPAUX_conf_defs THEN
@@ -5029,7 +5029,7 @@ let _ = cake_add_simps [stubs_with_has_fp_ops];;
 (* HOL4 line 2067 *)
 let stubs_with_has_fp_tern = prove
  (`!data_conf b.
-     data_to_word_stubs (:A) (data_to_word_config_has_fp_tern_fupd (K b) data_conf) =
+     data_to_word_stubs (:A) (data_to_word_config_has_fp_tern_fupd (combin_K b) data_conf) =
      data_to_word_stubs (:A) data_conf`,
   REWRITE_TAC[data_to_word_stubs_def] THEN
   REWRITE_TAC D2WPAUX_conf_defs THEN
@@ -5073,7 +5073,7 @@ let stubs_no_share_inst = prove
 let D2WPAUX_no_share_inst_assign = prove
  (`!x c secn v w y z. no_share_inst (FST (data_to_word_assign c secn v w x y z):(A)wl_prog)`,
   REPEAT GEN_TAC THEN CONV_TAC(ONCE_DEPTH_CONV(REWR_CONV data_to_word_assign_def)) THEN
-  CASE_REWRITE_TAC[] THEN REPEAT TOP_CASE_TAC THEN
+  CAKE_REWRITE_TAC[] THEN REPEAT TOP_CASE_TAC THEN
   REWRITE_TAC[data_to_word_arg1_def; data_to_word_arg2_def; arg3_def; arg4_def] THEN
   REWRITE_TAC D2WPAUX_assign_unfold_defs THEN
   CONV_TAC(d2wpaux_PUSH_CONV ["FST"; "no_share_inst"; "data_to_word_list_Seq"]
@@ -5146,7 +5146,7 @@ let D2WPAUX_full_compile_single_no_share_inst = prove
          D2WPAUX_triple_cases) THEN
   DISCH_THEN(X_CHOOSE_THEN `x1:num` (X_CHOOSE_THEN `x2:num` (X_CHOOSE_THEN `x3:(A)wl_prog`
     ASSUME_TAC))) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[SND] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[SND] THEN
   MATCH_MP_TAC remove_must_terminate_no_share_inst THEN
   MP_TAC(ISPECL [`\q:(A)wl_prog. ~(ShareInst ARB 0 (wl_Var 0) = q)`;
                  `((n:num,m:num,p:(A)wl_prog),col:(num spt)option)`;
@@ -5168,12 +5168,12 @@ let compile_no_share_inst = prove
      ALL (\(n,m,pp). no_share_inst pp) prog'`,
   REPEAT GEN_TAC THEN REWRITE_TAC[data_to_word_compile_def; word_to_word_compile_def] THEN
   REWRITE_TAC[LET_DEF; LET_END_DEF] THEN CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
-  CASE_REWRITE_TAC[] THEN TOP_CASE_TAC THEN CASE_REWRITE_TAC[PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[] THEN TOP_CASE_TAC THEN CAKE_REWRITE_TAC[PAIR_EQ] THEN
   STRIP_TAC THEN FIRST_X_ASSUM(SUBST1_TAC o SYM) THEN REWRITE_TAC[ALL_MAP] THEN
-  SPEC_TAC(`data_to_word_config_has_fp_ops_fupd (K (1 < asm_config_fp_reg_count
+  SPEC_TAC(`data_to_word_config_has_fp_ops_fupd (combin_K (1 < asm_config_fp_reg_count
               (asm_conf:(A)asm_config)))
              (data_to_word_config_has_fp_tern_fupd
-                (K (asm_config_ISA asm_conf = ARMv7 /\ 2 < asm_config_fp_reg_count asm_conf))
+                (combin_K (asm_config_ISA asm_conf = ARMv7 /\ 2 < asm_config_fp_reg_count asm_conf))
                 data_conf)`, `dc:data_to_word_config`) THEN GEN_TAC THEN
   MP_TAC(ISPECL [`\q:num#num#(A)wl_prog. no_share_inst (SND (SND q))`;
                  `APPEND (data_to_word_stubs (:A) dc)
@@ -5261,10 +5261,10 @@ let data_to_word_compile_lab_pres = prove
             ALL_DISTINCT labs) p`,
   REPEAT GEN_TAC THEN REWRITE_TAC[data_to_word_compile_def; LET_DEF; LET_END_DEF] THEN
   CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
-  SPEC_TAC(`data_to_word_config_has_fp_ops_fupd (K (1 < asm_config_fp_reg_count
+  SPEC_TAC(`data_to_word_config_has_fp_ops_fupd (combin_K (1 < asm_config_fp_reg_count
               (asm_conf:(A)asm_config)))
              (data_to_word_config_has_fp_tern_fupd
-                (K (asm_config_ISA asm_conf = ARMv7 /\ 2 < asm_config_fp_reg_count asm_conf))
+                (combin_K (asm_config_ISA asm_conf = ARMv7 /\ 2 < asm_config_fp_reg_count asm_conf))
                 data_conf)`, `dc:data_to_word_config`) THEN GEN_TAC THEN
   MP_TAC(SPEC `word_conf:word_to_word_config`
     (MATCH_MP (GEN_ALL (SPEC_ALL compile_to_word_conventions))
@@ -5276,7 +5276,7 @@ let data_to_word_compile_lab_pres = prove
                      (MAP (data_to_word_compile_part dc) prog))` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `col:((num spt)option)list`
     (X_CHOOSE_THEN `progs:(num#num#(A)wl_prog)list` SUBST1_TAC)) THEN
-  CASE_REWRITE_TAC[] THEN STRIP_TAC THEN CONJ_TAC THENL
+  CAKE_REWRITE_TAC[] THEN STRIP_TAC THEN CONJ_TAC THENL
    [ASM_REWRITE_TAC[MAP_APPEND; MAP_FST_MAP_compile_part; D2WPAUX_MAP_FST_stubs];
     MATCH_MP_TAC D2WPAUX_labels_transfer THEN
     EXISTS_TAC `APPEND (data_to_word_stubs (:A) dc)
@@ -5326,7 +5326,7 @@ let assign_no_inst = prove
      every_inst (inst_ok_less ac) (FST (data_to_word_assign a b c d e f g))`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   CONV_TAC(ONCE_DEPTH_CONV(REWR_CONV data_to_word_assign_def)) THEN
-  CASE_REWRITE_TAC[] THEN REPEAT TOP_CASE_TAC THEN
+  CAKE_REWRITE_TAC[] THEN REPEAT TOP_CASE_TAC THEN
   REWRITE_TAC[data_to_word_arg1_def; data_to_word_arg2_def; arg3_def; arg4_def] THEN
   REWRITE_TAC D2WPAUX_assign_unfold_defs THEN
   CONV_TAC(d2wpaux_PUSH_CONV ["FST"; "every_inst"; "data_to_word_list_Seq"]
@@ -5476,9 +5476,9 @@ let data_to_word_compile_conventions = prove
   REWRITE_TAC[data_to_word_compile_def; LET_DEF; LET_END_DEF] THEN
   CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
   ABBREV_TAC `dc = data_to_word_config_has_fp_ops_fupd
-      (K (1 < asm_config_fp_reg_count (ac:(A)asm_config)))
+      (combin_K (1 < asm_config_fp_reg_count (ac:(A)asm_config)))
       (data_to_word_config_has_fp_tern_fupd
-         (K (asm_config_ISA ac = ARMv7 /\ 2 < asm_config_fp_reg_count ac)) data_conf)` THEN
+         (combin_K (asm_config_ISA ac = ARMv7 /\ 2 < asm_config_fp_reg_count ac)) data_conf)` THEN
   MP_TAC(SPEC `wc:word_to_word_config`
     (MATCH_MP (GEN_ALL (SPEC_ALL compile_to_word_conventions))
        (ISPECL [`dc:data_to_word_config`; `dc:data_to_word_config`;
@@ -5489,7 +5489,7 @@ let data_to_word_compile_conventions = prove
          PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `col:((num spt)option)list`
     (X_CHOOSE_THEN `progs:(num#num#(A)wl_prog)list` SUBST1_TAC)) THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   DISCH_THEN(MP_TAC o CONJUNCT2 o CONJUNCT2) THEN
   MATCH_MP_TAC MONO_ALL THEN REWRITE_TAC[FORALL_PAIR_THM] THEN
   CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
@@ -5523,7 +5523,7 @@ let data_to_word_names = prove
        (ISPECL [`backend_config_data_conf c`; `c3:data_to_word_config`;
                 `prog:(num#num#data_prog)list`; `c2:(A)asm_config`]
                D2WPAUX_input_no_share_inst_or))) THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   SIMP_TAC[MAP_APPEND; MAP_FST_MAP_compile_part]);;
 
 (* HOL4 line 2456 *)
@@ -5543,7 +5543,7 @@ let MAP_FST_stubs_bound = prove
 (* HOL4 line 2469 *)
 let max_heap_limit_has_fp_ops = prove
  (`!conf b.
-     max_heap_limit (:A) (data_to_word_config_has_fp_ops_fupd (K b) conf) =
+     max_heap_limit (:A) (data_to_word_config_has_fp_ops_fupd (combin_K b) conf) =
      max_heap_limit (:A) conf`,
   REWRITE_TAC[max_heap_limit_def; shift_length_def;
               (record_info "data_to_word_config").ri_accfupds; K_THM]);;
@@ -5628,18 +5628,18 @@ let D2WPAUX_get_code_labels_StoreAnyConsts = prove
   MATCH_MP_TAC StoreAnyConsts_ind THEN CONJ_TAC THEN REPEAT GEN_TAC THENL
    [ONCE_REWRITE_TAC[StoreAnyConsts_def] THEN
     MP_TAC(ISPEC `SND (v:bool#A word_loc)` (cases "word_loc")) THEN
-    STRIP_TAC THEN ASM_REWRITE_TAC[isWord_def] THEN CASE_REWRITE_TAC[] THEN
+    STRIP_TAC THEN ASM_REWRITE_TAC[isWord_def] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[wordConvs_get_code_labels_def; UNION_EMPTY];
     ALL_TAC] THEN
   STRIP_TAC THEN REWRITE_TAC[MAP; ALL] THEN STRIP_TAC THEN
   ONCE_REWRITE_TAC[StoreAnyConsts_def] THEN
   FIRST_ASSUM(X_CHOOSE_TAC `a:A word` o REWRITE_RULE[isWord_exists] o
     check (fun th -> concl th = `isWord (SND (v:bool#A word_loc))`)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   MP_TAC(ISPEC `getWords (CONS (v:bool#A word_loc) vs) []` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `cs:(bool#A word)list` (X_CHOOSE_THEN `rest:(bool#A word_loc)list`
     ASSUME_TAC)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[wordConvs_get_code_labels_def; UNION_EMPTY] THEN
   FIRST_X_ASSUM(MP_TAC o SPECL [`a:A word`; `cs:(bool#A word)list`;
     `rest:(bool#A word_loc)list`] o check (fun th -> is_forall (concl th) &&
@@ -5676,7 +5676,7 @@ let getWords_good_loc = prove
   DISCH_THEN(X_CHOOSE_THEN `b:bool` (X_CHOOSE_THEN `x:A word_loc` SUBST1_TAC)) THEN
   MP_TAC(ISPEC `x:A word_loc` (cases "word_loc")) THEN
   DISCH_THEN(DISJ_CASES_THEN (REPEAT_TCL CHOOSE_THEN SUBST1_TAC)) THEN
-  CASE_REWRITE_TAC[PAIR_EQ] THEN REWRITE_TAC[ALL; o_THM] THEN STRIP_TAC THENL
+  CAKE_REWRITE_TAC[PAIR_EQ] THEN REWRITE_TAC[ALL; o_THM] THEN STRIP_TAC THENL
    [FIRST_X_ASSUM MATCH_MP_TAC THEN
     MAP_EVERY EXISTS_TAC [`CONS (b:bool,a:A word) ys`; `ws:(bool#A word)list`] THEN
     ASM_REWRITE_TAC[];
@@ -5699,7 +5699,7 @@ let D2WPAUX_code_labels_assign = prove
      wordConvs_get_code_labels (FST (data_to_word_assign c secn v w x y z):(A)wl_prog) SUBSET
      assign_get_code_label x UNION set_of_list (MAP FST (data_to_word_stubs (:A) c))`,
   REPEAT GEN_TAC THEN CONV_TAC(ONCE_DEPTH_CONV(REWR_CONV data_to_word_assign_def)) THEN
-  CASE_REWRITE_TAC[] THEN REPEAT TOP_CASE_TAC THEN
+  CAKE_REWRITE_TAC[] THEN REPEAT TOP_CASE_TAC THEN
   REWRITE_TAC[assign_get_code_label_def; D2WPAUX_MAP_FST_stubs; set_of_list] THEN
   REWRITE_TAC[data_to_word_arg1_def; data_to_word_arg2_def; arg3_def; arg4_def] THEN
   REWRITE_TAC D2WPAUX_assign_unfold_defs THEN
@@ -5758,7 +5758,7 @@ let word_good_handlers_StoreAnyConsts = prove
 let D2WPAUX_good_handlers_assign = prove
  (`!x c secn v w y z. good_handlers secn (FST (data_to_word_assign c secn v w x y z):(A)wl_prog)`,
   REPEAT GEN_TAC THEN CONV_TAC(ONCE_DEPTH_CONV(REWR_CONV data_to_word_assign_def)) THEN
-  CASE_REWRITE_TAC[] THEN REPEAT TOP_CASE_TAC THEN
+  CAKE_REWRITE_TAC[] THEN REPEAT TOP_CASE_TAC THEN
   REWRITE_TAC[data_to_word_arg1_def; data_to_word_arg2_def; arg3_def; arg4_def] THEN
   REWRITE_TAC D2WPAUX_assign_unfold_defs THEN
   CONV_TAC(d2wpaux_PUSH_CONV ["FST"; "good_handlers"; "data_to_word_list_Seq"]
@@ -5860,10 +5860,10 @@ let data_to_word_good_code_labels = prove
      wordConvs_good_code_labels prog' elabs`,
   REPEAT GEN_TAC THEN REWRITE_TAC[data_to_word_compile_def; LET_DEF; LET_END_DEF] THEN
   CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
-  SPEC_TAC(`data_to_word_config_has_fp_ops_fupd (K (1 < asm_config_fp_reg_count
+  SPEC_TAC(`data_to_word_config_has_fp_ops_fupd (combin_K (1 < asm_config_fp_reg_count
               (asm_conf:(A)asm_config)))
              (data_to_word_config_has_fp_tern_fupd
-                (K (asm_config_ISA asm_conf = ARMv7 /\ 2 < asm_config_fp_reg_count asm_conf))
+                (combin_K (asm_config_ISA asm_conf = ARMv7 /\ 2 < asm_config_fp_reg_count asm_conf))
                 data_conf)`, `dc:data_to_word_config`) THEN GEN_TAC THEN
   DISCH_THEN(CONJUNCTS_THEN2 MP_TAC ASSUME_TAC) THEN
   DISCH_THEN(MP_TAC o AP_TERM `SND:(((num spt)option)list #

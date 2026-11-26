@@ -15,8 +15,9 @@
 (*              (this is the order of HOL4's fs; FS has the order of rfs).  *)
 (*   DECIDE_TAC HOL4 decide_tac: ARITH_TAC with the arithmetic assumptions. *)
 (*   ARITH_ss   a marker for the lists above: arithmetic (HOL4 ARITH_ss).   *)
-(* The simplifier strategy is HOL Light's TOP_DEPTH_SQCONV without its      *)
-(* redundant second pass (same results, faster); SIMP_TAC etc. use it too.  *)
+(* Their simplifier strategy is HOL Light's TOP_DEPTH_SQCONV without the    *)
+(* second pass over a combination after a complete congruence step (below);*)
+(* HOL Light's own SIMP_CONV, SIMP_TAC, ASM_SIMP_TAC, ... are unchanged.    *)
 (* The project simpset (HOL4's srw_ss) holds the case equations,             *)
 (* distinctness and injectivity of every registered datatype, the record     *)
 (* theorems, and whatever cake_add_simps registers.                         *)
@@ -89,11 +90,11 @@ let kit_mk_rewrites =
 let cake_basic_ss thl =
   let Simpset(n,p,_,_) = basic_ss thl in Simpset(n,p,[],kit_mk_rewrites);;
 
-let K_DEF = new_definition `K = \(x:A) (y:B). x`;;
+let combin_K_DEF = new_definition `combin_K = \(x:A) (y:B). x`;;
 
 let K_THM = prove
- (`!(x:A) (y:B). K x y = x`,
-  REWRITE_TAC[K_DEF]);;
+ (`!(x:A) (y:B). combin_K x y = x`,
+  REWRITE_TAC[combin_K_DEF]);;
 
 (* ------------------------------------------------------------------------- *)
 (* Rewrite nets made once per theorem list.  A tactic that rewrites each      *)
@@ -136,16 +137,39 @@ let cake_memo (memo:('a * 'b) list ref) (key:'a -> bool) (k:'a) (make:unit -> 'b
 
 let cake_rw_net_memo = ref ([] : ((bool * gconv net * thm list) * gconv net) list);;
 
-let GENERAL_REWRITE_CONV rep (cnvl:conv->conv) (builtin_net:gconv net) thl =
-  let final_net =
-    cake_memo cake_rw_net_memo
-      (fun (r,b,l) -> r = rep && b == builtin_net && cake_same_thms l thl)
-      (rep,builtin_net,thl)
-      (fun () -> let thl_canon = itlist (mk_rewrites false) thl [] in
-                 itlist (net_of_thm rep) thl_canon builtin_net) in
-  cnvl (REWRITES_CONV final_net);;
+let kit_rw_net rep (builtin_net:gconv net) thl : gconv net =
+  cake_memo cake_rw_net_memo
+    (fun (r,b,l) -> r = rep && b == builtin_net && cake_same_thms l thl)
+    (rep,builtin_net,thl)
+    (fun () -> let thl_canon = itlist (mk_rewrites false) thl [] in
+               itlist (net_of_thm rep) thl_canon builtin_net);;
 
-(* HOL Light's front ends, unchanged, so that they use the memo *)
+(* Replaces HOL Light's GENERAL_REWRITE_CONV: the same, with the net memo    *)
+let GENERAL_REWRITE_CONV rep (cnvl:conv->conv) (builtin_net:gconv net) thl =
+  cnvl (REWRITES_CONV (kit_rw_net rep builtin_net thl));;
+
+(* the rewriting with assumptions (ASM_REWRITE_TAC thl and the others): the *)
+(* net of the list asms @ thl is the net of thl (from the memo) with the     *)
+(* rewrites of asms added on top, which is the same net (itlist inserts     *)
+(* from the right), so that the net of a long list thl is made once for     *)
+(* all the goals of a case split, whose assumptions differ (since           *)
+(* 2026-11-25: the memo missed whenever the assumptions changed)            *)
+let kit_asm_rw_conv rep (cnvl:conv->conv) (builtin_net:gconv net) (asms:thm list) thl =
+  let net = kit_rw_net rep builtin_net thl in
+  let net' = if asms = [] then net
+             else itlist (net_of_thm rep) (itlist (mk_rewrites false) asms []) net in
+  cnvl (REWRITES_CONV net');;
+
+let kit_asm_rw_tac rep (cnvl:conv->conv) (builtin:unit -> gconv net) thl : tactic =
+  fun (asl,w as g) ->
+    CONV_TAC (kit_asm_rw_conv rep cnvl (builtin()) (map snd asl) thl) g;;
+
+let kit_asm_rw_rule rep (cnvl:conv->conv) (builtin:unit -> gconv net) thl th =
+  CONV_RULE (kit_asm_rw_conv rep cnvl (builtin()) (map ASSUME (hyp th)) thl) th;;
+
+(* Replace HOL Light's rewriting front ends (simp.ml: GEN_REWRITE_CONV ..   *)
+(* ONCE_ASM_REWRITE_TAC below) with the same definitions, so that they use  *)
+(* the memo: the same nets, made once per theorem list                       *)
 
 let GEN_REWRITE_CONV (cnvl:conv->conv) thl =
   GENERAL_REWRITE_CONV false cnvl empty_net thl;;
@@ -163,52 +187,47 @@ let REWRITE_RULE thl = CONV_RULE(REWRITE_CONV thl);;
 let PURE_ONCE_REWRITE_RULE thl = CONV_RULE(PURE_ONCE_REWRITE_CONV thl);;
 let ONCE_REWRITE_RULE thl = CONV_RULE(ONCE_REWRITE_CONV thl);;
 let PURE_ASM_REWRITE_RULE thl th =
-    PURE_REWRITE_RULE ((map ASSUME (hyp th)) @ thl) th;;
+  kit_asm_rw_rule true TOP_DEPTH_CONV (fun () -> empty_net) thl th;;
 let ASM_REWRITE_RULE thl th =
-    REWRITE_RULE ((map ASSUME (hyp th)) @ thl) th;;
+  kit_asm_rw_rule true TOP_DEPTH_CONV basic_net thl th;;
 let PURE_ONCE_ASM_REWRITE_RULE thl th =
-    PURE_ONCE_REWRITE_RULE ((map ASSUME (hyp th)) @ thl) th;;
+  kit_asm_rw_rule false ONCE_DEPTH_CONV (fun () -> empty_net) thl th;;
 let ONCE_ASM_REWRITE_RULE thl th =
-    ONCE_REWRITE_RULE ((map ASSUME (hyp th)) @ thl) th;;
+  kit_asm_rw_rule false ONCE_DEPTH_CONV basic_net thl th;;
 let GEN_REWRITE_TAC cnvl thl = CONV_TAC(GEN_REWRITE_CONV cnvl thl);;
 let PURE_REWRITE_TAC thl = CONV_TAC(PURE_REWRITE_CONV thl);;
 let REWRITE_TAC thl = CONV_TAC(REWRITE_CONV thl);;
 let PURE_ONCE_REWRITE_TAC thl = CONV_TAC(PURE_ONCE_REWRITE_CONV thl);;
 let ONCE_REWRITE_TAC thl = CONV_TAC(ONCE_REWRITE_CONV thl);;
-let (PURE_ASM_REWRITE_TAC: thm list -> tactic) = ASM PURE_REWRITE_TAC;;
-let (ASM_REWRITE_TAC: thm list -> tactic) = ASM REWRITE_TAC;;
-let (PURE_ONCE_ASM_REWRITE_TAC: thm list -> tactic) = ASM PURE_ONCE_REWRITE_TAC;;
-let (ONCE_ASM_REWRITE_TAC: thm list -> tactic) = ASM ONCE_REWRITE_TAC;;
+let (PURE_ASM_REWRITE_TAC: thm list -> tactic) =
+  kit_asm_rw_tac true TOP_DEPTH_CONV (fun () -> empty_net);;
+let (ASM_REWRITE_TAC: thm list -> tactic) =
+  kit_asm_rw_tac true TOP_DEPTH_CONV basic_net;;
+let (PURE_ONCE_ASM_REWRITE_TAC: thm list -> tactic) =
+  kit_asm_rw_tac false ONCE_DEPTH_CONV (fun () -> empty_net);;
+let (ONCE_ASM_REWRITE_TAC: thm list -> tactic) =
+  kit_asm_rw_tac false ONCE_DEPTH_CONV basic_net;;
 
 (* ------------------------------------------------------------------------- *)
-(* A faster simplifier.  HOL Light's TOP_DEPTH_SQCONV, after a pass over the *)
-(* subterms of a term has changed some of them, simplifies the new term      *)
-(* again from scratch, so every subterm is traversed once more (and again    *)
-(* at every enclosing level: on a big induction hypothesis 550,000 calls for *)
-(* a term of size 220).  That second pass cannot change anything: each       *)
-(* subterm is then the result of a call of the strategy (which goes on until *)
-(* it fails) or a subterm on which it failed.  KIT_TOP_DEPTH_SQCONV tries   *)
-(* only the rewrites at the top of the new term instead, and so gives the    *)
-(* same theorems.  The helper functions are HOL Light's (simp.ml), unchanged.*)
-(* SIMPLIFY_CONV and HOL Light's SIMP_CONV, SIMP_RULE, SIMP_TAC,             *)
-(* ASM_SIMP_TAC and their PURE_ versions are redefined with it (otherwise    *)
-(* HOL Light's definitions), for the kit and every later file.               *)
+(* The kit's simplifier strategy KIT_TOP_DEPTH_SQCONV: HOL Light's          *)
+(* TOP_DEPTH_SQCONV (simp.ml) without the second pass over a combination     *)
+(* whose operator and operand have been simplified, by the subterms or by a *)
+(* congruence rule that leaves no argument as it is: only the rewrites at   *)
+(* the top of the new term are tried (the subterms are results of the       *)
+(* strategy, which goes on until it fails, or subterms on which it failed). *)
+(* HOL Light before be9b91e made that pass always (on a big induction       *)
+(* hypothesis 550,000 calls for a term of size 220); since be9b91e it skips *)
+(* it unless a congruence rule applies, so implications and conditionals    *)
+(* (the rules of basic_congs) still get it, and with a congruence rule such *)
+(* as HOL4's MAP_CONG (CONGR in the kit's lists), whose antecedent f x =    *)
+(* g x is "simplified" by a beta step each time, HOL Light's strategy loops *)
+(* (as before be9b91e; KIT6, 2026-11-25).  After a rule that leaves an      *)
+(* argument as it is (the range of nsum and sum), the kit does the second   *)
+(* pass, as HOL Light (kit_cong_partial).  The helper functions are HOL     *)
+(* Light's, with a cache of side-condition proofs and a shortcut for        *)
+(* binders named like free variables (below).  SIMP, FS, GVS, RW,           *)
+(* CAKE_SIMP_CONV, CAKE_SIMPLIFY_CONV and the other kit tactics use it.     *)
 (* ------------------------------------------------------------------------- *)
-
-(* find_witnesses of HOL Light's simp.ml (commit 9cb19cc), copied so that   *)
-(* the kit also loads on HOL Light versions without it (924faf0)            *)
-let kit_find_witnesses provers vs tm : instantiation =
-  let evs,bod = strip_exists tm in
-  let avs = vs @ evs in
-  let p = list_mk_conj(filter (fun c -> exists (C vfree_in c) avs)
-                              (conjuncts bod)) in
-  let q = list_mk_exists(avs,p) and lconsts = subtract (frees p) avs in
-  let restrict l = filter (fun (_,v) -> mem v vs) l in
-  tryfind (fun pr ->
-    let bcs,insts,tyin = term_match lconsts p (concl(apply_prover pr q)) in
-    if exists (fun (ty,v) -> ty <> v) tyin then fail()
-    else restrict bcs,restrict insts,[])
-  provers;;
 
 (* The conditions of conditional rewrites are proved by the simplifier      *)
 (* (the simpset's prover), at a depth lev; the same condition is often      *)
@@ -311,6 +330,46 @@ let kit_check_abort (th:thm) : unit =
         Some (v,_) -> raise (Kit_binder_abort v)
       | None -> ();;
 
+(* A congruence rule a1 ==> .. ==> (c x1 .. xn = c y1 .. yn) leaves an     *)
+(* argument as it is if no antecedent's result (the variable on the right   *)
+(* of !vs. ctx ==> t = t', t' a variable or one applied to the bound        *)
+(* variables) occurs in it: the rules of HOL Light's basic_congs for nsum   *)
+(* and sum leave the range alone (nsum s (\i. f i) = nsum s g), those for   *)
+(* ==> and if-then-else and HOL4's MAP_CONG (CONGR) leave nothing.  After a *)
+(* step with such a partial rule, the kit's strategy simplifies the result  *)
+(* again from the top, as HOL Light's does (since 2026-11-25: the range     *)
+(* stayed as it was, unlike HOL Light's SIMP_CONV; found by HYG1's          *)
+(* coexistence test, Library/binomial.ml BINOMIAL_THEOREM)                  *)
+let kit_cong_partial (th:thm) : bool =
+  try
+    let ants,c = splitlist dest_imp (concl th) in
+    let outs = mapfilter (fun a ->
+        let _,b = strip_forall a in
+        let eqn = if is_imp b then rand b else b in
+        let h = fst(strip_comb(rand eqn)) in
+        if is_var h then h else fail()) ants in
+    let _,args = strip_comb (rand c) in
+    exists (fun a -> not (exists (fun v -> vfree_in v a) outs)) args
+  with Failure _ -> false;;
+
+(* A chain of rewrites at one position that comes back to a term it has     *)
+(* already passed through would go on forever, as with an assumption        *)
+(* state_clock s = state_clock (state_refs_fupd f s), which rewrites         *)
+(* state_clock s to a term that the record rules (accfupds) rewrite back to  *)
+(* state_clock s (CAN2c's stack overflow in SIMP[] on candle_kernel_funs'    *)
+(* goals): the kit's strategy stops such a chain where the term recurs.  The *)
+(* strategy is deterministic, so this only changes what would not           *)
+(* terminate; not while a ONCE rewrite is unused (its first use could lead   *)
+(* back to the term).  kit_rw_chain holds the terms of the current chain     *)
+(* (since 2026-11-25).                                                      *)
+let kit_rw_chain = ref ([] : term list);;
+
+let kit_with_chain (c:term list) (f:'a -> 'b) (x:'a) : 'b =
+  let old = !kit_rw_chain in
+  kit_rw_chain := c;
+  try let r = f x in kit_rw_chain := old; r
+  with e -> (kit_rw_chain := old; raise e);;
+
 let KIT_TOP_DEPTH_SQCONV =
   let nonlooping th =
     let l,r = dest_eq(rand(concl th)) in
@@ -329,7 +388,7 @@ let KIT_TOP_DEPTH_SQCONV =
       let mvs = subtract (frees cnd) (union (frees tm) (freesl(hyp th))) in
       let th' =
         if mvs = [] then th else
-        let th1 = try INSTANTIATE (kit_find_witnesses provers mvs cnd) th
+        let th1 = try INSTANTIATE (find_witnesses provers mvs cnd) th
                   with Failure _ -> th in
         if nonlooping th1 then th1
         else if th1 != th && nonlooping th then th
@@ -339,10 +398,11 @@ let KIT_TOP_DEPTH_SQCONV =
       (* checked through r, which carries its hypotheses                      *)
       let cth =
         match !kit_active_binders with
-          [] -> kit_cond_prove prover strat ss lev (lhand(concl th'))
+          [] -> kit_with_chain [] (kit_cond_prove prover strat ss lev) (lhand(concl th'))
         | act ->
             kit_active_binders := [];
-            (try let c = kit_cond_prove prover strat ss lev (lhand(concl th')) in
+            (try let c = kit_with_chain [] (kit_cond_prove prover strat ss lev)
+                                        (lhand(concl th')) in
                  kit_active_binders := act; c
              with e -> (kit_active_binders := act; raise e)) in
       let r = MP th' cth in kit_check_abort r; r) pconvs in
@@ -363,18 +423,23 @@ let KIT_TOP_DEPTH_SQCONV =
       let th'' = MP th' eth' in
       RUN_SUB_CONV strat ss lev triv' th''
     else if triv then fail() else th in
+  (* GEN_SUB_CONV gives the theorem and whether a congruence rule that      *)
+  (* leaves an argument as it is (partial, below) made it                    *)
   let GEN_SUB_CONV strat ss lev pconvs tm =
     try tryfind (fun (n,cnv) ->
           if n < 4 then fail() else
           let th = cnv tm in
-          RUN_SUB_CONV strat ss lev true th) pconvs
+          let r = RUN_SUB_CONV strat ss lev true th in
+          if kit_cong_partial th then
+            (if aconv (rand(concl r)) tm then fail() else r,true)
+          else r,false) pconvs
     with Failure _ ->
         if is_comb tm then
           let l,r = dest_comb tm in
-          try let th1 = strat ss lev l in
-              try let th2 = strat ss lev r in MK_COMB(th1,th2)
-              with Failure _ -> AP_THM th1 r
-          with Failure _ -> AP_TERM l (strat ss lev r)
+          (try let th1 = strat ss lev l in
+               try let th2 = strat ss lev r in MK_COMB(th1,th2)
+               with Failure _ -> AP_THM th1 r
+           with Failure _ -> AP_TERM l (strat ss lev r)),false
         else if is_abs tm then
           let v,bod = dest_abs tm in
           let via_genvar () =
@@ -391,7 +456,7 @@ let KIT_TOP_DEPTH_SQCONV =
             try ABS v th with Failure _ -> via_genvar () in
           if not !kit_binder_shortcut || not (mem v (Lazy.force !kit_context_frees)) ||
              kit_once_pending ()
-          then direct () else
+          then direct (),false else
           let watched () =
             let vhs = filter (vfree_in v) (Lazy.force !kit_context_hyps) in
             let old_act = !kit_active_binders in
@@ -402,19 +467,30 @@ let KIT_TOP_DEPTH_SQCONV =
             | Kit_exn (Kit_binder_abort v') when v' == v ->
                 kit_active_binders := old_act; via_genvar ()
             | Kit_exn e -> kit_active_binders := old_act; raise e in
-          watched ()
+          watched (),false
         else failwith "GEN_SUB_CONV" in
+  (* the chain of the position goes on from tm to the result of th: stop   *)
+  (* if that result is a term of the chain                                *)
+  let continue_chain strat ss lev (seen:term list) (th:thm) =
+    let tm' = rand(concl th) in
+    if exists (aconv tm') seen && not (kit_once_pending ()) then th else
+    try TRANS th (kit_with_chain seen (strat ss lev) tm') with Failure _ -> th in
   let rec TOP_DEPTH_SQCONV (Simpset(net,prover,provers,rewmaker) as ss) lev tm =
     let pconvs = lookup tm net in
+    let seen = tm :: !kit_rw_chain in
     try let th1 = IMP_REWRITES_CONV TOP_DEPTH_SQCONV ss lev pconvs tm in
-        (try TRANS th1 (TOP_DEPTH_SQCONV ss lev (rand(concl th1)))
-         with Failure _ -> th1)
+        continue_chain TOP_DEPTH_SQCONV ss lev seen th1
     with Failure _ ->
-      let th1 = GEN_SUB_CONV TOP_DEPTH_SQCONV ss lev pconvs tm in
+      let th1,partial =
+        kit_with_chain [] (GEN_SUB_CONV TOP_DEPTH_SQCONV ss lev pconvs) tm in
       let tm1 = rand(concl th1) in
+      if partial then
+        (* HOL Light's second pass: an argument that the congruence rule left *)
+        (* as it is (the range of a sum) is simplified there                *)
+        continue_chain TOP_DEPTH_SQCONV ss lev seen th1
+      else
       try let th2 = IMP_REWRITES_CONV TOP_DEPTH_SQCONV ss lev (lookup tm1 net) tm1 in
-          TRANS th1 (try TRANS th2 (TOP_DEPTH_SQCONV ss lev (rand(concl th2)))
-                     with Failure _ -> th2)
+          TRANS th1 (continue_chain TOP_DEPTH_SQCONV ss lev (tm1 :: seen) th2)
       with Failure _ -> th1 in
   TOP_DEPTH_SQCONV;;
 
@@ -432,53 +508,25 @@ let kit_simplify_conv ss thl tm =
                  kit_active_binders := old_act;
                  decr kit_simp_depth;
                  if !kit_simp_depth = 0 then Hashtbl.reset kit_cond_cache in
-  let r = try GEN_SIMPLIFY_CONV KIT_TOP_DEPTH_SQCONV ss 3 thl tm
+  let r = try kit_with_chain [] (GEN_SIMPLIFY_CONV KIT_TOP_DEPTH_SQCONV ss 3 thl) tm
           with e -> (leave (); raise e) in
   leave (); r;;
 
-(* terms equal up to the names of genvars (_123) among the bound variables: *)
-(* two runs of the same simplification can differ in those (the genvar     *)
-(* counter), so the check below compares up to them                        *)
-let kit_same_upto_genvars (t1:term) (t2:term) =
-  let is_gv s = String.length s > 1 && s.[0] = '_' &&
-                (try ignore (int_of_string (String.sub s 1 (String.length s - 1))); true
-                 with Failure _ -> false) in
-  let rec names t acc =
-    match t with
-      Abs(v,b) -> let n = fst (dest_var v) in names b ((if is_gv n then "_" else n) :: acc)
-    | Comb(f,x) -> names x (names f acc)
-    | _ -> acc in
-  aconv t1 t2 && names t1 [] = names t2 [];;
 
-(* in check mode, every outermost call also runs with the binder shortcut  *)
-(* off (HOL Light's route, second, from the same ONCE flags, so that its    *)
-(* state is the one kept) and a KITDIFF line reports a different theorem   *)
-(* (up to genvar names)                                                     *)
-let SIMPLIFY_CONV ss thl tm =
-  if not (!kit_check && !kit_binder_shortcut && !kit_simp_depth = 0)
-  then kit_simplify_conv ss thl tm else
-  let plain () =
-    kit_binder_shortcut := false;
-    let r = (try kit_simplify_conv ss thl tm
-             with e -> (kit_binder_shortcut := true; raise e)) in
-    kit_binder_shortcut := true; r in
-  let sub l1 l2 = forall (fun h -> exists (kit_same_upto_genvars h) l2) l1 in
-  let same a b = kit_same_upto_genvars (concl a) (concl b) &&
-                 sub (hyp a) (hyp b) && sub (hyp b) (hyp a) in
-  let flags = !kit_current_once_flags in
-  let saved = map (!) flags in
-  let r_new = (try Kit_ok (kit_simplify_conv ss thl tm) with e -> Kit_exn e) in
-  List.iter2 (fun r v -> r := v) flags saved;
-  let r_old = (try Kit_ok (plain ()) with e -> Kit_exn e) in
-  kit_check_results "simplifier binder" same r_old r_new;;
-let SIMP_CONV thl = SIMPLIFY_CONV (basic_ss []) thl;;
-let PURE_SIMP_CONV thl = SIMPLIFY_CONV empty_ss thl;;
-let SIMP_RULE thl = CONV_RULE(SIMP_CONV thl);;
-let PURE_SIMP_RULE thl = CONV_RULE(PURE_SIMP_CONV thl);;
-let SIMP_TAC thl = CONV_TAC(SIMP_CONV thl);;
-let PURE_SIMP_TAC thl = CONV_TAC(PURE_SIMP_CONV thl);;
-let ASM_SIMP_TAC = ASM SIMP_TAC;;
-let PURE_ASM_SIMP_TAC = ASM PURE_SIMP_TAC;;
+(* the kit's simplification with an arbitrary simpset (as HOL Light's       *)
+(* SIMPLIFY_CONV ss thl, which, like SIMP_CONV, SIMP_RULE, SIMP_TAC,         *)
+(* ASM_SIMP_TAC and their PURE_ versions, is HOL Light's own: the kit       *)
+(* redefined them with its strategy until 2026-11-25, which made HOL        *)
+(* Light's libraries loaded after LightCake see a different simplifier)     *)
+let CAKE_SIMPLIFY_CONV ss thl tm = kit_simplify_conv ss thl tm;;
+
+(* HOL Light's SIMP_TAC and ASM_SIMP_TAC (basic_ss, no project simpset) on  *)
+(* the kit's strategy, for the proofs that need it: with HOL Light's own,   *)
+(* ASM_SIMP_TAC does not terminate on an assumption s = t when t has a      *)
+(* paired lambda binding a variable named s (\(s,u). ..), which the kit's   *)
+(* binder shortcut handles (holSyntaxExtra_p4's term_ok_VSUBST)             *)
+let CAKE_SIMP_TAC thl = CONV_TAC (CAKE_SIMPLIFY_CONV (basic_ss []) thl);;
+let CAKE_ASM_SIMP_TAC = ASM CAKE_SIMP_TAC;;
 
 (* a few arithmetic rewrites in the spirit of HOL4's ARITH_RWTS_ss *)
 
@@ -584,6 +632,33 @@ let rec cake_file_closure f acc =
   let ds = try assoc f (!cake_file_deps) with Failure _ -> [] in
   itlist cake_file_closure ds (f::acc);;
 
+(* the closures as sets, kept until cake_file_deps changes (cake_begin and  *)
+(* needs call kit_deps_changed): cake_add_simps asks whether the new file  *)
+(* is in the closure of every cached simpset, and computing them again at  *)
+(* each call took 0.1 s per call with 157 cached simpsets (22 s of          *)
+(* candle_kernel_perms' 83 s).  The same sets as cake_file_closure.  Since  *)
+(* 2026-11-25.                                                               *)
+let kit_closure_memo = (Hashtbl.create 200 : (string, (string, unit) Hashtbl.t) Hashtbl.t);;
+let kit_deps_table = ref (None : (string, string list) Hashtbl.t option);;
+
+let kit_deps_changed () =
+  Hashtbl.reset kit_closure_memo; kit_deps_table := None;;
+
+let kit_closure_set (k:string) : (string, unit) Hashtbl.t =
+  try Hashtbl.find kit_closure_memo k with Not_found ->
+  let deps = match !kit_deps_table with
+      Some t -> t
+    | None -> let t = Hashtbl.create 1000 in
+              List.iter (fun (g,ds) -> if not (Hashtbl.mem t g) then Hashtbl.add t g ds)
+                        (!cake_file_deps);
+              kit_deps_table := Some t; t in
+  let seen = Hashtbl.create 100 in
+  let rec go f =
+    if not (Hashtbl.mem seen f) then
+      (Hashtbl.add seen f ();
+       List.iter go (try Hashtbl.find deps f with Not_found -> [])) in
+  go k; Hashtbl.add kit_closure_memo k seen; seen;;
+
 let cake_context_key () =
   match !cake_loading with
     f::_ -> f
@@ -637,7 +712,7 @@ let cake_add_simps thl =
     mapfilter (fun (k,ss,p) ->
                  if k = f || k = "*" then (k,ss,thl::p)
                  else if mem k (!cake_loading) then failwith ""
-                 else if mem f (cake_file_closure k []) then failwith ""
+                 else if Hashtbl.mem (kit_closure_set k) f then failwith ""
                  else (k,ss,p)) (!cake_ss_cache);;
 
 (* remove registered rewrites (by conclusion), everywhere *)
@@ -655,12 +730,14 @@ let cake_begin file =
           with Not_found -> Filename.concat cakeml_src_dir file in
   cake_file_deps := (f,read_needs_lines f) ::
                     filter (fun (g,_) -> g <> f) (!cake_file_deps);
+  kit_deps_changed ();
   cake_context := Some f;
   cake_ss_cache := filter (fun (k,_,_) -> k <> f) (!cake_ss_cache);;
 
 let cake_end () = cake_context := None;;
 
-(* needs, recording which file is being loaded and its needs *)
+(* Replaces HOL Light's needs (the same loading): it records the file being  *)
+(* loaded and its needs lines, for the file-scoped simpsets above            *)
 
 let needs s =
   let s' = file_on_path (!load_path) s in
@@ -669,6 +746,7 @@ let needs s =
   begin
     cake_file_deps := (s',read_needs_lines s') ::
                       filter (fun (g,_) -> g <> s') (!cake_file_deps);
+    kit_deps_changed ();
     cake_loading := s' :: !cake_loading;
     (try needs s with e -> (cake_loading := tl (!cake_loading); raise e));
     cake_loading := tl (!cake_loading)
@@ -845,30 +923,6 @@ let DECIDE_TAC : tactic = fun (asl,w as g) ->
   let with_facts fs = MAP_EVERY MP_TAC fs THEN ARITH_TAC in
   if length rel = length facts then with_facts facts g else
   (with_facts rel ORELSE with_facts facts) g;;
-
-(* HOL Light's ASM_ARITH_TAC (every assumption that is not universally      *)
-(* quantified, then ARITH_TAC), redefined: with at least                    *)
-(* kit_asm_arith_min assumptions, first ARITH_TAC with only the arithmetic  *)
-(* assumptions that share an atom with the goal (as DECIDE_TAC), and HOL    *)
-(* Light's tactic only if that fails, so the same goals are proved (with    *)
-(* the same theorems), faster in big contexts (the full load spent 195 s in *)
-(* ASM_ARITH_TAC calls over 0.3 s with 10 or more assumptions).  HOL        *)
-(* Light's tactic at once when the first try cannot succeed: an assumption  *)
-(* F or ~T (which HOL Light's uses at once), or a goal without arithmetic   *)
-(* atoms (such as F).  Since 2026-11-20.                                    *)
-let kit_asm_arith_min = ref 10;;
-
-let ASM_ARITH_TAC : tactic =
-  let hol = ASM_ARITH_TAC in
-  let f_tm = `F` and t_tm = `T` in
-  let absurd tm = tm = f_tm || (is_neg tm && rand tm = t_tm) in
-  fun (asl,w as g) ->
-    if length asl < !kit_asm_arith_min || exists (fun (_,th) -> absurd (concl th)) asl ||
-       kit_arith_atoms w = [] then hol g else
-    let facts = filter (kit_is_arith o concl) (map snd asl) in
-    let rel = kit_relevant_facts w facts in
-    if length rel = length asl then hol g else
-    try (MAP_EVERY MP_TAC rel THEN ARITH_TAC) g with Failure _ -> hol g;;
 
 (* ------------------------------------------------------------------------- *)
 (* ARITH_ss (HOL4 ARITH_ss, for the easy cases): a marker theorem; any kit   *)
@@ -1152,8 +1206,9 @@ let kit_cong_rule (mth:thm) : thm =
   let th = EQ_MP (SPEC (rand (concl mth)) CAKE_CONG_DEF) mth in
   SPEC_ALL (PURE_REWRITE_RULE[GSYM IMP_IMP] (SPEC_ALL th));;
 
-(* the project simpset augmented with thl: SIMPLIFY_CONV (CAKE_AUGMENTED_SS *)
-(* thl) l is SIMPLIFY_CONV (cake_active_ss()) (l @ thl) (AUGMENT_SIMPSET    *)
+(* the project simpset augmented with thl: CAKE_SIMPLIFY_CONV              *)
+(* (CAKE_AUGMENTED_SS thl) l is CAKE_SIMPLIFY_CONV (cake_active_ss())       *)
+(* (l @ thl) (AUGMENT_SIMPSET                                                *)
 (* works from the right of the list).  Made when the tactic runs, once per  *)
 (* call of a tactic that simplifies many assumptions, and kept in a memo    *)
 (* like the rewrite nets above (same simpset, same theorems).  The markers  *)
@@ -1196,9 +1251,9 @@ let CAKE_AUGMENTED_SS thl =
   ss';;
 
 (* simplify the goal with the assumptions and an augmented simpset *)
-let SIMP_SS ss : tactic = ASM (fun l -> CONV_TAC (SIMPLIFY_CONV ss l)) [];;
+let SIMP_SS ss : tactic = ASM (fun l -> CONV_TAC (CAKE_SIMPLIFY_CONV ss l)) [];;
 
-let CAKE_SIMP_CONV thl tm = SIMPLIFY_CONV (CAKE_AUGMENTED_SS thl) [] tm;;
+let CAKE_SIMP_CONV thl tm = CAKE_SIMPLIFY_CONV (CAKE_AUGMENTED_SS thl) [] tm;;
 
 let CAKE_SIMP_RULE thl = CONV_RULE (CAKE_SIMP_CONV thl);;
 
@@ -1346,7 +1401,7 @@ let kit_fs_merge (newer_first:bool) ss : tactic = fun (asl,w as g) ->
   let facts = mapfilter (fun ((t1,_,a1),(t2,_,a2)) ->
       let eqth = if newer_first then TRANS (SYM (orient a1 t1)) (orient a2 t2)
                  else TRANS (SYM (orient a2 t2)) (orient a1 t1) in
-      let fth = CONV_RULE (SIMPLIFY_CONV ss []) eqth in
+      let fth = CONV_RULE (CAKE_SIMPLIFY_CONV ss []) eqth in
       if concl fth = cake_true_tm ||
          exists (fun (_,a) -> aconv (concl a) (concl fth)) asl
       then fail() else fth) cands in
@@ -1362,7 +1417,7 @@ let FS thl : tactic =
    let ss = CAKE_AUGMENTED_SS thl in
    (POP_ASSUM_LIST (fun asms ->
       let simped =
-        rev_itlist (fun th acc -> CONV_RULE (SIMPLIFY_CONV ss acc) th :: acc)
+        rev_itlist (fun th acc -> CONV_RULE (CAKE_SIMPLIFY_CONV ss acc) th :: acc)
                    (rev asms) [] in
       let av = itlist (union o thm_frees) simped [] in
       MAP_EVERY (CAKE_ASSUME_AV av) (rev simped)) THEN
@@ -1383,7 +1438,7 @@ let RFS thl : tactic =
    let ss = CAKE_AUGMENTED_SS thl in
    (POP_ASSUM_LIST (fun asms ->
       let simped =
-        rev_itlist (fun th acc -> CONV_RULE (SIMPLIFY_CONV ss acc) th :: acc)
+        rev_itlist (fun th acc -> CONV_RULE (CAKE_SIMPLIFY_CONV ss acc) th :: acc)
                    asms [] in
       let av = itlist (union o thm_frees) simped [] in
       MAP_EVERY (CAKE_ASSUME_AV av) simped) THEN
@@ -1461,7 +1516,7 @@ let kit_clash ss (asl:(string * thm) list) (th:thm) : thm =
               with Failure _ -> false) asl in
   let orient th = if aconv (lhs(concl th)) t then th else SYM th in
   let eqth = TRANS (SYM (orient a)) (orient th) in
-  let fth = EQ_MP (SIMPLIFY_CONV ss [] (concl eqth)) eqth in
+  let fth = EQ_MP (CAKE_SIMPLIFY_CONV ss [] (concl eqth)) eqth in
   if concl fth = cake_false_tm then fth else failwith "kit_clash";;
 
 let rec KIT_GVS_STRIP_AV ss (av:term list) th : tactic =
@@ -1494,7 +1549,7 @@ let KIT_GVS_ASSUME_TAC ss th =
 let GVS_STEP_SS ss : tactic =
   POP_LAST_ASSUM (fun th ->
     ASSUM_LIST (fun asms ->
-      let th' = CONV_RULE (SIMPLIFY_CONV ss asms) th in
+      let th' = CONV_RULE (CAKE_SIMPLIFY_CONV ss asms) th in
       if is_eliminable (concl th') then VSUBST_ASM_TAC th'
       else KIT_GVS_ASSUME_TAC ss th'));;
 
@@ -1558,6 +1613,6 @@ let RW thl : tactic =
       (VAR_EQ_TAC ORELSE
        FIRST_X_ASSUM (fun th ->
          if breakable (concl th) then
-           CAKE_ASSUME_TAC (CONV_RULE (SIMPLIFY_CONV ss []) th)
+           CAKE_ASSUME_TAC (CONV_RULE (CAKE_SIMPLIFY_CONV ss []) th)
          else failwith "RW") ORELSE
        SIMP_SS ss))) gl;;

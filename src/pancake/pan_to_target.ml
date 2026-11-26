@@ -55,14 +55,14 @@ let pan_to_target_compile_prog_def = cake_def
      let (col,prog3) =
        word_to_word_compile (backend_config_word_to_word_conf c) asm_conf prog2 in
      let c = backend_config_word_to_word_conf_fupd
-               (\c. word_to_word_config_col_oracle_fupd (K col) c) c in
+               (\c. word_to_word_config_col_oracle_fupd (combin_K col) c) c in
      let names = fromAList (ZIP (sort (<) (MAP FST prog2))
                                 (CONS (implode "generated_main")
                                       (MAP FST (functions prog1)))) : mlstring spt in
      let names = sptree_union (fromAList (APPEND (APPEND (word_to_stack_stub_names one)
                                                   (stack_alloc_stub_names one))
                                           (stack_remove_stub_names one))) names in
-     let c = backend_config_exported_fupd (K (exports prog)) c in
+     let c = backend_config_exported_fupd (combin_K (exports prog)) c in
      from_word asm_conf c names prog3`;;
 
 (* TODO (HOL4): evaluate max_depth ... (full_call_graph dest (fromAList prog)) *)
@@ -86,7 +86,7 @@ let compile_prog_eq = prove
      let names = sptree_union (fromAList (APPEND (APPEND (word_to_stack_stub_names one)
                                                   (stack_alloc_stub_names one))
                                           (stack_remove_stub_names one))) names in
-     let c = backend_config_exported_fupd (K (exports prog)) c in
+     let c = backend_config_exported_fupd (combin_K (exports prog)) c in
      from_word_0 asm_conf c names prog2`,
   REWRITE_TAC[pan_to_target_compile_prog_def; from_word_0_def] THEN SIMP[] THEN
   BACKDEFAUX_LETS_TAC THEN SIMP[]);;

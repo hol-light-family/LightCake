@@ -52,7 +52,7 @@ ml_prog_update ml_prog_open_local_block;;
 let BAS1AUX_W8ALLOC_evaluate = prove
  (`!(env:v sem_env) (s:(FFI)state) n w.
      eval_rel s env (App Aw8alloc [Lit (IntLit (&n)); Lit (Word8 w)])
-       (state_refs_fupd (K (APPEND (state_refs s) [W8array (REPLICATE n w)])) s)
+       (state_refs_fupd (combin_K (APPEND (state_refs s) [W8array (REPLICATE n w)])) s)
        (Loc T (LENGTH (state_refs s)))`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[eval_rel_def] THEN SIMP[] THEN
   MAP_EVERY EXISTS_TAC [`state_clock (s:(FFI)state)`; `state_clock (s:(FFI)state)`] THEN

@@ -145,7 +145,7 @@ let mem_upair = prove
   STRIP_TAC THEN IMP_RES_TAC is_upair_upair THEN FS[is_upair_def]);;
 
 let setSpec_empty_def = cake_def
-  `setSpec_empty (mem:U->U->bool) = setSpec_sub mem ARB (K F)`;;
+  `setSpec_empty (mem:U->U->bool) = setSpec_sub mem ARB (combin_K F)`;;
 
 let mem_empty = prove
  (`is_set_theory (mem:U->U->bool) ==> !x. ~(mem x (setSpec_empty mem))`,

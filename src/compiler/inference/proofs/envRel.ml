@@ -135,7 +135,7 @@ let convert_t_subst = prove
   REPEAT CONJ_TAC THEN REPEAT STRIP_TAC THENL
   [ASM_SIMP_TAC[ALOOKUP_EQ_FLOOKUP; ALOOKUP_ZIP_MAP_SND; o_THM] THEN
    CASES_ON `ALOOKUP (ZIP (tvs:mlstring list) (ts':infer_t list)) a` THEN
-   CASE_REWRITE_TAC[OPTION_MAP_DEF] THEN
+   CAKE_REWRITE_TAC[OPTION_MAP_DEF] THEN
    FIRST_X_ASSUM(MP_TAC o REWRITE_RULE[ALOOKUP_NONE]) THEN ASM_SIMP_TAC[MAP_ZIP];
    ASM_SIMP_TAC[];
    ASM_SIMP_TAC[]]);;
@@ -365,7 +365,7 @@ let INFER1AUX_lookup_varE_bind_tvar_Empty = prove
  (`!(y:(mlstring,mlstring)id) n.
      lookup_varE y (bind_tvar n Empty) = NONE /\ lookup_varE y Empty = NONE`,
   MATCH_MP_TAC id_INDUCT THEN REWRITE_TAC[lookup_varE_def; bind_tvar_def] THEN
-  CASE_REWRITE_TAC[] THEN REPEAT GEN_TAC THEN
+  CAKE_REWRITE_TAC[] THEN REPEAT GEN_TAC THEN
   COND_CASES_TAC THEN REWRITE_TAC[tveLookup_def]);;
 
 let env_rel_sound_extend_tvs = prove
@@ -376,8 +376,8 @@ let env_rel_sound_extend_tvs = prove
   FIRST_X_ASSUM(MP_TAC o SPECL [`x:(mlstring,mlstring)id`; `ts:num#infer_t`]) THEN
   ASM_REWRITE_TAC[num_tvs_def; ADD_CLAUSES] THEN STRIP_TAC THEN
   MAP_EVERY EXISTS_TAC [`tvs':num`; `t':t`] THEN
-  RULE_ASSUM_TAC(CASE_REWRITE_RULE[lookup_var_def; INFER1AUX_lookup_varE_bind_tvar_Empty]) THEN
-  CASE_REWRITE_TAC[lookup_var_def; INFER1AUX_lookup_varE_bind_tvar_Empty] THEN
+  RULE_ASSUM_TAC(CAKE_REWRITE_RULE[lookup_var_def; INFER1AUX_lookup_varE_bind_tvar_Empty]) THEN
+  CAKE_REWRITE_TAC[lookup_var_def; INFER1AUX_lookup_varE_bind_tvar_Empty] THEN
   ASM_REWRITE_TAC[] THEN CONJ_TAC THENL
    [FIRST_X_ASSUM(MATCH_MP_TAC o MATCH_MP check_freevars_add) THEN ARITH_TAC;
     MATCH_MP_TAC tscheme_approx_weakening THEN
@@ -397,7 +397,7 @@ let INFER1AUX_lookup_var_Bind_name_other = prove
      ==> lookup_var y (Bind_name x tvs t tenvE) tenv = lookup_var y tenvE tenv`,
   MATCH_MP_TAC id_INDUCT THEN
   REWRITE_TAC[lookup_var_def; lookup_varE_def; tveLookup_def; injectivity "id"] THEN
-  CASE_REWRITE_TAC[] THEN REPEAT STRIP_TAC THEN
+  CAKE_REWRITE_TAC[] THEN REPEAT STRIP_TAC THEN
   COND_CASES_TAC THEN ASM_MESON_TAC[]);;
 
 let env_rel_sound_extend0 = prove
@@ -406,7 +406,7 @@ let env_rel_sound_extend0 = prove
      check_t (num_tvs tenvE) (FDOM s) t /\
      (!uv. uv IN FDOM s ==> check_t (num_tvs tenvE) {} (t_walkstar s (Infer_Tuvar uv)))
      ==> env_rel_sound s
-           (inf_env_inf_v_fupd (K (nsBind x (0,t) (inf_env_inf_v ienv))) ienv)
+           (inf_env_inf_v_fupd (combin_K (nsBind x (0,t) (inf_env_inf_v ienv))) ienv)
            tenv (Bind_name x 0 (convert_t (t_walkstar s t)) tenvE)`,
   REWRITE_TAC[env_rel_sound_def; inf_env_INFO.ri_accfupds; K_THM; num_tvs_def] THEN
   REPEAT GEN_TAC THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
@@ -419,7 +419,7 @@ let env_rel_sound_extend0 = prove
      [MATCH_MP_TAC(CONJUNCT1 check_t_walkstar) THEN ASM_REWRITE_TAC[]; ALL_TAC] THEN
     MAP_EVERY EXISTS_TAC [`0`; `convert_t (t_walkstar (s:(num,infer_t)fmap) t)`] THEN
     REWRITE_TAC[lookup_var_def; lookup_varE_def; tveLookup_def; deBruijn_inc0] THEN
-    CASE_REWRITE_TAC[ADD_CLAUSES] THEN
+    CAKE_REWRITE_TAC[ADD_CLAUSES] THEN
     FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP check_t_empty_unconvert_convert_id th]) THEN
     ASM_SIMP_TAC[check_t_to_check_freevars; tscheme_approx0];
     ASM_SIMP_TAC[nsLookup_nsBind; INFER1AUX_lookup_var_Bind_name_other]]);;
@@ -432,7 +432,7 @@ let env_rel_sound_merge0 = prove
      env_rel_sound s ienv tenv tenvE
      ==> env_rel_sound s
            (inf_env_inf_v_fupd
-              (K (nsAppend (alist_to_ns (MAP (\nt. match nt with (n,t) -> (n,(0,t))) bindings))
+              (combin_K (nsAppend (alist_to_ns (MAP (\nt. match nt with (n,t) -> (n,(0,t))) bindings))
                            (inf_env_inf_v ienv))) ienv)
            tenv (bind_var_list 0 (convert_env s bindings) tenvE)`,
   REWRITE_TAC[env_rel_sound_def; inf_env_INFO.ri_accfupds; K_THM; num_tvs_bind_var_list] THEN
@@ -453,9 +453,9 @@ let env_rel_sound_merge0 = prove
       REWRITE_TAC[ADD_CLAUSES];
       ALL_TAC] THEN
     MAP_EVERY EXISTS_TAC [`0`; `convert_t (t_walkstar (s:(num,infer_t)fmap) z)`] THEN
-    REWRITE_TAC[lookup_var_def; lookup_varE_def] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[lookup_var_def; lookup_varE_def] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[tveLookup_bvl; convert_env_def; NSPAUX_ALOOKUP_MAP] THEN
-    ASM_REWRITE_TAC[OPTION_MAP_DEF] THEN CASE_REWRITE_TAC[deBruijn_inc0; ADD_CLAUSES] THEN
+    ASM_REWRITE_TAC[OPTION_MAP_DEF] THEN CAKE_REWRITE_TAC[deBruijn_inc0; ADD_CLAUSES] THEN
     FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP check_t_empty_unconvert_convert_id th]) THEN
     ASM_SIMP_TAC[check_t_to_check_freevars; tscheme_approx0];
     FIRST_X_ASSUM(MP_TAC o SPECL [`y:(mlstring,mlstring)id`; `ts:num#infer_t`]) THEN
@@ -467,8 +467,8 @@ let env_rel_sound_merge0 = prove
     MATCH_MP_TAC id_INDUCT THEN
     REWRITE_TAC[lookup_var_def; lookup_varE_def; tveLookup_bvl; convert_env_def;
                 NSPAUX_ALOOKUP_MAP; injectivity "id"; distinctness "id"] THEN
-    CASE_REWRITE_TAC[] THEN REPEAT STRIP_TAC THEN
-    ASM_SIMP_TAC[OPTION_MAP_DEF] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]]);;
+    CAKE_REWRITE_TAC[] THEN REPEAT STRIP_TAC THEN
+    ASM_SIMP_TAC[OPTION_MAP_DEF] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]]);;
 
 let env_rel_e_sound_letrec_merge0 = prove
  (CASE_TERM `!(funs:(mlstring#mlstring#exp)list) ienv tenv tenvE (s:(num,infer_t)fmap) uvs.
@@ -478,7 +478,7 @@ let env_rel_e_sound_letrec_merge0 = prove
      env_rel_sound s ienv tenv tenvE
      ==> env_rel_sound s
            (inf_env_inf_v_fupd
-              (K (nsAppend
+              (combin_K (nsAppend
                     (alist_to_ns
                        (MAP2 (\fxe uvar. match fxe with (f,x,e) -> (f,(0,uvar)))
                           funs (MAP (\n. Infer_Tuvar (uvs + n)) (COUNT_LIST (LENGTH funs)))))
@@ -496,7 +496,7 @@ let env_rel_e_sound_letrec_merge0 = prove
   SPEC_TAC(`h:mlstring#mlstring#exp`,`h:mlstring#mlstring#exp`) THEN
   REWRITE_TAC[FORALL_PAIR_THM] THEN
   MAP_EVERY X_GEN_TAC [`f:mlstring`; `x:mlstring`; `e:exp`] THEN
-  REWRITE_TAC[LENGTH; COUNT_LIST_def; MAP; MAP2] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[LENGTH; COUNT_LIST_def; MAP; MAP2] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[alist_to_ns_cons; nsAppend_nsBind; bind_var_list_def; MAP_MAP_o; o_DEF;
               ADD_CLAUSES] THEN
   REPEAT GEN_TAC THEN STRIP_TAC THEN
@@ -528,7 +528,7 @@ let env_rel_complete_lookup_none = prove
      ==> nsLookup (type_env_v tenv) x = NONE`,
   REWRITE_TAC[env_rel_complete_def; lookup_var_def] THEN REPEAT STRIP_TAC THEN
   FIRST_X_ASSUM(MP_TAC o SPEC `x:(mlstring,mlstring)id`) THEN
-  CASES_ON `lookup_varE (x:(mlstring,mlstring)id) tenvE` THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON `lookup_varE (x:(mlstring,mlstring)id) tenvE` THEN CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[option_DISTINCT] THEN
   CASES_ON `nsLookup (type_env_v tenv) (x:(mlstring,mlstring)id)` THEN
   REWRITE_TAC[] THEN
@@ -566,7 +566,7 @@ let _ = cake_add_simps [lookup_varE_empty];;
 
 let INFER1AUX_lookup_var_Empty = prove
  (`!x tenv. lookup_var x Empty tenv = nsLookup (type_env_v tenv) x`,
-  REWRITE_TAC[lookup_var_def; lookup_varE_empty] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[lookup_var_def; lookup_varE_empty] THEN CAKE_REWRITE_TAC[]);;
 
 let INFER1AUX_EXISTS_SOME = prove
  (`!x:A option. (?e. x = SOME e) <=> ~(x = NONE)`,
@@ -646,12 +646,12 @@ let env_rel_lift = prove
     REWRITE_TAC[tenv_ok_def; tenv_val_ok_def; tenv_ctor_ok_def; tenv_abbrev_ok_def;
                 type_env_INFO.ri_accessors; nsAll_nsLift];
     LIST_INDUCT_TAC THEN REWRITE_TAC[nsLookupMod_nsLift] THEN
-    CASE_REWRITE_TAC[option_DISTINCT] THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[];
+    CAKE_REWRITE_TAC[option_DISTINCT] THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[];
     MATCH_MP_TAC id_INDUCT THEN REWRITE_TAC[nsLookup_nsLift] THEN
-    CASE_REWRITE_TAC[option_DISTINCT] THEN REPEAT GEN_TAC THEN DISCH_TAC THEN GEN_TAC THEN
+    CAKE_REWRITE_TAC[option_DISTINCT] THEN REPEAT GEN_TAC THEN DISCH_TAC THEN GEN_TAC THEN
     COND_CASES_TAC THEN ASM_REWRITE_TAC[option_DISTINCT];
     MATCH_MP_TAC id_INDUCT THEN REWRITE_TAC[nsLookup_nsLift] THEN
-    CASE_REWRITE_TAC[option_DISTINCT] THEN REPEAT GEN_TAC THEN DISCH_TAC THEN
+    CAKE_REWRITE_TAC[option_DISTINCT] THEN REPEAT GEN_TAC THEN DISCH_TAC THEN
     REPEAT GEN_TAC THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[option_DISTINCT]]);;
 
 let ienv_to_tenv_def = cake_def
@@ -679,7 +679,7 @@ let INFER1AUX_ienv_ok_lookup = prove
   MP_TAC(ISPECL [`inf_env_inf_v ienv`; `x:(mlstring,mlstring)id`] nsLookup_nsAll) THEN
   DISCH_THEN(fun th -> FIRST_ASSUM(MP_TAC o MATCH_MP (REWRITE_RULE[IMP_CONJ] th))) THEN
   DISCH_THEN(MP_TAC o SPEC `(tvs:num,t:infer_t)`) THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[]);;
 
 let INFER1AUX_nsAll_mono = prove
  (`!P Q (e:(M,N,V)namespace). nsAll P e ==> (!id x. P id x ==> Q id x) ==> nsAll Q e`,
@@ -697,7 +697,7 @@ let env_rel_ienv_to_tenv = prove
                 ienv_val_ok_def; nsAll_nsMap] THEN
     STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
     FIRST_ASSUM(MATCH_MP_TAC o MATCH_MP INFER1AUX_nsAll_mono) THEN
-    REWRITE_TAC[FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[FORALL_PAIR_THM] THEN CAKE_REWRITE_TAC[] THEN
     REPEAT STRIP_TAC THEN MATCH_MP_TAC check_t_to_check_freevars THEN ASM_REWRITE_TAC[];
     MAP_EVERY X_GEN_TAC [`x:(mlstring,mlstring)id`; `ts:num#infer_t`] THEN
     SPEC_TAC(`ts:num#infer_t`,`ts:num#infer_t`) THEN REWRITE_TAC[FORALL_PAIR_THM] THEN
@@ -707,11 +707,11 @@ let env_rel_ienv_to_tenv = prove
     MAP_EVERY EXISTS_TAC [`tvs:num`; `convert_t t`] THEN
     FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP check_t_empty_unconvert_convert_id th]) THEN
     ASM_SIMP_TAC[check_t_to_check_freevars; tscheme_approx_refl] THEN
-    EXISTS_TAC `(tvs:num,t:infer_t)` THEN CASE_REWRITE_TAC[];
+    EXISTS_TAC `(tvs:num,t:infer_t)` THEN CAKE_REWRITE_TAC[];
     REPEAT GEN_TAC THEN DISCH_THEN(X_CHOOSE_THEN `z:num#infer_t` MP_TAC) THEN
     MP_TAC(ISPEC `z:num#infer_t` PAIR_SURJECTIVE) THEN
     DISCH_THEN(X_CHOOSE_THEN `q:num` (X_CHOOSE_THEN `r:infer_t` SUBST1_TAC)) THEN
-    CASE_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN
+    CAKE_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN
     SUBGOAL_THEN `check_t q {} (r:infer_t)` ASSUME_TAC THENL
      [ASM_MESON_TAC[INFER1AUX_ienv_ok_lookup]; ALL_TAC] THEN
     ASM_REWRITE_TAC[] THEN
@@ -740,7 +740,7 @@ let INFER1AUX_tenv_ok_lookup = prove
   MP_TAC(ISPECL [`type_env_v tenv`; `x:(mlstring,mlstring)id`] nsLookup_nsAll) THEN
   DISCH_THEN(fun th -> FIRST_ASSUM(MP_TAC o MATCH_MP (REWRITE_RULE[IMP_CONJ] th))) THEN
   DISCH_THEN(MP_TAC o SPEC `(tvs:num,t:t)`) THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[]);;
 
 let env_rel_tenv_to_ienv = prove
  (`!tenv. tenv_ok tenv ==> envRel_env_rel tenv (tenv_to_ienv tenv)`,
@@ -754,19 +754,19 @@ let env_rel_tenv_to_ienv = prove
                 ienv_val_ok_def; nsAll_nsMap] THEN
     STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
     FIRST_ASSUM(MATCH_MP_TAC o MATCH_MP INFER1AUX_nsAll_mono) THEN
-    REWRITE_TAC[FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[FORALL_PAIR_THM] THEN CAKE_REWRITE_TAC[] THEN
     REPEAT STRIP_TAC THEN MATCH_MP_TAC check_freevars_to_check_t THEN ASM_REWRITE_TAC[];
     REPEAT GEN_TAC THEN DISCH_THEN(X_CHOOSE_THEN `z:num#t` MP_TAC) THEN
     MP_TAC(ISPEC `z:num#t` PAIR_SURJECTIVE) THEN
     DISCH_THEN(X_CHOOSE_THEN `q:num` (X_CHOOSE_THEN `r:t` SUBST1_TAC)) THEN
-    CASE_REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
     MAP_EVERY EXISTS_TAC [`q:num`; `r:t`] THEN ASM_REWRITE_TAC[tscheme_approx_refl] THEN
     ASM_MESON_TAC[INFER1AUX_tenv_ok_lookup];
     REPEAT STRIP_TAC THENL
      [EXISTS_TAC `tvs:num` THEN ASM_MESON_TAC[INFER1AUX_tenv_ok_lookup];
       MAP_EVERY EXISTS_TAC [`tvs:num`; `unconvert_t t`] THEN
       REWRITE_TAC[tscheme_approx_refl] THEN
-      EXISTS_TAC `(tvs:num,t:t)` THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]]]);;
+      EXISTS_TAC `(tvs:num,t:t)` THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]]]);;
 
 let tenv_to_ienv_lift = prove
  (`!mn tenv. tenv_to_ienv (tenvLift mn tenv) = lift_ienv mn (tenv_to_ienv tenv)`,

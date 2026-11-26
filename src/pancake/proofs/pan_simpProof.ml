@@ -68,7 +68,7 @@ let evaluate_seq_skip = prove
  (`!p (s:(A,FFI)pan_state). pan_evaluate (panLang_Seq p panLang_Skip,s) = pan_evaluate (p,s)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[pan_evaluate_def] THEN
   PAIR_CASES_ON `pan_evaluate (p:(A)panLang_prog,s:(A,FFI)pan_state)` THEN
-  CASE_REWRITE_TAC[] THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[] THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[]);;
 
 let evaluate_skip_seq = prove
  (`pan_evaluate (panLang_Seq panLang_Skip p,s:(A,FFI)pan_state) = pan_evaluate (p,s)`,
@@ -99,9 +99,9 @@ let evaluate_while_no_error_imp = prove
    ~(FST (pan_evaluate (c,pan_dec_clock s)) = SOME pan_Error)`,
   STRIP_TAC THEN
   UNDISCH_TAC `~(FST (pan_evaluate (While e c,s:(A,FFI)pan_state)) = SOME pan_Error)` THEN
-  ONCE_REWRITE_TAC[pan_evaluate_def] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ONCE_REWRITE_TAC[pan_evaluate_def] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   PAIR_CASES_ON `pan_evaluate (c:(A)panLang_prog,pan_dec_clock (s:(A,FFI)pan_state))` THEN
-  CASE_REWRITE_TAC[] THEN REPEAT TOP_CASE_TAC THEN FS[]);;
+  CAKE_REWRITE_TAC[] THEN REPEAT TOP_CASE_TAC THEN FS[]);;
 
 (* evaluate_seq_assoc: two helpers for HOL4's case analysis of the clauses *)
 
@@ -115,7 +115,7 @@ let PPASS1AUX_evaluate_seq_seq = prove
    pan_evaluate (panLang_Seq p (panLang_Seq q r),s)`,
   REWRITE_TAC[pan_evaluate_def] THEN
   PAIR_CASES_ON `pan_evaluate (p:(A)panLang_prog,s:(A,FFI)pan_state)` THEN
-  CASE_REWRITE_TAC[] THEN COND_CASES_TAC THEN CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN COND_CASES_TAC THEN CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[]);;
 
 let evaluate_seq_assoc = prove
@@ -140,11 +140,11 @@ let evaluate_seq_assoc = prove
     (* Call (SOME (rv,exp)) *)
     GEN_TAC THEN MATCH_MP_TAC PPASS1AUX_evaluate_seq_cong THEN GEN_TAC THEN
     QCASES_ON "exp:(mlstring#mlstring#(A)panLang_prog)option" THEN
-    CASE_REWRITE_TAC[] THEN
-    PAIR_CASES_ON `a:mlstring#mlstring#(A)panLang_prog` THEN CASE_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN
+    PAIR_CASES_ON `a:mlstring#mlstring#(A)panLang_prog` THEN CAKE_REWRITE_TAC[] THEN
     FIRST_X_ASSUM(MP_TAC o SPECL [`a0:mlstring`; `a1:mlstring`; `a2:(A)panLang_prog`]) THEN
     REWRITE_TAC[] THEN DISCH_TAC THEN
-    REWRITE_TAC[pan_evaluate_def] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[pan_evaluate_def] THEN CAKE_REWRITE_TAC[] THEN
     ASM_REWRITE_TAC[evaluate_skip_seq];
     (* DecCall *)
     GEN_TAC THEN MATCH_MP_TAC PPASS1AUX_evaluate_seq_cong THEN GEN_TAC THEN
@@ -152,7 +152,7 @@ let evaluate_seq_assoc = prove
     (* Annot *)
     REWRITE_TAC[pan_evaluate_def] THEN
     PAIR_CASES_ON `pan_evaluate (p:(A)panLang_prog,s:(A,FFI)pan_state)` THEN
-    CASE_REWRITE_TAC[] THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[]]);;
+    CAKE_REWRITE_TAC[] THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[]]);;
 
 (* evaluate_seq_call_ret_eq: the one case where seq_call_ret changes the     *)
 (* program (HOL4: fs [evaluate_def] >> every_case_tac >> ...)                *)
@@ -165,7 +165,7 @@ let PPASS1AUX_evaluate_tail_call = prove
    pan_evaluate (panLang_Call NONE trgt args,s) =
    pan_evaluate (panLang_Seq (panLang_Call (SOME (SOME (panLang_Local,rv),NONE)) trgt args)
                              (panLang_Return (panLang_Var panLang_Local rv)),s)`,
-  REWRITE_TAC[pan_evaluate_def; LET_DEF; LET_END_DEF] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[pan_evaluate_def; LET_DEF; LET_END_DEF] THEN CAKE_REWRITE_TAC[] THEN
   EVERY_CASE_TAC THEN FS[] THEN
   FS[pan_empty_locals_def; kvar_defs] THEN FS[pan_eval_def; FLOOKUP_UPDATE]);;
 
@@ -181,7 +181,7 @@ let evaluate_seq_no_error_fst = prove
    ~(FST (pan_evaluate (p,s)) = SOME pan_Error)`,
   REWRITE_TAC[pan_evaluate_def] THEN
   PAIR_CASES_ON `pan_evaluate (p:(A)panLang_prog,s:(A,FFI)pan_state)` THEN
-  CASE_REWRITE_TAC[] THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[option_DISTINCT]);;
+  CAKE_REWRITE_TAC[] THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[option_DISTINCT]);;
 
 let eval_seq_assoc_eq_evaluate = prove
  (`pan_evaluate (seq_assoc panLang_Skip p,s:(A,FFI)pan_state) = (res,t) ==>
@@ -210,7 +210,7 @@ let ret_to_tail_correct = prove
      UNDISCH_TAC `~(FST (pan_evaluate (panLang_Seq c1 c2,s:(A,FFI)pan_state)) = SOME pan_Error)` THEN
      REWRITE_TAC[pan_evaluate_def] THEN RFS[] THEN
      PAIR_CASES_ON `pan_evaluate (c1:(A)panLang_prog,s:(A,FFI)pan_state)` THEN
-     CASE_REWRITE_TAC[] THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
+     CAKE_REWRITE_TAC[] THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
      RVEQ_TAC THEN ASM_MESON_TAC[];
      ALL_TAC] THEN
    MATCH_MP_TAC EQ_TRANS THEN
@@ -232,12 +232,12 @@ let ret_to_tail_correct = prove
      ALL_TAC] THEN
    RFS[] THEN
    PAIR_CASES_ON `pan_evaluate (c:(A)panLang_prog,pan_dec_clock (s:(A,FFI)pan_state))` THEN
-   CASE_REWRITE_TAC[] THEN REPEAT(TOP_CASE_TAC THEN CASE_REWRITE_TAC[])) THEN
+   CAKE_REWRITE_TAC[] THEN REPEAT(TOP_CASE_TAC THEN CAKE_REWRITE_TAC[])) THEN
     (SUBGOAL_THEN `~(FST (pan_evaluate (While e c,p1:(A,FFI)pan_state)) =
                    SOME (pan_Error:(A)pan_result))` ASSUME_TAC THENL
     [UNDISCH_TAC `~(FST (pan_evaluate (While e c,s:(A,FFI)pan_state)) = SOME pan_Error)` THEN
      GEN_REWRITE_TAC (LAND_CONV o RAND_CONV o LAND_CONV o RAND_CONV) [pan_evaluate_def] THEN
-     ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[];
+     ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[];
      RFS[]]);
     (* Call *)
     RW[] THEN FS[ret_to_tail_def; pan_evaluate_def] THEN EVERY_CASE_TAC THEN
@@ -265,7 +265,7 @@ let evaluate_seq_simp = prove
 
 let pan_simpProof_state_rel_def = cake_def
  `pan_simpProof_state_rel (s:(A,FFI)pan_state) t c <=>
-    t = pan_state_code_fupd (K c) s /\
+    t = pan_state_code_fupd (combin_K c) s /\
     (!f. FLOOKUP (pan_state_code s) f = NONE ==> FLOOKUP c f = NONE) /\
     (!f vshs prog rshape.
        FLOOKUP (pan_state_code s) f = SOME (vshs,prog,rshape) ==>
@@ -273,7 +273,7 @@ let pan_simpProof_state_rel_def = cake_def
 
 let pan_simpProof_state_rel_intro = prove
  (`!(s:(A,FFI)pan_state) t c. pan_simpProof_state_rel s t c ==>
-     t = pan_state_code_fupd (K c) s /\
+     t = pan_state_code_fupd (combin_K c) s /\
      (!f vshs prog rshape.
         FLOOKUP (pan_state_code s) f = SOME (vshs,prog,rshape) ==>
         FLOOKUP c f = SOME (vshs,pan_simp_compile prog,rshape))`,
@@ -281,7 +281,7 @@ let pan_simpProof_state_rel_intro = prove
 
 let state_rel_upd_inv = prove
  (`pan_simpProof_state_rel (s:(A,FFI)pan_state) t code ==>
-   ?s_code. s = pan_state_code_fupd (K s_code) t`,
+   ?s_code. s = pan_state_code_fupd (combin_K s_code) t`,
   RW[pan_simpProof_state_rel_def] THEN EXISTS_TAC `pan_state_code (s:(A,FFI)pan_state)` THEN
   SIMP[pan_state_component_equality]);;
 
@@ -358,9 +358,9 @@ let PPASS1AUX_state_rel_lookup_code = prove
   REWRITE_TAC[pan_lookup_code_def; pan_simpProof_state_rel_def] THEN STRIP_TAC THEN
   POP_ASSUM MP_TAC THEN
   QCASES_ON "FLOOKUP (pan_state_code (s:(A,FFI)pan_state)) fname" THEN
-  CASE_REWRITE_TAC[option_DISTINCT] THEN
+  CAKE_REWRITE_TAC[option_DISTINCT] THEN
   PAIR_CASES_ON `a:(mlstring#shape)list#(A)panLang_prog#shape` THEN
-  RES_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  RES_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   COND_CASES_TAC THEN REWRITE_TAC[option_INJ; option_DISTINCT; PAIR_EQ] THEN
   MESON_TAC[]);;
 
@@ -385,7 +385,7 @@ let PPASS1AUX_state_rel_globals = prove
 
 
 let PPASS1AUX_eval_upd_code_eq_fun = prove
- (`!(t:(A,FFI)pan_state) c. pan_eval (pan_state_code_fupd (K c) t) = pan_eval t`,
+ (`!(t:(A,FFI)pan_state) c. pan_eval (pan_state_code_fupd (combin_K c) t) = pan_eval t`,
   REWRITE_TAC[FUN_EQ_THM; eval_upd_code_eq]);;
 let PPASS1AUX_LOCAL_TAC : tactic =
   REPEAT GEN_TAC THEN STRIP_TAC THEN
@@ -397,7 +397,7 @@ let PPASS1AUX_LOCAL_TAC : tactic =
               LET_DEF; LET_END_DEF; pan_sh_mem_load_def; pan_sh_mem_store_def;
               kvar_defs] THEN
   SIMP[] THEN REWRITE_TAC[eval_upd_code_eq; PPASS1AUX_eval_upd_code_eq_fun] THEN
-  REPEAT(TOP_CASE_TAC THEN CASE_REWRITE_TAC[]) THEN
+  REPEAT(TOP_CASE_TAC THEN CAKE_REWRITE_TAC[]) THEN
   REWRITE_TAC[PAIR_EQ] THEN REPEAT STRIP_TAC THEN RVEQ_TAC THEN
   FS[pan_simpProof_state_rel_def; pan_empty_locals_def] THEN
   FS[pan_state_component_equality];;
@@ -440,7 +440,7 @@ let PPASS1AUX_DECCALL_CONT_TAC : tactic =
     check (fun th -> is_forall(concl th) && length(fst(strip_forall(concl th))) = 4)) THEN
   ASM_REWRITE_TAC[] THEN
   DISCH_THEN(MP_TAC o SPECL [`x:((A)pan_result)option`; `y:(A,FFI)pan_state`;
-    `pan_set_var rt a''' (pan_state_locals_fupd (K (pan_state_locals (s:(A,FFI)pan_state)))
+    `pan_set_var rt a''' (pan_state_locals_fupd (combin_K (pan_state_locals (s:(A,FFI)pan_state)))
                             (t1:(A,FFI)pan_state))`]) THEN
   ANTS_TAC THENL
    [ASM_REWRITE_TAC[] THEN REWRITE_TAC[pan_set_var_def] THEN
@@ -470,7 +470,7 @@ let pan_simpProof_compile_correct = prove
      (ASSUME `pan_eval (s:(A,FFI)pan_state) e = SOME a`)) THEN DISCH_TAC THEN
    GVS[COND_CASE_EQ] THEN REPEAT(PAIRARG_TAC THEN FS[] THEN RVEQ_TAC THEN FS[])) THEN
     (FIRST_X_ASSUM(MP_TAC o
-     SPEC `pan_state_locals_fupd (K (pan_state_locals t |+ (v,a:(A)pan_v)))
+     SPEC `pan_state_locals_fupd (combin_K (pan_state_locals t |+ (v,a:(A)pan_v)))
              (t:(A,FFI)pan_state)` o check (is_forall o concl)) THEN
    ANTS_TAC THENL
     [ASM_REWRITE_TAC[] THEN FS[pan_simpProof_state_rel_def; pan_state_component_equality];
@@ -511,7 +511,7 @@ let pan_simpProof_compile_correct = prove
     (REPEAT GEN_TAC THEN STRIP_TAC THEN REPEAT GEN_TAC THEN STRIP_TAC THEN
    UNDISCH_TAC `pan_evaluate (While e c,s:(A,FFI)pan_state) = (res,s1)` THEN
    GEN_REWRITE_TAC (LAND_CONV o LAND_CONV) [pan_evaluate_def] THEN
-   QCASES_ON "pan_eval (s:(A,FFI)pan_state) e" THEN CASE_REWRITE_TAC[] THENL
+   QCASES_ON "pan_eval (s:(A,FFI)pan_state) e" THEN CAKE_REWRITE_TAC[] THENL
     [ASM_REWRITE_TAC[PAIR_EQ] THEN ASM_MESON_TAC[]; ALL_TAC] THEN
    FIRST_ASSUM(MP_TAC o MATCH_MP compile_eval_correct o CONJ
      (ASSUME `pan_eval (s:(A,FFI)pan_state) e = SOME a`)) THEN DISCH_TAC THEN
@@ -523,10 +523,10 @@ let pan_simpProof_compile_correct = prove
      SIMP[];
      ALL_TAC] THEN
    GEN_REWRITE_TAC (RAND_CONV o BINDER_CONV o LAND_CONV o LAND_CONV) [pan_evaluate_def] THEN
-   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]) THEN
-    (QCASES_ON "a:(A)pan_v" THEN CASE_REWRITE_TAC[] THEN
+   ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]) THEN
+    (QCASES_ON "a:(A)pan_v" THEN CAKE_REWRITE_TAC[] THEN
    TRY(REWRITE_TAC[PAIR_EQ] THEN ASM_MESON_TAC[] THEN NO_TAC) THEN
-   QCASES_ON "a':(A)word_lab" THEN CASE_REWRITE_TAC[] THEN
+   QCASES_ON "a':(A)word_lab" THEN CAKE_REWRITE_TAC[] THEN
    ASM_CASES_TAC `a'':A word = word 0` THEN ASM_REWRITE_TAC[PAIR_EQ] THENL
     [STRIP_TAC THEN EXISTS_TAC `t:(A,FFI)pan_state` THEN ASM_MESON_TAC[]; ALL_TAC] THEN
    ASM_CASES_TAC `pan_state_clock (s:(A,FFI)pan_state) = 0` THEN ASM_REWRITE_TAC[PAIR_EQ] THENL
@@ -534,17 +534,17 @@ let pan_simpProof_compile_correct = prove
      ASM_MESON_TAC[PPASS1AUX_state_rel_empty_locals];
      ALL_TAC]) THEN
     (PAIR_CASES_ON `pan_evaluate (c:(A)panLang_prog,pan_dec_clock (s:(A,FFI)pan_state))` THEN
-   CASE_REWRITE_TAC[] THEN
+   CAKE_REWRITE_TAC[] THEN
    ASM_CASES_TAC `p0 = SOME (pan_Error:(A)pan_result)` THENL
-    [ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[PAIR_EQ] THEN ASM_MESON_TAC[]; ALL_TAC] THEN
+    [ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[PAIR_EQ] THEN ASM_MESON_TAC[]; ALL_TAC] THEN
    FIRST_X_ASSUM(MP_TAC o SPEC `a'':A word`) THEN ASM_REWRITE_TAC[] THEN
    DISCH_THEN(MP_TAC o SPECL [`p0:((A)pan_result)option`; `p1:(A,FFI)pan_state`;
                                `pan_dec_clock (t:(A,FFI)pan_state)`]) THEN
    ASM_SIMP_TAC[PPASS1AUX_state_rel_dec_clock] THEN
    DISCH_THEN(X_CHOOSE_THEN `t1:(A,FFI)pan_state` STRIP_ASSUME_TAC) THEN
-   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]) THEN
-    (QCASES_ON "p0:((A)pan_result)option" THEN CASE_REWRITE_TAC[] THEN
-   TRY(TOP_CASE_TAC THEN CASE_REWRITE_TAC[]) THEN
+   ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]) THEN
+    (QCASES_ON "p0:((A)pan_result)option" THEN CAKE_REWRITE_TAC[] THEN
+   TRY(TOP_CASE_TAC THEN CAKE_REWRITE_TAC[]) THEN
    REWRITE_TAC[PAIR_EQ] THEN
    FIRST
     [DISCH_TAC THEN FIRST_X_ASSUM(fun th ->
@@ -569,20 +569,20 @@ let pan_simpProof_compile_correct = prove
    UNDISCH_TAC `pan_evaluate (panLang_Call caltyp fname argexps,s:(A,FFI)pan_state) = (res,s1)` THEN
    GEN_REWRITE_TAC (LAND_CONV o LAND_CONV) [pan_evaluate_def] THEN
    GEN_REWRITE_TAC (RAND_CONV o BINDER_CONV o LAND_CONV o LAND_CONV) [pan_evaluate_def] THEN
-   QCASES_ON "OPT_MMAP (pan_eval (s:(A,FFI)pan_state)) argexps" THEN CASE_REWRITE_TAC[] THENL
+   QCASES_ON "OPT_MMAP (pan_eval (s:(A,FFI)pan_state)) argexps" THEN CAKE_REWRITE_TAC[] THENL
     [REWRITE_TAC[PAIR_EQ] THEN ASM_MESON_TAC[]; ALL_TAC]) THEN
     (FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP PPASS1AUX_state_rel_fields) THEN
    MP_TAC(INST [`argexps:((A)panLang_exp)list`,`es:((A)panLang_exp)list`;
                 `a:((A)pan_v)list`,`vs:((A)pan_v)list`]
             (REWRITE_RULE[ETA_AX] OPT_MMAP_eval_some_eq)) THEN
-   ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN CASE_REWRITE_TAC[] THEN
+   ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN CAKE_REWRITE_TAC[] THEN
    QCASES_ON "pan_lookup_code (pan_state_code (s:(A,FFI)pan_state)) fname a" THEN
-   CASE_REWRITE_TAC[] THENL [REWRITE_TAC[PAIR_EQ] THEN ASM_MESON_TAC[]; ALL_TAC] THEN
+   CAKE_REWRITE_TAC[] THENL [REWRITE_TAC[PAIR_EQ] THEN ASM_MESON_TAC[]; ALL_TAC] THEN
    PAIR_CASES_ON `a':(A)panLang_prog#((mlstring,(A)pan_v)fmap)#shape` THEN
    FIRST_ASSUM(MP_TAC o MATCH_MP PPASS1AUX_state_rel_lookup_code o
      C CONJ (ASSUME `pan_lookup_code (pan_state_code (s:(A,FFI)pan_state)) fname a =
                      SOME (a'0,a'1,a'2)`)) THEN
-   DISCH_THEN SUBST1_TAC THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
+   DISCH_THEN SUBST1_TAC THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
    ASM_CASES_TAC `pan_state_clock (s:(A,FFI)pan_state) = 0` THEN ASM_REWRITE_TAC[] THENL
     [REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN
      EXISTS_TAC `pan_empty_locals (t:(A,FFI)pan_state)` THEN
@@ -591,12 +591,12 @@ let pan_simpProof_compile_correct = prove
    REWRITE_TAC[LET_DEF; LET_END_DEF]) THEN
     (REWRITE_TAC[pan_is_valid_value_def; pan_lookup_kvar_def] THEN ASM_REWRITE_TAC[] THEN
    PAIR_CASES_ON `pan_evaluate (a'0:(A)panLang_prog,
-                    pan_state_locals_fupd (K a'1) (pan_dec_clock (s:(A,FFI)pan_state)))` THEN
-   CASE_REWRITE_TAC[] THEN
+                    pan_state_locals_fupd (combin_K a'1) (pan_dec_clock (s:(A,FFI)pan_state)))` THEN
+   CAKE_REWRITE_TAC[] THEN
    ASM_CASES_TAC `p0 = NONE \/ p0 = SOME (pan_Error:(A)pan_result) \/
                   p0 = SOME pan_Break \/ p0 = SOME pan_Continue` THENL
     [FIRST_X_ASSUM(REPEAT_TCL DISJ_CASES_THEN SUBST_ALL_TAC) THEN
-     CASE_REWRITE_TAC[PAIR_EQ] THEN ASM_MESON_TAC[];
+     CAKE_REWRITE_TAC[PAIR_EQ] THEN ASM_MESON_TAC[];
      ALL_TAC] THEN
    FIRST_X_ASSUM(STRIP_ASSUME_TAC o REWRITE_RULE[DE_MORGAN_THM]) THEN
    FIRST_X_ASSUM(MP_TAC o SPECL [`a:((A)pan_v)list`; `a'2:shape`; `a'0:(A)panLang_prog`;
@@ -605,33 +605,33 @@ let pan_simpProof_compile_correct = prove
                                   length(fst(strip_forall(concl th))) = 4)) THEN
    ASM_REWRITE_TAC[] THEN
    DISCH_THEN(MP_TAC o SPECL [`p0:((A)pan_result)option`; `p1:(A,FFI)pan_state`;
-     `pan_state_locals_fupd (K a'1) (pan_dec_clock (t:(A,FFI)pan_state))`]) THEN
+     `pan_state_locals_fupd (combin_K a'1) (pan_dec_clock (t:(A,FFI)pan_state))`]) THEN
    FS[PPASS1AUX_state_rel_locals; PPASS1AUX_state_rel_dec_clock] THEN
    DISCH_THEN(X_CHOOSE_THEN `t1:(A,FFI)pan_state` STRIP_ASSUME_TAC) THEN
    FIRST_ASSUM(MP_TAC o MATCH_MP evaluate_seq_simp o C CONJ
      (ASSUME `~(p0 = SOME (pan_Error:(A)pan_result))`)) THEN
-   DISCH_THEN SUBST1_TAC THEN CASE_REWRITE_TAC[]) THEN
-    (REPEAT(TOP_CASE_TAC THEN CASE_REWRITE_TAC[]) THEN REWRITE_TAC[PAIR_EQ]) THEN
+   DISCH_THEN SUBST1_TAC THEN CAKE_REWRITE_TAC[]) THEN
+    (REPEAT(TOP_CASE_TAC THEN CAKE_REWRITE_TAC[]) THEN REWRITE_TAC[PAIR_EQ]) THEN
     FIRST [PPASS1AUX_CALL_HANDLER_TAC; PPASS1AUX_CALL_CLOSE_TAC];
     (* DecCall *)
     (REPEAT GEN_TAC THEN STRIP_TAC THEN REPEAT GEN_TAC THEN STRIP_TAC THEN
    UNDISCH_TAC `pan_evaluate (DecCall rt shape fname argexps prog1,s:(A,FFI)pan_state) = (res,s1)` THEN
    GEN_REWRITE_TAC (LAND_CONV o LAND_CONV) [pan_evaluate_def] THEN
    GEN_REWRITE_TAC (RAND_CONV o BINDER_CONV o LAND_CONV o LAND_CONV) [pan_evaluate_def] THEN
-   QCASES_ON "OPT_MMAP (pan_eval (s:(A,FFI)pan_state)) argexps" THEN CASE_REWRITE_TAC[] THENL
+   QCASES_ON "OPT_MMAP (pan_eval (s:(A,FFI)pan_state)) argexps" THEN CAKE_REWRITE_TAC[] THENL
     [REWRITE_TAC[PAIR_EQ] THEN ASM_MESON_TAC[]; ALL_TAC]) THEN
     (FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP PPASS1AUX_state_rel_fields) THEN
    MP_TAC(INST [`argexps:((A)panLang_exp)list`,`es:((A)panLang_exp)list`;
                 `a:((A)pan_v)list`,`vs:((A)pan_v)list`]
             (REWRITE_RULE[ETA_AX] OPT_MMAP_eval_some_eq)) THEN
-   ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN CASE_REWRITE_TAC[] THEN
+   ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN CAKE_REWRITE_TAC[] THEN
    QCASES_ON "pan_lookup_code (pan_state_code (s:(A,FFI)pan_state)) fname a" THEN
-   CASE_REWRITE_TAC[] THENL [REWRITE_TAC[PAIR_EQ] THEN ASM_MESON_TAC[]; ALL_TAC] THEN
+   CAKE_REWRITE_TAC[] THENL [REWRITE_TAC[PAIR_EQ] THEN ASM_MESON_TAC[]; ALL_TAC] THEN
    PAIR_CASES_ON `a':(A)panLang_prog#((mlstring,(A)pan_v)fmap)#shape` THEN
    FIRST_ASSUM(MP_TAC o MATCH_MP PPASS1AUX_state_rel_lookup_code o
      C CONJ (ASSUME `pan_lookup_code (pan_state_code (s:(A,FFI)pan_state)) fname a =
                      SOME (a'0,a'1,a'2)`)) THEN
-   DISCH_THEN SUBST1_TAC THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
+   DISCH_THEN SUBST1_TAC THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
    ASM_CASES_TAC `pan_state_clock (s:(A,FFI)pan_state) = 0` THEN ASM_REWRITE_TAC[] THENL
     [REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN
      EXISTS_TAC `pan_empty_locals (t:(A,FFI)pan_state)` THEN
@@ -640,12 +640,12 @@ let pan_simpProof_compile_correct = prove
    REWRITE_TAC[LET_DEF; LET_END_DEF]) THEN
     (REWRITE_TAC[pan_is_valid_value_def; pan_lookup_kvar_def] THEN ASM_REWRITE_TAC[] THEN
    PAIR_CASES_ON `pan_evaluate (a'0:(A)panLang_prog,
-                    pan_state_locals_fupd (K a'1) (pan_dec_clock (s:(A,FFI)pan_state)))` THEN
-   CASE_REWRITE_TAC[] THEN
+                    pan_state_locals_fupd (combin_K a'1) (pan_dec_clock (s:(A,FFI)pan_state)))` THEN
+   CAKE_REWRITE_TAC[] THEN
    ASM_CASES_TAC `p0 = NONE \/ p0 = SOME (pan_Error:(A)pan_result) \/
                   p0 = SOME pan_Break \/ p0 = SOME pan_Continue` THENL
     [FIRST_X_ASSUM(REPEAT_TCL DISJ_CASES_THEN SUBST_ALL_TAC) THEN
-     CASE_REWRITE_TAC[PAIR_EQ] THEN ASM_MESON_TAC[];
+     CAKE_REWRITE_TAC[PAIR_EQ] THEN ASM_MESON_TAC[];
      ALL_TAC] THEN
    FIRST_X_ASSUM(STRIP_ASSUME_TAC o REWRITE_RULE[DE_MORGAN_THM]) THEN
    FIRST_X_ASSUM(MP_TAC o SPECL [`a:((A)pan_v)list`; `a'2:shape`; `a'0:(A)panLang_prog`;
@@ -654,13 +654,13 @@ let pan_simpProof_compile_correct = prove
                                   length(fst(strip_forall(concl th))) = 4)) THEN
    ASM_REWRITE_TAC[] THEN
    DISCH_THEN(MP_TAC o SPECL [`p0:((A)pan_result)option`; `p1:(A,FFI)pan_state`;
-     `pan_state_locals_fupd (K a'1) (pan_dec_clock (t:(A,FFI)pan_state))`]) THEN
+     `pan_state_locals_fupd (combin_K a'1) (pan_dec_clock (t:(A,FFI)pan_state))`]) THEN
    FS[PPASS1AUX_state_rel_locals; PPASS1AUX_state_rel_dec_clock] THEN
    DISCH_THEN(X_CHOOSE_THEN `t1:(A,FFI)pan_state` STRIP_ASSUME_TAC) THEN
    FIRST_ASSUM(MP_TAC o MATCH_MP evaluate_seq_simp o C CONJ
      (ASSUME `~(p0 = SOME (pan_Error:(A)pan_result))`)) THEN
-   DISCH_THEN SUBST1_TAC THEN CASE_REWRITE_TAC[]) THEN
-    (REPEAT(TOP_CASE_TAC THEN CASE_REWRITE_TAC[]) THEN REWRITE_TAC[PAIR_EQ]) THEN
+   DISCH_THEN SUBST1_TAC THEN CAKE_REWRITE_TAC[]) THEN
+    (REPEAT(TOP_CASE_TAC THEN CAKE_REWRITE_TAC[]) THEN REWRITE_TAC[PAIR_EQ]) THEN
     FIRST [PPASS1AUX_CALL_CLOSE_TAC; PPASS1AUX_DECCALL_CONT_TAC THEN NO_TAC];
     (* ExtCall *)
     PPASS1AUX_LOCAL_TAC]);;
@@ -710,12 +710,12 @@ let pan_simpProof_compile_prog_distinct_params = prove
 
 let PPASS1AUX_pan_semantics_cong = prove
  (`!(s:(A,FFI)pan_state) (t:(A,FFI)pan_state) start.
-     (!k. FST (pan_evaluate (panLang_Call NONE start [],pan_state_clock_fupd (K k) t)) =
-          FST (pan_evaluate (panLang_Call NONE start [],pan_state_clock_fupd (K k) s))) /\
+     (!k. FST (pan_evaluate (panLang_Call NONE start [],pan_state_clock_fupd (combin_K k) t)) =
+          FST (pan_evaluate (panLang_Call NONE start [],pan_state_clock_fupd (combin_K k) s))) /\
      (!k. pan_state_ffi
-            (SND (pan_evaluate (panLang_Call NONE start [],pan_state_clock_fupd (K k) t))) =
+            (SND (pan_evaluate (panLang_Call NONE start [],pan_state_clock_fupd (combin_K k) t))) =
           pan_state_ffi
-            (SND (pan_evaluate (panLang_Call NONE start [],pan_state_clock_fupd (K k) s))))
+            (SND (pan_evaluate (panLang_Call NONE start [],pan_state_clock_fupd (combin_K k) s))))
      ==> pan_semantics t start = pan_semantics s start`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   REWRITE_TAC[pan_semantics_def; LET_DEF; LET_END_DEF] THEN
@@ -724,7 +724,7 @@ let PPASS1AUX_pan_semantics_cong = prove
     (CASE_TERM
      `!res. (?k t' r outcome.
                pan_evaluate (panLang_Call NONE (start:mlstring) [],
-                             pan_state_clock_fupd (K k) (t:(A,FFI)pan_state)) =
+                             pan_state_clock_fupd (combin_K k) (t:(A,FFI)pan_state)) =
                  (r,t') /\
                (match r with
                   SOME (pan_FinalFFI e) -> outcome = FFI_outcome e
@@ -733,7 +733,7 @@ let PPASS1AUX_pan_semantics_cong = prove
                res = Terminate outcome (ffi_state_io_events (pan_state_ffi t'))) <=>
             (?k t' r outcome.
                pan_evaluate (panLang_Call NONE start [],
-                             pan_state_clock_fupd (K k) (s:(A,FFI)pan_state)) =
+                             pan_state_clock_fupd (combin_K k) (s:(A,FFI)pan_state)) =
                  (r,t') /\
                (match r with
                   SOME (pan_FinalFFI e) -> outcome = FFI_outcome e
@@ -751,8 +751,8 @@ let PPASS1AUX_pan_semantics_cong = prove
 
 let PPASS1AUX_state_rel_clock = prove
  (`pan_simpProof_state_rel s t (pan_state_code (t:(A,FFI)pan_state)) ==>
-   pan_simpProof_state_rel (pan_state_clock_fupd (K k) s) (pan_state_clock_fupd (K k) t)
-     (pan_state_code (pan_state_clock_fupd (K k) t))`,
+   pan_simpProof_state_rel (pan_state_clock_fupd (combin_K k) s) (pan_state_clock_fupd (combin_K k) t)
+     (pan_state_code (pan_state_clock_fupd (combin_K k) t))`,
   DISCH_TAC THEN
   FIRST_ASSUM(X_CHOOSE_THEN
     `c:(mlstring,(mlstring#shape)list#(A)panLang_prog#shape)fmap` SUBST_ALL_TAC o
@@ -775,13 +775,13 @@ let pan_simpProof_state_rel_imp_semantics = prove
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   SUBGOAL_THEN
     `!k. ?r s1 t1.
-       pan_evaluate (panLang_Call NONE start [],pan_state_clock_fupd (K k) s) = (r,s1) /\
-       pan_evaluate (panLang_Call NONE start [],pan_state_clock_fupd (K k) t) = (r,t1) /\
+       pan_evaluate (panLang_Call NONE start [],pan_state_clock_fupd (combin_K k) s) = (r,s1) /\
+       pan_evaluate (panLang_Call NONE start [],pan_state_clock_fupd (combin_K k) t) = (r,t1) /\
        pan_state_ffi t1 = pan_state_ffi (s1:(A,FFI)pan_state)`
     MP_TAC THENL
    [X_GEN_TAC `k:num` THEN
     MP_TAC(ISPEC `pan_evaluate (panLang_Call NONE start [],
-                                pan_state_clock_fupd (K k) (s:(A,FFI)pan_state))`
+                                pan_state_clock_fupd (combin_K k) (s:(A,FFI)pan_state))`
            PAIR_SURJECTIVE) THEN
     REWRITE_TAC[LEFT_IMP_EXISTS_THM] THEN
     MAP_EVERY X_GEN_TAC [`r:((A)pan_result)option`; `s1:(A,FFI)pan_state`] THEN
@@ -791,12 +791,12 @@ let pan_simpProof_state_rel_imp_semantics = prove
       REWRITE_TAC[pan_semantics_def; LET_DEF; LET_END_DEF] THEN
       COND_CASES_TAC THEN REWRITE_TAC[] THEN DISCH_TAC THEN DISCH_TAC THEN
       FIRST_X_ASSUM(MP_TAC o SPEC `k:num` o REWRITE_RULE[NOT_EXISTS_THM]) THEN
-      ASM_REWRITE_TAC[FST] THEN CASE_REWRITE_TAC[];
+      ASM_REWRITE_TAC[FST] THEN CAKE_REWRITE_TAC[];
       ALL_TAC] THEN
     MP_TAC(ISPECL [`panLang_Call NONE start []:(A)panLang_prog`;
-                   `pan_state_clock_fupd (K k) (s:(A,FFI)pan_state)`;
+                   `pan_state_clock_fupd (combin_K k) (s:(A,FFI)pan_state)`;
                    `r:((A)pan_result)option`; `s1:(A,FFI)pan_state`;
-                   `pan_state_clock_fupd (K k) (t:(A,FFI)pan_state)`]
+                   `pan_state_clock_fupd (combin_K k) (t:(A,FFI)pan_state)`]
            pan_simpProof_compile_correct) THEN
     ASM_SIMP_TAC[PPASS1AUX_state_rel_clock] THEN
     DISCH_THEN(X_CHOOSE_THEN `t1:(A,FFI)pan_state` STRIP_ASSUME_TAC) THEN
@@ -824,14 +824,14 @@ let state_rel_imp_evaluate_decls = prove
    GVS(all_case_eqs()) THENL
    [(* Decl *)
     FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP PPASS1AUX_state_rel_fields) THEN
-   SUBGOAL_THEN `pan_eval (pan_state_locals_fupd (K FEMPTY) (t:(A,FFI)pan_state)) e =
+   SUBGOAL_THEN `pan_eval (pan_state_locals_fupd (combin_K FEMPTY) (t:(A,FFI)pan_state)) e =
                  SOME (a:(A)pan_v)`
      ASSUME_TAC THENL
     [MATCH_MP_TAC compile_eval_correct THEN
-     EXISTS_TAC `pan_state_locals_fupd (K FEMPTY) (s:(A,FFI)pan_state)` THEN
+     EXISTS_TAC `pan_state_locals_fupd (combin_K FEMPTY) (s:(A,FFI)pan_state)` THEN
      ASM_REWRITE_TAC[] THEN FS[PPASS1AUX_state_rel_locals];
      ALL_TAC] THEN
-   FIRST_X_ASSUM(MP_TAC o SPEC `pan_state_globals_fupd (K (pan_state_globals t |+ (v,a:(A)pan_v)))
+   FIRST_X_ASSUM(MP_TAC o SPEC `pan_state_globals_fupd (combin_K (pan_state_globals t |+ (v,a:(A)pan_v)))
                                   (t:(A,FFI)pan_state)` o check (is_forall o concl)) THEN
    ANTS_TAC THENL [ASM_REWRITE_TAC[] THEN FS[PPASS1AUX_state_rel_globals]; ALL_TAC] THEN
    STRIP_TAC THEN EXISTS_TAC `t':(A,FFI)pan_state` THEN ASM_REWRITE_TAC[] THEN
@@ -843,7 +843,7 @@ let state_rel_imp_evaluate_decls = prove
     (* Function *)
     FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP PPASS1AUX_state_rel_fields) THEN
    FIRST_X_ASSUM(MP_TAC o SPEC
-     `pan_state_code_fupd (K (pan_state_code t |+
+     `pan_state_code_fupd (combin_K (pan_state_code t |+
         (fun_decl_name fi,fun_decl_params fi,pan_simp_compile (fun_decl_body fi),
          fun_decl_return fi))) (t:(A,FFI)pan_state)` o check (is_forall o concl)) THEN
    ANTS_TAC THENL
@@ -857,7 +857,7 @@ let state_rel_imp_evaluate_decls = prove
     (* ExnDecl *)
     FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP PPASS1AUX_state_rel_fields) THEN
    FIRST_X_ASSUM(MP_TAC o SPEC
-     `pan_state_eshapes_fupd (K (pan_state_eshapes t |+ (eid,sh)))
+     `pan_state_eshapes_fupd (combin_K (pan_state_eshapes t |+ (eid,sh)))
         (t:(A,FFI)pan_state)` o check (is_forall o concl)) THEN
    ANTS_TAC THENL
     [FIRST_ASSUM(X_CHOOSE_THEN
@@ -873,7 +873,7 @@ let decs_stcnames_compile_prog = prove
  (`!ctxt (pan_code:((A)decl)list).
      decs_stcnames ctxt (pan_simp_compile_prog pan_code) = decs_stcnames ctxt pan_code`,
   REC_IND_TAC decs_stcnames_ind THEN REWRITE_TAC[pan_simp_compile_prog_def; MAP] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[decs_stcnames_def; LET_DEF; LET_END_DEF] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[decs_stcnames_def; LET_DEF; LET_END_DEF] THEN
   REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
   REPEAT(TOP_CASE_TAC THEN ASM_REWRITE_TAC[]) THEN ASM_MESON_TAC[]);;
 
@@ -890,15 +890,15 @@ let pan_simpProof_state_rel_imp_semantics_decls = prove
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   UNDISCH_TAC `~(semantics_decls (s:(A,FFI)pan_state) start pan_code = Fail)` THEN
   REWRITE_TAC[semantics_decls_def; decs_stcnames_compile_prog] THEN
-  QCASES_ON "decs_stcnames [] (pan_code:((A)decl)list)" THEN CASE_REWRITE_TAC[] THEN
+  QCASES_ON "decs_stcnames [] (pan_code:((A)decl)list)" THEN CAKE_REWRITE_TAC[] THEN
   RENAME1 "decs_stcnames [] pan_code = SOME st_ctxt" THEN
-  QCASES_ON "evaluate_decls (pan_state_structs_fupd (K st_ctxt) (s:(A,FFI)pan_state)) pan_code" THEN
-  CASE_REWRITE_TAC[] THEN
-  RENAME1 "evaluate_decls (pan_state_structs_fupd (K st_ctxt) s) pan_code = SOME s1" THEN
+  QCASES_ON "evaluate_decls (pan_state_structs_fupd (combin_K st_ctxt) (s:(A,FFI)pan_state)) pan_code" THEN
+  CAKE_REWRITE_TAC[] THEN
+  RENAME1 "evaluate_decls (pan_state_structs_fupd (combin_K st_ctxt) s) pan_code = SOME s1" THEN
   DISCH_TAC THEN
-  MP_TAC(ISPECL [`pan_state_structs_fupd (K st_ctxt) (s:(A,FFI)pan_state)`;
+  MP_TAC(ISPECL [`pan_state_structs_fupd (combin_K st_ctxt) (s:(A,FFI)pan_state)`;
                  `pan_code:((A)decl)list`;
-                 `pan_state_structs_fupd (K st_ctxt) (t:(A,FFI)pan_state)`;
+                 `pan_state_structs_fupd (combin_K st_ctxt) (t:(A,FFI)pan_state)`;
                  `s1:(A,FFI)pan_state`] state_rel_imp_evaluate_decls) THEN
   ANTS_TAC THENL
    [ASM_REWRITE_TAC[] THEN
@@ -907,7 +907,7 @@ let pan_simpProof_state_rel_imp_semantics_decls = prove
     SIMP[pan_simpProof_state_rel_def] THEN RW[] THEN SIMP[pan_state_component_equality];
     ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_THEN `t1:(A,FFI)pan_state` STRIP_ASSUME_TAC) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN CONV_TAC SYM_CONV THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN CONV_TAC SYM_CONV THEN
   MATCH_MP_TAC pan_simpProof_state_rel_imp_semantics THEN
   EXISTS_TAC `pan_code:((A)decl)list` THEN ASM_REWRITE_TAC[] THEN
   REPEAT(FIRST_X_ASSUM(MP_TAC o MATCH_MP evaluate_decls_functions)) THEN

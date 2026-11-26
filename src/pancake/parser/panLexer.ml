@@ -121,7 +121,7 @@ let PPARSEAUX_CASE_CLAUSES =
             let vs' = map (fresh avoid) pref in
             let pat' = vsubst (zip vs' vs) pat in
             let th1 = INST [pat',x] th in
-            split (CONV_RULE (RAND_CONV (CASE_REWRITE_CONV [] THENC
+            split (CONV_RULE (RAND_CONV (CAKE_REWRITE_CONV [] THENC
                                          DEPTH_CONV BETA_CONV)) th1))
           ci.ci_pats fs) in
   fun th ->

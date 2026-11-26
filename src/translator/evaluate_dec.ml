@@ -48,7 +48,7 @@ let evaluate_dec_list_def = cake_def_wf
        else Rerr (Rabort Rtype_error))) /\
    (evaluate_dec_list st env [Dtype locs tds] =
       if ALL check_dup_ctors tds then
-        (state_next_type_stamp_fupd (K (state_next_type_stamp st + LENGTH tds)) st,
+        (state_next_type_stamp_fupd (combin_K (state_next_type_stamp st + LENGTH tds)) st,
          Rval (sem_env_REC nsEmpty (build_tdefs (state_next_type_stamp st) tds)))
       else (st,Rerr (Rabort Rtype_error))) /\
    (evaluate_dec_list st env [Dtabbrev locs tvs tn t] =
@@ -57,9 +57,9 @@ let evaluate_dec_list_def = cake_def_wf
       match declare_env (state_eval_state st) env with
         NONE -> (st,Rerr (Rabort Rtype_error))
       | SOME (x,es') ->
-          (state_eval_state_fupd (K es') st,Rval (sem_env_REC (nsSing n x) nsEmpty))) /\
+          (state_eval_state_fupd (combin_K es') st,Rval (sem_env_REC (nsSing n x) nsEmpty))) /\
    (evaluate_dec_list st env [Dexn locs cn ts] =
-      (state_next_exn_stamp_fupd (K (state_next_exn_stamp st + 1)) st,
+      (state_next_exn_stamp_fupd (combin_K (state_next_exn_stamp st + 1)) st,
        Rval (sem_env_REC nsEmpty
                (nsSing cn (LENGTH ts,ExnStamp (state_next_exn_stamp st)))))) /\
    (evaluate_dec_list st env [Dmod mn ds] =
@@ -81,7 +81,7 @@ let evaluate_dec_list_ind = cake_ind "evaluate_dec_list";;
 let evaluate_dec_list_with_clock_def = cake_def
   `evaluate_dec_list_with_clock (st:(FFI)state) (env:v sem_env) (k:num)
                                 (prog:dec list) =
-     let (st',r) = evaluate_dec_list (state_clock_fupd (K k) st) env prog in
+     let (st',r) = evaluate_dec_list (state_clock_fupd (combin_K k) st) env prog in
      (state_ffi st',r)`;;
 
 (* Terminate: there is a clock for which evaluation terminates, either      *)
@@ -457,8 +457,8 @@ let evaluate_dec_list_set_clock = prove
  (`!(s:(FFI)state) env decs s1 res.
      evaluate_dec_list s env decs = (s1,res) /\
      ~(res = Rerr (Rabort Rtimeout_error)) ==>
-     !ck. ?ck1. evaluate_dec_list (state_clock_fupd (K ck1) s) env decs =
-                (state_clock_fupd (K ck) s1,res)`,
+     !ck. ?ck1. evaluate_dec_list (state_clock_fupd (combin_K ck1) s) env decs =
+                (state_clock_fupd (combin_K ck) s1,res)`,
   MATCH_MP_TAC evaluate_dec_list_ind THEN REPEAT CONJ_TAC THENL
    [(* [] *)
     REPEAT GEN_TAC THEN REWRITE_TAC[evaluate_dec_list_def; PAIR_EQ] THEN STRIP_TAC THEN
@@ -631,8 +631,8 @@ let evaluate_dec_list_append = prove
 let evaluate_dec_list_add_to_clock = prove
  (`!(s:(FFI)state) e p s' r extra.
      evaluate_dec_list s e p = (s',r) /\ ~(r = Rerr (Rabort Rtimeout_error)) ==>
-     evaluate_dec_list (state_clock_fupd (K (state_clock s + extra)) s) e p =
-     (state_clock_fupd (K (state_clock s' + extra)) s',r)`,
+     evaluate_dec_list (state_clock_fupd (combin_K (state_clock s + extra)) s) e p =
+     (state_clock_fupd (combin_K (state_clock s' + extra)) s',r)`,
   MATCH_MP_TAC evaluate_dec_list_ind THEN REPEAT CONJ_TAC THENL
    [(* [] *)
     REPEAT GEN_TAC THEN REWRITE_TAC[evaluate_dec_list_def; PAIR_EQ] THEN
@@ -733,8 +733,8 @@ let eval_dec_list_no_eval_simulation = prove
      evaluate_dec_list s env decs = (s',res) /\ state_eval_state s = NONE /\
      ~(res = Rerr (Rabort Rtype_error)) ==>
      state_eval_state s' = NONE /\
-     evaluate_dec_list (state_eval_state_fupd (K es) s) env decs =
-     (state_eval_state_fupd (K es) s',res)`,
+     evaluate_dec_list (state_eval_state_fupd (combin_K es) s) env decs =
+     (state_eval_state_fupd (combin_K es) s',res)`,
   MATCH_MP_TAC evaluate_dec_list_ind THEN REPEAT CONJ_TAC THENL
    [(* [] *)
     REPEAT GEN_TAC THEN REWRITE_TAC[evaluate_dec_list_def; PAIR_EQ] THEN

@@ -106,7 +106,7 @@ let CMPPAUX_EQ_LAST (th:thm) : thm =
 let CMPPAUX_HFAIL_TAC : tactic = fun (asl,w as g) ->
   let e = find (fun v -> type_of v = `:hol_exn`) (frees w) in
   (STRUCT_CASES_TAC (SPEC e (cases "hol_exn")) THEN
-   CASE_REWRITE_TAC[holKernel_raise_Failure_def] THEN CMPPAUX_RESULT_TAC) g;;
+   CAKE_REWRITE_TAC[holKernel_raise_Failure_def] THEN CMPPAUX_RESULT_TAC) g;;
 
 let compute_init_thy_ok = prove
  (`!ths ctxt s.
@@ -297,7 +297,7 @@ let map_check_var_thm = prove
   STRUCT_CASES_TAC (SPEC `h:hol_term` (cases "hol_term")) THEN
   REWRITE_TAC[check_var_def] THEN
   REWRITE_TAC[COND_RATOR] THEN TRY COND_CASES_TAC THEN
-  CASE_REWRITE_TAC[holKernel_raise_Failure_def; st_ex_return_def] THEN
+  CAKE_REWRITE_TAC[holKernel_raise_Failure_def; st_ex_return_def] THEN
   TRY (CMPPAUX_RESULT_TAC THEN NO_TAC) THEN
   FIRST_X_ASSUM(MP_TAC o SPECL [`ctxt:(update)list`; `s:hol_refs`;
       `FST (compute_map check_var t (s:hol_refs))`;
@@ -362,7 +362,7 @@ let check_eqn_thm = prove
    REWRITE_TAC[check_eqn_def] THEN STRIP_TAC THEN POP_ASSUM MP_TAC THEN
    REWRITE_TAC[st_ex_ignore_bind_def; COND_RATOR] THEN
    ASM_CASES_TAC `a0:hol_term list = []` THEN ASM_REWRITE_TAC[] THEN
-   CASE_REWRITE_TAC[st_ex_return_def; holKernel_raise_Failure_def] THEN
+   CAKE_REWRITE_TAC[st_ex_return_def; holKernel_raise_Failure_def] THEN
    TRY (CMPPAUX_RESULT_TAC THEN NO_TAC) THEN
    FIRST_X_ASSUM SUBST_ALL_TAC THEN
   SUBGOAL_THEN `holKernelProof_TERM ctxt a1` ASSUME_TAC THENL
@@ -384,9 +384,9 @@ let check_eqn_thm = prove
      (X_CHOOSE_THEN `f0:hol_term` (X_CHOOSE_THEN `vs0:hol_term list` ASSUME_TAC))
      (ISPEC `list_dest_comb [] l` list_CASES) THEN
    ASM_REWRITE_TAC[] THENL [ASM_MESON_TAC[list_dest_comb_not_nil]; ALL_TAC] THEN
-   CASE_REWRITE_TAC[] THEN REWRITE_TAC[COND_RATOR] THEN
+   CAKE_REWRITE_TAC[] THEN REWRITE_TAC[COND_RATOR] THEN
    ASM_CASES_TAC `ALL_DISTINCT (vs0:hol_term list)` THEN ASM_REWRITE_TAC[] THEN
-   CASE_REWRITE_TAC[st_ex_return_def; holKernel_raise_Failure_def] THEN
+   CAKE_REWRITE_TAC[st_ex_return_def; holKernel_raise_Failure_def] THEN
    TRY (CMPPAUX_RESULT_TAC THEN NO_TAC) THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP list_dest_comb_folds_back o check (fun th ->
      try fst (dest_const (fst (strip_comb (lhs (concl th))))) = "list_dest_comb"
@@ -412,7 +412,7 @@ let check_eqn_thm = prove
        with Failure _ -> false)) THEN
      STRUCT_CASES_TAC (SPEC `f0:hol_term` (cases "hol_term")) THEN
      REWRITE_TAC[holKernel_dest_const_def] THEN
-     CASE_REWRITE_TAC[st_ex_return_def; holKernel_raise_Failure_def; PAIR_EQ;
+     CAKE_REWRITE_TAC[st_ex_return_def; holKernel_raise_Failure_def; PAIR_EQ;
                       injectivity "exc"; distinctness "exc"; injectivity "hol_term"] THEN
      MESON_TAC[];
      ALL_TAC] THEN
@@ -421,10 +421,10 @@ let check_eqn_thm = prove
    CMPEXPAUX_SIMP_TAC THENL [ALL_TAC; CMPPAUX_RESULT2_TAC] THEN
   DISJ_CASES_THEN2 ASSUME_TAC (X_CHOOSE_THEN `cv1:compute_exp` ASSUME_TAC)
      (ISPEC `compute_dest_cexp r` (cases "option")) THEN
-   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[holKernel_raise_Failure_def; st_ex_return_def] THEN
+   ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[holKernel_raise_Failure_def; st_ex_return_def] THEN
    TRY (CMPPAUX_RESULT_TAC THEN NO_TAC) THEN
    REWRITE_TAC[COND_RATOR] THEN COND_CASES_TAC THEN
-   CASE_REWRITE_TAC[holKernel_raise_Failure_def; st_ex_return_def] THEN
+   CAKE_REWRITE_TAC[holKernel_raise_Failure_def; st_ex_return_def] THEN
    TRY (CMPPAUX_RESULT_TAC THEN NO_TAC) THEN
    REWRITE_TAC[PAIR_EQ] THEN DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
    REWRITE_TAC[injectivity "exc"; distinctness "exc"; PAIR_EQ] THEN
@@ -553,7 +553,7 @@ let map_check_consts_thm = prove
   SPEC_TAC(`h:mlstring#A#compute_exp`,`h:mlstring#A#compute_exp`) THEN
   REWRITE_TAC[FORALL_PAIR_THM] THEN
   MAP_EVERY X_GEN_TAC [`f0:mlstring`; `n0:A`; `r0:compute_exp`] THEN
-  REWRITE_TAC[st_ex_bind_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[st_ex_bind_def] THEN CAKE_REWRITE_TAC[] THEN
   CMPPAUX_CASES_TAC "check_consts" 4 THEN
   CMPPAUX_REL_TAC (CMPPAUX_EQ_FIRST (REWRITE_RULE[GSYM IMP_IMP] check_consts_thm)) THEN
   CMPEXPAUX_SIMP_TAC THENL [ALL_TAC; CMPPAUX_RESULT2_TAC] THEN
@@ -691,19 +691,19 @@ let compute_thm = prove
   REPEAT GEN_TAC THEN STRIP_TAC THEN
    REWRITE_TAC[compute_compute_def; C_THM; holKernel_handle_Clash_def] THEN
    ASM_CASES_TAC `compute_init ths` THEN ASM_REWRITE_TAC[] THEN
-   CASE_REWRITE_TAC[holKernel_raise_Failure_def] THEN
+   CAKE_REWRITE_TAC[holKernel_raise_Failure_def] THEN
    TRY (CMPPAUX_RESULT_TAC THEN NO_TAC) THEN
   SUBGOAL_THEN `compute_thy_ok (thyof ctxt)` ASSUME_TAC THENL
     [ASM_MESON_TAC[compute_init_thy_ok]; ALL_TAC] THEN
    DISJ_CASES_THEN2 ASSUME_TAC (X_CHOOSE_THEN `cv:compute_exp` ASSUME_TAC)
      (ISPEC `compute_dest_cexp tm` (cases "option")) THEN
-   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[holKernel_raise_Failure_def] THEN
+   ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[holKernel_raise_Failure_def] THEN
    TRY (CMPPAUX_RESULT_TAC THEN NO_TAC) THEN
    MP_TAC (SPEC `thyof ctxt` dest_cexp_thm) THEN ASM_REWRITE_TAC[] THEN
    DISCH_THEN(MP_TAC o SPECL [`tm:hol_term`; `cv:compute_exp`]) THEN ASM_REWRITE_TAC[FST] THEN
    ANTS_TAC THENL [ASM_REWRITE_TAC[GSYM holKernelProof_TERM_def]; STRIP_TAC] THEN
    REWRITE_TAC[st_ex_ignore_bind_def; COND_RATOR] THEN
-   COND_CASES_TAC THEN CASE_REWRITE_TAC[st_ex_return_def; holKernel_raise_Failure_def] THEN
+   COND_CASES_TAC THEN CAKE_REWRITE_TAC[st_ex_return_def; holKernel_raise_Failure_def] THEN
    TRY (CMPPAUX_RESULT_TAC THEN NO_TAC) THEN
    FIRST_ASSUM(ASSUME_TAC o REWRITE_RULE[set_of_list; DIFF_EMPTY] o
                MATCH_MP check_cexp_closed_correct) THEN
@@ -716,7 +716,7 @@ let compute_thm = prove
     DISCH_THEN(CONJUNCTS_THEN2 CMPPAUX_SUBST_STATE_TAC ASSUME_TAC)) THEN
    CMPEXPAUX_SIMP_TAC THENL [ALL_TAC; CMPPAUX_HFAIL_TAC] THEN
   REWRITE_TAC[st_ex_ignore_bind_def; COND_RATOR; LET_DEF; LET_END_DEF] THEN
-   COND_CASES_TAC THEN CASE_REWRITE_TAC[st_ex_return_def; holKernel_raise_Failure_def] THEN
+   COND_CASES_TAC THEN CAKE_REWRITE_TAC[st_ex_return_def; holKernel_raise_Failure_def] THEN
    TRY (CMPPAUX_RESULT_TAC THEN NO_TAC) THEN
    CMPPAUX_CASES_TAC "check_consts" 4 THEN
    CMPPAUX_REL_TAC (CMPPAUX_EQ_FIRST (REWRITE_RULE[GSYM IMP_IMP] check_consts_thm)) THEN

@@ -5,7 +5,11 @@
 (* This is the block of HOL Light's define.ml (John Harrison) that proves     *)
 (* the existence of recursive functions (instantiate_casewise_recursion,     *)
 (* pure_prove_recursive_function_exists, prove_general_recursive_function_  *)
-(* exists), copied with one change: the admissibility analysis also uses     *)
+(* exists; here cake_instantiate_casewise_recursion,                         *)
+(* cake_pure_prove_recursive_function_exists and                             *)
+(* cake_prove_general_recursive_function_exists, which leave HOL Light's     *)
+(* functions of those names as they are, since 2026-11-25), copied with one  *)
+(* change: the admissibility analysis also uses                              *)
 (* ADMISSIBLE_COND for a conditional that is not in tail position (for       *)
 (* example inside the arm of a match), so the condition becomes part of the  *)
 (* context of the recursive calls under it.  Without that, a definition like *)
@@ -180,9 +184,9 @@ let CAKE_GEN_BETA_CONV : conv =
 let cake_tie_saved = !type_invention_error;;
 type_invention_error := false;;
 
-let instantiate_casewise_recursion,
-    pure_prove_recursive_function_exists,
-    prove_general_recursive_function_exists,
+let cake_instantiate_casewise_recursion,
+    cake_pure_prove_recursive_function_exists,
+    cake_prove_general_recursive_function_exists,
     cake_guess_wf_hyp =
 
 (* ------------------------------------------------------------------------- *)

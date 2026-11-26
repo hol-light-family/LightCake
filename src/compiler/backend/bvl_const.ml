@@ -238,7 +238,7 @@ let dest_EqualInt_pmatch = prove
      match x with BlockOp (EqualConst (clos_Int i)) -> SOME i | _ -> NONE`,
   SPEC_TAC(`x:clos_op`,`x:clos_op`) THEN
   MATCH_MP_TAC (BVLPAUX_case_ind dest_EqualInt_def) THEN
-  REWRITE_TAC[dest_EqualInt_def] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[dest_EqualInt_def] THEN CAKE_REWRITE_TAC[]);;
 
 let SmartOp1_def = cake_def
   `SmartOp1 op (x:bvl_exp) =
@@ -287,9 +287,9 @@ let extract_pmatch = prove
          SOME (bvl_Op (BlockOp (clos_Cons t)) [])
      | _ -> NONE`,
   MATCH_MP_TAC (BVLPAUX_case_ind bvl_const_extract_def) THEN
-  REWRITE_TAC[bvl_const_extract_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[bvl_const_extract_def] THEN CAKE_REWRITE_TAC[] THEN
   REPEAT GEN_TAC THEN CASES_ON `xs:bvl_exp list` THEN
-  REWRITE_TAC[NULL] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[NULL] THEN CAKE_REWRITE_TAC[]);;
 
 let bvl_const_extract_list_def = cake_def
   `(bvl_const_extract_list [] = []) /\
@@ -309,7 +309,7 @@ let delete_var_pmatch = prove
        bvl_Var n -> bvl_Op (IntOp (clos_Const (&0))) []
      | x -> x`,
   MATCH_MP_TAC bvl_const_delete_var_ind THEN
-  REWRITE_TAC[bvl_const_delete_var_def] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[bvl_const_delete_var_def] THEN CAKE_REWRITE_TAC[]);;
 
 (* HOL4 LLOOKUP env v is oEL v env (misc); HOL4 proves termination of      *)
 (* compile automatically, with the size of the expression list             *)
@@ -440,4 +440,4 @@ let bvl_const_compile_exp_def = cake_def
 let bvl_const_compile_exp_eq = prove
  (`!x. bvl_const_compile_exp x = bvl_const_compile_sing [] x`,
   REWRITE_TAC[bvl_const_compile_exp_def; bvl_const_compile_eq] THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[]);;

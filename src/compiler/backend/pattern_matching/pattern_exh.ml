@@ -410,7 +410,7 @@ let exh_all_thm = prove
   REWRITE_TAC[exh_all_def; exh_matrix_def] THEN REPEAT STRIP_TAC THEN
   COND_CASES_TAC THEN ASM_SIMP_TAC[] THEN
   CASES_ON `col_ctors (CONS (r:(pattern_semantics_pat)list) rows)` THEN
-  CASE_REWRITE_TAC[] THEN ASM_SIMP_TAC[exh_mats_append]);;
+  CAKE_REWRITE_TAC[] THEN ASM_SIMP_TAC[exh_mats_append]);;
 
 let exh_rows_eq = prove
  (`!rows:(pattern_semantics_pat # A) list.
@@ -483,9 +483,9 @@ let pmatch_list_cons = prove
           (pattern_semantics_pmatch_list refs ps vs)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[pattern_semantics_pmatch_def] THEN
   CASES_ON `pattern_semantics_pmatch refs p v` THEN
-  CASE_REWRITE_TAC[pand_def] THEN
+  CAKE_REWRITE_TAC[pand_def] THEN
   CASES_ON `pattern_semantics_pmatch_list refs ps vs` THEN
-  CASE_REWRITE_TAC[distinctness "pmatchResult"]);;
+  CAKE_REWRITE_TAC[distinctness "pmatchResult"]);;
 
 let IL1AUX_PE_SIMPS = [pand_simps; pand_eq_PTypeFailure; pand_eq_PMatchSuccess;
                        pmatch_Any; pmatch_list_nil; pmatch_list_cons];;

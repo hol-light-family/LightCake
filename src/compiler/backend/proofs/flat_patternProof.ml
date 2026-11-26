@@ -255,7 +255,7 @@ let ALOOKUP_rel_eq_fst = prove
   MATCH_MP_TAC ALOOKUP_rel_cons THEN ASM_SIMP_TAC[]);;
 
 let env_set_v_noop = prove
- (`flat_environment_v_fupd (K (flat_environment_v env)) (an_env:(V)flat_environment) = env`,
+ (`flat_environment_v_fupd (combin_K (flat_environment_v env)) (an_env:(V)flat_environment) = env`,
   REWRITE_TAC[flat_environment_component_equality; flat_environment_INFO.ri_accfupds;
               K_THM]);;
 
@@ -275,7 +275,7 @@ let pat_bindings_evaluate_FOLDR_lemma = prove
                       [ITLIST (\x exp. flat_Let t (f x) (g x) exp) xs exp] =
                     flat_evaluate
                       (flat_environment_v_fupd
-                         (K (APPEND (MAP (\x. (THE (f x),h x)) (REVERSE xs))
+                         (combin_K (APPEND (MAP (\x. (THE (f x),h x)) (REVERSE xs))
                                     (flat_environment_v env2))) env2)
                       s [exp]`,
   GEN_TAC THEN LIST_INDUCT_TAC THEN SIMP[env_set_v_noop] THEN RW[] THEN
@@ -343,7 +343,7 @@ let FLATPAUX_FOLDR_El = prove
      ==> flat_evaluate env s
            [ITLIST (\((j,nm),r) exp. flat_Let t (SOME nm) (flat_App t (flat_El j) [x]) exp)
                    used exp] =
-         flat_evaluate (flat_environment_v_fupd (K (APPEND
+         flat_evaluate (flat_environment_v_fupd (combin_K (APPEND
              (MAP (\y. SND (FST y),EL (FST (FST y)) con_vs) (REVERSE used))
              (flat_environment_v env))) env) s [exp]`,
   REPEAT STRIP_TAC THEN CONV_TAC(LAND_CONV(ONCE_DEPTH_CONV FLATPAUX_PAIRED_ABS_CONV)) THEN
@@ -1151,7 +1151,7 @@ let evaluate_compile_pat_rhs = prove
    ==> ?ext_env. flat_evaluate ext_env s [exp] = (t,res) /\
          flat_patternProof_env_rel (N - 1)
            (flat_environment_v_fupd
-              (K (APPEND l_bindings (flat_environment_v env1))) env1) ext_env`,
+              (combin_K (APPEND l_bindings (flat_environment_v env1))) env1) ext_env`,
   SIMP[compile_pat_rhs_def; max_dec_name_LESS_EVERY] THEN
   CASES_ON `compile_pat_bindings tr (N + 1) [p,N,Var_local tr (enc_num_to_name N)] exp` THEN
   RW[] THEN
@@ -1184,8 +1184,8 @@ let do_eval_thm = prove
    ==> ?rv' decs' eval_config'.
          flat_do_eval ys (flat_state_eval_config t) = SOME (decs',eval_config',rv') /\
          flat_patternProof_state_rel cfg
-           (flat_state_eval_config_fupd (K eval_config) s)
-           (flat_state_eval_config_fupd (K eval_config') t) /\
+           (flat_state_eval_config_fupd (combin_K eval_config) s)
+           (flat_state_eval_config_fupd (combin_K eval_config') t) /\
          flat_patternProof_v_rel rv rv' /\
          decs' = MAP (compile_dec cfg) decs`,
   RW[flat_patternProof_state_rel_def] THEN RULE_ASSUM_TAC (REWRITE_RULE[flat_do_eval_def]) THEN
@@ -1314,7 +1314,7 @@ let FLATPAUX_ce_pats = prove
       dflt d1 d2 t1 r1.
    (!p env' e'. pmatch_rows pes s' v1 = Match (env',p,e') /\ ALL_DISTINCT (flat_pat_bindings p)
       ==> FLATPAUX_ce_P s_cfg
-            (flat_environment_v_fupd (K (APPEND env' (flat_environment_v env1))) env1) s' [e']) /\
+            (flat_environment_v_fupd (combin_K (APPEND env' (flat_environment_v env1))) env1) s' [e']) /\
    compile_match cfg pes = (j,sgp,ps2) /\ flat_patternProof_env_rel N env1 env2 /\
    (match pmatch_rows pes s' v1 with
       Match_type_error -> (s',Rerr (Rabort Rtype_error))
@@ -1322,7 +1322,7 @@ let FLATPAUX_ce_pats = prove
     | Match (env',p',e') ->
         if ALL_DISTINCT (flat_pat_bindings p')
         then flat_evaluate (flat_environment_v_fupd
-                              (K (APPEND env' (flat_environment_v env1))) env1) s' [e']
+                              (combin_K (APPEND env' (flat_environment_v env1))) env1) s' [e']
         else (s',Rerr (Rabort Rtype_error))) = (t1,r1) /\
    ~(r1 = Rerr (Rabort Rtype_error)) /\ j + 2 <= k /\ k <= N /\
    f (flat_environment_v env3) = CONS (enc_num_to_name k,w1) (flat_environment_v env2) /\
@@ -1384,8 +1384,8 @@ let FLATPAUX_update_thunk_rel = prove
      ALL2 flat_patternProof_v_rel vs vs' /\ ALL2 flat_patternProof_v_rel ws ws' /\
      flat_patternProof_state_rel cfg s t
      ==> ?refs'. flat_update_thunk vs' (flat_state_refs t) ws' = SOME refs' /\
-                 flat_patternProof_state_rel cfg (flat_state_refs_fupd (K refs) s)
-                   (flat_state_refs_fupd (K refs') t)`,
+                 flat_patternProof_state_rel cfg (flat_state_refs_fupd (combin_K refs) s)
+                   (flat_state_refs_fupd (combin_K refs') t)`,
   RW[] THEN IMP_RES_TAC FLATPAUX_update_thunk_SOME_IMP THEN RVEQ_TAC THEN
   FS[LIST_REL_CONS1; v_rel_l_cases] THEN RVEQ_TAC THEN
   DRULE_THEN DRULE (MATCH_MP_CURRIED simple_state_rel_store_assign flat_patternProof_simple_state_rel) THEN

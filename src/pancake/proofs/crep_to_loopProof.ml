@@ -183,7 +183,7 @@ let state_rel_clock_add_zero = prove
  (`!(s:(A,FFI)crep_state) (t:(A,FFI)loop_state).
      crep_to_loopProof_state_rel s t ==>
      ?ck. crep_to_loopProof_state_rel s
-            (loop_state_clock_fupd (K (ck + loop_state_clock t)) t)`,
+            (loop_state_clock_fupd (combin_K (ck + loop_state_clock t)) t)`,
   RW[] THEN QEXISTS_TAC "0" THEN
   FS[crep_to_loopProof_state_rel_def; loop_state_component_equality]);;
 
@@ -223,18 +223,18 @@ let write_bytearray_mem_rel = prove
    [`sm1 = pan_write_bytearray (word_add (w:A word) (word 1)) t sm dm be`;
     `tm1 = write_bytearray (word_add (w:A word) (word 1)) t tm dm be`] THEN
   DISCH_TAC THEN REWRITE_TAC[pan_mem_store_byte_def; mem_store_byte_aux_def] THEN
-  QCASES_ON "sm1 (byte_align w:A word)" THEN CASE_REWRITE_TAC[] THEN
+  QCASES_ON "sm1 (byte_align w:A word)" THEN CAKE_REWRITE_TAC[] THEN
   ASM_CASES_TAC `byte_align (w:A word) IN dm` THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[] THENL
+  CAKE_REWRITE_TAC[] THENL
    [SUBGOAL_THEN `(tm1:A word->(A)word_loc) (byte_align (w:A word)) = wl_Word (a:A word)`
       SUBST1_TAC THENL
      [FIRST_ASSUM(MP_TAC o SPEC `byte_align (w:A word)` o REWRITE_RULE[mem_rel_def]) THEN
       ASM_REWRITE_TAC[wlab_wloc_def] THEN MESON_TAC[];
       ALL_TAC] THEN
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[mem_rel_def; APPLY_UPDATE_THM] THEN
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[mem_rel_def; APPLY_UPDATE_THM] THEN
     REPEAT STRIP_TAC THEN COND_CASES_TAC THEN ASM_SIMP_TAC[wlab_wloc_def] THEN
     ASM_MESON_TAC[mem_rel_def];
-    QCASES_ON "tm1 (byte_align w:A word)" THEN CASE_REWRITE_TAC[] THEN
+    QCASES_ON "tm1 (byte_align w:A word)" THEN CAKE_REWRITE_TAC[] THEN
     ASM_REWRITE_TAC[]]);;
 
 let evaluate_comb_seq = prove
@@ -292,7 +292,7 @@ let compile_exps_alt = prove
      let (p1,les,tmp'',l'') = crep_to_loop_compile_exps ctxt tmp' l' es in
      (APPEND p p1,CONS le les,tmp'',l'')`,
   CONJ_TAC THEN GEN_REWRITE_TAC LAND_CONV [crep_to_loop_compile_exp_def] THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[]);;
 
 let crep_to_loopProof_list_insert_insert = prove
  (`!x xs l. insert x one (list_insert xs l) = list_insert xs (insert x one l)`,
@@ -379,7 +379,7 @@ let compile_exp_out_rel_cases = prove
      CONJ_TAC THENL [ASM_ARITH_TAC; ALL_TAC] THEN
      REWRITE_TAC[cut_sets_nested_seq; PC2LAUX_Assign_add_comm; cut_sets_MAPi_Assign;
                  loop_nested_seq_def; cut_sets_def] THEN
-     CASE_REWRITE_TAC[]) THENL
+     CAKE_REWRITE_TAC[]) THENL
      [SUBGOAL_THEN `((tmp + LENGTH (les:((A)loop_exp)list)) + 1) - tmp = SUC (LENGTH les)`
         SUBST1_TAC THENL [ARITH_TAC; ALL_TAC] THEN
       REWRITE_TAC[GENLIST; list_insert_SNOC] THEN
@@ -400,7 +400,7 @@ let compile_exp_out_rel_cases = prove
     DISCH_TAC THEN REPEAT PAIRARG_TAC THEN RFS[] THEN RVEQ_TAC THEN
     ASM_SIMP_TAC[cut_sets_nested_seq; comp_syn_ok_nested_seq] THEN ASM_ARITH_TAC;
     (* compile_exps *)
-    QCASES_ON "cps" THEN CASE_REWRITE_TAC[] THEN DISCH_TAC THEN REPEAT PAIRARG_TAC THEN
+    QCASES_ON "cps" THEN CAKE_REWRITE_TAC[] THEN DISCH_TAC THEN REPEAT PAIRARG_TAC THEN
     RFS[] THEN RVEQ_TAC THENL
      [REWRITE_TAC[loop_nested_seq_def; comp_syntax_ok_def; cut_sets_def];
       ASM_SIMP_TAC[cut_sets_nested_seq; comp_syn_ok_nested_seq; LENGTH] THEN
@@ -421,7 +421,7 @@ let comp_exp_assigned_vars_tmp_bound_cases = prove
      tmp <= n /\ n < ntmp)`,
   MATCH_MP_TAC crep_to_loop_compile_exp_ind THEN REPEAT CONJ_TAC THEN
   PC2LAUX_CE_SETUP_TAC THEN
-  TRY (QCASES_ON "cps" THEN CASE_REWRITE_TAC[]) THEN
+  TRY (QCASES_ON "cps" THEN CAKE_REWRITE_TAC[]) THEN
   DISCH_TAC THEN REPEAT PAIRARG_TAC THEN RFS[] THEN RVEQ_TAC THEN
   TRY (QCASES_ON "cop" THEN
        QPAT_X_ASSUM "compile_crepop _ _ _ _ _ _ = _"
@@ -474,7 +474,7 @@ let compile_exp_le_tmp_domain_cases = prove
      n < tmp' /\ n IN domain l')`,
   MATCH_MP_TAC crep_to_loop_compile_exp_ind THEN REPEAT CONJ_TAC THEN
   PC2LAUX_CE_SETUP_TAC THEN
-  TRY (QCASES_ON "cps" THEN CASE_REWRITE_TAC[]) THEN
+  TRY (QCASES_ON "cps" THEN CAKE_REWRITE_TAC[]) THEN
   DISCH_TAC THEN REPEAT PAIRARG_TAC THEN RFS[] THEN RVEQ_TAC THEN
   TRY (QCASES_ON "cop" THEN
        QPAT_X_ASSUM "compile_crepop _ _ _ _ _ _ = _"
@@ -486,7 +486,7 @@ let compile_exp_le_tmp_domain_cases = prove
   RVEQ_TAC THENL
    [(* Var *)
     ASM_REWRITE_TAC[crep_to_loop_find_var_def] THEN
-    CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
     QPAT_X_ASSUM "crep_to_loopProof_ctxt_max _ _"
       (MP_TAC o REWRITE_RULE[crep_to_loopProof_ctxt_max_def]) THEN
     DISCH_THEN(MP_TAC o SPECL [`v:num`; `m:num`]) THEN ASM_REWRITE_TAC[] THEN
@@ -519,22 +519,22 @@ let PC2LAUX_mem_load_32_some_rel = prove
      mem_rel sm tm dm /\ pan_mem_load_32 sm dm be w = SOME x ==>
      mem_load_32 tm dm be w = SOME x`,
   REWRITE_TAC[pan_mem_load_32_def; mem_load_32_def; mem_rel_def] THEN REPEAT GEN_TAC THEN
-  QCASES_ON "sm (byte_align w:A word)" THEN CASE_REWRITE_TAC[] THEN
+  QCASES_ON "sm (byte_align w:A word)" THEN CAKE_REWRITE_TAC[] THEN
   FS[COND_CASE_EQ] THEN STRIP_TAC THEN
   FIRST_X_ASSUM(MP_TAC o SPEC `byte_align (w:A word)`) THEN
   ASM_REWRITE_TAC[wlab_wloc_def] THEN DISCH_THEN(SUBST1_TAC o SYM) THEN
-  CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]);;
 
 let PC2LAUX_mem_load_byte_some_rel = prove
  (`!(sm:A word->(A)word_lab) tm dm be w x.
      mem_rel sm tm dm /\ pan_mem_load_byte sm dm be w = SOME x ==>
      mem_load_byte_aux tm dm be w = SOME x`,
   REWRITE_TAC[pan_mem_load_byte_def; mem_load_byte_aux_def; mem_rel_def] THEN REPEAT GEN_TAC THEN
-  QCASES_ON "sm (byte_align w:A word)" THEN CASE_REWRITE_TAC[] THEN
+  QCASES_ON "sm (byte_align w:A word)" THEN CAKE_REWRITE_TAC[] THEN
   FS[COND_CASE_EQ] THEN STRIP_TAC THEN
   FIRST_X_ASSUM(MP_TAC o SPEC `byte_align (w:A word)`) THEN
   ASM_REWRITE_TAC[wlab_wloc_def] THEN DISCH_THEN(SUBST1_TAC o SYM) THEN
-  CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]);;
 let PC2LAUX_state_mem_load_32 = prove
  (`!(s:(A,FFI)crep_state) (t:(A,FFI)loop_state) w x.
    crep_to_loopProof_state_rel s t /\
@@ -567,12 +567,12 @@ let PC2LAUX_crep_eval_Shift = prove
      ?w1 w2 z. crep_eval s e1 = SOME (Word w1) /\ crep_eval s e2 = SOME (Word w2) /\
                word_sh sh w1 (val w2) = SOME z /\ v = Word z`,
   REPEAT GEN_TAC THEN REWRITE_TAC[crep_eval_def] THEN
-  QCASES_ON "crep_eval (s:(A,FFI)crep_state) e1" THEN CASE_REWRITE_TAC[] THEN
+  QCASES_ON "crep_eval (s:(A,FFI)crep_state) e1" THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[option_DISTINCT; option_INJ] THEN
-  QCASES_ON "crep_eval (s:(A,FFI)crep_state) e2" THEN CASE_REWRITE_TAC[] THEN
+  QCASES_ON "crep_eval (s:(A,FFI)crep_state) e2" THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[option_DISTINCT; option_INJ] THENL
-   [QCASES_ON "a" THEN CASE_REWRITE_TAC[option_DISTINCT];
-    QCASES_ON "a" THEN QCASES_ON "a'" THEN CASE_REWRITE_TAC[injectivity "word_lab"] THEN
+   [QCASES_ON "a" THEN CAKE_REWRITE_TAC[option_DISTINCT];
+    QCASES_ON "a" THEN QCASES_ON "a'" THEN CAKE_REWRITE_TAC[injectivity "word_lab"] THEN
     QCASES_ON "word_sh sh a'' (val a''')" THEN
     REWRITE_TAC[OPTION_MAP_DEF; option_DISTINCT; option_INJ] THEN
     ASM_MESON_TAC[option_DISTINCT; option_INJ]]);;
@@ -583,12 +583,12 @@ let PC2LAUX_crep_eval_Cmp = prove
      ?w1 w2. crep_eval s e1 = SOME (Word w1) /\ crep_eval s e2 = SOME (Word w2) /\
              v = Word (v2w [asm_word_cmp cmp w1 w2])`,
   REPEAT GEN_TAC THEN REWRITE_TAC[crep_eval_def] THEN
-  QCASES_ON "crep_eval (s:(A,FFI)crep_state) e1" THEN CASE_REWRITE_TAC[] THEN
+  QCASES_ON "crep_eval (s:(A,FFI)crep_state) e1" THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[option_DISTINCT; option_INJ] THEN
-  QCASES_ON "crep_eval (s:(A,FFI)crep_state) e2" THEN CASE_REWRITE_TAC[] THEN
+  QCASES_ON "crep_eval (s:(A,FFI)crep_state) e2" THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[option_DISTINCT; option_INJ] THENL
-   [QCASES_ON "a" THEN CASE_REWRITE_TAC[option_DISTINCT];
-    QCASES_ON "a" THEN QCASES_ON "a'" THEN CASE_REWRITE_TAC[injectivity "word_lab"] THEN
+   [QCASES_ON "a" THEN CAKE_REWRITE_TAC[option_DISTINCT];
+    QCASES_ON "a" THEN QCASES_ON "a'" THEN CAKE_REWRITE_TAC[injectivity "word_lab"] THEN
     REWRITE_TAC[option_DISTINCT; option_INJ] THEN MESON_TAC[]]);;
 
 
@@ -660,7 +660,7 @@ let PC2LAUX_comp_exps_preserves_eval_gen = prove
             crep_to_loop_context_vmax ctxt < tmp ==>
             ?ck st.
               loop_evaluate (loop_nested_seq p,
-                loop_state_clock_fupd (K (loop_state_clock t + ck)) t) = (NONE,st) /\
+                loop_state_clock_fupd (combin_K (loop_state_clock t + ck)) t) = (NONE,st) /\
               loop_eval st le = SOME (wlab_wloc v) /\
               crep_to_loopProof_state_rel s st /\
               mem_rel (crep_state_memory s) (loop_state_memory st) (crep_state_memaddrs s) /\
@@ -678,7 +678,7 @@ let PC2LAUX_comp_exps_preserves_eval_gen = prove
      crep_to_loop_context_vmax ctxt < tmp ==>
      ?ck st.
        loop_evaluate (loop_nested_seq p,
-                      loop_state_clock_fupd (K (loop_state_clock t + ck)) t) = (NONE,st) /\
+                      loop_state_clock_fupd (combin_K (loop_state_clock t + ck)) t) = (NONE,st) /\
        OPT_MMAP (loop_eval st) les = SOME (MAP wlab_wloc vs) /\
        crep_to_loopProof_state_rel s st /\
        mem_rel (crep_state_memory s) (loop_state_memory st) (crep_state_memaddrs s) /\
@@ -710,7 +710,7 @@ let PC2LAUX_comp_exps_preserves_eval_gen = prove
     ASM_REWRITE_TAC[];
     STRIP_TAC] THEN
   MP_TAC(ISPECL [`loop_nested_seq p':(A)loop_prog`;
-                 `loop_state_clock_fupd (K (loop_state_clock t' + ck)) (t':(A,FFI)loop_state)`;
+                 `loop_state_clock_fupd (combin_K (loop_state_clock t' + ck)) (t':(A,FFI)loop_state)`;
                  `NONE:((A)loop_result)option`; `st:(A,FFI)loop_state`; `ck':num`]
                 loop_evaluate_add_clock_eq) THEN
   ASM_REWRITE_TAC[option_DISTINCT] THEN SIMP[GSYM ADD_ASSOC] THEN DISCH_TAC THEN
@@ -741,12 +741,12 @@ let PC2LAUX_crep_eval_Op = prove
      ?ws z. OPT_MMAP (crep_eval s) es = SOME ws /\
             word_op op (MAP (\w. match w with Word n -> n) ws) = SOME z /\ v = Word z`,
   REPEAT GEN_TAC THEN REWRITE_TAC[crep_eval_def] THEN
-  QCASES_ON "OPT_MMAP (crep_eval (s:(A,FFI)crep_state)) es" THEN CASE_REWRITE_TAC[] THEN
+  QCASES_ON "OPT_MMAP (crep_eval (s:(A,FFI)crep_state)) es" THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[option_DISTINCT; option_INJ] THEN
   SUBGOAL_THEN (CASE_TERM `ALL (\w:(A)word_lab. match w with Word _ -> T) a`)
     (fun th -> REWRITE_TAC[th]) THENL
    [REWRITE_TAC[GSYM ALL_MEM] THEN GEN_TAC THEN QCASES_ON "x:(A)word_lab" THEN
-    CASE_REWRITE_TAC[];
+    CAKE_REWRITE_TAC[];
     REWRITE_TAC[OPTION_MAP_EQ_SOME] THEN MESON_TAC[]]);;
 
 let PC2LAUX_crep_eval_Crepop = prove
@@ -756,12 +756,12 @@ let PC2LAUX_crep_eval_Crepop = prove
      ?ws z. OPT_MMAP (crep_eval s) es = SOME ws /\
             crep_op op (MAP (\w. match w with Word n -> n) ws) = SOME z /\ v = Word z`,
   REPEAT GEN_TAC THEN REWRITE_TAC[crep_eval_def] THEN
-  QCASES_ON "OPT_MMAP (crep_eval (s:(A,FFI)crep_state)) es" THEN CASE_REWRITE_TAC[] THEN
+  QCASES_ON "OPT_MMAP (crep_eval (s:(A,FFI)crep_state)) es" THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[option_DISTINCT; option_INJ] THEN
   SUBGOAL_THEN (CASE_TERM `ALL (\w:(A)word_lab. match w with Word _ -> T) a`)
     (fun th -> REWRITE_TAC[th]) THENL
    [REWRITE_TAC[GSYM ALL_MEM] THEN GEN_TAC THEN QCASES_ON "x:(A)word_lab" THEN
-    CASE_REWRITE_TAC[];
+    CAKE_REWRITE_TAC[];
     REWRITE_TAC[OPTION_MAP_EQ_SOME] THEN MESON_TAC[]]);;
 
 let PC2LAUX_the_words_MAP = prove
@@ -777,7 +777,7 @@ let PC2LAUX_the_words_MAP = prove
     FS[MAP; NOT_CONS_NIL; injectivity "list"] THEN RVEQ_TAC THEN
     FIRST_X_ASSUM(MP_TAC o SPECL [`f:B->((A)word_loc)option`; `a1:((A)word_lab)list`]) THEN
     ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
-    QCASES_ON "a0:(A)word_lab" THEN FS[wlab_wloc_def] THEN CASE_REWRITE_TAC[] THEN
+    QCASES_ON "a0:(A)word_lab" THEN FS[wlab_wloc_def] THEN CAKE_REWRITE_TAC[] THEN
     ASM_REWRITE_TAC[]]);;
 
 
@@ -806,11 +806,11 @@ let PC2LAUX_crep_op_Mul = prove
   REWRITE_TAC[MAP; crep_op_def; option_DISTINCT; NOT_NIL_CONS] THEN
   QCASES_ON "a0:(A)word_lab" THEN QCASES_ON "a1:((A)word_lab)list" THEN
   REWRITE_TAC[MAP; crep_op_def; option_DISTINCT; NOT_NIL_CONS; injectivity "list"] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   QCASES_ON "a0:(A)word_lab" THEN QCASES_ON "a1':((A)word_lab)list" THEN
   REWRITE_TAC[MAP; crep_op_def; option_DISTINCT; option_INJ; NOT_NIL_CONS; NOT_CONS_NIL;
               injectivity "list"; injectivity "word_lab"] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[crep_op_def; option_DISTINCT; option_INJ] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[crep_op_def; option_DISTINCT; option_INJ] THEN
   MESON_TAC[]);;
 
 
@@ -888,7 +888,7 @@ let PC2LAUX_CPE_OP_TAC =
   MAP_EVERY EXISTS_TAC [`ck:num`; `st:(A,FFI)loop_state`] THEN
   ASM_REWRITE_TAC[loop_eval_def] THEN
   IMP_RES_TAC PC2LAUX_the_words_MAP THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[OPTION_MAP_DEF; wlab_wloc_def];;
+  CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[OPTION_MAP_DEF; wlab_wloc_def];;
 
 let PC2LAUX_CPE_CREPOP_END_TAC =
   SIMP[loop_eval_def; lookup_insert; wlab_wloc_def; WORD_MUL; WORD_VAL] THEN
@@ -953,7 +953,7 @@ let PC2LAUX_CPE_CREPOP_TAC =
   ASM_SIMP_TAC[loop_nested_seq_def] THEN
   SIMP[loop_evaluate_def; loop_arith_def; loop_set_var_def; lookup_insert;
        ARITH_RULE `~(n + 1 = n) /\ ~(n = n + 1)`] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   PC2LAUX_CPE_CREPOP_END_TAC;;
 
 let PC2LAUX_CPE_CMP_TAC1 =
@@ -966,9 +966,9 @@ let PC2LAUX_CPE_CMP_TAC1 =
   LAST_X_ASSUM(QSPECL_THEN ["Word w2"; "st"; "ctxt"; "tmp'"; "l'"; "p''"; "le''"; "tmp''"; "l''"]
     MP_TAC) THEN
   ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
-  QSPECL_THEN ["loop_nested_seq p'"; "loop_state_clock_fupd (K (loop_state_clock t + ck)) t";
+  QSPECL_THEN ["loop_nested_seq p'"; "loop_state_clock_fupd (combin_K (loop_state_clock t + ck)) t";
                "NONE"; "st"; "ck' + 1"] MP_TAC loop_evaluate_add_clock_eq THEN
-  QSPECL_THEN ["loop_nested_seq p''"; "loop_state_clock_fupd (K (loop_state_clock st + ck')) st";
+  QSPECL_THEN ["loop_nested_seq p''"; "loop_state_clock_fupd (combin_K (loop_state_clock st + ck')) st";
                "NONE"; "st'"; "1"] MP_TAC loop_evaluate_add_clock_eq THEN
   ASM_REWRITE_TAC[option_DISTINCT] THEN SIMP[GSYM ADD_ASSOC] THEN
   REPEAT DISCH_TAC THEN
@@ -1022,7 +1022,7 @@ let PC2LAUX_CPE_CMP_TAC =
   ASM_CASES_TAC `asm_word_cmp cmp (w1:A word) w2` THEN ASM_REWRITE_TAC[] THEN
   SIMP[loop_evaluate_def; loop_eval_def; loop_set_var_def; cut_res_def; cut_state_def;
        domain_insert; loop_dec_clock_def] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN SIMP[ADD_EQ_0; ARITH_EQ; ADD_SUB] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN SIMP[ADD_EQ_0; ARITH_EQ; ADD_SUB] THEN
   SIMP[lookup_inter_alt; domain_list_insert; MEM; lookup_insert; wlab_wloc_def; v2w_sing] THEN
   (CONJ_TAC THENL [FS[crep_to_loopProof_state_rel_def]; ALL_TAC]) THEN
   MATCH_MP_TAC PC2LAUX_locals_rel_cmp THEN ASM_REWRITE_TAC[] THEN DECIDE_TAC;;
@@ -1037,7 +1037,7 @@ let PC2LAUX_CPE_SHIFT_TAC =
   LAST_X_ASSUM(QSPECL_THEN ["Word w2"; "st"; "ctxt"; "tmp'"; "l'"; "p''"; "le''"; "ntmp"; "nl"]
     MP_TAC) THEN
   ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
-  QSPECL_THEN ["loop_nested_seq p'"; "loop_state_clock_fupd (K (loop_state_clock t + ck)) t";
+  QSPECL_THEN ["loop_nested_seq p'"; "loop_state_clock_fupd (combin_K (loop_state_clock t + ck)) t";
                "NONE"; "st"; "ck'"] MP_TAC loop_evaluate_add_clock_eq THEN
   ASM_REWRITE_TAC[option_DISTINCT] THEN SIMP[GSYM ADD_ASSOC] THEN DISCH_TAC THEN
   QEXISTS_TAC "ck + ck'" THEN QEXISTS_TAC "st'" THEN
@@ -1054,7 +1054,7 @@ let PC2LAUX_CPE_SHIFT_TAC =
     QSPECL_THEN ["s"; "ctxt"; "l"; "loop_state_locals t"; "tmp"; "e1"; "p'"; "le'"; "tmp'";
                  "cut_sets l (loop_nested_seq p')"; "n"; "Word w1"]
       MP_TAC PC2LAUX_le_tmp_domain_eval THEN ASM_SIMP_TAC[];
-    ASM_REWRITE_TAC[loop_eval_def; wlab_wloc_def] THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[loop_eval_def; wlab_wloc_def] THEN CAKE_REWRITE_TAC[] THEN
     ASM_REWRITE_TAC[OPTION_MAP_DEF]];;
 
 let crep_to_loopProof_comp_exp_preserves_eval = prove
@@ -1069,7 +1069,7 @@ let crep_to_loopProof_comp_exp_preserves_eval = prove
      crep_to_loop_context_vmax ctxt < tmp ==>
      ?ck st.
        loop_evaluate (loop_nested_seq p,
-                      loop_state_clock_fupd (K (loop_state_clock t + ck)) t) = (NONE,st) /\
+                      loop_state_clock_fupd (combin_K (loop_state_clock t + ck)) t) = (NONE,st) /\
        loop_eval st le = SOME (wlab_wloc v) /\
        crep_to_loopProof_state_rel s st /\
        mem_rel (crep_state_memory s) (loop_state_memory st) (crep_state_memaddrs s) /\
@@ -1112,7 +1112,7 @@ let comp_exps_preserves_eval = prove
      crep_to_loop_context_vmax ctxt < tmp ==>
      ?ck st.
        loop_evaluate (loop_nested_seq p,
-                      loop_state_clock_fupd (K (loop_state_clock t + ck)) t) = (NONE,st) /\
+                      loop_state_clock_fupd (combin_K (loop_state_clock t + ck)) t) = (NONE,st) /\
        OPT_MMAP (loop_eval st) les = SOME (MAP wlab_wloc vs) /\
        crep_to_loopProof_state_rel s st /\
        mem_rel (crep_state_memory s) (loop_state_memory st) (crep_state_memaddrs s) /\
@@ -1142,7 +1142,7 @@ let member_cutset_survives_comp_exp_cases = prove
      survives n (loop_nested_seq p))`,
   MATCH_MP_TAC crep_to_loop_compile_exp_ind THEN REPEAT CONJ_TAC THEN
   PC2LAUX_CE_SETUP_TAC THEN
-  TRY (QCASES_ON "cps" THEN CASE_REWRITE_TAC[]) THEN
+  TRY (QCASES_ON "cps" THEN CAKE_REWRITE_TAC[]) THEN
   DISCH_TAC THEN REPEAT PAIRARG_TAC THEN RFS[] THEN RVEQ_TAC THEN
   TRY (QCASES_ON "cop" THEN
        QPAT_X_ASSUM "compile_crepop _ _ _ _ _ _ = _"
@@ -1322,7 +1322,7 @@ let PC2LAUX_ncompile_stmt = CASE_TERM
     crep_to_loopProof_locals_rel ctxt l (crep_state_locals v1) (loop_state_locals t) ==>
     ?ck res1 t1.
       loop_evaluate (crep_to_loop_compile ctxt l v,
-                     loop_state_clock_fupd (K (loop_state_clock t + ck)) t) = (res1,t1) /\
+                     loop_state_clock_fupd (combin_K (loop_state_clock t + ck)) t) = (res1,t1) /\
       crep_to_loopProof_state_rel s1 t1 /\
       mem_rel (crep_state_memory s1) (loop_state_memory t1) (crep_state_memaddrs s1) /\
       crep_to_loopProof_globals_rel (crep_state_globals s1) (loop_state_globals t1) /\
@@ -1414,7 +1414,7 @@ let PC2LAUX_LOCALS_EXP_TAC : tactic =
 
 let PC2LAUX_NC_SIMPLE_TAC =
   REPEAT STRIP_TAC THEN FS[crep_evaluate_def; loop_evaluate_def; crep_to_loop_compile_def] THEN
-  RVEQ_TAC THEN QEXISTS_TAC "0" THEN FS[ADD_0; RECORD_SELFID_ss] THEN CASE_REWRITE_TAC[];;
+  RVEQ_TAC THEN QEXISTS_TAC "0" THEN FS[ADD_0; RECORD_SELFID_ss] THEN CAKE_REWRITE_TAC[];;
 
 (* HOL4: Resume ncompile_correct[Skip] *)
 
@@ -1443,7 +1443,7 @@ let PC2LAUX_ncompile_Tick = prove
   RVEQ_TAC THEN
   FS[crep_to_loopProof_state_rel_def; crep_empty_locals_def; crep_dec_clock_def;
      loop_dec_clock_def] THEN
-  GVS[] THEN QEXISTS_TAC "0" THEN FS[ADD_0; RECORD_SELFID_ss] THEN CASE_REWRITE_TAC[]);;
+  GVS[] THEN QEXISTS_TAC "0" THEN FS[ADD_0; RECORD_SELFID_ss] THEN CAKE_REWRITE_TAC[]);;
 
 (* HOL4: Resume ncompile_correct[Seq] *)
 
@@ -1454,17 +1454,17 @@ let PC2LAUX_ncompile_Seq = prove
    [FS[crep_to_loop_compile_def; loop_evaluate_def] THEN
     LAST_X_ASSUM(MP_TAC o SPECL [`t:(A,FFI)loop_state`; `ctxt:crep_to_loop_context`;
                                  `l:num_set`]) THEN
-    ASM_REWRITE_TAC[option_DISTINCT] THEN CASE_REWRITE_TAC[] THEN STRIP_TAC THEN RVEQ_TAC THEN
+    ASM_REWRITE_TAC[option_DISTINCT] THEN CAKE_REWRITE_TAC[] THEN STRIP_TAC THEN RVEQ_TAC THEN
     LAST_X_ASSUM(MP_TAC o SPECL [`res:((A)crep_result)option`; `s1:(A,FFI)crep_state`;
       `t1:(A,FFI)loop_state`; `ctxt:crep_to_loop_context`; `l:num_set`]) THEN
     ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
     MP_TAC(ISPECL [`crep_to_loop_compile ctxt l (c1:(A)crep_prog)`;
-      `loop_state_clock_fupd (K (loop_state_clock t + ck)) (t:(A,FFI)loop_state)`;
+      `loop_state_clock_fupd (combin_K (loop_state_clock t + ck)) (t:(A,FFI)loop_state)`;
       `NONE:((A)loop_result)option`; `t1:(A,FFI)loop_state`; `ck':num`]
       loop_evaluate_add_clock_eq) THEN
     ASM_REWRITE_TAC[option_DISTINCT] THEN SIMP[GSYM ADD_ASSOC] THEN DISCH_TAC THEN
     MAP_EVERY EXISTS_TAC [`ck + ck':num`; `t1':(A,FFI)loop_state`] THEN
-    ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[];
+    ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[];
     QPAT_X_ASSUM "(if res' = NONE then _ else _) = _" MP_TAC THEN ASM_REWRITE_TAC[PAIR_EQ] THEN
     STRIP_TAC THEN RVEQ_TAC THEN
     FS[crep_to_loop_compile_def; loop_evaluate_def] THEN
@@ -1473,7 +1473,7 @@ let PC2LAUX_ncompile_Seq = prove
     ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
     MAP_EVERY EXISTS_TAC [`ck:num`; `t1:(A,FFI)loop_state`] THEN ASM_REWRITE_TAC[] THEN
     NAMED_CASES_ON "res" ["";"r"] THEN FS[] THEN NAMED_CASES_ON "r" [] THEN
-    CASE_REWRITE_TAC[] THEN FS[option_DISTINCT]]);;
+    CAKE_REWRITE_TAC[] THEN FS[option_DISTINCT]]);;
 
 (* HOL4: Resume ncompile_correct[Return] *)
 
@@ -1517,7 +1517,7 @@ let PC2LAUX_ncompile_Return = prove
     `MAP wlab_wloc (a:((A)word_lab)list)`; `st:(A,FFI)loop_state`]
     get_vars_local_update_some_eq) THEN
   ANTS_TAC THENL [ASM_MESON_TAC[]; DISCH_TAC] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   SIMP[call_env_def; crep_empty_locals_def; option_DISTINCT] THEN
   FS[crep_to_loopProof_state_rel_def]);;
 
@@ -1530,7 +1530,7 @@ let PC2LAUX_ncompile_Raise = prove
      loop_set_var_def; lookup_insert; call_env_def; crep_to_loopProof_state_rel_def;
      crep_empty_locals_def] THEN RVEQ_TAC THEN
   FS[mem_rel_def] THEN QEXISTS_TAC "0" THEN FS[ADD_0; RECORD_SELFID_ss] THEN
-  CASE_REWRITE_TAC[] THEN FS[]);;
+  CAKE_REWRITE_TAC[] THEN FS[]);;
 
 (* ------------------------------------------------------------------------- *)
 
@@ -1554,7 +1554,7 @@ let PC2LAUX_comp_exp_two_eval = prove
      crep_to_loop_context_vmax ctxt < tmp ==>
      ?ck st.
        loop_evaluate (loop_nested_seq (APPEND p1 p2),
-                      loop_state_clock_fupd (K (loop_state_clock t + ck)) t) = (NONE,st) /\
+                      loop_state_clock_fupd (combin_K (loop_state_clock t + ck)) t) = (NONE,st) /\
        loop_eval st le1 = SOME (wlab_wloc v1) /\ loop_eval st le2 = SOME (wlab_wloc v2) /\
        crep_to_loopProof_state_rel s st /\
        mem_rel (crep_state_memory s) (loop_state_memory st) (crep_state_memaddrs s) /\
@@ -1579,7 +1579,7 @@ let PC2LAUX_comp_exp_two_eval = prove
     crep_to_loopProof_comp_exp_preserves_eval) THEN
   ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
   MP_TAC(ISPECL [`loop_nested_seq p1:(A)loop_prog`;
-    `loop_state_clock_fupd (K (loop_state_clock t + ck)) (t:(A,FFI)loop_state)`;
+    `loop_state_clock_fupd (combin_K (loop_state_clock t + ck)) (t:(A,FFI)loop_state)`;
     `NONE:((A)loop_result)option`; `st:(A,FFI)loop_state`; `ck':num`]
     loop_evaluate_add_clock_eq) THEN
   ASM_REWRITE_TAC[option_DISTINCT] THEN SIMP[GSYM ADD_ASSOC] THEN DISCH_TAC THEN
@@ -1618,7 +1618,7 @@ let PC2LAUX_crep_evaluate_Store = prove
      crep_evaluate (crep_Store dst src,s) = (res,s1) /\ ~(res = SOME crep_Error) ==>
      ?adr w m. crep_eval s dst = SOME (Word adr) /\ crep_eval s src = SOME w /\
                pan_mem_store adr w (crep_state_memaddrs s) (crep_state_memory s) = SOME m /\
-               res = NONE /\ s1 = crep_state_memory_fupd (K m) s`,
+               res = NONE /\ s1 = crep_state_memory_fupd (combin_K m) s`,
   REPEAT STRIP_TAC THEN GVS([crep_evaluate_def] @ all_case_eqs()));;
 
 let PC2LAUX_crep_evaluate_Store32 = prove
@@ -1627,7 +1627,7 @@ let PC2LAUX_crep_evaluate_Store32 = prove
      ?adr w m. crep_eval s dst = SOME (Word adr) /\ crep_eval s src = SOME (Word w) /\
                pan_mem_store_32 (crep_state_memory s) (crep_state_memaddrs s)
                  (crep_state_be s) adr (word_zx w) = SOME m /\
-               res = NONE /\ s1 = crep_state_memory_fupd (K m) s`,
+               res = NONE /\ s1 = crep_state_memory_fupd (combin_K m) s`,
   REPEAT STRIP_TAC THEN GVS([crep_evaluate_def] @ all_case_eqs()));;
 
 let PC2LAUX_crep_evaluate_StoreByte = prove
@@ -1636,7 +1636,7 @@ let PC2LAUX_crep_evaluate_StoreByte = prove
      ?adr w m. crep_eval s dst = SOME (Word adr) /\ crep_eval s src = SOME (Word w) /\
                pan_mem_store_byte (crep_state_memory s) (crep_state_memaddrs s)
                  (crep_state_be s) adr (word_zx w) = SOME m /\
-               res = NONE /\ s1 = crep_state_memory_fupd (K m) s`,
+               res = NONE /\ s1 = crep_state_memory_fupd (combin_K m) s`,
   REPEAT STRIP_TAC THEN GVS([crep_evaluate_def] @ all_case_eqs()));;
 
 let PC2LAUX_crep_evaluate_StoreGlob = prove
@@ -1656,12 +1656,12 @@ let PC2LAUX_mem_store_rel = prove
 let PC2LAUX_STORE_REL_TAC defs =
   REWRITE_TAC defs THEN REPEAT GEN_TAC THEN
   TRY(ASM_CASES_TAC `alignment_aligned 2 (w:A word)` THEN ASM_REWRITE_TAC[option_DISTINCT]) THEN
-  QCASES_ON "sm (byte_align w:A word)" THEN CASE_REWRITE_TAC[] THEN
+  QCASES_ON "sm (byte_align w:A word)" THEN CAKE_REWRITE_TAC[] THEN
   ASM_CASES_TAC `byte_align (w:A word) IN dm` THEN ASM_REWRITE_TAC[option_DISTINCT] THEN
   STRIP_TAC THEN
   FIRST_ASSUM(MP_TAC o SPEC `byte_align (w:A word)` o REWRITE_RULE[mem_rel_def]) THEN
   ASM_REWRITE_TAC[wlab_wloc_def] THEN DISCH_THEN(SUBST1_TAC o SYM) THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   RULE_ASSUM_TAC(REWRITE_RULE[LET_DEF; LET_END_DEF; option_INJ]) THEN
   ASM_REWRITE_TAC[LET_DEF; LET_END_DEF; option_INJ; RIGHT_EXISTS_AND_THM; UNWIND_THM1] THEN
   FIRST_X_ASSUM(SUBST1_TAC o SYM) THEN
@@ -1690,9 +1690,9 @@ let PC2LAUX_ncompile_Store = prove
   ASM_REWRITE_TAC[] THEN STRIP_TAC THEN RVEQ_TAC THEN
   REWRITE_TAC[crep_to_loop_compile_def] THEN
   NAMED_CASES_ON "crep_to_loop_compile_exp ctxt (crep_to_loop_context_vmax ctxt + 1) l dst"
-    ["dp dle dtmp dl"] THEN CASE_REWRITE_TAC[] THEN
+    ["dp dle dtmp dl"] THEN CAKE_REWRITE_TAC[] THEN
   NAMED_CASES_ON "crep_to_loop_compile_exp ctxt dtmp dl src" ["sp sle stmp sl"] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   MP_TAC(ISPECL [`s:(A,FFI)crep_state`; `dst:(A)crep_exp`; `src:(A)crep_exp`;
     `Word adr:(A)word_lab`; `w:(A)word_lab`; `t:(A,FFI)loop_state`; `ctxt:crep_to_loop_context`;
     `crep_to_loop_context_vmax ctxt + 1`; `l:num_set`;
@@ -1718,7 +1718,7 @@ let PC2LAUX_ncompile_Store = prove
   SIMP[loop_nested_seq_def; loop_evaluate_def; loop_set_var_def; lookup_insert;
        loop_mem_store_def] THEN
   QBY "adr IN loop_state_mdomain st" (ASM_MESON_TAC[crep_to_loopProof_state_rel_def]) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN SIMP[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN SIMP[] THEN
   CONJ_TAC THENL [FS[crep_to_loopProof_state_rel_def]; ALL_TAC] THEN
   MATCH_MP_TAC locals_rel_insert_gt_vmax THEN
   CONJ_TAC THENL [ALL_TAC; ASM_ARITH_TAC] THEN
@@ -1736,9 +1736,9 @@ let PC2LAUX_NC_STORE_N_TAC (inv_th,rel_th,zxw) =
   ASM_REWRITE_TAC[] THEN STRIP_TAC THEN RVEQ_TAC THEN
   REWRITE_TAC[crep_to_loop_compile_def] THEN
   NAMED_CASES_ON "crep_to_loop_compile_exp ctxt (crep_to_loop_context_vmax ctxt + 1) l dst"
-    ["dp dle dtmp dl"] THEN CASE_REWRITE_TAC[] THEN
+    ["dp dle dtmp dl"] THEN CAKE_REWRITE_TAC[] THEN
   NAMED_CASES_ON "crep_to_loop_compile_exp ctxt dtmp dl src" ["sp sle stmp sl"] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   MP_TAC(ISPECL [`s:(A,FFI)crep_state`; `dst:(A)crep_exp`; `src:(A)crep_exp`;
     `Word adr:(A)word_lab`; `Word w:(A)word_lab`; `t:(A,FFI)loop_state`;
     `ctxt:crep_to_loop_context`;
@@ -1768,7 +1768,7 @@ let PC2LAUX_NC_STORE_N_TAC (inv_th,rel_th,zxw) =
   RULE_ASSUM_TAC(REWRITE_RULE[loop_set_var_def]) THEN
   SIMP[loop_nested_seq_def; loop_evaluate_def; loop_set_var_def; lookup_insert;
        ARITH_RULE `~(n + 1 = n) /\ ~(n = n + 1)`] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   REPEAT CONJ_TAC THENL
    [FS[crep_to_loopProof_state_rel_def];
     QPAT_ASSUM "crep_to_loopProof_state_rel s st"
@@ -1806,7 +1806,7 @@ let PC2LAUX_ncompile_StoreGlob = prove
   ASM_REWRITE_TAC[] THEN STRIP_TAC THEN RVEQ_TAC THEN
   REWRITE_TAC[crep_to_loop_compile_def] THEN
   NAMED_CASES_ON "crep_to_loop_compile_exp ctxt (crep_to_loop_context_vmax ctxt + 1) l src"
-    ["p le tmp nl"] THEN CASE_REWRITE_TAC[] THEN
+    ["p le tmp nl"] THEN CAKE_REWRITE_TAC[] THEN
   MP_TAC(ISPECL [`s:(A,FFI)crep_state`; `src:(A)crep_exp`; `w:(A)word_lab`;
     `t:(A,FFI)loop_state`; `ctxt:crep_to_loop_context`; `crep_to_loop_context_vmax ctxt + 1`;
     `l:num_set`; `p:((A)loop_prog)list`; `le:(A)loop_exp`; `tmp:num`; `nl:num_set`]
@@ -1890,7 +1890,7 @@ let opt_mmap_rhss_locals_rel = prove
     `t':(A,C)loop_state`; `ctxt:crep_to_loop_context`; `l:num_set`]) THEN
   ASM_REWRITE_TAC[] THEN STRIP_TAC THEN QEXISTS_TAC "CONS n nrhss" THEN
   ASM_REWRITE_TAC[LENGTH; ALL; get_vars_def; option_INJ; CONS_11] THEN
-  CONJ_TAC THENL [MESON_TAC[]; CASE_REWRITE_TAC[]]);;
+  CONJ_TAC THENL [MESON_TAC[]; CAKE_REWRITE_TAC[]]);;
 
 let opt_mmap_lhss_locals_rel = prove
  (`!lhss (s:(A,B)crep_state) (t:(A,C)loop_state) ctxt l.
@@ -1954,7 +1954,7 @@ let crep_primop_loop_primop = prove
               ONE; TWO; ARITH_RULE `SUC (SUC (SUC 0)) = 3`] THEN
   REWRITE_TAC[GSYM ONE; GSYM TWO; pan_theWord_def; theWord_def] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN GEN_TAC THEN
-  PAIR_CASES_ON `word_add_carry (a:A word) a' a''` THEN CASE_REWRITE_TAC[] THEN
+  PAIR_CASES_ON `word_add_carry (a:A word) a' a''` THEN CAKE_REWRITE_TAC[] THEN
   DISCH_THEN(SUBST1_TAC o SYM o REWRITE_RULE[option_INJ]) THEN
   REWRITE_TAC[MAP; wlab_wloc_def]);;
 
@@ -1965,11 +1965,11 @@ let PC2LAUX_ncompile_Primitive = prove
   RW[] THEN
   GVS([crep_evaluate_def; loop_evaluate_def; crep_to_loop_compile_def] @ all_case_eqs()) THEN
   IMP_RES_TAC opt_mmap_rhss_locals_rel THEN IMP_RES_TAC opt_mmap_lhss_locals_rel THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN QEXISTS_TAC "0" THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN QEXISTS_TAC "0" THEN
   REWRITE_TAC[ADD_CLAUSES] THEN ONCE_REWRITE_TAC[loop_evaluate_def] THEN
-  REWRITE_TAC[get_vars_clock_upd_eq] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[get_vars_clock_upd_eq] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   FIRST_X_ASSUM(ASSUME_TAC o MATCH_MP crep_primop_loop_primop) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[LENGTH_MAP] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[LENGTH_MAP] THEN
   REWRITE_TAC[set_vars_def] THEN
   SIMP[PAIR_EQ] THEN FS[crep_to_loopProof_state_rel_def; loop_state_component_equality] THEN
   FS[crep_to_loopProof_locals_rel_def] THEN CONJ_TAC THENL
@@ -1993,7 +1993,7 @@ let PC2LAUX_ncompile_Primitive = prove
         ALOOKUP_ALL_DISTINCT_EL) THEN
       ASM_SIMP_TAC[MAP_FST_ZIP; LENGTH_ZIP; LENGTH_MAP; EL_ZIP] THEN
       DISCH_THEN MATCH_MP_TAC THEN ASM_ARITH_TAC) THEN
-    ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
     MATCH_MP_TAC EL_MAP THEN ASM_ARITH_TAC;
     QBY "FLOOKUP (crep_state_locals s) vname = SOME v"
       (FIRST_X_ASSUM(SUBST1_TAC o SYM) THEN CONV_TAC SYM_CONV THEN
@@ -2004,7 +2004,7 @@ let PC2LAUX_ncompile_Primitive = prove
     QBY "~MEM n nlhss" (MATCH_MP_TAC not_mem_nlhss_lemma THEN ASM_MESON_TAC[]) THEN
     QBY "ALOOKUP (ZIP nlhss (MAP wlab_wloc a')) n = NONE"
       (ASM_SIMP_TAC[ALOOKUP_NONE; MAP_FST_ZIP; LENGTH_MAP]) THEN
-    ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]]);;
+    ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]]);;
 
 (* ------------------------------------------------------------------------- *)
 
@@ -2022,8 +2022,8 @@ let PC2LAUX_locals_rel_dec = prove
      domain l SUBSET domain nl /\
      crep_to_loop_context_vmax ctxt < tmp ==>
      crep_to_loopProof_locals_rel
-       (crep_to_loop_context_vars_fupd (K (crep_to_loop_context_vars ctxt |+ (v,tmp)))
-          (crep_to_loop_context_vmax_fupd (K tmp) ctxt))
+       (crep_to_loop_context_vars_fupd (combin_K (crep_to_loop_context_vars ctxt |+ (v,tmp)))
+          (crep_to_loop_context_vmax_fupd (combin_K tmp) ctxt))
        (insert tmp one l) (sl |+ (v,w)) (insert tmp (wlab_wloc w) tl)`,
   REWRITE_TAC[crep_to_loopProof_locals_rel_def; crep_to_loopProof_ctxt_max_def;
               distinct_vars_def; PC2LAUX_ctxt_accfupds; K_THM; domain_insert;
@@ -2060,8 +2060,8 @@ let PC2LAUX_locals_rel_res_var = prove
  (`!ctxt l tmp v (sl:(num,(A)word_lab)fmap) stl tl tl1.
      crep_to_loopProof_locals_rel ctxt l sl tl /\
      crep_to_loopProof_locals_rel
-       (crep_to_loop_context_vars_fupd (K (crep_to_loop_context_vars ctxt |+ (v,tmp)))
-          (crep_to_loop_context_vmax_fupd (K tmp) ctxt))
+       (crep_to_loop_context_vars_fupd (combin_K (crep_to_loop_context_vars ctxt |+ (v,tmp)))
+          (crep_to_loop_context_vmax_fupd (combin_K tmp) ctxt))
        (insert tmp one l) stl tl1 /\
      crep_to_loop_context_vmax ctxt < tmp /\
      (!pv pn. FLOOKUP sl v = SOME pv /\ FLOOKUP (crep_to_loop_context_vars ctxt) v = SOME pn
@@ -2128,10 +2128,10 @@ let PC2LAUX_ncompile_Dec = prove
   FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP compile_exp_out_rel) THEN
   FIRST_X_ASSUM(MP_TAC o SPEC `value:(A)word_lab`) THEN ASM_REWRITE_TAC[] THEN
   DISCH_THEN(MP_TAC o SPECL [`res:((A)crep_result)option`; `st:(A,FFI)crep_state`;
-     `loop_state_locals_fupd (K (insert tmp (wlab_wloc (value:(A)word_lab))
+     `loop_state_locals_fupd (combin_K (insert tmp (wlab_wloc (value:(A)word_lab))
         (loop_state_locals (st':(A,FFI)loop_state)))) st'`;
-     `crep_to_loop_context_vars_fupd (K (crep_to_loop_context_vars ctxt |+ (v,tmp)))
-        (crep_to_loop_context_vmax_fupd (K tmp) ctxt)`;
+     `crep_to_loop_context_vars_fupd (combin_K (crep_to_loop_context_vars ctxt |+ (v,tmp)))
+        (crep_to_loop_context_vmax_fupd (combin_K tmp) ctxt)`;
      `insert tmp one l`]) THEN
   ASM_REWRITE_TAC[] THEN ANTS_TAC THENL
    [FS[crep_to_loopProof_state_rel_def] THEN CONJ_TAC THENL
@@ -2146,16 +2146,16 @@ let PC2LAUX_ncompile_Dec = prove
     (MP_TAC o SPEC `ck':num` o MATCH_MP (REWRITE_RULE[IMP_CONJ] loop_evaluate_add_clock_eq)) THEN
   SIMP[option_DISTINCT; o_DEF; ADD_ASSOC] THEN
   DISCH_TAC THEN ONCE_REWRITE_TAC[loop_evaluate_def] THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[] THEN ONCE_REWRITE_TAC[loop_evaluate_def] THEN
-  REWRITE_TAC[loop_eval_upd_clock_eq] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[] THEN ONCE_REWRITE_TAC[loop_evaluate_def] THEN
+  REWRITE_TAC[loop_eval_upd_clock_eq] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   ONCE_REWRITE_TAC[loop_evaluate_def] THEN
-  REWRITE_TAC[loop_eval_upd_clock_eq] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[loop_eval_upd_clock_eq] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[loop_set_var_def] THEN SAME_RUN_TAC[] THEN
   QEXISTS_TAC "t1" THEN REWRITE_TAC[] THEN
   FS[crep_to_loopProof_state_rel_def; PC2LAUX_code_rel_fupds] THEN
   ABBREV_TAC `nctxt = crep_to_loop_context_vars_fupd
-     (K (crep_to_loop_context_vars ctxt |+ (v,tmp)))
-     (crep_to_loop_context_vmax_fupd (K tmp) ctxt)` THEN
+     (combin_K (crep_to_loop_context_vars ctxt |+ (v,tmp)))
+     (crep_to_loop_context_vmax_fupd (combin_K tmp) ctxt)` THEN
   ABBREV_TAC `lp = crep_to_loop_compile nctxt (insert tmp one l) (prog:(A)crep_prog)` THEN
   SUBGOAL_THEN
    `!pv pn. FLOOKUP (crep_state_locals (s:(A,FFI)crep_state)) v = SOME pv /\
@@ -2194,9 +2194,9 @@ let PC2LAUX_ncompile_Dec = prove
         (ASSUME `FLOOKUP (crep_state_locals (s:(A,FFI)crep_state)) v = SOME pv`))) THEN
       ASM_REWRITE_TAC[option_INJ] THEN MESON_TAC[]];
     ALL_TAC] THEN
-  QCASES_ON "res" THEN CASE_REWRITE_TAC[] THEN RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THENL
+  QCASES_ON "res" THEN CAKE_REWRITE_TAC[] THEN RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THENL
    [PC2LAUX_DEC_LOCALS_TAC;
-    TOP_CASE_TAC THEN RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN
+    TOP_CASE_TAC THEN RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN
     FIRST [FS[] THEN NO_TAC; PC2LAUX_DEC_LOCALS_TAC]]);;
 
 (* local helper: the locals relation survives the cut of a conditional *)
@@ -2208,9 +2208,9 @@ let PC2LAUX_locals_rel_inter = prove
   REWRITE_TAC[crep_to_loopProof_locals_rel_def; domain_inter] THEN
   REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[] THENL [ASM SET_TAC[]; ALL_TAC] THEN
   FIRST_X_ASSUM(fun th -> FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP th)) THEN
-  QEXISTS_TAC "n" THEN ASM_REWRITE_TAC[lookup_inter] THEN CASE_REWRITE_TAC[] THEN
+  QEXISTS_TAC "n" THEN ASM_REWRITE_TAC[lookup_inter] THEN CAKE_REWRITE_TAC[] THEN
   QPAT_X_ASSUM "n IN domain l" (STRIP_ASSUME_TAC o REWRITE_RULE[domain_lookup]) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]);;
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]);;
 
 (* HOL4: Resume ncompile_correct[If] *)
 
@@ -2227,7 +2227,7 @@ let PC2LAUX_ncompile_If = prove
   FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP compile_exp_out_rel) THEN
   FIRST_X_ASSUM(MP_TAC o SPEC `a:A word`) THEN ASM_REWRITE_TAC[] THEN
   DISCH_THEN(MP_TAC o SPECL [`res:((A)crep_result)option`; `s1:(A,FFI)crep_state`;
-     `loop_state_locals_fupd (K (insert tmp (wl_Word (a:A word))
+     `loop_state_locals_fupd (combin_K (insert tmp (wl_Word (a:A word))
         (loop_state_locals (st:(A,FFI)loop_state)))) st`;
      `ctxt:crep_to_loop_context`; `l:num_set`]) THEN
   ASM_REWRITE_TAC[] THEN ANTS_TAC THENL
@@ -2238,19 +2238,19 @@ let PC2LAUX_ncompile_If = prove
       ASM_ARITH_TAC];
     ALL_TAC] THEN
   STRIP_TAC THEN
-  QCASES_ON "res" THEN CASE_REWRITE_TAC[] THEN RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THENL
+  QCASES_ON "res" THEN CAKE_REWRITE_TAC[] THEN RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THENL
    [QEXISTS_TAC "ck + ck' + 1" THEN
     QBY "loop_evaluate (loop_nested_seq np,
-           loop_state_clock_fupd (K (loop_state_clock t + ck + ck' + 1)) t) =
-         (NONE,loop_state_clock_fupd (K (loop_state_clock st + ck' + 1)) st)"
+           loop_state_clock_fupd (combin_K (loop_state_clock t + ck + ck' + 1)) t) =
+         (NONE,loop_state_clock_fupd (combin_K (loop_state_clock st + ck' + 1)) st)"
      (QPAT_X_ASSUM "loop_evaluate (loop_nested_seq np,_) = (NONE,st)"
        (MP_TAC o SPEC `ck' + 1` o
         MATCH_MP (REWRITE_RULE[IMP_CONJ] loop_evaluate_add_clock_eq)) THEN
       SIMP[option_DISTINCT; o_DEF; ADD_ASSOC]);
     QEXISTS_TAC "ck + ck'" THEN
     QBY "loop_evaluate (loop_nested_seq np,
-           loop_state_clock_fupd (K (loop_state_clock t + ck + ck')) t) =
-         (NONE,loop_state_clock_fupd (K (loop_state_clock st + ck')) st)"
+           loop_state_clock_fupd (combin_K (loop_state_clock t + ck + ck')) t) =
+         (NONE,loop_state_clock_fupd (combin_K (loop_state_clock st + ck')) st)"
      (QPAT_X_ASSUM "loop_evaluate (loop_nested_seq np,_) = (NONE,st)"
        (MP_TAC o SPEC `ck':num` o
         MATCH_MP (REWRITE_RULE[IMP_CONJ] loop_evaluate_add_clock_eq)) THEN
@@ -2258,10 +2258,10 @@ let PC2LAUX_ncompile_If = prove
   FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP evaluate_none_nested_seq_append th]) THEN
   REWRITE_TAC[loop_nested_seq_def] THEN
   ONCE_REWRITE_TAC[loop_evaluate_def] THEN ONCE_REWRITE_TAC[loop_evaluate_def] THEN
-  REWRITE_TAC[loop_eval_upd_clock_eq] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[loop_eval_upd_clock_eq] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[loop_set_var_def] THEN ONCE_REWRITE_TAC[loop_evaluate_def] THEN
   ONCE_REWRITE_TAC[loop_evaluate_def] THEN
-  SIMP[lookup_insert; get_var_imm_def; asm_word_cmp_def] THEN CASE_REWRITE_TAC[] THENL
+  SIMP[lookup_insert; get_var_imm_def; asm_word_cmp_def] THEN CAKE_REWRITE_TAC[] THENL
    [QPAT_X_ASSUM "loop_evaluate (crep_to_loop_compile ctxt l _,_) = _"
       (MP_TAC o ONCE_REWRITE_RULE[COND_RAND] o SPEC `1` o
        MATCH_MP (REWRITE_RULE[IMP_CONJ] loop_evaluate_add_clock_eq)) THEN
@@ -2269,14 +2269,14 @@ let PC2LAUX_ncompile_If = prove
     QPAT_ASSUM "crep_to_loopProof_locals_rel ctxt l (crep_state_locals s1) _"
       (STRIP_ASSUME_TAC o MATCH_MP crep_to_loopProof_locals_rel_intro) THEN
     SIMP[cut_res_def; cut_state_def; loop_dec_clock_def; ARITH_RULE `~(n + 1 = 0)`] THEN
-    CASE_REWRITE_TAC[] THEN SIMP[ADD_SUB] THEN
+    CAKE_REWRITE_TAC[] THEN SIMP[ADD_SUB] THEN
     FS[crep_to_loopProof_state_rel_def] THEN
     MATCH_MP_TAC PC2LAUX_locals_rel_inter THEN ASM_REWRITE_TAC[];
     QPAT_X_ASSUM "loop_evaluate (crep_to_loop_compile ctxt l _,_) = _"
       (MP_TAC o ONCE_REWRITE_RULE[COND_RAND]) THEN
     DISCH_TAC THEN SAME_RUN_TAC[] THEN
-    QCASES_ON "a'" THEN CASE_REWRITE_TAC[] THEN RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN
-    SIMP[cut_res_def; option_DISTINCT] THEN CASE_REWRITE_TAC[] THEN
+    QCASES_ON "a'" THEN CAKE_REWRITE_TAC[] THEN RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN
+    SIMP[cut_res_def; option_DISTINCT] THEN CAKE_REWRITE_TAC[] THEN
     FS[crep_to_loopProof_state_rel_def]]);;
 
 (* local helper: loading bytes from related memories *)
@@ -2286,12 +2286,12 @@ let PC2LAUX_mem_load_byte_rel = prove
      mem_rel smem tmem dm ==>
      mem_load_byte_aux tmem dm be = pan_mem_load_byte smem dm be`,
   REWRITE_TAC[mem_rel_def; FUN_EQ_THM; mem_load_byte_aux_def; pan_mem_load_byte_def] THEN
-  REPEAT STRIP_TAC THEN QCASES_ON "smem (byte_align x:A word)" THEN CASE_REWRITE_TAC[] THEN
+  REPEAT STRIP_TAC THEN QCASES_ON "smem (byte_align x:A word)" THEN CAKE_REWRITE_TAC[] THEN
   ASM_CASES_TAC `byte_align (x:A word) IN dm` THEN ASM_REWRITE_TAC[] THENL
    [FIRST_X_ASSUM(MP_TAC o SPEC `byte_align (x:A word)`) THEN
     ASM_REWRITE_TAC[wlab_wloc_def] THEN DISCH_THEN(SUBST1_TAC o SYM) THEN
-    CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[];
-    QCASES_ON "tmem (byte_align x:A word)" THEN CASE_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[];
+    QCASES_ON "tmem (byte_align x:A word)" THEN CAKE_REWRITE_TAC[] THEN
     ASM_REWRITE_TAC[]]);;
 
 (* HOL4: Resume ncompile_correct[ExtCall] *)
@@ -2305,7 +2305,7 @@ let PC2LAUX_ncompile_ExtCall = prove
   QEXISTS_TAC "0" THEN ONCE_REWRITE_TAC[loop_evaluate_def] THEN
   FS[crep_to_loopProof_state_rel_def] THEN RFS[] THEN
   FIRST_ASSUM(fun th -> ASSUME_TAC(MATCH_MP PC2LAUX_mem_load_byte_rel th)) THEN
-  FS[cut_state_def; ADD_CLAUSES] THEN CASE_REWRITE_TAC[] THEN
+  FS[cut_state_def; ADD_CLAUSES] THEN CAKE_REWRITE_TAC[] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   SIMP[PAIR_EQ; call_env_def] THEN
   CONJ_TAC THENL
@@ -2326,27 +2326,27 @@ let PC2LAUX_while_tail = prove
      loop_evaluate (loop_nested_seq [loop_Assign tmp le;
          loop_If NotEqual tmp (Imm (word 0)) (loop_Seq lp (loop_Continue 0))
            (loop_Break 0) l], st) =
-     (let st1 = loop_state_locals_fupd (K (insert tmp (wl_Word w) (loop_state_locals st))) st in
+     (let st1 = loop_state_locals_fupd (combin_K (insert tmp (wl_Word w) (loop_state_locals st))) st in
       if w = word 0 then (SOME (loopSem_Break 0),st1)
       else match loop_evaluate (lp,st1) with
              (NONE,t1) -> (SOME (loopSem_Continue 0),t1)
            | (r,t1) -> (r,t1))`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[loop_nested_seq_def] THEN
   ONCE_REWRITE_TAC[loop_evaluate_def] THEN ONCE_REWRITE_TAC[loop_evaluate_def] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[loop_set_var_def] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[loop_set_var_def] THEN
   ONCE_REWRITE_TAC[loop_evaluate_def] THEN ONCE_REWRITE_TAC[loop_evaluate_def] THEN
-  SIMP[lookup_insert; get_var_imm_def; asm_word_cmp_def] THEN CASE_REWRITE_TAC[] THEN
+  SIMP[lookup_insert; get_var_imm_def; asm_word_cmp_def] THEN CAKE_REWRITE_TAC[] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   ASM_CASES_TAC `w = word 0:A word` THEN ASM_REWRITE_TAC[] THENL
    [ONCE_REWRITE_TAC[loop_evaluate_def] THEN REWRITE_TAC[cut_res_def; option_DISTINCT] THEN
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[option_DISTINCT];
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[option_DISTINCT];
     ONCE_REWRITE_TAC[loop_evaluate_def] THEN
     NAMED_CASES_ON "loop_evaluate (lp,loop_state_locals_fupd
-      (K (insert tmp (wl_Word w) (loop_state_locals st))) st)" ["r t1"] THEN
-    CASE_REWRITE_TAC[] THEN QCASES_ON "r" THEN CASE_REWRITE_TAC[] THEN
+      (combin_K (insert tmp (wl_Word w) (loop_state_locals st))) st)" ["r t1"] THEN
+    CAKE_REWRITE_TAC[] THEN QCASES_ON "r" THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[cut_res_def; option_DISTINCT] THEN
-    ONCE_REWRITE_TAC[loop_evaluate_def] THEN CASE_REWRITE_TAC[] THEN
-    REWRITE_TAC[cut_res_def; option_DISTINCT] THEN CASE_REWRITE_TAC[] THEN
+    ONCE_REWRITE_TAC[loop_evaluate_def] THEN CAKE_REWRITE_TAC[] THEN
+    REWRITE_TAC[cut_res_def; option_DISTINCT] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[option_DISTINCT]]);;
 
 let PC2LAUX_loop_entry = prove
@@ -2355,10 +2355,10 @@ let PC2LAUX_loop_entry = prove
      cut_res l (NONE:((A)loop_result)option,s) =
      if loop_state_clock s = 0
      then (SOME loop_TimeOut,
-           loop_state_locals_fupd (K LN)
-             (loop_state_locals_fupd (K (sptree_inter (loop_state_locals s) l)) s))
+           loop_state_locals_fupd (combin_K LN)
+             (loop_state_locals_fupd (combin_K (sptree_inter (loop_state_locals s) l)) s))
      else (NONE,loop_dec_clock
-                  (loop_state_locals_fupd (K (sptree_inter (loop_state_locals s) l)) s))`,
+                  (loop_state_locals_fupd (combin_K (sptree_inter (loop_state_locals s) l)) s))`,
   SIMP[cut_res_def; cut_state_def] THEN REPEAT STRIP_TAC);;
 
 let PC2LAUX_ONE_BINDER_TAC (ttac:thm_tactic) : tactic =
@@ -2387,9 +2387,9 @@ let PC2LAUX_WHILE_EXIT_TAC : tactic =
   QPAT_X_ASSUM "loop_state_clock t = crep_state_clock s" (ASSUME_TAC o SYM) THEN
   QEXISTS_TAC "ck + ck'" THEN
   QBY "loop_evaluate (loop_nested_seq np,
-         loop_state_locals_fupd (K (sptree_inter (loop_state_locals t) l))
-           (loop_state_clock_fupd (K ((loop_state_clock t + ck + ck') - 1)) t)) =
-       (NONE,loop_state_clock_fupd (K (loop_state_clock st + ck')) st)"
+         loop_state_locals_fupd (combin_K (sptree_inter (loop_state_locals t) l))
+           (loop_state_clock_fupd (combin_K ((loop_state_clock t + ck + ck') - 1)) t)) =
+       (NONE,loop_state_clock_fupd (combin_K (loop_state_clock st + ck')) st)"
    (QPAT_X_ASSUM "loop_evaluate (loop_nested_seq np,_) = (NONE,st)"
      (MP_TAC o SPEC `ck':num` o MATCH_MP (REWRITE_RULE[IMP_CONJ] loop_evaluate_add_clock_eq)) THEN
     SIMP[option_DISTINCT] THEN DISCH_TAC THEN SAME_RUN_TAC[]) THEN
@@ -2397,13 +2397,13 @@ let PC2LAUX_WHILE_EXIT_TAC : tactic =
   ONCE_REWRITE_TAC[loop_evaluate_def] THEN
   SIMP[PC2LAUX_loop_entry; loop_dec_clock_def] THEN
   FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP evaluate_none_nested_seq_append th]) THEN
-  SUBGOAL_THEN `loop_eval (loop_state_clock_fupd (K (loop_state_clock st + ck'))
+  SUBGOAL_THEN `loop_eval (loop_state_clock_fupd (combin_K (loop_state_clock st + ck'))
                   (st:(A,FFI)loop_state)) le = SOME (wl_Word (w:A word))` ASSUME_TAC THENL
    [ASM_REWRITE_TAC[loop_eval_upd_clock_eq; GSYM wlab_wloc_def]; ALL_TAC] THEN
   FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP PC2LAUX_while_tail th]) THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN ASM_REWRITE_TAC[] THEN SAME_RUN_TAC[] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
-  SIMP[crep_exit_loop_def; loop_exit_loop_def] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
+  SIMP[crep_exit_loop_def; loop_exit_loop_def] THEN CAKE_REWRITE_TAC[] THEN
   FS[crep_to_loopProof_state_rel_def];;
 
 (* one iteration that continues the loop (the body returns NONE or         *)
@@ -2412,9 +2412,9 @@ let PC2LAUX_WHILE_EXIT_TAC : tactic =
 let PC2LAUX_WHILE_NEXT_TAC : tactic =
   QEXISTS_TAC "ck + ck' + ck''" THEN
   QBY "loop_evaluate (loop_nested_seq np,
-         loop_state_locals_fupd (K (sptree_inter (loop_state_locals t) l))
-           (loop_state_clock_fupd (K ((loop_state_clock t + ck + ck' + ck'') - 1)) t)) =
-       (NONE,loop_state_clock_fupd (K (loop_state_clock st + ck' + ck'')) st)"
+         loop_state_locals_fupd (combin_K (sptree_inter (loop_state_locals t) l))
+           (loop_state_clock_fupd (combin_K ((loop_state_clock t + ck + ck' + ck'') - 1)) t)) =
+       (NONE,loop_state_clock_fupd (combin_K (loop_state_clock st + ck' + ck'')) st)"
    (QPAT_X_ASSUM "loop_evaluate (loop_nested_seq np,_) = (NONE,st)"
      (MP_TAC o SPEC `ck' + ck''` o
       MATCH_MP (REWRITE_RULE[IMP_CONJ] loop_evaluate_add_clock_eq)) THEN
@@ -2424,7 +2424,7 @@ let PC2LAUX_WHILE_NEXT_TAC : tactic =
   ONCE_REWRITE_TAC[loop_evaluate_def] THEN
   SIMP[PC2LAUX_loop_entry; loop_dec_clock_def] THEN
   FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP evaluate_none_nested_seq_append th]) THEN
-  SUBGOAL_THEN `loop_eval (loop_state_clock_fupd (K (loop_state_clock st + ck' + ck''))
+  SUBGOAL_THEN `loop_eval (loop_state_clock_fupd (combin_K (loop_state_clock st + ck' + ck''))
                   (st:(A,FFI)loop_state)) le = SOME (wl_Word (w:A word))` ASSUME_TAC THENL
    [ASM_REWRITE_TAC[loop_eval_upd_clock_eq; GSYM wlab_wloc_def]; ALL_TAC] THEN
   FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP PC2LAUX_while_tail th]) THEN
@@ -2433,10 +2433,10 @@ let PC2LAUX_WHILE_NEXT_TAC : tactic =
     (MP_TAC o SPEC `ck'':num` o MATCH_MP (REWRITE_RULE[IMP_CONJ] loop_evaluate_add_clock_eq)) THEN
   ASM_REWRITE_TAC[option_DISTINCT] THEN
   SIMP[option_DISTINCT] THEN DISCH_TAC THEN SAME_RUN_TAC[] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   QPAT_X_ASSUM "loop_evaluate (crep_to_loop_compile ctxt l (crep_While e c),_) = _"
     (MP_TAC o REWRITE_RULE[crep_to_loop_compile_def]) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   DISCH_TAC THEN ASM_REWRITE_TAC[PAIR_EQ] THEN
   REWRITE_TAC[RIGHT_EXISTS_AND_THM; UNWIND_THM1] THEN ASM_REWRITE_TAC[];;
 
@@ -2447,12 +2447,12 @@ let PC2LAUX_ncompile_While = prove
   REPEAT GEN_TAC THEN STRIP_TAC THEN REPEAT GEN_TAC THEN STRIP_TAC THEN
   QPAT_X_ASSUM "crep_evaluate (crep_While e c,s) = (res,s1)" MP_TAC THEN
   ONCE_REWRITE_TAC[crep_evaluate_def] THEN
-  QCASES_ON "crep_eval s e" THEN CASE_REWRITE_TAC[] THENL
+  QCASES_ON "crep_eval s e" THEN CAKE_REWRITE_TAC[] THENL
    [ASM_MESON_TAC[PAIR_EQ]; ALL_TAC] THEN
-  QCASES_ON "a" THEN CASE_REWRITE_TAC[] THEN RENAME1 "crep_eval s e = SOME (Word w)" THEN
+  QCASES_ON "a" THEN CAKE_REWRITE_TAC[] THEN RENAME1 "crep_eval s e = SOME (Word w)" THEN
   REWRITE_TAC[crep_to_loop_compile_def] THEN
   NAMED_CASES_ON "crep_to_loop_compile_exp ctxt (crep_to_loop_context_vmax ctxt + 1) l e"
-    ["np le tmp nl"] THEN CASE_REWRITE_TAC[] THEN
+    ["np le tmp nl"] THEN CAKE_REWRITE_TAC[] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   QPAT_ASSUM "crep_to_loopProof_locals_rel ctxt l _ _"
     (STRIP_ASSUME_TAC o MATCH_MP crep_to_loopProof_locals_rel_intro) THEN
@@ -2462,7 +2462,7 @@ let PC2LAUX_ncompile_While = prove
     REWRITE_TAC[PAIR_EQ] THEN
     DISCH_THEN(CONJUNCTS_THEN2 (SUBST_ALL_TAC o SYM) (SUBST_ALL_TAC o SYM)) THEN
     MP_TAC(ISPECL [`s:(A,FFI)crep_state`; `e:(A)crep_exp`; `Word (w:A word)`;
-       `loop_state_locals_fupd (K (sptree_inter (loop_state_locals (t:(A,FFI)loop_state))
+       `loop_state_locals_fupd (combin_K (sptree_inter (loop_state_locals (t:(A,FFI)loop_state))
           (l:num_set))) t`;
        `ctxt:crep_to_loop_context`; `crep_to_loop_context_vmax ctxt + 1`; `l:num_set`;
        `np:((A)loop_prog)list`; `le:(A)loop_exp`; `tmp:num`; `nl:num_set`]
@@ -2480,11 +2480,11 @@ let PC2LAUX_ncompile_While = prove
     SIMP[ARITH_RULE `~(c + ck + 2 = 0)`; loop_dec_clock_def] THEN
     REWRITE_TAC[ARITH_RULE `(a + b + 2) - 1 = (a + b) + 1`] THEN
     FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP evaluate_none_nested_seq_append th]) THEN
-    SUBGOAL_THEN `loop_eval (loop_state_clock_fupd (K (loop_state_clock st + 1))
+    SUBGOAL_THEN `loop_eval (loop_state_clock_fupd (combin_K (loop_state_clock st + 1))
                     (st:(A,FFI)loop_state)) le = SOME (wl_Word (w:A word))` ASSUME_TAC THENL
      [ASM_REWRITE_TAC[loop_eval_upd_clock_eq; wlab_wloc_def]; ALL_TAC] THEN
     FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP PC2LAUX_while_tail th]) THEN
-    CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+    CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
     SUBGOAL_THEN `domain (l:num_set) SUBSET domain (loop_state_locals (st:(A,FFI)loop_state))`
       ASSUME_TAC THENL
      [QPAT_ASSUM "crep_to_loopProof_locals_rel ctxt nl _ _"
@@ -2513,14 +2513,14 @@ let PC2LAUX_ncompile_While = prove
     REWRITE_TAC[PAIR_EQ] THEN
     DISCH_THEN(CONJUNCTS_THEN2 (SUBST_ALL_TAC o SYM) (SUBST_ALL_TAC o SYM)) THEN
     QEXISTS_TAC "0" THEN ONCE_REWRITE_TAC[loop_evaluate_def] THEN
-    SIMP[PC2LAUX_loop_entry] THEN CASE_REWRITE_TAC[] THEN
+    SIMP[PC2LAUX_loop_entry] THEN CAKE_REWRITE_TAC[] THEN
     FS[crep_to_loopProof_state_rel_def; crep_empty_locals_def];
     ALL_TAC] THEN
   (* the body is run *)
-  NAMED_CASES_ON "crep_evaluate (c,crep_dec_clock s)" ["r s2"] THEN CASE_REWRITE_TAC[] THEN
+  NAMED_CASES_ON "crep_evaluate (c,crep_dec_clock s)" ["r s2"] THEN CAKE_REWRITE_TAC[] THEN
   MP_TAC(ISPECL [`crep_dec_clock (s:(A,FFI)crep_state)`; `e:(A)crep_exp`; `Word (w:A word)`;
-     `loop_state_clock_fupd (K (loop_state_clock t - 1))
-        (loop_state_locals_fupd (K (sptree_inter (loop_state_locals (t:(A,FFI)loop_state))
+     `loop_state_clock_fupd (combin_K (loop_state_clock t - 1))
+        (loop_state_locals_fupd (combin_K (sptree_inter (loop_state_locals (t:(A,FFI)loop_state))
            (l:num_set))) t)`;
      `ctxt:crep_to_loop_context`; `crep_to_loop_context_vmax ctxt + 1`; `l:num_set`;
      `np:((A)loop_prog)list`; `le:(A)loop_exp`; `tmp:num`; `nl:num_set`]
@@ -2533,7 +2533,7 @@ let PC2LAUX_ncompile_While = prove
   STRIP_TAC THEN
   PC2LAUX_ONE_BINDER_TAC(MP_TAC o SPEC `w:A word`) THEN ASM_REWRITE_TAC[] THEN
   DISCH_THEN(MP_TAC o SPECL [`r:((A)crep_result)option`; `s2:(A,FFI)crep_state`;
-     `loop_state_locals_fupd (K (insert tmp (wl_Word (w:A word))
+     `loop_state_locals_fupd (combin_K (insert tmp (wl_Word (w:A word))
         (loop_state_locals (st:(A,FFI)loop_state)))) st`;
      `ctxt:crep_to_loop_context`; `l:num_set`]) THEN
   ASM_REWRITE_TAC[] THEN
@@ -2550,11 +2550,11 @@ let PC2LAUX_ncompile_While = prove
       ASM_ARITH_TAC];
     ALL_TAC] THEN
   STRIP_TAC THEN
-  QCASES_ON "r" THEN CASE_REWRITE_TAC[] THEN RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THENL
+  QCASES_ON "r" THEN CAKE_REWRITE_TAC[] THEN RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THENL
    [(* the body ends normally: the next iteration *)
     FIRST_X_ASSUM SUBST_ALL_TAC THEN PC2LAUX_WHILE_IH_TAC THEN PC2LAUX_WHILE_NEXT_TAC;
     ALL_TAC] THEN
-  QCASES_ON "a''" THEN CASE_REWRITE_TAC[] THEN RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THENL
+  QCASES_ON "a''" THEN CAKE_REWRITE_TAC[] THEN RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THENL
    [FS[crep_exit_loop_def];
     PC2LAUX_WHILE_EXIT_TAC;
     ASM_CASES_TAC `a''' = 0` THEN
@@ -2566,9 +2566,9 @@ let PC2LAUX_ncompile_While = prove
       QPAT_X_ASSUM "loop_state_clock t = crep_state_clock s" (ASSUME_TAC o SYM) THEN
       QEXISTS_TAC "ck + ck' + 1" THEN
       QBY "loop_evaluate (loop_nested_seq np,
-             loop_state_locals_fupd (K (sptree_inter (loop_state_locals t) l))
-               (loop_state_clock_fupd (K ((loop_state_clock t + ck + ck' + 1) - 1)) t)) =
-           (NONE,loop_state_clock_fupd (K (loop_state_clock st + ck' + 1)) st)"
+             loop_state_locals_fupd (combin_K (sptree_inter (loop_state_locals t) l))
+               (loop_state_clock_fupd (combin_K ((loop_state_clock t + ck + ck' + 1) - 1)) t)) =
+           (NONE,loop_state_clock_fupd (combin_K (loop_state_clock st + ck' + 1)) st)"
        (QPAT_X_ASSUM "loop_evaluate (loop_nested_seq np,_) = (NONE,st)"
          (MP_TAC o SPEC `ck' + 1` o
           MATCH_MP (REWRITE_RULE[IMP_CONJ] loop_evaluate_add_clock_eq)) THEN
@@ -2577,7 +2577,7 @@ let PC2LAUX_ncompile_While = prove
       ONCE_REWRITE_TAC[loop_evaluate_def] THEN
       SIMP[PC2LAUX_loop_entry; loop_dec_clock_def] THEN
       FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP evaluate_none_nested_seq_append th]) THEN
-      SUBGOAL_THEN `loop_eval (loop_state_clock_fupd (K (loop_state_clock st + ck' + 1))
+      SUBGOAL_THEN `loop_eval (loop_state_clock_fupd (combin_K (loop_state_clock st + ck' + 1))
                       (st:(A,FFI)loop_state)) le = SOME (wl_Word (w:A word))`
         ASSUME_TAC THENL
        [ASM_REWRITE_TAC[loop_eval_upd_clock_eq; GSYM wlab_wloc_def]; ALL_TAC] THEN
@@ -2587,7 +2587,7 @@ let PC2LAUX_ncompile_While = prove
         (MP_TAC o SPEC `1` o MATCH_MP (REWRITE_RULE[IMP_CONJ] loop_evaluate_add_clock_eq)) THEN
       ASM_REWRITE_TAC[option_DISTINCT; option_INJ; GSYM CONJ_ASSOC] THEN
       SIMP[option_DISTINCT] THEN DISCH_TAC THEN SAME_RUN_TAC[] THEN
-      CASE_REWRITE_TAC[] THEN
+      CAKE_REWRITE_TAC[] THEN
       QPAT_ASSUM "crep_to_loopProof_locals_rel ctxt l (crep_state_locals s2) _"
         (STRIP_ASSUME_TAC o MATCH_MP crep_to_loopProof_locals_rel_intro) THEN
       SIMP[PC2LAUX_loop_entry; loop_dec_clock_def; ARITH_RULE `~(n + 1 = 0)`; ADD_SUB] THEN
@@ -2626,10 +2626,10 @@ let crep_to_loopProof_call_preserve_state_code_locals_rel = prove
      (let nctxt = crep_to_loopProof_ctxt_fc (crep_to_loop_context_target ctxt)
                     (crep_to_loop_context_funcs ctxt) ns lns in
       crep_to_loopProof_state_rel
-        (crep_state_clock_fupd (K (crep_state_clock s - 1))
-           (crep_state_locals_fupd (K (FEMPTY |++ ZIP ns args)) s))
-        (loop_state_clock_fupd (K (loop_state_clock st - 1))
-           (loop_state_locals_fupd (K (fromAList (ZIP lns (MAP wlab_wloc args)))) st)) /\
+        (crep_state_clock_fupd (combin_K (crep_state_clock s - 1))
+           (crep_state_locals_fupd (combin_K (FEMPTY |++ ZIP ns args)) s))
+        (loop_state_clock_fupd (combin_K (loop_state_clock st - 1))
+           (loop_state_locals_fupd (combin_K (fromAList (ZIP lns (MAP wlab_wloc args)))) st)) /\
       crep_to_loopProof_code_rel nctxt (crep_state_code s) (loop_state_code st) /\
       crep_to_loopProof_locals_rel nctxt (list_to_num_set lns) (FEMPTY |++ ZIP ns args)
         (fromAList (ZIP lns (MAP wlab_wloc args))))`,
@@ -2704,19 +2704,19 @@ let OPT_MMAP_APPEND = prove
 
 let case_le = prove
  (CASE_TERM `(match (dest:A option) with NONE -> 1 | SOME v1 -> 0) <= 1`,
-  QCASES_ON "dest" THEN CASE_REWRITE_TAC[] THEN ARITH_TAC);;
+  QCASES_ON "dest" THEN CAKE_REWRITE_TAC[] THEN ARITH_TAC);;
 
 let crep_eval_upd_clock = prove
- (`crep_eval (crep_state_clock_fupd (K v) s) = crep_eval (s:(A,FFI)crep_state)`,
+ (`crep_eval (crep_state_clock_fupd (combin_K v) s) = crep_eval (s:(A,FFI)crep_state)`,
   SIMP[FUN_EQ_THM; crep_eval_upd_clock_eq]);;
 
 let loop_eval_upd_clock = prove
- (`loop_eval (loop_state_clock_fupd (K v) s) = loop_eval (s:(A,FFI)loop_state)`,
+ (`loop_eval (loop_state_clock_fupd (combin_K v) s) = loop_eval (s:(A,FFI)loop_state)`,
   SIMP[FUN_EQ_THM; loop_eval_upd_clock_eq]);;
 
 let UNCURRY_eq_case = prove
  (CASE_TERM `UNCURRY (f:A->B->C) x = (match x with (a,b) -> f a b)`,
-  PAIR_CASES_ON `x:A#B` THEN REWRITE_TAC[UNCURRY_DEF] THEN CASE_REWRITE_TAC[]);;
+  PAIR_CASES_ON `x:A#B` THEN REWRITE_TAC[UNCURRY_DEF] THEN CAKE_REWRITE_TAC[]);;
 
 let locals_rel_lookup_same = prove
  (`crep_to_loopProof_locals_rel ctxt l locs1 (locs2:((A)word_loc)spt) ==>
@@ -2733,10 +2733,10 @@ let locals_rel_inter_helper = prove
   SIMP[crep_to_loopProof_locals_rel_def; SUBSET; domain_lookup; lookup_inter;
        lookup_alist_insert] THEN
   RW[] THENL
-   [QCASES_ON "ALOOKUP (ZIP xs ys) x" THEN CASE_REWRITE_TAC[] THENL
+   [QCASES_ON "ALOOKUP (ZIP xs ys) x" THEN CAKE_REWRITE_TAC[] THENL
      [QPAT_X_ASSUM "!x. (?v. lookup x l = SOME v) ==> _" (MP_TAC o SPEC `x:num`) THEN
       ANTS_TAC THENL [ASM_MESON_TAC[]; STRIP_TAC] THEN ASM_REWRITE_TAC[] THEN
-      CASE_REWRITE_TAC[] THEN MESON_TAC[];
+      CAKE_REWRITE_TAC[] THEN MESON_TAC[];
       MESON_TAC[]];
     FIRST_X_ASSUM(MP_TAC o SPECL [`vname:num`; `v:(A)word_lab`]) THEN ASM_REWRITE_TAC[] THEN
     STRIP_TAC THEN QEXISTS_TAC "n" THEN ASM_REWRITE_TAC[] THEN CONJ_TAC THENL
@@ -2746,14 +2746,14 @@ let locals_rel_inter_helper = prove
       QPAT_X_ASSUM "ALL _ xs" (MP_TAC o REWRITE_RULE[GSYM ALL_MEM]) THEN
       REWRITE_TAC[] THEN DISCH_THEN(fun th -> DISCH_THEN(MP_TAC o MATCH_MP th)) THEN
       ASM_REWRITE_TAC[option_DISTINCT]) THEN
-    ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]]);;
+    ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]]);;
 
 let all_distinct_ctxt_lookup_all_distinct = prove
  (`ALL_DISTINCT rts /\ distinct_vars (crep_to_loop_context_vars ctxt) ==>
    ALL_DISTINCT (rt_vars (crep_to_loop_context_vars ctxt) rts n)`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[rt_vars_def] THEN
   QCASES_ON "OPT_MMAP (FLOOKUP (crep_to_loop_context_vars ctxt)) rts" THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[ALL_DISTINCT; MEM] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[ALL_DISTINCT; MEM] THEN
   MATCH_MP_TAC (ISPEC `SOME:num->num option` ALL_DISTINCT_MAP) THEN
   FIRST_ASSUM(fun th -> REWRITE_TAC[GSYM(REWRITE_RULE[opt_mmap_eq_some] th)]) THEN
   MATCH_MP_TAC ALL_DISTINCT_MAP_INJ THEN ASM_REWRITE_TAC[] THEN
@@ -2771,7 +2771,7 @@ let PC2LAUX_call_prefix = prove
      LENGTH nargs = LENGTH les ==>
      loop_evaluate (loop_nested_seq (APPEND (APPEND p (MAP2 loop_Assign nargs les)) [c]),s0) =
      loop_evaluate (c,loop_state_locals_fupd
-                        (K (alist_insert nargs ev (loop_state_locals st))) st)`,
+                        (combin_K (alist_insert nargs ev (loop_state_locals st))) st)`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[GSYM APPEND_ASSOC] THEN
   FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP evaluate_none_nested_seq_append th]) THEN
   MP_TAC(ISPECL [`les:((A)loop_exp)list`; `nargs:num list`; `st:(A,FFI)loop_state`;
@@ -2780,8 +2780,8 @@ let PC2LAUX_call_prefix = prove
   FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP evaluate_none_nested_seq_append th]) THEN
   REWRITE_TAC[loop_nested_seq_def] THEN ONCE_REWRITE_TAC[loop_evaluate_def] THEN
   NAMED_CASES_ON "loop_evaluate (c:(A)loop_prog,loop_state_locals_fupd
-    (K (alist_insert nargs ev (loop_state_locals st))) st)" ["r s1"] THEN
-  CASE_REWRITE_TAC[] THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
+    (combin_K (alist_insert nargs ev (loop_state_locals st))) st)" ["r s1"] THEN
+  CAKE_REWRITE_TAC[] THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
   ONCE_REWRITE_TAC[loop_evaluate_def] THEN REWRITE_TAC[]);;
 
 (* the common part of the Call case: the arguments, the code of the callee *)
@@ -2791,13 +2791,13 @@ let PC2LAUX_CALL_COMMON_TAC : tactic =
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   QPAT_X_ASSUM "crep_evaluate (crep_Call caltyp fname argexps,s) = (res,s1)" MP_TAC THEN
   ONCE_REWRITE_TAC[crep_evaluate_def] THEN REWRITE_TAC[crep_lookup_code_def] THEN
-  NAMED_CASES_ON "OPT_MMAP (crep_eval s) argexps" ["";"args"] THEN CASE_REWRITE_TAC[] THENL
+  NAMED_CASES_ON "OPT_MMAP (crep_eval s) argexps" ["";"args"] THEN CAKE_REWRITE_TAC[] THENL
    [ASM_MESON_TAC[]; ALL_TAC] THEN
-  NAMED_CASES_ON "FLOOKUP (crep_state_code s) fname" ["";"np"] THEN CASE_REWRITE_TAC[] THENL
+  NAMED_CASES_ON "FLOOKUP (crep_state_code s) fname" ["";"np"] THEN CAKE_REWRITE_TAC[] THENL
    [ASM_MESON_TAC[]; ALL_TAC] THEN
-  NAMED_CASES_ON "np" ["ns prog"] THEN CASE_REWRITE_TAC[] THEN
+  NAMED_CASES_ON "np" ["ns prog"] THEN CAKE_REWRITE_TAC[] THEN
   ASM_CASES_TAC `LENGTH (ns:num list) = LENGTH (args:((A)word_lab)list) /\ ALL_DISTINCT ns` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THENL [ALL_TAC; ASM_MESON_TAC[]] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THENL [ALL_TAC; ASM_MESON_TAC[]] THEN
   FIRST_X_ASSUM STRIP_ASSUME_TAC THEN
   ASM_CASES_TAC (CASE_TERM
     `(match (caltyp:((num list)#((A word#(A)crep_prog)option))option) with
@@ -2806,7 +2806,7 @@ let PC2LAUX_CALL_COMMON_TAC : tactic =
   ASM_REWRITE_TAC[] THENL [ASM_MESON_TAC[PAIR_EQ]; ALL_TAC] THEN
   REWRITE_TAC[crep_to_loop_compile_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   NAMED_CASES_ON "crep_to_loop_compile_exps ctxt (crep_to_loop_context_vmax ctxt + 1) l argexps"
-    ["p les tmp nl"] THEN CASE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+    ["p les tmp nl"] THEN CAKE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   MP_TAC(ISPECL [`argexps:((A)crep_exp)list`; `s:(A,FFI)crep_state`; `args:((A)word_lab)list`;
      `t:(A,FFI)loop_state`; `ctxt:crep_to_loop_context`; `crep_to_loop_context_vmax ctxt + 1`;
      `l:num_set`; `p:((A)loop_prog)list`; `les:((A)loop_exp)list`; `tmp:num`; `nl:num_set`]
@@ -2843,7 +2843,7 @@ let PC2LAUX_CALL_COMMON_TAC : tactic =
   ASM_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   DISCH_THEN(X_CHOOSE_THEN `loc:num` (X_CHOOSE_THEN `len:num` STRIP_ASSUME_TAC)) THEN
   SUBGOAL_THEN `crep_to_loop_find_lab ctxt fname = loc` ASSUME_TAC THENL
-   [ASM_REWRITE_TAC[crep_to_loop_find_lab_def] THEN CASE_REWRITE_TAC[]; ALL_TAC] THEN
+   [ASM_REWRITE_TAC[crep_to_loop_find_lab_def] THEN CAKE_REWRITE_TAC[]; ALL_TAC] THEN
   ASM_REWRITE_TAC[];;
 
 (* the arguments of a call: the code of the expressions, then the          *)
@@ -2867,7 +2867,7 @@ let PC2LAUX_CALL_FIND_TAC (stt:term) : tactic =
   ONCE_REWRITE_TAC[loop_evaluate_def] THEN
   SUBGOAL_THEN (subst [stt,`stt:(A,FFI)loop_state`]
     `get_vars (gen_temps tmp (LENGTH (les:((A)loop_exp)list)))
-       (loop_state_locals_fupd (K (alist_insert (gen_temps tmp (LENGTH les))
+       (loop_state_locals_fupd (combin_K (alist_insert (gen_temps tmp (LENGTH les))
           (MAP wlab_wloc (args:((A)word_lab)list)) (loop_state_locals (stt:(A,FFI)loop_state))))
           stt) = SOME (MAP wlab_wloc args)`) SUBST1_TAC THENL
    [MATCH_MP_TAC get_vars_local_update_some_eq THEN ASM_REWRITE_TAC[LENGTH_MAP] THEN
@@ -2876,7 +2876,7 @@ let PC2LAUX_CALL_FIND_TAC (stt:term) : tactic =
                SOME (args:((A)word_lab)list)`)) THEN
     ASM_ARITH_TAC;
     ALL_TAC] THEN
-  CASE_REWRITE_TAC[] THEN SIMP[find_code_def] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[];;
+  CAKE_REWRITE_TAC[] THEN SIMP[find_code_def] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[];;
 
 (* a result of the callee of a tail call *)
 
@@ -2886,22 +2886,22 @@ let PC2LAUX_TAILCALL_RES_TAC : tactic =
   ASM_REWRITE_TAC[option_DISTINCT; option_INJ; distinctness "loop_result"] THEN
   DISCH_TAC THEN QEXISTS_TAC "ck + ck'" THEN
   QBY "loop_evaluate (loop_nested_seq p,
-         loop_state_clock_fupd (K (loop_state_clock t + ck + ck')) t) =
-       (NONE,loop_state_clock_fupd (K (loop_state_clock st + ck')) st)"
+         loop_state_clock_fupd (combin_K (loop_state_clock t + ck + ck')) t) =
+       (NONE,loop_state_clock_fupd (combin_K (loop_state_clock st + ck')) st)"
    (QPAT_X_ASSUM "loop_evaluate (loop_nested_seq p,_) = (NONE,st)"
      (MP_TAC o SPEC `ck':num` o MATCH_MP (REWRITE_RULE[IMP_CONJ] loop_evaluate_add_clock_eq)) THEN
     SIMP[option_DISTINCT; ADD_ASSOC]) THEN
-  SUBGOAL_THEN `MAP (loop_eval (loop_state_clock_fupd (K (loop_state_clock st + ck'))
+  SUBGOAL_THEN `MAP (loop_eval (loop_state_clock_fupd (combin_K (loop_state_clock st + ck'))
                   (st:(A,FFI)loop_state))) les = MAP SOME (MAP wlab_wloc (args:((A)word_lab)list))`
     ASSUME_TAC THENL [ASM_REWRITE_TAC[loop_eval_upd_clock]; ALL_TAC] THEN
   PC2LAUX_CALL_PREFIX_CK_TAC
-    `loop_state_clock_fupd (K (loop_state_clock st + ck')) (st:(A,FFI)loop_state)` THEN
+    `loop_state_clock_fupd (combin_K (loop_state_clock st + ck')) (st:(A,FFI)loop_state)` THEN
   PC2LAUX_CALL_FIND_TAC
-    `loop_state_clock_fupd (K (loop_state_clock st + ck')) (st:(A,FFI)loop_state)` THEN
+    `loop_state_clock_fupd (combin_K (loop_state_clock st + ck')) (st:(A,FFI)loop_state)` THEN
   SUBGOAL_THEN `~(loop_state_clock (st:(A,FFI)loop_state) = 0)` ASSUME_TAC THENL
    [ASM_MESON_TAC[crep_to_loopProof_state_rel_def]; ALL_TAC] THEN
   ASM_REWRITE_TAC[] THEN REWRITE_TAC[ocompile_def; o_THM; loop_dec_clock_def] THEN
-  SAME_RUN_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  SAME_RUN_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   QPAT_X_ASSUM "crep_to_loopProof_code_rel (crep_to_loopProof_ctxt_fc _ _ _ _) _ _" MP_TAC THEN
   REWRITE_TAC[crep_to_loopProof_code_rel_def; crep_to_loopProof_ctxt_fc_def;
               PC2LAUX_ctxt_accessors] THEN
@@ -2923,26 +2923,26 @@ let PC2LAUX_CALL_NONE_TAC : tactic =
     PC2LAUX_CALL_FIND_TAC `st:(A,FFI)loop_state` THEN
     SUBGOAL_THEN `loop_state_clock (st:(A,FFI)loop_state) = 0` SUBST1_TAC THENL
      [ASM_MESON_TAC[crep_to_loopProof_state_rel_def]; ALL_TAC] THEN
-    REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
     FS[crep_to_loopProof_state_rel_def; crep_empty_locals_def];
     ALL_TAC] THEN
   (* the callee runs *)
-  NAMED_CASES_ON "crep_evaluate (prog,crep_state_locals_fupd (K (FEMPTY |++ ZIP ns args))
-     (crep_dec_clock s))" ["x st1"] THEN CASE_REWRITE_TAC[] THEN DISCH_TAC THEN
+  NAMED_CASES_ON "crep_evaluate (prog,crep_state_locals_fupd (combin_K (FEMPTY |++ ZIP ns args))
+     (crep_dec_clock s))" ["x st1"] THEN CAKE_REWRITE_TAC[] THEN DISCH_TAC THEN
   SUBGOAL_THEN `~(x = SOME (crep_Error:(A)crep_result)) /\ ~(x = NONE) /\
                 (!n. ~(x = SOME (crepSem_Break n))) /\ (!n. ~(x = SOME (crepSem_Continue n)))`
     STRIP_ASSUME_TAC THENL
    [REPEAT CONJ_TAC THEN REPEAT STRIP_TAC THEN FIRST_X_ASSUM SUBST_ALL_TAC THEN
-    RULE_ASSUM_TAC(CASE_REWRITE_RULE[PAIR_EQ]) THEN ASM_MESON_TAC[];
+    RULE_ASSUM_TAC(CAKE_REWRITE_RULE[PAIR_EQ]) THEN ASM_MESON_TAC[];
     ALL_TAC] THEN
   REMOVE_THEN "ihc" (MP_TAC o SPECL [`args:((A)word_lab)list`; `prog:(A)crep_prog`;
      `FEMPTY |++ ZIP (ns:num list) (args:((A)word_lab)list)`]) THEN
-  ASM_REWRITE_TAC[crep_lookup_code_def] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[crep_lookup_code_def] THEN CAKE_REWRITE_TAC[] THEN
   SUBGOAL_THEN `LENGTH (ns:num list) = len` ASSUME_TAC THENL
    [ASM_MESON_TAC[]; ALL_TAC] THEN ASM_REWRITE_TAC[] THEN
   DISCH_THEN(MP_TAC o SPECL [`x:((A)crep_result)option`; `st1:(A,FFI)crep_state`;
-     `loop_state_clock_fupd (K (loop_state_clock st - 1))
-        (loop_state_locals_fupd (K (fromAList (ZIP (list_of_seq I len)
+     `loop_state_clock_fupd (combin_K (loop_state_clock st - 1))
+        (loop_state_locals_fupd (combin_K (fromAList (ZIP (list_of_seq I len)
           (MAP wlab_wloc (args:((A)word_lab)list))))) (st:(A,FFI)loop_state))`;
      `crep_to_loopProof_ctxt_fc (crep_to_loop_context_target ctxt)
         (crep_to_loop_context_funcs ctxt) (ns:num list) (list_of_seq I len)`;
@@ -2964,7 +2964,7 @@ let PC2LAUX_CALL_NONE_TAC : tactic =
   QCASES_ON "x" THEN
   TRY(FIRST_X_ASSUM(MP_TAC o check (fun th ->
         concl th = `~(NONE = NONE:((A)crep_result)option)`)) THEN REWRITE_TAC[] THEN NO_TAC) THEN
-  QCASES_ON "a" THEN RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN
+  QCASES_ON "a" THEN RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[option_INJ; injectivity "crep_result";
                               distinctness "crep_result"]) THEN
   TRY(FIRST_X_ASSUM CONTR_TAC) THEN
@@ -2985,7 +2985,7 @@ let PC2LAUX_lookup_alist_insert_not_mem = prove
      lookup n (alist_insert xs ys t) = lookup n t`,
   REPEAT STRIP_TAC THEN ASM_SIMP_TAC[lookup_alist_insert] THEN
   SUBGOAL_THEN `ALOOKUP (ZIP (xs:num list) (ys:A list)) n = NONE` SUBST1_TAC THENL
-   [ASM_SIMP_TAC[ALOOKUP_NONE; MAP_FST_ZIP]; CASE_REWRITE_TAC[]]);;
+   [ASM_SIMP_TAC[ALOOKUP_NONE; MAP_FST_ZIP]; CAKE_REWRITE_TAC[]]);;
 let PC2LAUX_locals_rel_call_ret = prove
  (`!ctxt l (sl:(num,(A)word_lab)fmap) tl rts retvs nrhss X.
      crep_to_loopProof_locals_rel ctxt l sl tl /\
@@ -3071,10 +3071,10 @@ let PC2LAUX_SOME_PREFIX_TAC (stt:term) : tactic =
 
 let PC2LAUX_SOME_ENTER_TAC (xt:term) : tactic =
   let stt = subst [xt,`xt:num`]
-    `loop_state_clock_fupd (K (loop_state_clock st + xt)) (st:(A,FFI)loop_state)` in
+    `loop_state_clock_fupd (combin_K (loop_state_clock st + xt)) (st:(A,FFI)loop_state)` in
   MP_TAC(SPEC xt (MATCH_MP (REWRITE_RULE[IMP_CONJ] loop_evaluate_add_clock_eq)
     (ASSUME `loop_evaluate (loop_nested_seq p,loop_state_clock_fupd
-       (K (loop_state_clock t + ck)) (t:(A,FFI)loop_state)) = (NONE,st)`))) THEN
+       (combin_K (loop_state_clock t + ck)) (t:(A,FFI)loop_state)) = (NONE,st)`))) THEN
   SIMP[option_DISTINCT; GSYM ADD_ASSOC] THEN DISCH_TAC THEN
   EXISTS_TAC (subst [xt,`xt:num`] `ck + xt:num`) THEN
   SUBGOAL_THEN (subst [stt,`stt:(A,FFI)loop_state`]
@@ -3084,7 +3084,7 @@ let PC2LAUX_SOME_ENTER_TAC (xt:term) : tactic =
   PC2LAUX_SOME_PREFIX_TAC stt THEN
   PC2LAUX_CALL_FIND_TAC stt THEN
   MP_TAC(ISPECL [`l:num_set`; subst [stt,`stt:(A,FFI)loop_state`]
-    `loop_state_locals_fupd (K (alist_insert (gen_temps tmp (LENGTH (argexps:((A)crep_exp)list)))
+    `loop_state_locals_fupd (combin_K (alist_insert (gen_temps tmp (LENGTH (argexps:((A)crep_exp)list)))
        (MAP wlab_wloc (args:((A)word_lab)list)) (loop_state_locals (st:(A,FFI)loop_state))))
        (stt:(A,FFI)loop_state)`]
     PC2LAUX_loop_entry) THEN
@@ -3094,7 +3094,7 @@ let PC2LAUX_SOME_ENTER_TAC (xt:term) : tactic =
     MATCH_MP_TAC opt_mmap_length_eq THEN
     EXISTS_TAC `crep_eval (s:(A,FFI)crep_state)` THEN ASM_REWRITE_TAC[];
     DISCH_THEN SUBST1_TAC] THEN
-  SIMP[ADD_EQ_0] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  SIMP[ADD_EQ_0] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[ocompile_def; o_THM];;
 
 let PC2LAUX_CALLEE_RUN_TAC (ttac:thm_tactic) : tactic =
@@ -3110,7 +3110,7 @@ let PC2LAUX_SOME_CALLEE_TAC : tactic =
     (MP_TAC o MATCH_MP (REWRITE_RULE[IMP_CONJ] loop_liveProof_optimise_correct)) THEN
   ASM_REWRITE_TAC[option_DISTINCT; option_INJ; distinctness "loop_result"] THEN
   DISCH_TAC THEN REWRITE_TAC[loop_dec_clock_def] THEN
-  SAME_RUN_TAC[] THEN CASE_REWRITE_TAC[];;
+  SAME_RUN_TAC[] THEN CAKE_REWRITE_TAC[];;
 let PC2LAUX_SOME_CALLEE_PLUS_TAC (et:term) : tactic =
   PC2LAUX_CALLEE_RUN_TAC
     (fun th -> MP_TAC (SPEC et (MATCH_MP (REWRITE_RULE[IMP_CONJ] loop_evaluate_add_clock_eq) th)))
@@ -3159,7 +3159,7 @@ let PC2LAUX_CALL_SOME_TAC : tactic =
   SUBGOAL_THEN `ALL_DISTINCT (rts:num list)` ASSUME_TAC THENL
      [FIRST_X_ASSUM(MP_TAC o check (fun th -> is_neg (concl th) &&
          can (find_term ((=) `ALL_DISTINCT:num list->bool`)) (concl th))) THEN
-      CASE_REWRITE_TAC[] THEN REWRITE_TAC[];
+      CAKE_REWRITE_TAC[] THEN REWRITE_TAC[];
       ALL_TAC] THEN
     QPAT_ASSUM "crep_to_loopProof_locals_rel ctxt l (crep_state_locals s) (loop_state_locals t)"
       (STRIP_ASSUME_TAC o MATCH_MP crep_to_loopProof_locals_rel_intro) THEN
@@ -3187,25 +3187,25 @@ let PC2LAUX_CALL_SOME_TAC : tactic =
     PC2LAUX_CUT_RES_TAC PC2LAUX_DOMAIN_TAC THEN
     SUBGOAL_THEN `loop_state_clock (st:(A,FFI)loop_state) = 0` ASSUME_TAC THENL
      [ASM_MESON_TAC[crep_to_loopProof_state_rel_def]; ALL_TAC] THEN
-    SIMP[] THEN CASE_REWRITE_TAC[] THEN
+    SIMP[] THEN CAKE_REWRITE_TAC[] THEN
     FS[crep_to_loopProof_state_rel_def; crep_empty_locals_def];
     (* the callee runs *)
-    NAMED_CASES_ON "crep_evaluate (prog,crep_state_locals_fupd (K (FEMPTY |++ ZIP ns args))
-         (crep_dec_clock s))" ["x st1"] THEN CASE_REWRITE_TAC[] THEN DISCH_TAC THEN
+    NAMED_CASES_ON "crep_evaluate (prog,crep_state_locals_fupd (combin_K (FEMPTY |++ ZIP ns args))
+         (crep_dec_clock s))" ["x st1"] THEN CAKE_REWRITE_TAC[] THEN DISCH_TAC THEN
       SUBGOAL_THEN `~(x = SOME (crep_Error:(A)crep_result)) /\ ~(x = NONE) /\
                     (!n. ~(x = SOME (crepSem_Break n))) /\ (!n. ~(x = SOME (crepSem_Continue n)))`
         STRIP_ASSUME_TAC THENL
        [REPEAT CONJ_TAC THEN REPEAT STRIP_TAC THEN FIRST_X_ASSUM SUBST_ALL_TAC THEN
-        RULE_ASSUM_TAC(CASE_REWRITE_RULE[PAIR_EQ]) THEN ASM_MESON_TAC[];
+        RULE_ASSUM_TAC(CAKE_REWRITE_RULE[PAIR_EQ]) THEN ASM_MESON_TAC[];
         ALL_TAC] THEN
       REMOVE_THEN "ihc" (MP_TAC o SPECL [`args:((A)word_lab)list`; `prog:(A)crep_prog`;
          `FEMPTY |++ ZIP (ns:num list) (args:((A)word_lab)list)`]) THEN
-      ASM_REWRITE_TAC[crep_lookup_code_def] THEN CASE_REWRITE_TAC[] THEN
+      ASM_REWRITE_TAC[crep_lookup_code_def] THEN CAKE_REWRITE_TAC[] THEN
       SUBGOAL_THEN `LENGTH (ns:num list) = len` ASSUME_TAC THENL
        [ASM_MESON_TAC[]; ALL_TAC] THEN ASM_REWRITE_TAC[] THEN
       DISCH_THEN(MP_TAC o SPECL [`x:((A)crep_result)option`; `st1:(A,FFI)crep_state`;
-         `loop_state_clock_fupd (K (loop_state_clock st - 1))
-            (loop_state_locals_fupd (K (fromAList (ZIP (list_of_seq I len)
+         `loop_state_clock_fupd (combin_K (loop_state_clock st - 1))
+            (loop_state_locals_fupd (combin_K (fromAList (ZIP (list_of_seq I len)
               (MAP wlab_wloc (args:((A)word_lab)list))))) (st:(A,FFI)loop_state))`;
          `crep_to_loopProof_ctxt_fc (crep_to_loop_context_target ctxt)
             (crep_to_loop_context_funcs ctxt) (ns:num list) (list_of_seq I len)`;
@@ -3237,7 +3237,7 @@ let PC2LAUX_CALL_SOME_TAC : tactic =
       TRY(FIRST_X_ASSUM(MP_TAC o check (fun th ->
             concl th = `~(NONE = NONE:((A)crep_result)option)`)) THEN REWRITE_TAC[] THEN
               NO_TAC) THEN
-      QCASES_ON "a" THEN RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN
+      QCASES_ON "a" THEN RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN
       RULE_ASSUM_TAC(REWRITE_RULE[option_INJ; injectivity "crep_result";
                                   distinctness "crep_result"]) THEN
       TRY(FIRST_X_ASSUM CONTR_TAC) THEN
@@ -3245,14 +3245,14 @@ let PC2LAUX_CALL_SOME_TAC : tactic =
      [(* callee TimeOut *)
       PC2LAUX_SOME_ENTER_TAC `ck':num` THEN PC2LAUX_SOME_CALLEE_TAC THEN
       QPAT_X_ASSUM "_ = res /\\ _ = s1" (CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
-        CASE_REWRITE_TAC[] THEN REWRITE_TAC[RIGHT_EXISTS_AND_THM; UNWIND_THM1] THEN
+        CAKE_REWRITE_TAC[] THEN REWRITE_TAC[RIGHT_EXISTS_AND_THM; UNWIND_THM1] THEN
         FS[crep_to_loopProof_state_rel_def; crep_empty_locals_def];
       (* callee Return: the return values are assigned *)
       FIRST_X_ASSUM(MP_TAC o check (fun th -> is_eq (concl th) &&
            rand (concl th) = `res:((A)crep_result)option,(s1:(A,FFI)crep_state)`)) THEN
         COND_CASES_TAC THENL [REWRITE_TAC[PAIR_EQ] THEN ASM_MESON_TAC[]; ALL_TAC] THEN
         NAMED_CASES_ON "OPT_MMAP (FLOOKUP (crep_state_locals s)) rts" ["";"vs"] THEN
-        CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
+        CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
         DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
         MP_TAC(ISPECL [`rts:num list`; `vs:((A)word_lab)list`; `s:(A,FFI)crep_state`;
           `st:(A,FFI)loop_state`; `ctxt:crep_to_loop_context`; `l:num_set`]
@@ -3260,12 +3260,12 @@ let PC2LAUX_CALL_SOME_TAC : tactic =
         ASM_REWRITE_TAC[] THEN DISCH_THEN(X_CHOOSE_THEN `nrhss:num list` STRIP_ASSUME_TAC) THEN
         SUBGOAL_THEN `rt_vars (crep_to_loop_context_vars ctxt) rts
                         (crep_to_loop_context_vmax ctxt + 1) = nrhss` ASSUME_TAC THENL
-         [ASM_REWRITE_TAC[rt_vars_def] THEN CASE_REWRITE_TAC[]; ALL_TAC] THEN
+         [ASM_REWRITE_TAC[rt_vars_def] THEN CAKE_REWRITE_TAC[]; ALL_TAC] THEN
         RULE_ASSUM_TAC(REWRITE_RULE[ASSUME `rt_vars (crep_to_loop_context_vars ctxt) rts
                         (crep_to_loop_context_vmax ctxt + 1) = nrhss`]) THEN
         ASM_REWRITE_TAC[] THEN
       PC2LAUX_SOME_ENTER_TAC `ck' + 1` THEN PC2LAUX_SOME_CALLEE_PLUS_TAC `1` THEN
-      REWRITE_TAC[rt_vars_def] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+      REWRITE_TAC[rt_vars_def] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
         SUBGOAL_THEN `LENGTH (MAP wlab_wloc (a':((A)word_lab)list)) = LENGTH (nrhss:num list)`
           ASSUME_TAC THENL [ASM_REWRITE_TAC[LENGTH_MAP]; ALL_TAC] THEN
         ASM_REWRITE_TAC[] THEN ONCE_REWRITE_TAC[loop_evaluate_def] THEN
@@ -3283,7 +3283,7 @@ let PC2LAUX_CALL_SOME_TAC : tactic =
       (* callee Exception *)
       FIRST_X_ASSUM(MP_TAC o check (fun th -> is_eq (concl th) &&
            rand (concl th) = `res:((A)crep_result)option,(s1:(A,FFI)crep_state)`)) THEN
-        NAMED_CASES_ON "hdl" ["";"hp"] THEN CASE_REWRITE_TAC[] THENL
+        NAMED_CASES_ON "hdl" ["";"hp"] THEN CAKE_REWRITE_TAC[] THENL
        [(* no handler *)
         REWRITE_TAC[PAIR_EQ] THEN DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
           PC2LAUX_SOME_ENTER_TAC `ck':num` THEN PC2LAUX_SOME_CALLEE_TAC THEN
@@ -3291,7 +3291,7 @@ let PC2LAUX_CALL_SOME_TAC : tactic =
           SIMP[loop_set_var_def; lookup_insert; cut_res_def; call_env_def] THEN
           REWRITE_TAC[RIGHT_EXISTS_AND_THM; UNWIND_THM1] THEN
           FS[crep_to_loopProof_state_rel_def; crep_empty_locals_def];
-        NAMED_CASES_ON "hp" ["eid' p'"] THEN CASE_REWRITE_TAC[] THEN COND_CASES_TAC THENL
+        NAMED_CASES_ON "hp" ["eid' p'"] THEN CAKE_REWRITE_TAC[] THEN COND_CASES_TAC THENL
          [(* the handler catches the exception *)
           DISCH_TAC THEN QPAT_X_ASSUM "a' = eid'" (SUBST_ALL_TAC o SYM) THEN
             SUBGOAL_THEN `crep_to_loopProof_locals_rel ctxt l (crep_state_locals
@@ -3315,10 +3315,10 @@ let PC2LAUX_CALL_SOME_TAC : tactic =
           REMOVE_THEN "ihh" (MP_TAC o SPECL [`args:((A)word_lab)list`; `prog:(A)crep_prog`;
                `FEMPTY |++ ZIP (ns:num list) (args:((A)word_lab)list)`; `rts:num list`; `a':A word`;
                `p':(A)crep_prog`; `st1:(A,FFI)crep_state`]) THEN
-            ASM_REWRITE_TAC[crep_lookup_code_def] THEN CASE_REWRITE_TAC[] THEN
+            ASM_REWRITE_TAC[crep_lookup_code_def] THEN CAKE_REWRITE_TAC[] THEN
               ASM_REWRITE_TAC[] THEN
             DISCH_THEN(MP_TAC o SPECL [`res:((A)crep_result)option`; `s1:(A,FFI)crep_state`;
-              `loop_state_locals_fupd (K (insert (crep_to_loop_context_vmax ctxt + 1) (wl_Word
+              `loop_state_locals_fupd (combin_K (insert (crep_to_loop_context_vmax ctxt + 1) (wl_Word
                   (a':A word))
                  (sptree_inter (alist_insert (gen_temps tmp (LENGTH (argexps:((A)crep_exp)list)))
                     (MAP wlab_wloc (args:((A)word_lab)list)) (loop_state_locals
@@ -3330,13 +3330,13 @@ let PC2LAUX_CALL_SOME_TAC : tactic =
           NAMED_CASES_ON "res" ["";"r"] THENL
            [(* the handler ends normally: two more cut_res, two more ticks *)
             SUBGOAL_THEN `res1':((A)loop_result)option = NONE` ASSUME_TAC THENL
-               [QPAT_X_ASSUM "res1' = _" SUBST1_TAC THEN CASE_REWRITE_TAC[]; ALL_TAC] THEN
-              RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN
+               [QPAT_X_ASSUM "res1' = _" SUBST1_TAC THEN CAKE_REWRITE_TAC[]; ALL_TAC] THEN
+              RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN
               PC2LAUX_SOME_ENTER_TAC `ck' + 1 + ck'' + 2` THEN
               PC2LAUX_SOME_CALLEE_PLUS_TAC `1 + ck'' + 2` THEN
               SIMP[loop_evaluate_def; loop_set_var_def; lookup_insert; get_var_imm_def;
                 asm_word_cmp_def] THEN
-              CASE_REWRITE_TAC[] THEN SIMP[ADD_EQ_0; ARITH_EQ; loop_dec_clock_def] THEN
+              CAKE_REWRITE_TAC[] THEN SIMP[ADD_EQ_0; ARITH_EQ; loop_dec_clock_def] THEN
             PC2LAUX_HANDLER_RUN_TAC
                 (fun th -> MP_TAC (SPEC `2` (MATCH_MP (REWRITE_RULE[IMP_CONJ]
                   loop_evaluate_add_clock_eq) th))) THEN
@@ -3354,31 +3354,31 @@ let PC2LAUX_CALL_SOME_TAC : tactic =
               REPEAT(MATCH_MP_TAC PC2LAUX_locals_rel_inter) THEN ASM_REWRITE_TAC[];
             (* any other result of the handler *)
             SUBGOAL_THEN `~(res1':((A)loop_result)option = NONE)` ASSUME_TAC THENL
-               [QPAT_X_ASSUM "res1' = _" SUBST1_TAC THEN CASE_REWRITE_TAC[] THEN
-                QCASES_ON "r" THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[option_DISTINCT];
+               [QPAT_X_ASSUM "res1' = _" SUBST1_TAC THEN CAKE_REWRITE_TAC[] THEN
+                QCASES_ON "r" THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[option_DISTINCT];
                 ALL_TAC] THEN
             PC2LAUX_SOME_ENTER_TAC `ck' + 1 + ck''` THEN
               PC2LAUX_SOME_CALLEE_PLUS_TAC `1 + ck''` THEN
             SIMP[loop_evaluate_def; loop_set_var_def; lookup_insert; get_var_imm_def;
               asm_word_cmp_def] THEN
-              CASE_REWRITE_TAC[] THEN SIMP[ADD_EQ_0; ARITH_EQ; loop_dec_clock_def] THEN
+              CAKE_REWRITE_TAC[] THEN SIMP[ADD_EQ_0; ARITH_EQ; loop_dec_clock_def] THEN
             SAME_RUN_TAC[] THEN
               REWRITE_TAC[cut_res_def; ASSUME `~(res1':((A)loop_result)option = NONE)`] THEN
               EXISTS_TAC `t1':(A,FFI)loop_state` THEN ASM_REWRITE_TAC[PAIR_EQ] THEN
-            CASE_REWRITE_TAC[] THEN RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN ASM_REWRITE_TAC[]];
+            CAKE_REWRITE_TAC[] THEN RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN ASM_REWRITE_TAC[]];
           (* another exception id: raised again *)
           REWRITE_TAC[PAIR_EQ] THEN DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
             PC2LAUX_SOME_ENTER_TAC `ck':num` THEN PC2LAUX_SOME_CALLEE_TAC THEN
             SIMP[loop_evaluate_def; loop_set_var_def; lookup_insert; get_var_imm_def;
               asm_word_cmp_def] THEN
-            CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
+            CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
             SIMP[loop_evaluate_def; lookup_insert; cut_res_def; call_env_def] THEN
             REWRITE_TAC[RIGHT_EXISTS_AND_THM; UNWIND_THM1] THEN
             FS[crep_to_loopProof_state_rel_def; crep_empty_locals_def]]];
       (* callee FinalFFI *)
       PC2LAUX_SOME_ENTER_TAC `ck':num` THEN PC2LAUX_SOME_CALLEE_TAC THEN
         QPAT_X_ASSUM "_ = res /\\ _ = s1" (CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
-        CASE_REWRITE_TAC[] THEN REWRITE_TAC[RIGHT_EXISTS_AND_THM; UNWIND_THM1] THEN
+        CAKE_REWRITE_TAC[] THEN REWRITE_TAC[RIGHT_EXISTS_AND_THM; UNWIND_THM1] THEN
         FS[crep_to_loopProof_state_rel_def; crep_empty_locals_def]]];;
 
 (* HOL4: Resume ncompile_correct[Call] *)
@@ -3386,9 +3386,9 @@ let PC2LAUX_CALL_SOME_TAC : tactic =
 let PC2LAUX_ncompile_Call = prove
  (PC2LAUX_ncompile_case "crep_Call",
   PC2LAUX_CALL_COMMON_TAC THEN
-  NAMED_CASES_ON "caltyp" ["";"rh"] THEN CASE_REWRITE_TAC[] THENL
+  NAMED_CASES_ON "caltyp" ["";"rh"] THEN CAKE_REWRITE_TAC[] THENL
    [PC2LAUX_CALL_NONE_TAC;
-    NAMED_CASES_ON "rh" ["rts hdl"] THEN CASE_REWRITE_TAC[] THEN PC2LAUX_CALL_SOME_TAC]);;
+    NAMED_CASES_ON "rh" ["rts hdl"] THEN CAKE_REWRITE_TAC[] THEN PC2LAUX_CALL_SOME_TAC]);;
 
 (* ------------------------------------------------------------------------- *)
 
@@ -3434,7 +3434,7 @@ let ocompile_correct = prove
    (!n. ~(res = SOME (crepSem_Continue n))) /\ ~(res = NONE) ==>
    ?ck res1 t1.
      loop_evaluate (ocompile ctxt l p,
-                    loop_state_clock_fupd (K (loop_state_clock t + ck)) t) = (res1,t1) /\
+                    loop_state_clock_fupd (combin_K (loop_state_clock t + ck)) t) = (res1,t1) /\
      crep_to_loopProof_state_rel s1 t1 /\
      mem_rel (crep_state_memory s1) (loop_state_memory t1) (crep_state_memaddrs s1) /\
      crep_to_loopProof_globals_rel (crep_state_globals s1) (loop_state_globals t1) /\
@@ -3634,22 +3634,22 @@ let evaluate_less_clock_cases = prove
  (`loop_evaluate (prog,(s:(A,FFI)loop_state)) = (res,s2) ==>
    ck <= loop_state_clock s ==>
    ?res2 s3.
-     loop_evaluate (prog,loop_state_clock_fupd (K ck) s) = (res2,s3) /\
-     ((res = res2 /\ (?ck2. s3 = loop_state_clock_fupd (K ck2) s2)) \/
+     loop_evaluate (prog,loop_state_clock_fupd (combin_K ck) s) = (res2,s3) /\
+     ((res = res2 /\ (?ck2. s3 = loop_state_clock_fupd (combin_K ck2) s2)) \/
       res2 = SOME loop_TimeOut)`,
   REPEAT STRIP_TAC THEN
-  PAIR_CASES_ON `loop_evaluate (prog,loop_state_clock_fupd (K ck) (s:(A,FFI)loop_state))` THEN
+  PAIR_CASES_ON `loop_evaluate (prog,loop_state_clock_fupd (combin_K ck) (s:(A,FFI)loop_state))` THEN
   MAP_EVERY EXISTS_TAC [`p0:((A)loop_result)option`; `p1:(A,FFI)loop_state`] THEN
   ASM_REWRITE_TAC[] THEN
   ASM_CASES_TAC `p0 = SOME (loop_TimeOut:(A)loop_result)` THEN ASM_REWRITE_TAC[] THEN
-  MP_TAC(ISPECL [`prog:(A)loop_prog`; `loop_state_clock_fupd (K ck) (s:(A,FFI)loop_state)`;
+  MP_TAC(ISPECL [`prog:(A)loop_prog`; `loop_state_clock_fupd (combin_K ck) (s:(A,FFI)loop_state)`;
                  `p0:((A)loop_result)option`; `p1:(A,FFI)loop_state`;
                  `loop_state_clock (s:(A,FFI)loop_state) - ck`] loop_evaluate_add_clock_eq) THEN
   ASM_REWRITE_TAC[] THEN
   SUBGOAL_THEN `loop_state_clock_fupd
-                  (K (loop_state_clock (loop_state_clock_fupd (K ck) s) +
+                  (combin_K (loop_state_clock (loop_state_clock_fupd (combin_K ck) s) +
                       loop_state_clock (s:(A,FFI)loop_state) - ck))
-                  (loop_state_clock_fupd (K ck) s) = s` SUBST1_TAC THENL
+                  (loop_state_clock_fupd (combin_K ck) s) = s` SUBST1_TAC THENL
    [REWRITE_TAC[loop_state_component_equality] THEN SIMP[] THEN ASM_ARITH_TAC;
     ALL_TAC] THEN
   ASM_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
@@ -3661,15 +3661,15 @@ let evaluate_less_clock_cases = prove
 let evaluate_twice_cases = prove
  (`loop_evaluate (prog,(s:(A,FFI)loop_state)) = (res,s2) ==>
    loop_evaluate (prog,s3) = (res2,s4) ==>
-   loop_state_clock_fupd (K 0) s = loop_state_clock_fupd (K 0) s3 ==>
+   loop_state_clock_fupd (combin_K 0) s = loop_state_clock_fupd (combin_K 0) s3 ==>
    (loop_state_clock s <= loop_state_clock s3 /\
     (res = SOME loop_TimeOut \/
-     (res = res2 /\ (?ck. s2 = loop_state_clock_fupd (K ck) s4)))) \/
+     (res = res2 /\ (?ck. s2 = loop_state_clock_fupd (combin_K ck) s4)))) \/
    (loop_state_clock s3 <= loop_state_clock s /\
     (res2 = SOME loop_TimeOut \/
-     (res2 = res /\ (?ck. s4 = loop_state_clock_fupd (K ck) s2))))`,
+     (res2 = res /\ (?ck. s4 = loop_state_clock_fupd (combin_K ck) s2))))`,
   REPEAT STRIP_TAC THEN
-  SUBGOAL_THEN `s3 = loop_state_clock_fupd (K (loop_state_clock s3)) (s:(A,FFI)loop_state)`
+  SUBGOAL_THEN `s3 = loop_state_clock_fupd (combin_K (loop_state_clock s3)) (s:(A,FFI)loop_state)`
     SUBST_ALL_TAC THENL
    [FIRST_X_ASSUM(MP_TAC o REWRITE_RULE[loop_state_component_equality]) THEN
     REWRITE_TAC[loop_state_component_equality] THEN SIMP[];
@@ -3678,7 +3678,7 @@ let evaluate_twice_cases = prove
   REWRITE_TAC[(record_info "loop_state").ri_accfupds; K_THM] THEN
   ASM_CASES_TAC `loop_state_clock (s:(A,FFI)loop_state) <= ck` THENL
    [DISJ1_TAC THEN ASM_REWRITE_TAC[] THEN
-    MP_TAC(ISPECL [`prog:(A)loop_prog`; `loop_state_clock_fupd (K ck) (s:(A,FFI)loop_state)`;
+    MP_TAC(ISPECL [`prog:(A)loop_prog`; `loop_state_clock_fupd (combin_K ck) (s:(A,FFI)loop_state)`;
                    `res2:((A)loop_result)option`; `s4:(A,FFI)loop_state`;
                    `loop_state_clock (s:(A,FFI)loop_state)`]
           (GENL [`prog:(A)loop_prog`; `s:(A,FFI)loop_state`; `res:((A)loop_result)option`;
@@ -3704,10 +3704,10 @@ let evaluate_twice_cases = prove
 let evaluate_io_mono_rephrases =
   CONJ
    (CAKE_SIMP_RULE[]
-     (ISPECL [`exs:(A)crep_prog`; `crep_state_clock_fupd (K k) (s:(A,FFI)crep_state)`]
+     (ISPECL [`exs:(A)crep_prog`; `crep_state_clock_fupd (combin_K k) (s:(A,FFI)crep_state)`]
         crep_evaluate_add_clock_io_events_mono))
    (CAKE_SIMP_RULE[]
-     (ISPECL [`exs:(A)loop_prog`; `loop_state_clock_fupd (K k) (s:(A,FFI)loop_state)`]
+     (ISPECL [`exs:(A)loop_prog`; `loop_state_clock_fupd (combin_K k) (s:(A,FFI)loop_state)`]
         loop_evaluate_add_clock_io_events_mono));;
 
 let code_rel_evaluate_call_correct = prove
@@ -3737,7 +3737,7 @@ let code_rel_evaluate_call_correct = prove
    ~(res = SOME crep_Error) ==>
    ?k res' t'.
      loop_evaluate (loop_Call NONE (SOME (crep_to_loop_find_lab nctxt start)) [] NONE,
-                    loop_state_clock_fupd (K (loop_state_clock t + k)) t) = (res',t') /\
+                    loop_state_clock_fupd (combin_K (loop_state_clock t + k)) t) = (res',t') /\
      crep_to_loopProof_state_rel s' t' /\
      res' = (match res with
                NONE -> NONE
@@ -3752,7 +3752,7 @@ let code_rel_evaluate_call_correct = prove
   FIRST_X_ASSUM(MP_TAC o MATCH_MP (REWRITE_RULE[IMP_CONJ] simp_prog_correct)) THEN
   ASM_REWRITE_TAC[] THEN
   REWRITE_TAC[simp_prog_def; simp_exp_def; MAP; LET_DEF; LET_END_DEF] THEN
-  CASE_REWRITE_TAC[] THEN DISCH_TAC THEN
+  CAKE_REWRITE_TAC[] THEN DISCH_TAC THEN
   FIRST_X_ASSUM(MP_TAC o MATCH_MP (REWRITE_RULE[IMP_CONJ] ncompile_correct)) THEN
   DISCH_THEN(MP_TAC o SPECL [`t:(A,FFI)loop_state`; `nctxt:crep_to_loop_context`;
                              `LN:num_set`]) THEN
@@ -3761,12 +3761,12 @@ let code_rel_evaluate_call_correct = prove
      FLOOKUP_EMPTY; domain_def; EMPTY_SUBSET] THEN
   DISCH_THEN(X_CHOOSE_THEN `ck:num` (X_CHOOSE_THEN `t1:(A,FFI)loop_state` STRIP_ASSUME_TAC)) THEN
   QPAT_X_ASSUM "loop_evaluate _ = _"
-    (MP_TAC o CASE_REWRITE_RULE[] o
+    (MP_TAC o CAKE_REWRITE_RULE[] o
      REWRITE_RULE[crep_to_loop_compile_def; LET_DEF; LET_END_DEF; CONJUNCT1 compile_exps_alt;
                   gen_temps_def; LENGTH; list_of_seq; MAP2; APPEND; loop_nested_seq_def]) THEN
   REWRITE_TAC[LET_DEF; LET_END_DEF; LENGTH; list_of_seq; MAP2; APPEND; loop_nested_seq_def;
               evaluate_Seq_Skip] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[LET_DEF; LET_END_DEF; LENGTH; list_of_seq; MAP2; APPEND; loop_nested_seq_def;
               evaluate_Seq_Skip] THEN
   DISCH_TAC THEN MAP_EVERY QEXISTS_TAC ["ck"; "t1"] THEN ASM_REWRITE_TAC[]);;
@@ -3839,11 +3839,11 @@ let crep_sem_is_wrapper = prove
               | SOME (crepSem_Return _) -> crep_to_loopProof_CompleteResult Success
               | _ -> crep_to_loopProof_RunError) ##
        (\s. ffi_state_io_events (crep_state_ffi s))) o
-      (\k. crep_evaluate (prog,crep_state_clock_fupd (K k) s)))`,
+      (\k. crep_evaluate (prog,crep_state_clock_fupd (combin_K k) s)))`,
   REWRITE_TAC[crep_semantics_def; LET_DEF; LET_END_DEF] THEN
   MATCH_MP_TAC (BETA_RULE (ISPECL
    [`\k. crep_evaluate (crep_Call NONE start [],
-                        crep_state_clock_fupd (K k) (s:(A,FFI)crep_state))`;
+                        crep_state_clock_fupd (combin_K k) (s:(A,FFI)crep_state))`;
     CASE_TERM `\r:((A)crep_result)option. match r with
                  SOME crep_TimeOut -> F
                | SOME (crep_FinalFFI _) -> F
@@ -3861,7 +3861,7 @@ let crep_sem_is_wrapper = prove
     `\s:(A,FFI)crep_state. ffi_state_io_events (crep_state_ffi s)`]
    PC2LAUX_wrapper_lemma)) THEN
   CONJ_TAC THEN REPEAT GEN_TAC THEN QCASES_ON "r" THEN
-  CASE_REWRITE_TAC[] THEN TRY (QCASES_ON "a") THEN CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN TRY (QCASES_ON "a") THEN CAKE_REWRITE_TAC[] THEN
   SIMP[] THEN MESON_TAC[]);;
 let loop_sem_is_wrapper = prove
  (CASE_TERM
@@ -3874,11 +3874,11 @@ let loop_sem_is_wrapper = prove
               | SOME (loop_Result _) -> crep_to_loopProof_CompleteResult Success
               | _ -> crep_to_loopProof_RunError) ##
        (\s. ffi_state_io_events (loop_state_ffi s))) o
-      (\k. loop_evaluate (prog,loop_state_clock_fupd (K k) s)))`,
+      (\k. loop_evaluate (prog,loop_state_clock_fupd (combin_K k) s)))`,
   REWRITE_TAC[loop_semantics_def; LET_DEF; LET_END_DEF] THEN
   MATCH_MP_TAC (BETA_RULE (ISPECL
    [`\k. loop_evaluate (loop_Call NONE (SOME start) [] NONE,
-                        loop_state_clock_fupd (K k) (s:(A,FFI)loop_state))`;
+                        loop_state_clock_fupd (combin_K k) (s:(A,FFI)loop_state))`;
     CASE_TERM `\r:((A)loop_result)option. match r with
                  SOME loop_TimeOut -> F
                | SOME (loop_FinalFFI _) -> F
@@ -3896,7 +3896,7 @@ let loop_sem_is_wrapper = prove
     `\s:(A,FFI)loop_state. ffi_state_io_events (loop_state_ffi s)`]
    PC2LAUX_wrapper_lemma)) THEN
   CONJ_TAC THEN REPEAT GEN_TAC THEN QCASES_ON "r" THEN
-  CASE_REWRITE_TAC[] THEN TRY (QCASES_ON "a") THEN CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN TRY (QCASES_ON "a") THEN CAKE_REWRITE_TAC[] THEN
   SIMP[] THEN MESON_TAC[]);;
 
 (* semantics_wrapper_eq: HOL4's proof splits on the value of the wrapper   *)
@@ -4150,34 +4150,34 @@ let PC2LAUX_run_prefix = prove
 
 let PC2LAUX_crep_clock_prop = prove
  (`!p (s:(A,FFI)crep_state) k k'.
-     ~(FST (crep_evaluate (p,crep_state_clock_fupd (K k) s)) = SOME crep_TimeOut) ==>
-     FST (crep_evaluate (p,crep_state_clock_fupd (K (k + k')) s)) =
-     FST (crep_evaluate (p,crep_state_clock_fupd (K k) s)) /\
+     ~(FST (crep_evaluate (p,crep_state_clock_fupd (combin_K k) s)) = SOME crep_TimeOut) ==>
+     FST (crep_evaluate (p,crep_state_clock_fupd (combin_K (k + k')) s)) =
+     FST (crep_evaluate (p,crep_state_clock_fupd (combin_K k) s)) /\
      ffi_state_io_events (crep_state_ffi (SND (crep_evaluate
-       (p,crep_state_clock_fupd (K (k + k')) s)))) =
+       (p,crep_state_clock_fupd (combin_K (k + k')) s)))) =
      ffi_state_io_events (crep_state_ffi (SND (crep_evaluate
-       (p,crep_state_clock_fupd (K k) s))))`,
+       (p,crep_state_clock_fupd (combin_K k) s))))`,
   REPEAT GEN_TAC THEN
-  PAIR_CASES_ON `crep_evaluate (p,crep_state_clock_fupd (K k) (s:(A,FFI)crep_state))` THEN
+  PAIR_CASES_ON `crep_evaluate (p,crep_state_clock_fupd (combin_K k) (s:(A,FFI)crep_state))` THEN
   REWRITE_TAC[FST; SND] THEN DISCH_TAC THEN
-  MP_TAC(ISPECL [`p:(A)crep_prog`; `crep_state_clock_fupd (K k) (s:(A,FFI)crep_state)`;
+  MP_TAC(ISPECL [`p:(A)crep_prog`; `crep_state_clock_fupd (combin_K k) (s:(A,FFI)crep_state)`;
                  `p0:((A)crep_result)option`; `p1:(A,FFI)crep_state`; `k':num`]
          crep_evaluate_add_clock_eq) THEN
   ASM_REWRITE_TAC[] THEN SIMP[] THEN DISCH_THEN SUBST1_TAC THEN SIMP[]);;
 
 let PC2LAUX_loop_clock_prop = prove
  (`!p (s:(A,FFI)loop_state) k k'.
-     ~(FST (loop_evaluate (p,loop_state_clock_fupd (K k) s)) = SOME loop_TimeOut) ==>
-     FST (loop_evaluate (p,loop_state_clock_fupd (K (k + k')) s)) =
-     FST (loop_evaluate (p,loop_state_clock_fupd (K k) s)) /\
+     ~(FST (loop_evaluate (p,loop_state_clock_fupd (combin_K k) s)) = SOME loop_TimeOut) ==>
+     FST (loop_evaluate (p,loop_state_clock_fupd (combin_K (k + k')) s)) =
+     FST (loop_evaluate (p,loop_state_clock_fupd (combin_K k) s)) /\
      ffi_state_io_events (loop_state_ffi (SND (loop_evaluate
-       (p,loop_state_clock_fupd (K (k + k')) s)))) =
+       (p,loop_state_clock_fupd (combin_K (k + k')) s)))) =
      ffi_state_io_events (loop_state_ffi (SND (loop_evaluate
-       (p,loop_state_clock_fupd (K k) s))))`,
+       (p,loop_state_clock_fupd (combin_K k) s))))`,
   REPEAT GEN_TAC THEN
-  PAIR_CASES_ON `loop_evaluate (p,loop_state_clock_fupd (K k) (s:(A,FFI)loop_state))` THEN
+  PAIR_CASES_ON `loop_evaluate (p,loop_state_clock_fupd (combin_K k) (s:(A,FFI)loop_state))` THEN
   REWRITE_TAC[FST; SND] THEN DISCH_TAC THEN
-  MP_TAC(ISPECL [`p:(A)loop_prog`; `loop_state_clock_fupd (K k) (s:(A,FFI)loop_state)`;
+  MP_TAC(ISPECL [`p:(A)loop_prog`; `loop_state_clock_fupd (combin_K k) (s:(A,FFI)loop_state)`;
                  `p0:((A)loop_result)option`; `p1:(A,FFI)loop_state`; `k':num`]
          loop_evaluate_add_clock_eq) THEN
   ASM_REWRITE_TAC[] THEN SIMP[] THEN DISCH_THEN SUBST1_TAC THEN SIMP[]);;
@@ -4213,8 +4213,8 @@ let crep_to_loopProof_state_rel_imp_semantics = prove
     ASM_REWRITE_TAC[OPT_MMAP_def; crep_lookup_code_def; LENGTH; ALOOKUP_EQ_FLOOKUP] THEN
     SIMP[] THEN
     QCASES_ON "ALOOKUP (crep_code:(mlstring#(num list)#(A)crep_prog)list) start" THEN
-    CASE_REWRITE_TAC[] THEN TRY (PAIR_CASES_ON `a:num list#(A)crep_prog`) THEN
-    CASE_REWRITE_TAC[] THEN TRY COND_CASES_TAC THEN CASE_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN TRY (PAIR_CASES_ON `a:num list#(A)crep_prog`) THEN
+    CAKE_REWRITE_TAC[] THEN TRY COND_CASES_TAC THEN CAKE_REWRITE_TAC[] THEN
     FIRST_X_ASSUM(CONJUNCTS_THEN ASSUME_TAC) THEN RVEQ_TAC THEN ASM_MESON_TAC[]] THEN
   FIRST_X_ASSUM(X_CHOOSE_TAC `prog:(A)crep_prog`) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[crep_sem_is_wrapper; LET_DEF; LET_END_DEF]) THEN
@@ -4223,21 +4223,21 @@ let crep_to_loopProof_state_rel_imp_semantics = prove
    [(* a crep run that is no error is matched by a loop run with more clock *)
     REWRITE_TAC[o_THM; PAIR_MAP_DEF; PAIR_EQ] THEN REPEAT GEN_TAC THEN STRIP_TAC THEN
     PAIR_CASES_ON `crep_evaluate (crep_Call NONE start [],
-                                  crep_state_clock_fupd (K k) (s:(A,FFI)crep_state))` THEN
+                                  crep_state_clock_fupd (combin_K k) (s:(A,FFI)crep_state))` THEN
     RULE_ASSUM_TAC(REWRITE_RULE[FST; SND]) THEN
     MP_TAC(SPECL [`c:architecture`; `crep_code:(mlstring#(num list)#(A)crep_prog)list`;
                   `start:mlstring`; `prog:(A)crep_prog`] mk_ctxt_code_imp_code_rel2) THEN
     ASM_REWRITE_TAC[] THEN
     DISCH_THEN(MP_TAC o MATCH_MP (INST
-      [`crep_state_clock_fupd (K k) (s:(A,FFI)crep_state)`,`s:(A,FFI)crep_state`;
+      [`crep_state_clock_fupd (combin_K k) (s:(A,FFI)crep_state)`,`s:(A,FFI)crep_state`;
        `p0:((A)crep_result)option`,`res:((A)crep_result)option`;
        `p1:(A,FFI)crep_state`,`s':(A,FFI)crep_state`;
-       `loop_state_clock_fupd (K k) (t:(A,FFI)loop_state)`,`t:(A,FFI)loop_state`]
+       `loop_state_clock_fupd (combin_K k) (t:(A,FFI)loop_state)`,`t:(A,FFI)loop_state`]
       code_rel_evaluate_call_correct)) THEN
     ASM_REWRITE_TAC[] THEN
     SIMP[crep_to_loop_find_lab_def; crep_to_loop_mk_ctxt_def; distinct_vars_def;
          crep_to_loopProof_ctxt_max_def; FLOOKUP_EMPTY] THEN
-    CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
     ANTS_TAC THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
     ANTS_TAC THENL
      [DISCH_TAC THEN
@@ -4245,25 +4245,25 @@ let crep_to_loopProof_state_rel_imp_semantics = prove
         `~(r = crep_to_loopProof_RunError:(outcome)crep_to_loopProof_semantics_run_res)` THEN
       FIRST_X_ASSUM(SUBST1_TAC o SYM o
         check (fun th -> rhs(concl th) = `r:(outcome)crep_to_loopProof_semantics_run_res`)) THEN
-      ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[];
+      ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[];
       ALL_TAC] THEN
     DISCH_THEN(X_CHOOSE_THEN `k':num` (X_CHOOSE_THEN `t':(A,FFI)loop_state`
       STRIP_ASSUME_TAC)) THEN
     QEXISTS_TAC "k'" THEN ASM_REWRITE_TAC[FST; SND] THEN CONJ_TAC THENL
      [FIRST_X_ASSUM(SUBST1_TAC o SYM o
         check (fun th -> rhs(concl th) = `r:(outcome)crep_to_loopProof_semantics_run_res`)) THEN
-      QCASES_ON "p0" THEN CASE_REWRITE_TAC[] THEN TRY (QCASES_ON "a") THEN
-      CASE_REWRITE_TAC[];
+      QCASES_ON "p0" THEN CAKE_REWRITE_TAC[] THEN TRY (QCASES_ON "a") THEN
+      CAKE_REWRITE_TAC[];
       FIRST_X_ASSUM(SUBST1_TAC o SYM o
         check (fun th -> rhs(concl th) = `ev:(io_event)list`)) THEN
       FS[crep_to_loopProof_state_rel_def]];
     (* the loop runs, the crep runs: complete results stay with more clock *)
     MATCH_MP_TAC PC2LAUX_run_mono THEN
     EXISTS_TAC `SOME loop_TimeOut:((A)loop_result)option` THEN BETA_TAC THEN
-    CONJ_TAC THENL [CASE_REWRITE_TAC[]; MATCH_ACCEPT_TAC PC2LAUX_loop_clock_prop];
+    CONJ_TAC THENL [CAKE_REWRITE_TAC[]; MATCH_ACCEPT_TAC PC2LAUX_loop_clock_prop];
     MATCH_MP_TAC PC2LAUX_run_mono THEN
     EXISTS_TAC `SOME crep_TimeOut:((A)crep_result)option` THEN BETA_TAC THEN
-    CONJ_TAC THENL [CASE_REWRITE_TAC[]; MATCH_ACCEPT_TAC PC2LAUX_crep_clock_prop];
+    CONJ_TAC THENL [CAKE_REWRITE_TAC[]; MATCH_ACCEPT_TAC PC2LAUX_crep_clock_prop];
     (* the io events grow with the clock *)
     MATCH_MP_TAC PC2LAUX_run_prefix THEN BETA_TAC THEN REPEAT GEN_TAC THEN
     MATCH_ACCEPT_TAC (GEN_ALL (CONJUNCT1 evaluate_io_mono_rephrases));

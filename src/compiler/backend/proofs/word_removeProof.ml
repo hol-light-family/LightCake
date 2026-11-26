@@ -29,12 +29,12 @@ needs "compiler/backend/semantics/wordConvs.ml";;
 type_invention_error := true;;
 let compile_state_def = cake_def
  `compile_state clk c (s:(A,C,FFI)wl_state) =
-    wl_state_compile_fupd (K c)
+    wl_state_compile_fupd (combin_K c)
      (wl_state_compile_oracle_fupd
-        (K ((I ## MAP (I ## I ## remove_must_terminate)) o wl_state_compile_oracle s))
-      (wl_state_code_fupd (K (sptree_map (I ## remove_must_terminate) (wl_state_code s)))
-       (wl_state_termdep_fupd (K 0)
-        (wl_state_clock_fupd (K (wl_state_clock s + clk)) s))))`;;
+        (combin_K ((I ## MAP (I ## I ## remove_must_terminate)) o wl_state_compile_oracle s))
+      (wl_state_code_fupd (combin_K (sptree_map (I ## remove_must_terminate) (wl_state_code s)))
+       (wl_state_termdep_fupd (combin_K 0)
+        (wl_state_clock_fupd (combin_K (wl_state_clock s + clk)) s))))`;;
 
 let compile_state_const = prove
  (`wl_state_locals (compile_state clk c s) = wl_state_locals (s:(A,C,FFI)wl_state) /\
@@ -74,36 +74,36 @@ let find_code_map_I = prove
 let _ = cake_add_simps [find_code_map_I];;
 
 let compile_state_update = prove
- (`wl_state_stack_fupd (K f1) (compile_state clk c s) =
-     compile_state clk c (wl_state_stack_fupd (K f1) (s:(A,C,FFI)wl_state)) /\
-   wl_state_permute_fupd (K f2) (compile_state clk c s) =
-     compile_state clk c (wl_state_permute_fupd (K f2) s) /\
-   wl_state_ffi_fupd (K f10) (compile_state clk c s) =
-     compile_state clk c (wl_state_ffi_fupd (K f10) s) /\
-   wl_state_data_buffer_fupd (K f9) (compile_state clk c s) =
-     compile_state clk c (wl_state_data_buffer_fupd (K f9) s) /\
-   wl_state_code_buffer_fupd (K f8) (compile_state clk c s) =
-     compile_state clk c (wl_state_code_buffer_fupd (K f8) s) /\
-   wl_state_memory_fupd (K f7) (compile_state clk c s) =
-     compile_state clk c (wl_state_memory_fupd (K f7) s) /\
-   wl_state_locals_fupd (K f6) (compile_state clk c s) =
-     compile_state clk c (wl_state_locals_fupd (K f6) s) /\
-   wl_state_memory_fupd (K f5) (compile_state clk c s) =
-     compile_state clk c (wl_state_memory_fupd (K f5) s) /\
-   wl_state_store_fupd (K f4) (compile_state clk c s) =
-     compile_state clk c (wl_state_store_fupd (K f4) s) /\
-   wl_state_fp_regs_fupd (K f11) (compile_state clk c s) =
-     compile_state clk c (wl_state_fp_regs_fupd (K f11) s) /\
-   wl_state_handler_fupd (K f3) (compile_state clk c s) =
-     compile_state clk c (wl_state_handler_fupd (K f3) s) /\
-   wl_state_locals_size_fupd (K f12) (compile_state clk c s) =
-     compile_state clk c (wl_state_locals_size_fupd (K f12) s) /\
-   wl_state_stack_size_fupd (K f13) (compile_state clk c s) =
-     compile_state clk c (wl_state_stack_size_fupd (K f13) s) /\
-   wl_state_stack_max_fupd (K f14) (compile_state clk c s) =
-     compile_state clk c (wl_state_stack_max_fupd (K f14) s) /\
-   wl_state_stack_limit_fupd (K f15) (compile_state clk c s) =
-     compile_state clk c (wl_state_stack_limit_fupd (K f15) s)`,
+ (`wl_state_stack_fupd (combin_K f1) (compile_state clk c s) =
+     compile_state clk c (wl_state_stack_fupd (combin_K f1) (s:(A,C,FFI)wl_state)) /\
+   wl_state_permute_fupd (combin_K f2) (compile_state clk c s) =
+     compile_state clk c (wl_state_permute_fupd (combin_K f2) s) /\
+   wl_state_ffi_fupd (combin_K f10) (compile_state clk c s) =
+     compile_state clk c (wl_state_ffi_fupd (combin_K f10) s) /\
+   wl_state_data_buffer_fupd (combin_K f9) (compile_state clk c s) =
+     compile_state clk c (wl_state_data_buffer_fupd (combin_K f9) s) /\
+   wl_state_code_buffer_fupd (combin_K f8) (compile_state clk c s) =
+     compile_state clk c (wl_state_code_buffer_fupd (combin_K f8) s) /\
+   wl_state_memory_fupd (combin_K f7) (compile_state clk c s) =
+     compile_state clk c (wl_state_memory_fupd (combin_K f7) s) /\
+   wl_state_locals_fupd (combin_K f6) (compile_state clk c s) =
+     compile_state clk c (wl_state_locals_fupd (combin_K f6) s) /\
+   wl_state_memory_fupd (combin_K f5) (compile_state clk c s) =
+     compile_state clk c (wl_state_memory_fupd (combin_K f5) s) /\
+   wl_state_store_fupd (combin_K f4) (compile_state clk c s) =
+     compile_state clk c (wl_state_store_fupd (combin_K f4) s) /\
+   wl_state_fp_regs_fupd (combin_K f11) (compile_state clk c s) =
+     compile_state clk c (wl_state_fp_regs_fupd (combin_K f11) s) /\
+   wl_state_handler_fupd (combin_K f3) (compile_state clk c s) =
+     compile_state clk c (wl_state_handler_fupd (combin_K f3) s) /\
+   wl_state_locals_size_fupd (combin_K f12) (compile_state clk c s) =
+     compile_state clk c (wl_state_locals_size_fupd (combin_K f12) s) /\
+   wl_state_stack_size_fupd (combin_K f13) (compile_state clk c s) =
+     compile_state clk c (wl_state_stack_size_fupd (combin_K f13) s) /\
+   wl_state_stack_max_fupd (combin_K f14) (compile_state clk c s) =
+     compile_state clk c (wl_state_stack_max_fupd (combin_K f14) s) /\
+   wl_state_stack_limit_fupd (combin_K f15) (compile_state clk c s) =
+     compile_state clk c (wl_state_stack_limit_fupd (combin_K f15) s)`,
   SIMP[compile_state_def]);;
 let _ = cake_add_simps [compile_state_update];;
 
@@ -396,7 +396,7 @@ let WPROOF1AUX_OCASES_TAC (c:string) (pat:term) : tactic = fun (asl,w as g) ->
             else ISPEC t BASICAUX_option3_cases in
   let vs = if is_var pat then [pat] else
            let a,bc = dest_pair pat in let b,cc = dest_pair bc in [a;b;cc] in
-  let USE th = REWRITE_TAC[th] THEN CASE_REWRITE_TAC[] THEN ASSUME_TAC th in
+  let USE th = REWRITE_TAC[th] THEN CAKE_REWRITE_TAC[] THEN ASSUME_TAC th in
   DISJ_CASES_THEN2 USE (fun th ->
       X_CHOOSE_THEN (hd vs)
         (if length vs = 1 then USE else

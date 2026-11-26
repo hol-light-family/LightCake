@@ -23,8 +23,23 @@
   name, HOL Light name, reason); `doc/library_renames.tsv` lists the HOL4 library names that
   changed.
 - Record fields: the accessor of field `f` of record type `r` is `r_f`, its update `r_f_fupd`
-  (HOL4 `x with f := v` is `r_f_fupd (K v) x`); the literal `<| f1 := v1; ... |>` is
-  `r_REC v1 ...` with the fields in declaration order.
+  (HOL4 `x with f := v` is `r_f_fupd (combin_K v) x`, HOL4's `K` being `combin_K`); the literal
+  `<| f1 := v1; ... |>` is `r_REC v1 ...` with the fields in declaration order.
+- OCaml-level names. Every file of the port is loaded into one session, so a top-level OCaml
+  binding of the port (a theorem, a tactic, a conversion, a table) replaces every earlier binding
+  of the same name for all later files and for the user. No file rebinds a top-level name of
+  HOL Light (its core, the module signatures it includes, such as the kernel's, and the
+  libraries the port loads): a HOL4 theorem named like a HOL Light value gets its theory prefix
+  (`typeSysProps_type_subst`, not `type_subst`, which would hide the kernel function;
+  `integer_int_mod`, as `Library/ringtheory.ml` uses `int.ml`'s `int_mod`), and so does a
+  theorem whose name a tool function of the port takes (`holSyntaxExtra`'s `trans` is
+  `hol_trans`). The kit's deliberate replacements of HOL Light functions are the only
+  exceptions: the rewriting front ends (memoised nets, the same results), `parse_term` (each
+  `_` is its own variable, and `match` is compiled into case constants), `g`, `needs` (it
+  records the file being loaded for the per-file simpsets, so code that wraps `needs` must be
+  bound after the prelude) and the METIS wrappers. Tactics of the kit whose HOL4 behaviour
+  differs from a HOL Light tactic of the same name get another name (`HOL4_IMP_RES_THEN`,
+  `HOL4_SELECT_ELIM_TAC`, `CAKE_REWRITE_TAC`).
 - Definition theorems are `NAME_def`, induction theorems `NAME_ind` (`cake_ind "NAME"`).
 - HOL4 library notions use HOL Light's constants where they mean the same (`ALL`, `EX`, `ALL2`,
   `set_of_list`, `UNIONS`, `BUTLAST`, `list_of_seq`, `ITLIST` for `FOLDR` with its arguments
@@ -112,6 +127,15 @@
 - The kit's simplifier tactics use HOL Light's simplifier without its `satisfy_prover` (part of
   `basic_ss` since November 2026), as HOL4's default simpsets have no `SATISFY_ss`. HOL Light's
   own `SIMP_TAC` and `ASM_SIMP_TAC` keep it.
+- HOL Light's `SIMP_CONV`, `SIMP_TAC`, `ASM_SIMP_TAC` and the other names of its simplifier are
+  HOL Light's own: the kit does not redefine them. The kit's tactics (`SIMP`, `FS`, `RFS`, `GVS`,
+  `RW`) run HOL Light's simplifier with the kit's strategy, which also gives up the rewriting of
+  a bound variable named like a free variable of the context at once, and stops a rewrite chain
+  that returns to a term it passed; `CAKE_SIMP_TAC`, `CAKE_ASM_SIMP_TAC` and `CAKE_SIMPLIFY_CONV`
+  are HOL Light's `SIMP_TAC`, `ASM_SIMP_TAC` and `SIMPLIFY_CONV` on that strategy, for the goals
+  on which HOL Light's simplifier does not terminate. `CAKE_REWRITE_TAC`, `CAKE_REWRITE_CONV` and
+  `CAKE_REWRITE_RULE` rewrite with the case-constant equations of the kit's datatypes as well
+  as HOL Light's basic rewrites.
 
 ## Translations
 - The proof-producing translator (`src/translator/ml_translatorLib.ml`, HOL4's

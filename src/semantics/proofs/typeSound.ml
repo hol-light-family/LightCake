@@ -39,7 +39,7 @@ let list_rel_flat = prove
 
 let fst_triple = prove
  (CASE_TERM `(\p. match p with (x,y,z) -> x) = (FST:A#B#C->A)`,
-  REWRITE_TAC[FUN_EQ_THM; FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[FUN_EQ_THM; FORALL_PAIR_THM] THEN CAKE_REWRITE_TAC[]);;
 
 let disjoint_image = prove
  (`!s1 s2 (f:A->B). DISJOINT (IMAGE f s1) (IMAGE f s2) ==> DISJOINT s1 s2`,
@@ -59,7 +59,7 @@ let TPROPSAUX_EVERY_LIST_REL = prove
   ASM_REWRITE_TAC[ALL; ALL2; LENGTH; REPLICATE]);;
 
 let v_unchanged = prove
- (`!tenv (x:A). type_env_v_fupd (K (type_env_v tenv)) tenv = tenv`,
+ (`!tenv (x:A). type_env_v_fupd (combin_K (type_env_v tenv)) tenv = tenv`,
   REWRITE_TAC[type_env_component_equality; type_env_INFO.ri_accfupds; K_THM]);;
 let _ = cake_add_simps [v_unchanged];;
 
@@ -69,7 +69,7 @@ let check_dup_ctors_thm = prove
   SPEC_TAC(`condefs:(mlstring#ast_t list)list`,`l:(mlstring#ast_t list)list`) THEN
   LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[ITLIST; MAP] THEN
   SPEC_TAC(`h:mlstring#ast_t list`,`h:mlstring#ast_t list`) THEN
-  REWRITE_TAC[FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]);;
+  REWRITE_TAC[FORALL_PAIR_THM] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]);;
 (* the type abbreviations and type numbers, with the constructor theorems  *)
 (* of t: decides equations between primitive types                        *)
 let TPROPSAUX_TYEQS =
@@ -201,19 +201,19 @@ let has_lists_v_to_list = prove
     RVEQ_TAC THEN TPROPSAUX_POP "ALL2" THEN
     REWRITE_TAC[ZIP; REVERSE; APPEND; FUPDATE_LIST_THM; MAP; type_subst_def;
                 FLOOKUP_UPDATE; typeSystem_Tlist_def] THEN
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[LIST_REL_CONS2; LIST_REL_NIL] THEN
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[LIST_REL_CONS2; LIST_REL_NIL] THEN
     STRIP_TAC THEN RVEQ_TAC THEN
     FIRST_X_ASSUM(MP_TAC o SPEC `h'':v`) THEN
     ANTS_TAC THENL [REWRITE_TAC[type_size_def "v"] THEN ARITH_TAC; ALL_TAC] THEN
     DISCH_THEN(MP_TAC o SPECL [`ctMap:ctMap`; `tvs:num`; `tenvS:tenv_store`; `t3:t`]) THEN
     ASM_REWRITE_TAC[typeSystem_Tlist_def] THEN STRIP_TAC THEN
     EXISTS_TAC `CONS (h':v) vs` THEN
-    ASM_REWRITE_TAC[v_to_list_def; ALL] THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[v_to_list_def; ALL] THEN CAKE_REWRITE_TAC[] THEN
     CONJ_TAC THEN DISCH_TAC THEN RVEQ_TAC THEN
     MAP_EVERY IMP_RES_TAC (CONJUNCTS prim_canonical_values_thm) THEN RVEQ_TAC THEN
     RULE_ASSUM_TAC(REWRITE_RULE[]) THEN
     FIRST_X_ASSUM(STRIP_ASSUME_TAC o check (is_exists o concl)) THEN
-    ASM_REWRITE_TAC[v_to_char_list_def; vs_to_string_def] THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[v_to_char_list_def; vs_to_string_def] THEN CAKE_REWRITE_TAC[] THEN
     MESON_TAC[];
     SUBGOAL_THEN `tvs' = [implode "'a"] /\ ts = []:t list` STRIP_ASSUME_TAC THENL
      [UNDISCH_TAC `ctMap_has_lists ctMap` THEN REWRITE_TAC[ctMap_has_lists_def] THEN
@@ -335,7 +335,7 @@ let TPROPSAUX_EQ1_TAC : tactic =
   TPROPSAUX_TV_ASM_CASES_TAC THEN
   TRY TPROPSAUX_NEG_TAC THEN
   TRY (TPROPSAUX_TFN_TAC THEN TPROPSAUX_NEG_TAC) THEN
-  RULE_ASSUM_TAC(CASE_REWRITE_RULE[do_eq_def; lit_same_type_def; ctor_same_type_def;
+  RULE_ASSUM_TAC(CAKE_REWRITE_RULE[do_eq_def; lit_same_type_def; ctor_same_type_def;
                                    distinctness "eq_result"]) THEN
   TRY (FIRST_ASSUM CONTR_TAC);;
 
@@ -389,7 +389,7 @@ let eq_same_type = prove
     MP_TAC (ISPEC `do_eq v1 v2` (cases "eq_result")) THEN ASM_REWRITE_TAC[] THEN
     DISCH_THEN(X_CHOOSE_TAC `r:bool`) THEN
     TPROPSAUX_POP_MATCH `(x:eq_result) = Eq_type_error` THEN
-    ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
     ASM_CASES_TAC `r:bool` THEN ASM_REWRITE_TAC[distinctness "eq_result"] THEN
     ASM_MESON_TAC[]]);;
 
@@ -431,7 +431,7 @@ let type_recfun_env_help = prove
      ALL_DISTINCT (MAP FST funs') /\
      tenv_ok tenv /\
      type_all_env ctMap tenvS env
-       (type_env_v_fupd (K (add_tenvE tenvE (type_env_v tenv))) tenv) /\
+       (type_env_v_fupd (combin_K (add_tenvE tenvE (type_env_v tenv))) tenv) /\
      tenv_val_exp_ok tenvE /\
      num_tvs tenvE = 0 /\
      (!fn t. ALOOKUP bindings fn = SOME t ==> ALOOKUP bindings' fn = SOME t) /\
@@ -446,7 +446,7 @@ let type_recfun_env_help = prove
     ASM_REWRITE_TAC[MAP; ALL2];
     SPEC_TAC(`h:mlstring#mlstring#exp`,`h:mlstring#mlstring#exp`) THEN
     REWRITE_TAC[FORALL_PAIR_THM; TPROPSAUX_type_funs_cases] THEN
-    REPEAT STRIP_TAC THEN RVEQ_TAC THEN REWRITE_TAC[MAP; ALL2] THEN CASE_REWRITE_TAC[] THEN
+    REPEAT STRIP_TAC THEN RVEQ_TAC THEN REWRITE_TAC[MAP; ALL2] THEN CAKE_REWRITE_TAC[] THEN
     CONJ_TAC THENL
      [MATCH_MP_TAC TPROPSAUX_type_v_Recclosure THEN
       MAP_EVERY EXISTS_TAC [`tenv:type_env`; `tenvE:tenv_val_exp`;
@@ -472,7 +472,7 @@ let type_recfun_env = prove
  (CASE_TERM `!funs ctMap tenvS tvs tenv tenvE env bindings.
      tenv_ok tenv /\
      type_all_env ctMap tenvS env
-       (type_env_v_fupd (K (add_tenvE tenvE (type_env_v tenv))) tenv) /\
+       (type_env_v_fupd (combin_K (add_tenvE tenvE (type_env_v tenv))) tenv) /\
      tenv_val_exp_ok tenvE /\
      num_tvs tenvE = 0 /\
      type_funs tenv (bind_var_list 0 bindings (bind_tvar tvs tenvE)) funs bindings /\
@@ -533,23 +533,23 @@ let opapp_type_sound = prove
      ==> ?env e tenv tenvE.
            tenv_ok tenv /\ tenv_val_exp_ok tenvE /\ num_tvs tenvE = 0 /\
            type_all_env ctMap tenvS env
-             (type_env_v_fupd (K (add_tenvE tenvE (type_env_v tenv))) tenv) /\
+             (type_env_v_fupd (combin_K (add_tenvE tenvE (type_env_v tenv))) tenv) /\
            type_e tenv tenvE e t /\ do_opapp vs = SOME (env,e)`,
   REPEAT GEN_TAC THEN
   REWRITE_TAC[type_op_cases; distinctness "op"; injectivity "op"] THEN STRIP_TAC THEN
   RVEQ_TAC THEN RULE_ASSUM_TAC(REWRITE_RULE[LIST_REL_CONS2; LIST_REL_NIL]) THEN
   REPEAT(FIRST_X_ASSUM(STRIP_ASSUME_TAC o check (is_exists o concl))) THEN
-  TPROPSAUX_NORM_TAC THEN REWRITE_TAC[do_opapp_def] THEN CASE_REWRITE_TAC[] THEN
-  TPROPSAUX_TV_CASES_ON `h':v` THEN TRY TPROPSAUX_NEG_TAC THEN CASE_REWRITE_TAC[] THEN
+  TPROPSAUX_NORM_TAC THEN REWRITE_TAC[do_opapp_def] THEN CAKE_REWRITE_TAC[] THEN
+  TPROPSAUX_TV_CASES_ON `h':v` THEN TRY TPROPSAUX_NEG_TAC THEN CAKE_REWRITE_TAC[] THEN
   RULE_ASSUM_TAC(REWRITE_RULE[bind_tvar_def]) THENL
    [(* a closure *)
-    MAP_EVERY EXISTS_TAC [`sem_env_v_fupd (K (nsBind n h'' (sem_env_v env))) (env:v sem_env)`;
+    MAP_EVERY EXISTS_TAC [`sem_env_v_fupd (combin_K (nsBind n h'' (sem_env_v env))) (env:v sem_env)`;
                           `e:exp`; `tenv:type_env`; `Bind_name n 0 t1 tenvE`] THEN
     ASM_REWRITE_TAC[tenv_val_exp_ok_def; num_tvs_def; ADD_CLAUSES] THEN
     REWRITE_TAC[type_all_env_def; type_env_INFO.ri_accfupds; sem_env_INFO.ri_accfupds;
                 K_THM; add_tenvE_def] THEN
     ASM_REWRITE_TAC[] THEN MATCH_MP_TAC nsAll2_nsBind THEN ASM_REWRITE_TAC[] THEN
-    CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[];
+    CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[];
     (* a recursive closure *)
     MP_TAC(ISPECL [`n:mlstring`; `ARB:num`; `funs:(mlstring#mlstring#exp)list`;
                    `bindings:(mlstring#t)list`; `ARB:exp`; `tenv:type_env`;
@@ -563,17 +563,17 @@ let opapp_type_sound = prove
                   type_recfun_lookup) THEN
     ASM_REWRITE_TAC[typeSystem_Tfn_def; typeSystem_Tfn_num_def] THEN STRIP_TAC THEN
     MAP_EVERY EXISTS_TAC
-      [`sem_env_v_fupd (K (nsBind n' h'' (build_rec_env funs env (sem_env_v env))))
+      [`sem_env_v_fupd (combin_K (nsBind n' h'' (build_rec_env funs env (sem_env_v env))))
          (env:v sem_env)`;
        `e':exp`; `tenv:type_env`; `Bind_name n' 0 a0' (bind_var_list 0 bindings tenvE)`] THEN
     ASM_REWRITE_TAC[tenv_val_exp_ok_def; num_tvs_def; ADD_CLAUSES; num_tvs_bind_var_list] THEN
-    REWRITE_TAC[fst_triple] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[fst_triple] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
     REPEAT CONJ_TAC THENL
      [ASM_MESON_TAC[type_v_freevars];
       ASM_MESON_TAC[tenv_val_exp_ok_bvl_funs];
       REWRITE_TAC[type_all_env_def; type_env_INFO.ri_accfupds; sem_env_INFO.ri_accfupds;
                   K_THM; add_tenvE_def] THEN
-      ASM_REWRITE_TAC[] THEN MATCH_MP_TAC nsAll2_nsBind THEN CASE_REWRITE_TAC[] THEN
+      ASM_REWRITE_TAC[] THEN MATCH_MP_TAC nsAll2_nsBind THEN CAKE_REWRITE_TAC[] THEN
       ASM_REWRITE_TAC[] THEN
       REWRITE_TAC[build_rec_env_merge; nsAppend_to_nsBindList; add_tenvE_bvl] THEN
       MATCH_MP_TAC nsAll2_nsBindList THEN ASM_REWRITE_TAC[] THEN BETA_TAC THEN
@@ -606,7 +606,7 @@ let store_type_extension_trans = prove
   FIRST_X_ASSUM(MP_TAC o SPEC `l:A`) THEN FIRST_X_ASSUM(MP_TAC o SPEC `l:A`) THEN
   REWRITE_TAC[FLOOKUP_FUNION] THEN
   CASES_ON `FLOOKUP (tenvS'':(A,B)fmap) l` THEN CASES_ON `FLOOKUP (tenvS':(A,B)fmap) l` THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[option_DISTINCT]);;
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[option_DISTINCT]);;
 
 let store_assign_type_sound = prove
  (`!ctMap tenvS store sv st l.
@@ -622,7 +622,7 @@ let store_assign_type_sound = prove
    [REPEAT(TPROPSAUX_POP "type_sv") THEN
     SPEC_TAC(`EL l store:v store_v`,`a:v store_v`) THEN GEN_TAC THEN
     CASES_ON `st:store_t` THEN CASES_ON `a:v store_v` THEN CASES_ON `sv:v store_v` THEN
-    REWRITE_TAC[type_sv_def; store_v_same_type_def] THEN CASE_REWRITE_TAC[];
+    REWRITE_TAC[type_sv_def; store_v_same_type_def] THEN CAKE_REWRITE_TAC[];
     ALL_TAC] THEN
   ASM_REWRITE_TAC[store_assign_def; injectivity "option"; UNWIND_THM1] THEN
   UNDISCH_TAC `type_s ctMap store tenvS` THEN
@@ -728,13 +728,13 @@ let type_v_list_to_v_APPEND = prove
    [UNDISCH_TAC `ctMap_has_lists ctMap` THEN REWRITE_TAC[ctMap_has_lists_def] THEN
     ASM_REWRITE_TAC[injectivity "option"; PAIR_EQ] THEN MESON_TAC[]; ALL_TAC] THEN
   RVEQ_TAC THEN
-  RULE_ASSUM_TAC(CASE_REWRITE_RULE[ZIP; REVERSE; APPEND; FUPDATE_LIST_THM; MAP;
+  RULE_ASSUM_TAC(CAKE_REWRITE_RULE[ZIP; REVERSE; APPEND; FUPDATE_LIST_THM; MAP;
                  type_subst_def; FLOOKUP_UPDATE; typeSystem_Tlist_def;
                  typeSystem_Tlist_num_def; ALL2]) THEN
   REWRITE_TAC[list_to_v_def] THEN MATCH_MP_TAC TPROPSAUX_type_v_Conv THEN
   MAP_EVERY EXISTS_TAC [`[implode "'a"]`;
                         `[Tvar (implode "'a"); Tlist (Tvar (implode "'a"))]`] THEN
-  CASE_REWRITE_TAC[ZIP; REVERSE; APPEND; FUPDATE_LIST_THM; MAP; type_subst_def;
+  CAKE_REWRITE_TAC[ZIP; REVERSE; APPEND; FUPDATE_LIST_THM; MAP; type_subst_def;
                    FLOOKUP_UPDATE; typeSystem_Tlist_def; typeSystem_Tlist_num_def;
                    ALL2; LENGTH] THEN
   ASM_REWRITE_TAC[] THEN
@@ -748,7 +748,7 @@ let do_eq_Boolv = prove
   REWRITE_TAC[semanticPrimitives_Boolv_def; do_eq_def] THEN
   REWRITE_TAC[injectivity "option"; injectivity "stamp"; injectivity "mlstring"; CONS_11;
               injectivity "char"; ctor_same_type_def] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[same_type_def]);;
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[same_type_def]);;
 
 let prim_canonical_Boolv_thm = prove
  (`type_v tvs ctMap tenvS v Tbool /\ ctMap_ok ctMap /\ ctMap_has_bools ctMap
@@ -816,7 +816,7 @@ let TPROPSAUX_type_v_chars = prove
     MAP_EVERY EXISTS_TAC [`[implode "'a"]`;
                           `[Tvar (implode "'a"); Tlist (Tvar (implode "'a"))]`] THEN
     ASM_REWRITE_TAC[] THEN
-    CASE_REWRITE_TAC[ZIP; REVERSE; APPEND; FUPDATE_LIST_THM; MAP; type_subst_def;
+    CAKE_REWRITE_TAC[ZIP; REVERSE; APPEND; FUPDATE_LIST_THM; MAP; type_subst_def;
                      FLOOKUP_UPDATE; typeSystem_Tlist_def; typeSystem_Tlist_num_def;
                      ALL2; LENGTH; check_freevars_def; ALL] THEN
     ASM_SIMP_TAC TPROPSAUX_TV_LIT_RULES]);;
@@ -835,7 +835,7 @@ let TPROPSAUX_OTS_START : tactic =
   RULE_ASSUM_TAC(REWRITE_RULE TPROPSAUX_TYEQS) THEN
   REPEAT(FIRST_X_ASSUM(STRIP_ASSUME_TAC o check (is_exists o concl))) THEN
   RVEQ_TAC THEN
-  REWRITE_TAC[REVERSE; APPEND] THEN REWRITE_TAC[do_app_def] THEN CASE_REWRITE_TAC[];;
+  REWRITE_TAC[REVERSE; APPEND] THEN REWRITE_TAC[do_app_def] THEN CAKE_REWRITE_TAC[];;
 
 (* the witnesses of the goal of TPROPSAUX_OTS: the given store type, and   *)
 (* store', ffi' and r from their equations in the goal (s0 = store' or     *)
@@ -867,7 +867,7 @@ let TPROPSAUX_head_args s n tm =
 (* the goal after the witnesses: store extension, store typing, the result *)
 let TPROPSAUX_OTS_FINISH_TAC : tactic =
   REWRITE_TAC (TPROPSAUX_TYEQS @ [sub_exn_v_def; chr_exn_v_def; div_exn_v_def]) THEN
-  CASE_REWRITE_TAC[store_type_extension_refl] THEN
+  CAKE_REWRITE_TAC[store_type_extension_refl] THEN
   RULE_ASSUM_TAC(REWRITE_RULE[check_freevars_def; ALL]) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[GE; NOT_LE]) THEN
   (fun (asl,w as gl) ->
@@ -894,7 +894,7 @@ let TPROPSAUX_STORE_ALLOC_TAC : tactic = fun (asl,w as gl) ->
    ASM_REWRITE_TAC[type_sv_def; ALL; EVERY_REPLICATE] THEN
    DISCH_THEN(X_CHOOSE_THEN `store1:(v store_v)list` (X_CHOOSE_THEN `tenvS1:tenv_store`
      (X_CHOOSE_THEN `n1:num` STRIP_ASSUME_TAC))) THEN
-   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+   ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
    TPROPSAUX_DO_APP_EXISTS_TAC `tenvS1:tenv_store`) gl;;
 
 (* do_app (store,ffi) op vs with a store_assign l sv store:                 *)
@@ -910,7 +910,7 @@ let TPROPSAUX_STORE_ASSIGN_TAC : tactic = fun (asl,w as gl) ->
                  store_assign_type_sound) THEN
    ASM_SIMP_TAC[type_sv_def; IMP_EVERY_LUPDATE] THEN
    DISCH_THEN(X_CHOOSE_THEN `store1:(v store_v)list` STRIP_ASSUME_TAC) THEN
-   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+   ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
    TPROPSAUX_DO_APP_EXISTS_TAC `tenvS:tenv_store`) gl;;
 
 (* split on a case expression or conditional of the goal (not on store     *)
@@ -924,12 +924,12 @@ let TPROPSAUX_SPLIT_TAC : tactic = fun (asl,w as gl) ->
      not (TPROPSAUX_head_args "store_assign" 3 x) &&
      not (TPROPSAUX_head_args "store_alloc" 2 x)) in
   let x = scrutinee_of (case_find_subterm ok w) in
-  (CASES_ON x THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[LET_DEF; LET_END_DEF]) gl;;
+  (CASES_ON x THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[LET_DEF; LET_END_DEF]) gl;;
 
 (* the cases of do_app after TPROPSAUX_OTS_START, then the witnesses *)
 let TPROPSAUX_OTS_GEN_TAC : tactic =
   RULE_ASSUM_TAC(REWRITE_RULE[LENGTH; LENGTH_NIL_SYM]) THEN RVEQ_TAC THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
   REPEAT TPROPSAUX_SPLIT_TAC THEN
   IMP_RES_TAC type_v_freevars THEN
   (TPROPSAUX_STORE_ALLOC_TAC ORELSE TPROPSAUX_STORE_ASSIGN_TAC ORELSE
@@ -979,7 +979,7 @@ let TPROPSAUX_OTS_START2 : tactic =
   RULE_ASSUM_TAC(REWRITE_RULE TPROPSAUX_TYEQS) THEN
   REPEAT(FIRST_X_ASSUM(STRIP_ASSUME_TAC o check (is_exists o concl))) THEN
   RVEQ_TAC THEN
-  REWRITE_TAC[REVERSE; APPEND] THEN REWRITE_TAC[do_app_def] THEN CASE_REWRITE_TAC[];;
+  REWRITE_TAC[REVERSE; APPEND] THEN REWRITE_TAC[do_app_def] THEN CAKE_REWRITE_TAC[];;
 
 (* the computation of the primitive operations *)
 let TPROPSAUX_OTS_PRIM_TAC : tactic =
@@ -989,7 +989,7 @@ let TPROPSAUX_OTS_PRIM_TAC : tactic =
               MAP; ALL; TPROPSAUX_EXISTS_REFL'; semanticPrimitivesProps_Boolv_11;
               EXCLUDED_MIDDLE; do_eq_Boolv; do_eq_def; lit_same_type_def;
               injectivity "v"; injectivity "lit"; distinctness "prim_type"; t_of_def] THEN
-  CASE_REWRITE_TAC[] THEN TPROPSAUX_OTS_GEN_TAC;;
+  CAKE_REWRITE_TAC[] THEN TPROPSAUX_OTS_GEN_TAC;;
 
 
 let TPROPSAUX_ots_Arith = prove
@@ -1015,7 +1015,7 @@ let TPROPSAUX_ots_Equality = prove
   ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
   MP_TAC (ISPEC `do_eq h'' h'` (cases "eq_result")) THEN ASM_REWRITE_TAC[] THEN
   DISCH_THEN(X_CHOOSE_THEN `b:bool` ASSUME_TAC) THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[] THEN TPROPSAUX_DO_APP_EXISTS_TAC `tenvS:tenv_store` THEN
+  CAKE_REWRITE_TAC[] THEN TPROPSAUX_DO_APP_EXISTS_TAC `tenvS:tenv_store` THEN
   TPROPSAUX_OTS_FINISH_TAC);;
 
 let TPROPSAUX_ots_Test = prove
@@ -1099,9 +1099,9 @@ let TPROPSAUX_ots_Aupdate = prove
 
 let TPROPSAUX_ots_ListAppend = prove
  (TPROPSAUX_OTS `ListAppend`,
-  TPROPSAUX_OTS_START THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  TPROPSAUX_OTS_START THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   TPROPSAUX_DO_APP_EXISTS_TAC `tenvS:tenv_store` THEN
-  REWRITE_TAC TPROPSAUX_TYEQS THEN CASE_REWRITE_TAC[store_type_extension_refl] THEN
+  REWRITE_TAC TPROPSAUX_TYEQS THEN CAKE_REWRITE_TAC[store_type_extension_refl] THEN
   ASM_REWRITE_TAC[] THEN
   MATCH_MP_TAC (REWRITE_RULE[typeSystem_Tlist_num_def] type_v_list_to_v_APPEND) THEN
   ASM_MESON_TAC[GEN_ALL type_v_list_to_v]);;
@@ -1161,8 +1161,8 @@ let build_conv_type_sound = prove
   DISCH_THEN(MP_TAC o SPECL [`cn:(mlstring,mlstring)id`; `tvs':mlstring list`; `ts:t list`;
                              `tn:num`]) THEN
   ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
-  REWRITE_TAC[build_conv_def] THEN CASE_REWRITE_TAC[] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[build_conv_def] THEN CAKE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[injectivity "option"; UNWIND_THM1] THEN
   MATCH_MP_TAC TPROPSAUX_type_v_Conv THEN
   MAP_EVERY EXISTS_TAC [`tvs':mlstring list`; `ts:t list`] THEN
@@ -1207,7 +1207,7 @@ let TPROPSAUX_mentions s tm =
 (* value and the pattern, close the impossible cases                         *)
 let TPROPSAUX_PAT_PRE_TAC : tactic =
   REPEAT STRIP_TAC THEN REWRITE_TAC[pmatch_def; distinctness "match_result"] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   TPROPSAUX_TV_ASM_CASES_TAC THEN TPROPSAUX_TP_ASM_CASES_TAC THEN
   IMP_RES_TAC TPROPSAUX_tenvC_lookup THEN
   REPEAT(FIRST_X_ASSUM(STRIP_ASSUME_TAC o check (is_exists o concl))) THEN
@@ -1218,19 +1218,19 @@ let TPROPSAUX_PAT_PRE_TAC : tactic =
 
 let TPROPSAUX_PAT_SIMPLE_TAC : tactic =
   TPROPSAUX_PAT_PRE_TAC THEN
-  REWRITE_TAC[lit_same_type_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[lit_same_type_def] THEN CAKE_REWRITE_TAC[] THEN
   REPEAT COND_CASES_TAC THEN
   ASM_REWRITE_TAC[distinctness "match_result"; injectivity "match_result"; APPEND;
-                  UNWIND_THM1; ALL2] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[];;
+                  UNWIND_THM1; ALL2] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[];;
 
 let TPROPSAUX_PAT_IH_TAC : tactic =
   TPROPSAUX_PAT_PRE_TAC THEN REWRITE_TAC[GSYM APPEND_ASSOC; APPEND] THEN
-  FIRST_X_ASSUM MATCH_MP_TAC THEN REWRITE_TAC[ALL2] THEN CASE_REWRITE_TAC[] THEN
+  FIRST_X_ASSUM MATCH_MP_TAC THEN REWRITE_TAC[ALL2] THEN CAKE_REWRITE_TAC[] THEN
   ASM_MESON_TAC[];;
 
 let TPROPSAUX_PAT_PCON_SOME_TAC : tactic =
   TPROPSAUX_PAT_PRE_TAC THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   SUBGOAL_THEN `same_type stamp'' stamp` ASSUME_TAC THENL
    [ASM_MESON_TAC[TPROPSAUX_ctMap_ok_same_type]; ALL_TAC] THEN
   IMP_RES_TAC type_ps_length THEN IMP_RES_TAC LIST_REL_LENGTH THEN
@@ -1254,7 +1254,7 @@ let TPROPSAUX_PAT_PREF_TAC : tactic =
   FIRST_X_ASSUM(fun th ->
     if TPROPSAUX_head_is "type_sv" (concl th) then MP_TAC th else NO_TAC) THEN
   CASES_ON `sv:v store_v` THEN REWRITE_TAC[type_sv_def] THEN DISCH_TAC THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN RES_TAC THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN RES_TAC THEN
   IMP_RES_TAC type_v_weakening THEN ASM_MESON_TAC[weakCT_refl; weakS_refl];;
 
 let TPROPSAUX_PAT_CONS_TAC : tactic =
@@ -1264,8 +1264,8 @@ let TPROPSAUX_PAT_CONS_TAC : tactic =
                                 `tvs:num`] o
                 check (fun th -> length (fst (strip_forall (concl th))) = 7 &&
                                  not (TPROPSAUX_mentions "pmatch_list" (concl th)))) THEN
-  ASM_REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
-  RES_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
+  RES_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[distinctness "match_result"; injectivity "match_result"; UNWIND_THM1;
               GSYM APPEND_ASSOC] THEN
   ASM_REWRITE_TAC[];;
@@ -1310,7 +1310,7 @@ let lookup_var_sound = prove
      ctMap_ok ctMap /\ tenv_val_exp_ok tenvE /\ num_tvs tenvE = 0 /\
      ALL (check_freevars tvs []) targs /\
      type_all_env ctMap tenvS env
-       (type_env_v_fupd (K (add_tenvE tenvE (type_env_v tenv))) tenv)
+       (type_env_v_fupd (combin_K (add_tenvE tenvE (type_env_v tenv))) tenv)
      ==> ?v. nsLookup (sem_env_v env) n = SOME v /\
              type_v tvs ctMap tenvS v (deBruijn_subst 0 targs t)`,
   REPEAT GEN_TAC THEN
@@ -1321,8 +1321,8 @@ let lookup_var_sound = prove
                  SOME (LENGTH (targs:t list),(t:t))` THEN
     REWRITE_TAC[lookup_var_def; lookup_varE_def; bind_tvar_rewrites] THEN
     CASES_ON `n:(mlstring,mlstring)id` THEN
-    CASE_REWRITE_TAC[bind_tvar_rewrites; ADD_CLAUSES] THENL
-     [CASES_ON `tveLookup a tvs tenvE` THEN CASE_REWRITE_TAC[] THEN DISCH_TAC THENL
+    CAKE_REWRITE_TAC[bind_tvar_rewrites; ADD_CLAUSES] THENL
+     [CASES_ON `tveLookup a tvs tenvE` THEN CAKE_REWRITE_TAC[] THEN DISCH_TAC THENL
        [MATCH_MP_TAC nsLookup_add_tenvE2 THEN EXISTS_TAC `tvs:num` THEN ASM_REWRITE_TAC[];
         MATCH_MP_TAC nsLookup_add_tenvE1 THEN EXISTS_TAC `tvs:num` THEN
         RULE_ASSUM_TAC(REWRITE_RULE[injectivity "option"]) THEN RVEQ_TAC THEN
@@ -1336,10 +1336,10 @@ let lookup_var_sound = prove
                  `sem_env_v (env:v sem_env)`; `add_tenvE tenvE (type_env_v tenv)`;
                  `n:(mlstring,mlstring)id`; `(LENGTH (targs:t list),(t:t))`]
                 nsAll2_nsLookup2) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   DISCH_THEN(X_CHOOSE_THEN `v:v` STRIP_ASSUME_TAC) THEN EXISTS_TAC `v:v` THEN
   ASM_REWRITE_TAC[] THEN
-  FIRST_ASSUM(MP_TAC o MATCH_MP (INST [`tvs:num`,`tvs':num`] type_subst)) THEN
+  FIRST_ASSUM(MP_TAC o MATCH_MP (INST [`tvs:num`,`tvs':num`] typeSysProps_type_subst)) THEN
   DISCH_THEN MATCH_MP_TAC THEN
   ASM_REWRITE_TAC[] THEN MATCH_MP_TAC type_v_freevars THEN
   MAP_EVERY EXISTS_TAC [`ctMap:ctMap`; `tenvS:tenv_store`; `v:v`] THEN ASM_REWRITE_TAC[]);;
@@ -1369,7 +1369,7 @@ let TPROPSAUX_ETS_P1 = CASE_TERM
       evaluate s env es = (s',r) /\
       tenv_ok tenv /\ tenv_val_exp_ok tenvE /\ good_ctMap ctMap /\ num_tvs tenvE = 0 /\
       type_all_env ctMap tenvS env
-        (type_env_v_fupd (K (add_tenvE tenvE (type_env_v tenv))) tenv) /\
+        (type_env_v_fupd (combin_K (add_tenvE tenvE (type_env_v tenv))) tenv) /\
       type_s ctMap (state_refs s) tenvS /\
       (~(tvs = 0) ==> ALL is_value es) /\
       type_es tenv (bind_tvar tvs tenvE) es ts
@@ -1390,7 +1390,7 @@ let TPROPSAUX_ETS_P2 = CASE_TERM
       evaluate_match s env v pes err_v = (s',r) /\
       tenv_ok tenv /\ tenv_val_exp_ok tenvE /\ good_ctMap ctMap /\ num_tvs tenvE = 0 /\
       type_all_env ctMap tenvS env
-        (type_env_v_fupd (K (add_tenvE tenvE (type_env_v tenv))) tenv) /\
+        (type_env_v_fupd (combin_K (add_tenvE tenvE (type_env_v tenv))) tenv) /\
       type_s ctMap (state_refs s) tenvS /\
       type_v tvs ctMap tenvS v t1 /\ type_v 0 ctMap tenvS err_v Texn /\
       type_pes tvs tvs tenv tenvE pes t1 t2
@@ -1437,7 +1437,7 @@ let TPROPSAUX_ETS_START : tactic =
 (* the result with the unchanged store type *)
 let TPROPSAUX_ETS_REFL_TAC : tactic =
   EXISTS_TAC `tenvS:tenv_store` THEN ASM_REWRITE_TAC[store_type_extension_refl] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC (ALL2 :: TPROPSAUX_TYEQS) THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC (ALL2 :: TPROPSAUX_TYEQS) THEN
   ASM_SIMP_TAC TPROPSAUX_TV_RULES;;
 
 (* the type_v rule of closures *)
@@ -1469,14 +1469,14 @@ let TPROPSAUX_ETS_IH_TAC : tactic =
 let TPROPSAUX_ETS_FINISH_TAC : tactic =
   RULE_ASSUM_TAC(REWRITE_RULE[PAIR_EQ]) THEN TPROPSAUX_NORM_TAC THEN
   EXISTS_TAC `tenvS:tenv_store` THEN ASM_REWRITE_TAC[store_type_extension_refl] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC (ALL2 :: TPROPSAUX_TYEQS) THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC (ALL2 :: TPROPSAUX_TYEQS) THEN
   ASM_SIMP_TAC TPROPSAUX_TV_RULES;;
 
 (* rewrite the assumptions satisfying p with the other assumptions *)
 let TPROPSAUX_RW_ASM_TAC (p:term->bool) : tactic = fun (asl,w as gl) ->
   let ths = map snd asl in
   RULE_ASSUM_TAC(fun th -> if p (concl th) then
-                    CASE_REWRITE_RULE (filter (fun th' -> not (th' == th)) ths) th
+                    CAKE_REWRITE_RULE (filter (fun th' -> not (th' == th)) ths) th
                   else th) gl;;
 
 (* the unfolded evaluate assumption: case .. = (s',r) *)
@@ -1503,8 +1503,8 @@ let TPROPSAUX_EVAL_SPLIT_TAC : tactic = fun (asl,w as gl) ->
 
 (* the goal ?tenvS'. .. with the given store type *)
 let TPROPSAUX_ETS_EXISTS_TAC (tenv':term) : tactic =
-  EXISTS_TAC tenv' THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
-  RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN
+  EXISTS_TAC tenv' THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
+  RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[LIST_REL_CONS2; LIST_REL_NIL; ALL2]) THEN
   REPEAT(FIRST_X_ASSUM(STRIP_ASSUME_TAC o check (is_exists o concl))) THEN
   TPROPSAUX_NORM_TAC THEN ASM_REWRITE_TAC[HD; ALL2];;
@@ -1587,7 +1587,7 @@ let TPROPSAUX_APPLY_IH_TAC (tvs:term) (tenvS:term) (nm:term) : tactic =
 let TPROPSAUX_WEAKEN_ENV_TAC (st1:term) : tactic =
   SUBGOAL_THEN (vsubst [st1, `tenvS1:tenv_store`]
     `type_all_env ctMap tenvS1 env
-       (type_env_v_fupd (K (add_tenvE tenvE (type_env_v tenv))) tenv)`) ASSUME_TAC THENL
+       (type_env_v_fupd (combin_K (add_tenvE tenvE (type_env_v tenv))) tenv)`) ASSUME_TAC THENL
    [MATCH_MP_TAC type_all_env_weakening THEN
     MAP_EVERY EXISTS_TAC [`ctMap:ctMap`; `tenvS:tenv_store`] THEN
     ASM_SIMP_TAC[weakCT_refl; store_type_extension_weakS]; ALL_TAC];;
@@ -1635,7 +1635,7 @@ let TPROPSAUX_type_vs_ext = prove
 (* the goal ?tenvS'. .. with the given store type, the facts of the     *)
 (* induction hypotheses chained                                           *)
 let TPROPSAUX_ETS_FIN_TAC (st':term) : tactic =
-  EXISTS_TAC st' THEN CASE_REWRITE_TAC[] THEN RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN
+  EXISTS_TAC st' THEN CAKE_REWRITE_TAC[] THEN RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN
   RULE_ASSUM_TAC(fun th -> if TPROPSAUX_head_is "ALL2" (concl th)
                            then REWRITE_RULE[LIST_REL_CONS2; LIST_REL_NIL; ALL2] th
                            else th) THEN
@@ -1645,7 +1645,7 @@ let TPROPSAUX_ETS_FIN_TAC (st':term) : tactic =
 
 (* the value of a boolean type: Boolv b, b split *)
 let TPROPSAUX_CANON_BOOL_TAC : tactic =
-  RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN
+  RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[LIST_REL_CONS2; LIST_REL_NIL; ALL2]) THEN
   REPEAT(FIRST_X_ASSUM(STRIP_ASSUME_TAC o check (is_exists o concl))) THEN
   TPROPSAUX_NORM_TAC THEN MAP_EVERY IMP_RES_TAC TPROPSAUX_CCV_IMPS THEN
@@ -1671,14 +1671,14 @@ let TPROPSAUX_BOOLV_CASES_TAC : tactic = fun (asl,w as gl) ->
 let TPROPSAUX_type_all_env_bind = prove
  (`!ctMap tenvS env tenv tenvE v t x.
      type_all_env ctMap tenvS env
-       (type_env_v_fupd (K (add_tenvE tenvE (type_env_v tenv))) tenv) /\
+       (type_env_v_fupd (combin_K (add_tenvE tenvE (type_env_v tenv))) tenv) /\
      type_v 0 ctMap tenvS v t
-     ==> type_all_env ctMap tenvS (sem_env_v_fupd (K (nsBind x v (sem_env_v env))) env)
-           (type_env_v_fupd (K (add_tenvE (Bind_name x 0 t tenvE) (type_env_v tenv))) tenv)`,
+     ==> type_all_env ctMap tenvS (sem_env_v_fupd (combin_K (nsBind x v (sem_env_v env))) env)
+           (type_env_v_fupd (combin_K (add_tenvE (Bind_name x 0 t tenvE) (type_env_v tenv))) tenv)`,
   REWRITE_TAC[type_all_env_def; type_env_INFO.ri_accfupds; sem_env_INFO.ri_accfupds; K_THM;
               add_tenvE_def] THEN
   REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[] THEN MATCH_MP_TAC nsAll2_nsBind THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]);;
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]);;
 
 (* split a free variable of the given type *)
 let TPROPSAUX_CASES_VAR_TAC (ty:hol_type) : tactic = fun (asl,w as gl) ->
@@ -1722,7 +1722,7 @@ let TPROPSAUX_ets_Fun = prove
  (TPROPSAUX_ETS 7,
   TPROPSAUX_ETS_START THEN TPROPSAUX_TE_ASM_CASES_TAC THEN
   EXISTS_TAC `tenvS:tenv_store` THEN ASM_REWRITE_TAC[store_type_extension_refl] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC (ALL2 :: TPROPSAUX_TYEQS) THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC (ALL2 :: TPROPSAUX_TYEQS) THEN
   MATCH_MP_TAC (REWRITE_RULE TPROPSAUX_TYEQS TPROPSAUX_type_v_Closure) THEN
   MAP_EVERY EXISTS_TAC [`tenv:type_env`; `tenvE:tenv_val_exp`] THEN
   TPROPSAUX_TAE_TAC THEN ASM_REWRITE_TAC[]);;
@@ -1774,7 +1774,7 @@ let TPROPSAUX_ets_Let_TAC : tactic =
   TPROPSAUX_APPLY_IH_TAC `0` `tenvS:tenv_store` `tenvS1:tenv_store` THEN
   ((TPROPSAUX_RESOLVE_IH_TAC THEN TPROPSAUX_CANON_BOOL_TAC THEN
     TPROPSAUX_CASES_VAR_TAC `:mlstring option` THEN
-    RULE_ASSUM_TAC(CASE_REWRITE_RULE[opt_bind_name_def; nsOptBind_def; bind_tvar0; HD;
+    RULE_ASSUM_TAC(CAKE_REWRITE_RULE[opt_bind_name_def; nsOptBind_def; bind_tvar0; HD;
                                      with_same_v]) THEN
     IMP_RES_TAC type_v_freevars THEN TPROPSAUX_WEAKEN_ENV_TAC `tenvS1:tenv_store` THEN
     IMP_RES_TAC TPROPSAUX_type_all_env_bind THEN
@@ -1804,8 +1804,8 @@ let TPROPSAUX_LETREC_ENV_TAC : tactic = fun (asl,w as gl) ->
   let g1 = list_mk_comb(`tenv_val_exp_ok`, [ee]) in
   let g2 = vsubst [funs, `funs:(mlstring#mlstring#exp)list`; ee, `ee:tenv_val_exp`]
      `type_all_env ctMap tenvS
-        (sem_env_v_fupd (K (build_rec_env funs env (sem_env_v env))) env)
-        (type_env_v_fupd (K (add_tenvE ee (type_env_v tenv))) tenv)` in
+        (sem_env_v_fupd (combin_K (build_rec_env funs env (sem_env_v env))) env)
+        (type_env_v_fupd (combin_K (add_tenvE ee (type_env_v tenv))) tenv)` in
   (SUBGOAL_THEN g1 ASSUME_TAC THENL
     [MATCH_MP_TAC tenv_val_exp_ok_bvl_funs THEN ASM_MESON_TAC[]; ALL_TAC] THEN
    SUBGOAL_THEN g2 ASSUME_TAC THENL
@@ -1859,15 +1859,15 @@ let TPROPSAUX_CON_CONTR_TAC : tactic =
   REPEAT(FIRST_X_ASSUM(STRIP_ASSUME_TAC o check (is_exists o concl))) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[LENGTH_MAP]) THEN
   TPROPSAUX_POP_MATCH `~do_con_check a b c` THEN
-  REWRITE_TAC[do_con_check_def] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[];;
+  REWRITE_TAC[do_con_check_def] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[];;
 
 (* the type_v rule of tuples *)
 let TPROPSAUX_type_v_ConvNONE = el 7 (CONJUNCTS type_v_rules);;
 
 (* Con: build_conv of a constructor *)
 let TPROPSAUX_CON_BC_TAC : tactic =   (* build_conv of a constructor *)
-  RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN TPROPSAUX_TAE_COPY_TAC THEN
+  RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN TPROPSAUX_TAE_COPY_TAC THEN
   IMP_RES_TAC build_conv_type_sound THEN
   REPEAT(FIRST_X_ASSUM(STRIP_ASSUME_TAC o check (is_exists o concl))) THEN
   TPROPSAUX_RW_ASM_TAC (fun t -> is_eq t && TPROPSAUX_head_is "build_conv" (lhs t)) THEN
@@ -1876,7 +1876,7 @@ let TPROPSAUX_CON_BC_TAC : tactic =   (* build_conv of a constructor *)
 
 (* Con: build_conv of a tuple *)
 let TPROPSAUX_CON_BCN_TAC : tactic =   (* build_conv of a tuple *)
-  RULE_ASSUM_TAC(CASE_REWRITE_RULE[build_conv_def]) THEN
+  RULE_ASSUM_TAC(CAKE_REWRITE_RULE[build_conv_def]) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[injectivity "option"; distinctness "option"]) THEN
   TRY (FIRST_ASSUM CONTR_TAC) THEN TPROPSAUX_NORM_TAC THEN
   FIRST_ASSUM(fun th -> if TPROPSAUX_head_is "ALL2" (concl th) &&
@@ -1948,8 +1948,8 @@ let TPROPSAUX_goal_type (w:term) : term =
 
 (* evaluate_match returns one value *)
 let TPROPSAUX_MATCH_SING_TAC : tactic =
-  CASES_ON `r:(v list,v)result` THEN CASE_REWRITE_TAC[] THEN
-  RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN
+  CASES_ON `r:(v list,v)result` THEN CAKE_REWRITE_TAC[] THEN
+  RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN
   TRY (IMP_RES_TAC (CONJUNCT1 (CONJUNCT2 evaluate_length)) THEN
        RULE_ASSUM_TAC(REWRITE_RULE[sing_list]) THEN
        REPEAT(FIRST_X_ASSUM(STRIP_ASSUME_TAC o check (is_exists o concl))) THEN
@@ -1958,14 +1958,14 @@ let TPROPSAUX_MATCH_SING_TAC : tactic =
 (* Handle: the raised exception is handled *)
 let TPROPSAUX_HANDLE_RAISE_TAC : tactic = fun (asl,w as gl) ->
   let t2 = TPROPSAUX_goal_type w in
-  (RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN TPROPSAUX_RESOLVE_IH_TAC THEN
+  (RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN TPROPSAUX_RESOLVE_IH_TAC THEN
    TPROPSAUX_WEAKEN_ENV_TAC `tenvS1:tenv_store` THEN
    TPROPSAUX_APPLY_IH2_TAC [`Tapp [] 3`; t2; `0`; `tenvS1:tenv_store`] `tenvS2:tenv_store` THEN
    TPROPSAUX_MATCH_SING_TAC THEN TPROPSAUX_ETS_FIN_TAC `tenvS2:tenv_store`) gl;;
 
 (* Handle: the impossible case can_pmatch_all false *)
 let TPROPSAUX_HANDLE_CONTR_TAC : tactic =
-  RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN TPROPSAUX_TAE_COPY_TAC THEN
+  RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN TPROPSAUX_TAE_COPY_TAC THEN
   TPROPSAUX_POP_MATCH `~can_pmatch_all a b c d` THEN
   MATCH_MP_TAC (TAUT `p ==> ~p ==> q`) THEN
   MATCH_MP_TAC TPROPSAUX_can_pmatch_all THEN
@@ -1993,7 +1993,7 @@ let TPROPSAUX_eval_type (asl:(string*thm) list) : term =
 (* Mat: the value is matched *)
 let TPROPSAUX_MAT_RVAL_TAC : tactic = fun (asl,w as gl) ->
   let t2 = TPROPSAUX_goal_type w and t1 = TPROPSAUX_eval_type asl in
-  (RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN TPROPSAUX_RESOLVE_IH_TAC THEN
+  (RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN TPROPSAUX_RESOLVE_IH_TAC THEN
    RULE_ASSUM_TAC(fun th -> if TPROPSAUX_head_is "ALL2" (concl th)
                             then REWRITE_RULE[LIST_REL_CONS2; LIST_REL_NIL; ALL2] th
                             else th) THEN
@@ -2005,7 +2005,7 @@ let TPROPSAUX_MAT_RVAL_TAC : tactic = fun (asl,w as gl) ->
 
 (* Mat: the impossible case can_pmatch_all false *)
 let TPROPSAUX_MAT_CONTR_TAC : tactic =
-  RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN
+  RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN
   RULE_ASSUM_TAC(fun th -> if TPROPSAUX_head_is "ALL2" (concl th)
                            then REWRITE_RULE[LIST_REL_CONS2; LIST_REL_NIL; ALL2] th
                            else th) THEN
@@ -2043,7 +2043,7 @@ let TPROPSAUX_bindings_ALL2 = prove
   GEN_TAC THEN GEN_TAC THEN GEN_TAC THEN LIST_INDUCT_TAC THEN LIST_INDUCT_TAC THEN
   REWRITE_TAC[ALL2; MAP] THEN
   SPEC_TAC(`h:mlstring#v`,`h:mlstring#v`) THEN SPEC_TAC(`h':mlstring#t`,`h':mlstring#t`) THEN
-  REWRITE_TAC[FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[] THEN ASM_MESON_TAC[]);;
+  REWRITE_TAC[FORALL_PAIR_THM] THEN CAKE_REWRITE_TAC[] THEN ASM_MESON_TAC[]);;
 
 (* the evaluate_match case Match: the environment of the clause *)
 let TPROPSAUX_MATCH_ENV_TAC : tactic =
@@ -2053,8 +2053,8 @@ let TPROPSAUX_MATCH_ENV_TAC : tactic =
     ASM_REWRITE_TAC[]; ALL_TAC] THEN
   SUBGOAL_THEN
    `type_all_env ctMap tenvS
-      (sem_env_v_fupd (K (nsAppend (alist_to_ns bindings') (sem_env_v env))) env)
-      (type_env_v_fupd (K (add_tenvE (bind_var_list tvs bindings tenvE) (type_env_v tenv)))
+      (sem_env_v_fupd (combin_K (nsAppend (alist_to_ns bindings') (sem_env_v env))) env)
+      (type_env_v_fupd (combin_K (add_tenvE (bind_var_list tvs bindings tenvE) (type_env_v tenv)))
          tenv)` ASSUME_TAC THENL
    [TPROPSAUX_TAE_COPY_TAC THEN
     REWRITE_TAC[type_all_env_def; type_env_INFO.ri_accfupds; sem_env_INFO.ri_accfupds;
@@ -2087,9 +2087,9 @@ let TPROPSAUX_ets_match_cons_TAC : tactic =
                       ASSUME_TAC (SPEC `bindings':(mlstring#v)list` th) else NO_TAC) THEN
     TPROPSAUX_MP_ASSUM_TAC THEN TPROPSAUX_MATCH_ENV_TAC THEN
     TPROPSAUX_APPLY_IH_TAC `0` `tenvS:tenv_store` `tenvS1:tenv_store` THEN
-    RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN
-    CASES_ON `r:(v list,v)result` THEN CASE_REWRITE_TAC[] THEN
-    RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN
+    RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN
+    CASES_ON `r:(v list,v)result` THEN CAKE_REWRITE_TAC[] THEN
+    RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN
     RULE_ASSUM_TAC(REWRITE_RULE[LIST_REL_CONS2; LIST_REL_NIL]) THEN
     REPEAT(FIRST_X_ASSUM(STRIP_ASSUME_TAC o check (is_exists o concl))) THEN
     TPROPSAUX_NORM_TAC THEN IMP_RES_TAC TPROPSAUX_type_v_0 THEN
@@ -2104,9 +2104,9 @@ let TPROPSAUX_getOpClass = prove
         (getOpClass op = Force ==> op = ThunkOp ForceThunk) /\
         (getOpClass op = Simple ==> ~(op = Opapp))`,
   GEN_TAC THEN CASES_ON `op:op` THEN REWRITE_TAC[getOpClass_def] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "op_class"; distinctness "op";
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "op_class"; distinctness "op";
                                       injectivity "op"] THEN
-  TRY (CASES_ON `a:thunk_op` THEN CASE_REWRITE_TAC[] THEN
+  TRY (CASES_ON `a:thunk_op` THEN CAKE_REWRITE_TAC[] THEN
        REWRITE_TAC[distinctness "op_class"; distinctness "thunk_op"]));;
 
 (* App: operators that have no type *)
@@ -2144,9 +2144,9 @@ let TPROPSAUX_list_result_case = prove
           | Rerr (Rabort (Rffi_error _)) -> T
           | Rerr (Rabort Rtype_error) -> F)`,
   REPEAT GEN_TAC THEN CASES_ON `r:(v,v)result` THEN
-  REWRITE_TAC[list_result_def] THEN CASE_REWRITE_TAC[ALL2] THEN
-  TRY (CASES_ON `a:(v)error_result` THEN CASE_REWRITE_TAC[] THEN
-       TRY (CASES_ON `a':abort` THEN CASE_REWRITE_TAC[])));;
+  REWRITE_TAC[list_result_def] THEN CAKE_REWRITE_TAC[ALL2] THEN
+  TRY (CASES_ON `a:(v)error_result` THEN CAKE_REWRITE_TAC[] THEN
+       TRY (CASES_ON `a':abort` THEN CAKE_REWRITE_TAC[])));;
 
 (* App: primitive operators *)
 let TPROPSAUX_APP_SIMPLE_TAC : tactic =
@@ -2170,7 +2170,7 @@ let TPROPSAUX_ets_App_TAC : tactic =
   RULE_ASSUM_TAC(REWRITE_RULE[bind_tvar0]) THEN TPROPSAUX_NUM_TVS_TAC THEN
   TPROPSAUX_EVAL_SPLIT_OUTER_TAC THEN TPROPSAUX_EVAL_SPLIT_OUTER_TAC THEN TPROPSAUX_NORM_TAC THEN
   TPROPSAUX_APPLY_IH_TAC `0` `tenvS:tenv_store` `tenvS1:tenv_store` THENL
-   [RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN TPROPSAUX_EVAL_SPLIT_OUTER_TAC THEN
+   [RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN TPROPSAUX_EVAL_SPLIT_OUTER_TAC THEN
     MAP_EVERY IMP_RES_TAC (CONJUNCTS (SPEC_ALL TPROPSAUX_getOpClass)) THEN
     TPROPSAUX_NORM_TAC THENL
      [TPROPSAUX_APP_CONTR_TAC; TPROPSAUX_APP_FUN_TAC; TPROPSAUX_APP_CONTR_TAC;
@@ -2186,7 +2186,7 @@ let exp_type_sound = prove
       evaluate s env es = (s',r) /\
       tenv_ok tenv /\ tenv_val_exp_ok tenvE /\ good_ctMap ctMap /\ num_tvs tenvE = 0 /\
       type_all_env ctMap tenvS env
-        (type_env_v_fupd (K (add_tenvE tenvE (type_env_v tenv))) tenv) /\
+        (type_env_v_fupd (combin_K (add_tenvE tenvE (type_env_v tenv))) tenv) /\
       type_s ctMap (state_refs s) tenvS /\
       (~(tvs = 0) ==> ALL is_value es) /\
       type_es tenv (bind_tvar tvs tenvE) es ts
@@ -2204,7 +2204,7 @@ let exp_type_sound = prove
       evaluate_match s env v pes err_v = (s',r) /\
       tenv_ok tenv /\ tenv_val_exp_ok tenvE /\ good_ctMap ctMap /\ num_tvs tenvE = 0 /\
       type_all_env ctMap tenvS env
-        (type_env_v_fupd (K (add_tenvE tenvE (type_env_v tenv))) tenv) /\
+        (type_env_v_fupd (combin_K (add_tenvE tenvE (type_env_v tenv))) tenv) /\
       type_s ctMap (state_refs s) tenvS /\
       type_v tvs ctMap tenvS v t1 /\ type_v 0 ctMap tenvS err_v Texn /\
       type_pes tvs tvs tenv tenvE pes t1 t2
@@ -2247,7 +2247,7 @@ let TPROPSAUX_alookup_ctors = prove
                MAP (\x. TypeStamp x next) (MAP FST (ctors:(conN # ast_t list) list))`)
    ASSUME_TAC THENL
   [REWRITE_TAC[MAP_MAP_o; o_DEF] THEN MATCH_MP_TAC MAP_EQ THEN
-   REWRITE_TAC[GSYM ALL_MEM; FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[] THEN
+   REWRITE_TAC[GSYM ALL_MEM; FORALL_PAIR_THM] THEN CAKE_REWRITE_TAC[] THEN
    REWRITE_TAC[FST];
    ALL_TAC] THEN
   MATCH_MP_TAC ALOOKUP_ALL_DISTINCT_MEM THEN
@@ -2256,7 +2256,7 @@ let TPROPSAUX_alookup_ctors = prove
   [MATCH_MP_TAC ALL_DISTINCT_MAP_INJ THEN ASM_REWRITE_TAC[injectivity "stamp"] THEN
    MESON_TAC[];
    REWRITE_TAC[MEM_MAP] THEN EXISTS_TAC `(cn,ts):conN # ast_t list` THEN
-   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]]);;
+   ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]]);;
 
 let build_tdefs_build_tenv = prove
  (CASE_TERM `!tenvT (tds:type_def) (tids:num list) next (ctMap:ctMap).
@@ -2273,16 +2273,16 @@ let build_tdefs_build_tenv = prove
    ALL_TAC] THEN
   MATCH_MP_TAC nsAll2_alist_to_ns THEN MATCH_MP_TAC EVERY2_REVERSE THEN
   REWRITE_TAC[build_constrs_def; EVERY2_MAP] THEN MATCH_MP_TAC EVERY2_refl THEN
-  REWRITE_TAC[FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[FORALL_PAIR_THM] THEN CAKE_REWRITE_TAC[] THEN
   REPEAT STRIP_TAC THEN
   REWRITE_TAC[type_ctor_def; LENGTH_MAP; flookup_fupdate_list; REVERSE_REVERSE;
               ALOOKUP_APPEND] THEN
   CASES_ON `ALOOKUP (type_def_to_ctMap (tenvT:tenv_abbrev) (next + 1) (tds:type_def)
                        (ids:num list)) (TypeStamp p1 next)` THEN
-  CASE_REWRITE_TAC[] THENL
+  CAKE_REWRITE_TAC[] THENL
   [FIRST_ASSUM(fun mem -> FIRST_ASSUM(fun ad ->
      REWRITE_TAC[MATCH_MP TPROPSAUX_alookup_ctors (CONJ ad mem)])) THEN
-   CASE_REWRITE_TAC[];
+   CAKE_REWRITE_TAC[];
    FIRST_X_ASSUM(MP_TAC o MATCH_MP ALOOKUP_MEM) THEN DISCH_TAC THEN
    FIRST_ASSUM(fun mem -> FIRST_ASSUM(fun len ->
      MP_TAC(MATCH_MP mem_type_def_to_ctMap (CONJ mem len)))) THEN
@@ -2325,22 +2325,22 @@ let type_e_con_check = prove
   REWRITE_TAC[every_exp_def; one_con_check_def; ALL] THEN
   REPEAT STRIP_TAC THEN ASM_SIMP_TAC[] THENL
   [(* Handle *)
-   REWRITE_TAC[GSYM ALL_MEM; FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[] THEN
+   REWRITE_TAC[GSYM ALL_MEM; FORALL_PAIR_THM] THEN CAKE_REWRITE_TAC[] THEN
    ASM_MESON_TAC[];
    (* Con SOME *)
    FIRST_ASSUM(fun lk -> FIRST_ASSUM(fun al ->
      MP_TAC(MATCH_MP nsAll2_nsLookup2 (CONJ lk al)))) THEN
    REWRITE_TAC[EXISTS_PAIR_THM; type_ctor_def] THEN STRIP_TAC THEN
-   ASM_REWRITE_TAC[do_con_check_def] THEN CASE_REWRITE_TAC[] THEN
+   ASM_REWRITE_TAC[do_con_check_def] THEN CAKE_REWRITE_TAC[] THEN
    IMP_RES_TAC type_es_length THEN ASM_REWRITE_TAC[LENGTH_MAP] THEN
-   CASE_REWRITE_TAC[] THEN REWRITE_TAC[];
+   CAKE_REWRITE_TAC[] THEN REWRITE_TAC[];
    (* Con NONE *)
-   REWRITE_TAC[do_con_check_def] THEN CASE_REWRITE_TAC[];
+   REWRITE_TAC[do_con_check_def] THEN CAKE_REWRITE_TAC[];
    (* Mat *)
-   REWRITE_TAC[GSYM ALL_MEM; FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[] THEN
+   REWRITE_TAC[GSYM ALL_MEM; FORALL_PAIR_THM] THEN CAKE_REWRITE_TAC[] THEN
    ASM_MESON_TAC[];
    (* type_funs cons *)
-   CASE_REWRITE_TAC[] THEN ASM_SIMP_TAC[]]);;
+   CAKE_REWRITE_TAC[] THEN ASM_SIMP_TAC[]]);;
 
 (* decs_type_sound_no_check is proved by evaluate_decs_ind, one lemma per *)
 (* clause of evaluate_decs: TPROPSAUX_DTS k is the k-th case              *)
@@ -2382,7 +2382,7 @@ let TPROPSAUX_dts_nil = prove
   ONCE_REWRITE_TAC[type_d_cases] THEN
   REWRITE_TAC[distinctness "list"; NOT_CONS_NIL] THEN STRIP_TAC THEN RVEQ_TAC THEN
   MAP_EVERY EXISTS_TAC [`ctMap:ctMap`; `tenvS:tenv_store`] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[weakCT_refl; DIFF_EQ_EMPTY; EMPTY_SUBSET; store_type_extension_refl;
                   TPROPSAUX_extend_empty; type_all_env_def; sem_env_INFO.ri_accessors;
                   type_env_INFO.ri_accessors; nsAll2_nsEmpty]);;
@@ -2418,15 +2418,15 @@ let TPROPSAUX_dts_cons = prove
   ANTS_TAC THENL [ASM_MESON_TAC[type_sound_invariant_union]; ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_THEN `ctMap1:ctMap` (X_CHOOSE_THEN `tenvS1:tenv_store`
     STRIP_ASSUME_TAC)) THEN
-  CASES_ON `r1:(v sem_env,v)result` THEN RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THENL
+  CASES_ON `r1:(v sem_env,v)result` THEN RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THENL
   [(* the first declaration returns *)
    UNDISCH_TAC `evaluate_decs (st:(FFI)state) env (CONS d1 (CONS d2 ds)) = (st',r)` THEN
-   ASM_REWRITE_TAC[evaluate_decs_def] THEN CASE_REWRITE_TAC[] THEN
+   ASM_REWRITE_TAC[evaluate_decs_def] THEN CAKE_REWRITE_TAC[] THEN
    MP_TAC(ISPEC `evaluate_decs (st1:(FFI)state) (extend_dec_env a env) (CONS d2 ds)`
      PAIR_SURJECTIVE) THEN
    DISCH_THEN(X_CHOOSE_THEN `st2:(FFI)state`
      (X_CHOOSE_THEN `r2:(v sem_env,v)result` ASSUME_TAC)) THEN
-   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
+   ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
    STRIP_TAC THEN RVEQ_TAC THEN
    FIRST_X_ASSUM(STRIP_ASSUME_TAC o check (is_conj o concl)) THEN
    REMOVE_THEN "ih2" (MP_TAC o SPECL [`st1:(FFI)state`; `a:v sem_env`]) THEN
@@ -2454,8 +2454,8 @@ let TPROPSAUX_dts_cons = prove
                  FRANGE ((SND o SND) o_f (ctMap1:ctMap)) SUBSET decls2` THEN SET_TAC[];
     ASM_MESON_TAC[store_type_extension_trans];
     ALL_TAC] THEN
-   CASES_ON `r2:(v sem_env,v)result` THEN RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN
-   REWRITE_TAC[combine_dec_result_def] THEN CASE_REWRITE_TAC[] THENL
+   CASES_ON `r2:(v sem_env,v)result` THEN RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN
+   REWRITE_TAC[combine_dec_result_def] THEN CAKE_REWRITE_TAC[] THENL
    [(* the rest returns *)
     REWRITE_TAC[GSYM extend_dec_env_def] THEN
     FIRST_X_ASSUM(STRIP_ASSUME_TAC o
@@ -2466,8 +2466,8 @@ let TPROPSAUX_dts_cons = prove
     MAP_EVERY EXISTS_TAC [`ctMap1:ctMap`; `tenvS1:tenv_store`] THEN
     ASM_SIMP_TAC[store_type_extension_weakS];
     (* the rest raises or aborts *)
-    CASES_ON `a':(v)error_result` THEN RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN
-    CASE_REWRITE_TAC[] THENL
+    CASES_ON `a':(v)error_result` THEN RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN
+    CAKE_REWRITE_TAC[] THENL
     [FIRST_X_ASSUM(STRIP_ASSUME_TAC o check (is_conj o concl)) THEN ASM_REWRITE_TAC[] THEN
      UNDISCH_TAC `type_sound_invariant (st':(FFI)state) (extend_dec_env a env) ctMap2
                     tenvS2 {} (extend_dec_tenv tenv1 tenv)` THEN
@@ -2480,10 +2480,10 @@ let TPROPSAUX_dts_cons = prove
      FIRST_ASSUM ACCEPT_TAC]];
    (* the first declaration raises or aborts *)
    UNDISCH_TAC `evaluate_decs (st:(FFI)state) env (CONS d1 (CONS d2 ds)) = (st',r)` THEN
-   ASM_REWRITE_TAC[evaluate_decs_def] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
+   ASM_REWRITE_TAC[evaluate_decs_def] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
    STRIP_TAC THEN RVEQ_TAC THEN
    MAP_EVERY EXISTS_TAC [`ctMap1:ctMap`; `tenvS1:tenv_store`] THEN
-   CASE_REWRITE_TAC[] THEN REPEAT CONJ_TAC THENL
+   CAKE_REWRITE_TAC[] THEN REPEAT CONJ_TAC THENL
    [ASM_REWRITE_TAC[];
     UNDISCH_TAC `FRANGE ((SND o SND) o_f (ctMap1:ctMap)) DIFF
                  FRANGE ((SND o SND) o_f (ctMap:ctMap)) SUBSET decls1` THEN SET_TAC[];
@@ -2515,7 +2515,7 @@ let TPROPSAUX_nsAll2_tenv_add_tvs = prove
   REPEAT STRIP_TAC THEN MATCH_MP_TAC nsAll2_alist_to_ns THEN
   REWRITE_TAC[tenv_add_tvs_def; EVERY2_MAP] THEN
   POP_ASSUM MP_TAC THEN MATCH_MP_TAC MONO_ALL2 THEN
-  REWRITE_TAC[FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[] THEN SIMP_TAC[]);;
+  REWRITE_TAC[FORALL_PAIR_THM] THEN CAKE_REWRITE_TAC[] THEN SIMP_TAC[]);;
 (* unfolds the type_sound_invariant assumption into its parts *)
 let TPROPSAUX_UNFOLD_TSI_TAC : tactic =
   FIRST_ASSUM(STRIP_ASSUME_TAC o REWRITE_RULE[type_sound_invariant_def] o
@@ -2561,14 +2561,14 @@ let TPROPSAUX_dlet_core = prove
   MP_TAC(ISPECL [`evaluate (st:(FFI)state) env [e]`] PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `st1:(FFI)state`
     (X_CHOOSE_THEN `r1:(v list,v)result` ASSUME_TAC)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN DISCH_TAC THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN DISCH_TAC THEN
   MP_TAC(SPECL [`st:(FFI)state`; `env:v sem_env`; `[e]:exp list`; `r1:(v list,v)result`;
     `st1:(FFI)state`; `tenv:type_env`; `Empty:tenv_val_exp`; `[t]:t list`; `tvs:num`;
     `tenvS:tenv_store`] (CONJUNCT1 exp_type_sound)) THEN
   ASM_REWRITE_TAC[tenv_val_exp_ok_def; num_tvs_def; add_tenvE_def; v_unchanged;
                   type_es_list_rel; ALL2; ALL] THEN
   DISCH_THEN(X_CHOOSE_THEN `tenvS1:tenv_store` STRIP_ASSUME_TAC) THEN
-  CASES_ON `r1:(v list,v)result` THEN RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THENL
+  CASES_ON `r1:(v list,v)result` THEN RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THENL
   [(* the expression returns a value *)
    FIRST_X_ASSUM(STRIP_ASSUME_TAC o check (is_conj o concl)) THEN RVEQ_TAC THEN
    FIRST_X_ASSUM(MP_TAC o REWRITE_RULE[LIST_REL_CONS2; LIST_REL_NIL] o
@@ -2583,7 +2583,7 @@ let TPROPSAUX_dlet_core = prove
      `[]:(mlstring#t)list`; `t:t`; `bindings:(mlstring#t)list`; `tenvS1:tenv_store`;
      `tvs:num`] (CONJUNCT1 pat_type_sound)) THEN
    ASM_REWRITE_TAC[ALL2; APPEND_NIL] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
-   CASE_REWRITE_TAC[] THENL
+   CAKE_REWRITE_TAC[] THENL
    [(* no match: Bind is raised *)
     MAP_EVERY EXISTS_TAC [`ctMap:ctMap`; `tenvS1:tenv_store`] THEN
     ASM_REWRITE_TAC[weakCT_refl; DIFF_EQ_EMPTY; EMPTY_SUBSET; bind_exn_v_def] THEN
@@ -2609,8 +2609,8 @@ let TPROPSAUX_dlet_core = prove
    FIRST_X_ASSUM(STRIP_ASSUME_TAC o check (is_conj o concl)) THEN RVEQ_TAC THEN
    MAP_EVERY EXISTS_TAC [`ctMap:ctMap`; `tenvS1:tenv_store`] THEN
    ASM_REWRITE_TAC[weakCT_refl; DIFF_EQ_EMPTY; EMPTY_SUBSET] THEN
-   CASES_ON `a:(v)error_result` THEN RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN
-   CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN ASM_MESON_TAC[TPROPSAUX_tsi_after]]);;
+   CASES_ON `a:(v)error_result` THEN RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN
+   CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN ASM_MESON_TAC[TPROPSAUX_tsi_after]]);;
 
 let TPROPSAUX_dts_Dlet = prove
  (TPROPSAUX_DTS 2,
@@ -2666,7 +2666,7 @@ let TPROPSAUX_dts_Dletrec = prove
     can (term_match [] `evaluate_decs (a:(FFI)state) b c = d`) (concl th))) THEN
   ASM_REWRITE_TAC[evaluate_decs_def; PAIR_EQ] THEN STRIP_TAC THEN RVEQ_TAC THEN
   MAP_EVERY EXISTS_TAC [`ctMap:ctMap`; `tenvS:tenv_store`] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[weakCT_refl; DIFF_EQ_EMPTY; EMPTY_SUBSET; store_type_extension_refl;
               build_rec_env_merge; nsAppend_nsEmpty] THEN
   RULE_ASSUM_TAC(REWRITE_RULE[fst_triple]) THEN
@@ -2700,7 +2700,7 @@ let TPROPSAUX_dts_Dtabbrev = prove
  (TPROPSAUX_DTS 5,
   TPROPSAUX_DTS_START_TAC THEN TPROPSAUX_DTS_EVAL_TAC THEN
   REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN RVEQ_TAC THEN
-  MAP_EVERY EXISTS_TAC [`ctMap:ctMap`; `tenvS:tenv_store`] THEN CASE_REWRITE_TAC[] THEN
+  MAP_EVERY EXISTS_TAC [`ctMap:ctMap`; `tenvS:tenv_store`] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[weakCT_refl; DIFF_EQ_EMPTY; EMPTY_SUBSET; store_type_extension_refl;
               TPROPSAUX_extend_empty] THEN
   REWRITE_TAC[type_sound_invariant_def] THEN ASM_REWRITE_TAC[] THEN
@@ -2734,7 +2734,7 @@ let TPROPSAUX_dts_Dmod = prove
   MP_TAC(ISPEC `evaluate_decs (st:(FFI)state) env ds'` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `st1:(FFI)state`
     (X_CHOOSE_THEN `r1:(v sem_env,v)result` ASSUME_TAC)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
   STRIP_TAC THEN RVEQ_TAC THEN
   REMOVE_THEN "ih" (MP_TAC o SPECL [`st':(FFI)state`; `r1:(v sem_env,v)result`;
     `ctMap:ctMap`; `tenvS:tenv_store`; `tenv:type_env`; `tids:num->bool`;
@@ -2743,8 +2743,8 @@ let TPROPSAUX_dts_Dmod = prove
   DISCH_THEN(X_CHOOSE_THEN `ctMap1:ctMap` (X_CHOOSE_THEN `tenvS1:tenv_store`
     STRIP_ASSUME_TAC)) THEN
   MAP_EVERY EXISTS_TAC [`ctMap1:ctMap`; `tenvS1:tenv_store`] THEN ASM_REWRITE_TAC[] THEN
-  CASES_ON `r1:(v sem_env,v)result` THEN RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN
-  CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
+  CASES_ON `r1:(v sem_env,v)result` THEN RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN
+  CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
   FIRST_X_ASSUM(STRIP_ASSUME_TAC o check (is_conj o concl)) THEN
   MATCH_MP_TAC(TAUT `!a b. a /\ (a ==> b) ==> a /\ b`) THEN CONJ_TAC THENL
   [MATCH_MP_TAC TPROPSAUX_type_all_env_lift THEN ASM_REWRITE_TAC[];
@@ -2764,7 +2764,7 @@ let TPROPSAUX_dts_Dlocal = prove
   MP_TAC(ISPEC `evaluate_decs (st:(FFI)state) env lds'` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `st1:(FFI)state`
     (X_CHOOSE_THEN `r1:(v sem_env,v)result` ASSUME_TAC)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN DISCH_TAC THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN DISCH_TAC THEN
   REMOVE_THEN "ih1" (MP_TAC o SPECL [`st1:(FFI)state`; `r1:(v sem_env,v)result`;
     `ctMap:ctMap`; `tenvS:tenv_store`; `tenv:type_env`; `decls1:num->bool`;
     `tenv1:type_env`]) THEN
@@ -2772,7 +2772,7 @@ let TPROPSAUX_dts_Dlocal = prove
   ANTS_TAC THENL [ASM_MESON_TAC[type_sound_invariant_union]; ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_THEN `ctMap1:ctMap` (X_CHOOSE_THEN `tenvS1:tenv_store`
     STRIP_ASSUME_TAC)) THEN
-  CASES_ON `r1:(v sem_env,v)result` THEN RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THENL
+  CASES_ON `r1:(v sem_env,v)result` THEN RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THENL
   [(* the local declarations return *)
    FIRST_X_ASSUM(STRIP_ASSUME_TAC o check (is_conj o concl)) THEN
    REMOVE_THEN "ih2" (MP_TAC o SPECL [`st1:(FFI)state`; `a:v sem_env`]) THEN
@@ -2805,16 +2805,16 @@ let TPROPSAUX_dts_Dlocal = prove
     MAP_EVERY EXISTS_TAC [`ctMap:ctMap`; `tenvS:tenv_store`] THEN ASM_REWRITE_TAC[] THEN
     ASM_MESON_TAC[weakCT_trans; store_type_extension_trans; store_type_extension_weakS];
     ALL_TAC] THEN
-   CASES_ON `r:(v sem_env,v)result` THEN RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN
-   CASE_REWRITE_TAC[] THENL
+   CASES_ON `r:(v sem_env,v)result` THEN RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN
+   CAKE_REWRITE_TAC[] THENL
    [FIRST_X_ASSUM(STRIP_ASSUME_TAC o check (is_conj o concl)) THEN ASM_REWRITE_TAC[] THEN
     FIRST_X_ASSUM(MP_TAC o check (can (term_match []
       `type_sound_invariant (s:(FFI)state) (extend_dec_env x (extend_dec_env y z)) c d e f`) o
       concl)) THEN
     REWRITE_TAC[type_sound_invariant_def] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
     MATCH_MP_TAC type_all_env_extend THEN ASM_REWRITE_TAC[];
-    CASES_ON `a':(v)error_result` THEN RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN
-    CASE_REWRITE_TAC[] THENL
+    CASES_ON `a':(v)error_result` THEN RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN
+    CAKE_REWRITE_TAC[] THENL
     [FIRST_X_ASSUM(STRIP_ASSUME_TAC o check (is_conj o concl)) THEN ASM_REWRITE_TAC[] THEN
      FIRST_X_ASSUM(MP_TAC o check (can (term_match []
        `type_sound_invariant (s:(FFI)state) (extend_dec_env x y) c d {} f`) o concl)) THEN
@@ -2823,7 +2823,7 @@ let TPROPSAUX_dts_Dlocal = prove
    (* the local declarations raise or abort *)
    FIRST_X_ASSUM(STRIP_ASSUME_TAC o check (is_conj o concl)) THEN RVEQ_TAC THEN
    MAP_EVERY EXISTS_TAC [`ctMap1:ctMap`; `tenvS1:tenv_store`] THEN
-   CASE_REWRITE_TAC[] THEN REPEAT CONJ_TAC THENL
+   CAKE_REWRITE_TAC[] THEN REPEAT CONJ_TAC THENL
    [ASM_REWRITE_TAC[];
     UNDISCH_TAC `FRANGE ((SND o SND) o_f (ctMap1:ctMap)) DIFF
                  FRANGE ((SND o SND) o_f (ctMap:ctMap)) SUBSET decls1` THEN SET_TAC[];
@@ -2876,7 +2876,7 @@ let TPROPSAUX_good_ctMap_exn = prove
   STRIP_TAC THEN REPEAT CONJ_TAC THENL
   [(* FEVERY *)
    REPEAT GEN_TAC THEN COND_CASES_TAC THEN REWRITE_TAC[injectivity "option"] THENL
-   [DISCH_THEN(SUBST1_TAC o SYM) THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[];
+   [DISCH_THEN(SUBST1_TAC o SYM) THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[];
     DISCH_TAC THEN FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[]];
    (* exception stamps *)
    REPEAT GEN_TAC THEN COND_CASES_TAC THEN REWRITE_TAC[injectivity "option"; PAIR_EQ] THEN
@@ -2914,7 +2914,7 @@ let TPROPSAUX_dexn_core = prove
              (type_env_REC nsEmpty
                (nsSing cn ([],MAP (type_name_subst (type_env_t tenv)) ts,Texn_num)) nsEmpty) /\
            type_sound_invariant
-             (state_next_exn_stamp_fupd (K (state_next_exn_stamp st + 1)) st)
+             (state_next_exn_stamp_fupd (combin_K (state_next_exn_stamp st + 1)) st)
              (extend_dec_env
                (sem_env_REC nsEmpty (nsSing cn (LENGTH ts,ExnStamp (state_next_exn_stamp st))))
                env)
@@ -2979,7 +2979,7 @@ let TPROPSAUX_dexn_core = prove
 let TPROPSAUX_dts_Dexn = prove
  (TPROPSAUX_DTS 7,
   TPROPSAUX_DTS_START_TAC THEN TPROPSAUX_DTS_EVAL_TAC THEN
-  REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN RVEQ_TAC THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN RVEQ_TAC THEN CAKE_REWRITE_TAC[] THEN
   MATCH_MP_TAC TPROPSAUX_dexn_core THEN ASM_REWRITE_TAC[]);;
 
 (* lookups in a ctMap extended by an association list *)
@@ -3010,7 +3010,7 @@ let TPROPSAUX_consistent_tdefs = prove
  (`!(st:(FFI)state) ctMap tenvT tds ids.
      LENGTH tds = LENGTH ids /\ consistent_ctMap st (set_of_list ids) ctMap
      ==> consistent_ctMap
-           (state_next_type_stamp_fupd (K (state_next_type_stamp st + LENGTH tds)) st) {}
+           (state_next_type_stamp_fupd (combin_K (state_next_type_stamp st + LENGTH tds)) st) {}
            (FUNION (FEMPTY |++ REVERSE (type_def_to_ctMap tenvT (state_next_type_stamp st)
                                           tds ids)) ctMap)`,
   REPEAT GEN_TAC THEN
@@ -3034,7 +3034,7 @@ let TPROPSAUX_check_ctor_tenv_distinct = prove
      ==> ALL (\d. match d with (tvs,tn,ctors) -> ALL_DISTINCT (MAP FST ctors)) tds`,
   REPEAT STRIP_TAC THEN FIRST_ASSUM(MP_TAC o MATCH_MP check_ctor_tenv_dups) THEN
   MATCH_MP_TAC MONO_ALL THEN REWRITE_TAC[FORALL_PAIR_THM; check_dup_ctors_thm] THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[]);;
 
 let TPROPSAUX_subset_disjoint = prove
  (`!a b c:A->bool. a SUBSET b /\ DISJOINT b c ==> DISJOINT a c`,
@@ -3060,7 +3060,7 @@ let TPROPSAUX_dtype_core = prove
              (sem_env_REC nsEmpty (build_tdefs (state_next_type_stamp st) tds))
              (type_env_REC nsEmpty (build_ctor_tenv tenvT tds ids) tenvT0) /\
            type_sound_invariant
-             (state_next_type_stamp_fupd (K (state_next_type_stamp st + LENGTH tds)) st)
+             (state_next_type_stamp_fupd (combin_K (state_next_type_stamp st + LENGTH tds)) st)
              (extend_dec_env
                (sem_env_REC nsEmpty (build_tdefs (state_next_type_stamp st) tds)) env)
              ctMap' tenvS' {}
@@ -3197,7 +3197,7 @@ let TPROPSAUX_dts_Dtype = prove
   FIRST_ASSUM(ASSUME_TAC o MATCH_MP check_ctor_tenv_dups o
     check (can (term_match [] `check_ctor_tenv a b`) o concl)) THEN
   TPROPSAUX_DTS_EVAL_TAC THEN
-  REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN RVEQ_TAC THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN RVEQ_TAC THEN CAKE_REWRITE_TAC[] THEN
   MATCH_MP_TAC TPROPSAUX_dtype_core THEN ASM_REWRITE_TAC[] THEN
   FIRST_X_ASSUM(MP_TAC o check (can (term_match [] `tenv_ok (extend_dec_tenv a b)`) o
     concl)) THEN
@@ -3255,16 +3255,16 @@ let semantics_type_sound = prove
   FIRST_X_ASSUM(MP_TAC o REWRITE_RULE[semantics_prog_def] o
     check (can (term_match [] `semantics_prog (a:(FFI)state) b c d`) o concl)) THEN
   REWRITE_TAC[evaluate_prog_with_clock_def; NOT_EXISTS_THM] THEN X_GEN_TAC `k:num` THEN
-  MP_TAC(ISPEC `evaluate_decs (state_clock_fupd (K k) (st:(FFI)state)) env tops`
+  MP_TAC(ISPEC `evaluate_decs (state_clock_fupd (combin_K k) (st:(FFI)state)) env tops`
     PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `st1:(FFI)state`
     (X_CHOOSE_THEN `r1:(v sem_env,v)result` ASSUME_TAC)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[SND] THEN DISCH_TAC THEN
-  MP_TAC(SPECL [`state_clock_fupd (K k) (st:(FFI)state)`; `env:v sem_env`;
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[SND] THEN DISCH_TAC THEN
+  MP_TAC(SPECL [`state_clock_fupd (combin_K k) (st:(FFI)state)`; `env:v sem_env`;
     `tops:dec list`; `checks:bool`; `st1:(FFI)state`; `r1:(v sem_env,v)result`;
     `ctMap:ctMap`; `tenvS:tenv_store`; `tenv:type_env`; `tids:num->bool`;
     `new_tenv:type_env`] decs_type_sound) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   UNDISCH_TAC `type_sound_invariant (st:(FFI)state) env ctMap tenvS tids tenv` THEN
   REWRITE_TAC[type_sound_invariant_def; consistent_ctMap_def; state_INFO.ri_accfupds] THEN
   SIMP_TAC[]);;

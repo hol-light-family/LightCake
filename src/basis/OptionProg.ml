@@ -28,7 +28,7 @@ let the_side_def = update_precondition (prove
  (`the_side = IS_SOME:A option->bool`,
   REWRITE_TAC[FUN_EQ_THM] THEN MATCH_MP_TAC option_INDUCT THEN
   REWRITE_TAC[tr_fetch "the_side_def"; IS_SOME_DEF] THEN
-  CASE_REWRITE_TAC[] THEN MESON_TAC[option_DISTINCT; option_INJ]));;
+  CAKE_REWRITE_TAC[] THEN MESON_TAC[option_DISTINCT; option_INJ]));;
 
 next_ml_names := ["join"];;
 let _ = translate OPTION_JOIN_DEF;;

@@ -43,7 +43,7 @@ ml_prog_update ml_prog_open_local_block;;
 use_full_type_names := false;;
 let _ = translate sum_sizes_def;;
 let _ = translate make_app_list_ann_def;;
-let _ = translate shrink_def;;
+let _ = translate mlstring_shrink_def;;
 next_ml_names := ["str_app_list_opt"];;
 let _ = translate str_app_list_opt_def;;
 use_full_type_names := true;;

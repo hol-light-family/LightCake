@@ -49,7 +49,7 @@ let generalise_no_uvars = prove
       ALL (check_t dbvars {}) ts ==> generalise_list m n s ts = (0,s,ts))`,
   MATCH_MP_TAC infer_t_INDUCT THEN
   REWRITE_TAC[check_t_def; ALL; NOT_IN_EMPTY] THEN REPEAT STRIP_TAC THEN
-  RES_TAC THEN ASM_REWRITE_TAC[generalise_def] THEN CASE_REWRITE_TAC[ADD_CLAUSES]);;
+  RES_TAC THEN ASM_REWRITE_TAC[generalise_def] THEN CAKE_REWRITE_TAC[ADD_CLAUSES]);;
 
 (* HOL4: val t_ind = t_induction |> Q.SPECL [P, EVERY P] |> ... is an ML     *)
 (* binding of the same theorem as inferProps' t_ind, which is used below.   *)
@@ -113,10 +113,10 @@ let env_rel_binding_lemma = prove
     ASM_REWRITE_TAC[LENGTH_LIST_OF_SEQ] THEN ANTS_TAC THENL
      [ASM_MESON_TAC[SUBSET; IN_SET_OF_LIST]; ALL_TAC] THEN
     DISCH_THEN(X_CHOOSE_THEN `j:num` STRIP_ASSUME_TAC) THEN
-    ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
     ASM_SIMP_TAC[EL_MAP; LENGTH_COUNT_LIST; EL_COUNT_LIST; EL_LIST_OF_SEQ;
                  LENGTH_LIST_OF_SEQ; infer_deBruijn_subst_alt] THEN
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[infer_deBruijn_subst_alt];
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[infer_deBruijn_subst_alt];
     X_GEN_TAC `l:t list` THEN REWRITE_TAC[GSYM ALL_MEM] THEN DISCH_TAC THEN
     REPEAT STRIP_TAC THEN
     REWRITE_TAC[infer_deBruijn_subst_alt; injectivity "infer_t"; GSYM MAP_o] THEN
@@ -150,10 +150,10 @@ let env_rel_binding_lemma2 = prove
     ASM_REWRITE_TAC[LENGTH_LIST_OF_SEQ] THEN ANTS_TAC THENL
      [ASM_MESON_TAC[SUBSET; IN_SET_OF_LIST]; ALL_TAC] THEN
     DISCH_THEN(X_CHOOSE_THEN `j:num` STRIP_ASSUME_TAC) THEN
-    ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
     ASM_SIMP_TAC[EL_MAP; LENGTH_COUNT_LIST; EL_COUNT_LIST; EL_LIST_OF_SEQ;
                  LENGTH_LIST_OF_SEQ; infer_deBruijn_subst_alt] THEN
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[infer_deBruijn_subst_alt];
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[infer_deBruijn_subst_alt];
     X_GEN_TAC `l:t list` THEN REWRITE_TAC[GSYM ALL_MEM] THEN DISCH_TAC THEN
     REPEAT STRIP_TAC THEN
     REWRITE_TAC[infer_deBruijn_subst_alt; injectivity "infer_t"; GSYM MAP_o] THEN
@@ -175,7 +175,7 @@ let unconvert_type_subst = prove
    [SUBGOAL_THEN `~(ALOOKUP (subst:(mlstring#t)list) a = NONE)` MP_TAC THENL
      [REWRITE_TAC[ALOOKUP_NONE] THEN ASM_MESON_TAC[SUBSET; IN_SET_OF_LIST]; ALL_TAC] THEN
     STRUCT_CASES_TAC(ISPEC `ALOOKUP (subst:(mlstring#t)list) a` (cases "option")) THEN
-    REWRITE_TAC[OPTION_MAP_DEF] THEN CASE_REWRITE_TAC[];
+    REWRITE_TAC[OPTION_MAP_DEF] THEN CAKE_REWRITE_TAC[];
     REWRITE_TAC[injectivity "infer_t"; GSYM MAP_o] THEN ASM_MESON_TAC[];
     REWRITE_TAC[CONS_11] THEN ASM_MESON_TAC[]]);;
 
@@ -224,7 +224,7 @@ let INFER2AUX_erb_approx1 = prove
       find_index_LESS_LENGTH) THEN
     STRUCT_CASES_TAC(ISPEC `find_index (EL i (fvs:mlstring list)) (list_nub fvs') 0`
       (cases "option")) THEN
-    CASE_REWRITE_TAC[check_t_def; ALL; option_INJ] THEN
+    CAKE_REWRITE_TAC[check_t_def; ALL; option_INJ] THEN
     MESON_TAC[ARITH_RULE `0 <= a /\ a < 0 + b ==> a < b`];
     ALL_TAC] THEN
   REPEAT STRIP_TAC THEN REWRITE_TAC[MAP_LIST_OF_SEQ; o_DEF] THEN
@@ -257,7 +257,7 @@ let INFER2AUX_erb_approx2 = prove
       find_index_LESS_LENGTH) THEN
     STRUCT_CASES_TAC(ISPEC `find_index (EL i (list_nub fvs':mlstring list)) fvs 0`
       (cases "option")) THEN
-    CASE_REWRITE_TAC[check_t_def; ALL; option_INJ] THEN
+    CAKE_REWRITE_TAC[check_t_def; ALL; option_INJ] THEN
     MESON_TAC[ARITH_RULE `0 <= a /\ a < 0 + b ==> a < b`];
     ALL_TAC] THEN
   REPEAT STRIP_TAC THEN REWRITE_TAC[MAP_LIST_OF_SEQ; o_DEF] THEN
@@ -318,13 +318,13 @@ let env_rel_binding = prove
               env_rel_sound_def; env_rel_complete_def; inf_env_INFO.ri_accessors;
               type_env_INFO.ri_accessors; nsAll_nsSing; nsLookup_nsSing; nsLookupMod_nsSing;
               tenv_ctor_ok_nsEmpty; tenv_abbrev_ok_def; nsAll_nsEmpty] THEN
-  CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
   REPEAT CONJ_TAC THENL
    [GEN_TAC THEN COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT];
     MAP_EVERY X_GEN_TAC [`x:(mlstring,mlstring)id`; `ts:num#infer_t`] THEN
     COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT; option_INJ] THEN
     DISCH_THEN(SUBST1_TAC o SYM) THEN ASM_REWRITE_TAC[lookup_var_def; lookup_varE_def] THEN
-    CASE_REWRITE_TAC[tveLookup_def; nsLookup_nsSing; num_tvs_def; type_env_INFO.ri_accessors] THEN
+    CAKE_REWRITE_TAC[tveLookup_def; nsLookup_nsSing; num_tvs_def; type_env_INFO.ri_accessors] THEN
     MAP_EVERY EXISTS_TAC [`LENGTH (fvs:mlstring list)`;
       `type_subst (alist_to_fmap (ZIP fvs (MAP Tvar_db (list_of_seq (\x. x) (LENGTH fvs)))))
          t`] THEN
@@ -334,7 +334,7 @@ let env_rel_binding = prove
     REWRITE_TAC[lookup_var_def; lookup_varE_def] THEN
     MP_TAC(ISPEC `x:(mlstring,mlstring)id` (cases "id")) THEN STRIP_TAC THEN
     ASM_REWRITE_TAC[] THEN
-    CASE_REWRITE_TAC[tveLookup_def; nsLookup_nsSing; num_tvs_def; type_env_INFO.ri_accessors] THEN
+    CAKE_REWRITE_TAC[tveLookup_def; nsLookup_nsSing; num_tvs_def; type_env_INFO.ri_accessors] THEN
     COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT; option_INJ; PAIR_EQ] THEN
     DISCH_THEN(CONJUNCTS_THEN (SUBST1_TAC o SYM)) THEN
     CONJ_TAC THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
@@ -367,7 +367,7 @@ let INFER2AUX_convert_env_set_tids = prove
   REWRITE_TAC[convert_env_def; ALL_MAP; o_DEF] THEN
   FIRST_X_ASSUM(MP_TAC o check (fun th -> INFER1AUX_is_app "ALL" (concl th))) THEN
   MATCH_MP_TAC MONO_ALL THEN REWRITE_TAC[FORALL_PAIR_THM] THEN
-  MAP_EVERY X_GEN_TAC [`x:mlstring`; `tt:infer_t`] THEN CASE_REWRITE_TAC[] THEN
+  MAP_EVERY X_GEN_TAC [`x:mlstring`; `tt:infer_t`] THEN CAKE_REWRITE_TAC[] THEN
   CONV_TAC(DEPTH_CONV GEN_BETA_CONV) THEN
   STRIP_TAC THEN REWRITE_TAC[set_tids_subset_def; GSYM inf_set_tids_unconvert] THEN
   FIRST_ASSUM(SUBST1_TAC o MATCH_MP check_t_empty_unconvert_convert_id) THEN
@@ -656,7 +656,7 @@ let type_pe_determ_canon_infer_e = prove
       `convert_env s1 (new_bindings:(mlstring#infer_t)list) = convert_env s2 new_bindings` THEN
     REWRITE_TAC[convert_env_def; MAP_EQ_f] THEN
     DISCH_THEN(MP_TAC o SPEC `(x:mlstring,tt:infer_t)`) THEN ASM_REWRITE_TAC[] THEN
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ];
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ];
     ALL_TAC] THEN
   DISCH_THEN(MP_TAC o AP_TERM `unconvert_t`) THEN
   MP_TAC(SPECL [`t_walkstar s1 tt`; `0`] check_t_empty_unconvert_convert_id) THEN
@@ -683,7 +683,7 @@ let inf_set_tids_extend_dec_ienv = prove
   REWRITE_TAC[inf_set_tids_ienv_def; extend_dec_ienv_def; inf_env_INFO.ri_accessors] THEN
   REPEAT STRIP_TAC THEN MATCH_MP_TAC nsAll_nsAppend THEN ASM_REWRITE_TAC[] THEN
   FIRST_X_ASSUM(fun th -> MP_TAC th THEN MATCH_MP_TAC nsAll_mono) THEN
-  REWRITE_TAC[FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[FORALL_PAIR_THM] THEN CAKE_REWRITE_TAC[] THEN
   ASM_MESON_TAC[INFER2AUX_inf_set_tids_subset_mono; ALL_MEM; IN_COUNT; LTE_TRANS]);;
 
 (* ------------------------------------------------------------------------- *)
@@ -693,12 +693,12 @@ let inf_set_tids_extend_dec_ienv = prove
 let INFER2AUX_bind_succ = prove
  (`!(x:S->(A,E)exc#S) (f:A->S->(B,E)exc#S) st y st'.
      x st = (M_success y,st') ==> st_ex_bind x f st = f y st'`,
-  REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[st_ex_bind_def] THEN CASE_REWRITE_TAC[]);;
+  REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[st_ex_bind_def] THEN CAKE_REWRITE_TAC[]);;
 
 let INFER2AUX_ibind_succ = prove
  (`!(x:S->(A,E)exc#S) (f:S->(B,E)exc#S) st y st'.
      x st = (M_success y,st') ==> st_ex_ignore_bind x f st = f st'`,
-  REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[st_ex_ignore_bind_def] THEN CASE_REWRITE_TAC[]);;
+  REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[st_ex_ignore_bind_def] THEN CAKE_REWRITE_TAC[]);;
 
 (* one step of evaluation: the goal is  st_ex_bind x f st = r  (or           *)
 (* st_ex_ignore_bind), x st is computed by rewriting with thl and the        *)
@@ -710,11 +710,11 @@ let INFER2AUX_BIND_TAC (thl:thm list) : tactic =
     let n = try fst(dest_const h) with Failure _ -> "" in
     if (n = "st_ex_bind" || n = "st_ex_ignore_bind") && length args = 3 then
       let x = el 0 args and st = el 2 args in
-      let th = (REWRITE_CONV (thl @ map snd asl) THENC CASE_REWRITE_CONV []) (mk_comb(x,st)) in
+      let th = (REWRITE_CONV (thl @ map snd asl) THENC CAKE_REWRITE_CONV []) (mk_comb(x,st)) in
       let lem = if n = "st_ex_bind" then INFER2AUX_bind_succ else INFER2AUX_ibind_succ in
       let th2 = MATCH_MP lem th in
       (GEN_REWRITE_TAC LAND_CONV [th2] THEN
-       CONV_TAC(LAND_CONV(TOP_DEPTH_CONV GEN_BETA_CONV THENC CASE_REWRITE_CONV []))) g
+       CONV_TAC(LAND_CONV(TOP_DEPTH_CONV GEN_BETA_CONV THENC CAKE_REWRITE_CONV []))) g
     else failwith "INFER2AUX_BIND_TAC";;
 
 let INFER2AUX_init_infer_state = prove
@@ -736,7 +736,7 @@ let INFER2AUX_infer_d_Dlet = prove
      ==> infer_d ienv (Dlet locs p e) st1 =
          (M_success (inf_env_REC (alist_to_ns (ZIP (MAP FST nb) (MAP (\t. (ntvs,t)) ts')))
                        nsEmpty nsEmpty),
-          infer_st_subst_fupd (K s) st')`,
+          infer_st_subst_fupd (combin_K s) st')`,
   REPEAT GEN_TAC THEN REWRITE_TAC[IMP_CONJ] THEN REPEAT DISCH_TAC THEN
   REWRITE_TAC[infer_d_def] THEN
   INFER2AUX_BIND_TAC[init_state_def] THEN
@@ -748,7 +748,7 @@ let INFER2AUX_infer_d_Dlet = prove
                      infer_st_INFO.ri_accfupds; K_THM] THEN
   INFER2AUX_BIND_TAC[st_ex_return_def] THEN
   REWRITE_TAC[infer_st_INFO.ri_accfupds; K_THM] THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   INFER2AUX_BIND_TAC[infer_guard_def; st_ex_return_def] THEN
   REWRITE_TAC[st_ex_return_def]);;
 
@@ -794,9 +794,9 @@ let INFER2AUX_env_rel_bindings = prove
   ASM_SIMP_TAC[nsAll_def; INFER2AUX_nsLookup_ZIP; LENGTH_MAP] THEN
   REPEAT CONJ_TAC THENL
    [REPEAT GEN_TAC THEN DISCH_THEN(X_CHOOSE_THEN `k:num` STRIP_ASSUME_TAC) THEN
-    ASM_SIMP_TAC[EL_MAP] THEN CASE_REWRITE_TAC[] THEN ASM_MESON_TAC[];
+    ASM_SIMP_TAC[EL_MAP] THEN CAKE_REWRITE_TAC[] THEN ASM_MESON_TAC[];
     REPEAT GEN_TAC THEN DISCH_THEN(X_CHOOSE_THEN `k:num` STRIP_ASSUME_TAC) THEN
-    ASM_SIMP_TAC[EL_MAP] THEN CASE_REWRITE_TAC[] THEN ASM_MESON_TAC[];
+    ASM_SIMP_TAC[EL_MAP] THEN CAKE_REWRITE_TAC[] THEN ASM_MESON_TAC[];
     GEN_TAC THEN MP_TAC(ISPEC `x:mlstring list` list_CASES) THEN STRIP_TAC THEN
     ASM_REWRITE_TAC[nsLookupMod_alist_to_ns] THEN
     REWRITE_TAC[nsLookupMod_def; option_DISTINCT];
@@ -1084,7 +1084,7 @@ let INFER2AUX_tenv_add_tvs_convert_env = prove
   GEN_TAC THEN GEN_TAC THEN LIST_INDUCT_TAC THEN
   ASM_REWRITE_TAC[tenv_add_tvs_def; convert_env_def; MAP; ZIP] THEN
   SPEC_TAC(`h:mlstring#infer_t`,`h:mlstring#infer_t`) THEN
-  REWRITE_TAC[FORALL_PAIR_THM; o_THM] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[FORALL_PAIR_THM; o_THM] THEN CAKE_REWRITE_TAC[] THEN
   RULE_ASSUM_TAC(REWRITE_RULE[tenv_add_tvs_def; convert_env_def]) THEN
   ASM_REWRITE_TAC[CONS_11]);;
 
@@ -1189,7 +1189,7 @@ let INFER2AUX_dlet_poly = prove
   MAP_EVERY EXISTS_TAC
    [`inf_env_REC (alist_to_ns (ZIP (MAP FST (nb:(mlstring#infer_t)list))
                   (MAP (\t. (ntvs,t)) ts'))) nsEmpty nsEmpty`;
-    `infer_st_subst_fupd (K s) st'`] THEN
+    `infer_st_subst_fupd (combin_K s) st'`] THEN
   CONJ_TAC THENL [ALL_TAC; CONJ_TAC THENL
    [ASM_REWRITE_TAC[infer_st_INFO.ri_accfupds; ADD_CLAUSES];
     MATCH_MP_TAC INFER2AUX_infer_d_Dlet THEN
@@ -1336,7 +1336,7 @@ let INFER2AUX_dlet_mono = prove
   MAP_EVERY EXISTS_TAC
    [`inf_env_REC (alist_to_ns (ZIP (MAP FST (nb:(mlstring#infer_t)list))
                   (MAP (\t. (0,t)) (MAP (t_walkstar s) (l:infer_t list))))) nsEmpty nsEmpty`;
-    `infer_st_subst_fupd (K s) st'`] THEN
+    `infer_st_subst_fupd (combin_K s) st'`] THEN
   CONJ_TAC THENL [ALL_TAC; CONJ_TAC THENL
    [ASM_REWRITE_TAC[infer_st_INFO.ri_accfupds; ADD_CLAUSES];
     MATCH_MP_TAC INFER2AUX_infer_d_Dlet THEN
@@ -1372,7 +1372,7 @@ let INFER2AUX_dlet_mono = prove
 let INFER2AUX_n_fresh_uvar_eval = prove
  (`!n st. (n_fresh_uvar n st:(infer_t list,A)exc#infer_st) =
           (M_success (MAP (\k. Infer_Tuvar (infer_st_next_uvar st + k)) (COUNT_LIST n)),
-           infer_st_next_uvar_fupd (K (infer_st_next_uvar st + n)) st)`,
+           infer_st_next_uvar_fupd (combin_K (infer_st_next_uvar st + n)) st)`,
   REWRITE_TAC[n_fresh_uvar_success]);;
 
 let INFER2AUX_infer_d_Dletrec = prove
@@ -1380,12 +1380,12 @@ let INFER2AUX_infer_d_Dletrec = prove
      ALL_DISTINCT (MAP FST funs) /\
      infer_funs (loc_err_info_REC (SOME locs) (inf_env_inf_t ienv))
        (inf_env_inf_v_fupd
-          (K (nsAppend
+          (combin_K (nsAppend
                 (alist_to_ns
                    (MAP2 (\fxe uvar. match fxe with (f,x,e) -> (f,(0,uvar))) funs
                       (MAP (\n. Infer_Tuvar n) (COUNT_LIST (LENGTH funs)))))
                 (inf_env_inf_v ienv))) ienv)
-       funs (infer_st_next_uvar_fupd (K (LENGTH funs)) (init_infer_state st1)) =
+       funs (infer_st_next_uvar_fupd (combin_K (LENGTH funs)) (init_infer_state st1)) =
        (M_success funs_ts,st) /\
      add_constraints (loc_err_info_REC (SOME locs) (inf_env_inf_t ienv))
        (MAP (\n. Infer_Tuvar n) (COUNT_LIST (LENGTH funs))) funs_ts st = (M_success one,st') /\
@@ -1408,7 +1408,7 @@ let INFER2AUX_infer_d_Dletrec = prove
   INFER2AUX_BIND_TAC[] THEN INFER2AUX_BIND_TAC[] THEN
   INFER2AUX_BIND_TAC[apply_subst_list_def; st_ex_bind_def; infer_read_def; st_ex_return_def] THEN
   INFER2AUX_BIND_TAC[st_ex_return_def] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[st_ex_return_def]);;
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[st_ex_return_def]);;
 
 let INFER2AUX_MAP2_triple_ZIP = prove
  (CASE_TERM `!(g:B->C) (funs:(A#D#E)list) (ts:B list).
@@ -1420,14 +1420,14 @@ let INFER2AUX_MAP2_triple_ZIP = prove
   DISCH_TAC THEN
   X_CHOOSE_THEN `a:A` (X_CHOOSE_THEN `b:D` (X_CHOOSE_THEN `c:E` SUBST1_TAC))
     (ISPEC `h:A#D#E` BASICAUX_TUPLE3) THEN
-  CASE_REWRITE_TAC[CONS_11] THEN ASM_SIMP_TAC[]);;
+  CAKE_REWRITE_TAC[CONS_11] THEN ASM_SIMP_TAC[]);;
 
 let INFER2AUX_tenv_add_tvs_ZIP = prove
  (`!tvs (l:(mlstring#t)list).
      tenv_add_tvs tvs l = ZIP (MAP FST l) (MAP (\t. (tvs,t)) (MAP SND l))`,
   GEN_TAC THEN LIST_INDUCT_TAC THEN REWRITE_TAC[tenv_add_tvs_def; MAP; ZIP] THEN
   SPEC_TAC(`h:mlstring#t`,`h:mlstring#t`) THEN REWRITE_TAC[FORALL_PAIR_THM] THEN
-  CASE_REWRITE_TAC[CONS_11] THEN
+  CAKE_REWRITE_TAC[CONS_11] THEN
   RULE_ASSUM_TAC(REWRITE_RULE[tenv_add_tvs_def]) THEN ASM_REWRITE_TAC[]);;
 
 let INFER2AUX_pac_walk_eq = prove
@@ -1448,7 +1448,7 @@ let INFER2AUX_letrec_ienv_ok = prove
      ienv_ok {} ienv
      ==> ienv_ok (pred_set_count (LENGTH funs))
            (inf_env_inf_v_fupd
-              (K (nsAppend
+              (combin_K (nsAppend
                     (alist_to_ns
                        (MAP2 (\fxe uvar. match fxe with (f,x,e) -> (f,(0,uvar))) funs
                           (MAP (\n. Infer_Tuvar n) (COUNT_LIST (LENGTH funs)))))
@@ -1460,9 +1460,9 @@ let INFER2AUX_letrec_ienv_ok = prove
     SIMP_TAC[INFER2AUX_MAP2_triple_ZIP; LENGTH_MAP; LENGTH_COUNT_LIST] THEN
     SIMP_TAC[GSYM ALL_EL; LENGTH_ZIP; LENGTH_MAP; LENGTH_COUNT_LIST; EL_ZIP; EL_MAP;
              EL_COUNT_LIST] THEN
-    CASE_REWRITE_TAC[check_t_def; IN_COUNT] THEN SIMP_TAC[];
+    CAKE_REWRITE_TAC[check_t_def; IN_COUNT] THEN SIMP_TAC[];
     FIRST_X_ASSUM(MP_TAC o check (fun th -> INFER1AUX_is_app "nsAll" (concl th))) THEN
-    MATCH_MP_TAC nsAll_mono THEN REWRITE_TAC[FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[] THEN
+    MATCH_MP_TAC nsAll_mono THEN REWRITE_TAC[FORALL_PAIR_THM] THEN CAKE_REWRITE_TAC[] THEN
     REPEAT STRIP_TAC THEN
     MATCH_MP_TAC(MATCH_MP (CONJUNCT1 check_t_more5) (ASSUME `check_t p1 {} p2`)) THEN
     REWRITE_TAC[EMPTY_SUBSET]]);;
@@ -1488,12 +1488,12 @@ let INFER2AUX_funs_sound_completion = prove
      ALL_DISTINCT (MAP FST funs) /\
      infer_funs loc
        (inf_env_inf_v_fupd
-          (K (nsAppend
+          (combin_K (nsAppend
                 (alist_to_ns
                    (MAP2 (\fxe uvar. match fxe with (f,x,e) -> (f,(0,uvar))) funs
                       (MAP (\n. Infer_Tuvar n) (COUNT_LIST (LENGTH funs)))))
                 (inf_env_inf_v ienv))) ienv)
-       funs (infer_st_next_uvar_fupd (K (LENGTH funs)) (init_infer_state st1)) =
+       funs (infer_st_next_uvar_fupd (combin_K (LENGTH funs)) (init_infer_state st1)) =
        (M_success funs_ts,st) /\
      infer_st_next_uvar st = infer_st_next_uvar st' /\
      pure_add_constraints (infer_st_subst st)
@@ -1578,7 +1578,7 @@ let INFER2AUX_convert_env_ZIP = prove
   GEN_TAC THEN LIST_INDUCT_TAC THEN LIST_INDUCT_TAC THEN
   REWRITE_TAC[LENGTH; NOT_SUC; GSYM NOT_SUC; SUC_INJ; ZIP; MAP; convert_env_def] THEN
   RULE_ASSUM_TAC(REWRITE_RULE[convert_env_def]) THEN
-  CASE_REWRITE_TAC[CONS_11; o_THM] THEN ASM_SIMP_TAC[]);;
+  CAKE_REWRITE_TAC[CONS_11; o_THM] THEN ASM_SIMP_TAC[]);;
 
 (* the type identifiers of the inferred types of mutually recursive functions *)
 let INFER2AUX_letrec_set_tids = prove
@@ -1587,12 +1587,12 @@ let INFER2AUX_letrec_set_tids = prove
      inf_set_tids_ienv (pred_set_count (infer_st_next_id st1)) ienv /\
      infer_funs loc
        (inf_env_inf_v_fupd
-          (K (nsAppend
+          (combin_K (nsAppend
                 (alist_to_ns
                    (MAP2 (\fxe uvar. match fxe with (f,x,e) -> (f,(0,uvar))) funs
                       (MAP (\n. Infer_Tuvar n) (COUNT_LIST (LENGTH funs)))))
                 (inf_env_inf_v ienv))) ienv)
-       funs (infer_st_next_uvar_fupd (K (LENGTH funs)) (init_infer_state st1)) =
+       funs (infer_st_next_uvar_fupd (combin_K (LENGTH funs)) (init_infer_state st1)) =
        (M_success funs_ts,st) /\
      pure_add_constraints (infer_st_subst st)
        (ZIP (MAP (\n. Infer_Tuvar n) (COUNT_LIST (LENGTH funs))) funs_ts) (infer_st_subst st')
@@ -1627,7 +1627,7 @@ let INFER2AUX_letrec_set_tids = prove
     ASM_SIMP_TAC[INFER2AUX_MAP2_triple_ZIP; LENGTH_MAP; LENGTH_COUNT_LIST] THEN
     ASM_SIMP_TAC[GSYM ALL_EL; LENGTH_ZIP; LENGTH_MAP; LENGTH_COUNT_LIST; EL_ZIP; EL_MAP;
                  EL_COUNT_LIST] THEN
-    CASE_REWRITE_TAC[inf_set_tids_subset_def; inf_set_tids_def; EMPTY_SUBSET];
+    CAKE_REWRITE_TAC[inf_set_tids_subset_def; inf_set_tids_def; EMPTY_SUBSET];
     ALL_TAC] THEN
   REWRITE_TAC[GSYM inf_set_tids_subst_def] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
   MATCH_MP_TAC pure_add_constraints_set_tids THEN
@@ -1774,7 +1774,7 @@ let INFER2AUX_dletrec = prove
     MATCH_MP_TAC INFER2AUX_convert_env_set_tids THEN EXISTS_TAC `num_gen:num` THEN
     ASM_REWRITE_TAC[] THEN
     ASM_SIMP_TAC[GSYM ALL_EL; LENGTH_ZIP; LENGTH_MAP; EL_ZIP] THEN
-    X_GEN_TAC `k:num` THEN DISCH_TAC THEN CASE_REWRITE_TAC[] THEN CONJ_TAC THENL
+    X_GEN_TAC `k:num` THEN DISCH_TAC THEN CAKE_REWRITE_TAC[] THEN CONJ_TAC THENL
      [UNDISCH_TAC `ALL (inf_set_tids_subset (pred_set_count n)) (funs_ts:infer_t list)` THEN
       ASM_SIMP_TAC[GSYM ALL_EL];
       SUBGOAL_THEN `k < N` ASSUME_TAC THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
@@ -1877,7 +1877,7 @@ let INFER2AUX_dtype = prove
        ASM_REWRITE_TAC[];
        ALL_TAC] THEN
      MAP_EVERY EXISTS_TAC [mk_comb(`tenv_to_ienv`,tenv');
-                           `infer_st_next_id_fupd (K (n + LENGTH (tdefs:type_def))) st1`]) THEN
+                           `infer_st_next_id_fupd (combin_K (n + LENGTH (tdefs:type_def))) st1`]) THEN
   ASM_SIMP_TAC[env_rel_tenv_to_ienv; infer_st_INFO.ri_accfupds; K_THM] THEN
   SUBGOAL_THEN `(\x. n + x) = (\i. i + n)` ASSUME_TAC THENL
    [REWRITE_TAC[FUN_EQ_THM] THEN ARITH_TAC; ALL_TAC] THEN
@@ -1917,7 +1917,7 @@ let INFER2AUX_dtabbrev = prove
   REWRITE_TAC[infer_d_def] THEN
   FIRST_ASSUM(fun th -> INFER2AUX_BIND_TAC[MATCH_MP INFER1AUX_check_dups_ok th]) THEN
   ASM_SIMP_TAC[st_ex_bind_def; type_name_check_subst_comp_thm] THEN
-  CASE_REWRITE_TAC[st_ex_return_def; tenv_to_ienv_def; type_env_INFO.ri_accessors;
+  CAKE_REWRITE_TAC[st_ex_return_def; tenv_to_ienv_def; type_env_INFO.ri_accessors;
                    nsMap_nsEmpty; nsMap_nsSing]);;
 
 let INFER2AUX_dexn = prove
@@ -1948,7 +1948,7 @@ let INFER2AUX_dexn = prove
   ASM_SIMP_TAC[env_rel_tenv_to_ienv; ADD_CLAUSES] THEN
   REWRITE_TAC[infer_d_def] THEN
   ASM_SIMP_TAC[st_ex_bind_def; type_name_check_subst_comp_thm] THEN
-  CASE_REWRITE_TAC[st_ex_return_def; tenv_to_ienv_def; type_env_INFO.ri_accessors;
+  CAKE_REWRITE_TAC[st_ex_return_def; tenv_to_ienv_def; type_env_INFO.ri_accessors;
                    nsMap_nsEmpty; nsMap_nsSing]);;
 
 (* ------------------------------------------------------------------------- *)

@@ -67,7 +67,7 @@ let SEM2AUX_CASE_CLAUSES =
             let vs' = map (fresh avoid) pref in
             let pat' = vsubst (zip vs' vs) pat in
             let th1 = INST [pat',x] th in
-            split (CONV_RULE (RAND_CONV (CASE_REWRITE_CONV [] THENC
+            split (CONV_RULE (RAND_CONV (CAKE_REWRITE_CONV [] THENC
                                          DEPTH_CONV BETA_CONV)) th1))
           ci.ci_pats fs) in
   fun th ->
@@ -126,15 +126,15 @@ let _ = cake_add_simps [destLongidT_EQ_SOME];;
 
 let destTyvarPT_def = SEM2AUX_CASE_CLAUSES (cake_def
   `destTyvarPT (p:(token,B,C)parsetree) =
-     match p with Lf (TOK (TyvarT s),_) -> SOME s | _ -> NONE`);;
+     match p with grammar_Lf (grammar_TOK (TyvarT s),_) -> SOME s | _ -> NONE`);;
 let _ = cake_add_simps [destTyvarPT_def];;
 
 let destLf_def = SEM2AUX_CASE_CLAUSES (cake_def
-  `destLf (p:(A,B,C)parsetree) = match p with Lf (x,_) -> SOME x | _ -> NONE`);;
+  `destLf (p:(A,B,C)parsetree) = match p with grammar_Lf (x,_) -> SOME x | _ -> NONE`);;
 let _ = cake_add_simps [destLf_def];;
 
 let destTOK_def = SEM2AUX_CASE_CLAUSES (cake_def
-  `destTOK (sym:(A,B)symbol) = match sym with TOK t -> SOME t | _ -> NONE`);;
+  `destTOK (sym:(A,B)symbol) = match sym with grammar_TOK t -> SOME t | _ -> NONE`);;
 let _ = cake_add_simps [destTOK_def];;
 
 let destAlphaT_def = SEM2AUX_CASE_CLAUSES (cake_def

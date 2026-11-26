@@ -227,8 +227,8 @@ let pan_globals_compile_decs_def = cake_def
       let s = word_add (pan_globals_context_globals_size ctxt)
                        (word_mul bytes_in_word (word (size_of_shape sh))) in
       let ctxt' = pan_globals_context_globals_fupd
-                    (K (pan_globals_context_globals ctxt |+ (v,sh,s)))
-                    (pan_globals_context_globals_size_fupd (K s) ctxt) in
+                    (combin_K (pan_globals_context_globals ctxt |+ (v,sh,s)))
+                    (pan_globals_context_globals_size_fupd (combin_K s) ctxt) in
       let (decs,funs,exns,ctxt'') = pan_globals_compile_decs ctxt' ds in
       (CONS (panLang_Store (panLang_Op asm_Sub [TopAddr; panLang_Const s])
                            (pan_globals_compile_exp ctxt e)) decs,
@@ -237,7 +237,7 @@ let pan_globals_compile_decs_def = cake_def
       let (decs,funs,exns,ctxt'') = pan_globals_compile_decs ctxt ds in
       (decs,
        CONS (Function (fun_decl_body_fupd
-                         (K (pan_globals_compile ctxt (fun_decl_body fi))) fi))
+                         (combin_K (pan_globals_compile ctxt (fun_decl_body fi))) fi))
             funs,
        exns,ctxt'')) /\
    (pan_globals_compile_decs ctxt (CONS (ExnDecl eid sh) ds) =
@@ -286,8 +286,8 @@ let fperm_ind = cake_ind "fperm";;
 let fperm_decs_def = cake_def
   `(fperm_decs f g ([]:((A)decl)list) = []) /\
    (fperm_decs f g (CONS (Function fi) decs) =
-      CONS (Function (fun_decl_name_fupd (K (fperm_name f g (fun_decl_name fi)))
-                        (fun_decl_body_fupd (K (fperm f g (fun_decl_body fi))) fi)))
+      CONS (Function (fun_decl_name_fupd (combin_K (fperm_name f g (fun_decl_name fi)))
+                        (fun_decl_body_fupd (combin_K (fperm f g (fun_decl_body fi))) fi)))
            (fperm_decs f g decs)) /\
    (fperm_decs f g (CONS d decs) = CONS d (fperm_decs f g decs))`;;
 

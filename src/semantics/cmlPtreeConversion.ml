@@ -90,9 +90,9 @@ let PTREEAUX_ADMISSIBLE_parsetree_CASE = prove
     (h1:(A1->B1)->P->(A,B)symbol#C->D)
     (h2:(A1->B1)->P->(B+num)#C->((A,B,C)parsetree)list->D).
      admissible (<<) p s e /\
-     admissible (<<) (\f (y1,y2,x). p f x /\ e f x = Lf (y1,y2))
+     admissible (<<) (\f (y1,y2,x). p f x /\ e f x = grammar_Lf (y1,y2))
                      (\(y1,y2,x). s x) (\f (y1,y2,x). h1 f x (y1,y2)) /\
-     admissible (<<) (\f (y1,y2,y3,x). p f x /\ e f x = Nd (y1,y2) y3)
+     admissible (<<) (\f (y1,y2,y3,x). p f x /\ e f x = grammar_Nd (y1,y2) y3)
                      (\(y1,y2,y3,x). s x) (\f (y1,y2,y3,x). h2 f x (y1,y2) y3)
      ==> admissible (<<) p s (\f x. parsetree_CASE (e f x) (h1 f x) (h2 f x))`,
   REPEAT GEN_TAC THEN REWRITE_TAC[admissible; FORALL_PAIR_THM] THEN
@@ -208,8 +208,8 @@ let tokcheck_def = cake_def
      OPTION_BIND (destLf pt) destTOK = SOME tok'`;;
 
 let ptree_UQTyop_def = cake_def
-  `(ptree_UQTyop (Lf (_:(token,MMLnonT)symbol#C)) = NONE) /\
-   (ptree_UQTyop (Nd (nt':(MMLnonT+num)#C) args) =
+  `(ptree_UQTyop (grammar_Lf (_:(token,MMLnonT)symbol#C)) = NONE) /\
+   (ptree_UQTyop (grammar_Nd (nt':(MMLnonT+num)#C) args) =
       if ~(FST nt' = INL nUQTyOp) then NONE
       else
         match args with
@@ -220,8 +220,8 @@ let ptree_UQTyop_def = cake_def
         | _ -> NONE)`;;
 
 let ptree_TyvarN_def = cake_def
-  `(ptree_TyvarN (Lf (_:(token,MMLnonT)symbol#C)) = NONE) /\
-   (ptree_TyvarN (Nd (nt':(MMLnonT+num)#C) args) =
+  `(ptree_TyvarN (grammar_Lf (_:(token,MMLnonT)symbol#C)) = NONE) /\
+   (ptree_TyvarN (grammar_Nd (nt':(MMLnonT+num)#C) args) =
       if ~(FST nt' = INL nTyvarN) then NONE
       else
         match args with
@@ -235,8 +235,8 @@ let Long_Short_def = cake_def
 let Long_Short_ind = cake_ind "Long_Short";;
 
 let ptree_Tyop_def = cake_def
-  `(ptree_Tyop (Lf (_:(token,MMLnonT)symbol#C)) = NONE) /\
-   (ptree_Tyop (Nd (nt':(MMLnonT+num)#C) args) =
+  `(ptree_Tyop (grammar_Lf (_:(token,MMLnonT)symbol#C)) = NONE) /\
+   (ptree_Tyop (grammar_Nd (nt':(MMLnonT+num)#C) args) =
       if ~(FST nt' = INL nTyOp) then NONE
       else
         match args with
@@ -266,8 +266,8 @@ let ptree_linfix_def = cake_def_wf
   `ptree_linfix (topnt:MMLnonT) (opn:token) (elnt:mlptree->A option)
                 (pt:mlptree) =
      match pt with
-       Lf _ -> NONE
-     | Nd nt' args ->
+       grammar_Lf _ -> NONE
+     | grammar_Nd nt' args ->
          if FST nt' = INL topnt then
            match args with
              [pt] -> OPTION_BIND (elnt pt) (\e. SOME [e])
@@ -300,10 +300,10 @@ let ptree_Type_def = cake_def_wf_clauses
                               (\pt. parsetree_size (\x:token. 0) (\x:MMLnonT. 0) (\x:C. 0) pt)
                               (\pt. parsetree_size (\x:token. 0) (\x:MMLnonT. 0) (\x:C. 0) pt))))`
   TERM_TAC
-  [`(ptree_Type:MMLnonT->(token,MMLnonT,C)parsetree->ast_t option) nt' (Lf _) =
+  [`(ptree_Type:MMLnonT->(token,MMLnonT,C)parsetree->ast_t option) nt' (grammar_Lf _) =
       NONE`;
    `(ptree_Type:MMLnonT->(token,MMLnonT,C)parsetree->ast_t option) nm
-      (Nd nt' args) =
+      (grammar_Nd nt' args) =
       if ~(FST nt' = INL nm) then NONE
       else if nm = nType then
         match args with
@@ -346,8 +346,8 @@ let ptree_Type_def = cake_def_wf_clauses
       else NONE`;
    `(ptree_Typelist2:(token,MMLnonT,C)parsetree->(ast_t list)option) ptree =
       match ptree with
-        Lf _ -> NONE
-      | Nd nt' args ->
+        grammar_Lf _ -> NONE
+      | grammar_Nd nt' args ->
           if ~(FST nt' = INL nTypeList2) then NONE
           else
             match args with
@@ -363,8 +363,8 @@ let ptree_Type_def = cake_def_wf_clauses
             | _ -> NONE`;
    `(ptree_TypeList1:(token,MMLnonT,C)parsetree->(ast_t list)option) ptree =
       match ptree with
-        Lf _ -> NONE
-      | Nd nt' args ->
+        grammar_Lf _ -> NONE
+      | grammar_Nd nt' args ->
           if ~(FST nt' = INL nTypeList1) then NONE
           else
             match args with
@@ -380,8 +380,8 @@ let ptree_Type_def = cake_def_wf_clauses
             | _ -> NONE`;
    `(ptree_PType:(token,MMLnonT,C)parsetree->(ast_t list)option) ptree =
       match ptree with
-        Lf _ -> NONE
-      | Nd nt' args ->
+        grammar_Lf _ -> NONE
+      | grammar_Nd nt' args ->
           if ~(FST nt' = INL nPType) then NONE
           else
             match args with
@@ -401,8 +401,8 @@ let ptree_Type_ind = cake_ind "ptree_Type";;
 let ptree_TypeName_def = cake_def
   `ptree_TypeName (ptree:mlptree) =
      match ptree with
-       Lf _ -> NONE
-     | Nd nt' args ->
+       grammar_Lf _ -> NONE
+     | grammar_Nd nt' args ->
          if FST nt' = INL nTypeName then
            match args with
              [opt] -> OPTION_BIND (ptree_UQTyop opt) (\opn. SOME ([],opn))
@@ -421,8 +421,8 @@ let ptree_TypeName_def = cake_def
          else NONE`;;
 
 let ptree_UQConstructorName_def = cake_def
-  `(ptree_UQConstructorName (Lf (_:(token,MMLnonT)symbol#C)) = NONE) /\
-   (ptree_UQConstructorName (Nd (nm:(MMLnonT+num)#C) args) =
+  `(ptree_UQConstructorName (grammar_Lf (_:(token,MMLnonT)symbol#C)) = NONE) /\
+   (ptree_UQConstructorName (grammar_Nd (nm:(MMLnonT+num)#C) args) =
       if ~(FST nm = INL nUQConstructorName) then NONE
       else
         match args with
@@ -432,8 +432,8 @@ let ptree_UQConstructorName_def = cake_def
 let ptree_ConstructorName_def = cake_def
   `ptree_ConstructorName (ast:(token,MMLnonT,C)parsetree) =
      match ast with
-       Lf _ -> NONE
-     | Nd nt' args ->
+       grammar_Lf _ -> NONE
+     | grammar_Nd nt' args ->
          if ~(FST nt' = INL nConstructorName) then NONE
          else
            match args with
@@ -463,13 +463,13 @@ let detuplify_pmatch = prove
  (CASE_TERM
   `!ty. detuplify ty = match ty with Attup args -> args | ty -> [ty]`,
   GEN_TAC THEN CASES_ON `ty:ast_t` THEN REWRITE_TAC[detuplify_def] THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[]);;
 
 let ptree_PTbase_def = cake_def
   `ptree_PTbase (ast:(token,MMLnonT,C)parsetree) =
      match ast with
-       Lf _ -> NONE
-     | Nd nt' args ->
+       grammar_Lf _ -> NONE
+     | grammar_Nd nt' args ->
          if FST nt' = INL nPTbase then
            match args with
              [pt] ->
@@ -488,8 +488,8 @@ let ptree_TbaseList_def = cake_def_wf
   TERM_TAC
   `ptree_TbaseList (ast:(token,MMLnonT,C)parsetree) =
      match ast with
-       Lf _ -> NONE
-     | Nd nt' args ->
+       grammar_Lf _ -> NONE
+     | grammar_Nd nt' args ->
          if FST nt' = INL nTbaseList then
            match args with
              [] -> SOME []
@@ -505,8 +505,8 @@ let ptree_TbaseList_ind = cake_ind "ptree_TbaseList";;
 let ptree_Dconstructor_def = cake_def
   `ptree_Dconstructor (ast:(token,MMLnonT,C)parsetree) =
      match ast with
-       Lf x -> NONE
-     | Nd nt' args ->
+       grammar_Lf x -> NONE
+     | grammar_Nd nt' args ->
          if FST nt' = INL nDconstructor then
            match args with
              [] -> NONE
@@ -523,8 +523,8 @@ let ptree_Dconstructor_def = cake_def
 let ptree_DtypeDecl_def = cake_def
   `ptree_DtypeDecl (pt:mlptree) =
      match pt with
-       Lf _ -> NONE
-     | Nd nt' args ->
+       grammar_Lf _ -> NONE
+     | grammar_Nd nt' args ->
          if FST nt' = INL nDtypeDecl then
            match args with
              [tynm_pt; eqt; dtc_pt] ->
@@ -539,8 +539,8 @@ let ptree_DtypeDecl_def = cake_def
 let ptree_TypeDec_def = cake_def
   `ptree_TypeDec (ptree:mlptree) =
      match ptree with
-       Lf _ -> NONE:type_def option
-     | Nd nt' args ->
+       grammar_Lf _ -> NONE:type_def option
+     | grammar_Nd nt' args ->
          if FST nt' = INL nTypeDec then
            match args with
              [datatype_pt; pt] ->
@@ -552,8 +552,8 @@ let ptree_TypeDec_def = cake_def
 let ptree_TypeAbbrevDec_def = cake_def
   `ptree_TypeAbbrevDec (ptree:mlptree) =
      match ptree with
-       Lf _ -> NONE:dec option
-     | Nd nt' args ->
+       grammar_Lf _ -> NONE:dec option
+     | grammar_Nd nt' args ->
          if FST nt' = INL nTypeAbbrevDec then
            match args with
              [typetok; tynm; eqtok; typ_pt] ->
@@ -575,8 +575,8 @@ let singleSymP_def = cake_def
    (singleSymP _ _ = NONE)`;;
 
 let ptree_Op_def = cake_def
-  `(ptree_Op (Lf (_:(token,MMLnonT)symbol#C)) = NONE:((D,mlstring)id)option) /\
-   (ptree_Op (Nd (nt':(MMLnonT+num)#C) subs) =
+  `(ptree_Op (grammar_Lf (_:(token,MMLnonT)symbol#C)) = NONE:((D,mlstring)id)option) /\
+   (ptree_Op (grammar_Nd (nt':(MMLnonT+num)#C) subs) =
       if FST nt' = INL nMultOps then
         if tokcheckl subs [StarT] then SOME (Short (implode "*"))
         else if tokcheckl subs [AlphaT (implode "mod")]
@@ -600,8 +600,8 @@ let ptree_Op_def = cake_def
       else NONE)`;;
 
 let ptree_V_def = cake_def
-  `(ptree_V (Lf (_:(token,MMLnonT)symbol#C)) = NONE) /\
-   (ptree_V (Nd (nt':(MMLnonT+num)#C) subs) =
+  `(ptree_V (grammar_Lf (_:(token,MMLnonT)symbol#C)) = NONE) /\
+   (ptree_V (grammar_Nd (nt':(MMLnonT+num)#C) subs) =
       OPTION_IGNORE_BIND (OPTION_GUARD (FST nt' = INL nV))
         (match subs with
            [pt] ->
@@ -610,8 +610,8 @@ let ptree_V_def = cake_def
          | _ -> NONE))`;;
 
 let ptree_FQV_def = cake_def
-  `(ptree_FQV (Lf (_:(token,MMLnonT)symbol#C)) = NONE) /\
-   (ptree_FQV (Nd (nt':(MMLnonT+num)#C) args) =
+  `(ptree_FQV (grammar_Lf (_:(token,MMLnonT)symbol#C)) = NONE) /\
+   (ptree_FQV (grammar_Nd (nt':(MMLnonT+num)#C) args) =
       if ~(FST nt' = INL nFQV) then NONE
       else
         match args with
@@ -644,12 +644,12 @@ let EtoPat_def = sem1aux_def (list_mk_conj
    `EtoPat (_:exp) = NONE:pat option`]);;
 
 let ptree_OpID_def = cake_def
-  `(ptree_OpID (Lf (_:(token,MMLnonT)symbol#C)) = NONE) /\
-   (ptree_OpID (Nd (nt':(MMLnonT+num)#C) subs) =
+  `(ptree_OpID (grammar_Lf (_:(token,MMLnonT)symbol#C)) = NONE) /\
+   (ptree_OpID (grammar_Nd (nt':(MMLnonT+num)#C) subs) =
       if ~(FST nt' = INL nOpID) then NONE
       else
         match subs with
-          [Lf (TOK tk,_)] ->
+          [grammar_Lf (grammar_TOK tk,_)] ->
             OPTION_CHOICE
              (OPTION_CHOICE
               (OPTION_CHOICE
@@ -699,10 +699,10 @@ let ptree_Pattern_def = cake_def_wf_clauses
                 (\p. parsetree_size (\x:token. 0) (\x:MMLnonT. 0) (\x:C. 0) (SND p))
                 (\pt. parsetree_size (\x:token. 0) (\x:MMLnonT. 0) (\x:C. 0) pt))`
   TERM_TAC
-  [`(ptree_Pattern:MMLnonT->(token,MMLnonT,C)parsetree->pat option) nt' (Lf _) =
+  [`(ptree_Pattern:MMLnonT->(token,MMLnonT,C)parsetree->pat option) nt' (grammar_Lf _) =
       NONE`;
    `(ptree_Pattern:MMLnonT->(token,MMLnonT,C)parsetree->pat option) nt'
-      (Nd nm args) =
+      (grammar_Nd nm args) =
       if ~(INL nt' = FST nm) then NONE
       else if FST nm = INL nPbase then
         match args with
@@ -801,8 +801,8 @@ let ptree_Pattern_def = cake_def_wf_clauses
                | _ -> SOME (Pcon NONE pl)))
         | _ -> NONE
       else NONE`;
-   `(ptree_Plist:(token,MMLnonT,C)parsetree->(pat list)option) (Lf _) = NONE`;
-   `(ptree_Plist:(token,MMLnonT,C)parsetree->(pat list)option) (Nd nm args) =
+   `(ptree_Plist:(token,MMLnonT,C)parsetree->(pat list)option) (grammar_Lf _) = NONE`;
+   `(ptree_Plist:(token,MMLnonT,C)parsetree->(pat list)option) (grammar_Nd nm args) =
       if ~(FST nm = INL nPatternList) then NONE
       else
         match args with
@@ -829,8 +829,8 @@ let ptree_PbaseList1_def = cake_def_wf
   `MEASURE (\pt:(token,MMLnonT,C)parsetree.
               parsetree_size (\x:token. 0) (\x:MMLnonT. 0) (\x:C. 0) pt)`
   TERM_TAC
-  `(ptree_PbaseList1 (Lf (_:(token,MMLnonT)symbol#C)) = NONE) /\
-   (ptree_PbaseList1 (Nd (nm:(MMLnonT+num)#C) args) =
+  `(ptree_PbaseList1 (grammar_Lf (_:(token,MMLnonT)symbol#C)) = NONE) /\
+   (ptree_PbaseList1 (grammar_Nd (nm:(MMLnonT+num)#C) args) =
       if ~(FST nm = INL nPbaseList1) then NONE
       else
         match args with
@@ -901,8 +901,8 @@ let mkFun_def = cake_def
   `mkFun (p:pat) (b:exp) = UNCURRY Fun (dePat p b)`;;
 
 let ptree_Eliteral_def = cake_def
-  `(ptree_Eliteral (Lf (_:(token,MMLnonT)symbol#C)) = NONE) /\
-   (ptree_Eliteral (Nd (nt':(MMLnonT+num)#C) subs) =
+  `(ptree_Eliteral (grammar_Lf (_:(token,MMLnonT)symbol#C)) = NONE) /\
+   (ptree_Eliteral (grammar_Nd (nt':(MMLnonT+num)#C) subs) =
       OPTION_IGNORE_BIND
         (OPTION_GUARD (LENGTH subs = 1 /\ FST nt' = INL nEliteral))
         (OPTION_BIND (destLf (HD subs)) (\lf.
@@ -940,8 +940,8 @@ let ptree_Expr_def = cake_def_wf_clauses
       `:mlptree`; `:mlptree`; `:mlptree`; `:mlptree`; `:mlptree`;
       `:mlptree`])
   TERM_TAC
-  [`(ptree_Expr:MMLnonT->mlptree->exp option) ent (Lf x) = NONE`;
-   `(ptree_Expr:MMLnonT->mlptree->exp option) ent (Nd (nt',loc) subs) =
+  [`(ptree_Expr:MMLnonT->mlptree->exp option) ent (grammar_Lf x) = NONE`;
+   `(ptree_Expr:MMLnonT->mlptree->exp option) ent (grammar_Nd (nt',loc) subs) =
       OPTION_BIND
         (if INL ent = nt' then
            if nt' = INL nEbase then
@@ -1132,8 +1132,8 @@ let ptree_Expr_def = cake_def_wf_clauses
         (\e. SOME (bind_loc e loc))`;
    `(ptree_Exprlist:MMLnonT->mlptree->(exp list)option) nm ast =
       match ast with
-        Lf _ -> NONE
-      | Nd (nt',_) subs ->
+        grammar_Lf _ -> NONE
+      | grammar_Nd (nt',_) subs ->
           if nt' = INL nElist1 then
             match subs with
               [sing] ->
@@ -1156,8 +1156,8 @@ let ptree_Expr_def = cake_def_wf_clauses
           else NONE`;
    `(ptree_AndFDecls:mlptree->((mlstring#mlstring#exp)list)option) ast =
       match ast with
-        Lf _ -> NONE
-      | Nd (nt',_) subs ->
+        grammar_Lf _ -> NONE
+      | grammar_Nd (nt',_) subs ->
           if nt' = INL nAndFDecls then
             match subs with
               [single] ->
@@ -1173,8 +1173,8 @@ let ptree_Expr_def = cake_def_wf_clauses
           else NONE`;
    `(ptree_FDecl:mlptree->(mlstring#mlstring#exp)option) ast =
       match ast with
-        Lf _ -> NONE
-      | Nd (nt',_) subs ->
+        grammar_Lf _ -> NONE
+      | grammar_Nd (nt',_) subs ->
           if nt' = INL nFDecl then
             match subs with
               [fname_pt; pats_pt; eqt; body_pt] ->
@@ -1191,8 +1191,8 @@ let ptree_Expr_def = cake_def_wf_clauses
    `(ptree_LetDecs:mlptree->
        (((pat#exp)+(mlstring#mlstring#exp)list)list)option) ast =
       match ast with
-        Lf _ -> NONE
-      | Nd (nt',_) args ->
+        grammar_Lf _ -> NONE
+      | grammar_Nd (nt',_) args ->
           if ~(nt' = INL nLetDecs) then NONE
           else
             match args with
@@ -1210,8 +1210,8 @@ let ptree_Expr_def = cake_def_wf_clauses
    `(ptree_LetDec:mlptree->((pat#exp)+(mlstring#mlstring#exp)list)option)
       ast =
       match ast with
-        Lf _ -> NONE
-      | Nd (nt',_) args ->
+        grammar_Lf _ -> NONE
+      | grammar_Nd (nt',_) args ->
           if ~(nt' = INL nLetDec) then NONE
           else
             match args with
@@ -1229,8 +1229,8 @@ let ptree_Expr_def = cake_def_wf_clauses
                      ((ptree_Expr:MMLnonT->mlptree->exp option) nE e_pt) (\e.
                    SOME (INL (p,e)))))
             | _ -> NONE`;
-   `(ptree_PEs:mlptree->((pat#exp)list)option) (Lf x) = NONE`;
-   `(ptree_PEs:mlptree->((pat#exp)list)option) (Nd (nt',loc) subs) =
+   `(ptree_PEs:mlptree->((pat#exp)list)option) (grammar_Lf x) = NONE`;
+   `(ptree_PEs:mlptree->((pat#exp)list)option) (grammar_Nd (nt',loc) subs) =
       if ~(nt' = INL nPEs) then NONE
       else
         match subs with
@@ -1242,8 +1242,8 @@ let ptree_Expr_def = cake_def_wf_clauses
                match p with
                  (e,pes) -> SOME (CONS (pat,e) pes))))
         | _ -> NONE`;
-   `(ptree_PE:mlptree->(exp#(pat#exp)list)option) (Lf x) = NONE`;
-   `(ptree_PE:mlptree->(exp#(pat#exp)list)option) (Nd (nt',loc) subs) =
+   `(ptree_PE:mlptree->(exp#(pat#exp)list)option) (grammar_Lf x) = NONE`;
+   `(ptree_PE:mlptree->(exp#(pat#exp)list)option) (grammar_Nd (nt',loc) subs) =
       if ~(nt' = INL nPE) then NONE
       else
         match subs with
@@ -1284,8 +1284,8 @@ let ptree_Expr_def = cake_def_wf_clauses
                OPTION_BIND (ptree_PE else_pt) (\p.
                match p with (ee,rest) -> SOME (If ge te ee,rest)))))
         | _ -> NONE`;
-   `(ptree_PEsfx:mlptree->(bool#(pat#exp)list)option) (Lf x) = NONE`;
-   `(ptree_PEsfx:mlptree->(bool#(pat#exp)list)option) (Nd (nt',loc) subs) =
+   `(ptree_PEsfx:mlptree->(bool#(pat#exp)list)option) (grammar_Lf x) = NONE`;
+   `(ptree_PEsfx:mlptree->(bool#(pat#exp)list)option) (grammar_Nd (nt',loc) subs) =
       if ~(nt' = INL nPEsfx) then NONE
       else
         match subs with
@@ -1298,8 +1298,8 @@ let ptree_Expr_def = cake_def_wf_clauses
               (OPTION_IGNORE_BIND (OPTION_GUARD (tokcheck handlebar_tok BarT))
                  (OPTION_BIND (ptree_PEs pes_pt) (\pes. SOME (F,pes))))
         | _ -> NONE`;
-   `(ptree_Eseq:mlptree->(exp list)option) (Lf x) = NONE`;
-   `(ptree_Eseq:mlptree->(exp list)option) (Nd (nt',loc) subs) =
+   `(ptree_Eseq:mlptree->(exp list)option) (grammar_Lf x) = NONE`;
+   `(ptree_Eseq:mlptree->(exp list)option) (grammar_Nd (nt',loc) subs) =
       if ~(nt' = INL nEseq) then NONE
       else
         match subs with
@@ -1332,8 +1332,8 @@ let ptree_Expr_others =
   end_itlist CONJ (snd(chop_list 2 (CONJUNCTS ptree_Expr_def)));;
 
 let ptree_StructName_def = cake_def
-  `(ptree_StructName (Lf (_:(token,MMLnonT)symbol#C)) = NONE) /\
-   (ptree_StructName (Nd (nm:(MMLnonT+num)#C) args) =
+  `(ptree_StructName (grammar_Lf (_:(token,MMLnonT)symbol#C)) = NONE) /\
+   (ptree_StructName (grammar_Nd (nm:(MMLnonT+num)#C) args) =
       if ~(FST nm = INL nStructName) then NONE
       else
         match args with
@@ -1341,9 +1341,9 @@ let ptree_StructName_def = cake_def
         | _ -> NONE)`;;
 
 let ptree_OptTypEqn_def = cake_def
-  `(ptree_OptTypEqn (Lf (_:(token,MMLnonT)symbol#C)) =
+  `(ptree_OptTypEqn (grammar_Lf (_:(token,MMLnonT)symbol#C)) =
       NONE:(ast_t option)option) /\
-   (ptree_OptTypEqn (Nd (nt':(MMLnonT+num)#C) args) =
+   (ptree_OptTypEqn (grammar_Nd (nt':(MMLnonT+num)#C) args) =
       if ~(FST nt' = INL nOptTypEqn) then NONE
       else
         match args with
@@ -1358,8 +1358,8 @@ let ptree_OptTypEqn_def = cake_def
 (* computed: every clause returns SOME one, as in HOL4                      *)
 
 let ptree_SpecLine_def = cake_def
-  `(ptree_SpecLine (Lf (_:(token,MMLnonT)symbol#locs)) = NONE) /\
-   (ptree_SpecLine (Nd (nt':(MMLnonT+num)#locs) args) =
+  `(ptree_SpecLine (grammar_Lf (_:(token,MMLnonT)symbol#locs)) = NONE) /\
+   (ptree_SpecLine (grammar_Nd (nt':(MMLnonT+num)#locs) args) =
       if ~(FST nt' = INL nSpecLine) then NONE
       else
         match args with
@@ -1387,8 +1387,8 @@ let ptree_SpeclineList_def = cake_def_wf
   `MEASURE (\pt:mlptree.
               parsetree_size (\x:token. 0) (\x:MMLnonT. 0) (\x:locs. 0) pt)`
   TERM_TAC
-  `(ptree_SpeclineList (Lf (_:(token,MMLnonT)symbol#locs)) = NONE) /\
-   (ptree_SpeclineList (Nd (nt':(MMLnonT+num)#locs) args) =
+  `(ptree_SpeclineList (grammar_Lf (_:(token,MMLnonT)symbol#locs)) = NONE) /\
+   (ptree_SpeclineList (grammar_Nd (nt':(MMLnonT+num)#locs) args) =
       if ~(FST nt' = INL nSpecLineList) then NONE
       else
         match args with
@@ -1404,8 +1404,8 @@ let ptree_SpeclineList_def = cake_def_wf
 let ptree_SpeclineList_ind = cake_ind "ptree_SpeclineList";;
 
 let ptree_SignatureValue_def = cake_def
-  `(ptree_SignatureValue (Lf (_:(token,MMLnonT)symbol#locs)) = NONE) /\
-   (ptree_SignatureValue (Nd (nt':(MMLnonT+num)#locs) args) =
+  `(ptree_SignatureValue (grammar_Lf (_:(token,MMLnonT)symbol#locs)) = NONE) /\
+   (ptree_SignatureValue (grammar_Nd (nt':(MMLnonT+num)#locs) args) =
       if ~(FST nt' = INL nSignatureValue) then NONE
       else
         match args with
@@ -1420,8 +1420,8 @@ let ptree_Decl_def = cake_def_wf_clauses
   TERM_TAC
   [`(ptree_Decl:mlptree->dec option) pt =
       match pt with
-        Lf _ -> NONE
-      | Nd (nt',locs) args ->
+        grammar_Lf _ -> NONE
+      | grammar_Nd (nt',locs) args ->
           if ~(nt' = INL nDecl) then NONE
           else
             match args with
@@ -1456,8 +1456,8 @@ let ptree_Decl_def = cake_def_wf_clauses
                    OPTION_BIND (ptree_Decls decls2_pt) (\decls2.
                    SOME (Dlocal decls1 decls2))))
             | _ -> NONE`;
-   `(ptree_Decls:mlptree->(dec list)option) (Lf _) = NONE`;
-   `(ptree_Decls:mlptree->(dec list)option) (Nd (nt',_) args) =
+   `(ptree_Decls:mlptree->(dec list)option) (grammar_Lf _) = NONE`;
+   `(ptree_Decls:mlptree->(dec list)option) (grammar_Nd (nt',_) args) =
       if ~(nt' = INL nDecls) then NONE
       else
         match args with
@@ -1469,8 +1469,8 @@ let ptree_Decl_def = cake_def_wf_clauses
               OPTION_BIND (ptree_Decls ds_pt) (\ds.
               SOME (CONS d ds)))
         | _ -> NONE`;
-   `(ptree_Structure:mlptree->dec option) (Lf _) = NONE`;
-   `(ptree_Structure:mlptree->dec option) (Nd nt' args) =
+   `(ptree_Structure:mlptree->dec option) (grammar_Lf _) = NONE`;
+   `(ptree_Structure:mlptree->dec option) (grammar_Nd nt' args) =
       if ~(FST nt' = INL nStructure) then NONE
       else
         match args with
@@ -1482,8 +1482,8 @@ let ptree_Decl_def = cake_def_wf_clauses
               (OPTION_BIND (ptree_StructName sname_pt) (\sname.
                OPTION_BIND
                  (match asc_opt with
-                    Lf _ -> NONE
-                  | Nd nt'' args' ->
+                    grammar_Lf _ -> NONE
+                  | grammar_Nd nt'' args' ->
                       if ~(FST nt'' = INL nOptionalSignatureAscription) then NONE
                       else
                         match args' with
@@ -1503,8 +1503,8 @@ let ptree_Decl_ind = cake_ind "ptree_Decl";;
 let ptree_TopLevelDecs_def = cake_def_wf_clauses
   (PTREEAUX_measure [`:mlptree`; `:mlptree`])
   TERM_TAC
-  [`(ptree_TopLevelDecs:mlptree->(dec list)option) (Lf _) = NONE`;
-   `(ptree_TopLevelDecs:mlptree->(dec list)option) (Nd nt' args) =
+  [`(ptree_TopLevelDecs:mlptree->(dec list)option) (grammar_Lf _) = NONE`;
+   `(ptree_TopLevelDecs:mlptree->(dec list)option) (grammar_Nd nt' args) =
       if ~(FST nt' = INL nTopLevelDecs) then NONE
       else
         match args with
@@ -1522,8 +1522,8 @@ let ptree_TopLevelDecs_def = cake_def_wf_clauses
                OPTION_BIND (ptree_TopLevelDecs tds_pt) (\tds.
                SOME (CONS (Dlet (SND nt') (Pvar (implode "it")) e) tds))))
         | _ -> NONE`;
-   `(ptree_NonETopLevelDecs:mlptree->(dec list)option) (Lf _) = NONE`;
-   `(ptree_NonETopLevelDecs:mlptree->(dec list)option) (Nd nt' args) =
+   `(ptree_NonETopLevelDecs:mlptree->(dec list)option) (grammar_Lf _) = NONE`;
+   `(ptree_NonETopLevelDecs:mlptree->(dec list)option) (grammar_Nd nt' args) =
       if ~(FST nt' = INL nNonETopLevelDecs) then NONE
       else
         match args with

@@ -237,8 +237,8 @@ let tymatch_SOME = prove
     ABBREV_TAC `v = REV_ASSOCD (Tyvar name) sids0 (Tyvar name)` THEN
     ASM_CASES_TAC `v = Tyvar name` THEN ASM_REWRITE_TAC[] THENL
      [ASM_CASES_TAC `MEM (name:mlstring) sids1` THEN ASM_REWRITE_TAC[] THEN
-      CASE_REWRITE_TAC[] THEN REWRITE_TAC[injectivity "option"];
-      CASE_REWRITE_TAC[] THEN REWRITE_TAC[injectivity "option"]] THENL
+      CAKE_REWRITE_TAC[] THEN REWRITE_TAC[injectivity "option"];
+      CAKE_REWRITE_TAC[] THEN REWRITE_TAC[injectivity "option"]] THENL
      [(* the variable is already fixed: ty is the variable itself *)
       DISCH_THEN(LABEL_TAC "ih") THEN COND_CASES_TAC THEN
       REWRITE_TAC[distinctness "option"] THEN

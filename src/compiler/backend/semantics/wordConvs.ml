@@ -571,7 +571,7 @@ let max_var_intro = prove
    [MATCH_MP_TAC every_var_inst_ind THEN REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
     TRY(CASES_ON `ri:(A)reg_imm`) THEN
     REWRITE_TAC[every_var_inst_def; max_var_inst_def; every_var_imm_def] THEN
-    CASE_REWRITE_TAC[] THEN TRY COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN TRY COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
     REPEAT STRIP_TAC THEN WORDP2AUX_MAX_TAC THEN ASM_REWRITE_TAC[]; ALL_TAC] THEN
   MATCH_MP_TAC max_var_ind THEN
   REWRITE_TAC[max_var_def; wl_every_var_def; cutsets_max_def; every_name_def] THEN

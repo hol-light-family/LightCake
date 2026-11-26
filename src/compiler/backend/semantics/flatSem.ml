@@ -170,7 +170,7 @@ let flat_do_opapp_def = cake_def
            (match find_recfun n funs with
               SOME (n,e) ->
                 SOME (flat_environment_v_fupd
-                        (K (CONS (n,v)
+                        (combin_K (CONS (n,v)
                               (flat_build_rec_env funs env
                                  (flat_environment_v env)))) env,e)
             | NONE -> NONE)
@@ -349,11 +349,11 @@ let flat_do_app_def = sem1aux_def
           else NONE)
      | (Src Opassign,[flat_Loc _ lnum; v]) ->
          (match store_assign lnum (Refv v) (flat_state_refs s) with
-            SOME s' -> SOME (flat_state_refs_fupd (K s') s,Rval Unitv)
+            SOME s' -> SOME (flat_state_refs_fupd (combin_K s') s,Rval Unitv)
           | NONE -> NONE)
      | (Src Opref,[v]) ->
          let (s',n) = store_alloc (Refv v) (flat_state_refs s) in
-         SOME (flat_state_refs_fupd (K s') s,Rval (flat_Loc T n))
+         SOME (flat_state_refs_fupd (combin_K s') s,Rval (flat_Loc T n))
      | (Src Aw8alloc,[flat_Litv (IntLit n); flat_Litv (Word8 w)]) ->
          if n < &0 then
            SOME (s,Rerr (Rraise subscript_exn_v))
@@ -361,7 +361,7 @@ let flat_do_app_def = sem1aux_def
            let (s',lnum) =
              store_alloc (W8array (REPLICATE (num_of_int (abs n)) w))
                (flat_state_refs s) in
-           SOME (flat_state_refs_fupd (K s') s,Rval (flat_Loc T lnum))
+           SOME (flat_state_refs_fupd (combin_K s') s,Rval (flat_Loc T lnum))
      | (Src Aw8sub,[flat_Loc _ lnum; flat_Litv (IntLit i)]) ->
          (match store_lookup lnum (flat_state_refs s) with
             SOME (W8array ws) ->
@@ -405,7 +405,7 @@ let flat_do_app_def = sem1aux_def
                   (match store_assign lnum (W8array (LUPDATE w n ws))
                            (flat_state_refs s) with
                      NONE -> NONE
-                   | SOME s' -> SOME (flat_state_refs_fupd (K s') s,Rval Unitv))
+                   | SOME s' -> SOME (flat_state_refs_fupd (combin_K s') s,Rval Unitv))
           | _ -> NONE)
      | (Src Aw8update_unsafe,[flat_Loc _ lnum; flat_Litv (IntLit i);
                               flat_Litv (Word8 w)]) ->
@@ -421,7 +421,7 @@ let flat_do_app_def = sem1aux_def
                   (match store_assign lnum (W8array (LUPDATE w n ws))
                            (flat_state_refs s) with
                      NONE -> NONE
-                   | SOME s' -> SOME (flat_state_refs_fupd (K s') s,Rval Unitv))
+                   | SOME s' -> SOME (flat_state_refs_fupd (combin_K s') s,Rval Unitv))
           | _ -> NONE)
      | (Src CopyStrStr,[flat_Litv (StrLit str); flat_Litv (IntLit off);
                         flat_Litv (IntLit len)]) ->
@@ -440,7 +440,7 @@ let flat_do_app_def = sem1aux_def
                | SOME cs ->
                    (match store_assign dst (W8array (chars_to_ws cs))
                             (flat_state_refs s) with
-                      SOME s' -> SOME (flat_state_refs_fupd (K s') s,Rval Unitv)
+                      SOME s' -> SOME (flat_state_refs_fupd (combin_K s') s,Rval Unitv)
                     | _ -> NONE))
           | _ -> NONE)
      | (Src CopyAw8Str,[flat_Loc _ src; flat_Litv (IntLit off);
@@ -463,7 +463,7 @@ let flat_do_app_def = sem1aux_def
                  NONE -> SOME (s,Rerr (Rraise subscript_exn_v))
                | SOME ws ->
                    (match store_assign dst (W8array ws) (flat_state_refs s) with
-                      SOME s' -> SOME (flat_state_refs_fupd (K s') s,Rval Unitv)
+                      SOME s' -> SOME (flat_state_refs_fupd (combin_K s') s,Rval Unitv)
                     | _ -> NONE))
           | _ -> NONE)
      | (Src XorAw8Str_unsafe,[flat_Loc _ dst; flat_Litv (StrLit str_arg)]) ->
@@ -474,7 +474,7 @@ let flat_do_app_def = sem1aux_def
                | SOME new_bs ->
                    (match store_assign dst (W8array new_bs) (flat_state_refs s) with
                       NONE -> NONE
-                    | SOME s' -> SOME (flat_state_refs_fupd (K s') s,Rval Unitv)))
+                    | SOME s' -> SOME (flat_state_refs_fupd (combin_K s') s,Rval Unitv)))
           | _ -> NONE)
      | (Src Implode,[v]) ->
          (match flat_v_to_char_list v with
@@ -527,10 +527,10 @@ let flat_do_app_def = sem1aux_def
            let (s',lnum) =
              store_alloc (Varray (REPLICATE (num_of_int (abs n)) v))
                (flat_state_refs s) in
-           SOME (flat_state_refs_fupd (K s') s,Rval (flat_Loc T lnum))
+           SOME (flat_state_refs_fupd (combin_K s') s,Rval (flat_Loc T lnum))
      | (Src AallocFixed,vs) ->
          let (s',lnum) = store_alloc (Varray vs) (flat_state_refs s) in
-         SOME (flat_state_refs_fupd (K s') s,Rval (flat_Loc T lnum))
+         SOME (flat_state_refs_fupd (combin_K s') s,Rval (flat_Loc T lnum))
      | (Src Asub,[flat_Loc _ lnum; flat_Litv (IntLit i)]) ->
          (match store_lookup lnum (flat_state_refs s) with
             SOME (Varray vs) ->
@@ -573,7 +573,7 @@ let flat_do_app_def = sem1aux_def
                   (match store_assign lnum (Varray (LUPDATE v n vs))
                            (flat_state_refs s) with
                      NONE -> NONE
-                   | SOME s' -> SOME (flat_state_refs_fupd (K s') s,Rval Unitv))
+                   | SOME s' -> SOME (flat_state_refs_fupd (combin_K s') s,Rval Unitv))
           | _ -> NONE)
      | (Src Aupdate_unsafe,[flat_Loc _ lnum; flat_Litv (IntLit i); v]) ->
          (match store_lookup lnum (flat_state_refs s) with
@@ -588,7 +588,7 @@ let flat_do_app_def = sem1aux_def
                   (match store_assign lnum (Varray (LUPDATE v n vs))
                            (flat_state_refs s) with
                      NONE -> NONE
-                   | SOME s' -> SOME (flat_state_refs_fupd (K s') s,Rval Unitv))
+                   | SOME s' -> SOME (flat_state_refs_fupd (combin_K s') s,Rval Unitv))
           | _ -> NONE)
      | (Src ListAppend,[x1; x2]) ->
          (match (flat_v_to_list x1,flat_v_to_list x2) with
@@ -606,8 +606,8 @@ let flat_do_app_def = sem1aux_def
                | FFI_return t' ws' ->
                    (match store_assign lnum (W8array ws') (flat_state_refs s) with
                       SOME s' ->
-                        SOME (flat_state_refs_fupd (K s')
-                                (flat_state_ffi_fupd (K t') s),Rval Unitv)
+                        SOME (flat_state_refs_fupd (combin_K s')
+                                (flat_state_ffi_fupd (combin_K t') s),Rval Unitv)
                     | NONE -> NONE))
           | _ -> NONE)
      | (Src Opapp,_) -> NONE
@@ -617,24 +617,24 @@ let flat_do_app_def = sem1aux_def
             (AllocThunk m,[v]) ->
               (if flat_bad_thunk_update m v (flat_state_refs s) then NONE else
                let (r,n) = store_alloc (Thunk m v) (flat_state_refs s) in
-               SOME (flat_state_refs_fupd (K r) s,Rval (flat_Loc F n)))
+               SOME (flat_state_refs_fupd (combin_K r) s,Rval (flat_Loc F n)))
           | (UpdateThunk m,[flat_Loc F lnum; v]) ->
               (if flat_bad_thunk_update m v (flat_state_refs s) then NONE else
                match store_assign lnum (Thunk m v) (flat_state_refs s) with
-                 SOME r -> SOME (flat_state_refs_fupd (K r) s,
+                 SOME r -> SOME (flat_state_refs_fupd (combin_K r) s,
                                  Rval (flat_Conv NONE []))
                | NONE -> NONE)
           | _ -> NONE)
      | (Src _,_) -> NONE
      | (GlobalVarAlloc n,[]) ->
          SOME (flat_state_globals_fupd
-                 (K (APPEND (flat_state_globals s) (REPLICATE n NONE))) s,
+                 (combin_K (APPEND (flat_state_globals s) (REPLICATE n NONE))) s,
                Rval Unitv)
      | (GlobalVarInit n,[v]) ->
          if n < LENGTH (flat_state_globals s) /\
             IS_NONE (EL n (flat_state_globals s)) then
            SOME (flat_state_globals_fupd
-                   (K (LUPDATE (SOME v) n (flat_state_globals s))) s,
+                   (combin_K (LUPDATE (SOME v) n (flat_state_globals s))) s,
                  Rval Unitv)
          else
            NONE
@@ -743,14 +743,14 @@ let pmatch_rows_def = cake_def
 
 let flat_dec_clock_def = cake_def
   `flat_dec_clock (s:(C,FFI)flat_state) =
-     flat_state_clock_fupd (K (flat_state_clock s - 1)) s`;;
+     flat_state_clock_fupd (combin_K (flat_state_clock s - 1)) s`;;
 
 (* HOL4 infers the most general type: s and s1 are states of independent    *)
 (* types                                                                     *)
 
 let flat_fix_clock_def = cake_def
   `flat_fix_clock (s:(C,FFI)flat_state) ((s1:(D,E)flat_state),(res:R)) =
-     (flat_state_clock_fupd (K (MIN (flat_state_clock s) (flat_state_clock s1)))
+     (flat_state_clock_fupd (combin_K (MIN (flat_state_clock s) (flat_state_clock s1)))
         s1,res)`;;
 
 (* HOL4 [local] *)
@@ -780,7 +780,7 @@ let flat_do_eval_def = cake_def
                    if bytes = bytes' /\ data = data' /\ ~(decs = []) /\
                       FST (new_oracle 0) = st'
                    then SOME (decs,
-                              install_config_compile_oracle_fupd (K new_oracle)
+                              install_config_compile_oracle_fupd (combin_K new_oracle)
                                 eval_config,
                               Unitv)
                    else NONE
@@ -944,7 +944,7 @@ let FLATSEMAUX_evaluate_clauses1 =
            | Match (env',p',e') ->
                if ALL_DISTINCT (flat_pat_bindings p')
                then flat_evaluate (flat_environment_v_fupd
-                                     (K (APPEND env' (flat_environment_v env))) env)
+                                     (combin_K (APPEND env' (flat_environment_v env))) env)
                                   s' [e']
                else (s',Rerr (Rabort Rtype_error)))
       | res -> res) /\
@@ -979,13 +979,13 @@ let FLATSEMAUX_evaluate_clauses2 =
             (match flat_do_eval (REVERSE vs) (flat_state_eval_config s') with
                SOME (decs,eval_config,retv) ->
                  if flat_state_clock
-                      (flat_state_eval_config_fupd (K eval_config) s') = 0 then
-                   (flat_state_eval_config_fupd (K eval_config) s',
+                      (flat_state_eval_config_fupd (combin_K eval_config) s') = 0 then
+                   (flat_state_eval_config_fupd (combin_K eval_config) s',
                     Rerr (Rabort Rtimeout_error))
                  else
                    (match flat_evaluate_decs
                             (flat_dec_clock
-                               (flat_state_eval_config_fupd (K eval_config) s'))
+                               (flat_state_eval_config_fupd (combin_K eval_config) s'))
                             decs with
                       (s2,NONE) -> (s2,Rval [retv])
                     | (s2,SOME e) -> (s2,Rerr e))
@@ -1002,7 +1002,7 @@ let FLATSEMAUX_evaluate_clauses2 =
                     (s2,Rval vs2) ->
                       (match flat_update_thunk vs (flat_state_refs s2) vs2 with
                          NONE -> (s2,Rerr (Rabort Rtype_error))
-                       | SOME refs -> (flat_state_refs_fupd (K refs) s2,Rval vs2))
+                       | SOME refs -> (flat_state_refs_fupd (combin_K refs) s2,Rval vs2))
                   | (s2,Rerr e) -> (s2,Rerr e)))
           else
             (match flat_do_app s' op (REVERSE vs) with
@@ -1025,7 +1025,7 @@ let FLATSEMAUX_evaluate_clauses2 =
            | Match (env',p',e') ->
                if ALL_DISTINCT (flat_pat_bindings p')
                then flat_evaluate (flat_environment_v_fupd
-                                     (K (APPEND env' (flat_environment_v env))) env)
+                                     (combin_K (APPEND env' (flat_environment_v env))) env)
                                   s' [e']
                else (s',Rerr (Rabort Rtype_error)))
       | res -> res) /\
@@ -1037,7 +1037,7 @@ let FLATSEMAUX_evaluate_clauses2 =
    (flat_evaluate env s [flat_Letrec _ funs e] =
       if ALL_DISTINCT (MAP FST funs)
       then flat_evaluate (flat_environment_v_fupd
-                            (K (flat_build_rec_env funs env (flat_environment_v env)))
+                            (combin_K (flat_build_rec_env funs env (flat_environment_v env)))
                             env) s [e]
       else (s,Rerr (Rabort Rtype_error)))`;;
 

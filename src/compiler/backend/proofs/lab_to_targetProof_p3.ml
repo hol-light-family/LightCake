@@ -204,7 +204,7 @@ let loc_to_pc_append = prove
   GEN_TAC THEN GEN_TAC THEN LIST_INDUCT_TAC THENL
    [REWRITE_TAC[APPEND; loc_to_pc_def; MAP; SUM; ADD_CLAUSES] THEN
     GEN_TAC THEN DISCH_TAC THEN CASES_ON `loc_to_pc l1 l2 (c2:((A)sec)list)` THEN
-    CASE_REWRITE_TAC[];
+    CAKE_REWRITE_TAC[];
     ALL_TAC] THEN
   X_GEN_TAC `c2:((A)sec)list` THEN REWRITE_TAC[APPEND; ALL; ALL_APPEND] THEN STRIP_TAC THEN
   FIRST_X_ASSUM(MP_TAC o SPEC `c2:((A)sec)list`) THEN ASM_REWRITE_TAC[ALL_APPEND] THEN
@@ -213,14 +213,14 @@ let loc_to_pc_append = prove
     STRIP_ASSUME_TAC THENL [ASM_REWRITE_TAC[ALL; ALL_APPEND]; ALL_TAC] THEN
   MP_TAC(ISPECL [`l1:num`; `l2:num`; `CONS (h:(A)sec) (APPEND t c2)`] loc_to_pc_thm) THEN
   MP_TAC(ISPECL [`l1:num`; `l2:num`; `CONS (h:(A)sec) t`] loc_to_pc_thm) THEN
-  ASM_REWRITE_TAC[] THEN REPEAT (DISCH_THEN SUBST1_TAC) THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN REPEAT (DISCH_THEN SUBST1_TAC) THEN CAKE_REWRITE_TAC[] THEN
   FIRST_X_ASSUM(SUBST1_TAC o check (is_eq o concl)) THEN
-  CASES_ON `h:(A)sec` THEN CASE_REWRITE_TAC[MAP; SUM; o_THM; lab_Section_lines_def] THEN
+  CASES_ON `h:(A)sec` THEN CAKE_REWRITE_TAC[MAP; SUM; o_THM; lab_Section_lines_def] THEN
   COND_CASES_TAC THEN TRY (CASES_ON `sec_loc_to_pc l2 (a1:((A)line)list)`) THEN
-  CASE_REWRITE_TAC[] THEN
-  CASES_ON `loc_to_pc l1 l2 (t:((A)sec)list)` THEN CASE_REWRITE_TAC[OPTION_MAP_DEF] THEN
+  CAKE_REWRITE_TAC[] THEN
+  CASES_ON `loc_to_pc l1 l2 (t:((A)sec)list)` THEN CAKE_REWRITE_TAC[OPTION_MAP_DEF] THEN
   CASES_ON `loc_to_pc l1 l2 (c2:((A)sec)list)` THEN
-  CASE_REWRITE_TAC[OPTION_MAP_DEF; option_INJ] THEN ARITH_TAC);;
+  CAKE_REWRITE_TAC[OPTION_MAP_DEF; option_INJ] THEN ARITH_TAC);;
 
 (* HOL4 line 6366 *)
 let all_enc_ok_append = prove
@@ -249,7 +249,7 @@ let extract_labels_loc_to_pc = prove
   REPEAT GEN_TAC THEN STRIP_TAC THEN DISCH_TAC THEN
   ONCE_REWRITE_TAC[loc_to_pc_def] THEN
   COND_CASES_TAC THENL [MESON_TAC[]; ALL_TAC] THEN
-  CASES_ON `xs:((A)line)list` THEN CASE_REWRITE_TAC[] THENL
+  CASES_ON `xs:((A)line)list` THEN CAKE_REWRITE_TAC[] THENL
    [RULE_ASSUM_TAC(REWRITE_RULE[lab_extract_labels_def; MEM; NOT_CONS_NIL]) THEN ASM_MESON_TAC[];
     ALL_TAC] THEN
   RULE_ASSUM_TAC(REWRITE_RULE[CONS_11; NOT_CONS_NIL]) THEN
@@ -263,7 +263,7 @@ let extract_labels_loc_to_pc = prove
   REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
   ((COND_CASES_TAC THENL [MESON_TAC[]; ALL_TAC]) ORELSE ALL_TAC) THEN
   FIRST_X_ASSUM(MP_TAC o check (is_imp o concl)) THEN ASM_REWRITE_TAC[] THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN ASM_MESON_TAC[]);;
+  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN ASM_MESON_TAC[]);;
 
 (* line_ok is monotone in the label table *)
 let LTTP3AUX_line_ok_labs_mono = prove
@@ -301,12 +301,12 @@ let pos_val_append = prove
   CASES_ON `h:(A)sec` THEN REWRITE_TAC[APPEND; MAP; SUM; o_THM; lab_Section_lines_def] THEN
   REPEAT STRIP_TAC THEN REWRITE_TAC[pos_val_thm] THEN
   COND_CASES_TAC THENL
-   [CASES_ON `sec_pos_val i pos (a1:((A)line)list)` THEN CASE_REWRITE_TAC[] THEN
+   [CASES_ON `sec_pos_val i pos (a1:((A)line)list)` THEN CAKE_REWRITE_TAC[] THEN
     ASM_SIMP_TAC[] THEN COND_CASES_TAC THEN REWRITE_TAC[] THEN ASM_ARITH_TAC;
     ALL_TAC] THEN
   SUBGOAL_THEN `sec_pos_val i pos (a1:((A)line)list) = NONE` SUBST1_TAC THENL
    [MATCH_MP_TAC sec_pos_val_too_big THEN ASM_ARITH_TAC; ALL_TAC] THEN
-  CASE_REWRITE_TAC[] THEN ASM_SIMP_TAC[] THEN COND_CASES_TAC THENL [ASM_ARITH_TAC; ALL_TAC] THEN
+  CAKE_REWRITE_TAC[] THEN ASM_SIMP_TAC[] THEN COND_CASES_TAC THENL [ASM_ARITH_TAC; ALL_TAC] THEN
   REWRITE_TAC[ADD_ASSOC; SUB_PLUS]);;
 
 (* HOL4 line 6451 *)
@@ -329,7 +329,7 @@ let pos_val_acc = prove
                       (t:((A)sec)list))) n a1 =
     NONE` SUBST1_TAC THENL
    [MATCH_MP_TAC sec_pos_val_acc THEN ARITH_TAC; ALL_TAC] THEN
-  CASE_REWRITE_TAC[ADD_SUB2] THEN ASM_REWRITE_TAC[ADD_ASSOC]);;
+  CAKE_REWRITE_TAC[ADD_SUB2] THEN ASM_REWRITE_TAC[ADD_ASSOC]);;
 
 (* pos_val_bound by induction on the code, for all i and pos *)
 let LTTP3AUX_pos_val_bound = prove
@@ -357,7 +357,7 @@ let sec_loc_to_pc_bound = prove
  (`!n (xs:((A)line)list) x.
      sec_loc_to_pc n xs = SOME x ==> x <= LENGTH (FILTER ((~) o is_Label) xs)`,
   GEN_TAC THEN LIST_INDUCT_TAC THENL
-   [ONCE_REWRITE_TAC[sec_loc_to_pc_def] THEN CASE_REWRITE_TAC[] THEN
+   [ONCE_REWRITE_TAC[sec_loc_to_pc_def] THEN CAKE_REWRITE_TAC[] THEN
     COND_CASES_TAC THEN REWRITE_TAC[option_INJ; option_DISTINCT] THEN ARITH_TAC;
     ALL_TAC] THEN
   REWRITE_TAC[sec_loc_to_pc_cons; FILTER; o_THM] THEN GEN_TAC THEN
@@ -383,10 +383,10 @@ let loc_to_pc_bound = prove
   DISCH_THEN(fun th -> RULE_ASSUM_TAC(REWRITE_RULE[th])) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[ALL]) THEN
   CASES_ON `h:(A)sec` THEN
-  RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN REWRITE_TAC[MAP; SUM; o_THM; lab_Section_lines_def] THEN
+  RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN REWRITE_TAC[MAP; SUM; o_THM; lab_Section_lines_def] THEN
   FIRST_X_ASSUM(MP_TAC o check (is_eq o concl)) THEN
   COND_CASES_TAC THENL
-   [CASES_ON `sec_loc_to_pc l2 (a1:((A)line)list)` THEN CASE_REWRITE_TAC[] THENL
+   [CASES_ON `sec_loc_to_pc l2 (a1:((A)line)list)` THEN CAKE_REWRITE_TAC[] THENL
      [rest_tac;
       REWRITE_TAC[option_INJ] THEN DISCH_THEN(SUBST1_TAC o SYM) THEN
       FIRST_X_ASSUM(MP_TAC o MATCH_MP sec_loc_to_pc_bound) THEN ARITH_TAC];
@@ -409,7 +409,7 @@ let find_ffi_names_append = prove
   MATCH_MP_TAC prog_to_bytes_ind THEN
   REWRITE_TAC[APPEND; find_ffi_names_def; FILTER; APPEND_NIL] THEN
   REPEAT STRIP_TAC THEN RULE_ASSUM_TAC(REWRITE_RULE[APPEND]) THEN
-  CASES_ON `y:(A)line` THEN TRY (CASES_ON `a0:(A)asm_with_lab`) THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON `y:(A)line` THEN TRY (CASES_ON `a0:(A)asm_with_lab`) THEN CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[LTTP3AUX_list_add_if_fresh_FILTER]);;
 
 (* tactic helpers: select an assumption by the head constant of its        *)
@@ -432,7 +432,7 @@ let all_enc_ok_aligned_pos_val = prove
 (* HOL4 line 6551 *)
 let read_ffi_bytearrays_with_next_interfer = prove
  (`!(mc:(A,B,C)machine_config) foo.
-     read_ffi_bytearrays (machine_config_next_interfer_fupd (K foo) mc) =
+     read_ffi_bytearrays (machine_config_next_interfer_fupd (combin_K foo) mc) =
      read_ffi_bytearrays mc`,
   REWRITE_TAC[FUN_EQ_THM; read_ffi_bytearrays_def; read_ffi_bytearray_def] THEN
   REWRITE_TAC[machine_config_INFO.ri_accfupds]);;
@@ -450,7 +450,7 @@ let _ = cake_add_simps [read_ffi_bytearrays_shift_interfer];;
 (* HOL4 line 6564 *)
 let read_ffi_bytearrays_ffi_interfer = prove
  (`!(mc:(A,B,C)machine_config) ffi.
-     read_ffi_bytearrays (machine_config_ffi_interfer_fupd (K ffi) mc) =
+     read_ffi_bytearrays (machine_config_ffi_interfer_fupd (combin_K ffi) mc) =
      read_ffi_bytearrays mc`,
   REWRITE_TAC[FUN_EQ_THM; read_ffi_bytearrays_def; read_ffi_bytearray_def] THEN
   REWRITE_TAC[machine_config_INFO.ri_accfupds]);;
@@ -1112,7 +1112,7 @@ let oracle_tie_ccache_residues = prove
         target_get_reg (machine_config_target mc_conf) ms2 (machine_config_len_reg mc_conf),
         ms2)`;
     `machine_config_ccache_interfer_fupd
-       (K (shift_seq 1 (machine_config_ccache_interfer (mc2:(A,B,C)machine_config)))) mc2`;
+       (combin_K (shift_seq 1 (machine_config_ccache_interfer (mc2:(A,B,C)machine_config)))) mc2`;
     `lab_state_ffi (s1:(A,D,FFI)lab_state)`]) THEN
   ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
   ASM_REWRITE_TAC[FUN_EQ_THM] THEN GEN_TAC THEN
@@ -1227,7 +1227,7 @@ let LTTP3AUX_state_rel_Loc = prove
   FIRST_X_ASSUM(MP_TAC o SPEC `r:num` o check (fun th -> is_forall(concl th) &&
     can (find_term (fun t -> try fst(dest_const t) = "word_loc_val" with _ -> false))
         (concl th))) THEN
-  RES_TAC THEN ASM_REWRITE_TAC[word_loc_val_def] THEN CASE_REWRITE_TAC[option_INJ] THEN
+  RES_TAC THEN ASM_REWRITE_TAC[word_loc_val_def] THEN CAKE_REWRITE_TAC[option_INJ] THEN
   MESON_TAC[]);;
 
 (* an encoding padded with nops is at least as long as the encoding *)
@@ -1504,7 +1504,7 @@ let LTTP3AUX_cc_JumpReg = prove
       CASES_ON `j:(A)line` THEN REWRITE_TAC[line_similar_def; line_ok_def; line_bytes_def] THEN
       STRIP_TAC THEN DISCH_THEN(SUBST_ALL_TAC o SYM) THEN EXPAND_TAC "enc" THEN
       FIRST_X_ASSUM(MP_TAC o MATCH_MP LTTP3AUX_enc_with_nop_LENGTH) THEN
-      REWRITE_TAC[cbw_to_asm_def] THEN CASE_REWRITE_TAC[];
+      REWRITE_TAC[cbw_to_asm_def] THEN CAKE_REWRITE_TAC[];
       USE_THEN "asmeq" SUBST1_TAC THEN
       REWRITE_TAC(asm_upd_pc_def :: LTTP3AUX_RECS) THEN ASM_REWRITE_TAC[]];
     ALL_TAC] THEN
@@ -1565,7 +1565,7 @@ let LTTP3AUX_cc_Jump = prove
   MP_TAC(ISPEC `jt:lab` (nchotomy_of_type `:lab`)) THEN
   DISCH_THEN(X_CHOOSE_THEN `l1:num` (X_CHOOSE_THEN `l2:num` SUBST_ALL_TAC)) THEN
   UNDISCH_TAC `get_pc_value (lab_Lab l1 l2) (s1:(A,lab_to_target_config,FFI)lab_state) = SOME x` THEN
-  REWRITE_TAC[get_pc_value_def] THEN CASE_REWRITE_TAC[] THEN DISCH_TAC THEN
+  REWRITE_TAC[get_pc_value_def] THEN CAKE_REWRITE_TAC[] THEN DISCH_TAC THEN
   MP_TAC(ISPECL [`mc_conf:(A,B,C)machine_config`; `code2:((A)sec)list`; `labs:(num spt)spt`;
      `p:A word`; `s1:(A,lab_to_target_config,FFI)lab_state`; `t1:(A)asm_state`; `ms1:B`;
      `l1:num`; `l2:num`; `x:num`] LTTP3AUX_state_rel_lab_lookup) THEN
@@ -1615,8 +1615,8 @@ let LTTP3AUX_cc_Jump = prove
       CASES_ON `j:(A)line` THEN REWRITE_TAC[line_similar_def; line_bytes_def] THEN
       DISCH_TAC THEN DISCH_THEN(SUBST_ALL_TAC o SYM) THEN
       FIRST_X_ASSUM(MP_TAC o check (LTTP3AUX_HEAD_IS "line_ok")) THEN
-      REWRITE_TAC[line_ok_def; get_label_def] THEN CASE_REWRITE_TAC[] THEN
-      ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
+      REWRITE_TAC[line_ok_def; get_label_def] THEN CAKE_REWRITE_TAC[] THEN
+      ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
       REWRITE_TAC[lab_inst_def] THEN STRIP_TAC THEN
       FIRST_X_ASSUM(MP_TAC o MATCH_MP LTTP3AUX_enc_with_nop_LENGTH) THEN ASM_REWRITE_TAC[];
       USE_THEN "asmeq" SUBST1_TAC THEN
@@ -1630,7 +1630,7 @@ let LTTP3AUX_cc_Jump = prove
   CONJ_TAC THENL
    [REMOVE_THEN "IH" (MATCH_MP_TAC o SPECL [`a1:A word`; `a2:byte list`; `a3:num`;
                                              `lab_Lab l1 l2`; `x:num`]) THEN
-    ASM_REWRITE_TAC[get_pc_value_def] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[];
+    ASM_REWRITE_TAC[get_pc_value_def] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[];
     ASM_REWRITE_TAC[]]);;
 (* HOL4 line 8052, Resume compile_correct[JumpCmp]: the comparison holds *)
 let LTTP3AUX_cc_JumpCmp_T = prove
@@ -1677,7 +1677,7 @@ let LTTP3AUX_cc_JumpCmp_T = prove
   MP_TAC(ISPEC `jt:lab` (nchotomy_of_type `:lab`)) THEN
   DISCH_THEN(X_CHOOSE_THEN `l1:num` (X_CHOOSE_THEN `l2:num` SUBST_ALL_TAC)) THEN
   UNDISCH_TAC `get_pc_value (lab_Lab l1 l2) (s1:(A,lab_to_target_config,FFI)lab_state) = SOME x` THEN
-  REWRITE_TAC[get_pc_value_def] THEN CASE_REWRITE_TAC[] THEN DISCH_TAC THEN
+  REWRITE_TAC[get_pc_value_def] THEN CAKE_REWRITE_TAC[] THEN DISCH_TAC THEN
   MP_TAC(ISPECL [`mc_conf:(A,B,C)machine_config`; `code2:((A)sec)list`; `labs:(num spt)spt`;
      `p:A word`; `s1:(A,lab_to_target_config,FFI)lab_state`; `t1:(A)asm_state`; `ms1:B`;
      `l1:num`; `l2:num`; `x:num`] LTTP3AUX_state_rel_lab_lookup) THEN
@@ -1728,8 +1728,8 @@ let LTTP3AUX_cc_JumpCmp_T = prove
       CASES_ON `j:(A)line` THEN REWRITE_TAC[line_similar_def; line_bytes_def] THEN
       DISCH_TAC THEN DISCH_THEN(SUBST_ALL_TAC o SYM) THEN
       FIRST_X_ASSUM(MP_TAC o check (LTTP3AUX_HEAD_IS "line_ok")) THEN
-      REWRITE_TAC[line_ok_def; get_label_def] THEN CASE_REWRITE_TAC[] THEN
-      ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
+      REWRITE_TAC[line_ok_def; get_label_def] THEN CAKE_REWRITE_TAC[] THEN
+      ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
       REWRITE_TAC[lab_inst_def] THEN STRIP_TAC THEN
       FIRST_X_ASSUM(MP_TAC o MATCH_MP LTTP3AUX_enc_with_nop_LENGTH) THEN ASM_REWRITE_TAC[];
       USE_THEN "asmeq" SUBST1_TAC THEN
@@ -1743,7 +1743,7 @@ let LTTP3AUX_cc_JumpCmp_T = prove
   CONJ_TAC THENL
    [REMOVE_THEN "IH" (MATCH_MP_TAC o SPECL [`a1:A word`; `a2:byte list`; `a3:num`;
        `cmp:cmp`; `rr:num`; `ri:(A)reg_imm`; `v1:bool`; `lab_Lab l1 l2`; `x:num`]) THEN
-    ASM_REWRITE_TAC[get_pc_value_def] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[];
+    ASM_REWRITE_TAC[get_pc_value_def] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[];
     ASM_REWRITE_TAC[]]);;
 (* inc_pc as an update of the pc *)
 let LTTP3AUX_inc_pc_dec_clock = prove
@@ -1967,7 +1967,7 @@ let LTTP3AUX_cc_LocValue = prove
                     SOME x` (X_CHOOSE_TAC `x:num`) THENL
    [UNDISCH_TAC `~(get_pc_value (lab_Lab l1 l2)
                     (s1:(A,lab_to_target_config,FFI)lab_state) = NONE)` THEN
-    REWRITE_TAC[get_pc_value_def] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[get_pc_value_def] THEN CAKE_REWRITE_TAC[] THEN
     MESON_TAC[option_CASES];
     ALL_TAC] THEN
   MP_TAC(ISPECL [`mc_conf:(A,B,C)machine_config`; `code2:((A)sec)list`; `labs:(num spt)spt`;
@@ -2035,8 +2035,8 @@ let LTTP3AUX_cc_LocValue = prove
        `lab_Lab l1 l2`]) THEN
     ASM_REWRITE_TAC[get_pc_value_def; option_DISTINCT; LTTP3AUX_inc_pc_dec_clock;
                     LTTP3AUX_pc_upd_reg; lab_to_loc_def] THEN
-    CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[option_DISTINCT];
-    ASM_REWRITE_TAC[word_loc_val_def] THEN CASE_REWRITE_TAC[option_INJ] THEN
+    CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[option_DISTINCT];
+    ASM_REWRITE_TAC[word_loc_val_def] THEN CAKE_REWRITE_TAC[option_INJ] THEN
     ASM_REWRITE_TAC[]]);;
 (* more parts of state_rel *)
 let LTTP3AUX_state_rel_misc_facts = prove
@@ -2200,15 +2200,15 @@ let LTTP3AUX_lab_evaluate_cases = prove
             lab_state_regs s1 r1 = wl_Word w1 /\
             lab_state_regs s1 r2 = wl_Word w2 /\
             buffer_write (lab_state_code_buffer s1) w1 (word_zx w2) = SOME cb /\
-            lab_evaluate (inc_pc (lab_dec_clock (lab_state_code_buffer_fupd (K cb) s1))) =
+            lab_evaluate (inc_pc (lab_dec_clock (lab_state_code_buffer_fupd (combin_K cb) s1))) =
               (res,s2)) \/
          (?m r ad a1 a2 new_ffi new_bytes s'.
             ~(lab_state_clock s1 = 0) /\
             asm_fetch s1 = SOME (Asm (ShareMem m r ad) a1 a2) /\
             share_mem_op m r ad s1 = SOME (FFI_return new_ffi new_bytes,s') /\
             lab_evaluate
-              (lab_state_io_regs_fupd (K (shift_seq 1 (lab_state_io_regs s')))
-                 (lab_state_io_fp_regs_fupd (K (shift_seq 1 (lab_state_io_fp_regs s'))) s')) =
+              (lab_state_io_regs_fupd (combin_K (shift_seq 1 (lab_state_io_regs s')))
+                 (lab_state_io_fp_regs_fupd (combin_K (shift_seq 1 (lab_state_io_fp_regs s'))) s')) =
               (res,s2)) \/
          (?m r ad a1 a2 outcome.
             ~(lab_state_clock s1 = 0) /\
@@ -2263,17 +2263,17 @@ let LTTP3AUX_lab_evaluate_cases = prove
               FFI_return new_ffi new_bytes /\
             lab_evaluate
               (lab_state_mem_fupd
-                 (K (write_bytearray w4 new_bytes (lab_state_mem s1) (lab_state_mem_domain s1)
+                 (combin_K (write_bytearray w4 new_bytes (lab_state_mem s1) (lab_state_mem_domain s1)
                        (lab_state_be s1)))
-              (lab_state_ffi_fupd (K new_ffi)
-              (lab_state_io_regs_fupd (K (shift_seq 1 (lab_state_io_regs s1)))
-              (lab_state_io_fp_regs_fupd (K (shift_seq 1 (lab_state_io_fp_regs s1)))
+              (lab_state_ffi_fupd (combin_K new_ffi)
+              (lab_state_io_regs_fupd (combin_K (shift_seq 1 (lab_state_io_regs s1)))
+              (lab_state_io_fp_regs_fupd (combin_K (shift_seq 1 (lab_state_io_fp_regs s1)))
               (lab_state_regs_fupd
-                 (K (\a. get_reg_value (lab_state_io_regs s1 0 (ExtCall ffi_index) a)
+                 (combin_K (\a. get_reg_value (lab_state_io_regs s1 0 (ExtCall ffi_index) a)
                            (lab_state_regs s1 a) wl_Word))
-              (lab_state_fp_regs_fupd (K (\n. lab_state_io_fp_regs s1 0 n))
-              (lab_state_pc_fupd (K new_pc)
-              (lab_state_clock_fupd (K (lab_state_clock s1 - 1)) s1)))))))) =
+              (lab_state_fp_regs_fupd (combin_K (\n. lab_state_io_fp_regs s1 0 n))
+              (lab_state_pc_fupd (combin_K new_pc)
+              (lab_state_clock_fupd (combin_K (lab_state_clock s1 - 1)) s1)))))))) =
               (res,s2)) \/
          (?ffi_index a1 a2 a3 w w2 w3 w4 n1 n2 bytes bytes2 new_pc outcome.
             ~(lab_state_clock s1 = 0) /\
@@ -2304,17 +2304,17 @@ let LTTP3AUX_lab_evaluate_cases = prove
             lab_state_compile s1 cfg (CONS (Section k lines) rest) =
               SOME (bytes,FST (shift_seq 1 (lab_state_compile_oracle s1) 0)) /\
             lab_evaluate
-              (lab_state_pc_fupd (K new_pc)
-              (lab_state_code_buffer_fupd (K cb)
-              (lab_state_code_fupd (K (APPEND (lab_state_code s1) (CONS (Section k lines) rest)))
-              (lab_state_cc_regs_fupd (K (shift_seq 1 (lab_state_cc_regs s1)))
-              (lab_state_cc_fp_regs_fupd (K (shift_seq 1 (lab_state_cc_fp_regs s1)))
+              (lab_state_pc_fupd (combin_K new_pc)
+              (lab_state_code_buffer_fupd (combin_K cb)
+              (lab_state_code_fupd (combin_K (APPEND (lab_state_code s1) (CONS (Section k lines) rest)))
+              (lab_state_cc_regs_fupd (combin_K (shift_seq 1 (lab_state_cc_regs s1)))
+              (lab_state_cc_fp_regs_fupd (combin_K (shift_seq 1 (lab_state_cc_fp_regs s1)))
               (lab_state_regs_fupd
-                 (K ((lab_state_ptr_reg s1 =+ wl_Loc k 0)
+                 (combin_K ((lab_state_ptr_reg s1 =+ wl_Loc k 0)
                        (\a. get_reg_value (lab_state_cc_regs s1 0 a) (lab_state_regs s1 a) wl_Word)))
-              (lab_state_fp_regs_fupd (K (\n. lab_state_cc_fp_regs s1 0 n))
-              (lab_state_compile_oracle_fupd (K (shift_seq 1 (lab_state_compile_oracle s1)))
-              (lab_state_clock_fupd (K (lab_state_clock s1 - 1)) s1))))))))) =
+              (lab_state_fp_regs_fupd (combin_K (\n. lab_state_cc_fp_regs s1 0 n))
+              (lab_state_compile_oracle_fupd (combin_K (shift_seq 1 (lab_state_compile_oracle s1)))
+              (lab_state_clock_fupd (combin_K (lab_state_clock s1 - 1)) s1))))))))) =
               (res,s2))`,
   REPEAT GEN_TAC THEN DISCH_THEN(CONJUNCTS_THEN2 MP_TAC ASSUME_TAC) THEN
   GEN_REWRITE_TAC (LAND_CONV o LAND_CONV) [lab_evaluate_def] THEN
@@ -2336,8 +2336,8 @@ let LTTP3AUX_buffer_write_byte = prove
      buffer_write cb w b = SOME cb'
      ==> w = word_add (buffer_position cb) (word (LENGTH (buffer_buffer cb))) /\
          0 < buffer_space_left cb /\
-         cb' = buffer_buffer_fupd (K (APPEND (buffer_buffer cb) [b]))
-                 (buffer_space_left_fupd (K (buffer_space_left cb - 1)) cb)`,
+         cb' = buffer_buffer_fupd (combin_K (APPEND (buffer_buffer cb) [b]))
+                 (buffer_space_left_fupd (combin_K (buffer_space_left cb - 1)) cb)`,
   REWRITE_TAC[buffer_write_def; DIMINDEX_8] THEN CONV_TAC(ONCE_DEPTH_CONV NUM_DIV_CONV) THEN
   REWRITE_TAC[WORD_MULT_CLAUSES] THEN REPEAT GEN_TAC THEN COND_CASES_TAC THEN
   REWRITE_TAC[option_DISTINCT; option_INJ] THEN STRIP_TAC THEN ASM_REWRITE_TAC[]);;
@@ -2360,11 +2360,11 @@ let LTTP3AUX_state_rel_cbw = prove
      buffer_write (lab_state_code_buffer s1) w1 b = SOME cb /\
      target_state_rel (machine_config_target mc_conf)
        (asm_upd_pc (word_add p (word (pos_val (lab_state_pc s1 + 1) 0 code2)))
-          (asm_state_mem_fupd (K ((w1 =+ b) (asm_state_mem t1))) t1)) ms2
+          (asm_state_mem_fupd (combin_K ((w1 =+ b) (asm_state_mem t1))) t1)) ms2
      ==> lab_to_targetProof_state_rel (mc_conf,code2,labs,p)
-           (inc_pc (lab_dec_clock (lab_state_code_buffer_fupd (K cb) s1)))
+           (inc_pc (lab_dec_clock (lab_state_code_buffer_fupd (combin_K cb) s1)))
            (asm_upd_pc (word_add p (word (pos_val (lab_state_pc s1 + 1) 0 code2)))
-              (asm_state_mem_fupd (K ((w1 =+ b) (asm_state_mem t1))) t1)) ms2`,
+              (asm_state_mem_fupd (combin_K ((w1 =+ b) (asm_state_mem t1))) t1)) ms2`,
   REPEAT GEN_TAC THEN
   DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC (CONJUNCTS_THEN2
     (STRIP_ASSUME_TAC o MATCH_MP LTTP3AUX_buffer_write_byte) ASSUME_TAC)) THEN
@@ -2451,7 +2451,7 @@ let LTTP3AUX_inst_store8 = prove
      asm_state_regs t1 r1 IN asm_state_mem_domain t1 /\ ~asm_state_failed t1
      ==> asmSem_inst (Mem Store8 r2 (Addr r1 (word 0))) t1 =
          asm_state_mem_fupd
-           (K ((asm_state_regs t1 r1 =+ word_zx (asm_state_regs t1 r2)) (asm_state_mem t1)))
+           (combin_K ((asm_state_regs t1 r1 =+ word_zx (asm_state_regs t1 r2)) (asm_state_mem t1)))
            t1`,
   REPEAT STRIP_TAC THEN
   REWRITE_TAC[asmSem_inst_def; asm_mem_op_def; asm_mem_store_def; asm_addr_def; read_reg_def;
@@ -2494,26 +2494,26 @@ let LTTP3AUX_cc_Cbw = prove
           buffer_write (lab_state_code_buffer s1) w1 (word_zx w2) = SOME new_cb
           ==> !res (mc_conf:(A,B,C)machine_config) s2 code2 labs (t1:(A)asm_state) ms1 p.
                 oracle_tie mc_conf ms1
-                  (inc_pc (lab_dec_clock (lab_state_code_buffer_fupd (K new_cb) s1))) /\
-                lab_evaluate (inc_pc (lab_dec_clock (lab_state_code_buffer_fupd (K new_cb) s1))) =
+                  (inc_pc (lab_dec_clock (lab_state_code_buffer_fupd (combin_K new_cb) s1))) /\
+                lab_evaluate (inc_pc (lab_dec_clock (lab_state_code_buffer_fupd (combin_K new_cb) s1))) =
                   (res,s2) /\
                 ~(res = target_Error) /\
                 encoder_correct (machine_config_target mc_conf) /\
                 lab_to_targetProof_state_rel (mc_conf,code2,labs,p)
-                  (inc_pc (lab_dec_clock (lab_state_code_buffer_fupd (K new_cb) s1))) t1 ms1
+                  (inc_pc (lab_dec_clock (lab_state_code_buffer_fupd (combin_K new_cb) s1))) t1 ms1
                 ==> ?k ms2.
                       target_evaluate mc_conf
                         (lab_state_ffi
-                           (inc_pc (lab_dec_clock (lab_state_code_buffer_fupd (K new_cb) s1))))
+                           (inc_pc (lab_dec_clock (lab_state_code_buffer_fupd (combin_K new_cb) s1))))
                         (lab_state_clock
-                           (inc_pc (lab_dec_clock (lab_state_code_buffer_fupd (K new_cb) s1))) +
+                           (inc_pc (lab_dec_clock (lab_state_code_buffer_fupd (combin_K new_cb) s1))) +
                          k) ms1 =
                       (res,ms2,lab_state_ffi s2)) /\
        ~(lab_state_clock s1 = 0) /\
        oracle_tie mc_conf ms1 s1 /\ ~(res = target_Error) /\
        encoder_correct (machine_config_target mc_conf) /\
        lab_to_targetProof_state_rel (mc_conf,code2,labs,p) s1 t1 ms1 /\
-       lab_evaluate (inc_pc (lab_dec_clock (lab_state_code_buffer_fupd (K cb) s1))) = (res,s2)
+       lab_evaluate (inc_pc (lab_dec_clock (lab_state_code_buffer_fupd (combin_K cb) s1))) = (res,s2)
        ==> ?k ms2.
              target_evaluate mc_conf (lab_state_ffi s1) (lab_state_clock s1 + k) ms1 =
              (res,ms2,lab_state_ffi s2)`,
@@ -2559,7 +2559,7 @@ let LTTP3AUX_cc_Cbw = prove
     IMP_bytes_in_memory_Cbw) THEN
   ASM_REWRITE_TAC[] THEN DISCH_THEN(X_CHOOSE_THEN `bytes':byte list` STRIP_ASSUME_TAC) THEN
   ABBREV_TAC `jj = Mem Store8 r2 (Addr r1 (word 0)):(A)inst` THEN
-  ABBREV_TAC `t2 = asm_state_mem_fupd (K ((w1 =+ (word_zx (w2:A word):byte))
+  ABBREV_TAC `t2 = asm_state_mem_fupd (combin_K ((w1 =+ (word_zx (w2:A word):byte))
                      (asm_state_mem t1))) (t1:(A)asm_state)` THEN
   SUBGOAL_THEN `asm_asm (asm_Inst jj) (word_add (asm_state_pc t1) (word (LENGTH (bytes':byte list))))
                   t1 =
@@ -2687,17 +2687,17 @@ let LTTP3AUX_target_evaluate_SharedMem = prove
           | FFI_return new_ffi new_bytes ->
               target_evaluate
                 (machine_config_ffi_interfer_fupd
-                   (K (shift_seq 1 (machine_config_ffi_interfer mc))) mc)
+                   (combin_K (shift_seq 1 (machine_config_ffi_interfer mc))) mc)
                 new_ffi (k - 1)
                 (machine_config_ffi_interfer mc 0 (index,new_bytes,ms)))`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   GEN_REWRITE_TAC LAND_CONV [target_evaluate_def] THEN
   CASES_ON `op:shmem_op` THEN
   RULE_ASSUM_TAC(REWRITE_RULE[distinctness "shmem_op"]) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
-  ASM_REWRITE_TAC[LET_DEF; LET_END_DEF; distinctness "shmem_op"] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[LET_DEF; LET_END_DEF; distinctness "shmem_op"] THEN CAKE_REWRITE_TAC[] THEN
   (COND_CASES_TAC THENL
-    [CASE_REWRITE_TAC[apply_oracle_def] THEN TOP_CASE_TAC THEN CASE_REWRITE_TAC[]; ASM_MESON_TAC[]]));;
+    [CAKE_REWRITE_TAC[apply_oracle_def] THEN TOP_CASE_TAC THEN CAKE_REWRITE_TAC[]; ASM_MESON_TAC[]]));;
 (* the first k bytes of a word *)
 
 let LTTP3AUX_TAKE_word_to_bytes_aux = prove
@@ -2742,12 +2742,12 @@ let LTTP3AUX_share_mem_op_return = prove
            (name = MappedRead ==>
             call_FFI (lab_state_ffi s) (SharedMem MappedRead) [nb]
               (word_to_bytes (word_add w0 off) F) = FFI_return new_ffi new_bytes /\
-            s' = lab_state_ffi_fupd (K new_ffi)
+            s' = lab_state_ffi_fupd (combin_K new_ffi)
                    (lab_state_regs_fupd
-                      (K ((r =+ wl_Word (word_of_bytes F (word 0) new_bytes))
+                      (combin_K ((r =+ wl_Word (word_of_bytes F (word 0) new_bytes))
                             (lab_state_regs s)))
-                   (lab_state_pc_fupd (K (lab_state_pc s + 1))
-                   (lab_state_clock_fupd (K (lab_state_clock s - 1)) s)))) /\
+                   (lab_state_pc_fupd (combin_K (lab_state_pc s + 1))
+                   (lab_state_clock_fupd (combin_K (lab_state_clock s - 1)) s)))) /\
            (name = MappedWrite ==>
             ?w. lab_state_regs s r = wl_Word w /\
                 call_FFI (lab_state_ffi s) (SharedMem MappedWrite) [nb]
@@ -2755,7 +2755,7 @@ let LTTP3AUX_share_mem_op_return = prove
                            else word_to_bytes_aux (val nb) w F)
                           (word_to_bytes (word_add w0 off) F)) =
                   FFI_return new_ffi new_bytes /\
-                s' = inc_pc (lab_dec_clock (lab_state_ffi_fupd (K new_ffi) s)))`,
+                s' = inc_pc (lab_dec_clock (lab_state_ffi_fupd (combin_K new_ffi) s)))`,
   REPEAT GEN_TAC THEN
   DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC
     (fun th -> MP_TAC(CONJUNCT2 th) THEN MP_TAC(CONJUNCT1 th))) THEN
@@ -2769,7 +2769,7 @@ let LTTP3AUX_share_mem_op_return = prove
   MP_TAC(ISPEC `lab_state_regs (s:(A,C,FFI)lab_state) r0` (nchotomy_of_type `:(A)word_loc`)) THEN
   DISCH_THEN(DISJ_CASES_THEN2 (X_CHOOSE_THEN `w0:A word` ASSUME_TAC)
     (X_CHOOSE_THEN `n1:num` (X_CHOOSE_THEN `n2:num` ASSUME_TAC))) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[option_DISTINCT] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[option_DISTINCT] THEN
   REPEAT (COND_CASES_TAC ORELSE TOP_CASE_TAC) THEN
   REWRITE_TAC[option_INJ; option_DISTINCT; PAIR_EQ; injectivity "ffi_result";
               distinctness "ffi_result"] THEN
@@ -2814,7 +2814,7 @@ let LTTP3AUX_share_mem_op_final = prove
   MP_TAC(ISPEC `lab_state_regs (s:(A,C,FFI)lab_state) r0` (nchotomy_of_type `:(A)word_loc`)) THEN
   DISCH_THEN(DISJ_CASES_THEN2 (X_CHOOSE_THEN `w0:A word` ASSUME_TAC)
     (X_CHOOSE_THEN `n1:num` (X_CHOOSE_THEN `n2:num` ASSUME_TAC))) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[option_DISTINCT] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[option_DISTINCT] THEN
   REPEAT (COND_CASES_TAC ORELSE TOP_CASE_TAC) THEN
   REWRITE_TAC[option_INJ; option_DISTINCT; PAIR_EQ; injectivity "ffi_result";
               distinctness "ffi_result"] THEN
@@ -2856,7 +2856,7 @@ let LTTP3AUX_state_rel_share_mem = prove
      target_state_rel (machine_config_target mc_conf) t2 ms2
      ==> lab_to_targetProof_state_rel
            (machine_config_ffi_interfer_fupd
-              (K (shift_seq 1 (machine_config_ffi_interfer mc_conf))) mc_conf,code2,labs,p)
+              (combin_K (shift_seq 1 (machine_config_ffi_interfer mc_conf))) mc_conf,code2,labs,p)
            S t2 ms2`,
   REPEAT GEN_TAC THEN
   DISCH_THEN(CONJUNCTS_THEN2 MP_TAC (REPEAT_TCL CONJUNCTS_THEN ASSUME_TAC)) THEN
@@ -2952,7 +2952,7 @@ let LTTP3AUX_state_rel_share_mem_line = prove
   DISCH_THEN(MP_TAC o SPECL [`lab_state_pc (s1:(A,lab_to_target_config,FFI)lab_state)`;
     `m:memop`; `r:num`; `ad:(A)addr`; `bytes:byte list`; `LENGTH (bytes:byte list)`;
     `i:num`]) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   DISCH_THEN(X_CHOOSE_THEN `index:num` STRIP_ASSUME_TAC) THEN
   MAP_EVERY EXISTS_TAC [`bytes:byte list`; `index:num`; `i:num`] THEN
   ASM_REWRITE_TAC[] THEN
@@ -3021,9 +3021,9 @@ let LTTP3AUX_share_mem_target_rel = prove
                (word_add (target_get_reg (machine_config_target mc_conf) ms1 r0) off) F) =
             FFI_return new_ffi new_bytes
           ==> target_state_rel (machine_config_target mc_conf)
-                (asm_state_pc_fupd (K pc')
+                (asm_state_pc_fupd (combin_K pc')
                    (asm_state_regs_fupd
-                      (K (\n. if n = r then word_of_bytes F (word 0) new_bytes
+                      (combin_K (\n. if n = r then word_of_bytes F (word 0) new_bytes
                               else asm_state_regs t1 n)) t1))
                 (machine_config_ffi_interfer mc_conf 0 (index,new_bytes,ms1))) /\
          (EL index (machine_config_ffi_names mc_conf) = SharedMem MappedWrite /\
@@ -3039,7 +3039,7 @@ let LTTP3AUX_share_mem_target_rel = prove
                   (word_add (target_get_reg (machine_config_target mc_conf) ms1 r0) off) F)) =
             FFI_return new_ffi new_bytes
           ==> target_state_rel (machine_config_target mc_conf)
-                (asm_state_pc_fupd (K pc') t1)
+                (asm_state_pc_fupd (combin_K pc') t1)
                 (machine_config_ffi_interfer mc_conf 0 (index,new_bytes,ms1)))`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP LTTP3AUX_state_rel_step_facts) THEN
@@ -3067,7 +3067,7 @@ let LTTP3AUX_share_mem_target_rel = prove
   UNDISCH_TAC `EL index (machine_config_ffi_names (mc_conf:(A,B,C)machine_config)) =
                SharedMem op` THEN
   ASM_REWRITE_TAC[injectivity "ffiname"] THEN DISCH_THEN(SUBST_ALL_TAC o SYM) THEN
-  USE_THEN "m" MP_TAC THEN CASE_REWRITE_TAC[] THEN
+  USE_THEN "m" MP_TAC THEN CAKE_REWRITE_TAC[] THEN
   ANTS_TAC THEN TRY(DISCH_THEN ACCEPT_TAC) THEN
   REPEAT CONJ_TAC THEN TRY(FIRST_ASSUM ACCEPT_TAC) THEN
   COND_CASES_TAC THEN REWRITE_TAC[] THEN
@@ -3089,37 +3089,37 @@ let LTTP3AUX_cc_ShareMem = prove
           share_mem_op m r ad s1 = SOME (FFI_return new_ffi new_bytes,s')
           ==> !res (mc_conf:(A,B,C)machine_config) s2 code2 labs (t1:(A)asm_state) ms1 p.
                 oracle_tie mc_conf ms1
-                  (lab_state_io_regs_fupd (K (shift_seq 1 (lab_state_io_regs s')))
+                  (lab_state_io_regs_fupd (combin_K (shift_seq 1 (lab_state_io_regs s')))
                      (lab_state_io_fp_regs_fupd
-                        (K (shift_seq 1 (lab_state_io_fp_regs s'))) s')) /\
+                        (combin_K (shift_seq 1 (lab_state_io_fp_regs s'))) s')) /\
                 lab_evaluate
-                  (lab_state_io_regs_fupd (K (shift_seq 1 (lab_state_io_regs s')))
+                  (lab_state_io_regs_fupd (combin_K (shift_seq 1 (lab_state_io_regs s')))
                      (lab_state_io_fp_regs_fupd
-                        (K (shift_seq 1 (lab_state_io_fp_regs s'))) s')) = (res,s2) /\
+                        (combin_K (shift_seq 1 (lab_state_io_fp_regs s'))) s')) = (res,s2) /\
                 ~(res = target_Error) /\
                 encoder_correct (machine_config_target mc_conf) /\
                 lab_to_targetProof_state_rel (mc_conf,code2,labs,p)
-                  (lab_state_io_regs_fupd (K (shift_seq 1 (lab_state_io_regs s')))
+                  (lab_state_io_regs_fupd (combin_K (shift_seq 1 (lab_state_io_regs s')))
                      (lab_state_io_fp_regs_fupd
-                        (K (shift_seq 1 (lab_state_io_fp_regs s'))) s')) t1 ms1
+                        (combin_K (shift_seq 1 (lab_state_io_fp_regs s'))) s')) t1 ms1
                 ==> ?k ms2.
                       target_evaluate mc_conf
                         (lab_state_ffi
-                          (lab_state_io_regs_fupd (K (shift_seq 1 (lab_state_io_regs s')))
+                          (lab_state_io_regs_fupd (combin_K (shift_seq 1 (lab_state_io_regs s')))
                              (lab_state_io_fp_regs_fupd
-                                (K (shift_seq 1 (lab_state_io_fp_regs s'))) s')))
+                                (combin_K (shift_seq 1 (lab_state_io_fp_regs s'))) s')))
                         (lab_state_clock
-                          (lab_state_io_regs_fupd (K (shift_seq 1 (lab_state_io_regs s')))
+                          (lab_state_io_regs_fupd (combin_K (shift_seq 1 (lab_state_io_regs s')))
                              (lab_state_io_fp_regs_fupd
-                                (K (shift_seq 1 (lab_state_io_fp_regs s'))) s')) + k) ms1 =
+                                (combin_K (shift_seq 1 (lab_state_io_fp_regs s'))) s')) + k) ms1 =
                       (res,ms2,lab_state_ffi s2)) /\
        ~(lab_state_clock s1 = 0) /\
        oracle_tie mc_conf ms1 s1 /\ ~(res = target_Error) /\
        encoder_correct (machine_config_target mc_conf) /\
        lab_to_targetProof_state_rel (mc_conf,code2,labs,p) s1 t1 ms1 /\
        lab_evaluate
-         (lab_state_io_regs_fupd (K (shift_seq 1 (lab_state_io_regs s')))
-            (lab_state_io_fp_regs_fupd (K (shift_seq 1 (lab_state_io_fp_regs s'))) s')) =
+         (lab_state_io_regs_fupd (combin_K (shift_seq 1 (lab_state_io_regs s')))
+            (lab_state_io_fp_regs_fupd (combin_K (shift_seq 1 (lab_state_io_fp_regs s'))) s')) =
          (res,s2)
        ==> ?k ms2.
              target_evaluate mc_conf (lab_state_ffi s1) (lab_state_clock s1 + k) ms1 =
@@ -3243,7 +3243,7 @@ let LTTP3AUX_cc_ShareMem = prove
     SUBGOAL_THEN `!k. target_evaluate (mc_conf:(A,B,C)machine_config)
           (lab_state_ffi (s1:(A,lab_to_target_config,FFI)lab_state)) (lab_state_clock s1 + k) ms1 =
         target_evaluate (machine_config_ffi_interfer_fupd
-            (K (shift_seq 1 (machine_config_ffi_interfer (mc_conf:(A,B,C)machine_config)))) mc_conf)
+            (combin_K (shift_seq 1 (machine_config_ffi_interfer (mc_conf:(A,B,C)machine_config)))) mc_conf)
           new_ffi (lab_state_clock s1 - 1 + k)
           (machine_config_ffi_interfer mc_conf 0 (index,new_bytes,ms1))` (LABEL_TAC "step") THENL
      [GEN_TAC THEN
@@ -3260,7 +3260,7 @@ let LTTP3AUX_cc_ShareMem = prove
         UNDISCH_TAC `~(lab_state_clock (s1:(A,lab_to_target_config,FFI)lab_state) = 0)` THEN ARITH_TAC;
         DISCH_THEN SUBST1_TAC] THEN
       USE_THEN "rw" (fun th -> REWRITE_TAC[CONJUNCT1 th]) THEN
-      CASE_REWRITE_TAC[] THEN AP_THM_TAC THEN AP_TERM_TAC THEN
+      CAKE_REWRITE_TAC[] THEN AP_THM_TAC THEN AP_TERM_TAC THEN
       UNDISCH_TAC `~(lab_state_clock (s1:(A,lab_to_target_config,FFI)lab_state) = 0)` THEN ARITH_TAC;
       ALL_TAC] THEN
     SUBGOAL_THEN `next_interference (mc_conf:(A,B,C)machine_config)
@@ -3268,7 +3268,7 @@ let LTTP3AUX_cc_ShareMem = prove
         SOME (FfiApp index new_bytes ms1
                 (machine_config_ffi_interfer mc_conf 0 (index,new_bytes,ms1)),
               machine_config_ffi_interfer_fupd
-            (K (shift_seq 1 (machine_config_ffi_interfer (mc_conf:(A,B,C)machine_config)))) mc_conf,
+            (combin_K (shift_seq 1 (machine_config_ffi_interfer (mc_conf:(A,B,C)machine_config)))) mc_conf,
               new_ffi)` ASSUME_TAC THENL
      [MATCH_MP_TAC(LTTP3AUX_INSTN [("op",`MappedRead`); ("nb",`nb:byte`); ("r",`r0:num`);
          ("off",`off:A word`); ("reg",`r:num`); ("pc'",`word_add (p:A word) (word (pos_val (lab_state_pc (s1:(A,lab_to_target_config,FFI)lab_state)) 0 (code2:((A)sec)list) +
@@ -3285,11 +3285,11 @@ let LTTP3AUX_cc_ShareMem = prove
        `s':(A,lab_to_target_config,FFI)lab_state`]) THEN
     ANTS_TAC THENL [REPEAT CONJ_TAC THEN FIRST_ASSUM ACCEPT_TAC; ALL_TAC] THEN
     DISCH_THEN(MP_TAC o SPECL [`res:machine_result`; `machine_config_ffi_interfer_fupd
-            (K (shift_seq 1 (machine_config_ffi_interfer (mc_conf:(A,B,C)machine_config)))) mc_conf`;
+            (combin_K (shift_seq 1 (machine_config_ffi_interfer (mc_conf:(A,B,C)machine_config)))) mc_conf`;
        `s2:(A,lab_to_target_config,FFI)lab_state`; `code2:((A)sec)list`; `labs:(num spt)spt`;
-       `asm_state_pc_fupd (K (word_add (p:A word) (word (pos_val (lab_state_pc (s1:(A,lab_to_target_config,FFI)lab_state)) 0 (code2:((A)sec)list) +
+       `asm_state_pc_fupd (combin_K (word_add (p:A word) (word (pos_val (lab_state_pc (s1:(A,lab_to_target_config,FFI)lab_state)) 0 (code2:((A)sec)list) +
            LENGTH (bytes:byte list)))))
-          (asm_state_regs_fupd (K (\n. if n = r then word_of_bytes F (word 0) new_bytes
+          (asm_state_regs_fupd (combin_K (\n. if n = r then word_of_bytes F (word 0) new_bytes
                                        else asm_state_regs (t1:(A)asm_state) n)) t1)`;
        `machine_config_ffi_interfer (mc_conf:(A,B,C)machine_config) 0 (index,new_bytes,ms1)`;
        `p:A word`]) THEN
@@ -3343,7 +3343,7 @@ let LTTP3AUX_cc_ShareMem = prove
     SUBGOAL_THEN `!k. target_evaluate (mc_conf:(A,B,C)machine_config)
           (lab_state_ffi (s1:(A,lab_to_target_config,FFI)lab_state)) (lab_state_clock s1 + k) ms1 =
         target_evaluate (machine_config_ffi_interfer_fupd
-            (K (shift_seq 1 (machine_config_ffi_interfer (mc_conf:(A,B,C)machine_config)))) mc_conf)
+            (combin_K (shift_seq 1 (machine_config_ffi_interfer (mc_conf:(A,B,C)machine_config)))) mc_conf)
           new_ffi (lab_state_clock s1 - 1 + k)
           (machine_config_ffi_interfer mc_conf 0 (index,new_bytes,ms1))` (LABEL_TAC "step") THENL
      [GEN_TAC THEN
@@ -3362,7 +3362,7 @@ let LTTP3AUX_cc_ShareMem = prove
       REWRITE_TAC[LET_DEF; LET_END_DEF; ASSUME `target_get_reg (machine_config_target (mc_conf:(A,B,C)machine_config)) ms1 r = (w:A word)`] THEN
       FIRST_ASSUM(fun th -> if LTTP3AUX_LHS_IS "call_FFI" th then REWRITE_TAC[th]
                             else NO_TAC) THEN
-      CASE_REWRITE_TAC[] THEN AP_THM_TAC THEN AP_TERM_TAC THEN
+      CAKE_REWRITE_TAC[] THEN AP_THM_TAC THEN AP_TERM_TAC THEN
       UNDISCH_TAC `~(lab_state_clock (s1:(A,lab_to_target_config,FFI)lab_state) = 0)` THEN ARITH_TAC;
       ALL_TAC] THEN
     SUBGOAL_THEN `next_interference (mc_conf:(A,B,C)machine_config)
@@ -3370,7 +3370,7 @@ let LTTP3AUX_cc_ShareMem = prove
         SOME (FfiApp index new_bytes ms1
                 (machine_config_ffi_interfer mc_conf 0 (index,new_bytes,ms1)),
               machine_config_ffi_interfer_fupd
-            (K (shift_seq 1 (machine_config_ffi_interfer (mc_conf:(A,B,C)machine_config)))) mc_conf,
+            (combin_K (shift_seq 1 (machine_config_ffi_interfer (mc_conf:(A,B,C)machine_config)))) mc_conf,
               new_ffi)` ASSUME_TAC THENL
      [MATCH_MP_TAC(LTTP3AUX_INSTN [("op",`MappedWrite`); ("nb",`nb:byte`); ("r",`r0:num`);
          ("off",`off:A word`); ("reg",`r:num`); ("pc'",`word_add (p:A word) (word (pos_val (lab_state_pc (s1:(A,lab_to_target_config,FFI)lab_state)) 0 (code2:((A)sec)list) +
@@ -3387,9 +3387,9 @@ let LTTP3AUX_cc_ShareMem = prove
        `s':(A,lab_to_target_config,FFI)lab_state`]) THEN
     ANTS_TAC THENL [REPEAT CONJ_TAC THEN FIRST_ASSUM ACCEPT_TAC; ALL_TAC] THEN
     DISCH_THEN(MP_TAC o SPECL [`res:machine_result`; `machine_config_ffi_interfer_fupd
-            (K (shift_seq 1 (machine_config_ffi_interfer (mc_conf:(A,B,C)machine_config)))) mc_conf`;
+            (combin_K (shift_seq 1 (machine_config_ffi_interfer (mc_conf:(A,B,C)machine_config)))) mc_conf`;
        `s2:(A,lab_to_target_config,FFI)lab_state`; `code2:((A)sec)list`; `labs:(num spt)spt`;
-       `asm_state_pc_fupd (K (word_add (p:A word) (word (pos_val (lab_state_pc (s1:(A,lab_to_target_config,FFI)lab_state)) 0 (code2:((A)sec)list) +
+       `asm_state_pc_fupd (combin_K (word_add (p:A word) (word (pos_val (lab_state_pc (s1:(A,lab_to_target_config,FFI)lab_state)) 0 (code2:((A)sec)list) +
            LENGTH (bytes:byte list))))) (t1:(A)asm_state)`;
        `machine_config_ffi_interfer (mc_conf:(A,B,C)machine_config) 0 (index,new_bytes,ms1)`;
        `p:A word`]) THEN
@@ -3553,7 +3553,7 @@ let LTTP3AUX_cc_ShareMem_final = prove
 
     FIRST_ASSUM(fun th -> if LTTP3AUX_LHS_IS "call_FFI" th then REWRITE_TAC[th]
                           else NO_TAC) THEN
-    CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[];
+    CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[];
     (* MappedWrite *)
     USE_THEN "rw" (X_CHOOSE_THEN `w:A word` STRIP_ASSUME_TAC) THEN
     SUBGOAL_THEN `target_get_reg (machine_config_target (mc_conf:(A,B,C)machine_config)) ms1 r =
@@ -3582,7 +3582,7 @@ let LTTP3AUX_cc_ShareMem_final = prove
     REWRITE_TAC[LET_DEF; LET_END_DEF; ASSUME `target_get_reg (machine_config_target (mc_conf:(A,B,C)machine_config)) ms1 r = (w:A word)`] THEN
     FIRST_ASSUM(fun th -> if LTTP3AUX_LHS_IS "call_FFI" th then REWRITE_TAC[th]
                           else NO_TAC) THEN
-    CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]]);;
+    CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]]);;
 (* HOL4 line 8292, Resume compile_correct[CallFFI]: the ffi index of the call *)
 let LTTP3AUX_callffi_index = prove
  (`!(mc_conf:(A,B,C)machine_config) code2 labs p (s1:(A,lab_to_target_config,FFI)lab_state)
@@ -3678,14 +3678,14 @@ let LTTP3AUX_target_evaluate_ExtCall = prove
           | FFI_return new_ffi new_bytes ->
               target_evaluate
                 (machine_config_ffi_interfer_fupd
-                   (K (shift_seq 1 (machine_config_ffi_interfer mc))) mc)
+                   (combin_K (shift_seq 1 (machine_config_ffi_interfer mc))) mc)
                 new_ffi (k - 1)
                 (machine_config_ffi_interfer mc 0 (index,new_bytes,ms)))`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   GEN_REWRITE_TAC LAND_CONV [target_evaluate_def] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
-  ASM_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN CASE_REWRITE_TAC[] THEN
-  TOP_CASE_TAC THEN CASE_REWRITE_TAC[apply_oracle_def]);;
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN CAKE_REWRITE_TAC[] THEN
+  TOP_CASE_TAC THEN CAKE_REWRITE_TAC[apply_oracle_def]);;
 (* the jump of a CallFFI line to the ffi entry point of its name *)
 let LTTP3AUX_callffi_jump = prove
  (`!(mc_conf:(A,B,C)machine_config) code2 labs p (s1:(A,lab_to_target_config,FFI)lab_state)
@@ -3700,7 +3700,7 @@ let LTTP3AUX_callffi_jump = prove
                 find_next_interference (shift_interfer l mc_conf) ffi k ms2) /\
            target_state_rel (machine_config_target mc_conf)
              (asm_state_pc_fupd
-                (K (word_sub p (word ((3 + get_ffi_index
+                (combin_K (word_sub p (word ((3 + get_ffi_index
                       (TAKE (THE (mmio_pcs_min_index (machine_config_ffi_names mc_conf)))
                          (machine_config_ffi_names mc_conf)) (ExtCall name)) * ffi_offset))))
                 t1) ms2`,
@@ -3797,7 +3797,7 @@ let LTTP3AUX_state_rel_ffi_return = prove
      target_state_rel (machine_config_target mc_conf) t2 ms2
      ==> lab_to_targetProof_state_rel
            (machine_config_ffi_interfer_fupd
-              (K (shift_seq 1 (machine_config_ffi_interfer mc_conf))) mc_conf,code2,labs,p)
+              (combin_K (shift_seq 1 (machine_config_ffi_interfer mc_conf))) mc_conf,code2,labs,p)
            S t2 ms2`,
   REPEAT GEN_TAC THEN
   DISCH_THEN(CONJUNCTS_THEN2 MP_TAC (REPEAT_TCL CONJUNCTS_THEN ASSUME_TAC)) THEN
@@ -3875,7 +3875,7 @@ let LTTP3AUX_state_rel_pc_regs = prove
  (`!(mc_conf:(A,B,C)machine_config) code2 labs p (s1:(A,lab_to_target_config,FFI)lab_state)
      (t1:(A)asm_state) ms1 pc ms2 r v.
      lab_to_targetProof_state_rel (mc_conf,code2,labs,p) s1 t1 ms1 /\
-     target_state_rel (machine_config_target mc_conf) (asm_state_pc_fupd (K pc) t1) ms2 /\
+     target_state_rel (machine_config_target mc_conf) (asm_state_pc_fupd (combin_K pc) t1) ms2 /\
      reg_ok r (target_config (machine_config_target mc_conf)) /\
      lab_state_regs s1 r = wl_Word v
      ==> target_get_reg (machine_config_target mc_conf) ms2 r = v`,
@@ -3895,7 +3895,7 @@ let LTTP3AUX_callffi_read_ffi = prove
  (`!(mc_conf:(A,B,C)machine_config) code2 labs p (s1:(A,lab_to_target_config,FFI)lab_state)
      (t1:(A)asm_state) ms1 pc ms2 w w2 w3 w4 bytes bytes2.
      lab_to_targetProof_state_rel (mc_conf,code2,labs,p) s1 t1 ms1 /\
-     target_state_rel (machine_config_target mc_conf) (asm_state_pc_fupd (K pc) t1) ms2 /\
+     target_state_rel (machine_config_target mc_conf) (asm_state_pc_fupd (combin_K pc) t1) ms2 /\
      lab_state_regs s1 (lab_state_len_reg s1) = wl_Word w /\
      lab_state_regs s1 (lab_state_ptr_reg s1) = wl_Word w2 /\
      lab_state_regs s1 (lab_state_len2_reg s1) = wl_Word w3 /\
@@ -3956,7 +3956,7 @@ let LTTP3AUX_callffi_target_rel = prove
      (!k. find_next_interference mc_conf (lab_state_ffi s1) (k + l) ms1 =
           find_next_interference (shift_interfer l mc_conf) (lab_state_ffi s1) k ms2) /\
      target_state_rel (machine_config_target mc_conf)
-       (asm_state_pc_fupd (K (word_sub p (word ((3 + idx) * ffi_offset)))) t1) ms2 /\
+       (asm_state_pc_fupd (combin_K (word_sub p (word ((3 + idx) * ffi_offset)))) t1) ms2 /\
      mmio_pcs_min_index (machine_config_ffi_names mc_conf) = SOME i /\ idx < i /\
      ~(word_sub p (word ((3 + idx) * ffi_offset)) IN machine_config_prog_addresses mc_conf) /\
      ~(word_sub p (word ((3 + idx) * ffi_offset)) = machine_config_halt_pc mc_conf) /\
@@ -3972,12 +3972,12 @@ let LTTP3AUX_callffi_target_rel = prove
      lab_state_regs s1 (lab_state_link_reg s1) = wl_Loc n1 n2 /\
      loc_to_pc n1 n2 (lab_state_code s1) = SOME new_pc
      ==> target_state_rel (machine_config_target mc_conf)
-           (asm_state_pc_fupd (K (word_add p (word (pos_val new_pc 0 code2))))
-           (asm_state_mem_fupd (K (asm_write_bytearray w4 new_bytes (asm_state_mem t1)))
+           (asm_state_pc_fupd (combin_K (word_add p (word (pos_val new_pc 0 code2))))
+           (asm_state_mem_fupd (combin_K (asm_write_bytearray w4 new_bytes (asm_state_mem t1)))
            (asm_state_regs_fupd
-              (K (\a. get_reg_value (lab_state_io_regs s1 0 (ExtCall ffi_index) a)
+              (combin_K (\a. get_reg_value (lab_state_io_regs s1 0 (ExtCall ffi_index) a)
                         (asm_state_regs t1 a) I))
-           (asm_state_fp_regs_fupd (K (\n. lab_state_io_fp_regs s1 0 n)) t1))))
+           (asm_state_fp_regs_fupd (combin_K (\n. lab_state_io_fp_regs s1 0 n)) t1))))
            (machine_config_ffi_interfer mc_conf 0 (idx,new_bytes,ms2))`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP LTTP3AUX_state_rel_step_facts) THEN
@@ -4071,67 +4071,67 @@ let LTTP3AUX_cc_CallFFI = prove
           FFI_return new_ffi new_bytes
         ==> !res (mc_conf:(A,B,C)machine_config) s2 code2 labs (t1:(A)asm_state) ms1 p.
               oracle_tie mc_conf ms1 (lab_state_mem_fupd
-              (K (write_bytearray w4 new_bytes (lab_state_mem s1) (lab_state_mem_domain s1)
+              (combin_K (write_bytearray w4 new_bytes (lab_state_mem s1) (lab_state_mem_domain s1)
                     (lab_state_be s1)))
-            (lab_state_ffi_fupd (K new_ffi)
-            (lab_state_io_regs_fupd (K (shift_seq 1 (lab_state_io_regs s1)))
-            (lab_state_io_fp_regs_fupd (K (shift_seq 1 (lab_state_io_fp_regs s1)))
+            (lab_state_ffi_fupd (combin_K new_ffi)
+            (lab_state_io_regs_fupd (combin_K (shift_seq 1 (lab_state_io_regs s1)))
+            (lab_state_io_fp_regs_fupd (combin_K (shift_seq 1 (lab_state_io_fp_regs s1)))
             (lab_state_regs_fupd
-              (K (\a. get_reg_value (lab_state_io_regs s1 0 (ExtCall ffi_index) a)
+              (combin_K (\a. get_reg_value (lab_state_io_regs s1 0 (ExtCall ffi_index) a)
                          (lab_state_regs s1 a) wl_Word))
-            (lab_state_fp_regs_fupd (K (\n. lab_state_io_fp_regs s1 0 n))
-            (lab_state_pc_fupd (K new_pc)
-            (lab_state_clock_fupd (K (lab_state_clock s1 - 1)) s1)))))))) /\
+            (lab_state_fp_regs_fupd (combin_K (\n. lab_state_io_fp_regs s1 0 n))
+            (lab_state_pc_fupd (combin_K new_pc)
+            (lab_state_clock_fupd (combin_K (lab_state_clock s1 - 1)) s1)))))))) /\
               lab_evaluate (lab_state_mem_fupd
-              (K (write_bytearray w4 new_bytes (lab_state_mem s1) (lab_state_mem_domain s1)
+              (combin_K (write_bytearray w4 new_bytes (lab_state_mem s1) (lab_state_mem_domain s1)
                     (lab_state_be s1)))
-            (lab_state_ffi_fupd (K new_ffi)
-            (lab_state_io_regs_fupd (K (shift_seq 1 (lab_state_io_regs s1)))
-            (lab_state_io_fp_regs_fupd (K (shift_seq 1 (lab_state_io_fp_regs s1)))
+            (lab_state_ffi_fupd (combin_K new_ffi)
+            (lab_state_io_regs_fupd (combin_K (shift_seq 1 (lab_state_io_regs s1)))
+            (lab_state_io_fp_regs_fupd (combin_K (shift_seq 1 (lab_state_io_fp_regs s1)))
             (lab_state_regs_fupd
-              (K (\a. get_reg_value (lab_state_io_regs s1 0 (ExtCall ffi_index) a)
+              (combin_K (\a. get_reg_value (lab_state_io_regs s1 0 (ExtCall ffi_index) a)
                          (lab_state_regs s1 a) wl_Word))
-            (lab_state_fp_regs_fupd (K (\n. lab_state_io_fp_regs s1 0 n))
-            (lab_state_pc_fupd (K new_pc)
-            (lab_state_clock_fupd (K (lab_state_clock s1 - 1)) s1)))))))) = (res,s2) /\
+            (lab_state_fp_regs_fupd (combin_K (\n. lab_state_io_fp_regs s1 0 n))
+            (lab_state_pc_fupd (combin_K new_pc)
+            (lab_state_clock_fupd (combin_K (lab_state_clock s1 - 1)) s1)))))))) = (res,s2) /\
               ~(res = target_Error) /\
               encoder_correct (machine_config_target mc_conf) /\
               lab_to_targetProof_state_rel (mc_conf,code2,labs,p) (lab_state_mem_fupd
-              (K (write_bytearray w4 new_bytes (lab_state_mem s1) (lab_state_mem_domain s1)
+              (combin_K (write_bytearray w4 new_bytes (lab_state_mem s1) (lab_state_mem_domain s1)
                     (lab_state_be s1)))
-            (lab_state_ffi_fupd (K new_ffi)
-            (lab_state_io_regs_fupd (K (shift_seq 1 (lab_state_io_regs s1)))
-            (lab_state_io_fp_regs_fupd (K (shift_seq 1 (lab_state_io_fp_regs s1)))
+            (lab_state_ffi_fupd (combin_K new_ffi)
+            (lab_state_io_regs_fupd (combin_K (shift_seq 1 (lab_state_io_regs s1)))
+            (lab_state_io_fp_regs_fupd (combin_K (shift_seq 1 (lab_state_io_fp_regs s1)))
             (lab_state_regs_fupd
-              (K (\a. get_reg_value (lab_state_io_regs s1 0 (ExtCall ffi_index) a)
+              (combin_K (\a. get_reg_value (lab_state_io_regs s1 0 (ExtCall ffi_index) a)
                          (lab_state_regs s1 a) wl_Word))
-            (lab_state_fp_regs_fupd (K (\n. lab_state_io_fp_regs s1 0 n))
-            (lab_state_pc_fupd (K new_pc)
-            (lab_state_clock_fupd (K (lab_state_clock s1 - 1)) s1)))))))) t1 ms1
+            (lab_state_fp_regs_fupd (combin_K (\n. lab_state_io_fp_regs s1 0 n))
+            (lab_state_pc_fupd (combin_K new_pc)
+            (lab_state_clock_fupd (combin_K (lab_state_clock s1 - 1)) s1)))))))) t1 ms1
               ==> ?k ms2.
                     target_evaluate mc_conf (lab_state_ffi (lab_state_mem_fupd
-              (K (write_bytearray w4 new_bytes (lab_state_mem s1) (lab_state_mem_domain s1)
+              (combin_K (write_bytearray w4 new_bytes (lab_state_mem s1) (lab_state_mem_domain s1)
                     (lab_state_be s1)))
-            (lab_state_ffi_fupd (K new_ffi)
-            (lab_state_io_regs_fupd (K (shift_seq 1 (lab_state_io_regs s1)))
-            (lab_state_io_fp_regs_fupd (K (shift_seq 1 (lab_state_io_fp_regs s1)))
+            (lab_state_ffi_fupd (combin_K new_ffi)
+            (lab_state_io_regs_fupd (combin_K (shift_seq 1 (lab_state_io_regs s1)))
+            (lab_state_io_fp_regs_fupd (combin_K (shift_seq 1 (lab_state_io_fp_regs s1)))
             (lab_state_regs_fupd
-              (K (\a. get_reg_value (lab_state_io_regs s1 0 (ExtCall ffi_index) a)
+              (combin_K (\a. get_reg_value (lab_state_io_regs s1 0 (ExtCall ffi_index) a)
                          (lab_state_regs s1 a) wl_Word))
-            (lab_state_fp_regs_fupd (K (\n. lab_state_io_fp_regs s1 0 n))
-            (lab_state_pc_fupd (K new_pc)
-            (lab_state_clock_fupd (K (lab_state_clock s1 - 1)) s1))))))))) (lab_state_clock (lab_state_mem_fupd
-              (K (write_bytearray w4 new_bytes (lab_state_mem s1) (lab_state_mem_domain s1)
+            (lab_state_fp_regs_fupd (combin_K (\n. lab_state_io_fp_regs s1 0 n))
+            (lab_state_pc_fupd (combin_K new_pc)
+            (lab_state_clock_fupd (combin_K (lab_state_clock s1 - 1)) s1))))))))) (lab_state_clock (lab_state_mem_fupd
+              (combin_K (write_bytearray w4 new_bytes (lab_state_mem s1) (lab_state_mem_domain s1)
                     (lab_state_be s1)))
-            (lab_state_ffi_fupd (K new_ffi)
-            (lab_state_io_regs_fupd (K (shift_seq 1 (lab_state_io_regs s1)))
-            (lab_state_io_fp_regs_fupd (K (shift_seq 1 (lab_state_io_fp_regs s1)))
+            (lab_state_ffi_fupd (combin_K new_ffi)
+            (lab_state_io_regs_fupd (combin_K (shift_seq 1 (lab_state_io_regs s1)))
+            (lab_state_io_fp_regs_fupd (combin_K (shift_seq 1 (lab_state_io_fp_regs s1)))
             (lab_state_regs_fupd
-              (K (\a. get_reg_value (lab_state_io_regs s1 0 (ExtCall ffi_index) a)
+              (combin_K (\a. get_reg_value (lab_state_io_regs s1 0 (ExtCall ffi_index) a)
                          (lab_state_regs s1 a) wl_Word))
-            (lab_state_fp_regs_fupd (K (\n. lab_state_io_fp_regs s1 0 n))
-            (lab_state_pc_fupd (K new_pc)
-            (lab_state_clock_fupd (K (lab_state_clock s1 - 1)) s1)))))))) + k) ms1 =
+            (lab_state_fp_regs_fupd (combin_K (\n. lab_state_io_fp_regs s1 0 n))
+            (lab_state_pc_fupd (combin_K new_pc)
+            (lab_state_clock_fupd (combin_K (lab_state_clock s1 - 1)) s1)))))))) + k) ms1 =
                     (res,ms2,lab_state_ffi s2)) /\
      ~(lab_state_clock s1 = 0) /\
         asm_fetch s1 = SOME (LabAsm (CallFFI ffi_index) a1 a2 a3) /\
@@ -4150,17 +4150,17 @@ let LTTP3AUX_cc_CallFFI = prove
         call_FFI (lab_state_ffi s1) (ExtCall ffi_index) bytes bytes2 =
           FFI_return new_ffi new_bytes /\
      lab_evaluate (lab_state_mem_fupd
-              (K (write_bytearray w4 new_bytes (lab_state_mem s1) (lab_state_mem_domain s1)
+              (combin_K (write_bytearray w4 new_bytes (lab_state_mem s1) (lab_state_mem_domain s1)
                     (lab_state_be s1)))
-            (lab_state_ffi_fupd (K new_ffi)
-            (lab_state_io_regs_fupd (K (shift_seq 1 (lab_state_io_regs s1)))
-            (lab_state_io_fp_regs_fupd (K (shift_seq 1 (lab_state_io_fp_regs s1)))
+            (lab_state_ffi_fupd (combin_K new_ffi)
+            (lab_state_io_regs_fupd (combin_K (shift_seq 1 (lab_state_io_regs s1)))
+            (lab_state_io_fp_regs_fupd (combin_K (shift_seq 1 (lab_state_io_fp_regs s1)))
             (lab_state_regs_fupd
-              (K (\a. get_reg_value (lab_state_io_regs s1 0 (ExtCall ffi_index) a)
+              (combin_K (\a. get_reg_value (lab_state_io_regs s1 0 (ExtCall ffi_index) a)
                          (lab_state_regs s1 a) wl_Word))
-            (lab_state_fp_regs_fupd (K (\n. lab_state_io_fp_regs s1 0 n))
-            (lab_state_pc_fupd (K new_pc)
-            (lab_state_clock_fupd (K (lab_state_clock s1 - 1)) s1)))))))) = (res,s2) /\
+            (lab_state_fp_regs_fupd (combin_K (\n. lab_state_io_fp_regs s1 0 n))
+            (lab_state_pc_fupd (combin_K new_pc)
+            (lab_state_clock_fupd (combin_K (lab_state_clock s1 - 1)) s1)))))))) = (res,s2) /\
      oracle_tie mc_conf ms1 s1 /\ ~(res = target_Error) /\
      encoder_correct (machine_config_target mc_conf) /\
      lab_to_targetProof_state_rel (mc_conf,code2,labs,p) s1 t1 ms1
@@ -4222,7 +4222,7 @@ let LTTP3AUX_cc_CallFFI = prove
   SUBGOAL_THEN `!k. target_evaluate (mc_conf:(A,B,C)machine_config) (lab_state_ffi (s1:(A,lab_to_target_config,FFI)lab_state))
         ((lab_state_clock s1 + k) + l) ms1 =
       target_evaluate (machine_config_ffi_interfer_fupd
-         (K (shift_seq 1 (machine_config_ffi_interfer (shift_interfer l (mc_conf:(A,B,C)machine_config)))))
+         (combin_K (shift_seq 1 (machine_config_ffi_interfer (shift_interfer l (mc_conf:(A,B,C)machine_config)))))
          (shift_interfer l mc_conf)) new_ffi (lab_state_clock s1 - 1 + k) (machine_config_ffi_interfer (shift_interfer l (mc_conf:(A,B,C)machine_config)) 0
          (idx,new_bytes,ms2))` (LABEL_TAC "step") THENL
    [GEN_TAC THEN USE_THEN "eval" (fun th -> REWRITE_TAC[th]) THEN
@@ -4235,7 +4235,7 @@ let LTTP3AUX_cc_CallFFI = prove
       DISCH_THEN SUBST1_TAC] THEN
     FIRST_ASSUM(fun th -> if LTTP3AUX_LHS_IS "call_FFI" th then REWRITE_TAC[th]
                           else NO_TAC) THEN
-    CASE_REWRITE_TAC[] THEN AP_THM_TAC THEN AP_TERM_TAC THEN
+    CAKE_REWRITE_TAC[] THEN AP_THM_TAC THEN AP_TERM_TAC THEN
     UNDISCH_TAC `~(lab_state_clock (s1:(A,lab_to_target_config,FFI)lab_state) = 0)` THEN ARITH_TAC;
     ALL_TAC] THEN
   (* the memory facts *)
@@ -4263,15 +4263,15 @@ let LTTP3AUX_cc_CallFFI = prove
      `new_bytes:byte list`; `new_ffi:(FFI)ffi_state`; `ffi_index:mlstring`; `new_pc:num`]) THEN
   ANTS_TAC THENL [REPEAT CONJ_TAC THEN FIRST_ASSUM ACCEPT_TAC; ALL_TAC] THEN
   DISCH_THEN(MP_TAC o SPECL [`res:machine_result`; `machine_config_ffi_interfer_fupd
-         (K (shift_seq 1 (machine_config_ffi_interfer (shift_interfer l (mc_conf:(A,B,C)machine_config)))))
+         (combin_K (shift_seq 1 (machine_config_ffi_interfer (shift_interfer l (mc_conf:(A,B,C)machine_config)))))
          (shift_interfer l mc_conf)`;
      `s2:(A,lab_to_target_config,FFI)lab_state`; `code2:((A)sec)list`; `labs:(num spt)spt`;
-     `asm_state_pc_fupd (K (word_add (p:A word) (word (pos_val new_pc 0 (code2:((A)sec)list)))))
-         (asm_state_mem_fupd (K (asm_write_bytearray (w4:A word) new_bytes (asm_state_mem (t1:(A)asm_state))))
+     `asm_state_pc_fupd (combin_K (word_add (p:A word) (word (pos_val new_pc 0 (code2:((A)sec)list)))))
+         (asm_state_mem_fupd (combin_K (asm_write_bytearray (w4:A word) new_bytes (asm_state_mem (t1:(A)asm_state))))
          (asm_state_regs_fupd
-            (K (\a. get_reg_value (lab_state_io_regs (s1:(A,lab_to_target_config,FFI)lab_state) 0 (ExtCall ffi_index) a)
+            (combin_K (\a. get_reg_value (lab_state_io_regs (s1:(A,lab_to_target_config,FFI)lab_state) 0 (ExtCall ffi_index) a)
                       (asm_state_regs t1 a) I))
-         (asm_state_fp_regs_fupd (K (\n. lab_state_io_fp_regs (s1:(A,lab_to_target_config,FFI)lab_state) 0 n)) t1)))`; `machine_config_ffi_interfer (shift_interfer l (mc_conf:(A,B,C)machine_config)) 0
+         (asm_state_fp_regs_fupd (combin_K (\n. lab_state_io_fp_regs (s1:(A,lab_to_target_config,FFI)lab_state) 0 n)) t1)))`; `machine_config_ffi_interfer (shift_interfer l (mc_conf:(A,B,C)machine_config)) 0
          (idx,new_bytes,ms2)`; `p:A word`]) THEN
   ANTS_TAC THENL
    [REPEAT CONJ_TAC THENL
@@ -4426,7 +4426,7 @@ let LTTP3AUX_cc_CallFFI_final = prove
     DISCH_THEN SUBST1_TAC] THEN
   FIRST_ASSUM(fun th -> if LTTP3AUX_LHS_IS "call_FFI" th then REWRITE_TAC[th]
                         else NO_TAC) THEN
-  CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]);;(* HOL4 line 8754, Resume compile_correct[Install]: the jump of an Install  *)
+  CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]);;(* HOL4 line 8754, Resume compile_correct[Install]: the jump of an Install  *)
 (* line to the code cache entry point                                         *)
 let LTTP3AUX_install_jump = prove
  (`!(mc_conf:(A,B,C)machine_config) code2 labs p (s1:(A,lab_to_target_config,FFI)lab_state)
@@ -4440,7 +4440,7 @@ let LTTP3AUX_install_jump = prove
            (!k. find_next_interference mc_conf ffi (k + l) ms1 =
                 find_next_interference (shift_interfer l mc_conf) ffi k ms2) /\
            target_state_rel (machine_config_target mc_conf)
-             (asm_state_pc_fupd (K (machine_config_ccache_pc mc_conf)) t1) ms2`,
+             (asm_state_pc_fupd (combin_K (machine_config_ccache_pc mc_conf)) t1) ms2`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP LTTP3AUX_state_rel_step_facts) THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP LTTP3AUX_state_rel_misc_facts) THEN
@@ -4511,14 +4511,14 @@ let LTTP3AUX_target_evaluate_ccache = prove
      ==> target_evaluate mc ffi k ms =
          target_evaluate
            (machine_config_ccache_interfer_fupd
-              (K (shift_seq 1 (machine_config_ccache_interfer mc))) mc)
+              (combin_K (shift_seq 1 (machine_config_ccache_interfer mc))) mc)
            ffi (k - 1)
            (machine_config_ccache_interfer mc 0
               (target_get_reg (machine_config_target mc) ms (machine_config_ptr_reg mc),
                target_get_reg (machine_config_target mc) ms (machine_config_len_reg mc),ms))`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   GEN_REWRITE_TAC LAND_CONV [target_evaluate_def] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[apply_oracle_def; LET_DEF; LET_END_DEF]);;
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[apply_oracle_def; LET_DEF; LET_END_DEF]);;
 (* the code cache entry point is not the halt entry point *)
 let LTTP3AUX_ccache_ne_halt = prove
  (`!(mc_conf:(A,B,C)machine_config) code2 labs p (s1:(A,lab_to_target_config,FFI)lab_state)
@@ -4547,7 +4547,7 @@ let LTTP3AUX_install_target_rel = prove
      (!k. find_next_interference mc_conf (lab_state_ffi s1) (k + l) ms1 =
           find_next_interference (shift_interfer l mc_conf) (lab_state_ffi s1) k ms2) /\
      target_state_rel (machine_config_target mc_conf)
-       (asm_state_pc_fupd (K (machine_config_ccache_pc mc_conf)) t1) ms2 /\
+       (asm_state_pc_fupd (combin_K (machine_config_ccache_pc mc_conf)) t1) ms2 /\
      lab_state_regs s1 (lab_state_ptr_reg s1) = wl_Word w1 /\
      lab_state_regs s1 (lab_state_len_reg s1) = wl_Word w2 /\
      lab_state_regs s1 (lab_state_link_reg s1) = wl_Loc n1 n2 /\
@@ -4558,10 +4558,10 @@ let LTTP3AUX_install_target_rel = prove
            w2 /\
          target_state_rel (machine_config_target mc_conf)
            (asm_state_regs_fupd
-              (K ((lab_state_ptr_reg s1 =+ w1)
+              (combin_K ((lab_state_ptr_reg s1 =+ w1)
                   (\a. get_reg_value (lab_state_cc_regs s1 0 a) (asm_state_regs t1 a) I)))
-           (asm_state_fp_regs_fupd (K (\n. lab_state_cc_fp_regs s1 0 n))
-           (asm_state_pc_fupd (K (word_add p (word (pos_val new_pc 0 code2)))) t1)))
+           (asm_state_fp_regs_fupd (combin_K (\n. lab_state_cc_fp_regs s1 0 n))
+           (asm_state_pc_fupd (combin_K (word_add p (word (pos_val new_pc 0 code2)))) t1)))
            (machine_config_ccache_interfer mc_conf 0 (w1,w2,ms2))`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP LTTP3AUX_state_rel_step_facts) THEN
@@ -4745,7 +4745,7 @@ let LTTP3AUX_install_compile = prove
     can (find_term (fun t -> try fst(dest_const t) = "lab_state_compile_oracle"
                              with Failure _ -> false)) (concl th))) THEN
   ASM_REWRITE_TAC[] THEN DISCH_THEN(MP_TAC o SPEC `0`) THEN
-  ASM_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN CAKE_REWRITE_TAC[] THEN
   STRIP_TAC THEN
   FIRST_X_ASSUM(fun th -> if LTTP3AUX_HEAD_IS "lab_to_targetProof_good_code" th
                           then MP_TAC th else NO_TAC) THEN
@@ -4754,7 +4754,7 @@ let LTTP3AUX_install_compile = prove
   UNDISCH_TAC `lab_state_compile (s1:(A,lab_to_target_config,FFI)lab_state) cfg new_code =
        SOME (bytes,FST (shift_seq 1 (lab_state_compile_oracle (s1:(A,lab_to_target_config,FFI)lab_state)) 0))` THEN
   ASM_REWRITE_TAC[compile_lab_def; LET_DEF; LET_END_DEF] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT] THEN
   TOP_CASE_TAC THEN REWRITE_TAC[option_DISTINCT] THEN
   TOP_CASE_TAC THEN TOP_CASE_TAC THEN
@@ -4801,8 +4801,8 @@ let LTTP3AUX_word_loc_val_mono = prove
   REWRITE_TAC[word_loc_val_def] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
   POP_ASSUM MP_TAC THEN
   MP_TAC(ISPEC `lab_lookup a0 a1 (labs:(num spt)spt)` (cases "option")) THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[option_DISTINCT] THEN
-  RES_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]);;
+  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[option_DISTINCT] THEN
+  RES_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]);;
 
 let LTTP3AUX_word_loc_val_byte_mono = prove
  (`!(p:A word) labs nlabs m a be v.
@@ -4813,12 +4813,12 @@ let LTTP3AUX_word_loc_val_byte_mono = prove
   POP_ASSUM MP_TAC THEN
   MP_TAC(ISPEC `word_loc_val (p:A word) labs ((m:A word->(A)word_loc) (byte_align a))`
     (cases "option")) THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[option_DISTINCT] THEN DISCH_TAC THEN
+  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[option_DISTINCT] THEN DISCH_TAC THEN
   SUBGOAL_THEN `word_loc_val (p:A word) nlabs ((m:A word->(A)word_loc) (byte_align a)) = SOME a'`
     SUBST1_TAC THENL
    [MATCH_MP_TAC LTTP3AUX_word_loc_val_mono THEN EXISTS_TAC `labs:(num spt)spt` THEN
     ASM_REWRITE_TAC[];
-    CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]]);;
+    CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]]);;
 
 (* the ffi byte arrays do not depend on the code cache oracle *)
 let LTTP3AUX_read_ffi_bytearrays_ccache = prove
@@ -4873,7 +4873,7 @@ let LTTP3AUX_install_loc_to_pc = prove
   UNDISCH_TAC `loc_to_pc l1 l2 (APPEND (code1:((A)sec)list) new_code) = SOME x2` THEN
   ASM_SIMP_TAC[loc_to_pc_append; ALL_APPEND; pos_val_append] THEN
   MP_TAC(ISPEC `loc_to_pc l1 l2 (code1:((A)sec)list)` (cases "option")) THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[option_INJ] THENL
+  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[option_INJ] THENL
    [ALL_TAC;
     DISCH_THEN(SUBST_ALL_TAC o SYM) THEN
     SUBGOAL_THEN `a <= SUM (MAP ((\xs. LENGTH (FILTER ((~) o is_Label) xs)) o Section_lines)
@@ -4885,7 +4885,7 @@ let LTTP3AUX_install_loc_to_pc = prove
       ALL_TAC] THEN
     FIRST_X_ASSUM MATCH_MP_TAC THEN FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[]] THEN
   MP_TAC(ISPEC `loc_to_pc l1 l2 (new_code:((A)sec)list)` (cases "option")) THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[option_INJ; option_DISTINCT] THEN
+  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[option_INJ; option_DISTINCT] THEN
   DISCH_THEN(SUBST_ALL_TAC o SYM) THEN
   FIRST_X_ASSUM(MP_TAC o SPECL [`l1:num`; `l2:num`; `a:num`] o check (fun th ->
     is_forall(concl th) && can (find_term ((=) `new_code:((A)sec)list`)) (concl th) &&
@@ -5003,32 +5003,32 @@ let LTTP3AUX_state_rel_install = prove
      lab_state_compile s1 cfg (CONS (Section k lines) rest) =
        SOME (bytes,FST (shift_seq 1 (lab_state_compile_oracle s1) 0)) /\
      target_state_rel (machine_config_target mc_conf) (asm_state_regs_fupd
-            (K ((lab_state_ptr_reg s1 =+ w1)
+            (combin_K ((lab_state_ptr_reg s1 =+ w1)
                 (\a. get_reg_value (lab_state_cc_regs s1 0 a) (asm_state_regs t1 a) I)))
-          (asm_state_fp_regs_fupd (K (\n. lab_state_cc_fp_regs s1 0 n))
-          (asm_state_pc_fupd (K (word_add p (word (pos_val new_pc 0 code2)))) t1))) ms2
+          (asm_state_fp_regs_fupd (combin_K (\n. lab_state_cc_fp_regs s1 0 n))
+          (asm_state_pc_fupd (combin_K (word_add p (word (pos_val new_pc 0 code2)))) t1))) ms2
      ==> ?sec_list.
            lab_to_targetProof_state_rel
              (machine_config_ccache_interfer_fupd
-                (K (shift_seq 1 (machine_config_ccache_interfer mc_conf))) mc_conf,
+                (combin_K (shift_seq 1 (machine_config_ccache_interfer mc_conf))) mc_conf,
               APPEND code2 sec_list,
               lab_to_target_config_labels (FST (shift_seq 1 (lab_state_compile_oracle s1) 0)),
               p)
-             (lab_state_pc_fupd (K new_pc)
-          (lab_state_code_buffer_fupd (K cb)
-          (lab_state_code_fupd (K (APPEND (lab_state_code s1) (CONS (Section k lines) rest)))
-          (lab_state_cc_regs_fupd (K (shift_seq 1 (lab_state_cc_regs s1)))
-          (lab_state_cc_fp_regs_fupd (K (shift_seq 1 (lab_state_cc_fp_regs s1)))
+             (lab_state_pc_fupd (combin_K new_pc)
+          (lab_state_code_buffer_fupd (combin_K cb)
+          (lab_state_code_fupd (combin_K (APPEND (lab_state_code s1) (CONS (Section k lines) rest)))
+          (lab_state_cc_regs_fupd (combin_K (shift_seq 1 (lab_state_cc_regs s1)))
+          (lab_state_cc_fp_regs_fupd (combin_K (shift_seq 1 (lab_state_cc_fp_regs s1)))
           (lab_state_regs_fupd
-             (K ((lab_state_ptr_reg s1 =+ wl_Loc k 0)
+             (combin_K ((lab_state_ptr_reg s1 =+ wl_Loc k 0)
                    (\a. get_reg_value (lab_state_cc_regs s1 0 a) (lab_state_regs s1 a) wl_Word)))
-          (lab_state_fp_regs_fupd (K (\n. lab_state_cc_fp_regs s1 0 n))
-          (lab_state_compile_oracle_fupd (K (shift_seq 1 (lab_state_compile_oracle s1)))
-          (lab_state_clock_fupd (K (lab_state_clock s1 - 1)) s1))))))))) (asm_state_regs_fupd
-            (K ((lab_state_ptr_reg s1 =+ w1)
+          (lab_state_fp_regs_fupd (combin_K (\n. lab_state_cc_fp_regs s1 0 n))
+          (lab_state_compile_oracle_fupd (combin_K (shift_seq 1 (lab_state_compile_oracle s1)))
+          (lab_state_clock_fupd (combin_K (lab_state_clock s1 - 1)) s1))))))))) (asm_state_regs_fupd
+            (combin_K ((lab_state_ptr_reg s1 =+ w1)
                 (\a. get_reg_value (lab_state_cc_regs s1 0 a) (asm_state_regs t1 a) I)))
-          (asm_state_fp_regs_fupd (K (\n. lab_state_cc_fp_regs s1 0 n))
-          (asm_state_pc_fupd (K (word_add p (word (pos_val new_pc 0 code2)))) t1))) ms2`,
+          (asm_state_fp_regs_fupd (combin_K (\n. lab_state_cc_fp_regs s1 0 n))
+          (asm_state_pc_fupd (combin_K (word_add p (word (pos_val new_pc 0 code2)))) t1))) ms2`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   MP_TAC(ISPECL [`mc_conf:(A,B,C)machine_config`; `code2:((A)sec)list`; `labs:(num spt)spt`;
      `p:A word`; `(s1:(A,lab_to_target_config,FFI)lab_state)`; `t1:(A)asm_state`; `ms1:B`; `a1:A word`; `a2:byte list`; `a3:num`;
@@ -5089,7 +5089,7 @@ let LTTP3AUX_state_rel_install = prove
     MP_TAC(ISPEC `lab_state_compile_oracle (s1:(A,lab_to_target_config,FFI)lab_state) (kk + 1)` PAIR_SURJECTIVE) THEN
     DISCH_THEN(X_CHOOSE_THEN `cfg1:lab_to_target_config`
       (X_CHOOSE_THEN `code1:((A)sec)list` ASSUME_TAC)) THEN
-    ASM_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[ADD_EQ_0; ARITH_EQ] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
     DISCH_THEN SUBST_ALL_TAC THEN
     SUBGOAL_THEN `FST (shift_seq 1 (lab_state_compile_oracle (s1:(A,lab_to_target_config,FFI)lab_state)) 0) = cfg1` ASSUME_TAC THENL
@@ -5128,7 +5128,7 @@ let LTTP3AUX_state_rel_install = prove
         (concl th) &&
       can (find_term ((=) `sec_list:((A)sec)list`)) (concl th))) THEN
     ONCE_REWRITE_TAC[loc_to_pc_def] THEN REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN
-    CASE_REWRITE_TAC[option_INJ] THEN
+    CAKE_REWRITE_TAC[option_INJ] THEN
     MP_TAC(ISPECL [`sec_list:((A)sec)list`; `target_config (machine_config_target (mc_conf:(A,B,C)machine_config))`;
       `nlabs:(num spt)spt`; `machine_config_ffi_names (mc_conf:(A,B,C)machine_config)`;
       `LENGTH (prog_to_bytes (code2:((A)sec)list))`] pos_val_0) THEN
@@ -5263,63 +5263,63 @@ let LTTP3AUX_cc_Install = prove
         lab_state_compile s1 cfg (CONS (Section k lines) rest) =
           SOME (bytes,FST (shift_seq 1 (lab_state_compile_oracle s1) 0))
         ==> !res (mc_conf:(A,B,C)machine_config) s2 code2 labs (t1:(A)asm_state) ms1 p.
-              oracle_tie mc_conf ms1 (lab_state_pc_fupd (K new_pc)
-          (lab_state_code_buffer_fupd (K cb)
-          (lab_state_code_fupd (K (APPEND (lab_state_code s1) (CONS (Section k lines) rest)))
-          (lab_state_cc_regs_fupd (K (shift_seq 1 (lab_state_cc_regs s1)))
-          (lab_state_cc_fp_regs_fupd (K (shift_seq 1 (lab_state_cc_fp_regs s1)))
+              oracle_tie mc_conf ms1 (lab_state_pc_fupd (combin_K new_pc)
+          (lab_state_code_buffer_fupd (combin_K cb)
+          (lab_state_code_fupd (combin_K (APPEND (lab_state_code s1) (CONS (Section k lines) rest)))
+          (lab_state_cc_regs_fupd (combin_K (shift_seq 1 (lab_state_cc_regs s1)))
+          (lab_state_cc_fp_regs_fupd (combin_K (shift_seq 1 (lab_state_cc_fp_regs s1)))
           (lab_state_regs_fupd
-             (K ((lab_state_ptr_reg s1 =+ wl_Loc k 0)
+             (combin_K ((lab_state_ptr_reg s1 =+ wl_Loc k 0)
                    (\a. get_reg_value (lab_state_cc_regs s1 0 a) (lab_state_regs s1 a) wl_Word)))
-          (lab_state_fp_regs_fupd (K (\n. lab_state_cc_fp_regs s1 0 n))
-          (lab_state_compile_oracle_fupd (K (shift_seq 1 (lab_state_compile_oracle s1)))
-          (lab_state_clock_fupd (K (lab_state_clock s1 - 1)) s1))))))))) /\
-              lab_evaluate (lab_state_pc_fupd (K new_pc)
-          (lab_state_code_buffer_fupd (K cb)
-          (lab_state_code_fupd (K (APPEND (lab_state_code s1) (CONS (Section k lines) rest)))
-          (lab_state_cc_regs_fupd (K (shift_seq 1 (lab_state_cc_regs s1)))
-          (lab_state_cc_fp_regs_fupd (K (shift_seq 1 (lab_state_cc_fp_regs s1)))
+          (lab_state_fp_regs_fupd (combin_K (\n. lab_state_cc_fp_regs s1 0 n))
+          (lab_state_compile_oracle_fupd (combin_K (shift_seq 1 (lab_state_compile_oracle s1)))
+          (lab_state_clock_fupd (combin_K (lab_state_clock s1 - 1)) s1))))))))) /\
+              lab_evaluate (lab_state_pc_fupd (combin_K new_pc)
+          (lab_state_code_buffer_fupd (combin_K cb)
+          (lab_state_code_fupd (combin_K (APPEND (lab_state_code s1) (CONS (Section k lines) rest)))
+          (lab_state_cc_regs_fupd (combin_K (shift_seq 1 (lab_state_cc_regs s1)))
+          (lab_state_cc_fp_regs_fupd (combin_K (shift_seq 1 (lab_state_cc_fp_regs s1)))
           (lab_state_regs_fupd
-             (K ((lab_state_ptr_reg s1 =+ wl_Loc k 0)
+             (combin_K ((lab_state_ptr_reg s1 =+ wl_Loc k 0)
                    (\a. get_reg_value (lab_state_cc_regs s1 0 a) (lab_state_regs s1 a) wl_Word)))
-          (lab_state_fp_regs_fupd (K (\n. lab_state_cc_fp_regs s1 0 n))
-          (lab_state_compile_oracle_fupd (K (shift_seq 1 (lab_state_compile_oracle s1)))
-          (lab_state_clock_fupd (K (lab_state_clock s1 - 1)) s1))))))))) = (res,s2) /\
+          (lab_state_fp_regs_fupd (combin_K (\n. lab_state_cc_fp_regs s1 0 n))
+          (lab_state_compile_oracle_fupd (combin_K (shift_seq 1 (lab_state_compile_oracle s1)))
+          (lab_state_clock_fupd (combin_K (lab_state_clock s1 - 1)) s1))))))))) = (res,s2) /\
               ~(res = target_Error) /\
               encoder_correct (machine_config_target mc_conf) /\
-              lab_to_targetProof_state_rel (mc_conf,code2,labs,p) (lab_state_pc_fupd (K new_pc)
-          (lab_state_code_buffer_fupd (K cb)
-          (lab_state_code_fupd (K (APPEND (lab_state_code s1) (CONS (Section k lines) rest)))
-          (lab_state_cc_regs_fupd (K (shift_seq 1 (lab_state_cc_regs s1)))
-          (lab_state_cc_fp_regs_fupd (K (shift_seq 1 (lab_state_cc_fp_regs s1)))
+              lab_to_targetProof_state_rel (mc_conf,code2,labs,p) (lab_state_pc_fupd (combin_K new_pc)
+          (lab_state_code_buffer_fupd (combin_K cb)
+          (lab_state_code_fupd (combin_K (APPEND (lab_state_code s1) (CONS (Section k lines) rest)))
+          (lab_state_cc_regs_fupd (combin_K (shift_seq 1 (lab_state_cc_regs s1)))
+          (lab_state_cc_fp_regs_fupd (combin_K (shift_seq 1 (lab_state_cc_fp_regs s1)))
           (lab_state_regs_fupd
-             (K ((lab_state_ptr_reg s1 =+ wl_Loc k 0)
+             (combin_K ((lab_state_ptr_reg s1 =+ wl_Loc k 0)
                    (\a. get_reg_value (lab_state_cc_regs s1 0 a) (lab_state_regs s1 a) wl_Word)))
-          (lab_state_fp_regs_fupd (K (\n. lab_state_cc_fp_regs s1 0 n))
-          (lab_state_compile_oracle_fupd (K (shift_seq 1 (lab_state_compile_oracle s1)))
-          (lab_state_clock_fupd (K (lab_state_clock s1 - 1)) s1))))))))) t1 ms1
+          (lab_state_fp_regs_fupd (combin_K (\n. lab_state_cc_fp_regs s1 0 n))
+          (lab_state_compile_oracle_fupd (combin_K (shift_seq 1 (lab_state_compile_oracle s1)))
+          (lab_state_clock_fupd (combin_K (lab_state_clock s1 - 1)) s1))))))))) t1 ms1
               ==> ?kk ms2.
-                    target_evaluate mc_conf (lab_state_ffi (lab_state_pc_fupd (K new_pc)
-          (lab_state_code_buffer_fupd (K cb)
-          (lab_state_code_fupd (K (APPEND (lab_state_code s1) (CONS (Section k lines) rest)))
-          (lab_state_cc_regs_fupd (K (shift_seq 1 (lab_state_cc_regs s1)))
-          (lab_state_cc_fp_regs_fupd (K (shift_seq 1 (lab_state_cc_fp_regs s1)))
+                    target_evaluate mc_conf (lab_state_ffi (lab_state_pc_fupd (combin_K new_pc)
+          (lab_state_code_buffer_fupd (combin_K cb)
+          (lab_state_code_fupd (combin_K (APPEND (lab_state_code s1) (CONS (Section k lines) rest)))
+          (lab_state_cc_regs_fupd (combin_K (shift_seq 1 (lab_state_cc_regs s1)))
+          (lab_state_cc_fp_regs_fupd (combin_K (shift_seq 1 (lab_state_cc_fp_regs s1)))
           (lab_state_regs_fupd
-             (K ((lab_state_ptr_reg s1 =+ wl_Loc k 0)
+             (combin_K ((lab_state_ptr_reg s1 =+ wl_Loc k 0)
                    (\a. get_reg_value (lab_state_cc_regs s1 0 a) (lab_state_regs s1 a) wl_Word)))
-          (lab_state_fp_regs_fupd (K (\n. lab_state_cc_fp_regs s1 0 n))
-          (lab_state_compile_oracle_fupd (K (shift_seq 1 (lab_state_compile_oracle s1)))
-          (lab_state_clock_fupd (K (lab_state_clock s1 - 1)) s1)))))))))) (lab_state_clock (lab_state_pc_fupd (K new_pc)
-          (lab_state_code_buffer_fupd (K cb)
-          (lab_state_code_fupd (K (APPEND (lab_state_code s1) (CONS (Section k lines) rest)))
-          (lab_state_cc_regs_fupd (K (shift_seq 1 (lab_state_cc_regs s1)))
-          (lab_state_cc_fp_regs_fupd (K (shift_seq 1 (lab_state_cc_fp_regs s1)))
+          (lab_state_fp_regs_fupd (combin_K (\n. lab_state_cc_fp_regs s1 0 n))
+          (lab_state_compile_oracle_fupd (combin_K (shift_seq 1 (lab_state_compile_oracle s1)))
+          (lab_state_clock_fupd (combin_K (lab_state_clock s1 - 1)) s1)))))))))) (lab_state_clock (lab_state_pc_fupd (combin_K new_pc)
+          (lab_state_code_buffer_fupd (combin_K cb)
+          (lab_state_code_fupd (combin_K (APPEND (lab_state_code s1) (CONS (Section k lines) rest)))
+          (lab_state_cc_regs_fupd (combin_K (shift_seq 1 (lab_state_cc_regs s1)))
+          (lab_state_cc_fp_regs_fupd (combin_K (shift_seq 1 (lab_state_cc_fp_regs s1)))
           (lab_state_regs_fupd
-             (K ((lab_state_ptr_reg s1 =+ wl_Loc k 0)
+             (combin_K ((lab_state_ptr_reg s1 =+ wl_Loc k 0)
                    (\a. get_reg_value (lab_state_cc_regs s1 0 a) (lab_state_regs s1 a) wl_Word)))
-          (lab_state_fp_regs_fupd (K (\n. lab_state_cc_fp_regs s1 0 n))
-          (lab_state_compile_oracle_fupd (K (shift_seq 1 (lab_state_compile_oracle s1)))
-          (lab_state_clock_fupd (K (lab_state_clock s1 - 1)) s1))))))))) + kk) ms1 =
+          (lab_state_fp_regs_fupd (combin_K (\n. lab_state_cc_fp_regs s1 0 n))
+          (lab_state_compile_oracle_fupd (combin_K (shift_seq 1 (lab_state_compile_oracle s1)))
+          (lab_state_clock_fupd (combin_K (lab_state_clock s1 - 1)) s1))))))))) + kk) ms1 =
                     (res,ms2,lab_state_ffi s2)) /\
      ~(lab_state_clock s1 = 0) /\
         asm_fetch s1 = SOME (LabAsm lab_Install a1 a2 a3) /\
@@ -5331,17 +5331,17 @@ let LTTP3AUX_cc_Install = prove
         lab_state_compile_oracle s1 0 = (cfg,CONS (Section k lines) rest) /\
         lab_state_compile s1 cfg (CONS (Section k lines) rest) =
           SOME (bytes,FST (shift_seq 1 (lab_state_compile_oracle s1) 0)) /\
-     lab_evaluate (lab_state_pc_fupd (K new_pc)
-          (lab_state_code_buffer_fupd (K cb)
-          (lab_state_code_fupd (K (APPEND (lab_state_code s1) (CONS (Section k lines) rest)))
-          (lab_state_cc_regs_fupd (K (shift_seq 1 (lab_state_cc_regs s1)))
-          (lab_state_cc_fp_regs_fupd (K (shift_seq 1 (lab_state_cc_fp_regs s1)))
+     lab_evaluate (lab_state_pc_fupd (combin_K new_pc)
+          (lab_state_code_buffer_fupd (combin_K cb)
+          (lab_state_code_fupd (combin_K (APPEND (lab_state_code s1) (CONS (Section k lines) rest)))
+          (lab_state_cc_regs_fupd (combin_K (shift_seq 1 (lab_state_cc_regs s1)))
+          (lab_state_cc_fp_regs_fupd (combin_K (shift_seq 1 (lab_state_cc_fp_regs s1)))
           (lab_state_regs_fupd
-             (K ((lab_state_ptr_reg s1 =+ wl_Loc k 0)
+             (combin_K ((lab_state_ptr_reg s1 =+ wl_Loc k 0)
                    (\a. get_reg_value (lab_state_cc_regs s1 0 a) (lab_state_regs s1 a) wl_Word)))
-          (lab_state_fp_regs_fupd (K (\n. lab_state_cc_fp_regs s1 0 n))
-          (lab_state_compile_oracle_fupd (K (shift_seq 1 (lab_state_compile_oracle s1)))
-          (lab_state_clock_fupd (K (lab_state_clock s1 - 1)) s1))))))))) = (res,s2) /\
+          (lab_state_fp_regs_fupd (combin_K (\n. lab_state_cc_fp_regs s1 0 n))
+          (lab_state_compile_oracle_fupd (combin_K (shift_seq 1 (lab_state_compile_oracle s1)))
+          (lab_state_clock_fupd (combin_K (lab_state_clock s1 - 1)) s1))))))))) = (res,s2) /\
      oracle_tie mc_conf ms1 s1 /\ ~(res = target_Error) /\
      encoder_correct (machine_config_target mc_conf) /\
      lab_to_targetProof_state_rel (mc_conf,code2,labs,p) s1 t1 ms1
@@ -5395,7 +5395,7 @@ let LTTP3AUX_cc_Install = prove
   SUBGOAL_THEN `!kk. target_evaluate (mc_conf:(A,B,C)machine_config) (lab_state_ffi (s1:(A,lab_to_target_config,FFI)lab_state))
         ((lab_state_clock s1 + kk) + l) ms1 =
       target_evaluate (machine_config_ccache_interfer_fupd
-         (K (shift_seq 1 (machine_config_ccache_interfer (shift_interfer l (mc_conf:(A,B,C)machine_config)))))
+         (combin_K (shift_seq 1 (machine_config_ccache_interfer (shift_interfer l (mc_conf:(A,B,C)machine_config)))))
          (shift_interfer l mc_conf)) (lab_state_ffi s1) (lab_state_clock s1 - 1 + kk) (machine_config_ccache_interfer (shift_interfer l (mc_conf:(A,B,C)machine_config)) 0
          (w1,w2,ms2))`
     (LABEL_TAC "step") THENL
@@ -5417,14 +5417,14 @@ let LTTP3AUX_cc_Install = prove
      `new_pc:num`; `cb:(A,8)buffer`; `lines:((A)line)list`; `rest:((A)sec)list`; `k:num`]) THEN
   ANTS_TAC THENL [REPEAT CONJ_TAC THEN FIRST_ASSUM ACCEPT_TAC; ALL_TAC] THEN
   DISCH_THEN(MP_TAC o SPECL [`res:machine_result`; `machine_config_ccache_interfer_fupd
-         (K (shift_seq 1 (machine_config_ccache_interfer (shift_interfer l (mc_conf:(A,B,C)machine_config)))))
+         (combin_K (shift_seq 1 (machine_config_ccache_interfer (shift_interfer l (mc_conf:(A,B,C)machine_config)))))
          (shift_interfer l mc_conf)`;
      `s2:(A,lab_to_target_config,FFI)lab_state`; `APPEND code2 sec_list:((A)sec)list`;
      `lab_to_target_config_labels (FST (shift_seq 1 (lab_state_compile_oracle (s1:(A,lab_to_target_config,FFI)lab_state)) 0))`; `asm_state_regs_fupd
-            (K ((lab_state_ptr_reg (s1:(A,lab_to_target_config,FFI)lab_state) =+ (w1:A word))
+            (combin_K ((lab_state_ptr_reg (s1:(A,lab_to_target_config,FFI)lab_state) =+ (w1:A word))
                 (\a. get_reg_value (lab_state_cc_regs s1 0 a) (asm_state_regs (t1:(A)asm_state) a) I)))
-          (asm_state_fp_regs_fupd (K (\n. lab_state_cc_fp_regs s1 0 n))
-          (asm_state_pc_fupd (K (word_add (p:A word) (word (pos_val new_pc 0 (code2:((A)sec)list))))) t1))`; `machine_config_ccache_interfer (shift_interfer l (mc_conf:(A,B,C)machine_config)) 0
+          (asm_state_fp_regs_fupd (combin_K (\n. lab_state_cc_fp_regs s1 0 n))
+          (asm_state_pc_fupd (combin_K (word_add (p:A word) (word (pos_val new_pc 0 (code2:((A)sec)list))))) t1))`; `machine_config_ccache_interfer (shift_interfer l (mc_conf:(A,B,C)machine_config)) 0
          (w1,w2,ms2)`; `p:A word`]) THEN
   ANTS_TAC THENL
    [REPEAT CONJ_TAC THENL

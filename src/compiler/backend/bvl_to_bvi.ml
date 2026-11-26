@@ -44,7 +44,7 @@ let destLet_pmatch = prove
            bvl_Let xs b -> (xs,b)
          | _ -> ([],bvl_Var 0)`,
   GEN_TAC THEN CASES_ON `exp:bvl_exp` THEN REWRITE_TAC[destLet_def] THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[]);;
 
 (* large_int = 268435457 = 2**28-1 *)
 
@@ -617,7 +617,7 @@ let BVIPAUX_B2B_SING_TAC : tactic =
     let c = concl th in
     if is_eq c && is_pair (lhs c) && not (is_pair (rhs c)) then SYM th else th) THEN
   REWRITE_TAC[bvl_to_bvi_compile_exps_def] THEN
-  ASM CASE_REWRITE_TAC [HD; LET_DEF; LET_END_DEF];;
+  ASM CAKE_REWRITE_TAC [HD; LET_DEF; LET_END_DEF];;
 
 let BVIPAUX_B2B_compile_exps_sing = prove
  (`(!n e c au m. compile_exps_sing n e = (c,au,m) ==>
@@ -634,7 +634,7 @@ let BVIPAUX_B2B_compile_exps_sing = prove
     if is_eq c && is_pair (lhs c) && not (is_pair (rhs c)) then SYM th else th) THEN
   CASES_ON `xs:bvl_exp list` THEN
   FS[bvl_to_bvi_compile_exps_def; SmartAppend_Nil; PAIR_EQ] THEN
-  TRY RVEQ_TAC THEN ASM CASE_REWRITE_TAC [APPEND; SmartAppend_Nil]);;
+  TRY RVEQ_TAC THEN ASM CAKE_REWRITE_TAC [APPEND; SmartAppend_Nil]);;
 
 let compile_exps_sing = prove
  (CASE_TERM
@@ -689,7 +689,7 @@ let compile_single_eq = prove
   REWRITE_TAC[bvl_to_bvi_compile_single_def; CONJUNCT1 compile_exps_sing] THEN
   SPEC_TAC(`compile_exps_sing n exp`,
            `p:bvi_exp # (num # num # bvi_exp) app_list # num`) THEN
-  REWRITE_TAC[FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[HD]);;
+  REWRITE_TAC[FORALL_PAIR_THM] THEN CAKE_REWRITE_TAC[HD]);;
 
 let bvl_to_bvi_compile_list_def = cake_def
   `(bvl_to_bvi_compile_list n [] = (misc_List [],n)) /\
@@ -790,18 +790,18 @@ let bvl_to_bvi_compile_inc_all_def = cake_def
        bvl_inline_compile_inc (bvl_to_bvi_config_inline_size_limit c)
          (bvl_to_bvi_config_split_main_at_seq c) (bvl_to_bvi_config_exp_cut c)
          (bvl_to_bvi_config_inlines c) p in
-     let c = bvl_to_bvi_config_inlines_fupd (K inl) c in
+     let c = bvl_to_bvi_config_inlines_fupd (combin_K inl) c in
      let (nn1,p) = bvl_to_bvi_compile_inc (bvl_to_bvi_config_next_name1 c) p in
-     let c = bvl_to_bvi_config_next_name1_fupd (K nn1) c in
+     let c = bvl_to_bvi_config_next_name1_fupd (combin_K nn1) c in
      let (nn2,p) =
        bvi_tailrec_compile_prog (bvl_to_bvi_config_do_tailrec c)
          (bvl_to_bvi_config_next_name2 c) p in
-     let c = bvl_to_bvi_config_next_name2_fupd (K nn2) c in
+     let c = bvl_to_bvi_config_next_name2_fupd (combin_K nn2) c in
      let (nn3,p) =
        bvi_tmc_compile_prog (bvl_to_bvi_config_do_tmc c)
          (bvl_to_bvi_config_next_name3 c) p in
-     let c = bvl_to_bvi_config_next_name3_fupd (K nn3) c in
+     let c = bvl_to_bvi_config_next_name3_fupd (combin_K nn3) c in
      let (bvi_inlines,p) =
        bvi_inline_compile_inc (bvl_to_bvi_config_bvi_inlines c) p in
-     let c = bvl_to_bvi_config_bvi_inlines_fupd (K bvi_inlines) c in
+     let c = bvl_to_bvi_config_bvi_inlines_fupd (combin_K bvi_inlines) c in
        (c,p)`;;

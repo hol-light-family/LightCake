@@ -155,12 +155,49 @@ let BAS1AUX_RAT_LE = prove
   REPEAT STRIP_TAC THEN
   ASM_SIMP_TAC[BAS1AUX_RAT_DIV_POS; REAL_LE_LDIV_EQ; REAL_LE_RDIV_EQ; BAS1AUX_DIV_MUL]);;
 
-let BAS1AUX_RAT_ARROW_TAC thl =
-  REWRITE_TAC[ml_Arrow_def; ml_AppReturns_def; RAT_TYPE_def] THEN
-  CONV_TAC (DEPTH_CONV BETA_CONV) THEN REPEAT STRIP_TAC THEN
-  FIRST_X_ASSUM (fun th -> FIRST_X_ASSUM (fun th2 ->
-    STRIP_ASSUME_TAC (SPEC_ALL (MATCH_MP th th2)))) THEN
-  ASM_MESON_TAC thl;;
+(* (RATIONAL_TYPE --> RATIONAL_TYPE --> B) f v ==> (RAT_TYPE --> RAT_TYPE --> B) g v  *)
+(* from the lemma about f and g on the pairs (the antecedent of the goal): a direct  *)
+(* proof through a transfer lemma, proved once (ASM_MESON_TAC on the unfolded      *)
+(* Arrow, as before, took about 11 s per goal)                                     *)
+let BAS1AUX_RAT_ARROW_TAC =
+  let transfer = prove
+   (`!(R:X->Y->bool) (A:X->v->bool) (A':Y->v->bool) (B:Z->v->bool) (B':W->v->bool) f g.
+       (!r v. A' r v ==> ?x. R x r /\ A x v) /\
+       (!x1 x2 r1 r2 u. R x1 r1 /\ R x2 r2 /\ B (f x1 x2) u ==> B' (g r1 r2) u)
+       ==> !v. (A --> A --> B) f v ==> (A' --> A' --> B') g v`,
+    REPEAT GEN_TAC THEN DISCH_THEN (CONJUNCTS_THEN2 (LABEL_TAC "rep") (LABEL_TAC "rel")) THEN
+    X_GEN_TAC `v:v` THEN REWRITE_TAC[ml_Arrow_def; ml_AppReturns_def] THEN
+    CONV_TAC (DEPTH_CONV BETA_CONV) THEN DISCH_THEN (LABEL_TAC "h") THEN
+    X_GEN_TAC `r1:Y` THEN X_GEN_TAC `v1:v` THEN
+    DISCH_THEN (fun a -> USE_THEN "rep" (fun rep ->
+      X_CHOOSE_THEN `x1:X` STRIP_ASSUME_TAC (MATCH_MP rep a))) THEN
+    X_GEN_TAC `refs1:(v store_v)list` THEN
+    USE_THEN "h" (fun h -> FIRST_X_ASSUM (fun a ->
+      MP_TAC (SPEC `refs1:(v store_v)list` (MATCH_MP (SPEC `x1:X` h) a)))) THEN
+    REWRITE_TAC[LEFT_IMP_EXISTS_THM] THEN
+    MAP_EVERY X_GEN_TAC [`env1:v sem_env`; `exp1:exp`; `refs1':(v store_v)list`; `u1:v`] THEN
+    STRIP_TAC THEN
+    MAP_EVERY EXISTS_TAC [`env1:v sem_env`; `exp1:exp`; `refs1':(v store_v)list`; `u1:v`] THEN
+    ASM_REWRITE_TAC[] THEN
+    X_GEN_TAC `r2:Y` THEN X_GEN_TAC `v2:v` THEN
+    DISCH_THEN (fun a -> USE_THEN "rep" (fun rep ->
+      X_CHOOSE_THEN `x2:X` STRIP_ASSUME_TAC (MATCH_MP rep a))) THEN
+    X_GEN_TAC `refs2:(v store_v)list` THEN
+    FIRST_X_ASSUM (fun h6 -> FIRST_X_ASSUM (fun a ->
+      MP_TAC (SPEC `refs2:(v store_v)list` (MATCH_MP (SPEC `x2:X` h6) a)))) THEN
+    REWRITE_TAC[LEFT_IMP_EXISTS_THM] THEN
+    MAP_EVERY X_GEN_TAC [`env2:v sem_env`; `exp2:exp`; `refs2':(v store_v)list`; `u2:v`] THEN
+    STRIP_TAC THEN
+    MAP_EVERY EXISTS_TAC [`env2:v sem_env`; `exp2:exp`; `refs2':(v store_v)list`; `u2:v`] THEN
+    ASM_REWRITE_TAC[] THEN
+    USE_THEN "rel" MATCH_MP_TAC THEN
+    MAP_EVERY EXISTS_TAC [`x1:X`; `x2:X`] THEN ASM_REWRITE_TAC[]) in
+  let rep = ISPEC `\(x:rational) (r:rat). ?n d. x = RatPair n d /\
+                     r = rat_div (rat_of_int n) (rat_of_num d) /\ ~(d = 0)` transfer in
+  fun (thl:thm list) ->
+    DISCH_TAC THEN MATCH_MP_TAC rep THEN CONV_TAC (DEPTH_CONV BETA_CONV) THEN CONJ_TAC THENL
+     [REWRITE_TAC[RAT_TYPE_def] THEN CONV_TAC (DEPTH_CONV BETA_CONV) THEN MESON_TAC[];
+      REPEAT STRIP_TAC THEN ASM_MESON_TAC thl];;
 
 let RatProg_pair_le_def = cake_def
   `RatProg_pair_le (RatPair n1 d1) (RatPair n2 d2) <=> (n1 * &d2 <= n2 * &d1:int)`;;
@@ -596,10 +633,10 @@ let Eval_REAL_DIV_lemma = prove
      check (fun th -> is_conj (concl th) && is_eq (fst (dest_conj (concl th))) &&
                       type_of (lhs (fst (dest_conj (concl th)))) = `:v sem_env`)) THEN
    MP_TAC (MATCH_MP eval_rel_11 (CONJ
-     (ASSUME `eval_rel (state_refs_fupd (K refs) ml_empty_state) env1 exp1
-              (state_refs_fupd (K (APPEND refs refs1)) ml_empty_state) u1`)
-     (ASSUME `eval_rel (state_refs_fupd (K refs) ml_empty_state) env1 exp1
-              (state_refs_fupd (K (APPEND refs refs1')) ml_empty_state) u1'`))) THEN
+     (ASSUME `eval_rel (state_refs_fupd (combin_K refs) ml_empty_state) env1 exp1
+              (state_refs_fupd (combin_K (APPEND refs refs1)) ml_empty_state) u1`)
+     (ASSUME `eval_rel (state_refs_fupd (combin_K refs) ml_empty_state) env1 exp1
+              (state_refs_fupd (combin_K (APPEND refs refs1')) ml_empty_state) u1'`))) THEN
    DISCH_THEN (SUBST_ALL_TAC o SYM o CONJUNCT2) THEN
    FIRST_X_ASSUM (MP_TAC o SPECL [`q2:rat`; `w2:v`]) THEN ASM_REWRITE_TAC[] THEN
    DISCH_THEN (MP_TAC o SPEC `refs2:(v store_v)list`) THEN

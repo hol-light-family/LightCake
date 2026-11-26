@@ -92,6 +92,8 @@ hol4/basic.ml	arithmetic	theorem	LE_MULT_RCANCEL	arithmetic_LE_MULT_RCANCEL	name
 hol4/basic.ml	arithmetic	theorem	LT_MULT_RCANCEL	arithmetic_LT_MULT_RCANCEL	name taken (HOL Light or another theory)
 hol4/comparison.ml	comparison	theorem	num_cmp_def	comparison_num_cmp_def	name taken (HOL Light or another theory)
 hol4/words4.ml	integer	theorem	int_sub	integer_int_sub	name taken (HOL Light or another theory)
+hol4/words4.ml	integer	constant	int_mod	integer_int_mod	HOL Light constant int_mod (int.ml: congruence mod n)
+hol4/words4.ml	integer	theorem	int_mod	integer_int_mod	follows the constant; HOL Light binds int_mod (int.ml; Library/ringtheory.ml uses it)
 hol4/list.ml	list	theorem	EXISTS_DEF	list_EXISTS_DEF	name taken (HOL Light or another theory)
 hol4/list.ml	list	theorem	MAP_o	list_MAP_o	name taken (HOL Light or another theory)
 hol4/basic.ml	pred_set	theorem	CARD_UNION	pred_set_CARD_UNION	name taken (HOL Light or another theory)
@@ -202,3 +204,11 @@ hol4/balanced_map_part2.ml	balanced_map	theorem	every_def	balanced_map_every_def
 hol4/balanced_map_part2.ml	balanced_map	theorem	exists_def	balanced_map_exists_def	bound so in src/hol4, no library_renames.tsv row; follows the constant; used by the NAMING4 theories
 hol4/llist.ml	llist	theorem	fromList_def	llist_fromList_def	bound so in src/hol4, no library_renames.tsv row; full load B_B5:hol4/sptree.ml binds fromList_def; used by the NAMING4 theories
 hol4/regexp_compiler.ml	regexp_compiler	theorem	fromList_def	regexp_compiler_fromList_def	bound so in src/hol4, no library_renames.tsv row; full load B_B5:hol4/sptree.ml binds fromList_def; used by the NAMING4 theories
+kit/simp.ml	combin	constant	K	combin_K	short name (NAMING.md 10); captured variables of Library/ringtheory.ml, grouptheory.ml, fieldtheory.ml and 17 more; user decision 2026-11-25: captures variables of HOL Light libraries (HYG1 scan)
+kit/simp.ml	combin	theorem	K_DEF	combin_K_DEF	follows the constant
+hol4/vocab.ml	pair	constant	##	PAIR_MAP	HOL4's name of its definition; the name ## is used by Library/poly.ml, Complex/cpoly.ml, Complex/quelim.ml; ## remains the infix syntax of PAIR_MAP (override_interface); user decision 2026-11-25: captures variables of HOL Light libraries (HYG1 scan)
+hol4/pegexec.ml	pegexec	constructor	EV	pegexec_EV	short name; captured a variable of Probability/expectation.ml; user decision 2026-11-25: captures variables of HOL Light libraries (HYG1 scan)
+hol4/grammar.ml	grammar	constructor	Lf	grammar_Lf	constructors of parsetree and symbol as one family (Lf, NT captured variables of Library/szemeredi.ml); user decision 2026-11-25: captures variables of HOL Light libraries (HYG1 scan)
+hol4/grammar.ml	grammar	constructor	Nd	grammar_Nd	constructors of parsetree and symbol as one family (Lf, NT captured variables of Library/szemeredi.ml); user decision 2026-11-25: captures variables of HOL Light libraries (HYG1 scan)
+hol4/grammar.ml	grammar	constructor	TOK	grammar_TOK	constructors of parsetree and symbol as one family (Lf, NT captured variables of Library/szemeredi.ml); user decision 2026-11-25: captures variables of HOL Light libraries (HYG1 scan)
+hol4/grammar.ml	grammar	constructor	NT	grammar_NT	constructors of parsetree and symbol as one family (Lf, NT captured variables of Library/szemeredi.ml); user decision 2026-11-25: captures variables of HOL Light libraries (HYG1 scan)

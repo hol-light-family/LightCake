@@ -349,8 +349,8 @@ let CLOSP1AUX_fvs_state_rel_refs_upd = prove
  (`!(s1:(C,FFI)clos_state) s2 p a b.
      clos_fvsProof_state_rel s1 s2 /\ clos_fvsProof_ref_rel a b ==>
      clos_fvsProof_state_rel
-       (clos_state_refs_fupd (K (clos_state_refs s1 |+ (p,a))) s1)
-       (clos_state_refs_fupd (K (clos_state_refs s2 |+ (p,b))) s2)`,
+       (clos_state_refs_fupd (combin_K (clos_state_refs s1 |+ (p,a))) s1)
+       (clos_state_refs_fupd (combin_K (clos_state_refs s2 |+ (p,b))) s2)`,
   REWRITE_TAC[clos_fvsProof_state_rel_def; clos_state_INFO.ri_accfupds; K_THM] THEN
   SIMP_TAC[fmap_rel_FUPDATE_same]);;
 
@@ -404,8 +404,8 @@ let clos_fvsProof_rel_update_thunk = prove
     clos_update_thunk [clos_RefPtr v ptr] (clos_state_refs s2) ys = NONE) /\
    (clos_update_thunk [clos_RefPtr v ptr] (clos_state_refs s1) vs = SOME refs1 ==>
     ?refs2. clos_update_thunk [clos_RefPtr v ptr] (clos_state_refs s2) ys = SOME refs2 /\
-            clos_fvsProof_state_rel (clos_state_refs_fupd (K refs1) s1)
-                                    (clos_state_refs_fupd (K refs2) s2))`,
+            clos_fvsProof_state_rel (clos_state_refs_fupd (combin_K refs1) s1)
+                                    (clos_state_refs_fupd (combin_K refs2) s2))`,
   STRIP_TAC THEN QCASES_ON "vs" THEN FS[clos_update_thunk_def] THEN
   QCASES_ON "a1" THEN FS[clos_update_thunk_def] THEN RVEQ_TAC THEN
   DRULE CLOSP1AUX_fvs_dest_thunk_rel THEN DISCH_THEN (QSPECL_THEN ["[a0]"; "[y]"] MP_TAC) THEN
@@ -448,7 +448,7 @@ let CLOSP1AUX_pair_CASE_CASE = prove
 let CLOSP1AUX_fvs_state_rel_clock = prove
  (`!(s:(C,FFI)clos_state) t n.
      clos_fvsProof_state_rel s t ==>
-     clos_fvsProof_state_rel (clos_state_clock_fupd (K n) s) (clos_state_clock_fupd (K n) t) /\
+     clos_fvsProof_state_rel (clos_state_clock_fupd (combin_K n) s) (clos_state_clock_fupd (combin_K n) t) /\
      clos_fvsProof_state_rel (clos_dec_clock n s) (clos_dec_clock n t)`,
   REWRITE_TAC[clos_fvsProof_state_rel_def; clos_dec_clock_def;
               clos_state_INFO.ri_accfupds; K_THM] THEN
@@ -683,14 +683,14 @@ let CLOSP1AUX_rfs_fv = prove
   REWRITE_TAC[fv1_thm; clos_fv_def; every_Fn_vs_NONE_def; MEM; fv_cons; MAP;
               CLOSP1AUX_IS_NONE_EQ; CLOSP1AUX_LENGTH_remove_fvs_let; GSYM EX_MEM;
               EXISTS_PAIR_THM; PAIR_EQ] THEN
-  REPEAT STRIP_TAC THEN RVEQ_TAC THEN CASE_REWRITE_TAC[] THEN
+  REPEAT STRIP_TAC THEN RVEQ_TAC THEN CAKE_REWRITE_TAC[] THEN
   REPEAT(FIRST_X_ASSUM(fun th ->
     let c = concl th in
     if CLOSP1AUX_is_app "every_Fn_vs_NONE" c && is_cons (rand c) &&
        not (rand (rand c) = `[]:clos_exp list`)
     then STRIP_ASSUME_TAC (ONCE_REWRITE_RULE[CLOSP1AUX_every_Fn_vs_NONE_cons] th)
     else NO_TAC)) THEN
-  RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN
+  RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN
   TRY(FIRST_X_ASSUM(MP_TAC o check (fun th -> can (find_term is_cond) (concl th))) THEN
       COND_CASES_TAC THEN REWRITE_TAC[fv1_thm; clos_fv_def] THEN ASM_ARITH_TAC) THEN
   CLOSPROPSAUX_RES_TAC THEN TRY ASM_ARITH_TAC);;

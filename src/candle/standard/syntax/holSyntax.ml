@@ -293,7 +293,7 @@ let VFREE_IN_FINITE_ALT = prove
   MESON_TAC[]);;
 
 let PRIMED_NAME_EXISTS = prove
- (`?n. ~(VFREE_IN (hol_Var (implode (APPEND x (list_of_seq (K (CHR 39)) n))) ty) t)`,
+ (`?n. ~(VFREE_IN (hol_Var (implode (APPEND x (list_of_seq (combin_K (CHR 39)) n))) ty) t)`,
   REWRITE_TAC[GSYM NOT_FORALL_THM] THEN DISCH_TAC THEN
   MP_TAC PRIMED_INFINITE THEN REWRITE_TAC[INFINITE] THEN
   MATCH_MP_TAC FINITE_SUBSET THEN
@@ -309,10 +309,10 @@ let hol_LEAST_EXISTS = prove
 let VARIANT_PRIMES_def = new_specification ["VARIANT_PRIMES"]
  (prove
    (`?f. !t x ty.
-       ~VFREE_IN (hol_Var (implode (APPEND x (list_of_seq (K (CHR 39))
+       ~VFREE_IN (hol_Var (implode (APPEND x (list_of_seq (combin_K (CHR 39))
                                               (f t x ty)))) ty) t /\
        !m. m < f t x ty
-           ==> VFREE_IN (hol_Var (implode (APPEND x (list_of_seq (K (CHR 39))
+           ==> VFREE_IN (hol_Var (implode (APPEND x (list_of_seq (combin_K (CHR 39))
                                                    m))) ty) t`,
     REWRITE_TAC[GSYM SKOLEM_THM] THEN REPEAT GEN_TAC THEN
     MP_TAC(MATCH_MP hol_LEAST_EXISTS PRIMED_NAME_EXISTS) THEN
@@ -320,7 +320,7 @@ let VARIANT_PRIMES_def = new_specification ["VARIANT_PRIMES"]
 
 let VARIANT_def = cake_def
   `VARIANT t x ty =
-     implode (APPEND x (list_of_seq (K (CHR 39)) (VARIANT_PRIMES t x ty)))`;;
+     implode (APPEND x (list_of_seq (combin_K (CHR 39)) (VARIANT_PRIMES t x ty)))`;;
 
 let VARIANT_THM = prove
  (`!t x ty. ~VFREE_IN (hol_Var (VARIANT t x ty) ty) t`,

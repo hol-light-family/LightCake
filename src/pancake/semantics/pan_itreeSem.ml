@@ -34,19 +34,19 @@ let bstate_INFO = cake_record "bstate"
 let bstate_component_equality = bstate_INFO.ri_component_equality;;
 
 let pan_itreeSem_empty_locals_def = cake_def
-  `pan_itreeSem_empty_locals (s:(A)bstate) = bstate_locals_fupd (K FEMPTY) s`;;
+  `pan_itreeSem_empty_locals (s:(A)bstate) = bstate_locals_fupd (combin_K FEMPTY) s`;;
 
 let empty_locals_defs = CONJ pan_empty_locals_def pan_itreeSem_empty_locals_def;;
 
 let pan_itreeSem_set_var_def = cake_def
   `pan_itreeSem_set_var (v:varname) (value:(A)pan_v) (s:(A)bstate) =
-     bstate_locals_fupd (K (bstate_locals s |+ (v,value))) s`;;
+     bstate_locals_fupd (combin_K (bstate_locals s |+ (v,value))) s`;;
 
 let set_var_defs = CONJ pan_set_var_def pan_itreeSem_set_var_def;;
 
 let pan_itreeSem_set_global_def = cake_def
   `pan_itreeSem_set_global (v:varname) (value:(A)pan_v) (s:(A)bstate) =
-     bstate_globals_fupd (K (bstate_globals s |+ (v,value))) s`;;
+     bstate_globals_fupd (combin_K (bstate_globals s |+ (v,value))) s`;;
 
 let set_global_defs = CONJ pan_set_global_def pan_itreeSem_set_global_def;;
 
@@ -256,12 +256,12 @@ let h_prog_dec_def = cake_def
    match pan_itreeSem_eval s e with
      SOME value ->
        if sh = shape_of value
-       then Vis (INL (p,bstate_locals_fupd (K (bstate_locals s |+ (vname,value))) s))
+       then Vis (INL (p,bstate_locals_fupd (combin_K (bstate_locals s |+ (vname,value))) s))
               (\a. itree_Ret (INR (match a with
                      INL _ -> (SOME pan_Error,s)
                    | INR (res,s') ->
                        (res,bstate_locals_fupd
-                              (K (pan_res_var (bstate_locals s')
+                              (combin_K (pan_res_var (bstate_locals s')
                                     (vname,FLOOKUP (bstate_locals s) vname))) s'))))
        else itree_Ret (INR (SOME pan_Error,s))
    | NONE -> itree_Ret (INR (SOME pan_Error,s))`;;
@@ -318,7 +318,7 @@ let h_prog_store_def = cake_def
                      (SOME (pan_Val (Word addr)),SOME value) ->
                        (match mem_stores addr (flatten value) (bstate_memaddrs s)
                                          (bstate_memory s) with
-                          SOME m -> (NONE,bstate_memory_fupd (K m) s)
+                          SOME m -> (NONE,bstate_memory_fupd (combin_K m) s)
                         | NONE -> (SOME pan_Error,s))
                    | _ -> (SOME pan_Error,s)))`;;
 
@@ -331,7 +331,7 @@ let h_prog_store_byte_def = cake_def
                      (SOME (pan_Val (Word addr)),SOME (pan_Val (Word w))) ->
                        (match pan_mem_store_byte (bstate_memory s) (bstate_memaddrs s)
                                 (bstate_be s) addr (word_zx w) with
-                          SOME m -> (NONE,bstate_memory_fupd (K m) s)
+                          SOME m -> (NONE,bstate_memory_fupd (combin_K m) s)
                         | NONE -> (SOME pan_Error,s))
                    | _ -> (SOME pan_Error,s)))`;;
 
@@ -344,7 +344,7 @@ let h_prog_store_32_def = cake_def
                      (SOME (pan_Val (Word addr)),SOME (pan_Val (Word w))) ->
                        (match pan_mem_store_32 (bstate_memory s) (bstate_memaddrs s)
                                 (bstate_be s) addr (word_zx w) with
-                          SOME m -> (NONE,bstate_memory_fupd (K m) s)
+                          SOME m -> (NONE,bstate_memory_fupd (combin_K m) s)
                         | NONE -> (SOME pan_Error,s))
                    | _ -> (SOME pan_Error,s)))`;;
 
@@ -405,11 +405,11 @@ let h_handle_call_ret_def = cake_def
      match calltyp with
        NONE -> itree_Ret (INR (SOME (pan_Return retv),pan_itreeSem_empty_locals s'))
      | SOME (NONE,_) ->
-         itree_Ret (INR (NONE,bstate_locals_fupd (K (bstate_locals s)) s'))
+         itree_Ret (INR (NONE,bstate_locals_fupd (combin_K (bstate_locals s)) s'))
      | SOME (SOME (rk,rt),_) ->
          if pan_itreeSem_is_valid_value s rk rt retv
          then itree_Ret (INR (NONE,pan_itreeSem_set_kvar rk rt retv
-                                     (bstate_locals_fupd (K (bstate_locals s)) s')))
+                                     (bstate_locals_fupd (combin_K (bstate_locals s)) s')))
          else itree_Ret (INR (SOME pan_Error,s'))) /\
   (h_handle_call_ret calltyp rsh s (INR (SOME (pan_Exception eid exn),s')) =
      match calltyp with
@@ -425,7 +425,7 @@ let h_handle_call_ret_def = cake_def
                 if shape_of exn = sh /\
                    pan_itreeSem_is_valid_value s panLang_Local evar exn
                 then Vis (INL (p,pan_itreeSem_set_var evar exn
-                                   (bstate_locals_fupd (K (bstate_locals s)) s')))
+                                   (bstate_locals_fupd (combin_K (bstate_locals s)) s')))
                        (\a. itree_Ret (INR (match a with
                               INL _ -> (SOME pan_Error,s')
                             | INR (res,s') -> (res,s'))))
@@ -445,7 +445,7 @@ let h_prog_call_def = cake_def
      SOME args ->
        (match pan_lookup_code (bstate_code s) fname args with
           SOME (callee_prog,newlocals,rshape) ->
-            Vis (INL (callee_prog,bstate_locals_fupd (K newlocals) s))
+            Vis (INL (callee_prog,bstate_locals_fupd (combin_K newlocals) s))
                 (h_handle_call_ret calltyp rshape s)
         | _ -> itree_Ret (INR (SOME pan_Error,s)))
    | _ -> itree_Ret (INR (SOME pan_Error,s))`;;
@@ -466,12 +466,12 @@ let h_handle_deccall_ret_def = cake_def
   (h_handle_deccall_ret rt shape prog1 rsh s (INR (SOME (pan_Return retv),s')) =
      if shape_of retv = shape /\ shape_of retv = rsh then
        Vis (INL (prog1,pan_itreeSem_set_var rt retv
-                         (bstate_locals_fupd (K (bstate_locals s)) s')))
+                         (bstate_locals_fupd (combin_K (bstate_locals s)) s')))
          (\a. itree_Ret (INR (match a with
                 INL _ -> (SOME pan_Error,s')
               | INR (res',s') ->
                   (res',bstate_locals_fupd
-                          (K (pan_res_var (bstate_locals s')
+                          (combin_K (pan_res_var (bstate_locals s')
                                 (rt,FLOOKUP (bstate_locals s) rt))) s'))))
      else itree_Ret (INR (SOME pan_Error,s'))) /\
   (h_handle_deccall_ret rt shape prog1 rsh s (INR (res,s')) =
@@ -486,7 +486,7 @@ let h_prog_deccall_def = cake_def
      SOME args ->
        (match pan_lookup_code (bstate_code s) fname args with
           SOME (callee_prog,newlocals,rshape) ->
-            Vis (INL (callee_prog,bstate_locals_fupd (K newlocals) s))
+            Vis (INL (callee_prog,bstate_locals_fupd (combin_K newlocals) s))
                 (h_handle_deccall_ret rt shape prog1 rshape s)
         | _ -> itree_Ret (INR (SOME pan_Error,s)))
    | _ -> itree_Ret (INR (SOME pan_Error,s))`;;
@@ -522,7 +522,7 @@ let h_prog_ext_call_def = cake_def
                                (let nmem = pan_write_bytearray array_ptr_adr new_bytes
                                              (bstate_memory s) (bstate_memaddrs s)
                                              (bstate_be s) in
-                                (NONE,bstate_memory_fupd (K nmem) s))
+                                (NONE,bstate_memory_fupd (combin_K nmem) s))
                              else
                                (SOME (pan_FinalFFI (Final_event (ExtCall ffi_name)
                                                       conf_bytes array_bytes FFI_failed)),
@@ -530,7 +530,7 @@ let h_prog_ext_call_def = cake_def
                     | INR _ -> (SOME pan_Error,s))))
             else itree_Ret (INR
                    (NONE,bstate_memory_fupd
-                           (K (pan_write_bytearray array_ptr_adr array_bytes
+                           (combin_K (pan_write_bytearray array_ptr_adr array_bytes
                                  (bstate_memory s) (bstate_memaddrs s) (bstate_be s))) s))
         | _ -> itree_Ret (INR (SOME pan_Error,s)))
    | _ -> itree_Ret (INR (SOME pan_Error,s))`;;
@@ -778,10 +778,10 @@ let _ = cake_add_simps [opt_mmap_eval_ext];;
 
 let ext_normalise = prove
  (`!(s:(A)bstate) t (f:(B)ffi_state) x m k k' (ffi:(B)ffi_state) ffi'.
-     pan_state_locals_fupd (K x) (pan_itreeSem_ext s t f) = pan_itreeSem_ext (bstate_locals_fupd (K x) s) t f /\
-     pan_state_memory_fupd (K m) (pan_itreeSem_ext s t f) = pan_itreeSem_ext (bstate_memory_fupd (K m) s) t f /\
-     pan_state_clock_fupd (K k') (pan_itreeSem_ext s k ffi) = pan_itreeSem_ext s k' ffi /\
-     pan_state_ffi_fupd (K ffi') (pan_itreeSem_ext s k ffi) = pan_itreeSem_ext s k ffi' /\
+     pan_state_locals_fupd (combin_K x) (pan_itreeSem_ext s t f) = pan_itreeSem_ext (bstate_locals_fupd (combin_K x) s) t f /\
+     pan_state_memory_fupd (combin_K m) (pan_itreeSem_ext s t f) = pan_itreeSem_ext (bstate_memory_fupd (combin_K m) s) t f /\
+     pan_state_clock_fupd (combin_K k') (pan_itreeSem_ext s k ffi) = pan_itreeSem_ext s k' ffi /\
+     pan_state_ffi_fupd (combin_K ffi') (pan_itreeSem_ext s k ffi) = pan_itreeSem_ext s k ffi' /\
      pan_dec_clock (pan_itreeSem_ext s k f) = pan_itreeSem_ext s (k - 1) f`,
   RW[pan_itreeSem_ext_def; pan_dec_clock_def]);;
 let _ = cake_add_simps [ext_normalise];;
@@ -814,16 +814,16 @@ let _ = cake_add_simps [bst_access];;
 
 let bst_normalise = prove
  (`!(s:(A,B)pan_state) x m k.
-     bstate_locals_fupd (K x) (pan_itreeSem_bst s) = pan_itreeSem_bst (pan_state_locals_fupd (K x) s) /\
-     bstate_globals_fupd (K x) (pan_itreeSem_bst s) = pan_itreeSem_bst (pan_state_globals_fupd (K x) s) /\
-     bstate_memory_fupd (K m) (pan_itreeSem_bst s) = pan_itreeSem_bst (pan_state_memory_fupd (K m) s) /\
-     pan_itreeSem_bst (pan_state_locals_fupd (K x) (pan_state_clock_fupd (K k) s)) =
-       pan_itreeSem_bst (pan_state_locals_fupd (K x) s) /\
-     pan_itreeSem_bst (pan_state_globals_fupd (K x) (pan_state_clock_fupd (K k) s)) =
-       pan_itreeSem_bst (pan_state_globals_fupd (K x) s) /\
-     pan_itreeSem_bst (pan_state_memory_fupd (K m) (pan_state_clock_fupd (K k) s)) =
-       pan_itreeSem_bst (pan_state_memory_fupd (K m) s) /\
-     pan_itreeSem_bst (pan_state_clock_fupd (K k) s) = pan_itreeSem_bst s`,
+     bstate_locals_fupd (combin_K x) (pan_itreeSem_bst s) = pan_itreeSem_bst (pan_state_locals_fupd (combin_K x) s) /\
+     bstate_globals_fupd (combin_K x) (pan_itreeSem_bst s) = pan_itreeSem_bst (pan_state_globals_fupd (combin_K x) s) /\
+     bstate_memory_fupd (combin_K m) (pan_itreeSem_bst s) = pan_itreeSem_bst (pan_state_memory_fupd (combin_K m) s) /\
+     pan_itreeSem_bst (pan_state_locals_fupd (combin_K x) (pan_state_clock_fupd (combin_K k) s)) =
+       pan_itreeSem_bst (pan_state_locals_fupd (combin_K x) s) /\
+     pan_itreeSem_bst (pan_state_globals_fupd (combin_K x) (pan_state_clock_fupd (combin_K k) s)) =
+       pan_itreeSem_bst (pan_state_globals_fupd (combin_K x) s) /\
+     pan_itreeSem_bst (pan_state_memory_fupd (combin_K m) (pan_state_clock_fupd (combin_K k) s)) =
+       pan_itreeSem_bst (pan_state_memory_fupd (combin_K m) s) /\
+     pan_itreeSem_bst (pan_state_clock_fupd (combin_K k) s) = pan_itreeSem_bst s`,
   RW[pan_itreeSem_bst_def]);;
 let _ = cake_add_simps [bst_normalise];;
 
@@ -848,26 +848,26 @@ let _ = cake_add_simps [opt_mmap_eval_bst];;
 let ext_bst_id = prove
  (`!(s:(A,B)pan_state) x m k (ffi:(B)ffi_state).
      pan_itreeSem_ext (pan_itreeSem_bst s) (pan_state_clock s) (pan_state_ffi s) = s /\
-     pan_itreeSem_ext (bstate_locals_fupd (K x) (pan_itreeSem_bst s)) (pan_state_clock s) (pan_state_ffi s) =
-       pan_state_locals_fupd (K x) s /\
-     pan_itreeSem_ext (bstate_globals_fupd (K x) (pan_itreeSem_bst s)) (pan_state_clock s) (pan_state_ffi s) =
-       pan_state_globals_fupd (K x) s /\
-     pan_itreeSem_ext (bstate_memory_fupd (K m) (pan_itreeSem_bst s)) (pan_state_clock s) (pan_state_ffi s) =
-       pan_state_memory_fupd (K m) s /\
+     pan_itreeSem_ext (bstate_locals_fupd (combin_K x) (pan_itreeSem_bst s)) (pan_state_clock s) (pan_state_ffi s) =
+       pan_state_locals_fupd (combin_K x) s /\
+     pan_itreeSem_ext (bstate_globals_fupd (combin_K x) (pan_itreeSem_bst s)) (pan_state_clock s) (pan_state_ffi s) =
+       pan_state_globals_fupd (combin_K x) s /\
+     pan_itreeSem_ext (bstate_memory_fupd (combin_K m) (pan_itreeSem_bst s)) (pan_state_clock s) (pan_state_ffi s) =
+       pan_state_memory_fupd (combin_K m) s /\
      pan_itreeSem_ext (pan_itreeSem_empty_locals (pan_itreeSem_bst s)) (pan_state_clock s) (pan_state_ffi s) =
        pan_empty_locals s /\
-     pan_itreeSem_ext (pan_itreeSem_bst s) k (pan_state_ffi s) = pan_state_clock_fupd (K k) s /\
-     pan_itreeSem_ext (pan_itreeSem_bst s) (pan_state_clock s) ffi = pan_state_ffi_fupd (K ffi) s /\
-     pan_itreeSem_ext (pan_itreeSem_bst s) k ffi = pan_state_clock_fupd (K k) (pan_state_ffi_fupd (K ffi) s)`,
+     pan_itreeSem_ext (pan_itreeSem_bst s) k (pan_state_ffi s) = pan_state_clock_fupd (combin_K k) s /\
+     pan_itreeSem_ext (pan_itreeSem_bst s) (pan_state_clock s) ffi = pan_state_ffi_fupd (combin_K ffi) s /\
+     pan_itreeSem_ext (pan_itreeSem_bst s) k ffi = pan_state_clock_fupd (combin_K k) (pan_state_ffi_fupd (combin_K ffi) s)`,
   RW[pan_itreeSem_bst_def; pan_itreeSem_ext_def; pan_state_component_equality; empty_locals_defs]);;
 let _ = cake_add_simps [ext_bst_id];;
 
 let bst_ext_id = prove
  (`!(s:(A)bstate) t (f:(B)ffi_state) x m k (ffi:(B)ffi_state).
      pan_itreeSem_bst (pan_itreeSem_ext s t f) = s /\
-     pan_itreeSem_bst (pan_state_locals_fupd (K x) (pan_itreeSem_ext s t f)) = bstate_locals_fupd (K x) s /\
-     pan_itreeSem_bst (pan_state_globals_fupd (K x) (pan_itreeSem_ext s t f)) = bstate_globals_fupd (K x) s /\
-     pan_itreeSem_bst (pan_state_memory_fupd (K m) (pan_itreeSem_ext s t f)) = bstate_memory_fupd (K m) s /\
+     pan_itreeSem_bst (pan_state_locals_fupd (combin_K x) (pan_itreeSem_ext s t f)) = bstate_locals_fupd (combin_K x) s /\
+     pan_itreeSem_bst (pan_state_globals_fupd (combin_K x) (pan_itreeSem_ext s t f)) = bstate_globals_fupd (combin_K x) s /\
+     pan_itreeSem_bst (pan_state_memory_fupd (combin_K m) (pan_itreeSem_ext s t f)) = bstate_memory_fupd (combin_K m) s /\
      pan_itreeSem_bst (pan_empty_locals (pan_itreeSem_ext s k ffi)) = pan_itreeSem_empty_locals s /\
      pan_itreeSem_bst (pan_dec_clock (pan_itreeSem_ext s k ffi)) = s`,
   RW[pan_itreeSem_bst_def; pan_itreeSem_ext_def; bstate_component_equality; empty_locals_defs;
@@ -1069,12 +1069,12 @@ let mrec_Dec = prove(CASE_TERM
         if shape_of v = sh
         then Tau (itree_bind
                (mrec h_prog (h_prog (p,bstate_locals_fupd
-                                        (K (bstate_locals s |+ (x,v))) s)))
+                                        (combin_K (bstate_locals s |+ (x,v))) s)))
                (\a. itree_Ret (INR (match a with
                       INL l -> (SOME pan_Error,s)
                     | INR (res,s') ->
                         (res,bstate_locals_fupd
-                               (K (pan_res_var (bstate_locals s')
+                               (combin_K (pan_res_var (bstate_locals s')
                                      (x,FLOOKUP (bstate_locals s) x))) s')))))
         else itree_Ret (INR (SOME pan_Error,s))
     | _ -> itree_Ret (INR (SOME pan_Error,s))`,
@@ -1129,7 +1129,7 @@ let mrec_Store = prove(CASE_TERM
     | (SOME (pan_Val (Word ad)),SOME v) ->
         (match mem_stores ad (flatten v) (bstate_memaddrs s) (bstate_memory s) with
            NONE -> (SOME pan_Error,s)
-         | SOME m -> (NONE,bstate_memory_fupd (K m) s))
+         | SOME m -> (NONE,bstate_memory_fupd (combin_K m) s))
     | _ -> (SOME pan_Error,s)))`,
   PITRAUX_MREC_TAC [h_prog_store_def]);;
 
@@ -1143,7 +1143,7 @@ let mrec_StoreByte = prove(CASE_TERM
         (match pan_mem_store_byte (bstate_memory s) (bstate_memaddrs s) (bstate_be s)
                  ad (word_zx v) with
            NONE -> (SOME pan_Error,s)
-         | SOME m -> (NONE,bstate_memory_fupd (K m) s))
+         | SOME m -> (NONE,bstate_memory_fupd (combin_K m) s))
     | _ -> (SOME pan_Error,s)))`,
   PITRAUX_MREC_TAC [h_prog_store_byte_def]);;
 
@@ -1157,7 +1157,7 @@ let mrec_Store32 = prove(CASE_TERM
         (match pan_mem_store_32 (bstate_memory s) (bstate_memaddrs s) (bstate_be s)
                  ad (word_zx v) with
            NONE -> (SOME pan_Error,s)
-         | SOME m -> (NONE,bstate_memory_fupd (K m) s))
+         | SOME m -> (NONE,bstate_memory_fupd (combin_K m) s))
     | _ -> (SOME pan_Error,s)))`,
   PITRAUX_MREC_TAC [h_prog_store_32_def]);;
 
@@ -1314,7 +1314,7 @@ let mrec_Call = prove(CASE_TERM
         match pan_lookup_code (bstate_code s) fname args with
           NONE -> itree_Ret (INR (SOME pan_Error,s))
         | SOME (q,r,rsh) ->
-            Tau (itree_bind (mrec h_prog (h_prog (q,bstate_locals_fupd (K r) s)))
+            Tau (itree_bind (mrec h_prog (h_prog (q,bstate_locals_fupd (combin_K r) s)))
                    (mrec h_prog o h_handle_call_ret typ rsh s))`,
   PITRAUX_MREC_TAC [h_prog_call_def]);;
 
@@ -1327,7 +1327,7 @@ let mrec_DecCall = prove(CASE_TERM
         match pan_lookup_code (bstate_code s) fname args with
           NONE -> itree_Ret (INR (SOME pan_Error,s))
         | SOME (q,r,rsh) ->
-            Tau (itree_bind (mrec h_prog (h_prog (q,bstate_locals_fupd (K r) s)))
+            Tau (itree_bind (mrec h_prog (h_prog (q,bstate_locals_fupd (combin_K r) s)))
                    (mrec h_prog o h_handle_deccall_ret rt sh prog rsh s))`,
   PITRAUX_MREC_TAC [h_prog_deccall_def]);;
 
@@ -1352,7 +1352,7 @@ let mrec_h_handle_call_ret_lemma = prove(CASE_TERM
                         pan_itreeSem_is_valid_value s panLang_Local evar exn
                      then Tau (itree_bind
                             (mrec h_prog (h_prog (p,pan_itreeSem_set_var evar exn
-                               (bstate_locals_fupd (K (bstate_locals s)) s'))))
+                               (bstate_locals_fupd (combin_K (bstate_locals s)) s'))))
                             (mrec h_prog o (\a. itree_Ret (INR
                                (match a with
                                   INL _ -> (SOME pan_Error,s')
@@ -1368,11 +1368,11 @@ let mrec_h_handle_call_ret_lemma = prove(CASE_TERM
         (match ct with
            NONE -> itree_Ret (INR (SOME (pan_Return retv),pan_itreeSem_empty_locals s'))
          | SOME (NONE,_) ->
-             itree_Ret (INR (NONE,bstate_locals_fupd (K (bstate_locals s)) s'))
+             itree_Ret (INR (NONE,bstate_locals_fupd (combin_K (bstate_locals s)) s'))
          | SOME (SOME (rk,rt),_) ->
              if pan_itreeSem_is_valid_value s rk rt retv
              then itree_Ret (INR (NONE,pan_itreeSem_set_kvar rk rt retv
-                                         (bstate_locals_fupd (K (bstate_locals s)) s')))
+                                         (bstate_locals_fupd (combin_K (bstate_locals s)) s')))
              else itree_Ret (INR (SOME pan_Error,s'))))
    | INR (r,s') -> itree_Ret (INR (r,pan_itreeSem_empty_locals s'))
    | INL _ -> itree_Ret (INR (SOME pan_Error,s))`,
@@ -1390,14 +1390,14 @@ let mrec_h_handle_deccall_ret_lemma = prove(CASE_TERM
        (if shape_of retv = sh /\ shape_of retv = rsh then
           Tau (itree_bind
                  (mrec h_prog (h_prog (p,pan_itreeSem_set_var rt retv
-                    (bstate_locals_fupd (K (bstate_locals s)) s'))))
+                    (bstate_locals_fupd (combin_K (bstate_locals s)) s'))))
                  (mrec h_prog o
                     (\a. itree_Ret (INR
                        (match a with
                           INL v -> (SOME pan_Error,s')
                         | INR (q,r') ->
                             (q,bstate_locals_fupd
-                                 (K (pan_res_var (bstate_locals r')
+                                 (combin_K (pan_res_var (bstate_locals r')
                                        (rt,FLOOKUP (bstate_locals s) rt))) r'))))))
         else itree_Ret (INR (SOME pan_Error,s')))
    | INR (r,s') -> itree_Ret (INR (r,pan_itreeSem_empty_locals s'))
@@ -1434,7 +1434,7 @@ let mrec_ExtCall = prove(CASE_TERM
                                | INL (INR new_bytes) ->
                                    if LENGTH new_bytes = LENGTH x then
                                      (NONE,bstate_memory_fupd
-                                             (K (pan_write_bytearray c' new_bytes
+                                             (combin_K (pan_write_bytearray c' new_bytes
                                                    (bstate_memory s) (bstate_memaddrs s)
                                                    (bstate_be s))) s)
                                    else
@@ -1444,7 +1444,7 @@ let mrec_ExtCall = prove(CASE_TERM
                                | INR _ -> (SOME pan_Error,s)))))
                   else itree_Ret (INR
                          (NONE,bstate_memory_fupd
-                                 (K (pan_write_bytearray c' x (bstate_memory s)
+                                 (combin_K (pan_write_bytearray c' x (bstate_memory s)
                                        (bstate_memaddrs s) (bstate_be s))) s))
               | _ -> itree_Ret (INR (SOME pan_Error,s)))
          | _ -> itree_Ret (INR (SOME pan_Error,s)))

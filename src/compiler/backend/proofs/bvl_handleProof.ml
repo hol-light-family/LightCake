@@ -259,7 +259,7 @@ let evaluate_LetLet = prove
     ALL_TAC] THEN
   FS[bvl_evaluate_def] THEN REWRITE_TAC[GSYM APPEND_ASSOC] THEN
   ASM_SIMP_TAC[BVLPROPSAUX_evaluate_long_list; GSYM ALL_MEM] THEN
-  CASE_REWRITE_TAC[] THEN FIRST_X_ASSUM MATCH_MP_TAC THEN
+  CAKE_REWRITE_TAC[] THEN FIRST_X_ASSUM MATCH_MP_TAC THEN
   FS[bvl_handleProof_env_rel_def; LIST_RELi_EL_EQN; LENGTH_LIST_OF_SEQ; EL_LIST_OF_SEQ]);;
 
 let env_rel_refl = prove

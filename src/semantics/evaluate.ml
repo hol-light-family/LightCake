@@ -31,17 +31,17 @@ type_invention_error := true;;
 let fix_clock_def = cake_def
   `fix_clock (s:(A)state) ((s':(B)state),(res:C)) =
      (state_clock_fupd
-        (K (if state_clock s' <= state_clock s then state_clock s'
+        (combin_K (if state_clock s' <= state_clock s then state_clock s'
             else state_clock s)) s',res)`;;
 
 let dec_clock_def = cake_def
-  `dec_clock (s:(FFI)state) = state_clock_fupd (K (state_clock s - 1)) s`;;
+  `dec_clock (s:(FFI)state) = state_clock_fupd (combin_K (state_clock s - 1)) s`;;
 
 let do_eval_res_def = cake_def
   `do_eval_res vs (s:(FFI)state) =
      match do_eval vs (state_eval_state s) with
        NONE -> (s,(Rerr (Rabort Rtype_error):(v sem_env # dec list,A)result))
-     | SOME (env1,decs,es1) -> (state_eval_state_fupd (K es1) s,Rval (env1,decs))`;;
+     | SOME (env1,decs,es1) -> (state_eval_state_fupd (combin_K es1) s,Rval (env1,decs))`;;
 
 (* list_result is equivalent to map_result (\v. [v]) I, where map_result is *)
 (* defined in evalPropsTheory                                                *)
@@ -180,7 +180,7 @@ let EVALAUX_evaluate_clauses1 =
                                  (match update_thunk (REVERSE vs) (state_refs st2) vs2
                                   with
                                     NONE -> (st2,Rerr (Rabort Rtype_error))
-                                  | SOME refs -> (state_refs_fupd (K refs) st2,Rval vs2))
+                                  | SOME refs -> (state_refs_fupd (combin_K refs) st2,Rval vs2))
                              | (st2,Rerr e) -> (st2,Rerr e)))
                      | NONE -> (st',Rerr (Rabort Rtype_error))))
            | EvalOp ->
@@ -195,14 +195,14 @@ let EVALAUX_evaluate_clauses1 =
                                      (extend_dec_env env2 env1) with
                                SOME (x,es2) ->
                                  (state_eval_state_fupd
-                                    (K (reset_env_generation (state_eval_state st') es2))
+                                    (combin_K (reset_env_generation (state_eval_state st') es2))
                                     st2,
                                   Rval [x])
                              | NONE -> (st2,Rerr (Rabort Rtype_error)))
                         | (st2,Rerr (Rabort a)) -> (st2,Rerr (Rabort a))
                         | (st2,Rerr e) ->
                             (state_eval_state_fupd
-                               (K (reset_env_generation (state_eval_state st')
+                               (combin_K (reset_env_generation (state_eval_state st')
                                      (state_eval_state st2))) st2,
                              Rerr e)))
                 | (st1,Rerr e) -> (st1,Rerr e))
@@ -210,7 +210,7 @@ let EVALAUX_evaluate_clauses1 =
                (match do_app (state_refs st',state_ffi st') op (REVERSE vs) with
                   NONE -> (st',Rerr (Rabort Rtype_error))
                 | SOME ((refs,ffi),r) ->
-                    (state_refs_fupd (K refs) (state_ffi_fupd (K ffi) st'),
+                    (state_refs_fupd (combin_K refs) (state_ffi_fupd (combin_K ffi) st'),
                      list_result r)))
       | res -> res) /\
    (evaluate st env [Log lop e1 e2] =
@@ -238,12 +238,12 @@ let EVALAUX_evaluate_clauses1 =
    (evaluate st env [Let xo e1 e2] =
       match fix_clock st (evaluate st env [e1]) with
         (st',Rval v) ->
-          evaluate st' (sem_env_v_fupd (K (nsOptBind xo (HD v) (sem_env_v env))) env)
+          evaluate st' (sem_env_v_fupd (combin_K (nsOptBind xo (HD v) (sem_env_v env))) env)
             [e2]
       | (st',Rerr v8) -> (st',Rerr v8)) /\
    (evaluate st env [Letrec funs e] =
       if ALL_DISTINCT (MAP (\xyz. match xyz with (x,y,z) -> x) funs) then
-        evaluate st (sem_env_v_fupd (K (build_rec_env funs env (sem_env_v env))) env)
+        evaluate st (sem_env_v_fupd (combin_K (build_rec_env funs env (sem_env_v env))) env)
           [e]
       else (st,Rerr (Rabort Rtype_error))) /\
    (evaluate st env [Tannot e t] = evaluate st env [e])`;;
@@ -262,7 +262,7 @@ let EVALAUX_evaluate_clauses3 =
            No_match -> evaluate_match st env v pes err_v
          | Match_type_error -> (st,Rerr (Rabort Rtype_error))
          | Match env_v' ->
-             evaluate st (sem_env_v_fupd (K (nsAppend (alist_to_ns env_v') (sem_env_v env)))
+             evaluate st (sem_env_v_fupd (combin_K (nsAppend (alist_to_ns env_v') (sem_env_v env)))
                             env) [e])
       else (st,Rerr (Rabort Rtype_error)))`;;
 
@@ -296,7 +296,7 @@ let EVALAUX_evaluate_clauses4 =
        else Rerr (Rabort Rtype_error))) /\
    (evaluate_decs st env [Dtype locs tds] =
       if ALL check_dup_ctors tds then
-        (state_next_type_stamp_fupd (K (state_next_type_stamp st + LENGTH tds)) st,
+        (state_next_type_stamp_fupd (combin_K (state_next_type_stamp st + LENGTH tds)) st,
          Rval (sem_env_REC nsEmpty (build_tdefs (state_next_type_stamp st) tds)))
       else (st,Rerr (Rabort Rtype_error))) /\
    (evaluate_decs st env [Dtabbrev locs tvs tn t] =
@@ -305,9 +305,9 @@ let EVALAUX_evaluate_clauses4 =
       match declare_env (state_eval_state st) env with
         NONE -> (st,Rerr (Rabort Rtype_error))
       | SOME (x,es') ->
-          (state_eval_state_fupd (K es') st,Rval (sem_env_REC (nsSing n x) nsEmpty))) /\
+          (state_eval_state_fupd (combin_K es') st,Rval (sem_env_REC (nsSing n x) nsEmpty))) /\
    (evaluate_decs st env [Dexn locs cn ts] =
-      (state_next_exn_stamp_fupd (K (state_next_exn_stamp st + 1)) st,
+      (state_next_exn_stamp_fupd (combin_K (state_next_exn_stamp st + 1)) st,
        Rval (sem_env_REC nsEmpty
                (nsSing cn (LENGTH ts,ExnStamp (state_next_exn_stamp st)))))) /\
    (evaluate_decs st env [Dmod mn ds] =
@@ -346,7 +346,7 @@ let EVALAUX_evaluate_rel =
         sum_CASE x (\t. state_clock (FST t),list_size exp_size (SND (SND t)))
           (\y. sum_CASE y
                  (\t. state_clock (FST t),
-                      list_size (pair_size pat_size exp_size)
+                      list_size (pair_size ast_pat_size exp_size)
                         (FST (SND (SND (SND t)))))
                  (\t. state_clock (FST t),list_size dec_size (SND (SND t)))))`;;
 

@@ -143,7 +143,7 @@ let isSomeDataElement_heap_lookup_eq = prove
        (list_to_BlockReps conf p k1 ls
         :((A word_loc,data_to_word_memoryProof_tag#B list)heap_element)list))`,
   LIST_INDUCT_TAC THEN REWRITE_TAC[list_to_BlockReps_def] THEN
-  CASES_ON `t:((A word_loc)heap_address)list` THEN CASE_REWRITE_TAC [] THEN
+  CASES_ON `t:((A word_loc)heap_address)list` THEN CAKE_REWRITE_TAC [] THEN
   REWRITE_TAC[heap_lookup_def; BlockRep_def; el_length_def; LENGTH] THEN
   REPEAT GEN_TAC THEN ASM_CASES_TAC `n = 0` THEN ASM_REWRITE_TAC[] THENL
    [REWRITE_TAC[isSomeDataElement_def; option_INJ] THEN MESON_TAC[]; ALL_TAC] THEN
@@ -170,7 +170,7 @@ let MP7AUX_heap_lookup_list_to_BlockReps = prove
         :((A word_loc,data_to_word_memoryProof_tag#B list)heap_element)list))`,
   LIST_INDUCT_TAC THEN REWRITE_TAC[LENGTH; CONJUNCT1 LT] THEN
   GEN_TAC THEN CASES_ON `j:num` THEN REWRITE_TAC[list_to_BlockReps_def; LT_SUC] THEN
-  CASES_ON `t:((A word_loc)heap_address)list` THEN CASE_REWRITE_TAC [] THEN
+  CASES_ON `t:((A word_loc)heap_address)list` THEN CAKE_REWRITE_TAC [] THEN
   REWRITE_TAC[heap_lookup_def; BlockRep_def; el_length_def; MULT_CLAUSES] THEN
   REWRITE_TAC[isSomeDataElement_def; option_INJ; LENGTH; CONJUNCT1 LT] THENL
    [MESON_TAC[]; MESON_TAC[]; ALL_TAC] THEN
@@ -591,13 +591,13 @@ let MP7AUX_heap_split_prefix = prove
   ASM_CASES_TAC `s < heap_length (ha:((A,B)heap_element)list)` THEN
   ASM_REWRITE_TAC[] THENL
    [CASES_ON `heap_split s (ha:((A,B)heap_element)list)` THEN
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[option_DISTINCT; option_INJ] THEN
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[option_DISTINCT; option_INJ] THEN
     CASES_ON `a:((A,B)heap_element)list#((A,B)heap_element)list` THEN
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[option_INJ; PAIR_EQ] THEN MESON_TAC[];
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[option_INJ; PAIR_EQ] THEN MESON_TAC[];
     STRIP_TAC THEN
     SUBGOAL_THEN `s = heap_length (ha:((A,B)heap_element)list)` SUBST_ALL_TAC THENL
      [ASM_ARITH_TAC; ALL_TAC] THEN
-    POP_ASSUM MP_TAC THEN REWRITE_TAC[SUB_REFL; heap_split_0] THEN CASE_REWRITE_TAC[] THEN
+    POP_ASSUM MP_TAC THEN REWRITE_TAC[SUB_REFL; heap_split_0] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[option_INJ; PAIR_EQ] THEN MESON_TAC[]]);;
 (* unused_space_inv after the allocation of hs at the start of the unused *)
 (* block                                                                    *)
@@ -641,7 +641,7 @@ let MP7AUX_alloc_gc_kind_inv = prove
      gc_kind_inv c (heap_length ha + heap_length hs) (sp - heap_length hs) sp1 gens
        (APPEND (APPEND (APPEND ha hs) (heap_expand ((sp + sp1) - heap_length hs))) hb)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[gc_kind_inv_def] THEN
-  CASES_ON `data_to_word_config_gc_kind c` THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON `data_to_word_config_gc_kind c` THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[] THEN STRIP_TAC THEN
   SUBGOAL_THEN `(heap_length (ha:((A,data_to_word_memoryProof_tag#B)heap_element)list) +
                  heap_length (hs:((A,data_to_word_memoryProof_tag#B)heap_element)list)) +
@@ -971,13 +971,13 @@ let MP7AUX_cm_bc_ref_inv = prove
      (f,tf,APPEND (APPEND ha (heap_expand (sp + sp1))) (hb:mp7heap),be)` THEN
   REWRITE_TAC[bc_ref_inv_def] THEN
   CASES_ON `FLOOKUP (f:(num,num)fmap) k` THEN
-  CASES_ON `lookup k (refs:(data_v bvl_ref)spt)` THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON `lookup k (refs:(data_v bvl_ref)spt)` THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[] THEN
   SUBGOAL_THEN `!t. t IN FDOM (tf:(num,num)fmap) ==> t < ts` ASSUME_TAC THENL
    [UNDISCH_TAC `FDOM (tf:(num,num)fmap) SUBSET {n | n < ts}` THEN
     REWRITE_TAC[SUBSET; IN_ELIM_THM] THEN MESON_TAC[];
     ALL_TAC] THEN
-  CASES_ON `a':data_v bvl_ref` THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON `a':data_v bvl_ref` THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[LET_DEF; LET_END_DEF] THEN STRIP_TAC THEN
   ASM_SIMP_TAC[MP7AUX_isSomeDataElement_blocks] THEN
   TRY(EXISTS_TAC `zs:((A word_loc)heap_address)list` THEN ASM_SIMP_TAC[] THEN NO_TAC) THEN
@@ -1404,7 +1404,7 @@ let MP7AUX_v_to_list_SOME_CONS_IMP = prove
   REPEAT COND_CASES_TAC THEN ASM_REWRITE_TAC[option_DISTINCT; option_INJ; NOT_CONS_NIL] THEN
   DISCH_TAC THEN REPEAT GEN_TAC THEN CASES_ON `data_v_to_list bt` THEN
   ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[option_DISTINCT; option_INJ; CONS_11; injectivity "data_v"] THEN
+  CAKE_REWRITE_TAC[option_DISTINCT; option_INJ; CONS_11; injectivity "data_v"] THEN
   STRIP_TAC THEN MAP_EVERY EXISTS_TAC [`ts:num`; `bt:data_v`] THEN ASM_REWRITE_TAC[]);;
 let MP7AUX_v_to_list_SOME_NIL_IFF = prove
  (`!v. data_v_to_list v = SOME [] <=> ?ts. v = data_Block ts nil_tag []`,
@@ -1414,7 +1414,7 @@ let MP7AUX_v_to_list_SOME_NIL_IFF = prove
     injectivity "data_v"; distinctness "data_v"; CONS_11] THENL
    [MESON_TAC[];
     DISCH_TAC THEN CASES_ON `data_v_to_list bt` THEN ASM_REWRITE_TAC[] THEN
-    CASE_REWRITE_TAC[option_DISTINCT; option_INJ; NOT_CONS_NIL]]);;
+    CAKE_REWRITE_TAC[option_DISTINCT; option_INJ; NOT_CONS_NIL]]);;
 
 (* HOL4 line 17373 *)
 let v_inv_v_to_list_lemma = prove
@@ -1460,7 +1460,7 @@ let MP7AUX_walk_CONS = prove
   GEN_REWRITE_TAC LAND_CONV [data_to_word_memoryProof_walk_def] THEN
   FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP MP7AUX_walk_some th]) THEN
   ASM_SIMP_TAC[ARITH_RULE `2 <= n ==> ~(n = 0) /\ ~(n = 1)`] THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[]);;
 (* the first cons cell of a list value *)
 let MP7AUX_v_inv_list_CONS = prove
  (`!c v refs ptr f tf
@@ -2006,7 +2006,7 @@ let do_part_SOME_IMP_SOME = prove
      data_do_part map0 h refs (SOME ts) = (x,s1,ts1) ==> ?ts'. ts1 = SOME ts'`,
   REPEAT GEN_TAC THEN CASES_ON `h:const_part` THEN
   REWRITE_TAC[data_do_part_def; LET_DEF; LET_END_DEF; PAIR_EQ] THEN
-  TRY COND_CASES_TAC THEN CASE_REWRITE_TAC[PAIR_EQ] THEN MESON_TAC[]);;
+  TRY COND_CASES_TAC THEN CAKE_REWRITE_TAC[PAIR_EQ] THEN MESON_TAC[]);;
 
 (* HOL4 line 17787 *)
 let memory_rel_IMP_MAP_UPDATE = prove
@@ -2171,7 +2171,7 @@ let MP7AUX_do_build_part = prove
     `a:int`; `y:(A word)list`; `x:bool`; `a:A word`] IMP_memory_rel_bignum_alt) THEN
   ANTS_TAC THENL
    [ASM_REWRITE_TAC[data_to_word_memoryProof_Bignum_def; LET_DEF; LET_END_DEF] THEN
-    CASE_REWRITE_TAC[];
+    CAKE_REWRITE_TAC[];
     ALL_TAC] THEN
   ASM_REWRITE_TAC[option_INJ; injectivity "word_loc"; MAP; ADD1] THEN
   DISCH_THEN(X_CHOOSE_THEN `free':A word` (X_CHOOSE_THEN `curr':A word`
@@ -2281,7 +2281,7 @@ let memory_rel_do_build = prove
       (X_CHOOSE_THEN `t1:num option` ASSUME_TAC))) THENL
    [MESON_TAC[PAIR_SURJECTIVE]; ALL_TAC] THEN
   FIRST_ASSUM(X_CHOOSE_THEN `ts':num` SUBST_ALL_TAC o MATCH_MP do_part_SOME_IMP_SOME) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC(all_case_eqs()) THEN REWRITE_TAC[PAIR_EQ; option_INJ; option_DISTINCT] THEN
   REWRITE_TAC[LEFT_AND_EXISTS_THM; LEFT_IMP_EXISTS_THM] THEN
   STRIP_TAC THEN
@@ -2467,7 +2467,7 @@ let MP7AUX_lookup_mem_insert = prove
  (`!k (v:bool#A word_loc) m j.
      lookup_mem (insert k v m) j = if j = k then v else lookup_mem m j`,
   REPEAT GEN_TAC THEN REWRITE_TAC[lookup_mem_def; lookup_insert] THEN
-  COND_CASES_TAC THEN CASE_REWRITE_TAC[]);;
+  COND_CASES_TAC THEN CAKE_REWRITE_TAC[]);;
 
 (* HOL4 line 18136 *)
 let parts_to_words_add = prove
@@ -2587,7 +2587,7 @@ let parts_to_words_IMP_build_words = prove
   MP_TAC(ISPECL [`c:data_to_word_config`; `m:(bool#A word_loc)spt`; `h:const_part`;
                  `off:A word`; `x:bool#A word_loc`; `y:(bool#A word_loc)list`]
          part_to_words_IMP_build_words) THEN
-  ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN CAKE_REWRITE_TAC[] THEN
   FIRST_X_ASSUM(MP_TAC o SPECL
     [`insert i (x:bool#A word_loc) m`; `i + 1`;
      `word_add off (word_mul bytes_in_word
@@ -2602,7 +2602,7 @@ let parts_to_words_IMP_build_words = prove
     GEN_TAC THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
     COND_CASES_TAC THEN ASM_MESON_TAC[];
     ALL_TAC] THEN
-  REWRITE_TAC[LENGTH_MAP] THEN DISCH_THEN SUBST1_TAC THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[LENGTH_MAP] THEN DISCH_THEN SUBST1_TAC THEN CAKE_REWRITE_TAC[]);;
 
 (* HOL4 line 18199 *)
 let LESS_EQ_num_size = prove
@@ -2702,7 +2702,7 @@ let const_parts_to_words_good_loc = prove
                              `word 0:A word`; `(y0:bool,y1:A word_loc)`;
                              `y2:(bool#A word_loc)list`] th) THEN
               ASM_REWRITE_TAC[lookup_mem_def; lookup_def] THEN
-              CASE_REWRITE_TAC[good_loc_def]) THEN
+              CAKE_REWRITE_TAC[good_loc_def]) THEN
   LIST_INDUCT_TAC THEN REWRITE_TAC[parts_to_words_def] THENL
    [REWRITE_TAC[option_INJ; PAIR_EQ] THEN REPEAT STRIP_TAC THEN
     REPEAT(FIRST_X_ASSUM(SUBST_ALL_TAC o SYM o check (fun th -> is_eq(concl th) &&
@@ -2753,7 +2753,7 @@ let memory_rel_do_build_const = prove
     ALL_TAC] THEN
   SUBGOAL_THEN `!i. lookup_mem (LN:(bool#A word_loc)spt) i = (F,wl_Word (word 0))`
     ASSUME_TAC THENL
-   [REWRITE_TAC[lookup_mem_def; lookup_def] THEN CASE_REWRITE_TAC[]; ALL_TAC] THEN
+   [REWRITE_TAC[lookup_mem_def; lookup_def] THEN CAKE_REWRITE_TAC[]; ALL_TAC] THEN
   MP_TAC(ISPECL [`c:data_to_word_config`; `parts:const_part list`;
     `LN:(bool#A word_loc)spt`; `0`; `word 0:A word`; `word_sub free curr:A word`;
     `w:bool#A word_loc`; `ws:(bool#A word_loc)list`; `LN:(bool#A word_loc)spt`]
@@ -2888,12 +2888,12 @@ let xor_bytes_bytes_to_word = prove
   REWRITE_TAC[NOT_SUC; SUC_SUB1; WORD_XOR_REFL] THEN
   MAP_EVERY X_GEN_TAC [`v1:byte list`; `v2:byte list`; `rv:byte list`; `a:A word`] THEN
   CASES_ON `v1:byte list` THEN CASES_ON `v2:byte list` THEN
-  REWRITE_TAC[xor_bytes_def; option_DISTINCT; option_INJ] THEN CASE_REWRITE_TAC[] THEN
-  TRY(DISCH_THEN(SUBST1_TAC o SYM) THEN CASE_REWRITE_TAC[WORD_XOR_0; WORD_XOR_REFL] THEN
+  REWRITE_TAC[xor_bytes_def; option_DISTINCT; option_INJ] THEN CAKE_REWRITE_TAC[] THEN
+  TRY(DISCH_THEN(SUBST1_TAC o SYM) THEN CAKE_REWRITE_TAC[WORD_XOR_0; WORD_XOR_REFL] THEN
       NO_TAC) THEN
   CASES_ON `xor_bytes a1 a1'` THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN
-  DISCH_THEN(SUBST1_TAC o SYM) THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[word_xor_set_byte] THEN
+  CAKE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN
+  DISCH_THEN(SUBST1_TAC o SYM) THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[word_xor_set_byte] THEN
   AP_THM_TAC THEN AP_TERM_TAC THEN FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[]);;
 
 (* HOL4 line 18431 *)
@@ -2904,7 +2904,7 @@ let xor_bytes_length = prove
    [REPEAT GEN_TAC THEN DISCH_THEN SUBST1_TAC THEN REWRITE_TAC[LENGTH; LE_0]; ALL_TAC] THEN
   GEN_TAC THEN CASES_ON `ys:byte list` THEN REWRITE_TAC[xor_bytes_def; option_DISTINCT] THEN
   GEN_TAC THEN CASES_ON `xor_bytes t a1` THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN DISCH_THEN(SUBST1_TAC o SYM) THEN
+  CAKE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN DISCH_THEN(SUBST1_TAC o SYM) THEN
   FIRST_X_ASSUM(MP_TAC o SPECL [`a1:byte list`; `a:byte list`]) THEN
   ASM_REWRITE_TAC[LENGTH] THEN ARITH_TAC);;
 
@@ -2919,9 +2919,9 @@ let xor_bytes_drop = prove
   X_GEN_TAC `n:num` THEN GEN_TAC THEN CASES_ON `ys:byte list` THEN
   REWRITE_TAC[xor_bytes_def; option_DISTINCT] THEN
   GEN_TAC THEN CASES_ON `xor_bytes t a1` THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN DISCH_THEN(SUBST1_TAC o SYM) THEN
+  CAKE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN DISCH_THEN(SUBST1_TAC o SYM) THEN
   REWRITE_TAC[DROP_DEF] THEN COND_CASES_TAC THEN
-  ASM_REWRITE_TAC[xor_bytes_def] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[xor_bytes_def] THEN CAKE_REWRITE_TAC[] THEN
   FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[]);;
 
 let MP7AUX_DIV_SUB_ADD1 = prove
@@ -2961,7 +2961,7 @@ let xor_bytes_xor_words = prove
   SUBGOAL_THEN `xor_words (write_bytes (DROP k vals1) t be)
                   (write_bytes (DROP k vals2) a1 be) =
                 SOME (write_bytes (DROP k res_vals) a1 be:(A word)list)`
-    (fun th -> REWRITE_TAC[th] THEN CASE_REWRITE_TAC[]) THEN
+    (fun th -> REWRITE_TAC[th] THEN CAKE_REWRITE_TAC[]) THEN
   ASM_CASES_TAC `LENGTH (vals1:byte list) < k` THENL
    [SUBGOAL_THEN `t:(A word)list = []` SUBST1_TAC THENL
      [REWRITE_TAC[GSYM LENGTH_EQ_NIL] THEN
@@ -3048,7 +3048,7 @@ let xor_words_word_list = prove
   UNDISCH_TAC `xor_words (CONS a0 a1) v2 = SOME (rv:(A word)list)` THEN
   CASES_ON `v2:(A word)list` THEN REWRITE_TAC[xor_words_def; option_DISTINCT] THEN
   CASES_ON `xor_words a1 (a1':(A word)list)` THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN DISCH_THEN(SUBST_ALL_TAC o SYM) THEN
+  CAKE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN DISCH_THEN(SUBST_ALL_TAC o SYM) THEN
   FIRST_X_ASSUM(MP_TAC o check (fun th -> try fst(dest_const(rator(rand(concl th)))) = "fun2set" with _ -> false)) THEN
   REWRITE_TAC[MAP; misc_word_list_def] THEN DISCH_TAC THEN
   MP7AUX_SEP_R_TAC THEN
@@ -3066,12 +3066,12 @@ let xor_words_word_list = prove
       DISCH_THEN(SUBST1_TAC o SYM) THEN
       ONCE_REWRITE_TAC[word_xor_bytes_def] THEN
       ASM_REWRITE_TAC[WORD_ULT; ARITH; GSYM VAL_EQ; VAL_WORD_0; read_word_def] THEN
-      CASE_REWRITE_TAC[theWord_def; isWord_def] THEN REWRITE_TAC[LET_DEF; LET_END_DEF]];
+      CAKE_REWRITE_TAC[theWord_def; isWord_def] THEN REWRITE_TAC[LET_DEF; LET_END_DEF]];
     ALL_TAC] THEN
   UNDISCH_TAC `xor_words (CONS a0'' a1'') a1' = SOME (a:(A word)list)` THEN
   CASES_ON `a1':(A word)list` THEN REWRITE_TAC[xor_words_def; option_DISTINCT] THEN
   CASES_ON `xor_words a1'' (a1''':(A word)list)` THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN DISCH_THEN(SUBST_ALL_TAC o SYM) THEN
+  CAKE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN DISCH_THEN(SUBST_ALL_TAC o SYM) THEN
   FIRST_X_ASSUM(MP_TAC o check mp7_is_fun2set_th) THEN
   REWRITE_TAC[MAP; misc_word_list_def; MP7AUX_ADD_BW_BW] THEN DISCH_TAC THEN
   REWRITE_TAC[MAP; misc_word_list_def; MP7AUX_ADD_BW_BW] THEN
@@ -3116,7 +3116,7 @@ let xor_words_word_list = prove
     ALL_TAC] THEN
   REWRITE_TAC[WORD_ULT] THEN
   ASM_REWRITE_TAC[ARITH_RULE `~(n + 2 < 2)`; read_word_def] THEN
-  CASE_REWRITE_TAC[theWord_def; isWord_def] THEN REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
+  CAKE_REWRITE_TAC[theWord_def; isWord_def] THEN REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
   ASM_REWRITE_TAC[] THEN
   SUBGOAL_THEN `word_sub (word (LENGTH (a1'':(A word)list) + 2)) (word 2):A word =
                 word (LENGTH a1'')` SUBST1_TAC THENL
@@ -3163,7 +3163,7 @@ let xor_words_word_list_alias = prove
   UNDISCH_TAC `xor_words (CONS a0 a1) (CONS a0 a1) = SOME (rv:(A word)list)` THEN
   REWRITE_TAC[xor_words_def] THEN
   CASES_ON `xor_words a1 (a1:(A word)list)` THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN DISCH_THEN(SUBST_ALL_TAC o SYM) THEN
+  CAKE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN DISCH_THEN(SUBST_ALL_TAC o SYM) THEN
   FIRST_X_ASSUM(MP_TAC o check mp7_is_fun2set_th) THEN
   REWRITE_TAC[MAP; misc_word_list_def] THEN DISCH_TAC THEN
   MP7AUX_SEP_R_TAC THEN
@@ -3178,12 +3178,12 @@ let xor_words_word_list_alias = prove
       DISCH_THEN(SUBST1_TAC o SYM) THEN
       ONCE_REWRITE_TAC[word_xor_bytes_def] THEN
       ASM_REWRITE_TAC[WORD_ULT; ARITH; GSYM VAL_EQ; VAL_WORD_0; read_word_def] THEN
-      CASE_REWRITE_TAC[theWord_def; isWord_def] THEN REWRITE_TAC[LET_DEF; LET_END_DEF]];
+      CAKE_REWRITE_TAC[theWord_def; isWord_def] THEN REWRITE_TAC[LET_DEF; LET_END_DEF]];
     ALL_TAC] THEN
   UNDISCH_TAC `xor_words (CONS a0' a1') (CONS a0' a1') = SOME (a:(A word)list)` THEN
   REWRITE_TAC[xor_words_def] THEN
   CASES_ON `xor_words a1' (a1':(A word)list)` THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN DISCH_THEN(SUBST_ALL_TAC o SYM) THEN
+  CAKE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN DISCH_THEN(SUBST_ALL_TAC o SYM) THEN
   FIRST_X_ASSUM(MP_TAC o check mp7_is_fun2set_th) THEN
   REWRITE_TAC[MAP; misc_word_list_def; MP7AUX_ADD_BW_BW] THEN DISCH_TAC THEN
   REWRITE_TAC[MAP; misc_word_list_def; MP7AUX_ADD_BW_BW] THEN
@@ -3225,7 +3225,7 @@ let xor_words_word_list_alias = prove
     ALL_TAC] THEN
   REWRITE_TAC[WORD_ULT] THEN
   ASM_REWRITE_TAC[ARITH_RULE `~(n + 2 < 2)`; read_word_def] THEN
-  CASE_REWRITE_TAC[theWord_def; isWord_def] THEN REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
+  CAKE_REWRITE_TAC[theWord_def; isWord_def] THEN REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
   ASM_REWRITE_TAC[] THEN
   SUBGOAL_THEN `word_sub (word (LENGTH (a1':(A word)list) + 2)) (word 2):A word =
                 word (LENGTH a1')` SUBST1_TAC THENL
@@ -3346,7 +3346,7 @@ let MP7AUX_abs_two_bytes = prove
       MAP_EVERY EXISTS_TAC [`data_RefPtr b p`; `p:num`] THEN
       ASM_REWRITE_TAC[get_refs_def; MEM; RTC_REFL];
       ALL_TAC] THEN
-    ASM_REWRITE_TAC[bc_ref_inv_def; FLOOKUP_DEF; make_zeros_def] THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[bc_ref_inv_def; FLOOKUP_DEF; make_zeros_def] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[LET_DEF; LET_END_DEF];
     ALL_TAC] THEN
   FIRST_X_ASSUM(fun th ->
@@ -3462,7 +3462,7 @@ let MP7AUX_word_el_Bytes_eq = prove
   REPEAT STRIP_TAC THEN
   ASM_REWRITE_TAC[data_to_word_memoryProof_Bytes_def; word_el_def; word_payload_def;
     LET_DEF; LET_END_DEF; LENGTH_MAP; LENGTH_write_bytes; misc_word_list_def] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[LENGTH_MAP; LENGTH_write_bytes] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[LENGTH_MAP; LENGTH_write_bytes] THEN
   EXISTS_TAC `LENGTH (zs:(A word)list) < 2 EXP (dimindex (:A) - 4) /\
     decode_length c (make_byte_header c fl (LENGTH (vals:byte list)):A word) =
     word (LENGTH zs) /\
@@ -3713,7 +3713,7 @@ let MP7AUX_abs_bytes = prove
     MAP_EVERY EXISTS_TAC [`data_RefPtr b p`; `p:num`] THEN
     ASM_REWRITE_TAC[get_refs_def; MEM; RTC_REFL];
     ALL_TAC] THEN
-  ASM_REWRITE_TAC[bc_ref_inv_def; FLOOKUP_DEF; make_zeros_def] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[bc_ref_inv_def; FLOOKUP_DEF; make_zeros_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[LET_DEF; LET_END_DEF]);;
 
 (* HOL4 line 18668 *)
@@ -3943,7 +3943,7 @@ let word_str_loop_thm = prove
         SOME (EL i (CONS (a0':byte) a1''))`] THEN
     DISCH_THEN(MP_TAC o SPEC `0`) THEN REWRITE_TAC[WORD_ADD_0; EL; HD; LT_0];
     ALL_TAC] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[TAKE_DEF; NOT_SUC; SUC_SUB1; find_diff_def] THEN
   COND_CASES_TAC THEN REWRITE_TAC[] THEN
   SUBGOAL_THEN `word_sub (word_add (word (SUC k)) bytes_in_word) (word 1):A word =

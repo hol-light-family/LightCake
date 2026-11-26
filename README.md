@@ -193,10 +193,10 @@ fresh HOL Light session with no axioms beyond HOL Light's three (`check.ml` show
 
 ## Loading
 
-You need HOL Light from commit `1a0c0e6` (19 November 2026) or later; the port uses its core
-(with `new_coinductive_definition` and the datatype tables of that commit) and
-`Library/words.ml`, `Library/rstc.ml`, `Library/iter.ml` and `Library/floor.ml`. Start HOL Light
-in the root directory of this repository and load everything with
+You need HOL Light from commit `be9b91e` (24 November 2026, pull request #218) or later; the
+port uses its core and `Library/words.ml`, `Library/rstc.ml`, `Library/iter.ml` and
+`Library/floor.ml`. Start HOL Light in the root directory of this repository and load everything
+with
 
     loadt "make.ml";;
 
@@ -214,12 +214,53 @@ session; `check.ml` was run this way with two versions of HOL Light:
 
 | HOL Light | time of `check.ml` |
 |---|---|
-| commit `1a0c0e6` of jrh13/hol-light (19 November 2026) | 2.6 hours |
-| commit `096417c` of jrh13/hol-light (24 November 2026, with pull request #218: MESON, X_CHOOSE_TAC, simplifier and arithmetic-tactic changes) | 2.6 hours |
+| commit `096417c` of jrh13/hol-light (master, 24 November 2026) | 2.6 hours |
+| commit `29c0925` of jargh/hol-light-dev (pull request #219 of jrh13/hol-light: no uses of `genvar` in the core and its libraries) | 2.6 hours |
 
 After `loadt "src/prelude.ml";;` any single
 file can be loaded on its own with `needs`, for example `needs "semantics/namespace.ml";;`
 (paths relative to `src/`).
+
+## HOL Light libraries after LightCake
+
+All of LightCake lives in one HOL Light session, with one namespace for its about 15,000
+constants, its theorems and its OCaml values, so a library loaded afterwards meets LightCake's
+names. LightCake avoids the clashes that matter for HOL Light's main libraries:
+- `make.ml` restores your settings of `use_file_raise_failure` and `type_invention_error` at
+  its end (the port's files set `type_invention_error` to true), and removes the interface of
+  `<<=`, `-->` and `##`, LightCake's notations for `isPREFIX`, `ml_Arrow` and `PAIR_MAP`, as
+  HOL Light's own `realax.ml` does for its symbols: HOL Light's libraries use these symbols
+  themselves. After `make.ml`, LightCake's theorems print `isPREFIX`, `ml_Arrow` and
+  `PAIR_MAP`; `override_interface` brings a notation back.
+- Constants that HOL Light's main libraries use as variables or define themselves carry a
+  theory prefix: `combin_K` (HOL4's `K`), `PAIR_MAP` (HOL4's `##`), `mlstring_shrink`,
+  `pegexec_EV`, `grammar_Lf`, `grammar_Nd`, `grammar_TOK`, `grammar_NT` and `ast_pat_size`.
+  LightCake's OCaml values never rebind a top-level name of HOL Light, apart from the kit's
+  deliberate replacements: the rewriting front ends (memoised nets, the same results),
+  `parse_term`, `g`, `needs` and the METIS wrappers.
+
+With that, the libraries of `Library/`, `Multivariate/`, `Complex/` and `Probability/` load after
+LightCake: tested on HOL Light master with `Library/integer.ml`, `prime.ml`, `card.ml`,
+`permutations.ml`, `pocklington.ml`, `ringtheory.ml`, `szemeredi.ml`, `poly.ml` and
+`bitmatch.ml`, `Multivariate/vectors.ml` and `cauchy.ml`, `Complex/cpoly.ml` and
+`Probability/expectation.ml`. A library takes about 1.5 to 2 times as long to load as in a plain
+session (up to 5 times for small files): HOL Light's kernel looks up constants in a list, and
+LightCake defines about 15,000 of them (the kit's parser avoids most of that cost for
+quotations). The exception is `Library/llist.ml`: LightCake's `src/hol4/llist.ml` ports HOL4's
+llistTheory, whose type `llist` and constants (`LNIL`, `LCONS`, `LHD`, `LTL`, `LNTH`, `LMAP`,
+..., and `THE` and `OPTION_MAP` of `src/hol4/vocab.ml`) have the same names; use LightCake's
+instead.
+
+Outside these four directories, several of HOL Light's examples and side developments define
+or use names that LightCake also defines, so they do not load after LightCake: `Logic/`,
+`Arithmetic/`, `GL/` and `Autoformalization/` (formula constructors such as `Not`, `True`,
+`Atom` and `Fn`, and `FV`, `functions`, `language`, `LEX`), `Model/` (HOL Light's own model of
+the HOL logic, whose names Candle's syntax shares: `VARIANT`, `TYPE_SUBST`, `ACONV`, `VSUBST`,
+`typeof`, `welltyped`, `|-`, ...), `Rqe/` (`Neg`, `Pos`, `Unknown`), `Sieve/` (`sptree`'s
+`LN` and `BS`), `Jordan/` (`compose`), `Unity/` and `Functionspaces/` (their own `K`), and some
+files of `Examples/` and `100/`. Two effects of the kit stay in force for later files:
+`parse_term` reads each `_` of a quotation as its own variable (as HOL4 does), and `g`
+compiles HOL4-style `match` expressions.
 
 ## How the port is written
 
@@ -249,7 +290,8 @@ file can be loaded on its own with `needs`, for example `needs "semantics/namesp
   names the theory name (`sptree_union`, `misc_the`, `peg_nt`; since update 012 also in the HOL4
   library layer). `doc/names.tsv` maps every HOL4 type, constructor, constant, field and theorem of
   the closure to its HOL Light name; `doc/library_renames.tsv` lists the HOL4 library names that
-  had to change.
+  had to change. OCaml-level names do not clash with HOL Light's either (see the previous
+  section).
   HOL4 library notions that HOL Light already has use HOL Light's constants (`EVERY` is `ALL`,
   `LIST_REL` is `ALL2`, `set` is `set_of_list`, `FUNPOW f n x` is `ITER n f x`, `measure` is
   `MEASURE`, ...). HOL4's rationals are the subtype of HOL Light's reals of the rational numbers

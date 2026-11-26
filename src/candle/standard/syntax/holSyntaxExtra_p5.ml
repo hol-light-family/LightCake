@@ -180,7 +180,7 @@ let INST_CORE_simple_inst = prove
       MATCH_MP_TAC(TAUT `(a /\ b /\ c /\ d) /\ w ==> a /\ b /\ c /\ d /\ w`) THEN
       CONJ_TAC THENL [MATCH_MP_TAC CSYNAUX_P5_INST_ABS_COND THEN ASM_REWRITE_TAC[];
                       ASM_REWRITE_TAC[]];
-      REWRITE_TAC[INST_CORE_def; dest_var_def; simple_inst_def] THEN CASE_REWRITE_TAC[] THEN
+      REWRITE_TAC[INST_CORE_def; dest_var_def; simple_inst_def] THEN CAKE_REWRITE_TAC[] THEN
       CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN ASM_REWRITE_TAC[IS_RESULT_def; RESULT_def]]]);;
 
 let INST_simple_inst = prove
@@ -417,7 +417,7 @@ let hol_fresh_def = new_specification ["hol_fresh"]
  (prove
    (`?f. !s:string->bool. FINITE s ==> ~(f s IN s)`,
     REWRITE_TAC[GSYM SKOLEM_THM; RIGHT_EXISTS_IMP_THM] THEN REPEAT STRIP_TAC THEN
-    MP_TAC(ISPECL [`IMAGE (\n. APPEND [] (list_of_seq (K (CHR 39)) n)) (:num)`;
+    MP_TAC(ISPECL [`IMAGE (\n. APPEND [] (list_of_seq (combin_K (CHR 39)) n)) (:num)`;
                    `s:string->bool`] IN_INFINITE_NOT_FINITE) THEN
     ASM_REWRITE_TAC[REWRITE_RULE[] (INST [`[]:string`,`x:string`] PRIMED_INFINITE)] THEN
     MESON_TAC[]));;
@@ -568,7 +568,7 @@ let variant_def = cake_def_wf
        (MAP (\a. {strlen x + 1 | x | ?ty. VFREE_IN (hol_Var x ty) a}) avoid))) -
      (match v with hol_Var x ty -> strlen x | _ -> 0))`)
   (REWRITE_TAC[measure_THM] THEN REPEAT STRIP_TAC THEN
-   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+   ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
    REWRITE_TAC[strlen_strcat; strlen_def; LENGTH] THEN
    MATCH_MP_TAC(ARITH_RULE `a < n ==> n - (a + SUC 0) < n - a`) THEN
    MATCH_MP_TAC SUM_SET_IN_LT THEN EXISTS_TAC `strlen s' + 1` THEN
@@ -593,17 +593,17 @@ let variant_ind = cake_ind "variant";;
 (* REPLICATE; here one lemma for any list of terms whose free variables are *)
 (* those of x, from the uniqueness of the least number of primes.           *)
 let CSYNAUX_P5_PRIMES_SUC = prove
- (`!m. list_of_seq (K (CHR 39)) (SUC m) = CONS (CHR 39) (list_of_seq (K (CHR 39)) m)`,
-  SUBGOAL_THEN `!m. APPEND (list_of_seq (K (CHR 39)) m) [CHR 39] =
-                    CONS (CHR 39) (list_of_seq (K (CHR 39)) m)` ASSUME_TAC THENL
+ (`!m. list_of_seq (combin_K (CHR 39)) (SUC m) = CONS (CHR 39) (list_of_seq (combin_K (CHR 39)) m)`,
+  SUBGOAL_THEN `!m. APPEND (list_of_seq (combin_K (CHR 39)) m) [CHR 39] =
+                    CONS (CHR 39) (list_of_seq (combin_K (CHR 39)) m)` ASSUME_TAC THENL
    [INDUCT_TAC THEN ASM_REWRITE_TAC[list_of_seq; K_THM; APPEND]; ALL_TAC] THEN
   ASM_REWRITE_TAC[list_of_seq; K_THM]);;
 
 let CSYNAUX_P5_VARIANT_PRIMES_UNIQUE = prove
  (`!t s ty n.
-     ~VFREE_IN (hol_Var (implode (APPEND s (list_of_seq (K (CHR 39)) n))) ty) t /\
+     ~VFREE_IN (hol_Var (implode (APPEND s (list_of_seq (combin_K (CHR 39)) n))) ty) t /\
      (!m. m < n
-          ==> VFREE_IN (hol_Var (implode (APPEND s (list_of_seq (K (CHR 39)) m))) ty) t)
+          ==> VFREE_IN (hol_Var (implode (APPEND s (list_of_seq (combin_K (CHR 39)) m))) ty) t)
      ==> VARIANT_PRIMES t s ty = n`,
   REPEAT STRIP_TAC THEN
   MP_TAC(SPECL [`t:hol_term`; `s:string`; `ty:hol_type`] VARIANT_PRIMES_def) THEN
@@ -611,8 +611,8 @@ let CSYNAUX_P5_VARIANT_PRIMES_UNIQUE = prove
   ASM_MESON_TAC[]);;
 
 let CSYNAUX_P5_APPEND_PRIME = prove
- (`!s m. APPEND (APPEND s "'") (list_of_seq (K (CHR 39)) m) =
-         APPEND s (list_of_seq (K (CHR 39)) (SUC m))`,
+ (`!s m. APPEND (APPEND s "'") (list_of_seq (combin_K (CHR 39)) m) =
+         APPEND s (list_of_seq (combin_K (CHR 39)) (SUC m))`,
   REWRITE_TAC[CSYNAUX_P5_PRIMES_SUC; GSYM APPEND_ASSOC; APPEND] THEN
   REWRITE_TAC[CHR_DEF] THEN CONV_TAC NUM_REDUCE_CONV THEN REWRITE_TAC[]);;
 
@@ -634,7 +634,7 @@ let CSYNAUX_P5_VARIANT_FREE = prove
   SUBGOAL_THEN `?j. k = SUC j` STRIP_ASSUME_TAC THENL
    [ASM_CASES_TAC `k = 0` THENL
      [UNDISCH_TAC `~VFREE_IN (hol_Var (implode (APPEND (explode name)
-                      (list_of_seq (K (CHR 39)) k))) ty) x` THEN
+                      (list_of_seq (combin_K (CHR 39)) k))) ty) x` THEN
       ASM_REWRITE_TAC[list_of_seq; APPEND_NIL; implode_explode];
       ASM_MESON_TAC[num_CASES]];
     ALL_TAC] THEN
@@ -650,7 +650,7 @@ let CSYNAUX_P5_variant_VARIANT = prove
      ==> variant avoid v = hol_Var (VARIANT x (explode name) ty) ty`,
   MATCH_MP_TAC variant_ind THEN REPEAT GEN_TAC THEN DISCH_TAC THEN
   REPEAT GEN_TAC THEN STRIP_TAC THEN
-  ONCE_REWRITE_TAC[variant_def] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ONCE_REWRITE_TAC[variant_def] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   COND_CASES_TAC THENL
    [FIRST_X_ASSUM(MP_TAC o SPECL [`name:mlstring`; `ty:hol_type`]) THEN
     ASM_REWRITE_TAC[] THEN
@@ -722,13 +722,13 @@ let hol_frees_def = cake_def
 let MEM_frees_EQ = prove
  (`!a x. MEM x (hol_frees a) <=> ?n ty. x = hol_Var n ty /\ MEM (hol_Var n ty) (hol_frees a)`,
   MATCH_MP_TAC hol_term_INDUCT THEN REPEAT STRIP_TAC THEN ONCE_REWRITE_TAC[hol_frees_def] THEN
-  CASE_REWRITE_TAC[MEM; MEM_union; subtract_def; MEM_FILTER] THEN ASM_MESON_TAC[]);;
+  CAKE_REWRITE_TAC[MEM; MEM_union; subtract_def; MEM_FILTER] THEN ASM_MESON_TAC[]);;
 
 (* the elements of hol_frees a are the free variables of a *)
 let CSYNAUX_P5_MEM_frees = prove
  (`!a n ty. MEM (hol_Var n ty) (hol_frees a) <=> VFREE_IN (hol_Var n ty) a`,
   MATCH_MP_TAC hol_term_INDUCT THEN REPEAT STRIP_TAC THEN ONCE_REWRITE_TAC[hol_frees_def] THEN
-  CASE_REWRITE_TAC[MEM; MEM_union; subtract_def; MEM_FILTER; VFREE_IN_def] THEN
+  CAKE_REWRITE_TAC[MEM; MEM_union; subtract_def; MEM_FILTER; VFREE_IN_def] THEN
   ASM_MESON_TAC[]);;
 
 let CSYNAUX_P5_EX_frees = prove
@@ -770,8 +770,8 @@ let INST_CORE_Abs_thm = prove
                 else tres')))`,
   REPEAT GEN_TAC THEN REWRITE_TAC[WELLTYPED_CLAUSES] THEN STRIP_TAC THEN
   ASM_REWRITE_TAC[] THEN GEN_REWRITE_TAC LAND_CONV [INST_CORE_def] THEN
-  REWRITE_TAC[dest_var_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[dest_var_def] THEN CAKE_REWRITE_TAC[] THEN
   SUBGOAL_THEN `welltyped (RESULT (INST_CORE [] tyin t))` ASSUME_TAC THENL
    [ASM_MESON_TAC[INST_WELLTYPED; INST_def]; ALL_TAC] THEN
-  ASM_SIMP_TAC[variant_inst_thm; dest_var_def] THEN CASE_REWRITE_TAC[] THEN
+  ASM_SIMP_TAC[variant_inst_thm; dest_var_def] THEN CAKE_REWRITE_TAC[] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[]);;

@@ -53,7 +53,7 @@ let MSLIB_eval_rel_Opref = prove
  (`!(env:v sem_env) (s:(FFI)state) n xv.
      nsLookup (sem_env_v env) (Short n) = SOME xv ==>
      eval_rel s env (App Opref [Var (Short n)])
-       (state_refs_fupd (K (APPEND (state_refs s) [Refv xv])) s)
+       (state_refs_fupd (combin_K (APPEND (state_refs s) [Refv xv])) s)
        (Loc T (LENGTH (state_refs s)))`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[eval_rel_def] THEN SIMP[] THEN
   MAP_EVERY EXISTS_TAC [`state_clock (s:(FFI)state)`; `state_clock (s:(FFI)state)`] THEN

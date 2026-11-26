@@ -23,7 +23,7 @@ needs "semantics/proofs/namespaceProps.ml";;
 type_invention_error := true;;
 
 let with_same_v = prove
- (`!env:V sem_env. sem_env_v_fupd (K (sem_env_v env)) env = env`,
+ (`!env:V sem_env. sem_env_v_fupd (combin_K (sem_env_v env)) env = env`,
   REWRITE_TAC[sem_env_component_equality; sem_env_INFO.ri_accfupds; K_THM]);;
 let _ = cake_add_simps [with_same_v];;
 
@@ -33,7 +33,7 @@ let unchanged_env = prove
 let _ = cake_add_simps [unchanged_env];;
 
 let with_same_clock = prove
- (`!st:(FFI)state. state_clock_fupd (K (state_clock st)) st = st`,
+ (`!st:(FFI)state. state_clock_fupd (combin_K (state_clock st)) st = st`,
   REWRITE_TAC[state_component_equality; state_INFO.ri_accfupds; K_THM]);;
 
 (* HOL4: Boolv_11 *)
@@ -200,12 +200,12 @@ let do_opapp_cases = prove
     do_opapp vs = SOME (env',v) <=>
     (?v2 env'' n e.
        vs = [Closure env'' n e; v2] /\
-       env' = sem_env_v_fupd (K (nsBind n v2 (sem_env_v env''))) env'' /\ v = e) \/
+       env' = sem_env_v_fupd (combin_K (nsBind n v2 (sem_env_v env''))) env'' /\ v = e) \/
     (?v2 env'' funs n' n'' e.
        vs = [Recclosure env'' funs n'; v2] /\
        find_recfun n' funs = SOME (n'',e) /\
        ALL_DISTINCT (MAP (\fxe. match fxe with (f,x,e) -> f) funs) /\
-       env' = sem_env_v_fupd (K (nsBind n'' v2 (build_rec_env funs env''
+       env' = sem_env_v_fupd (combin_K (nsBind n'' v2 (build_rec_env funs env''
                                                   (sem_env_v env'')))) env'' /\
        v = e)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[do_opapp_def] THEN
@@ -322,7 +322,7 @@ let EVALAUX_do_app_ffi_indep = prove
   REWRITE_TAC[distinctness "op"; injectivity "op"] THEN
   TRY(DISCH_THEN(fun th -> let x = lhs(dest_neg(snd(dest_forall(concl th)))) in
                            MP_TAC(SPEC x th) THEN REWRITE_TAC[] THEN NO_TAC)) THEN
-  REWRITE_TAC[do_app_def; thunk_op_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[do_app_def; thunk_op_def] THEN CAKE_REWRITE_TAC[] THEN
   CONV_TAC(RAND_CONV (EVALAUX_PUSH_CONV EVALAUX_ffi_fix_map EVALAUX_ffi_fix_leaves)) THEN
   CONV_TAC(LAND_CONV (TOP_DEPTH_CONV BETA_CONV)) THEN REFL_TAC);;
 
@@ -351,7 +351,7 @@ let EVALAUX_do_app_FFI_NONE = prove
      do_app (s,t) (FFI n) vs = NONE <=>
      ~(?conf b lnum ws. vs = [Litv (StrLit conf); Loc b lnum] /\
                        store_lookup lnum s = SOME (W8array ws))`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[do_app_def] THEN CASE_REWRITE_TAC[] THEN
+  REPEAT GEN_TAC THEN REWRITE_TAC[do_app_def] THEN CAKE_REWRITE_TAC[] THEN
   EVERY_CASE_TAC THEN IMP_RES_TAC EVALAUX_store_assign_W8array THEN GVS[]);;
 
 let do_app_NONE_ffi = prove
@@ -370,7 +370,7 @@ let EVALAUX_do_app_FFI_same = prove
      do_app (s,t) (FFI n) vs = SOME ((s',t),r) /\
      (!outcome. ~(r = Rerr (Rabort (Rffi_error outcome))))
      ==> do_app (s,t') (FFI n) vs = SOME ((s',t'),r)`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[do_app_def] THEN CASE_REWRITE_TAC[] THEN
+  REPEAT GEN_TAC THEN REWRITE_TAC[do_app_def] THEN CAKE_REWRITE_TAC[] THEN
   STRIP_TAC THEN GVS(EVALAUX_do_app_eqs @ [case_eq "ffi_result"]) THEN
   FIRST_X_ASSUM(STRIP_ASSUME_TAC o MATCH_MP EVALAUX_call_FFI_same) THEN
   GVS[call_FFI_def]);;
@@ -422,7 +422,7 @@ let do_app_ffi_changed = prove
    [ALL_TAC; ASM_MESON_TAC[do_app_ffi_unchanged]] THEN
   FIRST_X_ASSUM(X_CHOOSE_THEN `s:mlstring` SUBST_ALL_TAC) THEN
   POP_ASSUM MP_TAC THEN POP_ASSUM MP_TAC THEN
-  REWRITE_TAC[do_app_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[do_app_def] THEN CAKE_REWRITE_TAC[] THEN
   REPEAT STRIP_TAC THEN GVS(EVALAUX_do_app_eqs @ [case_eq "ffi_result"]) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[call_FFI_def; o_DEF]) THEN
   IMP_RES_TAC EVALAUX_store_assign_W8array THEN
@@ -840,7 +840,7 @@ let concrete_v_simps = prove
    (!e2 nm x. concrete_v (Closure e2 nm x) <=> F) /\
    (!e3 funs nm2. concrete_v (Recclosure e3 funs nm2) <=> F)`,
   REWRITE_TAC[concrete_v_list] THEN ONCE_REWRITE_TAC[concrete_v_def] THEN
-  CASE_REWRITE_TAC[concrete_v_list]);;
+  CAKE_REWRITE_TAC[concrete_v_list]);;
 let _ = cake_add_simps [concrete_v_simps];;
 
 let prim_type_cases = prove

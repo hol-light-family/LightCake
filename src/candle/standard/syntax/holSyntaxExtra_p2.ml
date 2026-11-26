@@ -220,7 +220,7 @@ let type_cmp_thm = prove
   REPEAT GEN_TAC THEN
   STRUCT_CASES_TAC(SPEC `t1:hol_type` (CONJUNCT1 (cases "hol_type"))) THEN
   STRUCT_CASES_TAC(SPEC `t2:hol_type` (CONJUNCT1 (cases "hol_type"))) THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[MATCH_MP pair_cmp_lexTO
     (CONJ TotOrd_compare (MATCH_MP TotOrd_list_cmp TotOrd_type_cmp))] THEN
   REWRITE_TAC[type_cmp_def; CSYNAUX_P2_compare_TO;
@@ -266,7 +266,7 @@ let term_cmp_thm = prove
   REPEAT GEN_TAC THEN
   STRUCT_CASES_TAC(SPEC `t1:hol_term` (cases "hol_term")) THEN
   STRUCT_CASES_TAC(SPEC `t2:hol_term` (cases "hol_term")) THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[MATCH_MP pair_cmp_lexTO (CONJ TotOrd_compare TotOrd_type_cmp);
               MATCH_MP pair_cmp_lexTO (CONJ TotOrd_term_cmp TotOrd_term_cmp)] THEN
   REWRITE_TAC[term_cmp_def; type_cmp_def; CSYNAUX_P2_compare_TO] THEN
@@ -320,7 +320,7 @@ let ALPHAVARS_eq_ordav = prove
 let RACONV_orda = prove
  (`!env tp. RACONV env tp ==> orda env (FST tp) (SND tp) = EQUAL`,
   MATCH_MP_TAC RACONV_ind THEN REWRITE_TAC[FST; SND; ALPHAVARS_eq_ordav] THEN
-  REPEAT STRIP_TAC THEN ONCE_REWRITE_TAC[orda_def] THEN CASE_REWRITE_TAC[] THEN
+  REPEAT STRIP_TAC THEN ONCE_REWRITE_TAC[orda_def] THEN CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[LET_DEF; LET_END_DEF; term_cmp_refl; type_cmp_refl; COND_ID]);;
 
 let orda_RACONV = prove
@@ -330,7 +330,7 @@ let orda_RACONV = prove
    [FIRST_X_ASSUM(CONJUNCTS_THEN SUBST_ALL_TAC) THEN DISCH_TAC THEN
     MATCH_MP_TAC RACONV_REFL THEN REWRITE_TAC[ALL];
     ALL_TAC] THEN
-  CASES_ON `t1:hol_term` THEN CASES_ON `t2:hol_term` THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON `t1:hol_term` THEN CASES_ON `t2:hol_term` THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[RACONV; distinctness "ordering"] THEN
   TRY(REWRITE_TAC[ALPHAVARS_eq_ordav] THEN NO_TAC) THEN
   REWRITE_TAC[LET_DEF; LET_END_DEF; CONJUNCT1(REWRITE_RULE[TotOrd] TotOrd_term_cmp);
@@ -418,7 +418,7 @@ let orda_thm =
     REPEAT GEN_TAC THEN GEN_REWRITE_TAC LAND_CONV [orda_def] THEN
     COND_CASES_TAC THEN REWRITE_TAC[] THEN
     FIRST_X_ASSUM(CONJUNCTS_THEN SUBST_ALL_TAC) THEN
-    CASES_ON `t2:hol_term` THEN CASE_REWRITE_TAC[] THEN
+    CASES_ON `t2:hol_term` THEN CAKE_REWRITE_TAC[] THEN
     ASM_SIMP_TAC[ordav_def; term_cmp_refl; type_cmp_refl; LET_DEF; LET_END_DEF;
                  ALL; UNCURRY_DEF]);;
 
@@ -511,7 +511,7 @@ let CSYNAUX_P2_orda_LESS_trans = prove
   let split_tac =
     NAMED_CASES_ON "t2" ["x2 ty2"; "x2 ty2"; "s2 u2"; "s2 u2"] THEN
     NAMED_CASES_ON "t3" ["x3 ty3"; "x3 ty3"; "s3 u3"; "s3 u3"] THEN
-    ONCE_REWRITE_TAC[orda_thm] THEN CASE_REWRITE_TAC[] THEN
+    ONCE_REWRITE_TAC[orda_thm] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[distinctness "ordering"; LET_DEF; LET_END_DEF] in
   let gens = MAP_EVERY X_GEN_TAC
     [`env1:(hol_term#hol_term)list`; `t2:hol_term`;

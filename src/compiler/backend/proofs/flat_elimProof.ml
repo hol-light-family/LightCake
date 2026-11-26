@@ -502,8 +502,8 @@ let FLATPAUX_refs_rel = prove
      flat_state_rel reachable s t /\
      domain (find_refs_globals refs) SUBSET domain reachable /\
      ALL (ALL ((~) o v_has_Eval) o flat_store_v_vs) refs
-     ==> flat_state_rel reachable (flat_state_refs_fupd (K refs) s)
-                                  (flat_state_refs_fupd (K refs) t)`,
+     ==> flat_state_rel reachable (flat_state_refs_fupd (combin_K refs) s)
+                                  (flat_state_refs_fupd (combin_K refs) t)`,
   SIMP[flat_state_rel_def]);;
 
 let FLATPAUX_refs_ffi_rel = prove
@@ -512,8 +512,8 @@ let FLATPAUX_refs_ffi_rel = prove
      domain (find_refs_globals refs) SUBSET domain reachable /\
      ALL (ALL ((~) o v_has_Eval) o flat_store_v_vs) refs
      ==> flat_state_rel reachable
-           (flat_state_refs_fupd (K refs) (flat_state_ffi_fupd (K ffi) s))
-           (flat_state_refs_fupd (K refs) (flat_state_ffi_fupd (K ffi) t))`,
+           (flat_state_refs_fupd (combin_K refs) (flat_state_ffi_fupd (combin_K ffi) s))
+           (flat_state_refs_fupd (combin_K refs) (flat_state_ffi_fupd (combin_K ffi) t))`,
   SIMP[flat_state_rel_def]);;
 
 let FLATPAUX_find_refs_globals_LUPDATE = prove
@@ -630,8 +630,8 @@ let FLATPAUX_REPLICATE_globals = prove
 let FLATPAUX_globals_state_rel = prove
  (`!reachable (s:(C,FFI)flat_state) t g1 g2.
      flat_state_rel reachable s t /\ globals_rel reachable g1 g2
-     ==> flat_state_rel reachable (flat_state_globals_fupd (K g1) s)
-                                  (flat_state_globals_fupd (K g2) t)`,
+     ==> flat_state_rel reachable (flat_state_globals_fupd (combin_K g1) s)
+                                  (flat_state_globals_fupd (combin_K g2) t)`,
   REWRITE_TAC[flat_state_rel_def; flat_state_INFO.ri_accfupds; K_THM] THEN
   MESON_TAC[]);;
 
@@ -712,7 +712,7 @@ FLATPAUX_do_app_eqs :=
   let others = filter (fun p -> try fst(dest_const(fst(strip_comb p))) <> "Src"
                                 with Failure _ -> true)
                       (FLATPAUX_case_pats "flat_op") in
-  map (fun c -> CONV_RULE (RAND_CONV (CASE_REWRITE_CONV [])) (INST [c,opv] th0))
+  map (fun c -> CONV_RULE (RAND_CONV (CAKE_REWRITE_CONV [])) (INST [c,opv] th0))
       (srcs @ others);;
 
 let FLATPAUX_is_do_app_eq th =
@@ -984,7 +984,7 @@ let FLATPAUX_SING_TAC : tactic =
 let FLATPAUX_SIMPLE_ERR_TAC : tactic =
   DISCH_THEN(CONJUNCTS_THEN2 (SUBST_ALL_TAC o SYM) (SUBST_ALL_TAC o SYM)) THEN
   FLATPAUX_IH_TAC "ih1" `removed_state:(C,FFI)flat_state` THEN
-  ASM_REWRITE_TAC[pair_CASE] THEN CASE_REWRITE_TAC[PAIR_EQ] THEN
+  ASM_REWRITE_TAC[pair_CASE] THEN CAKE_REWRITE_TAC[PAIR_EQ] THEN
   FLATPAUX_SING_TAC THEN FLATPAUX_KEEP_FINISH_TAC;;
 let FLATPAUX_IS_HYP_EVAL th =
   rand(concl th) = `(new_state:(C,FFI)flat_state, result:(flat_v list,flat_v)result)`;;
@@ -1018,12 +1018,12 @@ let FLATPAUX_pmatch_env_facts = prove
      ==> domain (find_lookups e) SUBSET domain reachable /\
          domain (find_env_globals
                    (flat_environment_v_fupd
-                      (K (APPEND env' (flat_environment_v env))) env)) SUBSET
+                      (combin_K (APPEND env' (flat_environment_v env))) env)) SUBSET
          domain reachable /\
          ALL ((~) o v_has_Eval o SND)
            (flat_environment_v
               (flat_environment_v_fupd
-                 (K (APPEND env' (flat_environment_v env))) env)) /\
+                 (combin_K (APPEND env' (flat_environment_v env))) env)) /\
          ~has_Eval e`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP pmatch_rows_IMP_pmatch) THEN
@@ -1057,7 +1057,7 @@ let FLATPAUX_IH2_CONS_TAC r2 =
                   C MP (ASSUME `flat_evaluate env (s:(C,FFI)flat_state) [e1] = (s1,Rval a)`) o
                   SPECL [`a:flat_v list`; `s1:(C,FFI)flat_state`]) THEN
   ANTS_TAC THENL [FLATPAUX_DISCH_TAC; STRIP_TAC] THEN
-  ASM_REWRITE_TAC[pair_CASE] THEN CASE_REWRITE_TAC[PAIR_EQ] THEN
+  ASM_REWRITE_TAC[pair_CASE] THEN CAKE_REWRITE_TAC[PAIR_EQ] THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP flat_evaluate_sing) THEN
   FIRST_X_ASSUM SUBST_ALL_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE (HD :: FLATPAUX_res_simps)) THEN
@@ -1072,14 +1072,14 @@ let FLATPAUX_KEEP_CONS_TAC : tactic =
                (new_state,result)` THEN
   ONCE_REWRITE_TAC[flat_evaluate_def] THEN ASM_REWRITE_TAC[pair_CASE] THEN
   RULE_ASSUM_TAC(REWRITE_RULE FLATPAUX_lookups_simps) THEN
-  CASES_ON `r1:(flat_v list,flat_v)result` THEN CASE_REWRITE_TAC[] THENL
+  CASES_ON `r1:(flat_v list,flat_v)result` THEN CAKE_REWRITE_TAC[] THENL
    [USE_THEN "ih1" (MP_TAC o SPECL [`s1:(C,FFI)flat_state`; `Rval a:(flat_v list,flat_v)result`;
                                   `reachable:num_set`; `removed_state:(C,FFI)flat_state`]) THEN
     ANTS_TAC THENL [FLATPAUX_DISCH_TAC; STRIP_TAC] THEN
     FLATPAUX_PAIR_TAC `flat_evaluate env (s1:(C,FFI)flat_state) (CONS e2 es)`
       `s2:(C,FFI)flat_state` `r2:(flat_v list,flat_v)result` THEN
     ASM_REWRITE_TAC[pair_CASE] THEN
-    CASES_ON `r2:(flat_v list,flat_v)result` THEN CASE_REWRITE_TAC[PAIR_EQ] THEN
+    CASES_ON `r2:(flat_v list,flat_v)result` THEN CAKE_REWRITE_TAC[PAIR_EQ] THEN
     DISCH_THEN(CONJUNCTS_THEN2 (SUBST_ALL_TAC o SYM) (SUBST_ALL_TAC o SYM)) THENL
      [FLATPAUX_IH2_CONS_TAC `Rval a':(flat_v list,flat_v)result`;
       FLATPAUX_IH2_CONS_TAC `Rerr a':(flat_v list,flat_v)result`];
@@ -1088,7 +1088,7 @@ let FLATPAUX_KEEP_CONS_TAC : tactic =
     USE_THEN "ih1" (MP_TAC o SPECL [`s1:(C,FFI)flat_state`; `Rerr a:(flat_v list,flat_v)result`;
                                   `reachable:num_set`; `removed_state:(C,FFI)flat_state`]) THEN
     ANTS_TAC THENL [FLATPAUX_DISCH_TAC; STRIP_TAC] THEN
-    ASM_REWRITE_TAC[pair_CASE] THEN CASE_REWRITE_TAC[PAIR_EQ] THEN
+    ASM_REWRITE_TAC[pair_CASE] THEN CAKE_REWRITE_TAC[PAIR_EQ] THEN
     FLATPAUX_KEEP_FINISH_TAC];;
 
 let FLATPAUX_KEEP_RAISE_TAC : tactic =
@@ -1099,25 +1099,25 @@ let FLATPAUX_KEEP_RAISE_TAC : tactic =
                (new_state,result)` THEN
   ONCE_REWRITE_TAC[flat_evaluate_def] THEN ASM_REWRITE_TAC[pair_CASE] THEN
   RULE_ASSUM_TAC(REWRITE_RULE (flat_elimProof_has_Eval_def :: FLATPAUX_lookups_simps)) THEN
-  CASES_ON `r1:(flat_v list,flat_v)result` THEN CASE_REWRITE_TAC[PAIR_EQ] THEN
+  CASES_ON `r1:(flat_v list,flat_v)result` THEN CAKE_REWRITE_TAC[PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN2 (SUBST_ALL_TAC o SYM) (SUBST_ALL_TAC o SYM)) THEN
   FLATPAUX_IH_TAC "ih1" `removed_state:(C,FFI)flat_state` THEN
-  ASM_REWRITE_TAC[pair_CASE] THEN CASE_REWRITE_TAC[PAIR_EQ] THEN
+  ASM_REWRITE_TAC[pair_CASE] THEN CAKE_REWRITE_TAC[PAIR_EQ] THEN
   FLATPAUX_SING_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE (HD :: FLATPAUX_res_simps)) THEN
   FLATPAUX_KEEP_FINISH_TAC;;
 
 let FLATPAUX_KEEP_HANDLE_RAISE_TAC : tactic =
   FLATPAUX_IH_TAC "ih1" `removed_state:(C,FFI)flat_state` THEN
-  ASM_REWRITE_TAC[pair_CASE] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[pair_CASE] THEN CAKE_REWRITE_TAC[] THEN
   ASSUM_LIST(fun ths -> REWRITE_TAC(mapfilter (MATCH_MP flat_state_rel_pmatch_rows) ths)) THEN
   CASES_ON `pmatch_rows (pes:(flat_pat#flat_exp)list) (s1:(C,FFI)flat_state) a'` THEN
-  CASE_REWRITE_TAC[PAIR_EQ] THENL
+  CAKE_REWRITE_TAC[PAIR_EQ] THENL
    [FLATPAUX_SUBST_RES_TAC THEN FLATPAUX_KEEP_FINISH_TAC;
     FLATPAUX_SUBST_RES_TAC THEN FLATPAUX_KEEP_FINISH_TAC;
     SUBGOAL_THEN `?env1 p1 e1. a'' = (env1:(varN#flat_v)list,p1:flat_pat,e1:flat_exp)`
       STRIP_ASSUME_TAC THENL [MESON_TAC[PAIR]; FIRST_X_ASSUM SUBST_ALL_TAC] THEN
-    CASE_REWRITE_TAC[] THEN COND_CASES_TAC THEN REWRITE_TAC[PAIR_EQ] THENL
+    CAKE_REWRITE_TAC[] THEN COND_CASES_TAC THEN REWRITE_TAC[PAIR_EQ] THENL
      [DISCH_TAC THEN REWRITE_TAC[o_DEF] THEN
       FLATPAUX_CHAIN 3 (fun th -> MATCH_MP_TAC (REWRITE_RULE[IMP_IMP]
          (SPECL [`new_state:(C,FFI)flat_state`; `result:(flat_v list,flat_v)result`;
@@ -1133,9 +1133,9 @@ let FLATPAUX_KEEP_HANDLE_TAC : tactic =
   FLATPAUX_PAIR_TAC `flat_evaluate env (s:(C,FFI)flat_state) [e]`
     `s1:(C,FFI)flat_state` `r1:(flat_v list,flat_v)result` THEN
   FLATPAUX_UNFOLD_HYP_TAC THEN
-  CASES_ON `r1:(flat_v list,flat_v)result` THEN CASE_REWRITE_TAC[PAIR_EQ] THENL
+  CASES_ON `r1:(flat_v list,flat_v)result` THEN CAKE_REWRITE_TAC[PAIR_EQ] THENL
    [FLATPAUX_SIMPLE_ERR_TAC;
-    CASES_ON `a:(flat_v)error_result` THEN CASE_REWRITE_TAC[PAIR_EQ] THENL
+    CASES_ON `a:(flat_v)error_result` THEN CAKE_REWRITE_TAC[PAIR_EQ] THENL
      [FLATPAUX_KEEP_HANDLE_RAISE_TAC; FLATPAUX_SIMPLE_ERR_TAC]];;
 
 let FLATPAUX_KEEP_CON_TAC : tactic =
@@ -1143,12 +1143,12 @@ let FLATPAUX_KEEP_CON_TAC : tactic =
   FLATPAUX_PAIR_TAC `flat_evaluate env (s:(C,FFI)flat_state) (REVERSE es)`
     `s1:(C,FFI)flat_state` `r1:(flat_v list,flat_v)result` THEN
   FLATPAUX_UNFOLD_HYP_TAC THEN
-  CASES_ON `r1:(flat_v list,flat_v)result` THEN CASE_REWRITE_TAC[PAIR_EQ] THEN
+  CASES_ON `r1:(flat_v list,flat_v)result` THEN CAKE_REWRITE_TAC[PAIR_EQ] THEN
   FLATPAUX_SIMPLE_ERR_TAC;;
 let FLATPAUX_KEEP_VAR_TAC : tactic =
   REPEAT GEN_TAC THEN STRIP_TAC THEN FLATPAUX_UNFOLD_HYP_TAC THEN
   CASES_ON `ALOOKUP (flat_environment_v (env:(flat_v)flat_environment)) n` THEN
-  CASE_REWRITE_TAC[PAIR_EQ] THEN FLATPAUX_SUBST_RES_TAC THEN
+  CAKE_REWRITE_TAC[PAIR_EQ] THEN FLATPAUX_SUBST_RES_TAC THEN
   FLATPAUX_KEEP_FINISH_TAC THEN
   FIRST_ASSUM(ASSUME_TAC o MATCH_MP ALOOKUP_MEM) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[find_env_globals_def; GSYM ALL_MEM]) THEN
@@ -1290,17 +1290,17 @@ let FLATPAUX_FORCE_DISCH_TAC : tactic =
   REWRITE_TAC (flat_AppUnit_def :: find_env_globals_def ::
                flat_environment_INFO.ri_accessors :: MAP :: find_v_globals_def ::
                FLATPAUX_lookups_simps) THEN
-  CASE_REWRITE_TAC[] THEN RULE_ASSUM_TAC(REWRITE_RULE FLATPAUX_res_inj) THEN
+  CAKE_REWRITE_TAC[] THEN RULE_ASSUM_TAC(REWRITE_RULE FLATPAUX_res_inj) THEN
   ASM_REWRITE_TAC FLATPAUX_res_inj THEN NO_TAC;;
 
 let FLATPAUX_KEEP_APP_OPAPP_TAC : tactic =
   REWRITE_TAC[GSYM (CONJUNCT1 (REWRITE_RULE[flat_state_rel_def]
      (ASSUME `flat_state_rel reachable (s1:(C,FFI)flat_state) new_removed_state`)))] THEN
-  CASES_ON `flat_do_opapp (REVERSE a)` THEN CASE_REWRITE_TAC[] THENL
+  CASES_ON `flat_do_opapp (REVERSE a)` THEN CAKE_REWRITE_TAC[] THENL
    [REWRITE_TAC[PAIR_EQ] THEN FLATPAUX_SUBST_RES_TAC THEN FLATPAUX_KEEP_FINISH_TAC;
     SUBGOAL_THEN `?env1 e1. a' = (env1:(flat_v)flat_environment, e1:flat_exp)`
       STRIP_ASSUME_TAC THENL [MESON_TAC[PAIR]; FIRST_X_ASSUM SUBST_ALL_TAC] THEN
-    CASE_REWRITE_TAC[] THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[] THENL
+    CAKE_REWRITE_TAC[] THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[] THENL
      [REWRITE_TAC[PAIR_EQ] THEN FLATPAUX_SUBST_RES_TAC THEN FLATPAUX_KEEP_FINISH_TAC;
       DISCH_TAC THEN REWRITE_TAC[o_DEF] THEN
       FLATPAUX_CHAIN 3 (fun th -> MATCH_MP_TAC (REWRITE_RULE[IMP_IMP]
@@ -1327,49 +1327,49 @@ let FLATPAUX_KEEP_APP_FORCE_TAC : tactic =
   REWRITE_TAC[GSYM (CONJUNCT1 (CONJUNCT2 (REWRITE_RULE[flat_state_rel_def]
      (ASSUME `flat_state_rel reachable (s1:(C,FFI)flat_state) new_removed_state`))))] THEN
   CASES_ON `flat_dest_thunk a (flat_state_refs (s1:(C,FFI)flat_state))` THEN
-  CASE_REWRITE_TAC[] THENL
+  CAKE_REWRITE_TAC[] THENL
    [FLATPAUX_SUBST_RES_TAC THEN FLATPAUX_KEEP_FINISH_TAC;
     FLATPAUX_SUBST_RES_TAC THEN FLATPAUX_KEEP_FINISH_TAC;
     FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP FLATPAUX_dest_thunk_IsThunk) THEN
     FLATPAUX_EXPAND_REL_TAC THEN FLATPAUX_LOOKUP_FACTS_TAC THEN
     RULE_ASSUM_TAC(REWRITE_RULE (find_refs_globals_def :: flat_store_v_vs_def :: o_DEF ::
                                  FLATPAUX_res_simps)) THEN
-    CASES_ON `a0:thunk_mode` THEN CASE_REWRITE_TAC[] THENL
+    CASES_ON `a0:thunk_mode` THEN CAKE_REWRITE_TAC[] THENL
      [REWRITE_TAC[PAIR_EQ] THEN FLATPAUX_SUBST_RES_TAC THEN FLATPAUX_KEEP_FINISH_TAC;
       FLATPAUX_PAIR_TAC `flat_evaluate (flat_environment_REC [implode "f",a1])
           (s1:(C,FFI)flat_state) [flat_AppUnit (Var_local backend_common_None (implode "f"))]`
         `s2:(C,FFI)flat_state` `r2:(flat_v list,flat_v)result` THEN
       FIRST_ASSUM(fun th -> REWRITE_TAC[th; pair_CASE]) THEN
-      CASES_ON `r2:(flat_v list,flat_v)result` THEN CASE_REWRITE_TAC[] THENL
+      CASES_ON `r2:(flat_v list,flat_v)result` THEN CAKE_REWRITE_TAC[] THENL
        [FLATPAUX_IH_N_TAC "ih_force" 3 `new_removed_state:(C,FFI)flat_state`
           FLATPAUX_FORCE_DISCH_TAC THEN
-        ASM_REWRITE_TAC[pair_CASE] THEN CASE_REWRITE_TAC[] THEN
+        ASM_REWRITE_TAC[pair_CASE] THEN CAKE_REWRITE_TAC[] THEN
         REWRITE_TAC[GSYM (CONJUNCT1 (CONJUNCT2 (REWRITE_RULE[flat_state_rel_def]
           (ASSUME `flat_state_rel reachable (s2:(C,FFI)flat_state) new_removed_state'`))))] THEN
         CASES_ON `flat_update_thunk [flat_Loc b n] (flat_state_refs (s2:(C,FFI)flat_state)) a'` THEN
-        CASE_REWRITE_TAC[PAIR_EQ] THEN FLATPAUX_SUBST_RES_TAC THENL
+        CAKE_REWRITE_TAC[PAIR_EQ] THEN FLATPAUX_SUBST_RES_TAC THENL
          [FLATPAUX_KEEP_FINISH_TAC;
           FLATPAUX_KEEP_FINISH_TAC THEN FLATPAUX_KEEP_APP_UPDATE_TAC];
         REWRITE_TAC[PAIR_EQ] THEN FLATPAUX_SUBST_RES_TAC THEN
         FLATPAUX_IH_N_TAC "ih_force" 3 `new_removed_state:(C,FFI)flat_state`
           FLATPAUX_FORCE_DISCH_TAC THEN
-        ASM_REWRITE_TAC[pair_CASE] THEN CASE_REWRITE_TAC[PAIR_EQ] THEN
+        ASM_REWRITE_TAC[pair_CASE] THEN CAKE_REWRITE_TAC[PAIR_EQ] THEN
         FLATPAUX_KEEP_FINISH_TAC]]];;
 
 let FLATPAUX_KEEP_APP_OTHER_TAC : tactic =
   REWRITE_TAC[ASSUME `~(op = Src (ThunkOp ForceThunk))`] THEN
-  CASES_ON `flat_do_app (s1:(C,FFI)flat_state) op (REVERSE a)` THEN CASE_REWRITE_TAC[] THENL
+  CASES_ON `flat_do_app (s1:(C,FFI)flat_state) op (REVERSE a)` THEN CAKE_REWRITE_TAC[] THENL
    [REWRITE_TAC[PAIR_EQ] THEN FLATPAUX_SUBST_RES_TAC THEN FLATPAUX_KEEP_FINISH_TAC;
     SUBGOAL_THEN `?s3 r3. a' = (s3:(C,FFI)flat_state, r3:(flat_v,flat_v)result)`
       STRIP_ASSUME_TAC THENL [MESON_TAC[PAIR]; FIRST_X_ASSUM SUBST_ALL_TAC] THEN
-    CASE_REWRITE_TAC[PAIR_EQ] THEN FLATPAUX_SUBST_RES_TAC THEN
+    CAKE_REWRITE_TAC[PAIR_EQ] THEN FLATPAUX_SUBST_RES_TAC THEN
     SUBGOAL_THEN `domain (find_lookups (flat_App x op [])) SUBSET domain (reachable:num_set)`
       ASSUME_TAC THENL
      [REWRITE_TAC[find_lookups_def] THEN
       FIRST_ASSUM(MP_TAC o check (fun th -> can (find_term (fun t ->
         t = `dest_GlobalVarLookup op`)) (concl th))) THEN
       CASES_ON `dest_GlobalVarLookup op` THEN
-      CASE_REWRITE_TAC[domain_insert; INSERT_SUBSET; domain_def; EMPTY_SUBSET;
+      CAKE_REWRITE_TAC[domain_insert; INSERT_SUBSET; domain_def; EMPTY_SUBSET;
                        find_lookups_def] THEN SIMP_TAC[];
       ALL_TAC] THEN
     SUBGOAL_THEN `~(r3 = Rerr (Rabort Rtype_error):(flat_v,flat_v)result)` ASSUME_TAC THENL
@@ -1386,7 +1386,7 @@ let FLATPAUX_KEEP_APP_OTHER_TAC : tactic =
      [REWRITE_TAC[o_DEF; EVERY_REVERSE; GSYM find_v_globalsL_REVERSE] THEN
       ASM_REWRITE_TAC[];
       STRIP_TAC] THEN
-    ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[PAIR_EQ] THEN FLATPAUX_KEEP_FINISH_TAC];;
+    ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[PAIR_EQ] THEN FLATPAUX_KEEP_FINISH_TAC];;
 
 let FLATPAUX_KEEP_APP_TAC : tactic =
   REPEAT GEN_TAC THEN
@@ -1400,19 +1400,19 @@ let FLATPAUX_KEEP_APP_TAC : tactic =
    [FIRST_X_ASSUM(MP_TAC o check (fun th -> can (find_term (fun t ->
       t = `dest_GlobalVarLookup op`)) (concl th))) THEN
     CASES_ON `dest_GlobalVarLookup op` THEN
-    CASE_REWRITE_TAC[domain_insert; INSERT_SUBSET] THEN SIMP_TAC[];
+    CAKE_REWRITE_TAC[domain_insert; INSERT_SUBSET] THEN SIMP_TAC[];
     ALL_TAC] THEN
-  CASES_ON `r1:(flat_v list,flat_v)result` THEN CASE_REWRITE_TAC[] THENL
+  CASES_ON `r1:(flat_v list,flat_v)result` THEN CAKE_REWRITE_TAC[] THENL
    [FLATPAUX_IH_TAC "ih1" `removed_state:(C,FFI)flat_state` THEN
-    ASM_REWRITE_TAC[pair_CASE] THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[pair_CASE] THEN CAKE_REWRITE_TAC[] THEN
     RULE_ASSUM_TAC(REWRITE_RULE (o_DEF :: FLATPAUX_res_simps)) THEN
     ASM_CASES_TAC `op = Src Opapp` THENL
      [FIRST_X_ASSUM SUBST_ALL_TAC THEN REWRITE_TAC[] THEN
       RULE_ASSUM_TAC(REWRITE_RULE[]) THEN FLATPAUX_KEEP_APP_OPAPP_TAC;
       ASM_REWRITE_TAC[] THEN
       ASM_CASES_TAC `op = Src (ThunkOp ForceThunk)` THENL
-       [FIRST_X_ASSUM SUBST_ALL_TAC THEN CASE_REWRITE_TAC[] THEN
-        RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN FLATPAUX_KEEP_APP_FORCE_TAC;
+       [FIRST_X_ASSUM SUBST_ALL_TAC THEN CAKE_REWRITE_TAC[] THEN
+        RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN FLATPAUX_KEEP_APP_FORCE_TAC;
         FLATPAUX_KEEP_APP_OTHER_TAC]];
     REWRITE_TAC[PAIR_EQ] THEN FLATPAUX_SIMPLE_ERR_TAC];;
 
@@ -1430,10 +1430,10 @@ let FLATPAUX_KEEP_IF_TAC : tactic =
   FLATPAUX_PAIR_TAC `flat_evaluate env (s:(C,FFI)flat_state) [e1]`
     `s1:(C,FFI)flat_state` `r1:(flat_v list,flat_v)result` THEN
   FLATPAUX_UNFOLD_HYP_TAC THEN
-  CASES_ON `r1:(flat_v list,flat_v)result` THEN CASE_REWRITE_TAC[] THENL
+  CASES_ON `r1:(flat_v list,flat_v)result` THEN CAKE_REWRITE_TAC[] THENL
    [FLATPAUX_IH_TAC "ih1" `removed_state:(C,FFI)flat_state` THEN
-    ASM_REWRITE_TAC[pair_CASE] THEN CASE_REWRITE_TAC[] THEN
-    CASES_ON `flat_do_if (HD a) e2 e3` THEN CASE_REWRITE_TAC[] THENL
+    ASM_REWRITE_TAC[pair_CASE] THEN CAKE_REWRITE_TAC[] THEN
+    CASES_ON `flat_do_if (HD a) e2 e3` THEN CAKE_REWRITE_TAC[] THENL
      [REWRITE_TAC[PAIR_EQ] THEN FLATPAUX_SUBST_RES_TAC THEN FLATPAUX_KEEP_FINISH_TAC;
       FLATPAUX_KEEP_IF_BRANCH_TAC];
     REWRITE_TAC[PAIR_EQ] THEN FLATPAUX_SIMPLE_ERR_TAC];;
@@ -1449,19 +1449,19 @@ let FLATPAUX_KEEP_MAT_TAC : tactic =
   FLATPAUX_PAIR_TAC `flat_evaluate env (s:(C,FFI)flat_state) [e]`
     `s1:(C,FFI)flat_state` `r1:(flat_v list,flat_v)result` THEN
   FLATPAUX_UNFOLD_HYP_TAC THEN
-  CASES_ON `r1:(flat_v list,flat_v)result` THEN CASE_REWRITE_TAC[] THENL
+  CASES_ON `r1:(flat_v list,flat_v)result` THEN CAKE_REWRITE_TAC[] THENL
    [FLATPAUX_IH_TAC "ih1" `removed_state:(C,FFI)flat_state` THEN
-    ASM_REWRITE_TAC[pair_CASE] THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[pair_CASE] THEN CAKE_REWRITE_TAC[] THEN
     FLATPAUX_SING_TAC THEN REWRITE_TAC[HD] THEN
     ASSUM_LIST(fun ths -> REWRITE_TAC(mapfilter (MATCH_MP flat_state_rel_pmatch_rows) ths)) THEN
     CASES_ON `pmatch_rows (pes:(flat_pat#flat_exp)list) (s1:(C,FFI)flat_state) y` THEN
-    CASE_REWRITE_TAC[PAIR_EQ] THENL
+    CAKE_REWRITE_TAC[PAIR_EQ] THENL
      [FLATPAUX_SUBST_RES_TAC THEN REWRITE_TAC[flat_bind_exn_v_def] THEN
       FLATPAUX_KEEP_FINISH_TAC;
       FLATPAUX_SUBST_RES_TAC THEN FLATPAUX_KEEP_FINISH_TAC;
       SUBGOAL_THEN `?env1 p1 e1. a' = (env1:(varN#flat_v)list,p1:flat_pat,e1:flat_exp)`
         STRIP_ASSUME_TAC THENL [MESON_TAC[PAIR]; FIRST_X_ASSUM SUBST_ALL_TAC] THEN
-      CASE_REWRITE_TAC[] THEN COND_CASES_TAC THEN REWRITE_TAC[PAIR_EQ] THENL
+      CAKE_REWRITE_TAC[] THEN COND_CASES_TAC THEN REWRITE_TAC[PAIR_EQ] THENL
        [DISCH_TAC THEN REWRITE_TAC[o_DEF] THEN
         FLATPAUX_CHAINR 3 [HD] (fun th -> MATCH_MP_TAC (REWRITE_RULE[IMP_IMP]
            (SPECL [`new_state:(C,FFI)flat_state`; `result:(flat_v list,flat_v)result`;
@@ -1478,9 +1478,9 @@ let FLATPAUX_KEEP_LET_TAC : tactic =
   FLATPAUX_PAIR_TAC `flat_evaluate env (s:(C,FFI)flat_state) [e1]`
     `s1:(C,FFI)flat_state` `r1:(flat_v list,flat_v)result` THEN
   FLATPAUX_UNFOLD_HYP_TAC THEN
-  CASES_ON `r1:(flat_v list,flat_v)result` THEN CASE_REWRITE_TAC[] THENL
+  CASES_ON `r1:(flat_v list,flat_v)result` THEN CAKE_REWRITE_TAC[] THENL
    [FLATPAUX_IH_TAC "ih1" `removed_state:(C,FFI)flat_state` THEN
-    ASM_REWRITE_TAC[pair_CASE] THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[pair_CASE] THEN CAKE_REWRITE_TAC[] THEN
     FLATPAUX_SING_TAC THEN REWRITE_TAC[HD] THEN
     DISCH_TAC THEN REWRITE_TAC[o_DEF] THEN
     FLATPAUX_CHAINR 1 [HD] (fun th -> MATCH_MP_TAC (REWRITE_RULE[IMP_IMP]
@@ -1542,7 +1542,7 @@ let evaluate_keep_flat_state_rel_eq_lemma = prove
 let evaluate_sing_keep_flat_state_rel_eq = prove
  (`!env (state:(C,FFI)flat_state) exprL new_state result expr (reachable:num_set)
     removed_state.
-     flat_evaluate (flat_environment_v_fupd (K []) env) state exprL =
+     flat_evaluate (flat_environment_v_fupd (combin_K []) env) state exprL =
        (new_state,result) /\
      flat_state_rel reachable state removed_state /\
      exprL = [expr] /\
@@ -1551,11 +1551,11 @@ let evaluate_sing_keep_flat_state_rel_eq = prove
      ~has_Eval expr /\
      ~(result = Rerr (Rabort Rtype_error))
      ==> ?new_removed_state.
-           flat_evaluate (flat_environment_v_fupd (K []) env) removed_state exprL =
+           flat_evaluate (flat_environment_v_fupd (combin_K []) env) removed_state exprL =
              (new_removed_state,result) /\
            flat_state_rel reachable new_state new_removed_state`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
-  MP_TAC(ISPECL [`flat_environment_v_fupd (K []) (env:(flat_v)flat_environment)`;
+  MP_TAC(ISPECL [`flat_environment_v_fupd (combin_K []) (env:(flat_v)flat_environment)`;
                  `state:(C,FFI)flat_state`; `exprL:flat_exp list`;
                  `new_state:(C,FFI)flat_state`; `result:(flat_v list,flat_v)result`;
                  `reachable:num_set`; `removed_state:(C,FFI)flat_state`]
@@ -1622,19 +1622,19 @@ let evaluate_dec_flat_state_rel = prove
   RULE_ASSUM_TAC(REWRITE_RULE[has_Eval_dec_def]) THEN ASM_REWRITE_TAC[] THEN
   UNDISCH_TAC `evaluate_dec (state:(C,FFI)flat_state) dec = (new_state,result)` THEN
   ONCE_REWRITE_TAC[flat_evaluate_def] THEN ASM_REWRITE_TAC[pair_CASE] THEN
-  CASES_ON `r1:(flat_v list,flat_v)result` THEN CASE_REWRITE_TAC[] THENL
+  CASES_ON `r1:(flat_v list,flat_v)result` THEN CAKE_REWRITE_TAC[] THENL
    [COND_CASES_TAC THEN REWRITE_TAC[PAIR_EQ] THEN
     DISCH_THEN(CONJUNCTS_THEN2 (SUBST_ALL_TAC o SYM) (SUBST_ALL_TAC o SYM)) THEN
     RULE_ASSUM_TAC(REWRITE_RULE[]) THEN TRY(FIRST_ASSUM CONTR_TAC) THEN
     REWRITE_TAC[distinctness "result"] THEN STRIP_TAC THEN
     EXISTS_TAC `new_removed_state:(C,FFI)flat_state` THEN
-    ASM_REWRITE_TAC[pair_CASE] THEN CASE_REWRITE_TAC[];
+    ASM_REWRITE_TAC[pair_CASE] THEN CAKE_REWRITE_TAC[];
     REWRITE_TAC[PAIR_EQ] THEN
     DISCH_THEN(CONJUNCTS_THEN2 (SUBST_ALL_TAC o SYM) (SUBST_ALL_TAC o SYM)) THEN
     RULE_ASSUM_TAC(REWRITE_RULE[option_INJ]) THEN
     ASM_REWRITE_TAC[injectivity "result"] THEN STRIP_TAC THEN
     EXISTS_TAC `new_removed_state:(C,FFI)flat_state` THEN
-    ASM_REWRITE_TAC[pair_CASE] THEN CASE_REWRITE_TAC[]]);;
+    ASM_REWRITE_TAC[pair_CASE] THEN CAKE_REWRITE_TAC[]]);;
 
 let total_pat_IMP = prove
  (`(!(s:(C,FFI)flat_state) p v env res.
@@ -1680,7 +1680,7 @@ let FLATPAUX_globals_rel_init_unreachable = prove
 let FLATPAUX_globals_state_rel1 = prove
  (`!reachable (s:(C,FFI)flat_state) t g.
      flat_state_rel reachable s t /\ globals_rel reachable g (flat_state_globals t)
-     ==> flat_state_rel reachable (flat_state_globals_fupd (K g) s) t`,
+     ==> flat_state_rel reachable (flat_state_globals_fupd (combin_K g) s) t`,
   REWRITE_TAC[flat_state_rel_def; flat_state_INFO.ri_accfupds; K_THM] THEN
   MESON_TAC[]);;
 
@@ -1739,13 +1739,13 @@ let FLATPAUX_PURE_CONS_TAC : tactic =
   FLATPAUX_PAIR_TAC `flat_evaluate env (s:(C,FFI)flat_state) [e1]`
     `s1:(C,FFI)flat_state` `r1:(flat_v list,flat_v)result` THEN
   FLATPAUX_PURE_UNFOLD_TAC THEN
-  CASES_ON `r1:(flat_v list,flat_v)result` THEN CASE_REWRITE_TAC[] THENL
+  CASES_ON `r1:(flat_v list,flat_v)result` THEN CAKE_REWRITE_TAC[] THENL
    [FLATPAUX_PIH_TAC "ih1" 1 `removed_state:(C,FFI)flat_state` THEN
     FLATPAUX_PAIR_TAC `flat_evaluate env (s1:(C,FFI)flat_state) (CONS e2 es)`
       `s2:(C,FFI)flat_state` `r2:(flat_v list,flat_v)result` THEN
     ASM_REWRITE_TAC[pair_CASE] THEN
     USE_THEN "ih2" (fun ih2 -> FIRST_ASSUM (LABEL_TAC "ih2'" o MATCH_MP ih2)) THEN
-    CASES_ON `r2:(flat_v list,flat_v)result` THEN CASE_REWRITE_TAC[] THEN
+    CASES_ON `r2:(flat_v list,flat_v)result` THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[PAIR_EQ] THEN FLATPAUX_SUBST_RES_TAC THEN
     FLATPAUX_PIH_TAC "ih2'" 1 `removed_state:(C,FFI)flat_state` THEN
     FLATPAUX_SING_TAC THEN FLATPAUX_PURE_FINISH_TAC;
@@ -1761,9 +1761,9 @@ let FLATPAUX_PURE_HANDLE_TAC : tactic =
   FLATPAUX_PAIR_TAC `flat_evaluate env (s:(C,FFI)flat_state) [e]`
     `s1:(C,FFI)flat_state` `r1:(flat_v list,flat_v)result` THEN
   FLATPAUX_PURE_UNFOLD_TAC THEN
-  CASES_ON `r1:(flat_v list,flat_v)result` THEN CASE_REWRITE_TAC[] THENL
+  CASES_ON `r1:(flat_v list,flat_v)result` THEN CAKE_REWRITE_TAC[] THENL
    [FLATPAUX_PURE_ERR_TAC "ih1";
-    CASES_ON `a:(flat_v)error_result` THEN CASE_REWRITE_TAC[] THENL
+    CASES_ON `a:(flat_v)error_result` THEN CAKE_REWRITE_TAC[] THENL
      [DISCH_THEN(K ALL_TAC) THEN
       FLATPAUX_PIH_TAC "ih1" 1 `removed_state:(C,FFI)flat_state` THEN
       FLATPAUX_PURE_FINISH_TAC;
@@ -1774,13 +1774,13 @@ let FLATPAUX_PURE_CON_TAC : tactic =
   FLATPAUX_PAIR_TAC `flat_evaluate env (s:(C,FFI)flat_state) (REVERSE es)`
     `s1:(C,FFI)flat_state` `r1:(flat_v list,flat_v)result` THEN
   FLATPAUX_PURE_UNFOLD_TAC THEN
-  CASES_ON `r1:(flat_v list,flat_v)result` THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON `r1:(flat_v list,flat_v)result` THEN CAKE_REWRITE_TAC[] THEN
   FLATPAUX_PURE_ERR_TAC "ih1";;
 
 let FLATPAUX_PURE_VAR_TAC : tactic =
   REPEAT GEN_TAC THEN STRIP_TAC THEN FLATPAUX_PURE_UNFOLD_TAC THEN
   CASES_ON `ALOOKUP (flat_environment_v (env:(flat_v)flat_environment)) n` THEN
-  CASE_REWRITE_TAC[PAIR_EQ] THEN FLATPAUX_SUBST_RES_TAC THEN
+  CAKE_REWRITE_TAC[PAIR_EQ] THEN FLATPAUX_SUBST_RES_TAC THEN
   FLATPAUX_PURE_FINISH_TAC THEN
   FIRST_ASSUM(ASSUME_TAC o MATCH_MP ALOOKUP_MEM) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[GSYM ALL_MEM]) THEN
@@ -1822,9 +1822,9 @@ let FLATPAUX_PURE_APP_TAC : tactic =
   TRY(FLATPAUX_PURE_NORM_TAC THEN FIRST_ASSUM CONTR_TAC THEN NO_TAC) THEN
   FLATPAUX_PAIR_TAC `flat_evaluate env (s:(C,FFI)flat_state) (REVERSE es)`
     `s1:(C,FFI)flat_state` `r1:(flat_v list,flat_v)result` THEN
-  FLATPAUX_PURE_UNFOLD_TAC THEN CASE_REWRITE_TAC[] THEN
+  FLATPAUX_PURE_UNFOLD_TAC THEN CAKE_REWRITE_TAC[] THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP inter_insert_empty) THEN
-  CASES_ON `r1:(flat_v list,flat_v)result` THEN CASE_REWRITE_TAC[] THENL
+  CASES_ON `r1:(flat_v list,flat_v)result` THEN CAKE_REWRITE_TAC[] THENL
    [FLATPAUX_PIH_TAC "ih1" 1 `removed_state:(C,FFI)flat_state` THEN
     REWRITE_TAC (!FLATPAUX_do_app_eqs) THEN DISCH_TAC THEN FLATSEMAUX_SPLIT_TAC THEN
     FLATPAUX_RVEQ_TAC THEN FLATPAUX_PURE_FINISH_TAC THEN FLATPAUX_PURE_GLOBALINIT_TAC;
@@ -1836,9 +1836,9 @@ let FLATPAUX_PURE_IF_TAC : tactic =
   FLATPAUX_PAIR_TAC `flat_evaluate env (s:(C,FFI)flat_state) [e1]`
     `s1:(C,FFI)flat_state` `r1:(flat_v list,flat_v)result` THEN
   FLATPAUX_PURE_UNFOLD_TAC THEN
-  CASES_ON `r1:(flat_v list,flat_v)result` THEN CASE_REWRITE_TAC[] THENL
+  CASES_ON `r1:(flat_v list,flat_v)result` THEN CAKE_REWRITE_TAC[] THENL
    [FLATPAUX_PIH_TAC "ih1" 1 `removed_state:(C,FFI)flat_state` THEN
-    CASES_ON `flat_do_if (HD a) e2 e3` THEN CASE_REWRITE_TAC[] THENL
+    CASES_ON `flat_do_if (HD a) e2 e3` THEN CAKE_REWRITE_TAC[] THENL
      [REWRITE_TAC[PAIR_EQ] THEN FLATPAUX_SUBST_RES_TAC THEN FLATPAUX_PURE_FINISH_TAC;
       DISCH_TAC THEN FIRST_ASSUM(DISJ_CASES_TAC o MATCH_MP do_if_either_or) THEN
       FIRST_X_ASSUM SUBST_ALL_TAC THEN
@@ -1856,11 +1856,11 @@ let FLATPAUX_PURE_MAT_TAC : tactic =
   FLATPAUX_PAIR_TAC `flat_evaluate env (s:(C,FFI)flat_state) [e]`
     `s1:(C,FFI)flat_state` `r1:(flat_v list,flat_v)result` THEN
   FLATPAUX_PURE_UNFOLD_TAC THEN
-  CASES_ON `r1:(flat_v list,flat_v)result` THEN CASE_REWRITE_TAC[] THENL
+  CASES_ON `r1:(flat_v list,flat_v)result` THEN CAKE_REWRITE_TAC[] THENL
    [FLATPAUX_PIH_TAC "ih1" 1 `removed_state:(C,FFI)flat_state` THEN
     FLATPAUX_SING_TAC THEN REWRITE_TAC[HD] THEN
     CASES_ON `pmatch_rows (pes:(flat_pat#flat_exp)list) (s1:(C,FFI)flat_state) y` THEN
-    CASE_REWRITE_TAC[PAIR_EQ] THENL
+    CAKE_REWRITE_TAC[PAIR_EQ] THENL
      [FIRST_ASSUM(MP_TAC o SPECL [`s1:(C,FFI)flat_state`; `y:flat_v`] o
                   MATCH_MP EXISTS_total_pat o check (fun th ->
                     can (term_match [] `EX total_pat (MAP FST (pes:(flat_pat#flat_exp)list))`)
@@ -1869,7 +1869,7 @@ let FLATPAUX_PURE_MAT_TAC : tactic =
       FLATPAUX_SUBST_RES_TAC THEN FLATPAUX_PURE_FINISH_TAC;
       SUBGOAL_THEN `?env1 p1 e1. a' = (env1:(varN#flat_v)list,p1:flat_pat,e1:flat_exp)`
         STRIP_ASSUME_TAC THENL [MESON_TAC[PAIR]; FIRST_X_ASSUM SUBST_ALL_TAC] THEN
-      CASE_REWRITE_TAC[] THEN COND_CASES_TAC THEN REWRITE_TAC[PAIR_EQ] THENL
+      CAKE_REWRITE_TAC[] THEN COND_CASES_TAC THEN REWRITE_TAC[PAIR_EQ] THENL
        [DISCH_TAC THEN
         FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP pmatch_rows_IMP_pmatch) THEN
         FLATPAUX_EXPAND_REL_TAC THEN
@@ -1905,7 +1905,7 @@ let FLATPAUX_PURE_LET_TAC : tactic =
   FLATPAUX_PAIR_TAC `flat_evaluate env (s:(C,FFI)flat_state) [e1]`
     `s1:(C,FFI)flat_state` `r1:(flat_v list,flat_v)result` THEN
   FLATPAUX_PURE_UNFOLD_TAC THEN
-  CASES_ON `r1:(flat_v list,flat_v)result` THEN CASE_REWRITE_TAC[] THENL
+  CASES_ON `r1:(flat_v list,flat_v)result` THEN CAKE_REWRITE_TAC[] THENL
    [FLATPAUX_PIH_TAC "ih1" 1 `removed_state:(C,FFI)flat_state` THEN
     FLATPAUX_SING_TAC THEN REWRITE_TAC[HD] THEN DISCH_TAC THEN
     RULE_ASSUM_TAC(REWRITE_RULE[injectivity "result"]) THEN
@@ -1965,7 +1965,7 @@ let evaluate_flat_state_rel_lemma = prove
 let evaluate_sing_notKeep_flat_state_rel = prove
  (`!env (state:(C,FFI)flat_state) exprL new_state result expr (reachable:num_set)
     removed_state.
-     flat_evaluate (flat_environment_v_fupd (K []) env) state exprL =
+     flat_evaluate (flat_environment_v_fupd (combin_K []) env) state exprL =
        (new_state,result) /\
      exprL = [expr] /\
      ~has_Eval expr /\
@@ -1977,7 +1977,7 @@ let evaluate_sing_notKeep_flat_state_rel = prove
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   FIRST_X_ASSUM SUBST_ALL_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[keep_def; COND_EXPAND; DE_MORGAN_THM]) THEN
-  MP_TAC(ISPECL [`flat_environment_v_fupd (K []) (env:(flat_v)flat_environment)`;
+  MP_TAC(ISPECL [`flat_environment_v_fupd (combin_K []) (env:(flat_v)flat_environment)`;
                  `state:(C,FFI)flat_state`; `[expr]:flat_exp list`;
                  `new_state:(C,FFI)flat_state`; `result:(flat_v list,flat_v)result`;
                  `reachable:num_set`; `removed_state:(C,FFI)flat_state`]
@@ -2025,13 +2025,13 @@ let flat_decs_removal_lemma = prove
   ONCE_REWRITE_TAC[flat_evaluate_def] THEN ASM_REWRITE_TAC[pair_CASE] THEN
   ASM_CASES_TAC `keep (reachable:num_set) h` THEN ASM_REWRITE_TAC[] THENL
      [ONCE_REWRITE_TAC[flat_evaluate_def] THEN
-  CASES_ON `r1:((flat_v)error_result)option` THEN CASE_REWRITE_TAC[] THENL
+  CASES_ON `r1:((flat_v)error_result)option` THEN CAKE_REWRITE_TAC[] THENL
    [DISCH_TAC THEN
     MP_TAC(ISPECL [`state:(C,FFI)flat_state`; `h:flat_exp`; `s1:(C,FFI)flat_state`;
                    `NONE:((flat_v)error_result)option`; `reachable:num_set`;
                    `removed_state:(C,FFI)flat_state`] evaluate_dec_flat_state_rel) THEN
     ASM_REWRITE_TAC[option_DISTINCT] THEN STRIP_TAC THEN
-    ASM_REWRITE_TAC[pair_CASE] THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[pair_CASE] THEN CAKE_REWRITE_TAC[] THEN
     REMOVE_THEN "ih" (MP_TAC o SPECL [`s1:(C,FFI)flat_state`; `new_state:(C,FFI)flat_state`;
       `result:((flat_v)error_result)option`; `reachable:num_set`;
       `FILTER (keep (reachable:num_set)) t`; `new_removed_state:(C,FFI)flat_state`]) THEN
@@ -2042,7 +2042,7 @@ let flat_decs_removal_lemma = prove
                    `SOME a:((flat_v)error_result)option`; `reachable:num_set`;
                    `removed_state:(C,FFI)flat_state`] evaluate_dec_flat_state_rel) THEN
     ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
-    ASM_REWRITE_TAC[pair_CASE] THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[pair_CASE] THEN CAKE_REWRITE_TAC[] THEN
     EXISTS_TAC `new_removed_state:(C,FFI)flat_state` THEN
     ASM_MESON_TAC[flat_state_rel_def]];
       FLATPAUX_PAIR_TAC `flat_evaluate (flat_environment_REC []) (state:(C,FFI)flat_state) [h]`
@@ -2056,11 +2056,11 @@ let flat_decs_removal_lemma = prove
                 evaluate_sing_notKeep_flat_state_rel) THEN
   REWRITE_TAC[flat_environment_INFO.ri_fupds; K_THM] THEN
   RULE_ASSUM_TAC(REWRITE_RULE[has_Eval_dec_def]) THEN ASM_REWRITE_TAC[] THEN
-  CASES_ON `r2:(flat_v list,flat_v)result` THEN CASE_REWRITE_TAC[] THENL
+  CASES_ON `r2:(flat_v list,flat_v)result` THEN CAKE_REWRITE_TAC[] THENL
    [STRIP_TAC THEN FIRST_X_ASSUM SUBST_ALL_TAC THEN
     COND_CASES_TAC THEN REWRITE_TAC[PAIR_EQ] THEN
     DISCH_THEN(CONJUNCTS_THEN2 (SUBST_ALL_TAC o SYM) (SUBST_ALL_TAC o SYM)) THEN
-    CASE_REWRITE_TAC[] THENL
+    CAKE_REWRITE_TAC[] THENL
      [DISCH_TAC THEN
       REMOVE_THEN "ih" (MP_TAC o SPECL [`s2:(C,FFI)flat_state`;
         `new_state:(C,FFI)flat_state`; `result:((flat_v)error_result)option`;
@@ -2072,7 +2072,7 @@ let flat_decs_removal_lemma = prove
       ASM_MESON_TAC[]];
     DISCH_THEN SUBST_ALL_TAC THEN
     DISCH_THEN(CONJUNCTS_THEN2 (SUBST_ALL_TAC o SYM) (SUBST_ALL_TAC o SYM)) THEN
-    CASE_REWRITE_TAC[PAIR_EQ] THEN
+    CAKE_REWRITE_TAC[PAIR_EQ] THEN
     DISCH_THEN(CONJUNCTS_THEN2 (SUBST_ALL_TAC o SYM) (SUBST_ALL_TAC o SYM)) THEN
     RULE_ASSUM_TAC(REWRITE_RULE[]) THEN FIRST_ASSUM CONTR_TAC]]]);;
 

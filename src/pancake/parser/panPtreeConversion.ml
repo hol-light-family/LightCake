@@ -45,13 +45,13 @@ type_invention_error := true;;
 (* CakeML's token (HOL4 [simp])                                             *)
 
 let panPtreeConversion_destLf_def = cake_def
-  `(panPtreeConversion_destLf (Lf (x,_)) = SOME (x:(A,B)symbol)) /\
-   (panPtreeConversion_destLf (Nd _ _:(A,B,C)parsetree) = NONE)`;;
+  `(panPtreeConversion_destLf (grammar_Lf (x,_)) = SOME (x:(A,B)symbol)) /\
+   (panPtreeConversion_destLf (grammar_Nd _ _:(A,B,C)parsetree) = NONE)`;;
 let _ = cake_add_simps [panPtreeConversion_destLf_def];;
 
 let panPtreeConversion_destTOK_def = cake_def
-  `(panPtreeConversion_destTOK (TOK t:(A,B)symbol) = SOME t) /\
-   (panPtreeConversion_destTOK (NT _:(A,B)symbol) = NONE)`;;
+  `(panPtreeConversion_destTOK (grammar_TOK t:(A,B)symbol) = SOME t) /\
+   (panPtreeConversion_destTOK (grammar_NT _:(A,B)symbol) = NONE)`;;
 let _ = cake_add_simps [panPtreeConversion_destTOK_def];;
 
 (* Copied from cmlPtreeConversion *)
@@ -77,8 +77,8 @@ let isNT_def = cake_def
   `isNT (nodeNT:(B+num)#C) (ntm:B) <=> FST nodeNT = INL ntm`;;
 
 let argsNT_def = cake_def
-  `(argsNT (Lf _:(A,B,C)parsetree) (_:B) = NONE) /\
-   (argsNT (Nd nodeNT args) ntm =
+  `(argsNT (grammar_Lf _:(A,B,C)parsetree) (_:B) = NONE) /\
+   (argsNT (grammar_Nd nodeNT args) ntm =
       if FST nodeNT = INL ntm then SOME args else NONE)`;;
 
 let is_add_with_carry_def = cake_def
@@ -145,7 +145,7 @@ let conv_binop_def = cake_def_wf
               parsetree_size (\x:panLexer_token. 0) (\x:pancakeNT. 0)
                              (\x:C. 0) t)`
   TERM_TAC
-  `(conv_binop (Nd nodeNT args:(panLexer_token,pancakeNT,C)parsetree) =
+  `(conv_binop (grammar_Nd nodeNT args:(panLexer_token,pancakeNT,C)parsetree) =
       if isNT nodeNT AddOpsNT then
         match args with
           [leaf] -> conv_binop leaf
@@ -164,7 +164,7 @@ let conv_panop_def = cake_def_wf
               parsetree_size (\x:panLexer_token. 0) (\x:pancakeNT. 0)
                              (\x:C. 0) t)`
   TERM_TAC
-  `(conv_panop (Nd nodeNT args:(panLexer_token,pancakeNT,C)parsetree) =
+  `(conv_panop (grammar_Nd nodeNT args:(panLexer_token,pancakeNT,C)parsetree) =
       if isNT nodeNT MulOpsNT then
         match args with
           [leaf] -> conv_panop leaf
@@ -179,7 +179,7 @@ let conv_shift_def = cake_def_wf
               parsetree_size (\x:panLexer_token. 0) (\x:pancakeNT. 0)
                              (\x:C. 0) t)`
   TERM_TAC
-  `(conv_shift (Nd nodeNT args:(panLexer_token,pancakeNT,C)parsetree) =
+  `(conv_shift (grammar_Nd nodeNT args:(panLexer_token,pancakeNT,C)parsetree) =
       if isNT nodeNT ShiftOpsNT then
         match args with
           [leaf] -> conv_shift leaf
@@ -197,7 +197,7 @@ let conv_cmp_def = cake_def_wf
               parsetree_size (\x:panLexer_token. 0) (\x:pancakeNT. 0)
                              (\x:C. 0) t)`
   TERM_TAC
-  `(conv_cmp (Nd nodeNT args:(panLexer_token,pancakeNT,C)parsetree) =
+  `(conv_cmp (grammar_Nd nodeNT args:(panLexer_token,pancakeNT,C)parsetree) =
       if isNT nodeNT CmpOpsNT \/ isNT nodeNT EqOpsNT then
         match args with
           [leaf] -> conv_cmp leaf
@@ -319,7 +319,7 @@ let PPARSEAUX_argsNT_size2 = prove
 
 let PPARSEAUX_size_MEM_Nd = prove
  (`!(p:(B+num)#C) (l:((A,B,C)parsetree)list) y fa fb fc.
-     MEM y l ==> parsetree_size fa fb fc y < parsetree_size fa fb fc (Nd p l)`,
+     MEM y l ==> parsetree_size fa fb fc y < parsetree_size fa fb fc (grammar_Nd p l)`,
   REPEAT STRIP_TAC THEN
   FIRST_ASSUM(MP_TAC o SPEC `parsetree_size (fa:A->num) (fb:B->num) (fc:C->num)` o
               MATCH_MP MEM_LIST_SIZE) THEN
@@ -363,7 +363,7 @@ let conv_Exp_def = cake_def_wf
                           OPTION_BIND (conv_Exp t2) (\exp.
                             SOME (fld,exp)))
       | _ -> NONE) /\
-   (conv_Exp (Nd nodeNT args) =
+   (conv_Exp (grammar_Nd nodeNT args) =
       if isNT nodeNT EFieldNT then
         (match args with
            [] -> NONE
@@ -484,7 +484,7 @@ let conv_Exp_ind = cake_ind "conv_Exp";;
 (* Handles all statements which cannot contain Prog nodes as children. *)
 
 let conv_NonRecStmt_def = cake_def
-  `(conv_NonRecStmt (Nd nodeNT args:(panLexer_token,pancakeNT,C)parsetree) =
+  `(conv_NonRecStmt (grammar_Nd nodeNT args:(panLexer_token,pancakeNT,C)parsetree) =
       if isNT nodeNT AssignNT then
         (match args with
            [dst; src] -> OPTION_MAP2 (panLang_Assign panLang_Global)
@@ -612,8 +612,8 @@ let list_size_MEM = prove
 let parsetree_locs_def = cake_def
   `parsetree_locs (tree:(A,B,locs)parsetree) =
      match tree with
-       Nd (_,Locs p1 p2) _ -> (p1,p2)
-     | Lf (_,Locs p1 p2) -> (p1,p2)`;;
+       grammar_Nd (_,Locs p1 p2) _ -> (p1,p2)
+     | grammar_Lf (_,Locs p1 p2) -> (p1,p2)`;;
 
 let posn_string_def = cake_def
   `(posn_string (POSN lnum cnum) =
@@ -637,7 +637,7 @@ let add_locs_annot_def = cake_def
 (* HOL4: Nd typed as a node of (token,pancakeNT,locs)parsetree *)
 
 let conv_Dec_def = cake_def
-  `(conv_Dec (Nd nodeNT args:(panLexer_token,pancakeNT,locs)parsetree) =
+  `(conv_Dec (grammar_Nd nodeNT args:(panLexer_token,pancakeNT,locs)parsetree) =
       if isNT nodeNT DecNT then
         (match args with
            [sh; id; e] ->
@@ -650,7 +650,7 @@ let conv_Dec_def = cake_def
    (conv_Dec _ = NONE:(shape#mlstring#(A)panLang_exp)option)`;;
 
 let conv_GlobalDec_def = cake_def
-  `(conv_GlobalDec (Nd nodeNT args:(panLexer_token,pancakeNT,locs)parsetree) =
+  `(conv_GlobalDec (grammar_Nd nodeNT args:(panLexer_token,pancakeNT,locs)parsetree) =
       if isNT nodeNT GlobalDecNT then
         (match args with
            [sh; id; e] ->
@@ -672,7 +672,7 @@ let conv_ExnDec_def = cake_def
      | _ -> NONE`;;
 
 let conv_DecCall_def = cake_def
-  `(conv_DecCall (Nd nodeNT args:(panLexer_token,pancakeNT,locs)parsetree) =
+  `(conv_DecCall (grammar_Nd nodeNT args:(panLexer_token,pancakeNT,locs)parsetree) =
       if isNT nodeNT DecCallNT then
         (match args with
            CONS s (CONS i (CONS e ts)) ->
@@ -709,7 +709,7 @@ let PPARSEAUX_MEM_butlast = prove
 let PPARSEAUX_size_MEM_butlast = prove
  (`!(p:(B+num)#C) (t:(A,B,C)parsetree) ts y fa fb fc.
      MEM y (CONS t (butlast ts))
-     ==> parsetree_size fa fb fc y < parsetree_size fa fb fc (Nd p (CONS t ts))`,
+     ==> parsetree_size fa fb fc y < parsetree_size fa fb fc (grammar_Nd p (CONS t ts))`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN MATCH_MP_TAC PPARSEAUX_size_MEM_Nd THEN
   POP_ASSUM MP_TAC THEN REWRITE_TAC[MEM] THEN MESON_TAC[PPARSEAUX_MEM_butlast]);;
 
@@ -717,7 +717,7 @@ let PPARSEAUX_size_LAST = prove
  (`!(p:(B+num)#C) (t:(A,B,C)parsetree) ts fa fb fc.
      ~(ts = [])
      ==> parsetree_size fa fb fc (LAST ts) <
-         parsetree_size fa fb fc (Nd p (CONS t ts))`,
+         parsetree_size fa fb fc (grammar_Nd p (CONS t ts))`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN MATCH_MP_TAC PPARSEAUX_size_MEM_Nd THEN
   REWRITE_TAC[MEM] THEN DISJ2_TAC THEN POP_ASSUM MP_TAC THEN
   STRUCT_CASES_TAC (ISPEC `ts:((A,B,C)parsetree)list` list_CASES) THEN
@@ -736,8 +736,8 @@ let conv_Prog_def = cake_def_wf
               parsetree_size (\x:panLexer_token. 0) (\x:pancakeNT. 0)
                              (\x:locs. 0) t)`
   PPARSEAUX_PROG_TERM_TAC
-  `(conv_Prog (Nd nodeNT args:(panLexer_token,pancakeNT,locs)parsetree) =
-      let nd = Nd nodeNT args in
+  `(conv_Prog (grammar_Nd nodeNT args:(panLexer_token,pancakeNT,locs)parsetree) =
+      let nd = grammar_Nd nodeNT args in
       if isNT nodeNT DecNT then
         (match args with
            [d; p] -> OPTION_BIND (conv_Dec d) (\q. match q with (sh,v,e') ->
@@ -808,7 +808,7 @@ let conv_Prog_def = cake_def_wf
                          (conv_Prog (LAST ts))
              else conv_Prog t
          | _ -> NONE)
-      else OPTION_MAP (add_locs_annot nd) (conv_NonRecStmt (Nd nodeNT args))) /\
+      else OPTION_MAP (add_locs_annot nd) (conv_NonRecStmt (grammar_Nd nodeNT args))) /\
    (conv_Prog leaf =
       OPTION_MAP (add_locs_annot leaf) (conv_NonRecStmt leaf)
         :((A)panLang_prog)option)`;;
@@ -838,7 +838,7 @@ let conv_FieldNameList_def = cake_def
      | _ -> NONE`;;
 
 let conv_StructName_def = cake_def
-  `(conv_StructName (Nd nodeNT args:(panLexer_token,pancakeNT,locs)parsetree) =
+  `(conv_StructName (grammar_Nd nodeNT args:(panLexer_token,pancakeNT,locs)parsetree) =
       if isNT nodeNT StructNameNT then
         (match args with
            [id; flds] ->
@@ -1030,7 +1030,7 @@ let localise_topdec_def = cake_def
    (localise_topdec ls (ExnDecl nm sh) = ExnDecl nm sh) /\
    (localise_topdec ls (Function fi) =
       Function (fun_decl_body_fupd
-                  (K (localise_prog
+                  (combin_K (localise_prog
                         (FOLDL (\m p. mlmap_insert m p one) ls
                                (MAP FST (fun_decl_params fi)))
                         (fun_decl_body fi))) fi))`;;

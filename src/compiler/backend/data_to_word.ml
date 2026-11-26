@@ -2994,9 +2994,9 @@ let data_to_word_compile_def = cake_def
   `data_to_word_compile (data_conf:data_to_word_config) word_conf
                         (asm_conf:(A)asm_config) prog =
      let data_conf =
-       data_to_word_config_has_fp_ops_fupd (K (1 < asm_config_fp_reg_count asm_conf))
+       data_to_word_config_has_fp_ops_fupd (combin_K (1 < asm_config_fp_reg_count asm_conf))
          (data_to_word_config_has_fp_tern_fupd
-            (K (asm_config_ISA asm_conf = ARMv7 /\ 2 < asm_config_fp_reg_count asm_conf))
+            (combin_K (asm_config_ISA asm_conf = ARMv7 /\ 2 < asm_config_fp_reg_count asm_conf))
             data_conf) in
      let p = APPEND (data_to_word_stubs (:A) data_conf)
                     (MAP (data_to_word_compile_part data_conf) prog) in
@@ -3005,9 +3005,9 @@ let data_to_word_compile_def = cake_def
 let compile_0_def = cake_def
   `compile_0 (data_conf:data_to_word_config) (asm_conf:(A)asm_config) prog =
      let data_conf =
-       data_to_word_config_has_fp_ops_fupd (K (1 < asm_config_fp_reg_count asm_conf))
+       data_to_word_config_has_fp_ops_fupd (combin_K (1 < asm_config_fp_reg_count asm_conf))
          (data_to_word_config_has_fp_tern_fupd
-            (K (asm_config_ISA asm_conf = ARMv7 /\ 2 < asm_config_fp_reg_count asm_conf))
+            (combin_K (asm_config_ISA asm_conf = ARMv7 /\ 2 < asm_config_fp_reg_count asm_conf))
             data_conf) in
      APPEND (data_to_word_stubs (:A) data_conf)
             (MAP (data_to_word_compile_part data_conf) prog)`;;
@@ -3047,8 +3047,8 @@ let D2WAUX_call_graph_th b1 b2 =
    (vsubst [b1,`b1:bool`; b2,`b2:bool`]
      `full_call_graph AnyArith_location
         (fromAList (data_to_word_stubs (:A)
-           (data_to_word_config_call_empty_ffi_fupd (K b1)
-              (data_to_word_config_has_longdiv_fupd (K b2) data_conf))))`);;
+           (data_to_word_config_call_empty_ffi_fupd (combin_K b1)
+              (data_to_word_config_has_longdiv_fupd (combin_K b2) data_conf))))`);;
 
 let D2WAUX_th_FF = D2WAUX_call_graph_th `F` `F`;;
 let D2WAUX_th_FT = D2WAUX_call_graph_th `F` `T`;;
@@ -3083,8 +3083,8 @@ let D2WAUX_structure_le_cs =
 let D2WAUX_ANYARITH_CASE_TAC (b1,b2,th) : tactic =
   SUBGOAL_THEN
     (vsubst [b1,`b1:bool`; b2,`b2:bool`]
-      `data_conf = data_to_word_config_call_empty_ffi_fupd (K b1)
-                     (data_to_word_config_has_longdiv_fupd (K b2)
+      `data_conf = data_to_word_config_call_empty_ffi_fupd (combin_K b1)
+                     (data_to_word_config_has_longdiv_fupd (combin_K b2)
                         (data_conf:data_to_word_config))`)
     (fun eq -> ONCE_REWRITE_TAC[eq]) THENL
    [REWRITE_TAC[data_to_word_config_component_equality;

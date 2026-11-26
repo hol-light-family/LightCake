@@ -611,7 +611,7 @@ let push_env_s_val_eq = prove
               (!x y. MEM x (MAP FST l') /\ MEM y (MAP FST l') /\ f x = f y
                      ==> x = y)) /\
            s_val_eq
-             (wl_state_stack (wl_push_env (x',x) b (wl_state_permute_fupd (K perm) st)))
+             (wl_state_stack (wl_push_env (x',x) b (wl_state_permute_fupd (combin_K perm) st)))
              (wl_state_stack (wl_push_env (y',y) b' cst))`,
   REWRITE_TAC[FORALL_OPTION_THM; FORALL_PAIR_THM; option_CASE; pair_CASE;
               option_DISTINCT] THEN
@@ -804,7 +804,7 @@ let pop_env_frame = prove
  (`!(r':(A,C,FFI)wl_state) st' y' y''.
      s_val_eq (wl_state_stack r') st' /\
      s_key_eq (wl_state_stack y') (wl_state_stack y'') /\
-     wl_pop_env (wl_state_stack_fupd (K st') r') = SOME y'' /\
+     wl_pop_env (wl_state_stack_fupd (combin_K st') r') = SOME y'' /\
      wl_pop_env r' = SOME y'
      ==> word_state_eq_rel y' y''`,
   REPEAT GEN_TAC THEN
@@ -920,15 +920,15 @@ let PAIR_CASE_PAIR_MAP = prove
 (* helper: updating permute with its own value *)
 
 let WALLOCPAUX_permute_same = prove
- (`!st:(A,C,FFI)wl_state. wl_state_permute_fupd (K (wl_state_permute st)) st = st`,
+ (`!st:(A,C,FFI)wl_state. wl_state_permute_fupd (combin_K (wl_state_permute st)) st = st`,
   GEN_TAC THEN REWRITE_TAC[wl_state_component_equality] THEN SIMP[]);;
 
 (* HOL4 line 836 *)
 let permute_swap_lemma4 = prove
  (`!(prog:(A)wl_prog) (st:(A,C,FFI)wl_state) P.
      (!st'. wl_evaluate (prog,st) = (SOME wl_Error,st') ==> P (SOME wl_Error,st')) /\
-     (?perm. P ((I ## (\s. wl_state_permute_fupd (K perm) s)) (wl_evaluate (prog,st))))
-     ==> (?perm. P (wl_evaluate (prog,wl_state_permute_fupd (K perm) st)))`,
+     (?perm. P ((I ## (\s. wl_state_permute_fupd (combin_K perm) s)) (wl_evaluate (prog,st))))
+     ==> (?perm. P (wl_evaluate (prog,wl_state_permute_fupd (combin_K perm) st)))`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   MP_TAC(ISPECL [`prog:(A)wl_prog`; `st:(A,C,FFI)wl_state`; `perm:num->num->num`]
     permute_swap_lemma) THEN
@@ -1069,7 +1069,7 @@ let WALLOCPAUX_sh_mem_set_var_cases = prove
              FFI_final outcome -> (SOME (wl_FinalFFI outcome),wl_flush_state T s)
            | FFI_return new_ffi new_bytes ->
                (NONE,wl_set_var v (wl_Word (word_of_bytes F (word 0) new_bytes))
-                       (wl_state_ffi_fupd (K new_ffi) s))))`,
+                       (wl_state_ffi_fupd (combin_K new_ffi) s))))`,
   REWRITE_TAC[FORALL_OPTION_THM] THEN CONJ_TAC THENL
    [REWRITE_TAC[sh_mem_set_var_def; option_CASE];
     GEN_TAC THEN STRUCT_CASES_TAC (ISPEC `a:(FFI)ffi_result` (cases "ffi_result")) THEN
@@ -1087,13 +1087,13 @@ let WALLOCPAUX_seq_SOME = prove
 let WALLOCPAUX_wser_locals = prove
  (`!(s:(A,C,FFI)wl_state) t a b.
      word_state_eq_rel s t
-     ==> word_state_eq_rel (wl_state_locals_fupd (K a) s) (wl_state_locals_fupd (K b) t)`,
+     ==> word_state_eq_rel (wl_state_locals_fupd (combin_K a) s) (wl_state_locals_fupd (combin_K b) t)`,
   REWRITE_TAC[word_state_eq_rel_def; wl_state_INFO.ri_accfupds; K_THM] THEN
   REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[]);;
 
 let WALLOCPAUX_wser_permute = prove
  (`!(s:(A,C,FFI)wl_state) t p.
-     word_state_eq_rel s t ==> word_state_eq_rel (wl_state_permute_fupd (K p) s) t`,
+     word_state_eq_rel s t ==> word_state_eq_rel (wl_state_permute_fupd (combin_K p) s) t`,
   REWRITE_TAC[word_state_eq_rel_def; wl_state_INFO.ri_accfupds; K_THM] THEN
   REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[]);;
 
@@ -1137,7 +1137,7 @@ let WALLOCPAUX_eac_Q_def = new_definition (CASE_TERM
      strong_locals_rel f (domain (get_live prog live lt))
        (wl_state_locals st) (wl_state_locals cst)
      ==> ?perm'.
-           let (res,rst) = wl_evaluate (prog,wl_state_permute_fupd (K perm') st) in
+           let (res,rst) = wl_evaluate (prog,wl_state_permute_fupd (combin_K perm') st) in
            if res = SOME wl_Error then T else
            let (res',rcst) = wl_evaluate (apply_colour f prog,cst) in
              res = res' /\
@@ -1423,7 +1423,7 @@ let evaluate_apply_colour_Loop_helper = prove
         strong_locals_rel f (domain (get_live body live lt))
           (wl_state_locals st) (wl_state_locals cst)
         ==> ?perm'.
-              (let (res,rst) = wl_evaluate (body,wl_state_permute_fupd (K perm') st) in
+              (let (res,rst) = wl_evaluate (body,wl_state_permute_fupd (combin_K perm') st) in
                  res = SOME wl_Error \/
                  let (res',rcst) = wl_evaluate (apply_colour f body,cst) in
                    res = res' /\ word_state_eq_rel rst rcst /\
@@ -1447,7 +1447,7 @@ let evaluate_apply_colour_Loop_helper = prove
      ==> ?perm'.
            (let (res,rst) =
                 wl_evaluate (wl_Loop names body exit_names,
-                             wl_state_permute_fupd (K perm') st) in
+                             wl_state_permute_fupd (combin_K perm') st) in
               res = SOME wl_Error \/
               let (res',rcst) =
                   wl_evaluate (apply_colour f (wl_Loop names body exit_names),cst) in
@@ -1487,8 +1487,8 @@ let evaluate_apply_colour_Loop_helper = prove
   ASM_REWRITE_TAC[domain_def; UNION_EMPTY; FST; SND; WALLOCPAUX_apply_nummaps_key_pair;
                   WALLOCPAUX_apply_nummap_key_LN] THEN
   DISCH_THEN(X_CHOOSE_THEN `y:((A)word_loc)spt` STRIP_ASSUME_TAC) THEN
-  USE_THEN "bih" (MP_TAC o SPECL [`wl_state_locals_fupd (K env) (st:(A,C,FFI)wl_state)`;
-    `wl_state_locals_fupd (K y) (cst:(A,C,FFI)wl_state)`; `f:num->num`; `names:num_set`;
+  USE_THEN "bih" (MP_TAC o SPECL [`wl_state_locals_fupd (combin_K env) (st:(A,C,FFI)wl_state)`;
+    `wl_state_locals_fupd (combin_K y) (cst:(A,C,FFI)wl_state)`; `f:num->num`; `names:num_set`;
     `CONS (names:num_set,exit_names:num_set) lt`]) THEN
   ANTS_TAC THENL
    [ASM_SIMP_TAC[WALLOCPAUX_wser_locals] THEN
@@ -2067,12 +2067,12 @@ let WALLOCPAUX_eac_MustTerminate = prove
   REMOVE_THEN "ih" (MP_TAC o SPEC `a0:(A)wl_prog`) THEN
   ANTS_TAC THENL [WALLOCPAUX_SIZE_TAC; ALL_TAC] THEN
   DISCH_THEN(MP_TAC o SPEC
-    `wl_state_clock_fupd (K (MustTerminate_limit (:A)))
-       (wl_state_termdep_fupd (K (wl_state_termdep st - 1)) (st:(A,C,FFI)wl_state))`) THEN
+    `wl_state_clock_fupd (combin_K (MustTerminate_limit (:A)))
+       (wl_state_termdep_fupd (combin_K (wl_state_termdep st - 1)) (st:(A,C,FFI)wl_state))`) THEN
   REWRITE_TAC[WALLOCPAUX_eac_Q_def] THEN
   DISCH_THEN(MP_TAC o SPECL
-    [`wl_state_clock_fupd (K (MustTerminate_limit (:A)))
-       (wl_state_termdep_fupd (K (wl_state_termdep (st:(A,C,FFI)wl_state) - 1))
+    [`wl_state_clock_fupd (combin_K (MustTerminate_limit (:A)))
+       (wl_state_termdep_fupd (combin_K (wl_state_termdep (st:(A,C,FFI)wl_state) - 1))
           (cst:(A,C,FFI)wl_state))`;
      `f:num->num`; `live:num_set`; `lt:(num_set#num_set)list`]) THEN
   ANTS_TAC THENL
@@ -2141,7 +2141,7 @@ let WALLOCPAUX_eac_Call_tail = prove
       REWRITE_TAC[wl_flush_state_def; wl_state_INFO.ri_accfupds; K_THM]];
     ALL_TAC] THEN
   SUBGOAL_THEN `wl_call_env args1 ss (wl_dec_clock (wl_state_permute_fupd
-                  (K (wl_state_permute cst)) (st:(A,C,FFI)wl_state))) =
+                  (combin_K (wl_state_permute cst)) (st:(A,C,FFI)wl_state))) =
                 wl_call_env args1 ss (wl_dec_clock (cst:(A,C,FFI)wl_state))` SUBST1_TAC THENL
    [REWRITE_TAC[wl_state_component_equality; wl_call_env_def; wl_dec_clock_def] THEN
     SIMP[];
@@ -2166,8 +2166,8 @@ let WALLOCPAUX_push_env_perm = prove
  (`!(e1:((A)word_loc)spt) e2 (b:(num#(A)wl_prog#num#num)option) (s:(A,C,FFI)wl_state)
     (P:num->num->num) perm2.
      wl_push_env (e1,e2) b
-       (wl_state_permute_fupd (K (\n. if n = 0 then P 0 else perm2 (n - 1))) s) =
-     wl_state_permute_fupd (K perm2) (wl_push_env (e1,e2) b (wl_state_permute_fupd (K P) s))`,
+       (wl_state_permute_fupd (combin_K (\n. if n = 0 then P 0 else perm2 (n - 1))) s) =
+     wl_state_permute_fupd (combin_K perm2) (wl_push_env (e1,e2) b (wl_state_permute_fupd (combin_K P) s))`,
   REPEAT GEN_TAC THEN
   SPEC_TAC(`b:(num#(A)wl_prog#num#num)option`, `b:(num#(A)wl_prog#num#num)option`) THEN
   REWRITE_TAC[FORALL_OPTION_THM; FORALL_PAIR_THM; wl_push_env_def; env_to_list_def] THEN
@@ -2177,10 +2177,10 @@ let WALLOCPAUX_push_env_perm = prove
 
 let WALLOCPAUX_call_env_permute = prove
  (`!a b p (s:(A,C,FFI)wl_state).
-     wl_call_env a b (wl_state_permute_fupd (K p) s) =
-     wl_state_permute_fupd (K p) (wl_call_env a b s) /\
-     wl_dec_clock (wl_state_permute_fupd (K p) s) =
-     wl_state_permute_fupd (K p) (wl_dec_clock s)`,
+     wl_call_env a b (wl_state_permute_fupd (combin_K p) s) =
+     wl_state_permute_fupd (combin_K p) (wl_call_env a b s) /\
+     wl_dec_clock (wl_state_permute_fupd (combin_K p) s) =
+     wl_state_permute_fupd (combin_K p) (wl_dec_clock s)`,
   REWRITE_TAC[wl_state_component_equality; wl_call_env_def; wl_dec_clock_def] THEN SIMP[]);;
 
 (* the callee states of a returning call differ only in the stack *)
@@ -2306,12 +2306,12 @@ let WALLOCPAUX_call_states = prove
       | SOME (w,hp,l1,l2) ->
           (match hh with NONE -> F | SOME (a,b,c,d) -> c = l1 /\ d = l2)) /\
      (\n. P (n + 1)) = (\n. wl_state_permute cst (n + 1)) /\
-     s_val_eq (wl_state_stack (wl_push_env (x1,x2) h (wl_state_permute_fupd (K P) st)))
+     s_val_eq (wl_state_stack (wl_push_env (x1,x2) h (wl_state_permute_fupd (combin_K P) st)))
               (wl_state_stack (wl_push_env (y1,y2) hh cst))
      ==> wl_call_env args1 ss (wl_push_env (y1,y2) hh cst) =
          wl_state_stack_fupd
-           (K (wl_state_stack (wl_call_env args1 ss (wl_push_env (y1,y2) hh cst))))
-           (wl_call_env args1 ss (wl_push_env (x1,x2) h (wl_state_permute_fupd (K P) st)))`,
+           (combin_K (wl_state_stack (wl_call_env args1 ss (wl_push_env (y1,y2) hh cst))))
+           (wl_call_env args1 ss (wl_push_env (x1,x2) h (wl_state_permute_fupd (combin_K P) st)))`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   FIRST_ASSUM(ASSUME_TAC o MATCH_MP s_val_eq_stack_size) THEN
   POP_ASSUM MP_TAC THEN POP_ASSUM MP_TAC THEN
@@ -2344,7 +2344,7 @@ let WALLOCPAUX_PERM_SWAP4_TAC (prog:term) (sc:term) : tactic =
     let pv,body = dest_exists w in
     let et = list_mk_icomb "wl_evaluate"
                [mk_pair(prog, list_mk_icomb "wl_state_permute_fupd"
-                                [mk_comb(mk_const("K",[type_of pv,aty;
+                                [mk_comb(mk_const("combin_K",[type_of pv,aty;
                                    `:num->num->num`,bty]), pv); sc])] in
     let r = mk_var("r", type_of et) in
     let plam = mk_abs(r, subst [r, et] body) in
@@ -2509,7 +2509,7 @@ let WALLOCPAUX_eac_Call_ret = prove
     ALL_TAC] THEN
   DISCH_THEN SUBST1_TAC THEN
   ABBREV_TAC `sc0 = wl_call_env args1 ss (wl_push_env (x1,x2) h
-                     (wl_state_permute_fupd (K P) (wl_dec_clock (st:(A,C,FFI)wl_state))))` THEN
+                     (wl_state_permute_fupd (combin_K P) (wl_dec_clock (st:(A,C,FFI)wl_state))))` THEN
   ABBREV_TAC `tc0 = wl_call_env args1 ss (wl_push_env (y1,y2) hh
                      (wl_dec_clock (cst:(A,C,FFI)wl_state)))` THEN
   WALLOCPAUX_PERM_SWAP4_TAC `prog:(A)wl_prog` `sc0:(A,C,FFI)wl_state` THENL
@@ -2600,7 +2600,7 @@ let WALLOCPAUX_eac_Call_ret = prove
           (X_CHOOSE_THEN `ls0:((A)stack_frame)list` (X_CHOOSE_THEN `o0:(num#num#num)option`
           (CONJUNCTS_THEN2 (K ALL_TAC) (X_CHOOSE_THEN `y0:(A,C,FFI)wl_state` STRIP_ASSUME_TAC)))))) THEN
         MP_TAC(ISPECL [`(y1:((A)word_loc)spt,y2:((A)word_loc)spt)`; bs push_t; ins push_t;
-                       `wl_state_stack_fupd (K st3) (s1:(A,C,FFI)wl_state)`]
+                       `wl_state_stack_fupd (combin_K st3) (s1:(A,C,FFI)wl_state)`]
                       push_env_pop_env_s_key_eq) THEN
         ANTS_TAC THENL
          [UNDISCH_TAC `s_key_eq (wl_state_stack (tc0:(A,C,FFI)wl_state)) st3` THEN
@@ -2615,7 +2615,7 @@ let WALLOCPAUX_eac_Call_ret = prove
     RULE_ASSUM_TAC(REWRITE_RULE[FST; SND]) THEN
     MP_TAC(ISPECL [`f:num->num`; `x1:((A)word_loc)spt`; `y1:((A)word_loc)spt`;
                    `lsB:(num#(A)word_loc)list`; `lsA:(num#(A)word_loc)list`;
-                   `s1:(A,C,FFI)wl_state`; `wl_state_stack_fupd (K st3) (s1:(A,C,FFI)wl_state)`;
+                   `s1:(A,C,FFI)wl_state`; `wl_state_stack_fupd (combin_K st3) (s1:(A,C,FFI)wl_state)`;
                    `s1p:(A,C,FFI)wl_state`; `t1p:(A,C,FFI)wl_state`;
                    `wl_state_locals_size (st:(A,C,FFI)wl_state)`; hoptS;
                    `wl_state_stack (st:(A,C,FFI)wl_state)`;
@@ -2669,7 +2669,7 @@ let WALLOCPAUX_eac_Call_ret = prove
       FIRST_ASSUM(fun th -> if concl th = t then STRIP_ASSUME_TAC(MATCH_MP wl_pop_env_const th)
                             else NO_TAC))
       [`wl_pop_env (s1:(A,C,FFI)wl_state) = SOME s1p`;
-       `wl_pop_env (wl_state_stack_fupd (K st3) (s1:(A,C,FFI)wl_state)) = SOME t1p`] THEN
+       `wl_pop_env (wl_state_stack_fupd (combin_K st3) (s1:(A,C,FFI)wl_state)) = SOME t1p`] THEN
     SUBGOAL_THEN `word_state_eq_rel (s1p:(A,C,FFI)wl_state) (t1p:(A,C,FFI)wl_state)`
       ASSUME_TAC THENL
      [REWRITE_TAC[word_state_eq_rel_def] THEN
@@ -2767,9 +2767,9 @@ let WALLOCPAUX_eac_Call_ret = prove
         free_in `tc0:(A,C,FFI)wl_state` (lhs(concl th))
       then REWRITE_TAC[th] else NO_TAC) THEN
     REWRITE_TAC[pair_CASE; option_CASE; WALLOCPAUX_wl_result_CASE] THEN
-    SUBGOAL_THEN `wl_state_stack_fupd (K (wl_state_stack s1))
-                    (wl_state_handler_fupd (K (wl_state_handler s1))
-                       (wl_state_locals_fupd (K (wl_state_locals s1)) s1)) = (s1:(A,C,FFI)wl_state)`
+    SUBGOAL_THEN `wl_state_stack_fupd (combin_K (wl_state_stack s1))
+                    (wl_state_handler_fupd (combin_K (wl_state_handler s1))
+                       (wl_state_locals_fupd (combin_K (wl_state_locals s1)) s1)) = (s1:(A,C,FFI)wl_state)`
       ASSUME_TAC THENL
      [REWRITE_TAC[wl_state_component_equality] THEN SIMP[]; ALL_TAC] THEN
     ASM_REWRITE_TAC([option_INJ] @ WALLOCPAUX_wl_result_distinct) THEN CONJ_TAC THENL
@@ -2878,8 +2878,8 @@ let WALLOCPAUX_eac_Call_ret = prove
         FIRST_ASSUM ACCEPT_TAC];
       ALL_TAC] THEN
     ASM_REWRITE_TAC[wl_state_INFO.ri_accfupds; K_THM] THEN
-    SUBGOAL_THEN `!p. wl_set_var n' (a1:(A)word_loc) (wl_state_permute_fupd (K p) (s1:(A,C,FFI)wl_state)) =
-                      wl_state_permute_fupd (K p) (wl_set_var n' a1 s1)`
+    SUBGOAL_THEN `!p. wl_set_var n' (a1:(A)word_loc) (wl_state_permute_fupd (combin_K p) (s1:(A,C,FFI)wl_state)) =
+                      wl_state_permute_fupd (combin_K p) (wl_set_var n' a1 s1)`
       (fun th -> REWRITE_TAC[th]) THENL
      [REWRITE_TAC[wl_set_var_with_const]; ALL_TAC] THEN
     (fun (asl,w as g) ->
@@ -2990,7 +2990,7 @@ let WALLOCPAUX_eac_Seq = prove
                              `lt:(num_set#num_set)list`]) THEN
   ANTS_TAC THENL [ASM_REWRITE_TAC[]; ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_THEN `perm2:num->num->num` (LABEL_TAC "ih2")) THEN
-  MP_TAC(ISPECL [`a0:(A)wl_prog`; `wl_state_permute_fupd (K perm1) (st:(A,C,FFI)wl_state)`;
+  MP_TAC(ISPECL [`a0:(A)wl_prog`; `wl_state_permute_fupd (combin_K perm1) (st:(A,C,FFI)wl_state)`;
                  `perm2:num->num->num`] permute_swap_lemma) THEN
   ASM_REWRITE_TAC[pair_CASE; option_DISTINCT; wl_state_INFO.ri_fupdfupds; K_o_THM] THEN
   DISCH_THEN(X_CHOOSE_TAC `perm3:num->num->num`) THEN
@@ -3438,7 +3438,7 @@ let evaluate_apply_colour = prove
      strong_locals_rel f (domain (get_live prog live lt))
        (wl_state_locals st) (wl_state_locals cst)
      ==> ?perm'.
-           let (res,rst) = wl_evaluate (prog,wl_state_permute_fupd (K perm') st) in
+           let (res,rst) = wl_evaluate (prog,wl_state_permute_fupd (combin_K perm') st) in
            if res = SOME wl_Error then T else
            let (res',rcst) = wl_evaluate (apply_colour f prog,cst) in
              res = res' /\
@@ -4338,7 +4338,7 @@ let get_forced_in_get_clash_tree =
     RULE_ASSUM_TAC(REWRITE_RULE[GSYM ALL_MEM; FORALL_PAIR_THM; pair_CASE]) THEN
     REWRITE_TAC[GSYM ALL_MEM; FORALL_PAIR_THM; pair_CASE; in_clash_tree_def; ALL;
                 MEM] THEN
-    CASES_ON `ri:(A)reg_imm` THEN CASE_REWRITE_TAC[] THEN
+    CASES_ON `ri:(A)reg_imm` THEN CAKE_REWRITE_TAC[] THEN
     ASM_REWRITE_TAC[in_clash_tree_def; option_CASE] THEN ASM_MESON_TAC[];
     common_tac;
     common_tac;
@@ -4450,7 +4450,7 @@ let WALLOCPAUX_word_alloc_apply = prove
      strong_locals_rel f (domain (get_live prog LN [])) (wl_state_locals st)
        (wl_state_locals st)
      ==> ?perm'.
-           let (res,rst) = wl_evaluate (prog,wl_state_permute_fupd (K perm') st) in
+           let (res,rst) = wl_evaluate (prog,wl_state_permute_fupd (combin_K perm') st) in
            if res = SOME wl_Error then T else
            let (res',rcst) = wl_evaluate (apply_colour f prog,st) in
              res = res' /\
@@ -4468,7 +4468,7 @@ let WALLOCPAUX_word_alloc_apply = prove
   DISCH_THEN(X_CHOOSE_THEN `perm':num->num->num`
     (fun th -> EXISTS_TAC `perm':num->num->num` THEN MP_TAC th)) THEN
   WALLOCPAUX_TUPLE_TAC
-    `wl_evaluate (prog,wl_state_permute_fupd (K perm') (st:(A,C,FFI)wl_state))`
+    `wl_evaluate (prog,wl_state_permute_fupd (combin_K perm') (st:(A,C,FFI)wl_state))`
     [`res:((A)wl_result)option`; `rst:(A,C,FFI)wl_state`] THEN
   REWRITE_TAC[LET_DEF; LET_END_DEF; pair_CASE] THEN CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
   COND_CASES_TAC THEN REWRITE_TAC[] THEN
@@ -4491,7 +4491,7 @@ let word_alloc_correct = prove
      even_starting_locals (wl_state_locals st) /\
      wf_cutsets prog
      ==> ?perm'.
-           let (res,rst) = wl_evaluate (prog,wl_state_permute_fupd (K perm') st) in
+           let (res,rst) = wl_evaluate (prog,wl_state_permute_fupd (combin_K perm') st) in
            if res = SOME wl_Error then T else
            let (res',rcst) = wl_evaluate (word_alloc fc c alg k prog col_opt,st) in
              res = res' /\
@@ -4597,7 +4597,7 @@ let strong_locals_rel_I_get_var = prove
  (`!x (st:(A,C,FFI)wl_state) v live t tstore.
      wl_get_var x st = SOME v /\
      strong_locals_rel I (x INSERT live) (wl_state_locals st) t
-     ==> wl_get_var x (wl_state_locals_fupd (K t) (wl_state_store_fupd (K tstore) st)) =
+     ==> wl_get_var x (wl_state_locals_fupd (combin_K t) (wl_state_store_fupd (combin_K tstore) st)) =
          SOME v`,
   REWRITE_TAC[strong_locals_rel_def; wl_get_var_def; I_THM; IN_INSERT] THEN
   SIMP[] THEN MESON_TAC[]);;
@@ -4607,7 +4607,7 @@ let strong_locals_rel_I_get_var' = prove
  (`!x (st:(A,C,FFI)wl_state) v live t.
      wl_get_var x st = SOME v /\
      strong_locals_rel I (x INSERT live) (wl_state_locals st) t
-     ==> wl_get_var x (wl_state_locals_fupd (K t) st) = SOME v`,
+     ==> wl_get_var x (wl_state_locals_fupd (combin_K t) st) = SOME v`,
   REWRITE_TAC[strong_locals_rel_def; wl_get_var_def; I_THM; IN_INSERT] THEN
   SIMP[] THEN MESON_TAC[]);;
 
@@ -4615,7 +4615,7 @@ let strong_locals_rel_I_get_var' = prove
 
 let WALLOCPAUX_mem_load_fupd = prove
  (`!w t tstore (s:(A,C,FFI)wl_state).
-     wl_mem_load w (wl_state_locals_fupd (K t) (wl_state_store_fupd (K tstore) s)) =
+     wl_mem_load w (wl_state_locals_fupd (combin_K t) (wl_state_store_fupd (combin_K tstore) s)) =
      wl_mem_load w s`,
   SIMP[wl_mem_load_def]);;
 
@@ -4626,7 +4626,7 @@ let strong_locals_rel_I_word_exp = prove
      strong_locals_rel I (domain (sptree_union (get_live_exp exp) live)) (wl_state_locals st) t /\
      live_store_rel nlive (wl_state_store st) tstore /\
      nlive_store nlive exp
-     ==> wl_word_exp (wl_state_locals_fupd (K t) (wl_state_store_fupd (K tstore) st)) exp =
+     ==> wl_word_exp (wl_state_locals_fupd (combin_K t) (wl_state_store_fupd (combin_K tstore) st)) exp =
          SOME res`,
   MATCH_MP_TAC wl_word_exp_ind THEN
   REWRITE_TAC[wl_word_exp_def; get_live_exp_def; nlive_store_def] THEN
@@ -4641,7 +4641,7 @@ let strong_locals_rel_I_word_exp = prove
     REPEAT GEN_TAC THEN DISCH_TAC THEN REPEAT GEN_TAC THEN
     REWRITE_TAC[option_case_eq; option_DISTINCT] THEN STRIP_TAC THEN
     SUBGOAL_THEN
-     `MAP (wl_word_exp (wl_state_locals_fupd (K t) (wl_state_store_fupd (K tstore)
+     `MAP (wl_word_exp (wl_state_locals_fupd (combin_K t) (wl_state_store_fupd (combin_K tstore)
             (s:(A,C,FFI)wl_state)))) wexps =
       MAP (wl_word_exp s) (wexps:((A)wl_exp)list)`
       SUBST1_TAC THENL
@@ -4687,10 +4687,10 @@ let strong_locals_rel_I_get_vars' = prove
      (!x. MEM x ls ==> x IN live) /\
      strong_locals_rel I live (wl_state_locals st) t /\
      wl_get_vars ls st = SOME vs
-     ==> wl_get_vars ls (wl_state_locals_fupd (K t) st) = SOME vs`,
+     ==> wl_get_vars ls (wl_state_locals_fupd (combin_K t) st) = SOME vs`,
   REPEAT STRIP_TAC THEN
   MP_TAC(ISPECL [`ls:num list`; `vs:((A)word_loc)list`; `I:num->num`; `live:num->bool`;
-                 `st:(A,C,FFI)wl_state`; `wl_state_locals_fupd (K t) (st:(A,C,FFI)wl_state)`]
+                 `st:(A,C,FFI)wl_state`; `wl_state_locals_fupd (combin_K t) (st:(A,C,FFI)wl_state)`]
     strong_locals_rel_get_vars) THEN
   SIMP[MAP_I; I_THM]);;
 
@@ -4786,8 +4786,8 @@ let strong_locals_rel_I_insert_insert = prove
 (* HOL4 line 3694 [simp] *)
 let st_eq = prove
  (`!(rst:(A,C,FFI)wl_state) t tstore t' tstore'.
-     wl_state_locals_fupd (K t) (wl_state_store_fupd (K tstore) rst) =
-     wl_state_locals_fupd (K t') (wl_state_store_fupd (K tstore') rst) <=>
+     wl_state_locals_fupd (combin_K t) (wl_state_store_fupd (combin_K tstore) rst) =
+     wl_state_locals_fupd (combin_K t') (wl_state_store_fupd (combin_K tstore') rst) <=>
      t = t' /\ tstore = tstore'`,
   REPEAT GEN_TAC THEN REWRITE_TAC[wl_state_component_equality] THEN
   SIMP[] THEN MESON_TAC[]);;
@@ -4807,13 +4807,13 @@ let _ = cake_add_simps [live_store_rel_refl];;
 
 (* HOL4 line 3716 [simp] *)
 let with_same_store = prove
- (`!st:(A,C,FFI)wl_state. wl_state_store_fupd (K (wl_state_store st)) st = st`,
+ (`!st:(A,C,FFI)wl_state. wl_state_store_fupd (combin_K (wl_state_store st)) st = st`,
   GEN_TAC THEN REWRITE_TAC[wl_state_component_equality] THEN SIMP[]);;
 let _ = cake_add_simps [with_same_store];;
 
 (* HOL4 line 3722 [simp]: with_same_locals *)
 let word_allocProof_with_same_locals = prove
- (`!st:(A,C,FFI)wl_state. wl_state_locals_fupd (K (wl_state_locals st)) st = st`,
+ (`!st:(A,C,FFI)wl_state. wl_state_locals_fupd (combin_K (wl_state_locals st)) st = st`,
   GEN_TAC THEN REWRITE_TAC[wl_state_component_equality] THEN SIMP[]);;
 let _ = cake_add_simps [word_allocProof_with_same_locals];;
 
@@ -4821,7 +4821,7 @@ let _ = cake_add_simps [word_allocProof_with_same_locals];;
 
 let WALLOCPAUX_flush_state_locals = prove
  (`!b t (s:(A,C,FFI)wl_state).
-     wl_flush_state b (wl_state_locals_fupd (K t) s) = wl_flush_state b s`,
+     wl_flush_state b (wl_state_locals_fupd (combin_K t) s) = wl_flush_state b s`,
   REWRITE_TAC[FORALL_BOOL_THM; wl_flush_state_def] THEN SIMP[]);;
 
 let WALLOCPAUX_strong_locals_rel_I_refl = prove
@@ -4878,8 +4878,8 @@ let evaluate_remove_dead_Loop_helper = prove
         ~(res' = SOME wl_Error)
         ==> ?t'' tstore''.
               wl_evaluate
-                (prog'',wl_state_locals_fupd (K t') (wl_state_store_fupd (K tstore') st')) =
-                (res',wl_state_locals_fupd (K t'') (wl_state_store_fupd (K tstore'') rst')) /\
+                (prog'',wl_state_locals_fupd (combin_K t') (wl_state_store_fupd (combin_K tstore') st')) =
+                (res',wl_state_locals_fupd (combin_K t'') (wl_state_store_fupd (combin_K tstore'') rst')) /\
               (match res' with
                  NONE ->
                    strong_locals_rel I (domain names) (wl_state_locals rst') t'' /\
@@ -4898,8 +4898,8 @@ let evaluate_remove_dead_Loop_helper = prove
                     | NONE -> T)
                | SOME _ -> wl_state_locals rst' = t'' /\ wl_state_store rst' = tstore''))
      ==> ?t' tstore'.
-           wl_evaluate (prog',wl_state_locals_fupd (K t) (wl_state_store_fupd (K tstore) st)) =
-           (res,wl_state_locals_fupd (K t') (wl_state_store_fupd (K tstore') rst)) /\
+           wl_evaluate (prog',wl_state_locals_fupd (combin_K t) (wl_state_store_fupd (combin_K tstore) st)) =
+           (res,wl_state_locals_fupd (combin_K t') (wl_state_store_fupd (combin_K tstore') rst)) /\
            (match res with
               NONE ->
                 strong_locals_rel I (domain live) (wl_state_locals rst) t' /\
@@ -4951,7 +4951,7 @@ let evaluate_remove_dead_Loop_helper = prove
   REWRITE_TAC[wl_state_INFO.ri_accfupds; wl_state_INFO.ri_fupdfupds; K_THM; K_o_THM] THEN
   ASM_REWRITE_TAC[option_CASE] THEN
   WALLOCPAUX_TUPLE_TAC
-    `wl_evaluate (body,wl_state_locals_fupd (K env) (st:(A,C,FFI)wl_state))`
+    `wl_evaluate (body,wl_state_locals_fupd (combin_K env) (st:(A,C,FFI)wl_state))`
     [`res1:((A)wl_result)option`; `s1:(A,C,FFI)wl_state`] THEN
   REWRITE_TAC[pair_CASE] THEN DISCH_TAC THEN
   SUBGOAL_THEN `~(res1 = SOME (wl_Error:(A)wl_result))` ASSUME_TAC THENL
@@ -4959,7 +4959,7 @@ let evaluate_remove_dead_Loop_helper = prove
     FIRST_X_ASSUM(MP_TAC o check (fun th -> is_eq(concl th) && is_cond(lhs(concl th)))) THEN
     SIMP[] THEN ASM_MESON_TAC[];
     ALL_TAC] THEN
-  USE_THEN "bih" (MP_TAC o SPECL [`wl_state_locals_fupd (K env) (st:(A,C,FFI)wl_state)`;
+  USE_THEN "bih" (MP_TAC o SPECL [`wl_state_locals_fupd (combin_K env) (st:(A,C,FFI)wl_state)`;
     `env:((A)word_loc)spt`; `wl_state_store (st:(A,C,FFI)wl_state)`; `body':(A)wl_prog`;
     `bl:1 spt`; `bnl:store_name list`; `res1:((A)wl_result)option`;
     `s1:(A,C,FFI)wl_state`]) THEN
@@ -4967,9 +4967,9 @@ let evaluate_remove_dead_Loop_helper = prove
    [ASM_REWRITE_TAC[] THEN SIMP[WALLOCPAUX_strong_locals_rel_I_refl; live_store_rel_refl];
     ALL_TAC] THEN
   SUBGOAL_THEN
-   `wl_state_locals_fupd (K env) (wl_state_store_fupd (K (wl_state_store st))
-      (wl_state_locals_fupd (K env) (st:(A,C,FFI)wl_state))) =
-    wl_state_locals_fupd (K env) st` SUBST1_TAC THENL
+   `wl_state_locals_fupd (combin_K env) (wl_state_store_fupd (combin_K (wl_state_store st))
+      (wl_state_locals_fupd (combin_K env) (st:(A,C,FFI)wl_state))) =
+    wl_state_locals_fupd (combin_K env) st` SUBST1_TAC THENL
    [REWRITE_TAC[wl_state_component_equality] THEN SIMP[]; ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_THEN `t1:((A)word_loc)spt` (X_CHOOSE_THEN
     `ts1:(store_name,(A)word_loc)fmap` STRIP_ASSUME_TAC)) THEN
@@ -5002,7 +5002,7 @@ let evaluate_remove_dead_Loop_helper = prove
     ASM_REWRITE_TAC[wl_STOP_def] THEN DISCH_TAC THEN
     SUBGOAL_THEN `wl_state_clock (wl_dec_clock (s1:(A,C,FFI)wl_state)) <
                   wl_state_clock (st:(A,C,FFI)wl_state)` ASSUME_TAC THENL
-     [MP_TAC(ISPECL [`body:(A)wl_prog`; `wl_state_locals_fupd (K env) (st:(A,C,FFI)wl_state)`;
+     [MP_TAC(ISPECL [`body:(A)wl_prog`; `wl_state_locals_fupd (combin_K env) (st:(A,C,FFI)wl_state)`;
                      `res1:((A)wl_result)option`; `s1:(A,C,FFI)wl_state`] wl_evaluate_clock) THEN
       ASM_REWRITE_TAC[wl_dec_clock_def; wl_state_INFO.ri_accfupds; K_THM] THEN
       UNDISCH_TAC `~(wl_state_clock (s1:(A,C,FFI)wl_state) = 0)` THEN ARITH_TAC;
@@ -5021,8 +5021,8 @@ let evaluate_remove_dead_Loop_helper = prove
       ASM_REWRITE_TAC[];
       ALL_TAC] THEN
     SUBGOAL_THEN
-     `wl_dec_clock (wl_state_locals_fupd (K t1) (s1:(A,C,FFI)wl_state)) =
-      wl_state_locals_fupd (K t1) (wl_state_store_fupd (K (wl_state_store s1))
+     `wl_dec_clock (wl_state_locals_fupd (combin_K t1) (s1:(A,C,FFI)wl_state)) =
+      wl_state_locals_fupd (combin_K t1) (wl_state_store_fupd (combin_K (wl_state_store s1))
         (wl_dec_clock s1))` SUBST1_TAC THENL
      [REWRITE_TAC[wl_state_component_equality; wl_dec_clock_def] THEN SIMP[]; ALL_TAC] THEN
     REWRITE_TAC[];
@@ -5091,8 +5091,8 @@ let WALLOCPAUX_rd_Q_def = new_definition (CASE_TERM
      remove_dead prog live nlive lt = (prog',livein,nlivein) /\
      ~(res = SOME wl_Error)
      ==> ?t' tstore'.
-           wl_evaluate (prog',wl_state_locals_fupd (K t) (wl_state_store_fupd (K tstore) st)) =
-           (res,wl_state_locals_fupd (K t') (wl_state_store_fupd (K tstore') rst)) /\
+           wl_evaluate (prog',wl_state_locals_fupd (combin_K t) (wl_state_store_fupd (combin_K tstore) st)) =
+           (res,wl_state_locals_fupd (combin_K t') (wl_state_store_fupd (combin_K tstore') rst)) /\
            (match res with
               NONE ->
                 strong_locals_rel I (domain live) (wl_state_locals rst) t' /\
@@ -5116,39 +5116,39 @@ let WALLOCPAUX_rd_Q_def = new_definition (CASE_TERM
 (* helpers: jump_exc and flush_state ignore the current locals *)
 
 let WALLOCPAUX_pop_env_locals = prove
- (`!t (s:(A,C,FFI)wl_state). wl_pop_env (wl_state_locals_fupd (K t) s) = wl_pop_env s`,
+ (`!t (s:(A,C,FFI)wl_state). wl_pop_env (wl_state_locals_fupd (combin_K t) s) = wl_pop_env s`,
   REWRITE_TAC[wl_pop_env_def] THEN SIMP[]);;
 
 let WALLOCPAUX_push_env_locals = prove
  (`!envs (h:(num#(A)wl_prog#num#num)option) t (s:(A,C,FFI)wl_state).
-     wl_push_env envs h (wl_state_locals_fupd (K t) s) =
-     wl_state_locals_fupd (K t) (wl_push_env envs h s)`,
+     wl_push_env envs h (wl_state_locals_fupd (combin_K t) s) =
+     wl_state_locals_fupd (combin_K t) (wl_push_env envs h s)`,
   GEN_TAC THEN REWRITE_TAC[FORALL_OPTION_THM; FORALL_PAIR_THM] THEN
   REWRITE_TAC[wl_push_env_def] THEN SIMP[] THEN REPEAT STRIP_TAC THEN
   EVERY_CASE_TAC THEN SIMP[]);;
 
 let WALLOCPAUX_set_store_locals = prove
  (`!v x t (s:(A,C,FFI)wl_state).
-     wl_set_store v x (wl_state_locals_fupd (K t) s) =
-     wl_state_locals_fupd (K t) (wl_set_store v x s)`,
+     wl_set_store v x (wl_state_locals_fupd (combin_K t) s) =
+     wl_state_locals_fupd (combin_K t) (wl_set_store v x s)`,
   REWRITE_TAC[wl_set_store_def] THEN SIMP[]);;
 
 let WALLOCPAUX_gc_locals = prove
  (`!t (s:(A,C,FFI)wl_state).
-     wl_gc (wl_state_locals_fupd (K t) s) = OPTION_MAP (wl_state_locals_fupd (K t)) (wl_gc s)`,
+     wl_gc (wl_state_locals_fupd (combin_K t) s) = OPTION_MAP (wl_state_locals_fupd (combin_K t)) (wl_gc s)`,
   REWRITE_TAC[wl_gc_def] THEN SIMP[] THEN REPEAT STRIP_TAC THEN
   EVERY_CASE_TAC THEN SIMP[]);;
 
 let WALLOCPAUX_call_env_locals = prove
  (`!args ss t (s:(A,C,FFI)wl_state).
-     wl_call_env args ss (wl_dec_clock (wl_state_locals_fupd (K t) s)) =
+     wl_call_env args ss (wl_dec_clock (wl_state_locals_fupd (combin_K t) s)) =
      wl_call_env args ss (wl_dec_clock s)`,
   REWRITE_TAC[wl_call_env_def; wl_dec_clock_def] THEN SIMP[]);;
 
 let WALLOCPAUX_get_var_I = prove
  (`!x ls (st:(A,C,FFI)wl_state) t tstore v.
      x IN ls /\ strong_locals_rel I ls (wl_state_locals st) t /\ wl_get_var x st = SOME v
-     ==> wl_get_var x (wl_state_locals_fupd (K t) (wl_state_store_fupd (K tstore) st)) =
+     ==> wl_get_var x (wl_state_locals_fupd (combin_K t) (wl_state_store_fupd (combin_K tstore) st)) =
          SOME v`,
   REWRITE_TAC[strong_locals_rel_def; wl_get_var_def; I_THM] THEN SIMP[] THEN MESON_TAC[]);;
 
@@ -5183,8 +5183,8 @@ let WALLOCPAUX_lookup_moves = prove
 
 let WALLOCPAUX_get_vars_locals_store = prove
  (`!ls t tstore (s:(A,C,FFI)wl_state).
-     wl_get_vars ls (wl_state_locals_fupd (K t) (wl_state_store_fupd (K tstore) s)) =
-     wl_get_vars ls (wl_state_locals_fupd (K t) s)`,
+     wl_get_vars ls (wl_state_locals_fupd (combin_K t) (wl_state_store_fupd (combin_K tstore) s)) =
+     wl_get_vars ls (wl_state_locals_fupd (combin_K t) s)`,
   LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[wl_get_vars_def; wl_get_var_def] THEN SIMP[]);;
 
 let WALLOCPAUX_ALOOKUP_FILTER_live = prove
@@ -5305,7 +5305,7 @@ let WALLOCPAUX_EX_LOCALS_TAC : tactic =
 let WALLOCPAUX_inst_dead = prove
  (`!i (live:1 spt) (st:(A,C,FFI)wl_state) s1.
      remove_dead_inst i live /\ wl_inst i st = SOME s1
-     ==> ?L. s1 = wl_state_locals_fupd (K L) st /\
+     ==> ?L. s1 = wl_state_locals_fupd (combin_K L) st /\
              (!n. n IN domain live ==> lookup n L = lookup n (wl_state_locals st))`,
   GEN_TAC THEN WALLOCPAUX_INST_CASES_TAC THEN
   REWRITE_TAC[remove_dead_inst_def] THEN REPEAT GEN_TAC THEN STRIP_TAC THEN
@@ -5318,7 +5318,7 @@ let WALLOCPAUX_inst_dead = prove
 
 let WALLOCPAUX_mem_load_store = prove
  (`!w tstore (s:(A,C,FFI)wl_state).
-     wl_mem_load w (wl_state_store_fupd (K tstore) s) = wl_mem_load w s`,
+     wl_mem_load w (wl_state_store_fupd (combin_K tstore) s) = wl_mem_load w s`,
   SIMP[wl_mem_load_def]);;
 
 let WALLOCPAUX_inst_store = prove
@@ -5332,8 +5332,8 @@ let WALLOCPAUX_inst_live = prove
  (`!i (live:1 spt) (st:(A,C,FFI)wl_state) s1 t tstore.
      wl_inst i st = SOME s1 /\
      strong_locals_rel I (domain (get_live_inst i live)) (wl_state_locals st) t
-     ==> ?t1. wl_inst i (wl_state_locals_fupd (K t) (wl_state_store_fupd (K tstore) st)) =
-              SOME (wl_state_locals_fupd (K t1) (wl_state_store_fupd (K tstore) s1)) /\
+     ==> ?t1. wl_inst i (wl_state_locals_fupd (combin_K t) (wl_state_store_fupd (combin_K tstore) st)) =
+              SOME (wl_state_locals_fupd (combin_K t1) (wl_state_store_fupd (combin_K tstore) s1)) /\
               strong_locals_rel I (domain live) (wl_state_locals s1) t1`,
   GEN_TAC THEN WALLOCPAUX_INST_CASES_TAC THEN
   REWRITE_TAC[get_live_inst_def] THEN REPEAT GEN_TAC THEN STRIP_TAC THEN
@@ -5432,7 +5432,7 @@ let WALLOCPAUX_rd_Move = prove
     ALL_TAC] THEN
   SUBGOAL_THEN
    `wl_get_vars (MAP SND (ls':(num#num)list))
-      (wl_state_locals_fupd (K t) (wl_state_store_fupd (K tstore) (st:(A,C,FFI)wl_state))) =
+      (wl_state_locals_fupd (combin_K t) (wl_state_store_fupd (combin_K tstore) (st:(A,C,FFI)wl_state))) =
     SOME vs'` ASSUME_TAC THENL
    [REWRITE_TAC[WALLOCPAUX_get_vars_locals_store] THEN
     MATCH_MP_TAC strong_locals_rel_I_get_vars' THEN
@@ -5552,7 +5552,7 @@ let WALLOCPAUX_rd_OpCurrHeap = prove
    [MATCH_MP_TAC strong_locals_rel_insert_notin THEN ASM_REWRITE_TAC[GSYM lookup_NONE_domain];
     ALL_TAC] THEN
   SUBGOAL_THEN
-    `wl_word_exp (wl_state_locals_fupd (K t) (wl_state_store_fupd (K tstore)
+    `wl_word_exp (wl_state_locals_fupd (combin_K t) (wl_state_store_fupd (combin_K tstore)
                     (st:(A,C,FFI)wl_state)))
        (wl_Op bop [wl_Var src; Lookup CurrHeap]) = SOME (a:(A)word_loc)`
     ASSUME_TAC THENL
@@ -5673,16 +5673,16 @@ let WALLOCPAUX_rd_Seq = prove
     MAP_EVERY EXISTS_TAC [`t2:((A)word_loc)spt`; `tstore2:(store_name,(A)word_loc)fmap`] THEN
     ASM_REWRITE_TAC[] THEN
     COND_CASES_TAC THENL
-     [UNDISCH_TAC `wl_evaluate (s1',wl_state_locals_fupd (K t) (wl_state_store_fupd (K tstore)
+     [UNDISCH_TAC `wl_evaluate (s1',wl_state_locals_fupd (combin_K t) (wl_state_store_fupd (combin_K tstore)
                      (st:(A,C,FFI)wl_state))) =
-                   (NONE,wl_state_locals_fupd (K t1) (wl_state_store_fupd (K tstore1) st1))` THEN
+                   (NONE,wl_state_locals_fupd (combin_K t1) (wl_state_store_fupd (combin_K tstore1) st1))` THEN
       ASM_REWRITE_TAC[] THEN ONCE_REWRITE_TAC[wl_evaluate_def] THEN REWRITE_TAC[PAIR_EQ] THEN
       DISCH_THEN SUBST1_TAC THEN ASM_REWRITE_TAC[];
       ALL_TAC] THEN
     COND_CASES_TAC THENL
-     [UNDISCH_TAC `wl_evaluate (s2',wl_state_locals_fupd (K t1) (wl_state_store_fupd (K tstore1)
+     [UNDISCH_TAC `wl_evaluate (s2',wl_state_locals_fupd (combin_K t1) (wl_state_store_fupd (combin_K tstore1)
                      (st1:(A,C,FFI)wl_state))) =
-                   (res,wl_state_locals_fupd (K t2) (wl_state_store_fupd (K tstore2) rst))` THEN
+                   (res,wl_state_locals_fupd (combin_K t2) (wl_state_store_fupd (combin_K tstore2) rst))` THEN
       ASM_REWRITE_TAC[] THEN ONCE_REWRITE_TAC[wl_evaluate_def] THEN
       DISCH_THEN(SUBST1_TAC o SYM) THEN ASM_REWRITE_TAC[];
       ALL_TAC] THEN
@@ -5699,10 +5699,10 @@ let WALLOCPAUX_rd_Seq = prove
   MAP_EVERY EXISTS_TAC [`t1:((A)word_loc)spt`; `tstore1:(store_name,(A)word_loc)fmap`] THEN
   ASM_REWRITE_TAC[option_CASE] THEN
   COND_CASES_TAC THENL
-   [UNDISCH_TAC `wl_evaluate (s1',wl_state_locals_fupd (K t) (wl_state_store_fupd (K tstore)
+   [UNDISCH_TAC `wl_evaluate (s1',wl_state_locals_fupd (combin_K t) (wl_state_store_fupd (combin_K tstore)
                    (st:(A,C,FFI)wl_state))) =
                  (SOME (x:(A)wl_result),
-                  wl_state_locals_fupd (K t1) (wl_state_store_fupd (K tstore1) st1))` THEN
+                  wl_state_locals_fupd (combin_K t1) (wl_state_store_fupd (combin_K tstore1) st1))` THEN
     ASM_REWRITE_TAC[] THEN ONCE_REWRITE_TAC[wl_evaluate_def] THEN
     REWRITE_TAC[PAIR_EQ; distinctness "option"];
     ALL_TAC] THEN
@@ -5730,15 +5730,15 @@ let WALLOCPAUX_rd_MustTerminate = prove
   COND_CASES_TAC THENL [REWRITE_TAC[PAIR_EQ] THEN ASM_MESON_TAC[]; ALL_TAC] THEN
   REWRITE_TAC[LET_DEF; LET_END_DEF] THEN CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
   WALLOCPAUX_TUPLE_TAC
-    `wl_evaluate (s1,wl_state_clock_fupd (K (MustTerminate_limit (:A)))
-       (wl_state_termdep_fupd (K (wl_state_termdep st - 1)) (st:(A,C,FFI)wl_state)))`
+    `wl_evaluate (s1,wl_state_clock_fupd (combin_K (MustTerminate_limit (:A)))
+       (wl_state_termdep_fupd (combin_K (wl_state_termdep st - 1)) (st:(A,C,FFI)wl_state)))`
     [`r1:((A)wl_result)option`; `st1:(A,C,FFI)wl_state`] THEN
   REWRITE_TAC[pair_CASE] THEN
   COND_CASES_TAC THENL [REWRITE_TAC[PAIR_EQ] THEN ASM_MESON_TAC[]; ALL_TAC] THEN
   REWRITE_TAC[PAIR_EQ] THEN DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
   REMOVE_THEN "ih" (MP_TAC o REWRITE_RULE[WALLOCPAUX_rd_Q_def] o
-    SPEC `wl_state_clock_fupd (K (MustTerminate_limit (:A)))
-       (wl_state_termdep_fupd (K (wl_state_termdep st - 1)) (st:(A,C,FFI)wl_state))`) THEN
+    SPEC `wl_state_clock_fupd (combin_K (MustTerminate_limit (:A)))
+       (wl_state_termdep_fupd (combin_K (wl_state_termdep st - 1)) (st:(A,C,FFI)wl_state))`) THEN
   DISCH_THEN(MP_TAC o SPECL [`s1':(A)wl_prog`; `s1live:1 spt`; `s1nlive:store_name list`;
     `t:((A)word_loc)spt`; `tstore:(store_name,(A)word_loc)fmap`;
     `r1:((A)wl_result)option`; `st1:(A,C,FFI)wl_state`]) THEN
@@ -5786,10 +5786,10 @@ let WALLOCPAUX_rd_If = prove
    `strong_locals_rel I (domain (e2_live:1 spt)) (wl_state_locals (st:(A,C,FFI)wl_state)) t /\
     strong_locals_rel I (domain (e3_live:1 spt)) (wl_state_locals st) t /\
     (!v. wl_get_var r1 st = SOME v ==>
-         wl_get_var r1 (wl_state_locals_fupd (K t) (wl_state_store_fupd (K tstore) st)) =
+         wl_get_var r1 (wl_state_locals_fupd (combin_K t) (wl_state_store_fupd (combin_K tstore) st)) =
          SOME v) /\
     (!v. wl_get_var_imm ri st = SOME v ==>
-         wl_get_var_imm ri (wl_state_locals_fupd (K t) (wl_state_store_fupd (K tstore) st)) =
+         wl_get_var_imm ri (wl_state_locals_fupd (combin_K t) (wl_state_store_fupd (combin_K tstore) st)) =
          SOME v)`
     STRIP_ASSUME_TAC THENL
    [FIRST_X_ASSUM(MP_TAC o check (fun th ->
@@ -5823,9 +5823,9 @@ let WALLOCPAUX_rd_If = prove
    [SIMP[] THEN ASM_MESON_TAC[]; ALL_TAC] THEN
   SIMP[] THEN DISCH_TAC THEN
   SUBGOAL_THEN
-   `wl_get_var r1 (wl_state_locals_fupd (K t) (wl_state_store_fupd (K tstore)
+   `wl_get_var r1 (wl_state_locals_fupd (combin_K t) (wl_state_store_fupd (combin_K tstore)
       (st:(A,C,FFI)wl_state))) = SOME x /\
-    wl_get_var_imm ri (wl_state_locals_fupd (K t) (wl_state_store_fupd (K tstore) st)) =
+    wl_get_var_imm ri (wl_state_locals_fupd (combin_K t) (wl_state_store_fupd (combin_K tstore) st)) =
       SOME y`
     STRIP_ASSUME_TAC THENL
    [CONJ_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[]; ALL_TAC] THEN
@@ -5865,14 +5865,14 @@ let WALLOCPAUX_push_env_handler = prove
 
 let WALLOCPAUX_call_env_push_locals = prove
  (`!args ss envs (h:(num#(A)wl_prog#num#num)option) t (s:(A,C,FFI)wl_state).
-     wl_call_env args ss (wl_push_env envs h (wl_dec_clock (wl_state_locals_fupd (K t) s))) =
+     wl_call_env args ss (wl_push_env envs h (wl_dec_clock (wl_state_locals_fupd (combin_K t) s))) =
      wl_call_env args ss (wl_push_env envs h (wl_dec_clock s)) /\
      wl_state_stack_max
-       (wl_call_env args ss (wl_push_env envs h (wl_state_locals_fupd (K t) s))) =
+       (wl_call_env args ss (wl_push_env envs h (wl_state_locals_fupd (combin_K t) s))) =
      wl_state_stack_max (wl_call_env args ss (wl_push_env envs h s))`,
   REPEAT GEN_TAC THEN
-  SUBGOAL_THEN `wl_dec_clock (wl_state_locals_fupd (K t) (s:(A,C,FFI)wl_state)) =
-                wl_state_locals_fupd (K t) (wl_dec_clock s)` SUBST1_TAC THENL
+  SUBGOAL_THEN `wl_dec_clock (wl_state_locals_fupd (combin_K t) (s:(A,C,FFI)wl_state)) =
+                wl_state_locals_fupd (combin_K t) (wl_dec_clock s)` SUBST1_TAC THENL
    [REWRITE_TAC[wl_dec_clock_def] THEN SIMP[]; ALL_TAC] THEN
   REWRITE_TAC[WALLOCPAUX_push_env_locals; wl_call_env_def] THEN SIMP[]);;
 
@@ -5915,7 +5915,7 @@ let WALLOCPAUX_rd_CallSome = prove
   DISCH_THEN(DISJ_CASES_THEN2 SUBST1_TAC (X_CHOOSE_THEN `xs:((A)word_loc)list`
     (fun th -> SUBST1_TAC th THEN ASSUME_TAC th))) THEN
   REWRITE_TAC[option_CASE] THENL [REWRITE_TAC[PAIR_EQ] THEN ASM_MESON_TAC[]; ALL_TAC] THEN
-  SUBGOAL_THEN `wl_get_vars args (wl_state_locals_fupd (K t) (st:(A,C,FFI)wl_state)) =
+  SUBGOAL_THEN `wl_get_vars args (wl_state_locals_fupd (combin_K t) (st:(A,C,FFI)wl_state)) =
                 SOME xs` SUBST1_TAC THENL
    [MATCH_MP_TAC strong_locals_rel_I_get_vars' THEN
     EXISTS_TAC `domain (sptree_union (sptree_union (FST (cutsets:1 spt#1 spt)) (SND cutsets))
@@ -6038,7 +6038,7 @@ let WALLOCPAUX_rd_CallNone = prove
   WALLOCPAUX_RD_OPEN_TAC THEN
   GVS[remove_dead_def; get_live_def; wl_evaluate_def; option_case_eq; pair_case_eq;
       case_eq "word_loc"] THEN
-  SUBGOAL_THEN `wl_get_vars args (wl_state_locals_fupd (K t) (st:(A,C,FFI)wl_state)) = SOME a`
+  SUBGOAL_THEN `wl_get_vars args (wl_state_locals_fupd (combin_K t) (st:(A,C,FFI)wl_state)) = SOME a`
     ASSUME_TAC THENL
    [MATCH_MP_TAC strong_locals_rel_I_get_vars' THEN
     EXISTS_TAC `domain (word_alloc_numset_list_insert args (LN:1 spt))` THEN
@@ -6164,9 +6164,9 @@ let WALLOCPAUX_rd_StoreConsts = prove
       case_eq "word_loc"; COND_CASE_EQ; wl_set_var_def; wl_unset_var_def; LET_DEF;
       LET_END_DEF] THEN
   SUBGOAL_THEN
-    `wl_get_var v35 (wl_state_locals_fupd (K t) (wl_state_store_fupd (K tstore)
+    `wl_get_var v35 (wl_state_locals_fupd (combin_K t) (wl_state_store_fupd (combin_K tstore)
        (st:(A,C,FFI)wl_state))) = SOME (wl_Word a) /\
-     wl_get_var v36 (wl_state_locals_fupd (K t) (wl_state_store_fupd (K tstore) st)) =
+     wl_get_var v36 (wl_state_locals_fupd (combin_K t) (wl_state_store_fupd (combin_K tstore) st)) =
        SOME (wl_Word a')`
     STRIP_ASSUME_TAC THENL
    [CONJ_TAC THEN MATCH_MP_TAC WALLOCPAUX_get_var_I THEN
@@ -6283,8 +6283,8 @@ let evaluate_remove_dead = prove
      remove_dead prog live nlive lt = (prog',livein,nlivein) /\
      ~(res = SOME wl_Error)
      ==> ?t' tstore'.
-           wl_evaluate (prog',wl_state_locals_fupd (K t) (wl_state_store_fupd (K tstore) st)) =
-           (res,wl_state_locals_fupd (K t') (wl_state_store_fupd (K tstore') rst)) /\
+           wl_evaluate (prog',wl_state_locals_fupd (combin_K t) (wl_state_store_fupd (combin_K tstore) st)) =
+           (res,wl_state_locals_fupd (combin_K t') (wl_state_store_fupd (combin_K tstore') rst)) /\
            (match res with
               NONE ->
                 strong_locals_rel I (domain live) (wl_state_locals rst) t' /\
@@ -6330,7 +6330,7 @@ let evaluate_remove_dead_prog = prove
      wl_evaluate (prog,st) = (res,rst) /\
      ~(res = SOME wl_Error)
      ==> ?t'. wl_evaluate (remove_dead_prog prog,st) =
-              (res,wl_state_locals_fupd (K t') rst) /\
+              (res,wl_state_locals_fupd (combin_K t') rst) /\
               (match res with
                  NONE -> T
                | SOME (wordSem_Break _) -> T
@@ -6613,7 +6613,7 @@ let mov_eval_head = prove
      ~MEM x (MAP FST moves)
      ==> wl_evaluate (wl_Move p (CONS (x,y) moves),st) =
          (NONE,wl_state_locals_fupd
-                 (K (insert x (THE (lookup y (wl_state_locals st))) (wl_state_locals rst)))
+                 (combin_K (insert x (THE (lookup y (wl_state_locals st))) (wl_state_locals rst)))
                  rst)`,
   REPEAT GEN_TAC THEN ONCE_REWRITE_TAC[wl_evaluate_def] THEN
   REWRITE_TAC[MAP; ALL_DISTINCT; FST; SND; wl_get_vars_def; wl_get_var_def] THEN
@@ -6945,7 +6945,7 @@ let WALLOCPAUX_evaluate_Move1 = prove
      y IN domain (wl_state_locals s)
      ==> wl_evaluate (wl_Move p [(x,y)]:(A)wl_prog,s) =
          (NONE,wl_state_locals_fupd
-                 (K (insert x (THE (lookup y (wl_state_locals s))) (wl_state_locals s))) s)`,
+                 (combin_K (insert x (THE (lookup y (wl_state_locals s))) (wl_state_locals s))) s)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[domain_lookup] THEN STRIP_TAC THEN
   ONCE_REWRITE_TAC[wl_evaluate_def] THEN
   REWRITE_TAC[MAP; ALL_DISTINCT; MEM; wl_get_vars_def; wl_get_var_def] THEN
@@ -7598,11 +7598,11 @@ let get_vars_list_insert_eq_gen = prove
  (`!(st:(A,C,FFI)wl_state) ls x locs a b.
      LENGTH ls = LENGTH x /\ ALL_DISTINCT ls /\
      LENGTH a = LENGTH b /\ (!e. MEM e ls ==> ~MEM e a)
-     ==> wl_get_vars ls (wl_state_locals_fupd (K (alist_insert (APPEND a ls) (APPEND b x) locs)) st) =
+     ==> wl_get_vars ls (wl_state_locals_fupd (combin_K (alist_insert (APPEND a ls) (APPEND b x) locs)) st) =
          SOME x`,
   REPEAT STRIP_TAC THEN ASM_SIMP_TAC[alist_insert_append] THEN
   MP_TAC(ISPECL [`ls:num list`;
-    `wl_state_locals_fupd (K (alist_insert a b (alist_insert ls x (locs:((A)word_loc)spt))))
+    `wl_state_locals_fupd (combin_K (alist_insert a b (alist_insert ls x (locs:((A)word_loc)spt))))
        (st:(A,C,FFI)wl_state)`] word_allocProof_get_vars_eq) THEN
   ANTS_TAC THENL
    [SIMP[] THEN ASM_SIMP_TAC[domain_alist_insert] THEN SET_TAC[];

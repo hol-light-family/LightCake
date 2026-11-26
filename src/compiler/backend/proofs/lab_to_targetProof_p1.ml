@@ -96,7 +96,7 @@ let sec_loc_to_pc_cons = prove
      if n2 = 0 \/ (?n1 k. l = lab_Label n1 n2 k) then SOME 0
      else OPTION_MAP (if is_Label l then I else SUC) (sec_loc_to_pc n2 lines)`,
   REPEAT GEN_TAC THEN GEN_REWRITE_TAC LAND_CONV [sec_loc_to_pc_def] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   ASM_CASES_TAC `n2 = 0` THEN ASM_REWRITE_TAC[] THEN
   COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
   COND_CASES_TAC THEN ASM_REWRITE_TAC[OPTION_MAP_id]);;
@@ -120,23 +120,23 @@ let loc_to_pc_thm = prove
                 | x -> x)
              else OPTION_MAP ((+) (LENGTH (FILTER ((~) o is_Label) xs))) (loc_to_pc n1 n2 ys)`,
   MATCH_MP_TAC loc_to_pc_ind THEN CONJ_TAC THENL
-   [REWRITE_TAC[loc_to_pc_def] THEN CASE_REWRITE_TAC[]; ALL_TAC] THEN
+   [REWRITE_TAC[loc_to_pc_def] THEN CAKE_REWRITE_TAC[]; ALL_TAC] THEN
   REPEAT GEN_TAC THEN STRIP_TAC THEN
-  REWRITE_TAC[ALL; sec_labels_ok_def] THEN STRIP_TAC THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[ALL; sec_labels_ok_def] THEN STRIP_TAC THEN CAKE_REWRITE_TAC[] THEN
   GEN_REWRITE_TAC LAND_CONV [loc_to_pc_def] THEN
-  CASES_ON `xs:((A)line)list` THEN CASE_REWRITE_TAC[] THENL
+  CASES_ON `xs:((A)line)list` THEN CAKE_REWRITE_TAC[] THENL
    [REWRITE_TAC[FILTER; LENGTH; plus_0_I; OPTION_MAP_id] THEN
-    ONCE_REWRITE_TAC[sec_loc_to_pc_def] THEN CASE_REWRITE_TAC[] THEN
+    ONCE_REWRITE_TAC[sec_loc_to_pc_def] THEN CAKE_REWRITE_TAC[] THEN
     ASM_CASES_TAC `n1 = k:num` THEN ASM_CASES_TAC `n2 = 0` THEN ASM_REWRITE_TAC[] THEN
-    CASE_REWRITE_TAC[];
+    CAKE_REWRITE_TAC[];
     ALL_TAC] THEN
   REWRITE_TAC[sec_loc_to_pc_cons; FILTER; o_THM] THEN
   RULE_ASSUM_TAC(fun th -> try SPECL [`a0:(A)line`; `a1:((A)line)list`] th
                            with Failure _ -> th) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[ALL; sec_labels_ok_def]) THEN
-  CASE_REWRITE_TAC[] THEN RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN
+  CAKE_REWRITE_TAC[] THEN RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN
   ASM_CASES_TAC `k:num = n1 /\ n2 = 0` THENL
-   [FIRST_X_ASSUM(CONJUNCTS_THEN SUBST_ALL_TAC) THEN REWRITE_TAC[] THEN CASE_REWRITE_TAC[];
+   [FIRST_X_ASSUM(CONJUNCTS_THEN SUBST_ALL_TAC) THEN REWRITE_TAC[] THEN CAKE_REWRITE_TAC[];
     ALL_TAC] THEN
   ASM_REWRITE_TAC[] THEN
   ASM_CASES_TAC `(?kk. (a0:(A)line) = lab_Label n1 n2 kk) /\ ~(n2 = 0)` THENL
@@ -162,11 +162,11 @@ let loc_to_pc_thm = prove
   ASM_CASES_TAC `is_Label (a0:(A)line)` THEN
   REPEAT(FIRST_X_ASSUM(fun th -> if is_imp(concl th) && is_imp(rand(concl th))
                                  then MP_TAC th else NO_TAC)) THEN
-  ASM_REWRITE_TAC[] THEN DISCH_THEN(fun th -> REWRITE_TAC[th]) THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN DISCH_THEN(fun th -> REWRITE_TAC[th]) THEN CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[OPTION_MAP_id; LENGTH] THEN
   CASES_ON `sec_loc_to_pc n2 (a1:((A)line)list)` THEN
   CASES_ON `loc_to_pc n1 n2 (ys:((A)sec)list)` THEN
-  ASM_REWRITE_TAC[OPTION_MAP_DEF] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[OPTION_MAP_DEF] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[injectivity "option"] THEN ARITH_TAC);;
 
 (* HOL4 line 93: temp_remove_rules_for_term "step" (a parser setting) *)
@@ -520,10 +520,10 @@ let lab_lookup_IMP = prove
  (`!l1 l2 labs x.
      lab_lookup l1 l2 labs = SOME x ==> find_pos (lab_Lab l1 l2) labs = x`,
   REPEAT GEN_TAC THEN REWRITE_TAC[lab_lookup_def; find_pos_def; lookup_any_def] THEN
-  CASES_ON `lookup l1 (labs:(num spt)spt)` THEN CASE_REWRITE_TAC[] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
-  CASES_ON `lookup l2 (a:num spt)` THEN CASE_REWRITE_TAC[] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN SIMP[]);;
+  CASES_ON `lookup l1 (labs:(num spt)spt)` THEN CAKE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
+  CASES_ON `lookup l2 (a:num spt)` THEN CAKE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN SIMP[]);;
 
 (* HOL4 line 364 *)
 let labs_domain_def = cake_def
@@ -534,7 +534,7 @@ let labs_domain_LN = prove
  (`labs_domain LN = {}`,
   REWRITE_TAC[labs_domain_def; lab_lookup_def; lookup_def; EXTENSION; NOT_IN_EMPTY;
               IN_ELIM_THM] THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[]);;
 
 let _ = cake_add_simps [labs_domain_LN];;
 
@@ -553,10 +553,10 @@ let labs_domain_insert = prove
               PAIR_EQ] THEN
   MAP_EVERY X_GEN_TAC [`a:num`; `b:num`] THEN REWRITE_TAC[lab_lookup_def; lookup_insert] THEN
   COND_CASES_TAC THENL
-   [FIRST_X_ASSUM SUBST_ALL_TAC THEN CASE_REWRITE_TAC[] THEN
+   [FIRST_X_ASSUM SUBST_ALL_TAC THEN CAKE_REWRITE_TAC[] THEN
     FIRST_X_ASSUM(MP_TAC o REWRITE_RULE[domain_lookup]) THEN
     REWRITE_TAC[domain_lookup] THEN
-    CASES_ON `lookup k (labs:(num spt)spt)` THEN CASE_REWRITE_TAC[] THEN SIMP[] THEN
+    CASES_ON `lookup k (labs:(num spt)spt)` THEN CAKE_REWRITE_TAC[] THEN SIMP[] THEN
     CASES_ON `lookup b (s:num spt)` THEN SIMP[];
     ASM_REWRITE_TAC[]]);;
 
@@ -601,7 +601,7 @@ let line_similar_def = prove
       line_similar (LabAsm v4 v5 v6 v7:(A)line) (lab_Label v8 v9 v10) <=> F) /\
    (!v4 v5 v6 v7 v8 v9 (v10:num).
       line_similar (LabAsm v4 v5 v6 v7:(A)line) (Asm v8 v9 v10) <=> F)`,
-  REWRITE_TAC[line_similar_DEF] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[line_similar_DEF] THEN CAKE_REWRITE_TAC[]);;
 
 (* HOL4 line 398: val line_similar_ind = theorem "line_similar_ind" (the    *)
 (* case split of HOL4's TFL, one case per clause of line_similar_def)       *)
@@ -919,16 +919,16 @@ let pos_val_thm0 = prove
                       (pos + SUM (MAP line_length s)) ss
           | SOME x -> x)`,
   MATCH_MP_TAC pos_val_ind THEN REPEAT CONJ_TAC THEN REPEAT GEN_TAC THENL
-   [REWRITE_TAC[pos_val_def] THEN CASE_REWRITE_TAC[];
-    DISCH_TAC THEN REWRITE_TAC[pos_val_def] THEN CASE_REWRITE_TAC[] THEN
+   [REWRITE_TAC[pos_val_def] THEN CAKE_REWRITE_TAC[];
+    DISCH_TAC THEN REWRITE_TAC[pos_val_def] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[sec_pos_val_def; FILTER; LENGTH; MAP; SUM; SUB_0; ADD_CLAUSES] THEN
-    CASE_REWRITE_TAC[];
+    CAKE_REWRITE_TAC[];
     ALL_TAC] THEN
-  STRIP_TAC THEN GEN_REWRITE_TAC LAND_CONV [pos_val_def] THEN CASE_REWRITE_TAC[] THEN
+  STRIP_TAC THEN GEN_REWRITE_TAC LAND_CONV [pos_val_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[sec_pos_val_def; FILTER; o_THM; MAP; SUM] THEN
   ASM_CASES_TAC `is_Label (y:(A)line)` THENL
-   [LTTP1AUX_IH_TAC THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[ADD_ASSOC];
-    ASM_CASES_TAC `i = 0` THEN LTTP1AUX_IH_TAC THEN CASE_REWRITE_TAC[] THEN
+   [LTTP1AUX_IH_TAC THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[ADD_ASSOC];
+    ASM_CASES_TAC `i = 0` THEN LTTP1AUX_IH_TAC THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[ADD_ASSOC; LENGTH; ARITH_RULE `i - 1 - n = i - SUC n`]]);;
 
 (* HOL4 line 659 *)
@@ -942,7 +942,7 @@ let pos_val_thm = prove
       | SOME x -> x)`,
   REPEAT GEN_TAC THEN CONJ_TAC THENL
    [REWRITE_TAC[pos_val_def];
-    GEN_REWRITE_TAC LAND_CONV [pos_val_thm0] THEN CASE_REWRITE_TAC[]]);;
+    GEN_REWRITE_TAC LAND_CONV [pos_val_thm0] THEN CAKE_REWRITE_TAC[]]);;
 
 (* HOL4 line 669 (HOL4 all_enc_ok_pre c code is ALL (sec_ok_pre c) code) *)
 let lab_to_targetProof_good_code_def = cake_def
@@ -1003,7 +1003,7 @@ let share_mem_state_rel_def = cake_def
         machine_config_prog_addresses mc_conf = asm_state_mem_domain t1 /\
         ad' = word_add (target_get_reg (machine_config_target mc_conf) ms2 ad) offs /\
         target_state_rel (machine_config_target mc_conf)
-          (asm_state_pc_fupd (K (EL index (machine_config_ffi_entry_pcs mc_conf))) t1) ms2
+          (asm_state_pc_fupd (combin_K (EL index (machine_config_ffi_entry_pcs mc_conf))) t1) ms2
         ==> ?op. EL index (machine_config_ffi_names mc_conf) = SharedMem op /\
                  (match op with
                     MappedRead ->
@@ -1016,9 +1016,9 @@ let share_mem_state_rel_def = cake_def
                       call_FFI st (SharedMem MappedRead) [nb] (word_to_bytes ad' F) =
                         FFI_return new_st new_bytes
                       ==> target_state_rel (machine_config_target mc_conf)
-                            (asm_state_pc_fupd (K pc')
+                            (asm_state_pc_fupd (combin_K pc')
                                (asm_state_regs_fupd
-                                  (K (\n. if n = re then word_of_bytes F (word 0) new_bytes
+                                  (combin_K (\n. if n = re then word_of_bytes F (word 0) new_bytes
                                           else asm_state_regs t1 n)) t1))
                             (machine_config_ffi_interfer mc_conf k (index,new_bytes,ms2))
                   | MappedWrite ->
@@ -1036,7 +1036,7 @@ let share_mem_state_rel_def = cake_def
                            (word_to_bytes ad' F)) =
                         FFI_return new_st new_bytes
                       ==> target_state_rel (machine_config_target mc_conf)
-                            (asm_state_pc_fupd (K pc') t1)
+                            (asm_state_pc_fupd (combin_K pc') t1)
                             (machine_config_ffi_interfer mc_conf k (index,new_bytes,ms2)))) /\
      (!index i.
         mmio_pcs_min_index (machine_config_ffi_names mc_conf) = SOME i /\
@@ -1190,7 +1190,7 @@ let oracle_tie_ExtCall_residues = prove
      (!k. find_next_interference mc_conf (lab_state_ffi s1) (k + l) ms1 =
           find_next_interference
             (machine_config_next_interfer_fupd
-               (K (shift_seq l (machine_config_next_interfer mc_conf))) mc_conf)
+               (combin_K (shift_seq l (machine_config_next_interfer mc_conf))) mc_conf)
             (lab_state_ffi s1) k ms2) /\
      ~(target_get_pc (machine_config_target mc_conf) ms2 IN
        machine_config_prog_addresses mc_conf DIFF
@@ -1216,7 +1216,7 @@ let oracle_tie_ExtCall_residues = prove
                 (machine_config_ffi_interfer mc_conf 0 (index,new_bytes,ms2)) n)`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   ABBREV_TAC `mc2 = machine_config_next_interfer_fupd
-                      (K (shift_seq l (machine_config_next_interfer mc_conf)))
+                      (combin_K (shift_seq l (machine_config_next_interfer mc_conf)))
                       (mc_conf:(A,B,C)machine_config)` THEN
   SUBGOAL_THEN `next_interference (mc_conf:(A,B,C)machine_config)
                   (lab_state_ffi (s1:(A,D,FFI)lab_state)) ms1 =
@@ -1228,7 +1228,7 @@ let oracle_tie_ExtCall_residues = prove
                         (machine_config_ffi_interfer (mc_conf:(A,B,C)machine_config) 0
                            (index,new_bytes,ms2)),
                       machine_config_ffi_interfer_fupd
-                        (K (shift_seq 1 (machine_config_ffi_interfer mc_conf))) mc2,
+                        (combin_K (shift_seq 1 (machine_config_ffi_interfer mc_conf))) mc2,
                       new_ffi)` ASSUME_TAC THENL
    [SUBGOAL_THEN `machine_config_ffi_interfer (mc_conf:(A,B,C)machine_config) =
                   machine_config_ffi_interfer (mc2:(A,B,C)machine_config)` SUBST1_TAC THENL
@@ -1245,7 +1245,7 @@ let oracle_tie_ExtCall_residues = prove
     `index:num`; `new_bytes:byte list`; `ms2:B`;
     `machine_config_ffi_interfer (mc_conf:(A,B,C)machine_config) 0 (index,new_bytes,ms2)`;
     `machine_config_ffi_interfer_fupd
-       (K (shift_seq 1 (machine_config_ffi_interfer (mc_conf:(A,B,C)machine_config))))
+       (combin_K (shift_seq 1 (machine_config_ffi_interfer (mc_conf:(A,B,C)machine_config))))
        (mc2:(A,B,C)machine_config)`;
     `new_ffi:(FFI)ffi_state`] oracle_tie_ffi_step) THEN
   ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
@@ -1284,14 +1284,14 @@ let lab_to_targetProof_state_rel_def = cake_def
           FFI_return new_st new_bytes /\
         machine_config_prog_addresses mc_conf = asm_state_mem_domain t1 /\
         target_state_rel (machine_config_target mc_conf)
-          (asm_state_pc_fupd (K (word_sub p (word ((3 + index) * ffi_offset)))) t1) ms2 /\
+          (asm_state_pc_fupd (combin_K (word_sub p (word ((3 + index) * ffi_offset)))) t1) ms2 /\
         alignment_aligned
           (asm_config_code_alignment (target_config (machine_config_target mc_conf)))
           (asm_state_regs t1 (lab_state_link_reg s1))
         ==> (let ms' = machine_config_ffi_interfer mc_conf k (index,new_bytes,ms2) in
              target_state_rel (machine_config_target mc_conf)
                (asm_state_regs_fupd
-                  (K (\a. if MEM a (machine_config_callee_saved_regs mc_conf) \/
+                  (combin_K (\a. if MEM a (machine_config_callee_saved_regs mc_conf) \/
                              ~(a < asm_config_reg_count
                                      (target_config (machine_config_target mc_conf))) \/
                              MEM a (asm_config_avoid_regs
@@ -1299,22 +1299,22 @@ let lab_to_targetProof_state_rel_def = cake_def
                           then asm_state_regs t1 a
                           else target_get_reg (machine_config_target mc_conf) ms' a))
                 (asm_state_fp_regs_fupd
-                  (K (\n. target_get_fp_reg (machine_config_target mc_conf) ms' n))
+                  (combin_K (\n. target_get_fp_reg (machine_config_target mc_conf) ms' n))
                 (asm_state_mem_fupd
-                  (K (asm_write_bytearray (asm_state_regs t1 (lab_state_ptr2_reg s1))
+                  (combin_K (asm_write_bytearray (asm_state_regs t1 (lab_state_ptr2_reg s1))
                         new_bytes (asm_state_mem t1)))
-                (asm_state_pc_fupd (K (asm_state_regs t1 (lab_state_link_reg s1))) t1))))
+                (asm_state_pc_fupd (combin_K (asm_state_regs t1 (lab_state_link_reg s1))) t1))))
                ms')) /\
      (!ms2 t1 k a1 a2.
         target_state_rel (machine_config_target mc_conf)
-          (asm_state_pc_fupd (K (word_sub p (word (2 * ffi_offset)))) t1) ms2 /\
+          (asm_state_pc_fupd (combin_K (word_sub p (word (2 * ffi_offset)))) t1) ms2 /\
         alignment_aligned
           (asm_config_code_alignment (target_config (machine_config_target mc_conf)))
           (asm_state_regs t1 (lab_state_link_reg s1))
         ==> (let ms' = machine_config_ccache_interfer mc_conf k (a1,a2,ms2) in
              target_state_rel (machine_config_target mc_conf)
                (asm_state_regs_fupd
-                  (K (\a. if MEM a (machine_config_callee_saved_regs mc_conf) \/
+                  (combin_K (\a. if MEM a (machine_config_callee_saved_regs mc_conf) \/
                              a = lab_state_ptr_reg s1 \/
                              ~(a < asm_config_reg_count
                                      (target_config (machine_config_target mc_conf))) \/
@@ -1323,8 +1323,8 @@ let lab_to_targetProof_state_rel_def = cake_def
                           then asm_state_regs t1 a
                           else target_get_reg (machine_config_target mc_conf) ms' a))
                 (asm_state_fp_regs_fupd
-                  (K (\n. target_get_fp_reg (machine_config_target mc_conf) ms' n))
-                (asm_state_pc_fupd (K (asm_state_regs t1 (lab_state_link_reg s1))) t1)))
+                  (combin_K (\n. target_get_fp_reg (machine_config_target mc_conf) ms' n))
+                (asm_state_pc_fupd (combin_K (asm_state_regs t1 (lab_state_link_reg s1))) t1)))
                ms')) /\
      lab_state_compile s1 = compile_lab (target_config (machine_config_target mc_conf)) /\
      (no_share_mem_inst code2
@@ -1416,7 +1416,7 @@ let LTTP1AUX_CONJ_TAC (p:term->bool) (ttac:thm_tactic) : tactic =
 (* HOL4 line 1098 *)
 let oracle_tie_clock = prove
  (`!(mc_conf:(A,B,C)machine_config) ms (s1:(A,D,FFI)lab_state) k.
-     oracle_tie mc_conf ms s1 ==> oracle_tie mc_conf ms (lab_state_clock_fupd (K k) s1)`,
+     oracle_tie mc_conf ms s1 ==> oracle_tie mc_conf ms (lab_state_clock_fupd (combin_K k) s1)`,
   REWRITE_TAC[oracle_tie_def] THEN SIMP[]);;
 
 (* HOL4 line 1105 *)
@@ -1424,7 +1424,7 @@ let lab_to_targetProof_state_rel_clock = prove
  (`!x (s1:(A,lab_to_target_config,FFI)lab_state) (t1:(A)asm_state) (ms:B) k.
      lab_to_targetProof_state_rel (x:(A,B,C)machine_config#((A)sec)list#(num spt)spt#A word)
        s1 t1 ms
-     ==> lab_to_targetProof_state_rel x (lab_state_clock_fupd (K k) s1) t1 ms`,
+     ==> lab_to_targetProof_state_rel x (lab_state_clock_fupd (combin_K k) s1) t1 ms`,
   REWRITE_TAC[FORALL_PAIR_THM; lab_to_targetProof_state_rel_def; share_mem_state_rel_def;
               (record_info "lab_state").ri_accfupds]);;
 
@@ -1435,7 +1435,7 @@ let share_mem_state_rel_shift_interfer = prove
      share_mem_state_rel mc_conf s1 t1 x
      ==> share_mem_state_rel
            (machine_config_next_interfer_fupd
-              (K (\i. machine_config_next_interfer mc_conf (i + l))) mc_conf) s1 t1 x`,
+              (combin_K (\i. machine_config_next_interfer mc_conf (i + l))) mc_conf) s1 t1 x`,
   REWRITE_TAC[share_mem_state_rel_def; (record_info "machine_config").ri_accfupds]);;
 
 (* HOL4 line 1130 *)
@@ -1444,7 +1444,7 @@ let share_mem_domain_code_rel_shift_interfer = prove
      share_mem_domain_code_rel mc_conf p code2 (lab_state_shared_mem_domain s1)
      ==> share_mem_domain_code_rel
            (machine_config_next_interfer_fupd
-              (K (\i. machine_config_next_interfer mc_conf (i + l))) mc_conf)
+              (combin_K (\i. machine_config_next_interfer mc_conf (i + l))) mc_conf)
            p code2 (lab_state_shared_mem_domain s1)`,
   REWRITE_TAC[share_mem_domain_code_rel_def; (record_info "machine_config").ri_accfupds]);;
 
@@ -1691,7 +1691,7 @@ let IMP_bytes_in_memory_Jump = prove
   CASES_ON `j:(A)line` THEN REWRITE_TAC[line_similar_def; line_bytes_def] THEN
   STRIP_TAC THEN RVEQ_TAC THEN CASES_ON `jtarget:lab` THEN
   RULE_ASSUM_TAC(REWRITE_RULE[line_ok_def; get_label_def; lab_inst_def]) THEN
-  RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN
+  RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN
   CASES_ON `lab_lookup a0' a1' (labs:(num spt)spt)` THEN FS[] THEN
   FIRST_X_ASSUM(ASSUME_TAC o MATCH_MP lab_lookup_IMP) THEN
   FS[LET_DEF; LET_END_DEF; enc_with_nop_thm] THEN RVEQ_TAC THEN
@@ -1719,7 +1719,7 @@ let IMP_bytes_in_memory_JumpCmp = prove
   CASES_ON `j:(A)line` THEN REWRITE_TAC[line_similar_def; line_bytes_def] THEN
   STRIP_TAC THEN RVEQ_TAC THEN CASES_ON `jtarget:lab` THEN
   RULE_ASSUM_TAC(REWRITE_RULE[line_ok_def; get_label_def; lab_inst_def]) THEN
-  RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN
+  RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN
   CASES_ON `lab_lookup a0' a1' (labs:(num spt)spt)` THEN FS[] THEN
   FIRST_X_ASSUM(ASSUME_TAC o MATCH_MP lab_lookup_IMP) THEN
   FS[LET_DEF; LET_END_DEF; enc_with_nop_thm] THEN RVEQ_TAC THEN
@@ -1749,7 +1749,7 @@ let IMP_bytes_in_memory_JumpCmp_1 = prove
   CASES_ON `j:(A)line` THEN REWRITE_TAC[line_similar_def; line_bytes_def] THEN
   STRIP_TAC THEN RVEQ_TAC THEN CASES_ON `jtarget:lab` THEN
   RULE_ASSUM_TAC(REWRITE_RULE[line_ok_def; get_label_def; lab_inst_def]) THEN
-  RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN
+  RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN
   CASES_ON `lab_lookup a0' a1' (labs:(num spt)spt)` THEN FS[] THEN
   FIRST_X_ASSUM(ASSUME_TAC o MATCH_MP lab_lookup_IMP) THEN
   FS[LET_DEF; LET_END_DEF] THEN EXISTS_TAC `a2:byte list` THEN ASM_REWRITE_TAC[]);;
@@ -1794,7 +1794,7 @@ let IMP_bytes_in_memory_LocValue = prove
   CASES_ON `j:(A)line` THEN REWRITE_TAC[line_similar_def; line_bytes_def] THEN
   STRIP_TAC THEN RVEQ_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[line_ok_def; get_label_def; lab_inst_def]) THEN
-  RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN
+  RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN
   CASES_ON `lab_lookup l1 l2 (labs:(num spt)spt)` THEN FS[] THEN
   FIRST_X_ASSUM(ASSUME_TAC o MATCH_MP lab_lookup_IMP) THEN
   FS[LET_DEF; LET_END_DEF] THEN EXISTS_TAC `a2:byte list` THEN ASM_REWRITE_TAC[]);;
@@ -1823,7 +1823,7 @@ let IMP_bytes_in_memory_Inst = prove
   CASES_ON `j:(A)line` THEN REWRITE_TAC[line_similar_def; line_bytes_def] THEN
   STRIP_TAC THEN RVEQ_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[line_ok_def; cbw_to_asm_def]) THEN
-  RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN
+  RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN
   EXISTS_TAC `a1:byte list` THEN ASM_REWRITE_TAC[]);;
 
 (* HOL4 line 1445 *)
@@ -1851,7 +1851,7 @@ let IMP_bytes_in_memory_Cbw = prove
   CASES_ON `j:(A)line` THEN REWRITE_TAC[line_similar_def; line_bytes_def] THEN
   STRIP_TAC THEN RVEQ_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[line_ok_def; cbw_to_asm_def]) THEN
-  RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN
+  RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN
   EXISTS_TAC `a1:byte list` THEN ASM_REWRITE_TAC[]);;
 
 (* HOL4 line 1474 *)
@@ -2049,7 +2049,7 @@ let IMP_bytes_in_memory_ShareMem = prove
   CASES_ON `j:(A)line` THEN REWRITE_TAC[line_similar_def; line_bytes_def] THEN
   STRIP_TAC THEN RVEQ_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[line_ok_def; cbw_to_asm_def]) THEN
-  RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN
+  RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN
   EXISTS_TAC `a1:byte list` THEN ASM_REWRITE_TAC[] THEN
   MP_TAC(SPECL [`lab_state_pc (s1:(A,lab_to_target_config,FFI)lab_state)`;
     `lab_state_code (s1:(A,lab_to_target_config,FFI)lab_state)`; `code2:((A)sec)list`]
@@ -2063,7 +2063,7 @@ let IMP_bytes_in_memory_ShareMem = prove
     `code2:((A)sec)list`; `target_config (machine_config_target (mc_conf:(A,B,C)machine_config))`;
     `labs:(num spt)spt`; `ffi_names:ffiname list`;
     `Asm (ShareMem mop r ad) a1' a2':(A)line`] all_enc_ok_asm_fetch_aux_IMP_line_ok) THEN
-  ASM_REWRITE_TAC[line_ok_def; cbw_to_asm_def] THEN CASE_REWRITE_TAC[] THEN STRIP_TAC THEN
+  ASM_REWRITE_TAC[line_ok_def; cbw_to_asm_def] THEN CAKE_REWRITE_TAC[] THEN STRIP_TAC THEN
   MP_TAC(ISPECL [`lab_state_pc (s1:(A,lab_to_target_config,FFI)lab_state)`; `0`;
     `code2:((A)sec)list`; `Asm (ShareMem mop r ad) a1' a2':(A)line`;
     `target_config (machine_config_target (mc_conf:(A,B,C)machine_config))`;
@@ -2095,12 +2095,12 @@ let LTTP1AUX_state_rel_mem = prove
   DISCH_THEN(CONJUNCTS_THEN2 STRIP_ASSUME_TAC MP_TAC) THEN
   REWRITE_TAC[mem_load_byte_aux_def] THEN
   CASES_ON `lab_state_mem (s1:(A,lab_to_target_config,FFI)lab_state) (byte_align (a:A word))` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   COND_CASES_TAC THEN REWRITE_TAC[option_INJ; option_DISTINCT] THEN
   DISCH_THEN(SUBST1_TAC o SYM) THEN
   FIRST_X_ASSUM(MP_TAC o SPEC `a:A word` o check (fun th ->
     can (find_term (fun t -> is_const t && fst(dest_const t) = "word_loc_val_byte")) (concl th))) THEN
-  ASM_REWRITE_TAC[word_loc_val_byte_def; word_loc_val_def] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[word_loc_val_byte_def; word_loc_val_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[option_INJ] THEN MESON_TAC[]);;
 
 (* HOL4 line 1666 *)
@@ -2118,19 +2118,19 @@ let read_bytearray_state_rel = prove
   DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC MP_TAC) THEN
   CASES_ON `mem_load_byte_aux (lab_state_mem (s1:(A,lab_to_target_config,FFI)lab_state))
               (lab_state_mem_domain s1) (lab_state_be s1) (a:A word)` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   MP_TAC(SPECL [`mc_conf:(A,B,C)machine_config`; `code2:((A)sec)list`; `labs:(num spt)spt`;
     `p:A word`; `s1:(A,lab_to_target_config,FFI)lab_state`; `t1:(A)asm_state`; `ms1:B`;
     `a:A word`; `a':byte`] LTTP1AUX_state_rel_mem) THEN
-  ASM_REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   CASES_ON `read_bytearray (word_add (a:A word) (word 1)) n
               (mem_load_byte_aux (lab_state_mem (s1:(A,lab_to_target_config,FFI)lab_state))
                  (lab_state_mem_domain s1) (lab_state_be s1))` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN DISCH_TAC THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN DISCH_TAC THEN
   FIRST_X_ASSUM(MP_TAC o SPECL [`word_add (a:A word) (word 1)`; `a'':byte list`;
     `mc_conf:(A,B,C)machine_config`; `code2:((A)sec)list`; `labs:(num spt)spt`;
     `p:A word`; `s1:(A,lab_to_target_config,FFI)lab_state`; `t1:(A)asm_state`; `ms1:B`]) THEN
-  ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[]);;
 
 (* HOL4 line 1686 *)
@@ -2149,7 +2149,7 @@ let IMP_has_io_name = prove
   ASM_CASES_TAC `is_Label (y:(A)line)` THEN ASM_REWRITE_TAC[] THENL
    [ASM_MESON_TAC[]; ALL_TAC] THEN
   ASM_CASES_TAC `pos = 0` THEN ASM_REWRITE_TAC[option_INJ] THENL
-   [DISCH_THEN SUBST1_TAC THEN CASE_REWRITE_TAC[]; ASM_MESON_TAC[]]);;
+   [DISCH_THEN SUBST1_TAC THEN CAKE_REWRITE_TAC[]; ASM_MESON_TAC[]]);;
 
 (* HOL4 line 1700 *)
 let bytes_in_mem_asm_write_bytearray_lemma = prove
@@ -2164,7 +2164,7 @@ let LTTP1AUX_mem_load_byte_aux_SOME = prove
      mem_load_byte_aux m dm be a = SOME b ==> byte_align a IN dm`,
   REPEAT GEN_TAC THEN REWRITE_TAC[mem_load_byte_aux_def] THEN
   CASES_ON `(m:A word->(A)word_loc) (byte_align a)` THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[] THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[option_DISTINCT]);;
+  CAKE_REWRITE_TAC[] THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[option_DISTINCT]);;
 
 (* HOL4 line 1709 *)
 let bytes_in_mem_asm_write_bytearray = prove
@@ -2187,11 +2187,11 @@ let bytes_in_mem_asm_write_bytearray = prove
   REPEAT GEN_TAC THEN
   CASES_ON `mem_load_byte_aux (lab_state_mem (s1:(A,D,FFI)lab_state))
               (lab_state_mem_domain s1) (lab_state_be s1) (c1:A word)` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   CASES_ON `read_bytearray (word_add (c1:A word) (word 1)) (LENGTH (t:byte list))
               (mem_load_byte_aux (lab_state_mem (s1:(A,D,FFI)lab_state))
                  (lab_state_mem_domain s1) (lab_state_be s1))` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN DISCH_TAC THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN DISCH_TAC THEN
   X_GEN_TAC `b:A word` THEN DISCH_TAC THEN REWRITE_TAC[APPLY_UPDATE_THM] THEN
   COND_CASES_TAC THENL
    [FIRST_X_ASSUM(MP_TAC o MATCH_MP LTTP1AUX_mem_load_byte_aux_SOME) THEN
@@ -2209,7 +2209,7 @@ let LTTP1AUX_write_bytearray_Word = prove
   REWRITE_TAC[mem_store_byte_aux_def] THEN
   CASES_ON `write_bytearray (word_add (c1:A word) (word 1)) t (m:A word->(A)word_loc) dm be
               (byte_align c1)` THEN
-  CASE_REWRITE_TAC[] THEN TRY COND_CASES_TAC THEN CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN TRY COND_CASES_TAC THEN CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[APPLY_UPDATE_THM] THEN TRY COND_CASES_TAC THEN ASM_MESON_TAC[]);;
 
 (* HOL4 line 1735 *)
@@ -2234,10 +2234,10 @@ let LTTP1AUX_write_bytearray_byte = prove
   LIST_INDUCT_TAC THEN REWRITE_TAC[write_bytearray_def; asm_write_bytearray_def] THEN
   REPEAT GEN_TAC THEN REWRITE_TAC[LENGTH; read_bytearray_def] THEN
   CASES_ON `mem_load_byte_aux (m:A word->(A)word_loc) dm be c1` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   CASES_ON `read_bytearray (word_add (c1:A word) (word 1)) (LENGTH (t:byte list))
               (mem_load_byte_aux (m:A word->(A)word_loc) dm be)` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN STRIP_TAC THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN STRIP_TAC THEN
   FIRST_X_ASSUM(MP_TAC o SPECL [`word_add (c1:A word) (word 1)`; `m:A word->(A)word_loc`;
     `dm:A word->bool`; `be:bool`; `tm:A word->byte`; `a'':byte list`; `p:A word`;
     `labs:(num spt)spt`; `a:A word`]) THEN
@@ -2247,14 +2247,14 @@ let LTTP1AUX_write_bytearray_byte = prove
    [UNDISCH_TAC `mem_load_byte_aux (m:A word->(A)word_loc) dm be c1 = SOME a'` THEN
     REWRITE_TAC[mem_load_byte_aux_def] THEN
     CASES_ON `(m:A word->(A)word_loc) (byte_align c1)` THEN ASM_REWRITE_TAC[] THEN
-    CASE_REWRITE_TAC[] THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[option_DISTINCT] THEN
+    CAKE_REWRITE_TAC[] THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[option_DISTINCT] THEN
     MESON_TAC[];
     ALL_TAC] THEN
   MP_TAC(SPECL [`t:byte list`; `word_add (c1:A word) (word 1)`; `m:A word->(A)word_loc`;
     `dm:A word->bool`; `be:bool`; `byte_align (c1:A word)`] LTTP1AUX_write_bytearray_Word) THEN
   ANTS_TAC THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_TAC `v:A word`) THEN
-  REWRITE_TAC[mem_store_byte_aux_def] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[mem_store_byte_aux_def] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   UNDISCH_TAC `write_bytearray (word_add (c1:A word) (word 1)) t (m:A word->(A)word_loc) dm be
                  (byte_align c1) = wl_Word v` THEN
   UNDISCH_TAC `word_loc_val_byte (p:A word) labs
@@ -2268,18 +2268,18 @@ let LTTP1AUX_write_bytearray_byte = prove
   REWRITE_TAC[word_loc_val_byte_def; APPLY_UPDATE_THM] THEN
   ASM_CASES_TAC `a:A word = c1` THENL
    [FIRST_X_ASSUM SUBST_ALL_TAC THEN ASM_REWRITE_TAC[word_loc_val_def] THEN
-    CASE_REWRITE_TAC[] THEN ASM_SIMP_TAC[good_dimindex_get_byte_set_byte];
+    CAKE_REWRITE_TAC[] THEN ASM_SIMP_TAC[good_dimindex_get_byte_set_byte];
     ALL_TAC] THEN
   ASM_REWRITE_TAC[] THEN
   ASM_CASES_TAC `byte_align (c1:A word) = byte_align a` THEN ASM_REWRITE_TAC[] THENL
-   [REWRITE_TAC[word_loc_val_def] THEN CASE_REWRITE_TAC[] THEN
+   [REWRITE_TAC[word_loc_val_def] THEN CAKE_REWRITE_TAC[] THEN
     ASM_SIMP_TAC[get_byte_set_byte_diff] THEN
     UNDISCH_TAC `word_loc_val_byte (p:A word) labs (M:A word->(A)word_loc) a be =
                  SOME ((TM:A word->byte) a)` THEN
     REWRITE_TAC[word_loc_val_byte_def] THEN
     FIRST_X_ASSUM(SUBST1_TAC o SYM o check (fun th -> concl th =
       `byte_align (c1:A word) = byte_align a`)) THEN
-    ASM_REWRITE_TAC[word_loc_val_def] THEN CASE_REWRITE_TAC[];
+    ASM_REWRITE_TAC[word_loc_val_def] THEN CAKE_REWRITE_TAC[];
     UNDISCH_TAC `word_loc_val_byte (p:A word) labs (M:A word->(A)word_loc) a be =
                  SOME ((TM:A word->byte) a)` THEN
     REWRITE_TAC[word_loc_val_byte_def]]);;
@@ -2635,7 +2635,7 @@ let fp_upd_lemma = prove
   FIRST_X_ASSUM(fun th -> if is_eq(concl th) &&
                             lhs(concl th) = `lab_state_fp_regs (s1:(A,D,FFI)lab_state)`
                          then SUBST_ALL_TAC th else NO_TAC) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[LTTP1AUX_lab_regs_upd; LTTP1AUX_fp_upd_simps; fpfma_def] THEN
   REPEAT CONJ_TAC THEN
   REPEAT(MATCH_MP_TAC LTTP1AUX_word_loc_val_upd THEN CONJ_TAC THENL
@@ -2647,11 +2647,11 @@ let lab_to_targetProof_Inst_share_mem_pc_update_helper = prove
  (`!(mc_conf:(A,B,C)machine_config) (s1:(A,lab_to_target_config,FFI)lab_state)
      (t1:(A)asm_state) ms1 pc' ms2.
      share_mem_state_rel mc_conf s1 t1 ms1 /\
-     target_state_rel (machine_config_target mc_conf) (asm_state_pc_fupd (K pc') t1) ms2
+     target_state_rel (machine_config_target mc_conf) (asm_state_pc_fupd (combin_K pc') t1) ms2
      ==> share_mem_state_rel mc_conf
-           (lab_state_pc_fupd (K (lab_state_pc s1 + 1))
-              (lab_state_clock_fupd (K (lab_state_clock s1 - 1)) s1))
-           (asm_state_pc_fupd (K pc') t1) ms2`,
+           (lab_state_pc_fupd (combin_K (lab_state_pc s1 + 1))
+              (lab_state_clock_fupd (combin_K (lab_state_clock s1 - 1)) s1))
+           (asm_state_pc_fupd (combin_K pc') t1) ms2`,
   REWRITE_TAC[share_mem_state_rel_def; (record_info "lab_state").ri_accfupds] THEN
   REPEAT GEN_TAC THEN DISCH_THEN(ACCEPT_TAC o CONJUNCT1));;
 
@@ -2661,14 +2661,14 @@ let lab_to_targetProof_Inst_share_mem_reg_update_helper = prove
      (t1:(A)asm_state) ms1 n c pc' ms2.
      share_mem_state_rel mc_conf s1 t1 ms1 /\
      target_state_rel (machine_config_target mc_conf)
-       (asm_state_regs_fupd (K ((n =+ c) (asm_state_regs t1)))
-          (asm_state_pc_fupd (K pc') t1)) ms2
+       (asm_state_regs_fupd (combin_K ((n =+ c) (asm_state_regs t1)))
+          (asm_state_pc_fupd (combin_K pc') t1)) ms2
      ==> share_mem_state_rel mc_conf
-           (lab_state_regs_fupd (K ((n =+ wl_Word c) (lab_state_regs s1)))
-              (lab_state_pc_fupd (K (lab_state_pc s1 + 1))
-                 (lab_state_clock_fupd (K (lab_state_clock s1 - 1)) s1)))
-           (asm_state_regs_fupd (K ((n =+ c) (asm_state_regs t1)))
-              (asm_state_pc_fupd (K pc') t1)) ms2`,
+           (lab_state_regs_fupd (combin_K ((n =+ wl_Word c) (lab_state_regs s1)))
+              (lab_state_pc_fupd (combin_K (lab_state_pc s1 + 1))
+                 (lab_state_clock_fupd (combin_K (lab_state_clock s1 - 1)) s1)))
+           (asm_state_regs_fupd (combin_K ((n =+ c) (asm_state_regs t1)))
+              (asm_state_pc_fupd (combin_K pc') t1)) ms2`,
   REWRITE_TAC[share_mem_state_rel_def; (record_info "lab_state").ri_accfupds] THEN
   REPEAT GEN_TAC THEN DISCH_THEN(ACCEPT_TAC o CONJUNCT1));;
 
@@ -2797,7 +2797,7 @@ let LTTP1AUX_arith_upd_failed = prove
   TRY(CASES_ON `a0:binop`) THEN TRY(CASES_ON `a3:(A)reg_imm`) THEN
   REWRITE_TAC[asm_arith_upd_def; asm_binop_upd_def; asm_reg_imm_def; read_reg_def;
               LET_DEF; LET_END_DEF; LTTP1AUX_asm_failed_upd] THEN
-  CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
   RULE_ASSUM_TAC(REWRITE_RULE[lab_arith_upd_def; lab_binop_upd_def; lab_reg_imm_def;
                               LET_DEF; LET_END_DEF]) THEN
   EVERY_CASE_TAC THEN TRY RES_TAC THEN
@@ -2825,7 +2825,7 @@ let LTTP1AUX_fp_upd_failed = prove
                             lhs(concl th) = `lab_state_fp_regs (s1:(A,D,FFI)lab_state)`
                          then SUBST_ALL_TAC th else NO_TAC) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[DE_MORGAN_THM]) THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[LTTP1AUX_asm_failed_upd] THEN ASM_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[LTTP1AUX_asm_failed_upd] THEN ASM_REWRITE_TAC[] THEN
   FS[]);;
 let LTTP1AUX_rmw_consts = prove
  (`!n (a:A word) s.
@@ -3094,7 +3094,7 @@ let LTTP1AUX_word_bytes = prove
     SPEC `w:A word`) THEN
   ASM_REWRITE_TAC[word_loc_val_byte_def] THEN
   CASES_ON `word_loc_val (p:A word) labs (lab_state_mem (s1:(A,D,FFI)lab_state) w)` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[option_DISTINCT] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[option_DISTINCT] THEN
   DISCH_TAC THEN EXISTS_TAC `a:A word` THEN REWRITE_TAC[] THEN
   X_GEN_TAC `m:num` THEN DISCH_TAC THEN
   USE_THEN "lay" (MP_TAC o C MP (ASSUME `m < dimindex(:A) DIV 8`) o SPEC `m:num`) THEN
@@ -3105,7 +3105,7 @@ let LTTP1AUX_word_bytes = prove
   USE_THEN "mem" (MP_TAC o C MP (ASSUME `byte_align (word_add (w:A word) (word m)) IN
                 lab_state_mem_domain (s1:(A,D,FFI)lab_state)`) o
     SPEC `word_add (w:A word) (word m)`) THEN
-  ASM_REWRITE_TAC[word_loc_val_byte_def] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[word_loc_val_byte_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[option_INJ; get_byte_def] THEN ASM_REWRITE_TAC[] THEN MESON_TAC[]);;
 let LTTP1AUX_inst_load = prove
  (`!(p:A word) labs (s1:(A,D,FFI)lab_state) (t1:(A)asm_state) r a.
@@ -3129,7 +3129,7 @@ let LTTP1AUX_inst_load = prove
     fst(dest_const t) = "lab_mem_load")) (concl th))) THEN
   REWRITE_TAC[lab_mem_load_def; lab_addr_def] THEN
   CASES_ON `lab_state_regs (s1:(A,D,FFI)lab_state) a0` THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[LTTP1AUX_lab_regs_upd; DE_MORGAN_THM] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[LTTP1AUX_lab_regs_upd; DE_MORGAN_THM] THEN
   DISCH_THEN(CONJUNCTS_THEN2 STRIP_ASSUME_TAC ASSUME_TAC) THEN
   USE_THEN "regs" (MP_TAC o SPEC `a0:num`) THEN
   REWRITE_TAC[ASSUME `lab_state_regs (s1:(A,D,FFI)lab_state) a0 = wl_Word a`;
@@ -3241,7 +3241,7 @@ let LTTP1AUX_inst_store = prove
     fst(dest_const t) = "lab_mem_store")) (concl th))) THEN
   REWRITE_TAC[lab_mem_store_def; lab_addr_def] THEN
   CASES_ON `lab_state_regs (s1:(A,D,FFI)lab_state) a0` THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[LTTP1AUX_lab_regs_upd; DE_MORGAN_THM; lab_upd_mem_def; lab_assert_def;
               (record_info "lab_state").ri_accfupds; K_THM] THEN
   DISCH_THEN(CONJUNCTS_THEN2 STRIP_ASSUME_TAC ASSUME_TAC) THEN
@@ -3327,7 +3327,7 @@ let LTTP1AUX_inst_store = prove
   ABBREV_TAC `mx = val (x:A word) MOD d` THEN STRIP_TAC THEN
   ASM_CASES_TAC `byte_align (x:A word) = w` THENL
    [REWRITE_TAC[word_loc_val_byte_def; APPLY_UPDATE_THM] THEN ASM_REWRITE_TAC[] THEN
-    USE_THEN "regs" (fun th -> REWRITE_TAC[SPEC `r:num` th]) THEN CASE_REWRITE_TAC[] THEN
+    USE_THEN "regs" (fun th -> REWRITE_TAC[SPEC `r:num` th]) THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[option_INJ; get_byte_def] THEN
     FIRST_X_ASSUM(fun th -> if is_eq(concl th) && lhs(concl th) = `x:A word`
                             then SUBST1_TAC th else NO_TAC) THEN
@@ -3404,7 +3404,7 @@ let LTTP1AUX_inst_load8 = prove
     fst(dest_const t) = "mem_load_byte")) (concl th))) THEN
   REWRITE_TAC[mem_load_byte_def; lab_addr_def] THEN
   CASES_ON `lab_state_regs (s1:(A,D,FFI)lab_state) a0` THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[LTTP1AUX_lab_regs_upd] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[LTTP1AUX_lab_regs_upd] THEN
   USE_THEN "regs" (MP_TAC o SPEC `a0:num`) THEN
   REWRITE_TAC[ASSUME `lab_state_regs (s1:(A,D,FFI)lab_state) a0 = wl_Word a`;
               word_loc_val_def; option_INJ] THEN
@@ -3412,15 +3412,15 @@ let LTTP1AUX_inst_load8 = prove
   ABBREV_TAC `w = word_add (a:A word) a1` THEN
   REWRITE_TAC[mem_load_byte_aux_def] THEN
   CASES_ON `lab_state_mem (s1:(A,D,FFI)lab_state) (byte_align w)` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[LTTP1AUX_lab_regs_upd] THEN
-  COND_CASES_TAC THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[LTTP1AUX_lab_regs_upd] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[LTTP1AUX_lab_regs_upd] THEN
+  COND_CASES_TAC THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[LTTP1AUX_lab_regs_upd] THEN
   DISCH_TAC THEN
   USE_THEN "mem" (MP_TAC o SPEC `w:A word`) THEN
   REWRITE_TAC[ASSUME `byte_align (w:A word) IN lab_state_mem_domain (s1:(A,D,FFI)lab_state)`;
               word_loc_val_byte_def;
               ASSUME `lab_state_mem (s1:(A,D,FFI)lab_state) (byte_align w) = wl_Word a'`;
               word_loc_val_def] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[option_INJ] THEN STRIP_TAC THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[option_INJ] THEN STRIP_TAC THEN
   REWRITE_TAC[asm_mem_load_def; asm_addr_def; read_reg_def; LET_DEF; LET_END_DEF;
               pair_CASE_def] THEN
   ASM_REWRITE_TAC[] THEN CONV_TAC NUM_REDUCE_CONV THEN
@@ -3466,22 +3466,22 @@ let LTTP1AUX_inst_store8 = prove
     fst(dest_const t) = "mem_store_byte")) (concl th))) THEN
   REWRITE_TAC[mem_store_byte_def; lab_addr_def] THEN
   CASES_ON `lab_state_regs (s1:(A,D,FFI)lab_state) a0` THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[LTTP1AUX_lab_regs_upd] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[LTTP1AUX_lab_regs_upd] THEN
   USE_THEN "regs" (MP_TAC o SPEC `a0:num`) THEN
   REWRITE_TAC[ASSUME `lab_state_regs (s1:(A,D,FFI)lab_state) a0 = wl_Word a`;
               word_loc_val_def; option_INJ] THEN
   DISCH_THEN(ASSUME_TAC o SYM) THEN
   ABBREV_TAC `w = word_add (a:A word) a1` THEN
   CASES_ON `lab_state_regs (s1:(A,D,FFI)lab_state) r` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[LTTP1AUX_lab_regs_upd] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[LTTP1AUX_lab_regs_upd] THEN
   USE_THEN "regs" (MP_TAC o SPEC `r:num`) THEN
   REWRITE_TAC[ASSUME `lab_state_regs (s1:(A,D,FFI)lab_state) r = wl_Word a'`;
               word_loc_val_def; option_INJ] THEN
   DISCH_THEN(ASSUME_TAC o SYM) THEN
   REWRITE_TAC[mem_store_byte_aux_def] THEN
   CASES_ON `lab_state_mem (s1:(A,D,FFI)lab_state) (byte_align w)` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[LTTP1AUX_lab_regs_upd] THEN
-  COND_CASES_TAC THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[LTTP1AUX_lab_regs_upd] THEN
+  COND_CASES_TAC THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[LTTP1AUX_lab_regs_upd; (record_info "lab_state").ri_accfupds; K_THM] THEN
   DISCH_TAC THEN
   USE_THEN "mem" (MP_TAC o SPEC `w:A word`) THEN
@@ -3500,7 +3500,7 @@ let LTTP1AUX_inst_store8 = prove
   X_GEN_TAC `x:A word` THEN DISCH_TAC THEN
   REWRITE_TAC[word_loc_val_byte_def; APPLY_UPDATE_THM] THEN
   ASM_CASES_TAC `byte_align (w:A word) = byte_align x` THEN ASM_REWRITE_TAC[] THENL
-   [REWRITE_TAC[word_loc_val_def] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[option_INJ] THEN
+   [REWRITE_TAC[word_loc_val_def] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[option_INJ] THEN
     COND_CASES_TAC THENL
      [FIRST_X_ASSUM(SUBST_ALL_TAC o SYM) THEN ASM_SIMP_TAC[good_dimindex_get_byte_set_byte];
       ALL_TAC] THEN
@@ -3512,7 +3512,7 @@ let LTTP1AUX_inst_store8 = prove
                 word_loc_val_byte_def] THEN
     FIRST_X_ASSUM(fun th -> if is_eq(concl th) &&
       lhs(concl th) = `byte_align (w:A word)` then REWRITE_TAC[GSYM th] else NO_TAC) THEN
-    ASM_REWRITE_TAC[word_loc_val_def] THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[word_loc_val_def] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[option_INJ] THEN MESON_TAC[];
     ALL_TAC] THEN
   SUBGOAL_THEN `~((w:A word) = x)` (fun th -> REWRITE_TAC[th]) THENL
@@ -3615,7 +3615,7 @@ let LTTP1AUX_inst_load32 = prove
     fst(dest_const t) = "mem_load32")) (concl th))) THEN
   REWRITE_TAC[mem_load32_def; lab_addr_def] THEN
   CASES_ON `lab_state_regs (s1:(A,D,FFI)lab_state) a0` THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[LTTP1AUX_lab_regs_upd] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[LTTP1AUX_lab_regs_upd] THEN
   USE_THEN "regs" (MP_TAC o SPEC `a0:num`) THEN
   REWRITE_TAC[ASSUME `lab_state_regs (s1:(A,D,FFI)lab_state) a0 = wl_Word a`;
               word_loc_val_def; option_INJ] THEN
@@ -3623,10 +3623,10 @@ let LTTP1AUX_inst_load32 = prove
   ABBREV_TAC `w = word_add (a:A word) a1` THEN
   REWRITE_TAC[mem_load_32_def] THEN
   ASM_CASES_TAC `alignment_aligned 2 (w:A word)` THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[LTTP1AUX_lab_regs_upd] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[LTTP1AUX_lab_regs_upd] THEN
   CASES_ON `lab_state_mem (s1:(A,D,FFI)lab_state) (byte_align w)` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[LTTP1AUX_lab_regs_upd] THEN
-  COND_CASES_TAC THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[LTTP1AUX_lab_regs_upd] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[LTTP1AUX_lab_regs_upd] THEN
+  COND_CASES_TAC THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[LTTP1AUX_lab_regs_upd] THEN
   DISCH_TAC THEN
   SUBGOAL_THEN `!j. j < 4 ==> word_add (w:A word) (word j) IN asm_state_mem_domain t1 /\
                               asm_state_mem t1 (word_add w (word j)) =
@@ -3641,7 +3641,7 @@ let LTTP1AUX_inst_load32 = prove
                 word_loc_val_byte_def;
                 ASSUME `lab_state_mem (s1:(A,D,FFI)lab_state) (byte_align w) = wl_Word a'`;
                 word_loc_val_def] THEN
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[option_INJ] THEN ASM_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[option_INJ] THEN ASM_REWRITE_TAC[] THEN
     MESON_TAC[];
     ALL_TAC] THEN
   REWRITE_TAC[asm_mem_load_def; asm_addr_def; read_reg_def; LET_DEF; LET_END_DEF;
@@ -3734,24 +3734,24 @@ let LTTP1AUX_inst_store32 = prove
     fst(dest_const t) = "mem_store32")) (concl th))) THEN
   REWRITE_TAC[mem_store32_def; lab_addr_def] THEN
   CASES_ON `lab_state_regs (s1:(A,D,FFI)lab_state) a0` THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[LTTP1AUX_lab_regs_upd] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[LTTP1AUX_lab_regs_upd] THEN
   USE_THEN "regs" (MP_TAC o SPEC `a0:num`) THEN
   REWRITE_TAC[ASSUME `lab_state_regs (s1:(A,D,FFI)lab_state) a0 = wl_Word a`;
               word_loc_val_def; option_INJ] THEN
   DISCH_THEN(ASSUME_TAC o SYM) THEN
   ABBREV_TAC `w = word_add (a:A word) a1` THEN
   CASES_ON `lab_state_regs (s1:(A,D,FFI)lab_state) r` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[LTTP1AUX_lab_regs_upd] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[LTTP1AUX_lab_regs_upd] THEN
   USE_THEN "regs" (MP_TAC o SPEC `r:num`) THEN
   REWRITE_TAC[ASSUME `lab_state_regs (s1:(A,D,FFI)lab_state) r = wl_Word a'`;
               word_loc_val_def; option_INJ] THEN
   DISCH_THEN(ASSUME_TAC o SYM) THEN
   REWRITE_TAC[mem_store_32_def] THEN
   ASM_CASES_TAC `alignment_aligned 2 (w:A word)` THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[LTTP1AUX_lab_regs_upd] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[LTTP1AUX_lab_regs_upd] THEN
   CASES_ON `lab_state_mem (s1:(A,D,FFI)lab_state) (byte_align w)` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[LTTP1AUX_lab_regs_upd] THEN
-  COND_CASES_TAC THEN REWRITE_TAC[LET_DEF; LET_END_DEF] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[LTTP1AUX_lab_regs_upd] THEN
+  COND_CASES_TAC THEN REWRITE_TAC[LET_DEF; LET_END_DEF] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[LTTP1AUX_lab_regs_upd; (record_info "lab_state").ri_accfupds; K_THM] THEN
   DISCH_TAC THEN
   SUBGOAL_THEN `!j. j < 4 ==> byte_align (word_add (w:A word) (word j)) = byte_align w /\
@@ -3769,7 +3769,7 @@ let LTTP1AUX_inst_store32 = prove
                 word_loc_val_byte_def;
                 ASSUME `lab_state_mem (s1:(A,D,FFI)lab_state) (byte_align w) = wl_Word a''`;
                 word_loc_val_def] THEN
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[option_INJ] THEN ASM_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[option_INJ] THEN ASM_REWRITE_TAC[] THEN
     MESON_TAC[];
     ALL_TAC] THEN
   REWRITE_TAC[asm_mem_store_def; asm_addr_def; read_reg_def; LET_DEF; LET_END_DEF] THEN
@@ -3879,7 +3879,7 @@ let LTTP1AUX_inst_store32 = prove
   X_GEN_TAC `x:A word` THEN DISCH_TAC THEN
   REWRITE_TAC[word_loc_val_byte_def; APPLY_UPDATE_THM] THEN
   ASM_CASES_TAC `byte_align (w:A word) = byte_align x` THEN ASM_REWRITE_TAC[] THENL
-   [REWRITE_TAC[word_loc_val_def] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[option_INJ] THEN
+   [REWRITE_TAC[word_loc_val_def] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[option_INJ] THEN
     SIMP_TAC[LTTP1AUX_get_set_byte; ASSUME `good_dimindex(:A)`;
              SYM(ASSUME `byte_align (w:A word) = byte_align x`);
              ASSUME `byte_align (word_add (w:A word) (word 1)) = byte_align w`;
@@ -3914,7 +3914,7 @@ let LTTP1AUX_inst_store32 = prove
                 SYM(ASSUME `byte_align (w:A word) = byte_align x`);
                 ASSUME `lab_state_mem (s1:(A,D,FFI)lab_state) (byte_align w) = wl_Word a''`;
                 word_loc_val_def] THEN
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[option_INJ] THEN ASM_REWRITE_TAC[] THEN MESON_TAC[];
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[option_INJ] THEN ASM_REWRITE_TAC[] THEN MESON_TAC[];
     USE_THEN "asmout" (MP_TAC o SPEC `x:A word`) THEN ANTS_TAC THENL
      [REPEAT STRIP_TAC THEN USE_THEN "bytes" (MP_TAC o C MP (ASSUME `j < 4`) o SPEC `j:num`) THEN
       ASM_MESON_TAC[];

@@ -418,7 +418,7 @@ let src_orac_env_invs_lookup_env = prove
   MP_TAC(ISPEC `env_id:num#num` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `i:num` (X_CHOOSE_THEN `j:num` SUBST_ALL_TAC)) THEN
   REWRITE_TAC[lookup_env_def; option_case_eq; oEL_EQ_EL; distinctness "option"] THEN
-  REWRITE_TAC[src_orac_env_invs_def; src_orac_next_cfg_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[src_orac_env_invs_def; src_orac_next_cfg_def] THEN CAKE_REWRITE_TAC[] THEN
   STRIP_TAC THEN ASM_REWRITE_TAC[FST; SND] THEN
   FIRST_X_ASSUM(MP_TAC o SPECL [`i:num`; `j:num`]) THEN
   ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
@@ -426,12 +426,12 @@ let src_orac_env_invs_lookup_env = prove
                  (eval_oracle_state_oracle es 0) = SOME c` THEN
   ASM_REWRITE_TAC[src_orac_next_cfg_inner_def] THEN
   CASES_ON `interp:(v->(source_to_flat_config#C)option)option` THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[THE_DEF] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[THE_DEF] THEN
   CASES_ON `(a':v->(source_to_flat_config#C)option) st_v` THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   MP_TAC(ISPEC `a'':source_to_flat_config#C` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `c':source_to_flat_config` (X_CHOOSE_THEN `x:C` SUBST_ALL_TAC)) THEN
-  CASE_REWRITE_TAC[] THEN DISCH_THEN SUBST_ALL_TAC THEN
+  CAKE_REWRITE_TAC[] THEN DISCH_THEN SUBST_ALL_TAC THEN
   MAP_EVERY EXISTS_TAC [`c:source_to_flat_config`; `x:C`] THEN ASM_MESON_TAC[]);;
 
 (* HOL4 line 3171 *)
@@ -454,7 +454,7 @@ let step_1 = prove
          src_orac_next_cfg (SOME i_f) (SOME (EvalOracle es)) = SOME c0`,
   REPEAT GEN_TAC THEN
   CASES_ON `interp:(v->(source_to_flat_config#C)option)option` THEN
-  REWRITE_TAC[src_orac_step_invs_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[src_orac_step_invs_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[LET_DEF; LET_END_DEF; o_THM] THEN
   DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "dec") (LABEL_TAC "step")) THEN
   MAP_EVERY (fun k ->
@@ -479,8 +479,8 @@ let step_1 = prove
     `c:source_to_flat_config`; `x:C`; `e1:num#num`; `s1:v`; `d1:dec list`;
     `c':source_to_flat_config`; `x':C`] THEN
   ASM_REWRITE_TAC[src_orac_next_cfg_def; src_orac_next_cfg_inner_def] THEN
-  CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
-  ASM_REWRITE_TAC[PAIR] THEN CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[PAIR] THEN CAKE_REWRITE_TAC[]);;
 
 (* HOL4 line 3202 *)
 let subglobals_add_NONE = prove
@@ -503,24 +503,24 @@ let FLATP2AUX_do_eval_oracle_SOME = prove
            eval_state =
              SOME (EvalOracle (add_env_generation
                (eval_oracle_state_oracle_fupd
-                  (K (shift_seq 1 (eval_oracle_state_oracle es))) es)))`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[do_eval_def] THEN CASE_REWRITE_TAC[] THEN
+                  (combin_K (shift_seq 1 (eval_oracle_state_oracle es))) es)))`,
+  REPEAT GEN_TAC THEN REWRITE_TAC[do_eval_def] THEN CAKE_REWRITE_TAC[] THEN
   DISCH_THEN(CONJUNCTS_THEN2 MP_TAC SUBST1_TAC) THEN
   REWRITE_TAC[do_eval_oracle_def] THEN
   FLATP2AUX_LIST_SPLIT_TAC `vs:v list` `v1:v` `t1:v list` THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "option"] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "option"] THEN
   FLATP2AUX_LIST_SPLIT_TAC `t1:v list` `v2:v` `t2:v list` THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "option"] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "option"] THEN
   FLATP2AUX_LIST_SPLIT_TAC `t2:v list` `v3:v` `t3:v list` THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "option"] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "option"] THEN
   FLATP2AUX_LIST_SPLIT_TAC `t3:v list` `v4:v` `t4:v list` THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "option"] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "option"] THEN
   FLATP2AUX_LIST_SPLIT_TAC `t4:v list` `v5:v` `t5:v list` THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "option"] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "option"] THEN
   FLATP2AUX_LIST_SPLIT_TAC `t5:v list` `v6:v` `t6:v list` THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "option"] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "option"] THEN
   FLATP2AUX_LIST_SPLIT_TAC `t6:v list` `v7:v` `t7:v list` THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "option"] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "option"] THEN
   REWRITE_TAC[option_case_eq; pair_case_eq; COND_CASE_EQ; distinctness "option";
               injectivity "option"; PAIR_EQ] THEN
   STRIP_TAC THEN GVS[PAIR_EQ] THEN
@@ -529,7 +529,7 @@ let FLATP2AUX_do_eval_oracle_SOME = prove
 
 let FLATP2AUX_do_eval_NONE = prove
  (`!vs. do_eval vs NONE = NONE`,
-  REWRITE_TAC[do_eval_def] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[do_eval_def] THEN CAKE_REWRITE_TAC[]);;
 
 let FLATP2AUX_orac_rel_SOME = prove
  (`!interp g es0 fc.
@@ -537,9 +537,9 @@ let FLATP2AUX_orac_rel_SOME = prove
      ==> ?dec es s_compiler. interp = SOME dec /\ es0 = EvalOracle es /\
            eval_oracle_state_custom_do_eval es = do_eval_oracle s_compiler g /\
            orac_rel_inner dec es s_compiler g fc`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[orac_rel_def] THEN CASE_REWRITE_TAC[] THEN
+  REPEAT GEN_TAC THEN REWRITE_TAC[orac_rel_def] THEN CAKE_REWRITE_TAC[] THEN
   CASES_ON `interp:(v->(source_to_flat_config#C)option)option` THEN
-  CASE_REWRITE_TAC[] THEN CASES_ON `es0:eval_state` THEN CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN CASES_ON `es0:eval_state` THEN CAKE_REWRITE_TAC[] THEN
   MESON_TAC[]);;
 
 let FLATP2AUX_flat_do_eval_SOME = prove
@@ -550,10 +550,10 @@ let FLATP2AUX_flat_do_eval_SOME = prove
      FST (install_config_compile_oracle ec 1) = st'
      ==> flat_do_eval [v1; v2] ec =
          SOME (decs, install_config_compile_oracle_fupd
-                       (K (shift_seq 1 (install_config_compile_oracle ec))) ec, Unitv)`,
+                       (combin_K (shift_seq 1 (install_config_compile_oracle ec))) ec, Unitv)`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN REWRITE_TAC[flat_do_eval_def] THEN
-  CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
-  REWRITE_TAC[LET_DEF; LET_END_DEF] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
+  REWRITE_TAC[LET_DEF; LET_END_DEF] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[shift_seq_def; ADD_CLAUSES; ARITH_RULE `0 + 1 = 1`]);;
 
 let FLATP2AUX_ALL2_6 = prove
@@ -591,7 +591,7 @@ let FLATP2AUX_idx_block_final = prove
 
 let FLATP2AUX_genv_allocated_idxs_NONE = prove
  (`!genv n. genv_allocated_idxs
-              (global_env_v_fupd (K (APPEND (global_env_v genv) (REPLICATE n NONE))) genv)
+              (global_env_v_fupd (combin_K (APPEND (global_env_v genv) (REPLICATE n NONE))) genv)
             SUBSET genv_allocated_idxs genv`,
   REWRITE_TAC[genv_allocated_idxs_def; global_env_INFO.ri_accfupds; K_THM] THEN
   REWRITE_TAC[SUBSET; IN_UNION; IN_ELIM_THM; LENGTH_APPEND; LENGTH_REPLICATE] THEN
@@ -609,8 +609,8 @@ let FLATP2AUX_inc_compile_prog_eq = prove
           (environment_store_next (source_to_flat_config_envs c)) LN) p =
        (n0, next, e, gen, p')
      ==> inc_compile_prog env_id c p =
-         (source_to_flat_config_next_fupd (K next)
-            (source_to_flat_config_envs_fupd (K (environment_store_REC
+         (source_to_flat_config_next_fupd (combin_K next)
+            (source_to_flat_config_envs_fupd (combin_K (environment_store_REC
                (environment_store_next (source_to_flat_config_envs c) + 1)
                (insert (environment_store_next (source_to_flat_config_envs c))
                   (insert (environment_generation_store_next gen)
@@ -621,7 +621,7 @@ let FLATP2AUX_inc_compile_prog_eq = prove
             (APPEND p' [store_env_id (environment_generation_store_generation gen)
                                      (environment_generation_store_next gen)]))`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN REWRITE_TAC[inc_compile_prog_def] THEN
-  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[]);;
 
 (* HOL4 line 3208 (HOL4's unused existential fin_idx dropped) *)
@@ -644,10 +644,10 @@ let do_eval = prove
                  genv'
                  (source_to_flat_config_next c, source_to_flat_config_next c',
                   idx_block idx end_idx UNION other)
-                 (state_eval_state_fupd (K eval_state) s)
-                 (flat_state_eval_config_fupd (K eval_config')
+                 (state_eval_state_fupd (combin_K eval_state) s)
+                 (flat_state_eval_config_fupd (combin_K eval_config')
                     (flat_state_globals_fupd
-                       (K (APPEND (flat_state_globals t)
+                       (combin_K (APPEND (flat_state_globals t)
                              (REPLICATE (next_indices_vidx (source_to_flat_config_next c') -
                                          next_indices_vidx (source_to_flat_config_next c))
                                 NONE))) t)) /\
@@ -740,7 +740,7 @@ X_GEN_TAC `vs':flat_v list` THEN REPEAT GEN_TAC THEN
     `w5:flat_v`; `w6:flat_v`] (CONJUNCTS_THEN2 SUBST_ALL_TAC
     (FLATP2AUX_LABEL_CONJS ["r1"; "r2"; "r3"; "r4"; "r5"; "r6"]))) THEN
   SUBGOAL_THEN `flat_do_eval [w5; w6] (flat_state_eval_config (t:(C,FFI)flat_state)) =
-      SOME (fdecs0, install_config_compile_oracle_fupd (K (shift_seq 1
+      SOME (fdecs0, install_config_compile_oracle_fupd (combin_K (shift_seq 1
         (install_config_compile_oracle (flat_state_eval_config t))))
         (flat_state_eval_config t), Unitv)` (LABEL_TAC "fde") THENL
    [MATCH_MP_TAC FLATP2AUX_flat_do_eval_SOME THEN
@@ -756,7 +756,7 @@ X_GEN_TAC `vs':flat_v list` THEN REPEAT GEN_TAC THEN
     ALL_TAC] THEN
   SUBGOAL_THEN `src_orac_next_cfg (SOME (dec:v->(source_to_flat_config#C)option))
       (SOME (EvalOracle (add_env_generation (eval_oracle_state_oracle_fupd
-        (K (shift_seq 1 (eval_oracle_state_oracle es))) es)))) = SOME c1`
+        (combin_K (shift_seq 1 (eval_oracle_state_oracle es))) es)))) = SOME c1`
     (LABEL_TAC "nc") THENL
    [REWRITE_TAC[src_orac_next_cfg_def; src_orac_next_cfg_inner_def; add_env_generation_def] THEN
     FLATP2AUX_LKSIMP_TAC ["s_or1"; "s_dec1"] [shift_seq_def];
@@ -774,21 +774,21 @@ X_GEN_TAC `vs':flat_v list` THEN REPEAT GEN_TAC THEN
   FLATP2AUX_LREWRITE_TAC ["s_inc"] [PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "c1eq") (LABEL_TAC "fd_eq")) THEN
   USE_THEN "src_orac" (MP_TAC o CONJUNCT1 o CONJUNCT2 o REWRITE_RULE[src_orac_invs_def]) THEN
-  REWRITE_TAC[src_orac_env_invs_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[src_orac_env_invs_def] THEN CAKE_REWRITE_TAC[] THEN
   FLATP2AUX_LREWRITE_TAC ["s_next"] [injectivity "option"; UNWIND_THM1] THEN
   DISCH_THEN(FLATP2AUX_LABEL_CONJS ["esi"; "esn"; "eenv"]) THEN
   USE_THEN "idx_range" (MP_TAC o REWRITE_RULE[idx_range_rel_def]) THEN
-  FLATP2AUX_LREWRITE_TAC ["s_next"] [] THEN CASE_REWRITE_TAC[] THEN
+  FLATP2AUX_LREWRITE_TAC ["s_next"] [] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[PAIR_EQ] THEN
   DISCH_THEN(FLATP2AUX_CHOOSE_THEN [`i1:next_indices`; `i2:next_indices`;
     `fin_idx:next_indices`; `ob:num#idx_types->bool`]
     (FLATP2AUX_LABEL_CONJS ["ir_eq"; "ir_fin"; "ir_prev"; "ir_disj"; "ir_ts"; "ir_en"])) THEN
   REMOVE_THEN "ir_fin" SUBST_ALL_TAC THEN REMOVE_THEN "ir_eq" SUBST_ALL_TAC THEN
-  MAP_EVERY EXISTS_TAC [`global_env_v_fupd (K (APPEND (global_env_v genv)
+  MAP_EVERY EXISTS_TAC [`global_env_v_fupd (combin_K (APPEND (global_env_v genv)
       (REPLICATE (next_indices_vidx (source_to_flat_config_next c1) -
                   next_indices_vidx (source_to_flat_config_next c0)) NONE))) genv`;
     `env_id:num#num`; `c0:source_to_flat_config`; `fdecs0:flat_exp list`;
-    `install_config_compile_oracle_fupd (K (shift_seq 1
+    `install_config_compile_oracle_fupd (combin_K (shift_seq 1
         (install_config_compile_oracle (flat_state_eval_config (t:(C,FFI)flat_state)))))
         (flat_state_eval_config t)`;
     `c1:source_to_flat_config`; `i1:next_indices`; `i2:next_indices`;
@@ -809,7 +809,7 @@ X_GEN_TAC `vs':flat_v list` THEN REPEAT GEN_TAC THEN
     ASM_REWRITE_TAC[] THEN SIMP_NOASM[SUBMAP_REFL; subglobals_add_NONE];
     (* 5 idx_range_rel *)
     REWRITE_TAC[idx_range_rel_def] THEN FLATP2AUX_LREWRITE_TAC ["nc"] [] THEN
-    CASE_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN
     MAP_EVERY EXISTS_TAC [`source_to_flat_config_next c0`; `source_to_flat_config_next c1`;
       `source_to_flat_config_next c1`; `idx_block i1 i2 UNION ob`] THEN
     REWRITE_TAC[idx_prev_refl] THEN SIMP_NOASM[] THEN
@@ -822,11 +822,11 @@ X_GEN_TAC `vs':flat_v list` THEN REPEAT GEN_TAC THEN
     (* 6 src_orac_invs *)
     REWRITE_TAC[src_orac_invs_def] THEN REPEAT CONJ_TAC THENL
      [USE_THEN "src_orac" (MP_TAC o CONJUNCT1 o REWRITE_RULE[src_orac_invs_def]) THEN
-      REWRITE_TAC[src_orac_step_invs_def] THEN CASE_REWRITE_TAC[] THEN
+      REWRITE_TAC[src_orac_step_invs_def] THEN CAKE_REWRITE_TAC[] THEN
       SIMP_NOASM[add_env_generation_def; shift_seq_def; LET_DEF; LET_END_DEF; o_THM] THEN
       STRIP_TAC THEN REPEAT CONJ_TAC THEN
       REWRITE_TAC[ARITH_RULE `SUC k + 1 = SUC (k + 1)`] THEN ASM_MESON_TAC[];
-      REWRITE_TAC[src_orac_env_invs_def] THEN CASE_REWRITE_TAC[] THEN
+      REWRITE_TAC[src_orac_env_invs_def] THEN CAKE_REWRITE_TAC[] THEN
       FLATP2AUX_LREWRITE_TAC ["nc"] [injectivity "option"; UNWIND_THM1] THEN
       USE_THEN "s_inc" (fun th -> USE_THEN "esi" (fun th2 ->
         STRIP_ASSUME_TAC (MATCH_MP inc_compile_prog_env_submap (CONJ th th2)))) THEN
@@ -849,10 +849,10 @@ X_GEN_TAC `vs':flat_v list` THEN REPEAT GEN_TAC THEN
         SUBGOAL_THEN `g_id - LENGTH (eval_oracle_state_envs es) = 0`
           (fun th -> RULE_ASSUM_TAC(REWRITE_RULE[th; EL; HD; LENGTH; LT])) THENL
          [ASM_ARITH_TAC; FLATP2AUX_F_TAC]];
-      REWRITE_TAC[src_orac_gen_inv_def] THEN CASE_REWRITE_TAC[] THEN
+      REWRITE_TAC[src_orac_gen_inv_def] THEN CAKE_REWRITE_TAC[] THEN
       SIMP_NOASM[add_env_generation_def; LENGTH_APPEND; LENGTH] THEN ARITH_TAC];
     (* 7 orac_rel *)
-    REWRITE_TAC[orac_rel_def] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[orac_rel_def] THEN CAKE_REWRITE_TAC[] THEN
     EXISTS_TAC `s_compiler:compiler_fun` THEN
     SIMP_NOASM[add_env_generation_def] THEN
     FLATP2AUX_LREWRITE_TAC ["cde"] [orac_rel_inner_def] THEN
@@ -868,18 +868,18 @@ X_GEN_TAC `vs':flat_v list` THEN REPEAT GEN_TAC THEN
     (* 10 env_gen_inv *)
     SIMP_NOASM[env_gen_inv_def; domain_def; EMPTY_SUBSET];
     (* 11 fin_idx_match *)
-    FLATP2AUX_LREWRITE_TAC ["nc"] [fin_idx_match_def] THEN CASE_REWRITE_TAC[] THEN
+    FLATP2AUX_LREWRITE_TAC ["nc"] [fin_idx_match_def] THEN CAKE_REWRITE_TAC[] THEN
     USE_THEN "fin_idx" MP_TAC THEN
-    FLATP2AUX_LREWRITE_TAC ["s_next"] [fin_idx_match_def] THEN CASE_REWRITE_TAC[] THEN
+    FLATP2AUX_LREWRITE_TAC ["s_next"] [fin_idx_match_def] THEN CAKE_REWRITE_TAC[] THEN
     USE_THEN "idxp" MP_TAC THEN REWRITE_TAC[idx_prev_def] THEN ARITH_TAC;
     (* 12 env_gen_rel *)
-    REWRITE_TAC[env_gen_rel_def] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[env_gen_rel_def] THEN CAKE_REWRITE_TAC[] THEN
     FLATP2AUX_LKSIMP_TAC ["esn"] [add_env_generation_def; LENGTH_APPEND; EL_APPEND;
       LT_REFL; SUB_REFL; LENGTH; ARITH_RULE `n < n + 1`; EL; HD];
     (* 13 compile_decs future rel *)
-    FLATP2AUX_LREWRITE_TAC ["cd"] [] THEN CASE_REWRITE_TAC[] THEN
+    FLATP2AUX_LREWRITE_TAC ["cd"] [] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[env_gen_future_rel_def] THEN FLATP2AUX_LREWRITE_TAC ["nc"] [] THEN
-    CASE_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN
     USE_THEN "cd" (ASSUME_TAC o MATCH_MP compile_decs_generation) THEN
     USE_THEN "cd" (MP_TAC o MATCH_MP (REWRITE_RULE[IMP_CONJ] compile_decs_env_gen_inv)) THEN
     ANTS_TAC THENL [SIMP_NOASM[env_gen_inv_def; domain_def; EMPTY_SUBSET]; STRIP_TAC] THEN
@@ -898,7 +898,7 @@ X_GEN_TAC `vs':flat_v list` THEN REPEAT GEN_TAC THEN
       (FLATP2AUX_LABEL_CONJS ["cx"; "lk1"; "lk2"; "gei"])) THEN
     REMOVE_THEN "cx" (CONJUNCTS_THEN2 (SUBST_ALL_TAC o SYM) (SUBST_ALL_TAC o SYM)) THEN
     REWRITE_TAC[lookup_env_id_def] THEN FLATP2AUX_LREWRITE_TAC ["lk1"] [] THEN
-    CASE_REWRITE_TAC[] THEN FLATP2AUX_LREWRITE_TAC ["lk2"] [] THEN CASE_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN FLATP2AUX_LREWRITE_TAC ["lk2"] [] THEN CAKE_REWRITE_TAC[] THEN
     MATCH_MP_TAC global_env_inv_weak THEN EXISTS_TAC `genv:global_env` THEN
     FLATP2AUX_LREWRITE_TAC ["gei"] [] THEN SIMP_NOASM[SUBMAP_REFL] THEN
     FLATP2AUX_LREWRITE_TAC ["globals"] [subglobals_add_NONE];
@@ -920,7 +920,7 @@ let FLATP2AUX_next_cfg_generation = prove
      src_orac_next_cfg (interp:(v->(source_to_flat_config#C)option)option)
        (SOME (EvalOracle (eval_oracle_state_generation_fupd f s))) =
      src_orac_next_cfg interp (SOME (EvalOracle s))`,
-  REWRITE_TAC[src_orac_next_cfg_def] THEN CASE_REWRITE_TAC[] THEN SIMP_NOASM[]);;
+  REWRITE_TAC[src_orac_next_cfg_def] THEN CAKE_REWRITE_TAC[] THEN SIMP_NOASM[]);;
 
 let FLATP2AUX_ALL_DISJOINT_end = prove
  (`!a f f' b o' d.
@@ -945,7 +945,7 @@ let FLATP2AUX_invs_generation = prove
   REPEAT GEN_TAC THEN
   REWRITE_TAC[src_orac_step_invs_def; src_orac_env_invs_def; orac_rel_def;
               FLATP2AUX_next_cfg_generation; orac_rel_inner_def] THEN
-  CASE_REWRITE_TAC[] THEN SIMP_NOASM[]);;
+  CAKE_REWRITE_TAC[] THEN SIMP_NOASM[]);;
 
 (* HOL4 line 3409 *)
 let invariant_end_eval = prove
@@ -967,7 +967,7 @@ let invariant_end_eval = prove
     | _ -> F)
    ==> source_to_flatProof_invariant interp g gen genv (idx, end_idx, other)
          (state_eval_state_fupd
-            (K (reset_env_generation (state_eval_state prev_st) (state_eval_state st))) st)
+            (combin_K (reset_env_generation (state_eval_state prev_st) (state_eval_state st))) st)
          st' /\
        orac_forward_rel interp (state_eval_state prev_st)
          (reset_env_generation (state_eval_state prev_st) (state_eval_state st)) /\
@@ -980,23 +980,23 @@ REPEAT GEN_TAC THEN
   SUBGOAL_THEN `?s0. state_eval_state (prev_st:(FFI)state) = SOME (EvalOracle s0)`
     STRIP_ASSUME_TAC THENL
    [USE_THEN "cs" MP_TAC THEN CASES_ON `state_eval_state (prev_st:(FFI)state)` THEN
-    CASE_REWRITE_TAC[] THEN CASES_ON `a:eval_state` THEN CASE_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN CASES_ON `a:eval_state` THEN CAKE_REWRITE_TAC[] THEN
     MESON_TAC[];
     ALL_TAC] THEN
   RULE_ASSUM_TAC(REWRITE_RULE[ASSUME
     `state_eval_state (prev_st:(FFI)state) = SOME (EvalOracle s0)`]) THEN
   REWRITE_TAC[ASSUME `state_eval_state (prev_st:(FFI)state) = SOME (EvalOracle s0)`] THEN
-  REMOVE_THEN "cs" (MP_TAC o CASE_REWRITE_RULE[]) THEN
+  REMOVE_THEN "cs" (MP_TAC o CAKE_REWRITE_RULE[]) THEN
   DISCH_THEN(X_CHOOSE_THEN `s1:eval_oracle_state` (CONJUNCTS_THEN2 SUBST_ALL_TAC
     (CONJUNCTS_THEN2 (LABEL_TAC "s1envs") (LABEL_TAC "s1gen")))) THEN
   USE_THEN "fwd" (MP_TAC o CONJUNCT2 o REWRITE_RULE[orac_forward_rel_def]) THEN
-  REWRITE_TAC[eval_state_call_rel_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[eval_state_call_rel_def] THEN CAKE_REWRITE_TAC[] THEN
   DISCH_THEN(X_CHOOSE_THEN `s2:eval_oracle_state` (CONJUNCTS_THEN2 (LABEL_TAC "s2eq")
     (FLATP2AUX_LABEL_CONJS ["s2gen"; "s2len"; "s2el"]))) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[ASSUME
     `state_eval_state (st:(FFI)state) = SOME (EvalOracle s2)`]) THEN
   REWRITE_TAC[ASSUME `state_eval_state (st:(FFI)state) = SOME (EvalOracle s2)`] THEN
-  REWRITE_TAC[reset_env_generation_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[reset_env_generation_def] THEN CAKE_REWRITE_TAC[] THEN
   SUBGOAL_THEN `?dec. (interp:(v->(source_to_flat_config#C)option)option) = SOME dec`
     (X_CHOOSE_THEN `dec:v->(source_to_flat_config#C)option` SUBST_ALL_TAC) THENL
    [USE_THEN "b_src_orac" (MP_TAC o MATCH_MP step_1 o CONJUNCT1 o
@@ -1006,7 +1006,7 @@ REPEAT GEN_TAC THEN
                               K_THM]) THEN
   USE_THEN "b_src_orac" (LABEL_TAC "b_gen" o CONJUNCT2 o CONJUNCT2 o
                          REWRITE_RULE[src_orac_invs_def; src_orac_gen_inv_def]) THEN
-  RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN
+  RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN
   SUBGOAL_THEN `eval_oracle_state_generation s0 < LENGTH (eval_oracle_state_envs s2) /\
                 !i. i <= eval_oracle_state_generation s0
                     ==> EL i (eval_oracle_state_envs s2) = EL i (eval_oracle_state_envs s0)`
@@ -1055,7 +1055,7 @@ REPEAT GEN_TAC THEN
       USE_THEN "a_src_orac" (ACCEPT_TAC o CONJUNCT1 o REWRITE_RULE[src_orac_invs_def]);
       USE_THEN "a_src_orac" (ACCEPT_TAC o CONJUNCT1 o CONJUNCT2 o
                              REWRITE_RULE[src_orac_invs_def]);
-      REWRITE_TAC[src_orac_gen_inv_def] THEN CASE_REWRITE_TAC[] THEN SIMP_NOASM[] THEN
+      REWRITE_TAC[src_orac_gen_inv_def] THEN CAKE_REWRITE_TAC[] THEN SIMP_NOASM[] THEN
       FLATP2AUX_LREWRITE_TAC ["g02"] [];
       USE_THEN "a_orac_rel" ACCEPT_TAC;
       USE_THEN "a_globals" ACCEPT_TAC;
@@ -1064,7 +1064,7 @@ REPEAT GEN_TAC THEN
       USE_THEN "a_fin_idx" MP_TAC THEN REWRITE_TAC[fin_idx_match_def] THEN
       CASES_ON `src_orac_next_cfg (SOME (dec:v->(source_to_flat_config#C)option))
                   (SOME (EvalOracle s2))` THEN
-      CASE_REWRITE_TAC[] THEN USE_THEN "prev" MP_TAC THEN REWRITE_TAC[idx_prev_def] THEN
+      CAKE_REWRITE_TAC[] THEN USE_THEN "prev" MP_TAC THEN REWRITE_TAC[idx_prev_def] THEN
       ARITH_TAC];
     (* forward rel *)
     REWRITE_TAC[orac_forward_rel_def] THEN CONJ_TAC THENL
@@ -1074,13 +1074,13 @@ REPEAT GEN_TAC THEN
       EXISTS_TAC `SOME (EvalOracle s1)` THEN
       FLATP2AUX_LREWRITE_TAC ["sub"] [] THEN
       USE_THEN "fwd" (ACCEPT_TAC o CONJUNCT1 o REWRITE_RULE[orac_forward_rel_def]);
-      REWRITE_TAC[eval_state_call_rel_def] THEN CASE_REWRITE_TAC[] THEN SIMP_NOASM[] THEN
+      REWRITE_TAC[eval_state_call_rel_def] THEN CAKE_REWRITE_TAC[] THEN SIMP_NOASM[] THEN
       CONJ_TAC THENL
        [USE_THEN "s2len" MP_TAC THEN FLATP2AUX_LREWRITE_TAC ["s1envs"] [LENGTH_APPEND; LENGTH] THEN
         ARITH_TAC;
         REPEAT STRIP_TAC THEN USE_THEN "el02" MATCH_MP_TAC THEN ASM_ARITH_TAC]];
     (* env_gen_rel *)
-    REWRITE_TAC[env_gen_rel_def] THEN CASE_REWRITE_TAC[] THEN SIMP_NOASM[] THEN
+    REWRITE_TAC[env_gen_rel_def] THEN CAKE_REWRITE_TAC[] THEN SIMP_NOASM[] THEN
     STRIP_TAC THEN FLATP2AUX_LREWRITE_TAC ["g02"] [] THEN
     USE_THEN "el02" (fun th -> REWRITE_TAC[REWRITE_RULE[LE_REFL]
       (SPEC `eval_oracle_state_generation s0` th)])]);;
@@ -1113,7 +1113,7 @@ let alloc_tags1_imp = prove
     REWRITE_TAC[FORALL_PAIR_THM] THEN MESON_TAC[]))) THEN
   DISCH_THEN(X_CHOOSE_THEN `ns0:(modN,conN,num)namespace` (X_CHOOSE_THEN `cids:num spt`
     (X_CHOOSE_THEN `tl0:(num#num)list` (LABEL_TAC "at")))) THEN
-  FLATP2AUX_LREWRITE_TAC ["at"] [] THEN CASE_REWRITE_TAC[] THEN
+  FLATP2AUX_LREWRITE_TAC ["at"] [] THEN CAKE_REWRITE_TAC[] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   FIRST_X_ASSUM(MP_TAC o SPECL [`ns0:(modN,conN,num)namespace`; `cids:num spt`;
     `tl0:(num#num)list`]) THEN
@@ -1124,7 +1124,7 @@ let alloc_tags1_imp = prove
     (FLATP2AUX_LABEL_CONJS ["ns0"; "set0"; "tl0"; "dist0"; "rel0"; "fst0"])) THEN
   REMOVE_THEN "h" (CONJUNCTS_THEN2 MP_TAC (LABEL_TAC "nmem" o CONJUNCT1)) THEN
   REWRITE_TAC[lookup_inc_def] THEN
-  CASES_ON `lookup (LENGTH (ts:ast_t list)) (cids:num spt)` THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON `lookup (LENGTH (ts:ast_t list)) (cids:num spt)` THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN2 (SUBST_ALL_TAC o SYM) (CONJUNCTS_THEN2 (SUBST_ALL_TAC o SYM)
     (SUBST_ALL_TAC o SYM))) THENL
@@ -1214,7 +1214,7 @@ let FLATP2AUX_invariant_genv_ext = prove
 
 let FLATP2AUX_idx_block_type = prove
  (`!idx end_idx.
-     idx_block (next_indices_tidx_fupd (K (next_indices_tidx idx + 1)) idx) end_idx =
+     idx_block (next_indices_tidx_fupd (combin_K (next_indices_tidx idx + 1)) idx) end_idx =
      idx_block idx end_idx DIFF {(next_indices_tidx idx, Idx_Type)}`,
   REPEAT GEN_TAC THEN REWRITE_TAC[idx_block_def; EXTENSION; IN_DIFF; IN_UNION; IN_SING;
     IN_ELIM_THM; FORALL_PAIR_THM; PAIR_EQ] THEN
@@ -1263,7 +1263,7 @@ let FLATP2AUX_idx_range_type = prove
            (global_env_REC (global_env_v genv) (FUNION (global_env_c genv) c_ext)
               (FUNION (global_env_tys genv) tys_ext))
            (nts + 1) nes ev
-           (next_indices_tidx_fupd (K (next_indices_tidx idx + 1)) idx, end_idx, os)`,
+           (next_indices_tidx_fupd (combin_K (next_indices_tidx idx + 1)) idx, end_idx, os)`,
   REPEAT GEN_TAC THEN
   DISCH_THEN(CONJUNCTS_THEN2 (MP_TAC o REWRITE_RULE[idx_range_rel_def; PAIR_EQ])
     (FLATP2AUX_LABEL_CONJS ["lt"; "td"; "cd"; "rg"])) THEN
@@ -1273,7 +1273,7 @@ let FLATP2AUX_idx_range_type = prove
   REMOVE_THEN "eq" (CONJUNCTS_THEN2 (SUBST_ALL_TAC o SYM)
          (CONJUNCTS_THEN2 (SUBST_ALL_TAC o SYM) (SUBST_ALL_TAC o SYM))) THEN
   REWRITE_TAC[idx_range_rel_def; PAIR_EQ] THEN
-  MAP_EVERY EXISTS_TAC [`next_indices_tidx_fupd (K (next_indices_tidx idx + 1)) idx`;
+  MAP_EVERY EXISTS_TAC [`next_indices_tidx_fupd (combin_K (next_indices_tidx idx + 1)) idx`;
     `end_idx:next_indices`; `fin:next_indices`; `os:num#idx_types->bool`] THEN
   SUBGOAL_THEN `genv_allocated_idxs (global_env_REC (global_env_v genv)
             (FUNION (global_env_c genv) c_ext) (FUNION (global_env_tys genv) tys_ext)) =
@@ -1421,7 +1421,7 @@ let FLATP2AUX_MAP_FST_kv = prove
   GEN_TAC THEN LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[MAP] THEN
   MP_TAC(ISPEC `h:K#V` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `a:K` (X_CHOOSE_THEN `b:V` SUBST1_TAC)) THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[FST]);;
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[FST]);;
 
 let FLATP2AUX_global_env_inv_type = prove
  (`!genv (t:num) nts (ctors:(mlstring # ast_t list) list) (cn_tags:(mlstring#num#num)list).
@@ -1443,7 +1443,7 @@ let FLATP2AUX_global_env_inv_type = prove
   DISCH_THEN(X_CHOOSE_THEN `c0:mlstring` (CONJUNCTS_THEN2 SUBST_ALL_TAC (LABEL_TAC "al"))) THEN
   USE_THEN "al" (MP_TAC o MATCH_MP ALOOKUP_MEM) THEN
   REWRITE_TAC[MEM_REVERSE; build_constrs_def; MEM_MAP; EXISTS_PAIR_THM] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
   DISCH_THEN(X_CHOOSE_THEN `c1:mlstring` (X_CHOOSE_THEN `ts:ast_t list`
     (CONJUNCTS_THEN2 (LABEL_TAC "eqs") (LABEL_TAC "memc")))) THEN
   REMOVE_THEN "memc" (CONJUNCTS_THEN2 SUBST_ALL_TAC (CONJUNCTS_THEN SUBST_ALL_TAC)) THEN
@@ -1453,7 +1453,7 @@ let FLATP2AUX_global_env_inv_type = prove
        mlstring#ast_t list->mlstring#num#num->bool`;
     `(c1:mlstring),(ts:ast_t list)`] LIST_REL_MEM_IMP) THEN
   FLATP2AUX_LREWRITE_TAC ["rel"; "eqs"] [MEM_REVERSE] THEN
-  REWRITE_TAC[EXISTS_PAIR_THM] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[EXISTS_PAIR_THM] THEN CAKE_REWRITE_TAC[] THEN
   DISCH_THEN(X_CHOOSE_THEN `c2:mlstring` (X_CHOOSE_THEN `tag:num` (X_CHOOSE_THEN `ar:num`
     (CONJUNCTS_THEN2 (LABEL_TAC "memt") (CONJUNCTS_THEN2 (SUBST_ALL_TAC o SYM) SUBST_ALL_TAC))))) THEN
   MAP_EVERY EXISTS_TAC [`tag:num`;
@@ -1463,7 +1463,7 @@ let FLATP2AUX_global_env_inv_type = prove
    [MATCH_MP_TAC ALOOKUP_ALL_DISTINCT_MEM THEN
     REWRITE_TAC[FLATP2AUX_MAP_FST_kv; FLATP2AUX_MAP_FST_cn_tag] THEN
     FLATP2AUX_LREWRITE_TAC ["dist"] [MEM_MAP; EXISTS_PAIR_THM] THEN
-    MAP_EVERY EXISTS_TAC [`c1:mlstring`; `tag:num`] THEN CASE_REWRITE_TAC[] THEN
+    MAP_EVERY EXISTS_TAC [`c1:mlstring`; `tag:num`] THEN CAKE_REWRITE_TAC[] THEN
     MAP_EVERY EXISTS_TAC [`c1:mlstring`; `tag:num`; `LENGTH (ts:ast_t list)`] THEN
     FLATP2AUX_LREWRITE_TAC ["memt"] [];
     CONJ_TAC THENL
@@ -1476,7 +1476,7 @@ let FLATP2AUX_MAP_FST_build_constrs = prove
   GEN_TAC THEN LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[MAP; build_constrs_def] THEN
   MP_TAC(ISPEC `h:mlstring # ast_t list` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `a:mlstring` (X_CHOOSE_THEN `b:ast_t list` SUBST1_TAC)) THEN
-  CASE_REWRITE_TAC[] THEN RULE_ASSUM_TAC(REWRITE_RULE[build_constrs_def]) THEN
+  CAKE_REWRITE_TAC[] THEN RULE_ASSUM_TAC(REWRITE_RULE[build_constrs_def]) THEN
   ASM_REWRITE_TAC[FST]);;
 
 let FLATP2AUX_env_domain_eq_type = prove
@@ -1557,8 +1557,8 @@ let alloc_tags_invariant = prove
          global_env_tys genv SUBMAP global_env_tys genv' /\
          global_env_v genv' = global_env_v genv /\
          source_to_flatProof_invariant interp g gen genv'
-           (next_indices_tidx_fupd (K (next_indices_tidx idx + 1)) idx, end_idx, os)
-           (state_next_type_stamp_fupd (K (state_next_type_stamp st + 1)) st) st' /\
+           (next_indices_tidx_fupd (combin_K (next_indices_tidx idx + 1)) idx, end_idx, os)
+           (state_next_type_stamp_fupd (combin_K (state_next_type_stamp st + 1)) st) st' /\
          (let build_env = sem_env_REC nsEmpty
                             (alist_to_ns (REVERSE (build_constrs (state_next_type_stamp st)
                                                      ctors))) in
@@ -1570,7 +1570,7 @@ let alloc_tags_invariant = prove
     (prove(`!x:A#B#C. ?a b c. x = (a,b,c)`, REWRITE_TAC[FORALL_PAIR_THM] THEN MESON_TAC[]))) THEN
   DISCH_THEN(X_CHOOSE_THEN `con_ns:(modN,conN,num)namespace` (X_CHOOSE_THEN `cid_spt:num spt`
     (X_CHOOSE_THEN `tag_list:(num#num)list` (LABEL_TAC "a1")))) THEN
-  FLATP2AUX_LREWRITE_TAC ["a1"] [] THEN CASE_REWRITE_TAC[] THEN
+  FLATP2AUX_LREWRITE_TAC ["a1"] [] THEN CAKE_REWRITE_TAC[] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN2 (SUBST_ALL_TAC o SYM) (SUBST_ALL_TAC o SYM))) THEN
   (SUBGOAL_THEN `ALL_DISTINCT (MAP FST (REVERSE (ctors:(mlstring # ast_t list) list)))`
@@ -1621,11 +1621,11 @@ let alloc_tags_invariant = prove
     REWRITE_TAC[FLOOKUP_FUNION] THEN
     USE_THEN "kf" (fun th -> REWRITE_TAC[REWRITE_RULE[GSYM flookup_thm]
       (SPECL [`tag:num`; `ar:num`] th)]) THEN
-    CASE_REWRITE_TAC[] THEN MATCH_MP_TAC FLATP2AUX_FLOOKUP_type_ext_MEM THEN
+    CAKE_REWRITE_TAC[] THEN MATCH_MP_TAC FLATP2AUX_FLOOKUP_type_ext_MEM THEN
     FLATP2AUX_LREWRITE_TAC ["dist0"] [] THEN FIRST_ASSUM ACCEPT_TAC;
     REWRITE_TAC[FLOOKUP_FUNION] THEN
     USE_THEN "tf" (fun th -> REWRITE_TAC[REWRITE_RULE[GSYM flookup_thm] th]) THEN
-    CASE_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[alist_to_fmap_thm; FLOOKUP_UPDATE; FLOOKUP_EMPTY; MAP_REVERSE]]);
    (MATCH_MP_TAC FLATP2AUX_env_domain_eq_type THEN FLATP2AUX_LREWRITE_TAC ["fst0"] [])]);;
 
@@ -1713,7 +1713,7 @@ let source_to_flatProof_abort_simps = prove
      source_to_flatProof_abort (Rerr (Rabort a):(A,B)result) = T /\
    source_to_flatProof_abort (Rerr (Rraise e):(A,B)result) = F /\
    source_to_flatProof_abort (Rval v:(A,B)result) = F`,
-  REWRITE_TAC[source_to_flatProof_abort_def] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[source_to_flatProof_abort_def] THEN CAKE_REWRITE_TAC[]);;
 let _ = cake_add_simps [source_to_flatProof_abort_simps];;
 
 (* HOL4 line 3747: Theorem compile_correct, stated at its Finalise (HOL4   *)
@@ -1729,7 +1729,7 @@ let invariant_change_eval_ref = prove
      source_to_flatProof_invariant (interp:(v->(source_to_flat_config#C)option)option) g gen genv idxs
      (st:(FFI)state) (st':(C,FFI)flat_state)
    ==> source_to_flatProof_invariant interp g gen genv idxs st
-         (flat_state_refs_fupd (K (CONS (Refv y) (TL (flat_state_refs st')))) st')`,
+         (flat_state_refs_fupd (combin_K (CONS (Refv y) (TL (flat_state_refs st')))) st')`,
   REPEAT GEN_TAC THEN
   REWRITE_TAC[source_to_flatProof_invariant_def; source_to_flatProof_s_rel_cases; eval_ref_inv_def] THEN
   SIMP_NOASM[NULL; TL; TAKE_def; ARITH_RULE `~(1 = 0)`; ARITH_RULE `1 - 1 = 0`] THEN
@@ -1740,7 +1740,7 @@ let FLATP2AUX_evaluate_store_env_id = prove
      flat_state_globals s = CONS (SOME (flat_Loc T 0)) xs /\
      flat_state_refs s = CONS (Refv v0) rs
      ==> flat_evaluate_decs s [store_env_id gen id] =
-         (flat_state_refs_fupd (K (CONS (Refv (flat_Conv NONE
+         (flat_state_refs_fupd (combin_K (CONS (Refv (flat_Conv NONE
             [flat_Litv (IntLit (&gen)); flat_Litv (IntLit (&id))])) rs)) s, NONE)`,
   REPEAT STRIP_TAC THEN
   REWRITE_TAC[store_env_id_def; env_id_tuple_def] THEN
@@ -1762,7 +1762,7 @@ let FLATP2AUX_invs_envs = prove
   REPEAT GEN_TAC THEN
   REWRITE_TAC[src_orac_step_invs_def; src_orac_next_cfg_def; orac_rel_def;
               orac_rel_inner_def] THEN
-  CASE_REWRITE_TAC[] THEN SIMP_NOASM[]);;
+  CAKE_REWRITE_TAC[] THEN SIMP_NOASM[]);;
 
 let FLATP2AUX_eval_ref_inv_cons = prove
  (`!gs rs. eval_ref_inv (TAKE 1 gs) (TAKE 1 rs)
@@ -1790,12 +1790,12 @@ let declare_env_store_env_id = prove
                            NONE -> F
                          | SOME e -> global_env_inv genv e {} env)))
    ==> ?y. flat_evaluate_decs s_i1 [store_env_id gen_id id] =
-             (flat_state_refs_fupd (K (CONS (Refv y) (TL (flat_state_refs s_i1)))) s_i1,
+             (flat_state_refs_fupd (combin_K (CONS (Refv y) (TL (flat_state_refs s_i1)))) s_i1,
               NONE) /\
            source_to_flatProof_invariant interp g
              (environment_generation_store_next_fupd
-                (K (environment_generation_store_next gen + 1)) gen)
-             genv idxs (state_eval_state_fupd (K es2) st) s_i1 /\
+                (combin_K (environment_generation_store_next gen + 1)) gen)
+             genv idxs (state_eval_state_fupd (combin_K es2) st) s_i1 /\
            (?xs. flat_state_globals s_i1 = CONS (SOME (flat_Loc T 0)) xs) /\
            source_to_flatProof_v_rel genv x y /\
            orac_forward_rel interp (state_eval_state st) es2`,
@@ -1807,11 +1807,11 @@ REPEAT GEN_TAC THEN
     STRIP_ASSUME_TAC THENL
    [USE_THEN "orac_rel" MP_TAC THEN USE_THEN "de" MP_TAC THEN
     CASES_ON `state_eval_state (st:(FFI)state)` THEN REWRITE_TAC[declare_env_def] THEN
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "option"] THEN
-    CASES_ON `a:eval_state` THEN CASE_REWRITE_TAC[] THEN
-    REWRITE_TAC[orac_rel_def] THEN CASE_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "option"] THEN
+    CASES_ON `a:eval_state` THEN CAKE_REWRITE_TAC[] THEN
+    REWRITE_TAC[orac_rel_def] THEN CAKE_REWRITE_TAC[] THEN
     CASES_ON `interp:(v->(source_to_flat_config#C)option)option` THEN
-    CASE_REWRITE_TAC[] THEN MESON_TAC[];
+    CAKE_REWRITE_TAC[] THEN MESON_TAC[];
     ALL_TAC] THEN
   RULE_ASSUM_TAC(REWRITE_RULE[ASSUME
     `state_eval_state (st:(FFI)state) = SOME (EvalOracle es)`]) THEN
@@ -1821,11 +1821,11 @@ REPEAT GEN_TAC THEN
    [USE_THEN "src_orac" (MP_TAC o MATCH_MP step_1 o CONJUNCT1 o
                          REWRITE_RULE[src_orac_invs_def]) THEN MESON_TAC[];
     ALL_TAC] THEN
-  REMOVE_THEN "de" (MP_TAC o REWRITE_RULE[declare_env_def]) THEN CASE_REWRITE_TAC[] THEN
-  REWRITE_TAC[oEL_THM] THEN COND_CASES_TAC THEN CASE_REWRITE_TAC[] THEN
+  REMOVE_THEN "de" (MP_TAC o REWRITE_RULE[declare_env_def]) THEN CAKE_REWRITE_TAC[] THEN
+  REWRITE_TAC[oEL_THM] THEN COND_CASES_TAC THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[distinctness "option"; injectivity "option"; PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN2 (SUBST_ALL_TAC o SYM) (SUBST_ALL_TAC o SYM)) THEN
-  USE_THEN "egr" (MP_TAC o REWRITE_RULE[env_gen_rel_def]) THEN CASE_REWRITE_TAC[] THEN
+  USE_THEN "egr" (MP_TAC o REWRITE_RULE[env_gen_rel_def]) THEN CAKE_REWRITE_TAC[] THEN
   DISCH_THEN(FLATP2AUX_LABEL_CONJS ["eg1"; "eg2"; "eg3"]) THEN
   USE_THEN "eval_ref" (MP_TAC o MATCH_MP FLATP2AUX_eval_ref_inv_cons) THEN
   DISCH_THEN(FLATP2AUX_CHOOSE_THEN [`xs:(flat_v option)list`; `v0:flat_v`;
@@ -1849,19 +1849,19 @@ REPEAT GEN_TAC THEN
       SIMP_NOASM[FLATP2AUX_invs_envs];
       USE_THEN "src_orac" (ACCEPT_TAC o CONJUNCT1 o REWRITE_RULE[src_orac_invs_def]);
       USE_THEN "src_orac" (MP_TAC o CONJUNCT1 o CONJUNCT2 o REWRITE_RULE[src_orac_invs_def]) THEN
-      REWRITE_TAC[src_orac_env_invs_def] THEN CASE_REWRITE_TAC[] THEN
+      REWRITE_TAC[src_orac_env_invs_def] THEN CAKE_REWRITE_TAC[] THEN
       SIMP_NOASM[FLATP2AUX_invs_envs; LENGTH_LUPDATE] THEN
       DISCH_THEN(X_CHOOSE_THEN `c:source_to_flat_config`
         (FLATP2AUX_LABEL_CONJS ["nc"; "esi"; "esn"; "eenv"])) THEN
       EXISTS_TAC `c:source_to_flat_config` THEN FLATP2AUX_LREWRITE_TAC ["nc"; "esi"; "esn"] [] THEN
       USE_THEN "lk" MP_TAC THEN FLATP2AUX_LREWRITE_TAC ["nc"; "eg1"; "eg3"] [] THEN
-      CASE_REWRITE_TAC[] THEN
+      CAKE_REWRITE_TAC[] THEN
       CASES_ON `lookup (eval_oracle_state_generation es)
         (environment_store_env_gens (source_to_flat_config_envs c))` THEN
-      CASE_REWRITE_TAC[] THEN REWRITE_TAC[] THEN
+      CAKE_REWRITE_TAC[] THEN REWRITE_TAC[] THEN
       CASES_ON `lookup (LENGTH (EL (eval_oracle_state_generation es)
                    (eval_oracle_state_envs es))) (a:(source_to_flat_environment)spt)` THEN
-      CASE_REWRITE_TAC[] THEN REWRITE_TAC[] THEN DISCH_TAC THEN
+      CAKE_REWRITE_TAC[] THEN REWRITE_TAC[] THEN DISCH_TAC THEN
       MAP_EVERY X_GEN_TAC [`g_id:num`; `i_d:num`] THEN REWRITE_TAC[EL_LUPDATE] THEN
       ASM_CASES_TAC `g_id = eval_oracle_state_generation es` THENL
        [ASM_REWRITE_TAC[] THEN REWRITE_TAC[LENGTH_APPEND; LENGTH; EL_APPEND] THEN STRIP_TAC THEN
@@ -1877,7 +1877,7 @@ REPEAT GEN_TAC THEN
           ASM_REWRITE_TAC[]];
         ASM_REWRITE_TAC[] THEN
         REMOVE_THEN "eenv" (MP_TAC o SPECL [`g_id:num`; `i_d:num`]) THEN ASM_REWRITE_TAC[]];
-      REWRITE_TAC[src_orac_gen_inv_def] THEN CASE_REWRITE_TAC[] THEN
+      REWRITE_TAC[src_orac_gen_inv_def] THEN CAKE_REWRITE_TAC[] THEN
       SIMP_NOASM[LENGTH_LUPDATE] THEN FLATP2AUX_LREWRITE_TAC ["eg2"] [];
       USE_THEN "orac_rel" ACCEPT_TAC;
       USE_THEN "globals" ACCEPT_TAC;
@@ -1895,7 +1895,7 @@ REPEAT GEN_TAC THEN
     CONJ_TAC THENL
      [CASES_ON `src_orac_next_cfg (SOME (dec:v->(source_to_flat_config#C)option))
                   (SOME (EvalOracle es))` THEN REWRITE_TAC[OPTREL_THM; subspt_refl];
-      REWRITE_TAC[eval_state_call_rel_def] THEN CASE_REWRITE_TAC[] THEN
+      REWRITE_TAC[eval_state_call_rel_def] THEN CAKE_REWRITE_TAC[] THEN
       SIMP_NOASM[LENGTH_LUPDATE; EL_LUPDATE] THEN
       MESON_TAC[ARITH_RULE `i < n ==> ~(i = n)`]]]);;
 
@@ -1920,7 +1920,7 @@ let pmatch_rows_drop_4 = prove
   REPEAT GEN_TAC THEN REWRITE_TAC[FLATP2AUX_LENGTH_6] THEN STRIP_TAC THEN
   ASM_REWRITE_TAC[pmatch_rows_def; flat_pmatch_def; pmatch_stamps_ok_cases; LENGTH;
                   OPTION_MAP_DEF] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[LAST; NOT_CONS_NIL; ARITH_RULE `4 = SUC(SUC(SUC(SUC 0)))`; EL; HD; TL]);;
 
 (* HOL4 line 4133 *)
@@ -1941,7 +1941,7 @@ let abort_compile_dec_result = prove
    source_to_flatProof_abort r`,
   REPEAT GEN_TAC THEN CASES_ON `r:((v)sem_env,A)result` THEN
   REWRITE_TAC[combine_dec_result_def; source_to_flatProof_abort_def] THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[]);;
 
 (* HOL4 line 4714 *)
 let invariant_env_gen_inv = prove
@@ -1966,7 +1966,7 @@ let compile_decs_future_rel = prove
     ASSUME_TAC (CONJUNCT2 (MATCH_MP compile_decs_env_gen_inv (CONJ th th2))))) THEN
   REWRITE_TAC[env_gen_future_rel_def] THEN
   CASES_ON `src_orac_next_cfg (interp:(v->(source_to_flat_config#C)option)option)
-              eval_state` THEN CASE_REWRITE_TAC[] THEN
+              eval_state` THEN CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[] THEN STRIP_TAC THEN EXISTS_TAC `gen_final:(source_to_flat_environment)spt` THEN
   ASM_MESON_TAC[subspt_trans]);;
 
@@ -1983,7 +1983,7 @@ let env_gen_future_rel_forward = prove
               eval_state` THEN
   CASES_ON `src_orac_next_cfg (interp:(v->(source_to_flat_config#C)option)option)
               eval_state2` THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[OPTREL_THM] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[OPTREL_THM] THEN
   REWRITE_TAC[subspt_lookup] THEN MESON_TAC[]);;
 
 (* HOL4 lines 4751-5231: the Resume blocks cons_decs, Dlet, Dletrec, Dtype, *)
@@ -2007,7 +2007,7 @@ let FLATP2AUX_cc_goal = `!interp g.
       ~(r = Rerr (Rabort Rtype_error)) /\
       es_i1 = source_to_flat_compile_exps t
                 (source_to_flat_environment_v_fupd
-                   (K (bind_locals ts locals (source_to_flat_environment_v comp_map)))
+                   (combin_K (bind_locals ts locals (source_to_flat_environment_v comp_map)))
                    comp_map) es
       ==> ?s'_i1 r_i1 genv'.
             flat_evaluate env_i1 s_i1 es_i1 = (s'_i1, r_i1) /\
@@ -2031,7 +2031,7 @@ let FLATP2AUX_cc_goal = `!interp g.
       ~(r = Rerr (Rabort Rtype_error)) /\
       pes_i1 = compile_pes t
                  (source_to_flat_environment_v_fupd
-                    (K (bind_locals ts locals (source_to_flat_environment_v comp_map)))
+                    (combin_K (bind_locals ts locals (source_to_flat_environment_v comp_map)))
                     comp_map) pes /\
       ~(pmatch_rows pes_i1 s_i1 v_i1 = Match_type_error) /\
       source_to_flatProof_v_rel genv err_v err_v_i1
@@ -2091,8 +2091,8 @@ let FLATP2AUX_flat_Handle = prove
           | _ -> (s1, r))`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN REWRITE_TAC[flat_evaluate_def] THEN
   ASM_REWRITE_TAC[] THEN
-  CASES_ON `r:(flat_v list,flat_v)result` THEN CASE_REWRITE_TAC[] THEN
-  CASES_ON `a:(flat_v)error_result` THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON `r:(flat_v list,flat_v)result` THEN CAKE_REWRITE_TAC[] THEN
+  CASES_ON `a:(flat_v)error_result` THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[flat_evaluate_match_def]);;
 let FLATP2AUX_env_all_rel_c = prove
  (`!genv comp_map env env' locals x arity stamp.
@@ -2130,15 +2130,15 @@ let FLATP2AUX_nsLookup_nsAppend_alist = prove
       | Long mn id' -> nsLookup e id)`,
   REPEAT GEN_TAC THEN CASES_ON `e:(A,B,C)namespace` THEN CASES_ON `id:(A,B)id` THEN
   REWRITE_TAC[alist_to_ns_def; nsAppend_def; nsLookup_def; ALOOKUP_APPEND; APPEND] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[ALOOKUP_THM] THEN CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[ALOOKUP_THM] THEN CAKE_REWRITE_TAC[]);;
 let FLATP2AUX_flat_eval_global = prove
  (`!env (s:(C,FFI)flat_state) t n v.
      n < LENGTH (flat_state_globals s) /\ EL n (flat_state_globals s) = SOME v
      ==> flat_evaluate env s [flat_App t (GlobalVarLookup n) []] = (s, Rval [v])`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[flat_evaluate_def; REVERSE] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "flat_op"] THEN
-  ASM_REWRITE_TAC[flat_do_app_def] THEN CASE_REWRITE_TAC[] THEN
-  ASM_REWRITE_TAC[IS_SOME_DEF; THE_DEF] THEN CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "flat_op"] THEN
+  ASM_REWRITE_TAC[flat_do_app_def] THEN CAKE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[IS_SOME_DEF; THE_DEF] THEN CAKE_REWRITE_TAC[] THEN
   SIMP_NOASM[REVERSE; list_result_def]);;
 let FLATP2AUX_sem_env_v_fupd = prove
  (`!f (env:v sem_env). sem_env_v_fupd f env = sem_env_REC (f (sem_env_v env)) (sem_env_c env)`,
@@ -2151,7 +2151,7 @@ let FLATP2AUX_v_rel_closure = prove
            (flat_Closure env_i1 x
              (source_to_flat_compile_exp t
                (source_to_flat_environment_v_fupd
-                 (K (nsBind x (source_to_flat_Local backend_common_None x)
+                 (combin_K (nsBind x (source_to_flat_Local backend_common_None x)
                        (bind_locals ts locals (source_to_flat_environment_v comp_map))))
                  comp_map) e))`,
   REPEAT GEN_TAC THEN REWRITE_TAC[env_all_rel_cases] THEN
@@ -2192,7 +2192,7 @@ let FLATP2AUX_flat_If = prove
                         | NONE -> (s1, Rerr (Rabort Rtype_error)))
           | Rerr e -> (s1, r))`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN REWRITE_TAC[flat_evaluate_def] THEN
-  ASM_REWRITE_TAC[] THEN CASES_ON `r:(flat_v list,flat_v)result` THEN CASE_REWRITE_TAC[]);;
+  ASM_REWRITE_TAC[] THEN CASES_ON `r:(flat_v list,flat_v)result` THEN CAKE_REWRITE_TAC[]);;
 let FLATP2AUX_flat_Mat = prove
  (CASE_TERM `!env (s:(C,FFI)flat_state) e s1 r t pes.
      flat_evaluate env s [e] = (s1, r)
@@ -2201,7 +2201,7 @@ let FLATP2AUX_flat_Mat = prove
             Rval v -> flat_evaluate_match env s1 (HD v) pes flat_bind_exn_v
           | Rerr e -> (s1, r))`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN REWRITE_TAC[flat_evaluate_def] THEN
-  ASM_REWRITE_TAC[] THEN CASES_ON `r:(flat_v list,flat_v)result` THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CASES_ON `r:(flat_v list,flat_v)result` THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[flat_evaluate_match_def]);;
 let FLATP2AUX_nsBind_alist = prove
  (`!x (v:C) (l:(B#C)list).
@@ -2217,8 +2217,8 @@ let FLATP2AUX_nsBind_nsAppend_alist = prove
 let FLATP2AUX_env_all_rel_bind = prove
  (`!genv comp_map env env_i1 locals x v v'.
      env_all_rel genv comp_map env env_i1 locals /\ source_to_flatProof_v_rel genv v v'
-     ==> env_all_rel genv comp_map (sem_env_v_fupd (K (nsBind x v (sem_env_v env))) env)
-           (flat_environment_v_fupd (K (CONS (x,v') (flat_environment_v env_i1))) env_i1)
+     ==> env_all_rel genv comp_map (sem_env_v_fupd (combin_K (nsBind x v (sem_env_v env))) env)
+           (flat_environment_v_fupd (combin_K (CONS (x,v') (flat_environment_v env_i1))) env_i1)
            (CONS x locals)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[env_all_rel_cases] THEN
   DISCH_THEN(CONJUNCTS_THEN2 (FLATP2AUX_CHOOSE_THEN [`evl:(modN,varN,v)namespace`;
@@ -2247,14 +2247,14 @@ let FLATP2AUX_flat_Let = prove
             Rval vs -> flat_evaluate (flat_environment_v_fupd (opt_bind n (HD vs)) env) s1 [e2]
           | Rerr e -> (s1, r))`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN REWRITE_TAC[flat_evaluate_def] THEN
-  ASM_REWRITE_TAC[] THEN CASES_ON `r:(flat_v list,flat_v)result` THEN CASE_REWRITE_TAC[]);;
+  ASM_REWRITE_TAC[] THEN CASES_ON `r:(flat_v list,flat_v)result` THEN CAKE_REWRITE_TAC[]);;
 
 let FLATP2AUX_flat_env_v_fupd = prove
  (`!f (env:(flat_v)flat_environment).
      flat_environment_v_fupd f env = flat_environment_REC (f (flat_environment_v env))`,
   REWRITE_TAC[(record_info "flat_environment").ri_component_equality] THEN SIMP_NOASM[]);;
 let FLATP2AUX_record_etas = prove
- (`(!env:v sem_env. sem_env_v_fupd (K (sem_env_v env)) env = env) /\
+ (`(!env:v sem_env. sem_env_v_fupd (combin_K (sem_env_v env)) env = env) /\
    (!env:(flat_v)flat_environment. flat_environment_v_fupd (\e. e) env = env) /\
    (!env:(flat_v)flat_environment. flat_environment_v_fupd I env = env)`,
   REWRITE_TAC[(record_info "sem_env").ri_component_equality;
@@ -2264,7 +2264,7 @@ let FLATP2AUX_record_etas = prove
 let FLATP2AUX_opt_bind_fun = prove
  (`(!v:A. opt_bind (NONE:(B)option) v = (\e. e)) /\
    (!(x:B) (v:A). opt_bind (SOME x) v = (\e. CONS (x,v) e))`,
-  REWRITE_TAC[FUN_EQ_THM; opt_bind_def] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[FUN_EQ_THM; opt_bind_def] THEN CAKE_REWRITE_TAC[]);;
 let FLATP2AUX_flat_env_REC_eta = prove
  (`!env:(flat_v)flat_environment. flat_environment_REC (flat_environment_v env) = env`,
   REWRITE_TAC[(record_info "flat_environment").ri_component_equality] THEN SIMP_NOASM[]);;
@@ -2279,7 +2279,7 @@ let FLATP2AUX_MAP_compile_funs = prove
   MP_TAC(ISPEC `h:varN#varN#exp` (prove(`!x:A#B#C. ?a b c. x = (a,b,c)`,
     REWRITE_TAC[FORALL_PAIR_THM] THEN MESON_TAC[]))) THEN
   STRIP_TAC THEN ASM_REWRITE_TAC[source_to_flat_compile_exp_def; MAP] THEN
-  CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]);;
 
 let FLATP2AUX_env_rel_map = prove
  (CASE_TERM `!(fs:(varN#varN#exp)list) (A:varN->v) (B:varN->flat_v) genv.
@@ -2296,7 +2296,7 @@ let FLATP2AUX_env_rel_map = prove
   REPEAT GEN_TAC THEN
   MP_TAC(ISPEC `h:varN#varN#exp` (prove(`!x:A#B#C. ?a b c. x = (a,b,c)`,
     REWRITE_TAC[FORALL_PAIR_THM] THEN MESON_TAC[]))) THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[FST] THEN CASE_REWRITE_TAC[] THEN DISCH_TAC THEN
+  STRIP_TAC THEN ASM_REWRITE_TAC[FST] THEN CAKE_REWRITE_TAC[] THEN DISCH_TAC THEN
   REWRITE_TAC[GSYM FLATP2AUX_nsBind_alist] THEN
   MATCH_MP_TAC(el 9 (CONJUNCTS source_to_flatProof_v_rel_rules)) THEN
   CONJ_TAC THENL [FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_MESON_TAC[]; ASM_MESON_TAC[]]);;
@@ -2306,16 +2306,16 @@ let FLATP2AUX_MAP_FST_rec = prove
      MAP FST (MAP (\fne. match fne with (f,y) -> (match y with (n,e) -> (f, R f))) funs) =
      MAP FST funs`,
   GEN_TAC THEN GEN_TAC THEN REWRITE_TAC[MAP_MAP_o] THEN AP_THM_TAC THEN AP_TERM_TAC THEN
-  REWRITE_TAC[FUN_EQ_THM; FORALL_PAIR_THM; o_THM] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[FUN_EQ_THM; FORALL_PAIR_THM; o_THM] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[FST]);;
 let FLATP2AUX_env_all_rel_letrec = prove
  (CASE_TERM `!genv comp_map env env_i1 locals ts t funs.
    env_all_rel genv comp_map env env_i1 locals /\ LENGTH ts = LENGTH locals
    ==> env_all_rel genv comp_map
-         (sem_env_v_fupd (K (build_rec_env funs env (sem_env_v env))) env)
-         (flat_environment_v_fupd (K (flat_build_rec_env
+         (sem_env_v_fupd (combin_K (build_rec_env funs env (sem_env_v env))) env)
+         (flat_environment_v_fupd (combin_K (flat_build_rec_env
              (compile_funs t (source_to_flat_environment_v_fupd
-                (K (bind_locals (APPEND (REPLICATE (LENGTH funs) backend_common_None) ts)
+                (combin_K (bind_locals (APPEND (REPLICATE (LENGTH funs) backend_common_None) ts)
                       (APPEND (MAP FST funs) locals) (source_to_flat_environment_v comp_map)))
                 comp_map) funs)
              env_i1 (flat_environment_v env_i1))) env_i1)
@@ -2341,7 +2341,7 @@ let FLATP2AUX_env_all_rel_letrec = prove
     {|APPEND (MAP (\fne. match fne with (f,y) -> (match y with
       (n,e) -> (f, flat_Recclosure (flat_environment_REC env1)
         (compile_funs t (source_to_flat_environment_v_fupd
-          (K (bind_locals (APPEND (REPLICATE (LENGTH funs) backend_common_None) ts)
+          (combin_K (bind_locals (APPEND (REPLICATE (LENGTH funs) backend_common_None) ts)
              (APPEND (MAP FST funs) (MAP FST l)) (source_to_flat_environment_v comp_map)))
           comp_map) funs) f))) funs) env1|}] THEN
   REWRITE_TAC[nsAppend_assoc; nsAppend_alist_to_ns] THEN REPEAT CONJ_TAC THENL
@@ -2367,14 +2367,14 @@ let FLATP2AUX_env_all_rel_letrec = prove
       ARITH_TAC]]);;
 let FLATP2AUX_FST3_case = prove
  (CASE_TERM `(\xyz:A#B#C. match xyz with (x,y) -> (match y with (y',z) -> x)) = FST`,
-  REWRITE_TAC[FUN_EQ_THM; FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[FST]);;
+  REWRITE_TAC[FUN_EQ_THM; FORALL_PAIR_THM] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[FST]);;
 let FLATP2AUX_env_all_rel_append = prove
  (`!genv comp_map env env_i1 locals env_v env2.
      env_all_rel genv comp_map env env_i1 locals /\
      source_to_flatProof_env_rel genv (alist_to_ns env_v) env2
      ==> env_all_rel genv comp_map
-           (sem_env_v_fupd (K (nsAppend (alist_to_ns env_v) (sem_env_v env))) env)
-           (flat_environment_v_fupd (K (APPEND env2 (flat_environment_v env_i1))) env_i1)
+           (sem_env_v_fupd (combin_K (nsAppend (alist_to_ns env_v) (sem_env_v env))) env)
+           (flat_environment_v_fupd (combin_K (APPEND env2 (flat_environment_v env_i1))) env_i1)
            (APPEND (MAP FST env_v) locals)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[env_all_rel_cases] THEN
   DISCH_THEN(CONJUNCTS_THEN2 (FLATP2AUX_CHOOSE_THEN [`evl:(modN,varN,v)namespace`;
@@ -2402,14 +2402,14 @@ let FLATP2AUX_flat_evaluate_match_cons = prove
      (flat_pmatch s p v [] = Match env2 /\ ~(pmatch_rows pes s v = Match_type_error) /\
       ALL_DISTINCT (flat_pat_bindings p)
       ==> flat_evaluate_match env s v (CONS (p,e) pes) err_v =
-          flat_evaluate (flat_environment_v_fupd (K (APPEND env2 (flat_environment_v env))) env)
+          flat_evaluate (flat_environment_v_fupd (combin_K (APPEND env2 (flat_environment_v env))) env)
             s [e])`,
   REPEAT GEN_TAC THEN CONJ_TAC THEN STRIP_TAC THEN
   REWRITE_TAC[flat_evaluate_match_def; pmatch_rows_def] THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   MP_TAC(ISPEC `pmatch_rows (pes:(flat_pat#flat_exp)list) (s:(C,FFI)flat_state) v`
     (cases "match_result")) THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
+  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
   FIRST_X_ASSUM(fun th -> if is_neg(concl th) then MP_TAC th else NO_TAC) THEN
   ASM_REWRITE_TAC[distinctness "match_result"]);;
 let FLATP2AUX_compile_decs_cons = prove
@@ -2440,14 +2440,14 @@ let FLATP2AUX_lift_env_props = prove
                 source_to_flat_environment_INFO.ri_accessors; sem_env_INFO.ri_accessors;
                 NOT_IN_EMPTY; IMAGE_CLAUSES] THEN
     STRIP_TAC THEN CONJ_TAC THEN GEN_TAC THEN CASES_ON `x:(modN,varN)id` THEN
-    TRY(CASES_ON `x:(modN,conN)id`) THEN CASE_REWRITE_TAC[] THEN
+    TRY(CASES_ON `x:(modN,conN)id`) THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[distinctness "option"] THEN COND_CASES_TAC THEN
     REWRITE_TAC[distinctness "option"] THEN ASM_MESON_TAC[]]);;
 let FLATP2AUX_simple_dlet_SOME = prove
  (`!p e pv vn. simple_dlet p e = SOME (pv, vn) <=> p = Pvar pv /\ e = Var vn`,
   REPEAT GEN_TAC THEN CASES_ON `p:pat` THEN REWRITE_TAC[simple_dlet_def] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "option"; distinctness "pat"] THEN
-  CASES_ON `e:exp` THEN CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "option"; distinctness "pat"] THEN
+  CASES_ON `e:exp` THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[distinctness "option"; distinctness "exp"; injectivity "option";
               injectivity "pat"; injectivity "exp"; PAIR_EQ]);;
 
@@ -2488,7 +2488,7 @@ let FLATP2AUX_result_rel_Rerr_f = prove
 
 let FLATP2AUX_bind_locals_nil = prove
  (`!comp_map. source_to_flat_environment_v_fupd
-                (K (bind_locals [] [] (source_to_flat_environment_v comp_map))) comp_map =
+                (combin_K (bind_locals [] [] (source_to_flat_environment_v comp_map))) comp_map =
               comp_map`,
   REWRITE_TAC[bind_locals_def; MAP2; nsBindList_def; ITLIST;
               (record_info "source_to_flat_environment").ri_component_equality] THEN
@@ -2505,8 +2505,8 @@ let FLATP2AUX_flat_decs_sing = prove
     PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `s1:(C,FFI)flat_state` (X_CHOOSE_THEN `r1:(flat_v list,flat_v)result`
     SUBST1_TAC)) THEN
-  CASES_ON `r1:(flat_v list,flat_v)result` THEN CASE_REWRITE_TAC[] THEN
-  TRY COND_CASES_TAC THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[flat_evaluate_def]);;
+  CASES_ON `r1:(flat_v list,flat_v)result` THEN CAKE_REWRITE_TAC[] THEN
+  TRY COND_CASES_TAC THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[flat_evaluate_def]);;
 
 let FLATP2AUX_env_domain_eq_alist = prove
  (`!l1 (l2:(varN#A)list).
@@ -2533,7 +2533,7 @@ let FLATP2AUX_v_rel_Recclosure_top = prove
      ==> source_to_flatProof_v_rel genv (Recclosure env funs x)
            (flat_Recclosure (flat_environment_REC [] :(flat_v)flat_environment)
               (compile_funs t (source_to_flat_environment_v_fupd
-                 (K (nsBindList (MAP (\x. (x, source_to_flat_Local backend_common_None x))
+                 (combin_K (nsBindList (MAP (\x. (x, source_to_flat_Local backend_common_None x))
                                      (MAP FST funs))
                        (source_to_flat_environment_v comp_map))) comp_map) funs) x)`,
   REPEAT STRIP_TAC THEN
@@ -2551,7 +2551,7 @@ let FLATP2AUX_v_rel_Recclosure_top = prove
 
 let FLATP2AUX_idx_block_exn = prove
  (`!idx end_idx.
-     idx_block (next_indices_eidx_fupd (K (next_indices_eidx idx + 1)) idx) end_idx =
+     idx_block (next_indices_eidx_fupd (combin_K (next_indices_eidx idx + 1)) idx) end_idx =
      idx_block idx end_idx DIFF {(next_indices_eidx idx, Idx_Exn)}`,
   REPEAT GEN_TAC THEN REWRITE_TAC[idx_block_def; EXTENSION; IN_DIFF; IN_UNION; IN_SING;
     IN_ELIM_THM; FORALL_PAIR_THM; PAIR_EQ] THEN
@@ -2560,7 +2560,7 @@ let FLATP2AUX_idx_block_exn = prove
 let FLATP2AUX_genv_alloc_exn = prove
  (`!genv e a st.
      genv_allocated_idxs (global_env_c_fupd
-        (K (FUNION (global_env_c genv) (FEMPTY |+ (((e, NONE), a), st)))) genv) =
+        (combin_K (FUNION (global_env_c genv) (FEMPTY |+ (((e, NONE), a), st)))) genv) =
      genv_allocated_idxs genv UNION {(e, Idx_Exn)}`,
   REPEAT GEN_TAC THEN REWRITE_TAC[genv_allocated_idxs_def; EXTENSION; IN_UNION; IN_SING;
     IN_ELIM_THM; FORALL_PAIR_THM; PAIR_EQ] THEN
@@ -2576,7 +2576,7 @@ let FLATP2AUX_FRANGE_FUNION_UPDATE = prove
   MP_TAC(ISPEC `FLOOKUP (c:(A,B)fmap) k'` (cases "option")) THEN
   DISCH_THEN(DISJ_CASES_THEN2 SUBST1_TAC
     (X_CHOOSE_THEN `y:B` (fun th -> SUBST1_TAC th THEN ASSUME_TAC th))) THEN
-  CASE_REWRITE_TAC[] THENL
+  CAKE_REWRITE_TAC[] THENL
    [COND_CASES_TAC THEN REWRITE_TAC[distinctness "option"; injectivity "option"] THEN MESON_TAC[];
     REWRITE_TAC[injectivity "option"] THEN ASM_MESON_TAC[]]);;
 
@@ -2586,10 +2586,10 @@ let FLATP2AUX_idx_range_exn = prove
        (idx, end_idx, os) /\
      next_indices_eidx idx < next_indices_eidx end_idx
      ==> idx_range_rel interp
-           (global_env_c_fupd (K (FUNION (global_env_c genv)
+           (global_env_c_fupd (combin_K (FUNION (global_env_c genv)
               (FEMPTY |+ (((next_indices_eidx idx, NONE), a), ExnStamp nes)))) genv)
            nts (nes + 1) ev
-           (next_indices_eidx_fupd (K (next_indices_eidx idx + 1)) idx, end_idx, os)`,
+           (next_indices_eidx_fupd (combin_K (next_indices_eidx idx + 1)) idx, end_idx, os)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[idx_range_rel_def; PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN2
     (FLATP2AUX_CHOOSE_THEN [`i0:next_indices`; `e0:next_indices`; `fin:next_indices`;
@@ -2598,7 +2598,7 @@ let FLATP2AUX_idx_range_exn = prove
     (LABEL_TAC "lt")) THEN
   REMOVE_THEN "eq" (CONJUNCTS_THEN2 (SUBST_ALL_TAC o SYM)
          (CONJUNCTS_THEN2 (SUBST_ALL_TAC o SYM) (SUBST_ALL_TAC o SYM))) THEN
-  MAP_EVERY EXISTS_TAC [`next_indices_eidx_fupd (K (next_indices_eidx idx + 1)) idx`;
+  MAP_EVERY EXISTS_TAC [`next_indices_eidx_fupd (combin_K (next_indices_eidx idx + 1)) idx`;
     `end_idx:next_indices`; `fin:next_indices`; `os:num#idx_types->bool`] THEN
   FLATP2AUX_LREWRITE_TAC ["fin"; "prev"] [FLATP2AUX_idx_block_exn; FLATP2AUX_genv_alloc_exn] THEN
   REWRITE_TAC[global_env_INFO.ri_accfupds; K_THM] THEN
@@ -2678,10 +2678,10 @@ let FLATP2AUX_alloc_tags_SUC = prove
   GEN_TAC THEN REWRITE_TAC[FUN_EQ_THM; o_THM] THEN GEN_TAC THEN
   REWRITE_TAC[ARITH_RULE `t + SUC x = (t + 1) + x`]);;
 let FLATP2AUX_next_indices_eta = prove
- (`!idx. next_indices_tidx_fupd (K (next_indices_tidx idx)) idx = idx`,
+ (`!idx. next_indices_tidx_fupd (combin_K (next_indices_tidx idx)) idx = idx`,
   REWRITE_TAC[(record_info "next_indices").ri_component_equality] THEN SIMP_NOASM[]);;
 let FLATP2AUX_state_nts_eta = prove
- (`!st:(FFI)state. state_next_type_stamp_fupd (K (state_next_type_stamp st)) st = st`,
+ (`!st:(FFI)state. state_next_type_stamp_fupd (combin_K (state_next_type_stamp st)) st = st`,
   REWRITE_TAC[(record_info "state").ri_component_equality] THEN SIMP_NOASM[]);;
 
 let FLATP2AUX_dtype_ind = prove
@@ -2696,8 +2696,8 @@ let FLATP2AUX_dtype_ind = prove
            global_env_tys genv SUBMAP global_env_tys genv' /\
            global_env_v genv' = global_env_v genv /\
            source_to_flatProof_invariant interp g gen genv'
-             (next_indices_tidx_fupd (K (next_indices_tidx idx + LENGTH tds)) idx, end_idx, os)
-             (state_next_type_stamp_fupd (K (state_next_type_stamp st + LENGTH tds)) st) s_i1 /\
+             (next_indices_tidx_fupd (combin_K (next_indices_tidx idx + LENGTH tds)) idx, end_idx, os)
+             (state_next_type_stamp_fupd (combin_K (state_next_type_stamp st + LENGTH tds)) st) s_i1 /\
            global_env_inv genv'
              (source_to_flat_environment_REC
                 (FOLDL (\ns (l,cids). nsAppend l ns) nsEmpty
@@ -2732,10 +2732,10 @@ let FLATP2AUX_dtype_ind = prove
   REWRITE_TAC[ALL; LENGTH; source_evalProof_check_dup_ctors_thm] THEN
   DISCH_THEN(FLATP2AUX_LABEL_CONJS ["inv"; "gei"; "cd"; "tle"]) THEN
   REMOVE_THEN "cd" (CONJUNCTS_THEN2 (LABEL_TAC "dist") (LABEL_TAC "dall")) THEN
-  REWRITE_TAC[MAPi_DEF; FOLDL; build_tdefs_def; ADD_CLAUSES] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[MAPi_DEF; FOLDL; build_tdefs_def; ADD_CLAUSES] THEN CAKE_REWRITE_TAC[] THEN
   FLATP2AUX_PAIR_TAC `alloc_tags (next_indices_tidx idx) (ctors:(mlstring # ast_t list) list)`
     `ns1:(modN,conN,num#type_group_id)namespace` `cids1:num spt` "at" THEN
-  FLATP2AUX_LREWRITE_TAC ["at"] [] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[nsAppend_nsEmpty] THEN
+  FLATP2AUX_LREWRITE_TAC ["at"] [] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[nsAppend_nsEmpty] THEN
   MP_TAC(ISPECL [`idx:next_indices`; `ctors:(mlstring # ast_t list) list`;
     `ns1:(modN,conN,num#type_group_id)namespace`; `cids1:num spt`;
     `interp:(v->(source_to_flat_config#C)option)option`; `g:dec list->dec list`;
@@ -2750,8 +2750,8 @@ let FLATP2AUX_dtype_ind = prove
     (FLATP2AUX_LABEL_CONJS ["sc1"; "sy1"; "sv1"; "inv1"; "bl1"])) THEN
   REMOVE_THEN "bl1" (CONJUNCTS_THEN2 (LABEL_TAC "gi1") (LABEL_TAC "ed1") o
                      CONV_RULE(TOP_DEPTH_CONV let_CONV)) THEN
-  USE_THEN "ih" (MP_TAC o SPECL [`next_indices_tidx_fupd (K (next_indices_tidx idx + 1)) idx`;
-    `state_next_type_stamp_fupd (K (state_next_type_stamp st + 1)) (st:(FFI)state)`;
+  USE_THEN "ih" (MP_TAC o SPECL [`next_indices_tidx_fupd (combin_K (next_indices_tidx idx + 1)) idx`;
+    `state_next_type_stamp_fupd (combin_K (state_next_type_stamp st + 1)) (st:(FFI)state)`;
     `genv1:global_env`]) THEN
   REWRITE_TAC[next_indices_INFO.ri_accfupds; next_indices_INFO.ri_fupdfupds;
               state_INFO.ri_accfupds; state_INFO.ri_fupdfupds; K_THM; K_o_THM] THEN
@@ -2784,7 +2784,7 @@ let FLATP2AUX_evaluate_global_init = prove
      n < LENGTH (flat_state_globals s) /\ EL n (flat_state_globals s) = NONE
      ==> flat_evaluate_decs s [flat_App backend_common_None (GlobalVarInit n)
                                  [env_id_tuple gen id]] =
-         (flat_state_globals_fupd (K (LUPDATE (SOME (flat_Conv NONE
+         (flat_state_globals_fupd (combin_K (LUPDATE (SOME (flat_Conv NONE
             [flat_Litv (IntLit (&gen)); flat_Litv (IntLit (&id))])) n (flat_state_globals s))) s,
           NONE)`,
   REPEAT STRIP_TAC THEN
@@ -2794,7 +2794,7 @@ let FLATP2AUX_evaluate_global_init = prove
 
 let FLATP2AUX_idx_block_var = prove
  (`!idx end_idx.
-     idx_block (next_indices_vidx_fupd (K (next_indices_vidx idx + 1)) idx) end_idx =
+     idx_block (next_indices_vidx_fupd (combin_K (next_indices_vidx idx + 1)) idx) end_idx =
      idx_block idx end_idx DIFF {(next_indices_vidx idx, Idx_Var)}`,
   REPEAT GEN_TAC THEN REWRITE_TAC[idx_block_def; EXTENSION; IN_DIFF; IN_UNION; IN_SING;
     IN_ELIM_THM; FORALL_PAIR_THM; PAIR_EQ] THEN
@@ -2803,7 +2803,7 @@ let FLATP2AUX_idx_block_var = prove
 let FLATP2AUX_genv_alloc_var = prove
  (`!genv i x.
      i < LENGTH (global_env_v genv)
-     ==> genv_allocated_idxs (global_env_v_fupd (K (LUPDATE (SOME x) i (global_env_v genv))) genv) =
+     ==> genv_allocated_idxs (global_env_v_fupd (combin_K (LUPDATE (SOME x) i (global_env_v genv))) genv) =
          genv_allocated_idxs genv UNION {(i, Idx_Var)}`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN
   REWRITE_TAC[genv_allocated_idxs_def; EXTENSION; IN_UNION; IN_SING; IN_ELIM_THM;
@@ -2833,7 +2833,7 @@ let FLATP2AUX_idx_range_var_fresh = prove
    [USE_THEN "fm" MP_TAC THEN USE_THEN "fin" MP_TAC THEN USE_THEN "prev" MP_TAC THEN
     REWRITE_TAC[fin_idx_match_def; idx_prev_def] THEN
     CASES_ON `src_orac_next_cfg (interp:(v->(source_to_flat_config#C)option)option) ev` THEN
-    CASE_REWRITE_TAC[] THENL
+    CAKE_REWRITE_TAC[] THENL
      [USE_THEN "lt" MP_TAC THEN ARITH_TAC;
       DISCH_TAC THEN DISCH_THEN SUBST_ALL_TAC THEN USE_THEN "lt" MP_TAC THEN
       POP_ASSUM MP_TAC THEN ARITH_TAC];
@@ -2854,9 +2854,9 @@ let FLATP2AUX_idx_range_var = prove
      next_indices_vidx idx < LENGTH (global_env_v genv) /\
      src_orac_next_cfg interp ev' = src_orac_next_cfg interp ev
      ==> idx_range_rel interp
-           (global_env_v_fupd (K (LUPDATE (SOME x) (next_indices_vidx idx) (global_env_v genv)))
+           (global_env_v_fupd (combin_K (LUPDATE (SOME x) (next_indices_vidx idx) (global_env_v genv)))
               genv) nts nes ev'
-           (next_indices_vidx_fupd (K (next_indices_vidx idx + 1)) idx, end_idx, os)`,
+           (next_indices_vidx_fupd (combin_K (next_indices_vidx idx + 1)) idx, end_idx, os)`,
   REPEAT GEN_TAC THEN
   DISCH_THEN(CONJUNCTS_THEN2 (MP_TAC o REWRITE_RULE[idx_range_rel_def; PAIR_EQ])
     (FLATP2AUX_LABEL_CONJS ["lt"; "lv"; "nc"])) THEN
@@ -2866,7 +2866,7 @@ let FLATP2AUX_idx_range_var = prove
   REMOVE_THEN "eq" (CONJUNCTS_THEN2 (SUBST_ALL_TAC o SYM)
          (CONJUNCTS_THEN2 (SUBST_ALL_TAC o SYM) (SUBST_ALL_TAC o SYM))) THEN
   REWRITE_TAC[idx_range_rel_def; PAIR_EQ] THEN
-  MAP_EVERY EXISTS_TAC [`next_indices_vidx_fupd (K (next_indices_vidx idx + 1)) idx`;
+  MAP_EVERY EXISTS_TAC [`next_indices_vidx_fupd (combin_K (next_indices_vidx idx + 1)) idx`;
     `end_idx:next_indices`; `fin:next_indices`; `os:num#idx_types->bool`] THEN
   USE_THEN "lv" (fun th -> REWRITE_TAC[MATCH_MP FLATP2AUX_genv_alloc_var th]) THEN
   FLATP2AUX_LREWRITE_TAC ["nc"; "fin"; "prev"; "ts"; "en"] [FLATP2AUX_idx_block_var] THEN
@@ -2916,10 +2916,10 @@ let FLATP2AUX_env_invs_declare = prove
        (SOME (EvalOracle es)) /\
      env_gen_future_rel interp
        (environment_generation_store_envs_fupd
-          (K (insert (environment_generation_store_next gen) comp_map
+          (combin_K (insert (environment_generation_store_next gen) comp_map
                 (environment_generation_store_envs gen)))
           (environment_generation_store_next_fupd
-             (K (environment_generation_store_next gen + 1)) gen))
+             (combin_K (environment_generation_store_next gen + 1)) gen))
        (SOME (EvalOracle es)) /\
      environment_generation_store_generation gen = eval_oracle_state_generation es /\
      eval_oracle_state_generation es < LENGTH (eval_oracle_state_envs es) /\
@@ -2931,18 +2931,18 @@ let FLATP2AUX_env_invs_declare = prove
      subglobals (global_env_v genv) (global_env_v genv')
      ==> src_orac_env_invs interp genv'
            (SOME (EvalOracle (eval_oracle_state_envs_fupd
-              (K (LUPDATE (APPEND (EL (eval_oracle_state_generation es)
+              (combin_K (LUPDATE (APPEND (EL (eval_oracle_state_generation es)
                                       (eval_oracle_state_envs es)) [env])
                     (eval_oracle_state_generation es) (eval_oracle_state_envs es))) es)))`,
   REPEAT GEN_TAC THEN
   DISCH_THEN(FLATP2AUX_LABEL_CONJS ["ei"; "efr"; "eg1"; "eg2"; "eg3"; "gei"; "sc"; "sy"; "sg"]) THEN
-  USE_THEN "ei" MP_TAC THEN REWRITE_TAC[src_orac_env_invs_def] THEN CASE_REWRITE_TAC[] THEN
+  USE_THEN "ei" MP_TAC THEN REWRITE_TAC[src_orac_env_invs_def] THEN CAKE_REWRITE_TAC[] THEN
   SIMP_NOASM[FLATP2AUX_invs_envs; LENGTH_LUPDATE] THEN
   DISCH_THEN(X_CHOOSE_THEN `c:source_to_flat_config`
     (FLATP2AUX_LABEL_CONJS ["ncc"; "esi"; "esn"; "eenv"])) THEN
   EXISTS_TAC `c:source_to_flat_config` THEN FLATP2AUX_LREWRITE_TAC ["ncc"; "esi"; "esn"] [] THEN
   USE_THEN "efr" MP_TAC THEN REWRITE_TAC[env_gen_future_rel_def] THEN
-  FLATP2AUX_LREWRITE_TAC ["ncc"] [] THEN CASE_REWRITE_TAC[] THEN
+  FLATP2AUX_LREWRITE_TAC ["ncc"] [] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[environment_generation_store_INFO.ri_accfupds; K_THM] THEN
   FLATP2AUX_LREWRITE_TAC ["eg1"] [] THEN
   DISCH_THEN(X_CHOOSE_THEN `gf:(source_to_flat_environment)spt`
@@ -2996,7 +2996,7 @@ let FLATP2AUX_App_err = prove
            (s1_i1, Rerr err_i1)`,
   REPEAT GEN_TAC THEN DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "ev") (LABEL_TAC "fe")) THEN
   CONJ_TAC THENL
-   [REWRITE_TAC[full_evaluate_def] THEN FLATP2AUX_LREWRITE_TAC ["ev"] [] THEN CASE_REWRITE_TAC[];
+   [REWRITE_TAC[full_evaluate_def] THEN FLATP2AUX_LREWRITE_TAC ["ev"] [] THEN CAKE_REWRITE_TAC[];
     ALL_TAC] THEN
   USE_THEN "fe" (LABEL_TAC "fe'" o REWRITE_RULE[compile_exps_reverse]) THEN
   REWRITE_TAC[source_to_flat_compile_exp_def] THEN
@@ -3004,27 +3004,27 @@ let FLATP2AUX_App_err = prove
    [MATCH_MP_TAC evaluate_foldr_let_err THEN FLATP2AUX_LREWRITE_TAC ["fe'"] []; ALL_TAC] THEN
   COND_CASES_TAC THENL
    [REWRITE_TAC[flat_evaluate_def] THEN FLATP2AUX_LREWRITE_TAC ["fe'"] [] THEN
-    CASE_REWRITE_TAC[];
+    CAKE_REWRITE_TAC[];
     ALL_TAC] THEN
   COND_CASES_TAC THENL
    [MP_TAC(ISPEC `es:exp list` list_CASES) THEN
     DISCH_THEN(DISJ_CASES_THEN2 SUBST_ALL_TAC
       (X_CHOOSE_THEN `e1:exp` (X_CHOOSE_THEN `es1:exp list` SUBST_ALL_TAC))) THEN
-    CASE_REWRITE_TAC[] THENL
+    CAKE_REWRITE_TAC[] THENL
      [USE_THEN "fe'" MP_TAC THEN
       REWRITE_TAC[source_to_flat_compile_exp_def; REVERSE] THEN
       REWRITE_TAC[flat_evaluate_def; PAIR_EQ; distinctness "result"];
       MP_TAC(ISPEC `es1:exp list` list_CASES) THEN
       DISCH_THEN(DISJ_CASES_THEN2 SUBST_ALL_TAC
         (X_CHOOSE_THEN `e2:exp` (X_CHOOSE_THEN `es2:exp list` SUBST_ALL_TAC))) THEN
-      CASE_REWRITE_TAC[] THENL
+      CAKE_REWRITE_TAC[] THENL
        [USE_THEN "fe'" MP_TAC THEN REWRITE_TAC[source_to_flat_compile_exp_def; REVERSE; APPEND] THEN
-        CASE_REWRITE_TAC[];
+        CAKE_REWRITE_TAC[];
         REWRITE_TAC[flat_evaluate_def] THEN FLATP2AUX_LREWRITE_TAC ["fe'"] [] THEN
-        CASE_REWRITE_TAC[]]];
+        CAKE_REWRITE_TAC[]]];
     ALL_TAC] THEN
   REWRITE_TAC[flat_evaluate_def] THEN FLATP2AUX_LREWRITE_TAC ["fe'"] [] THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[]);;
 
 let FLATP2AUX_result_rel_list_result = prove
  (`!genv (r:(v,v)result) (r':(flat_v,flat_v)result).
@@ -3040,7 +3040,7 @@ let FLATP2AUX_result_rel_list_result = prove
 let FLATP2AUX_astOp_Src = prove
  (`!op x. astOp_to_flatOp op = Src x ==> x = op`,
   GEN_TAC THEN CASES_ON `op:op` THEN REWRITE_TAC[astOp_to_flatOp_def] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[injectivity "flat_op"; distinctness "flat_op"] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[injectivity "flat_op"; distinctness "flat_op"] THEN
   MESON_TAC[]);;
 let FLATP2AUX_astOp_simple = prove
  (`!op. getOpClass op = Simple
@@ -3049,7 +3049,7 @@ let FLATP2AUX_astOp_simple = prove
   GEN_TAC THEN DISCH_TAC THEN REPEAT CONJ_TAC THEN
   TRY(DISCH_THEN(SUBST_ALL_TAC o SYM o MATCH_MP FLATP2AUX_astOp_Src)) THEN
   TRY(DISCH_THEN SUBST_ALL_TAC) THEN
-  POP_ASSUM MP_TAC THEN REWRITE_TAC[getOpClass_def] THEN CASE_REWRITE_TAC[] THEN
+  POP_ASSUM MP_TAC THEN REWRITE_TAC[getOpClass_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[distinctness "op_class"]);;
 
 let FLATP2AUX_App_simple = prove
@@ -3073,17 +3073,17 @@ let FLATP2AUX_App_simple = prove
   REPEAT GEN_TAC THEN
   DISCH_THEN(FLATP2AUX_LABEL_CONJS ["ev1"; "ev"; "nte"; "cls"; "na"; "ne"; "fe1"; "vr"; "inv"]) THEN
   REMOVE_THEN "ev" (MP_TAC o REWRITE_RULE[full_evaluate_def]) THEN
-  FLATP2AUX_LREWRITE_TAC ["ev1"; "cls"] [] THEN CASE_REWRITE_TAC[] THEN
+  FLATP2AUX_LREWRITE_TAC ["ev1"; "cls"] [] THEN CAKE_REWRITE_TAC[] THEN
   FLATP2AUX_OPTION_CASES_TAC `do_app (state_refs (st1:(FFI)state),state_ffi st1) op (REVERSE vs)`
     `res:((v store_v)list # (FFI)ffi_state) # (v,v)result` "da" THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THENL
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THENL
    [DISCH_THEN(SUBST_ALL_TAC o SYM o CONJUNCT2) THEN USE_THEN "nte" MP_TAC THEN REWRITE_TAC[];
     ALL_TAC] THEN
   MP_TAC(ISPEC `res:((v store_v)list # (FFI)ffi_state) # (v,v)result`
     (prove(`!x:(A#B)#C. ?a b c. x = ((a,b),c)`, REWRITE_TAC[FORALL_PAIR_THM] THEN MESON_TAC[]))) THEN
   DISCH_THEN(X_CHOOSE_THEN `refs':(v store_v)list` (X_CHOOSE_THEN `ffi':(FFI)ffi_state`
     (X_CHOOSE_THEN `r0:(v,v)result` SUBST_ALL_TAC))) THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN2 (SUBST_ALL_TAC o SYM) (SUBST_ALL_TAC o SYM)) THEN
   FLATP2AUX_INV_TAC "inv" THEN
   USE_THEN "s_rel" (FLATP2AUX_LABEL_CONJS ["nn"; "srf"; "scl"; "sff"] o
@@ -3104,12 +3104,12 @@ let FLATP2AUX_App_simple = prove
   REWRITE_TAC[source_to_flat_compile_exp_def] THEN
   FLATP2AUX_LREWRITE_TAC ["na"; "n4"; "ne"] [] THEN
   REWRITE_TAC[flat_evaluate_def; GSYM compile_exps_reverse] THEN
-  FLATP2AUX_LREWRITE_TAC ["fe1"] [] THEN CASE_REWRITE_TAC[] THEN
-  FLATP2AUX_LREWRITE_TAC ["n1"; "n2"; "n3"; "fda"] [] THEN CASE_REWRITE_TAC[] THEN
+  FLATP2AUX_LREWRITE_TAC ["fe1"] [] THEN CAKE_REWRITE_TAC[] THEN
+  FLATP2AUX_LREWRITE_TAC ["n1"; "n2"; "n3"; "fda"] [] THEN CAKE_REWRITE_TAC[] THEN
   USE_THEN "rr" (fun th -> REWRITE_TAC[MATCH_MP FLATP2AUX_result_rel_list_result th]) THEN
   REWRITE_TAC[state_INFO.ri_accfupds] THEN
   SUBGOAL_THEN `source_to_flatProof_s_rel genv1
-     (state_refs_fupd (K refs') (state_ffi_fupd (K ffi') (st1:(FFI)state))) (s2_i1:(C,FFI)flat_state)`
+     (state_refs_fupd (combin_K refs') (state_ffi_fupd (combin_K ffi') (st1:(FFI)state))) (s2_i1:(C,FFI)flat_state)`
     (LABEL_TAC "sr2") THENL
    [REWRITE_TAC[source_to_flatProof_s_rel_cases; state_INFO.ri_accfupds; K_THM] THEN
     USE_THEN "srf2" (MP_TAC o REWRITE_RULE[FST]) THEN USE_THEN "sff2" (MP_TAC o REWRITE_RULE[SND]) THEN
@@ -3129,7 +3129,7 @@ let FLATP2AUX_getOpClass_cases = prove
  (`!op. (getOpClass op = FunApp <=> op = Opapp) /\
         (getOpClass op = EvalOp <=> op = Eval) /\
         (getOpClass op = Force <=> op = ThunkOp ForceThunk)`,
-  GEN_TAC THEN CASES_ON `op:op` THEN REWRITE_TAC[getOpClass_def] THEN CASE_REWRITE_TAC[] THEN
+  GEN_TAC THEN CASES_ON `op:op` THEN REWRITE_TAC[getOpClass_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[distinctness "op_class"; distinctness "op"; injectivity "op"] THEN
   TRY COND_CASES_TAC THEN ASM_REWRITE_TAC[distinctness "op_class"]);;
 
@@ -3138,20 +3138,20 @@ let FLATP2AUX_do_app_Env_id = prove
      do_app (s,t) Env_id vs = SOME res
      ==> (?env g i. vs = [Env env (g,i)]) \/
          (?g i. vs = [Conv NONE [g; i]] /\ res = ((s,t), Rval (Conv NONE [g; i])))`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[do_app_def] THEN CASE_REWRITE_TAC[] THEN
+  REPEAT GEN_TAC THEN REWRITE_TAC[do_app_def] THEN CAKE_REWRITE_TAC[] THEN
   EVERY_CASE_TAC THEN SIMP_NOASM[distinctness "option"; injectivity "option"] THEN
   MESON_TAC[]);;
 
 let FLATP2AUX_state_refs_ffi_eta = prove
- (`!s:(FFI)state. state_refs_fupd (K (state_refs s)) (state_ffi_fupd (K (state_ffi s)) s) = s`,
+ (`!s:(FFI)state. state_refs_fupd (combin_K (state_refs s)) (state_ffi_fupd (combin_K (state_ffi s)) s) = s`,
   REWRITE_TAC[(record_info "state").ri_component_equality] THEN SIMP_NOASM[]);;
 
 let FLATP2AUX_do_app_AallocEmpty = prove
  (`!(s:(v store_v)list) (t:(FFI)ffi_state) vs res.
      do_app (s,t) AallocEmpty vs = SOME res
      ==> vs = [Conv NONE []] /\ res = ((APPEND s [Varray []], t), Rval (Loc T (LENGTH s)))`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[do_app_def] THEN CASE_REWRITE_TAC[] THEN
-  REWRITE_TAC[store_alloc_def] THEN CASE_REWRITE_TAC[] THEN
+  REPEAT GEN_TAC THEN REWRITE_TAC[do_app_def] THEN CAKE_REWRITE_TAC[] THEN
+  REWRITE_TAC[store_alloc_def] THEN CAKE_REWRITE_TAC[] THEN
   EVERY_CASE_TAC THEN SIMP_NOASM[distinctness "option"; injectivity "option"] THEN
   MESON_TAC[]);;
 
@@ -3159,13 +3159,13 @@ let FLATP2AUX_flat_Aalloc_0 = prove
  (`!env (s:(C,FFI)flat_state).
      flat_evaluate env s [flat_App backend_common_None (Src Aalloc)
         [flat_Lit backend_common_None (IntLit (&0)); flat_Lit backend_common_None (IntLit (&0))]] =
-     (flat_state_refs_fupd (K (APPEND (flat_state_refs s) [Varray []])) s,
+     (flat_state_refs_fupd (combin_K (APPEND (flat_state_refs s) [Varray []])) s,
       Rval [flat_Loc T (LENGTH (flat_state_refs s))])`,
   REPEAT GEN_TAC THEN
   FS[flat_evaluate_def; REVERSE; APPEND; flat_do_app_def; store_alloc_def; list_result_def;
      INT_ABS_NUM; NUM_OF_INT_OF_NUM; REPLICATE; INT_LT_REFL; INT_OF_NUM_LT] THEN
   REWRITE_TAC[INT_ARITH `~(&0:int < &0)`; INT_ABS_NUM; NUM_OF_INT_OF_NUM; REPLICATE] THEN
-  CASE_REWRITE_TAC[] THEN SIMP_NOASM[]);;
+  CAKE_REWRITE_TAC[] THEN SIMP_NOASM[]);;
 
 let FLATP2AUX_s_rel_length = prove
  (`!genv (s:(FFI)state) (s1:(C,FFI)flat_state).
@@ -3184,8 +3184,8 @@ let FLATP2AUX_s_rel_alloc = prove
  (`!genv (s:(FFI)state) (s1:(C,FFI)flat_state).
      source_to_flatProof_s_rel genv s s1
      ==> source_to_flatProof_s_rel genv
-           (state_refs_fupd (K (APPEND (state_refs s) [Varray []])) (state_ffi_fupd (K (state_ffi s)) s))
-           (flat_state_refs_fupd (K (APPEND (flat_state_refs s1) [Varray []])) s1)`,
+           (state_refs_fupd (combin_K (APPEND (state_refs s) [Varray []])) (state_ffi_fupd (combin_K (state_ffi s)) s))
+           (flat_state_refs_fupd (combin_K (APPEND (flat_state_refs s1) [Varray []])) s1)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[source_to_flatProof_s_rel_cases] THEN
   REWRITE_TAC[state_INFO.ri_accfupds; flat_state_INFO.ri_accfupds; K_THM] THEN
   STRUCT_CASES_TAC(ISPEC `flat_state_refs (s1:(C,FFI)flat_state)` list_CASES) THEN
@@ -3216,7 +3216,7 @@ let FLATP2AUX_App_alloc = prove
   FLATP2AUX_LREWRITE_TAC ["ev1"] [] THEN SIMP_NOASM[] THEN
   FLATP2AUX_OPTION_CASES_TAC `do_app (state_refs (st1:(FFI)state),state_ffi st1) AallocEmpty (REVERSE vs)`
     `res:((v store_v)list # (FFI)ffi_state) # (v,v)result` "da" THEN
-  CASE_REWRITE_TAC[] THENL
+  CAKE_REWRITE_TAC[] THENL
    [REWRITE_TAC[PAIR_EQ] THEN DISCH_THEN(SUBST_ALL_TAC o SYM o CONJUNCT2) THEN
     USE_THEN "nte" MP_TAC THEN REWRITE_TAC[];
     ALL_TAC] THEN
@@ -3224,7 +3224,7 @@ let FLATP2AUX_App_alloc = prove
   DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "rvs") SUBST_ALL_TAC) THEN
   USE_THEN "rvs" (MP_TAC o AP_TERM `REVERSE:v list->v list`) THEN
   REWRITE_TAC[REVERSE_REVERSE; REVERSE; APPEND] THEN DISCH_THEN SUBST_ALL_TAC THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ; list_result_def] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ; list_result_def] THEN
   DISCH_THEN(CONJUNCTS_THEN2 (SUBST_ALL_TAC o SYM) (SUBST_ALL_TAC o SYM)) THEN
   USE_THEN "ev1" (MP_TAC o SYM o MATCH_MP (CONJUNCT1 evaluate_length)) THEN
   REWRITE_TAC[LENGTH; LENGTH_REVERSE; ONE] THEN
@@ -3241,16 +3241,16 @@ let FLATP2AUX_App_alloc = prove
   REWRITE_TAC[source_to_flat_compile_exp_def] THEN
   REWRITE_TAC([REVERSE; APPEND; ITLIST] @ FLATP2AUX_compile_exps_clauses) THEN
   USE_THEN "fe1'" (fun th -> REWRITE_TAC[MATCH_MP FLATP2AUX_flat_Let th]) THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[FLATP2AUX_opt_bind_fun; FLATP2AUX_record_etas] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[FLATP2AUX_opt_bind_fun; FLATP2AUX_record_etas] THEN
   REWRITE_TAC[FLATP2AUX_flat_Aalloc_0] THEN
-  FLATP2AUX_EXISTSL [{|flat_state_refs_fupd (K (APPEND (flat_state_refs s1_i1) [Varray []])) s1_i1|};
+  FLATP2AUX_EXISTSL [{|flat_state_refs_fupd (combin_K (APPEND (flat_state_refs s1_i1) [Varray []])) s1_i1|};
     {|Rval [flat_Loc T (LENGTH (flat_state_refs s1_i1))]:(flat_v list,flat_v)result|}] THEN
   FLATP2AUX_INV_TAC "inv" THEN
   REWRITE_TAC[result_rel_eqns; o_THM; ALL2; v_rel_eqns; injectivity "result"; CONS_11] THEN
   USE_THEN "s_rel" (fun th -> REWRITE_TAC[MATCH_MP FLATP2AUX_s_rel_length th]) THEN
   SUBGOAL_THEN `source_to_flatProof_s_rel genv1
-     (state_refs_fupd (K (APPEND (state_refs st1) [Varray []])) (state_ffi_fupd (K (state_ffi st1)) (st1:(FFI)state)))
-     (flat_state_refs_fupd (K (APPEND (flat_state_refs s1_i1) [Varray []])) (s1_i1:(C,FFI)flat_state))`
+     (state_refs_fupd (combin_K (APPEND (state_refs st1) [Varray []])) (state_ffi_fupd (combin_K (state_ffi st1)) (st1:(FFI)state)))
+     (flat_state_refs_fupd (combin_K (APPEND (flat_state_refs s1_i1) [Varray []])) (s1_i1:(C,FFI)flat_state))`
     (LABEL_TAC "sr2") THENL
    [USE_THEN "s_rel" (ACCEPT_TAC o MATCH_MP FLATP2AUX_s_rel_alloc); ALL_TAC] THEN
   FLATP2AUX_LREWRITE_TAC ["sr2"] [state_INFO.ri_accfupds] THEN
@@ -3268,15 +3268,15 @@ let FLATP2AUX_dest_thunk_not_sing = prove
    (!(l:flat_v list) st. ~(LENGTH l = 1) ==> flat_dest_thunk l st = flat_NotThunk)`,
   CONJ_TAC THEN GEN_TAC THEN GEN_TAC THENL
    [STRUCT_CASES_TAC(ISPEC `l:v list` list_CASES) THEN
-    REWRITE_TAC[dest_thunk_def] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[dest_thunk_def] THEN CAKE_REWRITE_TAC[] THEN
     STRUCT_CASES_TAC(ISPEC `t:v list` list_CASES) THEN
     REWRITE_TAC[LENGTH; ONE] THEN CASES_ON `h:v` THEN
-    REWRITE_TAC[dest_thunk_def] THEN CASE_REWRITE_TAC[];
+    REWRITE_TAC[dest_thunk_def] THEN CAKE_REWRITE_TAC[];
     STRUCT_CASES_TAC(ISPEC `l:flat_v list` list_CASES) THEN
-    REWRITE_TAC[flat_dest_thunk_def] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[flat_dest_thunk_def] THEN CAKE_REWRITE_TAC[] THEN
     STRUCT_CASES_TAC(ISPEC `t:flat_v list` list_CASES) THEN
     REWRITE_TAC[LENGTH; ONE] THEN CASES_ON `h:flat_v` THEN
-    REWRITE_TAC[flat_dest_thunk_def] THEN CASE_REWRITE_TAC[]]);;
+    REWRITE_TAC[flat_dest_thunk_def] THEN CAKE_REWRITE_TAC[]]);;
 
 let FLATP2AUX_v_rel_flat_Loc = prove
  (`!genv x b n. source_to_flatProof_v_rel genv x (flat_Loc b n) ==> ?n'. x = Loc b n' /\ n = n' + 1`,
@@ -3306,11 +3306,11 @@ let FLATP2AUX_dest_thunk_rel1 = prove
     USE_THEN "nn" (fun th -> REWRITE_TAC[MATCH_MP FLATP2AUX_store_lookup_TL th]) THEN
     REWRITE_TAC[store_lookup_def] THEN
     USE_THEN "rr" (fun th -> REWRITE_TAC[GSYM(MATCH_MP LIST_REL_LENGTH th)]) THEN
-    COND_CASES_TAC THEN CASE_REWRITE_TAC[] THEN
+    COND_CASES_TAC THEN CAKE_REWRITE_TAC[] THEN
     USE_THEN "rr" (MP_TAC o SPEC `n0:num` o CONJUNCT2 o REWRITE_RULE[LIST_REL_EL_EQN]) THEN
     ASM_REWRITE_TAC[] THEN ONCE_REWRITE_TAC[source_to_flatProof_sv_rel_cases] THEN
-    STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
-    CASES_ON `m:thunk_mode` THEN CASE_REWRITE_TAC[] THEN BOOL_CASES_TAC `b:bool` THEN
+    STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
+    CASES_ON `m:thunk_mode` THEN CAKE_REWRITE_TAC[] THEN BOOL_CASES_TAC `b:bool` THEN
     REWRITE_TAC[distinctness "dest_thunk_ret"; injectivity "dest_thunk_ret";
                 distinctness "flat_dest_thunk_ret"; injectivity "flat_dest_thunk_ret"] THEN
     REPEAT STRIP_TAC THEN ASM_MESON_TAC[];
@@ -3319,11 +3319,11 @@ let FLATP2AUX_dest_thunk_rel1 = prove
   SUBGOAL_THEN `flat_dest_thunk [x':flat_v] refs' = flat_NotThunk` (LABEL_TAC "fn") THENL
    [USE_THEN "nl" MP_TAC THEN CASES_ON `x':flat_v` THEN
     REWRITE_TAC[flat_dest_thunk_def; injectivity "flat_v"; distinctness "flat_v"] THEN
-    CASE_REWRITE_TAC[] THEN MESON_TAC[];
+    CAKE_REWRITE_TAC[] THEN MESON_TAC[];
     ALL_TAC] THEN
   SUBGOAL_THEN `dest_thunk [x:v] refs = NotThunk` (LABEL_TAC "sn") THENL
    [USE_THEN "nl" MP_TAC THEN USE_THEN "vr" MP_TAC THEN CASES_ON `x:v` THEN
-    REWRITE_TAC[dest_thunk_def] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[dest_thunk_def] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[v_rel_eqns] THEN MESON_TAC[];
     ALL_TAC] THEN
   FLATP2AUX_LREWRITE_TAC ["fn"; "sn"] [distinctness "dest_thunk_ret"]));;
@@ -3364,8 +3364,8 @@ let FLATP2AUX_sv_rel_same_type = prove
   REPEAT GEN_TAC THEN DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "sv") MP_TAC) THEN
   USE_THEN "sv" MP_TAC THEN ONCE_REWRITE_TAC[source_to_flatProof_sv_rel_cases] THEN
   DISCH_THEN(REPEAT_TCL DISJ_CASES_THEN (REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC)) THEN
-  ASM_REWRITE_TAC[store_v_same_type_def] THEN CASE_REWRITE_TAC[] THEN
-  TRY(CASES_ON `m':thunk_mode` THEN CASE_REWRITE_TAC[]));;
+  ASM_REWRITE_TAC[store_v_same_type_def] THEN CAKE_REWRITE_TAC[] THEN
+  TRY(CASES_ON `m':thunk_mode` THEN CAKE_REWRITE_TAC[]));;
 
 let FLATP2AUX_update_thunk_rel = prove
  (`!genv vs vs' (refs:(v store_v)list) (refs':(flat_v store_v)list) ws ws' refs2.
@@ -3385,10 +3385,10 @@ let FLATP2AUX_update_thunk_rel = prove
                    (AP_THM (AP_TERM `(=):num->num->bool` (ISPEC `vs:v list` LENGTH_REVERSE)) `1`)))
                    (ASSUME `~(LENGTH (vs:v list) = 1)`))]) THENL
      [GEN_TAC THEN STRUCT_CASES_TAC(ISPEC `l:v list` list_CASES) THEN
-      REWRITE_TAC[update_thunk_def] THEN CASE_REWRITE_TAC[] THEN
+      REWRITE_TAC[update_thunk_def] THEN CAKE_REWRITE_TAC[] THEN
       STRUCT_CASES_TAC(ISPEC `t:v list` list_CASES) THEN
       REWRITE_TAC[LENGTH; ONE] THEN CASES_ON `h:v` THEN
-      REWRITE_TAC[update_thunk_def] THEN CASE_REWRITE_TAC[];
+      REWRITE_TAC[update_thunk_def] THEN CAKE_REWRITE_TAC[];
       REWRITE_TAC[distinctness "option"]]] THEN
   POP_ASSUM MP_TAC THEN REWRITE_TAC[ONE; LENGTH_EQ_CONS; LENGTH_EQ_NIL] THEN
   DISCH_THEN(X_CHOOSE_THEN `x:v` (X_CHOOSE_THEN `t0:v list`
@@ -3400,24 +3400,24 @@ let FLATP2AUX_update_thunk_rel = prove
   ASM_CASES_TAC `?b n. (x:v) = Loc b n` THENL
    [ALL_TAC;
     POP_ASSUM MP_TAC THEN CASES_ON `x:v` THEN REWRITE_TAC[update_thunk_def] THEN
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "option"; injectivity "v"] THEN
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "option"; injectivity "v"] THEN
     MESON_TAC[]] THEN
   POP_ASSUM(FLATP2AUX_CHOOSE_THEN [`b:bool`; `n:num`] SUBST_ALL_TAC) THEN
   USE_THEN "xr" (SUBST_ALL_TAC o REWRITE_RULE[v_rel_eqns]) THEN
   BOOL_CASES_TAC `b:bool` THEN REWRITE_TAC[update_thunk_def; flat_update_thunk_def] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "option"] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "option"] THEN
   MP_TAC(ISPEC `ws:v list` list_CASES) THEN
   DISCH_THEN(DISJ_CASES_THEN2 SUBST_ALL_TAC
     (X_CHOOSE_THEN `w:v` (X_CHOOSE_THEN `wt:v list` SUBST_ALL_TAC))) THEN
-  REWRITE_TAC[update_thunk_def] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "option"] THEN
+  REWRITE_TAC[update_thunk_def] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "option"] THEN
   MP_TAC(ISPEC `wt:v list` list_CASES) THEN
   DISCH_THEN(DISJ_CASES_THEN2 SUBST_ALL_TAC
     (X_CHOOSE_THEN `w2:v` (X_CHOOSE_THEN `wt2:v list` SUBST_ALL_TAC))) THEN
-  REWRITE_TAC[update_thunk_def] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "option"] THEN
+  REWRITE_TAC[update_thunk_def] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "option"] THEN
   USE_THEN "wr" (MP_TAC o REWRITE_RULE[LIST_REL_CONS1; LIST_REL_NIL]) THEN
   DISCH_THEN(X_CHOOSE_THEN `w':flat_v` (X_CHOOSE_THEN `wt':flat_v list`
     (CONJUNCTS_THEN2 SUBST_ALL_TAC (CONJUNCTS_THEN2 (LABEL_TAC "wvr") SUBST_ALL_TAC)))) THEN
-  REWRITE_TAC[flat_update_thunk_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[flat_update_thunk_def] THEN CAKE_REWRITE_TAC[] THEN
   ALL_TAC) THEN
   (MP_TAC(MATCH_MP FLATP2AUX_dest_thunk_rel1 (end_itlist CONJ
     [ASSUME `source_to_flatProof_v_rel genv w w'`;
@@ -3427,9 +3427,9 @@ let FLATP2AUX_update_thunk_rel = prove
   (MP_TAC(ISPEC `dest_thunk [w] refs` (cases "dest_thunk_ret")) THEN
   DISCH_THEN(REPEAT_TCL DISJ_CASES_THEN ASSUME_TAC) THEN
   TRY(FIRST_X_ASSUM(CHOOSE_THEN (CHOOSE_THEN ASSUME_TAC))) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "option"]) THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "option"]) THEN
   (USE_THEN "d2" (fun th -> REWRITE_TAC[MATCH_MP th (ASSUME `dest_thunk [w] refs = NotThunk`)]) THEN
-  CASE_REWRITE_TAC[]) THEN
+  CAKE_REWRITE_TAC[]) THEN
   (USE_THEN "nn" MP_TAC THEN USE_THEN "rr" MP_TAC THEN
   STRUCT_CASES_TAC(ISPEC `refs':(flat_v store_v)list` list_CASES) THEN
   REWRITE_TAC[NULL; TL] THEN DISCH_THEN(LABEL_TAC "rr'")) THEN
@@ -3477,11 +3477,11 @@ let FLATP2AUX_ALL2_v_rel_weak = prove
 let FLATP2AUX_invariant_refs = prove
  (`!interp g gen genv idxs (st:(FFI)state) (s_i1:(C,FFI)flat_state) refs refs'.
      source_to_flatProof_invariant (interp:(v->(source_to_flat_config#C)option)option) g gen genv idxs st s_i1 /\
-     source_to_flatProof_s_rel genv (state_refs_fupd (K refs) st)
-       (flat_state_refs_fupd (K refs') s_i1) /\
+     source_to_flatProof_s_rel genv (state_refs_fupd (combin_K refs) st)
+       (flat_state_refs_fupd (combin_K refs') s_i1) /\
      TAKE 1 refs' = TAKE 1 (flat_state_refs s_i1)
-     ==> source_to_flatProof_invariant interp g gen genv idxs (state_refs_fupd (K refs) st)
-           (flat_state_refs_fupd (K refs') s_i1)`,
+     ==> source_to_flatProof_invariant interp g gen genv idxs (state_refs_fupd (combin_K refs) st)
+           (flat_state_refs_fupd (combin_K refs') s_i1)`,
   REPEAT GEN_TAC THEN
   DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "inv") (CONJUNCTS_THEN2 (LABEL_TAC "sr") (LABEL_TAC "tk"))) THEN
   FLATP2AUX_INV_TAC "inv" THEN
@@ -3501,10 +3501,10 @@ let FLATP2AUX_flat_Eval_code = prove
      flat_do_eval (DROP 4 (REVERSE vs')) (flat_state_eval_config s1) = SOME (decs', ec', Unitv)
      ==> flat_evaluate env_i1 s_i1 [source_to_flat_compile_exp t cm (App Eval es)] =
          (if flat_state_clock s1 = 0
-          then (flat_state_eval_config_fupd (K ec') s1, Rerr (Rabort Rtimeout_error))
-          else (match flat_evaluate_decs (flat_dec_clock (flat_state_eval_config_fupd (K ec') s1)) decs'
+          then (flat_state_eval_config_fupd (combin_K ec') s1, Rerr (Rabort Rtimeout_error))
+          else (match flat_evaluate_decs (flat_dec_clock (flat_state_eval_config_fupd (combin_K ec') s1)) decs'
                 with (s2, NONE) ->
-                       flat_evaluate (flat_environment_v_fupd (K (CONS (implode "words", LAST (REVERSE vs'))
+                       flat_evaluate (flat_environment_v_fupd (combin_K (CONS (implode "words", LAST (REVERSE vs'))
                           (CONS (implode "bytes", EL 4 (REVERSE vs')) (flat_environment_v env_i1)))) env_i1) s2
                          [flat_Let backend_common_None (SOME (implode "r"))
                             (flat_App backend_common_None (GlobalVarLookup 0) [])
@@ -3516,46 +3516,46 @@ let FLATP2AUX_flat_Eval_code = prove
   SUBGOAL_THEN `flat_evaluate env_i1 (s_i1:(C,FFI)flat_state)
       [flat_Con backend_common_None NONE (source_to_flat_compile_exps t cm es)] =
       (s1, Rval [flat_Conv NONE (REVERSE vs')])` (LABEL_TAC "fc") THENL
-   [REWRITE_TAC[flat_evaluate_def] THEN FLATP2AUX_LREWRITE_TAC ["fe"] [] THEN CASE_REWRITE_TAC[];
+   [REWRITE_TAC[flat_evaluate_def] THEN FLATP2AUX_LREWRITE_TAC ["fe"] [] THEN CAKE_REWRITE_TAC[];
     ALL_TAC] THEN
   USE_THEN "fc" (fun th -> REWRITE_TAC[MATCH_MP FLATP2AUX_flat_Mat th]) THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[HD; flat_evaluate_match_def] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[HD; flat_evaluate_match_def] THEN
   SUBGOAL_THEN `LENGTH (REVERSE (vs':flat_v list)) = 6` (LABEL_TAC "len'") THENL
    [FLATP2AUX_LREWRITE_TAC ["len"] [LENGTH_REVERSE]; ALL_TAC] THEN
   USE_THEN "len'" (fun th -> REWRITE_TAC[MATCH_MP pmatch_rows_drop_4 th]) THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[flat_pat_bindings_def; APPEND; ALL_DISTINCT; MEM; FLATP2AUX_words_bytes] THEN
   SUBGOAL_THEN `[EL 4 (REVERSE (vs':flat_v list)); LAST (REVERSE vs')] = DROP 4 (REVERSE vs')`
     (LABEL_TAC "d4") THENL
    [MATCH_MP_TAC drop_4_via_el THEN FLATP2AUX_LREWRITE_TAC ["len'"] []; ALL_TAC] THEN
-  SUBGOAL_THEN (CASE_TERM `flat_evaluate (flat_environment_v_fupd (K
+  SUBGOAL_THEN (CASE_TERM `flat_evaluate (flat_environment_v_fupd (combin_K
       (CONS (implode "words",LAST (REVERSE vs')) (CONS (implode "bytes",EL 4 (REVERSE vs'))
       (flat_environment_v env_i1)))) env_i1) (s1:(C,FFI)flat_state)
       [flat_App backend_common_None (Src Eval)
          (MAP (Var_local backend_common_None) [implode "bytes"; implode "words"])] =
       (if flat_state_clock s1 = 0
-       then (flat_state_eval_config_fupd (K ec') s1, Rerr (Rabort Rtimeout_error))
-       else (match flat_evaluate_decs (flat_dec_clock (flat_state_eval_config_fupd (K ec') s1)) decs'
+       then (flat_state_eval_config_fupd (combin_K ec') s1, Rerr (Rabort Rtimeout_error))
+       else (match flat_evaluate_decs (flat_dec_clock (flat_state_eval_config_fupd (combin_K ec') s1)) decs'
              with (s2, NONE) -> (s2, Rval [Unitv])
                 | (s2, SOME e) -> (s2, Rerr e)))`) (LABEL_TAC "fev") THENL
    [REWRITE_TAC[MAP; flat_evaluate_def; REVERSE; APPEND] THEN
     REWRITE_TAC[flat_environment_INFO.ri_accfupds; K_THM; APPEND; ALOOKUP_THM;
                 FLATP2AUX_words_bytes; GSYM FLATP2AUX_words_bytes] THEN
-    CASE_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[distinctness "op"; injectivity "flat_op"; HD; REVERSE; APPEND] THEN
-    FLATP2AUX_LREWRITE_TAC ["d4"; "fde"] [] THEN CASE_REWRITE_TAC[] THEN
+    FLATP2AUX_LREWRITE_TAC ["d4"; "fde"] [] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[flat_state_INFO.ri_accfupds];
     ALL_TAC] THEN
   REWRITE_TAC[APPEND] THEN
   ASM_CASES_TAC `flat_state_clock (s1:(C,FFI)flat_state) = 0` THEN POP_ASSUM(LABEL_TAC "c0") THEN
   USE_THEN "fev" MP_TAC THEN FLATP2AUX_LREWRITE_TAC ["c0"] [] THENL
-   [DISCH_THEN(fun th -> REWRITE_TAC[MATCH_MP FLATP2AUX_flat_Let th]) THEN CASE_REWRITE_TAC[];
+   [DISCH_THEN(fun th -> REWRITE_TAC[MATCH_MP FLATP2AUX_flat_Let th]) THEN CAKE_REWRITE_TAC[];
     ALL_TAC] THEN
-  FLATP2AUX_PAIR_TAC `flat_evaluate_decs (flat_dec_clock (flat_state_eval_config_fupd (K ec')
+  FLATP2AUX_PAIR_TAC `flat_evaluate_decs (flat_dec_clock (flat_state_eval_config_fupd (combin_K ec')
       (s1:(C,FFI)flat_state))) decs'` `s2:(C,FFI)flat_state` `ro:((flat_v)error_result)option` "fd" THEN
-  FLATP2AUX_LREWRITE_TAC ["fd"] [] THEN CASE_REWRITE_TAC[] THEN
-  CASES_ON `ro:((flat_v)error_result)option` THEN CASE_REWRITE_TAC[] THEN
-  DISCH_THEN(fun th -> REWRITE_TAC[MATCH_MP FLATP2AUX_flat_Let th]) THEN CASE_REWRITE_TAC[] THEN
+  FLATP2AUX_LREWRITE_TAC ["fd"] [] THEN CAKE_REWRITE_TAC[] THEN
+  CASES_ON `ro:((flat_v)error_result)option` THEN CAKE_REWRITE_TAC[] THEN
+  DISCH_THEN(fun th -> REWRITE_TAC[MATCH_MP FLATP2AUX_flat_Let th]) THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[FLATP2AUX_opt_bind_fun; FLATP2AUX_record_etas]);;
 
 let FLATP2AUX_flat_eval_ref_read = prove
@@ -3575,7 +3575,7 @@ let FLATP2AUX_flat_eval_ref_read = prove
 let FLATP2AUX_flat_glob_alloc = prove
  (`!(s:(C,FFI)flat_state) next c rest.
      flat_evaluate_decs s (CONS (glob_alloc next c) rest) =
-     flat_evaluate_decs (flat_state_globals_fupd (K (APPEND (flat_state_globals s)
+     flat_evaluate_decs (flat_state_globals_fupd (combin_K (APPEND (flat_state_globals s)
        (REPLICATE (next_indices_vidx next - next_indices_vidx (source_to_flat_config_next c))
           NONE))) s) rest`,
   REPEAT GEN_TAC THEN REWRITE_TAC[glob_alloc_def] THEN
@@ -3584,11 +3584,11 @@ let FLATP2AUX_flat_glob_alloc = prove
 
 let FLATP2AUX_flat_state_comm = prove
  (`!(s:(C,FFI)flat_state) ec gl.
-     flat_state_globals_fupd (K (APPEND (flat_state_globals
-         (flat_dec_clock (flat_state_eval_config_fupd (K ec) s))) gl))
-       (flat_dec_clock (flat_state_eval_config_fupd (K ec) s)) =
-     flat_dec_clock (flat_state_eval_config_fupd (K ec)
-       (flat_state_globals_fupd (K (APPEND (flat_state_globals s) gl)) s))`,
+     flat_state_globals_fupd (combin_K (APPEND (flat_state_globals
+         (flat_dec_clock (flat_state_eval_config_fupd (combin_K ec) s))) gl))
+       (flat_dec_clock (flat_state_eval_config_fupd (combin_K ec) s)) =
+     flat_dec_clock (flat_state_eval_config_fupd (combin_K ec)
+       (flat_state_globals_fupd (combin_K (APPEND (flat_state_globals s) gl)) s))`,
   REWRITE_TAC[(record_info "flat_state").ri_component_equality; flat_dec_clock_def] THEN
   SIMP_NOASM[]);;
 
@@ -3601,13 +3601,13 @@ let FLATP2AUX_cc_seq = prove
   FLATP2AUX_PAIR_TAC `evaluate (st:(FFI)state) env [e1]` `st1:(FFI)state`
     `r1:(v list,v)result` "ev1" THEN
   USE_THEN "ev" (MP_TAC o REWRITE_RULE[full_evaluate_def]) THEN
-  FLATP2AUX_LREWRITE_TAC ["ev1"] [] THEN CASE_REWRITE_TAC[] THEN
+  FLATP2AUX_LREWRITE_TAC ["ev1"] [] THEN CAKE_REWRITE_TAC[] THEN
   FLATP2AUX_RESULT_CASES_TAC `r1:(v list,v)result` `v1:v list` `err1:(v)error_result` THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[source_to_flat_compile_exp_def] THENL
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[source_to_flat_compile_exp_def] THENL
    [(* e1 evaluates to a value *)
     FLATP2AUX_PAIR_TAC `evaluate (st1:(FFI)state) env (CONS e2 es)` `st2:(FFI)state`
       `r2:(v list,v)result` "ev2" THEN
-    FLATP2AUX_LREWRITE_TAC ["ev2"] [] THEN CASE_REWRITE_TAC[] THEN
+    FLATP2AUX_LREWRITE_TAC ["ev2"] [] THEN CAKE_REWRITE_TAC[] THEN
     DISCH_THEN(LABEL_TAC "ev'") THEN
     FLATP2AUX_IH_TAC "ih1" [("s'",`st1:(FFI)state`); ("r",`Rval v1:(v list,v)result`)] THEN
     ANTS_TAC THENL
@@ -3632,7 +3632,7 @@ let FLATP2AUX_cc_seq = prove
       ALL_TAC] THEN
     SUBGOAL_THEN `~(r2 = Rerr (Rabort Rtype_error):(v list,v)result)` (LABEL_TAC "nte2") THENL
      [DISCH_THEN SUBST_ALL_TAC THEN USE_THEN "nte" MP_TAC THEN USE_THEN "ev'" MP_TAC THEN
-      CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN MESON_TAC[];
+      CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN MESON_TAC[];
       ALL_TAC] THEN
     FLATP2AUX_IH_TAC "ih2'" [("s'",`st2:(FFI)state`); ("r",`r2:(v list,v)result`);
       ("genv",`genv1:global_env`); ("s_i1",`s1_i1:(C,FFI)flat_state`)] THEN
@@ -3643,7 +3643,7 @@ let FLATP2AUX_cc_seq = prove
     USE_THEN "fe1" (LABEL_TAC "fe1'" o REWRITE_RULE[source_to_flat_compile_exp_def]) THEN
     USE_THEN "fe2" (LABEL_TAC "fe2'" o REWRITE_RULE[source_to_flat_compile_exp_def]) THEN
     FLATP2AUX_RESULT_CASES_TAC `r2:(v list,v)result` `vs2:v list` `err2:(v)error_result` THEN
-    REMOVE_THEN "ev'" (MP_TAC o CASE_REWRITE_RULE[]) THEN REWRITE_TAC[PAIR_EQ; HD] THEN
+    REMOVE_THEN "ev'" (MP_TAC o CAKE_REWRITE_RULE[]) THEN REWRITE_TAC[PAIR_EQ; HD] THEN
     DISCH_THEN(CONJUNCTS_THEN2 (SUBST_ALL_TAC o SYM) (SUBST_ALL_TAC o SYM)) THENL
      [USE_THEN "rr2" (MP_TAC o MATCH_MP FLATP2AUX_result_rel_Rval) THEN
       DISCH_THEN(X_CHOOSE_THEN `vs2':flat_v list` (CONJUNCTS_THEN2 SUBST_ALL_TAC
@@ -3651,7 +3651,7 @@ let FLATP2AUX_cc_seq = prove
       MAP_EVERY EXISTS_TAC [`s2_i1:(C,FFI)flat_state`;
         `Rval (CONS x1' vs2'):(flat_v list,flat_v)result`; `genv2:global_env`] THEN
       REWRITE_TAC[flat_evaluate_def] THEN FLATP2AUX_LREWRITE_TAC ["fe1'"] [] THEN
-      CASE_REWRITE_TAC[] THEN FLATP2AUX_LREWRITE_TAC ["fe2'"] [] THEN CASE_REWRITE_TAC[] THEN
+      CAKE_REWRITE_TAC[] THEN FLATP2AUX_LREWRITE_TAC ["fe2'"] [] THEN CAKE_REWRITE_TAC[] THEN
       FLATP2AUX_LREWRITE_TAC ["sr2"] [HD; source_to_flatProof_abort_simps] THEN
       USE_THEN "na2" (MP_TAC o REWRITE_RULE[source_to_flatProof_abort_simps]) THEN
       DISCH_THEN(FLATP2AUX_LABEL_CONJS ["i2"; "eg2"; "of2"; "sc2"; "sy2"; "sg2"]) THEN
@@ -3668,7 +3668,7 @@ let FLATP2AUX_cc_seq = prove
       MAP_EVERY EXISTS_TAC [`s2_i1:(C,FFI)flat_state`;
         `Rerr err2':(flat_v list,flat_v)result`; `genv2:global_env`] THEN
       REWRITE_TAC[flat_evaluate_def] THEN FLATP2AUX_LREWRITE_TAC ["fe1'"] [] THEN
-      CASE_REWRITE_TAC[] THEN FLATP2AUX_LREWRITE_TAC ["fe2'"] [] THEN CASE_REWRITE_TAC[] THEN
+      CAKE_REWRITE_TAC[] THEN FLATP2AUX_LREWRITE_TAC ["fe2'"] [] THEN CAKE_REWRITE_TAC[] THEN
       FLATP2AUX_LREWRITE_TAC ["sr2"; "rr2"] [] THEN DISCH_TAC THEN
       USE_THEN "na2" (MP_TAC o C MP (ASSUME
         `~source_to_flatProof_abort (Rerr err2:(v list,v)result)`)) THEN
@@ -3689,7 +3689,7 @@ let FLATP2AUX_cc_seq = prove
     FLATP2AUX_LREWRITE_TAC ["rr1"; "sr1"; "na1"] [] THEN
     REWRITE_TAC[flat_evaluate_def] THEN
     USE_THEN "fe1" (MP_TAC o REWRITE_RULE[source_to_flat_compile_exp_def]) THEN
-    DISCH_THEN(fun th -> REWRITE_TAC[th]) THEN CASE_REWRITE_TAC[]]);;
+    DISCH_THEN(fun th -> REWRITE_TAC[th]) THEN CAKE_REWRITE_TAC[]]);;
 
 let FLATP2AUX_cc_Raise = prove
  (FLATP2AUX_cc_case 3,
@@ -3700,9 +3700,9 @@ let FLATP2AUX_cc_Raise = prove
   FLATP2AUX_PAIR_TAC `evaluate (st:(FFI)state) env [e]` `st1:(FFI)state`
     `r1:(v list,v)result` "ev1" THEN
   USE_THEN "ev" (MP_TAC o REWRITE_RULE[full_evaluate_def]) THEN
-  FLATP2AUX_LREWRITE_TAC ["ev1"] [] THEN CASE_REWRITE_TAC[] THEN
+  FLATP2AUX_LREWRITE_TAC ["ev1"] [] THEN CAKE_REWRITE_TAC[] THEN
   FLATP2AUX_RESULT_CASES_TAC `r1:(v list,v)result` `v1:v list` `err1:(v)error_result` THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[source_to_flat_compile_exp_def; PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[source_to_flat_compile_exp_def; PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN2 SUBST_ALL_TAC (SUBST_ALL_TAC o SYM)) THENL
    [FLATP2AUX_IH_TAC "ih1" [("r",`Rval v1:(v list,v)result`)] THEN
     ANTS_TAC THENL
@@ -3722,7 +3722,7 @@ let FLATP2AUX_cc_Raise = prove
       `Rerr (Rraise x1'):(flat_v list,flat_v)result`; `genv1:global_env`] THEN
     REWRITE_TAC[flat_evaluate_def] THEN
     USE_THEN "fe1" (MP_TAC o REWRITE_RULE[source_to_flat_compile_exp_def]) THEN
-    DISCH_THEN(fun th -> REWRITE_TAC[th]) THEN CASE_REWRITE_TAC[] THEN
+    DISCH_THEN(fun th -> REWRITE_TAC[th]) THEN CAKE_REWRITE_TAC[] THEN
     FLATP2AUX_LREWRITE_TAC ["sr1"] [result_rel_eqns; HD; source_to_flatProof_abort_simps] THEN
     FLATP2AUX_LKSIMP_TAC ["xr1"] [] THEN
     USE_THEN "na1" (ACCEPT_TAC o REWRITE_RULE[source_to_flatProof_abort_simps]);
@@ -3737,7 +3737,7 @@ let FLATP2AUX_cc_Raise = prove
       `Rerr err1':(flat_v list,flat_v)result`; `genv1:global_env`] THEN
     REWRITE_TAC[flat_evaluate_def] THEN
     USE_THEN "fe1" (MP_TAC o REWRITE_RULE[source_to_flat_compile_exp_def]) THEN
-    DISCH_THEN(fun th -> REWRITE_TAC[th]) THEN CASE_REWRITE_TAC[] THEN
+    DISCH_THEN(fun th -> REWRITE_TAC[th]) THEN CAKE_REWRITE_TAC[] THEN
     FLATP2AUX_LREWRITE_TAC ["rr1"; "sr1"; "na1"] []]);;
 
 let FLATP2AUX_cc_Handle = prove
@@ -3749,11 +3749,11 @@ let FLATP2AUX_cc_Handle = prove
   FLATP2AUX_PAIR_TAC `evaluate (st:(FFI)state) env [e]` `st1:(FFI)state`
     `r1:(v list,v)result` "ev1" THEN
   USE_THEN "ev" (MP_TAC o REWRITE_RULE[full_evaluate_def]) THEN
-  FLATP2AUX_LREWRITE_TAC ["ev1"] [] THEN CASE_REWRITE_TAC[] THEN
+  FLATP2AUX_LREWRITE_TAC ["ev1"] [] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[source_to_flat_compile_exp_def] THEN DISCH_THEN(LABEL_TAC "ev'") THEN
   SUBGOAL_THEN `~(r1 = Rerr (Rabort Rtype_error):(v list,v)result)` (LABEL_TAC "nte1") THENL
    [DISCH_THEN SUBST_ALL_TAC THEN USE_THEN "ev'" MP_TAC THEN
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
     USE_THEN "nte" MP_TAC THEN MESON_TAC[];
     ALL_TAC] THEN
   FLATP2AUX_IH_TAC "ih1" [("s'",`st1:(FFI)state`); ("r",`r1:(v list,v)result`)] THEN
@@ -3766,21 +3766,21 @@ let FLATP2AUX_cc_Handle = prove
   DISCH_THEN(fun th -> REWRITE_TAC[th]) THEN REMOVE_THEN "ev'" MP_TAC THEN
   FLATP2AUX_RESULT_CASES_TAC `r1:(v list,v)result` `v1:v list` `err1:(v)error_result` THENL
    [(* value: passes through *)
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
     DISCH_THEN(CONJUNCTS_THEN2 SUBST_ALL_TAC (SUBST_ALL_TAC o SYM)) THEN
     USE_THEN "rr1" (MP_TAC o MATCH_MP FLATP2AUX_result_rel_Rval) THEN
     DISCH_THEN(X_CHOOSE_THEN `v1':flat_v list` (CONJUNCTS_THEN2 SUBST_ALL_TAC
       (LABEL_TAC "vr1"))) THEN
     MAP_EVERY EXISTS_TAC [`s1_i1:(C,FFI)flat_state`;
       `Rval v1':(flat_v list,flat_v)result`; `genv1:global_env`] THEN
-    CASE_REWRITE_TAC[] THEN FLATP2AUX_LREWRITE_TAC ["rr1"; "sr1"; "na1"] [];
+    CAKE_REWRITE_TAC[] THEN FLATP2AUX_LREWRITE_TAC ["rr1"; "sr1"; "na1"] [];
     ALL_TAC] THEN
-  CASES_ON `err1:(v)error_result` THEN CASE_REWRITE_TAC[] THENL
+  CASES_ON `err1:(v)error_result` THEN CAKE_REWRITE_TAC[] THENL
    [(* raise *)
     USE_THEN "rr1" (MP_TAC o REWRITE_RULE[result_rel_eqns]) THEN
     DISCH_THEN(X_CHOOSE_THEN `ev':flat_v` (CONJUNCTS_THEN2 (LABEL_TAC "evr")
       SUBST_ALL_TAC)) THEN
-    CASE_REWRITE_TAC[] THEN COND_CASES_TAC THENL
+    CAKE_REWRITE_TAC[] THEN COND_CASES_TAC THENL
      [ALL_TAC;
       REWRITE_TAC[PAIR_EQ] THEN USE_THEN "nte" MP_TAC THEN MESON_TAC[]] THEN
     DISCH_THEN(LABEL_TAC "evm") THEN
@@ -3820,7 +3820,7 @@ let FLATP2AUX_cc_Handle = prove
     USE_THEN "rr1" (SUBST_ALL_TAC o REWRITE_RULE[result_rel_eqns]) THEN
     MAP_EVERY EXISTS_TAC [`s1_i1:(C,FFI)flat_state`;
       `Rerr (Rabort a):(flat_v list,flat_v)result`; `genv1:global_env`] THEN
-    CASE_REWRITE_TAC[] THEN FLATP2AUX_LREWRITE_TAC ["sr1"; "na1"] [result_rel_eqns]]);;
+    CAKE_REWRITE_TAC[] THEN FLATP2AUX_LREWRITE_TAC ["sr1"; "na1"] [result_rel_eqns]]);;
 
 let FLATP2AUX_cc_Con = prove
  (FLATP2AUX_cc_case 5,
@@ -3834,10 +3834,10 @@ let FLATP2AUX_cc_Con = prove
   USE_THEN "dcc" (fun c -> USE_THEN "ih0" (fun th -> LABEL_TAC "ih1" (MATCH_MP th c))) THEN
   FLATP2AUX_PAIR_TAC `evaluate (st:(FFI)state) env (REVERSE es)` `st1:(FFI)state`
     `r1:(v list,v)result` "ev1" THEN
-  FLATP2AUX_LREWRITE_TAC ["ev1"] [] THEN CASE_REWRITE_TAC[] THEN DISCH_THEN(LABEL_TAC "ev'") THEN
+  FLATP2AUX_LREWRITE_TAC ["ev1"] [] THEN CAKE_REWRITE_TAC[] THEN DISCH_THEN(LABEL_TAC "ev'") THEN
   SUBGOAL_THEN `~(r1 = Rerr (Rabort Rtype_error):(v list,v)result)` (LABEL_TAC "nte1") THENL
    [DISCH_THEN SUBST_ALL_TAC THEN USE_THEN "ev'" MP_TAC THEN
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
     USE_THEN "nte" MP_TAC THEN MESON_TAC[];
     ALL_TAC] THEN
   FLATP2AUX_IH_TAC "ih1" [("s'",`st1:(FFI)state`); ("r",`r1:(v list,v)result`)] THEN
@@ -3851,7 +3851,7 @@ let FLATP2AUX_cc_Con = prove
   FLATP2AUX_RESULT_CASES_TAC `r1:(v list,v)result` `v1:v list` `err1:(v)error_result` THENL
    [ALL_TAC;
     (* error: passes through *)
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
     DISCH_THEN(CONJUNCTS_THEN2 SUBST_ALL_TAC (SUBST_ALL_TAC o SYM)) THEN
     USE_THEN "rr1" (X_CHOOSE_THEN `err1':(flat_v)error_result` SUBST_ALL_TAC o
                     MATCH_MP FLATP2AUX_result_rel_Rerr) THEN
@@ -3860,12 +3860,12 @@ let FLATP2AUX_cc_Con = prove
     CASES_ON `cn:((modN,conN)id)option` THEN
     REWRITE_TAC[OPTION_MAP_DEF; OPTION_JOIN_DEF; flat_evaluate_def; o_THM] THEN
     TRY(CASES_ON `type_group_id_type (nsLookup (source_to_flat_environment_c
-      (source_to_flat_environment_v_fupd (K (bind_locals ts locals
+      (source_to_flat_environment_v_fupd (combin_K (bind_locals ts locals
         (source_to_flat_environment_v comp_map))) comp_map)) a)`) THEN
     REWRITE_TAC[OPTION_JOIN_DEF; flat_evaluate_def] THEN
-    FLATP2AUX_LREWRITE_TAC ["fe1'"] [] THEN CASE_REWRITE_TAC[] THEN
+    FLATP2AUX_LREWRITE_TAC ["fe1'"] [] THEN CAKE_REWRITE_TAC[] THEN
     FLATP2AUX_LREWRITE_TAC ["rr1"; "sr1"; "na1"] []] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   USE_THEN "rr1" (MP_TAC o MATCH_MP FLATP2AUX_result_rel_Rval) THEN
   DISCH_THEN(X_CHOOSE_THEN `v1':flat_v list` (CONJUNCTS_THEN2 SUBST_ALL_TAC
     (LABEL_TAC "vr1"))) THEN
@@ -3873,24 +3873,24 @@ let FLATP2AUX_cc_Con = prove
   DISCH_THEN(FLATP2AUX_LABEL_CONJS ["i1"; "eg1"; "of1"; "sc1"; "sy1"; "sg1"]) THEN
   USE_THEN "vr1" (LABEL_TAC "vr1r" o MATCH_MP LIST_REL_REVERSE o REWRITE_RULE[o_THM]) THEN
   CASES_ON `cn:((modN,conN)id)option` THENL
-   [REWRITE_TAC[build_conv_def] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
+   [REWRITE_TAC[build_conv_def] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
     DISCH_THEN(CONJUNCTS_THEN2 SUBST_ALL_TAC (SUBST_ALL_TAC o SYM)) THEN
     MAP_EVERY EXISTS_TAC [`s1_i1:(C,FFI)flat_state`;
       `Rval [flat_Conv NONE (REVERSE v1')]:(flat_v list,flat_v)result`; `genv1:global_env`] THEN
     REWRITE_TAC[OPTION_MAP_DEF; OPTION_JOIN_DEF; flat_evaluate_def] THEN
-    FLATP2AUX_LREWRITE_TAC ["fe1'"] [] THEN CASE_REWRITE_TAC[] THEN
+    FLATP2AUX_LREWRITE_TAC ["fe1'"] [] THEN CAKE_REWRITE_TAC[] THEN
     FLATP2AUX_LREWRITE_TAC ["sr1"; "i1"; "eg1"; "of1"; "sc1"; "sy1"; "sg1"]
       [result_rel_eqns; source_to_flatProof_abort_simps; o_THM; ALL2] THEN
     FLATP2AUX_LKSIMP_TAC ["vr1r"] [v_rel_eqns];
     ALL_TAC] THEN
-  REWRITE_TAC[build_conv_def] THEN CASE_REWRITE_TAC[] THEN
-  USE_THEN "dcc" (MP_TAC o REWRITE_RULE[do_con_check_def]) THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[build_conv_def] THEN CAKE_REWRITE_TAC[] THEN
+  USE_THEN "dcc" (MP_TAC o REWRITE_RULE[do_con_check_def]) THEN CAKE_REWRITE_TAC[] THEN
   FLATP2AUX_OPTION_CASES_TAC `nsLookup (sem_env_c (env:v sem_env)) (a:(modN,conN)id)`
     `ls:num#stamp` "lkenv" THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[] THEN
   MP_TAC(ISPEC `ls:num#stamp` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `arity:num` (X_CHOOSE_THEN `stamp:stamp` SUBST_ALL_TAC)) THEN
-  CASE_REWRITE_TAC[] THEN DISCH_THEN(LABEL_TAC "len") THEN
+  CAKE_REWRITE_TAC[] THEN DISCH_THEN(LABEL_TAC "len") THEN
   REWRITE_TAC[PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN2 SUBST_ALL_TAC (SUBST_ALL_TAC o SYM)) THEN
   MP_TAC(ISPECL [`genv:global_env`; `comp_map:source_to_flat_environment`; `env:v sem_env`;
@@ -3905,7 +3905,7 @@ let FLATP2AUX_cc_Con = prove
   SIMP_NOASM[OPTION_MAP_DEF; OPTION_JOIN_DEF; o_THM; type_group_id_type_MAP] THEN
   FLATP2AUX_LREWRITE_TAC ["lkc"] [OPTION_MAP_DEF; OPTION_JOIN_DEF; PAIR_MAP_THM; I_THM;
                                  flat_evaluate_def] THEN
-  FLATP2AUX_LREWRITE_TAC ["fe1'"] [] THEN CASE_REWRITE_TAC[] THEN
+  FLATP2AUX_LREWRITE_TAC ["fe1'"] [] THEN CAKE_REWRITE_TAC[] THEN
   FLATP2AUX_LREWRITE_TAC ["sr1"; "i1"; "eg1"; "of1"; "sc1"; "sy1"; "sg1"]
     [result_rel_eqns; source_to_flatProof_abort_simps; o_THM; ALL2] THEN
   FLATP2AUX_LKSIMP_TAC ["vr1r"] [v_rel_eqns; LENGTH_REVERSE] THEN
@@ -3921,7 +3921,7 @@ let FLATP2AUX_cc_Var = prove
   REMOVE_THEN "esi" SUBST_ALL_TAC THEN
   USE_THEN "ev" (MP_TAC o REWRITE_RULE[full_evaluate_def]) THEN
   FLATP2AUX_OPTION_CASES_TAC `nsLookup (sem_env_v (env:v sem_env)) n` `v:v` "lkv" THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THENL
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THENL
    [USE_THEN "nte" MP_TAC THEN MESON_TAC[]; ALL_TAC] THEN
   DISCH_THEN(CONJUNCTS_THEN2 SUBST_ALL_TAC (SUBST_ALL_TAC o SYM)) THEN
   USE_THEN "ear" (MP_TAC o REWRITE_RULE[env_all_rel_cases]) THEN
@@ -3975,19 +3975,19 @@ let FLATP2AUX_cc_Var = prove
     FLATP2AUX_LKSIMP_TAC ["vr"] [ALL2] THEN
     USE_THEN "inv" (ACCEPT_TAC o MATCH_MP invariant_IMP_s_rel);
     ALL_TAC] THEN
-  CASES_ON `n:(modN,varN)id` THEN CASE_REWRITE_TAC[] THENL
+  CASES_ON `n:(modN,varN)id` THEN CAKE_REWRITE_TAC[] THENL
    [FLATP2AUX_OPTION_CASES_TAC `ALOOKUP (l:(varN#v)list) a` `vl:v` "alk" THEN
-    CASE_REWRITE_TAC[] THENL
+    CAKE_REWRITE_TAC[] THENL
      [DISCH_TAC THEN
       USE_THEN "alk" (LABEL_TAC "nmem" o REWRITE_RULE[ALOOKUP_NONE]) THEN
       MP_TAC(ISPECL [`MAP FST (l:(varN#v)list)`; `ts:(tra)list`; `a:varN`]
         FLATP2AUX_ALOOKUP_MAP2_Local) THEN
       FLATP2AUX_LREWRITE_TAC ["lts"; "nmem"] [] THEN DISCH_THEN(fun th -> REWRITE_TAC[th]) THEN
-      CASE_REWRITE_TAC[] THEN
+      CAKE_REWRITE_TAC[] THEN
       REMOVE_THEN "glob" (MP_TAC o SPEC `Short a:(modN,varN)id`) THEN
       ASM_REWRITE_TAC[IN_IMAGE; injectivity "id"; UNWIND_THM1; IN_SET_OF_LIST] THEN
       DISCH_THEN(CONJUNCTS_THEN2 MP_TAC (X_CHOOSE_THEN `vn:var_name` ASSUME_TAC)) THEN
-      ASM_REWRITE_TAC[THE_DEF; orac_forward_rel_refl] THEN CASE_REWRITE_TAC[];
+      ASM_REWRITE_TAC[THE_DEF; orac_forward_rel_refl] THEN CAKE_REWRITE_TAC[];
       REWRITE_TAC[injectivity "option"] THEN DISCH_THEN SUBST_ALL_TAC THEN
       SUBGOAL_THEN `MEM (a:varN) (MAP FST (l:(varN#v)list))` (LABEL_TAC "mem") THENL
        [REWRITE_TAC[MEM_MAP] THEN EXISTS_TAC `(a:varN),(v:v)` THEN
@@ -3997,24 +3997,24 @@ let FLATP2AUX_cc_Var = prove
         FLATP2AUX_ALOOKUP_MAP2_Local) THEN
       FLATP2AUX_LREWRITE_TAC ["lts"; "mem"] [] THEN
       DISCH_THEN(X_CHOOSE_THEN `tr:tra` (fun th -> REWRITE_TAC[th]) o CONJUNCT2) THEN
-      CASE_REWRITE_TAC[] THEN REWRITE_TAC[compile_var_def; flat_evaluate_def] THEN
+      CAKE_REWRITE_TAC[] THEN REWRITE_TAC[compile_var_def; flat_evaluate_def] THEN
       MP_TAC(ISPECL [`genv:global_env`; `l:(varN#v)list`; `a:varN`; `v:v`; `env1:(varN#flat_v)list`]
         env_rel_lookup) THEN
       FLATP2AUX_LREWRITE_TAC ["alk"; "er"] [] THEN
       DISCH_THEN(X_CHOOSE_THEN `v':flat_v` (CONJUNCTS_THEN2 (LABEL_TAC "vr") (LABEL_TAC "alk1"))) THEN
-      FLATP2AUX_LREWRITE_TAC ["alk1"] [] THEN CASE_REWRITE_TAC[] THEN
+      FLATP2AUX_LREWRITE_TAC ["alk1"] [] THEN CAKE_REWRITE_TAC[] THEN
       MAP_EVERY EXISTS_TAC [`s_i1:(C,FFI)flat_state`; `Rval [v']:(flat_v list,flat_v)result`;
                             `genv:global_env`] THEN
       FLATP2AUX_LREWRITE_TAC ["inv"; "egr"]
         [SUBMAP_REFL; subglobals_refl; orac_forward_rel_refl; result_rel_eqns; o_THM; ALL2] THEN
       FLATP2AUX_LKSIMP_TAC ["vr"] [ALL2] THEN
-      FLATP2AUX_LREWRITE_TAC ["alk1"] [] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[] THEN
+      FLATP2AUX_LREWRITE_TAC ["alk1"] [] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[] THEN
       USE_THEN "inv" (ACCEPT_TAC o MATCH_MP invariant_IMP_s_rel)];
     DISCH_TAC THEN
     REMOVE_THEN "glob" (MP_TAC o SPEC `Long a0 a1:(modN,varN)id`) THEN
     ASM_REWRITE_TAC[IN_IMAGE; distinctness "id"] THEN
     DISCH_THEN(CONJUNCTS_THEN2 MP_TAC (X_CHOOSE_THEN `vn:var_name` ASSUME_TAC)) THEN
-    ASM_REWRITE_TAC[THE_DEF; orac_forward_rel_refl] THEN CASE_REWRITE_TAC[]]);;
+    ASM_REWRITE_TAC[THE_DEF; orac_forward_rel_refl] THEN CAKE_REWRITE_TAC[]]);;
 
 let FLATP2AUX_cc_Fun = prove
  (FLATP2AUX_cc_case 7,
@@ -4027,7 +4027,7 @@ let FLATP2AUX_cc_Fun = prove
   MAP_EVERY EXISTS_TAC [`s_i1:(C,FFI)flat_state`;
     `Rval [flat_Closure env_i1 x (source_to_flat_compile_exp t
        (source_to_flat_environment_v_fupd
-         (K (nsBind x (source_to_flat_Local backend_common_None x)
+         (combin_K (nsBind x (source_to_flat_Local backend_common_None x)
                (bind_locals ts locals (source_to_flat_environment_v comp_map))))
          comp_map) e)]:(flat_v list,flat_v)result`; `genv:global_env`] THEN
   SIMP_NOASM[] THEN
@@ -4099,7 +4099,7 @@ let FLATP2AUX_cc_match_nil = prove
   USE_THEN "ev" (MP_TAC o REWRITE_RULE[full_evaluate_def]) THEN REWRITE_TAC[PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN2 SUBST_ALL_TAC (SUBST_ALL_TAC o SYM)) THEN
   REWRITE_TAC[source_to_flat_compile_exp_def; flat_evaluate_match_def; pmatch_rows_def] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   MAP_EVERY EXISTS_TAC [`s_i1:(C,FFI)flat_state`;
     `Rerr (Rraise err_v_i1):(flat_v list,flat_v)result`; `genv:global_env`] THEN
   FLATP2AUX_LREWRITE_TAC ["inv"; "egr"; "evr"]
@@ -4117,10 +4117,10 @@ let FLATP2AUX_cc_Log = prove
   FLATP2AUX_PAIR_TAC `evaluate (st:(FFI)state) env [e1]` `st1:(FFI)state`
     `r1:(v list,v)result` "ev1" THEN
   USE_THEN "ev" (MP_TAC o REWRITE_RULE[full_evaluate_def]) THEN
-  FLATP2AUX_LREWRITE_TAC ["ev1"] [] THEN CASE_REWRITE_TAC[] THEN DISCH_THEN(LABEL_TAC "ev'") THEN
+  FLATP2AUX_LREWRITE_TAC ["ev1"] [] THEN CAKE_REWRITE_TAC[] THEN DISCH_THEN(LABEL_TAC "ev'") THEN
   SUBGOAL_THEN `~(r1 = Rerr (Rabort Rtype_error):(v list,v)result)` (LABEL_TAC "nte1") THENL
    [DISCH_THEN SUBST_ALL_TAC THEN USE_THEN "ev'" MP_TAC THEN
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
     USE_THEN "nte" MP_TAC THEN MESON_TAC[];
     ALL_TAC] THEN
   FLATP2AUX_IH_TAC "ih1" [("s'",`st1:(FFI)state`); ("r",`r1:(v list,v)result`)] THEN
@@ -4132,7 +4132,7 @@ let FLATP2AUX_cc_Log = prove
   FLATP2AUX_SUBGOAL {|!tg e2 e3. flat_evaluate env_i1 s_i1 [flat_If tg
       (source_to_flat_compile_exp t
         (source_to_flat_environment_v_fupd
-          (K (bind_locals ts locals (source_to_flat_environment_v comp_map))) comp_map) e1)
+          (combin_K (bind_locals ts locals (source_to_flat_environment_v comp_map))) comp_map) e1)
       e2 e3] =
       (match r1_i1 with
          Rval vs -> (match flat_do_if (HD vs) e2 e3 with
@@ -4144,14 +4144,14 @@ let FLATP2AUX_cc_Log = prove
   REWRITE_TAC[source_to_flat_compile_exp_def] THEN REMOVE_THEN "ev'" MP_TAC THEN
   FLATP2AUX_RESULT_CASES_TAC `r1:(v list,v)result` `v1:v list` `err1:(v)error_result` THENL
    [ALL_TAC;
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
     DISCH_THEN(CONJUNCTS_THEN2 SUBST_ALL_TAC (SUBST_ALL_TAC o SYM)) THEN
     USE_THEN "rr1" (X_CHOOSE_THEN `err1':(flat_v)error_result` SUBST_ALL_TAC o
                     MATCH_MP FLATP2AUX_result_rel_Rerr) THEN
     MAP_EVERY EXISTS_TAC [`s1_i1:(C,FFI)flat_state`;
       `Rerr err1':(flat_v list,flat_v)result`; `genv1:global_env`] THEN
-    CASES_ON `lop:lop` THEN CASE_REWRITE_TAC[] THEN
-    FLATP2AUX_LREWRITE_TAC ["fif"] [] THEN CASE_REWRITE_TAC[] THEN
+    CASES_ON `lop:lop` THEN CAKE_REWRITE_TAC[] THEN
+    FLATP2AUX_LREWRITE_TAC ["fif"] [] THEN CAKE_REWRITE_TAC[] THEN
     FLATP2AUX_LREWRITE_TAC ["rr1"; "sr1"; "na1"] []] THEN
   USE_THEN "rr1" (MP_TAC o MATCH_MP FLATP2AUX_result_rel_Rval) THEN
   DISCH_THEN(X_CHOOSE_THEN `v1':flat_v list` (CONJUNCTS_THEN2 SUBST_ALL_TAC
@@ -4164,20 +4164,20 @@ let FLATP2AUX_cc_Log = prove
     (CONJUNCTS_THEN2 SUBST_ALL_TAC (CONJUNCTS_THEN2 (LABEL_TAC "xr1") SUBST_ALL_TAC)))) THEN
   USE_THEN "i1" (LABEL_TAC "cok1" o MATCH_MP invariant_genv_c_ok) THEN
   USE_THEN "i1" (LABEL_TAC "srl1" o MATCH_MP invariant_IMP_s_rel) THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[HD; do_log_def] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[HD; do_log_def] THEN
   ASM_CASES_TAC `x1 = Boolv T` THENL
    [ALL_TAC;
     ASM_CASES_TAC `x1 = Boolv F` THENL
      [ALL_TAC;
-      ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
+      ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
       USE_THEN "nte" MP_TAC THEN MESON_TAC[]]] THEN
   FIRST_X_ASSUM SUBST_ALL_TAC THEN
   USE_THEN "cok1" (fun c -> USE_THEN "xr1" (fun xr ->
     SUBST_ALL_TAC (REWRITE_RULE[MATCH_MP v_rel_Bool_eqn c] xr))) THEN
   REWRITE_TAC[semanticPrimitivesProps_Boolv_11] THEN
-  CASES_ON `lop:lop` THEN REWRITE_TAC[distinctness "lop"] THEN CASE_REWRITE_TAC[] THEN
-  FLATP2AUX_LREWRITE_TAC ["fif"] [] THEN CASE_REWRITE_TAC[] THEN
-  REWRITE_TAC[HD; flat_do_if_def; source_to_flatProof_Boolv_11] THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON `lop:lop` THEN REWRITE_TAC[distinctness "lop"] THEN CAKE_REWRITE_TAC[] THEN
+  FLATP2AUX_LREWRITE_TAC ["fif"] [] THEN CAKE_REWRITE_TAC[] THEN
+  REWRITE_TAC[HD; flat_do_if_def; source_to_flatProof_Boolv_11] THEN CAKE_REWRITE_TAC[] THEN
   let exp_case (b:term) : tactic =
     DISCH_THEN(LABEL_TAC "ev2") THEN
     USE_THEN "ih2" (MP_TAC o SPECL [mk_list([mk_comb(`Boolv`,b)],`:v`); `st1:(FFI)state`;
@@ -4226,10 +4226,10 @@ let FLATP2AUX_cc_If = prove
   FLATP2AUX_PAIR_TAC `evaluate (st:(FFI)state) env [e1]` `st1:(FFI)state`
     `r1:(v list,v)result` "ev1" THEN
   USE_THEN "ev" (MP_TAC o REWRITE_RULE[full_evaluate_def]) THEN
-  FLATP2AUX_LREWRITE_TAC ["ev1"] [] THEN CASE_REWRITE_TAC[] THEN DISCH_THEN(LABEL_TAC "ev'") THEN
+  FLATP2AUX_LREWRITE_TAC ["ev1"] [] THEN CAKE_REWRITE_TAC[] THEN DISCH_THEN(LABEL_TAC "ev'") THEN
   SUBGOAL_THEN `~(r1 = Rerr (Rabort Rtype_error):(v list,v)result)` (LABEL_TAC "nte1") THENL
    [DISCH_THEN SUBST_ALL_TAC THEN USE_THEN "ev'" MP_TAC THEN
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
     USE_THEN "nte" MP_TAC THEN MESON_TAC[];
     ALL_TAC] THEN
   FLATP2AUX_IH_TAC "ih1" [("s'",`st1:(FFI)state`); ("r",`r1:(v list,v)result`)] THEN
@@ -4241,7 +4241,7 @@ let FLATP2AUX_cc_If = prove
   FLATP2AUX_SUBGOAL {|!tg e2 e3. flat_evaluate env_i1 s_i1 [flat_If tg
       (source_to_flat_compile_exp t
         (source_to_flat_environment_v_fupd
-          (K (bind_locals ts locals (source_to_flat_environment_v comp_map))) comp_map) e1)
+          (combin_K (bind_locals ts locals (source_to_flat_environment_v comp_map))) comp_map) e1)
       e2 e3] =
       (match r1_i1 with
          Rval vs -> (match flat_do_if (HD vs) e2 e3 with
@@ -4253,13 +4253,13 @@ let FLATP2AUX_cc_If = prove
   REWRITE_TAC[source_to_flat_compile_exp_def] THEN REMOVE_THEN "ev'" MP_TAC THEN
   FLATP2AUX_RESULT_CASES_TAC `r1:(v list,v)result` `v1:v list` `err1:(v)error_result` THENL
    [ALL_TAC;
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
     DISCH_THEN(CONJUNCTS_THEN2 SUBST_ALL_TAC (SUBST_ALL_TAC o SYM)) THEN
     USE_THEN "rr1" (X_CHOOSE_THEN `err1':(flat_v)error_result` SUBST_ALL_TAC o
                     MATCH_MP FLATP2AUX_result_rel_Rerr) THEN
     MAP_EVERY EXISTS_TAC [`s1_i1:(C,FFI)flat_state`;
       `Rerr err1':(flat_v list,flat_v)result`; `genv1:global_env`] THEN
-    FLATP2AUX_LREWRITE_TAC ["fif"] [] THEN CASE_REWRITE_TAC[] THEN
+    FLATP2AUX_LREWRITE_TAC ["fif"] [] THEN CAKE_REWRITE_TAC[] THEN
     FLATP2AUX_LREWRITE_TAC ["rr1"; "sr1"; "na1"] []] THEN
   USE_THEN "rr1" (MP_TAC o MATCH_MP FLATP2AUX_result_rel_Rval) THEN
   DISCH_THEN(X_CHOOSE_THEN `v1':flat_v list` (CONJUNCTS_THEN2 SUBST_ALL_TAC
@@ -4272,19 +4272,19 @@ let FLATP2AUX_cc_If = prove
     (CONJUNCTS_THEN2 SUBST_ALL_TAC (CONJUNCTS_THEN2 (LABEL_TAC "xr1") SUBST_ALL_TAC)))) THEN
   USE_THEN "i1" (LABEL_TAC "cok1" o MATCH_MP invariant_genv_c_ok) THEN
   USE_THEN "i1" (LABEL_TAC "srl1" o MATCH_MP invariant_IMP_s_rel) THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[HD; do_if_def] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[HD; do_if_def] THEN
   ASM_CASES_TAC `x1 = Boolv T` THENL
    [ALL_TAC;
     ASM_CASES_TAC `x1 = Boolv F` THENL
      [ALL_TAC;
-      ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
+      ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
       USE_THEN "nte" MP_TAC THEN MESON_TAC[]]] THEN
   FIRST_X_ASSUM SUBST_ALL_TAC THEN
   USE_THEN "cok1" (fun c -> USE_THEN "xr1" (fun xr ->
     SUBST_ALL_TAC (REWRITE_RULE[MATCH_MP v_rel_Bool_eqn c] xr))) THEN
-  REWRITE_TAC[semanticPrimitivesProps_Boolv_11] THEN CASE_REWRITE_TAC[] THEN
-  FLATP2AUX_LREWRITE_TAC ["fif"] [] THEN CASE_REWRITE_TAC[] THEN
-  REWRITE_TAC[HD; flat_do_if_def; source_to_flatProof_Boolv_11] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[semanticPrimitivesProps_Boolv_11] THEN CAKE_REWRITE_TAC[] THEN
+  FLATP2AUX_LREWRITE_TAC ["fif"] [] THEN CAKE_REWRITE_TAC[] THEN
+  REWRITE_TAC[HD; flat_do_if_def; source_to_flatProof_Boolv_11] THEN CAKE_REWRITE_TAC[] THEN
   let exp_case (b:term) (e:term) : tactic =
     DISCH_THEN(LABEL_TAC "ev2") THEN
     USE_THEN "ih2" (MP_TAC o SPECL [mk_list([mk_comb(`Boolv`,b)],`:v`); `st1:(FFI)state`; e]) THEN
@@ -4319,11 +4319,11 @@ let FLATP2AUX_cc_Mat = prove
   FLATP2AUX_PAIR_TAC `evaluate (st:(FFI)state) env [e]` `st1:(FFI)state`
     `r1:(v list,v)result` "ev1" THEN
   USE_THEN "ev" (MP_TAC o REWRITE_RULE[full_evaluate_def]) THEN
-  FLATP2AUX_LREWRITE_TAC ["ev1"] [] THEN CASE_REWRITE_TAC[] THEN
+  FLATP2AUX_LREWRITE_TAC ["ev1"] [] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[source_to_flat_compile_exp_def] THEN DISCH_THEN(LABEL_TAC "ev'") THEN
   SUBGOAL_THEN `~(r1 = Rerr (Rabort Rtype_error):(v list,v)result)` (LABEL_TAC "nte1") THENL
    [DISCH_THEN SUBST_ALL_TAC THEN USE_THEN "ev'" MP_TAC THEN
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
     USE_THEN "nte" MP_TAC THEN MESON_TAC[];
     ALL_TAC] THEN
   FLATP2AUX_IH_TAC "ih1" [("s'",`st1:(FFI)state`); ("r",`r1:(v list,v)result`)] THEN
@@ -4336,13 +4336,13 @@ let FLATP2AUX_cc_Mat = prove
   DISCH_THEN(fun th -> REWRITE_TAC[th]) THEN REMOVE_THEN "ev'" MP_TAC THEN
   FLATP2AUX_RESULT_CASES_TAC `r1:(v list,v)result` `v1:v list` `err1:(v)error_result` THENL
    [ALL_TAC;
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
     DISCH_THEN(CONJUNCTS_THEN2 SUBST_ALL_TAC (SUBST_ALL_TAC o SYM)) THEN
     USE_THEN "rr1" (X_CHOOSE_THEN `err1':(flat_v)error_result` SUBST_ALL_TAC o
                     MATCH_MP FLATP2AUX_result_rel_Rerr) THEN
     MAP_EVERY EXISTS_TAC [`s1_i1:(C,FFI)flat_state`;
       `Rerr err1':(flat_v list,flat_v)result`; `genv1:global_env`] THEN
-    CASE_REWRITE_TAC[] THEN FLATP2AUX_LREWRITE_TAC ["rr1"; "sr1"; "na1"] []] THEN
+    CAKE_REWRITE_TAC[] THEN FLATP2AUX_LREWRITE_TAC ["rr1"; "sr1"; "na1"] []] THEN
   USE_THEN "rr1" (MP_TAC o MATCH_MP FLATP2AUX_result_rel_Rval) THEN
   DISCH_THEN(X_CHOOSE_THEN `v1':flat_v list` (CONJUNCTS_THEN2 SUBST_ALL_TAC
     (LABEL_TAC "vr1"))) THEN
@@ -4352,7 +4352,7 @@ let FLATP2AUX_cc_Mat = prove
   USE_THEN "vr1" (MP_TAC o REWRITE_RULE[o_THM; LIST_REL_CONS1; LIST_REL_NIL]) THEN
   DISCH_THEN(X_CHOOSE_THEN `x1':flat_v` (X_CHOOSE_THEN `tl1:flat_v list`
     (CONJUNCTS_THEN2 SUBST_ALL_TAC (CONJUNCTS_THEN2 (LABEL_TAC "xr1") SUBST_ALL_TAC)))) THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[HD] THEN COND_CASES_TAC THENL
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[HD] THEN COND_CASES_TAC THENL
    [POP_ASSUM(LABEL_TAC "cpa");
     REWRITE_TAC[PAIR_EQ] THEN USE_THEN "nte" MP_TAC THEN MESON_TAC[]] THEN
   DISCH_THEN(LABEL_TAC "evm") THEN
@@ -4380,7 +4380,7 @@ let FLATP2AUX_cc_Mat = prove
     (FLATP2AUX_LABEL_CONJS ["fe2"; "rr2"; "sr2"; "na2"])) THEN
   MAP_EVERY EXISTS_TAC [`s2_i1:(C,FFI)flat_state`;
     `r2_i1:(flat_v list,flat_v)result`; `genv2:global_env`] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[HD] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[HD] THEN
   FLATP2AUX_LREWRITE_TAC ["fe2"; "rr2"; "sr2"] [] THEN DISCH_TAC THEN
   USE_THEN "na2" (MP_TAC o C MP (ASSUME `~source_to_flatProof_abort (r:(v list,v)result)`)) THEN
   DISCH_THEN(FLATP2AUX_LABEL_CONJS ["i2"; "eg2"; "of2"; "sc2"; "sy2"; "sg2"]) THEN
@@ -4396,10 +4396,10 @@ let FLATP2AUX_cc_Let = prove
   FLATP2AUX_PAIR_TAC `evaluate (st:(FFI)state) env [e1]` `st1:(FFI)state`
     `r1:(v list,v)result` "ev1" THEN
   USE_THEN "ev" (MP_TAC o REWRITE_RULE[full_evaluate_def]) THEN
-  FLATP2AUX_LREWRITE_TAC ["ev1"] [] THEN CASE_REWRITE_TAC[] THEN DISCH_THEN(LABEL_TAC "ev'") THEN
+  FLATP2AUX_LREWRITE_TAC ["ev1"] [] THEN CAKE_REWRITE_TAC[] THEN DISCH_THEN(LABEL_TAC "ev'") THEN
   SUBGOAL_THEN `~(r1 = Rerr (Rabort Rtype_error):(v list,v)result)` (LABEL_TAC "nte1") THENL
    [DISCH_THEN SUBST_ALL_TAC THEN USE_THEN "ev'" MP_TAC THEN
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
     USE_THEN "nte" MP_TAC THEN MESON_TAC[];
     ALL_TAC] THEN
   REWRITE_TAC[source_to_flat_compile_exp_def] THEN
@@ -4416,13 +4416,13 @@ let FLATP2AUX_cc_Let = prove
     DISCH_THEN(fun th -> REWRITE_TAC[th]) THEN REMOVE_THEN "ev'" MP_TAC THEN
     FLATP2AUX_RESULT_CASES_TAC `r1:(v list,v)result` `v1:v list` `err1:(v)error_result` THENL
      [ALL_TAC;
-      CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
+      CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
       DISCH_THEN(CONJUNCTS_THEN2 SUBST_ALL_TAC (SUBST_ALL_TAC o SYM)) THEN
       USE_THEN "rr1" (X_CHOOSE_THEN `err1':(flat_v)error_result` SUBST_ALL_TAC o
                       MATCH_MP FLATP2AUX_result_rel_Rerr) THEN
       MAP_EVERY EXISTS_TAC [`s1_i1:(C,FFI)flat_state`;
         `Rerr err1':(flat_v list,flat_v)result`; `genv1:global_env`] THEN
-      CASE_REWRITE_TAC[] THEN FLATP2AUX_LREWRITE_TAC ["rr1"; "sr1"; "na1"] []] THEN
+      CAKE_REWRITE_TAC[] THEN FLATP2AUX_LREWRITE_TAC ["rr1"; "sr1"; "na1"] []] THEN
     USE_THEN "rr1" (MP_TAC o MATCH_MP FLATP2AUX_result_rel_Rval) THEN
     DISCH_THEN(X_CHOOSE_THEN `v1':flat_v list` (CONJUNCTS_THEN2 SUBST_ALL_TAC
       (LABEL_TAC "vr1"))) THEN
@@ -4432,7 +4432,7 @@ let FLATP2AUX_cc_Let = prove
     USE_THEN "vr1" (MP_TAC o REWRITE_RULE[o_THM; LIST_REL_CONS1; LIST_REL_NIL]) THEN
     DISCH_THEN(X_CHOOSE_THEN `x1':flat_v` (X_CHOOSE_THEN `tl1:flat_v list`
       (CONJUNCTS_THEN2 SUBST_ALL_TAC (CONJUNCTS_THEN2 (LABEL_TAC "xr1") SUBST_ALL_TAC)))) THEN
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[HD] THEN DISCH_THEN(LABEL_TAC "ev2") THEN
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[HD] THEN DISCH_THEN(LABEL_TAC "ev2") THEN
     FLATP2AUX_SUBGOAL {|env_all_rel genv1 comp_map env env_i1 locals|} (LABEL_TAC "ear1") THENL
      [MATCH_MP_TAC env_all_rel_weak THEN EXISTS_TAC `genv:global_env` THEN
       FLATP2AUX_LREWRITE_TAC ["ear"; "sc1"; "sy1"; "sg1"] [];
@@ -4447,7 +4447,7 @@ let FLATP2AUX_cc_Let = prove
       (FLATP2AUX_LABEL_CONJS ["fe2"; "rr2"; "sr2"; "na2"])) THEN
     MAP_EVERY EXISTS_TAC [`s2_i1:(C,FFI)flat_state`; `r2_i1:(flat_v list,flat_v)result`;
                           `genv2:global_env`] THEN
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[HD] THEN
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[HD] THEN
     USE_THEN "fe2" (MP_TAC o REWRITE_RULE[source_to_flat_compile_exp_def]) THEN
     REWRITE_TAC[FLATP2AUX_opt_bind_fun; FLATP2AUX_record_etas; FLATP1AUX_bind_locals_CONS;
       source_to_flat_environment_INFO.ri_fupdfupds; source_to_flat_environment_INFO.ri_accfupds;
@@ -4460,22 +4460,22 @@ let FLATP2AUX_cc_Let = prove
     FLATP2AUX_TRANS_TAC `state_eval_state (st1:(FFI)state)` `genv1:global_env` in
   let none_bind : tactic =
     REMOVE_THEN "ih2'" (LABEL_TAC "ih2n" o REWRITE_RULE[FLATP2AUX_record_etas] o
-      CASE_REWRITE_RULE[] o REWRITE_RULE[nsOptBind_def]) THEN
+      CAKE_REWRITE_RULE[] o REWRITE_RULE[nsOptBind_def]) THEN
     REMOVE_THEN "ev2" (LABEL_TAC "ev2n" o REWRITE_RULE[FLATP2AUX_record_etas] o
-      CASE_REWRITE_RULE[] o REWRITE_RULE[nsOptBind_def]) THEN
+      CAKE_REWRITE_RULE[] o REWRITE_RULE[nsOptBind_def]) THEN
     FLATP2AUX_IH_TAC "ih2n" [("genv",`genv1:global_env`); ("s_i1",`s1_i1:(C,FFI)flat_state`)] THEN
     finish_tac in
   let some_bind : tactic =
-    REMOVE_THEN "ih2'" (LABEL_TAC "ih2n" o CASE_REWRITE_RULE[] o REWRITE_RULE[nsOptBind_def]) THEN
-    REMOVE_THEN "ev2" (LABEL_TAC "ev2n" o CASE_REWRITE_RULE[] o REWRITE_RULE[nsOptBind_def]) THEN
+    REMOVE_THEN "ih2'" (LABEL_TAC "ih2n" o CAKE_REWRITE_RULE[] o REWRITE_RULE[nsOptBind_def]) THEN
+    REMOVE_THEN "ev2" (LABEL_TAC "ev2n" o CAKE_REWRITE_RULE[] o REWRITE_RULE[nsOptBind_def]) THEN
     FLATP2AUX_SUBGOAL {|env_all_rel genv1 comp_map
-        (sem_env_v_fupd (K (nsBind a x1 (sem_env_v env))) env)
-        (flat_environment_v_fupd (K (CONS (a,x1') (flat_environment_v env_i1))) env_i1)
+        (sem_env_v_fupd (combin_K (nsBind a x1 (sem_env_v env))) env)
+        (flat_environment_v_fupd (combin_K (CONS (a,x1') (flat_environment_v env_i1))) env_i1)
         (CONS a locals)|} (LABEL_TAC "ear2") THENL
      [MATCH_MP_TAC FLATP2AUX_env_all_rel_bind THEN FLATP2AUX_LREWRITE_TAC ["ear1"; "xr1"] [];
       ALL_TAC] THEN
     FLATP2AUX_IH_TAC "ih2n" [("genv",`genv1:global_env`); ("s_i1",`s1_i1:(C,FFI)flat_state`);
-      ("env_i1",`flat_environment_v_fupd (K (CONS (a:varN,x1':flat_v)
+      ("env_i1",`flat_environment_v_fupd (combin_K (CONS (a:varN,x1':flat_v)
                    (flat_environment_v (env_i1:(flat_v)flat_environment)))) env_i1`);
       ("locals",`CONS (a:varN) locals`); ("ts",`CONS backend_common_None ts`)] THEN
     FLATP2AUX_LREWRITE_TAC ["lts"] [LENGTH] THEN
@@ -4499,9 +4499,9 @@ let FLATP2AUX_cc_Letrec = prove
               K_THM; nsAppend_bind_locals] THEN
   REWRITE_TAC[source_to_flat_environment_INFO.ri_fupdfupds; K_o_THM] THEN
   FLATP2AUX_IH_TAC "ih1" [
-    ("env_i1",`flat_environment_v_fupd (K (flat_build_rec_env
+    ("env_i1",`flat_environment_v_fupd (combin_K (flat_build_rec_env
        (compile_funs t (source_to_flat_environment_v_fupd
-          (K (bind_locals (APPEND (REPLICATE (LENGTH (funs:(varN#varN#exp)list))
+          (combin_K (bind_locals (APPEND (REPLICATE (LENGTH (funs:(varN#varN#exp)list))
                 backend_common_None) ts)
              (APPEND (MAP FST funs) locals) (source_to_flat_environment_v comp_map)))
           comp_map) funs)
@@ -4529,7 +4529,7 @@ let FLATP2AUX_cc_pattern = prove
     `idxs:next_indices#next_indices#(num#idx_types->bool)`; `st:(FFI)state`;
     `s_i1:(C,FFI)flat_state`; `comp_map:source_to_flat_environment`; `env:v sem_env`;
     `env_i1:(flat_v)flat_environment`; `locals:mlstring list`;
-    `source_to_flat_environment_v_fupd (K (bind_locals ts locals
+    `source_to_flat_environment_v_fupd (combin_K (bind_locals ts locals
        (source_to_flat_environment_v comp_map))) comp_map`; `v_i1:flat_v`; `p:pat`]
     pmatch_invariant) THEN
   FLATP2AUX_LREWRITE_TAC ["inv"; "ear"; "vr"] [source_to_flat_environment_INFO.ri_accfupds] THEN
@@ -4541,10 +4541,10 @@ let FLATP2AUX_cc_pattern = prove
     (X_CHOOSE_THEN `env_v:(varN#v)list` (X_CHOOSE_THEN `env2:(varN#flat_v)list`
       (CONJUNCTS_THEN2 (LABEL_TAC "m1") (LABEL_TAC "m2")))))) THENL
    [(* type error *)
-    FLATP2AUX_LREWRITE_TAC ["mte"] [] THEN CASE_REWRITE_TAC[] THEN
+    FLATP2AUX_LREWRITE_TAC ["mte"] [] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[PAIR_EQ] THEN USE_THEN "nte" MP_TAC THEN MESON_TAC[];
     (* no match *)
-    FLATP2AUX_LREWRITE_TAC ["nm1"] [] THEN CASE_REWRITE_TAC[] THEN DISCH_TAC THEN
+    FLATP2AUX_LREWRITE_TAC ["nm1"] [] THEN CAKE_REWRITE_TAC[] THEN DISCH_TAC THEN
     USE_THEN "nm2" (fun th -> REWRITE_TAC[MATCH_MP (CONJUNCT1 (SPEC_ALL
       FLATP2AUX_flat_evaluate_match_cons)) th]) THEN
     USE_THEN "dist" (fun d -> USE_THEN "nm1" (fun n -> USE_THEN "ihn" (fun ih ->
@@ -4554,29 +4554,29 @@ let FLATP2AUX_cc_pattern = prove
      [FLATP2AUX_ANTS_TAC THEN USE_THEN "pmr" MP_TAC THEN
       REWRITE_TAC[source_to_flat_compile_exp_def] THEN
       CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[pmatch_rows_def] THEN
-      FLATP2AUX_LREWRITE_TAC ["nm2"] [] THEN CASE_REWRITE_TAC[];
+      FLATP2AUX_LREWRITE_TAC ["nm2"] [] THEN CAKE_REWRITE_TAC[];
       REWRITE_TAC[]];
     (* match *)
-    FLATP2AUX_LREWRITE_TAC ["m1"] [] THEN CASE_REWRITE_TAC[] THEN DISCH_TAC THEN
+    FLATP2AUX_LREWRITE_TAC ["m1"] [] THEN CAKE_REWRITE_TAC[] THEN DISCH_TAC THEN
     USE_THEN "mrr" (MP_TAC o REWRITE_RULE[source_to_flatProof_match_result_rel_def]) THEN
     FLATP2AUX_LREWRITE_TAC ["m1"; "m2"] [source_to_flatProof_match_result_rel_def; APPEND_NIL] THEN
     DISCH_THEN(X_CHOOSE_THEN `env_v':(varN#v)list` (CONJUNCTS_THEN2 SUBST_ALL_TAC
       (LABEL_TAC "er2"))) THEN
     FLATP2AUX_SUBGOAL {|~(pmatch_rows (compile_pes t
         (source_to_flat_environment_v_fupd
-          (K (bind_locals ts locals (source_to_flat_environment_v comp_map))) comp_map) pes)
+          (combin_K (bind_locals ts locals (source_to_flat_environment_v comp_map))) comp_map) pes)
         s_i1 v_i1 = Match_type_error)|} (LABEL_TAC "pmr'") THENL
      [USE_THEN "pmr" MP_TAC THEN REWRITE_TAC[source_to_flat_compile_exp_def] THEN
       CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[pmatch_rows_def] THEN
-      FLATP2AUX_LREWRITE_TAC ["m2"] [] THEN CASE_REWRITE_TAC[] THEN
+      FLATP2AUX_LREWRITE_TAC ["m2"] [] THEN CAKE_REWRITE_TAC[] THEN
       MP_TAC(ISPEC `pmatch_rows (compile_pes t (source_to_flat_environment_v_fupd
-        (K (bind_locals ts locals (source_to_flat_environment_v comp_map))) comp_map)
+        (combin_K (bind_locals ts locals (source_to_flat_environment_v comp_map))) comp_map)
         (pes:(pat#exp)list)) (s_i1:(C,FFI)flat_state) v_i1` (cases "match_result")) THEN
-      STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+      STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
       REWRITE_TAC[distinctness "match_result"];
       ALL_TAC] THEN
     USE_THEN "dist" (LABEL_TAC "dist'" o REWRITE_RULE[GSYM (SPEC `source_to_flat_environment_v_fupd
-      (K (bind_locals ts locals (source_to_flat_environment_v comp_map))) comp_map`
+      (combin_K (bind_locals ts locals (source_to_flat_environment_v comp_map))) comp_map`
       pat_bindings_compile_pat)]) THEN
     USE_THEN "m2" (fun m2 -> USE_THEN "pmr'" (fun pr -> USE_THEN "dist'" (fun d ->
       REWRITE_TAC[MATCH_MP (GEN_ALL (CONJUNCT2 (SPEC_ALL FLATP2AUX_flat_evaluate_match_cons)))
@@ -4594,7 +4594,7 @@ let FLATP2AUX_cc_pattern = prove
     USE_THEN "dist" (fun d -> USE_THEN "m1" (fun m -> USE_THEN "ihm" (fun ih ->
       LABEL_TAC "ihm'" (MATCH_MP ih (CONJ d m))))) THEN
     FLATP2AUX_IH_TAC "ihm'" [
-      ("env_i1",`flat_environment_v_fupd (K (APPEND (env2:(varN#flat_v)list)
+      ("env_i1",`flat_environment_v_fupd (combin_K (APPEND (env2:(varN#flat_v)list)
          (flat_environment_v (env_i1:(flat_v)flat_environment)))) env_i1`);
       ("locals",`APPEND (pat_bindings p) locals`); ("ts",`APPEND (tss:(tra)list) ts`)] THEN
     ANTS_TAC THENL
@@ -4638,7 +4638,7 @@ let FLATP2AUX_cc_cons_decs = prove
     `ds2:flat_exp list`] (LABEL_TAC "cd2")) THEN
   REMOVE_THEN "cd" (MP_TAC o REWRITE_RULE[FLATP2AUX_compile_decs_cons]) THEN
   FLATP2AUX_LREWRITE_TAC ["cd1"] [] THEN
-  CASE_REWRITE_TAC[] THEN FLATP2AUX_LREWRITE_TAC ["cd2"] [] THEN CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN FLATP2AUX_LREWRITE_TAC ["cd2"] [] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[PAIR_EQ] THEN
   DISCH_THEN(FLATP2AUX_LABEL_CONJS ["e1"; "e2"; "e3"; "e4"; "e5"]) THEN
   MAP_EVERY (fun l -> REMOVE_THEN l (SUBST_ALL_TAC o SYM)) ["e1"; "e2"; "e3"; "e4"; "e5"] THEN
@@ -4654,10 +4654,10 @@ let FLATP2AUX_cc_cons_decs = prove
   FLATP2AUX_PAIR_TAC `evaluate_decs (st:(FFI)state) env [d1]` `st1:(FFI)state`
     `r1:(v sem_env,v)result` "ev1" THEN
   USE_THEN "ev" (MP_TAC o REWRITE_RULE[full_evaluate_def]) THEN
-  FLATP2AUX_LREWRITE_TAC ["ev1"] [] THEN CASE_REWRITE_TAC[] THEN DISCH_THEN(LABEL_TAC "ev'") THEN
+  FLATP2AUX_LREWRITE_TAC ["ev1"] [] THEN CAKE_REWRITE_TAC[] THEN DISCH_THEN(LABEL_TAC "ev'") THEN
   SUBGOAL_THEN `~(r1 = Rerr (Rabort Rtype_error):(v sem_env,v)result)` (LABEL_TAC "nte1") THENL
    [DISCH_THEN SUBST_ALL_TAC THEN USE_THEN "ev'" MP_TAC THEN
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
     USE_THEN "nte" MP_TAC THEN MESON_TAC[];
     ALL_TAC] THEN
   FLATP2AUX_IH_TAC "ih1" [("s'",`st1:(FFI)state`); ("r",`r1:(v sem_env,v)result`);
@@ -4674,7 +4674,7 @@ let FLATP2AUX_cc_cons_decs = prove
   FLATP2AUX_RESULT_CASES_TAC `r1:(v sem_env,v)result` `env1:v sem_env` `err1:(v)error_result` THENL
    [ALL_TAC;
     (* d1 raises *)
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
     DISCH_THEN(CONJUNCTS_THEN2 SUBST_ALL_TAC (SUBST_ALL_TAC o SYM)) THEN
     USE_THEN "oke1" (MP_TAC o SPEC `err1:(v)error_result`) THEN REWRITE_TAC[] THEN
     DISCH_THEN(X_CHOOSE_THEN `err1':(flat_v)error_result` (CONJUNCTS_THEN2 SUBST_ALL_TAC
@@ -4683,7 +4683,7 @@ let FLATP2AUX_cc_cons_decs = prove
       `SOME err1':((flat_v)error_result)option`] THEN
     FLATP2AUX_LREWRITE_TAC ["fe1"; "sr1"; "rre1"] [flat_evaluate_decs_append;
       distinctness "result"; injectivity "result"] THEN
-    CASE_REWRITE_TAC[] THEN CONJ_TAC THENL
+    CAKE_REWRITE_TAC[] THEN CONJ_TAC THENL
      [DISCH_TAC THEN
       USE_THEN "na1" (MP_TAC o C MP (ASSUME
         `~source_to_flatProof_abort (Rerr err1:(v sem_env,v)result)`)) THEN
@@ -4693,10 +4693,10 @@ let FLATP2AUX_cc_cons_decs = prove
       MAP_EVERY EXISTS_TAC [`gen1:environment_generation_store`; `idx1:next_indices`] THEN
       FLATP2AUX_LREWRITE_TAC ["i1"; "ip2"; "ip"; "egi2"] [];
       SIMP_NOASM[] THEN FLATP2AUX_LREWRITE_TAC ["rre1"] []]] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   FLATP2AUX_PAIR_TAC `evaluate_decs (st1:(FFI)state) (extend_dec_env env1 env) (CONS d2 ds)`
     `st2:(FFI)state` `r2:(v sem_env,v)result` "ev2" THEN
-  FLATP2AUX_LREWRITE_TAC ["ev2"] [] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
+  FLATP2AUX_LREWRITE_TAC ["ev2"] [] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN2 SUBST_ALL_TAC (SUBST_ALL_TAC o SYM)) THEN
   USE_THEN "okv1" (MP_TAC o SPEC `env1:v sem_env`) THEN REWRITE_TAC[] THEN
   DISCH_THEN(FLATP2AUX_LABEL_CONJS ["rn1"; "ede1"; "eg1"; "ge1"]) THEN
@@ -4706,7 +4706,7 @@ let FLATP2AUX_cc_cons_decs = prove
   USE_THEN "ev1" (fun ev1 -> USE_THEN "ih2" (fun ih2 -> LABEL_TAC "ih2'" (MATCH_MP ih2 ev1))) THEN
   SUBGOAL_THEN `~(r2 = Rerr (Rabort Rtype_error):(v sem_env,v)result)` (LABEL_TAC "nte2") THENL
    [DISCH_THEN SUBST_ALL_TAC THEN USE_THEN "nte" MP_TAC THEN
-    REWRITE_TAC[combine_dec_result_def] THEN CASE_REWRITE_TAC[];
+    REWRITE_TAC[combine_dec_result_def] THEN CAKE_REWRITE_TAC[];
     ALL_TAC] THEN
   FLATP2AUX_SUBGOAL {|global_env_inv genv1 (extend_env cm1 comp_map) {} (extend_dec_env env1 env)|}
     (LABEL_TAC "ge12") THENL
@@ -4730,7 +4730,7 @@ let FLATP2AUX_cc_cons_decs = prove
     (FLATP2AUX_LABEL_CONJS ["fe2"; "sr2"; "na2"; "okv2"; "oke2"])) THEN
   MAP_EVERY EXISTS_TAC [`s2_i1:(C,FFI)flat_state`; `genv2:global_env`;
     `r2_i1:((flat_v)error_result)option`] THEN
-  FLATP2AUX_LREWRITE_TAC ["fe1"] [flat_evaluate_decs_append] THEN CASE_REWRITE_TAC[] THEN
+  FLATP2AUX_LREWRITE_TAC ["fe1"] [flat_evaluate_decs_append] THEN CAKE_REWRITE_TAC[] THEN
   FLATP2AUX_LREWRITE_TAC ["fe2"; "sr2"] [abort_compile_dec_result] THEN REPEAT CONJ_TAC THENL
    [DISCH_TAC THEN
     USE_THEN "na2" (MP_TAC o C MP (ASSUME
@@ -4740,7 +4740,7 @@ let FLATP2AUX_cc_cons_decs = prove
     FLATP2AUX_TRANS_TAC `state_eval_state (st1:(FFI)state)` `genv1:global_env`;
     X_GEN_TAC `envr:v sem_env` THEN
     FLATP2AUX_RESULT_CASES_TAC `r2:(v sem_env,v)result` `env2:v sem_env` `err2:(v)error_result` THEN
-    REWRITE_TAC[combine_dec_result_def] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[combine_dec_result_def] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[injectivity "result"; distinctness "result"] THEN
     DISCH_THEN(SUBST_ALL_TAC o SYM) THEN
     USE_THEN "okv2" (MP_TAC o SPEC `env2:v sem_env`) THEN REWRITE_TAC[] THEN
@@ -4755,7 +4755,7 @@ let FLATP2AUX_cc_cons_decs = prove
       FLATP2AUX_LREWRITE_TAC ["ge1"; "sc2"; "sy2"; "sg2"] []];
     X_GEN_TAC `errr:(v)error_result` THEN
     FLATP2AUX_RESULT_CASES_TAC `r2:(v sem_env,v)result` `env2:v sem_env` `err2:(v)error_result` THEN
-    REWRITE_TAC[combine_dec_result_def] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[combine_dec_result_def] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[injectivity "result"; distinctness "result"] THEN
     DISCH_THEN(SUBST_ALL_TAC o SYM) THEN
     USE_THEN "oke2" (MP_TAC o SPEC `err2:(v)error_result`) THEN REWRITE_TAC[]]);;
@@ -4789,16 +4789,16 @@ let FLATP2AUX_cc_Dmod = prove
     `ds1:flat_exp list`] (LABEL_TAC "cd1")) THEN
   REMOVE_THEN "cd" (MP_TAC o REWRITE_RULE[source_to_flat_compile_decs_def]) THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN FLATP2AUX_LREWRITE_TAC ["cd1"] [] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
   DISCH_THEN(FLATP2AUX_LABEL_CONJS ["e1"; "e2"; "e3"; "e4"; "e5"]) THEN
   MAP_EVERY (fun l -> REMOVE_THEN l (SUBST_ALL_TAC o SYM)) ["e1"; "e2"; "e3"; "e4"; "e5"] THEN
   FLATP2AUX_PAIR_TAC `evaluate_decs (st:(FFI)state) env ds` `st1:(FFI)state`
     `r1:(v sem_env,v)result` "ev1" THEN
   USE_THEN "ev" (MP_TAC o REWRITE_RULE[full_evaluate_def]) THEN
-  FLATP2AUX_LREWRITE_TAC ["ev1"] [] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
+  FLATP2AUX_LREWRITE_TAC ["ev1"] [] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN2 SUBST_ALL_TAC (SUBST_ALL_TAC o SYM)) THEN
   SUBGOAL_THEN `~(r1 = Rerr (Rabort Rtype_error):(v sem_env,v)result)` (LABEL_TAC "nte1") THENL
-   [DISCH_THEN SUBST_ALL_TAC THEN USE_THEN "nte" MP_TAC THEN CASE_REWRITE_TAC[];
+   [DISCH_THEN SUBST_ALL_TAC THEN USE_THEN "nte" MP_TAC THEN CAKE_REWRITE_TAC[];
     ALL_TAC] THEN
   FLATP2AUX_IH_TAC "ih1" [("r",`r1:(v sem_env,v)result`); ("path",`CONS (mn:modN) path`);
     ("idx'",`idx1:next_indices`); ("comp_map'",`cm1:source_to_flat_environment`);
@@ -4811,7 +4811,7 @@ let FLATP2AUX_cc_Dmod = prove
     `r1_i1:((flat_v)error_result)option`] THEN
   FLATP2AUX_LREWRITE_TAC ["fe1"; "sr1"] [] THEN
   FLATP2AUX_RESULT_CASES_TAC `r1:(v sem_env,v)result` `e1:v sem_env` `err1:(v)error_result` THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[source_to_flatProof_abort_simps; distinctness "result"; injectivity "result"] THENL
    [USE_THEN "na1" (MP_TAC o REWRITE_RULE[source_to_flatProof_abort_simps]) THEN
     DISCH_THEN(fun th -> REWRITE_TAC[th]) THEN
@@ -4842,7 +4842,7 @@ let FLATP2AUX_cc_Dlocal = prove
     `ds2:flat_exp list`] (LABEL_TAC "cd2")) THEN
   REMOVE_THEN "cd" (MP_TAC o REWRITE_RULE[source_to_flat_compile_decs_def]) THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN FLATP2AUX_LREWRITE_TAC ["cd1"] [] THEN
-  CASE_REWRITE_TAC[] THEN FLATP2AUX_LREWRITE_TAC ["cd2"] [] THEN CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN FLATP2AUX_LREWRITE_TAC ["cd2"] [] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[PAIR_EQ] THEN
   DISCH_THEN(FLATP2AUX_LABEL_CONJS ["e1"; "e2"; "e3"; "e4"; "e5"]) THEN
   MAP_EVERY (fun l -> REMOVE_THEN l (SUBST_ALL_TAC o SYM)) ["e1"; "e2"; "e3"; "e4"; "e5"] THEN
@@ -4858,10 +4858,10 @@ let FLATP2AUX_cc_Dlocal = prove
   FLATP2AUX_PAIR_TAC `evaluate_decs (st:(FFI)state) env lds` `st1:(FFI)state`
     `r1:(v sem_env,v)result` "ev1" THEN
   USE_THEN "ev" (MP_TAC o REWRITE_RULE[full_evaluate_def]) THEN
-  FLATP2AUX_LREWRITE_TAC ["ev1"] [] THEN CASE_REWRITE_TAC[] THEN DISCH_THEN(LABEL_TAC "ev'") THEN
+  FLATP2AUX_LREWRITE_TAC ["ev1"] [] THEN CAKE_REWRITE_TAC[] THEN DISCH_THEN(LABEL_TAC "ev'") THEN
   SUBGOAL_THEN `~(r1 = Rerr (Rabort Rtype_error):(v sem_env,v)result)` (LABEL_TAC "nte1") THENL
    [DISCH_THEN SUBST_ALL_TAC THEN USE_THEN "ev'" MP_TAC THEN
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
     USE_THEN "nte" MP_TAC THEN MESON_TAC[];
     ALL_TAC] THEN
   FLATP2AUX_IH_TAC "ih1" [("s'",`st1:(FFI)state`); ("r",`r1:(v sem_env,v)result`);
@@ -4878,7 +4878,7 @@ let FLATP2AUX_cc_Dlocal = prove
   FLATP2AUX_RESULT_CASES_TAC `r1:(v sem_env,v)result` `env1:v sem_env` `err1:(v)error_result` THENL
    [ALL_TAC;
     (* d1 raises *)
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
     DISCH_THEN(CONJUNCTS_THEN2 SUBST_ALL_TAC (SUBST_ALL_TAC o SYM)) THEN
     USE_THEN "oke1" (MP_TAC o SPEC `err1:(v)error_result`) THEN REWRITE_TAC[] THEN
     DISCH_THEN(X_CHOOSE_THEN `err1':(flat_v)error_result` (CONJUNCTS_THEN2 SUBST_ALL_TAC
@@ -4887,7 +4887,7 @@ let FLATP2AUX_cc_Dlocal = prove
       `SOME err1':((flat_v)error_result)option`] THEN
     FLATP2AUX_LREWRITE_TAC ["fe1"; "sr1"; "rre1"] [flat_evaluate_decs_append;
       distinctness "result"; injectivity "result"] THEN
-    CASE_REWRITE_TAC[] THEN CONJ_TAC THENL
+    CAKE_REWRITE_TAC[] THEN CONJ_TAC THENL
      [DISCH_TAC THEN
       USE_THEN "na1" (MP_TAC o C MP (ASSUME
         `~source_to_flatProof_abort (Rerr err1:(v sem_env,v)result)`)) THEN
@@ -4897,7 +4897,7 @@ let FLATP2AUX_cc_Dlocal = prove
       MAP_EVERY EXISTS_TAC [`gen1:environment_generation_store`; `idx1:next_indices`] THEN
       FLATP2AUX_LREWRITE_TAC ["i1"; "ip2"; "ip"; "egi2"] [];
       SIMP_NOASM[] THEN FLATP2AUX_LREWRITE_TAC ["rre1"] []]] THEN
-  CASE_REWRITE_TAC[] THEN DISCH_THEN(LABEL_TAC "ev2") THEN
+  CAKE_REWRITE_TAC[] THEN DISCH_THEN(LABEL_TAC "ev2") THEN
   USE_THEN "okv1" (MP_TAC o SPEC `env1:v sem_env`) THEN REWRITE_TAC[] THEN
   DISCH_THEN(FLATP2AUX_LABEL_CONJS ["rn1"; "ede1"; "eg1"; "ge1"]) THEN
   REMOVE_THEN "rn1" SUBST_ALL_TAC THEN
@@ -4927,7 +4927,7 @@ let FLATP2AUX_cc_Dlocal = prove
     (FLATP2AUX_LABEL_CONJS ["fe2"; "sr2"; "na2"; "okv2"; "oke2"])) THEN
   MAP_EVERY EXISTS_TAC [`s2_i1:(C,FFI)flat_state`; `genv2:global_env`;
     `r2_i1:((flat_v)error_result)option`] THEN
-  FLATP2AUX_LREWRITE_TAC ["fe1"] [flat_evaluate_decs_append] THEN CASE_REWRITE_TAC[] THEN
+  FLATP2AUX_LREWRITE_TAC ["fe1"] [flat_evaluate_decs_append] THEN CAKE_REWRITE_TAC[] THEN
   FLATP2AUX_LREWRITE_TAC ["fe2"; "sr2"; "okv2"; "oke2"] [] THEN
   DISCH_TAC THEN
   USE_THEN "na2" (MP_TAC o C MP (ASSUME `~source_to_flatProof_abort (r:(v sem_env,v)result)`)) THEN
@@ -4942,7 +4942,7 @@ let FLATP2AUX_cc_Dlet = prove
   FLATP2AUX_OPTION_CASES_TAC `simple_dlet p e` `pvv:varN#(modN,varN)id` "sd" THENL
    [(* not a simple dlet: HOL4 lines 4825-4888 *)
     REMOVE_THEN "cd" (MP_TAC o REWRITE_RULE[source_to_flat_compile_decs_def]) THEN
-    FLATP2AUX_LREWRITE_TAC ["sd"] [] THEN CASE_REWRITE_TAC[] THEN
+    FLATP2AUX_LREWRITE_TAC ["sd"] [] THEN CAKE_REWRITE_TAC[] THEN
     CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[PAIR_EQ] THEN
     DISCH_THEN(FLATP2AUX_LABEL_CONJS ["e1"; "e2"; "e3"; "e4"; "e5"]) THEN
     MAP_EVERY (fun l -> REMOVE_THEN l (SUBST_ALL_TAC o SYM)) ["e1"; "e2"; "e3"; "e4"; "e5"] THEN
@@ -4956,10 +4956,10 @@ let FLATP2AUX_cc_Dlet = prove
     USE_THEN "adee" (fun a -> REMOVE_THEN "ih0" (LABEL_TAC "ih" o C MP a)) THEN
     FLATP2AUX_PAIR_TAC `evaluate (st:(FFI)state) env [e]` `st1:(FFI)state` `r1:(v list,v)result` "ev1" THEN
     REMOVE_THEN "ev" (MP_TAC o REWRITE_RULE[full_evaluate_def]) THEN
-    FLATP2AUX_LREWRITE_TAC ["adee"; "ev1"] [] THEN CASE_REWRITE_TAC[] THEN
+    FLATP2AUX_LREWRITE_TAC ["adee"; "ev1"] [] THEN CAKE_REWRITE_TAC[] THEN
     DISCH_THEN(LABEL_TAC "ev'") THEN
     SUBGOAL_THEN `~(r1 = Rerr (Rabort Rtype_error):(v list,v)result)` (LABEL_TAC "nte1") THENL
-     [DISCH_THEN SUBST_ALL_TAC THEN USE_THEN "ev'" MP_TAC THEN CASE_REWRITE_TAC[] THEN
+     [DISCH_THEN SUBST_ALL_TAC THEN USE_THEN "ev'" MP_TAC THEN CAKE_REWRITE_TAC[] THEN
       REWRITE_TAC[PAIR_EQ] THEN DISCH_THEN(SUBST_ALL_TAC o SYM o CONJUNCT2) THEN
       USE_THEN "nte" MP_TAC THEN REWRITE_TAC[];
       ALL_TAC] THEN
@@ -4988,7 +4988,7 @@ let FLATP2AUX_cc_Dlet = prove
         MATCH_MP FLATP2AUX_result_rel_Rval) THEN
       DISCH_THEN(X_CHOOSE_THEN `v1':flat_v` (X_CHOOSE_THEN `tl1:flat_v list`
         (CONJUNCTS_THEN2 SUBST_ALL_TAC (CONJUNCTS_THEN2 (LABEL_TAC "vr1") SUBST_ALL_TAC)))) THEN
-      USE_THEN "ev'" MP_TAC THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ; HD] THEN
+      USE_THEN "ev'" MP_TAC THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ; HD] THEN
       DISCH_THEN(CONJUNCTS_THEN2 (SUBST_ALL_TAC o SYM) (LABEL_TAC "req")) THEN
       USE_THEN "na1" (MP_TAC o REWRITE_RULE[source_to_flatProof_abort_simps]) THEN
       DISCH_THEN(FLATP2AUX_LABEL_CONJS ["inv1"; "eg1"; "of1"; "sc1"; "sy1"; "sg1"]) THEN
@@ -5007,7 +5007,7 @@ let FLATP2AUX_cc_Dlet = prove
          REFL `source_to_flat_environment_c comp_map`;
          ASSUME `source_to_flatProof_v_rel genv1 v1 v1'`]))) THEN
       DISCH_THEN(LABEL_TAC "mrr") THEN REWRITE_TAC[flat_evaluate_match_def; pmatch_rows_def] THEN
-      CASE_REWRITE_TAC[] THEN
+      CAKE_REWRITE_TAC[] THEN
       USE_THEN "mrr" (MP_TAC o MATCH_MP match_result_rel_imp) THEN
       DISCH_THEN(DISJ_CASES_THEN2 SUBST_ALL_TAC (DISJ_CASES_THEN2
         (CONJUNCTS_THEN SUBST_ALL_TAC)
@@ -5015,11 +5015,11 @@ let FLATP2AUX_cc_Dlet = prove
           (CONJUNCTS_THEN2 SUBST_ALL_TAC
             (fun th -> SUBST_ALL_TAC th THEN LABEL_TAC "m2eq" th)))))) THENL
        [(* Match_type_error *)
-        USE_THEN "req" MP_TAC THEN CASE_REWRITE_TAC[] THEN DISCH_THEN(SUBST_ALL_TAC o SYM) THEN
+        USE_THEN "req" MP_TAC THEN CAKE_REWRITE_TAC[] THEN DISCH_THEN(SUBST_ALL_TAC o SYM) THEN
         USE_THEN "nte" MP_TAC THEN REWRITE_TAC[];
         (* No_match *)
-        USE_THEN "req" MP_TAC THEN CASE_REWRITE_TAC[] THEN DISCH_THEN(SUBST_ALL_TAC o SYM) THEN
-        CASE_REWRITE_TAC[] THEN
+        USE_THEN "req" MP_TAC THEN CAKE_REWRITE_TAC[] THEN DISCH_THEN(SUBST_ALL_TAC o SYM) THEN
+        CAKE_REWRITE_TAC[] THEN
         MAP_EVERY EXISTS_TAC [`s1_i1:(C,FFI)flat_state`; `genv1:global_env`;
                               `SOME (Rraise flat_bind_exn_v)`] THEN
         REWRITE_TAC[distinctness "result"; injectivity "result"; injectivity "option";
@@ -5037,11 +5037,11 @@ let FLATP2AUX_cc_Dlet = prove
         USE_THEN "mrr" (MP_TAC o REWRITE_RULE[source_to_flatProof_match_result_rel_def]) THEN
         DISCH_THEN(X_CHOOSE_THEN `el:(varN#v)list`
           (CONJUNCTS_THEN2 SUBST_ALL_TAC (LABEL_TAC "er1"))) THEN
-        USE_THEN "req" MP_TAC THEN CASE_REWRITE_TAC[] THEN DISCH_THEN(SUBST_ALL_TAC o SYM) THEN
+        USE_THEN "req" MP_TAC THEN CAKE_REWRITE_TAC[] THEN DISCH_THEN(SUBST_ALL_TAC o SYM) THEN
         USE_THEN "m2eq" (LABEL_TAC "dom2" o
           REWRITE_RULE[MAP; APPEND_NIL; pat_bindings_compile_pat] o
           MATCH_MP (CONJUNCT1 pmatch_bindings)) THEN
-        CASE_REWRITE_TAC[] THEN
+        CAKE_REWRITE_TAC[] THEN
         FLATP2AUX_LREWRITE_TAC ["adee"] [pat_bindings_compile_pat; APPEND_NIL] THEN
         SIMP_NOASM[] THEN
         FLATP2AUX_ISPECL_TAC ["interp"; "g"; "gen"; "genv1"; "idx"; "end_idx"; "os"; "st1";
@@ -5056,7 +5056,7 @@ let FLATP2AUX_cc_Dlet = prove
         DISCH_THEN(FLATP2AUX_CHOOSE_THEN [`genv2:global_env`; `st2:(C,FFI)flat_state`]
           (FLATP2AUX_LABEL_CONJS ["fe2"; "inv2"; "c2"; "t2"; "sg2"; "gi2"])) THEN
         MAP_EVERY EXISTS_TAC [`st2:(C,FFI)flat_state`; `genv2:global_env`] THEN
-        FLATP2AUX_LREWRITE_TAC ["fe2"] [] THEN CASE_REWRITE_TAC[] THEN
+        FLATP2AUX_LREWRITE_TAC ["fe2"] [] THEN CAKE_REWRITE_TAC[] THEN
         USE_THEN "inv2" (LABEL_TAC "inv2'" o REWRITE_RULE[LENGTH_REVERSE]) THEN
         FLATP2AUX_LREWRITE_TAC ["inv2'"; "of1"; "eg1"; "c2"; "t2"; "sc1"; "sy1"] [] THEN
         REPEAT CONJ_TAC THENL
@@ -5071,17 +5071,17 @@ let FLATP2AUX_cc_Dlet = prove
           MATCH_MP_TAC env_rel_weak THEN EXISTS_TAC `genv1:global_env` THEN
           FLATP2AUX_LREWRITE_TAC ["er1"; "c2"; "t2"; "sg2"] [SUBMAP_REFL]]];
       (* the expression raised or aborted *)
-      USE_THEN "ev'" MP_TAC THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
+      USE_THEN "ev'" MP_TAC THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
       DISCH_THEN(CONJUNCTS_THEN2 (SUBST_ALL_TAC o SYM) (SUBST_ALL_TAC o SYM)) THEN
       USE_THEN "rr1" (X_CHOOSE_THEN `e1':(flat_v)error_result` SUBST_ALL_TAC o
                       MATCH_MP FLATP2AUX_result_rel_Rerr) THEN
-      CASE_REWRITE_TAC[] THEN
+      CAKE_REWRITE_TAC[] THEN
       MAP_EVERY EXISTS_TAC [`s1_i1:(C,FFI)flat_state`; `genv1:global_env`;
                             `SOME (e1':(flat_v)error_result)`] THEN
       REWRITE_TAC[distinctness "result"; injectivity "result"; injectivity "option"] THEN
       FLATP2AUX_LREWRITE_TAC ["sr1"] [] THEN CONJ_TAC THENL
        [DISCH_THEN(fun th -> USE_THEN "na1" MP_TAC THEN ANTS_TAC THENL
-         [MP_TAC th THEN REWRITE_TAC[source_to_flatProof_abort_def] THEN CASE_REWRITE_TAC[] THEN
+         [MP_TAC th THEN REWRITE_TAC[source_to_flatProof_abort_def] THEN CAKE_REWRITE_TAC[] THEN
           TRY(DISCH_THEN ACCEPT_TAC);
           ALL_TAC]) THEN
         DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "inv1")
@@ -5098,22 +5098,22 @@ let FLATP2AUX_cc_Dlet = prove
     USE_THEN "sd" (MP_TAC o REWRITE_RULE[FLATP2AUX_simple_dlet_SOME]) THEN
     DISCH_THEN(CONJUNCTS_THEN SUBST_ALL_TAC) THEN
     REMOVE_THEN "cd" (MP_TAC o REWRITE_RULE[source_to_flat_compile_decs_def]) THEN
-    FLATP2AUX_LREWRITE_TAC ["sd"] [] THEN CASE_REWRITE_TAC[] THEN
+    FLATP2AUX_LREWRITE_TAC ["sd"] [] THEN CAKE_REWRITE_TAC[] THEN
     USE_THEN "ev" (MP_TAC o REWRITE_RULE[full_evaluate_def]) THEN
     REWRITE_TAC[pat_bindings_def; ALL_DISTINCT; MEM; every_exp_def; one_con_check_def] THEN
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[full_evaluate_def] THEN
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[full_evaluate_def] THEN
     FLATP2AUX_OPTION_CASES_TAC `nsLookup (sem_env_v (env:v sem_env)) vn` `v:v` "lkv" THEN
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THENL
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THENL
      [DISCH_THEN(CONJUNCTS_THEN2 SUBST_ALL_TAC (SUBST_ALL_TAC o SYM)) THEN
       USE_THEN "nte" MP_TAC THEN REWRITE_TAC[];
-      REWRITE_TAC[pmatch_def; HD] THEN CASE_REWRITE_TAC[] THEN
+      REWRITE_TAC[pmatch_def; HD] THEN CAKE_REWRITE_TAC[] THEN
       USE_THEN "gei" (MP_TAC o SPECL [`vn:(modN,varN)id`; `v:v`] o CONJUNCT1 o
                       REWRITE_RULE[v_rel_global_eqn]) THEN
       FLATP2AUX_LREWRITE_TAC ["lkv"] [IMAGE_CLAUSES; NOT_IN_EMPTY] THEN
       DISCH_THEN(FLATP2AUX_CHOOSE_THEN [`n':num`; `v':flat_v`; `tr:tra`]
         (FLATP2AUX_LABEL_CONJS ["glk"; "nlt"; "gel"; "vr"])) THEN
       DISCH_THEN(CONJUNCTS_THEN2 SUBST_ALL_TAC (SUBST_ALL_TAC o SYM)) THEN
-      FLATP2AUX_LREWRITE_TAC ["glk"] [] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
+      FLATP2AUX_LREWRITE_TAC ["glk"] [] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
       DISCH_THEN(FLATP2AUX_LABEL_CONJS ["e1"; "e2"; "e3"; "e4"; "e5"]) THEN
       MAP_EVERY (fun l -> REMOVE_THEN l (SUBST_ALL_TAC o SYM)) ["e1"; "e2"; "e3"; "e4"; "e5"] THEN
       MAP_EVERY EXISTS_TAC [`s_i1:(C,FFI)flat_state`; `genv:global_env`;
@@ -5160,7 +5160,7 @@ let FLATP2AUX_cc_Dletrec = prove
   DISCH_THEN(FLATP2AUX_CHOOSE_THEN [`genv2:global_env`; `st2:(C,FFI)flat_state`]
     (FLATP2AUX_LABEL_CONJS ["fe2"; "inv2"; "c2"; "t2"; "sg2"; "gi2"])) THEN
   MAP_EVERY EXISTS_TAC [`st2:(C,FFI)flat_state`; `genv2:global_env`] THEN
-  FLATP2AUX_LREWRITE_TAC ["fe2"] [] THEN CASE_REWRITE_TAC[] THEN
+  FLATP2AUX_LREWRITE_TAC ["fe2"] [] THEN CAKE_REWRITE_TAC[] THEN
   USE_THEN "inv2" (LABEL_TAC "inv2'" o REWRITE_RULE[LENGTH_REVERSE; LENGTH_MAP]) THEN
   FLATP2AUX_LREWRITE_TAC ["inv2'"; "egr"; "c2"; "t2"; "sg2"]
     [SUBMAP_REFL; orac_forward_rel_refl; build_rec_env_merge; nsAppend_nsEmpty] THEN
@@ -5209,7 +5209,7 @@ let FLATP2AUX_cc_Dexn = prove
     ASM_MESON_TAC[LE_REFL; ARITH_RULE `e + 1 <= x ==> e < x`];
     ALL_TAC]) THEN
   (MAP_EVERY EXISTS_TAC [`s_i1:(C,FFI)flat_state`;
-    `global_env_c_fupd (K (FUNION (global_env_c genv)
+    `global_env_c_fupd (combin_K (FUNION (global_env_c genv)
        (FEMPTY |+ (((next_indices_eidx idx, NONE), LENGTH (ts:ast_t list)),
                    ExnStamp (state_next_exn_stamp (st:(FFI)state)))))) genv`;
     `NONE:((flat_v)error_result)option`] THEN
@@ -5241,7 +5241,7 @@ let FLATP2AUX_cc_Dexn = prove
     MATCH_MP_TAC FLATP2AUX_global_env_inv_exn THEN
     SIMP_NOASM[FLOOKUP_FUNION; FLOOKUP_UPDATE; FLOOKUP_EMPTY] THEN
     USE_THEN "kfresh" (fun th -> REWRITE_TAC[REWRITE_RULE[GSYM flookup_thm] th]) THEN
-    CASE_REWRITE_TAC[]]));;
+    CAKE_REWRITE_TAC[]]));;
 
 let FLATP2AUX_cc_Dtype = prove
  (FLATP2AUX_cc_case 22,
@@ -5287,23 +5287,23 @@ let FLATP2AUX_cc_Denv = prove
   MAP_EVERY (fun l -> REMOVE_THEN l (SUBST_ALL_TAC o SYM)) ["e1"; "e2"; "e3"; "e4"; "e5"] THEN
   REMOVE_THEN "ev" (MP_TAC o REWRITE_RULE[full_evaluate_def]) THEN
   FLATP2AUX_OPTION_CASES_TAC `declare_env (state_eval_state (st:(FFI)state)) env`
-    `xe:v#(eval_state)option` "de" THEN CASE_REWRITE_TAC[] THENL
+    `xe:v#(eval_state)option` "de" THEN CAKE_REWRITE_TAC[] THENL
    [REWRITE_TAC[PAIR_EQ] THEN DISCH_THEN(SUBST_ALL_TAC o SYM o CONJUNCT2) THEN
     USE_THEN "nte" MP_TAC THEN REWRITE_TAC[];
     ALL_TAC] THEN
   FLATP2AUX_PAIR_TAC `xe:v#(eval_state)option` `x:v` `es2:(eval_state)option` "xeq" THEN
-  REMOVE_THEN "xeq" SUBST_ALL_TAC THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
+  REMOVE_THEN "xeq" SUBST_ALL_TAC THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN2 (SUBST_ALL_TAC o SYM) (SUBST_ALL_TAC o SYM)) THEN
   FLATP2AUX_INV_TAC "inv") THEN
   (SUBGOAL_THEN `?es. state_eval_state (st:(FFI)state) = SOME (EvalOracle es)`
     STRIP_ASSUME_TAC THENL
    [USE_THEN "orac_rel" MP_TAC THEN USE_THEN "de" MP_TAC THEN
     CASES_ON `state_eval_state (st:(FFI)state)` THEN REWRITE_TAC[declare_env_def] THEN
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "option"] THEN
-    CASES_ON `a:eval_state` THEN CASE_REWRITE_TAC[] THEN
-    REWRITE_TAC[orac_rel_def] THEN CASE_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "option"] THEN
+    CASES_ON `a:eval_state` THEN CAKE_REWRITE_TAC[] THEN
+    REWRITE_TAC[orac_rel_def] THEN CAKE_REWRITE_TAC[] THEN
     CASES_ON `interp:(v->(source_to_flat_config#C)option)option` THEN
-    CASE_REWRITE_TAC[] THEN MESON_TAC[];
+    CAKE_REWRITE_TAC[] THEN MESON_TAC[];
     ALL_TAC] THEN
   RULE_ASSUM_TAC(REWRITE_RULE[ASSUME
     `state_eval_state (st:(FFI)state) = SOME (EvalOracle es)`]) THEN
@@ -5314,11 +5314,11 @@ let FLATP2AUX_cc_Denv = prove
     `env_id1:num#num`; `st_v1:v`; `decs1:dec list`; `c1:source_to_flat_config`; `x1:C`]
     (CONJUNCTS_THEN2 SUBST_ALL_TAC (MP_TAC o last o CONJUNCTS))) THEN
   DISCH_THEN(LABEL_TAC "nc") THEN
-  REMOVE_THEN "de" (MP_TAC o REWRITE_RULE[declare_env_def]) THEN CASE_REWRITE_TAC[] THEN
-  REWRITE_TAC[oEL_THM] THEN COND_CASES_TAC THEN CASE_REWRITE_TAC[] THEN
+  REMOVE_THEN "de" (MP_TAC o REWRITE_RULE[declare_env_def]) THEN CAKE_REWRITE_TAC[] THEN
+  REWRITE_TAC[oEL_THM] THEN COND_CASES_TAC THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[distinctness "option"; injectivity "option"; PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN2 (SUBST_ALL_TAC o SYM) (SUBST_ALL_TAC o SYM)) THEN
-  USE_THEN "egr" (MP_TAC o REWRITE_RULE[env_gen_rel_def]) THEN CASE_REWRITE_TAC[] THEN
+  USE_THEN "egr" (MP_TAC o REWRITE_RULE[env_gen_rel_def]) THEN CAKE_REWRITE_TAC[] THEN
   DISCH_THEN(FLATP2AUX_LABEL_CONJS ["eg1"; "eg2"; "eg3"])) THEN
   (SUBGOAL_THEN `next_indices_vidx idx < next_indices_vidx end_idx` (LABEL_TAC "vlt") THENL
    [USE_THEN "ip" (MP_TAC o REWRITE_RULE[idx_prev_def]) THEN SIMP_NOASM[] THEN ARITH_TAC;
@@ -5340,11 +5340,11 @@ let FLATP2AUX_cc_Denv = prove
     `environment_generation_store_generation gen`; `environment_generation_store_next gen`]
     FLATP2AUX_evaluate_global_init) THEN
   FLATP2AUX_LREWRITE_TAC ["vl"; "vn"] [] THEN DISCH_THEN SUBST1_TAC) THEN
-  (FLATP2AUX_EXISTSL [{|flat_state_globals_fupd (K (LUPDATE (SOME (flat_Conv NONE
+  (FLATP2AUX_EXISTSL [{|flat_state_globals_fupd (combin_K (LUPDATE (SOME (flat_Conv NONE
       [flat_Litv (IntLit (&(environment_generation_store_generation gen)));
        flat_Litv (IntLit (&(environment_generation_store_next gen)))]))
       (next_indices_vidx idx) (flat_state_globals s_i1))) s_i1|};
-    {|global_env_v_fupd (K (LUPDATE (SOME (flat_Conv NONE
+    {|global_env_v_fupd (combin_K (LUPDATE (SOME (flat_Conv NONE
       [flat_Litv (IntLit (&(environment_generation_store_generation gen)));
        flat_Litv (IntLit (&(environment_generation_store_next gen)))]))
       (next_indices_vidx idx) (global_env_v genv))) genv|};
@@ -5357,14 +5357,14 @@ let FLATP2AUX_cc_Denv = prove
    [MATCH_MP_TAC FLATP2AUX_subglobals_LUPDATE_NONE THEN
     FLATP2AUX_LREWRITE_TAC ["globals"; "vl"; "vn"] [];
     ALL_TAC] THEN
-  SUBGOAL_THEN `source_to_flatProof_s_rel (global_env_v_fupd (K (LUPDATE (SOME (flat_Conv NONE
+  SUBGOAL_THEN `source_to_flatProof_s_rel (global_env_v_fupd (combin_K (LUPDATE (SOME (flat_Conv NONE
       [flat_Litv (IntLit (&(environment_generation_store_generation gen)));
        flat_Litv (IntLit (&(environment_generation_store_next gen)))]))
       (next_indices_vidx idx) (global_env_v genv))) genv)
-      (state_eval_state_fupd (K (SOME (EvalOracle (eval_oracle_state_envs_fupd
-       (K (LUPDATE (APPEND (EL (eval_oracle_state_generation es) (eval_oracle_state_envs es)) [env])
+      (state_eval_state_fupd (combin_K (SOME (EvalOracle (eval_oracle_state_envs_fupd
+       (combin_K (LUPDATE (APPEND (EL (eval_oracle_state_generation es) (eval_oracle_state_envs es)) [env])
             (eval_oracle_state_generation es) (eval_oracle_state_envs es))) es)))) (st:(FFI)state))
-      (flat_state_globals_fupd (K (LUPDATE (SOME (flat_Conv NONE
+      (flat_state_globals_fupd (combin_K (LUPDATE (SOME (flat_Conv NONE
       [flat_Litv (IntLit (&(environment_generation_store_generation gen)));
        flat_Litv (IntLit (&(environment_generation_store_next gen)))]))
       (next_indices_vidx idx) (flat_state_globals s_i1))) (s_i1:(C,FFI)flat_state))`
@@ -5394,7 +5394,7 @@ let FLATP2AUX_cc_Denv = prove
     REWRITE_TAC[global_env_INFO.ri_accfupds; K_THM; SUBMAP_REFL] THEN
     FLATP2AUX_LREWRITE_TAC ["efr"; "eg1"; "eg2"; "eg3"; "gei"; "sgl"] [] THEN
     USE_THEN "src_orac" (ACCEPT_TAC o CONJUNCT1 o CONJUNCT2 o REWRITE_RULE[src_orac_invs_def]);
-    REWRITE_TAC[src_orac_gen_inv_def] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[src_orac_gen_inv_def] THEN CAKE_REWRITE_TAC[] THEN
     SIMP_NOASM[LENGTH_LUPDATE] THEN FLATP2AUX_LREWRITE_TAC ["eg2"] [];
     FLATP2AUX_LREWRITE_TAC ["globals"] [];
     MATCH_MP_TAC FLATP2AUX_eval_ref_inv_LUPDATE THEN FLATP2AUX_LREWRITE_TAC ["eval_ref"] [] THEN
@@ -5411,13 +5411,13 @@ let FLATP2AUX_cc_Denv = prove
   CONJ_TAC THENL
    [CASES_ON `src_orac_next_cfg (SOME (dec:v->(source_to_flat_config#C)option))
                 (SOME (EvalOracle es))` THEN REWRITE_TAC[OPTREL_THM; subspt_refl];
-    REWRITE_TAC[eval_state_call_rel_def] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[eval_state_call_rel_def] THEN CAKE_REWRITE_TAC[] THEN
     SIMP_NOASM[LENGTH_LUPDATE; EL_LUPDATE] THEN
     MESON_TAC[ARITH_RULE `i < n ==> ~(i = n)`]])];
    (X_GEN_TAC `envr:v sem_env` THEN DISCH_THEN(SUBST_ALL_TAC o SYM) THEN
   REPEAT CONJ_TAC THENL
    [REWRITE_TAC[FLATP2AUX_nsBind_nsEmpty_sing; FLATP2AUX_env_domain_eq_sing_v];
-    REWRITE_TAC[env_gen_rel_def] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[env_gen_rel_def] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[environment_generation_store_INFO.ri_accfupds;
                 eval_oracle_state_INFO.ri_accfupds; K_THM; LENGTH_LUPDATE; EL_LUPDATE] THEN
     FLATP2AUX_LREWRITE_TAC ["eg1"; "eg2"; "eg3"] [LENGTH_APPEND; LENGTH] THEN ARITH_TAC;
@@ -5441,9 +5441,9 @@ let FLATP2AUX_cc_App = prove
   FLATP2AUX_PAIR_TAC `evaluate (st:(FFI)state) env (REVERSE es)` `st1:(FFI)state`
     `r1:(v list,v)result` "ev1" THEN
   USE_THEN "ev" (MP_TAC o REWRITE_RULE[full_evaluate_def]) THEN
-  FLATP2AUX_LREWRITE_TAC ["ev1"] [] THEN CASE_REWRITE_TAC[] THEN DISCH_THEN(LABEL_TAC "ev'") THEN
+  FLATP2AUX_LREWRITE_TAC ["ev1"] [] THEN CAKE_REWRITE_TAC[] THEN DISCH_THEN(LABEL_TAC "ev'") THEN
   SUBGOAL_THEN `~(r1 = Rerr (Rabort Rtype_error):(v list,v)result)` (LABEL_TAC "nte1") THENL
-   [DISCH_THEN SUBST_ALL_TAC THEN USE_THEN "ev'" MP_TAC THEN CASE_REWRITE_TAC[] THEN
+   [DISCH_THEN SUBST_ALL_TAC THEN USE_THEN "ev'" MP_TAC THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[PAIR_EQ] THEN DISCH_THEN(SUBST_ALL_TAC o SYM o CONJUNCT2) THEN
     USE_THEN "nte" MP_TAC THEN REWRITE_TAC[];
     ALL_TAC] THEN
@@ -5464,7 +5464,7 @@ let FLATP2AUX_cc_App = prove
                               else failwith "") THEN
       FLATP2AUX_ISPECL_TAC ["interp"; "g"; "gen"; "genv1"; "idxs"; "st"; "env"; "es";
         "st1"; "vs"; "env_i1"; "s_i1"; "t";
-        "source_to_flat_environment_v_fupd (K (bind_locals ts locals (source_to_flat_environment_v comp_map))) comp_map";
+        "source_to_flat_environment_v_fupd (combin_K (bind_locals ts locals (source_to_flat_environment_v comp_map))) comp_map";
         "s1_i1"; "vs1'"; "s'"; "r"] FLATP2AUX_App_alloc THEN
       ANTS_TAC THENL
        [FLATP2AUX_LREWRITE_TAC ["ev1"; "ev"; "nte"; "fe1"; "vr1"; "inv1"] []; ALL_TAC] THEN
@@ -5478,7 +5478,7 @@ let FLATP2AUX_cc_App = prove
   USE_THEN "ev'" MP_TAC THEN SIMP_NOASM[]) THEN
   (FLATP2AUX_OPTION_CASES_TAC `do_app (state_refs (st1:(FFI)state),state_ffi st1) Env_id (REVERSE vs)`
     `res:((v store_v)list # (FFI)ffi_state) # (v,v)result` "da" THEN
-  CASE_REWRITE_TAC[] THENL
+  CAKE_REWRITE_TAC[] THENL
    [REWRITE_TAC[PAIR_EQ] THEN DISCH_THEN(SUBST_ALL_TAC o SYM o CONJUNCT2) THEN
     USE_THEN "nte" MP_TAC THEN REWRITE_TAC[];
     ALL_TAC] THEN
@@ -5492,7 +5492,7 @@ let FLATP2AUX_cc_App = prove
     ALL_TAC] THEN
   USE_THEN "rvs" (MP_TAC o AP_TERM `REVERSE:v list->v list`) THEN
   REWRITE_TAC[REVERSE_REVERSE; REVERSE; APPEND] THEN DISCH_THEN SUBST_ALL_TAC THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ; list_result_def] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ; list_result_def] THEN
   DISCH_THEN(CONJUNCTS_THEN2 (SUBST_ALL_TAC o SYM) (SUBST_ALL_TAC o SYM)) THEN
   USE_THEN "ev1" (MP_TAC o SYM o MATCH_MP (CONJUNCT1 evaluate_length)) THEN
   REWRITE_TAC[LENGTH; LENGTH_REVERSE; ONE] THEN
@@ -5502,7 +5502,7 @@ let FLATP2AUX_cc_App = prove
   REWRITE_TAC[LENGTH; NOT_SUC; SUC_INJ; LENGTH_EQ_NIL] THEN
   DISCH_THEN SUBST_ALL_TAC THEN
   REWRITE_TAC[FLATP2AUX_state_refs_ffi_eta] THEN
-  REWRITE_TAC[source_to_flat_compile_exp_def; distinctness "op"] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[source_to_flat_compile_exp_def; distinctness "op"] THEN CAKE_REWRITE_TAC[] THEN
   USE_THEN "fe1" (MP_TAC o REWRITE_RULE([REVERSE; APPEND] @ FLATP2AUX_compile_exps_clauses)) THEN
   DISCH_TAC THEN
   MAP_EVERY EXISTS_TAC [`s1_i1:(C,FFI)flat_state`; `Rval vs1':(flat_v list,flat_v)result`;
@@ -5517,7 +5517,7 @@ let FLATP2AUX_cc_App = prove
   USE_THEN "ev'" MP_TAC THEN SIMP_NOASM[do_eval_res_def]) THEN
       (FLATP2AUX_OPTION_CASES_TAC `do_eval (REVERSE vs) (state_eval_state (st1:(FFI)state))`
     `ddd:v sem_env # dec list # (eval_state)option` "de" THEN
-  CASE_REWRITE_TAC[] THENL
+  CAKE_REWRITE_TAC[] THENL
    [REWRITE_TAC[PAIR_EQ] THEN DISCH_THEN(SUBST_ALL_TAC o SYM o CONJUNCT2) THEN
     USE_THEN "nte" MP_TAC THEN REWRITE_TAC[];
     ALL_TAC] THEN
@@ -5525,7 +5525,7 @@ let FLATP2AUX_cc_App = prove
     (prove(`!x:A#B#C. ?a b c. x = (a,b,c)`, REWRITE_TAC[FORALL_PAIR_THM] THEN MESON_TAC[]))) THEN
   DISCH_THEN(X_CHOOSE_THEN `env1:v sem_env` (X_CHOOSE_THEN `decs:dec list`
     (X_CHOOSE_THEN `es1:(eval_state)option` SUBST_ALL_TAC))) THEN
-  CASE_REWRITE_TAC[] THEN DISCH_THEN(LABEL_TAC "evx") THEN
+  CAKE_REWRITE_TAC[] THEN DISCH_THEN(LABEL_TAC "evx") THEN
   MP_TAC(ISPECL [`REVERSE (vs1':flat_v list)`; `REVERSE (vs:v list)`; `st1:(FFI)state`;
     `env1:v sem_env`; `decs:dec list`; `es1:(eval_state)option`;
     `interp:(v->(source_to_flat_config#C)option)option`; `g:dec list->dec list`;
@@ -5552,7 +5552,7 @@ let FLATP2AUX_cc_App = prove
   FLATP2AUX_LREWRITE_TAC ["c0"] [] THENL
    [USE_THEN "evy" MP_TAC THEN FLATP2AUX_LREWRITE_TAC ["c0"] [PAIR_EQ] THEN
     DISCH_THEN(CONJUNCTS_THEN2 (SUBST_ALL_TAC o SYM) (SUBST_ALL_TAC o SYM)) THEN
-    MAP_EVERY EXISTS_TAC [`flat_state_eval_config_fupd (K ec') (s1_i1:(C,FFI)flat_state)`;
+    MAP_EVERY EXISTS_TAC [`flat_state_eval_config_fupd (combin_K ec') (s1_i1:(C,FFI)flat_state)`;
       `Rerr (Rabort Rtimeout_error):(flat_v list,flat_v)result`; `genv1:global_env`] THEN
     REWRITE_TAC[result_rel_eqns; source_to_flatProof_abort_simps] THEN
     REWRITE_TAC[source_to_flatProof_s_rel_cases; state_INFO.ri_accfupds;
@@ -5569,7 +5569,7 @@ let FLATP2AUX_cc_App = prove
   DISCH_THEN(FLATP2AUX_CHOOSE_THEN [`n0:num`; `next1:next_indices`;
     `e1:source_to_flat_environment`; `gen1:environment_generation_store`; `p1:flat_exp list`]
     (LABEL_TAC "cdq")) THEN
-  FLATP2AUX_LREWRITE_TAC ["cdq"] [] THEN CASE_REWRITE_TAC[] THEN
+  FLATP2AUX_LREWRITE_TAC ["cdq"] [] THEN CAKE_REWRITE_TAC[] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "c'eq") (SUBST_ALL_TAC o SYM)) THEN
   REWRITE_TAC[FLATP2AUX_flat_glob_alloc; flat_evaluate_decs_append] THEN
@@ -5579,20 +5579,20 @@ let FLATP2AUX_cc_App = prove
   REMOVE_THEN "cnext" (fun th -> RULE_ASSUM_TAC(REWRITE_RULE[th]) THEN LABEL_TAC "cnext" th) THEN
   USE_THEN "inva" (LABEL_TAC "invad" o CONJUNCT2 o MATCH_MP invariant_dec_clock)) THEN
       (USE_THEN "evy" (LABEL_TAC "evz" o REWRITE_RULE[ASSUME `~(state_clock (st1:(FFI)state) = 0)`]) THEN
-  FLATP2AUX_PAIR_TAC `evaluate_decs (dec_clock (state_eval_state_fupd (K es1) (st1:(FFI)state))) env1 decs`
+  FLATP2AUX_PAIR_TAC `evaluate_decs (dec_clock (state_eval_state_fupd (combin_K es1) (st1:(FFI)state))) env1 decs`
     `st2:(FFI)state` `r2:(v sem_env,v)result` "ev4" THEN
-  USE_THEN "evz" MP_TAC THEN FLATP2AUX_LREWRITE_TAC ["ev4"] [] THEN CASE_REWRITE_TAC[] THEN
+  USE_THEN "evz" MP_TAC THEN FLATP2AUX_LREWRITE_TAC ["ev4"] [] THEN CAKE_REWRITE_TAC[] THEN
   DISCH_THEN(LABEL_TAC "ev5") THEN
   SUBGOAL_THEN `~(r2 = Rerr (Rabort Rtype_error):(v sem_env,v)result)` (LABEL_TAC "nte2") THENL
-   [DISCH_THEN SUBST_ALL_TAC THEN USE_THEN "ev5" MP_TAC THEN CASE_REWRITE_TAC[] THEN
+   [DISCH_THEN SUBST_ALL_TAC THEN USE_THEN "ev5" MP_TAC THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[PAIR_EQ] THEN DISCH_THEN(SUBST_ALL_TAC o SYM o CONJUNCT2) THEN
     USE_THEN "nte" MP_TAC THEN REWRITE_TAC[];
     ALL_TAC] THEN
   USE_THEN "ihe" (MP_TAC o SPECL [`vs:v list`; `st1:(FFI)state`;
-    `state_eval_state_fupd (K es1) (st1:(FFI)state)`; `env1:v sem_env`; `decs:dec list`]) THEN
+    `state_eval_state_fupd (combin_K es1) (st1:(FFI)state)`; `env1:v sem_env`; `decs:dec list`]) THEN
   ANTS_TAC THENL
    [FLATP2AUX_LREWRITE_TAC ["ev1"; "de"; "c0"] [getOpClass_def; do_eval_res_def;
-      state_INFO.ri_accfupds] THEN CASE_REWRITE_TAC[];
+      state_INFO.ri_accfupds] THEN CAKE_REWRITE_TAC[];
     ALL_TAC] THEN
   DISCH_THEN(LABEL_TAC "ihe'")) THEN
       (FLATP2AUX_IH_TAC "ihe'" [("s'", `st2:(FFI)state`); ("r", `r2:(v sem_env,v)result`);
@@ -5600,8 +5600,8 @@ let FLATP2AUX_cc_App = prove
     ("idx", `source_to_flat_config_next c`); ("end_idx", `next1:next_indices`);
     ("os", `idx_block idx end_idx UNION (other:num#idx_types->bool)`);
     ("comp_map", `lookup_env_id env_id (source_to_flat_config_envs c)`);
-    ("s_i1", `flat_dec_clock (flat_state_eval_config_fupd (K ec')
-       (flat_state_globals_fupd (K (APPEND (flat_state_globals (s1_i1:(C,FFI)flat_state))
+    ("s_i1", `flat_dec_clock (flat_state_eval_config_fupd (combin_K ec')
+       (flat_state_globals_fupd (combin_K (APPEND (flat_state_globals (s1_i1:(C,FFI)flat_state))
           (REPLICATE (next_indices_vidx next1 - next_indices_vidx (source_to_flat_config_next c))
              NONE))) s1_i1))`);
     ("idx'", `next1:next_indices`); ("comp_map'", `e1:source_to_flat_environment`);
@@ -5613,28 +5613,28 @@ let FLATP2AUX_cc_App = prove
    [FLATP2AUX_LREWRITE_TAC ["ev4"; "invad"; "cdq"; "geia"; "nte2"] [idx_prev_refl] THEN
     REWRITE_TAC[dec_clock_def; state_INFO.ri_accfupds; K_THM] THEN
     FLATP2AUX_LREWRITE_TAC ["ega"] [] THEN
-    USE_THEN "efra" MP_TAC THEN FLATP2AUX_LREWRITE_TAC ["cdq"] [] THEN CASE_REWRITE_TAC[];
+    USE_THEN "efra" MP_TAC THEN FLATP2AUX_LREWRITE_TAC ["cdq"] [] THEN CAKE_REWRITE_TAC[];
     ALL_TAC] THEN
   DISCH_THEN(FLATP2AUX_CHOOSE_THEN [`s3_i1:(C,FFI)flat_state`; `genv3:global_env`;
     `r3_i1:((flat_v)error_result)option`] (FLATP2AUX_LABEL_CONJS ["fe3"; "sr3"; "na3"; "okv3"; "oke3"])) THEN
-  FLATP2AUX_LREWRITE_TAC ["fe3"] [] THEN CASE_REWRITE_TAC[]) THEN
+  FLATP2AUX_LREWRITE_TAC ["fe3"] [] THEN CAKE_REWRITE_TAC[]) THEN
       (USE_THEN "ix" SUBST_ALL_TAC THEN
   FLATP2AUX_RESULT_CASES_TAC `r2:(v sem_env,v)result` `env2:v sem_env` `err2:(v)error_result`) THENL
       [(USE_THEN "okv3" (MP_TAC o SPEC `env2:v sem_env`) THEN REWRITE_TAC[] THEN
   DISCH_THEN(CONJUNCTS_THEN2 SUBST_ALL_TAC (FLATP2AUX_LABEL_CONJS ["ede2"; "egr2"; "gie2"])) THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   USE_THEN "na3" (MP_TAC o REWRITE_RULE[dec_clock_def; state_INFO.ri_accfupds; K_THM;
                                          source_to_flatProof_abort_simps]) THEN
   DISCH_THEN(FLATP2AUX_LABEL_CONJS ["inv3"; "of3"; "sc3"; "sy3"; "sg3"]) THEN
-  USE_THEN "ev5" MP_TAC THEN CASE_REWRITE_TAC[] THEN
+  USE_THEN "ev5" MP_TAC THEN CAKE_REWRITE_TAC[] THEN
   FLATP2AUX_OPTION_CASES_TAC `declare_env (state_eval_state (st2:(FFI)state)) (extend_dec_env env2 env1)`
     `xes:v # (eval_state)option` "dce" THEN
-  CASE_REWRITE_TAC[] THENL
+  CAKE_REWRITE_TAC[] THENL
    [REWRITE_TAC[PAIR_EQ] THEN DISCH_THEN(SUBST_ALL_TAC o SYM o CONJUNCT2) THEN
     USE_THEN "nte" MP_TAC THEN REWRITE_TAC[];
     ALL_TAC] THEN
   FLATP2AUX_PAIR_TAC `xes:v # (eval_state)option` `x:v` `es2:(eval_state)option` "xeq" THEN
-  REMOVE_THEN "xeq" SUBST_ALL_TAC THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
+  REMOVE_THEN "xeq" SUBST_ALL_TAC THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN2 (SUBST_ALL_TAC o SYM) (SUBST_ALL_TAC o SYM)) THEN
   USE_THEN "cdq" (LABEL_TAC "gen1g" o MATCH_MP compile_decs_generation) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[environment_generation_store_INFO.ri_accessors]) THEN
@@ -5650,7 +5650,7 @@ let FLATP2AUX_cc_App = prove
    [USE_THEN "of3" (MP_TAC o CONJUNCT1 o REWRITE_RULE[orac_forward_rel_def]) THEN
     REWRITE_TAC[orac_config_envs_subspt_def] THEN FLATP2AUX_LREWRITE_TAC ["nca"] [OPTREL_SOME] THEN
     DISCH_THEN(X_CHOOSE_THEN `cc:source_to_flat_config` (CONJUNCTS_THEN2 SUBST1_TAC MP_TAC)) THEN
-    CASE_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN
     USE_THEN "c'eq" (fun th -> REWRITE_TAC[GSYM th]) THEN
     REWRITE_TAC[source_to_flat_config_INFO.ri_accfupds; K_THM; environment_store_INFO.ri_accessors] THEN
     REWRITE_TAC[subspt_lookup] THEN
@@ -5660,7 +5660,7 @@ let FLATP2AUX_cc_App = prove
        (environment_generation_store_next gen1)
        (extend_env e1 (lookup_env_id env_id (source_to_flat_config_envs c)))
        (environment_generation_store_envs gen1))`)]) THEN
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[lookup_insert] THEN CASE_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[lookup_insert] THEN CAKE_REWRITE_TAC[] THEN
     MATCH_MP_TAC global_env_inv_append THEN FLATP2AUX_LREWRITE_TAC ["ede2"; "gie2"] [] THEN
     MATCH_MP_TAC global_env_inv_weak THEN EXISTS_TAC `genva:global_env` THEN
     FLATP2AUX_LREWRITE_TAC ["geia"; "sc3"; "sy3"; "sg3"] [];
@@ -5672,7 +5672,7 @@ let FLATP2AUX_cc_App = prove
   ANTS_TAC THENL
    [FLATP2AUX_LREWRITE_TAC ["dce"; "inv3"; "egr2"; "lkc"] []; ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_THEN `y:flat_v` (FLATP2AUX_LABEL_CONJS ["fst"; "inv5"; "glx"; "vrx"; "ofx"])) THEN
-  FLATP2AUX_LREWRITE_TAC ["fst"] [] THEN CASE_REWRITE_TAC[] THEN
+  FLATP2AUX_LREWRITE_TAC ["fst"] [] THEN CAKE_REWRITE_TAC[] THEN
   USE_THEN "glx" (X_CHOOSE_THEN `xs:(flat_v option)list` (LABEL_TAC "glx'")) THEN
   W(fun (asl,w) -> let tm = find_term (fun t -> try fst(dest_const(fst(strip_comb t))) = "flat_evaluate"
                                           with Failure _ -> false) w in
@@ -5680,11 +5680,11 @@ let FLATP2AUX_cc_App = prove
                   `TL (flat_state_refs (s3_i1:(C,FFI)flat_state))`] FLATP2AUX_flat_eval_ref_read)) THEN
   REWRITE_TAC[flat_state_INFO.ri_accfupds; K_THM] THEN FLATP2AUX_LREWRITE_TAC ["glx'"] [] THEN
   DISCH_THEN SUBST1_TAC THEN
-  MAP_EVERY EXISTS_TAC [`flat_state_refs_fupd (K (CONS (Refv y) (TL (flat_state_refs s3_i1))))
+  MAP_EVERY EXISTS_TAC [`flat_state_refs_fupd (combin_K (CONS (Refv y) (TL (flat_state_refs s3_i1))))
       (s3_i1:(C,FFI)flat_state)`; `Rval [y]:(flat_v list,flat_v)result`; `genv3:global_env`] THEN
   REWRITE_TAC[result_rel_eqns; o_THM; source_to_flatProof_abort_simps; injectivity "result"] THEN
   SUBGOAL_THEN `orac_forward_rel (interp:(v->(source_to_flat_config#C)option)option) es1
-                  (state_eval_state (state_eval_state_fupd (K es2) (st2:(FFI)state)))`
+                  (state_eval_state (state_eval_state_fupd (combin_K es2) (st2:(FFI)state)))`
     (LABEL_TAC "of5") THENL
    [REWRITE_TAC[state_INFO.ri_accfupds; K_THM] THEN MATCH_MP_TAC orac_forward_rel_trans THEN
     EXISTS_TAC `state_eval_state (st2:(FFI)state)` THEN FLATP2AUX_LREWRITE_TAC ["of3"; "ofx"] [];
@@ -5715,10 +5715,10 @@ let FLATP2AUX_cc_App = prove
     FLATP2AUX_LREWRITE_TAC ["sga"; "sg3"] []]);
        (USE_THEN "oke3" (MP_TAC o SPEC `err2:(v)error_result`) THEN REWRITE_TAC[] THEN
   DISCH_THEN(X_CHOOSE_THEN `ee3:(flat_v)error_result` (CONJUNCTS_THEN2 SUBST_ALL_TAC (LABEL_TAC "rre3"))) THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   USE_THEN "na3" (MP_TAC o REWRITE_RULE[dec_clock_def; state_INFO.ri_accfupds; K_THM]) THEN
   DISCH_THEN(LABEL_TAC "na3'") THEN
-  USE_THEN "ev5" MP_TAC THEN CASES_ON `err2:(v)error_result` THEN CASE_REWRITE_TAC[] THEN
+  USE_THEN "ev5" MP_TAC THEN CASES_ON `err2:(v)error_result` THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN2 (SUBST_ALL_TAC o SYM) (SUBST_ALL_TAC o SYM)) THEN
   MAP_EVERY EXISTS_TAC [`s3_i1:(C,FFI)flat_state`; `Rerr ee3:(flat_v list,flat_v)result`;
@@ -5755,12 +5755,12 @@ let FLATP2AUX_cc_App = prove
       (USE_THEN "opeq" SUBST_ALL_TAC THEN
   USE_THEN "ev'" MP_TAC THEN SIMP_NOASM[] THEN
   FLATP2AUX_OPTION_CASES_TAC `do_opapp (REVERSE (vs:v list))` `ee:v sem_env # exp` "dop" THEN
-  CASE_REWRITE_TAC[] THENL
+  CAKE_REWRITE_TAC[] THENL
    [REWRITE_TAC[PAIR_EQ] THEN DISCH_THEN(SUBST_ALL_TAC o SYM o CONJUNCT2) THEN
     USE_THEN "nte" MP_TAC THEN REWRITE_TAC[];
     ALL_TAC]) THEN
   (FLATP2AUX_PAIR_TAC `ee:v sem_env # exp` `env':v sem_env` `e:exp` "eeq" THEN
-  REMOVE_THEN "eeq" SUBST_ALL_TAC THEN CASE_REWRITE_TAC[] THEN DISCH_THEN(LABEL_TAC "ev2")) THEN
+  REMOVE_THEN "eeq" SUBST_ALL_TAC THEN CAKE_REWRITE_TAC[] THEN DISCH_THEN(LABEL_TAC "ev2")) THEN
   (MP_TAC(ISPECL [`genv1:global_env`; `REVERSE (vs:v list)`; `REVERSE (vs1':flat_v list)`;
     `env':v sem_env`; `e:exp`] do_opapp) THEN
   ANTS_TAC THENL
@@ -5771,10 +5771,10 @@ let FLATP2AUX_cc_App = prove
     `env_i2:(flat_v)flat_environment`; `locals2:mlstring list`; `t1:mlstring list`;
     `ts2:tra list`] (FLATP2AUX_LABEL_CONJS ["ear2"; "lts2"; "fdop"]))) THEN
   (REWRITE_TAC[source_to_flat_compile_exp_def; distinctness "op"] THEN
-  REWRITE_TAC[astOp_to_flatOp_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[astOp_to_flatOp_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[flat_evaluate_def; GSYM compile_exps_reverse] THEN
-  FLATP2AUX_LREWRITE_TAC ["fe1"] [] THEN CASE_REWRITE_TAC[] THEN
-  FLATP2AUX_LREWRITE_TAC ["fdop"] [] THEN CASE_REWRITE_TAC[]) THEN
+  FLATP2AUX_LREWRITE_TAC ["fe1"] [] THEN CAKE_REWRITE_TAC[] THEN
+  FLATP2AUX_LREWRITE_TAC ["fdop"] [] THEN CAKE_REWRITE_TAC[]) THEN
   (USE_THEN "inv1" (CONJUNCTS_THEN2 (LABEL_TAC "clk") (LABEL_TAC "invd") o
                    MATCH_MP invariant_dec_clock) THEN
   USE_THEN "clk" (fun th -> REWRITE_TAC[GSYM th])) THEN
@@ -5789,7 +5789,7 @@ let FLATP2AUX_cc_App = prove
   (USE_THEN "ev2" (LABEL_TAC "ev3" o REWRITE_RULE[ASSUME `~(state_clock (st1:(FFI)state) = 0)`]) THEN
   USE_THEN "ihf" (MP_TAC o SPECL [`vs:v list`; `st1:(FFI)state`; `env':v sem_env`; `e:exp`]) THEN
   ANTS_TAC THENL
-   [FLATP2AUX_LREWRITE_TAC ["ev1"; "dop"; "c0"] [getOpClass_def] THEN CASE_REWRITE_TAC[];
+   [FLATP2AUX_LREWRITE_TAC ["ev1"; "dop"; "c0"] [getOpClass_def] THEN CAKE_REWRITE_TAC[];
     ALL_TAC] THEN
   DISCH_THEN(LABEL_TAC "ihf'")) THEN
   (FLATP2AUX_IH_TAC "ihf'" [("s'", `s':(FFI)state`); ("r", `r:(v list,v)result`);
@@ -5819,9 +5819,9 @@ let FLATP2AUX_cc_App = prove
   USE_THEN "ev'" MP_TAC THEN SIMP_NOASM[]) THEN
       (DISCH_THEN(LABEL_TAC "evf") THEN
   REWRITE_TAC[source_to_flat_compile_exp_def; distinctness "op"] THEN
-  REWRITE_TAC[astOp_to_flatOp_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[astOp_to_flatOp_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[flat_evaluate_def; GSYM compile_exps_reverse] THEN
-  FLATP2AUX_LREWRITE_TAC ["fe1"] [] THEN CASE_REWRITE_TAC[] THEN
+  FLATP2AUX_LREWRITE_TAC ["fe1"] [] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[injectivity "flat_op"; distinctness "op"; injectivity "op"; distinctness "thunk_op"] THEN
   FLATP2AUX_INV_TAC "inv1" THEN
   USE_THEN "s_rel" (FLATP2AUX_LABEL_CONJS ["nn"; "srf"; "scl"; "sff"] o
@@ -5835,18 +5835,18 @@ let FLATP2AUX_cc_App = prove
       (MP_TAC(ISPEC `dest_thunk (REVERSE vs) (state_refs (st1:(FFI)state))` (cases "dest_thunk_ret")) THEN
   DISCH_THEN(DISJ_CASES_THEN2 (LABEL_TAC "dt") (DISJ_CASES_THEN2 (LABEL_TAC "dt")
     (X_CHOOSE_THEN `m:thunk_mode` (X_CHOOSE_THEN `tv:v` (LABEL_TAC "dt"))))) THENL
-   [USE_THEN "evf" MP_TAC THEN FLATP2AUX_LREWRITE_TAC ["dt"] [] THEN CASE_REWRITE_TAC[] THEN
+   [USE_THEN "evf" MP_TAC THEN FLATP2AUX_LREWRITE_TAC ["dt"] [] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[PAIR_EQ] THEN DISCH_THEN(SUBST_ALL_TAC o SYM o CONJUNCT2) THEN
     USE_THEN "nte" MP_TAC THEN REWRITE_TAC[];
-    USE_THEN "evf" MP_TAC THEN FLATP2AUX_LREWRITE_TAC ["dt"] [] THEN CASE_REWRITE_TAC[] THEN
+    USE_THEN "evf" MP_TAC THEN FLATP2AUX_LREWRITE_TAC ["dt"] [] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[PAIR_EQ] THEN DISCH_THEN(SUBST_ALL_TAC o SYM o CONJUNCT2) THEN
     USE_THEN "nte" MP_TAC THEN REWRITE_TAC[];
     ALL_TAC] THEN
   USE_THEN "dt" (fun th -> USE_THEN "d3" (X_CHOOSE_THEN `tv':flat_v`
     (CONJUNCTS_THEN2 (LABEL_TAC "fdt") (LABEL_TAC "tvr")) o C MATCH_MP th)) THEN
-  FLATP2AUX_LREWRITE_TAC ["fdt"] [] THEN CASE_REWRITE_TAC[] THEN
-  USE_THEN "evf" MP_TAC THEN FLATP2AUX_LREWRITE_TAC ["dt"] [] THEN CASE_REWRITE_TAC[] THEN
-  CASES_ON `m:thunk_mode` THEN CASE_REWRITE_TAC[]) THENL
+  FLATP2AUX_LREWRITE_TAC ["fdt"] [] THEN CAKE_REWRITE_TAC[] THEN
+  USE_THEN "evf" MP_TAC THEN FLATP2AUX_LREWRITE_TAC ["dt"] [] THEN CAKE_REWRITE_TAC[] THEN
+  CASES_ON `m:thunk_mode` THEN CAKE_REWRITE_TAC[]) THENL
       [(DISCH_THEN(CONJUNCTS_THEN2 (SUBST_ALL_TAC o SYM) (SUBST_ALL_TAC o SYM)) THEN
   MAP_EVERY EXISTS_TAC [`s1_i1:(C,FFI)flat_state`; `Rval [tv']:(flat_v list,flat_v)result`;
                         `genv1:global_env`] THEN
@@ -5855,12 +5855,12 @@ let FLATP2AUX_cc_App = prove
    [EXISTS_TAC `[tv':flat_v]` THEN FLATP2AUX_LREWRITE_TAC ["tvr"] [ALL2]; ALL_TAC] THEN
   FLATP2AUX_LREWRITE_TAC ["sr1"; "inv1"; "eg1"; "of1"; "sc1"; "sy1"; "sg1"] []);
        (FLATP2AUX_OPTION_CASES_TAC `do_opapp [tv; Conv NONE []]` `ee:v sem_env # exp` "dop" THEN
-  CASE_REWRITE_TAC[] THENL
+  CAKE_REWRITE_TAC[] THENL
    [REWRITE_TAC[PAIR_EQ] THEN DISCH_THEN(SUBST_ALL_TAC o SYM o CONJUNCT2) THEN
     USE_THEN "nte" MP_TAC THEN REWRITE_TAC[];
     ALL_TAC] THEN
   FLATP2AUX_PAIR_TAC `ee:v sem_env # exp` `env':v sem_env` `e:exp` "eeq" THEN
-  REMOVE_THEN "eeq" SUBST_ALL_TAC THEN CASE_REWRITE_TAC[] THEN DISCH_THEN(LABEL_TAC "ev2") THEN
+  REMOVE_THEN "eeq" SUBST_ALL_TAC THEN CAKE_REWRITE_TAC[] THEN DISCH_THEN(LABEL_TAC "ev2") THEN
   MP_TAC(ISPECL [`genv1:global_env`; `[tv; Conv NONE []]`; `[tv'; flat_Conv NONE []]`;
     `env':v sem_env`; `e:exp`] do_opapp) THEN
   ANTS_TAC THENL
@@ -5871,12 +5871,12 @@ let FLATP2AUX_cc_App = prove
     `env_i2:(flat_v)flat_environment`; `locals2:mlstring list`; `t1:mlstring list`;
     `ts2:tra list`] (FLATP2AUX_LABEL_CONJS ["ear2"; "lts2"; "fdop"])) THEN
   REWRITE_TAC[FLATP2AUX_flat_AppUnit] THEN FLATP2AUX_LREWRITE_TAC ["fdop"] [] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   USE_THEN "inv1" (CONJUNCTS_THEN2 (LABEL_TAC "clk") (LABEL_TAC "invd") o
                    MATCH_MP invariant_dec_clock) THEN
   USE_THEN "clk" (fun th -> REWRITE_TAC[GSYM th])) THEN
        (ASM_CASES_TAC `state_clock (st1:(FFI)state) = 0` THEN POP_ASSUM(LABEL_TAC "c0") THEN
-  FLATP2AUX_LREWRITE_TAC ["c0"] [] THEN CASE_REWRITE_TAC[] THENL
+  FLATP2AUX_LREWRITE_TAC ["c0"] [] THEN CAKE_REWRITE_TAC[] THENL
    [USE_THEN "ev2" MP_TAC THEN FLATP2AUX_LREWRITE_TAC ["c0"] [PAIR_EQ] THEN
     DISCH_THEN(CONJUNCTS_THEN2 (SUBST_ALL_TAC o SYM) (SUBST_ALL_TAC o SYM)) THEN
     MAP_EVERY EXISTS_TAC [`s1_i1:(C,FFI)flat_state`;
@@ -5886,15 +5886,15 @@ let FLATP2AUX_cc_App = prove
        (USE_THEN "ev2" (LABEL_TAC "ev3" o REWRITE_RULE[ASSUME `~(state_clock (st1:(FFI)state) = 0)`]) THEN
   USE_THEN "iht" (MP_TAC o SPECL [`vs:v list`; `tv:v`; `st1:(FFI)state`; `env':v sem_env`; `e:exp`]) THEN
   ANTS_TAC THENL
-   [FLATP2AUX_LREWRITE_TAC ["ev1"; "dop"; "c0"; "dt"] [getOpClass_def] THEN CASE_REWRITE_TAC[];
+   [FLATP2AUX_LREWRITE_TAC ["ev1"; "dop"; "c0"; "dt"] [getOpClass_def] THEN CAKE_REWRITE_TAC[];
     ALL_TAC] THEN
   DISCH_THEN(LABEL_TAC "iht'") THEN
   FLATP2AUX_PAIR_TAC `evaluate (dec_clock (st1:(FFI)state)) env' [e]` `st2:(FFI)state`
     `r2:(v list,v)result` "ev4" THEN
-  USE_THEN "ev3" MP_TAC THEN FLATP2AUX_LREWRITE_TAC ["ev4"] [] THEN CASE_REWRITE_TAC[] THEN
+  USE_THEN "ev3" MP_TAC THEN FLATP2AUX_LREWRITE_TAC ["ev4"] [] THEN CAKE_REWRITE_TAC[] THEN
   DISCH_THEN(LABEL_TAC "ev5")) THEN
        (SUBGOAL_THEN `~(r2 = Rerr (Rabort Rtype_error):(v list,v)result)` (LABEL_TAC "nte2") THENL
-   [DISCH_THEN SUBST_ALL_TAC THEN USE_THEN "ev5" MP_TAC THEN CASE_REWRITE_TAC[] THEN
+   [DISCH_THEN SUBST_ALL_TAC THEN USE_THEN "ev5" MP_TAC THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[PAIR_EQ] THEN DISCH_THEN(SUBST_ALL_TAC o SYM o CONJUNCT2) THEN
     USE_THEN "nte" MP_TAC THEN REWRITE_TAC[];
     ALL_TAC] THEN
@@ -5912,18 +5912,18 @@ let FLATP2AUX_cc_App = prove
   DISCH_THEN(FLATP2AUX_CHOOSE_THEN [`s2_i1:(C,FFI)flat_state`;
     `r2_i1:(flat_v list,flat_v)result`; `genv2:global_env`]
     (FLATP2AUX_LABEL_CONJS ["fe2"; "rr2"; "sr2"; "na2"])) THEN
-  FLATP2AUX_LREWRITE_TAC ["fe2"] [] THEN CASE_REWRITE_TAC[] THEN
+  FLATP2AUX_LREWRITE_TAC ["fe2"] [] THEN CAKE_REWRITE_TAC[] THEN
   FLATP2AUX_RESULT_CASES_TAC `r2:(v list,v)result` `vs2:v list` `err2:(v)error_result`) THENL
        [(USE_THEN "rr2" (X_CHOOSE_THEN `vs2':flat_v list` (CONJUNCTS_THEN2 SUBST_ALL_TAC
       (LABEL_TAC "vr2" o REWRITE_RULE[o_THM])) o MATCH_MP FLATP2AUX_result_rel_Rval) THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   USE_THEN "na2" (MP_TAC o REWRITE_RULE[source_to_flatProof_abort_simps]) THEN
   REWRITE_TAC[dec_clock_def; state_INFO.ri_accfupds] THEN
   DISCH_THEN(FLATP2AUX_LABEL_CONJS ["inv2"; "eg2"; "of2"; "sc2"; "sy2"; "sg2"]) THEN
-  USE_THEN "ev5" MP_TAC THEN CASE_REWRITE_TAC[] THEN
+  USE_THEN "ev5" MP_TAC THEN CAKE_REWRITE_TAC[] THEN
   FLATP2AUX_OPTION_CASES_TAC `update_thunk (REVERSE vs) (state_refs (st2:(FFI)state)) vs2`
     `refs3:(v store_v)list` "ut" THEN
-  CASE_REWRITE_TAC[] THENL
+  CAKE_REWRITE_TAC[] THENL
    [REWRITE_TAC[PAIR_EQ] THEN DISCH_THEN(SUBST_ALL_TAC o SYM o CONJUNCT2) THEN
     USE_THEN "nte" MP_TAC THEN REWRITE_TAC[];
     ALL_TAC] THEN
@@ -5942,11 +5942,11 @@ let FLATP2AUX_cc_App = prove
     ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_THEN `refs3':(flat_v store_v)list`
     (FLATP2AUX_LABEL_CONJS ["fut"; "rr3"; "nn3"; "tk3"])) THEN
-  FLATP2AUX_LREWRITE_TAC ["fut"] [] THEN CASE_REWRITE_TAC[] THEN
-  MAP_EVERY EXISTS_TAC [`flat_state_refs_fupd (K refs3') (s2_i1:(C,FFI)flat_state)`;
+  FLATP2AUX_LREWRITE_TAC ["fut"] [] THEN CAKE_REWRITE_TAC[] THEN
+  MAP_EVERY EXISTS_TAC [`flat_state_refs_fupd (combin_K refs3') (s2_i1:(C,FFI)flat_state)`;
     `Rval vs2':(flat_v list,flat_v)result`; `genv2:global_env`] THEN
-  SUBGOAL_THEN `source_to_flatProof_s_rel genv2 (state_refs_fupd (K refs3) (st2:(FFI)state))
-                  (flat_state_refs_fupd (K refs3') (s2_i1:(C,FFI)flat_state))` (LABEL_TAC "sr3") THENL
+  SUBGOAL_THEN `source_to_flatProof_s_rel genv2 (state_refs_fupd (combin_K refs3) (st2:(FFI)state))
+                  (flat_state_refs_fupd (combin_K refs3') (s2_i1:(C,FFI)flat_state))` (LABEL_TAC "sr3") THENL
    [REWRITE_TAC[source_to_flatProof_s_rel_cases; state_INFO.ri_accfupds;
                 flat_state_INFO.ri_accfupds; K_THM] THEN
     FLATP2AUX_LREWRITE_TAC ["nn3"; "rr3"; "scl2"; "sff2"] [];
@@ -5960,8 +5960,8 @@ let FLATP2AUX_cc_App = prove
   FLATP2AUX_TRANS_TAC `state_eval_state (st1:(FFI)state)` `genv1:global_env`);
         (USE_THEN "rr2" (X_CHOOSE_THEN `e2':(flat_v)error_result` SUBST_ALL_TAC o
                   MATCH_MP FLATP2AUX_result_rel_Rerr) THEN
-  CASE_REWRITE_TAC[] THEN
-  USE_THEN "ev5" MP_TAC THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[] THEN
+  USE_THEN "ev5" MP_TAC THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN2 (SUBST_ALL_TAC o SYM) (SUBST_ALL_TAC o SYM)) THEN
   MAP_EVERY EXISTS_TAC [`s2_i1:(C,FFI)flat_state`; `Rerr e2':(flat_v list,flat_v)result`;
                         `genv2:global_env`] THEN
@@ -5973,7 +5973,7 @@ let FLATP2AUX_cc_App = prove
   FLATP2AUX_TRANS_TAC `state_eval_state (st1:(FFI)state)` `genv1:global_env`)]];
       FLATP2AUX_ISPECL_TAC ["interp"; "g"; "gen"; "genv1"; "idxs"; "st"; "env"; "op"; "es";
         "st1"; "vs"; "env_i1"; "s_i1"; "t";
-        "source_to_flat_environment_v_fupd (K (bind_locals ts locals (source_to_flat_environment_v comp_map))) comp_map";
+        "source_to_flat_environment_v_fupd (combin_K (bind_locals ts locals (source_to_flat_environment_v comp_map))) comp_map";
         "s1_i1"; "vs1'"; "s'"; "r"] FLATP2AUX_App_simple THEN
       ANTS_TAC THENL
        [FLATP2AUX_LREWRITE_TAC ["ev1"; "ev"; "nte"; "cls"; "fe1"; "vr1"; "inv1"] [] THEN
@@ -5987,7 +5987,7 @@ let FLATP2AUX_cc_App = prove
     USE_THEN "rr1" (X_CHOOSE_THEN `e1':(flat_v)error_result` SUBST_ALL_TAC o
                     MATCH_MP FLATP2AUX_result_rel_Rerr) THEN
     FLATP2AUX_ISPECL_TAC ["st"; "env"; "op"; "es"; "st1"; "err1"; "env_i1"; "s_i1"; "t";
-      "source_to_flat_environment_v_fupd (K (bind_locals ts locals (source_to_flat_environment_v comp_map))) comp_map";
+      "source_to_flat_environment_v_fupd (combin_K (bind_locals ts locals (source_to_flat_environment_v comp_map))) comp_map";
       "s1_i1"; "e1'"] FLATP2AUX_App_err THEN
     FLATP2AUX_LREWRITE_TAC ["ev1"; "fe1"] [] THEN
     DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "eva") (LABEL_TAC "fea")) THEN
@@ -6014,7 +6014,7 @@ let source_to_flatProof_compile_correct = prove
       ~(r = Rerr (Rabort Rtype_error)) /\
       es_i1 = source_to_flat_compile_exps t
                 (source_to_flat_environment_v_fupd
-                   (K (bind_locals ts locals (source_to_flat_environment_v comp_map)))
+                   (combin_K (bind_locals ts locals (source_to_flat_environment_v comp_map)))
                    comp_map) es
       ==> ?s'_i1 r_i1 genv'.
             flat_evaluate env_i1 s_i1 es_i1 = (s'_i1, r_i1) /\
@@ -6038,7 +6038,7 @@ let source_to_flatProof_compile_correct = prove
       ~(r = Rerr (Rabort Rtype_error)) /\
       pes_i1 = compile_pes t
                  (source_to_flat_environment_v_fupd
-                    (K (bind_locals ts locals (source_to_flat_environment_v comp_map)))
+                    (combin_K (bind_locals ts locals (source_to_flat_environment_v comp_map)))
                     comp_map) pes /\
       ~(pmatch_rows pes_i1 s_i1 v_i1 = Match_type_error) /\
       source_to_flatProof_v_rel genv err_v err_v_i1
@@ -6171,7 +6171,7 @@ let init_genv_ok = prove
   RULE_ASSUM_TAC(REWRITE_RULE[]) THEN TRY(FIRST_ASSUM CONTR_TAC) THEN
   REWRITE_TAC[ctor_same_type_def; same_type_def; flat_ctor_same_type_def; PAIR_EQ;
     option_INJ; option_DISTINCT; ARITH_EQ] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[same_type_def; ARITH_EQ; option_INJ]);;
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[same_type_def; ARITH_EQ; option_INJ]);;
 
 (* HOL4 line 5274 *)
 let init_genv_tys_ok = prove
@@ -6222,17 +6222,17 @@ let init_global_env_inv_imp = prove
   MP_TAC(ISPEC `sem_env_c (env:v sem_env)` (CONJUNCT1 (cases "namespace"))) THEN
   DISCH_THEN(X_CHOOSE_THEN `ns:(mlstring#(num#stamp))list`
     (X_CHOOSE_THEN `ms:(mlstring#(mlstring,mlstring,num#stamp)namespace)list` ASSUME_TAC)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN STRIP_TAC THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN STRIP_TAC THEN
   FIRST (mapfilter MATCH_MP_TAC (CONJUNCTS source_to_flatProof_v_rel_rules)) THEN
   ASM_REWRITE_TAC[nsEmpty_def; NOT_IN_EMPTY; IMAGE_CLAUSES] THEN CONJ_TAC THENL
    [GEN_TAC THEN MP_TAC(ISPEC `x:(mlstring,mlstring)id` (cases "id")) THEN STRIP_TAC THEN
-    ASM_REWRITE_TAC[nsLookup_def; ALOOKUP_THM; option_DISTINCT] THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[nsLookup_def; ALOOKUP_THM; option_DISTINCT] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[option_DISTINCT];
     ALL_TAC] THEN
   REPEAT GEN_TAC THEN MP_TAC(ISPEC `x:(mlstring,mlstring)id` (cases "id")) THEN
   DISCH_THEN(DISJ_CASES_THEN2 (X_CHOOSE_THEN `n:mlstring` SUBST1_TAC)
     (X_CHOOSE_THEN `m:mlstring` (X_CHOOSE_THEN `i:(mlstring,mlstring)id` SUBST1_TAC))) THEN
-  REWRITE_TAC[nsLookup_def; ALOOKUP_THM] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[nsLookup_def; ALOOKUP_THM] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[option_DISTINCT] THEN
   DISCH_THEN(ASSUME_TAC o MATCH_MP ALOOKUP_MEM) THEN
   FIRST_X_ASSUM(MP_TAC o SPEC `(n:mlstring, (arity:num, stamp:stamp))` o
@@ -6243,7 +6243,7 @@ let init_global_env_inv_imp = prove
   (fun gl -> let tm = FLATP2AUX_PARSE_IN gl
                  "nsLookup (source_to_flat_environment_c comp_map) (Short n)" in
              SPEC_TAC(tm, mk_var("lk", type_of tm)) gl) THEN
-  REWRITE_TAC[FORALL_OPTION_THM; FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[FORALL_OPTION_THM; FORALL_PAIR_THM] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[option_INJ; PAIR_EQ] THEN REPEAT GEN_TAC THEN CONJ_TAC THENL
    [REPEAT GEN_TAC THEN DISCH_TAC THEN MAP_EVERY EXISTS_TAC [`p1:num`; `NONE:(num#(num#num)list)option`] THEN
   ASM_REWRITE_TAC[option_DISTINCT];
@@ -6277,7 +6277,7 @@ let precondition1_change_clock = prove
  (`!interp g s1 env1 conf eval_conf prog k.
      precondition1 (interp:(v->(source_to_flat_config#C)option)option) g (s1:(FFI)state)
      env1 conf (eval_conf:(C)install_config) prog
-   ==> precondition1 interp g (state_clock_fupd (K k) s1) env1 conf eval_conf prog`,
+   ==> precondition1 interp g (state_clock_fupd (combin_K k) s1) env1 conf eval_conf prog`,
   REPEAT GEN_TAC THEN REWRITE_TAC[precondition1_def; state_INFO.ri_accfupds]);;
 
 (* HOL4 line 5342 *)
@@ -6306,7 +6306,7 @@ let precondition_stamp_helper = prove
   CONJ_TAC THEN REPEAT GEN_TAC THEN DISCH_TAC THEN
   X_GEN_TAC `k:(num#num option)#num` THEN DISCH_TAC THEN
   FIRST_ASSUM(fun mem -> FIRST_X_ASSUM(fun all -> MP_TAC(MATCH_MP all mem))) THEN
-  CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN CASE_REWRITE_TAC[] THEN ASM_ARITH_TAC);;
+  CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN CAKE_REWRITE_TAC[] THEN ASM_ARITH_TAC);;
 
 (* local helpers for invariant_begin_alloc_blanks: init_genv_next computed, the *)
 (* allocated indices of the initial global env, the initial disjointness, and *)
@@ -6314,7 +6314,7 @@ let precondition_stamp_helper = prove
 let FLATP2AUX_init_genv_next_eval = prove
  (`init_genv_next = next_indices_REC 0 2 4`,
   REWRITE_TAC[init_genv_next; FLATP2AUX_init_genv_els_eval; MAP; SND] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[MAX_LIST; MAX] THEN CONV_TAC NUM_REDUCE_CONV);;
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[MAX_LIST; MAX] THEN CONV_TAC NUM_REDUCE_CONV);;
 
 let FLATP2AUX_EL_init_globs = prove
  (`!i n (v:flat_v).
@@ -6325,7 +6325,7 @@ let FLATP2AUX_EL_init_globs = prove
 let FLATP2AUX_genv_allocated_init = prove
  (`!(v:flat_v) n x.
      x IN genv_allocated_idxs
-            (global_env_v_fupd (K (CONS (SOME v) (REPLICATE n NONE))) init_genv)
+            (global_env_v_fupd (combin_K (CONS (SOME v) (REPLICATE n NONE))) init_genv)
      ==> x = (0, Idx_Var) \/ (?i. i < 2 /\ x = (i, Idx_Type)) \/
          (?i. i < 4 /\ x = (i, Idx_Exn))`,
   REPEAT GEN_TAC THEN
@@ -6343,9 +6343,9 @@ let FLATP2AUX_init_disjoint = prove
  (`!a b (v:flat_v) n.
      1 <= next_indices_vidx b /\ 2 <= next_indices_tidx a /\ 4 <= next_indices_eidx a /\
      next_indices_tidx a <= next_indices_tidx b /\ next_indices_eidx a <= next_indices_eidx b
-     ==> ALL_DISJOINT [idx_block (next_indices_vidx_fupd (K 1) a) b; idx_final_block b; {};
+     ==> ALL_DISJOINT [idx_block (next_indices_vidx_fupd (combin_K 1) a) b; idx_final_block b; {};
                        genv_allocated_idxs (global_env_v_fupd
-                         (K (CONS (SOME v) (REPLICATE n NONE))) init_genv)]`,
+                         (combin_K (CONS (SOME v) (REPLICATE n NONE))) init_genv)]`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   REWRITE_TAC[FLATP1AUX_ALL_DISJOINT_CONS; FLATP1AUX_ALL_DISJOINT_NIL; ALL; DISJOINT_EMPTY] THEN
   REWRITE_TAC[DISJOINT; EXTENSION; IN_INTER; NOT_IN_EMPTY; FORALL_PAIR_THM] THEN
@@ -6361,7 +6361,7 @@ let FLATP2AUX_compile_prog_cfg = prove
  (`!c p c' p'.
      source_to_flat_compile_prog c p = (c', p')
      ==> idx_prev (next_indices_vidx_fupd
-                     (K (next_indices_vidx (source_to_flat_config_next c) + 1))
+                     (combin_K (next_indices_vidx (source_to_flat_config_next c) + 1))
                      (source_to_flat_config_next c))
                   (source_to_flat_config_next c') /\
          environment_store_next (source_to_flat_config_envs c') =
@@ -6389,12 +6389,12 @@ let invariant_begin_alloc_blanks = prove
    ==> source_to_flatProof_invariant interp g
          (environment_generation_store_REC 0
             (environment_store_next (source_to_flat_config_envs cfg)) LN)
-         (global_env_v_fupd (K init_globs) init_genv)
-         (next_indices_vidx_fupd (K 1) (source_to_flat_config_next cfg),
+         (global_env_v_fupd (combin_K init_globs) init_genv)
+         (next_indices_vidx_fupd (combin_K 1) (source_to_flat_config_next cfg),
           source_to_flat_config_next cfg', {})
          s1
-         (flat_state_refs_fupd (K [Refv (flat_Conv NONE [])])
-            (flat_state_globals_fupd (K init_globs)
+         (flat_state_refs_fupd (combin_K [Refv (flat_Conv NONE [])])
+            (flat_state_globals_fupd (combin_K init_globs)
                (flat_initial_state (state_ffi s1) (state_clock s1) eval_conf)))`,
   REPEAT GEN_TAC THEN
   FLATP2AUX_PAIR_TAC `source_to_flat_compile_prog cfg prog` `c1:source_to_flat_config`
@@ -6440,7 +6440,7 @@ let invariant_begin_alloc_blanks = prove
     FLATP2AUX_LREWRITE_TAC ["refs0"] [ALL2];
     (* idx_range_rel *)
     REWRITE_TAC[idx_range_rel_def; PAIR_EQ] THEN
-    MAP_EVERY EXISTS_TAC [`next_indices_vidx_fupd (K 1) (source_to_flat_config_next cfg)`;
+    MAP_EVERY EXISTS_TAC [`next_indices_vidx_fupd (combin_K 1) (source_to_flat_config_next cfg)`;
       `source_to_flat_config_next c1`; `source_to_flat_config_next c1`;
       `{}:(num#idx_types)->bool`] THEN
     REWRITE_TAC[idx_prev_refl; global_env_INFO.ri_accfupds; K_THM] THEN
@@ -6448,7 +6448,7 @@ let invariant_begin_alloc_blanks = prove
      [USE_THEN "next_cfg" MP_TAC THEN
       (fun gl -> MP_TAC(ISPEC (FLATP2AUX_PARSE_IN gl
          "src_orac_next_cfg interp (state_eval_state s1)") (cases "option")) gl) THEN
-      STRIP_TAC THEN POP_ASSUM SUBST1_TAC THEN CASE_REWRITE_TAC[] THEN SIMP_TAC[];
+      STRIP_TAC THEN POP_ASSUM SUBST1_TAC THEN CAKE_REWRITE_TAC[] THEN SIMP_TAC[];
       ALL_TAC] THEN
     CONJ_TAC THENL
      [MATCH_MP_TAC FLATP2AUX_init_disjoint THEN
@@ -6459,13 +6459,13 @@ let invariant_begin_alloc_blanks = prove
       USE_THEN "next_cfg" MP_TAC THEN USE_THEN "es_ok" MP_TAC THEN USE_THEN "step" MP_TAC THEN
       (fun gl -> MP_TAC(ISPEC (FLATP2AUX_PARSE_IN gl "state_eval_state s1") (cases "option")) gl) THEN
       DISCH_THEN(DISJ_CASES_THEN2 SUBST1_TAC (X_CHOOSE_THEN `es:eval_state` SUBST1_TAC)) THEN
-      REWRITE_TAC[src_orac_env_invs_def; src_orac_gen_inv_def] THEN CASE_REWRITE_TAC[] THEN
+      REWRITE_TAC[src_orac_env_invs_def; src_orac_gen_inv_def] THEN CAKE_REWRITE_TAC[] THEN
       MP_TAC(ISPEC `es:eval_state` (cases "eval_state")) THEN
       DISCH_THEN(DISJ_CASES_THEN2 (X_CHOOSE_THEN `d:eval_decs_state` SUBST1_TAC)
         (X_CHOOSE_THEN `os:eval_oracle_state` SUBST1_TAC)) THEN
-      REWRITE_TAC[init_eval_state_ok_def] THEN CASE_REWRITE_TAC[] THEN
+      REWRITE_TAC[init_eval_state_ok_def] THEN CAKE_REWRITE_TAC[] THEN
       DISCH_THEN(STRIP_ASSUME_TAC o MATCH_MP step_1) THEN STRIP_TAC THEN
-      ASM_REWRITE_TAC[LENGTH] THEN CASE_REWRITE_TAC[] THEN DISCH_THEN SUBST_ALL_TAC THEN
+      ASM_REWRITE_TAC[LENGTH] THEN CAKE_REWRITE_TAC[] THEN DISCH_THEN SUBST_ALL_TAC THEN
       CONJ_TAC THENL [ALL_TAC; ARITH_TAC] THEN
       EXISTS_TAC `c1:source_to_flat_config` THEN FLATP2AUX_LREWRITE_TAC ["inv1"; "next1"] [] THEN
       REWRITE_TAC[ONE; LT] THEN REPEAT GEN_TAC THEN
@@ -6483,7 +6483,7 @@ let invariant_begin_alloc_blanks = prove
     USE_THEN "next_cfg" MP_TAC THEN
     (fun gl -> MP_TAC(ISPEC (FLATP2AUX_PARSE_IN gl
        "src_orac_next_cfg interp (state_eval_state s1)") (cases "option")) gl) THEN
-    STRIP_TAC THEN POP_ASSUM SUBST1_TAC THEN CASE_REWRITE_TAC[] THEN
+    STRIP_TAC THEN POP_ASSUM SUBST1_TAC THEN CAKE_REWRITE_TAC[] THEN
     TRY (DISCH_THEN SUBST1_TAC) THEN USE_THEN "v1" MP_TAC THEN ARITH_TAC]);;
 
 (* local helpers for compile_prog_correct: the evaluation of the two first *)
@@ -6494,10 +6494,10 @@ let FLATP2AUX_flat_alloc_env_ref = prove
      ==> flat_evaluate_decs s (CONS alloc_env_ref rest) =
          flat_evaluate_decs
            (flat_state_globals_fupd
-              (K (LUPDATE (SOME (flat_Loc T (LENGTH (flat_state_refs s)))) 0
+              (combin_K (LUPDATE (SOME (flat_Loc T (LENGTH (flat_state_refs s)))) 0
                     (flat_state_globals s)))
               (flat_state_refs_fupd
-                 (K (APPEND (flat_state_refs s) [Refv (flat_Conv NONE [])])) s))
+                 (combin_K (APPEND (flat_state_refs s) [Refv (flat_Conv NONE [])])) s))
            rest`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN REWRITE_TAC[alloc_env_ref_def] THEN
   FS[flat_evaluate_def; REVERSE; APPEND; flat_do_app_def; list_result_def;
@@ -6510,9 +6510,9 @@ let FLATP2AUX_compile_prog_prefix = prove
      ==> flat_evaluate_decs (flat_initial_state ffi k ec)
            (CONS (glob_alloc next c) (CONS alloc_env_ref rest)) =
          flat_evaluate_decs
-           (flat_state_refs_fupd (K [Refv (flat_Conv NONE [])])
+           (flat_state_refs_fupd (combin_K [Refv (flat_Conv NONE [])])
               (flat_state_globals_fupd
-                 (K (CONS (SOME (flat_Loc T 0))
+                 (combin_K (CONS (SOME (flat_Loc T 0))
                        (REPLICATE (next_indices_vidx next -
                                    next_indices_vidx (source_to_flat_config_next c) - 1)
                           NONE)))
@@ -6587,16 +6587,16 @@ let compile_prog_correct = prove
   USE_THEN "cd" (LABEL_TAC "gen_eq" o MATCH_MP compile_decs_generation) THEN
   MP_TAC(ISPECL [`s:(FFI)state`; `env:v sem_env`; `ds:dec list`; `s':(FFI)state`;
     `r:((v)sem_env,v)result`; `[]:mlstring list`; `1`;
-    `next_indices_vidx_fupd (K 1) (source_to_flat_config_next cfg)`; `next:next_indices`;
+    `next_indices_vidx_fupd (combin_K 1) (source_to_flat_config_next cfg)`; `next:next_indices`;
     `{}:(num#idx_types)->bool`; `source_to_flat_config_mod_env cfg`;
-    `flat_state_refs_fupd (K [Refv (flat_Conv NONE [])])
+    `flat_state_refs_fupd (combin_K [Refv (flat_Conv NONE [])])
        (flat_state_globals_fupd
-         (K (CONS (SOME (flat_Loc T 0))
+         (combin_K (CONS (SOME (flat_Loc T 0))
                (REPLICATE (next_indices_vidx (next:next_indices) - 1) NONE)))
          (flat_initial_state (state_ffi (s:(FFI)state)) (state_clock s)
             (eval_conf:(C)install_config)))`;
     `next:next_indices`; `e:source_to_flat_environment`; `p':flat_exp list`; `n0:num`;
-    `global_env_v_fupd (K (CONS (SOME (flat_Loc T 0))
+    `global_env_v_fupd (combin_K (CONS (SOME (flat_Loc T 0))
        (REPLICATE (next_indices_vidx (next:next_indices) - 1) NONE))) init_genv`;
     `environment_generation_store_REC 0
        (environment_store_next (source_to_flat_config_envs cfg)) LN`;
@@ -6615,11 +6615,11 @@ let compile_prog_correct = prove
       (fun gl -> MP_TAC(ISPEC (FLATP2AUX_PARSE_IN gl "state_eval_state s")
          (cases "option")) gl) THEN
       DISCH_THEN(DISJ_CASES_THEN2 SUBST1_TAC (X_CHOOSE_THEN `es:eval_state` SUBST1_TAC)) THEN
-      CASE_REWRITE_TAC[] THEN
+      CAKE_REWRITE_TAC[] THEN
       MP_TAC(ISPEC `es:eval_state` (cases "eval_state")) THEN
       DISCH_THEN(DISJ_CASES_THEN2 (X_CHOOSE_THEN `d:eval_decs_state` SUBST1_TAC)
         (X_CHOOSE_THEN `os:eval_oracle_state` SUBST1_TAC)) THEN
-      REWRITE_TAC[init_eval_state_ok_def] THEN CASE_REWRITE_TAC[] THEN STRIP_TAC THEN
+      REWRITE_TAC[init_eval_state_ok_def] THEN CAKE_REWRITE_TAC[] THEN STRIP_TAC THEN
       ASM_REWRITE_TAC[environment_generation_store_INFO.ri_accessors; LENGTH; EL; HD] THEN
       USE_THEN "envs0" SUBST1_TAC THEN
       REWRITE_TAC[empty_config_def; source_to_flat_config_INFO.ri_accessors;
@@ -6627,7 +6627,7 @@ let compile_prog_correct = prove
       REWRITE_TAC[env_gen_future_rel_def] THEN USE_THEN "next_cfg" MP_TAC THEN
       (fun gl -> MP_TAC(ISPEC (FLATP2AUX_PARSE_IN gl
          "src_orac_next_cfg interp (state_eval_state s)") (cases "option")) gl) THEN
-      STRIP_TAC THEN POP_ASSUM SUBST1_TAC THEN CASE_REWRITE_TAC[] THEN
+      STRIP_TAC THEN POP_ASSUM SUBST1_TAC THEN CAKE_REWRITE_TAC[] THEN
       DISCH_THEN SUBST1_TAC THEN
       REWRITE_TAC[source_to_flat_config_INFO.ri_accfupds; K_THM;
         environment_store_INFO.ri_accessors] THEN
@@ -6674,23 +6674,23 @@ let FLATP2AUX_sem_clock = prove
  (`!interp g s1 env1 conf ec prog k.
      precondition1 (interp:(v->(source_to_flat_config#C)option)option) g (s1:(FFI)state)
        env1 conf (ec:(C)install_config) prog /\
-     ~(SND (evaluate_decs (state_clock_fupd (K k) s1) env1 prog) = Rerr (Rabort Rtype_error))
-     ==> state_ffi (FST (evaluate_decs (state_clock_fupd (K k) s1) env1 prog)) =
+     ~(SND (evaluate_decs (state_clock_fupd (combin_K k) s1) env1 prog) = Rerr (Rabort Rtype_error))
+     ==> state_ffi (FST (evaluate_decs (state_clock_fupd (combin_K k) s1) env1 prog)) =
            flat_state_ffi (FST (flat_evaluate_decs (flat_initial_state (state_ffi s1) k ec)
                                   (SND (source_to_flat_compile_prog conf prog)))) /\
          (!a. SND (flat_evaluate_decs (flat_initial_state (state_ffi s1) k ec)
                      (SND (source_to_flat_compile_prog conf prog))) = SOME (Rabort a) <=>
-              SND (evaluate_decs (state_clock_fupd (K k) s1) env1 prog) = Rerr (Rabort a))`,
+              SND (evaluate_decs (state_clock_fupd (combin_K k) s1) env1 prog) = Rerr (Rabort a))`,
   REPEAT GEN_TAC THEN DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "pre") (LABEL_TAC "nt")) THEN
   USE_THEN "pre" (LABEL_TAC "prek" o SPEC `k:num` o MATCH_MP precondition1_change_clock) THEN
-  FLATP2AUX_PAIR_TAC `evaluate_decs (state_clock_fupd (K k) (s1:(FFI)state)) env1 prog`
+  FLATP2AUX_PAIR_TAC `evaluate_decs (state_clock_fupd (combin_K k) (s1:(FFI)state)) env1 prog`
     `s':(FFI)state` `r:((v)sem_env,v)result` "ev" THEN
   FLATP2AUX_PAIR_TAC `source_to_flat_compile_prog conf prog` `c':source_to_flat_config`
     `p':flat_exp list` "cp" THEN
   FLATP2AUX_LREWRITE_TAC ["ev"; "cp"] [FST; SND] THEN
   USE_THEN "ev" (fun th -> REMOVE_THEN "nt" (LABEL_TAC "nt" o REWRITE_RULE[th; SND])) THEN
   MP_TAC(ISPECL [`interp:(v->(source_to_flat_config#C)option)option`; `g:dec list->dec list`;
-    `state_clock_fupd (K k) (s1:(FFI)state)`; `env1:v sem_env`; `conf:source_to_flat_config`;
+    `state_clock_fupd (combin_K k) (s1:(FFI)state)`; `env1:v sem_env`; `conf:source_to_flat_config`;
     `ec:(C)install_config`; `prog:dec list`; `c':source_to_flat_config`; `p':flat_exp list`;
     `s':(FFI)state`; `r:((v)sem_env,v)result`] compile_prog_correct) THEN
   FLATP2AUX_LREWRITE_TAC ["prek"; "cp"; "ev"; "nt"] [state_INFO.ri_accfupds; K_THM] THEN
@@ -6764,13 +6764,13 @@ let source_to_flatProof_compile_prog_semantics = prove
   REWRITE_TAC[semantics_prog_def; SEVPAUX_evaluate_prog_with_clock; NOT_EXISTS_THM] THEN
   DISCH_THEN(LABEL_TAC "nf") THEN
   SUBGOAL_THEN
-   `!k. state_ffi (FST (evaluate_decs (state_clock_fupd (K k) s1) env1 prog)) =
+   `!k. state_ffi (FST (evaluate_decs (state_clock_fupd (combin_K k) s1) env1 prog)) =
         flat_state_ffi (FST (flat_evaluate_decs
           (flat_initial_state (state_ffi (s1:(FFI)state)) k (eval_conf:(C)install_config))
           (SND (source_to_flat_compile_prog conf prog)))) /\
         (!a. SND (flat_evaluate_decs (flat_initial_state (state_ffi s1) k eval_conf)
                     (SND (source_to_flat_compile_prog conf prog))) = SOME (Rabort a) <=>
-             SND (evaluate_decs (state_clock_fupd (K k) s1) env1 prog) = Rerr (Rabort a))`
+             SND (evaluate_decs (state_clock_fupd (combin_K k) s1) env1 prog) = Rerr (Rabort a))`
     (LABEL_TAC "ck") THENL
    [GEN_TAC THEN MATCH_MP_TAC FLATP2AUX_sem_clock THEN
     MAP_EVERY EXISTS_TAC [`interp:(v->(source_to_flat_config#C)option)option`;
@@ -6788,12 +6788,12 @@ let source_to_flatProof_compile_prog_semantics = prove
     USE_THEN "nf" (fun th -> REWRITE_TAC[th]);
     ALL_TAC] THEN
   FLATP2AUX_SOME_INTRO_TAC THEN CONJ_TAC THENL
-   [X_GEN_TAC `res:behaviour` THEN CASE_REWRITE_TAC[] THEN
+   [X_GEN_TAC `res:behaviour` THEN CAKE_REWRITE_TAC[] THEN
       DISCH_THEN(X_CHOOSE_THEN `k:num` (X_CHOOSE_THEN `sf:(C,FFI)flat_state`
         (X_CHOOSE_THEN `rf:((flat_v)error_result)option` (X_CHOOSE_THEN `outcome:outcome`
           (FLATP2AUX_LABEL_CONJS ["fe"; "m"; "res"]))))) THEN
       REMOVE_THEN "res" SUBST1_TAC THEN
-      FLATP2AUX_PAIR_TAC `evaluate_decs (state_clock_fupd (K k) (s1:(FFI)state)) env1 prog`
+      FLATP2AUX_PAIR_TAC `evaluate_decs (state_clock_fupd (combin_K k) (s1:(FFI)state)) env1 prog`
         `ss:(FFI)state` `rs:((v)sem_env,v)result` "se" THEN
       USE_THEN "ck" (MP_TAC o SPEC `k:num`) THEN FLATP2AUX_LREWRITE_TAC ["fe"; "se"] [FST; SND] THEN
       DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "ffi") (LABEL_TAC "ab")) THEN
@@ -6808,24 +6808,24 @@ let source_to_flatProof_compile_prog_semantics = prove
         MP_TAC(ISPEC `b:abort` (cases "abort")) THEN
         DISCH_THEN(DISJ_CASES_THEN2 SUBST1_TAC (DISJ_CASES_THEN2 SUBST1_TAC
           (X_CHOOSE_THEN `fev:final_event` SUBST1_TAC))) THEN
-        CASE_REWRITE_TAC[] THEN REWRITE_TAC[];
+        CAKE_REWRITE_TAC[] THEN REWRITE_TAC[];
         FIRST_X_ASSUM(CONJUNCTS_THEN2 (LABEL_TAC "na")
           (DISJ_CASES_THEN2 SUBST_ALL_TAC (X_CHOOSE_THEN `x:flat_v` SUBST_ALL_TAC))) THEN
-        REMOVE_THEN "m" MP_TAC THEN CASE_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN
+        REMOVE_THEN "m" MP_TAC THEN CAKE_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN
         MP_TAC(ISPEC `rs:((v)sem_env,v)result` (cases "result")) THEN
         DISCH_THEN(DISJ_CASES_THEN2 (X_CHOOSE_THEN `v0:(v)sem_env` SUBST_ALL_TAC)
           (X_CHOOSE_THEN `err:(v)error_result` SUBST_ALL_TAC)) THEN
-        CASE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "result"] THEN
+        CAKE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "result"] THEN
         MP_TAC(ISPEC `err:(v)error_result` (cases "error_result")) THEN
         DISCH_THEN(DISJ_CASES_THEN2 (X_CHOOSE_THEN `xv:v` SUBST_ALL_TAC)
           (X_CHOOSE_THEN `b:abort` SUBST_ALL_TAC)) THEN
-        CASE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "result"; distinctness "error_result"] THEN
+        CAKE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "result"; distinctness "error_result"] THEN
         USE_THEN "na" (MP_TAC o SPEC `b:abort`) THEN REWRITE_TAC[]];
-    CASE_REWRITE_TAC[] THEN DISCH_THEN(LABEL_TAC "nt") THEN
+    CAKE_REWRITE_TAC[] THEN DISCH_THEN(LABEL_TAC "nt") THEN
       REWRITE_TAC[semantics_prog_def; SEVPAUX_evaluate_prog_with_clock; PAIR_EQ; UNWIND_THM1; FST] THEN
       CONJ_TAC THENL
      [X_GEN_TAC `k:num` THEN
-          FLATP2AUX_PAIR_TAC `evaluate_decs (state_clock_fupd (K k) (s1:(FFI)state)) env1 prog`
+          FLATP2AUX_PAIR_TAC `evaluate_decs (state_clock_fupd (combin_K k) (s1:(FFI)state)) env1 prog`
             `ss:(FFI)state` `rs:((v)sem_env,v)result` "se" THEN
           FLATP2AUX_PAIR_TAC `flat_evaluate_decs (flat_initial_state (state_ffi (s1:(FFI)state)) k
               (eval_conf:(C)install_config)) (SND (source_to_flat_compile_prog conf prog))`
@@ -6847,7 +6847,7 @@ let source_to_flatProof_compile_prog_semantics = prove
             REWRITE_TAC[] THEN
             MAP_EVERY EXISTS_TAC [`k:num`; `sf:(C,FFI)flat_state`;
               `SOME (Rabort (Rffi_error fev)):((flat_v)error_result)option`; `FFI_outcome fev`] THEN
-            FLATP2AUX_LREWRITE_TAC ["fe"] [] THEN CASE_REWRITE_TAC[];
+            FLATP2AUX_LREWRITE_TAC ["fe"] [] THEN CAKE_REWRITE_TAC[];
             FIRST_X_ASSUM(CONJUNCTS_THEN2 (LABEL_TAC "na")
               (DISJ_CASES_THEN2 SUBST_ALL_TAC (X_CHOOSE_THEN `x:flat_v` SUBST_ALL_TAC))) THEN
             USE_THEN "nt" (MP_TAC o SPEC `Terminate Success
@@ -6855,14 +6855,14 @@ let source_to_flatProof_compile_prog_semantics = prove
             REWRITE_TAC[] THEN
             MAP_EVERY EXISTS_TAC [`k:num`; `sf:(C,FFI)flat_state`] THEN
             USE_THEN "fe" (fun th -> EXISTS_TAC (rand(rhs(concl th)))) THEN
-            EXISTS_TAC `Success` THEN FLATP2AUX_LREWRITE_TAC ["fe"] [] THEN CASE_REWRITE_TAC[]];
+            EXISTS_TAC `Success` THEN FLATP2AUX_LREWRITE_TAC ["fe"] [] THEN CAKE_REWRITE_TAC[]];
       USE_THEN "ck" (fun th -> REWRITE_TAC[GSYM (CONJUNCT1 (SPEC_ALL th))]) THEN
           MATCH_MP_TAC build_lprefix_lub_thm THEN
           SUBGOAL_THEN
            `IMAGE (\k. llist_fromList (ffi_state_io_events (state_ffi
-               (FST (evaluate_decs (state_clock_fupd (K k) (s1:(FFI)state)) env1 prog))))) (:num) =
+               (FST (evaluate_decs (state_clock_fupd (combin_K k) (s1:(FFI)state)) env1 prog))))) (:num) =
             IMAGE llist_fromList (IMAGE (\k. ffi_state_io_events (state_ffi
-               (FST (evaluate_decs (state_clock_fupd (K k) s1) env1 prog)))) (:num))`
+               (FST (evaluate_decs (state_clock_fupd (combin_K k) s1) env1 prog)))) (:num))`
             SUBST1_TAC THENL [REWRITE_TAC[GSYM IMAGE_o; o_DEF]; ALL_TAC] THEN
           MATCH_MP_TAC prefix_chain_lprefix_chain THEN
           REWRITE_TAC[prefix_chain_def; FORALL_IN_IMAGE_2; IN_UNIV] THEN
@@ -6911,7 +6911,7 @@ let source_to_flatProof_compile_semantics = prove
   FLATP2AUX_PAIR_TAC `source_to_flat_compile_prog cfg prog` `c1:source_to_flat_config`
     `p1:flat_exp list` "cp" THEN
   REWRITE_TAC[source_to_flat_compile_def] THEN FLATP2AUX_LREWRITE_TAC ["cp"] [] THEN
-  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN CASE_REWRITE_TAC[] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN CAKE_REWRITE_TAC[] THEN
   SUBGOAL_THEN `source_to_flat_config_pattern_cfg c1 = source_to_flat_config_pattern_cfg cfg`
     SUBST1_TAC THENL
    [USE_THEN "cp" MP_TAC THEN
@@ -6943,7 +6943,7 @@ let op_gbag_astOp_to_flatOp = prove
  (`!op.
      flat_op_gbag (astOp_to_flatOp op) = EMPTY_BAG`,
   GEN_TAC THEN CASES_ON `op:op` THEN REWRITE_TAC[astOp_to_flatOp_def] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[flat_op_gbag_def]);;
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[flat_op_gbag_def]);;
 
 (* local helpers for compile_exp_esgc_free: the Let chain of the AallocEmpty *)
 (* case, and the three shapes of a list *)
@@ -6987,7 +6987,7 @@ let source_to_flatProof_compile_exp_esgc_free = prove
    [(* Var *)
     (fun gl -> FLATP2AUX_OPTION_CASES_TAC
        (FLATP2AUX_PARSE_IN gl "nsLookup (source_to_flat_environment_v env) xid")
-       `vn:var_name` "lk" gl) THEN CASE_REWRITE_TAC[] THEN
+       `vn:var_name` "lk" gl) THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[flat_esgc_free_def; flat_set_globals_def] THEN
     STRUCT_CASES_TAC (ISPEC `vn:var_name` (cases "var_name")) THEN
     REWRITE_TAC[compile_var_def; flat_esgc_free_def; flat_set_globals_def; flat_op_gbag_def;
@@ -7007,17 +7007,17 @@ let source_to_flatProof_compile_exp_esgc_free = prove
       ALL_TAC] THEN
     ASM_CASES_TAC `opn = Env_id` THEN ASM_REWRITE_TAC[] THENL
      [MP_TAC(ISPEC `es:exp list` FLATP2AUX_list_cases2) THEN STRIP_TAC THEN
-      POP_ASSUM SUBST_ALL_TAC THEN CASE_REWRITE_TAC[] THEN
+      POP_ASSUM SUBST_ALL_TAC THEN CAKE_REWRITE_TAC[] THEN
       RULE_ASSUM_TAC(REWRITE_RULE[source_to_flat_compile_exp_def; ALL; flat_set_globals_def;
         BAG_UNION_EMPTY]) THEN
-      REWRITE_TAC[source_to_flat_compile_exp_def] THEN CASE_REWRITE_TAC[] THEN
+      REWRITE_TAC[source_to_flat_compile_exp_def] THEN CAKE_REWRITE_TAC[] THEN
       ASM_REWRITE_TAC[flat_esgc_free_def; flat_set_globals_def; ALL; BAG_UNION_EMPTY;
         flat_op_gbag_def];
       ASM_REWRITE_TAC[flat_esgc_free_def; flat_set_globals_def; op_gbag_astOp_to_flatOp;
         BAG_UNION_EMPTY]];
     (* Log *)
     POP_ASSUM MP_TAC THEN STRUCT_CASES_TAC (ISPEC `lop:lop` (cases "lop")) THEN
-    REWRITE_TAC[distinctness "lop"] THEN CASE_REWRITE_TAC[] THEN STRIP_TAC THEN
+    REWRITE_TAC[distinctness "lop"] THEN CAKE_REWRITE_TAC[] THEN STRIP_TAC THEN
     ASM_REWRITE_TAC[flat_esgc_free_def; flat_set_globals_def; ALL; BAG_UNION_EMPTY]]);;
 
 (* esgc_free theorems for compile_decs *)
@@ -7092,7 +7092,7 @@ let source_to_flatProof_compile_esgc_free = prove
   FLATP2AUX_PAIR_TAC `source_to_flat_compile_prog c p` `c1:source_to_flat_config`
     `p1:flat_exp list` "cp" THEN
   REWRITE_TAC[source_to_flat_compile_def] THEN FLATP2AUX_LREWRITE_TAC ["cp"] [] THEN
-  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN CASE_REWRITE_TAC[] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN CAKE_REWRITE_TAC[] THEN
   MATCH_MP_TAC compile_flat_esgc_free THEN
   MAP_EVERY EXISTS_TAC [`source_to_flat_config_pattern_cfg c1`; `p1:flat_exp list`] THEN
   REWRITE_TAC[] THEN ASM_MESON_TAC[source_to_flatProof_compile_prog_esgc_free]);;
@@ -7115,7 +7115,7 @@ let inc_compile_esgc_free = prove
   FLATP2AUX_PAIR_TAC `inc_compile_prog env_id c p` `c1:source_to_flat_config`
     `p1:flat_exp list` "cp" THEN
   REWRITE_TAC[inc_compile_def] THEN FLATP2AUX_LREWRITE_TAC ["cp"] [] THEN
-  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN CASE_REWRITE_TAC[] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN CAKE_REWRITE_TAC[] THEN
   MATCH_MP_TAC flat_patternProof_compile_decs_esgc_free THEN
   MP_TAC(SPECL [`env_id:num#num`; `c:source_to_flat_config`; `p:dec list`]
     inc_compile_prog_esgc_free) THEN
@@ -7129,7 +7129,7 @@ let compile_no_Mat = prove
   FLATP2AUX_PAIR_TAC `source_to_flat_compile_prog c prog` `c1:source_to_flat_config`
     `p1:flat_exp list` "cp" THEN
   REWRITE_TAC[source_to_flat_compile_def] THEN FLATP2AUX_LREWRITE_TAC ["cp"] [] THEN
-  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN CASE_REWRITE_TAC[] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[compile_flat_def; o_THM] THEN REWRITE_TAC[compile_decs_no_Mat]);;
 
 (* HOL4 line 5780 *)
@@ -7140,7 +7140,7 @@ let inc_compile_no_Mat = prove
   FLATP2AUX_PAIR_TAC `inc_compile_prog env_id c prog` `c1:source_to_flat_config`
     `p1:flat_exp list` "cp" THEN
   REWRITE_TAC[inc_compile_def] THEN FLATP2AUX_LREWRITE_TAC ["cp"] [] THEN
-  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN CASE_REWRITE_TAC[] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[compile_decs_no_Mat]);;
 
 (* HOL4 line 5788 *)
@@ -7186,7 +7186,7 @@ let compile_decs_num_bindings = prove
   REPEAT STRIP_TAC THEN
   ASM_REWRITE_TAC[num_bindings_def; MAP; SUM; next_indices_INFO.ri_accfupds; K_THM;
     LENGTH_REVERSE; ADD_CLAUSES; LE_REFL; SUB_REFL; LE_ADD; ADD_SUB2] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   RULE_ASSUM_TAC(REWRITE_RULE[num_bindings_def; MAP; SUM; ADD_CLAUSES]) THEN
   ASM_ARITH_TAC);;
 
@@ -7250,7 +7250,7 @@ let source_to_flatProof_compile_decs_elist_globals = prove
     flat_elist_globals_append; set_globals_make_varls; source_to_flatProof_compile_exp_esgc_free;
     LENGTH_REVERSE; LENGTH_MAP; BAG_UNION_EMPTY; env_id_tuple_def; flat_op_gbag_def;
     COUNT_LIST_DEF; LIST_TO_BAG_def] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[COUNT_LIST_DEF; MAP; LIST_TO_BAG_def] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[COUNT_LIST_DEF; MAP; LIST_TO_BAG_def] THEN
   TRY(MATCH_MP_TAC FLATP2AUX_globals_bag_append2 THEN
       RULE_ASSUM_TAC(REWRITE_RULE[num_bindings_def; MAP; SUM; ADD_CLAUSES]) THEN
       CONJ_TAC THEN ASM_ARITH_TAC) THEN
@@ -7280,7 +7280,7 @@ let compile_globals_BAG_ALL_DISTINCT = prove
   FLATP2AUX_PAIR_TAC `source_to_flat_compile_prog c prog` `c1:source_to_flat_config`
     `p1:flat_exp list` "cp" THEN
   REWRITE_TAC[source_to_flat_compile_def] THEN FLATP2AUX_LREWRITE_TAC ["cp"] [] THEN
-  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN CASE_REWRITE_TAC[] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN CAKE_REWRITE_TAC[] THEN
   MATCH_MP_TAC compile_flat_BAG_ALL_DISTINCT THEN
   REMOVE_THEN "cp" MP_TAC THEN
   REWRITE_TAC[source_to_flat_compile_prog_def; LET_DEF; LET_END_DEF] THEN
@@ -7306,7 +7306,7 @@ let inc_compile_globals_BAG_ALL_DISTINCT = prove
   FLATP2AUX_PAIR_TAC `inc_compile_prog env_id c prog` `c1:source_to_flat_config`
     `p1:flat_exp list` "cp" THEN
   REWRITE_TAC[inc_compile_def] THEN FLATP2AUX_LREWRITE_TAC ["cp"] [] THEN
-  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN CASE_REWRITE_TAC[] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN CAKE_REWRITE_TAC[] THEN
   MATCH_MP_TAC BAG_ALL_DISTINCT_SUB_BAG THEN
   EXISTS_TAC `flat_elist_globals p1` THEN
   REWRITE_TAC[flat_patternProof_compile_decs_elist_globals] THEN
@@ -7338,7 +7338,7 @@ let FLATP2AUX_compile_globals_bound = prove
   FLATP2AUX_PAIR_TAC `source_to_flat_compile_prog conf prog` `c1:source_to_flat_config`
     `p1:flat_exp list` "cp" THEN
   REWRITE_TAC[source_to_flat_compile_def] THEN FLATP2AUX_LREWRITE_TAC ["cp"] [] THEN
-  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN CASE_REWRITE_TAC[] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN RVEQ_TAC THEN
   X_GEN_TAC `x:num` THEN
   DISCH_THEN(MP_TAC o MATCH_MP (MATCH_MP SUB_BAG_IMP
@@ -7370,7 +7370,7 @@ let FLATP2AUX_inc_compile_globals_bound = prove
   FLATP2AUX_PAIR_TAC `inc_compile_prog env_id c decs` `c1:source_to_flat_config`
     `p1:flat_exp list` "cp" THEN
   REWRITE_TAC[inc_compile_def] THEN FLATP2AUX_LREWRITE_TAC ["cp"] [] THEN
-  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN CASE_REWRITE_TAC[] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN RVEQ_TAC THEN
   SUBGOAL_THEN `!cfg x. BAG_IN x (flat_elist_globals (MAP (compile_dec cfg) p1))
                         ==> BAG_IN x (flat_elist_globals p1)` MP_TAC THENL

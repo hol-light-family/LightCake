@@ -489,7 +489,7 @@ let sexplist_thm = prove
    sexplist p (SX_NUM n) = NONE /\
    sexplist p (SX_STR str) = NONE`,
   REPEAT CONJ_TAC THEN GEN_REWRITE_TAC LAND_CONV [sexplist_def] THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[]);;
 let _ = cake_add_simps [sexplist_thm];;
 
 let sexppair_def = cake_def
@@ -506,7 +506,7 @@ let sexppair_CONG = prove
      ==> sexppair p1 p2 s1 = sexppair p1' p2' s2`,
   REPEAT GEN_TAC THEN DISCH_THEN(CONJUNCTS_THEN2 SUBST1_TAC MP_TAC) THEN
   CASES_ON `s2:simpleSexp_sexp` THEN REWRITE_TAC[sexppair_def] THEN
-  CASE_REWRITE_TAC[] THEN MESON_TAC[]);;
+  CAKE_REWRITE_TAC[] THEN MESON_TAC[]);;
 
 let strip_sxcons_FAIL_sexplist_FAIL = prove
  (`!s. strip_sxcons s = NONE ==> sexplist (p:simpleSexp_sexp->A option) s = NONE`,

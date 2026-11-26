@@ -225,9 +225,9 @@ let inline_boundary_examples = prove
         (bvi_Op (BlockOp (clos_Cons 7)) (list_of_seq bvi_Var 4))) LN)
     (LetCall 1 2 10 [bvi_Var 4; bvi_Var 5; bvi_Var 6] (bvi_Return [bvi_Var 0])) =
       LetCall 1 2 10 [bvi_Var 4; bvi_Var 5; bvi_Var 6] (bvi_Return [bvi_Var 0])`,
-  CASE_REWRITE_TAC[inline_exp_def; LET_DEF; LET_END_DEF; lookup_insert1;
+  CAKE_REWRITE_TAC[inline_exp_def; LET_DEF; LET_END_DEF; lookup_insert1;
                    LENGTH] THEN
-  CONV_TAC NUM_REDUCE_CONV THEN CASE_REWRITE_TAC[]);;
+  CONV_TAC NUM_REDUCE_CONV THEN CAKE_REWRITE_TAC[]);;
 
 let final_tick_cleanup_example = prove
  (`remove_ticks_exp

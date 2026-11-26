@@ -227,9 +227,9 @@ let crep_to_loop_compile_def = cake_def_wf_clauses
       let (p,le,tmp,nl) =
         crep_to_loop_compile_exp ctxt (crep_to_loop_context_vmax ctxt + 1) l e in
       let nctxt =
-        crep_to_loop_context_vmax_fupd (K tmp)
+        crep_to_loop_context_vmax_fupd (combin_K tmp)
           (crep_to_loop_context_vars_fupd
-             (K (crep_to_loop_context_vars ctxt |+ (v,tmp))) ctxt) in
+             (combin_K (crep_to_loop_context_vars ctxt |+ (v,tmp))) ctxt) in
       let fl = insert tmp one l in
       let lp = crep_to_loop_compile nctxt fl prog in
       loop_Seq (loop_nested_seq p) (loop_Seq (loop_Assign tmp le) lp):(A)loop_prog`;

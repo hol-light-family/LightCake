@@ -49,7 +49,7 @@
 (* statement): fcp_CART_EQ, words_WORD_AND_ASSOC, words_WORD_OR_ASSOC,       *)
 (* integer_INT_ABS, integer_INT_LT, integer_INT_SUB, integer_NUM_OF_INT,     *)
 (* integer_int_le, integer_int_ge, integer_int_gt, integer_int_sub,          *)
-(* integer_word_INT_MIN_def, integer_word_INT_MAX_def.                       *)
+(* integer_int_mod, integer_word_INT_MIN_def, integer_word_INT_MAX_def.      *)
 (* Where a definition comes out in another form or quantifier order, it is  *)
 (* bound as NAME_DEF and NAME_def is the HOL4 statement.  Helpers that are   *)
 (* lemmas of another unit's theory have the prefix WORDSAUX_.                *)
@@ -1587,7 +1587,9 @@ let int_div_DEF = new_definition
 let integer_int_mod_DEF = new_definition
   `integer_int_mod (i:int) j = i - int_div i j * j`;;
 
-let int_mod = prove
+(* HOL4 int_mod, the specification of %; HOL Light binds int_mod (int.ml:   *)
+(* the congruence), so the theorem follows its constant integer_int_mod     *)
+let integer_int_mod = prove
  (`!i j. ~(j = &0) ==> integer_int_mod i j = i - int_div i j * j`,
   REWRITE_TAC[integer_int_mod_DEF]);;
 
@@ -2288,7 +2290,7 @@ let w2n_eq_0 = prove
   REWRITE_TAC[VAL_EQ_0]);;
 
 let FCP_T_F = prove
- (`word_of_bits (K T) = word_UINT_MAX:N word /\ word_of_bits (K F) = word 0:N word`,
+ (`word_of_bits (combin_K T) = word_UINT_MAX:N word /\ word_of_bits (combin_K F) = word 0:N word`,
   REWRITE_TAC[WORD_EQ_BITS_ALT; BIT_WORD_OF_BITS; IN; K_THM; BIT_WORD_0] THEN
   REWRITE_TAC[word_UINT_MAX; BIT_WORD; GSYM numbit; BIT_EXP_SUB1]);;
 

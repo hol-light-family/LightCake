@@ -285,13 +285,13 @@ let no_thunks_in_refs_def = cake_def
 
 let add_space_def = cake_def
   `add_space (s:(C,FFI)data_state) k =
-     data_state_space_fupd (K k)
+     data_state_space_fupd (combin_K k)
        (data_state_safe_for_space_fupd
-          (K (data_state_safe_for_space s /\
+          (combin_K (data_state_safe_for_space s /\
               no_thunks_in_refs (data_state_refs s) /\
               size_of_heap s + k <= limits_heap_limit (data_state_limits s)))
           (data_state_peak_heap_length_fupd
-             (K (MAX (data_state_peak_heap_length s) (size_of_heap s + k))) s))`;;
+             (combin_K (MAX (data_state_peak_heap_length s) (size_of_heap s + k))) s))`;;
 
 (* Args-aware variant: cost reflects op_args + non-arg locals as the GC-root *)
 (* set, matching wordSem's view at the op's inner Alloc. stack_to_vs         *)
@@ -309,7 +309,7 @@ let size_of_heap_args_def = cake_def
 let consume_space_def = cake_def
   `consume_space k (s:(C,FFI)data_state) =
      if data_state_space s < k then NONE
-     else SOME (data_state_space_fupd (K (data_state_space s - k)) s)`;;
+     else SOME (data_state_space_fupd (combin_K (data_state_space s - k)) s)`;;
 
 (* Determines which operations are safe for space *)
 
@@ -521,16 +521,16 @@ let stack_consumed_ind = CLOSSEMAUX_cases_ind stack_consumed_def;;
 let do_space_def = cake_def
   `do_space op vs (s:(C,FFI)data_state) =
      if op_space_reset op
-     then SOME (data_state_space_fupd (K 0)
+     then SOME (data_state_space_fupd (combin_K 0)
                  (data_state_safe_for_space_fupd
-                    (K (if op_space_reset op
+                    (combin_K (if op_space_reset op
                         then data_state_safe_for_space s /\
                              no_thunks_in_refs (data_state_refs s) /\
                              size_of_heap_args vs s + space_consumed s op vs
                                <= limits_heap_limit (data_state_limits s)
                         else data_state_safe_for_space s))
                     (data_state_peak_heap_length_fupd
-                       (K (if op_space_reset op
+                       (combin_K (if op_space_reset op
                            then MAX (data_state_peak_heap_length s)
                                     (size_of_heap_args vs s + space_consumed s op vs)
                            else data_state_peak_heap_length s)) s)))
@@ -556,11 +556,11 @@ let do_stack_def = cake_def
          (OPTION_MAP2 (+) (size_of_stack (data_state_stack s))
                           (data_state_locals_size s)) in
      data_state_safe_for_space_fupd
-       (K (data_state_safe_for_space s /\
+       (combin_K (data_state_safe_for_space s /\
            misc_the F (OPTION_MAP ((>) (limits_stack_limit (data_state_limits s)))
                              new_stack)))
        (data_state_stack_max_fupd
-          (K (OPTION_MAP2 MAX (data_state_stack_max s) new_stack)) s)`;;
+          (combin_K (OPTION_MAP2 MAX (data_state_stack_max s) new_stack)) s)`;;
 
 let data_v_to_bytes_def = cake_def
   `data_v_to_bytes lv = some ns:byte list.
@@ -642,10 +642,10 @@ let data_do_install_def = cake_def
                    (SOME (bytes',data',cfg'), CONS (k,prog) _) ->
                      if bytes = bytes' /\ data = data' /\ FST (new_oracle 0) = cfg' then
                        let s' =
-                         data_state_safe_for_space_fupd (K F)
+                         data_state_safe_for_space_fupd (combin_K F)
                            (data_state_code_fupd
-                              (K (sptree_union (data_state_code s) (fromAList progs)))
-                              (data_state_compile_oracle_fupd (K new_oracle) s))
+                              (combin_K (sptree_union (data_state_code s) (fromAList progs)))
+                              (data_state_compile_oracle_fupd (combin_K new_oracle) s))
                        in
                          Rval (data_CodePtr k, s')
                      else Rerr (Rabort Rtype_error)
@@ -661,7 +661,7 @@ let data_list_to_v_def = cake_def
 let with_fresh_ts_def = cake_def
   `with_fresh_ts (s:(C,FFI)data_state) n (f:num->(C,FFI)data_state->A) =
      match data_state_tstamps s with
-       SOME ts -> f ts (data_state_tstamps_fupd (K (SOME (ts + n))) s)
+       SOME ts -> f ts (data_state_tstamps_fupd (combin_K (SOME (ts + n))) s)
      | NONE -> f 0 s`;;
 
 let lim_safe_part_def = cake_def
@@ -811,13 +811,13 @@ let lim_safe_ind = CLOSSEMAUX_cases_ind lim_safe_def;;
 let do_lim_safe = cake_def
   `do_lim_safe (s:(C,FFI)data_state) op vs =
      data_state_safe_for_space_fupd
-       (K (lim_safe (data_state_limits s) op vs /\ data_state_safe_for_space s)) s`;;
+       (combin_K (lim_safe (data_state_limits s) op vs /\ data_state_safe_for_space s)) s`;;
 let _ = cake_add_simps [do_lim_safe];;
 
 let check_lim_def = cake_def
   `check_lim (s:(C,FFI)data_state) n =
      data_state_safe_for_space_fupd
-       (K (n < 2 EXP limits_length_limit (data_state_limits s) /\
+       (combin_K (n < 2 EXP limits_length_limit (data_state_limits s) /\
            data_state_safe_for_space s)) s`;;
 
 (* HOL4 infers the most general type: s is a map to (A)bvl_ref *)
@@ -1025,7 +1025,7 @@ let data_do_app_aux_def = cake_def
                         (match lookup ptr (data_state_refs s) with
                            SOME (bvl_ValueArray xs) ->
                              (if n < LENGTH xs
-                              then Rval (data_Unit, data_state_refs_fupd (K (insert ptr
+                              then Rval (data_Unit, data_state_refs_fupd (combin_K (insert ptr
                                      (bvl_ValueArray (LUPDATE x n xs)) (data_state_refs s))) s)
                               else Rerr (Rabort Rtype_error))
                          | _ -> Rerr (Rabort Rtype_error))
@@ -1033,7 +1033,7 @@ let data_do_app_aux_def = cake_def
           | _ -> Rerr (Rabort Rtype_error))
      | (GlobOp SetGlobalsPtr,xs) ->
          (match xs with
-            [data_RefPtr T p] -> Rval (data_Unit, data_state_global_fupd (K (SOME p)) s)
+            [data_RefPtr T p] -> Rval (data_Unit, data_state_global_fupd (combin_K (SOME p)) s)
           | _ -> Rerr (Rabort Rtype_error))
      | (BlockOp (FromList n), xs) ->
          (match xs with
@@ -1054,7 +1054,7 @@ let data_do_app_aux_def = cake_def
             [data_Number i; data_Number b] ->
               if &0 <= i /\ (?w:byte. b = &(val w)) then
                 let ptr = (minimal ptr. ~(ptr IN domain (data_state_refs s))) in
-                  Rval (data_RefPtr T ptr, data_state_refs_fupd (K (insert ptr
+                  Rval (data_RefPtr T ptr, data_state_refs_fupd (combin_K (insert ptr
                     (bvl_ByteArray f (REPLICATE (num_of_int i) (iword b)))
                     (data_state_refs s))) s)
               else Rerr (Rabort Rtype_error)
@@ -1065,8 +1065,8 @@ let data_do_app_aux_def = cake_def
      | (MemOp (CopyByte T), _) -> Rerr (Rabort Rtype_error)
      | (BlockOp (Build parts1),[]) ->
          (match data_do_build_const parts1 (data_state_refs s) (data_state_tstamps s) with
-            (v,s1,ts1) -> Rval (v,data_state_refs_fupd (K s1)
-                                    (data_state_tstamps_fupd (K ts1) s)))
+            (v,s1,ts1) -> Rval (v,data_state_refs_fupd (combin_K s1)
+                                    (data_state_tstamps_fupd (combin_K ts1) s)))
      | (BlockOp (clos_Cons tag),xs) ->
          (if xs = []
           then Rval (data_Block 0 tag [],s)
@@ -1129,7 +1129,7 @@ let data_do_app_aux_def = cake_def
      | (MemOp RefArray,[data_Number i; v]) ->
          if &0 <= i then
            let ptr = (minimal ptr. ~(ptr IN domain (data_state_refs s))) in
-             Rval (data_RefPtr T ptr, data_state_refs_fupd (K (insert ptr
+             Rval (data_RefPtr T ptr, data_state_refs_fupd (combin_K (insert ptr
                      (bvl_ValueArray (REPLICATE (num_of_int i) v)) (data_state_refs s))) s)
          else Rerr (Rabort Rtype_error)
      | (MemOp DerefByte,[data_RefPtr _ ptr; data_Number i]) ->
@@ -1144,7 +1144,7 @@ let data_do_app_aux_def = cake_def
             SOME (bvl_ByteArray f bs) ->
               (if &0 <= i /\ i < &(LENGTH bs) /\ (?w:byte. b = &(val w))
                then
-                 Rval (data_Unit, data_state_refs_fupd (K (insert ptr
+                 Rval (data_Unit, data_state_refs_fupd (combin_K (insert ptr
                    (bvl_ByteArray f (LUPDATE (iword b) (num_of_int i) bs))
                    (data_state_refs s))) s)
                else Rerr (Rabort Rtype_error))
@@ -1153,7 +1153,7 @@ let data_do_app_aux_def = cake_def
          (match (lookup src (data_state_refs s), lookup dst (data_state_refs s)) with
             (SOME (bvl_ByteArray _ ws), SOME (bvl_ByteArray f ds)) ->
               (match xor_bytes ws ds with
-                 SOME ds1 -> Rval (data_Unit, data_state_refs_fupd (K (insert dst
+                 SOME ds1 -> Rval (data_Unit, data_state_refs_fupd (combin_K (insert dst
                                (bvl_ByteArray f ds1) (data_state_refs s))) s)
                | NONE -> Rerr (Rabort Rtype_error))
           | _ -> Rerr (Rabort Rtype_error))
@@ -1169,7 +1169,7 @@ let data_do_app_aux_def = cake_def
          (match (lookup src (data_state_refs s), lookup dst (data_state_refs s)) with
             (SOME (bvl_ByteArray _ ws), SOME (bvl_ByteArray fl ds)) ->
               (match copy_array (ws,srcoff) len (SOME (ds,dstoff)) with
-                 SOME ds -> Rval (data_Unit, data_state_refs_fupd (K (insert dst
+                 SOME ds -> Rval (data_Unit, data_state_refs_fupd (combin_K (insert dst
                               (bvl_ByteArray fl ds) (data_state_refs s))) s)
                | NONE -> Rerr (Rabort Rtype_error))
           | _ -> Rerr (Rabort Rtype_error))
@@ -1204,13 +1204,13 @@ let data_do_app_aux_def = cake_def
           | _ -> Rerr (Rabort Rtype_error))
      | (MemOp clos_Ref,xs) ->
          let ptr = (minimal ptr. ~(ptr IN domain (data_state_refs s))) in
-           Rval (data_RefPtr T ptr, data_state_refs_fupd (K (insert ptr
+           Rval (data_RefPtr T ptr, data_state_refs_fupd (combin_K (insert ptr
                    (bvl_ValueArray xs) (data_state_refs s))) s)
      | (MemOp Update,[data_RefPtr _ ptr; data_Number i; x]) ->
          (match lookup ptr (data_state_refs s) with
             SOME (bvl_ValueArray xs) ->
               (if &0 <= i /\ i < &(LENGTH xs)
-               then Rval (data_Unit, data_state_refs_fupd (K (insert ptr
+               then Rval (data_Unit, data_state_refs_fupd (combin_K (insert ptr
                            (bvl_ValueArray (LUPDATE x (num_of_int i) xs))
                            (data_state_refs s))) s)
                else Rerr (Rabort Rtype_error))
@@ -1222,19 +1222,19 @@ let data_do_app_aux_def = cake_def
               let c = EL i xs in
               let r = DROP (i + 1) xs in
                 Rval (data_RefPtr F ptr,
-                      data_state_refs_fupd (K (insert ptr (MutBlock tag F l c r)
+                      data_state_refs_fupd (combin_K (insert ptr (MutBlock tag F l c r)
                                                  (data_state_refs s))) s))
      | (MemOp UpdateCons,[data_RefPtr _ ptr; data_Number i; x]) ->
          (match lookup ptr (data_state_refs s) with
             SOME (MutBlock tag finalised l c r) ->
               if ~(i = &(LENGTH l)) \/ finalised then Rerr (Rabort Rtype_error) else
-                Rval (data_Unit, data_state_refs_fupd (K (insert ptr
+                Rval (data_Unit, data_state_refs_fupd (combin_K (insert ptr
                         (MutBlock tag F l x r) (data_state_refs s))) s)
           | _ -> Rerr (Rabort Rtype_error))
      | (MemOp FinaliseCons,[x]) ->
          (match data_finalise_cons x (data_state_refs s) (data_state_tstamps s) with
             SOME (v,refs',ts') ->
-              Rval (v, data_state_refs_fupd (K refs') (data_state_tstamps_fupd (K ts') s))
+              Rval (v, data_state_refs_fupd (combin_K refs') (data_state_tstamps_fupd (combin_K ts') s))
           | NONE -> Rerr (Rabort Rtype_error))
      | (IntOp intop, vs) ->
          (match data_do_int_app intop vs with
@@ -1250,9 +1250,9 @@ let data_do_app_aux_def = cake_def
               (match call_FFI (data_state_ffi s) (ExtCall n) cws ws with
                  FFI_return ffi' ws' ->
                    Rval (data_Unit,
-                         data_state_refs_fupd (K (insert ptr (bvl_ByteArray F ws')
+                         data_state_refs_fupd (combin_K (insert ptr (bvl_ByteArray F ws')
                                                     (data_state_refs s)))
-                           (data_state_ffi_fupd (K ffi') s))
+                           (data_state_ffi_fupd (combin_K ffi') s))
                | FFI_final outcome ->
                    Rerr (Rabort (Rffi_error outcome)))
           | _ -> Rerr (Rabort Rtype_error))
@@ -1285,14 +1285,14 @@ let data_do_app_aux_def = cake_def
               (if data_bad_thunk_update m v (data_state_refs s) then
                  Rerr (Rabort Rtype_error) else
                let ptr = (minimal ptr. ~(ptr IN domain (data_state_refs s))) in
-                 Rval (data_RefPtr F ptr, data_state_refs_fupd (K (insert ptr
+                 Rval (data_RefPtr F ptr, data_state_refs_fupd (combin_K (insert ptr
                          (bvl_Thunk m v) (data_state_refs s))) s))
           | (UpdateThunk m, [data_RefPtr F ptr; v]) ->
               (if data_bad_thunk_update m v (data_state_refs s) then
                  Rerr (Rabort Rtype_error) else
                match lookup ptr (data_state_refs s) with
                  SOME (bvl_Thunk NotEvaluated _) ->
-                   Rval (data_Unit, data_state_refs_fupd (K (insert ptr
+                   Rval (data_Unit, data_state_refs_fupd (combin_K (insert ptr
                            (bvl_Thunk m v) (data_state_refs s))) s)
                | _ -> Rerr (Rabort Rtype_error))
           | _ -> Rerr (Rabort Rtype_error))
@@ -1303,8 +1303,8 @@ let data_do_app_aux_def = cake_def
 let data_do_app_def = cake_def
   `data_do_app op vs (s:(C,FFI)data_state) =
      if op = clos_Install then
-       data_do_install vs (data_state_stack_max_fupd (K NONE)
-                             (data_state_stack_frame_sizes_fupd (K LN) s)) else
+       data_do_install vs (data_state_stack_max_fupd (combin_K NONE)
+                             (data_state_stack_frame_sizes_fupd (combin_K LN) s)) else
      if MEM op [IntOp Greater; IntOp GreaterEq] then
        (Rerr (Rabort Rtype_error):(data_v # (C,FFI)data_state,data_v)result) else
      match do_space op vs s with
@@ -1325,18 +1325,18 @@ let data_get_vars_def = cake_def
 
 let data_set_var_def = cake_def
   `data_set_var v x (s:(C,FFI)data_state) =
-     data_state_locals_fupd (K (insert v x (data_state_locals s))) s`;;
+     data_state_locals_fupd (combin_K (insert v x (data_state_locals s))) s`;;
 
 let data_dec_clock_def = cake_def
   `data_dec_clock (s:(C,FFI)data_state) =
-     data_state_clock_fupd (K (data_state_clock s - 1)) s`;;
+     data_state_clock_fupd (combin_K (data_state_clock s - 1)) s`;;
 
 (* HOL4 infers the most general type: s and s1 are states of independent   *)
 (* types                                                                     *)
 let data_fix_clock_def = cake_def
   `data_fix_clock (s:(A,B)data_state) ((res:R),(s1:(C,D)data_state)) =
      (res,data_state_clock_fupd
-            (K (MIN (data_state_clock s) (data_state_clock s1))) s1)`;;
+            (combin_K (MIN (data_state_clock s) (data_state_clock s1))) s1)`;;
 
 (* HOL4 [local] *)
 let data_fix_clock_IMP = prove
@@ -1359,12 +1359,12 @@ let data_LESS_EQ_dec_clock = prove
 
 let data_flush_state_def = cake_def
   `(data_flush_state T (s:(C,FFI)data_state) =
-      data_state_locals_fupd (K LN)
-        (data_state_stack_fupd (K [])
-           (data_state_locals_size_fupd (K (SOME 0)) s))) /\
+      data_state_locals_fupd (combin_K LN)
+        (data_state_stack_fupd (combin_K [])
+           (data_state_locals_size_fupd (combin_K (SOME 0)) s))) /\
    (data_flush_state F s =
-      data_state_locals_fupd (K LN)
-        (data_state_locals_size_fupd (K (SOME 0)) s))`;;
+      data_state_locals_fupd (combin_K LN)
+        (data_state_locals_size_fupd (combin_K (SOME 0)) s))`;;
 
 let data_call_env_def = cake_def
   `data_call_env args (size':num option) (s:(C,FFI)data_state) =
@@ -1372,11 +1372,11 @@ let data_call_env_def = cake_def
                            (OPTION_MAP2 (+) (size_of_stack (data_state_stack s)) size') in
      let stack_safe = misc_the F (OPTION_MAP ((>) (limits_stack_limit (data_state_limits s)))
                                         new_stack_max) in
-       data_state_locals_fupd (K (fromList args))
-         (data_state_locals_size_fupd (K size')
-            (data_state_stack_max_fupd (K new_stack_max)
+       data_state_locals_fupd (combin_K (fromList args))
+         (data_state_locals_size_fupd (combin_K size')
+            (data_state_stack_max_fupd (combin_K new_stack_max)
                (data_state_safe_for_space_fupd
-                  (K (data_state_safe_for_space s /\ stack_safe)) s)))`;;
+                  (combin_K (data_state_safe_for_space s /\ stack_safe)) s)))`;;
 
 let data_push_env_def = cake_def
   `(data_push_env env F (s:(C,FFI)data_state) =
@@ -1384,34 +1384,34 @@ let data_push_env_def = cake_def
       let stack_max = OPTION_MAP2 MAX (data_state_stack_max s) (size_of_stack stack) in
       let stack_safe = misc_the F (OPTION_MAP ((>) (limits_stack_limit (data_state_limits s)))
                                          stack_max) in
-        data_state_stack_fupd (K stack)
-          (data_state_stack_max_fupd (K stack_max)
+        data_state_stack_fupd (combin_K stack)
+          (data_state_stack_max_fupd (combin_K stack_max)
              (data_state_safe_for_space_fupd
-                (K (data_state_safe_for_space s /\ stack_safe)) s))) /\
+                (combin_K (data_state_safe_for_space s /\ stack_safe)) s))) /\
    (data_push_env env T s =
       let stack = CONS (Exc (data_state_locals_size s) env (data_state_handler s))
                        (data_state_stack s) in
       let stack_max = OPTION_MAP2 MAX (data_state_stack_max s) (size_of_stack stack) in
       let stack_safe = misc_the F (OPTION_MAP ((>) (limits_stack_limit (data_state_limits s)))
                                          stack_max) in
-        data_state_stack_fupd (K stack)
-          (data_state_stack_max_fupd (K stack_max)
-             (data_state_handler_fupd (K (LENGTH (data_state_stack s)))
+        data_state_stack_fupd (combin_K stack)
+          (data_state_stack_max_fupd (combin_K stack_max)
+             (data_state_handler_fupd (combin_K (LENGTH (data_state_stack s)))
                 (data_state_safe_for_space_fupd
-                   (K (data_state_safe_for_space s /\ stack_safe)) s))))`;;
+                   (combin_K (data_state_safe_for_space s /\ stack_safe)) s))))`;;
 
 let data_pop_env_def = cake_def
   `data_pop_env (s:(C,FFI)data_state) =
      match data_state_stack s with
        CONS (data_Env ss e) xs ->
-         SOME (data_state_locals_fupd (K e)
-                 (data_state_stack_fupd (K xs)
-                    (data_state_locals_size_fupd (K ss) s)))
+         SOME (data_state_locals_fupd (combin_K e)
+                 (data_state_stack_fupd (combin_K xs)
+                    (data_state_locals_size_fupd (combin_K ss) s)))
      | CONS (Exc ss e n) xs ->
-         SOME (data_state_locals_fupd (K e)
-                 (data_state_stack_fupd (K xs)
-                    (data_state_locals_size_fupd (K ss)
-                       (data_state_handler_fupd (K n) s))))
+         SOME (data_state_locals_fupd (combin_K e)
+                 (data_state_stack_fupd (combin_K xs)
+                    (data_state_locals_size_fupd (combin_K ss)
+                       (data_state_handler_fupd (combin_K n) s))))
      | _ -> NONE`;;
 
 let data_jump_exc_def = cake_def
@@ -1419,10 +1419,10 @@ let data_jump_exc_def = cake_def
      if data_state_handler s < LENGTH (data_state_stack s) then
        match LASTN (data_state_handler s + 1) (data_state_stack s) with
          CONS (Exc ss e n) xs ->
-           SOME (data_state_handler_fupd (K n)
-                   (data_state_locals_fupd (K e)
-                      (data_state_stack_fupd (K xs)
-                         (data_state_locals_size_fupd (K ss) s))))
+           SOME (data_state_handler_fupd (combin_K n)
+                   (data_state_locals_fupd (combin_K e)
+                      (data_state_stack_fupd (combin_K xs)
+                         (data_state_locals_size_fupd (combin_K ss) s))))
        | _ -> NONE
      else NONE`;;
 
@@ -1436,7 +1436,7 @@ let data_cut_state_def = cake_def
   `data_cut_state names (s:(C,FFI)data_state) =
      match data_cut_env names (data_state_locals s) with
        NONE -> NONE
-     | SOME env -> SOME (data_state_locals_fupd (K env) s)`;;
+     | SOME env -> SOME (data_state_locals_fupd (combin_K env) s)`;;
 
 let data_cut_state_opt_def = cake_def
   `data_cut_state_opt names (s:(C,FFI)data_state) =
@@ -1487,7 +1487,7 @@ let isBool_def = cake_def
 let install_sfs_def = cake_def
   `install_sfs op (s:(C,FFI)data_state) =
      data_state_safe_for_space_fupd
-       (K (~(op = clos_Install) /\ data_state_safe_for_space s)) s`;;
+       (combin_K (~(op = clos_Install) /\ data_state_safe_for_space s)) s`;;
 let _ = cake_add_simps [install_sfs_def];;
 
 (* HOL4's ZIP truncates the longer list; HOL Light's ZIP l1 l2 is HOL4's   *)
@@ -1495,7 +1495,7 @@ let _ = cake_add_simps [install_sfs_def];;
 
 let data_set_vars_def = cake_def
   `data_set_vars ns vs (s:(C,FFI)data_state) =
-     data_state_locals_fupd (K (sptree_union (fromAList (ZIP ns vs)) (data_state_locals s))) s`;;
+     data_state_locals_fupd (combin_K (sptree_union (fromAList (ZIP ns vs)) (data_state_locals s))) s`;;
 
 (* HOL4 [local]: helpers for the termination proof of evaluate *)
 
@@ -1578,7 +1578,7 @@ let DSEMAUX_evaluate_clauses = list_mk_conj
       (MakeSpace k names,(s:(C,FFI)data_state)) =
       match data_cut_env names (data_state_locals s) with
         NONE -> (SOME (Rerr (Rabort Rtype_error)),s)
-      | SOME env -> (NONE,add_space (data_state_locals_fupd (K env) s) k)`;
+      | SOME env -> (NONE,add_space (data_state_locals_fupd (combin_K env) s) k)`;
    `(data_evaluate:data_prog # (C,FFI)data_state ->
                    ((data_v list,data_v)result)option # (C,FFI)data_state)
       (data_Raise n,(s:(C,FFI)data_state)) =
@@ -1623,7 +1623,7 @@ let DSEMAUX_evaluate_clauses = list_mk_conj
                     (match data_cut_env names (data_state_locals s) with
                        NONE -> (SOME (Rerr (Rabort Rtype_error)),s)
                      | SOME env ->
-                         (NONE, data_set_var dest v (data_state_locals_fupd (K env) s))))
+                         (NONE, data_set_var dest v (data_state_locals_fupd (combin_K env) s))))
            | data_IsThunk NotEvaluated f ->
                (match data_find_code (SOME loc) [thunk_v; f] (data_state_code s)
                         (data_state_stack_frame_sizes s) with
@@ -1633,8 +1633,8 @@ let DSEMAUX_evaluate_clauses = list_mk_conj
                        NONE ->
                          (if data_state_clock s = 0 then
                             (SOME (Rerr (Rabort Rtimeout_error)),
-                             data_state_stack_fupd (K [])
-                               (data_state_locals_fupd (K LN) s))
+                             data_state_stack_fupd (combin_K [])
+                               (data_state_locals_fupd (combin_K LN) s))
                           else
                             (match data_evaluate (prog, data_call_env args1 ss
                                                           (data_dec_clock s)) with
@@ -1646,8 +1646,8 @@ let DSEMAUX_evaluate_clauses = list_mk_conj
                           | SOME env ->
                                 if data_state_clock s = 0 then
                                   (SOME (Rerr (Rabort Rtimeout_error)),
-                                   data_state_stack_fupd (K [])
-                                     (data_state_locals_fupd (K LN)
+                                   data_state_stack_fupd (combin_K [])
+                                     (data_state_locals_fupd (combin_K LN)
                                         (data_call_env args1 ss
                                            (data_push_env env F (data_dec_clock s)))))
                                 else
@@ -1693,8 +1693,8 @@ let DSEMAUX_evaluate_clauses = list_mk_conj
                       | SOME env ->
                             if data_state_clock s = 0
                             then (SOME (Rerr (Rabort Rtimeout_error)),
-                                  data_state_stack_fupd (K [])
-                                    (data_state_locals_fupd (K LN)
+                                  data_state_stack_fupd (combin_K [])
+                                    (data_state_locals_fupd (combin_K LN)
                                        (data_call_env args1 ss
                                           (data_push_env env (IS_SOME handler)
                                              (data_dec_clock s)))))
@@ -1873,7 +1873,7 @@ let DSEMAUX_USE_IHS_TAC : tactic = fun (asl,w as g) ->
       let vs,bod = strip_forall (concl th') in
       if is_imp bod && exists DSEMAUX_is_eval_eq (conjuncts(fst(dest_imp bod)))
       then th' else failwith "") asl in
-  let avoid = freesl (w :: map (concl o snd) asl) in
+  let avoid = freesl (w :: map (concl o snd) asl @ flat (map (hyp o snd) asl)) in
   let inst_of ih0 e =
     let vs0,_ = strip_forall (concl ih0) in
     let vs1 = rev(itlist (fun v acc -> variant (acc @ avoid) v :: acc) (rev vs0) []) in

@@ -85,9 +85,9 @@ let W2WPAUX_res_case = prove
      (res = NONE \/ (?n. res = SOME (wordSem_Break n)) \/
       (?n. res = SOME (wordSem_Continue n)) \/ P)`,
   GEN_TAC THEN STRUCT_CASES_TAC (ISPEC `res:((A)wl_result)option` (cases "option")) THEN
-  CASE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN
+  CAKE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN
   STRUCT_CASES_TAC (ISPEC `a:(A)wl_result` (cases "wl_result")) THEN
-  CASE_REWRITE_TAC[] THEN MESON_TAC[]);;
+  CAKE_REWRITE_TAC[] THEN MESON_TAC[]);;
 
 let W2WPAUX_res_case_imp = prove
  (CASE_TERM
@@ -100,9 +100,9 @@ let W2WPAUX_res_case_imp = prove
      ==> (res = NONE \/ (?n. res = SOME (wordSem_Break n)) \/
           (?n. res = SOME (wordSem_Continue n)) \/ P)`,
   GEN_TAC THEN STRUCT_CASES_TAC (ISPEC `res:((A)wl_result)option` (cases "option")) THEN
-  CASE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN
+  CAKE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN
   STRUCT_CASES_TAC (ISPEC `a:(A)wl_result` (cases "wl_result")) THEN
-  CASE_REWRITE_TAC[] THEN MESON_TAC[]);;
+  CAKE_REWRITE_TAC[] THEN MESON_TAC[]);;
 
 (* take the assumption in which the term tm occurs *)
 let W2WPAUX_X_ASM_TAC tm (ttac:thm_tactic) : tactic =
@@ -110,9 +110,9 @@ let W2WPAUX_X_ASM_TAC tm (ttac:thm_tactic) : tactic =
                           else failwith "W2WPAUX_X_ASM_TAC");;
 
 let W2WPAUX_wser_locals = prove
- (`(word_state_eq_rel (wl_state_locals_fupd (K x) (s:(A,C,FFI)wl_state)) t <=>
+ (`(word_state_eq_rel (wl_state_locals_fupd (combin_K x) (s:(A,C,FFI)wl_state)) t <=>
     word_state_eq_rel s t) /\
-   (word_state_eq_rel s (wl_state_locals_fupd (K x) t) <=> word_state_eq_rel s t)`,
+   (word_state_eq_rel s (wl_state_locals_fupd (combin_K x) t) <=> word_state_eq_rel s t)`,
   REWRITE_TAC[word_state_eq_rel_def] THEN SIMP[]);;
 
 (* the disjunctions res = NONE \/ Break \/ Continue \/ X of the pass        *)
@@ -137,7 +137,7 @@ let compile_single_lem = prove
      domain (wl_state_locals st) = set_of_list (even_list n) /\
      gc_fun_const_ok (wl_state_gc_fun st)
      ==> ?perm'.
-           let (res,rst) = wl_evaluate (prog,wl_state_permute_fupd (K perm') st) in
+           let (res,rst) = wl_evaluate (prog,wl_state_permute_fupd (combin_K perm') st) in
            let (x1,x2,cprog) =
              word_to_word_compile_single t k a c ((name,n,prog),col) in
            if res = SOME wl_Error then T else
@@ -151,7 +151,7 @@ let compile_single_lem = prove
               | SOME _ -> wl_state_locals rst = wl_state_locals rcst)`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   REWRITE_TAC[word_to_word_compile_single_def; LET_DEF; LET_END_DEF] THEN
-  CASE_REWRITE_TAC[W2WPAUX_res_case] THEN
+  CAKE_REWRITE_TAC[W2WPAUX_res_case] THEN
   ABBREV_TAC `p0 = word_simp_compile_exp (prog:(A)wl_prog)` THEN
   ABBREV_TAC `p1 = inst_select (c:(A)asm_config) (max_var (p0:(A)wl_prog) + 1) p0` THEN
   ABBREV_TAC `p2 = full_ssa_cc_trans n (p1:(A)wl_prog)` THEN
@@ -195,26 +195,26 @@ let compile_single_lem = prove
                     is_phy_var_def] THEN
     REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[] THEN SIMP_TAC[MOD_MULT; ARITH_EQ];
     ALL_TAC] THEN
-  CASE_REWRITE_TAC[W2WPAUX_res_case] THEN
+  CAKE_REWRITE_TAC[W2WPAUX_res_case] THEN
   DISCH_THEN(X_CHOOSE_TAC `perm1:num->num->num`) THEN
   (* SSA *)
-  MP_TAC(ISPECL [`p1:(A)wl_prog`; `wl_state_permute_fupd (K perm1) (st:(A,C,FFI)wl_state)`;
+  MP_TAC(ISPECL [`p1:(A)wl_prog`; `wl_state_permute_fupd (combin_K perm1) (st:(A,C,FFI)wl_state)`;
                  `n:num`] full_ssa_cc_trans_correct) THEN
   ANTS_TAC THENL [SIMP[]; ALL_TAC] THEN
-  CASE_REWRITE_TAC[W2WPAUX_res_case] THEN SIMP[] THEN
+  CAKE_REWRITE_TAC[W2WPAUX_res_case] THEN SIMP[] THEN
   DISCH_THEN(X_CHOOSE_TAC `perm2:num->num->num`) THEN
   EXISTS_TAC `perm2:num->num->num` THEN PAIRARG_TAC THEN
   ASM_CASES_TAC `res = SOME (wl_Error:(A)wl_result)` THEN ASM_REWRITE_TAC[] THEN
   (* word_simp *)
   SUBGOAL_THEN `wl_evaluate (p0:(A)wl_prog,
-                             wl_state_permute_fupd (K perm2) (st:(A,C,FFI)wl_state)) = (res,rst)`
+                             wl_state_permute_fupd (combin_K perm2) (st:(A,C,FFI)wl_state)) = (res,rst)`
     ASSUME_TAC THENL
    [EXPAND_TAC "p0" THEN MATCH_MP_TAC word_simpProof_compile_exp_thm THEN
     ASM_SIMP_TAC[] THEN SIMP[];
     ALL_TAC] THEN
   (* inst_select *)
   MP_TAC(ISPECL [`c:(A)asm_config`; `max_var (p0:(A)wl_prog) + 1`; `p0:(A)wl_prog`;
-                 `wl_state_permute_fupd (K perm2) (st:(A,C,FFI)wl_state)`;
+                 `wl_state_permute_fupd (combin_K perm2) (st:(A,C,FFI)wl_state)`;
                  `res:((A)wl_result)option`; `rst:(A,C,FFI)wl_state`;
                  `wl_state_locals (st:(A,C,FFI)wl_state)`] inst_select_thm) THEN
   ANTS_TAC THENL
@@ -222,10 +222,10 @@ let compile_single_lem = prove
     EXISTS_TAC `\x:num. x <= max_var (p0:(A)wl_prog)` THEN
     REWRITE_TAC[max_var_max] THEN ARITH_TAC;
     ALL_TAC] THEN
-  CASE_REWRITE_TAC[W2WPAUX_res_case] THEN
-  SUBGOAL_THEN `!perm. wl_state_locals_fupd (K (wl_state_locals st))
-                         (wl_state_permute_fupd (K perm) st) =
-                       wl_state_permute_fupd (K perm) (st:(A,C,FFI)wl_state)`
+  CAKE_REWRITE_TAC[W2WPAUX_res_case] THEN
+  SUBGOAL_THEN `!perm. wl_state_locals_fupd (combin_K (wl_state_locals st))
+                         (wl_state_permute_fupd (combin_K perm) st) =
+                       wl_state_permute_fupd (combin_K perm) (st:(A,C,FFI)wl_state)`
     (fun th -> REWRITE_TAC[th]) THENL
    [SIMP[wl_state_component_equality]; ALL_TAC] THEN
   ASM_REWRITE_TAC[] THEN
@@ -233,44 +233,44 @@ let compile_single_lem = prove
   FIRST_X_ASSUM(MP_TAC o MATCH_MP W2WPAUX_res_case_imp) THEN DISCH_TAC THEN
   (* back to SSA *)
   W2WPAUX_X_ASM_TAC `wl_evaluate (p2:(A)wl_prog,
-                                  wl_state_permute_fupd (K perm1) (st:(A,C,FFI)wl_state))` MP_TAC THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN PAIRARG_TAC THEN
+                                  wl_state_permute_fupd (combin_K perm1) (st:(A,C,FFI)wl_state))` MP_TAC THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN PAIRARG_TAC THEN
   SIMP[] THEN DISCH_THEN(REPEAT_TCL CONJUNCTS_THEN ASSUME_TAC) THEN
   FIRST_X_ASSUM(SUBST_ALL_TAC o SYM o
                 check (fun th -> concl th = `res = res':((A)wl_result)option`)) THEN
   (* first remove_dead *)
-  MP_TAC(ISPECL [`p2:(A)wl_prog`; `wl_state_permute_fupd (K perm1) (st:(A,C,FFI)wl_state)`;
+  MP_TAC(ISPECL [`p2:(A)wl_prog`; `wl_state_permute_fupd (combin_K perm1) (st:(A,C,FFI)wl_state)`;
                  `rcst:(A,C,FFI)wl_state`; `res:((A)wl_result)option`]
                 evaluate_remove_dead_prog) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[W2WPAUX_res_case] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[W2WPAUX_res_case] THEN
   DISCH_THEN(X_CHOOSE_THEN `t1:((A)word_loc)spt` (CONJUNCTS_THEN ASSUME_TAC)) THEN
   (* word_cse, word_copy, three_to_two_reg, remove_unreach *)
   SUBGOAL_THEN `wl_evaluate (p6:(A)wl_prog,
-                             wl_state_permute_fupd (K perm1) (st:(A,C,FFI)wl_state)) =
-                (res, wl_state_locals_fupd (K t1) rcst)` ASSUME_TAC THENL
+                             wl_state_permute_fupd (combin_K perm1) (st:(A,C,FFI)wl_state)) =
+                (res, wl_state_locals_fupd (combin_K t1) rcst)` ASSUME_TAC THENL
    [EXPAND_TAC "p6" THEN MATCH_MP_TAC evaluate_remove_unreach THEN ASM_REWRITE_TAC[] THEN
     EXPAND_TAC "p5" THEN MATCH_MP_TAC evaluate_three_to_two_reg_prog THEN ASM_REWRITE_TAC[] THEN
     EXPAND_TAC "p4" THEN
     SUBGOAL_THEN `wl_evaluate (word_common_subexp_elim (p3:(A)wl_prog),
-                               wl_state_permute_fupd (K perm1) (st:(A,C,FFI)wl_state)) =
-                  (res, wl_state_locals_fupd (K t1) rcst)` ASSUME_TAC THENL
+                               wl_state_permute_fupd (combin_K perm1) (st:(A,C,FFI)wl_state)) =
+                  (res, wl_state_locals_fupd (combin_K t1) rcst)` ASSUME_TAC THENL
      [MATCH_MP_TAC word_common_subexp_elim_correct THEN ASM_REWRITE_TAC[];
       ALL_TAC] THEN
     ASM_SIMP_TAC[evaluate_copy_prop; FST];
     ALL_TAC] THEN
   (* second remove_dead *)
-  MP_TAC(ISPECL [`p6:(A)wl_prog`; `wl_state_permute_fupd (K perm1) (st:(A,C,FFI)wl_state)`;
-                 `wl_state_locals_fupd (K t1) (rcst:(A,C,FFI)wl_state)`;
+  MP_TAC(ISPECL [`p6:(A)wl_prog`; `wl_state_permute_fupd (combin_K perm1) (st:(A,C,FFI)wl_state)`;
+                 `wl_state_locals_fupd (combin_K t1) (rcst:(A,C,FFI)wl_state)`;
                  `res:((A)wl_result)option`] evaluate_remove_dead_prog) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[W2WPAUX_res_case] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[W2WPAUX_res_case] THEN
   DISCH_THEN(X_CHOOSE_THEN `t2:((A)word_loc)spt` (CONJUNCTS_THEN ASSUME_TAC)) THEN
   (* back to word_alloc *)
   W2WPAUX_X_ASM_TAC `word_alloc name (c:(A)asm_config) a k (p7:(A)wl_prog) col` MP_TAC THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
   SPEC_TAC(`wl_evaluate (word_alloc name (c:(A)asm_config) a k (p7:(A)wl_prog) col,
                          st:(A,C,FFI)wl_state)`,
            `q:((A)wl_result)option#(A,C,FFI)wl_state`) THEN
-  REWRITE_TAC[FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[FORALL_PAIR_THM] THEN CAKE_REWRITE_TAC[] THEN
   MAP_EVERY X_GEN_TAC [`res7:((A)wl_result)option`; `s7:(A,C,FFI)wl_state`] THEN
   REWRITE_TAC[W2WPAUX_wser_locals; wl_state_INFO.ri_accfupds; K_THM] THEN
   DISCH_THEN(REPEAT_TCL CONJUNCTS_THEN ASSUME_TAC) THEN
@@ -284,7 +284,7 @@ let compile_single_lem = prove
 
 (* HOL4 line 159 *)
 let rm_perm = prove
- (`!s:(A,C,FFI)wl_state. wl_state_permute_fupd (K (wl_state_permute s)) s = s`,
+ (`!s:(A,C,FFI)wl_state. wl_state_permute_fupd (combin_K (wl_state_permute s)) s = s`,
   SIMP[wl_state_component_equality]);;
 
 (* HOL4 line 165: val size_tac (a tactic) *)
@@ -303,9 +303,9 @@ let W2WPAUX_find_code_SOME = prove
          ls = lookup p ssize`,
   REPEAT GEN_TAC THEN REWRITE_TAC[wl_find_code_def] THEN
   STRUCT_CASES_TAC (ISPEC `lookup p (code:(num#B)spt)` (cases "option")) THEN
-  CASE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN
+  CAKE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN
   SPEC_TAC(`a':num#B`,`q:num#B`) THEN REWRITE_TAC[FORALL_PAIR_THM] THEN
-  CASE_REWRITE_TAC[PAIR_EQ] THEN REPEAT GEN_TAC THEN
+  CAKE_REWRITE_TAC[PAIR_EQ] THEN REPEAT GEN_TAC THEN
   COND_CASES_TAC THEN ASM_REWRITE_TAC[option_DISTINCT; option_INJ; PAIR_EQ] THEN
   ASM_MESON_TAC[]);;
 
@@ -317,13 +317,13 @@ let W2WPAUX_find_code_NONE = prove
              LENGTH args = m + 1 /\ a = BUTLAST args /\ ls = lookup loc ssize`,
   REPEAT GEN_TAC THEN EQ_TAC THENL
    [REWRITE_TAC[wl_find_code_def] THEN COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT] THEN
-    CASES_ON `LAST (args:((A)word_loc)list)` THEN CASE_REWRITE_TAC[option_DISTINCT] THEN
+    CASES_ON `LAST (args:((A)word_loc)list)` THEN CAKE_REWRITE_TAC[option_DISTINCT] THEN
     COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT] THEN
-    CASES_ON `lookup a0 (code:(num#B)spt)` THEN CASE_REWRITE_TAC[option_DISTINCT] THEN
+    CASES_ON `lookup a0 (code:(num#B)spt)` THEN CAKE_REWRITE_TAC[option_DISTINCT] THEN
     PAIRARG_TAC THEN COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT; option_INJ; PAIR_EQ] THEN
     ASM_MESON_TAC[];
-    STRIP_TAC THEN ASM_REWRITE_TAC[wl_find_code_def] THEN CASE_REWRITE_TAC[] THEN
-    ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]]);;
+    STRIP_TAC THEN ASM_REWRITE_TAC[wl_find_code_def] THEN CAKE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]]);;
 
 (* HOL4 line 167 *)
 let word_to_wordProof_find_code_thm = prove
@@ -398,14 +398,14 @@ let code_rel_union_fromAList = prove
   REWRITE_TAC[word_to_wordProof_code_rel_def; lookup_union; lookup_fromAList;
               W2WPAUX_ALOOKUP_compile_single] THEN
   STRIP_TAC THEN MAP_EVERY X_GEN_TAC [`n:num`; `v:num#(A)wl_prog`] THEN
-  CASES_ON `lookup n (s:(num#(A)wl_prog)spt)` THEN CASE_REWRITE_TAC[] THENL
+  CASES_ON `lookup n (s:(num#(A)wl_prog)spt)` THEN CAKE_REWRITE_TAC[] THENL
    [SUBGOAL_THEN `lookup n (l:(num#(A)wl_prog)spt) = NONE` SUBST1_TAC THENL
      [ASM_MESON_TAC[lookup_NONE_domain]; ALL_TAC] THEN
-    CASE_REWRITE_TAC[] THEN DISCH_TAC THEN ASM_REWRITE_TAC[OPTION_MAP_DEF] THEN
+    CAKE_REWRITE_TAC[] THEN DISCH_TAC THEN ASM_REWRITE_TAC[OPTION_MAP_DEF] THEN
     MESON_TAC[];
     REWRITE_TAC[option_INJ] THEN DISCH_THEN SUBST_ALL_TAC THEN
     FIRST_X_ASSUM(MP_TAC o SPECL [`n:num`; `v:num#(A)wl_prog`]) THEN
-    ASM_REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
     MESON_TAC[]]);;
 
 (* ------------------------------------------------------------------------- *)
@@ -485,55 +485,55 @@ let W2WPAUX_csc_P = CASE_TERM
                wl_state_compile_oracle st /\
      gc_fun_const_ok (wl_state_gc_fun st)
      ==> ?perm'.
-           let (res,rst) = wl_evaluate (prog,wl_state_permute_fupd (K perm') st) in
+           let (res,rst) = wl_evaluate (prog,wl_state_permute_fupd (combin_K perm') st) in
            if res = SOME wl_Error then T
            else
              let (res1,rst1) =
-               wl_evaluate (prog,wl_state_code_fupd (K l)
-                                   (wl_state_compile_oracle_fupd (K coracle)
-                                      (wl_state_compile_fupd (K cc) st))) in
+               wl_evaluate (prog,wl_state_code_fupd (combin_K l)
+                                   (wl_state_compile_oracle_fupd (combin_K coracle)
+                                      (wl_state_compile_fupd (combin_K cc) st))) in
              res1 = res /\
              word_to_wordProof_code_rel (wl_state_code rst) (wl_state_code rst1) /\
              domain (wl_state_code rst) = domain (wl_state_code rst1) /\
-             rst1 = wl_state_code_fupd (K (wl_state_code rst1))
+             rst1 = wl_state_code_fupd (combin_K (wl_state_code rst1))
                       (wl_state_compile_oracle_fupd
-                         (K ((I ## MAP (\p. word_to_word_compile_single tt kk aa co
+                         (combin_K ((I ## MAP (\p. word_to_word_compile_single tt kk aa co
                                                (p,NONE))) o
                              wl_state_compile_oracle rst))
-                         (wl_state_compile_fupd (K cc) rst))`;;
+                         (wl_state_compile_fupd (combin_K cc) rst))`;;
 
 let W2WPAUX_flush_state_upd = prove
- (`wl_flush_state b (wl_state_code_fupd (K x) (s:(A,C,FFI)wl_state)) =
-     wl_state_code_fupd (K x) (wl_flush_state b s) /\
-   wl_flush_state b (wl_state_compile_oracle_fupd (K y) s) =
-     wl_state_compile_oracle_fupd (K y) (wl_flush_state b s) /\
-   wl_flush_state b (wl_state_compile_fupd (K z) s) =
-     wl_state_compile_fupd (K z) (wl_flush_state b s)`,
+ (`wl_flush_state b (wl_state_code_fupd (combin_K x) (s:(A,C,FFI)wl_state)) =
+     wl_state_code_fupd (combin_K x) (wl_flush_state b s) /\
+   wl_flush_state b (wl_state_compile_oracle_fupd (combin_K y) s) =
+     wl_state_compile_oracle_fupd (combin_K y) (wl_flush_state b s) /\
+   wl_flush_state b (wl_state_compile_fupd (combin_K z) s) =
+     wl_state_compile_fupd (combin_K z) (wl_flush_state b s)`,
   BOOL_CASES_TAC `b:bool` THEN REWRITE_TAC[wl_flush_state_def] THEN SIMP[]);;
 
 let W2WPAUX_jump_exc_upd = prove
  (CASE_TERM
-  `wl_jump_exc (wl_state_code_fupd (K x) (s:(A,C,FFI)wl_state)) =
-     OPTION_MAP (\p. match p with (s,t) -> (wl_state_code_fupd (K x) s, t))
+  `wl_jump_exc (wl_state_code_fupd (combin_K x) (s:(A,C,FFI)wl_state)) =
+     OPTION_MAP (\p. match p with (s,t) -> (wl_state_code_fupd (combin_K x) s, t))
        (wl_jump_exc s) /\
-   wl_jump_exc (wl_state_compile_oracle_fupd (K y) s) =
-     OPTION_MAP (\p. match p with (s,t) -> (wl_state_compile_oracle_fupd (K y) s, t))
+   wl_jump_exc (wl_state_compile_oracle_fupd (combin_K y) s) =
+     OPTION_MAP (\p. match p with (s,t) -> (wl_state_compile_oracle_fupd (combin_K y) s, t))
        (wl_jump_exc s) /\
-   wl_jump_exc (wl_state_compile_fupd (K z) s) =
-     OPTION_MAP (\p. match p with (s,t) -> (wl_state_compile_fupd (K z) s, t))
+   wl_jump_exc (wl_state_compile_fupd (combin_K z) s) =
+     OPTION_MAP (\p. match p with (s,t) -> (wl_state_compile_fupd (combin_K z) s, t))
        (wl_jump_exc s)`,
   REPEAT CONJ_TAC THEN REWRITE_TAC[wl_jump_exc_def] THEN SIMP[] THEN
   REPEAT (TOP_CASE_TAC THEN SIMP[OPTION_MAP_DEF]));;
 
 let W2WPAUX_sh_mem_set_var_upd = prove
- (`sh_mem_set_var res v (wl_state_code_fupd (K x) (s:(A,C,FFI)wl_state)) =
-     (I ## (\s. wl_state_code_fupd (K x) s))
+ (`sh_mem_set_var res v (wl_state_code_fupd (combin_K x) (s:(A,C,FFI)wl_state)) =
+     (I ## (\s. wl_state_code_fupd (combin_K x) s))
        (sh_mem_set_var res v s:((W)wl_result)option#(A,C,FFI)wl_state) /\
-   sh_mem_set_var res v (wl_state_compile_oracle_fupd (K y) s) =
-     (I ## (\s. wl_state_compile_oracle_fupd (K y) s))
+   sh_mem_set_var res v (wl_state_compile_oracle_fupd (combin_K y) s) =
+     (I ## (\s. wl_state_compile_oracle_fupd (combin_K y) s))
        (sh_mem_set_var res v s:((W)wl_result)option#(A,C,FFI)wl_state) /\
-   sh_mem_set_var res v (wl_state_compile_fupd (K z) s) =
-     (I ## (\s. wl_state_compile_fupd (K z) s))
+   sh_mem_set_var res v (wl_state_compile_fupd (combin_K z) s) =
+     (I ## (\s. wl_state_compile_fupd (combin_K z) s))
        (sh_mem_set_var res v s:((W)wl_result)option#(A,C,FFI)wl_state)`,
   STRUCT_CASES_TAC (ISPEC `res:((FFI)ffi_result)option` (cases "option")) THEN
   TRY(STRUCT_CASES_TAC (ISPEC `a:(FFI)ffi_result` (cases "ffi_result"))) THEN
@@ -541,14 +541,14 @@ let W2WPAUX_sh_mem_set_var_upd = prove
   SIMP[W2WPAUX_flush_state_upd]);;
 
 let W2WPAUX_share_inst_upd = prove
- (`share_inst op v c (wl_state_code_fupd (K x) (s:(A,C,FFI)wl_state)) =
-     (I ## (\s. wl_state_code_fupd (K x) s))
+ (`share_inst op v c (wl_state_code_fupd (combin_K x) (s:(A,C,FFI)wl_state)) =
+     (I ## (\s. wl_state_code_fupd (combin_K x) s))
        (share_inst op v c s:((W)wl_result)option#(A,C,FFI)wl_state) /\
-   share_inst op v c (wl_state_compile_oracle_fupd (K y) s) =
-     (I ## (\s. wl_state_compile_oracle_fupd (K y) s))
+   share_inst op v c (wl_state_compile_oracle_fupd (combin_K y) s) =
+     (I ## (\s. wl_state_compile_oracle_fupd (combin_K y) s))
        (share_inst op v c s:((W)wl_result)option#(A,C,FFI)wl_state) /\
-   share_inst op v c (wl_state_compile_fupd (K z) s) =
-     (I ## (\s. wl_state_compile_fupd (K z) s))
+   share_inst op v c (wl_state_compile_fupd (combin_K z) s) =
+     (I ## (\s. wl_state_compile_fupd (combin_K z) s))
        (share_inst op v c s:((W)wl_result)option#(A,C,FFI)wl_state)`,
   STRUCT_CASES_TAC (ISPEC `op:memop` (cases "memop")) THEN
   REWRITE_TAC[share_inst_def; wl_sh_mem_store_def; wl_sh_mem_store_byte_def;
@@ -579,7 +579,7 @@ let W2WPAUX_NAME_PAIR_TAC (tm:term) (v1:term) (v2:term) : tactic =
   MP_TAC(ISPEC tm PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN v1 (X_CHOOSE_THEN v2
     (fun th -> SUBST_ALL_TAC th THEN ASSUME_TAC th))) THEN
-  CASE_REWRITE_TAC[];;
+  CAKE_REWRITE_TAC[];;
 
 let W2WPAUX_size = type_size_def "wl_prog";;
 
@@ -666,25 +666,25 @@ let W2WPAUX_csc_Seq = prove
   DISCH_THEN(MP_TAC o SPEC_ALL) THEN ASM_REWRITE_TAC[] THEN
   DISCH_THEN(X_CHOOSE_THEN `perm1:num->num->num` MP_TAC) THEN
   W2WPAUX_NAME_PAIR_TAC
-    `wl_evaluate (p1:(A)wl_prog, wl_state_permute_fupd (K perm1) (st:(A,C,FFI)wl_state))`
+    `wl_evaluate (p1:(A)wl_prog, wl_state_permute_fupd (combin_K perm1) (st:(A,C,FFI)wl_state))`
     `r1:((A)wl_result)option` `s1:(A,C,FFI)wl_state` THEN
   ASM_CASES_TAC `r1 = SOME (wl_Error:(A)wl_result)` THENL
    [DISCH_TAC THEN EXISTS_TAC `perm1:num->num->num` THEN ASM_REWRITE_TAC[] THEN
-    CASE_REWRITE_TAC[option_DISTINCT];
+    CAKE_REWRITE_TAC[option_DISTINCT];
     ALL_TAC] THEN
   ASM_REWRITE_TAC[] THEN
   W2WPAUX_NAME_PAIR_TAC
-    `wl_evaluate (p1:(A)wl_prog, wl_state_code_fupd (K l)
+    `wl_evaluate (p1:(A)wl_prog, wl_state_code_fupd (combin_K l)
         (wl_state_compile_oracle_fupd
-           (K ((I ## MAP (\p. word_to_word_compile_single tt kk aa co (p,NONE))) o
+           (combin_K ((I ## MAP (\p. word_to_word_compile_single tt kk aa co (p,NONE))) o
                wl_state_compile_oracle (st:(A,C,FFI)wl_state)))
-           (wl_state_compile_fupd (K cc) (st:(A,C,FFI)wl_state))))`
+           (wl_state_compile_fupd (combin_K cc) (st:(A,C,FFI)wl_state))))`
     `r1':((A)wl_result)option` `s1':(A,C,FFI)wl_state` THEN
   DISCH_THEN(REPEAT_TCL CONJUNCTS_THEN ASSUME_TAC) THEN
   ASM_CASES_TAC `r1:((A)wl_result)option = NONE` THENL
    [ALL_TAC;
-    EXISTS_TAC `perm1:num->num->num` THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
-    ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
+    EXISTS_TAC `perm1:num->num->num` THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
     FIRST_ASSUM ACCEPT_TAC] THEN
   (* the second program, from s1 *)
   FIRST_X_ASSUM SUBST_ALL_TAC THEN
@@ -692,9 +692,9 @@ let W2WPAUX_csc_Seq = prove
                 wl_state_termdep s1 = wl_state_termdep st /\
                 wl_state_compile s1 = wl_state_compile st /\
                 wl_state_gc_fun s1 = wl_state_gc_fun st` STRIP_ASSUME_TAC THENL
-   [MP_TAC(ISPECL [`p1:(A)wl_prog`; `wl_state_permute_fupd (K perm1) (st:(A,C,FFI)wl_state)`;
+   [MP_TAC(ISPECL [`p1:(A)wl_prog`; `wl_state_permute_fupd (combin_K perm1) (st:(A,C,FFI)wl_state)`;
                    `NONE:((A)wl_result)option`; `s1:(A,C,FFI)wl_state`] wl_evaluate_clock) THEN
-    MP_TAC(ISPECL [`p1:(A)wl_prog`; `wl_state_permute_fupd (K perm1) (st:(A,C,FFI)wl_state)`;
+    MP_TAC(ISPECL [`p1:(A)wl_prog`; `wl_state_permute_fupd (combin_K perm1) (st:(A,C,FFI)wl_state)`;
                    `NONE:((A)wl_result)option`; `s1:(A,C,FFI)wl_state`] wl_evaluate_consts) THEN
     ASM_REWRITE_TAC[] THEN SIMP[];
     ALL_TAC] THEN
@@ -711,12 +711,12 @@ let W2WPAUX_csc_Seq = prove
   ASM_REWRITE_TAC[] THEN
   DISCH_THEN(X_CHOOSE_THEN `perm2:num->num->num` MP_TAC) THEN
   (* the first program again, ending with the permutation perm2 *)
-  MP_TAC(ISPECL [`p1:(A)wl_prog`; `wl_state_permute_fupd (K perm1) (st:(A,C,FFI)wl_state)`;
+  MP_TAC(ISPECL [`p1:(A)wl_prog`; `wl_state_permute_fupd (combin_K perm1) (st:(A,C,FFI)wl_state)`;
                  `perm2:num->num->num`] permute_swap_lemma) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[option_DISTINCT] THEN SIMP[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[option_DISTINCT] THEN SIMP[] THEN
   DISCH_THEN(X_CHOOSE_TAC `perm3:num->num->num`) THEN
   DISCH_TAC THEN EXISTS_TAC `perm3:num->num->num` THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   FIRST_ASSUM(SUBST1_TAC o check (fun th ->
      is_eq(concl th) && lhs(concl th) = `s1':(A,C,FFI)wl_state`)) THEN
   POP_ASSUM MP_TAC THEN SIMP_NOASM[]);;
@@ -743,22 +743,22 @@ let W2WPAUX_csc_MustTerminate = prove
    [EXISTS_TAC `wl_state_permute (st:(A,C,FFI)wl_state)` THEN SIMP[]; ALL_TAC] THEN
   USE_THEN "IH" (MP_TAC o SPECL
     [`p:(A)wl_prog`;
-     `wl_state_clock_fupd (K (MustTerminate_limit (:A)))
-        (wl_state_termdep_fupd (K (wl_state_termdep st - 1)) (st:(A,C,FFI)wl_state))`]) THEN
+     `wl_state_clock_fupd (combin_K (MustTerminate_limit (:A)))
+        (wl_state_termdep_fupd (combin_K (wl_state_termdep st - 1)) (st:(A,C,FFI)wl_state))`]) THEN
   ANTS_TAC THENL [SIMP[] THEN ASM_ARITH_TAC; ALL_TAC] THEN
   DISCH_THEN(MP_TAC o SPEC_ALL) THEN SIMP[] THEN REWRITE_TAC[LEFT_IMP_EXISTS_THM] THEN
   X_GEN_TAC `perm1:num->num->num` THEN DISCH_TAC THEN
   EXISTS_TAC `perm1:num->num->num` THEN POP_ASSUM MP_TAC THEN
   W2WPAUX_NAME_PAIR_TAC
     `wl_evaluate (p:(A)wl_prog,
-       wl_state_permute_fupd (K perm1) (wl_state_clock_fupd (K (MustTerminate_limit (:A)))
-        (wl_state_termdep_fupd (K (wl_state_termdep st - 1)) (st:(A,C,FFI)wl_state))))`
+       wl_state_permute_fupd (combin_K perm1) (wl_state_clock_fupd (combin_K (MustTerminate_limit (:A)))
+        (wl_state_termdep_fupd (combin_K (wl_state_termdep st - 1)) (st:(A,C,FFI)wl_state))))`
     `r1:((A)wl_result)option` `s1:(A,C,FFI)wl_state` THEN
   ASM_CASES_TAC `r1 = SOME (wl_Error:(A)wl_result)` THEN ASM_REWRITE_TAC[] THENL
-   [CASE_REWRITE_TAC[option_DISTINCT; option_INJ]; ALL_TAC] THEN
+   [CAKE_REWRITE_TAC[option_DISTINCT; option_INJ]; ALL_TAC] THEN
   ASM_CASES_TAC `r1 = SOME (wl_TimeOut:(A)wl_result)` THEN ASM_REWRITE_TAC[] THENL
-   [CASE_REWRITE_TAC[]; ALL_TAC] THEN
-  CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
+   [CAKE_REWRITE_TAC[]; ALL_TAC] THEN
+  CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
   W2WPAUX_SPLIT_EVAL_TAC `p:(A)wl_prog` (not o W2WPAUX_has_perm)
     `r1':((A)wl_result)option` `s1':(A,C,FFI)wl_state` THEN
   DISCH_THEN(REPEAT_TCL CONJUNCTS_THEN ASSUME_TAC) THEN
@@ -772,10 +772,10 @@ let W2WPAUX_csc_Loop = prove
   REWRITE_TAC[wl_evaluate_def] THEN SIMP[] THEN
   MP_TAC(ISPEC `wl_cut_state (names,LN) (st:(A,C,FFI)wl_state)` (cases "option")) THEN
   DISCH_THEN(DISJ_CASES_THEN2
-    (fun th -> REWRITE_TAC[th] THEN CASE_REWRITE_TAC[OPTION_MAP_DEF] THEN
+    (fun th -> REWRITE_TAC[th] THEN CAKE_REWRITE_TAC[OPTION_MAP_DEF] THEN
                EXISTS_TAC `wl_state_permute (st:(A,C,FFI)wl_state)` THEN SIMP[rm_perm])
     (X_CHOOSE_THEN `stt:(A,C,FFI)wl_state` (fun th -> ASSUME_TAC th THEN REWRITE_TAC[th]))) THEN
-  CASE_REWRITE_TAC[OPTION_MAP_DEF] THEN
+  CAKE_REWRITE_TAC[OPTION_MAP_DEF] THEN
   SUBGOAL_THEN `wl_state_code (stt:(A,C,FFI)wl_state) = wl_state_code (st:(A,C,FFI)wl_state) /\
                 wl_state_compile stt = wl_state_compile st /\
                 wl_state_compile_oracle stt = wl_state_compile_oracle st /\
@@ -791,7 +791,7 @@ let W2WPAUX_csc_Loop = prove
   DISCH_THEN(MP_TAC o SPEC_ALL) THEN ASM_REWRITE_TAC[] THEN
   DISCH_THEN(X_CHOOSE_THEN `perm1:num->num->num` MP_TAC) THEN
   W2WPAUX_NAME_PAIR_TAC
-    `wl_evaluate (body:(A)wl_prog, wl_state_permute_fupd (K perm1) (stt:(A,C,FFI)wl_state))`
+    `wl_evaluate (body:(A)wl_prog, wl_state_permute_fupd (combin_K perm1) (stt:(A,C,FFI)wl_state))`
     `r1:((A)wl_result)option` `s1:(A,C,FFI)wl_state` THEN
   ASM_CASES_TAC `r1 = SOME (wl_Error:(A)wl_result)` THENL
    [DISCH_TAC THEN EXISTS_TAC `perm1:num->num->num` THEN ASM_REWRITE_TAC[] THEN SIMP[];
@@ -805,16 +805,16 @@ let W2WPAUX_csc_Loop = prove
                 wl_state_termdep s1 = wl_state_termdep st /\
                 wl_state_compile s1 = wl_state_compile st /\
                 wl_state_gc_fun s1 = wl_state_gc_fun st` STRIP_ASSUME_TAC THENL
-   [MP_TAC(ISPECL [`body:(A)wl_prog`; `wl_state_permute_fupd (K perm1) (stt:(A,C,FFI)wl_state)`;
+   [MP_TAC(ISPECL [`body:(A)wl_prog`; `wl_state_permute_fupd (combin_K perm1) (stt:(A,C,FFI)wl_state)`;
                    `r1:((A)wl_result)option`; `s1:(A,C,FFI)wl_state`] wl_evaluate_clock) THEN
-    MP_TAC(ISPECL [`body:(A)wl_prog`; `wl_state_permute_fupd (K perm1) (stt:(A,C,FFI)wl_state)`;
+    MP_TAC(ISPECL [`body:(A)wl_prog`; `wl_state_permute_fupd (combin_K perm1) (stt:(A,C,FFI)wl_state)`;
                    `r1:((A)wl_result)option`; `s1:(A,C,FFI)wl_state`] wl_evaluate_consts) THEN
     ASM_REWRITE_TAC[] THEN SIMP[];
     ALL_TAC] THEN
   ASM_CASES_TAC `wl_cont_loop (r1:((A)wl_result)option)` THEN ASM_REWRITE_TAC[] THENL
    [ASM_CASES_TAC `wl_state_clock (s1:(A,C,FFI)wl_state) = 0` THENL
      [(* TimeOut *)
-      EXISTS_TAC `perm1:num->num->num` THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+      EXISTS_TAC `perm1:num->num->num` THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
       ASM_REWRITE_TAC[] THEN
       FIRST_ASSUM(SUBST1_TAC o check (fun th ->
         is_eq(concl th) && lhs(concl th) = `s1':(A,C,FFI)wl_state`)) THEN
@@ -834,18 +834,18 @@ let W2WPAUX_csc_Loop = prove
          wl_state_compile_oracle (s1:(A,C,FFI)wl_state)`) THEN
       REWRITE_TAC[wl_dec_clock_def] THEN SIMP[] THEN
       DISCH_THEN(X_CHOOSE_THEN `perm2:num->num->num` MP_TAC) THEN
-      MP_TAC(ISPECL [`body:(A)wl_prog`; `wl_state_permute_fupd (K perm1) (stt:(A,C,FFI)wl_state)`;
+      MP_TAC(ISPECL [`body:(A)wl_prog`; `wl_state_permute_fupd (combin_K perm1) (stt:(A,C,FFI)wl_state)`;
                      `perm2:num->num->num`] permute_swap_lemma) THEN
-      ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN SIMP_NOASM[] THEN
+      ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN SIMP_NOASM[] THEN
       DISCH_THEN(X_CHOOSE_TAC `perm3:num->num->num`) THEN
       DISCH_TAC THEN EXISTS_TAC `perm3:num->num->num` THEN ASM_REWRITE_TAC[] THEN
-      CASE_REWRITE_TAC[] THEN SIMP[wl_STOP_def; wl_dec_clock_def] THEN
+      CAKE_REWRITE_TAC[] THEN SIMP[wl_STOP_def; wl_dec_clock_def] THEN
       FIRST_ASSUM(SUBST1_TAC o check (fun th ->
         is_eq(concl th) && lhs(concl th) = `s1':(A,C,FFI)wl_state`)) THEN
       POP_ASSUM MP_TAC THEN SIMP_NOASM[wl_STOP_def; wl_dec_clock_def] THEN
       ASM_REWRITE_TAC[] THEN SIMP_NOASM[]];
     (* leaving the loop *)
-    EXISTS_TAC `perm1:num->num->num` THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+    EXISTS_TAC `perm1:num->num->num` THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
     ASM_REWRITE_TAC[] THEN
     FIRST_ASSUM(SUBST1_TAC o check (fun th ->
       is_eq(concl th) && lhs(concl th) = `s1':(A,C,FFI)wl_state`)) THEN
@@ -858,7 +858,7 @@ let W2WPAUX_csc_Loop = prove
 let W2WPAUX_wser_eq = prove
  (`!(s:(A,C,FFI)wl_state) t.
      word_state_eq_rel s t /\ wl_state_locals s = wl_state_locals t
-     ==> t = wl_state_permute_fupd (K (wl_state_permute t)) s`,
+     ==> t = wl_state_permute_fupd (combin_K (wl_state_permute t)) s`,
   REWRITE_TAC[word_state_eq_rel_def; wl_state_component_equality] THEN
   REPEAT STRIP_TAC THEN SIMP[]);;
 
@@ -866,8 +866,8 @@ let W2WPAUX_wser_eq = prove
 let W2WPAUX_push_env_perm = prove
  (`!envs h (s:(A,C,FFI)wl_state) p.
      wl_push_env envs h
-       (wl_state_permute_fupd (K (\n. if n = 0 then wl_state_permute s 0 else p (n - 1))) s) =
-     wl_state_permute_fupd (K p) (wl_push_env envs h s)`,
+       (wl_state_permute_fupd (combin_K (\n. if n = 0 then wl_state_permute s 0 else p (n - 1))) s) =
+     wl_state_permute_fupd (combin_K p) (wl_push_env envs h s)`,
   GEN_TAC THEN GEN_TAC THEN
   SPEC_TAC(`h:(num#(A)wl_prog#num#num)option`,`h:(num#(A)wl_prog#num#num)option`) THEN
   REWRITE_TAC[FORALL_OPTION_THM; FORALL_PAIR_THM; wl_push_env_def; env_to_list_def] THEN
@@ -892,17 +892,17 @@ let W2WPAUX_csc_body_goal =
     SND (word_to_word_compile_single t k a c ((name,m,prog),col)) = (m,prog') /\
     domain (wl_state_locals S0) = set_of_list (even_list m)
     ==> ?perm.
-          let (r,s) = wl_evaluate (prog,wl_state_permute_fupd (K perm) S0) in
+          let (r,s) = wl_evaluate (prog,wl_state_permute_fupd (combin_K perm) S0) in
           r = SOME wl_Error \/ r = NONE \/ (?n. r = SOME (wordSem_Break n)) \/
           (?n. r = SOME (wordSem_Continue n)) \/
-          ?c1. wl_evaluate (prog',wl_state_code_fupd (K l)
-                                   (wl_state_compile_oracle_fupd (K coracle)
-                                      (wl_state_compile_fupd (K cc) S0))) =
-               (r,wl_state_code_fupd (K c1)
+          ?c1. wl_evaluate (prog',wl_state_code_fupd (combin_K l)
+                                   (wl_state_compile_oracle_fupd (combin_K coracle)
+                                      (wl_state_compile_fupd (combin_K cc) S0))) =
+               (r,wl_state_code_fupd (combin_K c1)
                     (wl_state_compile_oracle_fupd
-                       (K ((I ## MAP (\p. word_to_word_compile_single tt kk aa co
+                       (combin_K ((I ## MAP (\p. word_to_word_compile_single tt kk aa co
                                              (p,NONE))) o wl_state_compile_oracle s))
-                       (wl_state_compile_fupd (K cc) s))) /\
+                       (wl_state_compile_fupd (combin_K cc) s))) /\
                word_to_wordProof_code_rel (wl_state_code s) c1 /\
                domain (wl_state_code s) = domain c1` in
   let tm = mk_imp(ih,rest) in
@@ -918,27 +918,27 @@ let W2WPAUX_csc_body = prove
   REMOVE_THEN "IHB" (MP_TAC o SPEC_ALL) THEN ASM_REWRITE_TAC[] THEN
   DISCH_THEN(X_CHOOSE_THEN `perm1:num->num->num` MP_TAC) THEN
   (* compile_single_lem on the source body *)
-  MP_TAC(ISPECL [`prog:(A)wl_prog`; `m:num`; `wl_state_permute_fupd (K perm1) (S0:(A,C,FFI)wl_state)`;
+  MP_TAC(ISPECL [`prog:(A)wl_prog`; `m:num`; `wl_state_permute_fupd (combin_K perm1) (S0:(A,C,FFI)wl_state)`;
                  `t:bool`; `k:num`; `a:num`; `c:(A)asm_config`; `name:num`;
                  `col:(num spt)option`] compile_single_lem) THEN
   ANTS_TAC THENL [SIMP[]; ALL_TAC] THEN
   SUBGOAL_THEN `word_to_word_compile_single t k a (c:(A)asm_config) ((name,m,prog),col) =
                 (name,m,prog')` SUBST1_TAC THENL
    [ONCE_REWRITE_TAC[compile_single_eta] THEN ASM_REWRITE_TAC[]; ALL_TAC] THEN
-  CASE_REWRITE_TAC[W2WPAUX_res_case] THEN SIMP[] THEN
+  CAKE_REWRITE_TAC[W2WPAUX_res_case] THEN SIMP[] THEN
   DISCH_THEN(X_CHOOSE_THEN `perm2:num->num->num` MP_TAC) THEN
   W2WPAUX_NAME_PAIR_TAC
-    `wl_evaluate (prog:(A)wl_prog, wl_state_permute_fupd (K perm2) (S0:(A,C,FFI)wl_state))`
+    `wl_evaluate (prog:(A)wl_prog, wl_state_permute_fupd (combin_K perm2) (S0:(A,C,FFI)wl_state))`
     `r2:((A)wl_result)option` `s2:(A,C,FFI)wl_state` THEN
   ASM_CASES_TAC `r2 = SOME (wl_Error:(A)wl_result) \/ r2 = NONE \/
                  (?n. r2 = SOME (wordSem_Break n)) \/ (?n. r2 = SOME (wordSem_Continue n))` THENL
    [DISCH_TAC THEN DISCH_TAC THEN EXISTS_TAC `perm2:num->num->num` THEN
-    ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN ASM_MESON_TAC[];
+    ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN ASM_MESON_TAC[];
     ALL_TAC] THEN
   FIRST_X_ASSUM(STRIP_ASSUME_TAC o REWRITE_RULE[DE_MORGAN_THM; NOT_EXISTS_THM]) THEN
   ASM_REWRITE_TAC[] THEN
   W2WPAUX_NAME_PAIR_TAC
-    `wl_evaluate (prog':(A)wl_prog, wl_state_permute_fupd (K perm1) (S0:(A,C,FFI)wl_state))`
+    `wl_evaluate (prog':(A)wl_prog, wl_state_permute_fupd (combin_K perm1) (S0:(A,C,FFI)wl_state))`
     `r1:((A)wl_result)option` `s1:(A,C,FFI)wl_state` THEN
   STRIP_TAC THEN FIRST_X_ASSUM(SUBST_ALL_TAC o SYM o
     check (fun th -> concl th = `r2:((A)wl_result)option = r1`)) THEN
@@ -946,13 +946,13 @@ let W2WPAUX_csc_body = prove
   W2WPAUX_SPLIT_EVAL_TAC `prog':(A)wl_prog` (not o W2WPAUX_has_perm)
     `r3:((A)wl_result)option` `s3:(A,C,FFI)wl_state` THEN
   STRIP_TAC THEN
-  MP_TAC(ISPECL [`prog:(A)wl_prog`; `wl_state_permute_fupd (K perm2) (S0:(A,C,FFI)wl_state)`;
+  MP_TAC(ISPECL [`prog:(A)wl_prog`; `wl_state_permute_fupd (combin_K perm2) (S0:(A,C,FFI)wl_state)`;
                  `wl_state_permute (s1:(A,C,FFI)wl_state)`] permute_swap_lemma) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN SIMP_NOASM[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN SIMP_NOASM[] THEN
   DISCH_THEN(X_CHOOSE_TAC `perm3:num->num->num`) THEN
-  EXISTS_TAC `perm3:num->num->num` THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  EXISTS_TAC `perm3:num->num->num` THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[] THEN
-  SUBGOAL_THEN `s1 = wl_state_permute_fupd (K (wl_state_permute s1)) (s2:(A,C,FFI)wl_state)`
+  SUBGOAL_THEN `s1 = wl_state_permute_fupd (combin_K (wl_state_permute s1)) (s2:(A,C,FFI)wl_state)`
     ASSUME_TAC THENL
    [MATCH_MP_TAC W2WPAUX_wser_eq THEN ASM_MESON_TAC[]; ALL_TAC] THEN
   EXISTS_TAC `wl_state_code (s3:(A,C,FFI)wl_state)` THEN
@@ -981,10 +981,10 @@ let W2WPAUX_find_code_rel = prove
 let W2WPAUX_OPT_CASES_TAC (tm:term) (v:term) : tactic =
   MP_TAC(ISPEC tm (cases "option")) THEN
   DISCH_THEN(DISJ_CASES_THEN2
-    (fun th -> REWRITE_TAC[th] THEN CASE_REWRITE_TAC[] THEN
+    (fun th -> REWRITE_TAC[th] THEN CAKE_REWRITE_TAC[] THEN
                EXISTS_TAC `wl_state_permute (st:(A,C,FFI)wl_state)` THEN SIMP[rm_perm])
     (X_CHOOSE_THEN v (fun th -> ASSUME_TAC th THEN REWRITE_TAC[th]))) THEN
-  CASE_REWRITE_TAC[];;
+  CAKE_REWRITE_TAC[];;
 
 (* the common part of the Call cases: the arguments, the destination and   *)
 (* the code found (find_code_thm gives the compiled code in l)              *)
@@ -1010,7 +1010,7 @@ let W2WPAUX_CALL_PREFIX_TAC (ret:term) : tactic =
   DISCH_THEN(X_CHOOSE_THEN `t:bool` (X_CHOOSE_THEN `k:num` (X_CHOOSE_THEN `a:num`
     (X_CHOOSE_THEN `c:(A)asm_config` (X_CHOOSE_THEN `col:(num spt)option`
     (X_CHOOSE_THEN `name:num` (X_CHOOSE_THEN `prog':(A)wl_prog` STRIP_ASSUME_TAC))))))) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[];;
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[];;
 
 (* use W2WPAUX_csc_body for the call state S0 (the induction hypothesis on *)
 (* the compiled body prog' at S0 is the assumption "IHC")                  *)
@@ -1052,7 +1052,7 @@ let W2WPAUX_csc_Call_tail = prove
   EXISTS_TAC `perm:num->num->num` THEN REMOVE_THEN "BODY" MP_TAC THEN
   SIMP[IL2AUX_dec_clock_permute] THEN
   W2WPAUX_NAME_PAIR_TAC
-    `wl_evaluate (prog:(A)wl_prog, wl_state_permute_fupd (K perm)
+    `wl_evaluate (prog:(A)wl_prog, wl_state_permute_fupd (combin_K perm)
        (wl_call_env args1 ss (wl_dec_clock (st:(A,C,FFI)wl_state))))`
     `r:((A)wl_result)option` `s:(A,C,FFI)wl_state` THEN
   SIMP[wl_dec_clock_def] THEN
@@ -1064,8 +1064,8 @@ let W2WPAUX_csc_Call_tail = prove
 let W2WPAUX_push_env_dec_perm = prove
  (`!envs h (st:(A,C,FFI)wl_state) p.
      wl_push_env envs h (wl_dec_clock (wl_state_permute_fupd
-       (K (\n. if n = 0 then wl_state_permute st 0 else p (n - 1))) st)) =
-     wl_state_permute_fupd (K p) (wl_push_env envs h (wl_dec_clock st))`,
+       (combin_K (\n. if n = 0 then wl_state_permute st 0 else p (n - 1))) st)) =
+     wl_state_permute_fupd (combin_K p) (wl_push_env envs h (wl_dec_clock st))`,
   REPEAT GEN_TAC THEN REWRITE_TAC[IL2AUX_dec_clock_permute] THEN
   MP_TAC(ISPECL [`envs:((A)word_loc)spt#((A)word_loc)spt`; `h:(num#(A)wl_prog#num#num)option`;
                  `wl_dec_clock (st:(A,C,FFI)wl_state)`; `p:num->num->num`]
@@ -1088,12 +1088,12 @@ let W2WPAUX_OPT_CASES_THEN (tm:term) (v:term) (ntac:tactic) : tactic =
     (X_CHOOSE_THEN v (fun th -> ASSUME_TAC th)));;
 
 let W2WPAUX_dec_clock_upd = prove
- (`wl_dec_clock (wl_state_code_fupd (K x) (s:(A,C,FFI)wl_state)) =
-     wl_state_code_fupd (K x) (wl_dec_clock s) /\
-   wl_dec_clock (wl_state_compile_oracle_fupd (K y) s) =
-     wl_state_compile_oracle_fupd (K y) (wl_dec_clock s) /\
-   wl_dec_clock (wl_state_compile_fupd (K z) s) =
-     wl_state_compile_fupd (K z) (wl_dec_clock s)`,
+ (`wl_dec_clock (wl_state_code_fupd (combin_K x) (s:(A,C,FFI)wl_state)) =
+     wl_state_code_fupd (combin_K x) (wl_dec_clock s) /\
+   wl_dec_clock (wl_state_compile_oracle_fupd (combin_K y) s) =
+     wl_state_compile_oracle_fupd (combin_K y) (wl_dec_clock s) /\
+   wl_dec_clock (wl_state_compile_fupd (combin_K z) s) =
+     wl_state_compile_fupd (combin_K z) (wl_dec_clock s)`,
   REWRITE_TAC[wl_dec_clock_def] THEN SIMP[]);;
 
 (* the assumption wl_evaluate (p,s) = (r,t) whose state s satisfies ok *)
@@ -1135,7 +1135,7 @@ let W2WPAUX_csc_Call_ret = prove
      ALL_TAC] THEN
    DISCH_THEN(X_CHOOSE_THEN `perm:num->num->num` MP_TAC) THEN
    W2WPAUX_NAME_PAIR_TAC
-     `wl_evaluate (prog:(A)wl_prog, wl_state_permute_fupd (K perm)
+     `wl_evaluate (prog:(A)wl_prog, wl_state_permute_fupd (combin_K perm)
         (wl_call_env args1 ss (wl_push_env envs handler (wl_dec_clock (st:(A,C,FFI)wl_state)))))`
      `r:((A)wl_result)option` `s:(A,C,FFI)wl_state` THEN
    SIMP[W2WPAUX_dec_clock_upd] THEN
@@ -1187,10 +1187,10 @@ let W2WPAUX_csc_Call_ret = prove
    ANTS_TAC THENL [SIMP[]; ALL_TAC] THEN
    DISCH_THEN(X_CHOOSE_THEN `permh:num->num->num` (LABEL_TAC "IHH")) THEN
    MP_TAC(ISPECL [`prog:(A)wl_prog`;
-     `wl_state_permute_fupd (K perm) (wl_call_env args1 ss (wl_push_env envs handler
+     `wl_state_permute_fupd (combin_K perm) (wl_call_env args1 ss (wl_push_env envs handler
         (wl_dec_clock (st:(A,C,FFI)wl_state))))`;
      `permh:num->num->num`] permute_swap_lemma) THEN
-   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN SIMP_NOASM[] THEN
+   ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN SIMP_NOASM[] THEN
    DISCH_THEN(X_CHOOSE_TAC `perm2:num->num->num`) THEN
    W2WPAUX_RET_WITNESS_TAC `perm2:num->num->num` THEN ASM_REWRITE_TAC[] THEN
    SIMP[W2WPAUX_dec_clock_upd] THEN
@@ -1231,10 +1231,10 @@ let W2WPAUX_csc_Call_ret = prove
    ANTS_TAC THENL [SIMP[]; ALL_TAC] THEN
    DISCH_THEN(X_CHOOSE_THEN `permh:num->num->num` (LABEL_TAC "IHH")) THEN
    MP_TAC(ISPECL [`prog:(A)wl_prog`;
-     `wl_state_permute_fupd (K perm) (wl_call_env args1 ss (wl_push_env envs
+     `wl_state_permute_fupd (combin_K perm) (wl_call_env args1 ss (wl_push_env envs
         (SOME (hn,hp,hl1,hl2)) (wl_dec_clock (st:(A,C,FFI)wl_state))))`;
      `permh:num->num->num`] permute_swap_lemma) THEN
-   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN SIMP_NOASM[] THEN
+   ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN SIMP_NOASM[] THEN
    DISCH_THEN(X_CHOOSE_TAC `perm2:num->num->num`) THEN
    W2WPAUX_RET_WITNESS_TAC `perm2:num->num->num` THEN ASM_REWRITE_TAC[] THEN
    SIMP[W2WPAUX_dec_clock_upd] THEN
@@ -1274,22 +1274,22 @@ let compile_single_correct = prove
                wl_state_compile_oracle st /\
      gc_fun_const_ok (wl_state_gc_fun st)
      ==> ?perm'.
-           let (res,rst) = wl_evaluate (prog,wl_state_permute_fupd (K perm') st) in
+           let (res,rst) = wl_evaluate (prog,wl_state_permute_fupd (combin_K perm') st) in
            if res = SOME wl_Error then T
            else
              let (res1,rst1) =
-               wl_evaluate (prog,wl_state_code_fupd (K l)
-                                   (wl_state_compile_oracle_fupd (K coracle)
-                                      (wl_state_compile_fupd (K cc) st))) in
+               wl_evaluate (prog,wl_state_code_fupd (combin_K l)
+                                   (wl_state_compile_oracle_fupd (combin_K coracle)
+                                      (wl_state_compile_fupd (combin_K cc) st))) in
              res1 = res /\
              word_to_wordProof_code_rel (wl_state_code rst) (wl_state_code rst1) /\
              domain (wl_state_code rst) = domain (wl_state_code rst1) /\
-             rst1 = wl_state_code_fupd (K (wl_state_code rst1))
+             rst1 = wl_state_code_fupd (combin_K (wl_state_code rst1))
                       (wl_state_compile_oracle_fupd
-                         (K ((I ## MAP (\p. word_to_word_compile_single tt kk aa co
+                         (combin_K ((I ## MAP (\p. word_to_word_compile_single tt kk aa co
                                                (p,NONE))) o
                              wl_state_compile_oracle rst))
-                         (wl_state_compile_fupd (K cc) rst))`,
+                         (wl_state_compile_fupd (combin_K cc) rst))`,
   ACCEPT_TAC W2WPAUX_csc_all);;
 
 (* full_compile_single is compile_single followed by remove_must_terminate *)
@@ -1299,7 +1299,7 @@ let W2WPAUX_fcs = prove
      (I ## I ## remove_must_terminate) (word_to_word_compile_single t k a c p)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[full_compile_single_def] THEN
   SPEC_TAC(`word_to_word_compile_single t k a (c:(A)asm_config) p`,`q:num#num#(A)wl_prog`) THEN
-  REWRITE_TAC[FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[PAIR_MAP_THM; I_THM]);;
+  REWRITE_TAC[FORALL_PAIR_THM] THEN CAKE_REWRITE_TAC[PAIR_MAP_THM; I_THM]);;
 
 let W2WPAUX_MAP_fcs = prove
  (`!t k a (c:(A)asm_config) (progs:(num#num#(A)wl_prog)list).
@@ -1330,15 +1330,15 @@ let compile_word_to_word_thm = prove
      gc_fun_const_ok (wl_state_gc_fun st)
      ==> ?perm' clk.
            let prog = wl_Call NONE (SOME start) [0] NONE in
-           let (res,rst) = wl_evaluate (prog,wl_state_permute_fupd (K perm') st) in
+           let (res,rst) = wl_evaluate (prog,wl_state_permute_fupd (combin_K perm') st) in
            if res = SOME wl_Error then T else
            let (res1,rst1) =
              wl_evaluate (prog,
-               wl_state_code_fupd (K (sptree_map (I ## remove_must_terminate) l))
-                 (wl_state_clock_fupd (K (wl_state_clock st + clk))
-                    (wl_state_termdep_fupd (K 0)
-                       (wl_state_compile_fupd (K cc)
-                          (wl_state_compile_oracle_fupd (K coracle) st))))) in
+               wl_state_code_fupd (combin_K (sptree_map (I ## remove_must_terminate) l))
+                 (wl_state_clock_fupd (combin_K (wl_state_clock st + clk))
+                    (wl_state_termdep_fupd (combin_K 0)
+                       (wl_state_compile_fupd (combin_K cc)
+                          (wl_state_compile_oracle_fupd (combin_K coracle) st))))) in
            res1 = res /\
            wl_state_clock rst1 = wl_state_clock rst /\
            wl_state_ffi rst1 = wl_state_ffi rst /\
@@ -1356,11 +1356,11 @@ let compile_word_to_word_thm = prove
    [ASM_REWRITE_TAC[] THEN REWRITE_TAC[FUN_EQ_THM; o_THM; W2WPAUX_MAP_fcs]; ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_THEN `perm:num->num->num` MP_TAC) THEN
   W2WPAUX_NAME_PAIR_TAC `wl_evaluate (wl_Call NONE (SOME start) [0] NONE:(A)wl_prog,
-                           wl_state_permute_fupd (K perm) (st:(A,C,FFI)wl_state))`
+                           wl_state_permute_fupd (combin_K perm) (st:(A,C,FFI)wl_state))`
     `res:((A)wl_result)option` `rst:(A,C,FFI)wl_state` THEN
   ASM_CASES_TAC `res = SOME (wl_Error:(A)wl_result)` THENL
    [DISCH_TAC THEN MAP_EVERY EXISTS_TAC [`perm:num->num->num`; `0`] THEN ASM_REWRITE_TAC[] THEN
-    CASE_REWRITE_TAC[];
+    CAKE_REWRITE_TAC[];
     ALL_TAC] THEN
   ASM_REWRITE_TAC[] THEN
   W2WPAUX_SPLIT_EVAL_TAC `wl_Call NONE (SOME start) [0] NONE:(A)wl_prog`
@@ -1376,10 +1376,10 @@ let compile_word_to_word_thm = prove
   SIMP[] THEN ASM_REWRITE_TAC[] THEN
   DISCH_THEN(X_CHOOSE_TAC `clk:num`) THEN
   MAP_EVERY EXISTS_TAC [`perm:num->num->num`; `clk:num`] THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
   W2WPAUX_X_ASM_TAC `compile_state 0 cc (rst1:(A,C,FFI)wl_state)` MP_TAC THEN
   SIMP[compile_state_def; remove_must_terminate_def; W2WPAUX_oracle_fcs] THEN
-  DISCH_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  DISCH_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   FIRST_ASSUM(SUBST1_TAC o check (fun th ->
     is_eq(concl th) && lhs(concl th) = `rst1:(A,C,FFI)wl_state`)) THEN SIMP[]);;
 
@@ -1418,10 +1418,10 @@ let W2WPAUX_nsi_inst_select = prove
                            fst(dest_type(type_of v)) = "prod") (frees w)) g) THEN
     REWRITE_TAC[FORALL_PAIR_THM; PAIR_EQ] THEN REPEAT GEN_TAC THEN
     REPEAT DISCH_TAC THEN ONCE_REWRITE_TAC[inst_select_def] THEN
-    CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN CASE_REWRITE_TAC[] THEN
+    CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN CAKE_REWRITE_TAC[] THEN
     RULE_ASSUM_TAC(REWRITE_RULE[no_share_inst_def]) THEN
-    REWRITE_TAC[no_share_inst_def] THEN CASE_REWRITE_TAC[] THEN
-    RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN
+    REWRITE_TAC[no_share_inst_def] THEN CAKE_REWRITE_TAC[] THEN
+    RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN
     SIMP[distinctness "wl_prog"] THEN ASM_MESON_TAC[] in
   MATCH_MP_TAC inst_select_ind THEN REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
   (fun (asl,w as g) ->
@@ -1620,7 +1620,7 @@ let compile_to_word_conventions = prove
     `progs:(num#num#(A)wl_prog)list` (fun th -> REWRITE_TAC[th] THEN
       MP_TAC(AP_TERM `SND:((num spt)option)list#(num#num#(A)wl_prog)list->
                           (num#num#(A)wl_prog)list` th)))) THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[WPROOF2AUX_w2w_SND; SND] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[WPROOF2AUX_w2w_SND; SND] THEN
   DISCH_THEN(SUBST1_TAC o SYM) THEN
   ABBREV_TAC `os = FST (next_n_oracle (LENGTH (p:(num#num#(A)wl_prog)list))
                           (word_to_word_config_col_oracle wc))` THEN
@@ -1739,8 +1739,8 @@ let code_rel_no_install = prove
 (* not depend on the compiler and the oracle                                 *)
 let W2WPAUX_ni_P = `\(prog:(A)wl_prog) (s:(A,C,FFI)wl_state).
    !c orc. wordConvs_no_install prog /\ no_install_code (wl_state_code s)
-   ==> wl_evaluate (prog, wl_state_compile_fupd (K c) (wl_state_compile_oracle_fupd (K orc) s)) =
-       (I ## (\t. wl_state_compile_fupd (K c) (wl_state_compile_oracle_fupd (K orc) t)))
+   ==> wl_evaluate (prog, wl_state_compile_fupd (combin_K c) (wl_state_compile_oracle_fupd (combin_K orc) s)) =
+       (I ## (\t. wl_state_compile_fupd (combin_K c) (wl_state_compile_oracle_fupd (combin_K orc) t)))
          (wl_evaluate (prog,s))`;;
 
 let W2WPAUX_NI_NONREC_TAC : tactic =
@@ -1784,7 +1784,7 @@ let W2WPAUX_NI_MT_TAC : tactic =
   REMOVE_THEN "ih" (MP_TAC o C MATCH_MP (ASSUME `~(wl_state_termdep (s:(A,C,FFI)wl_state) = 0)`)) THEN
   DISCH_THEN W2WPAUX_NI_IH_TAC THEN
   W2WPAUX_SPLIT_EVAL_TAC `p:(A)wl_prog` (K true) `r1:((A)wl_result)option` `s1:(A,C,FFI)wl_state` THEN
-  REWRITE_TAC[PAIR_MAP_THM; I_THM] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[PAIR_MAP_THM; I_THM] THEN CAKE_REWRITE_TAC[] THEN
   COND_CASES_TAC THEN SIMP W2WPAUX_NI_SIMPS;;
 
 let W2WPAUX_NI_SEQ_TAC : tactic =
@@ -1796,7 +1796,7 @@ let W2WPAUX_NI_SEQ_TAC : tactic =
   REMOVE_THEN "ih1" W2WPAUX_NI_IH_TAC THEN
   W2WPAUX_NAME_PAIR_TAC `wl_evaluate (c1:(A)wl_prog,s:(A,C,FFI)wl_state)`
     `r1:((A)wl_result)option` `s1:(A,C,FFI)wl_state` THEN
-  REWRITE_TAC[PAIR_MAP_THM; I_THM] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[PAIR_MAP_THM; I_THM] THEN CAKE_REWRITE_TAC[] THEN
   ASM_CASES_TAC `r1:((A)wl_result)option = NONE` THEN ASM_REWRITE_TAC[PAIR_MAP_THM; I_THM] THEN
   FIRST_X_ASSUM SUBST_ALL_TAC THEN
   REMOVE_THEN "ih2" (MP_TAC o SPEC `s1:(A,C,FFI)wl_state`) THEN
@@ -1836,7 +1836,7 @@ let W2WPAUX_NI_LOOP_TAC : tactic =
   RULE_ASSUM_TAC(REWRITE_RULE[wordConvs_no_install_def]) THEN
   W2WPAUX_NI_UNFOLD_TAC THEN SIMP W2WPAUX_NI_SIMPS THEN
   WPROOF1AUX_OCASES_TAC "wl_cut_state" `s':(A,C,FFI)wl_state` THEN TRY W2WPAUX_NI_CLOSE_TAC THEN
-  REWRITE_TAC[OPTION_MAP_DEF] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[OPTION_MAP_DEF] THEN CAKE_REWRITE_TAC[] THEN
   SUBGOAL_THEN `no_install_code (wl_state_code (s':(A,C,FFI)wl_state))` ASSUME_TAC THENL
    [FIRST_ASSUM(MP_TAC o MATCH_MP cut_state_const o
       check (fun th -> can (term_match [] `wl_cut_state x (y:(A,C,FFI)wl_state) = SOME z`)
@@ -1846,7 +1846,7 @@ let W2WPAUX_NI_LOOP_TAC : tactic =
   W2WPAUX_NI_IH_AT_TAC "ih2" [`s':(A,C,FFI)wl_state`] THEN
   W2WPAUX_NAME_PAIR_TAC `wl_evaluate (body:(A)wl_prog,s':(A,C,FFI)wl_state)`
     `r1:((A)wl_result)option` `s1:(A,C,FFI)wl_state` THEN
-  REWRITE_TAC[PAIR_MAP_THM; I_THM] THEN CASE_REWRITE_TAC[] THEN SIMP W2WPAUX_NI_SIMPS THEN
+  REWRITE_TAC[PAIR_MAP_THM; I_THM] THEN CAKE_REWRITE_TAC[] THEN SIMP W2WPAUX_NI_SIMPS THEN
   ASM_CASES_TAC `wl_cont_loop (r1:((A)wl_result)option)` THEN ASM_REWRITE_TAC[] THENL
    [ASM_CASES_TAC `wl_state_clock (s1:(A,C,FFI)wl_state) = 0` THEN ASM_REWRITE_TAC[] THEN
     TRY W2WPAUX_NI_CLOSE_TAC THEN REWRITE_TAC[wl_STOP_def] THEN
@@ -1854,7 +1854,7 @@ let W2WPAUX_NI_LOOP_TAC : tactic =
                                 `s1:(A,C,FFI)wl_state`];
     COND_CASES_TAC THEN TRY W2WPAUX_NI_CLOSE_TAC THEN
     WPROOF1AUX_OCASES_TAC "wl_cut_state" `s2:(A,C,FFI)wl_state` THEN
-    REWRITE_TAC[OPTION_MAP_DEF] THEN CASE_REWRITE_TAC[] THEN W2WPAUX_NI_CLOSE_TAC];;
+    REWRITE_TAC[OPTION_MAP_DEF] THEN CAKE_REWRITE_TAC[] THEN W2WPAUX_NI_CLOSE_TAC];;
 
 let W2WPAUX_NI_INSTALL_TAC : tactic =
   REPEAT GEN_TAC THEN REWRITE_TAC[wordConvs_no_install_def] THEN SIMP[];;
@@ -1878,7 +1878,7 @@ let W2WPAUX_NI_CALL_TAC : tactic =
       DISCH_THEN(X_CHOOSE_THEN `hn:num` (X_CHOOSE_THEN `hp:(A)wl_prog`
         (X_CHOOSE_THEN `hl1:num` (X_CHOOSE_THEN `hl2:num` SUBST_ALL_TAC))))) THEN
   STRIP_TAC THEN
-  RULE_ASSUM_TAC(CASE_REWRITE_RULE[] o REWRITE_RULE[wordConvs_no_install_def]) THEN
+  RULE_ASSUM_TAC(CAKE_REWRITE_RULE[] o REWRITE_RULE[wordConvs_no_install_def]) THEN
   REPEAT(FIRST_X_ASSUM(CONJUNCTS_THEN ASSUME_TAC o check (is_conj o concl))) THEN
   W2WPAUX_NI_UNFOLD_TAC THEN SIMP (add_ret_loc_def :: W2WPAUX_NI_SIMPS) THEN
   WPROOF1AUX_OCASES_TAC "wl_get_vars" `xs:((A)word_loc)list` THEN TRY W2WPAUX_NI_CLOSE_TAC THEN
@@ -1922,16 +1922,16 @@ let W2WPAUX_NI_RETCALL_TAC : tactic =
   REWRITE_TAC[FST; SND] THEN W2WPAUX_NI_CODE_TAC `prog:(A)wl_prog` THEN
   DISJ_CASES_THEN2 SUBST_ALL_TAC (X_CHOOSE_THEN `rr:(A)wl_result` SUBST_ALL_TAC)
    (ISPEC `r:((A)wl_result)option` (cases "option")) THEN
-  CASE_REWRITE_TAC[] THEN TRY W2WPAUX_NI_CLOSE_TAC THEN
+  CAKE_REWRITE_TAC[] THEN TRY W2WPAUX_NI_CLOSE_TAC THEN
   REPEAT_TCL DISJ_CASES_THEN (REPEAT_TCL CHOOSE_THEN SUBST_ALL_TAC)
     (ISPEC `rr:(A)wl_result` (cases "wl_result")) THEN
-  CASE_REWRITE_TAC[] THEN TRY W2WPAUX_NI_CLOSE_TAC THEN
+  CAKE_REWRITE_TAC[] THEN TRY W2WPAUX_NI_CLOSE_TAC THEN
   ALL_TAC;;
 
 let W2WPAUX_NI_RESULT_TAC : tactic =
   COND_CASES_TAC THENL [W2WPAUX_NI_CLOSE_TAC; ALL_TAC] THEN
   WPROOF1AUX_OCASES_TAC "wl_pop_env" `s1:(A,C,FFI)wl_state` THEN
-  REWRITE_TAC[OPTION_MAP_DEF] THEN CASE_REWRITE_TAC[] THEN TRY W2WPAUX_NI_CLOSE_TAC THEN
+  REWRITE_TAC[OPTION_MAP_DEF] THEN CAKE_REWRITE_TAC[] THEN TRY W2WPAUX_NI_CLOSE_TAC THEN
   SIMP W2WPAUX_NI_SIMPS THEN
   COND_CASES_TAC THENL [ALL_TAC; W2WPAUX_NI_CLOSE_TAC] THEN
   SUBGOAL_THEN `no_install_code (wl_state_code (s1:(A,C,FFI)wl_state))` ASSUME_TAC THENL
@@ -1975,8 +1975,8 @@ let W2WPAUX_ni_irr2 = prove
  (`!prog (s:(A,C,FFI)wl_state) c orc res t.
      wordConvs_no_install prog /\ no_install_code (wl_state_code s) /\
      wl_evaluate (prog,s) = (res,t)
-     ==> wl_evaluate (prog, wl_state_compile_fupd (K c) (wl_state_compile_oracle_fupd (K orc) s)) =
-         (res, wl_state_compile_fupd (K c) (wl_state_compile_oracle_fupd (K orc) t)) /\
+     ==> wl_evaluate (prog, wl_state_compile_fupd (combin_K c) (wl_state_compile_oracle_fupd (combin_K orc) s)) =
+         (res, wl_state_compile_fupd (combin_K c) (wl_state_compile_oracle_fupd (combin_K orc) t)) /\
          wl_state_compile_oracle t = wl_state_compile_oracle s /\
          wl_state_compile t = wl_state_compile s`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN CONJ_TAC THENL
@@ -1987,8 +1987,8 @@ let W2WPAUX_ni_irr2 = prove
   ASM_REWRITE_TAC[PAIR_MAP_THM; I_THM] THEN
   DISCH_THEN(MP_TAC o SPECL [`wl_state_compile (s:(A,C,FFI)wl_state)`;
                              `wl_state_compile_oracle (s:(A,C,FFI)wl_state)`]) THEN
-  SUBGOAL_THEN `wl_state_compile_fupd (K (wl_state_compile s))
-                  (wl_state_compile_oracle_fupd (K (wl_state_compile_oracle s)) s) =
+  SUBGOAL_THEN `wl_state_compile_fupd (combin_K (wl_state_compile s))
+                  (wl_state_compile_oracle_fupd (combin_K (wl_state_compile_oracle s)) s) =
                 (s:(A,C,FFI)wl_state)` SUBST1_TAC THENL
    [SIMP[wl_state_component_equality]; ALL_TAC] THEN
   ASM_REWRITE_TAC[PAIR_EQ] THEN DISCH_THEN(fun th -> ONCE_REWRITE_TAC[th]) THEN SIMP[]);;
@@ -2011,7 +2011,7 @@ let W2WPAUX_code_rel_nc = prove
   MATCH_MP_TAC W2WPAUX_cs_ncs THEN ASM_MESON_TAC[]);;
 
 let W2WPAUX_oracle_same = prove
- (`!s:(A,C,FFI)wl_state. wl_state_compile_oracle_fupd (K (wl_state_compile_oracle s)) s = s`,
+ (`!s:(A,C,FFI)wl_state. wl_state_compile_oracle_fupd (combin_K (wl_state_compile_oracle s)) s = s`,
   SIMP[wl_state_component_equality]);;
 
 (* HOL4 line 1092: derived from compile_single_correct (for a compiler of   *)
@@ -2026,14 +2026,14 @@ let no_install_no_alloc_compile_single_correct = prove
      domain (wl_state_code st) = domain l /\
      gc_fun_const_ok (wl_state_gc_fun st)
      ==> ?perm'.
-           let (res,rst) = wl_evaluate (prog,wl_state_permute_fupd (K perm') st) in
+           let (res,rst) = wl_evaluate (prog,wl_state_permute_fupd (combin_K perm') st) in
            if res = SOME wl_Error then T
            else
-             let (res1,rst1) = wl_evaluate (prog,wl_state_code_fupd (K l) st) in
+             let (res1,rst1) = wl_evaluate (prog,wl_state_code_fupd (combin_K l) st) in
              res1 = res /\
              word_to_wordProof_code_rel (wl_state_code rst) (wl_state_code rst1) /\
              domain (wl_state_code rst) = domain (wl_state_code rst1) /\
-             rst1 = wl_state_code_fupd (K (wl_state_code rst1)) rst`,
+             rst1 = wl_state_code_fupd (combin_K (wl_state_code rst1)) rst`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   SUBGOAL_THEN `no_install_code (l:(num#(A)wl_prog)spt)` ASSUME_TAC THENL
    [UNDISCH_TAC `no_install_code (wl_state_code (st:(A,C,FFI)wl_state))` THEN
@@ -2043,7 +2043,7 @@ let no_install_no_alloc_compile_single_correct = prove
     ALL_TAC] THEN
   MP_TAC(ISPECL [`prog:(A)wl_prog`;
      `wl_state_compile_fupd
-        (K (\conf progs. (ARB:C->(num#num#(A)wl_prog)list->(byte list#(A word)list#C)option)
+        (combin_K (\conf progs. (ARB:C->(num#num#(A)wl_prog)list->(byte list#(A word)list#C)option)
                           conf (MAP (\p. word_to_word_compile_single F 0 0 (ARB:(A)asm_config) (p,NONE))
                                 progs)))
         (st:(A,C,FFI)wl_state)`;
@@ -2055,19 +2055,19 @@ let no_install_no_alloc_compile_single_correct = prove
   ASM_REWRITE_TAC[] THEN SIMP[] THEN ASM_REWRITE_TAC[] THEN
   DISCH_THEN(X_CHOOSE_THEN `perm:num->num->num` (LABEL_TAC "CSC")) THEN
    EXISTS_TAC `perm:num->num->num` THEN REMOVE_THEN "CSC" MP_TAC THEN
-   W2WPAUX_NAME_PAIR_TAC `wl_evaluate (prog:(A)wl_prog, wl_state_permute_fupd (K perm)
+   W2WPAUX_NAME_PAIR_TAC `wl_evaluate (prog:(A)wl_prog, wl_state_permute_fupd (combin_K perm)
                             (st:(A,C,FFI)wl_state))` `res:((A)wl_result)option` `rst:(A,C,FFI)wl_state` THEN
-   W2WPAUX_NAME_PAIR_TAC `wl_evaluate (prog:(A)wl_prog, wl_state_code_fupd (K l)
+   W2WPAUX_NAME_PAIR_TAC `wl_evaluate (prog:(A)wl_prog, wl_state_code_fupd (combin_K l)
                             (st:(A,C,FFI)wl_state))` `res1:((A)wl_result)option` `rst1:(A,C,FFI)wl_state` THEN
-   MP_TAC(ISPECL [`prog:(A)wl_prog`; `wl_state_permute_fupd (K perm) (st:(A,C,FFI)wl_state)`;
+   MP_TAC(ISPECL [`prog:(A)wl_prog`; `wl_state_permute_fupd (combin_K perm) (st:(A,C,FFI)wl_state)`;
      `\conf progs. (ARB:C->(num#num#(A)wl_prog)list->(byte list#(A word)list#C)option)
                      conf (MAP (\p. word_to_word_compile_single F 0 0 (ARB:(A)asm_config) (p,NONE))
                                 progs)`;
-     `wl_state_compile_oracle (wl_state_permute_fupd (K perm) (st:(A,C,FFI)wl_state))`;
+     `wl_state_compile_oracle (wl_state_permute_fupd (combin_K perm) (st:(A,C,FFI)wl_state))`;
      `res:((A)wl_result)option`; `rst:(A,C,FFI)wl_state`] W2WPAUX_ni_irr2) THEN
    REWRITE_TAC[W2WPAUX_oracle_same] THEN ANTS_TAC THENL [ASM_REWRITE_TAC[] THEN SIMP[]; ALL_TAC] THEN
    DISCH_THEN(STRIP_ASSUME_TAC o CAKE_SIMP_RULE[]) THEN
-   MP_TAC(ISPECL [`prog:(A)wl_prog`; `wl_state_code_fupd (K l) (st:(A,C,FFI)wl_state)`;
+   MP_TAC(ISPECL [`prog:(A)wl_prog`; `wl_state_code_fupd (combin_K l) (st:(A,C,FFI)wl_state)`;
      `ARB:C->(num#num#(A)wl_prog)list->(byte list#(A word)list#C)option`;
      `(I ## MAP (\p. word_to_word_compile_single F 0 0 (ARB:(A)asm_config) (p,NONE))) o
       wl_state_compile_oracle (st:(A,C,FFI)wl_state)`;
@@ -2234,9 +2234,9 @@ let panLang_compile_word_to_word_thm = prove
      gc_fun_const_ok (wl_state_gc_fun st)
      ==> ?perm'.
            let prog = wl_Call NONE (SOME start) [0] NONE in
-           let (res,rst) = wl_evaluate (prog,wl_state_permute_fupd (K perm') st) in
+           let (res,rst) = wl_evaluate (prog,wl_state_permute_fupd (combin_K perm') st) in
            if res = SOME wl_Error then T else
-           let (res1,rst1) = wl_evaluate (prog,wl_state_code_fupd (K l) st) in
+           let (res1,rst1) = wl_evaluate (prog,wl_state_code_fupd (combin_K l) st) in
            res1 = res /\
            wl_state_clock rst1 = wl_state_clock rst /\
            wl_state_ffi rst1 = wl_state_ffi rst /\
@@ -2244,16 +2244,16 @@ let panLang_compile_word_to_word_thm = prove
   REPEAT GEN_TAC THEN STRIP_TAC THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   MP_TAC(ISPECL [`wl_Call NONE (SOME start) [0] NONE:(A)wl_prog`; `st:(A,C,FFI)wl_state`;
                  `l:(num#(A)wl_prog)spt`] no_install_no_alloc_compile_single_correct) THEN
-  ASM_REWRITE_TAC[wordConvs_no_install_def; no_alloc_def] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[wordConvs_no_install_def; no_alloc_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[distinctness "wl_prog"] THEN
   DISCH_THEN(X_CHOOSE_THEN `perm:num->num->num` MP_TAC) THEN
   DISCH_TAC THEN EXISTS_TAC `perm:num->num->num` THEN POP_ASSUM MP_TAC THEN
   W2WPAUX_NAME_PAIR_TAC `wl_evaluate (wl_Call NONE (SOME start) [0] NONE:(A)wl_prog,
-                           wl_state_permute_fupd (K perm) (st:(A,C,FFI)wl_state))`
+                           wl_state_permute_fupd (combin_K perm) (st:(A,C,FFI)wl_state))`
     `res:((A)wl_result)option` `rst:(A,C,FFI)wl_state` THEN
   COND_CASES_TAC THEN REWRITE_TAC[] THEN
   W2WPAUX_NAME_PAIR_TAC `wl_evaluate (wl_Call NONE (SOME start) [0] NONE:(A)wl_prog,
-                           wl_state_code_fupd (K l) (st:(A,C,FFI)wl_state))`
+                           wl_state_code_fupd (combin_K l) (st:(A,C,FFI)wl_state))`
     `res1:((A)wl_result)option` `rst1:(A,C,FFI)wl_state` THEN
   STRIP_TAC THEN FIRST_ASSUM(SUBST1_TAC o check (fun th ->
     is_eq(concl th) && lhs(concl th) = `rst1:(A,C,FFI)wl_state`)) THEN
@@ -2263,12 +2263,12 @@ let panLang_compile_word_to_word_thm = prove
 (* evaluations                                                              *)
 let W2WPAUX_sem_obs = prove
  (`!(s:(A,B,FFI)wl_state) (t:(A,B,FFI)wl_state) start.
-     (!k. FST (wl_evaluate (wl_Call NONE (SOME start) [0] NONE, wl_state_clock_fupd (K k) s)) =
-          FST (wl_evaluate (wl_Call NONE (SOME start) [0] NONE, wl_state_clock_fupd (K k) t)) /\
+     (!k. FST (wl_evaluate (wl_Call NONE (SOME start) [0] NONE, wl_state_clock_fupd (combin_K k) s)) =
+          FST (wl_evaluate (wl_Call NONE (SOME start) [0] NONE, wl_state_clock_fupd (combin_K k) t)) /\
           wl_state_ffi (SND (wl_evaluate (wl_Call NONE (SOME start) [0] NONE,
-                                          wl_state_clock_fupd (K k) s))) =
+                                          wl_state_clock_fupd (combin_K k) s))) =
           wl_state_ffi (SND (wl_evaluate (wl_Call NONE (SOME start) [0] NONE,
-                                          wl_state_clock_fupd (K k) t))))
+                                          wl_state_clock_fupd (combin_K k) t))))
      ==> wl_semantics s start = wl_semantics t start`,
   REPEAT GEN_TAC THEN REWRITE_TAC[FORALL_AND_THM] THEN STRIP_TAC THEN
   REWRITE_TAC[wl_semantics_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
@@ -2295,7 +2295,7 @@ let word_to_word_compile_semantics = prove
      ALL_DISTINCT (MAP FST wprog0) /\ wl_state_stack s = [] /\
      wl_state_code t = fromAList wprog /\
      lookup 0 (wl_state_locals t) = SOME (wl_Loc 1 0) /\
-     t = wl_state_code_fupd (K (wl_state_code t)) s /\
+     t = wl_state_code_fupd (combin_K (wl_state_code t)) s /\
      wl_state_code s = fromAList wprog0 /\
      ~(wl_semantics s start = Fail)
      ==> wl_semantics s start = wl_semantics t start`,
@@ -2319,17 +2319,17 @@ let word_to_word_compile_semantics = prove
     REWRITE_TAC[WPROOF2AUX_next_n_oracle_LENGTH; FORALL_PAIR_THM; WPROOF2AUX_fcs_FST];
     ALL_TAC] THEN
   SUBGOAL_THEN `!k. ~(FST (wl_evaluate (wl_Call NONE (SOME start) [0] NONE:(A)wl_prog,
-                   wl_state_clock_fupd (K k) (s:(A,B,FFI)wl_state))) = SOME wl_Error)`
+                   wl_state_clock_fupd (combin_K k) (s:(A,B,FFI)wl_state))) = SOME wl_Error)`
      ASSUME_TAC THENL
     [X_GEN_TAC `k:num` THEN UNDISCH_TAC `~(wl_semantics (s:(A,B,FFI)wl_state) start = Fail)` THEN
      REWRITE_TAC[wl_semantics_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
      COND_CASES_TAC THEN REWRITE_TAC[] THEN DISCH_THEN(K ALL_TAC) THEN
      FIRST_X_ASSUM(MP_TAC o SPEC `k:num` o REWRITE_RULE[NOT_EXISTS_THM]) THEN
      ONCE_REWRITE_TAC[TAUT `(~a ==> ~b) <=> (b ==> a)`] THEN
-     DISCH_THEN SUBST1_TAC THEN CASE_REWRITE_TAC[];
+     DISCH_THEN SUBST1_TAC THEN CAKE_REWRITE_TAC[];
      ALL_TAC] THEN
   MATCH_MP_TAC W2WPAUX_sem_obs THEN X_GEN_TAC `k:num` THEN
-   MP_TAC(ISPECL [`wl_state_clock_fupd (K k) (s:(A,B,FFI)wl_state)`;
+   MP_TAC(ISPECL [`wl_state_clock_fupd (combin_K k) (s:(A,B,FFI)wl_state)`;
                   `fromAList (wprog:(num#num#(A)wl_prog)list)`; `start:num`]
                  panLang_compile_word_to_word_thm) THEN
    ANTS_TAC THENL [ASM_REWRITE_TAC[] THEN SIMP[]; ALL_TAC] THEN
@@ -2339,10 +2339,10 @@ let word_to_word_compile_semantics = prove
                           then SUBST1_TAC th else failwith "") THEN
    ASM_REWRITE_TAC[] THEN SIMP_NOASM[] THEN
    MP_TAC(ISPECL [`wl_Call NONE (SOME start) [0] NONE:(A)wl_prog`;
-                  `wl_state_clock_fupd (K k) (s:(A,B,FFI)wl_state)`; `perm:num->num->num`;
+                  `wl_state_clock_fupd (combin_K k) (s:(A,B,FFI)wl_state)`; `perm:num->num->num`;
                   `[]:((A)stack_frame)list`] permute_swap_lemma3) THEN
    W2WPAUX_NAME_PAIR_TAC `wl_evaluate (wl_Call NONE (SOME start) [0] NONE:(A)wl_prog,
-                            wl_state_clock_fupd (K k) (s:(A,B,FFI)wl_state))`
+                            wl_state_clock_fupd (combin_K k) (s:(A,B,FFI)wl_state))`
      `r0:((A)wl_result)option` `s0:(A,B,FFI)wl_state` THEN
    ANTS_TAC THENL
     [FIRST_X_ASSUM(MP_TAC o SPEC `k:num` o check (is_forall o concl)) THEN
@@ -2351,7 +2351,7 @@ let word_to_word_compile_semantics = prove
      ALL_TAC] THEN
    DISCH_THEN(X_CHOOSE_THEN `perm2:num->num->num` (X_CHOOSE_THEN
      `stack2:((A)stack_frame)list` STRIP_ASSUME_TAC)) THEN
-   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+   ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
    FIRST_X_ASSUM(MP_TAC o SPEC `k:num` o check (is_forall o concl)) THEN
    ASM_REWRITE_TAC[FST] THEN DISCH_TAC THEN ASM_REWRITE_TAC[] THEN
   W2WPAUX_SPLIT_EVAL_TAC `wl_Call NONE (SOME start) [0] NONE:(A)wl_prog` (K true)

@@ -85,7 +85,7 @@ let option_ALOOKUP = prove
    (fun th -> REPEAT STRIP_TAC THEN REWRITE_TAC[compute_option_def] THEN
               SUBGOAL_THEN `ALOOKUP (eqs:(A#B#C)list) f = SOME (l,body)` SUBST1_TAC THENL
                [MATCH_MP_TAC th THEN EXISTS_TAC `n:num` THEN ASM_REWRITE_TAC[];
-                CASE_REWRITE_TAC[st_ex_return_def]]) THEN
+                CAKE_REWRITE_TAC[st_ex_return_def]]) THEN
   LIST_INDUCT_TAC THEN REWRITE_TAC[LENGTH; CONJUNCT1 LT] THEN
   SPEC_TAC(`h:A#B#C`,`h:A#B#C`) THEN REWRITE_TAC[FORALL_PAIR_THM] THEN
   MAP_EVERY X_GEN_TAC [`a:A`; `b:B`; `c:C`; `n:num`] THEN
@@ -111,7 +111,7 @@ let compute_eval_from_cv = prove
      compute_eval ck eqs (from_cv x) s = (M_success (from_cv x),s)`,
   MATCH_MP_TAC cv_INDUCT THEN REWRITE_TAC[from_cv_def] THEN REPEAT STRIP_TAC THEN
   ONCE_REWRITE_TAC[compute_eval_def] THEN
-  ASM CASE_REWRITE_TAC[st_ex_return_def; st_ex_bind_def]);;
+  ASM CAKE_REWRITE_TAC[st_ex_return_def; st_ex_bind_def]);;
 
 let compile_eval_list_length = prove
  (`!cvs xs ck ceqs (s:hol_refs) s'.
@@ -142,7 +142,7 @@ let do_uop_from_cv = prove
   REPEAT GEN_TAC THEN
   STRUCT_CASES_TAC (SPEC `uop:uop` (cases "uop")) THEN
   STRUCT_CASES_TAC (SPEC `a:cv` (cases "cv")) THEN
-  CASE_REWRITE_TAC[compute_do_uop_def; compute_do_fst_def; compute_do_snd_def;
+  CAKE_REWRITE_TAC[compute_do_uop_def; compute_do_fst_def; compute_do_snd_def;
                    compute_do_ispair_def; compute_monop_def; compute_monop_fst_def;
                    compute_monop_snd_def; compute_monop_ispair_def; from_cv_def;
                    st_ex_return_def]);;
@@ -164,7 +164,7 @@ let do_binop_from_cv = prove
   STRUCT_CASES_TAC (SPEC `a:cv` (cases "cv")) THEN
   STRUCT_CASES_TAC (SPEC `b:cv` (cases "cv")) THEN
   REWRITE_TAC[compute_do_binop_def; compute_binop_def] THEN
-  CASE_REWRITE_TAC[compute_do_arith_def; compute_do_reln_def; compute_do_eq_def;
+  CAKE_REWRITE_TAC[compute_do_arith_def; compute_do_reln_def; compute_do_eq_def;
                    compute_binop_add_def; compute_binop_sub_def; compute_binop_mul_def;
                    compute_binop_div_def; compute_binop_mod_def; compute_binop_less_def;
                    compute_binop_eq_def; from_cv_def; to_num_def; st_ex_return_def;
@@ -206,7 +206,7 @@ let subst_subst = prove
   REPEAT CONJ_TAC THEN REPEAT STRIP_TAC THENL
    [(* (Num is solved by the rewriting) Var *)
     REWRITE_TAC[ALOOKUP_APPEND] THEN TOP_CASE_TAC THEN
-    CASE_REWRITE_TAC[compute_subst_def] THEN
+    CAKE_REWRITE_TAC[compute_subst_def] THEN
     FIRST_X_ASSUM(ASSUME_TAC o MATCH_MP ALOOKUP_MEM) THEN
     UNDISCH_TAC `ALL (\x. ?v. SND x = from_cv v) (ys:(mlstring#compute_exp)list)` THEN
     REWRITE_TAC[GSYM ALL_MEM] THEN DISCH_THEN(fun th -> FIRST_ASSUM(MP_TAC o MATCH_MP th)) THEN
@@ -275,7 +275,7 @@ let subst_cons_lemma = prove
   MATCH_MP_TAC alookup_subst THEN
   REWRITE_TAC[FUN_EQ_THM; MAP; ALOOKUP_APPEND; ALOOKUP_FILTER; ALOOKUP_THM] THEN
   X_GEN_TAC `k:mlstring` THEN ASM_CASES_TAC `k:mlstring = s` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN TOP_CASE_TAC THEN CASE_REWRITE_TAC[]);;
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN TOP_CASE_TAC THEN CAKE_REWRITE_TAC[]);;
 
 let subst_eq_subst_lemma = prove
  (`!s (xs:(mlstring#compute_exp)list) ys.
@@ -366,7 +366,7 @@ let CMPEXPAUX_get_code = prove
 
 (* the monadic plumbing *)
 let CMPEXPAUX_SIMP_TAC : tactic =
-  CASE_REWRITE_TAC[st_ex_bind_def; st_ex_return_def; st_ex_ignore_bind_def;
+  CAKE_REWRITE_TAC[st_ex_bind_def; st_ex_return_def; st_ex_ignore_bind_def;
                    from_res_def; from_cv_def; PAIR_EQ; FST; SND;
                    holKernel_raise_Failure_def; injectivity "exc"; distinctness "exc"];;
 
@@ -473,7 +473,7 @@ let CMPEXPAUX_exec_eqn = prove
     MP_TAC (ISPECL [`v1:mlstring list`; `env:(mlstring#cv)list`; `s:mlstring`;
                     `v2:mlstring list`] env_lookup_lemma) THEN
     ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
-    ASM_REWRITE_TAC[compute_subst_def] THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[compute_subst_def] THEN CAKE_REWRITE_TAC[] THEN
     ONCE_REWRITE_TAC[exec_def] THEN
     ASM_REWRITE_TAC[compute_eval_from_cv] THEN CMPEXPAUX_SIMP_TAC;
     (* Num *)

@@ -375,3 +375,6 @@ hol4lib_refs.tsv	library constant	word_ushr	words	word_lsr	word_lsr	HOL Light co
 hol4lib_refs.tsv	library constant	word_zx	words	w2w	w2w	HOL Light constant for a HOL4 library constant; the translator names the function after the HOL4 name (argument order may differ, e.g. ITLIST/FOLDR)
 vocab	library constant	=+	combin	UPDATE	update	HOL Light constant for a HOL4 library constant (src/hol4/vocab.ml); added by main 2026-11-24 on agent TL2's report
 vocab	library constant	flip	combin	C	c	HOL Light constant for a HOL4 library constant (src/hol4/vocab.ml); added by main 2026-11-24 on agent TL2's report
+library_renames.tsv	constant	combin_K	combin	K	k	renamed HOL4 library item
+names.tsv	constant	mlstring_shrink	mlstring	shrink	shrink	function (fname = clean_lowercase of the HOL4 name)
+library_renames.tsv	constant	PAIR_MAP	pair	##	map	renamed HOL4 library item (CakeML name from next_ml_names in mlbasicsProg)

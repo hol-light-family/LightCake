@@ -86,7 +86,7 @@ let op_consts_pmatch = prove
         match op with
           asm_And -> wl_Const (word_not (word 0)):(A)wl_exp
         | _ -> wl_Const (word 0)`,
-  GEN_TAC THEN CASES_ON `op:binop` THEN CASE_REWRITE_TAC[op_consts_def]);;
+  GEN_TAC THEN CASES_ON `op:binop` THEN CAKE_REWRITE_TAC[op_consts_def]);;
 
 (* Returns a definite value *)
 

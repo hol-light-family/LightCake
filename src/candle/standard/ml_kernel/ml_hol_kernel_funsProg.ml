@@ -541,7 +541,7 @@ let MK_COMB_lemma =
            holKernel_MK_COMB (Sequent asl1 c1,Sequent asl2 c2)`,
     REWRITE_TAC[FORALL_PAIR_THM] THEN X_GEN_TAC `p1:thm` THEN X_GEN_TAC `p2:thm` THEN
     MAP_EVERY (fun v -> STRUCT_CASES_TAC (ISPEC v (cases "thm"))) [`p1:thm`; `p2:thm`] THEN
-    CASE_REWRITE_TAC[])) in
+    CAKE_REWRITE_TAC[])) in
   CONV_RULE (RAND_CONV (REWRITE_CONV [holKernel_MK_COMB_def])) th;;
 let _ = m_translate MK_COMB_lemma;;
 

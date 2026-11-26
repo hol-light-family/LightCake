@@ -41,8 +41,8 @@ let word_gcFunctions_word_or_eq_0 = prove
   REWRITE_TAC[WORD_OR_EQ_0]);;
 
 let shift_length_has_fp_ops = prove
- (`shift_length (data_to_word_config_has_fp_ops_fupd (K b1)
-                   (data_to_word_config_has_fp_tern_fupd (K b2) conf)) =
+ (`shift_length (data_to_word_config_has_fp_ops_fupd (combin_K b1)
+                   (data_to_word_config_has_fp_tern_fupd (combin_K b2) conf)) =
    shift_length conf`,
   SIMP[shift_length_def]);;
 
@@ -225,7 +225,7 @@ let WSIMPPAUX_GC_ABS_TAC (cname:string) : tactic = fun (asl,w as g) ->
   let t = find_term is_cand w in
   let v = variant (frees w) (mk_var("r",type_of t)) in
   (SPEC_TAC(t,v) THEN REWRITE_TAC[FORALL_PAIR_THM] THEN REPEAT GEN_TAC THEN
-   CASE_REWRITE_TAC[]) g;;
+   CAKE_REWRITE_TAC[]) g;;
 
 (* the kit's PAIRARG_TAC, but only for a pair_CASE whose scrutinee is not   *)
 (* itself a case expression: nested lets are split from the inside out      *)
@@ -247,7 +247,7 @@ let WSIMPPAUX_PAIRARG_TAC : tactic =
       try let a,b = dest_abs f in let b1,_ = dest_abs b in
           fst(dest_var a),fst(dest_var b1)
       with Failure _ -> "p1","p2" in
-    let avoid = frees whole in
+    let avoid = itlist (union o thm_frees o snd) asl (frees whole) in
     let v1 = variant avoid (mk_var(n1,tya)) in
     let v2 = variant (v1::avoid) (mk_var(n2,tyb)) in
     let nch = ISPEC x (nchotomy_of_type (type_of x)) in
@@ -255,7 +255,7 @@ let WSIMPPAUX_PAIRARG_TAC : tactic =
      DISCH_THEN(X_CHOOSE_THEN v1 (X_CHOOSE_THEN v2
        (fun th -> if is_var x then SUBST_ALL_TAC th
                   else SUBST_ALL_TAC th THEN ASSUME_TAC th))) THEN
-     CASE_ASM_TIDY_TAC THEN CASE_REWRITE_TAC[]) gl;;
+     CASE_ASM_TIDY_TAC THEN CAKE_REWRITE_TAC[]) gl;;
 
 let word_gen_gc_partial_move_list_append = prove
  (CASE_TERM
@@ -271,7 +271,7 @@ let word_gen_gc_partial_move_list_append = prove
        (a3,i3,pa3,m3,(c2 /\ c3))`,
   GEN_REWRITE_TAC I [SWAP_FORALL_THM] THEN INDUCT_TAC THEN REPEAT GEN_TAC THENL
    [REWRITE_TAC[ADD_CLAUSES; word_gen_gc_partial_move_list_zero] THEN
-    DISCH_TAC THEN CASE_REWRITE_TAC[] THEN
+    DISCH_TAC THEN CAKE_REWRITE_TAC[] THEN
     WSIMPPAUX_GC_ABS_TAC "word_gen_gc_partial_move_list" THEN REWRITE_TAC[];
     REWRITE_TAC[ADD_CLAUSES] THEN DISCH_TAC THEN
     SUBGOAL_THEN `l + l' < dimword(:A) /\ SUC l < dimword(:A)` STRIP_ASSUME_TAC THENL
@@ -742,7 +742,7 @@ let word_gc_IMP_EVERY2 = prove
   REWRITE_TAC[word_gc_fun_def; word_full_gc_def; word_gen_gc_def;
               word_gen_gc_partial_def; word_gen_gc_partial_full_def] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
-  CASES_ON `data_to_word_config_gc_kind c` THEN CASE_REWRITE_TAC[] THENL
+  CASES_ON `data_to_word_config_gc_kind c` THEN CAKE_REWRITE_TAC[] THENL
    [COND_CASES_TAC THEN
     REWRITE_TAC[distinctness "option"; injectivity "option"; PAIR_EQ] THEN
     STRIP_TAC THEN RVEQ_TAC THEN MATCH_MP_TAC EVERY2_refl THEN REWRITE_TAC[];
@@ -771,8 +771,8 @@ let word_gc_fun_LENGTH = prove
 (* ------------------------------------------------------------------------- *)
 
 let word_gc_fun_assum_has_fp_ops = prove
- (`word_gc_fun_assum (data_to_word_config_has_fp_ops_fupd (K b1)
-                        (data_to_word_config_has_fp_tern_fupd (K b2) conf))
+ (`word_gc_fun_assum (data_to_word_config_has_fp_ops_fupd (combin_K b1)
+                        (data_to_word_config_has_fp_tern_fupd (combin_K b2) conf))
                      (s:(store_name,(A)word_loc)fmap) =
    word_gc_fun_assum conf s`,
   SIMP[word_gc_fun_assum_def]);;
@@ -780,8 +780,8 @@ let word_gc_fun_assum_has_fp_ops = prove
 cake_add_simps [word_gc_fun_assum_has_fp_ops];;
 
 let word_gc_move_has_fp_ops = prove
- (`!x. word_gc_move (data_to_word_config_has_fp_ops_fupd (K b1)
-                       (data_to_word_config_has_fp_tern_fupd (K b2) conf)) x =
+ (`!x. word_gc_move (data_to_word_config_has_fp_ops_fupd (combin_K b1)
+                       (data_to_word_config_has_fp_tern_fupd (combin_K b2) conf)) x =
        word_gc_move conf
          (x:(A)word_loc#A word#A word#A word#(A word->(A)word_loc)#(A word->bool))`,
   REWRITE_TAC[FORALL_PAIR_THM] THEN MATCH_MP_TAC word_loc_INDUCT THEN
@@ -791,8 +791,8 @@ let word_gc_move_has_fp_ops = prove
 cake_add_simps [word_gc_move_has_fp_ops];;
 
 let word_gen_gc_move_has_fp_ops = prove
- (`!x. word_gen_gc_move (data_to_word_config_has_fp_ops_fupd (K b1)
-                           (data_to_word_config_has_fp_tern_fupd (K b2) conf)) x =
+ (`!x. word_gen_gc_move (data_to_word_config_has_fp_ops_fupd (combin_K b1)
+                           (data_to_word_config_has_fp_tern_fupd (combin_K b2) conf)) x =
        word_gen_gc_move conf
          (x:(A)word_loc#A word#A word#A word#A word#A word#(A word->(A)word_loc)#
             (A word->bool))`,
@@ -803,8 +803,8 @@ let word_gen_gc_move_has_fp_ops = prove
 cake_add_simps [word_gen_gc_move_has_fp_ops];;
 
 let word_gen_gc_partial_move_has_fp_ops = prove
- (`!x. word_gen_gc_partial_move (data_to_word_config_has_fp_ops_fupd (K b1)
-                           (data_to_word_config_has_fp_tern_fupd (K b2) conf)) x =
+ (`!x. word_gen_gc_partial_move (data_to_word_config_has_fp_ops_fupd (combin_K b1)
+                           (data_to_word_config_has_fp_tern_fupd (combin_K b2) conf)) x =
        word_gen_gc_partial_move conf
          (x:(A)word_loc#A word#A word#A word#(A word->(A)word_loc)#(A word->bool)#
             A word#A word)`,
@@ -817,17 +817,17 @@ cake_add_simps [word_gen_gc_partial_move_has_fp_ops];;
 (* the parts of the configuration that the GC functions use *)
 
 let WSIMPPAUX_conf_has_fp_ops = prove
- (`ptr_to_addr (data_to_word_config_has_fp_ops_fupd (K b1)
-                (data_to_word_config_has_fp_tern_fupd (K b2) conf)) =
+ (`ptr_to_addr (data_to_word_config_has_fp_ops_fupd (combin_K b1)
+                (data_to_word_config_has_fp_tern_fupd (combin_K b2) conf)) =
      (ptr_to_addr conf:A word->A word->A word) /\
-   update_addr (data_to_word_config_has_fp_ops_fupd (K b1)
-                (data_to_word_config_has_fp_tern_fupd (K b2) conf)) =
+   update_addr (data_to_word_config_has_fp_ops_fupd (combin_K b1)
+                (data_to_word_config_has_fp_tern_fupd (combin_K b2) conf)) =
      (update_addr conf:A word->A word->A word) /\
-   decode_length (data_to_word_config_has_fp_ops_fupd (K b1)
-                (data_to_word_config_has_fp_tern_fupd (K b2) conf)) =
+   decode_length (data_to_word_config_has_fp_ops_fupd (combin_K b1)
+                (data_to_word_config_has_fp_tern_fupd (combin_K b2) conf)) =
      (decode_length conf:A word->A word) /\
-   data_to_word_config_gc_kind (data_to_word_config_has_fp_ops_fupd (K b1)
-                (data_to_word_config_has_fp_tern_fupd (K b2) conf)) =
+   data_to_word_config_gc_kind (data_to_word_config_has_fp_ops_fupd (combin_K b1)
+                (data_to_word_config_has_fp_tern_fupd (combin_K b2) conf)) =
      data_to_word_config_gc_kind conf`,
   REWRITE_TAC[FUN_EQ_THM] THEN
   SIMP[ptr_to_addr_def; update_addr_def; decode_length_def; small_shift_length_def]);;
@@ -836,8 +836,8 @@ let WSIMPPAUX_conf_has_fp_ops_moves = CONJ word_gc_move_has_fp_ops
   (CONJ word_gen_gc_move_has_fp_ops word_gen_gc_partial_move_has_fp_ops);;
 
 let word_gc_move_list_has_fp_ops = prove
- (`!conf x. word_gc_move_list (data_to_word_config_has_fp_ops_fupd (K b1)
-                (data_to_word_config_has_fp_tern_fupd (K b2) conf)) x =
+ (`!conf x. word_gc_move_list (data_to_word_config_has_fp_ops_fupd (combin_K b1)
+                (data_to_word_config_has_fp_tern_fupd (combin_K b2) conf)) x =
             word_gc_move_list conf
               (x:A word#A word#A word#A word#A word#(A word->(A)word_loc)#(A word->bool))`,
   MATCH_MP_TAC word_gc_move_list_ind THEN REPEAT GEN_TAC THEN DISCH_TAC THEN
@@ -851,8 +851,8 @@ let word_gc_move_list_has_fp_ops = prove
 cake_add_simps [word_gc_move_list_has_fp_ops];;
 
 let word_gen_gc_move_list_has_fp_ops = prove
- (`!conf x. word_gen_gc_move_list (data_to_word_config_has_fp_ops_fupd (K b1)
-                (data_to_word_config_has_fp_tern_fupd (K b2) conf)) x =
+ (`!conf x. word_gen_gc_move_list (data_to_word_config_has_fp_ops_fupd (combin_K b1)
+                (data_to_word_config_has_fp_tern_fupd (combin_K b2) conf)) x =
             word_gen_gc_move_list conf
               (x:A word#A word#A word#A word#A word#A word#A word#(A word->(A)word_loc)#
                  (A word->bool))`,
@@ -867,8 +867,8 @@ let word_gen_gc_move_list_has_fp_ops = prove
 cake_add_simps [word_gen_gc_move_list_has_fp_ops];;
 
 let word_gen_gc_partial_move_list_has_fp_ops = prove
- (`!conf x. word_gen_gc_partial_move_list (data_to_word_config_has_fp_ops_fupd (K b1)
-                (data_to_word_config_has_fp_tern_fupd (K b2) conf)) x =
+ (`!conf x. word_gen_gc_partial_move_list (data_to_word_config_has_fp_ops_fupd (combin_K b1)
+                (data_to_word_config_has_fp_tern_fupd (combin_K b2) conf)) x =
             word_gen_gc_partial_move_list conf
               (x:A word#A word#A word#A word#A word#(A word->(A)word_loc)#(A word->bool)#
                  A word#A word)`,
@@ -883,8 +883,8 @@ let word_gen_gc_partial_move_list_has_fp_ops = prove
 cake_add_simps [word_gen_gc_partial_move_list_has_fp_ops];;
 
 let word_gc_move_roots_has_fp_ops = prove
- (`!conf x. word_gc_move_roots (data_to_word_config_has_fp_ops_fupd (K b1)
-                (data_to_word_config_has_fp_tern_fupd (K b2) conf)) x =
+ (`!conf x. word_gc_move_roots (data_to_word_config_has_fp_ops_fupd (combin_K b1)
+                (data_to_word_config_has_fp_tern_fupd (combin_K b2) conf)) x =
             word_gc_move_roots conf
               (x:((A)word_loc)list#A word#A word#A word#(A word->(A)word_loc)#(A word->bool))`,
   MATCH_MP_TAC word_gc_move_roots_ind THEN CONJ_TAC THEN REPEAT GEN_TAC THENL
@@ -896,8 +896,8 @@ let word_gc_move_roots_has_fp_ops = prove
 cake_add_simps [word_gc_move_roots_has_fp_ops];;
 
 let word_gen_gc_move_roots_has_fp_ops = prove
- (`!conf x. word_gen_gc_move_roots (data_to_word_config_has_fp_ops_fupd (K b1)
-                (data_to_word_config_has_fp_tern_fupd (K b2) conf)) x =
+ (`!conf x. word_gen_gc_move_roots (data_to_word_config_has_fp_ops_fupd (combin_K b1)
+                (data_to_word_config_has_fp_tern_fupd (combin_K b2) conf)) x =
             word_gen_gc_move_roots conf
               (x:((A)word_loc)list#A word#A word#A word#A word#A word#
                  (A word->(A)word_loc)#(A word->bool))`,
@@ -910,8 +910,8 @@ let word_gen_gc_move_roots_has_fp_ops = prove
 cake_add_simps [word_gen_gc_move_roots_has_fp_ops];;
 
 let word_gen_gc_partial_move_roots_has_fp_ops = prove
- (`!conf x. word_gen_gc_partial_move_roots (data_to_word_config_has_fp_ops_fupd (K b1)
-                (data_to_word_config_has_fp_tern_fupd (K b2) conf)) x =
+ (`!conf x. word_gen_gc_partial_move_roots (data_to_word_config_has_fp_ops_fupd (combin_K b1)
+                (data_to_word_config_has_fp_tern_fupd (combin_K b2) conf)) x =
             word_gen_gc_partial_move_roots conf
               (x:((A)word_loc)list#A word#A word#A word#(A word->(A)word_loc)#
                  (A word->bool)#A word#A word)`,
@@ -924,8 +924,8 @@ let word_gen_gc_partial_move_roots_has_fp_ops = prove
 cake_add_simps [word_gen_gc_partial_move_roots_has_fp_ops];;
 
 let word_gc_move_loop_has_fp_ops = prove
- (`!n conf x. word_gc_move_loop n (data_to_word_config_has_fp_ops_fupd (K b1)
-                (data_to_word_config_has_fp_tern_fupd (K b2) conf)) x =
+ (`!n conf x. word_gc_move_loop n (data_to_word_config_has_fp_ops_fupd (combin_K b1)
+                (data_to_word_config_has_fp_tern_fupd (combin_K b2) conf)) x =
               word_gc_move_loop n conf
                 (x:A word#A word#A word#A word#(A word->(A)word_loc)#(A word->bool)#bool)`,
   INDUCT_TAC THEN REWRITE_TAC[FORALL_PAIR_THM] THEN REPEAT GEN_TAC THEN
@@ -935,8 +935,8 @@ let word_gc_move_loop_has_fp_ops = prove
 cake_add_simps [word_gc_move_loop_has_fp_ops];;
 
 let word_gen_gc_partial_move_data_has_fp_ops = prove
- (`!n conf x. word_gen_gc_partial_move_data (data_to_word_config_has_fp_ops_fupd (K b1)
-                (data_to_word_config_has_fp_tern_fupd (K b2) conf)) n x =
+ (`!n conf x. word_gen_gc_partial_move_data (data_to_word_config_has_fp_ops_fupd (combin_K b1)
+                (data_to_word_config_has_fp_tern_fupd (combin_K b2) conf)) n x =
               word_gen_gc_partial_move_data conf n
                 (x:A word#A word#A word#A word#(A word->(A)word_loc)#(A word->bool)#
                    A word#A word)`,
@@ -947,8 +947,8 @@ let word_gen_gc_partial_move_data_has_fp_ops = prove
 cake_add_simps [word_gen_gc_partial_move_data_has_fp_ops];;
 
 let word_gen_gc_move_data_has_fp_ops = prove
- (`!n conf x. word_gen_gc_move_data (data_to_word_config_has_fp_ops_fupd (K b1)
-                (data_to_word_config_has_fp_tern_fupd (K b2) conf)) n x =
+ (`!n conf x. word_gen_gc_move_data (data_to_word_config_has_fp_ops_fupd (combin_K b1)
+                (data_to_word_config_has_fp_tern_fupd (combin_K b2) conf)) n x =
               word_gen_gc_move_data conf n
                 (x:A word#A word#A word#A word#A word#A word#(A word->(A)word_loc)#
                    (A word->bool))`,
@@ -959,8 +959,8 @@ let word_gen_gc_move_data_has_fp_ops = prove
 cake_add_simps [word_gen_gc_move_data_has_fp_ops];;
 
 let word_gen_gc_move_refs_has_fp_ops = prove
- (`!n conf x. word_gen_gc_move_refs (data_to_word_config_has_fp_ops_fupd (K b1)
-                (data_to_word_config_has_fp_tern_fupd (K b2) conf)) n x =
+ (`!n conf x. word_gen_gc_move_refs (data_to_word_config_has_fp_ops_fupd (combin_K b1)
+                (data_to_word_config_has_fp_tern_fupd (combin_K b2) conf)) n x =
               word_gen_gc_move_refs conf n
                 (x:A word#A word#A word#A word#A word#A word#A word#
                    (A word->(A)word_loc)#(A word->bool))`,
@@ -971,8 +971,8 @@ let word_gen_gc_move_refs_has_fp_ops = prove
 cake_add_simps [word_gen_gc_move_refs_has_fp_ops];;
 
 let word_gen_gc_partial_move_ref_list_has_fp_ops = prove
- (`!n conf x. word_gen_gc_partial_move_ref_list n (data_to_word_config_has_fp_ops_fupd (K b1)
-                (data_to_word_config_has_fp_tern_fupd (K b2) conf)) x =
+ (`!n conf x. word_gen_gc_partial_move_ref_list n (data_to_word_config_has_fp_ops_fupd (combin_K b1)
+                (data_to_word_config_has_fp_tern_fupd (combin_K b2) conf)) x =
               word_gen_gc_partial_move_ref_list n conf
                 (x:A word#A word#A word#A word#(A word->(A)word_loc)#(A word->bool)#bool#
                    A word#A word#A word)`,
@@ -983,8 +983,8 @@ let word_gen_gc_partial_move_ref_list_has_fp_ops = prove
 cake_add_simps [word_gen_gc_partial_move_ref_list_has_fp_ops];;
 
 let word_gen_gc_move_loop_has_fp_ops = prove
- (`!n conf x. word_gen_gc_move_loop (data_to_word_config_has_fp_ops_fupd (K b1)
-                (data_to_word_config_has_fp_tern_fupd (K b2) conf)) n x =
+ (`!n conf x. word_gen_gc_move_loop (data_to_word_config_has_fp_ops_fupd (combin_K b1)
+                (data_to_word_config_has_fp_tern_fupd (combin_K b2) conf)) n x =
               word_gen_gc_move_loop conf n
                 (x:A word#A word#A word#A word#A word#A word#A word#
                    (A word->(A)word_loc)#(A word->bool))`,
@@ -996,8 +996,8 @@ let word_gen_gc_move_loop_has_fp_ops = prove
 cake_add_simps [word_gen_gc_move_loop_has_fp_ops];;
 
 let word_full_gc_has_fp_ops = prove
- (`!x. word_full_gc (data_to_word_config_has_fp_ops_fupd (K b1)
-                (data_to_word_config_has_fp_tern_fupd (K b2) conf)) x =
+ (`!x. word_full_gc (data_to_word_config_has_fp_ops_fupd (combin_K b1)
+                (data_to_word_config_has_fp_tern_fupd (combin_K b2) conf)) x =
        word_full_gc conf
          (x:((A)word_loc)list#A word#A word#(A word->(A)word_loc)#(A word->bool))`,
   REWRITE_TAC[FORALL_PAIR_THM; word_full_gc_def; word_gc_move_roots_has_fp_ops;
@@ -1006,8 +1006,8 @@ let word_full_gc_has_fp_ops = prove
 cake_add_simps [word_full_gc_has_fp_ops];;
 
 let word_gen_gc_partial_full_has_fp_ops = prove
- (`!x. word_gen_gc_partial_full (data_to_word_config_has_fp_ops_fupd (K b1)
-                (data_to_word_config_has_fp_tern_fupd (K b2) conf)) x =
+ (`!x. word_gen_gc_partial_full (data_to_word_config_has_fp_ops_fupd (combin_K b1)
+                (data_to_word_config_has_fp_tern_fupd (combin_K b2) conf)) x =
        word_gen_gc_partial_full conf
          (x:((A)word_loc)list#A word#A word#A word#(A word->(A)word_loc)#(A word->bool)#
             A word#A word)`,
@@ -1019,8 +1019,8 @@ let word_gen_gc_partial_full_has_fp_ops = prove
 cake_add_simps [word_gen_gc_partial_full_has_fp_ops];;
 
 let word_gen_gc_has_fp_ops = prove
- (`!x. word_gen_gc (data_to_word_config_has_fp_ops_fupd (K b1)
-                (data_to_word_config_has_fp_tern_fupd (K b2) conf)) x =
+ (`!x. word_gen_gc (data_to_word_config_has_fp_ops_fupd (combin_K b1)
+                (data_to_word_config_has_fp_tern_fupd (combin_K b2) conf)) x =
        word_gen_gc conf
          (x:((A)word_loc)list#A word#A word#A word#(A word->(A)word_loc)#(A word->bool))`,
   REWRITE_TAC[FORALL_PAIR_THM; word_gen_gc_def; word_gen_gc_move_roots_has_fp_ops;
@@ -1029,8 +1029,8 @@ let word_gen_gc_has_fp_ops = prove
 cake_add_simps [word_gen_gc_has_fp_ops];;
 
 let glob_real_has_fp_ops = prove
- (`glob_real (data_to_word_config_has_fp_ops_fupd (K b1)
-                (data_to_word_config_has_fp_tern_fupd (K b2) conf)) x y =
+ (`glob_real (data_to_word_config_has_fp_ops_fupd (combin_K b1)
+                (data_to_word_config_has_fp_tern_fupd (combin_K b2) conf)) x y =
    glob_real conf (x:A word) (y:(A)word_loc)`,
   STRUCT_CASES_TAC (ISPEC `y:(A)word_loc` (cases "word_loc")) THEN
   REWRITE_TAC[glob_real_def; shift_length_has_fp_ops]);;
@@ -1038,8 +1038,8 @@ let glob_real_has_fp_ops = prove
 cake_add_simps [glob_real_has_fp_ops];;
 
 let word_gc_fun_has_fp_ops = prove
- (`word_gc_fun (data_to_word_config_has_fp_ops_fupd (K b1)
-                (data_to_word_config_has_fp_tern_fupd (K b2) conf)) =
+ (`word_gc_fun (data_to_word_config_has_fp_ops_fupd (combin_K b1)
+                (data_to_word_config_has_fp_tern_fupd (combin_K b2) conf)) =
    word_gc_fun conf:((A)word_loc)list#(A word->(A)word_loc)#(A word->bool)#
                     (store_name,(A)word_loc)fmap->
                     (((A)word_loc)list#(A word->(A)word_loc)#(store_name,(A)word_loc)fmap)option`,

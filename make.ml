@@ -1,5 +1,8 @@
 (* Load the whole port: start HOL Light in this directory, then loadt "make.ml";; *)
 
+(* HOL Light flags that the port sets while it loads; restored at the end *)
+let lightcake_saved_flags = (!use_file_raise_failure, !type_invention_error);;
+
 use_file_raise_failure := true;;
 
 loadt "src/prelude.ml";;
@@ -499,3 +502,12 @@ needs "candle/prover/candle_prover_evaluate.ml";;
 needs "candle/prover/candle_basis_evaluate.ml";;
 needs "candle/prover/candle_prover_statement.ml";;
 needs "candle/prover/candle_prover_semantics.ml";;
+
+use_file_raise_failure := fst lightcake_saved_flags;;
+type_invention_error := snd lightcake_saved_flags;;
+
+(* Notations of the port that HOL Light's libraries use themselves (as realax.ml does, HOL *)
+(* Light leaves <<= free; Multivariate/topology.ml defines -->; Library/poly.ml has ##):   *)
+(* the port's isPREFIX, ml_Arrow and PAIR_MAP print without them now, and                 *)
+(* override_interface brings them back.                                                    *)
+do_list remove_interface ["<<="; "-->"; "##"];;

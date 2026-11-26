@@ -156,51 +156,51 @@ let reg_alloc_get_stack_def = cake_def
 
 let set_adj_ls_def = cake_def
   `(set_adj_ls:(num list)list->ra_state->(1,C)exc#ra_state) x =
-     \state. (M_success one,ra_state_adj_ls_fupd (K x) state)`;;
+     \state. (M_success one,ra_state_adj_ls_fupd (combin_K x) state)`;;
 
 let set_node_tag_def = cake_def
   `(set_node_tag:reg_alloc_tag list->ra_state->(1,C)exc#ra_state) x =
-     \state. (M_success one,ra_state_node_tag_fupd (K x) state)`;;
+     \state. (M_success one,ra_state_node_tag_fupd (combin_K x) state)`;;
 
 let set_degrees_def = cake_def
   `(set_degrees:num list->ra_state->(1,C)exc#ra_state) x =
-     \state. (M_success one,ra_state_degrees_fupd (K x) state)`;;
+     \state. (M_success one,ra_state_degrees_fupd (combin_K x) state)`;;
 
 let set_dim_def = cake_def
   `(set_dim:num->ra_state->(1,C)exc#ra_state) x =
-     \state. (M_success one,ra_state_dim_fupd (K x) state)`;;
+     \state. (M_success one,ra_state_dim_fupd (combin_K x) state)`;;
 
 let set_simp_wl_def = cake_def
   `(set_simp_wl:num list->ra_state->(1,C)exc#ra_state) x =
-     \state. (M_success one,ra_state_simp_wl_fupd (K x) state)`;;
+     \state. (M_success one,ra_state_simp_wl_fupd (combin_K x) state)`;;
 
 let set_spill_wl_def = cake_def
   `(set_spill_wl:num list->ra_state->(1,C)exc#ra_state) x =
-     \state. (M_success one,ra_state_spill_wl_fupd (K x) state)`;;
+     \state. (M_success one,ra_state_spill_wl_fupd (combin_K x) state)`;;
 
 let set_freeze_wl_def = cake_def
   `(set_freeze_wl:num list->ra_state->(1,C)exc#ra_state) x =
-     \state. (M_success one,ra_state_freeze_wl_fupd (K x) state)`;;
+     \state. (M_success one,ra_state_freeze_wl_fupd (combin_K x) state)`;;
 
 let set_avail_moves_wl_def = cake_def
   `(set_avail_moves_wl:(num#num#num)list->ra_state->(1,C)exc#ra_state) x =
-     \state. (M_success one,ra_state_avail_moves_wl_fupd (K x) state)`;;
+     \state. (M_success one,ra_state_avail_moves_wl_fupd (combin_K x) state)`;;
 
 let set_unavail_moves_wl_def = cake_def
   `(set_unavail_moves_wl:(num#num#num)list->ra_state->(1,C)exc#ra_state) x =
-     \state. (M_success one,ra_state_unavail_moves_wl_fupd (K x) state)`;;
+     \state. (M_success one,ra_state_unavail_moves_wl_fupd (combin_K x) state)`;;
 
 let set_coalesced_def = cake_def
   `(set_coalesced:num list->ra_state->(1,C)exc#ra_state) x =
-     \state. (M_success one,ra_state_coalesced_fupd (K x) state)`;;
+     \state. (M_success one,ra_state_coalesced_fupd (combin_K x) state)`;;
 
 let set_move_related_def = cake_def
   `(set_move_related:bool list->ra_state->(1,C)exc#ra_state) x =
-     \state. (M_success one,ra_state_move_related_fupd (K x) state)`;;
+     \state. (M_success one,ra_state_move_related_fupd (combin_K x) state)`;;
 
 let set_stack_def = cake_def
   `(set_stack:num list->ra_state->(1,C)exc#ra_state) x =
-     \state. (M_success one,ra_state_stack_fupd (K x) state)`;;
+     \state. (M_success one,ra_state_stack_fupd (combin_K x) state)`;;
 
 (* Data type for the exceptions *)
 let state_exn_INDUCT,state_exn_RECURSION = cake_type
@@ -256,7 +256,7 @@ let adj_ls_sub_def = cake_def
 let update_adj_ls_def = cake_def
   `update_adj_ls =
      Marray_update (\state:ra_state. ra_state_adj_ls state)
-       (\x state. ra_state_adj_ls_fupd (K x) state) Subscript`;;
+       (\x state. ra_state_adj_ls_fupd (combin_K x) state) Subscript`;;
 
 let node_tag_length_def = cake_def
   `(node_tag_length:ra_state->(num,C)exc#ra_state) =
@@ -269,7 +269,7 @@ let node_tag_sub_def = cake_def
 let update_node_tag_def = cake_def
   `update_node_tag =
      Marray_update (\state:ra_state. ra_state_node_tag state)
-       (\x state. ra_state_node_tag_fupd (K x) state) Subscript`;;
+       (\x state. ra_state_node_tag_fupd (combin_K x) state) Subscript`;;
 
 let degrees_length_def = cake_def
   `(degrees_length:ra_state->(num,C)exc#ra_state) =
@@ -282,7 +282,7 @@ let degrees_sub_def = cake_def
 let update_degrees_def = cake_def
   `update_degrees =
      Marray_update (\state:ra_state. ra_state_degrees state)
-       (\x state. ra_state_degrees_fupd (K x) state) Subscript`;;
+       (\x state. ra_state_degrees_fupd (combin_K x) state) Subscript`;;
 
 let coalesced_length_def = cake_def
   `(coalesced_length:ra_state->(num,C)exc#ra_state) =
@@ -295,7 +295,7 @@ let coalesced_sub_def = cake_def
 let update_coalesced_def = cake_def
   `update_coalesced =
      Marray_update (\state:ra_state. ra_state_coalesced state)
-       (\x state. ra_state_coalesced_fupd (K x) state) Subscript`;;
+       (\x state. ra_state_coalesced_fupd (combin_K x) state) Subscript`;;
 
 let move_related_length_def = cake_def
   `(move_related_length:ra_state->(num,C)exc#ra_state) =
@@ -308,7 +308,7 @@ let move_related_sub_def = cake_def
 let update_move_related_def = cake_def
   `update_move_related =
      Marray_update (\state:ra_state. ra_state_move_related state)
-       (\x state. ra_state_move_related_fupd (K x) state) Subscript`;;
+       (\x state. ra_state_move_related_fupd (combin_K x) state) Subscript`;;
 
 let adj_ls_accessor = end_itlist CONJ
   [get_adj_ls_def; set_adj_ls_def;

@@ -187,7 +187,7 @@ let select_has_model_gen = prove
   SUBGOAL_THEN `SND (i:(mlstring->U list->U)#(mlstring->U list->U)) (implode "==>") [] =
                 Boolrel0 (mem:U->U->bool) (==>)` ASSUME_TAC THENL
    [MP_TAC(ISPECL [`mem:U->U->bool`; `SND (i:(mlstring->U list->U)#(mlstring->U list->U))`;
-                   `implode "==>"`; `K (Boolrel0 (mem:U->U->bool) (==>)):U list->U`]
+                   `implode "==>"`; `combin_K (Boolrel0 (mem:U->U->bool) (==>)):U list->U`]
       CBOOLAUX_interp_nil_value) THEN
     ASM_REWRITE_TAC[GSYM is_implies_interpretation0_def; K_THM];
     ALL_TAC] THEN
@@ -623,8 +623,8 @@ let CBOOLAUX_infinity_core = prove
                                  [Tyvar (implode "A"); Tyvar (implode "B")]))
                            (hol_Var (implode "x") (Tyvar (implode "A")))))))))) IN axs1 /\
      is_infinite mem inf'
-     ==> equal_on (tys1,tms1) i1 ((implode "ind" =+ K inf') (FST i1), SND i1) /\
-         models0 mem ((implode "ind" =+ K inf') (FST i1), SND i1)
+     ==> equal_on (tys1,tms1) i1 ((implode "ind" =+ combin_K inf') (FST i1), SND i1) /\
+         models0 mem ((implode "ind" =+ combin_K inf') (FST i1), SND i1)
            ((tys1 |+ (implode "ind",0), tms1),
             (
           hol_Comb
@@ -710,7 +710,7 @@ let CBOOLAUX_infinity_core = prove
       DISCH_TAC THEN MAP_EVERY X_GEN_TAC [`k:mlstring`; `ty:hol_type`] THEN DISCH_TAC THEN
       FIRST_X_ASSUM(MP_TAC o SPECL [`k:mlstring`; `ty:hol_type`]) THEN ASM_REWRITE_TAC[] THEN
       CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
-      SUBGOAL_THEN `!tau. typesem ((implode "ind" =+ K inf')
+      SUBGOAL_THEN `!tau. typesem ((implode "ind" =+ combin_K inf')
                                     (FST (i1:(mlstring->U list->U)#(mlstring->U list->U))))
                                   tau ty = typesem (FST i1) tau ty`
         (fun th -> REWRITE_TAC[th]) THEN
@@ -746,10 +746,10 @@ let CBOOLAUX_infinity_core = prove
   MP_TAC(ISPECL [`mem:U->U->bool`; `((tys1:tysig,tms1:tmsig),axs1:hol_term->bool)`;
                  `i1:(mlstring->U list->U)#(mlstring->U list->U)`] CBOOLAUX_onto_interp) THEN
   ASM_REWRITE_TAC[FST; SND; interprets0_def] THEN
-  DISCH_THEN(MP_TAC o SPEC `K (inf':U):mlstring->U`) THEN
+  DISCH_THEN(MP_TAC o SPEC `combin_K (inf':U):mlstring->U`) THEN
   REWRITE_TAC[is_type_valuation0_def; K_THM; MAP; HD; TL] THEN ASM_REWRITE_TAC[] THEN
   DISCH_TAC THEN
-  DISCH_THEN(MP_TAC o SPEC `K (inf':U):mlstring->U`) THEN
+  DISCH_THEN(MP_TAC o SPEC `combin_K (inf':U):mlstring->U`) THEN
   REWRITE_TAC[is_type_valuation0_def; K_THM; MAP; HD; TL] THEN ASM_REWRITE_TAC[] THEN
   DISCH_TAC THEN
   CBOOLAUX_SEM_SIMP_SIG_TAC `(tys1:tysig) |+ (implode "ind",0),(tms1:tmsig)`
@@ -764,7 +764,7 @@ let CBOOLAUX_infinity_core = prove
     [FIRST_ASSUM(MATCH_MP_TAC o MATCH_MP abstract_in_funspace) THEN ASM_REWRITE_TAC[];
      DISCH_TAC] THEN
   SUBGOAL_THEN `is_valuation0 (mem:U->U->bool) ((tys1:tysig) |+ (implode "ind",0))
-                   ((implode "ind" =+ K (inf':U))
+                   ((implode "ind" =+ combin_K (inf':U))
                       (FST (i1:(mlstring->U list->U)#(mlstring->U list->U))))
                    (FST (v:(mlstring->U)#(mlstring#hol_type->U)),
                     ((implode "f",
@@ -774,13 +774,13 @@ let CBOOLAUX_infinity_core = prove
     ASM_REWRITE_TAC([PAIR; typesem_def; MAP; APPLY_UPDATE_THM; K_THM] @ CBOOLAUX_STRING_THMS);
     ALL_TAC] THEN
    SUBGOAL_THEN `is_std_type_assignment0 (mem:U->U->bool)
-                   ((implode "ind" =+ K (inf':U))
+                   ((implode "ind" =+ combin_K (inf':U))
                       (FST (i1:(mlstring->U list->U)#(mlstring->U list->U))))`
    ASSUME_TAC THENL
    [FIRST_ASSUM(ACCEPT_TAC o REWRITE_RULE[FST] o MATCH_MP is_std_interpretation_is_type o
                 check (fun th -> can (term_match []
                   `is_std_interpretation0 (mem:U->U->bool)
-                     ((implode "ind" =+ K (inf':U))
+                     ((implode "ind" =+ combin_K (inf':U))
                         (FST (i1:(mlstring->U list->U)#(mlstring->U list->U))),SND i1)`)
                   (concl th)));
     ALL_TAC] THEN
@@ -952,7 +952,7 @@ let infinity_has_model_gen = prove
     CBOOLAUX_AXIOM_IN_CTXT1_TAC;
     ALL_TAC] THEN
   STRIP_TAC THEN
-   EXISTS_TAC `((implode "ind" =+ K (inf':U))
+   EXISTS_TAC `((implode "ind" =+ combin_K (inf':U))
                   (FST (i1:(mlstring->U list->U)#(mlstring->U list->U))), SND i1)` THEN
    REWRITE_TAC[FST; SND; APPLY_UPDATE_THM; K_THM] THEN CONJ_TAC THENL
     [MATCH_MP_TAC equal_on_trans THEN

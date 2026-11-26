@@ -286,7 +286,7 @@ let evaluate_ConjList_append_T = prove
   LIST_INDUCT_TAC THENL [SIMP[]; ALL_TAC] THEN
   QCASES_ON "t" THEN FS[ConjList_def] THEN GEN_TAC THENL
    [QCASES_ON "ys" THEN REWRITE_TAC[ConjList_def; evaluate_MakeBool] THENL
-     [MESON_TAC[]; STRIP_TAC THEN ASM_REWRITE_TAC[clos_evaluate_def] THEN CASE_REWRITE_TAC[HD]];
+     [MESON_TAC[]; STRIP_TAC THEN ASM_REWRITE_TAC[clos_evaluate_def] THEN CAKE_REWRITE_TAC[HD]];
     SIMP[clos_evaluate_def] THEN STRIP_TAC THEN
     QSPECL_THEN ["h"; "env1"; "r"] MP_TAC pure_correct THEN
     REPEAT (CASE_TAC THEN FS[evaluate_MakeBool]) THEN RW[]]);;
@@ -304,7 +304,7 @@ let evaluate_ConjList_T = prove
    clos_evaluate ([ConjList (CONS x xs)],env,r) =
    (res:(clos_v list,clos_v)result#(C,FFI)clos_state)`,
   QCASES_ON "xs" THEN REWRITE_TAC[ConjList_def] THEN STRIP_TAC THEN
-  ASM_REWRITE_TAC[clos_evaluate_def] THEN CASE_REWRITE_TAC[HD] THEN
+  ASM_REWRITE_TAC[clos_evaluate_def] THEN CAKE_REWRITE_TAC[HD] THEN
   ASM_MESON_TAC[evaluate_MakeBool]);;
 
 (* HOL4: eq_direct_simple_exp *)

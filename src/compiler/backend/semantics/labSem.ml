@@ -92,19 +92,19 @@ let asm_fetch_def = cake_def
 (* HOL4: upd_pc_def, upd_reg_def, upd_mem_def, assert_def *)
 
 let lab_upd_pc_def = cake_def
-  `lab_upd_pc pc (s:(A,C,FFI)lab_state) = lab_state_pc_fupd (K pc) s`;;
+  `lab_upd_pc pc (s:(A,C,FFI)lab_state) = lab_state_pc_fupd (combin_K pc) s`;;
 
 let lab_upd_reg_def = cake_def
   `lab_upd_reg r w (s:(A,C,FFI)lab_state) =
-     lab_state_regs_fupd (K ((r =+ w) (lab_state_regs s))) s`;;
+     lab_state_regs_fupd (combin_K ((r =+ w) (lab_state_regs s))) s`;;
 
 let lab_upd_mem_def = cake_def
   `lab_upd_mem a w (s:(A,C,FFI)lab_state) =
-     lab_state_mem_fupd (K ((a =+ w) (lab_state_mem s))) s`;;
+     lab_state_mem_fupd (combin_K ((a =+ w) (lab_state_mem s))) s`;;
 
 let lab_assert_def = cake_def
   `lab_assert b (s:(A,C,FFI)lab_state) =
-     lab_state_failed_fupd (K (~b \/ lab_state_failed s)) s`;;
+     lab_state_failed_fupd (combin_K (~b \/ lab_state_failed s)) s`;;
 
 (* HOL4: reg_imm_def *)
 
@@ -190,7 +190,7 @@ let _ = cake_add_simps [lab_arith_upd_def];;
 
 let lab_upd_fp_reg_def = cake_def
   `lab_upd_fp_reg r v (s:(A,C,FFI)lab_state) =
-     lab_state_fp_regs_fupd (K ((r =+ v) (lab_state_fp_regs s))) s`;;
+     lab_state_fp_regs_fupd (combin_K ((r =+ v) (lab_state_fp_regs s))) s`;;
 
 let lab_read_fp_reg_def = cake_def
   `lab_read_fp_reg r (s:(A,C,FFI)lab_state) = lab_state_fp_regs s r`;;
@@ -317,7 +317,7 @@ let mem_store32_def = cake_def
            wl_Word b ->
              (match mem_store_32 (lab_state_mem s) (lab_state_mem_domain s)
                       (lab_state_be s) w (word_zx b) with
-                SOME m -> lab_state_mem_fupd (K m) s
+                SOME m -> lab_state_mem_fupd (combin_K m) s
               | NONE -> lab_assert F s)
          | _ -> lab_assert F s`;;
 
@@ -340,7 +340,7 @@ let mem_store_byte_def = cake_def
            wl_Word b ->
              (match mem_store_byte_aux (lab_state_mem s) (lab_state_mem_domain s)
                       (lab_state_be s) w (word_zx b) with
-                SOME m -> lab_state_mem_fupd (K m) s
+                SOME m -> lab_state_mem_fupd (combin_K m) s
               | NONE -> lab_assert F s)
          | _ -> lab_assert F s`;;
 
@@ -371,10 +371,10 @@ let _ = cake_add_simps [asm_inst_def];;
 
 let lab_dec_clock_def = cake_def
   `lab_dec_clock (s:(A,C,FFI)lab_state) =
-     lab_state_clock_fupd (K (lab_state_clock s - 1)) s`;;
+     lab_state_clock_fupd (combin_K (lab_state_clock s - 1)) s`;;
 
 let inc_pc_def = cake_def
-  `inc_pc (s:(A,C,FFI)lab_state) = lab_state_pc_fupd (K (lab_state_pc s + 1)) s`;;
+  `inc_pc (s:(A,C,FFI)lab_state) = lab_state_pc_fupd (combin_K (lab_state_pc s + 1)) s`;;
 
 let asm_code_length_def = cake_def
   `(asm_code_length ([]:((A)sec)list) = 0) /\
@@ -509,12 +509,12 @@ let share_mem_load_def = cake_def
               FFI_final outcome -> SOME (FFI_final outcome,s)
             | FFI_return new_ffi new_bytes ->
                 SOME (FFI_return new_ffi new_bytes,
-                      lab_state_ffi_fupd (K new_ffi)
+                      lab_state_ffi_fupd (combin_K new_ffi)
                         (lab_state_regs_fupd
-                           (K ((r =+ wl_Word (word_of_bytes F (word 0) new_bytes))
+                           (combin_K ((r =+ wl_Word (word_of_bytes F (word 0) new_bytes))
                                  (lab_state_regs s)))
-                        (lab_state_pc_fupd (K (lab_state_pc s + 1))
-                        (lab_state_clock_fupd (K (lab_state_clock s - 1)) s)))))
+                        (lab_state_pc_fupd (combin_K (lab_state_pc s + 1))
+                        (lab_state_clock_fupd (combin_K (lab_state_clock s - 1)) s)))))
          else NONE`;;
 
 let share_mem_store_def = cake_def
@@ -536,7 +536,7 @@ let share_mem_store_def = cake_def
                    FFI_final outcome -> SOME (FFI_final outcome,s)
                  | FFI_return new_ffi new_bytes ->
                      SOME (FFI_return new_ffi new_bytes,
-                           inc_pc (lab_dec_clock (lab_state_ffi_fupd (K new_ffi) s))))
+                           inc_pc (lab_dec_clock (lab_state_ffi_fupd (combin_K new_ffi) s))))
               else NONE)
      | _ -> NONE`;;
 
@@ -598,7 +598,7 @@ let lab_evaluate_def = cake_def_wf
               (match buffer_write (lab_state_code_buffer s) w1 (word_zx w2) with
                  SOME new_cb ->
                    lab_evaluate
-                     (inc_pc (lab_dec_clock (lab_state_code_buffer_fupd (K new_cb) s)))
+                     (inc_pc (lab_dec_clock (lab_state_code_buffer_fupd (combin_K new_cb) s)))
                | _ -> (target_Error,s))
           | _ -> (target_Error,s))
      | SOME (Asm (ShareMem m r ad) _ _) ->
@@ -606,9 +606,9 @@ let lab_evaluate_def = cake_def_wf
             SOME (FFI_final outcome,s') -> (target_Halt (FFI_outcome outcome),s')
           | SOME (FFI_return new_ffi new_bytes,s') ->
               lab_evaluate
-                (lab_state_io_regs_fupd (K (shift_seq 1 (lab_state_io_regs s')))
+                (lab_state_io_regs_fupd (combin_K (shift_seq 1 (lab_state_io_regs s')))
                    (lab_state_io_fp_regs_fupd
-                      (K (shift_seq 1 (lab_state_io_fp_regs s'))) s'))
+                      (combin_K (shift_seq 1 (lab_state_io_fp_regs s'))) s'))
           | NONE -> (target_Error,s))
      | SOME (LabAsm lab_Halt _ _ _) ->
          (match lab_state_regs s (lab_state_ptr_reg s) with
@@ -655,19 +655,19 @@ let lab_evaluate_def = cake_def_wf
                       (SOME (bytes',cfg'),CONS (Section k _) _) ->
                         if bytes = bytes' /\ FST (new_oracle 0) = cfg' then
                           lab_evaluate
-                            (lab_state_pc_fupd (K new_pc)
-                            (lab_state_code_buffer_fupd (K cb)
-                            (lab_state_code_fupd (K (APPEND (lab_state_code s) prog))
-                            (lab_state_cc_regs_fupd (K (shift_seq 1 (lab_state_cc_regs s)))
+                            (lab_state_pc_fupd (combin_K new_pc)
+                            (lab_state_code_buffer_fupd (combin_K cb)
+                            (lab_state_code_fupd (combin_K (APPEND (lab_state_code s) prog))
+                            (lab_state_cc_regs_fupd (combin_K (shift_seq 1 (lab_state_cc_regs s)))
                             (lab_state_cc_fp_regs_fupd
-                               (K (shift_seq 1 (lab_state_cc_fp_regs s)))
+                               (combin_K (shift_seq 1 (lab_state_cc_fp_regs s)))
                             (lab_state_regs_fupd
-                               (K ((lab_state_ptr_reg s =+ wl_Loc k 0)
+                               (combin_K ((lab_state_ptr_reg s =+ wl_Loc k 0)
                                      (\a. get_reg_value (lab_state_cc_regs s 0 a)
                                             (lab_state_regs s a) wl_Word)))
-                            (lab_state_fp_regs_fupd (K (\n. lab_state_cc_fp_regs s 0 n))
-                            (lab_state_compile_oracle_fupd (K new_oracle)
-                            (lab_state_clock_fupd (K (lab_state_clock s - 1)) s)))))))))
+                            (lab_state_fp_regs_fupd (combin_K (\n. lab_state_cc_fp_regs s 0 n))
+                            (lab_state_compile_oracle_fupd (combin_K new_oracle)
+                            (lab_state_clock_fupd (combin_K (lab_state_clock s - 1)) s)))))))))
                         else (target_Error,s)
                     | _ -> (target_Error,s))
                | _ -> (target_Error,s))
@@ -695,17 +695,17 @@ let lab_evaluate_def = cake_def_wf
                         let new_m = write_bytearray w4 new_bytes (lab_state_mem s)
                                       (lab_state_mem_domain s) (lab_state_be s) in
                         lab_evaluate
-                          (lab_state_mem_fupd (K new_m)
-                          (lab_state_ffi_fupd (K new_ffi)
-                          (lab_state_io_regs_fupd (K new_io_regs)
-                          (lab_state_io_fp_regs_fupd (K new_io_fp_regs)
+                          (lab_state_mem_fupd (combin_K new_m)
+                          (lab_state_ffi_fupd (combin_K new_ffi)
+                          (lab_state_io_regs_fupd (combin_K new_io_regs)
+                          (lab_state_io_fp_regs_fupd (combin_K new_io_fp_regs)
                           (lab_state_regs_fupd
-                             (K (\a. get_reg_value
+                             (combin_K (\a. get_reg_value
                                        (lab_state_io_regs s 0 (ExtCall ffi_index) a)
                                        (lab_state_regs s a) wl_Word))
-                          (lab_state_fp_regs_fupd (K (\n. lab_state_io_fp_regs s 0 n))
-                          (lab_state_pc_fupd (K new_pc)
-                          (lab_state_clock_fupd (K (lab_state_clock s - 1)) s)))))))))
+                          (lab_state_fp_regs_fupd (combin_K (\n. lab_state_io_fp_regs s 0 n))
+                          (lab_state_pc_fupd (combin_K new_pc)
+                          (lab_state_clock_fupd (combin_K (lab_state_clock s - 1)) s)))))))))
                | _ -> (target_Error,s))
           | _ -> (target_Error,s))
      | _ -> (target_Error,s)`;;
@@ -716,11 +716,11 @@ let lab_evaluate_ind = cake_ind "lab_evaluate";;
 
 let lab_semantics_def = cake_def
   `lab_semantics (s:(A,C,FFI)lab_state) =
-     if ?k. FST (lab_evaluate (lab_state_clock_fupd (K k) s)) = target_Error then Fail
+     if ?k. FST (lab_evaluate (lab_state_clock_fupd (combin_K k) s)) = target_Error then Fail
      else
        match some res.
                ?k t outcome.
-                 lab_evaluate (lab_state_clock_fupd (K k) s) = (target_Halt outcome,t) /\
+                 lab_evaluate (lab_state_clock_fupd (combin_K k) s) = (target_Halt outcome,t) /\
                  res = Terminate outcome (ffi_state_io_events (lab_state_ffi t)) with
          SOME res -> res
        | NONE ->
@@ -729,5 +729,5 @@ let lab_semantics_def = cake_def
                 (IMAGE (\k. llist_fromList
                               (ffi_state_io_events
                                  (lab_state_ffi
-                                    (SND (lab_evaluate (lab_state_clock_fupd (K k) s))))))
+                                    (SND (lab_evaluate (lab_state_clock_fupd (combin_K k) s))))))
                        UNIV))`;;

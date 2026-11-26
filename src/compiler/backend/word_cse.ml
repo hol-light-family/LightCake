@@ -120,7 +120,7 @@ let register_read_def = cake_def
   `register_read (data:knowledge) (r:num) =
      if ~EVEN r /\ keep_data (knowledge_to_canonical data) r
      then knowledge_to_canonical_fupd
-            (K (insert r r (knowledge_to_canonical data))) data
+            (combin_K (insert r r (knowledge_to_canonical data))) data
      else data`;;
 
 let register_reads_def = cake_def
@@ -175,8 +175,8 @@ let canonicalMoveRegs_def = cake_def
        let to_c = map_insert ys (knowledge_to_canonical data) in
        let zs = MAP (\(a,b). (b,a)) ys in
        let to_l = map_insert zs (knowledge_to_latest data) in
-       knowledge_to_canonical_fupd (K to_c)
-         (knowledge_to_latest_fupd (K to_l) data)
+       knowledge_to_canonical_fupd (combin_K to_c)
+         (knowledge_to_latest_fupd (combin_K to_l) data)
      else empty_data`;;
 
 (* the clauses are parsed apart: r3 is a reg_imm in one and a num in others *)
@@ -376,19 +376,19 @@ let add_to_data_aux_def = cake_def
          if EVEN r then (data,wl_Move 0 [(r,k)])
          else
            (knowledge_to_canonical_fupd
-              (K (insert r r' (knowledge_to_canonical data)))
+              (combin_K (insert r r' (knowledge_to_canonical data)))
               (knowledge_to_latest_fupd
-                 (K (insert r' r (knowledge_to_latest data))) data),
+                 (combin_K (insert r' r (knowledge_to_latest data))) data),
             wl_Move 0 [(r,k)])
      | NONE ->
          if EVEN r then (data,x)
          else
            (knowledge_instrs_mem_fupd
-              (K (balanced_map_insert listCmp i r (knowledge_instrs_mem data)))
+              (combin_K (balanced_map_insert listCmp i r (knowledge_instrs_mem data)))
               (knowledge_to_canonical_fupd
-                 (K (insert r r (knowledge_to_canonical data)))
+                 (combin_K (insert r r (knowledge_to_canonical data)))
                  (knowledge_to_latest_fupd
-                    (K (insert r r (knowledge_to_latest data))) data)),
+                    (combin_K (insert r r (knowledge_to_latest data))) data)),
             x)`;;
 
 let add_to_data_def = cake_def
@@ -408,17 +408,17 @@ let add_to_data_const_def = cake_def
      match balanced_map_lookup listCmp i (knowledge_instrs_mem data) with
        SOME r' ->
          (knowledge_to_canonical_fupd
-            (K (insert r r' (knowledge_to_canonical data)))
+            (combin_K (insert r r' (knowledge_to_canonical data)))
             (knowledge_to_latest_fupd
-               (K (insert r' r (knowledge_to_latest data))) data),
+               (combin_K (insert r' r (knowledge_to_latest data))) data),
           wl_Inst (asm_Const r w))
      | NONE ->
          (knowledge_instrs_mem_fupd
-            (K (balanced_map_insert listCmp i r (knowledge_instrs_mem data)))
+            (combin_K (balanced_map_insert listCmp i r (knowledge_instrs_mem data)))
             (knowledge_to_canonical_fupd
-               (K (insert r r (knowledge_to_canonical data)))
+               (combin_K (insert r r (knowledge_to_canonical data)))
                (knowledge_to_latest_fupd
-                  (K (insert r r (knowledge_to_latest data))) data)),
+                  (combin_K (insert r r (knowledge_to_latest data))) data)),
           wl_Inst (asm_Const r w))`;;
 
 (* As add_to_data_aux, but for the load-fact map. *)
@@ -431,19 +431,19 @@ let add_to_load_aux_def = cake_def
          if EVEN r then (data,wl_Move 0 [(r,k)])
          else
            (knowledge_to_canonical_fupd
-              (K (insert r r' (knowledge_to_canonical data)))
+              (combin_K (insert r r' (knowledge_to_canonical data)))
               (knowledge_to_latest_fupd
-                 (K (insert r' r (knowledge_to_latest data))) data),
+                 (combin_K (insert r' r (knowledge_to_latest data))) data),
             wl_Move 0 [(r,k)])
      | NONE ->
          if EVEN r then (data,x)
          else
            (knowledge_loads_mem_fupd
-              (K (balanced_map_insert listCmp i r (knowledge_loads_mem data)))
+              (combin_K (balanced_map_insert listCmp i r (knowledge_loads_mem data)))
               (knowledge_to_canonical_fupd
-                 (K (insert r r (knowledge_to_canonical data)))
+                 (combin_K (insert r r (knowledge_to_canonical data)))
                  (knowledge_to_latest_fupd
-                    (K (insert r r (knowledge_to_latest data))) data)),
+                    (combin_K (insert r r (knowledge_to_latest data))) data)),
             x)`;;
 
 let can_mem_arith_def = sem1aux_def
@@ -490,7 +490,7 @@ let word_cseInst_def = cake_def_clauses
      else (data,wl_Inst (asm_Arith a))`;
   `word_cseInst (data:knowledge) (Mem op r (Addr a ofs):(A)inst) =
      if is_store op then
-       (knowledge_loads_mem_fupd (K balanced_map_empty) data,
+       (knowledge_loads_mem_fupd (combin_K balanced_map_empty) data,
         wl_Inst (Mem op r (Addr a ofs)))
      else
        let data = invalidate_data data r in
@@ -603,20 +603,20 @@ let word_cse_def = sem1aux_def (list_mk_conj
      match ALOOKUP (knowledge_gets_mem data) x with
        NONE ->
          if EVEN r then (data,wl_Get r x) else
-         (knowledge_gets_mem_fupd (K (CONS (x,r) (knowledge_gets_mem data)))
+         (knowledge_gets_mem_fupd (combin_K (CONS (x,r) (knowledge_gets_mem data)))
             (knowledge_to_canonical_fupd
-               (K (insert r r (knowledge_to_canonical data)))
+               (combin_K (insert r r (knowledge_to_canonical data)))
                (knowledge_to_latest_fupd
-                  (K (insert r r (knowledge_to_latest data))) data)),
+                  (combin_K (insert r r (knowledge_to_latest data))) data)),
           wl_Get r x)
      | SOME k ->
          if EVEN r
          then (data,wl_Move 1 [(r,lookup_any k (knowledge_to_latest data) k)])
          else
            (knowledge_to_canonical_fupd
-              (K (insert r k (knowledge_to_canonical data)))
+              (combin_K (insert r k (knowledge_to_canonical data)))
               (knowledge_to_latest_fupd
-                 (K (insert k r (knowledge_to_latest data))) data),
+                 (combin_K (insert k r (knowledge_to_latest data))) data),
             wl_Move 1 [(r,lookup_any k (knowledge_to_latest data) k)])`;
   `(word_cse:knowledge->(A)wl_prog->knowledge#(A)wl_prog) data
      (wl_Set x e) =
@@ -624,15 +624,15 @@ let word_cse_def = sem1aux_def (list_mk_conj
      else
        let new_gets_mem = FILTER (\(m,n). ~(m = x)) (knowledge_gets_mem data) in
        match dest_Var e with
-         NONE -> (knowledge_gets_mem_fupd (K new_gets_mem) data,wl_Set x e)
+         NONE -> (knowledge_gets_mem_fupd (combin_K new_gets_mem) data,wl_Set x e)
        | SOME v ->
            if EVEN v
-           then (knowledge_gets_mem_fupd (K new_gets_mem) data,wl_Set x e)
+           then (knowledge_gets_mem_fupd (combin_K new_gets_mem) data,wl_Set x e)
            else
              (knowledge_gets_mem_fupd
-                (K (CONS (x,canonicalRegs data v) new_gets_mem))
+                (combin_K (CONS (x,canonicalRegs data v) new_gets_mem))
                 (knowledge_to_canonical_fupd
-                   (K (insert v (lookup_any v (knowledge_to_canonical data) v)
+                   (combin_K (insert v (lookup_any v (knowledge_to_canonical data) v)
                          (knowledge_to_canonical data))) data),
               wl_Set x e)`;
   `(word_cse:knowledge->(A)wl_prog->knowledge#(A)wl_prog) data
@@ -667,7 +667,7 @@ let word_cse_def = sem1aux_def (list_mk_conj
      wl_Skip = (data,wl_Skip)`;
   `(word_cse:knowledge->(A)wl_prog->knowledge#(A)wl_prog) data
      (wl_Store e r) =
-     (knowledge_loads_mem_fupd (K balanced_map_empty) data,wl_Store e r)`;
+     (knowledge_loads_mem_fupd (combin_K balanced_map_empty) data,wl_Store e r)`;
   `(word_cse:knowledge->(A)wl_prog->knowledge#(A)wl_prog) data
      (wl_Assign r e) =
      (data,wl_Assign r e)`;
@@ -696,7 +696,7 @@ let word_cse_def = sem1aux_def (list_mk_conj
   `(word_cse:knowledge->(A)wl_prog->knowledge#(A)wl_prog) data
      (wl_StoreConsts r1 r2 r3 r4 payload) =
      (let data = invalidate_regs data [r1; r2; r3; r4] in
-      (knowledge_loads_mem_fupd (K balanced_map_empty) data,
+      (knowledge_loads_mem_fupd (combin_K balanced_map_empty) data,
        wl_StoreConsts r1 r2 r3 r4 payload))`;
   `(word_cse:knowledge->(A)wl_prog->knowledge#(A)wl_prog) data
      (ShareInst op r exp) =

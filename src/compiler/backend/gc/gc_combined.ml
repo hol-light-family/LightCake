@@ -38,11 +38,11 @@ let gc_combined_def = cake_def
                          (heap_expand (gc_state_n state)))
                  (gc_state_r1 state),
           gc_state_a state, gc_state_n state,
-          GenState 0 (MAP (K (gc_state_a state)) limits), gc_state_ok state))
+          GenState 0 (MAP (combin_K (gc_state_a state)) limits), gc_state_ok state))
       else
         (let (roots,state) = gen_gc conf (roots,heap) in
          (roots,
           APPEND (APPEND (gc_state_h1 state) (heap_expand (gc_state_n state)))
                  (gc_state_r1 state),
           gc_state_a state, gc_state_n state,
-          GenState 0 (MAP (K (gc_state_a state)) limits), gc_state_ok state)))`;;
+          GenState 0 (MAP (combin_K (gc_state_a state)) limits), gc_state_ok state)))`;;

@@ -155,7 +155,7 @@ let word_cmp_lemma = prove
   DISCH_THEN(fun th -> REWRITE_TAC[th]) THEN
   MP_TAC(ISPECL [`a0:num`; `0`]
     (ASSUME `!l1 l2 x. lab_lookup l1 l2 labs = SOME x ==> EVEN x`)) THEN
-  CASES_ON `lab_lookup a0 0 labs` THEN CASE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN
+  CASES_ON `lab_lookup a0 0 labs` THEN CAKE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN
   REWRITE_TAC[option_DISTINCT; option_INJ] THEN
   DISCH_TAC THEN DISCH_THEN(SUBST_ALL_TAC o SYM) THEN
   ONCE_REWRITE_TAC[WORD_AND_SYM] THEN ASM_SIMP_TAC[EVEN_add_AND]);;
@@ -193,8 +193,8 @@ let find_index_append = prove
       | SOME i -> SOME i)`,
   REPEAT GEN_TAC THEN SPEC_TAC(`n:num`,`n:num`) THEN SPEC_TAC(`l:A list`,`l:A list`) THEN
   LIST_INDUCT_TAC THEN
-  ASM_REWRITE_TAC[APPEND; find_index_def; LENGTH; ADD_CLAUSES] THEN CASE_REWRITE_TAC[] THEN
-  GEN_TAC THEN COND_CASES_TAC THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[APPEND; find_index_def; LENGTH; ADD_CLAUSES] THEN CAKE_REWRITE_TAC[] THEN
+  GEN_TAC THEN COND_CASES_TAC THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[ARITH_RULE `(n + 1) + m = SUC (n + m)`]);;
 
 let LTTP2AUX_has_io_name_MEM = prove
@@ -202,8 +202,8 @@ let LTTP2AUX_has_io_name_MEM = prove
   MATCH_MP_TAC has_io_name_ind THEN
   REWRITE_TAC[has_io_name_def; find_ffi_names_def; MEM] THEN
   REPEAT GEN_TAC THEN DISCH_TAC THEN
-  CASES_ON `y:(A)line` THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
-  CASES_ON `a0:(A)asm_with_lab` THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON `y:(A)line` THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
+  CASES_ON `a0:(A)asm_with_lab` THEN CAKE_REWRITE_TAC[] THEN
   SIMP[list_add_if_fresh_thm] THEN COND_CASES_TAC THEN SIMP[MEM_APPEND; MEM] THEN
   ASM_MESON_TAC[]);;
 
@@ -640,7 +640,7 @@ let code_similar_loc_to_pc = prove
   ONCE_REWRITE_TAC[loc_to_pc_def] THEN
   COND_CASES_TAC THEN REWRITE_TAC[] THEN
   CASES_ON `xs:((A)line)list` THEN CASES_ON `a1:((A)line)list` THEN
-  FS[ALL2] THEN CASE_REWRITE_TAC[] THENL
+  FS[ALL2] THEN CAKE_REWRITE_TAC[] THENL
    [FIRST_X_ASSUM(MP_TAC o check (is_imp o concl)) THEN ASM_REWRITE_TAC[] THEN
     DISCH_THEN MATCH_MP_TAC THEN ASM_REWRITE_TAC[];
     ALL_TAC] THEN
@@ -768,7 +768,7 @@ let sec_labels_ok_filter_skip = prove
   AP_THM_TAC THEN AP_TERM_TAC THEN AP_THM_TAC THEN AP_TERM_TAC THEN
   GEN_REWRITE_TAC I [FUN_EQ_THM] THEN GEN_TAC THEN
   CASES_ON `x:(A)line` THEN REWRITE_TAC[sec_label_ok_def; not_skip_def] THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[]);;
 
 let _ = cake_add_simps [sec_labels_ok_filter_skip];;
 
@@ -2502,7 +2502,7 @@ let LTTP2AUX_lab_lookup_not_none = prove
      ~(lab_lookup n1 n2 labs = NONE) <=>
      (match lookup n1 labs with NONE -> F | SOME l -> ~(lookup n2 l = NONE))`,
   REPEAT GEN_TAC THEN REWRITE_TAC[lab_lookup_def] THEN
-  CASES_ON `lookup n1 (labs:(num spt)spt)` THEN CASE_REWRITE_TAC[]);;
+  CASES_ON `lookup n1 (labs:(num spt)spt)` THEN CAKE_REWRITE_TAC[]);;
 
 (* HOL4 line 5047 *)
 let zero_labs_acc_exist_eq = prove
@@ -2891,7 +2891,7 @@ let all_enc_ok_lab_lookup_even = prove
     `insert a0 (fromAList (CONS (0,pos) sec_labs)) (acc:(num spt)spt)`] THEN
   ASM_REWRITE_TAC[] THEN CONJ_TAC THENL
    [REWRITE_TAC[lab_lookup_def; lookup_insert] THEN GEN_TAC THEN COND_CASES_TAC THENL
-     [CASE_REWRITE_TAC[] THEN REWRITE_TAC[lookup_fromAList; ALOOKUP_DEF] THEN
+     [CAKE_REWRITE_TAC[] THEN REWRITE_TAC[lookup_fromAList; ALOOKUP_DEF] THEN
       COND_CASES_TAC THEN REWRITE_TAC[option_INJ] THENL
        [DISCH_THEN(SUBST1_TAC o SYM) THEN ASM_REWRITE_TAC[];
         DISCH_TAC THEN MATCH_MP_TAC lines_ok_section_lab_lookup_even THEN
@@ -3028,12 +3028,12 @@ let ALOOKUP_section_labels = prove
                pc = LENGTH (FILTER ((~) o is_Label) lines)) \/
               sec_pos_val pc pos lines = SOME i)`,
   MATCH_MP_TAC section_labels_ind THEN REPEAT CONJ_TAC THEN REPEAT GEN_TAC THENL
-   [ONCE_REWRITE_TAC[sec_loc_to_pc_def] THEN CASE_REWRITE_TAC[] THEN
+   [ONCE_REWRITE_TAC[sec_loc_to_pc_def] THEN CAKE_REWRITE_TAC[] THEN
     MESON_TAC[option_DISTINCT];
     DISCH_THEN(CONJUNCTS_THEN ASSUME_TAC) THEN REPEAT GEN_TAC THEN
     REWRITE_TAC[ALL; sec_label_ok_def; line_length_ok_def; line_bytes_def; LENGTH;
                 label_zero_def; lab_extract_labels_def; ALL_DISTINCT] THEN
-    ONCE_REWRITE_TAC[sec_loc_to_pc_def] THEN CASE_REWRITE_TAC[] THEN
+    ONCE_REWRITE_TAC[sec_loc_to_pc_def] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[section_labels_def; sec_pos_val_def; is_Label_def; line_length_def;
                 injectivity "line"; MAP; SUM; FILTER; o_THM] THEN
     STRIP_TAC THEN
@@ -3064,7 +3064,7 @@ let ALOOKUP_section_labels = prove
     DISCH_TAC THEN REPEAT GEN_TAC THEN
     REWRITE_TAC[ALL; sec_label_ok_def; line_length_ok_def; line_bytes_def;
                 label_zero_def; lab_extract_labels_def] THEN
-    ONCE_REWRITE_TAC[sec_loc_to_pc_def] THEN CASE_REWRITE_TAC[] THEN
+    ONCE_REWRITE_TAC[sec_loc_to_pc_def] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[section_labels_def; sec_pos_val_def; is_Label_def; line_length_def;
                 distinctness "line"; MAP; SUM; FILTER; o_THM; line_len_def] THEN
     STRIP_TAC THEN FIRST_X_ASSUM(MP_TAC o check (fun th -> is_eq(concl th) &&
@@ -3077,7 +3077,7 @@ let ALOOKUP_section_labels = prove
     DISCH_TAC THEN REPEAT GEN_TAC THEN
     REWRITE_TAC[ALL; sec_label_ok_def; line_length_ok_def; line_bytes_def;
                 label_zero_def; lab_extract_labels_def] THEN
-    ONCE_REWRITE_TAC[sec_loc_to_pc_def] THEN CASE_REWRITE_TAC[] THEN
+    ONCE_REWRITE_TAC[sec_loc_to_pc_def] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[section_labels_def; sec_pos_val_def; is_Label_def; line_length_def;
                 distinctness "line"; MAP; SUM; FILTER; o_THM; line_len_def] THEN
     STRIP_TAC THEN FIRST_X_ASSUM(MP_TAC o check (fun th -> is_eq(concl th) &&
@@ -3122,15 +3122,15 @@ let lab_lookup_compute_labels_test = prove
   UNDISCH_TAC `loc_to_pc l1 l2 (CONS (Section k lines) (rest:((A)sec)list)) = SOME x2` THEN
   MP_TAC(ISPECL [`l1:num`; `l2:num`; `CONS (Section k lines) (rest:((A)sec)list)`]
                 loc_to_pc_thm) THEN
-  ASM_REWRITE_TAC[ALL] THEN DISCH_THEN SUBST1_TAC THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[ALL] THEN DISCH_THEN SUBST1_TAC THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[pos_val_thm] THEN
   ASM_CASES_TAC `l1:num = k` THEN ASM_REWRITE_TAC[] THENL
-   [CASES_ON `sec_loc_to_pc l2 (lines:((A)line)list)` THEN CASE_REWRITE_TAC[] THENL
+   [CASES_ON `sec_loc_to_pc l2 (lines:((A)line)list)` THEN CAKE_REWRITE_TAC[] THENL
      [ALL_TAC;
       REWRITE_TAC[option_INJ] THEN DISCH_THEN(SUBST_ALL_TAC o SYM) THEN
       FIRST_X_ASSUM(SUBST_ALL_TAC o check (fun th -> concl th = `l1:num = k`)) THEN
       ASM_SIMP_TAC[lab_lookup_compute_labels_alt_ignore] THEN
-      REWRITE_TAC[lab_lookup_def; lookup_insert] THEN CASE_REWRITE_TAC[] THEN
+      REWRITE_TAC[lab_lookup_def; lookup_insert] THEN CAKE_REWRITE_TAC[] THEN
       REWRITE_TAC[lookup_fromAList; ALOOKUP_DEF] THEN
       ASM_CASES_TAC `0 = l2` THENL
        [FIRST_X_ASSUM(SUBST_ALL_TAC o SYM) THEN
@@ -3140,15 +3140,15 @@ let lab_lookup_compute_labels_test = prove
         ASM_CASES_TAC `ALL is_Label (lines:((A)line)list)` THENL
          [MP_TAC(ISPEC `lines:((A)line)list` LTTP2AUX_all_label_zero_sums) THEN
           ASM_SIMP_TAC[EVERY_is_Label_sec_pos_val; LENGTH; ADD_CLAUSES; SUB_0] THEN
-          STRIP_TAC THEN CASE_REWRITE_TAC[] THEN ASM_MESON_TAC[pos_val_0; ADD_CLAUSES];
-          ASM_SIMP_TAC[sec_pos_val_0] THEN CASE_REWRITE_TAC[]];
+          STRIP_TAC THEN CAKE_REWRITE_TAC[] THEN ASM_MESON_TAC[pos_val_0; ADD_CLAUSES];
+          ASM_SIMP_TAC[sec_pos_val_0] THEN CAKE_REWRITE_TAC[]];
         ASM_REWRITE_TAC[] THEN
         SUBGOAL_THEN `~(l2 = 0)` ASSUME_TAC THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
         MP_TAC(ISPECL [`pos:num`; `lines:((A)line)list`; `[]:(num#num)list`; `a:num`;
                        `k:num`; `l2:num`] ALOOKUP_section_labels) THEN
         RULE_ASSUM_TAC(REWRITE_RULE[sec_labels_ok_def]) THEN ASM_REWRITE_TAC[] THEN
         DISCH_THEN(X_CHOOSE_THEN `i:num` (CONJUNCTS_THEN2 SUBST1_TAC MP_TAC)) THEN
-        STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+        STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
         ASM_REWRITE_TAC[SUB_REFL] THEN ASM_MESON_TAC[pos_val_0]]];
     ALL_TAC] THEN
   (REWRITE_TAC[OPTION_MAP_EQ_SOME] THEN
@@ -3156,7 +3156,7 @@ let lab_lookup_compute_labels_test = prove
    SUBGOAL_THEN `sec_pos_val (LENGTH (FILTER ((~) o is_Label) lines) + y) pos
                    (lines:((A)line)list) = NONE` SUBST1_TAC THENL
     [MATCH_MP_TAC sec_pos_val_too_big THEN ARITH_TAC; ALL_TAC] THEN
-   CASE_REWRITE_TAC[] THEN REWRITE_TAC[ADD_SUB2] THEN
+   CAKE_REWRITE_TAC[] THEN REWRITE_TAC[ADD_SUB2] THEN
    FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_MESON_TAC[]));;
 
 let LTTP2AUX_enc_lines_again_simp_similar = prove
@@ -3758,7 +3758,7 @@ let LTTP2AUX_remove_labels_done = prove
                      (set_of_list (MAP Section_num (code:((A)sec)list)))` THEN
       UNDISCH_TAC `lab_lookup l1 l2 (init_labs:(num spt)spt) = SOME x` THEN
       REWRITE_TAC[lab_lookup_def; IN_DISJOINT; IN_SET_OF_LIST; domain_lookup] THEN
-      CASES_ON `lookup l1 (init_labs:(num spt)spt)` THEN CASE_REWRITE_TAC[] THEN
+      CASES_ON `lookup l1 (init_labs:(num spt)spt)` THEN CAKE_REWRITE_TAC[] THEN
       REWRITE_TAC[option_DISTINCT] THEN ASM_MESON_TAC[];
       ALL_TAC] THEN
     ASM_SIMP_TAC[lab_lookup_compute_labels_alt_ignore];

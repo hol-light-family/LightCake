@@ -158,15 +158,16 @@ let LBIG_SPLIT_TAC : tactic =
          REWRITE_TAC[LEFT_IMP_EXISTS_THM] THEN
          let ty1,ty2 = match dest_type (type_of e) with
              "prod",[a;b] -> a,b | _ -> failwith "LBIG_SPLIT_TAC" in
-         let v1 = variant fvs (mk_var("p1",ty1)) in
-         let v2 = variant (v1::fvs) (mk_var("p2",ty2)) in
+         let avoid = itlist (union o thm_frees o snd) asl fvs in
+         let v1 = variant avoid (mk_var("p1",ty1)) in
+         let v2 = variant (v1::avoid) (mk_var("p2",ty2)) in
          MAP_EVERY X_GEN_TAC [v1;v2] THEN
          DISCH_THEN(fun th -> SUBST_ALL_TAC th THEN ASSUME_TAC th) THEN
-         CASE_REWRITE_TAC[]) gl
+         CAKE_REWRITE_TAC[]) gl
     | None -> failwith "LBIG_SPLIT_TAC: nothing to split";;
 
 let LBIG_TAILREC_FINISH_TAC =
-  REWRITE_TAC[LET_DEF; LET_END_DEF] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[LET_DEF; LET_END_DEF] THEN CAKE_REWRITE_TAC[] THEN
   REPEAT LBIG_SPLIT_TAC THEN
   ASM_REWRITE_TAC[ISL; OUTL; OUTR; FST; SND] THEN
   TRY (CONV_TAC TAUT);;
@@ -378,7 +379,7 @@ let mc_compare_thm = prove
   MP_TAC(SPECL [`xs:(N word)list`; `ys:(N word)list`; `l - 1`] mc_cmp_thm) THEN
   ANTS_TAC THENL [ASM_REWRITE_TAC[] THEN ASM_ARITH_TAC; ALL_TAC] THEN
   DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC (X_CHOOSE_THEN `l2:num` STRIP_ASSUME_TAC)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   EXISTS_TAC `l2:num` THEN REWRITE_TAC[] THEN ASM_ARITH_TAC);;
 
 let b2w_eq = prove
@@ -602,7 +603,7 @@ let mc_add_loop1_thm = prove
   REWRITE_TAC[GSYM APPEND_ASSOC; APPEND; LENGTH; GSYM ADD1] THEN
   ONCE_REWRITE_TAC[mc_add_loop1_def; mc_add_loop1_pre_def] THEN
   ASM_REWRITE_TAC[LET_DEF; LET_END_DEF; LBIGAUX_WORD_SUC_SUB1; LBIGAUX_EL_LENGTH_CONS] THEN
-  REWRITE_TAC[LBIGAUX_SINGLE_ADD_WORD_B2W] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[LBIGAUX_SINGLE_ADD_WORD_B2W] THEN CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[b2w_eq; LBIGAUX_B2W_01; word_add_n2w; GSYM ADD1; LBIGAUX_MW_ADD_CONS] THEN
   FIRST_X_ASSUM(MP_TAC o SPECL [`ys':(N word)list`; `zs':(N word)list`;
     `SNOC (h:N word) xs1`; `SNOC (y:N word) ys1`;
@@ -659,7 +660,7 @@ let mc_add_loop2_thm = prove
   REWRITE_TAC[GSYM APPEND_ASSOC; APPEND; LENGTH; GSYM ADD1] THEN
   ONCE_REWRITE_TAC[mc_add_loop2_def; mc_add_loop2_pre_def] THEN
   ASM_REWRITE_TAC[LET_DEF; LET_END_DEF; LBIGAUX_WORD_SUC_SUB1; LBIGAUX_EL_LENGTH_CONS] THEN
-  REWRITE_TAC[LBIGAUX_SINGLE_ADD_WORD_B2W] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[LBIGAUX_SINGLE_ADD_WORD_B2W] THEN CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[b2w_eq; LBIGAUX_B2W_01; word_add_n2w; GSYM ADD1; LBIGAUX_MW_ADD_CONS; MAP] THEN
   FIRST_X_ASSUM(MP_TAC o SPECL [`zs':(N word)list`;
     `SNOC (h:N word) xs1`; `SNOC (FST (single_add (h:N word) (word 0) c)) zs1`;
@@ -702,7 +703,7 @@ let mc_add_thm = prove
   LBIG_PAIR_TAC `mw_add (xs1:(N word)list) (ys:(N word)list) F` `qs1:(N word)list` `c1:bool` THEN
   LBIG_PAIR_TAC `mw_add (xs2:(N word)list) (MAP (\x. word 0:N word) xs2) c1`
     `qs2:(N word)list` `c2:bool` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   DISCH_TAC THEN
   SUBGOAL_THEN `LENGTH (qs1:(N word)list) = LENGTH (xs1:(N word)list) /\
                 LENGTH (qs2:(N word)list) = LENGTH (xs2:(N word)list)` STRIP_ASSUME_TAC THENL
@@ -735,7 +736,7 @@ let mc_add_thm = prove
   ANTS_TAC THENL [RULE_ASSUM_TAC(REWRITE_RULE[LENGTH_APPEND]) THEN ASM_ARITH_TAC; ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_THEN `r8a:N word` (X_CHOOSE_THEN `r9a:N word`
     (X_CHOOSE_THEN `l2a:num` STRIP_ASSUME_TAC))) THEN
-  ASM_REWRITE_TAC[GSYM APPEND_ASSOC] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[GSYM APPEND_ASSOC] THEN CAKE_REWRITE_TAC[] THEN
   MP_TAC(SPECL [`xs2:(N word)list`; `zs3:(N word)list`; `xs1:(N word)list`;
     `qs1:(N word)list`; `[]:(N word)list`; `APPEND zs4 zs2:(N word)list`; `r8a:N word`;
     `c1:bool`; `l2a - 1`] mc_add_loop2_thm) THEN
@@ -744,7 +745,7 @@ let mc_add_thm = prove
   ANTS_TAC THENL [RULE_ASSUM_TAC(REWRITE_RULE[LENGTH_APPEND]) THEN ASM_ARITH_TAC; ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_THEN `r8b:N word` (X_CHOOSE_THEN `r9b:N word`
     (X_CHOOSE_THEN `l2b:num` STRIP_ASSUME_TAC))) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   SUBGOAL_THEN `LENGTH (zs4:(N word)list) = (if c2 then 1 else 0)` MP_TAC THENL
    [UNDISCH_TAC `LENGTH (APPEND zs1 (APPEND zs3 zs4):(N word)list) =
        LENGTH (APPEND (APPEND qs1 qs2) (if c2 then [word 1:N word] else []))` THEN
@@ -755,7 +756,7 @@ let mc_add_thm = prove
   ASM_REWRITE_TAC[LENGTH; NOT_SUC; GSYM NOT_SUC; ARITH_RULE `SUC n = 1 <=> n = 0`;
                   ARITH_RULE `~(0 = 1)`; LENGTH_EQ_NIL; BITVAL_CLAUSES;
                   LBIGAUX_WORD_NOT_ZERO_ONE; GSYM LBIGAUX_WORD_NOT_ZERO_ONE] THEN
-  REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[APPEND] THEN CASE_REWRITE_TAC[] THENL
+  REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[APPEND] THEN CAKE_REWRITE_TAC[] THENL
    [MAP_EVERY EXISTS_TAC [`word 0:N word`; `word (LENGTH (xs2:(N word)list) + 1):N word`;
       `r8b:N word`; `r9b:N word`; `l2b:num`] THEN
     REWRITE_TAC[LENGTH_APPEND; ADD_CLAUSES] THEN ASM_REWRITE_TAC[] THEN
@@ -1009,7 +1010,7 @@ let mc_sub_loop1_thm = prove
   REWRITE_TAC[GSYM APPEND_ASSOC; APPEND; LENGTH; GSYM ADD1] THEN
   ONCE_REWRITE_TAC[mc_sub_loop1_def; mc_sub_loop1_pre_def] THEN
   ASM_REWRITE_TAC[LET_DEF; LET_END_DEF; LBIGAUX_WORD_SUC_SUB1; LBIGAUX_EL_LENGTH_CONS] THEN
-  REWRITE_TAC[LBIGAUX_SINGLE_SUB_WORD_B2W] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[LBIGAUX_SINGLE_SUB_WORD_B2W] THEN CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[b2w_eq; LBIGAUX_B2W_01; word_add_n2w; GSYM ADD1; LBIGAUX_MW_SUB_CONS] THEN
   FIRST_X_ASSUM(MP_TAC o SPECL [`ys':(N word)list`; `zs':(N word)list`;
     `SNOC (h:N word) xs1`; `SNOC (y:N word) ys1`;
@@ -1066,7 +1067,7 @@ let mc_sub_loop2_thm = prove
   REWRITE_TAC[GSYM APPEND_ASSOC; APPEND; LENGTH; GSYM ADD1] THEN
   ONCE_REWRITE_TAC[mc_sub_loop2_def; mc_sub_loop2_pre_def] THEN
   ASM_REWRITE_TAC[LET_DEF; LET_END_DEF; LBIGAUX_WORD_SUC_SUB1; LBIGAUX_EL_LENGTH_CONS] THEN
-  REWRITE_TAC[LBIGAUX_SINGLE_SUB_WORD_B2W] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[LBIGAUX_SINGLE_SUB_WORD_B2W] THEN CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[b2w_eq; LBIGAUX_B2W_01; word_add_n2w; GSYM ADD1; LBIGAUX_MW_SUB_CONS_NIL] THEN
   FIRST_X_ASSUM(MP_TAC o SPECL [`zs':(N word)list`;
     `SNOC (h:N word) xs1`; `SNOC (FST (single_sub (h:N word) (word 0) c)) zs1`;
@@ -1101,7 +1102,7 @@ let mc_sub_thm = prove
   FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP mw_sub_APPEND th]) THEN
   LBIG_PAIR_TAC `mw_sub (xs1:(N word)list) (ys:(N word)list) T` `qs1:(N word)list` `c1:bool` THEN
   LBIG_PAIR_TAC `mw_sub (xs2:(N word)list) [] c1` `qs2:(N word)list` `c2:bool` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   SUBGOAL_THEN `LENGTH (qs1:(N word)list) = LENGTH (xs1:(N word)list) /\
                 LENGTH (qs2:(N word)list) = LENGTH (xs2:(N word)list)` STRIP_ASSUME_TAC THENL
    [ASM_MESON_TAC[LENGTH_mw_sub]; ALL_TAC] THEN
@@ -1129,7 +1130,7 @@ let mc_sub_thm = prove
   ANTS_TAC THENL [RULE_ASSUM_TAC(REWRITE_RULE[LENGTH_APPEND]) THEN ASM_ARITH_TAC; ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_THEN `r8a:N word` (X_CHOOSE_THEN `r9a:N word`
     (X_CHOOSE_THEN `l2a:num` STRIP_ASSUME_TAC))) THEN
-  ASM_REWRITE_TAC[GSYM APPEND_ASSOC] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[GSYM APPEND_ASSOC] THEN CAKE_REWRITE_TAC[] THEN
   MP_TAC(SPECL [`xs2:(N word)list`; `zs3:(N word)list`; `xs1:(N word)list`;
     `qs1:(N word)list`; `[]:(N word)list`; `zs2:(N word)list`; `r8a:N word`;
     `c1:bool`; `l2a - 1`] mc_sub_loop2_thm) THEN
@@ -1138,13 +1139,13 @@ let mc_sub_thm = prove
   ANTS_TAC THENL [RULE_ASSUM_TAC(REWRITE_RULE[LENGTH_APPEND]) THEN ASM_ARITH_TAC; ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_THEN `r8b:N word` (X_CHOOSE_THEN `r9b:N word`
     (X_CHOOSE_THEN `l2b:num` STRIP_ASSUME_TAC))) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   MP_TAC(SPECL [`APPEND (qs1:(N word)list) qs2`; `zs2:(N word)list`; `r8b:N word`;
     `l2b - 1`] mc_fix_thm) THEN
   REWRITE_TAC[LENGTH_APPEND; GSYM APPEND_ASSOC] THEN ASM_REWRITE_TAC[] THEN
   ANTS_TAC THENL [RULE_ASSUM_TAC(REWRITE_RULE[LENGTH_APPEND]) THEN ASM_ARITH_TAC; ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_THEN `r8c:N word` (X_CHOOSE_THEN `l2c:num` STRIP_ASSUME_TAC)) THEN
-  REWRITE_TAC[LENGTH_APPEND] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[LENGTH_APPEND] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   MAP_EVERY EXISTS_TAC [`word 0:N word`; `word (LENGTH (xs2:(N word)list) + 1):N word`;
     `r8c:N word`; `r9b:N word`; `l2c:num`] THEN
   REWRITE_TAC[] THEN RULE_ASSUM_TAC(REWRITE_RULE[LENGTH_APPEND]) THEN ASM_ARITH_TAC);;
@@ -1364,22 +1365,22 @@ let mc_iadd_thm = prove
         STRIP_ASSUME_TAC THENL [ASM_MESON_TAC[dim63_IMP_dim64]; ALL_TAC] THEN
       REWRITE_TAC[mc_iadd1_def; LET_DEF; LET_END_DEF; word_lo_n2w] THEN ASM_SIMP_TAC[MOD_LT] THEN
       ASM_CASES_TAC `LENGTH (ys:(N word)list) <= LENGTH (xs:(N word)list)` THEN
-      ASM_REWRITE_TAC[GSYM NOT_LE] THEN CASE_REWRITE_TAC[]) THENL
+      ASM_REWRITE_TAC[GSYM NOT_LE] THEN CAKE_REWRITE_TAC[]) THENL
     [(MP_TAC(SPECL [`xs:(N word)list`; `ys:(N word)list`; `zs:(N word)list`; `l:num`]
          LBIGAUX_IADD_ADD) THEN
        ANTS_TAC THENL
         [ASM_SIMP_TAC[LBIGAUX_DIV2_LT] THEN ASM_ARITH_TAC; ALL_TAC] THEN
-       STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
-       REWRITE_TAC[mc_iadd3_def; mc_header_AND_1] THEN CASE_REWRITE_TAC[] THEN
+       STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
+       REWRITE_TAC[mc_iadd3_def; mc_header_AND_1] THEN CAKE_REWRITE_TAC[] THEN
        EXISTS_TAC `zs1:(N word)list` THEN EXISTS_TAC `l2:num` THEN
        ASM_REWRITE_TAC[LBIGAUX_SHL1_HEADER] THEN ASM_ARITH_TAC);
      (MP_TAC(SPECL [`ys:(N word)list`; `xs:(N word)list`; `zs:(N word)list`; `l:num`]
          LBIGAUX_IADD_ADD) THEN
        ANTS_TAC THENL
         [ASM_SIMP_TAC[LBIGAUX_DIV2_LT] THEN ASM_ARITH_TAC; ALL_TAC] THEN
-       STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+       STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
        REWRITE_TAC[mc_iadd3_def; mc_header_AND_1; GSYM LBIGAUX_WORD_NOT_ZERO_ONE] THEN
-       CASE_REWRITE_TAC[] THEN
+       CAKE_REWRITE_TAC[] THEN
        EXISTS_TAC `zs1:(N word)list` THEN EXISTS_TAC `l2:num` THEN
        ASM_REWRITE_TAC[LBIGAUX_SHL1_HEADER] THEN ASM_ARITH_TAC)];
     (SUBGOAL_THEN `LENGTH (xs:(N word)list) < dimword(:N) /\ LENGTH (ys:(N word)list) < dimword(:N)`
@@ -1387,7 +1388,7 @@ let mc_iadd_thm = prove
       MP_TAC(SPECL [`xs:(N word)list`; `ys:(N word)list`; `l:num`] mc_compare_thm) THEN
       ANTS_TAC THENL [ASM_ARITH_TAC; ALL_TAC] THEN
       DISCH_THEN(X_CHOOSE_THEN `l1:num` STRIP_ASSUME_TAC) THEN
-      ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+      ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
       ASM_SIMP_TAC[mw_compare_thm] THEN
       ASM_CASES_TAC `mw2n (xs:(N word)list) = mw2n (ys:(N word)list)` THEN
       ASM_REWRITE_TAC[cmp2w_def] THENL
@@ -1398,16 +1399,16 @@ let mc_iadd_thm = prove
       ASM_REWRITE_TAC[cmp2w_def; GSYM LBIGAUX_WORD_NOT_ZERO_ONE] THEN
       REWRITE_TAC[mc_iadd2_def; LET_DEF; LET_END_DEF; mc_header_AND_1] THEN
       ASM_REWRITE_TAC[LBIGAUX_WORD_2_NE_1; GSYM NOT_LT]) THENL
-    [(CASE_REWRITE_TAC[] THEN ASM_SIMP_TAC[mc_length] THEN
+    [(CAKE_REWRITE_TAC[] THEN ASM_SIMP_TAC[mc_length] THEN
        SUBGOAL_THEN `LENGTH (xs:(N word)list) <= LENGTH (ys:(N word)list)` ASSUME_TAC THENL
         [ASM_MESON_TAC[mw2n_LESS; LT_IMP_LE]; ALL_TAC] THEN
        MP_TAC(SPECL [`ys:(N word)list`; `xs:(N word)list`; `zs:(N word)list`; `l1:num`]
          LBIGAUX_IADD_SUB) THEN
        ANTS_TAC THENL
         [ASM_SIMP_TAC[LBIGAUX_DIV2_LT] THEN ASM_ARITH_TAC; ALL_TAC] THEN
-       STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+       STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
        REWRITE_TAC[mc_iadd3_def; GSYM LBIGAUX_WORD_NOT_ZERO_ONE] THEN
-       CASE_REWRITE_TAC[] THEN
+       CAKE_REWRITE_TAC[] THEN
        EXISTS_TAC `zs1:(N word)list` THEN EXISTS_TAC `l2:num` THEN
        ASM_REWRITE_TAC[b2w_NOT; LBIGAUX_SHL1_HEADER] THEN ASM_ARITH_TAC);
      (SUBGOAL_THEN `~(word 2:N word = word 0)` (fun th -> REWRITE_TAC[th]) THENL
@@ -1420,16 +1421,16 @@ let mc_iadd_thm = prove
          UNDISCH_TAC `LENGTH (xs:(N word)list) < dimword (:N) DIV 2` THEN
          REWRITE_TAC[LBIGAUX_DIMWORD_HALF] THEN SIMP_TAC[DIV_MULT; ARITH_RULE `~(2 = 0)`] THEN
          ARITH_TAC; ALL_TAC] THEN
-       CASE_REWRITE_TAC[] THEN ASM_SIMP_TAC[mc_length] THEN
+       CAKE_REWRITE_TAC[] THEN ASM_SIMP_TAC[mc_length] THEN
        SUBGOAL_THEN `LENGTH (ys:(N word)list) <= LENGTH (xs:(N word)list)` ASSUME_TAC THENL
         [MATCH_MP_TAC mw2n_LESS THEN ASM_REWRITE_TAC[] THEN ASM_ARITH_TAC; ALL_TAC] THEN
        MP_TAC(SPECL [`xs:(N word)list`; `ys:(N word)list`; `zs:(N word)list`; `l1:num`]
          LBIGAUX_IADD_SUB) THEN
        ANTS_TAC THENL
         [ASM_SIMP_TAC[LBIGAUX_DIV2_LT] THEN ASM_ARITH_TAC; ALL_TAC] THEN
-       STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+       STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
        REWRITE_TAC[mc_iadd3_def] THEN
-       CASE_REWRITE_TAC[] THEN
+       CAKE_REWRITE_TAC[] THEN
        EXISTS_TAC `zs1:(N word)list` THEN EXISTS_TAC `l2:num` THEN
        ASM_REWRITE_TAC[LBIGAUX_SHL1_HEADER] THEN ASM_ARITH_TAC)]]);;
 
@@ -1478,21 +1479,21 @@ let mc_single_mul_add_thm = prove
   REPEAT GEN_TAC THEN
   REWRITE_TAC[mc_single_mul_add_def; mc_single_mul_add_pre_def; LET_DEF; LET_END_DEF] THEN
   LBIG_PAIR_TAC `single_mul (p:N word) q (word 0)` `r0a:N word` `r2a:N word` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[LBIGAUX_SINGLE_ADD_WORD_0] THEN
   LBIG_PAIR_TAC `single_add (r0a:N word) k F` `r0b:N word` `c1:bool` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[LBIGAUX_SINGLE_ADD_WORD_B2W] THEN
   LBIG_PAIR_TAC `single_add (r2a:N word) (word 0) c1` `r2b:N word` `c2:bool` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[LBIGAUX_SINGLE_ADD_WORD_0] THEN
   LBIG_PAIR_TAC `single_add (r0b:N word) s F` `r0c:N word` `c3:bool` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[LBIGAUX_SINGLE_ADD_WORD_B2W] THEN
   LBIG_PAIR_TAC `single_add (r2b:N word) (word 0) c3` `r2c:N word` `c4:bool` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   LBIG_PAIR_TAC `single_mul_add (p:N word) q k s` `x1:N word` `x2:N word` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
   MATCH_MP_TAC LBIGAUX_DIGITS_UNIQUE THEN
   REPEAT(FIRST_X_ASSUM(fun th ->
     let th' = tryfind (fun r -> MATCH_MP r th)
@@ -1652,9 +1653,9 @@ let LBIGAUX_MC_MUL_PASS = prove
   ONCE_REWRITE_TAC[mc_mul_pass_def; mc_mul_pass_pre_def] THEN
   ASM_REWRITE_TAC[LET_DEF; LET_END_DEF; LBIGAUX_EL_LENGTH_CONS; mc_single_mul_add_thm] THEN
   LBIG_PAIR_TAC `single_mul_add (x:N word) h k z` `x1:N word` `x2:N word` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[LUPDATE_LENGTH; word_add_n2w; mw_mul_pass_def; HD; TL] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   FIRST_X_ASSUM(MP_TAC o SPECL [`SNOC (h:N word) ys1`; `x:N word`; `zs':(N word)list`;
     `x2:N word`; `SNOC (x1:N word) zs1`; `zs2:(N word)list`; `z2:N word`; `l - 1`]) THEN
   REWRITE_TAC[LENGTH_SNOC; SNOC_APPEND; GSYM APPEND_ASSOC; APPEND; LENGTH_APPEND; LENGTH;
@@ -1736,7 +1737,7 @@ let LBIGAUX_MC_MUL = prove
     UNDISCH_TAC `2 * SUC (LENGTH (t:(N word)list)) + SUC (LENGTH t) * LENGTH (ys:(N word)list) <= l` THEN
     REWRITE_TAC[MULT_CLAUSES] THEN ASM_ARITH_TAC; ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_THEN `r1:N word` (X_CHOOSE_THEN `l2:num` STRIP_ASSUME_TAC)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[LENGTH_APPEND; LBIGAUX_WORD_SUB_MID2] THEN
   SUBGOAL_THEN `?p ps. mw_mul_pass (h:N word) ys zs (word 0) = CONS p ps /\
                        LENGTH (ps:(N word)list) = LENGTH (ys:(N word)list)`
@@ -1880,7 +1881,7 @@ let mc_imul_thm = prove
   MP_TAC(SPECL [`qs1:(N word)list`; `qs2:(N word)list`; `l - 1`] mc_mul_zero_thm) THEN
   ASM_REWRITE_TAC[] THEN ANTS_TAC THENL
    [RULE_ASSUM_TAC(REWRITE_RULE[LENGTH_APPEND]) THEN LBIGAUX_ARITH_TAC; ALL_TAC] THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   SUBGOAL_THEN `MAP (\x. word 0:N word) (qs1:(N word)list) = MAP (\x. word 0) (ys:(N word)list)`
     SUBST1_TAC THENL [ASM_REWRITE_TAC[MAP_EQ_MAP_EQ]; ALL_TAC] THEN
   MP_TAC(SPECL [`xs:(N word)list`; `ys:(N word)list`; `MAP (\x. word 0:N word) (ys:(N word)list)`;
@@ -1888,7 +1889,7 @@ let mc_imul_thm = prove
   ASM_REWRITE_TAC[LENGTH_MAP; LENGTH_APPEND] THEN ANTS_TAC THENL
    [RULE_ASSUM_TAC(REWRITE_RULE[LENGTH_APPEND]) THEN LBIGAUX_ARITH_TAC; ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_THEN `zs3:(N word)list` (X_CHOOSE_THEN `l2:num` STRIP_ASSUME_TAC)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   SUBGOAL_THEN `LENGTH (mw_mul (xs:(N word)list) ys (MAP (\x. word 0) ys)) =
                 LENGTH xs + LENGTH ys` ASSUME_TAC THENL
    [MATCH_MP_TAC LENGTH_mw_mul THEN REWRITE_TAC[LENGTH_MAP]; ALL_TAC] THEN
@@ -1898,7 +1899,7 @@ let mc_imul_thm = prove
    [ASM_REWRITE_TAC[] THEN RULE_ASSUM_TAC(REWRITE_RULE[LENGTH_APPEND]) THEN LBIGAUX_ARITH_TAC;
     ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_THEN `r8a:N word` (X_CHOOSE_THEN `l3:num` STRIP_ASSUME_TAC)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[LBIGAUX_B2W_EQ_COND; LBIGAUX_SHL1_HEADER] THEN
   EXISTS_TAC `APPEND (REPLICATE (LENGTH (mw_mul (xs:(N word)list) ys (MAP (\x. word 0) ys)) -
      LENGTH (mw_fix (mw_mul xs ys (MAP (\x. word 0) ys)))) (word 0:N word)) zs3` THEN
@@ -1933,7 +1934,7 @@ let mc_single_div_thm = prove
   REPEAT GEN_TAC THEN
   REWRITE_TAC[mc_single_div_def; mc_single_div_pre_def; LET_DEF; LET_END_DEF] THEN
   LBIG_PAIR_TAC `single_div (x1:N word) x2 y` `q:N word` `r:N word` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[single_div_pre_def; WORD_ULT] THEN
   ASM_CASES_TAC `y:N word = word 0` THEN ASM_REWRITE_TAC[VAL_WORD_0; CONJUNCT1 LT] THEN
   SUBGOAL_THEN `~(val (y:N word) = 0)` ASSUME_TAC THENL
@@ -1995,12 +1996,12 @@ let LBIGAUX_MW_SIMPLE_DIV_SNOC = prove
            mw_simple_div (SND (single_div r2 x r9)) (REVERSE xs) r9 = (qs',r,T)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[REVERSE_SNOC; mw_simple_div_def; LET_DEF; LET_END_DEF] THEN
   LBIG_PAIR_TAC `single_div (r2:N word) x r9` `q:N word` `r':N word` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   MP_TAC(ISPEC `mw_simple_div (r':N word) (REVERSE xs) r9` PAIR_SURJECTIVE) THEN
   REWRITE_TAC[LEFT_IMP_EXISTS_THM] THEN MAP_EVERY X_GEN_TAC [`qs1:(N word)list`; `p:N word#bool`] THEN
   MP_TAC(ISPEC `p:N word#bool` PAIR_SURJECTIVE) THEN
   REWRITE_TAC[LEFT_IMP_EXISTS_THM] THEN MAP_EVERY X_GEN_TAC [`r1:N word`; `c1:bool`] THEN
-  DISCH_THEN SUBST1_TAC THEN DISCH_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  DISCH_THEN SUBST1_TAC THEN DISCH_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[PAIR_EQ; FST; SND] THEN MESON_TAC[]);;
 
 let mc_simple_div_thm = prove
@@ -2035,7 +2036,7 @@ let mc_simple_div_thm = prove
   REWRITE_TAC[SNOC_APPEND; GSYM APPEND_ASSOC; APPEND; LBIGAUX_EL_LENGTH_CONS] THEN
   ASM_REWRITE_TAC[mc_single_div_thm] THEN
   LBIG_PAIR_TAC `single_div (r2:N word) x r9` `q:N word` `r':N word` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   UNDISCH_TAC `single_div (r2:N word) x r9 = q,r'` THEN
   DISCH_THEN(fun th -> RULE_ASSUM_TAC(REWRITE_RULE[th; FST; SND]) THEN ASSUME_TAC th) THEN
   SUBGOAL_THEN `LUPDATE (q:N word) (LENGTH (xs:(N word)list)) (APPEND zs' (CONS z zs1)) =
@@ -2075,7 +2076,7 @@ let mc_simple_div1_thm = prove
   REWRITE_TAC[SNOC_APPEND; GSYM APPEND_ASSOC; APPEND; LBIGAUX_EL_LENGTH_CONS] THEN
   ASM_REWRITE_TAC[mc_single_div_thm] THEN
   LBIG_PAIR_TAC `single_div (r2:N word) x r9` `q:N word` `r':N word` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   UNDISCH_TAC `single_div (r2:N word) x r9 = q,r'` THEN
   DISCH_THEN(fun th -> RULE_ASSUM_TAC(REWRITE_RULE[th; FST; SND]) THEN ASSUME_TAC th) THEN
   REWRITE_TAC[LUPDATE_LENGTH] THEN
@@ -2153,15 +2154,15 @@ let mc_single_mul_thm = prove
   REPEAT GEN_TAC THEN
   REWRITE_TAC[mc_single_mul_def; mc_single_mul_pre_def; LET_DEF; LET_END_DEF] THEN
   LBIG_PAIR_TAC `single_mul (p:N word) q (word 0)` `r0a:N word` `r2a:N word` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[LBIGAUX_SINGLE_ADD_WORD_0] THEN
   LBIG_PAIR_TAC `single_add (r0a:N word) k F` `r0b:N word` `c1:bool` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[LBIGAUX_SINGLE_ADD_WORD_B2W] THEN
   LBIG_PAIR_TAC `single_add (r2a:N word) (word 0) c1` `r2b:N word` `c2:bool` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   LBIG_PAIR_TAC `single_mul_add (p:N word) q k (word 0)` `x1:N word` `x2:N word` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
   MATCH_MP_TAC LBIGAUX_DIGITS_UNIQUE THEN
   REPEAT(FIRST_X_ASSUM(fun th ->
     let th' = tryfind (fun r -> MATCH_MP r th)
@@ -2209,9 +2210,9 @@ let mc_mul_by_single2_thm = prove
   REWRITE_TAC[mw_mul_by_single_def; LENGTH; k2mw_def; DIV_0; mw_mul_pass_def; HD; TL;
               ARITH_RULE `2 = SUC (SUC 0)`] THEN
   LBIG_PAIR_TAC `single_mul_add (r6:N word) r7 (word 0) (word 0)` `y1:N word` `k1:N word` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   LBIG_PAIR_TAC `single_mul_add (r6:N word) r8 k1 (word 0)` `y2:N word` `k2:N word` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   MESON_TAC[]);;
 
 let mc_cmp3,mc_cmp3_pre,mc_cmp3_def,mc_cmp3_pre_def =
@@ -2284,8 +2285,8 @@ let mc_cmp_mul2_thm = prove
   REPEAT GEN_TAC THEN
   REWRITE_TAC[mc_cmp_mul2_def; mc_cmp_mul2_pre_def; LET_DEF; LET_END_DEF] THEN
   MP_TAC(SPECL [`r6:N word`; `r7:N word`; `r8:N word`] mc_mul_by_single2_thm) THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
-  REWRITE_TAC[mc_cmp3_thm] THEN CASE_REWRITE_TAC[]);;
+  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
+  REWRITE_TAC[mc_cmp3_thm] THEN CAKE_REWRITE_TAC[]);;
 
 let mc_sub1,mc_sub1_pre,mc_sub1_def,mc_sub1_pre_def =
   LBIGAUX_tailrec_define "mc_sub1"
@@ -2377,7 +2378,7 @@ let mc_div_test_lemma = prove
   REPEAT GEN_TAC THEN DISCH_THEN(LABEL_TAC "ih") THEN X_GEN_TAC `l:num` THEN DISCH_TAC THEN
   ONCE_REWRITE_TAC[mc_div_test_def; mc_div_test_pre_def] THEN
   ONCE_REWRITE_TAC[mw_div_test_def] THEN
-  REWRITE_TAC[LET_DEF; LET_END_DEF; mc_cmp_mul2_thm] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[LET_DEF; LET_END_DEF; mc_cmp_mul2_thm] THEN CAKE_REWRITE_TAC[] THEN
   ASM_CASES_TAC `mw_cmp [u3:N word;u2;u1] (mw_mul_by_single (q:N word) [v2;v1]) = SOME T` THEN
   ASM_REWRITE_TAC[GSYM LBIGAUX_WORD_NOT_ZERO_ONE] THENL
    [ALL_TAC; EXISTS_TAC `l:num` THEN ARITH_TAC] THEN
@@ -2392,8 +2393,8 @@ let mc_div_test_lemma = prove
   REWRITE_TAC[mc_sub1_thm; mc_single_mul_add_thm; GSYM LBIGAUX_SINGLE_MUL_ADD_00] THEN
   LBIG_PAIR_TAC `single_mul_add (word (val (q:N word) - 1):N word) v1 (word 0) (word 0)`
     `x1:N word` `x2:N word` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
-  REWRITE_TAC[mc_cmp2_thm; FST; SND; LBIGAUX_MW_ADD_0_1] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
+  REWRITE_TAC[mc_cmp2_thm; FST; SND; LBIGAUX_MW_ADD_0_1] THEN CAKE_REWRITE_TAC[] THEN
   ASM_CASES_TAC `mw_cmp [u2:N word;u1] [x1; word_add x2 (word 1)] = SOME T` THEN
   ASM_REWRITE_TAC[GSYM LBIGAUX_WORD_NOT_ZERO_ONE] THENL
    [ALL_TAC; EXISTS_TAC `l:num` THEN ARITH_TAC] THEN
@@ -2435,7 +2436,7 @@ let LBIGAUX_SINGLE_DIV_PRE = prove
   MP_TAC(SPECL [`x2:N word`; `x1:N word`; `y:N word`] mc_single_div_thm) THEN
   REWRITE_TAC[mc_single_div_pre_def; LET_DEF; LET_END_DEF] THEN
   LBIG_PAIR_TAC `single_div (x1:N word) x2 y` `q:N word` `r:N word` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN SIMP_TAC[]);;
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN SIMP_TAC[]);;
 
 let mc_div_r1,mc_div_r1_pre,mc_div_r1_def,mc_div_r1_pre_def =
   LBIGAUX_tailrec_define "mc_div_r1" (CASE_TERM
@@ -2455,7 +2456,7 @@ let mc_div_r1_thm = prove
   REPEAT GEN_TAC THEN REWRITE_TAC[mc_div_r1_def; LET_DEF; LET_END_DEF] THEN
   COND_CASES_TAC THEN REWRITE_TAC[] THEN
   LBIG_PAIR_TAC `single_div (r2:N word) r0 r1` `q:N word` `r:N word` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[FST; SND]);;
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[FST; SND]);;
 
 let mc_div_guess,mc_div_guess_pre,mc_div_guess_def,mc_div_guess_pre_def =
   LBIGAUX_tailrec_define "mc_div_guess" (CASE_TERM
@@ -2486,18 +2487,18 @@ let mc_div_guess_thm = prove
               mc_div_r1_pre_def] THEN
   REWRITE_TAC[mw_div_guess_def; LET_DEF; LET_END_DEF; HD; TL; GSYM WORD_ULT;
               LBIGAUX_WORD_NOT_0] THEN
-  ASM_CASES_TAC `word_ult (u1:N word) v1` THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_CASES_TAC `word_ult (u1:N word) v1` THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[LBIGAUX_SINGLE_DIV_PRE] THEN ASM_REWRITE_TAC[] THENL
    [MP_TAC(SPECL [`FST (single_div (u1:N word) u2 v1)`; `u1:N word`; `u2:N word`; `u3:N word`;
       `v1:N word`; `v2:N word`; `l - 1`] mc_div_test_thm);
     MP_TAC(SPECL [`word (dimword(:N) - 1):N word`; `u1:N word`; `u2:N word`; `u3:N word`;
       `v1:N word`; `v2:N word`; `l - 1`] mc_div_test_thm)] THEN
   (ANTS_TAC THENL [ASM_ARITH_TAC; ALL_TAC] THEN
-   STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+   STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
    EXISTS_TAC `l2:num` THEN REWRITE_TAC[] THEN
    CONJ_TAC THENL [ALL_TAC; ASM_ARITH_TAC]) THEN
   TRY(LBIG_PAIR_TAC `single_div (u1:N word) u2 v1` `q0:N word` `rr0:N word` THEN
-      ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]) THEN
+      ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]) THEN
   (SUBGOAL_THEN `~(l = 0) /\ (word_ult (u1:N word) v1 ==> ~(v1 = word 0))` MP_TAC THENL
     [CONJ_TAC THENL
       [ASM_ARITH_TAC; REWRITE_TAC[WORD_ULT; GSYM VAL_EQ_0; VAL_WORD_0] THEN ARITH_TAC];
@@ -2637,9 +2638,9 @@ let mc_div_sub_thm = prove
   REPEAT GEN_TAC THEN
   REWRITE_TAC[mc_div_sub_def; mc_div_sub_pre_def; LET_DEF; LET_END_DEF;
               LBIGAUX_SINGLE_SUB_WORD_B2W; LBIGAUX_B2W_01] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   LBIG_PAIR_TAC `single_sub (r3:N word) r0 c` `a:N word` `b:bool` THEN
-  ASM_REWRITE_TAC[FST; SND] THEN CASE_REWRITE_TAC[]);;
+  ASM_REWRITE_TAC[FST; SND] THEN CAKE_REWRITE_TAC[]);;
 
 let LBIGAUX_MW_CMP_ALT_CONS = prove
  (`!(z:N word) zs q qs res.
@@ -2677,7 +2678,7 @@ let LBIGAUX_MC_ADJUST_AUX = prove
     SUBGOAL_THEN `val (word (LENGTH (zs1:(N word)list)):N word) = LENGTH zs1` SUBST1_TAC THENL
      [MATCH_MP_TAC LBIGAUX_VAL_WORD_LT THEN ASM_ARITH_TAC; ALL_TAC] THEN
     REWRITE_TAC[LBIGAUX_EL_LENGTH_CONS; mc_adj_cmp_thm; mw_mul_by_single2_def] THEN
-    CASE_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[word_add_n2w; LENGTH_APPEND; LENGTH; GSYM ADD1] THEN
     EXISTS_TAC `l:num` THEN ARITH_TAC;
     ALL_TAC] THEN
@@ -2698,12 +2699,12 @@ let LBIGAUX_MC_ADJUST_AUX = prove
   ASM_REWRITE_TAC[LET_DEF; LET_END_DEF; LBIGAUX_EL_LENGTH_CONS] THEN
   REWRITE_TAC[mc_single_mul_thm] THEN
   LBIG_PAIR_TAC `single_mul_add (r6:N word) h r1 (word 0)` `q1:N word` `q2:N word` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   LBIG_PAIR_TAC `single_mul_add (r7:N word) q1 r12 (word 0)` `q3:N word` `q4:N word` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
-  REWRITE_TAC[mc_adj_cmp_thm] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
+  REWRITE_TAC[mc_adj_cmp_thm] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[word_add_n2w; mw_mul_by_single2_def] THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[ISPECL [`z:N word`; `zs':(N word)list`; `q3:N word`;
     `mw_mul_by_single2 (r6:N word) r7 t q2 q4`; `res:bool option`] LBIGAUX_MW_CMP_ALT_CONS] THEN
   FIRST_X_ASSUM(MP_TAC o SPECL [`zs':(N word)list`; `SNOC (h:N word) ys1`;
@@ -2763,7 +2764,7 @@ let mc_div_adjust_thm = prove
     `l - 1`] mc_adjust_aux_thm) THEN
   ANTS_TAC THENL [ASM_ARITH_TAC; ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_THEN `l2:num` STRIP_ASSUME_TAC) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   SUBGOAL_THEN `mw_cmp_alt (zs:(N word)list) (mw_mul_by_single2 r6 r7 ys (word 0) (word 0)) NONE =
                 mw_cmp zs (mw_mul_by_single r7 (BUTLAST (mw_mul_by_single r6 ys)))`
     SUBST1_TAC THENL
@@ -2813,8 +2814,8 @@ let LBIGAUX_MC_DIV_SUB_LOOP = prove
      [MATCH_MP_TAC LBIGAUX_VAL_WORD_LT THEN ASM_ARITH_TAC; ALL_TAC] THEN
     REWRITE_TAC[LBIGAUX_EL_LENGTH_CONS; mc_div_sub_thm; mw_mul_by_single2_def] THEN
     LBIG_PAIR_TAC `single_sub (z:N word) r12 c` `d:N word` `c1:bool` THEN
-    ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
-    REWRITE_TAC[LUPDATE_LENGTH; mw_sub_def] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
+    REWRITE_TAC[LUPDATE_LENGTH; mw_sub_def] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[word_add_n2w; LENGTH_APPEND; LENGTH; GSYM ADD1; APPEND; FST] THEN
     EXISTS_TAC `l:num` THEN ARITH_TAC;
     ALL_TAC] THEN
@@ -2835,14 +2836,14 @@ let LBIGAUX_MC_DIV_SUB_LOOP = prove
   ASM_REWRITE_TAC[LET_DEF; LET_END_DEF; LBIGAUX_EL_LENGTH_CONS] THEN
   REWRITE_TAC[mc_single_mul_thm] THEN
   LBIG_PAIR_TAC `single_mul_add (r6:N word) h r1 (word 0)` `q1:N word` `q2:N word` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   LBIG_PAIR_TAC `single_mul_add (r7:N word) q1 r12 (word 0)` `q3:N word` `q4:N word` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[mc_div_sub_thm] THEN
   LBIG_PAIR_TAC `single_sub (z:N word) q3 c` `d:N word` `c1:bool` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[LUPDATE_LENGTH; word_add_n2w; mw_mul_by_single2_def] THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[LBIGAUX_MW_SUB_CONS; FST; SND] THEN
   FIRST_X_ASSUM(MP_TAC o SPECL [`zs':(N word)list`; `SNOC (h:N word) ys1`;
     `SNOC (d:N word) zs1`; `zs2:(N word)list`; `c1:bool`;
@@ -3009,7 +3010,7 @@ let LBIGAUX_MC_DIV_LOOP = prove
     GEN_REWRITE_TAC (BINDER_CONV o RAND_CONV o LAND_CONV o RAND_CONV o ONCE_DEPTH_CONV)
       [mw_div_aux_def] THEN
     REWRITE_TAC[LENGTH; APPEND; REVERSE; MULT_CLAUSES; ADD_CLAUSES] THEN
-    EXISTS_TAC `l:num` THEN REWRITE_TAC[LE_REFL] THEN CASE_REWRITE_TAC[] THEN
+    EXISTS_TAC `l:num` THEN REWRITE_TAC[LE_REFL] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[APPEND; REVERSE];
     ALL_TAC] THEN
   X_GEN_TAC `zs1:(N word)list` THEN DISCH_THEN(LABEL_TAC "ih") THEN
@@ -3111,7 +3112,7 @@ let LBIGAUX_MC_DIV_LOOP = prove
    [UNDISCH_TAC `SUC (LENGTH (zs1:(N word)list)) * (dimword(:N) + 2 * LENGTH (ys:(N word)list) + 4) <= l` THEN
     REWRITE_TAC[MULT_CLAUSES] THEN ARITH_TAC; ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_THEN `l2:num` STRIP_ASSUME_TAC) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   SUBGOAL_THEN `REVERSE (APPEND w0 [a3;a2;a1]) =
                 CONS (a1:N word) (CONS a2 (CONS a3 (REVERSE w0)))` SUBST1_TAC THENL
    [REWRITE_TAC[LBIGAUX_APPEND3_SNOC; REVERSE_SNOC]; ALL_TAC] THEN
@@ -3129,7 +3130,7 @@ let LBIGAUX_MC_DIV_LOOP = prove
     UNDISCH_TAC `SUC (LENGTH (zs1:(N word)list)) * (dimword(:N) + 2 * LENGTH (ys:(N word)list) + 4) <= l` THEN
     REWRITE_TAC[MULT_CLAUSES] THEN LBIGAUX_ARITH_TAC; ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_THEN `l3:num` STRIP_ASSUME_TAC) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[] THEN
   MP_TAC(INST [`d:N word`,`r6:N word`; `q1:N word`,`r7:N word`]
    (SPECL [`ys:(N word)list`; `APPEND w0 [a3;a2;a1:N word]`; `zs1:(N word)list`;
@@ -3140,7 +3141,7 @@ let LBIGAUX_MC_DIV_LOOP = prove
     UNDISCH_TAC `SUC (LENGTH (zs1:(N word)list)) * (dimword(:N) + 2 * LENGTH (ys:(N word)list) + 4) <= l` THEN
     REWRITE_TAC[MULT_CLAUSES] THEN LBIGAUX_ARITH_TAC; ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_THEN `l4:num` STRIP_ASSUME_TAC) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
   SUBGOAL_THEN `?s sub0. FST (mw_sub (APPEND w0 [a3;a2;a1]) (mw_mul_by_single (q1:N word) ys1) T) =
                          SNOC s sub0 /\ LENGTH (sub0:(N word)list) = LENGTH (ys:(N word)list)`
    STRIP_ASSUME_TAC THENL
@@ -3172,10 +3173,10 @@ let LBIGAUX_MC_DIV_LOOP = prove
   DISCH_THEN(X_CHOOSE_THEN `l5:num` STRIP_ASSUME_TAC) THEN
   LBIG_PAIR_TAC `mw_div_aux (zs1:(N word)list) sub0 ys1` `qs0:(N word)list` `rs0:(N word)list` THEN
   UNDISCH_TAC `mw_div_aux (zs1:(N word)list) sub0 ys1 = qs0,rs0` THEN
-  DISCH_THEN(fun th -> RULE_ASSUM_TAC(CASE_REWRITE_RULE[] o REWRITE_RULE[th]) THEN
+  DISCH_THEN(fun th -> RULE_ASSUM_TAC(CAKE_REWRITE_RULE[] o REWRITE_RULE[th]) THEN
                        ASSUME_TAC th) THEN
   SUBGOAL_THEN `~(b1:N word = word 0)` ASSUME_TAC THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   EXISTS_TAC `l5:num` THEN ASM_REWRITE_TAC[REVERSE; GSYM APPEND_ASSOC; APPEND] THEN
   REWRITE_TAC[LENGTH_APPEND; LENGTH; LENGTH_SNOC] THEN
   UNDISCH_TAC `SUC (LENGTH (zs1:(N word)list)) * (dimword(:N) + 2 * LENGTH (ys:(N word)list) + 4) <= l` THEN
@@ -3436,7 +3437,7 @@ let LBIGAUX_MC_MUL_BY_SINGLE = prove
              word (LENGTH ys1),APPEND ys1 ys,APPEND zs1 (APPEND zs (CONS z2 zs2))) =
              (l2,r1,x,word (LENGTH (APPEND ys1 ys)),word (LENGTH (APPEND zs1 zs) + 1),
               APPEND ys1 ys,
-              APPEND zs1 (APPEND (mw_mul_pass x ys (MAP (K (word 0)) ys) k) zs2)) /\
+              APPEND zs1 (APPEND (mw_mul_pass x ys (MAP (combin_K (word 0)) ys) k) zs2)) /\
            l <= l2 + LENGTH ys`,
   LIST_INDUCT_TAC THENL
    [REWRITE_TAC[LENGTH; LENGTH_EQ_NIL] THEN REPEAT STRIP_TAC THEN
@@ -3471,9 +3472,9 @@ let LBIGAUX_MC_MUL_BY_SINGLE = prove
   ONCE_REWRITE_TAC[mc_mul_by_single_def; mc_mul_by_single_pre_def] THEN
   ASM_REWRITE_TAC[LET_DEF; LET_END_DEF; LBIGAUX_EL_LENGTH_CONS; mc_single_mul_add_thm] THEN
   LBIG_PAIR_TAC `single_mul_add (x:N word) h k (word 0)` `x1:N word` `x2:N word` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[LUPDATE_LENGTH; word_add_n2w; mw_mul_pass_def; MAP; K_THM; HD; TL] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   FIRST_X_ASSUM(MP_TAC o SPECL [`SNOC (h:N word) ys1`; `x:N word`; `zs':(N word)list`;
     `x2:N word`; `SNOC (x1:N word) zs1`; `zs2:(N word)list`; `z2:N word`; `l - 1`]) THEN
   REWRITE_TAC[LENGTH_SNOC; SNOC_APPEND; GSYM APPEND_ASSOC; APPEND; LENGTH_APPEND; LENGTH;
@@ -3536,9 +3537,9 @@ let LBIGAUX_MC_TOP_TWO = prove
   ONCE_REWRITE_TAC[mc_top_two_def; mc_top_two_pre_def] THEN
   ASM_REWRITE_TAC[LET_DEF; LET_END_DEF; LBIGAUX_EL_LENGTH_CONS; mc_single_mul_thm] THEN
   LBIG_PAIR_TAC `single_mul_add (x:N word) h k1 (word 0)` `y1:N word` `k':N word` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[word_add_n2w; mw_mul_pass_top_def] THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   FIRST_X_ASSUM(MP_TAC o SPECL [`x:N word`; `k':N word`; `y1:N word`; `k2:N word`;
     `SNOC (h:N word) ys1`; `l - 1`]) THEN
   REWRITE_TAC[LENGTH_SNOC; SNOC_APPEND; GSYM APPEND_ASSOC; APPEND; LENGTH_APPEND; LENGTH;
@@ -3723,7 +3724,7 @@ let LBIGAUX_MC_DIV_A = prove
   ASM_SIMP_TAC[word_lo_n2w; MOD_LT] THEN
   REWRITE_TAC[mc_div0_def; mc_div0_pre_def; LET_DEF; LET_END_DEF] THEN
   ASM_CASES_TAC `r3:N word = word 0` THEN ASM_REWRITE_TAC[] THENL
-   [(CASE_REWRITE_TAC[] THEN MAP_EVERY EXISTS_TAC [`zs:(N word)list`; `l:num`] THEN
+   [(CAKE_REWRITE_TAC[] THEN MAP_EVERY EXISTS_TAC [`zs:(N word)list`; `l:num`] THEN
       REWRITE_TAC[LENGTH; APPEND] THEN
       UNDISCH_TAC `~(ys:(N word)list = [])` THEN REWRITE_TAC[GSYM LENGTH_EQ_NIL] THEN
       ASM_ARITH_TAC);
@@ -3742,14 +3743,14 @@ let LBIGAUX_MC_DIV_A = prove
       ASM_REWRITE_TAC[LENGTH_APPEND] THEN
       ANTS_TAC THENL [UNDISCH_TAC `mc_div_max xs ys (APPEND (APPEND zs3 zs4) zs5:(N word)list) <= l` THEN
         REWRITE_TAC[mc_div_max_def; LENGTH_APPEND] THEN ASM_ARITH_TAC; ALL_TAC] THEN
-      STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+      STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
       MP_TAC(SPECL [`xs:(N word)list`; `MAP (\x. word 0:N word) (zs3:(N word)list)`;
         `[]:(N word)list`; `APPEND (MAP (\x. word 0:N word) (zs4:(N word)list)) zs5`;
         `l - 1 - (LENGTH (zs3:(N word)list) + LENGTH (zs4:(N word)list)) - 1`] mc_copy_over_thm) THEN
       ASM_REWRITE_TAC[LENGTH_MAP; LENGTH_APPEND; APPEND_NIL; MAP_APPEND; GSYM APPEND_ASSOC] THEN
       ANTS_TAC THENL [UNDISCH_TAC `mc_div_max xs ys (APPEND (APPEND zs3 zs4) zs5:(N word)list) <= l` THEN
         REWRITE_TAC[mc_div_max_def; LENGTH_APPEND] THEN ASM_ARITH_TAC; ALL_TAC] THEN
-      STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+      STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
       MAP_EVERY EXISTS_TAC [`zs5:(N word)list`; `l2:num`] THEN
       ASM_REWRITE_TAC[LENGTH_APPEND; LENGTH_REPLICATE; GSYM APPEND_ASSOC; MAP_K_0] THEN
       SUBGOAL_THEN `LENGTH (xs:(N word)list) + LENGTH (ys:(N word)list) - LENGTH xs = LENGTH ys /\
@@ -3790,7 +3791,7 @@ let LBIGAUX_MC_DIV_B = prove
     MAP_EVERY X_GEN_TAC [`qs:(N word)list`; `p:N word#bool`] THEN
     MP_TAC(ISPEC `p:N word#bool` PAIR_SURJECTIVE) THEN
     REWRITE_TAC[LEFT_IMP_EXISTS_THM] THEN MAP_EVERY X_GEN_TAC [`r:N word`; `c:bool`] THEN
-    DISCH_THEN SUBST1_TAC THEN DISCH_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+    DISCH_THEN SUBST1_TAC THEN DISCH_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN
     MAP_EVERY EXISTS_TAC [`qs:(N word)list`; `r:N word`] THEN ASM_REWRITE_TAC[];
     ALL_TAC] THEN
@@ -3816,9 +3817,9 @@ let LBIGAUX_MC_DIV_B = prove
   ASM_REWRITE_TAC[APPEND_NIL] THEN
   ANTS_TAC THENL [UNDISCH_TAC `mc_div_max xs ys (APPEND zs1 zs5:(N word)list) <= l` THEN
     REWRITE_TAC[mc_div_max_def; LENGTH_APPEND] THEN ASM_ARITH_TAC; ALL_TAC] THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   ASM_CASES_TAC `r3:N word = word 0` THEN ASM_REWRITE_TAC[] THENL
-   [(ASM_CASES_TAC `r:N word = word 0` THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+   [(ASM_CASES_TAC `r:N word = word 0` THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
       MAP_EVERY EXISTS_TAC [`zs5:(N word)list`; `l - 1 - LENGTH (xs:(N word)list)`] THEN
       ASM_REWRITE_TAC[LBIGAUX_MW_FIX_SING; LENGTH_REVERSE; LENGTH_APPEND; LENGTH] THEN
       UNDISCH_TAC `mc_div_max xs ys (APPEND zs1 zs5:(N word)list) <= l` THEN
@@ -3830,7 +3831,7 @@ let LBIGAUX_MC_DIV_B = prove
           REWRITE_TAC[GSYM LENGTH_EQ_NIL; LENGTH_REVERSE] THEN ASM_ARITH_TAC;
           ASM_MESON_TAC[]]; ALL_TAC] THEN
       ASM_REWRITE_TAC[APPEND; LUPDATE_DEF] THEN
-      ASM_CASES_TAC `r:N word = word 0` THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+      ASM_CASES_TAC `r:N word = word 0` THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
       MAP_EVERY EXISTS_TAC [`APPEND t zs5:(N word)list`; `l - 1 - LENGTH (xs:(N word)list)`] THEN
       ASM_REWRITE_TAC[LBIGAUX_MW_FIX_SING; LENGTH_APPEND; LENGTH; APPEND] THEN
       (SUBGOAL_THEN `LENGTH (t:(N word)list) + 1 = LENGTH (xs:(N word)list)` ASSUME_TAC THENL
@@ -3892,7 +3893,7 @@ let LBIGAUX_MC_DIV_C = prove
     UNDISCH_TAC `LENGTH (ts2:(N word)list) = LENGTH (ys:(N word)list)` THEN
     DISCH_THEN(fun th -> REWRITE_TAC[SYM th] THEN ASSUME_TAC th) THEN
     ASM_REWRITE_TAC[LBIGAUX_BUTLASTN_LENGTH_APPEND; LASTN_LENGTH_APPEND] THEN
-    CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[PAIR_EQ] THEN MESON_TAC[];
     ALL_TAC] THEN
   UNDISCH_TAC `res = REVERSE (qs1:(N word)list)` THEN DISCH_THEN SUBST_ALL_TAC THEN
@@ -3964,7 +3965,7 @@ let LBIGAUX_MC_DIV_C = prove
   ANTS_TAC THENL [UNDISCH_TAC `mc_div_max xs ys (APPEND zs1 (CONS z1 (CONS z2 zs2)):(N word)list) <= l` THEN
     REWRITE_TAC[mc_div_max_def; LENGTH_APPEND; LENGTH] THEN ARITH_TAC; ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_THEN `l1:num` STRIP_ASSUME_TAC) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[mc_div3_def; mc_div3_pre_def; LET_DEF; LET_END_DEF] THEN
   MP_TAC(SPECL [`xs:(N word)list`; `d:N word`; `zs1:(N word)list`; `CONS (z2:N word) zs2`;
     `z1:N word`; `l1 - 1`] mc_mul_by_single_thm) THEN
@@ -3972,7 +3973,7 @@ let LBIGAUX_MC_DIV_C = prove
   ANTS_TAC THENL [UNDISCH_TAC `mc_div_max xs ys (APPEND zs1 (CONS z1 (CONS z2 zs2)):(N word)list) <= l` THEN
     REWRITE_TAC[mc_div_max_def; LENGTH_APPEND; LENGTH] THEN LBIGAUX_ARITH_TAC; ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_THEN `r1a:N word` (X_CHOOSE_THEN `l2:num` STRIP_ASSUME_TAC)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   SUBGOAL_THEN `val (word (LENGTH (xs:(N word)list) + 1):N word) = LENGTH xs + 1 /\
                 LUPDATE (word 0) (LENGTH xs + 1)
                   (APPEND (mw_mul_by_single (d:N word) xs) (CONS z2 zs2)) =
@@ -3991,7 +3992,7 @@ let LBIGAUX_MC_DIV_C = prove
   ANTS_TAC THENL [UNDISCH_TAC `mc_div_max xs ys (APPEND zs1 (CONS z1 (CONS z2 zs2)):(N word)list) <= l` THEN
     REWRITE_TAC[mc_div_max_def; LENGTH_APPEND; LENGTH] THEN LBIGAUX_ARITH_TAC; ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_THEN `l3:num` STRIP_ASSUME_TAC) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   SUBGOAL_THEN `word_add (word_sub (word (LENGTH (xs:(N word)list))) (word (LENGTH (ys:(N word)list))))
                   (word 2):N word = word (LENGTH (ts1:(N word)list))` SUBST1_TAC THENL
    [SUBGOAL_THEN `word_sub (word (LENGTH (xs:(N word)list))) (word (LENGTH (ys:(N word)list))):N word =
@@ -4011,7 +4012,7 @@ let LBIGAUX_MC_DIV_C = prove
     UNDISCH_TAC `mc_div_max xs ys (APPEND zs1 (CONS z1 (CONS z2 zs2)):(N word)list) <= l` THEN
     REWRITE_TAC[mc_div_max_def; LENGTH_APPEND; LENGTH] THEN LBIGAUX_ARITH_TAC; ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_THEN `l4:num` STRIP_ASSUME_TAC) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[mc_div2_def; mc_div2_pre_def; LET_DEF; LET_END_DEF] THEN
   MP_TAC(SPECL [`rs1:(N word)list`; `APPEND (REVERSE qs1) zs2:(N word)list`; `word 0:N word`;
     `d:N word`; `x1:(N word)list`; `x2:N word`; `l4 - 1`] mc_simple_div1_thm) THEN
@@ -4019,7 +4020,7 @@ let LBIGAUX_MC_DIV_C = prove
   ANTS_TAC THENL
    [UNDISCH_TAC `mc_div_max xs ys (APPEND zs1 (CONS z1 (CONS z2 zs2)):(N word)list) <= l` THEN
     REWRITE_TAC[mc_div_max_def; LENGTH_APPEND; LENGTH] THEN LBIGAUX_ARITH_TAC; ALL_TAC] THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   MP_TAC(SPECL [`REVERSE x1:(N word)list`; `APPEND (REVERSE qs1) zs2:(N word)list`;
     `word (LENGTH (ts1:(N word)list)):N word`; `l4 - 1 - LENGTH (ys:(N word)list) - 1`]
     mc_fix_thm) THEN
@@ -4028,7 +4029,7 @@ let LBIGAUX_MC_DIV_C = prove
    [UNDISCH_TAC `mc_div_max xs ys (APPEND zs1 (CONS z1 (CONS z2 zs2)):(N word)list) <= l` THEN
     REWRITE_TAC[mc_div_max_def; LENGTH_APPEND; LENGTH] THEN LBIGAUX_ARITH_TAC; ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_THEN `r8a:N word` (X_CHOOSE_THEN `l6:num` STRIP_ASSUME_TAC)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   ASM_CASES_TAC `r3:N word = word 0` THEN ASM_REWRITE_TAC[] THENL
    [(MP_TAC(SPECL [`REVERSE x1:(N word)list`; `REVERSE qs1:(N word)list`; `zs2:(N word)list`;
         `l6 - 1`] mc_copy_down_thm) THEN
@@ -4038,7 +4039,7 @@ let LBIGAUX_MC_DIV_C = prove
         UNDISCH_TAC `mc_div_max xs ys (APPEND zs1 (CONS z1 (CONS z2 zs2)):(N word)list) <= l` THEN
         REWRITE_TAC[mc_div_max_def; LENGTH_APPEND; LENGTH] THEN LBIGAUX_ARITH_TAC; ALL_TAC] THEN
       DISCH_THEN(X_CHOOSE_THEN `zs4:(N word)list` (X_CHOOSE_THEN `l7:num` STRIP_ASSUME_TAC)) THEN
-      ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+      ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
       MAP_EVERY EXISTS_TAC [`zs4:(N word)list`; `l7:num`] THEN
       ASM_REWRITE_TAC[LENGTH_REVERSE; LENGTH_APPEND; LENGTH] THEN
     MP_TAC(ISPEC `REVERSE x1:(N word)list` LENGTH_mw_fix) THEN
@@ -4058,7 +4059,7 @@ let LBIGAUX_MC_DIV_C = prove
         `LENGTH (mw_fix (REVERSE (x1:(N word)list))) <= LENGTH (ys:(N word)list)`;
         `LENGTH (ys:(N word)list) < dimword(:N)`] THEN
       ARITH_TAC);
-    (CASE_REWRITE_TAC[] THEN
+    (CAKE_REWRITE_TAC[] THEN
       MAP_EVERY EXISTS_TAC [`APPEND (REVERSE qs1) zs2:(N word)list`; `l6:num`] THEN
       ASM_REWRITE_TAC[LENGTH_REVERSE; LENGTH_APPEND; LENGTH] THEN
       MP_TAC(ISPEC `REVERSE x1:(N word)list` LENGTH_mw_fix) THEN
@@ -4382,7 +4383,7 @@ let LBIGAUX_MC_DIV_SUB_AUX = prove
   REWRITE_TAC[GSYM APPEND_ASSOC; APPEND; LENGTH] THEN
   ONCE_REWRITE_TAC[mc_div_sub_aux1_def; mc_div_sub_aux1_pre_def] THEN
   ASM_REWRITE_TAC[LET_DEF; LET_END_DEF; LBIGAUX_WORD_ADD1_SUB1; LBIGAUX_EL_LENGTH_CONS] THEN
-  REWRITE_TAC[LBIGAUX_SINGLE_SUB_WORD_B2W] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[LBIGAUX_SINGLE_SUB_WORD_B2W] THEN CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[b2w_eq; LBIGAUX_B2W_01; word_add_n2w; LUPDATE_LENGTH; LBIGAUX_MW_SUB_CONS] THEN
   FIRST_X_ASSUM(MP_TAC o SPECL [`zs':(N word)list`;
     `SNOC (h:N word) ys1`; `SNOC (FST (single_sub (h:N word) z c)) zs1`; `ys2:(N word)list`;
@@ -4433,7 +4434,7 @@ let mc_div_sub1_thm = prove
   ANTS_TAC THENL [ASM_ARITH_TAC; ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_THEN `r8a:N word` (X_CHOOSE_THEN `r9a:N word`
     (X_CHOOSE_THEN `l2:num` STRIP_ASSUME_TAC))) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   MAP_EVERY EXISTS_TAC [`r8a:N word`; `r9a:N word`; `l2:num`] THEN
   ASM_REWRITE_TAC[] THEN ASM_ARITH_TAC);;
 
@@ -4533,10 +4534,10 @@ let mc_idiv_thm = prove
     `md:(N word)list`; `r3:N word`; `l:num`] mc_div_thm) THEN
   ASM_REWRITE_TAC[] THEN ANTS_TAC THENL [ASM_ARITH_TAC; ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_THEN `zs2:(N word)list` (X_CHOOSE_THEN `l1:num` STRIP_ASSUME_TAC)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[mwi_divmod_alt_def; mwi_div_def; mwi_mod_def; mwi_divmod_def; LET_DEF;
               LET_END_DEF] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[mc_idiv0_def; mc_idiv0_pre_def; LET_DEF; LET_END_DEF] THEN
   ASM_CASES_TAC `r3:N word = word 0` THEN ASM_REWRITE_TAC[FST; SND] THENL
    [((SUBGOAL_THEN `LENGTH (res:(N word)list) < dimword(:N) /\ ~(LENGTH (zs2:(N word)list) = 0)`
@@ -4551,14 +4552,14 @@ let mc_idiv_thm = prove
         UNDISCH_TAC `LENGTH (zs:(N word)list) = LENGTH (APPEND (if (r3:N word) = word 0 then (res:(N word)list) else md) zs2)` THEN
         ASM_REWRITE_TAC[LENGTH_APPEND] THEN ARITH_TAC; ALL_TAC] THEN
       DISCH_THEN(X_CHOOSE_THEN `r8a:N word` (X_CHOOSE_THEN `l2:num` STRIP_ASSUME_TAC)) THEN
-      ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+      ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
       REWRITE_TAC[mc_add1_call_def; mc_add1_call_pre_def; LET_DEF; LET_END_DEF; b2w_EQ_0w] THEN
-      ASM_CASES_TAC `s <=> (t:bool)` THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]) THENL
+      ASM_CASES_TAC `s <=> (t:bool)` THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]) THENL
     [(SUBGOAL_THEN `LENGTH (mw_fix (res:(N word)list)) < dimword(:N)` ASSUME_TAC THENL
         [MP_TAC(ISPEC `res:(N word)list` LENGTH_mw_fix) THEN ASM_ARITH_TAC; ALL_TAC] THEN
        ASM_SIMP_TAC[LBIGAUX_WORD_LENGTH_EQ_0] THEN
        ASM_CASES_TAC `mw_fix (res:(N word)list) = []` THEN ASM_REWRITE_TAC[] THEN
-       CASE_REWRITE_TAC[] THEN
+       CAKE_REWRITE_TAC[] THEN
        EXISTS_TAC `APPEND (REPLICATE (LENGTH (res:(N word)list) - LENGTH (mw_fix res)) (word 0:N word)) zs2` THEN
        EXISTS_TAC `l2:num` THEN
        REWRITE_TAC[LBIGAUX_HEADER_NIL; LBIGAUX_SHL1_HEADER; LBIGAUX_B2W_TF] THEN
@@ -4574,10 +4575,10 @@ let mc_idiv_thm = prove
         [MP_TAC(ISPEC `res:(N word)list` LENGTH_mw_fix) THEN ASM_ARITH_TAC; ALL_TAC] THEN
        ASM_SIMP_TAC[LBIGAUX_WORD_LENGTH_EQ_0] THEN
        ASM_CASES_TAC `mw_fix (md:(N word)list) = []` THEN ASM_REWRITE_TAC[] THEN
-       CASE_REWRITE_TAC[] THENL
+       CAKE_REWRITE_TAC[] THENL
         [ASM_SIMP_TAC[LBIGAUX_WORD_LENGTH_EQ_0] THEN
          ASM_CASES_TAC `mw_fix (res:(N word)list) = []` THEN ASM_REWRITE_TAC[] THEN
-         CASE_REWRITE_TAC[] THEN
+         CAKE_REWRITE_TAC[] THEN
          EXISTS_TAC `APPEND (REPLICATE (LENGTH (res:(N word)list) - LENGTH (mw_fix res)) (word 0:N word)) zs2` THEN
          EXISTS_TAC `l2:num` THEN
          REWRITE_TAC[LBIGAUX_HEADER_NIL; LBIGAUX_SHL1_HEADER; LBIGAUX_B2W_TF] THEN
@@ -4607,9 +4608,9 @@ let mc_idiv_thm = prove
          UNDISCH_TAC `~(LENGTH (zs2:(N word)list) = 0)` THEN
          ASM_REWRITE_TAC[LENGTH_APPEND] THEN ARITH_TAC; ALL_TAC] THEN
        DISCH_THEN(X_CHOOSE_THEN `rest:(N word)list` (X_CHOOSE_THEN `l3:num` STRIP_ASSUME_TAC)) THEN
-       ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+       ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
        ASM_SIMP_TAC[LBIGAUX_WORD_LENGTH_EQ_0; LBIGAUX_MW_ADDV_T_NZ] THEN
-       CASE_REWRITE_TAC[] THEN
+       CAKE_REWRITE_TAC[] THEN
        MAP_EVERY EXISTS_TAC [`rest:(N word)list`; `l3:num`] THEN
        ASM_REWRITE_TAC[LBIGAUX_SHL1_HEADER] THEN
        MP_TAC(ISPEC `res:(N word)list` LENGTH_mw_fix) THEN
@@ -4625,7 +4626,7 @@ let mc_idiv_thm = prove
     (ASM_SIMP_TAC[mc_length] THEN
       REWRITE_TAC[mc_div_sub_call_def; mc_div_sub_call_pre_def; LET_DEF; LET_END_DEF; b2w_EQ_0w] THEN
       ASM_SIMP_TAC[LBIGAUX_WORD_LENGTH_EQ_0] THEN
-      ASM_CASES_TAC `s <=> (t:bool)` THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THENL
+      ASM_CASES_TAC `s <=> (t:bool)` THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THENL
        [ASM_SIMP_TAC[mc_idiv_mod_header_thm] THEN
         EXISTS_TAC `APPEND (REPLICATE (LENGTH (md:(N word)list) - LENGTH (mw_fix md)) (word 0:N word)) zs2` THEN
         EXISTS_TAC `l1:num` THEN
@@ -4634,7 +4635,7 @@ let mc_idiv_thm = prove
         UNDISCH_TAC `mc_div_max xs ys (zs:(N word)list) + 2 * LENGTH zs + 2 <= l` THEN
         UNDISCH_TAC `l <= l1 + mc_div_max xs ys (zs:(N word)list)` THEN ARITH_TAC;
         ALL_TAC] THEN
-    ASM_CASES_TAC `mw_fix (md:(N word)list) = []` THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THENL
+    ASM_CASES_TAC `mw_fix (md:(N word)list) = []` THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THENL
        [ASM_SIMP_TAC[mc_idiv_mod_header_thm; LENGTH; ZERO_LT_dimword] THEN
         MAP_EVERY EXISTS_TAC [`APPEND (md:(N word)list) zs2`; `l1:num`] THEN
         REWRITE_TAC[APPEND] THEN
@@ -4655,7 +4656,7 @@ let mc_idiv_thm = prove
         ASM_REWRITE_TAC[LENGTH_APPEND] THEN ARITH_TAC; ALL_TAC] THEN
       DISCH_THEN(X_CHOOSE_THEN `r8a:N word` (X_CHOOSE_THEN `r9a:N word`
         (X_CHOOSE_THEN `l2:num` STRIP_ASSUME_TAC))) THEN
-      ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+      ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
       LBIG_PAIR_TAC `mw_sub (ys:(N word)list) md T` `sb:(N word)list` `cb:bool` THEN
       FIRST_ASSUM(ASSUME_TAC o SYM o MATCH_MP LENGTH_mw_sub) THEN
       ASM_REWRITE_TAC[FST] THEN
@@ -4669,7 +4670,7 @@ let mc_idiv_thm = prove
         UNDISCH_TAC `LENGTH (zs:(N word)list) < dimword(:N)` THEN
         ASM_REWRITE_TAC[LENGTH_APPEND] THEN ARITH_TAC; ALL_TAC] THEN
       DISCH_THEN(X_CHOOSE_THEN `r8b:N word` (X_CHOOSE_THEN `l3:num` STRIP_ASSUME_TAC)) THEN
-      ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+      ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
       SUBGOAL_THEN `mw_subv ys (mw_fix (md:(N word)list)) = mw_fix (sb:(N word)list)` SUBST1_TAC THENL
        [ASM_REWRITE_TAC[mw_subv_def; mw_sub_mw_fix]; ALL_TAC] THEN
       SUBGOAL_THEN `LENGTH (mw_fix (sb:(N word)list)) < dimword(:N)` ASSUME_TAC THENL
@@ -4765,7 +4766,7 @@ let LBIG_IOP_IADD_TAC t =
     mc_iadd_thm) THEN
   ANTS_TAC THENL [ASM_REWRITE_TAC[] THEN LBIG_IOP_BOUND_TAC; ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_THEN `zs1:(N word)list` (X_CHOOSE_THEN `l2:num` STRIP_ASSUME_TAC)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   MAP_EVERY EXISTS_TAC [`zs1:(N word)list`; `l2:num`] THEN ASM_REWRITE_TAC[] THEN
   UNDISCH_TAC `l <= l2 + 4 * LENGTH (xs:(N word)list) + 4 * LENGTH (ys:(N word)list) + 4` THEN
   LBIG_IOP_BOUND_TAC;;
@@ -4776,7 +4777,7 @@ let LBIG_IOP_IDIV_TAC w =
   ANTS_TAC THENL [ASM_REWRITE_TAC[] THEN ASM_ARITH_TAC; ALL_TAC] THEN
   REWRITE_TAC[mwi_divmod_alt_def; GSYM LBIGAUX_WORD_NOT_ZERO_ONE] THEN
   DISCH_THEN(X_CHOOSE_THEN `zs1:(N word)list` (X_CHOOSE_THEN `l2:num` STRIP_ASSUME_TAC)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   MAP_EVERY EXISTS_TAC [`zs1:(N word)list`; `l2:num`] THEN ASM_REWRITE_TAC[];;
 
 let mc_iop_thm = prove
@@ -4822,17 +4823,17 @@ let mc_iop_thm = prove
    [(TRY(FIRST_ASSUM(CONTR_TAC o check (fun th -> concl th = `F`))) THEN
        REWRITE_TAC[mc_isub_flip_def; LET_DEF; LET_END_DEF] THEN
        ASM_SIMP_TAC[ARITH_RULE `0 < 16 /\ 1 < 16`; WORD_SUB_REFL] THEN CONV_TAC NUM_REDUCE_CONV THEN
-       CASE_REWRITE_TAC[] THEN LBIG_IOP_IADD_TAC `t:bool`);
+       CAKE_REWRITE_TAC[] THEN LBIG_IOP_IADD_TAC `t:bool`);
     (TRY(FIRST_ASSUM(CONTR_TAC o check (fun th -> concl th = `F`))) THEN
        REWRITE_TAC[mc_isub_flip_def; LET_DEF; LET_END_DEF] THEN
        ASM_SIMP_TAC[ARITH_RULE `0 < 16 /\ 1 < 16`; WORD_SUB_REFL] THEN CONV_TAC NUM_REDUCE_CONV THEN
-       CASE_REWRITE_TAC[] THEN REWRITE_TAC[mc_header_XOR_1; mwi_sub_def] THEN
+       CAKE_REWRITE_TAC[] THEN REWRITE_TAC[mc_header_XOR_1; mwi_sub_def] THEN
        LBIG_IOP_IADD_TAC `~t:bool`);
     (MP_TAC(SPECL [`s:bool`; `t:bool`; `xs:(N word)list`; `ys:(N word)list`; `zs:(N word)list`;
          `l:num`] mc_imul_thm) THEN
        ANTS_TAC THENL [ASM_REWRITE_TAC[] THEN LBIG_IOP_BOUND_TAC; ALL_TAC] THEN
        DISCH_THEN(X_CHOOSE_THEN `zs1:(N word)list` (X_CHOOSE_THEN `l2:num` STRIP_ASSUME_TAC)) THEN
-       ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+       ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
        MAP_EVERY EXISTS_TAC [`zs1:(N word)list`; `l2:num`] THEN ASM_REWRITE_TAC[] THEN
        UNDISCH_TAC `l <= l2 + 3 * LENGTH (xs:(N word)list) + 3 * LENGTH (ys:(N word)list) +
                       LENGTH xs * LENGTH ys + 3` THEN

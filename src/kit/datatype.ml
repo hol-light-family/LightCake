@@ -448,6 +448,13 @@ let rec size_of_type (tvsizes:(hol_type*term) list) ty =
                            tvs)
       with Failure _ -> zero_size ty;;
 
+(* size function names other than TY_size, by type name (type names are unique *)
+(* in a session): NAMING.md 10, the theory prefix of a short name               *)
+let cake_size_names = ref ([] : (string * string) list);;
+
+let cake_size_name tyname =
+  try assoc tyname !cake_size_names with Failure _ -> tyname ^ "_size";;
+
 let define_size_functions (names:string list) =
   let main = hd names in
   let _,_,rth = assoc main (!inductive_type_store) in
@@ -463,7 +470,7 @@ let define_size_functions (names:string list) =
   let naux = ref 0 in
   let fname fn =
     let n = fst(dest_type(dom fn)) in
-    if mem n names then n^"_size"
+    if mem n names then cake_size_name n
     else (incr naux; main^"_size_aux"^string_of_int !naux) in
   let fnames = map fname fns in
   let svars = map2 (fun fn nm ->
@@ -531,7 +538,8 @@ let define_size_functions (names:string list) =
                                      GENL (vs @ params) (SPECL vs c)) cs) in
   let consts = map (fun v -> mk_const(fst(dest_var v),[])) svars in
   List.iter2 (fun nm c ->
-      let base = String.sub nm 0 (String.length nm - 5) in
+      let base = try fst (find (fun (_,s) -> s = nm) !cake_size_names)
+                 with Failure _ -> String.sub nm 0 (String.length nm - 5) in
       if mem base names then
         the_size_fns := (base,(c,tvs)) :: !the_size_fns) fnames consts;
   the_size_defs := def :: !the_size_defs;
@@ -604,7 +612,7 @@ let cake_type s =
 let type_size_def tyname =
   find (fun th -> exists (fun cl ->
           try let f = fst(strip_comb(lhs(snd(strip_forall cl)))) in
-              fst(dest_const f) = tyname^"_size"
+              fst(dest_const f) = cake_size_name tyname
           with Failure _ -> false) (conjuncts(concl th)))
        (!the_size_defs);;
 

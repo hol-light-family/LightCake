@@ -26,8 +26,8 @@ type_invention_error := true;;
 let parse_def = cake_def
   `parse (toks:(token#locs)list) =
      match some pt. valid_lptree cmlG pt /\
-                    ptree_head pt = NT (INL nTopLevelDecs) /\
-                    real_fringe pt = MAP (TOK ## I) toks with
+                    ptree_head pt = grammar_NT (INL nTopLevelDecs) /\
+                    real_fringe pt = MAP (grammar_TOK ## I) toks with
        NONE -> NONE
      | SOME p -> ptree_TopLevelDecs p`;;
 
@@ -52,7 +52,7 @@ let can_type_prog_def = cake_def
 let evaluate_prog_with_clock_def = cake_def
   `evaluate_prog_with_clock (st:(FFI)state) (env:v sem_env) (k:num)
                             (prog:dec list) =
-     let (st',r) = evaluate_decs (state_clock_fupd (K k) st) env prog in
+     let (st',r) = evaluate_decs (state_clock_fupd (combin_K k) st) env prog in
      (state_ffi st',r)`;;
 
 (* Terminate: there is a clock for which evaluation terminates, either      *)

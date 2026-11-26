@@ -118,10 +118,10 @@ let () = monotonicity_theorems := env_rel_mono_rel :: !monotonicity_theorems;;
 let SEVPAUX_has_const s th =
   can (find_term (fun t -> is_const t && fst(dest_const t) = s)) (concl th);;
 let env_rel_add_nsBind = prove
- (`source_evalProof_env_rel R (sem_env_v_fupd (K ev) env) (sem_env_v_fupd (K ev') env') /\
+ (`source_evalProof_env_rel R (sem_env_v_fupd (combin_K ev) env) (sem_env_v_fupd (combin_K ev') env') /\
    R x y ==>
-   source_evalProof_env_rel R (sem_env_v_fupd (K (nsBind n x ev)) env)
-     (sem_env_v_fupd (K (nsBind n y ev')) env')`,
+   source_evalProof_env_rel R (sem_env_v_fupd (combin_K (nsBind n x ev)) env)
+     (sem_env_v_fupd (combin_K (nsBind n y ev')) env')`,
   RW[source_evalProof_env_rel_def] THEN
   REPEAT(FIRST_X_ASSUM(MP_TAC o check (SEVPAUX_has_const "nsBind"))) THEN
   ASM_CASES_TAC `nm = Short n:(mlstring,mlstring)id` THEN
@@ -129,10 +129,10 @@ let env_rel_add_nsBind = prove
 
 let env_rel_add_nsBindList = prove
  (`!(xs:(mlstring#v)list) ys.
-     source_evalProof_env_rel R (sem_env_v_fupd (K ev) env) (sem_env_v_fupd (K ev') env') /\
+     source_evalProof_env_rel R (sem_env_v_fupd (combin_K ev) env) (sem_env_v_fupd (combin_K ev') env') /\
      ALL2 ((=) ### R) xs ys ==>
-     source_evalProof_env_rel R (sem_env_v_fupd (K (nsBindList xs ev)) env)
-       (sem_env_v_fupd (K (nsBindList ys ev')) env')`,
+     source_evalProof_env_rel R (sem_env_v_fupd (combin_K (nsBindList xs ev)) env)
+       (sem_env_v_fupd (combin_K (nsBindList ys ev')) env')`,
   LIST_INDUCT_TAC THEN LIST_INDUCT_TAC THEN REWRITE_TAC[ALL2; nsBindList_def; ITLIST] THEN
   REWRITE_TAC[GSYM nsBindList_def] THEN
   MAP_EVERY (fun t -> SPEC_TAC(t,t)) [`h':mlstring#v`; `h:mlstring#v`] THEN
@@ -142,22 +142,22 @@ let env_rel_add_nsBindList = prove
 
 
 let env_rel_nsLift = prove
- (`source_evalProof_env_rel R (sem_env_v_fupd (K v) (sem_env_c_fupd (K c) env))
-     (sem_env_v_fupd (K v') (sem_env_c_fupd (K c') env')) ==>
+ (`source_evalProof_env_rel R (sem_env_v_fupd (combin_K v) (sem_env_c_fupd (combin_K c) env))
+     (sem_env_v_fupd (combin_K v') (sem_env_c_fupd (combin_K c') env')) ==>
    source_evalProof_env_rel R
-     (sem_env_v_fupd (K (nsLift mn v)) (sem_env_c_fupd (K (nsLift mn c)) env))
-     (sem_env_v_fupd (K (nsLift mn v')) (sem_env_c_fupd (K (nsLift mn c')) env'))`,
+     (sem_env_v_fupd (combin_K (nsLift mn v)) (sem_env_c_fupd (combin_K (nsLift mn c)) env))
+     (sem_env_v_fupd (combin_K (nsLift mn v')) (sem_env_c_fupd (combin_K (nsLift mn c')) env'))`,
   RW[source_evalProof_env_rel_def; nsDom_nsLift; nsDomMod_nsLift] THEN
   REPEAT(FIRST_X_ASSUM(MP_TAC o check (SEVPAUX_has_const "nsLift"))) THEN
   REWRITE_TAC[nsLookup_nsLift] THEN EVERY_CASE_TAC THEN ASM_MESON_TAC[]);;
 
 let env_rel_nsEmpty = prove
- (`(!env'. source_evalProof_env_rel R (sem_env_v_fupd (K nsEmpty) x) env' <=>
+ (`(!env'. source_evalProof_env_rel R (sem_env_v_fupd (combin_K nsEmpty) x) env' <=>
            sem_env_c x = sem_env_c env' /\
            nsDom (nsEmpty:(mlstring,mlstring,v)namespace) = nsDom (sem_env_v env') /\
            nsDomMod (nsEmpty:(mlstring,mlstring,v)namespace) =
            nsDomMod (sem_env_v env')) /\
-   (source_evalProof_env_rel R x (sem_env_v_fupd (K nsEmpty) y) <=>
+   (source_evalProof_env_rel R x (sem_env_v_fupd (combin_K nsEmpty) y) <=>
       sem_env_c x = sem_env_c y /\
       nsDom (sem_env_v x) = nsDom (nsEmpty:(mlstring,mlstring,v)namespace) /\
       nsDomMod (sem_env_v x) = nsDomMod (nsEmpty:(mlstring,mlstring,v)namespace))`,
@@ -166,10 +166,10 @@ let env_rel_nsEmpty = prove
 let _ = cake_add_simps (CONJUNCTS env_rel_nsEmpty);;
 
 let env_rel_nsAppend = prove
- (`source_evalProof_env_rel R (sem_env_v_fupd (K a) env) (sem_env_v_fupd (K c) env') /\
-   source_evalProof_env_rel R (sem_env_v_fupd (K b) env) (sem_env_v_fupd (K d) env') ==>
-   source_evalProof_env_rel R (sem_env_v_fupd (K (nsAppend a b)) env)
-     (sem_env_v_fupd (K (nsAppend c d)) env')`,
+ (`source_evalProof_env_rel R (sem_env_v_fupd (combin_K a) env) (sem_env_v_fupd (combin_K c) env') /\
+   source_evalProof_env_rel R (sem_env_v_fupd (combin_K b) env) (sem_env_v_fupd (combin_K d) env') ==>
+   source_evalProof_env_rel R (sem_env_v_fupd (combin_K (nsAppend a b)) env)
+     (sem_env_v_fupd (combin_K (nsAppend c d)) env')`,
   RW[source_evalProof_env_rel_def] THEN
   TRY(MP_TAC(ISPECL [`a:(mlstring,mlstring,v)namespace`; `b:(mlstring,mlstring,v)namespace`;
                      `c:(mlstring,mlstring,v)namespace`; `d:(mlstring,mlstring,v)namespace`]
@@ -292,8 +292,8 @@ let recorded_orac_wf_def = cake_def
 let source_evalProof_s_rel_def = cake_def
   `source_evalProof_s_rel (ci:(C)compiler_instance) (s:(FFI)state) s' <=>
      ?dec_s oracle_s refs'.
-       s' = state_refs_fupd (K refs')
-              (state_eval_state_fupd (K (SOME (EvalOracle oracle_s))) s) /\
+       s' = state_refs_fupd (combin_K refs')
+              (state_eval_state_fupd (combin_K (SOME (EvalOracle oracle_s))) s) /\
        ALL2 (sv_rel (source_evalProof_v_rel oracle_s)) (state_refs s) refs' /\
        state_eval_state s = SOME (EvalDecs dec_s) /\
        eval_oracle_state_custom_do_eval oracle_s = do_eval_record ci /\
@@ -437,7 +437,7 @@ let SEVPAUX_mrr_T = prove
    (a = No_match ==> b = No_match) /\ (!x. a = Match x ==> ?y. b = Match y /\ R x y)`,
   STRUCT_CASES_TAC(ISPEC `a:(A)match_result` (cases "match_result")) THEN
   REWRITE_TAC[source_evalProof_match_result_rel_def; distinctness "match_result";
-              injectivity "match_result"] THEN CASE_REWRITE_TAC[] THEN MESON_TAC[]);;
+              injectivity "match_result"] THEN CAKE_REWRITE_TAC[] THEN MESON_TAC[]);;
 
 let SEVPAUX_pm_cons = prove
  (CASE_TERM `!(R:A->B->bool) a1 b1 (f:A->(A)match_result) (g:B->(B)match_result) e1 e2.
@@ -463,7 +463,7 @@ let SEVPAUX_pm_cons = prove
   STRUCT_CASES_TAC(ISPEC `(f:A->(A)match_result) e1` (cases "match_result")) THEN
   STRUCT_CASES_TAC(ISPEC `(g:B->(B)match_result) e2` (cases "match_result")) THEN
   REWRITE_TAC[SEVPAUX_mrr_T; distinctness "match_result"; injectivity "match_result"] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[distinctness "match_result"; injectivity "match_result"] THEN
   MESON_TAC[]);;
 
@@ -476,7 +476,7 @@ let SEVPAUX_PM_PREP_TAC : tactic =
 
 let SEVPAUX_PM_TYERR_TAC : tactic =
   GEN_REWRITE_TAC (RATOR_CONV o RAND_CONV) [pmatch_def] THEN
-  REWRITE_TAC[source_evalProof_match_result_rel_def] THEN CASE_REWRITE_TAC[] THEN NO_TAC;;
+  REWRITE_TAC[source_evalProof_match_result_rel_def] THEN CAKE_REWRITE_TAC[] THEN NO_TAC;;
 
 let SEVPAUX_PM_FIN_TAC : tactic =
   REWRITE_TAC[SEVPAUX_mrr_T; distinctness "match_result"; injectivity "match_result"] THEN
@@ -530,12 +530,12 @@ let source_evalProof_pmatch = prove
              s_rel_store_lookup) THEN
     ASM_REWRITE_TAC[] THEN
     MP_TAC(ISPEC `store_lookup lnum (state_refs (s:(FFI)state))` (cases "option")) THEN
-    STRIP_TAC THEN ASM_REWRITE_TAC[OPTREL_THM; OPTREL_SOME] THEN CASE_REWRITE_TAC[] THEN
+    STRIP_TAC THEN ASM_REWRITE_TAC[OPTREL_THM; OPTREL_SOME] THEN CAKE_REWRITE_TAC[] THEN
     TRY SEVPAUX_PM_FIN_TAC THEN
     DISCH_THEN(X_CHOOSE_THEN `z:(v)store_v` STRIP_ASSUME_TAC) THEN ASM_REWRITE_TAC[] THEN
-    CASE_REWRITE_TAC[] THEN POP_ASSUM MP_TAC THEN
+    CAKE_REWRITE_TAC[] THEN POP_ASSUM MP_TAC THEN
     CASES_ON `a:(v)store_v` THEN CASES_ON `z:(v)store_v` THEN
-    REWRITE_TAC[sv_rel_def; distinctness "store_v"] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[sv_rel_def; distinctness "store_v"] THEN CAKE_REWRITE_TAC[] THEN
     TRY SEVPAUX_PM_FIN_TAC THEN DISCH_TAC THEN
     FIRST_X_ASSUM(MP_TAC o SPEC `a':v` o check (is_forall o concl)) THEN
     ASM_REWRITE_TAC[] THEN DISCH_THEN MATCH_MP_TAC THEN ASM_REWRITE_TAC[];
@@ -585,7 +585,7 @@ let can_pmatch_all = prove
   MP_TAC(ISPEC `pmatch (sem_env_c (env:v sem_env)) (state_refs (s:(FFI)state)) h x []`
            (cases "match_result")) THEN
   STRIP_TAC THEN ASM_REWRITE_TAC[source_evalProof_match_result_rel_def] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "match_result"] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "match_result"] THEN
   STRIP_TAC THEN ASM_REWRITE_TAC[distinctness "match_result"]);;
 
 let source_evalProof_Num_11 = prove
@@ -628,15 +628,15 @@ let source_evalProof_do_eq = prove
     SIMP_TAC[injectivity "eq_result"];
     SIMP_TAC[injectivity "eq_result"];
     REWRITE_TAC[LENGTH; do_eq_def; nat_to_v_def; lit_same_type_def] THEN
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[injectivity "lit"; INT_OF_NUM_EQ] THEN
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[injectivity "lit"; INT_OF_NUM_EQ] THEN
     ASM_CASES_TAC `gen1:num = gen2` THEN ASM_REWRITE_TAC[injectivity "eq_result"] THEN
     CONV_TAC TAUT;
     SIMP_TAC[injectivity "eq_result"];
     MP_TAC(ISPEC `do_eq v1 v2` (cases "eq_result")) THEN
     DISCH_THEN(DISJ_CASES_THEN STRIP_ASSUME_TAC) THEN ASM_REWRITE_TAC[] THEN
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "eq_result"] THEN
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "eq_result"] THEN
     SUBGOAL_THEN `do_eq h'' h' = Eq_val a` SUBST1_TAC THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
-    CASE_REWRITE_TAC[] THEN ASM_CASES_TAC `a:bool` THEN ASM_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN ASM_CASES_TAC `a:bool` THEN ASM_REWRITE_TAC[] THEN
     ASM_MESON_TAC[];
     SIMP_TAC[injectivity "eq_result"];
     SIMP_TAC[injectivity "eq_result"]]);;
@@ -647,7 +647,7 @@ let SEVPAUX_same_type_rel = prove
   REPEAT GEN_TAC THEN
   CASES_ON `a:A store_v` THEN CASES_ON `b:B store_v` THEN
   CASES_ON `sv:A store_v` THEN CASES_ON `sv':B store_v` THEN
-  REWRITE_TAC[sv_rel_def; store_v_same_type_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[sv_rel_def; store_v_same_type_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[] THEN EVERY_CASE_TAC THEN ASM_MESON_TAC[]);;
 
 let store_assign = prove
@@ -737,7 +737,7 @@ let source_evalProof_v_rel_check_type = prove
   TRY(FIRST_X_ASSUM(SUBST1_TAC o MATCH_MP v_to_env_id_SOME)) THEN
   CASES_ON `ty:prim_type` THEN TRY(CASES_ON `a:word_size`) THEN
   REWRITE_TAC[check_type_def; dest_Litv_def; semanticPrimitives_Boolv_def] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[distinctness "v"; injectivity "v"] THEN
   TRY(COND_CASES_TAC) THEN
   REWRITE_TAC[distinctness "v"; injectivity "v"] THEN
@@ -773,7 +773,7 @@ let SEVPAUX_do_arith_res = prove
  (`do_arith a ty vs = SOME r ==>
    r = INL div_exn_v \/ (?l. r = INR (Litv l)) \/ (?b. r = INR (Boolv b))`,
   CASES_ON `ty:prim_type` THEN TRY(CASES_ON `a':word_size`) THEN
-  REWRITE_TAC[do_arith_def] THEN CASE_REWRITE_TAC[] THEN EVERY_CASE_TAC THEN
+  REWRITE_TAC[do_arith_def] THEN CAKE_REWRITE_TAC[] THEN EVERY_CASE_TAC THEN
   REWRITE_TAC[option_INJ; option_DISTINCT] THEN DISCH_THEN(SUBST1_TAC o SYM) THEN
   REWRITE_TAC[injectivity "sum"; distinctness "sum"] THEN
   TRY(REPEAT DISJ2_TAC THEN EXISTS_TAC `~the_Boolv a0` THEN REFL_TAC) THEN
@@ -784,7 +784,7 @@ let SEVPAUX_do_conversion_res = prove
   CASES_ON `ty1:prim_type` THEN TRY(CASES_ON `a:word_size`) THEN
   CASES_ON `ty2:prim_type` THEN TRY(CASES_ON `a:word_size`) THEN
   REWRITE_TAC[do_conversion_def; LET_DEF; LET_END_DEF] THEN CONV_TAC(DEPTH_CONV BETA_CONV) THEN
-  CASE_REWRITE_TAC[] THEN TRY COND_CASES_TAC THEN
+  CAKE_REWRITE_TAC[] THEN TRY COND_CASES_TAC THEN
   REWRITE_TAC[option_INJ; option_DISTINCT] THEN DISCH_THEN(SUBST1_TAC o SYM) THEN
   REWRITE_TAC[injectivity "sum"; distinctness "sum"] THEN MESON_TAC[]);;
 
@@ -813,9 +813,9 @@ let SEVPAUX_dest_thunk_rel = prove
   REPEAT GEN_TAC THEN
   STRUCT_CASES_TAC(ISPEC `o1:(v store_v)option` (cases "option")) THEN
   STRUCT_CASES_TAC(ISPEC `o2:(v store_v)option` (cases "option")) THEN
-  REWRITE_TAC[OPTREL_THM; option_DISTINCT; option_INJ] THEN CASE_REWRITE_TAC[] THEN
-  REWRITE_TAC[sv_rel_cases] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
-  TRY(CASES_ON `m:thunk_mode`) THEN CASE_REWRITE_TAC[] THEN COND_CASES_TAC THEN
+  REWRITE_TAC[OPTREL_THM; option_DISTINCT; option_INJ] THEN CAKE_REWRITE_TAC[] THEN
+  REWRITE_TAC[sv_rel_cases] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
+  TRY(CASES_ON `m:thunk_mode`) THEN CAKE_REWRITE_TAC[] THEN COND_CASES_TAC THEN
   REWRITE_TAC[distinctness "dest_thunk_ret"]);;
 
 let SEVPAUX_bad_thunk_update_rel = prove
@@ -906,9 +906,9 @@ let SEVPAUX_thunk_op_sim = prove
   IMP_RES_TAC LIST_REL_LENGTH THEN
   FIRST_X_ASSUM(fun th -> if is_forall (concl th) then RULE_ASSUM_TAC(REWRITE_RULE[th])
                           else NO_TAC) THEN
-  ASM_REWRITE_TAC[thunk_op_def; store_alloc_def] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[thunk_op_def; store_alloc_def] THEN CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[] THEN
-  TRY SEVPAUX_STORE_ASSIGN_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  TRY SEVPAUX_STORE_ASSIGN_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[option_INJ; PAIR_EQ; GSYM CONJ_ASSOC] THEN
   REPEAT SEVPAUX_EX_WITNESS_TAC THEN
   ASM_SIMP_TAC[result_rel_def; v_rel_l_simps; ALL2; LIST_REL_APPEND_EQ; sv_rel_def;
@@ -987,11 +987,11 @@ let SEVPAUX_REL_FIN_TAC : tactic =
 
 let SEVPAUX_DAS_GOAL_TAC : tactic =
   REWRITE_TAC[do_app_def; store_alloc_def; LET_DEF; LET_END_DEF; I_THM] THEN
-  CONV_TAC(DEPTH_CONV BETA_CONV) THEN CASE_REWRITE_TAC[] THEN
-  REPEAT(CHANGED_TAC(ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[])) THEN
+  CONV_TAC(DEPTH_CONV BETA_CONV) THEN CAKE_REWRITE_TAC[] THEN
+  REPEAT(CHANGED_TAC(ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[])) THEN
   TRY(FIRST_ASSUM ACCEPT_TAC) THEN
   TRY SEVPAUX_STORE_ASSIGN_TAC THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[option_INJ; PAIR_EQ; GSYM CONJ_ASSOC] THEN
   REPEAT SEVPAUX_EX_WITNESS_TAC THEN
   SEVPAUX_REL_FIN_TAC;;
@@ -1065,7 +1065,7 @@ let SEVPAUX_concrete_v_thm = prove
    (!vs. concrete_v (Vectorv vs) <=> ALL concrete_v vs) /\
    (!e i. concrete_v (Env e i) <=> F)`,
   REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
-  GEN_REWRITE_TAC LAND_CONV [CONJUNCT1 concrete_v_def] THEN CASE_REWRITE_TAC[] THEN
+  GEN_REWRITE_TAC LAND_CONV [CONJUNCT1 concrete_v_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[concrete_v_list]);;
 
 let concrete_v_rel = prove
@@ -1080,7 +1080,7 @@ let concrete_v_rel = prove
 let v_to_list_concrete = prove
  (`!x xs. v_to_list x = SOME xs ==> (concrete_v x <=> ALL concrete_v xs)`,
   MATCH_MP_TAC v_to_list_ind THEN REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
-  REWRITE_TAC[v_to_list_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[v_to_list_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[option_DISTINCT] THEN REPEAT(DISCH_TAC ORELSE GEN_TAC) THEN
   EVERY_CASE_TAC THEN RULE_ASSUM_TAC(REWRITE_RULE[option_DISTINCT; injectivity "option"]) THEN
   SEVPAUX_SUBST_TAC THEN RULE_ASSUM_TAC(REWRITE_RULE[option_DISTINCT; injectivity "option"]) THEN
@@ -1088,10 +1088,10 @@ let v_to_list_concrete = prove
 
 let source_evalProof_maybe_all_list_SOME = prove
  (`!(xs:(A option)list) ys. maybe_all_list xs = SOME ys ==> xs = MAP SOME ys`,
-  LIST_INDUCT_TAC THEN ONCE_REWRITE_TAC[maybe_all_list_def] THEN CASE_REWRITE_TAC[] THEN
+  LIST_INDUCT_TAC THEN ONCE_REWRITE_TAC[maybe_all_list_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[injectivity "option"; option_DISTINCT] THENL
    [MESON_TAC[MAP]; ALL_TAC] THEN
-  GEN_TAC THEN CASES_ON `h:A option` THEN CASE_REWRITE_TAC[option_DISTINCT] THEN
+  GEN_TAC THEN CASES_ON `h:A option` THEN CAKE_REWRITE_TAC[option_DISTINCT] THEN
   TOP_CASE_TAC THEN REWRITE_TAC[option_DISTINCT; injectivity "option"] THEN
   DISCH_THEN(SUBST1_TAC o SYM) THEN REWRITE_TAC[MAP; CONS_11] THEN ASM_MESON_TAC[]);;
 
@@ -1176,7 +1176,7 @@ let SEVPAUX_lookup_env = prove
    j < LENGTH (EL i (eval_oracle_state_envs es)) /\
    env = EL j (EL i (eval_oracle_state_envs es))`,
   REWRITE_TAC[lookup_env_def; oEL_THM] THEN
-  COND_CASES_TAC THEN ASM_REWRITE_TAC[option_DISTINCT] THEN CASE_REWRITE_TAC[] THEN
+  COND_CASES_TAC THEN ASM_REWRITE_TAC[option_DISTINCT] THEN CAKE_REWRITE_TAC[] THEN
   COND_CASES_TAC THEN ASM_REWRITE_TAC[option_DISTINCT; option_INJ] THEN MESON_TAC[]);;
 
 let SEVPAUX_forward_append = prove
@@ -1231,9 +1231,9 @@ let SEVPAUX_reset_sim = prove
            (orac_s (reset_env_generation (SOME (EvalOracle oracle_s)) (state_eval_state t2))) /\
          source_evalProof_s_rel ci
            (state_eval_state_fupd
-              (K (reset_env_generation (SOME (EvalDecs dec_s)) (state_eval_state s2))) s2)
+              (combin_K (reset_env_generation (SOME (EvalDecs dec_s)) (state_eval_state s2))) s2)
            (state_eval_state_fupd
-              (K (reset_env_generation (SOME (EvalOracle oracle_s)) (state_eval_state t2))) t2) /\
+              (combin_K (reset_env_generation (SOME (EvalOracle oracle_s)) (state_eval_state t2))) t2) /\
          es_stack_forward oracle_s
            (orac_s (reset_env_generation (SOME (EvalOracle oracle_s)) (state_eval_state t2)))`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
@@ -1242,7 +1242,7 @@ let SEVPAUX_reset_sim = prove
   FIRST_X_ASSUM(SUBST_ALL_TAC o check (fun th -> is_eq(concl th) && is_var(lhs(concl th)))) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[state_INFO.ri_accfupds; K_THM; orac_s_def]) THEN
   ASM_REWRITE_TAC[state_INFO.ri_accfupds; K_THM; orac_s_def; reset_env_generation_def] THEN
-  CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[orac_s_def] THEN
+  CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[orac_s_def] THEN
   SUBGOAL_THEN `!j. j < LENGTH (eval_oracle_state_envs oracle_s) ==>
                     EL j (eval_oracle_state_envs oracle_s') = EL j (eval_oracle_state_envs oracle_s)`
     ASSUME_TAC THENL
@@ -1253,7 +1253,7 @@ let SEVPAUX_reset_sim = prove
    [UNDISCH_TAC `es_forward o2 oracle_s'` THEN
     ASM_REWRITE_TAC[es_forward_def; LENGTH_APPEND; LENGTH] THEN ARITH_TAC; ALL_TAC] THEN
   SUBGOAL_THEN `source_evalProof_v_rel (eval_oracle_state_generation_fupd
-                  (K (eval_oracle_state_generation oracle_s)) oracle_s') =
+                  (combin_K (eval_oracle_state_generation oracle_s)) oracle_s') =
                 source_evalProof_v_rel oracle_s'` ASSUME_TAC THENL
    [MATCH_MP_TAC SEVPAUX_v_rel_envs THEN REWRITE_TAC[eval_oracle_state_INFO.ri_accfupds];
     ALL_TAC] THEN
@@ -1262,11 +1262,11 @@ let SEVPAUX_reset_sim = prove
     REWRITE_TAC[source_evalProof_s_rel_def] THEN
     MAP_EVERY EXISTS_TAC
      [`eval_decs_state_env_id_counter_fupd
-         (K (eval_oracle_state_generation oracle_s,
+         (combin_K (eval_oracle_state_generation oracle_s,
              LENGTH (EL (eval_oracle_state_generation oracle_s)
                         (eval_oracle_state_envs oracle_s)),
              LENGTH (eval_oracle_state_envs oracle_s'))) dec_s'`;
-      `eval_oracle_state_generation_fupd (K (eval_oracle_state_generation oracle_s))
+      `eval_oracle_state_generation_fupd (combin_K (eval_oracle_state_generation oracle_s))
          oracle_s'`;
       `refs':(v store_v)list`] THEN
     ASM_REWRITE_TAC[state_INFO.ri_fupdfupds; state_INFO.ri_fupdcanon; K_o_THM;
@@ -1293,8 +1293,8 @@ let do_eval_sim = prove
      es_forward (orac_s (state_eval_state t)) (orac_s es') /\
      do_eval (REVERSE ys) (state_eval_state t) = SOME (env',decs,es') /\
      source_evalProof_env_rel (source_evalProof_v_rel (orac_s es')) env env' /\
-     source_evalProof_s_rel ci (state_eval_state_fupd (K es) s)
-       (state_eval_state_fupd (K es') t) /\
+     source_evalProof_s_rel ci (state_eval_state_fupd (combin_K es) s)
+       (state_eval_state_fupd (combin_K es') t) /\
      (!s2 t2. source_evalProof_s_rel ci (s2:(A)state) t2 /\
               es_forward (orac_s es') (orac_s (state_eval_state t2)) /\
               es_stack_forward (orac_s es') (orac_s (state_eval_state t2)) ==>
@@ -1302,9 +1302,9 @@ let do_eval_sim = prove
                 (orac_s (reset_env_generation (state_eval_state t) (state_eval_state t2))) /\
               source_evalProof_s_rel ci
                 (state_eval_state_fupd
-                   (K (reset_env_generation (state_eval_state s) (state_eval_state s2))) s2)
+                   (combin_K (reset_env_generation (state_eval_state s) (state_eval_state s2))) s2)
                 (state_eval_state_fupd
-                   (K (reset_env_generation (state_eval_state t) (state_eval_state t2))) t2) /\
+                   (combin_K (reset_env_generation (state_eval_state t) (state_eval_state t2))) t2) /\
               es_stack_forward (orac_s (state_eval_state t))
                 (orac_s (reset_env_generation (state_eval_state t) (state_eval_state t2))))`,
   STRIP_TAC THEN
@@ -1328,15 +1328,15 @@ let do_eval_sim = prove
     STRIP_ASSUME_TAC THENL [MESON_TAC[PAIR_SURJECTIVE]; ALL_TAC] THEN
   FIRST_X_ASSUM(fun eq -> RULE_ASSUM_TAC(REWRITE_RULE[eq; FST; SND]) THEN ASSUME_TAC eq) THEN
   ASM_REWRITE_TAC[FST; SND] THEN
-  ONCE_REWRITE_TAC[do_eval_def] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[do_eval_record_def] THEN
-  REPEAT(CHANGED_TAC(CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[LET_DEF; LET_END_DEF])) THEN
+  ONCE_REWRITE_TAC[do_eval_def] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[do_eval_record_def] THEN
+  REPEAT(CHANGED_TAC(CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[LET_DEF; LET_END_DEF])) THEN
   REWRITE_TAC[option_INJ; PAIR_EQ; GSYM CONJ_ASSOC] THEN
   REPEAT SEVPAUX_WITNESS_TAC THEN REWRITE_TAC[] THEN
   FIRST_X_ASSUM(SUBST_ALL_TAC o SYM o
     check (fun th -> is_eq(concl th) && rhs(concl th) = `es:eval_state option`)) THEN
   REWRITE_TAC[orac_s_def] THEN
   ABBREV_TAC `o2 = add_env_generation (eval_oracle_state_oracle_fupd
-     (K (\j. if j = 0 then ((i + 1,0),a0'',[]) else if j = SUC i then (a1,st,decs)
+     (combin_K (\j. if j = 0 then ((i + 1,0),a0'',[]) else if j = SUC i then (a1,st,decs)
              else eval_oracle_state_oracle oracle_s j)) oracle_s)` THEN
   SUBGOAL_THEN `eval_oracle_state_envs o2 = APPEND (eval_oracle_state_envs oracle_s) [[]] /\
                 eval_oracle_state_generation o2 = LENGTH (eval_oracle_state_envs oracle_s) /\
@@ -1358,12 +1358,12 @@ let do_eval_sim = prove
   CONJ_TAC THENL
    [REWRITE_TAC[source_evalProof_s_rel_def] THEN
     MAP_EVERY EXISTS_TAC
-     [`add_decs_generation (eval_decs_state_compiler_state_fupd (K (a0'':v)) dec_s)`;
+     [`add_decs_generation (eval_decs_state_compiler_state_fupd (combin_K (a0'':v)) dec_s)`;
       `o2:eval_oracle_state`; `refs':(v store_v)list`] THEN
     REWRITE_TAC[state_INFO.ri_fupdfupds; state_INFO.ri_fupdcanon; K_o_THM;
                 state_INFO.ri_accfupds; K_THM] THEN
     ASM_REWRITE_TAC[add_decs_generation_def; eval_decs_state_INFO.ri_accfupds; K_THM] THEN
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[eval_decs_state_INFO.ri_accfupds; K_THM] THEN
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[eval_decs_state_INFO.ri_accfupds; K_THM] THEN
     REWRITE_TAC[ARITH_RULE `~(i + 1 = 0) /\ 0 < i + 1`; LENGTH_APPEND; LENGTH; EL_APPEND_EQN;
                 LT_REFL; SUB_REFL; EL; HD; ADD_CLAUSES; LT_SUC_LE; LE_REFL; FST; SND] THEN
     REPEAT CONJ_TAC THEN
@@ -1396,13 +1396,13 @@ let do_eval_sim = prove
 
 let SEVPAUX_v_to_nat_nat = prove
  (`!n. v_to_nat (nat_to_v n) = SOME n`,
-  REWRITE_TAC[v_to_nat_def; nat_to_v_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[v_to_nat_def; nat_to_v_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[INT_POS; NUM_OF_INT_OF_NUM]);;
 
 let SEVPAUX_v_to_env_id_nat = prove
  (`!a b. v_to_env_id (Conv NONE [nat_to_v a; nat_to_v b]) = SOME (a,b)`,
-  REWRITE_TAC[v_to_env_id_def] THEN CASE_REWRITE_TAC[] THEN
-  REWRITE_TAC[SEVPAUX_v_to_nat_nat] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[v_to_env_id_def] THEN CAKE_REWRITE_TAC[] THEN
+  REWRITE_TAC[SEVPAUX_v_to_nat_nat] THEN CAKE_REWRITE_TAC[]);;
 let SEVPAUX_declare_env_EvalDecs =
   CAKE_SIMP_CONV ([declare_env_def; LEFT_AND_EXISTS_THM; RIGHT_AND_EXISTS_THM] @
                   EVALAUX_do_app_eqs @ [case_eq "eval_state"])
@@ -1416,8 +1416,8 @@ let declare_env_sim = prove
      es_forward (orac_s (state_eval_state t)) (orac_s es2) /\
      declare_env (state_eval_state t) env' = SOME (v',es2) /\
      source_evalProof_v_rel (orac_s es2) v v' /\
-     source_evalProof_s_rel ci (state_eval_state_fupd (K es) s)
-       (state_eval_state_fupd (K es2) t) /\
+     source_evalProof_s_rel ci (state_eval_state_fupd (combin_K es) s)
+       (state_eval_state_fupd (combin_K es2) t) /\
      es_stack_forward (orac_s (state_eval_state t)) (orac_s es2)`,
   STRIP_TAC THEN
   FIRST_X_ASSUM(STRIP_ASSUME_TAC o REWRITE_RULE[source_evalProof_s_rel_def] o
@@ -1432,12 +1432,12 @@ let declare_env_sim = prove
   SEVPAUX_SUBST_TAC THEN
   FIRST_X_ASSUM(SUBST_ALL_TAC o SYM o
     check (fun th -> is_eq(concl th) && rhs(concl th) = `es:eval_state option`)) THEN
-  REWRITE_TAC[declare_env_def] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[oEL_THM] THEN
-  CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[declare_env_def] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[oEL_THM] THEN
+  CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[option_INJ; PAIR_EQ; GSYM CONJ_ASSOC] THEN
   REPEAT SEVPAUX_WITNESS_TAC THEN REWRITE_TAC[orac_s_def] THEN
   ABBREV_TAC `o2 = eval_oracle_state_envs_fupd
-     (K (LUPDATE (APPEND (EL (eval_oracle_state_generation oracle_s)
+     (combin_K (LUPDATE (APPEND (EL (eval_oracle_state_generation oracle_s)
                               (eval_oracle_state_envs oracle_s)) [env'])
                  (eval_oracle_state_generation oracle_s) (eval_oracle_state_envs oracle_s)))
      oracle_s` THEN
@@ -1466,7 +1466,7 @@ let declare_env_sim = prove
     REWRITE_TAC[source_evalProof_s_rel_def] THEN
     MAP_EVERY EXISTS_TAC
      [`eval_decs_state_env_id_counter_fupd
-         (K (eval_oracle_state_generation oracle_s,
+         (combin_K (eval_oracle_state_generation oracle_s,
              LENGTH (EL (eval_oracle_state_generation oracle_s)
                         (eval_oracle_state_envs oracle_s)) + 1,
              LENGTH (eval_oracle_state_envs oracle_s))) dec_s`;
@@ -1493,7 +1493,7 @@ let source_evalProof_abort_simps = prove
  (`(source_evalProof_abort (Rerr (Rabort a):(A,B)result) <=> T) /\
    (source_evalProof_abort (Rerr (Rraise e):(A,B)result) <=> F) /\
    (source_evalProof_abort (Rval v:(A,B)result) <=> F)`,
-  REWRITE_TAC[source_evalProof_abort_def] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[source_evalProof_abort_def] THEN CAKE_REWRITE_TAC[]);;
 let _ = cake_add_simps [source_evalProof_abort_simps];;
 
 (* HOL4 [local] *)
@@ -1514,23 +1514,23 @@ let env_rel_imp_c = prove
 
 let SEVPAUX_env_rel_bind = prove
  (`source_evalProof_env_rel R env env' /\ R x y ==>
-   source_evalProof_env_rel R (sem_env_v_fupd (K (nsBind n x (sem_env_v env))) env)
-     (sem_env_v_fupd (K (nsBind n y (sem_env_v env'))) env')`,
+   source_evalProof_env_rel R (sem_env_v_fupd (combin_K (nsBind n x (sem_env_v env))) env)
+     (sem_env_v_fupd (combin_K (nsBind n y (sem_env_v env'))) env')`,
   STRIP_TAC THEN MATCH_MP_TAC env_rel_add_nsBind THEN
   ASM_REWRITE_TAC[with_same_v]);;
 
 let SEVPAUX_env_rel_optbind = prove
  (`source_evalProof_env_rel R env env' /\ R x y ==>
-   source_evalProof_env_rel R (sem_env_v_fupd (K (nsOptBind xo x (sem_env_v env))) env)
-     (sem_env_v_fupd (K (nsOptBind xo y (sem_env_v env'))) env')`,
-  CASES_ON `xo:mlstring option` THEN REWRITE_TAC[nsOptBind_def] THEN CASE_REWRITE_TAC[] THEN
+   source_evalProof_env_rel R (sem_env_v_fupd (combin_K (nsOptBind xo x (sem_env_v env))) env)
+     (sem_env_v_fupd (combin_K (nsOptBind xo y (sem_env_v env'))) env')`,
+  CASES_ON `xo:mlstring option` THEN REWRITE_TAC[nsOptBind_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[with_same_v] THEN MESON_TAC[SEVPAUX_env_rel_bind]);;
 
 let SEVPAUX_env_rel_bindlist = prove
  (`source_evalProof_env_rel R env env' /\ ALL2 ((=) ### R) xs ys ==>
    source_evalProof_env_rel R
-     (sem_env_v_fupd (K (nsAppend (alist_to_ns xs) (sem_env_v env))) env)
-     (sem_env_v_fupd (K (nsAppend (alist_to_ns ys) (sem_env_v env'))) env')`,
+     (sem_env_v_fupd (combin_K (nsAppend (alist_to_ns xs) (sem_env_v env))) env)
+     (sem_env_v_fupd (combin_K (nsAppend (alist_to_ns ys) (sem_env_v env'))) env')`,
   REWRITE_TAC[nsAppend_to_nsBindList] THEN STRIP_TAC THEN
   MATCH_MP_TAC env_rel_add_nsBindList THEN ASM_REWRITE_TAC[with_same_v]);;
 
@@ -1546,7 +1546,7 @@ let SEVPAUX_ALL2_recclosures = prove
   LIST_INDUCT_TAC THEN REWRITE_TAC[MAP; ALL2] THEN DISCH_TAC THEN
   ASM_SIMP_TAC[] THEN
   SPEC_TAC(`h:mlstring#mlstring#exp`,`h:mlstring#mlstring#exp`) THEN
-  REWRITE_TAC[FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[FORALL_PAIR_THM] THEN CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[PAIR_REL_THM; v_rel_l_simps; injectivity "v"; UNWIND_THM1; UNWIND_THM2;
                   GSYM CONJ_ASSOC]);;
 
@@ -1554,8 +1554,8 @@ let SEVPAUX_env_rel_rec_env = prove
  (`source_evalProof_env_rel (source_evalProof_v_rel es) env1 env1' /\
    source_evalProof_env_rel (source_evalProof_v_rel es) env env' ==>
    source_evalProof_env_rel (source_evalProof_v_rel es)
-     (sem_env_v_fupd (K (build_rec_env funs env1 (sem_env_v env))) env)
-     (sem_env_v_fupd (K (build_rec_env funs env1' (sem_env_v env'))) env')`,
+     (sem_env_v_fupd (combin_K (build_rec_env funs env1 (sem_env_v env))) env)
+     (sem_env_v_fupd (combin_K (build_rec_env funs env1' (sem_env_v env'))) env')`,
   STRIP_TAC THEN REWRITE_TAC[build_rec_env_merge] THEN
   MATCH_MP_TAC SEVPAUX_env_rel_bindlist THEN ASM_SIMP_TAC[SEVPAUX_ALL2_recclosures]);;
 
@@ -1671,9 +1671,9 @@ let SEVPAUX_s_rel_fields = prove
 let SEVPAUX_s_rel_refs = prove
  (`source_evalProof_s_rel (ci:(C)compiler_instance) (s:(FFI)state) t /\
    ALL2 (sv_rel (source_evalProof_v_rel (orac_s (state_eval_state t)))) refs refs' ==>
-   source_evalProof_s_rel ci (state_refs_fupd (K refs) s) (state_refs_fupd (K refs') t) /\
-   (!ffi. source_evalProof_s_rel ci (state_refs_fupd (K refs) (state_ffi_fupd (K ffi) s))
-            (state_refs_fupd (K refs') (state_ffi_fupd (K ffi) t)))`,
+   source_evalProof_s_rel ci (state_refs_fupd (combin_K refs) s) (state_refs_fupd (combin_K refs') t) /\
+   (!ffi. source_evalProof_s_rel ci (state_refs_fupd (combin_K refs) (state_ffi_fupd (combin_K ffi) s))
+            (state_refs_fupd (combin_K refs') (state_ffi_fupd (combin_K ffi) t)))`,
   REWRITE_TAC[source_evalProof_s_rel_def] THEN STRIP_TAC THEN
   FIRST_X_ASSUM(SUBST_ALL_TAC o check (fun th -> is_eq (concl th) &&
                                                  lhs (concl th) = `t:(FFI)state`)) THEN
@@ -1729,7 +1729,7 @@ let SEVPAUX_env_rel_sing = prove
   REWRITE_TAC[SEVPAUX_env_rel_empty_v]);;
 
 let SEVPAUX_sem_env_fupds_REC = prove
- (`!a b e:v sem_env. sem_env_v_fupd (K a) (sem_env_c_fupd (K b) e) = sem_env_REC a b`,
+ (`!a b e:v sem_env. sem_env_v_fupd (combin_K a) (sem_env_c_fupd (combin_K b) e) = sem_env_REC a b`,
   REWRITE_TAC[sem_env_component_equality; sem_env_INFO.ri_accfupds; sem_env_INFO.ri_accessors;
               K_THM]);;
 
@@ -1754,7 +1754,7 @@ let SEVPAUX_combine_dec_result_rel = prove
  (`result_rel (source_evalProof_env_rel R) R r r' /\ source_evalProof_env_rel R e e' ==>
    result_rel (source_evalProof_env_rel R) R (combine_dec_result e r) (combine_dec_result e' r')`,
   CASES_ON `r:(v sem_env,v)result` THEN CASES_ON `r':(v sem_env,v)result` THEN
-  REWRITE_TAC[result_rel_def; combine_dec_result_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[result_rel_def; combine_dec_result_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[result_rel_def; GSYM extend_dec_env_def] THEN MESON_TAC[env_rel_extend_dec_env]);;
 
 let SEVPAUX_dest_thunk_IsThunk = prove
@@ -1762,8 +1762,8 @@ let SEVPAUX_dest_thunk_IsThunk = prove
    ?n. vs = [Loc F n] /\ store_lookup n st = SOME (Thunk m v)`,
   EQ_TAC THENL
    [ALL_TAC;
-    STRIP_TAC THEN ASM_REWRITE_TAC[dest_thunk_def] THEN CASE_REWRITE_TAC[] THEN
-    CASES_ON `m:thunk_mode` THEN CASE_REWRITE_TAC[]] THEN
+    STRIP_TAC THEN ASM_REWRITE_TAC[dest_thunk_def] THEN CAKE_REWRITE_TAC[] THEN
+    CASES_ON `m:thunk_mode` THEN CAKE_REWRITE_TAC[]] THEN
   STRUCT_CASES_TAC(ISPEC `vs:v list` list_CASES) THEN
   REWRITE_TAC[dest_thunk_def; distinctness "dest_thunk_ret"] THEN
   CASES_ON `h:v` THEN
@@ -1773,11 +1773,11 @@ let SEVPAUX_dest_thunk_IsThunk = prove
   REWRITE_TAC[CONS_11; injectivity "v"; GSYM CONJ_ASSOC; RIGHT_EXISTS_AND_THM; UNWIND_THM1;
               NOT_CONS_NIL] THEN
   MP_TAC(ISPEC `store_lookup a1 (st:(v store_v)list)` (cases "option")) THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[distinctness "dest_thunk_ret"; option_INJ] THEN
-  CASES_ON `a:(v)store_v` THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON `a:(v)store_v` THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[distinctness "dest_thunk_ret"; distinctness "store_v"; injectivity "store_v"] THEN
-  TRY(CASES_ON `a0':thunk_mode`) THEN CASE_REWRITE_TAC[] THEN
+  TRY(CASES_ON `a0':thunk_mode`) THEN CAKE_REWRITE_TAC[] THEN
   BOOL_CASES_TAC `a0:bool` THEN
   REWRITE_TAC[distinctness "dest_thunk_ret"; injectivity "dest_thunk_ret"] THEN
   MESON_TAC[]);;
@@ -1788,7 +1788,7 @@ let SEVPAUX_update_thunk_SOME = prove
          store_assign n (Thunk Evaluated v) st = SOME st2`,
   EQ_TAC THENL
    [ALL_TAC;
-    STRIP_TAC THEN ASM_REWRITE_TAC[update_thunk_def] THEN CASE_REWRITE_TAC[]] THEN
+    STRIP_TAC THEN ASM_REWRITE_TAC[update_thunk_def] THEN CAKE_REWRITE_TAC[]] THEN
   STRUCT_CASES_TAC(ISPEC `vs:v list` list_CASES) THEN
   REWRITE_TAC[update_thunk_def; option_DISTINCT] THEN
   CASES_ON `h:v` THEN REWRITE_TAC[update_thunk_def; option_DISTINCT] THEN
@@ -1804,7 +1804,7 @@ let SEVPAUX_update_thunk_SOME = prove
   (fun (asl,w as gl) ->
      let t = find_term (fun t -> EVPROPSAUX_is_const_app ["dest_thunk"] t) w in
      MP_TAC(ISPEC t (cases "dest_thunk_ret")) gl) THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[option_DISTINCT; distinctness "dest_thunk_ret"]);;
 
 (* ---- machinery for eval_simulation ---- *)
@@ -1975,7 +1975,7 @@ let SEVPAUX_local_lemmas asl =
 (* instances of the local lemmas where the quantified states are updated   *)
 (* in their eval_state (state_eval_state_fupd (K e) s0), normalized         *)
 let SEVPAUX_es_opt_ty = `:(eval_state)option`;;
-let SEVPAUX_K_es = `K:(eval_state)option->(eval_state)option->(eval_state)option`;;
+let SEVPAUX_K_es = `combin_K:(eval_state)option->(eval_state)option->(eval_state)option`;;
 let SEVPAUX_REC_RW_CONV = REWRITE_CONV EVPROPSAUX_REC_RW;;
 
 let SEVPAUX_local_inst_lemmas asl =
@@ -2217,7 +2217,7 @@ let SEVPAUX_abort_combine = prove
  (`!env r. source_evalProof_abort (combine_dec_result env (r:(v sem_env,A)result)) <=>
            source_evalProof_abort r`,
   GEN_TAC THEN GEN_TAC THEN CASES_ON `r:(v sem_env,A)result` THEN
-  REWRITE_TAC[combine_dec_result_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[combine_dec_result_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[source_evalProof_abort_simps]);;
 
 let SEVPAUX_ES_NORM_RW =
@@ -2322,7 +2322,7 @@ let SEVPAUX_ES_GOAL_TAC : tactic =
   SEVPAUX_POST_TAC THEN
   ONCE_REWRITE_TAC[full_evaluate_def] THEN
   (fun gl -> REPEAT(CHANGED_TAC(ASM_REWRITE_TAC (SEVPAUX_ES_EVAL_THL @ !SEVPAUX_feqs) THEN
-                                CASE_REWRITE_TAC[])) gl) THEN
+                                CAKE_REWRITE_TAC[])) gl) THEN
   SEVPAUX_EXS_TAC THEN REWRITE_TAC[] THEN SEVPAUX_ES_FIN_TAC;;
 
 (* ---- the lemmas ---- *)
@@ -2344,7 +2344,7 @@ let SEVPAUX_combine_tyerr = prove
  (`~(combine_dec_result env (r:(v sem_env,A)result) = Rerr (Rabort Rtype_error)) ==>
    ~(r = Rerr (Rabort Rtype_error))`,
   CONV_TAC CONTRAPOS_CONV THEN REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN
-  REWRITE_TAC[combine_dec_result_def] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[combine_dec_result_def] THEN CAKE_REWRITE_TAC[]);;
 
 let SEVPAUX_v_rel_bind_exn = prove
  (`source_evalProof_v_rel es bind_exn_v bind_exn_v`,
@@ -2519,7 +2519,7 @@ let source_evalProof_check_dup_ctors_thm = prove
   SPEC_TAC(`condefs:(mlstring#ast_t list)list`,`l:(mlstring#ast_t list)list`) THEN
   LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[ITLIST; MAP] THEN
   SPEC_TAC(`h:mlstring#ast_t list`,`h:mlstring#ast_t list`) THEN
-  REWRITE_TAC[FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]);;
+  REWRITE_TAC[FORALL_PAIR_THM] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]);;
 
 let do_eval_oracle_def = cake_def
   `do_eval_oracle (f:compiler_fun) (g:dec list->dec list) vs (orac:eval_oracle_fun) =
@@ -2542,9 +2542,9 @@ let insert_gen_oracle_def = cake_def
        SOME (EvalOracle s) ->
          SOME (EvalOracle
                  (eval_oracle_state_custom_do_eval_fupd
-                    (K (do_eval_oracle (mk_compiler_fun_from_ci ci) g))
+                    (combin_K (do_eval_oracle (mk_compiler_fun_from_ci ci) g))
                     (eval_oracle_state_oracle_fupd
-                       (K (shift_seq (shift_f (eval_oracle_state_oracle s 0)) orac)) s)))
+                       (combin_K (shift_seq (shift_f (eval_oracle_state_oracle s 0)) orac)) s)))
      | _ -> es`;;
 
 let orac_agrees_def = cake_def
@@ -2596,10 +2596,10 @@ let orac_agrees_backward = prove
  (`orac_agrees orac es2 /\ record_forward es1 es2 ==> orac_agrees orac es1`,
   ASM_CASES_TAC `?s1. es1 = SOME (EvalOracle s1)` THENL
    [FIRST_X_ASSUM(X_CHOOSE_THEN `s1:eval_oracle_state` SUBST_ALL_TAC) THEN
-    REWRITE_TAC[record_forward_def] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[record_forward_def] THEN CAKE_REWRITE_TAC[] THEN
     DISCH_THEN(CONJUNCTS_THEN2 MP_TAC
       (X_CHOOSE_THEN `s2:eval_oracle_state` STRIP_ASSUME_TAC)) THEN
-    ASM_REWRITE_TAC[orac_agrees_def] THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[orac_agrees_def] THEN CAKE_REWRITE_TAC[] THEN
     DISCH_TAC THEN X_GEN_TAC `j:num` THEN DISCH_TAC THEN
     SUBGOAL_THEN `j < FST (FST (eval_oracle_state_oracle s2 0)) /\ 0 < j + 1 /\
                   j + 1 < FST (FST (eval_oracle_state_oracle s1 0)) + 1`
@@ -2664,7 +2664,7 @@ let insert_do_eval = prove
     recorded_orac_wf (mk_compiler_fun_from_ci ci) (eval_oracle_state_oracle (orac_s es')))`,
   STRIP_TAC THEN
   FIRST_ASSUM(X_CHOOSE_THEN `s:eval_oracle_state` SUBST_ALL_TAC o MATCH_MP is_record_IMP) THEN
-  RULE_ASSUM_TAC(REWRITE_RULE[is_record_def]) THEN RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN
+  RULE_ASSUM_TAC(REWRITE_RULE[is_record_def]) THEN RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN
   FIRST_X_ASSUM(MP_TAC o check (SEVPAUX_has_const "do_eval")) THEN
   ASM_REWRITE_TAC[SEVPAUX_do_eval_EvalOracle; SEVPAUX_do_eval_record_SOME] THEN
   DISCH_THEN(REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC) THEN
@@ -2673,7 +2673,7 @@ let insert_do_eval = prove
   REPEAT(FIRST_X_ASSUM(SUBST_ALL_TAC o check (fun th -> is_eq(concl th) && is_var(lhs(concl th))))) THEN
   FIRST_X_ASSUM(SUBST_ALL_TAC o SYM o check (fun th -> is_eq(concl th) && is_abs(lhs(concl th)))) THEN
   REWRITE_TAC[is_record_def; record_forward_def; insert_gen_oracle_def; orac_s_def] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[add_env_generation_def; eval_oracle_state_INFO.ri_accfupds; K_THM;
               injectivity "option"; injectivity "eval_state"; UNWIND_THM1] THEN
   ASM_REWRITE_TAC[ARITH_RULE `x <= x + 1`; FST; o_THM] THEN
@@ -2681,9 +2681,9 @@ let insert_do_eval = prove
    [REPEAT STRIP_TAC THEN
     ASM_SIMP_TAC[ARITH_RULE `0 < j ==> ~(j = 0)`; ARITH_RULE `j < n + 1 ==> ~(j = SUC n)`];
     STRIP_TAC THEN
-    FIRST_X_ASSUM(MP_TAC o SPEC `x'':num` o CASE_REWRITE_RULE[orac_agrees_def] o
+    FIRST_X_ASSUM(MP_TAC o SPEC `x'':num` o CAKE_REWRITE_RULE[orac_agrees_def] o
       check (SEVPAUX_has_const "orac_agrees")) THEN
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[eval_oracle_state_INFO.ri_accfupds; K_THM] THEN
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[eval_oracle_state_INFO.ri_accfupds; K_THM] THEN
     REWRITE_TAC[ARITH_RULE `x < x + 1 /\ ~(x + 1 = 0) /\ x + 1 = SUC x`] THEN DISCH_TAC THEN
     FIRST_ASSUM(X_CHOOSE_THEN `bs:byte list` (X_CHOOSE_THEN `ws:int64 list` STRIP_ASSUME_TAC) o
       MATCH_MP SEVPAUX_compiler_agrees_SOME) THEN
@@ -2691,16 +2691,16 @@ let insert_do_eval = prove
       check (SEVPAUX_has_const "orac_extended_wf")) THEN
     ASM_REWRITE_TAC[] THEN DISCH_THEN(MP_TAC o SPEC `(a0''':v,bs:byte list,ws:int64 list)`) THEN
     ASM_REWRITE_TAC[FST] THEN DISCH_TAC THEN
-    ONCE_REWRITE_TAC[do_eval_def] THEN CASE_REWRITE_TAC[] THEN
+    ONCE_REWRITE_TAC[do_eval_def] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[eval_oracle_state_INFO.ri_accfupds; K_THM; do_eval_oracle_def] THEN
-    CASE_REWRITE_TAC[] THEN
-    ASM_REWRITE_TAC[shift_seq_def; ADD_CLAUSES; I_THM] THEN CASE_REWRITE_TAC[] THEN
-    ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[shift_seq_def; ADD_CLAUSES; I_THM] THEN CAKE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
     REPEAT(CHANGED_TAC(CONV_TAC(DEPTH_CONV BETA_CONV) THEN
       ASM_REWRITE_TAC[ADD_CLAUSES; I_THM; eval_oracle_state_INFO.ri_accfupds; K_THM] THEN
-      CASE_REWRITE_TAC[])) THEN
-    REWRITE_TAC[ARITH_RULE `1 + x = SUC x`] THEN CASE_REWRITE_TAC[] THEN
-    ASM_REWRITE_TAC[SEVPAUX_lookup_env_fupds] THEN CASE_REWRITE_TAC[] THEN
+      CAKE_REWRITE_TAC[])) THEN
+    REWRITE_TAC[ARITH_RULE `1 + x = SUC x`] THEN CAKE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[SEVPAUX_lookup_env_fupds] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[option_INJ; PAIR_EQ; injectivity "eval_state"] THEN
     REWRITE_TAC[eval_oracle_state_component_equality; add_env_generation_def;
                 eval_oracle_state_INFO.ri_accfupds; K_THM; FUN_EQ_THM] THEN
@@ -2720,18 +2720,18 @@ let insert_declare_env = prove
     recorded_orac_wf (mk_compiler_fun_from_ci ci) (eval_oracle_state_oracle (orac_s es2)))`,
   STRIP_TAC THEN
   FIRST_ASSUM(X_CHOOSE_THEN `s:eval_oracle_state` SUBST_ALL_TAC o MATCH_MP is_record_IMP) THEN
-  RULE_ASSUM_TAC(REWRITE_RULE[is_record_def]) THEN RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN
+  RULE_ASSUM_TAC(REWRITE_RULE[is_record_def]) THEN RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN
   FIRST_X_ASSUM(MP_TAC o check (SEVPAUX_has_const "declare_env")) THEN
-  REWRITE_TAC[declare_env_def; oEL_THM] THEN CASE_REWRITE_TAC[] THEN
-  COND_CASES_TAC THEN CASE_REWRITE_TAC[option_DISTINCT] THEN
+  REWRITE_TAC[declare_env_def; oEL_THM] THEN CAKE_REWRITE_TAC[] THEN
+  COND_CASES_TAC THEN CAKE_REWRITE_TAC[option_DISTINCT] THEN
   REWRITE_TAC[option_INJ; PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
   REWRITE_TAC[is_record_def; record_forward_def; insert_gen_oracle_def; orac_s_def] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[eval_oracle_state_INFO.ri_accfupds; K_THM; injectivity "option";
                   injectivity "eval_state"; UNWIND_THM1; LE_REFL] THEN
-  REWRITE_TAC[declare_env_def; oEL_THM] THEN CASE_REWRITE_TAC[] THEN
-  ASM_REWRITE_TAC[eval_oracle_state_INFO.ri_accfupds; K_THM] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[declare_env_def; oEL_THM] THEN CAKE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[eval_oracle_state_INFO.ri_accfupds; K_THM] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[option_INJ; PAIR_EQ; injectivity "eval_state";
               eval_oracle_state_component_equality; eval_oracle_state_INFO.ri_accfupds;
               K_THM]);;
@@ -2752,7 +2752,7 @@ let reset_env_generation_orac_eqs = prove
                   eval_oracle_state_INFO.ri_accfupds; K_THM; injectivity "option";
                   injectivity "eval_state"; eval_oracle_state_INFO.ri_fupdcanon;
                   eval_oracle_state_INFO.ri_accfupds] THEN
-  CASE_REWRITE_TAC[eval_oracle_state_INFO.ri_accfupds; K_THM; injectivity "option";
+  CAKE_REWRITE_TAC[eval_oracle_state_INFO.ri_accfupds; K_THM; injectivity "option";
                    injectivity "eval_state"] THEN
   REWRITE_TAC[UNWIND_THM1; eval_oracle_state_INFO.ri_accfupds]);;
 
@@ -2942,13 +2942,13 @@ let v_rel_concrete_v = prove
     REWRITE_TAC[concrete_v_def; ALL2] THEN MESON_TAC[]]);;
 
 let env_rel_concrete_v = prove
- (`nsAll (K concrete_v) (sem_env_v env) ==>
+ (`nsAll (combin_K concrete_v) (sem_env_v env) ==>
    source_evalProof_env_rel (source_evalProof_v_rel es) env env`,
   REWRITE_TAC[source_evalProof_env_rel_def] THEN REPEAT STRIP_TAC THEN
   SUBGOAL_THEN `y:v = x` SUBST1_TAC THENL [ASM_MESON_TAC[option_INJ]; ALL_TAC] THEN
   MATCH_MP_TAC (CONJUNCT1 v_rel_concrete_v) THEN
   MP_TAC(ISPECL [`sem_env_v (env:v sem_env)`; `nm:(mlstring,mlstring)id`;
-                 `K concrete_v:(mlstring,mlstring)id->v->bool`; `x:v`] nsLookup_nsAll) THEN
+                 `combin_K concrete_v:(mlstring,mlstring)id->v->bool`; `x:v`] nsLookup_nsAll) THEN
   ASM_REWRITE_TAC[K_THM]);;
 
 (* HOL4 [local] *)
@@ -3114,17 +3114,17 @@ let evaluate_record_suffix = prove
 let extract_oracle_def = cake_def
   `extract_oracle (s:(FFI)state) env decs n =
      match (OLEAST k. ?s' (res:(v sem_env,v)result).
-              evaluate_decs (state_clock_fupd (K k) s) env decs = (s',res) /\
+              evaluate_decs (state_clock_fupd (combin_K k) s) env decs = (s',res) /\
               n < FST (FST (eval_oracle_state_oracle (orac_s (state_eval_state s')) 0))) with
        NONE -> NONE
      | SOME k ->
-         (match evaluate_decs (state_clock_fupd (K k) s) env decs with
+         (match evaluate_decs (state_clock_fupd (combin_K k) s) env decs with
             (s',_) -> SOME (eval_oracle_state_oracle (orac_s (state_eval_state s')) (n + 1)))`;;
 
 (* local: setting the clock to k is decreasing it by clock - k *)
 let SEVPAUX_clock_fupd_K = prove
  (`!(s:(FFI)state) k. k <= state_clock s ==>
-     state_clock_fupd (\c. c - (state_clock s - k)) s = state_clock_fupd (K k) s`,
+     state_clock_fupd (\c. c - (state_clock s - k)) s = state_clock_fupd (combin_K k) s`,
   REPEAT STRIP_TAC THEN
   REWRITE_TAC[state_component_equality; state_INFO.ri_accfupds; K_THM] THEN
   CONV_TAC(DEPTH_CONV BETA_CONV) THEN ASM_ARITH_TAC);;
@@ -3133,7 +3133,7 @@ let SEVPAUX_clock_fupd_K = prove
 let SEVPAUX_clock_record_common_prefix = prove
  (`!(s:(FFI)state) env decs s' res k s'' res'.
      evaluate_decs s env decs = (s',res) /\
-     evaluate_decs (state_clock_fupd (K k) s) env decs = (s'',res') /\
+     evaluate_decs (state_clock_fupd (combin_K k) s) env decs = (s'',res') /\
      is_record (ci:(C)compiler_instance) (state_eval_state s) /\ k <= state_clock s /\
      j < FST (FST (eval_oracle_state_oracle (orac_s (state_eval_state s')) 0)) /\
      j < FST (FST (eval_oracle_state_oracle (orac_s (state_eval_state s'')) 0)) ==>
@@ -3160,7 +3160,7 @@ let SEVPAUX_clock_record_common_prefix = prove
                  (state_eval_state (s':(FFI)state))` THEN
   UNDISCH_TAC `j < FST (FST (eval_oracle_state_oracle
                  (orac_s (state_eval_state (s''':(FFI)state))) 0))` THEN
-  ASM_REWRITE_TAC[record_forward_def; orac_s_def] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[record_forward_def; orac_s_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[injectivity "option"; injectivity "eval_state"] THEN
   REPEAT STRIP_TAC THEN FIRST_X_ASSUM(SUBST_ALL_TAC o SYM) THEN
   FIRST_X_ASSUM(MP_TAC o SPEC `j + 1`) THEN
@@ -3168,7 +3168,7 @@ let SEVPAUX_clock_record_common_prefix = prove
 
 let evaluate_decs_clock_record_common_prefix = prove
  (`evaluate_decs (s:(FFI)state) env decs = (s',res) /\
-   evaluate_decs (state_clock_fupd (K k) s) env decs = (s'',res') /\
+   evaluate_decs (state_clock_fupd (combin_K k) s) env decs = (s'',res') /\
    is_record (ci:(C)compiler_instance) (state_eval_state s) /\
    j < FST (FST (eval_oracle_state_oracle (orac_s (state_eval_state s')) 0)) /\
    j < FST (FST (eval_oracle_state_oracle (orac_s (state_eval_state s'')) 0)) ==>
@@ -3180,7 +3180,7 @@ let evaluate_decs_clock_record_common_prefix = prove
                           `res:(v sem_env,v)result`; `k:num`; `res':(v sem_env,v)result`] THEN
     ASM_REWRITE_TAC[];
     CONV_TAC SYM_CONV THEN MATCH_MP_TAC SEVPAUX_clock_record_common_prefix THEN
-    MAP_EVERY EXISTS_TAC [`state_clock_fupd (K k) (s:(FFI)state)`; `env:v sem_env`;
+    MAP_EVERY EXISTS_TAC [`state_clock_fupd (combin_K k) (s:(FFI)state)`; `env:v sem_env`;
                           `decs:dec list`; `res':(v sem_env,v)result`;
                           `state_clock (s:(FFI)state)`; `res:(v sem_env,v)result`] THEN
     ASM_REWRITE_TAC[state_INFO.ri_fupdfupds; K_o_THM; with_same_clock;
@@ -3201,18 +3201,18 @@ let recorded_orac_wf_defined = prove
 (* local: a run that records more than n compilations gives the n-th entry *)
 let SEVPAUX_extract_oracle_SOME = prove
  (`!(t:(FFI)state) env decs n k t1 (res1:(v sem_env,v)result).
-     evaluate_decs (state_clock_fupd (K k) t) env decs = (t1,res1) /\
+     evaluate_decs (state_clock_fupd (combin_K k) t) env decs = (t1,res1) /\
      n < FST (FST (eval_oracle_state_oracle (orac_s (state_eval_state t1)) 0)) ==>
      ?k0 t0 (res0:(v sem_env,v)result).
        extract_oracle t env decs n =
          SOME (eval_oracle_state_oracle (orac_s (state_eval_state t0)) (n + 1)) /\
-       evaluate_decs (state_clock_fupd (K k0) t) env decs = (t0,res0) /\
+       evaluate_decs (state_clock_fupd (combin_K k0) t) env decs = (t0,res0) /\
        n < FST (FST (eval_oracle_state_oracle (orac_s (state_eval_state t0)) 0)) /\
        k0 <= k`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[extract_oracle_def] THEN
   SUBGOAL_THEN
    `?k0. (OLEAST k. ?s' (res:(v sem_env,v)result).
-            evaluate_decs (state_clock_fupd (K k) (t:(FFI)state)) env decs = (s',res) /\
+            evaluate_decs (state_clock_fupd (combin_K k) (t:(FFI)state)) env decs = (s',res) /\
             n < FST (FST (eval_oracle_state_oracle (orac_s (state_eval_state s')) 0))) =
          SOME k0`
    STRIP_ASSUME_TAC THENL
@@ -3221,14 +3221,14 @@ let SEVPAUX_extract_oracle_SOME = prove
   DISCH_THEN(CONJUNCTS_THEN2
     (X_CHOOSE_THEN `t0:(FFI)state` (X_CHOOSE_THEN `res0:(v sem_env,v)result`
        STRIP_ASSUME_TAC)) (MP_TAC o SPEC `k:num`)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN DISCH_TAC THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN DISCH_TAC THEN
   MAP_EVERY EXISTS_TAC [`k0:num`; `t0:(FFI)state`; `res0:(v sem_env,v)result`] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[GSYM NOT_LT] THEN DISCH_TAC THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[GSYM NOT_LT] THEN DISCH_TAC THEN
   FIRST_X_ASSUM(MP_TAC o check (is_imp o concl)) THEN ASM_REWRITE_TAC[] THEN
   ASM_MESON_TAC[]);;
 
 let extract_oracle_agrees = prove
- (`evaluate_decs (state_clock_fupd (K k) (t:(FFI)state)) env decs = (t',res) /\
+ (`evaluate_decs (state_clock_fupd (combin_K k) (t:(FFI)state)) env decs = (t',res) /\
    source_evalProof_s_rel (ci:(C)compiler_instance) (s:(FFI)state) t /\
    (!i r. extract_oracle t env decs i = SOME r /\
           ~(mk_compiler_fun_from_ci ci r = NONE) ==> orac i = r) ==>
@@ -3239,17 +3239,17 @@ let extract_oracle_agrees = prove
   FIRST_X_ASSUM(K ALL_TAC o check (fun th -> is_eq (concl th) &&
                                              lhs (concl th) = `t:(FFI)state`)) THEN
   SUBGOAL_THEN `is_record (ci:(C)compiler_instance)
-                  (state_eval_state (state_clock_fupd (K k) (t:(FFI)state)))` ASSUME_TAC THENL
+                  (state_eval_state (state_clock_fupd (combin_K k) (t:(FFI)state)))` ASSUME_TAC THENL
    [ASM_REWRITE_TAC[state_INFO.ri_accfupds; K_THM; is_record_def] THEN
-    CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[];
+    CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[];
     ALL_TAC] THEN
-  MP_TAC(SPECL [`state_clock_fupd (K k) (t:(FFI)state)`; `env:v sem_env`; `decs:dec list`;
+  MP_TAC(SPECL [`state_clock_fupd (combin_K k) (t:(FFI)state)`; `env:v sem_env`; `decs:dec list`;
                 `t':(FFI)state`; `res:(v sem_env,v)result`]
            (CONJUNCT2(CONJUNCT2 evaluate_is_record_forward))) THEN
   ASM_REWRITE_TAC[] THEN REWRITE_TAC[state_INFO.ri_accfupds; K_THM] THEN
   ASM_REWRITE_TAC[orac_s_def] THEN STRIP_TAC THEN
   FIRST_ASSUM(X_CHOOSE_TAC `os1:eval_oracle_state` o MATCH_MP is_record_IMP) THEN
-  ASM_REWRITE_TAC[orac_agrees_def] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[orac_agrees_def] THEN CAKE_REWRITE_TAC[] THEN
   X_GEN_TAC `j:num` THEN DISCH_TAC THEN
   MP_TAC(SPECL [`t:(FFI)state`; `env:v sem_env`; `decs:dec list`; `j:num`; `k:num`;
                 `t':(FFI)state`; `res:(v sem_env,v)result`] SEVPAUX_extract_oracle_SOME) THEN
@@ -3258,7 +3258,7 @@ let extract_oracle_agrees = prove
    `eval_oracle_state_oracle (orac_s (state_eval_state (t':(FFI)state))) (j + 1) =
     eval_oracle_state_oracle (orac_s (state_eval_state (t0:(FFI)state))) (j + 1)`
    MP_TAC THENL
-   [MATCH_MP_TAC(INST [`state_clock_fupd (K k) (t:(FFI)state)`,`s:(FFI)state`;
+   [MATCH_MP_TAC(INST [`state_clock_fupd (combin_K k) (t:(FFI)state)`,`s:(FFI)state`;
                        `t':(FFI)state`,`s':(FFI)state`; `t0:(FFI)state`,`s'':(FFI)state`;
                        `k0:num`,`k:num`; `res0:(v sem_env,v)result`,`res':(v sem_env,v)result`]
                  evaluate_decs_clock_record_common_prefix) THEN
@@ -3277,16 +3277,16 @@ let extract_oracle_agrees = prove
 let get_oracle_def = cake_def
   `get_oracle (ci:(C)compiler_instance) (s:(FFI)state) env decs =
      let es_record = EvalOracle (eval_oracle_state_REC
-                       (K ((0,0),compiler_instance_config_v ci (compiler_instance_init_state ci),
+                       (combin_K ((0,0),compiler_instance_config_v ci (compiler_instance_init_state ci),
                            []))
                        (do_eval_record ci) [[]] 0) in
-     extract_oracle (state_eval_state_fupd (K (SOME es_record)) s) env decs`;;
+     extract_oracle (state_eval_state_fupd (combin_K (SOME es_record)) s) env decs`;;
 
 let put_oracle_def = cake_def
   `put_oracle (ci:(C)compiler_instance) orac =
      insert_gen_oracle ci I (FST o FST) orac
        (SOME (EvalOracle (eval_oracle_state_REC
-          (K ((0,0),compiler_instance_config_v ci (compiler_instance_init_state ci),[]))
+          (combin_K ((0,0),compiler_instance_config_v ci (compiler_instance_init_state ci),[]))
           (do_eval_record ci) [[]] 0)))`;;
 
 let result_rel_IMP_cases = prove
@@ -3296,7 +3296,7 @@ let result_rel_IMP_cases = prove
 
 let s_rel_clock2 = prove
  (`!k. source_evalProof_s_rel (ci:(C)compiler_instance) (s:(FFI)state) t ==>
-       source_evalProof_s_rel ci (state_clock_fupd (K k) s) (state_clock_fupd (K k) t)`,
+       source_evalProof_s_rel ci (state_clock_fupd (combin_K k) s) (state_clock_fupd (combin_K k) t)`,
   REWRITE_TAC[source_evalProof_s_rel_def] THEN REPEAT STRIP_TAC THEN
   ASM_REWRITE_TAC[state_INFO.ri_accfupds; K_THM] THEN
   MAP_EVERY EXISTS_TAC [`dec_s:eval_decs_state`; `oracle_s:eval_oracle_state`;
@@ -3321,18 +3321,18 @@ let SEVPAUX_extract_oracle_IS_SOME = prove
  (`!(s:(FFI)state) env decs n.
      IS_SOME (extract_oracle s env decs n) <=>
      ?k t1 (res1:(v sem_env,v)result).
-       evaluate_decs (state_clock_fupd (K k) s) env decs = (t1,res1) /\
+       evaluate_decs (state_clock_fupd (combin_K k) s) env decs = (t1,res1) /\
        n < FST (FST (eval_oracle_state_oracle (orac_s (state_eval_state t1)) 0))`,
   REPEAT GEN_TAC THEN EQ_TAC THENL
    [ONCE_REWRITE_TAC[GSYM CONTRAPOS_THM] THEN REWRITE_TAC[NOT_EXISTS_THM] THEN
     DISCH_TAC THEN REWRITE_TAC[extract_oracle_def] THEN
     SUBGOAL_THEN
      `(OLEAST k. ?s' (res:(v sem_env,v)result).
-         evaluate_decs (state_clock_fupd (K k) (s:(FFI)state)) env decs = (s',res) /\
+         evaluate_decs (state_clock_fupd (combin_K k) (s:(FFI)state)) env decs = (s',res) /\
          n < FST (FST (eval_oracle_state_oracle (orac_s (state_eval_state s')) 0))) = NONE`
      SUBST1_TAC THENL
      [REWRITE_TAC[OLEAST_EQ_NONE] THEN ASM_MESON_TAC[]; ALL_TAC] THEN
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[IS_SOME_DEF];
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[IS_SOME_DEF];
     STRIP_TAC THEN
     MP_TAC(SPECL [`s:(FFI)state`; `env:v sem_env`; `decs:dec list`; `n:num`; `k:num`;
                   `t1:(FFI)state`; `res1:(v sem_env,v)result`]
@@ -3350,30 +3350,30 @@ let extract_oracle_SOME_SUC = prove
 let SEVPAUX_evaluate_prog_with_clock = prove
  (`!(st:(FFI)state) env k (prog:dec list).
      evaluate_prog_with_clock st env k prog =
-     (state_ffi (FST (evaluate_decs (state_clock_fupd (K k) st) env prog)),
-      SND (evaluate_decs (state_clock_fupd (K k) st) env prog))`,
+     (state_ffi (FST (evaluate_decs (state_clock_fupd (combin_K k) st) env prog)),
+      SND (evaluate_decs (state_clock_fupd (combin_K k) st) env prog))`,
   REPEAT GEN_TAC THEN REWRITE_TAC[evaluate_prog_with_clock_def] THEN
-  SPEC_TAC(`evaluate_decs (state_clock_fupd (K k) (st:(FFI)state)) env prog`,
+  SPEC_TAC(`evaluate_decs (state_clock_fupd (combin_K k) (st:(FFI)state)) env prog`,
            `q:(FFI)state#(v sem_env,v)result`) THEN
   REWRITE_TAC[FORALL_PAIR_THM; pair_CASE]);;
 
 let SEVPAUX_not_fail = prove
  (`~semantics_prog (s:(FFI)state) env decs Fail ==>
-   !k. ~(SND (evaluate_decs (state_clock_fupd (K k) s) env decs) = Rerr (Rabort Rtype_error))`,
+   !k. ~(SND (evaluate_decs (state_clock_fupd (combin_K k) s) env decs) = Rerr (Rabort Rtype_error))`,
   REWRITE_TAC[semantics_prog_def; SEVPAUX_evaluate_prog_with_clock; NOT_EXISTS_THM; SND]);;
 
 let SEVPAUX_decs_sim_clock = prove
  (`source_evalProof_s_rel (ci:(C)compiler_instance) (s:(FFI)state) t /\
-   nsAll (K concrete_v) (sem_env_v env) /\ ~semantics_prog s env decs Fail /\
-   evaluate_decs (state_clock_fupd (K k) s) env decs = (s1,r1) ==>
-   ?t1 r1'. evaluate_decs (state_clock_fupd (K k) t) env decs = (t1,r1') /\
+   nsAll (combin_K concrete_v) (sem_env_v env) /\ ~semantics_prog s env decs Fail /\
+   evaluate_decs (state_clock_fupd (combin_K k) s) env decs = (s1,r1) ==>
+   ?t1 r1'. evaluate_decs (state_clock_fupd (combin_K k) t) env decs = (t1,r1') /\
             source_evalProof_s_rel ci s1 t1 /\
             result_rel
               (source_evalProof_env_rel (source_evalProof_v_rel (orac_s (state_eval_state t1))))
               (source_evalProof_v_rel (orac_s (state_eval_state t1))) r1 r1'`,
   STRIP_TAC THEN
-  MP_TAC(SPECL [`state_clock_fupd (K k) (s:(FFI)state)`; `env:v sem_env`; `decs:dec list`;
-                `s1:(FFI)state`; `r1:(v sem_env,v)result`; `state_clock_fupd (K k) (t:(FFI)state)`;
+  MP_TAC(SPECL [`state_clock_fupd (combin_K k) (s:(FFI)state)`; `env:v sem_env`; `decs:dec list`;
+                `s1:(FFI)state`; `r1:(v sem_env,v)result`; `state_clock_fupd (combin_K k) (t:(FFI)state)`;
                 `env:v sem_env`] (CONJUNCT2 (CONJUNCT2 eval_simulation))) THEN
   ANTS_TAC THENL
    [ASM_SIMP_TAC[s_rel_clock2; env_rel_concrete_v] THEN
@@ -3385,7 +3385,7 @@ let SEVPAUX_decs_sim_clock = prove
 let SEVPAUX_extract_oracle_cases = prove
  (`extract_oracle (t:(FFI)state) env decs n = SOME r ==>
    ?k t0 (res0:(v sem_env,v)result).
-     evaluate_decs (state_clock_fupd (K k) t) env decs = (t0,res0) /\
+     evaluate_decs (state_clock_fupd (combin_K k) t) env decs = (t0,res0) /\
      n < FST (FST (eval_oracle_state_oracle (orac_s (state_eval_state t0)) 0)) /\
      r = eval_oracle_state_oracle (orac_s (state_eval_state t0)) (n + 1)`,
   DISCH_TAC THEN
@@ -3402,11 +3402,11 @@ let extract_oracle_0_st = prove
  (`extract_oracle (t:(FFI)state) env decs 0 = SOME r /\
    ~semantics_prog (s:(FFI)state) env decs Fail /\
    source_evalProof_s_rel (ci:(C)compiler_instance) s t /\
-   nsAll (K concrete_v) (sem_env_v env) ==>
+   nsAll (combin_K concrete_v) (sem_env_v env) ==>
    FST (SND r) = compiler_instance_config_v ci (compiler_instance_init_state ci)`,
   STRIP_TAC THEN
   FIRST_X_ASSUM(STRIP_ASSUME_TAC o MATCH_MP SEVPAUX_extract_oracle_cases) THEN
-  MP_TAC(ISPEC `evaluate_decs (state_clock_fupd (K k) (s:(FFI)state)) env decs`
+  MP_TAC(ISPEC `evaluate_decs (state_clock_fupd (combin_K k) (s:(FFI)state)) env decs`
            PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `s1:(FFI)state` (X_CHOOSE_TAC `r1:(v sem_env,v)result`)) THEN
   MP_TAC(INST [`r1:(v sem_env,v)result`,`r1:(v sem_env,v)result`] SEVPAUX_decs_sim_clock) THEN
@@ -3432,10 +3432,10 @@ let orac_agrees_s_rel_IMP = prove
   UNDISCH_TAC `i < FST (FST (eval_oracle_state_oracle
                  (orac_s (state_eval_state (t:(FFI)state))) 0))` THEN
   ASM_REWRITE_TAC[state_INFO.ri_accfupds; K_THM; orac_agrees_def; orac_s_def] THEN
-  CASE_REWRITE_TAC[] THEN MESON_TAC[]);;
+  CAKE_REWRITE_TAC[] THEN MESON_TAC[]);;
 
 let SEVPAUX_extract_oracle_run = prove
- (`evaluate_decs (state_clock_fupd (K k) (t:(FFI)state)) env decs = (t1,res1) /\
+ (`evaluate_decs (state_clock_fupd (combin_K k) (t:(FFI)state)) env decs = (t1,res1) /\
    is_record (ci:(C)compiler_instance) (state_eval_state t) /\
    n < FST (FST (eval_oracle_state_oracle (orac_s (state_eval_state t1)) 0)) ==>
    extract_oracle t env decs n =
@@ -3445,7 +3445,7 @@ let SEVPAUX_extract_oracle_run = prove
                 `t1:(FFI)state`; `res1:(v sem_env,v)result`] SEVPAUX_extract_oracle_SOME) THEN
   ASM_REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[option_INJ] THEN
   CONV_TAC SYM_CONV THEN
-  MATCH_MP_TAC(INST [`state_clock_fupd (K k) (t:(FFI)state)`,`s:(FFI)state`;
+  MATCH_MP_TAC(INST [`state_clock_fupd (combin_K k) (t:(FFI)state)`,`s:(FFI)state`;
                      `t1:(FFI)state`,`s':(FFI)state`; `t0:(FFI)state`,`s'':(FFI)state`;
                      `k0:num`,`k:num`; `res1:(v sem_env,v)result`,`res:(v sem_env,v)result`;
                      `res0:(v sem_env,v)result`,`res':(v sem_env,v)result`; `n:num`,`j:num`]
@@ -3456,13 +3456,13 @@ let SEVPAUX_s_rel_is_record = prove
  (`source_evalProof_s_rel (ci:(C)compiler_instance) (s:(FFI)state) t ==>
    is_record ci (state_eval_state t)`,
   REWRITE_TAC[source_evalProof_s_rel_def] THEN STRIP_TAC THEN
-  ASM_REWRITE_TAC[state_INFO.ri_accfupds; K_THM; is_record_def] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[state_INFO.ri_accfupds; K_THM; is_record_def] THEN CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[]);;
 
 let extract_oracle_SUC_st = prove
  (`IS_SOME (extract_oracle (t:(FFI)state) env decs (SUC i)) /\
    source_evalProof_s_rel (ci:(C)compiler_instance) (s:(FFI)state) t /\
-   nsAll (K concrete_v) (sem_env_v env) /\
+   nsAll (combin_K concrete_v) (sem_env_v env) /\
    ~semantics_prog s env decs Fail ==>
    ?r r' x. extract_oracle t env decs (SUC i) = SOME r' /\
             extract_oracle t env decs i = SOME r /\
@@ -3470,7 +3470,7 @@ let extract_oracle_SUC_st = prove
             FST (SND r') = FST x`,
   REWRITE_TAC[SEVPAUX_extract_oracle_IS_SOME] THEN STRIP_TAC THEN
   FIRST_ASSUM(ASSUME_TAC o MATCH_MP SEVPAUX_s_rel_is_record) THEN
-  MP_TAC(ISPEC `evaluate_decs (state_clock_fupd (K k) (s:(FFI)state)) env decs`
+  MP_TAC(ISPEC `evaluate_decs (state_clock_fupd (combin_K k) (s:(FFI)state)) env decs`
            PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `s1:(FFI)state` (X_CHOOSE_TAC `r1:(v sem_env,v)result`)) THEN
   MP_TAC(INST [`r1:(v sem_env,v)result`,`r1:(v sem_env,v)result`] SEVPAUX_decs_sim_clock) THEN
@@ -3505,8 +3505,8 @@ let SEVPAUX_s_rel_get_oracle = prove
    state_eval_state s = SOME (mk_init_eval_state (ci:(C)compiler_instance)) ==>
    source_evalProof_s_rel ci s
      (state_eval_state_fupd
-        (K (SOME (EvalOracle (eval_oracle_state_REC
-           (K ((0,0),compiler_instance_config_v ci (compiler_instance_init_state ci),[]))
+        (combin_K (SOME (EvalOracle (eval_oracle_state_REC
+           (combin_K ((0,0),compiler_instance_config_v ci (compiler_instance_init_state ci),[]))
            (do_eval_record ci) [[]] 0)))) s)`,
   STRIP_TAC THEN REWRITE_TAC[source_evalProof_s_rel_def] THEN
   MAP_EVERY EXISTS_TAC
@@ -3514,7 +3514,7 @@ let SEVPAUX_s_rel_get_oracle = prove
        (compiler_instance_config_v ci (compiler_instance_init_state ci)) (0,0,1)
        (v_fun_abs (compiler_instance_decs_dom ci) (compiler_instance_decs_v ci))`;
     `eval_oracle_state_REC
-       (K ((0,0),compiler_instance_config_v (ci:(C)compiler_instance)
+       (combin_K ((0,0),compiler_instance_config_v (ci:(C)compiler_instance)
                    (compiler_instance_init_state ci),[]))
        (do_eval_record ci) [[]] 0`;
     `[]:(v store_v)list`] THEN
@@ -3525,7 +3525,7 @@ let SEVPAUX_s_rel_get_oracle = prove
   ASM_REWRITE_TAC[]);;
 
 let get_oracle_props = prove
- (`nsAll (K concrete_v) (sem_env_v env) /\
+ (`nsAll (combin_K concrete_v) (sem_env_v env) /\
    state_refs (s:(FFI)state) = [] /\
    state_eval_state s = SOME (mk_init_eval_state (ci:(C)compiler_instance)) /\
    ~semantics_prog s env decs Fail ==>
@@ -3538,8 +3538,8 @@ let get_oracle_props = prove
   CONV_TAC(DEPTH_CONV BETA_CONV) THEN
   MP_TAC SEVPAUX_s_rel_get_oracle THEN ASM_REWRITE_TAC[] THEN
   ABBREV_TAC `tt = state_eval_state_fupd
-        (K (SOME (EvalOracle (eval_oracle_state_REC
-           (K ((0,0),compiler_instance_config_v (ci:(C)compiler_instance)
+        (combin_K (SOME (EvalOracle (eval_oracle_state_REC
+           (combin_K ((0,0),compiler_instance_config_v (ci:(C)compiler_instance)
                        (compiler_instance_init_state ci),[]))
            (do_eval_record ci) [[]] 0)))) (s:(FFI)state)` THEN
   DISCH_TAC THEN CONJ_TAC THEN REPEAT STRIP_TAC THENL
@@ -3550,7 +3550,7 @@ let get_oracle_props = prove
 
 let SEVPAUX_result_rel_KKT = prove
  (`result_rel (R1:A->B->bool) (R2:C->D->bool) r r' ==>
-   result_rel (K (K T):A->B->bool) (K (K T):C->D->bool) r r'`,
+   result_rel (combin_K (combin_K T):A->B->bool) (combin_K (combin_K T):C->D->bool) r r'`,
   CASES_ON `r:(A,C)result` THEN CASES_ON `r':(B,D)result` THEN
   REWRITE_TAC[result_rel_def; K_THM] THEN
   TRY(CASES_ON `a:(C)error_result`) THEN TRY(CASES_ON `a':(D)error_result`) THEN
@@ -3563,7 +3563,7 @@ let SEVPAUX_result_rel_not_tyerr = prove
   REWRITE_TAC[result_rel_Rerr2; exc_rel_type_error2] THEN MESON_TAC[]);;
 
 let SEVPAUX_result_rel_KKT_refl = prove
- (`result_rel (K (K T):A->A->bool) (K (K T):B->B->bool) r r`,
+ (`result_rel (combin_K (combin_K T):A->A->bool) (combin_K (combin_K T):B->B->bool) r r`,
   CASES_ON `r:(A,B)result` THEN REWRITE_TAC[result_rel_def; K_THM] THEN
   CASES_ON `a:(B)error_result` THEN REWRITE_TAC[exc_rel_def; K_THM]);;
 
@@ -3572,13 +3572,13 @@ let evaluate_prog_with_clock_put_oracle = prove
    evaluate_prog_with_clock s1 env k decs = (ffi,res) /\
    ~(res = Rerr (Rabort Rtype_error)) /\
    state_refs s1 = [] /\
-   nsAll (K concrete_v) (sem_env_v env) /\
+   nsAll (combin_K concrete_v) (sem_env_v env) /\
    ~semantics_prog s1 env decs Fail ==>
-   ?res'. evaluate_prog_with_clock (state_eval_state_fupd (K (put_oracle ci orac)) s1) env k decs =
+   ?res'. evaluate_prog_with_clock (state_eval_state_fupd (combin_K (put_oracle ci orac)) s1) env k decs =
             (ffi,res') /\
-          result_rel (K (K T):v sem_env->v sem_env->bool) (K (K T):v->v->bool) res res'`,
+          result_rel (combin_K (combin_K T):v sem_env->v sem_env->bool) (combin_K (combin_K T):v->v->bool) res res'`,
   REWRITE_TAC[SEVPAUX_evaluate_prog_with_clock; PAIR_EQ] THEN STRIP_TAC THEN
-  MP_TAC(ISPEC `evaluate_decs (state_clock_fupd (K k) (s1:(FFI)state)) env decs`
+  MP_TAC(ISPEC `evaluate_decs (state_clock_fupd (combin_K k) (s1:(FFI)state)) env decs`
            PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `s2:(FFI)state` (X_CHOOSE_TAC `r2:(v sem_env,v)result`)) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[FST; SND]) THEN
@@ -3590,9 +3590,9 @@ let evaluate_prog_with_clock_put_oracle = prove
   UNDISCH_TAC `precond_eval_state orac (ci:(C)compiler_instance) (s1:(FFI)state) env decs` THEN
   REWRITE_TAC[precond_eval_state_def] THEN
   MP_TAC(ISPEC `state_eval_state (s1:(FFI)state)` (cases "option")) THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THENL
+  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THENL
    [(* no eval state: the oracle is not consulted *)
-    MP_TAC(SPECL [`state_clock_fupd (K k) (s1:(FFI)state)`; `env:v sem_env`; `decs:dec list`;
+    MP_TAC(SPECL [`state_clock_fupd (combin_K k) (s1:(FFI)state)`; `env:v sem_env`; `decs:dec list`;
                   `s2:(FFI)state`; `res:(v sem_env,v)result`]
              (INST [`put_oracle (ci:(C)compiler_instance) orac`,`es:(eval_state)option`]
                 (CONJUNCT2 (CONJUNCT2 eval_no_eval_simulation)))) THEN
@@ -3603,14 +3603,14 @@ let evaluate_prog_with_clock_put_oracle = prove
     EXISTS_TAC `res:(v sem_env,v)result` THEN REWRITE_TAC[SEVPAUX_result_rel_KKT_refl];
     ALL_TAC] THEN
   (* the initial eval state: simulation by the recording state, then insertion *)
-  CASES_ON `a:eval_state` THEN CASE_REWRITE_TAC[] THEN STRIP_TAC THEN
+  CASES_ON `a:eval_state` THEN CAKE_REWRITE_TAC[] THEN STRIP_TAC THEN
   SUBGOAL_THEN `state_eval_state (s1:(FFI)state) = SOME (mk_init_eval_state (ci:(C)compiler_instance))`
     ASSUME_TAC THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
   MP_TAC(INST [`s1:(FFI)state`,`s:(FFI)state`] SEVPAUX_s_rel_get_oracle) THEN
   ASM_REWRITE_TAC[] THEN
   ABBREV_TAC `tt = state_eval_state_fupd
-        (K (SOME (EvalOracle (eval_oracle_state_REC
-           (K ((0,0),compiler_instance_config_v (ci:(C)compiler_instance)
+        (combin_K (SOME (EvalOracle (eval_oracle_state_REC
+           (combin_K ((0,0),compiler_instance_config_v (ci:(C)compiler_instance)
                        (compiler_instance_init_state ci),[]))
            (do_eval_record ci) [[]] 0)))) (s1:(FFI)state)` THEN
   DISCH_TAC THEN
@@ -3628,7 +3628,7 @@ let evaluate_prog_with_clock_put_oracle = prove
     REWRITE_TAC[get_oracle_def; LET_DEF; LET_END_DEF] THEN CONV_TAC(DEPTH_CONV BETA_CONV) THEN
     ASM_REWRITE_TAC[] THEN ASM_MESON_TAC[cases "option"];
     ALL_TAC] THEN
-  MP_TAC(SPECL [`state_clock_fupd (K k) (tt:(FFI)state)`; `env:v sem_env`; `decs:dec list`;
+  MP_TAC(SPECL [`state_clock_fupd (combin_K k) (tt:(FFI)state)`; `env:v sem_env`; `decs:dec list`;
                 `t1:(FFI)state`; `r1':(v sem_env,v)result`]
          (CONJUNCT2 (CONJUNCT2 insert_oracle_correct))) THEN
   ANTS_TAC THENL
@@ -3636,9 +3636,9 @@ let evaluate_prog_with_clock_put_oracle = prove
     ASM_MESON_TAC[SEVPAUX_s_rel_is_record; SEVPAUX_result_rel_not_tyerr];
     DISCH_TAC] THEN
   SUBGOAL_THEN
-   `state_clock_fupd (K k) (state_eval_state_fupd (K (put_oracle (ci:(C)compiler_instance) orac)) s1) =
+   `state_clock_fupd (combin_K k) (state_eval_state_fupd (combin_K (put_oracle (ci:(C)compiler_instance) orac)) s1) =
     state_eval_state_fupd (insert_gen_oracle ci I (FST o FST) orac)
-      (state_clock_fupd (K k) (tt:(FFI)state))` SUBST1_TAC THENL
+      (state_clock_fupd (combin_K k) (tt:(FFI)state))` SUBST1_TAC THENL
    [EXPAND_TAC "tt" THEN
     REWRITE_TAC[state_component_equality; state_INFO.ri_accfupds; K_THM; put_oracle_def];
     ALL_TAC] THEN
@@ -3655,13 +3655,13 @@ let SEVPAUX_put_oracle_runs = prove
  (`~semantics_prog (s1:(FFI)state) env decs Fail /\
    precond_eval_state orac (ci:(C)compiler_instance) s1 env decs /\
    state_refs s1 = [] /\
-   nsAll (K concrete_v) (sem_env_v env) ==>
-   !k. FST (evaluate_prog_with_clock (state_eval_state_fupd (K (put_oracle ci orac)) s1)
+   nsAll (combin_K concrete_v) (sem_env_v env) ==>
+   !k. FST (evaluate_prog_with_clock (state_eval_state_fupd (combin_K (put_oracle ci orac)) s1)
               env k decs) =
        FST (evaluate_prog_with_clock s1 env k decs) /\
-       result_rel (K (K T):v sem_env->v sem_env->bool) (K (K T):v->v->bool)
+       result_rel (combin_K (combin_K T):v sem_env->v sem_env->bool) (combin_K (combin_K T):v->v->bool)
          (SND (evaluate_prog_with_clock s1 env k decs))
-         (SND (evaluate_prog_with_clock (state_eval_state_fupd (K (put_oracle ci orac)) s1)
+         (SND (evaluate_prog_with_clock (state_eval_state_fupd (combin_K (put_oracle ci orac)) s1)
                  env k decs))`,
   STRIP_TAC THEN GEN_TAC THEN
   MP_TAC(ISPEC `evaluate_prog_with_clock (s1:(FFI)state) env k decs` PAIR_SURJECTIVE) THEN
@@ -3675,7 +3675,7 @@ let SEVPAUX_put_oracle_runs = prove
     STRIP_TAC THEN ASM_REWRITE_TAC[FST; SND]]);;
 
 let SEVPAUX_result_rel_KKT_abort = prove
- (`result_rel (K (K T):A->B->bool) (K (K T):C->D->bool) r r' ==>
+ (`result_rel (combin_K (combin_K T):A->B->bool) (combin_K (combin_K T):C->D->bool) r r' ==>
    (!a. r = Rerr (Rabort a) <=> r' = Rerr (Rabort a))`,
   CASES_ON `r:(A,C)result` THEN CASES_ON `r':(B,D)result` THEN
   REWRITE_TAC[result_rel_def; distinctness "result"; injectivity "result"] THEN
@@ -3685,7 +3685,7 @@ let SEVPAUX_result_rel_KKT_abort = prove
 
 let SEVPAUX_terminate_transfer = prove
  (CASE_TERM
-  `result_rel (K (K T):v sem_env->v sem_env->bool) (K (K T):v->v->bool) r1 r ==>
+  `result_rel (combin_K (combin_K T):v sem_env->v sem_env->bool) (combin_K (combin_K T):v->v->bool) r1 r ==>
    ((match r with
        Rerr (Rabort (Rffi_error outcome')) -> outcome = FFI_outcome outcome'
      | r -> ~(r = Rerr (Rabort Rtimeout_error)) /\ outcome = Success) <=>
@@ -3695,7 +3695,7 @@ let SEVPAUX_terminate_transfer = prove
   CASES_ON `r1:(v sem_env,v)result` THEN CASES_ON `r:(v sem_env,v)result` THEN
   REWRITE_TAC[result_rel_def; K_THM] THEN
   TRY(CASES_ON `a:(v)error_result`) THEN TRY(CASES_ON `a':(v)error_result`) THEN
-  REWRITE_TAC[exc_rel_def; K_THM] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[exc_rel_def; K_THM] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[distinctness "result"; distinctness "error_result"] THEN
   TRY(DISCH_THEN SUBST1_TAC THEN REFL_TAC));;
 
@@ -3705,16 +3705,16 @@ let SEVPAUX_ex_pair_snd = prove
 
 let oracle_semantics_prog = prove
  (`~semantics_prog (s1:(FFI)state) env decs Fail /\
-   semantics_prog (state_eval_state_fupd (K (put_oracle (ci:(C)compiler_instance) orac)) s1)
+   semantics_prog (state_eval_state_fupd (combin_K (put_oracle (ci:(C)compiler_instance) orac)) s1)
      env decs outcome /\
    precond_eval_state orac ci s1 env decs /\
    state_refs s1 = [] /\
-   nsAll (K concrete_v) (sem_env_v env) ==>
+   nsAll (combin_K concrete_v) (sem_env_v env) ==>
    semantics_prog s1 env decs outcome`,
   STRIP_TAC THEN
   MP_TAC(INST [`s1:(FFI)state`,`s1:(FFI)state`] SEVPAUX_put_oracle_runs) THEN
   ASM_REWRITE_TAC[FORALL_AND_THM] THEN STRIP_TAC THEN
-  UNDISCH_TAC `semantics_prog (state_eval_state_fupd (K (put_oracle (ci:(C)compiler_instance) orac))
+  UNDISCH_TAC `semantics_prog (state_eval_state_fupd (combin_K (put_oracle (ci:(C)compiler_instance) orac))
                  (s1:(FFI)state)) env decs outcome` THEN
   STRUCT_CASES_TAC(ISPEC `outcome:behaviour` (cases "behaviour")) THEN
   ASM_REWRITE_TAC[semantics_prog_def] THENL
@@ -3761,7 +3761,7 @@ let adjust_oracle_def = cake_def
      | SOME (EvalOracle o_s) ->
          SOME (EvalOracle
                  (eval_oracle_state_custom_do_eval_fupd
-                    (K (do_eval_oracle (mk_compiler_fun_from_ci ci) f)) o_s))`;;
+                    (combin_K (do_eval_oracle (mk_compiler_fun_from_ci ci) f)) o_s))`;;
 
 let adjust_oracle_insert_gen_oracle = prove
  (`adjust_oracle (ci:(C)compiler_instance) f (insert_gen_oracle ci g shift_f orac es) =
@@ -3783,7 +3783,7 @@ let is_insert_decs = prove
   REWRITE_TAC[is_insert_oracle_def] THEN
   MAP_EVERY EXISTS_TAC [`SOME (EvalDecs eds)`; `(FST o FST):compiler_args->num`;
                         `orac:eval_oracle_fun`] THEN
-  REWRITE_TAC[insert_gen_oracle_def] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[insert_gen_oracle_def] THEN CAKE_REWRITE_TAC[]);;
 
 let SEVPAUX_is_insert_EvalOracle = prove
  (`is_insert_oracle (ci:(C)compiler_instance) f (SOME (EvalOracle s)) <=>
@@ -3797,7 +3797,7 @@ let SEVPAUX_is_insert_EvalOracle = prove
     DISCH_TAC THEN
     MAP_EVERY EXISTS_TAC [`SOME (EvalOracle s)`; `(\x. 0):compiler_args->num`;
                           `eval_oracle_state_oracle s`] THEN
-    REWRITE_TAC[insert_gen_oracle_def] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[insert_gen_oracle_def] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[injectivity "option"; injectivity "eval_state";
                 eval_oracle_state_component_equality; eval_oracle_state_INFO.ri_accfupds;
                 K_THM; shift_seq_def; ADD_CLAUSES; ETA_AX] THEN
@@ -3808,7 +3808,7 @@ let SEVPAUX_is_insert_NONE = prove
   REWRITE_TAC[is_insert_oracle_def] THEN
   MAP_EVERY EXISTS_TAC [`NONE:eval_state option`; `(FST o FST):compiler_args->num`;
                         `orac:eval_oracle_fun`] THEN
-  REWRITE_TAC[insert_gen_oracle_def] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[insert_gen_oracle_def] THEN CAKE_REWRITE_TAC[]);;
 
 let SEVPAUX_do_eval_oracle_SOME = prove
  (`do_eval_oracle (cf:compiler_fun) f vs orac = SOME (a,b,c) ==>
@@ -3827,14 +3827,14 @@ let do_eval_adjust = prove
    is_insert_oracle ci f es1`,
   MP_TAC(ISPEC `es:eval_state option` (cases "option")) THEN
   DISCH_THEN(DISJ_CASES_THEN2 SUBST1_TAC (X_CHOOSE_THEN `a:eval_state` SUBST1_TAC)) THENL
-   [REWRITE_TAC[do_eval_def] THEN CASE_REWRITE_TAC[option_DISTINCT]; ALL_TAC] THEN
+   [REWRITE_TAC[do_eval_def] THEN CAKE_REWRITE_TAC[option_DISTINCT]; ALL_TAC] THEN
   CASES_ON `a:eval_state` THENL
    [STRIP_TAC THEN
     FIRST_ASSUM(STRIP_ASSUME_TAC o REWRITE_RULE[SEVPAUX_do_eval_EvalDecs] o
       check (SEVPAUX_has_const "do_eval")) THEN
     FIRST_X_ASSUM(SUBST_ALL_TAC o SYM o
       check (fun th -> is_eq(concl th) && rhs(concl th) = `es1:eval_state option`)) THEN
-    REWRITE_TAC[adjust_oracle_def] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[adjust_oracle_def] THEN CAKE_REWRITE_TAC[] THEN
     ASM_REWRITE_TAC[is_insert_decs];
     REWRITE_TAC[SEVPAUX_is_insert_EvalOracle] THEN STRIP_TAC THEN
     FIRST_X_ASSUM(MP_TAC o REWRITE_RULE[SEVPAUX_do_eval_EvalOracle] o
@@ -3847,11 +3847,11 @@ let do_eval_adjust = prove
     FIRST_X_ASSUM(X_CHOOSE_THEN `d0:dec list` STRIP_ASSUME_TAC o
       MATCH_MP SEVPAUX_do_eval_oracle_SOME) THEN
     FIRST_X_ASSUM SUBST_ALL_TAC THEN
-    REWRITE_TAC[adjust_oracle_def] THEN CASE_REWRITE_TAC[] THEN
-    REWRITE_TAC[do_eval_def] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[adjust_oracle_def] THEN CAKE_REWRITE_TAC[] THEN
+    REWRITE_TAC[do_eval_def] THEN CAKE_REWRITE_TAC[] THEN
     ASM_REWRITE_TAC[eval_oracle_state_INFO.ri_accfupds; K_THM; o_THM] THEN
-    CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[SEVPAUX_lookup_env_fupds] THEN
-    CASE_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[SEVPAUX_lookup_env_fupds] THEN
+    CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[SEVPAUX_is_insert_EvalOracle; add_env_generation_def;
                 eval_oracle_state_INFO.ri_accfupds; K_THM; injectivity "option";
                 injectivity "eval_state"; PAIR_EQ;
@@ -3868,10 +3868,10 @@ let declare_env_adjust = prove
   MP_TAC(ISPEC `es:eval_state option` (cases "option")) THEN
   DISCH_THEN(DISJ_CASES_THEN2 SUBST1_TAC (X_CHOOSE_THEN `a:eval_state` SUBST1_TAC)) THEN
   TRY(CASES_ON `a:eval_state`) THEN
-  REWRITE_TAC[adjust_oracle_def; declare_env_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[adjust_oracle_def; declare_env_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[eval_oracle_state_INFO.ri_accfupds; K_THM] THEN
   EVERY_CASE_TAC THEN
-  REWRITE_TAC[adjust_oracle_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[adjust_oracle_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[injectivity "option"; PAIR_EQ; injectivity "eval_state";
               eval_oracle_state_INFO.ri_fupdcanon]);;
 
@@ -3882,7 +3882,7 @@ let adjust_oracle_reset = prove
   REWRITE_TAC[adjust_oracle_def; reset_env_generation_def] THEN EVERY_CASE_TAC THEN
   ASM_REWRITE_TAC[eval_oracle_state_INFO.ri_accfupds; K_THM; injectivity "option";
                   injectivity "eval_state"; eval_oracle_state_INFO.ri_fupdcanon] THEN
-  CASE_REWRITE_TAC[eval_oracle_state_INFO.ri_accfupds; K_THM; injectivity "option";
+  CAKE_REWRITE_TAC[eval_oracle_state_INFO.ri_accfupds; K_THM; injectivity "option";
                    injectivity "eval_state"; eval_oracle_state_INFO.ri_fupdcanon]);;
 
 (* HOL4 [local] *)
@@ -3992,12 +3992,12 @@ let adjust_oracle_ev_decs = prove
       evaluate_decs s env ds = (s',res) /\ ~(res = Rerr (Rabort Rtype_error)) ==>
       evaluate_decs s env (compile_decs ds) = (s',res)) ==>
    !env ds s' res.
-     evaluate_decs (state_clock_fupd (K k) (s:(FFI)state)) env ds = (s',res) /\
+     evaluate_decs (state_clock_fupd (combin_K k) (s:(FFI)state)) env ds = (s',res) /\
      is_insert_oracle (ci:(C)compiler_instance) f (state_eval_state s) /\
      ~(res = Rerr (Rabort Rtype_error)) ==>
      is_insert_oracle ci f (state_eval_state s') /\
      evaluate_decs (state_eval_state_fupd (adjust_oracle ci (compile_decs o f))
-                      (state_clock_fupd (K k) s)) env ds =
+                      (state_clock_fupd (combin_K k) s)) env ds =
      (state_eval_state_fupd (adjust_oracle ci (compile_decs o f)) s',res)`,
   DISCH_THEN(ASSUME_TAC o CONJUNCT2 o CONJUNCT2 o MATCH_MP adjust_oracle_evaluate) THEN
   REPEAT GEN_TAC THEN STRIP_TAC THEN FIRST_X_ASSUM MATCH_MP_TAC THEN
@@ -4027,7 +4027,7 @@ let adjust_oracle_semantics_prog = prove
   ASSUME_TAC THENL
    [X_GEN_TAC `k:num` THEN REWRITE_TAC[SEVPAUX_evaluate_prog_with_clock] THEN
     STRIP_TAC THEN
-    MP_TAC(ISPEC `evaluate_decs (state_clock_fupd (K k) (s:(FFI)state)) env prog`
+    MP_TAC(ISPEC `evaluate_decs (state_clock_fupd (combin_K k) (s:(FFI)state)) env prog`
              PAIR_SURJECTIVE) THEN
     DISCH_THEN(X_CHOOSE_THEN `s1:(FFI)state` (X_CHOOSE_THEN `r1:(v sem_env,v)result`
       ASSUME_TAC)) THEN
@@ -4036,11 +4036,11 @@ let adjust_oracle_semantics_prog = prove
                                   `s1:(FFI)state`; `r1:(v sem_env,v)result`] o
       check (fun th -> is_forall(concl th) && SEVPAUX_has_const "adjust_oracle" th)) THEN
     ASM_REWRITE_TAC[] THEN
-    SUBGOAL_THEN `state_clock_fupd (K k)
+    SUBGOAL_THEN `state_clock_fupd (combin_K k)
                     (state_eval_state_fupd (adjust_oracle (ci:(C)compiler_instance)
                        ((compile:dec list->dec list) o (f:dec list->dec list))) (s:(FFI)state)) =
                   state_eval_state_fupd (adjust_oracle ci (compile o f))
-                    (state_clock_fupd (K k) s)` SUBST1_TAC THENL
+                    (state_clock_fupd (combin_K k) s)` SUBST1_TAC THENL
      [REWRITE_TAC[state_INFO.ri_fupdcanon]; ALL_TAC] THEN
     STRIP_TAC THEN ASM_REWRITE_TAC[state_INFO.ri_accfupds];
     ALL_TAC] THEN

@@ -45,8 +45,8 @@ let stack_set_store_const = prove
 let _ = cake_add_simps [stack_set_store_const];;
 
 let stack_set_store_with_const = prove
- (`stack_set_store x y (stack_state_clock_fupd (K a) (z:(A,C,FFI)stack_state)) =
-   stack_state_clock_fupd (K a) (stack_set_store x y z)`,
+ (`stack_set_store x y (stack_state_clock_fupd (combin_K a) (z:(A,C,FFI)stack_state)) =
+   stack_state_clock_fupd (combin_K a) (stack_set_store x y z)`,
   REWRITE_TAC[stack_set_store_def] THEN SIMP[]);;
 let _ = cake_add_simps [stack_set_store_with_const];;
 
@@ -77,24 +77,24 @@ let stack_set_var_const = prove
 let _ = cake_add_simps [stack_set_var_const];;
 
 let stack_set_var_with_const = prove
- (`stack_set_var x y (stack_state_clock_fupd (K clk) (z:(A,C,FFI)stack_state)) =
-     stack_state_clock_fupd (K clk) (stack_set_var x y z) /\
-   stack_set_var x y (stack_state_memory_fupd (K m) z) =
-     stack_state_memory_fupd (K m) (stack_set_var x y z) /\
-   stack_set_var x y (stack_state_ffi_fupd (K ffi) z) =
-     stack_state_ffi_fupd (K ffi) (stack_set_var x y z) /\
-   stack_set_var x y (stack_state_stack_fupd (K stk) z) =
-     stack_state_stack_fupd (K stk) (stack_set_var x y z) /\
-   stack_set_var x y (stack_state_stack_space_fupd (K stk_space) z) =
-     stack_state_stack_space_fupd (K stk_space) (stack_set_var x y z)`,
+ (`stack_set_var x y (stack_state_clock_fupd (combin_K clk) (z:(A,C,FFI)stack_state)) =
+     stack_state_clock_fupd (combin_K clk) (stack_set_var x y z) /\
+   stack_set_var x y (stack_state_memory_fupd (combin_K m) z) =
+     stack_state_memory_fupd (combin_K m) (stack_set_var x y z) /\
+   stack_set_var x y (stack_state_ffi_fupd (combin_K ffi) z) =
+     stack_state_ffi_fupd (combin_K ffi) (stack_set_var x y z) /\
+   stack_set_var x y (stack_state_stack_fupd (combin_K stk) z) =
+     stack_state_stack_fupd (combin_K stk) (stack_set_var x y z) /\
+   stack_set_var x y (stack_state_stack_space_fupd (combin_K stk_space) z) =
+     stack_state_stack_space_fupd (combin_K stk_space) (stack_set_var x y z)`,
   REWRITE_TAC[stack_set_var_def] THEN SIMP[]);;
 let _ = cake_add_simps [stack_set_var_with_const];;
 
 (* HOL4 [local] *)
 
 let stack_set_fp_var_with_const = prove
- (`stack_set_fp_var x y (stack_state_clock_fupd (K k) (z:(A,C,FFI)stack_state)) =
-   stack_state_clock_fupd (K k) (stack_set_fp_var x y z)`,
+ (`stack_set_fp_var x y (stack_state_clock_fupd (combin_K k) (z:(A,C,FFI)stack_state)) =
+   stack_state_clock_fupd (combin_K k) (stack_set_fp_var x y z)`,
   REWRITE_TAC[stack_set_fp_var_def] THEN SIMP[]);;
 
 (* HOL4 [local] set_fp_var_const, rebound later in the script by the        *)
@@ -123,14 +123,14 @@ let STACKPROPSAUX_set_fp_var_const = prove
 (* HOL4 [local] *)
 
 let stack_get_fp_var_with_const = prove
- (`stack_get_fp_var x (stack_state_clock_fupd (K k) (y:(A,C,FFI)stack_state)) =
+ (`stack_get_fp_var x (stack_state_clock_fupd (combin_K k) (y:(A,C,FFI)stack_state)) =
    stack_get_fp_var x y`,
   REWRITE_TAC[stack_get_fp_var_def] THEN SIMP[]);;
 
 let stack_get_var_with_const = prove
- (`stack_get_var r (stack_state_clock_fupd (K clk) (t:(A,C,FFI)stack_state)) =
+ (`stack_get_var r (stack_state_clock_fupd (combin_K clk) (t:(A,C,FFI)stack_state)) =
      stack_get_var r t /\
-   stack_get_var r (stack_state_stack_space_fupd (K stk_space) t) =
+   stack_get_var r (stack_state_stack_space_fupd (combin_K stk_space) t) =
      stack_get_var r t`,
   REWRITE_TAC[stack_get_var_def] THEN SIMP[]);;
 let _ = cake_add_simps [stack_get_var_with_const];;
@@ -138,12 +138,12 @@ let _ = cake_add_simps [stack_get_var_with_const];;
 (* HOL4 [local] *)
 
 let stack_get_vars_with_const = prove
- (`!xs. stack_get_vars xs (stack_state_clock_fupd (K k) (y:(A,C,FFI)stack_state)) =
+ (`!xs. stack_get_vars xs (stack_state_clock_fupd (combin_K k) (y:(A,C,FFI)stack_state)) =
         stack_get_vars xs y`,
   LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[stack_get_vars_def; stack_get_var_with_const]);;
 
 let stack_get_var_imm_with_const = prove
- (`stack_get_var_imm x (stack_state_clock_fupd (K k) (y:(A,C,FFI)stack_state)) =
+ (`stack_get_var_imm x (stack_state_clock_fupd (combin_K k) (y:(A,C,FFI)stack_state)) =
    stack_get_var_imm x y`,
   CASES_ON `x:(A)reg_imm` THEN
   REWRITE_TAC[stack_get_var_imm_def; stack_get_var_with_const]);;
@@ -177,8 +177,8 @@ let empty_env_const = prove
 let _ = cake_add_simps [empty_env_const];;
 
 let empty_env_with_const = prove
- (`stack_empty_env (stack_state_clock_fupd (K y) (x:(A,C,FFI)stack_state)) =
-   stack_state_clock_fupd (K y) (stack_empty_env x)`,
+ (`stack_empty_env (stack_state_clock_fupd (combin_K y) (x:(A,C,FFI)stack_state)) =
+   stack_state_clock_fupd (combin_K y) (stack_empty_env x)`,
   REWRITE_TAC[stack_empty_env_def] THEN SIMP[]);;
 let _ = cake_add_simps [empty_env_with_const];;
 
@@ -226,15 +226,15 @@ let store_const_sem_const = prove
   REWRITE_TAC[stack_unset_var_def; I_THM] THEN SIMP[]);;
 
 let stack_gc_with_const = prove
- (`stack_gc (stack_state_clock_fupd (K k) (x:(A,C,FFI)stack_state)) =
-   OPTION_MAP (\s. stack_state_clock_fupd (K k) s) (stack_gc x)`,
+ (`stack_gc (stack_state_clock_fupd (combin_K k) (x:(A,C,FFI)stack_state)) =
+   OPTION_MAP (\s. stack_state_clock_fupd (combin_K k) s) (stack_gc x)`,
   REWRITE_TAC[stack_gc_def; LET_DEF; LET_END_DEF] THEN SIMP[] THEN
   EVERY_CASE_TAC THEN SIMP[OPTION_MAP_DEF]);;
 let _ = cake_add_simps [stack_gc_with_const];;
 
 let stack_alloc_with_const = prove
- (`stackSem_alloc x (stack_state_clock_fupd (K z) (y:(A,C,FFI)stack_state)) =
-   (I ## (\s. stack_state_clock_fupd (K z) s)) (stackSem_alloc x y)`,
+ (`stackSem_alloc x (stack_state_clock_fupd (combin_K z) (y:(A,C,FFI)stack_state)) =
+   (I ## (\s. stack_state_clock_fupd (combin_K z) s)) (stackSem_alloc x y)`,
   REWRITE_TAC[stackSem_alloc_def] THEN SIMP[] THEN
   CASES_ON `stack_gc (stack_set_store AllocSize (wl_Word x) (y:(A,C,FFI)stack_state))` THEN
   SIMP[OPTION_MAP_DEF; PAIR_MAP_THM; I_THM] THEN EVERY_CASE_TAC THEN
@@ -242,8 +242,8 @@ let stack_alloc_with_const = prove
 let _ = cake_add_simps [stack_alloc_with_const];;
 
 let store_const_sem_with_const = prove
- (`store_const_sem t1 t2 (stack_state_clock_fupd (K z) (y:(A,C,FFI)stack_state)) =
-   (I ## (\s. stack_state_clock_fupd (K z) s)) (store_const_sem t1 t2 y)`,
+ (`store_const_sem t1 t2 (stack_state_clock_fupd (combin_K z) (y:(A,C,FFI)stack_state)) =
+   (I ## (\s. stack_state_clock_fupd (combin_K z) s)) (store_const_sem t1 t2 y)`,
   REWRITE_TAC[store_const_sem_def; stack_get_var_def] THEN SIMP[] THEN
   EVERY_CASE_TAC THEN
   SIMP[PAIR_MAP_THM; I_THM; stack_unset_var_def; stack_set_var_def]);;
@@ -252,8 +252,8 @@ let _ = cake_add_simps [store_const_sem_with_const];;
 (* HOL4: mem_load_with_const (a statement about mem_store) *)
 
 let stack_mem_load_with_const = prove
- (`stack_mem_store x y (stack_state_clock_fupd (K k) (z:(A,C,FFI)stack_state)) =
-   OPTION_MAP (\s. stack_state_clock_fupd (K k) s) (stack_mem_store x y z)`,
+ (`stack_mem_store x y (stack_state_clock_fupd (combin_K k) (z:(A,C,FFI)stack_state)) =
+   OPTION_MAP (\s. stack_state_clock_fupd (combin_K k) s) (stack_mem_store x y z)`,
   REWRITE_TAC[stack_mem_store_def] THEN SIMP[] THEN
   COND_CASES_TAC THEN SIMP[OPTION_MAP_DEF]);;
 let _ = cake_add_simps [stack_mem_load_with_const];;
@@ -263,58 +263,58 @@ let STACKPROPSAUX_SH_WITH_TAC def : tactic =
   SIMP[PAIR_MAP_THM; I_THM];;
 
 let stack_sh_mem_load_with_const = prove
- (`stack_sh_mem_load r x (stack_state_clock_fupd (K k) (y:(A,C,FFI)stack_state)) =
-   (I ## (\s. stack_state_clock_fupd (K k) s)) (stack_sh_mem_load r x y)`,
+ (`stack_sh_mem_load r x (stack_state_clock_fupd (combin_K k) (y:(A,C,FFI)stack_state)) =
+   (I ## (\s. stack_state_clock_fupd (combin_K k) s)) (stack_sh_mem_load r x y)`,
   STACKPROPSAUX_SH_WITH_TAC stack_sh_mem_load_def);;
 let _ = cake_add_simps [stack_sh_mem_load_with_const];;
 
 let stack_sh_mem_store_with_const = prove
- (`stack_sh_mem_store x y (stack_state_clock_fupd (K k) (z:(A,C,FFI)stack_state)) =
-   (I ## (\s. stack_state_clock_fupd (K k) s)) (stack_sh_mem_store x y z)`,
+ (`stack_sh_mem_store x y (stack_state_clock_fupd (combin_K k) (z:(A,C,FFI)stack_state)) =
+   (I ## (\s. stack_state_clock_fupd (combin_K k) s)) (stack_sh_mem_store x y z)`,
   STACKPROPSAUX_SH_WITH_TAC stack_sh_mem_store_def);;
 let _ = cake_add_simps [stack_sh_mem_store_with_const];;
 
 let stack_sh_mem_load32_with_const = prove
- (`stack_sh_mem_load32 r x (stack_state_clock_fupd (K k) (y:(A,C,FFI)stack_state)) =
-   (I ## (\s. stack_state_clock_fupd (K k) s)) (stack_sh_mem_load32 r x y)`,
+ (`stack_sh_mem_load32 r x (stack_state_clock_fupd (combin_K k) (y:(A,C,FFI)stack_state)) =
+   (I ## (\s. stack_state_clock_fupd (combin_K k) s)) (stack_sh_mem_load32 r x y)`,
   STACKPROPSAUX_SH_WITH_TAC stack_sh_mem_load32_def);;
 let _ = cake_add_simps [stack_sh_mem_load32_with_const];;
 
 let stack_sh_mem_store32_with_const = prove
- (`stack_sh_mem_store32 x y (stack_state_clock_fupd (K k) (z:(A,C,FFI)stack_state)) =
-   (I ## (\s. stack_state_clock_fupd (K k) s)) (stack_sh_mem_store32 x y z)`,
+ (`stack_sh_mem_store32 x y (stack_state_clock_fupd (combin_K k) (z:(A,C,FFI)stack_state)) =
+   (I ## (\s. stack_state_clock_fupd (combin_K k) s)) (stack_sh_mem_store32 x y z)`,
   STACKPROPSAUX_SH_WITH_TAC stack_sh_mem_store32_def);;
 let _ = cake_add_simps [stack_sh_mem_store32_with_const];;
 
 let stack_sh_mem_load16_with_const = prove
- (`stack_sh_mem_load16 r x (stack_state_clock_fupd (K k) (y:(A,C,FFI)stack_state)) =
-   (I ## (\s. stack_state_clock_fupd (K k) s)) (stack_sh_mem_load16 r x y)`,
+ (`stack_sh_mem_load16 r x (stack_state_clock_fupd (combin_K k) (y:(A,C,FFI)stack_state)) =
+   (I ## (\s. stack_state_clock_fupd (combin_K k) s)) (stack_sh_mem_load16 r x y)`,
   STACKPROPSAUX_SH_WITH_TAC stack_sh_mem_load16_def);;
 let _ = cake_add_simps [stack_sh_mem_load16_with_const];;
 
 let stack_sh_mem_store16_with_const = prove
- (`stack_sh_mem_store16 x y (stack_state_clock_fupd (K k) (z:(A,C,FFI)stack_state)) =
-   (I ## (\s. stack_state_clock_fupd (K k) s)) (stack_sh_mem_store16 x y z)`,
+ (`stack_sh_mem_store16 x y (stack_state_clock_fupd (combin_K k) (z:(A,C,FFI)stack_state)) =
+   (I ## (\s. stack_state_clock_fupd (combin_K k) s)) (stack_sh_mem_store16 x y z)`,
   STACKPROPSAUX_SH_WITH_TAC stack_sh_mem_store16_def);;
 let _ = cake_add_simps [stack_sh_mem_store16_with_const];;
 
 let stack_sh_mem_load_byte_with_const = prove
- (`stack_sh_mem_load_byte r x (stack_state_clock_fupd (K k) (y:(A,C,FFI)stack_state)) =
-   (I ## (\s. stack_state_clock_fupd (K k) s)) (stack_sh_mem_load_byte r x y)`,
+ (`stack_sh_mem_load_byte r x (stack_state_clock_fupd (combin_K k) (y:(A,C,FFI)stack_state)) =
+   (I ## (\s. stack_state_clock_fupd (combin_K k) s)) (stack_sh_mem_load_byte r x y)`,
   STACKPROPSAUX_SH_WITH_TAC stack_sh_mem_load_byte_def);;
 let _ = cake_add_simps [stack_sh_mem_load_byte_with_const];;
 
 let stack_sh_mem_store_byte_with_const = prove
- (`stack_sh_mem_store_byte x y (stack_state_clock_fupd (K k) (z:(A,C,FFI)stack_state)) =
-   (I ## (\s. stack_state_clock_fupd (K k) s)) (stack_sh_mem_store_byte x y z)`,
+ (`stack_sh_mem_store_byte x y (stack_state_clock_fupd (combin_K k) (z:(A,C,FFI)stack_state)) =
+   (I ## (\s. stack_state_clock_fupd (combin_K k) s)) (stack_sh_mem_store_byte x y z)`,
   STACKPROPSAUX_SH_WITH_TAC stack_sh_mem_store_byte_def);;
 let _ = cake_add_simps [stack_sh_mem_store_byte_with_const];;
 
 (* HOL4 [local] *)
 
 let sh_mem_op_with_const = prove
- (`sh_mem_op op x y (stack_state_clock_fupd (K k) (z:(A,C,FFI)stack_state)) =
-   (I ## (\s. stack_state_clock_fupd (K k) s)) (sh_mem_op op x y z)`,
+ (`sh_mem_op op x y (stack_state_clock_fupd (combin_K k) (z:(A,C,FFI)stack_state)) =
+   (I ## (\s. stack_state_clock_fupd (combin_K k) s)) (sh_mem_op op x y z)`,
   CASES_ON `op:memop` THEN REWRITE_TAC[sh_mem_op_def] THEN
   REWRITE_TAC[stack_sh_mem_load_with_const; stack_sh_mem_store_with_const;
               stack_sh_mem_load32_with_const; stack_sh_mem_store32_with_const;
@@ -329,7 +329,7 @@ let STACKPROPSAUX_local_simps =
    stack_get_fp_var_with_const; stack_get_vars_with_const; sh_mem_op_with_const];;
 
 let stack_word_exp_with_const = prove
- (`!s y k. stack_word_exp (stack_state_clock_fupd (K k) (s:(A,C,FFI)stack_state)) y =
+ (`!s y k. stack_word_exp (stack_state_clock_fupd (combin_K k) (s:(A,C,FFI)stack_state)) y =
            stack_word_exp s y`,
   MATCH_MP_TAC stack_word_exp_ind THEN REPEAT CONJ_TAC THEN REPEAT GEN_TAC THENL
    [REWRITE_TAC[stack_word_exp_def];
@@ -339,7 +339,7 @@ let stack_word_exp_with_const = prove
     ASM_REWRITE_TAC[stack_mem_load_def] THEN SIMP[];
     DISCH_TAC THEN GEN_TAC THEN ONCE_REWRITE_TAC[stack_word_exp_def] THEN
     SUBGOAL_THEN
-     `MAP (stack_word_exp (stack_state_clock_fupd (K k) (s:(A,C,FFI)stack_state)))
+     `MAP (stack_word_exp (stack_state_clock_fupd (combin_K k) (s:(A,C,FFI)stack_state)))
           wexps = MAP (stack_word_exp s) wexps`
      (fun th -> REWRITE_TAC[th]) THEN
     MATCH_MP_TAC MAP_EQ THEN REWRITE_TAC[GSYM ALL_MEM] THEN ASM_SIMP_TAC[];
@@ -348,8 +348,8 @@ let stack_word_exp_with_const = prove
 let _ = cake_add_simps [stack_word_exp_with_const];;
 
 let stack_assign_with_const = prove
- (`stack_assign x y (stack_state_clock_fupd (K k) (s:(A,C,FFI)stack_state)) =
-   OPTION_MAP (\s. stack_state_clock_fupd (K k) s) (stack_assign x y s)`,
+ (`stack_assign x y (stack_state_clock_fupd (combin_K k) (s:(A,C,FFI)stack_state)) =
+   OPTION_MAP (\s. stack_state_clock_fupd (combin_K k) s) (stack_assign x y s)`,
   REWRITE_TAC[stack_assign_def; stack_word_exp_with_const] THEN
   CASES_ON `stack_word_exp (s:(A,C,FFI)stack_state) y` THEN
   SIMP[OPTION_MAP_DEF]);;
@@ -376,13 +376,13 @@ let stack_inst_const = prove
   DISCH_THEN(SUBST1_TAC o SYM) THEN SIMP STACKPROPSAUX_local_simps);;
 
 let STACKPROPSAUX_mem_load_with_const = prove
- (`stack_mem_load a (stack_state_clock_fupd (K k) (s:(A,C,FFI)stack_state)) =
+ (`stack_mem_load a (stack_state_clock_fupd (combin_K k) (s:(A,C,FFI)stack_state)) =
    stack_mem_load a s`,
   REWRITE_TAC[stack_mem_load_def] THEN SIMP[]);;
 
 let stack_inst_with_const = prove
- (`stack_inst i (stack_state_clock_fupd (K k) (s:(A,C,FFI)stack_state)) =
-   OPTION_MAP (\s. stack_state_clock_fupd (K k) s) (stack_inst i s)`,
+ (`stack_inst i (stack_state_clock_fupd (combin_K k) (s:(A,C,FFI)stack_state)) =
+   OPTION_MAP (\s. stack_state_clock_fupd (combin_K k) s) (stack_inst i s)`,
   REWRITE_TAC[stack_inst_def] THEN
   SIMP(STACKPROPSAUX_mem_load_with_const :: STACKPROPSAUX_local_simps) THEN
   REPEAT (TOP_CASE_TAC THEN SIMP[OPTION_MAP_DEF; LET_DEF; LET_END_DEF]) THEN
@@ -700,8 +700,8 @@ let STACKPROPSAUX_dec_clock_clock = prove
 
 let STACKPROPSAUX_dec_clock_add = prove
  (`~(n = 0) ==>
-   stack_dec_clock (stack_state_clock_fupd (K (n + extra)) (s:(A,C,FFI)stack_state)) =
-   stack_state_clock_fupd (K ((n - 1) + extra)) (stack_dec_clock s)`,
+   stack_dec_clock (stack_state_clock_fupd (combin_K (n + extra)) (s:(A,C,FFI)stack_state)) =
+   stack_state_clock_fupd (combin_K ((n - 1) + extra)) (stack_dec_clock s)`,
   REWRITE_TAC[stack_dec_clock_def] THEN SIMP[] THEN DISCH_TAC THEN
   AP_THM_TAC THEN AP_TERM_TAC THEN AP_TERM_TAC THEN ASM_ARITH_TAC);;
 
@@ -763,12 +763,12 @@ let STACKPROPSAUX_ADD_CLOCK_TAC : tactic =
 let stack_evaluate_add_clock = prove
  (`!p (s:(A,C,FFI)stack_state) r s'.
      stack_evaluate (p,s) = (r,s') /\ ~(r = SOME stack_TimeOut) ==>
-     stack_evaluate (p,stack_state_clock_fupd (K (stack_state_clock s + extra)) s) =
-     (r,stack_state_clock_fupd (K (stack_state_clock s' + extra)) s')`,
+     stack_evaluate (p,stack_state_clock_fupd (combin_K (stack_state_clock s + extra)) s) =
+     (r,stack_state_clock_fupd (combin_K (stack_state_clock s' + extra)) s')`,
   STACKPROPSAUX_EVAL_IND_TAC THEN STACKPROPSAUX_ADD_CLOCK_TAC);;
 
 let stack_with_clock_ffi = prove
- (`stack_state_ffi (stack_state_clock_fupd (K k) (s:(A,C,FFI)stack_state)) =
+ (`stack_state_ffi (stack_state_clock_fupd (combin_K k) (s:(A,C,FFI)stack_state)) =
    stack_state_ffi s`,
   SIMP[]);;
 
@@ -825,7 +825,7 @@ let STACKPROPSAUX_TIMEOUT_IO_TAC : tactic =
 let STACKPROPSAUX_timeout_io = prove
  (`!e (s:(A,C,FFI)stack_state) t.
      stack_evaluate (e,s) = (SOME stack_TimeOut,t) ==>
-     !q t'. stack_evaluate (e,stack_state_clock_fupd (K (stack_state_clock s + extra)) s) =
+     !q t'. stack_evaluate (e,stack_state_clock_fupd (combin_K (stack_state_clock s + extra)) s) =
             (q,t') ==>
             isPREFIX (ffi_state_io_events (stack_state_ffi t))
                      (ffi_state_io_events (stack_state_ffi t'))`,
@@ -836,7 +836,7 @@ let stack_evaluate_add_clock_io_events_mono = prove
      isPREFIX
        (ffi_state_io_events (stack_state_ffi (SND (stack_evaluate (e,s)))))
        (ffi_state_io_events (stack_state_ffi (SND (stack_evaluate
-          (e,stack_state_clock_fupd (K (stack_state_clock s + extra)) s)))))`,
+          (e,stack_state_clock_fupd (combin_K (stack_state_clock s + extra)) s)))))`,
   REPEAT GEN_TAC THEN
   MP_TAC(ISPEC `stack_evaluate (e:(A)stack_prog,s:(A,C,FFI)stack_state)`
            PAIR_SURJECTIVE) THEN
@@ -844,7 +844,7 @@ let stack_evaluate_add_clock_io_events_mono = prove
   MAP_EVERY X_GEN_TAC [`q:((A)stack_result)option`; `r:(A,C,FFI)stack_state`] THEN
   DISCH_TAC THEN
   MP_TAC(ISPEC `stack_evaluate (e:(A)stack_prog,
-                  stack_state_clock_fupd (K (stack_state_clock s + extra))
+                  stack_state_clock_fupd (combin_K (stack_state_clock s + extra))
                     (s:(A,C,FFI)stack_state))` PAIR_SURJECTIVE) THEN
   REWRITE_TAC[LEFT_IMP_EXISTS_THM] THEN
   MAP_EVERY X_GEN_TAC [`q':((A)stack_result)option`; `r':(A,C,FFI)stack_state`] THEN
@@ -875,8 +875,8 @@ let clock_neutral_ind = cake_ind "clock_neutral";;
 
 let inst_clock_neutral = prove
  (`(stack_inst i (s:(A,C,FFI)stack_state) = SOME t ==>
-    stack_inst i (stack_state_clock_fupd (K k) s) = SOME (stack_state_clock_fupd (K k) t)) /\
-   (stack_inst i s = NONE ==> stack_inst i (stack_state_clock_fupd (K k) s) = NONE)`,
+    stack_inst i (stack_state_clock_fupd (combin_K k) s) = SOME (stack_state_clock_fupd (combin_K k) t)) /\
+   (stack_inst i s = NONE ==> stack_inst i (stack_state_clock_fupd (combin_K k) s) = NONE)`,
   REWRITE_TAC[stack_inst_with_const] THEN CONJ_TAC THEN DISCH_THEN SUBST1_TAC THEN
   REWRITE_TAC[OPTION_MAP_DEF]);;
 
@@ -912,25 +912,25 @@ let STACKPROPSAUX_word_exp_frame = prove
     ASM_REWRITE_TAC[] THEN REPEAT(DISCH_THEN SUBST1_TAC) THEN REWRITE_TAC[]]);;
 
 let STACKPROPSAUX_word_exp_with_ffi = prove
- (`stack_word_exp (stack_state_ffi_fupd (K k) (s:(A,C,FFI)stack_state)) e =
+ (`stack_word_exp (stack_state_ffi_fupd (combin_K k) (s:(A,C,FFI)stack_state)) e =
    stack_word_exp s e`,
   MATCH_MP_TAC STACKPROPSAUX_word_exp_frame THEN SIMP[]);;
 
 let STACKPROPSAUX_ffi_rws = prove
- (`(!r. stack_get_var r (stack_state_ffi_fupd (K k) (s:(A,C,FFI)stack_state)) =
+ (`(!r. stack_get_var r (stack_state_ffi_fupd (combin_K k) (s:(A,C,FFI)stack_state)) =
         stack_get_var r s) /\
-   (!xs. stack_get_vars xs (stack_state_ffi_fupd (K k) (s:(A,C,FFI)stack_state)) =
+   (!xs. stack_get_vars xs (stack_state_ffi_fupd (combin_K k) (s:(A,C,FFI)stack_state)) =
          stack_get_vars xs s) /\
-   (!r. stack_get_fp_var r (stack_state_ffi_fupd (K k) (s:(A,C,FFI)stack_state)) =
+   (!r. stack_get_fp_var r (stack_state_ffi_fupd (combin_K k) (s:(A,C,FFI)stack_state)) =
         stack_get_fp_var r s) /\
-   (!a. stack_mem_load a (stack_state_ffi_fupd (K k) (s:(A,C,FFI)stack_state)) =
+   (!a. stack_mem_load a (stack_state_ffi_fupd (combin_K k) (s:(A,C,FFI)stack_state)) =
         stack_mem_load a s) /\
-   (!a w. stack_mem_store a w (stack_state_ffi_fupd (K k) (s:(A,C,FFI)stack_state)) =
-          OPTION_MAP (\s. stack_state_ffi_fupd (K k) s) (stack_mem_store a w s)) /\
-   (!x y. stack_set_fp_var x y (stack_state_ffi_fupd (K k) (s:(A,C,FFI)stack_state)) =
-          stack_state_ffi_fupd (K k) (stack_set_fp_var x y s)) /\
-   (!x y. stack_assign x y (stack_state_ffi_fupd (K k) (s:(A,C,FFI)stack_state)) =
-          OPTION_MAP (\s. stack_state_ffi_fupd (K k) s) (stack_assign x y s))`,
+   (!a w. stack_mem_store a w (stack_state_ffi_fupd (combin_K k) (s:(A,C,FFI)stack_state)) =
+          OPTION_MAP (\s. stack_state_ffi_fupd (combin_K k) s) (stack_mem_store a w s)) /\
+   (!x y. stack_set_fp_var x y (stack_state_ffi_fupd (combin_K k) (s:(A,C,FFI)stack_state)) =
+          stack_state_ffi_fupd (combin_K k) (stack_set_fp_var x y s)) /\
+   (!x y. stack_assign x y (stack_state_ffi_fupd (combin_K k) (s:(A,C,FFI)stack_state)) =
+          OPTION_MAP (\s. stack_state_ffi_fupd (combin_K k) s) (stack_assign x y s))`,
   REPEAT CONJ_TAC THENL
    [REWRITE_TAC[stack_get_var_def] THEN SIMP[];
     LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[stack_get_vars_def; stack_get_var_def] THEN
@@ -946,8 +946,8 @@ let STACKPROPSAUX_ffi_rws = prove
     SIMP[OPTION_MAP_DEF]]);;
 
 let STACKPROPSAUX_inst_with_ffi = prove
- (`stack_inst i (stack_state_ffi_fupd (K k) (s:(A,C,FFI)stack_state)) =
-   OPTION_MAP (\s. stack_state_ffi_fupd (K k) s) (stack_inst i s)`,
+ (`stack_inst i (stack_state_ffi_fupd (combin_K k) (s:(A,C,FFI)stack_state)) =
+   OPTION_MAP (\s. stack_state_ffi_fupd (combin_K k) s) (stack_inst i s)`,
   REWRITE_TAC[stack_inst_def] THEN
   SIMP[STACKPROPSAUX_ffi_rws; STACKPROPSAUX_word_exp_with_ffi] THEN
   REPEAT (TOP_CASE_TAC THEN SIMP[OPTION_MAP_DEF; LET_DEF; LET_END_DEF]) THEN
@@ -957,8 +957,8 @@ let STACKPROPSAUX_inst_with_ffi = prove
 
 let inst_clock_neutral_ffi = prove
  (`(stack_inst i (s:(A,C,FFI)stack_state) = SOME t ==>
-    stack_inst i (stack_state_ffi_fupd (K k) s) = SOME (stack_state_ffi_fupd (K k) t)) /\
-   (stack_inst i s = NONE ==> stack_inst i (stack_state_ffi_fupd (K k) s) = NONE)`,
+    stack_inst i (stack_state_ffi_fupd (combin_K k) s) = SOME (stack_state_ffi_fupd (combin_K k) t)) /\
+   (stack_inst i s = NONE ==> stack_inst i (stack_state_ffi_fupd (combin_K k) s) = NONE)`,
   REWRITE_TAC[STACKPROPSAUX_inst_with_ffi] THEN CONJ_TAC THEN DISCH_THEN SUBST1_TAC THEN
   REWRITE_TAC[OPTION_MAP_DEF]);;
 
@@ -978,15 +978,15 @@ let STACKPROPSAUX_NEUTRAL_TAC (rws:thm list) : tactic =
 let evaluate_clock_neutral = prove
  (`!prog (s:(A,C,FFI)stack_state) res t.
      stack_evaluate (prog,s) = (res,t) /\ clock_neutral prog ==>
-     stack_evaluate (prog,stack_state_clock_fupd (K c) s) =
-     (res,stack_state_clock_fupd (K c) t)`,
+     stack_evaluate (prog,stack_state_clock_fupd (combin_K c) s) =
+     (res,stack_state_clock_fupd (combin_K c) t)`,
   STACKPROPSAUX_EVAL_IND_TAC THEN STACKPROPSAUX_NEUTRAL_TAC []);;
 
 let STACKPROPSAUX_neutral_ffi_rws = prove
- (`(!x. stack_get_var_imm x (stack_state_ffi_fupd (K k) (s:(A,C,FFI)stack_state)) =
+ (`(!x. stack_get_var_imm x (stack_state_ffi_fupd (combin_K k) (s:(A,C,FFI)stack_state)) =
         stack_get_var_imm x s) /\
-   stack_empty_env (stack_state_ffi_fupd (K k) (s:(A,C,FFI)stack_state)) =
-   stack_state_ffi_fupd (K k) (stack_empty_env s)`,
+   stack_empty_env (stack_state_ffi_fupd (combin_K k) (s:(A,C,FFI)stack_state)) =
+   stack_state_ffi_fupd (combin_K k) (stack_empty_env s)`,
   CONJ_TAC THENL
    [GEN_TAC THEN CASES_ON `x:(A)reg_imm` THEN
     REWRITE_TAC[stack_get_var_imm_def; STACKPROPSAUX_ffi_rws];
@@ -995,8 +995,8 @@ let STACKPROPSAUX_neutral_ffi_rws = prove
 let evaluate_ffi_neutral = prove
  (`!prog (s:(A,C,FFI)stack_state) res t.
      stack_evaluate (prog,s) = (res,t) /\ clock_neutral prog ==>
-     stack_evaluate (prog,stack_state_ffi_fupd (K c) s) =
-     (res,stack_state_ffi_fupd (K c) t)`,
+     stack_evaluate (prog,stack_state_ffi_fupd (combin_K c) s) =
+     (res,stack_state_ffi_fupd (combin_K c) t)`,
   STACKPROPSAUX_EVAL_IND_TAC THEN
   STACKPROPSAUX_NEUTRAL_TAC [STACKPROPSAUX_ffi_rws; STACKPROPSAUX_inst_with_ffi;
                              STACKPROPSAUX_neutral_ffi_rws]);;
@@ -1027,11 +1027,11 @@ let semantics_Diverge_IMP_LPREFIX = prove
   REPEAT(POP_ASSUM(K ALL_TAC)) THEN
   ABBREV_TAC `f = \k. ffi_state_io_events (stack_state_ffi (SND (stack_evaluate
                    (stack_Call NONE (INL start) NONE:(A)stack_prog,
-                    stack_state_clock_fupd (K k) (s1:(A,C,FFI)stack_state)))))` THEN
+                    stack_state_clock_fupd (combin_K k) (s1:(A,C,FFI)stack_state)))))` THEN
   SUBGOAL_THEN
    `IMAGE (\k. llist_fromList (ffi_state_io_events (stack_state_ffi (SND (stack_evaluate
        (stack_Call NONE (INL start) NONE:(A)stack_prog,
-        stack_state_clock_fupd (K k) (s1:(A,C,FFI)stack_state))))))) (:num) =
+        stack_state_clock_fupd (combin_K k) (s1:(A,C,FFI)stack_state))))))) (:num) =
     IMAGE llist_fromList (IMAGE f (:num))`
    SUBST1_TAC THENL
    [EXPAND_TAC "f" THEN REWRITE_TAC[GSYM IMAGE_o; o_DEF]; ALL_TAC] THEN
@@ -1057,7 +1057,7 @@ let semantics_Diverge_IMP_LPREFIX = prove
   EXPAND_TAC "f" THEN REWRITE_TAC[LE_EXISTS] THEN REPEAT STRIP_TAC THEN
   ASM_REWRITE_TAC[] THEN
   MP_TAC(ISPECL [`stack_Call NONE (INL start) NONE:(A)stack_prog`;
-                 `stack_state_clock_fupd (K k1) (s1:(A,C,FFI)stack_state)`]
+                 `stack_state_clock_fupd (combin_K k1) (s1:(A,C,FFI)stack_state)`]
           (INST [`d:num`,`extra:num`] stack_evaluate_add_clock_io_events_mono)) THEN
   SIMP[]);;
 
@@ -1585,11 +1585,11 @@ let STACKPROPSAUX_io_mono = prove
      k1 <= k2 ==>
      isPREFIX
        (ffi_state_io_events (stack_state_ffi
-          (SND (stack_evaluate (p,stack_state_clock_fupd (K k1) x)))))
+          (SND (stack_evaluate (p,stack_state_clock_fupd (combin_K k1) x)))))
        (ffi_state_io_events (stack_state_ffi
-          (SND (stack_evaluate (p,stack_state_clock_fupd (K k2) x)))))`,
+          (SND (stack_evaluate (p,stack_state_clock_fupd (combin_K k2) x)))))`,
   REPEAT GEN_TAC THEN REWRITE_TAC[LE_EXISTS] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
-  MP_TAC(ISPECL [`p:(A)stack_prog`; `stack_state_clock_fupd (K k1) (x:(A,C,FFI)stack_state)`]
+  MP_TAC(ISPECL [`p:(A)stack_prog`; `stack_state_clock_fupd (combin_K k1) (x:(A,C,FFI)stack_state)`]
           (INST [`d:num`,`extra:num`] stack_evaluate_add_clock_io_events_mono)) THEN
   SIMP[]);;
 
@@ -1597,7 +1597,7 @@ let STACKPROPSAUX_io_chain = prove
  (`!p (x:(A,C,FFI)stack_state).
      lprefix_chain
        (IMAGE (\k. llist_fromList (ffi_state_io_events (stack_state_ffi
-          (SND (stack_evaluate (p,stack_state_clock_fupd (K k) x)))))) (:num))`,
+          (SND (stack_evaluate (p,stack_state_clock_fupd (combin_K k) x)))))) (:num))`,
   REPEAT GEN_TAC THEN
   REWRITE_TAC[SET_RULE `IMAGE (\k. (g:B->C) ((f:A->B) k)) s = IMAGE g (IMAGE f s)`] THEN
   MATCH_MP_TAC prefix_chain_lprefix_chain THEN

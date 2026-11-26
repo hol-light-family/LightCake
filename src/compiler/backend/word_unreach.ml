@@ -97,10 +97,10 @@ let remove_unreach_test = prove
    wl_Move 1 [(3,11); (2,99); (1,11)]`,
   REWRITE_TAC[remove_unreach_def; word_unreach_Seq_assoc_right_def] THEN
   REWRITE_TAC[SimpSeq_def; LET_DEF; LET_END_DEF] THEN
-  CASE_REWRITE_TAC[dest_Seq_Move_def] THEN
+  CAKE_REWRITE_TAC[dest_Seq_Move_def] THEN
   REWRITE_TAC[word_unreach_merge_moves_def; LET_DEF; LET_END_DEF; MAP; APPEND;
               ALOOKUP_DEF] THEN
-  REPEAT (CHANGED_TAC (CONV_TAC(DEPTH_CONV NUM_EQ_CONV) THEN CASE_REWRITE_TAC[])) THEN
+  REPEAT (CHANGED_TAC (CONV_TAC(DEPTH_CONV NUM_EQ_CONV) THEN CAKE_REWRITE_TAC[])) THEN
   REPEAT (CHANGED_TAC (ONCE_REWRITE_TAC[anub_def] THEN REWRITE_TAC[MEM] THEN
                        CONV_TAC(DEPTH_CONV NUM_EQ_CONV) THEN REWRITE_TAC[])) THEN
   REWRITE_TAC[ARITH_RULE `MAX 1 1 = 1`]);;

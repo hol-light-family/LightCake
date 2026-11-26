@@ -222,7 +222,7 @@ let pan_structs_compile_def = sem1aux_def_wf
           (pan_structs_compile_exp ctxt e)
           (pan_structs_compile
              (pan_structs_context_locals_fupd
-                (K (CONS (v,s) (pan_structs_context_locals ctxt))) ctxt) p):
+                (combin_K (CONS (v,s) (pan_structs_context_locals ctxt))) ctxt) p):
         (A)panLang_prog) /\
      (pan_structs_compile ctxt (panLang_Assign vk v e) =
         panLang_Assign vk v (pan_structs_compile_exp ctxt e)) /\
@@ -264,7 +264,7 @@ let pan_structs_compile_def = sem1aux_def_wf
           (pan_structs_compile_exps ctxt es)
           (pan_structs_compile
              (pan_structs_context_locals_fupd
-                (K (CONS (v,s) (pan_structs_context_locals ctxt))) ctxt) p)) /\
+                (combin_K (CONS (v,s) (pan_structs_context_locals ctxt))) ctxt) p)) /\
      (pan_structs_compile ctxt (panLang_ExtCall f ptr1 len1 ptr2 len2) =
         panLang_ExtCall f
           (pan_structs_compile_exp ctxt ptr1)
@@ -294,7 +294,7 @@ let pan_structs_compile_decs_def = cake_def
       let (ds',ctxt') =
         pan_structs_compile_decs
           (pan_structs_context_globals_fupd
-             (K (CONS (v,sh) (pan_structs_context_globals ctxt))) ctxt) ds in
+             (combin_K (CONS (v,sh) (pan_structs_context_globals ctxt))) ctxt) ds in
       (CONS (Decl (compile_shape (pan_structs_context_structs ctxt) sh) v
                   (pan_structs_compile_exp ctxt e)) ds',
        ctxt')) /\
@@ -306,7 +306,7 @@ let pan_structs_compile_decs_def = cake_def
           (MAP (\q. match q with
                       (p,s) -> (p,compile_shape (pan_structs_context_structs ctxt) s)))
           (fun_decl_body_fupd
-             (pan_structs_compile (pan_structs_context_locals_fupd (K params) ctxt'))
+             (pan_structs_compile (pan_structs_context_locals_fupd (combin_K params) ctxt'))
              (fun_decl_return_fupd
                 (compile_shape (pan_structs_context_structs ctxt)) fi)) in
       (CONS (Function fi') ds',ctxt')) /\
@@ -325,7 +325,7 @@ let get_names_def = cake_def
   `(get_names ctxt ([]:((A)decl)list) = ctxt) /\
    (get_names ctxt (CONS (Name nm flds) ds) =
       get_names (pan_structs_context_structs_fupd
-                   (K (CONS (nm,flds) (pan_structs_context_structs ctxt))) ctxt) ds) /\
+                   (combin_K (CONS (nm,flds) (pan_structs_context_structs ctxt))) ctxt) ds) /\
    (get_names ctxt (CONS _ ds) = get_names ctxt ds)`;;
 
 (* Returns converted program *)

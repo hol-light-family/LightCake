@@ -155,9 +155,9 @@ let clos_do_install_def = cake_def
                     if bytes = bytes' /\ data = data' /\
                        FST (new_oracle 0) = cfg' /\ ~(exps = []) then
                      (let s' =
-                        clos_state_code_fupd (K (clos_state_code s |++ aux))
-                          (clos_state_compile_oracle_fupd (K new_oracle)
-                            (clos_state_clock_fupd (K (clos_state_clock s - 1)) s))
+                        clos_state_code_fupd (combin_K (clos_state_code s |++ aux))
+                          (clos_state_compile_oracle_fupd (combin_K new_oracle)
+                            (clos_state_clock_fupd (combin_K (clos_state_clock s - 1)) s))
                       in
                         if clos_state_clock s = 0
                         then (Rerr (Rabort Rtimeout_error),s')
@@ -327,12 +327,12 @@ let clos_do_app_def = cake_def
      | (GlobOp (SetGlobal n),[v]) ->
          (match get_global n (clos_state_globals s) with
             SOME NONE -> Rval (clos_Unit,
-              clos_state_globals_fupd (K (LUPDATE (SOME v) n (clos_state_globals s))) s)
+              clos_state_globals_fupd (combin_K (LUPDATE (SOME v) n (clos_state_globals s))) s)
           | _ -> Rerr (Rabort Rtype_error))
      | (GlobOp AllocGlobal,[clos_Number i]) ->
          (if i < &0 then Rerr (Rabort Rtype_error)
           else Rval (clos_Unit, clos_state_globals_fupd
-                 (K (APPEND (clos_state_globals s) (REPLICATE (num_of_int i) NONE))) s))
+                 (combin_K (APPEND (clos_state_globals s) (REPLICATE (num_of_int i) NONE))) s))
      | (BlockOp (Constant c),[]) -> Rval (make_const c, s)
      | (BlockOp (clos_Cons tag),xs) -> Rval (clos_Block tag xs, s)
      | (BlockOp (ConsExtend tag),
@@ -382,13 +382,13 @@ let clos_do_app_def = cake_def
      | (MemOp (RefByte F),[clos_Number i; clos_Number b]) ->
          if &0 <= i /\ (?w:byte. b = &(val w)) then
            let ptr = (minimal ptr. ~(ptr IN FDOM (clos_state_refs s))) in
-             Rval (clos_RefPtr T ptr, clos_state_refs_fupd (K (clos_state_refs s |+
+             Rval (clos_RefPtr T ptr, clos_state_refs_fupd (combin_K (clos_state_refs s |+
                (ptr,clos_ByteArray (REPLICATE (num_of_int i) (iword b))))) s)
          else Rerr (Rabort Rtype_error)
      | (MemOp RefArray,[clos_Number i; v]) ->
          if &0 <= i then
            let ptr = (minimal ptr. ~(ptr IN FDOM (clos_state_refs s))) in
-             Rval (clos_RefPtr T ptr, clos_state_refs_fupd (K (clos_state_refs s |+
+             Rval (clos_RefPtr T ptr, clos_state_refs_fupd (combin_K (clos_state_refs s |+
                (ptr,clos_ValueArray (REPLICATE (num_of_int i) v)))) s)
          else Rerr (Rabort Rtype_error)
      | (MemOp DerefByte,[clos_RefPtr _ ptr; clos_Number i]) ->
@@ -403,7 +403,7 @@ let clos_do_app_def = cake_def
             SOME (clos_ByteArray bs) ->
               (if &0 <= i /\ i < &(LENGTH bs) /\ (?w:byte. b = &(val w))
                then
-                 Rval (clos_Unit, clos_state_refs_fupd (K (clos_state_refs s |+
+                 Rval (clos_Unit, clos_state_refs_fupd (combin_K (clos_state_refs s |+
                    (ptr, clos_ByteArray (LUPDATE (iword b) (num_of_int i) bs)))) s)
                else Rerr (Rabort Rtype_error))
           | _ -> Rerr (Rabort Rtype_error))
@@ -434,7 +434,7 @@ let clos_do_app_def = cake_def
             SOME (clos_ByteArray ds) ->
               (match copy_array (ws,srcoff) len (SOME (ds,dstoff)) with
                  SOME ds -> Rval (clos_Unit, clos_state_refs_fupd
-                              (K (clos_state_refs s |+ (dst, clos_ByteArray ds))) s)
+                              (combin_K (clos_state_refs s |+ (dst, clos_ByteArray ds))) s)
                | NONE -> Rerr (Rabort Rtype_error))
           | _ -> Rerr (Rabort Rtype_error))
      | (MemOp (CopyByte F),[clos_RefPtr _ src; clos_Number srcoff; clos_Number len;
@@ -443,7 +443,7 @@ let clos_do_app_def = cake_def
             (SOME (clos_ByteArray ws), SOME (clos_ByteArray ds)) ->
               (match copy_array (ws,srcoff) len (SOME (ds,dstoff)) with
                  SOME ds -> Rval (clos_Unit, clos_state_refs_fupd
-                              (K (clos_state_refs s |+ (dst, clos_ByteArray ds))) s)
+                              (combin_K (clos_state_refs s |+ (dst, clos_ByteArray ds))) s)
                | NONE -> Rerr (Rabort Rtype_error))
           | _ -> Rerr (Rabort Rtype_error))
      | (MemOp (CopyByte T),[ByteVector ws; clos_Number srcoff; clos_Number len]) ->
@@ -462,7 +462,7 @@ let clos_do_app_def = cake_def
             SOME (clos_ByteArray ds) ->
               (match xor_bytes ws ds with
                  SOME ds1 -> Rval (clos_Unit, clos_state_refs_fupd
-                               (K (clos_state_refs s |+ (dst, clos_ByteArray ds1))) s)
+                               (combin_K (clos_state_refs s |+ (dst, clos_ByteArray ds1))) s)
                | _ -> Rerr (Rabort Rtype_error))
           | _ -> Rerr (Rabort Rtype_error))
      | (MemOp (StringCmp b cmp),[ByteVector b1; ByteVector b2]) ->
@@ -497,12 +497,12 @@ let clos_do_app_def = cake_def
      | (MemOp clos_Ref,xs) ->
          let ptr = (minimal ptr. ~(ptr IN FDOM (clos_state_refs s))) in
            Rval (clos_RefPtr T ptr, clos_state_refs_fupd
-                   (K (clos_state_refs s |+ (ptr,clos_ValueArray xs))) s)
+                   (combin_K (clos_state_refs s |+ (ptr,clos_ValueArray xs))) s)
      | (MemOp Update,[clos_RefPtr _ ptr; clos_Number i; x]) ->
          (match FLOOKUP (clos_state_refs s) ptr with
             SOME (clos_ValueArray xs) ->
               (if &0 <= i /\ i < &(LENGTH xs)
-               then Rval (clos_Unit, clos_state_refs_fupd (K (clos_state_refs s |+
+               then Rval (clos_Unit, clos_state_refs_fupd (combin_K (clos_state_refs s |+
                            (ptr,clos_ValueArray (LUPDATE x (num_of_int i) xs)))) s)
                else Rerr (Rabort Rtype_error))
           | _ -> Rerr (Rabort Rtype_error))
@@ -520,8 +520,8 @@ let clos_do_app_def = cake_def
               (match call_FFI (clos_state_ffi s) (ExtCall n) conf ws with
                  FFI_return ffi' ws' ->
                    Rval (clos_Unit,
-                         clos_state_refs_fupd (K (clos_state_refs s |+ (ptr,clos_ByteArray ws')))
-                           (clos_state_ffi_fupd (K ffi') s))
+                         clos_state_refs_fupd (combin_K (clos_state_refs s |+ (ptr,clos_ByteArray ws')))
+                           (clos_state_ffi_fupd (combin_K ffi') s))
                | FFI_final outcome ->
                    Rerr (Rabort (Rffi_error outcome)))
           | _ -> Rerr (Rabort Rtype_error))
@@ -547,21 +547,21 @@ let clos_do_app_def = cake_def
                  Rerr (Rabort Rtype_error) else
                let ptr = (minimal ptr. ~(ptr IN FDOM (clos_state_refs s))) in
                  Rval (clos_RefPtr F ptr, clos_state_refs_fupd
-                         (K (clos_state_refs s |+ (ptr,clos_Thunk m v))) s))
+                         (combin_K (clos_state_refs s |+ (ptr,clos_Thunk m v))) s))
           | (UpdateThunk m, [clos_RefPtr F ptr; v]) ->
               (if clos_bad_thunk_update m v (clos_state_refs s) then
                  Rerr (Rabort Rtype_error) else
                match FLOOKUP (clos_state_refs s) ptr with
                  SOME (clos_Thunk NotEvaluated _) ->
                    Rval (clos_Unit, clos_state_refs_fupd
-                           (K (clos_state_refs s |+ (ptr,clos_Thunk m v))) s)
+                           (combin_K (clos_state_refs s |+ (ptr,clos_Thunk m v))) s)
                | _ -> Rerr (Rabort Rtype_error))
           | _ -> Rerr (Rabort Rtype_error))
      | _ -> (Rerr (Rabort Rtype_error):(clos_v # (C,FFI)clos_state,clos_v)result)`;;
 
 let clos_dec_clock_def = cake_def
   `clos_dec_clock n (s:(C,FFI)clos_state) =
-     clos_state_clock_fupd (K (clos_state_clock s - n)) s`;;
+     clos_state_clock_fupd (combin_K (clos_state_clock s - n)) s`;;
 
 (* HOL4 [local] *)
 let clos_LESS_EQ_dec_clock = prove
@@ -588,7 +588,7 @@ let clos_find_code_def = cake_def
 (* types                                                                     *)
 let clos_fix_clock_def = cake_def
   `clos_fix_clock (s:(A,B)clos_state) ((res:R),(s1:(C,D)clos_state)) =
-     (res,clos_state_clock_fupd (K (MIN (clos_state_clock s) (clos_state_clock s1))) s1)`;;
+     (res,clos_state_clock_fupd (combin_K (MIN (clos_state_clock s) (clos_state_clock s1))) s1)`;;
 
 (* HOL4 [local] *)
 let clos_fix_clock_IMP = prove
@@ -852,7 +852,7 @@ let CLOSSEMAUX_evaluate_clauses1 =
                     (Rval vs2,s) ->
                       (match clos_update_thunk vs (clos_state_refs s) vs2 with
                          NONE -> (Rerr (Rabort Rtype_error),s)
-                       | SOME refs -> (Rval vs2,clos_state_refs_fupd (K refs) s))
+                       | SOME refs -> (Rval vs2,clos_state_refs_fupd (combin_K refs) s))
                   | (Rerr e,s) -> (Rerr e,s)))
           else
             (match clos_do_app op (REVERSE vs) s with
@@ -903,7 +903,7 @@ let CLOSSEMAUX_evaluate_clauses1 =
              NONE -> (Rerr (Rabort Rtype_error),s)
            | SOME (args,exp) ->
                if clos_state_clock s < ticks + 1 then
-                 (Rerr (Rabort Rtimeout_error),clos_state_clock_fupd (K 0) s)
+                 (Rerr (Rabort Rtimeout_error),clos_state_clock_fupd (combin_K 0) s)
                else
                  clos_evaluate ([exp],args,clos_dec_clock (ticks + 1) s))
       | res -> res)`;;
@@ -916,11 +916,11 @@ let CLOSSEMAUX_evaluate_clauses2 =
         NONE -> (Rerr (Rabort Rtype_error),s)
       | SOME (Partial_app v) ->
           if clos_state_clock s < LENGTH args
-          then (Rerr (Rabort Rtimeout_error),clos_state_clock_fupd (K 0) s)
+          then (Rerr (Rabort Rtimeout_error),clos_state_clock_fupd (combin_K 0) s)
           else (Rval [v], clos_dec_clock (LENGTH args) s)
       | SOME (Full_app exp env rest_args) ->
           if clos_state_clock s < LENGTH args - LENGTH rest_args
-          then (Rerr (Rabort Rtimeout_error),clos_state_clock_fupd (K 0) s)
+          then (Rerr (Rabort Rtimeout_error),clos_state_clock_fupd (combin_K 0) s)
           else
             (match clos_fix_clock (clos_dec_clock (LENGTH args - LENGTH rest_args) s)
                      (clos_evaluate ([exp],env,
@@ -1127,4 +1127,4 @@ let CLOSSEMAUX_dest_thunk_NONE = prove
      ~(d = clos_NotThunk) ==>
      (match d with clos_BadRef -> NONE | clos_NotThunk -> x | clos_IsThunk m v -> NONE) =
      NONE`,
-  GEN_TAC THEN CASES_ON `d:clos_dest_thunk_ret` THEN CASE_REWRITE_TAC[]);;
+  GEN_TAC THEN CASES_ON `d:clos_dest_thunk_ret` THEN CAKE_REWRITE_TAC[]);;

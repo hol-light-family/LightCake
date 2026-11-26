@@ -192,7 +192,7 @@ let LSTRAUX_TESTBIT_APPEND = prove
         (fun th -> REWRITE_TAC[th]) THEN ASM_ARITH_TAC]]);;
 
 let LSTRAUX_TESTBIT_FALSES = prove
- (`!i k. ~testbit i (list_of_seq (K F) k)`,
+ (`!i k. ~testbit i (list_of_seq (combin_K F) k)`,
   REWRITE_TAC[testbit; LENGTH_LIST_OF_SEQ] THEN REPEAT STRIP_TAC THEN
   POP_ASSUM MP_TAC THEN ASM_SIMP_TAC[EL_LIST_OF_SEQ; K_THM;
     ARITH_RULE `i < k ==> k - 1 - i < k`]);;

@@ -121,7 +121,7 @@ let REVERSE_BOTTOM_UP_OPT_LIST = prove
 (* HOL4: dec_clock_with_clock [simp] (names.tsv ml_optimise_dec_clock_with_clock) *)
 
 let ml_optimise_dec_clock_with_clock = prove
- (`state_clock_fupd (K c) (dec_clock st1) = state_clock_fupd (K c) (st1:(FFI)state)`,
+ (`state_clock_fupd (combin_K c) (dec_clock st1) = state_clock_fupd (combin_K c) (st1:(FFI)state)`,
   REWRITE_TAC[dec_clock_def; state_component_equality] THEN SIMP[]);;
 let _ = cake_add_simps [ml_optimise_dec_clock_with_clock];;
 
@@ -134,26 +134,26 @@ let MAP_FST_BOTTOM_UP_OPT_PAT = prove
 (* helper of the port: clock updates of a state *)
 
 let TR2OPTAUX_clock_fupd = prove
- (`(!a b (s:(FFI)state). state_clock_fupd (K a) (state_clock_fupd (K b) s) =
-                         state_clock_fupd (K a) s) /\
-   (!s:(FFI)state. state_clock_fupd (K (state_clock s)) s = s) /\
-   (!a (s:(FFI)state). state_clock (state_clock_fupd (K a) s) = a) /\
-   (!a (s:(FFI)state). state_refs (state_clock_fupd (K a) s) = state_refs s)`,
+ (`(!a b (s:(FFI)state). state_clock_fupd (combin_K a) (state_clock_fupd (combin_K b) s) =
+                         state_clock_fupd (combin_K a) s) /\
+   (!s:(FFI)state. state_clock_fupd (combin_K (state_clock s)) s = s) /\
+   (!a (s:(FFI)state). state_clock (state_clock_fupd (combin_K a) s) = a) /\
+   (!a (s:(FFI)state). state_refs (state_clock_fupd (combin_K a) s) = state_refs s)`,
   REWRITE_TAC[state_component_equality] THEN SIMP[]);;
 
 let evaluate_two_steps_clock = prove
- (`evaluate st1 env1 xs1 = (state_clock_fupd (K ck2) st2,Rval v2) /\
-   evaluate (state_clock_fupd (K ck3) st2) env2 xs2 = (st3,Rval v3) ==>
+ (`evaluate st1 env1 xs1 = (state_clock_fupd (combin_K ck2) st2,Rval v2) /\
+   evaluate (state_clock_fupd (combin_K ck3) st2) env2 xs2 = (st3,Rval v3) ==>
    ?n_ck1 n_ck2 n_ck3.
-     evaluate (state_clock_fupd (K n_ck1) st1) env1 xs1 =
-       (state_clock_fupd (K n_ck2) (st2:(FFI)state),Rval v2) /\
-     evaluate (state_clock_fupd (K n_ck2) st2) env2 xs2 =
-       (state_clock_fupd (K n_ck3) st3,Rval v3)`,
+     evaluate (state_clock_fupd (combin_K n_ck1) st1) env1 xs1 =
+       (state_clock_fupd (combin_K n_ck2) (st2:(FFI)state),Rval v2) /\
+     evaluate (state_clock_fupd (combin_K n_ck2) st2) env2 xs2 =
+       (state_clock_fupd (combin_K n_ck3) st3,Rval v3)`,
   STRIP_TAC THEN
   MP_TAC(ISPECL [`st1:(FFI)state`; `env1:v sem_env`; `xs1:exp list`;
-    `state_clock_fupd (K ck2) (st2:(FFI)state)`; `Rval v2:(v list,v)result`; `ck3:num`]
+    `state_clock_fupd (combin_K ck2) (st2:(FFI)state)`; `Rval v2:(v list,v)result`; `ck3:num`]
     evaluate_add_to_clock) THEN
-  MP_TAC(ISPECL [`state_clock_fupd (K ck3) (st2:(FFI)state)`; `env2:v sem_env`;
+  MP_TAC(ISPECL [`state_clock_fupd (combin_K ck3) (st2:(FFI)state)`; `env2:v sem_env`;
     `xs2:exp list`; `st3:(FFI)state`; `Rval v3:(v list,v)result`; `ck2:num`]
     evaluate_add_to_clock) THEN
   ASM_REWRITE_TAC[distinctness "result"; TR2OPTAUX_clock_fupd] THEN
@@ -165,18 +165,18 @@ let evaluate_two_steps_clock = prove
     SUBST1_TAC(ARITH_RULE `ck2 + ck3 = ck3 + ck2:num`) THEN ASM_REWRITE_TAC[]]);;
 
 let evaluate_and_match_clock = prove
- (`evaluate st1 env1 xs1 = (state_clock_fupd (K ck2) st2,Rval v2) /\
-   evaluate_match (state_clock_fupd (K ck3) st2) env2 m2 p2 exn2 = (st3,Rval v3) ==>
+ (`evaluate st1 env1 xs1 = (state_clock_fupd (combin_K ck2) st2,Rval v2) /\
+   evaluate_match (state_clock_fupd (combin_K ck3) st2) env2 m2 p2 exn2 = (st3,Rval v3) ==>
    ?n_ck1 n_ck2 n_ck3.
-     evaluate (state_clock_fupd (K n_ck1) st1) env1 xs1 =
-       (state_clock_fupd (K n_ck2) (st2:(FFI)state),Rval v2) /\
-     evaluate_match (state_clock_fupd (K n_ck2) st2) env2 m2 p2 exn2 =
-       (state_clock_fupd (K n_ck3) st3,Rval v3)`,
+     evaluate (state_clock_fupd (combin_K n_ck1) st1) env1 xs1 =
+       (state_clock_fupd (combin_K n_ck2) (st2:(FFI)state),Rval v2) /\
+     evaluate_match (state_clock_fupd (combin_K n_ck2) st2) env2 m2 p2 exn2 =
+       (state_clock_fupd (combin_K n_ck3) st3,Rval v3)`,
   STRIP_TAC THEN
   MP_TAC(ISPECL [`st1:(FFI)state`; `env1:v sem_env`; `xs1:exp list`;
-    `state_clock_fupd (K ck2) (st2:(FFI)state)`; `Rval v2:(v list,v)result`; `ck3:num`]
+    `state_clock_fupd (combin_K ck2) (st2:(FFI)state)`; `Rval v2:(v list,v)result`; `ck3:num`]
     evaluate_add_to_clock) THEN
-  MP_TAC(ISPECL [`state_clock_fupd (K ck3) (st2:(FFI)state)`; `env2:v sem_env`;
+  MP_TAC(ISPECL [`state_clock_fupd (combin_K ck3) (st2:(FFI)state)`; `env2:v sem_env`;
     `m2:v`; `p2:(pat#exp)list`; `exn2:v`; `st3:(FFI)state`; `Rval v3:(v list,v)result`;
     `ck2:num`] evaluate_match_add_to_clock) THEN
   ASM_REWRITE_TAC[distinctness "result"; TR2OPTAUX_clock_fupd] THEN
@@ -194,8 +194,8 @@ let TR2OPTAUX_evaluate_match_set_clock = prove
  (`!(s:(FFI)state) env v pes err_v s1 res.
      evaluate_match s env v pes err_v = (s1,res) /\
      ~(res = Rerr (Rabort Rtimeout_error)) ==>
-     !ck. ?ck1. evaluate_match (state_clock_fupd (K ck1) s) env v pes err_v =
-                (state_clock_fupd (K ck) s1,res)`,
+     !ck. ?ck1. evaluate_match (state_clock_fupd (combin_K ck1) s) env v pes err_v =
+                (state_clock_fupd (combin_K ck) s1,res)`,
   MESON_TAC(map (BETA_RULE o MATCH_MP is_clock_io_mono_set_clock o SPEC_ALL)
               (CONJUNCTS is_clock_io_mono_evaluate)));;
 
@@ -203,19 +203,19 @@ let TR2OPTAUX_ANY_EXP = prove
  (`!e e' (s:(FFI)state) env s2 v.
      (!s1 r. eval_rel s env e s1 r ==> eval_rel s env e' s1 r) /\
      evaluate s env [e] = (s2,Rval [v]) ==>
-     !ck. ?ck1. evaluate (state_clock_fupd (K ck1) s) env [e'] =
-                (state_clock_fupd (K ck) s2,Rval [v])`,
+     !ck. ?ck1. evaluate (state_clock_fupd (combin_K ck1) s) env [e'] =
+                (state_clock_fupd (combin_K ck) s2,Rval [v])`,
   REPEAT GEN_TAC THEN DISCH_THEN(CONJUNCTS_THEN2 MP_TAC ASSUME_TAC) THEN
   DISCH_THEN(MP_TAC o SPECL
-    [`state_clock_fupd (K (state_clock (s:(FFI)state))) (s2:(FFI)state)`; `v:v`]) THEN
+    [`state_clock_fupd (combin_K (state_clock (s:(FFI)state))) (s2:(FFI)state)`; `v:v`]) THEN
   REWRITE_TAC[eval_rel_def; TR2OPTAUX_clock_fupd] THEN ANTS_TAC THENL
    [MAP_EVERY EXISTS_TAC [`state_clock (s:(FFI)state)`; `state_clock (s2:(FFI)state)`] THEN
     ASM_REWRITE_TAC[TR2OPTAUX_clock_fupd];
     ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_THEN `c1:num` (X_CHOOSE_TAC `c2:num`)) THEN
   X_GEN_TAC `ck:num` THEN
-  MP_TAC(ISPECL [`state_clock_fupd (K c1) (s:(FFI)state)`; `env:v sem_env`; `[e']:exp list`;
-    `state_clock_fupd (K c2) (s2:(FFI)state)`; `Rval [v]:(v list,v)result`]
+  MP_TAC(ISPECL [`state_clock_fupd (combin_K c1) (s:(FFI)state)`; `env:v sem_env`; `[e']:exp list`;
+    `state_clock_fupd (combin_K c2) (s2:(FFI)state)`; `Rval [v]:(v list,v)result`]
     evaluate_set_clock) THEN
   ASM_REWRITE_TAC[distinctness "result"; TR2OPTAUX_clock_fupd] THEN
   DISCH_THEN(MP_TAC o SPEC `ck:num`) THEN REWRITE_TAC[TR2OPTAUX_clock_fupd]);;
@@ -224,19 +224,19 @@ let TR2OPTAUX_ANY_LIST = prove
  (`!es es' (s:(FFI)state) env s2 vs.
      (!s1 r. eval_list_rel s env es s1 r ==> eval_list_rel s env es' s1 r) /\
      evaluate s env es = (s2,Rval vs) ==>
-     !ck. ?ck1. evaluate (state_clock_fupd (K ck1) s) env es' =
-                (state_clock_fupd (K ck) s2,Rval vs)`,
+     !ck. ?ck1. evaluate (state_clock_fupd (combin_K ck1) s) env es' =
+                (state_clock_fupd (combin_K ck) s2,Rval vs)`,
   REPEAT GEN_TAC THEN DISCH_THEN(CONJUNCTS_THEN2 MP_TAC ASSUME_TAC) THEN
   DISCH_THEN(MP_TAC o SPECL
-    [`state_clock_fupd (K (state_clock (s:(FFI)state))) (s2:(FFI)state)`; `vs:v list`]) THEN
+    [`state_clock_fupd (combin_K (state_clock (s:(FFI)state))) (s2:(FFI)state)`; `vs:v list`]) THEN
   REWRITE_TAC[eval_list_rel_def; TR2OPTAUX_clock_fupd] THEN ANTS_TAC THENL
    [MAP_EVERY EXISTS_TAC [`state_clock (s:(FFI)state)`; `state_clock (s2:(FFI)state)`] THEN
     ASM_REWRITE_TAC[TR2OPTAUX_clock_fupd];
     ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_THEN `c1:num` (X_CHOOSE_TAC `c2:num`)) THEN
   X_GEN_TAC `ck:num` THEN
-  MP_TAC(ISPECL [`state_clock_fupd (K c1) (s:(FFI)state)`; `env:v sem_env`; `es':exp list`;
-    `state_clock_fupd (K c2) (s2:(FFI)state)`; `Rval vs:(v list,v)result`]
+  MP_TAC(ISPECL [`state_clock_fupd (combin_K c1) (s:(FFI)state)`; `env:v sem_env`; `es':exp list`;
+    `state_clock_fupd (combin_K c2) (s2:(FFI)state)`; `Rval vs:(v list,v)result`]
     evaluate_set_clock) THEN
   ASM_REWRITE_TAC[distinctness "result"; TR2OPTAUX_clock_fupd] THEN
   DISCH_THEN(MP_TAC o SPEC `ck:num`) THEN REWRITE_TAC[TR2OPTAUX_clock_fupd]);;
@@ -246,20 +246,20 @@ let TR2OPTAUX_ANY_MATCH = prove
      (!s1 r. eval_match_rel s env v pes err s1 r ==>
              eval_match_rel s env v pes' err s1 r) /\
      evaluate_match s env v pes err = (s2,Rval [r]) ==>
-     !ck. ?ck1. evaluate_match (state_clock_fupd (K ck1) s) env v pes' err =
-                (state_clock_fupd (K ck) s2,Rval [r])`,
+     !ck. ?ck1. evaluate_match (state_clock_fupd (combin_K ck1) s) env v pes' err =
+                (state_clock_fupd (combin_K ck) s2,Rval [r])`,
   REPEAT GEN_TAC THEN DISCH_THEN(CONJUNCTS_THEN2 MP_TAC ASSUME_TAC) THEN
   DISCH_THEN(MP_TAC o SPECL
-    [`state_clock_fupd (K (state_clock (s:(FFI)state))) (s2:(FFI)state)`; `r:v`]) THEN
+    [`state_clock_fupd (combin_K (state_clock (s:(FFI)state))) (s2:(FFI)state)`; `r:v`]) THEN
   REWRITE_TAC[eval_match_rel_def; TR2OPTAUX_clock_fupd] THEN ANTS_TAC THENL
    [MAP_EVERY EXISTS_TAC [`state_clock (s:(FFI)state)`; `state_clock (s2:(FFI)state)`] THEN
     ASM_REWRITE_TAC[TR2OPTAUX_clock_fupd];
     ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_THEN `c1:num` (X_CHOOSE_TAC `c2:num`)) THEN
   X_GEN_TAC `ck:num` THEN
-  MP_TAC(ISPECL [`state_clock_fupd (K c1) (s:(FFI)state)`; `env:v sem_env`; `v:v`;
+  MP_TAC(ISPECL [`state_clock_fupd (combin_K c1) (s:(FFI)state)`; `env:v sem_env`; `v:v`;
     `pes':(pat#exp)list`; `err:v`;
-    `state_clock_fupd (K c2) (s2:(FFI)state)`; `Rval [r]:(v list,v)result`]
+    `state_clock_fupd (combin_K c2) (s2:(FFI)state)`; `Rval [r]:(v list,v)result`]
     TR2OPTAUX_evaluate_match_set_clock) THEN
   ASM_REWRITE_TAC[distinctness "result"; TR2OPTAUX_clock_fupd] THEN
   DISCH_THEN(MP_TAC o SPEC `ck:num`) THEN REWRITE_TAC[TR2OPTAUX_clock_fupd]);;
@@ -273,7 +273,7 @@ let TR2OPTAUX_DEC_STEP_TAC e1 =
   DISCH_THEN(X_CHOOSE_THEN `st':(FFI)state` (X_CHOOSE_THEN `res:(v list,v)result`
     (fun th -> REWRITE_TAC[th] THEN ASSUME_TAC th))) THEN
   CASES_ON `res:(v list,v)result` THEN
-  CASE_REWRITE_TAC[PAIR_EQ; distinctness "result"] THEN
+  CAKE_REWRITE_TAC[PAIR_EQ; distinctness "result"] THEN
   FIRST_ASSUM(X_CHOOSE_THEN `v1:v` SUBST_ALL_TAC o MATCH_MP evaluate_sing) THEN
   REWRITE_TAC[HD];;
 
@@ -287,32 +287,32 @@ let TR2OPTAUX_DEC_Log = prove
   DISCH_TAC THEN MAP_EVERY EXISTS_TAC [`st':(FFI)state`; `v1:v`] THEN
   ASM_REWRITE_TAC[] THEN POP_ASSUM MP_TAC THEN
   REWRITE_TAC[do_log_def] THEN
-  REPEAT COND_CASES_TAC THEN CASE_REWRITE_TAC[PAIR_EQ; distinctness "result";
+  REPEAT COND_CASES_TAC THEN CAKE_REWRITE_TAC[PAIR_EQ; distinctness "result";
     injectivity "result"; injectivity "option"; distinctness "option";
     injectivity "exp_or_val"; distinctness "exp_or_val"] THEN
   MESON_TAC[]);;
 
 let TR2OPTAUX_EVG_Log = prove
  (`!(s:(FFI)state) env lop e1 e2 st v1 s1 vs.
-     (!ck. ?ck1. evaluate (state_clock_fupd (K ck1) s) env [e1] =
-                 (state_clock_fupd (K ck) st,Rval [v1])) /\
+     (!ck. ?ck1. evaluate (state_clock_fupd (combin_K ck1) s) env [e1] =
+                 (state_clock_fupd (combin_K ck) st,Rval [v1])) /\
      ((do_log lop v1 e2 = SOME (Exp e2) /\
-       (!ck. ?ck1. evaluate (state_clock_fupd (K ck1) st) env [e2] =
-                   (state_clock_fupd (K ck) s1,Rval vs))) \/
+       (!ck. ?ck1. evaluate (state_clock_fupd (combin_K ck1) st) env [e2] =
+                   (state_clock_fupd (combin_K ck) s1,Rval vs))) \/
       (?w. do_log lop v1 e2 = SOME (Val w) /\ st = s1 /\ vs = [w])) ==>
-     !ck. ?ck1. evaluate (state_clock_fupd (K ck1) s) env [Log lop e1 e2] =
-                (state_clock_fupd (K ck) s1,Rval vs)`,
+     !ck. ?ck1. evaluate (state_clock_fupd (combin_K ck1) s) env [Log lop e1 e2] =
+                (state_clock_fupd (combin_K ck) s1,Rval vs)`,
   REPEAT GEN_TAC THEN
   DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "h1") MP_TAC) THEN
   STRIP_TAC THEN X_GEN_TAC `ck:num` THENL
    [FIRST_X_ASSUM(X_CHOOSE_TAC `c2:num` o SPEC `ck:num`) THEN
     REMOVE_THEN "h1" (X_CHOOSE_TAC `c1:num` o SPEC `c2:num`) THEN
     EXISTS_TAC `c1:num` THEN ASM_REWRITE_TAC[evaluate_def] THEN
-    CASE_REWRITE_TAC[HD] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[HD] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
     ASM_REWRITE_TAC[];
     REMOVE_THEN "h1" (X_CHOOSE_TAC `c1:num` o SPEC `ck:num`) THEN
     EXISTS_TAC `c1:num` THEN ASM_REWRITE_TAC[evaluate_def] THEN
-    CASE_REWRITE_TAC[HD] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]]);;
+    CAKE_REWRITE_TAC[HD] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]]);;
 
 let TR2OPTAUX_DEC_If = prove
  (`!(st:(FFI)state) env e1 e2 e3 s1 vs.
@@ -324,29 +324,29 @@ let TR2OPTAUX_DEC_If = prove
   DISCH_TAC THEN MAP_EVERY EXISTS_TAC [`st':(FFI)state`; `v1:v`] THEN
   ASM_REWRITE_TAC[] THEN POP_ASSUM MP_TAC THEN
   REWRITE_TAC[do_if_def] THEN
-  REPEAT COND_CASES_TAC THEN CASE_REWRITE_TAC[PAIR_EQ; distinctness "result"] THEN
+  REPEAT COND_CASES_TAC THEN CAKE_REWRITE_TAC[PAIR_EQ; distinctness "result"] THEN
   ASM_REWRITE_TAC[] THEN MESON_TAC[]);;
 
 let TR2OPTAUX_EVG_If = prove
  (`!(s:(FFI)state) env e1 e2 e3 st v1 s1 vs.
-     (!ck. ?ck1. evaluate (state_clock_fupd (K ck1) s) env [e1] =
-                 (state_clock_fupd (K ck) st,Rval [v1])) /\
+     (!ck. ?ck1. evaluate (state_clock_fupd (combin_K ck1) s) env [e1] =
+                 (state_clock_fupd (combin_K ck) st,Rval [v1])) /\
      ((v1 = Boolv T /\
-       (!ck. ?ck1. evaluate (state_clock_fupd (K ck1) st) env [e2] =
-                   (state_clock_fupd (K ck) s1,Rval vs))) \/
+       (!ck. ?ck1. evaluate (state_clock_fupd (combin_K ck1) st) env [e2] =
+                   (state_clock_fupd (combin_K ck) s1,Rval vs))) \/
       (v1 = Boolv F /\
-       (!ck. ?ck1. evaluate (state_clock_fupd (K ck1) st) env [e3] =
-                   (state_clock_fupd (K ck) s1,Rval vs)))) ==>
-     !ck. ?ck1. evaluate (state_clock_fupd (K ck1) s) env [If e1 e2 e3] =
-                (state_clock_fupd (K ck) s1,Rval vs)`,
+       (!ck. ?ck1. evaluate (state_clock_fupd (combin_K ck1) st) env [e3] =
+                   (state_clock_fupd (combin_K ck) s1,Rval vs)))) ==>
+     !ck. ?ck1. evaluate (state_clock_fupd (combin_K ck1) s) env [If e1 e2 e3] =
+                (state_clock_fupd (combin_K ck) s1,Rval vs)`,
   REPEAT GEN_TAC THEN
   DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "h1") MP_TAC) THEN
   STRIP_TAC THEN X_GEN_TAC `ck:num` THEN
   FIRST_X_ASSUM(X_CHOOSE_TAC `c2:num` o SPEC `ck:num`) THEN
   REMOVE_THEN "h1" (X_CHOOSE_TAC `c1:num` o SPEC `c2:num`) THEN
   EXISTS_TAC `c1:num` THEN ASM_REWRITE_TAC[evaluate_def] THEN
-  CASE_REWRITE_TAC[HD; do_if_def; semanticPrimitivesProps_Boolv_11] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[HD; do_if_def; semanticPrimitivesProps_Boolv_11] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]);;
 
 let TR2OPTAUX_DEC_Mat = prove
  (`!(st:(FFI)state) env e pes s1 vs.
@@ -361,13 +361,13 @@ let TR2OPTAUX_DEC_Mat = prove
 
 let TR2OPTAUX_EVG_Mat = prove
  (`!(s:(FFI)state) env e pes st v1 s1 vs.
-     (!ck. ?ck1. evaluate (state_clock_fupd (K ck1) s) env [e] =
-                 (state_clock_fupd (K ck) st,Rval [v1])) /\
+     (!ck. ?ck1. evaluate (state_clock_fupd (combin_K ck1) s) env [e] =
+                 (state_clock_fupd (combin_K ck) st,Rval [v1])) /\
      can_pmatch_all (sem_env_c env) (state_refs st) (MAP FST pes) v1 /\
-     (!ck. ?ck1. evaluate_match (state_clock_fupd (K ck1) st) env v1 pes bind_exn_v =
-                 (state_clock_fupd (K ck) s1,Rval vs)) ==>
-     !ck. ?ck1. evaluate (state_clock_fupd (K ck1) s) env [Mat e pes] =
-                (state_clock_fupd (K ck) s1,Rval vs)`,
+     (!ck. ?ck1. evaluate_match (state_clock_fupd (combin_K ck1) st) env v1 pes bind_exn_v =
+                 (state_clock_fupd (combin_K ck) s1,Rval vs)) ==>
+     !ck. ?ck1. evaluate (state_clock_fupd (combin_K ck1) s) env [Mat e pes] =
+                (state_clock_fupd (combin_K ck) s1,Rval vs)`,
   REPEAT GEN_TAC THEN
   DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "h1") (CONJUNCTS_THEN2 ASSUME_TAC
     (LABEL_TAC "h2"))) THEN
@@ -375,13 +375,13 @@ let TR2OPTAUX_EVG_Mat = prove
   REMOVE_THEN "h2" (X_CHOOSE_TAC `c2:num` o SPEC `ck:num`) THEN
   REMOVE_THEN "h1" (X_CHOOSE_TAC `c1:num` o SPEC `c2:num`) THEN
   EXISTS_TAC `c1:num` THEN ASM_REWRITE_TAC[evaluate_def] THEN
-  CASE_REWRITE_TAC[HD] THEN ASM_REWRITE_TAC[TR2OPTAUX_clock_fupd]);;
+  CAKE_REWRITE_TAC[HD] THEN ASM_REWRITE_TAC[TR2OPTAUX_clock_fupd]);;
 
 let TR2OPTAUX_DEC_Let = prove
  (`!(st:(FFI)state) env xo e1 e2 s1 vs.
      evaluate st env [Let xo e1 e2] = (s1,Rval vs) ==>
      ?st' v1. evaluate st env [e1] = (st',Rval [v1]) /\
-       evaluate st' (sem_env_v_fupd (K (nsOptBind xo v1 (sem_env_v env))) env) [e2] =
+       evaluate st' (sem_env_v_fupd (combin_K (nsOptBind xo v1 (sem_env_v env))) env) [e2] =
        (s1,Rval vs)`,
   TR2OPTAUX_DEC_STEP_TAC `evaluate (st:(FFI)state) env [e1]` THEN
   DISCH_TAC THEN MAP_EVERY EXISTS_TAC [`st':(FFI)state`; `v1:v`] THEN
@@ -389,20 +389,20 @@ let TR2OPTAUX_DEC_Let = prove
 
 let TR2OPTAUX_EVG_Let = prove
  (`!(s:(FFI)state) env xo e1 e2 st v1 s1 vs.
-     (!ck. ?ck1. evaluate (state_clock_fupd (K ck1) s) env [e1] =
-                 (state_clock_fupd (K ck) st,Rval [v1])) /\
-     (!ck. ?ck1. evaluate (state_clock_fupd (K ck1) st)
-                   (sem_env_v_fupd (K (nsOptBind xo v1 (sem_env_v env))) env) [e2] =
-                 (state_clock_fupd (K ck) s1,Rval vs)) ==>
-     !ck. ?ck1. evaluate (state_clock_fupd (K ck1) s) env [Let xo e1 e2] =
-                (state_clock_fupd (K ck) s1,Rval vs)`,
+     (!ck. ?ck1. evaluate (state_clock_fupd (combin_K ck1) s) env [e1] =
+                 (state_clock_fupd (combin_K ck) st,Rval [v1])) /\
+     (!ck. ?ck1. evaluate (state_clock_fupd (combin_K ck1) st)
+                   (sem_env_v_fupd (combin_K (nsOptBind xo v1 (sem_env_v env))) env) [e2] =
+                 (state_clock_fupd (combin_K ck) s1,Rval vs)) ==>
+     !ck. ?ck1. evaluate (state_clock_fupd (combin_K ck1) s) env [Let xo e1 e2] =
+                (state_clock_fupd (combin_K ck) s1,Rval vs)`,
   REPEAT GEN_TAC THEN
   DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "h1") (LABEL_TAC "h2")) THEN
   X_GEN_TAC `ck:num` THEN
   REMOVE_THEN "h2" (X_CHOOSE_TAC `c2:num` o SPEC `ck:num`) THEN
   REMOVE_THEN "h1" (X_CHOOSE_TAC `c1:num` o SPEC `c2:num`) THEN
   EXISTS_TAC `c1:num` THEN ASM_REWRITE_TAC[evaluate_def] THEN
-  CASE_REWRITE_TAC[HD] THEN ASM_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[HD] THEN ASM_REWRITE_TAC[]);;
 
 let TR2OPTAUX_DEC_CONS = prove
  (`!(st:(FFI)state) env e es s1 vs.
@@ -414,40 +414,40 @@ let TR2OPTAUX_DEC_CONS = prove
   DISCH_THEN(X_CHOOSE_THEN `st':(FFI)state` (X_CHOOSE_THEN `res:(v list,v)result`
     (fun th -> REWRITE_TAC[th] THEN ASSUME_TAC th))) THEN
   CASES_ON `res:(v list,v)result` THEN
-  CASE_REWRITE_TAC[PAIR_EQ; distinctness "result"] THEN
+  CAKE_REWRITE_TAC[PAIR_EQ; distinctness "result"] THEN
   FIRST_ASSUM(X_CHOOSE_THEN `v1:v` SUBST_ALL_TAC o MATCH_MP evaluate_sing) THEN
   MP_TAC(ISPEC `evaluate (st':(FFI)state) env es` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `st'':(FFI)state` (X_CHOOSE_THEN `res':(v list,v)result`
     (fun th -> REWRITE_TAC[th] THEN ASSUME_TAC th))) THEN
   CASES_ON `res':(v list,v)result` THEN
-  CASE_REWRITE_TAC[PAIR_EQ; distinctness "result"; injectivity "result"] THEN
+  CAKE_REWRITE_TAC[PAIR_EQ; distinctness "result"; injectivity "result"] THEN
   STRIP_TAC THEN
   MAP_EVERY EXISTS_TAC [`st':(FFI)state`; `v1:v`; `a':v list`] THEN
   RULE_ASSUM_TAC(REWRITE_RULE[APPEND]) THEN ASM_REWRITE_TAC[]);;
 
 let TR2OPTAUX_EVG_CONS = prove
  (`!(s:(FFI)state) env e es st v1 s1 vs.
-     (!ck. ?ck1. evaluate (state_clock_fupd (K ck1) s) env [e] =
-                 (state_clock_fupd (K ck) st,Rval [v1])) /\
-     (!ck. ?ck1. evaluate (state_clock_fupd (K ck1) st) env es =
-                 (state_clock_fupd (K ck) s1,Rval vs)) ==>
-     !ck. ?ck1. evaluate (state_clock_fupd (K ck1) s) env (CONS e es) =
-                (state_clock_fupd (K ck) s1,Rval (CONS v1 vs))`,
+     (!ck. ?ck1. evaluate (state_clock_fupd (combin_K ck1) s) env [e] =
+                 (state_clock_fupd (combin_K ck) st,Rval [v1])) /\
+     (!ck. ?ck1. evaluate (state_clock_fupd (combin_K ck1) st) env es =
+                 (state_clock_fupd (combin_K ck) s1,Rval vs)) ==>
+     !ck. ?ck1. evaluate (state_clock_fupd (combin_K ck1) s) env (CONS e es) =
+                (state_clock_fupd (combin_K ck) s1,Rval (CONS v1 vs))`,
   REPEAT GEN_TAC THEN
   DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "h1") (LABEL_TAC "h2")) THEN
   X_GEN_TAC `ck:num` THEN
   REMOVE_THEN "h2" (X_CHOOSE_TAC `c2:num` o SPEC `ck:num`) THEN
   REMOVE_THEN "h1" (X_CHOOSE_TAC `c1:num` o SPEC `c2:num`) THEN
   EXISTS_TAC `c1:num` THEN ONCE_REWRITE_TAC[evaluate_cons] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[APPEND]);;
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[APPEND]);;
 
 let TR2OPTAUX_DEC_PCONS = prove
  (`!(st:(FFI)state) env v p e pes err s1 vs.
      evaluate_match st env v (CONS (p,e) pes) err = (s1,Rval vs) ==>
      ALL_DISTINCT (pat_bindings p) /\
      ((?bs. pmatch (sem_env_c env) (state_refs st) p v [] = Match bs /\
-            evaluate st (sem_env_v_fupd (K (nsAppend (alist_to_ns bs) (sem_env_v env)))
+            evaluate st (sem_env_v_fupd (combin_K (nsAppend (alist_to_ns bs) (sem_env_v env)))
                            env) [e] = (s1,Rval vs)) \/
       (pmatch (sem_env_c env) (state_refs st) p v [] = No_match /\
        evaluate_match st env v pes err = (s1,Rval vs)))`,
@@ -456,7 +456,7 @@ let TR2OPTAUX_DEC_PCONS = prove
   MP_TAC(ISPEC `pmatch (sem_env_c (env:v sem_env)) (state_refs (st:(FFI)state)) p v []`
     (case_info_of_tyname "match_result").ci_nchotomy) THEN
   STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[PAIR_EQ; distinctness "result"; distinctness "match_result";
+  CAKE_REWRITE_TAC[PAIR_EQ; distinctness "result"; distinctness "match_result";
     injectivity "match_result"] THEN
   MESON_TAC[]);;
 
@@ -464,13 +464,13 @@ let TR2OPTAUX_EVG_PCONS = prove
  (`!(st:(FFI)state) env v p e pes err res.
      ALL_DISTINCT (pat_bindings p) /\
      ((?bs. pmatch (sem_env_c env) (state_refs st) p v [] = Match bs /\
-            evaluate st (sem_env_v_fupd (K (nsAppend (alist_to_ns bs) (sem_env_v env)))
+            evaluate st (sem_env_v_fupd (combin_K (nsAppend (alist_to_ns bs) (sem_env_v env)))
                            env) [e] = res) \/
       (pmatch (sem_env_c env) (state_refs st) p v [] = No_match /\
        evaluate_match st env v pes err = res)) ==>
      evaluate_match st env v (CONS (p,e) pes) err = res`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN REWRITE_TAC[evaluate_def] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]);;
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]);;
 
 let TR2OPTAUX_DEC_App = prove
  (`!(st:(FFI)state) env op es s1 vs.
@@ -481,7 +481,7 @@ let TR2OPTAUX_DEC_App = prove
   DISCH_THEN(X_CHOOSE_THEN `st':(FFI)state` (X_CHOOSE_THEN `res:(v list,v)result`
     SUBST1_TAC)) THEN
   CASES_ON `res:(v list,v)result` THEN
-  CASE_REWRITE_TAC[PAIR_EQ; distinctness "result"; injectivity "result"] THEN
+  CAKE_REWRITE_TAC[PAIR_EQ; distinctness "result"; injectivity "result"] THEN
   MESON_TAC[]);;
 
 let TR2OPTAUX_EQ_App = prove
@@ -502,7 +502,7 @@ let TR2OPTAUX_DEC_Con = prove
   DISCH_THEN(X_CHOOSE_THEN `st':(FFI)state` (X_CHOOSE_THEN `res:(v list,v)result`
     SUBST1_TAC)) THEN
   CASES_ON `res:(v list,v)result` THEN
-  CASE_REWRITE_TAC[PAIR_EQ; distinctness "result"; injectivity "result"] THEN
+  CAKE_REWRITE_TAC[PAIR_EQ; distinctness "result"; injectivity "result"] THEN
   MESON_TAC[]);;
 
 let TR2OPTAUX_EQ_Con = prove
@@ -516,11 +516,11 @@ let TR2OPTAUX_EQ_Con = prove
 let TR2OPTAUX_ANY_EXP2 = prove
  (`!e e' (s:(FFI)state) env s2 v ck0.
      (!(s:(FFI)state) s1 r env. eval_rel s env e s1 r ==> eval_rel s env e' s1 r) /\
-     evaluate (state_clock_fupd (K ck0) s) env [e] = (s2,Rval [v]) ==>
-     !ck. ?ck1. evaluate (state_clock_fupd (K ck1) s) env [e'] =
-                (state_clock_fupd (K ck) s2,Rval [v])`,
+     evaluate (state_clock_fupd (combin_K ck0) s) env [e] = (s2,Rval [v]) ==>
+     !ck. ?ck1. evaluate (state_clock_fupd (combin_K ck1) s) env [e'] =
+                (state_clock_fupd (combin_K ck) s2,Rval [v])`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
-  MP_TAC(ISPECL [`e:exp`; `e':exp`; `state_clock_fupd (K ck0) (s:(FFI)state)`;
+  MP_TAC(ISPECL [`e:exp`; `e':exp`; `state_clock_fupd (combin_K ck0) (s:(FFI)state)`;
     `env:v sem_env`; `s2:(FFI)state`; `v:v`] TR2OPTAUX_ANY_EXP) THEN
   ASM_SIMP_TAC[TR2OPTAUX_clock_fupd]);;
 
@@ -528,11 +528,11 @@ let TR2OPTAUX_ANY_LIST2 = prove
  (`!es es' (s:(FFI)state) env s2 vs ck0.
      (!(s:(FFI)state) s1 r env. eval_list_rel s env es s1 r ==>
                                 eval_list_rel s env es' s1 r) /\
-     evaluate (state_clock_fupd (K ck0) s) env es = (s2,Rval vs) ==>
-     !ck. ?ck1. evaluate (state_clock_fupd (K ck1) s) env es' =
-                (state_clock_fupd (K ck) s2,Rval vs)`,
+     evaluate (state_clock_fupd (combin_K ck0) s) env es = (s2,Rval vs) ==>
+     !ck. ?ck1. evaluate (state_clock_fupd (combin_K ck1) s) env es' =
+                (state_clock_fupd (combin_K ck) s2,Rval vs)`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
-  MP_TAC(ISPECL [`es:exp list`; `es':exp list`; `state_clock_fupd (K ck0) (s:(FFI)state)`;
+  MP_TAC(ISPECL [`es:exp list`; `es':exp list`; `state_clock_fupd (combin_K ck0) (s:(FFI)state)`;
     `env:v sem_env`; `s2:(FFI)state`; `vs:v list`] TR2OPTAUX_ANY_LIST) THEN
   ASM_SIMP_TAC[TR2OPTAUX_clock_fupd]);;
 
@@ -540,12 +540,12 @@ let TR2OPTAUX_ANY_MATCH2 = prove
  (`!pes pes' (s:(FFI)state) env v err s2 r ck0.
      (!(s:(FFI)state) s1 v r w env. eval_match_rel s env v pes w s1 r ==>
                                     eval_match_rel s env v pes' w s1 r) /\
-     evaluate_match (state_clock_fupd (K ck0) s) env v pes err = (s2,Rval [r]) ==>
-     !ck. ?ck1. evaluate_match (state_clock_fupd (K ck1) s) env v pes' err =
-                (state_clock_fupd (K ck) s2,Rval [r])`,
+     evaluate_match (state_clock_fupd (combin_K ck0) s) env v pes err = (s2,Rval [r]) ==>
+     !ck. ?ck1. evaluate_match (state_clock_fupd (combin_K ck1) s) env v pes' err =
+                (state_clock_fupd (combin_K ck) s2,Rval [r])`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   MP_TAC(ISPECL [`pes:(pat#exp)list`; `pes':(pat#exp)list`;
-    `state_clock_fupd (K ck0) (s:(FFI)state)`; `env:v sem_env`; `v:v`; `err:v`;
+    `state_clock_fupd (combin_K ck0) (s:(FFI)state)`; `env:v sem_env`; `v:v`; `err:v`;
     `s2:(FFI)state`; `r:v`] TR2OPTAUX_ANY_MATCH) THEN
   ASM_SIMP_TAC[TR2OPTAUX_clock_fupd]);;
 
@@ -579,7 +579,7 @@ let TR2OPTAUX_CONG_Log = prove
     (CONJUNCTS_THEN2 ASSUME_TAC MP_TAC))) THEN
   ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
   MP_TAC(ISPECL [`s:(FFI)state`; `env:v sem_env`; `lop:lop`; `y1:exp`; `y2:exp`;
-    `st:(FFI)state`; `v1:v`; `state_clock_fupd (K ck2) (s1:(FFI)state)`; `[r:v]`]
+    `st:(FFI)state`; `v1:v`; `state_clock_fupd (combin_K ck2) (s1:(FFI)state)`; `[r:v]`]
     TR2OPTAUX_EVG_Log) THEN
   ANTS_TAC THENL
    [CONJ_TAC THENL
@@ -613,7 +613,7 @@ let TR2OPTAUX_CONG_If = prove
     (CONJUNCTS_THEN2 ASSUME_TAC MP_TAC))) THEN
   ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
   MP_TAC(ISPECL [`s:(FFI)state`; `env:v sem_env`; `y1:exp`; `y2:exp`; `y3:exp`;
-    `st:(FFI)state`; `v1:v`; `state_clock_fupd (K ck2) (s1:(FFI)state)`; `[r:v]`]
+    `st:(FFI)state`; `v1:v`; `state_clock_fupd (combin_K ck2) (s1:(FFI)state)`; `[r:v]`]
     TR2OPTAUX_EVG_If) THEN
   ANTS_TAC THENL
    [CONJ_TAC THENL
@@ -648,7 +648,7 @@ let TR2OPTAUX_CONG_Mat = prove
   DISCH_THEN(X_CHOOSE_THEN `st:(FFI)state` (X_CHOOSE_THEN `v1:v` STRIP_ASSUME_TAC)) THEN
   ASM_REWRITE_TAC[] THEN
   MP_TAC(ISPECL [`s:(FFI)state`; `env:v sem_env`; `y:exp`; `pes':(pat#exp)list`;
-    `st:(FFI)state`; `v1:v`; `state_clock_fupd (K ck2) (s1:(FFI)state)`; `[r:v]`]
+    `st:(FFI)state`; `v1:v`; `state_clock_fupd (combin_K ck2) (s1:(FFI)state)`; `[r:v]`]
     TR2OPTAUX_EVG_Mat) THEN
   ANTS_TAC THENL
    [ASM_REWRITE_TAC[] THEN CONJ_TAC THENL
@@ -673,7 +673,7 @@ let TR2OPTAUX_CONG_Let = prove
   DISCH_THEN(X_CHOOSE_THEN `st:(FFI)state` (X_CHOOSE_THEN `v1:v` STRIP_ASSUME_TAC)) THEN
   ASM_REWRITE_TAC[] THEN
   MP_TAC(ISPECL [`s:(FFI)state`; `env:v sem_env`; `xo:mlstring option`; `y1:exp`; `y2:exp`;
-    `st:(FFI)state`; `v1:v`; `state_clock_fupd (K ck2) (s1:(FFI)state)`; `[r:v]`]
+    `st:(FFI)state`; `v1:v`; `state_clock_fupd (combin_K ck2) (s1:(FFI)state)`; `[r:v]`]
     TR2OPTAUX_EVG_Let) THEN
   ANTS_TAC THENL
    [CONJ_TAC THENL
@@ -702,7 +702,7 @@ let TR2OPTAUX_CONG_App = prove
   DISCH_THEN(X_CHOOSE_TAC `c:num` o SPEC `state_clock (st:(FFI)state)`) THEN
   MAP_EVERY EXISTS_TAC [`c:num`; `ck2:num`] THEN
   MATCH_MP_TAC EQ_TRANS THEN
-  EXISTS_TAC `evaluate (state_clock_fupd (K ck1) (s:(FFI)state)) env [App op xs]` THEN
+  EXISTS_TAC `evaluate (state_clock_fupd (combin_K ck1) (s:(FFI)state)) env [App op xs]` THEN
   CONJ_TAC THENL [ALL_TAC; ASM_REWRITE_TAC[]] THEN
   MATCH_MP_TAC TR2OPTAUX_EQ_App THEN ASM_REWRITE_TAC[TR2OPTAUX_clock_fupd]);;
 
@@ -726,7 +726,7 @@ let TR2OPTAUX_CONG_Con = prove
   DISCH_THEN(X_CHOOSE_TAC `c:num` o SPEC `state_clock (st:(FFI)state)`) THEN
   MAP_EVERY EXISTS_TAC [`c:num`; `ck2:num`] THEN
   MATCH_MP_TAC EQ_TRANS THEN
-  EXISTS_TAC `evaluate (state_clock_fupd (K ck1) (s:(FFI)state)) env [Con cn xs]` THEN
+  EXISTS_TAC `evaluate (state_clock_fupd (combin_K ck1) (s:(FFI)state)) env [Con cn xs]` THEN
   CONJ_TAC THENL [ALL_TAC; ASM_REWRITE_TAC[]] THEN
   MATCH_MP_TAC TR2OPTAUX_EQ_Con THEN ASM_REWRITE_TAC[TR2OPTAUX_clock_fupd]);;
 
@@ -753,7 +753,7 @@ let TR2OPTAUX_CONG_CONS = prove
     STRIP_ASSUME_TAC))) THEN
   ASM_REWRITE_TAC[] THEN
   MP_TAC(ISPECL [`s:(FFI)state`; `env:v sem_env`; `y:exp`; `ys:exp list`;
-    `st:(FFI)state`; `v1:v`; `state_clock_fupd (K ck2) (s1:(FFI)state)`; `vs:v list`]
+    `st:(FFI)state`; `v1:v`; `state_clock_fupd (combin_K ck2) (s1:(FFI)state)`; `vs:v list`]
     TR2OPTAUX_EVG_CONS) THEN
   ANTS_TAC THENL
    [CONJ_TAC THENL
@@ -781,8 +781,8 @@ let TR2OPTAUX_CONG_PCONS = prove
   DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC MP_TAC) THEN ASM_REWRITE_TAC[] THEN
   STRIP_TAC THENL
    [MP_TAC(ISPECL [`x:exp`; `y:exp`; `s:(FFI)state`;
-      `sem_env_v_fupd (K (nsAppend (alist_to_ns bs) (sem_env_v env))) (env:v sem_env)`;
-      `state_clock_fupd (K ck2) (s1:(FFI)state)`; `r:v`; `ck1:num`] TR2OPTAUX_ANY_EXP2) THEN
+      `sem_env_v_fupd (combin_K (nsAppend (alist_to_ns bs) (sem_env_v env))) (env:v sem_env)`;
+      `state_clock_fupd (combin_K ck2) (s1:(FFI)state)`; `r:v`; `ck1:num`] TR2OPTAUX_ANY_EXP2) THEN
     ASM_REWRITE_TAC[] THEN
     DISCH_THEN(X_CHOOSE_TAC `c:num` o SPEC `ck2:num`) THEN
     MAP_EVERY EXISTS_TAC [`c:num`; `ck2:num`] THEN
@@ -790,7 +790,7 @@ let TR2OPTAUX_CONG_PCONS = prove
     DISJ1_TAC THEN EXISTS_TAC `bs:(mlstring#v)list` THEN
     ASM_REWRITE_TAC[TR2OPTAUX_clock_fupd];
     MP_TAC(ISPECL [`pes:(pat#exp)list`; `pes':(pat#exp)list`; `s:(FFI)state`;
-      `env:v sem_env`; `v:v`; `w:v`; `state_clock_fupd (K ck2) (s1:(FFI)state)`; `r:v`;
+      `env:v sem_env`; `v:v`; `w:v`; `state_clock_fupd (combin_K ck2) (s1:(FFI)state)`; `r:v`;
       `ck1:num`] TR2OPTAUX_ANY_MATCH2) THEN
     ASM_REWRITE_TAC[] THEN
     DISCH_THEN(X_CHOOSE_TAC `c:num` o SPEC `ck2:num`) THEN
@@ -880,17 +880,17 @@ let TR2OPTAUX_DEC_abs2let = prove
  (`!(st:(FFI)state) env v e y s1 vs.
      evaluate st env [App Opapp [Fun v e; y]] = (s1,Rval vs) ==>
      ?st' vy. evaluate st env [y] = (st',Rval [vy]) /\ ~(state_clock st' = 0) /\
-       evaluate (dec_clock st') (sem_env_v_fupd (K (nsBind v vy (sem_env_v env))) env) [e] =
+       evaluate (dec_clock st') (sem_env_v_fupd (combin_K (nsBind v vy (sem_env_v env))) env) [e] =
        (s1,Rval vs)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[evaluate_def; REVERSE; APPEND] THEN
   MP_TAC(ISPEC `evaluate (st:(FFI)state) env [y]` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `st':(FFI)state` (X_CHOOSE_THEN `res:(v list,v)result`
     (fun th -> REWRITE_TAC[th] THEN ASSUME_TAC th))) THEN
   CASES_ON `res:(v list,v)result` THEN
-  CASE_REWRITE_TAC[PAIR_EQ; distinctness "result"] THEN
+  CAKE_REWRITE_TAC[PAIR_EQ; distinctness "result"] THEN
   FIRST_ASSUM(X_CHOOSE_THEN `vy:v` SUBST_ALL_TAC o MATCH_MP evaluate_sing) THEN
-  REWRITE_TAC[HD; getOpClass_def] THEN CASE_REWRITE_TAC[] THEN
-  REWRITE_TAC[REVERSE; APPEND; do_opapp_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[HD; getOpClass_def] THEN CAKE_REWRITE_TAC[] THEN
+  REWRITE_TAC[REVERSE; APPEND; do_opapp_def] THEN CAKE_REWRITE_TAC[] THEN
   COND_CASES_TAC THEN REWRITE_TAC[PAIR_EQ; distinctness "result"] THEN
   DISCH_TAC THEN MAP_EVERY EXISTS_TAC [`st':(FFI)state`; `vy:v`] THEN
   ASM_REWRITE_TAC[]);;
@@ -906,7 +906,7 @@ let abs2let_thm = prove
    [POP_ASSUM MP_TAC THEN REWRITE_TAC[abs2let_def] THEN
     REPEAT TOP_CASE_TAC THEN REWRITE_TAC[] THEN MESON_TAC[];
     ALL_TAC] THEN
-  FIRST_X_ASSUM SUBST_ALL_TAC THEN REWRITE_TAC[abs2let_def] THEN CASE_REWRITE_TAC[] THEN
+  FIRST_X_ASSUM SUBST_ALL_TAC THEN REWRITE_TAC[abs2let_def] THEN CAKE_REWRITE_TAC[] THEN
   FIRST_X_ASSUM(MP_TAC o check (fun th -> is_comb (concl th) &&
     (try fst (dest_const (fst (strip_comb (concl th)))) = "eval_rel"
      with Failure _ -> false))) THEN
@@ -916,10 +916,10 @@ let abs2let_thm = prove
   DISCH_THEN(X_CHOOSE_THEN `st:(FFI)state` (X_CHOOSE_THEN `vy:v` STRIP_ASSUME_TAC)) THEN
   ASM_REWRITE_TAC[] THEN
   MAP_EVERY EXISTS_TAC [`ck1:num`; `ck2 + 1`] THEN
-  ASM_REWRITE_TAC[evaluate_def] THEN CASE_REWRITE_TAC[HD; nsOptBind_def] THEN
+  ASM_REWRITE_TAC[evaluate_def] THEN CAKE_REWRITE_TAC[HD; nsOptBind_def] THEN
   MP_TAC(ISPECL [`dec_clock (st:(FFI)state)`;
-    `sem_env_v_fupd (K (nsBind v vy (sem_env_v env))) (env:v sem_env)`; `[e:exp]`;
-    `state_clock_fupd (K ck2) (t:(FFI)state)`; `Rval [res]:(v list,v)result`; `1`]
+    `sem_env_v_fupd (combin_K (nsBind v vy (sem_env_v env))) (env:v sem_env)`; `[e:exp]`;
+    `state_clock_fupd (combin_K ck2) (t:(FFI)state)`; `Rval [res]:(v list,v)result`; `1`]
     evaluate_add_to_clock) THEN
   ASM_REWRITE_TAC[distinctness "result"; dec_clock_def; TR2OPTAUX_clock_fupd] THEN
   SUBGOAL_THEN `state_clock (st:(FFI)state) - 1 + 1 = state_clock st` SUBST1_TAC THENL
@@ -957,7 +957,7 @@ let let_id_thm = prove
   DISCH_THEN(X_CHOOSE_THEN `st:(FFI)state` (X_CHOOSE_THEN `v1:v` STRIP_ASSUME_TAC)) THEN
   ASM_REWRITE_TAC[] THEN MAP_EVERY EXISTS_TAC [`ck1:num`; `ck2:num`] THEN
   FIRST_X_ASSUM(MP_TAC o check (fun th -> free_in `Var (Short v)` (concl th))) THEN
-  REWRITE_TAC[evaluate_def; nsOptBind_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[evaluate_def; nsOptBind_def] THEN CAKE_REWRITE_TAC[] THEN
   SIMP[nsLookup_nsBind] THEN
   REWRITE_TAC[PAIR_EQ; injectivity "result"; CONS_11] THEN
   STRIP_TAC THEN ASM_MESON_TAC[]);;
@@ -1017,7 +1017,7 @@ let dest_binop_thm = prove
 
 let TR2OPTAUX_state_self = prove
  (`!s:(FFI)state.
-     state_refs_fupd (K (state_refs s)) (state_ffi_fupd (K (state_ffi s)) s) = s`,
+     state_refs_fupd (combin_K (state_refs s)) (state_ffi_fupd (combin_K (state_ffi s)) s) = s`,
   REWRITE_TAC[state_component_equality] THEN SIMP[]);;
 
 let TR2OPTAUX_EV_sub_add = prove
@@ -1029,29 +1029,29 @@ let TR2OPTAUX_EV_sub_add = prove
   REPEAT GEN_TAC THEN
   DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC MP_TAC) THEN
   FIRST_X_ASSUM(DISJ_CASES_THEN (CONJUNCTS_THEN SUBST1_TAC)) THEN
-  REWRITE_TAC[evaluate_def; REVERSE; APPEND] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[evaluate_def; REVERSE; APPEND] THEN CAKE_REWRITE_TAC[] THEN
   MP_TAC(ISPEC `evaluate (st:(FFI)state) env [x1]` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `st':(FFI)state` (X_CHOOSE_THEN `res:(v list,v)result`
     (fun th -> REWRITE_TAC[th] THEN ASSUME_TAC th))) THEN
   CASES_ON `res:(v list,v)result` THEN
-  CASE_REWRITE_TAC[PAIR_EQ; distinctness "result"] THEN
+  CAKE_REWRITE_TAC[PAIR_EQ; distinctness "result"] THEN
   FIRST_ASSUM(X_CHOOSE_THEN `vx:v` SUBST_ALL_TAC o MATCH_MP evaluate_sing) THEN
-  REWRITE_TAC[HD; getOpClass_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[HD; getOpClass_def] THEN CAKE_REWRITE_TAC[] THEN
   (ASM_CASES_TAC `?i j. vx = Litv (IntLit i) /\ y1 = IntLit j` THENL
     [FIRST_X_ASSUM(X_CHOOSE_THEN `i:int` (X_CHOOSE_THEN `j:int`
        (CONJUNCTS_THEN SUBST_ALL_TAC))) THEN
-     REWRITE_TAC[REVERSE; APPEND; do_app_def] THEN CASE_REWRITE_TAC[] THEN
+     REWRITE_TAC[REVERSE; APPEND; do_app_def] THEN CAKE_REWRITE_TAC[] THEN
      SIMP[ALL; check_type_def; do_arith_def; MAP; the_Litv_IntLit_def; list_result_def;
        REVERSE; APPEND] THEN
-     CASE_REWRITE_TAC[] THEN
+     CAKE_REWRITE_TAC[] THEN
      SIMP[ALL; check_type_def; do_arith_def; MAP; the_Litv_IntLit_def; list_result_def;
        REVERSE; APPEND; TR2OPTAUX_state_self;
        INT_ARITH `!i j:int. (i - j) + j = i /\ (i + j) - j = i`];
-     REWRITE_TAC[REVERSE; APPEND; do_app_def] THEN CASE_REWRITE_TAC[] THEN
+     REWRITE_TAC[REVERSE; APPEND; do_app_def] THEN CAKE_REWRITE_TAC[] THEN
      COND_CASES_TAC THENL
       [FIRST_X_ASSUM(MP_TAC o REWRITE_RULE[ALL; check_type_def]) THEN
        SIMP[injectivity "v"; injectivity "lit"] THEN ASM_MESON_TAC[];
-       CASE_REWRITE_TAC[PAIR_EQ; distinctness "result"]]]));;
+       CAKE_REWRITE_TAC[PAIR_EQ; distinctness "result"]]]));;
 
 (* HOL4 [local] *)
 

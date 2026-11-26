@@ -45,7 +45,7 @@ let to_flat_all_def = cake_def
      let ps = APPEND ps [(implode "after remove_flat",Flat p)] in
      let p = MAP (compile_dec (source_to_flat_config_pattern_cfg c')) p in
      let ps = APPEND ps [(implode "after flat_pattern",Flat p)] in
-     let c = backend_config_source_conf_fupd (K c') c in
+     let c = backend_config_source_conf_fupd (combin_K c') c in
      (ps:(mlstring#(A)any_prog)list,c,p)`;;
 
 let to_flat_thm = prove
@@ -86,10 +86,10 @@ let to_bvl_all_def = cake_def
      let prog = APPEND (chain_exps (clos_to_bvl_config_next_loc c0) es) aux in
      let prog = clos_annotate_compile prog in
      let ps = APPEND ps [(implode "after clos_annotate",backend_passes_Clos [] prog)] in
-     let c1 = clos_to_bvl_config_start_fupd (K (clos_to_bvl_config_next_loc c0))
-                (clos_to_bvl_config_next_loc_fupd (K n)
-                   (clos_to_bvl_config_known_conf_fupd (K kc)
-                      (clos_to_bvl_config_call_state_fupd (K (g,aux)) c0))) in
+     let c1 = clos_to_bvl_config_start_fupd (combin_K (clos_to_bvl_config_next_loc c0))
+                (clos_to_bvl_config_next_loc_fupd (combin_K n)
+                   (clos_to_bvl_config_known_conf_fupd (combin_K kc)
+                      (clos_to_bvl_config_call_state_fupd (combin_K (g,aux)) c0))) in
      let init_stubs = toAList (clos_to_bvl_init_code (clos_to_bvl_config_max_app c1)) in
      let init_globs =
        [(num_stubs (clos_to_bvl_config_max_app c1) - 2,2,force_thunk_code);
@@ -103,9 +103,9 @@ let to_bvl_all_def = cake_def
          (clos_to_bvl_config_next_loc c0) (LENGTH es0) in
      let ps = APPEND ps [(implode "after clos_to_bvl",Bvl prog' func_names)] in
      let c2 = clos_to_bvl_config_start_fupd
-                (K (num_stubs (clos_to_bvl_config_max_app c1) - 1)) c1 in
+                (combin_K (num_stubs (clos_to_bvl_config_max_app c1) - 1)) c1 in
      let p = code_sort prog' in
-     let c = backend_config_clos_conf_fupd (K c2) c in
+     let c = backend_config_clos_conf_fupd (combin_K c2) c in
      (ps:(mlstring#(A)any_prog)list,c,p,func_names)`;;
 
 let to_bvl_thm = prove
@@ -152,13 +152,13 @@ let to_bvi_all_def = cake_def
      let ps = APPEND ps [(implode "after bvi_tmc",Bvi code3 names)] in
      let ps = APPEND ps [(implode "after bvi_inline",Bvi code' names)] in
      let c = backend_config_clos_conf_fupd
-               (\c. clos_to_bvl_config_start_fupd (K s) c) c in
+               (\c. clos_to_bvl_config_start_fupd (combin_K s) c) c in
      let c = backend_config_bvl_conf_fupd
-               (\c. bvl_to_bvi_config_inlines_fupd (K l)
-                      (bvl_to_bvi_config_bvi_inlines_fupd (K bl)
-                         (bvl_to_bvi_config_next_name1_fupd (K n1)
-                            (bvl_to_bvi_config_next_name2_fupd (K n2)
-                               (bvl_to_bvi_config_next_name3_fupd (K n3) c))))) c in
+               (\c. bvl_to_bvi_config_inlines_fupd (combin_K l)
+                      (bvl_to_bvi_config_bvi_inlines_fupd (combin_K bl)
+                         (bvl_to_bvi_config_next_name1_fupd (combin_K n1)
+                            (bvl_to_bvi_config_next_name2_fupd (combin_K n2)
+                               (bvl_to_bvi_config_next_name3_fupd (combin_K n3) c))))) c in
      (ps:(mlstring#(A)any_prog)list,c,p,names)`;;
 
 (* the bvl passes of to_bvi_all are bvl_inline_optimise (local helper) *)
@@ -263,9 +263,9 @@ let to_word_all_def = cake_def
      let word_conf = backend_config_word_to_word_conf c in
      let data_conf = backend_config_data_conf c in
      let data_conf =
-       data_to_word_config_has_fp_ops_fupd (K (1 < asm_config_fp_reg_count asm_conf))
+       data_to_word_config_has_fp_ops_fupd (combin_K (1 < asm_config_fp_reg_count asm_conf))
          (data_to_word_config_has_fp_tern_fupd
-            (K (asm_config_ISA asm_conf = ARMv7 /\ 2 < asm_config_fp_reg_count asm_conf))
+            (combin_K (asm_config_ISA asm_conf = ARMv7 /\ 2 < asm_config_fp_reg_count asm_conf))
             data_conf) in
      let p = APPEND (data_to_word_stubs (:A) data_conf)
                     (MAP (data_to_word_compile_part data_conf) p) in
@@ -284,7 +284,7 @@ let to_word_all_def = cake_def
      let ps = APPEND ps [(implode "after word_alloc (and remove_must_terminate)",
                           backend_passes_Word p names)] in
      let c = backend_config_word_to_word_conf_fupd
-               (\c. word_to_word_config_col_oracle_fupd (K col) c) c in
+               (\c. word_to_word_config_col_oracle_fupd (combin_K col) c) c in
      (ps:(mlstring#(A)any_prog)list,c,p,names)`;;
 
 let LENGTH_next_n_oracle = prove
@@ -336,7 +336,7 @@ let to_stack_all_def = cake_def
        word_to_stack_compile asm_conf
          (stack_to_lab_config_perf_calls (backend_config_stack_conf c)) p in
      let ps = APPEND ps [(implode "after word_to_stack",Stack p names)] in
-     let c = backend_config_word_conf_fupd (K c') c in
+     let c = backend_config_word_conf_fupd (combin_K c') c in
      (ps:(mlstring#(A)any_prog)list,bm,c,p,names)`;;
 
 let to_stack_thm = prove
@@ -437,7 +437,7 @@ let from_word_all_def = cake_def
        word_to_stack_compile asm_conf
          (stack_to_lab_config_perf_calls (backend_config_stack_conf c)) p in
      let ps = APPEND ps [(implode "after word_to_stack",Stack p names)] in
-     let c = backend_config_word_conf_fupd (K c') c in
+     let c = backend_config_word_conf_fupd (combin_K c') c in
      from_stack_all ps asm_conf c names p bm`;;
 
 let from_word_thm = prove
@@ -464,7 +464,7 @@ let from_word_0_all_def = cake_def
      let ps = APPEND ps [(implode "after word_alloc (and remove_must_terminate)",
                           backend_passes_Word p names)] in
      let c = backend_config_word_to_word_conf_fupd
-               (\c. word_to_word_config_col_oracle_fupd (K col) c) c in
+               (\c. word_to_word_config_col_oracle_fupd (combin_K col) c) c in
      from_word_all ps asm_conf c names p`;;
 
 let from_word_0_thm = prove
@@ -486,9 +486,9 @@ let from_data_all_def = cake_def
      let data_conf = backend_config_data_conf c in
      let word_conf = backend_config_word_to_word_conf c in
      let data_conf =
-       data_to_word_config_has_fp_ops_fupd (K (1 < asm_config_fp_reg_count asm_conf))
+       data_to_word_config_has_fp_ops_fupd (combin_K (1 < asm_config_fp_reg_count asm_conf))
          (data_to_word_config_has_fp_tern_fupd
-            (K (asm_config_ISA asm_conf = ARMv7 /\ 2 < asm_config_fp_reg_count asm_conf))
+            (combin_K (asm_config_ISA asm_conf = ARMv7 /\ 2 < asm_config_fp_reg_count asm_conf))
             data_conf) in
      let p = APPEND (data_to_word_stubs (:A) data_conf)
                     (MAP (data_to_word_compile_part data_conf) p) in

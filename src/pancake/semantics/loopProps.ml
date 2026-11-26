@@ -89,7 +89,7 @@ let evaluate_tail_calls_eqs = prove
  (`!f (t:(A,FFI)loop_state) lc x.
      find_code (SOME f) ([]:((A)word_loc)list) (loop_state_code t) = SOME x ==>
      loop_evaluate (loop_Call NONE (SOME f) [] NONE:(A)loop_prog, t) =
-     loop_evaluate (loop_Call NONE (SOME f) [] NONE, loop_state_locals_fupd (K lc) t)`,
+     loop_evaluate (loop_Call NONE (SOME f) [] NONE, loop_state_locals_fupd (combin_K lc) t)`,
   REPEAT STRIP_TAC THEN FS[loop_evaluate_def; get_vars_def] THEN
   TOP_CASE_TAC THEN SIMP[loop_dec_clock_def]);;
 
@@ -324,7 +324,7 @@ let loop_eval_nested_assign_distinct_eq = prove
      ALL_DISTINCT ns /\
      LENGTH ns = LENGTH es ==>
      loop_evaluate (loop_nested_seq (MAP2 loop_Assign ns es),t) =
-     (NONE, loop_state_locals_fupd (K (alist_insert ns ev (loop_state_locals t))) t)`,
+     (NONE, loop_state_locals_fupd (combin_K (alist_insert ns ev (loop_state_locals t))) t)`,
   MATCH_MP_TAC list_INDUCT THEN CONJ_TAC THEN REPEAT GEN_TAC THENL
   [DISJ_CASES_THEN2 SUBST1_TAC (X_CHOOSE_THEN `n0:num` (X_CHOOSE_THEN `ns0:num list`
      SUBST1_TAC)) (ISPEC `ns:num list` list_CASES) THEN
@@ -364,32 +364,32 @@ let loop_eval_nested_assign_distinct_eq = prove
     ASM_SIMP_TAC[GEN_ALL alist_insert_pull_insert]]);;
 
 let get_var_imm_add_clk_eq = prove
- (`get_var_imm ri (loop_state_clock_fupd (K ck) (s:(A,FFI)loop_state)) =
+ (`get_var_imm ri (loop_state_clock_fupd (combin_K ck) (s:(A,FFI)loop_state)) =
    get_var_imm ri s`,
   STRUCT_CASES_TAC (ISPEC `ri:(A)reg_imm` (cases "reg_imm")) THEN
   REWRITE_TAC[get_var_imm_def] THEN SIMP[]);;
 
 let get_vars_local_clock_upd_eq = prove
  (`!ns (st:(A,FFI)loop_state) l ck.
-     get_vars ns (loop_state_locals_fupd (K l) (loop_state_clock_fupd (K ck) st)) =
-     get_vars ns (loop_state_locals_fupd (K l) st)`,
+     get_vars ns (loop_state_locals_fupd (combin_K l) (loop_state_clock_fupd (combin_K ck) st)) =
+     get_vars ns (loop_state_locals_fupd (combin_K l) st)`,
   LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[get_vars_def] THEN SIMP[]);;
 
 let get_vars_clock_upd_eq = prove
  (`!ns (st:(A,FFI)loop_state) ck.
-     get_vars ns (loop_state_clock_fupd (K ck) st) = get_vars ns st`,
+     get_vars ns (loop_state_clock_fupd (combin_K ck) st) = get_vars ns st`,
   LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[get_vars_def] THEN SIMP[]);;
 let get_vars_local_update_some_eq = prove
  (`!ns vs (st:(A,FFI)loop_state).
      ALL_DISTINCT ns /\ LENGTH ns = LENGTH vs ==>
-     get_vars ns (loop_state_locals_fupd (K (alist_insert ns vs (loop_state_locals st))) st) =
+     get_vars ns (loop_state_locals_fupd (combin_K (alist_insert ns vs (loop_state_locals st))) st) =
      SOME vs`,
   LIST_INDUCT_TAC THEN LIST_INDUCT_TAC THEN
   REWRITE_TAC[LENGTH; NOT_SUC; ARITH_RULE `~(0 = SUC n)`; SUC_INJ; get_vars_def;
               ALL_DISTINCT; alist_insert_def] THEN
   REPEAT STRIP_TAC THEN SIMP[lookup_insert] THEN
   FIRST_X_ASSUM(MP_TAC o SPECL [`t':((A)word_loc)list`;
-     `loop_state_locals_fupd (K (insert h h' (loop_state_locals st)))
+     `loop_state_locals_fupd (combin_K (insert h h' (loop_state_locals st)))
         (st:(A,FFI)loop_state)`]) THEN
   SIMP[] THEN ASM_SIMP_TAC[GEN_ALL alist_insert_pull_insert] THEN
   REWRITE_TAC[option_CASE]);;
@@ -726,7 +726,7 @@ let PLOOPAUX_COND_FACT_TAC : tactic = fun (asl,w as g) ->
 
 let PLOOPAUX_arith_locals = prove
  (`!arith (s:(A,FFI)loop_state) s1.
-     loop_arith s arith = SOME s1 ==> ?l. s1 = loop_state_locals_fupd (K l) s`,
+     loop_arith s arith = SOME s1 ==> ?l. s1 = loop_state_locals_fupd (combin_K l) s`,
   MATCH_MP_TAC loop_arith_INDUCT THEN
   REWRITE_TAC[loop_arith_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN EVERY_CASE_TAC THEN
@@ -765,8 +765,8 @@ let PLOOPAUX_comp_syn_ok_fields = prove
 let comp_syn_ok_upd_local_clock = prove
  (`!p (s:(A,FFI)loop_state) res t l.
      loop_evaluate (p,s) = (res,t) /\ comp_syntax_ok l p ==>
-     t = loop_state_locals_fupd (K (loop_state_locals t))
-           (loop_state_clock_fupd (K (loop_state_clock t)) s)`,
+     t = loop_state_locals_fupd (combin_K (loop_state_locals t))
+           (loop_state_clock_fupd (combin_K (loop_state_clock t)) s)`,
   REPEAT GEN_TAC THEN DISCH_THEN(MP_TAC o MATCH_MP PLOOPAUX_comp_syn_ok_fields) THEN
   REWRITE_TAC[loop_state_component_equality] THEN SIMP[]);;
 
@@ -868,21 +868,21 @@ let comp_syn_ok_lookup_locals_eq = prove
 
 let loop_eval_upd_clock_eq = prove
  (`!(t:(A,FFI)loop_state) e ck.
-     loop_eval (loop_state_clock_fupd (K ck) t) e = loop_eval t e`,
+     loop_eval (loop_state_clock_fupd (combin_K ck) t) e = loop_eval t e`,
   REPEAT GEN_TAC THEN MATCH_MP_TAC locals_touched_eq_eval_eq THEN SIMP[]);;
 
 let eval_upd_locals_clock_eq = prove
  (`!(t:(A,FFI)loop_state) e l ck.
-     loop_eval (loop_state_locals_fupd (K l) (loop_state_clock_fupd (K ck) t)) e =
-     loop_eval (loop_state_locals_fupd (K l) t) e`,
+     loop_eval (loop_state_locals_fupd (combin_K l) (loop_state_clock_fupd (combin_K ck) t)) e =
+     loop_eval (loop_state_locals_fupd (combin_K l) t) e`,
   REPEAT GEN_TAC THEN MATCH_MP_TAC locals_touched_eq_eval_eq THEN SIMP[]);;
 
 let cut_res_add_clock = prove
  (`cut_res l (res,s) = (q,r) /\ ~(q = SOME loop_TimeOut) ==>
    cut_res (l:(B)spt) (res:((W)loop_result)option,
-                       loop_state_clock_fupd (K (ck + loop_state_clock s))
+                       loop_state_clock_fupd (combin_K (ck + loop_state_clock s))
                          (s:(A,FFI)loop_state)) =
-   (q, loop_state_clock_fupd (K (ck + loop_state_clock r)) r)`,
+   (q, loop_state_clock_fupd (combin_K (ck + loop_state_clock r)) r)`,
   ASM_CASES_TAC `res:((W)loop_result)option = NONE` THEN
   ASM_REWRITE_TAC[cut_res_def; cut_state_def; loop_dec_clock_def; PAIR_EQ] THEN
   SIMP[] THEN
@@ -896,35 +896,35 @@ let cut_res_add_clock = prove
 
 let get_vars_clock = prove
  (`!vs (s:(A,FFI)loop_state) c.
-     get_vars vs (loop_state_clock_fupd (K c) s) = get_vars vs s`,
+     get_vars vs (loop_state_clock_fupd (combin_K c) s) = get_vars vs s`,
   REWRITE_TAC[get_vars_clock_upd_eq]);;
 let PLOOPAUX_arith_clock_upd = prove
  (`!arith (s:(A,FFI)loop_state) c.
-     loop_arith (loop_state_clock_fupd (K c) s) arith =
-     OPTION_MAP (loop_state_clock_fupd (K c)) (loop_arith s arith)`,
+     loop_arith (loop_state_clock_fupd (combin_K c) s) arith =
+     OPTION_MAP (loop_state_clock_fupd (combin_K c)) (loop_arith s arith)`,
   MATCH_MP_TAC loop_arith_INDUCT THEN
   REWRITE_TAC[loop_arith_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   SIMP[loop_set_var_def] THEN REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
   REPEAT TOP_CASE_TAC THEN SIMP[OPTION_MAP_DEF]);;
 
 let PLOOPAUX_mem_store_clock_upd = prove
- (`loop_mem_store a w (loop_state_clock_fupd (K c) (s:(A,FFI)loop_state)) =
-   OPTION_MAP (loop_state_clock_fupd (K c)) (loop_mem_store a w s)`,
+ (`loop_mem_store a w (loop_state_clock_fupd (combin_K c) (s:(A,FFI)loop_state)) =
+   OPTION_MAP (loop_state_clock_fupd (combin_K c)) (loop_mem_store a w s)`,
   REWRITE_TAC[loop_mem_store_def] THEN SIMP[] THEN COND_CASES_TAC THEN
   SIMP[OPTION_MAP_DEF]);;
 
 let PLOOPAUX_cut_state_clock_upd = prove
- (`cut_state (live:(B)spt) (loop_state_clock_fupd (K c) (s:(A,FFI)loop_state)) =
-   OPTION_MAP (loop_state_clock_fupd (K c)) (cut_state live s)`,
+ (`cut_state (live:(B)spt) (loop_state_clock_fupd (combin_K c) (s:(A,FFI)loop_state)) =
+   OPTION_MAP (loop_state_clock_fupd (combin_K c)) (cut_state live s)`,
   REWRITE_TAC[cut_state_def] THEN SIMP[] THEN COND_CASES_TAC THEN
   SIMP[OPTION_MAP_DEF]);;
 
 let PLOOPAUX_sh_mem_op_clock_upd = prove
  (`!op r ad (s:(A,FFI)loop_state) c.
-     loop_sh_mem_op op r ad (loop_state_clock_fupd (K c) s):((W)loop_result)option#
+     loop_sh_mem_op op r ad (loop_state_clock_fupd (combin_K c) s):((W)loop_result)option#
                                                              (A,FFI)loop_state =
      (FST (loop_sh_mem_op op r ad s:((W)loop_result)option#(A,FFI)loop_state),
-      loop_state_clock_fupd (K c)
+      loop_state_clock_fupd (combin_K c)
         (SND (loop_sh_mem_op op r ad s:((W)loop_result)option#(A,FFI)loop_state)))`,
   MATCH_MP_TAC memop_INDUCT THEN
   REWRITE_TAC[loop_sh_mem_op_def; loop_sh_mem_load_def; loop_sh_mem_store_def;
@@ -934,17 +934,17 @@ let PLOOPAUX_sh_mem_op_clock_upd = prove
 
 let PLOOPAUX_dec_clock_add = prove
  (`~(loop_state_clock s = 0) ==>
-   loop_dec_clock (loop_state_clock_fupd (K (loop_state_clock s + ck)) (s:(A,FFI)loop_state)) =
-   loop_state_clock_fupd (K (loop_state_clock (loop_dec_clock s) + ck)) (loop_dec_clock s)`,
+   loop_dec_clock (loop_state_clock_fupd (combin_K (loop_state_clock s + ck)) (s:(A,FFI)loop_state)) =
+   loop_state_clock_fupd (combin_K (loop_state_clock (loop_dec_clock s) + ck)) (loop_dec_clock s)`,
   REWRITE_TAC[loop_dec_clock_def] THEN SIMP[] THEN DISCH_TAC THEN
   AP_THM_TAC THEN AP_TERM_TAC THEN AP_TERM_TAC THEN ASM_ARITH_TAC);;
 
 let PLOOPAUX_cut_res_add_clock = prove
  (`cut_res l (res,s) = (q,r) ==> ~(q = SOME loop_TimeOut) ==>
    cut_res (l:(B)spt) (res:((W)loop_result)option,
-                       loop_state_clock_fupd (K (loop_state_clock s + ck))
+                       loop_state_clock_fupd (combin_K (loop_state_clock s + ck))
                          (s:(A,FFI)loop_state)) =
-   (q, loop_state_clock_fupd (K (loop_state_clock r + ck)) r)`,
+   (q, loop_state_clock_fupd (combin_K (loop_state_clock r + ck)) r)`,
   ONCE_REWRITE_TAC[ADD_SYM] THEN MESON_TAC[cut_res_add_clock]);;
 
 let PLOOPAUX_ADDCLK_TAC : tactic =
@@ -971,8 +971,8 @@ let PLOOPAUX_ADDCLK_TAC : tactic =
 let PLOOPAUX_evaluate_add_clock = prove
  (`!ck p (t:(A,FFI)loop_state) res st.
      loop_evaluate (p,t) = (res,st) /\ ~(res = SOME loop_TimeOut) ==>
-     loop_evaluate (p,loop_state_clock_fupd (K (loop_state_clock t + ck)) t) =
-     (res,loop_state_clock_fupd (K (loop_state_clock st + ck)) st)`,
+     loop_evaluate (p,loop_state_clock_fupd (combin_K (loop_state_clock t + ck)) t) =
+     (res,loop_state_clock_fupd (combin_K (loop_state_clock st + ck)) st)`,
   GEN_TAC THEN REC_IND_TAC loop_evaluate_ind THEN REPEAT CONJ_TAC THEN
   PLOOPAUX_ADDCLK_TAC);;
 
@@ -981,8 +981,8 @@ let PLOOPAUX_evaluate_add_clock = prove
 let loop_evaluate_add_clock_eq = prove
  (`!p (t:(A,FFI)loop_state) res st ck.
      loop_evaluate (p,t) = (res,st) /\ ~(res = SOME loop_TimeOut) ==>
-     loop_evaluate (p,loop_state_clock_fupd (K (loop_state_clock t + ck)) t) =
-     (res,loop_state_clock_fupd (K (loop_state_clock st + ck)) st)`,
+     loop_evaluate (p,loop_state_clock_fupd (combin_K (loop_state_clock t + ck)) t) =
+     (res,loop_state_clock_fupd (combin_K (loop_state_clock st + ck)) st)`,
   MESON_TAC[PLOOPAUX_evaluate_add_clock]);;
 (* the clause of a constructor in loop_evaluate_def *)
 let PLOOPAUX_eval_clause (c:string) =
@@ -1018,9 +1018,9 @@ let evaluate_nested_seq_comb_seq = prove
    MATCH_MP_TAC PLOOPAUX_seq_cong THEN ASM_REWRITE_TAC[]]);;
 let nested_seq_pure_evaluation = prove
  (`!p q (t:(A,FFI)loop_state) r st l m e v ck ck'.
-     loop_evaluate (loop_nested_seq p,loop_state_clock_fupd (K (ck + loop_state_clock t)) t) =
+     loop_evaluate (loop_nested_seq p,loop_state_clock_fupd (combin_K (ck + loop_state_clock t)) t) =
      (NONE,st) /\
-     loop_evaluate (loop_nested_seq q,loop_state_clock_fupd (K (ck' + loop_state_clock st)) st) =
+     loop_evaluate (loop_nested_seq q,loop_state_clock_fupd (combin_K (ck' + loop_state_clock st)) st) =
      (NONE,r) /\
      comp_syntax_ok l (loop_nested_seq p) /\
      comp_syntax_ok (cut_sets l (loop_nested_seq p)) (loop_nested_seq q) /\
@@ -1034,7 +1034,7 @@ let nested_seq_pure_evaluation = prove
   SUBGOAL_THEN `loop_eval (r:(A,FFI)loop_state) e = loop_eval (st:(A,FFI)loop_state) e`
     MP_TAC THENL [ALL_TAC; ASM_MESON_TAC[]] THEN
   MP_TAC(ISPECL [`loop_nested_seq q:(A)loop_prog`;
-                 `loop_state_clock_fupd (K (ck' + loop_state_clock st)) (st:(A,FFI)loop_state)`;
+                 `loop_state_clock_fupd (combin_K (ck' + loop_state_clock st)) (st:(A,FFI)loop_state)`;
                  `NONE:((A)loop_result)option`; `r:(A,FFI)loop_state`;
                  `cut_sets l (loop_nested_seq p:(A)loop_prog)`]
          PLOOPAUX_comp_syn_ok_fields) THEN
@@ -1042,7 +1042,7 @@ let nested_seq_pure_evaluation = prove
   MATCH_MP_TAC locals_touched_eq_eval_eq THEN ASM_REWRITE_TAC[] THEN
   X_GEN_TAC `n:num` THEN DISCH_TAC THEN
   MP_TAC(ISPECL [`loop_nested_seq q:(A)loop_prog`;
-                 `loop_state_clock_fupd (K (ck' + loop_state_clock st)) (st:(A,FFI)loop_state)`;
+                 `loop_state_clock_fupd (combin_K (ck' + loop_state_clock st)) (st:(A,FFI)loop_state)`;
                  `NONE:((A)loop_result)option`; `r:(A,FFI)loop_state`;
                  `cut_sets l (loop_nested_seq p:(A)loop_prog)`; `n:num`]
          comp_syn_ok_lookup_locals_eq) THEN
@@ -1228,7 +1228,7 @@ let PLOOPAUX_timeout_io = prove
      loop_evaluate (p,s) = (SOME loop_TimeOut, t) ==>
      isPREFIX (ffi_state_io_events (loop_state_ffi t))
        (ffi_state_io_events (loop_state_ffi (SND (loop_evaluate
-          (p, loop_state_clock_fupd (K (loop_state_clock s + extra)) s)))))`,
+          (p, loop_state_clock_fupd (combin_K (loop_state_clock s + extra)) s)))))`,
   GEN_TAC THEN REC_IND_TAC loop_evaluate_ind THEN REPEAT CONJ_TAC THEN
   PLOOPAUX_TIO_TAC THEN PLOOPAUX_TIO_FIN_TAC);;
 
@@ -1238,7 +1238,7 @@ let loop_evaluate_add_clock_io_events_mono = prove
  (`!exps (s:(A,FFI)loop_state) extra.
      isPREFIX (ffi_state_io_events (loop_state_ffi (SND (loop_evaluate (exps,s)))))
        (ffi_state_io_events (loop_state_ffi (SND (loop_evaluate
-          (exps, loop_state_clock_fupd (K (loop_state_clock s + extra)) s)))))`,
+          (exps, loop_state_clock_fupd (combin_K (loop_state_clock s + extra)) s)))))`,
   REPEAT GEN_TAC THEN
   MP_TAC(ISPEC `loop_evaluate (exps:(A)loop_prog,s:(A,FFI)loop_state)` PAIR_SURJECTIVE) THEN
   REWRITE_TAC[LEFT_IMP_EXISTS_THM] THEN

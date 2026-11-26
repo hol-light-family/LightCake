@@ -319,24 +319,24 @@ let get_sorted_moves_def = cake_def
 
 let set_colors_def = cake_def
   `(set_colors:num list->linear_scan_hidden_state->(1,C)exc#linear_scan_hidden_state) x =
-     \state. (M_success one,linear_scan_hidden_state_colors_fupd (K x) state)`;;
+     \state. (M_success one,linear_scan_hidden_state_colors_fupd (combin_K x) state)`;;
 
 let set_int_beg_def = cake_def
   `(set_int_beg:int list->linear_scan_hidden_state->(1,C)exc#linear_scan_hidden_state) x =
-     \state. (M_success one,linear_scan_hidden_state_int_beg_fupd (K x) state)`;;
+     \state. (M_success one,linear_scan_hidden_state_int_beg_fupd (combin_K x) state)`;;
 
 let set_int_end_def = cake_def
   `(set_int_end:int list->linear_scan_hidden_state->(1,C)exc#linear_scan_hidden_state) x =
-     \state. (M_success one,linear_scan_hidden_state_int_end_fupd (K x) state)`;;
+     \state. (M_success one,linear_scan_hidden_state_int_end_fupd (combin_K x) state)`;;
 
 let set_sorted_regs_def = cake_def
   `(set_sorted_regs:num list->linear_scan_hidden_state->(1,C)exc#linear_scan_hidden_state) x =
-     \state. (M_success one,linear_scan_hidden_state_sorted_regs_fupd (K x) state)`;;
+     \state. (M_success one,linear_scan_hidden_state_sorted_regs_fupd (combin_K x) state)`;;
 
 let set_sorted_moves_def = cake_def
   `(set_sorted_moves:
       (num#num#num)list->linear_scan_hidden_state->(1,C)exc#linear_scan_hidden_state) x =
-     \state. (M_success one,linear_scan_hidden_state_sorted_moves_fupd (K x) state)`;;
+     \state. (M_success one,linear_scan_hidden_state_sorted_moves_fupd (combin_K x) state)`;;
 
 
 (* HOL4 reuses reg_alloc's Datatype state_exn = Fail string | Subscript *)
@@ -395,7 +395,7 @@ let colors_sub_def = cake_def
 let update_colors_def = cake_def
   `update_colors =
      Marray_update (\state:linear_scan_hidden_state. linear_scan_hidden_state_colors state)
-       (\x state. linear_scan_hidden_state_colors_fupd (K x) state) Subscript`;;
+       (\x state. linear_scan_hidden_state_colors_fupd (combin_K x) state) Subscript`;;
 
 let int_beg_length_def = cake_def
   `(int_beg_length:linear_scan_hidden_state->(num,C)exc#linear_scan_hidden_state) =
@@ -409,7 +409,7 @@ let int_beg_sub_def = cake_def
 let update_int_beg_def = cake_def
   `update_int_beg =
      Marray_update (\state:linear_scan_hidden_state. linear_scan_hidden_state_int_beg state)
-       (\x state. linear_scan_hidden_state_int_beg_fupd (K x) state) Subscript`;;
+       (\x state. linear_scan_hidden_state_int_beg_fupd (combin_K x) state) Subscript`;;
 
 let int_end_length_def = cake_def
   `(int_end_length:linear_scan_hidden_state->(num,C)exc#linear_scan_hidden_state) =
@@ -423,7 +423,7 @@ let int_end_sub_def = cake_def
 let update_int_end_def = cake_def
   `update_int_end =
      Marray_update (\state:linear_scan_hidden_state. linear_scan_hidden_state_int_end state)
-       (\x state. linear_scan_hidden_state_int_end_fupd (K x) state) Subscript`;;
+       (\x state. linear_scan_hidden_state_int_end_fupd (combin_K x) state) Subscript`;;
 
 let sorted_regs_length_def = cake_def
   `(sorted_regs_length:linear_scan_hidden_state->(num,C)exc#linear_scan_hidden_state) =
@@ -437,7 +437,7 @@ let sorted_regs_sub_def = cake_def
 let update_sorted_regs_def = cake_def
   `update_sorted_regs =
      Marray_update (\state:linear_scan_hidden_state. linear_scan_hidden_state_sorted_regs state)
-       (\x state. linear_scan_hidden_state_sorted_regs_fupd (K x) state) Subscript`;;
+       (\x state. linear_scan_hidden_state_sorted_regs_fupd (combin_K x) state) Subscript`;;
 
 let sorted_moves_length_def = cake_def
   `(sorted_moves_length:linear_scan_hidden_state->(num,C)exc#linear_scan_hidden_state) =
@@ -451,7 +451,7 @@ let sorted_moves_sub_def = cake_def
 let update_sorted_moves_def = cake_def
   `update_sorted_moves =
      Marray_update (\state:linear_scan_hidden_state. linear_scan_hidden_state_sorted_moves state)
-       (\x state. linear_scan_hidden_state_sorted_moves_fupd (K x) state) Subscript`;;
+       (\x state. linear_scan_hidden_state_sorted_moves_fupd (combin_K x) state) Subscript`;;
 
 let colors_accessor = end_itlist CONJ
   [get_colors_def; set_colors_def;
@@ -539,7 +539,7 @@ let remove_inactive_intervals_def = cake_def_wf
      | CONS (e,r) activetail ->
          if e < beg then
            st_ex_bind (colors_sub r) (\col.
-           let st' = linear_scan_state_active_fupd (K activetail)
+           let st' = linear_scan_state_active_fupd (combin_K activetail)
                        (linear_scan_state_colorpool_fupd (\l. CONS col l) st) in
            remove_inactive_intervals beg st')
          else st_ex_return st`;;
@@ -551,7 +551,7 @@ let remove_inactive_intervals_ind = prove
  (`!P. (!beg st.
           (!r e activetail col.
              linear_scan_state_active st = CONS (e,r) activetail /\ e < beg
-             ==> P beg (linear_scan_state_active_fupd (K activetail)
+             ==> P beg (linear_scan_state_active_fupd (combin_K activetail)
                           (linear_scan_state_colorpool_fupd (\l. CONS col l) st)))
           ==> P beg st)
        ==> !beg st. P beg st`,
@@ -581,7 +581,7 @@ let find_color_in_colornum_def = cake_def
 let find_color_def = cake_def
   `find_color st (forbidden:1 spt) =
      match find_color_in_list (linear_scan_state_colorpool st) forbidden with
-       SOME (col,rest) -> (linear_scan_state_colorpool_fupd (K rest) st,SOME col)
+       SOME (col,rest) -> (linear_scan_state_colorpool_fupd (combin_K rest) st,SOME col)
      | NONE -> find_color_in_colornum st forbidden`;;
 
 let spill_register_def = cake_def
@@ -620,7 +620,7 @@ let find_spill_def = cake_def
      | SOME ((stealend,stealreg),newactive) ->
          if force \/ rend < stealend then
            st_ex_bind (colors_sub stealreg) (\stealcolor.
-           st_ex_bind (spill_register (linear_scan_state_active_fupd (K newactive) st)
+           st_ex_bind (spill_register (linear_scan_state_active_fupd (combin_K newactive) st)
                                       stealreg) (\st'.
            color_register st' reg stealcolor rend))
          else spill_register st reg)`;;
@@ -940,25 +940,25 @@ let find_bijection_step_def = cake_def
   `find_bijection_step state r =
      if ~(lookup r (bijection_state_bij state) = NONE) then state
      else if is_phy_var r then
-       bijection_state_bij_fupd (K (insert r r (bijection_state_bij state)))
-       (bijection_state_invbij_fupd (K (insert r r (bijection_state_invbij state)))
-       (bijection_state_nmax_fupd (K (MAX r (bijection_state_nmax state))) state))
+       bijection_state_bij_fupd (combin_K (insert r r (bijection_state_bij state)))
+       (bijection_state_invbij_fupd (combin_K (insert r r (bijection_state_invbij state)))
+       (bijection_state_nmax_fupd (combin_K (MAX r (bijection_state_nmax state))) state))
      else if is_stack_var r then
        bijection_state_bij_fupd
-         (K (insert r (bijection_state_nstack state) (bijection_state_bij state)))
+         (combin_K (insert r (bijection_state_nstack state) (bijection_state_bij state)))
        (bijection_state_invbij_fupd
-         (K (insert (bijection_state_nstack state) r (bijection_state_invbij state)))
+         (combin_K (insert (bijection_state_nstack state) r (bijection_state_invbij state)))
        (bijection_state_nmax_fupd
-         (K (MAX (bijection_state_nstack state) (bijection_state_nmax state)))
-       (bijection_state_nstack_fupd (K (bijection_state_nstack state + 4)) state)))
+         (combin_K (MAX (bijection_state_nstack state) (bijection_state_nmax state)))
+       (bijection_state_nstack_fupd (combin_K (bijection_state_nstack state + 4)) state)))
      else
        bijection_state_bij_fupd
-         (K (insert r (bijection_state_nalloc state) (bijection_state_bij state)))
+         (combin_K (insert r (bijection_state_nalloc state) (bijection_state_bij state)))
        (bijection_state_invbij_fupd
-         (K (insert (bijection_state_nalloc state) r (bijection_state_invbij state)))
+         (combin_K (insert (bijection_state_nalloc state) r (bijection_state_invbij state)))
        (bijection_state_nmax_fupd
-         (K (MAX (bijection_state_nalloc state) (bijection_state_nmax state)))
-       (bijection_state_nalloc_fupd (K (bijection_state_nalloc state + 4)) state)))`;;
+         (combin_K (MAX (bijection_state_nalloc state) (bijection_state_nmax state)))
+       (bijection_state_nalloc_fupd (combin_K (bijection_state_nalloc state + 4)) state)))`;;
 
 let find_bijection_clash_tree_def = cake_def
   `(find_bijection_clash_tree state (Delta wr rd) =

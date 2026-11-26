@@ -88,7 +88,7 @@ let CLOS2AUX_SPLIT_PAIR_TAC : tactic =
       try let a,b = dest_abs f in let b1,_ = dest_abs b in
           fst(dest_var a),fst(dest_var b1)
       with Failure _ -> "p1","p2" in
-    let avoid = frees whole in
+    let avoid = itlist (union o thm_frees o snd) asl (frees whole) in
     let v1 = variant avoid (mk_var(n1,tya)) in
     let v2 = variant (v1::avoid) (mk_var(n2,tyb)) in
     let nch = ISPEC x (nchotomy_of_type (type_of x)) in
@@ -96,7 +96,7 @@ let CLOS2AUX_SPLIT_PAIR_TAC : tactic =
      DISCH_THEN(X_CHOOSE_THEN v1 (X_CHOOSE_THEN v2
        (fun th -> if is_var x then SUBST_ALL_TAC th
                   else SUBST_ALL_TAC th THEN ASSUME_TAC th))) THEN
-     CASE_ASM_TIDY_TAC THEN CASE_REWRITE_TAC[]) gl;;
+     CASE_ASM_TIDY_TAC THEN CAKE_REWRITE_TAC[]) gl;;
 
 (* This definition is written to short-circuit, i.e. exit as soon as       *)
 (* possible.  The names of Fn and clos_Letrec (HOL4 t) are nm and nms.      *)
@@ -577,12 +577,12 @@ let clos_known_default_config_def = cake_def
 let dec_inline_factor_def = cake_def
   `dec_inline_factor c =
      clos_known_config_inline_factor_fupd
-       (K (clos_known_config_inline_factor c DIV 2)) c`;;
+       (combin_K (clos_known_config_inline_factor c DIV 2)) c`;;
 
 let reset_inline_factor_def = cake_def
   `reset_inline_factor c =
      clos_known_config_inline_factor_fupd
-       (K (clos_known_config_initial_inline_factor c)) c`;;
+       (combin_K (clos_known_config_initial_inline_factor c)) c`;;
 
 let decide_inline_def = cake_def
   `decide_inline c fapx (app_lopt:num option) app_arity =
@@ -610,8 +610,8 @@ let decide_inline_LetInline = prove
      decide_inline c fapx lopt arity = inlD_LetInline body
      ==> 0 < clos_known_config_inline_factor c`,
   REPEAT GEN_TAC THEN CASES_ON `fapx:val_approx` THEN
-  REWRITE_TAC[decide_inline_def] THEN CASE_REWRITE_TAC[] THEN
-  REPEAT COND_CASES_TAC THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[decide_inline_def] THEN CAKE_REWRITE_TAC[] THEN
+  REPEAT COND_CASES_TAC THEN CAKE_REWRITE_TAC[] THEN
   ASM_MESON_TAC[CLOS2AUX_LT_MULT_POS]);;
 
 (* HOL4: known; t ss k is mk_cons t k; the names of Fn and clos_Letrec    *)
@@ -778,7 +778,7 @@ let clos_known_compile_def = cake_def
       let (es,g) = clos_known_known c exps [] LN in
       let es1 = clos_ticks_remove_ticks (MAP FST es) in
       let es2 = clos_letop_let_op es1 in
-        (SOME (clos_known_config_val_approx_spt_fupd (K g) c),es2))`;;
+        (SOME (clos_known_config_val_approx_spt_fupd (combin_K g) c),es2))`;;
 
 (* HOL4: compile_inc *)
 
@@ -792,7 +792,7 @@ let known_static_conf_def = cake_def
      match kc with
        NONE -> NONE
      | SOME kc ->
-         SOME (clos_known_config_val_approx_spt_fupd (K LN)
+         SOME (clos_known_config_val_approx_spt_fupd (combin_K LN)
                  (reset_inline_factor kc))`;;
 
 let known_compile_inc_def = cake_def
@@ -813,4 +813,4 @@ let option_val_approx_spt_def = cake_def
 let option_upd_val_spt_def = cake_def
   `(option_upd_val_spt (spt:val_approx spt) NONE = NONE) /\
    (option_upd_val_spt spt (SOME kc) =
-      SOME (clos_known_config_val_approx_spt_fupd (K spt) kc))`;;
+      SOME (clos_known_config_val_approx_spt_fupd (combin_K spt) kc))`;;

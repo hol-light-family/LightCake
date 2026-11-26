@@ -123,7 +123,7 @@ let term_union_thm = prove
     REPEAT GEN_TAC THEN GEN_REWRITE_TAC LAND_CONV [term_union_def] THEN
     REWRITE_TAC[list_CASE] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
     STRUCT_CASES_TAC(ISPEC `orda [] h1 h2` (cases "ordering")) THEN
-    REWRITE_TAC[distinctness "ordering"] THEN CASE_REWRITE_TAC[]]);;
+    REWRITE_TAC[distinctness "ordering"] THEN CAKE_REWRITE_TAC[]]);;
 
 let MEM_term_union_imp = prove
  (`!l1 l2 x. MEM x (term_union l1 l2) ==> MEM x l1 \/ MEM x l2`,
@@ -131,7 +131,7 @@ let MEM_term_union_imp = prove
   LIST_INDUCT_TAC THENL [REWRITE_TAC[term_union_thm] THEN MESON_TAC[]; ALL_TAC] THEN
   X_GEN_TAC `x:hol_term` THEN REWRITE_TAC[term_union_thm] THEN
   STRUCT_CASES_TAC(ISPEC `orda [] h h'` (cases "ordering")) THEN
-  CASE_REWRITE_TAC[MEM] THEN ASM_MESON_TAC[MEM]);;
+  CAKE_REWRITE_TAC[MEM] THEN ASM_MESON_TAC[MEM]);;
 
 (* orda [] in the GREATER case, through orda_sym *)
 let CSYNAUX_P3_orda_GREATER = prove
@@ -152,7 +152,7 @@ let hypset_ok_term_union = prove
   REWRITE_TAC[term_union_thm] THEN
   MP_TAC transitive_alpha_lt THEN REWRITE_TAC[transitive_def] THEN DISCH_TAC THEN
   MP_TAC(ISPEC `orda [] h h'` (cases "ordering")) THEN STRIP_TAC THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[MATCH_MP SORTED_EQ transitive_alpha_lt] THENL
    [(* LESS *)
     CONJ_TAC THENL
@@ -188,7 +188,7 @@ let MEM_term_union = prove
   X_GEN_TAC `tm:hol_term` THEN REWRITE_TAC[hypset_ok_cons] THEN STRIP_TAC THEN
   REWRITE_TAC[term_union_thm] THEN
   MP_TAC(ISPEC `orda [] h h'` (cases "ordering")) THEN STRIP_TAC THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   RULE_ASSUM_TAC(REWRITE_RULE[GSYM ACONV_eq_orda]) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[MEM]) THEN REWRITE_TAC[MEM] THEN
   ASM_MESON_TAC[ACONV_REFL; ACONV_SYM; hypset_ok_cons; MEM]);;
@@ -196,7 +196,7 @@ let MEM_term_union = prove
 let term_union_sing_lt = prove
  (`!ys x. ALL (\y. alpha_lt x y) ys ==> term_union [x] ys = CONS x ys`,
   LIST_INDUCT_TAC THEN REWRITE_TAC[term_union_thm; ALL; alpha_lt_def] THEN
-  REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[term_union_thm]);;
+  REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[term_union_thm]);;
 
 let term_union_insert = prove
  (`!ys x zs.
@@ -208,7 +208,7 @@ let term_union_insert = prove
   REPEAT STRIP_TAC THEN REWRITE_TAC[term_union_thm] THEN
   SUBGOAL_THEN `orda [] x h = GREATER` SUBST1_TAC THENL
    [ASM_REWRITE_TAC[CSYNAUX_P3_orda_GREATER]; ALL_TAC] THEN
-  CASE_REWRITE_TAC[] THEN ASM_SIMP_TAC[term_union_thm]);;
+  CAKE_REWRITE_TAC[] THEN ASM_SIMP_TAC[term_union_thm]);;
 
 let term_union_replace = prove
  (`!ys x x' zs.
@@ -217,12 +217,12 @@ let term_union_replace = prove
      ==> term_union [x] (APPEND ys (CONS x' zs)) = APPEND ys (CONS x zs)`,
   LIST_INDUCT_TAC THEN REWRITE_TAC[APPEND; ALL; term_union_thm] THENL
    [REPEAT STRIP_TAC THEN RULE_ASSUM_TAC(REWRITE_RULE[ACONV_eq_orda]) THEN
-    ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[term_union_thm];
+    ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[term_union_thm];
     ALL_TAC] THEN
   REPEAT STRIP_TAC THEN
   SUBGOAL_THEN `orda [] x h = GREATER` SUBST1_TAC THENL
    [ASM_REWRITE_TAC[CSYNAUX_P3_orda_GREATER]; ALL_TAC] THEN
-  CASE_REWRITE_TAC[] THEN ASM_SIMP_TAC[]);;
+  CAKE_REWRITE_TAC[] THEN ASM_SIMP_TAC[]);;
 
 let MEM_term_union_first = prove
  (`!h1 h2 t. hypset_ok h1 /\ hypset_ok h2 /\ MEM t h1
@@ -232,7 +232,7 @@ let MEM_term_union_first = prove
   X_GEN_TAC `tm:hol_term` THEN REWRITE_TAC[hypset_ok_cons] THEN STRIP_TAC THEN
   REWRITE_TAC[term_union_thm] THEN
   MP_TAC(ISPEC `orda [] h h'` (cases "ordering")) THEN STRIP_TAC THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   RULE_ASSUM_TAC(REWRITE_RULE[MEM]) THEN REWRITE_TAC[MEM] THEN
   ASM_MESON_TAC[hypset_ok_cons; MEM]);;
 
@@ -243,13 +243,13 @@ let term_union_insert_mem = prove
    [FIRST_X_ASSUM SUBST_ALL_TAC THEN REWRITE_TAC[term_union_thm] THEN
     SUBGOAL_THEN `orda [] h h = EQUAL` SUBST1_TAC THENL
      [REWRITE_TAC[GSYM ACONV_eq_orda; ACONV_REFL]; ALL_TAC] THEN
-    CASE_REWRITE_TAC[term_union_thm];
+    CAKE_REWRITE_TAC[term_union_thm];
     REWRITE_TAC[term_union_thm] THEN
     SUBGOAL_THEN `orda [] c h = GREATER` SUBST1_TAC THENL
      [REWRITE_TAC[CSYNAUX_P3_orda_GREATER] THEN
       RULE_ASSUM_TAC(REWRITE_RULE[GSYM ALL_MEM]) THEN ASM_MESON_TAC[];
       ALL_TAC] THEN
-    CASE_REWRITE_TAC[] THEN ASM_SIMP_TAC[]]);;
+    CAKE_REWRITE_TAC[] THEN ASM_SIMP_TAC[]]);;
 
 (* one step of term_remove (HOL4: simp[Once term_remove_def]) *)
 let CSYNAUX_P3_term_remove_cons = prove
@@ -284,7 +284,7 @@ let term_union_insert_remove = prove
      [ASM_REWRITE_TAC[CSYNAUX_P3_orda_GREATER]; ALL_TAC] THEN
     REWRITE_TAC[CSYNAUX_P3_term_remove_cons] THEN ASM_REWRITE_TAC[] THEN
     COND_CASES_TAC THEN REWRITE_TAC[term_union_thm] THEN ASM_REWRITE_TAC[] THEN
-    CASE_REWRITE_TAC[injectivity "list"] THEN
+    CAKE_REWRITE_TAC[injectivity "list"] THEN
     ASM_MESON_TAC[term_union_insert_mem; term_union_thm]]);;
 
 (* term_remove *)

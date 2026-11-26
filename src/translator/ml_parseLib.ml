@@ -1143,7 +1143,7 @@ let rec mlp_cond_chain_conv tm =
 let mlp_ptree_Expr_pevaled = ref TRUTH;;
 
 mlp_ptree_Expr_pevaled :=
-  let cl = find (fun th -> mlp_head_name (rand (lhs (concl th))) = "Nd")
+  let cl = find (fun th -> mlp_head_name (rand (lhs (concl th))) = "grammar_Nd")
              (map SPEC_ALL (filter (fun th ->
                   mlp_head_name (lhs (snd (strip_forall (concl th)))) = "ptree_Expr")
                 (CONJUNCTS ptree_Expr_def))) in

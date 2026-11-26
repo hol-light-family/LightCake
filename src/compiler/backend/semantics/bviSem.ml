@@ -43,7 +43,7 @@ let bvi_state_component_equality = bvi_state_INFO.ri_component_equality;;
 
 let bvi_dec_clock_def = cake_def
   `bvi_dec_clock x (s:(C,FFI)bvi_state) =
-     bvi_state_clock_fupd (K (bvi_state_clock s - x)) s`;;
+     bvi_state_clock_fupd (combin_K (bvi_state_clock s - x)) s`;;
 
 (* HOL4 [local] *)
 let bvi_LESS_EQ_dec_clock = prove
@@ -55,16 +55,16 @@ let bvi_LESS_EQ_dec_clock = prove
 
 let bvi_to_bvl_def = cake_def
   `bvi_to_bvl (s:(C,FFI)bvi_state) =
-     bvl_state_refs_fupd (K (bvi_state_refs s))
-       (bvl_state_clock_fupd (K (bvi_state_clock s))
-         (bvl_state_code_fupd (K (sptree_map (K (ARB:num # bvl_exp)) (bvi_state_code s)))
-           (bvl_state_ffi_fupd (K (bvi_state_ffi s)) (ARB:(C,FFI)bvl_state))))`;;
+     bvl_state_refs_fupd (combin_K (bvi_state_refs s))
+       (bvl_state_clock_fupd (combin_K (bvi_state_clock s))
+         (bvl_state_code_fupd (combin_K (sptree_map (combin_K (ARB:num # bvl_exp)) (bvi_state_code s)))
+           (bvl_state_ffi_fupd (combin_K (bvi_state_ffi s)) (ARB:(C,FFI)bvl_state))))`;;
 
 let bvl_to_bvi_def = cake_def
   `bvl_to_bvi (s:(C,FFI)bvl_state) (t:(C,FFI)bvi_state) =
-     bvi_state_refs_fupd (K (bvl_state_refs s))
-       (bvi_state_clock_fupd (K (bvl_state_clock s))
-         (bvi_state_ffi_fupd (K (bvl_state_ffi s)) t))`;;
+     bvi_state_refs_fupd (combin_K (bvl_state_refs s))
+       (bvi_state_clock_fupd (combin_K (bvl_state_clock s))
+         (bvi_state_ffi_fupd (combin_K (bvl_state_ffi s)) t))`;;
 
 (* HOL4: refs'<|ptr |-> x|> is refs' |+ (ptr,x); l ++ [c'] ++ r is         *)
 (* APPEND (APPEND l [c']) r                                                  *)
@@ -116,7 +116,7 @@ let bvi_do_app_aux_def = cake_def
           | _ -> NONE)
      | (GlobOp SetGlobalsPtr,xs) ->
          (match xs with
-            [bvl_RefPtr T p] -> SOME (SOME (bvl_Unit, bvi_state_global_fupd (K (SOME p)) s))
+            [bvl_RefPtr T p] -> SOME (SOME (bvl_Unit, bvi_state_global_fupd (combin_K (SOME p)) s))
           | _ -> NONE)
      | (GlobOp (clos_Global n), xs) ->
          (match xs with
@@ -138,7 +138,7 @@ let bvi_do_app_aux_def = cake_def
                            SOME (bvl_ValueArray xs) ->
                              (if n < LENGTH xs
                               then SOME (SOME (bvl_Unit, bvi_state_refs_fupd
-                                     (K (bvi_state_refs s |+
+                                     (combin_K (bvi_state_refs s |+
                                          (ptr, bvl_ValueArray (LUPDATE x n xs)))) s))
                               else NONE)
                          | _ -> NONE)
@@ -159,7 +159,7 @@ let bvi_do_app_aux_def = cake_def
               if &0 <= i /\ (?w:byte. b = &(val w)) then
                 let ptr = (minimal ptr. ~(ptr IN FDOM (bvi_state_refs s))) in
                   SOME (SOME (bvl_RefPtr T ptr, bvi_state_refs_fupd
-                    (K (bvi_state_refs s |+
+                    (combin_K (bvi_state_refs s |+
                         (ptr, bvl_ByteArray f (REPLICATE (num_of_int i) (iword b))))) s))
               else NONE
           | _ -> NONE)
@@ -171,17 +171,17 @@ let bvi_do_app_aux_def = cake_def
               let r = DROP (i + 1) xs in
               let b = MutBlock tag F l c r in
                 SOME (SOME (bvl_RefPtr F ptr,
-                            bvi_state_refs_fupd (K (bvi_state_refs s |+ (ptr,b))) s)))
+                            bvi_state_refs_fupd (combin_K (bvi_state_refs s |+ (ptr,b))) s)))
      | (MemOp UpdateCons,[bvl_RefPtr _ ptr; bvl_Number i; x]) ->
          (match FLOOKUP (bvi_state_refs s) ptr with
             SOME (MutBlock tag finalised l c r) ->
               if ~(i = &(LENGTH l)) \/ finalised then NONE else
                 SOME (SOME (bvl_Unit, bvi_state_refs_fupd
-                  (K (bvi_state_refs s |+ (ptr,MutBlock tag F l x r))) s))
+                  (combin_K (bvi_state_refs s |+ (ptr,MutBlock tag F l x r))) s))
           | _ -> NONE)
      | (MemOp FinaliseCons,[x]) ->
          (match bvi_finalise_cons x (bvi_state_refs s) with
-            SOME (v,refs') -> SOME (SOME (v,bvi_state_refs_fupd (K refs') s))
+            SOME (v,refs') -> SOME (SOME (v,bvi_state_refs_fupd (combin_K refs') s))
           | NONE -> NONE)
      | (GlobOp AllocGlobal, _) -> NONE
      | (MemOp FromListByte, _) -> NONE
@@ -208,8 +208,8 @@ let bvi_do_install_def = cake_def
                    (SOME (bytes',data',cfg'), CONS (k,prog) _) ->
                      if bytes = bytes' /\ data = data' /\ FST (new_oracle 0) = cfg' then
                        let s' =
-                         bvi_state_code_fupd (K (sptree_union (bvi_state_code s) (fromAList progs)))
-                           (bvi_state_compile_oracle_fupd (K new_oracle) s)
+                         bvi_state_code_fupd (combin_K (sptree_union (bvi_state_code s) (fromAList progs)))
+                           (bvi_state_compile_oracle_fupd (combin_K new_oracle) s)
                        in
                          Rval (bvl_CodePtr k, s')
                      else Rerr (Rabort Rtype_error)
@@ -253,7 +253,7 @@ let bvi_dest_thunk_def = sem1aux_def
 (* types                                                                     *)
 let bvi_fix_clock_def = cake_def
   `bvi_fix_clock (s:(A,B)bvi_state) ((res:R),(s1:(C,D)bvi_state)) =
-     (res,bvi_state_clock_fupd (K (MIN (bvi_state_clock s) (bvi_state_clock s1))) s1)`;;
+     (res,bvi_state_clock_fupd (combin_K (MIN (bvi_state_clock s) (bvi_state_clock s1))) s1)`;;
 
 (* HOL4 [local] *)
 let bvi_fix_clock_IMP = prove
@@ -324,7 +324,7 @@ let CLOSSEMAUX_bvi_evaluate_clauses1 =
                   NONE -> (Rerr (Rabort Rtype_error),s)
                 | SOME (args,exp) ->
                     if bvi_state_clock s = 0 then
-                      (Rerr (Rabort Rtimeout_error),bvi_state_clock_fupd (K 0) s)
+                      (Rerr (Rabort Rtimeout_error),bvi_state_clock_fupd (combin_K 0) s)
                     else
                       (match bvi_evaluate ([exp],args,bvi_dec_clock 1 s) with
                          (Rerr (Rraise (Ret _)),s1) -> (Rerr (Rabort Rtype_error),s1)
@@ -337,7 +337,7 @@ let CLOSSEMAUX_bvi_evaluate_clauses1 =
              NONE -> (Rerr (Rabort Rtype_error),s)
            | SOME (args,exp) ->
                if bvi_state_clock s < ticks + 1 then
-                 (Rerr (Rabort Rtimeout_error),bvi_state_clock_fupd (K 0) s)
+                 (Rerr (Rabort Rtimeout_error),bvi_state_clock_fupd (combin_K 0) s)
                else
                  (match bvi_fix_clock (bvi_dec_clock (ticks + 1) s)
                           (bvi_evaluate ([exp],args,bvi_dec_clock (ticks + 1) s)) with
@@ -364,7 +364,7 @@ let CLOSSEMAUX_bvi_evaluate_clauses2 =
              NONE -> (Rerr (Rabort Rtype_error),s)
            | SOME (args,exp) ->
                if bvi_state_clock s < ticks + 1 then
-                 (Rerr (Rabort Rtimeout_error),bvi_state_clock_fupd (K 0) s)
+                 (Rerr (Rabort Rtimeout_error),bvi_state_clock_fupd (combin_K 0) s)
                else
                  (match bvi_fix_clock (bvi_dec_clock (ticks + 1) s)
                           (bvi_evaluate ([exp],args,bvi_dec_clock (ticks + 1) s)) with

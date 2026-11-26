@@ -452,16 +452,16 @@ let parse_clos_conf_def = cake_def
                                   (default_max_body_size n i) in
             match max_body_size with
               INL x ->
-                INL (clos_to_bvl_config_do_mti_fupd (K m)
-                      (clos_to_bvl_config_known_conf_fupd (K (SOME (mk_config x i)))
-                        (clos_to_bvl_config_do_call_fupd (K c)
-                          (clos_to_bvl_config_max_app_fupd (K n) clos))))
+                INL (clos_to_bvl_config_do_mti_fupd (combin_K m)
+                      (clos_to_bvl_config_known_conf_fupd (combin_K (SOME (mk_config x i)))
+                        (clos_to_bvl_config_do_call_fupd (combin_K c)
+                          (clos_to_bvl_config_max_app_fupd (combin_K n) clos))))
             | _ -> INR (mlstring_concat [get_err_str max_body_size]))
          else
-           INL (clos_to_bvl_config_do_mti_fupd (K m)
-                 (clos_to_bvl_config_known_conf_fupd (K NONE)
-                   (clos_to_bvl_config_do_call_fupd (K c)
-                     (clos_to_bvl_config_max_app_fupd (K n) clos))))
+           INL (clos_to_bvl_config_do_mti_fupd (combin_K m)
+                 (clos_to_bvl_config_known_conf_fupd (combin_K NONE)
+                   (clos_to_bvl_config_do_call_fupd (combin_K c)
+                     (clos_to_bvl_config_max_app_fupd (combin_K n) clos))))
      | _ ->
          INR (mlstring_concat [get_err_str multi;
                                get_err_str known;
@@ -482,11 +482,11 @@ let parse_bvl_conf_def = cake_def
                        (bvl_to_bvi_config_split_main_at_seq bvl) in
      match (inlinesz,expcut,splitmain,tmc,tailrec) with
        (INL i,INL e,INL m,INL do_tmc,INL do_tailrec) ->
-         INL (bvl_to_bvi_config_inline_size_limit_fupd (K i)
-               (bvl_to_bvi_config_exp_cut_fupd (K e)
-                 (bvl_to_bvi_config_split_main_at_seq_fupd (K m)
-                   (bvl_to_bvi_config_do_tmc_fupd (K do_tmc)
-                     (bvl_to_bvi_config_do_tailrec_fupd (K do_tailrec) bvl)))))
+         INL (bvl_to_bvi_config_inline_size_limit_fupd (combin_K i)
+               (bvl_to_bvi_config_exp_cut_fupd (combin_K e)
+                 (bvl_to_bvi_config_split_main_at_seq_fupd (combin_K m)
+                   (bvl_to_bvi_config_do_tmc_fupd (combin_K do_tmc)
+                     (bvl_to_bvi_config_do_tailrec_fupd (combin_K do_tailrec) bvl)))))
      | _ ->
          INR (mlstring_concat [get_err_str inlinesz;
                                get_err_str expcut;
@@ -500,7 +500,7 @@ let parse_wtw_conf_def = cake_def
   `parse_wtw_conf ls (wtw:word_to_word_config) =
      let regalg = find_num (implode "--reg_alg=") ls (word_to_word_config_reg_alg wtw) in
      match regalg with
-       INL r -> INL (word_to_word_config_reg_alg_fupd (K r) wtw)
+       INL r -> INL (word_to_word_config_reg_alg_fupd (combin_K r) wtw)
      | INR s -> INR (get_err_str regalg)`;;
 
 let parse_gc_def = cake_def
@@ -551,12 +551,12 @@ let parse_data_conf_def = cake_def
      let gc = parse_gc ls (data_to_word_config_gc_kind data) in
      match (tag_bits,len_bits,pad_bits,len_size,gc,empty_FFI) with
        (INL tb,INL lb,INL pb,INL ls,INL gc,INL empty_FFI) ->
-         INL (data_to_word_config_tag_bits_fupd (K tb)
-               (data_to_word_config_len_bits_fupd (K lb)
-                 (data_to_word_config_pad_bits_fupd (K pb)
-                   (data_to_word_config_len_size_fupd (K ls)
-                     (data_to_word_config_gc_kind_fupd (K gc)
-                       (data_to_word_config_call_empty_ffi_fupd (K empty_FFI) data))))))
+         INL (data_to_word_config_tag_bits_fupd (combin_K tb)
+               (data_to_word_config_len_bits_fupd (combin_K lb)
+                 (data_to_word_config_pad_bits_fupd (combin_K pb)
+                   (data_to_word_config_len_size_fupd (combin_K ls)
+                     (data_to_word_config_gc_kind_fupd (combin_K gc)
+                       (data_to_word_config_call_empty_ffi_fupd (combin_K empty_FFI) data))))))
      | _ ->
          INR (mlstring_concat [get_err_str tag_bits;
                                get_err_str len_bits;
@@ -573,8 +573,8 @@ let parse_stack_conf_def = cake_def
      let perf = find_bool (implode "--perf_callgraph=") ls
                   (stack_to_lab_config_perf_calls stack) in
      match (jump,perf) with
-       (INL j,INL p) -> INL (stack_to_lab_config_jump_fupd (K j)
-                              (stack_to_lab_config_perf_calls_fupd (K p) stack))
+       (INL j,INL p) -> INL (stack_to_lab_config_jump_fupd (combin_K j)
+                              (stack_to_lab_config_perf_calls_fupd (combin_K p) stack))
      | (INR s,_) -> INR s
      | (_,INR s) -> INR s`;;
 
@@ -590,7 +590,7 @@ let parse_lab_conf_def = cake_def
   `parse_lab_conf ls (lab:lab_to_target_config) =
      let hs = find_num (implode "--hash_size=") ls (lab_to_target_config_hash_size lab) in
      match hs with
-       INL r -> INL (lab_to_target_config_hash_size_fupd (K r) lab)
+       INL r -> INL (lab_to_target_config_hash_size_fupd (combin_K r) lab)
      | INR s -> INR s`;;
 
 let extend_conf_def = cake_def
@@ -604,13 +604,13 @@ let extend_conf_def = cake_def
      let lab = parse_lab_conf ls (backend_config_lab_conf conf) in
      match (clos,bvl,wtw,data,stack,tap,lab) with
        (INL clos,INL bvl,INL wtw,INL data,INL stack,INL tap,INL lab) ->
-         INL (backend_config_clos_conf_fupd (K clos)
-               (backend_config_bvl_conf_fupd (K bvl)
-                 (backend_config_word_to_word_conf_fupd (K wtw)
-                   (backend_config_data_conf_fupd (K data)
-                     (backend_config_stack_conf_fupd (K stack)
-                       (backend_config_tap_conf_fupd (K tap)
-                         (backend_config_lab_conf_fupd (K lab) conf)))))))
+         INL (backend_config_clos_conf_fupd (combin_K clos)
+               (backend_config_bvl_conf_fupd (combin_K bvl)
+                 (backend_config_word_to_word_conf_fupd (combin_K wtw)
+                   (backend_config_data_conf_fupd (combin_K data)
+                     (backend_config_stack_conf_fupd (combin_K stack)
+                       (backend_config_tap_conf_fupd (combin_K tap)
+                         (backend_config_lab_conf_fupd (combin_K lab) conf)))))))
      | _ ->
          INR (mlstring_concat [get_err_str clos;
                                get_err_str bvl;
@@ -671,5 +671,5 @@ let add_tap_output_def = cake_def
 let pancake_backend_conf_def = cake_def
   `pancake_backend_conf (c:backend_config) =
      backend_config_data_conf_fupd
-       (K (data_to_word_config_gc_kind_fupd (K data_to_word_None)
+       (combin_K (data_to_word_config_gc_kind_fupd (combin_K data_to_word_None)
              (backend_config_data_conf c))) c`;;

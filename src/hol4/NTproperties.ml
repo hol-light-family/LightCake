@@ -42,14 +42,14 @@ let LPARSEAUX_CONS_EQ_APPEND_SNOC = prove
 
 let derives_TOK = prove
  (`!(G:(A,B)grammar) p s t sf.
-     RTC (derive G) (APPEND (APPEND p [TOK t]) s) sf
-     ==> ?ps ss. sf = APPEND (APPEND ps [TOK t]) ss /\
+     RTC (derive G) (APPEND (APPEND p [grammar_TOK t]) s) sf
+     ==> ?ps ss. sf = APPEND (APPEND ps [grammar_TOK t]) ss /\
                  RTC (derive G) p ps /\ RTC (derive G) s ss`,
   GEN_TAC THEN
   SUBGOAL_THEN
    `!sf0 sf. RTC (derive (G:(A,B)grammar)) sf0 sf
-             ==> !p s t. sf0 = APPEND (APPEND p [TOK t]) s
-                         ==> ?ps ss. sf = APPEND (APPEND ps [TOK t]) ss /\
+             ==> !p s t. sf0 = APPEND (APPEND p [grammar_TOK t]) s
+                         ==> ?ps ss. sf = APPEND (APPEND ps [grammar_TOK t]) ss /\
                                      RTC (derive G) p ps /\
                                      RTC (derive G) s ss`
    (fun th -> MESON_TAC[th]) THEN
@@ -66,8 +66,8 @@ let derives_TOK = prove
                        `t:A`] THEN
   DISCH_TAC THEN
   SUBGOAL_THEN
-   `APPEND (APPEND p [TOK t:(A,B)symbol]) s =
-    APPEND p0 (APPEND [NT N] s0)` MP_TAC THENL
+   `APPEND (APPEND p [grammar_TOK t:(A,B)symbol]) s =
+    APPEND p0 (APPEND [grammar_NT N] s0)` MP_TAC THENL
    [ASM_MESON_TAC[APPEND_ASSOC]; ALL_TAC] THEN
   REWRITE_TAC[LPARSEAUX_APPEND_EQ_APPEND_MID] THEN STRIP_TAC THENL
    [(* the NT is to the right of the token *)
@@ -109,7 +109,7 @@ let derives_TOK = prove
     ASM_REWRITE_TAC[GSYM APPEND_ASSOC; APPEND]]);;
 
 let nullable_CONS_TOK = prove
- (`!(G:(A,B)grammar) t rest. nullable G (CONS (TOK t) rest) <=> F`,
+ (`!(G:(A,B)grammar) t rest. nullable G (CONS (grammar_TOK t) rest) <=> F`,
   REWRITE_TAC[nullable_def] THEN REPEAT STRIP_TAC THEN
   MP_TAC(ISPECL [`G:(A,B)grammar`; `[]:((A,B)symbol)list`;
                  `rest:((A,B)symbol)list`; `t:A`; `[]:((A,B)symbol)list`]
@@ -122,7 +122,7 @@ let nullable_NIL = prove
 
 let nullable_CONS_NT = prove
  (`!(G:(A,B)grammar) n rest.
-     nullable G (CONS (NT n) rest) <=>
+     nullable G (CONS (grammar_NT n) rest) <=>
      nullable G rest /\ n IN FDOM (grammar_rules G) /\
      ?r. r IN FAPPLY (grammar_rules G) n /\ nullable G r`,
   REPEAT GEN_TAC THEN REWRITE_TAC[nullable_def] THEN EQ_TAC THENL
@@ -130,7 +130,7 @@ let nullable_CONS_NT = prove
     REWRITE_TAC[derives_split_horizontally; LPARSEAUX_NIL_EQ_APPEND] THEN
     REWRITE_TAC[LEFT_AND_EXISTS_THM; LEFT_IMP_EXISTS_THM] THEN
     REPEAT GEN_TAC THEN STRIP_TAC THEN RVEQ_TAC THEN ASM_REWRITE_TAC[] THEN
-    UNDISCH_TAC `RTC (derive (G:(A,B)grammar)) [NT n] []` THEN
+    UNDISCH_TAC `RTC (derive (G:(A,B)grammar)) [grammar_NT n] []` THEN
     DISCH_THEN(MP_TAC o ONCE_REWRITE_RULE[RTC_CASES_R]) THEN
     REWRITE_TAC[NOT_CONS_NIL; derive_1NT] THEN MESON_TAC[];
     STRIP_TAC THEN MATCH_MP_TAC RTC_TRANS_R THEN
@@ -166,8 +166,8 @@ let nullableML_def = cake_def_wf
          LENGTH (SND (SND t))))`
   LPARSEAUX_NT_TERM_TAC
   `(nullableML (G:(A,B)grammar) seen [] <=> T) /\
-   (nullableML G seen (CONS (TOK t) u) <=> F) /\
-   (nullableML G seen (CONS (NT n) rest) <=>
+   (nullableML G seen (CONS (grammar_TOK t) u) <=> F) /\
+   (nullableML G seen (CONS (grammar_NT n) rest) <=>
       if n IN FDOM (grammar_rules G) /\ ~(n IN seen) then
         if FAPPLY (grammar_rules G) n INTER
            {r | nullableML G (n INSERT seen) r} = {}
@@ -198,12 +198,12 @@ let ptree_NTs_def = new_specification ["ptree_NTs"]
   (CASE_TERM
    `?ptree_NTs.
       (!(l:(A,B)symbol) (u:C).
-         ptree_NTs (Lf (l,u)) = (match l with NT N -> {N} | u1 -> {})) /\
+         ptree_NTs (grammar_Lf (l,u)) = (match l with grammar_NT N -> {N} | u1 -> {})) /\
       (!(n:B+num) (u:C) (subs:((A,B,C)parsetree)list).
-         ptree_NTs (Nd (n,u) subs) =
+         ptree_NTs (grammar_Nd (n,u) subs) =
          n INSERT UNIONS (IMAGE ptree_NTs (set_of_list subs)))`,
    MP_TAC(ISPECL
-    [CASE_TERM `\p:(A,B)symbol#C. (match FST p with NT N -> {N} | u1 -> {})`;
+    [CASE_TERM `\p:(A,B)symbol#C. (match FST p with grammar_NT N -> {N} | u1 -> {})`;
      `\(x:(B+num)#C) (subs:((A,B,C)parsetree)list) (rs:((B+num)->bool)list).
         FST x INSERT UNIONS (set_of_list rs)`]
     LPARSEAUX_parsetree_MAP_RECURSION) THEN
@@ -213,9 +213,9 @@ let ptree_NTs_def = new_specification ["ptree_NTs"]
 let ptree_rptfree_def = new_specification ["ptree_rptfree"]
  (prove
   (`?ptree_rptfree.
-      (!p:(A,B)symbol#C. ptree_rptfree (Lf p) <=> T) /\
+      (!p:(A,B)symbol#C. ptree_rptfree (grammar_Lf p) <=> T) /\
       (!(N:B+num) (u:C) (subs:((A,B,C)parsetree)list).
-         ptree_rptfree (Nd (N,u) subs) <=>
+         ptree_rptfree (grammar_Nd (N,u) subs) <=>
          !s. MEM s subs ==> ptree_rptfree s /\ ~(N IN ptree_NTs s))`,
    MP_TAC(ISPECL
     [`\p:(A,B)symbol#C. T`;
@@ -292,7 +292,7 @@ let rptfree_subtree = prove
      ptree_rptfree pt /\ N IN ptree_NTs pt /\ ptree_fringe pt = [] /\
      valid_ptree G pt
      ==> ?pt':(A,B,C)parsetree.
-           ptree_rptfree pt' /\ ptree_head pt' = NT N /\
+           ptree_rptfree pt' /\ ptree_head pt' = grammar_NT N /\
            ptree_fringe pt' = [] /\ valid_ptree G pt'`,
   GEN_TAC THEN GEN_TAC THEN MATCH_MP_TAC ptree_ind THEN CONJ_TAC THENL
    [REWRITE_TAC[FORALL_PAIR_THM; ptree_fringe_def; NOT_CONS_NIL];
@@ -302,7 +302,7 @@ let rptfree_subtree = prove
   MAP_EVERY X_GEN_TAC [`n:B+num`; `l:C`] THEN
   REWRITE_TAC[ptree_NTs_def; IN_INSERT; IN_UNIONS; IN_IMAGE; IN_SET_OF_LIST] THEN
   STRIP_TAC THENL
-   [EXISTS_TAC `Nd (n,l) subs:(A,B,C)parsetree` THEN
+   [EXISTS_TAC `grammar_Nd (n,l) subs:(A,B,C)parsetree` THEN
     ASM_REWRITE_TAC[ptree_head_def];
     ALL_TAC] THEN
   FIRST_X_ASSUM(MP_TAC o SPEC `x:(A,B,C)parsetree` o
@@ -370,7 +370,7 @@ let rptfree_nullable_ptrees_possible = prove
                   rptfree_subtree) THEN
     ANTS_TAC THENL [ASM_MESON_TAC[]; MESON_TAC[]];
     ALL_TAC] THEN
-  EXISTS_TAC `Nd (N,l) subs':(A,B,C)parsetree` THEN
+  EXISTS_TAC `grammar_Nd (N,l) subs':(A,B,C)parsetree` THEN
   ASM_REWRITE_TAC[valid_ptree_def; ptree_fringe_def; IN_SET_OF_LIST;
                   LPARSEAUX_FLAT_MAP_EQ_NIL; ptree_head_def;
                   ptree_rptfree_def] THEN
@@ -404,11 +404,11 @@ let nullableML_EQN = prove
 
 let firstSet_def = new_definition
   `firstSet (G:(A,B)grammar) sf =
-     {t | ?rest. RTC (derive G) sf (CONS (TOK t) rest)}`;;
+     {t | ?rest. RTC (derive G) sf (CONS (grammar_TOK t) rest)}`;;
 
 let firstSet_nonempty_fringe = prove
  (`!(G:(A,B)grammar) (pt:(A,B,C)parsetree) t rest.
-     ptree_fringe pt = CONS (TOK t) rest /\ valid_ptree G pt
+     ptree_fringe pt = CONS (grammar_TOK t) rest /\ valid_ptree G pt
      ==> t IN firstSet G [ptree_head pt]`,
   REWRITE_TAC[firstSet_def; IN_ELIM_THM] THEN
   MESON_TAC[valid_ptree_derive]);;
@@ -418,34 +418,34 @@ let IN_firstSet = prove
      t IN firstSet G [sym]
      ==> ?pt:(A,B,1)parsetree rest.
            ptree_head pt = sym /\ valid_ptree G pt /\
-           ptree_fringe pt = CONS (TOK t) rest`,
+           ptree_fringe pt = CONS (grammar_TOK t) rest`,
   REWRITE_TAC[firstSet_def; IN_ELIM_THM] THEN REPEAT STRIP_TAC THEN
-  MP_TAC(ISPECL [`G:(A,B)grammar`; `Lf (sym,one):(A,B,1)parsetree`;
-                 `CONS (TOK t) rest:((A,B)symbol)list`]
+  MP_TAC(ISPECL [`G:(A,B)grammar`; `grammar_Lf (sym,one):(A,B,1)parsetree`;
+                 `CONS (grammar_TOK t) rest:((A,B)symbol)list`]
                 ptrees_derive_extensible) THEN
   ASM_REWRITE_TAC[valid_ptree_def; ptree_fringe_def; ptree_head_def] THEN
   MESON_TAC[]);;
 
 let LPARSEAUX_MAP_TOK_NEQ_NT = prove
  (`!(syms:A list) p (N:B+num) l.
-     ~(MAP (TOK:A->(A,B)symbol) syms = APPEND (APPEND p [NT N]) l)`,
+     ~(MAP (grammar_TOK:A->(A,B)symbol) syms = APPEND (APPEND p [grammar_NT N]) l)`,
   REPEAT GEN_TAC THEN
-  DISCH_THEN(MP_TAC o AP_TERM `MEM (NT N:(A,B)symbol)`) THEN
+  DISCH_THEN(MP_TAC o AP_TERM `MEM (grammar_NT N:(A,B)symbol)`) THEN
   REWRITE_TAC[MEM_MAP; MEM_APPEND; MEM; symbol_distinct]);;
 
 let derives_preserves_leading_toks = prove
  (`!(G:(A,B)grammar) syms rest x.
-     RTC (derive G) (APPEND (MAP TOK syms) rest) x <=>
-     ?rest'. RTC (derive G) rest rest' /\ x = APPEND (MAP TOK syms) rest'`,
+     RTC (derive G) (APPEND (MAP grammar_TOK syms) rest) x <=>
+     ?rest'. RTC (derive G) rest rest' /\ x = APPEND (MAP grammar_TOK syms) rest'`,
   REPEAT GEN_TAC THEN EQ_TAC THENL
    [ALL_TAC;
     STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
     MATCH_MP_TAC derives_paste_horizontally THEN ASM_REWRITE_TAC[RTC_REFL]] THEN
   SUBGOAL_THEN
    `!x y. RTC (derive (G:(A,B)grammar)) x y
-          ==> !syms rest. x = APPEND (MAP TOK syms) rest
+          ==> !syms rest. x = APPEND (MAP grammar_TOK syms) rest
                           ==> ?rest'. RTC (derive G) rest rest' /\
-                                      y = APPEND (MAP TOK syms) rest'`
+                                      y = APPEND (MAP grammar_TOK syms) rest'`
    (fun th -> MESON_TAC[th]) THEN
   MATCH_MP_TAC RTC_INDUCT_L THEN CONJ_TAC THENL
    [MESON_TAC[RTC_REFL]; ALL_TAC] THEN
@@ -481,7 +481,7 @@ let firstSet_NIL = prove
   REWRITE_TAC[APPEND_EQ_NIL; NOT_CONS_NIL]);;
 
 let firstSet_TOK = prove
- (`!(G:(A,B)grammar) t rest. firstSet G (CONS (TOK t) rest) = {t}`,
+ (`!(G:(A,B)grammar) t rest. firstSet G (CONS (grammar_TOK t) rest) = {t}`,
   REPEAT GEN_TAC THEN
   REWRITE_TAC[firstSet_def; EXTENSION; IN_ELIM_THM; IN_SING] THEN
   X_GEN_TAC `t':A` THEN EQ_TAC THENL
@@ -494,21 +494,21 @@ let firstSet_TOK = prove
 
 let LPARSEAUX_firstSet_NT_imp = prove
  (`!(G:(A,B)grammar) N rest t rest'.
-     RTC (derive G) (CONS (NT N) rest) (CONS (TOK t) rest')
+     RTC (derive G) (CONS (grammar_NT N) rest) (CONS (grammar_TOK t) rest')
      ==> (?rhs r0. rhs IN FAPPLY (grammar_rules G) N /\
-                   RTC (derive G) rhs (CONS (TOK t) r0)) \/
-         (nullable G [NT N] /\ ?r0. RTC (derive G) rest (CONS (TOK t) r0))`,
+                   RTC (derive G) rhs (CONS (grammar_TOK t) r0)) \/
+         (nullable G [grammar_NT N] /\ ?r0. RTC (derive G) rest (CONS (grammar_TOK t) r0))`,
   REPEAT GEN_TAC THEN
   DISCH_THEN(MP_TAC o ONCE_REWRITE_RULE[LPARSEAUX_CONS_APPEND]) THEN
   REWRITE_TAC[derives_split_horizontally] THEN
   DISCH_THEN(X_CHOOSE_THEN `z1:((A,B)symbol)list` (X_CHOOSE_THEN
     `z2:((A,B)symbol)list` STRIP_ASSUME_TAC)) THEN
-  UNDISCH_TAC `APPEND [TOK t:(A,B)symbol] rest' = APPEND z1 z2` THEN
+  UNDISCH_TAC `APPEND [grammar_TOK t:(A,B)symbol] rest' = APPEND z1 z2` THEN
   REWRITE_TAC[APPEND] THEN DISCH_THEN(MP_TAC o SYM) THEN
   REWRITE_TAC[LPARSEAUX_APPEND_EQ_CONS] THEN STRIP_TAC THEN RVEQ_TAC THENL
    [DISJ2_TAC THEN ASM_REWRITE_TAC[nullable_def] THEN ASM_MESON_TAC[];
     DISJ1_TAC THEN
-    UNDISCH_TAC `RTC (derive (G:(A,B)grammar)) [NT N] (CONS (TOK t) l1')` THEN
+    UNDISCH_TAC `RTC (derive (G:(A,B)grammar)) [grammar_NT N] (CONS (grammar_TOK t) l1')` THEN
     DISCH_THEN(MP_TAC o ONCE_REWRITE_RULE[RTC_CASES_R]) THEN
     REWRITE_TAC[CONS_11; symbol_distinct; derive_1NT] THEN
     MESON_TAC[]]);;
@@ -516,23 +516,23 @@ let LPARSEAUX_firstSet_NT_imp = prove
 let LPARSEAUX_firstSet_NT_rhs = prove
  (`!(G:(A,B)grammar) N x t r0 rest.
      N IN FDOM (grammar_rules G) /\ x IN FAPPLY (grammar_rules G) N /\
-     RTC (derive G) x (CONS (TOK t) r0)
-     ==> RTC (derive G) (CONS (NT N) rest) (CONS (TOK t) (APPEND r0 rest))`,
+     RTC (derive G) x (CONS (grammar_TOK t) r0)
+     ==> RTC (derive G) (CONS (grammar_NT N) rest) (CONS (grammar_TOK t) (APPEND r0 rest))`,
   REPEAT STRIP_TAC THEN MATCH_MP_TAC RTC_TRANS_R THEN
   EXISTS_TAC `APPEND (x:((A,B)symbol)list) rest` THEN CONJ_TAC THENL
    [REWRITE_TAC[derive_def] THEN
     MAP_EVERY EXISTS_TAC [`[]:((A,B)symbol)list`; `N:B+num`;
                           `x:((A,B)symbol)list`; `rest:((A,B)symbol)list`] THEN
     ASM_REWRITE_TAC[APPEND];
-    SUBGOAL_THEN `CONS (TOK t) (APPEND r0 rest):((A,B)symbol)list =
-                  APPEND (CONS (TOK t) r0) rest` SUBST1_TAC THENL
+    SUBGOAL_THEN `CONS (grammar_TOK t) (APPEND r0 rest):((A,B)symbol)list =
+                  APPEND (CONS (grammar_TOK t) r0) rest` SUBST1_TAC THENL
      [REWRITE_TAC[APPEND]; ALL_TAC] THEN
     MATCH_MP_TAC derives_paste_horizontally THEN ASM_REWRITE_TAC[RTC_REFL]]);;
 
 let LPARSEAUX_firstSet_NT_null = prove
  (`!(G:(A,B)grammar) N t r0 rest.
-     nullable G [NT N] /\ RTC (derive G) rest (CONS (TOK t) r0)
-     ==> RTC (derive G) (CONS (NT N) rest) (CONS (TOK t) r0)`,
+     nullable G [grammar_NT N] /\ RTC (derive G) rest (CONS (grammar_TOK t) r0)
+     ==> RTC (derive G) (CONS (grammar_NT N) rest) (CONS (grammar_TOK t) r0)`,
   REWRITE_TAC[nullable_def] THEN REPEAT STRIP_TAC THEN
   ONCE_REWRITE_TAC[LPARSEAUX_CONS_APPEND] THEN
   GEN_REWRITE_TAC RAND_CONV [GSYM(CONJUNCT1 APPEND)] THEN
@@ -541,10 +541,10 @@ let LPARSEAUX_firstSet_NT_null = prove
 
 let firstSet_NT = prove
  (`!(G:(A,B)grammar) N rest.
-     firstSet G (CONS (NT N) rest) =
+     firstSet G (CONS (grammar_NT N) rest) =
        if N IN FDOM (grammar_rules G) then
          UNIONS (IMAGE (firstSet G) (FAPPLY (grammar_rules G) N)) UNION
-         (if nullable G [NT N] then firstSet G rest else {})
+         (if nullable G [grammar_NT N] then firstSet G rest else {})
        else {}`,
   REPEAT GEN_TAC THEN COND_CASES_TAC THENL
    [ALL_TAC;
@@ -585,28 +585,28 @@ let LPARSEAUX_firstSetML_raw = cake_def_wf
          LENGTH (SND (SND t))))`
   LPARSEAUX_NT_TERM_TAC2
   `(firstSetML (G:(A,B)grammar) seen [] = {}) /\
-   (firstSetML G seen (CONS (TOK t) u) = {t}) /\
-   (firstSetML G seen (CONS (NT n) rest) =
+   (firstSetML G seen (CONS (grammar_TOK t) u) = {t}) /\
+   (firstSetML G seen (CONS (grammar_NT n) rest) =
       if n IN FDOM (grammar_rules G) then
         if ~(n IN seen) then
           UNIONS (IMAGE (\r. firstSetML G (n INSERT seen) r)
                         (FAPPLY (grammar_rules G) n)) UNION
-          (if nullable G [NT n] then firstSetML G seen rest else {})
+          (if nullable G [grammar_NT n] then firstSetML G seen rest else {})
         else
-          {} UNION (if nullable G [NT n] then firstSetML G seen rest else {})
+          {} UNION (if nullable G [grammar_NT n] then firstSetML G seen rest else {})
       else {})`;;
 
 let firstSetML_def = prove
  (`(!(G:(A,B)grammar) seen. firstSetML G seen [] = {}) /\
-   (!(G:(A,B)grammar) seen t u. firstSetML G seen (CONS (TOK t) u) = {t}) /\
+   (!(G:(A,B)grammar) seen t u. firstSetML G seen (CONS (grammar_TOK t) u) = {t}) /\
    (!(G:(A,B)grammar) seen n rest.
-      firstSetML G seen (CONS (NT n) rest) =
+      firstSetML G seen (CONS (grammar_NT n) rest) =
       if n IN FDOM (grammar_rules G) then
         (if ~(n IN seen) then
            UNIONS (IMAGE (firstSetML G (n INSERT seen))
                          (FAPPLY (grammar_rules G) n))
          else {}) UNION
-        (if nullable G [NT n] then firstSetML G seen rest else {})
+        (if nullable G [grammar_NT n] then firstSetML G seen rest else {})
       else {})`,
   REWRITE_TAC[LPARSEAUX_firstSetML_raw; ETA_AX] THEN
   REPEAT GEN_TAC THEN REPEAT(COND_CASES_TAC THEN ASM_REWRITE_TAC[]));;
@@ -624,12 +624,12 @@ let LPARSEAUX_NT_WF = prove
 let firstSetML_ind = prove
  (`!P:(A,B)grammar->((B+num)->bool)->((A,B)symbol)list->bool.
        (!(G:(A,B)grammar) seen. P G seen []) /\
-       (!(G:(A,B)grammar) seen t u. P G seen (CONS (TOK t) u)) /\
+       (!(G:(A,B)grammar) seen t u. P G seen (CONS (grammar_TOK t) u)) /\
        (!(G:(A,B)grammar) seen n rest.
-          (n IN FDOM (grammar_rules G) /\ nullable G [NT n] ==> P G seen rest) /\
+          (n IN FDOM (grammar_rules G) /\ nullable G [grammar_NT n] ==> P G seen rest) /\
           (!r. n IN FDOM (grammar_rules G) /\ ~(n IN seen)
                ==> P G (n INSERT seen) r)
-          ==> P G seen (CONS (NT n) rest))
+          ==> P G seen (CONS (grammar_NT n) rest))
        ==> !G seen sf. P G seen sf`,
   GEN_TAC THEN
   DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "nil")
@@ -673,11 +673,11 @@ let nts_derive_def = cake_def
   `(nts_derive (G:(A,B)grammar) [] (tk:A) <=> F) /\
    (nts_derive G [N] tk <=>
       N IN FDOM (grammar_rules G) /\
-      ?p s. APPEND (APPEND p [TOK tk]) s IN FAPPLY (grammar_rules G) N /\
+      ?p s. APPEND (APPEND p [grammar_TOK tk]) s IN FAPPLY (grammar_rules G) N /\
             nullable G p) /\
    (nts_derive G (CONS N1 (CONS N2 NS)) tk <=>
       N1 IN FDOM (grammar_rules G) /\
-      ?p s. APPEND (APPEND p [NT N2]) s IN FAPPLY (grammar_rules G) N1 /\
+      ?p s. APPEND (APPEND p [grammar_NT N2]) s IN FAPPLY (grammar_rules G) N1 /\
             nullable G p /\ nts_derive G (CONS N2 NS) tk)`;;
 
 let LPARSEAUX_nts_derive_CONS = prove
@@ -701,7 +701,7 @@ let firstSetML_nullable_prefix = prove
   STRUCT_CASES_TAC(ISPEC `h:(A,B)symbol` symbol_nchotomy) THEN
   REWRITE_TAC[nullable_CONS_TOK; nullable_CONS_NT] THEN REPEAT STRIP_TAC THEN
   ASM_REWRITE_TAC[firstSetML_def; IN_UNION] THEN DISJ2_TAC THEN
-  SUBGOAL_THEN `nullable (G:(A,B)grammar) [NT a]` (fun th -> REWRITE_TAC[th]) THENL
+  SUBGOAL_THEN `nullable (G:(A,B)grammar) [grammar_NT a]` (fun th -> REWRITE_TAC[th]) THENL
    [REWRITE_TAC[nullable_CONS_NT; nullable_NIL] THEN ASM_MESON_TAC[];
     ASM_MESON_TAC[]]);;
 
@@ -727,7 +727,7 @@ let LPARSEAUX_distinct_nts_derive = prove
  (`!(G:(A,B)grammar) ns h tk sn.
      nts_derive G (CONS h ns) tk /\ ALL_DISTINCT (CONS h ns) /\
      set_of_list (CONS h ns) INTER sn = {}
-     ==> tk IN firstSetML G sn [NT h]`,
+     ==> tk IN firstSetML G sn [grammar_NT h]`,
   GEN_TAC THEN LIST_INDUCT_TAC THENL
    [REWRITE_TAC[nts_derive_def; ALL_DISTINCT; set_of_list] THEN
     MAP_EVERY X_GEN_TAC [`h:B+num`; `tk:A`; `sn:(B+num)->bool`] THEN
@@ -739,7 +739,7 @@ let LPARSEAUX_distinct_nts_derive = prove
     ASM_REWRITE_TAC[firstSetML_def; IN_UNION; IN_UNIONS; IN_IMAGE] THEN
     DISJ1_TAC THEN
     EXISTS_TAC `firstSetML (G:(A,B)grammar) (h INSERT sn)
-                  (APPEND (APPEND p [TOK tk]) s)` THEN
+                  (APPEND (APPEND p [grammar_TOK tk]) s)` THEN
     CONJ_TAC THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
     REWRITE_TAC[GSYM APPEND_ASSOC; APPEND] THEN
     MATCH_MP_TAC firstSetML_nullable_prefix THEN
@@ -755,7 +755,7 @@ let LPARSEAUX_distinct_nts_derive = prove
   ASM_REWRITE_TAC[firstSetML_def; IN_UNION; IN_UNIONS; IN_IMAGE] THEN
   DISJ1_TAC THEN
   EXISTS_TAC `firstSetML (G:(A,B)grammar) (h0 INSERT sn)
-                (APPEND (APPEND p [NT h]) s)` THEN
+                (APPEND (APPEND p [grammar_NT h]) s)` THEN
   CONJ_TAC THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
   REWRITE_TAC[GSYM APPEND_ASSOC; APPEND] THEN
   MATCH_MP_TAC firstSetML_nullable_prefix THEN ASM_REWRITE_TAC[] THEN
@@ -770,7 +770,7 @@ let LPARSEAUX_distinct_nts_derive = prove
 let distinct_nts_derive_firstSetML = prove
  (`!(G:(A,B)grammar) ns tk sn.
      nts_derive G ns tk /\ ALL_DISTINCT ns /\ set_of_list ns INTER sn = {}
-     ==> tk IN firstSetML G sn [NT (HD ns)]`,
+     ==> tk IN firstSetML G sn [grammar_NT (HD ns)]`,
   GEN_TAC THEN LIST_INDUCT_TAC THEN REWRITE_TAC[nts_derive_def; HD] THEN
   MESON_TAC[LPARSEAUX_distinct_nts_derive]);;
 
@@ -831,8 +831,8 @@ let LPARSEAUX_ALL_DISTINCT_APPEND = prove
 
 let LPARSEAUX_ptree_nts_derive = prove
  (`!(G:(A,B)grammar) tk (pt:(A,B,1)parsetree) N rest.
-     ptree_head pt = NT N /\ valid_ptree G pt /\
-     ptree_fringe pt = CONS (TOK tk) rest
+     ptree_head pt = grammar_NT N /\ valid_ptree G pt /\
+     ptree_fringe pt = CONS (grammar_TOK tk) rest
      ==> ?Ns. ALL_DISTINCT Ns /\ nts_derive G Ns tk /\ HD Ns = N`,
   GEN_TAC THEN GEN_TAC THEN MATCH_MP_TAC ptree_ind THEN CONJ_TAC THENL
    [REWRITE_TAC[FORALL_PAIR_THM; ptree_head_def; ptree_fringe_def; CONS_11] THEN
@@ -909,7 +909,7 @@ let LPARSEAUX_ptree_nts_derive = prove
   MP_TAC(ISPEC `a0:(B+num)#1` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `x:B+num` (X_CHOOSE_THEN `y:1` SUBST_ALL_TAC)) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[ptree_head_def]) THEN
-  REMOVE_THEN "ih" (MP_TAC o SPEC `Nd (x,y) a1:(A,B,1)parsetree`) THEN
+  REMOVE_THEN "ih" (MP_TAC o SPEC `grammar_Nd (x,y) a1:(A,B,1)parsetree`) THEN
   ASM_REWRITE_TAC[] THEN
   DISCH_THEN(MP_TAC o SPECL [`x:B+num`; `r0:((A,B)symbol)list`]) THEN
   ASM_REWRITE_TAC[ptree_head_def] THEN ANTS_TAC THENL
@@ -943,7 +943,7 @@ let LPARSEAUX_ptree_nts_derive = prove
 
 let firstSet_nts_derive = prove
  (`!(G:(A,B)grammar) tk N.
-     tk IN firstSet G [NT N]
+     tk IN firstSet G [grammar_NT N]
      ==> ?Ns. ALL_DISTINCT Ns /\ nts_derive G Ns tk /\ HD Ns = N`,
   REPEAT STRIP_TAC THEN FIRST_X_ASSUM(MP_TAC o MATCH_MP IN_firstSet) THEN
   MESON_TAC[LPARSEAUX_ptree_nts_derive]);;
@@ -954,8 +954,8 @@ let LPARSEAUX_firstSet_singleton_back = prove
      ==> tk IN firstSet G (APPEND (APPEND p [e]) s)`,
   REWRITE_TAC[firstSet_def; IN_ELIM_THM; nullable_def] THEN
   REPEAT STRIP_TAC THEN EXISTS_TAC `APPEND rest s:((A,B)symbol)list` THEN
-  SUBGOAL_THEN `CONS (TOK tk) (APPEND rest s):((A,B)symbol)list =
-                APPEND (APPEND [] (CONS (TOK tk) rest)) s`
+  SUBGOAL_THEN `CONS (grammar_TOK tk) (APPEND rest s):((A,B)symbol)list =
+                APPEND (APPEND [] (CONS (grammar_TOK tk) rest)) s`
     SUBST1_TAC THENL [REWRITE_TAC[APPEND]; ALL_TAC] THEN
   MATCH_MP_TAC derives_paste_horizontally THEN REWRITE_TAC[RTC_REFL] THEN
   MATCH_MP_TAC derives_paste_horizontally THEN ASM_REWRITE_TAC[]);;
@@ -969,14 +969,14 @@ let LPARSEAUX_firstSet_singleton_imp = prove
   REWRITE_TAC[firstSet_NIL; NOT_IN_EMPTY] THEN X_GEN_TAC `tk:A` THEN
   STRUCT_CASES_TAC(ISPEC `h:(A,B)symbol` symbol_nchotomy) THENL
    [REWRITE_TAC[firstSet_TOK; IN_SING] THEN DISCH_THEN SUBST1_TAC THEN
-    MAP_EVERY EXISTS_TAC [`[]:((A,B)symbol)list`; `TOK a:(A,B)symbol`;
+    MAP_EVERY EXISTS_TAC [`[]:((A,B)symbol)list`; `grammar_TOK a:(A,B)symbol`;
                           `t:((A,B)symbol)list`] THEN
     REWRITE_TAC[APPEND; nullable_NIL; firstSet_TOK; IN_SING];
     ALL_TAC] THEN
   GEN_REWRITE_TAC (LAND_CONV o RAND_CONV) [firstSet_NT] THEN
   COND_CASES_TAC THEN REWRITE_TAC[NOT_IN_EMPTY; IN_UNION] THEN
   STRIP_TAC THENL
-   [MAP_EVERY EXISTS_TAC [`[]:((A,B)symbol)list`; `NT a:(A,B)symbol`;
+   [MAP_EVERY EXISTS_TAC [`[]:((A,B)symbol)list`; `grammar_NT a:(A,B)symbol`;
                           `t:((A,B)symbol)list`] THEN
     ASM_REWRITE_TAC[APPEND; nullable_NIL; firstSet_NT; IN_UNION];
     ALL_TAC] THEN
@@ -986,10 +986,10 @@ let LPARSEAUX_firstSet_singleton_imp = prove
   ASM_REWRITE_TAC[] THEN
   DISCH_THEN(X_CHOOSE_THEN `p:((A,B)symbol)list` (X_CHOOSE_THEN
     `e:(A,B)symbol` (X_CHOOSE_THEN `s:((A,B)symbol)list` STRIP_ASSUME_TAC))) THEN
-  MAP_EVERY EXISTS_TAC [`CONS (NT a:(A,B)symbol) p`; `e:(A,B)symbol`;
+  MAP_EVERY EXISTS_TAC [`CONS (grammar_NT a:(A,B)symbol) p`; `e:(A,B)symbol`;
                         `s:((A,B)symbol)list`] THEN
   ASM_REWRITE_TAC[APPEND] THEN
-  UNDISCH_TAC `nullable (G:(A,B)grammar) [NT a]` THEN
+  UNDISCH_TAC `nullable (G:(A,B)grammar) [grammar_NT a]` THEN
   ASM_REWRITE_TAC[nullable_CONS_NT; nullable_NIL]);;
 
 let firstSet_singleton = prove

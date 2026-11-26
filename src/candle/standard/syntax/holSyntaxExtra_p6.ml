@@ -4,8 +4,9 @@
 (* inference system (addAssum, sym, trans, proveHyp), the system respects    *)
 (* alpha-equivalence (proves_ACONV), extension is transitive.  Notes on the *)
 (* rendering: holSyntaxExtra_p1.ml.                                          *)
-(* - HOL4's proves_theory_ok is hol_proves_theory_ok and sym is hol_sym      *)
-(*   (names.tsv).  HOL4's ML values assume (the rule proves_ASSUME) and rws  *)
+(* - HOL4's proves_theory_ok is hol_proves_theory_ok, sym is hol_sym and     *)
+(*   trans is hol_trans (names.tsv; basisFunctionsLib binds the function     *)
+(*   trans).  HOL4's ML values assume (the rule proves_ASSUME) and rws       *)
 (*   (a list of EL rewrites) are not bound: the proofs use proves_ASSUME and *)
 (*   HOL Light's EL lemmas directly.                                         *)
 (* - Local helpers that are not HOL4 theorems are CSYNAUX_P6_.               *)
@@ -123,7 +124,7 @@ let addAssum = prove
                  `thy:thy`] deductAntisym_equation) THEN
       ASM_REWRITE_TAC[] THEN
       SUBGOAL_THEN `term_remove (c === c) [a] = [a]` SUBST1_TAC THENL
-       [ONCE_REWRITE_TAC[term_remove_def] THEN CASE_REWRITE_TAC[] THEN
+       [ONCE_REWRITE_TAC[term_remove_def] THEN CAKE_REWRITE_TAC[] THEN
         REWRITE_TAC[LET_DEF; LET_END_DEF; term_remove_nil] THEN
         RULE_ASSUM_TAC(REWRITE_RULE[ACONV_eq_orda]) THEN
         ASM_REWRITE_TAC[] THEN COND_CASES_TAC THEN REWRITE_TAC[];
@@ -427,7 +428,8 @@ let trans_equation = prove
     REWRITE_TAC[GSYM ACONV_def; ACONV_REFL] THEN ASM_REWRITE_TAC[];
     DISCH_THEN(ACCEPT_TAC o MATCH_MP sym_equation)]);;
 
-let trans = prove
+(* HOL4: trans *)
+let hol_trans = prove
  (`!thy h1 h2 t1 t2a t2b t3 ty.
      (thy,h2) |- hol_Comb (hol_Comb (hol_Const (implode "=")
                    (Tyapp (implode "fun") [ty; Tyapp (implode "fun")

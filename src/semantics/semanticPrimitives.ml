@@ -296,8 +296,8 @@ let pmatch_def = sem1aux_def_wf
   `inv_image (<)
      (\x:(env_ctor # (v store_v) list # pat # v # (varN # v) list) +
          (env_ctor # (v store_v) list # pat list # v list # (varN # v) list).
-        sum_CASE x (\t. pat_size (FST (SND (SND t))))
-                   (\t. list_size pat_size (FST (SND (SND t)))))`
+        sum_CASE x (\t. ast_pat_size (FST (SND (SND t))))
+                   (\t. list_size ast_pat_size (FST (SND (SND t)))))`
   SEM1AUX_TC_TAC
   `(pmatch envC s Pany v' env = Match env) /\
    (pmatch envC s (Pvar x) v' env = Match (CONS (x,v') env)) /\
@@ -411,14 +411,14 @@ let do_opapp_def = cake_def
   `do_opapp vs =
      match vs with
        [Closure env n e; v] ->
-         SOME (sem_env_v_fupd (K (nsBind n v (sem_env_v env))) env,e)
+         SOME (sem_env_v_fupd (combin_K (nsBind n v (sem_env_v env))) env,e)
      | [Recclosure env' funs n'; v] ->
          if ALL_DISTINCT (MAP (\fxe. match fxe with (f,x,e) -> f) funs) then
            (match find_recfun n' funs with
               NONE -> NONE
             | SOME (n,e) ->
                 SOME (sem_env_v_fupd
-                        (K (nsBind n v (build_rec_env funs env' (sem_env_v env'))))
+                        (combin_K (nsBind n v (build_rec_env funs env' (sem_env_v env'))))
                         env',e))
          else NONE
      | _ -> NONE`;;
@@ -526,12 +526,12 @@ let add_decs_generation_def = cake_def
   `add_decs_generation s =
      match eval_decs_state_env_id_counter s with
        (cur_gen,next_id,next_gen) ->
-         eval_decs_state_env_id_counter_fupd (K (next_gen,0,next_gen + 1)) s`;;
+         eval_decs_state_env_id_counter_fupd (combin_K (next_gen,0,next_gen + 1)) s`;;
 
 let add_env_generation_def = cake_def
   `add_env_generation s =
-     eval_oracle_state_generation_fupd (K (LENGTH (eval_oracle_state_envs s)))
-       (eval_oracle_state_envs_fupd (K (APPEND (eval_oracle_state_envs s) [[]]))
+     eval_oracle_state_generation_fupd (combin_K (LENGTH (eval_oracle_state_envs s)))
+       (eval_oracle_state_envs_fupd (combin_K (APPEND (eval_oracle_state_envs s) [[]]))
           s)`;;
 
 let declare_env_def = cake_def
@@ -544,7 +544,7 @@ let declare_env_def = cake_def
               SOME (Env env (cur_gen,next_id),
                     SOME (EvalDecs
                             (eval_decs_state_env_id_counter_fupd
-                               (K (cur_gen,next_id + 1,next_gen)) s))))
+                               (combin_K (cur_gen,next_id + 1,next_gen)) s))))
      | SOME (EvalOracle s') ->
          (match oEL (eval_oracle_state_generation s') (eval_oracle_state_envs s') with
             NONE -> NONE
@@ -553,7 +553,7 @@ let declare_env_def = cake_def
                                nat_to_v (LENGTH gen_envs)],
                     SOME (EvalOracle
                             (eval_oracle_state_envs_fupd
-                               (K (LUPDATE (APPEND gen_envs [env])
+                               (combin_K (LUPDATE (APPEND gen_envs [env])
                                      (eval_oracle_state_generation s')
                                      (eval_oracle_state_envs s'))) s'))))`;;
 
@@ -600,7 +600,7 @@ let do_eval_def = cake_def
                 SOME (env,decs,
                       SOME (EvalDecs
                               (add_decs_generation
-                                 (eval_decs_state_compiler_state_fupd (K st_v2) s))))
+                                 (eval_decs_state_compiler_state_fupd (combin_K st_v2) s))))
               else NONE)
      | (SOME (EvalOracle s'),vs) ->
          (match eval_oracle_state_custom_do_eval s' vs (eval_oracle_state_oracle s') with
@@ -612,7 +612,7 @@ let do_eval_def = cake_def
                    SOME (env,decs,
                          SOME (EvalOracle
                                  (add_env_generation
-                                    (eval_oracle_state_oracle_fupd (K oracle) s'))))))
+                                    (eval_oracle_state_oracle_fupd (combin_K oracle) s'))))))
      | _ -> NONE`;;
 
 (* conclude an Eval generation *)
@@ -626,11 +626,11 @@ let reset_env_generation_def = cake_def
             ((cur_gen,next_id,v5),v6,v8,next_gen) ->
               SOME (EvalDecs
                       (eval_decs_state_env_id_counter_fupd
-                         (K (cur_gen,next_id,next_gen)) s')))
+                         (combin_K (cur_gen,next_id,next_gen)) s')))
      | (SOME (EvalOracle prior_s),SOME (EvalOracle s)) ->
          SOME (EvalOracle
                  (eval_oracle_state_generation_fupd
-                    (K (eval_oracle_state_generation prior_s)) s))
+                    (combin_K (eval_oracle_state_generation prior_s)) s))
      | _ -> es`;;
 
 let copy_array_def = cake_def

@@ -83,7 +83,7 @@ let pan_to_target_all_def = cake_def
      let ps = APPEND ps [(implode "after loop_optimise",pan_passes_Loop prog_c names)] in
      let ps = APPEND ps [(implode "after loop_to_word",
                           Cake (backend_passes_Word prog2 names))] in
-     let c = backend_config_exported_fupd (K (exports prog)) c in
+     let c = backend_config_exported_fupd (combin_K (exports prog)) c in
      let (ps1,out) = from_word_0_all [] asm_conf c names prog2 in
      (APPEND ps (MAP (\(n,p). (n,Cake p)) ps1),out)`;;
 
@@ -245,11 +245,11 @@ let MEM_append_pan_seqs = prove
      panLang_prog_size ARB a <= panLang_prog_size ARB prog1`,
   REC_IND_TAC (cake_ind "pan_seqs") THEN GEN_TAC THEN STRIP_TAC THEN GEN_TAC THEN
   ONCE_REWRITE_TAC[pan_seqs_def] THEN
-  QCASES_ON "z:(A)panLang_prog" THEN CASE_REWRITE_TAC[] THEN
+  QCASES_ON "z:(A)panLang_prog" THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[append_thm; MEM] THEN
   TRY (DISCH_THEN SUBST1_TAC THEN REWRITE_TAC[LE_REFL] THEN NO_TAC) THEN
   RENAME1 "dest_annot x" THEN QCASES_ON "dest_annot (x:(A)panLang_prog)" THEN
-  CASE_REWRITE_TAC[append_thm; MEM; MEM_APPEND] THEN
+  CAKE_REWRITE_TAC[append_thm; MEM; MEM_APPEND] THEN
   TRY (DISCH_THEN SUBST1_TAC THEN REWRITE_TAC[LE_REFL] THEN NO_TAC) THEN
   FS[] THEN STRIP_TAC THEN RES_TAC THEN
   REWRITE_TAC[type_size_def "panLang_prog"] THEN ASM_ARITH_TAC);;
@@ -491,7 +491,7 @@ let MEM_append_crep_seqs = prove
      crep_prog_size ARB a <= crep_prog_size ARB prog1`,
   REC_IND_TAC (cake_ind "crep_seqs") THEN GEN_TAC THEN STRIP_TAC THEN GEN_TAC THEN
   ONCE_REWRITE_TAC[crep_seqs_def] THEN
-  QCASES_ON "z:(A)crep_prog" THEN CASE_REWRITE_TAC[] THEN
+  QCASES_ON "z:(A)crep_prog" THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[append_thm; MEM; MEM_APPEND] THEN
   TRY (DISCH_THEN SUBST1_TAC THEN REWRITE_TAC[LE_REFL] THEN NO_TAC) THEN
   FS[] THEN STRIP_TAC THEN RES_TAC THEN
@@ -659,7 +659,7 @@ let MEM_append_loop_seqs = prove
      loop_prog_size ARB a <= loop_prog_size ARB prog1`,
   REC_IND_TAC (cake_ind "loop_seqs") THEN GEN_TAC THEN STRIP_TAC THEN GEN_TAC THEN
   ONCE_REWRITE_TAC[loop_seqs_def] THEN
-  QCASES_ON "z:(A)loop_prog" THEN CASE_REWRITE_TAC[] THEN
+  QCASES_ON "z:(A)loop_prog" THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[append_thm; MEM; MEM_APPEND] THEN
   TRY (DISCH_THEN SUBST1_TAC THEN REWRITE_TAC[LE_REFL] THEN NO_TAC) THEN
   FS[] THEN STRIP_TAC THEN RES_TAC THEN

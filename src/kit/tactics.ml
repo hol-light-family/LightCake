@@ -71,12 +71,12 @@ let cake_type s =
   let res = cake_type s in
   cake_update_case_net(); res;;
 
-let CASE_REWRITE_CONV thl =
+let CAKE_REWRITE_CONV thl =
   GENERAL_REWRITE_CONV true TOP_DEPTH_CONV (!cake_case_net) thl;;
 
-let CASE_REWRITE_TAC thl = CONV_TAC (CASE_REWRITE_CONV thl);;
+let CAKE_REWRITE_TAC thl = CONV_TAC (CAKE_REWRITE_CONV thl);;
 
-let CASE_REWRITE_RULE thl = CONV_RULE (CASE_REWRITE_CONV thl);;
+let CAKE_REWRITE_RULE thl = CONV_RULE (CAKE_REWRITE_CONV thl);;
 
 (* ------------------------------------------------------------------------- *)
 (* Cases_on.                                                                 *)
@@ -181,11 +181,11 @@ let CASE_TIDY_TAC : tactic =
       let c = concl th in
       if is_eq c && lhs c = rhs c then ALL_TAC else failwith "keep")) THEN
     ASM_REWRITE_TAC[] THEN
-    CASE_REWRITE_TAC[]) gl;;
+    CAKE_REWRITE_TAC[]) gl;;
 
 let CASE_ASM_TIDY_TAC : tactic =
   fun gl ->
-   (RULE_ASSUM_TAC (CASE_REWRITE_RULE[]) THEN
+   (RULE_ASSUM_TAC (CAKE_REWRITE_RULE[]) THEN
     REPEAT (FIRST_X_ASSUM (fun th ->
       let c = concl th in
       if c = cake_true_tm then ALL_TAC
@@ -338,7 +338,7 @@ let IRULE th : tactic = fun g ->
 (* imp_res_tac: resolve the antecedents of th with every assumption, as far *)
 (* as they go; add every result (stripped)                                   *)
 
-let IMP_RES_THEN (ttac:thm_tactic) th : tactic =
+let HOL4_IMP_RES_THEN (ttac:thm_tactic) th : tactic =
   fun (asl,w as gl) ->
     let asms = map snd asl in
     let rec resolve th =
@@ -349,7 +349,7 @@ let IMP_RES_THEN (ttac:thm_tactic) th : tactic =
     let th' = IMP_CURRY_RULE (GEN_ALL th) in
     let mp = MATCH_MP_CURRIED th' in
     let first = mapfilter mp asms in
-    if first = [] then failwith "IMP_RES_THEN: no match" else
+    if first = [] then failwith "HOL4_IMP_RES_THEN: no match" else
     let results = flat (map resolve first) in
     EVERY (map ttac results) gl;;
 
@@ -357,13 +357,13 @@ let IMP_RES_THEN (ttac:thm_tactic) th : tactic =
 (* conjunct, as HOL4's imp_res_tac (RES_CANON) does; since 2026-11-18       *)
 
 let IMP_RES_TAC th : tactic =
-  fun gl -> try IMP_RES_THEN CAKE_ASSUME_TAC th gl
+  fun gl -> try HOL4_IMP_RES_THEN CAKE_ASSUME_TAC th gl
             with Failure _ ->
               let cs = try map GEN_ALL (CONJUNCTS (SPEC_ALL (GEN_ALL th)))
                        with Failure _ -> [] in
               if length cs < 2 then ALL_TAC gl else
               let ok = filter (fun c -> is_imp(snd(strip_forall(concl c)))) cs in
-              let tacs = map (fun c g -> try IMP_RES_THEN CAKE_ASSUME_TAC c g
+              let tacs = map (fun c g -> try HOL4_IMP_RES_THEN CAKE_ASSUME_TAC c g
                                          with Failure _ -> ALL_TAC g) ok in
               let res = EVERY tacs gl in
               (match res with
@@ -392,7 +392,7 @@ let kit_res_with (ttac:thm_tactic) : tactic =
   fun (asl,w as gl) ->
     let imps = filter (fun th -> is_imp(snd(strip_forall(concl th))))
                       (map snd asl) in
-    EVERY (map (fun th g -> try IMP_RES_THEN ttac th g with Failure _ -> ALL_TAC g)
+    EVERY (map (fun th g -> try HOL4_IMP_RES_THEN ttac th g with Failure _ -> ALL_TAC g)
                imps) gl;;
 
 let kit_assume_new th : tactic = fun (asl,w as g) ->
@@ -473,7 +473,7 @@ let PAIRARG_TAC : tactic =
      DISCH_THEN(X_CHOOSE_THEN v1 (X_CHOOSE_THEN v2
        (fun th -> if is_var x then CAKE_SUBST_ALL_TAC th
                   else CAKE_SUBST_ALL_TAC th THEN ASSUME_TAC th))) THEN
-     CASE_ASM_TIDY_TAC THEN CASE_REWRITE_TAC[]) gl;;
+     CASE_ASM_TIDY_TAC THEN CAKE_REWRITE_TAC[]) gl;;
 
 (* ------------------------------------------------------------------------- *)
 (* Induct_on: structural induction on a free variable; assumptions about it  *)
@@ -521,6 +521,8 @@ let with_quiet_type_invention f x =
   let restore () = type_invention_error := old_e; type_invention_warning := old_w in
   try let r = f x in restore (); r with e -> (restore (); raise e);;
 
+(* Replace HOL Light's METIS_TAC, ASM_METIS_TAC and METIS: the same, with  *)
+(* type_invention_error off while Metis runs (see above)                     *)
 let METIS_TAC thl : tactic =
   fun g -> with_type_invention (fun g -> METIS_TAC thl g) g;;
 
@@ -2004,9 +2006,12 @@ let cake_register_case_type (tyname:string) (case_def:thm) (nch:thm)
   let c = fst(strip_comb(lhs(snd(strip_forall(hd cls))))) in
   let ds = kit_conjuncts_th distinct and is = kit_conjuncts_th inject in
   let ds2 = ds @ map sym_neg ds in
-  (* the rectype net first: REWRITE_TAC then knows the constructors *)
-  basic_rectype_net :=
-    itlist (net_of_thm true) (itlist (mk_rewrites false) (ds2 @ is) []) (!basic_rectype_net);
+  (* the rectype net first: REWRITE_TAC then knows the constructors (a type *)
+  (* of define_type is there already: ind_types.ml extend_rectype_net)       *)
+  (if not (can (assoc tyname) (!inductive_type_store)) then
+     basic_rectype_net :=
+       itlist (net_of_thm true) (itlist (mk_rewrites false) (ds2 @ is) [])
+              (!basic_rectype_net));
   (if is <> [] then injectivity_store := (tyname,end_itlist CONJ is) :: !injectivity_store);
   let r = funpow (length pats) (fun t -> snd(dest_fun_ty t)) (snd(dest_fun_ty(type_of c))) in
   let fs = map2 (fun (vs,_) i -> mk_var("f"^string_of_int i,itlist (mk_fun_ty o type_of) vs r))

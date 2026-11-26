@@ -44,14 +44,14 @@ let STALLOCAUX_partial_or_full_cons = prove
                     stack_Inst (asm_Arith (Binop asm_Sub 7 7 (Reg 8)));
                     stack_If NotLower 7 (Reg 1) (stack_list_Seq xs) (stack_list_Seq ys)]`,
   GEN_TAC THEN STRUCT_CASES_TAC (ISPEC `gen_sizes:num list` list_CASES) THEN
-  REWRITE_TAC[NOT_CONS_NIL; word_gc_partial_or_full_def] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[NOT_CONS_NIL; word_gc_partial_or_full_def] THEN CAKE_REWRITE_TAC[]);;
 
 let STALLOCAUX_partial_or_full_nil = prove
  (`!(xs:((A)stack_prog)list) ys.
     word_gc_partial_or_full ([]:num list) xs ys =
     stack_list_Seq (APPEND [stack_Get 8 TriggerGC; stack_Get 7 EndOfHeap;
                             stack_Inst (asm_Arith (Binop asm_Sub 7 7 (Reg 8)))] ys)`,
-  REWRITE_TAC[word_gc_partial_or_full_def] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[word_gc_partial_or_full_def] THEN CAKE_REWRITE_TAC[]);;
 
 (* the evaluation of SetNewTrigger endh_reg ib_reg gs at the head of the     *)
 (* first evaluation of the goal, by evaluate_SetNewTrigger (registers and   *)
@@ -131,22 +131,22 @@ let alloc_correct_lemma_Generational = prove
    ?ck l2.
      stack_evaluate
        (word_gc_code conf,
-        stack_state_use_store_fupd (K T)
-        (stack_state_use_stack_fupd (K T)
-        (stack_state_use_alloc_fupd (K F)
-        (stack_state_clock_fupd (K (stack_state_clock s + ck))
-        (stack_state_regs_fupd (K l)
-        (stack_state_gc_fun_fupd (K anything)
+        stack_state_use_store_fupd (combin_K T)
+        (stack_state_use_stack_fupd (combin_K T)
+        (stack_state_use_alloc_fupd (combin_K F)
+        (stack_state_clock_fupd (combin_K (stack_state_clock s + ck))
+        (stack_state_regs_fupd (combin_K l)
+        (stack_state_gc_fun_fupd (combin_K anything)
         (stack_state_code_fupd
-           (K (fromAList (stack_alloc_compile c (toAList (stack_state_code s))))) s))))))) =
+           (combin_K (fromAList (stack_alloc_compile c (toAList (stack_state_code s))))) s))))))) =
        (r,
-        stack_state_use_store_fupd (K T)
-        (stack_state_use_stack_fupd (K T)
-        (stack_state_use_alloc_fupd (K F)
+        stack_state_use_store_fupd (combin_K T)
+        (stack_state_use_stack_fupd (combin_K T)
+        (stack_state_use_alloc_fupd (combin_K F)
         (stack_state_code_fupd
-           (K (fromAList (stack_alloc_compile c (toAList (stack_state_code s)))))
-        (stack_state_regs_fupd (K l2)
-        (stack_state_gc_fun_fupd (K anything) t)))))) /\
+           (combin_K (fromAList (stack_alloc_compile c (toAList (stack_state_code s)))))
+        (stack_state_regs_fupd (combin_K l2)
+        (stack_state_gc_fun_fupd (combin_K anything) t)))))) /\
      (~(r = NONE) ==> r = SOME (stackSem_Halt (wl_Word (word 1)))) /\
      stack_state_regs t SUBMAP l2 /\
      (r = NONE ==> FLOOKUP l2 0 = SOME ret)`,
@@ -162,9 +162,9 @@ let alloc_correct_lemma_Generational = prove
                      DISCH_THEN SUBST1_TAC]) THEN
     CONV_TAC (stallocaux_norm []) THEN
     COND_CASES_TAC THENL
-     [CASE_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN STALLOCAUX_ERROR_TAC; ALL_TAC] THEN
+     [CAKE_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN STALLOCAUX_ERROR_TAC; ALL_TAC] THEN
     COND_CASES_TAC THENL
-     [CASE_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN STALLOCAUX_ERROR_TAC; ALL_TAC] THEN
+     [CAKE_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN STALLOCAUX_ERROR_TAC; ALL_TAC] THEN
     POP_ASSUM(MP_TAC o REWRITE_RULE[]) THEN
     REWRITE_TAC[word_gc_fun_assum_def; FDOM_FUPDATE; INSERT_SUBSET; IN_INSERT;
                 FAPPLY_FUPDATE_THM; distinctness "store_name"] THEN
@@ -195,7 +195,7 @@ let alloc_correct_lemma_Generational = prove
     SUBGOAL_THEN `(dimindex(:A) DIV 8) * LENGTH (APPEND ys1 (ys2:((A)word_loc)list)) <
                   dimword(:A)` ASSUME_TAC THENL
      [ONCE_REWRITE_TAC[MULT_SYM] THEN ASM_REWRITE_TAC[]; ALL_TAC] THEN
-    REWRITE_TAC[LET_DEF; LET_END_DEF] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[LET_DEF; LET_END_DEF] THEN CAKE_REWRITE_TAC[] THEN
     COND_CASES_TAC) THENL
   [(STALLOCAUX_SPLIT_FN_TAC "word_gen_gc_partial_move" ["w1";"i1";"pa1";"m1";"c1"] THEN
     STALLOCAUX_SPLIT_FN_TAC "word_gen_gc_partial_move_roots_bitmaps" ["ws2";"i2";"pa2";"m2";"c2"] THEN
@@ -203,7 +203,7 @@ let alloc_correct_lemma_Generational = prove
     STALLOCAUX_SPLIT_FN_TAC "word_gen_gc_partial_move_data" ["i4";"pa4";"m4";"c4"] THEN
     STALLOCAUX_SPLIT_FN_TAC "memcpy" ["b1";"m5";"c5"] THEN
     COND_CASES_TAC THENL
-     [ALL_TAC; CASE_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN STALLOCAUX_ERROR_TAC] THEN
+     [ALL_TAC; CAKE_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN STALLOCAUX_ERROR_TAC] THEN
     CONV_TAC (stallocaux_norm []) THEN REWRITE_TAC[stack_has_space_def] THEN
     CONV_TAC (stallocaux_norm [])) THEN
   (POP_ASSUM STRIP_ASSUME_TAC THEN
@@ -239,7 +239,7 @@ let alloc_correct_lemma_Generational = prove
      [REWRITE_TAC[WORD_ADD_SYM]; ALL_TAC] THEN
     REWRITE_TAC[word_gc_code_def;
                 ASSUME `data_to_word_config_gc_kind conf = Generational gen_sizes`] THEN
-    CASE_REWRITE_TAC[] THEN ASM_SIMP_TAC[STALLOCAUX_partial_or_full_cons] THEN
+    CAKE_REWRITE_TAC[] THEN ASM_SIMP_TAC[STALLOCAUX_partial_or_full_cons] THEN
     STALLOCAUX_EV_TAC) THEN
   ((fun (asl,w as g) ->
       let s0 = stallocaux_goal_state w in
@@ -350,7 +350,7 @@ let alloc_correct_lemma_Generational = prove
     STALLOCAUX_SPLIT_FN_TAC "word_gen_gc_move_roots_bitmaps" ["ws2";"i2";"pa2";"ib2";"pb2";"m2";"c2"] THEN
     STALLOCAUX_SPLIT_FN_TAC "word_gen_gc_move_loop" ["i3";"pa3";"ib3";"pb3";"m3";"c3"] THEN
     COND_CASES_TAC THENL
-     [ALL_TAC; CASE_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN STALLOCAUX_ERROR_TAC] THEN
+     [ALL_TAC; CAKE_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN STALLOCAUX_ERROR_TAC] THEN
     CONV_TAC (stallocaux_norm []) THEN REWRITE_TAC[stack_has_space_def] THEN
     CONV_TAC (stallocaux_norm []) THEN
     REWRITE_TAC[WORD_RULE `word_sub (word_add x y) x = y:A word`] THEN
@@ -372,7 +372,7 @@ let alloc_correct_lemma_Generational = prove
      [MATCH_ACCEPT_TAC WORD_ADD_SYM; ALL_TAC] THEN
     REWRITE_TAC[word_gc_code_def;
                 ASSUME `data_to_word_config_gc_kind conf = Generational gen_sizes`] THEN
-    CASE_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN
     ASM_CASES_TAC `gen_sizes:num list = []` THENL
      [FIRST_X_ASSUM SUBST_ALL_TAC THEN REWRITE_TAC[STALLOCAUX_partial_or_full_nil; APPEND];
       SUBGOAL_THEN `word_ult (word_sub endh trig) (w:A word)` ASSUME_TAC THENL
@@ -619,22 +619,22 @@ let alloc_correct_lemma_None = prove
    ?ck l2.
      stack_evaluate
        (word_gc_code conf,
-        stack_state_use_store_fupd (K T)
-        (stack_state_use_stack_fupd (K T)
-        (stack_state_use_alloc_fupd (K F)
-        (stack_state_clock_fupd (K (stack_state_clock s + ck))
-        (stack_state_regs_fupd (K l)
-        (stack_state_gc_fun_fupd (K anything)
+        stack_state_use_store_fupd (combin_K T)
+        (stack_state_use_stack_fupd (combin_K T)
+        (stack_state_use_alloc_fupd (combin_K F)
+        (stack_state_clock_fupd (combin_K (stack_state_clock s + ck))
+        (stack_state_regs_fupd (combin_K l)
+        (stack_state_gc_fun_fupd (combin_K anything)
         (stack_state_code_fupd
-           (K (fromAList (stack_alloc_compile c (toAList (stack_state_code s))))) s))))))) =
+           (combin_K (fromAList (stack_alloc_compile c (toAList (stack_state_code s))))) s))))))) =
        (r,
-        stack_state_use_store_fupd (K T)
-        (stack_state_use_stack_fupd (K T)
-        (stack_state_use_alloc_fupd (K F)
+        stack_state_use_store_fupd (combin_K T)
+        (stack_state_use_stack_fupd (combin_K T)
+        (stack_state_use_alloc_fupd (combin_K F)
         (stack_state_code_fupd
-           (K (fromAList (stack_alloc_compile c (toAList (stack_state_code s)))))
-        (stack_state_regs_fupd (K l2)
-        (stack_state_gc_fun_fupd (K anything) t)))))) /\
+           (combin_K (fromAList (stack_alloc_compile c (toAList (stack_state_code s)))))
+        (stack_state_regs_fupd (combin_K l2)
+        (stack_state_gc_fun_fupd (combin_K anything) t)))))) /\
      (~(r = NONE) ==> r = SOME (stackSem_Halt (wl_Word (word 1)))) /\
      stack_state_regs t SUBMAP l2 /\
      (r = NONE ==> FLOOKUP l2 0 = SOME ret)`,
@@ -645,23 +645,23 @@ let alloc_correct_lemma_None = prove
     REWRITE_TAC[stackSem_alloc_def; stack_gc_def; stack_set_store_def] THEN
     CONV_TAC (stallocaux_norm []) THEN
     COND_CASES_TAC THENL
-     [CASE_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN ASM_MESON_TAC[]; ALL_TAC] THEN
-    ASM_REWRITE_TAC[word_gc_fun_def; LET_DEF; LET_END_DEF] THEN CASE_REWRITE_TAC[] THEN
+     [CAKE_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN ASM_MESON_TAC[]; ALL_TAC] THEN
+    ASM_REWRITE_TAC[word_gc_fun_def; LET_DEF; LET_END_DEF] THEN CAKE_REWRITE_TAC[] THEN
     STALLOCAUX_OPT_CASES_TAC `stack_enc_stack (stack_state_bitmaps (s:(A,C,FFI)stack_state))
                 (DROP (stack_state_stack_space s) (stack_state_stack s))` ["wl"] THEN
-    CASE_REWRITE_TAC[PAIR_EQ] THENL [STRIP_TAC THEN ASM_MESON_TAC[]; ALL_TAC] THEN
+    CAKE_REWRITE_TAC[PAIR_EQ] THENL [STRIP_TAC THEN ASM_MESON_TAC[]; ALL_TAC] THEN
     COND_CASES_TAC THENL
-     [ALL_TAC; CASE_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN ASM_MESON_TAC[]] THEN
+     [ALL_TAC; CAKE_REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN ASM_MESON_TAC[]] THEN
     POP_ASSUM(MP_TAC o REWRITE_RULE[]) THEN
     REWRITE_TAC[word_gc_fun_assum_def; FDOM_FUPDATE; INSERT_SUBSET; IN_INSERT;
                 FAPPLY_FUPDATE_THM; distinctness "store_name"] THEN
     STRIP_TAC THEN
     REWRITE_TAC[FAPPLY_FUPDATE_THM; distinctness "store_name"; theWord_def] THEN
     STALLOCAUX_STORE_WORD_TAC `stack_state_store (s:(A,C,FFI)stack_state)` `CurrHeap` "old" THEN
-    REWRITE_TAC[theWord_def] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[theWord_def] THEN CAKE_REWRITE_TAC[] THEN
     STALLOCAUX_OPT_CASES_TAC `stack_dec_stack (stack_state_bitmaps (s:(A,C,FFI)stack_state)) wl
                 (DROP (stack_state_stack_space s) (stack_state_stack s))` ["stk"] THEN
-    CASE_REWRITE_TAC[PAIR_EQ] THENL [STRIP_TAC THEN ASM_MESON_TAC[]; ALL_TAC] THEN
+    CAKE_REWRITE_TAC[PAIR_EQ] THENL [STRIP_TAC THEN ASM_MESON_TAC[]; ALL_TAC] THEN
     FIRST_ASSUM(fun th1 -> FIRST_ASSUM(fun th2 ->
       MP_TAC (MATCH_MP enc_dec_stack (CONJ th1 th2)))) THEN
     DISCH_THEN(SUBST_ALL_TAC o SYM) THEN
@@ -672,7 +672,7 @@ let alloc_correct_lemma_None = prove
     ASM_CASES_TAC `w:A word = word 0` THEN ASM_REWRITE_TAC[PAIR_EQ] THEN
     DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
     REWRITE_TAC[word_gc_code_def; ASSUME `data_to_word_config_gc_kind conf = data_to_word_None`] THEN
-    CASE_REWRITE_TAC[] THEN EXISTS_TAC `0` THEN STALLOCAUX_EV_TAC THEN
+    CAKE_REWRITE_TAC[] THEN EXISTS_TAC `0` THEN STALLOCAUX_EV_TAC THEN
     (fun (asl,w as g) ->
        let _,body = dest_exists w in
        let eq = hd (conjuncts body) in
@@ -695,22 +695,22 @@ let alloc_correct_lemma = prove
    ?ck l2.
      stack_evaluate
        (word_gc_code conf,
-        stack_state_use_store_fupd (K T)
-        (stack_state_use_stack_fupd (K T)
-        (stack_state_use_alloc_fupd (K F)
-        (stack_state_clock_fupd (K (stack_state_clock s + ck))
-        (stack_state_regs_fupd (K l)
-        (stack_state_gc_fun_fupd (K anything)
+        stack_state_use_store_fupd (combin_K T)
+        (stack_state_use_stack_fupd (combin_K T)
+        (stack_state_use_alloc_fupd (combin_K F)
+        (stack_state_clock_fupd (combin_K (stack_state_clock s + ck))
+        (stack_state_regs_fupd (combin_K l)
+        (stack_state_gc_fun_fupd (combin_K anything)
         (stack_state_code_fupd
-           (K (fromAList (stack_alloc_compile c (toAList (stack_state_code s))))) s))))))) =
+           (combin_K (fromAList (stack_alloc_compile c (toAList (stack_state_code s))))) s))))))) =
        (r,
-        stack_state_use_store_fupd (K T)
-        (stack_state_use_stack_fupd (K T)
-        (stack_state_use_alloc_fupd (K F)
+        stack_state_use_store_fupd (combin_K T)
+        (stack_state_use_stack_fupd (combin_K T)
+        (stack_state_use_alloc_fupd (combin_K F)
         (stack_state_code_fupd
-           (K (fromAList (stack_alloc_compile c (toAList (stack_state_code s)))))
-        (stack_state_regs_fupd (K l2)
-        (stack_state_gc_fun_fupd (K anything) t)))))) /\
+           (combin_K (fromAList (stack_alloc_compile c (toAList (stack_state_code s)))))
+        (stack_state_regs_fupd (combin_K l2)
+        (stack_state_gc_fun_fupd (combin_K anything) t)))))) /\
      (~(r = NONE) ==> r = SOME (stackSem_Halt (wl_Word (word 1)))) /\
      stack_state_regs t SUBMAP l2 /\
      (r = NONE ==> FLOOKUP l2 0 = SOME ret)`,
@@ -734,31 +734,31 @@ let alloc_correct = prove
   ?ck l2.
      stack_evaluate
        (stack_Call (SOME (stack_Skip,0,n',m)) (INL gc_stub_location) NONE,
-        stack_state_use_store_fupd (K T)
-        (stack_state_use_stack_fupd (K T)
-        (stack_state_use_alloc_fupd (K F)
-        (stack_state_use_alloc_fupd (K F)
-        (stack_state_clock_fupd (K (stack_state_clock s + ck))
-        (stack_state_regs_fupd (K l)
-        (stack_state_gc_fun_fupd (K anything)
+        stack_state_use_store_fupd (combin_K T)
+        (stack_state_use_stack_fupd (combin_K T)
+        (stack_state_use_alloc_fupd (combin_K F)
+        (stack_state_use_alloc_fupd (combin_K F)
+        (stack_state_clock_fupd (combin_K (stack_state_clock s + ck))
+        (stack_state_regs_fupd (combin_K l)
+        (stack_state_gc_fun_fupd (combin_K anything)
         (stack_state_code_fupd
-           (K (fromAList (stack_alloc_compile c (toAList (stack_state_code s))))) s)))))))) =
+           (combin_K (fromAList (stack_alloc_compile c (toAList (stack_state_code s))))) s)))))))) =
        (r,
-        stack_state_use_store_fupd (K T)
-        (stack_state_use_stack_fupd (K T)
-        (stack_state_use_alloc_fupd (K F)
-        (stack_state_use_alloc_fupd (K F)
+        stack_state_use_store_fupd (combin_K T)
+        (stack_state_use_stack_fupd (combin_K T)
+        (stack_state_use_alloc_fupd (combin_K F)
+        (stack_state_use_alloc_fupd (combin_K F)
         (stack_state_code_fupd
-           (K (fromAList (stack_alloc_compile c (toAList (stack_state_code s)))))
-        (stack_state_regs_fupd (K l2)
-        (stack_state_gc_fun_fupd (K anything) t))))))) /\
+           (combin_K (fromAList (stack_alloc_compile c (toAList (stack_state_code s)))))
+        (stack_state_regs_fupd (combin_K l2)
+        (stack_state_gc_fun_fupd (combin_K anything) t))))))) /\
      stack_state_regs t SUBMAP l2`,
   (REPEAT GEN_TAC THEN STRIP_TAC THEN
     SUBGOAL_THEN `stack_find_code (INL gc_stub_location) ((l:(num,(A)word_loc)fmap) \\ 0)
         (fromAList (stack_alloc_compile c (toAList (stack_state_code (s:(A,C,FFI)stack_state))))) =
         SOME (stack_Seq (word_gc_code c) (stack_Return 0))` ASSUME_TAC THENL
      [REWRITE_TAC[stack_find_code_def; lookup_fromAList; stack_alloc_compile_def; ALOOKUP_APPEND;
-                  stack_alloc_stubs_def; ALOOKUP_DEF] THEN CASE_REWRITE_TAC[];
+                  stack_alloc_stubs_def; ALOOKUP_DEF] THEN CAKE_REWRITE_TAC[];
       ALL_TAC] THEN
     (fun (asl,w as g) ->
        let any = find (fun v -> fst(dest_var v) = "anything") (frees w) in
@@ -771,22 +771,22 @@ let alloc_correct = prove
     DISCH_THEN(X_CHOOSE_THEN `ck:num` (X_CHOOSE_THEN `l2:(num,(A)word_loc)fmap`
       STRIP_ASSUME_TAC)) THEN
     MAP_EVERY EXISTS_TAC [`ck + 1`; `l2:(num,(A)word_loc)fmap`] THEN ASM_REWRITE_TAC[] THEN
-    REWRITE_TAC[STALLOCAUX_ev_clause "stack_Call"] THEN CASE_REWRITE_TAC[] THEN
-    CONV_TAC (stallocaux_norm []) THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[STALLOCAUX_ev_clause "stack_Call"] THEN CAKE_REWRITE_TAC[] THEN
+    CONV_TAC (stallocaux_norm []) THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[ADD_EQ_0; ARITH_EQ] THEN
     REWRITE_TAC[STALLOCAUX_ev_clause "stack_Seq"] THEN
     FIRST_X_ASSUM(fun th -> if can stallocaux_dest_ev (lhs(concl th))
       then REWRITE_TAC[CONV_RULE (LAND_CONV (RAND_CONV (RAND_CONV (stallocaux_norm [])))) th]
       else NO_TAC) THEN
-    REWRITE_TAC[LET_DEF; LET_END_DEF; stack_fix_clock_def] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[LET_DEF; LET_END_DEF; stack_fix_clock_def] THEN CAKE_REWRITE_TAC[] THEN
     ASM_CASES_TAC `r:((A)stack_result)option = NONE` THENL
      [FIRST_X_ASSUM SUBST_ALL_TAC THEN RULE_ASSUM_TAC(REWRITE_RULE[]) THEN
       REWRITE_TAC[STALLOCAUX_ev_clause "stack_Return"] THEN CONV_TAC (stallocaux_norm []) THEN
-      ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+      ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
       REWRITE_TAC[STALLOCAUX_ev_clause "stack_Skip"] THEN CONV_TAC (stallocaux_norm []);
       FIRST_X_ASSUM(fun th -> if is_imp (concl th) && is_neg (lhand (concl th))
         then SUBST_ALL_TAC (MP th (ASSUME `~(r:((A)stack_result)option = NONE)`)) else NO_TAC) THEN
-      REWRITE_TAC[option_DISTINCT] THEN CASE_REWRITE_TAC[] THEN CONV_TAC (stallocaux_norm [])]));;
+      REWRITE_TAC[option_DISTINCT] THEN CAKE_REWRITE_TAC[] THEN CONV_TAC (stallocaux_norm [])]));;
 
 (* HOL4 line 5137 *)
 let find_code_IMP_lookup = prove
@@ -797,10 +797,10 @@ let find_code_IMP_lookup = prove
   REWRITE_TAC[stack_find_code_def; FUN_EQ_THM] THEN REPEAT GEN_TAC THENL
    [MESON_TAC[]; ALL_TAC] THEN
   STALLOCAUX_OPT_CASES_TAC `FLOOKUP (regs:(num,(A)word_loc)fmap) a` ["v"] THEN
-  CASE_REWRITE_TAC[option_DISTINCT] THEN
+  CAKE_REWRITE_TAC[option_DISTINCT] THEN
   STRUCT_CASES_TAC(ISPEC `v:(A)word_loc` (cases "word_loc")) THEN
-  CASE_REWRITE_TAC[option_DISTINCT] THEN
-  COND_CASES_TAC THEN CASE_REWRITE_TAC[option_DISTINCT] THEN MESON_TAC[]);;
+  CAKE_REWRITE_TAC[option_DISTINCT] THEN
+  COND_CASES_TAC THEN CAKE_REWRITE_TAC[option_DISTINCT] THEN MESON_TAC[]);;
 
 (* HOL4 line 5146 *)
 let alloc_length_stack = prove
@@ -810,21 +810,21 @@ let alloc_length_stack = prove
    LENGTH (stack_state_stack t) = LENGTH (stack_state_stack s)`,
   (REPEAT GEN_TAC THEN REWRITE_TAC[stackSem_alloc_def; stack_gc_def; stack_set_store_def] THEN
     CONV_TAC (stallocaux_norm []) THEN
-    COND_CASES_TAC THEN CASE_REWRITE_TAC[PAIR_EQ] THENL
+    COND_CASES_TAC THEN CAKE_REWRITE_TAC[PAIR_EQ] THENL
      [STRIP_TAC THEN RVEQ_TAC THEN REWRITE_TAC[]; ALL_TAC] THEN
-    REWRITE_TAC[LET_DEF; LET_END_DEF] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[LET_DEF; LET_END_DEF] THEN CAKE_REWRITE_TAC[] THEN
     STALLOCAUX_OPT_CASES_TAC `stack_enc_stack (stack_state_bitmaps (s:(A,C,FFI)stack_state))
                 (DROP (stack_state_stack_space s) (stack_state_stack s))` ["wl"] THEN
-    CASE_REWRITE_TAC[PAIR_EQ] THENL [STRIP_TAC THEN RVEQ_TAC THEN REWRITE_TAC[]; ALL_TAC] THEN
+    CAKE_REWRITE_TAC[PAIR_EQ] THENL [STRIP_TAC THEN RVEQ_TAC THEN REWRITE_TAC[]; ALL_TAC] THEN
     STRIP_TAC THEN FIRST_X_ASSUM(MP_TAC o check (fun th -> is_eq (concl th) &&
       is_pair (rhs (concl th)))) THEN
     ASM_REWRITE_TAC[] THEN
     STALLOCAUX_OPT_CASES_TAC `word_gc_fun conf (wl,stack_state_memory (s:(A,C,FFI)stack_state),
        stack_state_mdomain s,stack_state_store s |+ (AllocSize,wl_Word c))` ["wl2";"m2";"st2"] THEN
-    CASE_REWRITE_TAC[PAIR_EQ] THENL [STRIP_TAC THEN RVEQ_TAC THEN REWRITE_TAC[]; ALL_TAC] THEN
+    CAKE_REWRITE_TAC[PAIR_EQ] THENL [STRIP_TAC THEN RVEQ_TAC THEN REWRITE_TAC[]; ALL_TAC] THEN
     STALLOCAUX_OPT_CASES_TAC `stack_dec_stack (stack_state_bitmaps (s:(A,C,FFI)stack_state)) wl2
                 (DROP (stack_state_stack_space s) (stack_state_stack s))` ["stk"] THEN
-    CASE_REWRITE_TAC[PAIR_EQ] THENL [STRIP_TAC THEN RVEQ_TAC THEN REWRITE_TAC[]; ALL_TAC] THEN
+    CAKE_REWRITE_TAC[PAIR_EQ] THENL [STRIP_TAC THEN RVEQ_TAC THEN REWRITE_TAC[]; ALL_TAC] THEN
     SUBGOAL_THEN `LENGTH (stk:((A)word_loc)list) =
                   LENGTH (DROP (stack_state_stack_space s) (stack_state_stack (s:(A,C,FFI)stack_state)))`
       ASSUME_TAC THENL
@@ -841,9 +841,9 @@ let alloc_length_stack = prove
       ALL_TAC] THEN
     CONV_TAC (stallocaux_norm []) THEN
     STALLOCAUX_OPT_CASES_TAC `FLOOKUP (st2:(store_name,(A)word_loc)fmap) AllocSize` ["aw"] THEN
-    CASE_REWRITE_TAC[PAIR_EQ] THEN
+    CAKE_REWRITE_TAC[PAIR_EQ] THEN
     TRY (STALLOCAUX_OPT_CASES_TAC `stack_has_space aw (st2:(store_name,(A)word_loc)fmap)` ["b"] THEN
-         CASE_REWRITE_TAC[PAIR_EQ]) THEN
+         CAKE_REWRITE_TAC[PAIR_EQ]) THEN
     TRY (COND_CASES_TAC THEN REWRITE_TAC[PAIR_EQ]) THEN
     STRIP_TAC THEN RVEQ_TAC THEN
     TRY (FIRST_X_ASSUM(MP_TAC o SPEC `wl_Word (word 1):(A)word_loc`) THEN REWRITE_TAC[] THEN
@@ -860,9 +860,9 @@ let find_code_regs_SUBMAP = prove
   REWRITE_TAC[stack_find_code_def] THEN STRIP_TAC THEN
   POP_ASSUM MP_TAC THEN
   STALLOCAUX_OPT_CASES_TAC `FLOOKUP (r1:(num,(A)word_loc)fmap) a` ["v"] THEN
-  CASE_REWRITE_TAC[option_DISTINCT] THEN DISCH_TAC THEN
+  CAKE_REWRITE_TAC[option_DISTINCT] THEN DISCH_TAC THEN
   SUBGOAL_THEN `FLOOKUP (r2:(num,(A)word_loc)fmap) a = SOME v` (fun th -> REWRITE_TAC[th]) THENL
-   [ASM_MESON_TAC[FLOOKUP_SUBMAP]; CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]]);;
+   [ASM_MESON_TAC[FLOOKUP_SUBMAP]; CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]]);;
 
 (* for each split comp n m x = (q,m') in the assumptions: get_labels x is   *)
 (* a subset of get_labels q, from the induction hypotheses (by MESON)       *)
@@ -885,17 +885,17 @@ let stack_allocProof_get_labels_comp = prove
     REWRITE_TAC[injectivity "stack_prog"; distinctness "stack_prog"] THEN
     REWRITE_TAC[LEFT_FORALL_IMP_THM; RIGHT_FORALL_IMP_THM; UNWIND_THM1; UNWIND_THM2;
                 GSYM CONJ_ASSOC; FORALL_UNWIND_THM1; FORALL_UNWIND_THM2] THEN
-    REPEAT STRIP_TAC THEN ONCE_REWRITE_TAC[stack_alloc_comp_def] THEN CASE_REWRITE_TAC[] THEN
-    REWRITE_TAC[stack_get_labels_def; LET_DEF; LET_END_DEF] THEN CASE_REWRITE_TAC[] THEN
+    REPEAT STRIP_TAC THEN ONCE_REWRITE_TAC[stack_alloc_comp_def] THEN CAKE_REWRITE_TAC[] THEN
+    REWRITE_TAC[stack_get_labels_def; LET_DEF; LET_END_DEF] THEN CAKE_REWRITE_TAC[] THEN
     TRY (MATCH_ACCEPT_TAC EMPTY_SUBSET) THEN
     REPEAT (STALLOCAUX_SPLIT_FN_TAC "stack_alloc_comp" ["q";"mm"]) THEN
     RULE_ASSUM_TAC(REWRITE_RULE[FST]) THEN REWRITE_TAC[FST; stack_get_labels_def] THEN
-    CASE_REWRITE_TAC[] THEN TRY (MATCH_ACCEPT_TAC EMPTY_SUBSET) THEN
+    CAKE_REWRITE_TAC[] THEN TRY (MATCH_ACCEPT_TAC EMPTY_SUBSET) THEN
     TRY (STALLOCAUX_OPT_CASES_TAC `a0:((A)stack_prog#num#num#num)option` ["p1";"lr";"l1";"l2"]) THEN
     TRY (STALLOCAUX_OPT_CASES_TAC `a2:((A)stack_prog#num#num)option` ["p2";"k1";"k2"]) THEN
-    CASE_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN
     REPEAT (STALLOCAUX_SPLIT_FN_TAC "stack_alloc_comp" ["q";"mm"]) THEN
-    REWRITE_TAC[FST; stack_get_labels_def] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[FST; stack_get_labels_def] THEN CAKE_REWRITE_TAC[] THEN
     TRY (MATCH_ACCEPT_TAC EMPTY_SUBSET) THEN
     STALLOCAUX_COMP_IH_TAC THEN ASM SET_TAC[]));;
 
@@ -950,26 +950,26 @@ let SUBMAP_FUPDATE_both = prove
 let STALLOCAUX_rx_word_exp = prove
  (`!(s:(A,C,FFI)stack_state) e w ext.
      stack_word_exp s e = SOME w ==>
-     stack_word_exp (stack_state_regs_fupd (K (FUNION (stack_state_regs s) ext)) s) e = SOME w`,
+     stack_word_exp (stack_state_regs_fupd (combin_K (FUNION (stack_state_regs s) ext)) s) e = SOME w`,
   (MATCH_MP_TAC stack_word_exp_ind THEN REPEAT CONJ_TAC THEN REPEAT GEN_TAC THENL
      [REWRITE_TAC[stack_word_exp_def];
       REWRITE_TAC[stack_word_exp_def] THEN CONV_TAC (stallocaux_norm []) THEN
       REWRITE_TAC[FLOOKUP_FUNION] THEN
       STALLOCAUX_OPT_CASES_TAC `FLOOKUP (stack_state_regs (s:(A,C,FFI)stack_state)) s'` ["x"] THEN
-      CASE_REWRITE_TAC[option_DISTINCT];
+      CAKE_REWRITE_TAC[option_DISTINCT];
       REWRITE_TAC[stack_word_exp_def] THEN CONV_TAC (stallocaux_norm []);
       DISCH_TAC THEN GEN_TAC THEN GEN_TAC THEN ONCE_REWRITE_TAC[stack_word_exp_def] THEN
       STALLOCAUX_OPT_CASES_TAC `stack_word_exp (s:(A,C,FFI)stack_state) addr` ["a"] THEN
-      CASE_REWRITE_TAC[option_DISTINCT] THEN
+      CAKE_REWRITE_TAC[option_DISTINCT] THEN
       FIRST_X_ASSUM(fun th -> REWRITE_TAC[MATCH_MP th
         (ASSUME `stack_word_exp (s:(A,C,FFI)stack_state) addr = SOME a`)]) THEN
-      CASE_REWRITE_TAC[stack_mem_load_def] THEN CONV_TAC (stallocaux_norm []);
+      CAKE_REWRITE_TAC[stack_mem_load_def] THEN CONV_TAC (stallocaux_norm []);
       ALL_TAC;
       ALL_TAC]) THENL
   [(DISCH_TAC THEN GEN_TAC THEN GEN_TAC THEN ONCE_REWRITE_TAC[stack_word_exp_def] THEN
     REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
     COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT] THEN DISCH_TAC THEN
-    SUBGOAL_THEN `MAP (stack_word_exp (stack_state_regs_fupd (K (FUNION (stack_state_regs s) ext))
+    SUBGOAL_THEN `MAP (stack_word_exp (stack_state_regs_fupd (combin_K (FUNION (stack_state_regs s) ext))
                       (s:(A,C,FFI)stack_state))) wexps = MAP (stack_word_exp s) wexps`
       (fun th -> ASM_REWRITE_TAC[th]) THEN
     MATCH_MP_TAC MAP_EQ THEN REWRITE_TAC[GSYM ALL_MEM] THEN
@@ -984,8 +984,8 @@ let STALLOCAUX_rx_word_exp = prove
    (STRIP_TAC THEN GEN_TAC THEN GEN_TAC THEN ONCE_REWRITE_TAC[stack_word_exp_def] THEN
     STALLOCAUX_OPT_CASES_TAC `stack_word_exp (s:(A,C,FFI)stack_state) wexp` ["a"] THEN
     STALLOCAUX_OPT_CASES_TAC `stack_word_exp (s:(A,C,FFI)stack_state) wexp1` ["b"] THEN
-    CASE_REWRITE_TAC[option_DISTINCT] THEN
-    RES_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[])]);;
+    CAKE_REWRITE_TAC[option_DISTINCT] THEN
+    RES_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[])]);;
 
 (* the same for the states of inst_correct: registers extended, the        *)
 (* compiler fields, gc_fun, use_* and code changed                          *)
@@ -994,14 +994,14 @@ let STALLOCAUX_rx_word_exp_big = prove
      (f:C#(num#(A)stack_prog)list#(A word)list->C#(num#(A)stack_prog)list#(A word)list) gcf cf.
      stack_word_exp s e = SOME w ==>
      stack_word_exp
-       (stack_state_regs_fupd (K (FUNION (stack_state_regs s) ext))
-       (stack_state_compile_fupd (K cr)
-       (stack_state_compile_oracle_fupd (K (f o stack_state_compile_oracle s))
-       (stack_state_gc_fun_fupd (K gcf)
-       (stack_state_use_stack_fupd (K T)
-       (stack_state_use_store_fupd (K T)
-       (stack_state_use_alloc_fupd (K F)
-       (stack_state_code_fupd (K (cf (stack_state_code s))) s)))))))) e = SOME w`,
+       (stack_state_regs_fupd (combin_K (FUNION (stack_state_regs s) ext))
+       (stack_state_compile_fupd (combin_K cr)
+       (stack_state_compile_oracle_fupd (combin_K (f o stack_state_compile_oracle s))
+       (stack_state_gc_fun_fupd (combin_K gcf)
+       (stack_state_use_stack_fupd (combin_K T)
+       (stack_state_use_store_fupd (combin_K T)
+       (stack_state_use_alloc_fupd (combin_K F)
+       (stack_state_code_fupd (combin_K (cf (stack_state_code s))) s)))))))) e = SOME w`,
   REPEAT GEN_TAC THEN
   DISCH_THEN(MP_TAC o SPEC `ext:(num,(A)word_loc)fmap` o MATCH_MP STALLOCAUX_rx_word_exp) THEN
   MATCH_MP_TAC(MESON[] `(a:(A word)option) = b ==> a = SOME (w:A word) ==> b = SOME w`) THEN
@@ -1012,37 +1012,37 @@ let STALLOCAUX_rx_get_var_big = prove
      (f:C#(num#(A)stack_prog)list#(A word)list->C#(num#(A)stack_prog)list#(A word)list) gcf cf.
      stack_get_var r s = SOME v ==>
      stack_get_var r
-       (stack_state_regs_fupd (K (FUNION (stack_state_regs s) ext))
-       (stack_state_compile_fupd (K cr)
-       (stack_state_compile_oracle_fupd (K (f o stack_state_compile_oracle s))
-       (stack_state_gc_fun_fupd (K gcf)
-       (stack_state_use_stack_fupd (K T)
-       (stack_state_use_store_fupd (K T)
-       (stack_state_use_alloc_fupd (K F)
-       (stack_state_code_fupd (K (cf (stack_state_code s))) s)))))))) = SOME v`,
+       (stack_state_regs_fupd (combin_K (FUNION (stack_state_regs s) ext))
+       (stack_state_compile_fupd (combin_K cr)
+       (stack_state_compile_oracle_fupd (combin_K (f o stack_state_compile_oracle s))
+       (stack_state_gc_fun_fupd (combin_K gcf)
+       (stack_state_use_stack_fupd (combin_K T)
+       (stack_state_use_store_fupd (combin_K T)
+       (stack_state_use_alloc_fupd (combin_K F)
+       (stack_state_code_fupd (combin_K (cf (stack_state_code s))) s)))))))) = SOME v`,
   REWRITE_TAC[stack_get_var_def] THEN CONV_TAC (stallocaux_norm []) THEN
   REWRITE_TAC[FLOOKUP_FUNION] THEN REPEAT GEN_TAC THEN DISCH_THEN SUBST1_TAC THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[]);;
 
 let STALLOCAUX_rx_get_vars_big = prove
  (`!xs (s:(A,C,FFI)stack_state) vs ext cr
      (f:C#(num#(A)stack_prog)list#(A word)list->C#(num#(A)stack_prog)list#(A word)list) gcf cf.
      stack_get_vars xs s = SOME vs ==>
      stack_get_vars xs
-       (stack_state_regs_fupd (K (FUNION (stack_state_regs s) ext))
-       (stack_state_compile_fupd (K cr)
-       (stack_state_compile_oracle_fupd (K (f o stack_state_compile_oracle s))
-       (stack_state_gc_fun_fupd (K gcf)
-       (stack_state_use_stack_fupd (K T)
-       (stack_state_use_store_fupd (K T)
-       (stack_state_use_alloc_fupd (K F)
-       (stack_state_code_fupd (K (cf (stack_state_code s))) s)))))))) = SOME vs`,
+       (stack_state_regs_fupd (combin_K (FUNION (stack_state_regs s) ext))
+       (stack_state_compile_fupd (combin_K cr)
+       (stack_state_compile_oracle_fupd (combin_K (f o stack_state_compile_oracle s))
+       (stack_state_gc_fun_fupd (combin_K gcf)
+       (stack_state_use_stack_fupd (combin_K T)
+       (stack_state_use_store_fupd (combin_K T)
+       (stack_state_use_alloc_fupd (combin_K F)
+       (stack_state_code_fupd (combin_K (cf (stack_state_code s))) s)))))))) = SOME vs`,
   (LIST_INDUCT_TAC THEN REWRITE_TAC[stack_get_vars_def] THEN REPEAT GEN_TAC THEN
     STALLOCAUX_OPT_CASES_TAC `stack_get_var h (s:(A,C,FFI)stack_state)` ["v"] THEN
-    CASE_REWRITE_TAC[option_DISTINCT]) THEN
+    CAKE_REWRITE_TAC[option_DISTINCT]) THEN
   (STALLOCAUX_OPT_CASES_TAC `stack_get_vars t (s:(A,C,FFI)stack_state)` ["vs1"] THEN
-    CASE_REWRITE_TAC[option_DISTINCT] THEN DISCH_TAC THEN
-    ASM_SIMP_TAC[STALLOCAUX_rx_get_var_big] THEN CASE_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[option_DISTINCT] THEN DISCH_TAC THEN
+    ASM_SIMP_TAC[STALLOCAUX_rx_get_var_big] THEN CAKE_REWRITE_TAC[] THEN
     FIRST_X_ASSUM(MP_TAC o SPECL
       [`s:(A,C,FFI)stack_state`; `vs1:((A)word_loc)list`; `ext:(num,(A)word_loc)fmap`;
        `cr:C->(num#(A)stack_prog)list->(byte list#C)option`;
@@ -1050,7 +1050,7 @@ let STALLOCAUX_rx_get_vars_big = prove
        `gcf:((A)word_loc)list#(A word->(A)word_loc)#(A word->bool)#(store_name,(A)word_loc)fmap->
             (((A)word_loc)list#(A word->(A)word_loc)#(store_name,(A)word_loc)fmap)option`;
        `cf:((A)stack_prog)spt->((A)stack_prog)spt`]) THEN
-    ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN CAKE_REWRITE_TAC[] THEN
     ASM_REWRITE_TAC[]));;
 
 let STALLOCAUX_rx_mem_store_big = prove
@@ -1058,23 +1058,23 @@ let STALLOCAUX_rx_mem_store_big = prove
      (f:C#(num#(A)stack_prog)list#(A word)list->C#(num#(A)stack_prog)list#(A word)list) gcf cf.
      stack_mem_store a w s = SOME t ==>
      stack_mem_store a w
-       (stack_state_regs_fupd (K (FUNION (stack_state_regs s) ext))
-       (stack_state_compile_fupd (K cr)
-       (stack_state_compile_oracle_fupd (K (f o stack_state_compile_oracle s))
-       (stack_state_gc_fun_fupd (K gcf)
-       (stack_state_use_stack_fupd (K T)
-       (stack_state_use_store_fupd (K T)
-       (stack_state_use_alloc_fupd (K F)
-       (stack_state_code_fupd (K (cf (stack_state_code s))) s)))))))) =
+       (stack_state_regs_fupd (combin_K (FUNION (stack_state_regs s) ext))
+       (stack_state_compile_fupd (combin_K cr)
+       (stack_state_compile_oracle_fupd (combin_K (f o stack_state_compile_oracle s))
+       (stack_state_gc_fun_fupd (combin_K gcf)
+       (stack_state_use_stack_fupd (combin_K T)
+       (stack_state_use_store_fupd (combin_K T)
+       (stack_state_use_alloc_fupd (combin_K F)
+       (stack_state_code_fupd (combin_K (cf (stack_state_code s))) s)))))))) =
      SOME
-       (stack_state_regs_fupd (K (FUNION (stack_state_regs t) ext))
-       (stack_state_compile_fupd (K cr)
-       (stack_state_compile_oracle_fupd (K (f o stack_state_compile_oracle t))
-       (stack_state_gc_fun_fupd (K gcf)
-       (stack_state_use_stack_fupd (K T)
-       (stack_state_use_store_fupd (K T)
-       (stack_state_use_alloc_fupd (K F)
-       (stack_state_code_fupd (K (cf (stack_state_code t))) t))))))))`,
+       (stack_state_regs_fupd (combin_K (FUNION (stack_state_regs t) ext))
+       (stack_state_compile_fupd (combin_K cr)
+       (stack_state_compile_oracle_fupd (combin_K (f o stack_state_compile_oracle t))
+       (stack_state_gc_fun_fupd (combin_K gcf)
+       (stack_state_use_stack_fupd (combin_K T)
+       (stack_state_use_store_fupd (combin_K T)
+       (stack_state_use_alloc_fupd (combin_K F)
+       (stack_state_code_fupd (combin_K (cf (stack_state_code t))) t))))))))`,
   REWRITE_TAC[stack_mem_store_def] THEN CONV_TAC (stallocaux_norm []) THEN
   REPEAT GEN_TAC THEN COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT; option_INJ] THEN
   DISCH_THEN(SUBST1_TAC o SYM) THEN CONV_TAC (stallocaux_norm []));;
@@ -1082,29 +1082,29 @@ let STALLOCAUX_inst_big = prove
  (`!(i:(A)inst) (s:(A,C,FFI)stack_state) t ext cr (f:C#(num#(A)stack_prog)list#(A word)list->C#(num#(A)stack_prog)list#(A word)list) gcf cf.
      stack_inst i s = SOME t ==>
      stack_inst i
-       (stack_state_regs_fupd (K (FUNION (stack_state_regs s) ext))
-       (stack_state_compile_fupd (K cr)
-       (stack_state_compile_oracle_fupd (K (f o stack_state_compile_oracle s))
-       (stack_state_gc_fun_fupd (K gcf)
-       (stack_state_use_stack_fupd (K T)
-       (stack_state_use_store_fupd (K T)
-       (stack_state_use_alloc_fupd (K F)
-       (stack_state_code_fupd (K (cf (stack_state_code s))) s)))))))) =
+       (stack_state_regs_fupd (combin_K (FUNION (stack_state_regs s) ext))
+       (stack_state_compile_fupd (combin_K cr)
+       (stack_state_compile_oracle_fupd (combin_K (f o stack_state_compile_oracle s))
+       (stack_state_gc_fun_fupd (combin_K gcf)
+       (stack_state_use_stack_fupd (combin_K T)
+       (stack_state_use_store_fupd (combin_K T)
+       (stack_state_use_alloc_fupd (combin_K F)
+       (stack_state_code_fupd (combin_K (cf (stack_state_code s))) s)))))))) =
      SOME
-       (stack_state_regs_fupd (K (FUNION (stack_state_regs t) ext))
-       (stack_state_compile_fupd (K cr)
-       (stack_state_compile_oracle_fupd (K (f o stack_state_compile_oracle t))
-       (stack_state_gc_fun_fupd (K gcf)
-       (stack_state_use_stack_fupd (K T)
-       (stack_state_use_store_fupd (K T)
-       (stack_state_use_alloc_fupd (K F)
-       (stack_state_code_fupd (K (cf (stack_state_code t))) t))))))))`,
+       (stack_state_regs_fupd (combin_K (FUNION (stack_state_regs t) ext))
+       (stack_state_compile_fupd (combin_K cr)
+       (stack_state_compile_oracle_fupd (combin_K (f o stack_state_compile_oracle t))
+       (stack_state_gc_fun_fupd (combin_K gcf)
+       (stack_state_use_stack_fupd (combin_K T)
+       (stack_state_use_store_fupd (combin_K T)
+       (stack_state_use_alloc_fupd (combin_K F)
+       (stack_state_code_fupd (combin_K (cf (stack_state_code t))) t))))))))`,
   (REPEAT GEN_TAC THEN
     GEN_REWRITE_TAC (LAND_CONV o LAND_CONV) [stack_inst_def] THEN
-    REWRITE_TAC[stack_assign_def] THEN CASE_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
+    REWRITE_TAC[stack_assign_def] THEN CAKE_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
     REPEAT (TOP_CASE_TAC THEN REWRITE_TAC[option_DISTINCT]) THEN
     DISCH_THEN(SUBST1_TAC o SYM) THEN
-    REWRITE_TAC[stack_inst_def] THEN CASE_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
+    REWRITE_TAC[stack_inst_def] THEN CAKE_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
     REWRITE_TAC[stack_assign_def] THEN
     (fun (asl,w) -> MAP_EVERY (fun (_,th) ->
         try ASSUME_TAC (MATCH_MP STALLOCAUX_rx_word_exp_big th) with Failure _ ->
@@ -1112,12 +1112,12 @@ let STALLOCAUX_inst_big = prove
         try ASSUME_TAC (MATCH_MP STALLOCAUX_rx_get_vars_big th) with Failure _ ->
         try ASSUME_TAC (MATCH_MP STALLOCAUX_rx_mem_store_big th) with Failure _ -> ALL_TAC)
         asl (asl,w)) THEN
-    REPEAT (CHANGED_TAC (ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[])) THEN
+    REPEAT (CHANGED_TAC (ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[])) THEN
     REWRITE_TAC[stack_get_vars_def; stack_get_var_def; stack_get_fp_var_def; stack_mem_load_def;
                 stack_mem_store_def; stack_set_var_def; stack_set_fp_var_def] THEN
     CONV_TAC (stallocaux_norm []) THEN REWRITE_TAC[FLOOKUP_FUNION] THEN
     RULE_ASSUM_TAC(REWRITE_RULE[stack_get_fp_var_def; stack_mem_load_def]) THEN
-    REPEAT (CHANGED_TAC (ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[])) THEN
+    REPEAT (CHANGED_TAC (ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[])) THEN
     CONV_TAC (stallocaux_norm []) THEN
     REWRITE_TAC[FUNION_FUPDATE_1]));;
 
@@ -1129,7 +1129,7 @@ let STALLOCAUX_inst_stack_buffer = prove
   REPEAT GEN_TAC THEN
   REWRITE_TAC[stack_inst_def; stack_assign_def; stack_mem_store_def; stack_set_var_def;
               stack_set_fp_var_def] THEN
-  CASE_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
+  CAKE_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
   REPEAT ((TOP_CASE_TAC ORELSE COND_CASES_TAC) THEN REWRITE_TAC[option_DISTINCT]) THEN
   REWRITE_TAC[option_INJ] THEN
   TRY (FIRST_X_ASSUM(fun th -> if is_cond(lhs(concl th)) &&
@@ -1150,27 +1150,27 @@ let stack_allocProof_inst_correct = prove
      stack_state_regs s SUBMAP regs ==>
      ?regs1.
        stack_inst i
-         (stack_state_regs_fupd (K regs)
-         (stack_state_compile_fupd (K compile_rest)
+         (stack_state_regs_fupd (combin_K regs)
+         (stack_state_compile_fupd (combin_K compile_rest)
          (stack_state_compile_oracle_fupd
-            (K ((I ## MAP stack_alloc_prog_comp ## I) o stack_state_compile_oracle s))
-         (stack_state_gc_fun_fupd (K anything)
-         (stack_state_use_stack_fupd (K T)
-         (stack_state_use_store_fupd (K T)
-         (stack_state_use_alloc_fupd (K F)
+            (combin_K ((I ## MAP stack_alloc_prog_comp ## I) o stack_state_compile_oracle s))
+         (stack_state_gc_fun_fupd (combin_K anything)
+         (stack_state_use_stack_fupd (combin_K T)
+         (stack_state_use_store_fupd (combin_K T)
+         (stack_state_use_alloc_fupd (combin_K F)
          (stack_state_code_fupd
-            (K (fromAList (stack_alloc_compile c (toAList (stack_state_code s))))) s)))))))) =
+            (combin_K (fromAList (stack_alloc_compile c (toAList (stack_state_code s))))) s)))))))) =
        SOME
-         (stack_state_regs_fupd (K regs1)
-         (stack_state_compile_fupd (K compile_rest)
+         (stack_state_regs_fupd (combin_K regs1)
+         (stack_state_compile_fupd (combin_K compile_rest)
          (stack_state_compile_oracle_fupd
-            (K ((I ## MAP stack_alloc_prog_comp ## I) o stack_state_compile_oracle t))
-         (stack_state_gc_fun_fupd (K anything)
-         (stack_state_use_stack_fupd (K T)
-         (stack_state_use_store_fupd (K T)
-         (stack_state_use_alloc_fupd (K F)
+            (combin_K ((I ## MAP stack_alloc_prog_comp ## I) o stack_state_compile_oracle t))
+         (stack_state_gc_fun_fupd (combin_K anything)
+         (stack_state_use_stack_fupd (combin_K T)
+         (stack_state_use_store_fupd (combin_K T)
+         (stack_state_use_alloc_fupd (combin_K F)
          (stack_state_code_fupd
-            (K (fromAList (stack_alloc_compile c (toAList (stack_state_code t))))) t)))))))) /\
+            (combin_K (fromAList (stack_alloc_compile c (toAList (stack_state_code t))))) t)))))))) /\
        stack_state_regs t SUBMAP regs1 /\
        LENGTH (stack_state_stack t) * (dimindex (:A) DIV 8) < dimword (:A) /\
        LENGTH (buffer_buffer (stack_state_data_buffer t)) +
@@ -1226,28 +1226,28 @@ let STALLOCAUX_cc_P =
      ==>
      ?ck regs1.
        stack_evaluate (FST (stack_alloc_comp n m p),
-         stack_state_use_store_fupd (K T)
-         (stack_state_use_stack_fupd (K T)
-         (stack_state_use_alloc_fupd (K F)
-         (stack_state_clock_fupd (K (stack_state_clock s + ck))
-         (stack_state_regs_fupd (K regs)
-         (stack_state_gc_fun_fupd (K anything)
+         stack_state_use_store_fupd (combin_K T)
+         (stack_state_use_stack_fupd (combin_K T)
+         (stack_state_use_alloc_fupd (combin_K F)
+         (stack_state_clock_fupd (combin_K (stack_state_clock s + ck))
+         (stack_state_regs_fupd (combin_K regs)
+         (stack_state_gc_fun_fupd (combin_K anything)
          (stack_state_compile_oracle_fupd
-            (K ((I ## MAP stack_alloc_prog_comp ## I) o stack_state_compile_oracle s))
-         (stack_state_compile_fupd (K compile_rest)
+            (combin_K ((I ## MAP stack_alloc_prog_comp ## I) o stack_state_compile_oracle s))
+         (stack_state_compile_fupd (combin_K compile_rest)
          (stack_state_code_fupd
-            (K (fromAList (stack_alloc_compile c (toAList (stack_state_code s))))) s))))))))) =
+            (combin_K (fromAList (stack_alloc_compile c (toAList (stack_state_code s))))) s))))))))) =
        (r,
-         stack_state_use_store_fupd (K T)
-         (stack_state_use_stack_fupd (K T)
-         (stack_state_use_alloc_fupd (K F)
-         (stack_state_regs_fupd (K regs1)
-         (stack_state_gc_fun_fupd (K anything)
+         stack_state_use_store_fupd (combin_K T)
+         (stack_state_use_stack_fupd (combin_K T)
+         (stack_state_use_alloc_fupd (combin_K F)
+         (stack_state_regs_fupd (combin_K regs1)
+         (stack_state_gc_fun_fupd (combin_K anything)
          (stack_state_compile_oracle_fupd
-            (K ((I ## MAP stack_alloc_prog_comp ## I) o stack_state_compile_oracle t))
-         (stack_state_compile_fupd (K compile_rest)
+            (combin_K ((I ## MAP stack_alloc_prog_comp ## I) o stack_state_compile_oracle t))
+         (stack_state_compile_fupd (combin_K compile_rest)
          (stack_state_code_fupd
-            (K (fromAList (stack_alloc_compile c (toAList (stack_state_code t))))) t)))))))) /\
+            (combin_K (fromAList (stack_alloc_compile c (toAList (stack_state_code t))))) t)))))))) /\
        stack_state_regs t SUBMAP regs1 /\
        (LENGTH (stack_state_bitmaps t) + LENGTH (buffer_buffer (stack_state_data_buffer t))) +
          buffer_space_left (stack_state_data_buffer t) < dimword (:A) - 1 /\
@@ -1317,7 +1317,7 @@ let STALLOCAUX_CC_LOOKUPS_TAC : tactic = fun (asl,w as g) ->
 
 let STALLOCAUX_clock_code_id = prove
  (`!f (s:(A,C,FFI)stack_state).
-     stack_state_clock_fupd (K (stack_state_clock s)) (stack_state_code_fupd f s) =
+     stack_state_clock_fupd (combin_K (stack_state_clock s)) (stack_state_code_fupd f s) =
      stack_state_code_fupd f s`,
   REWRITE_TAC[stack_state_component_equality] THEN CONV_TAC (stallocaux_norm []));;
 
@@ -1349,7 +1349,7 @@ let STALLOCAUX_CC_LEAF_TAC : tactic =
 
 let STALLOCAUX_CC_PRIM1_TAC (defs:thm list) : tactic =
   REPEAT GEN_TAC THEN STRIP_TAC THEN
-  GEN_REWRITE_TAC ONCE_DEPTH_CONV [stack_alloc_comp_def] THEN CASE_REWRITE_TAC[] THEN
+  GEN_REWRITE_TAC ONCE_DEPTH_CONV [stack_alloc_comp_def] THEN CAKE_REWRITE_TAC[] THEN
   EXISTS_TAC `0` THEN REWRITE_TAC[ADD_CLAUSES] THEN
   FIRST_X_ASSUM(MP_TAC o check (stallocaux_is_ev_eq o concl)) THEN
   GEN_REWRITE_TAC (LAND_CONV o LAND_CONV) [stack_evaluate_def] THEN
@@ -1409,7 +1409,7 @@ let STALLOCAUX_CC_PRIM2_TAC (defs:thm list) : tactic =
   CONV_TAC (stallocaux_norm []) THEN
   STALLOCAUX_CC_WEXP_TAC THEN STALLOCAUX_CC_LOCCHECK_TAC THEN
   STALLOCAUX_CC_LOOKUPS_TAC THEN
-  REPEAT (CHANGED_TAC (ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[])) THEN
+  REPEAT (CHANGED_TAC (ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[])) THEN
   CONV_TAC (stallocaux_norm []) THEN
   STALLOCAUX_CC_WIT_TAC THEN
   REWRITE_TAC[PAIR_EQ] THEN CONV_TAC (stallocaux_norm []) THEN
@@ -1449,7 +1449,7 @@ let STALLOCAUX_DISTINCT_TAC : tactic =
 
 let STALLOCAUX_CC_STORECONSTS_SOME_TAC : tactic =
   REPEAT GEN_TAC THEN STRIP_TAC THEN
-  GEN_REWRITE_TAC ONCE_DEPTH_CONV [stack_alloc_comp_def] THEN CASE_REWRITE_TAC[] THEN
+  GEN_REWRITE_TAC ONCE_DEPTH_CONV [stack_alloc_comp_def] THEN CAKE_REWRITE_TAC[] THEN
   FIRST_X_ASSUM(MP_TAC o check (stallocaux_is_ev_eq o concl)) THEN
   GEN_REWRITE_TAC (LAND_CONV o LAND_CONV) [stack_evaluate_def] THEN
   REWRITE_TAC ([check_store_consts_opt_def; store_const_sem_def; IS_SOME_DEF] @
@@ -1466,12 +1466,12 @@ let STALLOCAUX_CC_STORECONSTS_SOME_TAC : tactic =
                     `c:data_to_word_config`] lookup_IMP_lookup_compile) THEN
     ANTS_TAC THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
     STRIP_TAC THEN ASM_REWRITE_TAC[option_INJ] THEN
-    ONCE_REWRITE_TAC[stack_alloc_comp_def] THEN CASE_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
-    ONCE_REWRITE_TAC[stack_alloc_comp_def] THEN CASE_REWRITE_TAC[LET_DEF; LET_END_DEF];
+    ONCE_REWRITE_TAC[stack_alloc_comp_def] THEN CAKE_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
+    ONCE_REWRITE_TAC[stack_alloc_comp_def] THEN CAKE_REWRITE_TAC[LET_DEF; LET_END_DEF];
     ALL_TAC] THEN
-  REWRITE_TAC[STALLOCAUX_ev_clause "stack_Call"] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[STALLOCAUX_ev_clause "stack_Call"] THEN CAKE_REWRITE_TAC[] THEN
   CONV_TAC (stallocaux_norm []) THEN ASM_REWRITE_TAC[stack_find_code_def] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[ADD_EQ_0; ARITH_EQ] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[ADD_EQ_0; ARITH_EQ] THEN
   STALLOCAUX_DISTINCT_TAC THEN STALLOCAUX_CC_LOOKUPS_TAC THEN
   REWRITE_TAC[STALLOCAUX_ev_clause "stack_Seq"; STALLOCAUX_ev_clause "stack_StoreConsts";
               STALLOCAUX_ev_clause "stack_Return"; STALLOCAUX_ev_clause "stack_Skip";
@@ -1493,7 +1493,7 @@ let STALLOCAUX_CC_INST_TAC : tactic =
     else NO_TAC) THEN
   ANTS_TAC THENL [ASM_REWRITE_TAC[] THEN ASM_ARITH_TAC; ALL_TAC] THEN
   CONV_TAC (stallocaux_norm []) THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[] THEN EXISTS_TAC `regs1:(num,(A)word_loc)fmap` THEN
+  CAKE_REWRITE_TAC[] THEN EXISTS_TAC `regs1:(num,(A)word_loc)fmap` THEN
   ASM_REWRITE_TAC[] THEN CONV_TAC (stallocaux_norm []) THEN ASM_ARITH_TAC;;
 
 (* the cases of comp_correct that do not run other code *)
@@ -1608,8 +1608,8 @@ let STALLOCAUX_cc_BitmapLoad = prove
 
 let STALLOCAUX_gc_compile_frame = prove
  (`!(s:(A,C,FFI)stack_state) cr co.
-     stack_gc (stack_state_compile_fupd (K cr) (stack_state_compile_oracle_fupd (K co) s)) =
-     OPTION_MAP (\t. stack_state_compile_fupd (K cr) (stack_state_compile_oracle_fupd (K co) t))
+     stack_gc (stack_state_compile_fupd (combin_K cr) (stack_state_compile_oracle_fupd (combin_K co) s)) =
+     OPTION_MAP (\t. stack_state_compile_fupd (combin_K cr) (stack_state_compile_oracle_fupd (combin_K co) t))
        (stack_gc s)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[stack_gc_def; LET_DEF; LET_END_DEF] THEN
   CONV_TAC (stallocaux_norm []) THEN
@@ -1619,20 +1619,20 @@ let STALLOCAUX_gc_compile_frame = prove
 let STALLOCAUX_alloc_compile_frame = prove
  (`!w (s:(A,C,FFI)stack_state) r t cr co.
      stackSem_alloc w s = (r,t) ==>
-     stackSem_alloc w (stack_state_compile_fupd (K cr) (stack_state_compile_oracle_fupd (K co) s)) =
-     (r,stack_state_compile_fupd (K cr) (stack_state_compile_oracle_fupd (K co) t))`,
+     stackSem_alloc w (stack_state_compile_fupd (combin_K cr) (stack_state_compile_oracle_fupd (combin_K co) s)) =
+     (r,stack_state_compile_fupd (combin_K cr) (stack_state_compile_oracle_fupd (combin_K co) t))`,
   REPEAT GEN_TAC THEN REWRITE_TAC[stackSem_alloc_def] THEN
   SUBGOAL_THEN
    `stack_set_store AllocSize (wl_Word w)
-      (stack_state_compile_fupd (K cr) (stack_state_compile_oracle_fupd (K co) s)) =
-    stack_state_compile_fupd (K cr) (stack_state_compile_oracle_fupd (K co)
+      (stack_state_compile_fupd (combin_K cr) (stack_state_compile_oracle_fupd (combin_K co) s)) =
+    stack_state_compile_fupd (combin_K cr) (stack_state_compile_oracle_fupd (combin_K co)
       (stack_set_store AllocSize (wl_Word w) (s:(A,C,FFI)stack_state)))`
    SUBST1_TAC THENL
    [REWRITE_TAC[stack_set_store_def] THEN CONV_TAC (stallocaux_norm []); ALL_TAC] THEN
   REWRITE_TAC[STALLOCAUX_gc_compile_frame] THEN
   STALLOCAUX_OPT_CASES_TAC `stack_gc (stack_set_store AllocSize (wl_Word w) (s:(A,C,FFI)stack_state))`
     ["s1"] THEN
-  REWRITE_TAC[OPTION_MAP_DEF] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[OPTION_MAP_DEF] THEN CAKE_REWRITE_TAC[] THEN
   CONV_TAC (stallocaux_norm []) THEN
   REPEAT ((COND_CASES_TAC ORELSE TOP_CASE_TAC) THEN ASM_REWRITE_TAC[PAIR_EQ]) THEN
   REPEAT (DISCH_THEN(CONJUNCTS_THEN (SUBST1_TAC o SYM))) THEN
@@ -1643,7 +1643,7 @@ let STALLOCAUX_CC_ALLOC_TAC : tactic =
   RULE_ASSUM_TAC(REWRITE_RULE[alloc_arg_def]) THEN
   FIRST_X_ASSUM(fun th -> if is_eq (concl th) && is_var (lhs(concl th)) &&
                              rhs(concl th) = `1` then SUBST_ALL_TAC th else NO_TAC) THEN
-  GEN_REWRITE_TAC ONCE_DEPTH_CONV [stack_alloc_comp_def] THEN CASE_REWRITE_TAC[] THEN
+  GEN_REWRITE_TAC ONCE_DEPTH_CONV [stack_alloc_comp_def] THEN CAKE_REWRITE_TAC[] THEN
   FIRST_X_ASSUM(MP_TAC o check (stallocaux_is_ev_eq o concl)) THEN
   GEN_REWRITE_TAC (LAND_CONV o LAND_CONV) [stack_evaluate_def] THEN
   REWRITE_TAC STALLOCAUX_cc_defs THEN CONV_TAC (stallocaux_norm []) THEN
@@ -1734,7 +1734,7 @@ let STALLOCAUX_comp_rec = prove
         (SOME (FST (stack_alloc_comp n (SND (stack_alloc_comp n m p1)) p2),k1,k2)))`,
   REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
   GEN_REWRITE_TAC (LAND_CONV o RAND_CONV) [stack_alloc_comp_def] THEN
-  CASE_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
+  CAKE_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
   REPEAT (STALLOCAUX_SPLIT_FN_TAC "stack_alloc_comp" ["q";"mm"]) THEN
   REWRITE_TAC[FST; SND]);;
 
@@ -1742,58 +1742,58 @@ let STALLOCAUX_comp_rec = prove
 let STALLOCAUX_cc_add_clock = prove
  (`!q (s:(A,C,FFI)stack_state) regs ck1 r t regs1 ck2.
      stack_evaluate (q,
-         stack_state_use_store_fupd (K T)
-         (stack_state_use_stack_fupd (K T)
-         (stack_state_use_alloc_fupd (K F)
-         (stack_state_clock_fupd (K (stack_state_clock s + ck1))
-         (stack_state_regs_fupd (K regs)
+         stack_state_use_store_fupd (combin_K T)
+         (stack_state_use_stack_fupd (combin_K T)
+         (stack_state_use_alloc_fupd (combin_K F)
+         (stack_state_clock_fupd (combin_K (stack_state_clock s + ck1))
+         (stack_state_regs_fupd (combin_K regs)
          (stack_state_gc_fun_fupd
-            (K (anything:((A)word_loc)list#(A word->(A)word_loc)#(A word->bool)#
+            (combin_K (anything:((A)word_loc)list#(A word->(A)word_loc)#(A word->bool)#
                          (store_name,(A)word_loc)fmap->
                          (((A)word_loc)list#(A word->(A)word_loc)#
                           (store_name,(A)word_loc)fmap)option))
          (stack_state_compile_oracle_fupd
-            (K ((I ## MAP stack_alloc_prog_comp ## I) o stack_state_compile_oracle s))
+            (combin_K ((I ## MAP stack_alloc_prog_comp ## I) o stack_state_compile_oracle s))
          (stack_state_compile_fupd
-            (K (compile_rest:C->(num#(A)stack_prog)list->(byte list#C)option))
+            (combin_K (compile_rest:C->(num#(A)stack_prog)list->(byte list#C)option))
          (stack_state_code_fupd
-            (K (fromAList (stack_alloc_compile c (toAList (stack_state_code s))))) s))))))))) =
+            (combin_K (fromAList (stack_alloc_compile c (toAList (stack_state_code s))))) s))))))))) =
        (r,
-         stack_state_use_store_fupd (K T)
-         (stack_state_use_stack_fupd (K T)
-         (stack_state_use_alloc_fupd (K F)
-         (stack_state_regs_fupd (K regs1)
-         (stack_state_gc_fun_fupd (K anything)
+         stack_state_use_store_fupd (combin_K T)
+         (stack_state_use_stack_fupd (combin_K T)
+         (stack_state_use_alloc_fupd (combin_K F)
+         (stack_state_regs_fupd (combin_K regs1)
+         (stack_state_gc_fun_fupd (combin_K anything)
          (stack_state_compile_oracle_fupd
-            (K ((I ## MAP stack_alloc_prog_comp ## I) o stack_state_compile_oracle t))
-         (stack_state_compile_fupd (K compile_rest)
+            (combin_K ((I ## MAP stack_alloc_prog_comp ## I) o stack_state_compile_oracle t))
+         (stack_state_compile_fupd (combin_K compile_rest)
          (stack_state_code_fupd
-            (K (fromAList (stack_alloc_compile c (toAList (stack_state_code t))))) t)))))))) /\
+            (combin_K (fromAList (stack_alloc_compile c (toAList (stack_state_code t))))) t)))))))) /\
      ~(r = SOME stack_TimeOut) ==>
      stack_evaluate (q,
-         stack_state_use_store_fupd (K T)
-         (stack_state_use_stack_fupd (K T)
-         (stack_state_use_alloc_fupd (K F)
-         (stack_state_clock_fupd (K (stack_state_clock s + ck1 + ck2))
-         (stack_state_regs_fupd (K regs)
-         (stack_state_gc_fun_fupd (K anything)
+         stack_state_use_store_fupd (combin_K T)
+         (stack_state_use_stack_fupd (combin_K T)
+         (stack_state_use_alloc_fupd (combin_K F)
+         (stack_state_clock_fupd (combin_K (stack_state_clock s + ck1 + ck2))
+         (stack_state_regs_fupd (combin_K regs)
+         (stack_state_gc_fun_fupd (combin_K anything)
          (stack_state_compile_oracle_fupd
-            (K ((I ## MAP stack_alloc_prog_comp ## I) o stack_state_compile_oracle s))
-         (stack_state_compile_fupd (K compile_rest)
+            (combin_K ((I ## MAP stack_alloc_prog_comp ## I) o stack_state_compile_oracle s))
+         (stack_state_compile_fupd (combin_K compile_rest)
          (stack_state_code_fupd
-            (K (fromAList (stack_alloc_compile c (toAList (stack_state_code s))))) s))))))))) =
+            (combin_K (fromAList (stack_alloc_compile c (toAList (stack_state_code s))))) s))))))))) =
        (r,
-         stack_state_use_store_fupd (K T)
-         (stack_state_use_stack_fupd (K T)
-         (stack_state_use_alloc_fupd (K F)
-         (stack_state_clock_fupd (K (stack_state_clock t + ck2))
-         (stack_state_regs_fupd (K regs1)
-         (stack_state_gc_fun_fupd (K anything)
+         stack_state_use_store_fupd (combin_K T)
+         (stack_state_use_stack_fupd (combin_K T)
+         (stack_state_use_alloc_fupd (combin_K F)
+         (stack_state_clock_fupd (combin_K (stack_state_clock t + ck2))
+         (stack_state_regs_fupd (combin_K regs1)
+         (stack_state_gc_fun_fupd (combin_K anything)
          (stack_state_compile_oracle_fupd
-            (K ((I ## MAP stack_alloc_prog_comp ## I) o stack_state_compile_oracle t))
-         (stack_state_compile_fupd (K compile_rest)
+            (combin_K ((I ## MAP stack_alloc_prog_comp ## I) o stack_state_compile_oracle t))
+         (stack_state_compile_fupd (combin_K compile_rest)
          (stack_state_code_fupd
-            (K (fromAList (stack_alloc_compile c (toAList (stack_state_code t))))) t)))))))))`,
+            (combin_K (fromAList (stack_alloc_compile c (toAList (stack_state_code t))))) t)))))))))`,
   REPEAT GEN_TAC THEN
   DISCH_THEN(MP_TAC o MATCH_MP (INST [`ck2:num`,`extra:num`] stack_evaluate_add_clock)) THEN
   CONV_TAC (stallocaux_norm []) THEN REWRITE_TAC[ADD_ASSOC]);;
@@ -1812,7 +1812,7 @@ let STALLOCAUX_cc_Seq = prove
     GEN_REWRITE_TAC (LAND_CONV o LAND_CONV) [STALLOCAUX_ev_clause "stack_Seq"] THEN
     STALLOCAUX_SPLIT_TAC `stack_evaluate (c1,s:(A,C,FFI)stack_state)`
       [`res:((A)stack_result)option`; `s1:(A,C,FFI)stack_state`] THEN
-    REWRITE_TAC[LET_DEF; LET_END_DEF] THEN CASE_REWRITE_TAC[]) THEN
+    REWRITE_TAC[LET_DEF; LET_END_DEF] THEN CAKE_REWRITE_TAC[]) THEN
   (ASM_CASES_TAC `res:((A)stack_result)option = NONE` THENL
      [FIRST_X_ASSUM SUBST_ALL_TAC THEN REWRITE_TAC[] THEN DISCH_TAC THEN
       REMOVE_THEN "ih1" (MP_TAC o SPECL [`NONE:((A)stack_result)option`; `s1:(A,C,FFI)stack_state`;
@@ -1841,7 +1841,7 @@ let STALLOCAUX_cc_Seq = prove
       REWRITE_TAC[STALLOCAUX_ev_clause "stack_Seq"] THEN
       FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP STALLOCAUX_cc_add_clock
                     (CONJ th STALLOCAUX_none_not_timeout)]) THEN
-      CASE_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN ASM_REWRITE_TAC[];
+      CAKE_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN ASM_REWRITE_TAC[];
       ALL_TAC]) THEN
   (ASM_REWRITE_TAC[PAIR_EQ] THEN DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
     REMOVE_THEN "ih1" (MP_TAC o SPECL [`res:((A)stack_result)option`; `s1:(A,C,FFI)stack_state`;
@@ -1852,7 +1852,7 @@ let STALLOCAUX_cc_Seq = prove
     MAP_EVERY EXISTS_TAC [`ck1:num`; `regs1:(num,(A)word_loc)fmap`] THEN
     ASM_REWRITE_TAC[] THEN
     REWRITE_TAC[STALLOCAUX_ev_clause "stack_Seq"] THEN ASM_REWRITE_TAC[] THEN
-    CASE_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN ASM_REWRITE_TAC[]));;
+    CAKE_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN ASM_REWRITE_TAC[]));;
 
 (* instantiate the labelled induction hypothesis !vs. a1 /\ .. /\ an ==> P  *)
 (* with assumptions matching a1, .., an (in order; an equation v = x or     *)
@@ -1943,7 +1943,7 @@ let STALLOCAUX_CC_IF_BRANCH_TAC (lab:string) (mt:term) : tactic =
   REWRITE_TAC[STALLOCAUX_ev_clause "stack_If"] THEN
   STALLOCAUX_CC_SUB_TAC "stack_get_var" 1 STALLOCAUX_get_var_sub THEN
   STALLOCAUX_CC_SUB_TAC "stack_get_var_imm" 1 STALLOCAUX_get_var_imm_sub THEN
-  REPEAT (CHANGED_TAC (ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]));;
+  REPEAT (CHANGED_TAC (ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]));;
 
 let STALLOCAUX_cc_If = prove
  (stallocaux_cc_case 14,
@@ -1954,7 +1954,7 @@ let STALLOCAUX_cc_If = prove
   REPEAT (FIRST_X_ASSUM (CONJUNCTS_THEN ASSUME_TAC o check (is_conj o concl))) THEN
   FIRST_X_ASSUM(MP_TAC o check (stallocaux_is_ev_eq o concl)) THEN
   GEN_REWRITE_TAC (LAND_CONV o LAND_CONV) [STALLOCAUX_ev_clause "stack_If"] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   REPEAT ((COND_CASES_TAC ORELSE TOP_CASE_TAC) THEN
           ASM_REWRITE_TAC[PAIR_EQ; option_DISTINCT; option_INJ]) THEN
   STALLOCAUX_CC_LEAF_TAC THENL
@@ -1994,7 +1994,7 @@ let STALLOCAUX_cc_Loop = prove
     GEN_REWRITE_TAC (LAND_CONV o LAND_CONV) [STALLOCAUX_ev_clause "stack_Loop"] THEN
     STALLOCAUX_SPLIT_TAC `stack_evaluate (c1,s:(A,C,FFI)stack_state)`
       [`res:((A)stack_result)option`; `s1:(A,C,FFI)stack_state`] THEN
-    REWRITE_TAC[LET_DEF; LET_END_DEF] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[LET_DEF; LET_END_DEF] THEN CAKE_REWRITE_TAC[] THEN
     ASM_CASES_TAC `res = SOME (stack_Error:(A)stack_result)` THENL
      [ASM_REWRITE_TAC[stack_cont_loop_def; stack_exit_loop_def; PAIR_EQ] THEN
       STRIP_TAC THEN ASM_MESON_TAC[];
@@ -2015,7 +2015,7 @@ let STALLOCAUX_cc_Loop = prove
      [REWRITE_TAC[PAIR_EQ] THEN DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
       MAP_EVERY EXISTS_TAC [`ck1:num`; `FEMPTY:(num,(A)word_loc)fmap`] THEN
       REWRITE_TAC[STALLOCAUX_ev_clause "stack_Loop"] THEN ASM_REWRITE_TAC[] THEN
-      CASE_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
+      CAKE_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
       CONV_TAC (stallocaux_norm []) THEN ASM_REWRITE_TAC[] THEN
       REWRITE_TAC[stack_empty_env_def] THEN CONV_TAC (stallocaux_norm []) THEN
       ASM_REWRITE_TAC[SUBMAP_FEMPTY; LENGTH; MULT_CLAUSES; ZERO_LT_dimword];
@@ -2044,7 +2044,7 @@ let STALLOCAUX_cc_Loop = prove
     REWRITE_TAC[STALLOCAUX_ev_clause "stack_Loop"] THEN
     FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP STALLOCAUX_cc_add_clock
          (CONJ th (ASSUME `~(res = SOME (stack_TimeOut:(A)stack_result))`))]) THEN
-    CASE_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN ASM_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN ASM_REWRITE_TAC[] THEN
     CONV_TAC (stallocaux_norm []) THEN ASM_REWRITE_TAC[ADD_EQ_0] THEN
     REWRITE_TAC[stack_STOP_def] THEN CONV_TAC (stallocaux_norm []) THEN
     SUBGOAL_THEN `(stack_state_clock (s1:(A,C,FFI)stack_state) + ck2) - 1 =
@@ -2055,7 +2055,7 @@ let STALLOCAUX_cc_Loop = prove
     MAP_EVERY EXISTS_TAC [`ck1:num`; `regs1:(num,(A)word_loc)fmap`] THEN
     ASM_REWRITE_TAC[] THEN
     REWRITE_TAC[STALLOCAUX_ev_clause "stack_Loop"] THEN ASM_REWRITE_TAC[] THEN
-    CASE_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN ASM_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[LET_DEF; LET_END_DEF] THEN ASM_REWRITE_TAC[] THEN
     DISCH_TAC THEN
     FIRST_X_ASSUM(fun th -> if is_imp (concl th) && is_forall (lhand (concl th))
                             then MATCH_MP_TAC th else NO_TAC) THEN
@@ -2077,7 +2077,7 @@ let STALLOCAUX_CC_FINDCODE_TAC : tactic =
   FIRST_ASSUM(fun th -> if is_eq (concl th) &&
                            stallocaux_head_is "stack_find_code" (lhs (concl th))
                         then MP_TAC (REWRITE_RULE[stack_find_code_def] th) else NO_TAC) THEN
-  CASE_REWRITE_TAC[] THEN DISCH_TAC;;
+  CAKE_REWRITE_TAC[] THEN DISCH_TAC;;
 
 (* the goal P (prog,st) ==> G with P from comp_correct's induction: take   *)
 (* r t from the assumption stack_evaluate (prog,st) = (r,t) and n m from   *)
@@ -2104,10 +2104,10 @@ let STALLOCAUX_cc_JumpLower = prove
  ((stallocaux_cc_case 16),
   (REPEAT GEN_TAC THEN DISCH_THEN (LABEL_TAC "ih") THEN
     REPEAT GEN_TAC THEN STRIP_TAC THEN
-    GEN_REWRITE_TAC ONCE_DEPTH_CONV [stack_alloc_comp_def] THEN CASE_REWRITE_TAC[] THEN
+    GEN_REWRITE_TAC ONCE_DEPTH_CONV [stack_alloc_comp_def] THEN CAKE_REWRITE_TAC[] THEN
     FIRST_X_ASSUM(MP_TAC o check (stallocaux_is_ev_eq o concl)) THEN
     GEN_REWRITE_TAC (LAND_CONV o LAND_CONV) [STALLOCAUX_ev_clause "JumpLower"] THEN
-    CASE_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN
     REPEAT ((COND_CASES_TAC ORELSE TOP_CASE_TAC) THEN
             ASM_REWRITE_TAC[PAIR_EQ; option_DISTINCT; option_INJ]) THEN
     STALLOCAUX_CC_LEAF_TAC) THENL
@@ -2115,9 +2115,9 @@ let STALLOCAUX_cc_JumpLower = prove
     MAP_EVERY EXISTS_TAC [`0`; `FEMPTY:(num,(A)word_loc)fmap`] THEN
     REWRITE_TAC[ADD_CLAUSES; STALLOCAUX_ev_clause "JumpLower"] THEN
     STALLOCAUX_CC_SUB_TAC "stack_get_var" 1 STALLOCAUX_get_var_sub THEN
-    CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
     CONV_TAC (stallocaux_norm []) THEN REWRITE_TAC[stack_find_code_def] THEN
-    CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[stack_empty_env_def] THEN CONV_TAC (stallocaux_norm []) THEN
     ASM_REWRITE_TAC[SUBMAP_FEMPTY; LENGTH; MULT_CLAUSES; ZERO_LT_dimword] THEN
     REWRITE_TAC[stack_state_component_equality] THEN CONV_TAC (stallocaux_norm []) THEN
@@ -2134,19 +2134,19 @@ let STALLOCAUX_cc_JumpLower = prove
     MAP_EVERY EXISTS_TAC [`ck:num`; `regs1:(num,(A)word_loc)fmap`] THEN ASM_REWRITE_TAC[] THEN
     REWRITE_TAC[STALLOCAUX_ev_clause "JumpLower"] THEN
     STALLOCAUX_CC_SUB_TAC "stack_get_var" 1 STALLOCAUX_get_var_sub THEN
-    CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN
     CONV_TAC (stallocaux_norm []) THEN REWRITE_TAC[stack_find_code_def] THEN
-    CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[ADD_EQ_0] THEN CASE_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[ADD_EQ_0] THEN CAKE_REWRITE_TAC[] THEN
     CONV_TAC (stallocaux_norm []) THEN
     SUBGOAL_THEN `(stack_state_clock (s:(A,C,FFI)stack_state) + ck) - 1 =
                   (stack_state_clock s - 1) + ck` SUBST1_TAC THENL
      [STALLOCAUX_CLOCK_ARITH_TAC; ALL_TAC] THEN
     RULE_ASSUM_TAC(CONV_RULE (stallocaux_norm [])) THEN ASM_REWRITE_TAC[] THEN
-    CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]);
+    CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]);
    (MAP_EVERY EXISTS_TAC [`0`; `regs:(num,(A)word_loc)fmap`] THEN
     REWRITE_TAC[ADD_CLAUSES; STALLOCAUX_ev_clause "JumpLower"] THEN
     STALLOCAUX_CC_SUB_TAC "stack_get_var" 1 STALLOCAUX_get_var_sub THEN
-    CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN CONV_TAC (stallocaux_norm []) THEN
+    CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN CONV_TAC (stallocaux_norm []) THEN
     ASM_REWRITE_TAC[])]);;
 
 let STALLOCAUX_dest_Seq_SOME = prove
@@ -2167,10 +2167,10 @@ let STALLOCAUX_cc_RawCall = prove
  ((stallocaux_cc_case 17),
   (REPEAT GEN_TAC THEN DISCH_THEN (LABEL_TAC "ih") THEN
     REPEAT GEN_TAC THEN STRIP_TAC THEN
-    GEN_REWRITE_TAC ONCE_DEPTH_CONV [stack_alloc_comp_def] THEN CASE_REWRITE_TAC[] THEN
+    GEN_REWRITE_TAC ONCE_DEPTH_CONV [stack_alloc_comp_def] THEN CAKE_REWRITE_TAC[] THEN
     FIRST_X_ASSUM(MP_TAC o check (stallocaux_is_ev_eq o concl)) THEN
     GEN_REWRITE_TAC (LAND_CONV o LAND_CONV) [STALLOCAUX_ev_clause "RawCall"] THEN
-    CASE_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN
     REPEAT ((COND_CASES_TAC ORELSE TOP_CASE_TAC) THEN
             ASM_REWRITE_TAC[PAIR_EQ; option_DISTINCT; option_INJ]) THEN
     STALLOCAUX_CC_LEAF_TAC) THENL
@@ -2179,7 +2179,7 @@ let STALLOCAUX_cc_RawCall = prove
     MAP_EVERY EXISTS_TAC [`0`; `FEMPTY:(num,(A)word_loc)fmap`] THEN
     REWRITE_TAC[ADD_CLAUSES; STALLOCAUX_ev_clause "RawCall"] THEN
     CONV_TAC (stallocaux_norm []) THEN ASM_REWRITE_TAC[] THEN
-    CASE_REWRITE_TAC[stack_dest_Seq_def] THEN ASM_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[stack_dest_Seq_def] THEN ASM_REWRITE_TAC[] THEN
     REWRITE_TAC[stack_empty_env_def] THEN CONV_TAC (stallocaux_norm []) THEN
     ASM_REWRITE_TAC[SUBMAP_FEMPTY; LENGTH; MULT_CLAUSES; ZERO_LT_dimword] THEN
     REWRITE_TAC[stack_state_component_equality] THEN CONV_TAC (stallocaux_norm []) THEN
@@ -2203,13 +2203,13 @@ let STALLOCAUX_cc_RawCall = prove
     MAP_EVERY EXISTS_TAC [`ck:num`; `regs1:(num,(A)word_loc)fmap`] THEN ASM_REWRITE_TAC[] THEN
     REWRITE_TAC[STALLOCAUX_ev_clause "RawCall"] THEN
     CONV_TAC (stallocaux_norm []) THEN ASM_REWRITE_TAC[] THEN
-    CASE_REWRITE_TAC[stack_dest_Seq_def] THEN ASM_REWRITE_TAC[ADD_EQ_0] THEN
+    CAKE_REWRITE_TAC[stack_dest_Seq_def] THEN ASM_REWRITE_TAC[ADD_EQ_0] THEN
     CONV_TAC (stallocaux_norm []) THEN
     SUBGOAL_THEN `(stack_state_clock (s:(A,C,FFI)stack_state) + ck) - 1 =
                   (stack_state_clock s - 1) + ck` SUBST1_TAC THENL
      [STALLOCAUX_CLOCK_ARITH_TAC; ALL_TAC] THEN
     RULE_ASSUM_TAC(CONV_RULE (stallocaux_norm [])) THEN ASM_REWRITE_TAC[] THEN
-    CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[])]);;
+    CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[])]);;
 
 let STALLOCAUX_ALOOKUP_MAP_prog_comp = prove
  (`!l (k:num). ALOOKUP (MAP stack_alloc_prog_comp l) k =
@@ -2231,9 +2231,9 @@ let STALLOCAUX_compile_union = prove
               STALLOCAUX_ALOOKUP_MAP_prog_comp; ALOOKUP_toAList] THEN
   X_GEN_TAC `k:num` THEN
   STALLOCAUX_OPT_CASES_TAC `ALOOKUP (stack_alloc_stubs c:(num#(A)stack_prog)list) k` ["x"] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   STALLOCAUX_OPT_CASES_TAC `lookup k (code:((A)stack_prog)spt)` ["y"] THEN
-  CASE_REWRITE_TAC[OPTION_MAP_DEF]);;
+  CAKE_REWRITE_TAC[OPTION_MAP_DEF]);;
 
 let STALLOCAUX_buffer_flush_eq = prove
  (`!(b:(A,B)buffer) w1 w2 d b'.
@@ -2248,7 +2248,7 @@ let STALLOCAUX_buffer_flush_eq = prove
 let STALLOCAUX_cc_Install = prove
  ((stallocaux_cc_case 19),
   (REPEAT GEN_TAC THEN STRIP_TAC THEN
-    GEN_REWRITE_TAC ONCE_DEPTH_CONV [stack_alloc_comp_def] THEN CASE_REWRITE_TAC[] THEN
+    GEN_REWRITE_TAC ONCE_DEPTH_CONV [stack_alloc_comp_def] THEN CAKE_REWRITE_TAC[] THEN
     EXISTS_TAC `0` THEN REWRITE_TAC[ADD_CLAUSES] THEN
     FIRST_X_ASSUM(MP_TAC o check (stallocaux_is_ev_eq o concl)) THEN
     GEN_REWRITE_TAC (LAND_CONV o LAND_CONV) [STALLOCAUX_ev_clause "stack_Install"] THEN
@@ -2268,9 +2268,9 @@ let STALLOCAUX_cc_Install = prove
     REWRITE_TAC[stack_get_var_def; LET_DEF; LET_END_DEF] THEN CONV_TAC (stallocaux_norm []) THEN
     STALLOCAUX_CC_LOOKUPS_TAC THEN
     REWRITE_TAC[o_THM; PAIR_MAP_THM; FST_PAIR_MAP; I_THM; MAP; shift_seq_def; ADD_CLAUSES] THEN
-    REPEAT (CHANGED_TAC (ASM_REWRITE_TAC[o_THM; PAIR_MAP_THM; I_THM; MAP] THEN CASE_REWRITE_TAC[])) THEN
+    REPEAT (CHANGED_TAC (ASM_REWRITE_TAC[o_THM; PAIR_MAP_THM; I_THM; MAP] THEN CAKE_REWRITE_TAC[])) THEN
     REWRITE_TAC[stack_alloc_prog_comp_def] THEN
-    REPEAT (CHANGED_TAC (ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[])) THEN
+    REPEAT (CHANGED_TAC (ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[])) THEN
     STALLOCAUX_CC_WIT_TAC THEN
     REWRITE_TAC[STALLOCAUX_compile_union; MAP; stack_alloc_prog_comp_def; o_DEF] THEN
     CONV_TAC (stallocaux_norm []) THEN
@@ -2326,8 +2326,8 @@ let STALLOCAUX_CC_FC_TAC (regs2:term) : tactic = fun (asl,w as g) ->
 let STALLOCAUX_CC_TIMEOUT_TAC : tactic =
   MAP_EVERY EXISTS_TAC [`0`; `FEMPTY:(num,(A)word_loc)fmap`] THEN
   REWRITE_TAC[ADD_CLAUSES; STALLOCAUX_ev_clause "stack_Call"] THEN
-  CASE_REWRITE_TAC[] THEN CONV_TAC (stallocaux_norm []) THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN CONV_TAC (stallocaux_norm []) THEN ASM_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[stack_empty_env_def] THEN CONV_TAC (stallocaux_norm []) THEN
   ASM_REWRITE_TAC[SUBMAP_FEMPTY; LENGTH; MULT_CLAUSES; ZERO_LT_dimword] THEN
   REWRITE_TAC[stack_state_component_equality] THEN CONV_TAC (stallocaux_norm []) THEN
@@ -2351,7 +2351,7 @@ let STALLOCAUX_CC_CALL_SPLIT_TAC : tactic =
   REWRITE_TAC[STALLOCAUX_comp_rec] THEN
   FIRST_X_ASSUM(MP_TAC o check (stallocaux_is_ev_eq o concl)) THEN
   GEN_REWRITE_TAC (LAND_CONV o LAND_CONV) [STALLOCAUX_ev_clause "stack_Call"] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   REPEAT ((COND_CASES_TAC ORELSE TOP_CASE_TAC) THEN
           ASM_REWRITE_TAC[PAIR_EQ; option_DISTINCT; option_INJ;
                           distinctness "stack_result"; injectivity "stack_result"]) THEN
@@ -2392,13 +2392,13 @@ let STALLOCAUX_CLOCK_SUB1_TAC : tactic =
 (* the compiled Call up to the callee's result *)
 let STALLOCAUX_CC_CALL_RUN_TAC : tactic =
   REWRITE_TAC[STALLOCAUX_ev_clause "stack_Call"] THEN
-  CASE_REWRITE_TAC[] THEN CONV_TAC (stallocaux_norm []) THEN ASM_REWRITE_TAC[ADD_EQ_0] THEN
-  CASE_REWRITE_TAC[] THEN CONV_TAC (stallocaux_norm []) THEN
+  CAKE_REWRITE_TAC[] THEN CONV_TAC (stallocaux_norm []) THEN ASM_REWRITE_TAC[ADD_EQ_0] THEN
+  CAKE_REWRITE_TAC[] THEN CONV_TAC (stallocaux_norm []) THEN
   STALLOCAUX_CLOCK_SUB1_TAC THEN
   RULE_ASSUM_TAC(fun th -> if stallocaux_is_ev_eq (concl th)
                            then REWRITE_RULE[ADD_ASSOC] (CONV_RULE (stallocaux_norm []) th)
                            else th) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[];;
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[];;
 
 (* facts about the result state of the callee evaluation (the assumption  *)
 (* stack_evaluate (p,stack_dec_clock ..) = (res,s2))                       *)
@@ -2446,7 +2446,7 @@ let STALLOCAUX_CC_CALL_CONT_TAC (lab:string) (mt:term) : tactic =
   STALLOCAUX_CC_ADDCLOCK_TAC `ck1:num` `ck2:num` THEN
   STALLOCAUX_CC_CALL_RUN_TAC THEN
   CONV_TAC (stallocaux_norm []) THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[];;
+  CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[];;
 
 (* the Call case of comp_correct *)
 let STALLOCAUX_cc_Call = prove
@@ -2459,7 +2459,7 @@ let STALLOCAUX_cc_Call = prove
   REWRITE_TAC[STALLOCAUX_comp_rec] THEN
   FIRST_X_ASSUM(MP_TAC o check (stallocaux_is_ev_eq o concl)) THEN
   GEN_REWRITE_TAC (LAND_CONV o LAND_CONV) [STALLOCAUX_ev_clause "stack_Call"] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   REPEAT ((COND_CASES_TAC ORELSE TOP_CASE_TAC) THEN
           ASM_REWRITE_TAC[PAIR_EQ; option_DISTINCT; option_INJ]) THEN
   STALLOCAUX_CC_LEAF_TAC) THENL
@@ -2475,13 +2475,13 @@ let STALLOCAUX_cc_Call = prove
     STRIP_ASSUME_TAC)) THEN
   MAP_EVERY EXISTS_TAC [`ck:num`; `regs1:(num,(A)word_loc)fmap`] THEN ASM_REWRITE_TAC[] THEN
   REWRITE_TAC[STALLOCAUX_ev_clause "stack_Call"] THEN
-  CASE_REWRITE_TAC[] THEN CONV_TAC (stallocaux_norm []) THEN ASM_REWRITE_TAC[ADD_EQ_0] THEN
-  CASE_REWRITE_TAC[] THEN CONV_TAC (stallocaux_norm []) THEN
+  CAKE_REWRITE_TAC[] THEN CONV_TAC (stallocaux_norm []) THEN ASM_REWRITE_TAC[ADD_EQ_0] THEN
+  CAKE_REWRITE_TAC[] THEN CONV_TAC (stallocaux_norm []) THEN
   SUBGOAL_THEN `(stack_state_clock (s:(A,C,FFI)stack_state) + ck) - 1 =
                 (stack_state_clock s - 1) + ck` SUBST1_TAC THENL
    [STALLOCAUX_CLOCK_ARITH_TAC; ALL_TAC] THEN
   RULE_ASSUM_TAC(CONV_RULE (stallocaux_norm [])) THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]];
+  CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]];
     X_GEN_TAC `a:(A)stack_prog#num#num#num` THEN
     STRUCT_CASES_TAC (ISPEC `a:(A)stack_prog#num#num#num` STALLOCAUX_quad_cases) THEN
     X_GEN_TAC `dest:num+num` THEN
@@ -2526,28 +2526,28 @@ let stack_allocProof_comp_correct = prove
      ==>
      ?ck regs1.
        stack_evaluate (FST (stack_alloc_comp n m p),
-         stack_state_use_store_fupd (K T)
-         (stack_state_use_stack_fupd (K T)
-         (stack_state_use_alloc_fupd (K F)
-         (stack_state_clock_fupd (K (stack_state_clock s + ck))
-         (stack_state_regs_fupd (K regs)
-         (stack_state_gc_fun_fupd (K anything)
+         stack_state_use_store_fupd (combin_K T)
+         (stack_state_use_stack_fupd (combin_K T)
+         (stack_state_use_alloc_fupd (combin_K F)
+         (stack_state_clock_fupd (combin_K (stack_state_clock s + ck))
+         (stack_state_regs_fupd (combin_K regs)
+         (stack_state_gc_fun_fupd (combin_K anything)
          (stack_state_compile_oracle_fupd
-            (K ((I ## MAP stack_alloc_prog_comp ## I) o stack_state_compile_oracle s))
-         (stack_state_compile_fupd (K compile_rest)
+            (combin_K ((I ## MAP stack_alloc_prog_comp ## I) o stack_state_compile_oracle s))
+         (stack_state_compile_fupd (combin_K compile_rest)
          (stack_state_code_fupd
-            (K (fromAList (stack_alloc_compile c (toAList (stack_state_code s))))) s))))))))) =
+            (combin_K (fromAList (stack_alloc_compile c (toAList (stack_state_code s))))) s))))))))) =
        (r,
-         stack_state_use_store_fupd (K T)
-         (stack_state_use_stack_fupd (K T)
-         (stack_state_use_alloc_fupd (K F)
-         (stack_state_regs_fupd (K regs1)
-         (stack_state_gc_fun_fupd (K anything)
+         stack_state_use_store_fupd (combin_K T)
+         (stack_state_use_stack_fupd (combin_K T)
+         (stack_state_use_alloc_fupd (combin_K F)
+         (stack_state_regs_fupd (combin_K regs1)
+         (stack_state_gc_fun_fupd (combin_K anything)
          (stack_state_compile_oracle_fupd
-            (K ((I ## MAP stack_alloc_prog_comp ## I) o stack_state_compile_oracle t))
-         (stack_state_compile_fupd (K compile_rest)
+            (combin_K ((I ## MAP stack_alloc_prog_comp ## I) o stack_state_compile_oracle t))
+         (stack_state_compile_fupd (combin_K compile_rest)
          (stack_state_code_fupd
-            (K (fromAList (stack_alloc_compile c (toAList (stack_state_code t))))) t)))))))) /\
+            (combin_K (fromAList (stack_alloc_compile c (toAList (stack_state_code t))))) t)))))))) /\
        stack_state_regs t SUBMAP regs1 /\
        (LENGTH (stack_state_bitmaps t) + LENGTH (buffer_buffer (stack_state_data_buffer t))) +
          buffer_space_left (stack_state_data_buffer t) < dimword (:A) - 1 /\
@@ -2577,23 +2577,23 @@ let stack_allocProof_comp_correct = prove
 (* script (augment_srw_ss); here it is used by name                          *)
 let with_same_regs_lemma = prove
  (`!(s:(A,C,FFI)stack_state) cc oracle anything k c.
-     stack_state_regs_fupd (K (stack_state_regs s))
-     (stack_state_compile_fupd (K cc)
-     (stack_state_compile_oracle_fupd (K oracle)
-     (stack_state_gc_fun_fupd (K anything)
-     (stack_state_use_stack_fupd (K T)
-     (stack_state_use_store_fupd (K T)
-     (stack_state_use_alloc_fupd (K F)
-     (stack_state_clock_fupd (K k)
-     (stack_state_code_fupd (K c) s)))))))) =
-     stack_state_compile_fupd (K cc)
-     (stack_state_compile_oracle_fupd (K oracle)
-     (stack_state_gc_fun_fupd (K anything)
-     (stack_state_use_stack_fupd (K T)
-     (stack_state_use_store_fupd (K T)
-     (stack_state_use_alloc_fupd (K F)
-     (stack_state_clock_fupd (K k)
-     (stack_state_code_fupd (K c) s)))))))`,
+     stack_state_regs_fupd (combin_K (stack_state_regs s))
+     (stack_state_compile_fupd (combin_K cc)
+     (stack_state_compile_oracle_fupd (combin_K oracle)
+     (stack_state_gc_fun_fupd (combin_K anything)
+     (stack_state_use_stack_fupd (combin_K T)
+     (stack_state_use_store_fupd (combin_K T)
+     (stack_state_use_alloc_fupd (combin_K F)
+     (stack_state_clock_fupd (combin_K k)
+     (stack_state_code_fupd (combin_K c) s)))))))) =
+     stack_state_compile_fupd (combin_K cc)
+     (stack_state_compile_oracle_fupd (combin_K oracle)
+     (stack_state_gc_fun_fupd (combin_K anything)
+     (stack_state_use_stack_fupd (combin_K T)
+     (stack_state_use_store_fupd (combin_K T)
+     (stack_state_use_alloc_fupd (combin_K F)
+     (stack_state_clock_fupd (combin_K k)
+     (stack_state_code_fupd (combin_K c) s)))))))`,
   REWRITE_TAC[stack_state_component_equality] THEN SIMP[]);;
 
 (* helpers for compile_semantics.  The proof of HOL4 compile_semantics      *)
@@ -2609,20 +2609,20 @@ let with_same_regs_lemma = prove
 
 let STALLOCAUX_SEM_eval_det = prove
  (`!p (x:(A,C,FFI)stack_state) k1 k2 r1 r2 x1 x2.
-     stack_evaluate (p,stack_state_clock_fupd (K k1) x) = (r1,x1) /\
-     stack_evaluate (p,stack_state_clock_fupd (K k2) x) = (r2,x2) /\
+     stack_evaluate (p,stack_state_clock_fupd (combin_K k1) x) = (r1,x1) /\
+     stack_evaluate (p,stack_state_clock_fupd (combin_K k2) x) = (r2,x2) /\
      ~(r1 = SOME stack_TimeOut) /\ ~(r2 = SOME stack_TimeOut)
      ==> r1 = r2 /\ stack_state_ffi x1 = stack_state_ffi x2`,
   SUBGOAL_THEN
    `!p (x:(A,C,FFI)stack_state) k1 d r1 r2 x1 x2.
-     stack_evaluate (p,stack_state_clock_fupd (K k1) x) = (r1,x1) /\
-     stack_evaluate (p,stack_state_clock_fupd (K (k1 + d)) x) = (r2,x2) /\
+     stack_evaluate (p,stack_state_clock_fupd (combin_K k1) x) = (r1,x1) /\
+     stack_evaluate (p,stack_state_clock_fupd (combin_K (k1 + d)) x) = (r2,x2) /\
      ~(r1 = SOME stack_TimeOut)
      ==> r1 = r2 /\ stack_state_ffi x1 = stack_state_ffi x2`
    ASSUME_TAC THENL
    [REPEAT GEN_TAC THEN STRIP_TAC THEN
     MP_TAC(INST [`d:num`,`extra:num`]
-      (ISPECL [`p:(A)stack_prog`; `stack_state_clock_fupd (K k1) (x:(A,C,FFI)stack_state)`;
+      (ISPECL [`p:(A)stack_prog`; `stack_state_clock_fupd (combin_K k1) (x:(A,C,FFI)stack_state)`;
                `r1:((A)stack_result)option`; `x1:(A,C,FFI)stack_state`]
               stack_evaluate_add_clock)) THEN
     ASM_REWRITE_TAC[] THEN SIMP[] THEN ASM_REWRITE_TAC[PAIR_EQ] THEN
@@ -2635,15 +2635,15 @@ let STALLOCAUX_SEM_eval_det = prove
 
 let STALLOCAUX_SEM_eval_mono_clock = prove
  (`!p (x:(A,C,FFI)stack_state) k1 k2 r1 x1.
-     stack_evaluate (p,stack_state_clock_fupd (K k1) x) = (r1,x1) /\
+     stack_evaluate (p,stack_state_clock_fupd (combin_K k1) x) = (r1,x1) /\
      ~(r1 = SOME stack_TimeOut) /\ k1 <= k2
-     ==> FST (stack_evaluate (p,stack_state_clock_fupd (K k2) x)) = r1 /\
-         stack_state_ffi (SND (stack_evaluate (p,stack_state_clock_fupd (K k2) x))) =
+     ==> FST (stack_evaluate (p,stack_state_clock_fupd (combin_K k2) x)) = r1 /\
+         stack_state_ffi (SND (stack_evaluate (p,stack_state_clock_fupd (combin_K k2) x))) =
          stack_state_ffi x1`,
   REPEAT GEN_TAC THEN REWRITE_TAC[LE_EXISTS] THEN STRIP_TAC THEN
   FIRST_X_ASSUM SUBST_ALL_TAC THEN
   MP_TAC(INST [`d:num`,`extra:num`]
-    (ISPECL [`p:(A)stack_prog`; `stack_state_clock_fupd (K k1) (x:(A,C,FFI)stack_state)`;
+    (ISPECL [`p:(A)stack_prog`; `stack_state_clock_fupd (combin_K k1) (x:(A,C,FFI)stack_state)`;
              `r1:((A)stack_result)option`; `x1:(A,C,FFI)stack_state`]
             stack_evaluate_add_clock)) THEN
   ASM_REWRITE_TAC[] THEN SIMP[]);;
@@ -2651,7 +2651,7 @@ let STALLOCAUX_SEM_eval_mono_clock = prove
 let STALLOCAUX_SEM_sem_ev (x:term) (k:term) =
   vsubst [x,`x:(A,C,FFI)stack_state`; k,`k:num`]
    `stack_evaluate (stack_Call NONE (INL start) NONE:(A)stack_prog,
-                    stack_state_clock_fupd (K k) (x:(A,C,FFI)stack_state))`;;
+                    stack_state_clock_fupd (combin_K k) (x:(A,C,FFI)stack_state))`;;
 
 (* the pair of a run: names r, s1 for stack_evaluate (P,clock_fupd (K k) x) *)
 let STALLOCAUX_SEM_RUN_TAC (x:term) (k:term) (r:term) (x1:term) : tactic =
@@ -2682,27 +2682,27 @@ let STALLOCAUX_SEM_sem_oks (x:term) =
 let STALLOCAUX_SEM_semantics_sim = prove
  (`!start (s:(A,C,FFI)stack_state) (t:(A,C,FFI)stack_state).
      (!k r s1.
-        stack_evaluate (stack_Call NONE (INL start) NONE,stack_state_clock_fupd (K k) s) =
+        stack_evaluate (stack_Call NONE (INL start) NONE,stack_state_clock_fupd (combin_K k) s) =
         (r,s1) /\ ~(r = SOME stack_Error)
         ==> ?ck t1.
               stack_evaluate (stack_Call NONE (INL start) NONE,
-                              stack_state_clock_fupd (K (k + ck)) t) = (r,t1) /\
+                              stack_state_clock_fupd (combin_K (k + ck)) t) = (r,t1) /\
               stack_state_ffi t1 = stack_state_ffi s1) /\
      ~(stack_semantics start s = Fail)
      ==> stack_semantics start t = stack_semantics start s`,
   REPEAT GEN_TAC THEN DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "sim") ASSUME_TAC) THEN
   SUBGOAL_THEN
    `!k. FST (stack_evaluate (stack_Call NONE (INL start) NONE:(A)stack_prog,
-                             stack_state_clock_fupd (K k) (s:(A,C,FFI)stack_state))) =
+                             stack_state_clock_fupd (combin_K k) (s:(A,C,FFI)stack_state))) =
           SOME stack_TimeOut \/
         FST (stack_evaluate (stack_Call NONE (INL start) NONE:(A)stack_prog,
-                             stack_state_clock_fupd (K k) s)) =
+                             stack_state_clock_fupd (combin_K k) s)) =
           SOME (stack_Result (wl_Loc 1 0)) \/
         (?w. FST (stack_evaluate (stack_Call NONE (INL start) NONE:(A)stack_prog,
-                                  stack_state_clock_fupd (K k) s)) =
+                                  stack_state_clock_fupd (combin_K k) s)) =
                SOME (stackSem_Halt (wl_Word w))) \/
         (?f. FST (stack_evaluate (stack_Call NONE (INL start) NONE:(A)stack_prog,
-                                  stack_state_clock_fupd (K k) s)) =
+                                  stack_state_clock_fupd (combin_K k) s)) =
                SOME (stack_FinalFFI f))`
    (LABEL_TAC "oks") THENL
    [UNDISCH_TAC `~(stack_semantics start (s:(A,C,FFI)stack_state) = Fail)` THEN
@@ -2713,10 +2713,10 @@ let STALLOCAUX_SEM_semantics_sim = prove
     ALL_TAC] THEN
   SUBGOAL_THEN
     `!k. FST (stack_evaluate (stack_Call NONE (INL start) NONE:(A)stack_prog,
-                              stack_state_clock_fupd (K k) (s:(A,C,FFI)stack_state))) =
+                              stack_state_clock_fupd (combin_K k) (s:(A,C,FFI)stack_state))) =
          SOME stack_TimeOut
          ==> FST (stack_evaluate (stack_Call NONE (INL start) NONE:(A)stack_prog,
-                                  stack_state_clock_fupd (K k) (t:(A,C,FFI)stack_state))) =
+                                  stack_state_clock_fupd (combin_K k) (t:(A,C,FFI)stack_state))) =
              SOME stack_TimeOut`
     (LABEL_TAC "tmo") THENL
    [GEN_TAC THEN
@@ -2741,10 +2741,10 @@ let STALLOCAUX_SEM_semantics_sim = prove
   SUBGOAL_THEN
     `!k r (t1:(A,C,FFI)stack_state).
        stack_evaluate (stack_Call NONE (INL start) NONE:(A)stack_prog,
-                       stack_state_clock_fupd (K k) t) = (r,t1) /\
+                       stack_state_clock_fupd (combin_K k) t) = (r,t1) /\
        ~(r = SOME stack_TimeOut)
        ==> ?s1. stack_evaluate (stack_Call NONE (INL start) NONE:(A)stack_prog,
-                                stack_state_clock_fupd (K k) (s:(A,C,FFI)stack_state)) =
+                                stack_state_clock_fupd (combin_K k) (s:(A,C,FFI)stack_state)) =
                 (r,s1) /\ stack_state_ffi s1 = stack_state_ffi t1`
     (LABEL_TAC "back") THENL
    [REPEAT GEN_TAC THEN STRIP_TAC THEN
@@ -2817,7 +2817,7 @@ let STALLOCAUX_SEM_semantics_sim = prove
    REWRITE_TAC[BASICAUX_some_NONE] THEN DISCH_TAC THEN AP_TERM_TAC THEN
    SUBGOAL_THEN
      `!k. FST (stack_evaluate (stack_Call NONE (INL start) NONE:(A)stack_prog,
-                               stack_state_clock_fupd (K k) (s:(A,C,FFI)stack_state))) =
+                               stack_state_clock_fupd (combin_K k) (s:(A,C,FFI)stack_state))) =
           SOME stack_TimeOut`
      (LABEL_TAC "div") THENL
     [GEN_TAC THEN
@@ -2846,7 +2846,7 @@ let STALLOCAUX_SEM_semantics_sim = prove
                      (ffi_state_io_events (stack_state_ffi (s1:(A,C,FFI)stack_state)))` THEN
        MAP_EVERY EXISTS_TAC [`k:num`; `s1:(A,C,FFI)stack_state`;
                              `stack_FinalFFI f:(A)stack_result`; `FFI_outcome f`]] THEN
-     ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[];
+     ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[];
      ALL_TAC] THEN
    MATCH_MP_TAC IMP_build_lprefix_lub_EQ THEN REWRITE_TAC[STACKPROPSAUX_io_chain] THEN
    REWRITE_TAC[lprefix_rel_def; FORALL_IN_IMAGE; EXISTS_IN_IMAGE; IN_UNIV] THEN
@@ -2874,11 +2874,11 @@ let STALLOCAUX_SEM_comp_Call = prove
  (`!n m start.
      FST (stack_alloc_comp n m (stack_Call NONE (INL start) NONE:(A)stack_prog)) =
      stack_Call NONE (INL start) NONE`,
-  REPEAT GEN_TAC THEN ONCE_REWRITE_TAC[stack_alloc_comp_def] THEN CASE_REWRITE_TAC[FST]);;
+  REPEAT GEN_TAC THEN ONCE_REWRITE_TAC[stack_alloc_comp_def] THEN CAKE_REWRITE_TAC[FST]);;
 
 let STALLOCAUX_SEM_alloc_arg_Call = prove
  (`!start. alloc_arg (stack_Call NONE (INL start) NONE:(A)stack_prog)`,
-  REWRITE_TAC[alloc_arg_def] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[alloc_arg_def] THEN CAKE_REWRITE_TAC[]);;
 
 (* the runs of the semantics: comp_correct for stack_Call NONE (INL start)  *)
 (* NONE at clock k, with regs := s.regs (HOL4 comp_correct_thm)              *)
@@ -2900,25 +2900,25 @@ let STALLOCAUX_SEM_run = prove
      LENGTH (stack_state_stack s) * (dimindex (:A) DIV 8) < dimword (:A) /\
      stack_state_use_stack s /\ stack_state_use_alloc s /\
      stack_state_compile s = (\c. compile_rest c o MAP stack_alloc_prog_comp) /\
-     stack_evaluate (stack_Call NONE (INL start) NONE,stack_state_clock_fupd (K k) s) =
+     stack_evaluate (stack_Call NONE (INL start) NONE,stack_state_clock_fupd (combin_K k) s) =
        (r,s1) /\
      ~(r = SOME stack_Error)
      ==> ?ck t1.
            stack_evaluate (stack_Call NONE (INL start) NONE,
-             stack_state_clock_fupd (K (k + ck))
+             stack_state_clock_fupd (combin_K (k + ck))
              (stack_state_code_fupd
-                (K (fromAList (stack_alloc_compile c (toAList (stack_state_code s)))))
-             (stack_state_gc_fun_fupd (K anything)
-             (stack_state_compile_fupd (K compile_rest)
+                (combin_K (fromAList (stack_alloc_compile c (toAList (stack_state_code s)))))
+             (stack_state_gc_fun_fupd (combin_K anything)
+             (stack_state_compile_fupd (combin_K compile_rest)
              (stack_state_compile_oracle_fupd
-                (K ((I ## MAP stack_alloc_prog_comp ## I) o stack_state_compile_oracle s))
-             (stack_state_use_store_fupd (K T)
-             (stack_state_use_stack_fupd (K T)
-             (stack_state_use_alloc_fupd (K F) s)))))))) = (r,t1) /\
+                (combin_K ((I ## MAP stack_alloc_prog_comp ## I) o stack_state_compile_oracle s))
+             (stack_state_use_store_fupd (combin_K T)
+             (stack_state_use_stack_fupd (combin_K T)
+             (stack_state_use_alloc_fupd (combin_K F) s)))))))) = (r,t1) /\
            stack_state_ffi t1 = stack_state_ffi s1`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   MP_TAC(ISPECL [`stack_Call NONE (INL start) NONE:(A)stack_prog`;
-                 `stack_state_clock_fupd (K k) (s:(A,C,FFI)stack_state)`;
+                 `stack_state_clock_fupd (combin_K k) (s:(A,C,FFI)stack_state)`;
                  `r:((A)stack_result)option`; `s1:(A,C,FFI)stack_state`;
                  `0:num`; `0:num`; `c:data_to_word_config`;
                  `stack_state_regs (s:(A,C,FFI)stack_state)`;
@@ -2954,14 +2954,14 @@ let stack_allocProof_compile_semantics = prove
      ~(stack_semantics start s = Fail)
      ==> stack_semantics start
            (stack_state_code_fupd
-              (K (fromAList (stack_alloc_compile c (toAList (stack_state_code s)))))
-           (stack_state_gc_fun_fupd (K anything)
-           (stack_state_compile_fupd (K compile_rest)
+              (combin_K (fromAList (stack_alloc_compile c (toAList (stack_state_code s)))))
+           (stack_state_gc_fun_fupd (combin_K anything)
+           (stack_state_compile_fupd (combin_K compile_rest)
            (stack_state_compile_oracle_fupd
-              (K ((I ## MAP stack_alloc_prog_comp ## I) o stack_state_compile_oracle s))
-           (stack_state_use_store_fupd (K T)
-           (stack_state_use_stack_fupd (K T)
-           (stack_state_use_alloc_fupd (K F) s))))))) =
+              (combin_K ((I ## MAP stack_alloc_prog_comp ## I) o stack_state_compile_oracle s))
+           (stack_state_use_store_fupd (combin_K T)
+           (stack_state_use_stack_fupd (combin_K T)
+           (stack_state_use_alloc_fupd (combin_K F) s))))))) =
          stack_semantics start s`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   MATCH_MP_TAC STALLOCAUX_SEM_semantics_sim THEN ASM_REWRITE_TAC[] THEN
@@ -2971,13 +2971,13 @@ let stack_allocProof_compile_semantics = prove
 (* first field outermost; the bound config of the compile lambda is cfg)     *)
 let stack_allocProof_make_init_def = cake_def
   `stack_allocProof_make_init (c:data_to_word_config) code oracle (s:(A,C,FFI)stack_state) =
-     stack_state_code_fupd (K code)
-      (stack_state_use_alloc_fupd (K T)
-       (stack_state_use_stack_fupd (K T)
-        (stack_state_gc_fun_fupd (K (word_gc_fun c))
+     stack_state_code_fupd (combin_K code)
+      (stack_state_use_alloc_fupd (combin_K T)
+       (stack_state_use_stack_fupd (combin_K T)
+        (stack_state_gc_fun_fupd (combin_K (word_gc_fun c))
          (stack_state_compile_fupd
-            (K (\cfg. stack_state_compile s cfg o MAP stack_alloc_prog_comp))
-          (stack_state_compile_oracle_fupd (K oracle) s)))))`;;
+            (combin_K (\cfg. stack_state_compile s cfg o MAP stack_alloc_prog_comp))
+          (stack_state_compile_oracle_fupd (combin_K oracle) s)))))`;;
 
 (* HOL4 line 6075 (HOL4's paired lambda is HOL Light's \(n,p). ...) *)
 let prog_comp_lambda = prove
@@ -3039,7 +3039,7 @@ let next_lab_EQ_MAX = prove
     (fun th -> MESON_TAC[th]) THEN
   MATCH_MP_TAC next_lab_ind THEN REPEAT GEN_TAC THEN CASES_ON `p:(A)stack_prog` THEN
   CONV_TAC(RAND_CONV(ONCE_REWRITE_CONV[next_lab_def])) THEN
-  CASE_REWRITE_TAC[] THEN EVERY_CASE_TAC THEN
+  CAKE_REWRITE_TAC[] THEN EVERY_CASE_TAC THEN
   TRY (DISCH_THEN (fun th ->
     MAP_EVERY (fun c -> ONCE_REWRITE_TAC[c]) (CONJUNCTS (CAKE_SIMP_RULE [] th)))) THEN
   GEN_TAC THEN ARITH_TAC);;
@@ -3066,7 +3066,7 @@ let next_lab_thm = prove
      | _ -> 2`,
   GEN_TAC THEN CASES_ON `p:(A)stack_prog` THEN
   CONV_TAC(LAND_CONV(ONCE_REWRITE_CONV[next_lab_def])) THEN
-  CASE_REWRITE_TAC[] THEN EVERY_CASE_TAC THEN
+  CAKE_REWRITE_TAC[] THEN EVERY_CASE_TAC THEN
   ONCE_REWRITE_TAC[next_lab_EQ_MAX] THEN ONCE_REWRITE_TAC[next_lab_EQ_MAX] THEN
   ONCE_REWRITE_TAC[next_lab_EQ_MAX] THEN ARITH_TAC);;
 
@@ -3075,9 +3075,9 @@ let extract_labels_next_lab = prove
  (`!(p:(A)stack_prog) (aux:num) e.
      MEM e (stack_extract_labels p) ==> SND e < next_lab p 2`,
   MATCH_MP_TAC next_lab_ind THEN REPEAT GEN_TAC THEN CASES_ON `p:(A)stack_prog` THEN
-  DISCH_THEN (CAKE_ASSUME_TAC o CAKE_SIMP_RULE[] o CASE_REWRITE_RULE[]) THEN
+  DISCH_THEN (CAKE_ASSUME_TAC o CAKE_SIMP_RULE[] o CAKE_REWRITE_RULE[]) THEN
   GEN_TAC THEN ONCE_REWRITE_TAC[next_lab_thm] THEN
-  CASE_REWRITE_TAC[stack_extract_labels_def; LET_DEF; LET_END_DEF] THEN
+  CAKE_REWRITE_TAC[stack_extract_labels_def; LET_DEF; LET_END_DEF] THEN
   EVERY_CASE_TAC THEN RULE_ASSUM_TAC(CAKE_SIMP_RULE[]) THEN REWRITE_TAC[MEM; MEM_APPEND] THEN
   STRIP_TAC THEN ASM_REWRITE_TAC[] THEN RES_TAC THEN ASM_ARITH_TAC);;
 
@@ -3241,11 +3241,11 @@ let stack_alloc_lab_pres = prove
                 ==> MEM lab (stack_extract_labels p) \/ nl <= SND lab /\ SND lab < nl') /\
          nl <= nl'`,
   MATCH_MP_TAC stack_alloc_comp_ind THEN REPEAT GEN_TAC THEN CASES_ON `p:(A)stack_prog` THEN
-  DISCH_THEN (CAKE_ASSUME_TAC o CAKE_SIMP_RULE[] o CASE_REWRITE_RULE[]) THEN GEN_TAC THEN
+  DISCH_THEN (CAKE_ASSUME_TAC o CAKE_SIMP_RULE[] o CAKE_REWRITE_RULE[]) THEN GEN_TAC THEN
   ONCE_REWRITE_TAC[stack_alloc_comp_def] THEN ONCE_REWRITE_TAC[next_lab_thm] THEN
-  CASE_REWRITE_TAC[stack_extract_labels_def; LET_DEF; LET_END_DEF] THEN
+  CAKE_REWRITE_TAC[stack_extract_labels_def; LET_DEF; LET_END_DEF] THEN
   EVERY_CASE_TAC THEN REPEAT (CHANGED_TAC STTAILAUX_COMP_EQ_TAC) THEN
-  CASE_REWRITE_TAC[stack_extract_labels_def; LET_DEF; LET_END_DEF] THEN
+  CAKE_REWRITE_TAC[stack_extract_labels_def; LET_DEF; LET_END_DEF] THEN
   FIRST (map (fun t -> t THEN NO_TAC)
    [SIMP_NOASM[APPEND; ALL; ALL_DISTINCT; MEM] THEN ARITH_TAC;
     FIRST_ASSUM ACCEPT_TAC;
@@ -3266,11 +3266,11 @@ let stack_alloc_comp_stack_asm_name = prove
      ==> let (p',m') = stack_alloc_comp n m p in
          stack_asm_name c p' /\ stack_asm_remove c p'`,
   MATCH_MP_TAC stack_alloc_comp_ind THEN REPEAT GEN_TAC THEN CASES_ON `p:(A)stack_prog` THEN
-  DISCH_THEN (CAKE_ASSUME_TAC o CAKE_SIMP_RULE[] o CASE_REWRITE_RULE[]) THEN GEN_TAC THEN
+  DISCH_THEN (CAKE_ASSUME_TAC o CAKE_SIMP_RULE[] o CAKE_REWRITE_RULE[]) THEN GEN_TAC THEN
   ONCE_REWRITE_TAC[stack_alloc_comp_def] THEN
-  CASE_REWRITE_TAC[stack_asm_name_def; stack_asm_remove_def] THEN
+  CAKE_REWRITE_TAC[stack_asm_name_def; stack_asm_remove_def] THEN
   EVERY_CASE_TAC THEN REPEAT (CHANGED_TAC STTAILAUX_COMP_EQ_TAC) THEN
-  CASE_REWRITE_TAC[stack_asm_name_def; stack_asm_remove_def] THEN
+  CAKE_REWRITE_TAC[stack_asm_name_def; stack_asm_remove_def] THEN
   ASM_MESON_TAC[]);;
 
 (* the definitions that make up the gc code of word_gc_code, unfolded where *)
@@ -3339,7 +3339,7 @@ let STTAILAUX_stubs_asm = prove
   REWRITE_TAC(IN_INSERT :: NOT_IN_EMPTY :: stack_asm_name_def :: stack_asm_remove_def ::
               inst_name_def :: arith_name_def :: addr_name_def :: reg_imm_name_def ::
               STTAILAUX_gc_code_defs) THEN
-  CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]);;
 
 (* HOL4 line 6239; HOL4: stack_alloc_stack_asm_convs *)
 (* HOL4 comment on conf_ok (:A) conf: conf_ok is too strong, but we already *)
@@ -3369,7 +3369,7 @@ let stack_allocProof_stack_alloc_stack_asm_convs = prove
   (ANTS_TAC THENL [ASM_MESON_TAC[]; ALL_TAC]) THEN
   SPEC_TAC(`stack_alloc_comp p1 (next_lab (p2:(A)stack_prog) 2) p2`,
            `q:(A)stack_prog#num`) THEN
-  REWRITE_TAC[FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[] THEN SIMP_TAC[FST]);;
+  REWRITE_TAC[FORALL_PAIR_THM] THEN CAKE_REWRITE_TAC[] THEN SIMP_TAC[FST]);;
 
 (* the comp part of stack_alloc_reg_bound (HOL4 proves it inside the proof *)
 (* by comp_ind)                                                             *)
@@ -3378,11 +3378,11 @@ let STTAILAUX_comp_reg_bound = prove
      10 <= sp /\ reg_bound p sp ==> reg_bound (FST (stack_alloc_comp n m p)) sp`,
   GEN_TAC THEN MATCH_MP_TAC stack_alloc_comp_ind THEN REPEAT GEN_TAC THEN
   CASES_ON `p:(A)stack_prog` THEN
-  DISCH_THEN (CAKE_ASSUME_TAC o CAKE_SIMP_RULE[] o CASE_REWRITE_RULE[]) THEN
+  DISCH_THEN (CAKE_ASSUME_TAC o CAKE_SIMP_RULE[] o CAKE_REWRITE_RULE[]) THEN
   ONCE_REWRITE_TAC[stack_alloc_comp_def] THEN
-  CASE_REWRITE_TAC[reg_bound_def] THEN
+  CAKE_REWRITE_TAC[reg_bound_def] THEN
   EVERY_CASE_TAC THEN REPEAT (CHANGED_TAC STTAILAUX_COMP_EQ_TAC) THEN
-  CASE_REWRITE_TAC[reg_bound_def; FST] THEN
+  CAKE_REWRITE_TAC[reg_bound_def; FST] THEN
   ASM_MESON_TAC[ARITH_RULE `!sp. 10 <= sp ==> 0 < sp`]);;
 
 (* HOL4 line 6270 *)
@@ -3398,7 +3398,7 @@ let stack_alloc_reg_bound = prove
     REWRITE_TAC[word_gc_code_def] THEN TOP_CASE_TAC THEN
     REWRITE_TAC[word_gc_partial_or_full_def] THEN TRY TOP_CASE_TAC THEN
     REWRITE_TAC(reg_bound_def :: reg_bound_inst_def :: STTAILAUX_gc_code_defs) THEN
-    CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[];
+    CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[];
     UNDISCH_TAC `ALL (\p. reg_bound p sp) (MAP SND (prog1:(num#(A)stack_prog)list))` THEN
     SPEC_TAC(`prog1:(num#(A)stack_prog)list`,`prog1:(num#(A)stack_prog)list`) THEN
     LIST_INDUCT_TAC THEN REWRITE_TAC[MAP; ALL] THEN
@@ -3412,11 +3412,11 @@ let STTAILAUX_comp_call_args = prove
      call_args p 1 2 3 4 0 ==> call_args (FST (stack_alloc_comp n m p)) 1 2 3 4 0`,
   MATCH_MP_TAC stack_alloc_comp_ind THEN REPEAT GEN_TAC THEN
   CASES_ON `p:(A)stack_prog` THEN
-  DISCH_THEN (CAKE_ASSUME_TAC o CAKE_SIMP_RULE[] o CASE_REWRITE_RULE[]) THEN
+  DISCH_THEN (CAKE_ASSUME_TAC o CAKE_SIMP_RULE[] o CAKE_REWRITE_RULE[]) THEN
   ONCE_REWRITE_TAC[stack_alloc_comp_def] THEN
-  CASE_REWRITE_TAC[call_args_def] THEN
+  CAKE_REWRITE_TAC[call_args_def] THEN
   EVERY_CASE_TAC THEN REPEAT (CHANGED_TAC STTAILAUX_COMP_EQ_TAC) THEN
-  CASE_REWRITE_TAC[call_args_def; FST] THEN
+  CAKE_REWRITE_TAC[call_args_def; FST] THEN
   ASM_MESON_TAC[]);;
 
 (* HOL4 line 6304; HOL4: stack_alloc_call_args *)
@@ -3430,7 +3430,7 @@ let stack_allocProof_stack_alloc_call_args = prove
     REWRITE_TAC[word_gc_code_def] THEN TOP_CASE_TAC THEN
     REWRITE_TAC[word_gc_partial_or_full_def] THEN TRY TOP_CASE_TAC THEN
     REWRITE_TAC(call_args_def :: STTAILAUX_gc_code_defs) THEN
-    CASE_REWRITE_TAC[];
+    CAKE_REWRITE_TAC[];
     UNDISCH_TAC
       `ALL (\p. call_args p 1 2 3 4 0) (MAP SND (prog1:(num#(A)stack_prog)list))` THEN
     SPEC_TAC(`prog1:(num#(A)stack_prog)list`,`prog1:(num#(A)stack_prog)list`) THEN
@@ -3444,8 +3444,8 @@ let stack_allocProof_stack_alloc_call_args = prove
 let compile_has_fp_ops = prove
  (`!dconf b1 b2 (code:(num#(A)stack_prog)list).
      stack_alloc_compile
-       (data_to_word_config_has_fp_ops_fupd (K b1)
-         (data_to_word_config_has_fp_tern_fupd (K b2) dconf)) code =
+       (data_to_word_config_has_fp_ops_fupd (combin_K b1)
+         (data_to_word_config_has_fp_tern_fupd (combin_K b2) dconf)) code =
      stack_alloc_compile dconf code`,
   REPEAT GEN_TAC THEN REWRITE_TAC[stack_alloc_compile_def; stack_alloc_stubs_def] THEN
   REWRITE_TAC((record_info "data_to_word_config").ri_accfupds :: word_gc_code_def ::

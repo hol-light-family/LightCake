@@ -141,8 +141,17 @@ let fromChar_thm = prove
    (fun th -> SIMP_TAC[th; fromChar_def; ARITH; LET_DEF; LET_END_DEF]) THENL
    [MESON_TAC[ORD_11; ORD_CHR_RWT]; ALL_TAC] THEN
   SPEC_TAC (`ORD char`,`n:num`) THEN GEN_TAC THEN
-  REPEAT COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN CONV_TAC NUM_REDUCE_CONV THEN
-  REWRITE_TAC[injectivity "option"; distinctness "option"] THEN ASM_ARITH_TAC);;
+  ASM_CASES_TAC `48 <= n /\ n <= 57` THEN ASM_REWRITE_TAC[] THENL
+   [FIRST_X_ASSUM (DISJ_CASES_THEN2 SUBST1_TAC (DISJ_CASES_THEN2 SUBST1_TAC
+      (DISJ_CASES_THEN2 SUBST1_TAC (DISJ_CASES_THEN2 SUBST1_TAC (DISJ_CASES_THEN2 SUBST1_TAC
+      (DISJ_CASES_THEN2 SUBST1_TAC (DISJ_CASES_THEN2 SUBST1_TAC (DISJ_CASES_THEN2 SUBST1_TAC
+      (DISJ_CASES_THEN2 SUBST1_TAC SUBST1_TAC)))))))) o
+      MATCH_MP (ARITH_RULE `48 <= n /\ n <= 57 ==> n = 48 \/ n = 49 \/ n = 50 \/ n = 51 \/
+                n = 52 \/ n = 53 \/ n = 54 \/ n = 55 \/ n = 56 \/ n = 57`)) THEN
+    CONV_TAC NUM_REDUCE_CONV;
+    SUBGOAL_THEN `~(n = 48) /\ ~(n = 49) /\ ~(n = 50) /\ ~(n = 51) /\ ~(n = 52) /\
+                  ~(n = 53) /\ ~(n = 54) /\ ~(n = 55) /\ ~(n = 56) /\ ~(n = 57)`
+      (fun th -> REWRITE_TAC[th]) THEN ASM_ARITH_TAC]);;
 
 let _ = translate fromChar_thm;;
 let _ = translate fromChars_range_def;;

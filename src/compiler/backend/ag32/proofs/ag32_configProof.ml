@@ -65,7 +65,7 @@ let AG32AUX_STORE_POS = prove
   SPEC_TAC(`INDEX_FIND 0 (\n:store_name. n = s) stack_remove_store_list`,
            `r:(num#store_name)option`) THEN
   MATCH_MP_TAC option_INDUCT THEN REWRITE_TAC[FORALL_PAIR_THM] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[option_INJ; PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[option_INJ; PAIR_EQ] THEN
   MESON_TAC[ARITH_RULE `0 <= 48`; ARITH_RULE `a + 0 < 48 ==> a + 1 <= 48`; ADD_CLAUSES]);;
 
 let AG32AUX_STORE_OFFSET = prove
@@ -95,7 +95,7 @@ let ag32_machine_config_ok = prove
   REWRITE_TAC[mc_conf_ok_def; is_ag32_machine_config_def] THEN REPEAT STRIP_TAC THEN
   ASM_REWRITE_TAC[ag32_encoder_correct; AG32AUX_TARGET_FIELDS; reg_ok_def; ag32_config;
                   good_dimindex_def; DIMINDEX_32; MEM] THEN
-  CASE_REWRITE_TAC[] THEN CONV_TAC NUM_REDUCE_CONV THEN
+  CAKE_REWRITE_TAC[] THEN CONV_TAC NUM_REDUCE_CONV THEN
   MP_TAC ag32_target_ok THEN SIMP[target_ok_def; AG32AUX_TARGET_FIELDS]);;
 
 let ag32_init_ok = prove
@@ -143,7 +143,7 @@ let get_shmem_info_LENGTH = prove
     then DISCH_TAC THEN
          SUBGOAL_THEN `?name nb. get_memop_info m = (name,nb:byte)` STRIP_ASSUME_TAC THENL
           [MESON_TAC[PAIR]; ALL_TAC] THEN
-         ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+         ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
          FIRST_X_ASSUM(MP_TAC o SPECL [`name:shmem_op`; `nb:byte`]) THEN ASM_REWRITE_TAC[] THEN
          REWRITE_TAC[LENGTH_APPEND; LENGTH] THEN REPEAT STRIP_TAC THEN
          FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[]
@@ -204,7 +204,7 @@ let compile_imp_ffi_names = prove
   FIRST_X_ASSUM(X_CHOOSE_TAC `q:((A)sec)list` o MATCH_MP AG32AUX_COMPILE_LAB) THEN
   POP_ASSUM MP_TAC THEN
   REWRITE_TAC[lab_to_target_compile_def; compile_lab_def] THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN CAKE_REWRITE_TAC[] THEN
   DISCH_TAC THEN GVS(all_case_eqs()) THEN
   FIRST_X_ASSUM(fun th -> if is_eq(concl th) &&
       (try fst(dest_const(rator(rhs(concl th)))) = "backend_config_lab_conf"

@@ -608,6 +608,9 @@ let cake_preterm_to_term (src:string) venv ptm =
   if !cake_parse_check then cake_parse_check_both src venv ptm
   else cake_term_of_preterm (cake_retypecheck venv ptm);;
 
+(* Replaces HOL Light's parse_term (parser.ml), which every quotation calls: *)
+(* the same terms, made with the kit's typechecker and constant tables       *)
+(* (cake_retypecheck, cake_term_of_preterm), each wildcard _ its own variable *)
 let parse_term s =
   let ptm,l = (parse_preterm o flat o map cake_wild_tokens o lex o explode) s in
   if l = [] then cake_preterm_to_term s [] ptm

@@ -44,7 +44,7 @@ let _ = translate I_THM;;
 next_ml_names := ["flip"];;
 let _ = translate C_DEF;;
 next_ml_names := ["const"];;
-let _ = translate K_DEF;;
+let _ = translate combin_K_DEF;;
 let _ = translate UPDATE_DEF;;
 
 (* arithmetic *)

@@ -27,10 +27,10 @@ type_invention_error := true;;
 let SEMPROPSAUX_evaluate_prog_with_clock = prove
  (`!(st:(FFI)state) env k (prog:dec list).
      evaluate_prog_with_clock st env k prog =
-     (state_ffi (FST (evaluate_decs (state_clock_fupd (K k) st) env prog)),
-      SND (evaluate_decs (state_clock_fupd (K k) st) env prog))`,
+     (state_ffi (FST (evaluate_decs (state_clock_fupd (combin_K k) st) env prog)),
+      SND (evaluate_decs (state_clock_fupd (combin_K k) st) env prog))`,
   REPEAT GEN_TAC THEN REWRITE_TAC[evaluate_prog_with_clock_def] THEN
-  SPEC_TAC(`evaluate_decs (state_clock_fupd (K k) (st:(FFI)state)) env prog`,
+  SPEC_TAC(`evaluate_decs (state_clock_fupd (combin_K k) (st:(FFI)state)) env prog`,
            `q:(FFI)state#(v sem_env,v)result`) THEN
   REWRITE_TAC[FORALL_PAIR_THM; pair_CASE]);;
 
@@ -113,7 +113,7 @@ let semantics_prog_total = prove
 
 (* HOL4 [local] *)
 let semanticsProps_with_clock_ffi = prove
- (`state_ffi (state_clock_fupd (K x) (s:(FFI)state)) = state_ffi s`,
+ (`state_ffi (state_clock_fupd (combin_K x) (s:(FFI)state)) = state_ffi s`,
   REWRITE_TAC[state_INFO.ri_accfupds]);;
 
 (* the parts of semantics_prog_deterministic (HOL4's tac1 and tac2)        *)
@@ -125,11 +125,11 @@ let SEMPROPSAUX_prog_clock_determ = prove
      ~(r1 = Rerr (Rabort Rtimeout_error)) /\ ~(r2 = Rerr (Rabort Rtimeout_error))
      ==> ffi1 = ffi2 /\ r1 = r2`,
   REPEAT GEN_TAC THEN REWRITE_TAC[evaluate_prog_with_clock_def] THEN
-  MP_TAC(ISPEC `evaluate_decs (state_clock_fupd (K k1) (st:(FFI)state)) env p`
+  MP_TAC(ISPEC `evaluate_decs (state_clock_fupd (combin_K k1) (st:(FFI)state)) env p`
     PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `s1:(FFI)state`
     (X_CHOOSE_THEN `q1:(v sem_env,v)result` ASSUME_TAC)) THEN
-  MP_TAC(ISPEC `evaluate_decs (state_clock_fupd (K k2) (st:(FFI)state)) env p`
+  MP_TAC(ISPEC `evaluate_decs (state_clock_fupd (combin_K k2) (st:(FFI)state)) env p`
     PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `s2:(FFI)state`
     (X_CHOOSE_THEN `q2:(v sem_env,v)result` ASSUME_TAC)) THEN
@@ -251,9 +251,9 @@ let state_invariant_def = cake_def
 
 (* HOL4 [local] *)
 let clock_lemmas = prove
- (`state_clock (state_clock_fupd (K c) (x:(FFI)state)) = c /\
-   state_clock_fupd (K d) (state_clock_fupd (K c) x) = state_clock_fupd (K d) x /\
-   state_clock_fupd (K (state_clock x)) x = x`,
+ (`state_clock (state_clock_fupd (combin_K c) (x:(FFI)state)) = c /\
+   state_clock_fupd (combin_K d) (state_clock_fupd (combin_K c) x) = state_clock_fupd (combin_K d) x /\
+   state_clock_fupd (combin_K (state_clock x)) x = x`,
   REWRITE_TAC[state_INFO.ri_accfupds; state_INFO.ri_fupdfupds; K_o_THM; K_THM] THEN
   REWRITE_TAC[state_component_equality; state_INFO.ri_accfupds; K_THM]);;
 

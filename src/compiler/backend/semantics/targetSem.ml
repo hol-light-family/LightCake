@@ -158,7 +158,7 @@ let target_evaluate_def = cake_def_wf
               (machine_config_prog_addresses mc) then
            let ms1 = target_next (machine_config_target mc) ms in
            let (ms2,new_oracle) = apply_oracle (machine_config_next_interfer mc) ms1 in
-           let mc = machine_config_next_interfer_fupd (K new_oracle) mc in
+           let mc = machine_config_next_interfer_fupd (combin_K new_oracle) mc in
            if ALL (target_state_ok (machine_config_target mc)) [ms; ms1; ms2] /\
               (!x. ~(x IN machine_config_prog_addresses mc) ==>
                    target_get_byte (machine_config_target mc) ms1 x =
@@ -177,7 +177,7 @@ let target_evaluate_def = cake_def_wf
              (target_get_reg (machine_config_target mc) ms (machine_config_ptr_reg mc),
               target_get_reg (machine_config_target mc) ms (machine_config_len_reg mc),
               ms) in
-         let mc = machine_config_ccache_interfer_fupd (K new_oracle) mc in
+         let mc = machine_config_ccache_interfer_fupd (combin_K new_oracle) mc in
          target_evaluate mc ffi (k - 1) ms1
        else
          match find_index (target_get_pc (machine_config_target mc) ms)
@@ -213,7 +213,7 @@ let target_evaluate_def = cake_def_wf
                                            apply_oracle (machine_config_ffi_interfer mc)
                                              (ffi_index,new_bytes,ms) in
                                          let mc = machine_config_ffi_interfer_fupd
-                                                    (K new_oracle) mc in
+                                                    (combin_K new_oracle) mc in
                                          target_evaluate mc new_ffi (k - 1) ms1)
                                   else (target_Error,ms,ffi)))
                         | MappedWrite ->
@@ -245,7 +245,7 @@ let target_evaluate_def = cake_def_wf
                                            apply_oracle (machine_config_ffi_interfer mc)
                                              (ffi_index,new_bytes,ms) in
                                          let mc = machine_config_ffi_interfer_fupd
-                                                    (K new_oracle) mc in
+                                                    (combin_K new_oracle) mc in
                                          target_evaluate mc new_ffi (k - 1) ms1)
                                   else (target_Error,ms,ffi)))))
               | ExtCall _ ->
@@ -263,7 +263,7 @@ let target_evaluate_def = cake_def_wf
                                    apply_oracle (machine_config_ffi_interfer mc)
                                      (ffi_index,new_bytes,ms) in
                                  let mc = machine_config_ffi_interfer_fupd
-                                            (K new_oracle) mc in
+                                            (combin_K new_oracle) mc in
                                  target_evaluate mc new_ffi (k - 1) ms1)
                         | _ -> (target_Error,ms,ffi))))`;;
 
@@ -377,7 +377,7 @@ let ffi_interfer_ok_def = cake_def
           new_bytes = bytes2) /\
          target_state_rel (machine_config_target mc_conf)
            (asm_state_pc_fupd
-              (K (word_add (word_neg (word ((3 + index) * ffi_offset))) pc)) t1)
+              (combin_K (word_add (word_neg (word ((3 + index) * ffi_offset))) pc)) t1)
            ms2 /\
          alignment_aligned
            (asm_config_code_alignment (target_config (machine_config_target mc_conf)))
@@ -410,21 +410,21 @@ let ffi_interfer_ok_def = cake_def
         (i <= index /\
          target_state_rel (machine_config_target mc_conf)
            (asm_state_pc_fupd
-              (K (EL index (machine_config_ffi_entry_pcs mc_conf))) t1)
+              (combin_K (EL index (machine_config_ffi_entry_pcs mc_conf))) t1)
            ms2 ==>
          (?info. ALOOKUP (machine_config_mmio_info mc_conf) index = SOME info /\
                  (EL index (machine_config_ffi_names mc_conf) = SharedMem MappedRead ==>
                   !new_bytes.
                     target_state_rel (machine_config_target mc_conf)
-                      (asm_state_pc_fupd (K (SND (SND (SND info))))
+                      (asm_state_pc_fupd (combin_K (SND (SND (SND info))))
                          (asm_state_regs_fupd
-                            (K (\n. if n = FST (SND (SND info))
+                            (combin_K (\n. if n = FST (SND (SND info))
                                     then word_of_bytes F (word 0) new_bytes
                                     else asm_state_regs t1 n)) t1))
                       (machine_config_ffi_interfer mc_conf k (index,new_bytes,ms2))) /\
                  (EL index (machine_config_ffi_names mc_conf) = SharedMem MappedWrite ==>
                   target_state_rel (machine_config_target mc_conf)
-                    (asm_state_pc_fupd (K (SND (SND (SND info)))) t1)
+                    (asm_state_pc_fupd (combin_K (SND (SND (SND info)))) t1)
                     (machine_config_ffi_interfer mc_conf k
                        (index,new_bytes,ms2))))))`;;
 
@@ -436,7 +436,7 @@ let ccache_interfer_ok_def = cake_def
   `ccache_interfer_ok pc (mc_conf:(A,B,C)machine_config) <=>
      (!ms2 t1 k a1 a2.
         target_state_rel (machine_config_target mc_conf)
-          (asm_state_pc_fupd (K (word_add (word_neg (word (2 * ffi_offset))) pc)) t1)
+          (asm_state_pc_fupd (combin_K (word_add (word_neg (word (2 * ffi_offset))) pc)) t1)
           ms2 /\
         alignment_aligned
           (asm_config_code_alignment (target_config (machine_config_target mc_conf)))
@@ -472,7 +472,7 @@ let ccache_interfer_ok_def = cake_def
 let post_ffi_asm_def = cake_def
   `post_ffi_asm (mc_conf:(A,B,C)machine_config) (t1:(A)asm_state) new_bytes (ms':B) =
      asm_state_regs_fupd
-       (K (\a. if MEM a (machine_config_callee_saved_regs mc_conf) \/
+       (combin_K (\a. if MEM a (machine_config_callee_saved_regs mc_conf) \/
                   ~(a < asm_config_reg_count
                           (target_config (machine_config_target mc_conf))) \/
                   MEM a (asm_config_avoid_regs
@@ -480,12 +480,12 @@ let post_ffi_asm_def = cake_def
                then asm_state_regs t1 a
                else target_get_reg (machine_config_target mc_conf) ms' a))
      (asm_state_fp_regs_fupd
-        (K (\i. target_get_fp_reg (machine_config_target mc_conf) ms' i))
+        (combin_K (\i. target_get_fp_reg (machine_config_target mc_conf) ms' i))
      (asm_state_mem_fupd
-        (K (asm_write_bytearray (asm_state_regs t1 (machine_config_ptr2_reg mc_conf))
+        (combin_K (asm_write_bytearray (asm_state_regs t1 (machine_config_ptr2_reg mc_conf))
               new_bytes (asm_state_mem t1)))
      (asm_state_pc_fupd
-        (K (asm_state_regs t1
+        (combin_K (asm_state_regs t1
               (match asm_config_link_reg
                        (target_config (machine_config_target mc_conf)) with
                  NONE -> 0
@@ -495,7 +495,7 @@ let post_ffi_asm_def = cake_def
 let post_ccache_asm_def = cake_def
   `post_ccache_asm (mc_conf:(A,B,C)machine_config) (t1:(A)asm_state) (ms':B) =
      asm_state_regs_fupd
-       (K (\a. if MEM a (machine_config_callee_saved_regs mc_conf) \/
+       (combin_K (\a. if MEM a (machine_config_callee_saved_regs mc_conf) \/
                   a = machine_config_ptr_reg mc_conf \/
                   ~(a < asm_config_reg_count
                           (target_config (machine_config_target mc_conf))) \/
@@ -504,9 +504,9 @@ let post_ccache_asm_def = cake_def
                then asm_state_regs t1 a
                else target_get_reg (machine_config_target mc_conf) ms' a))
      (asm_state_fp_regs_fupd
-        (K (\i. target_get_fp_reg (machine_config_target mc_conf) ms' i))
+        (combin_K (\i. target_get_fp_reg (machine_config_target mc_conf) ms' i))
      (asm_state_pc_fupd
-        (K (asm_state_regs t1
+        (combin_K (asm_state_regs t1
               (match asm_config_link_reg
                        (target_config (machine_config_target mc_conf)) with
                  NONE -> 0

@@ -669,7 +669,7 @@ let eval_nested_assign_distinct_eq = prove
      ALL_DISTINCT ns /\
      LENGTH ns = LENGTH es ==>
      crep_evaluate (crep_nested_seq (MAP2 crep_Assign ns es),t) =
-       (NONE,crep_state_locals_fupd (K (crep_state_locals t |++ ZIP ns ev)) t)`,
+       (NONE,crep_state_locals_fupd (combin_K (crep_state_locals t |++ ZIP ns ev)) t)`,
   LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN STRIP_TAC THEN QCASES_ON "ns" THEN
   FS[LENGTH; NOT_SUC; MAP2; crep_nested_seq_def] THEN RVEQ_TAC THENL
    [SIMP[crep_evaluate_def; FUPDATE_LIST_THM; RECORD_SELFID_ss]; ALL_TAC] THEN
@@ -685,7 +685,7 @@ let eval_nested_assign_distinct_eq = prove
   ONCE_REWRITE_TAC[crep_evaluate_def] THEN ONCE_REWRITE_TAC[crep_evaluate_def] THEN
   ASM_REWRITE_TAC[case_def "option"; case_def "prod"] THEN
   SUBGOAL_THEN
-   `MAP (crep_eval (crep_state_locals_fupd (K (crep_state_locals t' |+ (a0,x0)))
+   `MAP (crep_eval (crep_state_locals_fupd (combin_K (crep_state_locals t' |+ (a0,x0)))
                       (t':(A,B)crep_state))) t =
     MAP SOME (t0:((A)word_lab)list)` ASSUME_TAC THENL
    [FIRST_X_ASSUM(SUBST1_TAC o SYM o check (fun th -> is_eq (concl th) &&
@@ -696,7 +696,7 @@ let eval_nested_assign_distinct_eq = prove
     REWRITE_TAC[MEM_FLAT; MEM_MAP] THEN ASM_MESON_TAC[];
     ALL_TAC] THEN
   FIRST_X_ASSUM(fun ih -> MP_TAC(ISPECL [`a1:num list`;
-    `crep_state_locals_fupd (K (crep_state_locals t' |+ (a0,x0))) (t':(A,B)crep_state)`;
+    `crep_state_locals_fupd (combin_K (crep_state_locals t' |+ (a0,x0))) (t':(A,B)crep_state)`;
     `t0:((A)word_lab)list`; `x:((A)word_lab)list`] ih)) THEN
   ANTS_TAC THENL
    [SIMP[] THEN MATCH_MP_TAC opt_mmap_flookup_update THEN ASM_REWRITE_TAC[];
@@ -721,10 +721,10 @@ let eval_nested_decs_seq_res_var_eq = prove
    distinct_lists ns (FLAT (MAP var_cexp es)) /\
    ALL_DISTINCT ns ==>
    let (q,r) = crep_evaluate
-                 (p,crep_state_locals_fupd (K (crep_state_locals t |++ ZIP ns ev)) t) in
+                 (p,crep_state_locals_fupd (combin_K (crep_state_locals t |++ ZIP ns ev)) t) in
    crep_evaluate (nested_decs ns es p,t) =
    (q,crep_state_locals_fupd
-        (K (FOLDL crep_res_var (crep_state_locals r)
+        (combin_K (FOLDL crep_res_var (crep_state_locals r)
               (ZIP ns (MAP (FLOOKUP (crep_state_locals t)) ns)))) r)`,
   MATCH_MP_TAC list_INDUCT THEN CONJ_TAC THENL
    [REPEAT GEN_TAC THEN QCASES_ON "ns" THEN REWRITE_TAC[LENGTH; NOT_SUC] THEN
@@ -745,7 +745,7 @@ let eval_nested_decs_seq_res_var_eq = prove
   QPAT_ASSUM "distinct_lists _ _"
     (ASSUME_TAC o MATCH_MP distinct_lists_cons o ONCE_REWRITE_RULE[CONS_APPEND]) THEN
   SUBGOAL_THEN
-   `MAP (crep_eval (crep_state_locals_fupd (K (crep_state_locals t |+ (a0,x0)))
+   `MAP (crep_eval (crep_state_locals_fupd (combin_K (crep_state_locals t |+ (a0,x0)))
                       (t:(A,B)crep_state))) es =
     MAP SOME (t0:((A)word_lab)list)` ASSUME_TAC THENL
    [FIRST_X_ASSUM(SUBST1_TAC o SYM o check (fun th -> is_eq (concl th) &&
@@ -756,7 +756,7 @@ let eval_nested_decs_seq_res_var_eq = prove
     REWRITE_TAC[MEM_FLAT; MEM_MAP] THEN ASM_MESON_TAC[];
     ALL_TAC] THEN
   FIRST_X_ASSUM(fun ih -> MP_TAC(ISPECL [`a1:num list`;
-    `crep_state_locals_fupd (K (crep_state_locals t |+ (a0,x0))) (t:(A,B)crep_state)`;
+    `crep_state_locals_fupd (combin_K (crep_state_locals t |+ (a0,x0))) (t:(A,B)crep_state)`;
     `t0:((A)word_lab)list`; `p:(A)crep_prog`] ih)) THEN
   ASM_REWRITE_TAC[] THEN SIMP[ZIP; FUPDATE_LIST_THM] THEN
   W(fun (_,w) -> PAIR_CASES_ON (rand(rator(lhand w)))) THEN
@@ -956,7 +956,7 @@ let PP2CAUX_pc_Assign = prove
     ANTS_TAC THENL [REPEAT CONJ_TAC THEN FIRST_ASSUM ACCEPT_TAC; ALL_TAC] THEN
     DISCH_THEN SUBST1_TAC THEN
     MAP_EVERY EXISTS_TAC [`NONE:((A)crep_result)option`;
-      `crep_state_locals_fupd (K (crep_state_locals t |++ ZIP ns (flatten (ev:(A)pan_v))))
+      `crep_state_locals_fupd (combin_K (crep_state_locals t |++ ZIP ns (flatten (ev:(A)pan_v))))
          (t:(A,B)crep_state)`] THEN
     REWRITE_TAC[] THEN
     QPAT_X_ASSUM "pan_to_crepProof_state_rel s t" MP_TAC THEN
@@ -1010,14 +1010,14 @@ let PP2CAUX_pc_Assign = prove
      `crep_evaluate
         (crep_nested_seq (MAP2 crep_Assign ns (MAP crep_Var temps)):(A)crep_prog,
          crep_state_locals_fupd
-           (K (crep_state_locals t |++ ZIP temps (flatten (ev:(A)pan_v))))
+           (combin_K (crep_state_locals t |++ ZIP temps (flatten (ev:(A)pan_v))))
            (t:(A,B)crep_state)) =
       (NONE,crep_state_locals_fupd
-              (K ((crep_state_locals t |++ ZIP temps (flatten ev)) |++ ZIP ns (flatten ev))) t)`
+              (combin_K ((crep_state_locals t |++ ZIP temps (flatten ev)) |++ ZIP ns (flatten ev))) t)`
       SUBST1_TAC THENL
      [MP_TAC(ISPECL [`MAP crep_Var temps:((A)crep_exp)list`; `ns:num list`;
         `crep_state_locals_fupd
-           (K (crep_state_locals t |++ ZIP temps (flatten (ev:(A)pan_v))))
+           (combin_K (crep_state_locals t |++ ZIP temps (flatten (ev:(A)pan_v))))
            (t:(A,B)crep_state)`;
         `flatten (ev:(A)pan_v)`; `flatten (w:(A)pan_v)`] eval_nested_assign_distinct_eq) THEN
       SIMP[] THEN DISCH_THEN MATCH_MP_TAC THEN REPEAT CONJ_TAC THENL
@@ -1185,10 +1185,10 @@ let PP2CAUX_pc_Primitive = prove
    `crep_evaluate
       (crep_Primitive ns pop temps:(A)crep_prog,
        crep_state_locals_fupd
-         (K (crep_state_locals t |++ ZIP temps (FLAT (MAP flatten (vs:((A)pan_v)list)))))
+         (combin_K (crep_state_locals t |++ ZIP temps (FLAT (MAP flatten (vs:((A)pan_v)list)))))
          (t:(A,B)crep_state)) =
      (NONE,crep_state_locals_fupd
-             (K ((crep_state_locals t |++ ZIP temps (FLAT (MAP flatten vs))) |++
+             (combin_K ((crep_state_locals t |++ ZIP temps (FLAT (MAP flatten vs))) |++
                  ZIP ns (flatten (value:(A)pan_v)))) t)`
     SUBST1_TAC THENL
    [ONCE_REWRITE_TAC[crep_evaluate_def] THEN SIMP[] THEN
@@ -1374,9 +1374,9 @@ let filter_not_mem_self = prove
 let rewritten_context_unassigned = prove
  (`!(p:(A)panLang_prog) nctxt v ctxt ns nvars sh sh'.
      nctxt = pan_to_crep_context_vars_fupd
-               (K (pan_to_crep_context_vars ctxt |+ (v,sh,nvars)))
+               (combin_K (pan_to_crep_context_vars ctxt |+ (v,sh,nvars)))
                (pan_to_crep_context_vmax_fupd
-                  (K (pan_to_crep_context_vmax ctxt + size_of_shape sh)) ctxt) /\
+                  (combin_K (pan_to_crep_context_vmax ctxt + size_of_shape sh)) ctxt) /\
      FLOOKUP (pan_to_crep_context_vars ctxt) v = SOME (sh',ns) /\
      pan_commonProps_no_overlap (pan_to_crep_context_vars ctxt) /\
      pan_commonProps_ctxt_max (pan_to_crep_context_vmax ctxt) (pan_to_crep_context_vars ctxt) /\
@@ -1444,12 +1444,12 @@ let PP2CAUX_locals_rel_dec = prove
      is_wf_shape ([]:(mlstring#struct_info)list) (shape_of value) ==>
      pan_to_crepProof_locals_rel
        (pan_to_crep_context_vars_fupd
-          (K (pan_to_crep_context_vars ctxt |+
+          (combin_K (pan_to_crep_context_vars ctxt |+
                 (v,shape_of value,
                  list_of_seq (\x. pan_to_crep_context_vmax ctxt + SUC x)
                    (size_of_shape (shape_of value)))))
           (pan_to_crep_context_vmax_fupd
-             (K (pan_to_crep_context_vmax ctxt + size_of_shape (shape_of value))) ctxt))
+             (combin_K (pan_to_crep_context_vmax ctxt + size_of_shape (shape_of value))) ctxt))
        (sl |+ (v,value))
        (tl |++ ZIP (list_of_seq (\x. pan_to_crep_context_vmax ctxt + SUC x)
                       (size_of_shape (shape_of value)))
@@ -1504,8 +1504,8 @@ let PP2CAUX_locals_rel_res_var = prove
     sl tl v sh nvars n.
      pan_to_crepProof_locals_rel ctxt sl0 tl0 /\
      pan_to_crepProof_locals_rel
-       (pan_to_crep_context_vars_fupd (K (pan_to_crep_context_vars ctxt |+ (v,sh,nvars)))
-          (pan_to_crep_context_vmax_fupd (K (pan_to_crep_context_vmax ctxt + n)) ctxt))
+       (pan_to_crep_context_vars_fupd (combin_K (pan_to_crep_context_vars ctxt |+ (v,sh,nvars)))
+          (pan_to_crep_context_vmax_fupd (combin_K (pan_to_crep_context_vmax ctxt + n)) ctxt))
        sl tl /\
      (!sh' ns k. FLOOKUP (pan_to_crep_context_vars ctxt) v = SOME (sh',ns) /\ MEM k ns ==>
                  FLOOKUP tl k = FLOOKUP tl0 k) ==>
@@ -1537,7 +1537,7 @@ let PP2CAUX_pc_Dec = prove
   GVS[option_case_eq; COND_CASE_EQ] THEN
   DISCH_THEN(X_CHOOSE_THEN `value:(A)pan_v` STRIP_ASSUME_TAC) THEN RVEQ_TAC THEN
   PAIR_CASES_ON `pan_evaluate (prog:(A)panLang_prog,
-      pan_state_locals_fupd (K (pan_state_locals s |+ (v,value))) (s:(A,B)pan_state))` THEN
+      pan_state_locals_fupd (combin_K (pan_state_locals s |+ (v,value))) (s:(A,B)pan_state))` THEN
   QPAT_X_ASSUM "pair_CASE (p0,p1) _ = _" (MP_TAC o REWRITE_RULE[case_def "prod"; PAIR_EQ]) THEN
   STRIP_TAC THEN RVEQ_TAC THEN
   PAIR_CASES_ON `pan_to_crep_compile_exp (ctxt:(A)pan_to_crep_context) (e:(A)panLang_exp)` THEN
@@ -1554,9 +1554,9 @@ let PP2CAUX_pc_Dec = prove
                         (\x. pan_to_crep_context_vmax (ctxt:(A)pan_to_crep_context) + SUC x)
                         (size_of_shape (shape_of (value:(A)pan_v)))` THEN
   ABBREV_TAC `nctxt = pan_to_crep_context_vars_fupd
-       (K (pan_to_crep_context_vars ctxt |+ (v,shape_of value,nvars)))
+       (combin_K (pan_to_crep_context_vars ctxt |+ (v,shape_of value,nvars)))
       (pan_to_crep_context_vmax_fupd
-       (K (pan_to_crep_context_vmax (ctxt:(A)pan_to_crep_context) +
+       (combin_K (pan_to_crep_context_vmax (ctxt:(A)pan_to_crep_context) +
            size_of_shape (shape_of (value:(A)pan_v)))) ctxt)` THEN
   QPAT_ASSUM "pan_to_crepProof_locals_rel _ _ _"
     (STRIP_ASSUME_TAC o REWRITE_RULE[pan_to_crepProof_locals_rel_def]) THEN
@@ -1584,7 +1584,7 @@ let PP2CAUX_pc_Dec = prove
   ANTS_TAC THENL [REPEAT CONJ_TAC THEN FIRST_ASSUM ACCEPT_TAC; ALL_TAC] THEN
   FIRST_X_ASSUM(MP_TAC o SPEC `value:(A)pan_v`) THEN ASM_REWRITE_TAC[] THEN
   DISCH_THEN(MP_TAC o SPECL [`res:((A)pan_result)option`; `p1:(A,B)pan_state`;
-    `crep_state_locals_fupd (K (crep_state_locals t |++ ZIP nvars (flatten (value:(A)pan_v))))
+    `crep_state_locals_fupd (combin_K (crep_state_locals t |++ ZIP nvars (flatten (value:(A)pan_v))))
        (t:(A,B)crep_state)`; `nctxt:(A)pan_to_crep_context`]) THEN
   ASM_REWRITE_TAC[] THEN ANTS_TAC THENL
    [REPEAT CONJ_TAC THENL
@@ -1603,7 +1603,7 @@ let PP2CAUX_pc_Dec = prove
   ASM_REWRITE_TAC[case_def "prod"] THEN DISCH_THEN SUBST1_TAC THEN
   MAP_EVERY EXISTS_TAC [`res1:((A)crep_result)option`;
     `crep_state_locals_fupd
-       (K (FOLDL crep_res_var (crep_state_locals t1)
+       (combin_K (FOLDL crep_res_var (crep_state_locals t1)
              (ZIP nvars (MAP (FLOOKUP (crep_state_locals (t:(A,B)crep_state))) nvars))))
        (t1:(A,B)crep_state)`] THEN
   REWRITE_TAC[] THEN
@@ -1665,7 +1665,7 @@ let PP2CAUX_pc_Dec = prove
           MP_TAC(ISPECL
             [`pan_to_crep_compile (nctxt:(A)pan_to_crep_context) (prog:(A)panLang_prog)`;
              `crep_state_locals_fupd
-                (K (crep_state_locals t |++ ZIP nvars (flatten (value:(A)pan_v))))
+                (combin_K (crep_state_locals t |++ ZIP nvars (flatten (value:(A)pan_v))))
                 (t:(A,B)crep_state)`;
              `res1:((A)crep_result)option`; `t1:(A,B)crep_state`; `k:num`; `0`]
             crep_unassigned_vars_evaluate_same) THEN
@@ -1800,7 +1800,7 @@ let PP2CAUX_pc_Store = prove
     ALL_TAC] THEN
   ASM_REWRITE_TAC[] THEN REWRITE_TAC[case_def "option"] THEN
   MAP_EVERY EXISTS_TAC [`NONE:((A)crep_result)option`;
-    `crep_state_locals_fupd (K (crep_state_locals (t:(A,B)crep_state))) (p1'':(A,B)crep_state)`] THEN
+    `crep_state_locals_fupd (combin_K (crep_state_locals (t:(A,B)crep_state))) (p1'':(A,B)crep_state)`] THEN
   QPAT_X_ASSUM "pan_to_crepProof_state_rel s t" MP_TAC THEN
   ASM_REWRITE_TAC[pan_to_crepProof_state_rel_def; pan_state_INFO.ri_accfupds;
                   crep_state_INFO.ri_accfupds; K_THM] THEN
@@ -1848,7 +1848,7 @@ let PP2CAUX_PC_STORE_W_TAC (storefn:string) : tactic =
   ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
   ASM_REWRITE_TAC[case_def "option"] THEN
   MAP_EVERY EXISTS_TAC [`NONE:((A)crep_result)option`;
-    `crep_state_memory_fupd (K m) (t:(A,B)crep_state)`] THEN
+    `crep_state_memory_fupd (combin_K m) (t:(A,B)crep_state)`] THEN
   ASM_REWRITE_TAC[pan_to_crepProof_state_rel_def; pan_state_INFO.ri_accfupds;
                   crep_state_INFO.ri_accfupds; K_THM];;
 
@@ -2559,8 +2559,8 @@ let pan_to_crepProof_call_preserve_state_code_locals_rel = prove
    LENGTH ns = LENGTH (FLAT (MAP flatten args)) /\
    ALL (is_wf_shape_v ([]:(mlstring#struct_info)list)) args ==>
    pan_to_crepProof_state_rel
-     (pan_state_locals_fupd (K (slc vshs args)) (pan_dec_clock s))
-     (crep_state_locals_fupd (K (tlc ns args)) (crep_dec_clock t)) /\
+     (pan_state_locals_fupd (combin_K (slc vshs args)) (pan_dec_clock s))
+     (crep_state_locals_fupd (combin_K (tlc ns args)) (crep_dec_clock t)) /\
    pan_to_crepProof_code_rel
      (pan_to_crepProof_ctxt_fc (pan_to_crep_context_funcs ctxt)
         (pan_to_crep_context_eids ctxt) (MAP FST vshs) (MAP SND vshs) ns)
@@ -2754,7 +2754,7 @@ let evaluate_shape_invariant_ret_inst2 = prove
  (CASE_TERM `OPT_MMAP (pan_eval s) argexps = SOME args /\
    pan_lookup_code (pan_state_code (s:(A,FFI)pan_state)) fname args =
      SOME (p2,newlocals,rsh) /\
-   pan_evaluate (p,pan_state_locals_fupd (K newlocals) (pan_dec_clock s)) =
+   pan_evaluate (p,pan_state_locals_fupd (combin_K newlocals) (pan_dec_clock s)) =
      (SOME v,(s':(A,FFI)pan_state)) /\
    pan_to_crepProof_state_rel s (t:(A,FFI)crep_state) /\
    pan_to_crepProof_locals_rel (ctxt:(B)pan_to_crep_context) (pan_state_locals s) t_locs ==>
@@ -2776,7 +2776,7 @@ let evaluate_shape_invariant_ret_inst2 = prove
     lookup_code_wf_shape_invariant_step) THEN ASM_REWRITE_TAC[FEVERY_FEMPTY] THEN
   DISCH_TAC THEN
   MP_TAC(ISPECL [`p:(A)panLang_prog`;
-                 `pan_state_locals_fupd (K newlocals) (pan_dec_clock (s:(A,FFI)pan_state))`;
+                 `pan_state_locals_fupd (combin_K newlocals) (pan_dec_clock (s:(A,FFI)pan_state))`;
                  `SOME (v:(A)pan_result)`; `s':(A,FFI)pan_state`] evaluate_is_wf_shape_invariant) THEN
   ASM_REWRITE_TAC[pan_dec_clock_def; pan_state_INFO.ri_accfupds; K_THM; FEVERY_FEMPTY] THEN
   QCASES_ON "v" THEN REWRITE_TAC[case_def "option"; case_def "pan_result"] THEN MESON_TAC[]);;
@@ -2793,12 +2793,12 @@ let eval_distinct_lists_not_affect' = prove
      crep_eval s e = SOME w /\
      LENGTH vs = LENGTH nvals /\
      distinct_lists vs (var_cexp e) ==>
-     crep_eval (crep_state_locals_fupd (K (crep_state_locals s |++ ZIP vs nvals)) s) e =
+     crep_eval (crep_state_locals_fupd (combin_K (crep_state_locals s |++ ZIP vs nvals)) s) e =
      SOME w`,
   LIST_INDUCT_TAC THEN REPEAT GEN_TAC THENL
    [NAMED_CASES_ON "nvals" ["";"nv nvs"] THEN REWRITE_TAC[LENGTH; NOT_SUC] THEN STRIP_TAC THEN
     ASM_REWRITE_TAC[ZIP; FUPDATE_LIST_THM] THEN
-    SUBGOAL_THEN `crep_state_locals_fupd (K (crep_state_locals s)) s = (s:(A,B)crep_state)`
+    SUBGOAL_THEN `crep_state_locals_fupd (combin_K (crep_state_locals s)) s = (s:(A,B)crep_state)`
       SUBST1_TAC THENL
      [REWRITE_TAC[crep_state_component_equality; crep_state_INFO.ri_accfupds; K_THM];
       FIRST_ASSUM ACCEPT_TAC];
@@ -2809,11 +2809,11 @@ let eval_distinct_lists_not_affect' = prove
   MP_TAC(ISPECL [`s:(A,B)crep_state`; `e:(A)crep_exp`; `ARB:num`; `h:num`; `nv:(A)word_lab`]
     update_locals_not_vars_eval_eq') THEN ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
   FIRST_X_ASSUM(MP_TAC o SPECL
-    [`crep_state_locals_fupd (K (crep_state_locals s |+ (h,nv))) (s:(A,B)crep_state)`;
+    [`crep_state_locals_fupd (combin_K (crep_state_locals s |+ (h,nv))) (s:(A,B)crep_state)`;
      `e:(A)crep_exp`; `w:(A)word_lab`; `nvs:((A)word_lab)list`]) THEN
   ASM_REWRITE_TAC[distinct_lists_def; crep_state_INFO.ri_accfupds;
                   crep_state_INFO.ri_fupdfupds; K_THM; o_DEF] THEN
-  REWRITE_TAC[K_DEF]);;
+  REWRITE_TAC[combin_K_DEF]);;
 
 let opt_mmap_eval_distinct_lists_not_affect = prove
  (`!es (s:(A,B)crep_state) ws vs nvals.
@@ -2821,7 +2821,7 @@ let opt_mmap_eval_distinct_lists_not_affect = prove
      LENGTH vs = LENGTH nvals /\
      distinct_lists vs (FLAT (MAP var_cexp es)) ==>
      OPT_MMAP (crep_eval (crep_state_locals_fupd
-                            (K (crep_state_locals s |++ ZIP vs nvals)) s)) es = SOME ws`,
+                            (combin_K (crep_state_locals s |++ ZIP vs nvals)) s)) es = SOME ws`,
   LIST_INDUCT_TAC THEN REWRITE_TAC[OPT_MMAP_def; MAP; FLAT] THEN REPEAT GEN_TAC THENL
    [MESON_TAC[]; ALL_TAC] THEN
   REWRITE_TAC[OPTION_BIND_EQUALS_OPTION] THEN STRIP_TAC THEN
@@ -2870,16 +2870,16 @@ let PP2CAUX_call_setup = prove
          (LENGTH (FLAT (MAP flatten args))) =
          SOME (pan_to_crep_compile nctxt prog, tlc ns args) /\
        pan_to_crepProof_state_rel
-         (pan_state_locals_fupd (K newlocals) (pan_dec_clock s))
-         (crep_state_locals_fupd (K (tlc ns args)) (crep_dec_clock t)) /\
+         (pan_state_locals_fupd (combin_K newlocals) (pan_dec_clock s))
+         (crep_state_locals_fupd (combin_K (tlc ns args)) (crep_dec_clock t)) /\
        pan_to_crepProof_code_rel nctxt
-         (pan_state_code (pan_state_locals_fupd (K newlocals) (pan_dec_clock s)))
-         (crep_state_code (crep_state_locals_fupd (K (tlc ns args)) (crep_dec_clock t))) /\
+         (pan_state_code (pan_state_locals_fupd (combin_K newlocals) (pan_dec_clock s)))
+         (crep_state_code (crep_state_locals_fupd (combin_K (tlc ns args)) (crep_dec_clock t))) /\
        excp_rel (pan_to_crep_context_eids nctxt)
-         (pan_state_eshapes (pan_state_locals_fupd (K newlocals) (pan_dec_clock s))) /\
+         (pan_state_eshapes (pan_state_locals_fupd (combin_K newlocals) (pan_dec_clock s))) /\
        pan_to_crepProof_locals_rel nctxt
-         (pan_state_locals (pan_state_locals_fupd (K newlocals) (pan_dec_clock s)))
-         (crep_state_locals (crep_state_locals_fupd (K (tlc ns args)) (crep_dec_clock t)))`,
+         (pan_state_locals (pan_state_locals_fupd (combin_K newlocals) (pan_dec_clock s)))
+         (crep_state_locals (crep_state_locals_fupd (combin_K (tlc ns args)) (crep_dec_clock t)))`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   QPAT_X_ASSUM "pan_lookup_code _ _ _ = _" (MP_TAC o REWRITE_RULE[pan_lookup_code_def]) THEN
   GVS(option_case_eq :: COND_CASE_EQ :: all_case_eqs()) THEN STRIP_TAC THEN RVEQ_TAC THEN
@@ -2934,11 +2934,11 @@ let PP2CAUX_nested_decs_zeros = prove
      ALL_DISTINCT rts ==>
      let (q,r) = crep_evaluate
                    (p,crep_state_locals_fupd
-                        (K (crep_state_locals t |++
+                        (combin_K (crep_state_locals t |++
                             ZIP rts (REPLICATE (LENGTH rts) (Word (word 0))))) t) in
      crep_evaluate (nested_decs rts (REPLICATE (LENGTH rts) (crep_Const (word 0))) p,t) =
      (q,crep_state_locals_fupd
-          (K (FOLDL crep_res_var (crep_state_locals r)
+          (combin_K (FOLDL crep_res_var (crep_state_locals r)
                 (ZIP rts (MAP (FLOOKUP (crep_state_locals t)) rts)))) r)`,
   REPEAT STRIP_TAC THEN MATCH_MP_TAC eval_nested_decs_seq_res_var_eq THEN
   ASM_REWRITE_TAC[LENGTH_REPLICATE; GSYM opt_mmap_eq_some;
@@ -3054,10 +3054,10 @@ let PP2CAUX_pc_Call_none = prove
      DISCH_TAC THEN ASM_REWRITE_TAC[];
      ALL_TAC]) THEN
   PAIR_CASES_ON `pan_evaluate (prog:(A)panLang_prog,
-    pan_state_locals_fupd (K (slc (vshs:(mlstring#shape)list) (args:((A)pan_v)list)))
+    pan_state_locals_fupd (combin_K (slc (vshs:(mlstring#shape)list) (args:((A)pan_v)list)))
       (pan_dec_clock (s:(A,B)pan_state)))` THEN
   REWRITE_TAC[case_def "prod"] THEN DISCH_TAC THEN
-  RENAME_TAC ["pan_evaluate (prog,pan_state_locals_fupd (K (slc vshs args)) (pan_dec_clock s)) = r,st"] THEN
+  RENAME_TAC ["pan_evaluate (prog,pan_state_locals_fupd (combin_K (slc vshs args)) (pan_dec_clock s)) = r,st"] THEN
   (SUBGOAL_THEN `~(r = SOME (pan_Error:(A)pan_result))` ASSUME_TAC THENL
     [DISCH_THEN SUBST_ALL_TAC THEN
      FIRST_X_ASSUM(MP_TAC o check (fun th -> is_eq(concl th) &&
@@ -3075,7 +3075,7 @@ let PP2CAUX_pc_Call_none = prove
     check (fun th -> is_forall(concl th) && length(fst(strip_forall(concl th))) = 4)) THEN
   (ANTS_TAC THENL [ASM_REWRITE_TAC[]; ALL_TAC]) THEN
   DISCH_THEN(MP_TAC o SPECL [`r:((A)pan_result)option`; `st:(A,B)pan_state`;
-    `crep_state_locals_fupd (K (tlc (ns:num list) (args:((A)pan_v)list)))
+    `crep_state_locals_fupd (combin_K (tlc (ns:num list) (args:((A)pan_v)list)))
        (crep_dec_clock (t:(A,B)crep_state))`; `nctxt:(A)pan_to_crep_context`]) THEN
   (ANTS_TAC THENL
     [REWRITE_TAC[crep_state_INFO.ri_accfupds; K_THM] THEN ASM_REWRITE_TAC[];
@@ -3117,10 +3117,10 @@ let PP2CAUX_CALL_COMMON_TAC : tactic =
     (ASSUME `pan_to_crepProof_state_rel (s:(A,B)pan_state) (t:(A,B)crep_state)`)) THEN
   (COND_CASES_TAC THENL [PP2CAUX_CALL_CLOCK0_TAC; ALL_TAC]) THEN
   PAIR_CASES_ON `pan_evaluate (prog:(A)panLang_prog,
-    pan_state_locals_fupd (K (slc (vshs:(mlstring#shape)list) (args:((A)pan_v)list)))
+    pan_state_locals_fupd (combin_K (slc (vshs:(mlstring#shape)list) (args:((A)pan_v)list)))
       (pan_dec_clock (s:(A,B)pan_state)))` THEN
   REWRITE_TAC[case_def "prod"] THEN DISCH_TAC THEN
-  RENAME_TAC ["pan_evaluate (prog,pan_state_locals_fupd (K (slc vshs args)) (pan_dec_clock s)) = r,st"] THEN
+  RENAME_TAC ["pan_evaluate (prog,pan_state_locals_fupd (combin_K (slc vshs args)) (pan_dec_clock s)) = r,st"] THEN
   (SUBGOAL_THEN `~(r = SOME (pan_Error:(A)pan_result))` ASSUME_TAC THENL
     [DISCH_THEN SUBST_ALL_TAC THEN
      FIRST_X_ASSUM(MP_TAC o check (fun th -> is_eq(concl th) &&
@@ -3139,7 +3139,7 @@ let PP2CAUX_CALL_COMMON_TAC : tactic =
   (ANTS_TAC THENL [ASM_REWRITE_TAC[]; ALL_TAC]) THEN
   DISCH_THEN(MP_TAC o SPECL [`r:((A)pan_result)option`; `st:(A,B)pan_state`;
     `crep_state_locals_fupd
-       (K (tlc (list_of_seq I (size_of_shape (Comb (MAP SND (vshs:(mlstring#shape)list)))))
+       (combin_K (tlc (list_of_seq I (size_of_shape (Comb (MAP SND (vshs:(mlstring#shape)list)))))
                (args:((A)pan_v)list)))
        (crep_dec_clock (t:(A,B)crep_state))`;
     `pan_to_crepProof_ctxt_fc (pan_to_crep_context_funcs (ctxt:(A)pan_to_crep_context))
@@ -3264,8 +3264,8 @@ let PP2CAUX_exp_hdl_eval = prove
      globals_lookup t1 exn = SOME (flatten exn) /\ size_of_shape (shape_of exn) <= 32) ==>
     ?ns. FLOOKUP (pan_to_crep_context_vars ctxt) evar = SOME (shape_of w,ns) /\
          crep_evaluate (exp_hdl (pan_to_crep_context_vars ctxt) evar,
-                        crep_state_locals_fupd (K tl) t1) =
-         (NONE,crep_state_locals_fupd (K (tl |++ ZIP ns (flatten exn))) t1) /\
+                        crep_state_locals_fupd (combin_K tl) t1) =
+         (NONE,crep_state_locals_fupd (combin_K (tl |++ ZIP ns (flatten exn))) t1) /\
          pan_to_crepProof_locals_rel ctxt (sl |+ (evar,exn)) (tl |++ ZIP ns (flatten exn))`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   MP_TAC(MATCH_MP locals_rel_lookup_ctxt (CONJ
@@ -3293,7 +3293,7 @@ let PP2CAUX_exp_hdl_eval = prove
     ASSUME `FLOOKUP (pan_to_crep_context_vars (ctxt:(A)pan_to_crep_context)) evar =
             SOME (shape_of (w:(A)pan_v),ns)`; case_def "option"; case_def "prod"] THEN
   MP_TAC(ISPECL [`ns:num list`;
-                 `crep_state_locals_fupd (K (tl:(num,(A)word_lab)fmap)) (t1:(A,B)crep_state)`;
+                 `crep_state_locals_fupd (combin_K (tl:(num,(A)word_lab)fmap)) (t1:(A,B)crep_state)`;
                  `word 0:5 word`] evaluate_seq_assign_load_globals) THEN
   REWRITE_TAC[crep_state_INFO.ri_accfupds; K_THM; WORD_ADD_0; VAL_WORD_0; ADD_CLAUSES] THEN
   (ASM_CASES_TAC `size_of_shape (shape_of (exn:(A)pan_v)) = 0` THENL
@@ -3306,7 +3306,7 @@ let PP2CAUX_exp_hdl_eval = prove
        ALL_TAC] THEN
      REWRITE_TAC[ALL_DISTINCT; MEM; LENGTH; LIST_OF_SEQ; MAP; ZIP; ARITH] THEN
      DISCH_THEN SUBST1_TAC THEN REWRITE_TAC[crep_state_INFO.ri_fupdfupds; o_DEF; K_THM] THEN
-     REWRITE_TAC[K_DEF];
+     REWRITE_TAC[combin_K_DEF];
      ALL_TAC]) THEN
   (SUBGOAL_THEN `globals_lookup (t1:(A,B)crep_state) (exn:(A)pan_v) = SOME (flatten exn) /\
                  size_of_shape (shape_of exn) <= 32` STRIP_ASSUME_TAC THENL
@@ -3331,7 +3331,7 @@ let PP2CAUX_exp_hdl_eval = prove
        ASM_REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[distinctness "option"]];
      ALL_TAC]) THEN
   DISCH_THEN SUBST1_TAC THEN
-  REWRITE_TAC[crep_state_INFO.ri_fupdfupds; o_DEF; K_THM] THEN REWRITE_TAC[K_DEF] THEN
+  REWRITE_TAC[crep_state_INFO.ri_fupdfupds; o_DEF; K_THM] THEN REWRITE_TAC[combin_K_DEF] THEN
   SUBGOAL_THEN `MAP (\n. THE (FLOOKUP (crep_state_globals (t1:(A,B)crep_state)) n))
                   (list_of_seq (\x. (word x):5 word) (LENGTH (ns:num list))) = flatten (exn:(A)pan_v)`
     (fun th -> REWRITE_TAC[th]) THEN
@@ -3411,7 +3411,7 @@ let PP2CAUX_EXN_HDL_TAC : tactic =
       check (fun th -> is_forall(concl th) && length(fst(strip_forall(concl th))) = 9)) THEN
     (ANTS_TAC THENL [ASM_REWRITE_TAC[PP2CAUX_valid_local] THEN ASM_MESON_TAC[]; ALL_TAC]) THEN
     DISCH_THEN(MP_TAC o SPECL [`res:((A)pan_result)option`; `s1:(A,B)pan_state`;
-      `crep_state_locals_fupd (K (crep_state_locals (t:(A,B)crep_state) |++
+      `crep_state_locals_fupd (combin_K (crep_state_locals (t:(A,B)crep_state) |++
           ZIP nse (flatten (exn:(A)pan_v)))) (t1:(A,B)crep_state)`;
       `ctxt:(A)pan_to_crep_context`]) THEN
     (ANTS_TAC THENL
@@ -3424,7 +3424,7 @@ let PP2CAUX_EXN_HDL_TAC : tactic =
                    crep_state_INFO.ri_accfupds; K_THM] THEN SIMP_TAC[] THEN
        DISCH_TAC THEN RULE_ASSUM_TAC(REWRITE_RULE[pan_set_var_def; pan_state_INFO.ri_accfupds;
          K_THM; case_def "option"; case_def "prod"]) THEN
-       ASM_REWRITE_TAC[pan_state_INFO.ri_fupdfupds; o_DEF; K_THM] THEN REWRITE_TAC[K_DEF] THEN
+       ASM_REWRITE_TAC[pan_state_INFO.ri_fupdfupds; o_DEF; K_THM] THEN REWRITE_TAC[combin_K_DEF] THEN
        ASM_REWRITE_TAC[];
        REWRITE_TAC[]]);
     (SUBGOAL_THEN `~(n:A word = neid)` ASSUME_TAC THENL
@@ -3684,7 +3684,7 @@ let PP2CAUX_res_rel_temps_stmt =
   let cs = tl (conjuncts cbod) in
   let t1 = `t1:(A,B)crep_state` in
   let t1' = `crep_state_locals_fupd
-               (K (FOLDL crep_res_var (crep_state_locals (t1:(A,B)crep_state))
+               (combin_K (FOLDL crep_res_var (crep_state_locals (t1:(A,B)crep_state))
                      (ZIP rts (ys:(((A)word_lab)option)list)))) t1` in
   let hyp = list_mk_conj
     ([`!k. MEM k rts ==> pan_to_crep_context_vmax (ctxt:(A)pan_to_crep_context) < k`;
@@ -3788,7 +3788,7 @@ let PP2CAUX_pc_Call_retnone = prove
     check (fun th -> is_conj(concl th) && is_forall(lhand(concl th)))) THEN
   DISCH_THEN(MP_TAC o SPECL [`res:((A)pan_result)option`; `s1:(A,B)pan_state`;
     `crep_state_locals_fupd
-       (K (crep_state_locals (t:(A,B)crep_state) |++
+       (combin_K (crep_state_locals (t:(A,B)crep_state) |++
            ZIP (rts:num list) (REPLICATE (size_of_shape rsh) (Word (word 0):(A)word_lab)))) t`;
     `ctxt:(A)pan_to_crep_context`; `rts:num list`]) THEN
   (ANTS_TAC THENL
@@ -3851,7 +3851,7 @@ let not_none_then_some = prove
 (* HOL4 [local] *)
 
 let locals_id_update = prove
- (`crep_state_locals_fupd (K (crep_state_locals (t:(A,B)crep_state))) t = t`,
+ (`crep_state_locals_fupd (combin_K (crep_state_locals (t:(A,B)crep_state))) t = t`,
   REWRITE_TAC[crep_state_component_equality; crep_state_INFO.ri_accfupds; K_THM]);;
 
 (* HOL4's statement binds r vacuously *)
@@ -3869,7 +3869,7 @@ let MAP_SOME_MEM_lemma = prove
 let update_locals_not_vars_eval_mmap = prove
  (`(!n e. MEM e es /\ MEM n (var_cexp e) ==> ~(n = x)) ==>
    OPT_MMAP (crep_eval (crep_state_locals_fupd
-                          (K (crep_state_locals (t:(A,B)crep_state) |+ (x,v))) t)) es =
+                          (combin_K (crep_state_locals (t:(A,B)crep_state) |+ (x,v))) t)) es =
    OPT_MMAP (crep_eval t) es`,
   DISCH_TAC THEN MATCH_MP_TAC OPT_MMAP_CONG THEN REWRITE_TAC[] THEN
   X_GEN_TAC `e:(A)crep_exp` THEN DISCH_TAC THEN
@@ -3892,7 +3892,7 @@ let EL_load_globals = prove
 let eval_distinct_lists_not_affect = prove
  (`!vs (s:(A,B)crep_state) e (w:C) nvals.
      LENGTH vs = LENGTH nvals /\ distinct_lists vs (var_cexp e) ==>
-     crep_eval (crep_state_locals_fupd (K (crep_state_locals s |++ ZIP vs nvals)) s) e =
+     crep_eval (crep_state_locals_fupd (combin_K (crep_state_locals s |++ ZIP vs nvals)) s) e =
      crep_eval s e`,
   LIST_INDUCT_TAC THEN REPEAT GEN_TAC THENL
    [NAMED_CASES_ON "nvals" ["";"nv nvs"] THEN REWRITE_TAC[LENGTH; NOT_SUC] THEN
@@ -3902,7 +3902,7 @@ let eval_distinct_lists_not_affect = prove
   REWRITE_TAC[LENGTH; NOT_SUC; SUC_INJ; ZIP; FUPDATE_LIST_THM; distinct_lists_def; ALL] THEN
   STRIP_TAC THEN
   FIRST_X_ASSUM(MP_TAC o SPECL
-    [`crep_state_locals_fupd (K (crep_state_locals s |+ (h,nv))) (s:(A,B)crep_state)`;
+    [`crep_state_locals_fupd (combin_K (crep_state_locals s |+ (h,nv))) (s:(A,B)crep_state)`;
      `e:(A)crep_exp`; `w:C`; `nvs:((A)word_lab)list`]) THEN
   ASM_REWRITE_TAC[distinct_lists_def; crep_state_INFO.ri_accfupds;
                   crep_state_INFO.ri_fupdfupds; K_THM; K_o_THM] THEN
@@ -3915,7 +3915,7 @@ let opt_mmap_eval_distinct_lists_not_affect' = prove
  (`!es (s:(A,B)crep_state) (ws:C) vs nvals.
      LENGTH vs = LENGTH nvals /\ distinct_lists vs (FLAT (MAP var_cexp es)) ==>
      OPT_MMAP (crep_eval (crep_state_locals_fupd
-                            (K (crep_state_locals s |++ ZIP vs nvals)) s)) es =
+                            (combin_K (crep_state_locals s |++ ZIP vs nvals)) s)) es =
      OPT_MMAP (crep_eval s) es`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN MATCH_MP_TAC OPT_MMAP_CONG THEN REWRITE_TAC[] THEN
   X_GEN_TAC `e:(A)crep_exp` THEN DISCH_TAC THEN
@@ -3932,9 +3932,9 @@ let evaluate_nested_decs_load_globals = prove
    crep_evaluate (nested_decs vs (load_globals (word 0) (size_of_shape (shape_of rv)))
                     (p:(A)crep_prog),s) =
    let (res,s') = crep_evaluate
-                    (p,crep_state_locals_fupd (K (crep_state_locals s |++ ZIP vs rvs)) s) in
+                    (p,crep_state_locals_fupd (combin_K (crep_state_locals s |++ ZIP vs rvs)) s) in
    (res,crep_state_locals_fupd
-          (K (FOLDL crep_res_var (crep_state_locals s')
+          (combin_K (FOLDL crep_res_var (crep_state_locals s')
                 (ZIP vs (MAP (FLOOKUP (crep_state_locals s)) vs)))) s')`,
   STRIP_TAC THEN
   MP_TAC(ISPECL [`load_globals (word 0) (size_of_shape (shape_of (rv:(A)pan_v))):((A)crep_exp)list`;
@@ -3952,7 +3952,7 @@ let evaluate_nested_decs_load_globals = prove
     REWRITE_TAC[crep_eval_def; WORD_ADD_0];
     ALL_TAC] THEN
   PAIR_CASES_ON `crep_evaluate (p:(A)crep_prog,
-                   crep_state_locals_fupd (K (crep_state_locals s |++ ZIP vs rvs))
+                   crep_state_locals_fupd (combin_K (crep_state_locals s |++ ZIP vs rvs))
                      (s:(A,B)crep_state))` THEN
   ASM_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   REWRITE_TAC[case_def "prod"]);;
@@ -3999,9 +3999,9 @@ let locals_rel_extend_new_var = prove
      LENGTH ns = size_of_shape (shape_of v) ==>
      pan_to_crepProof_locals_rel
        (pan_to_crep_context_vars_fupd
-          (K (pan_to_crep_context_vars ct |+ (x,(shape_of v,ns))))
+          (combin_K (pan_to_crep_context_vars ct |+ (x,(shape_of v,ns))))
           (pan_to_crep_context_vmax_fupd
-             (K (pan_to_crep_context_vmax ct + size_of_shape (shape_of v))) ct))
+             (combin_K (pan_to_crep_context_vmax ct + size_of_shape (shape_of v))) ct))
        (s |+ (x,v)) (t |++ ZIP ns (flatten v))`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   QPAT_X_ASSUM "pan_to_crepProof_locals_rel _ _ _"
@@ -4063,8 +4063,8 @@ let PP2CAUX_A_var_cexp_replicate_const = prove
 
 let PP2CAUX_A_dec_clock_locals = prove
  (`!(t:(A,B)crep_state) X Y.
-     crep_state_locals_fupd (K X) (crep_dec_clock (crep_state_locals_fupd (K Y) t)) =
-     crep_state_locals_fupd (K X) (crep_dec_clock t)`,
+     crep_state_locals_fupd (combin_K X) (crep_dec_clock (crep_state_locals_fupd (combin_K Y) t)) =
+     crep_state_locals_fupd (combin_K X) (crep_dec_clock t)`,
   REWRITE_TAC[crep_dec_clock_def; crep_state_component_equality;
               crep_state_INFO.ri_accfupds; K_THM]);;
 
@@ -4214,9 +4214,9 @@ let PP2CAUX_A_DC_SETUP_TAC : tactic =
   ABBREV_TAC `nvars = list_of_seq (\x. pan_to_crep_context_vmax (ctxt:(A)pan_to_crep_context) + SUC x)
                         (size_of_shape shape)` THEN
   ABBREV_TAC `nctxt = pan_to_crep_context_vars_fupd
-      (K (pan_to_crep_context_vars ctxt |+ (rt,shape,nvars)))
+      (combin_K (pan_to_crep_context_vars ctxt |+ (rt,shape,nvars)))
      (pan_to_crep_context_vmax_fupd
-      (K (pan_to_crep_context_vmax (ctxt:(A)pan_to_crep_context) + size_of_shape shape)) ctxt)` THEN
+      (combin_K (pan_to_crep_context_vmax (ctxt:(A)pan_to_crep_context) + size_of_shape shape)) ctxt)` THEN
   ABBREV_TAC `cargs = FLAT (MAP FST (MAP (pan_to_crep_compile_exp (ctxt:(A)pan_to_crep_context))
                                        (argexps:((A)panLang_exp)list)))` THEN
   (SUBGOAL_THEN `ALL_DISTINCT (nvars:num list) /\ LENGTH nvars = size_of_shape shape /\
@@ -4239,7 +4239,7 @@ let PP2CAUX_A_DC_SETUP_TAC : tactic =
      ALL_TAC]) THEN
   (SUBGOAL_THEN
     `OPT_MMAP (crep_eval (crep_state_locals_fupd
-        (K (crep_state_locals t |++ ZIP nvars (REPLICATE (LENGTH nvars) (Word (word 0)))))
+        (combin_K (crep_state_locals t |++ ZIP nvars (REPLICATE (LENGTH nvars) (Word (word 0)))))
         (t:(A,B)crep_state))) cargs = SOME (FLAT (MAP flatten (args:((A)pan_v)list)))`
     ASSUME_TAC THENL
     [TRANS_TAC EQ_TRANS `OPT_MMAP (crep_eval (t:(A,B)crep_state)) cargs` THEN CONJ_TAC THENL
@@ -4255,7 +4255,7 @@ let PP2CAUX_A_DC_SETUP_TAC : tactic =
   ONCE_REWRITE_TAC[crep_evaluate_def] THEN ONCE_REWRITE_TAC[crep_evaluate_def] THEN
   REWRITE_TAC[ASSUME
    `OPT_MMAP (crep_eval (crep_state_locals_fupd
-       (K (crep_state_locals t |++ ZIP nvars (REPLICATE (LENGTH nvars) (Word (word 0)))))
+       (combin_K (crep_state_locals t |++ ZIP nvars (REPLICATE (LENGTH nvars) (Word (word 0)))))
        (t:(A,B)crep_state))) cargs = SOME (FLAT (MAP flatten (args:((A)pan_v)list)))`] THEN
   REWRITE_TAC[case_def "option"; crep_lookup_code_def; crep_state_INFO.ri_accfupds; K_THM] THEN
   PP2CAUX_A_REWR_LHS_TAC `FLOOKUP (crep_state_code (t:(A,B)crep_state)) fname` THEN
@@ -4281,7 +4281,7 @@ let PP2CAUX_A_DC_SETUP_TAC : tactic =
 
 let PP2CAUX_A_DC_CALLEE_TAC : tactic =
   PAIR_CASES_ON `pan_evaluate (prog:(A)panLang_prog,
-    pan_state_locals_fupd (K (slc (vshapes:(mlstring#shape)list) (args:((A)pan_v)list)))
+    pan_state_locals_fupd (combin_K (slc (vshapes:(mlstring#shape)list) (args:((A)pan_v)list)))
       (pan_dec_clock (s:(A,B)pan_state)))` THEN
   REWRITE_TAC[case_def "prod"] THEN DISCH_TAC THEN DISCH_TAC THEN
   (SUBGOAL_THEN `~(p0 = SOME (pan_Error:(A)pan_result))` ASSUME_TAC THENL
@@ -4300,7 +4300,7 @@ let PP2CAUX_A_DC_CALLEE_TAC : tactic =
     check (fun th -> is_forall(concl th) && length(fst(strip_forall(concl th))) = 4)) THEN
   (ANTS_TAC THENL [ASM_REWRITE_TAC[slc_def]; ALL_TAC]) THEN
   DISCH_THEN(MP_TAC o SPECL [`p0:((A)pan_result)option`; `p1:(A,B)pan_state`;
-    `crep_state_locals_fupd (K (tlc (list_of_seq I (LENGTH (FLAT (MAP flatten (args:((A)pan_v)list)))))
+    `crep_state_locals_fupd (combin_K (tlc (list_of_seq I (LENGTH (FLAT (MAP flatten (args:((A)pan_v)list)))))
                                    args)) (crep_dec_clock (t:(A,B)crep_state))`;
     `pan_to_crepProof_ctxt_fc (pan_to_crep_context_funcs (ctxt:(A)pan_to_crep_context))
        (pan_to_crep_context_eids ctxt) (MAP FST (vshapes:(mlstring#shape)list)) (MAP SND vshapes)
@@ -4363,7 +4363,7 @@ let PP2CAUX_A_DC_RETURN_TAC : tactic =
                  SOME (prog:(A)panLang_prog,slc (vshapes:(mlstring#shape)list) args,
                        shape_of (retv:(A)pan_v))`;
          ASSUME `pan_evaluate (prog:(A)panLang_prog,
-                   pan_state_locals_fupd (K (slc (vshapes:(mlstring#shape)list) (args:((A)pan_v)list)))
+                   pan_state_locals_fupd (combin_K (slc (vshapes:(mlstring#shape)list) (args:((A)pan_v)list)))
                      (pan_dec_clock (s:(A,B)pan_state))) = SOME (pan_Return (retv:(A)pan_v)),p1`;
          ASSUME `pan_to_crepProof_state_rel (s:(A,B)pan_state) (t:(A,B)crep_state)`;
          ASSUME `pan_to_crepProof_locals_rel (ctxt:(A)pan_to_crep_context)
@@ -4409,8 +4409,8 @@ let PP2CAUX_A_DC_RETURN_TAC : tactic =
   RULE_ASSUM_TAC(REWRITE_RULE[case_def "option"; case_def "prod"]) THEN
   PAIR_CASES_ON `pan_evaluate (prog1:(A)panLang_prog,
     pan_set_var (rt:mlstring) (retv:(A)pan_v)
-      (pan_state_locals_fupd (K (pan_state_locals (s:(A,B)pan_state))) (p1:(A,B)pan_state)))` THEN
-  RENAME_TAC ["pan_evaluate (prog1,pan_set_var rt retv (pan_state_locals_fupd (K (pan_state_locals s)) p1)) = pres,pst"] THEN
+      (pan_state_locals_fupd (combin_K (pan_state_locals (s:(A,B)pan_state))) (p1:(A,B)pan_state)))` THEN
+  RENAME_TAC ["pan_evaluate (prog1,pan_set_var rt retv (pan_state_locals_fupd (combin_K (pan_state_locals s)) p1)) = pres,pst"] THEN
   RULE_ASSUM_TAC(REWRITE_RULE[case_def "prod"; PAIR_EQ]) THEN
   PP2CAUX_WHL_SPLIT_TAC THEN
   FIRST_X_ASSUM(MP_TAC o SPECL [`args:((A)pan_v)list`; `prog:(A)panLang_prog`;
@@ -4419,7 +4419,7 @@ let PP2CAUX_A_DC_RETURN_TAC : tactic =
     check (fun th -> is_forall(concl th) && length(fst(strip_forall(concl th))) = 5)) THEN
   (ANTS_TAC THENL [ASM_REWRITE_TAC[]; ALL_TAC]) THEN
   DISCH_THEN(MP_TAC o SPECL [`pres:((A)pan_result)option`; `pst:(A,B)pan_state`;
-    `crep_state_locals_fupd (K (crep_state_locals (t:(A,B)crep_state) |++
+    `crep_state_locals_fupd (combin_K (crep_state_locals (t:(A,B)crep_state) |++
                                 ZIP nvars (flatten (retv:(A)pan_v))))
        (t1:(A,B)crep_state)`; `nctxt:(A)pan_to_crep_context`]) THEN
   (ANTS_TAC THENL
@@ -4460,7 +4460,7 @@ let PP2CAUX_A_DC_TAIL_TAC : tactic =
     then REWRITE_TAC[th] else NO_TAC) THEN
   MAP_EVERY EXISTS_TAC [`r2:((A)crep_result)option`;
     `crep_state_locals_fupd
-       (K (FOLDL crep_res_var (crep_state_locals t3)
+       (combin_K (FOLDL crep_res_var (crep_state_locals t3)
              (ZIP nvars (MAP (FLOOKUP (crep_state_locals (t:(A,B)crep_state))) nvars))))
        (t3:(A,B)crep_state)`] THEN
   REWRITE_TAC[] THEN
@@ -4530,7 +4530,7 @@ let PP2CAUX_A_DC_TAIL_TAC : tactic =
        MP_TAC(ISPECL
          [`pan_to_crep_compile (nctxt:(A)pan_to_crep_context) (prog1:(A)panLang_prog)`;
           `crep_state_locals_fupd
-             (K (crep_state_locals (t:(A,B)crep_state) |++ ZIP nvars (flatten (retv:(A)pan_v))))
+             (combin_K (crep_state_locals (t:(A,B)crep_state) |++ ZIP nvars (flatten (retv:(A)pan_v))))
              (t1:(A,B)crep_state)`;
           `r2:((A)crep_result)option`; `t3:(A,B)crep_state`; `k:num`; `0`]
          crep_unassigned_vars_evaluate_same) THEN
@@ -5029,21 +5029,21 @@ let PP2CAUX_B_res_cases = prove
 let PP2CAUX_B_sem_eq = prove
  (CASE_TERM
   `!(s:(A,FFI)pan_state) (t:(B,FFI)crep_state) start.
-     (!k. (match FST (pan_evaluate (panLang_Call NONE start [],pan_state_clock_fupd (K k) s)) with
+     (!k. (match FST (pan_evaluate (panLang_Call NONE start [],pan_state_clock_fupd (combin_K k) s)) with
              SOME pan_TimeOut ->
-               FST (crep_evaluate (crep_Call NONE start [],crep_state_clock_fupd (K k) t)) =
+               FST (crep_evaluate (crep_Call NONE start [],crep_state_clock_fupd (combin_K k) t)) =
                SOME crep_TimeOut
            | SOME (pan_FinalFFI f) ->
-               FST (crep_evaluate (crep_Call NONE start [],crep_state_clock_fupd (K k) t)) =
+               FST (crep_evaluate (crep_Call NONE start [],crep_state_clock_fupd (combin_K k) t)) =
                SOME (crep_FinalFFI f)
            | SOME (pan_Return v) ->
-               (?w. FST (crep_evaluate (crep_Call NONE start [],crep_state_clock_fupd (K k) t)) =
+               (?w. FST (crep_evaluate (crep_Call NONE start [],crep_state_clock_fupd (combin_K k) t)) =
                     SOME (crepSem_Return w))
            | _ -> F) /\
           crep_state_ffi (SND (crep_evaluate (crep_Call NONE start [],
-                                              crep_state_clock_fupd (K k) t))) =
+                                              crep_state_clock_fupd (combin_K k) t))) =
           pan_state_ffi (SND (pan_evaluate (panLang_Call NONE start [],
-                                            pan_state_clock_fupd (K k) s))))
+                                            pan_state_clock_fupd (combin_K k) s))))
      ==> crep_semantics t start = pan_semantics s start`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN
   FIRST_ASSUM(ASSUME_TAC o GEN `k:num` o MATCH_MP PP2CAUX_B_res_cases o CONJUNCT1 o
@@ -5054,7 +5054,7 @@ let PP2CAUX_B_sem_eq = prove
    `!res:behaviour.
       (?k t' (r:((B)crep_result)option) outcome.
          crep_evaluate (crep_Call NONE start [],
-                        crep_state_clock_fupd (K k) (t:(B,FFI)crep_state)) = (r,t') /\
+                        crep_state_clock_fupd (combin_K k) (t:(B,FFI)crep_state)) = (r,t') /\
          (match r with
             SOME (crep_FinalFFI e) -> outcome = FFI_outcome e
           | SOME (crepSem_Return _) -> outcome = Success
@@ -5062,7 +5062,7 @@ let PP2CAUX_B_sem_eq = prove
          res = Terminate outcome (ffi_state_io_events (crep_state_ffi t'))) <=>
       (?k t' (r:((A)pan_result)option) outcome.
          pan_evaluate (panLang_Call NONE start [],
-                       pan_state_clock_fupd (K k) (s:(A,FFI)pan_state)) = (r,t') /\
+                       pan_state_clock_fupd (combin_K k) (s:(A,FFI)pan_state)) = (r,t') /\
          (match r with
             SOME (pan_FinalFFI e) -> outcome = FFI_outcome e
           | SOME (pan_Return _) -> outcome = Success
@@ -5076,16 +5076,16 @@ let PP2CAUX_B_sem_eq = prove
   ASM_REWRITE_TAC[FST; SND] THEN REPEAT STRIP_TAC THENL
    [MAP_EVERY EXISTS_TAC
      [`SND (pan_evaluate (panLang_Call NONE start [],
-                          pan_state_clock_fupd (K k) (s:(A,FFI)pan_state)))`;
+                          pan_state_clock_fupd (combin_K k) (s:(A,FFI)pan_state)))`;
       `FST (pan_evaluate (panLang_Call NONE start [],
-                          pan_state_clock_fupd (K k) (s:(A,FFI)pan_state)))`;
+                          pan_state_clock_fupd (combin_K k) (s:(A,FFI)pan_state)))`;
       `outcome:outcome`] THEN
     ASM_REWRITE_TAC[PAIR];
     MAP_EVERY EXISTS_TAC
      [`SND (crep_evaluate (crep_Call NONE start [],
-                           crep_state_clock_fupd (K k) (t:(B,FFI)crep_state)))`;
+                           crep_state_clock_fupd (combin_K k) (t:(B,FFI)crep_state)))`;
       `FST (crep_evaluate (crep_Call NONE start [],
-                           crep_state_clock_fupd (K k) (t:(B,FFI)crep_state)))`;
+                           crep_state_clock_fupd (combin_K k) (t:(B,FFI)crep_state)))`;
       `outcome:outcome`] THEN
     ASM_REWRITE_TAC[PAIR] THEN ASM_MESON_TAC[]]);;
 
@@ -5125,7 +5125,7 @@ let state_rel_imp_semantics_to_crep = prove
   MATCH_MP_TAC PP2CAUX_B_sem_eq THEN X_GEN_TAC `k:num` THEN
   (SUBGOAL_THEN (CASE_TERM
     `~(match FST (pan_evaluate (panLang_Call NONE start [],
-                                pan_state_clock_fupd (K k) (s:(A,FFI)pan_state))) with
+                                pan_state_clock_fupd (combin_K k) (s:(A,FFI)pan_state))) with
          SOME pan_TimeOut -> F
        | SOME (pan_FinalFFI _) -> F
        | SOME (pan_Return _) -> F
@@ -5137,12 +5137,12 @@ let state_rel_imp_semantics_to_crep = prove
      REWRITE_TAC[];
      ALL_TAC]) THEN
   MP_TAC(ISPECL [`panLang_Call NONE start []:(A)panLang_prog`;
-                 `pan_state_clock_fupd (K k) (s:(A,FFI)pan_state)`;
+                 `pan_state_clock_fupd (combin_K k) (s:(A,FFI)pan_state)`;
                  `FST (pan_evaluate (panLang_Call NONE start [],
-                                     pan_state_clock_fupd (K k) (s:(A,FFI)pan_state)))`;
+                                     pan_state_clock_fupd (combin_K k) (s:(A,FFI)pan_state)))`;
                  `SND (pan_evaluate (panLang_Call NONE start [],
-                                     pan_state_clock_fupd (K k) (s:(A,FFI)pan_state)))`;
-                 `crep_state_clock_fupd (K k) (t:(A,FFI)crep_state)`;
+                                     pan_state_clock_fupd (combin_K k) (s:(A,FFI)pan_state)))`;
+                 `crep_state_clock_fupd (combin_K k) (t:(A,FFI)crep_state)`;
                  `nctxt:(A)pan_to_crep_context`] pc_compile_correct) THEN
   (ANTS_TAC THENL
     [REWRITE_TAC[PAIR; pan_state_INFO.ri_accfupds; crep_state_INFO.ri_accfupds; K_THM;
@@ -5150,7 +5150,7 @@ let state_rel_imp_semantics_to_crep = prove
      REPEAT CONJ_TAC THEN TRY(FIRST_ASSUM ACCEPT_TAC) THENL
       [DISCH_TAC THEN UNDISCH_TAC (CASE_TERM
          `~(match FST (pan_evaluate (panLang_Call NONE start [],
-                                     pan_state_clock_fupd (K k) (s:(A,FFI)pan_state))) with
+                                     pan_state_clock_fupd (combin_K k) (s:(A,FFI)pan_state))) with
               SOME pan_TimeOut -> F
             | SOME (pan_FinalFFI _) -> F
             | SOME (pan_Return _) -> F
@@ -5174,7 +5174,7 @@ let state_rel_imp_semantics_to_crep = prove
     SIMP_TAC[pan_to_crepProof_state_rel_def]] THEN
   UNDISCH_TAC (CASE_TERM
     `~(match FST (pan_evaluate (panLang_Call NONE start [],
-                                pan_state_clock_fupd (K k) (s:(A,FFI)pan_state))) with
+                                pan_state_clock_fupd (combin_K k) (s:(A,FFI)pan_state))) with
          SOME pan_TimeOut -> F
        | SOME (pan_FinalFFI _) -> F
        | SOME (pan_Return _) -> F
@@ -5182,7 +5182,7 @@ let state_rel_imp_semantics_to_crep = prove
   FIRST_X_ASSUM(MP_TAC o check (fun th -> free_in `r1:((A)crep_result)option` (concl th) &&
                                           not (is_eq (concl th)))) THEN
   SPEC_TAC(`FST (pan_evaluate (panLang_Call NONE start [],
-                               pan_state_clock_fupd (K k) (s:(A,FFI)pan_state)))`,
+                               pan_state_clock_fupd (combin_K k) (s:(A,FFI)pan_state)))`,
            `rp:((A)pan_result)option`) THEN
   GEN_TAC THEN QCASES_ON "rp" THEN REWRITE_TAC[case_def "option"] THEN
   TRY(QCASES_ON "a") THEN REWRITE_TAC[case_def "pan_result"] THEN MESON_TAC[]);;
@@ -5205,7 +5205,7 @@ let PP2CAUX_B_fdom_get_eids = prove
 
 let state_rel_imp_semantics_decls_to_crep = prove
  (`!(s:(A,FFI)pan_state) (t:(A,FFI)crep_state) (pan_code:((A)decl)list) start.
-     pan_to_crepProof_state_rel (pan_state_structs_fupd (K []) s) t /\
+     pan_to_crepProof_state_rel (pan_state_structs_fupd (combin_K []) s) t /\
      ALL_DISTINCT (MAP FST (functions pan_code)) /\
      pan_state_code s = FEMPTY /\
      crep_state_code t = alist_to_fmap (compile_to_crep pan_code) /\
@@ -5221,7 +5221,7 @@ let state_rel_imp_semantics_decls_to_crep = prove
     (GEN_ALL decs_stcnames_lemma)) THEN
   UNDISCH_TAC `~(semantics_decls (s:(A,FFI)pan_state) start pan_code = Fail)` THEN
   ASM_REWRITE_TAC[semantics_decls_def; case_def "option"] THEN
-  QCASES_ON "evaluate_decls (pan_state_structs_fupd (K []) (s:(A,FFI)pan_state)) pan_code" THEN
+  QCASES_ON "evaluate_decls (pan_state_structs_fupd (combin_K []) (s:(A,FFI)pan_state)) pan_code" THEN
   ASM_REWRITE_TAC[case_def "option"] THEN DISCH_TAC THEN
   FIRST_ASSUM(MP_TAC o MATCH_MP evaluate_decls_only_funs_and_exn_decls o
     CONJ (ASSUME `ALL (\x. is_function x \/ is_exn_decl x) (pan_code:((A)decl)list)`)) THEN
@@ -5266,7 +5266,7 @@ let pan_to_crepProof_state_rel_imp_semantics = prove
      crep_semantics t start = pan_semantics s start`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   MP_TAC(ISPECL [`s:(A,FFI)pan_state`;
-                 `crep_state_code_fupd (K (alist_to_fmap (compile_to_crep (pan_code:((A)decl)list))))
+                 `crep_state_code_fupd (combin_K (alist_to_fmap (compile_to_crep (pan_code:((A)decl)list))))
                     (t:(A,FFI)crep_state)`;
                  `pan_code:((A)decl)list`; `start:mlstring`] state_rel_imp_semantics_to_crep) THEN
   (ANTS_TAC THENL
@@ -5275,7 +5275,7 @@ let pan_to_crepProof_state_rel_imp_semantics = prove
      REWRITE_TAC[pan_to_crepProof_state_rel_def; crep_state_INFO.ri_accfupds; K_THM];
      ALL_TAC]) THEN
   DISCH_TAC THEN
-  SUBGOAL_THEN `~(crep_semantics (crep_state_code_fupd (K (alist_to_fmap
+  SUBGOAL_THEN `~(crep_semantics (crep_state_code_fupd (combin_K (alist_to_fmap
                    (compile_to_crep (pan_code:((A)decl)list)))) (t:(A,FFI)crep_state)) start = Fail)`
     ASSUME_TAC THENL [ASM_REWRITE_TAC[]; ALL_TAC] THEN
   FIRST_ASSUM(X_CHOOSE_THEN `ns:num list` (X_CHOOSE_TAC `prog:(A)crep_prog`) o
@@ -5295,7 +5295,7 @@ let pan_to_crepProof_state_rel_imp_semantics = prove
 
 let pan_to_crepProof_state_rel_imp_semantics_decls = prove
  (`!(s:(A,FFI)pan_state) (t:(A,FFI)crep_state) (pan_code:((A)decl)list) start.
-     pan_to_crepProof_state_rel (pan_state_structs_fupd (K []) s) t /\
+     pan_to_crepProof_state_rel (pan_state_structs_fupd (combin_K []) s) t /\
      ALL_DISTINCT (MAP FST (functions pan_code)) /\
      pan_state_code s = FEMPTY /\
      crep_state_code t = alist_to_fmap (pan_to_crep_compile_prog pan_code) /\
@@ -5311,7 +5311,7 @@ let pan_to_crepProof_state_rel_imp_semantics_decls = prove
     (GEN_ALL decs_stcnames_lemma)) THEN
   UNDISCH_TAC `~(semantics_decls (s:(A,FFI)pan_state) start pan_code = Fail)` THEN
   ASM_REWRITE_TAC[semantics_decls_def; case_def "option"] THEN
-  QCASES_ON "evaluate_decls (pan_state_structs_fupd (K []) (s:(A,FFI)pan_state)) pan_code" THEN
+  QCASES_ON "evaluate_decls (pan_state_structs_fupd (combin_K []) (s:(A,FFI)pan_state)) pan_code" THEN
   ASM_REWRITE_TAC[case_def "option"] THEN DISCH_TAC THEN
   FIRST_ASSUM(MP_TAC o MATCH_MP evaluate_decls_only_funs_and_exn_decls o
     CONJ (ASSUME `ALL (\x. is_function x \/ is_exn_decl x) (pan_code:((A)decl)list)`)) THEN

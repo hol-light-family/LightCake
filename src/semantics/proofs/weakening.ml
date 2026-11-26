@@ -44,7 +44,7 @@ let weak_tenv_refl = prove
    [RW[nsSub_def; tscheme_inst2_def] THEN
     FS[tenv_val_ok_def] THEN DRULE nsLookup_nsAll THEN DISCH_THEN DRULE THEN
     SPEC_TAC(`v1:num#t`,`v1:num#t`) THEN REWRITE_TAC[FORALL_PAIR_THM] THEN
-    CASE_REWRITE_TAC[] THEN REPEAT STRIP_TAC THEN
+    CAKE_REWRITE_TAC[] THEN REPEAT STRIP_TAC THEN
     REWRITE_TAC[tscheme_inst_def] THEN ASM_REWRITE_TAC[] THEN
     EXISTS_TAC `MAP Tvar_db (COUNT_LIST p1)` THEN
     ASM_SIMP_TAC[LENGTH_MAP; LENGTH_COUNT_LIST; deBruijn_subst_id] THEN
@@ -78,7 +78,7 @@ let weak_tenvE_opt_bind = prove
      weak_tenvE tenv' tenv
      ==> weak_tenvE (opt_bind_name n tvs t tenv') (opt_bind_name n tvs t tenv)`,
   REPEAT GEN_TAC THEN CASES_ON `n:mlstring option` THEN
-  REWRITE_TAC[opt_bind_name_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[opt_bind_name_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[weak_tenvE_bind]);;
 
 let weak_tenvE_bind_tvar = prove
@@ -140,7 +140,7 @@ let TPROPSAUX_option_ext = prove
 let TPROPSAUX_weak_lookup_varE = prove
  (`!n tenvE tenvE'. weak_tenvE tenvE' tenvE ==> lookup_varE n tenvE' = lookup_varE n tenvE`,
   REPEAT GEN_TAC THEN CASES_ON `n:(mlstring,mlstring)id` THEN
-  REWRITE_TAC[lookup_varE_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[lookup_varE_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[weak_tenvE_def] THEN STRIP_TAC THEN
   ONCE_REWRITE_TAC[TPROPSAUX_option_ext] THEN REWRITE_TAC[FORALL_PAIR_THM] THEN
   ASM_REWRITE_TAC[]);;
@@ -160,7 +160,7 @@ let TPROPSAUX_weakening_var = prove
               MATCH_MP TPROPSAUX_weak_lookup_varE) THEN
   UNDISCH_TAC `lookup_var n tenvE tenv = SOME (LENGTH (targs:t list),t)` THEN
   ASM_REWRITE_TAC[lookup_var_def] THEN
-  CASES_ON `lookup_varE n tenvE` THEN CASE_REWRITE_TAC[] THENL
+  CASES_ON `lookup_varE n tenvE` THEN CAKE_REWRITE_TAC[] THENL
    [DISCH_TAC THEN
     MP_TAC(SPECL [`n:(mlstring,mlstring)id`; `tenv:type_env`; `tenv':type_env`;
                   `LENGTH (targs:t list)`; `t:t`] eLookupV_weak) THEN
@@ -298,7 +298,7 @@ let type_tenv_val_weakening_lemma = prove
             envV tenvV
      ==> nsAll2 (\i v p. match p with (tvs,t) -> type_v tvs ctMap' tenvS' v t) envV tenvV`,
   REPEAT STRIP_TAC THEN TPROPSAUX_NSALL2_MONO_TAC THEN
-  REWRITE_TAC[FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[] THEN ASM_MESON_TAC[]);;
+  REWRITE_TAC[FORALL_PAIR_THM] THEN CAKE_REWRITE_TAC[] THEN ASM_MESON_TAC[]);;
 
 (* HOL4: remove_lambda_prod (local; the same as typeSysProps' one) *)
 let weakening_remove_lambda_prod = remove_lambda_prod;;
@@ -380,7 +380,7 @@ let type_all_env_weakening = prove
      ==> type_all_env ctMap' tenvS' env tenv`,
   RW[type_all_env_def] THENL
    [ASM_MESON_TAC[type_tenv_ctor_weakening];
-    TPROPSAUX_NSALL2_MONO_TAC THEN REWRITE_TAC[FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[] THEN
+    TPROPSAUX_NSALL2_MONO_TAC THEN REWRITE_TAC[FORALL_PAIR_THM] THEN CAKE_REWRITE_TAC[] THEN
     ASM_MESON_TAC[type_v_weakening]]);;
 
 let type_sv_weakening = prove

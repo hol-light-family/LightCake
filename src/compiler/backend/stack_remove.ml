@@ -324,7 +324,7 @@ let init_memory_def = cake_def
 
 let store_init_def = cake_def
   `store_init gen_gc' (k:num) =
-     (K (INL (word 0:A word)) =++
+     (combin_K (INL (word 0:A word)) =++
         [(CurrHeap,INR (k + 2));
          (GlobReal,INR (k + 2));
          (NextFree,INR (k + 2));

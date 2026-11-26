@@ -318,7 +318,7 @@ let ast_t_to_display_ind = cake_ind "ast_t_to_display";;
 
 let pat_to_display_def = sem1aux_def_wf
   `MEASURE (\x:pat + pat list.
-              sum_CASE x (\v. pat_size v) (\v. list_size pat_size v))`
+              sum_CASE x (\v. ast_pat_size v) (\v. list_size ast_pat_size v))`
   SEM1AUX_TC_TAC
   `(pat_to_display (c:pat) =
       match c with
@@ -345,7 +345,7 @@ let exp_to_display_def = sem1aux_def_wf
   `MEASURE (\x:exp + exp list + (pat # exp) list + (varN # varN # exp) list.
      sum_CASE x (\v. exp_size v)
        (\y. sum_CASE y (\v. list_size exp_size v)
-              (\z. sum_CASE z (\v. list_size (pair_size pat_size exp_size) v)
+              (\z. sum_CASE z (\v. list_size (pair_size ast_pat_size exp_size) v)
                      (\v. list_size (pair_size mlstring_size
                                        (pair_size mlstring_size exp_size)) v))))`
   SEM1AUX_TC_TAC
@@ -1023,7 +1023,7 @@ let IL1AUX_UNFOLD_CONS_CONV (def:thm) : conv =
 let MEM_append_data_seqs = prove
  (`!x. MEM a (append (data_seqs x)) ==> data_prog_size a <= data_prog_size x`,
   IL1AUX_NESTED_INDUCT_TAC data_prog_INDUCT THEN REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
-  CONV_TAC (IL1AUX_UNFOLD_CONS_CONV data_seqs_def) THEN CASE_REWRITE_TAC[] THEN
+  CONV_TAC (IL1AUX_UNFOLD_CONS_CONV data_seqs_def) THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[append_thm; MEM; MEM_APPEND] THEN
   REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[LE_REFL] THEN
   REWRITE_TAC[type_size_def "data_prog"] THEN RES_TAC THEN ASM_ARITH_TAC);;
@@ -1031,7 +1031,7 @@ let MEM_append_data_seqs = prove
 let list_size_append_data_seqs = prove
  (`!x. list_size data_prog_size (append (data_seqs x)) = data_prog_size x + 1`,
   IL1AUX_NESTED_INDUCT_TAC data_prog_INDUCT THEN REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
-  CONV_TAC (IL1AUX_UNFOLD_CONS_CONV data_seqs_def) THEN CASE_REWRITE_TAC[] THEN
+  CONV_TAC (IL1AUX_UNFOLD_CONS_CONV data_seqs_def) THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[append_thm; list_size; list_size_append] THEN
   REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
   REWRITE_TAC[type_size_def "data_prog"] THEN ARITH_TAC);;
@@ -1264,7 +1264,7 @@ let MEM_append_stack_seqs = prove
  (`!x:(A)stack_prog. MEM a (append (stack_seqs x)) ==>
                      stack_prog_size ARB a <= stack_prog_size ARB x`,
   IL1AUX_NESTED_INDUCT_TAC stack_prog_INDUCT THEN REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
-  CONV_TAC (IL1AUX_UNFOLD_CONS_CONV stack_seqs_def) THEN CASE_REWRITE_TAC[] THEN
+  CONV_TAC (IL1AUX_UNFOLD_CONS_CONV stack_seqs_def) THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[append_thm; MEM; MEM_APPEND] THEN
   REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[LE_REFL] THEN
   REWRITE_TAC[type_size_def "stack_prog"] THEN RES_TAC THEN ASM_ARITH_TAC);;
@@ -1274,7 +1274,7 @@ let list_size_append_stack_seqs = prove
      list_size (stack_prog_size ARB) (append (stack_seqs x)) =
      stack_prog_size ARB x + 1`,
   IL1AUX_NESTED_INDUCT_TAC stack_prog_INDUCT THEN REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
-  CONV_TAC (IL1AUX_UNFOLD_CONS_CONV stack_seqs_def) THEN CASE_REWRITE_TAC[] THEN
+  CONV_TAC (IL1AUX_UNFOLD_CONS_CONV stack_seqs_def) THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[append_thm; list_size; list_size_append] THEN
   REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
   REWRITE_TAC[type_size_def "stack_prog"] THEN ARITH_TAC);;
@@ -1471,7 +1471,7 @@ let MEM_append_word_seqs = prove
  (`!x:(A)wl_prog. MEM a (append (word_seqs x)) ==>
                   wl_prog_size ARB a <= wl_prog_size ARB x`,
   IL1AUX_NESTED_INDUCT_TAC wl_prog_INDUCT THEN REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
-  CONV_TAC (IL1AUX_UNFOLD_CONS_CONV word_seqs_def) THEN CASE_REWRITE_TAC[] THEN
+  CONV_TAC (IL1AUX_UNFOLD_CONS_CONV word_seqs_def) THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[append_thm; MEM; MEM_APPEND] THEN
   REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[LE_REFL] THEN
   REWRITE_TAC[type_size_def "wl_prog"] THEN RES_TAC THEN ASM_ARITH_TAC);;

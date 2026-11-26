@@ -42,9 +42,9 @@ let evaluate_JumpList = prove
      [REWRITE_TAC[INT_POS; INT_OF_NUM_LE] THEN ASM_ARITH_TAC; ALL_TAC];
     ALL_TAC] THEN
   REWRITE_TAC[bvl_do_app_def] THEN
-  CASE_REWRITE_TAC[LENGTH; LT_0; EL; HD; REVERSE; APPEND; bvl_do_int_app_def] THEN
+  CAKE_REWRITE_TAC[LENGTH; LT_0; EL; HD; REVERSE; APPEND; bvl_do_int_app_def] THEN
   ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[HD; bvl_Boolv_11; INT_OF_NUM_LT; LT_ADD_LCANCEL] THEN
+  CAKE_REWRITE_TAC[HD; bvl_Boolv_11; INT_OF_NUM_LT; LT_ADD_LCANCEL] THEN
   (COND_CASES_TAC THEN ASM_REWRITE_TAC[] THENL
    [FIRST_X_ASSUM(MP_TAC o SPECL [`k:num`; `env:bvl_v list`; `s:(C,FFI)bvl_state`] o
                   check (BVLPROPSAUX_has_const "TAKE" o concl)) THEN

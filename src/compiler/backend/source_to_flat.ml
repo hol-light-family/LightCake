@@ -61,12 +61,12 @@ let compile_var_def = cake_def
 (* HOL4 ast$pat1_size is list_size pat_size *)
 
 let ast_pat1_size = prove
- (`!xs. list_size pat_size xs = LENGTH xs + SUM (MAP pat_size xs)`,
+ (`!xs. list_size ast_pat_size xs = LENGTH xs + SUM (MAP ast_pat_size xs)`,
   LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[list_size; LENGTH; MAP; SUM] THEN
   ARITH_TAC);;
 
 let compile_pat_def = cake_def_wf
-  `MEASURE ((pat_size o SND):source_to_flat_environment # pat -> num)`
+  `MEASURE ((ast_pat_size o SND):source_to_flat_environment # pat -> num)`
   (REWRITE_TAC(WF_REL_THMS @ [o_THM; SND]) THEN REPEAT STRIP_TAC THEN
    (TERM_TAC ORELSE
     (REWRITE_TAC[type_size_def "pat"] THEN ASM_ARITH_TAC)))
@@ -140,7 +140,7 @@ let source_to_flat_compile_exp_def = sem1aux_def_wf
         sum_CASE x (\p. exp_size (SND (SND p)))
           (\y. sum_CASE y (\p. list_size exp_size (SND (SND p)))
                  (\z. sum_CASE z
-                        (\p. list_size (pair_size pat_size exp_size) (SND (SND p)))
+                        (\p. list_size (pair_size ast_pat_size exp_size) (SND (SND p)))
                         (\p. list_size (pair_size mlstring_size
                                           (pair_size mlstring_size exp_size))
                                        (SND (SND p))))))`
@@ -165,7 +165,7 @@ let source_to_flat_compile_exp_def = sem1aux_def_wf
       flat_Fun (join_all_names t) x
         (source_to_flat_compile_exp t
            (source_to_flat_environment_v_fupd
-              (K (nsBind x (source_to_flat_Local backend_common_None x)
+              (combin_K (nsBind x (source_to_flat_Local backend_common_None x)
                     (source_to_flat_environment_v env))) env) e)) /\
    (source_to_flat_compile_exp t env (App opn es) =
       if opn = AallocEmpty then
@@ -222,7 +222,7 @@ let source_to_flat_compile_exp_def = sem1aux_def_wf
         (source_to_flat_compile_exp (CONS x t) env e1)
         (source_to_flat_compile_exp t
            (source_to_flat_environment_v_fupd
-              (K (nsBind x (source_to_flat_Local backend_common_None x)
+              (combin_K (nsBind x (source_to_flat_Local backend_common_None x)
                     (source_to_flat_environment_v env))) env) e2)) /\
    (source_to_flat_compile_exp t env (Let NONE e1 e2) =
       flat_Let backend_common_None NONE
@@ -234,9 +234,9 @@ let source_to_flat_compile_exp_def = sem1aux_def_wf
                                     fun_names)
                                (source_to_flat_environment_v env) in
       flat_Letrec (join_all_names t)
-        (compile_funs t (source_to_flat_environment_v_fupd (K new_env) env) funs)
+        (compile_funs t (source_to_flat_environment_v_fupd (combin_K new_env) env) funs)
         (source_to_flat_compile_exp t
-           (source_to_flat_environment_v_fupd (K new_env) env) e)) /\
+           (source_to_flat_environment_v_fupd (combin_K new_env) env) e)) /\
    (source_to_flat_compile_exp t env (Tannot e _) =
       source_to_flat_compile_exp t env e) /\
    (source_to_flat_compile_exp t env (Lannot e (Locs st en)) =
@@ -252,14 +252,14 @@ let source_to_flat_compile_exp_def = sem1aux_def_wf
       CONS (compile_pat env p,
             source_to_flat_compile_exp t
               (source_to_flat_environment_v_fupd
-                 (K (nsBindList pts (source_to_flat_environment_v env))) env) e)
+                 (combin_K (nsBindList pts (source_to_flat_environment_v env))) env) e)
            (compile_pes t env pes)) /\
    (compile_funs t env [] = []) /\
    (compile_funs t env (CONS (f,x,e) funs) =
       CONS (f, x,
             source_to_flat_compile_exp (CONS f t)
               (source_to_flat_environment_v_fupd
-                 (K (nsBind x (source_to_flat_Local backend_common_None x)
+                 (combin_K (nsBind x (source_to_flat_Local backend_common_None x)
                        (source_to_flat_environment_v env))) env) e)
            (compile_funs t env funs))`;;
 
@@ -286,7 +286,7 @@ let compile_funs_map = prove
      compile_funs t env funs =
      MAP (\(f,x,e). (f,x,source_to_flat_compile_exp (CONS f t)
                            (source_to_flat_environment_v_fupd
-                              (K (nsBind x (source_to_flat_Local backend_common_None x)
+                              (combin_K (nsBind x (source_to_flat_Local backend_common_None x)
                                     (source_to_flat_environment_v env))) env) e))
          funs`,
   GEN_TAC THEN LIST_INDUCT_TAC THEN
@@ -422,7 +422,7 @@ let source_to_flat_compile_decs_def = sem1aux_def_wf
           let e' = source_to_flat_compile_exp (APPEND xs t) env e in
           let l = LENGTH xs in
           let n'' = n' + l in
-          (n'', next_indices_vidx_fupd (K (next_indices_vidx next + l)) next,
+          (n'', next_indices_vidx_fupd (combin_K (next_indices_vidx next + l)) next,
            source_to_flat_environment_REC nsEmpty
              (alist_to_ns (alloc_defs n' (next_indices_vidx next) xs)),
            envs,
@@ -434,14 +434,14 @@ let source_to_flat_compile_decs_def = sem1aux_def_wf
       let new_env = nsBindList (MAP (\x. (x, source_to_flat_Local backend_common_None x))
                                     fun_names)
                                (source_to_flat_environment_v env) in
-      let flat_funs = compile_funs t (source_to_flat_environment_v_fupd (K new_env) env)
+      let flat_funs = compile_funs t (source_to_flat_environment_v_fupd (combin_K new_env) env)
                         funs in
       let n' = n + 1 in
       let env' = source_to_flat_environment_REC nsEmpty
                    (alist_to_ns (alloc_defs n' (next_indices_vidx next)
                                    (REVERSE fun_names))) in
       (n' + LENGTH funs,
-       next_indices_vidx_fupd (K (next_indices_vidx next + LENGTH funs)) next,
+       next_indices_vidx_fupd (combin_K (next_indices_vidx next + LENGTH funs)) next,
        env', envs,
        [flat_Letrec (join_all_names t) flat_funs
           (make_varls 0 backend_common_None (next_indices_vidx next)
@@ -449,14 +449,14 @@ let source_to_flat_compile_decs_def = sem1aux_def_wf
    (source_to_flat_compile_decs t n next env envs [Dtype locs tds] =
       let new_env = MAPi (\tid (a,b,constrs). alloc_tags (next_indices_tidx next + tid)
                                                 constrs) tds in
-      (n, next_indices_tidx_fupd (K (next_indices_tidx next + LENGTH tds)) next,
+      (n, next_indices_tidx_fupd (combin_K (next_indices_tidx next + LENGTH tds)) next,
        source_to_flat_environment_REC
          (FOLDL (\ns (l,cids). nsAppend l ns) nsEmpty new_env) nsEmpty,
        envs, [])) /\
    (source_to_flat_compile_decs t n next env envs [Dtabbrev locs tvs tn ty] =
       (n, next, source_to_flat_empty_env, envs, [])) /\
    (source_to_flat_compile_decs t n next env envs [Dexn locs cn ts] =
-      (n, next_indices_eidx_fupd (K (next_indices_eidx next + 1)) next,
+      (n, next_indices_eidx_fupd (combin_K (next_indices_eidx next + 1)) next,
        source_to_flat_environment_REC (nsSing cn (next_indices_eidx next, NONE))
          nsEmpty,
        envs, [])) /\
@@ -471,14 +471,14 @@ let source_to_flat_compile_decs_def = sem1aux_def_wf
         source_to_flat_compile_decs t n' next1 (extend_env new_env1 env) envs' ds in
       (n'', next2, new_env2, envs'', APPEND lds' ds')) /\
    (source_to_flat_compile_decs t n next env envs [Denv nenv] =
-      (n + 1, next_indices_vidx_fupd (K (next_indices_vidx next + 1)) next,
+      (n + 1, next_indices_vidx_fupd (combin_K (next_indices_vidx next + 1)) next,
        source_to_flat_environment_REC nsEmpty
          (nsBind nenv (Glob backend_common_None (next_indices_vidx next)) nsEmpty),
        environment_generation_store_envs_fupd
-         (K (insert (environment_generation_store_next envs) env
+         (combin_K (insert (environment_generation_store_next envs) env
                     (environment_generation_store_envs envs)))
          (environment_generation_store_next_fupd
-            (K (environment_generation_store_next envs + 1)) envs),
+            (combin_K (environment_generation_store_next envs + 1)) envs),
        [flat_App backend_common_None (GlobalVarInit (next_indices_vidx next))
           [env_id_tuple (environment_generation_store_generation envs)
                         (environment_generation_store_next envs)]])) /\
@@ -523,7 +523,7 @@ let alloc_env_ref_def = cake_def
 let source_to_flat_compile_prog_def = cake_def
   `source_to_flat_compile_prog c p =
      let next = next_indices_vidx_fupd
-                  (K (next_indices_vidx (source_to_flat_config_next c) + 1))
+                  (combin_K (next_indices_vidx (source_to_flat_config_next c) + 1))
                   (source_to_flat_config_next c) in
      let envs = environment_generation_store_REC 0
                   (environment_store_next (source_to_flat_config_envs c)) LN in
@@ -534,9 +534,9 @@ let source_to_flat_compile_prog_def = cake_def
                    (insert (environment_store_next (source_to_flat_config_envs c))
                       (environment_generation_store_envs gen)
                       (environment_store_env_gens (source_to_flat_config_envs c))) in
-     (source_to_flat_config_next_fupd (K next)
-        (source_to_flat_config_envs_fupd (K envs2)
-           (source_to_flat_config_mod_env_fupd (K e) c)),
+     (source_to_flat_config_next_fupd (combin_K next)
+        (source_to_flat_config_envs_fupd (combin_K envs2)
+           (source_to_flat_config_mod_env_fupd (combin_K e) c)),
       CONS (glob_alloc next c) (CONS alloc_env_ref p'))`;;
 
 let lookup_env_id_def = cake_def
@@ -568,8 +568,8 @@ let inc_compile_prog_def = cake_def
                    (insert (environment_store_next (source_to_flat_config_envs c))
                       gen_envs
                       (environment_store_env_gens (source_to_flat_config_envs c))) in
-     (source_to_flat_config_next_fupd (K next)
-        (source_to_flat_config_envs_fupd (K envs2) c),
+     (source_to_flat_config_next_fupd (combin_K next)
+        (source_to_flat_config_envs_fupd (combin_K envs2) c),
       CONS (glob_alloc next c)
         (APPEND p' [store_env_id (environment_generation_store_generation gen)
                                  (environment_generation_store_next gen)]))`;;

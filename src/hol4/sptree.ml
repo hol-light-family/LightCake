@@ -1635,12 +1635,12 @@ let list_to_num_set_append = prove
   ONCE_REWRITE_TAC[union_assoc] THEN REWRITE_TAC[union_insert_LN]);;
 
 let map_map_K = prove
- (`!t:A spt. sptree_map (K (a:C)) (sptree_map (f:A->B) t) = sptree_map (K a) t`,
+ (`!t:A spt. sptree_map (combin_K (a:C)) (sptree_map (f:A->B) t) = sptree_map (combin_K a) t`,
   MATCH_MP_TAC spt_INDUCT THEN REPEAT STRIP_TAC THEN
   ASM_REWRITE_TAC[sptree_map_def; K_THM]);;
 
 let lookup_map_K = prove
- (`!t:A spt n. lookup n (sptree_map (K (x:B)) t) =
+ (`!t:A spt n. lookup n (sptree_map (combin_K (x:B)) t) =
                if n IN domain t then SOME x else NONE`,
   REWRITE_TAC[lookup_map; domain_lookup] THEN REPEAT GEN_TAC THEN
   SPTAUX_CASES_TAC `lookup n (t:A spt)` THEN
@@ -1945,8 +1945,8 @@ let SPTAUX_spts_to_alist_aux_thm = prove
 
 let SPTAUX_SUM_add_pause = prove
  (`!j q:(num#A spt)list.
-     SUM (MAP (spt_size (K 0) o SND) (spts_to_alist_add_pause j q)) =
-     SUM (MAP (spt_size (K 0) o SND) q)`,
+     SUM (MAP (spt_size (combin_K 0) o SND) (spts_to_alist_add_pause j q)) =
+     SUM (MAP (spt_size (combin_K 0) o SND) q)`,
   GEN_TAC THEN LIST_INDUCT_TAC THEN
   REWRITE_TAC[spts_to_alist_add_pause_def; list_CASE; MAP; SUM; o_THM;
               spt_size_def; SND; ADD_CLAUSES] THEN
@@ -1965,8 +1965,8 @@ let SPTAUX_SUM_MAP_REVERSE = prove
 
 let SPTAUX_spt_size_left_right = prove
  (`!spt:A spt. ~(spt = LN) ==>
-     spt_size (K 0) (spt_left spt) + spt_size (K 0) (spt_right spt) <
-     spt_size (K 0) spt`,
+     spt_size (combin_K 0) (spt_left spt) + spt_size (combin_K 0) (spt_right spt) <
+     spt_size (combin_K 0) spt`,
   GEN_TAC THEN SPTAUX_CASES_TAC `spt:A spt` THEN
   REWRITE_TAC[spt_left_def; spt_right_def; spt_size_def; K_THM; spt_distinct] THEN
   ARITH_TAC);;
@@ -1976,7 +1976,7 @@ let spts_to_alist_aux_size = prove
    !j ys acc2 repeat2.
      spts_to_alist_aux i xs acc_cent acc_right acc_left repeat =
        (j,ys,acc2,repeat2) ==>
-     let sz = (SUM o MAP (spt_size (K 0) o SND)) in
+     let sz = (SUM o MAP (spt_size (combin_K 0) o SND)) in
        sz ys <= sz (APPEND (APPEND xs acc_right) acc_left) /\
        (repeat2 ==> ~repeat ==>
         sz ys < sz (APPEND (APPEND xs acc_right) acc_left))`,
@@ -1995,8 +1995,8 @@ let spts_to_alist_aux_size = prove
   COND_CASES_TAC THEN
   DISCH_THEN(fun th -> FIRST_ASSUM(MP_TAC o C MATCH_MP th)) THEN
   ASM_REWRITE_TAC[SPTAUX_SUM_add_pause; MAP; SUM; o_THM; SND; spt_size_def] THEN
-  (SUBGOAL_THEN `spt_size (K 0) (spt_left (b:A spt)) +
-                 spt_size (K 0) (spt_right b) < spt_size (K 0) b \/ b = LN`
+  (SUBGOAL_THEN `spt_size (combin_K 0) (spt_left (b:A spt)) +
+                 spt_size (combin_K 0) (spt_right b) < spt_size (combin_K 0) b \/ b = LN`
      MP_TAC THENL [ASM_MESON_TAC[SPTAUX_spt_size_left_right]; ALL_TAC]) THEN
   ASM_CASES_TAC `repeat2:bool` THEN ASM_CASES_TAC `repeat:bool` THEN
   ASM_REWRITE_TAC[spt_distinct] THEN ARITH_TAC);;
@@ -2007,7 +2007,7 @@ let spts_to_alist_aux_size = prove
 
 let SPTAUX_spts_to_alist_eqn = cake_def_wf
   `MEASURE (\p:num#(num#A spt)list#(num#A)list.
-              SUM (MAP (spt_size (K 0) o SND) (FST (SND p))))`
+              SUM (MAP (spt_size (combin_K 0) o SND) (FST (SND p))))`
   (REWRITE_TAC(FST::SND::WF_REL_THMS) THEN REPEAT GEN_TAC THEN
    STRIP_TAC THEN TRY GEN_TAC THEN
    MP_TAC(ISPECL [`i:num`; `xs:(num#A spt)list`; `acc_cent:(num#A)list`;

@@ -166,7 +166,7 @@ let db_esubst_dbINST_comm = prove
         REWRITE_TAC[TYPE_SUBST_compose] THEN MESON_TAC[]];
       ALL_TAC] THEN
     DISCH_THEN(X_CHOOSE_THEN `s1:(hol_type#hol_type)list` STRIP_ASSUME_TAC) THEN
-    ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
     QBY "TYPE_SUBST s1 (ty_esubst sigma y) =
          TYPE_SUBST (MAP (\\(ty,a). (ty_esubst sigma ty,a)) tyin)
                     (TYPE_SUBST s2 (ty_esubst sigma y))"
@@ -515,7 +515,7 @@ let esubst_ty_has_type = prove
   REPEAT STRIP_TAC THEN
   QSPECL_THEN ["sigma"; "tm"; "sig"; "avds"] MP_TAC esubst_ty0_always_returns THEN
   ASM_REWRITE_TAC[] THEN DISCH_THEN(X_CHOOSE_TAC `v:hol_term`) THEN
-  ASM_REWRITE_TAC[esubst_ty_def] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[esubst_ty_def] THEN CAKE_REWRITE_TAC[] THEN
   SUBGOAL_THEN `welltyped (v:hol_term)` ASSUME_TAC THENL
    [MATCH_MP_TAC term_ok_welltyped THEN QEXISTS_TAC "esubst_sig sigma sig" THEN
     MATCH_MP_TAC esubst_ty0_term_ok THEN
@@ -535,10 +535,10 @@ let NVARIANT_SUBLIST_AVDS = prove
 let term_image_sing = prove
  (`!f x. term_image f [x] = [f x]`,
   REPEAT GEN_TAC THEN ONCE_REWRITE_TAC[term_image_def] THEN
-  CASE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
-  ONCE_REWRITE_TAC[term_image_def] THEN CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+  ONCE_REWRITE_TAC[term_image_def] THEN CAKE_REWRITE_TAC[] THEN
   COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
-  ONCE_REWRITE_TAC[term_union_def] THEN CASE_REWRITE_TAC[]);;
+  ONCE_REWRITE_TAC[term_union_def] THEN CAKE_REWRITE_TAC[]);;
 let _ = cake_add_simps [term_image_sing];;
 
 let esubst_var = prove
@@ -564,7 +564,7 @@ let VFREE_IN_esubst = prove
   REPEAT STRIP_TAC THEN REWRITE_TAC[esubst_def; esubst_ty_def] THEN
   QSPECL_THEN ["sigma"; "tm"; "sig"; "[]:mlstring list"] MP_TAC esubst_ty0_always_returns THEN
   ASM_REWRITE_TAC[] THEN DISCH_THEN(X_CHOOSE_TAC `v:hol_term`) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN MATCH_MP_TAC VFREE_IN_esubst_tm THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN MATCH_MP_TAC VFREE_IN_esubst_tm THEN
   QSPECL_THEN ["sig"; "[]:(hol_term#hol_term)list"; "sigma"; "[]:mlstring list"; "tm"; "v"]
     MP_TAC esubst_ty0_all_free THEN
   ASM_REWRITE_TAC[MEM] THEN DISCH_THEN(fun th -> REWRITE_TAC[th]) THEN ASM_MESON_TAC[]);;
@@ -596,7 +596,7 @@ let term_image_VSUBST_VFREE = prove
          hsigma`,
   REPEAT GEN_TAC THEN SPEC_TAC(`hsigma:hol_term list`,`hsigma:hol_term list`) THEN
   LIST_INDUCT_TAC THEN REWRITE_TAC[ALL; o_THM] THEN ONCE_REWRITE_TAC[term_image_def] THEN
-  CASE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN STRIP_TAC THEN
+  CAKE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN STRIP_TAC THEN
   MP_TAC(ISPECL [`sig:sig`; `h:hol_term`; `x:mlstring`;
                  `ty_esubst (sigma:(mlstring,mlstring list#hol_type)fmap#A) ty`;
                  `hol_Var y (ty_esubst (sigma:(mlstring,mlstring list#hol_type)fmap#A) ty)`]
@@ -617,7 +617,7 @@ let _ = cake_add_simps [LENGTH_term_union_sing_aux];;
 let term_image_LENGTH = prove
  (`!f ts. LENGTH (term_image f ts) <= LENGTH ts`,
   GEN_TAC THEN LIST_INDUCT_TAC THEN ONCE_REWRITE_TAC[term_image_def] THEN
-  CASE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+  CAKE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   REWRITE_TAC[LENGTH; LE_REFL] THEN COND_CASES_TAC THEN REWRITE_TAC[LENGTH; LE_REFL] THEN
   MP_TAC(ISPECL [`f:hol_term->hol_term`; `h:hol_term`; `term_image f t`]
                 LENGTH_term_union_sing_aux) THEN
@@ -632,7 +632,7 @@ let VARIANT_EQ_aux = prove
   REPEAT GEN_TAC THEN DISCH_TAC THEN GEN_TAC THEN STRIP_TAC THEN
   REPEAT(FIRST_X_ASSUM SUBST_ALL_TAC) THEN
   ONCE_REWRITE_TAC[variant_def] THEN
-  REWRITE_TAC[EX; GSYM vfree_in_thm] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[EX; GSYM vfree_in_thm] THEN CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[] THEN COND_CASES_TAC THEN REWRITE_TAC[] THEN
   FIRST_X_ASSUM(MP_TAC o SPECL [`n:mlstring`; `typ:hol_type`] o
                 check (is_imp o snd o strip_forall o concl)) THEN
@@ -678,7 +678,7 @@ let simple_esubst_Abs = prove
   QSPECL_THEN ["sigma"; "hol_Abs (hol_Var x ty) t"; "sig"; "avds"] MP_TAC
     esubst_ty0_always_returns THEN
   ASM_REWRITE_TAC[] THEN DISCH_THEN(X_CHOOSE_TAC `w:hol_term`) THEN
-  REWRITE_TAC[esubst_def; esubst_ty_def] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[esubst_def; esubst_ty_def] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   QPAT_X_ASSUM "esubst_ty0 [] _ _ (hol_Abs _ _) = _"
     (MP_TAC o CONV_RULE(TOP_DEPTH_CONV let_CONV) o REWRITE_RULE[esubst_ty0_def; dest_var_def]) THEN
   REWRITE_TAC[pair_CASE; try_eq_return; bind_EQ_return; bind_EQ_error; injectivity "error";
@@ -698,7 +698,7 @@ let simple_esubst_Abs = prove
      [MATCH_MP_TAC VSUBST_ID THEN QEXISTS_TAC "sig" THEN ASM_REWRITE_TAC[MEM; PAIR_EQ] THEN
       MESON_TAC[];
       ALL_TAC] THEN
-    ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
     CONJ_TAC THENL
      [MATCH_MP_TAC esubst_tm_ACONV THEN QEXISTS_TAC "sig" THEN ASM_REWRITE_TAC[] THEN
       QSPECL_THEN ["sig"; "sigma"; "sig"; "axs"; "avds"; "t"; "u"; "v";
@@ -722,7 +722,7 @@ let simple_esubst_Abs = prove
       ALL_TAC] THEN
     QSPECL_THEN ["sigma"; "tv"; "sig"; "avds"] MP_TAC esubst_ty0_always_returns THEN
     ASM_REWRITE_TAC[] THEN DISCH_THEN(X_CHOOSE_TAC `w2:hol_term`) THEN
-    ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
     QBY "hol_term_ok (esubst_sig sigma sig) u'"
      (MATCH_MP_TAC esubst_ty0_term_ok THEN
       QEXISTS_TAC "[hol_Var nv ty,hol_Var nv (ty_esubst sigma ty)]" THEN
@@ -825,7 +825,7 @@ let typeof_esubst = prove
   REPEAT STRIP_TAC THEN REWRITE_TAC[esubst_def; esubst_ty_def] THEN
   QSPECL_THEN ["(s,th)"; "tm"; "sig"; "avds"] MP_TAC esubst_ty0_always_returns THEN
   ASM_REWRITE_TAC[] THEN DISCH_THEN(X_CHOOSE_TAC `v:hol_term`) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   MATCH_MP_TAC EQ_TRANS THEN EXISTS_TAC `typeof v` THEN CONJ_TAC THENL
    [MATCH_MP_TAC typeof_esubst_tm THEN QEXISTS_TAC "sig" THEN QEXISTS_TAC "axs" THEN
     ASM_REWRITE_TAC[] THEN MATCH_MP_TAC esubst_ty0_term_ok THEN
@@ -876,7 +876,7 @@ let term_image_thm = prove
             if f h = h /\ term_image f t = t then CONS h t
             else term_union [f h] (term_image f t))`,
   CONJ_TAC THEN REPEAT GEN_TAC THEN GEN_REWRITE_TAC LAND_CONV [term_image_def] THEN
-  CASE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[]);;
 
 let db_esubst_ty_thm1 = prove
  (`!sig sigma tm avds.
@@ -885,7 +885,7 @@ let db_esubst_ty_thm1 = prove
   REPEAT STRIP_TAC THEN
   QSPECL_THEN ["sigma"; "tm"; "sig"; "avds"] MP_TAC esubst_ty0_always_returns THEN
   ASM_REWRITE_TAC[] THEN DISCH_THEN(X_CHOOSE_TAC `v:hol_term`) THEN
-  ASM_REWRITE_TAC[esubst_ty_def] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[esubst_ty_def] THEN CAKE_REWRITE_TAC[] THEN
   MATCH_MP_TAC db_esubst_ty_thm THEN QEXISTS_TAC "sig" THEN
   QEXISTS_TAC "[]:(hol_term#hol_term)list" THEN QEXISTS_TAC "avds" THEN
   ASM_REWRITE_TAC[MEM] THEN ASM_MESON_TAC[term_ok_welltyped]);;

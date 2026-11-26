@@ -885,15 +885,15 @@ let term_valuation_exists = prove
 
 (* HOL4: the local value is_type_valuation_exists (an UNDISCHed theorem) *)
 let CSEMAUX_is_type_valuation_exists = UNDISCH (prove
- (`is_set_theory (mem:U->U->bool) ==> is_type_valuation0 mem (K (setSpec_two mem))`,
+ (`is_set_theory (mem:U->U->bool) ==> is_type_valuation0 mem (combin_K (setSpec_two mem))`,
   SIMP_TAC[is_type_valuation0_def; K_THM] THEN MESON_TAC[boolean_in_boolset]));;
 
 let valuation_exists = prove
  (`is_set_theory (mem:U->U->bool) ==>
    !tyenv dl. is_type_assignment0 mem tyenv dl ==> ?v. is_valuation0 mem tyenv dl v`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[is_valuation0_def] THEN
-  EXISTS_TAC `(K (setSpec_two (mem:U->U->bool)):mlstring->U,
-               \(x:mlstring,ty). @v. (mem:U->U->bool) v (typesem dl (K (setSpec_two mem)) ty))` THEN
+  EXISTS_TAC `(combin_K (setSpec_two (mem:U->U->bool)):mlstring->U,
+               \(x:mlstring,ty). @v. (mem:U->U->bool) v (typesem dl (combin_K (setSpec_two mem)) ty))` THEN
   REWRITE_TAC[] THEN CONJ_TAC THENL
    [ACCEPT_TAC(DISCH_ALL CSEMAUX_is_type_valuation_exists |> C MP (ASSUME `is_set_theory (mem:U->U->bool)`));
     ALL_TAC] THEN
@@ -963,7 +963,7 @@ let interprets_one = prove
    (!x. (?y. mem y x) ==> i name [x] = f [x])`,
   REWRITE_TAC[interprets0_def; MAP; is_type_valuation0_def] THEN EQ_TAC THEN
   REPEAT STRIP_TAC THENL
-   [FIRST_X_ASSUM(MP_TAC o SPEC `K (x:U):mlstring->U`) THEN REWRITE_TAC[K_THM] THEN
+   [FIRST_X_ASSUM(MP_TAC o SPEC `combin_K (x:U):mlstring->U`) THEN REWRITE_TAC[K_THM] THEN
     DISCH_THEN MATCH_MP_TAC THEN ASM_MESON_TAC[];
     FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[]]);;
 

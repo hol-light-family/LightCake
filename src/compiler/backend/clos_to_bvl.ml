@@ -267,7 +267,7 @@ let recc_Let0_def = cake_def
 let build_recc_lets_def = cake_def
   `build_recc_lets (nargs:num list) vs n1 fns_l (c3:bvl_exp) =
      bvl_Let [bvl_Let [bvl_Op (MemOp clos_Ref)
-                         (REVERSE (APPEND (MAP (K (mk_const 0)) nargs)
+                         (REVERSE (APPEND (MAP (combin_K (mk_const 0)) nargs)
                                           (MAP bvl_Var vs)))]
                 (recc_Let0 (n1 + 2 * (fns_l - 1)) (HD (REVERSE nargs))
                            (fns_l - 1))]
@@ -900,10 +900,10 @@ let compile_common_def = cake_def
      let (es,g,aux) = clos_call_compile (clos_to_bvl_config_do_call c) es in
      let prog = APPEND (chain_exps (clos_to_bvl_config_next_loc c) es) aux in
      let prog = clos_annotate_compile prog in
-       (clos_to_bvl_config_start_fupd (K (clos_to_bvl_config_next_loc c))
-          (clos_to_bvl_config_next_loc_fupd (K n)
-             (clos_to_bvl_config_known_conf_fupd (K kc)
-                (clos_to_bvl_config_call_state_fupd (K (g,aux)) c))),
+       (clos_to_bvl_config_start_fupd (combin_K (clos_to_bvl_config_next_loc c))
+          (clos_to_bvl_config_next_loc_fupd (combin_K n)
+             (clos_to_bvl_config_known_conf_fupd (combin_K kc)
+                (clos_to_bvl_config_call_state_fupd (combin_K (g,aux)) c))),
         prog)`;;
 
 let add_src_names_def = cake_def
@@ -1043,7 +1043,7 @@ let clos_to_bvl_compile_def = cake_def
                         comp_progs in
      let func_names = make_name_alist (MAP FST prog') prog n
                         (clos_to_bvl_config_next_loc c0) (LENGTH es) in
-     let c = clos_to_bvl_config_start_fupd (K (n - 1)) c in
+     let c = clos_to_bvl_config_start_fupd (combin_K (n - 1)) c in
        (c,code_sort prog',func_names)`;;
 
 let extract_name_def = cake_def
@@ -1076,11 +1076,11 @@ let CLOS2AUX_EXTRACT_SOME = prove
          clos_Op t (IntOp (clos_Const i)) [] ->
            if i < &0 then NONE else SOME (num_of_int (abs i))
        | _ -> NONE`,
-  GEN_TAC THEN CASES_ON `x:clos_exp` THEN CASE_REWRITE_TAC[some_F] THEN
+  GEN_TAC THEN CASES_ON `x:clos_exp` THEN CAKE_REWRITE_TAC[some_F] THEN
   REWRITE_TAC[UNWIND_THM1] THEN CASES_ON `a1:clos_op` THEN
-  CASE_REWRITE_TAC[some_F] THEN CASES_ON `a:int_op` THEN
-  CASE_REWRITE_TAC[some_F] THEN CASES_ON `a2:clos_exp list` THEN
-  CASE_REWRITE_TAC[some_F; CLOS2AUX_SOME_NUM]);;
+  CAKE_REWRITE_TAC[some_F] THEN CASES_ON `a:int_op` THEN
+  CAKE_REWRITE_TAC[some_F] THEN CASES_ON `a2:clos_exp list` THEN
+  CAKE_REWRITE_TAC[some_F; CLOS2AUX_SOME_NUM]);;
 
 let CLOS2AUX_EXTRACT_NAME_CONS = prove
  (CASE_TERM
@@ -1091,11 +1091,11 @@ let CLOS2AUX_EXTRACT_NAME_CONS = prove
                  (num_of_int (abs i),if xs = [] then [x] else xs))
           | _ -> (0,CONS x xs)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[extract_name_def; CLOS2AUX_EXTRACT_SOME] THEN
-  CASES_ON `x:clos_exp` THEN CASE_REWRITE_TAC[] THEN
-  CASES_ON `a1:clos_op` THEN CASE_REWRITE_TAC[] THEN
-  CASES_ON `a:int_op` THEN CASE_REWRITE_TAC[] THEN
-  CASES_ON `a2:clos_exp list` THEN CASE_REWRITE_TAC[] THEN
-  COND_CASES_TAC THEN CASE_REWRITE_TAC[]);;
+  CASES_ON `x:clos_exp` THEN CAKE_REWRITE_TAC[] THEN
+  CASES_ON `a1:clos_op` THEN CAKE_REWRITE_TAC[] THEN
+  CASES_ON `a:int_op` THEN CAKE_REWRITE_TAC[] THEN
+  CASES_ON `a2:clos_exp list` THEN CAKE_REWRITE_TAC[] THEN
+  COND_CASES_TAC THEN CAKE_REWRITE_TAC[]);;
 
 let extract_name_pmatch = prove
  (CASE_TERM
@@ -1110,7 +1110,7 @@ let extract_name_pmatch = prove
             | _ -> (0,CONS x xs)`,
   GEN_TAC THEN CASES_ON `xs:clos_exp list` THEN
   REWRITE_TAC[extract_name_def; CLOS2AUX_EXTRACT_NAME_CONS] THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[]);;
 
 (* HOL4: compile_inc *)
 
@@ -1125,15 +1125,15 @@ let clos_to_bvl_compile_inc_def = cake_def
                                   (clos_to_bvl_config_max_app c) p in
      let (n,p) = ignore_table clos_number_compile_inc
                               (clos_to_bvl_config_next_loc c) p in
-     let c = clos_to_bvl_config_next_loc_fupd (K n) c in
+     let c = clos_to_bvl_config_next_loc_fupd (combin_K n) c in
      let spt = option_val_approx_spt (clos_to_bvl_config_known_conf c) in
      let (spt,p) = known_compile_inc
                      (known_static_conf (clos_to_bvl_config_known_conf c)) spt p in
      let c = clos_to_bvl_config_known_conf_fupd
-               (K (option_upd_val_spt spt (clos_to_bvl_config_known_conf c))) c in
+               (combin_K (option_upd_val_spt spt (clos_to_bvl_config_known_conf c))) c in
      let (c',p) = cond_call_compile_inc (clos_to_bvl_config_do_call c)
                     (FST (clos_to_bvl_config_call_state c)) p in
-     let c = clos_to_bvl_config_call_state_fupd (K (c',[])) c in
+     let c = clos_to_bvl_config_call_state_fupd (combin_K (c',[])) c in
      let p = clos_annotate_compile_inc p in
      let p = clos_to_bvl_compile_inc' (clos_to_bvl_config_max_app c) p in
        (c,p)`;;

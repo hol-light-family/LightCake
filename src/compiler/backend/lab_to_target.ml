@@ -446,14 +446,14 @@ let compile_lab_def = cake_def
            let (new_ffis,shmem_infos) =
              get_shmem_info sec_list (lab_to_target_config_pos c) [] [] in
            SOME (bytes,
-                 lab_to_target_config_labels_fupd (K l1)
+                 lab_to_target_config_labels_fupd (combin_K l1)
                    (lab_to_target_config_pos_fupd
-                      (K (LENGTH bytes + lab_to_target_config_pos c))
+                      (combin_K (LENGTH bytes + lab_to_target_config_pos c))
                    (lab_to_target_config_sec_pos_len_fupd
-                      (K (get_symbols (lab_to_target_config_pos c) sec_list))
+                      (combin_K (get_symbols (lab_to_target_config_pos c) sec_list))
                    (lab_to_target_config_ffi_names_fupd
-                      (K (SOME (APPEND ffis new_ffis)))
-                   (lab_to_target_config_shmem_extra_fupd (K shmem_infos) c)))))
+                      (combin_K (SOME (APPEND ffis new_ffis)))
+                   (lab_to_target_config_shmem_extra_fupd (combin_K shmem_infos) c)))))
        | NONE -> NONE
      else NONE`;;
 

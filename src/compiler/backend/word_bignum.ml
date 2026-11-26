@@ -511,7 +511,7 @@ let WORDP3AUX_mc_fac_def = prove
           pair_CASE (mc_fac_final (l,r1,r2)) (\l r1.
             (l,r1))))))))))))`,
   REPEAT GEN_TAC THEN GEN_REWRITE_TAC LAND_CONV [mc_fac_def] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[]);;
 
 WORDP3AUX_defs :=
   ["mc_cmp_def",WORDP3AUX_A mc_cmp_def;

@@ -150,10 +150,13 @@ let lift2_DEF = new_definition
 (* pair                                                                      *)
 (* ------------------------------------------------------------------------- *)
 
-parse_as_infix("##",(20,"right"));;
-
+(* HOL4's ## is the constant PAIR_MAP here (the name ## stays free for the   *)
+(* libraries of HOL Light); ## remains its infix syntax                      *)
 let PAIR_MAP_DEF = new_definition
-  `((f:A->C) ## (g:B->D)) = \p. (f (FST p), g (SND p))`;;
+  `PAIR_MAP (f:A->C) (g:B->D) = \p. (f (FST p), g (SND p))`;;
+
+parse_as_infix("##",(20,"right"));;
+override_interface("##",`PAIR_MAP:(A->C)->(B->D)->A#B->C#D`);;
 
 let PAIR_MAP_THM = prove
  (`!(f:A->C) (g:B->D) x y. (f ## g) (x,y) = (f x, g y)`,

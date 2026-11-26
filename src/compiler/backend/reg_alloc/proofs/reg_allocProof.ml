@@ -201,7 +201,7 @@ let update_adj_ls_eqn = prove
  (`!n t s.
      update_adj_ls n t s =
      if n < LENGTH (ra_state_adj_ls s) then
-       (M_success one,ra_state_adj_ls_fupd (K (LUPDATE t n (ra_state_adj_ls s))) s)
+       (M_success one,ra_state_adj_ls_fupd (combin_K (LUPDATE t n (ra_state_adj_ls s))) s)
      else (M_failure Subscript,s)`,
   REPEAT GEN_TAC THEN
   REWRITE_TAC[update_adj_ls_def; ml_monadBase_Marray_update_def; reg_allocProof_Mupdate_eqn] THEN
@@ -212,7 +212,7 @@ let update_node_tag_eqn = prove
  (`!n t s.
      update_node_tag n t s =
      if n < LENGTH (ra_state_node_tag s) then
-       (M_success one,ra_state_node_tag_fupd (K (LUPDATE t n (ra_state_node_tag s))) s)
+       (M_success one,ra_state_node_tag_fupd (combin_K (LUPDATE t n (ra_state_node_tag s))) s)
      else (M_failure Subscript,s)`,
   REPEAT GEN_TAC THEN
   REWRITE_TAC[update_node_tag_def; ml_monadBase_Marray_update_def; reg_allocProof_Mupdate_eqn] THEN
@@ -223,7 +223,7 @@ let update_degrees_eqn = prove
  (`!n t s.
      update_degrees n t s =
      if n < LENGTH (ra_state_degrees s) then
-       (M_success one,ra_state_degrees_fupd (K (LUPDATE t n (ra_state_degrees s))) s)
+       (M_success one,ra_state_degrees_fupd (combin_K (LUPDATE t n (ra_state_degrees s))) s)
      else (M_failure Subscript,s)`,
   REPEAT GEN_TAC THEN
   REWRITE_TAC[update_degrees_def; ml_monadBase_Marray_update_def; reg_allocProof_Mupdate_eqn] THEN
@@ -234,7 +234,7 @@ let update_coalesced_eqn = prove
  (`!n t s.
      update_coalesced n t s =
      if n < LENGTH (ra_state_coalesced s) then
-       (M_success one,ra_state_coalesced_fupd (K (LUPDATE t n (ra_state_coalesced s))) s)
+       (M_success one,ra_state_coalesced_fupd (combin_K (LUPDATE t n (ra_state_coalesced s))) s)
      else (M_failure Subscript,s)`,
   REPEAT GEN_TAC THEN
   REWRITE_TAC[update_coalesced_def; ml_monadBase_Marray_update_def; reg_allocProof_Mupdate_eqn] THEN
@@ -246,7 +246,7 @@ let update_move_related_eqn = prove
      update_move_related n t s =
      if n < LENGTH (ra_state_move_related s) then
        (M_success one,
-        ra_state_move_related_fupd (K (LUPDATE t n (ra_state_move_related s))) s)
+        ra_state_move_related_fupd (combin_K (LUPDATE t n (ra_state_move_related s))) s)
      else (M_failure Subscript,s)`,
   REPEAT GEN_TAC THEN
   REWRITE_TAC[update_move_related_def; ml_monadBase_Marray_update_def;
@@ -310,7 +310,7 @@ let RAPROOFAUX_ra_fields =
 (* RAPROOFAUX_frame [f1; ..]:                                               *)
 (*   s' = s with <| f1 := s'.f1; .. |>  <=>  the other fields agree         *)
 let RAPROOFAUX_frame (flds:string list) =
-  let upd = itlist (fun f t -> "ra_state_"^f^"_fupd (K (ra_state_"^f^" s')) ("^t^")")
+  let upd = itlist (fun f t -> "ra_state_"^f^"_fupd (combin_K (ra_state_"^f^" s')) ("^t^")")
               flds "s" in
   let others = filter (fun f -> not (mem f flds)) RAPROOFAUX_ra_fields in
   let rhs = end_itlist (fun a b -> a^" /\\ "^b)
@@ -434,7 +434,7 @@ let assign_Atemp_tag_correct = prove
                    else EL m (ra_state_node_tag s') = EL m (ra_state_node_tag s)) /\
               no_clash (ra_state_adj_ls s') (ra_state_node_tag s') /\
               good_ra_state s' /\
-              s' = ra_state_node_tag_fupd (K (ra_state_node_tag s')) s`,
+              s' = ra_state_node_tag_fupd (combin_K (ra_state_node_tag s')) s`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN REWRITE_TAC[assign_Atemp_tag_def] THEN
   SUBGOAL_THEN `n < LENGTH (ra_state_node_tag s) /\ n < LENGTH (ra_state_adj_ls s)`
   STRIP_ASSUME_TAC THENL [ASM_MESON_TAC[good_ra_state_def]; ALL_TAC] THEN
@@ -458,7 +458,7 @@ let assign_Atemp_tag_correct = prove
         (!m. if n = m then ~(EL m (LUPDATE t m (ra_state_node_tag s)) = Atemp)
              else EL m (LUPDATE t n (ra_state_node_tag s)) = EL m (ra_state_node_tag s)) /\
         no_clash (ra_state_adj_ls s) (LUPDATE t n (ra_state_node_tag s)) /\
-        good_ra_state (ra_state_node_tag_fupd (K (LUPDATE t n (ra_state_node_tag s))) s)`
+        good_ra_state (ra_state_node_tag_fupd (combin_K (LUPDATE t n (ra_state_node_tag s))) s)`
   ASSUME_TAC THENL
    [GEN_TAC THEN DISCH_TAC THEN REPEAT CONJ_TAC THENL
      [GEN_TAC THEN COND_CASES_TAC THENL
@@ -490,7 +490,7 @@ let assign_Atemps_FOREACH_lem = prove
      ==> ?s'. st_ex_FOREACH ls (assign_Atemp_tag ks prefs) s = (M_success one,s') /\
               no_clash (ra_state_adj_ls s') (ra_state_node_tag s') /\
               good_ra_state s' /\
-              s' = ra_state_node_tag_fupd (K (ra_state_node_tag s')) s /\
+              s' = ra_state_node_tag_fupd (combin_K (ra_state_node_tag s')) s /\
               (!m. if MEM m ls /\ EL m (ra_state_node_tag s) = Atemp
                    then ~(EL m (ra_state_node_tag s') = Atemp)
                    else EL m (ra_state_node_tag s') = EL m (ra_state_node_tag s))`,
@@ -525,7 +525,7 @@ let assign_Atemps_correct = prove
      ==> ?s'. assign_Atemps k ls prefs s = (M_success one,s') /\
               no_clash (ra_state_adj_ls s') (ra_state_node_tag s') /\
               good_ra_state s' /\
-              s' = ra_state_node_tag_fupd (K (ra_state_node_tag s')) s /\
+              s' = ra_state_node_tag_fupd (combin_K (ra_state_node_tag s')) s /\
               ALL (\n. ~(n = Atemp)) (ra_state_node_tag s') /\
               (!m. m < LENGTH (ra_state_node_tag s) /\ ~(EL m (ra_state_node_tag s) = Atemp)
                    ==> EL m (ra_state_node_tag s') = EL m (ra_state_node_tag s))`,
@@ -606,7 +606,7 @@ let assign_Stemp_tag_correct = prove
                    else EL m (ra_state_node_tag s') = EL m (ra_state_node_tag s)) /\
               no_clash (ra_state_adj_ls s') (ra_state_node_tag s') /\
               good_ra_state s' /\
-              s' = ra_state_node_tag_fupd (K (ra_state_node_tag s')) s`,
+              s' = ra_state_node_tag_fupd (combin_K (ra_state_node_tag s')) s`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN REWRITE_TAC[assign_Stemp_tag_def] THEN
   SUBGOAL_THEN `n < LENGTH (ra_state_node_tag s) /\ n < LENGTH (ra_state_adj_ls s)`
   STRIP_ASSUME_TAC THENL [ASM_MESON_TAC[good_ra_state_def]; ALL_TAC] THEN
@@ -628,7 +628,7 @@ let assign_Stemp_tag_correct = prove
           else EL m (ra_state_node_tag s') = EL m (ra_state_node_tag s)) /\
      no_clash (ra_state_adj_ls s') (ra_state_node_tag s') /\
      good_ra_state s' /\
-     s' = ra_state_node_tag_fupd (K (ra_state_node_tag s')) s`
+     s' = ra_state_node_tag_fupd (combin_K (ra_state_node_tag s')) s`
   ASSUME_TAC THENL
    [GEN_TAC THEN STRIP_TAC THEN ASM_REWRITE_TAC[update_node_tag_eqn] THEN SIMP[] THEN
     REPEAT CONJ_TAC THENL
@@ -671,7 +671,7 @@ let assign_Stemps_FOREACH_lem = prove
               (!m. if MEM m ls /\ EL m (ra_state_node_tag s) = Stemp
                    then ?k'. EL m (ra_state_node_tag s') = Fixed k' /\ k <= k'
                    else EL m (ra_state_node_tag s') = EL m (ra_state_node_tag s)) /\
-              s' = ra_state_node_tag_fupd (K (ra_state_node_tag s')) s`,
+              s' = ra_state_node_tag_fupd (combin_K (ra_state_node_tag s')) s`,
   LIST_INDUCT_TAC THENL
    [REWRITE_TAC[st_ex_FOREACH_def; st_ex_return_def; MEM] THEN
     SIMP[] THEN SIMP[ra_state_component_equality];
@@ -705,7 +705,7 @@ let assign_Stemps_correct = prove
      ==> ?s'. assign_Stemps k prefs s = (M_success one,s') /\
               no_clash (ra_state_adj_ls s') (ra_state_node_tag s') /\
               good_ra_state s' /\
-              s' = ra_state_node_tag_fupd (K (ra_state_node_tag s')) s /\
+              s' = ra_state_node_tag_fupd (combin_K (ra_state_node_tag s')) s /\
               (!m. m < LENGTH (ra_state_node_tag s) ==>
                    if EL m (ra_state_node_tag s) = Stemp
                    then ?k'. EL m (ra_state_node_tag s') = Fixed k' /\ k <= k'
@@ -1050,7 +1050,7 @@ let insert_edge_succeeds = prove
      good_ra_state s /\ y < ra_state_dim s /\ x < ra_state_dim s ==>
      ?s'. insert_edge x y s = (M_success one,s') /\
           good_ra_state s' /\
-          s' = ra_state_adj_ls_fupd (K (ra_state_adj_ls s')) s /\
+          s' = ra_state_adj_ls_fupd (combin_K (ra_state_adj_ls s')) s /\
           !a b. has_edge (ra_state_adj_ls s') a b <=>
                 (a = x /\ b = y) \/ (a = y /\ b = x) \/ has_edge (ra_state_adj_ls s) a b`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
@@ -1088,7 +1088,7 @@ let list_insert_edge_succeeds = prove
      good_ra_state s /\ x < ra_state_dim s /\ ALL (\y. y < ra_state_dim s) ys ==>
      ?s'. list_insert_edge x ys s = (M_success one,s') /\
           good_ra_state s' /\
-          s' = ra_state_adj_ls_fupd (K (ra_state_adj_ls s')) s /\
+          s' = ra_state_adj_ls_fupd (combin_K (ra_state_adj_ls s')) s /\
           !a b. has_edge (ra_state_adj_ls s') a b <=>
                 (a = x /\ MEM b ys) \/ (b = x /\ MEM a ys) \/
                 has_edge (ra_state_adj_ls s) a b`,
@@ -1116,7 +1116,7 @@ let clique_insert_edge_succeeds = prove
      good_ra_state s /\ ALL (\y. y < ra_state_dim s) ls ==>
      ?s'. clique_insert_edge ls s = (M_success one,s') /\
           good_ra_state s' /\
-          s' = ra_state_adj_ls_fupd (K (ra_state_adj_ls s')) s /\
+          s' = ra_state_adj_ls_fupd (combin_K (ra_state_adj_ls s')) s /\
           is_clique ls (ra_state_adj_ls s') /\
           is_subgraph (ra_state_adj_ls s) (ra_state_adj_ls s')`,
   LIST_INDUCT_TAC THENL
@@ -1148,7 +1148,7 @@ let extend_clique_succeeds = prove
      ?cli' s'. extend_clique ls cli s = (M_success cli',s') /\
                good_ra_state s' /\
                ALL_DISTINCT cli' /\
-               s' = ra_state_adj_ls_fupd (K (ra_state_adj_ls s')) s /\
+               s' = ra_state_adj_ls_fupd (combin_K (ra_state_adj_ls s')) s /\
                set_of_list cli' = set_of_list (APPEND cli ls) /\
                is_clique cli' (ra_state_adj_ls s') /\
                is_subgraph (ra_state_adj_ls s) (ra_state_adj_ls s')`,
@@ -1288,7 +1288,7 @@ let RAPROOFAUX_mk_graph_P (ct:string) =
      ==> ?livein s'. mk_graph ta ("^ct^") liveout s = (M_success livein,s') /\\
            good_ra_state s' /\\
            is_clique livein (ra_state_adj_ls s') /\\
-           s' = ra_state_adj_ls_fupd (K (ra_state_adj_ls s')) s /\\
+           s' = ra_state_adj_ls_fupd (combin_K (ra_state_adj_ls s')) s /\\
            ALL (\\y. y < ra_state_dim s) livein /\\
            ALL_DISTINCT livein /\\
            set_of_list livein SUBSET
@@ -1492,7 +1492,7 @@ let mk_graph_succeeds = prove
      ==> ?livein s'. mk_graph ta ct liveout s = (M_success livein,s') /\
            good_ra_state s' /\
            is_clique livein (ra_state_adj_ls s') /\
-           s' = ra_state_adj_ls_fupd (K (ra_state_adj_ls s')) s /\
+           s' = ra_state_adj_ls_fupd (combin_K (ra_state_adj_ls s')) s /\
            ALL (\y. y < ra_state_dim s) livein /\
            ALL_DISTINCT livein /\
            set_of_list livein SUBSET
@@ -1614,7 +1614,7 @@ let RAPROOFAUX_extend_clique_props = prove
      ALL (\y. y < ra_state_dim s) cli ==>
      good_ra_state s' /\
      ALL_DISTINCT cli' /\
-     s' = ra_state_adj_ls_fupd (K (ra_state_adj_ls s')) s /\
+     s' = ra_state_adj_ls_fupd (combin_K (ra_state_adj_ls s')) s /\
      set_of_list cli' = set_of_list (APPEND cli ls) /\
      is_clique cli' (ra_state_adj_ls s') /\
      is_subgraph (ra_state_adj_ls s) (ra_state_adj_ls s')`,
@@ -1629,7 +1629,7 @@ let RAPROOFAUX_clique_insert_edge_props = prove
      clique_insert_edge ls s = (M_success u,s') /\
      good_ra_state s /\ ALL (\y. y < ra_state_dim s) ls ==>
      good_ra_state s' /\
-     s' = ra_state_adj_ls_fupd (K (ra_state_adj_ls s')) s /\
+     s' = ra_state_adj_ls_fupd (combin_K (ra_state_adj_ls s')) s /\
      is_clique ls (ra_state_adj_ls s') /\
      is_subgraph (ra_state_adj_ls s) (ra_state_adj_ls s')`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
@@ -1649,7 +1649,7 @@ let RAPROOFAUX_mk_graph_props = prove
      ALL (\y. y < ra_state_dim s) liveout
      ==> good_ra_state s' /\
          is_clique livein (ra_state_adj_ls s') /\
-         s' = ra_state_adj_ls_fupd (K (ra_state_adj_ls s')) s /\
+         s' = ra_state_adj_ls_fupd (combin_K (ra_state_adj_ls s')) s /\
          ALL (\y. y < ra_state_dim s) livein /\
          ALL_DISTINCT livein /\
          set_of_list livein SUBSET
@@ -2172,7 +2172,7 @@ let extend_graph_succeeds = prove
      ALL (\p. match p with (x,y) -> f x < ra_state_dim s /\ f y < ra_state_dim s) forced ==>
      ?s'. extend_graph f forced s = (M_success one,s') /\
           good_ra_state s' /\
-          s' = ra_state_adj_ls_fupd (K (ra_state_adj_ls s')) s /\
+          s' = ra_state_adj_ls_fupd (combin_K (ra_state_adj_ls s')) s /\
           !a b. has_edge (ra_state_adj_ls s') a b <=>
                 (?x y. f x = a /\ f y = b /\ MEM (y,x) forced) \/
                 (?x y. f x = a /\ f y = b /\ MEM (x,y) forced) \/
@@ -2218,7 +2218,7 @@ let mk_tags_st_ex_FOREACH_lem = prove
                  else if fa i MOD 4 = 3 then update_node_tag i Stemp
                  else update_node_tag i (Fixed (fa i DIV 2))) s = (M_success one,s') /\
           good_ra_state s' /\
-          s' = ra_state_node_tag_fupd (K (ra_state_node_tag s')) s /\
+          s' = ra_state_node_tag_fupd (combin_K (ra_state_node_tag s')) s /\
           (!x. x < ra_state_dim s ==>
                if MEM x ls then
                  (if is_phy_var (fa x) then EL x (ra_state_node_tag s') = Fixed (fa x DIV 2)
@@ -2253,7 +2253,7 @@ let mk_tags_st_ex_FOREACH_lem = prove
    [ASM_MESON_TAC[RAPROOFAUX_good_lengths]; ALL_TAC] THEN
   SIMP RAPROOFAUX_msimps THEN
    FIRST_X_ASSUM(MP_TAC o SPECL
-    [`ra_state_node_tag_fupd (K (LUPDATE tg h (ra_state_node_tag s))) s`;
+    [`ra_state_node_tag_fupd (combin_K (LUPDATE tg h (ra_state_node_tag s))) s`;
      `fa:num->num`; `fs:1 spt`]) THEN
   ANTS_TAC THENL
    [UNDISCH_TAC `good_ra_state s` THEN SIMP[good_ra_state_def; LENGTH_LUPDATE] THEN
@@ -2277,7 +2277,7 @@ let mk_tags_succeeds = prove
      good_ra_state s /\ n = ra_state_dim s ==>
      ?s'. mk_tags n fs fa s = (M_success one,s') /\
           good_ra_state s' /\
-          s' = ra_state_node_tag_fupd (K (ra_state_node_tag s')) s /\
+          s' = ra_state_node_tag_fupd (combin_K (ra_state_node_tag s')) s /\
           !x y. x < n /\ y = fa x ==>
                 if is_phy_var y then EL x (ra_state_node_tag s') = Fixed (y DIV 2)
                 else if is_stack_var y then EL x (ra_state_node_tag s') = Stemp
@@ -2418,23 +2418,23 @@ let st_ex_PARTITION_move_related_sub = prove
 (* RAPROOFAUX_good_..._fupd: good_ra_state after an update of one field *)
 let RAPROOFAUX_good_degrees_fupd = prove
  (`!s d. good_ra_state s /\ LENGTH d = LENGTH (ra_state_degrees s) ==>
-         good_ra_state (ra_state_degrees_fupd (K d) s)`,
+         good_ra_state (ra_state_degrees_fupd (combin_K d) s)`,
   REWRITE_TAC[good_ra_state_def] THEN SIMP[]);;
 
 let RAPROOFAUX_good_move_related_fupd = prove
  (`!s d. good_ra_state s /\ LENGTH d = LENGTH (ra_state_move_related s) ==>
-         good_ra_state (ra_state_move_related_fupd (K d) s)`,
+         good_ra_state (ra_state_move_related_fupd (combin_K d) s)`,
   REWRITE_TAC[good_ra_state_def] THEN SIMP[]);;
 
 let RAPROOFAUX_good_stack_fupd = prove
- (`!s d. good_ra_state s ==> good_ra_state (ra_state_stack_fupd (K d) s)`,
+ (`!s d. good_ra_state s ==> good_ra_state (ra_state_stack_fupd (combin_K d) s)`,
   REWRITE_TAC[good_ra_state_def] THEN SIMP[]);;
 
 (* This is currently more general than necessary because it doesn't
    do any coalescing (yet) *)
 let dec_deg_success = prove
  (`!ls s. ALL (\v. v < ra_state_dim s) ls /\ good_ra_state s ==>
-          ?d. st_ex_FOREACH ls dec_deg s = (M_success one,ra_state_degrees_fupd (K d) s) /\
+          ?d. st_ex_FOREACH ls dec_deg s = (M_success one,ra_state_degrees_fupd (combin_K d) s) /\
               LENGTH d = LENGTH (ra_state_degrees s)`,
   LIST_INDUCT_TAC THENL
    [REWRITE_TAC[st_ex_FOREACH_def; st_ex_return_def] THEN REPEAT STRIP_TAC THEN
@@ -2444,10 +2444,10 @@ let dec_deg_success = prove
   SUBGOAL_THEN `h < LENGTH (ra_state_degrees s)` ASSUME_TAC THENL
    [ASM_MESON_TAC[RAPROOFAUX_good_lengths]; ALL_TAC] THEN
   SUBGOAL_THEN `dec_deg h s = (M_success one,
-     ra_state_degrees_fupd (K (LUPDATE (EL h (ra_state_degrees s) - 1) h
+     ra_state_degrees_fupd (combin_K (LUPDATE (EL h (ra_state_degrees s) - 1) h
        (ra_state_degrees s))) s)` (fun th -> REWRITE_TAC[MATCH_MP RAPROOFAUX_ignore_bind_ok th])
   THENL [REWRITE_TAC[dec_deg_def] THEN SIMP RAPROOFAUX_msimps; ALL_TAC] THEN
-  FIRST_X_ASSUM(MP_TAC o SPEC `ra_state_degrees_fupd (K (LUPDATE (EL h (ra_state_degrees s) - 1) h
+  FIRST_X_ASSUM(MP_TAC o SPEC `ra_state_degrees_fupd (combin_K (LUPDATE (EL h (ra_state_degrees s) - 1) h
        (ra_state_degrees s))) s`) THEN
   ANTS_TAC THENL
    [SIMP[] THEN MATCH_MP_TAC RAPROOFAUX_good_degrees_fupd THEN
@@ -2458,14 +2458,14 @@ let dec_deg_success = prove
 let dec_degree_success = prove
  (`!ls s. good_ra_state s ==>
           ?d. st_ex_FOREACH ls dec_degree s =
-                (M_success one,ra_state_degrees_fupd (K d) s) /\
+                (M_success one,ra_state_degrees_fupd (combin_K d) s) /\
               LENGTH d = LENGTH (ra_state_degrees s)`,
   LIST_INDUCT_TAC THENL
    [REWRITE_TAC[st_ex_FOREACH_def; st_ex_return_def] THEN REPEAT STRIP_TAC THEN
     EXISTS_TAC `ra_state_degrees s` THEN SIMP[ra_state_component_equality];
     ALL_TAC] THEN
   REWRITE_TAC[st_ex_FOREACH_def] THEN REPEAT STRIP_TAC THEN
-  SUBGOAL_THEN `?d. dec_degree h s = (M_success one,ra_state_degrees_fupd (K d) s) /\
+  SUBGOAL_THEN `?d. dec_degree h s = (M_success one,ra_state_degrees_fupd (combin_K d) s) /\
                     LENGTH d = LENGTH (ra_state_degrees s)` STRIP_ASSUME_TAC THENL
    [REWRITE_TAC[dec_degree_def; get_dim_def] THEN SIMP RAPROOFAUX_msimps THEN
     COND_CASES_TAC THENL
@@ -2478,7 +2478,7 @@ let dec_degree_success = prove
     ASM_MESON_TAC[];
     ALL_TAC] THEN
   FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP RAPROOFAUX_ignore_bind_ok th]) THEN
-  FIRST_X_ASSUM(MP_TAC o SPEC `ra_state_degrees_fupd (K d) s`) THEN
+  FIRST_X_ASSUM(MP_TAC o SPEC `ra_state_degrees_fupd (combin_K d) s`) THEN
   ANTS_TAC THENL
    [MATCH_MP_TAC RAPROOFAUX_good_degrees_fupd THEN ASM_REWRITE_TAC[]; ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_THEN `d2:num list` STRIP_ASSUME_TAC) THEN
@@ -2503,8 +2503,8 @@ let revive_moves_success = prove
  (`!ls s.
      ALL (\x. x < LENGTH (ra_state_adj_ls s)) ls ==>
      ?s'. revive_moves ls s = (M_success one,s') /\
-          s' = ra_state_avail_moves_wl_fupd (K (ra_state_avail_moves_wl s'))
-                 (ra_state_unavail_moves_wl_fupd (K (ra_state_unavail_moves_wl s')) s) /\
+          s' = ra_state_avail_moves_wl_fupd (combin_K (ra_state_avail_moves_wl s'))
+                 (ra_state_unavail_moves_wl_fupd (combin_K (ra_state_unavail_moves_wl s')) s) /\
           ALL (\x. MEM x (APPEND (ra_state_avail_moves_wl s) (ra_state_unavail_moves_wl s)))
             (ra_state_avail_moves_wl s') /\
           ALL (\x. MEM x (APPEND (ra_state_avail_moves_wl s) (ra_state_unavail_moves_wl s)))
@@ -2580,8 +2580,8 @@ let push_stack_success = prove
      ALL (\x. x < ra_state_dim s) ls /\ good_ra_state s ==>
      ?d mr st. st_ex_FOREACH ls push_stack s =
                  (M_success one,
-                  ra_state_degrees_fupd (K d) (ra_state_move_related_fupd (K mr)
-                    (ra_state_stack_fupd (K st) s))) /\
+                  ra_state_degrees_fupd (combin_K d) (ra_state_move_related_fupd (combin_K mr)
+                    (ra_state_stack_fupd (combin_K st) s))) /\
                LENGTH d = LENGTH (ra_state_degrees s) /\
                LENGTH mr = LENGTH (ra_state_move_related s)`,
   LIST_INDUCT_TAC THENL
@@ -2594,16 +2594,16 @@ let push_stack_success = prove
   SUBGOAL_THEN `h < LENGTH (ra_state_degrees s) /\ h < LENGTH (ra_state_move_related s)`
   STRIP_ASSUME_TAC THENL [ASM_MESON_TAC[RAPROOFAUX_good_lengths]; ALL_TAC] THEN
   SUBGOAL_THEN `push_stack h s = (M_success one,
-     ra_state_degrees_fupd (K (LUPDATE 0 h (ra_state_degrees s)))
-       (ra_state_move_related_fupd (K (LUPDATE F h (ra_state_move_related s)))
-         (ra_state_stack_fupd (K (CONS h (ra_state_stack s))) s)))`
+     ra_state_degrees_fupd (combin_K (LUPDATE 0 h (ra_state_degrees s)))
+       (ra_state_move_related_fupd (combin_K (LUPDATE F h (ra_state_move_related s)))
+         (ra_state_stack_fupd (combin_K (CONS h (ra_state_stack s))) s)))`
     (fun th -> REWRITE_TAC[MATCH_MP RAPROOFAUX_ignore_bind_ok th]) THENL
    [REWRITE_TAC[push_stack_def; reg_alloc_get_stack_def; set_stack_def] THEN
     SIMP RAPROOFAUX_msimps;
     ALL_TAC] THEN
-  FIRST_X_ASSUM(MP_TAC o SPEC `ra_state_degrees_fupd (K (LUPDATE 0 h (ra_state_degrees s)))
-       (ra_state_move_related_fupd (K (LUPDATE F h (ra_state_move_related s)))
-         (ra_state_stack_fupd (K (CONS h (ra_state_stack s))) s))`) THEN
+  FIRST_X_ASSUM(MP_TAC o SPEC `ra_state_degrees_fupd (combin_K (LUPDATE 0 h (ra_state_degrees s)))
+       (ra_state_move_related_fupd (combin_K (LUPDATE F h (ra_state_move_related s)))
+         (ra_state_stack_fupd (combin_K (CONS h (ra_state_stack s))) s))`) THEN
   ANTS_TAC THENL
    [SIMP[] THEN UNDISCH_TAC `good_ra_state s` THEN
     REWRITE_TAC[good_ra_state_def] THEN SIMP[LENGTH_LUPDATE];
@@ -2639,7 +2639,7 @@ let do_simplify_success = prove
   MP_TAC(SPECL [`ra_state_simp_wl s`; `s:ra_state`] dec_degree_success) THEN
   ASM_REWRITE_TAC[] THEN DISCH_THEN(X_CHOOSE_THEN `d:num list` STRIP_ASSUME_TAC) THEN
   FIRST_ASSUM RAPROOFAUX_BIND_TAC THEN
-  MP_TAC(SPECL [`ra_state_simp_wl s`; `ra_state_degrees_fupd (K d) s`] push_stack_success) THEN
+  MP_TAC(SPECL [`ra_state_simp_wl s`; `ra_state_degrees_fupd (combin_K d) s`] push_stack_success) THEN
   ANTS_TAC THENL
    [CONJ_TAC THENL
      [UNDISCH_TAC `good_ra_state s` THEN SIMP[good_ra_state_def];
@@ -2649,22 +2649,22 @@ let do_simplify_success = prove
     (X_CHOOSE_THEN `st:num list` STRIP_ASSUME_TAC))) THEN
   FIRST_ASSUM RAPROOFAUX_BIND_TAC THEN
   REWRITE_TAC[set_simp_wl_def] THEN SIMP RAPROOFAUX_msimps THEN
-  MP_TAC(SPECL [`k:num`; `ra_state_degrees_fupd (K d2) (ra_state_simp_wl_fupd (K [])
-     (ra_state_move_related_fupd (K mr) (ra_state_stack_fupd (K st) s)))`] unspill_success) THEN
+  MP_TAC(SPECL [`k:num`; `ra_state_degrees_fupd (combin_K d2) (ra_state_simp_wl_fupd (combin_K [])
+     (ra_state_move_related_fupd (combin_K mr) (ra_state_stack_fupd (combin_K st) s)))`] unspill_success) THEN
   ANTS_TAC THENL
   [UNDISCH_TAC `good_ra_state s` THEN REWRITE_TAC[good_ra_state_def] THEN SIMP[];
    REWRITE_TAC[LEFT_IMP_EXISTS_THM] THEN
   X_GEN_TAC `s4:ra_state` THEN STRIP_TAC THEN
   ASM_REWRITE_TAC[case_def "prod"; case_def "exc"] THEN
   MAP_EVERY EXISTS_TAC [`s4:ra_state`; `T`] THEN
-  UNDISCH_TAC `ra_state_dim (ra_state_degrees_fupd (K d2) (ra_state_simp_wl_fupd (K [])
-     (ra_state_move_related_fupd (K mr) (ra_state_stack_fupd (K st) s)))) = ra_state_dim s4` THEN
-  UNDISCH_TAC `ra_state_node_tag (ra_state_degrees_fupd (K d2) (ra_state_simp_wl_fupd (K [])
-     (ra_state_move_related_fupd (K mr) (ra_state_stack_fupd (K st) s)))) =
+  UNDISCH_TAC `ra_state_dim (ra_state_degrees_fupd (combin_K d2) (ra_state_simp_wl_fupd (combin_K [])
+     (ra_state_move_related_fupd (combin_K mr) (ra_state_stack_fupd (combin_K st) s)))) = ra_state_dim s4` THEN
+  UNDISCH_TAC `ra_state_node_tag (ra_state_degrees_fupd (combin_K d2) (ra_state_simp_wl_fupd (combin_K [])
+     (ra_state_move_related_fupd (combin_K mr) (ra_state_stack_fupd (combin_K st) s)))) =
      ra_state_node_tag s4` THEN
-  UNDISCH_TAC `is_subgraph (ra_state_adj_ls (ra_state_degrees_fupd (K d2)
-     (ra_state_simp_wl_fupd (K [])
-     (ra_state_move_related_fupd (K mr) (ra_state_stack_fupd (K st) s)))))
+  UNDISCH_TAC `is_subgraph (ra_state_adj_ls (ra_state_degrees_fupd (combin_K d2)
+     (ra_state_simp_wl_fupd (combin_K [])
+     (ra_state_move_related_fupd (combin_K mr) (ra_state_stack_fupd (combin_K st) s)))))
      (ra_state_adj_ls s4)` THEN
   SIMP[]]);;
 (* RAPROOFAUX_FILTER_ok, RAPROOFAUX_MAP_ok: st_ex_FILTER and st_ex_MAP of     *)
@@ -2887,7 +2887,7 @@ let bg_ok_success = prove
 let RAPROOFAUX_good_coalesced_fupd = prove
  (`!s c. good_ra_state s /\ LENGTH c = LENGTH (ra_state_coalesced s) /\
          ALL (\v. v < ra_state_dim s) c ==>
-         good_ra_state (ra_state_coalesced_fupd (K c) s)`,
+         good_ra_state (ra_state_coalesced_fupd (combin_K c) s)`,
   REWRITE_TAC[good_ra_state_def] THEN SIMP[]);;
 
 let RAPROOFAUX_is_Fixed_ok = prove
@@ -2899,7 +2899,7 @@ let coalesce_parent_success = prove
  (`!x s. x < ra_state_dim s /\ good_ra_state s ==>
          ?y s' coal. coalesce_parent x s = (M_success y,s') /\
                      y < ra_state_dim s /\ good_ra_state s' /\
-                     s' = ra_state_coalesced_fupd (K coal) s`,
+                     s' = ra_state_coalesced_fupd (combin_K coal) s`,
   MATCH_MP_TAC num_WF THEN X_GEN_TAC `x:num` THEN DISCH_TAC THEN
   X_GEN_TAC `s:ra_state` THEN STRIP_TAC THEN
   MP_TAC(MATCH_MP RAPROOFAUX_good_lengths (ASSUME `good_ra_state s`)) THEN STRIP_TAC THEN
@@ -2934,14 +2934,14 @@ let coalesce_parent_success = prove
     lhs(concl th) = `s1:ra_state`)) THEN
   SUBGOAL_THEN `LENGTH (c1:num list) = ra_state_dim s /\
                 ALL (\v. v < ra_state_dim s) c1` STRIP_ASSUME_TAC THENL
-   [UNDISCH_TAC `good_ra_state (ra_state_coalesced_fupd (K (c1:num list)) s)` THEN
+   [UNDISCH_TAC `good_ra_state (ra_state_coalesced_fupd (combin_K (c1:num list)) s)` THEN
     REWRITE_TAC[good_ra_state_def] THEN SIMP[];
     ALL_TAC] THEN
-  SUBGOAL_THEN `update_coalesced x y (ra_state_coalesced_fupd (K (c1:num list)) s) = (M_success one,
-     ra_state_coalesced_fupd (K (LUPDATE y x c1)) s)`
+  SUBGOAL_THEN `update_coalesced x y (ra_state_coalesced_fupd (combin_K (c1:num list)) s) = (M_success one,
+     ra_state_coalesced_fupd (combin_K (LUPDATE y x c1)) s)`
     RAPROOFAUX_BIND_TAC THENL [SIMP[update_coalesced_eqn]; ALL_TAC] THEN
   REWRITE_TAC[st_ex_return_def; PAIR_EQ; injectivity "exc"] THEN
-  MAP_EVERY EXISTS_TAC [`y:num`; `ra_state_coalesced_fupd (K (LUPDATE y x (c1:num list))) s`;
+  MAP_EVERY EXISTS_TAC [`y:num`; `ra_state_coalesced_fupd (combin_K (LUPDATE y x (c1:num list))) s`;
     `LUPDATE y x (c1:num list)`] THEN
   ASM_REWRITE_TAC[] THEN
   MATCH_MP_TAC RAPROOFAUX_good_coalesced_fupd THEN
@@ -2971,7 +2971,7 @@ let st_ex_FIRST_consistency_ok_bg_ok = prove
   ?ores ys s' coal.
     st_ex_FIRST consistency_ok (bg_ok k) ls acc s = (M_success (ores,ys),s') /\
     good_ra_state s' /\
-    s' = ra_state_coalesced_fupd (K coal) s /\
+    s' = ra_state_coalesced_fupd (combin_K coal) s /\
     ALL (\m. match m with (p:num,x,y) -> x < ra_state_dim s /\ y < ra_state_dim s) ys /\
     match ores with
       SOME ((x,y),(case1,case2),rest) ->
@@ -2995,25 +2995,25 @@ let st_ex_FIRST_consistency_ok_bg_ok = prove
   FIRST_ASSUM RAPROOFAUX_BIND_TAC THEN
   FIRST_X_ASSUM(SUBST_ALL_TAC o check (fun th -> is_eq(concl th) &&
     lhs(concl th) = `s1:ra_state`)) THEN
-  MP_TAC(SPECL [`y:num`; `ra_state_coalesced_fupd (K (c1:num list)) s`]
+  MP_TAC(SPECL [`y:num`; `ra_state_coalesced_fupd (combin_K (c1:num list)) s`]
     coalesce_parent_success) THEN
   SIMP[] THEN
   DISCH_THEN(X_CHOOSE_THEN `y1:num` (X_CHOOSE_THEN `c2:num list` STRIP_ASSUME_TAC)) THEN
   FIRST_ASSUM RAPROOFAUX_BIND_TAC THEN
-  MP_TAC(SPECL [`x1:num`; `y1:num`; `ra_state_coalesced_fupd (K (c2:num list)) s`]
+  MP_TAC(SPECL [`x1:num`; `y1:num`; `ra_state_coalesced_fupd (combin_K (c2:num list)) s`]
     consistency_ok_success) THEN
   SIMP[] THEN DISCH_THEN(X_CHOOSE_THEN `b1:bool` STRIP_ASSUME_TAC) THEN
   FIRST_ASSUM RAPROOFAUX_BIND_TAC THEN
   COND_CASES_TAC THENL
    [FIRST_X_ASSUM(MP_TAC o SPECL [`acc:(num#num#num)list`;
-      `ra_state_coalesced_fupd (K (c2:num list)) s`]) THEN
+      `ra_state_coalesced_fupd (combin_K (c2:num list)) s`]) THEN
     SIMP[] THEN DISCH_THEN ACCEPT_TAC;
     ALL_TAC] THEN
-  MP_TAC(SPECL [`x1:num`; `y1:num`; `ra_state_coalesced_fupd (K (c2:num list)) s`]
+  MP_TAC(SPECL [`x1:num`; `y1:num`; `ra_state_coalesced_fupd (combin_K (c2:num list)) s`]
     canonize_move_success) THEN
   SIMP[] THEN DISCH_THEN(X_CHOOSE_THEN `x2:num` (X_CHOOSE_THEN `y2:num` STRIP_ASSUME_TAC)) THEN
   FIRST_ASSUM RAPROOFAUX_BIND_TAC THEN REWRITE_TAC[case_def "prod"] THEN
-  MP_TAC(SPECL [`k:num`; `x2:num`; `y2:num`; `ra_state_coalesced_fupd (K (c2:num list)) s`]
+  MP_TAC(SPECL [`k:num`; `x2:num`; `y2:num`; `ra_state_coalesced_fupd (combin_K (c2:num list)) s`]
     bg_ok_success) THEN
   SIMP[] THEN DISCH_THEN(X_CHOOSE_THEN `opt:(num list#num list)option` STRIP_ASSUME_TAC) THEN
   FIRST_ASSUM RAPROOFAUX_BIND_TAC THEN
@@ -3021,7 +3021,7 @@ let st_ex_FIRST_consistency_ok_bg_ok = prove
   REWRITE_TAC[case_def "option"] THENL
    [TRY DISCH_TAC THEN
     FIRST_X_ASSUM(MP_TAC o SPECL [`CONS (p:num,x2:num,y2:num) acc`;
-      `ra_state_coalesced_fupd (K (c2:num list)) s`]) THEN
+      `ra_state_coalesced_fupd (combin_K (c2:num list)) s`]) THEN
     SIMP[ALL; case_def "prod"] THEN DISCH_THEN ACCEPT_TAC;
     ALL_TAC] THEN
   MP_TAC(ISPEC `a:num list#num list` PAIR_SURJECTIVE) THEN
@@ -3031,17 +3031,17 @@ let st_ex_FIRST_consistency_ok_bg_ok = prove
   MAP_EVERY EXISTS_TAC [`SOME ((x2:num,y2:num),(cs1:num list,cs2:num list),t:(num#num#num)list)`;
     `acc:(num#num#num)list`; `c2:num list`] THEN
   ASM_REWRITE_TAC[case_def "option"; case_def "prod"] THEN
-  UNDISCH_TAC `x2 < ra_state_dim (ra_state_coalesced_fupd (K (c2:num list)) s)` THEN
-  UNDISCH_TAC `y2 < ra_state_dim (ra_state_coalesced_fupd (K (c2:num list)) s)` THEN
+  UNDISCH_TAC `x2 < ra_state_dim (ra_state_coalesced_fupd (combin_K (c2:num list)) s)` THEN
+  UNDISCH_TAC `y2 < ra_state_dim (ra_state_coalesced_fupd (combin_K (c2:num list)) s)` THEN
   SIMP[]);;
 (* RAPROOFAUX_push_stack_ok, RAPROOFAUX_inc_deg_ok: single steps *)
 let RAPROOFAUX_push_stack_ok = prove
  (`!y s. y < LENGTH (ra_state_degrees s) /\ y < LENGTH (ra_state_move_related s) ==>
          push_stack y s =
          (M_success one,
-          ra_state_degrees_fupd (K (LUPDATE 0 y (ra_state_degrees s)))
-            (ra_state_move_related_fupd (K (LUPDATE F y (ra_state_move_related s)))
-              (ra_state_stack_fupd (K (CONS y (ra_state_stack s))) s)))`,
+          ra_state_degrees_fupd (combin_K (LUPDATE 0 y (ra_state_degrees s)))
+            (ra_state_move_related_fupd (combin_K (LUPDATE F y (ra_state_move_related s)))
+              (ra_state_stack_fupd (combin_K (CONS y (ra_state_stack s))) s)))`,
   REPEAT STRIP_TAC THEN
   REWRITE_TAC[push_stack_def; reg_alloc_get_stack_def; set_stack_def] THEN
   SIMP RAPROOFAUX_msimps);;
@@ -3051,7 +3051,7 @@ let RAPROOFAUX_inc_deg_ok = prove
            inc_deg x n s =
            (M_success one,
             ra_state_degrees_fupd
-              (K (LUPDATE (EL x (ra_state_degrees s) + n) x (ra_state_degrees s))) s)`,
+              (combin_K (LUPDATE (EL x (ra_state_degrees s) + n) x (ra_state_degrees s))) s)`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[inc_deg_def] THEN SIMP RAPROOFAUX_msimps);;
 
 let do_coalesce_real_success = prove
@@ -3068,26 +3068,26 @@ let do_coalesce_real_success = prove
   MP_TAC(MATCH_MP RAPROOFAUX_good_lengths (ASSUME `good_ra_state s`)) THEN STRIP_TAC THEN
   REWRITE_TAC[do_coalesce_real_def] THEN
   SUBGOAL_THEN `update_coalesced y x s = (M_success one,
-     ra_state_coalesced_fupd (K (LUPDATE x y (ra_state_coalesced s))) s)`
+     ra_state_coalesced_fupd (combin_K (LUPDATE x y (ra_state_coalesced s))) s)`
     RAPROOFAUX_BIND_TAC THENL [ASM_REWRITE_TAC[update_coalesced_eqn]; ALL_TAC] THEN
-  SUBGOAL_THEN `good_ra_state (ra_state_coalesced_fupd (K (LUPDATE x y (ra_state_coalesced s))) s)`
+  SUBGOAL_THEN `good_ra_state (ra_state_coalesced_fupd (combin_K (LUPDATE x y (ra_state_coalesced s))) s)`
   ASSUME_TAC THENL
    [MATCH_MP_TAC RAPROOFAUX_good_coalesced_fupd THEN
     ASM_REWRITE_TAC[LENGTH_LUPDATE] THEN MATCH_MP_TAC IMP_EVERY_LUPDATE THEN
     ASM_REWRITE_TAC[] THEN UNDISCH_TAC `good_ra_state s` THEN SIMP[good_ra_state_def];
     ALL_TAC] THEN
   SUBGOAL_THEN `x < LENGTH (ra_state_node_tag
-      (ra_state_coalesced_fupd (K (LUPDATE x y (ra_state_coalesced s))) s))`
+      (ra_state_coalesced_fupd (combin_K (LUPDATE x y (ra_state_coalesced s))) s))`
     (fun th -> RAPROOFAUX_BIND_TAC(MATCH_MP RAPROOFAUX_is_Fixed_ok th)) THENL
    [SIMP[]; ALL_TAC] THEN
   ALL_TAC THEN
   SUBGOAL_THEN (CASE_TERM `?d2. (if (match EL x (ra_state_node_tag
-               (ra_state_coalesced_fupd (K (LUPDATE x y (ra_state_coalesced s))) s)) with
+               (ra_state_coalesced_fupd (combin_K (LUPDATE x y (ra_state_coalesced s))) s)) with
                   Fixed n -> T | _ -> F)
       then st_ex_return one else inc_deg x (LENGTH (case2:num list)))
-      (ra_state_coalesced_fupd (K (LUPDATE x y (ra_state_coalesced s))) s) =
-      (M_success one, ra_state_degrees_fupd (K d2)
-         (ra_state_coalesced_fupd (K (LUPDATE x y (ra_state_coalesced s))) s)) /\
+      (ra_state_coalesced_fupd (combin_K (LUPDATE x y (ra_state_coalesced s))) s) =
+      (M_success one, ra_state_degrees_fupd (combin_K d2)
+         (ra_state_coalesced_fupd (combin_K (LUPDATE x y (ra_state_coalesced s))) s)) /\
       LENGTH d2 = LENGTH (ra_state_degrees s)`) STRIP_ASSUME_TAC THENL
    [COND_CASES_TAC THENL
      [EXISTS_TAC `ra_state_degrees s` THEN REWRITE_TAC[st_ex_return_def] THEN
@@ -3098,8 +3098,8 @@ let do_coalesce_real_success = prove
       SIMP[LENGTH_LUPDATE]];
     ALL_TAC] THEN
   FIRST_ASSUM RAPROOFAUX_BIND_TAC THEN
-  MP_TAC(SPECL [`case2:num list`; `x:num`; `ra_state_degrees_fupd (K (d2:num list))
-     (ra_state_coalesced_fupd (K (LUPDATE x y (ra_state_coalesced s))) s)`]
+  MP_TAC(SPECL [`case2:num list`; `x:num`; `ra_state_degrees_fupd (combin_K (d2:num list))
+     (ra_state_coalesced_fupd (combin_K (LUPDATE x y (ra_state_coalesced s))) s)`]
      list_insert_edge_succeeds) THEN
   ANTS_TAC THENL
    [SIMP[] THEN MATCH_MP_TAC RAPROOFAUX_good_degrees_fupd THEN SIMP[]; ALL_TAC] THEN
@@ -3111,16 +3111,16 @@ let do_coalesce_real_success = prove
   ASM_REWRITE_TAC[] THEN
   DISCH_THEN(X_CHOOSE_THEN `d4:num list` STRIP_ASSUME_TAC) THEN
   FIRST_ASSUM RAPROOFAUX_BIND_TAC THEN
-  SUBGOAL_THEN `y < LENGTH (ra_state_degrees (ra_state_degrees_fupd (K d4) s3)) /\
-                y < LENGTH (ra_state_move_related (ra_state_degrees_fupd (K d4) s3))`
+  SUBGOAL_THEN `y < LENGTH (ra_state_degrees (ra_state_degrees_fupd (combin_K d4) s3)) /\
+                y < LENGTH (ra_state_move_related (ra_state_degrees_fupd (combin_K d4) s3))`
     (fun th -> REWRITE_TAC[MATCH_MP RAPROOFAUX_push_stack_ok th]) THENL
    [SIMP[]; ALL_TAC] THEN
   EXISTS_TAC `ra_state_degrees_fupd
-               (K (LUPDATE 0 y (ra_state_degrees (ra_state_degrees_fupd (K d4) s3))))
+               (combin_K (LUPDATE 0 y (ra_state_degrees (ra_state_degrees_fupd (combin_K d4) s3))))
             (ra_state_move_related_fupd
-               (K (LUPDATE F y (ra_state_move_related (ra_state_degrees_fupd (K d4) s3))))
-              (ra_state_stack_fupd (K (CONS y (ra_state_stack (ra_state_degrees_fupd (K d4) s3))))
-                (ra_state_degrees_fupd (K d4) s3)))` THEN
+               (combin_K (LUPDATE F y (ra_state_move_related (ra_state_degrees_fupd (combin_K d4) s3))))
+              (ra_state_stack_fupd (combin_K (CONS y (ra_state_stack (ra_state_degrees_fupd (combin_K d4) s3))))
+                (ra_state_degrees_fupd (combin_K d4) s3)))` THEN
   SIMP[] THEN CONJ_TAC THENL
    [UNDISCH_TAC `good_ra_state s3` THEN REWRITE_TAC[good_ra_state_def] THEN
     SIMP[LENGTH_LUPDATE];
@@ -3165,17 +3165,17 @@ let do_coalesce_success = prove
     (X_CHOOSE_THEN `c1:num list` STRIP_ASSUME_TAC)))) THEN
   FIRST_ASSUM RAPROOFAUX_BIND_TAC THEN REWRITE_TAC[case_def "prod"] THEN
   SUBGOAL_THEN `(add_unavail_moves_wl ys:ra_state->(1,state_exn)exc#ra_state) s1 = (M_success one,
-     ra_state_unavail_moves_wl_fupd (K (APPEND ys (ra_state_unavail_moves_wl s1))) s1)`
+     ra_state_unavail_moves_wl_fupd (combin_K (APPEND ys (ra_state_unavail_moves_wl s1))) s1)`
     RAPROOFAUX_BIND_TAC THENL
    [REWRITE_TAC[add_unavail_moves_wl_def; get_unavail_moves_wl_def;
                 set_unavail_moves_wl_def] THEN SIMP RAPROOFAUX_msimps;
     ALL_TAC] THEN
   FIRST_X_ASSUM(SUBST_ALL_TAC o
     check (fun th -> is_eq(concl th) && lhs(concl th) = `s1:ra_state`)) THEN
-  SUBGOAL_THEN `good_ra_state (ra_state_unavail_moves_wl_fupd (K (APPEND ys
-     (ra_state_unavail_moves_wl (ra_state_coalesced_fupd (K c1) s))))
-     (ra_state_coalesced_fupd (K c1) s))` ASSUME_TAC THENL
-   [UNDISCH_TAC `good_ra_state (ra_state_coalesced_fupd (K (c1:num list)) s)` THEN
+  SUBGOAL_THEN `good_ra_state (ra_state_unavail_moves_wl_fupd (combin_K (APPEND ys
+     (ra_state_unavail_moves_wl (ra_state_coalesced_fupd (combin_K c1) s))))
+     (ra_state_coalesced_fupd (combin_K c1) s))` ASSUME_TAC THENL
+   [UNDISCH_TAC `good_ra_state (ra_state_coalesced_fupd (combin_K (c1:num list)) s)` THEN
     REWRITE_TAC[good_ra_state_def] THEN SIMP[ALL_APPEND] THEN STRIP_TAC THEN
     ASM_REWRITE_TAC[] THEN UNDISCH_TAC `good_ra_state s` THEN SIMP[good_ra_state_def];
     ALL_TAC] THEN
@@ -3183,9 +3183,9 @@ let do_coalesce_success = prove
   RULE_ASSUM_TAC(REWRITE_RULE[case_def "option"]) THEN REWRITE_TAC[case_def "option"] THENL
   [(REWRITE_TAC[set_avail_moves_wl_def] THEN SIMP RAPROOFAUX_msimps THEN
   REWRITE_TAC[is_subgraph_refl] THEN
-  UNDISCH_TAC `good_ra_state (ra_state_unavail_moves_wl_fupd (K (APPEND ys
-     (ra_state_unavail_moves_wl (ra_state_coalesced_fupd (K (c1:num list)) s))))
-     (ra_state_coalesced_fupd (K c1) s))` THEN
+  UNDISCH_TAC `good_ra_state (ra_state_unavail_moves_wl_fupd (combin_K (APPEND ys
+     (ra_state_unavail_moves_wl (ra_state_coalesced_fupd (combin_K (c1:num list)) s))))
+     (ra_state_coalesced_fupd (combin_K c1) s))` THEN
   REWRITE_TAC[good_ra_state_def] THEN SIMP[ALL] THEN
   DISCH_THEN(K ALL_TAC) THEN EXISTS_TAC `F` THEN REWRITE_TAC[]);
    (SUBGOAL_THEN `?x y cs1 cs2 ms. (a:(num#num)#(num list#num list)#(num#num#num)list) =
@@ -3195,23 +3195,23 @@ let do_coalesce_success = prove
   RULE_ASSUM_TAC(REWRITE_RULE[case_def "prod"]) THEN REWRITE_TAC[case_def "prod"] THEN
   FIRST_X_ASSUM(STRIP_ASSUME_TAC o check (is_conj o concl))) THEN
    (SUBGOAL_THEN `(set_avail_moves_wl ms:ra_state->(1,state_exn)exc#ra_state)
-     (ra_state_unavail_moves_wl_fupd (K (APPEND ys
-      (ra_state_unavail_moves_wl (ra_state_coalesced_fupd (K (c1:num list)) s))))
-     (ra_state_coalesced_fupd (K c1) s)) =
+     (ra_state_unavail_moves_wl_fupd (combin_K (APPEND ys
+      (ra_state_unavail_moves_wl (ra_state_coalesced_fupd (combin_K (c1:num list)) s))))
+     (ra_state_coalesced_fupd (combin_K c1) s)) =
      (M_success one,
-      ra_state_avail_moves_wl_fupd (K ms) (ra_state_unavail_moves_wl_fupd (K (APPEND ys
-      (ra_state_unavail_moves_wl (ra_state_coalesced_fupd (K c1) s))))
-     (ra_state_coalesced_fupd (K c1) s)))` RAPROOFAUX_BIND_TAC THENL
+      ra_state_avail_moves_wl_fupd (combin_K ms) (ra_state_unavail_moves_wl_fupd (combin_K (APPEND ys
+      (ra_state_unavail_moves_wl (ra_state_coalesced_fupd (combin_K c1) s))))
+     (ra_state_coalesced_fupd (combin_K c1) s)))` RAPROOFAUX_BIND_TAC THENL
    [REWRITE_TAC[set_avail_moves_wl_def]; ALL_TAC] THEN
   MP_TAC(SPECL [`x:num`; `y:num`; `cs1:num list`; `cs2:num list`;
-    `ra_state_avail_moves_wl_fupd (K ms) (ra_state_unavail_moves_wl_fupd (K (APPEND ys
-      (ra_state_unavail_moves_wl (ra_state_coalesced_fupd (K (c1:num list)) s))))
-     (ra_state_coalesced_fupd (K c1) s))`] do_coalesce_real_success) THEN
+    `ra_state_avail_moves_wl_fupd (combin_K ms) (ra_state_unavail_moves_wl_fupd (combin_K (APPEND ys
+      (ra_state_unavail_moves_wl (ra_state_coalesced_fupd (combin_K (c1:num list)) s))))
+     (ra_state_coalesced_fupd (combin_K c1) s))`] do_coalesce_real_success) THEN
   ANTS_TAC THENL
    [SIMP[] THEN
-    UNDISCH_TAC `good_ra_state (ra_state_unavail_moves_wl_fupd (K (APPEND ys
-     (ra_state_unavail_moves_wl (ra_state_coalesced_fupd (K (c1:num list)) s))))
-     (ra_state_coalesced_fupd (K c1) s))` THEN
+    UNDISCH_TAC `good_ra_state (ra_state_unavail_moves_wl_fupd (combin_K (APPEND ys
+     (ra_state_unavail_moves_wl (ra_state_coalesced_fupd (combin_K (c1:num list)) s))))
+     (ra_state_coalesced_fupd (combin_K c1) s))` THEN
     REWRITE_TAC[good_ra_state_def] THEN SIMP[];
     ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_THEN `s4:ra_state` STRIP_ASSUME_TAC) THEN
@@ -3237,7 +3237,7 @@ let st_ex_FOREACH_update_move_related = prove
  (`!ls s b.
      ALL (\v. v < LENGTH (ra_state_move_related s)) ls ==>
      ?lss. st_ex_FOREACH ls (\x. update_move_related x b) s =
-             (M_success one,ra_state_move_related_fupd (K lss) s) /\
+             (M_success one,ra_state_move_related_fupd (combin_K lss) s) /\
            LENGTH lss = LENGTH (ra_state_move_related s)`,
   LIST_INDUCT_TAC THENL
    [REWRITE_TAC[st_ex_FOREACH_def; st_ex_return_def] THEN REPEAT STRIP_TAC THEN
@@ -3245,10 +3245,10 @@ let st_ex_FOREACH_update_move_related = prove
     ALL_TAC] THEN
   REWRITE_TAC[ALL; st_ex_FOREACH_def] THEN REPEAT STRIP_TAC THEN
   SUBGOAL_THEN `update_move_related h b s = (M_success one,
-     ra_state_move_related_fupd (K (LUPDATE b h (ra_state_move_related s))) s)`
+     ra_state_move_related_fupd (combin_K (LUPDATE b h (ra_state_move_related s))) s)`
     RAPROOFAUX_BIND_TAC THENL [ASM_REWRITE_TAC[update_move_related_eqn]; ALL_TAC] THEN
   FIRST_X_ASSUM(MP_TAC o SPECL
-    [`ra_state_move_related_fupd (K (LUPDATE b h (ra_state_move_related s))) s`; `b:bool`]) THEN
+    [`ra_state_move_related_fupd (combin_K (LUPDATE b h (ra_state_move_related s))) s`; `b:bool`]) THEN
   SIMP[LENGTH_LUPDATE] THEN
   DISCH_THEN(X_CHOOSE_THEN `l2:bool list` STRIP_ASSUME_TAC) THEN
   EXISTS_TAC `l2:bool list` THEN ASM_REWRITE_TAC[] THEN SIMP[ra_state_component_equality]);;
@@ -3264,7 +3264,7 @@ let RAPROOFAUX_reset_move_related_loop = prove
                      st_ex_bind (is_Fixed y) (\by.
                      st_ex_ignore_bind (update_move_related x (~bx))
                                        (update_move_related y (~by))))) s =
-            (M_success one,ra_state_move_related_fupd (K mv) s) /\
+            (M_success one,ra_state_move_related_fupd (combin_K mv) s) /\
           LENGTH mv = LENGTH (ra_state_move_related s)`),
   LIST_INDUCT_TAC THENL
    [REWRITE_TAC[st_ex_FOREACH_def; st_ex_return_def] THEN REPEAT STRIP_TAC THEN
@@ -3278,7 +3278,7 @@ let RAPROOFAUX_reset_move_related_loop = prove
           st_ex_bind (is_Fixed y) (\by.
                st_ex_ignore_bind (update_move_related x (~bx))
                (update_move_related y (~by)))) s =
-     (M_success one,ra_state_move_related_fupd (K mv1) s) /\
+     (M_success one,ra_state_move_related_fupd (combin_K mv1) s) /\
      LENGTH mv1 = LENGTH (ra_state_move_related s)` STRIP_ASSUME_TAC THENL
    [SUBGOAL_THEN `x < LENGTH (ra_state_node_tag s)`
       (fun th -> RAPROOFAUX_BIND_TAC(MATCH_MP RAPROOFAUX_is_Fixed_ok th)) THENL
@@ -3293,7 +3293,7 @@ let RAPROOFAUX_reset_move_related_loop = prove
     SIMP[LENGTH_LUPDATE];
     ALL_TAC] THEN
   FIRST_ASSUM RAPROOFAUX_BIND_TAC THEN
-  FIRST_X_ASSUM(MP_TAC o SPEC `ra_state_move_related_fupd (K (mv1:bool list)) s`) THEN
+  FIRST_X_ASSUM(MP_TAC o SPEC `ra_state_move_related_fupd (combin_K (mv1:bool list)) s`) THEN
   ANTS_TAC THENL
    [CONJ_TAC THENL
      [MATCH_MP_TAC RAPROOFAUX_good_move_related_fupd THEN ASM_REWRITE_TAC[];
@@ -3306,7 +3306,7 @@ let reset_move_related_success = prove
  (CASE_TERM `!(ls:(A#num#num)list) s.
      good_ra_state s /\
      ALL (\m. match m with (p,(x,y)) -> x < ra_state_dim s /\ y < ra_state_dim s) ls ==>
-     ?mv. reset_move_related ls s = (M_success one,ra_state_move_related_fupd (K mv) s) /\
+     ?mv. reset_move_related ls s = (M_success one,ra_state_move_related_fupd (combin_K mv) s) /\
           LENGTH mv = ra_state_dim s`,
   REPEAT STRIP_TAC THEN
   MP_TAC(MATCH_MP RAPROOFAUX_good_lengths (ASSUME `good_ra_state s`)) THEN STRIP_TAC THEN
@@ -3319,7 +3319,7 @@ let reset_move_related_success = prove
   ASM_REWRITE_TAC[GSYM ALL_MEM; MEM_COUNT_LIST] THEN
   DISCH_THEN(X_CHOOSE_THEN `lss:bool list` STRIP_ASSUME_TAC) THEN
   FIRST_ASSUM RAPROOFAUX_BIND_TAC THEN
-  MP_TAC(ISPECL [`ls:(A#num#num)list`; `ra_state_move_related_fupd (K (lss:bool list)) s`]
+  MP_TAC(ISPECL [`ls:(A#num#num)list`; `ra_state_move_related_fupd (combin_K (lss:bool list)) s`]
     RAPROOFAUX_reset_move_related_loop) THEN
   ANTS_TAC THENL
    [CONJ_TAC THENL
@@ -3373,12 +3373,12 @@ let do_prefreeze_success = prove
   FIRST_ASSUM RAPROOFAUX_BIND_TAC THEN
   RAPROOFAUX_STEP_TAC[set_spill_wl_def] THEN
   RAPROOFAUX_STEP_TAC[get_unavail_moves_wl_def] THEN
-  SUBGOAL_THEN `good_ra_state (ra_state_spill_wl_fupd (K swl) s)` ASSUME_TAC THENL
+  SUBGOAL_THEN `good_ra_state (ra_state_spill_wl_fupd (combin_K swl) s)` ASSUME_TAC THENL
    [UNDISCH_TAC `good_ra_state s` THEN REWRITE_TAC[good_ra_state_def] THEN SIMP[] THEN
     UNDISCH_TAC `ALL (\x. x < LENGTH (ra_state_coalesced s)) swl` THEN SIMP[];
     ALL_TAC] THEN
   MP_TAC(ISPECL [`ra_state_unavail_moves_wl s`; `[]:(num#num#num)list`;
-    `ra_state_spill_wl_fupd (K (swl:num list)) s`] st_ex_FILTER_consistency_ok) THEN
+    `ra_state_spill_wl_fupd (combin_K (swl:num list)) s`] st_ex_FILTER_consistency_ok) THEN
   ANTS_TAC THENL
    [ASM_REWRITE_TAC[] THEN UNDISCH_TAC `good_ra_state s` THEN SIMP[good_ra_state_def];
     ALL_TAC] THEN
@@ -3386,15 +3386,15 @@ let do_prefreeze_success = prove
   DISCH_THEN(X_CHOOSE_THEN `uam:(num#num#num)list` STRIP_ASSUME_TAC) THEN
   RULE_ASSUM_TAC(CAKE_SIMP_RULE[]) THEN
   FIRST_ASSUM RAPROOFAUX_BIND_TAC THEN
-  MP_TAC(ISPECL [`uam:(num#num#num)list`; `ra_state_spill_wl_fupd (K (swl:num list)) s`]
+  MP_TAC(ISPECL [`uam:(num#num#num)list`; `ra_state_spill_wl_fupd (combin_K (swl:num list)) s`]
     reset_move_related_success) THEN
   SIMP[] THEN
   DISCH_THEN(X_CHOOSE_THEN `mv:bool list` STRIP_ASSUME_TAC) THEN
   FIRST_ASSUM RAPROOFAUX_BIND_TAC THEN
   RAPROOFAUX_STEP_TAC[set_unavail_moves_wl_def] THEN
   MP_TAC(ISPECL [`fwl:num list`; `[]:num list`; `[]:num list`;
-    `ra_state_spill_wl_fupd (K (swl:num list)) (ra_state_unavail_moves_wl_fupd (K uam)
-       (ra_state_move_related_fupd (K (mv:bool list)) s))`] st_ex_PARTITION_move_related_sub) THEN
+    `ra_state_spill_wl_fupd (combin_K (swl:num list)) (ra_state_unavail_moves_wl_fupd (combin_K uam)
+       (ra_state_move_related_fupd (combin_K (mv:bool list)) s))`] st_ex_PARTITION_move_related_sub) THEN
   ANTS_TAC THENL
    [SIMP[] THEN UNDISCH_TAC `ALL (\x. x < LENGTH (ra_state_coalesced s)) fwl` THEN SIMP[];
     ALL_TAC] THEN
@@ -3403,11 +3403,11 @@ let do_prefreeze_success = prove
   FIRST_ASSUM RAPROOFAUX_BIND_TAC THEN REWRITE_TAC[case_def "prod"] THEN
   RAPROOFAUX_STEP_TAC[add_simp_wl_def; get_simp_wl_def; set_simp_wl_def] THEN
   RAPROOFAUX_STEP_TAC[set_freeze_wl_def] THEN
-  MP_TAC(SPECL [`k:num`; `ra_state_simp_wl_fupd (K (APPEND tsimp (ra_state_simp_wl s)))
-     (ra_state_spill_wl_fupd (K swl)
-     (ra_state_freeze_wl_fupd (K tf)
-     (ra_state_unavail_moves_wl_fupd (K (uam:(num#num#num)list))
-     (ra_state_move_related_fupd (K (mv:bool list)) s))))`] do_simplify_success) THEN
+  MP_TAC(SPECL [`k:num`; `ra_state_simp_wl_fupd (combin_K (APPEND tsimp (ra_state_simp_wl s)))
+     (ra_state_spill_wl_fupd (combin_K swl)
+     (ra_state_freeze_wl_fupd (combin_K tf)
+     (ra_state_unavail_moves_wl_fupd (combin_K (uam:(num#num#num)list))
+     (ra_state_move_related_fupd (combin_K (mv:bool list)) s))))`] do_simplify_success) THEN
   ANTS_TAC THENL
    [UNDISCH_TAC `good_ra_state s` THEN REWRITE_TAC[good_ra_state_def] THEN SIMP[ALL_APPEND] THEN
     STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
@@ -3420,7 +3420,7 @@ let do_prefreeze_success = prove
   SIMP[] THEN DISCH_THEN ACCEPT_TAC);;
 let RAPROOFAUX_dec_degree_ok = prove
  (`!h s. good_ra_state s ==>
-         ?d. dec_degree h s = (M_success one,ra_state_degrees_fupd (K d) s) /\
+         ?d. dec_degree h s = (M_success one,ra_state_degrees_fupd (combin_K d) s) /\
              LENGTH d = LENGTH (ra_state_degrees s)`,
   REPEAT STRIP_TAC THEN
   REWRITE_TAC[dec_degree_def; get_dim_def] THEN SIMP RAPROOFAUX_msimps THEN
@@ -3454,16 +3454,16 @@ let do_freeze_success = prove
   MP_TAC(SPECL [`a0:num`; `s:ra_state`] RAPROOFAUX_dec_degree_ok) THEN ASM_REWRITE_TAC[] THEN
   DISCH_THEN(X_CHOOSE_THEN `d:num list` STRIP_ASSUME_TAC) THEN
   FIRST_ASSUM RAPROOFAUX_BIND_TAC THEN
-  SUBGOAL_THEN `a0 < LENGTH (ra_state_degrees (ra_state_degrees_fupd (K d) s)) /\
-                a0 < LENGTH (ra_state_move_related (ra_state_degrees_fupd (K d) s))`
+  SUBGOAL_THEN `a0 < LENGTH (ra_state_degrees (ra_state_degrees_fupd (combin_K d) s)) /\
+                a0 < LENGTH (ra_state_move_related (ra_state_degrees_fupd (combin_K d) s))`
     (fun th -> RAPROOFAUX_BIND_TAC(MATCH_MP RAPROOFAUX_push_stack_ok th)) THENL
    [SIMP[]; ALL_TAC] THEN
   RAPROOFAUX_STEP_TAC[set_freeze_wl_def] THEN
-  MP_TAC(SPECL [`k:num`; `ra_state_degrees_fupd (K (LUPDATE 0 a0 d))
-     (ra_state_freeze_wl_fupd (K a1)
+  MP_TAC(SPECL [`k:num`; `ra_state_degrees_fupd (combin_K (LUPDATE 0 a0 d))
+     (ra_state_freeze_wl_fupd (combin_K a1)
      (ra_state_move_related_fupd
-      (K (LUPDATE F a0 (ra_state_move_related s)))
-     (ra_state_stack_fupd (K (CONS a0 (ra_state_stack s))) s)))`] unspill_success) THEN
+      (combin_K (LUPDATE F a0 (ra_state_move_related s)))
+     (ra_state_stack_fupd (combin_K (CONS a0 (ra_state_stack s))) s)))`] unspill_success) THEN
   ANTS_TAC THENL
    [UNDISCH_TAC `good_ra_state s` THEN REWRITE_TAC[good_ra_state_def] THEN
     SIMP[LENGTH_LUPDATE];
@@ -3540,16 +3540,16 @@ let do_spill_success = prove
   MP_TAC(SPECL [`y:num`; `s:ra_state`] RAPROOFAUX_dec_degree_ok) THEN ASM_REWRITE_TAC[] THEN
   DISCH_THEN(X_CHOOSE_THEN `d:num list` STRIP_ASSUME_TAC) THEN
   FIRST_ASSUM RAPROOFAUX_BIND_TAC THEN
-  SUBGOAL_THEN `y < LENGTH (ra_state_degrees (ra_state_degrees_fupd (K d) s)) /\
-                y < LENGTH (ra_state_move_related (ra_state_degrees_fupd (K d) s))`
+  SUBGOAL_THEN `y < LENGTH (ra_state_degrees (ra_state_degrees_fupd (combin_K d) s)) /\
+                y < LENGTH (ra_state_move_related (ra_state_degrees_fupd (combin_K d) s))`
     (fun th -> RAPROOFAUX_BIND_TAC(MATCH_MP RAPROOFAUX_push_stack_ok th)) THENL
    [SIMP[]; ALL_TAC] THEN
   RAPROOFAUX_STEP_TAC[set_spill_wl_def] THEN
-  MP_TAC(SPECL [`k:num`; `ra_state_degrees_fupd (K (LUPDATE 0 y d))
-     (ra_state_spill_wl_fupd (K ys)
+  MP_TAC(SPECL [`k:num`; `ra_state_degrees_fupd (combin_K (LUPDATE 0 y d))
+     (ra_state_spill_wl_fupd (combin_K ys)
      (ra_state_move_related_fupd
-      (K (LUPDATE F y (ra_state_move_related s)))
-     (ra_state_stack_fupd (K (CONS y (ra_state_stack s))) s)))`] unspill_success) THEN
+      (combin_K (LUPDATE F y (ra_state_move_related s)))
+     (ra_state_stack_fupd (combin_K (CONS y (ra_state_stack s))) s)))`] unspill_success) THEN
   ANTS_TAC THENL
    [UNDISCH_TAC `good_ra_state s` THEN REWRITE_TAC[good_ra_state_def] THEN
     SIMP[LENGTH_LUPDATE];
@@ -3700,7 +3700,7 @@ let RAPROOFAUX_init_degrees_loop = prove
            (\i. st_ex_bind (adj_ls_sub i) (\adjls.
                 st_ex_bind (st_ex_FILTER (\v. considered_var k v) adjls []) (\fills.
                 update_degrees i (LENGTH fills)))) s =
-         (M_success one,ra_state_degrees_fupd (K d) s) /\
+         (M_success one,ra_state_degrees_fupd (combin_K d) s) /\
          LENGTH d = LENGTH (ra_state_degrees s)`,
   GEN_TAC THEN LIST_INDUCT_TAC THENL
    [REWRITE_TAC[st_ex_FOREACH_def; st_ex_return_def] THEN REPEAT STRIP_TAC THEN
@@ -3711,7 +3711,7 @@ let RAPROOFAUX_init_degrees_loop = prove
   SUBGOAL_THEN `?d1. st_ex_bind (adj_ls_sub h) (\adjls.
                 st_ex_bind (st_ex_FILTER (considered_var k) adjls []) (\fills.
                 update_degrees h (LENGTH fills))) s =
-                (M_success one,ra_state_degrees_fupd (K d1) s) /\
+                (M_success one,ra_state_degrees_fupd (combin_K d1) s) /\
                 LENGTH d1 = LENGTH (ra_state_degrees s)` STRIP_ASSUME_TAC THENL
    [SUBGOAL_THEN `adj_ls_sub h s = (M_success (EL h (ra_state_adj_ls s)),s)`
       RAPROOFAUX_BIND_TAC THENL [ASM_REWRITE_TAC[adj_ls_sub_eqn]; ALL_TAC] THEN
@@ -3729,7 +3729,7 @@ let RAPROOFAUX_init_degrees_loop = prove
     ASM_REWRITE_TAC[LENGTH_LUPDATE];
     ALL_TAC] THEN
   FIRST_ASSUM RAPROOFAUX_BIND_TAC THEN
-  FIRST_X_ASSUM(MP_TAC o SPEC `ra_state_degrees_fupd (K (d1:num list)) s`) THEN
+  FIRST_X_ASSUM(MP_TAC o SPEC `ra_state_degrees_fupd (combin_K (d1:num list)) s`) THEN
   ANTS_TAC THENL
    [CONJ_TAC THENL
      [MATCH_MP_TAC RAPROOFAUX_good_degrees_fupd THEN ASM_REWRITE_TAC[]; SIMP[]];
@@ -3741,34 +3741,34 @@ let RAPROOFAUX_init_coalesced_loop = prove
  (`!ls s.
      good_ra_state s /\ ALL (\v. v < ra_state_dim s) ls ==>
      ?c. st_ex_FOREACH ls do_upd_coalesce s =
-           (M_success one,ra_state_coalesced_fupd (K c) s) /\
-         good_ra_state (ra_state_coalesced_fupd (K c) s)`,
+           (M_success one,ra_state_coalesced_fupd (combin_K c) s) /\
+         good_ra_state (ra_state_coalesced_fupd (combin_K c) s)`,
   LIST_INDUCT_TAC THENL
    [REWRITE_TAC[st_ex_FOREACH_def; st_ex_return_def] THEN REPEAT STRIP_TAC THEN
     EXISTS_TAC `ra_state_coalesced s` THEN
-    SUBGOAL_THEN `ra_state_coalesced_fupd (K (ra_state_coalesced s)) s = s` SUBST1_TAC THENL
+    SUBGOAL_THEN `ra_state_coalesced_fupd (combin_K (ra_state_coalesced s)) s = s` SUBST1_TAC THENL
      [SIMP[ra_state_component_equality]; ASM_REWRITE_TAC[]];
     ALL_TAC] THEN
   REWRITE_TAC[ALL; st_ex_FOREACH_def] THEN REPEAT STRIP_TAC THEN
   MP_TAC(MATCH_MP RAPROOFAUX_good_lengths (ASSUME `good_ra_state s`)) THEN STRIP_TAC THEN
   SUBGOAL_THEN `do_upd_coalesce h s = (M_success one,
-     ra_state_coalesced_fupd (K (LUPDATE h h (ra_state_coalesced s))) s)`
+     ra_state_coalesced_fupd (combin_K (LUPDATE h h (ra_state_coalesced s))) s)`
     RAPROOFAUX_BIND_TAC THENL
    [ASM_REWRITE_TAC[do_upd_coalesce_def; update_coalesced_eqn; ADD_CLAUSES]; ALL_TAC] THEN
-  SUBGOAL_THEN `good_ra_state (ra_state_coalesced_fupd (K (LUPDATE h h (ra_state_coalesced s))) s)`
+  SUBGOAL_THEN `good_ra_state (ra_state_coalesced_fupd (combin_K (LUPDATE h h (ra_state_coalesced s))) s)`
   ASSUME_TAC THENL
    [MATCH_MP_TAC RAPROOFAUX_good_coalesced_fupd THEN ASM_REWRITE_TAC[LENGTH_LUPDATE] THEN
     MATCH_MP_TAC IMP_EVERY_LUPDATE THEN ASM_REWRITE_TAC[] THEN
     UNDISCH_TAC `good_ra_state s` THEN SIMP[good_ra_state_def];
     ALL_TAC] THEN
   FIRST_X_ASSUM(MP_TAC o SPEC
-    `ra_state_coalesced_fupd (K (LUPDATE h h (ra_state_coalesced s))) s`) THEN
+    `ra_state_coalesced_fupd (combin_K (LUPDATE h h (ra_state_coalesced s))) s`) THEN
   ANTS_TAC THENL [ASM_REWRITE_TAC[] THEN SIMP[]; ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_THEN `c2:num list` STRIP_ASSUME_TAC) THEN
   EXISTS_TAC `c2:num list` THEN ASM_REWRITE_TAC[] THEN
   CONJ_TAC THENL [SIMP[ra_state_component_equality]; ALL_TAC] THEN
-  UNDISCH_TAC `good_ra_state (ra_state_coalesced_fupd (K (c2:num list))
-     (ra_state_coalesced_fupd (K (LUPDATE h h (ra_state_coalesced s))) s))` THEN
+  UNDISCH_TAC `good_ra_state (ra_state_coalesced_fupd (combin_K (c2:num list))
+     (ra_state_coalesced_fupd (combin_K (LUPDATE h h (ra_state_coalesced s))) s))` THEN
   SIMP[]);;
 let RAPROOFAUX_is_Atemp_ok = prove
  (`!x s. x < LENGTH (ra_state_node_tag s) ==>
@@ -3801,7 +3801,7 @@ let RAPROOFAUX_init_alloc1_heu_ok = prove
   ASM_REWRITE_TAC[GSYM ALL_MEM; MEM_COUNT_LIST] THEN
   DISCH_THEN(X_CHOOSE_THEN `d1:num list` STRIP_ASSUME_TAC) THEN
   FIRST_ASSUM RAPROOFAUX_BIND_TAC THEN
-  MP_TAC(SPECL [`COUNT_LIST (ra_state_dim s)`; `ra_state_degrees_fupd (K (d1:num list)) s`]
+  MP_TAC(SPECL [`COUNT_LIST (ra_state_dim s)`; `ra_state_degrees_fupd (combin_K (d1:num list)) s`]
     RAPROOFAUX_init_coalesced_loop) THEN
   ANTS_TAC THENL
    [CONJ_TAC THENL
@@ -3811,47 +3811,47 @@ let RAPROOFAUX_init_alloc1_heu_ok = prove
   DISCH_THEN(X_CHOOSE_THEN `c1:num list` STRIP_ASSUME_TAC) THEN
   FIRST_ASSUM RAPROOFAUX_BIND_TAC THEN
   RAPROOFAUX_STEP_TAC[set_avail_moves_wl_def] THEN
-  SUBGOAL_THEN `good_ra_state (ra_state_degrees_fupd (K (d1:num list))
-     (ra_state_avail_moves_wl_fupd (K (reg_alloc_sort_moves (moves:(num#num#num)list)))
-     (ra_state_coalesced_fupd (K (c1:num list)) s)))` ASSUME_TAC THENL
-   [UNDISCH_TAC `good_ra_state (ra_state_coalesced_fupd (K (c1:num list))
-       (ra_state_degrees_fupd (K (d1:num list)) s))` THEN
+  SUBGOAL_THEN `good_ra_state (ra_state_degrees_fupd (combin_K (d1:num list))
+     (ra_state_avail_moves_wl_fupd (combin_K (reg_alloc_sort_moves (moves:(num#num#num)list)))
+     (ra_state_coalesced_fupd (combin_K (c1:num list)) s)))` ASSUME_TAC THENL
+   [UNDISCH_TAC `good_ra_state (ra_state_coalesced_fupd (combin_K (c1:num list))
+       (ra_state_degrees_fupd (combin_K (d1:num list)) s))` THEN
     REWRITE_TAC[good_ra_state_def] THEN SIMP[] THEN STRIP_TAC THEN
     ASM_REWRITE_TAC[] THEN
     UNDISCH_TAC (CASE_TERM `ALL (\m. match m with (p:num,x,y) ->
       x < ra_state_dim s /\ y < ra_state_dim s) moves`) THEN
     REWRITE_TAC[GSYM ALL_MEM; reg_alloc_sort_moves_def; sort_MEM];
     ALL_TAC] THEN
-  MP_TAC(ISPECL [`moves:(num#num#num)list`; `ra_state_degrees_fupd (K (d1:num list))
-     (ra_state_avail_moves_wl_fupd (K (reg_alloc_sort_moves (moves:(num#num#num)list)))
-     (ra_state_coalesced_fupd (K (c1:num list)) s))`] reset_move_related_success) THEN
+  MP_TAC(ISPECL [`moves:(num#num#num)list`; `ra_state_degrees_fupd (combin_K (d1:num list))
+     (ra_state_avail_moves_wl_fupd (combin_K (reg_alloc_sort_moves (moves:(num#num#num)list)))
+     (ra_state_coalesced_fupd (combin_K (c1:num list)) s))`] reset_move_related_success) THEN
   SIMP[] THEN
   DISCH_THEN(X_CHOOSE_THEN `mv:bool list` STRIP_ASSUME_TAC) THEN
   FIRST_ASSUM RAPROOFAUX_BIND_TAC THEN
-  SUBGOAL_THEN `good_ra_state (ra_state_degrees_fupd (K (d1:num list))
-     (ra_state_avail_moves_wl_fupd (K (reg_alloc_sort_moves (moves:(num#num#num)list)))
-     (ra_state_coalesced_fupd (K (c1:num list))
-       (ra_state_move_related_fupd (K (mv:bool list)) s))))`
+  SUBGOAL_THEN `good_ra_state (ra_state_degrees_fupd (combin_K (d1:num list))
+     (ra_state_avail_moves_wl_fupd (combin_K (reg_alloc_sort_moves (moves:(num#num#num)list)))
+     (ra_state_coalesced_fupd (combin_K (c1:num list))
+       (ra_state_move_related_fupd (combin_K (mv:bool list)) s))))`
   ASSUME_TAC THENL
-   [UNDISCH_TAC `good_ra_state (ra_state_degrees_fupd (K (d1:num list))
-     (ra_state_avail_moves_wl_fupd (K (reg_alloc_sort_moves (moves:(num#num#num)list)))
-     (ra_state_coalesced_fupd (K (c1:num list)) s)))` THEN
+   [UNDISCH_TAC `good_ra_state (ra_state_degrees_fupd (combin_K (d1:num list))
+     (ra_state_avail_moves_wl_fupd (combin_K (reg_alloc_sort_moves (moves:(num#num#num)list)))
+     (ra_state_coalesced_fupd (combin_K (c1:num list)) s)))` THEN
     REWRITE_TAC[good_ra_state_def] THEN SIMP[];
     ALL_TAC] THEN
   MP_TAC(SPECL [`atemps:num list`; `k:num`; `[]:num list`; `[]:num list`;
-    `ra_state_degrees_fupd (K (d1:num list))
-     (ra_state_avail_moves_wl_fupd (K (reg_alloc_sort_moves (moves:(num#num#num)list)))
-     (ra_state_coalesced_fupd (K (c1:num list))
-       (ra_state_move_related_fupd (K (mv:bool list)) s)))`]
+    `ra_state_degrees_fupd (combin_K (d1:num list))
+     (ra_state_avail_moves_wl_fupd (combin_K (reg_alloc_sort_moves (moves:(num#num#num)list)))
+     (ra_state_coalesced_fupd (combin_K (c1:num list))
+       (ra_state_move_related_fupd (combin_K (mv:bool list)) s)))`]
     st_ex_PARTITION_split_degree) THEN
   ASM_REWRITE_TAC[MEM] THEN SIMP[] THEN
   DISCH_THEN(X_CHOOSE_THEN `ltk:num list` (X_CHOOSE_THEN `gtk:num list` STRIP_ASSUME_TAC)) THEN
   FIRST_ASSUM RAPROOFAUX_BIND_TAC THEN REWRITE_TAC[case_def "prod"] THEN
   MP_TAC(SPECL [`ltk:num list`; `[]:num list`; `[]:num list`;
-    `ra_state_degrees_fupd (K (d1:num list))
-     (ra_state_avail_moves_wl_fupd (K (reg_alloc_sort_moves (moves:(num#num#num)list)))
-     (ra_state_coalesced_fupd (K (c1:num list))
-       (ra_state_move_related_fupd (K (mv:bool list)) s)))`]
+    `ra_state_degrees_fupd (combin_K (d1:num list))
+     (ra_state_avail_moves_wl_fupd (combin_K (reg_alloc_sort_moves (moves:(num#num#num)list)))
+     (ra_state_coalesced_fupd (combin_K (c1:num list))
+       (ra_state_move_related_fupd (combin_K (mv:bool list)) s)))`]
     st_ex_PARTITION_move_related_sub) THEN
   ANTS_TAC THENL
    [SIMP[] THEN UNDISCH_TAC `ALL (\x. MEM x (atemps:num list)) ltk` THEN
@@ -3865,10 +3865,10 @@ let RAPROOFAUX_init_alloc1_heu_ok = prove
   RAPROOFAUX_STEP_TAC[set_freeze_wl_def] THEN
   REWRITE_TAC[st_ex_return_def; PAIR_EQ; injectivity "exc"] THEN
   SIMP[] THEN
-  UNDISCH_TAC `good_ra_state (ra_state_degrees_fupd (K (d1:num list))
-     (ra_state_avail_moves_wl_fupd (K (reg_alloc_sort_moves (moves:(num#num#num)list)))
-     (ra_state_coalesced_fupd (K (c1:num list))
-       (ra_state_move_related_fupd (K (mv:bool list)) s))))` THEN
+  UNDISCH_TAC `good_ra_state (ra_state_degrees_fupd (combin_K (d1:num list))
+     (ra_state_avail_moves_wl_fupd (combin_K (reg_alloc_sort_moves (moves:(num#num#num)list)))
+     (ra_state_coalesced_fupd (combin_K (c1:num list))
+       (ra_state_move_related_fupd (combin_K (mv:bool list)) s))))` THEN
   REWRITE_TAC[good_ra_state_def] THEN SIMP[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
   UNDISCH_TAC `ALL (\x. MEM x (atemps:num list)) ltk` THEN
   UNDISCH_TAC `ALL (\x. MEM x (atemps:num list)) gtk` THEN

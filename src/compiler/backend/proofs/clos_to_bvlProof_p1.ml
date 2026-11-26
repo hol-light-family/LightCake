@@ -335,7 +335,7 @@ let C2BP1AUX_do_app_ElemAt = prove
  (`!n tag xs (s:(C,FFI)bvl_state).
      bvl_do_app (BlockOp (ElemAt n)) [bvl_Block tag xs] s =
      if n < LENGTH xs then Rval (EL n xs,s) else Rerr (Rabort Rtype_error)`,
-  REWRITE_TAC[bvl_do_app_def] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[bvl_do_app_def] THEN CAKE_REWRITE_TAC[]);;
 
 let C2BP1AUX_do_app_IntOp = prove
  (CASE_TERM `!op vs (s:(C,FFI)bvl_state).
@@ -343,7 +343,7 @@ let C2BP1AUX_do_app_IntOp = prove
      match bvl_do_int_app op vs with
        SOME res -> Rval (res,s)
      | NONE -> Rerr (Rabort Rtype_error)`,
-  REWRITE_TAC[bvl_do_app_def] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[bvl_do_app_def] THEN CAKE_REWRITE_TAC[]);;
 
 (* HOL4 line 352 (HOL4 mk_elem_at b i is bvl_Op (BlockOp (ElemAt i)) [b]) *)
 let evaluate_genlist_prev_args = prove
@@ -367,13 +367,13 @@ let evaluate_genlist_prev_args = prove
   FIRST_X_ASSUM (MP_TAC o SPECL [`APPEND z [h:bvl_v]`; `x:bvl_v list`; `tag:num`;
                                  `arg_list:bvl_v list`; `st:(C,FFI)bvl_state`]) THEN
   REWRITE_TAC[GSYM APPEND_ASSOC; APPEND] THEN DISCH_THEN SUBST1_TAC THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[bvl_evaluate_def; LENGTH_APPEND; LENGTH; ADD_CLAUSES] THEN
   REWRITE_TAC[ARITH_RULE `a < SUC (a + b)`] THEN
   SIMP_TAC[EL_LENGTH_APPEND; NULL; HD] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[REVERSE; APPEND; C2BP1AUX_do_app_ElemAt] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[REVERSE; APPEND; C2BP1AUX_do_app_ElemAt] THEN
   REWRITE_TAC[LENGTH_APPEND; LENGTH; ADD_CLAUSES; ARITH_RULE `a < SUC (a + b)`] THEN
-  SIMP_TAC[EL_LENGTH_APPEND; NULL; HD] THEN CASE_REWRITE_TAC[]);;
+  SIMP_TAC[EL_LENGTH_APPEND; NULL; HD] THEN CAKE_REWRITE_TAC[]);;
 
 (* HOL4 line 376 *)
 let evaluate_genlist_prev_args1_simpl = prove
@@ -417,10 +417,10 @@ let evaluate_genlist_prev_args_no_rev = prove
   REWRITE_TAC[bvl_evaluate_def; LENGTH_APPEND; LENGTH; ADD_CLAUSES] THEN
   REWRITE_TAC[ARITH_RULE `a < SUC (a + b)`] THEN
   SIMP_TAC[EL_LENGTH_APPEND; NULL; HD] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[REVERSE; APPEND; C2BP1AUX_do_app_ElemAt] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[REVERSE; APPEND; C2BP1AUX_do_app_ElemAt] THEN
   REWRITE_TAC[LENGTH_APPEND; LENGTH; ADD_CLAUSES; ARITH_RULE `a < SUC (a + b)`] THEN
-  SIMP_TAC[EL_LENGTH_APPEND; NULL; HD] THEN CASE_REWRITE_TAC[] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[HD]);;
+  SIMP_TAC[EL_LENGTH_APPEND; NULL; HD] THEN CAKE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[HD]);;
 
 (* HOL4 line 414 *)
 let evaluate_genlist_prev_args1_no_rev = prove
@@ -627,27 +627,27 @@ let C2BP1AUX_EVAL_LHS_TAC lemmas : tactic = fun (asl,w as g) ->
 let C2BP1AUX_do_app_TagEq = prove
  (`!n tag xs (s:(C,FFI)bvl_state).
      bvl_do_app (BlockOp (TagEq n)) [bvl_Block tag xs] s = Rval (bvl_Boolv (tag = n),s)`,
-  REWRITE_TAC[bvl_do_app_def] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[bvl_do_app_def] THEN CAKE_REWRITE_TAC[]);;
 
 let C2BP1AUX_do_app_LengthBlock = prove
  (`!tag xs (s:(C,FFI)bvl_state).
      bvl_do_app (BlockOp LengthBlock) [bvl_Block tag xs] s =
      Rval (bvl_Number (&(LENGTH xs)),s)`,
-  REWRITE_TAC[bvl_do_app_def] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[bvl_do_app_def] THEN CAKE_REWRITE_TAC[]);;
 
 let C2BP1AUX_do_app_Label = prove
  (`!n (s:(C,FFI)bvl_state).
      bvl_do_app (clos_Label n) [] s =
      if n IN domain (bvl_state_code s) then Rval (bvl_CodePtr n,s)
      else Rerr (Rabort Rtype_error)`,
-  REWRITE_TAC[bvl_do_app_def] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[bvl_do_app_def] THEN CAKE_REWRITE_TAC[]);;
 
 let C2BP1AUX_do_app_El = prove
  (`!tag xs i (s:(C,FFI)bvl_state).
      bvl_do_app (MemOp clos_El) [bvl_Block tag xs; bvl_Number i] s =
      if &0 <= i /\ num_of_int i < LENGTH xs then Rval (EL (num_of_int i) xs,s)
      else Rerr (Rabort Rtype_error)`,
-  REWRITE_TAC[bvl_do_app_def] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[bvl_do_app_def] THEN CAKE_REWRITE_TAC[]);;
 
 let C2BP1AUX_do_app_Global = prove
  (CASE_TERM `!n (s:(C,FFI)bvl_state).
@@ -655,7 +655,7 @@ let C2BP1AUX_do_app_Global = prove
      match get_global n (bvl_state_globals s) with
        SOME (SOME v) -> Rval (v,s)
      | _ -> Rerr (Rabort Rtype_error)`,
-  REWRITE_TAC[bvl_do_app_def] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[bvl_do_app_def] THEN CAKE_REWRITE_TAC[]);;
 
 let C2BP1AUX_do_app_ConsExtend = prove
  (`!tag tag' xs' lower len tot xs (s:(C,FFI)bvl_state).
@@ -668,13 +668,13 @@ let C2BP1AUX_do_app_ConsExtend = prove
      else
        Rval (bvl_Block tag (APPEND xs (TAKE (num_of_int len)
                                          (DROP (num_of_int lower) xs'))), s)`,
-  REWRITE_TAC[bvl_do_app_def] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[bvl_do_app_def] THEN CAKE_REWRITE_TAC[]);;
 
 let C2BP1AUX_do_app_EqualConst_Int = prove
  (`!i j (s:(C,FFI)bvl_state).
      bvl_do_app (BlockOp (EqualConst (clos_Int i))) [bvl_Number j] s =
      Rval (bvl_Boolv (i = j),s)`,
-  REWRITE_TAC[bvl_do_app_def] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[bvl_do_app_def] THEN CAKE_REWRITE_TAC[]);;
 
 let C2BP1AUX_tri_int = prove
  (`!tot n. int_div ((&tot - &1) * &tot) (&2) + &n = &(n + (tot * (tot - 1)) DIV 2)`,
@@ -697,7 +697,7 @@ let evaluate_generic_app1 = prove
             (CONS (bvl_CodePtr l) (CONS (bvl_Number (&total_args)) fvs))
      ==> bvl_evaluate ([generate_generic_app max_app n],APPEND args [cl],st) =
          if bvl_state_clock st < n then
-           (Rerr (Rabort Rtimeout_error),bvl_state_clock_fupd (K 0) st)
+           (Rerr (Rabort Rtimeout_error),bvl_state_clock_fupd (combin_K 0) st)
          else
            (Rval [bvl_Block partial_app_tag
                     (CONS (bvl_CodePtr (partial_app_fn_location max_app total_args n))
@@ -757,7 +757,7 @@ let evaluate_generic_app2 = prove
             (CONS (bvl_CodePtr l) (CONS (bvl_Number (&rem_args)) (CONS clo prev_args)))
      ==> bvl_evaluate ([generate_generic_app max_app n],APPEND args [cl],st) =
          if bvl_state_clock st < n then
-           (Rerr (Rabort Rtimeout_error),bvl_state_clock_fupd (K 0) st)
+           (Rerr (Rabort Rtimeout_error),bvl_state_clock_fupd (combin_K 0) st)
          else
            (Rval [bvl_Block partial_app_tag
                     (CONS (bvl_CodePtr (partial_app_fn_location max_app
@@ -838,7 +838,7 @@ let evaluate_generic_app_partial = prove
      unpack_closure cl (prev_args,total_args,sub_cl)
      ==> bvl_evaluate ([generate_generic_app max_app (LENGTH args - 1)],APPEND args [cl],st) =
          if bvl_state_clock st < LENGTH args - 1 then
-           (Rerr (Rabort Rtimeout_error),bvl_state_clock_fupd (K 0) st)
+           (Rerr (Rabort Rtimeout_error),bvl_state_clock_fupd (combin_K 0) st)
          else
            (Rval [bvl_Block partial_app_tag
                     (CONS (bvl_CodePtr (partial_app_fn_location max_app total_args
@@ -910,7 +910,7 @@ let evaluate_generic_app_full = prove
               [bvl_Block tag (CONS (bvl_CodePtr l) (CONS (bvl_Number (&rem_args)) vs))],
             st) =
          if bvl_state_clock st < rem_args + 1
-         then (Rerr (Rabort Rtimeout_error),bvl_state_clock_fupd (K 0) st)
+         then (Rerr (Rabort Rtimeout_error),bvl_state_clock_fupd (combin_K 0) st)
          else
            match bvl_evaluate
                    ([exp],
@@ -1014,7 +1014,7 @@ let evaluate_mk_cl_call = prove
      ==> bvl_evaluate ([mk_cl_call cl args],env,s) =
          if n = LENGTH args - 1 then
            if bvl_state_clock s < LENGTH args
-           then (Rerr (Rabort Rtimeout_error),bvl_state_clock_fupd (K 0) s)
+           then (Rerr (Rabort Rtimeout_error),bvl_state_clock_fupd (combin_K 0) s)
            else bvl_evaluate
                   ([exp],
                    APPEND args'
@@ -1023,7 +1023,7 @@ let evaluate_mk_cl_call = prove
                    bvl_dec_clock (LENGTH args) s)
          else
            if bvl_state_clock s < n + 2
-           then (Rerr (Rabort Rtimeout_error),bvl_state_clock_fupd (K 0) s)
+           then (Rerr (Rabort Rtimeout_error),bvl_state_clock_fupd (combin_K 0) s)
            else
              match bvl_evaluate
                      ([exp],
@@ -1082,16 +1082,16 @@ let evaluate_partial_app_fn = prove
                    (CONS l' (CONS num
                       (CONS (bvl_Block tag' (CONS (bvl_CodePtr l) (CONS num_args' fvs)))
                          prev_args)))],
-              bvl_state_code_fupd (K code) st) =
+              bvl_state_code_fupd (combin_K code) st) =
            if bvl_state_clock st = 0 then
-             (Rerr (Rabort Rtimeout_error),bvl_state_code_fupd (K code) st)
+             (Rerr (Rabort Rtimeout_error),bvl_state_code_fupd (combin_K code) st)
            else
              bvl_evaluate
                ([exp],
                 APPEND (APPEND (DROP ((LENGTH args' + LENGTH prev_args) - num_args) args')
                           prev_args)
                   [bvl_Block tag' (CONS (bvl_CodePtr l) (CONS num_args' fvs))],
-                bvl_dec_clock 1 (bvl_state_code_fupd (K code) st))`,
+                bvl_dec_clock 1 (bvl_state_code_fupd (combin_K code) st))`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN GEN_TAC THEN
   FIRST_X_ASSUM SUBST_ALL_TAC THEN
   REWRITE_TAC[ARITH_RULE `(a + l) - (l + a) = 0`; DROP_0] THEN
@@ -1531,10 +1531,10 @@ let clos_to_bvlProof_state_rel_globals = prove
 (* HOL4 line 1142 *)
 let clos_to_bvlProof_state_rel_clock = prove
  (`!x. (!f (s:(C,FFI)clos_state) (t:(C,FFI)bvl_state).
-          clos_to_bvlProof_state_rel f s (bvl_state_clock_fupd (K x) t) <=>
+          clos_to_bvlProof_state_rel f s (bvl_state_clock_fupd (combin_K x) t) <=>
           clos_to_bvlProof_state_rel f s t) /\
        (!f (s:(C,FFI)clos_state) (t:(C,FFI)bvl_state).
-          clos_to_bvlProof_state_rel f (clos_state_clock_fupd (K x) s) t <=>
+          clos_to_bvlProof_state_rel f (clos_state_clock_fupd (combin_K x) s) t <=>
           clos_to_bvlProof_state_rel f s t)`,
   SIMP[clos_to_bvlProof_state_rel_def]);;
 
@@ -1866,8 +1866,8 @@ let state_rel_UPDATE_REF = prove
           (bvl_state_code t2)) v v' /\
      (!bs. ~(v' = bvl_ByteArray T bs))
      ==> clos_to_bvlProof_state_rel f2
-           (clos_state_refs_fupd (K (clos_state_refs p1 |+ (dst,v))) p1)
-           (bvl_state_refs_fupd (K (bvl_state_refs t2 |+ (r2,v'))) t2)`,
+           (clos_state_refs_fupd (combin_K (clos_state_refs p1 |+ (dst,v))) p1)
+           (bvl_state_refs_fupd (combin_K (bvl_state_refs t2 |+ (r2,v'))) t2)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[clos_to_bvlProof_state_rel_def] THEN
   SIMP[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
   SUBGOAL_THEN `r2 IN FRANGE (f2:(num,num)fmap)` ASSUME_TAC THENL
@@ -1913,7 +1913,7 @@ let state_rel_NEW_REF = prove
  (`!f2 (p1:(C,FFI)clos_state) (t2:(C,FFI)bvl_state) p v.
      clos_to_bvlProof_state_rel f2 p1 t2 /\ ~(p IN FDOM (bvl_state_refs t2))
      ==> clos_to_bvlProof_state_rel f2 p1
-           (bvl_state_refs_fupd (K (bvl_state_refs t2 |+ (p,v))) t2)`,
+           (bvl_state_refs_fupd (combin_K (bvl_state_refs t2 |+ (p,v))) t2)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[clos_to_bvlProof_state_rel_def] THEN
   SIMP[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
   SUBGOAL_THEN `!m. m IN FRANGE (f2:(num,num)fmap) ==> ~(m = p)` ASSUME_TAC THENL
@@ -1950,7 +1950,7 @@ let clos_to_bvlProof_v_to_list = prove
     MESON_TAC[ALL2];
     DISCH_TAC THEN REPEAT GEN_TAC THEN COND_CASES_TAC THEN
     REWRITE_TAC[option_DISTINCT] THEN
-    CASES_ON `clos_v_to_list bt` THEN CASE_REWRITE_TAC[] THEN
+    CASES_ON `clos_v_to_list bt` THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[option_DISTINCT; option_INJ; v_rel_SIMP; LIST_REL_CONS1; LIST_REL_NIL] THEN
     STRIP_TAC THEN RVEQ_TAC THEN
     FIRST_X_ASSUM (MP_TAC o SPECL [`a:clos_v list`; `h'':bvl_v`; `max_app:num`;
@@ -1959,7 +1959,7 @@ let clos_to_bvlProof_v_to_list = prove
                    REWRITE_RULE[ASSUME `tag = cons_tag`]) THEN
     ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
     ASM_REWRITE_TAC[bvl_v_to_list_def; clos_tag_shift_cons_tag] THEN
-    CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[option_INJ; ALL2] THEN ASM_MESON_TAC[ALL2]]);;
+    CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[option_INJ; ALL2] THEN ASM_MESON_TAC[ALL2]]);;
 
 (* HOL4 line 1445 (HOL4 ^(closure_tag_def |> concl |> rand) is the value of *)
 (* closure_tag, 30)                                                           *)
@@ -1981,9 +1981,9 @@ let C2BP1AUX_do_eq_RefPtr = prove
   COND_CASES_TAC THEN REWRITE_TAC[] THEN
   CASES_ON `FLOOKUP (r:(num,(bvl_v)bvl_ref)fmap) p1` THEN
   CASES_ON `FLOOKUP (r:(num,(bvl_v)bvl_ref)fmap) p2` THEN
-  REWRITE_TAC[option_INJ; option_DISTINCT] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[option_INJ; option_DISTINCT] THEN CAKE_REWRITE_TAC[] THEN
   TRY (CASES_ON `a:(bvl_v)bvl_ref`) THEN TRY (CASES_ON `a':(bvl_v)bvl_ref`) THEN
-  CASE_REWRITE_TAC[] THEN SIMP[] THEN MESON_TAC[]);;
+  CAKE_REWRITE_TAC[] THEN SIMP[] THEN MESON_TAC[]);;
 
 
 let C2BP1AUX_do_eq_BV_BV = prove
@@ -1991,7 +1991,7 @@ let C2BP1AUX_do_eq_BV_BV = prove
      FLOOKUP r p1 = SOME (bvl_ByteArray T bs1) /\ FLOOKUP r p2 = SOME (bvl_ByteArray T bs2)
      ==> bvl_do_eq r (bvl_RefPtr T p1) (bvl_RefPtr T p2) = Eq_val (bs1 = bs2)`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN REWRITE_TAC[bvl_do_eq_def] THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[]);;
 
 let C2BP1AUX_do_eq_BV_ref = prove
  (`!(r:(num,(bvl_v)bvl_ref)fmap) p1 p2 bs1 b2.
@@ -2000,10 +2000,10 @@ let C2BP1AUX_do_eq_BV_ref = prove
      ==> bvl_do_eq r (bvl_RefPtr T p1) (bvl_RefPtr b2 p2) = Eq_type_error /\
          bvl_do_eq r (bvl_RefPtr b2 p2) (bvl_RefPtr T p1) = Eq_type_error`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN REWRITE_TAC[bvl_do_eq_def] THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[] THEN BOOL_CASES_TAC `b2:bool` THEN REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN BOOL_CASES_TAC `b2:bool` THEN REWRITE_TAC[] THEN
   CASES_ON `FLOOKUP (r:(num,(bvl_v)bvl_ref)fmap) p2` THEN
-  REWRITE_TAC[option_INJ; option_DISTINCT] THEN CASE_REWRITE_TAC[] THEN
-  TRY (CASES_ON `a:(bvl_v)bvl_ref`) THEN CASE_REWRITE_TAC[] THEN SIMP[] THEN
+  REWRITE_TAC[option_INJ; option_DISTINCT] THEN CAKE_REWRITE_TAC[] THEN
+  TRY (CASES_ON `a:(bvl_v)bvl_ref`) THEN CAKE_REWRITE_TAC[] THEN SIMP[] THEN
   ASM_MESON_TAC[]);;
 
 let C2BP1AUX_do_eq_RefPtr_v = prove
@@ -2014,7 +2014,7 @@ let C2BP1AUX_do_eq_RefPtr_v = prove
      clos_to_bvlProof_v_rel max_app f r c y y1
      ==> clos_do_eq (clos_RefPtr b1 i) y = bvl_do_eq r x1 y1`,
   REPEAT GEN_TAC THEN CASES_ON `y:clos_v` THEN REWRITE_TAC[v_rel_SIMP] THEN
-  STRIP_TAC THEN RVEQ_TAC THEN REWRITE_TAC[clos_do_eq_def] THEN CASE_REWRITE_TAC[] THEN
+  STRIP_TAC THEN RVEQ_TAC THEN REWRITE_TAC[clos_do_eq_def] THEN CAKE_REWRITE_TAC[] THEN
   TRY (REWRITE_TAC[bvl_do_eq_def] THEN NO_TAC) THENL
    [MP_TAC (ISPECL [`r:(num,(bvl_v)bvl_ref)fmap`; `p:num`; `r2:num`; `a:byte list`;
                     `b1:bool`] C2BP1AUX_do_eq_BV_ref) THEN
@@ -2047,7 +2047,7 @@ let C2BP1AUX_do_eq_ByteVector_v = prove
      clos_to_bvlProof_v_rel max_app f r c y y1
      ==> clos_do_eq (ByteVector bs) y = bvl_do_eq r x1 y1`,
   REPEAT GEN_TAC THEN CASES_ON `y:clos_v` THEN REWRITE_TAC[v_rel_SIMP] THEN
-  STRIP_TAC THEN RVEQ_TAC THEN REWRITE_TAC[clos_do_eq_def] THEN CASE_REWRITE_TAC[] THEN
+  STRIP_TAC THEN RVEQ_TAC THEN REWRITE_TAC[clos_do_eq_def] THEN CAKE_REWRITE_TAC[] THEN
   TRY (REWRITE_TAC[bvl_do_eq_def] THEN NO_TAC) THENL
    [MP_TAC (ISPECL [`r:(num,(bvl_v)bvl_ref)fmap`; `p:num`; `p':num`; `bs:byte list`;
                     `a:byte list`] C2BP1AUX_do_eq_BV_BV) THEN ASM_SIMP_TAC[];
@@ -2079,7 +2079,7 @@ let clos_to_bvlProof_do_eq = prove
     TRY (DISCH_TAC THEN MATCH_MP_TAC C2BP1AUX_do_eq_RefPtr_v THEN ASM_MESON_TAC[] THEN NO_TAC) THEN
     TRY (DISCH_TAC THEN MATCH_MP_TAC C2BP1AUX_do_eq_ByteVector_v THEN ASM_MESON_TAC[] THEN NO_TAC) THEN
     CASES_ON `y:clos_v` THEN REWRITE_TAC[v_rel_SIMP] THEN
-    STRIP_TAC THEN RVEQ_TAC THEN REWRITE_TAC[clos_do_eq_def] THEN CASE_REWRITE_TAC[] THEN
+    STRIP_TAC THEN RVEQ_TAC THEN REWRITE_TAC[clos_do_eq_def] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[bvl_do_eq_def; clos_tag_shift_def; not_isClos] THEN
     REWRITE_TAC[bvl_isClos_def; closure_tag_def; partial_app_tag_def; NOT_CONS_NIL] THEN
     REWRITE_TAC[ARITH_RULE `~((if t < 30 then t else t + 2) = 30) /\
@@ -2099,7 +2099,7 @@ let clos_to_bvlProof_do_eq = prove
     REWRITE_TAC[CONJ (end_itlist CONJ (tl (CONJUNCTS clos_do_eq_def))) bvl_do_eq_def] THEN
     SUBGOAL_THEN `clos_do_eq x y = bvl_do_eq (r:(num,(bvl_v)bvl_ref)fmap) h' h''` (fun th -> REWRITE_TAC[GSYM th]) THENL
      [FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[]; ALL_TAC] THEN
-    CASES_ON `clos_do_eq x y` THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[] THEN
+    CASES_ON `clos_do_eq x y` THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[] THEN
     COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
     FIRST_X_ASSUM (MP_TAC o SPEC `a:bool`) THEN ASM_REWRITE_TAC[] THEN
     DISCH_THEN MATCH_MP_TAC THEN ASM_REWRITE_TAC[];
@@ -2123,9 +2123,9 @@ let clos_to_bvlProof_do_eq_sym = prove
     GEN_REWRITE_TAC (RAND_CONV o RATOR_CONV o RATOR_CONV o RAND_CONV) [CONJ_SYM] THEN
     COND_CASES_TAC THEN REWRITE_TAC[] THEN
     CASES_ON `FLOOKUP (refs:(num,(bvl_v)bvl_ref)fmap) n1` THEN
-    CASES_ON `FLOOKUP (refs:(num,(bvl_v)bvl_ref)fmap) n2` THEN CASE_REWRITE_TAC[] THEN
+    CASES_ON `FLOOKUP (refs:(num,(bvl_v)bvl_ref)fmap) n2` THEN CAKE_REWRITE_TAC[] THEN
     TRY (CASES_ON `a:(bvl_v)bvl_ref`) THEN TRY (CASES_ON `a':(bvl_v)bvl_ref`) THEN
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[EQ_SYM_EQ] THEN
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[EQ_SYM_EQ] THEN
     TRY (BOOL_CASES_TAC `a0:bool` THEN REWRITE_TAC[EQ_SYM_EQ]) THEN
     TRY (BOOL_CASES_TAC `a0':bool` THEN REWRITE_TAC[EQ_SYM_EQ]);
     DISCH_TAC THEN ASM_CASES_TAC `bvl_isClos t1 (l1:bvl_v list)` THEN
@@ -2136,7 +2136,7 @@ let clos_to_bvlProof_do_eq_sym = prove
       SUBGOAL_THEN `~(t2:num = t1 /\ LENGTH (l2:bvl_v list) = LENGTH (l1:bvl_v list))`
         (fun th -> ASM_REWRITE_TAC[th]) THEN ASM_MESON_TAC[]];
     DISCH_THEN (CONJUNCTS_THEN2 ASSUME_TAC (SUBST1_TAC o SYM)) THEN
-    CASES_ON `bvl_do_eq (refs:(num,(bvl_v)bvl_ref)fmap) v1 v2` THEN CASE_REWRITE_TAC[] THEN
+    CASES_ON `bvl_do_eq (refs:(num,(bvl_v)bvl_ref)fmap) v1 v2` THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[] THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
     FIRST_X_ASSUM MATCH_MP_TAC THEN EXISTS_TAC `T` THEN ASM_REWRITE_TAC[]]);;
 
@@ -2147,7 +2147,7 @@ let do_eq_list_T_every = prove
      ALL2 (\v1 v2. bvl_do_eq r v1 v2 = Eq_val T) vs1 vs2`,
   LIST_INDUCT_TAC THEN LIST_INDUCT_TAC THEN
   SIMP[bvl_do_eq_def; ALL2] THEN
-  GEN_TAC THEN CASES_ON `bvl_do_eq (r:(num,(bvl_v)bvl_ref)fmap) h h'` THEN CASE_REWRITE_TAC[] THEN
+  GEN_TAC THEN CASES_ON `bvl_do_eq (r:(num,(bvl_v)bvl_ref)fmap) h h'` THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[] THEN BOOL_CASES_TAC `a:bool` THEN ASM_REWRITE_TAC[] THEN SIMP[]);;
 
 (* HOL4 line 1517 *)
@@ -2203,7 +2203,7 @@ let C2BP1AUX_do_word_app = prove
   EVERY_CASE_TAC THEN REWRITE_TAC[option_DISTINCT] THEN STRIP_TAC THEN
   POP_ASSUM_LIST (MAP_EVERY (STRIP_ASSUME_TAC o
                              REWRITE_RULE[LIST_REL_CONS1; LIST_REL_NIL; v_rel_SIMP; option_INJ])) THEN
-  RVEQ_TAC THEN ASM_REWRITE_TAC[bvl_do_word_app_def] THEN CASE_REWRITE_TAC[] THEN
+  RVEQ_TAC THEN ASM_REWRITE_TAC[bvl_do_word_app_def] THEN CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[option_INJ; UNWIND_THM1; clos_to_bvlProof_v_rel_rules;
                   clos_to_bvlProof_v_rel_Boolv]);;
 
@@ -2231,8 +2231,8 @@ let C2BP1AUX_DOAPP_FIN_LIST =
    INT_GT];;
 
 let C2BP1AUX_DOAPP_TAC : tactic =
-  REWRITE_TAC[clos_do_app_def; LET_DEF; LET_END_DEF] THEN CASE_REWRITE_TAC[] THEN
-  C2BP1AUX_EVERY_CASE_TAC THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[clos_do_app_def; LET_DEF; LET_END_DEF] THEN CAKE_REWRITE_TAC[] THEN
+  C2BP1AUX_EVERY_CASE_TAC THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN
   POP_ASSUM_LIST (MAP_EVERY (STRIP_ASSUME_TAC o
      REWRITE_RULE[LIST_REL_CONS1; LIST_REL_NIL; v_rel_SIMP; clos_to_bvlProof_v_rel_Boolv;
@@ -2241,16 +2241,16 @@ let C2BP1AUX_DOAPP_TAC : tactic =
   ASSUM_LIST (MAP_EVERY (fun th -> try ASSUME_TAC (SYM (MATCH_MP EVERY2_LENGTH th))
                                    with Failure _ -> ALL_TAC)) THEN
   REWRITE_TAC[bvl_do_app_def; clos_to_bvl_compile_op_def; LET_DEF; LET_END_DEF] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC C2BP1AUX_DOAPP_FIN_LIST THEN
-  TRY (CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC C2BP1AUX_DOAPP_FIN_LIST);;
+  TRY (CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC C2BP1AUX_DOAPP_FIN_LIST);;
 
 let C2BP1AUX_BOOL_SPLIT_TAC : tactic =
   RULE_ASSUM_TAC (REWRITE_RULE[DE_MORGAN_THM]) THEN
   REPEAT (FIRST_X_ASSUM (DISJ_CASES_THEN SUBST_ALL_TAC o check (fun th ->
     is_disj (concl th) && is_eq (lhand (concl th)) && is_var (lhs (lhand (concl th)))))) THEN
   RULE_ASSUM_TAC (REWRITE_RULE[clos_to_bvlProof_v_rel_Boolv]) THEN RVEQ_TAC THEN
-  ASM_REWRITE_TAC C2BP1AUX_DOAPP_FIN_LIST THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC C2BP1AUX_DOAPP_FIN_LIST THEN CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC C2BP1AUX_DOAPP_FIN_LIST THEN
   TRY (RULE_ASSUM_TAC (REWRITE_RULE[clos_Boolv_11; bvl_Boolv_11]) THEN ASM_REWRITE_TAC[]);;
 
@@ -2290,9 +2290,9 @@ let C2BP1AUX_REFS_TAC : tactic =
   RVEQ_TAC THEN
   ASSUM_LIST (MAP_EVERY (fun th -> try ASSUME_TAC (SYM (MATCH_MP EVERY2_LENGTH th))
                                    with Failure _ -> ALL_TAC)) THEN
-  ASM_REWRITE_TAC C2BP1AUX_DOAPP_FIN_LIST THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC C2BP1AUX_DOAPP_FIN_LIST THEN CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC C2BP1AUX_DOAPP_FIN_LIST THEN
-  TRY (CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC C2BP1AUX_DOAPP_FIN_LIST);;
+  TRY (CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC C2BP1AUX_DOAPP_FIN_LIST);;
 
 let C2BP1AUX_doapp_rel_IntOp = prove
  (`!iop xs (s1:(C,FFI)clos_state) v s2 f (t1:(C,FFI)bvl_state) ys.
@@ -2307,12 +2307,12 @@ let C2BP1AUX_doapp_rel_IntOp = prove
            clos_to_bvlProof_state_rel f s2 t2 /\
            bvl_state_refs t1 = bvl_state_refs t2 /\ bvl_state_code t1 = bvl_state_code t2`,
   REPEAT GEN_TAC THEN REWRITE_TAC[clos_do_app_def; clos_to_bvl_compile_op_def] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[bvl_do_app_def] THEN CASE_REWRITE_TAC[] THEN
-  CASES_ON `clos_do_int_app iop xs` THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[bvl_do_app_def] THEN CAKE_REWRITE_TAC[] THEN
+  CASES_ON `clos_do_int_app iop xs` THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
   STRIP_TAC THEN RVEQ_TAC THEN
   FIRST_ASSUM (fun a -> FIRST_ASSUM (fun b ->
     STRIP_ASSUME_TAC (MATCH_MP C2BP1AUX_do_int_app (CONJ a b)))) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC C2BP1AUX_DOAPP_FIN_LIST THEN ASM_REWRITE_TAC[]);;
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC C2BP1AUX_DOAPP_FIN_LIST THEN ASM_REWRITE_TAC[]);;
 
 let C2BP1AUX_doapp_rel_WordOp = prove
  (`!wop xs (s1:(C,FFI)clos_state) v s2 f (t1:(C,FFI)bvl_state) ys.
@@ -2327,12 +2327,12 @@ let C2BP1AUX_doapp_rel_WordOp = prove
            clos_to_bvlProof_state_rel f s2 t2 /\
            bvl_state_refs t1 = bvl_state_refs t2 /\ bvl_state_code t1 = bvl_state_code t2`,
   REPEAT GEN_TAC THEN REWRITE_TAC[clos_do_app_def; clos_to_bvl_compile_op_def] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[bvl_do_app_def] THEN CASE_REWRITE_TAC[] THEN
-  CASES_ON `clos_do_word_app wop xs` THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[bvl_do_app_def] THEN CAKE_REWRITE_TAC[] THEN
+  CASES_ON `clos_do_word_app wop xs` THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
   STRIP_TAC THEN RVEQ_TAC THEN
   FIRST_ASSUM (fun a -> FIRST_ASSUM (fun b ->
     STRIP_ASSUME_TAC (MATCH_MP C2BP1AUX_do_word_app (CONJ a b)))) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC C2BP1AUX_DOAPP_FIN_LIST THEN ASM_REWRITE_TAC[]);;
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC C2BP1AUX_DOAPP_FIN_LIST THEN ASM_REWRITE_TAC[]);;
 
 let C2BP1AUX_doapp_rel_BlockOp = prove
  (`!bop xs (s1:(C,FFI)clos_state) v s2 f (t1:(C,FFI)bvl_state) ys.
@@ -2352,7 +2352,7 @@ let C2BP1AUX_doapp_rel_BlockOp = prove
     C2BP1AUX_DOAPP_TAC THEN MATCH_MP_TAC (el 2 (CONJUNCTS clos_to_bvlProof_v_rel_rules)) THEN
     ASM_REWRITE_TAC[];
     (* ElemAt *)
-    C2BP1AUX_DOAPP_TAC THEN CASE_REWRITE_TAC C2BP1AUX_DOAPP_FIN_LIST THEN
+    C2BP1AUX_DOAPP_TAC THEN CAKE_REWRITE_TAC C2BP1AUX_DOAPP_FIN_LIST THEN
     ASM_MESON_TAC[LIST_REL_EL_EQN];
     (* TagLenEq *) C2BP1AUX_DOAPP_TAC;
     (* LenEq *) C2BP1AUX_DOAPP_TAC;
@@ -2367,17 +2367,17 @@ let C2BP1AUX_doapp_rel_BlockOp = prove
     MATCH_MP_TAC EVERY2_APPEND_suff THEN ASM_SIMP_TAC[EVERY2_TAKE; EVERY2_DROP];
     (* FromList *)
     C2BP1AUX_DOAPP_TAC THEN C2BP1AUX_V2L_TAC THEN
-    ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC C2BP1AUX_DOAPP_FIN_LIST THEN
+    ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC C2BP1AUX_DOAPP_FIN_LIST THEN
     ASM_SIMP_TAC[clos_to_bvlProof_v_rel_rules];
     (* ListAppend *)
     C2BP1AUX_DOAPP_TAC THEN C2BP1AUX_V2L_TAC THEN
-    ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC C2BP1AUX_DOAPP_FIN_LIST THEN
+    ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC C2BP1AUX_DOAPP_FIN_LIST THEN
     ASM_SIMP_TAC[clos_to_bvlProof_list_to_v_v_rel; EVERY2_APPEND_suff];
     (* Constant *)
     REWRITE_TAC[injectivity "block_op"] THEN MESON_TAC[];
     (* Equal *)
     C2BP1AUX_DOAPP_TAC THEN IMP_RES_TAC C2BP1AUX_do_eq_rel THEN
-    ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC C2BP1AUX_DOAPP_FIN_LIST THEN ASM_REWRITE_TAC[];
+    ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC C2BP1AUX_DOAPP_FIN_LIST THEN ASM_REWRITE_TAC[];
     (* EqualConst *) C2BP1AUX_DOAPP_TAC;
     (* Build *) C2BP1AUX_DOAPP_TAC]);;
 
@@ -2403,9 +2403,9 @@ let C2BP1AUX_state_rel_SetGlobal = prove
      clos_to_bvlProof_state_rel f s t /\
      clos_to_bvlProof_v_rel (clos_state_max_app s) f (bvl_state_refs t) (bvl_state_code t) v w
      ==> clos_to_bvlProof_state_rel f
-           (clos_state_globals_fupd (K (LUPDATE (SOME v) n (clos_state_globals s))) s)
+           (clos_state_globals_fupd (combin_K (LUPDATE (SOME v) n (clos_state_globals s))) s)
            (bvl_state_globals_fupd
-              (K (LUPDATE (SOME w) (n + num_added_globals) (bvl_state_globals t))) t)`,
+              (combin_K (LUPDATE (SOME w) (n + num_added_globals) (bvl_state_globals t))) t)`,
   REPEAT GEN_TAC THEN
   REWRITE_TAC[clos_to_bvlProof_state_rel_def; clos_state_INFO.ri_accfupds;
               bvl_state_INFO.ri_accfupds; K_THM] THEN
@@ -2422,9 +2422,9 @@ let C2BP1AUX_state_rel_AllocGlobal = prove
      clos_to_bvlProof_state_rel f s t
      ==> clos_to_bvlProof_state_rel f
            (clos_state_globals_fupd
-              (K (APPEND (clos_state_globals s) (REPLICATE k NONE))) s)
+              (combin_K (APPEND (clos_state_globals s) (REPLICATE k NONE))) s)
            (bvl_state_globals_fupd
-              (K (APPEND (bvl_state_globals t) (REPLICATE k NONE))) t)`,
+              (combin_K (APPEND (bvl_state_globals t) (REPLICATE k NONE))) t)`,
   REPEAT GEN_TAC THEN
   REWRITE_TAC[clos_to_bvlProof_state_rel_def; clos_state_INFO.ri_accfupds;
               bvl_state_INFO.ri_accfupds; K_THM] THEN
@@ -2460,12 +2460,12 @@ let C2BP1AUX_doapp_rel_GlobOp = prove
     C2BP1AUX_DOAPP_TAC THEN IMP_RES_TAC C2BP1AUX_get_global_rel THEN
     RULE_ASSUM_TAC (REWRITE_RULE[OPTREL_SOME]) THEN
     REPEAT (FIRST_X_ASSUM (STRIP_ASSUME_TAC o check (is_exists o concl))) THEN
-    RVEQ_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC C2BP1AUX_DOAPP_FIN_LIST THEN
+    RVEQ_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC C2BP1AUX_DOAPP_FIN_LIST THEN
     ASM_REWRITE_TAC[];
     (* SetGlobal *)
     C2BP1AUX_DOAPP_TAC THEN IMP_RES_TAC C2BP1AUX_get_global_rel THEN
     REPEAT (FIRST_X_ASSUM (STRIP_ASSUME_TAC o check (is_exists o concl))) THEN
-    ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC C2BP1AUX_DOAPP_FIN_LIST THEN
+    ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC C2BP1AUX_DOAPP_FIN_LIST THEN
     ASM_SIMP_TAC[C2BP1AUX_state_rel_SetGlobal; bvl_state_INFO.ri_accfupds];
     (* AllocGlobal *)
     C2BP1AUX_DOAPP_TAC THEN
@@ -2521,7 +2521,7 @@ let C2BP1AUX_doapp_rel_MemOp = prove
     (* LengthByteVec *)
     REWRITE_TAC[distinctness "mem_op"] THEN C2BP1AUX_DOAPP_TAC;
     (* DerefByteVec *)
-    REWRITE_TAC[distinctness "mem_op"] THEN C2BP1AUX_DOAPP_TAC THEN CASE_REWRITE_TAC C2BP1AUX_DOAPP_FIN_LIST THEN
+    REWRITE_TAC[distinctness "mem_op"] THEN C2BP1AUX_DOAPP_TAC THEN CAKE_REWRITE_TAC C2BP1AUX_DOAPP_FIN_LIST THEN
     ASM_REWRITE_TAC C2BP1AUX_DOAPP_FIN_LIST;
     (* StringCmp *)
     REWRITE_TAC[distinctness "mem_op"] THEN C2BP1AUX_DOAPP_TAC;
@@ -2585,8 +2585,8 @@ let clos_to_bvlProof_do_app = prove
 (* HOL4 line 1801: val v_case_eq_thms (case theorems for the proofs) *)
 
 let C2BP1AUX_ERR_PRE_TAC : tactic =
-  REWRITE_TAC[clos_do_app_def; LET_DEF; LET_END_DEF] THEN CASE_REWRITE_TAC[] THEN
-  C2BP1AUX_EVERY_CASE_TAC THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[clos_do_app_def; LET_DEF; LET_END_DEF] THEN CAKE_REWRITE_TAC[] THEN
+  C2BP1AUX_EVERY_CASE_TAC THEN CAKE_REWRITE_TAC[] THEN
   REPEAT STRIP_TAC THEN RVEQ_TAC THEN RULE_ASSUM_TAC (REWRITE_RULE[]) THEN
   TRY (FIRST_ASSUM (CONTR_TAC o check (fun th -> concl th = `F`))) THEN
   ASM_REWRITE_TAC[];;
@@ -2595,11 +2595,11 @@ let C2BP1AUX_ERR_PRE_TAC : tactic =
 (* the results of closSem do_app: Rval (false) or Rerr (Rabort Rtype_error), *)
 (* false by the hypothesis on the error                                     *)
 let C2BP1AUX_ERR_FAST_TAC : tactic =
-  REWRITE_TAC[clos_do_app_def; LET_DEF; LET_END_DEF] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[clos_do_app_def; LET_DEF; LET_END_DEF] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC (all_case_eqs()) THEN
   DISCH_THEN (fun th ->
     let a = CONJUNCT1 th and b = CONJUNCT1 (CONJUNCT2 th) in
-    MP_TAC (CASE_REWRITE_RULE[b] a)) THEN REWRITE_TAC[];;
+    MP_TAC (CAKE_REWRITE_RULE[b] a)) THEN REWRITE_TAC[];;
 
 let C2BP1AUX_FFI_ERR_TAC : tactic =
   POP_ASSUM_LIST (MAP_EVERY (STRIP_ASSUME_TAC o
@@ -2612,10 +2612,10 @@ let C2BP1AUX_FFI_ERR_TAC : tactic =
    [UNDISCH_TAC `clos_to_bvlProof_state_rel f (s1:(C,FFI)clos_state) (t1:(C,FFI)bvl_state)` THEN
     SIMP_TAC[clos_to_bvlProof_state_rel_def];
     ALL_TAC] THEN
-  REWRITE_TAC[bvl_do_app_def; clos_to_bvl_compile_op_def] THEN CASE_REWRITE_TAC[] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[exc_rel_def] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[exc_rel_def] THEN REWRITE_TAC[UNWIND_THM1] THEN
-  CASE_REWRITE_TAC[exc_rel_def];;
+  REWRITE_TAC[bvl_do_app_def; clos_to_bvl_compile_op_def] THEN CAKE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[exc_rel_def] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[exc_rel_def] THEN REWRITE_TAC[UNWIND_THM1] THEN
+  CAKE_REWRITE_TAC[exc_rel_def];;
 
 (* HOL4 line 1806 *)
 let clos_to_bvlProof_do_app_err = prove
@@ -2659,11 +2659,11 @@ let evaluate_check_closure = prove
          if t = closure_tag \/ t = partial_app_tag then (eq_res (Eq_val T),s)
          else bvl_evaluate ([e],env,s)`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[check_closure_def] THEN
-  ASM_REWRITE_TAC[bvl_evaluate_def] THEN CASE_REWRITE_TAC[] THEN
-  REWRITE_TAC[REVERSE; APPEND; C2BP1AUX_do_app_TagEq] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[bvl_evaluate_def] THEN CAKE_REWRITE_TAC[] THEN
+  REWRITE_TAC[REVERSE; APPEND; C2BP1AUX_do_app_TagEq] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[HD; bvl_Boolv_11] THEN
   REWRITE_TAC[bvl_Bool_def; bvl_evaluate_def; eq_res_def; REVERSE; bvl_do_app_Cons] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[bvl_Boolv_def; eq_res_def] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[bvl_Boolv_def; eq_res_def] THEN
   ASM_CASES_TAC `t = closure_tag` THEN ASM_REWRITE_TAC[REVERSE] THEN
   COND_CASES_TAC THEN ASM_REWRITE_TAC[]);;
 
@@ -2690,7 +2690,7 @@ let lookup_vars_IMP2 = prove
     REWRITE_TAC[bvl_evaluate_def; ALL2; LENGTH];
     ALL_TAC] THEN
   REPEAT GEN_TAC THEN COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT] THEN
-  CASES_ON `lookup_vars t (env:clos_v list)` THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON `lookup_vars t (env:clos_v list)` THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[option_DISTINCT; option_INJ] THEN STRIP_TAC THEN RVEQ_TAC THEN
   FIRST_X_ASSUM (MP_TAC o SPECL [`env:clos_v list`; `a:clos_v list`; `env2:bvl_v list`;
                                  `max_app:num`; `f:(num,num)fmap`;
@@ -2703,7 +2703,7 @@ let lookup_vars_IMP2 = prove
   EXISTS_TAC `CONS (EL h env2) (ys:bvl_v list)` THEN
   ASM_REWRITE_TAC[ALL2; LENGTH] THEN GEN_TAC THEN
   ONCE_REWRITE_TAC[bvl_evaluate_CONS] THEN ASM_REWRITE_TAC[bvl_evaluate_def] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[HD]);;
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[HD]);;
 
 (* HOL4 line 1889 *)
 let lookup_vars_IMP = prove
@@ -2724,7 +2724,7 @@ let compile_exps_IMP_code_installed = prove
   REPEAT STRIP_TAC THEN
   MP_TAC (SPECL [`max_app:num`; `xs:clos_exp list`; `aux:(num#num#bvl_exp)list`]
           compile_exps_acc) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN STRIP_TAC THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN STRIP_TAC THEN
   RULE_ASSUM_TAC (REWRITE_RULE[clos_to_bvlProof_code_installed_def]) THEN
   REWRITE_TAC[clos_to_bvlProof_code_installed_def] THEN RVEQ_TAC THEN
   RULE_ASSUM_TAC (REWRITE_RULE[ALL_APPEND]) THEN ASM_REWRITE_TAC[]);;
@@ -2782,7 +2782,7 @@ let C2BP1AUX_compile_exps_EL = prove
     MAP_EVERY EXISTS_TAC [`auxn:(num#num#bvl_exp)list`; `aux2n:(num#num#bvl_exp)list`] THEN
     ASM_REWRITE_TAC[] THEN
     MP_TAC (SPECL [`ma:num`; `[x:clos_exp]`; `aux1:(num#num#bvl_exp)list`] compile_exps_acc) THEN
-    ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN STRIP_TAC THEN
+    ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN STRIP_TAC THEN
     ASM_SIMP_TAC[IS_SUBLIST_APPEND2]]);;
 
 (* HOL4 line 1911 *)
@@ -2846,11 +2846,11 @@ let C2BP1AUX_do_app_Update = prove
          (if &0 <= i /\ i < &(LENGTH xs)
           then Rval (bvl_Unit,
                      bvl_state_refs_fupd
-                       (K (bvl_state_refs s |+
+                       (combin_K (bvl_state_refs s |+
                            (ptr,bvl_ValueArray (LUPDATE v (num_of_int i) xs)))) s)
           else Rerr (Rabort Rtype_error))
      | _ -> Rerr (Rabort Rtype_error)`,
-  REWRITE_TAC[bvl_do_app_def] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[bvl_do_app_def] THEN CAKE_REWRITE_TAC[]);;
 
 let C2BP1AUX_eval_recc_Let = prove
  (`!n num_args i rest env (s:(C,FFI)bvl_state) rr p a refsl.
@@ -2865,7 +2865,7 @@ let C2BP1AUX_eval_recc_Let = prove
                          (CONS (bvl_Block closure_tag [bvl_CodePtr p; bvl_Number a;
                                                        bvl_RefPtr T rr]) env),
                        bvl_state_refs_fupd
-                         (K (bvl_state_refs s |+
+                         (combin_K (bvl_state_refs s |+
                              (rr,bvl_ValueArray
                                    (LUPDATE (bvl_Block closure_tag
                                                [bvl_CodePtr n; bvl_Number (&(num_args - 1));
@@ -2880,21 +2880,21 @@ let C2BP1AUX_eval_recc_Let2 = prove
      ==> bvl_evaluate ([bvl_Let [recc_Let n num_args i] rest],
                        CONS (bvl_Block closure_tag [bvl_CodePtr p; bvl_Number a; bvl_RefPtr T rr])
                          env,
-                       bvl_state_refs_fupd (K (r |+ (rr,bvl_ValueArray refsl))) s) =
+                       bvl_state_refs_fupd (combin_K (r |+ (rr,bvl_ValueArray refsl))) s) =
          bvl_evaluate ([rest],
                        CONS (bvl_Block closure_tag [bvl_CodePtr n; bvl_Number (&(num_args - 1));
                                                     bvl_RefPtr T rr])
                          (CONS (bvl_Block closure_tag [bvl_CodePtr p; bvl_Number a;
                                                        bvl_RefPtr T rr]) env),
                        bvl_state_refs_fupd
-                         (K (r |+
+                         (combin_K (r |+
                              (rr,bvl_ValueArray
                                    (LUPDATE (bvl_Block closure_tag
                                                [bvl_CodePtr n; bvl_Number (&(num_args - 1));
                                                 bvl_RefPtr T rr]) i refsl)))) s)`,
   REPEAT STRIP_TAC THEN
   MP_TAC (ISPECL [`n:num`; `num_args:num`; `i:num`; `rest:bvl_exp`; `env:bvl_v list`;
-                  `bvl_state_refs_fupd (K (r |+ (rr,bvl_ValueArray refsl))) (s:(C,FFI)bvl_state)`;
+                  `bvl_state_refs_fupd (combin_K (r |+ (rr,bvl_ValueArray refsl))) (s:(C,FFI)bvl_state)`;
                   `rr:num`; `p:num`; `a:int`; `refsl:bvl_v list`] C2BP1AUX_eval_recc_Let) THEN
   SIMP[FLOOKUP_UPDATE; FUPDATE_EQ]);;
 
@@ -2916,11 +2916,11 @@ let C2BP1AUX_recc_MAP2_SNOC = prove
 let C2BP1AUX_recc_LUPDATE = prove
  (`!(l:(num#A)list) (y0:num#A) nb b ys.
      LUPDATE nb (LENGTH l)
-       (APPEND (APPEND (SNOC (K (bvl_Number (&0)) (FST y0)) (MAP (K (bvl_Number (&0))) (MAP FST l)))
+       (APPEND (APPEND (SNOC (combin_K (bvl_Number (&0)) (FST y0)) (MAP (combin_K (bvl_Number (&0))) (MAP FST l)))
                  [b]) ys) =
-     APPEND (APPEND (MAP (K (bvl_Number (&0))) (MAP FST l)) [nb]) (CONS b ys)`,
+     APPEND (APPEND (MAP (combin_K (bvl_Number (&0))) (MAP FST l)) [nb]) (CONS b ys)`,
   REPEAT GEN_TAC THEN
-  SUBGOAL_THEN `LENGTH (l:(num#A)list) = LENGTH (MAP (K (bvl_Number (&0))) (MAP FST l))`
+  SUBGOAL_THEN `LENGTH (l:(num#A)list) = LENGTH (MAP (combin_K (bvl_Number (&0))) (MAP FST l))`
     SUBST1_TAC THENL [REWRITE_TAC[LENGTH_MAP]; ALL_TAC] THEN
   REWRITE_TAC[SNOC_APPEND; GSYM APPEND_ASSOC; APPEND; LUPDATE_LENGTH]);;
 
@@ -2934,13 +2934,13 @@ let evaluate_recc_Lets = prove
                     [bvl_CodePtr (n7 + (ns + 2 * LENGTH ll)); bvl_Number (&(FST x - 1));
                      bvl_RefPtr T rr]) env',
             bvl_state_refs_fupd
-              (K (bvl_state_refs t1 |+
+              (combin_K (bvl_state_refs t1 |+
                   (rr,bvl_ValueArray
-                        (APPEND (APPEND (MAP (K (bvl_Number (&0))) (MAP FST ll))
+                        (APPEND (APPEND (MAP (combin_K (bvl_Number (&0))) (MAP FST ll))
                            [bvl_Block closure_tag
                               [bvl_CodePtr (n7 + (ns + 2 * LENGTH ll));
                                bvl_Number (&(FST x' - 1)); bvl_RefPtr T rr]]) ys))))
-              (bvl_state_clock_fupd (K ck) t1)) =
+              (bvl_state_clock_fupd (combin_K ck) t1)) =
          bvl_evaluate
            ([HD c8],
             APPEND (MAP2 (\n args. bvl_Block closure_tag
@@ -2948,14 +2948,14 @@ let evaluate_recc_Lets = prove
                                       bvl_RefPtr T rr])
                       (list_of_seq I (LENGTH ll + 1)) (APPEND (MAP FST ll) [FST x])) env',
             bvl_state_refs_fupd
-              (K (bvl_state_refs t1 |+
+              (combin_K (bvl_state_refs t1 |+
                   (rr,bvl_ValueArray
                         (APPEND (MAP2 (\n args. bvl_Block closure_tag
                                                   [bvl_CodePtr (n7 + ns + 2 * n);
                                                    bvl_Number (&(args - 1)); bvl_RefPtr T rr])
                                    (list_of_seq I (LENGTH ll + 1))
                                    (APPEND (MAP FST ll) [FST x'])) ys))))
-              (bvl_state_clock_fupd (K ck) t1))`,
+              (bvl_state_clock_fupd (combin_K ck) t1))`,
   MATCH_MP_TAC SNOC_INDUCT THEN CONJ_TAC THENL
    [REPEAT GEN_TAC THEN DISCH_TAC THEN ONCE_REWRITE_TAC[recc_Lets_def] THEN
     REWRITE_TAC[LENGTH; MAP; REVERSE; APPEND; ADD_CLAUSES; MULT_CLAUSES] THEN
@@ -3001,8 +3001,8 @@ let evaluate_app_helper = prove
                              (APPEND c8 [c7])],env,s) = (r,s')`,
   REPEAT GEN_TAC THEN CASES_ON `r:(bvl_v list,bvl_v)result` THENL
    [MESON_TAC[]; ALL_TAC] THEN STRIP_TAC THEN
-  CASES_ON `loc:num option` THEN CASE_REWRITE_TAC[] THEN
-  ASM_REWRITE_TAC[bvl_evaluate_def; bvl_evaluate_APPEND] THEN CASE_REWRITE_TAC[]);;
+  CASES_ON `loc:num option` THEN CAKE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[bvl_evaluate_def; bvl_evaluate_APPEND] THEN CAKE_REWRITE_TAC[]);;
 
 (* HOL4 line 2070 *)
 let evaluate_app_helper2 = prove
@@ -3017,9 +3017,9 @@ let evaluate_app_helper2 = prove
                              (APPEND c8 [c7])],env,s) = (r,s'')`,
   REPEAT GEN_TAC THEN CASES_ON `r:(bvl_v list,bvl_v)result` THENL
    [MESON_TAC[]; ALL_TAC] THEN STRIP_TAC THEN
-  CASES_ON `loc:num option` THEN CASE_REWRITE_TAC[] THEN
-  ASM_REWRITE_TAC[bvl_evaluate_def; bvl_evaluate_APPEND] THEN CASE_REWRITE_TAC[] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]);;
+  CASES_ON `loc:num option` THEN CAKE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[bvl_evaluate_def; bvl_evaluate_APPEND] THEN CAKE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]);;
 
 (* HOL4 line 2084 *)
 let evaluate_simple_genlist_vars = prove
@@ -3048,7 +3048,7 @@ let dest_closure_part_app = prove
          SOME c = add_args func args /\
          ?n. num_remaining_args func = SOME n /\ LENGTH args < n /\ LENGTH args <= max_app`,
   REPEAT GEN_TAC THEN CASES_ON `func:clos_v` THEN
-  REWRITE_TAC[dest_closure_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[dest_closure_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[option_DISTINCT] THEN
   TRY (PAIRARG_TAC) THEN REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
   REPEAT COND_CASES_TAC THEN
@@ -3093,7 +3093,7 @@ let dest_closure_full_app = prove
            LENGTH args2 = LENGTH args - rem_args /\
            check_loc max_app loc_opt loc num_args (LENGTH args) (num_args - rem_args)`,
   REPEAT GEN_TAC THEN CASES_ON `func:clos_v` THEN
-  REWRITE_TAC[dest_closure_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[dest_closure_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[option_DISTINCT] THEN
   TRY (PAIRARG_TAC) THEN REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
   REPEAT COND_CASES_TAC THEN SIMP[] THEN STRIP_TAC THEN RVEQ_TAC THEN
@@ -3306,7 +3306,7 @@ let evaluate_mk_cl_call_spec = prove
             s) =
          if n = LENGTH args - 1 then
            if bvl_state_clock s < LENGTH args
-           then (Rerr (Rabort Rtimeout_error),bvl_state_clock_fupd (K 0) s)
+           then (Rerr (Rabort Rtimeout_error),bvl_state_clock_fupd (combin_K 0) s)
            else bvl_evaluate
                   ([exp],
                    APPEND args
@@ -3315,7 +3315,7 @@ let evaluate_mk_cl_call_spec = prove
                    bvl_dec_clock (LENGTH args) s)
          else
            if bvl_state_clock s < n + 2
-           then (Rerr (Rabort Rtimeout_error),bvl_state_clock_fupd (K 0) s)
+           then (Rerr (Rabort Rtimeout_error),bvl_state_clock_fupd (combin_K 0) s)
            else
              match bvl_evaluate
                      ([exp],
@@ -3432,7 +3432,7 @@ let C2BP1AUX_check_loc_IMP = prove
 let dest_cl_imp_dest_cl' = prove
  (`!max_app l f a x. dest_closure max_app l f a = SOME x ==> dest_closure' l f a = SOME x`,
   REPEAT GEN_TAC THEN CASES_ON `f:clos_v` THEN
-  REWRITE_TAC[dest_closure_def; dest_closure'_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[dest_closure_def; dest_closure'_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[option_DISTINCT] THEN TRY PAIRARG_TAC THEN
   REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
   COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT] THEN
@@ -3498,12 +3498,12 @@ let C2BP1AUX_free_let_Block = prove
   FIRST_X_ASSUM (MP_TAC o SPECL [`CONS (h:bvl_v) zs`; `x:bvl_exp`; `env:bvl_v list`;
                                  `s:(C,FFI)bvl_state`; `n:num`; `y:bvl_v`; `z:bvl_v`]) THEN
   RULE_ASSUM_TAC (REWRITE_RULE[SNOC_APPEND; GSYM APPEND_ASSOC; APPEND]) THEN
-  ASM_REWRITE_TAC[free_let_def] THEN DISCH_THEN SUBST1_TAC THEN CASE_REWRITE_TAC[] THEN
-  ASM_REWRITE_TAC[bvl_evaluate_def] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[free_let_def] THEN DISCH_THEN SUBST1_TAC THEN CAKE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[bvl_evaluate_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[REVERSE; APPEND; C2BP1AUX_do_app_ElemAt; LENGTH; LENGTH_APPEND] THEN
   REWRITE_TAC[ARITH_RULE `a + 2 < SUC (SUC (a + SUC b))`] THEN
   REWRITE_TAC[ARITH_RULE `a + 2 = SUC (SUC a)`; EL; TL] THEN
-  SIMP_TAC[EL_LENGTH_APPEND; NULL; HD] THEN CASE_REWRITE_TAC[] THEN
+  SIMP_TAC[EL_LENGTH_APPEND; NULL; HD] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[SNOC_APPEND]);;
 
 (* HOL4 line 2444: val bEval_free_let_Block = Q.prove (...) |> Q.SPECL     *)
@@ -3525,7 +3525,7 @@ let C2BP1AUX_do_app_ElemAt_Ref = prove
        SOME (bvl_ValueArray xs) ->
          (if n < LENGTH xs then Rval (EL n xs,s) else Rerr (Rabort Rtype_error))
      | _ -> Rerr (Rabort Rtype_error)`,
-  REWRITE_TAC[bvl_do_app_def] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[bvl_do_app_def] THEN CAKE_REWRITE_TAC[]);;
 
 (* HOL4 line 2482 [local] (HOL4 mk_elem_at (Var 0) j is                    *)
 (* bvl_Op (BlockOp (ElemAt j)) [bvl_Var 0]) *)
@@ -3569,7 +3569,7 @@ let genlist_el = prove
   SUBGOAL_THEN `EL (LENGTH ys) (APPEND ys (CONS (h:bvl_v) t)) = h` ASSUME_TAC THENL
    [SIMP_TAC[EL_LENGTH_APPEND; NULL; HD]; ALL_TAC] THEN
   C2BP1AUX_EVAL_TAC (C2BP1AUX_do_app_ElemAt_Ref :: C2BP1AUX_eval_lemmas) THEN
-  CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[HD]);;
+  CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[HD]);;
 
 (* HOL4 line 2504 [local] (HOL4 a ++ b ++ c ++ d ++ e :: env is             *)
 (* left-associative, :: binding tighter) *)
@@ -3639,8 +3639,8 @@ let C2BP1AUX_eval_closure_code = prove
     REWRITE_TAC[bvl_evaluate_def; LENGTH_APPEND; LENGTH] THEN
     REWRITE_TAC[ARITH_RULE `a < a + SUC 0`; el_append2];
     ALL_TAC] THEN
-  ASM_REWRITE_TAC[bvl_evaluate_def; bvl_evaluate_APPEND] THEN CASE_REWRITE_TAC[] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[APPEND_ASSOC]);;
+  ASM_REWRITE_TAC[bvl_evaluate_def; bvl_evaluate_APPEND] THEN CAKE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[APPEND_ASSOC]);;
 
 let C2BP1AUX_eval_rec_closure_code = prove
  (`!(D:bvl_v list) tag y z fvs c k (t:(C,FFI)bvl_state).
@@ -3672,8 +3672,8 @@ let C2BP1AUX_eval_rec_closure_code = prove
     REWRITE_TAC[bvl_evaluate_def; LENGTH_APPEND; LENGTH] THEN
     REWRITE_TAC[ARITH_RULE `a < a + SUC 0`; el_append2];
     ALL_TAC] THEN
-  ASM_REWRITE_TAC[bvl_evaluate_def; bvl_evaluate_APPEND] THEN CASE_REWRITE_TAC[] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[APPEND_ASSOC]);;
+  ASM_REWRITE_TAC[bvl_evaluate_def; bvl_evaluate_APPEND] THEN CAKE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[APPEND_ASSOC]);;
 
 let C2BP1AUX_cl_rel_run_env_gen = prove
  (`!max_app f1 refs code args args' env1 env2 k.
@@ -3743,9 +3743,9 @@ let cl_rel_run = prove
            clos_to_bvlProof_env_rel max_app f1 refs code new_env new_env' /\
            !(t1:(C,FFI)bvl_state).
              bvl_evaluate ([exp'],APPEND (DROP (LENGTH args' - (n + 1)) args') [func'],
-                           bvl_state_refs_fupd (K refs) (bvl_state_code_fupd (K code) t1)) =
+                           bvl_state_refs_fupd (combin_K refs) (bvl_state_code_fupd (combin_K code) t1)) =
              bvl_evaluate ([body'],new_env',
-                           bvl_state_refs_fupd (K refs) (bvl_state_code_fupd (K code) t1))`,
+                           bvl_state_refs_fupd (combin_K refs) (bvl_state_code_fupd (combin_K code) t1))`,
   (REPEAT GEN_TAC THEN STRIP_TAC THEN
   SUBGOAL_THEN `LENGTH (args:clos_v list) = LENGTH (args':bvl_v list) /\
                 LENGTH (env:clos_v list) = LENGTH (fvs:bvl_v list)` STRIP_ASSUME_TAC THENL
@@ -3755,7 +3755,7 @@ let cl_rel_run = prove
    [(RULE_ASSUM_TAC (CAKE_SIMP_RULE[INT_OF_NUM_EQ]) THEN
     REPEAT (FIRST_X_ASSUM (STRIP_ASSUME_TAC o check (is_conj o concl))) THEN RVEQ_TAC) THEN
     (FIRST_X_ASSUM (MP_TAC o check (fun th -> try fst(dest_const(fst(strip_comb(lhs(concl th))))) = "dest_closure'" with _ -> false)) THEN
-    REWRITE_TAC[dest_closure'_def] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[dest_closure'_def] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[LENGTH; ADD_CLAUSES; SUB_0; APPEND_NIL] THEN
     COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT] THEN
     COND_CASES_TAC THEN SIMP[] THEN STRIP_TAC THEN RVEQ_TAC) THEN
@@ -3777,9 +3777,9 @@ let cl_rel_run = prove
     (RULE_ASSUM_TAC (CAKE_SIMP_RULE[INT_OF_NUM_EQ]) THEN
     REPEAT (FIRST_X_ASSUM (STRIP_ASSUME_TAC o check (is_conj o concl))) THEN RVEQ_TAC) THEN
     (FIRST_X_ASSUM (MP_TAC o check (fun th -> try fst(dest_const(fst(strip_comb(lhs(concl th))))) = "dest_closure'" with _ -> false)) THEN
-    REWRITE_TAC[dest_closure'_def] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[dest_closure'_def] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[EL; HD; LENGTH; ADD_CLAUSES; SUB_0; APPEND_NIL; LET_DEF; LET_END_DEF] THEN
-    CASE_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN
     COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT] THEN
     COND_CASES_TAC THEN SIMP[] THEN STRIP_TAC THEN RVEQ_TAC) THEN
     (REWRITE_TAC[LISTAUX_list_of_seq_1; GSYM APPEND_ASSOC; APPEND] THEN
@@ -3816,8 +3816,8 @@ let cl_rel_run = prove
     REWRITE_TAC[injectivity "bvl_v"; CONS_11; INT_OF_NUM_EQ] THEN
     DISCH_THEN (REPEAT_TCL CONJUNCTS_THEN (SUBST_ALL_TAC o SYM o check (fun th -> not (is_eq (concl th) && lhs(concl th) = rhs(concl th)))))) THEN
     (FIRST_X_ASSUM (MP_TAC o check (fun th -> try fst(dest_const(fst(strip_comb(lhs(concl th))))) = "dest_closure'" with _ -> false)) THEN
-    REWRITE_TAC[dest_closure'_def] THEN CASE_REWRITE_TAC[] THEN
-    ASM_SIMP_TAC[EL_MAP; LENGTH_MAP] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[dest_closure'_def] THEN CAKE_REWRITE_TAC[] THEN
+    ASM_SIMP_TAC[EL_MAP; LENGTH_MAP] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[LENGTH; ADD_CLAUSES; SUB_0; APPEND_NIL; LET_DEF; LET_END_DEF; NOT_LE] THEN
     ASM_REWRITE_TAC[] THEN
     COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT] THEN
@@ -3847,7 +3847,7 @@ let cl_rel_run = prove
       ASM_MESON_TAC[];
       MATCH_MP_TAC list_rel_IMP_env_rel THEN ASM_REWRITE_TAC[]]);
      (GEN_TAC THEN
-    MP_TAC (ISPECL [`bvl_state_refs_fupd (K refs) (bvl_state_code_fupd (K code) (t1:(C,FFI)bvl_state))`;
+    MP_TAC (ISPECL [`bvl_state_refs_fupd (combin_K refs) (bvl_state_code_fupd (combin_K code) (t1:(C,FFI)bvl_state))`;
                     `r:num`;
                     `APPEND (MAP (\((n,e),p). bvl_Block closure_tag
                        [bvl_CodePtr p; bvl_Number (&(n - 1)); bvl_RefPtr T r])
@@ -3895,8 +3895,8 @@ let dest_closure_full_of_part = prove
   REWRITE_TAC[add_args_def; get_num_args_def; option_DISTINCT; option_INJ] THEN
   STRIP_TAC THEN RVEQ_TAC THEN
   RULE_ASSUM_TAC (REWRITE_RULE[dest_closure_def]) THEN
-  RULE_ASSUM_TAC (CASE_REWRITE_RULE[]) THEN
-  REWRITE_TAC[dest_closure'_def] THEN CASE_REWRITE_TAC[] THENL
+  RULE_ASSUM_TAC (CAKE_REWRITE_RULE[]) THEN
+  REWRITE_TAC[dest_closure'_def] THEN CAKE_REWRITE_TAC[] THENL
    [RULE_ASSUM_TAC (REWRITE_RULE[LENGTH_EQ_NIL]) THEN
     CASES_ON `loc:num option` THEN
     RULE_ASSUM_TAC (REWRITE_RULE[check_loc_def; LENGTH_APPEND; ADD_EQ_0; LENGTH_EQ_NIL; APPEND_EQ_NIL]) THEN
@@ -3915,7 +3915,7 @@ let dest_closure_full_of_part = prove
     MP_TAC (ISPEC `EL a4 (a3:(num#clos_exp)list)` PAIR_SURJECTIVE) THEN
     DISCH_THEN (X_CHOOSE_THEN `na:num` (X_CHOOSE_THEN `ex:clos_exp`
       (fun th -> RULE_ASSUM_TAC (REWRITE_RULE[th]) THEN REWRITE_TAC[th]))) THEN
-    RULE_ASSUM_TAC (CASE_REWRITE_RULE[]) THEN CASE_REWRITE_TAC[] THEN
+    RULE_ASSUM_TAC (CAKE_REWRITE_RULE[]) THEN CAKE_REWRITE_TAC[] THEN
     RULE_ASSUM_TAC (REWRITE_RULE[LET_DEF; LET_END_DEF; LENGTH_EQ_NIL]) THEN
     REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
     CASES_ON `loc:num option` THEN
@@ -3963,7 +3963,7 @@ let C2BP1AUX_v_rel_closure_cases = prove
   TRY (FIRST_X_ASSUM (MP_TAC o check (fun th ->
          try fst(dest_const(fst(strip_comb(lhs(concl th))))) = "dest_closure"
          with _ -> false)) THEN
-       REWRITE_TAC[dest_closure_def] THEN CASE_REWRITE_TAC[] THEN
+       REWRITE_TAC[dest_closure_def] THEN CAKE_REWRITE_TAC[] THEN
        REWRITE_TAC[option_DISTINCT] THEN NO_TAC) THEN
   ASM_MESON_TAC[]);;
 
@@ -3987,9 +3987,9 @@ let v_rel_run = prove
            !(t1:(C,FFI)bvl_state).
              bvl_evaluate ([exp'],APPEND (DROP (LENGTH args' - (n + 1)) args') [func'],
                            bvl_inc_clock ck'
-                             (bvl_state_refs_fupd (K refs) (bvl_state_code_fupd (K code) t1))) =
+                             (bvl_state_refs_fupd (combin_K refs) (bvl_state_code_fupd (combin_K code) t1))) =
              bvl_evaluate ([body'],newenv',
-                           bvl_state_refs_fupd (K refs) (bvl_state_code_fupd (K code) t1))`,
+                           bvl_state_refs_fupd (combin_K refs) (bvl_state_code_fupd (combin_K code) t1))`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   MP_TAC (ISPECL [`max_app:num`; `f1:(num,num)fmap`; `refs:(num,(bvl_v)bvl_ref)fmap`;
                   `code:(num#bvl_exp)spt`; `func:clos_v`; `func':bvl_v`; `loc:num option`;
@@ -3999,7 +3999,7 @@ let v_rel_run = prove
   FIRST_X_ASSUM (SUBST_ALL_TAC o check (fun th -> is_var (lhs (concl th)))) THEN
   STRIP_TAC THEN
   FIRST_X_ASSUM (MP_TAC o check (fun th -> can (term_match [] `bvl_Block a b = bvl_Block c d`) (concl th))) THEN
-  CASE_REWRITE_TAC[] THEN STRIP_TAC THEN RVEQ_TAC THENL
+  CAKE_REWRITE_TAC[] THEN STRIP_TAC THEN RVEQ_TAC THENL
   [
   EXISTS_TAC `0` THEN REWRITE_TAC[inc_clock0] THEN MATCH_MP_TAC cl_rel_run THEN
   ASM_MESON_TAC[dest_cl_imp_dest_cl'];
@@ -4079,18 +4079,18 @@ let v_rel_run = prove
   SUBGOAL_THEN `(LENGTH (args'':bvl_v list) + LENGTH (ys:bvl_v list)) - num_args = 0`
     SUBST1_TAC THENL [C2BP1AUX_ARITH_TAC; ALL_TAC] THEN
   REWRITE_TAC[DROP_0] THEN
-  DISCH_THEN (MP_TAC o SPEC `bvl_inc_clock 1 (bvl_state_refs_fupd (K refs)
+  DISCH_THEN (MP_TAC o SPEC `bvl_inc_clock 1 (bvl_state_refs_fupd (combin_K refs)
                                                  (t1:(C,FFI)bvl_state))`) THEN
-  SUBGOAL_THEN `bvl_state_code_fupd (K code)
-                  (bvl_inc_clock 1 (bvl_state_refs_fupd (K refs) (t1:(C,FFI)bvl_state))) =
-                bvl_inc_clock 1 (bvl_state_refs_fupd (K refs) (bvl_state_code_fupd (K code) t1))`
+  SUBGOAL_THEN `bvl_state_code_fupd (combin_K code)
+                  (bvl_inc_clock 1 (bvl_state_refs_fupd (combin_K refs) (t1:(C,FFI)bvl_state))) =
+                bvl_inc_clock 1 (bvl_state_refs_fupd (combin_K refs) (bvl_state_code_fupd (combin_K code) t1))`
     SUBST1_TAC THENL
    [REWRITE_TAC[bvl_state_component_equality] THEN SIMP[bvl_inc_clock_def]; ALL_TAC] THEN
   DISCH_THEN SUBST1_TAC THEN
   REWRITE_TAC[bvl_inc_clock_clock; ADD_EQ_0; ARITH_EQ] THEN
-  SUBGOAL_THEN `bvl_dec_clock 1 (bvl_inc_clock 1 (bvl_state_refs_fupd (K refs)
-                  (bvl_state_code_fupd (K code) (t1:(C,FFI)bvl_state)))) =
-                bvl_state_refs_fupd (K refs) (bvl_state_code_fupd (K code) t1)`
+  SUBGOAL_THEN `bvl_dec_clock 1 (bvl_inc_clock 1 (bvl_state_refs_fupd (combin_K refs)
+                  (bvl_state_code_fupd (combin_K code) (t1:(C,FFI)bvl_state)))) =
+                bvl_state_refs_fupd (combin_K refs) (bvl_state_code_fupd (combin_K code) t1)`
     SUBST1_TAC THENL
    [REWRITE_TAC[bvl_state_component_equality] THEN
     SIMP[bvl_inc_clock_def; bvl_dec_clock_def] THEN ARITH_TAC; ALL_TAC] THEN
@@ -4118,7 +4118,7 @@ let list_rel_app = prove
      ALL2 R args args'
      ==> ALL2 R l0 (TAKE (LENGTH args' - rem_args) args')`,
   REPEAT GEN_TAC THEN CASES_ON `func:clos_v` THEN
-  REWRITE_TAC[dest_closure_def; num_remaining_args_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[dest_closure_def; num_remaining_args_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[option_DISTINCT] THEN
   TRY (PAIRARG_TAC) THEN REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
   REPEAT COND_CASES_TAC THEN SIMP[] THEN STRIP_TAC THEN RVEQ_TAC THEN
@@ -4299,7 +4299,7 @@ let C2BP1AUX_v_to_list_CONS_IFF = prove
   REPEAT GEN_TAC THEN STRUCT_CASES_TAC (ISPEC `ns:A list` list_CASES) THEN
   STRUCT_CASES_TAC (ISPEC `o1:(B list)option` option_CASES) THEN
   STRUCT_CASES_TAC (ISPEC `o2:(C list)option` option_CASES) THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[option_DISTINCT; option_INJ; CONS_11; NOT_CONS_NIL; MAP] THEN
   MESON_TAC[]);;
 
@@ -4548,7 +4548,7 @@ let C2BP1AUX_same_aux_SND = prove
     ALL_TAC] THEN
   REWRITE_TAC[extract_name_def] THEN
   CASES_ON `some n. ?t. h = clos_Op t (IntOp (clos_Const (&n))) []` THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THENL
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THENL
    [STRIP_TAC THEN FIRST_X_ASSUM (SUBST1_TAC o SYM) THEN
     FIRST_X_ASSUM (SUBST1_TAC o SYM) THEN REWRITE_TAC[C2BP1AUX_chain_exps_SND];
     ALL_TAC] THEN
@@ -4636,12 +4636,12 @@ let C2BP1AUX_eval_Let_Call0 = prove
      bvl_evaluate ([ch],[],t) = (Rval [w],s2) /\
      lookup loc1 (bvl_state_code s2) = SOME (0,d1')
      ==> bvl_evaluate ([bvl_Let [ch] (bvl_Call 0 (SOME loc1) [])],[],
-                       bvl_state_clock_fupd (K (ck + 1 + bvl_state_clock t)) t) =
-         bvl_evaluate ([d1'],[],bvl_state_clock_fupd (K (ck + bvl_state_clock s2)) s2)`,
+                       bvl_state_clock_fupd (combin_K (ck + 1 + bvl_state_clock t)) t) =
+         bvl_evaluate ([d1'],[],bvl_state_clock_fupd (combin_K (ck + bvl_state_clock s2)) s2)`,
   REPEAT STRIP_TAC THEN
   FIRST_ASSUM (MP_TAC o MATCH_MP (REWRITE_RULE[IMP_CONJ] bvl_evaluate_add_clock)) THEN
-  CASE_REWRITE_TAC[] THEN DISCH_THEN (MP_TAC o SPEC `ck + 1`) THEN
-  SUBGOAL_THEN `bvl_inc_clock (ck + 1) t = bvl_state_clock_fupd (K (ck + 1 + bvl_state_clock t)) (t:(C,FFI)bvl_state)` SUBST1_TAC THENL
+  CAKE_REWRITE_TAC[] THEN DISCH_THEN (MP_TAC o SPEC `ck + 1`) THEN
+  SUBGOAL_THEN `bvl_inc_clock (ck + 1) t = bvl_state_clock_fupd (combin_K (ck + 1 + bvl_state_clock t)) (t:(C,FFI)bvl_state)` SUBST1_TAC THENL
    [REWRITE_TAC[bvl_inc_clock_def] THEN AP_THM_TAC THEN AP_TERM_TAC THEN AP_TERM_TAC THEN
     ARITH_TAC; ALL_TAC] THEN
   DISCH_TAC THEN
@@ -4664,7 +4664,7 @@ let C2BP1AUX_chained_gen = prove
                   (chain_exps index all) new_exps) rest) (bvl_state_code t) /\
      ~(x6 = [])
      ==> ?ck8 res8.
-           bvl_evaluate ([d1],[],bvl_state_clock_fupd (K (ck8 + bvl_state_clock t)) t) =
+           bvl_evaluate ([d1],[],bvl_state_clock_fupd (combin_K (ck8 + bvl_state_clock t)) t) =
              (res8,t1) /\
            (match res with
               Rval vs -> res8 = Rval [LAST vs]
@@ -4679,12 +4679,12 @@ let C2BP1AUX_chained_gen = prove
     (CONJUNCTS_THEN SUBST_ALL_TAC) THENL [ASM_MESON_TAC[PAIR_EQ]; ALL_TAC] THEN
   FIRST_ASSUM (X_CHOOSE_THEN `d:bvl_exp` SUBST_ALL_TAC o
                MATCH_MP clos_to_bvl_compile_exps_SING) THEN
-  RULE_ASSUM_TAC (CASE_REWRITE_RULE[MAP2; APPEND; HD; PAIR_EQ]) THEN
+  RULE_ASSUM_TAC (CAKE_REWRITE_RULE[MAP2; APPEND; HD; PAIR_EQ]) THEN
     REPEAT (FIRST_X_ASSUM (CONJUNCTS_THEN ASSUME_TAC o check (is_conj o concl))) THEN
   RVEQ_TAC THEN
   EXISTS_TAC `0` THEN REWRITE_TAC[ADD_CLAUSES; bvl_with_same_clock] THEN
   EXISTS_TAC `res:((bvl_v)list,bvl_v)result` THEN ASM_REWRITE_TAC[] THEN
-  CASES_ON `res:((bvl_v)list,bvl_v)result` THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON `res:((bvl_v)list,bvl_v)result` THEN CAKE_REWRITE_TAC[] THEN
   FIRST_ASSUM (STRIP_ASSUME_TAC o MATCH_MP bvl_evaluate_SING) THEN ASM_REWRITE_TAC[LAST];
     (* double *)
     REPEAT GEN_TAC THEN STRIP_TAC THEN
@@ -4693,7 +4693,7 @@ let C2BP1AUX_chained_gen = prove
                  `new_exps:bvl_exp list`; `aux:(num#num#bvl_exp)list`]
            C2BP1AUX_chain_compile_CONS2) THEN
   ASM_REWRITE_TAC[] THEN STRIP_TAC THEN RVEQ_TAC THEN
-  RULE_ASSUM_TAC (CASE_REWRITE_RULE[chain_exps_def; MAP2; APPEND; HD; PAIR_EQ]) THEN
+  RULE_ASSUM_TAC (CAKE_REWRITE_RULE[chain_exps_def; MAP2; APPEND; HD; PAIR_EQ]) THEN
   REPEAT (FIRST_X_ASSUM (CONJUNCTS_THEN ASSUME_TAC o check (is_conj o concl))) THEN
   RVEQ_TAC THEN
     FIRST_ASSUM (ASSUME_TAC o MATCH_MP clos_to_bvlProof_code_installed_cons o
@@ -4715,7 +4715,7 @@ let C2BP1AUX_chained_gen = prove
                 SOME (0,d')` ASSUME_TAC THENL
    [FIRST_ASSUM (fun ceq ->
       if can (term_match [] `chain_exps n l = CONS (a:num#num#clos_exp) b`) (concl ceq) then
-        FIRST_ASSUM (MP_TAC o CASE_REWRITE_RULE[ceq; MAP2; APPEND] o
+        FIRST_ASSUM (MP_TAC o CAKE_REWRITE_RULE[ceq; MAP2; APPEND] o
                      check (fun th -> try fst(dest_const(fst(strip_comb(concl th)))) =
                                           "clos_to_bvlProof_code_installed" &&
                                           not (can (term_match [] `CONS (a:num#num#bvl_exp) b`)
@@ -4731,7 +4731,7 @@ let C2BP1AUX_chained_gen = prove
   DISCH_THEN (X_CHOOSE_THEN `r1:((bvl_v)list,bvl_v)result`
                (X_CHOOSE_THEN `s1:(C,FFI)bvl_state` ASSUME_TAC)) THEN
   ASM_REWRITE_TAC[] THEN
-  CASES_ON `r1:((bvl_v)list,bvl_v)result` THEN CASE_REWRITE_TAC[] THENL
+  CASES_ON `r1:((bvl_v)list,bvl_v)result` THEN CAKE_REWRITE_TAC[] THENL
      [(* Rval *)
       FIRST_ASSUM (X_CHOOSE_THEN `w:bvl_v` SUBST_ALL_TAC o MATCH_MP bvl_evaluate_SING o
                check (fun th -> can (term_match [] `bvl_evaluate ([ch:bvl_exp],[]:bvl_v list,t:(C,FFI)bvl_state) = (Rval a,s1)`) (concl th))) THEN
@@ -4760,7 +4760,7 @@ let C2BP1AUX_chained_gen = prove
       FIRST_ASSUM (fun ceq ->
         if can (term_match [] `chain_exps n l = CONS (a:num#num#clos_exp) b`) (concl ceq)
         then REWRITE_TAC[ceq] else NO_TAC) THEN
-      CASE_REWRITE_TAC[MAP2; APPEND; HD];
+      CAKE_REWRITE_TAC[MAP2; APPEND; HD];
       FIRST_ASSUM ACCEPT_TAC;
       FIRST_ASSUM ACCEPT_TAC;
       MATCH_MP_TAC code_installed_subspt THEN
@@ -4779,15 +4779,15 @@ let C2BP1AUX_chained_gen = prove
                  `t:(C,FFI)bvl_state`] C2BP1AUX_eval_Let_Call0) THEN
   (ANTS_TAC THENL [ASM_MESON_TAC[subspt_lookup]; DISCH_THEN SUBST1_TAC]) THEN
   CASES_ON `r2:((bvl_v)list,bvl_v)result` THEN
-  RULE_ASSUM_TAC (CASE_REWRITE_RULE[PAIR_EQ; HD]) THEN
+  RULE_ASSUM_TAC (CAKE_REWRITE_RULE[PAIR_EQ; HD]) THEN
   REPEAT (FIRST_X_ASSUM (CONJUNCTS_THEN ASSUME_TAC o check (is_conj o concl))) THEN
-  RVEQ_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  RVEQ_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
       REWRITE_TAC[LAST] THEN COND_CASES_TAC THEN REWRITE_TAC[] THEN
       ASM_MESON_TAC[bvl_evaluate_IMP_LENGTH; LENGTH; LENGTH_EQ_NIL];
       (* Rerr *)
       STRIP_TAC THEN RVEQ_TAC THEN EXISTS_TAC `0` THEN
       REWRITE_TAC[ADD_CLAUSES; bvl_with_same_clock] THEN
-      ONCE_REWRITE_TAC[bvl_evaluate_def] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+      ONCE_REWRITE_TAC[bvl_evaluate_def] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
       MESON_TAC[]]]);;
 
 (* HOL4 line 3159 (HOL4 Abbrev (progs = ...) is progs = ...; the paired     *)
@@ -4805,7 +4805,7 @@ let chained_lemma = prove
        (new_exps,aux) /\
      clos_to_bvlProof_code_installed progs (bvl_state_code t) /\ ~(x6 = [])
      ==> ?ck8 res8.
-           bvl_evaluate ([d1],[],bvl_state_clock_fupd (K (ck8 + bvl_state_clock t)) t) =
+           bvl_evaluate ([d1],[],bvl_state_clock_fupd (combin_K (ck8 + bvl_state_clock t)) t) =
              (res8,t1) /\
            (match res with
               Rval vs -> res8 = Rval [LAST vs]
@@ -4840,7 +4840,7 @@ let C2BP1AUX_chained_APPEND = prove
        (new_exps,aux) /\
      clos_to_bvlProof_code_installed progs (bvl_state_code t) /\ ~(x6 = [])
      ==> ?ck8 res8.
-           bvl_evaluate ([d1],[],bvl_state_clock_fupd (K (bvl_state_clock t + ck8)) t) =
+           bvl_evaluate ([d1],[],bvl_state_clock_fupd (combin_K (bvl_state_clock t + ck8)) t) =
              (res8,t1) /\
            (match res with
               Rval vs -> res8 = Rval [LAST vs]
@@ -4883,7 +4883,7 @@ let C2BP1AUX_compile_Op_Const = prove
      clos_to_bvl_compile_exps max_app [clos_Op t' (IntOp (clos_Const a)) []] aux =
      ([bvl_Op (IntOp (clos_Const a)) []],aux)`,
   REWRITE_TAC[clos_to_bvl_compile_exps_def; pair_CASE] THEN
-  CASE_REWRITE_TAC[clos_to_bvl_compile_op_def]);;
+  CAKE_REWRITE_TAC[clos_to_bvl_compile_op_def]);;
 
 let C2BP1AUX_eval_Op_Const = prove
  (`!a env (s:(C,FFI)bvl_state).
@@ -4908,7 +4908,7 @@ let evaluate_IMP_evaluate_chained = prove
      extract_name progs0 = (n,real_es) /\
      clos_to_bvlProof_code_installed progs (bvl_state_code t) /\ ~(x6 = [])
      ==> ?ck8 res8.
-           bvl_evaluate ([d1],[],bvl_state_clock_fupd (K (bvl_state_clock t + ck8)) t) =
+           bvl_evaluate ([d1],[],bvl_state_clock_fupd (combin_K (bvl_state_clock t + ck8)) t) =
              (res8,t1) /\
            (match res with
               Rval vs -> res8 = Rval [LAST vs]
@@ -4920,7 +4920,7 @@ let evaluate_IMP_evaluate_chained = prove
     ALL_TAC] THEN
   REWRITE_TAC[extract_name_def] THEN
   CASES_ON `some n. ?t. h = clos_Op t (IntOp (clos_Const (&n))) []` THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THENL
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THENL
    [(* NONE *)
     STRIP_TAC THEN RVEQ_TAC THEN MATCH_MP_TAC C2BP1AUX_chained_APPEND THEN ASM_MESON_TAC[];
     (* SOME *)
@@ -4952,14 +4952,14 @@ let evaluate_IMP_evaluate_chained = prove
                  check (fun th -> can (term_match []
                           `bvl_evaluate (CONS (a:bvl_exp) b,c,d:(C,FFI)bvl_state) = e`)
                           (concl th))) THEN
-  CASE_REWRITE_TAC[HD] THEN
+  CAKE_REWRITE_TAC[HD] THEN
   MP_TAC (ISPEC `bvl_evaluate (c2,[],t:(C,FFI)bvl_state)` PAIR_SURJECTIVE) THEN
   DISCH_THEN (X_CHOOSE_THEN `r2:((bvl_v)list,bvl_v)result`
                (X_CHOOSE_THEN `s2:(C,FFI)bvl_state` ASSUME_TAC)) THEN
   ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
   SUBGOAL_THEN (CASE_TERM
     `?ck8 res8.
-       bvl_evaluate ([d1],[],bvl_state_clock_fupd (K (bvl_state_clock t + ck8))
+       bvl_evaluate ([d1],[],bvl_state_clock_fupd (combin_K (bvl_state_clock t + ck8))
                                 (t:(C,FFI)bvl_state)) = (res8,s2) /\
        (match r2 with Rval vs -> res8 = Rval [LAST vs] | Rerr v3 -> res8 = Rerr v3)`)
     MP_TAC THENL
@@ -4968,15 +4968,15 @@ let evaluate_IMP_evaluate_chained = prove
                 STRIP_ASSUME_TAC)) THEN
   MAP_EVERY EXISTS_TAC [`ck8:num`; `res8:((bvl_v)list,bvl_v)result`] THEN
   CASES_ON `r2:((bvl_v)list,bvl_v)result` THEN
-  RULE_ASSUM_TAC (CASE_REWRITE_RULE[PAIR_EQ]) THEN
+  RULE_ASSUM_TAC (CAKE_REWRITE_RULE[PAIR_EQ]) THEN
   REPEAT (FIRST_X_ASSUM (CONJUNCTS_THEN ASSUME_TAC o check (is_conj o concl))) THEN
-  RVEQ_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  RVEQ_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[LAST] THEN COND_CASES_TAC THEN REWRITE_TAC[] THEN
     ASM_MESON_TAC[bvl_evaluate_IMP_LENGTH; LENGTH; LENGTH_EQ_NIL]]);;
 
 (* HOL4 line 3307 [local] *)
 let refs_lemma = prove
- (`!(t2:(A,B)bvl_state). bvl_state_refs_fupd (K (bvl_state_refs t2)) t2 = t2`,
+ (`!(t2:(A,B)bvl_state). bvl_state_refs_fupd (combin_K (bvl_state_refs t2)) t2 = t2`,
   REWRITE_TAC[bvl_state_component_equality] THEN SIMP[]);;
 
 let C2BP1AUX_FDIFF_SUBMAP_FUPDATE = prove
@@ -5006,7 +5006,7 @@ let C2BP1AUX_do_part_step = prove
            (build_part' m1 h) x /\
          (!k. clos_to_bvlProof_v_rel (clos_state_max_app p1) f2 refs1 (bvl_state_code t2)
                 (m1 k) (m2 k)) /\
-         clos_to_bvlProof_state_rel f2 p1 (bvl_state_refs_fupd (K refs1) t2) /\
+         clos_to_bvlProof_state_rel f2 p1 (bvl_state_refs_fupd (combin_K refs1) t2) /\
          FDIFF (bvl_state_refs t1) (FRANGE f1) SUBMAP FDIFF refs1 (FRANGE f2)`,
   GEN_TAC THEN CASES_ON `h:const_part` THEN
   REWRITE_TAC[update_tag_def; bvl_do_part_def; build_part'_def; PAIR_EQ; LET_DEF;
@@ -5038,7 +5038,7 @@ let C2BP1AUX_do_build_gen = prove
      FDIFF (bvl_state_refs t1) (FRANGE f1) SUBMAP FDIFF (bvl_state_refs t2) (FRANGE f2)
      ==> clos_to_bvlProof_v_rel (clos_state_max_app p1) f2 rs (bvl_state_code t2)
            (build' m1 n parts) v /\
-         clos_to_bvlProof_state_rel f2 p1 (bvl_state_refs_fupd (K rs) t2) /\
+         clos_to_bvlProof_state_rel f2 p1 (bvl_state_refs_fupd (combin_K rs) t2) /\
          FDIFF (bvl_state_refs t1) (FRANGE f1) SUBMAP FDIFF rs (FRANGE f2)`,
   LIST_INDUCT_TAC THENL
    [REWRITE_TAC[MAP; bvl_do_build_def; build'_def; PAIR_EQ] THEN REPEAT STRIP_TAC THEN
@@ -5057,7 +5057,7 @@ let C2BP1AUX_do_build_gen = prove
   ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
   FIRST_X_ASSUM (MP_TAC o SPECL [`(n =+ build_part' m1 h) (m1:num->clos_v)`;
                                  `(n =+ x) (m2:num->bvl_v)`; `n + 1`;
-                                 `bvl_state_refs_fupd (K refs1) (t2:(C,FFI)bvl_state)`;
+                                 `bvl_state_refs_fupd (combin_K refs1) (t2:(C,FFI)bvl_state)`;
                                  `v:bvl_v`; `rs:(num,(bvl_v)bvl_ref)fmap`; `f2:(num,num)fmap`;
                                  `p1:(C,FFI)clos_state`; `f1:(num,num)fmap`;
                                  `t1:(A,B)bvl_state`]) THEN
@@ -5077,7 +5077,7 @@ let do_build_const_thm = prove
      ==> ?f2'.
            clos_to_bvlProof_v_rel (clos_state_max_app p1) f2' rs (bvl_state_code t2)
              (build_const' parts) v /\
-           clos_to_bvlProof_state_rel f2' p1 (bvl_state_refs_fupd (K rs) t2) /\
+           clos_to_bvlProof_state_rel f2' p1 (bvl_state_refs_fupd (combin_K rs) t2) /\
            f1 SUBMAP f2' /\
            FDIFF (bvl_state_refs t1) (FRANGE f1) SUBMAP FDIFF rs (FRANGE f2')`,
   REPEAT GEN_TAC THEN REWRITE_TAC[bvl_do_build_const_def; build_const'_def] THEN STRIP_TAC THEN
@@ -5096,9 +5096,9 @@ let rel_dest_thunk = prove
               clos_to_bvlProof_v_rel (clos_state_max_app s) f (bvl_state_refs t)
                 (bvl_state_code t) r1 r2`,
   REPEAT GEN_TAC THEN CASES_ON `h:clos_v` THEN
-  REWRITE_TAC[clos_dest_thunk_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[clos_dest_thunk_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[v_rel_SIMP] THEN
-  EVERY_CASE_TAC THEN CASE_REWRITE_TAC[] THEN
+  EVERY_CASE_TAC THEN CAKE_REWRITE_TAC[] THEN
   STRIP_TAC THEN RVEQ_TAC THEN IMP_RES_TAC state_rel_refs_lookup THEN
   GVS[bvl_dest_thunk_def]);;
 
@@ -5110,8 +5110,8 @@ let rel_dest_thunk_NotThunk = prove
      clos_dest_thunk [h] (clos_state_refs s) = clos_NotThunk
      ==> bvl_dest_thunk y (bvl_state_refs t) = bvl_NotThunk`,
   REPEAT GEN_TAC THEN CASES_ON `h:clos_v` THEN
-  REWRITE_TAC[clos_dest_thunk_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[clos_dest_thunk_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[v_rel_SIMP] THEN
-  TRY (EVERY_CASE_TAC THEN CASE_REWRITE_TAC[]) THEN
+  TRY (EVERY_CASE_TAC THEN CAKE_REWRITE_TAC[]) THEN
   STRIP_TAC THEN RVEQ_TAC THEN TRY (IMP_RES_TAC state_rel_refs_lookup) THEN
   GVS[bvl_dest_thunk_def]);;

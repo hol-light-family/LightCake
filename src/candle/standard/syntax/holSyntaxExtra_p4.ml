@@ -173,7 +173,7 @@ let term_ok_VSUBST = prove
     SIMP[hol_term_ok_def; injectivity "hol_term"] THEN ASM_REWRITE_TAC[] THEN
     FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[MEM; MEM_FILTER; PAIR_EQ] THEN
     REPEAT STRIP_TAC THEN
-    ASM_SIMP_TAC[CSYNAUX_P3_has_type_Var; hol_term_ok_def; injectivity "hol_term"] THEN
+    CAKE_ASM_SIMP_TAC[CSYNAUX_P3_has_type_Var; hol_term_ok_def; injectivity "hol_term"] THEN
     ASM_MESON_TAC[]]);;
 
 let CSYNAUX_P4_INST_CORE_Abs_Var = prove
@@ -936,9 +936,9 @@ let CSYNAUX_P4_dbterm_Var = prove
      (match find_index (s,ty) env n with SOME k -> dbBound k | NONE -> dbVar s ty) =
      bind_list_aux n env (dbVar s ty)`,
   LIST_INDUCT_TAC THEN REWRITE_TAC[find_index_def; bind_list_aux_def] THEN
-  CASE_REWRITE_TAC[] THEN REPEAT GEN_TAC THEN REWRITE_TAC[hol_bind_def] THEN
+  CAKE_REWRITE_TAC[] THEN REPEAT GEN_TAC THEN REWRITE_TAC[hol_bind_def] THEN
   COND_CASES_TAC THEN ASM_REWRITE_TAC[bind_list_aux_clauses] THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[]);;
 
 let dbterm_bind = prove
  (`!tm env. dbterm env tm = bind_list_aux 0 env (hol_db tm)`,
@@ -969,25 +969,25 @@ let CSYNAUX_P4_dbterm_RACONV_Var = prove
   LIST_INDUCT_TAC THEN LIST_INDUCT_TAC THEN
   REWRITE_TAC[LENGTH; NOT_SUC; GSYM NOT_SUC; SUC_INJ; find_index_def; MAP; ZIP;
               ALPHAVARS_def] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[injectivity "dbterm"; injectivity "hol_term"; PAIR_EQ] THEN
   PAIR_CASES_ON `h:mlstring#hol_type` THEN PAIR_CASES_ON `h':mlstring#hol_type` THEN
   REWRITE_TAC[UNCURRY_DEF; PAIR_EQ; injectivity "hol_term"] THEN
   REPEAT GEN_TAC THEN
   ASM_CASES_TAC `h0:mlstring = x1 /\ h1:hol_type = ty1` THEN
   ASM_CASES_TAC `h'0:mlstring = x2 /\ h'1:hol_type = ty2` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THENL
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THENL
    [DISCH_THEN(MP_TAC o CONJUNCT2) THEN
     DISJ_CASES_THEN2 SUBST1_TAC (X_CHOOSE_THEN `k:num` (fun th ->
       ASSUME_TAC th THEN SUBST1_TAC th))
       (ISPEC `find_index (x2:mlstring,ty2:hol_type) t' (n + 1)` (cases "option")) THEN
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "dbterm"; injectivity "dbterm"] THEN
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "dbterm"; injectivity "dbterm"] THEN
     ASM_MESON_TAC[CSYNAUX_P4_find_index_SUC_ne];
     DISCH_THEN(MP_TAC o CONJUNCT2) THEN
     DISJ_CASES_THEN2 SUBST1_TAC (X_CHOOSE_THEN `k:num` (fun th ->
       ASSUME_TAC th THEN SUBST1_TAC th))
       (ISPEC `find_index (x1:mlstring,ty1:hol_type) t (n + 1)` (cases "option")) THEN
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "dbterm"; injectivity "dbterm"] THEN
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "dbterm"; injectivity "dbterm"] THEN
     ASM_MESON_TAC[CSYNAUX_P4_find_index_SUC_ne];
     STRIP_TAC THEN DISJ2_TAC THEN FIRST_X_ASSUM MATCH_MP_TAC THEN
     EXISTS_TAC `n + 1` THEN ASM_REWRITE_TAC[]]);;
@@ -998,7 +998,7 @@ let CSYNAUX_P4_dbterm_Var_cases = prove
               dbterm env (hol_Var s ty) = dbVar s ty`,
   REPEAT GEN_TAC THEN REWRITE_TAC[dbterm_def] THEN
   STRUCT_CASES_TAC(ISPEC `find_index (s:mlstring,ty:hol_type) env 0` (cases "option")) THEN
-  CASE_REWRITE_TAC[] THEN MESON_TAC[]);;
+  CAKE_REWRITE_TAC[] THEN MESON_TAC[]);;
 
 let dbterm_RACONV = prove
  (`!t1 env1 t2 env2.
@@ -1050,7 +1050,7 @@ let CSYNAUX_P4_RACONV_dbterm_Var = prove
             SOME k -> dbBound k | NONE -> dbVar x2 ty2)`,
   LIST_INDUCT_TAC THEN
   REWRITE_TAC[ALPHAVARS_def; MAP; find_index_def; MEM; o_THM] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   PAIR_CASES_ON `h:hol_term#hol_term` THEN REPEAT GEN_TAC THEN STRIP_TAC THEN
   FIRST_ASSUM(MP_TAC o SPEC `(h0:hol_term,h1:hol_term)`) THEN
   REWRITE_TAC[FST; SND] THEN
@@ -1061,7 +1061,7 @@ let CSYNAUX_P4_RACONV_dbterm_Var = prove
     let l,r = dest_eq(concl th) in is_var l && mem (fst(dest_var l)) ["h0";"h1"]))) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[injectivity "hol_term"]) THEN
   ASM_REWRITE_TAC[dest_var_def; PAIR_EQ] THENL
-   [CASE_REWRITE_TAC[];
+   [CAKE_REWRITE_TAC[];
     FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[] THEN
     X_GEN_TAC `vp:hol_term#hol_term` THEN DISCH_TAC THEN
     FIRST_X_ASSUM(MP_TAC o SPEC `vp:hol_term#hol_term`) THEN ASM_REWRITE_TAC[]]);;

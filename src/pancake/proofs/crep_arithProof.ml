@@ -194,7 +194,7 @@ let PCREPAUX_simp_exp_some = prove
 let simp_exp_correct1 = prove
  (`!(s:(A,FFI)crep_state) exp (v:B).
      ~(crep_eval s exp = NONE) ==>
-     crep_eval (crep_state_code_fupd (K (FMAP_MAP2 f (crep_state_code s))) s)
+     crep_eval (crep_state_code_fupd (combin_K (FMAP_MAP2 f (crep_state_code s))) s)
        (simp_exp exp) =
      crep_eval s exp`,
   REWRITE_TAC[PCREPAUX_eval_code_upd] THEN REPEAT STRIP_TAC THEN
@@ -203,7 +203,7 @@ let simp_exp_correct1 = prove
 
 let simp_exp_correct = prove
  (`crep_eval (s:(A,FFI)crep_state) exp = SOME v ==>
-   crep_eval (crep_state_code_fupd (K (FMAP_MAP2 f (crep_state_code s))) s)
+   crep_eval (crep_state_code_fupd (combin_K (FMAP_MAP2 f (crep_state_code s))) s)
      (simp_exp exp) = SOME v`,
   RW[simp_exp_correct1; option_DISTINCT]);;
 
@@ -213,7 +213,7 @@ let PCREPAUX_eval_code_upd_fun = prove
 
 let opt_mmap_simp_exp_correct = prove
  (`OPT_MMAP (crep_eval (s:(A,FFI)crep_state)) es = SOME vs ==>
-   OPT_MMAP (crep_eval (crep_state_code_fupd (K (FMAP_MAP2 f (crep_state_code s))) s))
+   OPT_MMAP (crep_eval (crep_state_code_fupd (combin_K (FMAP_MAP2 f (crep_state_code s))) s))
      (MAP simp_exp es) = SOME vs`,
   REWRITE_TAC[PCREPAUX_eval_code_upd_fun] THEN STRIP_TAC THEN
   MATCH_MP_TAC PCREPAUX_opt_mmap_simp_exp THEN ASM_REWRITE_TAC[PCREPAUX_simp_exp_some]);;
@@ -234,9 +234,9 @@ let lookup_code = prove
 
 let sh_mem_op_code = prove
  (`crep_sh_mem_op op p addr
-     (crep_state_code_fupd (K (FMAP_MAP2 f (crep_state_code s))) (s:(A,FFI)crep_state)) =
+     (crep_state_code_fupd (combin_K (FMAP_MAP2 f (crep_state_code s))) (s:(A,FFI)crep_state)) =
    ((I:((B)crep_result)option->((B)crep_result)option) ##
-    (\s. crep_state_code_fupd (K (FMAP_MAP2 f (crep_state_code s))) s))
+    (\s. crep_state_code_fupd (combin_K (FMAP_MAP2 f (crep_state_code s))) s))
      (crep_sh_mem_op op p addr s)`,
   QCASES_ON "op" THEN
   SIMP[crep_sh_mem_op_def; crep_sh_mem_load_def; crep_sh_mem_store_def] THEN
@@ -263,9 +263,9 @@ let simp_prog_correct = prove
      crep_evaluate
        (simp_prog p,
         crep_state_code_fupd
-          (K (FMAP_MAP2 (\(s,n,p). (n,simp_prog p)) (crep_state_code s))) s) =
+          (combin_K (FMAP_MAP2 (\(s,n,p). (n,simp_prog p)) (crep_state_code s))) s) =
      (r,crep_state_code_fupd
-          (K (FMAP_MAP2 (\(s,n,p). (n,simp_prog p)) (crep_state_code s'))) s')`,
+          (combin_K (FMAP_MAP2 (\(s,n,p). (n,simp_prog p)) (crep_state_code s'))) s')`,
   let step_tac =
     QPAT_X_ASSUM "crep_evaluate _ = _" (MP_TAC o ONCE_REWRITE_RULE[crep_evaluate_def]) THEN
     DISCH_TAC THEN GVS(all_case_eqs()) THEN FULL_RES_TAC THEN

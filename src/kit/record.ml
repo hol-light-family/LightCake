@@ -46,7 +46,7 @@ let record_fupdselfid name = Lazy.force (assoc name (!the_record_selfids));;
 
 (* HOL4's K_o_THM *)
 let K_o_THM = prove
- (`(!(f:C->B) (v:A). K v o f = K v) /\ (!(f:A->B) (v:A). f o K v = K (f v):C->B)`,
+ (`(!(f:C->B) (v:A). combin_K v o f = combin_K v) /\ (!(f:A->B) (v:A). f o combin_K v = combin_K (f v):C->B)`,
   REWRITE_TAC[FUN_EQ_THM; o_THM; K_THM]);;
 
 let KLAM_o_THM = prove
@@ -156,7 +156,7 @@ let cake_record (name:string) (fields:(string * string) list) =
   (* rec_fupdselfid (HOL4): r with fi := r.fi = r *)
   let selfid_tms = map2 (fun u a ->
       let fty = snd(dest_fun_ty(type_of a)) in
-      let kc = mk_const("K",[fty,aty; fty,bty]) in
+      let kc = mk_const("combin_K",[fty,aty; fty,bty]) in
       mk_forall(r,mk_eq(list_mk_comb(u,[mk_comb(kc,mk_comb(a,r)); r]),r)))
     upds accs in
   let fupdselfid = lazy (prove(list_mk_conj selfid_tms,

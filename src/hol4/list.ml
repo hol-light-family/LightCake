@@ -1058,10 +1058,10 @@ let isPREFIX_TRANS = prove
 (* ------------------------------------------------------------------------- *)
 
 let PAD_LEFT = new_definition
-  `PAD_LEFT (c:A) n s = APPEND (list_of_seq (K c) (n - LENGTH s)) s`;;
+  `PAD_LEFT (c:A) n s = APPEND (list_of_seq (combin_K c) (n - LENGTH s)) s`;;
 
 let PAD_RIGHT = new_definition
-  `PAD_RIGHT (c:A) n s = APPEND s (list_of_seq (K c) (n - LENGTH s))`;;
+  `PAD_RIGHT (c:A) n s = APPEND s (list_of_seq (combin_K c) (n - LENGTH s))`;;
 
 (* ------------------------------------------------------------------------- *)
 (* GENLIST (= list_of_seq).                                                  *)

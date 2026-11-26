@@ -368,10 +368,10 @@ let BVIPAUX_TMC_dest_Cons_SOME = prove
    `!b tag. bvi_tmc_dest_Cons (BlockOp b) = SOME tag <=> b = clos_Cons tag`
    ASSUME_TAC THENL
    [GEN_TAC THEN CASES_ON `b:block_op` THEN
-    REWRITE_TAC[bvi_tmc_dest_Cons_def] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[bvi_tmc_dest_Cons_def] THEN CAKE_REWRITE_TAC[] THEN
     MESON_TAC[];
     GEN_TAC THEN CASES_ON `op:clos_op` THEN
-    ASM_REWRITE_TAC[bvi_tmc_dest_Cons_def] THEN CASE_REWRITE_TAC[]]);;
+    ASM_REWRITE_TAC[bvi_tmc_dest_Cons_def] THEN CAKE_REWRITE_TAC[]]);;
 
 let bvi_to_cb_cases = prove
  (`!n loc x bs cb.
@@ -386,7 +386,7 @@ let bvi_to_cb_cases = prove
       BVIPAUX_TMC_dest_Cons_SOME] THEN
   REPEAT STRIP_TAC THEN RVEQ_TAC THEN
   TRY(FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP bvi_to_cb_aux_wf_inr)) THEN
-  RVEQ_TAC THEN CASE_REWRITE_TAC[] THEN MESON_TAC[]);;
+  RVEQ_TAC THEN CAKE_REWRITE_TAC[] THEN MESON_TAC[]);;
 
 (* Convert back to BlockOp Cons for comparing semantics *)
 

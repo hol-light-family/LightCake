@@ -69,8 +69,8 @@ let set_eq_inv = prove
    CPstate_inv (set_eq cs t s)`,
   STRIP_TAC THEN REWRITE_TAC[set_eq_def] THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
   MP_TAC(ISPEC `lookup s (copy_state_to_eq cs)` (nchotomy_of_type `:(num)option`)) THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
-  TRY COND_CASES_TAC THEN CASE_REWRITE_TAC[] THEN
+  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
+  TRY COND_CASES_TAC THEN CAKE_REWRITE_TAC[] THEN
   FIRST_X_ASSUM(STRIP_ASSUME_TAC o REWRITE_RULE[CPstate_inv_def] o
                 check (fun th -> can (find_term ((=) `CPstate_inv`)) (concl th))) THEN
   REWRITE_TAC[CPstate_inv_def; WPROOF2AUX_cs_acc; lookup_insert; domain_insert; IN_INSERT] THEN
@@ -83,7 +83,7 @@ let WPROOF2AUX_lookup_inter_eq_SOME = prove
      lookup k (inter_eq m1 m2) = SOME v <=> lookup k m1 = SOME v /\ lookup k m2 = SOME v`,
   REPEAT GEN_TAC THEN REWRITE_TAC[lookup_inter_eq] THEN
   MP_TAC(ISPEC `lookup k (m1:A spt)` (nchotomy_of_type `:(A)option`)) THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[option_DISTINCT] THEN
+  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[option_DISTINCT] THEN
   COND_CASES_TAC THEN ASM_REWRITE_TAC[option_DISTINCT; option_INJ] THEN
   ASM_MESON_TAC[]);;
 
@@ -110,8 +110,8 @@ let set_store_eq_inv = prove
   STRIP_TAC THEN REWRITE_TAC[set_store_eq_def] THEN COND_CASES_TAC THEN
   ASM_REWRITE_TAC[empty_eq_inv] THEN
   MP_TAC(ISPEC `lookup e (copy_state_to_eq cs)` (nchotomy_of_type `:(num)option`)) THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
-  TRY COND_CASES_TAC THEN CASE_REWRITE_TAC[] THEN
+  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
+  TRY COND_CASES_TAC THEN CAKE_REWRITE_TAC[] THEN
   FIRST_X_ASSUM(STRIP_ASSUME_TAC o REWRITE_RULE[CPstate_inv_def] o
                 check (fun th -> can (find_term ((=) `CPstate_inv`)) (concl th))) THEN
   REWRITE_TAC[CPstate_inv_def; WPROOF2AUX_cs_acc; copy_state_INFO.ri_accfupds;
@@ -148,7 +148,7 @@ let lookup_eqI = prove
           lookup c (copy_state_from_eq cs) = SOME r) ==>
      lookup_eq cs v = r`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN ASM_REWRITE_TAC[lookup_eq_def] THEN
-  CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]);;
 
 let both_alloc_vars_def = cake_def
   `both_alloc_vars (t,s) <=> is_alloc_var t /\ is_alloc_var s`;;
@@ -178,8 +178,8 @@ let WPROOF2AUX_set_eq_cases = prove
               (copy_state_store_to_eq cs) (copy_state_next cs))`,
   REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[set_eq_def] THEN
   MP_TAC(ISPEC `lookup s (copy_state_to_eq cs)` (nchotomy_of_type `:(num)option`)) THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
-  COND_CASES_TAC THEN CASE_REWRITE_TAC[] THEN
+  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
+  COND_CASES_TAC THEN CAKE_REWRITE_TAC[] THEN
   ASM_MESON_TAC[nchotomy_of_type `:(num)option`]);;
 
 let WPROOF2AUX_lookup_eq_REC = prove
@@ -200,9 +200,9 @@ let WPROOF2AUX_lookup_eq_cases = prove
             lookup c (copy_state_from_eq cs) = SOME r /\ lookup_eq cs v = r)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[lookup_eq_def] THEN
   MP_TAC(ISPEC `lookup v (copy_state_to_eq cs)` (nchotomy_of_type `:(num)option`)) THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[option_DISTINCT; option_INJ] THEN CASE_REWRITE_TAC[] THEN
+  STRIP_TAC THEN ASM_REWRITE_TAC[option_DISTINCT; option_INJ] THEN CAKE_REWRITE_TAC[] THEN
   MP_TAC(ISPEC `lookup a (copy_state_from_eq cs)` (nchotomy_of_type `:(num)option`)) THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[option_DISTINCT; option_INJ] THEN CASE_REWRITE_TAC[] THEN
+  STRIP_TAC THEN ASM_REWRITE_TAC[option_DISTINCT; option_INJ] THEN CAKE_REWRITE_TAC[] THEN
   ASM_MESON_TAC[]);;
 
 let WPROOF2AUX_inv_rep = prove
@@ -229,8 +229,8 @@ let WPROOF2AUX_lookup_eq_set_eq = prove
     (try fst(dest_const(fst(strip_comb(lhs(concl th))))) = "set_eq"
      with Failure _ -> false))) THENL
    [    (SUBGOAL_THEN `lookup_eq cs s = s` ASSUME_TAC THENL
-      [ASM_REWRITE_TAC[lookup_eq_def] THEN CASE_REWRITE_TAC[] THEN
-       ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]; ALL_TAC] THEN
+      [ASM_REWRITE_TAC[lookup_eq_def] THEN CAKE_REWRITE_TAC[] THEN
+       ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]; ALL_TAC] THEN
      SUBGOAL_THEN `!x. ~(x = s) ==> ~(lookup_eq cs x = s)` ASSUME_TAC THENL
       [GEN_TAC THEN DISCH_TAC THEN
        MP_TAC(SPECL [`cs:copy_state`; `x:num`] WPROOF2AUX_lookup_eq_cases) THEN
@@ -240,20 +240,20 @@ let WPROOF2AUX_lookup_eq_set_eq = prove
        DISCH_THEN SUBST_ALL_TAC THEN ASM_MESON_TAC[option_DISTINCT];
        ALL_TAC] THEN
      ASM_CASES_TAC `v:num = t` THEN ASM_REWRITE_TAC[lookup_insert] THEN
-     CASE_REWRITE_TAC[] THEN
+     CAKE_REWRITE_TAC[] THEN
      ASM_CASES_TAC `v:num = s` THEN ASM_REWRITE_TAC[lookup_insert] THEN
-     CASE_REWRITE_TAC[] THEN
+     CAKE_REWRITE_TAC[] THEN
      FIRST_X_ASSUM(MP_TAC o SPEC `v:num` o check (is_forall o concl)) THEN
      ASM_REWRITE_TAC[] THEN DISCH_TAC THEN ASM_REWRITE_TAC[lookup_eq_def] THEN
      MP_TAC(ISPEC `lookup v (copy_state_to_eq cs)` (nchotomy_of_type `:(num)option`)) THEN
-     STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+     STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
      MP_TAC(SPECL [`cs:copy_state`; `v:num`; `a:num`] WPROOF2AUX_inv_class) THEN
      ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
      SUBGOAL_THEN `~(a = copy_state_next cs)` (fun th -> REWRITE_TAC[th]) THEN
      POP_ASSUM MP_TAC THEN ARITH_TAC);
     (SUBGOAL_THEN `lookup_eq cs s = s` ASSUME_TAC THENL
-      [ASM_REWRITE_TAC[lookup_eq_def] THEN CASE_REWRITE_TAC[] THEN
-       ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]; ALL_TAC] THEN
+      [ASM_REWRITE_TAC[lookup_eq_def] THEN CAKE_REWRITE_TAC[] THEN
+       ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]; ALL_TAC] THEN
      SUBGOAL_THEN `!x. ~(x = s) ==> ~(lookup_eq cs x = s)` ASSUME_TAC THENL
       [GEN_TAC THEN DISCH_TAC THEN
        MP_TAC(SPECL [`cs:copy_state`; `x:num`] WPROOF2AUX_lookup_eq_cases) THEN
@@ -263,20 +263,20 @@ let WPROOF2AUX_lookup_eq_set_eq = prove
        DISCH_THEN SUBST_ALL_TAC THEN ASM_MESON_TAC[option_DISTINCT];
        ALL_TAC] THEN
      ASM_CASES_TAC `v:num = t` THEN ASM_REWRITE_TAC[lookup_insert] THEN
-     CASE_REWRITE_TAC[] THEN
+     CAKE_REWRITE_TAC[] THEN
      ASM_CASES_TAC `v:num = s` THEN ASM_REWRITE_TAC[lookup_insert] THEN
-     CASE_REWRITE_TAC[] THEN
+     CAKE_REWRITE_TAC[] THEN
      FIRST_X_ASSUM(MP_TAC o SPEC `v:num` o check (is_forall o concl)) THEN
      ASM_REWRITE_TAC[] THEN DISCH_TAC THEN ASM_REWRITE_TAC[lookup_eq_def] THEN
      MP_TAC(ISPEC `lookup v (copy_state_to_eq cs)` (nchotomy_of_type `:(num)option`)) THEN
-     STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+     STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
      MP_TAC(SPECL [`cs:copy_state`; `v:num`; `a:num`] WPROOF2AUX_inv_class) THEN
      ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
      SUBGOAL_THEN `~(a = copy_state_next cs)` (fun th -> REWRITE_TAC[th]) THEN
      POP_ASSUM MP_TAC THEN ARITH_TAC);
     (SUBGOAL_THEN `lookup_eq cs s = r` ASSUME_TAC THENL
-      [ASM_REWRITE_TAC[lookup_eq_def] THEN CASE_REWRITE_TAC[] THEN
-       ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]; ALL_TAC] THEN
+      [ASM_REWRITE_TAC[lookup_eq_def] THEN CAKE_REWRITE_TAC[] THEN
+       ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]; ALL_TAC] THEN
      SUBGOAL_THEN `!x. lookup_eq cs x = r <=> lookup x (copy_state_to_eq cs) = SOME c`
        ASSUME_TAC THENL
       [GEN_TAC THEN EQ_TAC THENL
@@ -287,15 +287,15 @@ let WPROOF2AUX_lookup_eq_set_eq = prove
          TRY (MP_TAC(SPECL [`cs:copy_state`; `c':num`; `r:num`] WPROOF2AUX_inv_rep) THEN
               ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN
               REWRITE_TAC[option_INJ] THEN MESON_TAC[]);
-         DISCH_TAC THEN ASM_REWRITE_TAC[lookup_eq_def] THEN CASE_REWRITE_TAC[] THEN
-         ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]];
+         DISCH_TAC THEN ASM_REWRITE_TAC[lookup_eq_def] THEN CAKE_REWRITE_TAC[] THEN
+         ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]];
        ALL_TAC] THEN
      ASM_REWRITE_TAC[lookup_insert] THEN
-     ASM_CASES_TAC `v:num = t` THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+     ASM_CASES_TAC `v:num = t` THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
      ASM_REWRITE_TAC[lookup_eq_def] THEN
      MP_TAC(ISPEC `lookup v (copy_state_to_eq cs)` (nchotomy_of_type `:(num)option`)) THEN
-     STRIP_TAC THEN ASM_REWRITE_TAC[option_DISTINCT; option_INJ] THEN CASE_REWRITE_TAC[] THEN
-     ASM_CASES_TAC `a:num = c` THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[])]);;
+     STRIP_TAC THEN ASM_REWRITE_TAC[option_DISTINCT; option_INJ] THEN CAKE_REWRITE_TAC[] THEN
+     ASM_CASES_TAC `a:num = c` THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[])]);;
 
 let lookup_eq_set_eq_is_alloc_var1 = prove
  (`CPstate_inv cs /\ both_alloc_vars (t,s) ==>
@@ -319,7 +319,7 @@ let lookup_eq_set_eq_t = prove
   REWRITE_TAC[both_alloc_vars_def] THEN STRIP_TAC THEN
   MP_TAC(SPECL [`cs:copy_state`; `t:num`; `s:num`] WPROOF2AUX_set_eq_cases) THEN
   ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
-  ASM_REWRITE_TAC[WPROOF2AUX_lookup_eq_REC; lookup_insert] THEN CASE_REWRITE_TAC[]);;
+  ASM_REWRITE_TAC[WPROOF2AUX_lookup_eq_REC; lookup_insert] THEN CAKE_REWRITE_TAC[]);;
 
 let lookup_eq_set_eq_s = prove
  (`CPstate_inv cs /\ both_alloc_vars (t,s) ==>
@@ -368,28 +368,28 @@ let CPstate_models_def = cake_def
                  FLOOKUP (wl_state_store S) s = lookup vrep (wl_state_locals S))`;;
 
 let CPstate_models_with_const = prove
- (`CPstate_models cs (wl_state_locals_size_fupd (K ls) (s:(A,C,FFI)wl_state)) =
+ (`CPstate_models cs (wl_state_locals_size_fupd (combin_K ls) (s:(A,C,FFI)wl_state)) =
      CPstate_models cs s /\
-   CPstate_models cs (wl_state_fp_regs_fupd (K fp) s) = CPstate_models cs s /\
-   CPstate_models cs (wl_state_stack_fupd (K xs) s) = CPstate_models cs s /\
-   CPstate_models cs (wl_state_stack_limit_fupd (K sl) s) = CPstate_models cs s /\
-   CPstate_models cs (wl_state_stack_max_fupd (K sm) s) = CPstate_models cs s /\
-   CPstate_models cs (wl_state_stack_size_fupd (K ssize) s) = CPstate_models cs s /\
-   CPstate_models cs (wl_state_memory_fupd (K m) s) = CPstate_models cs s /\
-   CPstate_models cs (wl_state_mdomain_fupd (K md) s) = CPstate_models cs s /\
-   CPstate_models cs (wl_state_sh_mdomain_fupd (K smd) s) = CPstate_models cs s /\
-   CPstate_models cs (wl_state_permute_fupd (K p) s) = CPstate_models cs s /\
-   CPstate_models cs (wl_state_compile_fupd (K c) s) = CPstate_models cs s /\
-   CPstate_models cs (wl_state_compile_oracle_fupd (K co) s) = CPstate_models cs s /\
-   CPstate_models cs (wl_state_code_buffer_fupd (K cb) s) = CPstate_models cs s /\
-   CPstate_models cs (wl_state_data_buffer_fupd (K db) s) = CPstate_models cs s /\
-   CPstate_models cs (wl_state_gc_fun_fupd (K g) s) = CPstate_models cs s /\
-   CPstate_models cs (wl_state_handler_fupd (K hd) s) = CPstate_models cs s /\
-   CPstate_models cs (wl_state_clock_fupd (K clk) s) = CPstate_models cs s /\
-   CPstate_models cs (wl_state_termdep_fupd (K tdep) s) = CPstate_models cs s /\
-   CPstate_models cs (wl_state_code_fupd (K cd) s) = CPstate_models cs s /\
-   CPstate_models cs (wl_state_be_fupd (K b) s) = CPstate_models cs s /\
-   CPstate_models cs (wl_state_ffi_fupd (K ffi) s) = CPstate_models cs s`,
+   CPstate_models cs (wl_state_fp_regs_fupd (combin_K fp) s) = CPstate_models cs s /\
+   CPstate_models cs (wl_state_stack_fupd (combin_K xs) s) = CPstate_models cs s /\
+   CPstate_models cs (wl_state_stack_limit_fupd (combin_K sl) s) = CPstate_models cs s /\
+   CPstate_models cs (wl_state_stack_max_fupd (combin_K sm) s) = CPstate_models cs s /\
+   CPstate_models cs (wl_state_stack_size_fupd (combin_K ssize) s) = CPstate_models cs s /\
+   CPstate_models cs (wl_state_memory_fupd (combin_K m) s) = CPstate_models cs s /\
+   CPstate_models cs (wl_state_mdomain_fupd (combin_K md) s) = CPstate_models cs s /\
+   CPstate_models cs (wl_state_sh_mdomain_fupd (combin_K smd) s) = CPstate_models cs s /\
+   CPstate_models cs (wl_state_permute_fupd (combin_K p) s) = CPstate_models cs s /\
+   CPstate_models cs (wl_state_compile_fupd (combin_K c) s) = CPstate_models cs s /\
+   CPstate_models cs (wl_state_compile_oracle_fupd (combin_K co) s) = CPstate_models cs s /\
+   CPstate_models cs (wl_state_code_buffer_fupd (combin_K cb) s) = CPstate_models cs s /\
+   CPstate_models cs (wl_state_data_buffer_fupd (combin_K db) s) = CPstate_models cs s /\
+   CPstate_models cs (wl_state_gc_fun_fupd (combin_K g) s) = CPstate_models cs s /\
+   CPstate_models cs (wl_state_handler_fupd (combin_K hd) s) = CPstate_models cs s /\
+   CPstate_models cs (wl_state_clock_fupd (combin_K clk) s) = CPstate_models cs s /\
+   CPstate_models cs (wl_state_termdep_fupd (combin_K tdep) s) = CPstate_models cs s /\
+   CPstate_models cs (wl_state_code_fupd (combin_K cd) s) = CPstate_models cs s /\
+   CPstate_models cs (wl_state_be_fupd (combin_K b) s) = CPstate_models cs s /\
+   CPstate_models cs (wl_state_ffi_fupd (combin_K ffi) s) = CPstate_models cs s`,
   REWRITE_TAC[CPstate_models_def; wl_state_INFO.ri_accfupds]);;
 
 let _ = cake_add_simps [CPstate_models_with_const];;
@@ -413,13 +413,13 @@ let CPstate_modelsI = prove
                                  (CONJ (ASSUME `CPstate_inv cs`) th))) THEN
   DISCH_TAC THEN
   (SUBGOAL_THEN `lookup_eq cs vrep = vrep` ASSUME_TAC THENL
-    [ASM_REWRITE_TAC[lookup_eq_def] THEN CASE_REWRITE_TAC[] THEN
-     ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]; ALL_TAC]) THEN
+    [ASM_REWRITE_TAC[lookup_eq_def] THEN CAKE_REWRITE_TAC[] THEN
+     ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]; ALL_TAC]) THEN
   FIRST_X_ASSUM MATCH_MP_TAC THENL
-   [ASM_REWRITE_TAC[lookup_eq_def] THEN CASE_REWRITE_TAC[] THEN
-    ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[];
-    ASM_REWRITE_TAC[lookup_store_eq_def] THEN CASE_REWRITE_TAC[] THEN
-    ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]]);;
+   [ASM_REWRITE_TAC[lookup_eq_def] THEN CAKE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[];
+    ASM_REWRITE_TAC[lookup_store_eq_def] THEN CAKE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]]);;
 
 let CPstate_modelsD = prove
  (`CPstate_inv cs /\ CPstate_models cs (st:(A,C,FFI)wl_state) ==>
@@ -457,7 +457,7 @@ let remove_eq_model_insert = prove
  (`CPstate_inv cs ==>
    CPstate_models cs (st:(A,C,FFI)wl_state) ==>
    CPstate_models (remove_eq cs t)
-     (wl_state_locals_fupd (K (insert t vv (wl_state_locals st))) st)`,
+     (wl_state_locals_fupd (combin_K (insert t vv (wl_state_locals st))) st)`,
   REPEAT STRIP_TAC THEN MATCH_MP_TAC remove_eq_model_insert' THEN
   ASM_REWRITE_TAC[wl_state_INFO.ri_accfupds; K_THM]);;
 
@@ -513,11 +513,11 @@ let lookup_eq_remove_eq_t = prove
   STRIP_TAC THEN FIRST_X_ASSUM(MP_TAC o check (fun th -> is_eq(concl th) &&
                      (try fst(dest_const(fst(strip_comb(lhs(concl th))))) = "lookup_eq"
                       with Failure _ -> false))) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THENL
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THENL
    [DISCH_TAC THEN MATCH_MP_TAC WPROOF2AUX_lookup_eq_unclassified THEN
     EXISTS_TAC `cs:copy_state` THEN ASM_REWRITE_TAC[];
     REWRITE_TAC[empty_eq_def; WPROOF2AUX_lookup_eq_REC; lookup_def] THEN
-    CASE_REWRITE_TAC[]]);;
+    CAKE_REWRITE_TAC[]]);;
 
 let WPROOF2AUX_lookup_store_eq_REC = prove
  (CASE_TERM
@@ -535,9 +535,9 @@ let WPROOF2AUX_lookup_store_eq_unclassified = prove
             ~(lookup_store_eq cs v = SOME t)`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN REWRITE_TAC[lookup_store_eq_def] THEN
   MP_TAC(ISPEC `ALOOKUP (copy_state_store_to_eq cs) v` (nchotomy_of_type `:(num)option`)) THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[option_DISTINCT] THEN
+  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[option_DISTINCT] THEN
   MP_TAC(ISPEC `lookup a (copy_state_from_eq cs)` (nchotomy_of_type `:(num)option`)) THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN
+  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN
   DISCH_THEN SUBST_ALL_TAC THEN
   MP_TAC(SPECL [`cs:copy_state`; `a:num`; `t:num`] WPROOF2AUX_inv_rep) THEN
   ASM_REWRITE_TAC[option_DISTINCT]);;
@@ -558,9 +558,9 @@ let WPROOF2AUX_lookup_store_eq_alt = prove
  (`!cs v a.
      ALOOKUP (copy_state_store_to_eq cs) v = SOME a ==>
      lookup_store_eq cs v = lookup a (copy_state_from_eq cs)`,
-  REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[lookup_store_eq_def] THEN CASE_REWRITE_TAC[] THEN
+  REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[lookup_store_eq_def] THEN CAKE_REWRITE_TAC[] THEN
   MP_TAC(ISPEC `lookup a (copy_state_from_eq cs)` (nchotomy_of_type `:(num)option`)) THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]);;
+  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]);;
 
 let WPROOF2AUX_lookup_store_eq_set_eq_alt = prove
  (`!cs v a t s.
@@ -589,7 +589,7 @@ let lookup_store_eq_set_eqD = prove
   STRIP_TAC THENL
    [FIRST_X_ASSUM(MP_TAC o check (fun th -> is_eq(concl th) && rand(concl th) = `SOME (r:num)`)) THEN
     ASM_REWRITE_TAC[lookup_store_eq_def; set_eq_store_to_eq] THEN
-    CASE_REWRITE_TAC[option_DISTINCT];
+    CAKE_REWRITE_TAC[option_DISTINCT];
     ALL_TAC] THEN
   FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP WPROOF2AUX_lookup_store_eq_alt th]) THEN
   FIRST_X_ASSUM(MP_TAC o check (fun th -> is_eq(concl th) && rand(concl th) = `SOME (r:num)`)) THEN
@@ -616,8 +616,8 @@ let lookup_store_eq_set_eqD = prove
     ASM_REWRITE_TAC[] THEN DISCH_TAC THEN WPROOF2AUX_ASM_CONTR_TAC;
     ASM_CASES_TAC `a:num = c` THEN ASM_REWRITE_TAC[option_INJ] THENL
      [DISCH_THEN(SUBST_ALL_TAC o SYM) THEN REWRITE_TAC[] THEN
-      REWRITE_TAC[lookup_eq_def] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
-      ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[];
+      REWRITE_TAC[lookup_eq_def] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
+      ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[];
       DISCH_TAC THEN ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST_ALL_TAC THEN
       FIRST_ASSUM(fun th -> MP_TAC(MATCH_MP WPROOF2AUX_lookup_store_eq_alt th)) THEN
       ASM_REWRITE_TAC[] THEN DISCH_TAC THEN WPROOF2AUX_ASM_CONTR_TAC]]);;
@@ -626,14 +626,14 @@ let WPROOF2AUX_remove_eq_t = prove
  (`!cs t. lookup t (copy_state_to_eq (remove_eq cs t)) = NONE`,
   REPEAT GEN_TAC THEN REWRITE_TAC[remove_eq_def] THEN
   MP_TAC(ISPEC `lookup t (copy_state_to_eq cs)` (nchotomy_of_type `:(num)option`)) THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[empty_eq_def; WPROOF2AUX_cs_acc; lookup_def]);;
 
 let copy_prop_move_model_aux = prove
  (`CPstate_inv cs /\ CPstate_models cs (st:(A,C,FFI)wl_state) /\
    both_alloc_vars (t,s) /\ lookup s (wl_state_locals st) = SOME sval ==>
    CPstate_models (set_eq (remove_eq cs t) t s)
-     (wl_state_locals_fupd (K (insert t sval (wl_state_locals st))) st)`,
+     (wl_state_locals_fupd (combin_K (insert t sval (wl_state_locals st))) st)`,
   REWRITE_TAC[both_alloc_vars_def] THEN STRIP_TAC THEN
   ABBREV_TAC `cs1 = remove_eq cs t` THEN
   SUBGOAL_THEN `CPstate_inv cs1` ASSUME_TAC THENL
@@ -707,7 +707,7 @@ let set_eq_remove_eq_models = prove
  (`CPstate_inv cs /\ CPstate_models cs (st:(A,C,FFI)wl_state) /\
    lookup s (wl_state_locals st) = SOME sval ==>
    CPstate_models (set_eq (remove_eq cs t) t s)
-     (wl_state_locals_fupd (K (insert t sval (wl_state_locals st))) st)`,
+     (wl_state_locals_fupd (combin_K (insert t sval (wl_state_locals st))) st)`,
   STRIP_TAC THEN ASM_CASES_TAC `both_alloc_vars (t,s)` THENL
    [MATCH_MP_TAC copy_prop_move_model_aux THEN ASM_REWRITE_TAC[];
     FIRST_X_ASSUM(ASSUME_TAC o REWRITE_RULE[both_alloc_vars_def]) THEN
@@ -721,7 +721,7 @@ let lookup_eq_idempotent = prove
   STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
   MP_TAC(SPECL [`cs:copy_state`; `c:num`; `r:num`] WPROOF2AUX_inv_rep) THEN
   ASM_REWRITE_TAC[] THEN DISCH_TAC THEN ASM_REWRITE_TAC[lookup_eq_def] THEN
-  CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]);;
 
 let CPstate_modelsD_get_var = prove
  (`CPstate_inv cs /\ CPstate_models cs (st:(A,C,FFI)wl_state) ==>
@@ -739,7 +739,7 @@ let CPstate_modelsD_get_var_imm = prove
  (`CPstate_inv cs /\ CPstate_models cs (st:(A,C,FFI)wl_state) ==>
    wl_get_var_imm (lookup_eq_imm cs x) st = wl_get_var_imm x st`,
   STRIP_TAC THEN CASES_ON `x:(A)reg_imm` THEN
-  REWRITE_TAC[lookup_eq_imm_def] THEN CASE_REWRITE_TAC[wl_get_var_imm_def] THEN
+  REWRITE_TAC[lookup_eq_imm_def] THEN CAKE_REWRITE_TAC[wl_get_var_imm_def] THEN
   ASM_SIMP_TAC[CPstate_modelsD_get_var]);;
 
 let CPstate_modelsD_Var = prove
@@ -754,7 +754,7 @@ let CPstate_modelsD_lookup_eq_imm = prove
    wl_word_exp st (match lookup_eq_imm cs x with Reg r -> wl_Var r | Imm w -> wl_Const w) =
    wl_word_exp st (match x with Reg r -> wl_Var r | Imm w -> wl_Const w)`,
   REPEAT STRIP_TAC THEN CASES_ON `x:(A)reg_imm` THEN
-  REWRITE_TAC[lookup_eq_imm_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[lookup_eq_imm_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[wl_word_exp_def] THEN ASM_SIMP_TAC[CPstate_modelsD_get_var]);;
 
 let MAP_get_var_eqD = prove
@@ -865,7 +865,7 @@ let copy_prop_inst_inv = prove
     (fun th -> MESON_TAC[th; SND]) THEN
   MATCH_MP_TAC copy_prop_inst_ind THEN REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
   REWRITE_TAC[copy_prop_inst_def; LET_DEF; LET_END_DEF] THEN
-  CASE_REWRITE_TAC[pair_CASE_def; FST; SND] THEN
+  CAKE_REWRITE_TAC[pair_CASE_def; FST; SND] THEN
   REPEAT COND_CASES_TAC THEN REWRITE_TAC[FST; SND] THEN
   MESON_TAC[remove_eq_inv; remove_eqs_inv]);;
 
@@ -878,9 +878,9 @@ let copy_prop_prog_inv = prove
   MATCH_MP_TAC copy_prop_prog_ind THEN REPEAT CONJ_TAC THEN REPEAT STRIP_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[WPROOF2AUX_cp_FORALL_PAIR_EQ_IMP]) THEN
   REWRITE_TAC[copy_prop_prog_def; LET_DEF; LET_END_DEF] THEN
-  CASE_REWRITE_TAC[pair_CASE_def; FST; SND] THEN
+  CAKE_REWRITE_TAC[pair_CASE_def; FST; SND] THEN
   REPEAT (FIRST [COND_CASES_TAC; TOP_CASE_TAC]) THEN
-  CASE_REWRITE_TAC[pair_CASE_def; FST; SND] THEN
+  CAKE_REWRITE_TAC[pair_CASE_def; FST; SND] THEN
   ASM_SIMP_TAC[empty_eq_inv; remove_eq_inv; remove_eqs_inv; set_store_eq_inv] THEN
   TRY (MATCH_MP_TAC merge_eqs_inv THEN ASM_SIMP_TAC[] THEN NO_TAC) THEN
   ASM_MESON_TAC[copy_prop_move_inv; copy_prop_inst_inv; PAIR]);;
@@ -895,9 +895,9 @@ let WPROOF2AUX_get_vars_CONS = prove
      ?x xs. values = CONS x xs /\ wl_get_var v st = SOME x /\ wl_get_vars vs st = SOME xs`,
   REPEAT GEN_TAC THEN REWRITE_TAC[wl_get_vars_def] THEN
   MP_TAC(ISPEC `wl_get_var v (st:(A,C,FFI)wl_state)` (nchotomy_of_type `:((A)word_loc)option`)) THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[option_DISTINCT; option_INJ] THEN CASE_REWRITE_TAC[option_DISTINCT] THEN
+  STRIP_TAC THEN ASM_REWRITE_TAC[option_DISTINCT; option_INJ] THEN CAKE_REWRITE_TAC[option_DISTINCT] THEN
   MP_TAC(ISPEC `wl_get_vars vs (st:(A,C,FFI)wl_state)` (nchotomy_of_type `:(((A)word_loc)list)option`)) THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[option_DISTINCT; option_INJ] THEN CASE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN
+  STRIP_TAC THEN ASM_REWRITE_TAC[option_DISTINCT; option_INJ] THEN CAKE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN
   MESON_TAC[]);;
 
 let copy_prop_move_model = prove
@@ -970,7 +970,7 @@ let copy_prop_move_correct = prove
    wl_evaluate (prog', st) = (err, st') /\
    (err = NONE ==> CPstate_models cs' st')`,
   REWRITE_TAC[copy_prop_prog_def; LET_DEF; LET_END_DEF] THEN
-  CASE_REWRITE_TAC[pair_CASE_def] THEN
+  CAKE_REWRITE_TAC[pair_CASE_def] THEN
   COND_CASES_TAC THEN REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN RVEQ_TAC THENL
    [CONJ_TAC THENL
      [MP_TAC(INST [`FST (copy_prop_move moves cs)`,`moves':(num#num)list`;
@@ -983,7 +983,7 @@ let copy_prop_move_correct = prove
     COND_CASES_TAC THEN REWRITE_TAC[PAIR_EQ; option_DISTINCT] THEN
     MP_TAC(ISPEC `wl_get_vars (MAP SND (moves:(num#num)list)) (st:(A,C,FFI)wl_state)`
              (nchotomy_of_type `:(((A)word_loc)list)option`)) THEN
-    STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[PAIR_EQ; option_DISTINCT] THEN
+    STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[PAIR_EQ; option_DISTINCT] THEN
     DISCH_THEN(SUBST1_TAC o SYM) THEN
     MP_TAC(INST [`FST (copy_prop_move moves cs)`,`moves':(num#num)list`;
                  `SND (copy_prop_move moves cs)`,`cs':copy_state`;
@@ -1031,10 +1031,10 @@ let copy_prop_inst_eval = prove
     ASM_REWRITE_TAC[]; ALL_TAC]) THEN
   DISCH_THEN(MP_TAC o SYM) THEN
   REWRITE_TAC[copy_prop_inst_def; LET_DEF; LET_END_DEF] THEN
-  CASE_REWRITE_TAC[pair_CASE_def; FST; SND] THEN
-  REPEAT COND_CASES_TAC THEN CASE_REWRITE_TAC[FST; SND; PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[pair_CASE_def; FST; SND] THEN
+  REPEAT COND_CASES_TAC THEN CAKE_REWRITE_TAC[FST; SND; PAIR_EQ] THEN
   STRIP_TAC THEN RVEQ_TAC THEN
-  REWRITE_TAC[wl_evaluate_def; wl_inst_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[wl_evaluate_def; wl_inst_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[wl_assign_def; wl_word_exp_def; MAP; wl_get_vars_def] THEN
   ASM_REWRITE_TAC[]);;
 
@@ -1043,9 +1043,9 @@ let remove_eq_comm = prove
   REWRITE_TAC[remove_eq_def] THEN
   MP_TAC(ISPEC `lookup x (copy_state_to_eq cs)` (nchotomy_of_type `:(num)option`)) THEN
   MP_TAC(ISPEC `lookup y (copy_state_to_eq cs)` (nchotomy_of_type `:(num)option`)) THEN
-  REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
-  REWRITE_TAC[empty_eq_def; WPROOF2AUX_cs_acc; lookup_def] THEN CASE_REWRITE_TAC[] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]);;
+  REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
+  REWRITE_TAC[empty_eq_def; WPROOF2AUX_cs_acc; lookup_def] THEN CAKE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]);;
 
 let WPROOF2AUX_models_mem = prove
  (`!f. CPstate_models cs (st:(A,C,FFI)wl_state) ==>
@@ -1071,8 +1071,8 @@ let WPROOF2AUX_copy_prop_inst_model = prove
   MATCH_MP_TAC copy_prop_inst_ind THEN REPEAT CONJ_TAC THEN
   REPEAT GEN_TAC THEN DISCH_TAC THEN DISCH_TAC THEN
   REWRITE_TAC[copy_prop_inst_def; LET_DEF; LET_END_DEF] THEN
-  CASE_REWRITE_TAC[pair_CASE_def; FST; SND] THEN
-  REWRITE_TAC[wl_inst_def; remove_eqs_def] THEN CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[pair_CASE_def; FST; SND] THEN
+  REWRITE_TAC[wl_inst_def; remove_eqs_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[wl_assign_def; wl_mem_store_def] THEN DISCH_TAC THEN
   GVS(all_case_eqs()) THEN WPROOF2AUX_MODEL_TAC);;
 
@@ -1092,7 +1092,7 @@ let copy_prop_inst_correct = prove
     REWRITE_TAC[wl_evaluate_def] THEN
     MP_TAC(ISPEC `wl_inst (ins:(A)inst) (st:(A,C,FFI)wl_state)`
              (nchotomy_of_type `:((A,C,FFI)wl_state)option`)) THEN
-    STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[PAIR_EQ; option_DISTINCT] THEN
+    STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[PAIR_EQ; option_DISTINCT] THEN
     DISCH_THEN(SUBST1_TAC o SYM) THEN
     MP_TAC(SPECL [`ins:(A)inst`; `cs:copy_state`; `st:(A,C,FFI)wl_state`;
                   `a:(A,C,FFI)wl_state`] WPROOF2AUX_copy_prop_inst_model) THEN
@@ -1104,7 +1104,7 @@ let remove_eq_model_unset_var = prove
    CPstate_models (remove_eq cs t) (wl_unset_var t st)`,
   REPEAT DISCH_TAC THEN REWRITE_TAC[remove_eq_def] THEN
   MP_TAC(ISPEC `lookup t (copy_state_to_eq cs)` (nchotomy_of_type `:(num)option`)) THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[empty_eq_model] THEN
   UNDISCH_TAC `CPstate_models cs (st:(A,C,FFI)wl_state)` THEN
   UNDISCH_TAC `CPstate_inv cs` THEN
@@ -1129,16 +1129,16 @@ let lookup_store_eq_SOME = prove
    FLOOKUP (wl_state_store st) s = lookup v (wl_state_locals st)`,
   REWRITE_TAC[CPstate_models_def; lookup_store_eq_def] THEN
   MP_TAC(ISPEC `ALOOKUP (copy_state_store_to_eq cs) s` (nchotomy_of_type `:(num)option`)) THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[option_DISTINCT] THEN
+  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[option_DISTINCT] THEN
   MP_TAC(ISPEC `lookup a (copy_state_from_eq cs)` (nchotomy_of_type `:(num)option`)) THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN
+  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN
   ASM_MESON_TAC[]);;
 
 let lookup_remove_eq = prove
  (`lookup n (copy_state_to_eq (remove_eq cs n)) = NONE`,
   REWRITE_TAC[remove_eq_def] THEN
   MP_TAC(ISPEC `lookup n (copy_state_to_eq cs)` (nchotomy_of_type `:(num)option`)) THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[empty_eq_def; WPROOF2AUX_cs_acc; lookup_def]);;
 
 let _ = cake_add_simps [lookup_remove_eq];;
@@ -1159,11 +1159,11 @@ let WPROOF2AUX_set_store_eq_cases = prove
             lookup c (copy_state_from_eq cs) = SOME r /\
             set_store_eq cs s y =
             copy_state_store_to_eq_fupd
-              (K (CONS (s,c) (copy_state_store_to_eq cs))) cs)`,
+              (combin_K (CONS (s,c) (copy_state_store_to_eq cs))) cs)`,
   REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[set_store_eq_def] THEN
   MP_TAC(ISPEC `lookup y (copy_state_to_eq cs)` (nchotomy_of_type `:(num)option`)) THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
-  COND_CASES_TAC THEN CASE_REWRITE_TAC[] THEN
+  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
+  COND_CASES_TAC THEN CAKE_REWRITE_TAC[] THEN
   ASM_MESON_TAC[nchotomy_of_type `:(num)option`]);;
 
 let WPROOF2AUX_lookup_eq_store_fupd = prove
@@ -1177,10 +1177,10 @@ let WPROOF2AUX_lookup_eq_fresh = prove
                   (insert (copy_state_next cs) x (copy_state_from_eq cs)) st n) y =
      lookup_eq cs y`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[WPROOF2AUX_lookup_eq_REC; lookup_insert] THEN
-  ASM_CASES_TAC `y:num = x` THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_CASES_TAC `y:num = x` THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[lookup_eq_def] THEN
   MP_TAC(ISPEC `lookup y (copy_state_to_eq cs)` (nchotomy_of_type `:(num)option`)) THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   SUBGOAL_THEN `~(a = copy_state_next cs)` (fun th -> REWRITE_TAC[th]) THEN
   ASM_MESON_TAC[WPROOF2AUX_inv_class; LT_REFL]);;
 
@@ -1191,13 +1191,13 @@ let lookup_eq_set_store_eq = prove
   MP_TAC(SPECL [`cs:copy_state`; `s:store_name`; `x:num`] WPROOF2AUX_set_store_eq_cases) THEN
   ASM_REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[WPROOF2AUX_lookup_eq_store_fupd] THEN
   MATCH_MP_TAC WPROOF2AUX_lookup_eq_fresh THEN
-  ASM_REWRITE_TAC[lookup_eq_def] THEN CASE_REWRITE_TAC[] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]);;
+  ASM_REWRITE_TAC[lookup_eq_def] THEN CAKE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]);;
 
 let WPROOF2AUX_lookup_store_eq_store_fupd = prove
  (CASE_TERM
   `!l cs v.
-     lookup_store_eq (copy_state_store_to_eq_fupd (K l) cs) v =
+     lookup_store_eq (copy_state_store_to_eq_fupd (combin_K l) cs) v =
      (match ALOOKUP l v with
         NONE -> NONE
       | SOME c -> (match lookup c (copy_state_from_eq cs) with
@@ -1214,12 +1214,12 @@ let lookup_store_eq_set_store_eq_1 = prove
   ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
   ASM_REWRITE_TAC[WPROOF2AUX_lookup_store_eq_REC; WPROOF2AUX_lookup_store_eq_store_fupd;
                   ALOOKUP_THM; lookup_insert] THEN
-  CASE_REWRITE_TAC[option_INJ] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[option_INJ] THEN
+  CAKE_REWRITE_TAC[option_INJ] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[option_INJ] THEN
   DISCH_THEN(SUBST1_TAC o SYM) THEN REWRITE_TAC[] THEN
   SUBGOAL_THEN `lookup r (copy_state_to_eq cs) = SOME c` ASSUME_TAC THENL
    [ASM_MESON_TAC[WPROOF2AUX_inv_rep]; ALL_TAC] THEN
-  ASM_REWRITE_TAC[lookup_eq_def] THEN CASE_REWRITE_TAC[] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]);;
+  ASM_REWRITE_TAC[lookup_eq_def] THEN CAKE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]);;
 
 let lookup_store_eq_set_store_eq_2 = prove
  (`CPstate_inv cs /\ is_alloc_var x /\ ~(s = t) /\
@@ -1235,7 +1235,7 @@ let lookup_store_eq_set_store_eq_2 = prove
                   ALOOKUP_THM] THEN
   REWRITE_TAC[lookup_store_eq_def] THEN
   MP_TAC(ISPEC `ALOOKUP (copy_state_store_to_eq cs) t` (nchotomy_of_type `:(num)option`)) THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[option_DISTINCT] THEN
+  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[option_DISTINCT] THEN
   SUBGOAL_THEN `~(a = copy_state_next cs)` (fun th -> REWRITE_TAC[th; lookup_insert]) THEN
   UNDISCH_TAC `CPstate_inv cs` THEN REWRITE_TAC[CPstate_inv_def] THEN
   ASM_MESON_TAC[LT_REFL]);;
@@ -1269,14 +1269,14 @@ let set_store_eq_model_set_store = prove
 
 let lookup_eq_remove_t_same = prove
  (`lookup_eq (remove_eq cs t) t = t`,
-  REWRITE_TAC[lookup_eq_def; lookup_remove_eq] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[lookup_eq_def; lookup_remove_eq] THEN CAKE_REWRITE_TAC[]);;
 
 let lookup_store_eq_set_store_eq_same = prove
  (`lookup x (copy_state_to_eq cs) = NONE /\ is_alloc_var x ==>
    lookup_store_eq (set_store_eq cs s x) s = SOME x`,
-  STRIP_TAC THEN ASM_REWRITE_TAC[set_store_eq_def] THEN CASE_REWRITE_TAC[] THEN
+  STRIP_TAC THEN ASM_REWRITE_TAC[set_store_eq_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[WPROOF2AUX_lookup_store_eq_REC; ALOOKUP_THM; lookup_insert] THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[]);;
 
 let set_store_eq_model_set_var = prove
  (`CPstate_inv cs /\ CPstate_models cs (st:(A,C,FFI)wl_state) /\
@@ -1346,7 +1346,7 @@ let evaluate_Loop_body_cong_err = prove
   MAP_EVERY X_GEN_TAC [`s:(A,C,FFI)wl_state`; `res:((A)wl_result)option`;
                        `s1:(A,C,FFI)wl_state`] THEN
   DISCH_TAC THEN ONCE_REWRITE_TAC[WPROOF2AUX_cp_eval_clause "wl_Loop"] THEN
-  CASES_ON `wl_cut_state (names,LN) (s:(A,C,FFI)wl_state)` THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON `wl_cut_state (names,LN) (s:(A,C,FFI)wl_state)` THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[PAIR_EQ] THENL [MESON_TAC[]; ALL_TAC] THEN
   MP_TAC(ISPEC `wl_evaluate (c:(A)wl_prog,a:(A,C,FFI)wl_state)` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `r:((A)wl_result)option` (X_CHOOSE_THEN `t:(A,C,FFI)wl_state`
@@ -1545,7 +1545,7 @@ let WPROOF2AUX_cpc_StoreConsts = prove
 
 let WPROOF2AUX_cpc_Set_Var = prove
  (WPROOF2AUX_cpc `wl_Set name (wl_Var n):(A)wl_prog`,
-  REWRITE_TAC[copy_prop_prog_def; LET_DEF; LET_END_DEF] THEN CASE_REWRITE_TAC[PAIR_EQ] THEN
+  REWRITE_TAC[copy_prop_prog_def; LET_DEF; LET_END_DEF] THEN CAKE_REWRITE_TAC[PAIR_EQ] THEN
   REPEAT GEN_TAC THEN STRIP_TAC THEN WPROOF2AUX_cp_SUBST_TAC THEN
   SUBGOAL_THEN `wl_evaluate (wl_Set name (wl_Var (lookup_eq cs n)), st:(A,C,FFI)wl_state) =
                 wl_evaluate (wl_Set name (wl_Var n), st)` SUBST1_TAC THENL
@@ -1556,7 +1556,7 @@ let WPROOF2AUX_cpc_Set_Var = prove
   REWRITE_TAC[wl_evaluate_def; wl_word_exp_def] THEN COND_CASES_TAC THEN
   REWRITE_TAC[PAIR_EQ; option_DISTINCT] THEN
   MP_TAC(ISPEC `wl_get_var n (st:(A,C,FFI)wl_state)` (nchotomy_of_type `:((A)word_loc)option`)) THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[PAIR_EQ; option_DISTINCT] THEN
+  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[PAIR_EQ; option_DISTINCT] THEN
   DISCH_THEN(SUBST1_TAC o SYM) THEN
   MATCH_MP_TAC set_store_eq_model_set_store THEN ASM_REWRITE_TAC[]);;
 
@@ -1567,10 +1567,10 @@ let WPROOF2AUX_cpc_Set = prove
     MATCH_ACCEPT_TAC WPROOF2AUX_cpc_Set_Var;
     MATCH_MP_TAC WPROOF2AUX_cpc_id THEN POP_ASSUM MP_TAC THEN
     CASES_ON `exp:(A)wl_exp` THEN REWRITE_TAC[copy_prop_prog_def] THEN
-    CASE_REWRITE_TAC[] THEN MESON_TAC[]]);;
+    CAKE_REWRITE_TAC[] THEN MESON_TAC[]]);;
 
 let WPROOF2AUX_locals_fupd_id = prove
- (`!st:(A,C,FFI)wl_state. wl_state_locals_fupd (K (wl_state_locals st)) st = st`,
+ (`!st:(A,C,FFI)wl_state. wl_state_locals_fupd (combin_K (wl_state_locals st)) st = st`,
   REWRITE_TAC[wl_state_INFO.ri_component_equality; wl_state_INFO.ri_accfupds; K_THM]);;
 
 let WPROOF2AUX_cpc_Get = prove
@@ -1584,7 +1584,7 @@ let WPROOF2AUX_cpc_Get = prove
     REWRITE_TAC[wl_evaluate_def] THEN
     MP_TAC(ISPEC `wl_get_store name (st:(A,C,FFI)wl_state)`
              (nchotomy_of_type `:((A)word_loc)option`)) THEN
-    STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[PAIR_EQ; option_INJ] THEN
+    STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[PAIR_EQ; option_INJ] THEN
     MESON_TAC[];
     ALL_TAC] THEN
   FIRST_X_ASSUM(SUBST_ALL_TAC o check (fun th -> concl th = `err:((A)wl_result)option = NONE`)) THEN
@@ -1594,7 +1594,7 @@ let WPROOF2AUX_cpc_Get = prove
   UNDISCH_TAC `copy_prop_prog (wl_Get n name:(A)wl_prog) cs = (prog',cs')` THEN
   REWRITE_TAC[copy_prop_prog_def; LET_DEF; LET_END_DEF] THEN
   MP_TAC(ISPEC `lookup_store_eq cs name` (nchotomy_of_type `:(num)option`)) THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[pair_CASE_def] THENL
+  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[pair_CASE_def] THENL
    [REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN WPROOF2AUX_cp_SUBST_TAC THEN
     ASM_REWRITE_TAC[] THEN MATCH_MP_TAC set_store_eq_model_set_var THEN
     ASM_REWRITE_TAC[];
@@ -1610,7 +1610,7 @@ let WPROOF2AUX_cpc_Get = prove
     REWRITE_TAC[copy_prop_move_def; FST; SND; wl_evaluate_def] THEN
     REWRITE_TAC[MAP; ALL_DISTINCT; MEM; wl_get_vars_def] THEN
     ASM_SIMP_TAC[CPstate_modelsD_get_var] THEN
-    ASM_REWRITE_TAC[wl_get_var_def] THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[wl_get_var_def] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[wl_set_vars_def; wl_set_var_def; alist_insert_def] THEN
     MATCH_MP_TAC set_eq_remove_eq_models THEN ASM_REWRITE_TAC[];
     FIRST_X_ASSUM(SUBST_ALL_TAC o check (fun th -> concl th = `a:num = n`)) THEN
@@ -1680,13 +1680,13 @@ let WPROOF2AUX_cpc_MustTerminate = prove
  (mk_imp(WPROOF2AUX_cpc `p1:(A)wl_prog`, WPROOF2AUX_cpc `MustTerminate p1:(A)wl_prog`),
   DISCH_TAC THEN
   REWRITE_TAC[copy_prop_prog_def; LET_DEF; LET_END_DEF] THEN
-  CASE_REWRITE_TAC[pair_CASE_def; PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[pair_CASE_def; PAIR_EQ] THEN
   REPEAT GEN_TAC THEN STRIP_TAC THEN WPROOF2AUX_cp_SUBST_TAC THEN
   UNDISCH_TAC `wl_evaluate (MustTerminate p1, st:(A,C,FFI)wl_state) = (err, st')` THEN
   REWRITE_TAC[wl_evaluate_def; LET_DEF; LET_END_DEF] THEN
   COND_CASES_TAC THENL [REWRITE_TAC[PAIR_EQ] THEN ASM_MESON_TAC[]; ALL_TAC] THEN
-  ABBREV_TAC `st1 = wl_state_clock_fupd (K (MustTerminate_limit (:A)))
-                      (wl_state_termdep_fupd (K (wl_state_termdep st - 1))
+  ABBREV_TAC `st1 = wl_state_clock_fupd (combin_K (MustTerminate_limit (:A)))
+                      (wl_state_termdep_fupd (combin_K (wl_state_termdep st - 1))
                          (st:(A,C,FFI)wl_state))` THEN
   MP_TAC(ISPEC `wl_evaluate (p1:(A)wl_prog, st1:(A,C,FFI)wl_state)` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `r:((A)wl_result)option`
@@ -1713,7 +1713,7 @@ let WPROOF2AUX_cpc_Seq = prove
          WPROOF2AUX_cpc `wl_Seq p1 p2:(A)wl_prog`),
   DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "IH1") (LABEL_TAC "IH2")) THEN
   REWRITE_TAC[copy_prop_prog_def; LET_DEF; LET_END_DEF] THEN
-  CASE_REWRITE_TAC[pair_CASE_def; PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[pair_CASE_def; PAIR_EQ] THEN
   REPEAT GEN_TAC THEN STRIP_TAC THEN WPROOF2AUX_cp_SUBST_TAC THEN
   UNDISCH_TAC `wl_evaluate (wl_Seq p1 p2, st:(A,C,FFI)wl_state) = (err, st')` THEN
   REWRITE_TAC[wl_evaluate_def; LET_DEF; LET_END_DEF] THEN
@@ -1756,7 +1756,7 @@ let WPROOF2AUX_cpc_If = prove
          WPROOF2AUX_cpc `wl_If cmp r ri p1 p2:(A)wl_prog`),
   DISCH_THEN(CONJUNCTS_THEN2 (LABEL_TAC "IH1") (LABEL_TAC "IH2")) THEN
   REWRITE_TAC[copy_prop_prog_def; LET_DEF; LET_END_DEF] THEN
-  CASE_REWRITE_TAC[pair_CASE_def; PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[pair_CASE_def; PAIR_EQ] THEN
   REPEAT GEN_TAC THEN STRIP_TAC THEN WPROOF2AUX_cp_SUBST_TAC THEN
   FIRST_ASSUM(ASSUME_TAC o GSYM o check (fun th ->
     concl th = `~(err = SOME (wl_Error:(A)wl_result))`)) THEN
@@ -1788,7 +1788,7 @@ let WPROOF2AUX_cpc_Loop = prove
          WPROOF2AUX_cpc `wl_Loop names c exit_names:(A)wl_prog`),
   DISCH_TAC THEN
   REWRITE_TAC[copy_prop_prog_def; LET_DEF; LET_END_DEF] THEN
-  CASE_REWRITE_TAC[pair_CASE_def; PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[pair_CASE_def; PAIR_EQ] THEN
   REPEAT GEN_TAC THEN STRIP_TAC THEN WPROOF2AUX_cp_SUBST_TAC THEN
   REWRITE_TAC[empty_eq_model] THEN
   MATCH_MP_TAC evaluate_Loop_body_cong_err THEN EXISTS_TAC `c:(A)wl_prog` THEN

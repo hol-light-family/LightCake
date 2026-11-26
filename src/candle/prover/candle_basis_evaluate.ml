@@ -83,7 +83,7 @@ let simple_exp_simps = prove
    (!e t. ~candle_simple_exp (Tannot e t)) /\
    (!e l. ~candle_simple_exp (Lannot e l))`,
   REWRITE_TAC[candle_simple_exp_def; ast_extras_every_exp_def] THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[]);;
 let _ = cake_add_simps [simple_exp_simps];;
 
 let candle_simple_pat_def = cake_def
@@ -103,8 +103,8 @@ let candle_simple_dec_def = cake_def
 let simple_dec_Dlet = prove
  (`candle_simple_dec (Dlet l p x) <=>
    ((?n e. x = Fun n e) \/ candle_simple_exp x) /\ candle_simple_pat p`,
-  REWRITE_TAC[candle_simple_dec_def; every_dec_def] THEN CASE_REWRITE_TAC[] THEN
-  QCASES_ON "x" THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[candle_simple_dec_def; every_dec_def] THEN CAKE_REWRITE_TAC[] THEN
+  QCASES_ON "x" THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[simple_exp_simps; injectivity "exp"; distinctness "exp"] THEN
   MESON_TAC[]);;
 let _ = cake_add_simps [simple_dec_Dlet];;
@@ -119,7 +119,7 @@ let simple_dec_simps = prove
    (!ds1 ds2. candle_simple_dec (Dlocal ds1 ds2) <=>
               ALL candle_simple_dec ds1 /\ ALL candle_simple_dec ds2) /\
    (!n. candle_simple_dec (Denv n))`,
-  REWRITE_TAC[candle_simple_dec_def; every_dec_def] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[candle_simple_dec_def; every_dec_def] THEN CAKE_REWRITE_TAC[]);;
 let _ = cake_add_simps [simple_dec_simps];;
 
 let post_state_ok_def = cake_def
@@ -292,7 +292,7 @@ let CAN2DBAUX_declare_env_v_ok = prove
  (`declare_env es env = SOME (x,es') /\ candle_env_ok ctxt env ==> candle_v_ok ctxt x`,
   QCASES_ON "es" THEN REWRITE_TAC[declare_env_def; option_CASE; option_DISTINCT] THEN
   MATCH_GOALSUB_RENAME_TAC "eval_state_CASE e" THEN QCASES_ON "e" THEN
-  CASE_REWRITE_TAC[] THEN STRIP_TAC THEN
+  CAKE_REWRITE_TAC[] THEN STRIP_TAC THEN
   GVS[pair_case_eq; option_case_eq; candle_v_ok_def; v_ok_Conv_NONE; ALL; nat_to_v_def]);;
 
 (* the operations simple_exp allows *)
@@ -307,7 +307,7 @@ let CAN2DBAUX_simple_op = prove
     | _ -> F) <=>
    op = VfromList \/ op = Aw8alloc \/ (?t ty. op = Test t ty) \/
    (?a ty. op = Arith a ty) \/ (?t1 t2. op = FromTo t1 t2)`,
-  QCASES_ON "op" THEN CASE_REWRITE_TAC[] THEN
+  QCASES_ON "op" THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[distinctness "op"; injectivity "op"] THEN MESON_TAC[]);;
 
 (* the results of do_arith and do_conversion *)
@@ -380,7 +380,7 @@ let CAN2DBAUX_evaluate_basis_v_ok_App = prove
   REWRITE_TAC[ALL; simple_exp_simps; CAN2DBAUX_simple_op] THEN STRIP_TAC THEN
   FIRST_X_ASSUM SUBST_ALL_TAC THEN
   QPAT_X_ASSUM "evaluate _ _ [App _ _] = _" (MP_TAC o ONCE_REWRITE_RULE[evaluate_def]) THEN
-  REWRITE_TAC[getOpClass_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[getOpClass_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[distinctness "thunk_op"; distinctness "op"] THEN DISCH_TAC THEN
   GVS[pair_case_eq; case_eq "result"; option_case_eq] THEN
   RULE_ASSUM_TAC (REWRITE_RULE[do_app_cases]) THEN GVS[] THEN
@@ -505,6 +505,6 @@ let evaluate_basis_v_ok = prove
 let evaluate_basis_v_ok_decs = el 2 (CONJUNCTS evaluate_basis_v_ok);;
 
 let post_state_ok_with_clock = prove
- (`post_state_ok (state_clock_fupd (K ck) (s:(FFI)state)) <=> post_state_ok s`,
+ (`post_state_ok (state_clock_fupd (combin_K ck) (s:(FFI)state)) <=> post_state_ok s`,
   REWRITE_TAC[post_state_ok_def; state_INFO.ri_accfupds]);;
 let _ = cake_add_simps [post_state_ok_with_clock];;

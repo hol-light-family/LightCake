@@ -142,10 +142,10 @@ let mem_load_flat_rel = prove
 let PCREPAUX_update_locals_not_vars_eval_eq' = prove
  (`!(s:(A,FFI)crep_state) e (v:B) n w res.
      ~MEM n (var_cexp e) /\ crep_eval s e = res ==>
-     crep_eval (crep_state_locals_fupd (K (crep_state_locals s |+ (n,w))) s) e = res`,
+     crep_eval (crep_state_locals_fupd (combin_K (crep_state_locals s |+ (n,w))) s) e = res`,
   SUBGOAL_THEN
    `!(s:(A,FFI)crep_state) e n w. ~MEM n (var_cexp e) ==>
-      crep_eval (crep_state_locals_fupd (K (crep_state_locals s |+ (n,w))) s) e =
+      crep_eval (crep_state_locals_fupd (combin_K (crep_state_locals s |+ (n,w))) s) e =
       crep_eval s e`
    (fun th -> MESON_TAC[th]) THEN
   MATCH_MP_TAC crep_eval_ind THEN
@@ -158,24 +158,24 @@ let PCREPAUX_update_locals_not_vars_eval_eq' = prove
 let crep_update_locals_not_vars_eval_eq = prove
  (`!(s:(A,FFI)crep_state) e v n w.
      ~MEM n (var_cexp e) /\ crep_eval s e = SOME v ==>
-     crep_eval (crep_state_locals_fupd (K (crep_state_locals s |+ (n,w))) s) e =
+     crep_eval (crep_state_locals_fupd (combin_K (crep_state_locals s |+ (n,w))) s) e =
      SOME v`,
   MESON_TAC[PCREPAUX_update_locals_not_vars_eval_eq']);;
 
 let update_locals_not_vars_eval_eq' = prove
  (`!(s:(A,FFI)crep_state) e (v:B) n w.
      ~MEM n (var_cexp e) ==>
-     crep_eval (crep_state_locals_fupd (K (crep_state_locals s |+ (n,w))) s) e =
+     crep_eval (crep_state_locals_fupd (combin_K (crep_state_locals s |+ (n,w))) s) e =
      crep_eval s e`,
   MESON_TAC[PCREPAUX_update_locals_not_vars_eval_eq']);;
 
 let update_locals_not_vars_eval_eq'' = prove
  (`!(s:(A,FFI)crep_state) e (v:B) n w locals.
      ~MEM n (var_cexp e) ==>
-     crep_eval (crep_state_locals_fupd (K (locals |+ (n,w))) s) e =
-     crep_eval (crep_state_locals_fupd (K locals) s) e`,
+     crep_eval (crep_state_locals_fupd (combin_K (locals |+ (n,w))) s) e =
+     crep_eval (crep_state_locals_fupd (combin_K locals) s) e`,
   REPEAT STRIP_TAC THEN
-  MP_TAC(ISPECL [`crep_state_locals_fupd (K locals) (s:(A,FFI)crep_state)`;
+  MP_TAC(ISPECL [`crep_state_locals_fupd (combin_K locals) (s:(A,FFI)crep_state)`;
                  `e:(A)crep_exp`; `v:B`; `n:num`; `w:(A)word_lab`]
                 update_locals_not_vars_eval_eq') THEN
   ASM_REWRITE_TAC[] THEN SIMP[]);;
@@ -412,7 +412,7 @@ let evaluate_seq_stores_mem_state_rel = prove
      crep_evaluate
        (crep_nested_seq (stores (crep_Var ad) (MAP crep_Var es) a),
         crep_state_locals_fupd
-          (K (crep_state_locals s |++ CONS (ad,Word addr) (ZIP es vs))) s) = (res,t)
+          (combin_K (crep_state_locals s |++ CONS (ad,Word addr) (ZIP es vs))) s) = (res,t)
      ==> res = NONE /\ crep_state_memory t = m /\
          crep_state_memaddrs t = crep_state_memaddrs s /\
          crep_state_sh_memaddrs t = crep_state_sh_memaddrs s /\
@@ -447,15 +447,15 @@ let evaluate_seq_stores_mem_state_rel = prove
    [LAST_X_ASSUM(MP_TAC o SPECL
      [`vs':((A)word_lab)list`; `ad:num`; `bytes_in_word:A word`;
       `crep_state_locals_fupd
-         (K (crep_state_locals s |++ CONS (ad,Word addr) (CONS (h,v) (ZIP t vs'))))
-         (crep_state_memory_fupd (K m') s):(A,FFI)crep_state`;
+         (combin_K (crep_state_locals s |++ CONS (ad,Word addr) (CONS (h,v) (ZIP t vs'))))
+         (crep_state_memory_fupd (combin_K m') s):(A,FFI)crep_state`;
       `res:((A)crep_result)option`; `t':(A,FFI)crep_state`; `addr:A word`;
       `m:A word->(A)word_lab`]);
     LAST_X_ASSUM(MP_TAC o SPECL
      [`vs':((A)word_lab)list`; `ad:num`; `word_add a bytes_in_word:A word`;
       `crep_state_locals_fupd
-         (K (crep_state_locals s |++ CONS (ad,Word addr) (CONS (h,v) (ZIP t vs'))))
-         (crep_state_memory_fupd (K m') s):(A,FFI)crep_state`;
+         (combin_K (crep_state_locals s |++ CONS (ad,Word addr) (CONS (h,v) (ZIP t vs'))))
+         (crep_state_memory_fupd (combin_K m') s):(A,FFI)crep_state`;
       `res:((A)crep_result)option`; `t':(A,FFI)crep_state`; `addr:A word`;
       `m:A word->(A)word_lab`])] THEN
   RULE_ASSUM_TAC(REWRITE_RULE[GSYM WORD_ADD_ASSOC]) THEN SIMP[GSYM WORD_ADD_ASSOC]);;
@@ -464,12 +464,12 @@ let evaluate_seq_store_globals_res = prove
  (`!vars vs (t:(A,FFI)crep_state) a.
      ALL_DISTINCT vars /\ LENGTH vars = LENGTH vs /\ val a + LENGTH vs <= 32 ==>
      crep_evaluate (crep_nested_seq (store_globals a (MAP crep_Var vars)),
-                    crep_state_locals_fupd (K (crep_state_locals t |++ ZIP vars vs)) t) =
+                    crep_state_locals_fupd (combin_K (crep_state_locals t |++ ZIP vars vs)) t) =
      (NONE,
       crep_state_globals_fupd
-        (K (crep_state_globals t |++
+        (combin_K (crep_state_globals t |++
             ZIP (list_of_seq (\x. word_add a (word x)) (LENGTH vs)) vs))
-        (crep_state_locals_fupd (K (crep_state_locals t |++ ZIP vars vs)) t))`,
+        (crep_state_locals_fupd (combin_K (crep_state_locals t |++ ZIP vars vs)) t))`,
   LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN STRIP_TAC THENL
    [FS[LENGTH; LENGTH_EQ_NIL] THEN RVEQ_TAC THEN
     FS[store_globals_def; MAP; crep_nested_seq_def; crep_evaluate_def; ZIP;
@@ -485,8 +485,8 @@ let evaluate_seq_store_globals_res = prove
    [REWRITE_TAC[FUN_EQ_THM; o_THM] THEN CONV_TAC WORD_RULE; ALL_TAC] THEN
   LAST_X_ASSUM(MP_TAC o SPECL
    [`vs':((A)word_lab)list`;
-    `crep_state_locals_fupd (K (crep_state_locals t' |+ (h,v)))
-       (crep_state_globals_fupd (K (crep_state_globals t' |+ (a,v))) t'):(A,FFI)crep_state`;
+    `crep_state_locals_fupd (combin_K (crep_state_locals t' |+ (h,v)))
+       (crep_state_globals_fupd (combin_K (crep_state_globals t' |+ (a,v))) t'):(A,FFI)crep_state`;
     `word_add a (word 1):5 word`]) THEN
   ANTS_TAC THENL
    [ASM_REWRITE_TAC[] THEN
@@ -519,10 +519,10 @@ let res_var_lookup_original_eq = prove
 let eval_exps_not_load_global_eq = prove
  (`!(s:(A,FFI)crep_state) e v g.
      crep_eval s e = SOME v /\ (!ad. ~MEM (LoadGlob ad) (crep_exps e)) ==>
-     crep_eval (crep_state_globals_fupd (K g) s) e = SOME v`,
+     crep_eval (crep_state_globals_fupd (combin_K g) s) e = SOME v`,
   SUBGOAL_THEN
    `!(s:(A,FFI)crep_state) e g. (!ad. ~MEM (LoadGlob ad) (crep_exps e)) ==>
-      crep_eval (crep_state_globals_fupd (K g) s) e = crep_eval s e`
+      crep_eval (crep_state_globals_fupd (combin_K g) s) e = crep_eval s e`
    (fun th -> MESON_TAC[th]) THEN
   MATCH_MP_TAC crep_eval_ind THEN
   REWRITE_TAC[crep_exps_def; MEM_APPEND; DE_MORGAN_THM; MEM_FLAT; MEM_MAP; MEM] THEN
@@ -555,7 +555,7 @@ let evaluate_seq_assign_load_globals = prove
        (crep_nested_seq (MAP2 crep_Assign ns (load_globals a (LENGTH ns))),t) =
      (NONE,
       crep_state_locals_fupd
-        (K (crep_state_locals t |++
+        (combin_K (crep_state_locals t |++
             ZIP ns (MAP (\n. THE (FLOOKUP (crep_state_globals t) n))
                         (list_of_seq (\x. word_add a (word x)) (LENGTH ns))))) t)`,
   LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN STRIP_TAC THENL
@@ -575,7 +575,7 @@ let evaluate_seq_assign_load_globals = prove
   QCASES_ON "FLOOKUP (crep_state_locals t') h" THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
   ASM_REWRITE_TAC[] THEN SIMP[] THEN
   LAST_X_ASSUM(MP_TAC o SPECL
-   [`crep_state_locals_fupd (K (crep_state_locals t' |+ (h,a'))) t':(A,FFI)crep_state`;
+   [`crep_state_locals_fupd (combin_K (crep_state_locals t' |+ (h,a'))) t':(A,FFI)crep_state`;
     `word_add a (word 1):5 word`]) THEN
   ANTS_TAC THENL
    [ASM_REWRITE_TAC[] THEN SIMP[FLOOKUP_UPDATE] THEN
@@ -635,7 +635,7 @@ let opt_mmap_eval_some_var_cexp_local_lookup = prove
 
 let crep_eval_upd_clock_eq = prove
  (`!(t:(A,FFI)crep_state) e ck.
-     crep_eval (crep_state_clock_fupd (K ck) t) e = crep_eval t e`,
+     crep_eval (crep_state_clock_fupd (combin_K ck) t) e = crep_eval t e`,
   MATCH_MP_TAC crep_eval_ind THEN REPEAT STRIP_TAC THEN
   ONCE_REWRITE_TAC[crep_eval_def] THEN SIMP[crep_mem_load_def] THEN
   AP_THM_TAC THEN AP_THM_TAC THEN AP_TERM_TAC THEN MATCH_MP_TAC OPT_MMAP_CONG THEN
@@ -643,7 +643,7 @@ let crep_eval_upd_clock_eq = prove
 
 let crep_opt_mmap_eval_upd_clock_eq = prove
  (`!es (s:(A,FFI)crep_state) ck.
-     OPT_MMAP (crep_eval (crep_state_clock_fupd (K (ck + crep_state_clock s)) s)) es =
+     OPT_MMAP (crep_eval (crep_state_clock_fupd (combin_K (ck + crep_state_clock s)) s)) es =
      OPT_MMAP (crep_eval s) es`,
   REPEAT GEN_TAC THEN MATCH_MP_TAC OPT_MMAP_CONG THEN
   REWRITE_TAC[crep_eval_upd_clock_eq]);;
@@ -651,14 +651,14 @@ let crep_opt_mmap_eval_upd_clock_eq = prove
 (* clock lemmas used by crep_evaluate_add_clock_eq *)
 
 let PCREPAUX_eval_upd_clock_fun = prove
- (`!(t:(A,FFI)crep_state) ck. crep_eval (crep_state_clock_fupd (K ck) t) = crep_eval t`,
+ (`!(t:(A,FFI)crep_state) ck. crep_eval (crep_state_clock_fupd (combin_K ck) t) = crep_eval t`,
   REWRITE_TAC[FUN_EQ_THM; crep_eval_upd_clock_eq]);;
 
 let PCREPAUX_sh_mem_op_clock_upd = prove
  (`!op v a (s:(A,FFI)crep_state) (res:((B)crep_result)option) st c.
      crep_sh_mem_op op v a s = (res,st) ==>
-     crep_sh_mem_op op v a (crep_state_clock_fupd (K c) s) =
-     (res,crep_state_clock_fupd (K c) st)`,
+     crep_sh_mem_op op v a (crep_state_clock_fupd (combin_K c) s) =
+     (res,crep_state_clock_fupd (combin_K c) st)`,
   REPEAT GEN_TAC THEN
   REWRITE_TAC[ONELINE crep_sh_mem_op_def; crep_sh_mem_load_def; crep_sh_mem_store_def] THEN
   QCASES_ON "op" THEN SIMP[] THEN EVERY_CASE_TAC THEN
@@ -668,8 +668,8 @@ let PCREPAUX_sh_mem_op_clock_upd = prove
 let PCREPAUX_dec_clock_add = prove
  (`!(s:(A,FFI)crep_state) ck.
      ~(crep_state_clock s = 0) ==>
-     crep_dec_clock (crep_state_clock_fupd (K (crep_state_clock s + ck)) s) =
-     crep_state_clock_fupd (K (crep_state_clock (crep_dec_clock s) + ck))
+     crep_dec_clock (crep_state_clock_fupd (combin_K (crep_state_clock s + ck)) s) =
+     crep_state_clock_fupd (combin_K (crep_state_clock (crep_dec_clock s) + ck))
        (crep_dec_clock s)`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[crep_dec_clock_def] THEN SIMP[] THEN
   AP_THM_TAC THEN AP_TERM_TAC THEN AP_TERM_TAC THEN ASM_ARITH_TAC);;
@@ -677,8 +677,8 @@ let PCREPAUX_dec_clock_add = prove
 let crep_evaluate_add_clock_eq = prove
  (`!p (t:(A,FFI)crep_state) res st ck.
      crep_evaluate (p,t) = (res,st) /\ ~(res = SOME crep_TimeOut) ==>
-     crep_evaluate (p,crep_state_clock_fupd (K (crep_state_clock t + ck)) t) =
-     (res,crep_state_clock_fupd (K (crep_state_clock st + ck)) st)`,
+     crep_evaluate (p,crep_state_clock_fupd (combin_K (crep_state_clock t + ck)) t) =
+     (res,crep_state_clock_fupd (combin_K (crep_state_clock st + ck)) st)`,
   let simple_tac thl =
     REPEAT STRIP_TAC THEN
     FS([crep_evaluate_def; crep_eval_upd_clock_eq; crep_set_var_def; pan_mem_store_def;
@@ -859,7 +859,7 @@ let PCREPAUX_timeout_io = prove
      crep_evaluate (p,s) = (SOME crep_TimeOut,t) ==>
      isPREFIX (ffi_state_io_events (crep_state_ffi t))
        (ffi_state_io_events (crep_state_ffi (SND (crep_evaluate
-          (p,crep_state_clock_fupd (K (crep_state_clock s + extra)) s)))))`,
+          (p,crep_state_clock_fupd (combin_K (crep_state_clock s + extra)) s)))))`,
   GEN_TAC THEN REC_IND_TAC crep_evaluate_ind THEN REPEAT CONJ_TAC THEN
   REPEAT STRIP_TAC THEN
   QPAT_X_ASSUM "crep_evaluate _ = _" (MP_TAC o ONCE_REWRITE_RULE[crep_evaluate_def]) THEN
@@ -886,7 +886,7 @@ let crep_evaluate_add_clock_io_events_mono = prove
      isPREFIX
        (ffi_state_io_events (crep_state_ffi (SND (crep_evaluate (exps,s)))))
        (ffi_state_io_events (crep_state_ffi (SND (crep_evaluate
-          (exps,crep_state_clock_fupd (K (crep_state_clock s + extra)) s)))))`,
+          (exps,crep_state_clock_fupd (combin_K (crep_state_clock s + extra)) s)))))`,
   REPEAT GEN_TAC THEN
   PAIR_CASES_ON `crep_evaluate (exps:(A)crep_prog,s:(A,FFI)crep_state)` THEN
   REWRITE_TAC[SND] THEN

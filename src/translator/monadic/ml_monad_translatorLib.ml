@@ -1993,7 +1993,20 @@ let mt_apply_ind thms ind =
     REPEAT STRIP_TAC THEN FIRST (map MATCH_MP_TAC ths) THEN
     RFS [ADD1; TRUE_def; FALSE_def; UNCURRY_SIMP; ARITH_ss] THEN
     REPEAT STRIP_TAC THEN RFS [ADD1; UNCURRY_SIMP; ARITH_ss] THEN ASM_MESON_TAC [] in
+  (* tac0 is tac1 with the hypotheses hs of the certificates hidden from the  *)
+  (* simplifier and MESON (RFS rewrote every assumption with them: 22 s for   *)
+  (* candle_kernelProg's exec, 0.3 s without them); they stay assumptions of   *)
+  (* the goals the certificates are applied in, so the proof is the same       *)
+  (* theorem; the tactics below are the original ones, tried if tac0 fails    *)
+  let hide_hs (tac : tactic) : tactic = fun (asl, w) ->
+    tac (filter (fun (_,th) -> not (mem (concl th) hs_l)) asl, w) in
+  let tac0 =
+    DISCH_THEN (fun th -> MAP_EVERY ASSUME_TAC (CONJUNCTS th)) THEN
+    MATCH_MP_TAC ind_thm THEN REPEAT STRIP_TAC THEN
+    FIRST (map MATCH_MP_TAC ths) THEN REPEAT STRIP_TAC THEN
+    hide_hs (RFS [ADD1; TRUE_def; FALSE_def; UNCURRY_SIMP; ARITH_ss] THEN ASM_MESON_TAC []) in
   let lemma =
+    try prove (goal, tac0) with Failure _ ->
     try prove (goal, tac1) with Failure _ ->
     try prove (goal, tac2) with Failure _ ->
     try prove (goal, tac3) with Failure _ ->
@@ -2151,7 +2164,12 @@ let mt_instantiate_local_environment th =
   INST [mt_get_curr_env (), env] th;;
 
 let mt_clean_lookup_assums th =
-  let c = CAKE_SIMP_CONV [build_rec_env_def; lookup_var_write; LOOKUP_ASSUM_SIMP; ITLIST] in
+  (* the literals' injectivity decides the name equations, as HOL4's        *)
+  (* mlstring_rewrites and list_ss do (the kit's simpset alone left equations *)
+  (* ASCII .. = ASCII .. of characters, so GEN failed with ABS)               *)
+  let c = CAKE_SIMP_CONV [build_rec_env_def; lookup_var_write; LOOKUP_ASSUM_SIMP; ITLIST;
+                          injectivity "mlstring"; injectivity "char"; CONS_11;
+                          NOT_CONS_NIL; NOT_NIL_CONS] in
   let th = itlist (fun h th ->
              let eq = c h in
              if rand (concl eq) = h then th

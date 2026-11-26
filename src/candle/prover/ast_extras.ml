@@ -210,5 +210,5 @@ let do_partial_app_def = cake_def
   `do_partial_app f (v:v) =
      match f with
        Closure env n (Fun n' e) ->
-         SOME (Closure (sem_env_v_fupd (K (nsBind n v (sem_env_v env))) env) n' e)
+         SOME (Closure (sem_env_v_fupd (combin_K (nsBind n v (sem_env_v env))) env) n' e)
      | _ -> NONE`;;

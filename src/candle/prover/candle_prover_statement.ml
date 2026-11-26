@@ -76,7 +76,7 @@ type_invention_error := true;;
 (* HOL4 semantics_thm (candle_prover_semanticsScript.sml line 423) *)
 let candle_prover_semantics_statement =
   `!(ffi:(FFI)ffi_state) (es:(eval_state)option) (prog:dec list) (res:behaviour).
-     semantics_prog (state_eval_state_fupd (K es) (ml_init_state ffi)) ml_init_env
+     semantics_prog (state_eval_state_fupd (combin_K es) (ml_init_state ffi)) ml_init_env
                     (APPEND candle_code prog) res /\
      candle_eval_state_ok es /\
      prog_syntax_ok candle_code /\
@@ -91,7 +91,7 @@ let candle_prover_semantics_statement =
 (* prog_syntax_ok_candle_code, by evaluation)                                *)
 let candle_prover_semantics_strong_statement =
   `!(ffi:(FFI)ffi_state) (es:(eval_state)option) (prog:dec list) (res:behaviour).
-     semantics_prog (state_eval_state_fupd (K es) (ml_init_state ffi)) ml_init_env
+     semantics_prog (state_eval_state_fupd (combin_K es) (ml_init_state ffi)) ml_init_env
                     (APPEND candle_code prog) res /\
      candle_eval_state_ok es /\
      ALL safe_dec prog /\

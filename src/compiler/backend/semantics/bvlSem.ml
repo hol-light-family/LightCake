@@ -166,8 +166,8 @@ let bvl_do_install_def = cake_def
                   (SOME (bytes',data',cfg'), CONS (k,prog) _) ->
                     if bytes = bytes' /\ data = data' /\ FST (new_oracle 0) = cfg' then
                       let s' =
-                        bvl_state_code_fupd (K (sptree_union (bvl_state_code s) (fromAList progs)))
-                          (bvl_state_compile_oracle_fupd (K new_oracle) s)
+                        bvl_state_code_fupd (combin_K (sptree_union (bvl_state_code s) (fromAList progs)))
+                          (bvl_state_compile_oracle_fupd (combin_K new_oracle) s)
                       in
                         Rval (bvl_CodePtr k, s')
                     else Rerr (Rabort Rtype_error)
@@ -403,12 +403,12 @@ let bvl_do_app_def = cake_def
      | (GlobOp (SetGlobal n),[v]) ->
          (match get_global n (bvl_state_globals s) with
             SOME _ -> Rval (bvl_Unit,
-              bvl_state_globals_fupd (K (LUPDATE (SOME v) n (bvl_state_globals s))) s)
+              bvl_state_globals_fupd (combin_K (LUPDATE (SOME v) n (bvl_state_globals s))) s)
           | _ -> Rerr (Rabort Rtype_error))
      | (GlobOp AllocGlobal,[bvl_Number i]) ->
          (if i < &0 then Rerr (Rabort Rtype_error)
           else Rval (bvl_Unit, bvl_state_globals_fupd
-                 (K (APPEND (bvl_state_globals s) (REPLICATE (num_of_int i) NONE))) s))
+                 (combin_K (APPEND (bvl_state_globals s) (REPLICATE (num_of_int i) NONE))) s))
      | (clos_Install,vs) -> bvl_do_install vs s
      | (BlockOp (clos_Cons tag),xs) -> Rval (bvl_Block tag xs, s)
      | (BlockOp (BoolTest test),[v1; v2]) ->
@@ -421,7 +421,7 @@ let bvl_do_app_def = cake_def
           if v1 = bvl_Boolv F then Rval (bvl_Boolv T, s) else Rerr (Rabort Rtype_error))
      | (BlockOp (Build parts),[]) ->
          (let (v,rs) = bvl_do_build_const parts (bvl_state_refs s) in
-            Rval (v, bvl_state_refs_fupd (K rs) s))
+            Rval (v, bvl_state_refs_fupd (combin_K rs) s))
      | (BlockOp (ConsExtend tag),
         CONS (bvl_Block _ xs') (CONS (bvl_Number lower) (CONS (bvl_Number len)
           (CONS (bvl_Number tot) xs)))) ->
@@ -468,13 +468,13 @@ let bvl_do_app_def = cake_def
      | (MemOp (RefByte F),[bvl_Number i; bvl_Number b]) ->
          if &0 <= i /\ (?w:byte. b = &(val w)) then
            let ptr = (minimal ptr. ~(ptr IN FDOM (bvl_state_refs s))) in
-             Rval (bvl_RefPtr T ptr, bvl_state_refs_fupd (K (bvl_state_refs s |+
+             Rval (bvl_RefPtr T ptr, bvl_state_refs_fupd (combin_K (bvl_state_refs s |+
                (ptr,bvl_ByteArray F (REPLICATE (num_of_int i) (iword b))))) s)
          else Rerr (Rabort Rtype_error)
      | (MemOp RefArray,[bvl_Number i; v]) ->
          if &0 <= i then
            let ptr = (minimal ptr. ~(ptr IN FDOM (bvl_state_refs s))) in
-             Rval (bvl_RefPtr T ptr, bvl_state_refs_fupd (K (bvl_state_refs s |+
+             Rval (bvl_RefPtr T ptr, bvl_state_refs_fupd (combin_K (bvl_state_refs s |+
                (ptr,bvl_ValueArray (REPLICATE (num_of_int i) v)))) s)
          else Rerr (Rabort Rtype_error)
      | (MemOp DerefByte,[bvl_RefPtr _ ptr; bvl_Number i]) ->
@@ -489,7 +489,7 @@ let bvl_do_app_def = cake_def
             SOME (bvl_ByteArray f bs) ->
               (if &0 <= i /\ i < &(LENGTH bs) /\ (?w:byte. b = &(val w))
                then
-                 Rval (bvl_Unit, bvl_state_refs_fupd (K (bvl_state_refs s |+
+                 Rval (bvl_Unit, bvl_state_refs_fupd (combin_K (bvl_state_refs s |+
                    (ptr, bvl_ByteArray f (LUPDATE (iword b) (num_of_int i) bs)))) s)
                else Rerr (Rabort Rtype_error))
           | _ -> Rerr (Rabort Rtype_error))
@@ -500,7 +500,7 @@ let bvl_do_app_def = cake_def
                    MAP (SOME o bvl_ByteArray T) wss) with
             SOME wss ->
               let ptr = (minimal ptr. ~(ptr IN FDOM (bvl_state_refs s))) in
-                Rval (bvl_RefPtr T ptr, bvl_state_refs_fupd (K (bvl_state_refs s |+
+                Rval (bvl_RefPtr T ptr, bvl_state_refs_fupd (combin_K (bvl_state_refs s |+
                         (ptr,bvl_ByteArray T (FLAT wss)))) s)
           | _ -> Rerr (Rabort Rtype_error))
      | (BlockOp (FromList n),[lv]) ->
@@ -512,7 +512,7 @@ let bvl_do_app_def = cake_def
                          ALL (\n. n < 256) ns with
             SOME ns ->
               let ptr = (minimal ptr. ~(ptr IN FDOM (bvl_state_refs s))) in
-                Rval (bvl_RefPtr T ptr, bvl_state_refs_fupd (K (bvl_state_refs s |+
+                Rval (bvl_RefPtr T ptr, bvl_state_refs_fupd (combin_K (bvl_state_refs s |+
                         (ptr,bvl_ByteArray T (MAP word ns)))) s)
           | NONE -> Rerr (Rabort Rtype_error))
      | (MemOp ToListByte,[bvl_RefPtr _ ptr]) ->
@@ -526,7 +526,7 @@ let bvl_do_app_def = cake_def
             (SOME (bvl_ByteArray _ ws), SOME (bvl_ByteArray fl ds)) ->
               (match copy_array (ws,srcoff) len (SOME (ds,dstoff)) with
                  SOME ds -> Rval (bvl_Unit, bvl_state_refs_fupd
-                              (K (bvl_state_refs s |+ (dst, bvl_ByteArray fl ds))) s)
+                              (combin_K (bvl_state_refs s |+ (dst, bvl_ByteArray fl ds))) s)
                | NONE -> Rerr (Rabort Rtype_error))
           | _ -> Rerr (Rabort Rtype_error))
      | (MemOp (CopyByte T),[bvl_RefPtr _ src; bvl_Number srcoff; bvl_Number len]) ->
@@ -536,7 +536,7 @@ let bvl_do_app_def = cake_def
                  SOME ds ->
                    let ptr = (minimal ptr. ~(ptr IN FDOM (bvl_state_refs s))) in
                    Rval (bvl_RefPtr T ptr, bvl_state_refs_fupd
-                           (K (bvl_state_refs s |+ (ptr, bvl_ByteArray T ds))) s)
+                           (combin_K (bvl_state_refs s |+ (ptr, bvl_ByteArray T ds))) s)
                | _ -> Rerr (Rabort Rtype_error))
           | _ -> Rerr (Rabort Rtype_error))
      | (MemOp XorByte,[bvl_RefPtr _ dst; bvl_RefPtr _ src]) ->
@@ -544,7 +544,7 @@ let bvl_do_app_def = cake_def
             (SOME (bvl_ByteArray _ ws), SOME (bvl_ByteArray fl ds)) ->
               (match xor_bytes ws ds with
                  SOME ds1 -> Rval (bvl_Unit, bvl_state_refs_fupd
-                               (K (bvl_state_refs s |+ (dst, bvl_ByteArray fl ds1))) s)
+                               (combin_K (bvl_state_refs s |+ (dst, bvl_ByteArray fl ds1))) s)
                | NONE -> Rerr (Rabort Rtype_error))
           | _ -> Rerr (Rabort Rtype_error))
      | (MemOp (StringCmp b cmp),[bvl_RefPtr _ s1; bvl_RefPtr _ s2]) ->
@@ -586,12 +586,12 @@ let bvl_do_app_def = cake_def
      | (MemOp clos_Ref,xs) ->
          let ptr = (minimal ptr. ~(ptr IN FDOM (bvl_state_refs s))) in
            Rval (bvl_RefPtr T ptr, bvl_state_refs_fupd
-                   (K (bvl_state_refs s |+ (ptr,bvl_ValueArray xs))) s)
+                   (combin_K (bvl_state_refs s |+ (ptr,bvl_ValueArray xs))) s)
      | (MemOp Update,[bvl_RefPtr _ ptr; bvl_Number i; x]) ->
          (match FLOOKUP (bvl_state_refs s) ptr with
             SOME (bvl_ValueArray xs) ->
               (if &0 <= i /\ i < &(LENGTH xs)
-               then Rval (bvl_Unit, bvl_state_refs_fupd (K (bvl_state_refs s |+
+               then Rval (bvl_Unit, bvl_state_refs_fupd (combin_K (bvl_state_refs s |+
                            (ptr,bvl_ValueArray (LUPDATE x (num_of_int i) xs)))) s)
                else Rerr (Rabort Rtype_error))
           | _ -> Rerr (Rabort Rtype_error))
@@ -612,8 +612,8 @@ let bvl_do_app_def = cake_def
               (match call_FFI (bvl_state_ffi s) (ExtCall n) cws ws with
                  FFI_return ffi' ws' ->
                    Rval (bvl_Unit,
-                         bvl_state_refs_fupd (K (bvl_state_refs s |+ (ptr,bvl_ByteArray F ws')))
-                           (bvl_state_ffi_fupd (K ffi') s))
+                         bvl_state_refs_fupd (combin_K (bvl_state_refs s |+ (ptr,bvl_ByteArray F ws')))
+                           (bvl_state_ffi_fupd (combin_K ffi') s))
                | FFI_final outcome ->
                    Rerr (Rabort (Rffi_error outcome)))
           | _ -> Rerr (Rabort Rtype_error))
@@ -647,21 +647,21 @@ let bvl_do_app_def = cake_def
                  Rerr (Rabort Rtype_error) else
                let ptr = (minimal ptr. ~(ptr IN FDOM (bvl_state_refs s))) in
                  Rval (bvl_RefPtr F ptr, bvl_state_refs_fupd
-                         (K (bvl_state_refs s |+ (ptr,bvl_Thunk m v))) s))
+                         (combin_K (bvl_state_refs s |+ (ptr,bvl_Thunk m v))) s))
           | (UpdateThunk m, [bvl_RefPtr F ptr; v]) ->
               (if bvl_bad_thunk_update m v (bvl_state_refs s) then
                  Rerr (Rabort Rtype_error) else
                match FLOOKUP (bvl_state_refs s) ptr with
                  SOME (bvl_Thunk NotEvaluated _) ->
                    Rval (bvl_Unit, bvl_state_refs_fupd
-                           (K (bvl_state_refs s |+ (ptr,bvl_Thunk m v))) s)
+                           (combin_K (bvl_state_refs s |+ (ptr,bvl_Thunk m v))) s)
                | _ -> Rerr (Rabort Rtype_error))
           | _ -> Rerr (Rabort Rtype_error))
      | _ -> (Rerr (Rabort Rtype_error):(bvl_v # (C,FFI)bvl_state,bvl_v)result)`;;
 
 let bvl_dec_clock_def = cake_def
   `bvl_dec_clock n (s:(C,FFI)bvl_state) =
-     bvl_state_clock_fupd (K (bvl_state_clock s - n)) s`;;
+     bvl_state_clock_fupd (combin_K (bvl_state_clock s - n)) s`;;
 
 (* Functions for looking up function definitions *)
 
@@ -692,7 +692,7 @@ let bvl_find_code_def = cake_def
 (* types                                                                     *)
 let bvl_fix_clock_def = cake_def
   `bvl_fix_clock (s:(A,B)bvl_state) ((res:R),(s1:(C,D)bvl_state)) =
-     (res,bvl_state_clock_fupd (K (MIN (bvl_state_clock s) (bvl_state_clock s1))) s1)`;;
+     (res,bvl_state_clock_fupd (combin_K (MIN (bvl_state_clock s) (bvl_state_clock s1))) s1)`;;
 
 (* HOL4 [local] *)
 let bvl_fix_clock_IMP = prove
@@ -763,7 +763,7 @@ let CLOSSEMAUX_bvl_evaluate_clauses =
                   NONE -> (Rerr (Rabort Rtype_error),s)
                 | SOME (args,exp) ->
                     if bvl_state_clock s = 0 then
-                      (Rerr (Rabort Rtimeout_error),bvl_state_clock_fupd (K 0) s)
+                      (Rerr (Rabort Rtimeout_error),bvl_state_clock_fupd (combin_K 0) s)
                     else
                       bvl_evaluate ([exp],args,bvl_dec_clock 1 s)))) /\
    (bvl_evaluate ([bvl_Call ticks dest xs],env,s1) =
@@ -773,7 +773,7 @@ let CLOSSEMAUX_bvl_evaluate_clauses =
              NONE -> (Rerr (Rabort Rtype_error),s)
            | SOME (args,exp) ->
                if bvl_state_clock s < ticks + 1 then
-                 (Rerr (Rabort Rtimeout_error),bvl_state_clock_fupd (K 0) s)
+                 (Rerr (Rabort Rtimeout_error),bvl_state_clock_fupd (combin_K 0) s)
                else
                  bvl_evaluate ([exp],args,bvl_dec_clock (ticks + 1) s))
       | res -> res)`;;
@@ -842,17 +842,17 @@ let bvl_do_app_Ref = prove
      bvl_do_app (MemOp clos_Ref) vs s =
      Rval (bvl_RefPtr T (minimal ptr. ~(ptr IN FDOM (bvl_state_refs s))),
            bvl_state_refs_fupd
-             (K (bvl_state_refs s |+
+             (combin_K (bvl_state_refs s |+
                  ((minimal ptr. ~(ptr IN FDOM (bvl_state_refs s))),bvl_ValueArray vs)))
              s)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[bvl_do_app_def; LET_DEF; LET_END_DEF] THEN
-  CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN CASE_REWRITE_TAC[]);;
+  CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN CAKE_REWRITE_TAC[]);;
 let _ = cake_add_simps [bvl_do_app_Ref];;
 
 let bvl_do_app_Cons = prove
  (`!tag vs (s:(C,FFI)bvl_state).
      bvl_do_app (BlockOp (clos_Cons tag)) vs s = Rval (bvl_Block tag vs,s)`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[bvl_do_app_def] THEN CASE_REWRITE_TAC[]);;
+  REPEAT GEN_TAC THEN REWRITE_TAC[bvl_do_app_def] THEN CAKE_REWRITE_TAC[]);;
 let _ = cake_add_simps [bvl_do_app_Cons];;
 
 (* HOL4: recInduct evaluate_ind >> rw[evaluate_def] >> every_case_tac >>    *)

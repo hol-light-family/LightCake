@@ -189,9 +189,9 @@ let pan_to_crep_compile_def = cake_def_wf_clauses
        let nvars = list_of_seq (\x. vmax + SUC x) (size_of_shape sh) in
        let nctxt =
          pan_to_crep_context_vars_fupd
-           (K (pan_to_crep_context_vars ctxt |+ (v,sh,nvars)))
+           (combin_K (pan_to_crep_context_vars ctxt |+ (v,sh,nvars)))
            (pan_to_crep_context_vmax_fupd
-              (K (pan_to_crep_context_vmax ctxt + size_of_shape sh)) ctxt) in
+              (combin_K (pan_to_crep_context_vmax ctxt + size_of_shape sh)) ctxt) in
        if size_of_shape sh = LENGTH es
        then nested_decs nvars es (pan_to_crep_compile nctxt p)
        else crep_Skip) /\
@@ -339,9 +339,9 @@ let pan_to_crep_compile_def = cake_def_wf_clauses
        let nvars = list_of_seq (\x. vmax + SUC x) (size_of_shape s) in
        let nctxt =
          pan_to_crep_context_vars_fupd
-           (K (pan_to_crep_context_vars ctxt |+ (v,s,nvars)))
+           (combin_K (pan_to_crep_context_vars ctxt |+ (v,s,nvars)))
            (pan_to_crep_context_vmax_fupd
-              (K (pan_to_crep_context_vmax ctxt + size_of_shape s)) ctxt) in
+              (combin_K (pan_to_crep_context_vmax ctxt + size_of_shape s)) ctxt) in
        let ret_dec =
          nested_decs nvars (REPLICATE (LENGTH nvars) (crep_Const (word 0))) in
        let p' = pan_to_crep_compile nctxt p in

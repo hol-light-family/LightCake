@@ -18,10 +18,10 @@ type_invention_error := true;;
 let bvl_inlineProof_state_rel_def = cake_def
   `bvl_inlineProof_state_rel (s:(C,FFI)bvl_state) (t:(C,FFI)bvl_state) <=>
      t = bvl_state_code_fupd
-           (K (sptree_map (I ## (\x. HD (bvl_inline_remove_ticks [x]))) (bvl_state_code s)))
-           (bvl_state_compile_fupd (K (bvl_state_compile t))
+           (combin_K (sptree_map (I ## (\x. HD (bvl_inline_remove_ticks [x]))) (bvl_state_code s)))
+           (bvl_state_compile_fupd (combin_K (bvl_state_compile t))
               (bvl_state_compile_oracle_fupd
-                 (K ((I ## MAP (I ## I ## (\x. HD (bvl_inline_remove_ticks [x])))) o
+                 (combin_K ((I ## MAP (I ## I ## (\x. HD (bvl_inline_remove_ticks [x])))) o
                      bvl_state_compile_oracle s)) s)) /\
      bvl_state_compile s =
        (\cfg prog. bvl_state_compile t cfg
@@ -52,7 +52,7 @@ let BVLPROPSAUX_state_rel_eq = prove
 (* the clock and then the size of the expression list                      *)
 let BVLPROPSAUX_clock_fupd_inc = prove
  (`!(t:(C,FFI)bvl_state) ck.
-     bvl_state_clock_fupd (K (bvl_state_clock t + ck)) t = bvl_inc_clock ck t`,
+     bvl_state_clock_fupd (combin_K (bvl_state_clock t + ck)) t = bvl_inc_clock ck t`,
   REWRITE_TAC[bvl_inc_clock_def]);;
 
 let BVLPROPSAUX_clock_size_ind = prove
@@ -111,9 +111,9 @@ let BVLPROPSAUX_do_app_map = prove
     FS[shift_seq_def; domain_map; BVLPROPSAUX_MAP_FST_PAIR_MAP] THEN
     REPEAT (TOP_CASE_TAC THEN GVS[MAP_EQ_CONS; list_MAP_EQ_NIL]) THEN
     RW[FUN_EQ_THM; o_THM; map_union; map_insert; map_fromAList; BVLPROPSAUX_PAIR_LAMBDA_MAP];
-    SUBGOAL_THEN `t = bvl_state_code_fupd (K (bvl_state_code t))
-                   (bvl_state_compile_fupd (K (bvl_state_compile t))
-                     (bvl_state_compile_oracle_fupd (K (bvl_state_compile_oracle t))
+    SUBGOAL_THEN `t = bvl_state_code_fupd (combin_K (bvl_state_code t))
+                   (bvl_state_compile_fupd (combin_K (bvl_state_compile t))
+                     (bvl_state_compile_oracle_fupd (combin_K (bvl_state_compile_oracle t))
                        (s:(C,FFI)bvl_state)))` SUBST1_TAC THENL
      [ASM_REWRITE_TAC[bvl_state_component_equality; bvl_state_INFO.ri_accfupds; K_THM];
       TOP_CASE_TAC THEN TRY TOP_CASE_TAC] THENL
@@ -152,7 +152,7 @@ let BVLPROPSAUX_state_rel_clock = prove
  (`!(t:(C,FFI)bvl_state) s. bvl_inlineProof_state_rel t s ==>
      bvl_state_clock t = bvl_state_clock s /\ bvl_state_refs t = bvl_state_refs s /\
      bvl_inlineProof_state_rel (bvl_dec_clock 1 t) (bvl_dec_clock 1 s) /\
-     bvl_inlineProof_state_rel (bvl_state_clock_fupd (K 0) t) (bvl_state_clock_fupd (K 0) s)`,
+     bvl_inlineProof_state_rel (bvl_state_clock_fupd (combin_K 0) t) (bvl_state_clock_fupd (combin_K 0) s)`,
   SIMP_TAC[BVLPROPSAUX_state_rel_eq; bvl_dec_clock_def; bvl_state_INFO.ri_accfupds; K_THM]);;
 
 let BVLPROPSAUX_dec_inc_1 = prove
@@ -266,7 +266,7 @@ let bvl_inlineProof_evaluate_remove_ticks = prove
  (`!k xs env (s:(C,FFI)bvl_state) t res s'.
      bvl_inlineProof_state_rel t s /\ bvl_state_clock s = k /\
      bvl_evaluate (bvl_inline_remove_ticks xs,env,s) = (res,s') ==>
-     ?ck t'. bvl_evaluate (xs,env,bvl_state_clock_fupd (K (bvl_state_clock t + ck)) t) =
+     ?ck t'. bvl_evaluate (xs,env,bvl_state_clock_fupd (combin_K (bvl_state_clock t + ck)) t) =
              (res,t') /\
              bvl_inlineProof_state_rel t' s'`,
   REWRITE_TAC[BVLPROPSAUX_clock_fupd_inc] THEN MESON_TAC[BVLPROPSAUX_rt_sim]);;
@@ -481,7 +481,7 @@ let BVLPROPSAUX_bvl_semantics_sim = prove
    [AP_TERM_TAC THEN ABS_TAC THEN EQ_TAC THEN STRIP_TAC THENL
      [SUBGOAL_THEN (mk_neg(mk_eq(rv, tmo))) ASSUME_TAC THENL
        [DISCH_THEN SUBST_ALL_TAC THEN
-        RULE_ASSUM_TAC(CASE_REWRITE_RULE[]) THEN ASM_MESON_TAC[]; ALL_TAC] THEN
+        RULE_ASSUM_TAC(CAKE_REWRITE_RULE[]) THEN ASM_MESON_TAC[]; ALL_TAC] THEN
       BVLPROPSAUX_LAB_MP_TAC "back" [`k:num`; rv; `s:(C,FFI)bvl_state`] THEN
       DISCH_THEN(X_CHOOSE_THEN s1 STRIP_ASSUME_TAC) THEN
       MAP_EVERY EXISTS_TAC [`k:num`; s1; rv; `outcome:outcome`] THEN
@@ -938,9 +938,9 @@ let BVLPROPSAUX_do_install_Rval = prove
        progs = CONS (k,prog) rest /\
        FST (bvl_state_compile_oracle s 1) = cfg' /\
        v = bvl_CodePtr k /\
-       s' = bvl_state_code_fupd (K (sptree_union (bvl_state_code s) (fromAList progs)))
+       s' = bvl_state_code_fupd (combin_K (sptree_union (bvl_state_code s) (fromAList progs)))
               (bvl_state_compile_oracle_fupd
-                 (K (shift_seq 1 (bvl_state_compile_oracle s))) s)`,
+                 (combin_K (shift_seq 1 (bvl_state_compile_oracle s))) s)`,
   RW[bvl_do_install_def] THEN GVS(shift_seq_def :: all_case_eqs()) THEN
   REWRITE_TAC[shift_seq_def; ADD_CLAUSES]);;
 
@@ -978,12 +978,12 @@ let BVLPROPSAUX_in_state_rel_install = prove
      ALL_DISTINCT (MAP FST progs) /\
      FST (FST (bvl_state_compile_oracle s1 1)) = cs1 ==>
      bvl_inlineProof_in_state_rel limit
-       (bvl_state_code_fupd (K (sptree_union (bvl_state_code s1) (fromAList progs)))
+       (bvl_state_code_fupd (combin_K (sptree_union (bvl_state_code s1) (fromAList progs)))
           (bvl_state_compile_oracle_fupd
-             (K (shift_seq 1 (bvl_state_compile_oracle s1))) s1))
-       (bvl_state_code_fupd (K (sptree_union (bvl_state_code t1) (fromAList prog1)))
+             (combin_K (shift_seq 1 (bvl_state_compile_oracle s1))) s1))
+       (bvl_state_code_fupd (combin_K (sptree_union (bvl_state_code t1) (fromAList prog1)))
           (bvl_state_compile_oracle_fupd
-             (K (shift_seq 1 (bvl_state_compile_oracle t1))) t1))`,
+             (combin_K (shift_seq 1 (bvl_state_compile_oracle t1))) t1))`,
   REPEAT STRIP_TAC THEN QPAT_ASSUM "bvl_inlineProof_in_state_rel _ _ _"
     (CAKE_STRIP_ASSUME_TAC o REWRITE_RULE[bvl_inlineProof_in_state_rel_def]) THEN
   REWRITE_TAC[bvl_inlineProof_in_state_rel_def] THEN REPEAT STRIP_TAC THEN
@@ -1125,8 +1125,8 @@ let BVLPROPSAUX_in_state_rel_clock = prove
      bvl_inlineProof_in_state_rel limit s t ==>
      bvl_state_clock t = bvl_state_clock s /\ bvl_state_refs t = bvl_state_refs s /\
      (!n. bvl_inlineProof_in_state_rel limit (bvl_dec_clock n s) (bvl_dec_clock n t)) /\
-     bvl_inlineProof_in_state_rel limit (bvl_state_clock_fupd (K 0) s)
-                                        (bvl_state_clock_fupd (K 0) t)`,
+     bvl_inlineProof_in_state_rel limit (bvl_state_clock_fupd (combin_K 0) s)
+                                        (bvl_state_clock_fupd (combin_K 0) t)`,
   SIMP_TAC[bvl_inlineProof_in_state_rel_def; bvl_dec_clock_def; bvl_state_INFO.ri_accfupds;
            K_THM]);;
 
@@ -1266,7 +1266,7 @@ let BVLPROPSAUX_lookup_tick_inline_all = prove
        TRY (REWRITE_TAC[injectivity "option"; PAIR_EQ] THEN
             DISCH_THEN(CONJUNCTS_THEN (SUBST1_TAC o SYM)) THEN
             EXISTS_TAC `p3:bvl_exp` THEN
-            ASM_REWRITE_TAC[lookup_union; lookup_insert] THEN CASE_REWRITE_TAC[] THEN NO_TAC) THEN
+            ASM_REWRITE_TAC[lookup_union; lookup_insert] THEN CAKE_REWRITE_TAC[] THEN NO_TAC) THEN
        DISCH_TAC THEN FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[];
        COND_CASES_TAC THEN REWRITE_TAC[domain_insert] THEN
        UNDISCH_TAC `DISJOINT (p1 INSERT set_of_list (MAP FST (t:(num#num#bvl_exp)list)))
@@ -1313,12 +1313,12 @@ let BVLPROPSAUX_subspt_tick_inline = prove
     DISCH_TAC THEN REPEAT GEN_TAC THEN
     COND_CASES_TAC THEN REWRITE_TAC[lookup_insert] THEN TRY COND_CASES_TAC THEN
     ASM_REWRITE_TAC[] THENL
-     [DISCH_THEN(SUBST1_TAC o SYM) THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[ALOOKUP_THM];
+     [DISCH_THEN(SUBST1_TAC o SYM) THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[ALOOKUP_THM];
       ALL_TAC;
       ALL_TAC] THEN
     DISCH_TAC THEN FIRST_X_ASSUM(MP_TAC o C MATCH_MP (ASSUME
       `lookup x (cs:(num#bvl_exp)spt) = SOME y`)) THEN
-    DISCH_THEN SUBST1_TAC THEN CASE_REWRITE_TAC[];
+    DISCH_THEN SUBST1_TAC THEN CAKE_REWRITE_TAC[];
     UNDISCH_TAC `ALL (\x:num#num#bvl_exp. ~(FST x IN domain (cs:(num#bvl_exp)spt))) t` THEN
     UNDISCH_TAC `~MEM n (APPEND (MAP FST (t:(num#num#bvl_exp)list))
                                 (MAP FST (aux:(num#num#bvl_exp)list)))` THEN
@@ -1412,10 +1412,10 @@ let let_opt_def = cake_def
 
 let let_state_rel_def = cake_def
   `let_state_rel split_seq cut_size (s:(C,FFI)bvl_state) (t:(C,FFI)bvl_state) <=>
-     t = bvl_state_code_fupd (K (sptree_map (let_opt split_seq cut_size) (bvl_state_code s)))
-           (bvl_state_compile_fupd (K (bvl_state_compile t))
+     t = bvl_state_code_fupd (combin_K (sptree_map (let_opt split_seq cut_size) (bvl_state_code s)))
+           (bvl_state_compile_fupd (combin_K (bvl_state_compile t))
               (bvl_state_compile_oracle_fupd
-                 (K ((I ## MAP (I ## let_opt split_seq cut_size)) o
+                 (combin_K ((I ## MAP (I ## let_opt split_seq cut_size)) o
                      bvl_state_compile_oracle s)) s)) /\
      bvl_state_compile s =
        (\cfg prog. bvl_state_compile t cfg (MAP (I ## let_opt split_seq cut_size) prog))`;;
@@ -1494,7 +1494,7 @@ let BVLPROPSAUX_let_state_rel_clock = prove
      let_state_rel q l s t ==>
      bvl_state_clock t = bvl_state_clock s /\ bvl_state_refs t = bvl_state_refs s /\
      (!n. let_state_rel q l (bvl_dec_clock n s) (bvl_dec_clock n t)) /\
-     let_state_rel q l (bvl_state_clock_fupd (K 0) s) (bvl_state_clock_fupd (K 0) t)`,
+     let_state_rel q l (bvl_state_clock_fupd (combin_K 0) s) (bvl_state_clock_fupd (combin_K 0) t)`,
   SIMP_TAC[BVLPROPSAUX_let_state_rel_eq; bvl_dec_clock_def; bvl_state_INFO.ri_accfupds;
            K_THM]);;
 
@@ -1795,7 +1795,7 @@ let BVLPROPSAUX_compile_any_code_labels = prove
  (`!s c a e. bvl_get_code_labels (compile_any s c a e) SUBSET bvl_get_code_labels e`,
   REPEAT GEN_TAC THEN REWRITE_TAC[compile_any_def] THEN COND_CASES_TAC THEN
   REWRITE_TAC[bvl_handleProof_compile_exp_code_labels] THEN
-  MP_TAC(CASE_REWRITE_RULE[] (SPECL [`c:num`; `e:bvl_exp`; `NONE:bvl_exp option`]
+  MP_TAC(CAKE_REWRITE_RULE[] (SPECL [`c:num`; `e:bvl_exp`; `NONE:bvl_exp option`]
                                     compile_seqs_code_labels)) THEN
   REWRITE_TAC[UNION_EMPTY]);;
 

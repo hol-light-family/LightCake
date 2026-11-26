@@ -43,7 +43,7 @@ let is_ag32_init_state_def = cake_def
   `is_ag32_init_state mem s <=>
      ag32_state_PC s = word 0 /\
      ag32_state_MEM s = mem /\
-     ag32_state_R s = K (word 0) /\
+     ag32_state_R s = combin_K (word 0) /\
      ag32_state_io_events s = []`;;
 
 (* -- encode ASM instructions to Ag32 bytes -- *)
@@ -277,13 +277,13 @@ let ag32_proj_def = cake_def
 
 let ag32_target_def = new_definition
   `ag32_target =
-     target_next_fupd (K ag32_Next)
-       (target_config_fupd (K ag32_config)
-          (target_get_pc_fupd (K ag32_state_PC)
-             (target_get_reg_fupd (K (\s. ag32_state_R s o word))
-                (target_get_byte_fupd (K ag32_state_MEM)
-                   (target_state_ok_fupd (K ag32_ok)
-                      (target_proj_fupd (K ag32_proj)
+     target_next_fupd (combin_K ag32_Next)
+       (target_config_fupd (combin_K ag32_config)
+          (target_get_pc_fupd (combin_K ag32_state_PC)
+             (target_get_reg_fupd (combin_K (\s. ag32_state_R s o word))
+                (target_get_byte_fupd (combin_K ag32_state_MEM)
+                   (target_state_ok_fupd (combin_K ag32_ok)
+                      (target_proj_fupd (combin_K ag32_proj)
                          (ARB:(32,ag32_state,
                                int32#((6)word->int32)#(int32#byte->bool)#bool#bool)
                               target)))))))`;;

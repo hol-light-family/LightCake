@@ -118,7 +118,7 @@ let canonicalRegs_correct = prove
      data_inv data s ==> wl_get_var (canonicalRegs data r) s = wl_get_var r s`,
   REWRITE_TAC[data_inv_def; sem_inv_def; canonicalRegs_def; lookup_any_def] THEN
   REPEAT STRIP_TAC THEN
-  CASES_ON `lookup r (knowledge_to_canonical data)` THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON `lookup r (knowledge_to_canonical data)` THEN CAKE_REWRITE_TAC[] THEN
   ASM_MESON_TAC[]);;
 let _ = cake_add_simps [canonicalRegs_correct];;
 
@@ -142,12 +142,12 @@ let canonicalArith_correct = prove
      wl_inst (asm_Arith (canonicalArith data a)) s = wl_inst (asm_Arith a) s`,
   REPEAT STRIP_TAC THEN
   STRUCT_CASES_TAC (ISPEC `a:(A)asm_arith` (cases "asm_arith")) THEN
-  REWRITE_TAC[canonicalArith_def; wl_inst_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[canonicalArith_def; wl_inst_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[wl_assign_def; wl_word_exp_def; the_words_def; MAP; wl_get_vars_def;
               LET_DEF; LET_END_DEF] THEN
   ASM_SIMP_TAC[canonicalRegs_correct; canonicalRegs'_correct] THEN
   TRY(MP_TAC(ISPEC `a3:(A)reg_imm` (cases "reg_imm")) THEN STRIP_TAC THEN
-      ASM_REWRITE_TAC[canonicalImmReg'_def] THEN CASE_REWRITE_TAC[] THEN
+      ASM_REWRITE_TAC[canonicalImmReg'_def] THEN CAKE_REWRITE_TAC[] THEN
       REWRITE_TAC[wl_word_exp_def] THEN ASM_SIMP_TAC[canonicalRegs'_correct]));;
 let _ = cake_add_simps [canonicalArith_correct];;
 
@@ -179,7 +179,7 @@ let firstRegOfArith_canonicalArith = prove
 let _ = cake_add_simps [firstRegOfArith_canonicalArith];;
 
 let data_inv_locals = prove
- (`!s:(A,C,FFI)wl_state. wl_state_locals_fupd (K (wl_state_locals s)) s = s`,
+ (`!s:(A,C,FFI)wl_state. wl_state_locals_fupd (combin_K (wl_state_locals s)) s = s`,
   REWRITE_TAC[wl_state_component_equality] THEN SIMP[]);;
 let _ = cake_add_simps [data_inv_locals];;
 
@@ -203,7 +203,7 @@ let WPROOF1AUX_CSE_ARITH_CASES_TAC : tactic =
   REWRITE_TAC[can_mem_arith_def; arithReads_def; firstRegOfArith_def; MEM;
               DE_MORGAN_THM] THEN
   REPEAT STRIP_TAC THEN
-  REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_Inst"; wl_inst_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_Inst"; wl_inst_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[wl_assign_def; wl_word_exp_def; the_words_def; MAP; wl_get_vars_def;
               LET_DEF; LET_END_DEF];;
 
@@ -221,7 +221,7 @@ let evaluate_arith_set_var = prove
 let WPROOF1AUX_CSE_LOAD_CASES_TAC : tactic =
   GEN_TAC THEN STRUCT_CASES_TAC (ISPEC `op:memop` (cases "memop")) THEN
   REWRITE_TAC[is_store_def] THEN REPEAT GEN_TAC THEN
-  REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_Inst"; wl_inst_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_Inst"; wl_inst_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[wl_word_exp_def; the_words_def; MAP; LET_DEF; LET_END_DEF];;
 
 let evaluate_load_any_dest = prove
@@ -257,8 +257,8 @@ let evaluate_load_change_addr = prove
 let evaluate_arith_memory = prove
  (`!a w (s:(A,C,FFI)wl_state) m.
      can_mem_arith a ==>
-     (wl_evaluate (wl_Inst (asm_Arith a), wl_state_memory_fupd (K m) s) =
-        (NONE, wl_state_memory_fupd (K m) (wl_set_var (firstRegOfArith a) w s)) <=>
+     (wl_evaluate (wl_Inst (asm_Arith a), wl_state_memory_fupd (combin_K m) s) =
+        (NONE, wl_state_memory_fupd (combin_K m) (wl_set_var (firstRegOfArith a) w s)) <=>
       wl_evaluate (wl_Inst (asm_Arith a), s) =
         (NONE, wl_set_var (firstRegOfArith a) w s))`,
   WPROOF1AUX_CSE_ARITH_CASES_TAC THEN
@@ -367,11 +367,11 @@ let data_inv_unset_var = prove
 let not_seen_data_inv_alist_insert = prove
  (`!data (s:(A,C,FFI)wl_state) l r v.
      lookup r (knowledge_to_canonical data) = NONE ==>
-     data_inv data (wl_state_locals_fupd (K l) s) ==>
-     data_inv data (wl_state_locals_fupd (K (insert r v l)) s)`,
+     data_inv data (wl_state_locals_fupd (combin_K l) s) ==>
+     data_inv data (wl_state_locals_fupd (combin_K (insert r v l)) s)`,
   REPEAT STRIP_TAC THEN
-  SUBGOAL_THEN `wl_state_locals_fupd (K (insert r v l)) (s:(A,C,FFI)wl_state) =
-                wl_set_var r v (wl_state_locals_fupd (K l) s)` SUBST1_TAC THENL
+  SUBGOAL_THEN `wl_state_locals_fupd (combin_K (insert r v l)) (s:(A,C,FFI)wl_state) =
+                wl_set_var r v (wl_state_locals_fupd (combin_K l) s)` SUBST1_TAC THENL
    [SIMP[wl_set_var_def]; ASM_SIMP_TAC[data_inv_set_var]]);;
 let _ = cake_add_simps [not_seen_data_inv_alist_insert];;
 
@@ -443,15 +443,15 @@ let WPROOF1AUX_CSE_och_agree = prove
 let data_inv_memory = prove
  (`!data (s:(A,C,FFI)wl_state) m.
      data_inv data s ==>
-     data_inv (knowledge_loads_mem_fupd (K balanced_map_empty) data)
-              (wl_state_memory_fupd (K m) s)`,
+     data_inv (knowledge_loads_mem_fupd (combin_K balanced_map_empty) data)
+              (wl_state_memory_fupd (combin_K m) s)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[data_inv_def; wf_data_def; sem_inv_def] THEN
   SIMP[lookup_listCmp_empty; invariant_listCmp_empty; option_DISTINCT] THEN
   STRIP_TAC THEN ASM_REWRITE_TAC[] THEN REPEAT CONJ_TAC THEN REPEAT GEN_TAC THEN
   DISCH_TAC THEN RES_TAC THEN ASM_REWRITE_TAC[] THEN
   EXISTS_TAC `w:(A)word_loc` THEN ASM_SIMP_TAC[evaluate_arith_memory] THEN
   MP_TAC(ISPECL [`op:binop`; `src:num`; `s:(A,C,FFI)wl_state`;
-                 `wl_state_memory_fupd (K m) (s:(A,C,FFI)wl_state)`]
+                 `wl_state_memory_fupd (combin_K m) (s:(A,C,FFI)wl_state)`]
                 WPROOF1AUX_CSE_och_agree) THEN
   SIMP[]);;
 
@@ -471,7 +471,7 @@ let WPROOF1AUX_CSE_ARITH_CASES2_TAC : tactic =
               DE_MORGAN_THM] THEN
   REPEAT STRIP_TAC THEN
   REPEAT(FIRST_X_ASSUM(MP_TAC o check WPROOF1AUX_CSE_is_eval_eq)) THEN
-  REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_Inst"; wl_inst_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_Inst"; wl_inst_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[wl_assign_def; wl_word_exp_def; the_words_def; MAP; wl_get_vars_def;
               LET_DEF; LET_END_DEF];;
 
@@ -490,7 +490,7 @@ let WPROOF1AUX_CSE_LOAD_CASES2_TAC : tactic =
   GEN_TAC THEN STRUCT_CASES_TAC (ISPEC `op:memop` (cases "memop")) THEN
   REWRITE_TAC[is_store_def] THEN REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
   REPEAT(FIRST_X_ASSUM(MP_TAC o check WPROOF1AUX_CSE_is_eval_eq)) THEN
-  REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_Inst"; wl_inst_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_Inst"; wl_inst_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[wl_word_exp_def; the_words_def; MAP; LET_DEF; LET_END_DEF];;
 
 let evaluate_load_agree = prove
@@ -554,7 +554,7 @@ let bm_inter_eq_acc_thm = prove
           | SOME v -> if FLOOKUP (to_fmap listCmp m2) ks = SOME v then SOME v
                       else FLOOKUP (to_fmap listCmp acc) ks`,
   GEN_TAC THEN MATCH_MP_TAC balanced_map_INDUCT THEN CONJ_TAC THENL
-   [REWRITE_TAC[bm_inter_eq_acc_def; to_fmap_def; FLOOKUP_EMPTY] THEN CASE_REWRITE_TAC[] THEN
+   [REWRITE_TAC[bm_inter_eq_acc_def; to_fmap_def; FLOOKUP_EMPTY] THEN CAKE_REWRITE_TAC[] THEN
     MESON_TAC[];
     ALL_TAC] THEN
   MAP_EVERY X_GEN_TAC [`n:num`; `k:num list`; `v:V`; `l:(num list,V)balanced_map`;
@@ -588,7 +588,7 @@ let bm_inter_eq_acc_thm = prove
     SUBGOAL_THEN `FLOOKUP (to_fmap listCmp (l:(num list,V)balanced_map)) (key_set listCmp k) = NONE /\
                   FLOOKUP (to_fmap listCmp (r:(num list,V)balanced_map)) (key_set listCmp k) = NONE`
       (fun th -> REWRITE_TAC[th]) THENL [ASM_REWRITE_TAC[FLOOKUP_DEF]; ALL_TAC] THEN
-    CASE_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN
     MP_TAC(ISPECL [`listCmp`; `k:num list`; `m2:(num list,V)balanced_map`] lookup_thm) THEN
     ASM_REWRITE_TAC[good_cmp_listCmp] THEN DISCH_THEN SUBST1_TAC THEN REWRITE_TAC[];
     ALL_TAC] THEN
@@ -596,9 +596,9 @@ let bm_inter_eq_acc_thm = prove
   SUBGOAL_THEN `~(key_set listCmp k = ks)` (fun th -> REWRITE_TAC[th]) THENL
    [ASM_MESON_TAC[]; ALL_TAC] THEN
   CASES_ON `FLOOKUP (to_fmap listCmp (l:(num list,V)balanced_map)) ks` THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   SUBGOAL_THEN `FLOOKUP (to_fmap listCmp (r:(num list,V)balanced_map)) ks = NONE`
-    (fun th -> REWRITE_TAC[th]) THEN CASE_REWRITE_TAC[] THEN
+    (fun th -> REWRITE_TAC[th]) THEN CAKE_REWRITE_TAC[] THEN
   UNDISCH_TAC `FLOOKUP (to_fmap listCmp (l:(num list,V)balanced_map)) ks = SOME a` THEN
   UNDISCH_TAC `DISJOINT (FDOM (to_fmap listCmp (l:(num list,V)balanced_map)))
                         (FDOM (to_fmap listCmp (r:(num list,V)balanced_map)))` THEN
@@ -626,7 +626,7 @@ let lookup_bm_inter_eq = prove
   ASM_SIMP_TAC[lookup_thm; good_cmp_listCmp] THEN
   REWRITE_TAC[balanced_map_empty_def; to_fmap_def; FLOOKUP_EMPTY] THEN
   CASES_ON `FLOOKUP (to_fmap listCmp (m1:(num list,V)balanced_map)) (key_set listCmp k)` THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[option_DISTINCT; option_INJ] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[option_DISTINCT; option_INJ] THEN
   COND_CASES_TAC THEN ASM_REWRITE_TAC[option_DISTINCT; option_INJ] THEN
   ASM_MESON_TAC[option_INJ]);;
 
@@ -642,7 +642,7 @@ let WPROOF1AUX_CSE_lookup_inter_eq_SOME = prove
  (`!m1 m2:A spt k v.
      lookup k (inter_eq m1 m2) = SOME v <=> lookup k m1 = SOME v /\ lookup k m2 = SOME v`,
   REPEAT GEN_TAC THEN REWRITE_TAC[lookup_inter_eq] THEN
-  CASES_ON `lookup k (m1:A spt)` THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON `lookup k (m1:A spt)` THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[option_DISTINCT; option_INJ] THEN COND_CASES_TAC THEN
   ASM_REWRITE_TAC[option_DISTINCT; option_INJ] THEN ASM_MESON_TAC[option_INJ]);;
 
@@ -838,7 +838,7 @@ let data_inv_insert_to_canonical = prove
      ODD x /\ ODD y /\
      wl_get_var x s = wl_get_var y s ==>
      data_inv (knowledge_to_canonical_fupd
-                 (K (insert x y (knowledge_to_canonical data))) data) s`,
+                 (combin_K (insert x y (knowledge_to_canonical data))) data) s`,
   WPROOF1AUX_CSE_INV_TAC THEN WPROOF1AUX_CSE_CLAUSE_TAC);;
 
 let data_inv_insert_to_latest = prove
@@ -848,7 +848,7 @@ let data_inv_insert_to_latest = prove
      y IN domain (knowledge_to_canonical data) /\
      wl_get_var x s = wl_get_var y s ==>
      data_inv (knowledge_to_latest_fupd
-                 (K (insert x y (knowledge_to_latest data))) data) s`,
+                 (combin_K (insert x y (knowledge_to_latest data))) data) s`,
   WPROOF1AUX_CSE_INV_TAC THEN WPROOF1AUX_CSE_CLAUSE_TAC);;
 
 
@@ -858,9 +858,9 @@ let data_inv_insert_gets = prove
      lookup v (knowledge_to_canonical data) = NONE /\ ODD v /\
      ALOOKUP (knowledge_gets_mem data) name = NONE /\
      FLOOKUP (wl_state_store s) name = SOME w /\ wl_get_var v s = SOME w ==>
-     data_inv (knowledge_to_canonical_fupd (K (insert v v (knowledge_to_canonical data)))
-                (knowledge_to_latest_fupd (K (insert v v (knowledge_to_latest data)))
-                  (knowledge_gets_mem_fupd (K (CONS (name,v) (knowledge_gets_mem data)))
+     data_inv (knowledge_to_canonical_fupd (combin_K (insert v v (knowledge_to_canonical data)))
+                (knowledge_to_latest_fupd (combin_K (insert v v (knowledge_to_latest data)))
+                  (knowledge_gets_mem_fupd (combin_K (CONS (name,v) (knowledge_gets_mem data)))
                      data))) s`,
   WPROOF1AUX_CSE_INV_TAC THEN REWRITE_TAC[MAP; ALL_DISTINCT] THEN
   ASM_REWRITE_TAC[GSYM ALOOKUP_NONE] THEN WPROOF1AUX_CSE_CLAUSE_TAC);;
@@ -869,7 +869,7 @@ let data_inv_filter_gets = prove
  (`!data (s:(A,C,FFI)wl_state) x.
      data_inv data s ==>
      data_inv (knowledge_gets_mem_fupd
-                 (K (FILTER (\(m,n). ~(m = x)) (knowledge_gets_mem data))) data) s`,
+                 (combin_K (FILTER (\(m,n). ~(m = x)) (knowledge_gets_mem data))) data) s`,
   WPROOF1AUX_CSE_INV_TAC THEN ASM_SIMP_TAC[ALL_DISTINCT_MAP_FST_FILTER] THEN
   WPROOF1AUX_CSE_CLAUSE_TAC);;
 
@@ -879,7 +879,7 @@ let data_inv_cons_gets = prove
      ALOOKUP (knowledge_gets_mem data) x = NONE /\
      lookup h (knowledge_to_canonical data) = SOME h /\
      FLOOKUP (wl_state_store s) x = SOME w /\ wl_get_var h s = SOME w ==>
-     data_inv (knowledge_gets_mem_fupd (K (CONS (x,h) (knowledge_gets_mem data))) data) s`,
+     data_inv (knowledge_gets_mem_fupd (combin_K (CONS (x,h) (knowledge_gets_mem data))) data) s`,
   WPROOF1AUX_CSE_INV_TAC THEN REWRITE_TAC[MAP; ALL_DISTINCT] THEN
   ASM_REWRITE_TAC[GSYM ALOOKUP_NONE] THEN WPROOF1AUX_CSE_CLAUSE_TAC);;
 
@@ -917,18 +917,18 @@ let data_inv_reinsert_canonical = prove
  (`!data (s:(A,C,FFI)wl_state) v.
      data_inv data s /\ ODD v ==>
      data_inv (knowledge_to_canonical_fupd
-                 (K (insert v (lookup_any v (knowledge_to_canonical data) v)
+                 (combin_K (insert v (lookup_any v (knowledge_to_canonical data) v)
                        (knowledge_to_canonical data))) data) s`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[lookup_any_def] THEN
-  CASES_ON `lookup v (knowledge_to_canonical data)` THEN CASE_REWRITE_TAC[] THENL
+  CASES_ON `lookup v (knowledge_to_canonical data)` THEN CAKE_REWRITE_TAC[] THENL
    [MATCH_MP_TAC data_inv_insert_to_canonical THEN ASM_REWRITE_TAC[lookup_insert];
     FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP insert_unchanged th]) THEN
-    SUBGOAL_THEN `knowledge_to_canonical_fupd (K (knowledge_to_canonical data)) data = data`
+    SUBGOAL_THEN `knowledge_to_canonical_fupd (combin_K (knowledge_to_canonical data)) data = data`
       SUBST1_TAC THENL
      [REWRITE_TAC[knowledge_component_equality] THEN SIMP[]; ASM_REWRITE_TAC[]]]);;
 
 let empty_data_loads_wipe = prove
- (`knowledge_loads_mem_fupd (K balanced_map_empty) empty_data = empty_data`,
+ (`knowledge_loads_mem_fupd (combin_K balanced_map_empty) empty_data = empty_data`,
   REWRITE_TAC[empty_data_def] THEN SIMP[]);;
 let _ = cake_add_simps [empty_data_loads_wipe];;
 
@@ -1008,15 +1008,15 @@ let data_inv_set_fp_var = prove
 let _ = cake_add_simps [data_inv_set_fp_var];;
 
 let with_locals_insert = prove
- (`wl_state_locals_fupd (K (insert r v l)) (s:(A,C,FFI)wl_state) =
-   wl_set_var r v (wl_state_locals_fupd (K l) s)`,
+ (`wl_state_locals_fupd (combin_K (insert r v l)) (s:(A,C,FFI)wl_state) =
+   wl_set_var r v (wl_state_locals_fupd (combin_K l) s)`,
   SIMP[wl_set_var_def]);;
 
 let data_inv_alist_insert_locals = prove
  (`!xs ys data (s:(A,C,FFI)wl_state) l.
      ALL (\x. lookup x (knowledge_to_canonical data) = NONE) xs ==>
-     (data_inv data (wl_state_locals_fupd (K (alist_insert xs ys l)) s) <=>
-      data_inv data (wl_state_locals_fupd (K l) s))`,
+     (data_inv data (wl_state_locals_fupd (combin_K (alist_insert xs ys l)) s) <=>
+      data_inv data (wl_state_locals_fupd (combin_K l) s))`,
   LIST_INDUCT_TAC THENL [REWRITE_TAC[alist_insert_def]; ALL_TAC] THEN
   LIST_INDUCT_TAC THEN REWRITE_TAC[alist_insert_def; ALL] THEN
   REPEAT STRIP_TAC THEN REWRITE_TAC[with_locals_insert] THEN
@@ -1034,7 +1034,7 @@ let evaluate_Move1 = prove
      wl_get_var k s = SOME w ==>
      wl_evaluate (wl_Move pri [(r,k)], s) = (NONE, wl_set_var r w s)`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_Move"] THEN
-  ASM_REWRITE_TAC[MAP; ALL_DISTINCT; MEM; wl_get_vars_def] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[MAP; ALL_DISTINCT; MEM; wl_get_vars_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[wl_set_vars_def; wl_set_var_def; alist_insert_def]);;
 
 let shiftToNum_eq = prove
@@ -1066,7 +1066,7 @@ let arith_keys_eq = prove
   STRIP_TAC THEN RVEQ_TAC THEN
   ASM_REWRITE_TAC[can_mem_arith_def; arithReads_def; firstRegOfArith_def] THEN
   REPEAT GEN_TAC THEN
-  REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_Inst"; wl_inst_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_Inst"; wl_inst_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[wl_assign_def; wl_word_exp_def; the_words_def; MAP; wl_get_vars_def;
               LET_DEF; LET_END_DEF] THEN
   SIMP[wl_get_var_def; wl_set_var_def] THEN
@@ -1135,7 +1135,7 @@ let data_inv_insert_instrs_Const = prove
      lookup r (knowledge_to_canonical data) = SOME r /\
      lookup r (wl_state_locals s) = SOME (wl_Word w) ==>
      data_inv (knowledge_instrs_mem_fupd
-                 (K (balanced_map_insert listCmp (instToNumList (asm_Const n w:(A)inst)) r
+                 (combin_K (balanced_map_insert listCmp (instToNumList (asm_Const n w:(A)inst)) r
                        (knowledge_instrs_mem data))) data) s`,
   WPROOF1AUX_CSE_INV_TAC THEN ASM_SIMP_TAC[lookup_insert_listCmp] THEN
   WPROOF1AUX_CSE_CLAUSE2_TAC);;
@@ -1149,7 +1149,7 @@ let data_inv_insert_instrs_Arith = prove
      wl_evaluate (wl_Inst (asm_Arith a), s) =
        (NONE, wl_set_var (firstRegOfArith a) w s) ==>
      data_inv (knowledge_instrs_mem_fupd
-                 (K (balanced_map_insert listCmp (instToNumList (asm_Arith a)) r
+                 (combin_K (balanced_map_insert listCmp (instToNumList (asm_Arith a)) r
                        (knowledge_instrs_mem data))) data) s`,
   WPROOF1AUX_CSE_INV_TAC THEN ASM_SIMP_TAC[lookup_insert_listCmp] THEN
   WPROOF1AUX_CSE_CLAUSE2_TAC);;
@@ -1162,7 +1162,7 @@ let data_inv_insert_instrs_OpCurrHeap = prove
      wl_word_exp s (wl_Op op [wl_Var src; Lookup CurrHeap]) = SOME w /\
      wl_get_var r s = SOME w ==>
      data_inv (knowledge_instrs_mem_fupd
-                 (K (balanced_map_insert listCmp (OpCurrHeapToNumList op src) r
+                 (combin_K (balanced_map_insert listCmp (OpCurrHeapToNumList op src) r
                        (knowledge_instrs_mem data))) data) s`,
   WPROOF1AUX_CSE_INV_TAC THEN ASM_SIMP_TAC[lookup_insert_listCmp] THEN
   WPROOF1AUX_CSE_CLAUSE2_TAC);;
@@ -1173,7 +1173,7 @@ let data_inv_insert_instrs_LocValue = prove
      lookup r (knowledge_to_canonical data) = SOME r /\
      lookup r (wl_state_locals s) = SOME (wl_Loc l 0) ==>
      data_inv (knowledge_instrs_mem_fupd
-                 (K (balanced_map_insert listCmp [48; l] r
+                 (combin_K (balanced_map_insert listCmp [48; l] r
                        (knowledge_instrs_mem data))) data) s`,
   WPROOF1AUX_CSE_INV_TAC THEN ASM_SIMP_TAC[lookup_insert_listCmp] THEN
   WPROOF1AUX_CSE_CLAUSE2_TAC);;
@@ -1184,40 +1184,40 @@ let WPROOF1AUX_CSE_get_var_latest = prove
      wl_get_var (lookup_any a (knowledge_to_latest data) a) s = SOME w`,
   REPEAT GEN_TAC THEN REWRITE_TAC[data_inv_def; sem_inv_def; lookup_any_def] THEN
   STRIP_TAC THEN CASES_ON `lookup a (knowledge_to_latest data)` THEN
-  CASE_REWRITE_TAC[] THEN ASM_MESON_TAC[]);;
+  CAKE_REWRITE_TAC[] THEN ASM_MESON_TAC[]);;
 
 let WPROOF1AUX_CSE_add_to_latest_eq = prove
  (`!data i r.
      knowledge_to_latest_fupd
-       (K (insert r r (knowledge_to_latest
+       (combin_K (insert r r (knowledge_to_latest
             (knowledge_instrs_mem_fupd
-              (K (balanced_map_insert listCmp i r
+              (combin_K (balanced_map_insert listCmp i r
                     (knowledge_instrs_mem
                        (knowledge_to_canonical_fupd
-                          (K (insert r r (knowledge_to_canonical data))) data))))
+                          (combin_K (insert r r (knowledge_to_canonical data))) data))))
               (knowledge_to_canonical_fupd
-                 (K (insert r r (knowledge_to_canonical data))) data)))))
+                 (combin_K (insert r r (knowledge_to_canonical data))) data)))))
        (knowledge_instrs_mem_fupd
-          (K (balanced_map_insert listCmp i r
+          (combin_K (balanced_map_insert listCmp i r
                 (knowledge_instrs_mem
                    (knowledge_to_canonical_fupd
-                      (K (insert r r (knowledge_to_canonical data))) data))))
+                      (combin_K (insert r r (knowledge_to_canonical data))) data))))
           (knowledge_to_canonical_fupd
-             (K (insert r r (knowledge_to_canonical data))) data)) =
+             (combin_K (insert r r (knowledge_to_canonical data))) data)) =
      knowledge_instrs_mem_fupd
-       (K (balanced_map_insert listCmp i r (knowledge_instrs_mem data)))
-       (knowledge_to_canonical_fupd (K (insert r r (knowledge_to_canonical data)))
-          (knowledge_to_latest_fupd (K (insert r r (knowledge_to_latest data))) data))`,
+       (combin_K (balanced_map_insert listCmp i r (knowledge_instrs_mem data)))
+       (knowledge_to_canonical_fupd (combin_K (insert r r (knowledge_to_canonical data)))
+          (knowledge_to_latest_fupd (combin_K (insert r r (knowledge_to_latest data))) data))`,
   REWRITE_TAC[knowledge_component_equality] THEN SIMP[]);;
 
 let WPROOF1AUX_CSE_reorder_eq = prove
  (`!data r a.
      knowledge_to_latest_fupd
-       (K (insert a r (knowledge_to_latest
-            (knowledge_to_canonical_fupd (K (insert r a (knowledge_to_canonical data))) data))))
-       (knowledge_to_canonical_fupd (K (insert r a (knowledge_to_canonical data))) data) =
-     knowledge_to_canonical_fupd (K (insert r a (knowledge_to_canonical data)))
-       (knowledge_to_latest_fupd (K (insert a r (knowledge_to_latest data))) data)`,
+       (combin_K (insert a r (knowledge_to_latest
+            (knowledge_to_canonical_fupd (combin_K (insert r a (knowledge_to_canonical data))) data))))
+       (knowledge_to_canonical_fupd (combin_K (insert r a (knowledge_to_canonical data))) data) =
+     knowledge_to_canonical_fupd (combin_K (insert r a (knowledge_to_canonical data)))
+       (knowledge_to_latest_fupd (combin_K (insert a r (knowledge_to_latest data))) data)`,
   REWRITE_TAC[knowledge_component_equality] THEN SIMP[]);;
 
 let WPROOF1AUX_CSE_wf_facts = prove
@@ -1236,12 +1236,12 @@ let add_to_data_aux_correct = prove
           wl_get_var v s = SOME w) /\
      (~EVEN r ==>
         data_inv (knowledge_instrs_mem_fupd
-                    (K (balanced_map_insert listCmp i r
+                    (combin_K (balanced_map_insert listCmp i r
                           (knowledge_instrs_mem
                              (knowledge_to_canonical_fupd
-                                (K (insert r r (knowledge_to_canonical data))) data))))
+                                (combin_K (insert r r (knowledge_to_canonical data))) data))))
                     (knowledge_to_canonical_fupd
-                       (K (insert r r (knowledge_to_canonical data))) data))
+                       (combin_K (insert r r (knowledge_to_canonical data))) data))
                  (wl_set_var r w s)) ==>
      wl_evaluate (p', s) = (NONE, wl_set_var r w s) /\
      data_inv data' (wl_set_var r w s)`,
@@ -1249,7 +1249,7 @@ let add_to_data_aux_correct = prove
   UNDISCH_TAC `add_to_data_aux data r i (p:(A)wl_prog) = (data',p')` THEN
   REWRITE_TAC[add_to_data_aux_def; LET_DEF; LET_END_DEF] THEN
   CASES_ON `balanced_map_lookup listCmp i (knowledge_instrs_mem data)` THEN
-  CASE_REWRITE_TAC[] THEN COND_CASES_TAC THEN REWRITE_TAC[PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[] THEN COND_CASES_TAC THEN REWRITE_TAC[PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN ASM_SIMP_TAC[data_inv_set_var] THEN
   (TRY(FIRST_X_ASSUM(MP_TAC o check (is_imp o concl)) THEN ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
       ONCE_REWRITE_TAC[GSYM WPROOF1AUX_CSE_add_to_latest_eq] THEN
@@ -1289,7 +1289,7 @@ let canonicalRegs_self_or_fresh = prove
        SOME (canonicalRegs data x) \/
      lookup (canonicalRegs data x) (knowledge_to_canonical data) = NONE`,
   REPEAT GEN_TAC THEN REWRITE_TAC[canonicalRegs_def; lookup_any_def] THEN DISCH_TAC THEN
-  CASES_ON `lookup x (knowledge_to_canonical data)` THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON `lookup x (knowledge_to_canonical data)` THEN CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[] THEN FIRST_ASSUM(MP_TAC o MATCH_MP WPROOF1AUX_CSE_tc_facts o
               CONJ (ASSUME `data_inv data (s:(A,C,FFI)wl_state)`)) THEN
   SIMP_TAC[]);;
@@ -1303,7 +1303,7 @@ let canonicalRegs'_self_or_fresh = prove
   REPEAT GEN_TAC THEN REWRITE_TAC[canonicalRegs'_def; canonicalRegs_def; lookup_any_def;
                                   LET_DEF; LET_END_DEF] THEN
   STRIP_TAC THEN
-  CASES_ON `lookup x (knowledge_to_canonical data)` THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON `lookup x (knowledge_to_canonical data)` THEN CAKE_REWRITE_TAC[] THEN
   COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
   TRY(FIRST_X_ASSUM SUBST_ALL_TAC THEN ASM_REWRITE_TAC[] THEN NO_TAC) THEN
   FIRST_ASSUM(MP_TAC o MATCH_MP WPROOF1AUX_CSE_tc_facts o
@@ -1328,8 +1328,8 @@ let WPROOF1AUX_CSE_REC_TAC (r:term) : tactic = fun (asl,w as g) ->
 let WPROOF1AUX_CSE_eval_const = prove
  (`!r (w:A word) (s:(A,C,FFI)wl_state).
      wl_evaluate (wl_Inst (asm_Const r w), s) = (NONE, wl_set_var r (wl_Word w) s)`,
-  REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_Inst"; wl_inst_def] THEN CASE_REWRITE_TAC[] THEN
-  REWRITE_TAC[wl_assign_def; wl_word_exp_def] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_Inst"; wl_inst_def] THEN CAKE_REWRITE_TAC[] THEN
+  REWRITE_TAC[wl_assign_def; wl_word_exp_def] THEN CAKE_REWRITE_TAC[]);;
 
 let add_to_data_const_correct = prove
  (`!data (s:(A,C,FFI)wl_state) r (w:A word) data' p'.
@@ -1345,28 +1345,28 @@ let add_to_data_const_correct = prove
   REWRITE_TAC[add_to_data_const_def; LET_DEF; LET_END_DEF] THEN
   CASES_ON `balanced_map_lookup listCmp (instToNumList (asm_Const r (w:A word)))
               (knowledge_instrs_mem data)` THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
   REWRITE_TAC[WPROOF1AUX_CSE_eval_const] THEN
   ALL_TAC THENL
    [(* miss *)
     WPROOF1AUX_CSE_REC_TAC
      `knowledge_to_latest_fupd
-        (K (insert r r (knowledge_to_latest
+        (combin_K (insert r r (knowledge_to_latest
            (knowledge_instrs_mem_fupd
-             (K (balanced_map_insert listCmp (instToNumList (asm_Const r (w:A word))) r
+             (combin_K (balanced_map_insert listCmp (instToNumList (asm_Const r (w:A word))) r
                    (knowledge_instrs_mem
                      (knowledge_to_canonical_fupd
-                        (K (insert r r (knowledge_to_canonical data))) data))))
+                        (combin_K (insert r r (knowledge_to_canonical data))) data))))
              (knowledge_to_canonical_fupd
-                (K (insert r r (knowledge_to_canonical data))) data)))))
+                (combin_K (insert r r (knowledge_to_canonical data))) data)))))
         (knowledge_instrs_mem_fupd
-           (K (balanced_map_insert listCmp (instToNumList (asm_Const r (w:A word))) r
+           (combin_K (balanced_map_insert listCmp (instToNumList (asm_Const r (w:A word))) r
                  (knowledge_instrs_mem
                    (knowledge_to_canonical_fupd
-                      (K (insert r r (knowledge_to_canonical data))) data))))
+                      (combin_K (insert r r (knowledge_to_canonical data))) data))))
            (knowledge_to_canonical_fupd
-              (K (insert r r (knowledge_to_canonical data))) data))` THEN
+              (combin_K (insert r r (knowledge_to_canonical data))) data))` THEN
     MATCH_MP_TAC data_inv_insert_to_latest THEN
     REPEAT CONJ_TAC THENL [ALL_TAC; SIMP[domain_insert; IN_INSERT];
                            SIMP[domain_insert; IN_INSERT]; REWRITE_TAC[]] THEN
@@ -1432,7 +1432,7 @@ let WPROOF1AUX_CSE_canon_src = prove
        NONE`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   REWRITE_TAC[canonicalRegs'_def; canonicalRegs_def; lookup_any_def; LET_DEF; LET_END_DEF] THEN
-  CASES_ON `lookup r2 (knowledge_to_canonical data)` THEN CASE_REWRITE_TAC[] THENL
+  CASES_ON `lookup r2 (knowledge_to_canonical data)` THEN CAKE_REWRITE_TAC[] THENL
    [ASM_REWRITE_TAC[lookup_register_read; GSYM NOT_EVEN] THEN ASM_MESON_TAC[];
     FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP WPROOF1AUX_CSE_tc_facts o
                 CONJ (ASSUME `data_inv data (s:(A,C,FFI)wl_state)`)) THEN
@@ -1462,7 +1462,7 @@ let add_to_data_OpCurrHeap_correct = prove
                         `wl_OpCurrHeap b r1 r2:(A)wl_prog`] THEN
   ASM_SIMP_TAC[data_inv_register_read; register_read_simps] THEN REPEAT CONJ_TAC THEN
   FIRST
-   [ASM_REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_OpCurrHeap"] THEN CASE_REWRITE_TAC[] THEN
+   [ASM_REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_OpCurrHeap"] THEN CAKE_REWRITE_TAC[] THEN
     NO_TAC;
     X_GEN_TAC `v:num` THEN DISCH_TAC THEN
     SUBGOAL_THEN `wl_get_var (canonicalRegs' r1 data r2) s = wl_get_var r2 (s:(A,C,FFI)wl_state)`
@@ -1609,7 +1609,7 @@ let data_inv_insert_loads = prove
      (!r'. wl_evaluate (wl_Inst (Mem op r' (Addr a ofs)), s) =
            (NONE, wl_set_var r' w s)) ==>
      data_inv (knowledge_loads_mem_fupd
-                 (K (balanced_map_insert listCmp (loadToNumList op a ofs) r
+                 (combin_K (balanced_map_insert listCmp (loadToNumList op a ofs) r
                        (knowledge_loads_mem data))) data) s`,
   WPROOF1AUX_CSE_INV_TAC THEN ASM_SIMP_TAC[lookup_insert_listCmp] THEN
   WPROOF1AUX_CSE_CLAUSE2_TAC);;
@@ -1617,25 +1617,25 @@ let data_inv_insert_loads = prove
 let WPROOF1AUX_CSE_add_to_latest_eq2 = prove
  (`!data i r.
      knowledge_to_latest_fupd
-       (K (insert r r (knowledge_to_latest
+       (combin_K (insert r r (knowledge_to_latest
             (knowledge_loads_mem_fupd
-              (K (balanced_map_insert listCmp i r
+              (combin_K (balanced_map_insert listCmp i r
                     (knowledge_loads_mem
                        (knowledge_to_canonical_fupd
-                          (K (insert r r (knowledge_to_canonical data))) data))))
+                          (combin_K (insert r r (knowledge_to_canonical data))) data))))
               (knowledge_to_canonical_fupd
-                 (K (insert r r (knowledge_to_canonical data))) data)))))
+                 (combin_K (insert r r (knowledge_to_canonical data))) data)))))
        (knowledge_loads_mem_fupd
-          (K (balanced_map_insert listCmp i r
+          (combin_K (balanced_map_insert listCmp i r
                 (knowledge_loads_mem
                    (knowledge_to_canonical_fupd
-                      (K (insert r r (knowledge_to_canonical data))) data))))
+                      (combin_K (insert r r (knowledge_to_canonical data))) data))))
           (knowledge_to_canonical_fupd
-             (K (insert r r (knowledge_to_canonical data))) data)) =
+             (combin_K (insert r r (knowledge_to_canonical data))) data)) =
      knowledge_loads_mem_fupd
-       (K (balanced_map_insert listCmp i r (knowledge_loads_mem data)))
-       (knowledge_to_canonical_fupd (K (insert r r (knowledge_to_canonical data)))
-          (knowledge_to_latest_fupd (K (insert r r (knowledge_to_latest data))) data))`,
+       (combin_K (balanced_map_insert listCmp i r (knowledge_loads_mem data)))
+       (knowledge_to_canonical_fupd (combin_K (insert r r (knowledge_to_canonical data)))
+          (knowledge_to_latest_fupd (combin_K (insert r r (knowledge_to_latest data))) data))`,
   REWRITE_TAC[knowledge_component_equality] THEN SIMP[]);;
 
 let WPROOF1AUX_CSE_wf_facts2 = prove
@@ -1654,12 +1654,12 @@ let add_to_load_aux_correct = prove
           wl_get_var v s = SOME w) /\
      (~EVEN r ==>
         data_inv (knowledge_loads_mem_fupd
-                    (K (balanced_map_insert listCmp i r
+                    (combin_K (balanced_map_insert listCmp i r
                           (knowledge_loads_mem
                              (knowledge_to_canonical_fupd
-                                (K (insert r r (knowledge_to_canonical data))) data))))
+                                (combin_K (insert r r (knowledge_to_canonical data))) data))))
                     (knowledge_to_canonical_fupd
-                       (K (insert r r (knowledge_to_canonical data))) data))
+                       (combin_K (insert r r (knowledge_to_canonical data))) data))
                  (wl_set_var r w s)) ==>
      wl_evaluate (p', s) = (NONE, wl_set_var r w s) /\
      data_inv data' (wl_set_var r w s)`,
@@ -1667,7 +1667,7 @@ let add_to_load_aux_correct = prove
   UNDISCH_TAC `add_to_load_aux data r i (p:(A)wl_prog) = (data',p')` THEN
   REWRITE_TAC[add_to_load_aux_def; LET_DEF; LET_END_DEF] THEN
   CASES_ON `balanced_map_lookup listCmp i (knowledge_loads_mem data)` THEN
-  CASE_REWRITE_TAC[] THEN COND_CASES_TAC THEN REWRITE_TAC[PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[] THEN COND_CASES_TAC THEN REWRITE_TAC[PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN ASM_SIMP_TAC[data_inv_set_var] THEN
   (TRY(FIRST_X_ASSUM(MP_TAC o check (is_imp o concl)) THEN ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
       ONCE_REWRITE_TAC[GSYM WPROOF1AUX_CSE_add_to_latest_eq2] THEN
@@ -1776,18 +1776,18 @@ let lookup_map_insert0 = prove
   `!xs r. lookup r (map_insert xs (m:A spt)) =
           match ALOOKUP xs r with NONE -> lookup r m | SOME r' -> SOME r'`,
   LIST_INDUCT_TAC THENL
-  [REWRITE_TAC[map_insert_def; ALOOKUP_THM] THEN CASE_REWRITE_TAC[];
+  [REWRITE_TAC[map_insert_def; ALOOKUP_THM] THEN CAKE_REWRITE_TAC[];
    SPEC_TAC(`h:num#A`,`h:num#A`) THEN REWRITE_TAC[FORALL_PAIR_THM] THEN
    ASM_REWRITE_TAC[map_insert_def; ALOOKUP_THM; lookup_insert] THEN
-   REPEAT GEN_TAC THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]]);;
+   REPEAT GEN_TAC THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]]);;
 
 let WPROOF1AUX_CSE_get_vars_CONS = prove
  (`!v vs x (s:(A,C,FFI)wl_state).
      wl_get_vars (CONS v vs) s = SOME x <=>
      ?y ys. wl_get_var v s = SOME y /\ wl_get_vars vs s = SOME ys /\ x = CONS y ys`,
   REPEAT GEN_TAC THEN REWRITE_TAC[wl_get_vars_def] THEN
-  CASES_ON `wl_get_var v (s:(A,C,FFI)wl_state)` THEN CASE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN
-  CASES_ON `wl_get_vars vs (s:(A,C,FFI)wl_state)` THEN CASE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN
+  CASES_ON `wl_get_var v (s:(A,C,FFI)wl_state)` THEN CAKE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN
+  CASES_ON `wl_get_vars vs (s:(A,C,FFI)wl_state)` THEN CAKE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN
   MESON_TAC[]);;
 
 let WPROOF1AUX_CSE_lookup_alist_insert_notin = prove
@@ -1843,7 +1843,7 @@ let get_set_vars_in_2 = prove
   REPEAT STRIP_TAC THEN
   SUBGOAL_THEN `canonicalRegs data p_2 = x'` ASSUME_TAC THENL
   [REWRITE_TAC[canonicalRegs_def; lookup_any_def] THEN ASM_REWRITE_TAC[] THEN
-   CASE_REWRITE_TAC[]; ALL_TAC] THEN
+   CAKE_REWRITE_TAC[]; ALL_TAC] THEN
   MP_TAC(ISPECL [`MAP (\(a,b). (a,canonicalRegs data b)) (moves:(num#num)list)`;
                  `r:num`; `x':num`; `x:((A)word_loc)list`; `s:(A,C,FFI)wl_state`]
                 get_set_vars_in) THEN
@@ -1865,30 +1865,30 @@ let list_insert_insert = prove
 
 let data_inv_insert_canonical_pair = prove
  (`!data (s:(A,C,FFI)wl_state) x y tc tl.
-     data_inv (knowledge_to_canonical_fupd (K tc) (knowledge_to_latest_fupd (K tl) data)) s /\
+     data_inv (knowledge_to_canonical_fupd (combin_K tc) (knowledge_to_latest_fupd (combin_K tl) data)) s /\
      lookup x tc = NONE /\
      lookup y (insert x y tc) = SOME y /\
      ODD x /\ ODD y /\
      wl_get_var x s = wl_get_var y s ==>
-     data_inv (knowledge_to_canonical_fupd (K (insert x y tc))
-                 (knowledge_to_latest_fupd (K tl) data)) s`,
+     data_inv (knowledge_to_canonical_fupd (combin_K (insert x y tc))
+                 (knowledge_to_latest_fupd (combin_K tl) data)) s`,
   REPEAT STRIP_TAC THEN
-  MP_TAC(ISPECL [`knowledge_to_canonical_fupd (K tc) (knowledge_to_latest_fupd (K tl) data)`;
+  MP_TAC(ISPECL [`knowledge_to_canonical_fupd (combin_K tc) (knowledge_to_latest_fupd (combin_K tl) data)`;
                  `s:(A,C,FFI)wl_state`; `x:num`; `y:num`] data_inv_insert_to_canonical) THEN
   SIMP_NOASM[] THEN DISCH_THEN MATCH_MP_TAC THEN ASM_REWRITE_TAC[]);;
 
 let data_inv_insert_pair = prove
  (`!data (s:(A,C,FFI)wl_state) x y tc tl.
-     data_inv (knowledge_to_canonical_fupd (K tc) (knowledge_to_latest_fupd (K tl) data)) s /\
+     data_inv (knowledge_to_canonical_fupd (combin_K tc) (knowledge_to_latest_fupd (combin_K tl) data)) s /\
      lookup x tc = NONE /\ lookup y tc = SOME y /\
      ODD x /\ ODD y /\ wl_get_var x s = wl_get_var y s ==>
-     data_inv (knowledge_to_canonical_fupd (K (insert x y tc))
-                 (knowledge_to_latest_fupd (K (insert y x tl)) data)) s`,
+     data_inv (knowledge_to_canonical_fupd (combin_K (insert x y tc))
+                 (knowledge_to_latest_fupd (combin_K (insert y x tl)) data)) s`,
   REPEAT STRIP_TAC THEN
   SUBGOAL_THEN `~(y:num = x)` ASSUME_TAC THENL
   [DISCH_THEN SUBST_ALL_TAC THEN ASM_MESON_TAC[option_DISTINCT]; ALL_TAC] THEN
-  MP_TAC(ISPECL [`knowledge_to_canonical_fupd (K (insert x y tc))
-                    (knowledge_to_latest_fupd (K tl) data)`;
+  MP_TAC(ISPECL [`knowledge_to_canonical_fupd (combin_K (insert x y tc))
+                    (knowledge_to_latest_fupd (combin_K tl) data)`;
                  `s:(A,C,FFI)wl_state`; `y:num`; `x:num`] data_inv_insert_to_latest) THEN
   SIMP_NOASM[] THEN DISCH_THEN MATCH_MP_TAC THEN
   ASM_REWRITE_TAC[domain_lookup; lookup_insert] THEN CONJ_TAC THENL
@@ -1902,14 +1902,14 @@ let data_inv_move_pairs = prove
      ALL (\(x,y). lookup x (knowledge_to_canonical data) = NONE /\
                   lookup y (knowledge_to_canonical data) = SOME y /\
                   ODD x /\ wl_get_var x s = wl_get_var y s) ps ==>
-     data_inv (knowledge_to_canonical_fupd (K (map_insert ps (knowledge_to_canonical data)))
+     data_inv (knowledge_to_canonical_fupd (combin_K (map_insert ps (knowledge_to_canonical data)))
                 (knowledge_to_latest_fupd
-                   (K (map_insert (MAP (\(a,b). (b,a)) ps) (knowledge_to_latest data)))
+                   (combin_K (map_insert (MAP (\(a,b). (b,a)) ps) (knowledge_to_latest data)))
                    data)) s`,
   LIST_INDUCT_TAC THENL
   [REWRITE_TAC[map_insert_def; MAP] THEN REPEAT STRIP_TAC THEN
-   SUBGOAL_THEN `knowledge_to_canonical_fupd (K (knowledge_to_canonical data))
-       (knowledge_to_latest_fupd (K (knowledge_to_latest data)) data) = data`
+   SUBGOAL_THEN `knowledge_to_canonical_fupd (combin_K (knowledge_to_canonical data))
+       (knowledge_to_latest_fupd (combin_K (knowledge_to_latest data)) data) = data`
      (fun th -> ASM_REWRITE_TAC[th]) THEN
    SIMP[knowledge_component_equality]; ALL_TAC] THEN
   SPEC_TAC(`h:num#num`,`h:num#num`) THEN REWRITE_TAC[FORALL_PAIR_THM] THEN
@@ -1927,7 +1927,7 @@ let data_inv_move_pairs = prove
    DISCH_THEN(MP_TAC o SPECL [`y:num`;`y:num`] o CONJUNCT1 o CONJUNCT1) THEN
    ASM_SIMP_TAC[];
    ALL_TAC] THEN
-  ASM_REWRITE_TAC[lookup_map_insert0] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[lookup_map_insert0] THEN CAKE_REWRITE_TAC[] THEN
   FIRST_X_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[] THEN
   REWRITE_TAC[GSYM ALL_MEM; FORALL_PAIR_THM] THEN SIMP_NOASM[] THEN ASM_REWRITE_TAC[]);;
 
@@ -1972,7 +1972,7 @@ let canonicalMoveRegs_lemma = prove
   [REWRITE_TAC[canonicalRegs_def; lookup_any_def; lookup_register_reads] THEN
    ASM_REWRITE_TAC[] THEN
    CASES_ON `lookup b (knowledge_to_canonical data)` THEN
-   ASM_REWRITE_TAC[option_DISTINCT] THEN CASE_REWRITE_TAC[] THEN
+   ASM_REWRITE_TAC[option_DISTINCT] THEN CAKE_REWRITE_TAC[] THEN
    RES_TAC THEN ASM_REWRITE_TAC[option_DISTINCT]; ALL_TAC] THEN
   ASM_SIMP_TAC[] THEN CONJ_TAC THENL [ASM_REWRITE_TAC[GSYM NOT_EVEN]; ALL_TAC] THEN
   SUBGOAL_THEN `~MEM (canonicalRegs (register_reads data (MAP SND rs)) b)
@@ -1993,17 +1993,17 @@ let evaluate_arith_clock = prove
  (`!a w (s:(A,C,FFI)wl_state) c td.
      can_mem_arith a ==>
      (wl_evaluate (wl_Inst (asm_Arith a),
-                   wl_state_clock_fupd (K c) (wl_state_termdep_fupd (K td) s)) =
-        (NONE, wl_state_clock_fupd (K c) (wl_state_termdep_fupd (K td)
+                   wl_state_clock_fupd (combin_K c) (wl_state_termdep_fupd (combin_K td) s)) =
+        (NONE, wl_state_clock_fupd (combin_K c) (wl_state_termdep_fupd (combin_K td)
                  (wl_set_var (firstRegOfArith a) w s))) <=>
       wl_evaluate (wl_Inst (asm_Arith a), s) =
         (NONE, wl_set_var (firstRegOfArith a) w s))`,
   REPEAT STRIP_TAC THEN
   SUBGOAL_THEN
-   `wl_state_clock_fupd (K c) (wl_state_termdep_fupd (K td)
+   `wl_state_clock_fupd (combin_K c) (wl_state_termdep_fupd (combin_K td)
       (wl_set_var (firstRegOfArith (a:(A)asm_arith)) w (s:(A,C,FFI)wl_state))) =
     wl_set_var (firstRegOfArith a) w
-      (wl_state_clock_fupd (K c) (wl_state_termdep_fupd (K td) s))` SUBST1_TAC THENL
+      (wl_state_clock_fupd (combin_K c) (wl_state_termdep_fupd (combin_K td) s))` SUBST1_TAC THENL
   [REWRITE_TAC[wl_set_var_def] THEN SIMP[]; ALL_TAC] THEN
   MATCH_MP_TAC WPROOF1AUX_CSE_arith_agree_iff THEN ASM_REWRITE_TAC[] THEN SIMP[]);;
 
@@ -2011,15 +2011,15 @@ let evaluate_load_clock = prove
  (`!op r a ofs w (s:(A,C,FFI)wl_state) c td.
      ~is_store op ==>
      (wl_evaluate (wl_Inst (Mem op r (Addr a ofs)),
-                   wl_state_clock_fupd (K c) (wl_state_termdep_fupd (K td) s)) =
-        (NONE, wl_state_clock_fupd (K c) (wl_state_termdep_fupd (K td)
+                   wl_state_clock_fupd (combin_K c) (wl_state_termdep_fupd (combin_K td) s)) =
+        (NONE, wl_state_clock_fupd (combin_K c) (wl_state_termdep_fupd (combin_K td)
                  (wl_set_var r w s))) <=>
       wl_evaluate (wl_Inst (Mem op r (Addr a ofs)), s) = (NONE, wl_set_var r w s))`,
   REPEAT STRIP_TAC THEN
   SUBGOAL_THEN
-   `wl_state_clock_fupd (K c) (wl_state_termdep_fupd (K td)
+   `wl_state_clock_fupd (combin_K c) (wl_state_termdep_fupd (combin_K td)
       (wl_set_var r w (s:(A,C,FFI)wl_state))) =
-    wl_set_var r w (wl_state_clock_fupd (K c) (wl_state_termdep_fupd (K td) s))`
+    wl_set_var r w (wl_state_clock_fupd (combin_K c) (wl_state_termdep_fupd (combin_K td) s))`
     SUBST1_TAC THENL
   [REWRITE_TAC[wl_set_var_def] THEN SIMP[]; ALL_TAC] THEN
   MATCH_MP_TAC WPROOF1AUX_CSE_load_agree_iff THEN ASM_REWRITE_TAC[] THEN SIMP[]);;
@@ -2027,7 +2027,7 @@ let evaluate_load_clock = prove
 let data_inv_clock = prove
  (`!data (s:(A,C,FFI)wl_state) c td.
      data_inv data s ==>
-     data_inv data (wl_state_clock_fupd (K c) (wl_state_termdep_fupd (K td) s))`,
+     data_inv data (wl_state_clock_fupd (combin_K c) (wl_state_termdep_fupd (combin_K td) s))`,
   REPEAT STRIP_TAC THEN MATCH_MP_TAC data_inv_state_agree THEN
   EXISTS_TAC `s:(A,C,FFI)wl_state` THEN ASM_REWRITE_TAC[] THEN SIMP[]);;
 
@@ -2041,7 +2041,7 @@ let _ = cake_add_simps [wf_data_empty];;
 
 let wf_data_loads_wipe = prove
  (`!data. wf_data (:A) data ==>
-          wf_data (:A) (knowledge_loads_mem_fupd (K balanced_map_empty) data)`,
+          wf_data (:A) (knowledge_loads_mem_fupd (combin_K balanced_map_empty) data)`,
   GEN_TAC THEN
   REWRITE_TAC[wf_data_def; knowledge_INFO.ri_accfupds; K_THM; lookup_listCmp_empty;
               invariant_listCmp_empty; option_DISTINCT] THEN
@@ -2064,7 +2064,7 @@ let wf_data_insert_to_canonical = prove
      lookup y (insert x y (knowledge_to_canonical data)) = SOME y /\
      ODD x /\ ODD y ==>
      wf_data (:A) (knowledge_to_canonical_fupd
-                     (K (insert x y (knowledge_to_canonical data))) data)`,
+                     (combin_K (insert x y (knowledge_to_canonical data))) data)`,
   WPROOF1AUX_CSE_INV_TAC THEN WPROOF1AUX_CSE_CLAUSE_TAC);;
 
 let wf_data_insert_to_latest = prove
@@ -2073,7 +2073,7 @@ let wf_data_insert_to_latest = prove
      x IN domain (knowledge_to_canonical data) /\
      y IN domain (knowledge_to_canonical data) ==>
      wf_data (:A) (knowledge_to_latest_fupd
-                     (K (insert x y (knowledge_to_latest data))) data)`,
+                     (combin_K (insert x y (knowledge_to_latest data))) data)`,
   WPROOF1AUX_CSE_INV_TAC THEN WPROOF1AUX_CSE_CLAUSE_TAC);;
 
 let wf_data_register_read = prove
@@ -2095,7 +2095,7 @@ let wf_data_insert_instrs_Const = prove
      wf_data (:A) data /\
      lookup r (knowledge_to_canonical data) = SOME r ==>
      wf_data (:A) (knowledge_instrs_mem_fupd
-                     (K (balanced_map_insert listCmp (instToNumList (asm_Const n w:(A)inst)) r
+                     (combin_K (balanced_map_insert listCmp (instToNumList (asm_Const n w:(A)inst)) r
                            (knowledge_instrs_mem data))) data)`,
   WPROOF1AUX_CSE_INV_TAC THEN ASM_SIMP_TAC[lookup_insert_listCmp] THEN
   WPROOF1AUX_CSE_CLAUSE2_TAC);;
@@ -2106,7 +2106,7 @@ let wf_data_insert_instrs_Arith = prove
      lookup r (knowledge_to_canonical data) = SOME r /\
      can_mem_arith a /\ in_names_set a (knowledge_to_canonical data) ==>
      wf_data (:A) (knowledge_instrs_mem_fupd
-                     (K (balanced_map_insert listCmp (instToNumList (asm_Arith a)) r
+                     (combin_K (balanced_map_insert listCmp (instToNumList (asm_Arith a)) r
                            (knowledge_instrs_mem data))) data)`,
   WPROOF1AUX_CSE_INV_TAC THEN ASM_SIMP_TAC[lookup_insert_listCmp] THEN
   WPROOF1AUX_CSE_CLAUSE2_TAC);;
@@ -2117,7 +2117,7 @@ let wf_data_insert_instrs_OpCurrHeap = prove
      lookup r (knowledge_to_canonical data) = SOME r /\
      lookup src (knowledge_to_canonical data) = SOME src ==>
      wf_data (:A) (knowledge_instrs_mem_fupd
-                     (K (balanced_map_insert listCmp (OpCurrHeapToNumList op src) r
+                     (combin_K (balanced_map_insert listCmp (OpCurrHeapToNumList op src) r
                            (knowledge_instrs_mem data))) data)`,
   WPROOF1AUX_CSE_INV_TAC THEN ASM_SIMP_TAC[lookup_insert_listCmp] THEN
   WPROOF1AUX_CSE_CLAUSE2_TAC);;
@@ -2127,7 +2127,7 @@ let wf_data_insert_instrs_LocValue = prove
      wf_data (:A) data /\
      lookup r (knowledge_to_canonical data) = SOME r ==>
      wf_data (:A) (knowledge_instrs_mem_fupd
-                     (K (balanced_map_insert listCmp [48; l] r
+                     (combin_K (balanced_map_insert listCmp [48; l] r
                            (knowledge_instrs_mem data))) data)`,
   WPROOF1AUX_CSE_INV_TAC THEN ASM_SIMP_TAC[lookup_insert_listCmp] THEN
   WPROOF1AUX_CSE_CLAUSE2_TAC);;
@@ -2138,7 +2138,7 @@ let wf_data_insert_loads = prove
      lookup r (knowledge_to_canonical data) = SOME r /\
      lookup a (knowledge_to_canonical data) = SOME a ==>
      wf_data (:A) (knowledge_loads_mem_fupd
-                     (K (balanced_map_insert listCmp (loadToNumList op a ofs) r
+                     (combin_K (balanced_map_insert listCmp (loadToNumList op a ofs) r
                            (knowledge_loads_mem data))) data)`,
   WPROOF1AUX_CSE_INV_TAC THEN ASM_SIMP_TAC[lookup_insert_listCmp] THEN
   WPROOF1AUX_CSE_CLAUSE2_TAC);;
@@ -2166,18 +2166,18 @@ let wf_add_to_data_aux = prove
      (~EVEN r ==>
         wf_data (:A)
           (knowledge_instrs_mem_fupd
-             (K (balanced_map_insert listCmp i r
+             (combin_K (balanced_map_insert listCmp i r
                    (knowledge_instrs_mem
                       (knowledge_to_canonical_fupd
-                         (K (insert r r (knowledge_to_canonical data))) data))))
+                         (combin_K (insert r r (knowledge_to_canonical data))) data))))
              (knowledge_to_canonical_fupd
-                (K (insert r r (knowledge_to_canonical data))) data))) ==>
+                (combin_K (insert r r (knowledge_to_canonical data))) data))) ==>
      wf_data (:A) data'`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   UNDISCH_TAC `add_to_data_aux data r i (p:(A)wl_prog) = (data',p')` THEN
   REWRITE_TAC[add_to_data_aux_def; LET_DEF; LET_END_DEF] THEN
   CASES_ON `balanced_map_lookup listCmp i (knowledge_instrs_mem data)` THEN
-  CASE_REWRITE_TAC[] THEN COND_CASES_TAC THEN REWRITE_TAC[PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[] THEN COND_CASES_TAC THEN REWRITE_TAC[PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN ASM_REWRITE_TAC[] THEN
   (TRY(FIRST_X_ASSUM(MP_TAC o check (is_imp o concl)) THEN ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
       ONCE_REWRITE_TAC[GSYM WPROOF1AUX_CSE_add_to_latest_eq] THEN
@@ -2213,26 +2213,26 @@ let wf_add_to_data_const = prove
   REWRITE_TAC[add_to_data_const_def; LET_DEF; LET_END_DEF] THEN
   CASES_ON `balanced_map_lookup listCmp (instToNumList (asm_Const r (w:A word)))
               (knowledge_instrs_mem data)` THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THENL
    [(* miss *)
     WPROOF1AUX_CSE_REC_WF_TAC
      `knowledge_to_latest_fupd
-        (K (insert r r (knowledge_to_latest
+        (combin_K (insert r r (knowledge_to_latest
            (knowledge_instrs_mem_fupd
-             (K (balanced_map_insert listCmp (instToNumList (asm_Const r (w:A word))) r
+             (combin_K (balanced_map_insert listCmp (instToNumList (asm_Const r (w:A word))) r
                    (knowledge_instrs_mem
                      (knowledge_to_canonical_fupd
-                        (K (insert r r (knowledge_to_canonical data))) data))))
+                        (combin_K (insert r r (knowledge_to_canonical data))) data))))
              (knowledge_to_canonical_fupd
-                (K (insert r r (knowledge_to_canonical data))) data)))))
+                (combin_K (insert r r (knowledge_to_canonical data))) data)))))
         (knowledge_instrs_mem_fupd
-           (K (balanced_map_insert listCmp (instToNumList (asm_Const r (w:A word))) r
+           (combin_K (balanced_map_insert listCmp (instToNumList (asm_Const r (w:A word))) r
                  (knowledge_instrs_mem
                    (knowledge_to_canonical_fupd
-                      (K (insert r r (knowledge_to_canonical data))) data))))
+                      (combin_K (insert r r (knowledge_to_canonical data))) data))))
            (knowledge_to_canonical_fupd
-              (K (insert r r (knowledge_to_canonical data))) data))` THEN
+              (combin_K (insert r r (knowledge_to_canonical data))) data))` THEN
     MATCH_MP_TAC wf_data_insert_to_latest THEN
     REPEAT CONJ_TAC THENL [ALL_TAC; SIMP[domain_insert; IN_INSERT];
                            SIMP[domain_insert; IN_INSERT]] THEN
@@ -2261,18 +2261,18 @@ let wf_add_to_load_aux = prove
      (~EVEN r ==>
         wf_data (:A)
           (knowledge_loads_mem_fupd
-             (K (balanced_map_insert listCmp i r
+             (combin_K (balanced_map_insert listCmp i r
                    (knowledge_loads_mem
                       (knowledge_to_canonical_fupd
-                         (K (insert r r (knowledge_to_canonical data))) data))))
+                         (combin_K (insert r r (knowledge_to_canonical data))) data))))
              (knowledge_to_canonical_fupd
-                (K (insert r r (knowledge_to_canonical data))) data))) ==>
+                (combin_K (insert r r (knowledge_to_canonical data))) data))) ==>
      wf_data (:A) data'`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   UNDISCH_TAC `add_to_load_aux data r i (p:(A)wl_prog) = (data',p')` THEN
   REWRITE_TAC[add_to_load_aux_def; LET_DEF; LET_END_DEF] THEN
   CASES_ON `balanced_map_lookup listCmp i (knowledge_loads_mem data)` THEN
-  CASE_REWRITE_TAC[] THEN COND_CASES_TAC THEN REWRITE_TAC[PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[] THEN COND_CASES_TAC THEN REWRITE_TAC[PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN ASM_REWRITE_TAC[] THEN
   (TRY(FIRST_X_ASSUM(MP_TAC o check (is_imp o concl)) THEN ASM_REWRITE_TAC[] THEN DISCH_TAC THEN
       ONCE_REWRITE_TAC[GSYM WPROOF1AUX_CSE_add_to_latest_eq2] THEN
@@ -2296,9 +2296,9 @@ let wf_data_insert_gets = prove
      lookup v (knowledge_to_canonical data) = NONE /\ ODD v /\
      ALOOKUP (knowledge_gets_mem data) name = NONE ==>
      wf_data (:A)
-       (knowledge_to_canonical_fupd (K (insert v v (knowledge_to_canonical data)))
-          (knowledge_to_latest_fupd (K (insert v v (knowledge_to_latest data)))
-             (knowledge_gets_mem_fupd (K (CONS (name,v) (knowledge_gets_mem data)))
+       (knowledge_to_canonical_fupd (combin_K (insert v v (knowledge_to_canonical data)))
+          (knowledge_to_latest_fupd (combin_K (insert v v (knowledge_to_latest data)))
+             (knowledge_gets_mem_fupd (combin_K (CONS (name,v) (knowledge_gets_mem data)))
                 data)))`,
   WPROOF1AUX_CSE_INV_TAC THEN REWRITE_TAC[MAP; ALL_DISTINCT] THEN
   ASM_REWRITE_TAC[GSYM ALOOKUP_NONE] THEN WPROOF1AUX_CSE_CLAUSE_TAC);;
@@ -2307,7 +2307,7 @@ let wf_data_filter_gets = prove
  (`!data x.
      wf_data (:A) data ==>
      wf_data (:A) (knowledge_gets_mem_fupd
-                     (K (FILTER (\(m,n). ~(m = x)) (knowledge_gets_mem data))) data)`,
+                     (combin_K (FILTER (\(m,n). ~(m = x)) (knowledge_gets_mem data))) data)`,
   WPROOF1AUX_CSE_INV_TAC THEN ASM_SIMP_TAC[ALL_DISTINCT_MAP_FST_FILTER] THEN
   WPROOF1AUX_CSE_CLAUSE_TAC);;
 
@@ -2316,7 +2316,7 @@ let wf_data_cons_gets = prove
      wf_data (:A) data /\
      ALOOKUP (knowledge_gets_mem data) x = NONE /\
      lookup h (knowledge_to_canonical data) = SOME h ==>
-     wf_data (:A) (knowledge_gets_mem_fupd (K (CONS (x,h) (knowledge_gets_mem data))) data)`,
+     wf_data (:A) (knowledge_gets_mem_fupd (combin_K (CONS (x,h) (knowledge_gets_mem data))) data)`,
   WPROOF1AUX_CSE_INV_TAC THEN REWRITE_TAC[MAP; ALL_DISTINCT] THEN
   ASM_REWRITE_TAC[GSYM ALOOKUP_NONE] THEN WPROOF1AUX_CSE_CLAUSE_TAC);;
 
@@ -2324,13 +2324,13 @@ let wf_data_reinsert_canonical = prove
  (`!data v.
      wf_data (:A) data /\ ODD v ==>
      wf_data (:A) (knowledge_to_canonical_fupd
-                     (K (insert v (lookup_any v (knowledge_to_canonical data) v)
+                     (combin_K (insert v (lookup_any v (knowledge_to_canonical data) v)
                            (knowledge_to_canonical data))) data)`,
   REPEAT STRIP_TAC THEN REWRITE_TAC[lookup_any_def] THEN
-  CASES_ON `lookup v (knowledge_to_canonical data)` THEN CASE_REWRITE_TAC[] THENL
+  CASES_ON `lookup v (knowledge_to_canonical data)` THEN CAKE_REWRITE_TAC[] THENL
    [MATCH_MP_TAC wf_data_insert_to_canonical THEN ASM_REWRITE_TAC[lookup_insert];
     FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP insert_unchanged th]) THEN
-    SUBGOAL_THEN `knowledge_to_canonical_fupd (K (knowledge_to_canonical data)) data = data`
+    SUBGOAL_THEN `knowledge_to_canonical_fupd (combin_K (knowledge_to_canonical data)) data = data`
       SUBST1_TAC THENL
      [REWRITE_TAC[knowledge_component_equality] THEN SIMP[]; ASM_REWRITE_TAC[]]]);;
 
@@ -2345,9 +2345,9 @@ let wf_data_move_pairs = prove
                   lookup y (knowledge_to_canonical data) = SOME y /\
                   ODD x /\ ODD y) ps ==>
      wf_data (:A)
-       (knowledge_to_canonical_fupd (K (map_insert ps (knowledge_to_canonical data)))
+       (knowledge_to_canonical_fupd (combin_K (map_insert ps (knowledge_to_canonical data)))
           (knowledge_to_latest_fupd
-             (K (map_insert (MAP (\(a,b). (b,a)) ps) (knowledge_to_latest data))) data))`,
+             (combin_K (map_insert (MAP (\(a,b). (b,a)) ps) (knowledge_to_latest data))) data))`,
   (REPEAT GEN_TAC THEN REWRITE_TAC[GSYM ALL_MEM; FORALL_PAIR_THM] THEN SIMP_NOASM[] THEN
   STRIP_TAC THEN
   SUBGOAL_THEN `!x y. ALOOKUP (ps:(num#num)list) x = SOME y ==>
@@ -2370,13 +2370,13 @@ let wf_data_move_pairs = prove
        ALOOKUP (ps:(num#num)list) k = SOME v \/
        (ALOOKUP ps k = NONE /\ lookup k (knowledge_to_canonical data) = SOME v)` ASSUME_TAC THENL
   [REWRITE_TAC[lookup_map_insert0] THEN REPEAT GEN_TAC THEN
-   CASES_ON `ALOOKUP (ps:(num#num)list) k` THEN CASE_REWRITE_TAC[] THEN
+   CASES_ON `ALOOKUP (ps:(num#num)list) k` THEN CAKE_REWRITE_TAC[] THEN
    REWRITE_TAC[option_DISTINCT; option_INJ]; ALL_TAC] THEN
   SUBGOAL_THEN `!k v. lookup k (map_insert (MAP (\(a,b). (b,a)) ps) (knowledge_to_latest data)) = SOME v <=>
        ALOOKUP (MAP (\(a,b). (b,a)) (ps:(num#num)list)) k = SOME v \/
        (ALOOKUP (MAP (\(a,b). (b,a)) ps) k = NONE /\ lookup k (knowledge_to_latest data) = SOME v)` ASSUME_TAC THENL
   [REWRITE_TAC[lookup_map_insert0] THEN REPEAT GEN_TAC THEN
-   CASES_ON `ALOOKUP (MAP (\(a,b). (b,a)) (ps:(num#num)list)) k` THEN CASE_REWRITE_TAC[] THEN
+   CASES_ON `ALOOKUP (MAP (\(a,b). (b,a)) (ps:(num#num)list)) k` THEN CAKE_REWRITE_TAC[] THEN
    REWRITE_TAC[option_DISTINCT; option_INJ]; ALL_TAC]) THEN
   (FIRST_X_ASSUM(STRIP_ASSUME_TAC o REWRITE_RULE[wf_data_def; in_names_set_def; GSYM ALL_MEM; domain_lookup] o check (fun th -> can (term_match [] `wf_data (:A) d`) (concl th))) THEN
   REWRITE_TAC[wf_data_def; in_names_set_def; GSYM ALL_MEM; domain_lookup; knowledge_INFO.ri_accfupds; K_THM] THEN
@@ -2418,7 +2418,7 @@ let wf_canonicalMoveRegs = prove
   [REWRITE_TAC[canonicalRegs_def; lookup_any_def; lookup_register_reads] THEN
    ASM_REWRITE_TAC[] THEN
    CASES_ON `lookup b (knowledge_to_canonical data)` THEN
-   ASM_REWRITE_TAC[option_DISTINCT] THEN CASE_REWRITE_TAC[] THEN
+   ASM_REWRITE_TAC[option_DISTINCT] THEN CAKE_REWRITE_TAC[] THEN
    RES_TAC THEN ASM_REWRITE_TAC[option_DISTINCT]; ALL_TAC] THEN
   ASM_SIMP_TAC[GSYM NOT_EVEN] THEN
   MP_TAC(ASSUME `wf_data (:A) (register_reads data (MAP SND (rs:(num#num)list)))`) THEN
@@ -2442,7 +2442,7 @@ let canonicalRegs_self_or_fresh_wf = prove
        SOME (canonicalRegs data x) \/
      lookup (canonicalRegs data x) (knowledge_to_canonical data) = NONE`,
   REPEAT GEN_TAC THEN REWRITE_TAC[canonicalRegs_def; lookup_any_def] THEN DISCH_TAC THEN
-  CASES_ON `lookup x (knowledge_to_canonical data)` THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON `lookup x (knowledge_to_canonical data)` THEN CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[] THEN FIRST_ASSUM(MP_TAC o MATCH_MP WPROOF1AUX_CSE_tc_facts_wf o
               CONJ (ASSUME `wf_data (:A) data`)) THEN
   SIMP_TAC[]);;
@@ -2456,7 +2456,7 @@ let canonicalRegs'_self_or_fresh_wf = prove
   REPEAT GEN_TAC THEN REWRITE_TAC[canonicalRegs'_def; canonicalRegs_def; lookup_any_def;
                                   LET_DEF; LET_END_DEF] THEN
   STRIP_TAC THEN
-  CASES_ON `lookup x (knowledge_to_canonical data)` THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON `lookup x (knowledge_to_canonical data)` THEN CAKE_REWRITE_TAC[] THEN
   COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
   TRY(FIRST_X_ASSUM SUBST_ALL_TAC THEN ASM_REWRITE_TAC[] THEN NO_TAC) THEN
   FIRST_ASSUM(MP_TAC o MATCH_MP WPROOF1AUX_CSE_tc_facts_wf o
@@ -2517,7 +2517,7 @@ let WPROOF1AUX_CSE_canon_src_wf = prove
        NONE`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   REWRITE_TAC[canonicalRegs'_def; canonicalRegs_def; lookup_any_def; LET_DEF; LET_END_DEF] THEN
-  CASES_ON `lookup r2 (knowledge_to_canonical data)` THEN CASE_REWRITE_TAC[] THENL
+  CASES_ON `lookup r2 (knowledge_to_canonical data)` THEN CAKE_REWRITE_TAC[] THENL
    [ASM_REWRITE_TAC[lookup_register_read; GSYM NOT_EVEN] THEN ASM_MESON_TAC[];
     FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP WPROOF1AUX_CSE_tc_facts_wf o
                 CONJ (ASSUME `wf_data (:A) data`)) THEN
@@ -2689,7 +2689,7 @@ let WPROOF1AUX_CSE_wf_Get = prove
   MP_TAC(SPECL [`data:knowledge`; `r:num`] WPROOF1AUX_CSE_lookup_invalidate_self) THEN
   DISCH_TAC THEN
   CASES_ON `ALOOKUP (knowledge_gets_mem (invalidate_data data r)) x` THEN
-  CASE_REWRITE_TAC[] THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[FST] THENL
+  CAKE_REWRITE_TAC[] THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[FST] THENL
    [REWRITE_TAC[knowledge_INFO.ri_fupdcanon] THEN
     MATCH_MP_TAC wf_data_insert_gets THEN ASM_REWRITE_TAC[GSYM NOT_EVEN];
     FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP WPROOF1AUX_CSE_wf_gets_facts o
@@ -2709,7 +2709,7 @@ let WPROOF1AUX_CSE_canon_reinsert_wf = prove
        (insert v (lookup_any v (knowledge_to_canonical data) v)
           (knowledge_to_canonical data)) = SOME (canonicalRegs data v)`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN REWRITE_TAC[canonicalRegs_def; lookup_any_def] THEN
-  CASES_ON `lookup v (knowledge_to_canonical data)` THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON `lookup v (knowledge_to_canonical data)` THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[lookup_insert] THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP WPROOF1AUX_CSE_tc_facts_wf o
               CONJ (ASSUME `wf_data (:A) data`)));;
@@ -2720,29 +2720,29 @@ let WPROOF1AUX_CSE_wf_Set = prove
   REPEAT STRIP_TAC THEN REWRITE_TAC[word_cse_def; LET_DEF; LET_END_DEF] THEN
   CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
   COND_CASES_TAC THEN REWRITE_TAC[FST; wf_data_empty] THEN
-  CASES_ON `dest_Var (e:(A)wl_exp)` THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON `dest_Var (e:(A)wl_exp)` THEN CAKE_REWRITE_TAC[] THEN
   TRY COND_CASES_TAC THEN ASM_SIMP_TAC[FST; wf_data_filter_gets] THEN
   WPROOF1AUX_CSE_REC_WF_TAC
    `knowledge_gets_mem_fupd
-      (K (CONS (x,canonicalRegs data a)
+      (combin_K (CONS (x,canonicalRegs data a)
            (knowledge_gets_mem
              (knowledge_gets_mem_fupd
-               (K (FILTER (\(m,n). ~(m = x))
+               (combin_K (FILTER (\(m,n). ~(m = x))
                     (knowledge_gets_mem
                       (knowledge_to_canonical_fupd
-                        (K (insert a (lookup_any a (knowledge_to_canonical data) a)
+                        (combin_K (insert a (lookup_any a (knowledge_to_canonical data) a)
                               (knowledge_to_canonical data))) data))))
                (knowledge_to_canonical_fupd
-                 (K (insert a (lookup_any a (knowledge_to_canonical data) a)
+                 (combin_K (insert a (lookup_any a (knowledge_to_canonical data) a)
                        (knowledge_to_canonical data))) data)))))
       (knowledge_gets_mem_fupd
-         (K (FILTER (\(m,n). ~(m = x))
+         (combin_K (FILTER (\(m,n). ~(m = x))
               (knowledge_gets_mem
                 (knowledge_to_canonical_fupd
-                  (K (insert a (lookup_any a (knowledge_to_canonical data) a)
+                  (combin_K (insert a (lookup_any a (knowledge_to_canonical data) a)
                         (knowledge_to_canonical data))) data))))
          (knowledge_to_canonical_fupd
-           (K (insert a (lookup_any a (knowledge_to_canonical data) a)
+           (combin_K (insert a (lookup_any a (knowledge_to_canonical data) a)
                  (knowledge_to_canonical data))) data))` THEN
   MATCH_MP_TAC wf_data_cons_gets THEN REPEAT CONJ_TAC THENL
    [MATCH_MP_TAC wf_data_filter_gets THEN MATCH_MP_TAC wf_data_reinsert_canonical THEN
@@ -2915,12 +2915,12 @@ let WPROOF1AUX_CSE_CC_OPCURRHEAP_TAC : tactic =
   FIRST_X_ASSUM(MP_TAC o check WPROOF1AUX_CSE_is_eval_eq) THEN
   REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_OpCurrHeap"] THEN
   CASES_ON `wl_word_exp (s:(A,C,FFI)wl_state) (wl_Op b [wl_Var src; Lookup CurrHeap])` THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[]) THEN TRY(FIRST_ASSUM CONTR_TAC) THEN
   COND_CASES_TAC THENL
    [REWRITE_TAC[PAIR_EQ] THEN DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
-    ASM_REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_OpCurrHeap"] THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_OpCurrHeap"] THEN CAKE_REWRITE_TAC[] THEN
     ASM_SIMP_TAC[data_inv_set_var; WPROOF1AUX_CSE_lookup_invalidate_self;
                  WPROOF1AUX_CSE_data_inv_invalidate];
     DISCH_TAC THEN REWRITE_TAC[] THEN MATCH_MP_TAC add_to_data_OpCurrHeap_correct THEN
@@ -2956,7 +2956,7 @@ let WPROOF1AUX_CSE_CC_GET_TAC : tactic =
   FIRST_X_ASSUM(MP_TAC o check WPROOF1AUX_CSE_is_eval_eq) THEN
   REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_Get"] THEN
   WPROOF1AUX_CSE_OCASES_TAC `wl_get_store name (s:(A,C,FFI)wl_state)` `w:(A)word_loc` THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[]) THEN TRY(FIRST_ASSUM CONTR_TAC) THEN
   SUBGOAL_THEN `data_inv (invalidate_data data v) (s:(A,C,FFI)wl_state)` ASSUME_TAC THENL
@@ -2965,14 +2965,14 @@ let WPROOF1AUX_CSE_CC_GET_TAC : tactic =
   DISCH_TAC THEN
   WPROOF1AUX_CSE_OCASES_TAC `ALOOKUP (knowledge_gets_mem (invalidate_data data v)) name`
     `k:num` THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   COND_CASES_TAC THEN REWRITE_TAC[PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN REWRITE_TAC[] THENL
    [(* NONE, EVEN *)
-    ASM_REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_Get"] THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_Get"] THEN CAKE_REWRITE_TAC[] THEN
     ASM_SIMP_TAC[data_inv_set_var];
     (* NONE, ODD *)
-    ASM_REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_Get"] THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_Get"] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[knowledge_INFO.ri_fupdcanon] THEN
     MATCH_MP_TAC data_inv_insert_gets THEN EXISTS_TAC `w:(A)word_loc` THEN
     ASM_SIMP_TAC[data_inv_set_var; GSYM NOT_EVEN; wl_get_var_set_var] THEN
@@ -3023,27 +3023,27 @@ let WPROOF1AUX_CSE_CC_SET_TAC : tactic =
   TRY(FIRST_ASSUM CONTR_TAC) THEN
   FIRST_X_ASSUM(MP_TAC o check WPROOF1AUX_CSE_is_cse_eq) THEN
   REWRITE_TAC[word_cse_def; LET_DEF; LET_END_DEF; dest_Var_def] THEN
-  CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN CASE_REWRITE_TAC[] THEN
+  CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN CAKE_REWRITE_TAC[] THEN
   FIRST_X_ASSUM(MP_TAC o check WPROOF1AUX_CSE_is_eval_eq) THEN
   REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_Set"; wl_word_exp_def] THEN
   COND_CASES_TAC THENL
    [REWRITE_TAC[PAIR_EQ] THEN DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
     RULE_ASSUM_TAC(REWRITE_RULE[]) THEN FIRST_ASSUM CONTR_TAC; ALL_TAC] THEN
   WPROOF1AUX_CSE_OCASES_TAC `wl_get_var a (s:(A,C,FFI)wl_state)` `w:(A)word_loc` THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[]) THEN TRY(FIRST_ASSUM CONTR_TAC) THEN
   COND_CASES_TAC THENL
    [REWRITE_TAC[PAIR_EQ] THEN DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
     REWRITE_TAC[data_inv_empty] THEN
     ASM_REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_Set"; wl_word_exp_def] THEN
-    CASE_REWRITE_TAC[];
+    CAKE_REWRITE_TAC[];
     ALL_TAC] THEN
   COND_CASES_TAC THEN REWRITE_TAC[PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN REWRITE_TAC[] THEN
   (CONJ_TAC THENL
    [ASM_REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_Set"; wl_word_exp_def] THEN
-    CASE_REWRITE_TAC[];
+    CAKE_REWRITE_TAC[];
     ALL_TAC]) THENL
    [(* EVEN: only the gets of v are dropped *)
     MATCH_MP_TAC data_inv_set_store THEN
@@ -3052,25 +3052,25 @@ let WPROOF1AUX_CSE_CC_SET_TAC : tactic =
     (* ODD: the new fact v -> canonical register of a *)
     WPROOF1AUX_CSE_REC_TAC
      `knowledge_gets_mem_fupd
-        (K (CONS (v,canonicalRegs data a)
+        (combin_K (CONS (v,canonicalRegs data a)
              (knowledge_gets_mem
                (knowledge_gets_mem_fupd
-                 (K (FILTER (\(m,n). ~(m = v))
+                 (combin_K (FILTER (\(m,n). ~(m = v))
                       (knowledge_gets_mem
                         (knowledge_to_canonical_fupd
-                          (K (insert a (lookup_any a (knowledge_to_canonical data) a)
+                          (combin_K (insert a (lookup_any a (knowledge_to_canonical data) a)
                                 (knowledge_to_canonical data))) data))))
                  (knowledge_to_canonical_fupd
-                   (K (insert a (lookup_any a (knowledge_to_canonical data) a)
+                   (combin_K (insert a (lookup_any a (knowledge_to_canonical data) a)
                          (knowledge_to_canonical data))) data)))))
         (knowledge_gets_mem_fupd
-           (K (FILTER (\(m,n). ~(m = v))
+           (combin_K (FILTER (\(m,n). ~(m = v))
                 (knowledge_gets_mem
                   (knowledge_to_canonical_fupd
-                    (K (insert a (lookup_any a (knowledge_to_canonical data) a)
+                    (combin_K (insert a (lookup_any a (knowledge_to_canonical data) a)
                           (knowledge_to_canonical data))) data))))
            (knowledge_to_canonical_fupd
-             (K (insert a (lookup_any a (knowledge_to_canonical data) a)
+             (combin_K (insert a (lookup_any a (knowledge_to_canonical data) a)
                    (knowledge_to_canonical data))) data))` THEN
     MATCH_MP_TAC data_inv_cons_gets THEN EXISTS_TAC `w:(A)word_loc` THEN
     REPEAT CONJ_TAC THENL
@@ -3095,7 +3095,7 @@ let WPROOF1AUX_CSE_arith_untracked = prove
      data_inv data s1`,
   GEN_TAC THEN STRUCT_CASES_TAC (ISPEC `a:(A)asm_arith` (cases "asm_arith")) THEN
   TRY(STRUCT_CASES_TAC (ISPEC `a3:(A)reg_imm` (cases "reg_imm"))) THEN
-  REWRITE_TAC[wl_inst_def; arithWrites_def; ALL] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[wl_inst_def; arithWrites_def; ALL] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[wl_assign_def; LET_DEF; LET_END_DEF] THEN
   CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
   REPEAT GEN_TAC THEN DISCH_THEN(CONJUNCTS_THEN2 MP_TAC STRIP_ASSUME_TAC) THEN
@@ -3109,7 +3109,7 @@ let WPROOF1AUX_CSE_fp_untracked = prove
      ALL (\r. lookup r (knowledge_to_canonical data) = NONE) (fpWrites fp) ==>
      data_inv data s1`,
   GEN_TAC THEN STRUCT_CASES_TAC (ISPEC `fp:fp` (cases "fp")) THEN
-  REWRITE_TAC[wl_inst_def; fpWrites_def; ALL] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[wl_inst_def; fpWrites_def; ALL] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
   CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
   REPEAT GEN_TAC THEN DISCH_THEN(CONJUNCTS_THEN2 MP_TAC STRIP_ASSUME_TAC) THEN
@@ -3127,7 +3127,7 @@ let WPROOF1AUX_CSE_arith_set_first = prove
   STRUCT_CASES_TAC (ISPEC `a:(A)asm_arith` (cases "asm_arith")) THEN
   TRY(STRUCT_CASES_TAC (ISPEC `a3:(A)reg_imm` (cases "reg_imm"))) THEN
   REWRITE_TAC[canonicalArith_def; canonicalImmReg'_def; can_mem_arith_def; wl_inst_def;
-              firstRegOfArith_def] THEN CASE_REWRITE_TAC[] THEN
+              firstRegOfArith_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[wl_assign_def; LET_DEF; LET_END_DEF] THEN
   CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
   REPEAT GEN_TAC THEN DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC MP_TAC) THEN
@@ -3140,7 +3140,7 @@ let WPROOF1AUX_CSE_load_set = prove
      ~is_store op /\ wl_inst (Mem op r (Addr a ofs)) s = SOME s1 ==>
      ?w. s1 = wl_set_var r w s`,
   GEN_TAC THEN STRUCT_CASES_TAC (ISPEC `op:memop` (cases "memop")) THEN
-  REWRITE_TAC[is_store_def; wl_inst_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[is_store_def; wl_inst_def] THEN CAKE_REWRITE_TAC[] THEN
   REPEAT GEN_TAC THEN
   REPEAT (CASE_TAC ORELSE PAIRARG_TAC) THEN
   REWRITE_TAC[option_INJ; option_DISTINCT; GSYM option_DISTINCT] THEN
@@ -3149,9 +3149,9 @@ let WPROOF1AUX_CSE_load_set = prove
 let WPROOF1AUX_CSE_store_mem = prove
  (`!op r a ofs (s:(A,C,FFI)wl_state) s1.
      is_store op /\ wl_inst (Mem op r (Addr a ofs)) s = SOME s1 ==>
-     ?m. s1 = wl_state_memory_fupd (K m) s`,
+     ?m. s1 = wl_state_memory_fupd (combin_K m) s`,
   GEN_TAC THEN STRUCT_CASES_TAC (ISPEC `op:memop` (cases "memop")) THEN
-  REWRITE_TAC[is_store_def; wl_inst_def; wl_mem_store_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[is_store_def; wl_inst_def; wl_mem_store_def] THEN CAKE_REWRITE_TAC[] THEN
   REPEAT GEN_TAC THEN
   REPEAT (CASE_TAC ORELSE PAIRARG_TAC ORELSE COND_CASES_TAC) THEN
   REWRITE_TAC[option_INJ; option_DISTINCT; GSYM option_DISTINCT] THEN
@@ -3160,7 +3160,7 @@ let WPROOF1AUX_CSE_store_mem = prove
 let WPROOF1AUX_CSE_pair_case_id = prove
  (CASE_TERM `!x:A#B. (match x with (a,b) -> (a,b)) = x`,
   GEN_TAC THEN MP_TAC(ISPEC `x:A#B` PAIR_SURJECTIVE) THEN STRIP_TAC THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]);;
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]);;
 
 (* the Inst case of comp_correct, for a successful instruction *)
 
@@ -3171,17 +3171,17 @@ let WPROOF1AUX_CSE_cc_inst = prove
   MATCH_MP_TAC inst_INDUCT THEN REPEAT CONJ_TAC THENL
    [(* Skip *)
     REPEAT GEN_TAC THEN REWRITE_TAC[word_cseInst_def; wl_inst_def; PAIR_EQ] THEN
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[option_INJ] THEN STRIP_TAC THEN RVEQ_TAC THEN
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[option_INJ] THEN STRIP_TAC THEN RVEQ_TAC THEN
     ASM_REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_Inst"; wl_inst_def] THEN
-    CASE_REWRITE_TAC[];
+    CAKE_REWRITE_TAC[];
     (* Const *)
     MAP_EVERY X_GEN_TAC [`r:num`; `w:A word`; `s:(A,C,FFI)wl_state`;
                          `s1:(A,C,FFI)wl_state`; `data:knowledge`; `p':(A)wl_prog`;
                          `data':knowledge`] THEN
     REWRITE_TAC[word_cseInst_def; LET_DEF; LET_END_DEF] THEN
     CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
-    REWRITE_TAC[wl_inst_def] THEN CASE_REWRITE_TAC[] THEN
-    REWRITE_TAC[wl_assign_def; wl_word_exp_def] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[wl_inst_def] THEN CAKE_REWRITE_TAC[] THEN
+    REWRITE_TAC[wl_assign_def; wl_word_exp_def] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[option_INJ] THEN
     DISCH_THEN(CONJUNCTS_THEN2 (SUBST_ALL_TAC o SYM) (CONJUNCTS_THEN2 ASSUME_TAC MP_TAC)) THEN
     COND_CASES_TAC THENL
@@ -3216,9 +3216,9 @@ let WPROOF1AUX_CSE_cc_inst = prove
                             `a:(A)asm_arith`;
                             `canonicalArith (invalidate_regs data (arithWrites a))
                                (a:(A)asm_arith)`] THEN
-      ASM_REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_Inst"] THEN CASE_REWRITE_TAC[];
+      ASM_REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_Inst"] THEN CAKE_REWRITE_TAC[];
       REWRITE_TAC[PAIR_EQ] THEN DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
-      ASM_REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_Inst"] THEN CASE_REWRITE_TAC[] THEN
+      ASM_REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_Inst"] THEN CAKE_REWRITE_TAC[] THEN
       MATCH_MP_TAC WPROOF1AUX_CSE_arith_untracked THEN
       MAP_EVERY EXISTS_TAC [`a:(A)asm_arith`; `s:(A,C,FFI)wl_state`] THEN
       ASM_REWRITE_TAC[GSYM ALL_MEM] THEN SIMP_TAC[lookup_invalidate_regs]];
@@ -3236,7 +3236,7 @@ let WPROOF1AUX_CSE_cc_inst = prove
                     `s1:(A,C,FFI)wl_state`] WPROOF1AUX_CSE_store_mem) THEN
       ASM_REWRITE_TAC[] THEN
       DISCH_THEN(X_CHOOSE_THEN `m:A word->(A)word_loc` SUBST_ALL_TAC) THEN
-      ASM_REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_Inst"] THEN CASE_REWRITE_TAC[] THEN
+      ASM_REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_Inst"] THEN CAKE_REWRITE_TAC[] THEN
       ASM_SIMP_TAC[data_inv_memory];
       ALL_TAC] THEN
     MP_TAC(SPECL [`op:memop`; `r:num`; `a0:num`; `a1:A word`; `s:(A,C,FFI)wl_state`;
@@ -3244,7 +3244,7 @@ let WPROOF1AUX_CSE_cc_inst = prove
     ASM_REWRITE_TAC[] THEN DISCH_THEN(X_CHOOSE_THEN `w:(A)word_loc` SUBST_ALL_TAC) THEN
     COND_CASES_TAC THENL
      [REWRITE_TAC[PAIR_EQ] THEN DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
-      ASM_REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_Inst"] THEN CASE_REWRITE_TAC[] THEN
+      ASM_REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_Inst"] THEN CAKE_REWRITE_TAC[] THEN
       ASM_SIMP_TAC[data_inv_set_var; WPROOF1AUX_CSE_lookup_invalidate_self;
                    WPROOF1AUX_CSE_data_inv_invalidate];
       DISCH_TAC THEN MATCH_MP_TAC add_to_load_correct THEN
@@ -3252,12 +3252,12 @@ let WPROOF1AUX_CSE_cc_inst = prove
                             `canonicalRegs' r (invalidate_data data r) a0`; `a1:A word`] THEN
       RULE_ASSUM_TAC(REWRITE_RULE[DE_MORGAN_THM]) THEN
       ASM_SIMP_TAC[WPROOF1AUX_CSE_lookup_invalidate_self; WPROOF1AUX_CSE_data_inv_invalidate] THEN
-      ASM_REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_Inst"] THEN CASE_REWRITE_TAC[]];
+      ASM_REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_Inst"] THEN CAKE_REWRITE_TAC[]];
     (* FP *)
     MAP_EVERY X_GEN_TAC [`fp:fp`; `s:(A,C,FFI)wl_state`; `s1:(A,C,FFI)wl_state`;
                          `data:knowledge`; `p':(A)wl_prog`; `data':knowledge`] THEN
     REWRITE_TAC[word_cseInst_def; PAIR_EQ] THEN STRIP_TAC THEN RVEQ_TAC THEN
-    ASM_REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_Inst"] THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_Inst"] THEN CAKE_REWRITE_TAC[] THEN
     MATCH_MP_TAC WPROOF1AUX_CSE_fp_untracked THEN
     MAP_EVERY EXISTS_TAC [`fp:fp`; `s:(A,C,FFI)wl_state`] THEN
     ASM_SIMP_TAC[data_inv_invalidate_regs; GSYM ALL_MEM; lookup_invalidate_regs]]);;
@@ -3270,7 +3270,7 @@ let WPROOF1AUX_CSE_CC_INST_TAC : tactic =
   REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_Inst"] THEN
   WPROOF1AUX_CSE_OCASES_TAC `wl_inst (i:(A)inst) (s:(A,C,FFI)wl_state)`
     `s1:(A,C,FFI)wl_state` THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
   RULE_ASSUM_TAC(REWRITE_RULE[]) THEN TRY(FIRST_ASSUM CONTR_TAC) THEN
   REWRITE_TAC[] THEN MATCH_MP_TAC WPROOF1AUX_CSE_cc_inst THEN
@@ -3288,8 +3288,8 @@ let WPROOF1AUX_CSE_FFI_CASES_TAC : tactic = fun (asl,w as g) ->
 let WPROOF1AUX_CSE_share_shape = prove
  (`!op v (ad:A word) (s:(A,C,FFI)wl_state) s1.
      share_inst op v ad s = ((NONE:((A)wl_result)option), s1) ==>
-     ?f. (is_store op /\ s1 = wl_state_ffi_fupd (K f) s) \/
-         (~is_store op /\ ?w. s1 = wl_set_var v w (wl_state_ffi_fupd (K f) s))`,
+     ?f. (is_store op /\ s1 = wl_state_ffi_fupd (combin_K f) s) \/
+         (~is_store op /\ ?w. s1 = wl_set_var v w (wl_state_ffi_fupd (combin_K f) s))`,
   GEN_TAC THEN STRUCT_CASES_TAC (ISPEC `op:memop` (cases "memop")) THEN
   REWRITE_TAC[share_inst_def; is_store_def] THEN REPEAT GEN_TAC THEN
   REWRITE_TAC[wl_sh_mem_load_def; wl_sh_mem_load_byte_def; wl_sh_mem_load16_def;
@@ -3297,7 +3297,7 @@ let WPROOF1AUX_CSE_share_shape = prove
               wl_sh_mem_store16_def; wl_sh_mem_store32_def] THEN
   REPEAT (CASE_TAC ORELSE COND_CASES_TAC ORELSE WPROOF1AUX_CSE_FFI_CASES_TAC) THEN
   REWRITE_TAC[sh_mem_set_var_def; PAIR_EQ; option_DISTINCT; GSYM option_DISTINCT] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[sh_mem_set_var_def; PAIR_EQ; option_DISTINCT; GSYM option_DISTINCT] THEN
   DISCH_THEN(SUBST1_TAC o SYM) THEN MESON_TAC[]);;
 
@@ -3327,18 +3327,18 @@ let WPROOF1AUX_CSE_CC_MUSTTERMINATE_TAC : tactic =
   REWRITE_TAC[word_cse_def] THEN
   MP_TAC(ISPEC `word_cse data (p:(A)wl_prog)` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `d1:knowledge` (X_CHOOSE_THEN `q1:(A)wl_prog` ASSUME_TAC)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
   FIRST_X_ASSUM(MP_TAC o check WPROOF1AUX_CSE_is_eval_eq) THEN
   REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "MustTerminate"] THEN
   COND_CASES_TAC THENL [WPROOF1AUX_CSE_CC_ERR_TAC; ALL_TAC] THEN
   MP_TAC(ISPEC `wl_evaluate (p:(A)wl_prog,
-                   wl_state_clock_fupd (K (MustTerminate_limit (:A)))
-                     (wl_state_termdep_fupd (K (wl_state_termdep s - 1))
+                   wl_state_clock_fupd (combin_K (MustTerminate_limit (:A)))
+                     (wl_state_termdep_fupd (combin_K (wl_state_termdep s - 1))
                         (s:(A,C,FFI)wl_state)))` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `r1:((A)wl_result)option`
     (X_CHOOSE_THEN `t1:(A,C,FFI)wl_state` ASSUME_TAC)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   COND_CASES_TAC THENL [WPROOF1AUX_CSE_CC_ERR_TAC; ALL_TAC] THEN
   REWRITE_TAC[PAIR_EQ] THEN DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
   FIRST_X_ASSUM(fun th ->
@@ -3348,7 +3348,7 @@ let WPROOF1AUX_CSE_CC_MUSTTERMINATE_TAC : tactic =
                (MP th (ASSUME `~(wl_state_termdep (s:(A,C,FFI)wl_state) = 0)`)))
     else NO_TAC) THEN
   ASM_SIMP_TAC[data_inv_clock] THEN STRIP_TAC THEN
-  ASM_REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "MustTerminate"] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "MustTerminate"] THEN CAKE_REWRITE_TAC[] THEN
   ASM_SIMP_TAC[data_inv_clock];;
 
 let WPROOF1AUX_CSE_CC_SEQ_TAC : tactic =
@@ -3359,17 +3359,17 @@ let WPROOF1AUX_CSE_CC_SEQ_TAC : tactic =
   REWRITE_TAC[word_cse_def] THEN
   MP_TAC(ISPEC `word_cse data (c1:(A)wl_prog)` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `d1:knowledge` (X_CHOOSE_THEN `q1:(A)wl_prog` ASSUME_TAC)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   MP_TAC(ISPEC `word_cse d1 (c2:(A)wl_prog)` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `d2:knowledge` (X_CHOOSE_THEN `q2:(A)wl_prog` ASSUME_TAC)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
   FIRST_X_ASSUM(MP_TAC o check WPROOF1AUX_CSE_is_eval_eq) THEN
   REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_Seq"] THEN
   MP_TAC(ISPEC `wl_evaluate (c1:(A)wl_prog, s:(A,C,FFI)wl_state)` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `r1:((A)wl_result)option`
     (X_CHOOSE_THEN `t1:(A,C,FFI)wl_state` ASSUME_TAC)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   COND_CASES_TAC THENL
    [FIRST_X_ASSUM SUBST_ALL_TAC THEN DISCH_TAC THEN
     REMOVE_THEN "ih1" (MP_TAC o SPECL [`NONE:((A)wl_result)option`; `t1:(A,C,FFI)wl_state`;
@@ -3379,13 +3379,13 @@ let WPROOF1AUX_CSE_CC_SEQ_TAC : tactic =
     DISCH_THEN(MP_TAC o SPECL [`res:((A)wl_result)option`; `s':(A,C,FFI)wl_state`;
                                `d1:knowledge`; `q2:(A)wl_prog`; `d2:knowledge`]) THEN
     ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
-    ASM_REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_Seq"] THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_Seq"] THEN CAKE_REWRITE_TAC[] THEN
     ASM_REWRITE_TAC[];
     REWRITE_TAC[PAIR_EQ] THEN DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
     REMOVE_THEN "ih1" (MP_TAC o SPECL [`r1:((A)wl_result)option`; `t1:(A,C,FFI)wl_state`;
                                        `data:knowledge`; `q1:(A)wl_prog`; `d1:knowledge`]) THEN
     ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
-    ASM_REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_Seq"] THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_Seq"] THEN CAKE_REWRITE_TAC[] THEN
     ASM_REWRITE_TAC[]];;
 
 let WPROOF1AUX_CSE_CC_IF_TAC : tactic =
@@ -3396,10 +3396,10 @@ let WPROOF1AUX_CSE_CC_IF_TAC : tactic =
   REWRITE_TAC[word_cse_def] THEN
   MP_TAC(ISPEC `word_cse data (c1:(A)wl_prog)` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `d1:knowledge` (X_CHOOSE_THEN `q1:(A)wl_prog` ASSUME_TAC)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   MP_TAC(ISPEC `word_cse data (c2:(A)wl_prog)` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `d2:knowledge` (X_CHOOSE_THEN `q2:(A)wl_prog` ASSUME_TAC)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
   SUBGOAL_THEN `wf_data (:A) d1 /\ wf_data (:A) d2` STRIP_ASSUME_TAC THENL
    [MP_TAC(ISPECL [`c1:(A)wl_prog`; `data:knowledge`] word_cse_wf_data) THEN
@@ -3410,19 +3410,19 @@ let WPROOF1AUX_CSE_CC_IF_TAC : tactic =
   FIRST_X_ASSUM(MP_TAC o check WPROOF1AUX_CSE_is_eval_eq) THEN
   REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_If"] THEN
   WPROOF1AUX_CSE_OCASES_TAC `wl_get_var r1 (s:(A,C,FFI)wl_state)` `x:(A)word_loc` THEN
-  CASE_REWRITE_TAC[] THEN TRY WPROOF1AUX_CSE_CC_ERR_TAC THEN
+  CAKE_REWRITE_TAC[] THEN TRY WPROOF1AUX_CSE_CC_ERR_TAC THEN
   WPROOF1AUX_CSE_OCASES_TAC `wl_get_var_imm (ri:(A)reg_imm) (s:(A,C,FFI)wl_state)`
     `y:(A)word_loc` THEN
-  CASE_REWRITE_TAC[] THEN TRY WPROOF1AUX_CSE_CC_ERR_TAC THEN
+  CAKE_REWRITE_TAC[] THEN TRY WPROOF1AUX_CSE_CC_ERR_TAC THEN
   WPROOF1AUX_CSE_OCASES_TAC `wl_word_cmp cmp (x:(A)word_loc) y` `b:bool` THEN
-  CASE_REWRITE_TAC[] THEN TRY WPROOF1AUX_CSE_CC_ERR_TAC THEN
+  CAKE_REWRITE_TAC[] THEN TRY WPROOF1AUX_CSE_CC_ERR_TAC THEN
   COND_CASES_TAC THEN DISCH_TAC THENL
    [REMOVE_THEN "ih1" (MP_TAC o SPECL [`x:(A)word_loc`; `y:(A)word_loc`; `b:bool`]) THEN
     ASM_REWRITE_TAC[] THEN
     DISCH_THEN(MP_TAC o SPECL [`res:((A)wl_result)option`; `s':(A,C,FFI)wl_state`;
                                `data:knowledge`; `q1:(A)wl_prog`; `d1:knowledge`]) THEN
     ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
-    ASM_REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_If"] THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_If"] THEN CAKE_REWRITE_TAC[] THEN
     ASM_REWRITE_TAC[] THEN DISCH_TAC THEN RES_TAC THEN
     MATCH_MP_TAC data_inv_merge_l THEN RULE_ASSUM_TAC(REWRITE_RULE[data_inv_def]) THEN
     ASM_REWRITE_TAC[];
@@ -3431,7 +3431,7 @@ let WPROOF1AUX_CSE_CC_IF_TAC : tactic =
     DISCH_THEN(MP_TAC o SPECL [`res:((A)wl_result)option`; `s':(A,C,FFI)wl_state`;
                                `data:knowledge`; `q2:(A)wl_prog`; `d2:knowledge`]) THEN
     ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
-    ASM_REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_If"] THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_If"] THEN CAKE_REWRITE_TAC[] THEN
     ASM_REWRITE_TAC[] THEN DISCH_TAC THEN RES_TAC THEN
     MATCH_MP_TAC data_inv_merge_r THEN RULE_ASSUM_TAC(REWRITE_RULE[data_inv_def]) THEN
     ASM_REWRITE_TAC[]];;
@@ -3444,17 +3444,17 @@ let WPROOF1AUX_CSE_CC_LOOP_TAC : tactic =
   REWRITE_TAC[word_cse_def] THEN
   MP_TAC(ISPEC `word_cse empty_data (c:(A)wl_prog)` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `d1:knowledge` (X_CHOOSE_THEN `q1:(A)wl_prog` ASSUME_TAC)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN REWRITE_TAC[data_inv_empty] THEN
   FIRST_X_ASSUM(MP_TAC o check WPROOF1AUX_CSE_is_eval_eq) THEN
   ONCE_REWRITE_TAC[WPROOF1AUX_CSE_eval_clause "wl_Loop"] THEN
   WPROOF1AUX_CSE_OCASES_TAC `wl_cut_state (names,LN) (s:(A,C,FFI)wl_state)`
     `s0:(A,C,FFI)wl_state` THEN
-  CASE_REWRITE_TAC[] THEN TRY WPROOF1AUX_CSE_CC_ERR_TAC THEN
+  CAKE_REWRITE_TAC[] THEN TRY WPROOF1AUX_CSE_CC_ERR_TAC THEN
   MP_TAC(ISPEC `wl_evaluate (c:(A)wl_prog, s0:(A,C,FFI)wl_state)` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `r:((A)wl_result)option`
     (X_CHOOSE_THEN `s1:(A,C,FFI)wl_state` ASSUME_TAC)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   ASM_CASES_TAC `r = SOME (wl_Error:(A)wl_result)` THENL
    [FIRST_X_ASSUM SUBST_ALL_TAC THEN
     REWRITE_TAC[wl_cont_loop_def; wl_exit_loop_def; option_INJ] THEN
@@ -3466,7 +3466,7 @@ let WPROOF1AUX_CSE_CC_LOOP_TAC : tactic =
                                `empty_data`; `q1:(A)wl_prog`; `d1:knowledge`]) THEN
     ASM_REWRITE_TAC[data_inv_empty] THEN SIMP_TAC[];
     ALL_TAC] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
   COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
   DISCH_TAC THEN
@@ -3477,7 +3477,7 @@ let WPROOF1AUX_CSE_CC_LOOP_TAC : tactic =
                              `empty_data`; `wl_Loop names q1 exit_names:(A)wl_prog`;
                              `empty_data`]) THEN
   ASM_REWRITE_TAC[wl_STOP_def; flat_exp_conventions_def; data_inv_empty; word_cse_def] THEN
-  CASE_REWRITE_TAC[] THEN SIMP_TAC[];;
+  CAKE_REWRITE_TAC[] THEN SIMP_TAC[];;
 
 let WPROOF1AUX_CSE_CC_SKIP_TAC : tactic =
   WPROOF1AUX_CSE_CC_SIMPLE_TAC THEN
@@ -3531,7 +3531,7 @@ let word_common_subexp_elim_correct = prove
   REWRITE_TAC[word_common_subexp_elim_def; LET_DEF; LET_END_DEF] THEN
   MP_TAC(ISPEC `word_cse empty_data (p:(A)wl_prog)` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `d:knowledge` (X_CHOOSE_THEN `q:(A)wl_prog` ASSUME_TAC)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN STRIP_TAC THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN STRIP_TAC THEN
   MP_TAC(ISPECL [`p:(A)wl_prog`; `s:(A,C,FFI)wl_state`; `res:((A)wl_result)option`;
                  `s1:(A,C,FFI)wl_state`; `empty_data`; `q:(A)wl_prog`; `d:knowledge`]
                 word_cseProof_comp_correct) THEN

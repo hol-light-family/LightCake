@@ -74,7 +74,7 @@ let WORDP1AUX_call_graph_def = sem1aux_def_wf
   `inv_image (MEASURE I LEX MEASURE I LEX MEASURE I)
      (\x:((num#(A)wl_prog)spt)#num#(num list)#num#(A)wl_prog.
         (sptree_size (FST x), FST (SND (SND (SND x))) - LENGTH (FST (SND (SND x))),
-         wl_prog_size (K 0) (SND (SND (SND (SND x))))))`
+         wl_prog_size (combin_K 0) (SND (SND (SND (SND x))))))`
   WORDP1AUX_CG_TAC
   `(call_graph funs n ns total' (wl_Seq p1 p2:(A)wl_prog) =
       mk_Branch (call_graph funs n ns total' p1) (call_graph funs n ns total' p2)) /\

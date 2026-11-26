@@ -134,263 +134,263 @@ let cmlG_def = new_definition
    grammar_REC (INL nTopLevelDecs)
   (FEMPTY
    |+ (INL nUQTyOp,
-         {[TOK (AlphaT m)] | m | T} UNION
-         {[TOK (SymbolT m)] | m | T})
+         {[grammar_TOK (AlphaT m)] | m | T} UNION
+         {[grammar_TOK (SymbolT m)] | m | T})
    |+ (INL nTyvarN,
-         {[TOK (TyvarT m)] | m | T})
+         {[grammar_TOK (TyvarT m)] | m | T})
    |+ (INL nTyOp,
-         {[NT (INL nUQTyOp)]} UNION
-         {[TOK (LongidT p m)] | m,p | T})
+         {[grammar_NT (INL nUQTyOp)]} UNION
+         {[grammar_TOK (LongidT p m)] | m,p | T})
    |+ (INL nTypeList1,
-         {[NT (INL nType)]} UNION
-         {[NT (INL nType); TOK CommaT; NT (INL nTypeList1)]})
+         {[grammar_NT (INL nType)]} UNION
+         {[grammar_NT (INL nType); grammar_TOK CommaT; grammar_NT (INL nTypeList1)]})
    |+ (INL nTypeList2,
-         {[NT (INL nType); TOK CommaT; NT (INL nTypeList1)]})
+         {[grammar_NT (INL nType); grammar_TOK CommaT; grammar_NT (INL nTypeList1)]})
    |+ (INL nTbase,
-         (({[TOK (TyvarT m)] | m | T} UNION
-         {[NT (INL nTyOp)]}) UNION
-         {[TOK LparT; NT (INL nTypeList2); TOK RparT; NT (INL nTyOp)]}) UNION
-         {[TOK LparT; NT (INL nType); TOK RparT]})
+         (({[grammar_TOK (TyvarT m)] | m | T} UNION
+         {[grammar_NT (INL nTyOp)]}) UNION
+         {[grammar_TOK LparT; grammar_NT (INL nTypeList2); grammar_TOK RparT; grammar_NT (INL nTyOp)]}) UNION
+         {[grammar_TOK LparT; grammar_NT (INL nType); grammar_TOK RparT]})
    |+ (INL nDType,
-         {[NT (INL nDType); NT (INL nTyOp)]} UNION
-         {[NT (INL nTbase)]})
+         {[grammar_NT (INL nDType); grammar_NT (INL nTyOp)]} UNION
+         {[grammar_NT (INL nTbase)]})
    |+ (INL nPType,
-         {[NT (INL nDType); TOK StarT; NT (INL nPType)]} UNION
-         {[NT (INL nDType)]})
+         {[grammar_NT (INL nDType); grammar_TOK StarT; grammar_NT (INL nPType)]} UNION
+         {[grammar_NT (INL nDType)]})
    |+ (INL nType,
-         {[NT (INL nPType)]} UNION
-         {[NT (INL nPType); TOK ArrowT; NT (INL nType)]})
+         {[grammar_NT (INL nPType)]} UNION
+         {[grammar_NT (INL nPType); grammar_TOK ArrowT; grammar_NT (INL nType)]})
    |+ (INL nTbaseList,
          {[]} UNION
-         {[NT (INL nPTbase); NT (INL nTbaseList)]})
+         {[grammar_NT (INL nPTbase); grammar_NT (INL nTbaseList)]})
    |+ (INL nPTbase,
-         ({[TOK (TyvarT m)] | m | T} UNION
-         {[NT (INL nTyOp)]}) UNION
-         {[TOK LparT; NT (INL nType); TOK RparT]})
+         ({[grammar_TOK (TyvarT m)] | m | T} UNION
+         {[grammar_NT (INL nTyOp)]}) UNION
+         {[grammar_TOK LparT; grammar_NT (INL nType); grammar_TOK RparT]})
    |+ (INL nTypeName,
-         ({[NT (INL nUQTyOp)]} UNION
-         {[TOK LparT; NT (INL nTyVarList); TOK RparT; NT (INL nUQTyOp)]}) UNION
-         {[TOK (TyvarT m); NT (INL nUQTyOp)] | m | T})
+         ({[grammar_NT (INL nUQTyOp)]} UNION
+         {[grammar_TOK LparT; grammar_NT (INL nTyVarList); grammar_TOK RparT; grammar_NT (INL nUQTyOp)]}) UNION
+         {[grammar_TOK (TyvarT m); grammar_NT (INL nUQTyOp)] | m | T})
    |+ (INL nTyVarList,
-         {[NT (INL nTyvarN)]} UNION
-         {[NT (INL nTyVarList); TOK CommaT; NT (INL nTyvarN)]})
+         {[grammar_NT (INL nTyvarN)]} UNION
+         {[grammar_NT (INL nTyVarList); grammar_TOK CommaT; grammar_NT (INL nTyvarN)]})
    |+ (INL nDconstructor,
-         {[NT (INL nUQConstructorName); NT (INL nTbaseList)]})
+         {[grammar_NT (INL nUQConstructorName); grammar_NT (INL nTbaseList)]})
    |+ (INL nDtypeCons,
-         {[NT (INL nDconstructor)]} UNION
-         {[NT (INL nDtypeCons); TOK BarT; NT (INL nDconstructor)]})
+         {[grammar_NT (INL nDconstructor)]} UNION
+         {[grammar_NT (INL nDtypeCons); grammar_TOK BarT; grammar_NT (INL nDconstructor)]})
    |+ (INL nDtypeDecl,
-         {[NT (INL nTypeName); TOK EqualsT; NT (INL nDtypeCons)]})
+         {[grammar_NT (INL nTypeName); grammar_TOK EqualsT; grammar_NT (INL nDtypeCons)]})
    |+ (INL nDtypeDecls,
-         {[NT (INL nDtypeDecl)]} UNION
-         {[NT (INL nDtypeDecls); TOK AndT; NT (INL nDtypeDecl)]})
+         {[grammar_NT (INL nDtypeDecl)]} UNION
+         {[grammar_NT (INL nDtypeDecls); grammar_TOK AndT; grammar_NT (INL nDtypeDecl)]})
    |+ (INL nTypeDec,
-         {[TOK DatatypeT; NT (INL nDtypeDecls)]})
+         {[grammar_TOK DatatypeT; grammar_NT (INL nDtypeDecls)]})
    |+ (INL nTypeAbbrevDec,
-         {[TOK TypeT; NT (INL nTypeName); TOK EqualsT; NT (INL nType)]})
+         {[grammar_TOK TypeT; grammar_NT (INL nTypeName); grammar_TOK EqualsT; grammar_NT (INL nType)]})
    |+ (INL nUQConstructorName,
-         {[TOK (AlphaT s)] | s | ~(s = implode "") /\ isUpper (strsub s 0)})
+         {[grammar_TOK (AlphaT s)] | s | ~(s = implode "") /\ isUpper (strsub s 0)})
    |+ (INL nConstructorName,
-         {[NT (INL nUQConstructorName)]} UNION
-         {[TOK (LongidT str s)] | str,s |
+         {[grammar_NT (INL nUQConstructorName)]} UNION
+         {[grammar_TOK (LongidT str s)] | str,s |
           ~(s = implode "") /\ isAlpha (strsub s 0) /\ isUpper (strsub s 0)})
    |+ (INL nV,
-         {[TOK (AlphaT s)] | s |
+         {[grammar_TOK (AlphaT s)] | s |
           ~(s IN {implode "before", implode "div", implode "mod", implode "o"}) /\
           ~(s = implode "") /\ ~isUpper (strsub s 0)} UNION
-         {[TOK (SymbolT s)] | s | validPrefixSym (explode s)})
+         {[grammar_TOK (SymbolT s)] | s | validPrefixSym (explode s)})
    |+ (INL nFQV,
-         {[NT (INL nV)]} UNION
-         {[TOK (LongidT str s)] | str,s |
+         {[grammar_NT (INL nV)]} UNION
+         {[grammar_TOK (LongidT str s)] | str,s |
           ~(s = implode "") /\ (isAlpha (strsub s 0) ==> ~isUpper (strsub s 0))})
    |+ (INL nOpID,
-         ((({[TOK (LongidT str s)] | str,s | ~(s = implode "")} UNION
-         {[TOK (AlphaT s)] | s | ~(s = implode "")}) UNION
-         {[TOK (SymbolT s)] | s | ~(s = implode "")}) UNION
-         {[TOK StarT]}) UNION
-         {[TOK EqualsT]})
+         ((({[grammar_TOK (LongidT str s)] | str,s | ~(s = implode "")} UNION
+         {[grammar_TOK (AlphaT s)] | s | ~(s = implode "")}) UNION
+         {[grammar_TOK (SymbolT s)] | s | ~(s = implode "")}) UNION
+         {[grammar_TOK StarT]}) UNION
+         {[grammar_TOK EqualsT]})
    |+ (INL nEliteral,
-         ((({[TOK (tokens_IntT i)] | i | T} UNION
-         {[TOK (tokens_CharT c)] | c | T}) UNION
-         {[TOK (StringT m)] | m | T}) UNION
-         {[TOK (tokens_WordT n)] | n | T}) UNION
-         {[TOK (FFIT m)] | m | T})
+         ((({[grammar_TOK (tokens_IntT i)] | i | T} UNION
+         {[grammar_TOK (tokens_CharT c)] | c | T}) UNION
+         {[grammar_TOK (StringT m)] | m | T}) UNION
+         {[grammar_TOK (tokens_WordT n)] | n | T}) UNION
+         {[grammar_TOK (FFIT m)] | m | T})
    |+ (INL nEbase,
-         (((((((({[TOK LparT; NT (INL nEseq); TOK RparT]} UNION
-         {[NT (INL nEtuple)]}) UNION
-         {[TOK LparT; TOK RparT]}) UNION
-         {[NT (INL nFQV)]}) UNION
-         {[NT (INL nConstructorName)]}) UNION
-         {[NT (INL nEliteral)]}) UNION
-         {[TOK LetT; NT (INL nLetDecs); TOK InT; NT (INL nEseq); TOK EndT]}) UNION
-         {[TOK LbrackT; TOK RbrackT]}) UNION
-         {[TOK LbrackT; NT (INL nElist1); TOK RbrackT]}) UNION
-         {[TOK OpT; NT (INL nOpID)]})
+         (((((((({[grammar_TOK LparT; grammar_NT (INL nEseq); grammar_TOK RparT]} UNION
+         {[grammar_NT (INL nEtuple)]}) UNION
+         {[grammar_TOK LparT; grammar_TOK RparT]}) UNION
+         {[grammar_NT (INL nFQV)]}) UNION
+         {[grammar_NT (INL nConstructorName)]}) UNION
+         {[grammar_NT (INL nEliteral)]}) UNION
+         {[grammar_TOK LetT; grammar_NT (INL nLetDecs); grammar_TOK InT; grammar_NT (INL nEseq); grammar_TOK EndT]}) UNION
+         {[grammar_TOK LbrackT; grammar_TOK RbrackT]}) UNION
+         {[grammar_TOK LbrackT; grammar_NT (INL nElist1); grammar_TOK RbrackT]}) UNION
+         {[grammar_TOK OpT; grammar_NT (INL nOpID)]})
    |+ (INL nEseq,
-         {[NT (INL nE); TOK SemicolonT; NT (INL nEseq)]} UNION
-         {[NT (INL nE)]})
+         {[grammar_NT (INL nE); grammar_TOK SemicolonT; grammar_NT (INL nEseq)]} UNION
+         {[grammar_NT (INL nE)]})
    |+ (INL nEtuple,
-         {[TOK LparT; NT (INL nElist2); TOK RparT]})
+         {[grammar_TOK LparT; grammar_NT (INL nElist2); grammar_TOK RparT]})
    |+ (INL nElist2,
-         {[NT (INL nE); TOK CommaT; NT (INL nElist1)]})
+         {[grammar_NT (INL nE); grammar_TOK CommaT; grammar_NT (INL nElist1)]})
    |+ (INL nElist1,
-         {[NT (INL nE)]} UNION
-         {[NT (INL nE); TOK CommaT; NT (INL nElist1)]})
+         {[grammar_NT (INL nE)]} UNION
+         {[grammar_NT (INL nE); grammar_TOK CommaT; grammar_NT (INL nElist1)]})
    |+ (INL nEapp,
-         {[NT (INL nEapp); NT (INL nEbase)]} UNION
-         {[NT (INL nEbase)]})
+         {[grammar_NT (INL nEapp); grammar_NT (INL nEbase)]} UNION
+         {[grammar_NT (INL nEbase)]})
    |+ (INL nMultOps,
-         {[TOK (AlphaT (implode "div"))], [TOK (AlphaT (implode "mod"))],
-          [TOK StarT]} UNION
-         {[TOK (SymbolT s)] | s | validMultSym (explode s)})
+         {[grammar_TOK (AlphaT (implode "div"))], [grammar_TOK (AlphaT (implode "mod"))],
+          [grammar_TOK StarT]} UNION
+         {[grammar_TOK (SymbolT s)] | s | validMultSym (explode s)})
    |+ (INL nAddOps,
-         {[TOK (SymbolT s)] | s | validAddSym (explode s)})
+         {[grammar_TOK (SymbolT s)] | s | validAddSym (explode s)})
    |+ (INL nRelOps,
-         {[TOK (SymbolT s)] | s | validRelSym (explode s)} UNION
-         {[TOK EqualsT]})
+         {[grammar_TOK (SymbolT s)] | s | validRelSym (explode s)} UNION
+         {[grammar_TOK EqualsT]})
    |+ (INL nCompOps,
-         {[TOK (AlphaT (implode "o"))]} UNION
-         {[TOK (SymbolT (implode ":="))]})
+         {[grammar_TOK (AlphaT (implode "o"))]} UNION
+         {[grammar_TOK (SymbolT (implode ":="))]})
    |+ (INL nListOps,
-         {[TOK (SymbolT s)] | s | validListSym (explode s)})
+         {[grammar_TOK (SymbolT s)] | s | validListSym (explode s)})
    |+ (INL nEmult,
-         {[NT (INL nEmult); NT (INL nMultOps); NT (INL nEapp)]} UNION
-         {[NT (INL nEapp)]})
+         {[grammar_NT (INL nEmult); grammar_NT (INL nMultOps); grammar_NT (INL nEapp)]} UNION
+         {[grammar_NT (INL nEapp)]})
    |+ (INL nEadd,
-         {[NT (INL nEadd); NT (INL nAddOps); NT (INL nEmult)]} UNION
-         {[NT (INL nEmult)]})
+         {[grammar_NT (INL nEadd); grammar_NT (INL nAddOps); grammar_NT (INL nEmult)]} UNION
+         {[grammar_NT (INL nEmult)]})
    |+ (INL nElistop,
-         {[NT (INL nEadd); NT (INL nListOps); NT (INL nElistop)]} UNION
-         {[NT (INL nEadd)]})
+         {[grammar_NT (INL nEadd); grammar_NT (INL nListOps); grammar_NT (INL nElistop)]} UNION
+         {[grammar_NT (INL nEadd)]})
    |+ (INL nErel,
-         {[NT (INL nErel); NT (INL nRelOps); NT (INL nElistop)]} UNION
-         {[NT (INL nElistop)]})
+         {[grammar_NT (INL nErel); grammar_NT (INL nRelOps); grammar_NT (INL nElistop)]} UNION
+         {[grammar_NT (INL nElistop)]})
    |+ (INL nEcomp,
-         {[NT (INL nEcomp); NT (INL nCompOps); NT (INL nErel)]} UNION
-         {[NT (INL nErel)]})
+         {[grammar_NT (INL nEcomp); grammar_NT (INL nCompOps); grammar_NT (INL nErel)]} UNION
+         {[grammar_NT (INL nErel)]})
    |+ (INL nEbefore,
-         {[NT (INL nEbefore); TOK (AlphaT (implode "before")); NT (INL nEcomp)]} UNION
-         {[NT (INL nEcomp)]})
+         {[grammar_NT (INL nEbefore); grammar_TOK (AlphaT (implode "before")); grammar_NT (INL nEcomp)]} UNION
+         {[grammar_NT (INL nEcomp)]})
    |+ (INL nEtyped,
-         {[NT (INL nEbefore)]} UNION
-         {[NT (INL nEbefore); TOK ColonT; NT (INL nType)]})
+         {[grammar_NT (INL nEbefore)]} UNION
+         {[grammar_NT (INL nEbefore); grammar_TOK ColonT; grammar_NT (INL nType)]})
    |+ (INL nElogicAND,
-         {[NT (INL nElogicAND); TOK AndalsoT; NT (INL nEtyped)]} UNION
-         {[NT (INL nEtyped)]})
+         {[grammar_NT (INL nElogicAND); grammar_TOK AndalsoT; grammar_NT (INL nEtyped)]} UNION
+         {[grammar_NT (INL nEtyped)]})
    |+ (INL nElogicOR,
-         {[NT (INL nElogicOR); TOK OrelseT; NT (INL nElogicAND)]} UNION
-         {[NT (INL nElogicAND)]})
+         {[grammar_NT (INL nElogicOR); grammar_TOK OrelseT; grammar_NT (INL nElogicAND)]} UNION
+         {[grammar_NT (INL nElogicAND)]})
    |+ (INL nEhandle,
-         {[NT (INL nElogicOR)]} UNION
-         {[NT (INL nElogicOR); TOK HandleT; NT (INL nPEs)]})
+         {[grammar_NT (INL nElogicOR)]} UNION
+         {[grammar_NT (INL nElogicOR); grammar_TOK HandleT; grammar_NT (INL nPEs)]})
    |+ (INL nE,
-         ((({[TOK IfT; NT (INL nE); TOK ThenT; NT (INL nE); TOK ElseT; NT (INL nE)]} UNION
-         {[TOK CaseT; NT (INL nE); TOK OfT; NT (INL nPEs)]}) UNION
-         {[TOK FnT; NT (INL nPattern); TOK DarrowT; NT (INL nE)]}) UNION
-         {[TOK RaiseT; NT (INL nE)]}) UNION
-         {[NT (INL nEhandle)]})
+         ((({[grammar_TOK IfT; grammar_NT (INL nE); grammar_TOK ThenT; grammar_NT (INL nE); grammar_TOK ElseT; grammar_NT (INL nE)]} UNION
+         {[grammar_TOK CaseT; grammar_NT (INL nE); grammar_TOK OfT; grammar_NT (INL nPEs)]}) UNION
+         {[grammar_TOK FnT; grammar_NT (INL nPattern); grammar_TOK DarrowT; grammar_NT (INL nE)]}) UNION
+         {[grammar_TOK RaiseT; grammar_NT (INL nE)]}) UNION
+         {[grammar_NT (INL nEhandle)]})
    |+ (INL nFDecl,
-         {[NT (INL nV); NT (INL nPbaseList1); TOK EqualsT; NT (INL nE)]})
+         {[grammar_NT (INL nV); grammar_NT (INL nPbaseList1); grammar_TOK EqualsT; grammar_NT (INL nE)]})
    |+ (INL nAndFDecls,
-         {[NT (INL nFDecl)]} UNION
-         {[NT (INL nAndFDecls); TOK AndT; NT (INL nFDecl)]})
+         {[grammar_NT (INL nFDecl)]} UNION
+         {[grammar_NT (INL nAndFDecls); grammar_TOK AndT; grammar_NT (INL nFDecl)]})
    |+ (INL nLetDec,
-         {[TOK ValT; NT (INL nPattern); TOK EqualsT; NT (INL nE)]} UNION
-         {[TOK FunT; NT (INL nAndFDecls)]})
+         {[grammar_TOK ValT; grammar_NT (INL nPattern); grammar_TOK EqualsT; grammar_NT (INL nE)]} UNION
+         {[grammar_TOK FunT; grammar_NT (INL nAndFDecls)]})
    |+ (INL nLetDecs,
-         ({[NT (INL nLetDec); NT (INL nLetDecs)]} UNION
-         {[TOK SemicolonT; NT (INL nLetDecs)]}) UNION
+         ({[grammar_NT (INL nLetDec); grammar_NT (INL nLetDecs)]} UNION
+         {[grammar_TOK SemicolonT; grammar_NT (INL nLetDecs)]}) UNION
          {[]})
    |+ (INL nPbase,
-         (((((((({[NT (INL nV)]} UNION
-         {[NT (INL nConstructorName)]}) UNION
-         {[TOK (tokens_IntT i)] | i | T}) UNION
-         {[TOK (StringT m)] | m | T}) UNION
-         {[TOK (tokens_CharT c)] | c | T}) UNION
-         {[NT (INL nPtuple)]}) UNION
-         {[TOK UnderbarT]}) UNION
-         {[TOK LbrackT; TOK RbrackT]}) UNION
-         {[TOK LbrackT; NT (INL nPatternList); TOK RbrackT]}) UNION
-         {[TOK OpT; NT (INL nOpID)]})
+         (((((((({[grammar_NT (INL nV)]} UNION
+         {[grammar_NT (INL nConstructorName)]}) UNION
+         {[grammar_TOK (tokens_IntT i)] | i | T}) UNION
+         {[grammar_TOK (StringT m)] | m | T}) UNION
+         {[grammar_TOK (tokens_CharT c)] | c | T}) UNION
+         {[grammar_NT (INL nPtuple)]}) UNION
+         {[grammar_TOK UnderbarT]}) UNION
+         {[grammar_TOK LbrackT; grammar_TOK RbrackT]}) UNION
+         {[grammar_TOK LbrackT; grammar_NT (INL nPatternList); grammar_TOK RbrackT]}) UNION
+         {[grammar_TOK OpT; grammar_NT (INL nOpID)]})
    |+ (INL nPConApp,
-         {[NT (INL nConstructorName)]} UNION
-         {[NT (INL nPConApp); NT (INL nPbase)]})
+         {[grammar_NT (INL nConstructorName)]} UNION
+         {[grammar_NT (INL nPConApp); grammar_NT (INL nPbase)]})
    |+ (INL nPapp,
-         {[NT (INL nPConApp); NT (INL nPbase)]} UNION
-         {[NT (INL nPbase)]})
+         {[grammar_NT (INL nPConApp); grammar_NT (INL nPbase)]} UNION
+         {[grammar_NT (INL nPbase)]})
    |+ (INL nPcons,
-         {[NT (INL nPapp); TOK (SymbolT (implode "::")); NT (INL nPcons)]} UNION
-         {[NT (INL nPapp)]})
+         {[grammar_NT (INL nPapp); grammar_TOK (SymbolT (implode "::")); grammar_NT (INL nPcons)]} UNION
+         {[grammar_NT (INL nPapp)]})
    |+ (INL nPas,
-         {[NT (INL nV); TOK AsT; NT (INL nPcons)]} UNION
-         {[NT (INL nPcons)]})
+         {[grammar_NT (INL nV); grammar_TOK AsT; grammar_NT (INL nPcons)]} UNION
+         {[grammar_NT (INL nPcons)]})
    |+ (INL nPattern,
-         {[NT (INL nPas)]} UNION
-         {[NT (INL nPas); TOK ColonT; NT (INL nType)]})
+         {[grammar_NT (INL nPas)]} UNION
+         {[grammar_NT (INL nPas); grammar_TOK ColonT; grammar_NT (INL nType)]})
    |+ (INL nPtuple,
-         {[TOK LparT; TOK RparT]} UNION
-         {[TOK LparT; NT (INL nPatternList); TOK RparT]})
+         {[grammar_TOK LparT; grammar_TOK RparT]} UNION
+         {[grammar_TOK LparT; grammar_NT (INL nPatternList); grammar_TOK RparT]})
    |+ (INL nPatternList,
-         {[NT (INL nPattern)]} UNION
-         {[NT (INL nPattern); TOK CommaT; NT (INL nPatternList)]})
+         {[grammar_NT (INL nPattern)]} UNION
+         {[grammar_NT (INL nPattern); grammar_TOK CommaT; grammar_NT (INL nPatternList)]})
    |+ (INL nPbaseList1,
-         {[NT (INL nPbase)]} UNION
-         {[NT (INL nPbase); NT (INL nPbaseList1)]})
+         {[grammar_NT (INL nPbase)]} UNION
+         {[grammar_NT (INL nPbase); grammar_NT (INL nPbaseList1)]})
    |+ (INL nPE,
-         ((({[TOK CaseT; NT (INL nE); TOK OfT; NT (INL nPEs)]} UNION
-         {[TOK IfT; NT (INL nE); TOK ThenT; NT (INL nE); TOK ElseT; NT (INL nPE)]}) UNION
-         {[TOK FnT; NT (INL nPattern); TOK DarrowT; NT (INL nE)]}) UNION
-         {[TOK RaiseT; NT (INL nPE)]}) UNION
-         {[NT (INL nElogicOR); NT (INL nPEsfx)]})
+         ((({[grammar_TOK CaseT; grammar_NT (INL nE); grammar_TOK OfT; grammar_NT (INL nPEs)]} UNION
+         {[grammar_TOK IfT; grammar_NT (INL nE); grammar_TOK ThenT; grammar_NT (INL nE); grammar_TOK ElseT; grammar_NT (INL nPE)]}) UNION
+         {[grammar_TOK FnT; grammar_NT (INL nPattern); grammar_TOK DarrowT; grammar_NT (INL nE)]}) UNION
+         {[grammar_TOK RaiseT; grammar_NT (INL nPE)]}) UNION
+         {[grammar_NT (INL nElogicOR); grammar_NT (INL nPEsfx)]})
    |+ (INL nPEsfx,
          ({[]} UNION
-         {[TOK HandleT; NT (INL nPEs)]}) UNION
-         {[TOK BarT; NT (INL nPEs)]})
+         {[grammar_TOK HandleT; grammar_NT (INL nPEs)]}) UNION
+         {[grammar_TOK BarT; grammar_NT (INL nPEs)]})
    |+ (INL nPEs,
-         {[NT (INL nPattern); TOK DarrowT; NT (INL nPE)]})
+         {[grammar_NT (INL nPattern); grammar_TOK DarrowT; grammar_NT (INL nPE)]})
    |+ (INL nStructName,
-         {[TOK (AlphaT s)] | s | ~(s = implode "")})
+         {[grammar_TOK (AlphaT s)] | s | ~(s = implode "")})
    |+ (INL nSpecLine,
-         (({[TOK ValT; NT (INL nV); TOK ColonT; NT (INL nType)]} UNION
-         {[TOK TypeT; NT (INL nTypeName); NT (INL nOptTypEqn)]}) UNION
-         {[TOK ExceptionT; NT (INL nDconstructor)]}) UNION
-         {[NT (INL nTypeDec)]})
+         (({[grammar_TOK ValT; grammar_NT (INL nV); grammar_TOK ColonT; grammar_NT (INL nType)]} UNION
+         {[grammar_TOK TypeT; grammar_NT (INL nTypeName); grammar_NT (INL nOptTypEqn)]}) UNION
+         {[grammar_TOK ExceptionT; grammar_NT (INL nDconstructor)]}) UNION
+         {[grammar_NT (INL nTypeDec)]})
    |+ (INL nOptTypEqn,
-         {[TOK EqualsT; NT (INL nType)]} UNION
+         {[grammar_TOK EqualsT; grammar_NT (INL nType)]} UNION
          {[]})
    |+ (INL nSpecLineList,
-         ({[NT (INL nSpecLine); NT (INL nSpecLineList)]} UNION
-         {[TOK SemicolonT; NT (INL nSpecLineList)]}) UNION
+         ({[grammar_NT (INL nSpecLine); grammar_NT (INL nSpecLineList)]} UNION
+         {[grammar_TOK SemicolonT; grammar_NT (INL nSpecLineList)]}) UNION
          {[]})
    |+ (INL nSignatureValue,
-         {[TOK SigT; NT (INL nSpecLineList); TOK EndT]})
+         {[grammar_TOK SigT; grammar_NT (INL nSpecLineList); grammar_TOK EndT]})
    |+ (INL nOptionalSignatureAscription,
-         {[TOK SealT; NT (INL nSignatureValue)]} UNION
+         {[grammar_TOK SealT; grammar_NT (INL nSignatureValue)]} UNION
          {[]})
    |+ (INL nDecl,
-         ((((({[TOK ValT; NT (INL nPattern); TOK EqualsT; NT (INL nE)]} UNION
-         {[TOK FunT; NT (INL nAndFDecls)]}) UNION
-         {[NT (INL nTypeDec)]}) UNION
-         {[TOK ExceptionT; NT (INL nDconstructor)]}) UNION
-         {[NT (INL nTypeAbbrevDec)]}) UNION
-         {[TOK LocalT; NT (INL nDecls); TOK InT; NT (INL nDecls); TOK EndT]}) UNION
-         {[NT (INL nStructure)]})
+         ((((({[grammar_TOK ValT; grammar_NT (INL nPattern); grammar_TOK EqualsT; grammar_NT (INL nE)]} UNION
+         {[grammar_TOK FunT; grammar_NT (INL nAndFDecls)]}) UNION
+         {[grammar_NT (INL nTypeDec)]}) UNION
+         {[grammar_TOK ExceptionT; grammar_NT (INL nDconstructor)]}) UNION
+         {[grammar_NT (INL nTypeAbbrevDec)]}) UNION
+         {[grammar_TOK LocalT; grammar_NT (INL nDecls); grammar_TOK InT; grammar_NT (INL nDecls); grammar_TOK EndT]}) UNION
+         {[grammar_NT (INL nStructure)]})
    |+ (INL nDecls,
-         ({[NT (INL nDecl); NT (INL nDecls)]} UNION
-         {[TOK SemicolonT; NT (INL nDecls)]}) UNION
+         ({[grammar_NT (INL nDecl); grammar_NT (INL nDecls)]} UNION
+         {[grammar_TOK SemicolonT; grammar_NT (INL nDecls)]}) UNION
          {[]})
    |+ (INL nStructure,
-         {[TOK StructureT; NT (INL nStructName);
-           NT (INL nOptionalSignatureAscription); TOK EqualsT; TOK StructT;
-           NT (INL nDecls); TOK EndT]})
+         {[grammar_TOK StructureT; grammar_NT (INL nStructName);
+           grammar_NT (INL nOptionalSignatureAscription); grammar_TOK EqualsT; grammar_TOK StructT;
+           grammar_NT (INL nDecls); grammar_TOK EndT]})
    |+ (INL nTopLevelDecs,
-         (({[NT (INL nE); TOK SemicolonT; NT (INL nTopLevelDecs)]} UNION
-         {[NT (INL nDecl); NT (INL nNonETopLevelDecs)]}) UNION
-         {[TOK SemicolonT; NT (INL nTopLevelDecs)]}) UNION
+         (({[grammar_NT (INL nE); grammar_TOK SemicolonT; grammar_NT (INL nTopLevelDecs)]} UNION
+         {[grammar_NT (INL nDecl); grammar_NT (INL nNonETopLevelDecs)]}) UNION
+         {[grammar_TOK SemicolonT; grammar_NT (INL nTopLevelDecs)]}) UNION
          {[]})
    |+ (INL nNonETopLevelDecs,
-         ({[NT (INL nDecl); NT (INL nNonETopLevelDecs)]} UNION
-         {[TOK SemicolonT; NT (INL nTopLevelDecs)]}) UNION
+         ({[grammar_NT (INL nDecl); grammar_NT (INL nNonETopLevelDecs)]} UNION
+         {[grammar_TOK SemicolonT; grammar_NT (INL nTopLevelDecs)]}) UNION
          {[]}))`
 ;;
 
@@ -424,7 +424,7 @@ let nt_distinct_ths =
   end_itlist CONJ (recurse cs);;
 
 let gram_Ndl_def = cake_def
-  `Ndl (n:B+num) (l:((A,B,locs)parsetree)list) = Nd (n,unknown_loc) l`;;
+  `Ndl (n:B+num) (l:((A,B,locs)parsetree)list) = grammar_Nd (n,unknown_loc) l`;;
 
 let gram_Lfl_def = cake_def
-  `Lfl (t:(A,B)symbol) = Lf (t,unknown_loc):(A,B,locs)parsetree`;;
+  `Lfl (t:(A,B)symbol) = grammar_Lf (t,unknown_loc):(A,B,locs)parsetree`;;

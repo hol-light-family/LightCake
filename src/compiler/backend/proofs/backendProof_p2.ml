@@ -77,7 +77,7 @@ let BKP2AUX_compile_clos_conf = prove
  (`!asm_conf c prog b bm c'.
      backend_compile (asm_conf:(A)asm_config) c prog = SOME (b,bm,c')
      ==> ?st. backend_config_clos_conf c' =
-              clos_to_bvl_config_start_fupd (K st)
+              clos_to_bvl_config_start_fupd (combin_K st)
                 (FST (clos_to_bvl_compile (backend_config_clos_conf c)
                         (SND (to_clos c prog))))`,
   REPEAT GEN_TAC THEN
@@ -108,7 +108,7 @@ let BKP2AUX_to_bvl_prog = prove
                                                with Failure _ -> false) w in
                    SPEC_TAC(t, mk_var("q", type_of t))) THEN
   REWRITE_TAC[FORALL_PAIR_THM] THEN REPEAT GEN_TAC THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
-  CASE_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN BACKDEFAUX_PAIRARG_TAC THEN REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN BACKDEFAUX_PAIRARG_TAC THEN REWRITE_TAC[]);;
 
 (* HOL4 line 2286 *)
 let monotonic_labels_bvl = prove
@@ -389,7 +389,7 @@ let BKP2AUX_SND_cake_orac_f = prove
      SND (cake_orac asm_conf c syntax f' g n)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[cake_orac_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   BKP2AUX_GEN_CONST_TAC "compile_inc_progs" 4 THEN
-  REWRITE_TAC[FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[FORALL_PAIR_THM] THEN CAKE_REWRITE_TAC[]);;
 
 (* the labLang code made from stackLang programs with stack_asm_name and   *)
 (* stack_asm_remove satisfies sec_ok_pre *)
@@ -425,7 +425,7 @@ let BKP2AUX_lab_code_asm_ok = prove
      stack_alloc_comp_stack_asm_name) THEN
    ASM_REWRITE_TAC[] THEN
    SPEC_TAC(`stack_alloc_comp n (next_lab (p:(A)stack_prog) 2) p`, `r:(A)stack_prog#num`) THEN
-   REWRITE_TAC[FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[] THEN SIMP_TAC[FST];
+   REWRITE_TAC[FORALL_PAIR_THM] THEN CAKE_REWRITE_TAC[] THEN SIMP_TAC[FST];
    ALL_TAC] THEN
   MATCH_MP_TAC stack_remove_comp_stack_asm_name THEN ASM_REWRITE_TAC[reg_name_def] THEN
   UNDISCH_TAC `LENGTH (asm_config_avoid_regs (asm_conf:(A)asm_config)) + 13 <=
@@ -435,7 +435,7 @@ let BKP2AUX_FST_cake_orac = prove
      FST (cake_orac (asm_conf:(A)asm_config) c syntax f g n) = f (cake_configs asm_conf c syntax n)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[cake_orac_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   BKP2AUX_GEN_CONST_TAC "compile_inc_progs" 4 THEN
-  REWRITE_TAC[FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[FORALL_PAIR_THM] THEN CAKE_REWRITE_TAC[]);;
 
 (* HOL4 line 2330 *)
 let good_code_lab_oracle = prove
@@ -610,11 +610,11 @@ let to_lab_good_code_lemma = prove
     STRIP_ASSUME_TAC THENL
   [UNDISCH_TAC `labels_ok (code:((A)sec)list)` THEN REWRITE_TAC[labels_ok_def] THEN
    SUBGOAL_THEN (CASE_TERM `(\s. match s with Section n _ -> n) = (Section_num:(A)sec->num)`) SUBST1_TAC THENL
-   [REWRITE_TAC[FUN_EQ_THM] THEN GEN_TAC THEN CASES_ON `x:(A)sec` THEN CASE_REWRITE_TAC[] THEN SIMP[];
+   [REWRITE_TAC[FUN_EQ_THM] THEN GEN_TAC THEN CASES_ON `x:(A)sec` THEN CAKE_REWRITE_TAC[] THEN SIMP[];
     ALL_TAC] THEN
    STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CONJ_TAC THEN
    FIRST_X_ASSUM(MP_TAC o check (is_comb o concl)) THEN MATCH_MP_TAC MONO_ALL THEN
-   GEN_TAC THEN CASES_ON `x:(A)sec` THEN CASE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+   GEN_TAC THEN CASES_ON `x:(A)sec` THEN CAKE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
    SIMP[EVERY_sec_label_ok; o_THM];
    ALL_TAC] THEN
   ASM_REWRITE_TAC[labs_domain_LN; UNION_EMPTY; domain_def; DISJOINT_EMPTY] THEN
@@ -694,7 +694,7 @@ let compile_word_conf_eq = prove
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   UNDISCH_TAC `backend_compile (asm_conf:(A)asm_config) c prog = SOME (code,data,conf)` THEN
   REWRITE_TAC[compile_eq_to_target; to_target_def; to_lab_def] THEN ASM_REWRITE_TAC[] THEN
-  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN CASE_REWRITE_TAC[] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN CAKE_REWRITE_TAC[] THEN
   DISCH_THEN(MP_TAC o MATCH_MP attach_bitmaps_SOME) THEN STRIP_TAC THEN
   FIRST_X_ASSUM(STRIP_ASSUME_TAC o REWRITE_RULE[PAIR_EQ]) THEN ASM_REWRITE_TAC[] THEN SIMP[]);;
 
@@ -787,7 +787,7 @@ let IMP_is_safe_for_space = prove
   ASM_REWRITE_TAC[] THEN
   SUBGOAL_THEN `?x1 wp x2. to_word (asm_conf:(A)asm_config) c prog = (x1,wp,x2)`
    STRIP_ASSUME_TAC THENL [MESON_TAC[PAIR]; ALL_TAC] THEN
-  ASM_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN CAKE_REWRITE_TAC[] THEN
   STRIP_TAC THEN
   SUBGOAL_THEN
    `?bm wc fs sp.
@@ -797,12 +797,12 @@ let IMP_is_safe_for_space = prove
    STRIP_ASSUME_TAC THENL [MESON_TAC[PAIR]; ALL_TAC] THEN
   MP_TAC(ISPECL [`c:backend_config`; `prog:dec list`; `code:byte list`; `data:(A word)list`;
                  `conf:backend_config`;
-                 `backend_config_word_conf_fupd (K (wc:word_to_stack_config)) x1`;
+                 `backend_config_word_conf_fupd (combin_K (wc:word_to_stack_config)) x1`;
                  `sp:(num#(A)stack_prog)list`; `x2:mlstring spt`;
                  `asm_conf:(A)asm_config`; `bm:(A word)list`] compile_word_conf_eq) THEN
   ANTS_TAC THENL
   [ASM_REWRITE_TAC[to_stack_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
-   CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[];
+   CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[];
    ALL_TAC] THEN
   SIMP[] THEN DISCH_THEN SUBST1_TAC THEN
   SUBGOAL_THEN `stack_to_lab_config_perf_calls (backend_config_stack_conf x1) = F`
@@ -874,9 +874,9 @@ let state_co_inc_compile_has_flat_comp = prove
   X_GEN_TAC `n:num` THEN
   REWRITE_TAC[state_co_def; cake_orac_def; LAMBDA_PAIR] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
-  BACKDEFAUX_PAIRARG_TAC THEN REWRITE_TAC[config_tuple1_def] THEN CASE_REWRITE_TAC[] THEN
+  BACKDEFAUX_PAIRARG_TAC THEN REWRITE_TAC[config_tuple1_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[inc_compile_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
-  BACKDEFAUX_PAIRARG_TAC THEN CASE_REWRITE_TAC[] THEN
+  BACKDEFAUX_PAIRARG_TAC THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[pure_co_def; PAIR_MAP_THM; I_THM; PAIR_EQ] THEN
   BKP2AUX_HDTM_ASSUM "inc_compile_prog"
     (MP_TAC o AP_TERM `source_to_flat_config_pattern_cfg o
@@ -889,7 +889,7 @@ let state_co_inc_compile_has_flat_comp = prove
 let add_eval_state_def = cake_def
   `(add_eval_state (NONE:((C)compiler_instance)option) (s0:(FFI)state) = s0) /\
    (add_eval_state (SOME ci) s0 =
-      state_eval_state_fupd (K (SOME (mk_init_eval_state ci))) s0)`;;
+      state_eval_state_fupd (combin_K (SOME (mk_init_eval_state ci))) s0)`;;
 
 (* HOL4 line 2916 *)
 let add_eval_state_ffi = prove
@@ -954,7 +954,7 @@ let backend_from_flat_tuple_cc_def = cake_def
 let BKP2AUX_known_compile_inc_static = prove
  (`!c g (p:clos_exp list#A).
      clos_known_compile_inc
-       (clos_known_config_val_approx_spt_fupd (K LN) (reset_inline_factor c)) g p =
+       (clos_known_config_val_approx_spt_fupd (combin_K LN) (reset_inline_factor c)) g p =
      clos_known_compile_inc c g p`,
   let ri = record_info "clos_known_config" in
   SUBGOAL_THEN
@@ -967,7 +967,7 @@ let BKP2AUX_known_compile_inc_static = prove
   REPEAT GEN_TAC THEN REWRITE_TAC[kcompile_inc_uncurry; reset_inline_factor_def] THEN
   REWRITE_TAC[ri.ri_fupdcanon; ri.ri_accfupds; ri.ri_fupdfupds] THEN
   ASM_REWRITE_TAC[known_reset_spt] THEN
-  REWRITE_TAC[prove(`!x y:num. (K x o K y) = (K x:num->num)`,
+  REWRITE_TAC[prove(`!x y:num. (combin_K x o combin_K y) = (combin_K x:num->num)`,
                     REWRITE_TAC[FUN_EQ_THM; o_THM; K_THM])]);;
 
 (* HOL4 line 2965 *)
@@ -976,13 +976,13 @@ let known_cc_eq_state_cc_inc = prove
      known_cc kc (cc:B->clos_prog->(byte list#int64 list#B)option) =
    state_cc (known_compile_inc (known_static_conf kc)) cc`,
   GEN_TAC THEN CASES_ON `kc:clos_known_config option` THEN
-  REWRITE_TAC[known_cc_def; known_static_conf_def] THEN CASE_REWRITE_TAC[] THEN GEN_TAC THEN
+  REWRITE_TAC[known_cc_def; known_static_conf_def] THEN CAKE_REWRITE_TAC[] THEN GEN_TAC THEN
   REWRITE_TAC[pure_cc_def; state_cc_def; FUN_EQ_THM; FORALL_PAIR_THM] THEN REPEAT GEN_TAC THEN
-  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN CASE_REWRITE_TAC[] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[known_compile_inc_def; CURRY_DEF; I_THM] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   REWRITE_TAC[BKP2AUX_known_compile_inc_static] THEN
-  BACKDEFAUX_PAIRARG_TAC THEN CASE_REWRITE_TAC[]);;
+  BACKDEFAUX_PAIRARG_TAC THEN CAKE_REWRITE_TAC[]);;
 
 (* HOL4 line 2979 *)
 let known_compile_inc_retreive_spt = prove
@@ -994,7 +994,7 @@ let known_compile_inc_retreive_spt = prove
   CASES_ON `kcfg1:clos_known_config option` THEN
   REWRITE_TAC[option_val_approx_spt_def; option_upd_val_spt_def; known_static_conf_def;
               known_compile_inc_def; IS_SOME_DEF] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[known_compile_inc_def; PAIR_EQ] THEN SIMP[]);;
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[known_compile_inc_def; PAIR_EQ] THEN SIMP[]);;
 
 (* HOL4 line 2992 (^cake_orac_config_inv_f c' = ^cake_orac_config_inv_f c  *)
 (* is written out as the equality of the twelve components)                  *)
@@ -1053,13 +1053,13 @@ let backend_from_flat_tuple_cc_eq_compile_inc_progs = prove
                   `source_to_source_compile decs`] BKP2AUX_inc_compile_prog_pattern_cfg) THEN
    SPEC_TAC(`inc_compile_prog env_id (backend_config_source_conf c') (source_to_source_compile decs)`,
             `q:source_to_flat_config#(flat_exp)list`) THEN
-   REWRITE_TAC[FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
+   REWRITE_TAC[FORALL_PAIR_THM] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
    ASM_MESON_TAC[];
    ALL_TAC] THEN
   REWRITE_TAC[backend_from_flat_tuple_cc_def; pure_cc_def; compile_common_inc_def;
               known_cc_eq_state_cc_inc; full_cc_def; config_tuple1_def; config_tuple2_def] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN REWRITE_TAC[state_cc_def] THEN
-  CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN CASE_REWRITE_TAC[] THEN
+  CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN CAKE_REWRITE_TAC[] THEN
   SIMP[(record_info "backend_config").ri_accfupds; K_THM] THEN
   BKP2AUX_HDTM_X_ASSUM "clos_to_bvl_compile_inc" MP_TAC THEN
   REWRITE_TAC[clos_to_bvl_compile_inc_def] THEN
@@ -1072,7 +1072,7 @@ let backend_from_flat_tuple_cc_eq_compile_inc_progs = prove
   REWRITE_TAC[bvl_to_bvi_compile_inc_all_def] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   REWRITE_TAC[(record_info "bvl_to_bvi_config").ri_accfupds; K_THM] THEN
-  REPEAT (CHANGED_TAC (ASM_REWRITE_TAC[] THEN TRY (CASE_REWRITE_TAC[]))) THEN
+  REPEAT (CHANGED_TAC (ASM_REWRITE_TAC[] THEN TRY (CAKE_REWRITE_TAC[]))) THEN
   REPEAT BACKDEFAUX_PAIRARG_TAC THEN REWRITE_TAC[PAIR_EQ] THEN
   STRIP_TAC THEN RVEQ_TAC THEN
   REWRITE_TAC[(record_info "clos_to_bvl_config").ri_accfupds;
@@ -1087,9 +1087,9 @@ let backend_from_flat_tuple_cc_eq_compile_inc_progs = prove
   BKP2AUX_GEN_CONST_TAC "lab_to_target_compile" 3 THEN
   REWRITE_TAC[FORALL_OPTION_THM; FORALL_PAIR_THM] THEN
   REWRITE_TAC[OPTION_MAP_DEF] THEN CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_MAP_THM; I_THM; injectivity "option"; PAIR_EQ; K_THM] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_MAP_THM; I_THM; injectivity "option"; PAIR_EQ; K_THM] THEN
   REPEAT (CHANGED_TAC (REWRITE_TAC[OPTION_MAP_DEF; PAIR_MAP_THM; I_THM] THEN
-     CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN TRY (CASE_REWRITE_TAC[]))) THEN
+     CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN TRY (CAKE_REWRITE_TAC[]))) THEN
   REWRITE_TAC[injectivity "option"; PAIR_EQ] THEN
   CONV_TAC SYM_CONV THEN MATCH_MP_TAC known_compile_inc_retreive_spt THEN ASM_MESON_TAC[]);;
 
@@ -1141,7 +1141,7 @@ let cake_orac_extended_wf = prove
   SUBGOAL_THEN `?cfg ps. cake_orac (asm_conf:(A)asm_config) c' syntax I I i =
                          (cfg:backend_config, ps:(A)backend_progs)`
    STRIP_ASSUME_TAC THENL [MESON_TAC[PAIR]; ALL_TAC] THEN
-  ASM_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[PAIR_MAP_THM; I_THM] THEN CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
   REWRITE_TAC[mk_compiler_fun_from_ci_def] THEN
   FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP config_wf_abs_conc th]) THEN
@@ -1149,12 +1149,12 @@ let cake_orac_extended_wf = prove
   BKP2AUX_HDTM_ASSUM "opt_eval_config_wf"
     (STRIP_ASSUME_TAC o REWRITE_RULE[opt_eval_config_wf_def]) THEN
   ASM_REWRITE_TAC[compile_inc_progs_for_eval_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
-  CASE_REWRITE_TAC[] THEN BACKDEFAUX_PAIRARG_TAC THEN CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN BACKDEFAUX_PAIRARG_TAC THEN CAKE_REWRITE_TAC[] THEN
   SPEC_TAC(`backend_progs_target_prog (p2:(A)backend_progs)`,
            `t:(byte list#(A word)list)option`) THEN
   REWRITE_TAC[FORALL_OPTION_THM; FORALL_PAIR_THM] THEN
   REWRITE_TAC[OPTION_MAP_DEF; OPTION_BIND_DEF] THEN CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[injectivity "option"; distinctness "option"] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[injectivity "option"; distinctness "option"] THEN
   REPEAT GEN_TAC THEN DISCH_THEN(SUBST1_TAC o SYM) THEN REWRITE_TAC[]);;
 
 (* HOL4 line 3081 *)
@@ -1163,7 +1163,7 @@ let cake_orac_eq_get_oracle = prove
   `!s env prog asm_conf c' ci syntax s'.
      ~semantics_prog (s:(FFI)state) env prog Fail /\
    opt_eval_config_wf (asm_conf:(A)asm_config) (c':backend_config) (SOME ci) /\
-   nsAll (K concrete_v) (sem_env_v env) /\ state_refs s = [] /\
+   nsAll (combin_K concrete_v) (sem_env_v env) /\ state_refs s = [] /\
    state_eval_state s = SOME (mk_init_eval_state ci) /\
    (!i r. get_oracle ci s env prog i = SOME r ==> syntax i = (I ## SND) r) /\
    s' = s
@@ -1204,15 +1204,15 @@ let cake_orac_eq_get_oracle = prove
     USE_THEN "wf" (fun th -> REWRITE_TAC[MATCH_MP config_wf_abs_conc th]) THEN
     COND_CASES_TAC THEN REWRITE_TAC[OPTION_BIND_DEF; distinctness "option"] THEN
     ASM_REWRITE_TAC[compile_inc_progs_for_eval_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
-    CASE_REWRITE_TAC[] THEN BACKDEFAUX_PAIRARG_TAC THEN CASE_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN BACKDEFAUX_PAIRARG_TAC THEN CAKE_REWRITE_TAC[] THEN
     SPEC_TAC(`backend_progs_target_prog (p2''':(A)backend_progs)`,
              `t:(byte list#(A word)list)option`) THEN
     REWRITE_TAC[FORALL_OPTION_THM; FORALL_PAIR_THM] THEN
     REWRITE_TAC[OPTION_MAP_DEF; OPTION_BIND_DEF] THEN CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[injectivity "option"; distinctness "option"; PAIR_EQ] THEN
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[injectivity "option"; distinctness "option"; PAIR_EQ] THEN
     MESON_TAC[]];
    ALL_TAC] THEN
-  REWRITE_TAC[FORALL_PAIR_THM] THEN REPEAT GEN_TAC THEN CASE_REWRITE_TAC[] THEN STRIP_TAC THEN
+  REWRITE_TAC[FORALL_PAIR_THM] THEN REPEAT GEN_TAC THEN CAKE_REWRITE_TAC[] THEN STRIP_TAC THEN
   EXISTS_TAC `cake_configs (asm_conf:(A)asm_config) c' syntax i` THEN CONJ_TAC THENL
   [USE_THEN "inv" (fun th -> FIRST_ASSUM(MP_TAC o MATCH_MP th)) THEN REWRITE_TAC[FST; SND];
    BKP2AUX_HDTM_X_ASSUM "cake_orac" MP_TAC THEN REWRITE_TAC[cake_orac_def] THEN
@@ -1234,7 +1234,7 @@ let BKP2AUX_compile_inc_progs_source_conf = prove
   REPEAT GEN_TAC THEN REWRITE_TAC[compile_inc_progs_def] THEN
   BACKDEFAUX_LETS_RW_TAC [(record_info "backend_config").ri_accfupds; K_THM] THEN
   BKP2AUX_HDTM_X_ASSUM "inc_compile" MP_TAC THEN REWRITE_TAC[inc_compile_def] THEN
-  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN BACKDEFAUX_PAIRARG_TAC THEN CASE_REWRITE_TAC[] THEN
+  CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN BACKDEFAUX_PAIRARG_TAC THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN ASM_REWRITE_TAC[]);;
 
 (* HOL4 line 3127 *)
@@ -1252,7 +1252,7 @@ let step_invs_cake_orac = prove
                       FST d_st = backend_config_source_conf (FST x)))
    ==> src_orac_step_invs (SOME decf) source_to_source_compile (SOME (EvalOracle st))`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN DISCH_THEN (LABEL_TAC "h") THEN
-  REWRITE_TAC[src_orac_step_invs_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[src_orac_step_invs_def] THEN CAKE_REWRITE_TAC[] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN ASM_REWRITE_TAC[o_THM] THEN CONJ_TAC THENL
   [REPEAT GEN_TAC THEN DISCH_TAC THEN
    USE_THEN "h" (MP_TAC o SPECL [`cake_orac (asm_conf:(A)asm_config) c' syn I I k`; `k:num`;
@@ -1274,7 +1274,7 @@ let step_invs_cake_orac = prove
   SUBGOAL_THEN `?cfg ps. cake_orac (asm_conf:(A)asm_config) c' syn I I k =
                          (cfg:backend_config, ps:(A)backend_progs)`
    STRIP_ASSUME_TAC THENL [MESON_TAC[PAIR]; ALL_TAC] THEN
-  ASM_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[I_THM; BKP2AUX_compile_inc_progs_source_conf]);;
 
 (* HOL4 line 3156 *)
@@ -1301,9 +1301,9 @@ let eval_oracle_semantics_prog_intro = prove
  (`!ci s1 env decs orac res. ~semantics_prog (s1:(FFI)state) env decs Fail /\
         precond_eval_state orac (ci:(C)compiler_instance) s1 env decs /\
         state_refs s1 = [] /\
-        nsAll (K concrete_v) (sem_env_v env) /\
-        (~semantics_prog (state_eval_state_fupd (K (put_oracle ci orac)) s1) env decs Fail
-         ==> semantics_prog (state_eval_state_fupd (K (put_oracle ci orac)) s1) env decs res)
+        nsAll (combin_K concrete_v) (sem_env_v env) /\
+        (~semantics_prog (state_eval_state_fupd (combin_K (put_oracle ci orac)) s1) env decs Fail
+         ==> semantics_prog (state_eval_state_fupd (combin_K (put_oracle ci orac)) s1) env decs res)
         ==> semantics_prog s1 env decs res`,
   MESON_TAC[semantics_prog_deterministic; semantics_prog_total; oracle_semantics_prog]);;
 
@@ -1311,33 +1311,33 @@ let eval_oracle_semantics_prog_intro = prove
 let source_to_source_semantics_prog_oracle_intro = prove
  (`!ev sf orac es s0 env prog res.
      ~semantics_prog
-      (state_eval_state_fupd (K (insert_gen_oracle (ev:(C)compiler_instance) I sf orac es))
+      (state_eval_state_fupd (combin_K (insert_gen_oracle (ev:(C)compiler_instance) I sf orac es))
          (s0:(FFI)state)) env prog Fail
    ==> (~semantics_prog
           (state_eval_state_fupd
-             (K (insert_gen_oracle ev source_to_source_compile sf orac es)) s0)
+             (combin_K (insert_gen_oracle ev source_to_source_compile sf orac es)) s0)
           env prog Fail
         ==> semantics_prog
               (state_eval_state_fupd
-                 (K (insert_gen_oracle ev source_to_source_compile sf orac es)) s0)
+                 (combin_K (insert_gen_oracle ev source_to_source_compile sf orac es)) s0)
               env prog res)
    ==> semantics_prog
-         (state_eval_state_fupd (K (insert_gen_oracle ev I sf orac es)) s0) env prog res`,
+         (state_eval_state_fupd (combin_K (insert_gen_oracle ev I sf orac es)) s0) env prog res`,
   REPEAT GEN_TAC THEN REPEAT DISCH_TAC THEN
   SUBGOAL_THEN
    `!outcome.
       semantics_prog
-        (state_eval_state_fupd (K (insert_gen_oracle (ev:(C)compiler_instance) I sf orac es))
+        (state_eval_state_fupd (combin_K (insert_gen_oracle (ev:(C)compiler_instance) I sf orac es))
            (s0:(FFI)state)) env prog outcome
       ==> semantics_prog
             (state_eval_state_fupd
-               (K (insert_gen_oracle ev source_to_source_compile sf orac es)) s0)
+               (combin_K (insert_gen_oracle ev source_to_source_compile sf orac es)) s0)
             env prog outcome`
    ASSUME_TAC THENL
   [X_GEN_TAC `outcome:behaviour` THEN DISCH_TAC THEN
    MP_TAC(SPEC `I:dec list->dec list`
      (INST [`ev:(C)compiler_instance`,`ci:(C)compiler_instance`;
-            `state_eval_state_fupd (K (insert_gen_oracle (ev:(C)compiler_instance) I sf orac es))
+            `state_eval_state_fupd (combin_K (insert_gen_oracle (ev:(C)compiler_instance) I sf orac es))
                (s0:(FFI)state)`,`s:(FFI)state`]
         source_to_sourceProof_compile_semantics_oracle)) THEN
    ANTS_TAC THENL
@@ -1368,7 +1368,7 @@ let BKP2AUX_EVAL_TAC thl =
                   OPTION_MAP_DEF; FLOOKUP_EMPTY; PAIR_EQ; injectivity "option";
                   distinctness "option"] @ thl) THEN
     CONV_TAC(DEPTH_CONV STRING_EQ_CONV) THEN CONV_TAC NUM_REDUCE_CONV THEN
-    REWRITE_TAC[] THEN TRY (CASE_REWRITE_TAC[])));;
+    REWRITE_TAC[] THEN TRY (CAKE_REWRITE_TAC[])));;
 
 (* facts about prim_src_config used by source_to_flatProof's precondition *)
 let BKP2AUX_prim_src_facts = prove
@@ -1377,7 +1377,7 @@ let BKP2AUX_prim_src_facts = prove
    source_to_flat_config_envs prim_src_config = source_to_flat_config_envs empty_config`,
   REWRITE_TAC[BKP2AUX_prim_src_config_eq; empty_config_def; idx_prev_def; init_genv_next] THEN
   SIMP[] THEN
-  REWRITE_TAC[FLATP2AUX_init_genv_els_eval; MAP; MAX_LIST] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[FLATP2AUX_init_genv_els_eval; MAP; MAX_LIST] THEN CAKE_REWRITE_TAC[] THEN
   CONV_TAC NUM_REDUCE_CONV);;
 
 (* the primitive environment satisfies init_global_env_inv *)
@@ -1418,9 +1418,9 @@ let BKP2AUX_orac_rel_lemma = prove
         source_to_source_compile
         (SOME (EvalOracle
           (eval_oracle_state_custom_do_eval_fupd
-             (K (do_eval_oracle (mk_compiler_fun_from_ci a) source_to_source_compile))
+             (combin_K (do_eval_oracle (mk_compiler_fun_from_ci a) source_to_source_compile))
              (eval_oracle_state_oracle_fupd
-                (K ((\(cfg,id,ds). (id,compiler_instance_config_v a cfg,ds)) o
+                (combin_K ((\(cfg,id,ds). (id,compiler_instance_config_v a cfg,ds)) o
                     cake_orac asm_conf c' syn I
                       (\ps. (backend_progs_env_id ps,backend_progs_source_prog ps))))
                 st0))))
@@ -1431,7 +1431,7 @@ let BKP2AUX_orac_rel_lemma = prove
               (cake_orac asm_conf c' syn config_tuple1
                  (\ps. (backend_progs_env_id ps,backend_progs_source_prog ps)))))`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
-  REWRITE_TAC[orac_rel_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[orac_rel_def] THEN CAKE_REWRITE_TAC[] THEN
   EXISTS_TAC `mk_compiler_fun_from_ci (a:(backend_config)compiler_instance)` THEN
   REWRITE_TAC[(record_info "eval_oracle_state").ri_accfupds; K_THM] THEN
   REWRITE_TAC[orac_rel_inner_def; (record_info "eval_oracle_state").ri_accfupds; K_THM; o_THM;
@@ -1444,7 +1444,7 @@ let BKP2AUX_orac_rel_lemma = prove
   REWRITE_TAC[mk_flat_install_conf_def; (record_info "install_config").ri_accessors] THEN
   CONJ_TAC THENL
   [REWRITE_TAC[state_co_def; BKP2AUX_cake_orac_src; config_tuple1_def] THEN
-   CASE_REWRITE_TAC[] THEN REWRITE_TAC[LAMBDA_PAIR] THEN CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
+   CAKE_REWRITE_TAC[] THEN REWRITE_TAC[LAMBDA_PAIR] THEN CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
    BACKDEFAUX_PAIRARG_TAC THEN REWRITE_TAC[PAIR_EQ];
    ALL_TAC] THEN
   REWRITE_TAC[pure_cc_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
@@ -1463,13 +1463,13 @@ let BKP2AUX_orac_rel_lemma = prove
   BKP2AUX_HDTM_ASSUM "opt_eval_config_wf" (fun th -> REWRITE_TAC[MATCH_MP config_wf_abs_conc th]) THEN
   COND_CASES_TAC THEN REWRITE_TAC[OPTION_BIND_DEF] THEN
   ASM_REWRITE_TAC[compile_inc_progs_for_eval_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR] THEN
-  BACKDEFAUX_PAIRARG_TAC THEN CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR] THEN
+  BACKDEFAUX_PAIRARG_TAC THEN CAKE_REWRITE_TAC[] THEN
   BKP2AUX_GEN_CONST_TAC "backend_progs_target_prog" 1 THEN
   GEN_REWRITE_TAC I [FORALL_OPTION_THM] THEN REWRITE_TAC[OPTION_MAP_DEF; OPTION_BIND_DEF] THEN
   X_GEN_TAC `bw:byte list#(A word)list` THEN
   STRUCT_CASES_TAC (ISPEC `bw:byte list#(A word)list` PAIR_SURJECTIVE) THEN
-  CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN CASE_REWRITE_TAC[] THEN
+  CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[distinctness "option"; injectivity "option"; PAIR_EQ] THEN
   MAP_EVERY EXISTS_TAC [`x:byte list`; `MAP upper_w2w (y:(A word)list)`;
                         `SND (config_tuple1 (p1:backend_config))`; `compiler_instance_config_v (a:(backend_config)compiler_instance) p1`] THEN
@@ -1487,9 +1487,9 @@ let BKP2AUX_next_cfg_lemma = prove
   ==> match src_orac_next_cfg
           (SOME (OPTION_MAP config_tuple1 o v_fun_abs UNIV (compiler_instance_config_v a)))
           (SOME (EvalOracle
-            (eval_oracle_state_custom_do_eval_fupd (K X)
+            (eval_oracle_state_custom_do_eval_fupd (combin_K X)
                (eval_oracle_state_oracle_fupd
-                  (K ((\(cfg,id,ds). (id,compiler_instance_config_v a cfg,ds)) o
+                  (combin_K ((\(cfg,id,ds). (id,compiler_instance_config_v a cfg,ds)) o
                       cake_orac asm_conf c' syn I
                         (\ps. (backend_progs_env_id ps,backend_progs_source_prog ps))))
                   st0)))) with
@@ -1497,13 +1497,13 @@ let BKP2AUX_next_cfg_lemma = prove
       | SOME cfg -> cfg = FST (source_to_flat_compile_prog prim_src_config
                                  (source_to_source_compile prog))`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
-  REWRITE_TAC[src_orac_next_cfg_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[src_orac_next_cfg_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[(record_info "eval_oracle_state").ri_accfupds; K_THM; o_THM;
               BKP2AUX_cake_orac_src; I_THM; LAMBDA_TRIPLE] THEN
-  REWRITE_TAC[src_orac_next_cfg_inner_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[src_orac_next_cfg_inner_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[cake_configs_def; state_orac_states_def; o_THM] THEN
   BKP2AUX_HDTM_ASSUM "opt_eval_config_wf" (fun th -> REWRITE_TAC[MATCH_MP config_wf_abs_conc th]) THEN
-  REWRITE_TAC[IN_UNIV; OPTION_MAP_DEF; config_tuple1_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[IN_UNIV; OPTION_MAP_DEF; config_tuple1_def] THEN CAKE_REWRITE_TAC[] THEN
   FIRST_ASSUM(SUBST1_TAC o MATCH_MP BKP1AUX_backend_compile_source_conf) THEN
   ASM_REWRITE_TAC[source_to_flat_compile_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   BACKDEFAUX_PAIRARG_TAC THEN REWRITE_TAC[]);;
@@ -1570,15 +1570,15 @@ let source_eval_to_flat_semantics = prove
   DISCH_TAC THEN ASM_REWRITE_TAC[BKP2AUX_prim_src_facts] THEN
   REWRITE_TAC[(record_info "state").ri_accessors] THEN
   REWRITE_TAC[src_orac_step_invs_def; orac_rel_def; src_orac_next_cfg_def;
-              init_eval_state_ok_def] THEN CASE_REWRITE_TAC[] THEN
-  REWRITE_TAC[FLATP2AUX_init_genv_els_eval; ALL] THEN CASE_REWRITE_TAC[] THEN
+              init_eval_state_ok_def] THEN CAKE_REWRITE_TAC[] THEN
+  REWRITE_TAC[FLATP2AUX_init_genv_els_eval; ALL] THEN CAKE_REWRITE_TAC[] THEN
   CONV_TAC NUM_REDUCE_CONV;
    ASM_MESON_TAC[source_to_source_semantics_prog_equiv]];
    REWRITE_TAC[add_eval_state_def] THEN RULE_ASSUM_TAC(REWRITE_RULE[add_eval_state_def; THE_DEF]) THEN
   MATCH_MP_TAC (ISPEC `a:(backend_config)compiler_instance` eval_oracle_semantics_prog_intro) THEN
   EXISTS_TAC `orac:num->(num#num)#v#dec list` THEN
   SUBGOAL_THEN `state_refs (s0:(FFI)state) = [] /\ state_eval_state s0 = NONE /\
-                nsAll (K concrete_v) (sem_env_v (env:(v)sem_env))` STRIP_ASSUME_TAC THENL
+                nsAll (combin_K concrete_v) (sem_env_v (env:(v)sem_env))` STRIP_ASSUME_TAC THENL
   [UNDISCH_TAC `THE (prim_sem_env (ffi:(FFI)ffi_state)) = (s0,env)` THEN
    REWRITE_TAC[prim_sem_env_eq; THE_DEF; PAIR_EQ] THEN
    DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THEN
@@ -1588,7 +1588,7 @@ let source_eval_to_flat_semantics = prove
   REWRITE_TAC[(record_info "state").ri_accfupds; K_THM] THEN ASM_REWRITE_TAC[] THEN
     CONJ_TAC THENL
      [REWRITE_TAC[precond_eval_state_def; (record_info "state").ri_accfupds; K_THM] THEN
-  CASE_REWRITE_TAC[mk_init_eval_state_def] THEN REWRITE_TAC[GSYM mk_init_eval_state_def] THEN
+  CAKE_REWRITE_TAC[mk_init_eval_state_def] THEN REWRITE_TAC[GSYM mk_init_eval_state_def] THEN
       CONJ_TAC THENL
   [EXPAND_TAC "orac" THEN MATCH_MP_TAC cake_orac_extended_wf THEN ASM_MESON_TAC[];
    ALL_TAC] THEN
@@ -1597,30 +1597,30 @@ let source_eval_to_flat_semantics = prove
      let co = find_term (fun t -> try let h,args = strip_comb t in
                 fst(dest_const h) = "cake_orac" && length args = 5 with Failure _ -> false) l in
      let syn = el 2 (snd (strip_comb co)) in
-     let s1 = `state_eval_state_fupd (K (SOME (mk_init_eval_state (a:(backend_config)compiler_instance)))) (s0:(FFI)state)` in
+     let s1 = `state_eval_state_fupd (combin_K (SOME (mk_init_eval_state (a:(backend_config)compiler_instance)))) (s0:(FFI)state)` in
      MP_TAC (ISPECL [s1; `env:(v)sem_env`; `prog:dec list`; `asm_conf:(A)asm_config`; `c':backend_config`;
                      `a:(backend_config)compiler_instance`; syn; s1] cake_orac_eq_get_oracle)
    else failwith "") THEN
   ANTS_TAC THENL
   [ASM_REWRITE_TAC[(record_info "state").ri_accfupds; K_THM] THEN
-   REPEAT GEN_TAC THEN DISCH_THEN SUBST1_TAC THEN CASE_REWRITE_TAC[] THEN
+   REPEAT GEN_TAC THEN DISCH_THEN SUBST1_TAC THEN CAKE_REWRITE_TAC[] THEN
    CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
    SPEC_TAC(`r:(num#num)#v#dec list`,`r:(num#num)#v#dec list`) THEN
-   REWRITE_TAC[FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_MAP_THM; I_THM];
+   REWRITE_TAC[FORALL_PAIR_THM] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_MAP_THM; I_THM];
    ALL_TAC] THEN
       DISCH_TAC THEN X_GEN_TAC `i:num` THEN REWRITE_TAC[FORALL_PAIR_THM] THEN REPEAT GEN_TAC THEN
   STRIP_TAC THEN EXPAND_TAC "orac" THEN REWRITE_TAC[o_THM] THEN
   W(fun (asl,w) -> let co = find_term (fun t -> try let h,args = strip_comb t in
                 fst(dest_const h) = "cake_orac" && length args = 6 with Failure _ -> false) w in
      FIRST_X_ASSUM(MP_TAC o SPECL [`i:num`; `((p1,p2),p1',p2'):(num#num)#v#dec list`; co])) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
   CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN REWRITE_TAC[];
       DISCH_TAC THEN
   MATCH_MP_TAC (REWRITE_RULE[IMP_IMP] source_to_source_semantics_prog_intro) THEN
   CONJ_TAC THENL [ASM_REWRITE_TAC[]; DISCH_TAC] THEN
   UNDISCH_TAC `~semantics_prog
-        (state_eval_state_fupd (K es)
-        (state_eval_state_fupd (K (SOME (mk_init_eval_state (a:(backend_config)compiler_instance)))) (s0:(FFI)state)))
+        (state_eval_state_fupd (combin_K es)
+        (state_eval_state_fupd (combin_K (SOME (mk_init_eval_state (a:(backend_config)compiler_instance)))) (s0:(FFI)state)))
         env (source_to_source_compile prog) Fail` THEN
   EXPAND_TAC "es" THEN REWRITE_TAC[put_oracle_def] THEN DISCH_TAC THEN
   MATCH_MP_TAC (REWRITE_RULE[IMP_IMP] source_to_source_semantics_prog_oracle_intro) THEN
@@ -1650,9 +1650,9 @@ let source_eval_to_flat_semantics = prove
                   (env:(v)sem_env)` ASSUME_TAC THENL
   [ASM_MESON_TAC[BKP2AUX_prim_env_facts]; ALL_TAC] THEN
   ASM_REWRITE_TAC[BKP2AUX_prim_src_facts] THEN
-  REWRITE_TAC[FLATP2AUX_init_genv_els_eval; ALL] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[FLATP2AUX_init_genv_els_eval; ALL] THEN CAKE_REWRITE_TAC[] THEN
   ASM_REWRITE_TAC[] THEN CONV_TAC NUM_REDUCE_CONV THEN
-  REWRITE_TAC[insert_gen_oracle_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[insert_gen_oracle_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[init_eval_state_ok_def; (record_info "eval_oracle_state").ri_accessors;
               (record_info "eval_oracle_state").ri_accfupds] THEN
       REWRITE_TAC[o_THM; K_THM; FST; shift_seq_zero] THEN REPEAT CONJ_TAC THENL
@@ -1685,7 +1685,7 @@ let source_eval_to_flat_semantics = prove
                 fst(dest_const h) = "cake_orac" && length args = 5 with Failure _ -> false) l in
      let syn0 = el 2 (snd (strip_comb co)) in
      SUBGOAL_THEN (mk_eq(`syn:num->(num#num)#dec list`, syn0)) ASSUME_TAC THENL [EXPAND_TAC "syn" THEN EXPAND_TAC "es" THEN
-  REWRITE_TAC[put_oracle_def; insert_gen_oracle_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[put_oracle_def; insert_gen_oracle_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[orac_s_def; (record_info "eval_oracle_state").ri_accfupds;
               (record_info "eval_oracle_state").ri_accessors; K_THM; o_THM; FST;
               shift_seq_zero] THEN
@@ -1784,7 +1784,7 @@ let compile_lab_IMP_mmio_pcs_min_index = prove
    ==> ?ffi_names. lab_to_target_config_ffi_names c' = SOME ffi_names /\
                    ?x. mmio_pcs_min_index ffi_names = SOME x`,
   REPEAT GEN_TAC THEN REWRITE_TAC[compile_lab_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
-  CASES_ON `lab_to_target_config_ffi_names c` THEN CASE_REWRITE_TAC[OPTION_ALL_def] THEN
+  CASES_ON `lab_to_target_config_ffi_names c` THEN CAKE_REWRITE_TAC[OPTION_ALL_def] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   EVERY_CASE_TAC THEN REWRITE_TAC[distinctness "option"; injectivity "option"; PAIR_EQ] THEN
   REPEAT STRIP_TAC THEN RVEQ_TAC THEN SIMP[] THEN
@@ -1800,7 +1800,7 @@ let compile_lab_no_share_mem_IMP_mmio_pcs_min_index = prove
    ==> ?ffi_names. lab_to_target_config_ffi_names c' = SOME ffi_names /\
                    mmio_pcs_min_index ffi_names = SOME (LENGTH ffi_names)`,
   REPEAT GEN_TAC THEN REWRITE_TAC[compile_lab_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
-  CASES_ON `lab_to_target_config_ffi_names c` THEN CASE_REWRITE_TAC[OPTION_ALL_def] THEN
+  CASES_ON `lab_to_target_config_ffi_names c` THEN CAKE_REWRITE_TAC[OPTION_ALL_def] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   EVERY_CASE_TAC THEN REWRITE_TAC[distinctness "option"; injectivity "option"; PAIR_EQ] THEN
   REPEAT STRIP_TAC THEN RVEQ_TAC THEN SIMP[] THEN
@@ -1838,15 +1838,15 @@ let BKP2AUX_compile_phases = prove
       bitmaps = bm /\
       backend_config_lab_conf c' = lc /\
       backend_config_source_conf c' = sc' /\
-      backend_config_clos_conf c' = clos_to_bvl_config_start_fupd (K s) cc' /\
+      backend_config_clos_conf c' = clos_to_bvl_config_start_fupd (combin_K s) cc' /\
       backend_config_bvl_conf c' =
-        bvl_to_bvi_config_inlines_fupd (K l)
-          (bvl_to_bvi_config_bvi_inlines_fupd (K bl)
-            (bvl_to_bvi_config_next_name1_fupd (K n1)
-              (bvl_to_bvi_config_next_name2_fupd (K n2)
-                (bvl_to_bvi_config_next_name3_fupd (K n3) (backend_config_bvl_conf c))))) /\
+        bvl_to_bvi_config_inlines_fupd (combin_K l)
+          (bvl_to_bvi_config_bvi_inlines_fupd (combin_K bl)
+            (bvl_to_bvi_config_next_name1_fupd (combin_K n1)
+              (bvl_to_bvi_config_next_name2_fupd (combin_K n2)
+                (bvl_to_bvi_config_next_name3_fupd (combin_K n3) (backend_config_bvl_conf c))))) /\
       backend_config_word_to_word_conf c' =
-        word_to_word_config_col_oracle_fupd (K col) (backend_config_word_to_word_conf c) /\
+        word_to_word_config_col_oracle_fupd (combin_K col) (backend_config_word_to_word_conf c) /\
       backend_config_word_conf c' = wc /\
       backend_config_stack_conf c' = backend_config_stack_conf c /\
       backend_config_data_conf c' = backend_config_data_conf c`,
@@ -1871,13 +1871,13 @@ let BKP2AUX_flat_to_data = prove
     (cc',p_bvl,names1) /\
   bvl_to_bvi_compile (clos_to_bvl_config_start cc') (backend_config_bvl_conf c) names1 p_bvl =
     (s,p_bvi,l,bl,n1,n2,n3,names2) /\
-  backend_config_clos_conf c' = clos_to_bvl_config_start_fupd (K s) cc' /\
+  backend_config_clos_conf c' = clos_to_bvl_config_start_fupd (combin_K s) cc' /\
   backend_config_bvl_conf c' =
-    bvl_to_bvi_config_inlines_fupd (K l)
-      (bvl_to_bvi_config_bvi_inlines_fupd (K bl)
-        (bvl_to_bvi_config_next_name1_fupd (K n1)
-          (bvl_to_bvi_config_next_name2_fupd (K n2)
-            (bvl_to_bvi_config_next_name3_fupd (K n3) (backend_config_bvl_conf c))))) /\
+    bvl_to_bvi_config_inlines_fupd (combin_K l)
+      (bvl_to_bvi_config_bvi_inlines_fupd (combin_K bl)
+        (bvl_to_bvi_config_next_name1_fupd (combin_K n1)
+          (bvl_to_bvi_config_next_name2_fupd (combin_K n2)
+            (bvl_to_bvi_config_next_name3_fupd (combin_K n3) (backend_config_bvl_conf c))))) /\
   ~(flat_semantics
       (mk_flat_install_conf (backend_from_flat_tuple_cc asm_conf c)
          (cake_orac asm_conf c' syn (SND o config_tuple1) (\ps. backend_progs_flat_prog ps)))
@@ -1912,7 +1912,7 @@ let BKP2AUX_flat_to_data = prove
   RULE_ASSUM_TAC(REWRITE_RULE[flat_to_clos_orac_eq]) THEN
   SUBGOAL_THEN `SND (to_clos c prog) = flat_to_clos_compile_prog p_flat` ASSUME_TAC THENL
   [REWRITE_TAC[to_clos_def; to_flat_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
-   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[];
+   ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[];
    ALL_TAC] THEN
   MP_TAC(ISPECL [`asm_conf:(A)asm_config`; `c:backend_config`; `prog:dec list`; `bytes:byte list`;
                  `bitmaps:(A word)list`; `c':backend_config`; `backend_config_clos_conf c`;
@@ -2127,14 +2127,14 @@ let BKP2AUX_syntax_p7 = prove
   MP_TAC(ISPECL [`backend_config_data_conf c`; `backend_config_word_to_word_conf c`;
                  `asm_conf:(A)asm_config`; `p_data:(num#num#data_prog)list`]
           data_to_word_compile_conventions) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN DISCH_TAC THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN DISCH_TAC THEN
   MP_TAC(ISPECL [`backend_config_data_conf c`; `backend_config_word_to_word_conf c`;
                  `asm_conf:(A)asm_config`; `p_data:(num#num#data_prog)list`]
           data_to_word_compile_lab_pres) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN STRIP_TAC THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN STRIP_TAC THEN
   MP_TAC(ISPECL [`p_word:(num#num#(A)wl_prog)list`; `asm_conf:(A)asm_config`]
           word_to_stack_compile_lab_pres) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN STRIP_TAC THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN STRIP_TAC THEN
   MP_TAC(ISPECL [`asm_conf:(A)asm_config`; `p_word:(num#num#(A)wl_prog)list`]
           word_to_stack_stack_asm_convs) THEN
   ASM_REWRITE_TAC[] THEN
@@ -2282,10 +2282,10 @@ let BKP2AUX_lab_step = prove
     SPEC_TAC(`cake_orac (target_config (machine_config_target (mc:(A,B,C)machine_config))) c' syn
                    (SND o SND o SND o SND o SND o SND o config_tuple2)
                    (\ps. backend_progs_lab_prog ps) k`,`q:lab_to_target_config#((A)sec)list`) THEN
-    REWRITE_TAC[FORALL_PAIR_THM] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[FORALL_PAIR_THM] THEN CAKE_REWRITE_TAC[] THEN
     REPEAT GEN_TAC THEN DISCH_THEN(MP_TAC o SPECL [`p1:lab_to_target_config`; `p2:((A)sec)list`;
        `mc:(A,B,C)machine_config`]) THEN ASM_REWRITE_TAC[] THEN MESON_TAC[];
-    REWRITE_TAC[cake_orac_0; config_tuple2_def; o_THM] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[cake_orac_0; config_tuple2_def; o_THM] THEN CAKE_REWRITE_TAC[] THEN
     ASM_REWRITE_TAC[] THEN
     UNDISCH_TAC `lab_to_target_compile (target_config (machine_config_target (mc:(A,B,C)machine_config))) (backend_config_lab_conf c) p7 = SOME (bytes,lc)` THEN
     REWRITE_TAC[lab_to_target_compile_def] THEN
@@ -2313,14 +2313,14 @@ let BKP2AUX_good_code_p6 = prove
   MP_TAC(ISPECL [`backend_config_data_conf c`; `backend_config_word_to_word_conf c`;
                  `asm_conf:(A)asm_config`; `p_data:(num#num#data_prog)list`]
           data_to_word_compile_conventions) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN DISCH_TAC THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN DISCH_TAC THEN
   MP_TAC(ISPECL [`backend_config_data_conf c`; `backend_config_word_to_word_conf c`;
                  `asm_conf:(A)asm_config`; `p_data:(num#num#data_prog)list`]
           data_to_word_compile_lab_pres) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN STRIP_TAC THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN STRIP_TAC THEN
   MP_TAC(ISPECL [`p_word:(num#num#(A)wl_prog)list`; `asm_conf:(A)asm_config`]
           word_to_stack_compile_lab_pres) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN STRIP_TAC THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN STRIP_TAC THEN
   BKP2AUX_HDTM_ASSUM "backend_config_ok" (STRIP_ASSUME_TAC o REWRITE_RULE[backend_config_ok_def]) THEN
   MP_TAC(ISPECL [`asm_conf:(A)asm_config`; `p_word:(num#num#(A)wl_prog)list`; `bm:(A word)list`;
                  `wc:word_to_stack_config`; `fs:num list`; `p_stack:(num#(A)stack_prog)list`;
@@ -2684,9 +2684,9 @@ let BKP2AUX_word_stub_names = prove
    (ISPECL
     [`backend_config_word_to_word_conf c`; `ac:(A)asm_config`;
      `backend_config_data_conf_fupd
-        (K (data_to_word_config_has_fp_ops_fupd (K (1 < asm_config_fp_reg_count (ac:(A)asm_config)))
+        (combin_K (data_to_word_config_has_fp_ops_fupd (combin_K (1 < asm_config_fp_reg_count (ac:(A)asm_config)))
              (data_to_word_config_has_fp_tern_fupd
-               (K (asm_config_ISA ac = ARMv7 /\ 2 < asm_config_fp_reg_count ac))
+               (combin_K (asm_config_ISA ac = ARMv7 /\ 2 < asm_config_fp_reg_count ac))
                (backend_config_data_conf c)))) c`]
     data_to_word_names))) THEN
   DISCH_TAC THEN ASM_REWRITE_TAC[ALOOKUP_NONE; MEM_APPEND; D2WPAUX_MAP_FST_stubs; MEM;
@@ -2762,7 +2762,7 @@ let BKP2AUX_word_step = prove
    MP_TAC(ISPECL [`backend_config_data_conf c`; `backend_config_word_to_word_conf c`;
                   `asm_conf:(A)asm_config`; `p_data:(num#num#data_prog)list`]
           data_to_word_compile_conventions) THEN
-   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+   ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
    MATCH_MP_TAC MONO_ALL THEN REWRITE_TAC[FORALL_PAIR_THM] THEN SIMP_TAC[]] THEN
   MP_TAC(ISPECL [`asm_config_reg_count (asm_conf:(A)asm_config) - (5 + LENGTH (asm_config_avoid_regs asm_conf))`;
    `bitmaps:(A word)list`; `TL (bitmaps:(A word)list)`;
@@ -2791,7 +2791,7 @@ let BKP2AUX_word_step = prove
   CONJ_TAC THENL
   [FIRST_X_ASSUM(MP_TAC o check (fun th -> BKP2AUX_mentions "list_CASE" (concl th))) THEN
    SPEC_TAC(`bitmaps:(A word)list`,`l:(A word)list`) THEN
-   LIST_INDUCT_TAC THEN CASE_REWRITE_TAC[TL; CONS_11] THEN MESON_TAC[];
+   LIST_INDUCT_TAC THEN CAKE_REWRITE_TAC[TL; CONS_11] THEN MESON_TAC[];
    ALL_TAC] THEN
   CONJ_TAC THENL
   [X_GEN_TAC `n:num` THEN
@@ -2915,7 +2915,7 @@ let BKP2AUX_fmi_SOME = prove
   FIRST_X_ASSUM(SUBST1_TAC o SYM o
     check (fun th -> BKP2AUX_head_is "stack_allocProof_make_init" (concl th))) THEN
   REWRITE_TAC[stack_allocProof_make_init_def; (record_info "stack_state").ri_accfupds; K_THM] THEN
-  REWRITE_TAC[make_init_any_def] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[make_init_any_def] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   FIRST_X_ASSUM(MP_TAC o check (fun th -> BKP2AUX_head_is "make_init_opt" (concl th))) THEN
   W(fun (asl,w) ->
     let t = BKP2AUX_find_app "stack_namesProof_make_init" 4 w in
@@ -2938,7 +2938,7 @@ let BKP2AUX_fmi_SOME = prove
   ASM_REWRITE_TAC[] THEN
   DISJ_CASES_THEN2 (X_CHOOSE_THEN `rr:(A)stack_result` SUBST_ALL_TAC) SUBST_ALL_TAC
     (ISPEC `r:((A)stack_result)option` option_CASES) THEN
-  CASE_REWRITE_TAC[option_DISTINCT] THEN
+  CAKE_REWRITE_TAC[option_DISTINCT] THEN
   COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT; option_INJ] THEN
   DISCH_THEN(SUBST1_TAC o SYM) THEN ASM_REWRITE_TAC[] THEN
   REWRITE_TAC[init_reduce_def] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
@@ -3025,7 +3025,7 @@ let BKP2AUX_cc_eq = prove
   X_GEN_TAC `t:((num#(A)stack_prog)list#num list#((A word)app_list#num))` THEN
   SUBGOAL_THEN `?x y z. t = (x:(num#(A)stack_prog)list,y:num list,z:(A word)app_list#num)`
     STRIP_ASSUME_TAC THENL [MESON_TAC[PAIR]; ALL_TAC] THEN
-  ASM_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN CASE_REWRITE_TAC[]);;
+  ASM_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN CAKE_REWRITE_TAC[]);;
 let BKP2AUX_w2s_make_init_fields = prove
  (`!(ac:(A)asm_config) k (t:(A,C,FFI)stack_state) code coracle.
      wl_state_handler (word_to_stackProof_make_init ac k t code coracle) = 0 /\
@@ -3063,9 +3063,9 @@ let BKP2AUX_MAP_FST_p_word = prove
    (ISPECL
     [`backend_config_word_to_word_conf c`; `ac:(A)asm_config`;
      `backend_config_data_conf_fupd
-        (K (data_to_word_config_has_fp_ops_fupd (K (1 < asm_config_fp_reg_count (ac:(A)asm_config)))
+        (combin_K (data_to_word_config_has_fp_ops_fupd (combin_K (1 < asm_config_fp_reg_count (ac:(A)asm_config)))
              (data_to_word_config_has_fp_tern_fupd
-               (K (asm_config_ISA ac = ARMv7 /\ 2 < asm_config_fp_reg_count ac))
+               (combin_K (asm_config_ISA ac = ARMv7 /\ 2 < asm_config_fp_reg_count ac))
                (backend_config_data_conf c)))) c`]
     data_to_word_names))) THEN
   REWRITE_TAC[D2WPAUX_MAP_FST_stubs]);;
@@ -3372,7 +3372,7 @@ let compile_correct' = prove
     (REPEAT GEN_TAC THEN DISCH_TAC THEN
   SUBGOAL_THEN `?s0 env. THE (prim_sem_env (ffi:(FFI)ffi_state)) = (s0,env)` STRIP_ASSUME_TAC THENL
   [MESON_TAC[PAIR]; ALL_TAC] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN STRIP_TAC) THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN STRIP_TAC) THEN
   (SUBGOAL_THEN `target_config (machine_config_target (mc:(A,B,C)machine_config)) = asm_conf` ASSUME_TAC THENL
   [BKP2AUX_HDTM_ASSUM "mc_init_ok" (fun th -> REWRITE_TAC[REWRITE_RULE[mc_init_ok_def] th]); ALL_TAC] THEN
   SUBGOAL_THEN `stack_to_lab_config_perf_calls (backend_config_stack_conf c) = F` ASSUME_TAC THENL
@@ -3687,7 +3687,7 @@ let backendProof_compile_correct = prove
   MP_TAC(SPEC_ALL compile_correct_no_eval) THEN ASM_REWRITE_TAC[] THEN
   SUBGOAL_THEN `?s0 env. THE (prim_sem_env (ffi:(FFI)ffi_state)) = (s0,env)`
    STRIP_ASSUME_TAC THENL [MESON_TAC[PAIR]; ALL_TAC] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   DISCH_THEN(fun th -> DISCH_THEN(MP_TAC o MATCH_MP th)) THEN
   MATCH_MP_TAC(SET_RULE `(t:behaviour->bool) SUBSET u ==> s SUBSET t ==> s SUBSET u`) THEN
   REWRITE_TAC[extend_with_resource_limit'_SUBSET]);;
@@ -3720,7 +3720,7 @@ let compile_correct_is_safe_for_space = prove
   MP_TAC(SPEC_ALL compile_correct_no_eval) THEN ASM_REWRITE_TAC[] THEN
   SUBGOAL_THEN `?s0 env. THE (prim_sem_env (ffi:(FFI)ffi_state)) = (s0,env)`
    STRIP_ASSUME_TAC THENL [MESON_TAC[PAIR]; ALL_TAC] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   DISCH_THEN(fun th -> DISCH_THEN(MP_TAC o MATCH_MP th)) THEN
   ASM_REWRITE_TAC[extend_with_resource_limit'_def] THEN
   X_CHOOSE_THEN `x:behaviour` SUBST1_TAC
@@ -3753,7 +3753,7 @@ let compile_correct_eval = prove
   MP_TAC(SPEC_ALL compile_correct') THEN ASM_REWRITE_TAC[] THEN
   SUBGOAL_THEN `?s0 env. THE (prim_sem_env (ffi:(FFI)ffi_state)) = (s0,env)`
    STRIP_ASSUME_TAC THENL [MESON_TAC[PAIR]; ALL_TAC] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
   DISCH_THEN(fun th -> DISCH_THEN(MP_TAC o MATCH_MP th)) THEN
   MATCH_MP_TAC(SET_RULE `(t:behaviour->bool) SUBSET u ==> s SUBSET t ==> s SUBSET u`) THEN
   REWRITE_TAC[extend_with_resource_limit'_SUBSET]);;

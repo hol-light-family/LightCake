@@ -38,7 +38,7 @@ type_invention_error := true;;
 let mb_exc_ty = `:(A,B)exc`;;
 let mb_a_ty = `:A` and mb_b_ty = `:B` and mb_c_ty = `:C`;;
 let mb_num_ty = `:num`;;
-let mb_K_const = `K:A->B->A`;;
+let mb_K_const = `combin_K:A->B->A`;;
 let mb_FST_const = `FST:A#B->A`;;
 let mb_SND_const = `SND:A#B->B`;;
 let mb_REPLICATE_const = `REPLICATE:num->A->A list`;;
@@ -56,7 +56,7 @@ let mb_run_const = `ml_monadBase_run:(A->(B,C)exc#A)->A->(B,C)exc`;;
 (* Helper functions                                                          *)
 (* ------------------------------------------------------------------------- *)
 
-(* HOL Light's type_subst (typeSysProps binds a theorem of that name) *)
+(* HOL Light's type_subst i ty, by inst *)
 let mb_type_subst i ty = type_of (inst i (mk_var ("x", ty)));;
 
 let mk_exc_type a b = mb_type_subst [a,mb_a_ty; b,mb_b_ty] mb_exc_ty;;

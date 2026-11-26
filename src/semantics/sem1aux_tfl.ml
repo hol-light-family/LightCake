@@ -170,7 +170,7 @@ let sem1aux_core_single (r,tac) (tm:term) : thm =
   let attempt () =
     let cth = if !cake_case_to_match then CASE_TO_MATCH_CONV tm0 else REFL tm0 in
     let etm = mk_exists(f,rand(concl cth)) in
-    let eth0 = sem1aux_time "recursion" pure_prove_recursive_function_exists etm in
+    let eth0 = sem1aux_time "recursion" cake_pure_prove_recursive_function_exists etm in
     let eth,_ = sem1aux_time "termination" (discharge_hyps name (Some(r,tac))) eth0 in
     if not (aconv (concl eth) etm) then
       failwith "sem1aux_core: the existence theorem is not about the clauses" else
@@ -351,7 +351,7 @@ let sem1aux_def_gen (rel_tac : (term * tactic) option) (tm:term) : thm =
     let stmt = rhs(concl(DEPTH_CONV ETA_MARKED_CONV stmt)) in
     try prove(stmt,
               REPEAT GEN_TAC THEN GEN_REWRITE_TAC LAND_CONV [el i fdefs] THEN
-              CASE_REWRITE_TAC[] THEN TRY REFL_TAC THEN NO_TAC)
+              CAKE_REWRITE_TAC[] THEN TRY REFL_TAC THEN NO_TAC)
     with Failure _ ->
       failwith ("sem1aux_def: could not prove the clause "^string_of_term stmt) in
   let def = sem1aux_time "clauses" (fun () -> end_itlist CONJ (map clause_thm cls)) () in

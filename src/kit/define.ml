@@ -251,7 +251,15 @@ let close_clauses fns tm =
 
 let cake_ind_store = ref ([] : (string * thm) list);;
 
-let cake_ind name = assoc name (!cake_ind_store);;
+(* induction theorems made when cake_ind first asks for them: the case      *)
+(* analyses of the non-recursive definitions by patterns (cake_case_ind,    *)
+(* below; since 2026-11-25)                                                  *)
+let cake_ind_lazy = ref ([] : (string * thm Lazy.t) list);;
+
+let cake_ind name =
+  try assoc name (!cake_ind_store) with Failure _ ->
+  let th = Lazy.force (assoc name (!cake_ind_lazy)) in
+  cake_ind_store := (name,th) :: !cake_ind_store; th;;
 
 let cake_tc_store = ref ([] : (string * term) list);;
 
@@ -560,7 +568,7 @@ let tidy_ctx ctx =
       if is_eq c && is_constructor_app (lhs c) && not (is_constructor_app (rhs c))
       then mk_eq(rhs c,lhs c) else c in
     let cs1 = map orient cs in
-    (* the case rewrites come from the kit's prebuilt net (CASE_REWRITE_TAC): *)
+    (* the case rewrites come from the kit's prebuilt net (CAKE_REWRITE_TAC): *)
     (* rebuilding a net of all of them for each conjunct costs about a second *)
     (* once a type with many constructors is defined                          *)
     let exists_meson ths = W(fun (_,w) -> if is_exists w &&
@@ -569,7 +577,7 @@ let tidy_ctx ctx =
     let implied others c =
       others <> [] &&
       can (fun () -> prove(mk_imp(list_mk_conj others,c),
-                           DISCH_THEN(fun th -> CASE_REWRITE_TAC(CONJUNCTS th)) THEN
+                           DISCH_THEN(fun th -> CAKE_REWRITE_TAC(CONJUNCTS th)) THEN
                            exists_meson []))
           () in
     let rec drop kept l = match l with
@@ -581,9 +589,9 @@ let tidy_ctx ctx =
     let th = prove(mk_imp(ctx',ctx),
                    DISCH_THEN(fun th ->
                      let ths = CONJUNCTS th in
-                     CASE_REWRITE_TAC ths THEN
+                     CAKE_REWRITE_TAC ths THEN
                      REWRITE_TAC(map GSYM (filter (fun t -> is_eq(concl t)) ths)) THEN
-                     CASE_REWRITE_TAC ths THEN
+                     CAKE_REWRITE_TAC ths THEN
                      TRY(MESON_TAC ths))) in
     ctx',th
   with Failure _ -> ctx,DISCH ctx (ASSUME ctx);;
@@ -811,10 +819,40 @@ let derive_induction (c:term) (clauses:(term list * term list) list)
 (* conditions): after lets are unfolded a recursive call can occur several   *)
 (* times, each with a stronger context (INST_CORE's call in a let, then in   *)
 (* if IS_RESULT tres then .. RESULT tres else tres), and each gave its own   *)
-(* hypothesis.  HOL4's TFL gives one per call.  The result is logically      *)
-(* equivalent; cake_ind itself is unchanged (stored theorems of existing     *)
-(* files stay as they are): write let f_ind = cake_ind_tidy (cake_ind "f").  *)
+(* hypothesis.  HOL4's TFL gives one per call.  Since 2026-11-25 it also     *)
+(* drops the trivially true conditions t = t of a hypothesis (a let with    *)
+(* cake_let_cong: !xs. Pl xs /\ Pl (REVERSE xs) ==> P (C xs) instead of      *)
+(* (k (REVERSE xs) = k (REVERSE xs) ==> Pl xs) /\ ..).  The result is        *)
+(* logically equivalent; cake_ind itself is unchanged (stored theorems of    *)
+(* existing files stay as they are): write                                   *)
+(*   let f_ind = cake_ind_tidy (cake_ind "f").                               *)
 (* ------------------------------------------------------------------------- *)
+
+(* an induction hypothesis !ws. c1 /\ .. /\ cm ==> P a without its trivially   *)
+(* true conditions t = t (the context of a let with cake_let_cong, a case    *)
+(* variable eliminated as in remove_colours: Fixed c = Fixed c), and the     *)
+(* function giving the new hypothesis from the old one (since 2026-11-25)    *)
+let kit_drop_refl_ih (h:term) : term * (thm -> thm) =
+  let ws,b = strip_forall h in
+  if not (is_imp b) then h,(fun t -> t) else
+  let ant,cn = dest_imp b in
+  let cs = conjuncts ant in
+  let is_refl c = is_eq c && aconv (lhs c) (rhs c) in
+  let keep = filter (fun c -> not (is_refl c)) cs in
+  if length keep = length cs then h,(fun t -> t) else
+  let body' = if keep = [] then cn else mk_imp(list_mk_conj keep,cn) in
+  let ws' = filter (fun w -> vfree_in w body') ws in
+  let derive (hth:thm) : thm =
+    let th1 = SPECL ws hth in
+    let kth = if keep = [] then None else Some (ASSUME (list_mk_conj keep)) in
+    let kparts = match kth with None -> [] | Some k -> CONJUNCTS k in
+    let rec build t =
+      if is_conj t then let l,r = dest_conj t in CONJ (build l) (build r)
+      else if is_refl t then REFL (lhs t)
+      else find (fun k -> aconv (concl k) t) kparts in
+    let r = MP th1 (build ant) in
+    GENL ws' (match kth with None -> r | Some k -> DISCH (concl k) r) in
+  list_mk_forall(ws',body'),derive;;
 
 let cake_ind_tidy (th:thm) : thm =
   let ps,body = strip_forall (concl th) in
@@ -826,30 +864,37 @@ let cake_ind_tidy (th:thm) : thm =
   let implies hi hj =
     let wi,ci,gi = parts hi and wj,cj,gj = parts hj in
     wi = wj && aconv gi gj && forall (fun c -> exists (aconv c) cj) ci in
+  (* per case: the new hypotheses, each with the index and derivation from   *)
+  (* the old one it comes from                                               *)
   let tidy_case c =
     let vs,b = strip_forall c in
-    if not (is_imp b) then c else
+    if not (is_imp b) then c,[] else
     let ihs,cc = dest_imp b in
-    let hs = Array.of_list (conjuncts ihs) in
+    let olds = conjuncts ihs in
+    let news = map kit_drop_refl_ih olds in
+    let hs = Array.of_list (map fst news) in
     let n = Array.length hs in
     let keep j = not (exists (fun i -> i <> j && implies hs.(i) hs.(j) &&
                                        (i < j || not (implies hs.(j) hs.(i))))
                             (0--(n-1))) in
-    let hs' = map (fun j -> hs.(j)) (filter keep (0--(n-1))) in
-    if length hs' = n then c else list_mk_forall(vs,mk_imp(list_mk_conj hs',cc)) in
-  let cases' = map tidy_case cases in
+    let kept = filter keep (0--(n-1)) in
+    let hs' = map (fun j -> hs.(j)) kept in
+    if length hs' = n && forall2 (fun h (h',_) -> h = h') olds news then c,[] else
+    list_mk_forall(vs,mk_imp(list_mk_conj hs',cc)),
+    map (fun j -> j,snd (el j news)) kept in
+  let tidied = map tidy_case cases in
+  let cases' = map fst tidied in
   if cases' = cases then th else
   let ant' = list_mk_conj cases' in
   let cths = CONJUNCTS (ASSUME ant') in
-  let old_case (c,c',cth) =
+  let old_case ((c,(c',info)),cth) =
     if c = c' then cth else
     let vs,b = strip_forall c in
     let ihs,_ = dest_imp b in
-    let hs' = conjuncts (fst(dest_imp(snd(strip_forall c')))) in
-    let parts = CONJUNCTS (ASSUME ihs) in
-    let pth = end_itlist CONJ (map (fun h -> find (fun t -> aconv (concl t) h) parts) hs') in
+    let parts = Array.of_list (CONJUNCTS (ASSUME ihs)) in
+    let pth = end_itlist CONJ (map (fun (j,derive) -> derive parts.(j)) info) in
     GENL vs (DISCH ihs (MP (SPECL vs cth) pth)) in
-  let cth = end_itlist CONJ (map2 (fun (c,c') t -> old_case (c,c',t)) (zip cases cases') cths) in
+  let cth = end_itlist CONJ (map old_case (zip (zip cases tidied) cths)) in
   GENL ps (DISCH ant' (MP (SPECL ps th) cth));;
 
 (* ------------------------------------------------------------------------- *)
@@ -879,7 +924,11 @@ let rename_wildcards tm =
 (* all of them                                                              *)
 
 let measure_candidates ty =
-  let rec comps ty = match dest_type ty with
+  (* the components of the tuple type; the last one may be a type variable *)
+  (* (before 2026-11-25 that failed, so recursion on another argument of   *)
+  (* such a function, as HOL4's itlist and rev_assocd, got no measure and  *)
+  (* no induction theorem)                                                 *)
+  let rec comps ty = match (try dest_type ty with Failure _ -> "",[]) with
       "prod",[a;b] -> a :: comps b
     | _ -> [ty] in
   let cs = comps ty in
@@ -1051,7 +1100,7 @@ let cake_tfl_define (f:term) (tm0:term) cls0 : thm =
       prove(mk_imp(dtm,cl),
             DISCH_THEN(fun dth -> REPEAT GEN_TAC THEN
                          GEN_REWRITE_TAC LAND_CONV [dth] THEN
-                         CASE_REWRITE_TAC[] THEN TRY REFL_TAC THEN NO_TAC)))
+                         CAKE_REWRITE_TAC[] THEN TRY REFL_TAC THEN NO_TAC)))
     (conjuncts tm0) in
   let def = new_definition deq in
   let c = mk_const(name,[]) in
@@ -1169,7 +1218,7 @@ let cake_def_gen (rel_tac : (term * tactic) option) (tm:term) : thm =
   let tm_m = rand(concl cth) in
   let etm = mk_exists(f,tm_m) in
   let auto_eth = if rel_tac = None && recursive && !cake_candidates_first
-                 then try Some(pure_prove_recursive_function_exists etm)
+                 then try Some(cake_pure_prove_recursive_function_exists etm)
                       with Failure _ -> None
                  else None in
   match (match auto_eth with
@@ -1177,8 +1226,8 @@ let cake_def_gen (rel_tac : (term * tactic) option) (tm:term) : thm =
          | _ -> None) with
     Some eth_p -> cake_def_auto name f cth etm cls0 eth_p
   | None ->
-  let eth0 = if rel_tac = None then prove_general_recursive_function_exists etm
-             else pure_prove_recursive_function_exists etm in
+  let eth0 = if rel_tac = None then cake_prove_general_recursive_function_exists etm
+             else cake_pure_prove_recursive_function_exists etm in
   let eth,wfinfo = discharge_hyps name rel_tac eth0 in
   if not (aconv (concl eth) etm) then
     failwith "cake_def: the existence theorem is not about the clauses" else
@@ -1199,7 +1248,7 @@ let cake_def_gen (rel_tac : (term * tactic) option) (tm:term) : thm =
        (* termination was automatic: look for a size measure for the       *)
        (* induction theorem                                               *)
        (try
-          let eth_p = pure_prove_recursive_function_exists etm in
+          let eth_p = cake_pure_prove_recursive_function_exists etm in
           let h = find is_wf_hyp (hyp eth_p) in
           let rel,_ = dest_exists h in
           let ty = fst(dest_fun_ty(type_of rel)) in
@@ -1263,6 +1312,119 @@ let kit_term_digest (tm:term) : string =
     | Abs(v,b) -> add "L("; tyser (type_of v); add "."; go (v::env) b; add ")" in
   go [] tm; Digest.string (Buffer.contents buf);;
 
+(* ------------------------------------------------------------------------- *)
+(* Overlapping clauses with literal patterns (numerals other than 0, T, F,   *)
+(* the characters of strings), which HOL4's TFL reads as equality tests,    *)
+(* first match wins.  They are not completed (complete_clauses), so they go  *)
+(* to the recursion package as they are, which accepts them only if the      *)
+(* overlapping clauses agree; when it fails, cake_def now compiles the       *)
+(* clauses into one equation f x1 .. xn = tree (as a match is compiled:      *)
+(* literal tests, constructor cases, ARB where no clause matches), defines f *)
+(* by it (recursive or not, with the termination relation and tactic as     *)
+(* given; cake_ind "f" then has the one case of that equation) and returns   *)
+(* the clauses that no earlier clause overlaps, as written, followed by the  *)
+(* equation, as HOL4 states such definitions (mergesortN_tail_def: the       *)
+(* clauses for the literals and a catch-all equation with the if-cascade).   *)
+(* Definitions accepted before are unaffected.  Since 2026-11-25.            *)
+(* ------------------------------------------------------------------------- *)
+
+let kit_literal_overlap (tm:term) : bool =
+  try
+    let cls = dest_clauses (rename_wildcards (cases_of_matches tm)) in
+    let fns = setify (map (fun (_,f,_,_) -> f) cls) in
+    length fns = 1 &&
+    (try ignore (complete_clauses cls); false
+     with Failure s -> s = "cake_def: overlapping clauses with literal patterns")
+  with Failure _ -> false;;
+
+let kit_literal_reduce_tac : tactic =
+  REPEAT (CHANGED_TAC (CAKE_REWRITE_TAC[] THEN CONV_TAC NUM_REDUCE_CONV));;
+
+let cake_def_literal (core : (term * tactic) option -> term -> thm)
+                     (rel_tac : (term * tactic) option) (tm:term) : thm =
+  let tm = rename_wildcards (cases_of_matches tm) in
+  let f = match dest_clauses tm with (_,f,_,_)::_ -> f | [] -> failwith "cake_def_literal" in
+  let tm = close_clauses [f] tm in
+  let cls = dest_clauses tm in
+  let xs,body = cake_tfl_tree (ref (frees tm)) f cls in
+  (* the arguments are named as in the last clause if it has distinct       *)
+  (* variables there (the catch-all clause, as HOL4's equation)            *)
+  let xs,body =
+    match rev cls with
+      (_,_,args,_)::_ when forall is_var args && length (setify args) = length args &&
+                           map type_of args = map type_of xs ->
+        let eq0 = mk_eq(list_mk_comb(f,xs),body) in
+        let eq1 = vsubst (zip args xs) eq0 in
+        args,rand eq1
+    | _ -> xs,body in
+  let eqn = list_mk_forall(xs,mk_eq(list_mk_comb(f,xs),body)) in
+  let def1 = core rel_tac eqn in
+  let name = fst(dest_var f) in
+  let c = let c0 = mk_const(name,[]) in inst (type_match (type_of c0) (type_of f) []) c0 in
+  let pats = map (fun (_,_,a,_) -> a) cls in
+  let disjoint i =
+    forall (fun j -> not (forall2 pat_compatible (el j pats) (el i pats))) (0--(i-1)) in
+  let clause_thm i =
+    if not (disjoint i) then failwith "overlapped" else
+    let (vs,_,args,r) = el i cls in
+    let stmt = vsubst [c,f] (list_mk_forall(vs,mk_eq(list_mk_comb(f,args),r))) in
+    try prove(stmt, REPEAT GEN_TAC THEN GEN_REWRITE_TAC LAND_CONV [def1] THEN
+                    kit_literal_reduce_tac)
+    with Failure _ ->
+      (Format.print_string ("Warning: cake_def "^name^": clause "^string_of_int (i+1)^
+                            " not proved from the equation (left out)\n");
+       failwith "clause") in
+  let ths = mapfilter clause_thm (0--(length cls - 1)) in
+  if length ths = length cls then end_itlist CONJ ths
+  else end_itlist CONJ (ths @ [def1]);;
+
+let cake_def_gen =
+  let core = cake_def_gen in
+  fun (rel_tac : (term * tactic) option) (tm:term) ->
+    try core rel_tac tm with Failure msg ->
+      if kit_literal_overlap tm then cake_def_literal core rel_tac tm
+      else failwith msg;;
+
+(* The induction theorem of a non-recursive definition by patterns: one     *)
+(* case per clause of the definition theorem (the completed clauses), no     *)
+(* induction hypotheses, as HOL4's TFL makes it (dest_binop_ind of           *)
+(* ml_optimise).  cake_case_ind def gives it for the definition theorem def  *)
+(* (the recipe of wordLang's IL2AUX_case_ind and compute_eval's               *)
+(* CMPEVAUX_case_ind, which it can replace), and cake_ind "f" gives it for a *)
+(* non-recursive cake_def of f by patterns (made when first asked for).      *)
+(* Since 2026-11-25.                                                         *)
+
+let cake_case_ind (def:thm) : thm =
+  let cls = map (fun cl -> let vs,eq = strip_forall cl in
+                           let c,args = strip_comb(lhs eq) in vs,c,args)
+                (conjuncts(concl def)) in
+  let _,c,args0 = hd cls in
+  let tty = end_itlist (fun a b -> mk_type("prod",[a;b])) (map type_of args0) in
+  let wfth = ISPEC (mk_abs(mk_var("x",tty),mk_small_numeral 0)) WF_MEASURE in
+  derive_induction c (map (fun (vs,_,args) -> vs,args) cls) [] wfth;;
+
+(* register the case analysis of a new non-recursive definition by          *)
+(* patterns (not a single clause with distinct variables as its arguments)  *)
+let kit_register_case_ind (th:thm) : unit =
+  try
+    let parts = map (fun cl -> let _,eq = strip_forall cl in
+                               let l,r = dest_eq eq in
+                               let c,args = strip_comb l in c,args,r)
+                    (conjuncts (concl th)) in
+    let c,_,_ = hd parts in
+    let name = fst (dest_const c) in
+    if exists (fun (c',_,r) -> c' <> c || free_in c r) parts then () else
+    if can (assoc name) (!cake_ind_store) || can (assoc name) (!cake_ind_lazy) then () else
+    (* a clause with only variables among others: the catch-all equation   *)
+    (* of overlapping literal clauses (cake_def_literal), no case analysis *)
+    if length parts > 1 && exists (fun (_,args,_) -> forall is_var args) parts then () else
+    match parts with
+      [(_,args,_)] when forall is_var args && length (setify args) = length args -> ()
+    | (_,args,_)::_ when args <> [] ->
+        cake_ind_lazy := (name,lazy (cake_case_ind th)) :: !cake_ind_lazy
+    | _ -> ()
+  with Failure _ -> ();;
+
 let cake_def_store = (Hashtbl.create 1000 : (string,(string * thm)) Hashtbl.t);;
 
 let kit_def_store = ref true;;
@@ -1270,7 +1432,8 @@ let kit_def_store = ref true;;
 let cake_def_gen =
   let cake_def_gen0 = cake_def_gen in
   fun (rel_tac : (term * tactic) option) (tm:term) ->
-    if not !kit_def_store then cake_def_gen0 rel_tac tm else
+    if not !kit_def_store then
+      (let th = cake_def_gen0 rel_tac tm in kit_register_case_ind th; th) else
     let ctm = rename_wildcards (cases_of_matches tm) in
     let head = try (match dest_clauses ctm with
                       (_,f,_,_)::_ -> if is_var f then fst(dest_var f)
@@ -1289,6 +1452,7 @@ let cake_def_gen =
         (* ctm is already compiled: cake_def_gen0's own cases_of_matches and   *)
         (* rename_wildcards leave it as it is (no second compilation)          *)
         let th = cake_def_gen0 rel_tac ctm in
+        kit_register_case_ind th;
         (try
            let fns = setify (filter is_var (map (fun (_,f,_,_) -> f) (dest_clauses ctm))) in
            let sub = map (fun f ->
@@ -1511,7 +1675,7 @@ cake_def_mutual_ref := cake_def_mutual;;
 let sum_measure_candidates (tys:hol_type list) =
   let num = cake_num_ty in
   let whole ty = size_of_type [] ty in
-  let first ty = match dest_type ty with
+  let first ty = match (try dest_type ty with Failure _ -> "",[]) with
       "prod",[a;b] -> let t = mk_var("t_ms",ty) in
                       mk_abs(t,mk_comb(size_of_type [] a,
                                        mk_comb(mk_const("FST",[a,aty; b,bty]),t)))

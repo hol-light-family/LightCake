@@ -24,19 +24,19 @@ type_invention_error := true;;
 
 let ml_write_def = cake_def
   `ml_write name (v:v) (env:v sem_env) =
-     sem_env_v_fupd (K (nsBind name v (sem_env_v env))) env`;;
+     sem_env_v_fupd (combin_K (nsBind name v (sem_env_v env))) env`;;
 
 let ml_write_cons_def = cake_def
   `ml_write_cons n d (env:v sem_env) =
-     sem_env_c_fupd (K (nsAppend (nsSing n d) (sem_env_c env))) env`;;
+     sem_env_c_fupd (combin_K (nsAppend (nsSing n d) (sem_env_c env))) env`;;
 
 let empty_env_def = cake_def
   `(empty_env:v sem_env) = sem_env_REC nsEmpty nsEmpty`;;
 
 let ml_write_mod_def = cake_def
   `ml_write_mod mn (env:v sem_env) env2 =
-     sem_env_c_fupd (K (nsAppend (nsLift mn (sem_env_c env)) (sem_env_c env2)))
-       (sem_env_v_fupd (K (nsAppend (nsLift mn (sem_env_v env)) (sem_env_v env2))) env2)`;;
+     sem_env_c_fupd (combin_K (nsAppend (nsLift mn (sem_env_c env)) (sem_env_c env2)))
+       (sem_env_v_fupd (combin_K (nsAppend (nsLift mn (sem_env_v env)) (sem_env_v env2))) env2)`;;
 
 let merge_env_def = cake_def
   `merge_env (env2:v sem_env) env1 =
@@ -167,7 +167,7 @@ let ml_write_rec_def = cake_def
 
 let write_rec_thm = prove
  (`ml_write_rec funs env1 env =
-   sem_env_v_fupd (K (build_rec_env funs env1 (sem_env_v env))) env`,
+   sem_env_v_fupd (combin_K (build_rec_env funs env1 (sem_env_v env))) env`,
   REWRITE_TAC[ml_write_rec_def; build_rec_env_def] THEN
   SPEC_TAC (`Recclosure env1 funs`,`hh:varN->v`) THEN
   SPEC_TAC (`env:v sem_env`,`env:v sem_env`) THEN
@@ -288,20 +288,20 @@ let empty_simp = prove
 let ml_Decls_def = cake_def
   `Decls (env:v sem_env) (s1:(FFI)state) ds env2 s2 <=>
      state_clock s1 = state_clock s2 /\
-     ?ck1 ck2. evaluate_dec_list (state_clock_fupd (K ck1) s1) env ds =
-               (state_clock_fupd (K ck2) s2,Rval env2)`;;
+     ?ck1 ck2. evaluate_dec_list (state_clock_fupd (combin_K ck1) s1) env ds =
+               (state_clock_fupd (combin_K ck2) s2,Rval env2)`;;
 
 let ml_Prog_def = cake_def
   `Prog (env:v sem_env) (s1:(FFI)state) ds env2 s2 <=>
      state_clock s1 = state_clock s2 /\
-     ?ck1 ck2. evaluate_decs (state_clock_fupd (K ck1) s1) env ds =
-               (state_clock_fupd (K ck2) s2,Rval env2)`;;
+     ?ck1 ck2. evaluate_decs (state_clock_fupd (combin_K ck1) s1) env ds =
+               (state_clock_fupd (combin_K ck2) s2,Rval env2)`;;
 
 let Decls_Dtype = prove
  (`!env (s:(FFI)state) tds env2 s2 locs.
      Decls env s [Dtype locs tds] env2 s2 <=>
      ALL check_dup_ctors tds /\
-     s2 = state_next_type_stamp_fupd (K (state_next_type_stamp s + LENGTH tds)) s /\
+     s2 = state_next_type_stamp_fupd (combin_K (state_next_type_stamp s + LENGTH tds)) s /\
      env2 = ml_write_tdefs (state_next_type_stamp s) tds empty_env`,
   REPEAT GEN_TAC THEN REWRITE_TAC[ml_Decls_def; evaluate_dec_list_def; write_tdefs_thm] THEN
   ASM_CASES_TAC `ALL check_dup_ctors (tds:type_def)` THEN ASM_REWRITE_TAC[] THEN SIMP[] THEN
@@ -313,7 +313,7 @@ let Decls_Dtype = prove
 let Decls_Dexn = prove
  (`!env (s:(FFI)state) n l env2 s2 locs.
      Decls env s [Dexn locs n l] env2 s2 <=>
-     s2 = state_next_exn_stamp_fupd (K (state_next_exn_stamp s + 1)) s /\
+     s2 = state_next_exn_stamp_fupd (combin_K (state_next_exn_stamp s + 1)) s /\
      env2 = ml_write_cons n (LENGTH l,ExnStamp (state_next_exn_stamp s)) empty_env`,
   REPEAT GEN_TAC THEN
   REWRITE_TAC[ml_Decls_def; evaluate_dec_list_def; ml_write_cons_def; empty_env_def] THEN
@@ -336,22 +336,22 @@ let eval_rel_def = cake_def
   `eval_rel (s1:(FFI)state) env e (s2:(FFI)state) (x:v) <=>
      state_clock s1 = state_clock s2 /\
      ?ck1 ck2.
-       evaluate (state_clock_fupd (K ck1) s1) env [e] =
-       (state_clock_fupd (K ck2) s2,Rval [x])`;;
+       evaluate (state_clock_fupd (combin_K ck1) s1) env [e] =
+       (state_clock_fupd (combin_K ck2) s2,Rval [x])`;;
 
 let eval_rel_alt = prove
  (`eval_rel (s1:(FFI)state) env e s2 x <=>
    state_clock s2 = state_clock s1 /\
-   ?ck. evaluate (state_clock_fupd (K ck) s1) env [e] = (s2,Rval [x])`,
+   ?ck. evaluate (state_clock_fupd (combin_K ck) s1) env [e] = (s2,Rval [x])`,
   REWRITE_TAC[eval_rel_def] THEN EQ_TAC THEN STRIP_TAC THENL
    [ASM_REWRITE_TAC[] THEN
-    MP_TAC (ISPECL [`state_clock_fupd (K ck1) (s1:(FFI)state)`; `env:v sem_env`; `[e:exp]`;
-                    `state_clock_fupd (K ck2) (s2:(FFI)state)`;
+    MP_TAC (ISPECL [`state_clock_fupd (combin_K ck1) (s1:(FFI)state)`; `env:v sem_env`; `[e:exp]`;
+                    `state_clock_fupd (combin_K ck2) (s2:(FFI)state)`;
                     `Rval [x]:(v list,v)result`] evaluate_set_clock) THEN
     ASM_REWRITE_TAC[] THEN SIMP[] THEN
     DISCH_THEN (X_CHOOSE_TAC `ck:num` o SPEC `state_clock (s2:(FFI)state)`) THEN
     QEXISTS_TAC "ck" THEN FS[RECORD_SELFID_ss];
-    SUBGOAL_THEN `state_clock_fupd (K (state_clock s2)) (s2:(FFI)state) = s2` ASSUME_TAC THENL
+    SUBGOAL_THEN `state_clock_fupd (combin_K (state_clock s2)) (s2:(FFI)state) = s2` ASSUME_TAC THENL
      [SIMP[RECORD_SELFID_ss]; ALL_TAC] THEN
     CONJ_TAC THENL [ASM_REWRITE_TAC[]; ALL_TAC] THEN
     MAP_EVERY EXISTS_TAC [`ck:num`; `state_clock (s2:(FFI)state)`] THEN ASM_REWRITE_TAC[]]);;
@@ -360,15 +360,15 @@ let eval_list_rel_def = cake_def
   `eval_list_rel (s1:(FFI)state) env e (s2:(FFI)state) (x:v list) <=>
      state_clock s1 = state_clock s2 /\
      ?ck1 ck2.
-       evaluate (state_clock_fupd (K ck1) s1) env e =
-       (state_clock_fupd (K ck2) s2,Rval x)`;;
+       evaluate (state_clock_fupd (combin_K ck1) s1) env e =
+       (state_clock_fupd (combin_K ck2) s2,Rval x)`;;
 
 let eval_match_rel_def = cake_def
   `eval_match_rel (s1:(FFI)state) env v pats err_v (s2:(FFI)state) (x:v) <=>
      state_clock s1 = state_clock s2 /\
      ?ck1 ck2.
-       evaluate_match (state_clock_fupd (K ck1) s1) env v pats err_v =
-       (state_clock_fupd (K ck2) s2,Rval [x])`;;
+       evaluate_match (state_clock_fupd (combin_K ck1) s1) env v pats err_v =
+       (state_clock_fupd (combin_K ck2) s2,Rval [x])`;;
 
 (* Delays the write *)
 let Decls_Dlet = prove
@@ -423,8 +423,8 @@ let Decls_Dlocal = prove
    ==> Decls (merge_env env2 env) st2 ds env3 st3
    ==> Decls env st [Dlocal lds ds] env3 st3`,
   REWRITE_TAC[ml_Decls_def] THEN REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
-  MP_TAC (ISPECL [`state_clock_fupd (K ck1) (st:(FFI)state)`; `env:v sem_env`;
-                  `lds:dec list`; `state_clock_fupd (K ck2) (st2:(FFI)state)`;
+  MP_TAC (ISPECL [`state_clock_fupd (combin_K ck1) (st:(FFI)state)`; `env:v sem_env`;
+                  `lds:dec list`; `state_clock_fupd (combin_K ck2) (st2:(FFI)state)`;
                   `Rval env2:(v sem_env,v)result`] evaluate_dec_list_set_clock) THEN
   ASM_REWRITE_TAC[] THEN SIMP[] THEN
   DISCH_THEN (X_CHOOSE_TAC `c1:num` o SPEC `ck1':num`) THEN
@@ -439,7 +439,7 @@ let Decls_Denv = prove
      Decls env s1 [Denv v] env2 s2 <=>
      ?env1 es.
        declare_env (state_eval_state s1) env = SOME (env1,es) /\
-       s2 = state_eval_state_fupd (K es) s1 /\
+       s2 = state_eval_state_fupd (combin_K es) s1 /\
        env2 = ml_write v env1 empty_env`,
   REPEAT GEN_TAC THEN
   REWRITE_TAC[ml_Decls_def; evaluate_dec_list_def; ml_write_def; empty_env_def] THEN
@@ -474,7 +474,7 @@ let Decls_CONS = prove
    [REWRITE_TAC[merge_env_def; extend_dec_env_def]; ALL_TAC] THEN
   EQ_TAC THENL
    [STRIP_TAC THEN POP_ASSUM (MP_TAC o ONCE_REWRITE_RULE[evaluate_dec_list_cons]) THEN
-    MP_TAC (ISPEC `evaluate_dec_list (state_clock_fupd (K ck1) (s1:(FFI)state)) env1 [d]`
+    MP_TAC (ISPEC `evaluate_dec_list (state_clock_fupd (combin_K ck1) (s1:(FFI)state)) env1 [d]`
       PAIR_SURJECTIVE) THEN
     DISCH_THEN (X_CHOOSE_THEN `sa:(FFI)state` (X_CHOOSE_THEN `ra:(v sem_env,v)result`
       ASSUME_TAC)) THEN
@@ -486,7 +486,7 @@ let Decls_CONS = prove
     ASM_REWRITE_TAC[] THEN QCASES_ON "rb" THEN SIMP[combine_dec_result_def] THEN
     STRIP_TAC THEN
     MAP_EVERY EXISTS_TAC [`a:v sem_env`; `a':v sem_env`;
-      `state_clock_fupd (K (state_clock (s3:(FFI)state))) (sa:(FFI)state)`] THEN
+      `state_clock_fupd (combin_K (state_clock (s3:(FFI)state))) (sa:(FFI)state)`] THEN
     REWRITE_TAC[state_INFO.ri_accfupds; K_THM] THEN REPEAT CONJ_TAC THENL
      [MAP_EVERY EXISTS_TAC [`ck1:num`; `state_clock (sa:(FFI)state)`] THEN
       ASM_REWRITE_TAC[] THEN SIMP[RECORD_SELFID_ss];
@@ -494,8 +494,8 @@ let Decls_CONS = prove
       SIMP[RECORD_SELFID_ss] THEN ASM_REWRITE_TAC[];
       REWRITE_TAC[merge_env_def] THEN ASM_MESON_TAC[]];
     STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
-    MP_TAC (ISPECL [`state_clock_fupd (K ck1) (s1:(FFI)state)`; `env1:v sem_env`;
-                    `[d:dec]`; `state_clock_fupd (K ck2) (s2:(FFI)state)`;
+    MP_TAC (ISPECL [`state_clock_fupd (combin_K ck1) (s1:(FFI)state)`; `env1:v sem_env`;
+                    `[d:dec]`; `state_clock_fupd (combin_K ck2) (s2:(FFI)state)`;
                     `Rval envA:(v sem_env,v)result`] evaluate_dec_list_set_clock) THEN
     ASM_REWRITE_TAC[] THEN SIMP[] THEN
     DISCH_THEN (X_CHOOSE_TAC `c1:num` o SPEC `ck1':num`) THEN
@@ -552,12 +552,12 @@ let Decls_SNOC = prove
 
 let ml_Decls_set_eval_state = prove
  (`Decls env1 (s1:(FFI)state) ds env2 s2 /\ state_eval_state s1 = NONE ==>
-   !es. Decls env1 (state_eval_state_fupd (K es) s1) ds env2
-                   (state_eval_state_fupd (K es) s2)`,
+   !es. Decls env1 (state_eval_state_fupd (combin_K es) s1) ds env2
+                   (state_eval_state_fupd (combin_K es) s2)`,
   REWRITE_TAC[ml_Decls_def] THEN STRIP_TAC THEN GEN_TAC THEN
   MP_TAC (INST [`es:(eval_state)option`,`es:(eval_state)option`]
-    (ISPECL [`state_clock_fupd (K ck1) (s1:(FFI)state)`; `env1:v sem_env`; `ds:dec list`;
-             `state_clock_fupd (K ck2) (s2:(FFI)state)`; `Rval env2:(v sem_env,v)result`]
+    (ISPECL [`state_clock_fupd (combin_K ck1) (s1:(FFI)state)`; `env1:v sem_env`; `ds:dec list`;
+             `state_clock_fupd (combin_K ck2) (s2:(FFI)state)`; `Rval env2:(v sem_env,v)result`]
             eval_dec_list_no_eval_simulation)) THEN
   ASM_REWRITE_TAC[] THEN SIMP[] THEN ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
   MAP_EVERY QEXISTS_TAC ["ck1"; "ck2"] THEN
@@ -673,7 +673,7 @@ let ML_code_Dtype = prove
  (`!tds locs. ML_code inp_env (CONS (comm,s1,prog,env2) bls) (s2:(FFI)state) ==>
      ALL check_dup_ctors tds ==>
      let nts = state_next_type_stamp s2 in
-     let s3 = state_next_type_stamp_fupd (K (nts + LENGTH tds)) s2 in
+     let s3 = state_next_type_stamp_fupd (combin_K (nts + LENGTH tds)) s2 in
      let env3 = ml_write_tdefs nts tds env2 in
      ML_code inp_env (CONS (comm,s1,SNOC (Dtype locs tds) prog,env3) bls) s3`,
   REWRITE_TAC[LET_DEF; LET_END_DEF; ML_code_def; SNOC_APPEND; Decls_APPEND] THEN
@@ -688,7 +688,7 @@ let ML_code_Dtype = prove
 let ML_code_Dexn = prove
  (`!n l locs. ML_code inp_env (CONS (comm,s1,prog,env2) bls) (s2:(FFI)state) ==>
      let nes = state_next_exn_stamp s2 in
-     let s3 = state_next_exn_stamp_fupd (K (nes + 1)) s2 in
+     let s3 = state_next_exn_stamp_fupd (combin_K (nes + 1)) s2 in
      let env3 = ml_write_cons n (LENGTH l,ExnStamp nes) env2 in
      ML_code inp_env (CONS (comm,s1,SNOC (Dexn locs n l) prog,env3) bls) s3`,
   REWRITE_TAC[LET_DEF; LET_END_DEF; ML_code_def; SNOC_APPEND; Decls_APPEND] THEN
@@ -816,7 +816,7 @@ let ML_code_Dlet_Var_Ref_Var = prove
      let len = LENGTH (state_refs s2) in
      let loc = Loc T len in
      let env2 = ml_write n loc env1 in
-     let s2_abbrev = state_refs_fupd (K (APPEND (state_refs s2) [Refv x])) s2 in
+     let s2_abbrev = state_refs_fupd (combin_K (APPEND (state_refs s2) [Refv x])) s2 in
      ML_code env0
        (CONS (comm,s1,SNOC (Dlet locs (Pvar n) (App Opref [Var vname])) prog,env2) bls)
        s2_abbrev`,
@@ -827,7 +827,7 @@ let ML_code_Dlet_Var_Ref_Var = prove
                 (prog:dec list),(env1:v sem_env))
                (bls:((mlstring#mlstring)#(FFI)state#dec list#v sem_env)list))`;
             `App Opref [Var vname]`;
-            `state_refs_fupd (K (APPEND (state_refs s2) [Refv x])) (s2:(FFI)state)`;
+            `state_refs_fupd (combin_K (APPEND (state_refs s2) [Refv x])) (s2:(FFI)state)`;
             `Loc T (LENGTH (state_refs (s2:(FFI)state)))`; `n:varN`; `locs:locs`]
            ML_code_Dlet_var)) THEN
   BETA_TAC THEN ASM_REWRITE_TAC[] THEN DISCH_THEN MATCH_MP_TAC THEN
@@ -839,7 +839,7 @@ let ML_code_Dlet_Var_Ref_Var = prove
 let declare_env_rel_def = cake_def
   `declare_env_rel (s2:(FFI)state) (env1:v sem_env) s3 envv <=>
      ?es. declare_env (state_eval_state s2) env1 = SOME (envv,es) /\
-          s3 = state_eval_state_fupd (K es) s2`;;
+          s3 = state_eval_state_fupd (combin_K es) s2`;;
 
 let ML_code_Denv = prove
  (`!n cenv s3 envv.
@@ -865,8 +865,8 @@ let ML_code_Denv = prove
 let ML_code_set_eval_state = prove
  (`ML_code env0 [(comm,s1,prog,env1)] (s2:(FFI)state) ==>
    state_eval_state s1 = NONE ==>
-   !es. ML_code env0 [(comm,state_eval_state_fupd (K (SOME es)) s1,prog,env1)]
-                     (state_eval_state_fupd (K (SOME es)) s2)`,
+   !es. ML_code env0 [(comm,state_eval_state_fupd (combin_K (SOME es)) s1,prog,env1)]
+                     (state_eval_state_fupd (combin_K (SOME es)) s2)`,
   REWRITE_TAC[ML_code_def] THEN REPEAT STRIP_TAC THEN
   MP_TAC (ISPECL [`ML_code_env env0
                     ([]:((mlstring#mlstring)#(FFI)state#dec list#v sem_env)list)`;

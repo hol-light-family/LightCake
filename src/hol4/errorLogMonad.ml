@@ -65,7 +65,7 @@ let bind_EQ_success = prove
   SIMP[PAIR_MAP_THM; I_THM] THEN MESON_TAC[]);;
 
 let silently_def = cake_def
-  `silently (M:A#B) = (I ## K ([]:(C)list)) M`;;
+  `silently (M:A#B) = (I ## combin_K ([]:(C)list)) M`;;
 
 let errorLogMonad_choice_def = cake_def
   `errorLogMonad_choice (M1:(A,E1)error#(L)list) (M2:(A,E2)error#(L)list) =

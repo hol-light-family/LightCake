@@ -33,7 +33,7 @@ let ASP5AUX_DO_APP_TAC op_tm (extra:thm list) : tactic =
               distinctness "word_op"; distinctness "mem_op"] THEN
   DISCH_THEN SUBST1_TAC THEN
   CONV_TAC(LAND_CONV(LAND_CONV(REWRITE_CONV[data_do_app_aux_def] THENC
-                               CASE_REWRITE_CONV[]))) THEN
+                               CAKE_REWRITE_CONV[]))) THEN
   REWRITE_TAC([case_eq "list"; case_eq "data_v"; case_eq "option"; case_eq "bvl_ref";
                case_eq "prod"; COND_CASE_EQ; distinctness "result";
                injectivity "result"; PAIR_EQ; RIGHT_AND_EXISTS_THM;
@@ -51,7 +51,7 @@ let ASP5AUX_ODD_adjust_var = prove
     DISCH_THEN SUBST_ALL_TAC THEN FIRST_X_ASSUM(MP_TAC) THEN REWRITE_TAC[ARITH]]);;
 
 let ASP5AUX_locals_fupd_id = prove
- (`!(t:(A,C,FFI)wl_state). wl_state_locals_fupd (K (wl_state_locals t)) t = t`,
+ (`!(t:(A,C,FFI)wl_state). wl_state_locals_fupd (combin_K (wl_state_locals t)) t = t`,
   REWRITE_TAC[wl_state_INFO.ri_component_equality; wl_state_INFO.ri_accfupds; K_THM]);;
 
 (* the final state_rel of a Boolv/Number result: the word state is t with  *)
@@ -59,7 +59,7 @@ let ASP5AUX_locals_fupd_id = prove
 (* (odd locals) set                                                        *)
 let ASP5AUX_state_rel_finish = prove
  (`!c l1 l2 (s:(C,FFI)data_state) (t:(A,C,FFI)wl_state) locs dest v w op vs L.
-     data_to_word_gcProof_state_rel c l1 l2 s (wl_state_locals_fupd (K L) t) NONE locs /\
+     data_to_word_gcProof_state_rel c l1 l2 s (wl_state_locals_fupd (combin_K L) t) NONE locs /\
      memory_rel c (wl_state_be t) (THE (data_state_tstamps s)) (data_state_refs s)
        (data_state_space s) (wl_state_store t) (wl_state_memory t) (wl_state_mdomain t)
        (CONS (v,w)
@@ -69,10 +69,10 @@ let ASP5AUX_state_rel_finish = prove
                (data_to_word_gcProof_flat (data_state_stack s) (wl_state_stack t))))) ==>
      data_to_word_gcProof_state_rel c l1 l2
        (data_set_var dest v (do_stack op vs (do_lim_safe s op vs)))
-       (wl_state_locals_fupd (K (insert (adjust_var dest) w L)) t) NONE locs`,
+       (wl_state_locals_fupd (combin_K (insert (adjust_var dest) w L)) t) NONE locs`,
   REPEAT STRIP_TAC THEN
   MP_TAC(ISPECL [`c:data_to_word_config`; `l1:num`; `l2:num`; `s:(C,FFI)data_state`;
-                 `wl_state_locals_fupd (K L) (t:(A,C,FFI)wl_state)`;
+                 `wl_state_locals_fupd (combin_K L) (t:(A,C,FFI)wl_state)`;
                  `locs:(num#num)list`; `dest:num`; `v:data_v`; `w:A word_loc`;
                  `op:clos_op`; `vs:data_v list`] ASP4AUX_state_rel_do_stack_set_var) THEN
   ASM_REWRITE_TAC[wl_set_var_def; wl_state_INFO.ri_accfupds;
@@ -173,14 +173,14 @@ let ASP5AUX_INTRO_TAC (intro:tactic) : tactic =
      injectivity "word_op"]) THEN
   UNDISCH_TAC `names_opt:(1 spt)option = NONE` THEN DISCH_THEN SUBST_ALL_TAC THEN
   UNDISCH_TAC `data_cut_state_opt NONE (s:(C,FFI)data_state) = SOME x` THEN
-  REWRITE_TAC[data_cut_state_opt_def] THEN CASE_REWRITE_TAC[option_INJ] THEN
+  REWRITE_TAC[data_cut_state_opt_def] THEN CAKE_REWRITE_TAC[option_INJ] THEN
   DISCH_THEN(SUBST_ALL_TAC o SYM) THEN
   FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP ASP4AUX_state_rel_facts);;
 
 (* unfold the assignment: assign_th is the equation of the operator *)
 let ASP5AUX_UNFOLD_ASSIGN_TAC assign_th : tactic =
-  CONV_TAC(ONCE_DEPTH_CONV(REWR_CONV data_to_word_assign_def)) THEN CASE_REWRITE_TAC[] THEN
-  REWRITE_TAC[data_to_word_arg1_def; data_to_word_arg2_def] THEN CASE_REWRITE_TAC[] THEN
+  CONV_TAC(ONCE_DEPTH_CONV(REWR_CONV data_to_word_assign_def)) THEN CAKE_REWRITE_TAC[] THEN
+  REWRITE_TAC[data_to_word_arg1_def; data_to_word_arg2_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[assign_th];;
 
 (* the do_app assumption, rewritten with th *)
@@ -276,11 +276,11 @@ let ASP5AUX_NUM_MEM_TAC : tactic =
 (* the equations assign c secn l dest op args names = match args with ... *)
 let ASP5AUX_ASSIGN_EQ_TAC def : tactic =
   REPEAT GEN_TAC THEN
-  CONV_TAC(LAND_CONV(REWR_CONV data_to_word_assign_def)) THEN CASE_REWRITE_TAC[] THEN
+  CONV_TAC(LAND_CONV(REWR_CONV data_to_word_assign_def)) THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[data_to_word_arg1_def; data_to_word_arg2_def; def] THEN
-  STRUCT_CASES_TAC(ISPEC `args:num list` list_CASES) THEN CASE_REWRITE_TAC[] THEN
-  STRUCT_CASES_TAC(ISPEC `t:num list` list_CASES) THEN CASE_REWRITE_TAC[] THEN
-  TRY(STRUCT_CASES_TAC(ISPEC `t':num list` list_CASES) THEN CASE_REWRITE_TAC[]);;
+  STRUCT_CASES_TAC(ISPEC `args:num list` list_CASES) THEN CAKE_REWRITE_TAC[] THEN
+  STRUCT_CASES_TAC(ISPEC `t:num list` list_CASES) THEN CAKE_REWRITE_TAC[] THEN
+  TRY(STRUCT_CASES_TAC(ISPEC `t':num list` list_CASES) THEN CAKE_REWRITE_TAC[]);;
 
 let ASP5AUX_do_app_BoolNot = prove
  (`!vs (s:(C,FFI)data_state) v s2.
@@ -322,13 +322,13 @@ let ASP5AUX_APP_TAC (def:thm) (extra:thm list) : tactic =
              distinctness "data_v"; injectivity "data_v"; COND_CASE_EQ] @ extra in
   REPEAT GEN_TAC THEN
   ASP4AUX_LIST_CASES_TAC `vs:data_v list` `x1:data_v` `t1:data_v list` THENL
-   [CASE_REWRITE_TAC rws; ALL_TAC] THEN
+   [CAKE_REWRITE_TAC rws; ALL_TAC] THEN
   ASP4AUX_LIST_CASES_TAC `t1:data_v list` `x2:data_v` `t2:data_v list` THENL
-   [ASP4AUX_DV_CASES_TAC `x1:data_v` THEN CASE_REWRITE_TAC rws THEN MESON_TAC[]; ALL_TAC] THEN
+   [ASP4AUX_DV_CASES_TAC `x1:data_v` THEN CAKE_REWRITE_TAC rws THEN MESON_TAC[]; ALL_TAC] THEN
   ASP4AUX_DV_CASES_TAC `x1:data_v` THEN ASP4AUX_DV_CASES_TAC `x2:data_v` THEN
-  CASE_REWRITE_TAC rws THEN
+  CAKE_REWRITE_TAC rws THEN
   TRY(ASP4AUX_LIST_CASES_TAC `t2:data_v list` `x3:data_v` `t3:data_v list` THEN
-      CASE_REWRITE_TAC rws) THEN
+      CAKE_REWRITE_TAC rws) THEN
   MESON_TAC[];;
 
 let ASP5AUX_int_app_LessConstSmall = prove
@@ -703,7 +703,7 @@ let ASP5AUX_DO_APP_RESET_TAC op_tm int_th : tactic =
               injectivity "clos_op"; distinctness "int_op"; distinctness "block_op"] THEN
   DISCH_THEN SUBST1_TAC THEN
   CONV_TAC(LAND_CONV(LAND_CONV(REWRITE_CONV[data_do_app_aux_def] THENC
-                               CASE_REWRITE_CONV[]))) THEN
+                               CAKE_REWRITE_CONV[]))) THEN
   REWRITE_TAC[case_eq "option"; distinctness "result"; injectivity "result"; PAIR_EQ;
               int_th] THEN
   MESON_TAC[];;
@@ -742,7 +742,7 @@ let ASP5AUX_code_rel_stubs = prove
 let ASP5AUX_state_rel_finish_reset = prove
  (`!c l1 l2 (x:(C,FFI)data_state) (t:(A,C,FFI)wl_state) locs dest v w L op vs sm p.
      op_space_reset op /\
-     data_to_word_gcProof_state_rel c l1 l2 x (wl_state_locals_fupd (K L) t) NONE locs /\
+     data_to_word_gcProof_state_rel c l1 l2 x (wl_state_locals_fupd (combin_K L) t) NONE locs /\
      memory_rel c (wl_state_be t) (THE (data_state_tstamps x)) (data_state_refs x) 0
        (wl_state_store t) (wl_state_memory t) (wl_state_mdomain t)
        (CONS (v,w)
@@ -755,13 +755,13 @@ let ASP5AUX_state_rel_finish_reset = prove
        (do_stack op vs (do_lim_safe (THE (do_space op vs x)) op vs))) ==>
      data_to_word_gcProof_state_rel c l1 l2
        (data_set_var dest v (do_stack op vs (do_lim_safe (THE (do_space op vs x)) op vs)))
-       (wl_state_stack_max_fupd (K sm) (wl_state_permute_fupd (K p)
-          (wl_state_locals_fupd (K (insert (adjust_var dest) w L)) t))) NONE locs`,
+       (wl_state_stack_max_fupd (combin_K sm) (wl_state_permute_fupd (combin_K p)
+          (wl_state_locals_fupd (combin_K (insert (adjust_var dest) w L)) t))) NONE locs`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   UNDISCH_TAC `option_le sm (data_state_stack_max
       (do_stack op vs (do_lim_safe (THE (do_space op vs (x:(C,FFI)data_state))) op vs)))` THEN
   UNDISCH_TAC `data_to_word_gcProof_state_rel c l1 l2 (x:(C,FFI)data_state)
-      (wl_state_locals_fupd (K L) (t:(A,C,FFI)wl_state)) NONE locs` THEN
+      (wl_state_locals_fupd (combin_K L) (t:(A,C,FFI)wl_state)) NONE locs` THEN
   ASM_REWRITE_TAC[data_to_word_gcProof_state_rel_thm; do_space_def; THE_DEF; do_stack_def;
     do_lim_safe; LET_DEF; LET_END_DEF; data_set_var_def; data_state_INFO.ri_accfupds;
     wl_state_INFO.ri_accfupds; K_THM] THEN
@@ -771,7 +771,7 @@ let ASP5AUX_state_rel_finish_reset = prove
       can (find_term ((=) `IS_SOME:(data_v)option->bool`)) (concl th))) THEN
     REWRITE_TAC[lookup_insert; adjust_var_11] THEN COND_CASES_TAC THEN
     REWRITE_TAC[IS_SOME_DEF] THEN ASM_MESON_TAC[];
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[APPEND] THEN
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[APPEND] THEN
     REWRITE_TAC[GSYM APPEND_ASSOC] THEN MATCH_MP_TAC memory_rel_insert THEN
     FIRST_X_ASSUM(MP_TAC o check (fun th ->
       can (find_term ((=) `CONS ((v:data_v),(w:A word_loc))`)) (concl th))) THEN
@@ -780,7 +780,7 @@ let ASP5AUX_state_rel_finish_reset = prove
 let ASP5AUX_state_rel_finish_reset0 = prove
  (`!c l1 l2 (x:(C,FFI)data_state) (t:(A,C,FFI)wl_state) locs dest v w L op vs.
      op_space_reset op /\
-     data_to_word_gcProof_state_rel c l1 l2 x (wl_state_locals_fupd (K L) t) NONE locs /\
+     data_to_word_gcProof_state_rel c l1 l2 x (wl_state_locals_fupd (combin_K L) t) NONE locs /\
      memory_rel c (wl_state_be t) (THE (data_state_tstamps x)) (data_state_refs x) 0
        (wl_state_store t) (wl_state_memory t) (wl_state_mdomain t)
        (CONS (v,w)
@@ -792,7 +792,7 @@ let ASP5AUX_state_rel_finish_reset0 = prove
        (data_state_stack_max (do_stack op vs (do_lim_safe (THE (do_space op vs x)) op vs))) ==>
      data_to_word_gcProof_state_rel c l1 l2
        (data_set_var dest v (do_stack op vs (do_lim_safe (THE (do_space op vs x)) op vs)))
-       (wl_state_locals_fupd (K (insert (adjust_var dest) w L)) t) NONE locs`,
+       (wl_state_locals_fupd (combin_K (insert (adjust_var dest) w L)) t) NONE locs`,
   REPEAT STRIP_TAC THEN
   MP_TAC(ISPECL [`c:data_to_word_config`; `l1:num`; `l2:num`; `x:(C,FFI)data_state`;
     `t:(A,C,FFI)wl_state`; `locs:(num#num)list`; `dest:num`; `v:data_v`; `w:A word_loc`;
@@ -800,10 +800,10 @@ let ASP5AUX_state_rel_finish_reset0 = prove
     `wl_state_stack_max (t:(A,C,FFI)wl_state)`; `wl_state_permute (t:(A,C,FFI)wl_state)`]
     ASP5AUX_state_rel_finish_reset) THEN
   ASM_REWRITE_TAC[] THEN
-  SUBGOAL_THEN `wl_state_stack_max_fupd (K (wl_state_stack_max (t:(A,C,FFI)wl_state)))
-     (wl_state_permute_fupd (K (wl_state_permute t))
-       (wl_state_locals_fupd (K (insert (adjust_var dest) (w:A word_loc) L)) t)) =
-     wl_state_locals_fupd (K (insert (adjust_var dest) w L)) t` SUBST1_TAC THENL
+  SUBGOAL_THEN `wl_state_stack_max_fupd (combin_K (wl_state_stack_max (t:(A,C,FFI)wl_state)))
+     (wl_state_permute_fupd (combin_K (wl_state_permute t))
+       (wl_state_locals_fupd (combin_K (insert (adjust_var dest) (w:A word_loc) L)) t)) =
+     wl_state_locals_fupd (combin_K (insert (adjust_var dest) w L)) t` SUBST1_TAC THENL
    [REWRITE_TAC[wl_state_INFO.ri_component_equality; wl_state_INFO.ri_accfupds; K_THM];
     ALL_TAC] THEN
   DISCH_THEN MATCH_MP_TAC THEN
@@ -820,7 +820,7 @@ let ASP5AUX_state_rel_finish_reset0 = prove
 let ASP5AUX_state_rel_finish_sp = prove
  (`!c l1 l2 (x:(C,FFI)data_state) (t:(A,C,FFI)wl_state) locs dest v w L sm p
     (s2:(C,FFI)data_state).
-     data_to_word_gcProof_state_rel c l1 l2 x (wl_state_locals_fupd (K L) t) NONE locs /\
+     data_to_word_gcProof_state_rel c l1 l2 x (wl_state_locals_fupd (combin_K L) t) NONE locs /\
      data_state_ffi s2 = data_state_ffi x /\
      data_state_clock s2 = data_state_clock x /\
      data_state_handler s2 = data_state_handler x /\
@@ -845,11 +845,11 @@ let ASP5AUX_state_rel_finish_sp = prove
      option_le (OPTION_MAP2 (+) (wl_stack_size (wl_state_stack t)) (wl_state_locals_size t)) sm /\
      option_le sm (data_state_stack_max s2) ==>
      data_to_word_gcProof_state_rel c l1 l2 (data_set_var dest v s2)
-       (wl_state_stack_max_fupd (K sm) (wl_state_permute_fupd (K p)
-          (wl_state_locals_fupd (K (insert (adjust_var dest) w L)) t))) NONE locs`,
+       (wl_state_stack_max_fupd (combin_K sm) (wl_state_permute_fupd (combin_K p)
+          (wl_state_locals_fupd (combin_K (insert (adjust_var dest) w L)) t))) NONE locs`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN
   UNDISCH_TAC `data_to_word_gcProof_state_rel c l1 l2 (x:(C,FFI)data_state)
-      (wl_state_locals_fupd (K L) (t:(A,C,FFI)wl_state)) NONE locs` THEN
+      (wl_state_locals_fupd (combin_K L) (t:(A,C,FFI)wl_state)) NONE locs` THEN
   ASM_REWRITE_TAC[data_to_word_gcProof_state_rel_thm; data_set_var_def;
     data_state_INFO.ri_accfupds; wl_state_INFO.ri_accfupds; K_THM] THEN
   REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[] THENL
@@ -858,7 +858,7 @@ let ASP5AUX_state_rel_finish_sp = prove
       can (find_term ((=) `IS_SOME:(data_v)option->bool`)) (concl th))) THEN
     REWRITE_TAC[lookup_insert; adjust_var_11] THEN COND_CASES_TAC THEN
     REWRITE_TAC[IS_SOME_DEF] THEN ASM_MESON_TAC[];
-    CASE_REWRITE_TAC[] THEN REWRITE_TAC[APPEND] THEN
+    CAKE_REWRITE_TAC[] THEN REWRITE_TAC[APPEND] THEN
     REWRITE_TAC[GSYM APPEND_ASSOC] THEN MATCH_MP_TAC memory_rel_insert THEN
     FIRST_X_ASSUM(MP_TAC o check (fun th ->
       can (find_term ((=) `CONS ((v:data_v),(w:A word_loc))`)) (concl th))) THEN
@@ -962,15 +962,15 @@ let ASP5AUX_CALL_FINISH_TAC : tactic =
 
 (* the end of the call case of Less and LessEq *)
 let ASP5AUX_CMP_END_TAC : tactic =
-  (SUBGOAL_THEN `!X. wl_state_locals_fupd (K X)
-     (wl_state_locals_size_fupd (K (wl_state_locals_size t))
-     (wl_state_stack_fupd (K (wl_state_stack t))
-     (wl_state_stack_max_fupd (K smx)
-     (wl_state_permute_fupd (K perm)
-     (wl_state_clock_fupd (K (wl_state_clock t))
-     (wl_state_termdep_fupd (K (wl_state_termdep t)) (t:(A,C,FFI)wl_state))))))) =
-     wl_state_stack_max_fupd (K smx) (wl_state_permute_fupd (K perm)
-       (wl_state_locals_fupd (K X) t))` (fun th -> REWRITE_TAC[th]) THENL
+  (SUBGOAL_THEN `!X. wl_state_locals_fupd (combin_K X)
+     (wl_state_locals_size_fupd (combin_K (wl_state_locals_size t))
+     (wl_state_stack_fupd (combin_K (wl_state_stack t))
+     (wl_state_stack_max_fupd (combin_K smx)
+     (wl_state_permute_fupd (combin_K perm)
+     (wl_state_clock_fupd (combin_K (wl_state_clock t))
+     (wl_state_termdep_fupd (combin_K (wl_state_termdep t)) (t:(A,C,FFI)wl_state))))))) =
+     wl_state_stack_max_fupd (combin_K smx) (wl_state_permute_fupd (combin_K perm)
+       (wl_state_locals_fupd (combin_K X) t))` (fun th -> REWRITE_TAC[th]) THENL
     [GEN_TAC THEN
      REWRITE_TAC[wl_state_INFO.ri_component_equality; wl_state_INFO.ri_accfupds; K_THM];
      ALL_TAC] THEN
@@ -1068,9 +1068,9 @@ let ASP5AUX_do_app_EqualConst_Con = prove
                  `s:(C,FFI)data_state`] ASP4AUX_DO_APP_NOSPACE) THEN
   REWRITE_TAC[op_space_reset_def; op_space_req_def; MEM; distinctness "clos_op";
               injectivity "clos_op"; distinctness "block_op"] THEN
-  DISCH_THEN SUBST1_TAC THEN REWRITE_TAC[data_do_app_aux_def] THEN CASE_REWRITE_TAC[] THEN
+  DISCH_THEN SUBST1_TAC THEN REWRITE_TAC[data_do_app_aux_def] THEN CAKE_REWRITE_TAC[] THEN
   REPEAT(COND_CASES_TAC ORELSE TOP_CASE_TAC) THEN
-  CASE_REWRITE_TAC[distinctness "result"]);;
+  CAKE_REWRITE_TAC[distinctness "result"]);;
 
 let ASP5AUX_val_word_ORD = prove
  (`!x. val (word (ORD x):byte) = ORD x`,
@@ -1083,11 +1083,11 @@ let ASP5AUX_some_pair = prove
      (match (some (x,y). P x y) with NONE -> NONE | SOME (x,y) -> f x y) = SOME r ==>
      ?x y. P x y /\ f x y = SOME r`,
   REPEAT GEN_TAC THEN REWRITE_TAC[some_DEF] THEN COND_CASES_TAC THEN
-  CASE_REWRITE_TAC[option_DISTINCT] THEN
+  CAKE_REWRITE_TAC[option_DISTINCT] THEN
   FIRST_X_ASSUM(MP_TAC o SELECT_RULE) THEN
   SPEC_TAC(`@p. (\(x,y). (P:A->B->bool) x y) p`,`pr:A#B`) THEN
   GEN_TAC THEN STRUCT_CASES_TAC(ISPEC `pr:A#B` PAIR_SURJECTIVE) THEN
-  CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN CASE_REWRITE_TAC[] THEN MESON_TAC[]);;
+  CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN CAKE_REWRITE_TAC[] THEN MESON_TAC[]);;
 
 let ASP5AUX_word_app_WordOpW8 = prove
  (`!opw vs r. data_do_word_app (WordOpw W8 opw) vs = SOME r ==>
@@ -1095,16 +1095,16 @@ let ASP5AUX_word_app_WordOpW8 = prove
                   r = data_Number (&(val (opw_lookup opw w1 w2)))`,
   REPEAT GEN_TAC THEN
   ASP4AUX_LIST_CASES_TAC `vs:data_v list` `x1:data_v` `t1:data_v list` THENL
-   [CASE_REWRITE_TAC[data_do_word_app_def; option_DISTINCT]; ALL_TAC] THEN
+   [CAKE_REWRITE_TAC[data_do_word_app_def; option_DISTINCT]; ALL_TAC] THEN
   ASP4AUX_LIST_CASES_TAC `t1:data_v list` `x2:data_v` `t2:data_v list` THENL
    [ASP4AUX_DV_CASES_TAC `x1:data_v` THEN
-    CASE_REWRITE_TAC[data_do_word_app_def; option_DISTINCT]; ALL_TAC] THEN
+    CAKE_REWRITE_TAC[data_do_word_app_def; option_DISTINCT]; ALL_TAC] THEN
   ASP4AUX_LIST_CASES_TAC `t2:data_v list` `x3:data_v` `t3:data_v list` THENL
    [ALL_TAC;
     ASP4AUX_DV_CASES_TAC `x1:data_v` THEN ASP4AUX_DV_CASES_TAC `x2:data_v` THEN
-    CASE_REWRITE_TAC[data_do_word_app_def; option_DISTINCT]] THEN
+    CAKE_REWRITE_TAC[data_do_word_app_def; option_DISTINCT]] THEN
   ASP4AUX_DV_CASES_TAC `x1:data_v` THEN ASP4AUX_DV_CASES_TAC `x2:data_v` THEN
-  CASE_REWRITE_TAC[data_do_word_app_def; option_DISTINCT] THEN
+  CAKE_REWRITE_TAC[data_do_word_app_def; option_DISTINCT] THEN
   DISCH_THEN(MP_TAC o MATCH_MP ASP5AUX_some_pair) THEN
   REWRITE_TAC[option_INJ; CONS_11; injectivity "data_v"] THEN MESON_TAC[]);;
 
@@ -1122,7 +1122,7 @@ let ASP5AUX_do_app_WordOpW8 = prove
               injectivity "clos_op"; distinctness "word_op"] THEN
   DISCH_THEN SUBST1_TAC THEN
   CONV_TAC(LAND_CONV(LAND_CONV(REWRITE_CONV[data_do_app_aux_def] THENC
-                               CASE_REWRITE_CONV[]))) THEN
+                               CAKE_REWRITE_CONV[]))) THEN
   REWRITE_TAC[case_eq "option"; distinctness "result"; injectivity "result"; PAIR_EQ] THEN
   DISCH_THEN(X_CHOOSE_THEN `r:data_v` (CONJUNCTS_THEN2
     (MP_TAC o MATCH_MP ASP5AUX_word_app_WordOpW8) STRIP_ASSUME_TAC)) THEN
@@ -1306,8 +1306,8 @@ let ASP5AUX_inst_AddCarry = prove
                  (wl_set_var r1 (wl_Word (word ((val l + val r) +
                                              (if c = word 0 then 0 else 1)))) s))
      | _ -> NONE`,
-  REPEAT GEN_TAC THEN REWRITE_TAC[wl_inst_def] THEN CASE_REWRITE_TAC[] THEN
-  REWRITE_TAC[word_add_carry_def; LET_DEF; LET_END_DEF] THEN CASE_REWRITE_TAC[]);;
+  REPEAT GEN_TAC THEN REWRITE_TAC[wl_inst_def] THEN CAKE_REWRITE_TAC[] THEN
+  REWRITE_TAC[word_add_carry_def; LET_DEF; LET_END_DEF] THEN CAKE_REWRITE_TAC[]);;
 
 let ASP5AUX_bool_word_0 = prove
  (`!b. ((if b then word 1 else word 0:A word) = word 0) <=> ~b`,
@@ -1336,7 +1336,7 @@ let ASP5AUX_header_pair = prove
      (match (x,y) with (SOME (a1,h1),SOME (a2,h2)) -> f a1 h1 a2 h2 | _ -> NONE) = SOME r ==>
      ?a1 h1 a2 h2. x = SOME (a1,h1) /\ y = SOME (a2,h2) /\ f a1 h1 a2 h2 = SOME r`,
   REWRITE_TAC[FORALL_OPTION_THM; FORALL_PAIR_THM] THEN
-  CASE_REWRITE_TAC[option_DISTINCT; option_INJ; PAIR_EQ] THEN MESON_TAC[]);;
+  CAKE_REWRITE_TAC[option_DISTINCT; option_INJ; PAIR_EQ] THEN MESON_TAC[]);;
 
 let ASP5AUX_word_header_SOME = prove
  (`!c st (w:A word) dm m a h.
@@ -1344,11 +1344,11 @@ let ASP5AUX_word_header_SOME = prove
      get_real_addr c st w = SOME a /\ a IN dm /\ m a = wl_Word h`,
   REPEAT GEN_TAC THEN REWRITE_TAC[word_header_def] THEN
   STRUCT_CASES_TAC(ISPEC `get_real_addr c st (w:A word)` option_CASES) THEN
-  CASE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN
+  CAKE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN
   COND_CASES_TAC THEN ASM_REWRITE_TAC[option_DISTINCT] THENL
    [ASM_MESON_TAC[]; ALL_TAC] THEN
   CASES_ON `(m:A word->A word_loc) x` THEN
-  CASE_REWRITE_TAC[option_DISTINCT; option_INJ; PAIR_EQ; distinctness "word_loc";
+  CAKE_REWRITE_TAC[option_DISTINCT; option_INJ; PAIR_EQ; distinctness "word_loc";
                    injectivity "word_loc"] THEN
   ASM_MESON_TAC[injectivity "word_loc"; distinctness "word_loc"]);;
 
@@ -1397,7 +1397,7 @@ let ASP5AUX_EQ_RET_TAC : tactic =
     (try fst (dest_const (rator (lhs c))) = "SOME" with Failure _ -> false) &&
     can (find_term (fun u -> try fst (dest_var u) = "res" with Failure _ -> false)) c)) THEN
   REWRITE_TAC[option_INJ; PAIR_EQ] THEN STRIP_TAC THEN RVEQ_TAC THEN
-  CASE_REWRITE_TAC[option_DISTINCT] THEN ASP5AUX_RET3_TAC;;
+  CAKE_REWRITE_TAC[option_DISTINCT] THEN ASP5AUX_RET3_TAC;;
 
 (* the stack bounds of the calls in Equal_code and Equal1_code (HOL4:      *)
 (* option_le_trans, option_le_max_right, eq_code_stack_max_sub1, ...)     *)
@@ -1469,7 +1469,7 @@ let ASP5AUX_cut_envs_0246 = prove
   REWRITE_TAC[domain_insert; domain_def; EMPTY_SUBSET] THEN
   REWRITE_TAC[INSERT_SUBSET; EMPTY_SUBSET; domain_lookup] THEN
   RULE_ASSUM_TAC(REWRITE_RULE[IS_SOME_EXISTS]) THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[]);;
 
 let ASP5AUX_le_mult_pos = prove
  (`!k m. ~(k = 0) ==> m <= k * m`,
@@ -1539,15 +1539,15 @@ let ASP5AUX_do_app_Equal = prove
   DISCH_THEN SUBST1_TAC THEN
   SIMP_TAC[ASP4AUX_refs_S1; op_space_reset_def] THEN
   ASP4AUX_LIST_CASES_TAC `vs:data_v list` `x1:data_v` `t1:data_v list` THENL
-   [CASE_REWRITE_TAC[data_do_app_aux_def; distinctness "result"; NOT_CONS_NIL]; ALL_TAC] THEN
+   [CAKE_REWRITE_TAC[data_do_app_aux_def; distinctness "result"; NOT_CONS_NIL]; ALL_TAC] THEN
   ASP4AUX_LIST_CASES_TAC `t1:data_v list` `x2:data_v` `t2:data_v list` THENL
-   [CASE_REWRITE_TAC[data_do_app_aux_def; distinctness "result"; NOT_CONS_NIL; CONS_11];
+   [CAKE_REWRITE_TAC[data_do_app_aux_def; distinctness "result"; NOT_CONS_NIL; CONS_11];
     ALL_TAC] THEN
   ASP4AUX_LIST_CASES_TAC `t2:data_v list` `x3:data_v` `t3:data_v list` THENL
    [ALL_TAC;
-    CASE_REWRITE_TAC[data_do_app_aux_def; distinctness "result"; NOT_CONS_NIL; CONS_11]] THEN
+    CAKE_REWRITE_TAC[data_do_app_aux_def; distinctness "result"; NOT_CONS_NIL; CONS_11]] THEN
   CONV_TAC(LAND_CONV(LAND_CONV(REWRITE_CONV[data_do_app_aux_def] THENC
-                               CASE_REWRITE_CONV[]))) THEN
+                               CAKE_REWRITE_CONV[]))) THEN
   SIMP_TAC[ASP4AUX_refs_S1; op_space_reset_def] THEN
   REWRITE_TAC[case_eq "eq_result"; distinctness "result"; injectivity "result"; PAIR_EQ;
               CONS_11] THEN
@@ -1558,10 +1558,10 @@ let ASP5AUX_cut_state_refs = prove
      data_cut_state_opt (SOME kept) s = SOME x ==>
      data_state_refs x = data_state_refs s`,
   REPEAT GEN_TAC THEN REWRITE_TAC[data_cut_state_opt_def; data_cut_state_def] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   STRUCT_CASES_TAC(ISPEC `data_cut_env kept (data_state_locals (s:(C,FFI)data_state))`
     option_CASES) THEN
-  CASE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN
+  CAKE_REWRITE_TAC[option_DISTINCT; option_INJ] THEN
   DISCH_THEN(SUBST1_TAC o SYM) THEN REWRITE_TAC[data_state_INFO.ri_accfupds]);;
 
 let ASP5AUX_equal_stack_bounds = prove
@@ -1597,10 +1597,10 @@ let ASP5AUX_DO_APP_SPACE3 = prove
      data_do_app op vs s = Rval (v,s2) ==>
      3 <= data_state_space s /\
      data_do_app_aux op vs (do_stack op vs (do_lim_safe
-        (data_state_space_fupd (K (data_state_space s - 3)) s) op vs)) = Rval (v,s2)`,
+        (data_state_space_fupd (combin_K (data_state_space s - 3)) s) op vs)) = Rval (v,s2)`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN UNDISCH_TAC `data_do_app op vs (s:(C,FFI)data_state) = Rval (v,s2)` THEN
   ASM_REWRITE_TAC[data_do_app_def; do_space_def; consume_space_def; ARITH_EQ] THEN
-  COND_CASES_TAC THEN CASE_REWRITE_TAC[distinctness "result"] THEN
+  COND_CASES_TAC THEN CAKE_REWRITE_TAC[distinctness "result"] THEN
   DISCH_TAC THEN ASM_REWRITE_TAC[] THEN ASM_ARITH_TAC);;
 
 let ASP5AUX_word_app_WordOpW64 = prove
@@ -1609,16 +1609,16 @@ let ASP5AUX_word_app_WordOpW64 = prove
                   r = data_Word64 (opw_lookup opw w1 w2)`,
   REPEAT GEN_TAC THEN
   ASP4AUX_LIST_CASES_TAC `vs:data_v list` `x1:data_v` `t1:data_v list` THENL
-   [CASE_REWRITE_TAC[data_do_word_app_def; option_DISTINCT]; ALL_TAC] THEN
+   [CAKE_REWRITE_TAC[data_do_word_app_def; option_DISTINCT]; ALL_TAC] THEN
   ASP4AUX_LIST_CASES_TAC `t1:data_v list` `x2:data_v` `t2:data_v list` THENL
    [ASP4AUX_DV_CASES_TAC `x1:data_v` THEN
-    CASE_REWRITE_TAC[data_do_word_app_def; option_DISTINCT]; ALL_TAC] THEN
+    CAKE_REWRITE_TAC[data_do_word_app_def; option_DISTINCT]; ALL_TAC] THEN
   ASP4AUX_LIST_CASES_TAC `t2:data_v list` `x3:data_v` `t3:data_v list` THENL
    [ALL_TAC;
     ASP4AUX_DV_CASES_TAC `x1:data_v` THEN ASP4AUX_DV_CASES_TAC `x2:data_v` THEN
-    CASE_REWRITE_TAC[data_do_word_app_def; option_DISTINCT]] THEN
+    CAKE_REWRITE_TAC[data_do_word_app_def; option_DISTINCT]] THEN
   ASP4AUX_DV_CASES_TAC `x1:data_v` THEN ASP4AUX_DV_CASES_TAC `x2:data_v` THEN
-  CASE_REWRITE_TAC[data_do_word_app_def; option_DISTINCT] THEN
+  CAKE_REWRITE_TAC[data_do_word_app_def; option_DISTINCT] THEN
   REWRITE_TAC[option_INJ; CONS_11; injectivity "data_v"] THEN MESON_TAC[]);;
 
 let ASP5AUX_do_app_WordOpW64 = prove
@@ -1627,7 +1627,7 @@ let ASP5AUX_do_app_WordOpW64 = prove
      ?w1 w2:int64. vs = [data_Word64 w1; data_Word64 w2] /\
             v = data_Word64 (opw_lookup opw w1 w2) /\ 3 <= data_state_space s /\
             s2 = do_stack (WordOp (WordOpw W64 opw)) vs
-                   (do_lim_safe (data_state_space_fupd (K (data_state_space s - 3)) s)
+                   (do_lim_safe (data_state_space_fupd (combin_K (data_state_space s - 3)) s)
                       (WordOp (WordOpw W64 opw)) vs)`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN
   MP_TAC(ISPECL [`WordOp (WordOpw W64 opw)`; `vs:data_v list`; `s:(C,FFI)data_state`;
@@ -1637,10 +1637,10 @@ let ASP5AUX_do_app_WordOpW64 = prove
   STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
   UNDISCH_TAC `data_do_app_aux (WordOp (WordOpw W64 opw)) vs
      (do_stack (WordOp (WordOpw W64 opw)) vs (do_lim_safe
-        (data_state_space_fupd (K (data_state_space s - 3)) (s:(C,FFI)data_state))
+        (data_state_space_fupd (combin_K (data_state_space s - 3)) (s:(C,FFI)data_state))
         (WordOp (WordOpw W64 opw)) vs)) = Rval (v,s2)` THEN
   CONV_TAC(LAND_CONV(LAND_CONV(REWRITE_CONV[data_do_app_aux_def] THENC
-                               CASE_REWRITE_CONV[]))) THEN
+                               CAKE_REWRITE_CONV[]))) THEN
   REWRITE_TAC[case_eq "option"; distinctness "result"; injectivity "result"; PAIR_EQ] THEN
   DISCH_THEN(X_CHOOSE_THEN `r:data_v` (CONJUNCTS_THEN2
     (MP_TAC o MATCH_MP ASP5AUX_word_app_WordOpW64) STRIP_ASSUME_TAC)) THEN
@@ -1883,7 +1883,7 @@ let ASP5AUX_some_single = prove
      (match (some x. P x) with NONE -> NONE | SOME x -> f x) = SOME r ==>
      ?x. P x /\ f x = SOME r`,
   REPEAT GEN_TAC THEN REWRITE_TAC[some_DEF] THEN COND_CASES_TAC THEN
-  CASE_REWRITE_TAC[option_DISTINCT] THEN
+  CAKE_REWRITE_TAC[option_DISTINCT] THEN
   FIRST_X_ASSUM(MP_TAC o SELECT_RULE) THEN MESON_TAC[]);;
 
 let ASP5AUX_word_app_WordShiftW8 = prove
@@ -1891,13 +1891,13 @@ let ASP5AUX_word_app_WordShiftW8 = prove
      ?w:byte. vs = [data_Number (&(val w))] /\ r = data_Number (&(val (shift_lookup sh w n)))`,
   REPEAT GEN_TAC THEN
   ASP4AUX_LIST_CASES_TAC `vs:data_v list` `x1:data_v` `t1:data_v list` THENL
-   [CASE_REWRITE_TAC[data_do_word_app_def; option_DISTINCT]; ALL_TAC] THEN
+   [CAKE_REWRITE_TAC[data_do_word_app_def; option_DISTINCT]; ALL_TAC] THEN
   ASP4AUX_LIST_CASES_TAC `t1:data_v list` `x2:data_v` `t2:data_v list` THENL
    [ALL_TAC;
     ASP4AUX_DV_CASES_TAC `x1:data_v` THEN
-    CASE_REWRITE_TAC[data_do_word_app_def; option_DISTINCT]] THEN
+    CAKE_REWRITE_TAC[data_do_word_app_def; option_DISTINCT]] THEN
   ASP4AUX_DV_CASES_TAC `x1:data_v` THEN
-  CASE_REWRITE_TAC[data_do_word_app_def; option_DISTINCT] THEN
+  CAKE_REWRITE_TAC[data_do_word_app_def; option_DISTINCT] THEN
   DISCH_THEN(MP_TAC o MATCH_MP ASP5AUX_some_single) THEN
   REWRITE_TAC[option_INJ; CONS_11; injectivity "data_v"] THEN MESON_TAC[]);;
 
@@ -1915,7 +1915,7 @@ let ASP5AUX_do_app_WordShiftW8 = prove
               injectivity "clos_op"; distinctness "word_op"] THEN
   DISCH_THEN SUBST1_TAC THEN
   CONV_TAC(LAND_CONV(LAND_CONV(REWRITE_CONV[data_do_app_aux_def] THENC
-                               CASE_REWRITE_CONV[]))) THEN
+                               CAKE_REWRITE_CONV[]))) THEN
   REWRITE_TAC[case_eq "option"; distinctness "result"; injectivity "result"; PAIR_EQ] THEN
   DISCH_THEN(X_CHOOSE_THEN `r:data_v` (CONJUNCTS_THEN2
     (MP_TAC o MATCH_MP ASP5AUX_word_app_WordShiftW8) STRIP_ASSUME_TAC)) THEN
@@ -1980,16 +1980,16 @@ let ASP5AUX_shift8_Ror = prove
 (* form for the evaluator                                                   *)
 let ASP5AUX_word_exp_ShiftVar_ins = prove
  (`(!sh (t:(A,C,FFI)wl_state) v n w L.
-      wl_word_exp (wl_state_locals_fupd (K (insert v (wl_Word w) L)) t) (ShiftVar sh v n) =
+      wl_word_exp (wl_state_locals_fupd (combin_K (insert v (wl_Word w) L)) t) (ShiftVar sh v n) =
       SOME (wl_Word (shift_lookup sh w n))) /\
    (!sh (t:(A,C,FFI)wl_state) v n k x L.
       ~(v = k) ==>
-      wl_word_exp (wl_state_locals_fupd (K (insert k x L)) t) (ShiftVar sh v n) =
-      wl_word_exp (wl_state_locals_fupd (K L) t) (ShiftVar sh v n))`,
+      wl_word_exp (wl_state_locals_fupd (combin_K (insert k x L)) t) (ShiftVar sh v n) =
+      wl_word_exp (wl_state_locals_fupd (combin_K L) t) (ShiftVar sh v n))`,
   CONJ_TAC THEN REPEAT GEN_TAC THENL
    [ONCE_REWRITE_TAC[word_exp_set_var_ShiftVar_lemma] THEN
     REWRITE_TAC[wl_state_INFO.ri_accfupds; K_THM; lookup_insert] THEN
-    CASES_ON `sh:shift` THEN CASE_REWRITE_TAC[shift_lookup_def; OPTION_MAP_DEF];
+    CASES_ON `sh:shift` THEN CAKE_REWRITE_TAC[shift_lookup_def; OPTION_MAP_DEF];
     DISCH_TAC THEN REWRITE_TAC[ShiftVar_def; LET_DEF; LET_END_DEF] THEN
     REPEAT COND_CASES_TAC THEN
     ASM_REWRITE_TAC[wl_word_exp_def; wl_get_var_def; wl_state_INFO.ri_accfupds; K_THM;
@@ -2014,13 +2014,13 @@ let ASP5AUX_word_app_WordShiftW64 = prove
      ?w:int64. vs = [data_Word64 w] /\ r = data_Word64 (shift_lookup sh w n)`,
   REPEAT GEN_TAC THEN
   ASP4AUX_LIST_CASES_TAC `vs:data_v list` `x1:data_v` `t1:data_v list` THENL
-   [CASE_REWRITE_TAC[data_do_word_app_def; option_DISTINCT]; ALL_TAC] THEN
+   [CAKE_REWRITE_TAC[data_do_word_app_def; option_DISTINCT]; ALL_TAC] THEN
   ASP4AUX_LIST_CASES_TAC `t1:data_v list` `x2:data_v` `t2:data_v list` THENL
    [ALL_TAC;
     ASP4AUX_DV_CASES_TAC `x1:data_v` THEN
-    CASE_REWRITE_TAC[data_do_word_app_def; option_DISTINCT]] THEN
+    CAKE_REWRITE_TAC[data_do_word_app_def; option_DISTINCT]] THEN
   ASP4AUX_DV_CASES_TAC `x1:data_v` THEN
-  CASE_REWRITE_TAC[data_do_word_app_def; option_DISTINCT] THEN
+  CAKE_REWRITE_TAC[data_do_word_app_def; option_DISTINCT] THEN
   REWRITE_TAC[option_INJ; CONS_11; injectivity "data_v"] THEN MESON_TAC[]);;
 
 let ASP5AUX_do_app_WordShiftW64 = prove
@@ -2029,7 +2029,7 @@ let ASP5AUX_do_app_WordShiftW64 = prove
      ?w:int64. vs = [data_Word64 w] /\
             v = data_Word64 (shift_lookup sh w n) /\ 3 <= data_state_space s /\
             s2 = do_stack (WordOp (WordShift W64 sh n)) vs
-                   (do_lim_safe (data_state_space_fupd (K (data_state_space s - 3)) s)
+                   (do_lim_safe (data_state_space_fupd (combin_K (data_state_space s - 3)) s)
                       (WordOp (WordShift W64 sh n)) vs)`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN
   MP_TAC(ISPECL [`WordOp (WordShift W64 sh n)`; `vs:data_v list`; `s:(C,FFI)data_state`;
@@ -2039,10 +2039,10 @@ let ASP5AUX_do_app_WordShiftW64 = prove
   STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
   UNDISCH_TAC `data_do_app_aux (WordOp (WordShift W64 sh n)) vs
      (do_stack (WordOp (WordShift W64 sh n)) vs (do_lim_safe
-        (data_state_space_fupd (K (data_state_space s - 3)) (s:(C,FFI)data_state))
+        (data_state_space_fupd (combin_K (data_state_space s - 3)) (s:(C,FFI)data_state))
         (WordOp (WordShift W64 sh n)) vs)) = Rval (v,s2)` THEN
   CONV_TAC(LAND_CONV(LAND_CONV(REWRITE_CONV[data_do_app_aux_def] THENC
-                               CASE_REWRITE_CONV[]))) THEN
+                               CAKE_REWRITE_CONV[]))) THEN
   REWRITE_TAC[case_eq "option"; distinctness "result"; injectivity "result"; PAIR_EQ] THEN
   DISCH_THEN(X_CHOOSE_THEN `r:data_v` (CONJUNCTS_THEN2
     (MP_TAC o MATCH_MP ASP5AUX_word_app_WordShiftW64) STRIP_ASSUME_TAC)) THEN
@@ -2468,7 +2468,7 @@ let assign_WordTest = prove
     ALL_TAC] THEN
   FIRST_X_ASSUM(REPEAT_TCL DISJ_CASES_THEN (CONJUNCTS_THEN2 SUBST_ALL_TAC SUBST_ALL_TAC) o
     check (is_disj o concl)) THEN
-  CASE_REWRITE_TAC[] THEN ASP5AUX_EV_TAC (wl_get_var_imm_def::ASP4AUX_EV_RWS) THEN
+  CAKE_REWRITE_TAC[] THEN ASP5AUX_EV_TAC (wl_get_var_imm_def::ASP4AUX_EV_RWS) THEN
   ASM_SIMP_TAC[GSYM VAL_EQ; WORD_ULT; VAL_WORD; GSYM dimword_def; MOD_LT;
                INT_OF_NUM_EQ; INT_OF_NUM_LT; INT_OF_NUM_LE] THEN
   REWRITE_TAC[ARITH_RULE `4 * a = 4 * b <=> a = b`; ARITH_RULE `4 * a < 4 * b <=> a < b`;
@@ -2492,8 +2492,8 @@ let data_to_word_assignProof_Compare1_code_thm = prove
      ?ck smx.
        wl_evaluate (Compare1_code,t) =
          (SOME (wl_Result (wl_Loc l1 l2) [wl_Word res]),
-          wl_state_clock_fupd (K ck) (wl_state_locals_fupd (K LN)
-            (wl_state_locals_size_fupd (K (SOME 0)) (wl_state_stack_max_fupd (K smx) t)))) /\
+          wl_state_clock_fupd (combin_K ck) (wl_state_locals_fupd (combin_K LN)
+            (wl_state_locals_size_fupd (combin_K (SOME 0)) (wl_state_stack_max_fupd (combin_K smx) t)))) /\
        option_le smx (OPTION_MAP2 MAX (wl_state_stack_max t)
                         (OPTION_MAP2 (+) (wl_stack_size (wl_state_stack t))
                            (wl_state_locals_size t))) /\
@@ -2517,8 +2517,8 @@ let data_to_word_assignProof_Compare1_code_thm = prove
     ALL_TAC] THEN
   COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT] THEN
   FIRST_X_ASSUM(CONJUNCTS_THEN ASSUME_TAC) THEN
-  CASES_ON `wl_state_memory (t:(A,C,FFI)wl_state) a1` THEN CASE_REWRITE_TAC[option_DISTINCT] THEN
-  CASES_ON `wl_state_memory (t:(A,C,FFI)wl_state) a2` THEN CASE_REWRITE_TAC[option_DISTINCT] THEN
+  CASES_ON `wl_state_memory (t:(A,C,FFI)wl_state) a1` THEN CAKE_REWRITE_TAC[option_DISTINCT] THEN
+  CASES_ON `wl_state_memory (t:(A,C,FFI)wl_state) a2` THEN CAKE_REWRITE_TAC[option_DISTINCT] THEN
   RULE_ASSUM_TAC(REWRITE_RULE[wl_get_var_def]) THEN
   ASP5AUX_EV_TAC (wl_mem_load_def::ASP5AUX_EV_RWS2) THEN
   ASM_CASES_TAC `a:A word = a'` THEN ASM_REWRITE_TAC[] THENL
@@ -2550,7 +2550,7 @@ let data_to_word_assignProof_Compare1_code_thm = prove
     ASM_ARITH_TAC;
     ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_THEN `ck:num` (X_CHOOSE_THEN `smx:num option` STRIP_ASSUME_TAC)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[wl_bad_fun_return_def] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[wl_bad_fun_return_def] THEN
   MAP_EVERY EXISTS_TAC [`ck:num`; `smx:num option`] THEN
   UNDISCH_TAC `option_le smx (OPTION_MAP2 MAX (wl_state_stack_max (t1:(A,C,FFI)wl_state))
     (OPTION_MAP2 (+) (wl_stack_size (wl_state_stack t1)) (wl_state_locals_size t1)))` THEN
@@ -2568,11 +2568,11 @@ let data_to_word_assignProof_Compare1_code_thm = prove
 let word_exp_insert = prove
  (`!m n (t:(A,C,FFI)wl_state) w c n1 w1.
      (~(m = n) ==>
-      (wl_word_exp (wl_state_locals_fupd (K (insert n w (wl_state_locals t))) t)
+      (wl_word_exp (wl_state_locals_fupd (combin_K (insert n w (wl_state_locals t))) t)
          (real_addr c m) =
        wl_word_exp t (real_addr c m))) /\
      (~(m IN {n,n1}) ==>
-      (wl_word_exp (wl_state_locals_fupd (K (insert n w (insert n1 w1 (wl_state_locals t))))
+      (wl_word_exp (wl_state_locals_fupd (combin_K (insert n w (insert n1 w1 (wl_state_locals t))))
                       t) (real_addr c m) =
        wl_word_exp t (real_addr c m)))`,
   REPEAT GEN_TAC THEN REWRITE_TAC[IN_INSERT; NOT_IN_EMPTY; DE_MORGAN_THM] THEN
@@ -2606,7 +2606,7 @@ let ASP5AUX_COMPARE1_CALL_TAC : tactic =
     UNDISCH_TAC `dimword (:A) < wl_state_clock (t:(A,C,FFI)wl_state)` THEN ARITH_TAC;
     ALL_TAC] THEN
   DISCH_THEN(X_CHOOSE_THEN `ck:num` (X_CHOOSE_THEN `smx:num option` STRIP_ASSUME_TAC)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[wl_bad_fun_return_def] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[wl_bad_fun_return_def] THEN
   MAP_EVERY EXISTS_TAC [`ck:num`; `smx:num option`] THEN
   UNDISCH_TAC `option_le smx (OPTION_MAP2 MAX (wl_state_stack_max (t1:(A,C,FFI)wl_state))
     (OPTION_MAP2 (+) (wl_stack_size (wl_state_stack t1)) (wl_state_locals_size t1)))` THEN
@@ -2636,8 +2636,8 @@ let data_to_word_assignProof_Compare_code_thm = prove
      ?ck smx.
        wl_evaluate (Compare_code c,t) =
          (SOME (wl_Result (wl_Loc l1 l2) [wl_Word (word_cmp_res i1 i2)]),
-          wl_state_clock_fupd (K ck) (wl_state_locals_fupd (K LN)
-            (wl_state_locals_size_fupd (K (SOME 0)) (wl_state_stack_max_fupd (K smx) t)))) /\
+          wl_state_clock_fupd (combin_K ck) (wl_state_locals_fupd (combin_K LN)
+            (wl_state_locals_size_fupd (combin_K (SOME 0)) (wl_state_stack_max_fupd (combin_K smx) t)))) /\
        option_le smx (OPTION_MAP2 MAX (wl_state_stack_max t)
                         (OPTION_MAP2 (+) (wl_stack_size (wl_state_stack t))
                            (lookup Compare1_location (wl_state_stack_size t))))`,
@@ -2656,7 +2656,7 @@ let data_to_word_assignProof_Compare_code_thm = prove
      [MATCH_MP_TAC get_real_addr_lemma THEN EXISTS_TAC `v1:A word` THEN
       ASM_REWRITE_TAC[wl_get_var_def];
       ALL_TAC] THEN
-    SUBGOAL_THEN `!x y. wl_word_exp (wl_state_locals_fupd (K (insert 1 x (insert 11 y
+    SUBGOAL_THEN `!x y. wl_word_exp (wl_state_locals_fupd (combin_K (insert 1 x (insert 11 y
                     (wl_state_locals t)))) (t:(A,C,FFI)wl_state)) (real_addr c 4) =
                     SOME (wl_Word a2)` ASSUME_TAC THENL
      [REPEAT GEN_TAC THEN MATCH_MP_TAC get_real_addr_lemma THEN EXISTS_TAC `v2:A word` THEN
@@ -2681,7 +2681,7 @@ let data_to_word_assignProof_Compare_code_thm = prove
      [(* equal headers: a call of Compare1_code *)
       FIRST_X_ASSUM(MP_TAC o check (is_cond o concl)) THEN ASM_REWRITE_TAC[] THEN
       ASM_SIMP_TAC[shift_lsl; WORD_ADD_0] THEN
-      COND_CASES_TAC THEN CASE_REWRITE_TAC[] THEN
+      COND_CASES_TAC THEN CAKE_REWRITE_TAC[] THEN
       DISCH_THEN(ASSUME_TAC o ONCE_REWRITE_RULE[WORD_MUL_SYM]) THEN
       ASP5AUX_COMPARE1_CALL_TAC;
       (* different headers *)
@@ -2762,7 +2762,7 @@ let env_to_list_cut_env_IMP = prove
   REWRITE_TAC[wf_fromAList; lookup_fromAList] THEN CONJ_TAC THENL
    [UNDISCH_TAC `wl_cut_env y (s:(A word_loc)spt) = SOME x` THEN
     REWRITE_TAC[wl_cut_env_def; cut_envs_def; cut_names_def] THEN
-    REPEAT(COND_CASES_TAC THEN CASE_REWRITE_TAC[option_DISTINCT]) THEN
+    REPEAT(COND_CASES_TAC THEN CAKE_REWRITE_TAC[option_DISTINCT]) THEN
     REWRITE_TAC[option_INJ] THEN DISCH_THEN(SUBST1_TAC o SYM) THEN
     MATCH_MP_TAC wf_union THEN REWRITE_TAC[wf_inter];
     DRULE env_to_list_lookup_equiv THEN SIMP_TAC[]]);;
@@ -2802,7 +2802,7 @@ let ASP5AUX_CMP_CALL_TAC : tactic =
    DISCH_THEN(X_CHOOSE_THEN `lst:(num#A word_loc)list` (X_CHOOSE_THEN `perm:num->num->num`
      ASSUME_TAC)) THEN
    REWRITE_TAC[wl_push_env_def; LET_DEF; LET_END_DEF] THEN ASM_REWRITE_TAC[] THEN
-   CASE_REWRITE_TAC[] THEN SIMP[stack_size_eq2; stack_size_frame_def]) THEN
+   CAKE_REWRITE_TAC[] THEN SIMP[stack_size_eq2; stack_size_frame_def]) THEN
   (ASP5AUX_ABBREV_EV_TAC `Compare_code c:(A)wl_prog` `t1:(A,C,FFI)wl_state` THEN
    FIRST_ASSUM(fun th -> if ASP5AUX_IS_MEMREL th &&
        can (find_term ((=) `data_Number i1`)) (concl th) then
@@ -2818,7 +2818,7 @@ let ASP5AUX_CMP_CALL_TAC : tactic =
        UNDISCH_TAC `data_to_word_config_len_size c + 7 < dimindex (:A)` THEN ARITH_TAC];
      ALL_TAC]) THEN
   (DISCH_THEN(X_CHOOSE_THEN `ck:num` (X_CHOOSE_THEN `smx:num option` STRIP_ASSUME_TAC)) THEN
-   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[LENGTH] THEN
+   ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[LENGTH] THEN
    EXPAND_TAC "t1" THEN SIMP[wl_pop_env_def; wl_set_vars_def; alist_insert_def;
                              asp5_ev_clause "wl_Skip"]) THEN
   (FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP cut_envs_wf) THEN
@@ -2830,9 +2830,9 @@ let ASP5AUX_CMP_CALL_TAC : tactic =
      SIMP_TAC[];
      ALL_TAC] THEN
    ASM_SIMP_TAC[fromAList_toAList] THEN
-   REWRITE_TAC[domain_union; UNION_ACI] THEN CASE_REWRITE_TAC[option_DISTINCT] THEN
+   REWRITE_TAC[domain_union; UNION_ACI] THEN CAKE_REWRITE_TAC[option_DISTINCT] THEN
    SIMP ASP5AUX_EV_RWS2) THEN
-  (ASP5AUX_EV_TAC ASP5AUX_EV_RWS2 THEN CASE_REWRITE_TAC[] THEN
+  (ASP5AUX_EV_TAC ASP5AUX_EV_RWS2 THEN CAKE_REWRITE_TAC[] THEN
    ASP5AUX_EV_TAC ASP5AUX_EV_RWS2 );;
 
 (* HOL4 line 11897 *)
@@ -2864,7 +2864,7 @@ let assign_Less = prove
     FIRST_X_ASSUM(MP_TAC o REWRITE_RULE[DE_MORGAN_THM] o check (fun th ->
       is_neg (concl th) && is_disj (rand (concl th)))) THEN
     STRIP_TAC THEN ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
-    CASE_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN
     ASP5AUX_EV_TAC (ASP5AUX_EV_RWS2)) THEN
     (FIRST_ASSUM(fun th -> if is_iff (concl th) &&
      can (find_term (fun u -> is_const u && fst (dest_const u) = "word_ilt")) (concl th)
@@ -2900,7 +2900,7 @@ let assign_LessEq = prove
     FIRST_X_ASSUM(MP_TAC o REWRITE_RULE[DE_MORGAN_THM] o check (fun th ->
       is_neg (concl th) && is_disj (rand (concl th)))) THEN
     STRIP_TAC THEN ASM_REWRITE_TAC[] THEN STRIP_TAC THEN
-    CASE_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN
     ASP5AUX_EV_TAC (ASP5AUX_EV_RWS2)) THEN
     (REWRITE_TAC[ASP5AUX_not_ilt] THEN
      FIRST_ASSUM(fun th -> if is_iff (concl th) &&
@@ -2924,7 +2924,7 @@ let word_exp_set_var_ShiftVar = prove
                          | Ror -> SOME (word_ror w n))`,
   REPEAT GEN_TAC THEN ONCE_REWRITE_TAC[word_exp_set_var_ShiftVar_lemma] THEN
   REWRITE_TAC[wl_set_var_def; wl_state_INFO.ri_accfupds; K_THM; lookup_insert] THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[]);;
 
 (* HOL4 line 12179 (local; the theorem of line 12206 rebinds the name) *)
 let MemEqList_thm = prove
@@ -2934,7 +2934,7 @@ let MemEqList_thm = prove
      m = wl_state_memory t ==>
      ?x. wl_evaluate (MemEqList offset xs,t) =
            (NONE,wl_state_locals_fupd
-                   (K (((if b then insert 1 (wl_Word (word 18)) else I) o
+                   (combin_K (((if b then insert 1 (wl_Word (word 18)) else I) o
                         (if ~(xs = []) then insert 5 x else I)) (wl_state_locals t))) t)`,
   SUBGOAL_THEN
    `!xs offset (t:(A,C,FFI)wl_state) dm m b a.
@@ -2943,7 +2943,7 @@ let MemEqList_thm = prove
      m = wl_state_memory t ==>
      ?x. wl_evaluate (MemEqList offset xs,t) =
            (NONE,wl_state_locals_fupd
-                   (K (((if b then insert 1 (wl_Word (word 18)) else I) o
+                   (combin_K (((if b then insert 1 (wl_Word (word 18)) else I) o
                         (if ~(xs = []) then insert 5 x else I)) (wl_state_locals t))) t)`
    (fun th -> MESON_TAC[th]) THEN
   MATCH_MP_TAC list_INDUCT THEN CONJ_TAC THENL
@@ -2973,7 +2973,7 @@ let MemEqList_thm = prove
   ASM_REWRITE_TAC[option_INJ] THENL
    [DISCH_TAC THEN
     FIRST_X_ASSUM(MP_TAC o SPECL [`word_add offset bytes_in_word:A word`;
-      `wl_state_locals_fupd (K (insert 5 (wl_Word h) (wl_state_locals t)))
+      `wl_state_locals_fupd (combin_K (insert 5 (wl_Word h) (wl_state_locals t)))
          (t:(A,C,FFI)wl_state)`;
       `wl_state_mdomain (t:(A,C,FFI)wl_state)`; `wl_state_memory (t:(A,C,FFI)wl_state)`;
       `b:bool`; `a:A word`]) THEN
@@ -2997,7 +2997,7 @@ let MemEqList_thm = prove
      m = wl_state_memory t ==>
      ?x. wl_evaluate (MemEqList (word 0) xs,t) =
            (NONE,wl_state_locals_fupd
-                   (K (((if b then insert 1 (wl_Word (word 18)) else I) o
+                   (combin_K (((if b then insert 1 (wl_Word (word 18)) else I) o
                         (if ~(xs = []) then insert 5 x else I)) (wl_state_locals t))) t)`,
   MP_TAC(ISPEC `word 0:A word` MemEqList_thm) THEN REWRITE_TAC[WORD_ADD_0]);;
 
@@ -3043,7 +3043,7 @@ let assign_EqualConst = prove
    REWRITE_TAC[part_to_words_def] THEN
    RULE_ASSUM_TAC(REWRITE_RULE[wl_get_var_def])) THEN
     ASM_CASES_TAC `small_int (:A) (a:int)` THEN ASM_REWRITE_TAC[] THENL
-     [(DISCH_TAC THEN CASE_REWRITE_TAC[] THEN
+     [(DISCH_TAC THEN CAKE_REWRITE_TAC[] THEN
      ASP5AUX_EV_TAC ASP5AUX_EV_RWS2 THEN
      REWRITE_TAC[ISPECL [`w:A word`; `Smallnum a:A word`] EQ_SYM_EQ] THEN
      ASM_REWRITE_TAC[] THEN
@@ -3051,8 +3051,8 @@ let assign_EqualConst = prove
       REWRITE_TAC[bignum_words_def] THEN
    MP_TAC(ISPEC `i2mw (a:int):bool#(A word)list` PAIR_SURJECTIVE) THEN
    DISCH_THEN(X_CHOOSE_THEN `sign:bool` (X_CHOOSE_THEN `ws:(A word)list` SUBST1_TAC)) THEN
-   CASE_REWRITE_TAC[] THEN
-   CASES_ON `encode_header c (if sign then 7 else 3) (LENGTH (ws:(A word)list)):(A word)option` THEN CASE_REWRITE_TAC[] THENL
+   CAKE_REWRITE_TAC[] THEN
+   CASES_ON `encode_header c (if sign then 7 else 3) (LENGTH (ws:(A word)list)):(A word)option` THEN CAKE_REWRITE_TAC[] THENL
        [DISCH_TAC THEN ASP5AUX_EV_TAC ASP5AUX_EV_RWS2 THEN ASM_REWRITE_TAC[] THEN
      ASP5AUX_FINISH_TAC THEN ASP5AUX_BOOLV_MEM_TAC;
         REWRITE_TAC[MP6AUX_MAP_GET_WORD] THEN
@@ -3061,7 +3061,7 @@ let assign_EqualConst = prove
      ASP5AUX_EV_TAC (data_to_word_gcProof_word_and_one_eq_0_iff::ASP5AUX_EV_RWS2) THEN
      ASM_REWRITE_TAC[] THEN ASP5AUX_FINISH_TAC THEN ASP5AUX_BOOLV_MEM_TAC;
           (DISCH_THEN(X_CHOOSE_THEN `ra:A word` STRIP_ASSUME_TAC) THEN
-   SUBGOAL_THEN `!z. wl_word_exp (wl_state_locals_fupd (K (insert 1 z (wl_state_locals t)))
+   SUBGOAL_THEN `!z. wl_word_exp (wl_state_locals_fupd (combin_K (insert 1 z (wl_state_locals t)))
                    (t:(A,C,FFI)wl_state)) (real_addr c (adjust_var a1)) = SOME (wl_Word ra)`
      ASSUME_TAC THENL
     [GEN_TAC THEN MATCH_MP_TAC get_real_addr_lemma THEN EXISTS_TAC `w:A word` THEN
@@ -3069,7 +3069,7 @@ let assign_EqualConst = prove
                      adjust_var_NEQ];
      ALL_TAC] THEN
    ASP5AUX_EV_TAC (data_to_word_gcProof_word_and_one_eq_0_iff::ASP5AUX_EV_RWS2)) THEN
-       (ASP5AUX_MEMEQ_TAC THEN CASE_REWRITE_TAC[] THEN
+       (ASP5AUX_MEMEQ_TAC THEN CAKE_REWRITE_TAC[] THEN
    ASP5AUX_EV_TAC (NOT_CONS_NIL::o_THM::I_THM::ASP5AUX_EV_RWS2)) THEN
        (COND_CASES_TAC THEN ASM_REWRITE_TAC[I_THM; lookup_insert; ARITH; case_def "option"] THEN
    ASP5AUX_FINISH_TAC THEN ASP5AUX_BOOLV_MEM_TAC)]]];
@@ -3085,7 +3085,7 @@ let assign_EqualConst = prove
    REWRITE_TAC[MP6AUX_BYTES_STR] THEN
    ASP5AUX_UNFOLD_ASSIGN_TAC assign_EqualConst_def THEN
    RULE_ASSUM_TAC(REWRITE_RULE[wl_get_var_def]) THEN
-   CASES_ON `part_to_words c LN (clos_Str a) (word 0:A word)` THEN CASE_REWRITE_TAC[] THEN STRIP_TAC THENL
+   CASES_ON `part_to_words c LN (clos_Str a) (word 0:A word)` THEN CAKE_REWRITE_TAC[] THEN STRIP_TAC THENL
      [ASP5AUX_EV_TAC ASP5AUX_EV_RWS2 THEN ASM_REWRITE_TAC[] THEN
      ASP5AUX_FINISH_TAC THEN ASP5AUX_BOOLV_MEM_TAC;
       (MP_TAC(ISPEC `a':(bool#A word_loc)#((bool#A word_loc)list)` PAIR_SURJECTIVE) THEN
@@ -3093,7 +3093,7 @@ let assign_EqualConst = prove
      SUBST_ALL_TAC)) THEN
    MP_TAC(ISPEC `xw:bool#A word_loc` PAIR_SURJECTIVE) THEN
    DISCH_THEN(X_CHOOSE_THEN `xb:bool` (X_CHOOSE_THEN `xv:A word_loc` SUBST_ALL_TAC)) THEN
-   CASE_REWRITE_TAC[] THEN
+   CAKE_REWRITE_TAC[] THEN
    SUBGOAL_THEN `xb:bool` ASSUME_TAC THENL
     [FIRST_X_ASSUM(MP_TAC o check (fun th -> is_eq (concl th) &&
        can (find_term (fun u -> is_const u && fst (dest_const u) = "part_to_words")) (lhs (concl th)))) THEN
@@ -3106,7 +3106,7 @@ let assign_EqualConst = prove
    ASM_REWRITE_TAC[] THEN
    DISCH_THEN(X_CHOOSE_THEN `w:A word` (X_CHOOSE_THEN `ra:A word` STRIP_ASSUME_TAC)) THEN
    RVEQ_TAC THEN
-   SUBGOAL_THEN `!z. wl_word_exp (wl_state_locals_fupd (K (insert 1 z (wl_state_locals t)))
+   SUBGOAL_THEN `!z. wl_word_exp (wl_state_locals_fupd (combin_K (insert 1 z (wl_state_locals t)))
                    (t:(A,C,FFI)wl_state)) (real_addr c (adjust_var a1)) = SOME (wl_Word ra)`
      ASSUME_TAC THENL
     [GEN_TAC THEN MATCH_MP_TAC get_real_addr_lemma THEN EXISTS_TAC `w:A word` THEN
@@ -3115,7 +3115,7 @@ let assign_EqualConst = prove
      ALL_TAC] THEN
    REWRITE_TAC[FST; data_to_word_list_Seq_def] THEN
    ASP5AUX_EV_TAC ASP5AUX_EV_RWS2 THEN
-   ASP5AUX_MEMEQ_TAC THEN CASE_REWRITE_TAC[] THEN
+   ASP5AUX_MEMEQ_TAC THEN CAKE_REWRITE_TAC[] THEN
    ASP5AUX_EV_TAC (NOT_CONS_NIL::o_THM::I_THM::ASP5AUX_EV_RWS2)) THEN
       (REPEAT COND_CASES_TAC THEN ASM_REWRITE_TAC[I_THM; lookup_insert; ARITH; case_def "option"] THEN
    ASP5AUX_FINISH_TAC THEN ASP5AUX_BOOLV_MEM_TAC)];
@@ -3138,9 +3138,9 @@ let assign_EqualConst = prove
     [FIRST_X_ASSUM(MP_TAC o check (is_cond o concl)) THEN COND_CASES_TAC THEN
      SIMP_TAC[];
      ALL_TAC] THEN
-   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[MAP; TL; MP6AUX_MAP_GET_WORD] THEN
+   ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[MAP; TL; MP6AUX_MAP_GET_WORD] THEN
    RULE_ASSUM_TAC(REWRITE_RULE[wl_get_var_def]) THEN
-   SUBGOAL_THEN `!z. wl_word_exp (wl_state_locals_fupd (K (insert 1 z (wl_state_locals t)))
+   SUBGOAL_THEN `!z. wl_word_exp (wl_state_locals_fupd (combin_K (insert 1 z (wl_state_locals t)))
                    (t:(A,C,FFI)wl_state)) (real_addr c (adjust_var a1)) = SOME (wl_Word ra)`
      ASSUME_TAC THENL
     [GEN_TAC THEN MATCH_MP_TAC get_real_addr_lemma THEN EXISTS_TAC `w:A word` THEN
@@ -3149,7 +3149,7 @@ let assign_EqualConst = prove
      ALL_TAC] THEN
    REWRITE_TAC[FST; data_to_word_list_Seq_def] THEN
    ASP5AUX_EV_TAC (WORD_ADD_0::ASP5AUX_EV_RWS2) THEN
-   ASP5AUX_MEMEQ_TAC THEN CASE_REWRITE_TAC[] THEN
+   ASP5AUX_MEMEQ_TAC THEN CAKE_REWRITE_TAC[] THEN
    ASP5AUX_EV_TAC (NOT_CONS_NIL::o_THM::I_THM::ASP5AUX_EV_RWS2) THEN
    REPEAT COND_CASES_TAC THEN ASM_REWRITE_TAC[I_THM; lookup_insert; ARITH; case_def "option"] THEN
    ASP5AUX_FINISH_TAC THEN ASP5AUX_BOOLV_MEM_TAC]);;
@@ -3210,9 +3210,9 @@ let data_to_word_assignProof_Equal_code_lemma = prove
       ?ck new_p smx.
         wl_evaluate (Equal_code c,t) =
           (SOME (wl_Result (wl_Loc l1 l2) [wl_Word res]),
-           wl_state_clock_fupd (K ck) (wl_state_locals_fupd (K LN)
-             (wl_state_locals_size_fupd (K (SOME 0)) (wl_state_permute_fupd (K new_p)
-                (wl_state_stack_max_fupd (K smx) t))))) /\
+           wl_state_clock_fupd (combin_K ck) (wl_state_locals_fupd (combin_K LN)
+             (wl_state_locals_size_fupd (combin_K (SOME 0)) (wl_state_permute_fupd (combin_K new_p)
+                (wl_state_stack_max_fupd (combin_K smx) t))))) /\
         option_le smx (OPTION_MAP2 MAX (wl_state_stack_max t)
                          (OPTION_MAP2 (+) (wl_stack_size (wl_state_stack t))
                             (eq_code_stack_max (wck + 1) (wl_state_stack_size t)))) /\
@@ -3238,9 +3238,9 @@ let data_to_word_assignProof_Equal_code_lemma = prove
       ?ck new_p smx.
         wl_evaluate (Equal1_code,t) =
           (SOME (wl_Result (wl_Loc l1 l2) [wl_Word res]),
-           wl_state_clock_fupd (K ck) (wl_state_locals_fupd (K LN)
-             (wl_state_locals_size_fupd (K (SOME 0)) (wl_state_permute_fupd (K new_p)
-                (wl_state_stack_max_fupd (K smx) t))))) /\
+           wl_state_clock_fupd (combin_K ck) (wl_state_locals_fupd (combin_K LN)
+             (wl_state_locals_size_fupd (combin_K (SOME 0)) (wl_state_permute_fupd (combin_K new_p)
+                (wl_state_stack_max_fupd (combin_K smx) t))))) /\
         option_le smx (OPTION_MAP2 MAX (wl_state_stack_max t)
                          (OPTION_MAP2 (+) (wl_stack_size (wl_state_stack t))
                             (eq_code_stack_max (wck + 1) (wl_state_stack_size t)))) /\
@@ -3280,13 +3280,13 @@ let data_to_word_assignProof_Equal_code_lemma = prove
        ASP5AUX_SPLIT_TAC `word_and (h1:A word) (word_or (tag_mask c) (word 2)) =
        word (16 * closure_tag + 2)`) THENL
       [(ASP5AUX_EQ_RET_TAC);
-       (CASE_REWRITE_TAC[] THEN
+       (CAKE_REWRITE_TAC[] THEN
          ASP5AUX_EV_TAC (BIT_WORD_AND::word_exp_insert::IN_INSERT::NOT_IN_EMPTY::wl_mem_load_def::
          ASP5AUX_EV_RWS2)) THEN
         (ASP5AUX_SPLIT_TAC `word_and (h1:A word) (word_or (tag_mask c) (word 2)) =
          word (16 * partial_app_tag + 2)`) THENL
         [(ASP5AUX_EQ_RET_TAC);
-         (CASE_REWRITE_TAC[] THEN
+         (CAKE_REWRITE_TAC[] THEN
            ASP5AUX_EV_TAC (BIT_WORD_AND::word_exp_insert::IN_INSERT::NOT_IN_EMPTY::wl_mem_load_def::
            ASP5AUX_EV_RWS2)) THEN
           (ASP5AUX_SPLIT_TAC `h1:A word = h2`) THENL
@@ -3296,7 +3296,7 @@ let data_to_word_assignProof_Equal_code_lemma = prove
              ALL_TAC] THEN
              FIRST_X_ASSUM(MP_TAC o check (fun th -> is_eq (concl th) && is_cond (lhs (concl th)))) THEN
              ASM_REWRITE_TAC[] THEN DISCH_TAC) THEN
-            (CASE_REWRITE_TAC[] THEN
+            (CAKE_REWRITE_TAC[] THEN
              ASP5AUX_EV_TAC (BIT_WORD_AND::word_exp_insert::IN_INSERT::NOT_IN_EMPTY::wl_mem_load_def::
              ASP5AUX_word_exp_ShiftVar_ins::ASP5AUX_EV_RWS2)) THEN
             (REWRITE_TAC[WORD_ADD_0; GSYM decode_length_def] THEN
@@ -3320,7 +3320,7 @@ let data_to_word_assignProof_Equal_code_lemma = prove
              ALL_TAC]) THEN
             (DISCH_THEN(X_CHOOSE_THEN `ck2:num` (X_CHOOSE_THEN `p2:num->num->num`
              (X_CHOOSE_THEN `smx2:num option` STRIP_ASSUME_TAC))) THEN
-             ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[wl_bad_fun_return_def; option_DISTINCT] THEN
+             ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[wl_bad_fun_return_def; option_DISTINCT] THEN
              MAP_EVERY EXISTS_TAC [`ck2:num`; `p2:num->num->num`; `smx2:num option`] THEN
              ASM_REWRITE_TAC[] THEN CONJ_TAC THENL
              [EXPAND_TAC "t1" THEN
@@ -3332,16 +3332,16 @@ let data_to_word_assignProof_Equal_code_lemma = prove
              FIRST_X_ASSUM(MP_TAC o check (fun th -> can (find_term ((=) `smx2:num option`)) (concl th))) THEN
              EXPAND_TAC "t1" THEN REWRITE_TAC[wl_state_INFO.ri_accfupds; K_THM]]);
            (ASP5AUX_EQ_RET_TAC)]]];
-     (CASE_REWRITE_TAC[] THEN
+     (CAKE_REWRITE_TAC[] THEN
        ASP5AUX_EV_TAC (BIT_WORD_AND::word_exp_insert::IN_INSERT::NOT_IN_EMPTY::wl_mem_load_def::
        ASP5AUX_word_exp_ShiftVar_ins::WORD_ADD_0::ASP5AUX_EV_RWS2)) THEN
       (ASP5AUX_SPLIT_TAC `h1:A word = h2`) THENL
-      [(CASE_REWRITE_TAC[] THEN
+      [(CAKE_REWRITE_TAC[] THEN
          ASP5AUX_EV_TAC (ASP5AUX_and_pow2::ASP5AUX_and24::BIT_WORD_AND::word_exp_insert::
          IN_INSERT::NOT_IN_EMPTY::wl_mem_load_def::
          ASP5AUX_word_exp_ShiftVar_ins::WORD_ADD_0::ASP5AUX_EV_RWS2)) THEN
         (ASP5AUX_SPLIT_TAC `bit 2 (h2:A word)` THENL [ALL_TAC; ASP5AUX_EQ_RET_TAC]) THEN
-        (CASE_REWRITE_TAC[] THEN
+        (CAKE_REWRITE_TAC[] THEN
          ASP5AUX_EV_TAC (ASP5AUX_and_pow2::ASP5AUX_and24::BIT_WORD_AND::word_exp_insert::
          IN_INSERT::NOT_IN_EMPTY::wl_mem_load_def::
          ASP5AUX_word_exp_ShiftVar_ins::WORD_ADD_0::ASP5AUX_EV_RWS2)) THEN
@@ -3350,7 +3350,7 @@ let data_to_word_assignProof_Equal_code_lemma = prove
          COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT] THEN
          REWRITE_TAC[case_eq "option"; option_DISTINCT; option_INJ; PAIR_EQ] THEN
          DISCH_THEN(X_CHOOSE_THEN `r:A word` STRIP_ASSUME_TAC) THEN RVEQ_TAC) THEN
-        (CASE_REWRITE_TAC[] THEN
+        (CAKE_REWRITE_TAC[] THEN
          ASP5AUX_EV_TAC (ASP5AUX_shift_lsl_mul::ASP5AUX_and_pow2::ASP5AUX_and24::BIT_WORD_AND::
          word_exp_insert::IN_INSERT::NOT_IN_EMPTY::wl_mem_load_def::
          ASP5AUX_word_exp_ShiftVar_ins::WORD_ADD_0::ASP5AUX_EV_RWS2)) THEN
@@ -3374,7 +3374,7 @@ let data_to_word_assignProof_Equal_code_lemma = prove
          ASM_ARITH_TAC;
          ALL_TAC]) THEN
         (DISCH_THEN(X_CHOOSE_THEN `ck2:num` (X_CHOOSE_THEN `smx2:num option` STRIP_ASSUME_TAC)) THEN
-         ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[wl_bad_fun_return_def; option_DISTINCT] THEN
+         ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[wl_bad_fun_return_def; option_DISTINCT] THEN
          MAP_EVERY EXISTS_TAC [`ck2:num`; `wl_state_permute (t:(A,C,FFI)wl_state)`;
          `smx2:num option`] THEN
          REPEAT CONJ_TAC THENL
@@ -3402,9 +3402,9 @@ let data_to_word_assignProof_Equal_code_lemma = prove
    ALL_TAC]) THEN
   (COND_CASES_TAC THEN REWRITE_TAC[option_DISTINCT] THEN
    FIRST_X_ASSUM(STRIP_ASSUME_TAC o REWRITE_RULE[DE_MORGAN_THM]) THEN
-   CASES_ON `wl_state_memory (t:(A,C,FFI)wl_state) a1` THEN CASE_REWRITE_TAC[option_DISTINCT] THEN
-   CASES_ON `wl_state_memory (t:(A,C,FFI)wl_state) a2` THEN CASE_REWRITE_TAC[option_DISTINCT]) THEN
-  (REWRITE_TAC[case_eq "option"; option_DISTINCT; EXISTS_PAIR_THM] THEN CASE_REWRITE_TAC[] THEN
+   CASES_ON `wl_state_memory (t:(A,C,FFI)wl_state) a1` THEN CAKE_REWRITE_TAC[option_DISTINCT] THEN
+   CASES_ON `wl_state_memory (t:(A,C,FFI)wl_state) a2` THEN CAKE_REWRITE_TAC[option_DISTINCT]) THEN
+  (REWRITE_TAC[case_eq "option"; option_DISTINCT; EXISTS_PAIR_THM] THEN CAKE_REWRITE_TAC[] THEN
    DISCH_THEN(X_CHOOSE_THEN `xr:A word` (X_CHOOSE_THEN `lr:num` (X_CHOOSE_THEN `ckr:num`
    STRIP_ASSUME_TAC)))) THEN
   (ASP5AUX_EV_TAC (wl_mem_load_def::ASP5AUX_EV_RWS2)) THEN
@@ -3418,7 +3418,7 @@ let data_to_word_assignProof_Equal_code_lemma = prove
    DISCH_THEN(X_CHOOSE_THEN `lst:(num#A word_loc)list` (X_CHOOSE_THEN `perm:num->num->num`
    ASSUME_TAC)) THEN
    REWRITE_TAC[wl_push_env_def; LET_DEF; LET_END_DEF] THEN ASM_REWRITE_TAC[] THEN
-   CASE_REWRITE_TAC[] THEN SIMP[stack_size_eq2; stack_size_frame_def]) THEN
+   CAKE_REWRITE_TAC[] THEN SIMP[stack_size_eq2; stack_size_frame_def]) THEN
   (ASP5AUX_ABBREV_EV_TAC `Equal_code c:(A)wl_prog` `t1:(A,C,FFI)wl_state`) THEN
   (FIRST_X_ASSUM(MP_TAC o SPECL [`a:A word`; `a':A word`] o
    check (fun th -> is_forall (concl th) && length (fst (strip_forall (concl th))) = 2)) THEN
@@ -3434,7 +3434,7 @@ let data_to_word_assignProof_Equal_code_lemma = prove
    ALL_TAC]) THEN
   (DISCH_THEN(X_CHOOSE_THEN `ck1:num` (X_CHOOSE_THEN `p1:num->num->num`
    (X_CHOOSE_THEN `smx1:num option` STRIP_ASSUME_TAC))) THEN
-   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[LENGTH] THEN
+   ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[LENGTH] THEN
    EXPAND_TAC "t1" THEN SIMP[wl_pop_env_def; wl_set_vars_def; alist_insert_def;
    asp5_ev_clause "wl_Skip"]) THEN
   (SUBGOAL_THEN `fromAList (lst:(num#A word_loc)list) = LN` ASSUME_TAC THENL
@@ -3445,8 +3445,8 @@ let data_to_word_assignProof_Equal_code_lemma = prove
    SIMP_TAC[lookup_def];
    ALL_TAC] THEN
    ASM_SIMP_TAC[fromAList_toAList; wf_inter; union_LN; domain_inter; domain_insert; domain_def] THEN
-   CASE_REWRITE_TAC[]) THEN
-  (REWRITE_TAC[UNION_EMPTY] THEN CASE_REWRITE_TAC[] THEN
+   CAKE_REWRITE_TAC[]) THEN
+  (REWRITE_TAC[UNION_EMPTY] THEN CAKE_REWRITE_TAC[] THEN
    ASP5AUX_EV_TAC (lookup_inter_alt::domain_insert::domain_def::IN_INSERT::NOT_IN_EMPTY::
    ASP5AUX_EV_RWS2)) THEN
   (ASP5AUX_SPLIT_TAC `xr:A word = word 1` THENL
@@ -3456,7 +3456,7 @@ let data_to_word_assignProof_Equal_code_lemma = prove
    (try fst (dest_const (rator (lhs c))) = "SOME" with Failure _ -> false) &&
    can (find_term (fun u -> try fst (dest_var u) = "res" with Failure _ -> false)) c)) THEN
    REWRITE_TAC[option_INJ; PAIR_EQ] THEN STRIP_TAC THEN RVEQ_TAC THEN
-   CASE_REWRITE_TAC[option_DISTINCT] THEN
+   CAKE_REWRITE_TAC[option_DISTINCT] THEN
    MAP_EVERY EXISTS_TAC [`ck1:num`; `p1:num->num->num`; `smx1:num option`] THEN
    REPEAT CONJ_TAC THENL
    [REWRITE_TAC[PAIR_EQ; wl_state_INFO.ri_component_equality; wl_state_INFO.ri_accfupds;
@@ -3475,7 +3475,7 @@ let data_to_word_assignProof_Equal_code_lemma = prove
    ALL_TAC] THEN
    FIRST_X_ASSUM(MP_TAC o check (fun th -> is_eq (concl th) && is_cond (lhs (concl th)))) THEN
    ASM_REWRITE_TAC[] THEN DISCH_TAC) THEN
-  (CASE_REWRITE_TAC[] THEN
+  (CAKE_REWRITE_TAC[] THEN
    ASP5AUX_EV_TAC (lookup_inter_alt::domain_insert::domain_def::IN_INSERT::NOT_IN_EMPTY::
    WORD_ADD_0::ASP5AUX_EV_RWS2)) THEN
   (CONV_TAC(ONCE_DEPTH_CONV(REWR_CONV (asp5_ev_clause "wl_Call"))) THEN
@@ -3496,7 +3496,7 @@ let data_to_word_assignProof_Equal_code_lemma = prove
    ALL_TAC]) THEN
   (DISCH_THEN(X_CHOOSE_THEN `ck2:num` (X_CHOOSE_THEN `p2:num->num->num`
    (X_CHOOSE_THEN `smx2:num option` STRIP_ASSUME_TAC))) THEN
-   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[wl_bad_fun_return_def; option_DISTINCT] THEN
+   ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[wl_bad_fun_return_def; option_DISTINCT] THEN
    MAP_EVERY EXISTS_TAC [`ck2:num`; `p2:num->num->num`; `smx2:num option`] THEN
    ASM_REWRITE_TAC[] THEN CONJ_TAC THENL
    [EXPAND_TAC "t5" THEN
@@ -3539,9 +3539,9 @@ let data_to_word_assignProof_Equal_code_thm = prove
      ?ck new_p smx.
        wl_evaluate (Equal_code c,t) =
          (SOME (wl_Result (wl_Loc l1 l2) [wl_Word res]),
-          wl_state_clock_fupd (K ck) (wl_state_locals_fupd (K LN)
-            (wl_state_locals_size_fupd (K (SOME 0)) (wl_state_permute_fupd (K new_p)
-               (wl_state_stack_max_fupd (K smx) t))))) /\
+          wl_state_clock_fupd (combin_K ck) (wl_state_locals_fupd (combin_K LN)
+            (wl_state_locals_size_fupd (combin_K (SOME 0)) (wl_state_permute_fupd (combin_K new_p)
+               (wl_state_stack_max_fupd (combin_K smx) t))))) /\
        option_le smx (OPTION_MAP2 MAX (wl_state_stack_max t)
                         (OPTION_MAP2 (+) (wl_stack_size (wl_state_stack t))
                            (eq_code_stack_max (wck + 1) (wl_state_stack_size t)))) /\
@@ -3591,7 +3591,7 @@ let assign_Equal = prove
   (ASM_CASES_TAC `bit 0 (w1:A word) /\ bit 0 (w2:A word)` THEN ASM_REWRITE_TAC[] THENL
    [ALL_TAC;
    SUBGOAL_THEN `(w1:A word = w2) <=> b` ASSUME_TAC THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
-   CASE_REWRITE_TAC[] THEN ASP5AUX_EV_TAC ASP5AUX_EV_RWS2 THEN
+   CAKE_REWRITE_TAC[] THEN ASP5AUX_EV_TAC ASP5AUX_EV_RWS2 THEN
    ASM_REWRITE_TAC[] THEN COND_CASES_TAC THEN ASP5AUX_RESET0_TAC]) THEN
   (ASM_CASES_TAC `w1:A word = w2` THENL
    [SUBGOAL_THEN `b /\ res = word 1:A word` STRIP_ASSUME_TAC THENL
@@ -3601,10 +3601,10 @@ let assign_Equal = prove
    with Failure _ -> false))) THEN
    ASM_REWRITE_TAC[option_INJ; PAIR_EQ] THEN STRIP_TAC THEN ASM_MESON_TAC[];
    ALL_TAC] THEN
-   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN ASP5AUX_EV_TAC ASP5AUX_EV_RWS2 THEN
+   ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN ASP5AUX_EV_TAC ASP5AUX_EV_RWS2 THEN
    ASP5AUX_RESET0_TAC;
    ALL_TAC]) THEN
-  (ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]) THEN
+  (ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]) THEN
   (FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP ASP5AUX_code_rel_stubs o CONJUNCT1 o CONJUNCT2 o
    CONJUNCT2 o CONJUNCT2 o CONJUNCT2 o REWRITE_RULE[data_to_word_gcProof_state_rel_thm] o
    check (fun th -> concl th = `data_to_word_gcProof_state_rel c l1 l2 (s:(C,FFI)data_state)
@@ -3628,7 +3628,7 @@ let assign_Equal = prove
    DISCH_THEN(X_CHOOSE_THEN `lst:(num#A word_loc)list` (X_CHOOSE_THEN `perm:num->num->num`
    ASSUME_TAC)) THEN
    REWRITE_TAC[wl_push_env_def; LET_DEF; LET_END_DEF] THEN ASM_REWRITE_TAC[] THEN
-   CASE_REWRITE_TAC[] THEN SIMP[stack_size_eq2; stack_size_frame_def]) THEN
+   CAKE_REWRITE_TAC[] THEN SIMP[stack_size_eq2; stack_size_frame_def]) THEN
   (ASP5AUX_ABBREV_EV_TAC `Equal_code c:(A)wl_prog` `t1:(A,C,FFI)wl_state`) THEN
   (FIRST_ASSUM(fun th ->
    let l = lhs (concl th) in
@@ -3648,7 +3648,7 @@ let assign_Equal = prove
    ALL_TAC]) THEN
   (DISCH_THEN(X_CHOOSE_THEN `ck:num` (X_CHOOSE_THEN `new_p:num->num->num`
    (X_CHOOSE_THEN `smx:num option` STRIP_ASSUME_TAC))) THEN
-   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[LENGTH] THEN
+   ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[LENGTH] THEN
    EXPAND_TAC "t1" THEN SIMP[wl_pop_env_def; wl_set_vars_def; alist_insert_def;
    asp5_ev_clause "wl_Skip"]) THEN
   (FIRST_ASSUM(STRIP_ASSUME_TAC o MATCH_MP cut_envs_wf) THEN
@@ -3660,19 +3660,19 @@ let assign_Equal = prove
    SIMP_TAC[];
    ALL_TAC] THEN
    ASM_SIMP_TAC[fromAList_toAList] THEN
-   REWRITE_TAC[domain_union; UNION_ACI] THEN CASE_REWRITE_TAC[option_DISTINCT] THEN
+   REWRITE_TAC[domain_union; UNION_ACI] THEN CAKE_REWRITE_TAC[option_DISTINCT] THEN
    SIMP ASP5AUX_EV_RWS2) THEN
-  (ASP5AUX_EV_TAC ASP5AUX_EV_RWS2 THEN CASE_REWRITE_TAC[] THEN
+  (ASP5AUX_EV_TAC ASP5AUX_EV_RWS2 THEN CAKE_REWRITE_TAC[] THEN
    ASP5AUX_EV_TAC ASP5AUX_EV_RWS2) THEN
-  ((SUBGOAL_THEN `!X. wl_state_locals_fupd (K X)
-   (wl_state_locals_size_fupd (K (wl_state_locals_size t))
-   (wl_state_stack_fupd (K (wl_state_stack t))
-   (wl_state_stack_max_fupd (K smx)
-   (wl_state_permute_fupd (K new_p)
-   (wl_state_clock_fupd (K (wl_state_clock t))
-   (wl_state_termdep_fupd (K (wl_state_termdep t)) (t:(A,C,FFI)wl_state))))))) =
-   wl_state_stack_max_fupd (K smx) (wl_state_permute_fupd (K new_p)
-   (wl_state_locals_fupd (K X) t))` (fun th -> REWRITE_TAC[th]) THENL
+  ((SUBGOAL_THEN `!X. wl_state_locals_fupd (combin_K X)
+   (wl_state_locals_size_fupd (combin_K (wl_state_locals_size t))
+   (wl_state_stack_fupd (combin_K (wl_state_stack t))
+   (wl_state_stack_max_fupd (combin_K smx)
+   (wl_state_permute_fupd (combin_K new_p)
+   (wl_state_clock_fupd (combin_K (wl_state_clock t))
+   (wl_state_termdep_fupd (combin_K (wl_state_termdep t)) (t:(A,C,FFI)wl_state))))))) =
+   wl_state_stack_max_fupd (combin_K smx) (wl_state_permute_fupd (combin_K new_p)
+   (wl_state_locals_fupd (combin_K X) t))` (fun th -> REWRITE_TAC[th]) THENL
    [GEN_TAC THEN
    REWRITE_TAC[wl_state_INFO.ri_component_equality; wl_state_INFO.ri_accfupds; K_THM];
    ALL_TAC]) THEN
@@ -3732,7 +3732,7 @@ let assign_WordOpW8 = prove
     [FIRST_ASSUM(MP_TAC o REWRITE_RULE[good_dimindex_def] o check (fun th ->
        concl th = `good_dimindex (:A)`)) THEN ARITH_TAC;
      ALL_TAC] THEN
-   CASES_ON `opw:opw` THEN CASE_REWRITE_TAC[lookup_word_op_def] THEN
+   CASES_ON `opw:opw` THEN CAKE_REWRITE_TAC[lookup_word_op_def] THEN
    ASP5AUX_EV_TAC (WORD_AND_NOT0::WORD_OR_0::WORD_XOR_0::WORD_ADD_0::ASP5AUX_val_word_lt::
                    ASP5AUX_EV_RWS2) THEN
    ASM_SIMP_TAC[ASP5AUX_carried_add; ASP5AUX_carried_sub] THEN
@@ -3792,12 +3792,12 @@ let evaluate_WordOp64_on_32 = prove
        wl_evaluate
          (WordOp64_on_32 opw,
           wl_state_locals_fupd
-            (K (insert 23 (wl_Word (word_extract 31 0 c''))
+            (combin_K (insert 23 (wl_Word (word_extract 31 0 c''))
                  (insert 21 (wl_Word (word_extract 63 32 c''))
                     (insert 13 (wl_Word (word_extract 31 0 c'))
                        (insert 11 (wl_Word (word_extract 63 32 c')) l))))) t) =
        (NONE,wl_state_locals_fupd
-          (K (insert 31 (wl_Word (word_extract 63 32 (opw_lookup opw c' c'')))
+          (combin_K (insert 31 (wl_Word (word_extract 63 32 (opw_lookup opw c' c'')))
                (insert 33 (wl_Word (word_extract 31 0 (opw_lookup opw c' c'')))
                   (insert 27 w27
                      (insert 29 w29
@@ -3806,7 +3806,7 @@ let evaluate_WordOp64_on_32 = prove
                               (insert 13 (wl_Word (word_extract 31 0 c'))
                                  (insert 11 (wl_Word (word_extract 63 32 c')) l))))))))) t)`,
   REPEAT GEN_TAC THEN DISCH_TAC THEN CASES_ON `opw:opw` THEN
-  REWRITE_TAC[WordOp64_on_32_def] THEN CASE_REWRITE_TAC[opw_lookup_def] THEN
+  REWRITE_TAC[WordOp64_on_32_def] THEN CAKE_REWRITE_TAC[opw_lookup_def] THEN
   REWRITE_TAC[data_to_word_list_Seq_def] THEN
   ASP5AUX_EV_TAC (ASP5AUX_inst_AddCarry::WORD_NEG_1::WORD_XOR_NOT0::WORD_AND_NOT0::WORD_OR_0::
                   WORD_XOR_0::ASP5AUX_bool_word_0::ASP5AUX_EV_RWS2) THEN
@@ -3850,17 +3850,17 @@ let assign_WordOpW64 = prove
    [ASM_MESON_TAC[good_dimindex_def]; ALL_TAC] THEN
   DISCH_THEN(DISJ_CASES_THEN ASSUME_TAC) THEN ASP5AUX_WORD64_CONDS_TAC THENL
    [(* dimindex (:A) = 64 *)
-    CASES_ON `encode_header c 3 1:(A word)option` THEN CASE_REWRITE_TAC[FST] THENL
+    CASES_ON `encode_header c 3 1:(A word)option` THEN CAKE_REWRITE_TAC[FST] THENL
      [ASP5AUX_W64_GIVEUP_TAC `1`; ALL_TAC] THEN
     ASP5AUX_REAL_ADDR2_TAC THEN
-    CASES_ON `opw:opw` THEN CASE_REWRITE_TAC[opw_lookup_def] THEN
+    CASES_ON `opw:opw` THEN CAKE_REWRITE_TAC[opw_lookup_def] THEN
     ASP5AUX_EV_TAC (WORD_ADD_0::WORD_OR_0::WORD_XOR_0::ASP5AUX_EV_RWS2) THEN
     ASP5AUX_WW64_FINISH_TAC [ASP5AUX_zx_opw];
     (* dimindex (:A) = 32 *)
-    CASES_ON `encode_header c 3 2:(A word)option` THEN CASE_REWRITE_TAC[FST] THENL
+    CASES_ON `encode_header c 3 2:(A word)option` THEN CAKE_REWRITE_TAC[FST] THENL
      [ASP5AUX_W64_GIVEUP_TAC `2`; ALL_TAC] THEN
     ASP5AUX_REAL_ADDR2_TAC THEN
-    SUBGOAL_THEN `!w. wl_word_exp (wl_state_locals_fupd (K (insert 15 w (wl_state_locals t)))
+    SUBGOAL_THEN `!w. wl_word_exp (wl_state_locals_fupd (combin_K (insert 15 w (wl_state_locals t)))
                      (t:(A,C,FFI)wl_state)) (real_addr c (adjust_var a2)) = SOME (wl_Word x2)`
       ASSUME_TAC THENL
      [GEN_TAC THEN ASM_SIMP_TAC[word_exp_insert; ASP5AUX_ODD_adjust_var; ARITH]; ALL_TAC] THEN
@@ -3874,7 +3874,7 @@ let assign_WordOpW64 = prove
                    `t:(A,C,FFI)wl_state`; `w1:int64`; `w2:int64`] evaluate_WordOp64_on_32) THEN
     ASM_REWRITE_TAC[] THEN
     DISCH_THEN(X_CHOOSE_THEN `w27:A word_loc` (X_CHOOSE_THEN `w29:A word_loc` SUBST1_TAC)) THEN
-    CASE_REWRITE_TAC[] THEN
+    CAKE_REWRITE_TAC[] THEN
     ASP5AUX_WW32_FINISH_TAC `opw_lookup opw (w1:int64) w2`]);;
 
 (* HOL4 line 13465 *)
@@ -3904,9 +3904,9 @@ let assign_WordShiftW8 = prove
    [X_GEN_TAC `sh0:shift` THEN X_GEN_TAC `m:num` THEN
     ONCE_REWRITE_TAC[word_exp_set_var_ShiftVar_lemma] THEN
     ASM_REWRITE_TAC[] THEN CASES_ON `sh0:shift` THEN
-    CASE_REWRITE_TAC[shift_lookup_def; OPTION_MAP_DEF];
+    CAKE_REWRITE_TAC[shift_lookup_def; OPTION_MAP_DEF];
     ALL_TAC] THEN
-  CASES_ON `sh:shift` THEN CASE_REWRITE_TAC[shift_lookup_def] THEN
+  CASES_ON `sh:shift` THEN CAKE_REWRITE_TAC[shift_lookup_def] THEN
   ASP5AUX_EV_TAC (ASP5AUX_val_word_lt::WORD_OR_0::ASP5AUX_EV_RWS2) THEN
   ASP5AUX_FINISH_TAC THEN
   ASM_SIMP_TAC[ASP5AUX_shift8_Lsl; ASP5AUX_shift8_Lsr; ASP5AUX_shift8_Asr;
@@ -3926,10 +3926,10 @@ let evaluate_WordShift64_on_32 = prove
      wl_evaluate
        (WordShift64_on_32 sh n,
         wl_state_locals_fupd
-          (K (insert 13 (wl_Word (word_extract 31 0 c'))
+          (combin_K (insert 13 (wl_Word (word_extract 31 0 c'))
                (insert 11 (wl_Word (word_extract 63 32 c')) l))) t) =
      (NONE,wl_state_locals_fupd
-        (K (insert 31 (wl_Word (word_extract 63 32 (shift_lookup sh c' n)))
+        (combin_K (insert 31 (wl_Word (word_extract 63 32 (shift_lookup sh c' n)))
              (insert 33 (wl_Word (word_extract 31 0 (shift_lookup sh c' n)))
                 (insert 13 (wl_Word (word_extract 31 0 c'))
                    (insert 11 (wl_Word (word_extract 63 32 c')) l))))) t)`,
@@ -3938,9 +3938,9 @@ let evaluate_WordShift64_on_32 = prove
    [REWRITE_TAC[MOD_LT_EQ] THEN ARITH_TAC; ALL_TAC] THEN
   CASES_ON `sh:shift` THEN
   REWRITE_TAC[WordShift64_on_32_def; distinctness "shift"; LET_DEF; LET_END_DEF] THEN
-  CASE_REWRITE_TAC[shift_lookup_def] THEN
+  CAKE_REWRITE_TAC[shift_lookup_def] THEN
   ASM_CASES_TAC `n < 32` THEN ASM_CASES_TAC `n MOD 64 < 32` THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[data_to_word_list_Seq_def] THEN
   ASP5AUX_EV_TAC (ASP5AUX_word_exp_ShiftVar_ins::WORD_OR_0::ASP5AUX_EV_RWS2) THEN
   ASP5AUX_LOCALS_EQ_TAC [DIMINDEX_64; ASSUME `dimindex(:A) = 32`]);;
@@ -3967,7 +3967,7 @@ let assign_WordShiftW64 = prove
    [ASM_MESON_TAC[good_dimindex_def]; ALL_TAC] THEN
   DISCH_THEN(DISJ_CASES_THEN ASSUME_TAC) THEN ASP5AUX_WORD64_CONDS_TAC THENL
    [(* dimindex (:A) = 64 *)
-    CASES_ON `encode_header c 3 1:(A word)option` THEN CASE_REWRITE_TAC[FST] THENL
+    CASES_ON `encode_header c 3 1:(A word)option` THEN CAKE_REWRITE_TAC[FST] THENL
      [ASP5AUX_W64_GIVEUP_TAC `1`; ALL_TAC] THEN
     SUBGOAL_THEN `wl_word_exp (t:(A,C,FFI)wl_state) (real_addr c (adjust_var a1)) =
                   SOME (wl_Word x1)` ASSUME_TAC THENL
@@ -3978,7 +3978,7 @@ let assign_WordShiftW64 = prove
     ASP5AUX_EV_TAC (WORD_ADD_0::ASP5AUX_word_exp_ShiftVar_ins::ASP5AUX_EV_RWS2) THEN
     ASP5AUX_WW64_FINISH_TAC [ASP5AUX_zx_shift];
     (* dimindex (:A) = 32 *)
-    CASES_ON `encode_header c 3 2:(A word)option` THEN CASE_REWRITE_TAC[FST] THENL
+    CASES_ON `encode_header c 3 2:(A word)option` THEN CAKE_REWRITE_TAC[FST] THENL
      [ASP5AUX_W64_GIVEUP_TAC `2`; ALL_TAC] THEN
     SUBGOAL_THEN `wl_word_exp (t:(A,C,FFI)wl_state) (real_addr c (adjust_var a1)) =
                   SOME (wl_Word x1)` ASSUME_TAC THENL
@@ -3993,7 +3993,7 @@ let assign_WordShiftW64 = prove
     MP_TAC(ISPECL [`insert 15 (wl_Word x1) (wl_state_locals (t:(A,C,FFI)wl_state))`;
                    `sh:shift`; `k:num`; `t:(A,C,FFI)wl_state`; `w1:int64`]
                   evaluate_WordShift64_on_32) THEN
-    ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN CAKE_REWRITE_TAC[] THEN
     ASP5AUX_WW32_FINISH_TAC `shift_lookup sh (w1:int64) k`]);;
 
 (* HOL4 lines 13990-14002: vals assign_FP_cmp, assign_FP_top, assign_FP_bop, *)

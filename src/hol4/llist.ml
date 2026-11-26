@@ -25,7 +25,7 @@
 (* - LLIST_CASE_TAC tm splits an llist term (the kit's CASES_ON does not     *)
 (*   handle llist).                                                          *)
 (* - Not ported (unused by the closure): LTL_HD, llist_CASE, LFILTER,        *)
-(*   LFLATTEN, LZIP, LGENLIST, LREPEAT, LSET, llist_rel, fromSeq, LSUFFIX,   *)
+(*   LFLATTEN, LZIP, LGENLIST, LREPEAT, llist_rel, fromSeq, LSUFFIX,         *)
 (*   until, LTAKE_WHILE, LDROP_WHILE, lbind, linear_order_to_llist.          *)
 (* - Lemmas named LLISTAUX_... are helpers of this file (not HOL4 names).    *)
 (* - HOL4 eventually and every are llist_eventually and llist_every (short   *)
@@ -262,18 +262,18 @@ let LLISTAUX_lrep_ok_ITER_BIND = prove
   SIMP_TAC[ITER; OPTION_BIND_DEF]);;
 
 let LLISTAUX_UNCURRY_K = prove
- (`!(f:A->C) (p:A#B). UNCURRY (K o f) p = f (FST p)`,
+ (`!(f:A->C) (p:A#B). UNCURRY (combin_K o f) p = f (FST p)`,
   GEN_TAC THEN REWRITE_TAC[FORALL_PAIR_THM; UNCURRY_DEF; o_THM; K_THM]);;
 
 let LUNFOLD_def = new_definition
   `LUNFOLD (f:A->(A#B)option) z =
      llist_abs (\n. OPTION_MAP SND
-                      (ITER n (\m. OPTION_BIND m (UNCURRY (K o f))) (f z)))`;;
+                      (ITER n (\m. OPTION_BIND m (UNCURRY (combin_K o f))) (f z)))`;;
 
 let LLISTAUX_LNTH_LUNFOLD = prove
  (`!(f:A->(A#B)option) z n.
      LNTH n (LUNFOLD f z) =
-     OPTION_MAP SND (ITER n (\m. OPTION_BIND m (UNCURRY (K o f))) (f z))`,
+     OPTION_MAP SND (ITER n (\m. OPTION_BIND m (UNCURRY (combin_K o f))) (f z))`,
   SIMP_TAC[LNTH_rep; LUNFOLD_def; LLISTAUX_repabs; LLISTAUX_lrep_ok_ITER_BIND]);;
 
 let LUNFOLD = prove
@@ -1839,6 +1839,14 @@ let LPREFIX_LUNFOLD = prove
   REWRITE_TAC[option_CASE; pair_CASE; LPREFIX_LNIL; LPREFIX_LCONS] THEN
   LLIST_CASE_TAC `ll:B llist` THEN
   REWRITE_TAC[LCONS_NOT_NIL; LCONS_11] THEN MESON_TAC[]);;
+
+(* ------------------------------------------------------------------------- *)
+(* The set of the elements of a lazy list (HOL4 LSET_def; the Candle prover  *)
+(* uses it).                                                                 *)
+(* ------------------------------------------------------------------------- *)
+
+let LSET_def = new_definition
+  `LSET (l:A llist) x <=> ?n. LNTH n l = SOME x`;;
 
 (* ------------------------------------------------------------------------- *)
 (* Temporal logic style operators: eventually (inductive), always            *)

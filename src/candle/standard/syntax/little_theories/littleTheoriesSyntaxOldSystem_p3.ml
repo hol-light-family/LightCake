@@ -397,7 +397,7 @@ let esubst_ty_avds_aconv = prove
   ASM_REWRITE_TAC[] THEN DISCH_THEN(X_CHOOSE_TAC `v1:hol_term`) THEN
   QSPECL_THEN ["sigma"; "tm"; "sig"; "avds2"] MP_TAC esubst_ty0_always_returns THEN
   ASM_REWRITE_TAC[] THEN DISCH_THEN(X_CHOOSE_TAC `v2:hol_term`) THEN
-  ASM_REWRITE_TAC[esubst_ty_def] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[esubst_ty_def] THEN CAKE_REWRITE_TAC[] THEN
   SUBGOAL_THEN `welltyped (v1:hol_term) /\ welltyped (v2:hol_term)` STRIP_ASSUME_TAC THENL
    [CONJ_TAC THEN MATCH_MP_TAC term_ok_welltyped THEN QEXISTS_TAC "esubst_sig sigma sig" THEN
     MATCH_MP_TAC esubst_ty0_term_ok THEN ASM_MESON_TAC[MEM];
@@ -458,7 +458,7 @@ let db_esubst_tm_thm = prove
         ALL_TAC] THEN
       QPAT_X_ASSUM "FLOOKUP (SND (esubst_sig _ _)) _ = _"
         (MP_TAC o REWRITE_RULE[tmsof_esubst_sig; FLOOKUP_o_f]) THEN
-      ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[option_INJ] THEN
+      ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[option_INJ] THEN
       DISCH_THEN(SUBST_ALL_TAC o SYM) THEN
       QSPECL_THEN ["ty_esubst (s,th) y"; "TYPE_SUBST i (ty_esubst (s,th) y)"]
         MP_TAC match_type_complete THEN
@@ -484,7 +484,7 @@ let db_esubst_thm = prove
   REPEAT STRIP_TAC THEN REWRITE_TAC[db_esubst_def; esubst_def; esubst_ty_def] THEN
   QSPECL_THEN ["sigma"; "tm"; "sig"; "avds"] MP_TAC esubst_ty0_always_returns THEN
   ASM_REWRITE_TAC[] THEN DISCH_THEN(X_CHOOSE_TAC `v:hol_term`) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   QSPECL_THEN ["sig"; "sigma"; "tm"; "[]:(hol_term#hol_term)list"; "v"; "avds"] MP_TAC
     db_esubst_ty_thm THEN
   ASM_REWRITE_TAC[MEM] THEN ANTS_TAC THENL
@@ -544,7 +544,7 @@ let CLITAUX_esubst_tm_Const = prove
       ALL_TAC] THEN
     QPAT_X_ASSUM "FLOOKUP (SND (esubst_sig _ _)) _ = _"
       (MP_TAC o REWRITE_RULE[tmsof_esubst_sig; FLOOKUP_o_f]) THEN
-    ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[option_INJ] THEN
+    ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[option_INJ] THEN
     DISCH_THEN(SUBST_ALL_TAC o SYM) THEN
     QSPECL_THEN ["ty_esubst (s,th) y"; "TYPE_SUBST i (ty_esubst (s,th) y)"]
       MP_TAC match_type_complete THEN
@@ -620,14 +620,14 @@ let esubst_equation = prove
   QSPECL_THEN ["(s,th)"; "tm2"; "sig"; "avds"] MP_TAC esubst_ty0_always_returns THEN
   ASM_REWRITE_TAC[] THEN DISCH_THEN(X_CHOOSE_TAC `v2:hol_term`) THEN
   REWRITE_TAC[esubst_def; esubst_ty_def; equation_def] THEN
-  ASM_REWRITE_TAC[esubst_ty0_def; errorMonad_bind_def] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[esubst_ty0_def; errorMonad_bind_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[esubst_tm_def] THEN
   SUBGOAL_THEN `FLOOKUP (th:(mlstring,hol_term#hol_type)fmap) (implode "=") = NONE`
     SUBST1_TAC THENL
    [QPAT_ASSUM "esubsts_ok _ _" (MP_TAC o REWRITE_RULE[esubsts_ok_def; FDOM_FLOOKUP]) THEN
     SIMP_TAC[];
     ALL_TAC] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   SUBGOAL_THEN `typeof (esubst_tm (s,th) v1) = ty_esubst (s,th) (typeof tm1)` SUBST1_TAC THENL
    [MATCH_MP_TAC EQ_TRANS THEN EXISTS_TAC `typeof (v1:hol_term)` THEN CONJ_TAC THENL
      [MATCH_MP_TAC typeof_esubst_tm_esubst_ty0 THEN ASM_MESON_TAC[MEM];
@@ -864,7 +864,7 @@ let esubst_ACONV = prove
     ASM_REWRITE_TAC[] THEN DISCH_THEN(X_CHOOSE_TAC `v1:hol_term`) THEN
     QSPECL_THEN ["sigma"; "tm2"; "sig"; "avds2"] MP_TAC esubst_ty0_always_returns THEN
     ASM_REWRITE_TAC[] THEN DISCH_THEN(X_CHOOSE_TAC `v2:hol_term`) THEN
-    ASM_REWRITE_TAC[esubst_ty_def] THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[esubst_ty_def] THEN CAKE_REWRITE_TAC[] THEN
     SUBGOAL_THEN `welltyped (v1:hol_term) /\ welltyped (v2:hol_term) /\
                   welltyped (tm1:hol_term) /\ welltyped (tm2:hol_term)`
       STRIP_ASSUME_TAC THENL
@@ -929,7 +929,7 @@ let esubst_has_type1 = prove
   QEXISTS_TAC "axs" THEN ASM_REWRITE_TAC[] THEN
   QSPECL_THEN ["sigma"; "tm"; "sig"; "avds"] MP_TAC esubst_ty0_always_returns THEN
   ASM_REWRITE_TAC[] THEN DISCH_THEN(X_CHOOSE_TAC `v:hol_term`) THEN
-  ASM_REWRITE_TAC[esubst_ty_def] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[esubst_ty_def] THEN CAKE_REWRITE_TAC[] THEN
   SUBGOAL_THEN `welltyped (v:hol_term)` ASSUME_TAC THENL
    [MATCH_MP_TAC term_ok_welltyped THEN QEXISTS_TAC "esubst_sig sigma sig" THEN
     MATCH_MP_TAC esubst_ty0_term_ok THEN ASM_MESON_TAC[MEM]; ALL_TAC] THEN

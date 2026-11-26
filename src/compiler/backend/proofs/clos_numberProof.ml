@@ -160,7 +160,7 @@ let renumber_code_locs_distinct_lemma = prove
   REWRITE_TAC[FST; SND] THEN CLOSP1AUX_NUM_NORM_TAC THEN CLOSP1AUX_NUM_INC_TAC THEN
   CLOSP1AUX_NUM_LEN_TAC THEN ONCE_REWRITE_TAC[code_locs_cons] THEN
   REWRITE_TAC[code_locs_def; LET_DEF; LET_END_DEF; APPEND_NIL; CLOSP1AUX_num_SR_NIL] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   ASM_SIMP_TAC[MAP_SND_ZIP; LENGTH_ZIP; LENGTH_MAP] THEN
   CLOSP1AUX_NUM_SR_TAC);;
 
@@ -251,8 +251,8 @@ let clos_numberProof_state_rel_max_app = prove
 let clos_numberProof_state_rel_with_clock = prove
  (`!(s:(num#C,FFI)clos_state) t.
      clos_numberProof_state_rel s t ==>
-     clos_numberProof_state_rel (clos_state_clock_fupd (K x) s)
-                                (clos_state_clock_fupd (K x) t)`,
+     clos_numberProof_state_rel (clos_state_clock_fupd (combin_K x) s)
+                                (clos_state_clock_fupd (combin_K x) t)`,
   REWRITE_TAC[clos_numberProof_state_rel_def; clos_state_INFO.ri_accfupds; K_THM] THEN
   SIMP_TAC[]);;
 
@@ -420,7 +420,7 @@ let CLOSP1AUX_num_dest_closure_NONE_Partial = prove
   FIRST_ASSUM(ASSUME_TAC o MATCH_MP LIST_REL_LENGTH o
               check (fun th -> CLOSPROPSAUX_is_app "ALL2" (concl th) &&
                                lhand (concl th) = `args:clos_v list`)) THEN
-  REWRITE_TAC[dest_closure_def; check_loc_def] THEN CASE_REWRITE_TAC[check_loc_def] THENL
+  REWRITE_TAC[dest_closure_def; check_loc_def] THEN CAKE_REWRITE_TAC[check_loc_def] THENL
    [ALL_TAC;
     REWRITE_TAC[CLOSP1AUX_num_LENGTH_ZIP_renum] THEN
     ASM_CASES_TAC `LENGTH (a3:(num#clos_exp)list) <= a4` THENL
@@ -476,7 +476,7 @@ let dest_closure_v_rel_full = prove
                           then SUBST_ALL_TAC th else NO_TAC) THEN
   FIRST_X_ASSUM(MP_TAC o check (fun th -> CLOSPROPSAUX_is_app "dest_closure"
                                             (lhs (concl th)))) THEN
-  REWRITE_TAC[dest_closure_def; check_loc_def] THEN CASE_REWRITE_TAC[check_loc_def] THEN
+  REWRITE_TAC[dest_closure_def; check_loc_def] THEN CAKE_REWRITE_TAC[check_loc_def] THEN
   CLOSP1AUX_NUM_LENGTHS_TAC THENL
    [REPEAT(COND_CASES_TAC THEN
            REWRITE_TAC[distinctness "option"; injectivity "option";
@@ -683,12 +683,12 @@ let CLOSP1AUX_num_state_rel_install = prove
  (`!(s1:(num#C,FFI)clos_state) s2 k.
      clos_numberProof_state_rel s1 s2 ==>
      clos_numberProof_state_rel
-       (clos_state_code_fupd (K (FEMPTY |++ []))
-         (clos_state_compile_oracle_fupd (K (shift_seq 1 (clos_state_compile_oracle s1)))
-           (clos_state_clock_fupd (K k) s1)))
-       (clos_state_code_fupd (K (FEMPTY |++ []))
-         (clos_state_compile_oracle_fupd (K (shift_seq 1 (clos_state_compile_oracle s2)))
-           (clos_state_clock_fupd (K k) s2)))`,
+       (clos_state_code_fupd (combin_K (FEMPTY |++ []))
+         (clos_state_compile_oracle_fupd (combin_K (shift_seq 1 (clos_state_compile_oracle s1)))
+           (clos_state_clock_fupd (combin_K k) s1)))
+       (clos_state_code_fupd (combin_K (FEMPTY |++ []))
+         (clos_state_compile_oracle_fupd (combin_K (shift_seq 1 (clos_state_compile_oracle s2)))
+           (clos_state_clock_fupd (combin_K k) s2)))`,
   REWRITE_TAC[clos_numberProof_state_rel_def; clos_state_INFO.ri_accfupds; K_THM;
               FUPDATE_LIST_THM] THEN
   REPEAT GEN_TAC THEN STRIP_TAC THEN ASM_REWRITE_TAC[shift_seq_def] THEN
@@ -715,7 +715,7 @@ let CLOSP1AUX_num_oracle = prove
     ASM_REWRITE_TAC[pair_CASE; ignore_table_def; LET_DEF; LET_END_DEF] THEN
     CONV_TAC(DEPTH_CONV BETA_CONV) THEN ASM_REWRITE_TAC[pair_CASE] THEN
     CASES_ON `clos_state_compile (s2:(C,FFI)clos_state) c (code',[])` THEN
-    CASE_REWRITE_TAC[]]);;
+    CAKE_REWRITE_TAC[]]);;
 
 let CLOSP1AUX_num_state_rel_oracle = prove
  (`!(s1:(num#C,FFI)clos_state) s2.
@@ -765,12 +765,12 @@ let do_install = prove
     ASM_SIMP_TAC[CLOSPROPSAUX_do_install_not2; PAIR_EQ; injectivity "result";
                  distinctness "result"; injectivity "error_result"; distinctness "abort"]] THEN
   FIRST_X_ASSUM(REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC) THEN RVEQ_TAC THEN
-  REWRITE_TAC[clos_do_install_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[clos_do_install_def] THEN CAKE_REWRITE_TAC[] THEN
   SUBGOAL_THEN `clos_v_to_bytes w1 = clos_v_to_bytes v1 /\ clos_v_to_words w2 = clos_v_to_words v2`
     (fun th -> REWRITE_TAC[th]) THENL
    [ASM_MESON_TAC[clos_numberProof_v_to_bytes; clos_numberProof_v_to_words]; ALL_TAC] THEN
   CASES_ON `clos_v_to_bytes v1` THEN CASES_ON `clos_v_to_words v2` THEN
-  CASE_REWRITE_TAC[PAIR_EQ; distinctness "result"; injectivity "result";
+  CAKE_REWRITE_TAC[PAIR_EQ; distinctness "result"; injectivity "result";
                    injectivity "error_result"; distinctness "abort"] THEN
   MP_TAC(ISPEC `clos_state_compile_oracle (s1:(num#C,FFI)clos_state) 0` PAIR_SURJECTIVE) THEN
   REWRITE_TAC[EXISTS_PAIR_THM] THEN
@@ -789,9 +789,9 @@ let do_install = prove
               LET_END_DEF] THEN
   CONV_TAC(DEPTH_CONV BETA_CONV) THEN
   CASES_ON `clos_state_compile (s2:(C,FFI)clos_state) c (code',[])` THEN
-  CASE_REWRITE_TAC[PAIR_EQ; distinctness "result"; injectivity "result";
+  CAKE_REWRITE_TAC[PAIR_EQ; distinctness "result"; injectivity "result";
                    injectivity "error_result"; distinctness "abort"] THEN
-  CLOSP1AUX_NUM_SPLIT_SOME_TAC THEN CASE_REWRITE_TAC[] THEN
+  CLOSP1AUX_NUM_SPLIT_SOME_TAC THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[CLOSP1AUX_num_shift_seq_app; ADD_CLAUSES] THEN ASM_REWRITE_TAC[] THEN
   FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP clos_numberProof_state_rel_clock th]) THEN
   SUBGOAL_THEN `~(code':clos_exp list = [])` ASSUME_TAC THENL
@@ -851,8 +851,8 @@ let CLOSP1AUX_num_state_rel_refs_upd = prove
      clos_numberProof_state_rel s1 s2 /\
      clos_ref_rel (clos_numberProof_v_rel (clos_state_max_app s1)) a b ==>
      clos_numberProof_state_rel
-       (clos_state_refs_fupd (K (clos_state_refs s1 |+ (p,a))) s1)
-       (clos_state_refs_fupd (K (clos_state_refs s2 |+ (p,b))) s2)`,
+       (clos_state_refs_fupd (combin_K (clos_state_refs s1 |+ (p,a))) s1)
+       (clos_state_refs_fupd (combin_K (clos_state_refs s2 |+ (p,b))) s2)`,
   REWRITE_TAC[clos_numberProof_state_rel_def; clos_state_INFO.ri_accfupds; K_THM] THEN
   SIMP_TAC[fmap_rel_FUPDATE_same]);;
 
@@ -862,8 +862,8 @@ let clos_numberProof_rel_update_thunk = prove
    ALL2 (clos_numberProof_v_rel (clos_state_max_app s1)) vs ys /\
    clos_update_thunk [clos_RefPtr v ptr] (clos_state_refs s1) vs = SOME refs1 ==>
    ?refs2. clos_update_thunk [clos_RefPtr v ptr] (clos_state_refs s2) ys = SOME refs2 /\
-           clos_numberProof_state_rel (clos_state_refs_fupd (K refs1) s1)
-                                      (clos_state_refs_fupd (K refs2) s2)`,
+           clos_numberProof_state_rel (clos_state_refs_fupd (combin_K refs1) s1)
+                                      (clos_state_refs_fupd (combin_K refs2) s2)`,
   STRIP_TAC THEN
   SUBGOAL_THEN `(vs = [] /\ ys = []) \/
                 (?x y. vs = [x] /\ ys = [y] /\
@@ -910,7 +910,7 @@ let clos_numberProof_rel_update_thunk = prove
    [SUBGOAL_THEN `clos_dest_thunk [y] (clos_state_refs (s2:(C,FFI)clos_state)) =
                   clos_NotThunk`
       ASSUME_TAC THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
-    ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[];
+    ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[];
     FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP CLOSSEMAUX_dest_thunk_NONE th]) THEN
     REWRITE_TAC[distinctness "option"]] THEN
   REWRITE_TAC[store_thunk_def] THEN
@@ -921,8 +921,8 @@ let clos_numberProof_rel_update_thunk = prove
   CASES_ON `FLOOKUP (clos_state_refs (s2:(C,FFI)clos_state)) ptr` THEN
   REWRITE_TAC[OPTREL_THM; case_def "option"; distinctness "option"] THEN
   CASES_ON `a':(clos_v)clos_ref` THEN REWRITE_TAC[CLOSP1AUX_num_ref_rel_right] THEN
-  STRIP_TAC THEN RVEQ_TAC THEN CASE_REWRITE_TAC[distinctness "option"] THEN
-  TRY(CASES_ON `a0:thunk_mode` THEN CASE_REWRITE_TAC[]) THEN
+  STRIP_TAC THEN RVEQ_TAC THEN CAKE_REWRITE_TAC[distinctness "option"] THEN
+  TRY(CASES_ON `a0:thunk_mode` THEN CAKE_REWRITE_TAC[]) THEN
   REWRITE_TAC[injectivity "option"; distinctness "option"] THEN
   DISCH_THEN(SUBST1_TAC o SYM) THEN REWRITE_TAC[UNWIND_THM1] THEN
   MATCH_MP_TAC CLOSP1AUX_num_state_rel_refs_upd THEN
@@ -980,7 +980,7 @@ let CLOSP1AUX_num_renum_AppUnit = prove
  (`!n. SND (renumber_code_locs_list n [clos_AppUnit (clos_Var backend_common_None 0)]) =
        [clos_AppUnit (clos_Var backend_common_None 0)]`,
   GEN_TAC THEN REWRITE_TAC[clos_AppUnit_def] THEN
-  REPEAT(CHANGED_TAC(REWRITE_TAC[renumber_code_locs_def] THEN CASE_REWRITE_TAC[])) THEN
+  REPEAT(CHANGED_TAC(REWRITE_TAC[renumber_code_locs_def] THEN CAKE_REWRITE_TAC[])) THEN
   REWRITE_TAC[SND]);;
 
 (* the P- and Q-shaped facts: an evaluation of the source with a variable  *)
@@ -1045,7 +1045,7 @@ let CLOSP1AUX_NUM_TE_TAC : tactic = fun (asl,w as gl) ->
   let r = !CLOSP1AUX_num_last in
   let te = mk_eq(r, `Rerr (Rabort Rtype_error):(clos_v list,clos_v)result`) in
   (ASM_CASES_TAC te THENL
-   [FIRST_X_ASSUM SUBST_ALL_TAC THEN CASE_REWRITE_TAC[] THEN
+   [FIRST_X_ASSUM SUBST_ALL_TAC THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[PAIR_EQ] THEN STRIP_TAC THEN RVEQ_TAC THEN
     RULE_ASSUM_TAC(REWRITE_RULE[]) THEN CLOSP1AUX_NUM_FALSE_TAC;
     ALL_TAC]) gl;;
@@ -1188,7 +1188,7 @@ let CLOSP1AUX_NUM_SPLIT_RES_TAC : tactic = fun (asl,w as gl) ->
    REWRITE_TAC[result_rel_Rval; result_rel_Rerr1] THEN
    DISCH_THEN(STRIP_ASSUME_TAC) THEN
    FIRST_X_ASSUM SUBST_ALL_TAC THEN
-   CASE_REWRITE_TAC[]) gl;;
+   CAKE_REWRITE_TAC[]) gl;;
 
 (* singleton results: clos_evaluate ([e],env,s) = (Rval a,s') gives a = [r] *)
 let CLOSP1AUX_NUM_SING_TAC : tactic =
@@ -1234,7 +1234,7 @@ let CLOSP1AUX_NUM_SPLIT_EXC_TAC : tactic = fun (asl,w as gl) ->
                                            rand (concl th) = e2)) THEN
    REWRITE_TAC[exc_rel_raise1; exc_rel_type_error1] THEN
    DISCH_THEN STRIP_ASSUME_TAC THEN
-   FIRST_X_ASSUM SUBST_ALL_TAC THEN CASE_REWRITE_TAC[]) gl;;
+   FIRST_X_ASSUM SUBST_ALL_TAC THEN CAKE_REWRITE_TAC[]) gl;;
 
 (* related states with decreased clocks *)
 let CLOSP1AUX_num_state_rel_dec_clock = prove
@@ -1372,9 +1372,9 @@ let CLOSP1AUX_num_do_install_nonnil = prove
 let CLOSP1AUX_num_eval_const = prove
  (`!t i env (s:(C,FFI)clos_state).
      clos_evaluate ([clos_Op t (IntOp (clos_Const i)) []],env,s) = (Rval [clos_Number i],s)`,
-  REWRITE_TAC[clos_evaluate_def] THEN CASE_REWRITE_TAC[] THEN
-  REWRITE_TAC[REVERSE; clos_do_app_def] THEN CASE_REWRITE_TAC[] THEN
-  REWRITE_TAC[clos_do_int_app_def] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[clos_evaluate_def] THEN CAKE_REWRITE_TAC[] THEN
+  REWRITE_TAC[REVERSE; clos_do_app_def] THEN CAKE_REWRITE_TAC[] THEN
+  REWRITE_TAC[clos_do_int_app_def] THEN CAKE_REWRITE_TAC[]);;
 
 let CLOSP1AUX_num_LAST_CONS = prove
  (`!(R:clos_v->clos_v->bool) l1 l2 x.
@@ -1391,7 +1391,7 @@ let CLOSP1AUX_NUM_SPLIT_PAIR_TAC (tm:term) : tactic = fun (asl,w as gl) ->
   let r = rhs (concl th) in
   if CLOSPROPSAUX_is_app "Rval" r && is_var (rand r) && is_type (type_of (rand r)) &&
      fst (dest_type (type_of (rand r))) = "prod"
-  then (CASES_ON (rand r) THEN CASE_REWRITE_TAC[]) gl
+  then (CASES_ON (rand r) THEN CAKE_REWRITE_TAC[]) gl
   else ALL_TAC gl;;
 
 let CLOSP1AUX_NUM_DO_APP_TAC : tactic = fun (asl,w as gl) ->
@@ -1407,10 +1407,10 @@ let CLOSP1AUX_NUM_DO_APP_TAC : tactic = fun (asl,w as gl) ->
                     xs,`xs:clos_v list`; ys,`ys:clos_v list`; op,`opp:clos_op`]
                    clos_numberProof_do_app_lemma) in
   (MP_TAC th THEN ANTS_TAC THENL [ASM_SIMP_TAC[EVERY2_REVERSE]; ALL_TAC] THEN
-   CASES_ON da THEN CASE_REWRITE_TAC[] THEN
+   CASES_ON da THEN CAKE_REWRITE_TAC[] THEN
    CLOSP1AUX_NUM_SPLIT_PAIR_TAC da THEN
    DISCH_THEN(REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC) THEN
-   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]) gl;;
+   ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]) gl;;
 
 (* the dest_thunk of the antecedent and the consequent                      *)
 let CLOSP1AUX_NUM_DEST_THUNK_TAC : tactic = fun (asl,w as gl) ->
@@ -1435,9 +1435,9 @@ let CLOSP1AUX_NUM_DEST_THUNK_TAC : tactic = fun (asl,w as gl) ->
      CONV_TAC(DEPTH_CONV BETA_CONV) THEN REWRITE_TAC(CLOSP1AUX_num_maxapp_eqs asl) THEN
      ASM_REWRITE_TAC[];
      ALL_TAC] THEN
-   CASES_ON db THEN CASE_REWRITE_TAC[] THEN
+   CASES_ON db THEN CAKE_REWRITE_TAC[] THEN
    DISCH_THEN(REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC) THEN
-   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]) gl;;
+   ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]) gl;;
 
 (* the arguments of a forced thunk are a single reference *)
 let CLOSP1AUX_NUM_THUNK_ARGS_TAC : tactic = fun (asl,w as gl) ->
@@ -1473,13 +1473,13 @@ let CLOSP1AUX_NUM_UPDATE_THUNK_TAC : tactic = fun (asl,w as gl) ->
      (INST [s1,`s1:(num#C,FFI)clos_state`; s2,`s2:(C,FFI)clos_state`; vs,`vs:clos_v list`;
             ws,`ys:clos_v list`; b,`v:bool`; ptr,`ptr:num`]
            clos_numberProof_rel_update_thunk) in
-  (CASES_ON ua THEN CASE_REWRITE_TAC[] THENL
+  (CASES_ON ua THEN CAKE_REWRITE_TAC[] THENL
    [CLOSP1AUX_NUM_FIN_TAC;
     (fun (asl,w as gl) ->
        let eq = snd (find (fun (_,th) -> is_eq (concl th) && lhs (concl th) = ua) asl) in
        let th1 = INST [rand (rhs (concl eq)), `refs1:(num,(clos_v)clos_ref)fmap`] th0 in
        (MP_TAC th1 THEN ANTS_TAC THENL [ASM_REWRITE_TAC[]; ALL_TAC] THEN
-        DISCH_THEN(STRIP_ASSUME_TAC) THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]) gl)]) gl;;
+        DISCH_THEN(STRIP_ASSUME_TAC) THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]) gl)]) gl;;
 
 (* a local helper: the code installed by clos_number_compile_inc *)
 let CLOSP1AUX_num_SND_compile_inc = prove
@@ -1490,7 +1490,7 @@ let CLOSP1AUX_num_SND_compile_inc = prove
   CONV_TAC(DEPTH_CONV BETA_CONV) THEN
   MP_TAC(ISPEC `renumber_code_locs_list (make_even (n + MAX (LENGTH (xs:clos_exp list)) 1)) xs`
                PAIR_SURJECTIVE) THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[SND]);;
+  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[SND]);;
 
 (* the source equation clos_do_install xs s = (r,s') named by DO_INSTALL *)
 let CLOSP1AUX_num_di_eq (asl:(string*thm) list) : thm =
@@ -1521,7 +1521,7 @@ let CLOSP1AUX_NUM_DO_INSTALL_TAC : tactic = fun (asl,w as gl) ->
    MP_TAC(ISPEC da PAIR_SURJECTIVE) THEN
    DISCH_THEN(X_CHOOSE_THEN r (X_CHOOSE_THEN s' ASSUME_TAC)) THEN
    POP_ASSUM(fun th -> REWRITE_TAC[th] THEN ASSUME_TAC th) THEN
-   CASES_ON r THEN CASE_REWRITE_TAC[]) gl;;
+   CASES_ON r THEN CAKE_REWRITE_TAC[]) gl;;
 
 (* resolve the do_install facts with the named equation; rewrite the target *)
 let CLOSP1AUX_NUM_DI_RES_TAC : tactic =
@@ -1533,7 +1533,7 @@ let CLOSP1AUX_NUM_DI_RES_TAC : tactic =
                  is_eq c && CLOSPROPSAUX_is_app "clos_do_install" (lhs c) &&
                  type_of (rand (lhs c)) = `:(C,FFI)clos_state`) asl) in
      REWRITE_TAC[teq] gl) THEN
-  CASE_REWRITE_TAC[];;
+  CAKE_REWRITE_TAC[];;
 
 (* the last value of the evaluation of installed code *)
 let CLOSP1AUX_NUM_LAST_TAC : tactic =
@@ -1552,7 +1552,7 @@ let CLOSP1AUX_NUM_INSTALL_VAL_TAC : tactic =
                           then SUBST_ALL_TAC th else NO_TAC) THEN
   REWRITE_TAC[CLOSP1AUX_num_SND_compile_inc] THEN
   ONCE_REWRITE_TAC[clos_evaluate_CONS] THEN REWRITE_TAC[CLOSP1AUX_num_eval_const] THEN
-  CASE_REWRITE_TAC[] THEN CLOSP1AUX_NUM_MAXAPP_TAC THEN
+  CAKE_REWRITE_TAC[] THEN CLOSP1AUX_NUM_MAXAPP_TAC THEN
   CLOSP1AUX_NUM_STEP_TAC THENL
    [CLOSP1AUX_NUM_FIN_TAC THEN CLOSP1AUX_NUM_LAST_TAC; CLOSP1AUX_NUM_FIN_TAC];;
 
@@ -1595,7 +1595,7 @@ let CLOSP1AUX_NUM_APPUNIT_CAS_TAC : tactic = fun (asl,w as gl) ->
 
 let CLOSP1AUX_NUM_MODE_CASES_TAC : tactic = fun (asl,w as gl) ->
   let v = find_term (fun t -> is_var t && type_of t = `:thunk_mode`) w in
-  (CASES_ON v THEN CASE_REWRITE_TAC[]) gl;;
+  (CASES_ON v THEN CAKE_REWRITE_TAC[]) gl;;
 
 let CLOSP1AUX_num_op = prove
  (el 7 CLOSP1AUX_num_cases,
@@ -1630,7 +1630,7 @@ let CLOSP1AUX_num_lookup_vars_rel = prove
   FIRST_ASSUM(MP_TAC o SPEC `vs:num list` o MATCH_MP (GEN_ALL lookup_vars_NONE_related_env)) THEN
   CASES_ON `lookup_vars (vs:num list) (env1:clos_v list)` THEN
   CASES_ON `lookup_vars (vs:num list) (env2:clos_v list)` THEN
-  CASE_REWRITE_TAC[distinctness "option"; injectivity "option"] THEN
+  CAKE_REWRITE_TAC[distinctness "option"; injectivity "option"] THEN
   ASM_MESON_TAC[GEN_ALL lookup_vars_SOME_related_env]);;
 
 let CLOSP1AUX_num_ALL_ZIP_FST = prove
@@ -1656,9 +1656,9 @@ let CLOSP1AUX_NUM_LOOKUP_VARS_TAC : tactic = fun (asl,w as gl) ->
   let m = rand (find_term (fun t -> is_comb t && rator t = `clos_numberProof_v_rel`) con) in
   (MP_TAC(ISPECL [m; vs; e1; e2] CLOSP1AUX_num_lookup_vars_rel) THEN
    ANTS_TAC THENL [ASM_REWRITE_TAC[]; ALL_TAC] THEN
-   CASES_ON la THEN CASE_REWRITE_TAC[] THEN
+   CASES_ON la THEN CAKE_REWRITE_TAC[] THEN
    DISCH_THEN(REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC) THEN
-   ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]) gl;;
+   ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]) gl;;
 
 (* a related closure value *)
 let CLOSP1AUX_NUM_CLOSURE_TAC : tactic =
@@ -1675,7 +1675,7 @@ let CLOSP1AUX_NUM_ALL_ZIP_TAC : tactic = fun (asl,w as gl) ->
   (MP_TAC(ISPECL [f; fns; fns'] CLOSP1AUX_num_ALL_ZIP_FST) THEN
    ANTS_TAC THENL
     [CONJ_TAC THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
-     REPEAT GEN_TAC THEN CONV_TAC(DEPTH_CONV BETA_CONV) THEN CASE_REWRITE_TAC[];
+     REPEAT GEN_TAC THEN CONV_TAC(DEPTH_CONV BETA_CONV) THEN CAKE_REWRITE_TAC[];
      DISCH_THEN SUBST1_TAC]) gl;;
 
 let CLOSP1AUX_num_fn = prove
@@ -1683,7 +1683,7 @@ let CLOSP1AUX_num_fn = prove
   REPEAT GEN_TAC THEN STRIP_TAC THEN CLOSP1AUX_NUM_CAS_TAC THEN CLOSP1AUX_NUM_UNFOLD_TAC THEN
   CLOSP1AUX_NUM_MAXAPP_TAC THEN
   COND_CASES_TAC THEN REWRITE_TAC[] THENL [ALL_TAC; CLOSP1AUX_NUM_FIN_TAC] THEN
-  CASES_ON `vsopt:(num list)option` THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON `vsopt:(num list)option` THEN CAKE_REWRITE_TAC[] THEN
   TRY CLOSP1AUX_NUM_LOOKUP_VARS_TAC THEN CLOSP1AUX_NUM_FIN_TAC THEN CLOSP1AUX_NUM_CLOSURE_TAC);;
 
 let CLOSP1AUX_num_letrec = prove
@@ -1696,15 +1696,15 @@ let CLOSP1AUX_num_letrec = prove
                         else NO_TAC) THEN
   REWRITE_TAC[LET_DEF; LET_END_DEF] THEN CONV_TAC(DEPTH_CONV BETA_CONV) THEN
   COND_CASES_TAC THEN REWRITE_TAC[] THENL [ALL_TAC; CLOSP1AUX_NUM_FIN_TAC] THEN
-  CASES_ON `namesopt:(num list)option` THEN CASE_REWRITE_TAC[] THENL
+  CASES_ON `namesopt:(num list)option` THEN CAKE_REWRITE_TAC[] THENL
    [REPEAT CLOSP1AUX_NUM_STEP_TAC THEN CLOSP1AUX_NUM_FIN_TAC;
-    CLOSP1AUX_NUM_LOOKUP_VARS_TAC THEN REWRITE_TAC[OPTION_MAP_DEF] THEN CASE_REWRITE_TAC[] THEN
+    CLOSP1AUX_NUM_LOOKUP_VARS_TAC THEN REWRITE_TAC[OPTION_MAP_DEF] THEN CAKE_REWRITE_TAC[] THEN
     TRY(CLOSP1AUX_NUM_FIN_TAC THEN NO_TAC) THEN
     REPEAT CLOSP1AUX_NUM_STEP_TAC THEN CLOSP1AUX_NUM_FIN_TAC]);;
 
 (* the evaluate_app of the antecedent, by the Q-shaped hypothesis *)
 let CLOSP1AUX_NUM_APP_Q_TAC : tactic =
-  CLOSP1AUX_NUM_SING_TAC THEN REWRITE_TAC[HD] THEN CASE_REWRITE_TAC[] THEN
+  CLOSP1AUX_NUM_SING_TAC THEN REWRITE_TAC[HD] THEN CAKE_REWRITE_TAC[] THEN
   CLOSP1AUX_NUM_COND_IH_TAC THEN CLOSP1AUX_NUM_MAXAPP_TAC THEN DISCH_TAC THEN
   FIRST_X_ASSUM(fun th -> if CLOSP1AUX_num_is_Q th then MATCH_MP_TAC th else NO_TAC) THEN
   ASM_REWRITE_TAC[HD];;
@@ -1737,7 +1737,7 @@ let CLOSP1AUX_num_call = prove
   CLOSP1AUX_NUM_STEP_TAC THENL [ALL_TAC; CLOSP1AUX_NUM_FIN_TAC] THEN
   (fun (asl,w as gl) ->
      REWRITE_TAC (mapfilter (fun (_,th) -> CONJUNCT1 (MATCH_MP state_rel_code th)) asl) gl) THEN
-  REWRITE_TAC[clos_find_code_def; FLOOKUP_EMPTY] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[clos_find_code_def; FLOOKUP_EMPTY] THEN CAKE_REWRITE_TAC[] THEN
   CLOSP1AUX_NUM_FIN_TAC);;
 
 let CLOSP1AUX_num_app_nil = prove
@@ -1752,7 +1752,7 @@ let CLOSP1AUX_num_app_nil = prove
 let CLOSP1AUX_num_state_rel_clock_upd = prove
  (`!(s:(num#C,FFI)clos_state) t n.
      clos_numberProof_state_rel s t ==>
-     clos_numberProof_state_rel (clos_state_clock_fupd (K n) s) (clos_state_clock_fupd (K n) t) /\
+     clos_numberProof_state_rel (clos_state_clock_fupd (combin_K n) s) (clos_state_clock_fupd (combin_K n) t) /\
      clos_numberProof_state_rel (clos_dec_clock n s) (clos_dec_clock n t)`,
   SIMP_TAC[clos_numberProof_state_rel_with_clock; CLOSP1AUX_num_state_rel_dec_clock]);;
 
@@ -1771,7 +1771,7 @@ let CLOSP1AUX_NUM_DEST_CLOSURE_TAC : tactic = fun (asl,w as gl) ->
   let th = INST [m,`max_app:num`; f1,`f:clos_v`; f2,`f':clos_v`; a1,`args:clos_v list`;
                  a2,`args':clos_v list`] CLOSP1AUX_num_dest_closure_NONE_Partial in
   (MP_TAC th THEN ANTS_TAC THENL [ASM_REWRITE_TAC[ALL2]; ALL_TAC] THEN
-   CASES_ON da THEN CASE_REWRITE_TAC[] THENL
+   CASES_ON da THEN CAKE_REWRITE_TAC[] THENL
    [DISCH_TAC THEN CLOSP1AUX_NUM_FIN_TAC; ALL_TAC]) gl;;
 
 (* the Full_app case: the target closure by dest_closure_v_rel_full *)
@@ -1791,7 +1791,7 @@ let CLOSP1AUX_NUM_FULL_APP_TAC : tactic = fun (asl,w as gl) ->
 
 let CLOSP1AUX_NUM_KIND_CASES_TAC : tactic = fun (asl,w as gl) ->
   let v = find_term (fun t -> is_var t && type_of t = `:app_kind`) w in
-  (CASES_ON v THEN CASE_REWRITE_TAC[]) gl;;
+  (CASES_ON v THEN CAKE_REWRITE_TAC[]) gl;;
 
 let CLOSP1AUX_num_app_cons = prove
  (el 14 CLOSP1AUX_num_cases,
@@ -1811,11 +1811,11 @@ let CLOSP1AUX_num_app_cons = prove
   CLOSP1AUX_NUM_DEST_CLOSURE_TAC THEN CLOSP1AUX_NUM_KIND_CASES_TAC THENL
    [REWRITE_TAC[MESON[] `!a:clos_v P. (!x. a = x ==> P x) <=> P a`] THEN
     DISCH_THEN(REPEAT_TCL CHOOSE_THEN STRIP_ASSUME_TAC) THEN
-    ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
     COND_CASES_TAC THEN REWRITE_TAC[] THEN CLOSP1AUX_NUM_FIN_TAC;
     RULE_ASSUM_TAC(REWRITE_RULE[injectivity "option"; injectivity "app_kind"]) THEN
     CLOSP1AUX_NUM_UNWIND_TAC THEN
-    CLOSP1AUX_NUM_FULL_APP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+    CLOSP1AUX_NUM_FULL_APP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
     CLOSP1AUX_NUM_LENGTHS_TAC THEN COND_CASES_TAC THEN REWRITE_TAC[] THENL
      [CLOSP1AUX_NUM_FIN_TAC; ALL_TAC] THEN
     CLOSP1AUX_NUM_STEP_TAC THENL [CLOSP1AUX_NUM_APP_Q_TAC; CLOSP1AUX_NUM_FIN_TAC]]);;
@@ -1908,7 +1908,7 @@ let renumber_code_locs_EVEN = prove
   CLOSP1AUX_NUM_RES3_TAC THEN
   ONCE_REWRITE_TAC[code_locs_cons] THEN
   REWRITE_TAC[code_locs_def; LET_DEF; LET_END_DEF; APPEND_NIL; ALL; ALL_APPEND] THEN
-  CASE_REWRITE_TAC[] THEN ASM_SIMP_TAC[MAP_SND_ZIP; LENGTH_ZIP; LENGTH_MAP] THEN
+  CAKE_REWRITE_TAC[] THEN ASM_SIMP_TAC[MAP_SND_ZIP; LENGTH_ZIP; LENGTH_MAP] THEN
   ASM_REWRITE_TAC[EVEN_ADD; EVEN_MULT; ARITH] THEN
   REWRITE_TAC[GSYM ALL_MEM; MEM_GENLIST] THEN REPEAT STRIP_TAC THEN
   ASM_REWRITE_TAC[EVEN_ADD; EVEN_MULT; ARITH]);;
@@ -2068,7 +2068,7 @@ let CLOSP1AUX_num_gcl = prove
   CLOSP1AUX_NUM_EVEN_TAC THEN CLOSP1AUX_NUM_INC_TAC THEN CLOSP1AUX_NUM_RES3_TAC THEN
   REWRITE_TAC[clos_get_code_labels_def; MAP; set_of_list; UNIONS_0; UNIONS_INSERT;
               UNION_EMPTY; assign_get_code_label_def] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[MAP_o] THEN ASM_SIMP_TAC[MAP_SND_ZIP; LENGTH_ZIP; LENGTH_MAP] THEN
   ASM_REWRITE_TAC[UNION_EMPTY] THEN
   ASM_SIMP_TAC[CLOSP1AUX_num_evens_insert; CLOSP1AUX_num_evens_image] THEN
@@ -2098,7 +2098,7 @@ let renumber_code_locs_any_dests = prove
   TRY(ONCE_REWRITE_TAC[any_dest_cons]) THEN
   ASM_SIMP_TAC[app_call_dests_def; LET_DEF; LET_END_DEF; MAP_SND_ZIP; LENGTH_MAP;
                UNION_EMPTY; distinctness "option"] THEN
-  CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[UNION_EMPTY]);;
+  CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[UNION_EMPTY]);;
 
 (* ------------------------------------------------------------------------- *)
 (* preservation of observable semantics                                     *)

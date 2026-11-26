@@ -710,7 +710,7 @@ let tymatch_type_ok = prove
        POP_ASSUM(fun th -> RULE_ASSUM_TAC(REWRITE_RULE[th]) THEN ASSUME_TAC th) THEN
        ASM_REWRITE_TAC[]) THEN
    RULE_ASSUM_TAC(REWRITE_RULE[distinctness "option"; injectivity "option"; MAP; ALL]) THEN
-   CASE_REWRITE_TAC[] THEN
+   CAKE_REWRITE_TAC[] THEN
    COND_CASES_TAC THEN ASM_REWRITE_TAC[distinctness "option"] THEN ASM_MESON_TAC[];
    DISCH_TAC THEN REPEAT GEN_TAC THEN COND_CASES_TAC THEN
    ASM_REWRITE_TAC[distinctness "option"; ALL; ALL_APPEND; type_ok_def] THEN

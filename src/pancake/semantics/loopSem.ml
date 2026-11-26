@@ -56,22 +56,22 @@ let loop_result_INDUCT,loop_result_RECURSION = cake_type
 
 let loop_dec_clock_def = cake_def
   `loop_dec_clock (s:(A,FFI)loop_state) =
-     loop_state_clock_fupd (K (loop_state_clock s - 1)) s`;;
+     loop_state_clock_fupd (combin_K (loop_state_clock s - 1)) s`;;
 
 let loop_fix_clock_def = cake_def
   `loop_fix_clock (old_s:(A,B)loop_state) (res:C,(new_s:(D,E)loop_state)) =
      (res, loop_state_clock_fupd
-             (K (if loop_state_clock old_s < loop_state_clock new_s
+             (combin_K (if loop_state_clock old_s < loop_state_clock new_s
                  then loop_state_clock old_s else loop_state_clock new_s)) new_s)`;;
 
 let loop_set_globals_def = cake_def
   `loop_set_globals gv w (s:(A,FFI)loop_state) =
-     loop_state_globals_fupd (K (loop_state_globals s |+ (gv,w))) s`;;
+     loop_state_globals_fupd (combin_K (loop_state_globals s |+ (gv,w))) s`;;
 
 let loop_mem_store_def = cake_def
   `loop_mem_store (addr:A word) (w:(A)word_loc) (s:(A,FFI)loop_state) =
      if addr IN loop_state_mdomain s then
-       SOME (loop_state_memory_fupd (K ((addr =+ w) (loop_state_memory s))) s)
+       SOME (loop_state_memory_fupd (combin_K ((addr =+ w) (loop_state_memory s))) s)
      else NONE`;;
 
 let loop_mem_load_def = cake_def
@@ -139,11 +139,11 @@ let get_vars_def = cake_def
 
 let loop_set_var_def = cake_def
   `loop_set_var v x (s:(A,FFI)loop_state) =
-     loop_state_locals_fupd (K (insert v x (loop_state_locals s))) s`;;
+     loop_state_locals_fupd (combin_K (insert v x (loop_state_locals s))) s`;;
 
 let set_vars_def = cake_def
   `set_vars vs xs (s:(A,FFI)loop_state) =
-     loop_state_locals_fupd (K (alist_insert vs xs (loop_state_locals s))) s`;;
+     loop_state_locals_fupd (combin_K (alist_insert vs xs (loop_state_locals s))) s`;;
 
 let loop_arith_def = cake_def
   `(loop_arith (s:(A,FFI)loop_state) (LDiv r1 r2 r3) =
@@ -209,12 +209,12 @@ let loop_fix_clock_IMP_LESS_EQ = prove
 
 let call_env_def = cake_def
   `call_env args (s:(A,FFI)loop_state) =
-     loop_state_locals_fupd (K (fromList args)) s`;;
+     loop_state_locals_fupd (combin_K (fromList args)) s`;;
 
 let cut_state_def = cake_def
   `cut_state (live:(B)spt) (s:(A,FFI)loop_state) =
      if domain live SUBSET domain (loop_state_locals s) then
-       SOME (loop_state_locals_fupd (K (sptree_inter (loop_state_locals s) live)) s)
+       SOME (loop_state_locals_fupd (combin_K (sptree_inter (loop_state_locals s) live)) s)
      else NONE`;;
 
 let cut_res_def = cake_def
@@ -223,7 +223,7 @@ let cut_res_def = cake_def
        match cut_state live s with
          NONE -> (SOME loop_Error,s)
        | SOME s -> if loop_state_clock s = 0
-                   then (SOME loop_TimeOut,loop_state_locals_fupd (K LN) s)
+                   then (SOME loop_TimeOut,loop_state_locals_fupd (combin_K LN) s)
                    else (res,loop_dec_clock s)`;;
 
 (* HOL4: sh_mem_load (its second FFI case has a redundant catch-all row) *)
@@ -237,7 +237,7 @@ let loop_sh_mem_load_def = cake_def
              FFI_final outcome ->
                (SOME (loop_FinalFFI outcome:(W)loop_result), call_env [] s)
            | FFI_return new_ffi new_bytes ->
-               (NONE, loop_state_ffi_fupd (K new_ffi)
+               (NONE, loop_state_ffi_fupd (combin_K new_ffi)
                         (loop_set_var v (wl_Word (word_of_bytes F (word 0) new_bytes)) s)))
         else (SOME loop_Error, s))
      else
@@ -246,7 +246,7 @@ let loop_sh_mem_load_def = cake_def
                    (word_to_bytes addr F) with
              FFI_final outcome -> (SOME (loop_FinalFFI outcome), call_env [] s)
            | FFI_return new_ffi new_bytes ->
-               (NONE, loop_state_ffi_fupd (K new_ffi)
+               (NONE, loop_state_ffi_fupd (combin_K new_ffi)
                         (loop_set_var v (wl_Word (word_of_bytes F (word 0) new_bytes)) s))
            | _ -> (SOME loop_Error, s))
         else (SOME loop_Error, s))`;;
@@ -262,7 +262,7 @@ let loop_sh_mem_store_def = cake_def
                   FFI_final outcome ->
                     (SOME (loop_FinalFFI outcome:(W)loop_result), call_env [] s)
                 | FFI_return new_ffi new_bytes ->
-                    (NONE, loop_state_ffi_fupd (K new_ffi) s))
+                    (NONE, loop_state_ffi_fupd (combin_K new_ffi) s))
              else (SOME loop_Error, s))
           else
             (if byte_align addr IN loop_state_sh_mdomain s then
@@ -270,7 +270,7 @@ let loop_sh_mem_store_def = cake_def
                         (APPEND (TAKE nb (word_to_bytes w F)) (word_to_bytes addr F)) with
                   FFI_final outcome -> (SOME (loop_FinalFFI outcome), call_env [] s)
                 | FFI_return new_ffi new_bytes ->
-                    (NONE, loop_state_ffi_fupd (K new_ffi) s))
+                    (NONE, loop_state_ffi_fupd (combin_K new_ffi) s))
              else (SOME loop_Error, s)))
      | _ -> (SOME loop_Error, s)`;;
 
@@ -419,7 +419,7 @@ let PLOOPAUX_evaluate_clauses =
        (SOME (wl_Word w), SOME (wl_Word b)) ->
          (match mem_store_32 (loop_state_memory s) (loop_state_mdomain s)
                   (loop_state_be s) w (word_zx b) with
-            SOME m -> (NONE, loop_state_memory_fupd (K m) s)
+            SOME m -> (NONE, loop_state_memory_fupd (combin_K m) s)
           | _ -> (SOME loop_Error, s))
      | _ -> (SOME loop_Error, s)) /\
   (loop_evaluate (loop_StoreByte a w, s) =
@@ -427,7 +427,7 @@ let PLOOPAUX_evaluate_clauses =
        (SOME (wl_Word w), SOME (wl_Word b)) ->
          (match mem_store_byte_aux (loop_state_memory s) (loop_state_mdomain s)
                   (loop_state_be s) w (word_zx b) with
-            SOME m -> (NONE, loop_state_memory_fupd (K m) s)
+            SOME m -> (NONE, loop_state_memory_fupd (combin_K m) s)
           | _ -> (SOME loop_Error, s))
      | _ -> (SOME loop_Error, s)) /\
   (loop_evaluate (loop_Seq c1 c2, s) =
@@ -474,7 +474,7 @@ let PLOOPAUX_evaluate_clauses =
      | _ -> (SOME loop_Error, s)) /\
   (loop_evaluate (loop_Tick, s) =
      if loop_state_clock s = 0
-     then (SOME loop_TimeOut, loop_state_locals_fupd (K LN) s)
+     then (SOME loop_TimeOut, loop_state_locals_fupd (combin_K LN) s)
      else (NONE, loop_dec_clock s)) /\
   (loop_evaluate (LocValue r l1, s) =
      if l1 IN domain (loop_state_code s) then
@@ -491,10 +491,10 @@ let PLOOPAUX_evaluate_clauses =
              NONE ->
                (if ~(handler = NONE) then (SOME loop_Error, s) else
                 if loop_state_clock s = 0
-                then (SOME loop_TimeOut, loop_state_locals_fupd (K LN) s)
+                then (SOME loop_TimeOut, loop_state_locals_fupd (combin_K LN) s)
                 else
                   (match loop_evaluate
-                           (prog, loop_state_locals_fupd (K env) (loop_dec_clock s)) with
+                           (prog, loop_state_locals_fupd (combin_K env) (loop_dec_clock s)) with
                      (NONE, s) -> (SOME loop_Error, s)
                    | (SOME (loopSem_Continue _), s) -> (SOME loop_Error, s)
                    | (SOME (loopSem_Break _), s) -> (SOME loop_Error, s)
@@ -503,30 +503,30 @@ let PLOOPAUX_evaluate_clauses =
                if ~ALL_DISTINCT ns then (SOME loop_Error, s) else
                (match cut_res live (NONE, s) with
                   (NONE, s) ->
-                    (match loop_fix_clock (loop_state_locals_fupd (K env) s)
-                             (loop_evaluate (prog, loop_state_locals_fupd (K env) s)) with
+                    (match loop_fix_clock (loop_state_locals_fupd (combin_K env) s)
+                             (loop_evaluate (prog, loop_state_locals_fupd (combin_K env) s)) with
                        (SOME (loop_Result retvs), st) ->
                          if ~(LENGTH retvs = LENGTH ns) then (SOME loop_Error, st) else
                          (match handler with
                             NONE ->
                               (NONE, set_vars ns retvs
-                                       (loop_state_locals_fupd (K (loop_state_locals s)) st))
+                                       (loop_state_locals_fupd (combin_K (loop_state_locals s)) st))
                           | SOME (_,_,r,live_out) ->
                               cut_res live_out
                                 (loop_evaluate
                                    (r, set_vars ns retvs
                                          (loop_state_locals_fupd
-                                            (K (loop_state_locals s)) st))))
+                                            (combin_K (loop_state_locals s)) st))))
                      | (SOME (loop_Exception exn), st) ->
                          (match handler with
                             NONE ->
-                              (SOME (loop_Exception exn), loop_state_locals_fupd (K LN) st)
+                              (SOME (loop_Exception exn), loop_state_locals_fupd (combin_K LN) st)
                           | SOME (n,h,_,live_out) ->
                               cut_res live_out
                                 (loop_evaluate
                                    (h, loop_set_var n exn
                                          (loop_state_locals_fupd
-                                            (K (loop_state_locals s)) st))))
+                                            (combin_K (loop_state_locals s)) st))))
                      | (SOME (loopSem_Continue _), st) -> (SOME loop_Error, st)
                      | (SOME (loopSem_Break _), st) -> (SOME loop_Error, st)
                      | (NONE, st) -> (SOME loop_Error, st)
@@ -550,8 +550,8 @@ let PLOOPAUX_evaluate_clauses =
                | FFI_return new_ffi new_bytes ->
                    let new_m = write_bytearray w4 new_bytes (loop_state_memory s)
                                  (loop_state_mdomain s) (loop_state_be s) in
-                     (NONE, loop_state_ffi_fupd (K new_ffi)
-                              (loop_state_memory_fupd (K new_m) s)))
+                     (NONE, loop_state_ffi_fupd (combin_K new_ffi)
+                              (loop_state_memory_fupd (combin_K new_m) s)))
           | _ -> (SOME loop_Error, s))
      | res -> (SOME loop_Error, s))`;;
 
@@ -624,7 +624,7 @@ let PLOOPAUX_USE_IHS_TAC : tactic = fun (asl,w as g) ->
       let vs,bod = strip_forall (concl th') in
       if is_imp bod && exists PLOOPAUX_is_eval_eq (conjuncts(fst(dest_imp bod)))
       then th' else failwith "") asl in
-  let avoid = freesl (w :: map (concl o snd) asl) in
+  let avoid = freesl (w :: map (concl o snd) asl @ flat (map (hyp o snd) asl)) in
   let inst_of ih0 e =
     let vs0,_ = strip_forall (concl ih0) in
     let vs1 = rev(itlist (fun v acc -> variant (acc @ avoid) v :: acc) (rev vs0) []) in
@@ -732,7 +732,7 @@ let () = cake_ind_store := ("loop_evaluate",loop_evaluate_ind) :: !cake_ind_stor
 let loop_semantics_def = cake_def
   `loop_semantics (s:(A,FFI)loop_state) start =
      let prog = loop_Call NONE (SOME start) [] NONE in
-     if ?k. match FST (loop_evaluate (prog, loop_state_clock_fupd (K k) s)) with
+     if ?k. match FST (loop_evaluate (prog, loop_state_clock_fupd (combin_K k) s)) with
               SOME loop_TimeOut -> F
             | SOME (loop_FinalFFI _) -> F
             | SOME (loop_Result _) -> F
@@ -741,7 +741,7 @@ let loop_semantics_def = cake_def
      else
        match (some res.
                 ?k t r outcome.
-                  loop_evaluate (prog, loop_state_clock_fupd (K k) s) = (r,t) /\
+                  loop_evaluate (prog, loop_state_clock_fupd (combin_K k) s) = (r,t) /\
                   (match r with
                      SOME (loop_FinalFFI e) -> outcome = FFI_outcome e
                    | SOME (loop_Result _) -> outcome = Success
@@ -755,5 +755,5 @@ let loop_semantics_def = cake_def
                               (ffi_state_io_events
                                  (loop_state_ffi
                                     (SND (loop_evaluate
-                                            (prog, loop_state_clock_fupd (K k) s))))))
+                                            (prog, loop_state_clock_fupd (combin_K k) s))))))
                        (:num)))`;;

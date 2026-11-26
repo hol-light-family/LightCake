@@ -429,7 +429,7 @@ let subst_empty = prove
   FIRST_X_ASSUM SUBST_ALL_TAC THEN
   RULE_ASSUM_TAC(REWRITE_RULE[FILTER]) THEN
   ASM_SIMP_TAC[compute_subst_def; ALOOKUP_THM; FILTER] THEN
-  TRY (CASE_REWRITE_TAC[]) THEN REWRITE_TAC[injectivity "compute_exp"] THEN
+  TRY (CAKE_REWRITE_TAC[]) THEN REWRITE_TAC[injectivity "compute_exp"] THEN
   GEN_REWRITE_TAC RAND_CONV [GSYM MAP_ID] THEN
   MATCH_MP_TAC MAP_EQ THEN ASM_SIMP_TAC[GSYM ALL_MEM]);;
 let _ = cake_add_simps [subst_empty];;

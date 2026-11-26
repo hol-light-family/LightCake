@@ -362,7 +362,7 @@ let ArrowM1 = prove
     ALL_TAC] THEN
   (* the run from the clock of s *)
   MP_TAC(SPEC `state_clock (s:(FFI)state)` (MATCH_MP evaluate_set_init_clock
-    (CONJ (ASSUME `evaluate (state_clock_fupd (K ck) (s:(FFI)state)) env [exp] = s3,res3`)
+    (CONJ (ASSUME `evaluate (state_clock_fupd (combin_K ck) (s:(FFI)state)) env [exp] = s3,res3`)
           (ASSUME `~(res3 = Rerr (Rabort Rtimeout_error):(v list,v)result)`)))) THEN
   REWRITE_TAC[state_INFO.ri_fupdfupds; K_o_THM; state_INFO.ri_accfupds; K_THM] THEN
   ASM_REWRITE_TAC[with_same_clock; PAIR_EQ] THEN STRIP_TAC THENL
@@ -392,7 +392,7 @@ let ArrowM1 = prove
                 candle_ref_ok ctxt r` ASSUME_TAC THENL
    [REWRITE_TAC[oEL_EQ_EL] THEN REPEAT STRIP_TAC THEN
     SUBGOAL_THEN `loc < LENGTH (state_refs (s:(FFI)state))` ASSUME_TAC THENL
-     [UNDISCH_TAC `LENGTH (state_refs (state_clock_fupd (K ck') (s3:(FFI)state))) =
+     [UNDISCH_TAC `LENGTH (state_refs (state_clock_fupd (combin_K ck') (s3:(FFI)state))) =
                    LENGTH (state_refs (s:(FFI)state))` THEN
       REWRITE_TAC[state_INFO.ri_accfupds; K_THM] THEN ASM_ARITH_TAC; ALL_TAC] THEN
     MP_TAC(INST [`loc:num`,`l:num`] HOL_STORE_not_kernel_locs) THEN
@@ -475,12 +475,12 @@ let ArrowM2 = prove
            concl)) THEN
   ASM_REWRITE_TAC[injectivity "option"; PAIR_EQ] THEN STRIP_TAC THEN
   SUBGOAL_THEN `v':v = gv` (fun th -> ASM_REWRITE_TAC[GSYM th]) THEN
-  UNDISCH_TAC `evaluate (state_clock_fupd (K ck) (s:(FFI)state)) env1 [exp1] = s3,res3` THEN
+  UNDISCH_TAC `evaluate (state_clock_fupd (combin_K ck) (s:(FFI)state)) env1 [exp1] = s3,res3` THEN
   ASM_REWRITE_TAC[CKFAUX_evaluate_Fun; PAIR_EQ; injectivity "result"; CONS_11] THEN
   MESON_TAC[]);;
 
 let state_ok_with_clock = prove
- (`candle_state_ok ctxt (state_clock_fupd (K k) (s:(FFI)state)) <=> candle_state_ok ctxt s`,
+ (`candle_state_ok ctxt (state_clock_fupd (combin_K k) (s:(FFI)state)) <=> candle_state_ok ctxt s`,
   SIMP[candle_state_ok_def]);;
 let _ = cake_add_simps [state_ok_with_clock];;
 
@@ -597,7 +597,7 @@ let ckfaux_concl =
 (* the errors that the argument checks of the kernel functions raise *)
 let CKFAUX_safe_error = prove
  (mk_imp(`candle_state_ok ctxt (s:(FFI)state) /\
-          (?k. s' = state_clock_fupd (K k) s /\
+          (?k. s' = state_clock_fupd (combin_K k) s /\
                (res = Rerr (Rabort Rtype_error) \/
                 res = Rerr (Rraise bind_exn_v) \/
                 res = Rerr (Rabort Rtimeout_error):(v list,v)result))`, ckfaux_concl),
@@ -1068,14 +1068,14 @@ let CKFAUX_get_type_arity_not_clash = prove
      ~(holKernel_get_type_arity a b = (M_failure (holKernel_Clash tm):(num,hol_exn)exc,refs))`,
   REWRITE_TAC[holKernel_get_type_arity_def; st_ex_bind_def;
               holKernel_get_the_type_constants_def] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[assoc_not_clash]);;
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[assoc_not_clash]);;
 
 let CKFAUX_dest_vartype_not_clash = prove
  (`!a b tm refs.
      ~(holKernel_dest_vartype a b = (M_failure (holKernel_Clash tm):(mlstring,hol_exn)exc,refs))`,
   GEN_TAC THEN STRUCT_CASES_TAC(ISPEC `a:hol_type` (CONJUNCT1 (cases "hol_type"))) THEN
   REWRITE_TAC[holKernel_dest_vartype_def; holKernel_raise_Failure_def; st_ex_return_def] THEN
-  CASE_REWRITE_TAC[PAIR_EQ; injectivity "exc"; distinctness "exc"; injectivity "hol_exn";
+  CAKE_REWRITE_TAC[PAIR_EQ; injectivity "exc"; distinctness "exc"; injectivity "hol_exn";
                    distinctness "hol_exn"]);;
 
 let CKFAUX_dest_const_not_clash = prove
@@ -1084,7 +1084,7 @@ let CKFAUX_dest_const_not_clash = prove
        (M_failure (holKernel_Clash tm):(mlstring#hol_type,hol_exn)exc,refs))`,
   GEN_TAC THEN STRUCT_CASES_TAC(ISPEC `a:hol_term` (cases "hol_term")) THEN
   REWRITE_TAC[holKernel_dest_const_def; holKernel_raise_Failure_def; st_ex_return_def] THEN
-  CASE_REWRITE_TAC[PAIR_EQ; injectivity "exc"; distinctness "exc"; injectivity "hol_exn";
+  CAKE_REWRITE_TAC[PAIR_EQ; injectivity "exc"; distinctness "exc"; injectivity "hol_exn";
                    distinctness "hol_exn"]);;
 
 let CKFAUX_rand_not_clash = prove
@@ -1092,7 +1092,7 @@ let CKFAUX_rand_not_clash = prove
      ~(holKernel_rand a b = (M_failure (holKernel_Clash tm):(hol_term,hol_exn)exc,refs))`,
   GEN_TAC THEN STRUCT_CASES_TAC(ISPEC `a:hol_term` (cases "hol_term")) THEN
   REWRITE_TAC[holKernel_rand_def; holKernel_raise_Failure_def; st_ex_return_def] THEN
-  CASE_REWRITE_TAC[PAIR_EQ; injectivity "exc"; distinctness "exc"; injectivity "hol_exn";
+  CAKE_REWRITE_TAC[PAIR_EQ; injectivity "exc"; distinctness "exc"; injectivity "hol_exn";
                    distinctness "hol_exn"]);;
 
 let CKFAUX_rator_not_clash = prove
@@ -1100,7 +1100,7 @@ let CKFAUX_rator_not_clash = prove
      ~(holKernel_rator a b = (M_failure (holKernel_Clash tm):(hol_term,hol_exn)exc,refs))`,
   GEN_TAC THEN STRUCT_CASES_TAC(ISPEC `a:hol_term` (cases "hol_term")) THEN
   REWRITE_TAC[holKernel_rator_def; holKernel_raise_Failure_def; st_ex_return_def] THEN
-  CASE_REWRITE_TAC[PAIR_EQ; injectivity "exc"; distinctness "exc"; injectivity "hol_exn";
+  CAKE_REWRITE_TAC[PAIR_EQ; injectivity "exc"; distinctness "exc"; injectivity "hol_exn";
                    distinctness "hol_exn"]);;
 let CKFAUX_inferred_get_type_arity = prove
  (ckfaux_inferred_goal `get_type_arity_v`,
@@ -1320,7 +1320,7 @@ let CKFAUX_inferred_new_axiom = prove
    (REPEAT GEN_TAC THEN STRIP_TAC THEN
     MP_TAC(SPECL [`tm:hol_term`; `refs:hol_refs`; `ctxt:update list`] new_axiom_thm) THEN
     ASM_REWRITE_TAC[] THEN ckfaux_exc_cases_tac `r:(thm,hol_exn)exc` `:thm` THEN
-    CASE_REWRITE_TAC[injectivity "exc"; distinctness "exc"] THENL
+    CAKE_REWRITE_TAC[injectivity "exc"; distinctness "exc"] THENL
      [DISCH_THEN(X_CHOOSE_THEN `d:update` STRIP_ASSUME_TAC) THEN
       X_GEN_TAC `x:thm` THEN DISCH_THEN(SUBST_ALL_TAC o SYM) THEN
       EXISTS_TAC `[d:update]` THEN ASM_REWRITE_TAC[APPEND] THEN
@@ -1335,7 +1335,7 @@ let CKFAUX_inferred_new_basic_definition = prove
     MP_TAC(SPECL [`tm:hol_term`; `refs:hol_refs`; `ctxt:update list`]
              new_basic_definition_thm) THEN
     ASM_REWRITE_TAC[] THEN ckfaux_exc_cases_tac `r:(thm,hol_exn)exc` `:thm` THEN
-    CASE_REWRITE_TAC[injectivity "exc"; distinctness "exc"] THENL
+    CAKE_REWRITE_TAC[injectivity "exc"; distinctness "exc"] THENL
      [DISCH_THEN(X_CHOOSE_THEN `d:update` STRIP_ASSUME_TAC) THEN
       X_GEN_TAC `x:thm` THEN DISCH_THEN(SUBST_ALL_TAC o SYM) THEN
       EXISTS_TAC `[d:update]` THEN ASM_REWRITE_TAC[APPEND] THEN
@@ -1351,7 +1351,7 @@ let CKFAUX_inferred_new_specification = prove
     MP_TAC(SPECL [`th:thm`; `refs:hol_refs`; `ctxt:update list`]
              new_specification_thm) THEN
     ASM_REWRITE_TAC[] THEN ckfaux_exc_cases_tac `r:(thm,hol_exn)exc` `:thm` THEN
-    CASE_REWRITE_TAC[injectivity "exc"; distinctness "exc"] THENL
+    CAKE_REWRITE_TAC[injectivity "exc"; distinctness "exc"] THENL
      [DISCH_THEN(X_CHOOSE_THEN `d:update` STRIP_ASSUME_TAC) THEN
       X_GEN_TAC `x:thm` THEN DISCH_THEN(SUBST_ALL_TAC o SYM) THEN
       EXISTS_TAC `[d:update]` THEN ASM_REWRITE_TAC[APPEND] THEN
@@ -1368,7 +1368,7 @@ let CKFAUX_inferred_new_constant = prove
     MP_TAC(SPECL [`p0:mlstring`; `p1:hol_type`; `refs:hol_refs`; `ctxt:update list`]
              new_constant_thm) THEN
     ASM_REWRITE_TAC[] THEN ckfaux_exc_cases_tac `r:(1,hol_exn)exc` `:1` THEN
-    CASE_REWRITE_TAC[injectivity "exc"; distinctness "exc"] THENL
+    CAKE_REWRITE_TAC[injectivity "exc"; distinctness "exc"] THENL
      [DISCH_THEN(X_CHOOSE_THEN `d:update` STRIP_ASSUME_TAC) THEN
       X_GEN_TAC `x:1` THEN DISCH_THEN(SUBST_ALL_TAC o SYM) THEN
       EXISTS_TAC `[d:update]` THEN ASM_REWRITE_TAC[APPEND] THEN
@@ -1385,7 +1385,7 @@ let CKFAUX_inferred_call_new_type = prove
       MP_TAC(SPECL [`p0:mlstring`; `num_of_int (abs p1)`; `refs:hol_refs`; `ctxt:update list`]
                new_type_thm) THEN
       ASM_REWRITE_TAC[] THEN ckfaux_exc_cases_tac `r:(1,hol_exn)exc` `:1` THEN
-      CASE_REWRITE_TAC[injectivity "exc"; distinctness "exc"] THENL
+      CAKE_REWRITE_TAC[injectivity "exc"; distinctness "exc"] THENL
        [DISCH_THEN(X_CHOOSE_THEN `d:update` STRIP_ASSUME_TAC) THEN
         X_GEN_TAC `x:1` THEN DISCH_THEN(SUBST_ALL_TAC o SYM) THEN
         EXISTS_TAC `[d:update]` THEN ASM_REWRITE_TAC[APPEND] THEN
@@ -1406,7 +1406,7 @@ let CKFAUX_inferred_new_basic_type_definition = prove
                   `ctxt:update list`] new_basic_type_definition_thm) THEN
     ASM_REWRITE_TAC[] THEN ckfaux_exc_cases_tac `r:(thm#thm,hol_exn)exc` `:thm#thm` THEN
     PAIR_CASES_ON `y:thm#thm` THEN
-    CASE_REWRITE_TAC[injectivity "exc"; distinctness "exc"] THENL
+    CAKE_REWRITE_TAC[injectivity "exc"; distinctness "exc"] THENL
      [DISCH_THEN(X_CHOOSE_THEN `ds:update list` STRIP_ASSUME_TAC) THEN
       X_GEN_TAC `x:thm#thm` THEN DISCH_THEN(SUBST_ALL_TAC o SYM) THEN
       EXISTS_TAC `ds:update list` THEN ASM_REWRITE_TAC[] THEN
@@ -1453,10 +1453,10 @@ let CKFAUX_evaluate_Opderef = prove
    oEL n (state_refs (s:(FFI)state)) = SOME (Refv v) ==>
    evaluate s env [App Opderef [Var (Short x)]] = (s,Rval [v])`,
   STRIP_TAC THEN ONCE_REWRITE_TAC[evaluate_def] THEN REWRITE_TAC[REVERSE; APPEND] THEN
-  ONCE_REWRITE_TAC[evaluate_def] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[getOpClass_def] THEN
-  REWRITE_TAC[REVERSE; APPEND; do_app_def] THEN CASE_REWRITE_TAC[] THEN
+  ONCE_REWRITE_TAC[evaluate_def] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[getOpClass_def] THEN
+  REWRITE_TAC[REVERSE; APPEND; do_app_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[CKFAUX_store_lookup_oEL] THEN ASM_REWRITE_TAC[] THEN
-  CASE_REWRITE_TAC[list_result_def] THEN
+  CAKE_REWRITE_TAC[list_result_def] THEN
   REWRITE_TAC[state_component_equality] THEN SIMP[]);;
 
 let ckfaux_deref_v_def = (try tr_fetch "deref_v_def" with _ -> ml_prog_fetch "deref_v_def");;
@@ -1469,8 +1469,8 @@ let CKFAUX_evaluate_deref = prove
    evaluate s env [App Opapp [Var (Short (implode "!")); Var (Short (implode "the_context"))]] =
    if state_clock s = 0 then (s,Rerr (Rabort Rtimeout_error)) else (dec_clock s,Rval [cv])`,
   STRIP_TAC THEN ASM_REWRITE_TAC[CAN2AAUX_evaluate_Opapp_vars] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[ckfaux_deref_v_def; do_opapp_def] THEN
-  CASE_REWRITE_TAC[] THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[ckfaux_deref_v_def; do_opapp_def] THEN
+  CAKE_REWRITE_TAC[] THEN COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN
   MATCH_MP_TAC (GEN_ALL CKFAUX_evaluate_Opderef) THEN EXISTS_TAC `T` THEN
   ASM_REWRITE_TAC[dec_clock_def] THEN SIMP[nsLookup_nsBind_compute]);;
 
@@ -1479,9 +1479,9 @@ let CKFAUX_evaluate_two = prove
    evaluate s env [e2; e1] =
    (s2, match r with Rval vs -> Rval (CONS v2 vs) | Rerr err -> Rerr err)`,
   STRIP_TAC THEN GEN_REWRITE_TAC LAND_CONV [evaluate_cons] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[APPEND] THEN ASM_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[APPEND] THEN ASM_REWRITE_TAC[] THEN
   STRUCT_CASES_TAC(ISPEC `r:(v list,v)result` (cases "result")) THEN
-  CASE_REWRITE_TAC[APPEND]);;
+  CAKE_REWRITE_TAC[APPEND]);;
 
 (* evaluation of App Opapp [e1; e2] when both arguments give values *)
 let CKFAUX_evaluate_Opapp2 = prove
@@ -1495,7 +1495,7 @@ let CKFAUX_evaluate_Opapp2 = prove
   STRIP_TAC THEN GEN_REWRITE_TAC LAND_CONV [evaluate_def] THEN
   REWRITE_TAC[REVERSE; APPEND] THEN
   FIRST_ASSUM(fun th -> FIRST_ASSUM(fun th2 -> REWRITE_TAC[MATCH_MP CKFAUX_evaluate_two (CONJ th th2)])) THEN
-  CASE_REWRITE_TAC[getOpClass_def; APPEND; REVERSE]);;
+  CAKE_REWRITE_TAC[getOpClass_def; APPEND; REVERSE]);;
 
 (* the first argument raises *)
 let CKFAUX_evaluate_Opapp2_err1 = prove
@@ -1504,7 +1504,7 @@ let CKFAUX_evaluate_Opapp2_err1 = prove
   STRIP_TAC THEN GEN_REWRITE_TAC LAND_CONV [evaluate_def] THEN
   REWRITE_TAC[REVERSE; APPEND] THEN
   FIRST_ASSUM(fun th -> FIRST_ASSUM(fun th2 -> REWRITE_TAC[MATCH_MP CKFAUX_evaluate_two (CONJ th th2)])) THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[]);;
 
 let CKFAUX_evaluate_Var = prove
  (`nsLookup (sem_env_v env) n = SOME x ==> evaluate (s:(FFI)state) env [Var n] = (s,Rval [x])`,
@@ -1517,7 +1517,7 @@ let CKFAUX_evaluate_Lit = prove
 (* the closure of a two-argument kernel function applied to one argument *)
 let CKFAUX_partial_exists = prove
  (`!f v. (?env n m e. f = Closure env n (Fun m e)) ==> ?g. do_partial_app f v = SOME g`,
-  REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[do_partial_app_def] THEN CASE_REWRITE_TAC[] THEN
+  REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[do_partial_app_def] THEN CAKE_REWRITE_TAC[] THEN
   MESON_TAC[]);;
 
 let CKFAUX_evaluate_dec_clock = prove
@@ -1553,8 +1553,8 @@ let CKFAUX_evaluate_thm_to_string = prove
      [App Opapp [Var (Short (implode "thm_to_string")); Var (Short (implode "ctxt"))]] =
      if state_clock s = 0 then (s,Rerr (Rabort Rtimeout_error)) else (dec_clock s,Rval [g])`
     ASSUME_TAC THENL
-   [ASM_REWRITE_TAC[CAN2AAUX_evaluate_Opapp_vars] THEN CASE_REWRITE_TAC[] THEN
-    ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN COND_CASES_TAC THEN
+   [ASM_REWRITE_TAC[CAN2AAUX_evaluate_Opapp_vars] THEN CAKE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN COND_CASES_TAC THEN
     ASM_REWRITE_TAC[CKFAUX_evaluate_Fun];
     ALL_TAC] THEN
   SUBGOAL_THEN `evaluate (s:(FFI)state) env [Var (Short (implode "th"))] = (s,Rval [v])`
@@ -1572,7 +1572,7 @@ let CKFAUX_evaluate_thm_to_string = prove
                `App Opapp [Var (Short (implode "thm_to_string")); Var (Short (implode "ctxt"))]`,
                `e1:exp`] CKFAUX_evaluate_Opapp2) THEN
   ASM_REWRITE_TAC[] THEN
-  REWRITE_TAC[do_opapp_def] THEN CASE_REWRITE_TAC[] THEN COND_CASES_TAC THENL
+  REWRITE_TAC[do_opapp_def] THEN CAKE_REWRITE_TAC[] THEN COND_CASES_TAC THENL
    [REWRITE_TAC[PAIR_EQ] THEN DISCH_THEN(CONJUNCTS_THEN SUBST1_TAC) THEN
     REWRITE_TAC[CKFAUX_evaluate_dec_clock];
     ALL_TAC] THEN
@@ -1580,19 +1580,19 @@ let CKFAUX_evaluate_thm_to_string = prove
   MP_TAC(INST [`LIST_TYPE UPDATE_TYPE`,`A:(update)list->v->bool`; `THM_TYPE`,`B:thm->v->bool`;
                `STRING_TYPE`,`C:mlstring->v->bool`; `thm_to_string`,`f:(update)list->thm->mlstring`;
                `thm_to_string_v`,`fv:v`; `cv:v`,`av:v`; `g:v`,`gv:v`; `v:v`,`bv:v`;
-               `sem_env_v_fupd (K (nsBind x0 (v:v) (sem_env_v (env0:v sem_env)))) env0`,
+               `sem_env_v_fupd (combin_K (nsBind x0 (v:v) (sem_env_v (env0:v sem_env)))) env0`,
                `env:v sem_env`;
                `e0:exp`,`exp:exp`; `dec_clock (dec_clock (s:(FFI)state))`,`s:(FFI)state`;
                `s1:(FFI)state`,`s':(FFI)state`; `r1:(v list,v)result`,`res:(v list,v)result`;
                `c:update list`,`a:update list`; `th:thm`,`b:thm`]
     (INST_TYPE [`:update list`,`:A`; `:thm`,`:B`; `:mlstring`,`:C`] candle_Arrow2)) THEN
   ASM_REWRITE_TAC[thm_to_string_v_thm; perms_ok_thm_to_string_v; do_opapp_def] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[CKFAUX_evaluate_dec_clock] THEN MESON_TAC[]);;
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[CKFAUX_evaluate_dec_clock] THEN MESON_TAC[]);;
 
 let CKFAUX_do_opapp_Closure = prove
  (`!env n e (x:v). do_opapp [Closure env n e; x] =
-                   SOME (sem_env_v_fupd (K (nsBind n x (sem_env_v env))) env,e)`,
-  REWRITE_TAC[do_opapp_def] THEN CASE_REWRITE_TAC[]);;
+                   SOME (sem_env_v_fupd (combin_K (nsBind n x (sem_env_v env))) env,e)`,
+  REWRITE_TAC[do_opapp_def] THEN CAKE_REWRITE_TAC[]);;
 
 (* |- !x. do_opapp [c; x] = SOME (env', e) for a closure constant c *)
 let ckfaux_opapp_closure_thm v_def =
@@ -1624,7 +1624,7 @@ let CKFAUX_evaluate_fromInt = prove
     CKFAUX_evaluate_Opapp2) THEN
   ASM_SIMP_TAC[CKFAUX_evaluate_Lit; CKFAUX_evaluate_Var;
                ckfaux_opapp_closure_thm ckfaux_word8_fromint_v_def] THEN
-  CASE_REWRITE_TAC[] THEN COND_CASES_TAC THENL
+  CAKE_REWRITE_TAC[] THEN COND_CASES_TAC THENL
    [REWRITE_TAC[PAIR_EQ] THEN DISCH_THEN(CONJUNCTS_THEN SUBST1_TAC) THEN REWRITE_TAC[];
     ALL_TAC] THEN
   DISCH_THEN(ASSUME_TAC o SYM) THEN
@@ -1648,7 +1648,7 @@ let CKFAUX_evaluate_Aw8alloc = prove
  (`nsLookup (sem_env_v env) (Short x) = SOME (Litv (IntLit (&0))) /\
    nsLookup (sem_env_v env) (Short y) = SOME (Litv (Word8 b)) ==>
    evaluate (s:(FFI)state) env [App Aw8alloc [Var (Short x); Var (Short y)]] =
-   (state_refs_fupd (K (APPEND (state_refs s) [W8array []])) s,
+   (state_refs_fupd (combin_K (APPEND (state_refs s) [W8array []])) s,
     Rval [Loc T (LENGTH (state_refs s))])`,
   STRIP_TAC THEN GEN_REWRITE_TAC LAND_CONV [evaluate_def] THEN
   REWRITE_TAC[REVERSE; APPEND] THEN
@@ -1657,11 +1657,11 @@ let CKFAUX_evaluate_Aw8alloc = prove
                `Rval [Litv (IntLit (&0))]:(v list,v)result`,`r:(v list,v)result`]
     CKFAUX_evaluate_two) THEN
   ASM_SIMP_TAC[CKFAUX_evaluate_Var] THEN DISCH_THEN SUBST1_TAC THEN
-  CASE_REWRITE_TAC[getOpClass_def; REVERSE; APPEND] THEN
-  REWRITE_TAC[do_app_def] THEN CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[getOpClass_def; REVERSE; APPEND] THEN
+  REWRITE_TAC[do_app_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[INT_LT_REFL; I_THM; INT_ABS_NUM; NUM_OF_INT_OF_NUM; REPLICATE;
               store_alloc_def] THEN
-  CASE_REWRITE_TAC[list_result_def] THEN
+  CAKE_REWRITE_TAC[list_result_def] THEN
   REWRITE_TAC[PAIR_EQ; state_component_equality] THEN SIMP[]);;
 
 (* Word8Array.array 0 v0 in print_thm *)
@@ -1680,7 +1680,7 @@ let CKFAUX_evaluate_array =
                  Var (Short (implode " v0"))]] =
    if state_clock s = 0 then (s,Rerr (Rabort Rtimeout_error))
    else if state_clock (dec_clock s) = 0 then (dec_clock s,Rerr (Rabort Rtimeout_error))
-   else (state_refs_fupd (K (APPEND (state_refs s) [W8array []])) (dec_clock (dec_clock s)),
+   else (state_refs_fupd (combin_K (APPEND (state_refs s) [W8array []])) (dec_clock (dec_clock s)),
          Rval [Loc T (LENGTH (state_refs s))])`,
   STRIP_TAC THEN
   SUBGOAL_THEN
@@ -1698,7 +1698,7 @@ let CKFAUX_evaluate_array =
                  `Var (Long (implode "Word8Array") (Short (implode "array")))`,`e1:exp`]
       CKFAUX_evaluate_Opapp2) THEN
     ASM_SIMP_TAC[CKFAUX_evaluate_Lit; CKFAUX_evaluate_Var] THEN
-    REWRITE_TAC[ath] THEN CASE_REWRITE_TAC[] THEN
+    REWRITE_TAC[ath] THEN CAKE_REWRITE_TAC[] THEN
     COND_CASES_TAC THEN ASM_REWRITE_TAC[CKFAUX_evaluate_Fun];
     ALL_TAC] THEN
   ASM_CASES_TAC `state_clock (s:(FFI)state) = 0` THENL
@@ -1717,7 +1717,7 @@ let CKFAUX_evaluate_array =
                            Lit (IntLit (&0))]`,`e1:exp`]
     CKFAUX_evaluate_Opapp2) THEN
   ASM_SIMP_TAC[CKFAUX_evaluate_Var] THEN
-  REWRITE_TAC[CKFAUX_do_opapp_Closure] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[CKFAUX_do_opapp_Closure] THEN CAKE_REWRITE_TAC[] THEN
   COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN TRY(DISCH_THEN(K ALL_TAC)) THEN
   W(fun (asl,w) -> MP_TAC(PART_MATCH (lhs o rand) CKFAUX_evaluate_Aw8alloc (lhs w))) THEN
   ANTS_TAC THENL [REPEAT CONJ_TAC THEN CONV_TAC can2aaux_lookup_conv; ALL_TAC] THEN
@@ -1734,7 +1734,7 @@ let CKFAUX_evaluate_ffi = prove
    match call_FFI (state_ffi s) (ExtCall (implode "kernel_ffi"))
            (MAP (word o ORD) (explode conf)) [] with
      FFI_return t' ws' ->
-       (state_refs_fupd (K (LUPDATE (W8array ws') n (state_refs s))) (state_ffi_fupd (K t') s),
+       (state_refs_fupd (combin_K (LUPDATE (W8array ws') n (state_refs s))) (state_ffi_fupd (combin_K t') s),
         Rval [Conv NONE []])
    | FFI_final outcome -> (s,Rerr (Rabort (Rffi_error outcome)))`,
   STRIP_TAC THEN GEN_REWRITE_TAC LAND_CONV [evaluate_def] THEN
@@ -1745,17 +1745,17 @@ let CKFAUX_evaluate_ffi = prove
                `Rval [Litv (StrLit conf)]:(v list,v)result`,`r:(v list,v)result`]
     CKFAUX_evaluate_two) THEN
   ASM_SIMP_TAC[CKFAUX_evaluate_Var] THEN DISCH_THEN SUBST1_TAC THEN
-  CASE_REWRITE_TAC[getOpClass_def; REVERSE; APPEND] THEN
-  REWRITE_TAC[do_app_def] THEN CASE_REWRITE_TAC[] THEN
-  REWRITE_TAC[CKFAUX_store_lookup_oEL] THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[getOpClass_def; REVERSE; APPEND] THEN
+  REWRITE_TAC[do_app_def] THEN CAKE_REWRITE_TAC[] THEN
+  REWRITE_TAC[CKFAUX_store_lookup_oEL] THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   UNDISCH_TAC `oEL n (state_refs (s:(FFI)state)) = SOME (W8array [])` THEN
   REWRITE_TAC[oEL_EQ_EL] THEN STRIP_TAC THEN
   MP_TAC(ISPEC `call_FFI (state_ffi (s:(FFI)state)) (ExtCall (implode "kernel_ffi"))
              (MAP (word o ORD) (explode conf)) []` (cases "ffi_result")) THEN
-  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[list_result_def] THEN
+  STRIP_TAC THEN ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[list_result_def] THEN
   ASM_REWRITE_TAC[store_assign_def] THEN
   REWRITE_TAC[GSYM(ASSUME `W8array [] = EL n (state_refs (s:(FFI)state))`)] THEN
-  REWRITE_TAC[store_v_same_type_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[store_v_same_type_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[PAIR_EQ] THEN REWRITE_TAC[state_component_equality] THEN SIMP[]);;
 
 (* the event of print_thm is an ok_event *)
@@ -1786,9 +1786,9 @@ let CKFAUX_print_state_ok = prove
    state_next_type_stamp s1 = state_next_type_stamp s /\
    ALL ok_event (ffi_state_io_events t') ==>
    candle_state_ok ctxt
-     (state_refs_fupd (K (LUPDATE (W8array ws) (LENGTH (state_refs s))
+     (state_refs_fupd (combin_K (LUPDATE (W8array ws) (LENGTH (state_refs s))
                                   (APPEND (state_refs s) [W8array []])))
-        (state_ffi_fupd (K t') (s1:(FFI)state)))`,
+        (state_ffi_fupd (combin_K t') (s1:(FFI)state)))`,
   REWRITE_TAC[candle_state_ok_def] THEN SIMP[] THEN STRIP_TAC THEN
   ASM_REWRITE_TAC[] THEN EXISTS_TAC `state:hol_refs` THEN ASM_REWRITE_TAC[] THEN
   REWRITE_TAC[CKFAUX_oEL_APPEND1] THEN CONJ_TAC THENL
@@ -1807,15 +1807,15 @@ let CKFAUX_print_state_ok = prove
 let CKFAUX_evaluate_Let_val = prove
  (`evaluate (s:(FFI)state) env [e1] = (s1,Rval [x]) ==>
    evaluate s env [Let (SOME n) e1 e2] =
-   evaluate s1 (sem_env_v_fupd (K (nsBind n x (sem_env_v env))) env) [e2]`,
+   evaluate s1 (sem_env_v_fupd (combin_K (nsBind n x (sem_env_v env))) env) [e2]`,
   STRIP_TAC THEN GEN_REWRITE_TAC LAND_CONV [evaluate_def] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[nsOptBind_def; HD]);;
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[nsOptBind_def; HD]);;
 
 let CKFAUX_evaluate_Let_err = prove
  (`evaluate (s:(FFI)state) env [e1] = (s1,Rerr err) ==>
    evaluate s env [Let xo e1 e2] = (s1,Rerr err)`,
   STRIP_TAC THEN GEN_REWRITE_TAC LAND_CONV [evaluate_def] THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]);;
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]);;
 
 (* the evaluation of a Let with a bound name: its first expression, then the error or the body *)
 let CKFAUX_evaluate_Let_split = prove
@@ -1823,7 +1823,7 @@ let CKFAUX_evaluate_Let_split = prove
    ?s1 r1. evaluate s env [e1] = (s1,r1) /\
            ((?err. r1 = Rerr err) /\ s' = s1 /\ res = r1 \/
             (?x. r1 = Rval [x] /\
-                 evaluate s1 (sem_env_v_fupd (K (nsBind n x (sem_env_v env))) env) [e2] =
+                 evaluate s1 (sem_env_v_fupd (combin_K (nsBind n x (sem_env_v env))) env) [e2] =
                  (s',res)))`,
   DISCH_TAC THEN
   SUBGOAL_THEN `?s1 r1. evaluate (s:(FFI)state) env [e1] = (s1,r1)` STRIP_ASSUME_TAC THENL
@@ -2011,7 +2011,7 @@ let CKFAUX_inferred_Kernel_print_thm = prove
     check (fun th -> try fst(dest_const(fst(strip_comb(concl th)))) = "STRING_TYPE"
                      with _ -> false)) THEN
   SUBGOAL_THEN `oEL (LENGTH (state_refs (dec_clock (s:(FFI)state))))
-    (state_refs (state_refs_fupd (K (APPEND (state_refs (dec_clock s)) [W8array []]))
+    (state_refs (state_refs_fupd (combin_K (APPEND (state_refs (dec_clock s)) [W8array []]))
                    (dec_clock (dec_clock (s3:(FFI)state))))) = SOME (W8array [])` ASSUME_TAC THENL
    [REWRITE_TAC[state_INFO.ri_accfupds; K_THM; CKFAUX_oEL_APPEND1; LT_REFL]; ALL_TAC] THEN
   ckfaux_eval_eq_tac CKFAUX_evaluate_ffi THEN
@@ -2030,7 +2030,7 @@ let CKFAUX_inferred_Kernel_print_thm = prove
   DISCH_THEN(DISJ_CASES_THEN2
     (X_CHOOSE_THEN `t':(FFI)ffi_state` (X_CHOOSE_THEN `ws':byte list` ASSUME_TAC))
     (X_CHOOSE_THEN `outcome:final_event` ASSUME_TAC)) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN REWRITE_TAC[PAIR_EQ] THEN
   DISCH_THEN(CONJUNCTS_THEN (SUBST_ALL_TAC o SYM)) THENL
   [(* FFI_return: the same context, a new ok event *)
    DISJ2_TAC THEN EXISTS_TAC `ctxt:update list` THEN
@@ -2107,7 +2107,7 @@ let CKFAUX_THM_TYPE_Conv = prove
 
 let CKFAUX_do_opapp_Conv = prove
  (`!opt vs v. do_opapp [Conv opt vs; v] = NONE`,
-  REWRITE_TAC[do_opapp_def] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[do_opapp_def] THEN CAKE_REWRITE_TAC[]);;
 
 let inferred_ok = prove
  (mk_imp(`candle_inferred ctxt f /\ candle_state_ok ctxt (s:(FFI)state) /\
@@ -2136,12 +2136,12 @@ let CKFAUX_kernel_funs_twice = prove
   STRIP_TAC THEN FIRST_X_ASSUM(SUBST_ALL_TAC o check (is_var o lhs o concl)) THEN
   POP_ASSUM MP_TAC THEN
   REWRITE_TAC[kernel_funs_v_def] THEN
-  REWRITE_TAC[do_partial_app_def] THEN CASE_REWRITE_TAC[distinctness "option"] THEN
+  REWRITE_TAC[do_partial_app_def] THEN CAKE_REWRITE_TAC[distinctness "option"] THEN
   REWRITE_TAC[injectivity "option"] THEN DISCH_THEN(SUBST1_TAC o SYM) THEN
-  CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[]);;
 let CKFAUX_do_partial_app_Conv = prove
  (`!opt vs v. do_partial_app (Conv opt vs) v = NONE`,
-  REWRITE_TAC[do_partial_app_def] THEN CASE_REWRITE_TAC[]);;
+  REWRITE_TAC[do_partial_app_def] THEN CAKE_REWRITE_TAC[]);;
 
 let kernel_vals_twice_partial_app = prove
  (`!ctxt f. candle_kernel_vals ctxt f ==>
@@ -2459,4 +2459,4 @@ let kernel_vals_ok = prove
    (FIRST_X_ASSUM(MP_TAC o check (fun th -> try fst(dest_const(fst(strip_comb(lhs(concl th))))) =
                                      "do_partial_app" with _ -> false)) THEN
     REWRITE_TAC[kernel_funs_v_def] THEN REWRITE_TAC[do_partial_app_def] THEN
-    CASE_REWRITE_TAC[distinctness "option"])));;
+    CAKE_REWRITE_TAC[distinctness "option"])));;

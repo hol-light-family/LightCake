@@ -474,11 +474,11 @@ let flatten_ind = cake_ind "flatten";;
 
 let pan_set_var_def = cake_def
   `pan_set_var (v:varname) (value:(A)pan_v) (s:(A,FFI)pan_state) =
-     pan_state_locals_fupd (K (pan_state_locals s |+ (v,value))) s`;;
+     pan_state_locals_fupd (combin_K (pan_state_locals s |+ (v,value))) s`;;
 
 let pan_set_global_def = cake_def
   `pan_set_global (v:varname) (value:(A)pan_v) (s:(A,FFI)pan_state) =
-     pan_state_globals_fupd (K (pan_state_globals s |+ (v,value))) s`;;
+     pan_state_globals_fupd (combin_K (pan_state_globals s |+ (v,value))) s`;;
 
 let pan_set_kvar_def = cake_def
   `pan_set_kvar vk (v:varname) (value:(A)pan_v) (s:(A,FFI)pan_state) =
@@ -504,19 +504,19 @@ let _ = cake_add_simps [kvar_simps];;
 
 let pan_upd_locals_def = cake_def
   `pan_upd_locals varargs (s:(A,FFI)pan_state) =
-     pan_state_locals_fupd (K (FEMPTY |++ varargs)) s`;;
+     pan_state_locals_fupd (combin_K (FEMPTY |++ varargs)) s`;;
 
 let pan_empty_locals_def = cake_def
-  `pan_empty_locals (s:(A,FFI)pan_state) = pan_state_locals_fupd (K FEMPTY) s`;;
+  `pan_empty_locals (s:(A,FFI)pan_state) = pan_state_locals_fupd (combin_K FEMPTY) s`;;
 
 let pan_dec_clock_def = cake_def
   `pan_dec_clock (s:(A,FFI)pan_state) =
-     pan_state_clock_fupd (K (pan_state_clock s - 1)) s`;;
+     pan_state_clock_fupd (combin_K (pan_state_clock s - 1)) s`;;
 
 let pan_fix_clock_def = cake_def
   `pan_fix_clock (old_s:(A,FFI)pan_state) (res:B,new_s:(A,FFI)pan_state) =
      (res, pan_state_clock_fupd
-             (K (if pan_state_clock old_s < pan_state_clock new_s
+             (combin_K (if pan_state_clock old_s < pan_state_clock new_s
                  then pan_state_clock old_s else pan_state_clock new_s)) new_s)`;;
 
 let pan_fix_clock_IMP_LESS_EQ = prove
@@ -555,18 +555,18 @@ let is_valid_value_simps = prove
   SIMP[pan_is_valid_value_def; pan_lookup_kvar_def]);;
 
 let is_valid_value_simps2 = prove
- (`(pan_is_valid_value (pan_state_clock_fupd (K k) (s:(A,FFI)pan_state)) vk v vl =
+ (`(pan_is_valid_value (pan_state_clock_fupd (combin_K k) (s:(A,FFI)pan_state)) vk v vl =
       pan_is_valid_value s vk v vl) /\
-   (pan_is_valid_value (pan_state_ffi_fupd (K ffi) s) vk v vl =
+   (pan_is_valid_value (pan_state_ffi_fupd (combin_K ffi) s) vk v vl =
       pan_is_valid_value s vk v vl) /\
-   (pan_is_valid_value (pan_state_code_fupd (K cd) s) vk v vl =
+   (pan_is_valid_value (pan_state_code_fupd (combin_K cd) s) vk v vl =
       pan_is_valid_value s vk v vl) /\
-   (pan_is_valid_value (pan_state_memory_fupd (K m) s) vk v vl =
+   (pan_is_valid_value (pan_state_memory_fupd (combin_K m) s) vk v vl =
       pan_is_valid_value s vk v vl) /\
-   (pan_lookup_kvar vk v (pan_state_clock_fupd (K k) s) = pan_lookup_kvar vk v s) /\
-   (pan_lookup_kvar vk v (pan_state_ffi_fupd (K ffi) s) = pan_lookup_kvar vk v s) /\
-   (pan_lookup_kvar vk v (pan_state_code_fupd (K cd) s) = pan_lookup_kvar vk v s) /\
-   (pan_lookup_kvar vk v (pan_state_memory_fupd (K m) s) = pan_lookup_kvar vk v s)`,
+   (pan_lookup_kvar vk v (pan_state_clock_fupd (combin_K k) s) = pan_lookup_kvar vk v s) /\
+   (pan_lookup_kvar vk v (pan_state_ffi_fupd (combin_K ffi) s) = pan_lookup_kvar vk v s) /\
+   (pan_lookup_kvar vk v (pan_state_code_fupd (combin_K cd) s) = pan_lookup_kvar vk v s) /\
+   (pan_lookup_kvar vk v (pan_state_memory_fupd (combin_K m) s) = pan_lookup_kvar vk v s)`,
   SIMP[pan_is_valid_value_def; pan_lookup_kvar_def]);;
 
 let _ = cake_add_simps [is_valid_value_simps2];;
@@ -590,7 +590,7 @@ let pan_sh_mem_load_def = cake_def
              FFI_final outcome ->
                (SOME (pan_FinalFFI outcome:(B)pan_result), pan_empty_locals s)
            | FFI_return new_ffi new_bytes ->
-               (NONE, pan_state_ffi_fupd (K new_ffi)
+               (NONE, pan_state_ffi_fupd (combin_K new_ffi)
                         (pan_set_kvar vk v
                            (pan_Val (Word (word_of_bytes F (word 0) new_bytes))) s)))
         else (SOME pan_Error, s))
@@ -600,7 +600,7 @@ let pan_sh_mem_load_def = cake_def
                           (word_to_bytes addr F) with
              FFI_final outcome -> (SOME (pan_FinalFFI outcome), pan_empty_locals s)
            | FFI_return new_ffi new_bytes ->
-               (NONE, pan_state_ffi_fupd (K new_ffi)
+               (NONE, pan_state_ffi_fupd (combin_K new_ffi)
                         (pan_set_kvar vk v
                            (pan_Val (Word (word_of_bytes F (word 0) new_bytes))) s)))
         else (SOME pan_Error, s))`;;
@@ -612,7 +612,7 @@ let pan_sh_mem_store_def = cake_def
           (match call_FFI (pan_state_ffi s) (SharedMem MappedWrite) [word nb]
                           (APPEND (word_to_bytes w F) (word_to_bytes addr F)) with
              FFI_final outcome -> (SOME (pan_FinalFFI outcome:(B)pan_result), s)
-           | FFI_return new_ffi new_bytes -> (NONE, pan_state_ffi_fupd (K new_ffi) s))
+           | FFI_return new_ffi new_bytes -> (NONE, pan_state_ffi_fupd (combin_K new_ffi) s))
         else (SOME pan_Error, s))
      else
        (if byte_align addr IN pan_state_sh_memaddrs s then
@@ -620,7 +620,7 @@ let pan_sh_mem_store_def = cake_def
                           (APPEND (TAKE nb (word_to_bytes w F))
                                   (word_to_bytes addr F)) with
              FFI_final outcome -> (SOME (pan_FinalFFI outcome), s)
-           | FFI_return new_ffi new_bytes -> (NONE, pan_state_ffi_fupd (K new_ffi) s))
+           | FFI_return new_ffi new_bytes -> (NONE, pan_state_ffi_fupd (combin_K new_ffi) s))
         else (SOME pan_Error, s))`;;
 
 let nb_op_def = cake_def
@@ -676,9 +676,9 @@ let PSEMAUX_evaluate_clauses = list_mk_conj
           if sh = shape_of value then
             let (res,st) =
               pan_evaluate (prog, pan_state_locals_fupd
-                                    (K (pan_state_locals s |+ (v,value))) s) in
+                                    (combin_K (pan_state_locals s |+ (v,value))) s) in
             (res, pan_state_locals_fupd
-                    (K (pan_res_var (pan_state_locals st)
+                    (combin_K (pan_res_var (pan_state_locals st)
                           (v, FLOOKUP (pan_state_locals s) v))) st)
           else (SOME pan_Error, s)
       | NONE -> (SOME pan_Error, s)) /\
@@ -704,7 +704,7 @@ let PSEMAUX_evaluate_clauses = list_mk_conj
         (SOME (pan_Val (Word addr)), SOME value) ->
           (match mem_stores addr (flatten value) (pan_state_memaddrs s)
                    (pan_state_memory s) with
-             SOME m -> (NONE, pan_state_memory_fupd (K m) s)
+             SOME m -> (NONE, pan_state_memory_fupd (combin_K m) s)
            | NONE -> (SOME pan_Error, s))
       | _ -> (SOME pan_Error, s)) /\
    (pan_evaluate (panLang_Store32 dst src, s) =
@@ -712,7 +712,7 @@ let PSEMAUX_evaluate_clauses = list_mk_conj
         (SOME (pan_Val (Word adr)), SOME (pan_Val (Word w))) ->
           (match pan_mem_store_32 (pan_state_memory s) (pan_state_memaddrs s)
                    (pan_state_be s) adr (word_zx w) with
-             SOME m -> (NONE, pan_state_memory_fupd (K m) s)
+             SOME m -> (NONE, pan_state_memory_fupd (combin_K m) s)
            | NONE -> (SOME pan_Error, s))
       | _ -> (SOME pan_Error, s)) /\
    (pan_evaluate (StoreByte dst src, s) =
@@ -720,7 +720,7 @@ let PSEMAUX_evaluate_clauses = list_mk_conj
         (SOME (pan_Val (Word adr)), SOME (pan_Val (Word w))) ->
           (match pan_mem_store_byte (pan_state_memory s) (pan_state_memaddrs s)
                    (pan_state_be s) adr (word_zx w) with
-             SOME m -> (NONE, pan_state_memory_fupd (K m) s)
+             SOME m -> (NONE, pan_state_memory_fupd (combin_K m) s)
            | NONE -> (SOME pan_Error, s))
       | _ -> (SOME pan_Error, s)) /\
    (pan_evaluate (ShMemLoad op vk v ad, s) =
@@ -788,8 +788,8 @@ let PSEMAUX_evaluate_clauses = list_mk_conj
               if pan_state_clock s = 0 then (SOME pan_TimeOut, pan_empty_locals s)
               else
               let eval_prog =
-                pan_fix_clock (pan_state_locals_fupd (K newlocals) (pan_dec_clock s))
-                  (pan_evaluate (prog, pan_state_locals_fupd (K newlocals)
+                pan_fix_clock (pan_state_locals_fupd (combin_K newlocals) (pan_dec_clock s))
+                  (pan_evaluate (prog, pan_state_locals_fupd (combin_K newlocals)
                                          (pan_dec_clock s))) in
               (match eval_prog with
                  (NONE,st) -> (SOME pan_Error, st)
@@ -800,12 +800,12 @@ let PSEMAUX_evaluate_clauses = list_mk_conj
                     (match caltyp with
                        NONE -> (SOME (pan_Return retv), pan_empty_locals st)
                      | SOME (NONE, _) ->
-                         (NONE, pan_state_locals_fupd (K (pan_state_locals s)) st)
+                         (NONE, pan_state_locals_fupd (combin_K (pan_state_locals s)) st)
                      | SOME (SOME (rk, rt), _) ->
                          if pan_is_valid_value s rk rt retv
                          then (NONE, pan_set_kvar rk rt retv
                                        (pan_state_locals_fupd
-                                          (K (pan_state_locals s)) st))
+                                          (combin_K (pan_state_locals s)) st))
                          else (SOME pan_Error, st)))
                | (SOME (pan_Exception eid exn),st) ->
                    (match caltyp with
@@ -820,7 +820,7 @@ let PSEMAUX_evaluate_clauses = list_mk_conj
                                   pan_is_valid_value s panLang_Local evar exn then
                                  pan_evaluate (p, pan_set_var evar exn
                                                     (pan_state_locals_fupd
-                                                       (K (pan_state_locals s)) st))
+                                                       (combin_K (pan_state_locals s)) st))
                                else (SOME pan_Error, st)
                            | NONE -> (SOME pan_Error, st))
                         else (SOME (pan_Exception eid exn), pan_empty_locals st))
@@ -836,8 +836,8 @@ let PSEMAUX_evaluate_clauses = list_mk_conj
                (if pan_state_clock s = 0 then (SOME pan_TimeOut, pan_empty_locals s)
                 else
                 let eval_prog =
-                  pan_fix_clock (pan_state_locals_fupd (K newlocals) (pan_dec_clock s))
-                    (pan_evaluate (prog, pan_state_locals_fupd (K newlocals)
+                  pan_fix_clock (pan_state_locals_fupd (combin_K newlocals) (pan_dec_clock s))
+                    (pan_evaluate (prog, pan_state_locals_fupd (combin_K newlocals)
                                            (pan_dec_clock s))) in
                 (match eval_prog with
                    (NONE,st) -> (SOME pan_Error, st)
@@ -848,9 +848,9 @@ let PSEMAUX_evaluate_clauses = list_mk_conj
                         let (res',st') =
                           pan_evaluate (prog1, pan_set_var rt retv
                                                  (pan_state_locals_fupd
-                                                    (K (pan_state_locals s)) st)) in
+                                                    (combin_K (pan_state_locals s)) st)) in
                         (res', pan_state_locals_fupd
-                                 (K (pan_res_var (pan_state_locals st')
+                                 (combin_K (pan_res_var (pan_state_locals st')
                                        (rt, FLOOKUP (pan_state_locals s) rt))) st')
                       else (SOME pan_Error, st))
                  | (res,st) -> (res, pan_empty_locals st)))
@@ -873,8 +873,8 @@ let PSEMAUX_evaluate_clauses = list_mk_conj
                 | FFI_return new_ffi new_bytes ->
                     let nmem = pan_write_bytearray sz2 new_bytes (pan_state_memory s)
                                  (pan_state_memaddrs s) (pan_state_be s) in
-                    (NONE, pan_state_memory_fupd (K nmem)
-                             (pan_state_ffi_fupd (K new_ffi) s)))
+                    (NONE, pan_state_memory_fupd (combin_K nmem)
+                             (pan_state_ffi_fupd (combin_K new_ffi) s)))
            | _ -> (SOME pan_Error, s))
       | res -> (SOME pan_Error, s))`];;
 
@@ -935,7 +935,7 @@ let () = cake_ind_store := ("pan_evaluate",pan_evaluate_ind) :: !cake_ind_store;
 let pan_semantics_def = cake_def
   `pan_semantics (s:(A,FFI)pan_state) start =
      let prog = panLang_Call NONE start [] in
-     if ?k. match FST (pan_evaluate (prog, pan_state_clock_fupd (K k) s)) with
+     if ?k. match FST (pan_evaluate (prog, pan_state_clock_fupd (combin_K k) s)) with
               SOME pan_TimeOut -> F
             | SOME (pan_FinalFFI _) -> F
             | SOME (pan_Return _) -> F
@@ -944,7 +944,7 @@ let pan_semantics_def = cake_def
      else
        match (some res.
                 ?k t r outcome.
-                  pan_evaluate (prog, pan_state_clock_fupd (K k) s) = (r,t) /\
+                  pan_evaluate (prog, pan_state_clock_fupd (combin_K k) s) = (r,t) /\
                   (match r with
                      SOME (pan_FinalFFI e) -> outcome = FFI_outcome e
                    | SOME (pan_Return _) -> outcome = Success
@@ -958,7 +958,7 @@ let pan_semantics_def = cake_def
                               (ffi_state_io_events
                                  (pan_state_ffi
                                     (SND (pan_evaluate
-                                            (prog, pan_state_clock_fupd (K k) s))))))
+                                            (prog, pan_state_clock_fupd (combin_K k) s))))))
                        (:num)))`;;
 
 (* ------------------------------------------------------------------------- *)
@@ -969,11 +969,11 @@ let evaluate_decls_def = cake_def
   `(evaluate_decls (s:(A,FFI)pan_state) [] = SOME s) /\
    (evaluate_decls s (CONS (Name nm flds) ds) = evaluate_decls s ds) /\
    (evaluate_decls s (CONS (Decl sh v e) ds) =
-      match pan_eval (pan_state_locals_fupd (K FEMPTY) s) e with
+      match pan_eval (pan_state_locals_fupd (combin_K FEMPTY) s) e with
         SOME res ->
           (if sh = shape_of res then
              evaluate_decls
-               (pan_state_globals_fupd (K (pan_state_globals s |+ (v,res))) s) ds
+               (pan_state_globals_fupd (combin_K (pan_state_globals s |+ (v,res))) s) ds
            else NONE)
       | NONE -> NONE) /\
    (evaluate_decls s (CONS (Function fi) ds) =
@@ -981,7 +981,7 @@ let evaluate_decls_def = cake_def
          is_wf_shape (pan_state_structs s) (fun_decl_return fi) then
         evaluate_decls
           (pan_state_code_fupd
-             (K (pan_state_code s |+
+             (combin_K (pan_state_code s |+
                    (fun_decl_name fi,
                     (fun_decl_params fi,(fun_decl_body fi,fun_decl_return fi))))) s)
           ds
@@ -989,7 +989,7 @@ let evaluate_decls_def = cake_def
    (evaluate_decls s (CONS (ExnDecl eid sh) ds) =
       if FLOOKUP (pan_state_eshapes s) eid = NONE /\
          is_wf_shape (pan_state_structs s) sh then
-        evaluate_decls (pan_state_eshapes_fupd (K (pan_state_eshapes s |+ (eid,sh))) s)
+        evaluate_decls (pan_state_eshapes_fupd (combin_K (pan_state_eshapes s |+ (eid,sh))) s)
           ds
       else NONE)`;;
 
@@ -1020,6 +1020,6 @@ let semantics_decls_def = cake_def
      match decs_stcnames [] decls with
        NONE -> Fail
      | SOME st_ctxt ->
-         match evaluate_decls (pan_state_structs_fupd (K st_ctxt) s) decls with
+         match evaluate_decls (pan_state_structs_fupd (combin_K st_ctxt) s) decls with
            NONE -> Fail
          | SOME s' -> pan_semantics s' start`;;

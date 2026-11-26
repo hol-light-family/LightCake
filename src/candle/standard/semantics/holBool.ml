@@ -40,24 +40,24 @@ let CBOOLAUX_TYVARS_THMS =
 let bool_sig_instances = prove
  (`is_bool_sig sig ==>
    instance (SND sig) (i:(mlstring->U list->U)#(mlstring->U list->U)) (implode "T")
-     (Tyapp (implode "bool") []) = K (SND i (implode "T") []) /\
+     (Tyapp (implode "bool") []) = combin_K (SND i (implode "T") []) /\
    instance (SND sig) i (implode "F")
-     (Tyapp (implode "bool") []) = K (SND i (implode "F") []) /\
+     (Tyapp (implode "bool") []) = combin_K (SND i (implode "F") []) /\
    instance (SND sig) i (implode "==>")
      (Tyapp (implode "fun") [Tyapp (implode "bool") [];
         Tyapp (implode "fun") [Tyapp (implode "bool") []; Tyapp (implode "bool") []]]) =
-     K (SND i (implode "==>") []) /\
+     combin_K (SND i (implode "==>") []) /\
    instance (SND sig) i (implode "/\\")
      (Tyapp (implode "fun") [Tyapp (implode "bool") [];
         Tyapp (implode "fun") [Tyapp (implode "bool") []; Tyapp (implode "bool") []]]) =
-     K (SND i (implode "/\\") []) /\
+     combin_K (SND i (implode "/\\") []) /\
    instance (SND sig) i (implode "\\/")
      (Tyapp (implode "fun") [Tyapp (implode "bool") [];
         Tyapp (implode "fun") [Tyapp (implode "bool") []; Tyapp (implode "bool") []]]) =
-     K (SND i (implode "\\/") []) /\
+     combin_K (SND i (implode "\\/") []) /\
    instance (SND sig) i (implode "~")
      (Tyapp (implode "fun") [Tyapp (implode "bool") []; Tyapp (implode "bool") []]) =
-     K (SND i (implode "~") []) /\
+     combin_K (SND i (implode "~") []) /\
    instance (SND sig) i (implode "!")
      (Tyapp (implode "fun")
         [Tyapp (implode "fun") [Tyvar (implode "A"); Tyapp (implode "bool") []];
@@ -81,17 +81,17 @@ let holBool_Boolrel0_def = cake_def
 (* HOL4: Definition is_true_interpretation_def *)
 let is_true_interpretation0_def = cake_def
   `is_true_interpretation0 (mem:U->U->bool) (gamma:mlstring->U list->U) <=>
-     interprets0 mem gamma (implode "T") [] (K (setSpec_true mem))`;;
+     interprets0 mem gamma (implode "T") [] (combin_K (setSpec_true mem))`;;
 
 (* HOL4: Definition is_and_interpretation_def *)
 let is_and_interpretation0_def = cake_def
   `is_and_interpretation0 (mem:U->U->bool) (gamma:mlstring->U list->U) <=>
-     interprets0 mem gamma (implode "/\\") [] (K (Boolrel0 mem (/\)))`;;
+     interprets0 mem gamma (implode "/\\") [] (combin_K (Boolrel0 mem (/\)))`;;
 
 (* HOL4: Definition is_implies_interpretation_def *)
 let is_implies_interpretation0_def = cake_def
   `is_implies_interpretation0 (mem:U->U->bool) (gamma:mlstring->U list->U) <=>
-     interprets0 mem gamma (implode "==>") [] (K (Boolrel0 mem (==>)))`;;
+     interprets0 mem gamma (implode "==>") [] (combin_K (Boolrel0 mem (==>)))`;;
 
 (* HOL4: Definition is_forall_interpretation_def *)
 let is_forall_interpretation0_def = cake_def
@@ -110,18 +110,18 @@ let is_exists_interpretation0_def = cake_def
 (* HOL4: Definition is_or_interpretation_def *)
 let is_or_interpretation0_def = cake_def
   `is_or_interpretation0 (mem:U->U->bool) (gamma:mlstring->U list->U) <=>
-     interprets0 mem gamma (implode "\\/") [] (K (Boolrel0 mem (\/)))`;;
+     interprets0 mem gamma (implode "\\/") [] (combin_K (Boolrel0 mem (\/)))`;;
 
 (* HOL4: Definition is_false_interpretation_def *)
 let is_false_interpretation0_def = cake_def
   `is_false_interpretation0 (mem:U->U->bool) (gamma:mlstring->U list->U) <=>
-     interprets0 mem gamma (implode "F") [] (K (setSpec_false mem))`;;
+     interprets0 mem gamma (implode "F") [] (combin_K (setSpec_false mem))`;;
 
 (* HOL4: Definition is_not_interpretation_def *)
 let is_not_interpretation0_def = cake_def
   `is_not_interpretation0 (mem:U->U->bool) (gamma:mlstring->U list->U) <=>
      interprets0 mem gamma (implode "~") []
-       (K (abstract mem (setSpec_two mem) (setSpec_two mem)
+       (combin_K (abstract mem (setSpec_two mem) (setSpec_two mem)
              (\p. boolean mem (~(p = setSpec_true mem)))))`;;
 
 (* HOL4: val ints (an ML list) *)
@@ -677,7 +677,7 @@ let CBOOLAUX_VALUE_TAC name c intdef : tactic =
   SUBGOAL_THEN (mk_eq(mk_comb(mk_comb(`SND (i:(mlstring->U list->U)#(mlstring->U list->U))`,
                   name), `[]:U list`), c)) ASSUME_TAC THENL
    [MP_TAC(ISPECL [`mem:U->U->bool`; `SND (i:(mlstring->U list->U)#(mlstring->U list->U))`;
-                   name; mk_comb(mk_const("K",[`:U`,`:A`; `:U list`,`:B`]), c)]
+                   name; mk_comb(mk_const("combin_K",[`:U`,`:A`; `:U list`,`:B`]), c)]
       CBOOLAUX_interp_nil_value) THEN
     ASM_REWRITE_TAC[GSYM intdef; K_THM];
     ALL_TAC];;
@@ -690,7 +690,7 @@ let CBOOLAUX_true_interp = prove
      (hol_Const (implode "T") (Tyapp (implode "bool") []) === TrueDef) IN SND thy
      ==> is_true_interpretation0 mem (SND i)`,
   CBOOLAUX_CONN_START_TAC `implode "T"` `Tyapp (implode "bool") []`
-    `TrueDef` `K (setSpec_true (mem:U->U->bool)):U list->U`
+    `TrueDef` `combin_K (setSpec_true (mem:U->U->bool)):U list->U`
     is_true_sig_def is_true_interpretation0_def THEN
   REWRITE_TAC[TrueDef_def] THEN CBOOLAUX_VAL_OK_TAC THEN
   ASM_SIMP_TAC[CBOOLAUX_termsem_equation; CBOOLAUX_structure] THEN
@@ -708,7 +708,7 @@ let CBOOLAUX_and_interp = prove
   CBOOLAUX_CONN_START_TAC `implode "/\\"`
     `Tyapp (implode "fun") [Tyapp (implode "bool") [];
        Tyapp (implode "fun") [Tyapp (implode "bool") []; Tyapp (implode "bool") []]]`
-    `AndDef` `K (Boolrel0 (mem:U->U->bool) (/\)):U list->U`
+    `AndDef` `combin_K (Boolrel0 (mem:U->U->bool) (/\)):U list->U`
     is_and_sig_def is_and_interpretation0_def THEN
   CBOOLAUX_VALUE_TAC `implode "T"` `setSpec_true (mem:U->U->bool)`
     is_true_interpretation0_def THEN
@@ -737,7 +737,7 @@ let CBOOLAUX_implies_interp = prove
   CBOOLAUX_CONN_START_TAC `implode "==>"`
     `Tyapp (implode "fun") [Tyapp (implode "bool") [];
        Tyapp (implode "fun") [Tyapp (implode "bool") []; Tyapp (implode "bool") []]]`
-    `ImpliesDef` `K (Boolrel0 (mem:U->U->bool) (==>)):U list->U`
+    `ImpliesDef` `combin_K (Boolrel0 (mem:U->U->bool) (==>)):U list->U`
     is_implies_sig_def is_implies_interpretation0_def THEN
   REWRITE_TAC[ImpliesDef_def; holBool_Boolrel0_def] THEN
   ASM_REWRITE_TAC CBOOLAUX_EVAL_SEM_THMS THEN
@@ -818,7 +818,7 @@ let CBOOLAUX_or_interp = prove
   CBOOLAUX_CONN_START_TAC `implode "\\/"`
     `Tyapp (implode "fun") [Tyapp (implode "bool") [];
        Tyapp (implode "fun") [Tyapp (implode "bool") []; Tyapp (implode "bool") []]]`
-    `OrDef` `K (Boolrel0 (mem:U->U->bool) (\/)):U list->U`
+    `OrDef` `combin_K (Boolrel0 (mem:U->U->bool) (\/)):U list->U`
     is_or_sig_def is_or_interpretation0_def THEN
   REWRITE_TAC[OrDef_def; holBool_Boolrel0_def] THEN ONCE_REWRITE_TAC[termsem0_def] THEN
   ASM_REWRITE_TAC [typesem_def; MAP; typeof_def; codomain_def; HD] THEN
@@ -841,7 +841,7 @@ let CBOOLAUX_false_interp = prove
      (hol_Const (implode "F") (Tyapp (implode "bool") []) === FalseDef) IN SND thy
      ==> is_false_interpretation0 mem (SND i)`,
   CBOOLAUX_CONN_START_TAC `implode "F"` `Tyapp (implode "bool") []`
-    `FalseDef` `K (setSpec_false (mem:U->U->bool)):U list->U`
+    `FalseDef` `combin_K (setSpec_false (mem:U->U->bool)):U list->U`
     is_false_sig_def is_false_interpretation0_def THEN
   REWRITE_TAC[FalseDef_def] THEN
   CBOOLAUX_SEM_SIMP_TAC [CBOOLAUX_is_valuation_update2; typesem_def; MAP] THEN
@@ -860,7 +860,7 @@ let CBOOLAUX_not_interp = prove
   CBOOLAUX_CONN_START_TAC `implode "~"`
     `Tyapp (implode "fun") [Tyapp (implode "bool") []; Tyapp (implode "bool") []]`
     `NotDef`
-    `K (abstract (mem:U->U->bool) (setSpec_two mem) (setSpec_two mem)
+    `combin_K (abstract (mem:U->U->bool) (setSpec_two mem) (setSpec_two mem)
           (\p. boolean mem (~(p = setSpec_true mem)))):U list->U`
     is_not_sig_def is_not_interpretation0_def THEN
   CBOOLAUX_VALUE_TAC `implode "F"` `setSpec_false (mem:U->U->bool)`

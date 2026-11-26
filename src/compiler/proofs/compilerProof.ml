@@ -97,8 +97,8 @@ let initial_condition_def = cake_def
 let CPPAUX_peg_eval_complete = prove
  (`!(s:(token#locs)list) pt r.
      peg_eval cmlPEG (s,peg_nt (INL nTopLevelDecs) I) r /\
-     valid_lptree cmlG pt /\ ptree_head pt = NT (INL nTopLevelDecs) /\
-     real_fringe pt = MAP (TOK ## I) s
+     valid_lptree cmlG pt /\ ptree_head pt = grammar_NT (INL nTopLevelDecs) /\
+     real_fringe pt = MAP (grammar_TOK ## I) s
      ==> ?eo. r = peg_Success [] [pt] eo`,
   REPEAT STRIP_TAC THEN
   MP_TAC(SPECL [`pt:mlptree`; `nTopLevelDecs`; `s:(token#locs)list`;
@@ -113,8 +113,8 @@ let CPPAUX_peg_eval_sound = prove
  (`!(s:(token#locs)list) pts eo.
      peg_eval cmlPEG (s,peg_nt (INL nTopLevelDecs) I) (peg_Success [] pts eo)
      ==> ?pt. pts = [pt] /\ valid_lptree cmlG pt /\
-              ptree_head pt = NT (INL nTopLevelDecs) /\
-              real_fringe pt = MAP (TOK ## I) s`,
+              ptree_head pt = grammar_NT (INL nTopLevelDecs) /\
+              real_fringe pt = MAP (grammar_TOK ## I) s`,
   REPEAT STRIP_TAC THEN
   FIRST_ASSUM(MP_TAC o MATCH_MP peg_sound) THEN
   REWRITE_TAC[MAP; APPEND_NIL] THEN MESON_TAC[]);;
@@ -156,13 +156,13 @@ let CPPAUX_parse_prog_correct0 = prove
   FIRST_ASSUM(fun th -> REWRITE_TAC[MATCH_MP CPPAUX_parse_prog_exec th]) THEN
   REWRITE_TAC[parse_def] THEN
   ASM_CASES_TAC
-   `?pt. valid_lptree cmlG pt /\ ptree_head pt = NT (INL nTopLevelDecs) /\
-         real_fringe pt = MAP (TOK ## I) (s:(token#locs)list)` THENL
+   `?pt. valid_lptree cmlG pt /\ ptree_head pt = grammar_NT (INL nTopLevelDecs) /\
+         real_fringe pt = MAP (grammar_TOK ## I) (s:(token#locs)list)` THENL
    [(* a parse tree exists: it is the unique one, found by the PEG *)
     FIRST_X_ASSUM(X_CHOOSE_THEN `pt:mlptree` STRIP_ASSUME_TAC) THEN
     SUBGOAL_THEN
-     `!pt2. valid_lptree cmlG pt2 /\ ptree_head pt2 = NT (INL nTopLevelDecs) /\
-            real_fringe pt2 = MAP (TOK ## I) (s:(token#locs)list) <=> pt2 = pt`
+     `!pt2. valid_lptree cmlG pt2 /\ ptree_head pt2 = grammar_NT (INL nTopLevelDecs) /\
+            real_fringe pt2 = MAP (grammar_TOK ## I) (s:(token#locs)list) <=> pt2 = pt`
      (fun th -> REWRITE_TAC[th; some_EQ]) THENL
      [GEN_TAC THEN EQ_TAC THENL
        [STRIP_TAC THEN
@@ -180,22 +180,22 @@ let CPPAUX_parse_prog_correct0 = prove
       `r:((token#locs)list,(mlptree)list,string)pegresult`]
       CPPAUX_peg_eval_complete) THEN
     ASM_REWRITE_TAC[] THEN STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
-    CASE_REWRITE_TAC[destResult_def; oHD_DEF; optlift_def] THEN
-    CASES_ON `ptree_TopLevelDecs pt` THEN CASE_REWRITE_TAC[optlift_def] THEN
+    CAKE_REWRITE_TAC[destResult_def; oHD_DEF; optlift_def] THEN
+    CASES_ON `ptree_TopLevelDecs pt` THEN CAKE_REWRITE_TAC[optlift_def] THEN
     REWRITE_TAC[pegresult_distinct; pegresult_inject] THEN MESON_TAC[];
     (* no parse tree: parse_prog cannot succeed *)
-    ASM_REWRITE_TAC[some_DEF] THEN CASE_REWRITE_TAC[] THEN
+    ASM_REWRITE_TAC[some_DEF] THEN CAKE_REWRITE_TAC[] THEN
     REWRITE_TAC[TAUT `(p ==> T) <=> T`; option_DISTINCT] THEN
     CASES_ON `r:((token#locs)list,(mlptree)list,string)pegresult` THEN
-    CASE_REWRITE_TAC[destResult_def; pegresult_distinct] THEN
+    CAKE_REWRITE_TAC[destResult_def; pegresult_distinct] THEN
     CASES_ON `a0:(token#locs)list` THENL
-     [CASE_REWRITE_TAC[destResult_def] THEN
+     [CAKE_REWRITE_TAC[destResult_def] THEN
       FIRST_ASSUM(MP_TAC o MATCH_MP CPPAUX_peg_eval_sound) THEN
       DISCH_THEN(X_CHOOSE_THEN `pt:mlptree` STRIP_ASSUME_TAC) THEN
       ASM_MESON_TAC[];
       MP_TAC(ISPEC `a0':token#locs` PAIR_SURJECTIVE) THEN
       DISCH_THEN(X_CHOOSE_THEN `t0:token` (X_CHOOSE_THEN `l0:locs` SUBST_ALL_TAC)) THEN
-      CASE_REWRITE_TAC[destResult_def; pegresult_distinct]]]);;
+      CAKE_REWRITE_TAC[destResult_def; pegresult_distinct]]]);;
 
 (* HOL4 line 49 *)
 let parse_prog_correct = prove
@@ -223,7 +223,7 @@ let infertype_prog_correct = prove
   DISCH_THEN(X_CHOOSE_THEN `res:(inf_env,locs option#mlstring)exc`
     (X_CHOOSE_TAC `st2:infer_st`)) THEN
   ASM_REWRITE_TAC[FST] THEN
-  CASES_ON `res:(inf_env,locs option#mlstring)exc` THEN CASE_REWRITE_TAC[] THENL
+  CASES_ON `res:(inf_env,locs option#mlstring)exc` THEN CAKE_REWRITE_TAC[] THENL
    [(* inference succeeds: the program has a type (soundness) *)
     SUBGOAL_THEN `can_type_prog (st:(FFI)semantics_state) p` (fun th -> REWRITE_TAC[th])
     THENL [ALL_TAC; MESON_TAC[]] THEN
@@ -299,7 +299,7 @@ let compile_correct_gen = prove
   REWRITE_TAC[compiler_compile_def; compilerProof_read_limits_def;
               compilerProof_is_safe_for_space_def] THEN
   CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN ASM_REWRITE_TAC[parse_cml_input_def] THEN
-  CASES_ON `parse_prog (lexer_fun input)` THEN CASE_REWRITE_TAC[] THENL
+  CASES_ON `parse_prog (lexer_fun input)` THEN CAKE_REWRITE_TAC[] THENL
    [(* the parser succeeds *)
     SUBGOAL_THEN `parse (lexer_fun input) = SOME (a1:dec list)` ASSUME_TAC THENL
      [ASM_MESON_TAC[parse_prog_correct]; ALL_TAC] THEN
@@ -310,28 +310,28 @@ let compile_correct_gen = prove
     DISCH_THEN(X_CHOOSE_THEN `ic:inf_env` (X_CHOOSE_THEN `err:locs option#mlstring`
       SUBST1_TAC)) THEN
     ASM_CASES_TAC `can_type_prog (st:(FFI)semantics_state) (APPEND prelude a1)` THEN
-    ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THENL
+    ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THENL
      [(* the program has a type: the backend *)
       MP_TAC(ISPEC `compile_tap (compiler_config_asm_config (cc:(A)compiler_config))
                       (compiler_config_backend_config cc) (APPEND prelude a1)`
         PAIR_SURJECTIVE) THEN
       DISCH_THEN(X_CHOOSE_THEN `res:(((8)word)list#((A)word)list#backend_config)option`
         (X_CHOOSE_THEN `td:(mlstring)app_list` ASSUME_TAC)) THEN
-      ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+      ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
       CASES_ON `res:(((8)word)list#((A)word)list#backend_config)option` THEN
-      CASE_REWRITE_TAC[] THEN
+      CAKE_REWRITE_TAC[] THEN
       MP_TAC(ISPEC `a:((8)word)list#((A)word)list#backend_config` PAIR_SURJECTIVE) THEN
       DISCH_THEN(X_CHOOSE_THEN `bytes:((8)word)list`
         (X_CHOOSE_THEN `y:((A)word)list#backend_config` SUBST_ALL_TAC)) THEN
       MP_TAC(ISPEC `y:((A)word)list#backend_config` PAIR_SURJECTIVE) THEN
       DISCH_THEN(X_CHOOSE_THEN `data:((A)word)list` (X_CHOOSE_THEN `c:backend_config`
         SUBST_ALL_TAC)) THEN
-      CASE_REWRITE_TAC[] THEN
+      CAKE_REWRITE_TAC[] THEN
       MAP_EVERY EXISTS_TAC
        [`semantics_prog (semantics_state_sem_st (st:(FFI)semantics_state))
            (semantics_state_sem_env st) (APPEND prelude a1)`; `a1:dec list`] THEN
       CONJ_TAC THENL
-       [ASM_REWRITE_TAC[semantics_def] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[];
+       [ASM_REWRITE_TAC[semantics_def] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[];
         ALL_TAC] THEN
       REWRITE_TAC[] THEN X_GEN_TAC `ms:B` THEN DISCH_TAC THEN
       FIRST_ASSUM(ASSUME_TAC o MATCH_MP compile_tap_compile) THEN
@@ -360,19 +360,19 @@ let compile_correct_gen = prove
       ASM_REWRITE_TAC[] THEN
       REWRITE_TAC[SYM(ASSUME `semantics_state_sem_st st,semantics_state_sem_env st =
         THE (prim_sem_env (state_ffi (semantics_state_sem_st (st:(FFI)semantics_state))))`)] THEN
-      CASE_REWRITE_TAC[] THEN
+      CAKE_REWRITE_TAC[] THEN
       CONV_TAC(TOP_DEPTH_CONV let_CONV) THEN
       ASM_REWRITE_TAC[add_eval_state_def; opt_eval_config_wf_def];
       (* the program has no type *)
       MP_TAC(ISPEC `err:locs option#mlstring` PAIR_SURJECTIVE) THEN
       DISCH_THEN(X_CHOOSE_THEN `locs:locs option` (X_CHOOSE_THEN `msg:mlstring`
         SUBST1_TAC)) THEN
-      CASE_REWRITE_TAC[] THEN
-      ASM_REWRITE_TAC[semantics_def] THEN CASE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]];
+      CAKE_REWRITE_TAC[] THEN
+      ASM_REWRITE_TAC[semantics_def] THEN CAKE_REWRITE_TAC[] THEN ASM_REWRITE_TAC[]];
     (* the parser fails *)
     SUBGOAL_THEN `parse (lexer_fun input) = NONE` ASSUME_TAC THENL
      [ASM_MESON_TAC[parse_prog_correct]; ALL_TAC] THEN
-    ASM_REWRITE_TAC[semantics_def] THEN CASE_REWRITE_TAC[]]);;
+    ASM_REWRITE_TAC[semantics_def] THEN CAKE_REWRITE_TAC[]]);;
 
 (* HOL4 compile_correct_lemma: EVAL of prim_type_ids = count start_type_id *)
 let CPPAUX_prim_type_ids_count = prove
@@ -392,7 +392,7 @@ let CPPAUX_set_tids_tenv_prim_tenv = prove
   REWRITE_TAC[set_tids_tenv_def; prim_tenv_def; type_env_INFO.ri_accessors;
               nsAll_nsEmpty] THEN
   CONJ_TAC THEN MATCH_MP_TAC nsAll_alist_to_ns THEN
-  REWRITE_TAC[REVERSE; APPEND; ALL] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[REVERSE; APPEND; ALL] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC([ALL; set_tids_subset_def; set_tids_def; typeSystem_Tlist_def; MAP;
                set_of_list; UNIONS_INSERT; UNIONS_0; UNION_EMPTY; INSERT_SUBSET;
                EMPTY_SUBSET; IN_COUNT; start_type_id_def] @ TPROPSAUX_type_num_defs) THEN
@@ -471,7 +471,7 @@ let compile_correct_safe_for_space = prove
   MP_TAC(SPECL [`ffi:(FFI)ffi_state`; `prelude:dec list`; `input:string`;
                 `cc:(A)compiler_config`; `mc:(A,B,C)machine_config`; `data_sp:num`;
                 `cbspace:num`] compilerProof_compile_correct_lemma) THEN
-  ASM_REWRITE_TAC[FST] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[FST] THEN CAKE_REWRITE_TAC[] THEN
   DISCH_THEN(X_CHOOSE_THEN `behaviours:behaviour->bool`
     (X_CHOOSE_THEN `source_decs:dec list` STRIP_ASSUME_TAC)) THEN
   MAP_EVERY EXISTS_TAC [`behaviours:behaviour->bool`; `source_decs:dec list`] THEN
@@ -537,7 +537,7 @@ let compilerProof_compile_correct = prove
            `r:(((8)word)list#((A)word)list#backend_config,compile_error)exc`) THEN
   GEN_TAC THEN
   CASES_ON `r:(((8)word)list#((A)word)list#backend_config,compile_error)exc` THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   (* the failure cases are the same in both; the success case: *)
   MP_TAC(ISPEC `a:((8)word)list#((A)word)list#backend_config` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `code:((8)word)list`
@@ -545,7 +545,7 @@ let compilerProof_compile_correct = prove
   MP_TAC(ISPEC `y:((A)word)list#backend_config` PAIR_SURJECTIVE) THEN
   DISCH_THEN(X_CHOOSE_THEN `data:((A)word)list` (X_CHOOSE_THEN `c:backend_config`
     SUBST1_TAC)) THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   DISCH_THEN(X_CHOOSE_THEN `behaviours:behaviour->bool`
     (X_CHOOSE_THEN `source_decs:dec list` STRIP_ASSUME_TAC)) THEN
   EXISTS_TAC `behaviours:behaviour->bool` THEN ASM_REWRITE_TAC[] THEN
@@ -585,7 +585,7 @@ let type_config_ok = prove
     REWRITE_TAC[nsLookupMod_def; nsLookupMod_nsEmpty; option_DISTINCT];
     ALL_TAC] THEN
   CONJ_TAC THEN MATCH_MP_TAC nsAll_alist_to_ns THEN
-  REWRITE_TAC[REVERSE; APPEND; ALL] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[REVERSE; APPEND; ALL] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC([ALL; inf_set_tids_subset_def; unconvert_t_def; inf_set_tids_def; MAP;
                set_of_list; UNIONS_INSERT; UNIONS_0; UNION_EMPTY; INSERT_SUBSET;
                EMPTY_SUBSET; typeSystem_Tlist_def; CPPAUX_prim_type_ids_count; IN_COUNT;

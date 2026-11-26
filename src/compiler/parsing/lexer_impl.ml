@@ -24,9 +24,9 @@ type_invention_error := true;;
 (* ------------------------------------------------------------------------- *)
 
 let LEX2AUX_GT_NORM_TAC =
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[get_token_def; CONS_11; NOT_CONS_NIL; HD] THEN
-  REWRITE_TAC[processIdent_def] THEN CASE_REWRITE_TAC[] THEN
+  REWRITE_TAC[processIdent_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[char_le_def; char_lt_def; isAlpha_def; isLower_def; isUpper_def;
               GSYM ORD_11; LSTRAUX_ORD_CHR_MOD; ORD_DEF; BITVAL_CLAUSES] THEN
   CONV_TAC NUM_REDUCE_CONV THEN REWRITE_TAC[];;
@@ -303,12 +303,12 @@ let LEX2AUX_COND_CONG = prove
 let LEX2AUX_PAIR_CASE_CONG = prove
  (`!(p:A#B) (f:A->B->C) g.
      (!a b. p = (a,b) ==> f a b = g a b) ==> pair_CASE p f = pair_CASE p g`,
-  GEN_TAC THEN CASES_ON `p:A#B` THEN CASE_REWRITE_TAC[] THEN MESON_TAC[]);;
+  GEN_TAC THEN CASES_ON `p:A#B` THEN CAKE_REWRITE_TAC[] THEN MESON_TAC[]);;
 
 let LEX2AUX_OPTION_CASE_CONG = prove
  (`!(x:A option) (a:B) f g.
      (!y. x = SOME y ==> f y = g y) ==> option_CASE x a f = option_CASE x a g`,
-  GEN_TAC THEN CASES_ON `x:A option` THEN CASE_REWRITE_TAC[] THEN MESON_TAC[]);;
+  GEN_TAC THEN CASES_ON `x:A option` THEN CAKE_REWRITE_TAC[] THEN MESON_TAC[]);;
 
 let rec LEX2AUX_LOCKSTEP_TAC g =
   FIRST
@@ -390,9 +390,9 @@ let lex_aux_LESS = prove
   REPEAT GEN_TAC THEN ONCE_REWRITE_TAC[lexer_impl_lex_aux_def] THEN
   REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
   ASM_CASES_TAC `next_token input loc = NONE` THENL
-   [ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]; ALL_TAC] THEN
+   [ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]; ALL_TAC] THEN
   FIRST_X_ASSUM (STRIP_ASSUME_TAC o MATCH_MP LEX2AUX_next_token_SOME) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   FIRST_ASSUM (ASSUME_TAC o MATCH_MP next_token_LESS) THEN
   REPEAT COND_CASES_TAC THEN LEX2AUX_LESS_LEAF_TAC);;
 
@@ -448,9 +448,9 @@ let lex_aux_alt_LESS = prove
   REPEAT GEN_TAC THEN ONCE_REWRITE_TAC[lex_aux_alt_def] THEN
   REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
   ASM_CASES_TAC `next_sym input l = NONE` THENL
-   [ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]; ALL_TAC] THEN
+   [ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]; ALL_TAC] THEN
   FIRST_X_ASSUM (STRIP_ASSUME_TAC o MATCH_MP LEX2AUX_next_sym_SOME) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   FIRST_ASSUM (ASSUME_TAC o MATCH_MP next_sym_LESS) THEN
   REPEAT COND_CASES_TAC THEN LEX2AUX_LESS_LEAF_TAC);;
 
@@ -471,7 +471,7 @@ let LEX2AUX_processIdent_kw = prove
        ~(processIdent s = SemicolonT) /\ ~(processIdent s = RparT) /\
        ~(processIdent s = LparT)`,
   GEN_TAC THEN CASES_ON `s:string` THEN REWRITE_TAC[processIdent_def] THEN
-  CASE_REWRITE_TAC[] THEN TRY COND_CASES_TAC THEN CASE_REWRITE_TAC[]);;
+  CAKE_REWRITE_TAC[] THEN TRY COND_CASES_TAC THEN CAKE_REWRITE_TAC[]);;
 
 let LEX2AUX_COND_EQ_PUSH = prove
  (`!b (x:token) y z. ((if b then x else y) = z) <=> (if b then x = z else y = z)`,
@@ -481,7 +481,7 @@ let LEX2AUX_GET_TOKEN_KW tm =
   prove(tm,
     GEN_TAC THEN GEN_REWRITE_TAC (LAND_CONV o LAND_CONV) [get_token_def] THEN
     REWRITE_TAC[LEX2AUX_COND_EQ_PUSH] THEN
-    CASE_REWRITE_TAC[LEX2AUX_processIdent_kw] THEN
+    CAKE_REWRITE_TAC[LEX2AUX_processIdent_kw] THEN
     REWRITE_TAC[TAUT `(if b then F else y) <=> ~b /\ y`;
                 TAUT `(if b then T else y) <=> b \/ y`] THEN
     EQ_TAC THENL
@@ -506,7 +506,7 @@ let token_of_sym_EQ_LEMMA = prove
      `!s. get_token s = RparT <=> s = ")"`;
      `!s. get_token s = LparT <=> s = "("`] in
   GEN_TAC THEN CASES_ON `q:lexer_fun_symbol` THEN
-  REWRITE_TAC[token_of_sym_def] THEN CASE_REWRITE_TAC kws);;
+  REWRITE_TAC[token_of_sym_def] THEN CAKE_REWRITE_TAC kws);;
 
 let token_of_sym_loc_def = cake_def
   `token_of_sym_loc (t,(l:A)) = (token_of_sym t,l)`;;
@@ -527,7 +527,7 @@ let LEX2AUX_LEX_CHAIN = prove
   let tac lit =
     ASM_CASES_TAC (mk_eq(`t:lexer_fun_symbol`,
                          mk_comb(`OtherS`,mk_string lit))) THENL
-     [FIRST_X_ASSUM SUBST1_TAC THEN REWRITE_TAC[MEM] THEN CASE_REWRITE_TAC[] THEN
+     [FIRST_X_ASSUM SUBST1_TAC THEN REWRITE_TAC[MEM] THEN CAKE_REWRITE_TAC[] THEN
       CONV_TAC (DEPTH_CONV (STRING_EQ_CONV ORELSEC CHAR_EQ_CONV)) THEN
       REWRITE_TAC[];
       ALL_TAC] in
@@ -556,11 +556,11 @@ let LEX2AUX_lex_aux_alt_thm = prove
   ONCE_REWRITE_TAC[lex_aux_alt_def; lexer_impl_lex_aux_def] THEN
   REWRITE_TAC[next_token_def; LET_DEF; LET_END_DEF] THEN
   ASM_CASES_TAC `next_sym input l = NONE` THENL
-   [ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[]; ALL_TAC] THEN
+   [ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[]; ALL_TAC] THEN
   FIRST_X_ASSUM (STRIP_ASSUME_TAC o MATCH_MP LEX2AUX_next_sym_SOME) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[token_of_sym_EQ_LEMMA] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[token_of_sym_EQ_LEMMA] THEN
   REWRITE_TAC[LEX2AUX_LEX_CHAIN] THEN
-  REPEAT (COND_CASES_TAC THEN ASM_REWRITE_TAC[]) THEN CASE_REWRITE_TAC[] THEN
+  REPEAT (COND_CASES_TAC THEN ASM_REWRITE_TAC[]) THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[GSYM MAP_REVERSE; MAP; token_of_sym_loc_def] THEN
   LEX2AUX_ALT_IH_TAC);;
 
@@ -622,8 +622,8 @@ let lex_aux_tokens_LESS = prove
           else LENGTH rest <= LENGTH input`
    (fun th -> MESON_TAC[th]) THEN
   LIST_INDUCT_TAC THEN ONCE_REWRITE_TAC[lex_aux_tokens_def] THEN
-  CASE_REWRITE_TAC[] THEN
-  SUBST1_TAC (ISPEC `h:token#A` (GSYM PAIR)) THEN CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
+  SUBST1_TAC (ISPEC `h:token#A` (GSYM PAIR)) THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[LET_DEF; LET_END_DEF] THEN REPEAT GEN_TAC THEN
   REPEAT COND_CASES_TAC THEN REWRITE_TAC[LENGTH] THEN
   LEX2AUX_LESS_LEAF_TAC);;
@@ -660,7 +660,7 @@ let LEX2AUX_lex_aux_tokens_clauses = prove
       else if token = RparT then lex_aux_tokens (CONS (token,locs) acc) (d - 1) rest
       else lex_aux_tokens (CONS (token,locs) acc) d rest)`,
   CONJ_TAC THEN REPEAT GEN_TAC THEN
-  GEN_REWRITE_TAC LAND_CONV [lex_aux_tokens_def] THEN CASE_REWRITE_TAC[] THEN
+  GEN_REWRITE_TAC LAND_CONV [lex_aux_tokens_def] THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[LET_DEF; LET_END_DEF]);;
 
 (* HOL4 lex_aux_tokens_thm_1 and lex_aux_tokens_thm: the first two of four  *)
@@ -680,11 +680,11 @@ let LEX2AUX_lex_aux_tokens_thm = prove
   SUBST1_TAC (SPECL [`input:string`; `loc:locn`] lexer_fun_aux_def) THEN
   REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
   ASM_CASES_TAC `next_token input loc = NONE` THENL
-   [ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[LEX2AUX_lex_aux_tokens_clauses];
+   [ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[LEX2AUX_lex_aux_tokens_clauses];
     ALL_TAC] THEN
   FIRST_X_ASSUM (STRIP_ASSUME_TAC o MATCH_MP LEX2AUX_next_token_SOME) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[LEX2AUX_lex_aux_tokens_clauses] THEN
-  REPEAT (COND_CASES_TAC THEN ASM_REWRITE_TAC[]) THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[LEX2AUX_lex_aux_tokens_clauses] THEN
+  REPEAT (COND_CASES_TAC THEN ASM_REWRITE_TAC[]) THEN CAKE_REWRITE_TAC[] THEN
   (FIRST_X_ASSUM (MP_TAC o SPECL [`token:token`; `l1:locn`; `r:string`; `l2:locn`]) THEN
    ANTS_TAC THENL [ASM_REWRITE_TAC[]; DISCH_THEN MATCH_ACCEPT_TAC]));;
 
@@ -731,12 +731,12 @@ let lex_impl_all_tokens_thm = prove
   MP_TAC (SPECL [`input:string`; `l:locn`; `[]:(token#locs)list`; `0`]
                 lex_aux_tokens_thm) THEN
   ASM_CASES_TAC `lexer_impl_lex_aux [] 0 input l = NONE` THENL
-   [ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN
-    CASE_REWRITE_TAC[];
+   [ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN
+    CAKE_REWRITE_TAC[];
     ALL_TAC] THEN
   FIRST_X_ASSUM (STRIP_ASSUME_TAC o MATCH_MP LEX2AUX_lex_aux_SOME) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN
-  CASE_REWRITE_TAC[] THEN ASM_MESON_TAC[]);;
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN
+  CAKE_REWRITE_TAC[] THEN ASM_MESON_TAC[]);;
 
 (* the second HOL4 lex_aux_tokens_thm_1 and lex_aux_tokens_thm *)
 
@@ -758,11 +758,11 @@ let lex_aux_tokens_thm_1 = prove
          APPEND (REVERSE acc) input = APPEND toks rest`,
   LIST_INDUCT_TAC THEN
   REWRITE_TAC[LEX2AUX_lex_aux_tokens_clauses; toplevel_semi_dex_def] THEN
-  CASE_REWRITE_TAC[] THEN
+  CAKE_REWRITE_TAC[] THEN
   SUBST1_TAC (ISPEC `h:token#A` (GSYM PAIR)) THEN
   REWRITE_TAC[LEX2AUX_lex_aux_tokens_clauses; toplevel_semi_dex_def] THEN
   REPEAT GEN_TAC THEN
-  REPEAT (COND_CASES_TAC THEN ASM_REWRITE_TAC[]) THEN CASE_REWRITE_TAC[] THEN
+  REPEAT (COND_CASES_TAC THEN ASM_REWRITE_TAC[]) THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[LENGTH_REVERSE; LENGTH; ADD1; REVERSE; GSYM APPEND_ASSOC; APPEND] THEN
   LEX2AUX_TOKENS_IH_TAC);;
 
@@ -787,13 +787,13 @@ let split_top_level_semi_thm = prove
   REWRITE_TAC[lex_until_toplevel_semicolon_tokens_def] THEN
   MP_TAC (SPEC `toks:(token#A)list` lex_aux_tokens_thm) THEN
   ASM_CASES_TAC `lex_aux_tokens [] 0 (toks:(token#A)list) = NONE` THENL
-   [ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN
-    CASE_REWRITE_TAC[];
+   [ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN DISCH_THEN SUBST1_TAC THEN
+    CAKE_REWRITE_TAC[];
     ALL_TAC] THEN
   FIRST_X_ASSUM (STRIP_ASSUME_TAC o MATCH_MP LEX2AUX_lex_aux_tokens_SOME) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[REVERSE; APPEND] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[REVERSE; APPEND] THEN
   DISCH_THEN (CONJUNCTS_THEN2 ASSUME_TAC SUBST_ALL_TAC) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[TAKE_LENGTH_APPEND; DROP_LENGTH_APPEND] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[TAKE_LENGTH_APPEND; DROP_LENGTH_APPEND] THEN
   FIRST_X_ASSUM (MP_TAC o SPEC `LENGTH (ts:(token#A)list)`) THEN
   ASM_REWRITE_TAC[DROP_LENGTH_APPEND]);;
 

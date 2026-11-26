@@ -809,8 +809,8 @@ basis/pure/mlstring	mlstring	constant	sum_sizes	sum_sizes	unique
 basis/pure/mlstring	mlstring	theorem	sum_sizes_def	sum_sizes_def	unique
 basis/pure/mlstring	mlstring	constant	make_app_list_ann	make_app_list_ann	unique
 basis/pure/mlstring	mlstring	theorem	make_app_list_ann_def	make_app_list_ann_def	unique
-basis/pure/mlstring	mlstring	constant	shrink	shrink	unique
-basis/pure/mlstring	mlstring	theorem	shrink_def	shrink_def	unique
+basis/pure/mlstring	mlstring	constant	shrink	mlstring_shrink	clash-hol-light-library (Multivariate/cauchy.ml uses shrink as a variable); user decision 2026-11-25: captures variables of HOL Light libraries (HYG1 scan)
+basis/pure/mlstring	mlstring	theorem	shrink_def	mlstring_shrink_def	follows the constant
 basis/pure/mlstring	mlstring	constant	str_app_list_opt	str_app_list_opt	unique
 basis/pure/mlstring	mlstring	theorem	str_app_list_opt_def	str_app_list_opt_def	unique
 basis/pure/mlstring	mlstring	theorem	str_app_list_opt_test	str_app_list_opt_test	unique
@@ -1307,6 +1307,7 @@ semantics/ast	ast	constant	Apps	Apps	unique
 semantics/ast	ast	theorem	Apps_def	ast_Apps_def	reserved
 semantics/ast	ast	constant	Funs	Funs	unique
 semantics/ast	ast	theorem	Funs_def	ast_Funs_def	reserved
+semantics/ast	ast	constant	pat_size	ast_pat_size	clash-hol-light-library (Library/bitmatch.ml defines pat_size); kit-generated size function of pat (kit cake_size_names); user decision 2026-11-25: captures variables of HOL Light libraries (HYG1 scan)
 semantics/fpSem	fpSem	type	fp_cmp	fp_cmp	unique
 semantics/fpSem	fpSem	constructor	FP_Less	FP_Less	unique
 semantics/fpSem	fpSem	constructor	FP_LessEqual	FP_LessEqual	unique
@@ -7969,7 +7970,7 @@ semantics/proofs/typeSysProps	typeSysProps	theorem	add_tenvE_nsAppend	add_tenvE_
 semantics/proofs/typeSysProps	typeSysProps	theorem	add_tenvE_bvl	add_tenvE_bvl	unique
 semantics/proofs/typeSysProps	typeSysProps	theorem	type_v_freevars	type_v_freevars	unique
 semantics/proofs/typeSysProps	typeSysProps	theorem	remove_lambda_prod	remove_lambda_prod	clash:3 theories
-semantics/proofs/typeSysProps	typeSysProps	theorem	type_subst	type_subst	unique
+semantics/proofs/typeSysProps	typeSysProps	theorem	type_subst	typeSysProps_type_subst	clash-hol-light (OCaml value: the kernel function type_subst)
 semantics/proofs/typeSysProps	typeSysProps	theorem	check_ctor_tenv_ok	check_ctor_tenv_ok	unique
 semantics/proofs/typeSysProps	typeSysProps	theorem	nsMap_build_ctor_tenv	nsMap_build_ctor_tenv	unique
 semantics/proofs/typeSysProps	typeSysProps	theorem	type_d_check_uniq	type_d_check_uniq	unique
@@ -24679,7 +24680,7 @@ candle/standard/syntax/holSyntaxExtra	holSyntaxExtra	theorem	proves_ACONV	proves
 candle/standard/syntax/holSyntaxExtra	holSyntaxExtra	theorem	sym_equation	sym_equation	unique
 candle/standard/syntax/holSyntaxExtra	holSyntaxExtra	theorem	sym	hol_sym	clash-hol-light
 candle/standard/syntax/holSyntaxExtra	holSyntaxExtra	theorem	trans_equation	trans_equation	unique
-candle/standard/syntax/holSyntaxExtra	holSyntaxExtra	theorem	trans	trans	unique
+candle/standard/syntax/holSyntaxExtra	holSyntaxExtra	theorem	trans	hol_trans	clash-library (basisFunctionsLib binds the OCaml function trans)
 candle/standard/syntax/holSyntaxExtra	holSyntaxExtra	theorem	proveHyp	proveHyp	unique
 candle/standard/syntax/holSyntaxExtra	holSyntaxExtra	theorem	extends_trans	extends_trans	unique
 candle/standard/syntax/holSyntaxExtra	holSyntaxExtra	theorem	updates_ALL_DISTINCT	updates_ALL_DISTINCT	unique

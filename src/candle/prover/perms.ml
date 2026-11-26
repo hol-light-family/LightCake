@@ -221,7 +221,7 @@ let perms_ok_state_def = cake_def
 
 let perms_ok_state_with_clock = prove
  (`!ps (s:(FFI)state) ck.
-     perms_ok_state ps (state_clock_fupd (K ck) s) <=> perms_ok_state ps s`,
+     perms_ok_state ps (state_clock_fupd (combin_K ck) s) <=> perms_ok_state ps s`,
   RW[perms_ok_state_def]);;
 let _ = cake_add_simps [perms_ok_state_with_clock];;
 
@@ -538,9 +538,9 @@ let PERMSAUX_getOpClass = prove
         (getOpClass op = Simple <=>
          ~(op = Opapp) /\ ~(op = Eval) /\ ~(op = ThunkOp ForceThunk))`,
   GEN_TAC THEN CASES_ON `op:op` THEN REWRITE_TAC[getOpClass_def] THEN
-  CASE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "op_class"; distinctness "op";
+  CAKE_REWRITE_TAC[] THEN REWRITE_TAC[distinctness "op_class"; distinctness "op";
                                       injectivity "op"] THEN
-  CASES_ON `a:thunk_op` THEN CASE_REWRITE_TAC[] THEN
+  CASES_ON `a:thunk_op` THEN CAKE_REWRITE_TAC[] THEN
   REWRITE_TAC[distinctness "op_class"; distinctness "thunk_op"]);;
 
 let PERMSAUX_do_opapp_perms = prove
@@ -587,7 +587,7 @@ let PERMSAUX_update_thunk = prove
      perms_ok_state ps s /\ ALL (perms_ok ps) vs2 /\
      update_thunk vs (state_refs s) vs2 = SOME refs ==>
      LENGTH refs = LENGTH (state_refs s) /\
-     perms_ok_state ps (state_refs_fupd (K refs) s)`,
+     perms_ok_state ps (state_refs_fupd (combin_K refs) s)`,
   REPEAT GEN_TAC THEN ONCE_REWRITE_TAC[ONELINE update_thunk_def] THEN STRIP_TAC THEN
   GVS[list_case_eq; case_eq "v"; COND_CASE_EQ; case_eq "dest_thunk_ret"; ALL;
       store_assign_def; option_case_eq; perms_ok_state_def; LENGTH_LUPDATE;
@@ -618,7 +618,7 @@ let PERMSAUX_update_thunk_MP = prove
  (`!vs (s:(FFI)state) vs2 refs. update_thunk vs (state_refs s) vs2 = SOME refs ==>
      !ps. perms_ok_state ps s ==> ALL (perms_ok ps) vs2 ==>
           LENGTH refs = LENGTH (state_refs s) /\
-          perms_ok_state ps (state_refs_fupd (K refs) s)`,
+          perms_ok_state ps (state_refs_fupd (combin_K refs) s)`,
   MESON_TAC[PERMSAUX_update_thunk]);;
 
 let PERMSAUX_do_opapp_MP = prove
@@ -645,7 +645,7 @@ let PERMSAUX_EV_APP_TAC =
   ASM_CASES_TAC `op = Opapp` THENL
    [FIRST_X_ASSUM SUBST_ALL_TAC THEN
     QPAT_X_ASSUM "evaluate _ _ [App _ _] = _" (MP_TAC o ONCE_REWRITE_RULE[evaluate_def]) THEN
-    REWRITE_TAC[getOpClass_def] THEN CASE_REWRITE_TAC[] THEN DISCH_TAC THEN
+    REWRITE_TAC[getOpClass_def] THEN CAKE_REWRITE_TAC[] THEN DISCH_TAC THEN
     RULE_ASSUM_TAC (REWRITE_RULE[distinctness "op"]) THEN
     GVS[pair_case_eq; case_eq "result"; case_eq "error_result";
         option_case_eq; COND_CASE_EQ; EVERY_REVERSE; dec_clock_def] THEN
@@ -655,7 +655,7 @@ let PERMSAUX_EV_APP_TAC =
   ASM_CASES_TAC `op = ThunkOp ForceThunk` THENL
    [FIRST_X_ASSUM SUBST_ALL_TAC THEN
     QPAT_X_ASSUM "evaluate _ _ [App _ _] = _" (MP_TAC o ONCE_REWRITE_RULE[evaluate_def]) THEN
-    REWRITE_TAC[getOpClass_def] THEN CASE_REWRITE_TAC[] THEN DISCH_TAC THEN
+    REWRITE_TAC[getOpClass_def] THEN CAKE_REWRITE_TAC[] THEN DISCH_TAC THEN
     RULE_ASSUM_TAC (REWRITE_RULE[distinctness "op"; injectivity "op";
                                  distinctness "thunk_op"]) THEN
     GVS[pair_case_eq; case_eq "result"; case_eq "error_result";
@@ -666,7 +666,7 @@ let PERMSAUX_EV_APP_TAC =
   SUBGOAL_THEN `getOpClass op = Simple` ASSUME_TAC THENL
    [ASM_REWRITE_TAC[PERMSAUX_getOpClass]; ALL_TAC] THEN
   QPAT_X_ASSUM "evaluate _ _ [App _ _] = _" (MP_TAC o ONCE_REWRITE_RULE[evaluate_def]) THEN
-  ASM_REWRITE_TAC[] THEN CASE_REWRITE_TAC[] THEN
+  ASM_REWRITE_TAC[] THEN CAKE_REWRITE_TAC[] THEN
   QPAT_X_ASSUM "getOpClass op = Simple" (K ALL_TAC) THEN DISCH_TAC THEN
   GVS[pair_case_eq; case_eq "result"; option_case_eq; EVERY_REVERSE] THEN
   REPEAT (PERMSAUX_IHS_TAC (ASM_REWRITE_TAC[])) THEN
@@ -678,7 +678,7 @@ let PERMSAUX_EV_APP_TAC =
 let PERMSAUX_perms_ok_env_nsBind = prove
  (`!ps fvs n v env.
      perms_ok ps v /\ perms_ok_env ps (fvs DIFF {Short n}) env ==>
-     perms_ok_env ps fvs (sem_env_v_fupd (K (nsBind n v (sem_env_v env))) env)`,
+     perms_ok_env ps fvs (sem_env_v_fupd (combin_K (nsBind n v (sem_env_v env))) env)`,
   REPEAT GEN_TAC THEN SIMP[perms_ok_env_def; IN_DIFF; IN_SING] THEN
   STRIP_TAC THEN X_GEN_TAC `x:(modN,varN)id` THEN X_GEN_TAC `w:v` THEN
   FIRST_X_ASSUM (MP_TAC o SPECL [`x:(modN,varN)id`; `w:v`]) THEN
@@ -691,7 +691,7 @@ let PERMSAUX_perms_ok_env_nsOptBind = prove
    `!ps fvs xo v env.
       perms_ok ps v /\
       perms_ok_env ps (fvs DIFF (match xo with SOME n -> {Short n} | _ -> {})) env ==>
-      perms_ok_env ps fvs (sem_env_v_fupd (K (nsOptBind xo v (sem_env_v env))) env)`,
+      perms_ok_env ps fvs (sem_env_v_fupd (combin_K (nsOptBind xo v (sem_env_v env))) env)`,
   REPEAT GEN_TAC THEN CASES_ON `xo:mlstring option` THEN
   REWRITE_TAC[option_CASE; nsOptBind_def; DIFF_EMPTY; PERMSAUX_perms_ok_env_nsBind] THEN
   SIMP[RECORD_SELFID_ss]);;
@@ -722,7 +722,7 @@ let PERMSAUX_perms_ok_env_build_rec_env = prove
       ALL (perms_ok_exp ps) (MAP (SND o SND) funs) /\
       perms_ok_env ps (fvs DIFF set_of_list (MAP (Short o FST) funs)) env ==>
       perms_ok_env ps fvs
-        (sem_env_v_fupd (K (build_rec_env funs env (sem_env_v env))) env)`,
+        (sem_env_v_fupd (combin_K (build_rec_env funs env (sem_env_v env))) env)`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN SIMP[perms_ok_env_def] THEN
   X_GEN_TAC `x:(modN,varN)id` THEN X_GEN_TAC `w:v` THEN STRIP_TAC THEN
   MP_TAC (SPECL [`ps:permission->bool`; `funs:(varN#varN#exp)list`; `env:v sem_env`;
@@ -757,7 +757,7 @@ let PERMSAUX_perms_ok_env_alist = prove
  (`!ps fvs (l:(varN#v)list) env.
      ALL (perms_ok ps) (MAP SND l) /\
      perms_ok_env ps (fvs DIFF set_of_list (MAP Short (MAP FST l))) env ==>
-     perms_ok_env ps fvs (sem_env_v_fupd (K (nsAppend (alist_to_ns l) (sem_env_v env))) env)`,
+     perms_ok_env ps fvs (sem_env_v_fupd (combin_K (nsAppend (alist_to_ns l) (sem_env_v env))) env)`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN SIMP[perms_ok_env_def] THEN
   X_GEN_TAC `x:(modN,varN)id` THEN X_GEN_TAC `w:v` THEN
   REWRITE_TAC[PERMSAUX_nsLookup_nsAppend_alist; nsLookup_alist_to_ns_some;
@@ -824,7 +824,7 @@ let PERMSAUX_perms_ok_env_nsLift = prove
   REPEAT GEN_TAC THEN SIMP[perms_ok_env_def; IN_UNIV] THEN DISCH_TAC THEN
   X_GEN_TAC `x:(modN,varN)id` THEN X_GEN_TAC `w:v` THEN
   CASES_ON `x:(modN,varN)id` THEN REWRITE_TAC[nsLookup_nsLift] THEN
-  CASE_REWRITE_TAC[] THEN RW[option_DISTINCT] THEN ASM_MESON_TAC[]);;
+  CAKE_REWRITE_TAC[] THEN RW[option_DISTINCT] THEN ASM_MESON_TAC[]);;
 
 let evaluate_perms_ok = prove
  (CASE_TERM

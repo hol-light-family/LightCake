@@ -72,7 +72,7 @@ and tr_CHAR_inv = `ml_CHAR` and tr_HOL_STRING_inv = `HOL_STRING_TYPE`
 and tr_STRING_inv = `STRING_TYPE` and tr_FLOAT64_inv = `ml_FLOAT64`;;
 let tr_dec_ty = `:dec`;;
 let tr_LET_tm = `LET:(A->B)->A->B`;;
-let tr_K_num_tm = `K:num->mlstring->num`;;
+let tr_K_num_tm = `combin_K:num->mlstring->num`;;
 let tr_LIST_TYPE_CHAR_tm = `LIST_TYPE ml_CHAR`;;
 let tr_v2_v = `v2:v`;;
 let tr_SOME_stamp_tm = `SOME:stamp->(stamp)option`;;
@@ -646,7 +646,7 @@ let get_unique_name str =
 
 let tr_tyname ty = fst (dest_type ty);;
 
-(* HOL Light's type_subst (a src file binds the name type_subst) *)
+(* the instance of a type under a type substitution, as type_subst *)
 let tr_type_subst i ty = type_of (inst i (mk_var ("x", ty)));;
 
 (* the case constant of the unit type (HOL4 one_CASE, one_case_def): HOL   *)
@@ -994,6 +994,242 @@ let tr_inv_term_tac : tactic =
   REWRITE_TAC [pair_size] THEN
   ASM_ARITH_TAC;;
 
+(* ------------------------------------------------------------------------- *)
+(* The definition of a recursive refinement invariant (one function, one     *)
+(* clause per constructor of its input argument), with the theorem, the      *)
+(* induction theorem and the kit tables that cake_def_wf gives, faster.     *)
+(* cake_def_wf's existence proof, HOL Light's casewise recursion over the   *)
+(* tuple of the variables of all clauses (kit/recursion.ml), is most of the *)
+(* time for nested types (11 of 15 s for ast's exp, 30 variables).  Here:   *)
+(* - existence: the clauses as one clause, f a x v <=> ty_CASE x arms (the  *)
+(*   tuple is then a x v), by the same package; its termination conditions  *)
+(*   proved with the same measure and tactic; the clauses follow from it by  *)
+(*   the case definition;                                                    *)
+(* - the termination conditions of the induction theorem: those of each     *)
+(*   clause alone (the package on one clause), merged and sorted by          *)
+(*   alphaorder, as the hypotheses of the analysis of all clauses are (the   *)
+(*   kernel keeps hypotheses sorted): the input of discharge_hyps and        *)
+(*   derive_induction is the same as in cake_def_wf;                         *)
+(* - the definition: new_specification of the same existence statement.     *)
+(* Anything else (mutual groups, other shapes, a failing step) is left to    *)
+(* cake_def_wf.  tr_fast_inv_check makes each definition also by            *)
+(* cake_def_wf (renamed) and compares the theorems (tests only).            *)
+(* ------------------------------------------------------------------------- *)
+
+let tr_fast_inv = ref true;;
+(* below this number of clause variables cake_def_wf's own analysis is the  *)
+(* faster one (two clauses of (A,B)id: 0.12 s against 0.3 s)                *)
+let tr_fast_inv_min_parms = ref 8;;
+let tr_fast_inv_check = ref false;;
+let tr_fast_inv_log = ref ([] : (string * string) list);;
+
+(* the arguments of the WF hypothesis of an existence theorem: the relation *)
+(* variable, the WF term and the termination conditions (as discharge_hyps  *)
+(* reads them); fails if there are other hypotheses                          *)
+let tr_wf_parts th =
+  match hyp th with
+    [] -> None
+  | [h] when is_wf_hyp h ->
+      let rel,bod = dest_exists h in
+      if is_conj bod then let w,t = dest_conj bod in Some (rel, w, conjuncts t)
+      else Some (rel, bod, [])
+  | _ -> failwith "tr_wf_parts: other hypotheses";;
+
+(* sorted by alphaorder, without repetitions (the kernel's hypothesis sets) *)
+let tr_alpha_setify l =
+  let l' = sort (fun a b -> alphaorder a b < 0) l in
+  let rec dedup l = match l with
+      a::(b::_ as t) -> if alphaorder a b = 0 then dedup t else a :: dedup t
+    | _ -> l in
+  dedup l';;
+
+(* the one-line form of clauses cls0 (vs, f, args, rhs) on argument i      *)
+let tr_inv_oneline f i cls0 =
+  let (_,_,args1,rhs1) = hd cls0 in
+  let ity = type_of (el i args1) in
+  let ci = case_info_of_tyname (fst (dest_type ity)) in
+  let avoid = ref (f :: itlist (fun (vs,_,args,r) acc -> union (frees r) (union vs acc)) cls0 []) in
+  let fresh n ty = let v = variant !avoid (mk_var (n, ty)) in avoid := v :: !avoid; v in
+  let x = fresh "x" ity in
+  let others = map (fun (a,k) -> if k = i then x else fresh "a" (type_of a))
+                   (zip args1 (0--(length args1 - 1))) in
+  let cname t = fst (dest_const (fst (strip_comb t))) in
+  let arm (_,pat) =
+    let cls = filter (fun (_,_,args,_) -> let a = el i args in
+                        is_const (fst (strip_comb a)) && cname a = cname pat) cls0 in
+    match cls with
+      [(_,_,args,r)] ->
+        let a = el i args in
+        let cvs = snd (strip_comb a) in
+        if not (forall is_var cvs) || length (setify cvs) <> length cvs then
+          failwith "tr_inv_oneline: pattern" else
+        let sub = map (fun ((t,ov),k) -> if k = i then (ov,ov) else
+                         if is_var t then (ov,t) else failwith "tr_inv_oneline: args")
+                      (zip (zip args others) (0--(length args - 1))) in
+        let sub = filter (fun (ov,t) -> not (ov == t)) sub in
+        if length (setify (map snd sub)) <> length sub then failwith "tr_inv_oneline: vars" else
+        list_mk_abs (cvs, vsubst sub r)
+    | _ -> failwith "tr_inv_oneline: constructor clauses" in
+  let arms = map arm ci.ci_pats in
+  if length cls0 <> length ci.ci_pats then failwith "tr_inv_oneline: clauses" else
+  let cc = ci.ci_case in
+  let cty = type_of cc in
+  let rty = type_of rhs1 in
+  let cc' = inst (type_match cty (itlist (fun a t -> mk_fun_ty (type_of a) t)
+                                           arms rty |> mk_fun_ty ity) []) cc in
+  let body = list_mk_comb (cc', x :: arms) in
+  (ci, x, others, list_mk_forall (others, mk_eq (list_mk_comb (f, others), body)));;
+
+(* (\x1 .. xn. b) a1 .. an = b[a1..an/x1..xn] (only the head redexes) *)
+let tr_head_betas_conv tm =
+  let h,args = strip_comb tm in
+  if args = [] || not (is_abs h) then REFL tm else
+  let rec go n t = if n = 0 then REFL t else
+    (RATOR_CONV (go (n-1)) THENC TRY_CONV BETA_CONV) t in
+  go (length args) tm;;
+
+(* |- ?f. tm0 from |- ?f. oneline *)
+let tr_inv_clauses_from_oneline f i ci others oneline eth1 tm0 cls0 =
+  let f0 = variant (variables tm0 @ variables oneline) (mk_var ("f0", type_of f)) in
+  let ol0 = vsubst [f0, f] oneline in
+  let hth = ASSUME ol0 in
+  let cldefs = CONJUNCTS ci.ci_def in
+  let clause (vs,_,args,r) =
+    let th1 = SPECL args hth in
+    let c = rand (concl th1) in
+    let th2 = TRANS th1 (GEN_REWRITE_CONV I cldefs c) in
+    let th3 = CONV_RULE (RAND_CONV tr_head_betas_conv) th2 in
+    let want = mk_eq (list_mk_comb (f0, args), vsubst [f0, f] r) in
+    let th4 = if concl th3 = want then th3 else EQ_MP (ALPHA (concl th3) want) th3 in
+    GENL vs th4 in
+  let cth = end_itlist CONJ (map clause cls0) in
+  let eth = EXISTS (mk_exists (f, tm0), f0) cth in
+  CHOOSE (f0, eth1) eth;;
+
+let tr_fast_inv_def0 (r:term) (tac:tactic) (ctm:term) : thm =
+  let tm = rename_wildcards (cases_of_matches ctm) in
+  let tm = complete_all_clauses tm in
+  let cls = dest_clauses tm in
+  let fns = setify (map (fun (_,f,_,_) -> f) cls) in
+  if length fns <> 1 then failwith "tr_fast_inv: mutual" else
+  let f = hd fns in
+  if not (is_var f) then failwith "tr_fast_inv: constant" else
+  let name = fst (dest_var f) in
+  let k = (match cls with (_,_,args,_)::_ -> length args | [] -> 0) in
+  let tm = eta_expand_bare k f tm in
+  let tm0 = close_clauses [f] tm in
+  let cls0 = dest_clauses tm0 in
+  let recursive = exists (fun (_,_,_,r) -> free_in f r) cls0 in
+  if not recursive || !cake_case_to_match then failwith "tr_fast_inv: shape" else
+  let parms_of cls = freesl (unions (map (fun (_,_,args,_) -> args) cls)) in
+  let gparms = parms_of cls0 in
+  if length gparms < !tr_fast_inv_min_parms then failwith "tr_fast_inv: small" else
+  let cth = REFL tm0 in
+  let etm = mk_exists (f, tm0) in
+  (* the argument with the constructor patterns *)
+  let (_,_,args1,_) = hd cls0 in
+  let i = try index true (map (fun a -> not (is_var a)) args1)
+          with Failure _ -> failwith "tr_fast_inv: no pattern" in
+  (* existence by the one-line form *)
+  let ci, x, others, oneline = tr_inv_oneline f i cls0 in
+  let eth1 = cake_pure_prove_recursive_function_exists (mk_exists (f, oneline)) in
+  let saved_tc = !cake_tc_store in
+  let eth1, _ = (try discharge_hyps name (Some (r, tac)) eth1
+                 with e -> (cake_tc_store := saved_tc; raise e)) in
+  cake_tc_store := saved_tc;
+  if hyp eth1 <> [] then failwith "tr_fast_inv: one-line hypotheses" else
+  let eth = tr_inv_clauses_from_oneline f i ci others oneline eth1 tm0 cls0 in
+  if not (aconv (concl eth) etm) || hyp eth <> [] then failwith "tr_fast_inv: existence" else
+  (* the termination conditions, clause by clause *)
+  (* the analysis of all clauses quantifies each condition over the         *)
+  (* variables of its clause in the order of this list (the parms of         *)
+  (* break_down_admissibility in kit/recursion.ml), the analysis of one       *)
+  (* clause in the order of that clause's list: reordered here               *)
+  let reorder cparms tc =
+    let qs, body = strip_forall tc in
+    let ys = filter (fun q -> not (mem q cparms)) qs
+    and ps = filter (fun q -> mem q cparms) qs in
+    if ys @ ps <> qs then failwith "tr_fast_inv: condition shape" else
+    list_mk_forall (ys @ filter (fun p -> mem p ps) gparms, body) in
+  let parts = map (fun (vs,_,args,r as cl) ->
+      if not (free_in f r) then None else
+      let c = list_mk_forall (vs, mk_eq (list_mk_comb (f, args), r)) in
+      match tr_wf_parts (cake_pure_prove_recursive_function_exists (mk_exists (f, c))) with
+        None -> None
+      | Some (rel, wf, tcs) -> Some (rel, wf, map (reorder (parms_of [cl])) tcs)) cls0 in
+  let parts = mapfilter (fun p -> match p with Some x -> x | None -> fail ()) parts in
+  if parts = [] then failwith "tr_fast_inv: no termination conditions" else
+  let (rel, wf, _) = hd parts in
+  if exists (fun (rel',wf',_) -> rel' <> rel || wf' <> wf) parts then
+    failwith "tr_fast_inv: relations" else
+  let tcs = tr_alpha_setify (flat (map (fun (_,_,t) -> t) parts)) in
+  let h = mk_exists (rel, list_mk_conj (wf :: tcs)) in
+  let _, wfinfo = discharge_hyps name (Some (r, tac)) (ASSUME h) in
+  let eth' = EQ_MP (SYM (MK_EXISTS f cth)) eth in
+  let def = new_specification [name] eth' in
+  (match wfinfo with
+     Some (wfth, tc_thms) ->
+       let c = mk_const (name, []) in
+       let c = inst (type_match (type_of c) (type_of f) []) c in
+       let clauses = map (fun (vs,_,args,_) -> vs,args) cls0 in
+       cake_ind_debug := Some (c, clauses, tc_thms, wfth);
+       (try let ind = derive_induction c clauses tc_thms wfth in
+            cake_ind_store := (name, ind) :: !cake_ind_store
+        with Failure msg ->
+          Format.print_string ("Warning: cake_def " ^ name ^
+                               ": no induction theorem (" ^ msg ^ ")\n"))
+   | None ->
+       Format.print_string ("Warning: cake_def " ^ name ^ ": no induction theorem " ^
+         "(the strict form R a p of a tail-call termination condition was not " ^
+         "proved by the tactic)\n"));
+  CONV_RULE (DEPTH_CONV ETA_MARKED_CONV) def;;
+
+(* cake_def_wf r tac tm by the faster route where it applies (the store of  *)
+(* identical redefinitions as in cake_def_gen)                               *)
+let tr_fast_inv_def (r:term) (tac:tactic) (tm:term) : thm =
+  if not !tr_fast_inv then cake_def_wf r tac tm else
+  let ctm = rename_wildcards (cases_of_matches tm) in
+  let head = try (match dest_clauses ctm with
+                    (_,f,_,_)::_ -> if is_var f then fst (dest_var f) else ""
+                  | [] -> "") with Failure _ -> "" in
+  if head = "" || (!kit_def_store && Hashtbl.find_all cake_def_store head <> [])
+  then cake_def_wf r tac tm else
+  match (try Some (tr_fast_inv_def0 r tac ctm)
+         with Failure msg -> (tr_fast_inv_log := (head, msg) :: !tr_fast_inv_log; None)) with
+    None -> cake_def_wf r tac tm
+  | Some th ->
+      (if !tr_fast_inv_check then
+         (* tests only: the same definition by cake_def_wf under another name *)
+         try
+           let f = (match dest_clauses ctm with (_,f,_,_)::_ -> f | [] -> fail ()) in
+           let nm = head ^ "_TL5CHK" in
+           let f' = mk_var (nm, type_of f) in
+           let r' = vsubst [f', f] r in
+           let th' = cake_def_wf r' tac (vsubst [f', f] tm) in
+           let c = mk_const (head, []) and c' = mk_const (nm, []) in
+           let c = inst (type_match (type_of c) (type_of f) []) c
+           and c' = inst (type_match (type_of c') (type_of f) []) c' in
+           let back t = subst [c, c'] t in
+           let ok_def = back (concl th') = concl th && hyp th = [] && hyp th' = [] in
+           let ok_ind = (try back (concl (cake_ind nm)) = concl (cake_ind head)
+                         with Failure _ -> not (can cake_ind nm) && not (can cake_ind head)) in
+           let ok_tc = (try back (vsubst [f, f'] (assoc nm !cake_tc_store)) =
+                              assoc head !cake_tc_store
+                        with Failure _ -> false) in
+           tr_fast_inv_log := (head, Printf.sprintf "CHECK def %b ind %b tc %b" ok_def ok_ind ok_tc)
+                              :: !tr_fast_inv_log
+         with Failure msg -> tr_fast_inv_log := (head, "CHECK failed: " ^ msg) :: !tr_fast_inv_log);
+      (if !kit_def_store then
+        try
+          let fns = setify (filter is_var (map (fun (_,f,_,_) -> f) (dest_clauses ctm))) in
+          let sub = map (fun f ->
+              let c = mk_const (fst (dest_var f), []) in
+              inst (type_match (type_of c) (type_of f) []) c, f) fns in
+          if sub <> [] then
+            Hashtbl.add cake_def_store head (kit_term_digest (vsubst sub ctm), th)
+        with Failure _ -> ());
+      th;;
+
 (* a definition, or the stored one if the session already has it: the kit *)
 (* gives a benign redefinition (the same clauses, with the constants for   *)
 (* the function variables) the stored theorem back, so a translation file  *)
@@ -1010,7 +1246,7 @@ let tr_define_benign name def_tm =
   let define tm =
     if is_rec then
       (try tr_time "invariant definition (cake_def_wf)"
-             (cake_def_wf (tr_inv_measure cvars) tr_inv_term_tac) tm
+             (tr_fast_inv_def (tr_inv_measure cvars) tr_inv_term_tac) tm
        with Failure _ -> tr_time "invariant definition (cake_def)" cake_def tm)
     else tr_time "invariant definition (cake_def)" cake_def tm in
   if exists (fun n -> can get_const_type n) cnames then
@@ -1427,7 +1663,7 @@ let tr_eq_pairC = prove
      ~(s1 = s2) ==> (P1 /\ P2 ==> types_match v v2)`,
   REPEAT GEN_TAC THEN STRIP_TAC THEN STRIP_TAC THEN RES_TAC THEN
   ASM_REWRITE_TAC [types_match_def; ctor_same_type_def; same_type_def; injectivity "option";
-                   injectivity "stamp"] THEN CASE_REWRITE_TAC [same_type_def] THEN
+                   injectivity "stamp"] THEN CAKE_REWRITE_TAC [same_type_def] THEN
   ASM_REWRITE_TAC [injectivity "option"; injectivity "stamp"]);;
 
 let tr_vs_var = `vs:v list`;;
@@ -1437,7 +1673,7 @@ let tr_vs_var = `vs:v list`;;
 (* rewrites with the invariant definitions, dist_conv with distinctness       *)
 let tr_eq_pair_tac inv_conv dist_conv : tactic =
   let shapes = ref ([] : (term * thm) list) in
-  let shape inv_tm =
+  let shape0 inv_tm =
     let x = rand (rator inv_tm) in
     let c = fst (strip_comb x) in
     let gen =
@@ -1457,6 +1693,27 @@ let tr_eq_pair_tac inv_conv dist_conv : tactic =
       let sh = GEN_ALL sh in
       shapes := (c, sh) :: !shapes; sh in
     PART_MATCH lhand gen inv_tm in
+  (* the instances of the shape lemmas, the literal inequalities and the     *)
+  (* lemma tr_eq_pairB at the type are made once: each recurs in the goals of *)
+  (* the n constructors and in both conjuncts (n^2 pairs in all)              *)
+  (* keyed by constructor names (the generic hash of a term looks at its     *)
+  (* first nodes only, which are the same for all these terms)                *)
+  let inst_memo = (Hashtbl.create 100 : (string, term * thm) Hashtbl.t)
+  and neq_memo = (Hashtbl.create 1000 : (string * string * int, thm) Hashtbl.t)
+  and pairB_memo = ref ([] : (hol_type * thm) list) in
+  let cname x = fst (dest_const (fst (strip_comb x))) in
+  let shape inv_tm =
+    let k = cname (rand (rator inv_tm)) in
+    try snd (find (fun (t,_) -> t = inv_tm) (Hashtbl.find_all inst_memo k))
+    with Failure _ ->
+      let th = shape0 inv_tm in Hashtbl.add inst_memo k (inv_tm, th); th in
+  let neq key tm =
+    try Hashtbl.find neq_memo key with Not_found ->
+      let th = EQF_ELIM (tr_lit_eq_fast tm) in Hashtbl.add neq_memo key th; th in
+  let pairB ty =
+    try assoc ty !pairB_memo with Failure _ ->
+      let th = INST_TYPE [ty, aty] tr_eq_pairB in
+      pairB_memo := (ty, th) :: !pairB_memo; th in
   let stamp_of sh = rand (rand (rator (rhs (snd (dest_exists (rand (concl sh))))))) in
   fun (asl,w as g) ->
     let v2,bod = dest_forall w in
@@ -1469,19 +1726,40 @@ let tr_eq_pair_tac inv_conv dist_conv : tactic =
     let st1 = stamp_of sh1 and st2 = stamp_of sh2 in
     if is_eq cl then
       let v = lhs (lhs cl) in
-      let st_neq = EQF_ELIM (tr_lit_eq_fast (mk_eq (st1, st2))) in
+      let st_neq = neq (cname x1, cname x2, 0) (mk_eq (st1, st2)) in
       let x_neq = EQF_ELIM (dist_conv (mk_eq (x1, x2))) in
-      let th = MP (ISPECL [inv1; inv2; x1; x2; v; v2; st1; st2] tr_eq_pairB)
+      let th = MP (SPECL [inv1; inv2; x1; x2; v; v2; st1; st2] (pairB (type_of x1)))
                   (CONJ sh1 (CONJ sh2 (CONJ st_neq x_neq))) in
       ACCEPT_TAC (GEN v2 th) g
     else
       let v = rand (rator cl) in
       let (s1,n1) = dest_TypeStamp st1 and (s2,n2) = dest_TypeStamp st2 in
       if n1 <> n2 then failwith "tr_eq_pair_tac: type numbers" else
-      let s_neq = EQF_ELIM (tr_lit_eq_fast (mk_eq (s1, s2))) in
+      let s_neq = neq (cname x1, cname x2, 1) (mk_eq (s1, s2)) in
       let th = MP (ISPECL [inv1; inv2; v; v2; s1; s2; n1] tr_eq_pairC)
                   (CONJ sh1 (CONJ sh2 s_neq)) in
       ACCEPT_TAC (GEN v2 th) g;;
+
+(* the cases of a type as one theorem, from its nchotomy:                  *)
+(*   !P. P C1 /\ (!a. P (C2 a)) /\ .. ==> !x. P x                          *)
+(* (STRUCT_CASES_TAC with the nchotomy costs time quadratic in the number   *)
+(* of constructors at each use; this is proved once per type)               *)
+let tr_cases_of_nchotomy nch =
+  let x, bod = dest_forall (concl nch) in
+  let ds = disjuncts bod in
+  let p = mk_var ("P", mk_fun_ty (type_of x) bool_ty) in
+  let case d = let vs, eq = strip_exists d in list_mk_forall (vs, mk_comb (p, rhs eq)) in
+  let ant = list_mk_conj (map case ds) in
+  let goal = mk_forall (p, mk_imp (ant, mk_forall (x, mk_comb (p, x)))) in
+  prove (goal, GEN_TAC THEN STRIP_TAC THEN GEN_TAC THEN
+               STRUCT_CASES_TAC (SPEC x nch) THEN FIRST_ASSUM MATCH_ACCEPT_TAC);;
+
+(* GEN_TAC keeping the bound variable's name where it is free (GEN_TAC's   *)
+(* mk_primed_var looks the name up in the constant table: about 1 ms in a   *)
+(* session with the whole development)                                     *)
+let tr_bound_gen_tac : tactic = fun (asl,w as g) ->
+  let x = fst (dest_forall w) in
+  (X_GEN_TAC x ORELSE GEN_TAC) g;;
 
 let tr_eqat_case_tac inv_defs nchs type_rws =
   (* the facts of the EqualityType and EqualityType_at assumptions, once per  *)
@@ -1522,13 +1800,23 @@ let tr_eqat_case_tac inv_defs nchs type_rws =
     MAP_EVERY ASSUME_TAC news g in
   let res_close = (res_pairs THEN ASM_REWRITE_TAC [] THEN NO_TAC) ORELSE
                   (res_facts THEN ASM_REWRITE_TAC []) in
+  (* the cases of x2 by the cases theorem of its type (made on first use) *)
+  let cases_memo = ref ([] : (thm * thm) list) in
+  let cases_of nch =
+    try List.assq nch !cases_memo with Not_found ->
+      let th = tr_cases_of_nchotomy nch in
+      cases_memo := (nch, th) :: !cases_memo; th in
   let split_x2 : tactic = fun (asl,w as g) ->
     let (x2,_) = dest_forall (snd (dest_forall w)) in
     (* the nchotomy of a nested type (b list in a group) is the generic one *)
-    let nch = tryfind (fun th -> let x = fst (dest_forall (concl th)) in
-                         INST_TYPE (type_match (type_of x) (type_of x2) []) th) nchs in
-    (X_GEN_TAC tr_v_v THEN X_GEN_TAC x2 THEN
-     STRUCT_CASES_TAC (ISPEC x2 nch)) g in
+    let cth = tryfind (fun th ->
+        let cth = cases_of th in
+        let x = fst (dest_forall (snd (dest_imp (snd (dest_forall (concl cth)))))) in
+        INST_TYPE (type_match (type_of x) (type_of x2) []) cth) nchs in
+    let arities = map (fun c -> length (fst (strip_forall c)))
+                      (conjuncts (fst (dest_imp (snd (dest_forall (concl cth)))))) in
+    (X_GEN_TAC tr_v_v THEN MATCH_MP_TAC cth THEN REPEAT CONJ_TAC THENL
+       map (fun k -> REPLICATE_TAC k tr_bound_gen_tac) arities) g in
   (* literal equalities: implode injectivity and CONS_11 can split a string *)
   (* literal into char equalities before STRING_EQ_CONV sees it            *)
   let lit_eq_conv = DEPTH_CONV (STRING_EQ_CONV ORELSEC CHAR_EQ_CONV ORELSEC NUM_EQ_CONV) in
@@ -2419,7 +2707,7 @@ let tr_conditional_oneline f cls =
   (* the case tree of compile_rows: case constants, and conditionals for   *)
   (* boolean literal patterns (bool_compare T F = ..)                        *)
   let rec go g =
-    ((REWRITE_TAC [def] THEN CASE_REWRITE_TAC [] THEN NO_TAC) ORELSE
+    ((REWRITE_TAC [def] THEN CAKE_REWRITE_TAC [] THEN NO_TAC) ORELSE
      (ASM_REWRITE_TAC [def] THEN NO_TAC) ORELSE
      (FIRST_X_ASSUM (MP_TAC o check (fun th -> is_disj (concl th) || is_exists (concl th) ||
                                                  is_eq (concl th))) THEN
@@ -2899,17 +3187,28 @@ let clean_assumptions_aux be_quiet th =
                   print_thm t; Format.print_string "\n\n"));
                 failwith ("clean_assumptions: false " ^ string_of_thm t)));
   let th = REWRITE_RULE lemmas th in
-  (* lift EqualityType, lookup_cons, nsLookup and Eval assumptions out *)
+  (* lift EqualityType, lookup_cons, nsLookup and Eval assumptions out.  The  *)
+  (* rewriting passes that cannot change the theorem are left out: th is in   *)
+  (* normal form for the basic rewrites after each pass, so a pass with no     *)
+  (* assumptions to lift, or with ml_PreImpEval_def or its converse where the  *)
+  (* constant does not occur, would give th back (most of the time of         *)
+  (* clean_assumptions, which every translation calls many times)             *)
+  let rw_assums l th = if l = [] then th else REWRITE_RULE (map ASSUME l) th in
   let eq_assums = tr_find_terms is_EqualityType (concl th) in
-  let th = REWRITE_RULE (map ASSUME eq_assums) th in
+  let th = rw_assums eq_assums th in
   let lc_assums = tr_find_terms (fun t -> is_eq t && is_lookup_cons (lhs t)) (concl th) in
-  let th = REWRITE_RULE (map ASSUME lc_assums) th in
+  let th = rw_assums lc_assums th in
   let ns_assums = tr_find_terms (fun t -> is_eq t && tr_head_is "nsLookup" (lhs t) &&
                                          length (tr_dest_args (lhs t)) = 2) (concl th) in
-  let th = REWRITE_RULE (map ASSUME ns_assums) th in
-  let th1 = REWRITE_RULE [GSYM ml_PreImpEval_def] th in
-  let th2 = try CONV_RULE (LAND_CONV (ONCE_DEPTH_CONV move_Eval_conv)) th1
+  let th = rw_assums ns_assums th in
+  let occurs n tm = tr_can_find_term (fun t -> tr_is_const_named n t) tm in
+  let th1 = if occurs "ml_PreImp" (concl th) then REWRITE_RULE [GSYM ml_PreImpEval_def] th
+            else th in
+  let moved = ref false in
+  let move tm = let r = move_Eval_conv tm in moved := true; r in
+  let th2 = try CONV_RULE (LAND_CONV (ONCE_DEPTH_CONV move)) th1
             with Failure _ -> th1 in
+  if not !moved && not (occurs "ml_PreImpEval" (concl th2)) then th2 else
   REWRITE_RULE [ml_PreImpEval_def] th2;;
 
 let clean_assumptions th = clean_assumptions_aux false th;;
@@ -3800,6 +4099,16 @@ let translate_rec_store_ref =
 (* NAME_refs by new_specification, the declaration Dlet by ml_progLib     *)
 let tr_state_refs_tm = `state_refs:(FFI)state->(v store_v)list`;;
 
+(* HOL4 decides no_change_refs exp by SIMP_CONV std_ss [EVERY_DEF, MAP,    *)
+(* SND, no_change_refs_def] THENC EVAL (translate's val case) and by EVAL  *)
+(* (declare_new_ref).  The App clause of no_change_refs_def tests the      *)
+(* operator with a case expression over op, so the rewriting has the case  *)
+(* definition of op as well: on a code term (constructors and literals)     *)
+(* that decides no_change_refs as EVAL does (no theorem binding: the case  *)
+(* definition is taken where the conversion is made)                       *)
+let tr_no_change_refs_conv =
+  REWRITE_CONV [ALL; MAP; SND; no_change_refs_def; (case_info_of_tyname "op").ci_def];;
+
 let translate_value (fname,ml_fname,def,th,pre) =
   let th = INST [get_curr_env (), tr_env] th in
   let th = tr_drop_T_hyps (tr_UNDISCH_ALL (clean_assumptions (tr_D th))) in
@@ -3812,8 +4121,8 @@ let translate_value (fname,ml_fname,def,th,pre) =
       with Failure _ -> th) (frees (concl th)) th in
   let lemma = tr_ISPECL_NAMED ["refs", curr_refs] ml_Eval_constant in
   let lemma = PURE_REWRITE_RULE [curr_refs_eq] lemma in
-  let lemma = MATCH_MP lemma th1 in
-  let lemma = REWRITE_RULE [PULL_EXISTS_EXTRA] (tr_D lemma) in
+  let lemma = tr_time "translate: value Eval_constant" (MATCH_MP lemma) th1 in
+  let lemma = tr_time "translate: value PULL_EXISTS" (REWRITE_RULE [PULL_EXISTS_EXTRA]) (tr_D lemma) in
   let v_name = find_const_name (fname ^ "_v") in
   let refs_name = find_const_name (fname ^ "_refs") in
   let v_thm_temp = new_specification [v_name; refs_name] lemma in
@@ -3822,8 +4131,8 @@ let translate_value (fname,ml_fname,def,th,pre) =
   let _ = if not (is_conj (concl v_thm_temp)) then TRUTH else
     (try
        let ref_def = CONJUNCT2 v_thm_temp in
-       let c = REWRITE_CONV [ALL; MAP; SND; no_change_refs_def] in
-       let ref_def_lemma = CONV_RULE (RATOR_CONV (RAND_CONV c)) ref_def in
+       let ref_def_lemma = tr_time "translate: value refs_def"
+           (CONV_RULE (RATOR_CONV (RAND_CONV tr_no_change_refs_conv))) ref_def in
        tr_save_thm (refs_name ^ "_def") (MP ref_def_lemma TRUTH)
      with Failure _ -> TRUTH) in
   let v_thm_temp = if is_conj (concl v_thm_temp) then CONJUNCT1 v_thm_temp else v_thm_temp in
@@ -3832,7 +4141,7 @@ let translate_value (fname,ml_fname,def,th,pre) =
   let eval_thm = MATCH_MP evaluate_empty_state_IMP
                    (PURE_REWRITE_RULE [GSYM curr_refs_eq] v_thm_temp) in
   let pre_def = match pre with None -> TRUTH | Some pre_def -> pre_def in
-  ml_prog_update (ml_prog_add_Dlet eval_thm ml_fname);
+  tr_time "translate: value add_Dlet" ml_prog_update (ml_prog_add_Dlet eval_thm ml_fname);
   add_v_thms (fname,ml_fname,v_thm,pre_def);
   let v_thm = tr_UNDISCH_ALL (PURE_REWRITE_RULE [GSYM IMP_IMP] (DISCH_ALL v_thm)) in
   tr_save_thm (fname ^ "_v_thm") v_thm;;
@@ -3848,7 +4157,7 @@ let declare_new_ref name tm =
     try MP init_val_th1 TRUTH with Failure _ ->
       failwith "translate_new_ref failed: translation of init value has preconditions" in
   let th = MATCH_MP ml_new_ref_thm init_val_th1 in
-  let th = CONV_RULE (RATOR_CONV (RAND_CONV (REWRITE_CONV [ALL; MAP; SND; no_change_refs_def]))) th in
+  let th = CONV_RULE (RATOR_CONV (RAND_CONV tr_no_change_refs_conv)) th in
   let th = try MP th TRUTH with Failure _ ->
     failwith ("translate_new_ref failed: init value not simple enough to prove no refs " ^
               "changed during evaluation of init value") in
@@ -3877,7 +4186,7 @@ let rec translate_options options def =
     let (is_rec,is_fun,results) =
       try translate_main options (translate_options options) register_type def
       with e -> (tr_translate_fail := def; raise e) in
-    if is_rec then !translate_rec_store_ref results
+    if is_rec then tr_time "translate: rec store" !translate_rec_store_ref results
     else
       let (fname,ml_fname,def,th,pre) = hd results in
       if is_fun then
@@ -3897,7 +4206,7 @@ let rec translate_options options def =
         let pre_def = match pre with None -> TRUTH | Some pre_def -> pre_def in
         add_v_thms (fname,ml_fname,v_thm,pre_def);
         tr_save_thm (fname ^ "_v_thm") v_thm
-      else translate_value (fname,ml_fname,def,th,pre);;
+      else tr_time "translate: value" translate_value (fname,ml_fname,def,th,pre);;
 
 let translate def = translate_options [] def;;
 let translate_no_ind def = translate_options [No_ind] def;;
@@ -4265,8 +4574,8 @@ let translate_main_rec options thms ind original_def =
                th in
     let th = clean_assumptions th in
     (fname,ml_fname,def,th) in
-  let thms = map apply_recc thms in
-  let thms = extract_precondition_rec thms in
+  let thms = tr_time "translate: rec apply_recc" (map apply_recc) thms in
+  let thms = tr_time "translate: rec extract_precondition" extract_precondition_rec thms in
   let get_goal (fname,ml_fname,def,th,pre) =
     let th = REWRITE_RULE [] th in
     let hs = hyp th in
@@ -4289,7 +4598,7 @@ let translate_main_rec options thms ind original_def =
     tr_unroll_dbg := gs;
     let pre_defs = map (fun (_,_,_,_,pre) -> match pre with None -> TRUTH | Some t -> t) thms in
     (* HOL4's tactic step by step *)
-    let lem = tr_auto_prove "unroll_pre_in_ind" (gs,
+    let lem = tr_time "translate: rec unroll_pre_in_ind" (tr_auto_prove "unroll_pre_in_ind") (gs,
       REPEAT STRIP_TAC THEN
       TRY (MATCH_MP_TAC PreImp_LEMMA THEN
            CONV_TAC (RATOR_CONV (ONCE_REWRITE_CONV pre_defs)) THEN STRIP_TAC) THEN
@@ -4309,7 +4618,7 @@ let translate_main_rec options thms ind original_def =
       let name = let (f,_,_,_,_) = hd thms in f in
       fst (hide_ind_goal_rule name (DISCH ind_thm_goal th))
     else
-      (try MP (DISCH ind_thm_goal th) (prove_ind_thm ind ind_thm_goal)
+      (try MP (DISCH ind_thm_goal th) (tr_time "translate: rec prove_ind_thm" (prove_ind_thm ind) ind_thm_goal)
        with Failure _ ->
          let name = let (f,_,_,_,_) = hd thms in f in
          let (th2,ind_goal_def) = hide_ind_goal_rule name (DISCH ind_thm_goal th) in
@@ -4329,7 +4638,7 @@ let translate_main_rec options thms ind original_def =
     let th = remove_Eq th in
     let th = SIMP_EqualityType_ASSUMS th in
     (fname,ml_fname,def,th,pre) in
-  (true, map fix (zip results thms));;
+  (true, tr_time "translate: rec fix" (map fix) (zip results thms));;
 
 translate_main_rec_ref := translate_main_rec;;
 
